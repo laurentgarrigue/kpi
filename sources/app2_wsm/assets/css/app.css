@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Custom styles for KPI WSM */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* WebSocket connection status indicators */
+.ws-connected {
+  @apply text-green-500;
+}
+
+.ws-connecting {
+  @apply text-yellow-500;
+}
+
+.ws-disconnected {
+  @apply text-red-500;
+}
+
+/* Game timer display */
+.timer-display {
+  @apply font-mono text-2xl font-bold;
+}
+
+/* Score display */
+.score-display {
+  @apply text-4xl font-bold;
+}
+
+/* Message log */
+.message-log {
+  @apply font-mono text-xs;
+}

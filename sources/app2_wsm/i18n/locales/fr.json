@@ -1,0 +1,89 @@
+{
+  "status": {
+    "Offline": "Vous n'êtes pas connecté !",
+    "Online": "Vous êtes connecté"
+  },
+  "nav": {
+    "Home": "Accueil",
+    "Manager": "Manager",
+    "Faker": "Faker",
+    "Stats": "Stats",
+    "Account": "Compte",
+    "Login": "Connexion",
+    "Logout": "Déconnexion"
+  },
+  "Login": {
+    "Authentication": "Authentification",
+    "Login": "Identifiant",
+    "LoginHelp": "Entrez votre numéro de licence",
+    "Password": "Mot de passe",
+    "Submit": "Connexion",
+    "EmptyMsg": "Identifiant et mot de passe sont requis !",
+    "UnauthorizedMsg": "Connexion refusée !",
+    "ErrorMsg": "Erreur durant l'authentification !",
+    "Welcome": "Bienvenue",
+    "Logout": "Déconnexion"
+  },
+  "AddToHomeScreen": {
+    "message": "Ajouter au bureau / à l'écran d'accueil.",
+    "Dismiss": "Refuser",
+    "Install": "Installer"
+  },
+  "Update": {
+    "Message": "Une mise à jour est disponible",
+    "Button": "Appliquer maintenant !"
+  },
+  "Event": "Événement",
+  "Pitches": "Terrains",
+  "Pitch": "Terrain",
+  "Team": "Equipe",
+  "Pass": "Passe",
+  "Shot": "Tir",
+  "Stop": "Arrêt",
+  "Neutral": "Neutre",
+  "Kickoff": "Engag.",
+  "Kickoff_won": "Engagement gagné",
+  "Kickoff_lost": "Engagement perdu",
+  "Shot_on": "Tir cadré",
+  "Shot_off": "Tir non cadré",
+  "Shot_stop": "Arrêt",
+  "Pass_possession": "Passe / Possession",
+  "Neutral_ball": "Balle neutre",
+  "Manager": {
+    "Title": "Gestionnaire WebSocket",
+    "Connect": "Connecter",
+    "Disconnect": "Déconnecter",
+    "Clear": "Effacer",
+    "Save": "Sauvegarder",
+    "Load": "Charger",
+    "ConnectionUrl": "URL de connexion",
+    "ConnectionType": "Type de connexion",
+    "RawWebSocket": "WebSocket brut",
+    "STOMP": "Protocole STOMP",
+    "Status": "Statut",
+    "Connected": "Connecté",
+    "Connecting": "Connexion en cours",
+    "Disconnected": "Déconnecté",
+    "MessageLog": "Journal des messages",
+    "NoMessages": "Aucun message",
+    "SyncToDatabase": "Synchroniser avec la base de données",
+    "ClearLog": "Effacer le journal"
+  },
+  "Stats": {
+    "Title": "Statistiques de match",
+    "SelectEvent": "Sélectionnez un événement",
+    "SelectPitch": "Sélectionnez un terrain",
+    "GameInfo": "Informations du match",
+    "Period": "Période",
+    "Timer": "Chronomètre",
+    "Score": "Score",
+    "Actions": "Actions",
+    "Submit": "Soumettre les statistiques"
+  },
+  "Faker": {
+    "Title": "Générateur de données de test",
+    "SendMessage": "Envoyer un message",
+    "PresetMessages": "Messages prédéfinis",
+    "CustomMessage": "Message personnalisé"
+  }
+}
