@@ -1,0 +1,89 @@
+{
+  "status": {
+    "Offline": "You are offline!",
+    "Online": "You are online"
+  },
+  "nav": {
+    "Home": "Home",
+    "Manager": "Manager",
+    "Faker": "Faker",
+    "Stats": "Stats",
+    "Account": "Account",
+    "Login": "Login",
+    "Logout": "Logout"
+  },
+  "Login": {
+    "Authentication": "Authentication",
+    "Login": "Login",
+    "LoginHelp": "Enter your login",
+    "Password": "Password",
+    "Submit": "Submit",
+    "EmptyMsg": "Login & Password must be filled!",
+    "UnauthorizedMsg": "Unauthorized login!",
+    "ErrorMsg": "Authentication failed!",
+    "Welcome": "Welcome",
+    "Logout": "Logout"
+  },
+  "AddToHomeScreen": {
+    "message": "Add to desktop/home screen.",
+    "Dismiss": "Dismiss",
+    "Install": "Install"
+  },
+  "Update": {
+    "Message": "An update is available",
+    "Button": "Update now!"
+  },
+  "Event": "Event",
+  "Pitches": "Pitches",
+  "Pitch": "Pitch",
+  "Team": "Team",
+  "Pass": "Pass",
+  "Shot": "Shot",
+  "Stop": "Stop",
+  "Neutral": "Neutral",
+  "Kickoff": "Kick off",
+  "Kickoff_won": "Won Kick off",
+  "Kickoff_lost": "Lost Kick off",
+  "Shot_on": "On target shot",
+  "Shot_off": "Off target shot",
+  "Shot_stop": "Shot stop",
+  "Pass_possession": "Pass / Possession",
+  "Neutral_ball": "Neutral ball",
+  "Manager": {
+    "Title": "WebSocket Manager",
+    "Connect": "Connect",
+    "Disconnect": "Disconnect",
+    "Clear": "Clear",
+    "Save": "Save",
+    "Load": "Load",
+    "ConnectionUrl": "Connection URL",
+    "ConnectionType": "Connection Type",
+    "RawWebSocket": "Raw WebSocket",
+    "STOMP": "STOMP Protocol",
+    "Status": "Status",
+    "Connected": "Connected",
+    "Connecting": "Connecting",
+    "Disconnected": "Disconnected",
+    "MessageLog": "Message Log",
+    "NoMessages": "No messages yet",
+    "SyncToDatabase": "Sync to Database",
+    "ClearLog": "Clear Log"
+  },
+  "Stats": {
+    "Title": "Game Statistics",
+    "SelectEvent": "Select an event",
+    "SelectPitch": "Select a pitch",
+    "GameInfo": "Game Information",
+    "Period": "Period",
+    "Timer": "Timer",
+    "Score": "Score",
+    "Actions": "Actions",
+    "Submit": "Submit Statistics"
+  },
+  "Faker": {
+    "Title": "Test Data Faker",
+    "SendMessage": "Send Message",
+    "PresetMessages": "Preset Messages",
+    "CustomMessage": "Custom Message"
+  }
+}

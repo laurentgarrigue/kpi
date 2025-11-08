@@ -16,17 +16,20 @@ DOCKER_EXEC_PHP8 = docker exec -ti kpi_php8
 DOCKER_EXEC_PHP_NON_INTERACTIVE = docker exec kpi_php
 DOCKER_EXEC_PHP8_NON_INTERACTIVE = docker exec -u www-data kpi_php8
 DOCKER_EXEC_NODE = docker exec -ti kpi_node_app2
+DOCKER_EXEC_NODE_WSM = docker exec -ti kpi_node_app2_wsm
 .DEFAULT_GOAL = help
 
-.PHONY: help init init_env init_env_app2 init_networks \
+.PHONY: help init init_env init_env_app2 init_env_app2_wsm init_networks \
 dev_up dev_down dev_restart dev_rebuild dev_logs dev_status \
 preprod_up preprod_down preprod_restart preprod_rebuild preprod_logs preprod_status \
 prod_up prod_down prod_restart prod_rebuild prod_logs prod_status \
 run_dev run_build run_generate run_lint \
+run_dev_wsm run_build_wsm run_generate_wsm run_lint_wsm \
 npm_install_app2 npm_ls_app2 npm_clean_app2 npm_update_app2 npm_add_app2 npm_add_dev_app2 \
+npm_install_app2_wsm npm_ls_app2_wsm npm_clean_app2_wsm npm_update_app2_wsm npm_add_app2_wsm npm_add_dev_app2_wsm \
 npm_install_backend npm_add_backend npm_update_backend npm_ls_backend npm_clean_backend npm_init_backend \
 composer_install composer_update composer_require composer_require_dev composer_dump \
-php_bash php8_bash node_bash db_bash \
+php_bash php8_bash node_bash node_bash_wsm db_bash \
 wordpress_backup wordpress_restore \
 networks_create networks_list networks_clean
 
@@ -88,6 +91,10 @@ init_env_app2: ## Initialise les fichiers .env.development et .env.production po
 	else \
 		echo "⚠️  Le fichier .env.production existe déjà pour app2"; \
 	fi
+
+init_env_app2_wsm: ## Initialise les fichiers .env.development et .env.production pour app2_wsm
+	@echo "Note: app2_wsm a déjà ses fichiers .env créés"
+	@echo "✅ Fichiers .env pour app2_wsm présents"
 
 init_networks: networks_create ## Alias pour networks_create (crée les réseaux Docker)
 
@@ -198,6 +205,40 @@ npm_add_dev_app2: ## Ajoute un package npm de dev à app2 (usage: make npm_add_d
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
 
 
+## NUXT - APP2_WSM
+run_dev_wsm: ## Lance le serveur Nuxt (app2_wsm) en mode développement (port 3003)
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm run dev"
+
+run_build_wsm: ## Build l'application Nuxt (app2_wsm) pour la production
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm run build"
+
+run_generate_wsm: ## Génère l'application Nuxt (app2_wsm) en mode statique
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm run generate"
+
+run_lint_wsm: ## Exécute ESLint sur app2_wsm
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm run lint"
+
+
+## NPM - APP2_WSM
+npm_install_app2_wsm: ## Installe toutes les dépendances npm pour app2_wsm
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm install"
+
+npm_ls_app2_wsm: ## Liste les modules npm installés dans app2_wsm
+	$(DOCKER_EXEC_NODE_WSM) sh -c "ls -l node_modules/@nuxtjs"
+
+npm_clean_app2_wsm: ## Supprime node_modules et package-lock.json de app2_wsm
+	$(DOCKER_EXEC_NODE_WSM) sh -c "rm -rf node_modules package-lock.json"
+
+npm_update_app2_wsm: ## Met à jour toutes les dépendances npm de app2_wsm
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm update"
+
+npm_add_app2_wsm: ## Ajoute un package npm à app2_wsm (usage: make npm_add_app2_wsm package=uuid)
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm install $(package)"
+
+npm_add_dev_app2_wsm: ## Ajoute un package npm de dev à app2_wsm (usage: make npm_add_dev_app2_wsm package=eslint)
+	$(DOCKER_EXEC_NODE_WSM) sh -c "npm install -D $(package)"
+
+
 ## NPM - BACKEND (JavaScript Libraries)
 npm_install_backend: ## Installe les dépendances npm du backend (sources/package.json) via container temporaire
 	@if [ ! -f sources/package.json ]; then \
@@ -299,6 +340,9 @@ php8_bash: ## Ouvre un shell bash dans le container PHP 8
 
 node_bash: ## Ouvre un shell bash dans le container Node (app2)
 	$(DOCKER_EXEC_NODE) sh
+
+node_bash_wsm: ## Ouvre un shell bash dans le container Node (app2_wsm)
+	$(DOCKER_EXEC_NODE_WSM) sh
 
 db_bash: ## Ouvre un shell dans le container MySQL
 	docker exec -ti kpi_db sh
