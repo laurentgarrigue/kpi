@@ -89,21 +89,14 @@ export const useFormat = () => {
 
   /**
    * Get team logo HTML (48px version)
-   * @param {string} structure - Club/nation code
-   * @param {string} zone - Display zone ('inter' or 'club')
+   * @param {string} logoPath - Logo path from backend (e.g., "str_logo/48/FRA.png")
    * @returns {string} HTML img tag
    */
-  const logo48 = (structure, zone = 'inter') => {
-    if (!structure) return ''
+  const logo48 = (logoPath) => {
+    if (!logoPath) return ''
 
-    if (zone === 'inter') {
-      // Verify and clean nation code
-      const nationCode = verifNation(structure)
-      return `<img class="centre" src="${backendBaseUrl}/img/Nations/${nationCode}.png" height="48" alt="${nationCode}" />`
-    } else {
-      // Display club logo
-      return `<img class="centre" src="${backendBaseUrl}/img/KIP/logo/${structure}-logo.png" height="48" alt="${structure}" />`
-    }
+    // The logo path is already complete from the backend
+    return `<img class="centre" src="${backendBaseUrl}/img_ress/${logoPath}" height="48" alt="" />`
   }
 
   /**

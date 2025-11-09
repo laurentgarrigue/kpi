@@ -66,11 +66,11 @@ export const useGame = () => {
     try {
       const data = await getScoreData(gameId)
 
-      // Update score in store
+      // Update score in store (backend uses score1/score2, periode)
       gameStore.updateScore({
-        scoreA: parseInt(data.scoreA) || 0,
-        scoreB: parseInt(data.scoreB) || 0,
-        period: data.period || gameStore.score.period,
+        scoreA: parseInt(data.score1) || 0,
+        scoreB: parseInt(data.score2) || 0,
+        period: data.periode || gameStore.score.period,
         penaltiesA: data.penaltiesA || [],
         penaltiesB: data.penaltiesB || []
       })
@@ -89,9 +89,18 @@ export const useGame = () => {
     try {
       const data = await getTimerData(gameId)
 
+      // Convert run_time (milliseconds) to MM:SS format
+      let timer = '00:00'
+      if (data.run_time) {
+        const totalSeconds = Math.floor(parseInt(data.run_time) / 1000)
+        const minutes = Math.floor(totalSeconds / 60)
+        const seconds = totalSeconds % 60
+        timer = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      }
+
       // Update timer in store
       gameStore.updateScore({
-        timer: data.timer || '00:00',
+        timer: timer,
         possession: parseInt(data.possession) || 0,
         period: data.period || gameStore.score.period
       })
