@@ -84,17 +84,20 @@ onMounted(async () => {
     try {
       const networkConfig = await getNetworkConfig(eventId.value)
 
-      if (networkConfig && networkConfig.url) {
-        console.log('Network config found, connecting to WebSocket:', networkConfig.url)
+      // Extract network config from nested structure
+      const wsConfig = networkConfig?.network?.global
+
+      if (wsConfig && wsConfig.url) {
+        console.log('Network config found, connecting to WebSocket:', wsConfig.url)
 
         // Set pitch filter before connecting (format: "eventId_pitch")
         setPitchFilter(eventId.value, pitch.value)
 
         // Connect to WebSocket
         connectStomp({
-          url: networkConfig.url,
-          login: networkConfig.login || '',
-          password: networkConfig.password || '',
+          url: wsConfig.url,
+          login: wsConfig.login || '',
+          password: wsConfig.password || '',
           topics: ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
         })
 
