@@ -109,6 +109,7 @@ export const useWebSocket = () => {
    * @param {Object} config - Connection configuration
    * @param {string} config.url - WebSocket URL
    * @param {string} config.password - Password (optional, base64 encoded)
+   * @param {string} config.topic - Topic/channel for Sec-WebSocket-Protocol header (optional)
    */
   const connectClassic = (config) => {
     if (connected.value || connecting.value) {
@@ -121,11 +122,12 @@ export const useWebSocket = () => {
     useStomp.value = false
 
     try {
-      // Create native WebSocket connection
-      client.value = new WebSocket(config.url)
+      // Create native WebSocket connection with optional protocol/topic
+      const protocols = config.topic ? [config.topic] : []
+      client.value = new WebSocket(config.url, protocols)
 
       client.value.onopen = () => {
-        console.log('WebSocket connected to:', config.url)
+        console.log('WebSocket connected to:', config.url, 'with topic:', config.topic || 'none')
         connected.value = true
         connecting.value = false
 
@@ -276,6 +278,7 @@ export const useWebSocket = () => {
    * @param {string} config.url - WebSocket URL
    * @param {string} config.password - Password (optional)
    * @param {boolean} config.stomp - Use STOMP protocol (default: false)
+   * @param {string} config.topic - Topic/channel for classic WebSocket (Sec-WebSocket-Protocol)
    * @param {string} config.login - Login for STOMP (optional)
    * @param {Array<string>} config.topics - STOMP topics (optional)
    */
@@ -284,7 +287,7 @@ export const useWebSocket = () => {
       console.log('Connecting using STOMP protocol')
       connectStomp(config)
     } else {
-      console.log('Connecting using classic WebSocket')
+      console.log('Connecting using classic WebSocket with topic:', config.topic || 'none')
       connectClassic(config)
     }
   }
