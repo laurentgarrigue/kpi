@@ -15,7 +15,12 @@ export const useGame = () => {
   const loading = ref(false)
   const error = ref(null)
   const intervalGame = ref(null)
+  const intervalPitch = ref(null)
   const forcedGameId = ref(null)
+  const currentGameId = ref(null)
+  const currentEventId = ref(null)
+  const currentPitch = ref(null)
+  const useWebSocketForUpdates = ref(false) // If true, don't use HTTP polling
 
   /**
    * Fetch game ID for a pitch
@@ -110,14 +115,77 @@ export const useGame = () => {
   }
 
   /**
-   * Set up periodic game updates
+   * Check pitch file periodically for match changes
+   * @param {number} eventId - Event ID
+   * @param {number} pitch - Pitch number
+   */
+  const checkPitchForChanges = async (eventId, pitch) => {
+    try {
+      const gameId = await fetchGameIdForPitch(eventId, pitch)
+
+      if (gameId && gameId !== currentGameId.value) {
+        console.log(`Match changed from ${currentGameId.value} to ${gameId}`)
+        currentGameId.value = gameId
+
+        // Reload all match data
+        await fetchGame(gameId)
+
+        // If not using WebSocket, restart score/timer polling
+        if (!useWebSocketForUpdates.value) {
+          startGameRotation(gameId)
+        }
+      }
+    } catch (err) {
+      console.error('Error checking pitch for changes:', err)
+    }
+  }
+
+  /**
+   * Start periodic pitch check (every 30 seconds)
+   * @param {number} eventId - Event ID
+   * @param {number} pitch - Pitch number
+   */
+  const startPitchCheck = (eventId, pitch) => {
+    if (intervalPitch.value) {
+      clearInterval(intervalPitch.value)
+    }
+
+    currentEventId.value = eventId
+    currentPitch.value = pitch
+
+    // Check every 30 seconds
+    intervalPitch.value = setInterval(() => {
+      checkPitchForChanges(eventId, pitch)
+    }, 30000)
+  }
+
+  /**
+   * Stop periodic pitch check
+   */
+  const stopPitchCheck = () => {
+    if (intervalPitch.value) {
+      clearInterval(intervalPitch.value)
+      intervalPitch.value = null
+    }
+  }
+
+  /**
+   * Set up periodic game updates (only if not using WebSocket)
    * @param {string} gameId - Game ID
    * @param {number} interval - Update interval in ms (default: 5000)
    */
   const startGameRotation = (gameId, interval = 5000) => {
+    // Don't start HTTP polling if WebSocket is active
+    if (useWebSocketForUpdates.value) {
+      console.log('WebSocket active, skipping HTTP polling')
+      return
+    }
+
     if (intervalGame.value) {
       clearInterval(intervalGame.value)
     }
+
+    currentGameId.value = gameId
 
     // Initial fetch
     fetchScore(gameId)
@@ -138,6 +206,27 @@ export const useGame = () => {
       clearInterval(intervalGame.value)
       intervalGame.value = null
     }
+  }
+
+  /**
+   * Enable WebSocket mode (disables HTTP polling)
+   */
+  const enableWebSocketMode = () => {
+    useWebSocketForUpdates.value = true
+    stopGameRotation() // Stop HTTP polling
+    console.log('WebSocket mode enabled, HTTP polling disabled')
+  }
+
+  /**
+   * Disable WebSocket mode (enables HTTP polling fallback)
+   */
+  const disableWebSocketMode = () => {
+    useWebSocketForUpdates.value = false
+    // Restart HTTP polling if we have a current game
+    if (currentGameId.value) {
+      startGameRotation(currentGameId.value)
+    }
+    console.log('WebSocket mode disabled, falling back to HTTP polling')
   }
 
   /**
@@ -171,6 +260,7 @@ export const useGame = () => {
    */
   const cleanup = () => {
     stopGameRotation()
+    stopPitchCheck()
     gameStore.resetGame()
     error.value = null
   }
@@ -179,12 +269,21 @@ export const useGame = () => {
     loading,
     error,
     forcedGameId,
+    currentGameId,
+    currentEventId,
+    currentPitch,
+    useWebSocketForUpdates,
     fetchGameIdForPitch,
     fetchGame,
     fetchScore,
     fetchTimer,
+    checkPitchForChanges,
+    startPitchCheck,
+    stopPitchCheck,
     startGameRotation,
     stopGameRotation,
+    enableWebSocketMode,
+    disableWebSocketMode,
     displayGameEvent,
     testGameId,
     cleanup

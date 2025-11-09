@@ -41,7 +41,16 @@ import MatchDisplay from '~/components/display/Match.vue'
 const route = useRoute()
 const { t } = useI18n()
 const { display, zone, mode, checkOptions } = useRouteOptions()
-const { fetchGameIdForPitch, fetchGame, loading, error, cleanup } = useGame()
+const {
+  fetchGameIdForPitch,
+  fetchGame,
+  startGameRotation,
+  startPitchCheck,
+  enableWebSocketMode,
+  loading,
+  error,
+  cleanup
+} = useGame()
 const gameStore = useGameStore()
 
 const gameData = computed(() => gameStore.currentGame)
@@ -62,28 +71,74 @@ onMounted(async () => {
   // Parse URL options
   checkOptions()
 
-  // Fetch game ID for pitch
-  if (eventId.value && pitch.value) {
-    try {
-      const gameId = await fetchGameIdForPitch(eventId.value, pitch.value)
+  if (!eventId.value || !pitch.value) {
+    error.value = t('InvalidParameters')
+    return
+  }
 
-      if (gameId) {
-        // Fetch game data
-        await fetchGame(gameId)
+  try {
+    // 1. Try to load network config and setup WebSocket if available
+    const { getNetworkConfig } = useApi()
+    const { connectStomp, setPitchFilter, connected } = useWebSocket()
+
+    try {
+      const networkConfig = await getNetworkConfig(eventId.value)
+
+      if (networkConfig && networkConfig.url) {
+        console.log('Network config found, connecting to WebSocket:', networkConfig.url)
+
+        // Set pitch filter before connecting (format: "eventId_pitch")
+        setPitchFilter(eventId.value, pitch.value)
+
+        // Connect to WebSocket
+        connectStomp({
+          url: networkConfig.url,
+          login: networkConfig.login || '',
+          password: networkConfig.password || '',
+          topics: ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
+        })
+
+        // Enable WebSocket mode (disables HTTP polling for score/chrono)
+        enableWebSocketMode()
       } else {
-        error.value = t('NoGameForPitch')
+        console.log('No network config found, will use HTTP polling')
       }
     } catch (err) {
-      console.error('Error loading game:', err)
-      error.value = t('ErrorLoadingGame')
+      console.log('Network config not available, using HTTP polling fallback:', err)
     }
-  } else {
-    error.value = t('InvalidParameters')
+
+    // 2. Fetch initial game ID for this pitch
+    const gameId = await fetchGameIdForPitch(eventId.value, pitch.value)
+
+    if (gameId) {
+      // 3. Fetch initial game data (global, score, chrono)
+      await fetchGame(gameId)
+
+      // 4. Start HTTP polling if WebSocket not connected
+      // If WebSocket is connected, updates will come via WebSocket
+      if (!connected.value) {
+        console.log('Starting HTTP polling for score/chrono updates')
+        startGameRotation(gameId)
+      } else {
+        console.log('WebSocket connected, score/chrono will update via WebSocket')
+      }
+    } else {
+      error.value = t('NoGameForPitch')
+    }
+
+    // 5. Start periodic pitch check (every 30 seconds) to detect match changes
+    startPitchCheck(eventId.value, pitch.value)
+
+  } catch (err) {
+    console.error('Error loading game:', err)
+    error.value = t('ErrorLoadingGame')
   }
 })
 
 onUnmounted(() => {
   cleanup()
+  const { disconnect } = useWebSocket()
+  disconnect()
 })
 
 definePageMeta({
