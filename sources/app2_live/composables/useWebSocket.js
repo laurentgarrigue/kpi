@@ -14,6 +14,17 @@ export const useWebSocket = () => {
   const connected = ref(false)
   const connecting = ref(false)
   const error = ref(null)
+  const currentPitchFilter = ref(null) // Format: "eventId_pitch" (e.g., "187_1")
+
+  /**
+   * Set pitch filter for WebSocket messages
+   * @param {number} eventId - Event ID
+   * @param {number} pitch - Pitch number
+   */
+  const setPitchFilter = (eventId, pitch) => {
+    currentPitchFilter.value = `${eventId}_${pitch}`
+    console.log('WebSocket pitch filter set to:', currentPitchFilter.value)
+  }
 
   /**
    * Process incoming WebSocket message
@@ -23,8 +34,16 @@ export const useWebSocket = () => {
     try {
       const data = typeof message === 'string' ? JSON.parse(message) : message
 
+      // Filter by pitch if specified
+      if (currentPitchFilter.value && data.p !== currentPitchFilter.value) {
+        // Message is not for this pitch, ignore it
+        return
+      }
+
+      console.log('Processing WebSocket message for pitch:', data.p, data)
+
       // Update score based on message type
-      if (data.type === 'chrono' || data.TPS-JEU !== undefined) {
+      if (data.type === 'chrono' || data['TPS-JEU'] !== undefined) {
         // Timer update
         gameStore.updateScore({
           timer: data['TPS-JEU'] || data.timer || gameStore.score.timer
@@ -233,6 +252,8 @@ export const useWebSocket = () => {
     connected,
     connecting,
     error,
+    currentPitchFilter,
+    setPitchFilter,
     connectStomp,
     disconnect,
     sendMessage,

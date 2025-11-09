@@ -104,8 +104,6 @@ const props = defineProps({
 
 const gameStore = useGameStore()
 const { teamName, logo48, playerPhoto, eventIcon, formatPeriod, msToMMSS } = useFormat()
-const { startGameRotation, stopGameRotation } = useGame()
-const { connectStomp, disconnect } = useWebSocket()
 
 const matchHorloge = ref('00:00')
 const matchHorlogeStarted = ref(false)
@@ -138,38 +136,12 @@ watch(() => score.value, () => {
   updateFromStore()
 }, { deep: true })
 
-onMounted(async () => {
-  if (props.gameData && props.gameData.id_match) {
-    // Load game data
-    await gameStore.loadGame(props.gameData)
-
-    // Start periodic score updates
-    startGameRotation(props.gameData.id_match)
-
-    // Initialize WebSocket connection
-    // (Optional - can be enabled if network config is available)
-    // const { getNetworkConfig } = useApi()
-    // try {
-    //   const networkConfig = await getNetworkConfig(props.gameData.d_id)
-    //   if (networkConfig && networkConfig.url) {
-    //     connectStomp({
-    //       url: networkConfig.url,
-    //       login: networkConfig.login,
-    //       password: networkConfig.password,
-    //       topics: ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
-    //     })
-    //   }
-    // } catch (err) {
-    //   console.error('Network config not available:', err)
-    // }
-
-    updateFromStore()
-  }
+onMounted(() => {
+  updateFromStore()
 })
 
 onUnmounted(() => {
-  stopGameRotation()
-  disconnect()
+  // Cleanup handled by parent page
 })
 </script>
 
