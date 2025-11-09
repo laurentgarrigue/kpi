@@ -72,23 +72,38 @@ export const useFormat = () => {
   /**
    * Format team name (uppercase, truncate if needed)
    * @param {string} name - Team name
-   * @param {number} maxLength - Maximum length
+   * @param {string} zone - Display zone ('inter' or 'club')
    * @returns {string} Formatted team name
    */
-  const teamName = (name, maxLength = 20) => {
+  const teamName = (name, zone = 'inter') => {
     if (!name) return ''
-    const formatted = name.toUpperCase()
-    return truncateStr(formatted, maxLength)
+
+    if (zone === 'inter') {
+      // International mode: show 3-letter country code
+      return name.substring(0, 3).toUpperCase()
+    }
+
+    // Club mode: show full name
+    return name
   }
 
   /**
-   * Get team logo URL (48px version)
-   * @param {string} logo - Logo filename
-   * @returns {string} Full logo URL
+   * Get team logo HTML (48px version)
+   * @param {string} structure - Club/nation code
+   * @param {string} zone - Display zone ('inter' or 'club')
+   * @returns {string} HTML img tag
    */
-  const logo48 = (logo) => {
-    if (!logo) return ''
-    return `${backendBaseUrl}/img/${logo}`
+  const logo48 = (structure, zone = 'inter') => {
+    if (!structure) return ''
+
+    if (zone === 'inter') {
+      // Verify and clean nation code
+      const nationCode = verifNation(structure)
+      return `<img class="centre" src="${backendBaseUrl}/img/Nations/${nationCode}.png" height="48" alt="${nationCode}" />`
+    } else {
+      // Display club logo
+      return `<img class="centre" src="${backendBaseUrl}/img/KIP/logo/${structure}-logo.png" height="48" alt="${structure}" />`
+    }
   }
 
   /**
@@ -119,13 +134,25 @@ export const useFormat = () => {
   }
 
   /**
-   * Verify nation code is valid
+   * Verify and clean nation code
    * @param {string} nation - Nation code
-   * @returns {boolean} True if valid
+   * @returns {string} Validated nation code (defaults to 'FRA' if invalid)
    */
   const verifNation = (nation) => {
-    if (!nation) return false
-    return nation.length === 3 && nation !== '---'
+    if (!nation) return 'FRA'
+
+    // Truncate to 3 characters max
+    let code = nation.length > 3 ? nation.substring(0, 3) : nation
+
+    // Check if contains digits (invalid nation code)
+    for (let i = 0; i < code.length; i++) {
+      const char = code.charAt(i)
+      if (char >= '0' && char <= '9') {
+        return 'FRA' // Default to France if code contains numbers
+      }
+    }
+
+    return code
   }
 
   /**
@@ -134,8 +161,8 @@ export const useFormat = () => {
    * @returns {string} Flag icon URL
    */
   const flagIcon = (nation) => {
-    if (!verifNation(nation)) return ''
-    return `${backendBaseUrl}/img_ress/flags/${nation.toLowerCase()}.png`
+    const nationCode = verifNation(nation)
+    return `${backendBaseUrl}/img_ress/flags/${nationCode.toLowerCase()}.png`
   }
 
   return {
