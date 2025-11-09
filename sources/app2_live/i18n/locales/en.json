@@ -1,0 +1,33 @@
+{
+  "Home": {
+    "Subtitle": "Real-time display for kayak polo competitions",
+    "HowToUse": "How to use",
+    "Usage1": "Navigate to /live/:event/:pitch/:options to display a live match",
+    "Usage2": "Customize the display with URL options (mode, zone, style)",
+    "Usage3": "The display updates automatically in real-time",
+    "ExampleUrl": "URL Format",
+    "Example": "Example: Event 123, Pitch 1, Score mode, Inter zone, Full mode",
+    "DisplayModes": "Display Modes",
+    "Zones": "Zones",
+    "Modes": "Modes",
+    "Styles": "Styles",
+    "ClubMode": "Full name",
+    "InterMode": "3-letter code + flag",
+    "FullMode": "Full with animations",
+    "OnlyMode": "Score only",
+    "EventsMode": "Events only",
+    "StaticMode": "Without animations",
+    "Version": "Version"
+  },
+  "Update": {
+    "Message": "Update available",
+    "Description": "A new version is available. Refresh now?",
+    "Button": "Update",
+    "Later": "Later"
+  },
+  "Loading": "Loading",
+  "NoGame": "No game to display",
+  "NoGameForPitch": "No game found for this pitch",
+  "ErrorLoadingGame": "Error loading game",
+  "InvalidParameters": "Invalid parameters"
+}

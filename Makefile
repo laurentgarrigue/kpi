@@ -16,17 +16,20 @@ DOCKER_EXEC_PHP8 = docker exec -ti kpi_php8
 DOCKER_EXEC_PHP_NON_INTERACTIVE = docker exec kpi_php
 DOCKER_EXEC_PHP8_NON_INTERACTIVE = docker exec -u www-data kpi_php8
 DOCKER_EXEC_NODE = docker exec -ti kpi_node_app2
+DOCKER_EXEC_NODE_LIVE = docker exec -ti kpi_node_app2_live
 .DEFAULT_GOAL = help
 
-.PHONY: help init init_env init_env_app2 init_networks \
+.PHONY: help init init_env init_env_app2 init_env_app2_live init_networks \
 dev_up dev_down dev_restart dev_rebuild dev_logs dev_status \
 preprod_up preprod_down preprod_restart preprod_rebuild preprod_logs preprod_status \
 prod_up prod_down prod_restart prod_rebuild prod_logs prod_status \
 run_dev run_build run_generate run_lint \
+run_dev_live run_build_live run_generate_live run_lint_live \
 npm_install_app2 npm_ls_app2 npm_clean_app2 npm_update_app2 npm_add_app2 npm_add_dev_app2 \
+npm_install_app2_live npm_ls_app2_live npm_clean_app2_live npm_update_app2_live npm_add_app2_live npm_add_dev_app2_live \
 npm_install_backend npm_add_backend npm_update_backend npm_ls_backend npm_clean_backend npm_init_backend \
 composer_install composer_update composer_require composer_require_dev composer_dump \
-php_bash php8_bash node_bash db_bash \
+php_bash php8_bash node_bash node_bash_live db_bash \
 wordpress_backup wordpress_restore \
 networks_create networks_list networks_clean
 
@@ -49,7 +52,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_networks ## Initialisation complète du projet (env, réseaux)
+init: init_env init_env_app2 init_env_app2_live init_networks ## Initialisation complète du projet (env, réseaux)
 	@echo ""
 	@echo "✅ Initialisation complète terminée!"
 	@echo ""
@@ -61,8 +64,8 @@ init: init_env init_env_app2 init_networks ## Initialisation complète du projet
 	@echo "  1. Configurez les variables dans docker/.env"
 	@echo "  2. Lancez l'environnement: make dev_up (ou preprod_up/prod_up)"
 	@echo "  3. Installez les dépendances Composer: make composer_install"
-	@echo "  4. Installez les dépendances NPM: make npm_install_app2"
-	@echo "  5. Lancez Nuxt: make run_dev"
+	@echo "  4. Installez les dépendances NPM: make npm_install_app2 ou make npm_install_app2_live"
+	@echo "  5. Lancez Nuxt: make run_dev (app2) ou make run_dev_live (app2_live)"
 	@echo ""
 	@echo "Note: Pour une préprod/prod, vérifiez APPLICATION_NAME dans docker/.env"
 
@@ -87,6 +90,20 @@ init_env_app2: ## Initialise les fichiers .env.development et .env.production po
 		echo "✅ Fichier .env.production créé pour app2"; \
 	else \
 		echo "⚠️  Le fichier .env.production existe déjà pour app2"; \
+	fi
+
+init_env_app2_live: ## Initialise les fichiers .env.development et .env.production pour app2_live
+	@if [ ! -f sources/app2_live/.env.development ]; then \
+		cp sources/app2_live/.env.development.dist sources/app2_live/.env.development; \
+		echo "✅ Fichier .env.development créé pour app2_live"; \
+	else \
+		echo "⚠️  Le fichier .env.development existe déjà pour app2_live"; \
+	fi
+	@if [ ! -f sources/app2_live/.env.production ]; then \
+		cp sources/app2_live/.env.production.dist sources/app2_live/.env.production; \
+		echo "✅ Fichier .env.production créé pour app2_live"; \
+	else \
+		echo "⚠️  Le fichier .env.production existe déjà pour app2_live"; \
 	fi
 
 init_networks: networks_create ## Alias pour networks_create (crée les réseaux Docker)
@@ -178,6 +195,20 @@ run_lint: ## Exécute ESLint sur app2
 	$(DOCKER_EXEC_NODE) sh -c "npm run lint"
 
 
+## NUXT - APP2_LIVE
+run_dev_live: ## Lance le serveur Nuxt (app2_live) en mode développement (port 3001)
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm run dev"
+
+run_build_live: ## Build l'application Nuxt (app2_live) pour la production
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm run build"
+
+run_generate_live: ## Génère l'application Nuxt (app2_live) en mode statique
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm run generate"
+
+run_lint_live: ## Exécute ESLint sur app2_live
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm run lint"
+
+
 ## NPM - APP2
 npm_install_app2: ## Installe toutes les dépendances npm pour app2
 	$(DOCKER_EXEC_NODE) sh -c "npm install"
@@ -196,6 +227,26 @@ npm_add_app2: ## Ajoute un package npm à app2 (usage: make npm_add_app2 package
 
 npm_add_dev_app2: ## Ajoute un package npm de dev à app2 (usage: make npm_add_dev_app2 package=eslint)
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
+
+
+## NPM - APP2_LIVE
+npm_install_app2_live: ## Installe toutes les dépendances npm pour app2_live
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm install"
+
+npm_ls_app2_live: ## Liste les modules npm installés dans app2_live
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "ls -l node_modules/@nuxtjs"
+
+npm_clean_app2_live: ## Supprime node_modules et package-lock.json de app2_live
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "rm -rf node_modules package-lock.json"
+
+npm_update_app2_live: ## Met à jour toutes les dépendances npm de app2_live
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm update"
+
+npm_add_app2_live: ## Ajoute un package npm à app2_live (usage: make npm_add_app2_live package=uuid)
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm install $(package)"
+
+npm_add_dev_app2_live: ## Ajoute un package npm de dev à app2_live (usage: make npm_add_dev_app2_live package=eslint)
+	$(DOCKER_EXEC_NODE_LIVE) sh -c "npm install -D $(package)"
 
 
 ## NPM - BACKEND (JavaScript Libraries)
@@ -299,6 +350,9 @@ php8_bash: ## Ouvre un shell bash dans le container PHP 8
 
 node_bash: ## Ouvre un shell bash dans le container Node (app2)
 	$(DOCKER_EXEC_NODE) sh
+
+node_bash_live: ## Ouvre un shell bash dans le container Node (app2_live)
+	$(DOCKER_EXEC_NODE_LIVE) sh
 
 db_bash: ## Ouvre un shell dans le container MySQL
 	docker exec -ti kpi_db sh

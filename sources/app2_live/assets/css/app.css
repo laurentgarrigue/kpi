@@ -1,0 +1,253 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent scrolling on live display */
+  background-color: #000;
+  color: #fff;
+}
+
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+
+/* LCD/Digital display font for scores */
+@font-face {
+  font-family: '7segments';
+  src: url('~/assets/fonts/7segments.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'LCDWinTT';
+  src: url('~/assets/fonts/LCDWinTT.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'LiquidCrystal-ExBold';
+  src: url('~/assets/fonts/LiquidCrystal-ExBold.ttf') format('truetype');
+}
+
+.lcd {
+  font-family: '7segments', 'LCDWinTT', monospace;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+
+/* Score display styles */
+.score-display {
+  font-family: '7segments', 'LCDWinTT', monospace;
+  font-size: 8rem;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+/* Timer display styles */
+.timer-display {
+  font-family: '7segments', 'LCDWinTT', monospace;
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1;
+}
+
+.timer-red {
+  color: #ef4444; /* red-500 */
+  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Team styles */
+.team-name {
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.team-logo {
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: contain;
+}
+
+/* Event banner styles for goals, cards, etc. */
+.event-banner {
+  position: fixed;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 1rem;
+  padding: 2rem 3rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  min-width: 400px;
+  text-align: center;
+}
+
+.event-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.player-photo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #fff;
+}
+
+/* Penalty shootout indicators */
+.penalty-indicator {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 4px;
+  background-color: #6b7280; /* gray-500 - empty */
+}
+
+.penalty-indicator.scored {
+  background-color: #10b981; /* green-500 - scored */
+}
+
+.penalty-indicator.missed {
+  background-color: #ef4444; /* red-500 - missed */
+}
+
+/* Period indicator */
+.period-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  font-size: 1.25rem;
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
+}
+
+/* Possession timer */
+.possession-timer {
+  font-family: '7segments', monospace;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Online/Offline indicator */
+.online-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.online-indicator.online {
+  color: #10b981; /* green-500 */
+}
+
+.online-indicator.offline {
+  color: #ef4444; /* red-500 */
+}
+
+/* Status message */
+.status-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 600px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Flag display for international matches */
+.flag-icon {
+  width: 48px;
+  height: 32px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+/* Category badge */
+.category-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background-color: #6b7280; /* gray-500 */
+  color: white;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 1024px) {
+  .score-display {
+    font-size: 6rem;
+  }
+
+  .team-name {
+    font-size: 1.5rem;
+  }
+
+  .team-logo {
+    max-width: 80px;
+    max-height: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .score-display {
+    font-size: 4rem;
+  }
+
+  .timer-display {
+    font-size: 2rem;
+  }
+
+  .team-name {
+    font-size: 1.25rem;
+  }
+
+  .team-logo {
+    max-width: 60px;
+    max-height: 60px;
+  }
+
+  .event-banner {
+    min-width: 300px;
+    padding: 1.5rem 2rem;
+  }
+}
