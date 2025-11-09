@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import { useGameStore } from '~/stores/gameStore'
 import { useFormat } from '~/composables/useFormat'
 import { useWebSocket } from '~/composables/useWebSocket'
@@ -105,13 +105,6 @@ const props = defineProps({
 const gameStore = useGameStore()
 const { teamName, logo48, playerPhoto, eventIcon, formatPeriod, formatPossession, msToMMSS } = useFormat()
 
-const matchHorloge = ref('00:00')
-const matchHorlogeStarted = ref(false)
-const matchPeriode = ref('M1')
-const matchPossession = ref(0)
-const pen1 = ref(0)
-const pen2 = ref(0)
-
 const styleZone = computed(() => {
   return props.zone === 'club' ? 'ban_score_club' : 'ban_score'
 })
@@ -121,24 +114,13 @@ const teams = computed(() => gameStore.teams)
 const currentGame = computed(() => gameStore.currentGame)
 const currentEvent = computed(() => gameStore.currentEvent)
 
-// Update local refs from store
-const updateFromStore = () => {
-  matchHorloge.value = score.value.timer || '00:00'
-  matchPeriode.value = formatPeriod(score.value.period || 'M1')
-  matchPossession.value = score.value.possession || 0
-  pen1.value = score.value.penaltiesA?.length || 0
-  pen2.value = score.value.penaltiesB?.length || 0
-  matchHorlogeStarted.value = matchHorloge.value !== '00:00'
-}
-
-// Watch store changes
-watch(() => score.value, () => {
-  updateFromStore()
-}, { deep: true })
-
-onMounted(() => {
-  updateFromStore()
-})
+// Computed properties that react immediately to store changes
+const matchHorloge = computed(() => score.value.timer || '00:00')
+const matchHorlogeStarted = computed(() => matchHorloge.value !== '00:00')
+const matchPeriode = computed(() => formatPeriod(score.value.period || 'M1'))
+const matchPossession = computed(() => score.value.possession || 0)
+const pen1 = computed(() => score.value.penaltiesA?.length || 0)
+const pen2 = computed(() => score.value.penaltiesB?.length || 0)
 
 onUnmounted(() => {
   // Cleanup handled by parent page
