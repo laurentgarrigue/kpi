@@ -8,12 +8,19 @@ export const useApi = () => {
    */
   const fetchApi = async (url, options = {}) => {
     try {
-      const response = await fetch(url, {
+      // Add timestamp to URL to prevent caching
+      const separator = url.includes('?') ? '&' : '?'
+      const urlWithTimestamp = `${url}${separator}_t=${Date.now()}`
+
+      const response = await fetch(urlWithTimestamp, {
         headers: {
           'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           ...options.headers
         },
+        cache: 'no-store',
         ...options
       })
 

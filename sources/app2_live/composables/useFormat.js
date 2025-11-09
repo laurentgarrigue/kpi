@@ -96,7 +96,7 @@ export const useFormat = () => {
     if (!logoPath) return ''
 
     // The logo path is already complete from the backend
-    return `<img class="centre" src="${backendBaseUrl}/img_ress/${logoPath}" height="48" alt="" />`
+    return `<img class="centre" src="${backendBaseUrl}/img/${logoPath}" height="48" alt="" />`
   }
 
   /**
