@@ -9,7 +9,7 @@
       <div class="grid grid-cols-7 gap-4 items-center">
         <!-- Team A -->
         <div class="col-span-3 flex items-center justify-end space-x-4">
-          <div v-if="teams.teamA.club" class="team-logo" v-html="logo48(teams.teamA.club, zone)" />
+          <div v-if="teams.teamA.logo" class="team-logo" v-html="logo48(teams.teamA.logo)" />
           <div class="team-name text-right">{{ teamName(teams.teamA.name, zone) }}</div>
           <div v-if="pen1 > 0" class="flex space-x-1">
             <div v-for="i in pen1" :key="`pen1-${i}`" class="penalty-indicator scored" />
@@ -41,7 +41,7 @@
             <div v-for="i in pen2" :key="`pen2-${i}`" class="penalty-indicator scored" />
           </div>
           <div class="team-name text-left">{{ teamName(teams.teamB.name, zone) }}</div>
-          <div v-if="teams.teamB.club" class="team-logo" v-html="logo48(teams.teamB.club, zone)" />
+          <div v-if="teams.teamB.logo" class="team-logo" v-html="logo48(teams.teamB.logo)" />
         </div>
       </div>
     </div>
