@@ -46,7 +46,8 @@ export const useGame = () => {
 
     try {
       const data = await getGameData(gameId)
-      await gameStore.loadGame(data)
+      // Pass gameId explicitly to handle cases where it's not in the data
+      await gameStore.loadGame(data, gameId)
     } catch (err) {
       console.error('Error fetching game:', err)
       error.value = err.message
