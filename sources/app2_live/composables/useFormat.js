@@ -88,7 +88,7 @@ export const useFormat = () => {
    */
   const logo48 = (logo) => {
     if (!logo) return ''
-    return `${backendBaseUrl}/img_ress/str_logo/48/${logo}`
+    return `${backendBaseUrl}/img/${logo}`
   }
 
   /**
