@@ -32,9 +32,13 @@ services:
         restart: unless-stopped
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.kpi.rule=Host(`${KPI_DOMAIN_NAME}`)"
-            - "traefik.http.routers.kpi.entrypoints=websecure"
-            - "traefik.http.routers.kpi.tls=true"
+            # HTTP (pour dev local .localhost)
+            - "traefik.http.routers.kpi-http.rule=Host(\`${KPI_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.kpi-http.entrypoints=web"
+            # HTTPS (pour dev avec domaines personnalisés)
+            - "traefik.http.routers.kpi-https.rule=Host(\`${KPI_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.kpi-https.entrypoints=websecure"
+            - "traefik.http.routers.kpi-https.tls=true"
     kpi8:
         container_name: ${PHP_CONTAINER_NAME}8
         build:
@@ -67,9 +71,13 @@ services:
         restart: unless-stopped
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.kpi8.rule=Host(`${KPI_DOMAIN_NAME_8}`)"
-            - "traefik.http.routers.kpi8.entrypoints=websecure"
-            - "traefik.http.routers.kpi8.tls=true"
+            # HTTP (pour dev local .localhost)
+            - "traefik.http.routers.kpi8-http.rule=Host(\`${KPI_DOMAIN_NAME_8}\`)"
+            - "traefik.http.routers.kpi8-http.entrypoints=web"
+            # HTTPS (pour dev avec domaines personnalisés)
+            - "traefik.http.routers.kpi8-https.rule=Host(\`${KPI_DOMAIN_NAME_8}\`)"
+            - "traefik.http.routers.kpi8-https.entrypoints=websecure"
+            - "traefik.http.routers.kpi8-https.tls=true"
     db:
         container_name: ${DB_CONTAINER_NAME}
         build:
@@ -125,10 +133,9 @@ services:
         container_name: kpi_node_app2
         build:
             context: ../sources/app2
-            dockerfile: ../../docker/node/Dockerfile # Crée ce Dockerfile si besoin
+            dockerfile: ../../docker/node/Dockerfile
         working_dir: /app
         user: "${USER_ID}:${GROUP_ID}"
-        # command: "npm run http-server"
         volumes:
             - ../sources/app2:/app
         environment:
@@ -142,48 +149,43 @@ services:
         restart: unless-stopped
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.app2.rule=Host(`${NODE_DOMAIN_NAME}`)"
-            - "traefik.http.routers.app2.entrypoints=websecure"
-            - "traefik.http.routers.app2.tls=true"
+            # HTTP (pour dev local .localhost)
+            - "traefik.http.routers.app2-http.rule=Host(\`${APP2_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.app2-http.entrypoints=web"
             - "traefik.http.services.app2.loadbalancer.server.port=3000"
+            # HTTPS (pour dev avec domaines personnalisés)
+            - "traefik.http.routers.app2-https.rule=Host(\`${APP2_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.app2-https.entrypoints=websecure"
+            - "traefik.http.routers.app2-https.tls=true"
     
-    # node:
-    #     container_name: kpi_node
-    #     # image: node:latest
-    #     build:
-    #         context: ../
-    #         dockerfile: ./docker/node/Dockerfile
-    #     ports:
-    #         - "8000:8000" # vue ui
-    #         - "9000:8080" # Vue-cli HMR
-    #     volumes:
-    #         - ../sources/app_dev:/app
-    #     user: "1000:33"
-    # node_live:
-    #     container_name: kpi_node_live
-    #     # image: node:latest
-    #     build:
-    #         context: ../
-    #         dockerfile: ./docker/node/Dockerfile_live
-    #     ports:
-    #         - "8001:8000" # vue ui
-    #         - "9001:8080" # Vue-cli HMR
-    #     volumes:
-    #         - ../sources/app_live_dev:/app
-    #     user: "1000:33"
-    # node_wsm:
-    #     container_name: kpi_node_wsm
-    #     # image: node:latest
-    #     build:
-    #         context: ../
-    #         dockerfile: ./docker/node/Dockerfile_wsm
-    #     ports:
-    #         - "8002:8000" # vue ui
-    #         - "9002:8080" # Vue-cli HMR
-    #     volumes:
-    #         - ../sources/app_wsm_dev:/app
-    #     user: "1000:33"
-
+    node_app2_wsm:
+        container_name: kpi_node_app2_wsm
+        build:
+            context: ../sources/app2_wsm
+            dockerfile: ../../docker/node/Dockerfile
+        working_dir: /app
+        user: "${USER_ID}:${GROUP_ID}"
+        volumes:
+            - ../sources/app2_wsm:/app
+        environment:
+            - HOST=0.0.0.0
+            - PORT=3000
+        networks:
+            - network_kpi
+            - traefiknetwork
+        ports:
+            - "3003:3000"
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            # HTTP (pour dev local .localhost)
+            - "traefik.http.routers.app2wsm-http.rule=Host(\`${APP2_WSM_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.app2wsm-http.entrypoints=web"
+            - "traefik.http.services.app2wsm.loadbalancer.server.port=3000"
+            # HTTPS (pour dev avec domaines personnalisés)
+            - "traefik.http.routers.app2wsm-https.rule=Host(\`${APP2_WSM_DOMAIN_NAME}\`)"
+            - "traefik.http.routers.app2wsm-https.entrypoints=websecure"
+            - "traefik.http.routers.app2wsm-https.tls=true"
 
 networks:
     network_kpi:
