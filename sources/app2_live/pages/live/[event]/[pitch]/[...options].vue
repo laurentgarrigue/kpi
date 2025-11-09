@@ -97,6 +97,7 @@ onMounted(async () => {
         connect({
           url: wsConfig.url,
           password: wsConfig.password || '',
+          topic: wsConfig.topic || '', // Topic for Sec-WebSocket-Protocol header (classic WS)
           stomp: wsConfig.stomp === true, // Use STOMP only if explicitly set to true
           login: wsConfig.login || '',
           topics: wsConfig.topics || ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
