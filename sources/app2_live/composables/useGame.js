@@ -50,9 +50,17 @@ export const useGame = () => {
     error.value = null
 
     try {
+      // Load global game data
       const data = await getGameData(gameId)
       // Pass gameId explicitly to handle cases where it's not in the data
       await gameStore.loadGame(data, gameId)
+
+      // Load initial score and chrono data (important if match already started)
+      // If WebSocket is active, these will be updated via WebSocket
+      // But we need initial state in case no changes occur
+      await fetchScore(gameId)
+      await fetchTimer(gameId)
+
     } catch (err) {
       console.error('Error fetching game:', err)
       error.value = err.message
