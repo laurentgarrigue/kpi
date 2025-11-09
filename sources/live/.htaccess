@@ -8,10 +8,11 @@
 
     # Set CORS headers for allowed origins
     Header always set Access-Control-Allow-Origin "%{CORS_ALLOW_ORIGIN}e" env=CORS_ALLOW_ORIGIN
-    Header always set Access-Control-Allow-Credentials "true" env=CORS_ALLOW_ORIGIN
-    Header always set Access-Control-Allow-Methods "GET, OPTIONS" env=CORS_ALLOW_ORIGIN
-    Header always set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Auth-Token" env=CORS_ALLOW_ORIGIN
-    Header always set Access-Control-Max-Age "3600" env=CORS_ALLOW_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "*"
+    Header always set Access-Control-Max-Age "3600"
+    Header always set Vary "Origin"
 </IfModule>
 
 # Handle OPTIONS requests (preflight)
