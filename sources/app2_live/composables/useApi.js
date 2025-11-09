@@ -65,8 +65,32 @@ export const useApi = () => {
    * Get full game data
    * @param {string} gameId - Game ID
    */
-  const getGameData = (gameId) => {
-    return fetchApi(`${backendBaseUrl}/live/cache/${gameId}_match_global.json`)
+  const getGameData = async (gameId) => {
+    try {
+      // Try to fetch from cache first
+      return await fetchApi(`${backendBaseUrl}/live/cache/${gameId}_match_global.json`)
+    } catch (error) {
+      // If cache doesn't exist (404), try to generate it
+      if (error.message.includes('404')) {
+        console.log(`Cache not found for game ${gameId}, trying to generate it...`)
+        try {
+          // Call force_cache_match.php to generate the cache
+          const genResponse = await fetch(`${backendBaseUrl}/live/force_cache_match.php?match=${gameId}`)
+          const genResult = await genResponse.text()
+          console.log('Cache generation result:', genResult)
+
+          // Wait a bit for the file to be generated
+          await new Promise(resolve => setTimeout(resolve, 1000))
+
+          // Retry fetching from cache
+          return await fetchApi(`${backendBaseUrl}/live/cache/${gameId}_match_global.json`)
+        } catch (genError) {
+          console.error('Failed to generate cache:', genError)
+          throw error // Throw original error
+        }
+      }
+      throw error
+    }
   }
 
   /**
