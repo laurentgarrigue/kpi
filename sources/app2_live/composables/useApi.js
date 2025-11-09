@@ -57,8 +57,32 @@ export const useApi = () => {
    * @param {number} eventId - Event ID
    * @param {number} pitch - Pitch number
    */
-  const getGameIdForPitch = (eventId, pitch) => {
-    return fetchApi(`${backendBaseUrl}/live/cache/event${eventId}_pitch${pitch}.json`)
+  const getGameIdForPitch = async (eventId, pitch) => {
+    try {
+      // Try to fetch from cache first
+      return await fetchApi(`${backendBaseUrl}/live/cache/event${eventId}_pitch${pitch}.json`)
+    } catch (error) {
+      // If cache doesn't exist (404), try to generate it
+      if (error.message.includes('404')) {
+        console.log(`Pitch cache not found for event ${eventId} pitch ${pitch}, trying to generate it...`)
+        try {
+          // Call ajax_cache_pitch.php to generate the cache
+          const genResponse = await fetch(`${backendBaseUrl}/live/ajax_cache_pitch.php?event=${eventId}&pitch=${pitch}`)
+          const genResult = await genResponse.text()
+          console.log('Pitch cache generation result:', genResult)
+
+          // Wait a bit for the file to be generated
+          await new Promise(resolve => setTimeout(resolve, 1000))
+
+          // Retry fetching from cache
+          return await fetchApi(`${backendBaseUrl}/live/cache/event${eventId}_pitch${pitch}.json`)
+        } catch (genError) {
+          console.error('Failed to generate pitch cache:', genError)
+          throw error // Throw original error
+        }
+      }
+      throw error
+    }
   }
 
   /**
