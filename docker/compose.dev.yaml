@@ -146,7 +146,32 @@ services:
             - "traefik.http.routers.app2.entrypoints=websecure"
             - "traefik.http.routers.app2.tls=true"
             - "traefik.http.services.app2.loadbalancer.server.port=3000"
-    
+
+    node_app2_live:
+        container_name: kpi_node_app2_live
+        build:
+            context: ../sources/app2_live
+            dockerfile: ../../docker/node/Dockerfile
+        working_dir: /app
+        user: "${USER_ID}:${GROUP_ID}"
+        volumes:
+            - ../sources/app2_live:/app
+        environment:
+            - HOST=0.0.0.0
+            - PORT=3001
+        networks:
+            - network_kpi
+            - traefiknetwork
+        ports:
+            - "3001:3001"
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app2_live.rule=Host(`${NODE_LIVE_DOMAIN_NAME}`)"
+            - "traefik.http.routers.app2_live.entrypoints=websecure"
+            - "traefik.http.routers.app2_live.tls=true"
+            - "traefik.http.services.app2_live.loadbalancer.server.port=3001"
+
     # node:
     #     container_name: kpi_node
     #     # image: node:latest
