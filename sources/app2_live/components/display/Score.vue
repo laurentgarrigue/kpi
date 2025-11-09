@@ -31,7 +31,7 @@
           <div class="period-badge">{{ matchPeriode }}</div>
 
           <div v-if="matchPossession" class="possession-timer text-yellow-400">
-            {{ matchPossession }}s
+            {{ formatPossession(matchPossession) }}s
           </div>
         </div>
 
@@ -103,7 +103,7 @@ const props = defineProps({
 })
 
 const gameStore = useGameStore()
-const { teamName, logo48, playerPhoto, eventIcon, formatPeriod, msToMMSS } = useFormat()
+const { teamName, logo48, playerPhoto, eventIcon, formatPeriod, formatPossession, msToMMSS } = useFormat()
 
 const matchHorloge = ref('00:00')
 const matchHorlogeStarted = ref(false)

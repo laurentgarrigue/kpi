@@ -114,7 +114,7 @@ export const useGame = () => {
       // Update timer in store
       gameStore.updateScore({
         timer: timer,
-        possession: parseInt(data.possession) || 0,
+        possession: parseFloat(data.possession) || 0,
         period: data.period || gameStore.score.period
       })
     } catch (err) {

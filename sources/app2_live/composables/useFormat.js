@@ -24,6 +24,24 @@ export const useFormat = () => {
   }
 
   /**
+   * Format possession time
+   * Shows tenths of seconds when < 10s, otherwise just seconds
+   * @param {number} seconds - Possession time in seconds
+   * @returns {string} Formatted possession time
+   */
+  const formatPossession = (seconds) => {
+    if (!seconds || seconds <= 0) return ''
+
+    if (seconds < 10) {
+      // Show tenths for last 10 seconds
+      return seconds.toFixed(1)
+    }
+
+    // Show whole seconds for >= 10
+    return Math.floor(seconds).toString()
+  }
+
+  /**
    * Convert milliseconds to MM:SS format
    * @param {number} ms - Milliseconds
    * @returns {string} Formatted time MM:SS
@@ -160,6 +178,7 @@ export const useFormat = () => {
 
   return {
     formatPeriod,
+    formatPossession,
     msToMMSS,
     msToSS,
     msToMMSSD,
