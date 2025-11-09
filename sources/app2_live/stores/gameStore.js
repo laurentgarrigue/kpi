@@ -32,36 +32,43 @@ export const useGameStore = defineStore('gameStore', {
     eventHistory: []
   }),
   actions: {
-    async loadGame(gameData) {
+    async loadGame(gameData, gameId = null) {
       this.currentGame = gameData
-      this.gameId = gameData.g_id
+      // Support multiple field names for game ID
+      this.gameId = gameId || gameData.g_id || gameData.id_match || gameData.id
 
-      // Update teams
+      // Update teams (handle missing fields gracefully)
       this.teams.teamA = {
-        id: gameData.t_a_id,
-        name: gameData.t_a_label,
-        club: gameData.t_a_club,
-        logo: gameData.t_a_logo
+        id: gameData.t_a_id || gameData.team_a_id || null,
+        name: gameData.t_a_label || gameData.team_a_name || gameData.equipe1?.nom || '',
+        club: gameData.t_a_club || gameData.team_a_club || gameData.equipe1?.club || '',
+        logo: gameData.t_a_logo || gameData.team_a_logo || gameData.equipe1?.logo || ''
       }
       this.teams.teamB = {
-        id: gameData.t_b_id,
-        name: gameData.t_b_label,
-        club: gameData.t_b_club,
-        logo: gameData.t_b_logo
+        id: gameData.t_b_id || gameData.team_b_id || null,
+        name: gameData.t_b_label || gameData.team_b_name || gameData.equipe2?.nom || '',
+        club: gameData.t_b_club || gameData.team_b_club || gameData.equipe2?.club || '',
+        logo: gameData.t_b_logo || gameData.team_b_logo || gameData.equipe2?.logo || ''
       }
 
-      // Update score
-      this.score.scoreA = parseInt(gameData.g_score_a) || 0
-      this.score.scoreB = parseInt(gameData.g_score_b) || 0
-      this.score.period = gameData.g_period || 'M1'
+      // Update score (handle missing fields)
+      this.score.scoreA = parseInt(gameData.g_score_a || gameData.score_a || gameData.score1 || 0)
+      this.score.scoreB = parseInt(gameData.g_score_b || gameData.score_b || gameData.score2 || 0)
+      this.score.period = gameData.g_period || gameData.period || 'M1'
 
-      // Cache in IndexedDB
-      await db.games.put({
-        id: gameData.g_id,
-        eventId: gameData.d_id,
-        timestamp: Date.now(),
-        data: gameData
-      })
+      // Cache in IndexedDB (try/catch to avoid errors if fields are missing)
+      if (this.gameId) {
+        try {
+          await db.games.put({
+            id: String(this.gameId), // Ensure it's a string
+            eventId: gameData.d_id || gameData.event_id || gameData.id_event || null,
+            timestamp: Date.now(),
+            data: gameData
+          })
+        } catch (err) {
+          console.warn('Could not cache game in IndexedDB:', err)
+        }
+      }
     },
     updateScore(scoreData) {
       if (scoreData.scoreA !== undefined) this.score.scoreA = scoreData.scoreA
