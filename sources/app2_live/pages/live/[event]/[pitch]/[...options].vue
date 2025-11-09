@@ -79,7 +79,7 @@ onMounted(async () => {
   try {
     // 1. Try to load network config and setup WebSocket if available
     const { getNetworkConfig } = useApi()
-    const { connectStomp, setPitchFilter, connected } = useWebSocket()
+    const { connect, setPitchFilter, connected } = useWebSocket()
 
     try {
       const networkConfig = await getNetworkConfig(eventId.value)
@@ -93,12 +93,13 @@ onMounted(async () => {
         // Set pitch filter before connecting (format: "eventId_pitch")
         setPitchFilter(eventId.value, pitch.value)
 
-        // Connect to WebSocket
-        connectStomp({
+        // Connect to WebSocket (classic or STOMP based on config)
+        connect({
           url: wsConfig.url,
-          login: wsConfig.login || '',
           password: wsConfig.password || '',
-          topics: ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
+          stomp: wsConfig.stomp === true, // Use STOMP only if explicitly set to true
+          login: wsConfig.login || '',
+          topics: wsConfig.topics || ['/game/chrono', '/game/period', '/game/data-game', '/game/player-info']
         })
 
         // Enable WebSocket mode (disables HTTP polling for score/chrono)
