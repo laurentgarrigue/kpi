@@ -29,11 +29,34 @@ export const useWebSocket = () => {
 
   /**
    * Process incoming WebSocket message
-   * @param {Object} message - Message object
+   * @param {Object} message - Message object or JSON string
    */
   const processMessage = (message) => {
+    // Validate and parse JSON
+    let data
     try {
-      const data = typeof message === 'string' ? JSON.parse(message) : message
+      if (typeof message === 'string') {
+        // Try to parse JSON string
+        data = JSON.parse(message)
+      } else if (typeof message === 'object' && message !== null) {
+        // Already an object
+        data = message
+      } else {
+        console.log('[WebSocket] Invalid message format (not JSON string or object):', message)
+        return
+      }
+    } catch (err) {
+      // JSON parsing failed
+      console.log('[WebSocket] Invalid JSON received:', message)
+      return
+    }
+
+    try {
+      // Validate message structure
+      if (!data || typeof data !== 'object') {
+        console.log('[WebSocket] Invalid message structure:', data)
+        return
+      }
 
       // Filter by pitch if specified (format: "eventId_pitch")
       if (currentPitchFilter.value && data.p !== currentPitchFilter.value) {
@@ -102,11 +125,11 @@ export const useWebSocket = () => {
           break
 
         default:
-          console.log('Unknown WebSocket message type:', data.t)
+          console.log('[WebSocket] Unknown message type:', data.t, 'Full message:', data)
       }
 
     } catch (err) {
-      console.error('Error processing WebSocket message:', err)
+      console.error('[WebSocket] Error processing message:', err, 'Message:', data)
     }
   }
 
