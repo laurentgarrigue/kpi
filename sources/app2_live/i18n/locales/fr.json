@@ -1,0 +1,33 @@
+{
+  "Home": {
+    "Subtitle": "Affichage temps réel pour compétitions de kayak-polo",
+    "HowToUse": "Comment utiliser",
+    "Usage1": "Accédez à /live/:event/:pitch/:options pour afficher un match en direct",
+    "Usage2": "Personnalisez l'affichage avec les options d'URL (mode, zone, style)",
+    "Usage3": "L'affichage se met à jour automatiquement en temps réel",
+    "ExampleUrl": "Format de l'URL",
+    "Example": "Exemple : Événement 123, Terrain 1, Mode score, Zone inter, Mode complet",
+    "DisplayModes": "Modes d'affichage",
+    "Zones": "Zones",
+    "Modes": "Modes",
+    "Styles": "Styles",
+    "ClubMode": "Nom complet",
+    "InterMode": "Code 3 lettres + drapeau",
+    "FullMode": "Complet avec animations",
+    "OnlyMode": "Score uniquement",
+    "EventsMode": "Événements uniquement",
+    "StaticMode": "Sans animation",
+    "Version": "Version"
+  },
+  "Update": {
+    "Message": "Mise à jour disponible",
+    "Description": "Une nouvelle version est disponible. Rafraîchir maintenant ?",
+    "Button": "Mettre à jour",
+    "Later": "Plus tard"
+  },
+  "Loading": "Chargement",
+  "NoGame": "Aucun match à afficher",
+  "NoGameForPitch": "Aucun match trouvé pour ce terrain",
+  "ErrorLoadingGame": "Erreur lors du chargement du match",
+  "InvalidParameters": "Paramètres invalides"
+}
