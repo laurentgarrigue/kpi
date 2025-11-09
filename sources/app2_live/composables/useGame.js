@@ -26,7 +26,8 @@ export const useGame = () => {
   const fetchGameIdForPitch = async (eventId, pitch) => {
     try {
       const data = await getGameIdForPitch(eventId, pitch)
-      return data?.gameId || data?.g_id || null
+      // Support multiple field names: id_match (backend), gameId, g_id
+      return data?.id_match || data?.gameId || data?.g_id || null
     } catch (err) {
       console.error('Error fetching game ID:', err)
       return null
