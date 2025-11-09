@@ -57,8 +57,9 @@ export const useWebSocket = () => {
 
         case 'posses':
           // Possession timer: v = "seconds" (string or number)
+          // Keep decimal value for display (shows tenths in last 10 seconds)
           gameStore.updateScore({
-            possession: parseInt(data.v) || 0
+            possession: parseFloat(data.v) || 0
           })
           break
 
