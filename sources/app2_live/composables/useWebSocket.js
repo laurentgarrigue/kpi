@@ -35,68 +35,73 @@ export const useWebSocket = () => {
     try {
       const data = typeof message === 'string' ? JSON.parse(message) : message
 
-      // Filter by pitch if specified
+      // Filter by pitch if specified (format: "eventId_pitch")
       if (currentPitchFilter.value && data.p !== currentPitchFilter.value) {
         // Message is not for this pitch, ignore it
         return
       }
 
-      console.log('Processing WebSocket message for pitch:', data.p, data)
+      console.log('Processing WebSocket message for pitch:', data.p, 'type:', data.t, 'value:', data.v)
 
-      // Update score based on message type
-      if (data.type === 'chrono' || data['TPS-JEU'] !== undefined) {
-        // Timer update
-        gameStore.updateScore({
-          timer: data['TPS-JEU'] || data.timer || gameStore.score.timer
-        })
-      }
+      // Process message based on type (t) and value (v)
+      switch (data.t) {
+        case 'chrono':
+          // Chrono: v = {time: "MM:SS", run: true/false}
+          if (data.v && typeof data.v === 'object') {
+            gameStore.updateScore({
+              timer: data.v.time || '00:00'
+            })
+            // Note: data.v.run indicates if timer is running (not used in display yet)
+          }
+          break
 
-      if (data.type === 'posses' || data.POSSES !== undefined) {
-        // Possession timer
-        gameStore.updateScore({
-          possession: parseInt(data.POSSES || data.possession) || 0
-        })
-      }
+        case 'posses':
+          // Possession timer: v = "seconds" (string or number)
+          gameStore.updateScore({
+            possession: parseInt(data.v) || 0
+          })
+          break
 
-      if (data.type === 'period' || data.period !== undefined) {
-        // Period change
-        gameStore.updateScore({
-          period: formatPeriod(data.period)
-        })
-      }
+        case 'period':
+          // Period: v = "M1", "M2", etc.
+          gameStore.updateScore({
+            period: formatPeriod(data.v)
+          })
+          break
 
-      if (data.type === 'scoreA' || data.HOME !== undefined) {
-        // Home team score
-        gameStore.updateScore({
-          scoreA: parseInt(data.HOME || data.scoreA) || 0
-        })
-      }
+        case 'scoreA':
+          // Score team A: v = score (string or number)
+          gameStore.updateScore({
+            scoreA: parseInt(data.v) || 0
+          })
+          break
 
-      if (data.type === 'scoreB' || data.GUEST !== undefined) {
-        // Guest team score
-        gameStore.updateScore({
-          scoreB: parseInt(data.GUEST || data.scoreB) || 0
-        })
-      }
+        case 'scoreB':
+          // Score team B: v = score (string or number)
+          gameStore.updateScore({
+            scoreB: parseInt(data.v) || 0
+          })
+          break
 
-      if (data.type === 'penA' || data.penaltiesA !== undefined) {
-        // Penalty shootout - team A
-        gameStore.updateScore({
-          penaltiesA: data.penaltiesA || []
-        })
-      }
+        case 'penA':
+          // Penalties team A: v = number of penalties
+          // Create array of penalties (just count, not detailed info)
+          const penaltiesA = Array(parseInt(data.v) || 0).fill({})
+          gameStore.updateScore({
+            penaltiesA: penaltiesA
+          })
+          break
 
-      if (data.type === 'penB' || data.penaltiesB !== undefined) {
-        // Penalty shootout - team B
-        gameStore.updateScore({
-          penaltiesB: data.penaltiesB || []
-        })
-      }
+        case 'penB':
+          // Penalties team B: v = number of penalties
+          const penaltiesB = Array(parseInt(data.v) || 0).fill({})
+          gameStore.updateScore({
+            penaltiesB: penaltiesB
+          })
+          break
 
-      if (data.type === 'evt' || data.event !== undefined) {
-        // Game event (goal, card, etc.)
-        const { displayGameEvent } = useGame()
-        displayGameEvent(data.event || data)
+        default:
+          console.log('Unknown WebSocket message type:', data.t)
       }
 
     } catch (err) {
