@@ -33,10 +33,11 @@
         <link rel="alternate" type="application/rss+xml" title="Kayak-polo.info &raquo; Flux des commentaires" href="http://kayak-polo.info/?feed=comments-rss2" />
 
         <link rel='stylesheet' href='{$adm}css/fullcalendar.min.css' type='text/css' media='all' />
-        <link rel='stylesheet' id='material-custom-css' href='{$adm}css/wordpress_material_stylesheets_styles.css?v={$NUM_VERSION}' type='text/css' media='all' />
-        {* <link rel='stylesheet' id='bootstrap' href='{$adm}vendor/twbs/bootstrap/dist/css/bootstrap.min.css?v={$NUM_VERSION}' type='text/css' media='all' /> *}
+        {* Bootstrap 5.3.3 - Replaces Material Design CSS *}
+        <link rel='stylesheet' id='bootstrap5-css' href='{$adm}css/bootstrap-5.3.8/bootstrap.min.css?v={$NUM_VERSION}' type='text/css' media='all' />
+        {* Bootstrap 5 Migration CSS - Handles Bootstrap 3 to 5 compatibility + Material Design theme preservation *}
+        <link rel='stylesheet' id='bootstrap5-migration-css' href='{$adm}css/bootstrap5_migration.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel='stylesheet' id='bootstrap5-navbar-fix-css' href='{$adm}css/bootstrap5_navbar_fix.css?v={$NUM_VERSION}' type='text/css' media='all' />
-        <link rel='stylesheet' id='material-main-css' href='{$adm}css/wordpress_material_style.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel='stylesheet' id='my_style-css' href='{$adm}css/jquery.dataTables.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel='stylesheet' href='{$adm}css/dataTables.fixedHeader.min.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel="stylesheet" href="{$adm}css/jquery-ui.css?v={$NUM_VERSION}">
@@ -76,7 +77,8 @@
         <script type='text/javascript' src='{$adm}js/jquery-ui-1.12.1.min.js?v={$NUM_VERSION}'></script>
         <script type='text/javascript' src='{$adm}js/jquery.dataTables-1.10.21.min.js?v={$NUM_VERSION}'></script>
         <script type='text/javascript' src='{$adm}js/dataTables.fixedHeader.min.js?v={$NUM_VERSION}'></script>
-        <script type='text/javascript' src='{$adm}vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js?v={$NUM_VERSION}'></script>
+        {* Bootstrap 5.3.3 JavaScript Bundle (includes Popper) *}
+        <script type='text/javascript' src='{$adm}js/bootstrap-5.3.8/bootstrap.bundle.min.js?v={$NUM_VERSION}'></script>
         <script type="text/javascript" src="{$adm}js/wordpress_material_javascripts_main.js"></script>
         <script type="text/javascript" src="{$adm}js/vanilla-autocomplete.js?v={$NUM_VERSION}"></script>
         <script type="text/javascript" src="{$adm}js/formTools.js?v={$NUM_VERSION}" defer></script>

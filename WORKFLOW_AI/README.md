@@ -121,6 +121,13 @@ Ce dossier contient toute la documentation technique générée durant le dével
 
 ### Plans de migration
 
+- **[BOOTSTRAP_5_MIGRATION.md](BOOTSTRAP_5_MIGRATION.md)** ⭐ **NOUVEAU** (13 nov 2025)
+  - Migration complète Material Design CSS → Bootstrap 5.3.3
+  - Remplacement wordpress_material_*.css par Bootstrap 5.3.3
+  - Fichier migration CSS (Bootstrap 3 → 5 + préservation thème)
+  - Templates compatibles sans modification (backward compatibility)
+  - **Statut**: ✅ Production-ready
+
 - **[PLAN_MIGRATION_BOOTSTRAP.md](PLAN_MIGRATION_BOOTSTRAP.md)** ⭐ (29 oct 2025)
   - Plan complet migration Bootstrap → 5.3.8
   - Inventaire 4 versions (3.4.1, 3.3.0, 5.0.2, 5.1.3)
@@ -194,14 +201,23 @@ Ce dossier contient toute la documentation technique générée durant le dével
 
 ## 📊 Statistiques
 
-- **Total documents**: 29 fichiers
-- **Lignes de documentation**: ~15000+
-- **Sujets couverts**: Migration PHP 8, PDF, Tableurs (ODS/XLSX), Bootstrap, JavaScript, Docker, WordPress, Audits, Bugs
-- **Date de création**: 2025-10-19 à 2025-11-01
+- **Total documents**: 30 fichiers
+- **Lignes de documentation**: ~16000+
+- **Sujets couverts**: Migration PHP 8, PDF, Tableurs (ODS/XLSX), Bootstrap, CSS, JavaScript, Docker, WordPress, Audits, Bugs
+- **Date de création**: 2025-10-19 à 2025-11-13
 
 ---
 
 ## 🔄 Historique des Mises à Jour
+
+### 2025-11-13
+- ✅ Migration Material Design CSS → Bootstrap 5.3.3
+- ✅ Téléchargement et intégration Bootstrap 5.3.3 (CSS + JS)
+- ✅ Création fichier migration CSS (Bootstrap 3 → 5 + préservation thème)
+- ✅ Mise à jour kppage.tpl (remplacement wordpress_material_*.css)
+- ✅ Backward compatibility totale (aucune modification template requise)
+- ✅ Ajout BOOTSTRAP_5_MIGRATION.md (1000+ lignes documentation)
+- ✅ Backup anciens CSS (backup_material_design/)
 
 ### 2025-11-01
 - ✅ Audit complet bibliothèques JavaScript (35+ fichiers)
@@ -288,7 +304,7 @@ Ce dossier contient toute la documentation technique générée durant le dével
 
 ---
 
-**Dernière mise à jour**: 2025-11-01
+**Dernière mise à jour**: 2025-11-13
 **Mainteneur**: Laurent Garrigue / Claude Code
 
 ## JavaScript Libraries Management
