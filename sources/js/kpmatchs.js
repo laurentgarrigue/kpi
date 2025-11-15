@@ -1,6 +1,8 @@
+// jQuery is required for DataTables plugin - using noConflict mode
 jq = jQuery.noConflict();
 var listVal;
 jq(document).ready(function(){
+    // DataTables initialization - French version
     table = jq('#tableMatchs_fr').DataTable( {
         "dom": 'lfrtip',
         responsive: true,
@@ -54,7 +56,7 @@ jq(document).ready(function(){
                     select.append( '<option value="'+d+'">'+d+'</option>' );
                 } );
             } );
-            
+
             // filtre équipes
             jq('#tableMatchs_fr_filter label').addClass('hidden-xs');
             this.api().columns([10]).every( function () {
@@ -77,7 +79,7 @@ jq(document).ready(function(){
                 var column = this;
                 column.cache( 'search' ).unique().sort().each( function ( d, j ) {
                     // Si l'élément n'est pas déjà présent et le premier caractère différent d'une parenthèse
-                    if(d.trim() != '' && jq.inArray(d.trim(), listTeams)<0 && d.trim()[0] != '(') { 
+                    if(d.trim() != '' && jq.inArray(d.trim(), listTeams)<0 && d.trim()[0] != '(') {
                         listTeams.push( d.trim() );
                     }
                 } );
@@ -87,7 +89,7 @@ jq(document).ready(function(){
                         jq('#tableMatchs_fr_filter select').append( '<option value="'+item+'">'+item+'</option>' );
                     });
             jq('#tableMatchs_fr_filter select').append( '</optgroup>' );
-            
+
             // filtre arbitres
             var listRefs = [];
             jq('#tableMatchs_fr_filter select').append( '<optgroup label="Arbitres">' );
@@ -101,24 +103,25 @@ jq(document).ready(function(){
                         listRefs.push( nomArbitre );
                     }
                 } );
-                
+
             } );
             listRefs.sort()
                     .forEach(function(item, index){
                         jq('#tableMatchs_fr_filter select').append( '<option value="'+item+'">'+item+'</option>' );
                     });
             jq('#tableMatchs_fr_filter select').append( '</optgroup>' );
-            
+
             // copie filtre date
             this.api().columns([1]).every( function () {
                 jq('#tableMatchs_fr_filter span.filtres').append(jq(this.footer()).find('select'));
             } );
-            
+
             jq('#tableMatchs_fr_length').append('&nbsp;&nbsp;<a class="btn btn-default" href="" title="Réactualiser"><img src="img/glyphicons-82-refresh.png" width="16"></a>');
             jq('.dataTables_wrapper select, .dataTables_wrapper input').css('height', '34px').css('padding', '6px 2px');
         }
     } );
 
+    // DataTables initialization - English version
     table_en = jq('#tableMatchs_en').DataTable( {
         "dom": 'lfrtip',
         responsive: true,
@@ -154,7 +157,7 @@ jq(document).ready(function(){
                     select.append( '<option value="'+d+'">'+d+'</option>' );
                 } );
             } );
-            
+
             // filtre équipes
             jq('#tableMatchs_en_filter label').addClass('hidden-xs');
             this.api().columns([10]).every( function () {
@@ -187,7 +190,7 @@ jq(document).ready(function(){
                         jq('#tableMatchs_en_filter select').append( '<option value="'+item+'">'+item+'</option>' );
                     });
             jq('#tableMatchs_en_filter select').append( '</optgroup>' );
-            
+
             // filtre arbitres
             var listRefs = [];
             jq('#tableMatchs_en_filter select').append( '<optgroup label="Referees">' );
@@ -200,73 +203,131 @@ jq(document).ready(function(){
                         listRefs.push( nomArbitre );
                     }
                 } );
-                
+
             } );
             listRefs.sort()
                     .forEach(function(item, index){
                         jq('#tableMatchs_en_filter select').append( '<option value="'+item+'">'+item+'</option>' );
                     });
             jq('#tableMatchs_en_filter select').append( '</optgroup>' );
-            
+
             // copie filtre date
             this.api().columns([1]).every( function () {
                 jq('#tableMatchs_en_filter span.filtres').append(jq(this.footer()).find('select'));
             } );
-            
+
             jq('#tableMatchs_en_length').append('&nbsp;&nbsp;<a class="btn btn-default" href="" title="Refresh"><img src="img/glyphicons-82-refresh.png" width="16"></a>');
             jq('.dataTables_wrapper select, .dataTables_wrapper input').css('height', '34px').css('padding', '6px 2px')
         }
     } );
 
 
-    jq('body').popover({
-        selector: '.img2',
-        html: true,
-        trigger: 'hover',
-        placement: 'left',
-        content: function () {
-            var temp = jq(this).attr('src');
-            return '<img class="img-rounded" style="float:right;width:100px;max-width:100px;" src="'+temp+'" />';
+    // === Vanilla JavaScript replacements below (no jQuery dependency) ===
+
+    // Initialize Bootstrap popovers for images
+    const imageElements = document.querySelectorAll('.img2');
+    imageElements.forEach(function(img) {
+        const popover = new bootstrap.Popover(img, {
+            html: true,
+            trigger: 'hover',
+            placement: 'left',
+            content: function () {
+                const temp = img.getAttribute('src');
+                return '<img class="img-rounded" style="float:right;width:100px;max-width:100px;" src="'+temp+'" />';
+            }
+        });
+    });
+
+    // Share button functionality
+    const shareBtn = document.getElementById('share_btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function(){
+            const btnkpmatch = document.getElementById('btnkpmatch');
+            const toCopy = 'https://www.kayak-polo.info/' + (btnkpmatch ? btnkpmatch.getAttribute('href') : '');
+            const existingAlert = document.getElementById('share_alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const navTitle = document.getElementById('navTitle');
+            if (navTitle) {
+                navTitle.insertAdjacentHTML('afterend',
+                    '<div class="alert alert-info alert-dismissible" role="alert" id="share_alert">'
+                    + ' <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                    + '<span>' + toCopy + '</span><input type="text" id="share_link" value="' + toCopy + '">'
+                    + '</div>');
+
+                const shareLink = document.getElementById('share_link');
+                if (shareLink) {
+                    shareLink.select();
+                    document.execCommand('copy');
+                    shareLink.remove();
+                }
+            }
+        });
+    }
+
+    // Toggle selects visibility
+    const selectsToggle = document.getElementById('selects_toggle');
+    if (selectsToggle) {
+        selectsToggle.addEventListener('click', function(e){
+            e.preventDefault();
+            const selects = document.querySelectorAll('.selects');
+            selects.forEach(function(el) {
+                el.classList.toggle('hidden-xs');
+            });
+            const selectorArticles = document.querySelectorAll('#selector article');
+            selectorArticles.forEach(function(el) {
+                el.classList.toggle('article_sans_bg');
+            });
+        });
+    }
+
+    // Build subtitle
+    const saisonSelect = document.getElementById('Saison');
+    const groupSelect = document.getElementById('Group');
+    const jSelect = document.getElementById('J');
+    const competSelect = document.getElementById('Compet');
+    const eventSelect = document.getElementById('event');
+
+    let subtitle = '';
+    if (saisonSelect && groupSelect) {
+        const groupOption = groupSelect.options[groupSelect.selectedIndex];
+        subtitle = saisonSelect.value + ' - ' + (groupOption ? groupOption.textContent : '');
+
+        if (jSelect && jSelect.value && jSelect.value !== '*') {
+            const jOption = jSelect.options[jSelect.selectedIndex];
+            subtitle += ' (' + (jOption ? jOption.textContent : '') + ')';
         }
-    });    
+        if (competSelect && competSelect.value && competSelect.value !== '*') {
+            const competOption = competSelect.options[competSelect.selectedIndex];
+            subtitle += ' (' + (competOption ? competOption.textContent : '') + ')';
+        }
+        if (eventSelect && eventSelect.value > 0) {
+            const eventOption = eventSelect.options[eventSelect.selectedIndex];
+            subtitle = saisonSelect.value + ' - ' + (eventOption ? eventOption.textContent : '');
+        }
+    }
 
-    jq('#share_btn').click(function(){
-        toCopy = 'https://www.kayak-polo.info/' + jq('#btnkpmatch').attr('href');
-        jq('#share_alert').remove();
-        jq('#navTitle').after('<div class="alert alert-info alert-dismissible" role="alert" id="share_alert">'
-                + ' <button type="button" class="close" data-dismiss="alert" aria-label="Close">'
-                + '    <span aria-hidden="true">&times;</span>'
-                + ' </button><span>' + toCopy + '</span><input type="text" id="share_link" value="' + toCopy + '">'
-                + '</div>');
-        jq('#share_link').select();
-        document.execCommand('copy');
-        jq('#share_link').remove();
-    });
+    // Update subtitle display
+    const subtitleLabel = document.querySelector('#subtitle label');
+    const subtitleDiv = document.getElementById('subtitle');
+    if (subtitleLabel) {
+        subtitleLabel.innerHTML = subtitle;
+    }
+    if (subtitleDiv) {
+        subtitleDiv.classList.remove('hidden-xs');
+    }
 
-    jq('#selects_toggle').click(function(e){
-        e.preventDefault();
-        jq('.selects').toggleClass('hidden-xs');
-        jq('#selector article').toggleClass('article_sans_bg');
-    });
-    
-    var subtitle = jq('#Saison').val() + ' - ' + jq('#Group option:selected').html();
-    if(typeof(jq('#J').val()) != 'undefined' && jq('#J').val() != '*') {
-        subtitle += ' (' + jq('#J option:selected').html() + ')';
+    // Smooth scroll to navigation group
+    const navGroup = document.getElementById('navGroup');
+    if (navGroup && navGroup.previousElementSibling) {
+        const targetOffset = navGroup.previousElementSibling.offsetTop;
+        window.scrollTo({
+            top: targetOffset,
+            behavior: 'smooth'
+        });
     }
-    if(typeof(jq('#Compet').val()) != 'undefined' && jq('#Compet').val() != '*') {
-        subtitle += ' (' + jq('#Compet option:selected').html() + ')';
-    }
-    if(jq('#event').val() > 0) {
-        subtitle = jq('#Saison').val() + ' - ' + jq('#event option:selected').html();
-    }
-    
-//    jq('#selects_toggle:visible').click();
-    jq('#subtitle label').html(subtitle);
-    jq('#subtitle').removeClass('hidden-xs');
-    
-    jq('html, body').animate({
-        scrollTop: jq("#navGroup").prev().offset().top
-    }, 700)
 
 });
 
@@ -283,7 +344,7 @@ jq(document).ready(function(){
         /* REACTIVER LE SPLIT POUR UNE RECHERCHE SUR DES TERMES MULTIPLES */
         c.rows({filter: "applied"}).data().length && (c.columns().every(function () {
             this.nodes().flatten().to$().unhighlight({className: "column_highlight"});
-            this.nodes().flatten().to$().highlight(a.trim(this.search()) /* .split(/\s+/) */, {className: "column_highlight"}) 
+            this.nodes().flatten().to$().highlight(a.trim(this.search()) /* .split(/\s+/) */, {className: "column_highlight"})
         }), d.highlight(a.trim(c.search()) /* .split(/\s+/) */ ))
     }
     a(g).on("init.dt.dth", function (d, c) {
@@ -383,7 +444,7 @@ jQuery.fn.unhighlight = function (options) {
 jQuery.fn.highlight = function (words, options) {
     var settings = { className: 'highlight', element: 'span', caseSensitive: false, wordsOnly: true };
     jQuery.extend(settings, options);
-    
+
     if (words.constructor === String) {
         words = [words];
 //        words[0] = words;
@@ -403,7 +464,7 @@ jQuery.fn.highlight = function (words, options) {
         pattern = "\\b" + pattern + "\\b";
     }
     var re = new RegExp(pattern, flag);
-    
+
     return this.each(function () {
         jQuery.highlight(this, re, settings.element, settings.className);
     });
