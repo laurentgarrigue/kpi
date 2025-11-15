@@ -1,47 +1,78 @@
-// jq = jQuery.noConflict();
-jq(document).ready(function(){
+// Vanilla JavaScript - no jQuery dependency
+document.addEventListener('DOMContentLoaded', function(){
 
-    jq('body').popover({
-        selector: '.img2',
-        html: true,
-        trigger: 'hover',
-        placement: 'right',
-        content: function () {
-            var temp = jq(this).attr('src');
-            return '<img class="img-rounded" style="float:right;width:100px;max-width:100px;" src="'+temp+'" />';
-        }
-    });    
-
-    jq('#share_btn').click(function(){
-        toCopy = window.location.href;
-        jq('#share_alert').remove();
-        jq('#navTitle').after('<div class="alert alert-info alert-dismissible" role="alert" id="share_alert">'
-                + ' <button type="button" class="close" data-dismiss="alert" aria-label="Close">'
-                + '    <span aria-hidden="true">&times;</span>'
-                + ' </button><span>' + toCopy + '</span><input type="text" id="share_link" value="' + toCopy + '">'
-                + '</div>');
-        jq('#share_link').select();
-        document.execCommand('copy');
-        jq('#share_link').remove();
-    });
-
-    jq('html, body').animate({
-        scrollTop: jq("#navGroup").prev().offset().top
-      }, 1000)
-
-    // equipe rouge au survol
-    $('a.equipe').mouseenter(function(){
-        var team = $(this).text();
-        $('a.btn:contains('+team+')').each(function(){
-            if ($(this).text() == team) {
-                $(this).addClass('btn-danger');
+    // Initialize Bootstrap popovers for images
+    const imageElements = document.querySelectorAll('.img2');
+    imageElements.forEach(function(img) {
+        const popover = new bootstrap.Popover(img, {
+            html: true,
+            trigger: 'hover',
+            placement: 'right',
+            content: function () {
+                const temp = img.getAttribute('src');
+                return '<img class="img-rounded" style="float:right;width:100px;max-width:100px;" src="'+temp+'" />';
             }
         });
-    }).mouseleave(function(){
-        $('a.btn-danger').removeClass('btn-danger');
     });
 
+    // Share button functionality
+    const shareBtn = document.getElementById('share_btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function(){
+            const toCopy = window.location.href;
+            const existingAlert = document.getElementById('share_alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const navTitle = document.getElementById('navTitle');
+            if (navTitle) {
+                navTitle.insertAdjacentHTML('afterend',
+                    '<div class="alert alert-info alert-dismissible" role="alert" id="share_alert">'
+                    + ' <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                    + '<span>' + toCopy + '</span><input type="text" id="share_link" value="' + toCopy + '">'
+                    + '</div>');
+
+                const shareLink = document.getElementById('share_link');
+                if (shareLink) {
+                    shareLink.select();
+                    document.execCommand('copy');
+                    shareLink.remove();
+                }
+            }
+        });
+    }
+
+    // Smooth scroll to navigation group
+    const navGroup = document.getElementById('navGroup');
+    if (navGroup && navGroup.previousElementSibling) {
+        const targetOffset = navGroup.previousElementSibling.offsetTop;
+        window.scrollTo({
+            top: targetOffset,
+            behavior: 'smooth'
+        });
+    }
+
+    // Highlight team on hover - equipe rouge au survol
+    const equipeLinks = document.querySelectorAll('a.equipe');
+    equipeLinks.forEach(function(link) {
+        link.addEventListener('mouseenter', function(){
+            const team = this.textContent;
+            const btnLinks = document.querySelectorAll('a.btn');
+            btnLinks.forEach(function(btn){
+                if (btn.textContent === team) {
+                    btn.classList.add('btn-danger');
+                }
+            });
+        });
+
+        link.addEventListener('mouseleave', function(){
+            const dangerBtns = document.querySelectorAll('a.btn-danger');
+            dangerBtns.forEach(function(btn){
+                btn.classList.remove('btn-danger');
+            });
+        });
+    });
 
 });
-
 
