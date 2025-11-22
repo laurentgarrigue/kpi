@@ -86,6 +86,29 @@ Ce dossier contient toute la documentation technique générée durant le dével
   - État d'avancement et recommandations
   - **Note**: ✅ Migration terminée, document historique
 
+### API Consolidation & Modernization
+
+- **[AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md](AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md)** ⭐ **NOUVEAU** (22 nov 2025)
+  - Plan complet consolidation 80+ endpoints AJAX autonomes → API REST structurées
+  - Analyse exhaustive : autocomplete, match management, exports, live, etc.
+  - Détection 13 doublons (autocomplete variants, chrono, event imports)
+  - Mapping détaillé ancien → nouveau (route par route)
+  - Migration par phases (18 semaines) : fondations, autocomplete, match, exports
+  - Impact clients : Admin (haut), WSM/App3 (critique), Live (moyen)
+  - Optimisations : SQL, cache, WebSocket, rate limiting
+  - Sécurité : JWT tokens, CORS strict, validation inputs
+  - Guide migration développeurs (exemples avant/après)
+  - **Réduction visée** : -70% fichiers (80 → 25-30 endpoints REST)
+  - **Statut** : 📋 Plan validé, prêt pour implémentation
+
+- **[AJAX_CONSOLIDATION_SUMMARY.md](AJAX_CONSOLIDATION_SUMMARY.md)** ⭐ **NOUVEAU** (22 nov 2025)
+  - Synthèse exécutive du plan de consolidation AJAX
+  - Chiffres clés : 80+ endpoints, 13 doublons, -70% réduction
+  - Top 7 doublons à consolider (autocomplete, chrono, events)
+  - Phases prioritaires et impact clients
+  - Actions immédiates et ressources
+  - **Document de référence rapide**
+
 ### Audits & Nettoyage
 
 - **[AUDIT_PHASE_0.md](AUDIT_PHASE_0.md)**
@@ -204,9 +227,10 @@ Ce dossier contient toute la documentation technique générée durant le dével
 ### À lire en premier
 1. **PHP8_MIGRATION_COMPLETE.md** 🎉 - Document final migration PHP 8.4 (TERMINÉE - Nov 2025)
 2. **PHP8_MIGRATION_SUMMARY.md** ⭐ - Synthèse technique complète migration PHP 8.4
-3. **JS_LIBRARIES_AUDIT.md** - État des bibliothèques JavaScript (migration en cours)
-4. **MIGRATION_OPENTBS_TO_OPENSPOUT.md** - Migration tableurs (export ODS/XLSX)
-5. **BOOTSTRAP_MIGRATION_STATUS.md** - Migration Bootstrap 5.3.8
+3. **AJAX_CONSOLIDATION_SUMMARY.md** 📋 **NOUVEAU** - Plan consolidation 80+ endpoints AJAX → REST API
+4. **JS_LIBRARIES_AUDIT.md** - État des bibliothèques JavaScript (migration en cours)
+5. **MIGRATION_OPENTBS_TO_OPENSPOUT.md** - Migration tableurs (export ODS/XLSX)
+6. **BOOTSTRAP_MIGRATION_STATUS.md** - Migration Bootstrap 5.3.8
 
 ### Pour le développement
 1. **AUDIT_PHASE_0.md** - Comprendre l'état du code
@@ -220,14 +244,35 @@ Ce dossier contient toute la documentation technique générée durant le dével
 
 ## 📊 Statistiques
 
-- **Total documents**: 29 fichiers
-- **Lignes de documentation**: ~15000+
-- **Sujets couverts**: Migration PHP 8, PDF, Tableurs (ODS/XLSX), Bootstrap, JavaScript, Docker, WordPress, Audits, Bugs
-- **Date de création**: 2025-10-19 à 2025-11-01
+- **Total documents**: 31 fichiers
+- **Lignes de documentation**: ~22000+
+- **Sujets couverts**: Migration PHP 8, PDF, Tableurs (ODS/XLSX), Bootstrap, JavaScript, Docker, WordPress, Audits, Bugs, API Consolidation
+- **Date de création**: 2025-10-19 à 2025-11-22
 
 ---
 
 ## 🔄 Historique des Mises à Jour
+
+### 2025-11-22
+- 📋 **Création plan consolidation endpoints AJAX**
+- ✅ Ajout AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md (7000+ lignes)
+  - Analyse exhaustive 80+ endpoints AJAX autonomes
+  - Identification 13 doublons (autocomplete, chrono, events)
+  - Mapping détaillé ancien → nouveau endpoints REST
+  - Plan migration 8 phases (18 semaines)
+  - Structure cible /api et /api2
+  - Guide migration développeurs (exemples avant/après)
+  - Stratégie tests (unitaires, intégration, E2E)
+  - Métriques succès et monitoring
+- ✅ Ajout AJAX_CONSOLIDATION_SUMMARY.md (synthèse exécutive)
+  - Chiffres clés et répartition catégories
+  - Top 7 doublons à consolider
+  - Phases prioritaires et impact clients
+  - Actions immédiates
+- ✅ Mise à jour WORKFLOW_AI/README.md
+  - Nouvelle section "API Consolidation & Modernization"
+  - Statistiques : 31 fichiers, ~22000+ lignes
+- **Statut** : Plan validé, prêt pour implémentation
 
 ### 2025-11-13
 - 📝 **Création WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md**
