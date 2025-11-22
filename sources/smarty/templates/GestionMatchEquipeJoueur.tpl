@@ -37,9 +37,9 @@
 								</tr>
 							</thead>
 							<tbody>
-								{section name=i loop=$arrayJoueur} 
-									{if ($arrayJoueur[i].Capitaine == 'E' or $arrayJoueur[i].Capitaine == 'A') && $test != 'OK'}
-									{assign var='test' value='OK'}
+								{section name=i loop=$arrayJoueur}
+									{if ($arrayJoueur[i].Capitaine == 'E' or $arrayJoueur[i].Capitaine == 'A' or $arrayJoueur[i].Capitaine == 'X') && $separateur_inactifs != 'OK'}
+									{assign var='separateur_inactifs' value='OK'}
 									<tr class='{cycle values="impair,pair"}'>
 										<td><br><br></td>
 										<td>&nbsp;</td>
