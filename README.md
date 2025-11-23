@@ -177,11 +177,11 @@ kpi/
 │   ├── commun/                  # Classes PHP partagées
 │   └── wordpress_archive/       # Archive WordPress
 ├── SQL/                         # Scripts SQL
-├── WORKFLOW_AI/                 # Documentation technique détaillée
+├── DOC/                        # Documentation technique détaillée (utilisateur + développeur)
 │   ├── README.md                # Index de la documentation
-│   ├── PHP8_GESTIONDOC_FIXES.md # Correctifs PHP 8
-│   ├── MIGRATION.md             # Guide de migration
-│   └── ... (18 fichiers)        # Guides, audits, fixes
+│   ├── user/                    # Documentation utilisateur (fonctionnalités)
+│   ├── developer/               # Documentation développeur (guides, audits, fixes)
+│   └── ... (63+ fichiers)       # Guides migration, audits, fixes, infrastructure
 ├── Makefile                     # Commandes Make
 ├── CLAUDE.md                    # Documentation pour Claude Code
 ├── GEMINI.md                    # Documentation pour Gemini
@@ -318,14 +318,15 @@ make run_dev           # Relancer
 ## 📚 Documentation complémentaire
 
 - **[CLAUDE.md](CLAUDE.md)** : Guide complet des commandes pour Claude Code
-- **[WORKFLOW_AI/](WORKFLOW_AI/)** : Documentation technique détaillée
-  - ✅ **[PHP8_MIGRATION_SUMMARY.md](WORKFLOW_AI/PHP8_MIGRATION_SUMMARY.md)** - Synthèse complète migration PHP 8.4 (TERMINÉE)
-  - Guides de migration (FPDF → mPDF, OpenTBS → OpenSpout, Bootstrap 5.3.8)
+- **[DOC/](DOC/)** : Documentation technique détaillée
+  - ✅ **[PHP8_MIGRATION_SUMMARY.md](DOC/developer/archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** - Synthèse complète migration PHP 8.4 (TERMINÉE)
+  - 📋 **[AJAX_CONSOLIDATION_SUMMARY.md](DOC/developer/in-progress/plans/AJAX_CONSOLIDATION_SUMMARY.md)** - Plan consolidation 80+ endpoints AJAX → REST API
+  - Guides de migration (FPDF → mPDF, OpenTBS → OpenSpout, Bootstrap 5.3.8, Axios→fetch)
   - Audits JavaScript et plan de modernisation (jQuery, bibliothèques legacy)
-  - Fixes et optimisations
+  - Fixes et optimisations (PHP 8, WordPress, Docker)
   - Audits de code et recommandations
   - Configuration Docker et infrastructure multi-environnements
-  - Voir [WORKFLOW_AI/README.md](WORKFLOW_AI/README.md) pour l'index complet (29+ documents)
+  - Voir [DOC/README.md](DOC/README.md) pour l'index complet (63+ documents)
 - **Makefile** : Toutes les commandes disponibles (`make help`)
 - **Wiki GitHub** : https://github.com/FFCK/kpi/wiki
 

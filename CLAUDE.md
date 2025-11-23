@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 📚 Documentation
 
-**Extended documentation** is available in the [`WORKFLOW_AI/`](WORKFLOW_AI/) directory, including:
+**Extended documentation** is available in the [`DOC/`](DOC/) directory, including:
 - Migration guides (PHP 8, FPDF → mPDF, etc.)
 - Technical fixes and optimizations
 - Audit reports and cleanup recommendations
 - Docker and infrastructure documentation
-- **[Makefile Multi-Environment Support](WORKFLOW_AI/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
+- **[Makefile Multi-Environment Support](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
 
-See [WORKFLOW_AI/README.md](WORKFLOW_AI/README.md) for the complete list.
+See [DOC/README.md](DOC/README.md) for the complete list.
 
 ## Project Overview
 
