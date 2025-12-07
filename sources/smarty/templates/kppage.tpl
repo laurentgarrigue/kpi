@@ -33,10 +33,12 @@
         <link rel="alternate" type="application/rss+xml" title="Kayak-polo.info &raquo; Flux des commentaires" href="http://kayak-polo.info/?feed=comments-rss2" />
 
         {* FullCalendar v6 styles are now included in JS bundle *}
-        <link rel='stylesheet' id='material-custom-css' href='{$adm}css/wordpress_material_stylesheets_styles.css?v={$NUM_VERSION}' type='text/css' media='all' />
-        {* <link rel='stylesheet' id='bootstrap' href='{$adm}vendor/twbs/bootstrap/dist/css/bootstrap.min.css?v={$NUM_VERSION}' type='text/css' media='all' /> *}
+        {* Bootstrap 5.3.8 CSS (from vendor/twbs/bootstrap) *}
+        <link rel='stylesheet' id='bootstrap5-css' href='{$adm}vendor/twbs/bootstrap/dist/css/bootstrap.min.css?v={$NUM_VERSION}' type='text/css' media='all' />
+        {* Bootstrap 5 compatibility layer (Bootstrap 3 → 5 mappings + KPI custom styles) *}
+        <link rel='stylesheet' id='bootstrap5-compat-css' href='{$adm}css/bootstrap5_compat.css?v={$NUM_VERSION}' type='text/css' media='all' />
+        {* Bootstrap 5 navbar fixes *}
         <link rel='stylesheet' id='bootstrap5-navbar-fix-css' href='{$adm}css/bootstrap5_navbar_fix.css?v={$NUM_VERSION}' type='text/css' media='all' />
-        <link rel='stylesheet' id='material-main-css' href='{$adm}css/wordpress_material_style.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel='stylesheet' id='my_style-css' href='{$adm}css/jquery.dataTables.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel='stylesheet' href='{$adm}css/dataTables.fixedHeader.min.css?v={$NUM_VERSION}' type='text/css' media='all' />
         <link rel="stylesheet" href="{$adm}css/jquery-ui.css?v={$NUM_VERSION}">

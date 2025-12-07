@@ -1,0 +1,1007 @@
+/**
+ * Bootstrap 5.3.8 Compatibility Layer
+ *
+ * This file provides backward compatibility for Bootstrap 3 classes
+ * while using Bootstrap 5.3.8. It preserves the Material WordPress theme
+ * appearance with the KPI blue color scheme (#2670b3).
+ *
+ * Created: December 2025
+ * Migration: wordpress_material_stylesheets_styles.css → Bootstrap 5.3.8
+ */
+
+/* ==========================================================================
+   1. CSS Variables (Custom Properties)
+   ========================================================================== */
+
+:root {
+  /* Primary brand colors */
+  --kpi-blue: #2670b3;
+  --kpi-blue-dark: #1a5a96;
+  --kpi-blue-light: #3a8ccf;
+  --kpi-blue-alpha: rgba(38, 112, 179, 0.2);
+
+  /* Additional theme colors */
+  --kpi-green: #3C9757;
+  --kpi-brown: #993939;
+  --kpi-purple: #3C2F91;
+
+  /* Bootstrap overrides */
+  --bs-primary: var(--kpi-blue);
+  --bs-primary-rgb: 38, 112, 179;
+  --bs-link-color: #626262;
+  --bs-link-hover-color: #3c3c3c;
+  --bs-body-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --bs-body-font-size: 14px;
+  --bs-body-line-height: 1.428571429;
+  --bs-body-color: #333333;
+  --bs-body-bg: #fff;
+}
+
+/* ==========================================================================
+   2. Base Styles (Override Bootstrap 5 defaults)
+   ========================================================================== */
+
+html {
+  font-size: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--bs-body-font-family);
+  font-size: var(--bs-body-font-size);
+  line-height: var(--bs-body-line-height);
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+}
+
+a {
+  color: var(--bs-link-color);
+  text-decoration: none;
+  word-break: break-word;
+}
+
+a:hover,
+a:focus {
+  color: var(--bs-link-hover-color);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   3. Bootstrap 3 to Bootstrap 5 Class Mappings
+   ========================================================================== */
+
+/* --- Grid System (col-xs-* mapped to col-*) --- */
+.col-xs-1 { flex: 0 0 auto; width: 8.333333%; }
+.col-xs-2 { flex: 0 0 auto; width: 16.666667%; }
+.col-xs-3 { flex: 0 0 auto; width: 25%; }
+.col-xs-4 { flex: 0 0 auto; width: 33.333333%; }
+.col-xs-5 { flex: 0 0 auto; width: 41.666667%; }
+.col-xs-6 { flex: 0 0 auto; width: 50%; }
+.col-xs-7 { flex: 0 0 auto; width: 58.333333%; }
+.col-xs-8 { flex: 0 0 auto; width: 66.666667%; }
+.col-xs-9 { flex: 0 0 auto; width: 75%; }
+.col-xs-10 { flex: 0 0 auto; width: 83.333333%; }
+.col-xs-11 { flex: 0 0 auto; width: 91.666667%; }
+.col-xs-12 { flex: 0 0 auto; width: 100%; }
+
+/* Grid offsets (Bootstrap 3 → 5) */
+.col-md-offset-1, .offset-md-1 { margin-left: 8.333333%; }
+.col-md-offset-2, .offset-md-2 { margin-left: 16.666667%; }
+.col-md-offset-3, .offset-md-3 { margin-left: 25%; }
+.col-md-offset-4, .offset-md-4 { margin-left: 33.333333%; }
+.col-md-offset-5, .offset-md-5 { margin-left: 41.666667%; }
+.col-md-offset-6, .offset-md-6 { margin-left: 50%; }
+
+/* --- Visibility Classes (Bootstrap 3 → 5) --- */
+.hidden-xs { display: block !important; }
+.hidden-sm { display: block !important; }
+.hidden-md { display: block !important; }
+.hidden-lg { display: block !important; }
+
+@media (max-width: 575.98px) {
+  .hidden-xs { display: none !important; }
+  .visible-xs { display: block !important; }
+  .visible-xs-block { display: block !important; }
+  .visible-xs-inline { display: inline !important; }
+  .visible-xs-inline-block { display: inline-block !important; }
+}
+
+@media (min-width: 576px) {
+  .visible-xs,
+  .visible-xs-block,
+  .visible-xs-inline,
+  .visible-xs-inline-block { display: none !important; }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .hidden-sm { display: none !important; }
+  .visible-sm { display: block !important; }
+  .visible-sm-block { display: block !important; }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .hidden-md { display: none !important; }
+  .visible-md { display: block !important; }
+  .visible-md-block { display: block !important; }
+}
+
+@media (min-width: 992px) {
+  .hidden-lg { display: none !important; }
+  .visible-lg { display: block !important; }
+  .visible-lg-block { display: block !important; }
+}
+
+/* --- Float Classes (Bootstrap 3 → 5) --- */
+.pull-left { float: left !important; }
+.pull-right { float: right !important; }
+
+/* --- Image Classes (Bootstrap 3 → 5) --- */
+.img-responsive {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.img-rounded {
+  border-radius: 6px;
+}
+
+.img-circle {
+  border-radius: 50%;
+}
+
+.img-thumbnail {
+  padding: 4px;
+  line-height: 1.428571429;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0;
+  transition: all 0.2s ease-in-out;
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- Button Classes (Bootstrap 3 → 5) --- */
+.btn-default {
+  --bs-btn-color: #333;
+  --bs-btn-bg: #fff;
+  --bs-btn-border-color: #ccc;
+  --bs-btn-hover-color: #333;
+  --bs-btn-hover-bg: #e6e6e6;
+  --bs-btn-hover-border-color: #adadad;
+  --bs-btn-active-color: #333;
+  --bs-btn-active-bg: #e6e6e6;
+  --bs-btn-active-border-color: #adadad;
+  color: var(--bs-btn-color);
+  background-color: var(--bs-btn-bg);
+  border-color: var(--bs-btn-border-color);
+}
+
+.btn-default:hover,
+.btn-default:focus {
+  color: var(--bs-btn-hover-color);
+  background-color: var(--bs-btn-hover-bg);
+  border-color: var(--bs-btn-hover-border-color);
+}
+
+.btn-xs {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+/* Primary button with KPI blue */
+.btn-primary {
+  --bs-btn-bg: var(--kpi-blue);
+  --bs-btn-border-color: var(--kpi-blue);
+  --bs-btn-hover-bg: var(--kpi-blue-dark);
+  --bs-btn-hover-border-color: var(--kpi-blue-dark);
+  --bs-btn-active-bg: var(--kpi-blue-dark);
+  --bs-btn-active-border-color: var(--kpi-blue-dark);
+}
+
+/* --- Label/Badge Classes (Bootstrap 3 → 5) --- */
+.label {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.375rem;
+}
+
+.label-default {
+  background-color: #777777;
+}
+
+.label-primary {
+  background-color: var(--kpi-blue);
+}
+
+.label-success {
+  background-color: #5cb85c;
+}
+
+.label-info {
+  background-color: #5bc0de;
+}
+
+.label-warning {
+  background-color: #f0ad4e;
+  color: #212529;
+}
+
+.label-danger {
+  background-color: #d9534f;
+}
+
+/* --- Table Classes (Bootstrap 3 → 5) --- */
+.table-condensed > thead > tr > th,
+.table-condensed > thead > tr > td,
+.table-condensed > tbody > tr > th,
+.table-condensed > tbody > tr > td,
+.table-condensed > tfoot > tr > th,
+.table-condensed > tfoot > tr > td {
+  padding: 2px;
+}
+
+/* Alias for Bootstrap 5 */
+.table-condensed {
+  --bs-table-cell-padding-y: 0.25rem;
+  --bs-table-cell-padding-x: 0.25rem;
+}
+
+/* --- Panel to Card Migration --- */
+.panel {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.panel-default {
+  border-color: #ddd;
+}
+
+.panel-default > .panel-heading {
+  color: #333333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+
+.panel-heading {
+  padding: 10px 15px;
+  border-bottom: 1px solid transparent;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.panel-body {
+  padding: 15px;
+}
+
+.panel-footer {
+  padding: 10px 15px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #ddd;
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.panel-primary {
+  border-color: var(--kpi-blue);
+}
+
+.panel-primary > .panel-heading {
+  color: #fff;
+  background-color: var(--kpi-blue);
+  border-color: var(--kpi-blue);
+}
+
+/* --- Well Component (Bootstrap 3) --- */
+.well {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 0;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.well-lg {
+  padding: 24px;
+  border-radius: 6px;
+}
+
+.well-sm {
+  padding: 9px;
+  border-radius: 3px;
+}
+
+/* --- Input Group Addon (Bootstrap 3 style) --- */
+.input-group-addon {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: #555555;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #eeeeee;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   4. Glyphicons Compatibility (Map to Font Awesome)
+   ========================================================================== */
+
+.glyphicon {
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'FontAwesome';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Common glyphicon to FontAwesome mappings */
+.glyphicon-search:before { content: "\f002"; }
+.glyphicon-envelope:before { content: "\f0e0"; }
+.glyphicon-heart:before { content: "\f004"; }
+.glyphicon-star:before { content: "\f005"; }
+.glyphicon-star-empty:before { content: "\f006"; }
+.glyphicon-user:before { content: "\f007"; }
+.glyphicon-ok:before { content: "\f00c"; }
+.glyphicon-remove:before { content: "\f00d"; }
+.glyphicon-zoom-in:before { content: "\f00e"; }
+.glyphicon-zoom-out:before { content: "\f010"; }
+.glyphicon-home:before { content: "\f015"; }
+.glyphicon-file:before { content: "\f016"; }
+.glyphicon-time:before { content: "\f017"; }
+.glyphicon-download:before { content: "\f019"; }
+.glyphicon-upload:before { content: "\f093"; }
+.glyphicon-play:before { content: "\f04b"; }
+.glyphicon-pause:before { content: "\f04c"; }
+.glyphicon-stop:before { content: "\f04d"; }
+.glyphicon-chevron-left:before { content: "\f053"; }
+.glyphicon-chevron-right:before { content: "\f054"; }
+.glyphicon-plus:before { content: "\f067"; }
+.glyphicon-minus:before { content: "\f068"; }
+.glyphicon-refresh:before { content: "\f021"; }
+.glyphicon-list:before { content: "\f03a"; }
+.glyphicon-lock:before { content: "\f023"; }
+.glyphicon-flag:before { content: "\f024"; }
+.glyphicon-calendar:before { content: "\f073"; }
+.glyphicon-comment:before { content: "\f075"; }
+.glyphicon-chevron-up:before { content: "\f077"; }
+.glyphicon-chevron-down:before { content: "\f078"; }
+.glyphicon-folder-close:before { content: "\f07b"; }
+.glyphicon-folder-open:before { content: "\f07c"; }
+.glyphicon-cog:before { content: "\f013"; }
+.glyphicon-trash:before { content: "\f1f8"; }
+.glyphicon-check:before { content: "\f046"; }
+.glyphicon-pencil:before { content: "\f040"; }
+.glyphicon-edit:before { content: "\f044"; }
+.glyphicon-share:before { content: "\f064"; }
+.glyphicon-print:before { content: "\f02f"; }
+.glyphicon-camera:before { content: "\f030"; }
+.glyphicon-bell:before { content: "\f0f3"; }
+.glyphicon-certificate:before { content: "\f0a3"; }
+.glyphicon-thumbs-up:before { content: "\f164"; }
+.glyphicon-thumbs-down:before { content: "\f165"; }
+.glyphicon-hand-right:before { content: "\f0a4"; }
+.glyphicon-hand-left:before { content: "\f0a5"; }
+.glyphicon-hand-up:before { content: "\f0a6"; }
+.glyphicon-hand-down:before { content: "\f0a7"; }
+.glyphicon-globe:before { content: "\f0ac"; }
+.glyphicon-wrench:before { content: "\f0ad"; }
+.glyphicon-filter:before { content: "\f0b0"; }
+.glyphicon-briefcase:before { content: "\f0b1"; }
+.glyphicon-fullscreen:before { content: "\f0b2"; }
+.glyphicon-dashboard:before { content: "\f0e4"; }
+.glyphicon-paperclip:before { content: "\f0c6"; }
+.glyphicon-link:before { content: "\f0c1"; }
+.glyphicon-phone:before { content: "\f095"; }
+.glyphicon-pushpin:before { content: "\f08d"; }
+.glyphicon-sort:before { content: "\f0dc"; }
+.glyphicon-log-in:before { content: "\f090"; }
+.glyphicon-log-out:before { content: "\f08b"; }
+.glyphicon-new-window:before { content: "\f08e"; }
+.glyphicon-save:before { content: "\f0c7"; }
+.glyphicon-open:before { content: "\f115"; }
+.glyphicon-export:before { content: "\f08e"; }
+.glyphicon-import:before { content: "\f090"; }
+.glyphicon-send:before { content: "\f1d8"; }
+.glyphicon-credit-card:before { content: "\f09d"; }
+.glyphicon-stats:before { content: "\f080"; }
+.glyphicon-cloud-download:before { content: "\f0ed"; }
+.glyphicon-cloud-upload:before { content: "\f0ee"; }
+.glyphicon-info-sign:before { content: "\f05a"; }
+.glyphicon-question-sign:before { content: "\f059"; }
+.glyphicon-exclamation-sign:before { content: "\f06a"; }
+.glyphicon-warning-sign:before { content: "\f071"; }
+.glyphicon-menu-hamburger:before { content: "\f0c9"; }
+.glyphicon-option-vertical:before { content: "\f142"; }
+.glyphicon-option-horizontal:before { content: "\f141"; }
+
+/* ==========================================================================
+   5. Material Theme Custom Styles
+   ========================================================================== */
+
+/* --- Site Header and Banner --- */
+body,
+.banner {
+  background-color: var(--kpi-blue);
+}
+
+.titre {
+  color: white;
+}
+
+.site-header {
+  margin-bottom: 0;
+}
+
+.site-banner {
+  max-width: 100%;
+  height: auto;
+}
+
+.site-logo a {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333333;
+  text-decoration: none;
+}
+
+.site-logo a:hover {
+  color: var(--kpi-blue);
+}
+
+.tagline {
+  font-size: 14px;
+  color: #777777;
+}
+
+.sitelogo {
+  padding: 10px 0;
+}
+
+/* --- Navigation --- */
+nav li.menu-item.active {
+  background-color: var(--kpi-blue);
+}
+
+nav li.menu-item.active a {
+  color: #FFFFFF;
+}
+
+.menu-menuprincipal-container li:hover,
+.menu-nav1-container li:hover {
+  background-color: #f9f9f9;
+  border-radius: 0.25em;
+}
+
+.site-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-menu > li {
+  display: inline-block;
+}
+
+.site-menu > li > a {
+  display: block;
+  padding: 10px 15px;
+  color: #333333;
+  text-decoration: none;
+}
+
+.site-menu > li > a:hover {
+  background-color: #f9f9f9;
+}
+
+.menu-item {
+  position: relative;
+}
+
+/* --- Background Colors --- */
+.bg-blue {
+  background-color: var(--kpi-blue);
+  border: 1px solid var(--kpi-blue);
+  color: #ffffff;
+}
+
+.bg-blue2 {
+  background-color: var(--kpi-purple);
+  border: 1px solid var(--kpi-purple);
+  color: #ffffff;
+}
+
+.bg-green {
+  background-color: var(--kpi-green);
+  border: 1px solid var(--kpi-green);
+  color: #ffffff;
+}
+
+.bg-brown {
+  background-color: var(--kpi-brown);
+  border: 1px solid var(--kpi-brown);
+  color: #ffffff;
+}
+
+/* --- Content and Layout --- */
+.container {
+  padding-left: 7.5px;
+  padding-right: 7.5px;
+}
+
+.container-fluid {
+  padding-left: 7.5px;
+  padding-right: 7.5px;
+}
+
+.row {
+  margin-left: -7.5px;
+  margin-right: -7.5px;
+}
+
+.header-contents {
+  background-color: #fff;
+}
+
+/* --- Padding Utilities --- */
+.padTopBottom {
+  padding-top: 7.5px;
+  padding-bottom: 7.5px;
+}
+
+.padBottom {
+  padding-bottom: 7.5px;
+}
+
+.mb5 {
+  margin-bottom: 5px;
+}
+
+/* --- Article and Content Boxes --- */
+.article {
+  background-color: #fff;
+  padding: 0px;
+  margin: 0px 7.5px 7.5px 7.5px;
+}
+
+/* --- Footer --- */
+.flex-footer {
+  display: flex;
+  justify-content: space-around;
+}
+
+.flex-footer div {
+  width: 220px;
+}
+
+.footer.copyright {
+  background-color: var(--kpi-blue);
+  color: #fff;
+  padding: 15px 0;
+}
+
+.fb-like {
+  padding: 2px 0 3px;
+}
+
+/* --- Logo --- */
+img.logo_img {
+  height: 90px;
+}
+
+#logo.img2 {
+  max-height: 100px;
+}
+
+/* ==========================================================================
+   6. KPI-Specific Styles
+   ========================================================================== */
+
+/* --- Match Table Styles --- */
+.cliquableScore,
+.cliquableNomEquipe {
+  text-align: center;
+}
+
+#tableStats {
+  width: 100%;
+}
+
+#msg {
+  width: 500px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+table a.report {
+  color: white;
+}
+
+/* --- Chart Styles --- */
+.chart_num_match {
+  font-style: italic;
+  color: gray;
+  font-size: 0.9em;
+}
+
+.chart_match {
+  background-color: var(--kpi-blue-alpha);
+  padding: 1px;
+}
+
+.chart_match table,
+.chart_match tr,
+.chart_match td {
+  border: none;
+}
+
+/* --- Flex Container Styles --- */
+div.flex {
+  display: flex;
+}
+
+div.flex article {
+  border: 1px solid var(--kpi-blue);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+div.flex .table-striped > tbody > tr:nth-child(2n+1) > td,
+div.flex .table-striped > tbody > tr:nth-child(2n+1) > th {
+  background-color: var(--kpi-blue-alpha);
+}
+
+/* --- Navbar Custom --- */
+.navbar-custom {
+  margin: 7.5px 0px;
+  padding: 3px 7.5px;
+  min-height: inherit;
+}
+
+.navbar-mv-up {
+  margin-top: -10px;
+}
+
+/* --- DataTables Overrides --- */
+.dataTables_length select,
+span.filtres select {
+  padding: 0px !important;
+}
+
+/* ==========================================================================
+   7. Responsive Styles
+   ========================================================================== */
+
+/* --- Mobile Styles (max-width: 800px) --- */
+@media only screen and (max-width: 800px) {
+  /* Force table to not be like tables anymore */
+  .no-more-tables table,
+  .no-more-tables thead,
+  .no-more-tables tbody,
+  .no-more-tables th,
+  .no-more-tables td,
+  .no-more-tables tr {
+    display: block;
+  }
+
+  /* Hide table headers (but not display: none;, for accessibility) */
+  .no-more-tables thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .no-more-tables tr {
+    border: 1px solid #ccc;
+  }
+
+  .no-more-tables td {
+    /* Behave like a "row" */
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .no-more-tables td:before {
+    /* Now like a table header */
+    position: absolute;
+    /* Top/left values mimic padding */
+    top: 6px;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    content: attr(data-title);
+  }
+}
+
+/* --- Smartphones portrait & landscape (max-width: 767.98px) --- */
+@media (max-width: 767.98px) {
+  .navgroup {
+    margin: 0px;
+  }
+
+  .frame_matchs {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+
+  .frame_matchs .dataTables_length label {
+    float: left;
+  }
+
+  .frame_matchs .dataTables_length .refresh {
+    float: right;
+  }
+}
+
+/* --- Smartphones portrait (max-width: 575.98px) --- */
+@media (max-width: 575.98px) {
+  .frame_matchs .dataTables_filter {
+    clear: both;
+  }
+}
+
+/* ==========================================================================
+   8. Print Styles
+   ========================================================================== */
+
+@media print {
+  * {
+    text-shadow: none !important;
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+
+  abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+
+  a[href^="javascript:"]:after,
+  a[href^="#"]:after {
+    content: "";
+  }
+
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+
+  select {
+    background: #fff !important;
+  }
+
+  .navbar {
+    display: none;
+  }
+
+  .table td,
+  .table th {
+    background-color: #fff !important;
+  }
+
+  .btn > .caret,
+  .dropup > .btn > .caret {
+    border-top-color: #000 !important;
+  }
+
+  .label {
+    border: 1px solid #000;
+  }
+
+  .table {
+    border-collapse: collapse !important;
+  }
+
+  .table-bordered th,
+  .table-bordered td {
+    border: 1px solid #ddd !important;
+  }
+}
+
+/* ==========================================================================
+   9. Nav Tabs Bootstrap 5 Fix
+   ========================================================================== */
+
+/* Support .active on <a> instead of <li> (BS3 compatibility) */
+.nav-tabs > li > a.active,
+.nav-tabs > li > a.active:hover,
+.nav-tabs > li > a.active:focus {
+  color: #555555;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+  cursor: default;
+}
+
+/* ==========================================================================
+   10. Form Controls
+   ========================================================================== */
+
+.form-control {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.428571429;
+  color: #555555;
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+}
+
+.form-control:focus {
+  border-color: var(--kpi-blue);
+  outline: 0;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(38, 112, 179, 0.6);
+}
+
+select.form-control {
+  height: 34px;
+}
+
+/* ==========================================================================
+   11. Dropdown Menu (Bootstrap 3 style)
+   ========================================================================== */
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  float: left;
+  min-width: 160px;
+  padding: 5px 0;
+  margin: 2px 0 0;
+  list-style: none;
+  font-size: 14px;
+  text-align: left;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  background-clip: padding-box;
+}
+
+.dropdown-menu > li > a {
+  display: block;
+  padding: 3px 20px;
+  clear: both;
+  font-weight: normal;
+  line-height: 1.428571429;
+  color: #333333;
+  white-space: nowrap;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  text-decoration: none;
+  color: #262626;
+  background-color: #f5f5f5;
+}
+
+.dropdown-menu > .active > a,
+.dropdown-menu > .active > a:hover,
+.dropdown-menu > .active > a:focus {
+  color: #fff;
+  text-decoration: none;
+  outline: 0;
+  background-color: var(--kpi-blue);
+}
+
+.open > .dropdown-menu {
+  display: block;
+}
+
+/* ==========================================================================
+   12. Modal (Bootstrap 3 style adjustments)
+   ========================================================================== */
+
+.modal.fade .modal-dialog {
+  transform: translate(0, -25%);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+  transform: translate(0, 0);
+}
+
+/* ==========================================================================
+   13. Caret (Bootstrap 3 style)
+   ========================================================================== */
+
+.caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-top: 4px solid;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+
+.dropup .caret {
+  border-top: 0;
+  border-bottom: 4px solid;
+}
+
+/* ==========================================================================
+   14. Alert Styles (Bootstrap 5 with custom colors)
+   ========================================================================== */
+
+.alert-primary {
+  --bs-alert-bg: rgba(38, 112, 179, 0.1);
+  --bs-alert-border-color: var(--kpi-blue);
+  --bs-alert-color: var(--kpi-blue-dark);
+}
