@@ -8,19 +8,21 @@
 				<div class='titrePage'>Opérations (Attention, sensible !!!)</div>
 
 				<div class='blocLeft'>
-					<table width="100%">
-						<tr>
-							<td colspan=2>
-								<span id="json_msg">
-									{$msg_json}
-								</span>
-								<br>
-								{section name=i loop=$arrayinfo}
-									{$arrayinfo[i]}<BR>
-								{/section}
-							</td>
-						</tr>
-					</table>
+					{if $msg_json neq '' || $arrayinfo|@count gt 0}
+						{* Affichage d'une alerte JavaScript si un message est présent *}
+						<table width="100%">
+							<tr>
+								<td colspan=2 class="pair2">
+									<span id="json_msg">
+										{$msg_json}<br>
+									</span>
+									{section name=i loop=$arrayinfo}
+										{$arrayinfo[i]}<br>
+									{/section}
+								</td>
+							</tr>
+						</table>
+					{/if}
 					<table width="100%">
 						<thead>
 							<tr>
@@ -152,6 +154,30 @@
 					<table width=100%>
 						<tr>
 							<th class='titreForm' colspan=2>
+								<label>Fusion automatique de licenciés non fédéraux</label>
+							</th>
+						</tr>
+						<tr>
+							<td colspan=2>
+								<p style="color: #666; font-size: 0.9em; margin: 10px 0;">
+									Cette fonction fusionne automatiquement les licenciés ayant :
+									<br>- Un numéro de licence > 2000000 (licences non fédérales)
+									<br>- Les mêmes Nom, Prénom et Club
+									<br><br>
+									Le licencié conservé sera celui ayant la meilleure cohérence de données (numéro ICF, date de naissance valide, qualification d'arbitre, saison la plus récente).
+								</p>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<input type="button" name="FusionAutoLicenciesNonFederaux" id="FusionAutoLicenciesNonFederaux" value="Lancer la fusion automatique" style="background-color: #ff9800; color: white; font-weight: bold;">
+							</td>
+						</tr>
+					</table>
+					<hr>
+					<table width=100%>
+						<tr>
+							<th class='titreForm' colspan=2>
 								<label>Renommer une équipe</label>
 							</th>
 						</tr>
@@ -236,16 +262,16 @@
 							<td width=50%>
 								<label for="ChangeCodeRecherche">Code recherché</label>
 								<input type="text" name="ChangeCodeRecherche" id="ChangeCodeRecherche" class='codecompet' size=40 placeholder="Chercher">
-								</td>
-								<td width=50%>
-								<label for="changeCodeSource">Code à changer</label>
-								<input type="text" name="changeCodeSource" id="changeCodeSource" readonly>
+							</td>
+							<td width=50%>
+								<label for="changeCodeCible">Code cible</label>
+								<input type="text" name="changeCodeCible" id="changeCodeCible" class='codecompet' size=40>
 							</td>
 						</tr>
 						<tr>
 							<td>
-								<label for="changeCodeCible">Code cible</label>
-								<input type="text" name="changeCodeCible" id="changeCodeCible" class='codecompet' size=40>
+								<label for="changeCodeSource">Code à changer</label>
+								<input type="text" name="changeCodeSource" id="changeCodeSource" readonly>
 							</td>
 							<td>
 								<input type='checkbox' name='changeCodeExists' id='changeCodeExists' value='Exists'>
@@ -253,11 +279,15 @@
 							</td>
 						</tr>
 						<tr>
-							<td colspan=2>
+							<td>
 								<div align='center'>
-									<input type='checkbox' name='changeCodeAllSeason' id='changeCodeAllSeason' value='All'>
-									Toutes saisons
+									Saison : {$saisonEnCours}
+									<input type='hidden' name='saisonChangeCode' id='saisonChangeCode' value='{$saisonEnCours}'>
 								</div>
+							</td>
+							<td>
+								<input type='checkbox' name='changeCodeAllSeason' id='changeCodeAllSeason' value='All'>
+								Toutes saisons
 							</td>
 						</tr>
 						<tr>
@@ -548,6 +578,77 @@
 							</td>
 						</tr>
 					</table>
+					<br>
+					{if $profile == 1}
+					<table width="100%">
+						<tr>
+							<th class='titreForm' colspan=2>
+								<label>Copier des compétitions (avec journées)</label>
+							</th>
+						</tr>
+						<tr>
+							<td>
+								<label for="saisonSourceCompet">Saison source :</label>
+								<select name="saisonSourceCompet" id="saisonSourceCompet" onchange="loadCompetitionsForSeason()">
+									{section name=i loop=$arraySaison}
+										<option value="{$arraySaison[i].Code}" {if $arraySaison[i].Etat=='A'}selected{/if}>{$arraySaison[i].Code}</option>
+									{/section}
+								</select>
+							</td>
+							<td>
+								<label for="saisonCibleCompet">Saison cible :</label>
+								<select name="saisonCibleCompet" id="saisonCibleCompet">
+									{section name=i loop=$arraySaison}
+										<option value="{$arraySaison[i].Code}" {if $arraySaison[i].Etat=='A'}selected{/if}>{$arraySaison[i].Code}</option>
+									{/section}
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2>
+								<label for="codesCompet">Compétitions à copier :</label>
+								<br>
+								<select name="codesCompet[]" id="codesCompet" multiple size="12" style="width: 100%;">
+									{section name=g loop=$arrayCompetitionCopy}
+										<optgroup label="{$arrayCompetitionCopy[g].label}">
+											{section name=o loop=$arrayCompetitionCopy[g].options}
+												<option value="{$arrayCompetitionCopy[g].options[o].Code}">{$arrayCompetitionCopy[g].options[o].Code} - {$arrayCompetitionCopy[g].options[o].Libelle}</option>
+											{/section}
+										</optgroup>
+									{/section}
+								</select>
+								<br>
+								<small style="color: #666;">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs compétitions</small>
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2>
+								<br>
+								<label>
+									<input type="checkbox" name="copierMatchsCP" id="copierMatchsCP" checked>
+									Copier les matchs des compétitions CP (phases)
+								</label>
+								<br>
+								<small style="color: #666;">
+									Si décoché : pour les compétitions CP, seule la <strong>première journée</strong> sera copiée, <strong>sans les matchs</strong>.
+									<br>Utile pour créer une structure minimale à compléter manuellement.
+								</small>
+							</td>
+						</tr>
+						<tr>
+							<td colspan=2>
+								<br>
+								<input type="button" name="CopyCompetitionsBtn" id="CopyCompetitionsBtn" onclick="CopyCompetitions();" value="Copier les compétitions">
+								<br>
+								<small style="color: #666;">
+									Les compétitions seront créées avec : statut ATT, non publiques, sans équipes.
+									<br>Les journées seront copiées avec les mêmes jours de la semaine à des dates équivalentes.
+									<br><span id="infoCopieMatchs">Pour les compétitions CP : les matchs sont copiés avec leurs encodages (sans équipes/scores/arbitres).</span>
+								</small>
+							</td>
+						</tr>
+					</table>
+					{/if}
 					<table width="100%">
 						<tr>
 							<th class='titreForm' colspan=2>
@@ -572,6 +673,22 @@
 							</tr>
 						{/if}
 
+					</table>
+					<table width="100%">
+						<thead>
+							<tr>
+								<th class="titreForm">📚 Documentation</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>
+									<a href="DocViewer.php" target="_blank">Documentation KPI</a>
+									<br>
+									<small style="color: #666;">Documentation utilisateur et développeur</small>
+								</td>
+							</tr>
+						</tbody>
 					</table>
 					<table width="100%">
 						<thead>

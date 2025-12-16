@@ -4,6 +4,10 @@ Documentation technique complète pour le développement et la maintenance du pr
 
 ## 📂 Organisation
 
+### [📚 Référence](reference/)
+Documentation de référence complète du système.
+- **[KPI_FUNCTIONALITY_INVENTORY.md](reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
+
 ### [📖 Guides](guides/)
 Guides de migration et documentation technique pour le développement.
 - **[migrations/](guides/migrations/)** - Guides de migration (FPDF→mPDF, Smarty v4, OpenSpout, Axios→fetch, etc.)
@@ -12,7 +16,7 @@ Guides de migration et documentation technique pour le développement.
 ### [⏳ Travaux en cours](in-progress/)
 Projets et migrations actuellement en cours de réalisation.
 - **[status/](in-progress/status/)** - Statut des migrations en cours (Bootstrap, Flatpickr, tooltips, masked input)
-- **[plans/](in-progress/plans/)** - Plans d'action (consolidation AJAX, élimination jQuery, nettoyage JS, Bootstrap)
+- **[plans/](in-progress/plans/)** - Plans d'action (élimination jQuery, nettoyage JS, Bootstrap)
 
 ### [✅ Archives](archive/)
 Projets et migrations terminés pour référence historique.
@@ -24,6 +28,7 @@ Documentation des bugs et correctifs appliqués.
 - **[bugs/](fixes/bugs/)** - Corrections de bugs spécifiques
 - **[php8/](fixes/php8/)** - Correctifs pour compatibilité PHP 8.4
 - **[docker/](fixes/docker/)** - Correctifs infrastructure Docker
+- **[features/](fixes/features/)** - Nouvelles fonctionnalités (Consolidation classement, Stats licenciés, etc.)
 
 ### [🔍 Audits & Analyses](audits/)
 Rapports d'audit de code et analyses techniques.
@@ -49,28 +54,22 @@ Documentation infrastructure et configuration.
    - Statut: ✅ 100% déployé en production
    - Métriques, configuration, timeline
 
-2. **[in-progress/plans/AJAX_CONSOLIDATION_SUMMARY.md](in-progress/plans/AJAX_CONSOLIDATION_SUMMARY.md)** ⭐ **NOUVEAU**
-   - **Plan consolidation 80+ endpoints AJAX** → REST API structurées
-   - Synthèse exécutive : 13 doublons, -70% réduction visée
-   - Impact clients et phases de migration
-   - Document de référence rapide
-
-3. **[archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md](archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** ⭐
+2. **[archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md](archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** ⭐
    - **Synthèse technique complète** migration PHP 7.4 → 8.4
    - Document de référence technique
    - Timeline, métriques, checklist validation
 
-4. **[audits/JS_LIBRARIES_AUDIT.md](audits/JS_LIBRARIES_AUDIT.md)**
+3. **[audits/JS_LIBRARIES_AUDIT.md](audits/JS_LIBRARIES_AUDIT.md)**
    - État actuel des bibliothèques JavaScript
    - Identification des CVE et obsolescence
    - Plan d'action en 4 phases
 
-5. **[guides/migrations/MIGRATION_OPENTBS_TO_OPENSPOUT.md](guides/migrations/MIGRATION_OPENTBS_TO_OPENSPOUT.md)**
+4. **[guides/migrations/MIGRATION_OPENTBS_TO_OPENSPOUT.md](guides/migrations/MIGRATION_OPENTBS_TO_OPENSPOUT.md)**
    - Migration tableurs (OpenTBS → OpenSpout)
    - Export ODS/XLSX/CSV avec internationalisation
    - ✅ En production
 
-6. **[in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md](in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md)**
+5. **[in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md](in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md)**
    - Statut migration Bootstrap 5.3.8
    - Travaux en cours
 
@@ -79,10 +78,6 @@ Documentation infrastructure et configuration.
 ## 🔄 Migrations en Cours
 
 ### Haute Priorité
-- **Consolidation AJAX → REST API** - 📋 Planifié (voir [plans/AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md](in-progress/plans/AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md))
-  - 80+ endpoints AJAX autonomes → API structurées /api et /api2
-  - Réduction -70%, élimination 13 doublons
-  - Migration 8 phases (18 semaines)
 - **Bootstrap 5.3.8** - ⏳ En cours (voir [status/BOOTSTRAP_MIGRATION_STATUS.md](in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md))
 - **Élimination jQuery** - ⏳ Planifié (voir [plans/JQUERY_ELIMINATION_STRATEGY.md](in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md))
 
@@ -108,8 +103,8 @@ Documentation infrastructure et configuration.
 ## 📊 Métriques Globales
 
 ### Code & Documentation
-- **Total documents**: 60+ fichiers
-- **Lignes de documentation**: ~25000+
+- **Total documents**: 57+ fichiers
+- **Lignes de documentation**: ~18000+
 - **Période**: Oct 2025 - Nov 2025
 
 ### Migrations Complétées

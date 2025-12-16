@@ -22,6 +22,10 @@ class GestionOperations extends MyPageSecure
 
 		$idEvenement = (int) utyGetSession('idEvenement', -1);
 
+		$saisonEnCours = $myBdd->GetActiveSaison();
+		$this->m_tpl->assign('saisonEnCours', $saisonEnCours);
+		$this->m_tpl->assign('profile', $_SESSION['Profile']);
+
 		// Chargement des Evenements
 		$arrayEvenement = array();
 
@@ -85,6 +89,45 @@ class GestionOperations extends MyPageSecure
 
 		$AuthSaison = utyGetSession('AuthSaison', '');
 		$this->m_tpl->assign('AuthSaison', $AuthSaison);
+
+		// Chargement des compétitions pour la copie en masse (groupées par section comme comboCompet)
+		$arrayCompetition = array();
+		$label = $myBdd->getSections();
+
+		$sql = "SELECT DISTINCT c.GroupOrder, c.Code, c.Libelle, c.Soustitre, c.Soustitre2,
+			c.Titre_actif, g.id, g.section, g.ordre
+			FROM kp_competition c, kp_groupe g
+			WHERE c.Code_saison = ?
+			AND c.Code_ref = g.Groupe
+			ORDER BY g.section, g.ordre, c.Code_tour, c.GroupOrder, c.Code ";
+		$result = $myBdd->pdo->prepare($sql);
+		$result->execute(array($saisonEnCours));
+
+		$j = '';
+		$i = -1;
+		while ($row = $result->fetch()) {
+			// Titre
+			if ($row["Titre_actif"] != 'O' && $row["Soustitre"] != '') {
+				$Libelle = $row["Soustitre"];
+			} else {
+				$Libelle = $row["Libelle"];
+			}
+			if ($row["Soustitre2"] != '') {
+				$Libelle .= ' - ' . $row["Soustitre2"];
+			}
+
+			if ($j != $row['section']) {
+				$i++;
+				$arrayCompetition[$i]['label'] = $label[$row['section']];
+			}
+			$j = $row['section'];
+			$arrayCompetition[$i]['options'][] = array(
+				'Code' => $row['Code'],
+				'Libelle' => $Libelle
+			);
+		}
+
+		$this->m_tpl->assign('arrayCompetitionCopy', $arrayCompetition);
 
 	}
 
@@ -151,13 +194,93 @@ class GestionOperations extends MyPageSecure
 			$stmt->execute(array($numFusionCible, $numFusionSource));
 
 			// compos matchs
+			// D'abord supprimer les doublons si source et target sont dans le même match
+			$sql = "DELETE mj_source FROM kp_match_joueur mj_source
+				INNER JOIN kp_match_joueur mj_target
+					ON mj_source.Id_match = mj_target.Id_match
+				WHERE mj_source.Matric = ?
+				AND mj_target.Matric = ?";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionSource, $numFusionCible));
+
+			// Puis mettre à jour les autres entrées
 			$sql  = "UPDATE kp_match_joueur
 				SET Matric = ?
 				WHERE Matric = ? ";
 			$stmt = $myBdd->pdo->prepare($sql);
 			$stmt->execute(array($numFusionCible, $numFusionSource));
 
-			// feuilles de présence
+			// scrutineering (contrôle) - Étape 1: Sauvegarder les données du source dans une table temporaire
+			// On doit faire ça AVANT de modifier kp_competition_equipe_joueur car la FK empêche la modification
+			// On supprime et recrée la table pour éviter les duplications
+			$sql = "DROP TEMPORARY TABLE IF EXISTS temp_scrutineering_fusion";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute();
+
+			$sql = "CREATE TEMPORARY TABLE temp_scrutineering_fusion (
+				id_equipe INT PRIMARY KEY,
+				kayak_status INT,
+				kayak_print INT,
+				vest_status INT,
+				vest_print INT,
+				helmet_status INT,
+				helmet_print INT,
+				paddle_count INT,
+				paddle_print INT,
+				comment TEXT
+			)";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute();
+
+			// Copier les données du TARGET dans la table temporaire en premier
+			$sql = "INSERT INTO temp_scrutineering_fusion (id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+				SELECT id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment
+				FROM kp_scrutineering
+				WHERE matric = ?";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionCible));
+
+			// Puis copier les données du SOURCE et fusionner avec celles du target si même équipe
+			$sql = "INSERT INTO temp_scrutineering_fusion (id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+				SELECT id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment
+				FROM kp_scrutineering
+				WHERE matric = ?
+				ON DUPLICATE KEY UPDATE
+					kayak_status = CASE WHEN temp_scrutineering_fusion.kayak_status IS NULL OR temp_scrutineering_fusion.kayak_status = 0 THEN VALUES(kayak_status) ELSE temp_scrutineering_fusion.kayak_status END,
+					kayak_print = CASE WHEN temp_scrutineering_fusion.kayak_print IS NULL OR temp_scrutineering_fusion.kayak_print = 0 THEN VALUES(kayak_print) ELSE temp_scrutineering_fusion.kayak_print END,
+					vest_status = CASE WHEN temp_scrutineering_fusion.vest_status IS NULL OR temp_scrutineering_fusion.vest_status = 0 THEN VALUES(vest_status) ELSE temp_scrutineering_fusion.vest_status END,
+					vest_print = CASE WHEN temp_scrutineering_fusion.vest_print IS NULL OR temp_scrutineering_fusion.vest_print = 0 THEN VALUES(vest_print) ELSE temp_scrutineering_fusion.vest_print END,
+					helmet_status = CASE WHEN temp_scrutineering_fusion.helmet_status IS NULL OR temp_scrutineering_fusion.helmet_status = 0 THEN VALUES(helmet_status) ELSE temp_scrutineering_fusion.helmet_status END,
+					helmet_print = CASE WHEN temp_scrutineering_fusion.helmet_print IS NULL OR temp_scrutineering_fusion.helmet_print = 0 THEN VALUES(helmet_print) ELSE temp_scrutineering_fusion.helmet_print END,
+					paddle_count = CASE WHEN temp_scrutineering_fusion.paddle_count IS NULL OR temp_scrutineering_fusion.paddle_count = 0 THEN VALUES(paddle_count) ELSE temp_scrutineering_fusion.paddle_count END,
+					paddle_print = CASE WHEN temp_scrutineering_fusion.paddle_print IS NULL OR temp_scrutineering_fusion.paddle_print = 0 THEN VALUES(paddle_print) ELSE temp_scrutineering_fusion.paddle_print END,
+					comment = CASE
+						WHEN temp_scrutineering_fusion.comment IS NULL OR temp_scrutineering_fusion.comment = '' THEN VALUES(comment)
+						WHEN VALUES(comment) IS NULL OR VALUES(comment) = '' THEN temp_scrutineering_fusion.comment
+						ELSE CONCAT(temp_scrutineering_fusion.comment, ' | ', VALUES(comment))
+					END";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionSource));
+
+			// Étape 2: Supprimer les entrées de scrutineering du source ET du target (libère les contraintes FK)
+			$sql = "DELETE FROM kp_scrutineering WHERE matric IN (?, ?)";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionSource, $numFusionCible));
+
+			// Étape 3a: Supprimer les doublons dans kp_competition_equipe_joueur
+			// Si source et target sont dans la même équipe, on supprime le source
+			$sql = "DELETE cej_source FROM kp_competition_equipe_joueur cej_source
+				INNER JOIN kp_competition_equipe_joueur cej_target
+					ON cej_source.Id_equipe = cej_target.Id_equipe
+				WHERE cej_source.Matric = :source
+				AND cej_target.Matric = :cible";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute([
+				':source' => $numFusionSource,
+				':cible' => $numFusionCible
+			]);
+
+			// Étape 3b: Mettre à jour les autres entrées (où source et target ne sont pas dans la même équipe)
 			$sql = "UPDATE kp_competition_equipe_joueur cej,
                 kp_licence lc
                 SET cej.Matric = :cible, cej.Nom = lc.Nom,
@@ -170,6 +293,32 @@ class GestionOperations extends MyPageSecure
 				':cible2' => $numFusionCible,
 				':source' => $numFusionSource
 			]);
+
+			// Étape 4: Fusionner les données de scrutineering depuis la table temporaire
+			$sql = "INSERT INTO kp_scrutineering (id_equipe, matric, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+				SELECT t.id_equipe, :cible, t.kayak_status, t.kayak_print, t.vest_status, t.vest_print, t.helmet_status, t.helmet_print, t.paddle_count, t.paddle_print, t.comment
+				FROM temp_scrutineering_fusion t
+				ON DUPLICATE KEY UPDATE
+					kayak_status = VALUES(kayak_status),
+					kayak_print = VALUES(kayak_print),
+					vest_status = VALUES(vest_status),
+					vest_print = VALUES(vest_print),
+					helmet_status = VALUES(helmet_status),
+					helmet_print = VALUES(helmet_print),
+					paddle_count = VALUES(paddle_count),
+					paddle_print = VALUES(paddle_print),
+					comment = CASE
+						WHEN kp_scrutineering.comment IS NULL OR kp_scrutineering.comment = '' THEN VALUES(comment)
+						WHEN VALUES(comment) IS NULL OR VALUES(comment) = '' THEN kp_scrutineering.comment
+						ELSE CONCAT(kp_scrutineering.comment, ' | ', VALUES(comment))
+					END";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute([':cible' => $numFusionCible]);
+
+			// Nettoyer la table temporaire pour la prochaine fusion
+			$sql = "DROP TEMPORARY TABLE IF EXISTS temp_scrutineering_fusion";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute();
 
 			// arbitre principal
 			$sql  = "UPDATE kp_match
@@ -241,7 +390,21 @@ class GestionOperations extends MyPageSecure
 			));
 
 			// TODO: changer noms (et matric) des lignes, arbitres, officiels...
-			// suppression
+			// Suppression des tables enfants AVANT la licence (contraintes FK)
+
+			// Supprimer l'arbitre source
+			$sql = "DELETE FROM kp_arbitre
+				WHERE Matric = ?";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionSource));
+
+			// Supprimer la recherche de licence source
+			$sql = "DELETE FROM kp_recherche_licence
+				WHERE Matric = ?";
+			$stmt = $myBdd->pdo->prepare($sql);
+			$stmt->execute(array($numFusionSource));
+
+			// Suppression de la licence
 			$sql  = "DELETE FROM kp_licence
 				WHERE Matric = ?; ";
 			$stmt = $myBdd->pdo->prepare($sql);
@@ -258,6 +421,420 @@ class GestionOperations extends MyPageSecure
 
 		$myBdd->utyJournal('Fusion Joueurs', $myBdd->GetActiveSaison(), utyGetSession('codeCompet'), null, null, null, $numFusionSource . ' => ' . $numFusionCible);
 		array_push($this->m_arrayinfo, 'Fusion Joueurs : ' . $numFusionSource . ' => ' . $numFusionCible);
+		return;
+	}
+
+	function FusionAutomatiqueLicenciesNonFederaux()
+	{
+		$myBdd = $this->myBdd;
+		$nbFusions = 0;
+		$fusionDetails = array();
+
+		try {
+			$myBdd->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+			// Trouver tous les doublons de licenciés non fédéraux (Matric > 2000000)
+			// ayant les mêmes Nom, Prenom et Numero_club
+			$sql = "SELECT
+						l.Nom,
+						l.Prenom,
+						l.Numero_club,
+						l.Club,
+						GROUP_CONCAT(l.Matric ORDER BY l.Matric SEPARATOR ',') as Matricules,
+						COUNT(*) as NbDoublons
+					FROM kp_licence l
+					WHERE l.Matric > 2000000
+					GROUP BY l.Nom, l.Prenom, l.Numero_club
+					HAVING COUNT(*) > 1
+					ORDER BY l.Nom, l.Prenom";
+
+			$stmt = $myBdd->pdo->query($sql);
+			$groupesDoublons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+			if (empty($groupesDoublons)) {
+				array_push($this->m_arrayinfo, 'Aucun doublon de licencié non fédéral trouvé.');
+				return;
+			}
+
+			// Pour chaque groupe de doublons
+			foreach ($groupesDoublons as $groupe) {
+				$matricules = explode(',', $groupe['Matricules']);
+
+				// Récupérer les détails complets de chaque licencié du groupe
+				$placeholders = implode(',', array_fill(0, count($matricules), '?'));
+				$sql = "SELECT
+							l.Matric,
+							l.Nom,
+							l.Prenom,
+							l.Naissance,
+							l.Numero_club,
+							l.Club,
+							l.Reserve as Numero_ICF,
+							l.Origine as Saison,
+							a.arbitre,
+							a.niveau as Niveau_arbitre
+						FROM kp_licence l
+						LEFT JOIN kp_arbitre a ON l.Matric = a.Matric
+						WHERE l.Matric IN ($placeholders)
+						ORDER BY
+							-- Prioriser celui qui a un numéro ICF
+							CASE WHEN l.Reserve IS NOT NULL AND l.Reserve != '' THEN 0 ELSE 1 END,
+							-- Puis celui qui a une date de naissance valide
+							CASE WHEN l.Naissance IS NOT NULL AND l.Naissance != '0000-00-00' AND l.Naissance != '' THEN 0 ELSE 1 END,
+							-- Puis celui qui a une qualification d'arbitre
+							CASE WHEN a.arbitre IS NOT NULL AND a.arbitre != '' THEN 0 ELSE 1 END,
+							-- Puis la saison la plus récente
+							l.Origine DESC,
+							-- En dernier recours, le plus petit matricule
+							l.Matric ASC
+						LIMIT 1";
+
+				$stmtCible = $myBdd->pdo->prepare($sql);
+				$stmtCible->execute($matricules);
+				$cible = $stmtCible->fetch(PDO::FETCH_ASSOC);
+
+				if (!$cible) {
+					continue;
+				}
+
+				$numFusionCible = $cible['Matric'];
+
+				// Récupérer tous les licenciés du groupe sauf la cible
+				$sql = "SELECT
+							l.Matric,
+							l.Naissance,
+							l.Reserve as Numero_ICF,
+							l.Origine as Saison,
+							a.arbitre,
+							a.niveau as Niveau_arbitre
+						FROM kp_licence l
+						LEFT JOIN kp_arbitre a ON l.Matric = a.Matric
+						WHERE l.Matric IN ($placeholders)
+						AND l.Matric != ?";
+
+				$params = array_merge($matricules, array($numFusionCible));
+				$stmtSources = $myBdd->pdo->prepare($sql);
+				$stmtSources->execute($params);
+				$sources = $stmtSources->fetchAll(PDO::FETCH_ASSOC);
+
+				// Avant de fusionner, vérifier si on doit mettre à jour certaines informations de la cible
+				$updateCible = array();
+
+				// Si la cible n'a pas de date de naissance valide, chercher la meilleure parmi les sources
+				if (empty($cible['Naissance']) || $cible['Naissance'] == '0000-00-00' || $cible['Naissance'] == '') {
+					foreach ($sources as $source) {
+						if (!empty($source['Naissance']) && $source['Naissance'] != '0000-00-00' && $source['Naissance'] != '') {
+							$updateCible['Naissance'] = $source['Naissance'];
+							break;
+						}
+					}
+				}
+
+				// Si la cible n'a pas de numéro ICF, chercher parmi les sources
+				if (empty($cible['Numero_ICF'])) {
+					foreach ($sources as $source) {
+						if (!empty($source['Numero_ICF'])) {
+							$updateCible['Reserve'] = $source['Numero_ICF'];
+							break;
+						}
+					}
+				}
+
+				// Si la cible n'a pas de qualification d'arbitre, chercher parmi les sources
+				if (empty($cible['arbitre'])) {
+					foreach ($sources as $source) {
+						if (!empty($source['arbitre'])) {
+							// Copier les informations d'arbitre
+							$sqlCopyArb = "INSERT INTO kp_arbitre (Matric, regional, interregional, national, international, arbitre, livret, niveau, saison)
+										   SELECT :cible, regional, interregional, national, international, arbitre, livret, niveau, saison
+										   FROM kp_arbitre
+										   WHERE Matric = :source
+										   ON DUPLICATE KEY UPDATE
+										   regional = VALUES(regional),
+										   interregional = VALUES(interregional),
+										   national = VALUES(national),
+										   international = VALUES(international),
+										   arbitre = VALUES(arbitre),
+										   livret = VALUES(livret),
+										   niveau = VALUES(niveau),
+										   saison = VALUES(saison)";
+							$stmtCopyArb = $myBdd->pdo->prepare($sqlCopyArb);
+							$stmtCopyArb->execute(array(':cible' => $numFusionCible, ':source' => $source['Matric']));
+							break;
+						}
+					}
+				}
+
+				// Mettre à jour la cible avec les informations manquantes
+				if (!empty($updateCible)) {
+					$setClauses = array();
+					$params = array();
+					foreach ($updateCible as $field => $value) {
+						$setClauses[] = "$field = ?";
+						$params[] = $value;
+					}
+					$params[] = $numFusionCible;
+
+					$sqlUpdate = "UPDATE kp_licence SET " . implode(', ', $setClauses) . " WHERE Matric = ?";
+					$stmtUpdate = $myBdd->pdo->prepare($sqlUpdate);
+					$stmtUpdate->execute($params);
+				}
+
+				// Maintenant fusionner chaque source vers la cible
+				foreach ($sources as $source) {
+					$numFusionSource = $source['Matric'];
+
+					$myBdd->pdo->beginTransaction();
+
+					// buts et cartons
+					$sql = "UPDATE kp_match_detail
+						SET Competiteur = ?
+						WHERE Competiteur = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionCible, $numFusionSource));
+
+					// compos matchs
+					// D'abord supprimer les doublons si source et target sont dans le même match
+					$sql = "DELETE mj_source FROM kp_match_joueur mj_source
+						INNER JOIN kp_match_joueur mj_target
+							ON mj_source.Id_match = mj_target.Id_match
+						WHERE mj_source.Matric = ?
+						AND mj_target.Matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource, $numFusionCible));
+
+					// Puis mettre à jour les autres entrées
+					$sql = "UPDATE kp_match_joueur
+						SET Matric = ?
+						WHERE Matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionCible, $numFusionSource));
+
+					// scrutineering (contrôle) - Étape 1: Sauvegarder les données du source dans une table temporaire
+					// On doit faire ça AVANT de modifier kp_competition_equipe_joueur car la FK empêche la modification
+					// On supprime et recrée la table à chaque itération pour éviter les duplications
+					$sql = "DROP TEMPORARY TABLE IF EXISTS temp_scrutineering_fusion";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute();
+
+					$sql = "CREATE TEMPORARY TABLE temp_scrutineering_fusion (
+						id_equipe INT PRIMARY KEY,
+						kayak_status INT,
+						kayak_print INT,
+						vest_status INT,
+						vest_print INT,
+						helmet_status INT,
+						helmet_print INT,
+						paddle_count INT,
+						paddle_print INT,
+						comment TEXT
+					)";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute();
+
+					// Copier les données du TARGET dans la table temporaire en premier
+					$sql = "INSERT INTO temp_scrutineering_fusion (id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+						SELECT id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment
+						FROM kp_scrutineering
+						WHERE matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionCible));
+
+					// Puis copier les données du SOURCE et fusionner avec celles du target si même équipe
+					$sql = "INSERT INTO temp_scrutineering_fusion (id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+						SELECT id_equipe, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment
+						FROM kp_scrutineering
+						WHERE matric = ?
+						ON DUPLICATE KEY UPDATE
+							kayak_status = CASE WHEN temp_scrutineering_fusion.kayak_status IS NULL OR temp_scrutineering_fusion.kayak_status = 0 THEN VALUES(kayak_status) ELSE temp_scrutineering_fusion.kayak_status END,
+							kayak_print = CASE WHEN temp_scrutineering_fusion.kayak_print IS NULL OR temp_scrutineering_fusion.kayak_print = 0 THEN VALUES(kayak_print) ELSE temp_scrutineering_fusion.kayak_print END,
+							vest_status = CASE WHEN temp_scrutineering_fusion.vest_status IS NULL OR temp_scrutineering_fusion.vest_status = 0 THEN VALUES(vest_status) ELSE temp_scrutineering_fusion.vest_status END,
+							vest_print = CASE WHEN temp_scrutineering_fusion.vest_print IS NULL OR temp_scrutineering_fusion.vest_print = 0 THEN VALUES(vest_print) ELSE temp_scrutineering_fusion.vest_print END,
+							helmet_status = CASE WHEN temp_scrutineering_fusion.helmet_status IS NULL OR temp_scrutineering_fusion.helmet_status = 0 THEN VALUES(helmet_status) ELSE temp_scrutineering_fusion.helmet_status END,
+							helmet_print = CASE WHEN temp_scrutineering_fusion.helmet_print IS NULL OR temp_scrutineering_fusion.helmet_print = 0 THEN VALUES(helmet_print) ELSE temp_scrutineering_fusion.helmet_print END,
+							paddle_count = CASE WHEN temp_scrutineering_fusion.paddle_count IS NULL OR temp_scrutineering_fusion.paddle_count = 0 THEN VALUES(paddle_count) ELSE temp_scrutineering_fusion.paddle_count END,
+							paddle_print = CASE WHEN temp_scrutineering_fusion.paddle_print IS NULL OR temp_scrutineering_fusion.paddle_print = 0 THEN VALUES(paddle_print) ELSE temp_scrutineering_fusion.paddle_print END,
+							comment = CASE
+								WHEN temp_scrutineering_fusion.comment IS NULL OR temp_scrutineering_fusion.comment = '' THEN VALUES(comment)
+								WHEN VALUES(comment) IS NULL OR VALUES(comment) = '' THEN temp_scrutineering_fusion.comment
+								ELSE CONCAT(temp_scrutineering_fusion.comment, ' | ', VALUES(comment))
+							END";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource));
+
+					// Étape 2: Supprimer les entrées de scrutineering du source ET du target (libère les contraintes FK)
+					$sql = "DELETE FROM kp_scrutineering WHERE matric IN (?, ?)";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource, $numFusionCible));
+
+					// Étape 3a: Supprimer les doublons dans kp_competition_equipe_joueur
+					// Si source et target sont dans la même équipe, on supprime le source
+					$sql = "DELETE cej_source FROM kp_competition_equipe_joueur cej_source
+						INNER JOIN kp_competition_equipe_joueur cej_target
+							ON cej_source.Id_equipe = cej_target.Id_equipe
+						WHERE cej_source.Matric = :source
+						AND cej_target.Matric = :cible";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute([
+						':source' => $numFusionSource,
+						':cible' => $numFusionCible
+					]);
+
+					// Étape 3b: Mettre à jour les autres entrées (où source et target ne sont pas dans la même équipe)
+					$sql = "UPDATE kp_competition_equipe_joueur cej,
+						kp_licence lc
+						SET cej.Matric = :cible, cej.Nom = lc.Nom,
+							cej.Prenom = lc.Prenom, cej.Sexe = lc.Sexe
+						WHERE cej.Matric = :source
+						AND lc.Matric = :cible2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute([
+						':cible' => $numFusionCible,
+						':cible2' => $numFusionCible,
+						':source' => $numFusionSource
+					]);
+
+					// Étape 4: Fusionner les données de scrutineering depuis la table temporaire
+					$sql = "INSERT INTO kp_scrutineering (id_equipe, matric, kayak_status, kayak_print, vest_status, vest_print, helmet_status, helmet_print, paddle_count, paddle_print, comment)
+						SELECT t.id_equipe, :cible, t.kayak_status, t.kayak_print, t.vest_status, t.vest_print, t.helmet_status, t.helmet_print, t.paddle_count, t.paddle_print, t.comment
+						FROM temp_scrutineering_fusion t
+						ON DUPLICATE KEY UPDATE
+							kayak_status = VALUES(kayak_status),
+							kayak_print = VALUES(kayak_print),
+							vest_status = VALUES(vest_status),
+							vest_print = VALUES(vest_print),
+							helmet_status = VALUES(helmet_status),
+							helmet_print = VALUES(helmet_print),
+							paddle_count = VALUES(paddle_count),
+							paddle_print = VALUES(paddle_print),
+							comment = CASE
+								WHEN kp_scrutineering.comment IS NULL OR kp_scrutineering.comment = '' THEN VALUES(comment)
+								WHEN VALUES(comment) IS NULL OR VALUES(comment) = '' THEN kp_scrutineering.comment
+								ELSE CONCAT(kp_scrutineering.comment, ' | ', VALUES(comment))
+							END";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute([':cible' => $numFusionCible]);
+
+					// Nettoyer la table temporaire pour la prochaine fusion
+					$sql = "DROP TEMPORARY TABLE IF EXISTS temp_scrutineering_fusion";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute();
+
+					// arbitre principal
+					$sql = "UPDATE kp_match
+						SET Matric_arbitre_principal = ?
+						WHERE Matric_arbitre_principal = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionCible, $numFusionSource));
+
+					// arbitre secondaire
+					$sql = "UPDATE kp_match
+						SET Matric_arbitre_secondaire = ?
+						WHERE Matric_arbitre_secondaire = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionCible, $numFusionSource));
+
+					// Secretaire
+					$sql = "UPDATE kp_match
+						SET Secretaire = REPLACE(Secretaire, :source, :cible)
+						WHERE Secretaire LIKE :source2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array(
+						':cible' => '(' . $numFusionCible . ')',
+						':source' => '(' . $numFusionSource . ')',
+						':source2' => '%(' . $numFusionSource . ')%'
+					));
+
+					// Chronometre
+					$sql = "UPDATE kp_match
+						SET Chronometre = REPLACE(Chronometre, :source, :cible)
+						WHERE Chronometre LIKE :source2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array(
+						':cible' => '(' . $numFusionCible . ')',
+						':source' => '(' . $numFusionSource . ')',
+						':source2' => '%(' . $numFusionSource . ')%'
+					));
+
+					// Timeshoot
+					$sql = "UPDATE kp_match
+						SET Timeshoot = REPLACE(Timeshoot, :source, :cible)
+						WHERE Timeshoot LIKE :source2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array(
+						':cible' => '(' . $numFusionCible . ')',
+						':source' => '(' . $numFusionSource . ')',
+						':source2' => '%(' . $numFusionSource . ')%'
+					));
+
+					// Ligne1
+					$sql = "UPDATE kp_match
+						SET Ligne1 = REPLACE(Ligne1, :source, :cible)
+						WHERE Ligne1 LIKE :source2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array(
+						':cible' => '(' . $numFusionCible . ')',
+						':source' => '(' . $numFusionSource . ')',
+						':source2' => '%(' . $numFusionSource . ')%'
+					));
+
+					// Ligne2
+					$sql = "UPDATE kp_match
+						SET Ligne2 = REPLACE(Ligne2, :source, :cible)
+						WHERE Ligne2 LIKE :source2";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array(
+						':cible' => '(' . $numFusionCible . ')',
+						':source' => '(' . $numFusionSource . ')',
+						':source2' => '%(' . $numFusionSource . ')%'
+					));
+
+					// Suppression des tables enfants AVANT la licence (contraintes FK)
+
+					// Supprimer l'arbitre source
+					$sql = "DELETE FROM kp_arbitre
+						WHERE Matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource));
+
+					// Supprimer la recherche de licence source
+					$sql = "DELETE FROM kp_recherche_licence
+						WHERE Matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource));
+
+					// Suppression de la licence
+					$sql = "DELETE FROM kp_licence
+						WHERE Matric = ?";
+					$stmt = $myBdd->pdo->prepare($sql);
+					$stmt->execute(array($numFusionSource));
+
+					$myBdd->pdo->commit();
+
+					$nbFusions++;
+					array_push($fusionDetails, $numFusionSource . ' => ' . $numFusionCible);
+				}
+			}
+		} catch (Exception $e) {
+			if ($myBdd->pdo->inTransaction()) {
+				$myBdd->pdo->rollBack();
+			}
+			utySendMail("[KPI] Erreur SQL", "Fusion Automatique Licenciés Non Fédéraux\r\n" . $e->getMessage());
+			error_log("Erreur lors de la fusion automatique des licenciés non fédéraux : " . $e->getMessage());
+			array_push($this->m_arrayinfo, "Erreur lors de la fusion automatique : " . $e->getMessage());
+			return;
+		}
+
+		if ($nbFusions > 0) {
+			$myBdd->utyJournal('Fusion Auto Licenciés Non Fédéraux', $myBdd->GetActiveSaison(), utyGetSession('codeCompet'), null, null, null, $nbFusions . ' fusions effectuées');
+			array_push($this->m_arrayinfo, '<strong>Fusion automatique terminée : ' . $nbFusions . ' licencié(s) fusionné(s)</strong>');
+			foreach ($fusionDetails as $detail) {
+				array_push($this->m_arrayinfo, '  - ' . $detail);
+			}
+		} else {
+			array_push($this->m_arrayinfo, 'Aucune fusion effectuée.');
+		}
+
 		return;
 	}
 
@@ -1584,7 +2161,6 @@ class GestionOperations extends MyPageSecure
 		// Validate MIME type
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$mimeType = finfo_file($finfo, $imageFile['tmp_name']);
-		finfo_close($finfo);
 
 		if (!in_array($mimeType, $config['mime_types'])) {
 			array_push($this->m_arrayinfo, 'Erreur : Type de fichier non autorisé. Attendu : ' . implode(', ', $config['mime_types']));
@@ -1679,8 +2255,8 @@ class GestionOperations extends MyPageSecure
 			}
 
 			// Free memory
-			imagedestroy($sourceImage);
-			imagedestroy($resizedImage);
+			unset($sourceImage);
+			unset($resizedImage);
 
 			if ($result) {
 				array_push($this->m_arrayinfo, "Image redimensionnée et uploadée avec succès : $filename");
@@ -1697,6 +2273,369 @@ class GestionOperations extends MyPageSecure
 				array_push($this->m_arrayinfo, 'Erreur : Échec de l\'upload du fichier.');
 			}
 		}
+	}
+
+	/**
+	 * Copie plusieurs compétitions d'une saison à une autre avec leurs journées
+	 * - Les compétitions copiées sont non publiques, statut ATT
+	 * - Les journées sont dupliquées avec dates ajustées (+1 an, même jour de semaine)
+	 * - Pour les compétitions de type CP : si option cochée, les matchs sont copiés avec leurs encodages ; sinon, seule la première journée est copiée
+	 * - Les équipes ne sont pas copiées
+	 */
+	function CopyCompetitions()
+	{
+		$saisonSource = utyGetPost('saisonSourceCompet', '');
+		$saisonCible = utyGetPost('saisonCibleCompet', '');
+		$arrayCodesCompet = utyGetPost('codesCompet', array());
+		$copierMatchsCP = utyGetPost('copierMatchsCP', 'off') === 'on';
+
+		if (strlen($saisonSource) == 0 || strlen($saisonCible) == 0) {
+			array_push($this->m_arrayinfo, 'Veuillez sélectionner une saison source et une saison cible.');
+			return;
+		}
+
+		if ($saisonSource == $saisonCible) {
+			array_push($this->m_arrayinfo, 'Les saisons source et cible doivent être différentes.');
+			return;
+		}
+
+		if (empty($arrayCodesCompet)) {
+			array_push($this->m_arrayinfo, 'Veuillez sélectionner au moins une compétition à copier.');
+			return;
+		}
+
+		$myBdd = $this->myBdd;
+
+		// Calcul du décalage en années entre les saisons
+		$yearOffset = (int)$saisonCible - (int)$saisonSource;
+
+		try {
+			$myBdd->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$myBdd->pdo->beginTransaction();
+
+			$nbCompetCopied = 0;
+			$nbCompetSkipped = 0;
+			$nbJourneesCopied = 0;
+			$nbMatchsCopied = 0;
+
+			foreach ($arrayCodesCompet as $codeCompet) {
+				// Vérifier si la compétition existe déjà dans la saison cible
+				$sqlCheck = "SELECT COUNT(*) as nb FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+				$stmtCheck = $myBdd->pdo->prepare($sqlCheck);
+				$stmtCheck->execute(array($codeCompet, $saisonCible));
+				$checkResult = $stmtCheck->fetch();
+
+				if ($checkResult['nb'] > 0) {
+					// Compétition existe déjà, on l'ignore
+					array_push($this->m_arrayinfo, "⚠️ Compétition $codeCompet ignorée : existe déjà dans la saison $saisonCible");
+					$nbCompetSkipped++;
+					continue;
+				}
+
+				// Récupérer les données de la compétition source
+				$sqlSource = "SELECT * FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+				$stmtSource = $myBdd->pdo->prepare($sqlSource);
+				$stmtSource->execute(array($codeCompet, $saisonSource));
+				$compet = $stmtSource->fetch(PDO::FETCH_ASSOC);
+
+				if (!$compet) {
+					array_push($this->m_arrayinfo, "⚠️ Compétition $codeCompet non trouvée dans la saison $saisonSource");
+					continue;
+				}
+
+				// Détecter si c'est une compétition de type CP (phases)
+				$isTypeCP = ($compet['Code_typeclt'] == 'CP');
+
+				// Insérer la nouvelle compétition avec les modifications demandées
+				$sqlInsertCompet = "INSERT INTO kp_competition (
+					Code, Code_saison, Code_niveau, Libelle, Soustitre, Soustitre2,
+					Web, BandeauLink, LogoLink, SponsorLink, En_actif, Titre_actif,
+					Bandeau_actif, Logo_actif, Sponsor_actif, Kpi_ffck_actif,
+					ToutGroup, TouteSaisons, Code_ref, GroupOrder, Code_typeclt,
+					Age_min, Age_max, Sexe, Code_tour, Nb_equipes, Verrou, Statut,
+					Qualifies, Elimines, Points, Date_calcul, Mode_calcul,
+					Date_publication, Date_publication_calcul, Mode_publication_calcul,
+					Code_uti_calcul, Code_uti_publication, Publication, Date_publi,
+					Code_uti_publi, commentairesCompet
+				) VALUES (
+					?, ?, ?, ?, ?, ?,
+					?, ?, ?, ?, ?, ?,
+					?, ?, ?, ?,
+					?, ?, ?, ?, ?,
+					?, ?, ?, ?, ?, ?, ?,
+					?, ?, ?, ?, ?,
+					?, ?, ?,
+					?, ?, ?, ?,
+					?, ?
+				)";
+
+				$stmtInsertCompet = $myBdd->pdo->prepare($sqlInsertCompet);
+				$stmtInsertCompet->execute(array(
+					$compet['Code'],
+					$saisonCible,
+					$compet['Code_niveau'],
+					$compet['Libelle'],
+					$compet['Soustitre'],
+					$compet['Soustitre2'],
+					$compet['Web'],
+					$compet['BandeauLink'],
+					$compet['LogoLink'],
+					$compet['SponsorLink'],
+					$compet['En_actif'],
+					$compet['Titre_actif'], // Conserver Titre_actif
+					$compet['Bandeau_actif'],
+					$compet['Logo_actif'],
+					$compet['Sponsor_actif'],
+					$compet['Kpi_ffck_actif'],
+					$compet['ToutGroup'],
+					$compet['TouteSaisons'],
+					$compet['Code_ref'],
+					$compet['GroupOrder'],
+					$compet['Code_typeclt'],
+					$compet['Age_min'],
+					$compet['Age_max'],
+					$compet['Sexe'],
+					$compet['Code_tour'],
+					0, // Nb_equipes = 0
+					'N', // Verrou = 'N'
+					'ATT', // Statut = 'ATT'
+					$compet['Qualifies'],
+					$compet['Elimines'],
+					$compet['Points'],
+					'0000-00-00 00:00:00',
+					$compet['Mode_calcul'],
+					'0000-00-00 00:00:00',
+					'0000-00-00 00:00:00',
+					$compet['Mode_publication_calcul'],
+					'',
+					'',
+					'', // Publication = '' (non publique)
+					'0000-00-00 00:00:00',
+					'',
+					'' // commentairesCompet vidé
+				));
+
+				$nbCompetCopied++;
+
+				// Copier les journées de cette compétition
+				$sqlJournees = "SELECT * FROM kp_journee WHERE Code_competition = ? AND Code_saison = ?";
+				$stmtJournees = $myBdd->pdo->prepare($sqlJournees);
+				$stmtJournees->execute(array($codeCompet, $saisonSource));
+				$journees = $stmtJournees->fetchAll(PDO::FETCH_ASSOC);
+
+
+				// Si compétition CP et copierMatchsCP = false, ne copier que la première journée
+				if ($isTypeCP && !$copierMatchsCP && count($journees) > 0) {
+					$journees = array(reset($journees)); // Ne garder que la première journée
+				}
+				foreach ($journees as $journee) {
+					$oldIdJournee = $journee['Id'];
+
+					// Calculer les nouvelles dates (même jour de semaine, année suivante)
+					$newDateDebut = $this->adjustDateSameWeekday($journee['Date_debut'], $yearOffset);
+					$newDateFin = $this->adjustDateSameWeekday($journee['Date_fin'], $yearOffset);
+
+					// Générer un nouvel ID pour la journée
+					$newIdJournee = $myBdd->GetNextIdJournee();
+
+					$sqlInsertJournee = "INSERT INTO kp_journee (
+						Id, Code_competition, Code_saison, Date_debut, Date_fin,
+						Nom, Libelle, Lieu, Departement, Plan_eau,
+						Responsable_insc, Responsable_insc_adr, Responsable_insc_cp, Responsable_insc_ville,
+						Responsable_R1, Etat, Type, Code_organisateur, Organisateur,
+						Organisateur_adr, Organisateur_cp, Organisateur_ville,
+						Delegue, ChefArbitre, Validation, Code_uti, Phase, Niveau, Etape,
+						Nbequipes, Publication, Id_dupli, Public_prin, Public_sec
+					) VALUES (
+						?, ?, ?, ?, ?,
+						?, ?, ?, ?, ?,
+						?, ?, ?, ?,
+						?, ?, ?, ?, ?,
+						?, ?, ?,
+						?, ?, ?, ?, ?, ?, ?,
+						?, ?, ?, ?, ?
+					)";
+
+					$stmtInsertJournee = $myBdd->pdo->prepare($sqlInsertJournee);
+					$stmtInsertJournee->execute(array(
+						$newIdJournee,
+						$codeCompet,
+						$saisonCible,
+						$newDateDebut,
+						$newDateFin,
+						$journee['Nom'], // Nom : copier
+						$journee['Libelle'], // Libelle : copier
+						'', // Lieu : vide
+						'', // Departement : vide
+						'', // Plan_eau : vide
+						'', // Responsable_insc : vide
+						'', // Responsable_insc_adr : vide
+						'', // Responsable_insc_cp : vide
+						'', // Responsable_insc_ville : vide
+						'', // Responsable_R1 : vide
+						$journee['Etat'],
+						$journee['Type'],
+						'', // Code_organisateur : vide
+						'', // Organisateur : vide
+						'', // Organisateur_adr : vide
+						'', // Organisateur_cp : vide
+						'', // Organisateur_ville : vide
+						'', // Delegue : vide
+						'', // ChefArbitre : vide
+						'N', // Validation = 'N'
+						'',
+						$journee['Phase'], // Phase : copier
+						$journee['Niveau'], // Niveau : copier
+						$journee['Etape'], // Etape : copier
+						$journee['Nbequipes'],
+						'', // Publication = '' (non publiée)
+						null, // Id_dupli = NULL
+						'O',
+						'O'
+					));
+
+					$nbJourneesCopied++;
+
+					// Pour les compétitions de type CP, copier les matchs avec leurs encodages
+					if ($isTypeCP && $copierMatchsCP) {
+						$sqlMatchs = "SELECT * FROM kp_match WHERE Id_journee = ?";
+						$stmtMatchs = $myBdd->pdo->prepare($sqlMatchs);
+						$stmtMatchs->execute(array($oldIdJournee));
+
+						while ($match = $stmtMatchs->fetch(PDO::FETCH_ASSOC)) {
+							// Ajuster la date du match
+							$newDateMatch = $this->adjustDateSameWeekday($match['Date_match'], $yearOffset);
+
+							$sqlInsertMatch = "INSERT INTO kp_match (
+								Id_journee, Libelle, Type, Statut, Date_match, Heure_match, Heure_fin,
+								Terrain, Numero_ordre, Periode,
+								Id_equipeA, Id_equipeB, ColorA, ColorB,
+								ScoreA, ScoreB, ScoreDetailA, ScoreDetailB, CoeffA, CoeffB,
+								Commentaires_officiels, Commentaires,
+								Arbitre_principal, Arbitre_secondaire,
+								Matric_arbitre_principal, Matric_arbitre_secondaire,
+								Secretaire, Chronometre, Timeshoot, Ligne1, Ligne2,
+								Publication, Code_uti, Validation
+							) VALUES (
+								?, ?, ?, ?, ?, ?, ?,
+								?, ?, ?,
+								?, ?, ?, ?,
+								?, ?, ?, ?, ?, ?,
+								?, ?,
+								?, ?,
+								?, ?,
+								?, ?, ?, ?, ?,
+								?, ?, ?
+							)";
+
+							$stmtInsertMatch = $myBdd->pdo->prepare($sqlInsertMatch);
+							$stmtInsertMatch->execute(array(
+								$newIdJournee, // Nouvelle journée
+								$match['Libelle'], // Libelle : conserver (encodage)
+								$match['Type'], // Type : conserver
+								'ATT', // Statut = 'ATT' (non validé)
+								$newDateMatch, // Date_match : ajustée
+								$match['Heure_match'], // Heure_match : conserver
+								'00:00:00', // Heure_fin : vide
+								$match['Terrain'], // Terrain : conserver
+								$match['Numero_ordre'], // Numero_ordre : conserver
+								$match['Periode'], // Periode : conserver
+								null, // Id_equipeA : vide
+								null, // Id_equipeB : vide
+								null, // ColorA : vide
+								null, // ColorB : vide
+								null, // ScoreA : vide
+								null, // ScoreB : vide
+								null, // ScoreDetailA : vide
+								null, // ScoreDetailB : vide
+								1, // CoeffA : défaut
+								1, // CoeffB : défaut
+								null, // Commentaires_officiels : vide
+								null, // Commentaires : vide
+								null, // Arbitre_principal : vide
+								null, // Arbitre_secondaire : vide
+								null, // Matric_arbitre_principal : vide
+								null, // Matric_arbitre_secondaire : vide
+								null, // Secretaire : vide
+								null, // Chronometre : vide
+								null, // Timeshoot : vide
+								null, // Ligne1 : vide
+								null, // Ligne2 : vide
+								'', // Publication = '' (non publié)
+								'', // Code_uti : vide
+								'' // Validation = '' (non validé)
+							));
+
+							$nbMatchsCopied++;
+						}
+					}
+				}
+
+				$competInfo = "✓ Compétition $codeCompet copiée vers la saison $saisonCible";
+				if ($isTypeCP && $nbMatchsCopied > 0) {
+					$competInfo .= " (avec matchs)";
+				}
+				array_push($this->m_arrayinfo, $competInfo);
+			}
+
+			$myBdd->pdo->commit();
+
+			$message = "Copie terminée : $nbCompetCopied compétition(s) copiée(s), $nbJourneesCopied journée(s) créée(s)";
+			if ($nbMatchsCopied > 0) {
+				$message .= ", $nbMatchsCopied match(s) créé(s)";
+			}
+			$message .= ".";
+			if ($nbCompetSkipped > 0) {
+				$message .= " ($nbCompetSkipped ignorée(s) car déjà existante(s))";
+			}
+			array_push($this->m_arrayinfo, $message);
+
+			$myBdd->utyJournal('Copie Compétitions', $saisonSource, '', null, null, null,
+				"Vers saison $saisonCible : $nbCompetCopied copiées, $nbJourneesCopied journées, $nbMatchsCopied matchs, $nbCompetSkipped ignorées");
+
+		} catch (Exception $e) {
+			$myBdd->pdo->rollBack();
+			utySendMail("[KPI] Erreur SQL", "Copie Compétitions, $saisonSource => $saisonCible" . '\r\n' . $e->getMessage());
+			array_push($this->m_arrayinfo, "Erreur lors de la copie des compétitions : " . $e->getMessage());
+		}
+	}
+
+	/**
+	 * Ajuste une date pour garder le même jour de la semaine après un décalage en années
+	 * Ex: samedi 5 avril 2025 avec +1 an -> samedi 4 avril 2026
+	 *
+	 * @param string $dateStr Date au format Y-m-d
+	 * @param int $yearOffset Nombre d'années à ajouter
+	 * @return string Date ajustée au format Y-m-d
+	 */
+	private function adjustDateSameWeekday($dateStr, $yearOffset)
+	{
+		if (empty($dateStr) || $dateStr == '0000-00-00') {
+			return $dateStr;
+		}
+
+		$date = new DateTime($dateStr);
+		$originalDayOfWeek = (int)$date->format('N'); // 1 (lundi) à 7 (dimanche)
+
+		// Ajouter les années
+		$date->modify("+$yearOffset years");
+
+		// Obtenir le jour de la semaine de la nouvelle date
+		$newDayOfWeek = (int)$date->format('N');
+
+		// Calculer la différence de jours pour retrouver le même jour de la semaine
+		$dayDiff = $originalDayOfWeek - $newDayOfWeek;
+
+		// Ajuster pour que la différence soit minimale (-3 à +3 jours)
+		if ($dayDiff > 3) {
+			$dayDiff -= 7;
+		} elseif ($dayDiff < -3) {
+			$dayDiff += 7;
+		}
+
+		$date->modify("$dayDiff days");
+
+		return $date->format('Y-m-d');
 	}
 
 	function CopyRc()
@@ -1827,6 +2766,8 @@ class GestionOperations extends MyPageSecure
 
 			if ($Cmd == 'FusionJoueurs') ($_SESSION['Profile'] == 1) ? $alertMessage = $this->FusionJoueurs() : $alertMessage = 'Vous n avez pas les droits pour cette action.';
 
+			if ($Cmd == 'FusionAutomatiqueLicenciesNonFederaux') ($_SESSION['Profile'] == 1) ? $alertMessage = $this->FusionAutomatiqueLicenciesNonFederaux() : $alertMessage = 'Vous n avez pas les droits pour cette action.';
+
 			if ($Cmd == 'RenomEquipe') ($_SESSION['Profile'] == 1) ? $alertMessage = $this->RenomEquipe() : $alertMessage = 'Vous n avez pas les droits pour cette action.';
 
 			if ($Cmd == 'FusionEquipes') ($_SESSION['Profile'] == 1) ? $alertMessage = $this->FusionEquipes() : $alertMessage = 'Vous n avez pas les droits pour cette action.';
@@ -1848,8 +2789,17 @@ class GestionOperations extends MyPageSecure
 
 			if ($Cmd == 'CopyRc') ($_SESSION['Profile'] <= 2) ? $alertMessage = $this->CopyRc() : $alertMessage = 'Vous n avez pas les droits pour cette action.';
 
-			// Pour PurgeCache, on ne redirige pas car on affiche les résultats via $arrayinfo
-			if ($alertMessage == '' && $Cmd != 'PurgeCache') {
+			if ($Cmd == 'CopyCompetitions') {
+				if ($_SESSION['Profile'] == 1) {
+					$this->CopyCompetitions();
+					// Les messages seront affichés via $arrayinfo dans le switch ci-dessous
+				} else {
+					$alertMessage = 'Vous n avez pas les droits pour cette action.';
+				}
+			}
+
+			// Pour PurgeCache, CopyCompetitions et FusionAutomatique, on ne redirige pas car on affiche les résultats via $arrayinfo
+			if ($alertMessage == '' && $Cmd != 'PurgeCache' && $Cmd != 'FusionAutomatiqueLicenciesNonFederaux' && $Cmd != 'CopyCompetitions') {
 				header("Location: http://" . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
 				exit;
 			}
@@ -1893,6 +2843,8 @@ class GestionOperations extends MyPageSecure
 				$arrayinfo = $this->m_arrayinfo;
 				break;
 			case $Cmd == 'PurgeCache':
+			case $Cmd == 'FusionAutomatiqueLicenciesNonFederaux':
+			case $Cmd == 'CopyCompetitions':
 				$arrayinfo = $this->m_arrayinfo;
 				break;
 		}

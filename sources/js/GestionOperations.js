@@ -1,15 +1,11 @@
 jq = jQuery.noConflict()
 
-var langue = []
+// Les traductions sont maintenant chargées depuis le fichier centralisé js_translations.php
+// L'objet 'langue' est disponible globalement
+
 var theLstEvt = '-1'
 var theLocalUrl = 'http://localhost/KPI2'
 var theDistantUrl = "https://www.kayak-polo.info"
-
-if (lang == 'en') {
-	langue['Cliquez_pour_modifier'] = 'Click to edit'
-} else {
-	langue['Cliquez_pour_modifier'] = 'Cliquez pour modifier'
-}
 
 function ExportEvt () {
 	jq("#ParamCmd").val(jq('#evenementExport').val())
@@ -61,6 +57,99 @@ function CopyRc () {
 	document.forms['formOperations'].elements['Cmd'].value = 'CopyRc'
 	document.forms['formOperations'].elements['ParamCmd'].value = ''
 	document.forms['formOperations'].submit()
+}
+
+function CopyCompetitions () {
+	var saisonSource = jq('#saisonSourceCompet').val()
+	var saisonCible = jq('#saisonCibleCompet').val()
+	var selectedCompets = jq('#codesCompet').val()
+	var copierMatchsCP = jq('#copierMatchsCP').is(':checked')
+
+	if (!saisonSource || !saisonCible) {
+		alert('Veuillez sélectionner une saison source et une saison cible.')
+		return
+	}
+
+	if (saisonSource == saisonCible) {
+		alert('Les saisons source et cible doivent être différentes.')
+		return
+	}
+
+	if (!selectedCompets || selectedCompets.length === 0) {
+		alert('Veuillez sélectionner au moins une compétition à copier.')
+		return
+	}
+
+	var nbCompets = selectedCompets.length
+	var yearDiff = parseInt(saisonCible) - parseInt(saisonSource)
+	var confirmMsg = 'Confirmez-vous la copie de ' + nbCompets + ' compétition(s) '
+	confirmMsg += 'de la saison ' + saisonSource + ' vers la saison ' + saisonCible + ' ?\n\n'
+	confirmMsg += 'Les compétitions seront créées avec :\n'
+	confirmMsg += '- Statut ATT (en attente)\n'
+	confirmMsg += '- Non publiques\n'
+	confirmMsg += '- Sans équipes\n'
+	confirmMsg += '- Journées avec dates ajustées (+' + yearDiff + ' an(s), même jour de semaine)\n'
+
+	if (copierMatchsCP) {
+		confirmMsg += '- Pour les compétitions CP : toutes les journées et matchs copiés avec encodages (sans équipes/scores/arbitres)'
+	} else {
+		confirmMsg += '- Pour les compétitions CP : UNIQUEMENT la première journée sera copiée, SANS les matchs'
+	}
+
+	if (!confirm(confirmMsg)) {
+		return
+	}
+
+	document.forms['formOperations'].elements['Cmd'].value = 'CopyCompetitions'
+	document.forms['formOperations'].elements['ParamCmd'].value = ''
+	document.forms['formOperations'].submit()
+}
+
+function loadCompetitionsForSeason () {
+	var saison = jq('#saisonSourceCompet').val()
+	var selectCompet = jq('#codesCompet')
+
+	if (!saison) {
+		return
+	}
+
+	// Afficher un message de chargement
+	selectCompet.html('<option value="">Chargement...</option>')
+
+	jq.ajax({
+		url: 'Ajax_competitions_by_saison.php',
+		type: 'GET',
+		dataType: 'json',
+		data: { saison: saison },
+		success: function (data) {
+			selectCompet.empty()
+
+			if (data.error) {
+				selectCompet.html('<option value="">Erreur : ' + data.error + '</option>')
+				return
+			}
+
+			if (data.length === 0) {
+				selectCompet.html('<option value="">Aucune compétition pour cette saison</option>')
+				return
+			}
+
+			// Reconstruire le select avec les optgroups
+			for (var g = 0; g < data.length; g++) {
+				var optgroup = jq('<optgroup>').attr('label', data[g].label)
+				for (var o = 0; o < data[g].options.length; o++) {
+					var opt = data[g].options[o]
+					optgroup.append(
+						jq('<option>').val(opt.Code).text(opt.Code + ' - ' + opt.Libelle)
+					)
+				}
+				selectCompet.append(optgroup)
+			}
+		},
+		error: function () {
+			selectCompet.html('<option value="">Erreur de chargement</option>')
+		}
+	})
 }
 
 function activeSaison () {
@@ -240,6 +329,15 @@ jq(document).ready(function () {
 		document.forms['formOperations'].submit()
 	})
 
+	//Fusion automatique licenciés non fédéraux
+	jq("#FusionAutoLicenciesNonFederaux").click(function () {
+		if (!confirm('ATTENTION : Cette opération va fusionner automatiquement tous les doublons de licenciés non fédéraux (numéro > 2000000) ayant les mêmes Nom, Prénom et Club.\n\nCette action est irréversible.\n\nConfirmez-vous ?')) {
+			return false
+		}
+		document.forms['formOperations'].elements['Cmd'].value = 'FusionAutomatiqueLicenciesNonFederaux'
+		document.forms['formOperations'].submit()
+	})
+
 	//Renomme Equipe
 	vanillaAutocomplete('#RenomSource', 'Autocompl_equipe.php', {
 		width: 550,
@@ -352,7 +450,7 @@ jq(document).ready(function () {
 		cacheLength: 0,
 		dataType: 'json',
 		extraParams: {
-			saison: jq('#saisonTravail').val()
+			saison: jq('#saisonChangeCode').val()
 		},
 		formatItem: (item) => item.label,
 		formatResult: (item) => item.label,
@@ -437,6 +535,18 @@ jq(document).ready(function () {
 	if (currentImage) {
 		jq('#newImageNamePreview').show();
 	}
+
+	// Update info text when checkbox for copying CP matches changes
+	jq('#copierMatchsCP').change(function() {
+		var isChecked = jq(this).is(':checked');
+		var infoText = jq('#infoCopieMatchs');
+
+		if (isChecked) {
+			infoText.text('Pour les compétitions CP : les matchs sont copiés avec leurs encodages (sans équipes/scores/arbitres).');
+		} else {
+			infoText.text('Pour les compétitions CP : seule la PREMIÈRE journée sera copiée, SANS les matchs.');
+		}
+	});
 
 })
 
