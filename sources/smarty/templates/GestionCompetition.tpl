@@ -289,6 +289,54 @@
 								</select>
 							</td>
 						</tr>
+						<tr id="pointsGridRow" style="display:{if $codeTypeClt == 'MULTI'}table-row{else}none{/if};">
+							<td colspan=4 title='{#Exemple_grille_points_MULTI#}: {ldelim}"1":10,"2":6,"3":4,"4":3,"5":2,"6":1,"default":0{rdelim}'>
+								<label for="pointsGrid">{#Grille_de_points_MULTI#} : </label>
+								<input type="text" name="pointsGrid" id="pointsGrid" maxlength=255 value=""
+									data-json-value='{$pointsGrid|escape:"html"}'
+									{if $profile > 2}readonly{/if} {if $profile <= 2}class='gris'{/if}
+									placeholder='{ldelim}"1":10,"2":6,"3":4,"4":3,"5":2,"6":1,"default":0{rdelim}' />
+								<br>
+								{if $profile <= 2}
+								<button type="button" onclick="openGridEditor()" class="newBtn" style="margin-top: 5px; padding: 5px 10px;">
+									{#Ouvrir_editeur_grille#}
+								</button>
+								{/if}
+								<br><small><i>{#Format_JSON#} : {ldelim}"1":10,"2":6,"3":4,"default":0{rdelim}</i></small>
+							</td>
+						</tr>
+					<tr id="rankingStructureTypeRow" style="display:{if $codeTypeClt == 'MULTI'}table-row{else}none{/if};">
+						<td colspan=4>
+							<label for="rankingStructureType">{#Type_classement_MULTI#} : </label>
+							<select name="rankingStructureType" id="rankingStructureType" {if $profile > 2}disabled{/if}>
+								<option value="team" {if $rankingStructureType == 'team' || $rankingStructureType == ''}selected{/if}>{#Classement_equipe#}</option>
+								<option value="club" {if $rankingStructureType == 'club'}selected{/if}>{#Classement_club#}</option>
+								<option value="cd" {if $rankingStructureType == 'cd'}selected{/if}>{#Classement_CD#}</option>
+								<option value="cr" {if $rankingStructureType == 'cr'}selected{/if}>{#Classement_CR#}</option>
+								<option value="nation" {if $rankingStructureType == 'nation'}selected{/if}>{#Classement_nation#}</option>
+							</select>
+							<br><small><i>{#Info_type_classement_MULTI#}</i></small>
+						</td>
+					</tr>
+						<tr id="multiCompetitionsRow" style="display:{if $codeTypeClt == 'MULTI'}table-row{else}none{/if};">
+							<td colspan=4>
+								<label for="multiCompetitions">{#Competitions_sources_MULTI#} : </label>
+								<input type="hidden" name="multiCompetitions" id="multiCompetitionsHidden" value="" />
+								<select id="multiCompetitionsSelect" multiple size="15" style="width:100%"
+									{if $profile > 2}disabled{/if}>
+									{foreach from=$competsBySection key=sectionKey item=sectionData}
+										<optgroup label="{$sectionData.sectionLabel}">
+											{foreach from=$sectionData.competitions item=compet}
+												<option value="{$compet.Code}" {if $compet.Selected}selected{/if}>
+													{$compet.Code} - {$compet.Libelle} ({$compet.Type})
+												</option>
+											{/foreach}
+										</optgroup>
+									{/foreach}
+								</select>
+								<br><small><i>{#Multi_select_instruction#}</i></small>
+							</td>
+						</tr>
 						<tr>
 							<td colspan=2 width=55%>
 								<label for="etape">{#Tour#}/Phase :</label>
@@ -579,4 +627,107 @@
 				{/if}
 			</div>
 			</form>
+			<script>
+			// Fonction pour afficher/masquer les champs MULTI selon le type de compétition
+			function changeCodeTypeClt() {
+				var typeCompet = document.getElementById('codeTypeClt');
+				var pointsGridRow = document.getElementById('pointsGridRow');
+				var rankingStructureTypeRow = document.getElementById('rankingStructureTypeRow');
+				var multiCompetitionsRow = document.getElementById('multiCompetitionsRow');
+
+				if (typeCompet && pointsGridRow && rankingStructureTypeRow && multiCompetitionsRow) {
+					if (typeCompet.value === 'MULTI') {
+						pointsGridRow.style.display = 'table-row';
+						rankingStructureTypeRow.style.display = 'table-row';
+						multiCompetitionsRow.style.display = 'table-row';
+					} else {
+						pointsGridRow.style.display = 'none';
+						rankingStructureTypeRow.style.display = 'none';
+						multiCompetitionsRow.style.display = 'none';
+					}
+				}
+			}
+
+			// Fonction pour synchroniser le select avec le champ hidden
+			function syncMultiCompetitions() {
+				var select = document.getElementById('multiCompetitionsSelect');
+				var hidden = document.getElementById('multiCompetitionsHidden');
+
+				if (select && hidden) {
+					var selected = [];
+					for (var i = 0; i < select.options.length; i++) {
+						if (select.options[i].selected) {
+							selected.push(select.options[i].value);
+						}
+					}
+					// Stocker la liste en JSON
+					hidden.value = JSON.stringify(selected);
+				}
+			}
+
+			// Fonction pour convertir le select multiple en JSON avant la soumission
+			function updateCompet() {
+				// S'assurer que le champ hidden est à jour
+				syncMultiCompetitions();
+
+				// Appeler la fonction originale updateCompet si elle existe
+				if (typeof window.originalUpdateCompet === 'function') {
+					window.originalUpdateCompet();
+				} else {
+					document.getElementById('Cmd').value = 'UpdateCompet';
+					document.forms['formCompet'].submit();
+				}
+			}
+
+			// Attacher l'event listener sur le select pour synchroniser automatiquement
+			function initMultiCompetitionsSync() {
+				var select = document.getElementById('multiCompetitionsSelect');
+				if (select) {
+					select.addEventListener('change', syncMultiCompetitions);
+					// Synchroniser immédiatement au chargement
+					syncMultiCompetitions();
+				}
+			}
+
+			// Fonction pour ouvrir l'éditeur de grille de points
+			function openGridEditor() {
+				var pointsGrid = document.getElementById('pointsGrid');
+				var currentJson = pointsGrid ? pointsGrid.value : '';
+
+				// Ouvrir la page dans une nouvelle fenêtre
+				var url = 'GestionGrillePoints.php';
+				if (currentJson) {
+					url += '?pointsGrid=' + encodeURIComponent(currentJson);
+				}
+
+				window.open(url, 'GridEditor', 'width=900,height=700,scrollbars=yes,resizable=yes');
+			}
+
+			// Fonction pour initialiser le champ pointsGrid depuis data-json-value
+			function initPointsGrid() {
+				var input = document.getElementById('pointsGrid');
+				if (input && input.hasAttribute('data-json-value')) {
+					var jsonValue = input.getAttribute('data-json-value');
+					if (jsonValue) {
+						// Décoder les entités HTML et définir la valeur
+						var textarea = document.createElement('textarea');
+						textarea.innerHTML = jsonValue;
+						input.value = textarea.value;
+					}
+				}
+			}
+
+			// Appeler au chargement de la page pour initialiser l'état
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', function() {
+					changeCodeTypeClt();
+					initMultiCompetitionsSync();
+					initPointsGrid();
+				});
+			} else {
+				changeCodeTypeClt();
+				initMultiCompetitionsSync();
+				initPointsGrid();
+			}
+			</script>
 	</div>

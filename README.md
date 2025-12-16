@@ -177,11 +177,19 @@ kpi/
 │   ├── commun/                  # Classes PHP partagées
 │   └── wordpress_archive/       # Archive WordPress
 ├── SQL/                         # Scripts SQL
-├── DOC/                        # Documentation technique détaillée (utilisateur + développeur)
-│   ├── README.md                # Index de la documentation
+├── DOC/                         # Documentation organisée
+│   ├── README.md                # Index principal de la documentation
 │   ├── user/                    # Documentation utilisateur (fonctionnalités)
-│   ├── developer/               # Documentation développeur (guides, audits, fixes)
-│   └── ... (63+ fichiers)       # Guides migration, audits, fixes, infrastructure
+│   │   ├── KPI_FUNCTIONALITY_INVENTORY.md
+│   │   ├── MATCH_CONSISTENCY_STATS.md
+│   │   └── CRON_DOCUMENTATION.md
+│   └── developer/               # Documentation développeur
+│       ├── guides/              # Guides de migration et infrastructure
+│       ├── in-progress/         # Migrations en cours (status + plans)
+│       ├── archive/             # Migrations terminées (PHP 8.4, mPDF, etc.)
+│       ├── fixes/               # Corrections de bugs
+│       ├── audits/              # Rapports d'audit de code
+│       └── infrastructure/      # Docker, WordPress, configuration
 ├── Makefile                     # Commandes Make
 ├── CLAUDE.md                    # Documentation pour Claude Code
 ├── GEMINI.md                    # Documentation pour Gemini
@@ -317,16 +325,24 @@ make run_dev           # Relancer
 
 ## 📚 Documentation complémentaire
 
+### Guides d'utilisation
 - **[CLAUDE.md](CLAUDE.md)** : Guide complet des commandes pour Claude Code
-- **[DOC/](DOC/)** : Documentation technique détaillée
-  - ✅ **[PHP8_MIGRATION_SUMMARY.md](DOC/developer/archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** - Synthèse complète migration PHP 8.4 (TERMINÉE)
-  - 📋 **[AJAX_CONSOLIDATION_SUMMARY.md](DOC/developer/in-progress/plans/AJAX_CONSOLIDATION_SUMMARY.md)** - Plan consolidation 80+ endpoints AJAX → REST API
-  - Guides de migration (FPDF → mPDF, OpenTBS → OpenSpout, Bootstrap 5.3.8, Axios→fetch)
-  - Audits JavaScript et plan de modernisation (jQuery, bibliothèques legacy)
-  - Fixes et optimisations (PHP 8, WordPress, Docker)
-  - Audits de code et recommandations
-  - Configuration Docker et infrastructure multi-environnements
-  - Voir [DOC/README.md](DOC/README.md) pour l'index complet (63+ documents)
+- **[GEMINI.md](GEMINI.md)** : Guide pour Gemini
+
+### Documentation complète
+- **[DOC/](DOC/)** : Documentation organisée et structurée
+  - **[DOC/user/](DOC/user/)** - Documentation utilisateur (fonctionnalités, guides)
+    - [Inventaire des fonctionnalités](DOC/user/KPI_FUNCTIONALITY_INVENTORY.md)
+    - [Statistiques de cohérence des matchs](DOC/user/MATCH_CONSISTENCY_STATS.md)
+    - [Tâches cron automatiques](DOC/user/CRON_DOCUMENTATION.md)
+  - **[DOC/developer/](DOC/developer/)** - Documentation développeur (technique)
+    - **Guides** - Migration guides (FPDF → mPDF, OpenTBS → OpenSpout, Axios → fetch, etc.)
+    - **En cours** - Migrations en cours (Bootstrap 5.3.8, Flatpickr, jQuery elimination, 📋 **AJAX consolidation** 82 endpoints → REST API)
+    - **Archives** - ✅ Migrations terminées (PHP 8.4, mPDF, OpenSpout, Axios)
+    - **Fixes** - Corrections de bugs et fixes PHP 8
+    - **Audits** - Audits JavaScript, Bootstrap, code cleanup
+    - **Infrastructure** - Docker, WordPress, configuration
+  - Voir [DOC/README.md](DOC/README.md) pour l'index complet (60+ documents)
 - **Makefile** : Toutes les commandes disponibles (`make help`)
 - **Wiki GitHub** : https://github.com/FFCK/kpi/wiki
 

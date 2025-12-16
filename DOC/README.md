@@ -6,13 +6,29 @@ Cette documentation est organisée en deux sections principales :
 
 Documentation orientée utilisateurs finaux et fonctionnalités du système.
 
-- **[KPI_FUNCTIONALITY_INVENTORY.md](user/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (7000+ lignes)
-- **[MATCH_CONSISTENCY_STATS.md](user/MATCH_CONSISTENCY_STATS.md)** - Fonctionnalité de cohérence des matchs
+### Fonctionnalités Principales
+- **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Event Cache Manager - Worker en arrière-plan pour incrustations vidéo
+- **[IMAGE_UPLOAD_MANAGEMENT.md](user/IMAGE_UPLOAD_MANAGEMENT.md)** - Upload et gestion d'images (logos, photos)
+- **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe entre compétitions
+- **[MATCH_DAY_BULK_OPERATIONS.md](user/MATCH_DAY_BULK_OPERATIONS.md)** - Opérations de masse sur les matchs (publication, validation, suppression)
+- **[BULK_COMPETITION_COPY.md](user/BULK_COMPETITION_COPY.md)** - Copie en masse de compétitions entre saisons (avec journées et matchs)
+
+### Fonctionnalités Spécifiques
+- **[MATCH_CONSISTENCY_STATS.md](user/MATCH_CONSISTENCY_STATS.md)** - Statistiques de cohérence des matchs
+- **[CONSOLIDATION_PHASES_CLASSEMENT.md](user/CONSOLIDATION_PHASES_CLASSEMENT.md)** - Consolidation des phases de classement
+- **[MULTI_COMPETITION_TYPE.md](user/MULTI_COMPETITION_TYPE.md)** - Type de compétition MULTI (agrégation multi-compétitions)
+- **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Guide du visualiseur de documentation
+- **[NOUVEAUTES.md](user/NOUVEAUTES.md)** - Dernières nouveautés et fonctionnalités ajoutées
 - **[CRON_DOCUMENTATION.md](user/CRON_DOCUMENTATION.md)** - Tâches planifiées automatiques
+
+Voir [user/README.md](user/README.md) pour plus de détails.
 
 ## 💻 [Documentation Développeur](developer/)
 
 Documentation technique pour le développement et la maintenance du projet.
+
+### [Référence](developer/reference/)
+- **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
 
 ### [Guides](developer/guides/)
 
@@ -33,6 +49,13 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[NPM_BACKEND_PRODUCTION_GUIDE.md](developer/guides/infrastructure/NPM_BACKEND_PRODUCTION_GUIDE.md)** - NPM pour backend PHP
 - **[TOOLTIP_TESTING_GUIDE.md](developer/guides/infrastructure/TOOLTIP_TESTING_GUIDE.md)** - Guide de test tooltips
 
+#### [Bonnes Pratiques](developer/guides/)
+- **[BEST_PRACTICES_JAVASCRIPT_SMARTY.md](developer/guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md)** - Bonnes pratiques JavaScript & Smarty (traductions, JSON, constructeurs)
+
+#### [Fonctionnalités](developer/guides/features/)
+- **[COMPETITION_TYPE_MULTI.md](developer/guides/features/COMPETITION_TYPE_MULTI.md)** - Documentation développeur type MULTI (héritée, voir version technique ci-dessous)
+- **[COMPETITION_TYPE_MULTI_TECHNICAL.md](developer/guides/features/COMPETITION_TYPE_MULTI_TECHNICAL.md)** - Documentation technique complète compétitions MULTI et éditeur de grille
+
 ### [Travaux en cours](developer/in-progress/)
 
 #### [Statuts des migrations](developer/in-progress/status/)
@@ -42,8 +65,9 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[MASKED_INPUT_MIGRATION_STATUS.md](developer/in-progress/status/MASKED_INPUT_MIGRATION_STATUS.md)** - ⏳ Migration masked input
 
 #### [Plans d'action](developer/in-progress/plans/)
-- **[AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md](developer/in-progress/plans/AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md)** ⭐ **NOUVEAU** - Plan consolidation 80+ endpoints AJAX → REST API
+- **[AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md](developer/in-progress/plans/AJAX_ENDPOINTS_CONSOLIDATION_PLAN.md)** ⭐ **NOUVEAU** - Plan consolidation 82 endpoints AJAX → REST API (détails complets)
 - **[AJAX_CONSOLIDATION_SUMMARY.md](developer/in-progress/plans/AJAX_CONSOLIDATION_SUMMARY.md)** ⭐ **NOUVEAU** - Synthèse consolidation AJAX
+- **[AJAX_CONSOLIDATION_UPDATE_NOV2025.md](developer/in-progress/plans/AJAX_CONSOLIDATION_UPDATE_NOV2025.md)** ⭐ **NOUVEAU** - Mise à jour Nov 2025 (API2 découverte, nouveaux endpoints)
 - **[JQUERY_ELIMINATION_STRATEGY.md](developer/in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md)** - Stratégie élimination jQuery
 - **[JS_LIBRARIES_CLEANUP_PLAN.md](developer/in-progress/plans/JS_LIBRARIES_CLEANUP_PLAN.md)** - Plan nettoyage bibliothèques JS
 - **[PLAN_MIGRATION_BOOTSTRAP.md](developer/in-progress/plans/PLAN_MIGRATION_BOOTSTRAP.md)** - Plan migration Bootstrap
@@ -74,6 +98,9 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[BUG_SQL_COMPET_ASTERISK.md](developer/fixes/bugs/BUG_SQL_COMPET_ASTERISK.md)** - Bug SQL avec astérisque
 - **[FIX_CSV_EXPORT_OPENSPOUT.md](developer/fixes/bugs/FIX_CSV_EXPORT_OPENSPOUT.md)** - Fix export CSV OpenSpout
 - **[FIX_MYPDF_OPEN_METHOD.md](developer/fixes/bugs/FIX_MYPDF_OPEN_METHOD.md)** - Fix méthode Open() MyPDF
+
+#### [Fonctionnalités](developer/fixes/features/)
+- **[STAT_LICENCIES_CATEGORIE.md](developer/fixes/features/STAT_LICENCIES_CATEGORIE.md)** - ✅ Statistique licenciés FFCK par catégorie d'âge
 
 #### [Correctifs PHP 8](developer/fixes/php8/)
 - **[PHP84_DEPRECATED_FIXES.md](developer/fixes/php8/PHP84_DEPRECATED_FIXES.md)** - Correctifs deprecated PHP 8.4
@@ -114,11 +141,11 @@ Documentation technique pour le développement et la maintenance du projet.
 
 ## 📊 Statistiques
 
-- **Total documents**: 63+ fichiers
-- **Documentation utilisateur**: 3 fichiers
-- **Documentation développeur**: 60+ fichiers
-- **Lignes de documentation**: ~27000+
-- **Dernière mise à jour**: 2025-11-22
+- **Total documents**: 66+ fichiers
+- **Documentation utilisateur**: 10 fichiers
+- **Documentation développeur**: 59+ fichiers (dont 1 référence)
+- **Lignes de documentation**: ~23000+
+- **Dernière mise à jour**: 2025-12-12
 
 ---
 
