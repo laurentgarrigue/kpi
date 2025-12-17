@@ -273,15 +273,15 @@ Allowed methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`
 
 | Legacy Endpoint | New Endpoint |
 |----------------|--------------|
-| `/api/events/{mode}` | `/api2/api/events/{mode}` |
-| `/api/event/{id}` | `/api2/api/event/{id}` |
-| `/api/games/{eventId}` | `/api2/api/games/{eventId}` |
-| `/api/charts/{eventId}` | `/api2/api/charts/{eventId}` |
-| `/api/team-stats/{teamId}/{eventId}` | `/api2/api/team-stats/{teamId}/{eventId}` |
-| `/api/stars` | `/api2/api/stars` |
-| `/api/rating` | `/api2/api/rating` |
-| `/api/staff/{token}/*` | `/api2/api/staff/{token}/*` |
-| `/api/report/{token}/*` | `/api2/api/report/{token}/*` |
-| `/api/wsm/*` | `/api2/api/wsm/*` |
+| `/api/events/{mode}` | `/api2/events/{mode}` |
+| `/api/event/{id}` | `/api2/event/{id}` |
+| `/api/games/{eventId}` | `/api2/games/{eventId}` |
+| `/api/charts/{eventId}` | `/api2/charts/{eventId}` |
+| `/api/team-stats/{teamId}/{eventId}` | `/api2/team-stats/{teamId}/{eventId}` |
+| `/api/stars` | `/api2/stars` |
+| `/api/rating` | `/api2/rating` |
+| `/api/staff/{token}/*` | `/api2/staff/{token}/*` |
+| `/api/report/{token}/*` | `/api2/report/{token}/*` |
+| `/api/wsm/*` | `/api2/wsm/*` |
 
 All endpoints return the same JSON structure as the legacy API.

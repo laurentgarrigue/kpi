@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\CacheMatchService;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,7 +14,8 @@ use Symfony\Component\Routing\Annotation\Route;
 class WsmController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private CacheMatchService $cacheService
     ) {
     }
 
@@ -125,7 +127,15 @@ class WsmController extends AbstractController
 
         try {
             $conn->executeStatement($sql, [$data->value, $matchId]);
-            // TODO: Create cache here
+
+            // Créer le cache du match
+            try {
+                $this->cacheService->createMatchCache($matchId);
+            } catch (\Exception $cacheError) {
+                // Log cache error but don't fail the request
+                error_log("Cache creation failed for match {$matchId}: " . $cacheError->getMessage());
+            }
+
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
@@ -175,7 +185,13 @@ class WsmController extends AbstractController
             ]);
         }
 
-        // TODO: Create cache here
+        // Créer le cache du match
+        try {
+            $this->cacheService->createMatchCache($matchId);
+        } catch (\Exception $cacheError) {
+            error_log("Cache creation failed for match {$matchId}: " . $cacheError->getMessage());
+        }
+
         return new JsonResponse(['success' => true]);
     }
 
@@ -208,7 +224,13 @@ class WsmController extends AbstractController
                 $data->params->status, $matchId, $data->params->team, $data->params->player
             ]);
 
-            // TODO: Create cache here
+            // Créer le cache du match
+            try {
+                $this->cacheService->createMatchCache($matchId);
+            } catch (\Exception $cacheError) {
+                error_log("Cache creation failed for match {$matchId}: " . $cacheError->getMessage());
+            }
+
             return new JsonResponse(['success' => true]);
         }
 
@@ -257,7 +279,13 @@ class WsmController extends AbstractController
             ]);
         }
 
-        // TODO: Create cache here
+        // Créer le cache du match
+        try {
+            $this->cacheService->createMatchCache($matchId);
+        } catch (\Exception $cacheError) {
+            error_log("Cache creation failed for match {$matchId}: " . $cacheError->getMessage());
+        }
+
         return new JsonResponse(['success' => true]);
     }
 
