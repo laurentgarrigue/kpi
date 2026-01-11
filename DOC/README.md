@@ -12,6 +12,7 @@ Documentation orientée utilisateurs finaux et fonctionnalités du système.
 - **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe entre compétitions
 - **[MATCH_DAY_BULK_OPERATIONS.md](user/MATCH_DAY_BULK_OPERATIONS.md)** - Opérations de masse sur les matchs (publication, validation, suppression)
 - **[BULK_COMPETITION_COPY.md](user/BULK_COMPETITION_COPY.md)** - Copie en masse de compétitions entre saisons (avec journées et matchs)
+- **[TEAM_DISTANCE_CALCULATOR.md](user/TEAM_DISTANCE_CALCULATOR.md)** - Calculateur de distances kilométriques des équipes
 
 ### Fonctionnalités Spécifiques
 - **[MATCH_CONSISTENCY_STATS.md](user/MATCH_CONSISTENCY_STATS.md)** - Statistiques de cohérence des matchs

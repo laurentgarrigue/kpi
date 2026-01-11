@@ -51,6 +51,14 @@ Cette section contient la documentation orientée utilisateurs finaux du systèm
   - Guide complet d'utilisation et FAQ
   - **Statut**: ✅ En production
 
+- **[TEAM_DISTANCE_CALCULATOR.md](TEAM_DISTANCE_CALCULATOR.md)** - **Calculateur de distances kilométriques**
+  - Calcul des distances routières entre clubs d'une compétition
+  - Kilométrage total par équipe selon les lieux des journées
+  - Matrice des distances inter-clubs
+  - Export Excel (ODS) depuis Gestion des équipes
+  - Support API OpenRouteService (distances routières) ou Haversine (vol d'oiseau)
+  - **Statut**: ✅ En production
+
 - **[MULTI_COMPETITION_TYPE.md](MULTI_COMPETITION_TYPE.md)** - **Type de compétition Multiple**
   - Gestion des compétitions avec plusieurs types
   - Configuration et utilisation
