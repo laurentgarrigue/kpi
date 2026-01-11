@@ -56,6 +56,8 @@
 											src="../img/pdfEN.png" /><br>EN</a>
 									<a href="FeuillePresenceCat.php" target="_blank" title="{#Feuilles_de_presence_par_categorie#}"><img
 											height="25" src="../img/pdf2.png" /><br>Cat</a>
+									<a href="ExportDistanceEquipes.php?compet={$codeCompet}" title="{#Distances_kilometriques#} (ODS)"><img
+											height="25" src="../img/ods.png" /><br>Km</a>
 									{if $codeCompet == 'POOL'}
 										<a href="FeuillePresencePhotoRef.php" target="_blank" title="{#Feuilles_de_presence_photo#}"><img
 												height="25" src="../img/pdf2.png" /><br>Photo</a>
