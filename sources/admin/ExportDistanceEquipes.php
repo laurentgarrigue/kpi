@@ -23,9 +23,8 @@ use OpenSpout\Common\Entity\Style\Color;
 if (!isset($_SESSION)) {
     session_start();
 }
-
 // Vérification authentification
-if (!isset($_SESSION['user']) || $_SESSION['Profile'] > 6) {
+if (!isset($_SESSION['User']) || $_SESSION['Profile'] > 6) {
     exit("Erreur : Accès non autorisé.");
 }
 
@@ -45,7 +44,7 @@ if (empty($codeCompet) || $codeCompet == '*') {
 }
 
 // Vérifier que la compétition n'est pas internationale
-$sql = "SELECT c.Code, c.Libelle, c.Code_niveau, cr.Code_comite_reg
+$sql = "SELECT c.Code, c.Libelle, c.Code_niveau, cr.Code
         FROM kp_competition c
         LEFT JOIN kp_cd cd ON c.Code_niveau LIKE CONCAT(cd.Code, '%')
         LEFT JOIN kp_cr cr ON cd.Code_comite_reg = cr.Code
