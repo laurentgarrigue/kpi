@@ -7,26 +7,35 @@
             <input type='hidden' name='idEquipeB' Value=''/>
             <input type='hidden' name='Pub' Value=''/>
             <input type='hidden' name='Verrou' Value=''/>
-            
-            <div class='col-md-1 col-sm-2 col-xs-2 hidden-xs selects'>
+
+            {* Toggle Compétitions / Événements *}
+            <div class='col-md-2 col-sm-3 col-xs-6 hidden-xs selects'>
+                <label>&nbsp;</label>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="submit" name="eventMode" value="group"
+                        class="btn {if $eventMode == 'group' || $eventMode == ''}btn-primary{else}btn-default{/if}">
+                        {#Competitions#}
+                    </button>
+                    <button type="submit" name="eventMode" value="event"
+                        class="btn {if $eventMode == 'event'}btn-primary{else}btn-default{/if}">
+                        {#Evenements#}
+                    </button>
+                </div>
+            </div>
+
+            {* Sélecteur de saison (toujours visible) *}
+            <div class='col-md-1 col-sm-2 col-xs-3 hidden-xs selects'>
                 <label for="Saison">{#Saison#}</label>
                 <select name="Saison" onChange="submit()" id="Saison">
-                    {section name=i loop=$arraySaison} 
+                    {section name=i loop=$arraySaison}
                         <option Value="{$arraySaison[i].Code}" {if $arraySaison[i].Code eq $Saison}selected{/if}>{$arraySaison[i].Code}</option>
                     {/section}
                 </select>
             </div>
-            <div class='col-md-2 col-sm-4 col-xs-4 hidden-xs selects'>
-                <label for="event">{#Evenement#}</label>
-                <select name="event" onChange="submit();" id="event">
-                    <option value="0" {if $event == 0}selected{/if}>--- {#Aucun#} ---</option>
-                    {section name=i loop=$arrayEvents}
-                        <option value="{$arrayEvents[i].Id}" {if $event == $arrayEvents[i].Id}selected{/if}>{$arrayEvents[i].Libelle}</option>
-                    {/section}
-                </select>
-            </div>
-            {if $event <= 0}
-                <div class='col-md-4 col-sm-6 col-xs-5 hidden-xs selects'>
+
+            {* Sélecteur conditionnel : Group ou Event *}
+            {if $eventMode == 'group' || $eventMode == ''}
+                <div class='col-md-4 col-sm-5 col-xs-6 hidden-xs selects'>
                     <label for="Group">{#Competition#}</label>
                     <select name="Group" onChange="submit();" id="Group">
                         {section name=i loop=$arrayCompetitionGroupe}
@@ -35,54 +44,52 @@
                             <optgroup label="{$smarty.config.$label|default:$label}">
                                 {section name=j loop=$options}
                                     {assign var='optionLabel' value=$options[j].Groupe}
-                                    <option Value="{$options[j].Groupe}" {$options[j].selected}>{$smarty.config.$optionLabel|default:$options[j].Libelle}</option>
+                                    {assign var='optionLibelle' value=$options[j].Libelle}
+                                    {assign var='optionLibelleEn' value=$options[j].Libelle_en|default:''}
+                                    <option Value="{$options[j].Groupe}" {$options[j].selected}>
+                                        {if $lang == 'en' && $optionLibelleEn != ''}
+                                            {$optionLibelleEn}
+                                        {else}
+                                            {$smarty.config.$optionLabel|default:$optionLibelle}
+                                        {/if}
+                                    </option>
                                 {/section}
                             </optgroup>
+                        {sectionelse}
+                            <option disabled>{#Aucune_competition_trouvee#}</option>
                         {/section}
                     </select>
                 </div>
-            {/if}   
-            <div class="visible-xs col-xs-11 selects bold" id="subtitle"><label></label></div>    
+            {else}
+                <div class='col-md-4 col-sm-5 col-xs-6 hidden-xs selects'>
+                    <label for="event">{#Evenement#}</label>
+                    <select name="event" onChange="submit();" id="event">
+                        <option value="0" disabled>{#Selectionner_un_evenement#}</option>
+                        {section name=i loop=$arrayEvents}
+                            <option value="{$arrayEvents[i].Id}" {if $event == $arrayEvents[i].Id}selected{/if}>
+                                {$arrayEvents[i].Libelle} - {$arrayEvents[i].Lieu}
+                            </option>
+                        {sectionelse}
+                            <option disabled>{#Aucun_evenement#}</option>
+                        {/section}
+                    </select>
+                </div>
+            {/if}
+
+            {* Sous-titre mobile et toggle *}
+            <div class="visible-xs col-xs-11 selects bold" id="subtitle"><label></label></div>
             <a class="visible-xs-block col-xs-1 pull-right" href="" id="selects_toggle">
                 <img class="img-responsive" src="img/glyphicon-triangle-bottom.png" width="16">
             </a>
-            {if $event <= 0}
-                {if $arrayCompetition[0].Code_typeclt == 'CHPT'}
-                    <div class='col-md-3 col-sm-6 col-xs-7 hidden-xs selects'>
-                        <label for="J">{#Journee#}</label>
-                        <select name="J" onChange="submit();" id="J">
-                            <option Value="*" Selected>{#Toutes#}</option>
-                            {section name=i loop=$arrayListJournees}
-                                    <option Value="{$arrayListJournees[i].Id}" {if $idSelJournee == $arrayListJournees[i].Id}Selected{/if}>
-                                        {if $lang == 'en'}{$arrayListJournees[i].Date_debut_en}
-                                        {else}{$arrayListJournees[i].Date_debut}
-                                        {/if} - {$arrayListJournees[i].Lieu}
-                                    </option>
-                            {/section}
-                        </select>
-                    </div>
-                {elseif $nbCompet > 1}
-                    <div class='col-md-3 col-sm-6 col-xs-7 hidden-xs selects'>
-                        <label for="Compet">{#Categorie#}</label>
-                        <select name="Compet" onChange="submit();" id="Compet">
-                            <option Value="*" Selected>{#Toutes#}</option>
-                            {section name=i loop=$arrayCompetition}
-                                    <option Value="{$arrayCompetition[i].Code}" {if $codeCompet == $arrayCompetition[i].Code}Selected{/if}>
-                                        {$arrayCompetition[i].Soustitre2|default:$arrayCompetition[i].Libelle}
-                                    </option>
-                            {/section}
-                        </select>
-                    </div>
-                {else}
-                    <div class='col-md-3 col-sm-6 col-xs-7 hidden-xs selects'></div>
-                {/if}
-            {/if}
-            <div class='col-md-2 col-sm-6 col-xs-5 hidden-xs text-right selects'>
-                <div id="fb-root"></div>
-                <div class="fb-like" data-href="https://www.kayak-polo.info/kpmatchs.php?lang={$lang}&event={$event}&Saison={$Saison}&Group={$Code_ref}&Compet={$codeCompet}&J={$idSelJournee}" 
-                     data-layout="button" data-action="recommend" data-show-faces="false" data-share="true"></div>
-                <br>
-                <a class="pdfLink btn btn-default" href="PdfListeMatchs{if $lang=='en'}EN{/if}.php?S={$Saison}&idEvenement={$event}&Group={$codeCompetGroup}&Compet={$codeCompet}&Journee={$idSelJournee}" Target="_blank"><img width="20" src="img/pdf.gif" alt="{#Matchs#} (pdf)" title="{#Matchs#} (pdf)" /></a>
+
+            {* Lien PDF *}
+            <div class='col-md-2 col-sm-2 col-xs-12 hidden-xs text-right selects'>
+                <label class="hidden-xs">&nbsp;</label>
+                <a class="pdfLink btn btn-default"
+                   href="PdfListeMatchs{if $lang=='en'}EN{/if}.php?S={$Saison}&idEvenement={$event}&Group={$codeCompetGroup}&Compet={$codeCompet}&Journee={$idSelJournee}"
+                   target="_blank">
+                    <img width="20" src="img/pdf.gif" alt="{#Matchs#} (pdf)" title="{#Matchs#} (pdf)" />
+                </a>
             </div>
         </form>
     </article>

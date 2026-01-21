@@ -1751,7 +1751,44 @@ class MyBdd
 	}
 
 	/**
-	 * 
+	 * Récupère les groupes ayant au moins une compétition publiée pour la saison donnée
+	 *
+	 * @param string $saison Code de la saison (ex: '2024')
+	 * @param string $groupActif Code du groupe actif (pour marquage 'selected')
+	 * @return array Tableau structuré par sections avec options groupées
+	 */
+	function GetGroupsForSeason($saison, $groupActif = '')
+	{
+		$result = [];
+		$label = $this->getSections();
+
+		$sql = "SELECT DISTINCT g.*
+			FROM kp_groupe g
+			INNER JOIN kp_competition c ON c.Code_ref = g.Groupe
+			WHERE g.section < 6
+			AND c.Publication = 'O'
+			AND c.Code_saison = ?
+			ORDER BY g.section, g.ordre";
+
+		$stmt = $this->pdo->prepare($sql);
+		$stmt->execute([$saison]);
+
+		$i = -1;
+		$j = '';
+		while ($row = $stmt->fetch()) {
+			if ($j != $row['section']) {
+				$i++;
+				$result[$i]['label'] = $label[$row['section']];
+			}
+			$row['selected'] = ($groupActif == $row['Groupe']) ? 'selected' : '';
+			$result[$i]['options'][] = $row;
+			$j = $row['section'];
+		}
+		return $result;
+	}
+
+	/**
+	 *
 	 * GetEvents
 	 * Récupère les événements (publics ou tous)
 	 * 

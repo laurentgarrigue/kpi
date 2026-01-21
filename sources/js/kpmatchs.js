@@ -249,15 +249,14 @@ jq(document).ready(function(){
         jq('#selector article').toggleClass('article_sans_bg');
     });
     
-    var subtitle = jq('#Saison').val() + ' - ' + jq('#Group option:selected').html();
-    if(typeof(jq('#J').val()) != 'undefined' && jq('#J').val() != '*') {
-        subtitle += ' (' + jq('#J option:selected').html() + ')';
-    }
-    if(typeof(jq('#Compet').val()) != 'undefined' && jq('#Compet').val() != '*') {
-        subtitle += ' (' + jq('#Compet option:selected').html() + ')';
-    }
-    if(jq('#event').val() > 0) {
-        subtitle = jq('#Saison').val() + ' - ' + jq('#event option:selected').html();
+    // Sous-titre selon le mode (Compétitions ou Événements)
+    var subtitle = jq('#Saison').val();
+    if(jq('button[name="eventMode"][value="group"]').hasClass('btn-primary') || jq('#Group').length > 0) {
+        if(jq('#Group option:selected').length > 0 && jq('#Group option:selected').html()) {
+            subtitle += ' - ' + jq('#Group option:selected').html().trim();
+        }
+    } else if(jq('#event').length > 0 && jq('#event').val() > 0) {
+        subtitle += ' - ' + jq('#event option:selected').html().trim();
     }
     
 //    jq('#selects_toggle:visible').click();

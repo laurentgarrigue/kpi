@@ -62,6 +62,28 @@ class Matchs extends MyPage
         $private = utyGetGet('private', $private);
         $_SESSION['private'] = $private;
 
+        // Mode de sélection : 'group' (compétitions) ou 'event' (événements)
+        $eventMode = utyGetSession('eventMode', 'group');
+        $eventMode = utyGetPost('eventMode', $eventMode);
+        $eventMode = utyGetGet('eventMode', $eventMode);
+        // Cascade lors du changement de mode
+        if (isset($_SESSION['eventMode']) && $eventMode != $_SESSION['eventMode']) {
+            if ($eventMode == 'group') {
+                $_SESSION['event'] = 0;
+            } else {
+                $_SESSION['codeCompetGroup'] = '';
+                $codeCompetGroup = '';
+            }
+            $_SESSION['idSelJournee'] = '*';
+            $_SESSION['idSelCompet'] = '*';
+            $idSelJournee = '*';
+            $codeCompet = '*';
+            $this->m_tpl->assign('idSelJournee', $idSelJournee);
+            $this->m_tpl->assign('codeCompet', $codeCompet);
+        }
+        $_SESSION['eventMode'] = $eventMode;
+        $this->m_tpl->assign('eventMode', $eventMode);
+
         $event = utyGetSession('event', 0);
         $event = utyGetPost('event', $event);
         $event = utyGetGet('event', $event);
@@ -123,8 +145,19 @@ class Matchs extends MyPage
 
         $this->m_tpl->assign('arraySaison', $arraySaison);
 
-        // Chargement des Evénements
-        $arrayEvents = $myBdd->GetEvents(true, false);
+        // Chargement des Evénements (filtrés par année si mode event)
+        if ($eventMode == 'event') {
+            $sql = "SELECT Id, Libelle, Lieu, logo
+                FROM kp_evenement
+                WHERE Publication = 'O'
+                AND YEAR(Date_debut) = ?
+                ORDER BY Date_debut DESC, Id DESC";
+            $result = $myBdd->pdo->prepare($sql);
+            $result->execute([$codeSaison]);
+            $arrayEvents = $result->fetchAll();
+        } else {
+            $arrayEvents = [];
+        }
         $this->m_tpl->assign('arrayEvents', $arrayEvents);
         if ($event > 0) {
             foreach ($arrayEvents as $key => $value) {
@@ -135,8 +168,12 @@ class Matchs extends MyPage
             }
         }
 
-        // Chargement des Groupes
-        $getGroups = $myBdd->GetGroups('public', $codeCompetGroup);
+        // Chargement des Groupes (filtrés par saison si mode group)
+        if ($eventMode == 'group') {
+            $getGroups = $myBdd->GetGroupsForSeason($codeSaison, $codeCompetGroup);
+        } else {
+            $getGroups = [];
+        }
         $this->m_tpl->assign('arrayCompetitionGroupe', $getGroups);
 
         // Chargement des Compétitions ...
