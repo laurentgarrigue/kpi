@@ -22,7 +22,7 @@
       <!-- Group display -->
       <template v-else-if="preferenceStore.preferences.lastGroup">
         <span class="font-semibold text-md lg:text-xl">{{ preferenceStore.preferences.lastGroup.code }} - {{ getGroupLabel(preferenceStore.preferences.lastGroup) }}</span>
-        <span class="text-sm text-gray-500 ml-2">({{ preferenceStore.preferences.lastSeason }})</span>
+        <span class="font-semibold text-md text-gray-800 ml-2">({{ preferenceStore.preferences.lastSeason }})</span>
       </template>
       <br>
       <button class="ml-2 px-2 py-1 bg-gray-500 text-white text-xs rounded cursor-pointer">
@@ -267,13 +267,7 @@ const loadGroups = async () => {
   groupStore.loading = true
   showSelector.value = false
   try {
-    // Restore season from preferences if available and not already set differently
-    const lastSeason = preferenceStore.preferences.lastSeason
-    if (lastSeason && selectedSeason.value === currentYear.toString()) {
-      selectedSeason.value = lastSeason
-    }
-
-    // Use selected season
+    // Use selected season (restored from preferences in onMounted if needed)
     const season = selectedSeason.value
     groupStore.selectSeason(season)
 
@@ -287,6 +281,7 @@ const loadGroups = async () => {
 
     // Restore group selection only if it matches the current season
     const lastGroup = preferenceStore.preferences.lastGroup
+    const lastSeason = preferenceStore.preferences.lastSeason
     if (lastGroup && lastSeason === season) {
       selectedGroupCode.value = lastGroup.code
     } else {
