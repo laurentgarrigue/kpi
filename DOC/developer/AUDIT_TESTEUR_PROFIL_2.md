@@ -11,7 +11,7 @@
 
 ### Gestion d'images / uploader
 - ✅ marche uniquement sur profil 1 ? pas réusssi à acceder, ni pour logo compétition ni pour logo équipe
-accès à élargir ? a priori prévu pour accès ±profil 4 d'après la doc, mais je n'ai pas trouvé comment faire avec un profil 2 - **RÉSOLU** Dans App4, accès élargi au profil 2 depuis le menu Administration -> Opérations -> Images.
+accès à élargir ? a priori prévu pour accès ±profil 4 d'après la doc, mais je n'ai pas trouvé comment faire avec un profil 2 - **RÉSOLU, à tester** Dans App4, accès élargi au profil 2 depuis le menu Administration -> Opérations -> Images.
 
 ### ✅ Stats contrôle de cohérence des matchs — résolu, à tester :
 - Règlement RP KAP 26.4 maintenant pris en compte, avec différenciation par niveau/type de compétition :
@@ -51,24 +51,25 @@ accès à élargir ? a priori prévu pour accès ±profil 4 d'après la doc, mai
 - ✅ Schémas de compétitions : erreur 404 sur les liens vers les schémas — **RÉSOLU, à tester** (les liens `window.open()` et `NuxtLink target="_blank"` ne préfixaient pas `/admin2` ; corrigé via `router.resolve()` dans `gamedays/index.vue` et `competitions/copy.vue`)
 
 - Feuilles de match PDF : qq détails de mise en page à régler : 
-	* la typo a changé, du coup certains champs dépassent des cadres. => réduire globalement la taille de police d'1 ou 2 pts ?
-	* le QR code dépasse sur les bordures adjacentes, qui disparaissent à l'édition
+	* ⚠️ la typo a changé, du coup certains champs dépassent des cadres. => réduire globalement la taille de police d'1 ou 2 pts ? — **PROBLEME NON CONSTATE**
+	* ⚠️ le QR code dépasse sur les bordures adjacentes, qui disparaissent à l'édition — **PROBLEME NON CONSTATE**
 
 - Page Documents :
 	* ✅ export des listes de match en format tableur ODS : le numéro du match n'est pas exporté dans le fichier (idem depuis la liste des matchs), c'est pourtant utile → **RÉSOLU**
-	* horodatage "variable" sur les fichiers PDF
-		- Equipes / feuilles de présence FR : uniquement sur la dernière page, date du 01/01/1970 à 00:00 ? / horodater chacune des pages en pied de page ?
-		- Equipes / feuilles de présence EN : aucun horodatage / horodater chacune des pages en pied de page ?
-		- Equipes / Présence avec VISA et Présence avec photo : aucun horodatage / horodater chacune des pages en pied de page ?
-		- Matchs / Liste des matchs FR : date du jour OK mais heure fixe à 00h00
-		- Matchs / Liste des matchs EN : date du 01/01/1970 à 00:00
-		- Matchs / feuilles de marque : date du jour OK mais heure en UTC+00
-		- Classements / classement général : date du 01/01/1970 à 00:00
-		- Classements / détail par phases : date du 01/01/1970 à 00:00
-		- Classements / détail par équipes : date du 01/01/1970 à 00:00 pour les 2 cas compétition type championnat ou coupe
-		- Evenements / match événement FR : date du jour OK mais heure fixe à 00h00
-		- Evenements / match événement EN : date du 01/01/1970 à 00:00
-		- Contrôle / Carton cumulés : à horodater en pied de page?
+	* ✅ horodatage "variable" sur les fichiers PDF — **RÉSOLU** : nouvel helper `utyGetPrintTimestamp()` dans `MyTools.php` ; app4 passe le paramètre `tz` (IANA timezone du navigateur, ex. `Europe/Paris`) dans tous les liens PDF legacy ; le PHP utilise ce paramètre en priorité, puis le `$_SESSION['tzOffset']` legacy, puis l'heure serveur. Timestamps ajoutés en pied de page sur FeuillePresenceEN, FeuillePresenceVisa et FeuillePresencePhoto.
+		- ✅ Equipes / feuilles de présence FR : date 01/01/1970 → heure locale correcte
+		- ✅ Equipes / feuilles de présence EN : horodatage ajouté en pied de page (format Y-m-d H:i)
+		- ✅ Equipes / Présence avec VISA et Présence avec photo : horodatage ajouté en pied de page
+		- ✅ Matchs / Liste des matchs FR : heure 00h00 → heure locale correcte
+		- ✅ Matchs / Liste des matchs EN : date 01/01/1970 → heure locale correcte
+		- ✅ Matchs / feuilles de marque : heure UTC+00 → heure locale correcte
+		- ✅ Classements / classement général : date 01/01/1970 → heure locale correcte
+		- ✅ Classements / détail par phases : date 01/01/1970 → heure locale correcte
+		- ✅ Classements / détail par équipes (CHPT et CP) : date 01/01/1970 → heure locale correcte
+		- ✅ Evenements / match événement FR : heure 00h00 → heure locale correcte
+		- ✅ Evenements / match événement EN : date 01/01/1970 → heure locale correcte
+		- ✅ Contrôle / Carton cumulés : horodatage avec heure locale correcte
+		- ✅ Problème identique sur les Classements publiés (PDF publics `PdfClt*.php`) : horodatage 01/01/1970 → heure locale correcte — **RÉSOLU** : pagination et horodatage ajoutés sur tous les fichiers PDF publics `PdfClt*.php`
 		
 	* ✅ Classements / détail par équipes  : ordre des équipes OK si compétition type championnat
 	* ✅ Classements / détail par équipes  : ordre des équipes erroné si compétition type coupe, a priori classées par ordre alphabétique et non de résultats → **RÉSOLU**
@@ -97,7 +98,7 @@ accès à élargir ? a priori prévu pour accès ±profil 4 d'après la doc, mai
 	* ✅ Ergonomie/visuel : pour les joueurs inactifs, griser légèrement la ligne en plus du texte? — **RÉSOLU** (opacité réduite + italique sur les lignes inactifs)
 	* ✅ Pour les novices : garder une "notice" en bas de page précisant que seuls les joueurs, capitaine et entraîneurs sont inscrits sur les feuilles de matchs de la prochaine journée. — **RÉSOLU** (notice ajoutée sous le tableau, reprenant le texte du legacy : statut Inactif, règles staff/arbitres/statistiques/feuilles de match)
 	* ✅ Garder un extrait du log en bas de page avec les dernières modifications effectuées (a minima qui et quand) ? — **RÉSOLU** (horodatage de la dernière addition/suppression affiché sous la notice : "Dernière modification JJ/MM/AAAA HH:mm:ss par utilisateur" ; les logs étaient silencieusement ignorés à cause d'un mauvais schéma de colonnes dans `AdminLoggableTrait`, corrigé)
-	* Ajout de joueur : en mode ajout de joueur existant, recherche impossible, génère une erreur : "Accès refusé : vous n'avez pas les droits nécessaires" (idem autres recherches)
+	* ✅ Ajout de joueur : en mode ajout de joueur existant, recherche impossible, génère une erreur : "Accès refusé : vous n'avez pas les droits nécessaires" (idem autres recherches) — **RÉSOLU** correction des droits profil 2
 
 - Page Journées/Phases
 	* ✅ Les liens vers les schémas de compétitions ne fonctionnent pas (erreur 404) — **RÉSOLU, à tester**
@@ -111,5 +112,5 @@ accès à élargir ? a priori prévu pour accès ±profil 4 d'après la doc, mai
 	* ✅ Menu Extraction PDF : les liens classement général / détail par équipe / déroulement renvoient un classement vide, sur une compétition à Belfast ;) (en mode championnat ou coupe) — **RÉSOLU** (les paramètres `Compet` et `S` n'étaient pas transmis aux scripts PDF legacy pour les liens général/détail/déroulement ; corrigé)
 
 - Page statistiques : 
-	* Les liens export Excel et PDF génèrent une "erreur serveur" 
+	* ✅ Les liens export Excel et PDF génèrent une "erreur serveur" — **RÉSOLU** (problème de droits profil 2)
 	* ✅ a priori les statistiques sont cohérentes avec la version actuelle de KPI, testé sur plusieurs calculs (buteurs, cartons, irrégularités, contrôle cohérence) sur 1-2 compétitions
