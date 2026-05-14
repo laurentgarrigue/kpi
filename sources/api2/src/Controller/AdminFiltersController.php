@@ -84,6 +84,7 @@ class AdminFiltersController extends AbstractController
 
         $allSeasons = $request->query->getBoolean('allSeasons');
         $season = $request->query->get('season');
+        $seasonsParam = $request->query->get('seasons'); // pipe-separated list: "2024|2025"
         $allowedSeasons = $user->getAllowedSeasons();
 
         if ($allSeasons) {
@@ -97,6 +98,23 @@ class AdminFiltersController extends AbstractController
                 $whereClause = "c.Code_saison > '1900'";
                 $params = [];
             }
+        } elseif ($seasonsParam) {
+            // Multiple specific seasons requested
+            $requestedSeasons = array_filter(explode('|', $seasonsParam), fn($s) => trim($s) !== '');
+            if (empty($requestedSeasons)) {
+                return $this->json(['groups' => []]);
+            }
+            // Enforce user season restrictions
+            if ($allowedSeasons !== null) {
+                $requestedSeasons = array_values(array_intersect($requestedSeasons, $allowedSeasons));
+                if (empty($requestedSeasons)) {
+                    return $this->json(['groups' => []]);
+                }
+            }
+            $placeholders = implode(',', array_fill(0, count($requestedSeasons), '?'));
+            $whereClause = "c.Code_saison IN ($placeholders)";
+            $params = $requestedSeasons;
+            $allSeasons = true; // reuse the deduplication SQL branch
         } else {
             if (!$season) {
                 $season = $this->getActiveSeason();
@@ -189,7 +207,8 @@ class AdminFiltersController extends AbstractController
 
     /**
      * Get events for a season (filtered by user restrictions)
-     * Only returns events that have competitions the user has access to in the given season
+     * Only returns events that have competitions the user has access to in the given season.
+     * Optional ?competitions=A|B|C restricts further to a specific set of competition codes.
      */
     #[Route('/events', name: 'admin_filters_events', methods: ['GET'])]
     public function getEvents(Request $request): JsonResponse
@@ -198,9 +217,24 @@ class AdminFiltersController extends AbstractController
         $user = $this->getUser();
 
         $season = $request->query->get('season');
+        $competitionsParam = $request->query->get('competitions'); // pipe-separated: "A|B|C"
 
         $allowedEvents = $user->getAllowedEvents();
         $allowedCompetitions = $user->getAllowedCompetitions();
+
+        // Resolve the effective competition filter: intersection of user rights and requested codes
+        $contextCompetitions = null;
+        if ($competitionsParam !== null) {
+            $requested = array_values(array_filter(explode('|', $competitionsParam), fn($c) => trim($c) !== ''));
+            if ($allowedCompetitions !== null) {
+                $contextCompetitions = array_values(array_intersect($requested, $allowedCompetitions));
+            } else {
+                $contextCompetitions = $requested;
+            }
+            if (empty($contextCompetitions)) {
+                return $this->json(['events' => []]);
+            }
+        }
 
         // Build query: only events that have competitions in the given season
         // linked through journée-événement relationships
@@ -216,8 +250,12 @@ class AdminFiltersController extends AbstractController
             $params[] = $season;
         }
 
-        // Filter by user competition restrictions
-        if ($allowedCompetitions !== null) {
+        // Filter by effective competition list (context filter takes priority over raw user rights)
+        if ($contextCompetitions !== null) {
+            $placeholders = implode(',', array_fill(0, count($contextCompetitions), '?'));
+            $where[] = "j.Code_competition IN ($placeholders)";
+            $params = array_merge($params, $contextCompetitions);
+        } elseif ($allowedCompetitions !== null) {
             $placeholders = implode(',', array_fill(0, count($allowedCompetitions), '?'));
             $where[] = "j.Code_competition IN ($placeholders)";
             $params = array_merge($params, $allowedCompetitions);
@@ -345,6 +383,66 @@ class AdminFiltersController extends AbstractController
             'eventId' => (int) $eventId,
             'competitions' => $competitions,
         ]);
+    }
+
+    /**
+     * Search competitions for autocomplete (used in users filter)
+     * Returns competitions matching a text query, optionally filtered by season.
+     * Respects the authenticated user's competition restrictions.
+     */
+    #[Route('/competitions-search', name: 'admin_filters_competitions_search', methods: ['GET'])]
+    public function searchCompetitions(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $query = trim($request->query->get('query', ''));
+        $season = trim($request->query->get('season', ''));
+
+        if (strlen($query) < 2) {
+            return $this->json([]);
+        }
+
+        $params = [];
+        $where = ['(c.Code LIKE ? OR c.Libelle LIKE ?)'];
+        $params[] = "%$query%";
+        $params[] = "%$query%";
+
+        if (!empty($season)) {
+            $allowedSeasons = $user->getAllowedSeasons();
+            if ($allowedSeasons !== null && !in_array($season, $allowedSeasons)) {
+                return $this->json([]);
+            }
+            $where[] = 'c.Code_saison = ?';
+            $params[] = $season;
+        } else {
+            // No season specified: search across all seasons but deduplicate by competition code
+            $where[] = "c.Code_saison = (SELECT MAX(c2.Code_saison) FROM kp_competition c2 WHERE c2.Code = c.Code)";
+        }
+
+        $allowedCompetitions = $user->getAllowedCompetitions();
+        if ($allowedCompetitions !== null) {
+            if (empty($allowedCompetitions)) {
+                return $this->json([]);
+            }
+            $placeholders = implode(',', array_fill(0, count($allowedCompetitions), '?'));
+            $where[] = "c.Code IN ($placeholders)";
+            $params = array_merge($params, $allowedCompetitions);
+        }
+
+        $sql = "SELECT c.Code, c.Libelle, c.Code_saison
+                FROM kp_competition c
+                WHERE " . implode(' AND ', $where) . "
+                ORDER BY c.Libelle, c.Code
+                LIMIT 20";
+
+        $rows = $this->connection->fetchAllAssociative($sql, $params);
+
+        return $this->json(array_map(fn(array $row) => [
+            'code' => $row['Code'],
+            'libelle' => $row['Libelle'],
+            'season' => $row['Code_saison'],
+        ], $rows));
     }
 
     private function getActiveSeason(): string
