@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Player, MatchAddPlayerFormData, CopyToMatchesFormData, CopyableMatch } from '~/types/presence'
+import type { Player, MatchAddPlayerFormData, CopyableMatch } from '~/types/presence'
 
 definePageMeta({
   layout: 'admin',
@@ -19,7 +19,6 @@ const teamCode = computed(() => route.params.teamCode as 'A' | 'B')
 // Permissions
 const {
   canEdit,
-  canDelete,
   canCopy,
   canCopyToCompetition,
   canInitializeFromTeam,
@@ -96,21 +95,22 @@ const getLicenseDisplay = (player: Player): string => {
   return player.icf ? `ICF-${player.icf}` : player.matric.toString()
 }
 
+// Status label mapping
+const statusLabel = (capitaine: string): string => {
+  const map: Record<string, string> = {
+    '-': '-',
+    'C': t('presence.status_captain'),
+    'E': t('presence.status_coach'),
+  }
+  return map[capitaine] ?? capitaine
+}
+
 // Actions
 const toggleSelectAll = () => {
   if (selectAll.value) {
     selectedPlayerIds.value = filteredPlayers.value.map(p => p.matric)
   } else {
     selectedPlayerIds.value = []
-  }
-}
-
-const toggleSelect = (matric: number) => {
-  const index = selectedPlayerIds.value.indexOf(matric)
-  if (index > -1) {
-    selectedPlayerIds.value.splice(index, 1)
-  } else {
-    selectedPlayerIds.value.push(matric)
   }
 }
 
@@ -136,8 +136,8 @@ const saveInlineEdit = async () => {
   try {
     await presenceStore.updatePlayerInline(matric, field, value, api)
     toast.add({ title: t('common.saved'), color: 'success' })
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   }
 }
 
@@ -183,8 +183,8 @@ const initializeFromTeam = async () => {
     await presenceStore.initializeFromTeam(api)
     toast.add({ title: t('presence.composition_initialized'), color: 'success' })
     availableTeamPlayersLoaded.value = false
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   }
 }
 
@@ -209,8 +209,8 @@ const addPlayerToMatch = async () => {
     addModalOpen.value = false
     resetAddForm()
     availableTeamPlayersLoaded.value = false
-  } catch (error: any) {
-    addFormError.value = error.message || t('presence.add_player_failed')
+  } catch (error: unknown) {
+    addFormError.value = (error as { message?: string })?.message || t('presence.add_player_failed')
   } finally {
     addFormSaving.value = false
   }
@@ -251,8 +251,8 @@ const copyToMatches = async () => {
     })
     copyToMatchesModalOpen.value = false
     selectedMatchIds.value = []
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   }
 }
 
@@ -274,8 +274,8 @@ const bulkDelete = async () => {
     selectAll.value = false
     bulkDeleteModalOpen.value = false
     availableTeamPlayersLoaded.value = false
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   } finally {
     isDeleting.value = false
   }
@@ -286,8 +286,8 @@ const deletePlayer = async (matric: number) => {
     await presenceStore.deletePlayers([matric], api)
     toast.add({ title: t('presence.player_deleted'), color: 'success' })
     availableTeamPlayersLoaded.value = false
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   }
 }
 
@@ -303,8 +303,8 @@ const clearAll = async () => {
     toast.add({ title: t('presence.composition_cleared'), color: 'success' })
     clearAllModalOpen.value = false
     availableTeamPlayersLoaded.value = false
-  } catch (error: any) {
-    toast.add({ title: t('common.error'), description: error.message, color: 'error' })
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
   } finally {
     isDeleting.value = false
   }
@@ -436,7 +436,7 @@ const formatDate = (dateStr: string) => {
                 type="checkbox"
                 class="rounded border-header-300"
                 @change="toggleSelectAll"
-              />
+              >
             </th>
             <th class="w-16 px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">#</th>
             <th class="w-12 px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">Cap</th>
@@ -447,7 +447,7 @@ const formatDate = (dateStr: string) => {
             <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.category') }}</th>
             <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.paddle') }}</th>
             <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.certificate') }}</th>
-            <th v-if="canEdit" class="w-16 px-3 py-1"></th>
+            <th v-if="canEdit" class="w-16 px-3 py-1"/>
           </tr>
         </thead>
 
@@ -465,7 +465,7 @@ const formatDate = (dateStr: string) => {
                 type="checkbox"
                 :value="player.matric"
                 class="rounded border-header-300"
-              />
+              >
             </td>
 
             <!-- Numero (inline edit) -->
@@ -487,7 +487,7 @@ const formatDate = (dateStr: string) => {
                 class="w-16 px-2 py-1 border border-primary-400 rounded text-sm focus:ring-2 focus:ring-primary-500"
                 @keydown="handleInlineKeydown"
                 @blur="saveInlineEdit"
-              />
+              >
             </td>
 
             <!-- Capitaine (inline edit) -->
@@ -497,7 +497,7 @@ const formatDate = (dateStr: string) => {
                 :class="canEdit ? 'editable-cell' : ''"
                 @click="canEdit && startEdit(player, 'capitaine')"
               >
-                {{ player.capitaine }}
+                {{ statusLabel(player.capitaine) }}
               </span>
               <select
                 v-else
@@ -507,9 +507,9 @@ const formatDate = (dateStr: string) => {
                 @change="saveInlineEdit"
                 @blur="cancelInlineEdit"
               >
-                <option value="-">-</option>
-                <option value="C">C</option>
-                <option value="E">E</option>
+                <option value="-">{{ t('presence.status_player') }}</option>
+                <option value="C">{{ t('presence.status_captain') }}</option>
+                <option value="E">{{ t('presence.status_coach') }}</option>
               </select>
             </td>
 
@@ -569,10 +569,10 @@ const formatDate = (dateStr: string) => {
               class="hover:bg-header-50 bg-orange-100/50"
             >
               <td v-if="canEdit" class="px-3 py-1">
-                <input v-model="selectedPlayerIds" type="checkbox" :value="player.matric" class="rounded border-header-300" />
+                <input v-model="selectedPlayerIds" type="checkbox" :value="player.matric" class="rounded border-header-300" >
               </td>
               <td class="px-3 py-1 text-sm text-header-900">{{ player.numero || '-' }}</td>
-              <td class="px-3 py-1 text-sm">{{ player.capitaine }}</td>
+              <td class="px-3 py-1 text-sm">{{ statusLabel(player.capitaine) }}</td>
               <td class="px-3 py-1 text-sm font-medium text-header-900">{{ player.nom }}</td>
               <td class="px-3 py-1 text-sm text-header-900">{{ player.prenom }}</td>
               <td class="px-3 py-1 text-sm text-header-500 font-mono">
@@ -623,7 +623,7 @@ const formatDate = (dateStr: string) => {
               type="checkbox"
               :value="player.matric"
               class="rounded border-header-300"
-            />
+            >
             <div>
               <div class="font-bold text-header-900">{{ player.nom }} {{ player.prenom }}</div>
               <NuxtLink
@@ -642,7 +642,7 @@ const formatDate = (dateStr: string) => {
               class="px-2 py-1 text-xs font-medium rounded"
               :class="player.capitaine === 'C' ? 'bg-warning-200 text-warning-800' : 'bg-header-100 text-header-600'"
             >
-              {{ player.capitaine }}
+              {{ statusLabel(player.capitaine) }}
             </span>
           </div>
         </div>
@@ -762,7 +762,7 @@ const formatDate = (dateStr: string) => {
               type="checkbox"
               :value="match.id"
               class="rounded border-header-300"
-            />
+            >
             <div class="text-sm">
               <div class="font-medium text-header-900">
                 {{ match.equipeA }} vs {{ match.equipeB }}

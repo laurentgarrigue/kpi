@@ -382,6 +382,8 @@ class AdminRankingsController extends AbstractController
             $this->connection->prepare($sql)->executeStatement([$value, $teamId]);
         }
 
+        $this->logActionForCompetition('Modif Classement inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)");
+
         return $this->json(['success' => true]);
     }
 
@@ -495,6 +497,12 @@ class AdminRankingsController extends AbstractController
 
         if (empty($teamIds) || empty($targetSeason) || empty($targetCompetition)) {
             return $this->json(['message' => 'teamIds, targetSeason and targetCompetition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Verify target competition is accessible to the user
+        $allowedCompetitions = $user->getAllowedCompetitions();
+        if ($allowedCompetitions !== null && !in_array($targetCompetition, $allowedCompetitions, true)) {
+            return $this->json(['message' => 'Insufficient permissions for target competition'], Response::HTTP_FORBIDDEN);
         }
 
         // Verify target competition exists
@@ -612,8 +620,19 @@ class AdminRankingsController extends AbstractController
             return $this->json(['message' => 'Season is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        $sql = "SELECT Code, Libelle FROM kp_competition WHERE Code_saison = ? ORDER BY Code ASC";
-        $rows = $this->connection->prepare($sql)->executeQuery([$season])->fetchAllAssociative();
+        $allowedCompetitions = $user->getAllowedCompetitions();
+
+        if ($allowedCompetitions !== null) {
+            if (empty($allowedCompetitions)) {
+                return $this->json([]);
+            }
+            $placeholders = implode(',', array_fill(0, count($allowedCompetitions), '?'));
+            $sql = "SELECT Code, Libelle FROM kp_competition WHERE Code_saison = ? AND Code IN ($placeholders) ORDER BY Code ASC";
+            $rows = $this->connection->prepare($sql)->executeQuery(array_merge([$season], $allowedCompetitions))->fetchAllAssociative();
+        } else {
+            $sql = "SELECT Code, Libelle FROM kp_competition WHERE Code_saison = ? ORDER BY Code ASC";
+            $rows = $this->connection->prepare($sql)->executeQuery([$season])->fetchAllAssociative();
+        }
 
         $result = array_map(fn($r) => ['code' => $r['Code'], 'libelle' => $r['Libelle']], $rows);
 
@@ -705,6 +724,14 @@ class AdminRankingsController extends AbstractController
             return $this->json(['message' => 'Invalid field'], Response::HTTP_BAD_REQUEST);
         }
 
+        $row = $this->connection->prepare(
+            "SELECT Code_compet, Code_saison FROM kp_competition_equipe WHERE Id = ?"
+        )->executeQuery([$teamId])->fetchAssociative();
+
+        if (!$row) {
+            return $this->json(['message' => 'Team not found'], Response::HTTP_NOT_FOUND);
+        }
+
         // Ensure init row exists
         $sql = "INSERT IGNORE INTO kp_competition_equipe_init (Id, Pts, Clt, J, G, N, P, F, Plus, Moins, Diff)
                 VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)";
@@ -712,6 +739,8 @@ class AdminRankingsController extends AbstractController
 
         $sql = "UPDATE kp_competition_equipe_init SET `$field` = ? WHERE Id = ?";
         $this->connection->prepare($sql)->executeStatement([$value, $teamId]);
+
+        $this->logActionForCompetition('Modif Classement initial inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)");
 
         return $this->json(['success' => true]);
     }

@@ -36,8 +36,8 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'saved'): void
+  close: []
+  saved: []
 }>()
 
 const { t } = useI18n()
@@ -96,6 +96,9 @@ const selectedCompetitions = ref<string[]>([])
 const allCompetitions = ref(false)
 const selectedEvents = ref<number[]>([])
 
+// Competition search filter
+const competitionSearch = ref('')
+
 // Mandates
 const mandates = ref<Mandate[]>([])
 const mandatesLoading = ref(false)
@@ -110,18 +113,17 @@ watch(() => props.open, async (isOpen) => {
   formError.value = ''
   selectedClubs.value = []
   mandates.value = []
+  competitionSearch.value = ''
 
-  // Load competitions for the active season
-  await loadCompetitions()
   if (adminNiveau.value <= 2) {
     await loadEvents()
   }
 
   if (props.user) {
-    // Edit mode: load user detail
+    // Edit mode: load user detail (sets selectedSeasons, which triggers competition reload via watch)
     await loadUserDetail(props.user.code)
   } else {
-    // Create mode: defaults
+    // Create mode: defaults (resetForm sets selectedSeasons, which triggers competition reload)
     resetForm()
   }
 })
@@ -133,6 +135,7 @@ function resetForm() {
   form.tel = ''
   form.fonction = ''
   form.niveau = 7
+  competitionSearch.value = ''
   form.filtreSaison = ''
   form.filtreCompetition = ''
   form.idEvenement = ''
@@ -149,10 +152,12 @@ function resetForm() {
     allSeasons.value = false
   } else {
     selectedSeasons.value = []
-    allSeasons.value = true
+    // Profile >= 3 cannot use "all seasons"
+    allSeasons.value = form.niveau < 3
   }
   selectedCompetitions.value = []
-  allCompetitions.value = true
+  // Profile >= 3 cannot use "all competitions"
+  allCompetitions.value = form.niveau < 3
   selectedEvents.value = []
   selectedClubs.value = []
   mandates.value = []
@@ -225,10 +230,17 @@ async function loadUserDetail(code: string) {
   } catch { /* useApi handles toast */ }
 }
 
-async function loadCompetitions() {
+async function loadCompetitions(seasons?: string[], all?: boolean) {
   try {
-    const data = await api.get<{ groups: { section: number; sectionLabel: string; competitions: { code: string; libelle: string; season?: string }[] }[] }>('/admin/filters/competitions', { allSeasons: '1' })
-    // Flatten grouped response into flat array with section info
+    let params: Record<string, string>
+    if (all) {
+      params = { allSeasons: '1' }
+    } else if (seasons && seasons.length > 0) {
+      params = { seasons: seasons.join('|') }
+    } else {
+      params = { allSeasons: '1' }
+    }
+    const data = await api.get<{ groups: { section: number; sectionLabel: string; competitions: { code: string; libelle: string; season?: string }[] }[] }>('/admin/filters/competitions', params)
     const flat: Competition[] = []
     for (const group of data.groups || []) {
       for (const c of group.competitions) {
@@ -236,6 +248,9 @@ async function loadCompetitions() {
       }
     }
     competitions.value = flat
+    // Remove selected competitions that are no longer in the list
+    const validCodes = new Set(flat.map(c => c.code))
+    selectedCompetitions.value = selectedCompetitions.value.filter(code => validCodes.has(code))
   } catch { /* ignore */ }
 }
 
@@ -285,6 +300,10 @@ function selectLicence(athlete: AthleteResult) {
     const existing = selectedClubs.value.find(c => c.code === athlete.codeClub)
     if (!existing) {
       selectedClubs.value.push({ code: athlete.codeClub, libelle: athlete.club || athlete.codeClub })
+    }
+    // For profile 7 (default), auto-fill fonction with the club name
+    if (form.niveau === 7 && !form.fonction) {
+      form.fonction = athlete.club || athlete.codeClub
     }
   }
 }
@@ -376,6 +395,24 @@ function toggleAllCompetitions() {
   }
 }
 
+// Reload competitions when season selection changes
+watch([selectedSeasons, allSeasons], ([seasons, all]) => {
+  loadCompetitions(seasons as string[], all as boolean)
+}, { deep: true })
+
+// When profile switches to >= 3, enforce that "all" cannot be selected
+watch(() => form.niveau, (niveau) => {
+  if (niveau >= 3) {
+    if (allSeasons.value) {
+      allSeasons.value = false
+    }
+    if (allCompetitions.value) {
+      allCompetitions.value = false
+      selectedCompetitions.value = []
+    }
+  }
+})
+
 // Event toggle
 function toggleEvent(id: number) {
   const idx = selectedEvents.value.indexOf(id)
@@ -387,25 +424,36 @@ function toggleEvent(id: number) {
 }
 
 // Profile options
+// Profiles 3-4 in edit mode: read-only base profile, mandates only
+const mandatesOnly = computed(() => isEditing.value && adminNiveau.value >= 3 && adminNiveau.value <= 4)
+
 const profileOptions = computed(() => {
   const options = []
   for (let i = 1; i <= 10; i++) {
-    // Apply restrictions: profils 3-4 can only assign >= 5, profil 2 can assign >= 3
     if (adminNiveau.value <= 1) {
       options.push({ value: i, label: t(`users.profiles.${i}`) })
     } else if (adminNiveau.value <= 2 && i >= 3) {
       options.push({ value: i, label: t(`users.profiles.${i}`) })
-    } else if (adminNiveau.value <= 4 && i >= 5) {
+    } else if (adminNiveau.value === 3 && i >= 4) {
+      options.push({ value: i, label: t(`users.profiles.${i}`) })
+    } else if (adminNiveau.value === 4 && i >= 5) {
       options.push({ value: i, label: t(`users.profiles.${i}`) })
     }
   }
   return options
 })
 
-// Grouped competitions for display
+// Grouped competitions for display (optionally filtered by search)
 const groupedCompetitions = computed(() => {
+  const query = competitionSearch.value.trim().toLowerCase()
+  const filtered = query
+    ? competitions.value.filter(c =>
+        c.code.toLowerCase().includes(query) || c.libelle.toLowerCase().includes(query)
+      )
+    : competitions.value
+
   const groups: Record<string, { label: string; items: Competition[] }> = {}
-  for (const c of competitions.value) {
+  for (const c of filtered) {
     const key = String(c.section)
     if (!groups[key]) {
       groups[key] = { label: c.sectionLabel, items: [] }
@@ -414,6 +462,9 @@ const groupedCompetitions = computed(() => {
   }
   return groups
 })
+
+// Profile >= 3 cannot use "all seasons" or "all competitions"
+const profileRestrictsAll = computed(() => form.niveau >= 3)
 
 // Submit
 async function handleSubmit() {
@@ -429,8 +480,26 @@ async function handleSubmit() {
     return
   }
 
-  // Club validation for profiles 7-8
-  if ((form.niveau === 7 || form.niveau === 8) && selectedClubs.value.length === 0) {
+  // Profile >= 3: at least one season required
+  if (form.niveau >= 3 && (allSeasons.value || selectedSeasons.value.length === 0)) {
+    formError.value = t('users.validation_season_required_profile')
+    return
+  }
+
+  // Profile >= 3: at least one competition required
+  if (form.niveau >= 3 && (allCompetitions.value || selectedCompetitions.value.length === 0)) {
+    formError.value = t('users.validation_competition_required')
+    return
+  }
+
+  // Profile 5 or 6: at least one gameday required
+  if ((form.niveau === 5 || form.niveau === 6) && !form.filtreJournee.trim()) {
+    formError.value = t('users.validation_gameday_required')
+    return
+  }
+
+  // Profile 7: at least one club required
+  if (form.niveau === 7 && selectedClubs.value.length === 0) {
     formError.value = t('users.validation_club_required')
     return
   }
@@ -534,6 +603,12 @@ onBeforeUnmount(() => {
         {{ formError }}
       </div>
 
+      <!-- Mandates-only notice for profiles 3-4 in edit mode -->
+      <div v-if="mandatesOnly" class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+        <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0 mt-0.5" />
+        {{ t('users.modal.mandates_only_notice') }}
+      </div>
+
       <!-- Licence autocomplete (create mode only) -->
       <div v-if="!isEditing" ref="licenceDropdownRef" class="relative">
         <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.search_licence') }}</label>
@@ -562,7 +637,7 @@ onBeforeUnmount(() => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-header-700 mb-1">
-            {{ t('users.modal.licence') }} <span class="text-danger-500">*</span>
+            {{ t('users.modal.licence') }} <span v-if="!mandatesOnly" class="text-danger-500">*</span>
           </label>
           <input
             v-model="form.code"
@@ -575,195 +650,235 @@ onBeforeUnmount(() => {
         </div>
         <div>
           <label class="block text-sm font-medium text-header-700 mb-1">
-            {{ t('users.modal.identity') }} <span class="text-danger-500">*</span>
+            {{ t('users.modal.identity') }}
           </label>
           <input
             v-model="form.identite"
             type="text"
             maxlength="80"
-            :readonly="isEditing && adminNiveau > 1"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            :class="{ 'bg-header-100': isEditing && adminNiveau > 1 }"
+            :readonly="isEditing"
+            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm"
+            :class="{ 'bg-header-100': isEditing }"
           >
         </div>
       </div>
 
-      <!-- Email -->
-      <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
-          {{ t('users.modal.email') }} <span class="text-danger-500">*</span>
-        </label>
-        <input
-          v-model="form.mail"
-          type="email"
-          maxlength="100"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        >
-      </div>
-
-      <!-- Phone + Function -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Fields hidden in mandates-only mode -->
+      <template v-if="!mandatesOnly">
+        <!-- Email -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.phone') }}</label>
+          <label class="block text-sm font-medium text-header-700 mb-1">
+            {{ t('users.modal.email') }} <span class="text-danger-500">*</span>
+          </label>
           <input
-            v-model="form.tel"
-            type="text"
-            maxlength="15"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.function') }}</label>
-          <input
-            v-model="form.fonction"
-            type="text"
+            v-model="form.mail"
+            type="email"
             maxlength="100"
             class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
         </div>
-      </div>
 
-      <!-- Profile -->
-      <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
-          {{ t('users.modal.profile') }} <span class="text-danger-500">*</span>
-        </label>
-        <select
-          v-model="form.niveau"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        >
-          <option v-for="opt in profileOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Access Filters section -->
-      <div class="border-t pt-4">
-        <h3 class="text-sm font-semibold text-header-800 mb-3">{{ t('users.modal.filters_title') }}</h3>
-
-        <!-- Seasons + Competitions side by side -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <!-- Seasons -->
+        <!-- Phone + Function -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_seasons') }}</label>
-            <div class="border border-header-300 rounded-lg max-h-36 overflow-y-auto p-2">
-              <label class="flex items-center gap-2 text-sm mb-1 cursor-pointer">
-                <input type="checkbox" :checked="allSeasons" @change="toggleAllSeasons">
-                <span class="font-medium">{{ t('users.modal.filter_seasons_all') }}</span>
-              </label>
-              <label
-                v-for="s in seasons"
-                :key="s.code"
-                class="flex items-center gap-2 text-sm mb-1 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  :checked="selectedSeasons.includes(s.code)"
-                  :disabled="allSeasons"
-                  @change="toggleSeason(s.code)"
-                >
-                {{ s.code }}{{ s.active ? ' ★' : '' }}
-              </label>
-            </div>
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.phone') }}</label>
+            <input
+              v-model="form.tel"
+              type="text"
+              maxlength="15"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
           </div>
-
-          <!-- Competitions -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_competitions') }}</label>
-            <div class="border border-header-300 rounded-lg max-h-36 overflow-y-auto p-2">
-              <label class="flex items-center gap-2 text-sm mb-1 cursor-pointer">
-                <input type="checkbox" :checked="allCompetitions" @change="toggleAllCompetitions">
-                <span class="font-medium">{{ t('users.modal.filter_competitions_all') }}</span>
-              </label>
-              <template v-for="(group, key) in groupedCompetitions" :key="key">
-                <div class="text-xs font-semibold text-header-500 mt-2 mb-1">— {{ group.label }} —</div>
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.function') }}</label>
+            <input
+              v-model="form.fonction"
+              type="text"
+              maxlength="100"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div>
+          <label class="block text-sm font-medium text-header-700 mb-1">
+            {{ t('users.modal.profile') }} <span class="text-danger-500">*</span>
+          </label>
+          <select
+            v-model="form.niveau"
+            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+            <option v-for="opt in profileOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Access Filters section -->
+        <div class="border-t pt-4">
+          <h3 class="text-sm font-semibold text-header-800 mb-3">{{ t('users.modal.filters_title') }}</h3>
+
+          <!-- Seasons + Competitions side by side -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Seasons -->
+            <div>
+              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_seasons') }}</label>
+              <div class="border border-header-300 rounded-lg max-h-36 overflow-y-auto p-2">
                 <label
-                  v-for="c in group.items"
-                  :key="c.code"
-                  class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
+                  class="flex items-center gap-2 text-sm mb-1"
+                  :class="profileRestrictsAll ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'"
                 >
                   <input
                     type="checkbox"
-                    :checked="selectedCompetitions.includes(c.code)"
-                    :disabled="allCompetitions"
-                    @change="toggleCompetition(c.code)"
+                    :checked="allSeasons"
+                    :disabled="profileRestrictsAll"
+                    @change="toggleAllSeasons"
                   >
-                  {{ c.code }} - {{ c.libelle }}
+                  <span class="font-medium">{{ t('users.modal.filter_seasons_all') }}</span>
                 </label>
-              </template>
+                <label
+                  v-for="s in seasons"
+                  :key="s.code"
+                  class="flex items-center gap-2 text-sm mb-1 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="selectedSeasons.includes(s.code)"
+                    :disabled="allSeasons"
+                    @change="toggleSeason(s.code)"
+                  >
+                  {{ s.code }}{{ s.active ? ' ★' : '' }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Competitions -->
+            <div>
+              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_competitions') }}</label>
+              <div class="border border-header-300 rounded-lg p-2">
+                <label
+                  class="flex items-center gap-2 text-sm mb-2"
+                  :class="profileRestrictsAll ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="allCompetitions"
+                    :disabled="profileRestrictsAll"
+                    @change="toggleAllCompetitions"
+                  >
+                  <span class="font-medium">{{ t('users.modal.filter_competitions_all') }}</span>
+                </label>
+                <div class="relative mb-2">
+                  <input
+                    v-model="competitionSearch"
+                    type="text"
+                    class="w-full px-2 py-1 text-xs border border-header-200 rounded focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+                    :class="competitionSearch ? 'pr-6' : ''"
+                    :placeholder="t('users.modal.filter_competitions_search')"
+                  >
+                  <button
+                    v-if="competitionSearch"
+                    class="absolute right-1.5 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+                    @click="competitionSearch = ''"
+                  >
+                    <UIcon name="i-heroicons-x-mark" class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div class="max-h-28 overflow-y-auto">
+                  <template v-for="(group, key) in groupedCompetitions" :key="key">
+                    <div class="text-xs font-semibold text-header-500 mt-1 mb-1">— {{ group.label }} —</div>
+                    <label
+                      v-for="c in group.items"
+                      :key="c.code"
+                      class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        :checked="selectedCompetitions.includes(c.code)"
+                        :disabled="allCompetitions"
+                        @change="toggleCompetition(c.code)"
+                      >
+                      {{ c.code }} - {{ c.libelle }}
+                    </label>
+                  </template>
+                  <div v-if="Object.keys(groupedCompetitions).length === 0" class="text-xs text-header-400 py-1">
+                    {{ t('users.modal.filter_competitions_no_results') }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Events (profile <= 2 only) -->
-        <div v-if="adminNiveau <= 2 && events.length > 0" class="mb-4">
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_events') }}</label>
-          <div class="border border-header-300 rounded-lg max-h-36 overflow-y-auto p-2">
-            <label
-              v-for="evt in events"
-              :key="evt.id"
-              class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                :checked="selectedEvents.includes(evt.id)"
-                @change="toggleEvent(evt.id)"
+          <!-- Events (profile <= 2 only) -->
+          <div v-if="adminNiveau <= 2 && events.length > 0" class="mb-4">
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_events') }}</label>
+            <div class="border border-header-300 rounded-lg max-h-36 overflow-y-auto p-2">
+              <label
+                v-for="evt in events"
+                :key="evt.id"
+                class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
               >
-              {{ evt.id }} - {{ evt.libelle }}
-            </label>
+                <input
+                  type="checkbox"
+                  :checked="selectedEvents.includes(evt.id)"
+                  @change="toggleEvent(evt.id)"
+                >
+                {{ evt.id }} - {{ evt.libelle }}
+              </label>
+            </div>
           </div>
-        </div>
 
-        <!-- Clubs autocomplete -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_clubs') }}</label>
-          <div ref="clubDropdownRef" class="relative">
-            <input
-              v-model="clubQuery"
-              type="text"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              :placeholder="t('users.modal.filter_clubs_placeholder')"
-            >
-            <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-2.5 w-4 h-4 animate-spin text-header-400" />
-            <div v-if="showClubDropdown" class="absolute z-30 mt-1 w-full bg-white border border-header-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
-              <button
-                v-for="club in clubResults"
+          <!-- Clubs autocomplete -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_clubs') }}</label>
+            <div ref="clubDropdownRef" class="relative">
+              <input
+                v-model="clubQuery"
+                type="text"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                :placeholder="t('users.modal.filter_clubs_placeholder')"
+              >
+              <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-2.5 w-4 h-4 animate-spin text-header-400" />
+              <div v-if="showClubDropdown" class="absolute z-30 mt-1 w-full bg-white border border-header-200 rounded-lg shadow-lg max-h-36 overflow-y-auto">
+                <button
+                  v-for="club in clubResults"
+                  :key="club.code"
+                  class="w-full px-3 py-2 text-left text-sm hover:bg-primary-50"
+                  @click="selectClub(club)"
+                >
+                  {{ club.code }} - {{ club.libelle }}
+                </button>
+              </div>
+            </div>
+            <!-- Selected club tags -->
+            <div v-if="selectedClubs.length > 0" class="flex flex-wrap gap-1.5 mt-2">
+              <span
+                v-for="club in selectedClubs"
                 :key="club.code"
-                class="w-full px-3 py-2 text-left text-sm hover:bg-primary-50"
-                @click="selectClub(club)"
+                class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-100 text-primary-800 text-xs rounded-full"
               >
                 {{ club.code }} - {{ club.libelle }}
-              </button>
+                <button class="text-primary-600 hover:text-primary-800" @click="removeClub(club.code)">×</button>
+              </span>
             </div>
           </div>
-          <!-- Selected club tags -->
-          <div v-if="selectedClubs.length > 0" class="flex flex-wrap gap-1.5 mt-2">
-            <span
-              v-for="club in selectedClubs"
-              :key="club.code"
-              class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-100 text-primary-800 text-xs rounded-full"
+
+          <!-- Journées -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_gamedays') }}</label>
+            <input
+              v-model="form.filtreJournee"
+              type="text"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              :placeholder="t('users.modal.filter_gamedays_placeholder')"
             >
-              {{ club.code }} - {{ club.libelle }}
-              <button class="text-primary-600 hover:text-primary-800" @click="removeClub(club.code)">×</button>
-            </span>
           </div>
         </div>
+      </template>
 
-        <!-- Journées -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.filter_gamedays') }}</label>
-          <input
-            v-model="form.filtreJournee"
-            type="text"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            :placeholder="t('users.modal.filter_gamedays_placeholder')"
-          >
-        </div>
-      </div>
-
-      <!-- Mandates section (profile <= 3 and edit mode only) -->
-      <div v-if="adminNiveau <= 3 && isEditing" class="border-t pt-4">
+      <!-- Mandates section (profile <= 4 and edit mode only) -->
+      <div v-if="adminNiveau <= 4 && isEditing" class="border-t pt-4">
         <h3 class="text-sm font-semibold text-header-800 mb-3">{{ t('users.modal.mandates_title') }}</h3>
 
         <div v-if="mandatesLoading" class="flex justify-center py-4">
@@ -812,7 +927,6 @@ onBeforeUnmount(() => {
         <!-- Add mandate form -->
         <AdminUserMandateForm
           :seasons="seasons"
-          :competitions="competitions"
           :events="events"
           :profile-options="profileOptions"
           :admin-niveau="adminNiveau"
@@ -858,9 +972,10 @@ onBeforeUnmount(() => {
         class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200"
         @click="emit('close')"
       >
-        {{ t('users.modal.cancel') }}
+        {{ mandatesOnly ? t('common.close') : t('users.modal.cancel') }}
       </button>
       <button
+        v-if="!mandatesOnly"
         class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
         :disabled="submitting"
         @click="handleSubmit"

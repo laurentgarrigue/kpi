@@ -369,6 +369,14 @@ const isGameEditable = (game: Game) => canEdit.value && !isLocked(game) && game.
 const isScoreEditable = (game: Game) => canEditScores.value && !isLocked(game) && game.authorized
 const isDeletable = (game: Game) => isGameEditable(game) && !hasScore(game)
 
+// IDs sélectionnés mais non verrouillés — utilisés par les bulk actions de modification
+const unlockedSelectedIds = computed(() =>
+  selectedIds.value.filter(id => {
+    const game = games.value.find(g => g.id === id)
+    return game && !isLocked(game)
+  })
+)
+
 // ─── Selection ───
 const toggleSelectAll = () => {
   if (selectedIds.value.length === filteredGames.value.length) {
@@ -394,6 +402,7 @@ const togglePublication = async (game: Game) => {
   try {
     const response = await api.patch<{ publication: string }>(`/admin/games/${game.id}/publication`)
     game.publication = response.publication
+    toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     game.publication = oldValue
   }
@@ -406,6 +415,7 @@ const toggleValidation = async (game: Game) => {
   try {
     const response = await api.patch<{ validation: string }>(`/admin/games/${game.id}/validation`)
     game.validation = response.validation
+    toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     game.validation = oldValue
   }
@@ -418,6 +428,7 @@ const toggleType = async (game: Game) => {
   try {
     const response = await api.patch<{ type: string }>(`/admin/games/${game.id}/type`)
     game.type = response.type
+    toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     game.type = oldValue
   }
@@ -436,6 +447,7 @@ const confirmToggleStatut = async () => {
   try {
     const response = await api.patch<{ statut: string }>(`/admin/games/${game.id}/statut`)
     game.statut = response.statut
+    toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     // Error already shown
   }
@@ -448,6 +460,7 @@ const togglePrinted = async (game: Game) => {
   try {
     const response = await api.patch<{ imprime: string }>(`/admin/games/${game.id}/printed`)
     game.imprime = response.imprime
+    toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     game.imprime = oldValue
   }
@@ -518,9 +531,9 @@ const saveInlineEdit = async () => {
       if (prop) {
         const numericFields = ['numeroOrdre']
         if (numericFields.includes(prop)) {
-          ;(game as any)[prop] = value ? parseInt(value) : null
+          ;(game as Record<string, unknown>)[prop] = value ? parseInt(value) : null
         } else {
-          ;(game as any)[prop] = value || null
+          ;(game as Record<string, unknown>)[prop] = value || null
         }
       }
     }
@@ -762,8 +775,8 @@ const saveGame = async (): Promise<boolean> => {
       toast.add({ title: t('common.success'), description: t('games.added'), color: 'success' })
     }
     return true
-  } catch (error: any) {
-    formError.value = error.message || t('common.error')
+  } catch (error: unknown) {
+    formError.value = (error as { message?: string })?.message || t('common.error')
     return false
   } finally {
     formSaving.value = false
@@ -829,8 +842,8 @@ const confirmDelete = async () => {
     toast.add({ title: t('common.success'), description: t('games.deleted'), color: 'success' })
     deleteConfirmOpen.value = false
     await loadGames()
-  } catch (error: any) {
-    const code = error?.code
+  } catch (error: unknown) {
+    const code = (error as { code?: string })?.code
     if (code === 'HAS_EVENTS') {
       toast.add({ title: t('common.error'), description: t('games.delete_error_events'), color: 'error' })
     } else if (code === 'LOCKED') {
@@ -848,7 +861,7 @@ const confirmDelete = async () => {
 const confirmBulkDelete = async () => {
   formSaving.value = true
   try {
-    const response = await api.del<{ deleted: number; skipped: any[] }>('/admin/games/bulk', { ids: selectedIds.value })
+    const response = await api.del<{ deleted: number; skipped: unknown[] }>('/admin/games/bulk', { ids: selectedIds.value })
     const msg = response.skipped?.length > 0
       ? t('games.bulk_deleted_partial', { deleted: response.deleted, skipped: response.skipped.length })
       : t('games.bulk_deleted', { deleted: response.deleted })
@@ -926,7 +939,7 @@ const confirmBulkChangeJournee = async () => {
   formSaving.value = true
   try {
     const response = await api.patch<{ updated: number }>('/admin/games/bulk/journee', {
-      ids: selectedIds.value,
+      ids: unlockedSelectedIds.value,
       journeeId: bulkJourneeId.value,
     })
     toast.add({ title: t('common.success'), description: t('games.bulk_journee_changed', { count: response.updated }), color: 'success' })
@@ -950,7 +963,7 @@ const confirmBulkRenumber = async () => {
   formSaving.value = true
   try {
     const response = await api.patch<{ updated: number }>('/admin/games/bulk/renumber', {
-      ids: selectedIds.value,
+      ids: unlockedSelectedIds.value,
       startNumber: bulkRenumberFrom.value,
     })
     toast.add({ title: t('common.success'), description: t('games.bulk_renumbered', { count: response.updated }), color: 'success' })
@@ -977,7 +990,7 @@ const confirmBulkChangeDate = async () => {
   formSaving.value = true
   try {
     const response = await api.patch<{ updated: number }>('/admin/games/bulk/date', {
-      ids: selectedIds.value,
+      ids: unlockedSelectedIds.value,
       date: bulkNewDate.value,
     })
     toast.add({ title: t('common.success'), description: t('games.bulk_date_changed', { count: response.updated }), color: 'success' })
@@ -1002,7 +1015,7 @@ const confirmBulkIncrementTime = async () => {
   formSaving.value = true
   try {
     const response = await api.patch<{ updated: number }>('/admin/games/bulk/time', {
-      ids: selectedIds.value,
+      ids: unlockedSelectedIds.value,
       startTime: bulkStartTime.value,
       interval: bulkInterval.value,
     })
@@ -1037,7 +1050,7 @@ const confirmBulkChangeGroup = async () => {
   formSaving.value = true
   try {
     const response = await api.patch<{ updated: number }>('/admin/games/bulk/group', {
-      ids: selectedIds.value,
+      ids: unlockedSelectedIds.value,
       oldGroup: bulkOldGroup.value,
       newGroup: bulkNewGroup.value,
     })
@@ -1101,13 +1114,6 @@ const statusLabel = (game: Game) => {
   }
 }
 
-const statusColor = (game: Game) => {
-  switch (game.statut) {
-    case 'ON': return 'text-success-500'
-    case 'END': return 'text-danger-600'
-    default: return 'text-header-400'
-  }
-}
 
 const statusBtnClass = (game: Game) => {
   switch (game.statut) {
