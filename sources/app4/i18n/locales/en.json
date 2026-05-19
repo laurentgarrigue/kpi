@@ -264,6 +264,7 @@
     "results_count": "{count} result(s)",
     "error_load_filters": "Error loading filters",
     "error_load_data": "Error loading data",
+    "search_placeholder": "Search...",
     "params": {
       "title": "Parameters",
       "configure": "Settings",
@@ -301,6 +302,7 @@
       "OfficielsJournees": "Gamedays with assigned officials: RC, R1, delegate, head referee",
       "OfficielsMatchs": "Games with all officials: referees, line judges, secretary, timer, shot clock",
       "ListeArbitres": "All FFCK referees: club, level, training season, booklet",
+      "ListeSurclassements": "Age-group waivers from the selected season onwards: season category, waiver category, waiver season and date",
       "ListeEquipes": "Registered teams with club, CD, CR and players' current clubs",
       "ListeJoueurs": "Registered players (excl. coaches): current club, category, team club",
       "ListeJoueurs2": "Registered players AND coaches: current club, category, team club",
@@ -336,6 +338,7 @@
       "irregularites_presence": "Team roster check",
       "irregularites": "Irregularities (games)",
       "liste_arbitres": "Referees",
+      "liste_surclassements": "Age-group waivers",
       "liste_equipes": "Teams",
       "liste_joueurs": "Players",
       "liste_joueurs_coachs": "Players & coaches",
@@ -353,7 +356,7 @@
     "columns": {
       "competition": "Competition",
       "licence": "License",
-      "matric": "ID",
+      "matric": "License",
       "nom": "Last name",
       "prenom": "First name",
       "sexe": "Gender",
@@ -423,7 +426,11 @@
       "total_activite": "Total",
       "type": "Type",
       "date": "Date",
-      "details": "Details"
+      "details": "Details",
+      "categorie_saison": "Season category",
+      "categorie_surclassement": "Waiver category",
+      "saison_surclassement": "Waiver season",
+      "date_surclassement": "Waiver date"
     }
   },
   "documents": {
@@ -1188,7 +1195,21 @@
     "notice_inactive": "Use Unavailable (X) status to set a player unavailable without removing them from the roster (absent or suspended players on one or more games, on one or more days).",
     "notice_staff_referee": "Coaches (E) and referees (A) are not counted in statistics. Unavailable players (X) and referees (A) are not transferred to game reports.",
     "last_addition_or_deletion": "Last addition or deletion",
-    "last_update_by": "by"
+    "last_update_by": "by",
+    "surclassement": "Overclassing",
+    "surclassement_ok": "Overclassing valid",
+    "surclassement_missing": "Overclassing missing",
+    "surclassement_not_required": "",
+    "validation_errors_title": "This player does not meet the national competition requirements:",
+    "error_Saison_licence": "Invalid license season (license not current for this season)",
+    "error_Certif": "Medical certificate missing",
+    "error_Pagaie_couleur": "Invalid paddle color (yellow, white or missing)",
+    "error_Surclassement": "Age overclassing missing",
+    "override_allowed_title": "Add despite failed validation",
+    "override_allowed_notice": "As an administrator, you may add this player only as a non-playing referee (A) or staff (E).",
+    "override_status_label": "Forced status",
+    "override_confirm": "Add anyway",
+    "override_cancel": "Cancel"
   },
   "gamedays": {
     "title": "Gamedays / Phases",
@@ -1901,7 +1922,8 @@
       "reset": "Reset to zero",
       "reset_confirm": "Reset all initial values to zero?",
       "reset_success": "Initial values reset to zero",
-      "back": "Back to rankings"
+      "back": "Back to rankings",
+      "readonly_end": "Competition ended — ranking is read-only"
     },
     "confirm_publish": "Publish computed ranking as public ranking?",
     "confirm_unpublish": "Delete the public ranking?",

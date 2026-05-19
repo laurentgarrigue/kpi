@@ -18,6 +18,7 @@ const { bracketLabels } = useBracketDisplay()
 const FILTERS_STORAGE_KEY = 'app4_games_filters'
 
 interface SavedFilters {
+  contextKey: string
   selectedTour: string
   selectedJournee: string
   selectedDate: string
@@ -37,6 +38,7 @@ function loadSavedFilters(): Partial<SavedFilters> {
 function saveFilters() {
   try {
     const data: SavedFilters = {
+      contextKey: workContext.pageCompetitionCodeAll + '|' + workContext.pageEventGroupSelection,
       selectedTour: selectedTour.value,
       selectedJournee: selectedJournee.value,
       selectedDate: selectedDate.value,
@@ -131,8 +133,10 @@ const tzParam = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZ
 // ─── Permissions ───
 const canEdit = computed(() => authStore.profile <= 6)
 const canEditScores = computed(() => authStore.profile <= 6 || authStore.profile === 9)
-const canLock = computed(() => authStore.profile <= 4)
+const canLock = computed(() => authStore.profile <= 6)
 const canSelect = computed(() => authStore.profile <= 6)
+const showPublicationColumn = computed(() => authStore.profile !== 7)
+const showPrintedColumn = computed(() => authStore.profile !== 7)
 // ─── Default form data ───
 function getDefaultFormData(): GameFormData {
   return {
@@ -276,14 +280,17 @@ onMounted(async () => {
   const phaseFromQuery = route.query.phase as string
   if (phaseFromQuery) {
     selectedJournee.value = phaseFromQuery
-    // Remove query param from URL without triggering navigation
     router.replace({ query: { ...route.query, phase: undefined } })
   } else {
-    // No explicit phase requested: reset competition-specific filters
-    // to avoid stale localStorage values from a different competition
-    selectedJournee.value = '*'
-    selectedDate.value = ''
-    selectedTerrain.value = ''
+    // Reset competition-specific filters only if the context has changed since last visit
+    const savedContextKey = loadSavedFilters().contextKey ?? ''
+    const currentContextKey = workContext.pageCompetitionCodeAll + '|' + workContext.pageEventGroupSelection
+    if (savedContextKey !== currentContextKey) {
+      selectedTour.value = ''
+      selectedJournee.value = '*'
+      selectedDate.value = ''
+      selectedTerrain.value = ''
+    }
   }
 
   initialLoadDone = true
@@ -1080,14 +1087,42 @@ const docBaseParams = computed(() => {
   params.set('S', workContext.season || '')
   params.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
 
-  if (workContext.pageEventGroupType === 'event') {
-    // Event selected → pass idEvenement only (no Compet, it would override)
-    params.set('idEvenement', workContext.pageEventGroupValue)
-  } else if (workContext.pageCompetitionCodeAll) {
-    // A specific single competition selected
+  if (workContext.pageCompetitionCodeAll) {
+    // A specific single competition selected → takes priority over event/group
     params.set('Compet', workContext.pageCompetitionCodeAll)
+  } else if (workContext.pageEventGroupType === 'event') {
+    // Event selected with "All competitions" → pass idEvenement
+    params.set('idEvenement', workContext.pageEventGroupValue)
+  } else if (workContext.pageEventGroupType === 'group') {
+    // Group selected with "All competitions" → pass all group competition codes
+    const group = workContext.uniqueGroups.find(g => g.code === workContext.pageEventGroupValue)
+    if (group && group.competitions.length > 0) {
+      const contextCodes = new Set(workContext.competitionCodes)
+      const groupCodes = group.competitions.filter(c => contextCodes.has(c))
+      if (groupCodes.length > 0) params.set('Compet', groupCodes.join(','))
+    }
+  } else if (workContext.selectionType === 'event' && workContext.eventId) {
+    // Global work context is an event with no page-level override → pass idEvenement
+    params.set('idEvenement', String(workContext.eventId))
   }
-  // When "All competitions" with a group or no specific filter: pass S alone to trigger urlMode
+  // When no specific filter: pass S alone to trigger urlMode
+
+  if (selectedTour.value) params.set('filtreTour', selectedTour.value)
+  if (selectedJournee.value && selectedJournee.value !== '*') params.set('idSelJournee', selectedJournee.value)
+  if (selectedDate.value) params.set('filtreJour', selectedDate.value)
+  if (selectedTerrain.value) params.set('filtreTerrain', selectedTerrain.value)
+  if (unlockedOnly.value) params.set('filtreMatchsNonVerrouilles', 'on')
+
+  const sortMap: Record<string, string> = {
+    date_time_terrain: 'Order By a.Date_match, a.Heure_match, a.Terrain, a.Numero_ordre',
+    competition_date: 'Order By d.Code_competition, a.Date_match, a.Heure_match, a.Terrain, a.Numero_ordre',
+    competition_phase: 'Order By d.Code_competition, d.Niveau, d.Phase, a.Heure_match, a.Terrain, a.Numero_ordre',
+    terrain_date: 'Order By a.Terrain, a.Date_match, a.Heure_match, a.Numero_ordre',
+    number: 'Order By a.Numero_ordre, a.Date_match, a.Heure_match, a.Terrain',
+  }
+  if (selectedSort.value && selectedSort.value !== 'date_time_terrain') {
+    params.set('orderMatchs', sortMap[selectedSort.value] ?? '')
+  }
 
   return params.toString()
 })
@@ -1099,10 +1134,11 @@ const docUrl = (file: string, isPublic = false) => {
 
 // ─── Journee label for dropdown ───
 const journeeLabel = (j: GameJournee) => {
+  const suffix = j.authorized === false ? ` 🔒` : ''
   if (j.codeTypeclt === 'CP') {
-    return `[${j.id}] ${j.codeCompetition} (${j.etape}) ${j.phase || ''}`
+    return `[${j.id}] ${j.codeCompetition} (${j.etape}) ${j.phase || ''}${suffix}`
   }
-  return `[${j.id}] ${j.codeCompetition} ${j.dateDebut ? formatDate(j.dateDebut) : ''} ${j.lieu || ''}`
+  return `[${j.id}] ${j.codeCompetition} ${j.dateDebut ? formatDate(j.dateDebut) : ''} ${j.lieu || ''}${suffix}`
 }
 
 // ─── Status label ───
@@ -1442,7 +1478,7 @@ const statusBtnClass = (game: Game) => {
                 >
               </th>
               <!-- Publication -->
-              <th class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:eye" class="w-6 h-6" /></th>
+              <th v-if="showPublicationColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:eye" class="w-6 h-6" /></th>
               <!-- N° -->
               <th class="w-10 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.number') }}</th>
               <!-- Actions -->
@@ -1480,7 +1516,7 @@ const statusBtnClass = (game: Game) => {
               <!-- Referee 2 -->
               <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.referee_2') }}</th>
               <!-- Printed -->
-              <th class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:inbox-arrow-down" class="w-6 h-6" /></th>
+              <th v-if="showPrintedColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:inbox-arrow-down" class="w-6 h-6" /></th>
               <!-- Delete -->
               <th v-if="canEdit" class="w-8 px-1 py-2" />
             </tr>
@@ -1520,7 +1556,7 @@ const statusBtnClass = (game: Game) => {
               </td>
 
               <!-- Publication toggle -->
-              <td class="px-1 py-1 text-center">
+              <td v-if="showPublicationColumn" class="px-1 py-1 text-center">
                 <AdminToggleButton
                   :active="g.publication === 'O'"
                   active-icon="heroicons:eye-solid"
@@ -1529,7 +1565,7 @@ const statusBtnClass = (game: Game) => {
                   size="md"
                   :active-title="t('games.published')"
                   :inactive-title="t('games.unpublished')"
-                  :disabled="!canEdit"
+                  :disabled="!canEdit || !g.authorized"
                   @toggle="togglePublication(g)"
                 />
               </td>
@@ -1557,7 +1593,7 @@ const statusBtnClass = (game: Game) => {
 
               <!-- Actions -->
               <td v-if="canEdit" class="px-1 py-1 text-center" @click.stop>
-                <button v-if="!isLocked(g)" :title="t('common.edit')" class="text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
+                <button v-if="!isLocked(g) && g.authorized" :title="t('common.edit')" class="text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
                   <UIcon name="heroicons:pencil" class="w-6 h-6" />
                   <br>
                   <span class="text-xs text-header-700">Edit</span>
@@ -1565,17 +1601,17 @@ const statusBtnClass = (game: Game) => {
               </td>
               <td v-if="canEdit || canEditScores" class="px-1 py-1 text-center" @click.stop>
                 <div class="flex items-center text-center gap-0.5">
-                  <a v-if="canEdit" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800">
+                  <a v-if="canEdit && g.authorized" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800">
                     <UIcon name="heroicons:document-text" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-700">PDF</span>
                   </a>
-                  <a v-if="canEditScores" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600">
+                  <a v-if="canEditScores && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-700">V2</span>
                   </a>
-                  <a v-if="canEditScores" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700">
+                  <a v-if="canEditScores && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-700">V3</span>
@@ -1791,6 +1827,7 @@ const statusBtnClass = (game: Game) => {
                   size="md"
                   :active-title="t('games.locked')"
                   :inactive-title="t('games.unlocked')"
+                  :disabled="!g.authorized"
                   @toggle="toggleValidation(g)"
                 />
                 <UIcon v-else-if="g.validation === 'O'" name="heroicons:lock-closed-solid" class="w-6 h-6 text-primary-500" :title="t('games.locked')" />
@@ -1963,7 +2000,7 @@ const statusBtnClass = (game: Game) => {
               </td>
 
               <!-- Printed toggle -->
-              <td class="px-1 py-1 text-center">
+              <td v-if="showPrintedColumn" class="px-1 py-1 text-center">
                 <AdminToggleButton
                   :active="g.imprime === 'O'"
                   active-icon="heroicons:inbox-arrow-down-solid"
@@ -2097,6 +2134,7 @@ const statusBtnClass = (game: Game) => {
               size="md"
               :active-title="t('games.locked')"
               :inactive-title="t('games.unlocked')"
+              :disabled="!g.authorized"
               @toggle="toggleValidation(g)"
             />
             <UIcon v-else-if="g.validation === 'O'" name="heroicons:lock-closed-solid" class="w-5 h-5 text-primary-500" :title="t('games.locked')" />
@@ -2106,7 +2144,7 @@ const statusBtnClass = (game: Game) => {
               inactive-icon="heroicons:eye-slash"
               active-color="success"
               size="md"
-              @toggle="canEdit && togglePublication(g)"
+              @toggle="canEdit && g.authorized && togglePublication(g)"
             />
           </div>
         </template>
@@ -2277,18 +2315,18 @@ const statusBtnClass = (game: Game) => {
         </div>
 
         <template #footer-right>
-          <AdminActionButton v-if="canEdit && !isLocked(g)" icon="heroicons:pencil" @click="openEditModal(g)">
+          <AdminActionButton v-if="canEdit && !isLocked(g) && g.authorized" icon="heroicons:pencil" @click="openEditModal(g)">
             {{ t('common.edit') }}
           </AdminActionButton>
-          <a v-if="canEdit" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-danger-600 hover:text-danger-800">
+          <a v-if="canEdit && g.authorized" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-danger-600 hover:text-danger-800">
             <UIcon name="heroicons:document-text" class="w-4 h-4" />
             {{ t('games.scoresheet_pdf') }}
           </a>
-          <a v-if="canEdit && authStore.profile <= 6" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800">
+          <a v-if="canEdit && authStore.profile <= 6 && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800">
             <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
             v2
           </a>
-          <a v-if="canEdit && authStore.profile <= 2" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800">
+          <a v-if="canEdit && authStore.profile <= 2 && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800">
             <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
             v3
           </a>
