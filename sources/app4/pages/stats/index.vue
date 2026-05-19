@@ -176,6 +176,7 @@ const loadStats = async () => {
     columns.value = response.columns
     data.value = response.data
     count.value = response.meta.count
+    searchQuery.value = ''
   } catch (error: unknown) {
     const message = (error as { message?: string })?.message || t('stats.error_load_data')
     toast.add({
@@ -245,7 +246,7 @@ onMounted(async () => {
 const columnLabels = computed<Record<string, string>>(() => ({
   competition: t('stats.columns.competition'),
   licence: t('stats.columns.licence'),
-  matric: t('stats.columns.matric'),
+  matric: t('stats.columns.licence'),
   nom: t('stats.columns.nom'),
   prenom: t('stats.columns.prenom'),
   sexe: t('stats.columns.sexe'),
@@ -297,6 +298,10 @@ const columnLabels = computed<Record<string, string>>(() => ({
   naissance: t('stats.columns.naissance'),
   clubActuel: t('stats.columns.club_actuel'),
   categorie: t('stats.columns.categorie'),
+  categorieSaison: t('stats.columns.categorie_saison'),
+  categorieSurclassement: t('stats.columns.categorie_surclassement'),
+  saisonSurclassement: t('stats.columns.saison_surclassement'),
+  dateSurclassement: t('stats.columns.date_surclassement'),
   cd: t('stats.columns.cd'),
   cr: t('stats.columns.cr'),
   clubActuelJoueurs: t('stats.columns.club_actuel_joueurs'),
@@ -348,6 +353,17 @@ const formatCellValue = (value: unknown, column: string): string => {
 // Check if column is numeric - use Set for O(1) lookup
 const isNumericColumn = (column: string): boolean => numericColumnsSet.has(column)
 
+// Return internal link for linkable columns, or null
+const getCellLink = (row: Record<string, unknown>, column: string): string | null => {
+  if ((column === 'licence' || column === 'matric') && row[column]) {
+    return `/athletes?matric=${row[column]}`
+  }
+  if ((column === 'codeClub' || column === 'numeroClub') && row[column]) {
+    return `/clubs?code=${row[column]}`
+  }
+  return null
+}
+
 // Get column label - use cached computed
 const getColumnLabel = (column: string): string => columnLabels.value[column] || column
 
@@ -391,6 +407,17 @@ const selectedCompetitionsTooltip = computed(() => {
 const showRankingColumn = computed(() => {
   const rankedStatTypes = ['Buteurs', 'Cartons', 'Fairplay', 'Arbitrage']
   return rankedStatTypes.includes(selectedStatType.value)
+})
+
+// Search
+const searchQuery = ref('')
+
+const filteredData = computed(() => {
+  if (!searchQuery.value.trim()) return data.value
+  const q = searchQuery.value.trim().toLowerCase()
+  return data.value.filter(row =>
+    Object.values(row).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(q))
+  )
 })
 
 // Export functions
@@ -525,6 +552,16 @@ const exportPdf = async () => {
             <UIcon v-else name="heroicons:document-text" class="w-4 h-4" />
             {{ t('stats.params.export_pdf') }}
           </button>
+          <!-- Search field -->
+          <div class="relative">
+            <UIcon name="heroicons:magnifying-glass" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400 pointer-events-none" />
+            <input
+              v-model="searchQuery"
+              type="search"
+              :placeholder="t('stats.search_placeholder')"
+              class="pl-8 pr-3 py-2 border border-header-300 rounded-lg bg-white text-header-900 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-48"
+            >
+          </div>
           <!-- Parameters button -->
           <button
             type="button"
@@ -588,7 +625,7 @@ const exportPdf = async () => {
             </tr>
 
             <!-- Empty state -->
-            <tr v-else-if="data.length === 0">
+            <tr v-else-if="filteredData.length === 0">
               <td :colspan="(showRankingColumn ? 1 : 0) + (columns.length || 1)" class="px-4 py-8 text-center text-header-500">
                 {{ t('stats.empty') }}
               </td>
@@ -596,7 +633,7 @@ const exportPdf = async () => {
 
             <!-- Data rows -->
             <tr
-              v-for="(row, index) in data"
+              v-for="(row, index) in filteredData"
               :key="index"
               class="hover:bg-header-50"
               :class="{ 'bg-header-100 italic text-header-500': row.isNonJoueur }"
@@ -616,7 +653,12 @@ const exportPdf = async () => {
                   ? 'text-right font-mono font-semibold text-header-900 tabular-nums'
                   : 'text-header-900'"
               >
-                {{ formatCellValue(row[column], column) }}
+                <NuxtLink
+                  v-if="getCellLink(row, column)"
+                  :to="getCellLink(row, column)!"
+                  class="link-value"
+                >{{ formatCellValue(row[column], column) }}</NuxtLink>
+                <template v-else>{{ formatCellValue(row[column], column) }}</template>
               </td>
             </tr>
           </tbody>
@@ -628,12 +670,12 @@ const exportPdf = async () => {
     <AdminCardList
       class="lg:hidden"
       :loading="loading && data.length === 0"
-      :empty="data.length === 0"
+      :empty="filteredData.length === 0"
       :loading-text="t('common.loading')"
       :empty-text="t('stats.empty')"
     >
       <AdminCard
-        v-for="(row, index) in data"
+        v-for="(row, index) in filteredData"
         :key="index"
         :class="{ 'opacity-60 italic': row.isNonJoueur }"
       >
@@ -655,7 +697,13 @@ const exportPdf = async () => {
             class="flex justify-between"
           >
             <span class="text-header-500">{{ getColumnLabel(column) }}:</span>
+            <NuxtLink
+              v-if="getCellLink(row, column)"
+              :to="getCellLink(row, column)!"
+              class="link-value"
+            >{{ formatCellValue(row[column], column) }}</NuxtLink>
             <span
+              v-else
               :class="isNumericColumn(column)
                 ? 'font-mono font-semibold text-header-900'
                 : 'text-header-700'"

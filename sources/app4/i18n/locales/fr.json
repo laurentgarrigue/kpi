@@ -266,6 +266,7 @@
     "error_load_filters": "Erreur lors du chargement des filtres",
     "error_load_data": "Erreur lors du chargement des données",
     "error_export": "Erreur lors de l'export",
+    "search_placeholder": "Rechercher...",
     "params": {
       "title": "Paramètres",
       "configure": "Paramétrage",
@@ -303,6 +304,7 @@
       "OfficielsJournees": "Journées avec officiels désignés : RC, R1, délégué, chef arbitre",
       "OfficielsMatchs": "Matchs avec tous les officiels : arbitres, juges de ligne, secrétaire, chrono, timeshoot",
       "ListeArbitres": "Tous les arbitres FFCK : club, niveau, saison de formation, livret",
+      "ListeSurclassements": "Surclassements à partir de la saison sélectionnée : catégorie de la saison, catégorie de surclassement, saison et date d'attribution",
       "ListeEquipes": "Équipes inscrites avec club, CD, CR et clubs actuels des joueurs",
       "ListeJoueurs": "Joueurs inscrits (hors entraîneurs) : club actuel, catégorie, club équipe",
       "ListeJoueurs2": "Joueurs ET entraîneurs inscrits : club actuel, catégorie, club équipe",
@@ -338,6 +340,7 @@
       "irregularites_presence": "Contrôle feuilles de présence",
       "irregularites": "Irrégularités (matchs)",
       "liste_arbitres": "Arbitres",
+      "liste_surclassements": "Surclassements",
       "liste_equipes": "Équipes",
       "liste_joueurs": "Joueurs",
       "liste_joueurs_coachs": "Joueurs & coachs",
@@ -355,7 +358,7 @@
     "columns": {
       "competition": "Compétition",
       "licence": "Licence",
-      "matric": "Matricule",
+      "matric": "Licence",
       "nom": "Nom",
       "prenom": "Prénom",
       "sexe": "Sexe",
@@ -425,7 +428,11 @@
       "total_activite": "Total",
       "type": "Type",
       "date": "Date",
-      "details": "Détails"
+      "details": "Détails",
+      "categorie_saison": "Catégorie saison",
+      "categorie_surclassement": "Catégorie surclassement",
+      "saison_surclassement": "Saison surclassement",
+      "date_surclassement": "Date surclassement"
     }
   },
   "documents": {
@@ -1201,7 +1208,21 @@
     "notice_inactive": "Utilisez le statut Inactif (X) pour rendre indisponible un joueur sans le supprimer de la liste (joueurs absents ou suspendus sur un ou plusieurs matchs, sur une ou plusieurs journées).",
     "notice_staff_referee": "Les membres du staff (E) et arbitres (A) ne sont pas comptabilisés dans les statistiques. Les joueurs inactifs (X) et les arbitres (A) ne sont pas transférés sur les feuilles de match.",
     "last_addition_or_deletion": "Dernière addition ou suppression",
-    "last_update_by": "par"
+    "last_update_by": "par",
+    "surclassement": "Surclassement",
+    "surclassement_ok": "Surclassement valide",
+    "surclassement_missing": "Surclassement manquant",
+    "surclassement_not_required": "",
+    "validation_errors_title": "Ce joueur ne satisfait pas les critères de la compétition nationale :",
+    "error_Saison_licence": "Saison de licence invalide (licence non à jour pour cette saison)",
+    "error_Certif": "Certificat médical manquant",
+    "error_Pagaie_couleur": "Pagaie couleur invalide (jaune, blanche ou absente)",
+    "error_Surclassement": "Surclassement manquant",
+    "override_allowed_title": "Ajout malgré la non-validation",
+    "override_allowed_notice": "En tant qu'administrateur, vous pouvez ajouter ce joueur uniquement en tant qu'arbitre non-joueur (A) ou staff (E).",
+    "override_status_label": "Statut imposé",
+    "override_confirm": "Ajouter malgré tout",
+    "override_cancel": "Annuler"
   },
   "gamedays": {
     "title": "Journées / Phases",
@@ -1914,7 +1935,8 @@
       "reset": "Remise à zéro",
       "reset_confirm": "Remettre à zéro toutes les valeurs initiales ?",
       "reset_success": "Valeurs initiales remises à zéro",
-      "back": "Retour aux classements"
+      "back": "Retour aux classements",
+      "readonly_end": "Compétition terminée — classement en lecture seule"
     },
     "confirm_publish": "Publier le classement calculé comme classement public ?",
     "confirm_unpublish": "Supprimer le classement public ?",
