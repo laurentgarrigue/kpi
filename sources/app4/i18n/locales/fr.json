@@ -218,6 +218,7 @@
     "success": "Succès",
     "confirm": "Confirmer",
     "actions": "Actions",
+    "refresh": "Rafraîchir",
     "scroll_to_top": "Retour en haut",
     "collapse_all": "Tout replier",
     "expand_all": "Tout déplier",
@@ -1456,7 +1457,9 @@
       "pitches_1_4_teams": "Terrains 1-4 (Équipes)",
       "pitches_5_8_teams": "Terrains 5-8 (Équipes)",
       "pitches_1_4_phases": "Terrains 1-4 (Phases)",
-      "pitches_5_8_phases": "Terrains 5-8 (Phases)"
+      "pitches_5_8_phases": "Terrains 5-8 (Phases)",
+      "pitches_1_5_phases": "Terrains 1-5 (Phases)",
+      "pitches_1_5_teams": "Terrains 1-5 (Équipes)"
     },
     "added": "Match créé.",
     "save_and_add": "Enregistrer et ajouter",

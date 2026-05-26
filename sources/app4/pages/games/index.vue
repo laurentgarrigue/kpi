@@ -55,8 +55,10 @@ const loading = ref(false)
 const games = ref<Game[]>([])
 const total = ref(0)
 const page = ref(1)
-const limit = ref(50)
 const totalPages = ref(0)
+
+const hasContextFilter = computed(() => !!(workContext.pageCompetitionCodeAll || workContext.pageEventGroupSelection))
+const limit = ref(hasContextFilter.value ? 0 : 50)
 const phaseLibelle = ref(false)
 const availableDates = ref<string[]>([])
 
@@ -310,6 +312,7 @@ watch([page, limit, selectedSort], () => {
 
 watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGroupSelection, selectedTour, selectedJournee, selectedDate, selectedTerrain], () => {
   page.value = 1
+  limit.value = (workContext.pageCompetitionCodeAll || workContext.pageEventGroupSelection) ? 0 : 50
   loadGames()
 })
 
@@ -554,9 +557,63 @@ const cancelInlineEdit = () => {
   editingCell.value = null
 }
 
+const inlineTabOrder = ['Heure_match', 'Terrain', 'Libelle']
+
 const handleInlineKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter') saveInlineEdit()
-  else if (e.key === 'Escape') cancelInlineEdit()
+  if (e.key === 'Enter') {
+    saveInlineEdit()
+  } else if (e.key === 'Escape') {
+    cancelInlineEdit()
+  } else if (e.key === 'Tab') {
+    e.preventDefault()
+    if (!editingCell.value) return
+    const { id, field } = editingCell.value
+    const currentIdx = inlineTabOrder.indexOf(field)
+    if (currentIdx === -1) {
+      saveInlineEdit()
+      return
+    }
+    const value = editingValue.value
+    const originalValue = editingOriginalValue.value
+    editingCell.value = null
+
+    const nextIdx = e.shiftKey
+      ? (currentIdx - 1 + inlineTabOrder.length) % inlineTabOrder.length
+      : (currentIdx + 1) % inlineTabOrder.length
+
+    // Determine which game to move to (next/prev row on wrap)
+    let targetGame = filteredGames.value.find(g => g.id === id) ?? null
+    if (!e.shiftKey && nextIdx === 0) {
+      const rowIdx = filteredGames.value.findIndex(g => g.id === id)
+      targetGame = filteredGames.value[rowIdx + 1] ?? null
+    } else if (e.shiftKey && nextIdx === inlineTabOrder.length - 1) {
+      const rowIdx = filteredGames.value.findIndex(g => g.id === id)
+      targetGame = filteredGames.value[rowIdx - 1] ?? null
+    }
+
+    // Save current value if changed
+    if (value !== originalValue) {
+      api.patch(`/admin/games/${id}/inline`, { field, value }).then(() => {
+        const game = games.value.find(g => g.id === id)
+        if (game) {
+          const prop = inlineFieldMap[field]
+          if (prop) {
+            const numericFields = ['numeroOrdre']
+            if (numericFields.includes(prop)) {
+              ;(game as Record<string, unknown>)[prop] = value ? parseInt(value) : null
+            } else {
+              ;(game as Record<string, unknown>)[prop] = value || null
+            }
+          }
+        }
+        toast.add({ title: t('common.saved'), color: 'success' })
+      }).catch(() => {})
+    }
+
+    if (targetGame && isGameEditable(targetGame)) {
+      startInlineEdit(targetGame, inlineTabOrder[nextIdx])
+    }
+  }
 }
 
 const onScoreInput = () => {
@@ -1240,6 +1297,11 @@ const statusBtnClass = (game: Game) => {
       @add="openAddModal"
     >
       <template #left>
+        <!-- Total count (when nothing selected) -->
+        <span v-if="selectedIds.length === 0 && total > 0" class="text-sm text-header-600">
+          {{ t('games.total', { count: total }) }}
+        </span>
+
         <!-- Bulk actions dropdown -->
         <div v-if="canSelect && selectedIds.length > 0" ref="bulkActionsRef" class="relative">
           <button
@@ -1350,6 +1412,15 @@ const statusBtnClass = (game: Game) => {
         </div>
       </template>
       <template #before-search>
+        <!-- Refresh button -->
+        <button
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          :title="t('common.refresh')"
+          @click="loadGames"
+        >
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
+        </button>
+
         <!-- Documents dropdown (all games with current filters) -->
         <div ref="documentsRef" class="relative">
           <button
@@ -1455,6 +1526,24 @@ const statusBtnClass = (game: Game) => {
             >
               <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
               {{ t('games.documents.pitches_5_8_phases') }}
+            </a>
+            <a
+              :href="docUrl('PdfListeMatchs5TerrainsEn.php', true)"
+              target="_blank"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              @click="documentsOpen = false"
+            >
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              {{ t('games.documents.pitches_1_5_phases') }}
+            </a>
+            <a
+              :href="docUrl('PdfListeMatchs5TerrainsEnTeams.php', true)"
+              target="_blank"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              @click="documentsOpen = false"
+            >
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              {{ t('games.documents.pitches_1_5_teams') }}
             </a>
           </div>
         </div>
@@ -1730,7 +1819,7 @@ const statusBtnClass = (game: Game) => {
                     v-model="editingValue" v-inline-focus
                     type="text"
                     maxlength="30"
-                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded"
+                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded game-code"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -1738,6 +1827,7 @@ const statusBtnClass = (game: Game) => {
                 <template v-else>
                   <span
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
+                    class="game-code"
                     @click="startInlineEdit(g, 'Libelle')"
                   >{{ g.libelle || '-' }}</span>
                 </template>
