@@ -215,7 +215,9 @@ const startEdit = (player: Player, field: 'numero' | 'capitaine') => {
     const el = mobileEl && mobileEl.offsetParent !== null ? mobileEl : desktopEl
     if (el) {
       el.focus()
-      if (el instanceof HTMLSelectElement) {
+      if (el instanceof HTMLInputElement) {
+        el.select()
+      } else if (el instanceof HTMLSelectElement) {
         try { el.showPicker() } catch { /* ignore if unsupported */ }
       }
     }
@@ -412,6 +414,10 @@ const copyComposition = async () => {
 }
 
 // Delete
+const singleDeleteMatric = ref<number | null>(null)
+const singleDeleteModalOpen = ref(false)
+const isSingleDeleting = ref(false)
+
 const confirmBulkDelete = () => {
   if (selectedPlayerIds.value.length === 0) return
   bulkDeleteModalOpen.value = true
@@ -435,12 +441,23 @@ const bulkDelete = async () => {
   }
 }
 
-const deletePlayer = async (matric: number) => {
+const deletePlayer = (matric: number) => {
+  singleDeleteMatric.value = matric
+  singleDeleteModalOpen.value = true
+}
+
+const confirmSingleDelete = async () => {
+  if (singleDeleteMatric.value === null) return
+  isSingleDeleting.value = true
   try {
-    await presenceStore.deletePlayers([matric], api)
+    await presenceStore.deletePlayers([singleDeleteMatric.value], api)
     toast.add({ title: t('presence.player_deleted'), color: 'success' })
+    singleDeleteModalOpen.value = false
+    singleDeleteMatric.value = null
   } catch (error: unknown) {
     toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
+  } finally {
+    isSingleDeleting.value = false
   }
 }
 
@@ -731,8 +748,8 @@ const pdfLinks = computed(() => {
               </select>
             </td>
 
-            <td class="px-3 py-1 text-sm font-medium text-header-900">{{ player.nom }}</td>
-            <td class="px-3 py-1 text-sm text-header-900">{{ player.prenom }}</td>
+            <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
+            <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
             <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
               <NuxtLink
                 :to="`/athletes?matric=${player.matric}`"
@@ -862,8 +879,8 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ player.nom }}</td>
-              <td class="px-3 py-1 text-sm text-header-900">{{ player.prenom }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
@@ -965,8 +982,8 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ player.nom }}</td>
-              <td class="px-3 py-1 text-sm text-header-900">{{ player.prenom }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
@@ -1068,8 +1085,8 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ player.nom }}</td>
-              <td class="px-3 py-1 text-sm text-header-900">{{ player.prenom }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
@@ -1154,7 +1171,7 @@ const pdfLinks = computed(() => {
               class="rounded border-header-300"
             >
             <div>
-              <div class="font-bold text-header-900">{{ player.nom }} {{ player.prenom }}</div>
+              <div class="font-bold text-header-900">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
               <NuxtLink
                 :to="`/athletes?matric=${player.matric}`"
                 class="link-value text-sm"
@@ -1261,6 +1278,19 @@ const pdfLinks = computed(() => {
       danger
       @close="bulkDeleteModalOpen = false"
       @confirm="bulkDelete"
+    />
+
+    <!-- Single Delete Confirmation Modal -->
+    <AdminConfirmModal
+      :open="singleDeleteModalOpen"
+      :title="t('common.delete')"
+      :message="t('presence.confirm_delete_player')"
+      :confirm-text="t('common.delete')"
+      :cancel-text="t('common.cancel')"
+      :loading="isSingleDeleting"
+      danger
+      @close="singleDeleteModalOpen = false"
+      @confirm="confirmSingleDelete"
     />
 
     <!-- Add Player Modal -->
@@ -1415,7 +1445,7 @@ const pdfLinks = computed(() => {
                           class="text-xs text-amber-800 underline hover:text-amber-950 cursor-pointer"
                           @click="selectDuplicate(dup)"
                         >
-                          {{ dup.nom }} {{ dup.prenom }} ({{ dup.matric }}) - {{ dup.club }}
+                          {{ formatNom(dup.nom) }} {{ formatPrenom(dup.prenom) }} ({{ dup.matric }}) - {{ dup.club }}
                         </button>
                       </li>
                     </ul>
