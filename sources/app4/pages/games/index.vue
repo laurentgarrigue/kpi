@@ -12,7 +12,7 @@ const api = useApi()
 const toast = useToast()
 const workContext = useWorkContextStore()
 const authStore = useAuthStore()
-const { bracketLabels } = useBracketDisplay()
+const { bracketLabels, bracketRawCodes } = useBracketDisplay()
 
 // ─── LocalStorage filter persistence ───
 const FILTERS_STORAGE_KEY = 'app4_games_filters'
@@ -130,6 +130,14 @@ const bulkActionsRef = ref<HTMLDivElement | null>(null)
 const documentsOpen = ref(false)
 const documentsRef = ref<HTMLDivElement | null>(null)
 
+// Conflict detection toolbar
+const conflictBarOpen = ref(false)
+const teamSearchOpen = ref(false)
+const teamSearchRef = ref<HTMLDivElement | null>(null)
+const selectedTeam = ref('')
+const teamSearchInput = ref('')
+const restMinutes = ref(30)
+
 // ─── Legacy base URL ───
 const legacyBase = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
 const tzParam = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
@@ -163,10 +171,147 @@ function getDefaultFormData(): GameFormData {
   }
 }
 
-// ─── Computed: Filtered games (client-side unlocked filter) ───
+// ─── Team search: extract team name from referee string "(ClubCode)" ───
+const extractRefereeTeam = (text: string | null): string => {
+  if (!text) return ''
+  const m = text.match(/\(([^)]+)\)/)
+  return m ? m[1] : ''
+}
+
+// ─── Team/placeholder entity list from loaded games ───
+// Real teams: identified by equipe name. Placeholders: identified by raw bracket code (e.g. "1A", "V2").
+// selectedTeam holds either a real team name or a raw bracket code.
+
+interface TeamEntity {
+  code: string   // unique key: team name for real teams, raw bracket code for placeholders
+  label: string  // display label (translated for placeholders)
+  isPlaceholder: boolean
+}
+
+const availableTeams = computed((): TeamEntity[] => {
+  const realTeams = new Map<string, TeamEntity>()
+  const placeholders = new Map<string, TeamEntity>()
+
+  for (const g of games.value) {
+    // Real teams
+    if (g.equipeA) realTeams.set(g.equipeA, { code: g.equipeA, label: g.equipeA, isPlaceholder: false })
+    if (g.equipeB) realTeams.set(g.equipeB, { code: g.equipeB, label: g.equipeB, isPlaceholder: false })
+
+    // Placeholders from bracket notation (only for unassigned slots)
+    const raw = bracketRawCodes(g.libelle)
+    const labels = bracketLabels(g.libelle)
+    if (!g.equipeA && raw.teamA && labels.teamA)
+      placeholders.set(raw.teamA, { code: raw.teamA, label: labels.teamA, isPlaceholder: true })
+    if (!g.equipeB && raw.teamB && labels.teamB)
+      placeholders.set(raw.teamB, { code: raw.teamB, label: labels.teamB, isPlaceholder: true })
+    if (!g.arbitrePrincipal && raw.refereePrincipal && labels.refereePrincipal)
+      placeholders.set(raw.refereePrincipal, { code: raw.refereePrincipal, label: labels.refereePrincipal, isPlaceholder: true })
+    if (!g.arbitreSecondaire && raw.refereeSecondaire && labels.refereeSecondaire)
+      placeholders.set(raw.refereeSecondaire, { code: raw.refereeSecondaire, label: labels.refereeSecondaire, isPlaceholder: true })
+  }
+
+  const sortedReal = [...realTeams.values()].sort((a, b) => a.label.localeCompare(b.label))
+  const sortedPlaceholders = [...placeholders.values()].sort((a, b) => a.label.localeCompare(b.label))
+  return [...sortedReal, ...sortedPlaceholders]
+})
+
+const filteredTeamOptions = computed(() => {
+  const q = teamSearchInput.value.trim().toLowerCase()
+  if (!q) return availableTeams.value
+  return availableTeams.value.filter(e => e.label.toLowerCase().includes(q) || e.code.toLowerCase().includes(q))
+})
+
+// ─── Prev/next team navigation (cycles through all entities) ───
+const selectedTeamIndex = computed(() => availableTeams.value.findIndex(e => e.code === selectedTeam.value))
+
+const selectPrevTeam = () => {
+  const teams = availableTeams.value
+  if (!teams.length) return
+  const idx = selectedTeamIndex.value
+  selectedTeam.value = (idx <= 0 ? teams[teams.length - 1] : teams[idx - 1]).code
+  teamSearchInput.value = ''
+}
+
+const selectNextTeam = () => {
+  const teams = availableTeams.value
+  if (!teams.length) return
+  const idx = selectedTeamIndex.value
+  selectedTeam.value = (idx < 0 || idx === teams.length - 1 ? teams[0] : teams[idx + 1]).code
+  teamSearchInput.value = ''
+}
+
+// ─── Current selected entity (for label display) ───
+const selectedTeamEntity = computed(() => availableTeams.value.find(e => e.code === selectedTeam.value) ?? null)
+
+// ─── Check if a game involves the selected entity (real team or placeholder) ───
+const gameInvolvesTeam = (g: Game, code: string): boolean => {
+  if (!code) return true
+  // Real team match
+  if (g.equipeA === code || g.equipeB === code) return true
+  if (extractRefereeTeam(g.arbitrePrincipal) === code) return true
+  if (extractRefereeTeam(g.arbitreSecondaire) === code) return true
+  // Placeholder match: compare raw bracket codes
+  const raw = bracketRawCodes(g.libelle)
+  if (!g.equipeA && raw.teamA === code) return true
+  if (!g.equipeB && raw.teamB === code) return true
+  if (!g.arbitrePrincipal && raw.refereePrincipal === code) return true
+  if (!g.arbitreSecondaire && raw.refereeSecondaire === code) return true
+  return false
+}
+
+// ─── For a selected team: build a set of "date+time" slots where team appears ───
+// A conflict = same date+time in two different games
+const teamConflictGameIds = computed((): Set<number> => {
+  if (!selectedTeam.value) return new Set()
+  const slotMap = new Map<string, number[]>() // "date|time" → game ids
+  for (const g of games.value) {
+    if (!gameInvolvesTeam(g, selectedTeam.value)) continue
+    const key = `${g.dateMatch ?? ''}|${g.heureMatch ?? ''}`
+    if (!slotMap.has(key)) slotMap.set(key, [])
+    slotMap.get(key)!.push(g.id)
+  }
+  const conflicted = new Set<number>()
+  for (const ids of slotMap.values()) {
+    if (ids.length > 1) ids.forEach(id => conflicted.add(id))
+  }
+  return conflicted
+})
+
+// ─── Insufficient rest: games for selected team with < restMinutes between consecutive games ───
+// We use heureMatch as start time. Rest is the gap between consecutive game start times.
+const teamRestWarningGameIds = computed((): Set<number> => {
+  if (!selectedTeam.value) return new Set()
+  const REST_MINUTES = restMinutes.value
+  const teamGames = games.value
+    .filter(g => gameInvolvesTeam(g, selectedTeam.value) && g.dateMatch && g.heureMatch)
+    .map(g => ({ id: g.id, dateMatch: g.dateMatch!, heureMatch: g.heureMatch! }))
+    .sort((a, b) => {
+      const da = `${a.dateMatch}T${a.heureMatch}`
+      const db = `${b.dateMatch}T${b.heureMatch}`
+      return da < db ? -1 : da > db ? 1 : 0
+    })
+  const warned = new Set<number>()
+  for (let i = 1; i < teamGames.length; i++) {
+    const prev = teamGames[i - 1]
+    const curr = teamGames[i]
+    if (prev.dateMatch !== curr.dateMatch) continue
+    const [ph, pm] = prev.heureMatch.split(':').map(Number)
+    const [ch, cm] = curr.heureMatch.split(':').map(Number)
+    const gap = (ch * 60 + cm) - (ph * 60 + pm)
+    if (gap < REST_MINUTES) {
+      warned.add(prev.id)
+      warned.add(curr.id)
+    }
+  }
+  return warned
+})
+
+// ─── Computed: Filtered games (client-side unlocked filter + team filter) ───
 const filteredGames = computed(() => {
-  if (!unlockedOnly.value) return games.value
-  return games.value.filter(g => g.validation !== 'O')
+  let result = games.value
+  if (unlockedOnly.value) result = result.filter(g => g.validation !== 'O')
+  if (selectedTeam.value) result = result.filter(g => gameInvolvesTeam(g, selectedTeam.value))
+  return result
 })
 
 // ─── Load data ───
@@ -218,7 +363,9 @@ const loadGames = async (keepSelection = false) => {
     total.value = response.total
     totalPages.value = response.totalPages
     phaseLibelle.value = response.phaseLibelle
-    availableDates.value = response.dates || []
+    if (!selectedDate.value) {
+      availableDates.value = response.dates || []
+    }
 
     if (keepSelection) {
       // After bulk action: keep only IDs that still exist in the reloaded data
@@ -349,6 +496,9 @@ const onClickOutside = (e: MouseEvent) => {
   }
   if (documentsRef.value && !documentsRef.value.contains(e.target as Node)) {
     documentsOpen.value = false
+  }
+  if (teamSearchRef.value && !teamSearchRef.value.contains(e.target as Node)) {
+    teamSearchOpen.value = false
   }
 }
 onMounted(() => document.addEventListener('click', onClickOutside))
@@ -1331,7 +1481,12 @@ const statusBtnClass = (game: Game) => {
       <template #left>
         <!-- Total count (when nothing selected) -->
         <span v-if="selectedIds.length === 0 && total > 0" class="text-sm text-header-600">
-          {{ t('games.total', { count: total }) }}
+          <template v-if="unlockedOnly">
+            {{ t('games.filtered', { filtered: filteredGames.length, total }) }}
+          </template>
+          <template v-else>
+            {{ t('games.total', { count: total }) }}
+          </template>
         </span>
 
         <!-- Bulk actions dropdown -->
@@ -1467,6 +1622,18 @@ const statusBtnClass = (game: Game) => {
           <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
         </button>
 
+        <!-- Conflict detection toolbar toggle -->
+        <button
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+          :class="conflictBarOpen || selectedTeam ? 'text-primary-700 bg-primary-50 border-primary-400' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
+          :title="t('games.conflict_toolbar_title')"
+          @click="conflictBarOpen = !conflictBarOpen"
+        >
+          <UIcon name="heroicons:shield-exclamation" class="w-5 h-5" :class="conflictBarOpen || selectedTeam ? 'text-primary-500' : 'text-header-500'" />
+          <span v-if="selectedTeamEntity" class="max-w-24 truncate text-xs" :class="selectedTeamEntity.isPlaceholder ? 'italic text-orange-600' : ''">{{ selectedTeamEntity.label }}</span>
+          <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': conflictBarOpen }" />
+        </button>
+
         <!-- Documents dropdown (all games with current filters) -->
         <div ref="documentsRef" class="relative">
           <button
@@ -1596,6 +1763,156 @@ const statusBtnClass = (game: Game) => {
       </template>
     </AdminToolbar>
 
+    <!-- ═══════ CONFLICT DETECTION TOOLBAR ═══════ -->
+    <div v-if="conflictBarOpen" class="flex flex-wrap items-center gap-3 px-3 py-2 bg-white rounded-lg shadow border border-primary-100">
+      <!-- Prev / dropdown / Next navigation -->
+      <div class="flex items-center gap-1">
+        <button
+          class="p-1.5 rounded-lg border border-header-300 bg-white hover:bg-header-50 text-header-600 disabled:opacity-30"
+          :disabled="availableTeams.length === 0"
+          :title="t('games.team_prev')"
+          @click="selectPrevTeam"
+        >
+          <UIcon name="heroicons:chevron-left" class="w-4 h-4" />
+        </button>
+
+        <!-- Team dropdown -->
+        <div ref="teamSearchRef" class="relative">
+          <button
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+            :class="selectedTeam ? 'text-primary-700 bg-primary-50 border-primary-400' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
+            @click="teamSearchOpen = !teamSearchOpen"
+          >
+            <UIcon
+              :name="selectedTeamEntity?.isPlaceholder ? 'heroicons:clock' : 'heroicons:user-group'"
+              class="w-5 h-5 shrink-0"
+              :class="selectedTeam ? (selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-500'"
+            />
+            <span
+              class="max-w-36 truncate"
+              :class="selectedTeamEntity?.isPlaceholder ? 'italic text-orange-600' : ''"
+            >{{ selectedTeamEntity?.label || t('games.filter_team') }}</span>
+            <button v-if="selectedTeam" class="ml-0.5 text-primary-400 hover:text-primary-700" :title="t('common.all')" @click.stop="selectedTeam = ''; teamSearchInput = ''">
+              <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+            </button>
+            <UIcon v-else name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': teamSearchOpen }" />
+          </button>
+          <div v-show="teamSearchOpen" class="absolute z-30 mt-1 w-64 bg-white border border-header-200 rounded-lg shadow-lg left-0 flex flex-col">
+            <div class="p-2 border-b border-header-100">
+              <input
+                v-model="teamSearchInput"
+                type="text"
+                :placeholder="t('games.search_team_placeholder')"
+                class="w-full px-2 py-1.5 text-xs border border-header-300 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none"
+                @click.stop
+              >
+            </div>
+            <div class="max-h-72 overflow-y-auto py-1">
+              <!-- All teams option -->
+              <button
+                class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50"
+                :class="!selectedTeam ? 'font-medium text-primary-700' : 'text-header-700'"
+                @click="selectedTeam = ''; teamSearchInput = ''; teamSearchOpen = false"
+              >
+                <UIcon name="heroicons:users" class="w-4 h-4 text-header-400 shrink-0" />
+                {{ t('games.all_teams') }}
+              </button>
+
+              <!-- Real teams -->
+              <template v-if="filteredTeamOptions.some(e => !e.isPlaceholder)">
+                <div v-if="filteredTeamOptions.some(e => e.isPlaceholder)" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider">
+                  {{ t('games.teams_assigned') }}
+                </div>
+                <button
+                  v-for="entity in filteredTeamOptions.filter(e => !e.isPlaceholder)"
+                  :key="entity.code"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50 truncate"
+                  :class="selectedTeam === entity.code ? 'font-medium text-primary-700 bg-primary-50' : 'text-header-700'"
+                  @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
+                >
+                  <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-400 shrink-0" />
+                  {{ entity.label }}
+                </button>
+              </template>
+
+              <!-- Placeholders -->
+              <template v-if="filteredTeamOptions.some(e => e.isPlaceholder)">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                  {{ t('games.teams_placeholder') }}
+                </div>
+                <button
+                  v-for="entity in filteredTeamOptions.filter(e => e.isPlaceholder)"
+                  :key="entity.code"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-orange-50 truncate"
+                  :class="selectedTeam === entity.code ? 'font-medium text-orange-700 bg-orange-50' : 'text-orange-500'"
+                  @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
+                >
+                  <UIcon name="heroicons:clock" class="w-4 h-4 text-orange-300 shrink-0" />
+                  <span class="italic">{{ entity.label }}</span>
+                  <span class="ml-auto text-[10px] text-header-400 font-mono shrink-0">{{ entity.code }}</span>
+                </button>
+              </template>
+
+              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-400 italic">
+                {{ t('common.no_results') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <span class="text-xs text-header-400 min-w-10 text-center">
+          <template v-if="selectedTeam && selectedTeamIndex >= 0">{{ selectedTeamIndex + 1 }}/{{ availableTeams.length }}</template>
+          <template v-else>—</template>
+        </span>
+        <button
+          class="p-1.5 rounded-lg border border-header-300 bg-white hover:bg-header-50 text-header-600 disabled:opacity-30"
+          :disabled="availableTeams.length === 0"
+          :title="t('games.team_next')"
+          @click="selectNextTeam"
+        >
+          <UIcon name="heroicons:chevron-right" class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Rest threshold -->
+      <div class="flex items-center gap-1.5 text-xs text-header-600">
+        <UIcon name="heroicons:clock" class="w-4 h-4 text-warning-500 shrink-0" />
+        <label class="whitespace-nowrap">{{ t('games.rest_threshold') }}</label>
+        <input
+          v-model.number="restMinutes"
+          type="number"
+          min="1"
+          max="240"
+          class="w-14 px-1.5 py-1 text-xs border border-header-300 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
+        >
+        <span>{{ t('games.rest_minutes') }}</span>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-5 w-px bg-header-200 hidden sm:block" />
+
+      <!-- Legend -->
+      <div class="flex flex-wrap items-center gap-3 text-xs text-header-600">
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-sm bg-danger-200 border border-danger-400 shrink-0" />
+          {{ t('games.team_conflict') }}
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-sm bg-warning-200 border border-warning-400 shrink-0" />
+          {{ t('games.team_rest_warning') }}
+        </span>
+      </div>
+
+      <!-- Close -->
+      <button
+        class="ml-auto p-1 text-header-400 hover:text-header-600"
+        :title="t('common.close')"
+        @click="conflictBarOpen = false; selectedTeam = ''; teamSearchInput = ''"
+      >
+        <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+      </button>
+    </div>
+
     <!-- ═══════ DESKTOP TABLE ═══════ -->
     <div class="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
@@ -1615,41 +1932,41 @@ const statusBtnClass = (game: Game) => {
               <!-- Publication -->
               <th v-if="showPublicationColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:eye" class="w-6 h-6" /></th>
               <!-- N° -->
-              <th class="w-10 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.number') }}</th>
+              <th class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.number') }}</th>
               <!-- Actions -->
-              <th v-if="canEdit" class="w-10 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.actions') }}</th>
+              <th v-if="canEdit" class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.actions') }}</th>
               <!-- Scoresheets -->
-              <th v-if="canEdit || canEditScores" class="w-10 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.actions') }}</th>
+              <th v-if="canEdit || canEditScores" class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.actions') }}</th>
               <!-- Time -->
-              <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.date_time') }}</th>
+              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.date_time') }}</th>
               <!-- Terrain -->
-              <th class="w-8 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.terrain') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.terrain') }}</th>
               <!-- Cat -->
-              <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.category') }}</th>
+              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.category') }}</th>
               <!-- Phase (conditional) -->
-              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.phase') }}</th>
+              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.phase') }}</th>
               <!-- Type -->
-              <th class="w-8 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.type') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.type') }}</th>
               <!-- Code (conditional) -->
-              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.code') }}</th>
+              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.code') }}</th>
               <!-- Code (non-phaseLibelle) -->
-              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.code') }}</th>
+              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.code') }}</th>
               <!-- Lieu (non-phaseLibelle) -->
-              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.location') }}</th>
+              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.location') }}</th>
               <!-- Team A -->
-              <th class="px-1 py-2 text-right text-header-500 font-medium">{{ t('games.field.team_a') }}</th>
+              <th class="px-1 py-2 text-right text-header-600 font-medium">{{ t('games.field.team_a') }}</th>
               <!-- Score A -->
-              <th class="w-8 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.score_a') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.score_a') }}</th>
               <!-- Lock -->
-              <th class="w-10 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.lock') }}</th>
+              <th class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.lock') }}</th>
               <!-- Score B -->
-              <th class="w-8 px-1 py-2 text-center text-header-500 font-medium">{{ t('games.field.score_b') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.score_b') }}</th>
               <!-- Team B -->
-              <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.team_b') }}</th>
+              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.team_b') }}</th>
               <!-- Referee 1 -->
-              <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.referee_1') }}</th>
+              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_1') }}</th>
               <!-- Referee 2 -->
-              <th class="px-1 py-2 text-left text-header-500 font-medium">{{ t('games.field.referee_2') }}</th>
+              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_2') }}</th>
               <!-- Printed -->
               <th v-if="showPrintedColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:inbox-arrow-down" class="w-6 h-6" /></th>
               <!-- Delete -->
@@ -1677,7 +1994,9 @@ const statusBtnClass = (game: Game) => {
               class="hover:bg-header-50"
               :class="{
                 'bg-primary-50': selectedIds.includes(g.id),
-                'bg-amber-50/50': isLocked(g),
+                'bg-amber-50/50': isLocked(g) && !teamConflictGameIds.has(g.id) && !teamRestWarningGameIds.has(g.id),
+                'bg-danger-100 border-l-2 border-danger-400': teamConflictGameIds.has(g.id),
+                'bg-warning-100 border-l-2 border-warning-400': !teamConflictGameIds.has(g.id) && teamRestWarningGameIds.has(g.id),
               }"
             >
               <!-- Checkbox -->
@@ -1771,7 +2090,7 @@ const statusBtnClass = (game: Game) => {
                   <span
                     v-else
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
-                    class="text-header-500"
+                    class="text-header-600"
                     @click="startInlineEdit(g, 'Date_match')"
                   >{{ formatDateShort(g.dateMatch) }}</span>
                   <!-- Heure inline -->
@@ -2076,7 +2395,7 @@ const statusBtnClass = (game: Game) => {
                     class="truncate block"
                     :class="[
                       isGameEditable(g) ? 'editable-cell' : '',
-                      g.matricArbitrePrincipal === 0 ? 'text-header-400 italic' : 'text-header-600',
+                      g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600',
                     ]"
                     :title="g.arbitrePrincipal"
                     @click="startRefereeEdit(g, 'principal')"
@@ -2090,7 +2409,7 @@ const statusBtnClass = (game: Game) => {
                   >({{ bracketLabels(g.libelle).refereePrincipal }})</span>
                   <span
                     v-else
-                    :class="isGameEditable(g) ? 'editable-cell text-header-300' : 'text-header-300'"
+                    :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
                     @click="startRefereeEdit(g, 'principal')"
                   >-</span>
                 </template>
@@ -2115,7 +2434,7 @@ const statusBtnClass = (game: Game) => {
                     class="truncate block"
                     :class="[
                       isGameEditable(g) ? 'editable-cell' : '',
-                      g.matricArbitreSecondaire === 0 ? 'text-header-400 italic' : 'text-header-600',
+                      g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600',
                     ]"
                     :title="g.arbitreSecondaire"
                     @click="startRefereeEdit(g, 'secondaire')"
@@ -2129,7 +2448,7 @@ const statusBtnClass = (game: Game) => {
                   >({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
                   <span
                     v-else
-                    :class="isGameEditable(g) ? 'editable-cell text-header-300' : 'text-header-300'"
+                    :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
                     @click="startRefereeEdit(g, 'secondaire')"
                   >-</span>
                 </template>
@@ -2184,9 +2503,16 @@ const statusBtnClass = (game: Game) => {
 
     <!-- ═══════ MOBILE CARDS ═══════ -->
     <AdminCardList class="lg:hidden" :loading="loading && games.length === 0" :empty="filteredGames.length === 0" :empty-text="t('games.no_results')">
-      <AdminCard
+      <div
         v-for="g in filteredGames"
         :key="g.id"
+        class="rounded-lg"
+        :class="{
+          'ring-2 ring-danger-400': teamConflictGameIds.has(g.id),
+          'ring-2 ring-warning-400': !teamConflictGameIds.has(g.id) && teamRestWarningGameIds.has(g.id),
+        }"
+      >
+      <AdminCard
         :selected="selectedIds.includes(g.id)"
         :show-checkbox="canSelect"
         :checked="selectedIds.includes(g.id)"
@@ -2288,7 +2614,7 @@ const statusBtnClass = (game: Game) => {
         <div class="space-y-2 text-sm">
           <!-- Date / Time / Terrain (inline editable) -->
           <div class="flex items-center gap-2">
-            <UIcon name="heroicons:calendar" class="w-5 h-5 text-header-400 shrink-0" />
+            <UIcon name="heroicons:calendar" class="w-5 h-5 text-header-600 shrink-0" />
             <!-- Date inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'Date_match'">
               <input
@@ -2302,6 +2628,7 @@ const statusBtnClass = (game: Game) => {
             </template>
             <span
               v-else
+              class="text-header-600"
               :class="isGameEditable(g) ? 'editable-cell' : ''"
               @click="startInlineEdit(g, 'Date_match')"
             >{{ formatDate(g.dateMatch) }}</span>
@@ -2425,7 +2752,7 @@ const statusBtnClass = (game: Game) => {
                 :class="g.type === 'C' ? 'text-primary-600' : 'text-orange-600'"
               />
             </button>
-            <span class="text-header-300">|</span>
+            <span class="text-header-400">|</span>
             <!-- <span class="text-header-500">{{ t('games.field.status') }}</span> -->
             <button
               v-if="isGameEditable(g)"
@@ -2441,10 +2768,10 @@ const statusBtnClass = (game: Game) => {
           </div>
 
           <div v-if="g.arbitrePrincipal || g.arbitreSecondaire || bracketLabels(g.libelle).refereePrincipal || bracketLabels(g.libelle).refereeSecondaire" class="text-xs text-header-500">
-            <span v-if="g.arbitrePrincipal" :class="{ 'italic text-header-400': g.matricArbitrePrincipal === 0 }">{{ g.arbitrePrincipal }}</span>
+            <span v-if="g.arbitrePrincipal" :class="{ 'italic text-header-600': g.matricArbitrePrincipal === 0 }">{{ g.arbitrePrincipal }}</span>
             <span v-else-if="bracketLabels(g.libelle).refereePrincipal" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereePrincipal }})</span>
             <template v-if="g.arbitreSecondaire || bracketLabels(g.libelle).refereeSecondaire"> /
-              <span v-if="g.arbitreSecondaire" :class="{ 'italic text-header-400': g.matricArbitreSecondaire === 0 }">{{ g.arbitreSecondaire }}</span>
+              <span v-if="g.arbitreSecondaire" :class="{ 'italic text-header-600': g.matricArbitreSecondaire === 0 }">{{ g.arbitreSecondaire }}</span>
               <span v-else-if="bracketLabels(g.libelle).refereeSecondaire" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
             </template>
           </div>
@@ -2471,6 +2798,7 @@ const statusBtnClass = (game: Game) => {
           </AdminActionButton>
         </template>
       </AdminCard>
+      </div>
 
       <!-- Mobile Pagination -->
       <AdminPagination
