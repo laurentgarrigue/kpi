@@ -1,6 +1,6 @@
 # Spécification — Scoring (console de match en direct) dans app4
 
-> Statut : proposition / plan de mise en œuvre
+> Statut : en cours — Phase 0 terminée, Phase 1 en cours (voir §11 Suivi)
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et le prototype standalone `sources/app3`
@@ -275,3 +275,64 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
 - **Phase 3** : connecter le broker + une incrustation `/live` → réception via `{p,t,v}` ;
   brancher un panneau matériel propriétaire (ou équivalent) en mode Hardware Scoring → le store se met à jour
   depuis le matériel.
+
+## 11. Suivi des développements
+
+> Cette section est enrichie au fil des développements avec le détail des décisions et de
+> l'implémentation effective.
+
+### Phase 0 — Échafaudage ✅ (terminée)
+
+Artefacts créés/modifiés dans `sources/app4` :
+
+| Fichier | Détail |
+|---|---|
+| `types/scoring.ts` | **Créé.** `Period`, `MatchStatus`, `MatchType`, `TeamSide`, `ScoringEventCode`, `ScoringMatch` (calé sur la réponse réelle de `AdminGamesController::get` — champs camelCase : id, validation, statut, type, periode, scoreA/B, scoreDetailA/B, idEquipeA/B, equipeA/B…), `ScoringPlayer`, `ScoringEvent`, `Penalty`, `PeriodDurations`. |
+| `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2/TB=180s. **Actions de chargement/mutation → Phase 1.** |
+| `composables/useScoringPermissions.ts` | **Créé.** Signature `(isLocked)`. **Accès gaté profil ≤ 2** via constante `SCORING_ACCESS_MAX_PROFILE = 2`. Retourne `canView`, `canScore`, `canManagePlayers`, `canValidate`, `canLock`. Cible post-validation documentée en commentaire (relever la constante + le contrôle serveur). |
+| `i18n/locales/fr.json`, `en.json` | **Modifiés.** Namespace `scoring.*` ajouté (title, link, hardware, status ATT/ON/END, period M1/M2/P1/P2/TB, event goal/cards, timer, scoreboard, locked). |
+| `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version qu'app3/fm3). |
+
+**Note environnement** : le container `kpi_node_app4` avait un `node_modules` partiellement
+détenu par `root` (~7175 entrées, install antérieure en root) + 80 artefacts temporaires
+d'installs avortées, qui bloquaient `npm install` (EACCES puis ENOTEMPTY). Corrigé hors
+périmètre feature : `chown -R node:node /app/node_modules` (via root) + suppression des
+artefacts `.*-RANDOM`. À garder en tête si d'autres installs échouent.
+
+### Phase 1 — MVP online (en cours)
+
+**Backend api2 :**
+
+| Fichier | Détail |
+|---|---|
+| `src/Controller/ScoringController.php` | **Créé** (repris de `WsmController`). Routes sous **`/admin/scoring/...`** (gameParam, gameEvent, playerStatus, gameTimer, stats) → automatiquement derrière le firewall JWT `^/admin`. Classe annotée **`#[IsGranted('ROLE_ADMIN')]`** = profil ≤ 2 (mapping `User::getRoles()` : niveau ≤ 2 → `ROLE_ADMIN`). Conserve le verrou `Validation != 'O'`. |
+| `src/Controller/WsmController.php` | **Supprimé.** N'était consommé par personne (vérifié : app_wsm/legacy utilisent `/api/wsm/`, backend distinct) et exposait `/wsm` en **public** (firewall `main`). Suppression = élimination de la surface non authentifiée. |
+
+> **Décision** : routes sous `/admin/scoring` plutôt que `/scoring` (spec initiale) — réutilise
+> le firewall JWT existant sans en créer un nouveau, cohérent avec `useApi` qui parle déjà à
+> `/admin/*`. Le contrôle fin de rôle reste dans le contrôleur (`ROLE_ADMIN` = profil ≤ 2,
+> à élargir en `ROLE_SCORER` à l'ouverture).
+
+**Vérifié** : `PUT /api2/admin/scoring/gameParam/1` sans token → **401** ; ancien
+`PUT /api2/wsm/gameParam/1` → **404**.
+
+**Frontend app4 :**
+
+| Fichier | Détail |
+|---|---|
+| `stores/scoringStore.ts` | **Complété.** Actions : `load` (GET `/admin/games/{id}` + 2× `/admin/matches/{id}/players?teamCode=A\|B`), `setParam`/`setStatus`/`setPeriod` (PUT gameParam, optimiste + rollback), `addEvent`/`removeEvent` (PUT gameEvent + maj score pour les buts), `setTimer` (PUT gameTimer), `toggleValidation` (PATCH `/admin/games/{id}/validation`). Getters `scoreA`/`scoreB`. |
+| `pages/games/[id]/scoring.vue` | **Créée.** Console : header match, score, sélecteurs statut/période, chrono (run/stop/RAZ → api2), listes joueurs A/B (sélection), boutons d'événements (but/cartons), liste des événements, verrouillage. Gatée `useScoringPermissions` (≤ 2). |
+| `pages/games/index.vue` | **Modifiée.** Ajout `canScoring` (profil ≤ 2) + helper `openScoring` + **bouton « Scoring »** dans la vue tableau (à côté de V2/V3) et la vue carte. **V2/V3 conservés inchangés.** |
+| `i18n/locales/fr.json`, `en.json` | Clés `scoring.*` complétées (field, history, not_found, select_player_first, no_access). |
+
+**Vérifié** : route `/games/{id}/scoring` compile (HTTP 302 → middleware auth, comme les
+autres routes protégées) ; ESLint OK sur tous les fichiers Scoring ; aucune erreur dans les
+logs du dev server.
+
+**Reste à faire en Phase 1** (avant de clore le MVP) :
+- Chrono visuel temps réel côté UI (easytimer.js) — actuellement `tpsJeu` figé à `00:00`.
+- Scoping par mandat dans `ScoringController` (restreindre aux matchs du mandat actif via
+  `allowedJournees`, comme `AdminGamesController`).
+- Test fonctionnel complet authentifié (profil ≤ 2) : saisie réelle + vérification base
+  (`kp_match`, `kp_match_detail`, `kp_chrono`) + restauration du chrono au rechargement.
+- Motifs de cartons (modal) et statut joueur (capitaine/coach) depuis la console.
