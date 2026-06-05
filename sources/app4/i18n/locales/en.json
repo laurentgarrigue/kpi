@@ -208,6 +208,7 @@
     "team_b": "Team B",
     "back": "Back",
     "cancel": "Cancel",
+    "next": "Next",
     "save": "Save",
     "delete": "Delete",
     "delete_selected": "Delete selection",
@@ -638,6 +639,9 @@
       "import_warning": "Import will overwrite existing event data. This action is irreversible.",
       "confirm_import": "Confirm import?",
       "confirm_import_message": "This will replace all event data with the JSON file content.",
+      "double_confirm_title": "Final confirmation — irreversible action",
+      "double_confirm_message": "To confirm the import, type the target event ID: {id}",
+      "double_confirm_placeholder": "Type the event ID",
       "success_export": "Export successful - download started",
       "success_import": "Import successful",
       "error_export": "Error during export",
@@ -739,7 +743,8 @@
       "matchs": "Games",
       "actions": "Actions",
       "edit": "Edit.",
-      "stage": "Stage"
+      "stage": "Stage",
+      "categorie": "Category"
     },
     "form": {
       "add_title": "Add competition",
@@ -1309,6 +1314,7 @@
     "officials_jury": "Appeal jury",
     "officials_print": "Print instances sheet",
     "no_results": "No gamedays found",
+    "select_context": "Select an event, a group or a competition",
     "total": "Total: {count} gameday(s)",
     "months": {
       "1": "January",
@@ -1336,6 +1342,7 @@
     "delete_error_score": "This game has a score. Cannot delete.",
     "confirm_status_change": "Confirm status change?",
     "select_journee": "Select a gameday / phase!",
+    "select_journee_placeholder": "Select a phase / gameday",
     "date_empty": "Date is required!",
     "time_invalid": "Time is not in HH:MM format. Continue anyway?",
     "referee_unidentified": "Unidentified referee",
@@ -1439,7 +1446,7 @@
       "toggle_printed": "Printed",
       "auto_assign": "Auto-assign",
       "cancel_assign": "Cancel assignment",
-      "change_journee": "Change Gameday",
+      "change_journee": "Change phase/gameday",
       "change_journee_title": "Change Gameday / Phase / Pool",
       "change_journee_label": "New gameday",
       "renumber": "Renumber",
@@ -1568,8 +1575,10 @@
       "colors": "Colors",
       "competitions": "Competitions",
       "season": "Season",
+      "code": "Code",
       "competition": "Competition",
       "team_name": "Team name",
+      "final_ranking": "Final ranking",
       "no_competitions": "No competition participation",
       "back_to_club": "Back to club"
     }
@@ -2088,6 +2097,7 @@
       "phases": "Phases",
       "commonValues": "Common values (applied to all gamedays/phases)",
       "commonValuesHelp": "Leave empty to keep individual values from each gameday",
+      "commonValuesHelpCp": "A field left empty will stay empty in the destination competition",
       "publicParams": "Public calendar parameters",
       "dateDebut": "Start date",
       "dateFin": "End date",
@@ -2293,5 +2303,43 @@
     "errors": {
       "missing_fields": "Event, date and time are required"
     }
+  },
+  "scoring": {
+    "title": "Scoring",
+    "link": "Scoring",
+    "link_title": "Online scoring",
+    "hardware": "Hardware scoring",
+    "status": {
+      "ATT": "Pending",
+      "ON": "Live",
+      "END": "Finished"
+    },
+    "period": {
+      "M1": "1st half",
+      "M2": "2nd half",
+      "P1": "Overtime 1",
+      "P2": "Overtime 2",
+      "TB": "Penalty shootout"
+    },
+    "event": {
+      "goal": "Goal",
+      "card_green": "Green card",
+      "card_yellow": "Yellow card",
+      "card_red": "Red card",
+      "card_red_def": "Red card (final)"
+    },
+    "timer": {
+      "start": "Start",
+      "pause": "Pause",
+      "reset": "Reset",
+      "shotclock": "Shot clock"
+    },
+    "scoreboard": "Scoreboard",
+    "locked": "Match locked — read only",
+    "field": "Field",
+    "history": "Event history",
+    "not_found": "Match not found",
+    "select_player_first": "Select a player first",
+    "no_access": "Restricted access (experimentation phase)"
   }
 }

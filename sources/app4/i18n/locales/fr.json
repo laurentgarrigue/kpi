@@ -208,6 +208,7 @@
     "team_b": "Équipe B",
     "back": "Retour",
     "cancel": "Annuler",
+    "next": "Suivant",
     "close": "Fermer",
     "save": "Enregistrer",
     "delete": "Supprimer",
@@ -640,6 +641,9 @@
       "import_warning": "L'import écrasera les données existantes de l'événement. Cette opération est irréversible.",
       "confirm_import": "Confirmer l'import ?",
       "confirm_import_message": "Cette action va remplacer toutes les données de l'événement par celles du fichier JSON.",
+      "double_confirm_title": "Confirmation finale — action irréversible",
+      "double_confirm_message": "Pour confirmer l'import, saisissez l'ID de l'événement cible : {id}",
+      "double_confirm_placeholder": "Saisissez l'ID de l'événement",
       "success_export": "Export réussi - téléchargement en cours",
       "success_import": "Import réussi",
       "error_export": "Erreur lors de l'export",
@@ -742,7 +746,8 @@
       "matchs": "Matchs",
       "actions": "Actions",
       "edit": "Edit.",
-      "stage": "Etape"
+      "stage": "Etape",
+      "categorie": "Catégorie"
     },
     "search_previous_placeholder": "Rechercher une compétition des saisons précédentes",
     "min_2_chars": "Tapez au moins 2 caractères pour rechercher",
@@ -1322,6 +1327,7 @@
     "officials_jury": "Jury d'appel",
     "officials_print": "Imprimer feuille d'instances",
     "no_results": "Aucune journée trouvée",
+    "select_context": "Sélectionnez un événement, un groupe ou une compétition",
     "total": "Total : {count} journée(s)",
     "months": {
       "1": "Janvier",
@@ -1349,6 +1355,7 @@
     "delete_error_score": "Ce match a un score. Suppression impossible.",
     "confirm_status_change": "Confirmez-vous le changement de statut ?",
     "select_journee": "Sélectionnez une journée / une phase !",
+    "select_journee_placeholder": "Sélectionnez une phase / journée",
     "date_empty": "La date est obligatoire !",
     "time_invalid": "L'heure n'est pas au format HH:MM. Continuer quand même ?",
     "referee_unidentified": "Arbitre non identifié",
@@ -1452,7 +1459,7 @@
       "toggle_printed": "Imprimé",
       "auto_assign": "Affectation automatique",
       "cancel_assign": "Annuler l'affectation",
-      "change_journee": "Changer de Journée",
+      "change_journee": "Changer de phase/journée",
       "change_journee_title": "Changer de Journée / Phase / Poule",
       "change_journee_label": "Nouvelle journée",
       "renumber": "Renuméroter",
@@ -1581,8 +1588,10 @@
       "colors": "Couleurs",
       "competitions": "Compétitions",
       "season": "Saison",
+      "code": "Code",
       "competition": "Compétition",
       "team_name": "Nom équipe",
+      "final_ranking": "Classement final",
       "no_competitions": "Aucune participation à une compétition",
       "back_to_club": "Retour au club"
     }
@@ -2101,6 +2110,7 @@
       "phases": "Phases",
       "commonValues": "Valeurs communes (appliquées à toutes les journées/phases)",
       "commonValuesHelp": "Laisser vide pour reprendre les valeurs individuelles de chaque journée",
+      "commonValuesHelpCp": "Un champ laissé vide restera vide dans la compétition cible",
       "publicParams": "Paramètres calendrier public",
       "dateDebut": "Date début",
       "dateFin": "Date fin",
@@ -2306,5 +2316,43 @@
     "errors": {
       "missing_fields": "Événement, date et heure sont obligatoires"
     }
+  },
+  "scoring": {
+    "title": "Scoring",
+    "link": "Scoring",
+    "link_title": "Scoring en ligne",
+    "hardware": "Scoring matériel",
+    "status": {
+      "ATT": "En attente",
+      "ON": "En cours",
+      "END": "Terminé"
+    },
+    "period": {
+      "M1": "1ère mi-temps",
+      "M2": "2ème mi-temps",
+      "P1": "Prolongation 1",
+      "P2": "Prolongation 2",
+      "TB": "Tir au but"
+    },
+    "event": {
+      "goal": "But",
+      "card_green": "Carton vert",
+      "card_yellow": "Carton jaune",
+      "card_red": "Carton rouge",
+      "card_red_def": "Carton rouge définitif"
+    },
+    "timer": {
+      "start": "Démarrer",
+      "pause": "Pause",
+      "reset": "Réinitialiser",
+      "shotclock": "Time-shoot"
+    },
+    "scoreboard": "Tableau d'affichage",
+    "locked": "Match verrouillé — lecture seule",
+    "field": "Terrain",
+    "history": "Historique des événements",
+    "not_found": "Match introuvable",
+    "select_player_first": "Sélectionnez d'abord un joueur",
+    "no_access": "Accès réservé (phase d'expérimentation)"
   }
 }
