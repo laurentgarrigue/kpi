@@ -1,11 +1,11 @@
 {
   "name": "kpi-admin",
-  "version": "1.6.4",
+  "version": "1.7.8",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --hostname 0.0.0.0 --port 3004",
+    "dev": "nuxt dev --host 0.0.0.0 --port 3004",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -34,6 +34,7 @@
     "vue-router": "^4.5.1"
   },
   "dependencies": {
+    "easytimer.js": "^4.6.0",
     "leaflet": "^1.9.4"
   }
 }

@@ -13,6 +13,7 @@ const toast = useToast()
 const workContext = useWorkContextStore()
 const authStore = useAuthStore()
 const { bracketLabels, bracketRawCodes } = useBracketDisplay()
+// normalizeBracketCoding is auto-imported from useBracketDisplay.ts (Nuxt composables)
 
 // ─── LocalStorage filter persistence ───
 const FILTERS_STORAGE_KEY = 'app4_games_filters'
@@ -145,6 +146,13 @@ const tzParam = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZ
 // ─── Permissions ───
 const canEdit = computed(() => authStore.profile <= 6)
 const canEditScores = computed(() => authStore.profile <= 6 || authStore.profile === 9)
+// Scoring console (new in-app match console).
+// DEV-ONLY restriction: during development the Scoring button is visible to a single
+// user (login 42054). Remove SCORING_DEV_USER and revert to `authStore.profile <= 2`
+// once the feature opens to the bureau. See DOC/specs/PAGE_SCORING.md.
+// V2/V3 links are kept alongside until the Scoring feature is validated.
+const SCORING_DEV_USER = '42054'
+const canScoring = computed(() => authStore.user?.id === SCORING_DEV_USER && authStore.profile <= 2)
 const canLock = computed(() => authStore.profile <= 6)
 const canSelect = computed(() => authStore.profile <= 6)
 const showPublicationColumn = computed(() => authStore.profile !== 7)
@@ -695,7 +703,8 @@ const startInlineEdit = (game: Game, field: string) => {
 const saveInlineEdit = async () => {
   if (!editingCell.value) return
   const { id, field } = editingCell.value
-  const value = editingValue.value
+  // Auto-repair coding: add missing brackets when the label is a bare encoding.
+  const value = field === 'Libelle' ? normalizeBracketCoding(editingValue.value) : editingValue.value
 
   editingCell.value = null
 
@@ -741,7 +750,8 @@ const handleInlineKeydown = (e: KeyboardEvent) => {
       saveInlineEdit()
       return
     }
-    const value = editingValue.value
+    // Auto-repair coding: add missing brackets when the label is a bare encoding.
+    const value = field === 'Libelle' ? normalizeBracketCoding(editingValue.value) : editingValue.value
     const originalValue = editingOriginalValue.value
     editingCell.value = null
 
@@ -998,6 +1008,8 @@ const validateForm = (): boolean => {
 
 const saveGame = async (): Promise<boolean> => {
   formSaving.value = true
+  // Auto-repair coding: add missing brackets when the label is a bare encoding.
+  formData.value.libelle = normalizeBracketCoding(formData.value.libelle)
   try {
     if (editingGame.value) {
       await api.put(`/admin/games/${editingGame.value.id}`, formData.value)
@@ -1412,6 +1424,24 @@ const statusBtnClass = (game: Game) => {
     case 'END': return 'bg-success-100 text-success-700 border-success-200'
     default: return 'bg-header-100 text-header-600 border-header-200'
   }
+}
+
+// ─── Scoresheet windows (FMV2/FMV3) ───
+// Réutilise la fenêtre existante si elle est déjà ouverte pour ce match
+const openScoresheet = (gameId: number, version: 2 | 3) => {
+  const url = version === 2
+    ? `${legacyBase.value}/admin/FeuilleMarque2.php?idMatch=${gameId}`
+    : `${legacyBase.value}/admin/FeuilleMarque3.php?idMatch=${gameId}`
+  window.open(url, `fmv${version}`)
+}
+
+// ─── Scoring console (new in-app match console) ───
+// Open in a new tab. router.resolve() prepends the app base path (/admin2),
+// so the new tab targets the correct URL. Reuse a per-match tab name to avoid duplicates.
+// (reuses the `router` already declared above)
+const openScoring = (gameId: number) => {
+  const { href } = router.resolve(`/games/${gameId}/scoring`)
+  window.open(href, `scoring_${gameId}`)
 }
 </script>
 
@@ -2083,16 +2113,21 @@ const statusBtnClass = (game: Game) => {
                     <br>
                     <span class="text-xs text-header-700">PDF</span>
                   </a>
-                  <a v-if="canEditScores && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600">
+                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-700">V2</span>
-                  </a>
-                  <a v-if="canEditScores && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700">
+                  </button>
+                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700" @click.stop="openScoresheet(g.id, 3)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-700">V3</span>
-                  </a>
+                  </button>
+                  <button v-if="canScoring && g.authorized" :title="t('scoring.link_title')" class="p-0.5 text-emerald-500 hover:text-emerald-700" @click.stop="openScoring(g.id)">
+                    <UIcon name="heroicons:bolt" class="w-6 h-6" />
+                    <br>
+                    <span class="text-xs text-header-700">{{ t('scoring.link') }}</span>
+                  </button>
                 </div>
               </td>
 
@@ -2806,14 +2841,18 @@ const statusBtnClass = (game: Game) => {
             <UIcon name="heroicons:document-text" class="w-4 h-4" />
             {{ t('games.scoresheet_pdf') }}
           </a>
-          <a v-if="canEdit && authStore.profile <= 6 && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque2.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800">
+          <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
             <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
             v2
-          </a>
-          <a v-if="canEdit && authStore.profile <= 2 && g.authorized" :href="`${legacyBase}/admin/FeuilleMarque3.php?idMatch=${g.id}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800">
+          </button>
+          <button v-if="canEdit && authStore.profile <= 2 && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800" @click="openScoresheet(g.id, 3)">
             <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
             v3
-          </a>
+          </button>
+          <button v-if="canScoring && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800" @click="openScoring(g.id)">
+            <UIcon name="heroicons:bolt" class="w-4 h-4" />
+            {{ t('scoring.link') }}
+          </button>
           <AdminActionButton v-if="isDeletable(g)" variant="danger" icon="heroicons:trash" @click="openDeleteConfirm(g)">
             {{ t('common.delete') }}
           </AdminActionButton>
@@ -2857,7 +2896,7 @@ const statusBtnClass = (game: Game) => {
             class="w-full px-3 py-2 border border-header-300 rounded-lg"
             @change="onFormJourneeChange"
           >
-            <option :value="null">-- {{ t('games.all_journees') }} --</option>
+            <option :value="null" disabled>-- {{ t('games.select_journee_placeholder') }} --</option>
             <option v-for="j in journees" :key="j.id" :value="j.id">{{ journeeLabel(j) }}</option>
           </select>
         </div>
