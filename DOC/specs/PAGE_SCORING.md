@@ -1,6 +1,6 @@
 # Spécification — Scoring (console de match en direct) dans app4
 
-> Statut : en cours — Phase 0 terminée, Phase 1 en cours (voir §11 Suivi)
+> Statut : en cours — Phase 0 terminée, Phase 1 en cours (voir §12 Suivi)
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et le prototype standalone `sources/app3`
@@ -222,7 +222,128 @@ d'événements, motifs de cartons, libellés chrono/shotclock/scoreboard, messag
 verrouillage, libellés « Scoring » / « Hardware Scoring »). Wording FR sourcé de
 `FeuilleMarque3.php` + `v2/fm3_*.js`. **cn hors périmètre.**
 
-## 7. Plan par phases
+## 7. Déroulement d'un match (workflow de la table de marque)
+
+> Cette section décrit le **parcours fonctionnel attendu** de la console Scoring, calqué sur la
+> feuille de marque en ligne V3 (FMV3) et complété par les nouveautés (chrono de mi-temps,
+> prolongations « but en or », alertes cartons). **Principe directeur : la page Scoring doit
+> exposer, d'une manière ou d'une autre, toutes les informations présentes sur le PDF de
+> contrôle `FeuilleMatchMulti.php`** (entête match, officiels, joueurs A/B, détail des
+> événements, scores mi-temps/final, commentaires, heures début/fin).
+
+### 7.1 Structure d'écran (deux vues)
+
+La console s'organise en deux vues commutables (cf. captures FMV3 : bouton « Déroulement du
+match… » ↔ « Paramètres du match… ») :
+
+1. **Vue Paramètres** (préparation, avant coup d'envoi) — sous-onglets :
+   - **Paramètres** : type de match (classement / élimination), publication (privé/public),
+     accès Stats / PDF / langue, score officiel + score provisoire (calculé = nb de buts),
+     bouton « Valider ce score », contrôle match (Ouvert / Verrouillé), chargement d'un autre
+     match (par ID# ou n°), « Match suivant… ».
+   - **Officiels** : secrétaire, chronométreur, chronométreur temps d'action de but, arbitre
+     principal, arbitre secondaire, juges de ligne (×2) — **cliquer pour modifier** ; rappel des
+     infos d'organisation (club organisateur, resp. organisation, délégué, chef des arbitres, RC).
+   - **Équipe A / Équipe B** : liste des joueurs présents (N°, statut, nom, prénom, licence,
+     catégorie), suppression d'un joueur, **« Recharger les joueurs présents »** (depuis la
+     feuille de présence).
+2. **Vue Déroulement** (pendant le match) — chrono, shotclock, score live, sélecteur de
+   statut/période, boutons d'événements (but, cartons vert/jaune/rouge/définitif), zone
+   pénalités, historique des événements (table A | Temps | B), commentaires.
+
+### 7.2 Préparation (avant le coup d'envoi)
+
+La table de marque, sur la **vue Paramètres**, doit :
+
+1. **Vérifier l'identité du match** : équipes qui se présentent, terrain et horaire (entête =
+   `kp_match` : `Libelle`/intitulé, `Terrain`, `Date_match`/`Heure_match`, équipes A/B), pour
+   être sûr d'avoir le bon match. Un chargement par **ID# ou n° d'ordre** permet de corriger.
+2. **Vérifier et compléter les officiels** (onglet Officiels) : secrétaire, chronométreurs,
+   arbitres, juges de ligne. Champs « cliquer pour modifier ».
+3. **Vérifier les joueurs présents** pour chaque équipe (onglets A/B) : ajuster les **numéros**,
+   désigner le **capitaine**, **supprimer** des joueurs si nécessaire, ou **recharger depuis la
+   présence**.
+4. **Passer le match en jeu** : statut → **ON (en cours)**, **Période 1**, prêt pour le coup
+   d'envoi.
+
+### 7.3 Conduite du match (suivant les instructions de l'arbitre)
+
+La table suit l'arbitre pour : **démarrer / arrêter le chrono**, saisir les **buts** et les
+**cartons**.
+
+- **Chrono** (autoritatif côté serveur, cf. §6.4) : run / stop / RAZ. Le shotclock (temps
+  d'action de but) suit le chrono.
+- **But** : incrémente le score de l'équipe, horodaté `période + temps de jeu`, attribué à un
+  joueur. Peut déclencher la **suppression d'une pénalité adverse** (cf. 7.4).
+- **Carton** : déclenche une **pénalité de 2 minutes** pour le joueur (cf. 7.4).
+
+### 7.4 Pénalités (cartons)
+
+- Un **carton** déclenche une **pénalité de 2 minutes** pour le joueur sanctionné, dont le
+  **décompte suit le chrono** (se met en pause quand le chrono est arrêté).
+- Une pénalité peut être **supprimée manuellement**, ou **suite à un but de l'équipe adverse**
+  (**après confirmation de l'opérateur**).
+- Si une équipe a **deux pénalités en cours**, c'est la **plus ancienne** qui est susceptible
+  d'être supprimée par un but adverse.
+- **Motif de carton** (optionnel) à définir à la saisie. Motifs existants (réutilisés de FMV3,
+  clés i18n) : `r_pad` (Pagaie), `r_kt` (Éperonnage), `r_ht` (Poussée / Accrochage), `r_p`
+  (Possession), `r_o` (Obstruction), `r_un` (antijeu/non sportif), `r_rep` (Remplacement),
+  `unknown` (autre/non précisé).
+- **Règle de progression des cartons (alerte)** : un même joueur **ne peut pas** faire l'objet
+  de **deux cartons de la même couleur** dans un même match. Le deuxième carton est
+  **obligatoirement au minimum de la couleur supérieure** dans l'ordre
+  **vert → jaune → rouge → rouge définitif**. **Déclencher une alerte** si l'opérateur tente de
+  saisir un carton qui ne respecte pas cette progression.
+
+### 7.5 Périodes, mi-temps et prolongations
+
+- **Match de classement (type C)** : **2 périodes de 10 minutes** (P1/P2), durée
+  **paramétrable** (`periodDurations`, défaut 600 s).
+- **Chrono de mi-temps (nouveauté)** : à la fin du temps de la **première période**, **signal
+  sonore** (buzzer), puis déclenchement automatique d'un **chrono de mi-temps de 3 minutes**.
+  Ce décompte est **indicatif** pour l'arbitre (repère pour reprendre le match), il ne bloque
+  pas.
+- **Match éliminatoire (type E)** : en cas d'**égalité à la fin du temps réglementaire**,
+  enchaîner **autant de prolongations de 5 minutes que nécessaire** jusqu'au **premier but
+  marqué (but en or)** → fin immédiate. Selon l'organisation et le système de jeu choisi, il
+  peut aussi y avoir une **séance de tirs au but** (TB).
+- États de période à gérer dans le store : `M1`/`M2` (= P1/P2 selon nommage), `TB` (tirs au
+  but) ; prévoir les prolongations (P-OT) et le chrono de mi-temps comme états dérivés.
+
+### 7.6 Clôture du match
+
+À la fin du match, la table de marque :
+
+1. indique l'**heure de fin** (`Heure_fin`),
+2. saisit les **commentaires** éventuels (capitaines et arbitre — `Commentaires_officiels`),
+3. **valide le score** (passe `Statut` → `END`), puis **verrouille** si le profil l'autorise
+   (`Validation = 'O'`, via `PATCH /admin/games/{id}/validation`).
+
+Le **score provisoire** (calculé = nombre de buts par équipe) et le **score officiel** doivent
+être distingués dans l'UI (cf. captures FMV3 : « Score officiel » vs « Score provisoire (calculé
+nb de buts) ») ; un écart entre les deux est signalé (le PDF affiche `Provisoire` vs `Final`).
+
+### 7.7 Parité avec le PDF de contrôle (`FeuilleMatchMulti.php`)
+
+Checklist des informations du PDF qui doivent être **présentes et éditables/consultables** dans
+la console (source : §lecture de `FeuilleMatchMulti.php`) :
+
+| Bloc PDF | Source | Présence console |
+|---|---|---|
+| Entête : compétition, organisateur, saison, R1/délégué, lieu/dpt, date/heure, terrain, phase, n° match, intitulé | `kp_match` + `kp_journee` + `GetCompetition` | Vue Paramètres (entête + onglet Officiels) |
+| Arbitres 1/2, secrétaire, chrono, time-shoot, lignes | `kp_match` (`Arbitre_*`, `Secretaire`, `Chronometre`, `Timeshoot`, `Ligne1/2`) | Onglet Officiels |
+| Joueurs A/B : n°, nom, prénom, licence, catégorie, capitaine/entraîneur | `kp_match_joueur` + `kp_licence` | Onglets Équipe A/B |
+| Couleurs équipes (ColorA/B + color1/2) | `kp_competition_equipe` | Affichage scoreboard (Phase 2) |
+| Détail des événements : période, temps, n° joueur, motif, but / V / J / R / D, par équipe | `kp_match_detail` | Vue Déroulement (historique) |
+| Score mi-temps A/B, score final A/B, type (Provisoire/Final) | dérivé des buts `kp_match_detail` + `ScoreA/B` | Score live + vue Paramètres |
+| Commentaires officiels | `kp_match.Commentaires_officiels` | Clôture (7.6) |
+| Heure début / heure fin | `kp_match.Heure_fin` | Clôture (7.6) |
+| Type match (C/E), « vainqueur obligatoire » / « pas de prolongation » | `kp_match.Type` | Vue Paramètres (type de match) |
+
+> Note : les **signatures** et le **QR code** du PDF restent propres au document papier ; la
+> console n'a pas à les reproduire (le PDF demeure le document de contrôle, cf. §1).
+
+## 8. Plan par phases
 
 - **Phase 0 — Échafaudage** : dep `easytimer.js` ; `types/scoring.ts` ; coquilles
   `scoringStore.ts` + `useScoringPermissions.ts` ; clés i18n `scoring.*`.
@@ -239,7 +360,7 @@ verrouillage, libellés « Scoring » / « Hardware Scoring »). Wording FR sour
 - **Phase 4 — Offline/PWA (reporté)** : file d'attente d'écritures IndexedDB derrière le store,
   service worker. Uniquement après un online-first solide.
 
-## 8. Fichiers critiques
+## 9. Fichiers critiques
 
 | Fichier | Action |
 |---|---|
@@ -256,7 +377,7 @@ Secondaires à créer : `composables/useTimer.ts`, `useBroadcast.ts`, `useWebSoc
 Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalités, ~1384 lignes,
 **plus gros effort**), `sources/admin/v2/scoreboard.js`.
 
-## 9. Risques / inconnues
+## 10. Risques / inconnues
 
 1. **Logique chrono/shotclock/pénalités de `fm3_C.js`** — plus gros effort de portage
    (type de match C vs E, expiration des pénalités → messages `penA/penB`).
@@ -266,7 +387,7 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
    maîtrisé (propriété interne).
 4. **cn** — hors périmètre MVP ; chantier de suivi séparé sur toute app4.
 
-## 10. Vérification de bout en bout
+## 11. Vérification de bout en bout
 
 - **Phase 1** : lancer app4 + api2, se connecter avec un **profil ≤ 2**, vérifier que le lien
   « Scoring » apparaît (à côté de V2/V3, eux toujours présents), ouvrir `/games/{id}/scoring`,
@@ -281,7 +402,7 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
   brancher un panneau matériel propriétaire (ou équivalent) en mode Hardware Scoring → le store se met à jour
   depuis le matériel.
 
-## 11. Suivi des développements
+## 12. Suivi des développements
 
 > Cette section est enrichie au fil des développements avec le détail des décisions et de
 > l'implémentation effective.
