@@ -1,0 +1,52 @@
+# Dependabot configuration
+#
+# Toutes les mises à jour ciblent `develop` (et non `main`) pour suivre le flow
+# de branches du projet : features -> develop -> PR develop -> main.
+# Sans `target-branch`, Dependabot vise la branche par défaut (main), ce qui
+# faisait diverger develop et provoquait des conflits de lockfile lors des PR
+# develop -> main (notamment package-lock.json et composer.lock).
+#
+# Les updates sont groupées par répertoire/écosystème : un seul PR (et donc un
+# seul recalcul de lockfile) au lieu d'un PR par paquet -> moins de conflits.
+
+version: 2
+updates:
+  # ---- npm ----
+  - package-ecosystem: "npm"
+    directories:
+      - "/sources/app2"
+      - "/sources/app3"
+      - "/sources/app4"
+      - "/sources/app_dev"
+      - "/sources/app_live_dev"
+      - "/sources/app_wsm_dev"
+      - "/sources"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      npm-all:
+        patterns:
+          - "*"
+
+  # ---- composer ----
+  - package-ecosystem: "composer"
+    directories:
+      - "/sources/api2"
+      - "/sources"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      composer-all:
+        patterns:
+          - "*"
+
+  # ---- GitHub Actions (au cas où des workflows seraient ajoutés) ----
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
