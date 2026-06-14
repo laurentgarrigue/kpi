@@ -66,6 +66,8 @@ C'est la page la plus complexe de l'administration, avec 4 modes de rendu selon 
 | 30 | Verrouillage désactive l'édition inline de la ligne | ≤ 6 | Essentielle | ✅ Conserver |
 | 31 | Classe `undefTeam` pour équipes non définies (Id < 1) | ≤ 10 | Essentielle | ✅ Conserver |
 | 32 | Classe `pbArb` pour arbitres non identifiés (matricule = 0) | ≤ 10 | Essentielle | ✅ Conserver |
+| 33 | Contrôle de planification (barre conflits) : sélection d'une entité et surlignage des conflits/repos | ≤ 6 | Amélioration | ✅ Implémenté (voir §2.6) |
+| 34 | Contrôle de planification appliqué aux **arbitres** (nominatifs et par équipe) + compteur d'arbitrages | ≤ 6 | Amélioration | ✅ Implémenté (voir §2.6) |
 
 ### 2.2 Fonctionnalités du formulaire (Ajout/Édition de match)
 
@@ -138,6 +140,50 @@ C'est la page la plus complexe de l'administration, avec 4 modes de rendu selon 
 | 8 | Feedback optimiste | Les toggles changent visuellement immédiatement (rollback si erreur) |
 | 9 | Matchs verrouillés mieux distingués | Fond coloré + icônes désactivées clairement au lieu de renommage de classes CSS |
 | 10 | Date picker moderne | Composant Nuxt UI au lieu de Flatpickr |
+| 11 | Contrôle de planification | Barre dédiée de détection des conflits d'horaire et de repos, pour les équipes **et les arbitres** (voir §2.6) — inexistant dans le legacy |
+
+### 2.6 Contrôle de planification (barre de conflits)
+
+Barre repliable activée par le bouton 🛡️ (icône `shield-exclamation`) de la toolbar. Elle permet de sélectionner une **entité de planification** et met en évidence, dans le tableau, ses conflits d'horaire et ses temps de repos insuffisants. Tout est calculé **côté client** à partir des matchs déjà chargés (aucun appel API).
+
+#### Types d'entités
+
+| Type | Origine | Clé (`code`) | Couleur | Notes |
+|------|---------|--------------|---------|-------|
+| Équipe | `Equipe_A` / `Equipe_B`, + club extrait des arbitres (texte entre parenthèses) | nom d'équipe | primaire (bleu) | Le club d'un arbitre reste rattaché à l'équipe pour détecter « joue ET arbitre au même créneau » |
+| Arbitre nominatif | `Arbitre_*` avec `Matric_arbitre_* ≠ 0` | `REF:<matricule>` | info (bleu clair) | Identifié **par matricule** (robuste aux variantes d'orthographe / homonymes). **Label = nom + prénom uniquement** : le club entre parenthèses (et le niveau) est retiré, car il désigne l'équipe de table/juges de ligne et non l'arbitre — une même personne peut arbitrer avec plusieurs équipes (arbitres du pool). Le matricule fusionne donc tous ses arbitrages en une seule entité. |
+| Arbitre par équipe | `Arbitre_*` avec `Matric_arbitre_* = 0` (ex. « RKV I ») | `REFTEAM:<nom normalisé>` | info (bleu clair) | Désignation d'équipe, pas de personne ; nom normalisé (trim + minuscules + espaces compactés) |
+| Placeholder | Codes bracket du libellé (`[T1-T2-ARB1-ARB2]`) pour les emplacements non affectés | code bracket brut (ex. `1A`, `V2`) | orange (italique) | Inclut les emplacements arbitre non encore affectés |
+
+Le bouton du select porte le libellé **« Équipe / Arbitre »**. Les entités sont listées dans un dropdown groupé en 4 sections distinctes :
+1. **Équipes affectées** (inclut les clubs extraits des arbitres) ;
+2. **Arbitres nominatifs** (personnes, clé matricule) — affichés en premier ;
+3. **Arbitres (équipe désignée)** (`matric = 0`, ex. « RKV I ») ;
+4. **Placeholders** (emplacements bracket non affectés).
+
+Navigation prev/next (◀ ▶) cyclant sur toutes les entités, recherche textuelle, et badge `n/total`.
+
+#### Compteur d'arbitrages par arbitre
+
+Chaque entité arbitre porte un **compteur d'arbitrages prévus** (`refereeCount`) = nombre d'emplacements arbitre (principal + secondaire) qui lui sont affectés sur l'ensemble des matchs chargés. Affiché :
+- en badge dans la liste du dropdown (sections arbitres triées par ordre alphabétique) — sert de **récapitulatif des arbitrages par arbitre** ;
+- en badge à côté du libellé de l'entité sélectionnée.
+
+#### Règles de détection (identiques pour équipes et arbitres)
+
+| Règle | Définition | Rendu |
+|-------|------------|-------|
+| **Conflit d'horaire** | L'entité apparaît dans ≥ 2 matchs au **même `Date_match` + `Heure_match`** | Surlignage rouge (danger) — couvre « arbitre affecté à 2 matchs en même temps » |
+| **Repos insuffisant** | Écart entre débuts de 2 matchs **consécutifs le même jour** < seuil `restMinutes` (défaut 60, réglable 1–240) | Surlignage orange (warning) — couvre le temps nécessaire pour se déplacer entre terrains |
+
+Le seuil de repos est réglable dans la barre. Une légende rappelle les deux couleurs.
+
+#### Notes d'implémentation
+
+- Modèle d'entité unifié `TeamEntity { code, label, kind: 'team' | 'placeholder' | 'referee', refereeCount? }`.
+- `gameInvolvesTeam(game, code)` résout l'appartenance ; les préfixes `REF:` / `REFTEAM:` aiguillent vers la correspondance par matricule ou par nom normalisé.
+- Les ensembles `teamConflictGameIds` et `teamRestWarningGameIds` (et le filtre `filteredGames`) reposent tous sur `gameInvolvesTeam`, donc le support arbitre est transverse sans logique dupliquée.
+- Couleur `info` (bleu) enregistrée dans `assets/css/admin.css` (`@theme`) pour distinguer visuellement les arbitres des équipes (primaire) et placeholders (orange).
 
 ---
 
