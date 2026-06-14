@@ -15,13 +15,17 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const toast = useToast()
 const authStore = useAuthStore()
 const config = useRuntimeConfig()
 
 const legacyBase = computed(() => config.public.legacyBaseUrl)
+
+// Server-side PDF of active referees, grouped by group (nation) then alphabetical.
+// Pass the active locale so the legacy script localises the PDF via MyLang.ini.
+const pdfUrl = computed(() => `${legacyBase.value}/admin/FeuillePoolArbitres.php?lang=${locale.value}`)
 
 function groupLogoUrl(group: PoolGroup): string | null {
   if (group.logo) return `${legacyBase.value}/img/${group.logo}`
@@ -44,6 +48,7 @@ const groups = ref<PoolGroup[]>([])
 const expandedIds = ref<Set<number>>(new Set())
 
 const allExpanded = computed(() => groups.value.length > 0 && groups.value.every(g => expandedIds.value.has(g.id)))
+const noneExpanded = computed(() => expandedIds.value.size === 0)
 
 async function loadPool() {
   loading.value = true
@@ -64,12 +69,12 @@ function toggleGroup(id: number) {
   expandedIds.value = new Set(expandedIds.value)
 }
 
-function toggleAll() {
-  if (allExpanded.value) {
-    expandedIds.value = new Set()
-  } else {
-    expandedIds.value = new Set(groups.value.map(g => g.id))
-  }
+function expandAll() {
+  expandedIds.value = new Set(groups.value.map(g => g.id))
+}
+
+function collapseAll() {
+  expandedIds.value = new Set()
 }
 
 // ── Group create / rename modal ──
@@ -332,15 +337,16 @@ onMounted(loadPool)
           {{ t('referees_pool_page.subtitle') }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <button
+      <div class="flex items-center gap-2 flex-wrap">
+        <a
           v-if="groups.length > 0"
+          :href="pdfUrl"
+          target="_blank"
           class="px-3 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200 flex items-center gap-1.5"
-          @click="toggleAll"
         >
-          <UIcon :name="allExpanded ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-4 h-4" />
-          {{ allExpanded ? t('common.collapse_all') : t('common.expand_all') }}
-        </button>
+          <UIcon name="i-heroicons-document-arrow-down" class="w-4 h-4" />
+          {{ t('referees_pool_page.export_pdf') }}
+        </a>
         <button
           v-if="canManage"
           class="px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 flex items-center gap-1.5"
@@ -350,6 +356,26 @@ onMounted(loadPool)
           {{ t('referees_pool_page.add_group') }}
         </button>
       </div>
+    </div>
+
+    <!-- Toolbar: collapse/expand on the left, below the title -->
+    <div v-if="groups.length > 0" class="flex items-center gap-2 mb-4 flex-wrap">
+      <button
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-600 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+        :disabled="noneExpanded"
+        @click="collapseAll"
+      >
+        <UIcon name="heroicons:chevron-double-up" class="w-3.5 h-3.5" />
+        {{ t('common.collapse_all') }}
+      </button>
+      <button
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-600 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+        :disabled="allExpanded"
+        @click="expandAll"
+      >
+        <UIcon name="heroicons:chevron-double-down" class="w-3.5 h-3.5" />
+        {{ t('common.expand_all') }}
+      </button>
     </div>
 
     <!-- Loading -->

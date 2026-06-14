@@ -2429,6 +2429,7 @@
     "error_save": "Error while saving",
     "status": "Status",
     "status_active": "Referee",
-    "status_inactive": "Inactive"
+    "status_inactive": "Inactive",
+    "export_pdf": "Export PDF"
   }
 }

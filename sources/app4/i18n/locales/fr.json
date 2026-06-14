@@ -2441,6 +2441,7 @@
     "error_save": "Erreur lors de l'enregistrement",
     "status": "Statut",
     "status_active": "Arbitre",
-    "status_inactive": "Inactif"
+    "status_inactive": "Inactif",
+    "export_pdf": "Export PDF"
   }
 }
