@@ -192,47 +192,101 @@ const extractRefereeTeam = (text: string | null, matric?: number | null): string
   return ''
 }
 
-// ─── Team/placeholder entity list from loaded games ───
+// ─── Referee entity identity ───
+// A referee is a scheduling entity in its own right (distinct from the teams it may belong to).
+// Two designation formats coexist:
+//   • Nominative (matric ≠ 0): "NOM Prénom (Club) Niveau" → entity keyed by matricule, the person.
+//   • Team-only (matric = 0): "RKV I" → entity keyed by the normalised team name.
+// Returns null when the slot carries no usable referee designation.
+interface RefereeRef {
+  code: string   // "REF:<matric>" for nominative, "REFTEAM:<normalised name>" for team-only
+  label: string  // display label: name only for nominative referees, full string for team-only
+}
+
+const normRefereeName = (text: string): string => text.trim().toLowerCase().replace(/\s+/g, ' ')
+
+// For nominative referees, the display label is the person's name only.
+// The designation string is "NOM Prénom (Club) Niveau"; the club in parentheses identifies the
+// team in charge of the scoring table / line judges, NOT the referee — a single person may
+// referee with several different teams (pool referees). Everything from the first "(" onward
+// (club + trailing level) is dropped.
+const refereePersonLabel = (text: string): string => {
+  const i = text.indexOf('(')
+  return (i >= 0 ? text.slice(0, i) : text).trim() || text.trim()
+}
+
+const refereeRef = (text: string | null, matric: number | null | undefined): RefereeRef | null => {
+  const raw = (text ?? '').trim()
+  if (matric && matric !== 0) return { code: `REF:${matric}`, label: refereePersonLabel(raw) || `#${matric}` }
+  if (raw) return { code: `REFTEAM:${normRefereeName(raw)}`, label: raw }
+  return null
+}
+
+// ─── Team/placeholder/referee entity list from loaded games ───
 // Real teams: identified by equipe name. Placeholders: identified by raw bracket code (e.g. "1A", "V2").
-// selectedTeam holds either a real team name or a raw bracket code.
+// Referees: identified by matricule (nominative) or normalised name (team-only).
+// selectedTeam holds the entity `code` of whichever kind is selected.
+
+type EntityKind = 'team' | 'placeholder' | 'referee'
 
 interface TeamEntity {
-  code: string   // unique key: team name for real teams, raw bracket code for placeholders
-  label: string  // display label (translated for placeholders)
-  isPlaceholder: boolean
+  code: string            // unique key (see kinds above)
+  label: string           // display label (translated for placeholders)
+  kind: EntityKind
+  isPlaceholder: boolean  // kept for template back-compat; true ⇔ kind === 'placeholder'
+  isReferee?: boolean     // true ⇔ kind === 'referee'
+  refereeNominative?: boolean // true ⇔ nominative referee (REF:<matric>), false ⇔ team-only (REFTEAM:)
+  refereeCount?: number   // number of scheduled refereeing slots (referee entities only)
 }
 
 const availableTeams = computed((): TeamEntity[] => {
   const realTeams = new Map<string, TeamEntity>()
   const placeholders = new Map<string, TeamEntity>()
+  const referees = new Map<string, TeamEntity>()
+
+  const addReferee = (ref: RefereeRef | null) => {
+    if (!ref) return
+    const existing = referees.get(ref.code)
+    if (existing) {
+      existing.refereeCount = (existing.refereeCount ?? 0) + 1
+    } else {
+      referees.set(ref.code, { code: ref.code, label: ref.label, kind: 'referee', isPlaceholder: false, isReferee: true, refereeNominative: ref.code.startsWith('REF:'), refereeCount: 1 })
+    }
+  }
 
   for (const g of games.value) {
     // Real teams
-    if (g.equipeA) realTeams.set(g.equipeA, { code: g.equipeA, label: g.equipeA, isPlaceholder: false })
-    if (g.equipeB) realTeams.set(g.equipeB, { code: g.equipeB, label: g.equipeB, isPlaceholder: false })
+    if (g.equipeA) realTeams.set(g.equipeA, { code: g.equipeA, label: g.equipeA, kind: 'team', isPlaceholder: false })
+    if (g.equipeB) realTeams.set(g.equipeB, { code: g.equipeB, label: g.equipeB, kind: 'team', isPlaceholder: false })
 
     // Referee clubs from identified referees (e.g. "Nom (ClubCode)" or free-text team name)
+    // Kept so "this club plays AND referees at the same slot" conflicts still surface.
     const arbPrincipalTeam = extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal)
-    if (arbPrincipalTeam) realTeams.set(arbPrincipalTeam, { code: arbPrincipalTeam, label: arbPrincipalTeam, isPlaceholder: false })
+    if (arbPrincipalTeam) realTeams.set(arbPrincipalTeam, { code: arbPrincipalTeam, label: arbPrincipalTeam, kind: 'team', isPlaceholder: false })
     const arbSecondaireTeam = extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire)
-    if (arbSecondaireTeam) realTeams.set(arbSecondaireTeam, { code: arbSecondaireTeam, label: arbSecondaireTeam, isPlaceholder: false })
+    if (arbSecondaireTeam) realTeams.set(arbSecondaireTeam, { code: arbSecondaireTeam, label: arbSecondaireTeam, kind: 'team', isPlaceholder: false })
+
+    // Referee entities (person or designated team) + per-referee assignment count
+    addReferee(refereeRef(g.arbitrePrincipal, g.matricArbitrePrincipal))
+    addReferee(refereeRef(g.arbitreSecondaire, g.matricArbitreSecondaire))
 
     // Placeholders from bracket notation (only for unassigned slots)
     const raw = bracketRawCodes(g.libelle)
     const labels = bracketLabels(g.libelle)
     if (!g.equipeA && raw.teamA && labels.teamA)
-      placeholders.set(raw.teamA, { code: raw.teamA, label: labels.teamA, isPlaceholder: true })
+      placeholders.set(raw.teamA, { code: raw.teamA, label: labels.teamA, kind: 'placeholder', isPlaceholder: true })
     if (!g.equipeB && raw.teamB && labels.teamB)
-      placeholders.set(raw.teamB, { code: raw.teamB, label: labels.teamB, isPlaceholder: true })
+      placeholders.set(raw.teamB, { code: raw.teamB, label: labels.teamB, kind: 'placeholder', isPlaceholder: true })
     if (!g.arbitrePrincipal && raw.refereePrincipal && labels.refereePrincipal)
-      placeholders.set(raw.refereePrincipal, { code: raw.refereePrincipal, label: labels.refereePrincipal, isPlaceholder: true })
+      placeholders.set(raw.refereePrincipal, { code: raw.refereePrincipal, label: labels.refereePrincipal, kind: 'placeholder', isPlaceholder: true })
     if (!g.arbitreSecondaire && raw.refereeSecondaire && labels.refereeSecondaire)
-      placeholders.set(raw.refereeSecondaire, { code: raw.refereeSecondaire, label: labels.refereeSecondaire, isPlaceholder: true })
+      placeholders.set(raw.refereeSecondaire, { code: raw.refereeSecondaire, label: labels.refereeSecondaire, kind: 'placeholder', isPlaceholder: true })
   }
 
   const sortedReal = [...realTeams.values()].sort((a, b) => a.label.localeCompare(b.label))
+  const sortedReferees = [...referees.values()].sort((a, b) => a.label.localeCompare(b.label))
   const sortedPlaceholders = [...placeholders.values()].sort((a, b) => a.label.localeCompare(b.label))
-  return [...sortedReal, ...sortedPlaceholders]
+  return [...sortedReal, ...sortedReferees, ...sortedPlaceholders]
 })
 
 const filteredTeamOptions = computed(() => {
@@ -263,9 +317,19 @@ const selectNextTeam = () => {
 // ─── Current selected entity (for label display) ───
 const selectedTeamEntity = computed(() => availableTeams.value.find(e => e.code === selectedTeam.value) ?? null)
 
-// ─── Check if a game involves the selected entity (real team or placeholder) ───
+// ─── Check if a game involves the selected entity (real team, placeholder or referee) ───
 const gameInvolvesTeam = (g: Game, code: string): boolean => {
   if (!code) return true
+  // Referee entity: match by matricule (nominative) or normalised name (team-only)
+  if (code.startsWith('REF:')) {
+    const m = Number(code.slice(4))
+    return g.matricArbitrePrincipal === m || g.matricArbitreSecondaire === m
+  }
+  if (code.startsWith('REFTEAM:')) {
+    const n = code.slice(8)
+    return (g.matricArbitrePrincipal === 0 && normRefereeName(g.arbitrePrincipal ?? '') === n)
+      || (g.matricArbitreSecondaire === 0 && normRefereeName(g.arbitreSecondaire ?? '') === n)
+  }
   // Real team match
   if (g.equipeA === code || g.equipeB === code) return true
   if (extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === code) return true
@@ -1891,14 +1955,19 @@ const openScoring = (gameId: number) => {
           >
             <span class="flex items-center gap-1.5 min-w-0">
               <UIcon
-                :name="selectedTeamEntity?.isPlaceholder ? 'heroicons:clock' : 'heroicons:user-group'"
+                :name="selectedTeamEntity?.isReferee ? 'heroicons:identification' : selectedTeamEntity?.isPlaceholder ? 'heroicons:clock' : 'heroicons:user-group'"
                 class="w-5 h-5 shrink-0"
-                :class="selectedTeam ? (selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-500'"
+                :class="selectedTeam ? (selectedTeamEntity?.isReferee ? 'text-info-500' : selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-500'"
               />
               <span
                 class="truncate"
-                :class="selectedTeamEntity?.isPlaceholder ? 'italic text-orange-600' : ''"
+                :class="selectedTeamEntity?.isPlaceholder ? 'italic text-orange-600' : selectedTeamEntity?.isReferee ? 'text-info-700' : ''"
               >{{ selectedTeamEntity?.label || t('games.filter_team') }}</span>
+              <span
+                v-if="selectedTeamEntity?.isReferee"
+                class="ml-1 shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                :title="t('games.referee_assignments', { count: selectedTeamEntity.refereeCount ?? 0 })"
+              >{{ selectedTeamEntity.refereeCount }}</span>
             </span>
             <button v-if="selectedTeam" class="ml-0.5 shrink-0 text-primary-400 hover:text-primary-700" :title="t('common.all')" @click.stop="selectedTeam = ''; teamSearchInput = ''">
               <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -1927,12 +1996,12 @@ const openScoring = (gameId: number) => {
               </button>
 
               <!-- Real teams -->
-              <template v-if="filteredTeamOptions.some(e => !e.isPlaceholder)">
-                <div v-if="filteredTeamOptions.some(e => e.isPlaceholder)" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider">
+              <template v-if="filteredTeamOptions.some(e => e.kind === 'team')">
+                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider">
                   {{ t('games.teams_assigned') }}
                 </div>
                 <button
-                  v-for="entity in filteredTeamOptions.filter(e => !e.isPlaceholder)"
+                  v-for="entity in filteredTeamOptions.filter(e => e.kind === 'team')"
                   :key="entity.code"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50 truncate"
                   :class="selectedTeam === entity.code ? 'font-medium text-primary-700 bg-primary-50' : 'text-header-700'"
@@ -1940,6 +2009,48 @@ const openScoring = (gameId: number) => {
                 >
                   <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-400 shrink-0" />
                   {{ entity.label }}
+                </button>
+              </template>
+
+              <!-- Nominative referees (people, identified by matricule; club not shown) -->
+              <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && e.refereeNominative)">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                  {{ t('games.referees_nominative_section') }}
+                </div>
+                <button
+                  v-for="entity in filteredTeamOptions.filter(e => e.kind === 'referee' && e.refereeNominative)"
+                  :key="entity.code"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-info-50 truncate"
+                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-700'"
+                  @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
+                >
+                  <UIcon name="heroicons:identification" class="w-4 h-4 text-info-400 shrink-0" />
+                  <span class="truncate">{{ entity.label }}</span>
+                  <span
+                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                    :title="t('games.referee_assignments', { count: entity.refereeCount ?? 0 })"
+                  >{{ entity.refereeCount }}</span>
+                </button>
+              </template>
+
+              <!-- Team-designated referees (matric=0, e.g. "RKV I") -->
+              <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && !e.refereeNominative)">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                  {{ t('games.referees_team_section') }}
+                </div>
+                <button
+                  v-for="entity in filteredTeamOptions.filter(e => e.kind === 'referee' && !e.refereeNominative)"
+                  :key="entity.code"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-info-50 truncate"
+                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-700'"
+                  @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
+                >
+                  <UIcon name="heroicons:flag" class="w-4 h-4 text-info-400 shrink-0" />
+                  <span class="truncate">{{ entity.label }}</span>
+                  <span
+                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                    :title="t('games.referee_assignments', { count: entity.refereeCount ?? 0 })"
+                  >{{ entity.refereeCount }}</span>
                 </button>
               </template>
 
