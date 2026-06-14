@@ -142,6 +142,19 @@
   --color-dark-900: oklch(0.380 0.003 106.69);
   --color-dark-950: oklch(0.280 0.002 106.69);
 
+  /* Info - blue, used for referee scheduling entities (mirrors --ui-color-info-*) */
+  --color-info-50: oklch(0.970 0.018 240);
+  --color-info-100: oklch(0.940 0.042 240);
+  --color-info-200: oklch(0.880 0.077 240);
+  --color-info-300: oklch(0.810 0.101 240);
+  --color-info-400: oklch(0.710 0.113 240);
+  --color-info-500: oklch(0.620 0.119 240);
+  --color-info-600: oklch(0.540 0.116 240);
+  --color-info-700: oklch(0.480 0.109 240);
+  --color-info-800: oklch(0.420 0.100 240);
+  --color-info-900: oklch(0.380 0.089 240);
+  --color-info-950: oklch(0.280 0.071 240);
+
   /* Danger - alias of error for custom usage */
   --color-danger-50: oklch(0.970 0.024 22.73);
   --color-danger-100: oklch(0.940 0.057 22.73);

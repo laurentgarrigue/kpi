@@ -178,6 +178,9 @@ TODO :
 - ✅ Menu admin2 : liens public dans un dropdown, avec un séparatif, pour réduire la largeur du menu sur PC.
 - ✅ Impression que sur Safari, les polices de caractère utilisées sont plus grosses.
 - ✅ clubs/team/<id> ajouter la dernière photo d'équipe
+- ✅ contrôle de planification arbitres : vérifier que les arbitres ne sont pas affectés à plusieurs matchs en même temps, et que les matchs sont bien espacés dans le temps pour permettre aux arbitres de se déplacer entre les terrains, et le nombre d'arbitrages prevus par arbitre.
+- ✅ Pool arbitres : extraction pdf des arbitres actifs, trié par leur groupe (nation)
+- Nouveau Profil Chef arbitre et scrutineering
 - ⚠️
 
 Scoring:
