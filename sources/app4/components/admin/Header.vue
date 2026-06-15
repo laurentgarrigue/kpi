@@ -303,7 +303,7 @@ onMounted(() => {
   <header
     class="sticky top-0 z-30 bg-header-950 text-header-50 shadow-lg"
     :class="runtimeConfig.public.appEnv !== 'production'
-      ? 'border-b-4 border-yellow-400'
+      ? 'border-t-4 border-yellow-400'
       : 'border-b border-header-800'"
   >
     <!-- Top bar -->
