@@ -39,6 +39,27 @@ interface MatchPlayersResponse {
   }>
 }
 
+/** Response shape of GET /admin/scoring/events/{id} */
+interface ScoringEventsResponse {
+  events: Array<{
+    uid: string
+    period: Period
+    tpsJeu: string
+    code: ScoringEvent['code']
+    player: string
+    number: number | null
+    team: TeamSide
+    reason: string | null
+    nom: string | null
+    prenom: string | null
+  }>
+}
+
+/** Generate a uid in the same shape the backend produces (uniqid without dashes). */
+function genUid(): string {
+  return (Date.now().toString(16) + Math.random().toString(16).slice(2, 10)).replace(/-/g, '')
+}
+
 interface ScoringState {
   matchId: number | null
   match: ScoringMatch | null
@@ -93,14 +114,27 @@ export const useScoringStore = defineStore('scoring', {
 
       try {
         const match = await api.get<ScoringMatch>(`/admin/games/${matchId}`)
-        const [resA, resB] = await Promise.all([
+        const [resA, resB, resEvents] = await Promise.all([
           api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'A' }),
-          api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'B' })
+          api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'B' }),
+          api.get<ScoringEventsResponse>(`/admin/scoring/events/${matchId}`)
         ])
 
         this.match = match
         this.playersA = resA.players.map(p => ({ ...p, team: 'A' as TeamSide }))
         this.playersB = resB.players.map(p => ({ ...p, team: 'B' as TeamSide }))
+        this.events = resEvents.events.map(e => ({
+          uid: e.uid,
+          code: e.code,
+          period: e.period,
+          tpsJeu: e.tpsJeu,
+          team: e.team,
+          player: e.player,
+          number: e.number,
+          reason: e.reason ?? '',
+          nom: e.nom ?? undefined,
+          prenom: e.prenom ?? undefined
+        }))
         this.initialized = true
       } catch (error) {
         console.error('Failed to load scoring match:', error)
@@ -151,6 +185,8 @@ export const useScoringStore = defineStore('scoring', {
     async addEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       const api = apiInstance ?? useApi()
+      // Assign a uid up front so optimistic state, server row and later edits all agree.
+      if (!event.uid) event.uid = genUid()
       this.events.push(event)
       const wasGoal = event.code === 'B'
       const scoreField = event.team === 'A' ? 'scoreA' : 'scoreB'
@@ -184,13 +220,15 @@ export const useScoringStore = defineStore('scoring', {
       }
     },
 
-    /** Remove the last matching event (period/player/code) */
+    /** Remove an event (by uid when known, else by period/player/code) */
     async removeEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       const api = apiInstance ?? useApi()
-      const idx = this.events.findIndex(
-        e => e.period === event.period && e.player === event.player && e.code === event.code
-      )
+      const idx = event.uid
+        ? this.events.findIndex(e => e.uid === event.uid)
+        : this.events.findIndex(
+            e => e.period === event.period && e.player === event.player && e.code === event.code
+          )
       const removed = idx >= 0 ? this.events.splice(idx, 1)[0] : null
       const wasGoal = event.code === 'B'
       const scoreField = event.team === 'A' ? 'scoreA' : 'scoreB'
@@ -202,6 +240,7 @@ export const useScoringStore = defineStore('scoring', {
         await api.put(`/admin/scoring/gameEvent/${this.match.id}`, {
           params: {
             action: 'remove',
+            uid: event.uid,
             period: event.period,
             player: event.player,
             code: event.code
@@ -211,10 +250,62 @@ export const useScoringStore = defineStore('scoring', {
           await this.setParam(event.team === 'A' ? 'ScoreA' : 'ScoreB', this.match[scoreField] ?? '0', api)
         }
       } catch (error) {
-        if (removed) this.events.splice(idx, 0, removed)
+        if (removed && idx >= 0) this.events.splice(idx, 0, removed)
         if (wasGoal) this.match[scoreField] = prevScore
         throw error
       }
+    },
+
+    /**
+     * Edit an existing event in place (period/time/player/number/code/team/reason).
+     * Recomputes both teams' scores from goal events afterwards (a goal may have been
+     * added/removed/moved between teams). Central to post-match correction (spec §7.3).
+     */
+    async updateEvent(uid: string, patch: Partial<ScoringEvent>, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      const api = apiInstance ?? useApi()
+      const idx = this.events.findIndex(e => e.uid === uid)
+      if (idx < 0) return
+      const previous = { ...this.events[idx] }
+      const updated: ScoringEvent = { ...previous, ...patch, uid }
+      this.events[idx] = updated
+      this.recomputeScoresFromEvents()
+      try {
+        await api.put(`/admin/scoring/gameEvent/${this.match.id}`, {
+          params: {
+            action: 'update',
+            uid,
+            period: updated.period,
+            tpsJeu: updated.tpsJeu,
+            code: updated.code,
+            player: updated.player,
+            number: updated.number,
+            team: updated.team,
+            reason: updated.reason
+          }
+        })
+        // Persist both scores (either side may have changed).
+        await this.setParam('ScoreA', String(this.scoreA), api)
+        await this.setParam('ScoreB', String(this.scoreB), api)
+      } catch (error) {
+        this.events[idx] = previous
+        this.recomputeScoresFromEvents()
+        throw error
+      }
+    },
+
+    /** Recompute scoreA/scoreB from the current goal events (code 'B'). */
+    recomputeScoresFromEvents() {
+      if (!this.match) return
+      let a = 0
+      let b = 0
+      for (const e of this.events) {
+        if (e.code !== 'B') continue
+        if (e.team === 'A') a++
+        else if (e.team === 'B') b++
+      }
+      this.match.scoreA = String(a)
+      this.match.scoreB = String(b)
     },
 
     /** Read the persisted timer state (for clock restore on reload) */

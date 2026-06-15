@@ -195,3 +195,5 @@ Scoring:
 - Tracer toutes les actions dans le journal
 
 - Vérifier la durée des prolongations dans les règlements.
+- Objectif zéro papier : prévoir un nouveau statut "signé" pour le scoring ?
+- Title de la page : Scoring match <numero> - <nom équipe A> | <nom équipe B>. (ex : Scoring match 1 - Team A | Team B). match -> game en anglais.
