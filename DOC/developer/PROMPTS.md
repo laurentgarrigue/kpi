@@ -189,6 +189,9 @@ Scoring:
 - départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/stop du chrono, pour le départ/reprise du timeshoot et pour la pause du timeshoot. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - autocomplete sur les officiels
 - gérer autant de prolongations que nécessaire (actuellement limité à 2))
-
 - Scoring : gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
 - Scoring : départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du timeshoot, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
+- les routes api2 doivent générer les json comme sur legacy...
+- Tracer toutes les actions dans le journal
+
+- Vérifier la durée des prolongations dans les règlements.
