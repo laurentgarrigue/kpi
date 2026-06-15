@@ -961,22 +961,79 @@ mandat actif, déjà résolu depuis `X-Active-Mandate` par la couche auth). Appe
 **Vérifié** : `PUT/GET /admin/scoring/...` sans token → **401** (auth JWT avant scoping). Le
 scoping 403 ne s'évalue que pour un utilisateur authentifié hors de son périmètre.
 
+**Journalisation `kp_journal` ✅ (terminé) :**
+
+`ScoringController` `use AdminLoggableTrait`. Le contrôleur expose désormais `$this->connection`
+(DBAL, requis par le trait, initialisé depuis `EntityManager` dans le constructeur) et toutes les
+écritures passent par `$this->connection` (plus de `$this->entityManager->getConnection()` épars).
+`assertMatchAuthorized()` résout et **met en cache** le contexte du match
+(`Id_journee`/`Code_saison`/`Code_competition`, via un JOIN `kp_journee`), réutilisé par l'aide
+privée `logScoring(action, matchId, details)` → `logActionForMatch(...)`. Actions tracées :
+« Scoring statut/période/score » (`gameParam`), « Scoring événement » add/update/remove
+(`gameEvent`), « Scoring chrono » run/stop/RAZ (`gameTimer`), « Scoring joueur » (`playerStatus`).
+Échec de log silencieux (comportement du trait). La validation/verrouillage reste tracée par
+`AdminGamesController`.
+
+**Chargement + édition complète des événements ✅ (terminé) :**
+
+| Fichier | Détail |
+|---|---|
+| `src/Controller/ScoringController.php` | **Ajout** `GET /admin/scoring/events/{matchId}` : liste les événements de `kp_match_detail` enrichis nom/prénom (`LEFT JOIN kp_licence`), triés `Periode DESC, Temps ASC, date_insert ASC` (calqué sur `ReportController`). **Ajout action `update`** dans `gameEvent` (édition en place par `uid`, requiert `uid`). **`remove` accepte un `uid`** (suppression précise) avec fallback sur l'ancien delete par champs. |
+| `stores/scoringStore.ts` | `load()` charge aussi les événements (3ᵉ appel parallèle). `addEvent` génère un `uid` client (helper `genUid`) pour aligner état optimiste / ligne serveur / éditions futures. **Nouveau `updateEvent(uid, patch)`** (optimiste + rollback) qui **recalcule scoreA/scoreB** depuis les buts (`recomputeScoresFromEvents`, gère un but déplacé entre équipes) et persiste les deux scores. `removeEvent` cible par `uid` quand connu. Types : `ScoringEvent` porte `nom?`/`prenom?` (enrichis au chargement). |
+| `pages/games/[id]/scoring.vue` | Historique **éditable** (clic crayon → charge la ligne dans la zone de saisie ; corbeille → suppression). Zone de saisie commune **présente en direct ET post-match** : sélecteur **période**, **champ temps `MM:SS`** avec ajustements −60/−10/−1/+1/+10/+60, **sélecteur motif** (cartons). Les boutons d'événement font **add** (joueur sélectionné) ou **update** (ligne en édition). |
+
+**Mode direct / post-match ✅ (terminé)** (cf. §1.1) : sélecteur « En direct / Post-match » dans
+l'entête, **pré-positionné selon le statut** (`END` → post-match). En post-match, **l'horloge live**
+(affichage + run/stop/RAZ + ajustements chrono) est **masquée** ; le **champ temps de l'événement**
+reste éditable (tapé à la main). En direct, le champ temps **suit le chrono** (sauf pendant l'édition
+d'une ligne existante).
+
+**Ajustement fin du chrono ✅ (terminé)** (cf. §6.4) : boutons −10/−1/+1/+10 s sous l'horloge
+(mode direct), re-priment le countdown via `useTimer.setPeriod(duration, elapsed)` et persistent
+l'état dans `kp_chrono` (en conservant l'état run/stop courant).
+
+**Motifs de cartons ✅ (terminé)** : sélecteur de motif dans la zone de saisie (clés i18n
+`scoring.reason.*` : `r_pad`/`r_kt`/`r_ht`/`r_p`/`r_o`/`r_un`/`r_rep`/`unknown` + `none`),
+enregistré dans `kp_match_detail.motif`, affiché inline entre parenthèses dans l'historique.
+
+**Sélecteurs statut/période en badge cyclique ✅ (terminé)** (cf. §7.1) :
+
+| Fichier | Détail |
+|---|---|
+| `components/scoring/StatusBadge.vue` | **Créé** (`<ScoringStatusBadge>`). Badge **unique** cyclique `ATT → ON → END → ATT` (clic / Entrée / Espace), couleurs calquées sur le badge statut de `competitions/index.vue`. Props `status`/`canCycle`, émet `change(next)` (props down / events up — la page mute le store). |
+| `components/scoring/PeriodSelector.vue` | **Créé** (`<ScoringPeriodSelector>`). **Avance à la période suivante** selon le type (C : `M1→M2` ; E : `M1→M2→P1→P2→TB`) via un bouton « Période suivante », + **accès direct** (USelect escape hatch). Changer de période ouvre une **confirmation** (`AdminConfirmModal`, rappelle que le chrono est réinitialisé) ; émet `change(period)` seulement après confirmation. Props `period`/`type`/`canChange`. Les prolongations non bornées (but en or, §7.5) restent un lot ultérieur — codes `M1/M2/P1/P2/TB` conservés. |
+| `pages/games/[id]/scoring.vue` | Remplace les deux rangées de boutons statut/période par `<ScoringStatusBadge>` + `<ScoringPeriodSelector>`. |
+
+**Historique symétrique (visuel PDF) ✅ (terminé)** (cf. §7.1) :
+
+| Fichier | Détail |
+|---|---|
+| `components/scoring/EventHistory.vue` | **Créé** (`<ScoringEventHistory>`). Deux rendus de la même liste : **table symétrique** sur `md+` (PC / grande tablette) reproduisant le PDF/FMV3 — **équipe A à gauche, équipe B à droite, période + temps au centre** (mirroir calqué sur `fm3_C.js` : A = `[token][#][nom](motif) | période temps | vide` ; B = `vide | période temps | (motif)[nom][#][token]`) ; **liste verticale compacte** sur mobile (`md:hidden`). Tri **période ↓ puis temps ↑**. Clic ligne = éditer ; corbeille au survol = supprimer. Tokens emoji (🥅/🟢/🟡/🔴/🟥) au lieu des PNG legacy. Props down (`events`, `teamAName/B`, `editingUid`, `canScore`) / events up (`edit`/`remove`). |
+| `pages/games/[id]/scoring.vue` | Remplace le `<ul>` historique inline par `<ScoringEventHistory>`. |
+
+> **Format du temps d'événement (`kp_match_detail.Temps` = colonne `TIME`).** La console
+> travaille en **`MM:SS`** (une mi-temps ≤ 10 min, pas d'heures). La colonne `Temps` étant un
+> `TIME`, MySQL lirait « 01:28 » comme **1h28** : le legacy (`v2/evt_match.php`) **préfixe `00:`**
+> avant insertion → stocke `00:MM:SS`. Le `ScoringController` reproduit ce comportement
+> (`normalizeTemps()` à l'add **et** l'update) et **reformate en `MM:SS` au GET**
+> (`TIME_FORMAT(Temps,'%i:%s')`). Le composant `EventHistory` a aussi un `fmtTime()` défensif
+> (retire un segment heures `00:` résiduel). **Bug corrigé** : sans le préfixe, les buts/cartons
+> saisis étaient stockés avec une heure erronée et l'historique affichait `M2 00:01:28`. |
+
+**Vérifié** : ESLint OK (via container node:22 — le `kpi_node_app4` en Node 20 ne peut pas exécuter
+le flat-config actuel, `Object.groupBy` absent < Node 21) ; `php -l ScoringController.php` OK.
+
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification
-  base + restauration visuelle du chrono au rechargement + vérif 403 hors mandat.
-- Motifs de cartons (modal) et statut joueur (capitaine/coach) depuis la console.
-- **Mode direct / post-match** (cf. §1.1) : sélecteur + masquage du chrono/shotclock hors-live,
-  pré-positionné selon le statut (`END` → post-match).
-- **Édition complète d'un événement** existant (clic ligne → modifier période/temps/joueur/motif,
-  `updateEvent` action=`update`), avec recalcul du score (cf. §7.3).
-- **Ajustement fin du chrono** ±1/±10 s + réglage durée de période (cf. §6.4).
+  base + restauration visuelle du chrono au rechargement + vérif 403 hors mandat + **vérif des
+  lignes `kp_journal`** (chaque action mutante).
+- **Statut joueur** (capitaine/coach) éditable depuis la console (mappe `playerStatus`, endpoint
+  déjà journalisé). Réglage durée de période non standard (dialog).
 - **Édition inline officiels / n° maillot**, **suppression / recharge des présents**,
-  **publication privé/public**, **charge d'un autre match par ID#/n° court** (cf. §7.8).
+  **publication privé/public** (lecture seule), **charge d'un autre match par ID#/n° court** (cf. §7.8).
 - **Alertes de progression des cartons** (même couleur 2×, seuils par joueur/équipe — cf. §7.4).
-- **Journalisation `kp_journal`** : `ScoringController` doit `use AdminLoggableTrait` et appeler
-  `logActionForMatch(...)` sur **chaque endpoint mutant** (gameParam/gameEvent/gameTimer/
-  playerStatus). **Actuellement absent** → aucune action de scoring n'est tracée (cf. §6.2
-  « Journalisation »). À faire avant de clore le MVP.
+- **Durée de période non standard** : dialog d'ajustement (le badge période réinitialise à la
+  durée standard via confirmation ; reste à exposer le réglage de durée à part, cf. §7.1/§6.4).
 - Shotclock (time-shoot), buzzer, raccourcis clavier, « Match suivant… » + diffusion broadcast
   → relèvent de la **Phase 2**.
 - **Génération des JSON `live/cache/{idMatch}_match_*.json`** (incrustations) → **Phase 3** avec le

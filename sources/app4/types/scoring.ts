@@ -81,6 +81,8 @@ export interface ScoringEvent {
   player: string // licence number ("0" for a team-level event)
   number: number | null
   reason: string // card reason code (motif), '' if none
+  nom?: string // player last name (enriched server-side when loading existing events)
+  prenom?: string // player first name (enriched server-side)
 }
 
 /**
