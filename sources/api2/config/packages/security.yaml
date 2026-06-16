@@ -13,9 +13,9 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Login and reset-password endpoints - no authentication required
+        # Public auth endpoints - no authentication required
         login:
-            pattern: ^/auth/(login|reset-password)$
+            pattern: ^/auth/(login|reset-password|forgot-password|access-request)$
             stateless: true
             security: false
 

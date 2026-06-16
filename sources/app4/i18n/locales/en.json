@@ -52,7 +52,9 @@
     "error_profile_restricted": "Access restricted to profile 1 during beta phase",
     "error_generic": "Login error. Please try again.",
     "beta_title": "Beta Version",
-    "beta_message": "Please report any difficulties to the developer."
+    "beta_message": "Please report any difficulties to the developer.",
+    "forgot_password": "Forgot password?",
+    "request_access": "Request access"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -2473,5 +2475,37 @@
     "status_active": "Referee",
     "status_inactive": "Inactive",
     "export_pdf": "Export PDF"
+  },
+  "access_request": {
+    "title": "Request Access",
+    "subtitle": "Fill in this form to request access to KPI Admin.",
+    "email": "Email",
+    "email_placeholder": "your{'@'}email.com",
+    "licence": "Licence number",
+    "licence_placeholder": "Licence number (optional)",
+    "nom": "Last name",
+    "nom_placeholder": "Your last name",
+    "prenom": "First name",
+    "prenom_placeholder": "Your first name",
+    "club": "Club",
+    "club_placeholder": "Your club (optional)",
+    "responsabilites": "Role(s) / Responsibilities",
+    "responsabilites_placeholder": "e.g. Coach, Technical director, Referee...",
+    "message": "Message",
+    "message_placeholder": "Describe your access needs and the features you would like...",
+    "submit": "Submit request",
+    "back_to_login": "Back to login",
+    "success_title": "Request submitted",
+    "success_message": "Your request has been sent to the administrator. You will be contacted by email.",
+    "error_generic": "An error occurred. Please try again.",
+    "required_fields": "Fields marked * are required."
+  },
+  "forgot_password": {
+    "title": "Forgot password",
+    "subtitle": "Enter your username or email address to receive a reset link.",
+    "identifier": "Username or email",
+    "identifier_placeholder": "Your username or email address",
+    "submit": "Send reset link",
+    "success": "If an account matches this identifier, you will receive an email with a reset link valid for 48 hours."
   }
 }
