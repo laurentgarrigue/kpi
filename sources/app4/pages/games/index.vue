@@ -934,24 +934,32 @@ const updateRefereeTeam = (position: 'principal' | 'secondaire', newTeam: string
   }
 }
 
-// ─── Inline Referee editing ───
+// ─── Inline Referee editing (modal) ───
 const editingRefereeMatric = ref(0)
+const refereeModalOpen = ref(false)
+const refereeModalField = ref<{ id: number; field: string } | null>(null)
+const refereeModalTeams = ref<GameTeam[]>([])
+const refereeModalTeamValue = ref('')
 
-const startRefereeEdit = (game: Game, position: 'principal' | 'secondaire') => {
+const startRefereeEdit = async (game: Game, position: 'principal' | 'secondaire') => {
   if (!isGameEditable(game)) return
   const field = position === 'principal' ? 'Referee_1' : 'Referee_2'
-  editingCell.value = { id: game.id, field }
   const currentValue = position === 'principal' ? (game.arbitrePrincipal || '') : (game.arbitreSecondaire || '')
   const currentMatric = position === 'principal' ? (game.matricArbitrePrincipal || 0) : (game.matricArbitreSecondaire || 0)
+
+  refereeModalField.value = { id: game.id, field }
   editingValue.value = currentValue
   editingOriginalValue.value = currentValue
   editingRefereeMatric.value = currentMatric
+  refereeModalTeamValue.value = ''
+  refereeModalTeams.value = await loadTeamsForJournee(game.idJournee)
+  refereeModalOpen.value = true
 }
 
 const saveRefereeEdit = async (value: string, matric: number) => {
-  if (!editingCell.value) return
-  const { id, field } = editingCell.value
-  editingCell.value = null
+  if (!refereeModalField.value) return
+  const { id, field } = refereeModalField.value
+  refereeModalField.value = null
 
   const dbField = field === 'Referee_1' ? 'Arbitre_principal' : 'Arbitre_secondaire'
 
@@ -975,9 +983,25 @@ const saveRefereeEdit = async (value: string, matric: number) => {
   }
 }
 
-const onRefereeConfirm = () => {
-  if (!editingCell.value) return
+const onRefereeModalTeamChange = (newTeam: string) => {
+  refereeModalTeamValue.value = newTeam
+  if (!editingValue.value) return
+  if (editingValue.value.includes('(')) {
+    editingValue.value = editingValue.value.replace(/\([^)]*\)/, `(${newTeam})`)
+  }
+  else {
+    editingValue.value = `${editingValue.value} (${newTeam})`
+  }
+}
+
+const confirmRefereeModal = () => {
+  refereeModalOpen.value = false
   saveRefereeEdit(editingValue.value, editingRefereeMatric.value)
+}
+
+const cancelRefereeModal = () => {
+  refereeModalOpen.value = false
+  refereeModalField.value = null
 }
 
 // ─── Inline Phase/Journee editing ───
@@ -2608,80 +2632,54 @@ const openScoring = (gameId: number) => {
 
               <!-- Referee 1 -->
               <td class="px-1 py-1 max-w-32">
-                <template v-if="editingCell?.id === g.id && editingCell.field === 'Referee_1'">
-                  <AdminRefereeAutocomplete
-                    v-model="editingValue"
-                    :matric="editingRefereeMatric"
-                    :journee-id="g.idJournee"
-                    compact
-                    @update:matric="editingRefereeMatric = $event"
-                    @confirm="onRefereeConfirm"
-                    @cancel="cancelInlineEdit"
-                  />
-                </template>
-                <template v-else>
-                  <span
-                    v-if="g.arbitrePrincipal"
-                    class="truncate block"
-                    :class="[
-                      isGameEditable(g) ? 'editable-cell' : '',
-                      selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
-                    ]"
-                    :title="g.arbitrePrincipal"
-                    @click="startRefereeEdit(g, 'principal')"
-                  >{{ g.arbitrePrincipal }}</span>
-                  <span
-                    v-else-if="bracketLabels(g.libelle).refereePrincipal"
-                    class="truncate block text-orange-400 italic"
-                    :class="isGameEditable(g) ? 'editable-cell' : ''"
-                    :title="bracketLabels(g.libelle).refereePrincipal!"
-                    @click="startRefereeEdit(g, 'principal')"
-                  >({{ bracketLabels(g.libelle).refereePrincipal }})</span>
-                  <span
-                    v-else
-                    :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
-                    @click="startRefereeEdit(g, 'principal')"
-                  >-</span>
-                </template>
+                <span
+                  v-if="g.arbitrePrincipal"
+                  class="truncate block"
+                  :class="[
+                    isGameEditable(g) ? 'editable-cell' : '',
+                    selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                  ]"
+                  :title="g.arbitrePrincipal"
+                  @click="startRefereeEdit(g, 'principal')"
+                >{{ g.arbitrePrincipal }}</span>
+                <span
+                  v-else-if="bracketLabels(g.libelle).refereePrincipal"
+                  class="truncate block text-orange-400 italic"
+                  :class="isGameEditable(g) ? 'editable-cell' : ''"
+                  :title="bracketLabels(g.libelle).refereePrincipal!"
+                  @click="startRefereeEdit(g, 'principal')"
+                >({{ bracketLabels(g.libelle).refereePrincipal }})</span>
+                <span
+                  v-else
+                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  @click="startRefereeEdit(g, 'principal')"
+                >-</span>
               </td>
 
               <!-- Referee 2 -->
               <td class="px-1 py-1 max-w-32">
-                <template v-if="editingCell?.id === g.id && editingCell.field === 'Referee_2'">
-                  <AdminRefereeAutocomplete
-                    v-model="editingValue"
-                    :matric="editingRefereeMatric"
-                    :journee-id="g.idJournee"
-                    compact
-                    @update:matric="editingRefereeMatric = $event"
-                    @confirm="onRefereeConfirm"
-                    @cancel="cancelInlineEdit"
-                  />
-                </template>
-                <template v-else>
-                  <span
-                    v-if="g.arbitreSecondaire"
-                    class="truncate block"
-                    :class="[
-                      isGameEditable(g) ? 'editable-cell' : '',
-                      selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
-                    ]"
-                    :title="g.arbitreSecondaire"
-                    @click="startRefereeEdit(g, 'secondaire')"
-                  >{{ g.arbitreSecondaire }}</span>
-                  <span
-                    v-else-if="bracketLabels(g.libelle).refereeSecondaire"
-                    class="truncate block text-orange-400 italic"
-                    :class="isGameEditable(g) ? 'editable-cell' : ''"
-                    :title="bracketLabels(g.libelle).refereeSecondaire!"
-                    @click="startRefereeEdit(g, 'secondaire')"
-                  >({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
-                  <span
-                    v-else
-                    :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
-                    @click="startRefereeEdit(g, 'secondaire')"
-                  >-</span>
-                </template>
+                <span
+                  v-if="g.arbitreSecondaire"
+                  class="truncate block"
+                  :class="[
+                    isGameEditable(g) ? 'editable-cell' : '',
+                    selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                  ]"
+                  :title="g.arbitreSecondaire"
+                  @click="startRefereeEdit(g, 'secondaire')"
+                >{{ g.arbitreSecondaire }}</span>
+                <span
+                  v-else-if="bracketLabels(g.libelle).refereeSecondaire"
+                  class="truncate block text-orange-400 italic"
+                  :class="isGameEditable(g) ? 'editable-cell' : ''"
+                  :title="bracketLabels(g.libelle).refereeSecondaire!"
+                  @click="startRefereeEdit(g, 'secondaire')"
+                >({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
+                <span
+                  v-else
+                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  @click="startRefereeEdit(g, 'secondaire')"
+                >-</span>
               </td>
 
               <!-- Printed toggle -->
@@ -3532,6 +3530,53 @@ const openScoring = (gameId: number) => {
       @close="bulkDuplicateConfirmOpen = false"
       @confirm="confirmBulkDuplicate"
     />
+
+    <!-- ═══════ INLINE REFEREE MODAL ═══════ -->
+    <AdminModal
+      :open="refereeModalOpen"
+      :title="refereeModalField?.field === 'Referee_1' ? t('games.field.referee_1') : t('games.field.referee_2')"
+      max-width="sm"
+      @close="cancelRefereeModal"
+    >
+      <div class="space-y-4">
+        <div>
+          <AdminRefereeAutocomplete
+            v-model="editingValue"
+            :matric="editingRefereeMatric"
+            :journee-id="refereeModalField ? games.find(g => g.id === refereeModalField!.id)?.idJournee ?? null : null"
+            @update:matric="editingRefereeMatric = $event"
+            @cancel="cancelRefereeModal"
+          />
+        </div>
+        <div v-if="editingRefereeMatric > 0">
+          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.referee_team_label') }}</label>
+          <select
+            :value="refereeModalTeamValue"
+            class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
+            @change="onRefereeModalTeamChange(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">--</option>
+            <option v-for="tm in refereeModalTeams" :key="tm.id" :value="tm.libelle">{{ tm.libelle }}</option>
+          </select>
+        </div>
+      </div>
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          @click="cancelRefereeModal"
+        >
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+          @click="confirmRefereeModal"
+        >
+          {{ t('common.save') }}
+        </button>
+      </template>
+    </AdminModal>
 
     <!-- Scroll to top -->
     <AdminScrollToTop :title="t('common.scroll_to_top')" />

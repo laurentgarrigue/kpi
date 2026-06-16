@@ -33,24 +33,46 @@ const searchQuery = ref('')
 const results = ref<RefereeResult[]>([])
 const isLoading = ref(false)
 const isOpen = ref(false)
+const activeIndex = ref(-1)
 const dropdownRef = ref<HTMLElement>()
 const inputRef = ref<HTMLInputElement>()
 
+// Position du dropdown téléporté (fixed, calculé depuis l'input)
+const dropdownStyle = ref({ top: '0px', left: '0px', width: '0px' })
+
+function updateDropdownPosition() {
+  if (!inputRef.value) return
+  const rect = inputRef.value.getBoundingClientRect()
+  dropdownStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    width: `${Math.max(rect.width, 256)}px`,
+  }
+}
+
 let debounceTimeout: ReturnType<typeof setTimeout> | null = null
 let skipNextSearch = false
-// Track if a selection was just made (to prevent blur from cancelling)
 let justSelected = false
+
+// Selectable items only (skip separators/errors)
+const selectableResults = computed(() =>
+  results.value.map((item, idx) => ({ item, idx })).filter(({ item }) => item.type !== 'separator' && item.type !== 'error'),
+)
 
 // Initialize search query from modelValue
 watch(
   () => props.modelValue,
   (newVal) => {
     if (!isOpen.value) {
+      skipNextSearch = true
       searchQuery.value = newVal || ''
     }
   },
   { immediate: true },
 )
+
+// Reset active index when results change
+watch(results, () => { activeIndex.value = -1 })
 
 async function performSearch() {
   if (searchQuery.value.length < 2 || !props.journeeId) {
@@ -66,6 +88,7 @@ async function performSearch() {
       { q: searchQuery.value, journeeId: props.journeeId, lang: locale.value },
     )
     results.value = data || []
+    updateDropdownPosition()
     isOpen.value = true
   }
   catch {
@@ -86,7 +109,6 @@ watch(searchQuery, () => {
     skipNextSearch = false
     return
   }
-  // When user types, clear matric (free text = non-nominative)
   emit('update:matric', 0)
   debouncedSearch()
 })
@@ -100,6 +122,7 @@ function selectItem(item: RefereeResult) {
   emit('update:matric', item.matric ? parseInt(String(item.matric)) || 0 : 0)
   results.value = []
   isOpen.value = false
+  activeIndex.value = -1
   emit('confirm')
 }
 
@@ -110,7 +133,21 @@ function clearSelection() {
   emit('update:matric', 0)
   results.value = []
   isOpen.value = false
+  activeIndex.value = -1
   emit('confirm')
+}
+
+function moveActive(dir: 1 | -1) {
+  if (!isOpen.value || selectableResults.value.length === 0) return
+  const len = selectableResults.value.length
+  // Find current position among selectable items
+  const pos = selectableResults.value.findIndex(({ idx }) => idx === activeIndex.value)
+  const nextPos = pos === -1 ? (dir === 1 ? 0 : len - 1) : (pos + dir + len) % len
+  activeIndex.value = selectableResults.value[nextPos]!.idx
+  // Scroll active item into view
+  nextTick(() => {
+    dropdownRef.value?.querySelector<HTMLElement>(`[data-idx="${activeIndex.value}"]`)?.scrollIntoView({ block: 'nearest' })
+  })
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -118,18 +155,52 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault()
     isOpen.value = false
     results.value = []
+    activeIndex.value = -1
     searchQuery.value = props.modelValue || ''
     inputRef.value?.blur()
-    // In compact (inline) mode, cancel the edit
-    if (props.compact) {
-      emit('cancel')
+    emit('cancel')
+  }
+  else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (!isOpen.value && results.value.length > 0) isOpen.value = true
+    moveActive(1)
+  }
+  else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    moveActive(-1)
+  }
+  else if (e.key === 'Tab') {
+    // Tab selects the active item if one is highlighted, otherwise commits free text
+    if (isOpen.value && activeIndex.value >= 0) {
+      e.preventDefault()
+      const active = results.value[activeIndex.value]
+      if (active && active.type !== 'separator' && active.type !== 'error') {
+        selectItem(active)
+        return
+      }
+    }
+    // No active item: close dropdown and commit free text (let Tab move focus naturally)
+    isOpen.value = false
+    results.value = []
+    activeIndex.value = -1
+    const current = searchQuery.value.trim()
+    if (current !== props.modelValue) {
+      emit('update:modelValue', current)
+      emit('update:matric', 0)
     }
   }
   else if (e.key === 'Enter') {
     e.preventDefault()
+    if (isOpen.value && activeIndex.value >= 0) {
+      const active = results.value[activeIndex.value]
+      if (active && active.type !== 'separator' && active.type !== 'error') {
+        selectItem(active)
+        return
+      }
+    }
     isOpen.value = false
     results.value = []
-    // In compact mode: Enter commits free text
+    activeIndex.value = -1
     if (props.compact) {
       justSelected = true
       const current = searchQuery.value.trim()
@@ -141,7 +212,6 @@ function handleKeydown(e: KeyboardEvent) {
       inputRef.value?.blur()
     }
     else {
-      // Form mode: commit free text
       const current = searchQuery.value.trim()
       if (current !== props.modelValue) {
         emit('update:modelValue', current)
@@ -152,7 +222,6 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 function handleBlur() {
-  // Delay to allow click on dropdown item
   setTimeout(() => {
     if (justSelected) {
       justSelected = false
@@ -160,14 +229,12 @@ function handleBlur() {
     }
     isOpen.value = false
     results.value = []
-    // blur = commit free text in both modes
+    activeIndex.value = -1
     const current = searchQuery.value.trim()
     if (current !== props.modelValue) {
       emit('update:modelValue', current)
       emit('update:matric', 0)
-      if (props.compact) {
-        emit('confirm')
-      }
+      if (props.compact) emit('confirm')
     }
     else if (props.compact) {
       emit('cancel')
@@ -175,9 +242,8 @@ function handleBlur() {
   }, 200)
 }
 
-// Auto-focus and select on mount (for inline mode)
 onMounted(() => {
-  if (props.compact && inputRef.value) {
+  if (inputRef.value) {
     inputRef.value.focus()
     inputRef.value.select()
   }
@@ -233,36 +299,42 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Dropdown results -->
-    <div
-      v-if="isOpen && !disabled && results.length > 0"
-      class="absolute z-50 w-64 mt-1 bg-white border border-header-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-    >
-      <template v-for="(item, idx) in results" :key="idx">
-        <!-- Separator -->
-        <div
-          v-if="item.type === 'separator'"
-          class="px-3 py-1 text-[10px] font-semibold text-header-400 bg-header-50 uppercase tracking-wider"
-        >
-          {{ item.label }}
-        </div>
-        <!-- Error -->
-        <div
-          v-else-if="item.type === 'error'"
-          class="px-3 py-2 text-xs text-danger-500 text-center"
-        >
-          {{ item.label }}
-        </div>
-        <!-- Selectable item -->
-        <button
-          v-else
-          type="button"
-          class="w-full px-3 py-1.5 text-left hover:bg-primary-50 border-b border-header-50 transition-colors text-xs"
-          @mousedown.prevent="selectItem(item)"
-        >
-          <span class="font-medium">{{ item.label }}</span>
-        </button>
-      </template>
-    </div>
+    <!-- Dropdown results (téléporté dans body pour ne pas être clippé par overflow) -->
+    <Teleport to="body">
+      <div
+        v-if="isOpen && !disabled && results.length > 0"
+        class="fixed z-9999 bg-white border border-header-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        :style="dropdownStyle"
+      >
+        <template v-for="(item, idx) in results" :key="idx">
+          <!-- Separator -->
+          <div
+            v-if="item.type === 'separator'"
+            class="px-3 py-1 text-[10px] font-semibold text-header-400 bg-header-50 uppercase tracking-wider"
+          >
+            {{ item.label }}
+          </div>
+          <!-- Error -->
+          <div
+            v-else-if="item.type === 'error'"
+            class="px-3 py-2 text-xs text-danger-500 text-center"
+          >
+            {{ item.label }}
+          </div>
+          <!-- Selectable item -->
+          <button
+            v-else
+            :data-idx="idx"
+            type="button"
+            class="w-full px-3 py-1.5 text-left border-b border-header-50 transition-colors text-xs"
+            :class="idx === activeIndex ? 'bg-primary-100' : 'hover:bg-primary-50'"
+            @mousedown.prevent="selectItem(item)"
+            @mousemove="activeIndex = idx"
+          >
+            <span class="font-medium">{{ item.label }}</span>
+          </button>
+        </template>
+      </div>
+    </Teleport>
   </div>
 </template>
