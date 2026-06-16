@@ -31,41 +31,50 @@ class PdfQrCodeApp extends MyPage
     $pdf->AddPage();
     $pdf->SetAutoPageBreak(true, 15);
 
+    // Page A4 paysage : 297mm de large, marges 15mm de chaque côté → largeur utile 267mm
+    $pageWidth = 297;
+    $marginLeft = 15;
+    $contentWidth = $pageWidth - 2 * $marginLeft; // 267mm
+
     $titreDate = "Saison (Season) " . $codeSaison;
     // titre
     $pdf->SetFont('Arial', 'BI', 12);
-    $pdf->Cell(137, 5, $titreEvenementCompet, 0, 0, 'L');
-    $pdf->Cell(136, 5, $titreDate, 0, 1, 'R');
+    $pdf->Cell($contentWidth / 2, 5, $titreEvenementCompet, 0, 0, 'L');
+    $pdf->Cell($contentWidth / 2, 5, $titreDate, 0, 1, 'R');
     $pdf->SetFont('Arial', 'B', 14);
-    $pdf->Cell(273, 25, "", 0, 1, 'C');
-    $pdf->Cell(273, 6, "Application", 0, 1, 'C');
+    $pdf->Cell($contentWidth, 25, "", 0, 1, 'C');
+    $pdf->Cell($contentWidth, 6, "Application", 0, 1, 'C');
     $pdf->Ln(20);
 
-    // Pattern 5: Sauvegarde position avant images
-    $savedY = $pdf->y;
-    $savedX = $pdf->x;
-
+    // Logo CNAKPI centré en haut
     $logo = 'img/CNAKPI_small.jpg';
-    $pdf->Image($logo, 118, 10, 0, 20, 'jpg', URL_SITE);
+    $logoWidth = 40; // largeur fixe du logo
+    $logoX = ($pageWidth - $logoWidth) / 2;
+    $pdf->Image($logo, $logoX, 10, $logoWidth, 20, 'jpg', URL_SITE);
 
+    // QR code centré (62mm de large)
+    $qrSize = 62;
+    $qrX = ($pageWidth - $qrSize) / 2;
+    $qrY = 85;
+    $qrcode = new QRcode(URL_APP . '/event/' . $idEvenement, 'Q'); // error level : L, M, Q, H
+    $qrcode->displayFPDF($pdf, $qrX, $qrY, $qrSize);
+
+    // Logo app centré dans le QR code
     $logoApp = 'img/logo.gif';
     $logo1 = imagecreatefromstring(file_get_contents($logoApp));
     $logo_width = imagesx($logo1);
     $logo_height = imagesy($logo1);
-    $height = ($logo_height / $logo_width * 16);
-    $y = (50 - $height) / 2;
+    $logoInnerW = 16;
+    $logoInnerH = ($logo_height / $logo_width * $logoInnerW);
+    $logoInnerX = ($pageWidth - $logoInnerW) / 2;
+    $logoInnerY = $qrY + ($qrSize - $logoInnerH) / 2;
+    $pdf->Image($logoApp, $logoInnerX, $logoInnerY, $logoInnerW, $logoInnerH, 'gif', URL_APP . '/event/' . $idEvenement);
 
-    // QRCode Matchs
-    $qrcode = new QRcode(URL_APP . '/event/' . $idEvenement, 'Q'); // error level : L, M, Q, H
-    $qrcode->displayFPDF($pdf, 115, 85, 62);
-    $pdf->Image($logoApp, 138, $y + 89, 16, $height, 'gif', URL_APP . '/event/' . $idEvenement);
+    // Restaurer la position après les images pour écrire le lien
+    $pdf->SetY($qrY + $qrSize + 5);
+    $pdf->SetX($marginLeft);
 
-    // Pattern 5: Restauration position après images
-    $pdf->SetY($savedY);
-    $pdf->SetX($savedX);
-
-    $pdf->Cell(273, 65, "", 0, 1, 'C');
-    $pdf->Cell(273, 6, URL_APP . '/event/' . $idEvenement, 0, 1, 'C');
+    $pdf->Cell($contentWidth, 6, URL_APP . '/event/' . $idEvenement, 0, 1, 'C');
 
     $pdf->Output('Links.pdf', \Mpdf\Output\Destination::INLINE);
   }
