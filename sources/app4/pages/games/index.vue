@@ -2578,7 +2578,7 @@ const openScoring = (gameId: number) => {
                 <template v-else>
                   <span
                     v-if="g.equipeB"
-                    :class="[isGameEditable(g) ? 'editable-cell' : '', selectedTeam && g.equipeB === selectedTeam ? 'bg-success-50' : 'text-header-900']"
+                    :class="[isGameEditable(g) ? 'editable-cell' : '', selectedTeam && g.equipeB === selectedTeam ? 'bg-success-100 font-semibold' : 'text-header-900']"
                     @click="startTeamEdit(g, 'B')"
                   >{{ g.equipeB }}</span>
                   <span
@@ -2625,7 +2625,7 @@ const openScoring = (gameId: number) => {
                     class="truncate block"
                     :class="[
                       isGameEditable(g) ? 'editable-cell' : '',
-                      selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-50' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                      selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
                     ]"
                     :title="g.arbitrePrincipal"
                     @click="startRefereeEdit(g, 'principal')"
@@ -2664,7 +2664,7 @@ const openScoring = (gameId: number) => {
                     class="truncate block"
                     :class="[
                       isGameEditable(g) ? 'editable-cell' : '',
-                      selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-50' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                      selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
                     ]"
                     :title="g.arbitreSecondaire"
                     @click="startRefereeEdit(g, 'secondaire')"
