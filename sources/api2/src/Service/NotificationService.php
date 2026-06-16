@@ -41,34 +41,52 @@ class NotificationService
     /**
      * Send a password reset email to a user.
      */
-    public function sendPasswordReset(string $toEmail, string $token, bool $includeDocLink, string $complementaryMessage, string $loginCode = ''): void
+    public function sendPasswordReset(string $toEmail, string $token, bool $includeDocLink, string $complementaryMessage, string $loginCode = '', string $locale = 'fr'): void
     {
         $resetUrl = rtrim($this->app4Url, '/') . '/reset-password?token=' . $token;
+        $isFr = ($locale !== 'en');
 
-        $body = "Bonjour,\n\n";
-        $body .= "Votre compte KPI a été créé ou mis à jour.\n\n";
-        if ($loginCode !== '') {
-            $body .= "Votre identifiant de connexion : " . $loginCode . "\n";
-            $body .= "(vous pouvez aussi vous connecter avec votre adresse email)\n\n";
+        if ($isFr) {
+            $subject = 'Accès KPI — Définition de votre mot de passe';
+            $body  = "Bonjour,\n\n";
+            $body .= "Votre compte KPI a été créé ou mis à jour.\n\n";
+            if ($loginCode !== '') {
+                $body .= "Votre identifiant de connexion : " . $loginCode . "\n";
+                $body .= "(vous pouvez aussi vous connecter avec votre adresse email)\n\n";
+            }
+            $body .= "Pour définir votre mot de passe, cliquez sur le lien ci-dessous (valable 48h) :\n";
+            $body .= $resetUrl . "\n\n";
+            if ($includeDocLink) {
+                $body .= "Documentation : " . rtrim($this->app4Url, '/') . "/doc\n\n";
+            }
+            if ($complementaryMessage !== '') {
+                $body .= $complementaryMessage . "\n\n";
+            }
+            $body .= "Cordialement,\nL'équipe KPI";
+        } else {
+            $subject = 'KPI Access — Set your password';
+            $body  = "Hello,\n\n";
+            $body .= "Your KPI account has been created or updated.\n\n";
+            if ($loginCode !== '') {
+                $body .= "Your login identifier: " . $loginCode . "\n";
+                $body .= "(you can also sign in with your email address)\n\n";
+            }
+            $body .= "To set your password, click the link below (valid for 48 hours):\n";
+            $body .= $resetUrl . "\n\n";
+            if ($includeDocLink) {
+                $body .= "Documentation: " . rtrim($this->app4Url, '/') . "/doc\n\n";
+            }
+            if ($complementaryMessage !== '') {
+                $body .= $complementaryMessage . "\n\n";
+            }
+            $body .= "Best regards,\nThe KPI Team";
         }
-        $body .= "Pour définir votre mot de passe, cliquez sur le lien ci-dessous (valable 48h) :\n";
-        $body .= $resetUrl . "\n\n";
-
-        if ($includeDocLink) {
-            $body .= "Documentation : " . rtrim($this->app4Url, '/') . "/doc\n\n";
-        }
-
-        if ($complementaryMessage !== '') {
-            $body .= $complementaryMessage . "\n\n";
-        }
-
-        $body .= "Cordialement,\nL'équipe KPI";
 
         try {
             $email = (new Email())
                 ->from($this->mailFrom)
                 ->to($toEmail)
-                ->subject('Accès KPI — Définition de votre mot de passe')
+                ->subject($subject)
                 ->text($body);
 
             $this->mailer->send($email);
