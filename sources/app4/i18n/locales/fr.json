@@ -2402,7 +2402,45 @@
     "history": "Historique des événements",
     "not_found": "Match introuvable",
     "select_player_first": "Sélectionnez d'abord un joueur",
-    "no_access": "Accès réservé (phase d'expérimentation)"
+    "no_access": "Accès réservé (phase d'expérimentation)",
+    "mode": {
+      "label": "Mode",
+      "live": "En direct",
+      "post": "Post-match"
+    },
+    "edit": {
+      "title": "Modifier l'événement",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "edit_hint": "Cliquez sur un événement pour le modifier"
+    },
+    "time": {
+      "label": "Temps de l'événement",
+      "period": "Période"
+    },
+    "adjust": {
+      "label": "Ajuster le chrono"
+    },
+    "reason": {
+      "label": "Motif",
+      "none": "—",
+      "r_pad": "Pagaie",
+      "r_kt": "Éperonnage",
+      "r_ht": "Poussée / Accrochage",
+      "r_p": "Possession",
+      "r_o": "Obstruction",
+      "r_un": "Antijeu / Non sportif",
+      "r_rep": "Remplacement",
+      "unknown": "Autre / Non précisé"
+    },
+    "status_cycle_hint": "Cliquer pour changer de statut",
+    "period_next": "Période suivante",
+    "period_direct": "Aller à…",
+    "period_confirm_title": "Changer de période ?",
+    "period_confirm_message": "Passer en {period} réinitialisera le chronomètre à la durée de cette période.",
+    "team": "Équipe",
+    "history_table_hint": "Cliquez une ligne pour la modifier ; survolez pour supprimer."
   },
   "competition": {
     "ended_title": "Compétition terminée — lecture seule",

@@ -21,7 +21,6 @@ const canScore = computed(() => canScoreBase.value && !scoringStore.isCompetitio
 
 // Periods available depend on match type (C = no overtime unless needed)
 const periods: Period[] = ['M1', 'M2', 'P1', 'P2', 'TB']
-const statuses: MatchStatus[] = ['ATT', 'ON', 'END']
 const eventCodes: { code: ScoringEventCode; labelKey: string; color: string }[] = [
   { code: 'B', labelKey: 'scoring.event.goal', color: 'primary' },
   { code: 'V', labelKey: 'scoring.event.card_green', color: 'success' },
@@ -29,12 +28,29 @@ const eventCodes: { code: ScoringEventCode; labelKey: string; color: string }[] 
   { code: 'R', labelKey: 'scoring.event.card_red', color: 'error' },
   { code: 'D', labelKey: 'scoring.event.card_red_def', color: 'error' }
 ]
+// Card reasons (motifs) reused from FMV3 — '' = none
+const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
 
 // Selected player for the next event
 const selected = ref<{ team: TeamSide; player: ScoringPlayer } | null>(null)
 
 const match = computed(() => scoringStore.match)
 const loading = computed(() => scoringStore.loading)
+
+// ─── Direct vs post-match mode (spec §1.1) ───
+// In post-match the live clock (run/stop/RAZ + current time) is hidden; only the per-event
+// time field stays editable. Pre-positioned from match status (END → post-match).
+type ScoringMode = 'live' | 'post'
+const mode = ref<ScoringMode>('live')
+const isLive = computed(() => mode.value === 'live')
+
+// ─── Event time/reason entry (period + MM:SS) ───
+// In live mode it is pre-filled from the clock; in post-match it is typed/edited by hand.
+const eventPeriod = ref<Period>('M1')
+const eventTime = ref('00:00')
+const eventReason = ref('')
+// When set, the event buttons commit an UPDATE of this existing event instead of a new one.
+const editingUid = ref<string | null>(null)
 
 // ─── Game clock (easytimer) ───
 const { display: clockDisplay, gameTime, elapsed, isRunning, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
@@ -45,10 +61,18 @@ const { display: clockDisplay, gameTime, elapsed, isRunning, setPeriod: timerSet
     }
   })
 
+// In live mode keep the event-time field tracking the clock (unless editing a row).
+watch(gameTime, (v) => {
+  if (isLive.value && !editingUid.value) eventTime.value = v
+})
+
 onMounted(async () => {
   if (!canView.value) return
   try {
     await scoringStore.load(matchId.value)
+    // Default mode from status, period field from the match's current period.
+    mode.value = scoringStore.match?.statut === 'END' ? 'post' : 'live'
+    eventPeriod.value = (scoringStore.match?.periode ?? 'M1') as Period
     // Restore the clock from kp_chrono if a state was persisted, else start fresh.
     const state = await scoringStore.loadTimerState()
     if (state && state.action) {
@@ -73,8 +97,24 @@ const selectPlayer = (team: TeamSide, player: ScoringPlayer) => {
   selected.value = { team, player }
 }
 
-const addEvent = async (code: ScoringEventCode) => {
+/** Commit the event buttons: add a new event, or update the one being edited. */
+const commitEvent = async (code: ScoringEventCode) => {
   if (!canScore.value || !match.value) return
+
+  if (editingUid.value) {
+    // Editing an existing row: keep its team/player, change code/time/period/reason.
+    try {
+      await scoringStore.updateEvent(editingUid.value, {
+        code,
+        period: eventPeriod.value,
+        tpsJeu: eventTime.value,
+        reason: eventReason.value
+      })
+      cancelEdit()
+    } catch { /* toast handled */ }
+    return
+  }
+
   if (!selected.value) {
     toast.add({ title: t('common.error'), description: t('scoring.select_player_first'), color: 'warning' })
     return
@@ -82,24 +122,56 @@ const addEvent = async (code: ScoringEventCode) => {
   const { team, player } = selected.value
   const event: ScoringEvent = {
     code,
-    period: (match.value.periode ?? 'M1') as Period,
-    tpsJeu: gameTime.value, // current game clock
+    period: eventPeriod.value,
+    tpsJeu: eventTime.value,
     team,
     player: String(player.matric),
     number: player.numero,
-    reason: ''
+    reason: eventReason.value,
+    nom: player.nom,
+    prenom: player.prenom
   }
   try {
     await scoringStore.addEvent(event)
     selected.value = null
+    eventReason.value = ''
   } catch { /* toast handled */ }
+}
+
+/** Load an existing event into the entry zone for editing. */
+const startEdit = (e: ScoringEvent) => {
+  if (!canScore.value || !e.uid) return
+  editingUid.value = e.uid
+  eventPeriod.value = e.period
+  eventTime.value = e.tpsJeu
+  eventReason.value = e.reason
+}
+const cancelEdit = () => {
+  editingUid.value = null
+  eventReason.value = ''
+  if (isLive.value) eventTime.value = gameTime.value
+}
+const removeEvent = async (e: ScoringEvent) => {
+  if (!canScore.value) return
+  try {
+    await scoringStore.removeEvent(e)
+    if (editingUid.value === e.uid) cancelEdit()
+  } catch { /* toast handled */ }
+}
+
+// ─── Event time fine-adjust (±60/±10/±1 s) — works in live and post-match ───
+const adjustEventTime = (deltaSec: number) => {
+  const [m, s] = eventTime.value.split(':').map(Number)
+  const total = Math.max(0, (m || 0) * 60 + (s || 0) + deltaSec)
+  eventTime.value = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
 const setPeriod = (p: Period) => {
   if (!canScore.value) return
   scoringStore.setPeriod(p)
+  eventPeriod.value = p
   // Reconfigure the clock to the new period duration (fresh countdown)
-  timerSetPeriod(scoringStore.periodDurations[p])
+  if (isLive.value) timerSetPeriod(scoringStore.periodDurations[p])
 }
 const setStatus = (s: MatchStatus) => { if (canScore.value) scoringStore.setStatus(s) }
 
@@ -119,6 +191,20 @@ const timer = (action: 'run' | 'stop' | 'RAZ') => {
     startTime: action === 'RAZ' ? 0 : elapsed.value,
     runTime: 0,
     maxTime
+  })
+}
+
+// Fine-adjust the live clock (±1/±10 s). Only meaningful in live mode.
+const adjustClock = (deltaSec: number) => {
+  if (!canScore.value) return
+  const wasRunning = isRunning.value
+  const next = Math.max(0, elapsed.value + deltaSec)
+  timerSetPeriod(scoringStore.currentPeriodDuration, next) // re-primes the clock (paused)
+  if (wasRunning) timerStart() // keep it running if it was
+  void scoringStore.setTimer(wasRunning ? 'run' : 'stop', {
+    startTime: next,
+    runTime: 0,
+    maxTime: scoringStore.currentPeriodDuration
   })
 }
 
@@ -160,6 +246,19 @@ const toggleLock = async () => {
           </p>
         </div>
         <div class="flex items-center gap-2">
+          <!-- Direct / post-match mode -->
+          <div class="flex gap-1">
+            <UButton
+              size="xs"
+              :variant="mode === 'live' ? 'solid' : 'outline'"
+              @click="mode = 'live'"
+            >{{ t('scoring.mode.live') }}</UButton>
+            <UButton
+              size="xs"
+              :variant="mode === 'post' ? 'solid' : 'outline'"
+              @click="mode = 'post'"
+            >{{ t('scoring.mode.post') }}</UButton>
+          </div>
           <UBadge :color="scoringStore.isLocked ? 'error' : 'success'">
             {{ scoringStore.isLocked ? t('scoring.locked') : t('scoring.status.' + match.statut) }}
           </UBadge>
@@ -186,37 +285,36 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Game clock -->
-      <div class="flex items-center justify-center">
+      <!-- Game clock + adjust (live mode only) -->
+      <div v-if="isLive" class="flex flex-col items-center gap-2">
         <div
           class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
           :class="isRunning ? 'text-success-600' : 'text-header-700'"
         >
           {{ clockDisplay }}
         </div>
+        <div class="flex gap-1">
+          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
+          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
+          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
+          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
+        </div>
       </div>
 
-      <!-- Status + Period + Timer -->
+      <!-- Status (cyclic badge) + Period (advance/direct) + Timer -->
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex gap-1">
-          <UButton
-            v-for="s in statuses" :key="s"
-            size="xs"
-            :variant="match.statut === s ? 'solid' : 'outline'"
-            :disabled="!canScore"
-            @click="setStatus(s)"
-          >{{ t('scoring.status.' + s) }}</UButton>
-        </div>
-        <div class="flex gap-1">
-          <UButton
-            v-for="p in periods" :key="p"
-            size="xs"
-            :variant="match.periode === p ? 'solid' : 'outline'"
-            :disabled="!canScore"
-            @click="setPeriod(p)"
-          >{{ p }}</UButton>
-        </div>
-        <div class="flex gap-1">
+        <ScoringStatusBadge
+          :status="match.statut"
+          :can-cycle="canScore"
+          @change="setStatus"
+        />
+        <ScoringPeriodSelector
+          :period="match.periode"
+          :type="match.type"
+          :can-change="canScore"
+          @change="setPeriod"
+        />
+        <div v-if="isLive" class="flex gap-1">
           <UButton size="xs" icon="i-heroicons-play" :disabled="!canScore" @click="timer('run')">{{ t('scoring.timer.start') }}</UButton>
           <UButton size="xs" icon="i-heroicons-pause" :disabled="!canScore" @click="timer('stop')">{{ t('scoring.timer.pause') }}</UButton>
           <UButton size="xs" icon="i-heroicons-arrow-uturn-left" variant="outline" :disabled="!canScore" @click="timer('RAZ')">{{ t('scoring.timer.reset') }}</UButton>
@@ -247,27 +345,69 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Event buttons -->
-      <div class="flex flex-wrap gap-2 justify-center border-t pt-4">
-        <UButton
-          v-for="evt in eventCodes" :key="evt.code"
-          :color="evt.color as any"
-          :disabled="!canScore || !selected"
-          @click="addEvent(evt.code)"
-        >{{ t(evt.labelKey) }}</UButton>
+      <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
+      <div class="border-t pt-4 space-y-3">
+        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600">
+          <UIcon name="i-heroicons-pencil-square" />
+          {{ t('scoring.edit.title') }}
+          <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
+        </div>
+
+        <div class="flex flex-wrap items-end gap-3 justify-center">
+          <!-- Period -->
+          <div>
+            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.time.period') }}</label>
+            <USelect v-model="eventPeriod" :items="periods" :disabled="!canScore" size="sm" class="w-28" />
+          </div>
+          <!-- Event time -->
+          <div>
+            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.time.label') }}</label>
+            <div class="flex items-center gap-1">
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-1)">−1</UButton>
+              <UInput v-model="eventTime" :disabled="!canScore" size="sm" class="w-20 font-mono text-center" />
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(1)">+1</UButton>
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
+              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
+            </div>
+          </div>
+          <!-- Reason (cards) -->
+          <div>
+            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.reason.label') }}</label>
+            <USelect
+              v-model="eventReason"
+              :items="reasonCodes.map(c => ({ label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c), value: c }))"
+              :disabled="!canScore"
+              size="sm"
+              class="w-48"
+            />
+          </div>
+        </div>
+
+        <!-- Event buttons -->
+        <div class="flex flex-wrap gap-2 justify-center">
+          <UButton
+            v-for="evt in eventCodes" :key="evt.code"
+            :color="evt.color as any"
+            :disabled="!canScore || (!selected && !editingUid)"
+            @click="commitEvent(evt.code)"
+          >{{ t(evt.labelKey) }}</UButton>
+        </div>
       </div>
 
-      <!-- Events list -->
-      <div v-if="scoringStore.events.length" class="border-t pt-4">
-        <h3 class="font-semibold mb-2">{{ t('scoring.history') }}</h3>
-        <ul class="text-sm space-y-1">
-          <li v-for="(e, i) in scoringStore.events" :key="i" class="flex gap-2">
-            <span class="font-mono">{{ e.period }} {{ e.tpsJeu }}</span>
-            <span>{{ e.team }}</span>
-            <span class="flex-1">#{{ e.number }} · {{ e.code }}</span>
-          </li>
-        </ul>
-      </div>
+      <!-- Events history (editable) — symmetric A | time | B on wide screens, list on mobile -->
+      <ScoringEventHistory
+        v-if="scoringStore.events.length"
+        class="border-t pt-4"
+        :events="scoringStore.events"
+        :team-a-name="match.equipeA"
+        :team-b-name="match.equipeB"
+        :editing-uid="editingUid"
+        :can-score="canScore"
+        @edit="startEdit"
+        @remove="removeEvent"
+      />
     </div>
 
     <div v-else class="text-center text-header-600 py-12">
