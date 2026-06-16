@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Security\UserProvider;
+use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use OpenApi\Attributes as OA;
@@ -24,7 +25,8 @@ class AdminAuthController extends AbstractController
     public function __construct(
         private readonly UserProvider $userProvider,
         private readonly JWTTokenManagerInterface $jwtManager,
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly NotificationService $notificationService
     ) {
     }
 
@@ -216,6 +218,107 @@ class AdminAuthController extends AbstractController
         $this->connection->executeStatement('DELETE FROM kp_user_token WHERE user = ?', [$userCode]);
 
         return $this->json(['message' => 'Password changed successfully']);
+    }
+
+    /**
+     * Request a password reset link — public, no auth required.
+     * Accepts username or email; always returns 200 to avoid enumeration.
+     */
+    #[Route('/forgot-password', name: 'api_auth_forgot_password', methods: ['POST'])]
+    #[OA\Post(
+        path: '/auth/forgot-password',
+        summary: 'Request a password reset link',
+        tags: ['20. App4 - Authentication']
+    )]
+    #[OA\Response(response: 200, description: 'Email sent if account found')]
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $identifier = trim((string) ($data['identifier'] ?? ''));
+
+        if ($identifier === '') {
+            return $this->json(['message' => 'Identifier is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Look up user by login code or email (case-insensitive)
+        $row = $this->connection->fetchAssociative(
+            'SELECT Code, Mail FROM kp_user WHERE Code = ? OR LOWER(Mail) = LOWER(?)',
+            [$identifier, $identifier]
+        );
+
+        // Always return 200 to avoid user enumeration
+        if (!$row || empty($row['Mail'])) {
+            return $this->json(['message' => 'If an account exists, a reset link has been sent.']);
+        }
+
+        $locale = in_array($data['locale'] ?? '', ['en', 'fr'], true) ? $data['locale'] : 'fr';
+
+        $token = bin2hex(random_bytes(32));
+        $this->connection->executeStatement(
+            'INSERT INTO kp_user_token (token, user, generated_at) VALUES (?, ?, NOW())
+             ON DUPLICATE KEY UPDATE token = VALUES(token), generated_at = NOW()',
+            [$token, $row['Code']]
+        );
+
+        $this->notificationService->sendPasswordReset($row['Mail'], $token, false, '', $row['Code'], $locale);
+
+        return $this->json(['message' => 'If an account exists, a reset link has been sent.']);
+    }
+
+    /**
+     * Submit an access request — public, no auth required.
+     * Sends an email to the administrator with the applicant's details.
+     */
+    #[Route('/access-request', name: 'api_auth_access_request', methods: ['POST'])]
+    #[OA\Post(
+        path: '/auth/access-request',
+        summary: 'Submit an access request to the administrator',
+        tags: ['20. App4 - Authentication']
+    )]
+    #[OA\Response(response: 200, description: 'Request submitted')]
+    #[OA\Response(response: 400, description: 'Missing required fields')]
+    public function accessRequest(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $required = ['email', 'nom', 'prenom', 'responsabilites', 'message'];
+        foreach ($required as $field) {
+            if (empty(trim((string) ($data[$field] ?? '')))) {
+                return $this->json(['message' => "Field '{$field}' is required"], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        $email         = trim($data['email']);
+        $nom           = trim($data['nom']);
+        $prenom        = trim($data['prenom']);
+        $licence       = trim((string) ($data['licence'] ?? ''));
+        $club          = trim((string) ($data['club'] ?? ''));
+        $responsabilites = trim($data['responsabilites']);
+        $message       = trim($data['message']);
+
+        $body  = "Nouvelle demande d'accès KPI Admin\n";
+        $body .= str_repeat('─', 40) . "\n";
+        $body .= "Nom       : {$nom}\n";
+        $body .= "Prénom    : {$prenom}\n";
+        $body .= "Email     : {$email}\n";
+        if ($licence !== '') {
+            $body .= "Licence   : {$licence}\n";
+        }
+        if ($club !== '') {
+            $body .= "Club      : {$club}\n";
+        }
+        $body .= "Rôle(s)   : {$responsabilites}\n";
+        $body .= "\nMessage :\n{$message}\n";
+
+        $this->notificationService->sendAdminNotification(
+            "Demande d'accès KPI — {$prenom} {$nom}",
+            $body
+        );
+
+        return $this->json(['message' => 'Your request has been submitted.']);
     }
 
     // ──────────────────────────────────────────────────────────────────────

@@ -110,9 +110,17 @@ const handleSubmit = async () => {
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-header-700 mb-1">
-              {{ t('login.password') }}
-            </label>
+            <div class="flex items-center justify-between mb-1">
+              <label for="password" class="block text-sm font-medium text-header-700">
+                {{ t('login.password') }}
+              </label>
+              <NuxtLink
+                to="/forgot-password"
+                class="text-xs text-primary-600 hover:text-primary-800"
+              >
+                {{ t('login.forgot_password') }}
+              </NuxtLink>
+            </div>
             <UInput
               id="password"
               v-model="form.password"
@@ -135,6 +143,16 @@ const handleSubmit = async () => {
             {{ t('login.submit') }}
           </UButton>
         </form>
+
+        <!-- Request access link -->
+        <div class="mt-4 text-center">
+          <NuxtLink
+            to="/access-request"
+            class="text-sm text-header-500 hover:text-header-700"
+          >
+            {{ t('login.request_access') }}
+          </NuxtLink>
+        </div>
 
         <!-- Beta notice -->
         <div class="mt-6 p-3 bg-warning-50 border border-warning-200 rounded text-sm text-warning-700">

@@ -52,7 +52,9 @@
     "error_profile_restricted": "Accès restreint au profil 1 pendant la phase beta",
     "error_generic": "Erreur de connexion. Veuillez réessayer.",
     "beta_title": "Version Beta",
-    "beta_message": "Merci d'indiquer au développeur toute difficulté rencontrée."
+    "beta_message": "Merci d'indiquer au développeur toute difficulté rencontrée.",
+    "forgot_password": "Mot de passe oublié ?",
+    "request_access": "Demander un accès"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -2485,5 +2487,37 @@
     "status_active": "Arbitre",
     "status_inactive": "Inactif",
     "export_pdf": "Export PDF"
+  },
+  "access_request": {
+    "title": "Demande d'accès",
+    "subtitle": "Remplissez ce formulaire pour demander un accès à l'application KPI Admin.",
+    "email": "Email",
+    "email_placeholder": "votre{'@'}email.fr",
+    "licence": "Numéro de licence",
+    "licence_placeholder": "Numéro de licence (optionnel)",
+    "nom": "Nom",
+    "nom_placeholder": "Votre nom",
+    "prenom": "Prénom",
+    "prenom_placeholder": "Votre prénom",
+    "club": "Club",
+    "club_placeholder": "Votre club (optionnel)",
+    "responsabilites": "Rôle(s) / Responsabilités",
+    "responsabilites_placeholder": "Ex : Entraîneur, Responsable technique, Arbitre...",
+    "message": "Message",
+    "message_placeholder": "Expliquez votre besoin d'accès et les fonctionnalités souhaitées...",
+    "submit": "Envoyer la demande",
+    "back_to_login": "Retour à la connexion",
+    "success_title": "Demande envoyée",
+    "success_message": "Votre demande a été transmise à l'administrateur. Vous serez contacté(e) par email.",
+    "error_generic": "Une erreur est survenue. Veuillez réessayer.",
+    "required_fields": "Les champs marqués * sont obligatoires."
+  },
+  "forgot_password": {
+    "title": "Mot de passe oublié",
+    "subtitle": "Entrez votre identifiant ou adresse email pour recevoir un lien de réinitialisation.",
+    "identifier": "Identifiant ou email",
+    "identifier_placeholder": "Votre identifiant ou adresse email",
+    "submit": "Envoyer le lien",
+    "success": "Si un compte correspond à cet identifiant, vous recevrez un email avec un lien de réinitialisation valable 48h."
   }
 }
