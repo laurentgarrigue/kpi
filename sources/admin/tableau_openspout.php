@@ -17,7 +17,8 @@ if(!isset($_SESSION)) {
 
 // Chargement des langues
 $langue = parse_ini_file("../commun/MyLang.ini", true);
-$isEn = utyGetSession('lang') == 'en';
+$langParam = utyGetGet('lang', utyGetSession('lang', 'fr'));
+$isEn = $langParam == 'en';
 if ($isEn) {
 	$lang = $langue['en'];
 } else {
@@ -115,7 +116,7 @@ if (empty($arrayMatchs)) {
 	exit("Erreur : Aucune donnée trouvée.");
 }
 
-$file_name = 'Matchs_' . date('d-m-Y') . '.ods';
+$file_name = ($isEn ? 'Games_' : 'Matchs_') . date('d-m-Y') . '.ods';
 $temp_file = '/tmp/' . $file_name;
 
 try {
@@ -146,8 +147,8 @@ try {
 
 	$headerRow = Row::fromValues([
 		$lang['Num'] ?? 'N°',
-		$lang['Journee'] ?? 'Journée',
-		$lang['Competition'] ?? 'Compétition',
+		$isEn ? 'Label' : 'Libellé',
+		$lang['Categorie'] ?? 'Catégorie',
 		$lang['Phase'] ?? 'Phase',
 		$isEn ? 'Stage' : 'Tour',
 		'Type',
@@ -156,14 +157,14 @@ try {
 		$lang['Heure'] ?? 'Heure',
 		$lang['Terrain'] ?? 'Terrain',
 		'Code',
-		$lang['Equipe_A'] ?? 'Équipe A',
-		$lang['Equipe_B'] ?? 'Équipe B',
-		$lang['Score'] . ' A',
-		$lang['Score'] . ' B',
-		$lang['Arbitre_1'] ?? 'Arbitre principal',
-		$lang['Arbitre_2'] ?? 'Arbitre secondaire',
-		$lang['Ligne'] ?? 'Juge de ligne',
-		$lang['Ligne'] ?? 'Juge de ligne',
+		$lang['Equipe_A'] ?? 'Equipe A',
+		$lang['Equipe_B'] ?? 'Equipe B',
+		($lang['Score'] ?? 'Score') . ' A',
+		($lang['Score'] ?? 'Score') . ' B',
+		$lang['Arbitre_1'] ?? 'Arbitre 1',
+		$lang['Arbitre_2'] ?? 'Arbitre 2',
+		($lang['Ligne_abr'] ?? 'Ligne') . ' 1',
+		($lang['Ligne_abr'] ?? 'Ligne') . ' 2',
 		$lang['Secretaire'] ?? 'Secrétaire',
 		$lang['Chronometre'] ?? 'Chronomètre',
 		$lang['Time_shoot2'] ?? 'Shotclock',
