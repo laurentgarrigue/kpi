@@ -1485,6 +1485,7 @@ const docBaseParams = computed(() => {
   const params = new URLSearchParams()
   params.set('S', workContext.season || '')
   params.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
+  if (locale.value !== 'fr') params.set('lang', locale.value)
 
   if (workContext.pageCompetitionCodeAll) {
     // A specific single competition selected → takes priority over event/group
