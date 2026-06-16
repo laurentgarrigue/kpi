@@ -181,6 +181,12 @@ TODO :
 - ✅ contrôle de planification arbitres : vérifier que les arbitres ne sont pas affectés à plusieurs matchs en même temps, et que les matchs sont bien espacés dans le temps pour permettre aux arbitres de se déplacer entre les terrains, et le nombre d'arbitrages prevus par arbitre.
 - ✅ Pool arbitres : extraction pdf des arbitres actifs, trié par leur groupe (nation)
 - Nouveau Profil Chef arbitre et scrutineering
+- Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
+- Vérifier s'il y a d'autres choses à upgrader.
+- Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
+- Tutoriel admin2 : créer un tutoriel pour les admins legacy qui ne connaissent pas app4, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
+- ✅ Login : Lien "j'ai perdu mon mot de passe"
+- ✅ Login : formulaire demande d'accès avec email, licence, nom, prénom, club, responsabilités, message, etc... pour demander un accès à l'application. Le formulaire doit être accessible depuis la page de login et doit envoyer un email à l'administrateur pour traitement.
 - ⚠️
 
 Scoring:
@@ -188,7 +194,7 @@ Scoring:
 - gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
 - départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/stop du chrono, pour le départ/reprise du timeshoot et pour la pause du timeshoot. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - autocomplete sur les officiels
-- gérer autant de prolongations que nécessaire (actuellement limité à 2))
+- gérer autant de prolongations que nécessaire (actuellement limité à 2)
 - Scoring : gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
 - Scoring : départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du timeshoot, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - les routes api2 doivent générer les json comme sur legacy...
