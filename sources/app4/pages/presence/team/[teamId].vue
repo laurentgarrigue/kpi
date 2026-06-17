@@ -641,6 +641,15 @@ const pdfLinks = computed(() => {
       @bulk-delete="confirmBulkDelete"
     >
       <template #before-search>
+        <!-- Refresh button -->
+        <button
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          :title="t('common.refresh')"
+          @click="presenceStore.initTeamMode(teamId, api)"
+        >
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
+        </button>
+
         <!-- PDF dropdown -->
         <button
           v-if="Object.keys(pdfLinks).length > 0"
