@@ -29,7 +29,7 @@
     "dexie": "^4.2.0",
     "dotenv-cli": "^8.0.0",
     "eslint": "^9.36.0",
-    "nuxt": "^4.4.6",
+    "nuxt": "^4.4.7",
     "pinia": "^3.0.3",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.1.13",
