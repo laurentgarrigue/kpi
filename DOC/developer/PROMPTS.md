@@ -189,7 +189,7 @@ TODO :
 - ✅ Login : formulaire demande d'accès avec email, licence, nom, prénom, club, responsabilités, message, etc... pour demander un accès à l'application. Le formulaire doit être accessible depuis la page de login et doit envoyer un email à l'administrateur pour traitement.
 
 - ✅ working context - event select : ajouter les numéros des événements dans le select pour faciliter la sélection.
-- bouton refresh sur le team roster.
+- ✅ bouton refresh sur le team roster.
 - Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
 - copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
 - Scrutineering App2 : dans le select des équipes, ou sur un état distinct, lister les équipes qui ont été contrôlées partiellement (au moins un joueur a un élément contrôlé) ou totalement (chaque joueur ou capitaine a tous ses éléments au vert), avec possibilité de filtrer sur ces équipes.
