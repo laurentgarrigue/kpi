@@ -41,7 +41,11 @@ class StaffController extends AbstractController
     )]
     public function test(Request $request): JsonResponse
     {
-        $auth = $this->tokenAuthService->validateToken($request);
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, null, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
         }
@@ -90,8 +94,8 @@ class StaffController extends AbstractController
     public function getTeams(Request $request, int $eventId): JsonResponse
     {
         try {
-            $auth = $this->tokenAuthService->validateToken($request, null, $eventId);
-        } catch (\RuntimeException $e) {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
             return $this->tokenAuthService->createForbiddenResponse();
         }
         if (!$auth) {
@@ -166,7 +170,11 @@ class StaffController extends AbstractController
     )]
     public function getPlayers(Request $request, int $eventId, int $teamId): JsonResponse
     {
-        $auth = $this->tokenAuthService->validateToken($request);
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
         }
@@ -253,7 +261,11 @@ class StaffController extends AbstractController
     )]
     public function updatePlayer(Request $request, int $eventId, int $playerId, int $teamId, string $parameter, ?int $value = null): JsonResponse
     {
-        $auth = $this->tokenAuthService->validateToken($request);
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
         }
@@ -354,8 +366,8 @@ class StaffController extends AbstractController
     public function getOverview(Request $request, int $eventId): JsonResponse
     {
         try {
-            $auth = $this->tokenAuthService->validateToken($request, null, $eventId);
-        } catch (\RuntimeException $e) {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
             return $this->tokenAuthService->createForbiddenResponse();
         }
         if (!$auth) {
