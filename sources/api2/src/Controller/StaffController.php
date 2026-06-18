@@ -89,7 +89,11 @@ class StaffController extends AbstractController
     )]
     public function getTeams(Request $request, int $eventId): JsonResponse
     {
-        $auth = $this->tokenAuthService->validateToken($request, null, $eventId);
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId);
+        } catch (\RuntimeException $e) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
         }
@@ -287,5 +291,168 @@ class StaffController extends AbstractController
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 401);
         }
+    }
+
+    #[Route('/{eventId}/overview', name: 'overview', methods: ['GET'])]
+    #[OA\Get(
+        path: '/staff/{eventId}/overview',
+        summary: 'Get scrutineering overview for all teams in an event',
+        description: 'Returns all teams grouped by category (Soustitre2) with their scrutineering status: none/partial/complete.',
+        tags: ['3. App2 - Staff'],
+        security: [['ApiToken' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'eventId',
+                in: 'path',
+                required: true,
+                description: 'Event ID',
+                schema: new OA\Schema(type: 'integer', example: 123)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Returns overview data',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'categories',
+                            type: 'array',
+                            items: new OA\Items(type: 'string', example: 'Elite H')
+                        ),
+                        new OA\Property(
+                            property: 'clubs',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'code', type: 'string', example: 'CAEN'),
+                                    new OA\Property(property: 'label', type: 'string', example: 'Caen Canoe Polo')
+                                ]
+                            )
+                        ),
+                        new OA\Property(
+                            property: 'teams',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'team_id', type: 'integer'),
+                                    new OA\Property(property: 'label', type: 'string'),
+                                    new OA\Property(property: 'club', type: 'string'),
+                                    new OA\Property(property: 'logo', type: 'string', nullable: true),
+                                    new OA\Property(property: 'category', type: 'string'),
+                                    new OA\Property(property: 'status', type: 'string', enum: ['none', 'partial', 'complete'])
+                                ]
+                            )
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Forbidden - No access to this event')
+        ]
+    )]
+    public function getOverview(Request $request, int $eventId): JsonResponse
+    {
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId);
+        } catch (\RuntimeException $e) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
+        if (!$auth) {
+            return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        // For each team in the event, compute scrutineering status by joining players and scrutineering data.
+        // A player counts as "complete" if kayak_status=1 AND vest_status=1 AND helmet_status=1 AND paddle_count>0.
+        // Coaches (Capitaine='E') and absent/excluded players are excluded from the check.
+        $sql = "SELECT
+                ce.Id                                       AS team_id,
+                ce.Libelle                                  AS label,
+                ce.Code_club                                AS club_code,
+                COALESCE(cl.Libelle, ce.Code_club, '')      AS club_label,
+                ce.logo                                     AS logo,
+                COALESCE(c.Soustitre2, c.Libelle, '')       AS category,
+                COUNT(DISTINCT cej.Matric)                  AS total_players,
+                COUNT(DISTINCT sc.matric)                   AS checked_players,
+                COUNT(DISTINCT CASE WHEN sc.kayak_status = 1
+                          AND sc.vest_status  = 1
+                          AND sc.helmet_status= 1
+                          AND sc.paddle_count > 0 THEN sc.matric END)
+                                                            AS complete_players
+            FROM kp_competition_equipe ce
+            INNER JOIN kp_competition c
+                ON (ce.Code_compet = c.Code AND ce.Code_saison = c.Code_saison)
+            INNER JOIN kp_journee j
+                ON (ce.Code_compet = j.Code_competition AND ce.Code_saison = j.Code_saison)
+            INNER JOIN kp_evenement_journee ej
+                ON (j.Id = ej.Id_journee)
+            LEFT JOIN kp_club cl
+                ON ce.Code_club = cl.Code
+            LEFT JOIN kp_competition_equipe_joueur cej
+                ON (cej.Id_equipe = ce.Id AND cej.Capitaine NOT IN ('E','A','X'))
+            LEFT JOIN kp_scrutineering sc
+                ON (sc.id_equipe = ce.Id AND sc.matric = cej.Matric)
+            WHERE ej.Id_evenement = ?
+            GROUP BY ce.Id, ce.Libelle, ce.Code_club, cl.Libelle, ce.logo, category
+            ORDER BY category, club_label, label";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(1, $eventId);
+        $result = $stmt->executeQuery();
+        $rows = $result->fetchAllAssociative();
+
+        $teams = [];
+        $categoriesSet = [];
+        $clubsMap = []; // code → {code, label, logo}
+
+        foreach ($rows as $row) {
+            $total    = (int) $row['total_players'];
+            $checked  = (int) $row['checked_players'];
+            $complete = (int) $row['complete_players'];
+
+            if ($checked === 0) {
+                $status = 'none';
+            } elseif ($total > 0 && $complete === $total) {
+                $status = 'complete';
+            } else {
+                $status = 'partial';
+            }
+
+            $category  = $row['category']   ?: '—';
+            $clubCode  = $row['club_code']   ?: '—';
+            $clubLabel = $row['club_label']  ?: $clubCode;
+
+            $categoriesSet[$category] = true;
+
+            if (!isset($clubsMap[$clubCode])) {
+                $clubsMap[$clubCode] = [
+                    'code'  => $clubCode,
+                    'label' => $clubLabel,
+                ];
+            }
+
+            $teams[] = [
+                'team_id'   => (int) $row['team_id'],
+                'label'     => $row['label'],
+                'club'      => $clubCode,
+                'logo'      => $row['logo'],
+                'category'  => $category,
+                'status'    => $status,
+            ];
+        }
+
+        // Sort clubs by label
+        $clubs = array_values($clubsMap);
+        usort($clubs, fn($a, $b) => strcmp($a['label'], $b['label']));
+
+        $response = new JsonResponse([
+            'categories' => array_keys($categoriesSet),
+            'clubs'      => $clubs,
+            'teams'      => $teams,
+        ]);
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
+        return $response;
     }
 }

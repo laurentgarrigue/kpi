@@ -232,7 +232,17 @@
     "AddComment": "Ajouter un commentaire",
     "Clear": "Effacer",
     "Cancel": "Annuler",
-    "Save": "Enregistrer"
+    "Save": "Enregistrer",
+    "RefreshRights": "Rafraîchir mes droits",
+    "Overview": {
+      "Title": "Vue synthétique",
+      "Club": "Club / Nation",
+      "Complete": "Complet",
+      "Partial": "Partiel",
+      "None": "Non contrôlé",
+      "NoTeams": "Aucune équipe trouvée pour cet événement.",
+      "LoadError": "Erreur lors du chargement de la vue synthétique."
+    }
   },
   "GameReports": {
     "NewGame": "Nouveau match (hors ligne)",

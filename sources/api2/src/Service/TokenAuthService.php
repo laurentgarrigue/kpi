@@ -24,7 +24,8 @@ class TokenAuthService
      * @param Request $request
      * @param string|null $tokenFromUrl Token from URL parameter (optional)
      * @param int|null $eventId Event ID to check access (optional)
-     * @return array{user: string, token: string}|null Returns user data or null if invalid
+     * @return array{user: string, token: string}|null Returns user data or null if invalid/unauthorized
+     * @throws \RuntimeException with code 403 if token is valid but event access is denied
      */
     public function validateToken(Request $request, ?string $tokenFromUrl = null, ?int $eventId = null): ?array
     {
@@ -67,7 +68,8 @@ class TokenAuthService
         if ($eventId !== null) {
             $grantedEvents = array_filter(explode('|', trim($row['Id_Evenement'] ?? '', '|')));
             if (!in_array((string)$eventId, $grantedEvents, true)) {
-                return null; // User doesn't have access to this event
+                // Token is valid but user has no access to this event → 403, not 401
+                throw new \RuntimeException('Forbidden', 403);
             }
         }
 
