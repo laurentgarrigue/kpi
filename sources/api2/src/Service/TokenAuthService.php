@@ -24,10 +24,11 @@ class TokenAuthService
      * @param Request $request
      * @param string|null $tokenFromUrl Token from URL parameter (optional)
      * @param int|null $eventId Event ID to check access (optional)
-     * @return array{user: string, token: string}|null Returns user data or null if invalid/unauthorized
-     * @throws \RuntimeException with code 403 if token is valid but event access is denied
+     * @param int|null $maxProfile Maximum profile level allowed (inclusive, lower = higher privilege)
+     * @return array{user: string, token: string, profile: int}|null Returns user data or null if invalid/unauthorized
+     * @throws \RuntimeException with code 403 if token is valid but event or profile access is denied
      */
-    public function validateToken(Request $request, ?string $tokenFromUrl = null, ?int $eventId = null): ?array
+    public function validateToken(Request $request, ?string $tokenFromUrl = null, ?int $eventId = null, ?int $maxProfile = null): ?array
     {
         // Get token from multiple sources (priority order)
         $token = $request->headers->get('X-Auth-Token')
@@ -41,7 +42,7 @@ class TokenAuthService
         $conn = $this->entityManager->getConnection();
 
         // Query user by token
-        $sql = "SELECT ut.user, ut.token, ut.generated_at, u.Id_Evenement
+        $sql = "SELECT ut.user, ut.token, ut.generated_at, u.Id_Evenement, u.Niveau
             FROM kp_user_token ut
             INNER JOIN kp_user u ON (ut.user = u.Code)
             WHERE ut.token = ?";
@@ -73,9 +74,15 @@ class TokenAuthService
             }
         }
 
+        // Check profile level if maxProfile provided (lower Niveau = higher privilege)
+        if ($maxProfile !== null && (int)$row['Niveau'] > $maxProfile) {
+            throw new \RuntimeException('Forbidden', 403);
+        }
+
         return [
             'user' => $row['user'],
-            'token' => $row['token']
+            'token' => $row['token'],
+            'profile' => (int)$row['Niveau'],
         ];
     }
 
