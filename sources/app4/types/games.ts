@@ -27,6 +27,7 @@ export interface Game {
   matricArbitrePrincipal: number
   arbitreSecondaire: string | null
   matricArbitreSecondaire: number
+  timeshoot: string | null
   codeCompetition: string
   competitionStatut: 'ATT' | 'ON' | 'END'
   phase: string | null
