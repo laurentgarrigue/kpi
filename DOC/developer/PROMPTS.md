@@ -195,6 +195,7 @@ TODO :
 - ✅ Scrutineering App2 : dans le select des équipes, ou sur un état distinct, lister les équipes qui ont été contrôlées partiellement (au moins un joueur a un élément contrôlé) ou totalement (chaque joueur ou capitaine a tous ses éléments au vert), avec possibilité de filtrer sur ces équipes.
 - Basculer le scrutineering sur app4 ?
 - Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
+- ✅ Games : Ajouter en option une colonne Shotclock après arbitre 1 et 2, modifiable inline avec autocomplétion sur les arbitres (pas d'équipe, uniquement désignation nominative). le champs existe déjà en base : kp_match.Timeshoot
 - ⚠️
 
 Scoring:

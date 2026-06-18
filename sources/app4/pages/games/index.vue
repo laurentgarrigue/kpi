@@ -26,6 +26,7 @@ interface SavedFilters {
   selectedTerrain: string
   selectedSort: string
   unlockedOnly: boolean
+  showShotclock: boolean
 }
 
 function loadSavedFilters(): Partial<SavedFilters> {
@@ -46,6 +47,7 @@ function saveFilters() {
       selectedTerrain: selectedTerrain.value,
       selectedSort: selectedSort.value,
       unlockedOnly: unlockedOnly.value,
+      showShotclock: showShotclock.value,
     }
     localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(data))
   } catch { /* ignore */ }
@@ -72,6 +74,7 @@ const selectedDate = ref(saved.selectedDate ?? '')
 const selectedTerrain = ref(saved.selectedTerrain ?? '')
 const selectedSort = ref(saved.selectedSort ?? 'date_time_terrain')
 const unlockedOnly = ref(saved.unlockedOnly ?? false)
+const showShotclock = ref(saved.showShotclock ?? false)
 
 // Filter data
 const journees = ref<GameJournee[]>([])
@@ -564,7 +567,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 })
 
 // Persist filters to localStorage
-watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly], () => {
+watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly, showShotclock], () => {
   saveFilters()
 })
 
@@ -1002,6 +1005,53 @@ const confirmRefereeModal = () => {
 const cancelRefereeModal = () => {
   refereeModalOpen.value = false
   refereeModalField.value = null
+}
+
+// ─── Shotclock editing (modal) ───
+// The shotclock operator (kp_match.Timeshoot) is a nominative designation only: just the
+// person's name, never a team. The modal mirrors the referee modal but drops the
+// "Associated team" select; on save we keep only the name part (everything before the
+// first "(" — club + level are dropped).
+const shotclockMatric = ref(0) // unused by the API, satisfies the autocomplete contract
+const shotclockModalOpen = ref(false)
+const shotclockModalField = ref<{ id: number } | null>(null)
+
+const startShotclockEdit = (game: Game) => {
+  if (!isGameEditable(game)) return
+  shotclockModalField.value = { id: game.id }
+  editingValue.value = game.timeshoot || ''
+  editingOriginalValue.value = editingValue.value
+  shotclockMatric.value = 0
+  shotclockModalOpen.value = true
+}
+
+const saveShotclockEdit = async () => {
+  if (!shotclockModalField.value) return
+  const { id } = shotclockModalField.value
+  shotclockModalField.value = null
+  // Keep the name only (strip "(Club)" and trailing level), per nominative-only requirement.
+  const value = refereePersonLabel(editingValue.value.trim())
+
+  if (value === editingOriginalValue.value) return
+
+  try {
+    await api.patch(`/admin/games/${id}/inline`, { field: 'Timeshoot', value })
+    const game = games.value.find(g => g.id === id)
+    if (game) game.timeshoot = value || null
+    toast.add({ title: t('common.saved'), color: 'success' })
+  } catch {
+    // Error already shown by useApi
+  }
+}
+
+const confirmShotclockModal = () => {
+  shotclockModalOpen.value = false
+  saveShotclockEdit()
+}
+
+const cancelShotclockModal = () => {
+  shotclockModalOpen.value = false
+  shotclockModalField.value = null
 }
 
 // ─── Inline Phase/Journee editing ───
@@ -1643,6 +1693,12 @@ const openScoring = (gameId: number) => {
           {{ t('games.unlocked_only') }}
         </label>
 
+        <!-- Show shotclock column checkbox -->
+        <label class="flex items-center gap-1.5 px-3 py-2 text-sm cursor-pointer rounded-lg border" :class="showShotclock ? 'text-primary-700 font-medium border-primary-400 bg-primary-50' : 'text-header-600 border-transparent'">
+          <input v-model="showShotclock" type="checkbox" class="rounded border-header-300 text-primary-600">
+          {{ t('games.show_shotclock') }}
+        </label>
+
         <!-- Loading spinner -->
         <UIcon v-if="loading" name="heroicons:arrow-path" class="w-5 h-5 text-primary-500 animate-spin" />
       </template>
@@ -2212,6 +2268,8 @@ const openScoring = (gameId: number) => {
               <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_1') }}</th>
               <!-- Referee 2 -->
               <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_2') }}</th>
+              <!-- Shotclock (optional column) -->
+              <th v-if="showShotclock" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.shotclock') }}</th>
               <!-- Printed -->
               <th v-if="showPrintedColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:inbox-arrow-down" class="w-6 h-6" /></th>
               <!-- Delete -->
@@ -2221,21 +2279,21 @@ const openScoring = (gameId: number) => {
           <tbody class="bg-white divide-y divide-header-200">
             <!-- Loading -->
             <tr v-if="loading && games.length === 0">
-              <td :colspan="22" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-8 text-center text-header-500">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="22" class="px-4 py-12 text-center text-header-400">
+              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-12 text-center text-header-400">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('games.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="filteredGames.length === 0">
-              <td :colspan="22" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-8 text-center text-header-500">
                 {{ t('games.no_results') }}
               </td>
             </tr>
@@ -2680,6 +2738,22 @@ const openScoring = (gameId: number) => {
                   v-else
                   :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
                   @click="startRefereeEdit(g, 'secondaire')"
+                >-</span>
+              </td>
+
+              <!-- Shotclock (optional column) -->
+              <td v-if="showShotclock" class="px-1 py-1 max-w-32">
+                <span
+                  v-if="g.timeshoot"
+                  class="truncate block text-header-600"
+                  :class="isGameEditable(g) ? 'editable-cell' : ''"
+                  :title="g.timeshoot"
+                  @click="startShotclockEdit(g)"
+                >{{ g.timeshoot }}</span>
+                <span
+                  v-else
+                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  @click="startShotclockEdit(g)"
                 >-</span>
               </td>
 
@@ -3573,6 +3647,43 @@ const openScoring = (gameId: number) => {
           type="button"
           class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700"
           @click="confirmRefereeModal"
+        >
+          {{ t('common.save') }}
+        </button>
+      </template>
+    </AdminModal>
+
+    <!-- ═══════ SHOTCLOCK MODAL ═══════ -->
+    <AdminModal
+      :open="shotclockModalOpen"
+      :title="t('games.field.shotclock')"
+      max-width="sm"
+      @close="cancelShotclockModal"
+    >
+      <div class="space-y-4">
+        <div>
+          <AdminRefereeAutocomplete
+            v-model="editingValue"
+            :matric="shotclockMatric"
+            :journee-id="shotclockModalField ? games.find(g => g.id === shotclockModalField!.id)?.idJournee ?? null : null"
+            :placeholder="t('games.shotclock_placeholder')"
+            @update:matric="shotclockMatric = $event"
+            @cancel="cancelShotclockModal"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button
+          type="button"
+          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          @click="cancelShotclockModal"
+        >
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+          @click="confirmShotclockModal"
         >
           {{ t('common.save') }}
         </button>

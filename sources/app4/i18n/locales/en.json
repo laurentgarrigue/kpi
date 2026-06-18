@@ -1424,6 +1424,7 @@
       "team_b": "Team B",
       "referee_1": "Referee 1",
       "referee_2": "Referee 2",
+      "shotclock": "Shotclock",
       "actions": "Actions",
       "printed": "Printed",
       "date": "Date",
@@ -1437,6 +1438,8 @@
     },
     "referee_placeholder": "Search referee, team, player...",
     "referee_team_label": "Associated team",
+    "shotclock_placeholder": "Search a person...",
+    "show_shotclock": "Shotclock",
     "type_classification": "Classification",
     "type_elimination": "Elimination",
     "published": "Public",
@@ -2038,9 +2041,6 @@
     "success_consolidated": "Phase consolidated",
     "success_unconsolidated": "Phase unconsolidated",
     "success_team_removed": "Team removed from phase"
-  },
-  "common": {
-    "refresh": "Refresh"
   },
   "journal": {
     "title": "Activity Log",
