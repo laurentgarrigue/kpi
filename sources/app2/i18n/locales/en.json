@@ -105,6 +105,7 @@
     "Teams": "Teams",
     "Refs": "Refs",
     "ShowRefs": "Show refs",
+    "ShowShotclock": "Show shotclock",
     "ShowFlags": "Show flags",
     "Dates": "Dates",
     "AllDates": "All dates",
@@ -125,6 +126,7 @@
     "Score": "Score",
     "Ref": "Ref.",
     "Referee": "Referee",
+    "Shotclock": "Shotclock",
     "GameReport": "Game report",
     "MatchSheet": "Open game sheet",
     "Status": {

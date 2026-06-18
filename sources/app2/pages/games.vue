@@ -143,6 +143,18 @@
           </label>
           <label class="ml-2 block text-sm font-medium text-gray-700">{{ t('Games.ShowRefs') }}</label>
         </div>
+        <div class="flex items-center">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="showShotclock"
+              @change="changeFav"
+              class="sr-only peer"
+            />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+          <label class="ml-2 block text-sm font-medium text-gray-700">{{ t('Games.ShowShotclock') }}</label>
+        </div>
         <div class="hidden md:flex items-center">
           <label class="relative inline-flex items-center cursor-pointer">
             <input
@@ -161,7 +173,7 @@
     <div v-if="isEmpty" class="flex items-center justify-center py-12 text-gray-400 italic text-sm">
       {{ t('Games.NoGames') }}
     </div>
-    <GameList v-else :games="filteredGames" :show-refs="showRefs" :show-flags="showFlags" :games-count="gamesCount" :filtered-games-count="filteredGamesCount" :is-group-mode="isGroupMode" :key="locale" />
+    <GameList v-else :games="filteredGames" :show-refs="showRefs" :show-shotclock="showShotclock" :show-flags="showFlags" :games-count="gamesCount" :filtered-games-count="filteredGamesCount" :is-group-mode="isGroupMode" :key="locale" />
 
     <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-gray-800 hover:bg-gray-700 text-white font-bold p-3 rounded-full">
       <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
@@ -206,6 +218,7 @@ const {
   refs,
   teamsFilteredByCategories,
   showRefs,
+  showShotclock,
   showFlags,
   fav_categories,
   fav_teams,
@@ -242,6 +255,7 @@ const hasActiveFilters = computed(() => {
   return fav_categories.value.length > 0 ||
          fav_teams.value.length > 0 ||
          showRefs.value !== true ||
+         showShotclock.value !== false ||
          showFlags.value !== true
 })
 
