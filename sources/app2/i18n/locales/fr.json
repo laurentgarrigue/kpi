@@ -215,7 +215,7 @@
     "Vest": "Gilet",
     "Kayak": "Kayak",
     "Paddles": "Pagaies",
-    "Coach": "Coach",
+    "Coach": "Staff",
     "PrintAll": "Imprimer tout",
     "Print": "Imprimer",
     "Cosmetic": "Cosmétique",
@@ -266,7 +266,7 @@
     "NoStats": "Aucune statistique disponible pour cette équipe.",
     "Player": "Joueur",
     "Goals": "Buts",
-    "Coach": "Coach"
+    "Coach": "Staff"
   },
   "MatchSheet": {
     "Title": "Feuille de match",
@@ -276,7 +276,7 @@
     "Referees": "Arbitres",
     "Player": "Joueur",
     "Goals": "Buts",
-    "Coach": "Coach",
+    "Coach": "Staff",
     "Timeline": "Chronologie",
     "Loading": "Chargement de la feuille de match...",
     "NotFound": "Match non trouvé ou non disponible",
