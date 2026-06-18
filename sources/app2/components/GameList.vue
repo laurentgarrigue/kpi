@@ -14,7 +14,11 @@
             <th scope="col" class="px-2 py-3 text-right">{{ t('Games.Team') }} A</th>
             <th scope="col" class="px-2 py-3 text-center">{{ t('Games.Score') }}</th>
             <th scope="col" class="px-2 py-3">{{ t('Games.Team') }} B</th>
-            <th v-if="showRefs" scope="col" class="px-2 py-3">{{ t('Games.Referee') }}</th>
+            <th v-if="showRefs || showShotclock" scope="col" class="px-2 py-3">
+              <span v-if="showRefs">{{ t('Games.Referee') }}</span>
+              <span v-if="showRefs && showShotclock"> | </span>
+              <span v-if="showShotclock">{{ t('Games.Shotclock') }}</span>
+            </th>
           </tr>
         </thead>
 
@@ -22,7 +26,7 @@
         <template v-if="!hasGroupStructure">
           <tbody v-for="(game_group, group_index) in games" :key="game_group.goupDate">
             <tr class="bg-gray-800 text-white">
-              <th :colspan="showRefs ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
+              <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
                 <NuxtTime :datetime="game_group.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
                 <span v-if="game_group.groupPlace" class="ml-2 text-gray-300">
                   <UIcon name="i-heroicons-map-pin" class="h-4 w-4 inline-block mr-1" />{{ game_group.groupPlace }}
@@ -85,9 +89,15 @@
                   />
                 </div>
               </td>
-              <td v-if="showRefs" class="px-2 py-2 text-xs text-gray-900">
-                <div v-html="highlightReferee(game.r_1, game.r_1_highlighted)" />
-                <div v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+              <td v-if="showRefs || showShotclock" class="px-2 py-2 text-xs text-gray-900">
+                <template v-if="showRefs">
+                  <div v-html="highlightReferee(game.r_1, game.r_1_highlighted)" />
+                  <div v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+                </template>
+                <div v-if="showShotclock && game.s_name" class="flex items-center text-gray-600">
+                  <UIcon name="i-heroicons-clock" class="h-3 w-3 inline-block mr-1 shrink-0" />
+                  <span v-html="formatShotclock(game.s_name, game.s_highlighted)" />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -98,7 +108,7 @@
           <tbody v-for="(compGroup, compIndex) in games" :key="compGroup.competition.code">
             <!-- Competition header -->
             <tr class="bg-blue-900 text-white">
-              <th :colspan="showRefs ? 7 : 6" scope="row" class="px-4 py-3 font-bold text-base">
+              <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-4 py-3 font-bold text-base">
                 {{ compGroup.competition.label }}
               </th>
             </tr>
@@ -106,7 +116,7 @@
             <template v-for="(locGroup, locIndex) in compGroup.locations" :key="`${compGroup.competition.code}-${locGroup.place}`">
               <!-- Location sub-header -->
               <tr class="bg-blue-700 text-white">
-                <th :colspan="showRefs ? 7 : 6" scope="row" class="px-3 py-2 font-medium">
+                <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-3 py-2 font-medium">
                   <UIcon name="i-heroicons-map-pin" class="h-4 w-4 inline-block mr-1" />
                   {{ locGroup.place || t('Games.UnknownLocation') }}
                 </th>
@@ -115,7 +125,7 @@
               <template v-for="(dateGroup, dateIndex) in locGroup.dates" :key="`${compGroup.competition.code}-${locGroup.place}-${dateGroup.goupDate}`">
                 <!-- Date sub-header -->
                 <tr class="bg-gray-800 text-white">
-                  <th :colspan="showRefs ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
+                  <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
                     <NuxtTime :datetime="dateGroup.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
                   </th>
                 </tr>
@@ -177,9 +187,15 @@
                       />
                     </div>
                   </td>
-                  <td v-if="showRefs" class="px-2 py-2 text-xs text-gray-900">
-                    <div v-html="highlightReferee(game.r_1, game.r_1_highlighted)" />
-                    <div v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+                  <td v-if="showRefs || showShotclock" class="px-2 py-2 text-xs text-gray-900">
+                    <template v-if="showRefs">
+                      <div v-html="highlightReferee(game.r_1, game.r_1_highlighted)" />
+                      <div v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+                    </template>
+                    <div v-if="showShotclock && game.s_name" class="flex items-center text-gray-600">
+                      <UIcon name="i-heroicons-clock" class="h-3 w-3 inline-block mr-1 shrink-0" />
+                      <span v-html="formatShotclock(game.s_name, game.s_highlighted)" />
+                    </div>
                   </td>
                 </tr>
               </template>
@@ -256,6 +272,10 @@
                   <div v-else :class="statusClass(game)" class="text-xs">{{ getStatusLabel(game) }}</div>
               </div>
               <div :class="['text-right text-xs text-gray-900 justify-self-end', { 'invisible': !showRefs }]" v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+              <div v-if="showShotclock && game.s_name" class="col-start-1 flex items-center text-left text-xs text-gray-600 justify-self-start">
+                <UIcon name="i-heroicons-clock" class="h-3 w-3 inline-block mr-1 shrink-0" />
+                <span v-html="formatShotclock(game.s_name, game.s_highlighted)" />
+              </div>
             </div>
           </div>
         </div>
@@ -339,6 +359,10 @@
                       <div v-else :class="statusClass(game)" class="text-xs">{{ getStatusLabel(game) }}</div>
                   </div>
                   <div :class="['text-right text-xs text-gray-900 justify-self-end', { 'invisible': !showRefs }]" v-html="highlightReferee(game.r_2, game.r_2_highlighted)" />
+                  <div v-if="showShotclock && game.s_name" class="col-start-1 flex items-center text-left text-xs text-gray-600 justify-self-start">
+                    <UIcon name="i-heroicons-clock" class="h-3 w-3 inline-block mr-1 shrink-0" />
+                    <span v-html="formatShotclock(game.s_name, game.s_highlighted)" />
+                  </div>
                 </div>
               </div>
             </template>
@@ -360,6 +384,7 @@ const { t, locale } = useI18n()
 const props = defineProps({
   games: { type: Array, default: () => [] },
   showRefs: { type: Boolean, default: true },
+  showShotclock: { type: Boolean, default: false },
   showFlags: { type: Boolean, default: true },
   filteredGamesCount: { type: Number, default: 0 },
   gamesCount: { type: Number, default: 0 },
@@ -433,6 +458,18 @@ const highlightReferee = (refereeText, isHighlighted) => {
   }
   // Apply yellow highlight to the referee text
   return `<span class="bg-yellow-200 text-black py-1">${showCode(refereeText)}</span>`
+}
+
+// Function to render the shotclock operator with optional highlight
+const formatShotclock = (shotclockName, isHighlighted) => {
+  if (!shotclockName) {
+    return ''
+  }
+  const name = showCode(shotclockName)
+  if (isHighlighted) {
+    return `<span class="bg-yellow-200 text-black py-1">${name}</span>`
+  }
+  return name
 }
 </script>
 

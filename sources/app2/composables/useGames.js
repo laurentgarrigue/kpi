@@ -14,6 +14,7 @@ const game_dates = ref([])
 const teams = ref([])
 const refs = ref([])
 const showRefs = ref(true)
+const showShotclock = ref(false)
 const showFlags = ref(true)
 const fav_categories = ref([])
 const fav_teams = ref([])
@@ -44,7 +45,11 @@ export const useGames = () => {
     ].filter(Boolean).sort()
 
     const filteredRefs = [
-      ...new Set(base.map(x => x.r_1_name).concat(base.map(x => x.r_2_name)))
+      ...new Set(
+        base.map(x => x.r_1_name)
+          .concat(base.map(x => x.r_2_name))
+          .concat(base.map(x => x.s_name))
+      )
     ].filter(Boolean).sort()
 
     return { teams: filteredTeams, refs: filteredRefs }
@@ -182,6 +187,8 @@ export const useGames = () => {
       game.g_score_detail_b = parseInt(game.g_score_detail_b) || 0
       game.r_1 = game.r_1 && game.r_1 !== '-1' ? game.r_1.replace(/\) (INT-|NAT-|REG-|INT|REG|OTM|JO)[ABCS]{0,1}/, ')') : null
       game.r_2 = game.r_2 && game.r_2 !== '-1' ? game.r_2.replace(/\) (INT-|NAT-|REG-|INT|REG|OTM|JO)[ABCS]{0,1}/, ')') : null
+      // Shotclock : "NOM Prenom" ou "NOM Prenom (licence) niveau-arbitre" -> garder "NOM Prenom"
+      game.s_name = game.s_name ? game.s_name.split(' (')[0].trim() || null : null
       game.t_a_label ??= gameEncode(game.g_code, 1)
       game.t_b_label ??= gameEncode(game.g_code, 2)
       game.r_1 ??= gameEncode(game.g_code, 3)
@@ -204,7 +211,11 @@ export const useGames = () => {
       .filter(value => value !== null)
       .sort()
     refs.value = [
-      ...new Set(allGames.map(x => x.r_1_name).concat(allGames.map(x => x.r_2_name)))
+      ...new Set(
+        allGames.map(x => x.r_1_name)
+          .concat(allGames.map(x => x.r_2_name))
+          .concat(allGames.map(x => x.s_name))
+      )
     ]
       .filter(value => value !== null)
       .sort()
@@ -216,6 +227,7 @@ export const useGames = () => {
     fav_teams.value = JSON.parse(preferenceStore.preferences.fav_teams || '[]')
     fav_dates.value = preferenceStore.preferences.fav_dates || ''
     showFlags.value = preferenceStore.preferences.show_flags ?? true
+    showShotclock.value = preferenceStore.preferences.show_shotclock ?? false
     filterGames()
   }
 
@@ -224,6 +236,7 @@ export const useGames = () => {
     await preferenceStore.putItem('fav_teams', JSON.stringify(fav_teams.value))
     await preferenceStore.putItem('fav_dates', fav_dates.value)
     await preferenceStore.putItem('show_flags', showFlags.value)
+    await preferenceStore.putItem('show_shotclock', showShotclock.value)
     filterGames()
   }
 
@@ -239,7 +252,8 @@ export const useGames = () => {
           (game.r_1 && fav_teams.value.includes(game.r_1.split('(').pop().split(')')[0])) ||
           (game.r_2 && fav_teams.value.includes(game.r_2.split('(').pop().split(')')[0])) ||
           fav_teams.value.includes(game.r_1_name) ||
-          fav_teams.value.includes(game.r_2_name)
+          fav_teams.value.includes(game.r_2_name) ||
+          fav_teams.value.includes(game.s_name)
         )
       })
     }
@@ -276,6 +290,9 @@ export const useGames = () => {
       // Équipes : ajouter des propriétés pour le highlighting côté composant
       newValue.t_a_highlighted = fav_teams.value.includes(value.t_a_label)
       newValue.t_b_highlighted = fav_teams.value.includes(value.t_b_label)
+
+      // Shotclock : surlignage si présent dans le filtre
+      newValue.s_highlighted = !!value.s_name && fav_teams.value.includes(value.s_name)
 
       // Arbitres : surlignage jaune (mark) - cherche le nom avec plusieurs stratégies (insensible à la casse)
       if (value.r_1) {
@@ -508,10 +525,12 @@ export const useGames = () => {
     fav_teams.value = []
     fav_dates.value = ''
     showFlags.value = true
+    showShotclock.value = false
     await preferenceStore.putItem('fav_categories', '[]')
     await preferenceStore.putItem('fav_teams', '[]')
     await preferenceStore.putItem('fav_dates', '')
     await preferenceStore.putItem('show_flags', true)
+    await preferenceStore.putItem('show_shotclock', false)
     filterGames()
   }
 
@@ -541,6 +560,7 @@ export const useGames = () => {
     refs,
     teamsFilteredByCategories,
     showRefs,
+    showShotclock,
     showFlags,
     fav_categories,
     fav_teams,
