@@ -174,6 +174,7 @@ class AdminGamesController extends AbstractController
                        m.Id_equipeA, m.Id_equipeB,
                        m.Arbitre_principal, m.Matric_arbitre_principal,
                        m.Arbitre_secondaire, m.Matric_arbitre_secondaire,
+                       m.Timeshoot,
                        j.Code_competition, j.Phase, j.Niveau, j.Etape, j.Lieu,
                        j.Libelle AS LibelleJournee,
                        c.Soustitre2, c.Code_typeclt, c.Statut AS CompetitionStatut,
@@ -242,6 +243,7 @@ class AdminGamesController extends AbstractController
                 'matricArbitrePrincipal' => (int) ($row['Matric_arbitre_principal'] ?? 0),
                 'arbitreSecondaire' => $row['Arbitre_secondaire'],
                 'matricArbitreSecondaire' => (int) ($row['Matric_arbitre_secondaire'] ?? 0),
+                'timeshoot' => $row['Timeshoot'],
                 'codeCompetition' => $row['Code_competition'],
                 'competitionStatut' => $row['CompetitionStatut'] ?? 'ATT',
                 'phase' => $row['Phase'],
@@ -570,7 +572,7 @@ class AdminGamesController extends AbstractController
 
         // Score fields editable by profile <= 9, other fields by <= 6
         $scoreFields = ['ScoreA', 'ScoreB'];
-        $otherFields = ['Numero_ordre', 'Date_match', 'Heure_match', 'Libelle', 'Terrain'];
+        $otherFields = ['Numero_ordre', 'Date_match', 'Heure_match', 'Libelle', 'Terrain', 'Timeshoot'];
         $refereeFields = ['Arbitre_principal', 'Arbitre_secondaire'];
 
         if (in_array($field, $scoreFields)) {
@@ -616,6 +618,8 @@ class AdminGamesController extends AbstractController
             $value = $value !== '' ? substr($value, 0, 12) : null;
         } elseif ($field === 'Libelle') {
             $value = $value !== '' ? substr($value, 0, 30) : null;
+        } elseif ($field === 'Timeshoot') {
+            $value = $value !== '' ? substr($value, 0, 50) : null;
         } elseif (in_array($field, ['ScoreA', 'ScoreB'])) {
             $value = $value !== '' ? substr($value, 0, 4) : null;
         } elseif (in_array($field, $refereeFields)) {
