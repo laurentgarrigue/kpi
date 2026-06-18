@@ -190,7 +190,7 @@ export const useApi = () => {
       if (!response.ok) {
         const errorType = detectErrorType(null, response)
 
-        // Special handling for 401 - logout and auto-redirect to login
+        // Special handling for 401 - token invalid/expired → logout and redirect
         if (errorType === ErrorType.HTTP_401) {
           const now = Date.now()
 
@@ -215,6 +215,11 @@ export const useApi = () => {
           }
 
           throw new Error('Unauthorized')
+        }
+
+        // 403 - valid token but no access to this resource, do NOT logout
+        if (response.status === 403) {
+          throw new Error('Forbidden')
         }
 
         // Handle other HTTP errors

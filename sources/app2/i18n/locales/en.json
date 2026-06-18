@@ -232,7 +232,17 @@
     "AddComment": "Add comment",
     "Clear": "Clear",
     "Cancel": "Cancel",
-    "Save": "Save"
+    "Save": "Save",
+    "RefreshRights": "Refresh my rights",
+    "Overview": {
+      "Title": "Overview",
+      "Club": "Club / Nation",
+      "Complete": "Complete",
+      "Partial": "Partial",
+      "None": "Not checked",
+      "NoTeams": "No teams found for this event.",
+      "LoadError": "Error loading the overview."
+    }
   },
   "GameReports": {
     "NewGame": "New game (offline)",

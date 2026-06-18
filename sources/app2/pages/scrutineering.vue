@@ -17,29 +17,54 @@
         </div>
       </template>
       <template #right>
-        <button v-if="prefs?.scr_team_id && visibleButton" @click="handleRefresh" class="p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-          <UIcon name="i-heroicons-arrow-path" class="h-6 w-6" />
-        </button>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="prefs?.scr_team_id"
+            @click="backToOverview"
+            class="p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+            :title="t('Scrutineering.Overview.Title')"
+          >
+            <UIcon name="i-heroicons-table-cells" class="h-6 w-6" />
+          </button>
+          <button v-if="prefs?.scr_team_id && visibleButton" @click="handleRefresh" class="p-2 rounded-md hover:bg-gray-100 cursor-pointer">
+            <UIcon name="i-heroicons-arrow-path" class="h-6 w-6" />
+          </button>
+        </div>
       </template>
     </AppSecondaryNav>
 
     <div v-if="user">
       <div v-if="authorized && user.profile <= 3">
-        <!-- Team Name and Logo -->
-        <div v-if="prefs?.scr_team_id" class="px-4 py-1 bg-gray-50 border-b">
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <img
-                v-if="prefs?.scr_team_logo"
-                class="h-12 w-12"
-                :src="`${baseUrl}/img/${prefs.scr_team_logo}`"
-                alt="Logo"
-              />
-              <h2 class="text-xl font-bold text-gray-800">{{ prefs?.scr_team_label }}</h2>
-            </div>
-            <h1 class="text-xl font-bold text-gray-800">{{ t('nav.Scrutineering') }}</h1>
+
+        <!-- Overview (no team selected) -->
+        <div v-if="!selectedTeamId && prefs?.lastEvent?.id">
+          <div class="px-4 py-2 bg-gray-50 border-b flex items-center justify-between">
+            <h1 class="text-lg font-bold text-gray-800">{{ t('Scrutineering.Overview.Title') }}</h1>
           </div>
+          <ScrOverview
+            ref="overviewRef"
+            :event-id="prefs.lastEvent.id"
+            @select-team="onOverviewSelectTeam"
+          />
         </div>
+
+        <!-- Team detail view -->
+        <div v-if="selectedTeamId">
+          <!-- Team Name and Logo -->
+          <div v-if="prefs?.scr_team_id" class="px-4 py-1 bg-gray-50 border-b">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <img
+                  v-if="prefs?.scr_team_logo"
+                  class="h-12 w-12"
+                  :src="`${baseUrl}/img/${prefs.scr_team_logo}`"
+                  alt="Logo"
+                />
+                <h2 class="text-xl font-bold text-gray-800">{{ prefs?.scr_team_label }}</h2>
+              </div>
+              <h1 class="text-xl font-bold text-gray-800">{{ t('nav.Scrutineering') }}</h1>
+            </div>
+          </div>
 
         <div v-if="prefs?.scr_team_id" class="p-2">
           <div class="overflow-x-auto">
@@ -183,6 +208,7 @@
             </div>
           </div>
         </div>
+        </div><!-- end team detail view -->
       </div>
 
       <div v-else class="p-4">
@@ -191,14 +217,25 @@
             <p class="font-bold text-yellow-800">
               {{ t('Scrutineering.ChangeEvent') }}
             </p>
-            <button
-              type="button"
-              class="px-4 py-2 text-sm bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 flex items-center"
-              @click="navigateTo('/')"
-            >
-              <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 mr-1" />
-              {{ t('nav.ChangeEvent') }}
-            </button>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="px-4 py-2 text-sm bg-white text-yellow-900 border border-yellow-400 rounded hover:bg-yellow-100 flex items-center"
+                :disabled="refreshingRights"
+                @click="refreshRights"
+              >
+                <UIcon name="i-heroicons-arrow-path" :class="['h-4 w-4 mr-1', refreshingRights && 'animate-spin']" />
+                {{ t('Scrutineering.RefreshRights') }}
+              </button>
+              <button
+                type="button"
+                class="px-4 py-2 text-sm bg-yellow-400 text-yellow-900 rounded hover:bg-yellow-500 flex items-center"
+                @click="navigateTo('/')"
+              >
+                <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 mr-1" />
+                {{ t('nav.ChangeEvent') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -215,7 +252,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useScrutineering } from '~/composables/useScrutineering'
 import { useUser } from '~/composables/useUser'
 import { useStatus } from '~/composables/useStatus'
@@ -225,15 +262,59 @@ definePageMeta({
   middleware: 'event-guard'
 })
 import { usePrefs } from '~/composables/usePrefs'
+import { usePreferenceStore } from '~/stores/preferenceStore'
 import CommentModal from '~/components/CommentModal.vue'
 
 const { t } = useI18n()
 const { user, getUser } = useUser()
-const { authorized, checkAuthorized } = useStatus()
+const { authorized, checkAuthorized, checkOnline } = useStatus()
 const { prefs, getPrefs, updatePref } = usePrefs()
 const { players, loadPlayers, updatePlayer, updateComment } = useScrutineering()
 const { getApi } = useApi()
+const preferenceStore = usePreferenceStore()
 const visibleButton = ref(true)
+const refreshingRights = ref(false)
+const overviewRef = ref(null)
+
+const backToOverview = async () => {
+  selectedTeamId.value = ''
+  await updatePref({ scr_team_id: null, scr_team_label: null, scr_team_club: null, scr_team_logo: null })
+  // Let the overview component re-mount, then refresh its data
+  await nextTick()
+  overviewRef.value?.load()
+}
+
+const onOverviewSelectTeam = async (team) => {
+  selectedTeamId.value = team.team_id
+  await updatePref({
+    scr_team_id: team.team_id,
+    scr_team_label: team.label,
+    scr_team_club: team.club,
+    scr_team_logo: team.logo
+  })
+  await loadPlayers()
+}
+
+const refreshRights = async () => {
+  if (!checkOnline()) return
+  refreshingRights.value = true
+  try {
+    const response = await getApi('/me')
+    const data = await response.json()
+    await preferenceStore.putItem('user', data.user)
+    await checkAuthorized()
+    if (authorized.value) {
+      await loadTeams()
+      if (prefs.value?.scr_team_id) {
+        await loadPlayers()
+      }
+    }
+  } catch {
+    // error already handled by useApi (toast)
+  } finally {
+    refreshingRights.value = false
+  }
+}
 
 // Page-specific SEO
 useSeoMeta({
@@ -251,8 +332,6 @@ const handleRefresh = () => {
     visibleButton.value = true
   }, 5000)
 }
-const { checkOnline } = useStatus()
-
 const runtimeConfig = useRuntimeConfig()
 const baseUrl = runtimeConfig.public.backendBaseUrl
 
@@ -320,10 +399,6 @@ const onTeamChange = async () => {
 
 onMounted(async () => {
   await getUser()
-  if (!user.value) {
-    navigateTo('/login')
-    return
-  }
   await checkAuthorized()
   await getPrefs()
   await loadTeams()

@@ -109,9 +109,9 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
   if (event.dateDebut) {
     const date = new Date(event.dateDebut)
     const year = date.getFullYear()
-    return `${event.libelle} (${year})`
+    return `${event.id} - ${event.libelle} (${year})`
   }
-  return event.libelle
+  return `${event.id} - ${event.libelle}`
 }
 </script>
 
