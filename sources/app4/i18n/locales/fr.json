@@ -2051,6 +2051,9 @@
     "success_unconsolidated": "Phase déconsolidée",
     "success_team_removed": "Équipe retirée de la phase"
   },
+  "common": {
+    "refresh": "Rafraîchir"
+  },
   "journal": {
     "title": "Journal d'activité",
     "search_placeholder": "Rechercher dans le journal...",
