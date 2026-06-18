@@ -115,6 +115,16 @@ class AuthController extends AbstractController
 
         $conn->executeStatement($sqlToken, [$row['Code'], $token]);
 
+        // Log successful login
+        try {
+            $identite = trim($row['Prenom'] . ' ' . $row['Nom']);
+            $conn->executeStatement(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Connexion App', ?)",
+                [$row['Code'], $identite ?: $row['Code']]
+            );
+        } catch (\Exception) {
+        }
+
         // Return user data
         return new JsonResponse([
             'user' => [

@@ -302,9 +302,11 @@ onMounted(() => {
 <template>
   <header
     class="sticky top-0 z-30 bg-header-950 text-header-50 shadow-lg"
-    :class="runtimeConfig.public.appEnv !== 'production'
-      ? 'border-t-4 border-yellow-400'
-      : 'border-b border-header-800'"
+    :class="runtimeConfig.public.appEnv === 'production'
+      ? 'border-b border-header-800'
+      : runtimeConfig.public.appEnv === 'preprod'
+        ? 'border-t-4 border-orange-500'
+        : 'border-t-4 border-yellow-400'"
   >
     <!-- Top bar -->
     <div class="px-4 lg:px-6">

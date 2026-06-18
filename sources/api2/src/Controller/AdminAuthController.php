@@ -75,7 +75,7 @@ class AdminAuthController extends AbstractController
         // Log successful login
         try {
             $identite = trim($user->getPrenom() . ' ' . $user->getNom());
-            $sql = "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Connexion', ?)";
+            $sql = "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Connexion Admin', ?)";
             $this->connection->prepare($sql)->executeStatement([
                 $user->getUserIdentifier(),
                 $identite ?: $user->getUserIdentifier(),
