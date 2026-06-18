@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\TokenAuthService;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +18,8 @@ use Symfony\Component\Routing\Attribute\Route;
 class AuthController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private TokenAuthService $tokenAuthService
     ) {
     }
 
@@ -122,6 +124,75 @@ class AuthController extends AbstractController
                 'profile' => $row['Niveau'],
                 'events' => $events,
                 'token' => $token
+            ]
+        ]);
+    }
+
+    #[Route('/me', name: 'me', methods: ['GET'])]
+    #[OA\Get(
+        path: '/me',
+        summary: 'Get current user data',
+        description: 'Returns up-to-date user data (including event rights) for the authenticated token',
+        tags: ['1. App2 - Authentication'],
+        security: [['ApiToken' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'User data',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', example: '123456'),
+                                new OA\Property(property: 'name', type: 'string', example: 'Dupont'),
+                                new OA\Property(property: 'firstname', type: 'string', example: 'Jean'),
+                                new OA\Property(property: 'profile', type: 'string', example: 'O'),
+                                new OA\Property(property: 'events', type: 'string', example: '123|456|789'),
+                                new OA\Property(property: 'token', type: 'string', example: 'a1b2c3d4e5f6...')
+                            ]
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthorized - Invalid or missing token')
+        ]
+    )]
+    public function me(Request $request): JsonResponse
+    {
+        $token = $request->headers->get('X-Auth-Token')
+            ?? $request->cookies->get('kpi_app');
+
+        if (!$token) {
+            return new JsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        $sql = "SELECT u.Code, u.Niveau, u.Id_Evenement, c.Nom, c.Prenom, ut.token
+            FROM kp_user_token ut
+            JOIN kp_user u ON (ut.user = u.Code)
+            JOIN kp_licence c ON (u.Code = c.Matric)
+            WHERE ut.token = ?";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue(1, $token);
+        $result = $stmt->executeQuery();
+        $row = $result->fetchAssociative();
+
+        if (!$row) {
+            return new JsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        return new JsonResponse([
+            'user' => [
+                'id' => $row['Code'],
+                'name' => $row['Nom'],
+                'firstname' => $row['Prenom'],
+                'profile' => $row['Niveau'],
+                'events' => trim($row['Id_Evenement'] ?? '', '|'),
+                'token' => $row['token']
             ]
         ]);
     }
