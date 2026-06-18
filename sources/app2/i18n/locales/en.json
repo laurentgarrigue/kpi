@@ -215,7 +215,7 @@
     "Vest": "Vest",
     "Kayak": "Kayak",
     "Paddles": "Paddles",
-    "Coach": "Coach",
+    "Coach": "Staff",
     "PrintAll": "Print all",
     "Print": "Print",
     "Cosmetic": "Cosmetic",
@@ -266,7 +266,7 @@
     "NoStats": "No statistics available for this team.",
     "Player": "Player",
     "Goals": "Goals",
-    "Coach": "Coach"
+    "Coach": "Staff"
   },
   "MatchSheet": {
     "Title": "Game Sheet",
@@ -276,7 +276,7 @@
     "Referees": "Referees",
     "Player": "Player",
     "Goals": "Goals",
-    "Coach": "Coach",
+    "Coach": "Staff",
     "Timeline": "Timeline",
     "Loading": "Loading game sheet...",
     "NotFound": "Game not found or not available",
