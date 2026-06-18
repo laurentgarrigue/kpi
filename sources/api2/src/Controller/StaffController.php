@@ -282,6 +282,14 @@ class StaffController extends AbstractController
 
             $conn->executeStatement($sql, [$teamId, $playerId, $comment, $comment]);
 
+            try {
+                $conn->executeStatement(
+                    "INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Journal) VALUES (NOW(), ?, 'Scrut commentaire', ?, ?)",
+                    [$auth['user'], $eventId, "Equipe $teamId - Joueur $playerId"]
+                );
+            } catch (\Exception) {
+            }
+
             return new JsonResponse(['comment' => $comment]);
         }
 
@@ -299,6 +307,21 @@ class StaffController extends AbstractController
 
         try {
             $conn->executeStatement($sql, [$teamId, $playerId, $value, $value]);
+
+            $paramLabels = [
+                'kayak_status'  => 'kayak',
+                'vest_status'   => 'gilet',
+                'helmet_status' => 'casque',
+                'paddle_count'  => 'pagaies',
+            ];
+            try {
+                $conn->executeStatement(
+                    "INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Journal) VALUES (NOW(), ?, 'Scrut équipement', ?, ?)",
+                    [$auth['user'], $eventId, "Equipe $teamId - Joueur $playerId - " . ($paramLabels[$parameter] ?? $parameter) . "=$value"]
+                );
+            } catch (\Exception) {
+            }
+
             return new JsonResponse(['value' => $value]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 401);

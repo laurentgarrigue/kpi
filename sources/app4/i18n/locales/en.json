@@ -2039,6 +2039,9 @@
     "success_unconsolidated": "Phase unconsolidated",
     "success_team_removed": "Team removed from phase"
   },
+  "common": {
+    "refresh": "Refresh"
+  },
   "journal": {
     "title": "Activity Log",
     "search_placeholder": "Search in the log...",
