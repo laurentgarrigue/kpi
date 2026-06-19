@@ -1993,12 +1993,16 @@ class AdminGamesController extends AbstractController
         }
 
         // 3. Pool Arbitres
+        // Capitaine = 'X' ⇒ membre inactif du groupe pool : exclu des suggestions.
+        // Un arbitre actif dans plusieurs groupes du pool est volontairement proposé
+        // une fois par groupe : l'indication du groupe (Libelle) aide au choix.
         $results[] = ['type' => 'separator', 'label' => $sepPool];
         $sql = "SELECT a.Matric, a.Nom, a.Prenom, b.Libelle, c.arbitre, c.niveau
                 FROM kp_competition_equipe b
                 INNER JOIN kp_competition_equipe_joueur a ON a.Id_equipe = b.Id
                 LEFT JOIN kp_arbitre c ON a.Matric = c.Matric
                 WHERE b.Code_compet = 'POOL'
+                AND a.Capitaine <> 'X'
                 AND (a.Matric LIKE ? OR UPPER(CONCAT_WS(' ', a.Nom, a.Prenom)) LIKE UPPER(?)
                      OR UPPER(CONCAT_WS(' ', a.Prenom, a.Nom)) LIKE UPPER(?) OR UPPER(b.Libelle) LIKE UPPER(?))
                 ORDER BY a.Nom, a.Prenom";
