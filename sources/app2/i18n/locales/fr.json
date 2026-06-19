@@ -236,12 +236,18 @@
     "Cancel": "Annuler",
     "Save": "Enregistrer",
     "RefreshRights": "Rafraîchir mes droits",
+    "TotalValidPaddles": "Total pagaies valides",
+    "ResetTeam": "Réinitialiser le contrôle",
+    "ResetTeamConfirmTitle": "Réinitialiser le contrôle",
+    "ResetTeamConfirm": "Cette action supprimera tous les contrôles d'équipement, les décomptes de pagaies et les commentaires de cette équipe. Cette action est irréversible. Continuer ?",
+    "Confirm": "Confirmer",
     "Overview": {
       "Title": "Vue synthétique",
       "Club": "Club / Nation",
       "Complete": "Complet",
       "Partial": "Partiel",
       "None": "Non contrôlé",
+      "Refresh": "Rafraîchir",
       "NoTeams": "Aucune équipe trouvée pour cet événement.",
       "LoadError": "Erreur lors du chargement de la vue synthétique."
     }

@@ -87,12 +87,38 @@ export const useScrutineering = () => {
     }
   }
 
+  const resetTeam = async () => {
+    if (!prefs.value?.lastEvent?.id || !prefs.value?.scr_team_id) {
+      console.error('Missing event or team ID')
+      return false
+    }
+
+    try {
+      const response = await postApi(
+        `/staff/${prefs.value.lastEvent.id}/team/${prefs.value.scr_team_id}/reset`,
+        {},
+        'DELETE'
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to reset team')
+      }
+
+      await loadPlayers()
+      return true
+    } catch (error) {
+      console.error('Error resetting team:', error)
+      return false
+    }
+  }
+
   return {
     players: computed(() => store.players),
     loading: computed(() => store.loading),
     error: computed(() => store.error),
     loadPlayers,
     updatePlayer,
-    updateComment
+    updateComment,
+    resetTeam
   }
 }
