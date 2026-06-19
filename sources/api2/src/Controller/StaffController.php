@@ -328,6 +328,55 @@ class StaffController extends AbstractController
         }
     }
 
+    #[Route('/{eventId}/team/{teamId}/reset', name: 'reset_team', methods: ['DELETE'])]
+    #[OA\Delete(
+        path: '/staff/{eventId}/team/{teamId}/reset',
+        summary: 'Reset all scrutineering data for a team',
+        description: 'Deletes every kp_scrutineering row for the team (equipment statuses, paddle counts and comments).',
+        tags: ['3. App2 - Staff'],
+        security: [['ApiToken' => []]],
+        parameters: [
+            new OA\Parameter(name: 'eventId', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 222)),
+            new OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Team scrutineering reset'),
+            new OA\Response(response: 401, description: 'Unauthorized')
+        ]
+    )]
+    public function resetTeam(Request $request, int $eventId, int $teamId): JsonResponse
+    {
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
+        if (!$auth) {
+            return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        try {
+            $deleted = $conn->executeStatement(
+                "DELETE FROM kp_scrutineering WHERE id_equipe = ?",
+                [$teamId]
+            );
+
+            try {
+                $conn->executeStatement(
+                    "INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Journal) VALUES (NOW(), ?, 'Scrut réinitialisation', ?, ?)",
+                    [$auth['user'], $eventId, "Equipe $teamId - réinitialisation complète"]
+                );
+            } catch (\Exception) {
+            }
+
+            return new JsonResponse(['reset' => true, 'deleted' => $deleted]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 401);
+        }
+    }
+
     #[Route('/{eventId}/overview', name: 'overview', methods: ['GET'])]
     #[OA\Get(
         path: '/staff/{eventId}/overview',
@@ -401,6 +450,8 @@ class StaffController extends AbstractController
 
         // For each team in the event, compute scrutineering status by joining players and scrutineering data.
         // A player counts as "complete" if kayak_status=1 AND vest_status=1 AND helmet_status=1 AND paddle_count>0.
+        // A player counts as "checked" if at least one equipment is > 0. A bare kp_scrutineering row with
+        // everything reset to 0/null (e.g. validated then cancelled) must NOT make the team "partial".
         // Coaches (Capitaine='E') and absent/excluded players are excluded from the check.
         $sql = "SELECT
                 ce.Id                                       AS team_id,
@@ -410,7 +461,11 @@ class StaffController extends AbstractController
                 ce.logo                                     AS logo,
                 COALESCE(c.Soustitre2, c.Libelle, '')       AS category,
                 COUNT(DISTINCT cej.Matric)                  AS total_players,
-                COUNT(DISTINCT sc.matric)                   AS checked_players,
+                COUNT(DISTINCT CASE WHEN COALESCE(sc.kayak_status, 0) > 0
+                          OR COALESCE(sc.vest_status, 0)   > 0
+                          OR COALESCE(sc.helmet_status, 0) > 0
+                          OR COALESCE(sc.paddle_count, 0)  > 0 THEN sc.matric END)
+                                                            AS checked_players,
                 COUNT(DISTINCT CASE WHEN sc.kayak_status = 1
                           AND sc.vest_status  = 1
                           AND sc.helmet_status= 1
