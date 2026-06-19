@@ -236,12 +236,18 @@
     "Cancel": "Cancel",
     "Save": "Save",
     "RefreshRights": "Refresh my rights",
+    "TotalValidPaddles": "Total valid paddles",
+    "ResetTeam": "Reset team check",
+    "ResetTeamConfirmTitle": "Reset team check",
+    "ResetTeamConfirm": "This will delete all equipment checks, paddle counts and comments for this team. This action cannot be undone. Continue?",
+    "Confirm": "Confirm",
     "Overview": {
       "Title": "Overview",
       "Club": "Club / Nation",
       "Complete": "Complete",
       "Partial": "Partial",
       "None": "Not checked",
+      "Refresh": "Refresh",
       "NoTeams": "No teams found for this event.",
       "LoadError": "Error loading the overview."
     }

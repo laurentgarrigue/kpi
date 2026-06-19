@@ -40,6 +40,15 @@
         <div v-if="!selectedTeamId && prefs?.lastEvent?.id">
           <div class="px-4 py-2 bg-gray-50 border-b flex items-center justify-between">
             <h1 class="text-lg font-bold text-gray-800">{{ t('Scrutineering.Overview.Title') }}</h1>
+            <button
+              type="button"
+              class="p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+              :disabled="refreshingOverview"
+              :title="t('Scrutineering.Overview.Refresh')"
+              @click="refreshOverview"
+            >
+              <UIcon name="i-heroicons-arrow-path" :class="['h-6 w-6', refreshingOverview && 'animate-spin']" />
+            </button>
           </div>
           <ScrOverview
             ref="overviewRef"
@@ -157,7 +166,34 @@
                   <td v-if="player.cap === 'E'" colspan="5" class="px-4 py-2"></td>
                 </tr>
               </tbody>
+              <tfoot class="bg-gray-50">
+                <tr class="border-t-2 border-gray-300">
+                  <td class="px-2 py-2 text-right text-sm font-medium text-gray-700">
+                    {{ t('Scrutineering.TotalValidPaddles') }}
+                  </td>
+                  <td class="px-1 py-2"></td>
+                  <td class="px-1 py-2"></td>
+                  <td class="px-1 py-2"></td>
+                  <td class="px-1 py-2 text-center">
+                    <span class="inline-flex items-center justify-center px-3 py-1 text-lg font-bold text-white bg-green-600 rounded">
+                      {{ totalValidPaddles }}
+                    </span>
+                  </td>
+                  <td class="px-1 py-2"></td>
+                </tr>
+              </tfoot>
             </table>
+          </div>
+
+          <div class="mt-4">
+            <button
+              type="button"
+              @click="isResetModalOpen = true"
+              class="px-4 py-2 text-sm text-red-600 border border-red-600 rounded hover:bg-red-50 flex items-center"
+            >
+              <UIcon name="i-heroicons-trash" class="h-5 w-5 mr-1" />
+              {{ t('Scrutineering.ResetTeam') }}
+            </button>
           </div>
 
           <div class="mt-4">
@@ -247,12 +283,46 @@
       @close="closeCommentModal"
       @save="saveComment"
     />
+
+    <!-- Reset confirmation modal -->
+    <div
+      v-if="isResetModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      @click.self="isResetModalOpen = false"
+    >
+      <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex items-center gap-2 mb-4">
+          <UIcon name="i-heroicons-exclamation-triangle" class="h-6 w-6 text-red-600" />
+          <h3 class="text-lg font-semibold text-gray-900">{{ t('Scrutineering.ResetTeamConfirmTitle') }}</h3>
+        </div>
+        <p class="text-sm text-gray-600 mb-6">{{ t('Scrutineering.ResetTeamConfirm') }}</p>
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            class="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
+            :disabled="resetting"
+            @click="isResetModalOpen = false"
+          >
+            {{ t('Scrutineering.Cancel') }}
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 text-sm text-white bg-red-600 rounded hover:bg-red-700 flex items-center disabled:opacity-50"
+            :disabled="resetting"
+            @click="confirmResetTeam"
+          >
+            <UIcon v-if="resetting" name="i-heroicons-arrow-path" class="h-4 w-4 mr-1 animate-spin" />
+            {{ t('Scrutineering.Confirm') }}
+          </button>
+        </div>
+      </div>
+    </div>
     <AppFooter />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useScrutineering } from '~/composables/useScrutineering'
 import { useUser } from '~/composables/useUser'
 import { useStatus } from '~/composables/useStatus'
@@ -269,12 +339,22 @@ const { t } = useI18n()
 const { user, getUser } = useUser()
 const { authorized, checkAuthorized, checkOnline } = useStatus()
 const { prefs, getPrefs, updatePref } = usePrefs()
-const { players, loadPlayers, updatePlayer, updateComment } = useScrutineering()
+const { players, loadPlayers, updatePlayer, updateComment, resetTeam } = useScrutineering()
 const { getApi } = useApi()
 const preferenceStore = usePreferenceStore()
 const visibleButton = ref(true)
 const refreshingRights = ref(false)
 const overviewRef = ref(null)
+const refreshingOverview = ref(false)
+
+const refreshOverview = async () => {
+  refreshingOverview.value = true
+  try {
+    await overviewRef.value?.load()
+  } finally {
+    refreshingOverview.value = false
+  }
+}
 
 const backToOverview = async () => {
   selectedTeamId.value = ''
@@ -341,6 +421,27 @@ const selectedComment = ref('')
 const modalTitle = ref('')
 const selectedTeamId = ref('')
 const availableTeams = ref([])
+
+const isResetModalOpen = ref(false)
+const resetting = ref(false)
+
+// Sum of validated paddles across non-coach players
+const totalValidPaddles = computed(() =>
+  players.value.reduce((sum, p) => {
+    if (p.cap === 'E') return sum
+    return sum + (Number(p.paddle_count) || 0)
+  }, 0)
+)
+
+const confirmResetTeam = async () => {
+  resetting.value = true
+  try {
+    await resetTeam()
+    isResetModalOpen.value = false
+  } finally {
+    resetting.value = false
+  }
+}
 
 // Load available teams
 const loadTeams = async () => {
