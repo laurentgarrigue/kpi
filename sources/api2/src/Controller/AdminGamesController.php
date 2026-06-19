@@ -136,7 +136,8 @@ class AdminGamesController extends AbstractController
 
         // Search filter
         if (!empty($search)) {
-            $where[] = '(m.Libelle LIKE ? OR cea.Libelle LIKE ? OR ceb.Libelle LIKE ? OR m.Arbitre_principal LIKE ? OR m.Arbitre_secondaire LIKE ? OR CAST(m.Numero_ordre AS CHAR) LIKE ?)';
+            $where[] = '(m.Libelle LIKE ? OR cea.Libelle LIKE ? OR ceb.Libelle LIKE ? OR m.Arbitre_principal LIKE ? OR m.Arbitre_secondaire LIKE ? OR m.Timeshoot LIKE ? OR CAST(m.Numero_ordre AS CHAR) LIKE ?)';
+            $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
