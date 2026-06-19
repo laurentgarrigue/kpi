@@ -42,17 +42,20 @@
               :key="cat"
               class="px-2 py-1 border-r border-gray-200 text-center"
             >
-              <button
-                v-if="getTeam(club.code, cat)"
-                type="button"
-                class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 transition-colors text-left cursor-pointer"
-                :class="getCellClass(getTeam(club.code, cat).status)"
-                :title="getStatusLabel(getTeam(club.code, cat).status)"
-                @click="$emit('select-team', getTeam(club.code, cat))"
-              >
-                <UIcon :name="getStatusIcon(getTeam(club.code, cat).status)" class="h-5 w-5 flex-shrink-0" />
-                <span class="text-xs leading-tight line-clamp-2">{{ getTeam(club.code, cat).label }}</span>
-              </button>
+              <div v-if="getTeams(club.code, cat).length" class="flex flex-col gap-1">
+                <button
+                  v-for="team in getTeams(club.code, cat)"
+                  :key="team.team_id"
+                  type="button"
+                  class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 transition-colors text-left cursor-pointer"
+                  :class="getCellClass(team.status)"
+                  :title="getStatusLabel(team.status)"
+                  @click="$emit('select-team', team)"
+                >
+                  <UIcon :name="getStatusIcon(team.status)" class="h-5 w-5 flex-shrink-0" />
+                  <span class="text-xs leading-tight line-clamp-2">{{ team.label }}</span>
+                </button>
+              </div>
               <span v-else class="text-gray-300">—</span>
             </td>
           </tr>
@@ -98,16 +101,18 @@ const categories = ref([])
 const clubs = ref([])   // [{code, label, logo}]
 const teams = ref([])
 
-// Index for O(1) cell lookup: "clubCode||category" → team
+// Index for O(1) cell lookup: "clubCode||category" → team[]
+// A club can field several teams in the same category, so each cell holds a list.
 const teamIndex = computed(() => {
   const idx = {}
   for (const team of teams.value) {
-    idx[`${team.club}||${team.category}`] = team
+    const key = `${team.club}||${team.category}`
+    ;(idx[key] ||= []).push(team)
   }
   return idx
 })
 
-const getTeam = (clubCode, category) => teamIndex.value[`${clubCode}||${category}`] || null
+const getTeams = (clubCode, category) => teamIndex.value[`${clubCode}||${category}`] || []
 
 const getStatusIcon = (status) => {
   if (status === 'complete') return 'i-heroicons-check-circle-solid'
