@@ -610,9 +610,9 @@ class GroupController extends AbstractController
     {
         $conn = $this->entityManager->getConnection();
 
-        $sql = "SELECT ce.Id t_id, ce.Libelle t_label, ce.Code_club t_club,
-            CASE WHEN ce.logo IS NULL THEN 'KIP/logo/empty-logo.png' ELSE ce.logo END t_logo,
-            c.Code c_code, c.Soustitre2 c_category
+        $sql = "SELECT ce.Id team_id, ce.Libelle label, ce.Code_club club,
+            CASE WHEN ce.logo IS NULL THEN 'KIP/logo/empty-logo.png' ELSE ce.logo END logo,
+            c.Code c_code, c.Soustitre2 category
             FROM kp_competition_equipe ce
             INNER JOIN kp_competition c ON (ce.Code_compet = c.Code AND ce.Code_saison = c.Code_saison)
             WHERE c.Code_ref = ?
