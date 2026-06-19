@@ -286,6 +286,21 @@ const availableTeams = computed((): TeamEntity[] => {
       placeholders.set(raw.refereeSecondaire, { code: raw.refereeSecondaire, label: labels.refereeSecondaire, kind: 'placeholder', isPlaceholder: true })
   }
 
+  // Shotclock assignments count towards the referee's total when the column is active.
+  // The shotclock operator (g.timeshoot) carries no matricule, so it can only be linked to a
+  // nominative referee (REF:<matric>) by person-name. Done as a second pass so every nominative
+  // referee is already registered before its shotclock slots are matched.
+  if (showShotclock.value) {
+    const refByName = new Map<string, TeamEntity>()
+    for (const e of referees.values())
+      if (e.refereeNominative) refByName.set(normRefereeName(e.label), e)
+    for (const g of games.value) {
+      if (!g.timeshoot) continue
+      const entity = refByName.get(normRefereeName(refereePersonLabel(g.timeshoot)))
+      if (entity) entity.refereeCount = (entity.refereeCount ?? 0) + 1
+    }
+  }
+
   const sortedReal = [...realTeams.values()].sort((a, b) => a.label.localeCompare(b.label))
   const sortedReferees = [...referees.values()].sort((a, b) => a.label.localeCompare(b.label))
   const sortedPlaceholders = [...placeholders.values()].sort((a, b) => a.label.localeCompare(b.label))
