@@ -26,9 +26,9 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="mb-4 flex flex-col sm:flex-row gap-4 justify-between">
+  <div class="mb-4 flex flex-col sm:flex-row gap-4 sm:justify-between">
     <!-- Left side: bulk actions -->
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <button
         v-if="showBulkDelete && selectedCount > 0"
         class="inline-flex items-center gap-2 px-4 py-2 bg-danger-50 text-danger-700 rounded-lg font-medium text-sm hover:bg-danger-100 transition-colors"
@@ -41,10 +41,10 @@ const emit = defineEmits<{
     </div>
 
     <!-- Right side: search and add -->
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
       <slot name="before-search" />
 
-      <div class="relative">
+      <div class="relative flex-1 min-w-40 sm:flex-none">
         <UIcon
           name="heroicons:magnifying-glass"
           class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-400 pointer-events-none"
@@ -53,7 +53,7 @@ const emit = defineEmits<{
           v-model="search"
           type="text"
           :placeholder="searchPlaceholder"
-          class="w-64 pl-10 pr-4 py-2 border border-header-300 rounded-lg text-primary-600 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-full sm:w-64 pl-10 pr-4 py-2 border border-header-300 rounded-lg text-primary-600 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         >
       </div>
 
