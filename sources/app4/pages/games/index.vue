@@ -320,13 +320,32 @@ const selectNextTeam = () => {
 // ─── Current selected entity (for label display) ───
 const selectedTeamEntity = computed(() => availableTeams.value.find(e => e.code === selectedTeam.value) ?? null)
 
+// ─── Normalised person-name for each nominative referee matricule ───
+// The shotclock operator (g.timeshoot) is a nominative name with no matricule, so the only
+// way to link it to a nominative referee is by name. We resolve each REF:<matric> to its
+// normalised person-name (taken from the referee designation: name before the first "(").
+const refereeNameByMatric = computed((): Map<number, string> => {
+  const byMatric = new Map<number, string>()
+  for (const g of games.value) {
+    if (g.matricArbitrePrincipal && g.arbitrePrincipal)
+      byMatric.set(g.matricArbitrePrincipal, normRefereeName(refereePersonLabel(g.arbitrePrincipal)))
+    if (g.matricArbitreSecondaire && g.arbitreSecondaire)
+      byMatric.set(g.matricArbitreSecondaire, normRefereeName(refereePersonLabel(g.arbitreSecondaire)))
+  }
+  return byMatric
+})
+
 // ─── Check if a game involves the selected entity (real team, placeholder or referee) ───
 const gameInvolvesTeam = (g: Game, code: string): boolean => {
   if (!code) return true
   // Referee entity: match by matricule (nominative) or normalised name (team-only)
   if (code.startsWith('REF:')) {
     const m = Number(code.slice(4))
-    return g.matricArbitrePrincipal === m || g.matricArbitreSecondaire === m
+    if (g.matricArbitrePrincipal === m || g.matricArbitreSecondaire === m) return true
+    // A nominative referee running the shotclock at the same slot is a real conflict:
+    // match the shotclock operator's name against the referee's person-name.
+    const name = refereeNameByMatric.value.get(m)
+    return !!name && !!g.timeshoot && normRefereeName(refereePersonLabel(g.timeshoot)) === name
   }
   if (code.startsWith('REFTEAM:')) {
     const n = code.slice(8)
