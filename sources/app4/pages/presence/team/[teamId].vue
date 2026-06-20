@@ -176,10 +176,45 @@ const navigateToTeam = (newTeamId: number) => {
   router.push(`/presence/team/${newTeamId}`)
 }
 
+// Keep the page competition filter in sync with the team currently displayed,
+// so the Competition selector reflects the real competition (and doesn't auto-navigate).
+const syncCompetitionFilter = () => {
+  const code = presenceStore.competition?.code
+  if (code && workContext.pageCompetitionCode !== code) {
+    workContext.setPageCompetition(code)
+  }
+}
+
+// Competition filter changed: repopulate the Team select with the teams of the newly
+// selected competition and jump to the first one.
+// The header emits the event without a payload, so read the new code from the store.
+// Ignore changes while the page is still initializing (the selector auto-selects on mount).
+const onCompetitionChange = async () => {
+  const code = workContext.pageCompetitionCode
+  if (!presenceStore.initialized || !code || code === presenceStore.competition?.code) return
+  try {
+    const response = await api.get<{ teams: { id: number; libelle: string }[] }>('/admin/competition-teams', {
+      season: workContext.season,
+      competition: code
+    })
+    // Update the Team select immediately so it reflects the selected competition
+    siblingTeams.value = (response.teams || []).map(t => ({ id: t.id, libelle: t.libelle }))
+    const firstTeam = response.teams?.[0]
+    if (firstTeam) {
+      router.push(`/presence/team/${firstTeam.id}`)
+    } else {
+      toast.add({ title: t('common.error'), description: t('teams_page.empty'), color: 'error', duration: 3000 })
+    }
+  } catch (error: unknown) {
+    toast.add({ title: t('common.error'), description: (error as { message?: string })?.message || t('teams_page.error_load'), color: 'error', duration: 3000 })
+  }
+}
+
 // Watch route changes to reload when navigating between teams
 watch(teamId, async (newId) => {
   if (newId && presenceStore.initialized) {
     await presenceStore.initTeamMode(newId, api)
+    syncCompetitionFilter()
     await loadSiblingTeams()
   }
 })
@@ -188,6 +223,7 @@ watch(teamId, async (newId) => {
 onMounted(async () => {
   await workContext.initContext()
   await presenceStore.initTeamMode(teamId.value, api)
+  syncCompetitionFilter()
   await loadSiblingTeams()
   document.addEventListener('click', handleClickOutsideActions)
 })
@@ -556,8 +592,9 @@ const pdfLinks = computed(() => {
     <!-- Page Header -->
     <AdminPageHeader
       :title="t('presence.title_team')"
-      :show-filters="false"
+      :competition-filtered-codes="workContext.pageFilteredCompetitionCodes"
       :has-notices="!!presenceStore.isLocked"
+      @competition-change="onCompetitionChange"
     >
       <template #badges>
         <div v-if="presenceStore.team" class="flex flex-wrap items-center gap-2 text-sm">
