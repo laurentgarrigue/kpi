@@ -31,13 +31,70 @@ mkdir -p sources/live/logs
 chmod 755 sources/live/logs
 ```
 
-### 3️⃣ Utiliser l'interface web
+### 3️⃣ Démarrer le daemon worker
 
-1. Ouvrir dans votre navigateur : `https://kpi.local/live/event.php` (ou votre domaine)
+Le daemon génère les fichiers JSON tant qu'une config est `running` dans
+`kp_event_worker_config`. Il faut donc qu'il tourne en permanence.
+
+**En développement / lancement immédiat** (dans le container PHP existant) :
+
+```bash
+make backend_worker_start     # lance le daemon en arrière-plan
+```
+
+**En production, sans rebuild ni redémarrage des containers** :
+
+```bash
+make backend_worker_start_prod   # lance le daemon dans le container PHP courant
+```
+
+> ⚠️ Lancé ainsi, le daemon s'arrête si le container PHP redémarre. Pour un
+> worker **persistant** (redémarrage automatique), voir la section
+> « Service Docker persistant » ci-dessous.
+
+### 4️⃣ Utiliser l'interface web (Event Cache Manager)
+
+1. Ouvrir l'**Event Cache Manager** dans app4 (console d'administration)
 2. Sélectionner un événement
 3. Configurer la date, l'heure et les paramètres
 4. Cliquer sur **"▶ Start Worker"**
-5. ✅ **Vous pouvez fermer le navigateur !** Le worker continue de tourner
+5. ✅ **Vous pouvez fermer le navigateur !** Le daemon continue de générer les caches
+
+> La page ne fait qu'écrire la configuration en base. C'est le **daemon**
+> (étape 3) qui lit cette config et génère réellement les fichiers
+> `live/cache/event<id>_pitch<pitch>.json`.
+
+---
+
+## 🐳 Service Docker persistant (recommandé en preprod/prod)
+
+Un service dédié `event-cache-worker` est défini dans les fichiers
+`compose.dev.yaml`, `compose.preprod.yaml` et `compose.prod.yaml`. Il lance
+`php api2/bin/console app:event-cache-worker` avec `restart: unless-stopped`,
+donc le daemon redémarre automatiquement avec les containers.
+
+```bash
+make docker_prod_up        # (ou docker_preprod_up / docker_dev_up)
+```
+
+Une fois ce service en place, **le lancement manuel via `make` n'est plus
+nécessaire** : le worker est toujours présent et consomme la config écrite par
+la page.
+
+### Isolation multi-environnement (preprod + prod sur le même VPS)
+
+Le service worker s'isole exactement comme les autres containers, via
+`APPLICATION_NAME` (défini dans chaque `docker/.env`) :
+
+| Ressource          | Valeur                                   |
+|--------------------|------------------------------------------|
+| Nom du container   | `${APPLICATION_NAME}_event_cache_worker` |
+| Réseau             | `network_${APPLICATION_NAME}`            |
+| Dossier de cache   | `live/cache/` du dossier de déploiement  |
+
+Tant que preprod et prod ont un **`APPLICATION_NAME` distinct** et des
+**dossiers de déploiement séparés**, les deux workers tournent en parallèle
+sans aucun conflit (containers, réseaux et fichiers de cache distincts).
 
 ---
 
@@ -84,7 +141,8 @@ Avant d'utiliser le worker en production :
 - [ ] Table `kp_event_worker_config` créée
 - [ ] Dossier `sources/live/logs/` existant avec permissions 755
 - [ ] Conteneurs Docker en cours d'exécution
-- [ ] Accès à l'interface web `event.php` fonctionnel
+- [ ] **Daemon worker lancé** (`make backend_worker_start_prod` ou service `event-cache-worker` de la compose)
+- [ ] Accès à l'Event Cache Manager (app4) fonctionnel
 - [ ] Test de démarrage/arrêt du worker
 - [ ] Vérification des fichiers JSON générés dans `sources/live/cache/`
 

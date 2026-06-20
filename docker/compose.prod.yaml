@@ -46,6 +46,36 @@ services:
             - "traefik.http.routers.kpi.entrypoints=websecure"
             - "traefik.http.routers.kpi.tls=true"
             - "traefik.http.routers.kpi.tls.certresolver=myresolver"
+    event-cache-worker:
+        container_name: ${APPLICATION_NAME}_event_cache_worker
+        build:
+            context: ./config
+            dockerfile: Dockerfile.prod.web
+            args:
+                USER_ID: ${USER_ID}
+                GROUP_ID: ${GROUP_ID}
+                BASE_IMAGE_PHP: ${BASE_IMAGE_PHP}
+        user: ${USER_ID}:${GROUP_ID}
+        environment:
+            - TZ=Europe/Paris
+            - LANG=fr_FR.UTF-8
+            - LANGUAGE=fr_FR:fr
+            - LC_ALL=fr_FR.UTF-8
+        command: php /var/www/html/api2/bin/console app:event-cache-worker
+        volumes:
+            - ../sources:/var/www/html
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+        networks:
+            - network_kpi
+        depends_on:
+            - db
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
     db:
         container_name: ${DB_CONTAINER_NAME}
         build:
