@@ -24,6 +24,10 @@ services:
         arguments:
             $liveDocumentRoot: '%live_document_root%'
 
+    App\Service\EventCacheService:
+        arguments:
+            $liveDocumentRoot: '%live_document_root%'
+
     App\Service\NotificationService:
         arguments:
             $mailFrom: '%env(MAILER_FROM)%'

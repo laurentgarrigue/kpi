@@ -41,7 +41,7 @@ backend_composer_install backend_composer_update backend_composer_require backen
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
-backend_worker_start backend_worker_stop backend_worker_status backend_worker_logs backend_worker_restart \
+backend_worker_start backend_worker_start_prod backend_worker_stop backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean
 
@@ -727,32 +727,44 @@ db_bash: ## Ouvre un shell dans le container MySQL
 
 
 ## BACKEND - EVENT WORKER
-backend_worker_start: ## Démarre le worker d'événements en arrière-plan
+backend_worker_start: ## Démarre le worker d'événements en arrière-plan (dans le container PHP existant)
 	@echo "Démarrage du worker d'événements..."
-	@echo "Création du dossier de logs si nécessaire..."
 	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "mkdir -p /var/www/html/live/logs && chmod 755 /var/www/html/live/logs"
-	@echo "Lancement du processus worker..."
-	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "nohup php /var/www/html/live/event_worker.php > /var/www/html/live/logs/event_worker.log 2>&1 &"
-	@sleep 2
-	@echo "Worker démarré en arrière-plan"
+	@if $(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "pgrep -f '[a]pp:event-cache-worker' > /dev/null"; then \
+		echo "Worker déjà en cours d'exécution (rien à faire)"; \
+	else \
+		echo "Lancement du processus worker (commande Symfony app:event-cache-worker)..."; \
+		docker exec -d $(PHP_CONTAINER_NAME) bash -c "php /var/www/html/api2/bin/console app:event-cache-worker >> /var/www/html/live/logs/event_worker.log 2>&1"; \
+		sleep 2; \
+		echo "Worker démarré en arrière-plan"; \
+	fi
 	@echo "Vérifiez le statut avec: make backend_worker_status"
 	@echo "Consultez les logs avec: make backend_worker_logs"
 
+backend_worker_start_prod: ## Lance immédiatement le worker en PROD dans le container PHP existant (sans rebuild/impacter la compose)
+	@echo "Démarrage immédiat du worker d'événements en PRODUCTION..."
+	@echo "Container ciblé: $(PHP_CONTAINER_NAME) (défini par APPLICATION_NAME dans docker/.env)"
+	@$(MAKE) backend_worker_start
+	@echo ""
+	@echo "ℹ️  Ce worker tourne dans le container PHP courant. Il s'arrêtera si le container redémarre."
+	@echo "ℹ️  Pour un worker persistant au redémarrage, ajoutez le service 'event-cache-worker' à la compose"
+	@echo "    (présent dans compose.prod.yaml) puis: make docker_prod_up"
+
 backend_worker_stop: ## Arrête le worker d'événements
 	@echo "Arrêt du worker d'événements..."
-	-@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "pkill -f event_worker.php" 2>/dev/null || true
+	-@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "pkill -f '[a]pp:event-cache-worker'" 2>/dev/null || true
 	@echo "Worker arrêté"
-	@echo "Note: Vous pouvez aussi arrêter via l'interface web (sources/live/event.php)"
+	@echo "Note: Vous pouvez aussi arrêter via l'interface web (Event Cache Manager dans app4)"
 
 backend_worker_status: ## Affiche le statut du worker d'événements
 	@echo "Statut du worker d'événements:"
-	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c 'if pgrep -f event_worker.php > /dev/null; then \
+	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c 'if pgrep -f "[a]pp:event-cache-worker" > /dev/null; then \
 		echo "  Worker en cours d'"'"'exécution"; \
-		echo "  PID: $$(pgrep -f event_worker.php)"; \
+		echo "  PID: $$(pgrep -f "[a]pp:event-cache-worker")"; \
 	else \
 		echo "  Worker arrêté"; \
 	fi'
-	@echo "Pour plus de détails, accédez à l'interface web: sources/live/event.php"
+	@echo "Pour plus de détails, accédez à l'interface web: Event Cache Manager (app4)"
 
 backend_worker_logs: ## Affiche les logs du worker d'événements
 	@echo "Logs du worker d'événements (Ctrl+C pour quitter):"
