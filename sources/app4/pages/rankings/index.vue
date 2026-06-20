@@ -626,6 +626,17 @@ const editValueForField = (field: string, value: number): string => {
             </option>
           </select>
         </div>
+
+        <!-- Refresh button -->
+        <button
+          v-if="workContext.pageCompetitionCode"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50 disabled:opacity-50"
+          :title="t('common.refresh')"
+          :disabled="loading"
+          @click="loadRankings"
+        >
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" :class="{ 'animate-spin': loading }" />
+        </button>
       </template>
       <template #badges>
         <div v-if="competitionInfo" class="flex items-center gap-2 flex-wrap">
