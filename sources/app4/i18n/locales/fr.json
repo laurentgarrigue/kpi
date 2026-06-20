@@ -1830,6 +1830,8 @@
       "phone": "Téléphone",
       "function": "Fonctions",
       "profile": "Profil",
+      "forced_password": "Mot de passe forcé",
+      "forced_password_placeholder": "Laisser vide pour ne pas modifier",
       "filters_title": "Filtres d'accès",
       "filter_seasons": "Saisons",
       "filter_seasons_all": "Toutes les saisons",
