@@ -44,7 +44,7 @@ chmod 755 sources/live/logs
 
 ### Via l'interface web (Recommandé)
 
-1. **Accéder à l'interface** : `https://votre-domaine.com/live/event.php`
+1. **Accéder à l'interface** : page **Event Cache Manager** dans app4 (console d'administration)
 
 2. **Configurer l'événement** :
    - Sélectionner l'événement
@@ -90,44 +90,47 @@ make backend_worker_stop
 ## 📊 Architecture
 
 ```
-┌─────────────────────┐
-│  Interface Web      │  ← Navigateur
-│  (event.php)        │
-└──────────┬──────────┘
+┌─────────────────────────────┐
+│  Event Cache Manager (app4) │  ← Navigateur (Nuxt)
+└──────────┬──────────────────┘
            │ HTTP
            ▼
-┌─────────────────────┐
-│  API REST           │
-│  (api_worker.php)   │
-└──────────┬──────────┘
+┌─────────────────────────────┐
+│  API REST (api2 / Symfony)  │
+│  AdminEventWorkerController  │
+└──────────┬──────────────────┘
            │ MySQL
            ▼
-┌─────────────────────┐
-│  Base de données    │
-│  (kp_event_worker_  │
-│   config)           │
-└──────────┬──────────┘
+┌─────────────────────────────┐
+│  Base de données            │
+│  (kp_event_worker_config)   │
+└──────────┬──────────────────┘
            │ Polling
            ▼
-┌─────────────────────┐
-│  Worker Process     │  ← Processus PHP en arrière-plan
-│  (event_worker.php) │
-└──────────┬──────────┘
+┌─────────────────────────────┐
+│  Daemon (api2 / Symfony)    │  ← Processus CLI en arrière-plan
+│  app:event-cache-worker     │
+│  → EventCacheService        │
+└──────────┬──────────────────┘
            │
            ▼
-┌─────────────────────┐
-│  Fichiers JSON      │  ← Cache généré
-│  (cache/*.json)     │
-└─────────────────────┘
+┌─────────────────────────────┐
+│  Fichiers JSON              │  ← Cache généré
+│  (cache/*.json)             │
+└─────────────────────────────┘
 ```
 
 ### Composants
 
-1. **event.php** : Interface web avec boutons de contrôle et monitoring
-2. **event.js** : JavaScript pour gérer l'interface et appeler l'API
-3. **api_worker.php** : API REST pour contrôler le worker (start/stop/status/pause/resume)
-4. **event_worker.php** : Processus PHP CLI qui tourne en arrière-plan
-5. **kp_event_worker_config** : Table MySQL qui stocke la configuration et le statut
+1. **Event Cache Manager (app4)** : page Nuxt avec boutons de contrôle et monitoring
+2. **AdminEventWorkerController** (`api2/src/Controller/`) : API REST de contrôle (start/stop/status/pause/resume) — écrit la config en base
+3. **app:event-cache-worker** (`api2/src/Command/EventCacheWorkerCommand.php`) : daemon CLI qui tourne en arrière-plan et lit la config
+4. **EventCacheService** (`api2/src/Service/EventCacheService.php`) : génère réellement les fichiers JSON (port de `CacheMatch::Event`)
+5. **kp_event_worker_config** : table MySQL qui stocke la configuration et le statut
+
+> 🗄️ **Legacy** : l'ancien daemon `live/event_worker.php` + l'API `live/api_worker.php`
+> + la page `live/event.php` remplissent le même rôle et restent fonctionnels,
+> mais sont remplacés par la stack api2/app4 ci-dessus.
 
 ---
 
@@ -136,9 +139,9 @@ make backend_worker_stop
 ### Cycle de vie du worker
 
 1. **Démarrage** :
-   - L'utilisateur clique sur "Start Worker" dans l'interface
-   - L'API enregistre la configuration dans la table `kp_event_worker_config`
-   - Le processus `event_worker.php` lit la config et démarre la boucle
+   - L'utilisateur clique sur "Start Worker" dans l'Event Cache Manager (app4)
+   - L'API (`AdminEventWorkerController`) enregistre la configuration dans `kp_event_worker_config`
+   - Le daemon `app:event-cache-worker` (qui tourne en permanence) lit la config et l'inclut dans sa boucle
 
 2. **Exécution** :
    - Toutes les X secondes (délai configuré), le worker :
