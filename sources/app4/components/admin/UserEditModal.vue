@@ -56,6 +56,7 @@ const form = reactive({
   tel: '',
   fonction: '',
   niveau: 7,
+  forcedPassword: '',
   filtreSaison: '' as string,
   filtreCompetition: '' as string,
   idEvenement: '' as string,
@@ -167,6 +168,7 @@ function resetForm() {
   form.tel = ''
   form.fonction = ''
   form.niveau = 7
+  form.forcedPassword = ''
   competitionSearch.value = ''
   form.filtreSaison = ''
   form.filtreCompetition = ''
@@ -204,6 +206,7 @@ async function loadUserDetail(code: string) {
     form.tel = detail.tel
     form.fonction = detail.fonction
     form.niveau = detail.niveau
+    form.forcedPassword = ''
     form.filtreSaison = detail.filtreSaison
     form.filtreCompetition = detail.filtreCompetition
     form.idEvenement = detail.idEvenement
@@ -560,6 +563,9 @@ async function handleSubmit() {
     tel: form.tel.trim(),
     fonction: form.fonction.trim(),
     niveau: form.niveau,
+    ...(authStore.isSuperAdmin && form.forcedPassword.trim()
+      ? { forcedPassword: form.forcedPassword }
+      : {}),
     filtreSaison: buildFiltreSaison(),
     filtreCompetition: buildFiltreCompetition(),
     idEvenement: buildIdEvenement(),
@@ -796,19 +802,34 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- Profile -->
-        <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
-            {{ t('users.modal.profile') }} <span class="text-danger-500">*</span>
-          </label>
-          <select
-            v-model="form.niveau"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option v-for="opt in profileOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
+        <!-- Profile (+ forced password for super admin) -->
+        <div :class="authStore.isSuperAdmin ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : ''">
+          <div>
+            <label class="block text-sm font-medium text-header-700 mb-1">
+              {{ t('users.modal.profile') }} <span class="text-danger-500">*</span>
+            </label>
+            <select
+              v-model="form.niveau"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option v-for="opt in profileOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Forced password (profile 1 only) -->
+          <div v-if="authStore.isSuperAdmin">
+            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.modal.forced_password') }}</label>
+            <input
+              v-model="form.forcedPassword"
+              type="text"
+              autocomplete="new-password"
+              maxlength="100"
+              :placeholder="t('users.modal.forced_password_placeholder')"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+          </div>
         </div>
 
         <!-- Access Filters section -->

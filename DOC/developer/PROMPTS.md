@@ -186,7 +186,7 @@ TODO :
 - Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.
 - Schéma de compétition : pouvoir changer de compétition sur la page ?
 - ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
-- Nouveau Profil Chef arbitre et scrutineering
+- Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
 - Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
 - Vérifier s'il y a d'autres choses à upgrader.
 - Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.

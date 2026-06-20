@@ -352,9 +352,15 @@ class AdminUsersController extends AbstractController
             ]);
         }
 
-        // Generate random bcrypt password (user will use reset link)
-        $randomPassword = bin2hex(random_bytes(16));
-        $hashedPassword = password_hash($randomPassword, PASSWORD_BCRYPT);
+        // Password: super admin (niveau 1) may force a specific password,
+        // otherwise generate a random one (user will use the reset link).
+        $forcedPassword = trim($data['forcedPassword'] ?? '');
+        if ($forcedPassword !== '' && $currentUser->getEffectiveNiveau() <= 1) {
+            $hashedPassword = password_hash($forcedPassword, PASSWORD_BCRYPT);
+        } else {
+            $randomPassword = bin2hex(random_bytes(16));
+            $hashedPassword = password_hash($randomPassword, PASSWORD_BCRYPT);
+        }
 
         $sql = "INSERT INTO kp_user (Code, Pwd, Identite, Mail, Tel, Fonction, Niveau,
                     Type_filtre_competition, Filtre_competition, Filtre_saison,
@@ -485,6 +491,13 @@ class AdminUsersController extends AbstractController
         if ($adminNiveau <= 2) {
             $setClauses[] = 'Id_Evenement = ?';
             $params[] = $data['idEvenement'] ?? '';
+        }
+
+        // Only super admin (niveau 1) can force a password
+        $forcedPassword = trim($data['forcedPassword'] ?? '');
+        if ($forcedPassword !== '' && $adminNiveau <= 1) {
+            $setClauses[] = 'Pwd = ?';
+            $params[] = password_hash($forcedPassword, PASSWORD_BCRYPT);
         }
 
         $params[] = $code; // WHERE clause
