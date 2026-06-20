@@ -390,6 +390,7 @@ class AdminGamesController extends AbstractController
             'Matric_arbitre_principal' => isset($data['matricArbitrePrincipal']) ? (int) $data['matricArbitrePrincipal'] : 0,
             'Arbitre_secondaire' => !empty($data['arbitreSecondaire']) ? substr($data['arbitreSecondaire'], 0, 60) : null,
             'Matric_arbitre_secondaire' => isset($data['matricArbitreSecondaire']) ? (int) $data['matricArbitreSecondaire'] : 0,
+            'Timeshoot' => !empty($data['timeshoot']) ? substr($data['timeshoot'], 0, 50) : null,
             'Publication' => 'N',
             'Validation' => 'N',
             'Statut' => 'ATT',
@@ -479,6 +480,9 @@ class AdminGamesController extends AbstractController
         }
         if (array_key_exists('matricArbitreSecondaire', $data)) {
             $updateData['Matric_arbitre_secondaire'] = (int) ($data['matricArbitreSecondaire'] ?? 0);
+        }
+        if (array_key_exists('timeshoot', $data)) {
+            $updateData['Timeshoot'] = !empty($data['timeshoot']) ? substr($data['timeshoot'], 0, 50) : null;
         }
 
         if (empty($updateData)) {

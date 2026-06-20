@@ -30,6 +30,31 @@ export const useGames = () => {
   const games = computed(() => gameStore.games)
   const gamesCount = computed(() => gameStore.games.length)
 
+  // Déduplique une liste de noms insensiblement à la casse.
+  // Pour chaque clé (nom en minuscules), conserve la variante la plus lisible :
+  // on préfère un nom mixte (ex. "DUPONT Jean") à une version tout en majuscules
+  // (ex. "DUPONT JEAN"), afin d'éviter les doublons quand le prénom est parfois
+  // converti en PascalCase et parfois laissé en majuscules.
+  const dedupeNamesCaseInsensitive = (names) => {
+    const byKey = new Map()
+    for (const name of names) {
+      if (!name) continue
+      const key = name.toLowerCase().replace(/\s+/g, ' ').trim()
+      const existing = byKey.get(key)
+      if (!existing) {
+        byKey.set(key, name)
+        continue
+      }
+      // Préférer une variante qui n'est pas entièrement en majuscules
+      const existingIsUpper = existing === existing.toUpperCase()
+      const candidateIsUpper = name === name.toUpperCase()
+      if (existingIsUpper && !candidateIsUpper) {
+        byKey.set(key, name)
+      }
+    }
+    return [...byKey.values()]
+  }
+
   // Teams and refs belonging to currently selected categories (or all if no category filter)
   const teamsFilteredByCategories = computed(() => {
     const allGames = gameStore.games
@@ -44,13 +69,11 @@ export const useGames = () => {
       )
     ].filter(Boolean).sort()
 
-    const filteredRefs = [
-      ...new Set(
-        base.map(x => x.r_1_name)
-          .concat(base.map(x => x.r_2_name))
-          .concat(base.map(x => x.s_name))
-      )
-    ].filter(Boolean).sort()
+    const filteredRefs = dedupeNamesCaseInsensitive(
+      base.map(x => x.r_1_name)
+        .concat(base.map(x => x.r_2_name))
+        .concat(base.map(x => x.s_name))
+    ).sort()
 
     return { teams: filteredTeams, refs: filteredRefs }
   })
@@ -210,15 +233,11 @@ export const useGames = () => {
     ]
       .filter(value => value !== null)
       .sort()
-    refs.value = [
-      ...new Set(
-        allGames.map(x => x.r_1_name)
-          .concat(allGames.map(x => x.r_2_name))
-          .concat(allGames.map(x => x.s_name))
-      )
-    ]
-      .filter(value => value !== null)
-      .sort()
+    refs.value = dedupeNamesCaseInsensitive(
+      allGames.map(x => x.r_1_name)
+        .concat(allGames.map(x => x.r_2_name))
+        .concat(allGames.map(x => x.s_name))
+    ).sort()
   }
 
   const getFav = async () => {
@@ -243,17 +262,24 @@ export const useGames = () => {
   const filterGames = () => {
     let newFilteredGames = [...gameStore.games]
     if (fav_teams.value.length > 0) {
+      // Set des favoris en minuscules pour matcher les noms d'arbitres quelle que
+      // soit la casse (le prénom est parfois en majuscules, parfois en PascalCase)
+      const favLower = new Set(
+        fav_teams.value.map(f => f.toLowerCase().replace(/\s+/g, ' ').trim())
+      )
+      const favHasName = (name) =>
+        !!name && favLower.has(name.toLowerCase().replace(/\s+/g, ' ').trim())
       newFilteredGames = newFilteredGames.filter(game => {
         return (
           fav_teams.value.includes(game.t_a_label) ||
           fav_teams.value.includes(game.t_b_label) ||
-          (game.r_1 && fav_teams.value.includes(game.r_1.split(' (')[0])) ||
-          (game.r_2 && fav_teams.value.includes(game.r_2.split(' (')[0])) ||
+          (game.r_1 && favHasName(game.r_1.split(' (')[0])) ||
+          (game.r_2 && favHasName(game.r_2.split(' (')[0])) ||
           (game.r_1 && fav_teams.value.includes(game.r_1.split('(').pop().split(')')[0])) ||
           (game.r_2 && fav_teams.value.includes(game.r_2.split('(').pop().split(')')[0])) ||
-          fav_teams.value.includes(game.r_1_name) ||
-          fav_teams.value.includes(game.r_2_name) ||
-          fav_teams.value.includes(game.s_name)
+          favHasName(game.r_1_name) ||
+          favHasName(game.r_2_name) ||
+          favHasName(game.s_name)
         )
       })
     }

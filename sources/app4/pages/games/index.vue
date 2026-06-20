@@ -115,6 +115,9 @@ const formData = ref<GameFormData>(getDefaultFormData())
 const formError = ref('')
 const formSaving = ref(false)
 const formTeams = ref<GameTeam[]>([])
+// Shotclock operator is nominative-only (a name, never a team). The autocomplete needs a
+// matric binding, but Timeshoot carries none — this throwaway ref satisfies the contract.
+const formShotclockMatric = ref(0)
 
 // Inline editing
 const editingCell = ref<{ id: number; field: string } | null>(null)
@@ -180,6 +183,7 @@ function getDefaultFormData(): GameFormData {
     matricArbitrePrincipal: 0,
     arbitreSecondaire: '',
     matricArbitreSecondaire: 0,
+    timeshoot: '',
   }
 }
 
@@ -1155,6 +1159,7 @@ const openEditModal = async (game: Game) => {
     matricArbitrePrincipal: game.matricArbitrePrincipal || 0,
     arbitreSecondaire: game.arbitreSecondaire || '',
     matricArbitreSecondaire: game.matricArbitreSecondaire || 0,
+    timeshoot: game.timeshoot || '',
   }
   formError.value = ''
   formTeams.value = await loadTeamsForJournee(game.idJournee)
@@ -1189,6 +1194,8 @@ const saveGame = async (): Promise<boolean> => {
   formSaving.value = true
   // Auto-repair coding: add missing brackets when the label is a bare encoding.
   formData.value.libelle = normalizeBracketCoding(formData.value.libelle)
+  // Shotclock keeps the name only (strip "(Club)" and trailing level), per nominative-only requirement.
+  formData.value.timeshoot = formData.value.timeshoot ? refereePersonLabel(formData.value.timeshoot.trim()) : ''
   try {
     if (editingGame.value) {
       await api.put(`/admin/games/${editingGame.value.id}`, formData.value)
@@ -1222,6 +1229,8 @@ const saveAsNewGame = async () => {
   formSaving.value = true
   // Auto-repair coding: add missing brackets when the label is a bare encoding.
   formData.value.libelle = normalizeBracketCoding(formData.value.libelle)
+  // Shotclock keeps the name only (strip "(Club)" and trailing level), per nominative-only requirement.
+  formData.value.timeshoot = formData.value.timeshoot ? refereePersonLabel(formData.value.timeshoot.trim()) : ''
   try {
     await api.post('/admin/games', formData.value)
     toast.add({ title: t('common.success'), description: t('games.added'), color: 'success' })
@@ -3304,6 +3313,18 @@ const openScoring = (gameId: number) => {
                   <option v-for="tm in formTeams" :key="tm.id" :value="tm.libelle">{{ tm.libelle }}</option>
                 </select>
               </div>
+            </div>
+            <!-- Shotclock (Timeshoot) — nominative name only, free text allowed -->
+            <div>
+              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.field.shotclock') }}</label>
+              <AdminRefereeAutocomplete
+                v-model="formData.timeshoot"
+                :matric="formShotclockMatric"
+                :journee-id="formData.idJournee"
+                :placeholder="t('games.shotclock_placeholder')"
+                :disabled="!formData.idJournee"
+                @update:matric="formShotclockMatric = $event"
+              />
             </div>
         </div>
 

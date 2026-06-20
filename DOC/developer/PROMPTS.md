@@ -186,7 +186,7 @@ TODO :
 - Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.
 - Schéma de compétition : pouvoir changer de compétition sur la page ?
 - ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
-- Nouveau Profil Chef arbitre et scrutineering
+- Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
 - Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
 - Vérifier s'il y a d'autres choses à upgrader.
 - Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
@@ -197,7 +197,12 @@ TODO :
 - Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
 - ✅ Rashedi Mehrdad proposé dans le pool arbitres pour IRI er FRA alors qu'il est inactif dans IRI
 (GET https://www.kayak-polo.info/api2/admin/games/autocomplete/referees?q=rash&journeeId=9953&lang=en)
-- 
+- Dark mode, blue mode.
+- Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
+- ✅ App4 en mode smartphone portrait, je ne peux pas dérouler le sous-menu administration et accéder aux items du bas.
+- ✅ App4 Games : dans le formulaire de modification d'un match, ajouter le champs shotclock (Timeshoot) avec autocomplétion sur les arbitres, et permettre la saisie directe même si l'arbitre n'est pas dans la liste.
+- Incrustation Teams only (clubs) : adapter le design à la css
+- ✅ Refresh sur la page ranking.
 - ⚠️
 
 Scoring:

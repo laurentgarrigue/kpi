@@ -49,8 +49,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
   const profile = authStore.profile
   const items: MenuItem[] = []
 
-  // Compétitions - profile <= 10
-  if (profile <= 10) {
+  // Compétitions - profile <= 8 (hidden for profile 9)
+  if (profile <= 8) {
     items.push({
       to: '/competitions',
       icon: 'heroicons:trophy',
@@ -58,8 +58,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Documents - hidden for profile 7
-  if (profile !== 7 && profile <= 9) {
+  // Documents - hidden for profile 7 and 9
+  if (profile !== 7 && profile <= 8) {
     items.push({
       to: '/documents',
       icon: 'heroicons:document-text',
@@ -67,8 +67,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Équipes - profile <= 9
-  if (profile <= 9) {
+  // Équipes - profile <= 8 (hidden for profile 9)
+  if (profile <= 8) {
     items.push({
       to: '/teams',
       icon: 'heroicons:user-group',
@@ -76,8 +76,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Journées/Phases - profile <= 9
-  if (profile <= 9) {
+  // Journées/Phases - profile <= 8 (hidden for profile 9)
+  if (profile <= 8) {
     items.push({
       to: '/gamedays',
       icon: 'heroicons:calendar',
@@ -94,8 +94,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Classements - profile <= 9 (simple link, initial accessible from page)
-  if (profile <= 9) {
+  // Classements - profile <= 8 (hidden for profile 9)
+  if (profile <= 8) {
     items.push({
       to: '/rankings',
       icon: 'heroicons:chart-bar',
@@ -103,8 +103,8 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Statistiques - profile <= 9
-  if (profile <= 9) {
+  // Statistiques - profile <= 8 (hidden for profile 9)
+  if (profile <= 8) {
     items.push({
       to: '/stats',
       icon: 'heroicons:chart-pie',
@@ -134,7 +134,7 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.events')
     })
   }
-  if (profile <= 9) {
+  if (profile <= 8) {
     referentials.push({
       to: '/clubs',
       icon: 'heroicons:building-office-2',
@@ -586,9 +586,11 @@ onMounted(() => {
       </div>
 
       <!-- Mobile menu (vertical dropdown) -->
+      <!-- max-h + overflow keeps the lower items (and the admin sub-menu) reachable
+           when the expanded menu is taller than the viewport (smartphone portrait). -->
       <nav
         v-if="mobileMenuOpen"
-        class="lg:hidden py-4 border-t border-header-800 relative z-50"
+        class="lg:hidden py-4 border-t border-header-800 relative z-50 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain"
       >
         <div class="px-4 pb-2 space-y-1">
           <!-- Section: Public -->
