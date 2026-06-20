@@ -68,6 +68,7 @@ export interface GameFormData {
   matricArbitrePrincipal: number
   arbitreSecondaire: string
   matricArbitreSecondaire: number
+  timeshoot: string
 }
 
 // Journee item for filter/select dropdown

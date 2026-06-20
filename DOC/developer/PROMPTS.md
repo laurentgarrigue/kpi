@@ -200,7 +200,7 @@ TODO :
 - Dark mode, blue mode.
 - Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
 - ✅ App4 en mode smartphone portrait, je ne peux pas dérouler le sous-menu administration et accéder aux items du bas.
-- ⚠️App4 Games : dans le formulaire de modification d'un match, ajouter le champs shotclock (Timeshoot) avec autocomplétion sur les arbitres, et permettre la saisie directe même si l'arbitre n'est pas dans la liste.
+- ✅ App4 Games : dans le formulaire de modification d'un match, ajouter le champs shotclock (Timeshoot) avec autocomplétion sur les arbitres, et permettre la saisie directe même si l'arbitre n'est pas dans la liste.
 - Incrustation Teams only (clubs) : adapter le design à la css
 - ⚠️
 
