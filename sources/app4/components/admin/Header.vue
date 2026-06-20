@@ -586,9 +586,11 @@ onMounted(() => {
       </div>
 
       <!-- Mobile menu (vertical dropdown) -->
+      <!-- max-h + overflow keeps the lower items (and the admin sub-menu) reachable
+           when the expanded menu is taller than the viewport (smartphone portrait). -->
       <nav
         v-if="mobileMenuOpen"
-        class="lg:hidden py-4 border-t border-header-800 relative z-50"
+        class="lg:hidden py-4 border-t border-header-800 relative z-50 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain"
       >
         <div class="px-4 pb-2 space-y-1">
           <!-- Section: Public -->
