@@ -93,6 +93,7 @@ La page s'organise en **deux onglets** : le **Classement calculé** (provisoire,
 | 6 | PDF Détail par équipe (public, sauf MULTI) | ≤ 10 | Essentielle | ✅ Conserver |
 | 7 | PDF Matchs (admin, sauf MULTI) | ≤ 10 | Essentielle | ✅ Conserver |
 | 8 | PDF Matchs (public, sauf MULTI) | ≤ 10 | Essentielle | ✅ Conserver |
+| 9 | PDF Justification du départage (CHPT + poules CP, à la demande, si égalités) | ≤ 10 | Utile | 🆕 À implémenter — voir [PAGE_CLASSEMENT_REGLEMENTS.md §6](PAGE_CLASSEMENT_REGLEMENTS.md) |
 
 **Liens PDF par type de compétition (legacy PHP)** :
 
@@ -420,9 +421,33 @@ Si G > 0 → Vainqueur (gras). Si P > 0 → Perdant (italique). Sinon → simple
 2. Mise à jour immédiate de l'interface (pas de rechargement complet)
 3. Les champs de la phase passent en lecture seule / éditables
 
+### 5.4 Conséquence : pré-requis pour l'affectation automatique des tours suivants
+
+La consolidation d'une poule ne fige pas seulement son classement vis-à-vis du recalcul : elle
+sert aussi de **garantie de fiabilité pour l'affectation automatique** des matchs des tours suivants
+(page Matchs). Un code bracket de type `1A` / `2B` (« 1er / 2e de la poule A / B ») n'est résolu
+que si la poule correspondante est **consolidée** (`kp_journee.Consolidation = 'O'`) — on évite
+ainsi d'affecter une équipe depuis un classement de poule encore provisoire.
+
+➡️ **Workflow** : consolider le classement des poules **avant** de lancer l'affectation automatique
+des tours suivants. Voir [PAGE_MATCHS.md §2.3.1](PAGE_MATCHS.md).
+
 ---
 
 ## 6. Calcul du classement (algorithme)
+
+> **Départage des égalités (goal-average)** : les règlements officiels appliqués au
+> départage des équipes à égalité de points (ICF 2025 pour le goal-average général,
+> FFCK RP KAP 65 pour le particulier), l'état réel de l'implémentation et l'écart
+> restant sont détaillés dans
+> [PAGE_CLASSEMENT_REGLEMENTS.md](PAGE_CLASSEMENT_REGLEMENTS.md).
+> Le `goalaverage` s'applique au classement général **CHPT** mais aussi au départage
+> **au sein des poules d'une CP** (déroulement type C), qui détermine quelle équipe est
+> 1ʳᵉ/2ᵉ de poule. En résumé : le calcul applique actuellement la différence de buts puis
+> les buts marqués (général), ou la différence particulière (particulier) ; la confrontation
+> directe en points, les cartons et le tirage au sort ne sont pas encore pris en compte.
+> ⚠️ Cas le plus impactant : en goal-average **particulier**, les poules CP ne font
+> **aucun départage** (équipes laissées ex æquo).
 
 ### 6.1 Étapes du calcul
 
