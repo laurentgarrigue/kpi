@@ -104,6 +104,7 @@ export interface RankingPhaseMatch {
   idEquipeB: number
   scoreA: number | null
   scoreB: number | null
+  validated: boolean // Validation = 'O' (match locked/validated)
 }
 
 // Phase in the déroulement (CP only)

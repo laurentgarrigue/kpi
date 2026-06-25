@@ -365,13 +365,20 @@ class AdminRankingsController extends AbstractController
             return $this->json(['message' => 'Competition must be ON to edit rankings'], Response::HTTP_FORBIDDEN);
         }
 
+        // Detail suffix identifying the phase/poule when editing a phase ranking,
+        // so logs can tell which gameday (Id_journee) was modified.
+        $phaseLabel = '';
+
         if ($journeeId !== null) {
             // Check phase is not consolidated
-            $sql = "SELECT Consolidation FROM kp_journee WHERE Id = ?";
+            $sql = "SELECT Consolidation, Phase, Lieu FROM kp_journee WHERE Id = ?";
             $jRow = $this->connection->prepare($sql)->executeQuery([(int)$journeeId])->fetchAssociative();
             if ($jRow && $jRow['Consolidation'] === 'O') {
                 return $this->json(['message' => 'Cannot edit a consolidated phase'], Response::HTTP_FORBIDDEN);
             }
+
+            $phaseName = trim(($jRow['Phase'] ?? '') . ' ' . ($jRow['Lieu'] ?? ''));
+            $phaseLabel = " [phase #" . (int)$journeeId . ($phaseName !== '' ? " - $phaseName" : '') . "]";
 
             // Update kp_competition_equipe_journee
             $sql = "UPDATE kp_competition_equipe_journee SET `$field` = ? WHERE Id = ? AND Id_journee = ?";
@@ -382,7 +389,17 @@ class AdminRankingsController extends AbstractController
             $this->connection->prepare($sql)->executeStatement([$value, $teamId]);
         }
 
-        $this->logActionForCompetition('Modif Classement inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)");
+        // A manual inline edit changes the calculated ranking, so refresh the
+        // calculation metadata (date + author) just like a recalculation does.
+        // Otherwise the published ranking could end up differing from the
+        // calculated one while both still advertise the same calculation date.
+        $userCode = $user->getCode();
+        $sql = "UPDATE kp_competition
+                SET Date_calcul = NOW(), Code_uti_calcul = ?
+                WHERE Code = ? AND Code_saison = ?";
+        $this->connection->prepare($sql)->executeStatement([$userCode, $row['Code_compet'], $row['Code_saison']]);
+
+        $this->logActionForCompetition('Modif Classement inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)$phaseLabel");
 
         return $this->json(['success' => true]);
     }
@@ -981,7 +998,7 @@ class AdminRankingsController extends AbstractController
             // Load matches for elimination phases
             $phaseMatches = [];
             if (($j['Type'] ?: 'C') === 'E') {
-                $sql = "SELECT m.Id, m.ScoreA, m.ScoreB, m.Id_equipeA, m.Id_equipeB,
+                $sql = "SELECT m.Id, m.ScoreA, m.ScoreB, m.Id_equipeA, m.Id_equipeB, m.Validation,
                                ce1.Libelle AS EquipeA, ce2.Libelle AS EquipeB
                         FROM kp_match m
                         LEFT JOIN kp_competition_equipe ce1 ON m.Id_equipeA = ce1.Id
@@ -997,6 +1014,7 @@ class AdminRankingsController extends AbstractController
                     'idEquipeB' => (int) ($m['Id_equipeB'] ?? 0),
                     'scoreA' => $m['ScoreA'] !== null ? (int) $m['ScoreA'] : null,
                     'scoreB' => $m['ScoreB'] !== null ? (int) $m['ScoreB'] : null,
+                    'validated' => ($m['Validation'] ?? '') === 'O',
                 ], $matches);
             }
 
