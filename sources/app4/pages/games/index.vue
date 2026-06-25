@@ -1519,8 +1519,43 @@ const confirmBulkChangeGroup = async () => {
 const confirmBulkAutoAssign = async () => {
   formSaving.value = true
   try {
-    const response = await api.post<{ updated: number }>('/admin/games/bulk/auto-assign', { ids: selectedIds.value })
-    toast.add({ title: t('common.success'), description: t('games.bulk_auto_assigned', { count: response.updated }), color: 'success' })
+    const response = await api.post<{ updated: number, errors?: { id: number, reason: string }[] }>(
+      '/admin/games/bulk/auto-assign',
+      { ids: selectedIds.value }
+    )
+    const errors = response.errors ?? []
+
+    // Only show the success toast when something was actually assigned, to avoid
+    // the contradictory "Success — 0 game assigned" message.
+    if (response.updated > 0) {
+      toast.add({ title: t('common.success'), description: t('games.bulk_auto_assigned', { count: response.updated }), color: 'success' })
+    } else if (errors.length === 0) {
+      toast.add({ title: t('common.warning'), description: t('games.bulk_auto_assign_none'), color: 'warning' })
+    }
+
+    // Surface unresolved slots. The most actionable case is a pool whose ranking
+    // is not yet consolidated: an auto-assignment from a "1st/2nd of pool" code
+    // (e.g. 1A) only uses a *consolidated* pool, to avoid assigning from a
+    // still-running pool's provisional ranking.
+    if (errors.length > 0) {
+      const notConsolidated = errors.filter(e => e.reason.startsWith('pool_not_consolidated'))
+      if (notConsolidated.length > 0) {
+        toast.add({
+          title: t('common.warning'),
+          description: t('games.bulk_auto_assign_pool_not_consolidated', { count: notConsolidated.length }),
+          color: 'warning',
+          duration: 8000
+        })
+      } else {
+        toast.add({
+          title: t('common.warning'),
+          description: t('games.bulk_auto_assign_unresolved', { count: errors.length }),
+          color: 'warning',
+          duration: 6000
+        })
+      }
+    }
+
     bulkAutoAssignConfirmOpen.value = false
     await loadGames(true)
   } catch {

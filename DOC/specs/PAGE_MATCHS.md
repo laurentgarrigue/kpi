@@ -114,6 +114,39 @@ C'est la page la plus complexe de l'administration, avec 4 modes de rendu selon 
 | 72 | Toggle imprimé en masse | ≤ 6 | Essentielle | ✅ Conserver |
 | 73 | Feuilles de marque PDF (sélection) | ≤ 10 | Essentielle | ✅ Conserver (lien legacy) |
 
+#### 2.3.1 Affectation automatique — résolution des codes bracket
+
+L'affectation automatique (#65) lit la notation bracket du libellé `[PART_A-PART_B-ARB1-ARB2]`
+et remplit, pour chaque match sélectionné, les équipes A/B (et arbitres) à partir de codes. Chaque
+code est résolu de la façon suivante :
+
+| Code (ex.) | Signification | Source |
+|------------|---------------|--------|
+| `T3` / `D3` | Équipe au tirage n° 3 | `kp_competition_equipe.Tirage` |
+| `V2` / `G2` / `W2` | **Vainqueur** du match n° 2 (Numero_ordre) | Match correspondant |
+| `P2` / `L2` | **Perdant** du match n° 2 | Match correspondant |
+| `1A` / `2B` | **1er / 2e de la poule A / B** | `kp_competition_equipe_journee.Clt` de la poule |
+
+**⚠️ Contraintes de fiabilité (pour ne jamais affecter depuis un résultat non figé) :**
+
+- **Vainqueur / perdant (`V`/`G`/`W`, `P`/`L`)** : le match source n'est résolu que s'il est
+  **verrouillé/validé** (`kp_match.Validation = 'O'`). Un match en cours ou non verrouillé n'est
+  pas utilisé → l'emplacement reste vide et l'opération renvoie `winner_not_found` / `loser_not_found`.
+- **Classement de poule (`1A`, `2B`, …)** : la poule n'est utilisée que si elle est **consolidée**
+  (`kp_journee.Consolidation = 'O'`). La consolidation est la décision explicite de l'admin que le
+  classement de la poule est définitif ; on évite ainsi d'affecter depuis un classement provisoire.
+  Si la poule existe mais n'est pas consolidée → `pool_not_consolidated` ; si elle n'existe pas ou que
+  le rang est introuvable → `pool_rank_not_found`. Dans les deux cas, l'emplacement reste vide.
+
+**Retour d'information utilisateur** : l'API renvoie `{ updated, errors: [{ id, reason }] }`. Le
+frontend affiche, en plus du nombre de matchs affectés, un **toast d'avertissement** quand des
+emplacements n'ont pas pu être résolus — avec un message spécifique « poule non consolidée »
+invitant à consolider le classement de la poule avant d'affecter les tours suivants
+(clés i18n `games.bulk_auto_assign_pool_not_consolidated` et `games.bulk_auto_assign_unresolved`).
+
+**Endpoint** : `POST /admin/games/bulk/auto-assign` — voir
+[AdminGamesController::bulkAutoAssign](../../sources/api2/src/Controller/AdminGamesController.php).
+
 ### 2.4 Documents / Exports (zone "Tous les matchs")
 
 | # | Fonctionnalité | Profil | Évaluation | Décision |
