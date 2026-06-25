@@ -1519,6 +1519,8 @@ class AdminGamesController extends AbstractController
                             case 'V':
                             case 'G':
                             case 'W':
+                                // Only resolve the winner from a validated (locked) game,
+                                // so an in-progress / unlocked game is never used as a source.
                                 $match = $this->connection->prepare(
                                     "SELECT m.Id_equipeA, m.Id_equipeB, ce.Libelle Nom_equipeA, ce2.Libelle Nom_equipeB,
                                             m.ScoreA, m.ScoreB
@@ -1527,6 +1529,7 @@ class AdminGamesController extends AbstractController
                                      JOIN kp_competition_equipe ce ON m.Id_equipeA = ce.Id
                                      JOIN kp_competition_equipe ce2 ON m.Id_equipeB = ce2.Id
                                      WHERE m.Numero_ordre = ? AND m.ScoreA != m.ScoreB
+                                       AND m.Validation = 'O'
                                        AND j.Code_competition = ? AND j.Code_saison = ?"
                                 )->executeQuery([$number, $row['Code_competition'], $row['Code_saison']])->fetchAssociative();
                                 if ($match) {
@@ -1541,6 +1544,8 @@ class AdminGamesController extends AbstractController
 
                             case 'P':
                             case 'L':
+                                // Only resolve the loser from a validated (locked) game,
+                                // so an in-progress / unlocked game is never used as a source.
                                 $match = $this->connection->prepare(
                                     "SELECT m.Id_equipeA, m.Id_equipeB, ce.Libelle Nom_equipeA, ce2.Libelle Nom_equipeB,
                                             m.ScoreA, m.ScoreB
@@ -1549,6 +1554,7 @@ class AdminGamesController extends AbstractController
                                      JOIN kp_competition_equipe ce ON m.Id_equipeA = ce.Id
                                      JOIN kp_competition_equipe ce2 ON m.Id_equipeB = ce2.Id
                                      WHERE m.Numero_ordre = ? AND m.ScoreA != m.ScoreB
+                                       AND m.Validation = 'O'
                                        AND j.Code_competition = ? AND j.Code_saison = ?"
                                 )->executeQuery([$number, $row['Code_competition'], $row['Code_saison']])->fetchAssociative();
                                 if ($match) {
@@ -1566,8 +1572,12 @@ class AdminGamesController extends AbstractController
                                 $hasError = true;
                         }
                     } else {
-                        // Number before letter: ranking in pool (e.g. 1A = 1st of pool A)
+                        // Number before letter: ranking in pool (e.g. 1A = 1st of pool A).
+                        // Only resolve from a *consolidated* pool: consolidation is the
+                        // explicit admin decision that the pool ranking is final and frozen,
+                        // so we never assign from a still-running pool's provisional ranking.
                         $poolLetter = $letter;
+                        $poolRegexp = '(^|[[:space:]])(Group|Groupe|Poule|poule)[[:space:]]+' . $poolLetter . '([[:space:]]|$)';
                         $team = $this->connection->prepare(
                             "SELECT cej.Id, ce.Libelle
                              FROM kp_competition_equipe_journee cej
@@ -1575,10 +1585,11 @@ class AdminGamesController extends AbstractController
                              JOIN kp_competition_equipe ce ON cej.Id = ce.Id
                              WHERE cej.Clt = ?
                                AND j.Phase REGEXP ?
+                               AND j.Consolidation = 'O'
                                AND j.Code_competition = ? AND j.Code_saison = ?"
                         )->executeQuery([
                             $number,
-                            '(^|[[:space:]])(Group|Groupe|Poule|poule)[[:space:]]+' . $poolLetter . '([[:space:]]|$)',
+                            $poolRegexp,
                             $row['Code_competition'],
                             $row['Code_saison'],
                         ])->fetchAssociative();
@@ -1586,7 +1597,20 @@ class AdminGamesController extends AbstractController
                             $selectNum[$j] = (int) $team['Id'];
                             $selectNom[$j] = $team['Libelle'];
                         } else {
-                            $errors[] = ['id' => $id, 'reason' => "pool_rank_not_found:{$number}{$poolLetter}"];
+                            // Distinguish "pool not consolidated yet" from "rank not found"
+                            // so the admin understands why the slot stayed empty.
+                            $poolExists = $this->connection->prepare(
+                                "SELECT 1 FROM kp_journee j
+                                 WHERE j.Phase REGEXP ?
+                                   AND j.Code_competition = ? AND j.Code_saison = ?
+                                 LIMIT 1"
+                            )->executeQuery([$poolRegexp, $row['Code_competition'], $row['Code_saison']])->fetchOne();
+
+                            if ($poolExists) {
+                                $errors[] = ['id' => $id, 'reason' => "pool_not_consolidated:{$number}{$poolLetter}"];
+                            } else {
+                                $errors[] = ['id' => $id, 'reason' => "pool_rank_not_found:{$number}{$poolLetter}"];
+                            }
                             $hasError = true;
                         }
                     }
