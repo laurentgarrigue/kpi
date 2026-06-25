@@ -5,6 +5,7 @@ import type {
   RankingTeam,
   RankingPhase,
   RankingPhaseTeam,
+  RankingPhaseMatch,
   RankingResponse,
   TransferResult,
   TransferCompetition
@@ -16,7 +17,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
@@ -115,8 +116,63 @@ const isRankingDifferent = computed(() => {
 // Phases sorted by niveau ASC (first round at top, final at bottom)
 const sortedPhases = computed(() => [...phases.value].sort((a, b) => a.niveau - b.niveau))
 
+// Published ranking, sorted by the published columns.
+// The backend returns `ranking` ordered by the *calculated* rank; the published
+// table must be ordered by the *published* rank (cltPubli / cltNiveauPubli),
+// otherwise a manual edit of the calculated ranking can make the published
+// table show teams out of order (e.g. 5th before 4th).
+const publishedRanking = computed<RankingTeam[]>(() => {
+  const list = [...ranking.value]
+  if (effectiveType.value === 'CP') {
+    list.sort((a, b) =>
+      (a.cltNiveauPubli - b.cltNiveauPubli)
+      || (b.diffPubli - a.diffPubli)
+      || (b.plusPubli - a.plusPubli)
+      || a.libelle.localeCompare(b.libelle))
+  } else if (effectiveType.value === 'MULTI') {
+    list.sort((a, b) =>
+      (b.ptsPubli - a.ptsPubli)
+      || (b.jPubli - a.jPubli)
+      || a.libelle.localeCompare(b.libelle))
+  } else {
+    list.sort((a, b) =>
+      (a.cltPubli - b.cltPubli)
+      || (b.ptsPubli - a.ptsPubli)
+      || (b.diffPubli - a.diffPubli)
+      || (b.plusPubli - a.plusPubli)
+      || a.libelle.localeCompare(b.libelle))
+  }
+  return list
+})
+
+// Teams of a phase (CP "Progress" tables), sorted by their *published* columns.
+// Like `publishedRanking`, the backend returns `phase.teams` ordered by the
+// *calculated* rank (cej.Clt); the published progress tables must follow the
+// *published* rank (cltPubli) instead.
+const publishedPhaseTeams = (teams: RankingPhaseTeam[]): RankingPhaseTeam[] =>
+  [...teams].sort((a, b) =>
+    (a.cltPubli - b.cltPubli)
+    || (b.ptsPubli - a.ptsPubli)
+    || (b.diffPubli - a.diffPubli)
+    || a.libelle.localeCompare(b.libelle))
+
 // Legacy base URL
 const legacyBase = computed(() => config.public.legacyBaseUrl)
+
+// Whether the computed / published ranking includes unlocked (non-validated) games.
+// 'tous' = all games (incl. unlocked), 'verr' = locked/validated only.
+const computedIncludesUnlocked = computed(() => competitionInfo.value?.modeCalcul === 'tous')
+const publishedIncludesUnlocked = computed(() => competitionInfo.value?.modePublicationCalcul === 'tous')
+
+// Elimination matches (type E): decide how to render an unvalidated game.
+//  - validated game            → show score + designate winner/loser (bold).
+//  - unvalidated, mode 'tous'  → show score as provisional, NO winner/loser.
+//  - unvalidated, mode 'verr'  → hide the score entirely (game not counted yet).
+const showPhaseMatchScore = (match: RankingPhaseMatch, includesUnlocked: boolean): boolean =>
+  match.scoreA !== null && (match.validated || includesUnlocked)
+
+// A winner/loser may only be highlighted once the game is validated.
+const phaseMatchHasWinner = (match: RankingPhaseMatch): boolean => match.validated
 
 // Status badge colors (same as teams page)
 const getStatusColor = (status: string) => {
@@ -168,11 +224,21 @@ const getQualifiedStatus = (index: number, totalTeams: number) => {
   return null
 }
 
-// Format date
+// Format date + time based on current locale.
+// French: DD/MM/YYYY HH:mm — English: YYYY-MM-DD HH:mm (ISO, like other pages).
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return null
   const d = new Date(dateStr)
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  if (locale.value === 'fr') {
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    return `${day}/${month}/${d.getFullYear()} ${hh}:${mm}`
+  }
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day} ${hh}:${mm}`
 }
 
 // Display points (÷ 100)
@@ -1223,15 +1289,17 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="match.scoreA !== null && match.scoreA > match.scoreB! ? 'font-bold text-header-900' : 'text-header-600'"
+                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900' : 'text-header-600'"
                         >{{ match.equipeA }}</span>
                         <span class="w-16 text-center text-sm font-mono font-semibold text-header-700">
-                          <template v-if="match.scoreA !== null">{{ match.scoreA }} - {{ match.scoreB }}</template>
+                          <template v-if="showPhaseMatchScore(match, computedIncludesUnlocked)">
+                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600">*</span>
+                          </template>
                           <template v-else>—</template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="match.scoreB !== null && match.scoreB > match.scoreA! ? 'font-bold text-header-900' : 'text-header-600'"
+                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900' : 'text-header-600'"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>
@@ -1398,7 +1466,7 @@ const editValueForField = (field: string, value: number): string => {
                   </thead>
                   <tbody class="divide-y divide-header-200">
                     <tr
-                      v-for="(team, idx) in ranking"
+                      v-for="(team, idx) in publishedRanking"
                       :key="team.id"
                       class="hover:bg-header-50"
                       :class="{ 'bg-primary-50': isSelected(team.id) }"
@@ -1464,7 +1532,7 @@ const editValueForField = (field: string, value: number): string => {
               <!-- Mobile cards (published) -->
               <div class="lg:hidden divide-y divide-header-200">
                 <div
-                  v-for="(team, idx) in ranking"
+                  v-for="(team, idx) in publishedRanking"
                   :key="team.id"
                   class="p-3"
                   :class="{ 'bg-primary-50': isSelected(team.id) }"
@@ -1548,7 +1616,7 @@ const editValueForField = (field: string, value: number): string => {
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-header-200">
-                        <tr v-for="pTeam in phase.teams" :key="pTeam.id" class="hover:bg-header-50">
+                        <tr v-for="pTeam in publishedPhaseTeams(phase.teams)" :key="pTeam.id" class="hover:bg-header-50">
                           <td class="px-2 py-1.5 text-center text-sm">{{ pTeam.cltPubli }}</td>
                           <td class="px-2 py-1.5 text-sm font-medium text-header-900">{{ pTeam.libelle }}</td>
                           <td class="px-2 py-1.5 text-center text-sm">{{ displayPts(pTeam.ptsPubli) }}</td>
@@ -1567,7 +1635,7 @@ const editValueForField = (field: string, value: number): string => {
 
                   <!-- Mobile cards -->
                   <div class="lg:hidden divide-y divide-header-200">
-                    <div v-for="pTeam in phase.teams" :key="pTeam.id" class="p-3">
+                    <div v-for="pTeam in publishedPhaseTeams(phase.teams)" :key="pTeam.id" class="p-3">
                       <div class="font-medium text-header-900 text-sm">{{ pTeam.libelle }}</div>
                       <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
                         <span>{{ t('rankings.table.rank') }}: {{ pTeam.cltPubli }}</span>
@@ -1586,20 +1654,22 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="match.scoreA !== null && match.scoreA > match.scoreB! ? 'font-bold text-header-900' : 'text-header-600'"
+                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900' : 'text-header-600'"
                         >{{ match.equipeA }}</span>
                         <span class="w-16 text-center text-sm font-mono font-semibold text-header-700">
-                          <template v-if="match.scoreA !== null">{{ match.scoreA }} - {{ match.scoreB }}</template>
+                          <template v-if="showPhaseMatchScore(match, publishedIncludesUnlocked)">
+                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600">*</span>
+                          </template>
                           <template v-else>—</template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="match.scoreB !== null && match.scoreB > match.scoreA! ? 'font-bold text-header-900' : 'text-header-600'"
+                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900' : 'text-header-600'"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>
                     <template v-else>
-                      <div v-for="pTeam in phase.teams" :key="pTeam.id" class="flex items-center gap-2 py-1">
+                      <div v-for="pTeam in publishedPhaseTeams(phase.teams)" :key="pTeam.id" class="flex items-center gap-2 py-1">
                         <template v-if="pTeam.gPubli > 0">
                           <span class="text-xs font-bold text-success-700 w-20">{{ t('rankings.winner') }}</span>
                           <span class="font-bold text-sm text-header-900">{{ pTeam.libelle }}</span>

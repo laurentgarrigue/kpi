@@ -197,12 +197,16 @@ TODO :
 - Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
 - ✅ Rashedi Mehrdad proposé dans le pool arbitres pour IRI er FRA alors qu'il est inactif dans IRI
 (GET https://www.kayak-polo.info/api2/admin/games/autocomplete/referees?q=rash&journeeId=9953&lang=en)
-- Dark mode, blue mode.
+- Dark mode, blue mode?
 - Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
 - ✅ App4 en mode smartphone portrait, je ne peux pas dérouler le sous-menu administration et accéder aux items du bas.
 - ✅ App4 Games : dans le formulaire de modification d'un match, ajouter le champs shotclock (Timeshoot) avec autocomplétion sur les arbitres, et permettre la saisie directe même si l'arbitre n'est pas dans la liste.
 - Incrustation Teams only (clubs) : adapter le design à la css
+- Revoir incrustation live game, les événements restent affichés.
+- ✅ Rankings, matchs éliminatoires : ne pas afficher le score si le match n'est pas encore validé ?
+- Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - ✅ Refresh sur la page ranking.
+- Feuille protocole : ajouter un bouton pour générer la feuille de protocole à partir des données de la compétition, avec possibilité de compléter, modifier les données avant impression.
 - ⚠️
 
 Scoring:
