@@ -38,8 +38,8 @@ defineExpose({
 // Format competition label for display
 function formatLabel(comp: CompetitionSearchResult): string {
   const parts = [comp.code, comp.libelle]
-  if (comp.soustitre) {
-    parts.push(`(${comp.soustitre})`)
+  if (comp.soustitre2) {
+    parts.push(`(${comp.soustitre2})`)
   }
   return parts.join(' - ')
 }

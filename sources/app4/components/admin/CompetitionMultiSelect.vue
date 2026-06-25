@@ -54,9 +54,9 @@ function toggleCompetition(code: string) {
   }
 }
 
-// Format competition label
-function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre?: string | null }): string {
-  return comp.soustitre ? `${comp.code} - ${comp.libelle} (${comp.soustitre})` : `${comp.code} - ${comp.libelle}`
+// Format competition label — show the category (soustitre2) in parentheses
+function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre2?: string | null }): string {
+  return comp.soustitre2 ? `${comp.code} - ${comp.libelle} (${comp.soustitre2})` : `${comp.code} - ${comp.libelle}`
 }
 </script>
 
