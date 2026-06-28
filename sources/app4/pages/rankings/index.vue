@@ -85,6 +85,9 @@ const pdfDropdownOpen = ref(false)
 const pdfDropdownStyle = ref<Record<string, string>>({})
 const pdfDropdownMode = ref<'admin' | 'public'>('admin')
 
+const tiesDropdownOpen = ref(false)
+const tiesDropdownStyle = ref<Record<string, string>>({})
+
 // Permission checks
 const canViewComputed = computed(() => authStore.profile <= 6)
 const canCompute = computed(() => authStore.profile <= 6)
@@ -583,11 +586,32 @@ const togglePdfDropdown = (e: MouseEvent, mode: 'admin' | 'public') => {
   pdfDropdownOpen.value = true
 }
 
+const toggleTiesDropdown = (e: MouseEvent) => {
+  if (tiesDropdownOpen.value) {
+    tiesDropdownOpen.value = false
+    return
+  }
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  tiesDropdownStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom + 4}px`,
+    right: `${window.innerWidth - rect.right}px`
+  }
+  // Close the PDF dropdown if open, so only one menu shows at a time.
+  pdfDropdownOpen.value = false
+  tiesDropdownOpen.value = true
+}
+
 const handleClickOutsideDropdown = (e: MouseEvent) => {
   const target = e.target as HTMLElement
   if (pdfDropdownOpen.value) {
     if (!target.closest('.pdf-dropdown-trigger') && !target.closest('.pdf-dropdown-menu')) {
       pdfDropdownOpen.value = false
+    }
+  }
+  if (tiesDropdownOpen.value) {
+    if (!target.closest('.ties-dropdown-trigger') && !target.closest('.ties-dropdown-menu')) {
+      tiesDropdownOpen.value = false
     }
   }
 }
@@ -621,6 +645,64 @@ const pdfUrls = computed(() => {
 
   return urls
 })
+
+// Tie-break justification (api2 PDF) — visible only when at least one group of
+// teams shares the same points (CHPT = whole ranking; CP = within a poule, type C).
+const hasTies = computed(() => {
+  const type = effectiveType.value
+  if (type === 'CHPT') {
+    const seen = new Set<number>()
+    for (const t of ranking.value) {
+      if (seen.has(t.pts)) return true
+      seen.add(t.pts)
+    }
+    return false
+  }
+  if (type === 'CP') {
+    for (const ph of phases.value) {
+      if (ph.type !== 'C') continue
+      const seen = new Set<number>()
+      for (const t of ph.teams) {
+        if (seen.has(t.pts)) return true
+        seen.add(t.pts)
+      }
+    }
+    return false
+  }
+  return false
+})
+
+const justificationLoading = ref(false)
+
+const openJustificationPdf = async () => {
+  if (!competitionInfo.value || justificationLoading.value) return
+  justificationLoading.value = true
+  try {
+    const code = competitionInfo.value.code
+    const saison = workContext.season
+    const type = effectiveType.value
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'
+    const qs = `season=${encodeURIComponent(saison)}&competition=${encodeURIComponent(code)}&type=${type}&format=pdf&timezone=${encodeURIComponent(tz)}&locale=${encodeURIComponent(locale.value)}`
+    const buffer = await api.getBlob(`/admin/rankings/justification?${qs}`)
+    const blob = new Blob([buffer], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    // Open in a new tab; fall back to a download if the popup is blocked
+    // (window.open after an await is no longer in the click gesture).
+    const win = window.open(url, '_blank')
+    if (!win) {
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `justification_departage_${code}.pdf`
+      a.click()
+    }
+    // Revoke later so the new tab/download has time to read the document.
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch {
+    // Errors already surfaced by useApi (toast).
+  } finally {
+    justificationLoading.value = false
+  }
+}
 
 // Get column label for MULTI structure type
 const structureLabel = computed(() => {
@@ -790,6 +872,18 @@ const editValueForField = (field: string, value: number): string => {
               >
                 <UIcon name="heroicons:document-text" class="w-4 h-4" />
                 {{ t('rankings.pdf.title') }}
+                <UIcon name="heroicons:chevron-down" class="w-3 h-3" />
+              </button>
+            </div>
+
+            <!-- "Égalités" dropdown — only when teams are tied (poules or general ranking) -->
+            <div v-if="hasTies" class="relative">
+              <button
+                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 text-warning-700 rounded-lg hover:bg-warning-50 transition-colors text-sm flex items-center gap-1"
+                @click="toggleTiesDropdown($event)"
+              >
+                <UIcon name="heroicons:scale" class="w-4 h-4" />
+                {{ t('rankings.ties.title') }}
                 <UIcon name="heroicons:chevron-down" class="w-3 h-3" />
               </button>
             </div>
@@ -1933,6 +2027,26 @@ const editValueForField = (field: string, value: number): string => {
           <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
           {{ t('rankings.pdf.matches') }}
         </a>
+      </div>
+    </Teleport>
+
+    <!-- "Égalités" dropdown (teleported) — only shown when there are tied groups -->
+    <Teleport to="body">
+      <div
+        v-if="tiesDropdownOpen"
+        class="ties-dropdown-menu z-9999 bg-white rounded-lg shadow-lg border border-header-200 py-1 min-w-50"
+        :style="tiesDropdownStyle"
+      >
+        <button
+          type="button"
+          class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50 disabled:opacity-50 disabled:cursor-not-allowed text-left"
+          :disabled="justificationLoading"
+          :title="t('rankings.justification.tooltip')"
+          @click="tiesDropdownOpen = false; openJustificationPdf()"
+        >
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          {{ justificationLoading ? t('rankings.justification.loading') : t('rankings.justification.button') }}
+        </button>
       </div>
     </Teleport>
   </div>
