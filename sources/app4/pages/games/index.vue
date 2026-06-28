@@ -27,6 +27,7 @@ interface SavedFilters {
   selectedSort: string
   unlockedOnly: boolean
   showShotclock: boolean
+  showReferees: boolean
 }
 
 function loadSavedFilters(): Partial<SavedFilters> {
@@ -48,6 +49,7 @@ function saveFilters() {
       selectedSort: selectedSort.value,
       unlockedOnly: unlockedOnly.value,
       showShotclock: showShotclock.value,
+      showReferees: showReferees.value,
     }
     localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(data))
   } catch { /* ignore */ }
@@ -75,6 +77,7 @@ const selectedTerrain = ref(saved.selectedTerrain ?? '')
 const selectedSort = ref(saved.selectedSort ?? 'date_time_terrain')
 const unlockedOnly = ref(saved.unlockedOnly ?? false)
 const showShotclock = ref(saved.showShotclock ?? false)
+const showReferees = ref(saved.showReferees ?? true)
 
 // Filter data
 const journees = ref<GameJournee[]>([])
@@ -137,6 +140,13 @@ const bulkActionsRef = ref<HTMLDivElement | null>(null)
 // Documents dropdown
 const documentsOpen = ref(false)
 const documentsRef = ref<HTMLDivElement | null>(null)
+
+// Display dropdown ("Affichage"): groups the row filter (unlocked only) and the optional
+// volunteer-post columns (referees, shotclock, …). New posts (secretary, timer, line 1/2…)
+// are added by declaring a ref above + an entry in `postColumns` + the column markup —
+// the dropdown, the active counter and the table colspan all derive from `postColumns`.
+const displayOpen = ref(false)
+const displayRef = ref<HTMLDivElement | null>(null)
 
 // Conflict detection toolbar
 const conflictBarOpen = ref(false)
@@ -266,16 +276,21 @@ const availableTeams = computed((): TeamEntity[] => {
     if (g.equipeA) realTeams.set(g.equipeA, { code: g.equipeA, label: g.equipeA, kind: 'team', isPlaceholder: false })
     if (g.equipeB) realTeams.set(g.equipeB, { code: g.equipeB, label: g.equipeB, kind: 'team', isPlaceholder: false })
 
-    // Referee clubs from identified referees (e.g. "Nom (ClubCode)" or free-text team name)
-    // Kept so "this club plays AND referees at the same slot" conflicts still surface.
-    const arbPrincipalTeam = extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal)
-    if (arbPrincipalTeam) realTeams.set(arbPrincipalTeam, { code: arbPrincipalTeam, label: arbPrincipalTeam, kind: 'team', isPlaceholder: false })
-    const arbSecondaireTeam = extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire)
-    if (arbSecondaireTeam) realTeams.set(arbSecondaireTeam, { code: arbSecondaireTeam, label: arbSecondaireTeam, kind: 'team', isPlaceholder: false })
+    // Referee-derived entities are only factored into the scheduling check when the
+    // referee columns are shown (showReferees). When hidden, referees are ignored entirely:
+    // no referee clubs, no referee entities, no referee placeholders.
+    if (showReferees.value) {
+      // Referee clubs from identified referees (e.g. "Nom (ClubCode)" or free-text team name)
+      // Kept so "this club plays AND referees at the same slot" conflicts still surface.
+      const arbPrincipalTeam = extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal)
+      if (arbPrincipalTeam) realTeams.set(arbPrincipalTeam, { code: arbPrincipalTeam, label: arbPrincipalTeam, kind: 'team', isPlaceholder: false })
+      const arbSecondaireTeam = extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire)
+      if (arbSecondaireTeam) realTeams.set(arbSecondaireTeam, { code: arbSecondaireTeam, label: arbSecondaireTeam, kind: 'team', isPlaceholder: false })
 
-    // Referee entities (person or designated team) + per-referee assignment count
-    addReferee(refereeRef(g.arbitrePrincipal, g.matricArbitrePrincipal))
-    addReferee(refereeRef(g.arbitreSecondaire, g.matricArbitreSecondaire))
+      // Referee entities (person or designated team) + per-referee assignment count
+      addReferee(refereeRef(g.arbitrePrincipal, g.matricArbitrePrincipal))
+      addReferee(refereeRef(g.arbitreSecondaire, g.matricArbitreSecondaire))
+    }
 
     // Placeholders from bracket notation (only for unassigned slots)
     const raw = bracketRawCodes(g.libelle)
@@ -284,9 +299,9 @@ const availableTeams = computed((): TeamEntity[] => {
       placeholders.set(raw.teamA, { code: raw.teamA, label: labels.teamA, kind: 'placeholder', isPlaceholder: true })
     if (!g.equipeB && raw.teamB && labels.teamB)
       placeholders.set(raw.teamB, { code: raw.teamB, label: labels.teamB, kind: 'placeholder', isPlaceholder: true })
-    if (!g.arbitrePrincipal && raw.refereePrincipal && labels.refereePrincipal)
+    if (showReferees.value && !g.arbitrePrincipal && raw.refereePrincipal && labels.refereePrincipal)
       placeholders.set(raw.refereePrincipal, { code: raw.refereePrincipal, label: labels.refereePrincipal, kind: 'placeholder', isPlaceholder: true })
-    if (!g.arbitreSecondaire && raw.refereeSecondaire && labels.refereeSecondaire)
+    if (showReferees.value && !g.arbitreSecondaire && raw.refereeSecondaire && labels.refereeSecondaire)
       placeholders.set(raw.refereeSecondaire, { code: raw.refereeSecondaire, label: labels.refereeSecondaire, kind: 'placeholder', isPlaceholder: true })
   }
 
@@ -373,14 +388,17 @@ const gameInvolvesTeam = (g: Game, code: string): boolean => {
   }
   // Real team match
   if (g.equipeA === code || g.equipeB === code) return true
-  if (extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === code) return true
-  if (extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === code) return true
+  // Referee-based involvement only counts when referee columns are shown.
+  if (showReferees.value) {
+    if (extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === code) return true
+    if (extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === code) return true
+  }
   // Placeholder match: compare raw bracket codes
   const raw = bracketRawCodes(g.libelle)
   if (!g.equipeA && raw.teamA === code) return true
   if (!g.equipeB && raw.teamB === code) return true
-  if (!g.arbitrePrincipal && raw.refereePrincipal === code) return true
-  if (!g.arbitreSecondaire && raw.refereeSecondaire === code) return true
+  if (showReferees.value && !g.arbitrePrincipal && raw.refereePrincipal === code) return true
+  if (showReferees.value && !g.arbitreSecondaire && raw.refereeSecondaire === code) return true
   return false
 }
 
@@ -430,6 +448,34 @@ const teamRestWarningGameIds = computed((): Set<number> => {
   }
   return warned
 })
+
+// ─── Optional volunteer-post columns ───
+// Single source of truth for the "Affichage" dropdown's "Postes" group, the active counter
+// and the table colspan. To add a new post (secretary, timer, line 1/2…): declare a ref
+// above, add an entry here (labelKey + model + how many table columns it adds), and render
+// the matching <th>/<td> with `v-if="<ref>"` in the table.
+interface PostColumn {
+  key: string
+  labelKey: string
+  model: Ref<boolean>
+  span: number // number of table columns this post adds when shown
+}
+
+const postColumns: PostColumn[] = [
+  { key: 'referees', labelKey: 'games.show_referees', model: showReferees, span: 2 },
+  { key: 'shotclock', labelKey: 'games.show_shotclock', model: showShotclock, span: 1 },
+]
+
+// Count of active display options shown on the dropdown button (filter + posts).
+const activeDisplayCount = computed(() =>
+  (unlockedOnly.value ? 1 : 0) + postColumns.filter(c => c.model.value).length
+)
+
+// ─── Table colspan (varies with optional post columns) ───
+// Base layout has 20 fixed columns; each active post adds its declared span.
+const tableColspan = computed(() =>
+  20 + postColumns.reduce((sum, c) => sum + (c.model.value ? c.span : 0), 0)
+)
 
 // ─── Computed: Filtered games (client-side unlocked filter + team filter) ───
 const filteredGames = computed(() => {
@@ -486,6 +532,13 @@ const loadGames = async (keepSelection = false) => {
     }
     if (searchQuery.value.trim()) {
       params.search = searchQuery.value.trim()
+      // Restrict the searchable optional columns to those currently shown, so a hidden
+      // column (e.g. referees) can't surface results the user can't see.
+      // useApi.get drops empty-string params, so when no optional column is shown we send the
+      // explicit "none" sentinel — otherwise the backend would treat the param as absent and
+      // fall back to searching all optional columns.
+      const visibleScopes = postColumns.filter(c => c.model.value).map(c => c.key)
+      params.searchFields = visibleScopes.length ? visibleScopes.join(',') : 'none'
     }
 
     const response = await api.get<GamesListResponse>('/admin/games', params)
@@ -605,7 +658,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 })
 
 // Persist filters to localStorage
-watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly, showShotclock], () => {
+watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly, showShotclock, showReferees], () => {
   saveFilters()
 })
 
@@ -619,6 +672,14 @@ watch(searchQuery, () => {
   }, 300)
 })
 
+// Showing/hiding an optional column changes its search scope: re-run the server search
+// so hidden columns stop matching (only relevant while a query is active).
+watch(() => postColumns.map(c => c.model.value), () => {
+  if (!searchQuery.value.trim()) return
+  page.value = 1
+  loadGames()
+})
+
 // Close dropdowns on outside click
 const onClickOutside = (e: MouseEvent) => {
   if (bulkActionsRef.value && !bulkActionsRef.value.contains(e.target as Node)) {
@@ -626,6 +687,9 @@ const onClickOutside = (e: MouseEvent) => {
   }
   if (documentsRef.value && !documentsRef.value.contains(e.target as Node)) {
     documentsOpen.value = false
+  }
+  if (displayRef.value && !displayRef.value.contains(e.target as Node)) {
+    displayOpen.value = false
   }
   if (teamSearchRef.value && !teamSearchRef.value.contains(e.target as Node)) {
     teamSearchOpen.value = false
@@ -1765,17 +1829,38 @@ const openScoring = (gameId: number) => {
           </select>
         </div>
 
-        <!-- Unlocked only checkbox -->
-        <label class="flex items-center gap-1.5 px-3 py-2 text-sm cursor-pointer rounded-lg border" :class="unlockedOnly ? 'text-warning-700 font-medium border-warning-400 bg-warning-50' : 'text-header-600 border-transparent'">
-          <input v-model="unlockedOnly" type="checkbox" class="rounded border-header-300 text-primary-600">
-          {{ t('games.unlocked_only') }}
-        </label>
-
-        <!-- Show shotclock column checkbox -->
-        <label class="flex items-center gap-1.5 px-3 py-2 text-sm cursor-pointer rounded-lg border" :class="showShotclock ? 'text-primary-700 font-medium border-primary-400 bg-primary-50' : 'text-header-600 border-transparent'">
-          <input v-model="showShotclock" type="checkbox" class="rounded border-header-300 text-primary-600">
-          {{ t('games.show_shotclock') }}
-        </label>
+        <!-- Display dropdown: row filter ("Filtres") + optional volunteer-post columns ("Postes") -->
+        <div ref="displayRef" class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+            :class="activeDisplayCount > 0 ? 'text-primary-700 border-primary-400 bg-primary-50' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
+            @click="displayOpen = !displayOpen"
+          >
+            <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
+            {{ t('games.display.title') }}
+            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
+            <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': displayOpen }" />
+          </button>
+          <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white border border-header-200 rounded-lg shadow-lg py-1 right-0">
+            <!-- Filtres -->
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
+            <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 cursor-pointer hover:bg-header-50">
+              <input v-model="unlockedOnly" type="checkbox" class="rounded border-header-300 text-primary-600">
+              {{ t('games.unlocked_only') }}
+            </label>
+            <!-- Postes -->
+            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100">{{ t('games.display.posts_section') }}</div>
+            <label
+              v-for="col in postColumns"
+              :key="col.key"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 cursor-pointer hover:bg-header-50"
+            >
+              <input v-model="col.model.value" type="checkbox" class="rounded border-header-300 text-primary-600">
+              {{ t(col.labelKey) }}
+            </label>
+          </div>
+        </div>
 
         <!-- Loading spinner -->
         <UIcon v-if="loading" name="heroicons:arrow-path" class="w-5 h-5 text-primary-500 animate-spin" />
@@ -2108,7 +2193,7 @@ const openScoring = (gameId: number) => {
         <!-- Team dropdown -->
         <div ref="teamSearchRef" class="relative">
           <button
-            class="flex items-center justify-between gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border min-w-[200px]"
+            class="flex items-center justify-between gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border min-w-[250px]"
             :class="selectedTeam ? 'text-primary-700 bg-primary-50 border-primary-400' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
             @click="teamSearchOpen = !teamSearchOpen"
           >
@@ -2342,10 +2427,10 @@ const openScoring = (gameId: number) => {
               <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.score_b') }}</th>
               <!-- Team B -->
               <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.team_b') }}</th>
-              <!-- Referee 1 -->
-              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_1') }}</th>
-              <!-- Referee 2 -->
-              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_2') }}</th>
+              <!-- Referee 1 (optional column) -->
+              <th v-if="showReferees" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_1') }}</th>
+              <!-- Referee 2 (optional column) -->
+              <th v-if="showReferees" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_2') }}</th>
               <!-- Shotclock (optional column) -->
               <th v-if="showShotclock" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.shotclock') }}</th>
               <!-- Printed -->
@@ -2357,21 +2442,21 @@ const openScoring = (gameId: number) => {
           <tbody class="bg-white divide-y divide-header-200">
             <!-- Loading -->
             <tr v-if="loading && games.length === 0">
-              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-500">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-12 text-center text-header-400">
+              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-400">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('games.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="filteredGames.length === 0">
-              <td :colspan="showShotclock ? 23 : 22" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-500">
                 {{ t('games.no_results') }}
               </td>
             </tr>
@@ -2767,8 +2852,8 @@ const openScoring = (gameId: number) => {
                 </template>
               </td>
 
-              <!-- Referee 1 -->
-              <td class="px-1 py-1 max-w-32">
+              <!-- Referee 1 (optional column) -->
+              <td v-if="showReferees" class="px-1 py-1 max-w-32">
                 <span
                   v-if="g.arbitrePrincipal"
                   class="truncate block"
@@ -2793,8 +2878,8 @@ const openScoring = (gameId: number) => {
                 >-</span>
               </td>
 
-              <!-- Referee 2 -->
-              <td class="px-1 py-1 max-w-32">
+              <!-- Referee 2 (optional column) -->
+              <td v-if="showReferees" class="px-1 py-1 max-w-32">
                 <span
                   v-if="g.arbitreSecondaire"
                   class="truncate block"
