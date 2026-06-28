@@ -1441,6 +1441,12 @@
     "referee_team_label": "Associated team",
     "shotclock_placeholder": "Search a person...",
     "show_shotclock": "Shotclock",
+    "show_referees": "Referees",
+    "display": {
+      "title": "Display",
+      "filters_section": "Filters",
+      "posts_section": "Posts"
+    },
     "type_classification": "Classification",
     "type_elimination": "Elimination",
     "published": "Public",
@@ -2020,6 +2026,14 @@
       "progress": "Progress",
       "detail": "Detail per team",
       "matches": "Games"
+    },
+    "ties": {
+      "title": "Ties"
+    },
+    "justification": {
+      "button": "Tie-break justification",
+      "loading": "Generating…",
+      "tooltip": "Generate a PDF justifying the tie-break of teams level on points"
     },
     "status_restriction": "Modifications are only available for ongoing competitions (status ON)",
     "initial": {

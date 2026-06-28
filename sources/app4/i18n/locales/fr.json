@@ -1453,6 +1453,12 @@
     "referee_team_label": "Équipe associée",
     "shotclock_placeholder": "Rechercher une personne...",
     "show_shotclock": "Shotclock",
+    "show_referees": "Arbitres",
+    "display": {
+      "title": "Affichage",
+      "filters_section": "Filtres",
+      "posts_section": "Postes"
+    },
     "type_classification": "Classement",
     "type_elimination": "Élimination",
     "published": "Public",
@@ -2032,6 +2038,14 @@
       "progress": "Déroulement",
       "detail": "Détail par équipe",
       "matches": "Matchs"
+    },
+    "ties": {
+      "title": "Égalités"
+    },
+    "justification": {
+      "button": "Justification du départage",
+      "loading": "Génération…",
+      "tooltip": "Générer un PDF justifiant le départage des équipes à égalité de points"
     },
     "status_restriction": "Les modifications ne sont disponibles que pour les compétitions en cours (statut ON)",
     "initial": {

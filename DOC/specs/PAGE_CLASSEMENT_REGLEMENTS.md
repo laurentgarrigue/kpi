@@ -25,14 +25,14 @@ Code concerné dans
 
 | Contexte | Fonction | `gen` | `part` |
 |----------|----------|-------|--------|
-| CHPT — général | `finalizeChptRanking()` | ✅ tri Diff + buts | ✅ appelle `resolveHeadToHead()` |
-| CP — poules (type C) | `finalizeJourneeChptRanking()` | ✅ tri Diff + buts | ⚠️ **ex æquo, aucun h2h** |
+| CHPT — général | `finalizeChptRanking()` | ✅ cascade #1→#4 (ICF) | ✅ cascade #1→#7 (FFCK) |
+| CP — poules (type C) | `finalizeJourneeChptRanking()` | ✅ cascade #1→#4 (ICF) | ✅ cascade #1→#7 (FFCK), périmètre poule |
 
-> ⚠️ **Écart spécifique CP** : `finalizeJourneeChptRanking()` reçoit bien `$goalaverage`,
-> mais en mode `part` il se contente d'attribuer le **même rang** aux équipes à égalité
-> de points (`$clt = $oldClt`) **sans jamais appeler `resolveHeadToHead()`**. Le départage
-> par confrontation directe n'est donc **pas du tout** effectué dans les poules — contrairement
-> au CHPT général où il l'est partiellement (cf. §3).
+> ✅ **Écart CP comblé** : `finalizeChptRanking()` et `finalizeJourneeChptRanking()`
+> partagent désormais le **même moteur de départage** (`resolveRankingOrder()` +
+> `applyTieBreakCascade()`). En poule, le périmètre h2h/cartons est restreint au
+> `Id_journee` de la poule (paramètre `$journeeId`). Le mode `part` n'attribue plus
+> d'ex æquo arbitraire : la cascade FFCK (#1→#7) est appliquée par groupe d'égalité.
 
 ---
 
@@ -42,10 +42,10 @@ Ordre de départage officiel entre équipes à égalité de points :
 
 | # | Critère ICF | Pris en compte ? |
 |---|-------------|------------------|
-| 1 | **Goal difference** (différence générale de buts) | ✅ Oui |
-| 2 | **Total number of Goals scored** (buts marqués) | ✅ Oui |
-| 3 | **Results of game between the two teams** (confrontation directe) | ❌ Non |
-| 4 | **Honourable Play** — cartons : rouge d'exclusion = 25 pts ; carton de progression (vert/jaune/rouge) = 5 pts chacun ; l'équipe au plus faible total est devant | ❌ Non |
+| 1 | **Goal difference** (différence générale de buts) | ✅ Oui (`diff_generale`) |
+| 2 | **Total number of Goals scored** (buts marqués) | ✅ Oui (`buts_marques`) |
+| 3 | **Results of game between the two teams** (confrontation directe) | ✅ Oui (`h2h_points`) |
+| 4 | **Honourable Play** — cartons : rouge d'exclusion = 25 pts ; carton de progression (vert/jaune/rouge) = 5 pts chacun ; l'équipe au plus faible total est devant | ✅ Oui (`honourable_play`) |
 | 5 | **Play Off** (match de barrage si possible) | ❌ Non (hors périmètre logiciel) |
 
 **Règles complémentaires** :
@@ -75,73 +75,57 @@ Ordre de départage officiel entre équipes à égalité de points :
 
 | # | Critère FFCK RP KAP 65 | Pris en compte ? |
 |---|------------------------|------------------|
-| 1 | Points marqués **entre elles** (confrontation directe) | ❌ Non |
-| 2 | **Différence particulière** de buts entre elles | ✅ Oui |
-| 3 | **Différence générale** de buts | ❌ Non (voir note) |
-| 4 | Nombre de buts marqués (général) | ❌ Non |
-| 5 | Moins de **cartons rouges** sur cette phase | ❌ Non |
-| 6 | Moins de **cartons jaunes** sur cette phase | ❌ Non |
-| 7 | Moins de **cartons verts** sur cette phase | ❌ Non |
+| 1 | Points marqués **entre elles** (confrontation directe) | ✅ Oui (`h2h_points`) |
+| 2 | **Différence particulière** de buts entre elles | ✅ Oui (`h2h_diff`) |
+| 3 | **Différence générale** de buts | ✅ Oui (`diff_generale`) |
+| 4 | Nombre de buts marqués (général) | ✅ Oui (`buts_marques`) |
+| 5 | Moins de **cartons rouges** sur cette phase | ✅ Oui (`cartons_rouges`, R + exclusion D) |
+| 6 | Moins de **cartons jaunes** sur cette phase | ✅ Oui (`cartons_jaunes`) |
+| 7 | Moins de **cartons verts** sur cette phase | ✅ Oui (`cartons_verts`) |
 | 8 | Moins de **cartons rouges** sur les phases précédentes | ❌ Non |
 | 9 | Moins de **cartons jaunes** sur les phases précédentes | ❌ Non |
 | 10 | (≥ 3 équipes) Moins de **cartons verts** sur les phases précédentes, sinon **tirage au sort** | ❌ Non |
 
-### Implémentation actuelle (`resolveHeadToHead`)
+### Implémentation actuelle (moteur de départage `resolveRankingOrder`)
 
-Pour chaque groupe d'équipes à égalité de points :
-1. On récupère les matchs joués **entre les équipes du groupe** (`Validation = 'O'`).
-2. On cumule, par équipe : `diff` (différence particulière de buts) et `plus`
-   (buts marqués dans ces confrontations).
-3. Tri : `h2h diff DESC, h2h plus DESC`.
+Le départage est désormais un **moteur critère-par-critère récursif** (cf. §6.4).
+Chaque groupe d'équipes à égalité de **points** est passé à `applyTieBreakCascade()`,
+qui applique dans l'ordre la liste `TIEBREAK_CRITERIA['part']` :
 
 ```php
-usort($ids, fn($a, $b) =>
-    $h2h[$a]['diff'] !== $h2h[$b]['diff']
-        ? $h2h[$b]['diff'] - $h2h[$a]['diff']     // différence particulière
-        : $h2h[$b]['plus'] - $h2h[$a]['plus']);   // buts marqués entre elles
+'part' => ['h2h_points', 'h2h_diff', 'diff_generale', 'buts_marques',
+           'cartons_rouges', 'cartons_jaunes', 'cartons_verts'],
 ```
 
-➡️ **Le calcul applique le critère 2 (différence particulière) puis, en cas
-d'égalité, les buts marqués entre elles** (qui se rapproche du critère 1 mais sans
-le formaliser comme « points » de confrontation directe).
+Chaque critère est une fonction autonome (`evaluateCriterion`) renvoyant une valeur
+numérique par équipe (valeur élevée = mieux classé). Un sous-groupe resté strictement
+à égalité après un critère est transmis **récursivement** au critère suivant ; à
+épuisement de la cascade, le sous-groupe reste **ex æquo** (même `Clt`).
 
-**Écarts notables** :
-- Le critère **1 (points marqués entre elles)** n'est **pas** appliqué en premier :
-  l'implémentation départage d'abord sur la différence particulière de buts, alors
-  que le règlement exige d'abord le nombre de **points** de la confrontation directe.
-- Les critères **3 à 10** (différence générale, buts marqués généraux, puis toute la
-  cascade cartons, puis tirage au sort) ne sont **pas** pris en compte.
+➡️ **Critères 1 à 7 pris en compte** : points de confrontation directe (selon le
+**système de points de la compétition** `kp_competition.Points`, ex. 4-2-1-0 — pas un
+barème universel), différence particulière, différence générale, buts généraux, puis
+cartons rouges (R + exclusion D), jaunes et verts sur la phase.
 
-#### ⚠️ Cas ≥ 3 équipes à égalité — départage non récursif
+**Écarts restants** :
+- Critères **8 à 10** (cartons des phases précédentes, puis tirage au sort) : non
+  implémentés. Un sous-groupe encore à égalité après le critère 7 reste **ex æquo**.
 
-Le **regroupement** gère correctement N équipes : `GROUP BY Pts HAVING COUNT(*) > 1`
-récupère les groupes de taille quelconque, et la requête h2h (`IN (...)`) prend bien tous
-les matchs entre les N équipes. **Le problème n'est pas la taille du groupe, mais la
-méthode.**
+#### ✅ Cas ≥ 3 équipes à égalité — départage récursif
 
-Pour un groupe de 3 équipes ou plus, le code calcule un cumul h2h **global** (somme des
-diff/buts de chaque équipe contre *toutes* les autres du groupe), trie **une seule fois**
-(`usort`), puis attribue des rangs **séquentiels distincts** (`startClt + $i`). Or le
-règlement FFCK impose un départage **récursif** : on établit le sous-classement des seules
-équipes concernées ; si un **sous-groupe** y reste à égalité, on ré-applique la cascade
-**sur ce seul sous-groupe** (et l'on descend vers les critères suivants : diff générale,
-cartons, tirage au sort).
+Le moteur gère le départage **récursif** réglementaire : `applyTieBreakCascade()`
+partitionne le groupe par valeur du critère courant, et **ré-applique la cascade
+sur chaque sous-groupe encore à égalité** avant de descendre au critère suivant.
 
 Conséquences pour ≥ 3 équipes en `part` :
-1. **Pas de re-segmentation** : si A se détache mais que B et C restent à égalité après
-   h2h, le code les sépare quand même arbitrairement au lieu de descendre au critère
-   suivant.
-2. **Égalités tranchées arbitrairement** : `usort` donne des rangs distincts même à stats
-   h2h strictement identiques, au lieu de laisser ex æquo puis d'appliquer le critère
-   suivant.
-3. **Cumul ≠ sous-classement** : sommer les écarts contre tout le groupe n'équivaut pas au
-   mini-championnat réglementaire (un gros écart contre une seule équipe peut masquer une
-   défaite contre une autre).
-
-> **Note critère 3** : pour deux équipes restées à égalité après h2h, l'implémentation
-> conserve l'ordre antérieur (qui provenait du tri `Pts, Diff, Plus` global), donc la
-> différence générale joue *de facto* comme garde-fou ; mais ce n'est pas garanti pour
-> un groupe de ≥ 3 équipes et ce n'est pas explicitement codé comme critère 3.
+1. **Re-segmentation correcte** : si A se détache mais que B et C restent à égalité
+   après h2h points, B et C sont ré-évalués sur le critère suivant (diff particulière,
+   puis diff générale, etc.) sans toucher à A.
+2. **Ex æquo préservé** : un sous-groupe strictement identique sur tous les critères
+   implémentés conserve le **même `Clt`** au lieu d'être tranché arbitrairement.
+3. **Sous-classement réel** : les valeurs h2h sont recalculées sur le **seul
+   sous-groupe** passé au critère (`headToHeadStats` ne compte que les matchs entre
+   les équipes encore en lice), ce qui correspond au mini-championnat réglementaire.
 
 ---
 
@@ -149,10 +133,10 @@ Conséquences pour ≥ 3 équipes en `part` :
 
 | Contexte | Goal-average | Dernier critère pris en compte | Premier critère **non** pris en compte |
 |----------|--------------|--------------------------------|----------------------------------------|
-| CHPT général | **Général (ICF)** | #2 — Total des buts marqués | #3 — Confrontation directe (puis #4 Honourable Play, règle 5.5.6) |
-| CHPT général | **Particulier (FFCK)** | #2 — Différence particulière de buts | #1 — Points de la confrontation directe (mal ordonné), puis #3 → #10. **≥ 3 équipes : départage non récursif** (cf. §3) |
-| CP — poules | **Général (ICF)** | #2 — Total des buts marqués | #3 — Confrontation directe (puis #4, 5.5.6) |
-| CP — poules | **Particulier (FFCK)** | *(aucun)* — équipes laissées **ex æquo** | #1 dès la première égalité : aucun h2h n'est calculé |
+| CHPT général | **Général (ICF)** | #4 — Honourable Play (cartons) | #5 — Play Off (hors logiciel) ; règle 5.5.6 (forfaits) |
+| CHPT général | **Particulier (FFCK)** | #7 — Cartons verts (phase) | #8 — Cartons des phases précédentes, puis #9-10 (tirage au sort) |
+| CP — poules | **Général (ICF)** | #4 — Honourable Play (cartons), périmètre poule | #5 — Play Off ; règle 5.5.6 |
+| CP — poules | **Particulier (FFCK)** | #7 — Cartons verts (poule), périmètre poule | #8 — Cartons des phases précédentes, puis #9-10 |
 
 ---
 
@@ -339,6 +323,58 @@ Conséquences concrètes :
 > des critères » dans le `usort` actuel, factoriser d'abord ce moteur critère-par-critère,
 > puis y brancher CHPT général et poules CP (mêmes critères, périmètre différent).
 
+### 6.4-ter Faire évoluer un règlement (procédure)
+
+Tout est centralisé dans
+[`AdminRankingsController.php`](../../sources/api2/src/Controller/AdminRankingsController.php).
+On **ne touche jamais** au moteur (`applyTieBreakCascade`), ni à
+`resolveRankingOrder` / `finalizeChptRanking` / `finalizeJourneeChptRanking`, ni au rendu
+PDF / endpoint / frontend : ils consomment la séquence de critères et les étapes produites.
+
+**Cas 1 — réordonner / activer / retirer des critères existants** (le plus fréquent) :
+un seul endroit, la constante `TIEBREAK_CRITERIA`.
+
+```php
+private const TIEBREAK_CRITERIA = [
+    'gen'  => ['diff_generale', 'buts_marques', 'h2h_points', 'honourable_play'],
+    'part' => ['h2h_points', 'h2h_diff', 'diff_generale', 'buts_marques',
+               'cartons_rouges', 'cartons_jaunes', 'cartons_verts'],
+];
+```
+
+Permuter / ajouter / retirer un code dans la liste suffit. Le départage **et** la
+justification suivent automatiquement.
+
+**Cas 2 — ajouter un critère inédit** (logique non encore codée) : 4 points, tous
+adjacents dans le fichier.
+
+| # | Quoi | Méthode / constante |
+|---|------|---------------------|
+| 1 | **Calcul** : fonction pure `teamId => valeur` (valeur haute = mieux classé) | `evaluateCriterion()` — nouveau `case` |
+| 2 | **Affichage** : reconvertir la valeur interne en chiffre lisible (si on inverse le signe, comme pour les cartons) | `displayValues()` — `case` |
+| 3 | **Libellés** FR + EN | `CRITERE_LABELS` (entrée dans `fr` **et** `en`) |
+| 4 | **Activer** : insérer le code dans la séquence | `TIEBREAK_CRITERIA` |
+
+Selon la nature du critère, ajuster aussi le **tri d'affichage des valeurs** (dans
+`traceTiedGroups`) :
+- « plus = mieux » → rien (cas par défaut, `arsort`) ;
+- « moins = mieux » (cartons-like) → ajouter le code à `$cardCriteria` ;
+- confrontation directe avec détail des matchs → ajouter le code à `$h2hCriteria`.
+
+> **Règle d'or** (point 1) : un critère est **autonome**. Il reçoit le sous-groupe encore à
+> égalité + le `$context`, recalcule ses propres valeurs depuis les données brutes, et ne
+> suppose **jamais** qu'un autre critère a tourné avant. C'est ce qui rend la récursivité et
+> le réordonnancement sûrs.
+
+Si le critère exige une **donnée nouvelle** (ex. cartons des phases précédentes,
+FFCK #8-10), ajouter une méthode de chargement *lazy* sur le modèle de
+`cardStats()` / `loadH2hMatches()` (nouvelle clé dans `$context`, ex. `'cards_prev' => null`).
+
+**Cas 3 — nouveau règlement** (3ᵉ mode de goal-average) : ajouter une **clé** dans
+`TIEBREAK_CRITERIA` (ex. `'icf2027' => [...]`), s'assurer que `kp_competition.goalaverage`
+peut porter cette valeur, puis traiter les éventuels critères inédits via le Cas 2. Le
+fallback `?? TIEBREAK_CRITERIA['gen']` protège déjà contre un mode inconnu.
+
 ### 6.4-bis Trace de départage
 
 La justification réutilise la **même cascade de critères** que le départage (la brique
@@ -375,16 +411,24 @@ JustificationEtape {
 > implémentés (h2h points, cartons, tirage au sort) apparaîtront comme **« non départagé par
 > le logiciel »** dans le PDF, ce qui est honnête et signale les cas à trancher manuellement.
 
-### 6.5 Endpoint API2 proposé
+### 6.5 Endpoint API2 ✅ implémenté
 
 ```
 GET /admin/rankings/justification
 ```
 
 **Query Parameters** : `season` (req.), `competition` (req.), `type` (opt., CHPT/CP),
-`format` (opt. : `json` par défaut, ou `pdf`).
+`format` (opt. : `json` par défaut, ou `pdf`), `timezone` (opt., pour la date du PDF).
 
 **Profil** : ≤ 10 (lecture ; aligné sur la consultation du classement).
+
+**Implémentation** (`AdminRankingsController::justification()`) :
+- lit `Clt`/`Pts` **tels quels en base** (respecte la consolidation, **n'appelle jamais**
+  `finalize…`) ;
+- ne documente que les **groupes réellement à égalité de points** (`buildJustificationChpt`
+  pour le CHPT ; `buildJustificationPoules` par poule de type C pour la CP) ;
+- rejoue la **même cascade de critères** que le départage en **mode trace**
+  (`applyTieBreakCascade($…, $trace)`), produisant une `JustificationEtape` par critère.
 
 **Réponse `json`** :
 ```json
@@ -408,30 +452,39 @@ GET /admin/rankings/justification
 }
 ```
 
-### 6.6 Rendu PDF
+> **Étapes h2h détaillées** : les critères de confrontation directe (`h2h_points`,
+> `h2h_diff`, `h2h_buts`) portent en plus un tableau `matchs` listant les rencontres
+> **réellement prises en compte** (entre les seules équipes du sous-groupe, dans le
+> périmètre), avec libellés et scores :
+> ```json
+> { "critere": "h2h_points", "valeurs": { "5": 8, "6": 6, "7": 2 }, "resultat": "departage",
+>   "matchs": [ { "numero": 123, "idA": 5, "idB": 6, "equipeA": "Corbeil-Essonnes I",
+>                 "equipeB": "Acigné I", "scoreA": 9, "scoreB": 7 } ] }
+> ```
+> Dans le PDF : une équipe par ligne pour les valeurs, puis un match par ligne préfixé
+> du **numéro de match** (`#123`, `Numero_ordre` avec repli sur `Id`) et **score en gras**.
 
-Deux pistes, à arbitrer au moment de l'implémentation :
+### 6.6 Rendu PDF ✅ implémenté (api2)
 
-- **Réutiliser l'infra legacy mPDF** (`MyPDF.php`), comme les autres `PdfClt*.php` : créer un
-  `PdfCltJustif.php` qui **consomme le JSON de l'endpoint api2** (il ne recalcule rien), pour
-  rester homogène avec les liens PDF existants (ouverts en `target="_blank"` depuis app4).
-- **Générer le PDF directement dans api2** (mPDF y est déjà utilisé, cf.
-  `AdminStatsController`) via `format=pdf`, et ouvrir l'URL api2 depuis app4.
-
-La première limite l'introduction de nouveaux patterns ; la seconde garde tout le périmètre
-« classement » dans api2. Le choix n'impacte pas le calcul (qui reste dans api2 dans les deux
-cas).
+Choix retenu : **générer le PDF directement dans api2** via `format=pdf`
+(`renderJustificationPdf()`, mPDF, même style que `AdminStatsController`). Tout le
+périmètre « classement » reste dans api2 ; le calcul n'est pas dupliqué. Depuis app4,
+le PDF est récupéré en blob authentifié (`useApi().getBlob`) puis ouvert dans un nouvel
+onglet (le endpoint exige le Bearer token, un simple `target="_blank"` ne conviendrait pas).
 
 **Contenu du PDF** : en-tête compétition + mode goal-average ; puis, par groupe à égalité,
 la liste des équipes, le critère décisif appliqué à chaque étape avec les valeurs chiffrées,
-et la mention explicite des cas **non départagés automatiquement** (à trancher manuellement /
-tirage au sort).
+le **détail des matchs** (libellés + scores) pour les étapes de confrontation directe, et la
+mention explicite des cas **non départagés automatiquement** (à trancher manuellement /
+tirage au sort). Le PDF et le JSON suivent la **langue active** (`locale=fr|en`).
 
-### 6.7 Point d'entrée UI
+### 6.7 Point d'entrée UI ✅ implémenté
 
-Bouton/lien « Justification du départage » dans la page Classement (section PDFs admin),
-visible uniquement s'il existe au moins un groupe d'équipes à égalité de points (sinon le
-document serait vide). À ajouter à la spec [PAGE_CLASSEMENT.md](PAGE_CLASSEMENT.md) §2.6.
+Bouton « Justification du départage » dans la page Classement
+([`pages/rankings/index.vue`](../../sources/app4/pages/rankings/index.vue)), à côté des
+extractions PDF. **Visible uniquement** s'il existe au moins un groupe d'équipes à égalité
+de points (`hasTies` : CHPT sur tout le classement, CP au sein d'une poule de type C).
+Clé i18n `rankings.justification.*` (fr/en).
 
 ---
 
@@ -440,15 +493,18 @@ document serait vide). À ajouter à la spec [PAGE_CLASSEMENT.md](PAGE_CLASSEMEN
 - **ICF 2025** — art. 5.5.4 à 5.5.6 (goal-average général).
 - **FFCK Règlement sportif 2023-2026** — art. RP KAP 65 (goal-average particulier).
 - Code : [`AdminRankingsController.php`](../../sources/api2/src/Controller/AdminRankingsController.php)
-  → `finalizeChptRanking()`, `resolveHeadToHead()`, `finalizeJourneeChptRanking()`.
+  → `finalizeChptRanking()`, `finalizeJourneeChptRanking()`,
+  `resolveRankingOrder()`, `applyTieBreakCascade()`, `evaluateCriterion()`.
 
 ---
 
 **Document créé le** : 2026-06-25
-**Statut** : 📋 Analyse + spec.
-Départage partiellement implémenté — CHPT général : critères 1-2 (`gen` et `part`) ;
-poules CP : critères 1-2 en `gen`, mais **aucun départage h2h en `part`** (équipes ex æquo).
-Restent à compléter : confrontation directe en points, cartons, neutralisation des forfaits
-(ICF 5.5.6), tirage au sort, **départage récursif ≥ 3 équipes**.
-À implémenter également (§6) : **export PDF de justification du départage** (à la volée via api2,
-respectant la consolidation, périmètre CHPT + poules CP, groupes à égalité uniquement).
+**Mis à jour le** : 2026-06-25
+**Statut** : ✅ Départage implémenté via moteur critère-par-critère récursif (CHPT + poules CP).
+- `gen` (ICF) : critères **1 → 4** (diff générale, buts, confrontation directe, Honourable Play).
+- `part` (FFCK) : critères **1 → 7** (h2h points, diff particulière, diff générale, buts généraux,
+  cartons rouges, jaunes, verts de la phase/poule).
+Export PDF de justification du départage (§6) : ✅ implémenté (api2 `format=pdf`,
+mode trace, respect de la consolidation, périmètre CHPT + poules CP, bouton app4 conditionnel).
+Restent à compléter : critères #8-10 FFCK (cartons des phases précédentes, tirage au sort),
+règle ICF 5.5.6 (neutralisation des forfaits).
