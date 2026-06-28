@@ -56,6 +56,16 @@ class AdminGamesController extends AbstractController
         $sort = $request->query->get('sort', 'date_time_terrain');
         $search = $request->query->get('search', '');
         $unlocked = $request->query->get('unlocked', '');
+        // Optional search scopes toggled by the hidden/shown columns in the UI.
+        // Comma-separated list; when the param is absent (legacy callers) all scopes apply.
+        // The "none" sentinel means "no optional column shown" — the client sends it because
+        // an empty string would be stripped from the query and read as absent (= all scopes).
+        $searchFieldsParam = $request->query->get('searchFields', null);
+        $searchFields = $searchFieldsParam === null
+            ? ['referees', 'shotclock']
+            : ($searchFieldsParam === 'none'
+                ? []
+                : array_filter(array_map('trim', explode(',', $searchFieldsParam))));
 
         // Fallback to active season
         if (empty($season)) {
@@ -135,15 +145,22 @@ class AdminGamesController extends AbstractController
         }
 
         // Search filter
+        // Always search labels, team names and game number; referee/shotclock columns are
+        // only searched when their column is visible (searchFields), so hidden columns can't
+        // surface unexpected results.
         if (!empty($search)) {
-            $where[] = '(m.Libelle LIKE ? OR cea.Libelle LIKE ? OR ceb.Libelle LIKE ? OR m.Arbitre_principal LIKE ? OR m.Arbitre_secondaire LIKE ? OR m.Timeshoot LIKE ? OR CAST(m.Numero_ordre AS CHAR) LIKE ?)';
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
+            $searchClauses = ['m.Libelle LIKE ?', 'cea.Libelle LIKE ?', 'ceb.Libelle LIKE ?', 'CAST(m.Numero_ordre AS CHAR) LIKE ?'];
+            if (in_array('referees', $searchFields, true)) {
+                $searchClauses[] = 'm.Arbitre_principal LIKE ?';
+                $searchClauses[] = 'm.Arbitre_secondaire LIKE ?';
+            }
+            if (in_array('shotclock', $searchFields, true)) {
+                $searchClauses[] = 'm.Timeshoot LIKE ?';
+            }
+            $where[] = '(' . implode(' OR ', $searchClauses) . ')';
+            foreach ($searchClauses as $_) {
+                $params[] = "%$search%";
+            }
         }
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
