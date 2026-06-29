@@ -228,6 +228,7 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
+    "warning": "Warning",
     "confirm": "Confirm",
     "actions": "Actions",
     "refresh": "Refresh",
@@ -1440,6 +1441,12 @@
     "referee_team_label": "Associated team",
     "shotclock_placeholder": "Search a person...",
     "show_shotclock": "Shotclock",
+    "show_referees": "Referees",
+    "display": {
+      "title": "Display",
+      "filters_section": "Filters",
+      "posts_section": "Posts"
+    },
     "type_classification": "Classification",
     "type_elimination": "Elimination",
     "published": "Public",
@@ -1554,6 +1561,9 @@
     "bulk_group_changed": "Group changed for {count} game(s).",
     "bulk_auto_assign_confirm": "Run auto-assignment for {count} selected game(s)?",
     "bulk_auto_assigned": "{count} game(s) auto-assigned.",
+    "bulk_auto_assign_pool_not_consolidated": "{count} slot(s) not assigned: the source pool is not consolidated. Consolidate the pool ranking before assigning the next rounds.",
+    "bulk_auto_assign_unresolved": "{count} slot(s) could not be resolved (source game not locked or result unavailable).",
+    "bulk_auto_assign_none": "No game assigned: no slot could be resolved.",
     "bulk_cancel_assign_confirm": "Clear teams and referees for {count} selected game(s)?",
     "bulk_assign_cancelled": "Assignment cancelled for {count} game(s).",
     "bulk_duplicate_confirm": "Duplicate {count} selected game(s)? Copies will be unlocked, unpublished and have no score.",
@@ -1962,6 +1972,7 @@
     "eliminated": "Eliminated",
     "winner": "Winner",
     "loser": "Loser",
+    "provisional": "Provisional score (game not validated)",
     "no_teams": "No teams in this competition",
     "compute": {
       "title": "Ranking computation",
@@ -2015,6 +2026,14 @@
       "progress": "Progress",
       "detail": "Detail per team",
       "matches": "Games"
+    },
+    "ties": {
+      "title": "Ties"
+    },
+    "justification": {
+      "button": "Tie-break justification",
+      "loading": "Generating…",
+      "tooltip": "Generate a PDF justifying the tie-break of teams level on points"
     },
     "status_restriction": "Modifications are only available for ongoing competitions (status ON)",
     "initial": {

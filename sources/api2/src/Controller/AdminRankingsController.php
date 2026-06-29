@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
+use Mpdf\Mpdf;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -365,13 +366,20 @@ class AdminRankingsController extends AbstractController
             return $this->json(['message' => 'Competition must be ON to edit rankings'], Response::HTTP_FORBIDDEN);
         }
 
+        // Detail suffix identifying the phase/poule when editing a phase ranking,
+        // so logs can tell which gameday (Id_journee) was modified.
+        $phaseLabel = '';
+
         if ($journeeId !== null) {
             // Check phase is not consolidated
-            $sql = "SELECT Consolidation FROM kp_journee WHERE Id = ?";
+            $sql = "SELECT Consolidation, Phase, Lieu FROM kp_journee WHERE Id = ?";
             $jRow = $this->connection->prepare($sql)->executeQuery([(int)$journeeId])->fetchAssociative();
             if ($jRow && $jRow['Consolidation'] === 'O') {
                 return $this->json(['message' => 'Cannot edit a consolidated phase'], Response::HTTP_FORBIDDEN);
             }
+
+            $phaseName = trim(($jRow['Phase'] ?? '') . ' ' . ($jRow['Lieu'] ?? ''));
+            $phaseLabel = " [phase #" . (int)$journeeId . ($phaseName !== '' ? " - $phaseName" : '') . "]";
 
             // Update kp_competition_equipe_journee
             $sql = "UPDATE kp_competition_equipe_journee SET `$field` = ? WHERE Id = ? AND Id_journee = ?";
@@ -382,7 +390,17 @@ class AdminRankingsController extends AbstractController
             $this->connection->prepare($sql)->executeStatement([$value, $teamId]);
         }
 
-        $this->logActionForCompetition('Modif Classement inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)");
+        // A manual inline edit changes the calculated ranking, so refresh the
+        // calculation metadata (date + author) just like a recalculation does.
+        // Otherwise the published ranking could end up differing from the
+        // calculated one while both still advertise the same calculation date.
+        $userCode = $user->getCode();
+        $sql = "UPDATE kp_competition
+                SET Date_calcul = NOW(), Code_uti_calcul = ?
+                WHERE Code = ? AND Code_saison = ?";
+        $this->connection->prepare($sql)->executeStatement([$userCode, $row['Code_compet'], $row['Code_saison']]);
+
+        $this->logActionForCompetition('Modif Classement inline', $row['Code_saison'], $row['Code_compet'], "$field: $value (équipe $teamId)$phaseLabel");
 
         return $this->json(['success' => true]);
     }
@@ -795,6 +813,490 @@ class AdminRankingsController extends AbstractController
         ]));
     }
 
+    // ─────────────────────────────────────────────
+    // 13. GET /admin/rankings/justification
+    //     Tie-break justification (CHPT + CP poules), JSON or PDF.
+    //     Source of truth = the tie-break engine itself (no parallel recompute).
+    //     Reads Clt/Pts as-is from DB (respects consolidation): never calls finalize*.
+    // ─────────────────────────────────────────────
+
+    #[Route('/justification', name: 'admin_rankings_justification', methods: ['GET'])]
+    public function justification(Request $request): Response
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        // Read-only, aligned with ranking consultation (≤ 10).
+        if (!$user || $user->getNiveau() > 10) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $season = $request->query->get('season', '');
+        $competition = $request->query->get('competition', '');
+        $typeOverride = $request->query->get('type', '');
+        $format = $request->query->get('format', 'json');
+
+        if (empty($season) || empty($competition)) {
+            return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $allowedCompetitions = $user->getAllowedCompetitions();
+        if ($allowedCompetitions !== null && !in_array($competition, $allowedCompetitions, true)) {
+            return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
+        }
+
+        $compRow = $this->getCompetitionRow($competition, $season);
+        if (!$compRow) {
+            return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $goalaverage = $compRow['goalaverage'] ?: 'gen';
+        $type = !empty($typeOverride) && in_array($typeOverride, ['CHPT', 'CP'], true)
+            ? $typeOverride
+            : ($compRow['Code_typeclt'] ?: 'CHPT');
+        $locale = $this->normalizeLocale($request->query->get('locale', 'fr'));
+
+        $groupes = $type === 'CP'
+            ? $this->buildJustificationPoules($competition, $season, $goalaverage, $locale)
+            : $this->buildJustificationChpt($competition, $season, $goalaverage, $locale);
+
+        $payload = [
+            'competition' => [
+                'code' => $compRow['Code'],
+                'libelle' => $compRow['Libelle'],
+                'goalaverage' => $goalaverage,
+                'type' => $type,
+            ],
+            'groupes' => $groupes,
+        ];
+
+        if ($format === 'pdf') {
+            return $this->renderJustificationPdf($payload, $request);
+        }
+
+        return $this->json($payload);
+    }
+
+    /**
+     * Build justification groups for a CHPT (whole-competition perimeter).
+     * Only groups of teams actually tied on Pts are documented.
+     */
+    private function buildJustificationChpt(string $competition, string $season, string $goalaverage, string $locale): array
+    {
+        // Read current state AS-IS (respects consolidation; no recompute).
+        $sql = "SELECT Id, Libelle, Pts, Diff, Plus, Clt FROM kp_competition_equipe
+                WHERE Code_compet = ? AND Code_saison = ?
+                ORDER BY Pts DESC, Diff DESC, Plus DESC";
+        $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
+
+        return $this->traceTiedGroups($rows, $goalaverage, $competition, $season, null, 'CHPT', null, $locale);
+    }
+
+    /**
+     * Build justification groups for CP poules (per-journee perimeter, type C only).
+     */
+    private function buildJustificationPoules(string $competition, string $season, string $goalaverage, string $locale): array
+    {
+        // Round-robin poules (type C); elimination phases (E) are not tie-broken here.
+        $sql = "SELECT cej.Id, ce.Libelle, cej.Id_journee, cej.Pts, cej.Diff, cej.Plus, cej.Clt,
+                       j.Phase, j.Lieu
+                FROM kp_competition_equipe_journee cej
+                INNER JOIN kp_competition_equipe ce ON cej.Id = ce.Id
+                INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND (j.Type IS NULL OR j.Type = 'C')
+                ORDER BY cej.Id_journee, cej.Pts DESC, cej.Diff DESC, cej.Plus DESC";
+        $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
+
+        // Group by journee, keep its label.
+        $byJournee = [];
+        $labels = [];
+        foreach ($rows as $row) {
+            $jid = (int) $row['Id_journee'];
+            $byJournee[$jid][] = $row;
+            if (!isset($labels[$jid])) {
+                // Label = "Phase (Lieu)" — e.g. "Poule ND (Nantes)".
+                $phase = trim((string) ($row['Phase'] ?? ''));
+                $lieu = trim((string) ($row['Lieu'] ?? ''));
+                $label = $phase;
+                if ($lieu !== '') {
+                    $label = $label !== '' ? "$label ($lieu)" : "($lieu)";
+                }
+                $fallback = $locale === 'en' ? "Pool #$jid" : "Poule #$jid";
+                $labels[$jid] = $label !== '' ? $label : $fallback;
+            }
+        }
+
+        $groupes = [];
+        foreach ($byJournee as $jid => $journeeRows) {
+            $g = $this->traceTiedGroups($journeeRows, $goalaverage, $competition, $season, $jid, 'POULE', $labels[$jid], $locale);
+            foreach ($g as $entry) {
+                $groupes[] = $entry;
+            }
+        }
+        return $groupes;
+    }
+
+    /**
+     * Replay the tie-break cascade in trace mode over groups of teams sharing the
+     * same Pts, returning one JustificationGroupe per genuinely-tied group.
+     *
+     * @param array       $rows       AS-IS rows (Id, Libelle, Pts, Diff, Plus, Clt), Pts-desc
+     * @param int|null    $journeeId  perimeter for h2h/cards (null = whole competition)
+     * @param string      $perimetre  'CHPT' | 'POULE'
+     * @param string|null $pouleLabel label when perimeter is a poule
+     */
+    private function traceTiedGroups(array $rows, string $goalaverage, string $competition, string $season, ?int $journeeId, string $perimetre, ?string $pouleLabel, string $locale = 'fr'): array
+    {
+        $criteria = self::TIEBREAK_CRITERIA[$goalaverage] ?? self::TIEBREAK_CRITERIA['gen'];
+        $critereLabels = $this->critereLabels($locale);
+
+        // Shared lazy context (stats/matches/cards), same as resolveRankingOrder().
+        $stats = [];
+        $libelles = [];
+        $cltById = [];
+        foreach ($rows as $row) {
+            $id = (int) $row['Id'];
+            $stats[$id] = [
+                'Pts'  => (int) $row['Pts'],
+                'Diff' => (int) $row['Diff'],
+                'Plus' => (int) $row['Plus'],
+            ];
+            $libelles[$id] = $row['Libelle'] ?? ('#' . $id);
+            $cltById[$id] = (int) $row['Clt'];
+        }
+        $context = [
+            'competition' => $competition,
+            'season'      => $season,
+            'journeeId'   => $journeeId,
+            'stats'       => $stats,
+            'matches'     => null,
+            'cards'       => null,
+            'points'      => null,
+        ];
+
+        // Group consecutive teams with equal Pts.
+        $groups = [];
+        $current = [];
+        $currentPts = null;
+        foreach ($rows as $row) {
+            $pts = (int) $row['Pts'];
+            if ($currentPts !== null && $pts !== $currentPts) {
+                if (count($current) > 1) $groups[] = ['pts' => $currentPts, 'ids' => $current];
+                $current = [];
+            }
+            $current[] = (int) $row['Id'];
+            $currentPts = $pts;
+        }
+        if (count($current) > 1) $groups[] = ['pts' => $currentPts, 'ids' => $current];
+
+        $result = [];
+        foreach ($groups as $grp) {
+            $trace = [];
+            $ordered = $this->applyTieBreakCascade($grp['ids'], $criteria, 0, $context, $trace);
+
+            // Flatten ordered buckets into the final order, deriving cltFinal from the
+            // cascade itself so the justification is self-consistent (order + rank come
+            // from the same source). The group occupies a contiguous rank range starting
+            // at its lowest stored Clt; ties inside a bucket share a rank (1224 style).
+            $startClt = min(array_map(fn($id) => $cltById[$id], $grp['ids']));
+            $equipes = [];
+            $rank = $startClt;
+            foreach ($ordered as $bucket) {
+                foreach ($bucket as $id) {
+                    $equipes[] = [
+                        'id' => $id,
+                        'libelle' => $libelles[$id],
+                        'cltFinal' => $rank,
+                    ];
+                }
+                $rank += count($bucket);
+            }
+
+            // Decorate trace steps with team labels for readability. Head-to-head
+            // criteria also carry the detail of the matches actually counted.
+            $h2hCriteria = ['h2h_points', 'h2h_diff', 'h2h_buts'];
+            // Card criteria display the raw card count: fewer is better, so they are
+            // ranked ascending. Every other criterion: higher value = better placed.
+            $cardCriteria = ['honourable_play', 'cartons_rouges', 'cartons_jaunes', 'cartons_verts'];
+            $etapes = array_map(function ($step) use ($critereLabels, $h2hCriteria, $cardCriteria, $libelles, &$context) {
+                $valeurs = [];
+                foreach ($step['valeurs'] as $id => $v) {
+                    $valeurs[(string) $id] = $v;
+                }
+                // Order teams by the criterion value (best-placed first), so the trace
+                // reads in the same order as the resulting ranking.
+                if (in_array($step['critere'], $cardCriteria, true)) {
+                    asort($valeurs, SORT_NUMERIC);   // fewer cards first
+                } else {
+                    arsort($valeurs, SORT_NUMERIC);  // higher stat first
+                }
+                $etape = [
+                    'critere' => $step['critere'],
+                    'critereLabel' => $critereLabels[$step['critere']] ?? $step['critere'],
+                    'equipesConcernees' => $step['equipesConcernees'],
+                    'valeurs' => $valeurs,
+                    'resultat' => $step['resultat'],
+                ];
+                if (in_array($step['critere'], $h2hCriteria, true)) {
+                    $etape['matchs'] = array_map(fn($m) => [
+                        'numero' => $m['numero'],
+                        'idA' => $m['idA'],
+                        'idB' => $m['idB'],
+                        'equipeA' => $libelles[$m['idA']] ?? ('#' . $m['idA']),
+                        'equipeB' => $libelles[$m['idB']] ?? ('#' . $m['idB']),
+                        'scoreA' => $m['scoreA'],
+                        'scoreB' => $m['scoreB'],
+                    ], $this->headToHeadMatchList($step['equipesConcernees'], $context));
+                }
+                return $etape;
+            }, $trace);
+
+            $result[] = [
+                'perimetre' => $perimetre,
+                'pouleLabel' => $pouleLabel,
+                'points' => (int) ($grp['pts'] / 100), // stored × 100 internally
+                'pointsRaw' => (int) $grp['pts'],
+                'goalaverage' => $goalaverage,
+                'equipes' => $equipes,
+                'etapes' => $etapes,
+            ];
+        }
+
+        return $result;
+    }
+
+    /** Human-readable labels for each tie-break criterion, per locale (fr/en). */
+    private const CRITERE_LABELS = [
+        'fr' => [
+            'h2h_points'      => 'Points en confrontation directe',
+            'h2h_diff'        => 'Différence particulière de buts',
+            'h2h_buts'        => 'Buts marqués en confrontation directe',
+            'diff_generale'   => 'Différence générale de buts',
+            'buts_marques'    => 'Buts marqués (général)',
+            'honourable_play' => 'Honourable Play (cartons, barème ICF)',
+            'cartons_rouges'  => 'Cartons rouges (phase)',
+            'cartons_jaunes'  => 'Cartons jaunes (phase)',
+            'cartons_verts'   => 'Cartons verts (phase)',
+            'non_departage'   => 'Non départagé par le logiciel',
+        ],
+        'en' => [
+            'h2h_points'      => 'Head-to-head points',
+            'h2h_diff'        => 'Head-to-head goal difference',
+            'h2h_buts'        => 'Head-to-head goals scored',
+            'diff_generale'   => 'Overall goal difference',
+            'buts_marques'    => 'Goals scored (overall)',
+            'honourable_play' => 'Honourable Play (cards, ICF scale)',
+            'cartons_rouges'  => 'Red cards (phase)',
+            'cartons_jaunes'  => 'Yellow cards (phase)',
+            'cartons_verts'   => 'Green cards (phase)',
+            'non_departage'   => 'Not separated by the software',
+        ],
+    ];
+
+    /** Normalise an incoming locale to a supported one (fr default). */
+    private function normalizeLocale(?string $locale): string
+    {
+        return $locale === 'en' ? 'en' : 'fr';
+    }
+
+    /** Criterion label map for the given locale. @return array<string,string> */
+    private function critereLabels(string $locale): array
+    {
+        return self::CRITERE_LABELS[$this->normalizeLocale($locale)];
+    }
+
+    /**
+     * Render the justification payload as a PDF (mPDF), mirroring the AdminStats
+     * export style. Documents only genuinely-tied groups.
+     */
+    private function renderJustificationPdf(array $payload, Request $request): Response
+    {
+        $locale = $this->normalizeLocale($request->query->get('locale', 'fr'));
+        $en = $locale === 'en';
+
+        // Localised strings used in the PDF chrome.
+        $L = $en ? [
+            'title'        => 'Tie-break justification — %s',
+            'ga_part'      => 'Particular goal-average (FFCK RP KAP 2023-2026 art. 65)',
+            'ga_gen'       => 'General goal-average (ICF 2025)',
+            'empty'        => 'No group of teams level on points: nothing to justify.',
+            'poule_pts'    => '%s — %d points',
+            'general_pts'  => 'Overall ranking — %d points',
+            'col_clt'      => 'Rank',
+            'col_team'     => 'Team',
+            'verdict_ok'   => 'separated',
+            'verdict_tie'  => 'still level',
+            'edited_on'    => 'Edited on',
+            'page'         => 'Page',
+            'matches'      => 'Games counted',
+        ] : [
+            'title'        => 'Justification du départage — %s',
+            'ga_part'      => 'Goal-average particulier (FFCK RP KAP 2023-2026 art. 65)',
+            'ga_gen'       => 'Goal-average général (ICF 2025)',
+            'empty'        => 'Aucun groupe d\'équipes à égalité de points : aucun départage à justifier.',
+            'poule_pts'    => '%s — %d points',
+            'general_pts'  => 'Classement général — %d points',
+            'col_clt'      => 'Clt',
+            'col_team'     => 'Équipe',
+            'verdict_ok'   => 'départage',
+            'verdict_tie'  => 'toujours à égalité',
+            'edited_on'    => 'Édité le',
+            'page'         => 'Page',
+            'matches'      => 'Matchs pris en compte',
+        ];
+
+        $timezone = $request->query->get('timezone', 'Europe/Paris');
+        try {
+            $tz = new \DateTimeZone($timezone);
+        } catch (\Exception) {
+            $tz = new \DateTimeZone('Europe/Paris');
+        }
+        $dt = new \DateTime('now', $tz);
+        $exportDate = $en ? $dt->format('m/d/Y h:i A') : $dt->format('d/m/Y H:i');
+
+        $comp = $payload['competition'];
+        $gaLabel = $comp['goalaverage'] === 'part' ? $L['ga_part'] : $L['ga_gen'];
+        $title = sprintf($L['title'], $comp['libelle']);
+
+        $logoPath = dirname(__DIR__, 3) . '/img/logoKPI-medium.png';
+        $logoBase64 = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : '';
+
+        $html = '<style>
+            body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; }
+            h2 { font-size: 12pt; margin: 14px 0 4px 0; }
+            .meta { color:#666; font-size:8pt; margin-bottom:6px; }
+            table { width:100%; border-collapse:collapse; margin-bottom:4px; }
+            th { background:#f0f0f0; text-align:left; padding:4px; border:1px solid #ccc; }
+            td { padding:4px; border:1px solid #ccc; }
+            .step { margin:6px 0 2px 0; padding-left:8px; }
+            .values { margin:0 0 2px 18px; font-size:8pt; }
+            .values div { line-height:1.4; }
+            .values .v { font-weight:bold; }
+            .matches { margin:2px 0 8px 18px; color:#444; font-size:8pt; }
+            .matches .lbl { color:#888; font-style:italic; }
+            .matches div { line-height:1.4; }
+            .matches .num { color:#888; }
+            .matches .sc { font-weight:bold; }
+            .ok { color:#137333; }
+            .tie { color:#a50e0e; }
+        </style>';
+
+        $html .= sprintf('<p style="font-size:11pt;font-weight:bold;">%s</p>', htmlspecialchars($gaLabel));
+
+        if (empty($payload['groupes'])) {
+            $html .= sprintf('<p>%s</p>', htmlspecialchars($L['empty']));
+        }
+
+        foreach ($payload['groupes'] as $g) {
+            $heading = $g['perimetre'] === 'POULE'
+                ? sprintf($L['poule_pts'], htmlspecialchars((string) $g['pouleLabel']), $g['points'])
+                : sprintf($L['general_pts'], $g['points']);
+            $html .= sprintf('<h2>%s</h2>', $heading);
+
+            // Final order of the group.
+            $html .= sprintf(
+                '<table><thead><tr><th style="width:40px;text-align:center;">%s</th><th>%s</th></tr></thead><tbody>',
+                htmlspecialchars($L['col_clt']),
+                htmlspecialchars($L['col_team'])
+            );
+            foreach ($g['equipes'] as $e) {
+                $html .= sprintf(
+                    '<tr><td style="text-align:center;font-weight:bold;">%d</td><td>%s</td></tr>',
+                    $e['cltFinal'],
+                    htmlspecialchars($e['libelle'])
+                );
+            }
+            $html .= '</tbody></table>';
+
+            // Build a name lookup for this group.
+            $names = [];
+            foreach ($g['equipes'] as $e) {
+                $names[$e['id']] = $e['libelle'];
+            }
+
+            // Cascade steps.
+            foreach ($g['etapes'] as $etape) {
+                $cls = $etape['resultat'] === 'departage' ? 'ok' : 'tie';
+                $verdict = $etape['resultat'] === 'departage' ? $L['verdict_ok'] : $L['verdict_tie'];
+                $html .= sprintf(
+                    '<div class="step"><span class="%s">▸ %s</span> — <em>%s</em></div>',
+                    $cls,
+                    htmlspecialchars($etape['critereLabel']),
+                    $verdict
+                );
+
+                // Per-team value, one team per line.
+                $html .= '<div class="values">';
+                foreach ($etape['valeurs'] as $id => $v) {
+                    $name = $names[(int) $id] ?? ('#' . $id);
+                    $html .= sprintf(
+                        '<div>%s : <span class="v">%s</span></div>',
+                        htmlspecialchars($name),
+                        $v === null ? '—' : htmlspecialchars((string) $v)
+                    );
+                }
+                $html .= '</div>';
+
+                // Detail of the head-to-head games actually counted, one game per line.
+                if (!empty($etape['matchs'])) {
+                    $html .= sprintf('<div class="matches"><span class="lbl">%s :</span>', htmlspecialchars($L['matches']));
+                    foreach ($etape['matchs'] as $m) {
+                        $html .= sprintf(
+                            '<div><span class="num">#%d</span> %s <span class="sc">%d–%d</span> %s</div>',
+                            $m['numero'],
+                            htmlspecialchars($m['equipeA']),
+                            $m['scoreA'],
+                            $m['scoreB'],
+                            htmlspecialchars($m['equipeB'])
+                        );
+                    }
+                    $html .= '</div>';
+                }
+            }
+        }
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_left' => 12,
+            'margin_right' => 12,
+            'margin_top' => 25,
+            'margin_bottom' => 15,
+            'margin_header' => 5,
+            'margin_footer' => 5,
+        ]);
+
+        $header = '<table width="100%" style="border-bottom:1px solid #ccc;">
+            <tr>
+                <td width="20%">' . ($logoBase64 ? '<img src="' . $logoBase64 . '" height="28" />' : 'KPI') . '</td>
+                <td width="60%" style="text-align:center;font-size:11pt;font-weight:bold;">' . htmlspecialchars($title) . '</td>
+                <td width="20%" style="text-align:right;font-size:8pt;color:#666;">kayak-polo.info</td>
+            </tr></table>';
+        $footer = '<table width="100%" style="border-top:1px solid #ccc;font-size:8pt;color:#666;">
+            <tr>
+                <td width="50%">' . htmlspecialchars($L['edited_on']) . ' ' . $exportDate . '</td>
+                <td width="50%" style="text-align:right;">' . htmlspecialchars($L['page']) . ' {PAGENO}/{nbpg}</td>
+            </tr></table>';
+
+        $mpdf->SetHTMLHeader($header);
+        $mpdf->SetHTMLFooter($footer);
+        $mpdf->SetTitle($title);
+        $mpdf->WriteHTML($html);
+
+        $filename = sprintf('justification_departage_%s_%s.pdf', $comp['code'], date('Y-m-d_His'));
+
+        return new Response(
+            $mpdf->Output($filename, 'S'),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            ]
+        );
+    }
+
     // ═══════════════════════════════════════════════
     //  PRIVATE HELPERS
     // ═══════════════════════════════════════════════
@@ -981,7 +1483,7 @@ class AdminRankingsController extends AbstractController
             // Load matches for elimination phases
             $phaseMatches = [];
             if (($j['Type'] ?: 'C') === 'E') {
-                $sql = "SELECT m.Id, m.ScoreA, m.ScoreB, m.Id_equipeA, m.Id_equipeB,
+                $sql = "SELECT m.Id, m.ScoreA, m.ScoreB, m.Id_equipeA, m.Id_equipeB, m.Validation,
                                ce1.Libelle AS EquipeA, ce2.Libelle AS EquipeB
                         FROM kp_match m
                         LEFT JOIN kp_competition_equipe ce1 ON m.Id_equipeA = ce1.Id
@@ -997,6 +1499,7 @@ class AdminRankingsController extends AbstractController
                     'idEquipeB' => (int) ($m['Id_equipeB'] ?? 0),
                     'scoreA' => $m['ScoreA'] !== null ? (int) $m['ScoreA'] : null,
                     'scoreB' => $m['ScoreB'] !== null ? (int) $m['ScoreB'] : null,
+                    'validated' => ($m['Validation'] ?? '') === 'O',
                 ], $matches);
             }
 
@@ -1282,110 +1785,455 @@ class AdminRankingsController extends AbstractController
 
     private function finalizeChptRanking(string $competition, string $season, string $goalaverage): void
     {
+        // CHPT perimeter = whole competition. Load team stats, order by the base
+        // criteria (Pts, then Diff, then Plus) and apply the tie-break cascade to
+        // each group of teams sharing the same Pts.
         $sql = "SELECT Id, Pts, Diff, Plus FROM kp_competition_equipe
                 WHERE Code_compet = ? AND Code_saison = ?
                 ORDER BY Pts DESC, Diff DESC, Plus DESC";
         $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
 
-        $clt = 1;
-        $oldPts = -1;
-        $oldClt = 1;
-        $ties = []; // clt -> [ids] for H2H resolution
-        $oldId = 0;
+        $ranking = $this->resolveRankingOrder($rows, $goalaverage, $competition, $season, null);
 
-        foreach ($rows as $i => $row) {
-            $id = (int) $row['Id'];
-            if ($row['Pts'] == $oldPts) {
-                if ($goalaverage === 'gen') {
-                    // General goal-average: each team gets sequential rank
-                    $clt = $i + 1;
-                } else {
-                    // Particular goal-average: teams share rank, collect for H2H
-                    $clt = $oldClt;
-                    $ties[$clt][$oldId] = $oldId;
-                    $ties[$clt][$id] = $id;
-                }
-            } else {
-                $clt = $i + 1;
-            }
-
+        foreach ($ranking as $id => $clt) {
             $sql = "UPDATE kp_competition_equipe SET Clt = ? WHERE Id = ?";
             $this->connection->prepare($sql)->executeStatement([$clt, $id]);
-
-            $oldPts = $row['Pts'];
-            $oldClt = $clt;
-            $oldId = $id;
-        }
-
-        // Head-to-head tie-breaking if goal-average = 'part'
-        if ($goalaverage === 'part' && !empty($ties)) {
-            $this->resolveHeadToHead($competition, $season);
         }
     }
 
-    private function resolveHeadToHead(string $competition, string $season): void
+    // ─────────────────────────────────────────────
+    //  TIE-BREAK ENGINE (goal-average départage)
+    //
+    //  Design (cf. DOC/specs/PAGE_CLASSEMENT_REGLEMENTS.md §6.4):
+    //   - each criterion is an autonomous, order-independent function that, given a
+    //     sub-group of still-tied teams, returns sub-groups partially ordered;
+    //   - the order of criteria is pure configuration (per goal-average);
+    //   - the engine applies the cascade recursively: a sub-group that a criterion
+    //     leaves tied is handed to the next criterion, down to ex-aequo.
+    //
+    //  Coverage requested: gen (ICF) up to criterion #4, part (FFCK) up to #7.
+    // ─────────────────────────────────────────────
+
+    /**
+     * Ordered list of tie-break criteria for each goal-average mode.
+     *
+     * gen  (ICF 2025, art. 5.5.4): #1 diff générale, #2 buts marqués,
+     *      #3 confrontation directe (points), #4 Honourable Play (cartons).
+     * part (FFCK RP KAP 65):       #1 points h2h, #2 diff particulière,
+     *      #3 diff générale, #4 buts marqués, #5 cartons rouges,
+     *      #6 cartons jaunes, #7 cartons verts.
+     */
+    private const TIEBREAK_CRITERIA = [
+        'gen'  => ['diff_generale', 'buts_marques', 'h2h_points', 'honourable_play'],
+        'part' => ['h2h_points', 'h2h_diff', 'diff_generale', 'buts_marques',
+                   'cartons_rouges', 'cartons_jaunes', 'cartons_verts'],
+    ];
+
+    /**
+     * Resolve the final ranking for a set of teams already ordered by the base
+     * criteria (Pts DESC, then Diff/Plus). Teams sharing the same Pts form a group
+     * that is departed via the configured tie-break cascade.
+     *
+     * @param array $rows         rows with at least Id, Pts, Diff, Plus (in Pts-desc order)
+     * @param int|null $journeeId perimeter: null = whole competition (CHPT),
+     *                            else restrict h2h/cards to that gameday/poule (CP)
+     * @return array<int,int>     map teamId => Clt
+     */
+    private function resolveRankingOrder(array $rows, string $goalaverage, string $competition, string $season, ?int $journeeId): array
     {
-        // Find groups of teams with same Pts
-        $sql = "SELECT Pts, GROUP_CONCAT(Id) AS ids
-                FROM kp_competition_equipe
-                WHERE Code_compet = ? AND Code_saison = ?
-                GROUP BY Pts
-                HAVING COUNT(*) > 1";
-        $groups = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
+        $criteria = self::TIEBREAK_CRITERIA[$goalaverage] ?? self::TIEBREAK_CRITERIA['gen'];
 
-        foreach ($groups as $group) {
-            $ids = array_map('intval', explode(',', $group['ids']));
-            if (count($ids) < 2) continue;
+        // General stats indexed by team id (Diff/Plus = general goal-average values).
+        $stats = [];
+        foreach ($rows as $row) {
+            $stats[(int) $row['Id']] = [
+                'Pts'  => (int) $row['Pts'],
+                'Diff' => (int) $row['Diff'],
+                'Plus' => (int) $row['Plus'],
+            ];
+        }
 
-            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        // Lazy-loaded context shared by criteria (matches between tied teams, cards).
+        $context = [
+            'competition' => $competition,
+            'season'      => $season,
+            'journeeId'   => $journeeId,
+            'stats'       => $stats,
+            'matches'     => null, // loaded on first h2h criterion
+            'cards'       => null, // loaded on first card criterion
+            'points'      => null, // competition scoring system [V,N,P,F], loaded lazily
+        ];
 
-            // Calculate head-to-head stats between tied teams
-            $sql = "SELECT m.Id_equipeA, m.Id_equipeB, m.ScoreA, m.ScoreB
-                    FROM kp_match m
-                    INNER JOIN kp_journee j ON j.Id = m.Id_journee
-                    WHERE j.Code_competition = ? AND j.Code_saison = ?
-                    AND m.Validation = 'O'
-                    AND m.Id_equipeA IN ($placeholders)
-                    AND m.Id_equipeB IN ($placeholders)";
-            $params = array_merge([$competition, $season], $ids, $ids);
-            $matches = $this->connection->prepare($sql)->executeQuery($params)->fetchAllAssociative();
+        // Build groups of teams with equal Pts, preserving the incoming order.
+        $ranking = [];
+        $clt = 1;
+        $group = [];
+        $groupPts = null;
 
-            // Build head-to-head diff for each tied team
-            $h2h = [];
-            foreach ($ids as $id) {
-                $h2h[$id] = ['diff' => 0, 'plus' => 0];
+        $flush = function (array $group) use (&$ranking, &$clt, $criteria, &$context) {
+            if (empty($group)) return;
+            if (count($group) === 1) {
+                $ranking[$group[0]] = $clt;
+                $clt++;
+                return;
             }
-
-            foreach ($matches as $m) {
-                $idA = (int) $m['Id_equipeA'];
-                $idB = (int) $m['Id_equipeB'];
-                $sA = $m['ScoreA'];
-                $sB = $m['ScoreB'];
-                if (!is_numeric($sA) || !is_numeric($sB)) continue;
-                $sA = (int) $sA; $sB = (int) $sB;
-
-                if (isset($h2h[$idA])) { $h2h[$idA]['diff'] += ($sA - $sB); $h2h[$idA]['plus'] += $sA; }
-                if (isset($h2h[$idB])) { $h2h[$idB]['diff'] += ($sB - $sA); $h2h[$idB]['plus'] += $sB; }
-            }
-
-            // Sort tied teams by h2h diff DESC, h2h plus DESC
-            usort($ids, function($a, $b) use ($h2h) {
-                if ($h2h[$a]['diff'] !== $h2h[$b]['diff']) {
-                    return $h2h[$b]['diff'] - $h2h[$a]['diff'];
+            // Departage the group: returns sub-groups (each sub-group = teams that
+            // remained strictly tied through the whole cascade => ex-aequo).
+            $ordered = $this->applyTieBreakCascade($group, $criteria, 0, $context);
+            foreach ($ordered as $bucket) {
+                foreach ($bucket as $id) {
+                    $ranking[$id] = $clt;
                 }
-                return $h2h[$b]['plus'] - $h2h[$a]['plus'];
-            });
+                $clt += count($bucket);
+            }
+        };
 
-            // Get the min Clt for these teams and re-assign sequentially
-            $sql = "SELECT MIN(Clt) AS minClt FROM kp_competition_equipe WHERE Id IN ($placeholders)";
-            $minCltRow = $this->connection->prepare($sql)->executeQuery($ids)->fetchAssociative();
-            $startClt = (int) ($minCltRow['minClt'] ?? 1);
+        foreach ($rows as $row) {
+            $id = (int) $row['Id'];
+            $pts = (int) $row['Pts'];
+            if ($groupPts !== null && $pts !== $groupPts) {
+                $flush($group);
+                $group = [];
+            }
+            $group[] = $id;
+            $groupPts = $pts;
+        }
+        $flush($group);
 
-            foreach ($ids as $i => $id) {
-                $sql = "UPDATE kp_competition_equipe SET Clt = ? WHERE Id = ?";
-                $this->connection->prepare($sql)->executeStatement([$startClt + $i, $id]);
+        return $ranking;
+    }
+
+    /**
+     * Recursively apply the criteria cascade to a group of tied teams.
+     *
+     * @param int[]    $group     team ids still tied at this depth
+     * @param string[] $criteria  ordered criterion codes
+     * @param int      $depth     current index into $criteria
+     * @return array<int,int[]>   ordered list of buckets; each bucket = teams left
+     *                            strictly tied (ex-aequo) after the whole cascade
+     */
+    private function applyTieBreakCascade(array $group, array $criteria, int $depth, array &$context, ?array &$trace = null): array
+    {
+        if (count($group) <= 1 || $depth >= count($criteria)) {
+            // No criterion left (or nothing to split): the whole group is ex-aequo.
+            if ($trace !== null && count($group) > 1) {
+                // Cascade exhausted while teams remain tied: software cannot depart them.
+                $trace[] = [
+                    'critere' => 'non_departage',
+                    'equipesConcernees' => array_values($group),
+                    'valeurs' => array_fill_keys($group, null),
+                    'resultat' => 'toujours_egalite',
+                ];
+            }
+            return [$group];
+        }
+
+        $criterion = $criteria[$depth];
+        $rawValues = $this->evaluateCriterion($criterion, $group, $context);
+
+        // Partition the group by criterion value; higher value = better placed.
+        // (Card criteria are inverted upstream so that "fewer cards" => higher value.)
+        $buckets = [];
+        foreach ($group as $id) {
+            $v = $rawValues[$id] ?? 0;
+            $buckets[(string) $v][] = $id;
+        }
+        krsort($buckets, SORT_NUMERIC);
+
+        if ($trace !== null) {
+            // Record this criterion as a justification step. "departage" if it split
+            // the group into at least two distinct buckets, else "toujours_egalite".
+            $trace[] = [
+                'critere' => $criterion,
+                'equipesConcernees' => array_values($group),
+                'valeurs' => $this->displayValues($criterion, $group, $context, $rawValues),
+                'resultat' => count($buckets) > 1 ? 'departage' : 'toujours_egalite',
+            ];
+        }
+
+        // For each resulting sub-group still tied (size > 1), recurse on next criterion.
+        $result = [];
+        foreach ($buckets as $bucket) {
+            if (count($bucket) > 1) {
+                foreach ($this->applyTieBreakCascade($bucket, $criteria, $depth + 1, $context, $trace) as $sub) {
+                    $result[] = $sub;
+                }
+            } else {
+                $result[] = $bucket;
             }
         }
+        return $result;
+    }
+
+    /**
+     * Human-readable values for the justification trace. The cascade internally uses
+     * inverted/encoded numbers (e.g. negative card counts so "fewer = higher"); this
+     * converts them back to the natural figure displayed in the PDF/JSON.
+     *
+     * @param int[]                $group
+     * @param array<int,int|float> $rawValues internal cascade values
+     * @return array<int,int|float>
+     */
+    private function displayValues(string $criterion, array $group, array &$context, array $rawValues): array
+    {
+        switch ($criterion) {
+            case 'honourable_play':
+            case 'cartons_rouges':
+            case 'cartons_jaunes':
+            case 'cartons_verts':
+                // Internal values are negated (lower is better). Show the positive figure.
+                $out = [];
+                foreach ($group as $id) {
+                    $out[$id] = -($rawValues[$id] ?? 0);
+                }
+                return $out;
+            default:
+                $out = [];
+                foreach ($group as $id) {
+                    $out[$id] = $rawValues[$id] ?? 0;
+                }
+                return $out;
+        }
+    }
+
+    /**
+     * Evaluate one autonomous criterion for the given sub-group.
+     * Returns teamId => numeric value (higher = better placed).
+     *
+     * @param int[] $group
+     * @return array<int,int|float>
+     */
+    private function evaluateCriterion(string $criterion, array $group, array &$context): array
+    {
+        switch ($criterion) {
+            case 'diff_generale':
+                return $this->mapStat($group, $context, 'Diff');
+
+            case 'buts_marques':
+                return $this->mapStat($group, $context, 'Plus');
+
+            case 'h2h_points':
+                return $this->headToHeadStats($group, $context)['points'];
+
+            case 'h2h_diff':
+                return $this->headToHeadStats($group, $context)['diff'];
+
+            case 'h2h_buts':
+                return $this->headToHeadStats($group, $context)['plus'];
+
+            case 'honourable_play':
+                // ICF #4: red exclusion = 25 pts, each progression card (V/J/R) = 5 pts.
+                // Lower total is better => invert sign so higher value wins.
+                $cards = $this->cardStats($context);
+                $out = [];
+                foreach ($group as $id) {
+                    $c = $cards[$id] ?? ['V' => 0, 'J' => 0, 'R' => 0, 'D' => 0];
+                    $score = $c['D'] * 25 + ($c['V'] + $c['J'] + $c['R']) * 5;
+                    $out[$id] = -$score;
+                }
+                return $out;
+
+            case 'cartons_rouges':
+                // FFCK #5: fewer red cards (R + exclusion D) is better => invert.
+                return $this->mapCards($group, $context, fn($c) => -($c['R'] + $c['D']));
+
+            case 'cartons_jaunes':
+                return $this->mapCards($group, $context, fn($c) => -$c['J']);
+
+            case 'cartons_verts':
+                return $this->mapCards($group, $context, fn($c) => -$c['V']);
+
+            default:
+                // Unknown / not-yet-implemented criterion: no discrimination.
+                return array_fill_keys($group, 0);
+        }
+    }
+
+    /** @param int[] $group @return array<int,int> */
+    private function mapStat(array $group, array &$context, string $field): array
+    {
+        $out = [];
+        foreach ($group as $id) {
+            $out[$id] = $context['stats'][$id][$field] ?? 0;
+        }
+        return $out;
+    }
+
+    /** @param int[] $group @return array<int,int> */
+    private function mapCards(array $group, array &$context, callable $fn): array
+    {
+        $cards = $this->cardStats($context);
+        $out = [];
+        foreach ($group as $id) {
+            $c = $cards[$id] ?? ['V' => 0, 'J' => 0, 'R' => 0, 'D' => 0];
+            $out[$id] = $fn($c);
+        }
+        return $out;
+    }
+
+    /**
+     * Head-to-head stats restricted to matches played *between the teams of the
+     * group* (and within the perimeter: whole competition or a single poule).
+     * Returns ['points'=>[], 'diff'=>[], 'plus'=>[]] indexed by team id.
+     *
+     * @param int[] $group
+     */
+    private function headToHeadStats(array $group, array &$context): array
+    {
+        $matches = $this->loadH2hMatches($context);
+        $set = array_flip($group);
+
+        // Confrontation-directe points use the competition's own scoring system
+        // (kp_competition.Points = "V-N-P-F"), NOT a hard-coded 3/1/0 scale.
+        [$ptsWin, $ptsDraw, $ptsLoss] = $this->scoringSystem($context);
+
+        $points = array_fill_keys($group, 0);
+        $diff   = array_fill_keys($group, 0);
+        $plus   = array_fill_keys($group, 0);
+
+        foreach ($matches as $m) {
+            $idA = (int) $m['Id_equipeA'];
+            $idB = (int) $m['Id_equipeB'];
+            // Only count matches where BOTH teams belong to the current sub-group.
+            if (!isset($set[$idA]) || !isset($set[$idB])) continue;
+
+            $sA = $m['ScoreA'];
+            $sB = $m['ScoreB'];
+            if (!is_numeric($sA) || !is_numeric($sB)) continue;
+            $sA = (int) $sA; $sB = (int) $sB;
+
+            $diff[$idA] += $sA - $sB;  $plus[$idA] += $sA;
+            $diff[$idB] += $sB - $sA;  $plus[$idB] += $sB;
+
+            // Points awarded per the competition scoring system.
+            if ($sA > $sB) { $points[$idA] += $ptsWin; $points[$idB] += $ptsLoss; }
+            elseif ($sB > $sA) { $points[$idB] += $ptsWin; $points[$idA] += $ptsLoss; }
+            else { $points[$idA] += $ptsDraw; $points[$idB] += $ptsDraw; }
+        }
+
+        return ['points' => $points, 'diff' => $diff, 'plus' => $plus];
+    }
+
+    /**
+     * Competition scoring system [win, draw, loss, forfeit] as integers, loaded once
+     * from kp_competition.Points ("V-N-P-F", e.g. "4-2-1-0"). Defaults to 4-2-1-0.
+     *
+     * @return array{0:int,1:int,2:int,3:int}
+     */
+    private function scoringSystem(array &$context): array
+    {
+        if ($context['points'] !== null) {
+            return $context['points'];
+        }
+
+        $sql = "SELECT Points FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+        $row = $this->connection->prepare($sql)->executeQuery([$context['competition'], $context['season']])->fetchAssociative();
+        $parts = explode('-', $row['Points'] ?? '');
+        $pts = [
+            (int) ($parts[0] ?? 4),
+            (int) ($parts[1] ?? 2),
+            (int) ($parts[2] ?? 1),
+            (int) ($parts[3] ?? 0),
+        ];
+
+        $context['points'] = $pts;
+        return $pts;
+    }
+
+    /**
+     * List the validated matches played *between the teams of the group* (within the
+     * perimeter), with their scores. Used to detail head-to-head tie-break steps.
+     *
+     * @param int[] $group
+     * @return list<array{numero:int,idA:int,idB:int,scoreA:int,scoreB:int}>
+     */
+    private function headToHeadMatchList(array $group, array &$context): array
+    {
+        $matches = $this->loadH2hMatches($context);
+        $set = array_flip($group);
+
+        $out = [];
+        foreach ($matches as $m) {
+            $idA = (int) $m['Id_equipeA'];
+            $idB = (int) $m['Id_equipeB'];
+            if (!isset($set[$idA]) || !isset($set[$idB])) continue;
+
+            $sA = $m['ScoreA'];
+            $sB = $m['ScoreB'];
+            if (!is_numeric($sA) || !is_numeric($sB)) continue;
+
+            $out[] = [
+                'numero' => (int) ($m['Numero_ordre'] ?: $m['Id']),
+                'idA' => $idA,
+                'idB' => $idB,
+                'scoreA' => (int) $sA,
+                'scoreB' => (int) $sB,
+            ];
+        }
+        return $out;
+    }
+
+    /** Load (once) the validated matches inside the current perimeter. */
+    private function loadH2hMatches(array &$context): array
+    {
+        if ($context['matches'] !== null) {
+            return $context['matches'];
+        }
+
+        $sql = "SELECT m.Id, m.Numero_ordre, m.Id_equipeA, m.Id_equipeB, m.ScoreA, m.ScoreB
+                FROM kp_match m
+                INNER JOIN kp_journee j ON j.Id = m.Id_journee
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND m.Validation = 'O'";
+        $params = [$context['competition'], $context['season']];
+        if ($context['journeeId'] !== null) {
+            $sql .= " AND m.Id_journee = ?";
+            $params[] = $context['journeeId'];
+        }
+
+        $context['matches'] = $this->connection->prepare($sql)->executeQuery($params)->fetchAllAssociative();
+        return $context['matches'];
+    }
+
+    /**
+     * Card counts per team inside the current perimeter.
+     * Returns teamId => ['V'=>int,'J'=>int,'R'=>int,'D'=>int].
+     * (V vert, J jaune, R rouge de progression, D rouge d'exclusion/définitif.)
+     */
+    private function cardStats(array &$context): array
+    {
+        if ($context['cards'] !== null) {
+            return $context['cards'];
+        }
+
+        $sql = "SELECT IF(md.Equipe_A_B='A', m.Id_equipeA, m.Id_equipeB) AS teamId,
+                       md.Id_evt_match AS evt, COUNT(*) AS nb
+                FROM kp_match_detail md
+                INNER JOIN kp_match m ON md.Id_match = m.Id
+                INNER JOIN kp_journee j ON j.Id = m.Id_journee
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND m.Validation = 'O'
+                AND md.Id_evt_match IN ('V','J','R','D')";
+        $params = [$context['competition'], $context['season']];
+        if ($context['journeeId'] !== null) {
+            $sql .= " AND m.Id_journee = ?";
+            $params[] = $context['journeeId'];
+        }
+        $sql .= " GROUP BY teamId, md.Id_evt_match";
+
+        $rows = $this->connection->prepare($sql)->executeQuery($params)->fetchAllAssociative();
+
+        $cards = [];
+        foreach ($rows as $r) {
+            $id = (int) $r['teamId'];
+            if (!isset($cards[$id])) {
+                $cards[$id] = ['V' => 0, 'J' => 0, 'R' => 0, 'D' => 0];
+            }
+            $cards[$id][$r['evt']] = (int) $r['nb'];
+        }
+
+        $context['cards'] = $cards;
+        return $cards;
     }
 
     private function finalizeNiveauRanking(string $competition, string $season): void
@@ -1454,7 +2302,8 @@ class AdminRankingsController extends AbstractController
 
     private function finalizeJourneeChptRanking(string $competition, string $season, string $goalaverage): void
     {
-        // Assign Clt within each journee, grouped by journee
+        // Assign Clt within each journee (poule). The goal-average tie-break cascade
+        // is applied per poule, restricting h2h/cards to the poule's perimeter.
         $sql = "SELECT cej.Id, cej.Id_journee, cej.Pts, cej.Diff, cej.Plus, j.Type
                 FROM kp_competition_equipe_journee cej
                 INNER JOIN kp_competition_equipe ce ON cej.Id = ce.Id
@@ -1464,44 +2313,20 @@ class AdminRankingsController extends AbstractController
                 ORDER BY cej.Id_journee, cej.Pts DESC, cej.Diff DESC, cej.Plus DESC";
         $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
 
-        $oldJourneeId = -1;
-        $clt = 1;
-        $oldPts = -1;
-        $oldClt = 1;
-        $oldId = 0;
-        $i = 0;
-
+        // Group rows by journee, preserving the SQL ordering within each group.
+        $byJournee = [];
         foreach ($rows as $row) {
-            $journeeId = (int) $row['Id_journee'];
-            $id = (int) $row['Id'];
-            $type = $row['Type'] ?? 'C';
+            $byJournee[(int) $row['Id_journee']][] = $row;
+        }
 
-            if ($journeeId !== $oldJourneeId) {
-                // New journee: reset
-                $oldJourneeId = $journeeId;
-                $clt = 1;
-                $oldPts = $row['Pts'];
-                $oldClt = 1;
-                $i = 0;
-            } else {
-                if ($row['Pts'] == $oldPts) {
-                    if ($goalaverage === 'gen') {
-                        $clt = $i + 1;
-                    } else {
-                        $clt = $oldClt;
-                    }
-                } else {
-                    $clt = $i + 1;
-                }
+        foreach ($byJournee as $journeeId => $journeeRows) {
+            // Departage within the poule perimeter (h2h/cards restricted to $journeeId).
+            $ranking = $this->resolveRankingOrder($journeeRows, $goalaverage, $competition, $season, $journeeId);
+
+            foreach ($ranking as $id => $clt) {
+                $sql = "UPDATE kp_competition_equipe_journee SET Clt = ? WHERE Id = ? AND Id_journee = ?";
+                $this->connection->prepare($sql)->executeStatement([$clt, $id, $journeeId]);
             }
-
-            $sql = "UPDATE kp_competition_equipe_journee SET Clt = ? WHERE Id = ? AND Id_journee = ?";
-            $this->connection->prepare($sql)->executeStatement([$clt, $id, $journeeId]);
-
-            $oldPts = $row['Pts'];
-            $oldClt = $clt;
-            $oldId = $id;
-            $i++;
         }
     }
 

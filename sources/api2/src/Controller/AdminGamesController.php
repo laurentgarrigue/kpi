@@ -56,6 +56,16 @@ class AdminGamesController extends AbstractController
         $sort = $request->query->get('sort', 'date_time_terrain');
         $search = $request->query->get('search', '');
         $unlocked = $request->query->get('unlocked', '');
+        // Optional search scopes toggled by the hidden/shown columns in the UI.
+        // Comma-separated list; when the param is absent (legacy callers) all scopes apply.
+        // The "none" sentinel means "no optional column shown" — the client sends it because
+        // an empty string would be stripped from the query and read as absent (= all scopes).
+        $searchFieldsParam = $request->query->get('searchFields', null);
+        $searchFields = $searchFieldsParam === null
+            ? ['referees', 'shotclock']
+            : ($searchFieldsParam === 'none'
+                ? []
+                : array_filter(array_map('trim', explode(',', $searchFieldsParam))));
 
         // Fallback to active season
         if (empty($season)) {
@@ -135,15 +145,22 @@ class AdminGamesController extends AbstractController
         }
 
         // Search filter
+        // Always search labels, team names and game number; referee/shotclock columns are
+        // only searched when their column is visible (searchFields), so hidden columns can't
+        // surface unexpected results.
         if (!empty($search)) {
-            $where[] = '(m.Libelle LIKE ? OR cea.Libelle LIKE ? OR ceb.Libelle LIKE ? OR m.Arbitre_principal LIKE ? OR m.Arbitre_secondaire LIKE ? OR m.Timeshoot LIKE ? OR CAST(m.Numero_ordre AS CHAR) LIKE ?)';
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
+            $searchClauses = ['m.Libelle LIKE ?', 'cea.Libelle LIKE ?', 'ceb.Libelle LIKE ?', 'CAST(m.Numero_ordre AS CHAR) LIKE ?'];
+            if (in_array('referees', $searchFields, true)) {
+                $searchClauses[] = 'm.Arbitre_principal LIKE ?';
+                $searchClauses[] = 'm.Arbitre_secondaire LIKE ?';
+            }
+            if (in_array('shotclock', $searchFields, true)) {
+                $searchClauses[] = 'm.Timeshoot LIKE ?';
+            }
+            $where[] = '(' . implode(' OR ', $searchClauses) . ')';
+            foreach ($searchClauses as $_) {
+                $params[] = "%$search%";
+            }
         }
 
         $whereClause = 'WHERE ' . implode(' AND ', $where);
@@ -1519,6 +1536,8 @@ class AdminGamesController extends AbstractController
                             case 'V':
                             case 'G':
                             case 'W':
+                                // Only resolve the winner from a validated (locked) game,
+                                // so an in-progress / unlocked game is never used as a source.
                                 $match = $this->connection->prepare(
                                     "SELECT m.Id_equipeA, m.Id_equipeB, ce.Libelle Nom_equipeA, ce2.Libelle Nom_equipeB,
                                             m.ScoreA, m.ScoreB
@@ -1527,6 +1546,7 @@ class AdminGamesController extends AbstractController
                                      JOIN kp_competition_equipe ce ON m.Id_equipeA = ce.Id
                                      JOIN kp_competition_equipe ce2 ON m.Id_equipeB = ce2.Id
                                      WHERE m.Numero_ordre = ? AND m.ScoreA != m.ScoreB
+                                       AND m.Validation = 'O'
                                        AND j.Code_competition = ? AND j.Code_saison = ?"
                                 )->executeQuery([$number, $row['Code_competition'], $row['Code_saison']])->fetchAssociative();
                                 if ($match) {
@@ -1541,6 +1561,8 @@ class AdminGamesController extends AbstractController
 
                             case 'P':
                             case 'L':
+                                // Only resolve the loser from a validated (locked) game,
+                                // so an in-progress / unlocked game is never used as a source.
                                 $match = $this->connection->prepare(
                                     "SELECT m.Id_equipeA, m.Id_equipeB, ce.Libelle Nom_equipeA, ce2.Libelle Nom_equipeB,
                                             m.ScoreA, m.ScoreB
@@ -1549,6 +1571,7 @@ class AdminGamesController extends AbstractController
                                      JOIN kp_competition_equipe ce ON m.Id_equipeA = ce.Id
                                      JOIN kp_competition_equipe ce2 ON m.Id_equipeB = ce2.Id
                                      WHERE m.Numero_ordre = ? AND m.ScoreA != m.ScoreB
+                                       AND m.Validation = 'O'
                                        AND j.Code_competition = ? AND j.Code_saison = ?"
                                 )->executeQuery([$number, $row['Code_competition'], $row['Code_saison']])->fetchAssociative();
                                 if ($match) {
@@ -1566,8 +1589,12 @@ class AdminGamesController extends AbstractController
                                 $hasError = true;
                         }
                     } else {
-                        // Number before letter: ranking in pool (e.g. 1A = 1st of pool A)
+                        // Number before letter: ranking in pool (e.g. 1A = 1st of pool A).
+                        // Only resolve from a *consolidated* pool: consolidation is the
+                        // explicit admin decision that the pool ranking is final and frozen,
+                        // so we never assign from a still-running pool's provisional ranking.
                         $poolLetter = $letter;
+                        $poolRegexp = '(^|[[:space:]])(Group|Groupe|Poule|poule)[[:space:]]+' . $poolLetter . '([[:space:]]|$)';
                         $team = $this->connection->prepare(
                             "SELECT cej.Id, ce.Libelle
                              FROM kp_competition_equipe_journee cej
@@ -1575,10 +1602,11 @@ class AdminGamesController extends AbstractController
                              JOIN kp_competition_equipe ce ON cej.Id = ce.Id
                              WHERE cej.Clt = ?
                                AND j.Phase REGEXP ?
+                               AND j.Consolidation = 'O'
                                AND j.Code_competition = ? AND j.Code_saison = ?"
                         )->executeQuery([
                             $number,
-                            '(^|[[:space:]])(Group|Groupe|Poule|poule)[[:space:]]+' . $poolLetter . '([[:space:]]|$)',
+                            $poolRegexp,
                             $row['Code_competition'],
                             $row['Code_saison'],
                         ])->fetchAssociative();
@@ -1586,7 +1614,20 @@ class AdminGamesController extends AbstractController
                             $selectNum[$j] = (int) $team['Id'];
                             $selectNom[$j] = $team['Libelle'];
                         } else {
-                            $errors[] = ['id' => $id, 'reason' => "pool_rank_not_found:{$number}{$poolLetter}"];
+                            // Distinguish "pool not consolidated yet" from "rank not found"
+                            // so the admin understands why the slot stayed empty.
+                            $poolExists = $this->connection->prepare(
+                                "SELECT 1 FROM kp_journee j
+                                 WHERE j.Phase REGEXP ?
+                                   AND j.Code_competition = ? AND j.Code_saison = ?
+                                 LIMIT 1"
+                            )->executeQuery([$poolRegexp, $row['Code_competition'], $row['Code_saison']])->fetchOne();
+
+                            if ($poolExists) {
+                                $errors[] = ['id' => $id, 'reason' => "pool_not_consolidated:{$number}{$poolLetter}"];
+                            } else {
+                                $errors[] = ['id' => $id, 'reason' => "pool_rank_not_found:{$number}{$poolLetter}"];
+                            }
                             $hasError = true;
                         }
                     }

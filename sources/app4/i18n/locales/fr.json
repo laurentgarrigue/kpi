@@ -228,6 +228,7 @@
     "loading": "Chargement...",
     "error": "Erreur",
     "success": "Succès",
+    "warning": "Attention",
     "confirm": "Confirmer",
     "actions": "Actions",
     "refresh": "Rafraîchir",
@@ -1452,6 +1453,12 @@
     "referee_team_label": "Équipe associée",
     "shotclock_placeholder": "Rechercher une personne...",
     "show_shotclock": "Shotclock",
+    "show_referees": "Arbitres",
+    "display": {
+      "title": "Affichage",
+      "filters_section": "Filtres",
+      "posts_section": "Postes"
+    },
     "type_classification": "Classement",
     "type_elimination": "Élimination",
     "published": "Public",
@@ -1566,6 +1573,9 @@
     "bulk_group_changed": "Groupe modifié pour {count} match(s).",
     "bulk_auto_assign_confirm": "Lancer l'affectation automatique pour {count} match(s) sélectionné(s) ?",
     "bulk_auto_assigned": "{count} match(s) affecté(s) automatiquement.",
+    "bulk_auto_assign_pool_not_consolidated": "{count} emplacement(s) non affecté(s) : la poule source n'est pas consolidée. Consolidez le classement de la poule avant d'affecter les tours suivants.",
+    "bulk_auto_assign_unresolved": "{count} emplacement(s) n'ont pas pu être résolus (match source non verrouillé ou résultat indisponible).",
+    "bulk_auto_assign_none": "Aucun match affecté : aucun emplacement n'a pu être résolu.",
     "bulk_cancel_assign_confirm": "Vider équipes et arbitres de {count} match(s) sélectionné(s) ?",
     "bulk_assign_cancelled": "Affectation annulée pour {count} match(s).",
     "bulk_duplicate_confirm": "Dupliquer les {count} match(s) sélectionné(s) ? Les copies seront non verrouillées, non publiées et sans score.",
@@ -1974,6 +1984,7 @@
     "eliminated": "Éliminé",
     "winner": "Vainqueur",
     "loser": "Perdant",
+    "provisional": "Score provisoire (match non validé)",
     "no_teams": "Aucune équipe dans cette compétition",
     "compute": {
       "title": "Calcul du classement",
@@ -2027,6 +2038,14 @@
       "progress": "Déroulement",
       "detail": "Détail par équipe",
       "matches": "Matchs"
+    },
+    "ties": {
+      "title": "Égalités"
+    },
+    "justification": {
+      "button": "Justification du départage",
+      "loading": "Génération…",
+      "tooltip": "Générer un PDF justifiant le départage des équipes à égalité de points"
     },
     "status_restriction": "Les modifications ne sont disponibles que pour les compétitions en cours (statut ON)",
     "initial": {
