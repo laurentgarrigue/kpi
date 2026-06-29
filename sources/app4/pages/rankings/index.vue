@@ -97,7 +97,15 @@ const canUnpublish = computed(() => authStore.profile <= 3 && competitionInfo.va
 const canConsolidate = computed(() => authStore.profile <= 6 && competitionInfo.value?.statut === 'ON')
 const canTransfer = computed(() => authStore.profile <= 4)
 const canChangeType = computed(() => authStore.profile <= 2)
-const canChangeStatus = computed(() => authStore.profile <= 3)
+// Past seasons (older than the active one) are read-only for profiles > 2, so
+// only profiles <= 2 may change a competition status there (PROMPTS.md).
+const isPastSeason = computed(() => {
+  const active = workContext.activeSeason?.code
+  return !!active && !!workContext.season && workContext.season < active
+})
+const canChangeStatus = computed(() =>
+  isPastSeason.value ? authStore.profile <= 2 : authStore.profile <= 3
+)
 const canAccessInitial = computed(() => authStore.profile <= 6)
 const isStatusOn = computed(() => competitionInfo.value?.statut === 'ON')
 

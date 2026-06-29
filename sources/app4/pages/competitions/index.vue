@@ -284,10 +284,14 @@ const isPastSeason = computed(() => {
 // Per-competition helpers for END state
 const canEditCompetition = (c: AdminCompetition) => canEdit.value && c.statut !== 'END'
 const canToggleLockCompetition = (c: AdminCompetition) => canToggleLock.value && c.statut !== 'END'
+// In a past season (older than the active one), only profiles <= 2 may change a
+// competition status — both to end it and to reopen one. Profiles > 2 are fully
+// read-only on past seasons (PROMPTS.md). In the active/future season, the usual
+// lock-toggle right applies.
 const canCycleStatus = (c: AdminCompetition) =>
-  c.statut !== 'END'
-    ? canToggleLock.value
-    : isPastSeason.value ? authStore.profile <= 2 : canToggleLock.value
+  isPastSeason.value
+    ? authStore.profile <= 2
+    : canToggleLock.value
 
 // Modal handlers
 const openAddModal = () => {
@@ -561,8 +565,10 @@ const cycleStatus = async (competition: AdminCompetition) => {
   const nextStatus = statusMap[competition.statut]
 
   try {
-    await api.patch(`/admin/competitions/${competition.code}/status?season=${workContext.season}`, { statut: nextStatus })
+    const response = await api.patch<{ statut: CompetitionStatus; verrou: boolean | null }>(`/admin/competitions/${competition.code}/status?season=${workContext.season}`, { statut: nextStatus })
     competition.statut = nextStatus
+    // Moving to END also locks the competition (présents no longer editable).
+    if (response.verrou !== null) competition.verrou = response.verrou
     toast.add({
       title: t('common.success'),
       description: t('competitions.success_status'),

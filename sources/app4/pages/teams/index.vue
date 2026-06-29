@@ -183,10 +183,13 @@ const specialOpLoading = ref(false)
 
 // Permission checks
 
-const canEditInline = computed(() => authStore.profile <= 6)
-const canManageSpecialOps = computed(() => authStore.profile <= 4)
-const canAddDelete = computed(() => authStore.profile <= 3 && !competitionInfo.value?.verrou)
-const canEditProperties = computed(() => authStore.profile <= 2)
+// A competition is read-only when locked or ended (statut END). Ending a
+// competition also sets the lock, so the teams can no longer be modified.
+const isReadOnly = computed(() => !!competitionInfo.value?.verrou || competitionInfo.value?.statut === 'END')
+const canEditInline = computed(() => authStore.profile <= 6 && !isReadOnly.value)
+const canManageSpecialOps = computed(() => authStore.profile <= 4 && !isReadOnly.value)
+const canAddDelete = computed(() => authStore.profile <= 3 && !isReadOnly.value)
+const canEditProperties = computed(() => authStore.profile <= 2 && !isReadOnly.value)
 const showPoolDrawColumns = computed(() => !(authStore.profile === 7 && competitionInfo.value?.statut === 'ATT'))
 
 // Computed: teams grouped by pool

@@ -128,16 +128,53 @@ class AdminOperationsController extends AbstractController
     }
 
     /**
-     * Activate a season
+     * Preview season activation: returns the current active season and how many
+     * of its competitions would be ended (Statut != 'END') if the caller chooses
+     * to close the previous season when activating a new one.
+     */
+    #[Route('/seasons/{code}/activate-preview', name: 'admin_operations_seasons_activate_preview', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function activateSeasonPreview(string $code): JsonResponse
+    {
+        $previous = $this->seasonService->getActiveSeason();
+        $sections = ($previous !== null && $previous !== $code)
+            ? $this->seasonService->getNonEndedCompetitionsBySection($previous)
+            : [];
+
+        $count = array_sum(array_map(fn ($s) => count($s['competitions']), $sections));
+
+        return $this->json([
+            'previousSeason' => $previous,
+            'nonEndedCount' => $count,
+            'sections' => $sections,
+        ]);
+    }
+
+    /**
+     * Activate a season.
+     *
+     * Body (optional): { "endPreviousSeason": true } to move all competitions of
+     * the previously active season to END + locked (read-only). Confirmed on the
+     * client side before sending the flag.
      */
     #[Route('/seasons/{code}/activate', name: 'admin_operations_seasons_activate', methods: ['PATCH'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function activateSeason(string $code): JsonResponse
+    public function activateSeason(string $code, Request $request): JsonResponse
     {
+        $data = json_decode($request->getContent(), true) ?? [];
+        $endPrevious = (bool) ($data['endPreviousSeason'] ?? false);
+
         try {
-            $this->seasonService->activateSeason($code);
+            $ended = $this->seasonService->activateSeason($code, $endPrevious);
             $this->logActionForEvent('Change Saison Active', null, $code);
-            return $this->json(['message' => 'Season activated', 'code' => $code]);
+            if ($ended > 0) {
+                $this->logActionForEvent('Cloture compétitions saison précédente', null, "$ended compétition(s)");
+            }
+            return $this->json([
+                'message' => 'Season activated',
+                'code' => $code,
+                'endedCompetitions' => $ended,
+            ]);
         } catch (\Exception $e) {
             return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
