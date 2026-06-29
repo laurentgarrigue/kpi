@@ -722,6 +722,8 @@
       "copy_competitions_button": "Copier les compétitions",
       "confirm_activate": "Activer cette saison ?",
       "confirm_activate_message": "Cette saison deviendra la saison active.",
+      "non_ended_warning": "La saison {season} compte {count} compétition(s) non terminée(s) :",
+      "end_previous_season": "Clôturer la saison {season} : passer ses {count} compétition(s) non terminée(s) au statut « Terminé » et les verrouiller (lecture seule). Sinon, annulez et corrigez leur statut manuellement.",
       "success_add": "Saison ajoutée avec succès",
       "success_activate": "Saison activée",
       "success_copy_rc": "{copied} RC copiés ({skipped} ignorés)",

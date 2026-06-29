@@ -721,6 +721,8 @@
       "copy_competitions_button": "Copy Competitions",
       "confirm_activate": "Activate this season?",
       "confirm_activate_message": "This season will become the active season.",
+      "non_ended_warning": "Season {season} has {count} unfinished competition(s):",
+      "end_previous_season": "Close season {season}: set its {count} unfinished competition(s) to \"Ended\" and lock them (read-only). Otherwise, cancel and fix their status manually.",
       "success_add": "Season added successfully",
       "success_activate": "Season activated",
       "success_copy_rc": "{copied} RC copied ({skipped} skipped)",

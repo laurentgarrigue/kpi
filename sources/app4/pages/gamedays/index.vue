@@ -94,6 +94,10 @@ const editingOriginalValue = ref('')
 const canEdit = computed(() => authStore.profile <= 4)
 const canSelect = computed(() => authStore.profile <= 3)
 
+// A gameday is read-only when its competition is ended (statut END), which also
+// locks the competition. The list can mix competitions, so this is per-row.
+const canEditGameday = (g: Gameday) => canEdit.value && g.competitionStatut !== 'END'
+
 // Open schema page in a new tab with competition and season params
 const router = useRouter()
 function goToSchema(competitionCode: string) {
@@ -312,7 +316,7 @@ const inlineFieldMap: Record<string, keyof Gameday> = {
 }
 
 const startInlineEdit = (gameday: Gameday, field: string) => {
-  if (!canEdit.value) return
+  if (!canEditGameday(gameday)) return
   editingCell.value = { id: gameday.id, field }
   const prop = inlineFieldMap[field]
   let val = prop ? String(gameday[prop] ?? '') : ''
@@ -913,7 +917,7 @@ const printJurySheet = (gamedayId: number) => {
                   active-color="success"
                   :active-title="t('gamedays.published')"
                   :inactive-title="t('gamedays.unpublished')"
-                  :disabled="!canEdit"
+                  :disabled="!canEditGameday(g)"
                   @toggle="togglePublication(g)"
                 />
               </td>
@@ -922,10 +926,10 @@ const printJurySheet = (gamedayId: number) => {
               <!-- Actions -->
               <td v-if="canEdit" class="px-2 py-2" @click.stop>
                 <div class="flex items-center gap-0.5">
-                  <button :title="t('common.edit')" class="p-1 text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
+                  <button v-if="canEditGameday(g)" :title="t('common.edit')" class="p-1 text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
                     <UIcon name="heroicons:pencil" class="w-6 h-6" />
                   </button>
-                  <button :title="t('gamedays.duplicate')" class="p-1 text-header-500 hover:text-header-700" @click="openDuplicateConfirm(g)">
+                  <button v-if="canEditGameday(g)" :title="t('gamedays.duplicate')" class="p-1 text-header-500 hover:text-header-700" @click="openDuplicateConfirm(g)">
                     <UIcon name="heroicons:document-duplicate" class="w-6 h-6" />
                   </button>
                   <button :title="t('schema.title')" class="p-1 text-header-500 hover:text-header-700" @click="goToSchema(g.codeCompetition)">
@@ -951,7 +955,7 @@ const printJurySheet = (gamedayId: number) => {
                 <template v-else>
                   <span
                     class="text-header-600"
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Phase')"
                   >{{ g.phase || '-' }}</span>
                 </template>
@@ -971,7 +975,7 @@ const printJurySheet = (gamedayId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Niveau')"
                   >{{ g.niveau ?? '-' }}</span>
                 </template>
@@ -990,7 +994,7 @@ const printJurySheet = (gamedayId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Etape')"
                   >{{ g.etape }}</span>
                 </template>
@@ -1009,7 +1013,7 @@ const printJurySheet = (gamedayId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Nbequipes')"
                   >{{ g.nbEquipes }}</span>
                 </template>
@@ -1019,9 +1023,9 @@ const printJurySheet = (gamedayId: number) => {
                 <button
                   :title="g.type === 'C' ? t('gamedays.field.type_c') : t('gamedays.field.type_e')"
                   class="p-1 rounded"
-                  :class="canEdit ? 'hover:bg-header-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'"
-                  :disabled="!canEdit"
-                  @click="canEdit && toggleType(g)"
+                  :class="canEditGameday(g) ? 'hover:bg-header-100 cursor-pointer' : 'opacity-40 cursor-not-allowed'"
+                  :disabled="!canEditGameday(g)"
+                  @click="canEditGameday(g) && toggleType(g)"
                 >
                   <UIcon
                     :name="g.type === 'C' ? 'heroicons:bars-3' : 'heroicons:arrows-right-left'"
@@ -1046,7 +1050,7 @@ const printJurySheet = (gamedayId: number) => {
                 <template v-else>
                   <span
                     class="font-medium text-header-900"
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Nom')"
                   >{{ g.nom || '-' }}</span>
                 </template>
@@ -1066,7 +1070,7 @@ const printJurySheet = (gamedayId: number) => {
                 <template v-else>
                   <span
                     class="text-header-700"
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Date_debut')"
                   >{{ formatDate(g.dateDebut) }}</span>
                 </template>
@@ -1086,7 +1090,7 @@ const printJurySheet = (gamedayId: number) => {
                 <template v-else>
                   <span
                     class="text-header-700"
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Date_fin')"
                   >{{ formatDate(g.dateFin) }}</span>
                 </template>
@@ -1106,7 +1110,7 @@ const printJurySheet = (gamedayId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Lieu')"
                   >{{ g.lieu || '-' }}</span>
                 </template>
@@ -1126,7 +1130,7 @@ const printJurySheet = (gamedayId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="canEdit ? 'editable-cell' : ''"
+                    :class="canEditGameday(g) ? 'editable-cell' : ''"
                     @click="startInlineEdit(g, 'Departement')"
                   >{{ g.departement || '-' }}</span>
                 </template>
@@ -1155,6 +1159,7 @@ const printJurySheet = (gamedayId: number) => {
               <!-- Delete -->
               <td v-if="canEdit && g.matchCount === 0" class="px-2 py-2" @click.stop>
                 <button
+                  v-if="canEditGameday(g)"
                   class="p-1 text-danger-500 hover:text-danger-700"
                   :title="t('common.delete')"
                   @click="openDeleteConfirm(g)"
@@ -1201,7 +1206,7 @@ const printJurySheet = (gamedayId: number) => {
             active-icon="heroicons:eye-solid"
             inactive-icon="heroicons:eye-slash"
             active-color="success"
-            @toggle="canEdit && togglePublication(g)"
+            @toggle="canEditGameday(g) && togglePublication(g)"
           />
         </template>
 
@@ -1227,16 +1232,16 @@ const printJurySheet = (gamedayId: number) => {
         </div>
 
         <template #footer-right>
-          <AdminActionButton v-if="canEdit" icon="heroicons:pencil" @click="openEditModal(g)">
+          <AdminActionButton v-if="canEditGameday(g)" icon="heroicons:pencil" @click="openEditModal(g)">
             {{ t('common.edit') }}
           </AdminActionButton>
-          <AdminActionButton v-if="canEdit" icon="heroicons:document-duplicate" @click="openDuplicateConfirm(g)">
+          <AdminActionButton v-if="canEditGameday(g)" icon="heroicons:document-duplicate" @click="openDuplicateConfirm(g)">
             {{ t('gamedays.duplicated') }}
           </AdminActionButton>
           <AdminActionButton icon="heroicons:rectangle-group" @click="goToSchema(g.codeCompetition)">
             {{ t('schema.title') }}
           </AdminActionButton>
-          <AdminActionButton v-if="canEdit" variant="danger" icon="heroicons:trash" @click="openDeleteConfirm(g)">
+          <AdminActionButton v-if="canEditGameday(g) && g.matchCount === 0" variant="danger" icon="heroicons:trash" @click="openDeleteConfirm(g)">
             {{ t('common.delete') }}
           </AdminActionButton>
         </template>
@@ -1834,7 +1839,7 @@ const printJurySheet = (gamedayId: number) => {
               {{ t('common.cancel') }}
             </button>
             <button
-              v-if="canEdit"
+              v-if="canEdit && (!officialsGameday || canEditGameday(officialsGameday))"
               class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
               :disabled="formSaving"
               @click="saveOfficials"

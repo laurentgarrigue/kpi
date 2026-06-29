@@ -119,9 +119,49 @@ class SeasonOperationsService
     }
 
     /**
-     * Activate a season (deactivates all others)
+     * Competitions of a season that are not yet ended (Statut != 'END'), grouped
+     * by section (kp_groupe.section). Used to warn the user, when activating
+     * another season, which competitions of the current season are still open.
+     *
+     * @return list<array{section: int, competitions: list<array{code: string, libelle: string, statut: string}>}>
      */
-    public function activateSeason(string $code): void
+    public function getNonEndedCompetitionsBySection(string $season): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT c.Code, c.Libelle, c.Statut, COALESCE(g.section, 100) AS section
+             FROM kp_competition c
+             LEFT JOIN kp_groupe g ON c.Code_ref = g.Groupe
+             WHERE c.Code_saison = ? AND (c.Statut IS NULL OR c.Statut != 'END')
+             ORDER BY section, c.Code",
+            [$season]
+        );
+
+        $bySection = [];
+        foreach ($rows as $row) {
+            $section = (int) $row['section'];
+            $bySection[$section] ??= ['section' => $section, 'competitions' => []];
+            $bySection[$section]['competitions'][] = [
+                'code' => $row['Code'],
+                'libelle' => $row['Libelle'],
+                'statut' => $row['Statut'] ?? 'ATT',
+            ];
+        }
+
+        return array_values($bySection);
+    }
+
+    /**
+     * Activate a season (deactivates all others).
+     *
+     * When $endPreviousSeason is true, all competitions of the previously active
+     * season are moved to END (and locked), making them read-only. This is the
+     * mechanism that enforces "past seasons are read-only for profiles > 2": once
+     * ended, only a profile 1-2 may reopen a past competition (see
+     * AdminCompetitionsController::changeStatus).
+     *
+     * @return int the number of competitions ended on the previous season
+     */
+    public function activateSeason(string $code, bool $endPreviousSeason = false): int
     {
         // Check if season exists
         $sql = "SELECT COUNT(*) FROM kp_saison WHERE Code = ?";
@@ -132,9 +172,22 @@ class SeasonOperationsService
             throw new \Exception("Season $code not found");
         }
 
+        $previousSeason = $this->getActiveSeason();
+        $endedCount = 0;
+
         $this->connection->beginTransaction();
 
         try {
+            // End competitions of the previously active season, if requested and if
+            // we are actually switching to a different season.
+            if ($endPreviousSeason && $previousSeason !== null && $previousSeason !== $code) {
+                $endedCount = $this->connection->executeStatement(
+                    "UPDATE kp_competition SET Statut = 'END', Verrou = 'O'
+                     WHERE Code_saison = ? AND (Statut IS NULL OR Statut != 'END')",
+                    [$previousSeason]
+                );
+            }
+
             // Deactivate all seasons
             $sql = "UPDATE kp_saison SET Etat = 'I' WHERE Etat = 'A'";
             $this->connection->executeStatement($sql);
@@ -149,6 +202,8 @@ class SeasonOperationsService
             $this->connection->rollBack();
             throw $e;
         }
+
+        return (int) $endedCount;
     }
 
     /**

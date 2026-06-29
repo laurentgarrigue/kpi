@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
+use App\Trait\CompetitionLockTrait;
 use App\Trait\DateValidationTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -25,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminGamedaysController extends AbstractController
 {
     use AdminLoggableTrait;
+    use CompetitionLockTrait;
     use DateValidationTrait;
 
     public function __construct(
@@ -151,7 +153,7 @@ class AdminGamedaysController extends AbstractController
                        j.Responsable_insc, j.Responsable_R1, j.Delegue, j.ChefArbitre,
                        j.Rep_athletes, j.Arb_nj1, j.Arb_nj2, j.Arb_nj3, j.Arb_nj4, j.Arb_nj5,
                        j.Publication, j.Code_organisateur, j.Validation,
-                       c.Libelle AS CompetitionLibelle, c.Code_typeclt,
+                       c.Libelle AS CompetitionLibelle, c.Code_typeclt, c.Statut AS CompetitionStatut,
                        (SELECT COUNT(*) FROM kp_match m WHERE m.Id_journee = j.Id) AS matchCount
                 FROM kp_journee j
                 LEFT JOIN kp_competition c ON c.Code = j.Code_competition AND c.Code_saison = j.Code_saison
@@ -201,6 +203,7 @@ class AdminGamedaysController extends AbstractController
                 'authorized' => $authorized,
                 'competitionLibelle' => $row['CompetitionLibelle'],
                 'competitionTypeClt' => $row['Code_typeclt'],
+                'competitionStatut' => $row['CompetitionStatut'],
             ];
         }, $rows);
 
@@ -300,6 +303,10 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isCompetitionReadOnly($competition, $season)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         // Get next ID for journee (max + 1, with upper limit to avoid conflicts with existing federal IDs > 19000000)
         $nextId = (int) $this->connection->executeQuery("SELECT COALESCE(MAX(Id), 0) + 1 FROM kp_journee WHERE Id < 19000001")->fetchOne();
 
@@ -363,6 +370,10 @@ class AdminGamedaysController extends AbstractController
 
         if (!$existing) {
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($this->isCompetitionReadOnly($existing['Code_competition'], $existing['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -456,6 +467,10 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isCompetitionReadOnly($row['Code_competition'], $row['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         $newValue = $row['Publication'] === 'O' ? 'N' : 'O';
         $this->connection->update('kp_journee', ['Publication' => $newValue], ['Id' => $id]);
 
@@ -482,6 +497,10 @@ class AdminGamedaysController extends AbstractController
 
         if (!$row) {
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($this->isCompetitionReadOnly($row['Code_competition'], $row['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $newValue = $row['Type'] === 'C' ? 'E' : 'C';
@@ -535,6 +554,10 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isCompetitionReadOnly($row['Code_competition'], $row['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         // Validate and format value
         $maxLen = $allowedFields[$field];
         if (in_array($field, ['Niveau', 'Etape', 'Nbequipes'])) {
@@ -584,6 +607,10 @@ class AdminGamedaysController extends AbstractController
 
         if (!$source) {
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($this->isCompetitionReadOnly($source['Code_competition'], $source['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         // Get next ID for journee (max + 1, with upper limit to avoid conflicts with existing federal IDs > 19000000)
@@ -661,6 +688,10 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isCompetitionReadOnly($row['Code_competition'], $row['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         // Check for matches
         $matchCount = (int) $this->connection->prepare(
             "SELECT COUNT(*) FROM kp_match WHERE Id_journee = ?"
@@ -712,6 +743,12 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'No IDs provided'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Skip gamedays of locked / ended competitions (read-only).
+        $ids = $this->filterEditableGamedayIds($ids);
+        if (empty($ids)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
         // Toggle: if any are unpublished, publish all. Otherwise unpublish all.
@@ -753,6 +790,12 @@ class AdminGamedaysController extends AbstractController
 
         if (empty($ids)) {
             return $this->json(['message' => 'No IDs provided'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Skip gamedays of locked / ended competitions (read-only).
+        $ids = $this->filterEditableGamedayIds($ids);
+        if (empty($ids)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         // Build SET clause from non-empty fields
@@ -832,6 +875,12 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'No target IDs after excluding source'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Skip target gamedays of locked / ended competitions (read-only).
+        $ids = $this->filterEditableGamedayIds($ids);
+        if (empty($ids)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         // Fetch source gameday
         $source = $this->connection->prepare(
             "SELECT Nom, Date_debut, Date_fin, Lieu, Departement, Plan_eau,
@@ -896,8 +945,15 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'No IDs provided'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Skip gamedays of locked / ended competitions (read-only).
+        $editableIds = $this->filterEditableGamedayIds($ids);
         $deleted = 0;
         $skipped = [];
+
+        foreach (array_diff($ids, $editableIds) as $lockedId) {
+            $skipped[] = ['id' => $lockedId, 'reason' => 'locked'];
+        }
+        $ids = $editableIds;
 
         foreach ($ids as $id) {
             // Check matches

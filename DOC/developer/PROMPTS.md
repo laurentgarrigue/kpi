@@ -82,7 +82,7 @@ TODO :
 - Classements : tester en profondeur
 - ✅ Lien vers app2 depuis app4
 - Droits par profil :
-  - Les profils > 2 ne peuvent pas créer, modifier ou supprimer quoi que ce soit dans les saisons antérieures à la saison active.
+  - ✅ Les profils > 2 ne peuvent pas créer, modifier ou supprimer quoi que ce soit dans les saisons antérieures à la saison active.
   - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - ✅ Copie de système de jeu : type CP par défaut
@@ -207,9 +207,25 @@ TODO :
 - Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - ✅ Refresh sur la page ranking.
 - Feuille protocole : ajouter un bouton pour générer la feuille de protocole à partir des données de la compétition, avec possibilité de compléter, modifier les données avant impression.
+- ✅ Vérifier qu'une compétition END vérouille aussi la saisie des présences, les matchs, les classements, etc... et pas seulement la saisie des résultats.
+- Visuel colonnes (refs, shotclock) : ajouter la possibilité de gérer l'affichage d'autres colonnes dans le tableau des matchs (lignes, secrétaire, chronomètre, autre bénévole...) avec saisie en ligne, masquage éventuel des équipes et scores ainsi que d'autres colonnes. Profil dédié (chef arbitre, chef bénévoles ?)
 - ⚠️
 
-Scoring:
+
+**App4**:
+- 
+
+
+**App2**:
+- Afficher case sélection active
+
+
+**TV Panel**:
+- Page avec affichage horloge simple du temps officiel
+- Page pub pour nous «want us to manage your tournament contact ..." + page insta et fb
+
+
+**Scoring**:
 - durées des périodes, des temps morts, des prolongations, etc... paramétrables dans la compétition
 - gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
 - départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/stop du chrono, pour le départ/reprise du timeshoot et pour la pause du timeshoot. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.

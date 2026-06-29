@@ -22,6 +22,16 @@ const newSeasonInterFin = ref('')
 // Modal state - Activate
 const confirmActivateModal = ref(false)
 const seasonToActivate = ref<OperationsSeason | null>(null)
+// When activating a new season, optionally end (END + lock) all competitions of
+// the previously active season so they become read-only.
+const endPreviousSeason = ref(true)
+const previousSeasonCode = ref<string | null>(null)
+const previousSeasonNonEnded = ref(0)
+interface NonEndedSection {
+  section: number
+  competitions: { code: string; libelle: string; statut: string }[]
+}
+const previousSeasonSections = ref<NonEndedSection[]>([])
 
 // Modal state - Edit
 const editModal = ref(false)
@@ -132,9 +142,28 @@ const confirmEdit = async () => {
 }
 
 // Activate season
-const openActivateModal = (season: OperationsSeason) => {
+const openActivateModal = async (season: OperationsSeason) => {
   seasonToActivate.value = season
+  endPreviousSeason.value = true
+  previousSeasonCode.value = null
+  previousSeasonNonEnded.value = 0
+  previousSeasonSections.value = []
   confirmActivateModal.value = true
+
+  // Preview which competitions of the current active season are not yet ended,
+  // grouped by section, so the user can decide to end them or fix them manually.
+  try {
+    const preview = await api.get<{
+      previousSeason: string | null
+      nonEndedCount: number
+      sections: NonEndedSection[]
+    }>(`/admin/operations/seasons/${season.code}/activate-preview`)
+    previousSeasonCode.value = preview.previousSeason
+    previousSeasonNonEnded.value = preview.nonEndedCount
+    previousSeasonSections.value = preview.sections
+  } catch {
+    // Preview is best-effort; activation still works without it.
+  }
 }
 
 const confirmActivate = async () => {
@@ -142,7 +171,9 @@ const confirmActivate = async () => {
 
   loading.value = true
   try {
-    await api.patch(`/admin/operations/seasons/${seasonToActivate.value.code}/activate`)
+    await api.patch(`/admin/operations/seasons/${seasonToActivate.value.code}/activate`, {
+      endPreviousSeason: endPreviousSeason.value
+    })
     toast.add({
       title: t('common.success'),
       description: t('operations.seasons.success_activate'),
@@ -476,7 +507,50 @@ onMounted(() => {
       :loading="loading"
       @close="confirmActivateModal = false"
       @confirm="confirmActivate"
-    />
+    >
+      <!-- Previous-season competitions not yet ended: warn + let the user decide -->
+      <div v-if="previousSeasonCode && previousSeasonNonEnded > 0" class="mt-4 space-y-3">
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p class="text-sm font-medium text-amber-800">
+            {{ t('operations.seasons.non_ended_warning', {
+              season: previousSeasonCode,
+              count: previousSeasonNonEnded
+            }) }}
+          </p>
+          <div class="mt-2 max-h-48 overflow-y-auto space-y-2">
+            <div v-for="sec in previousSeasonSections" :key="sec.section">
+              <div class="text-xs font-semibold text-header-600 uppercase tracking-wider">
+                {{ t(`groups.sections.${sec.section}`) }}
+              </div>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <span
+                  v-for="c in sec.competitions"
+                  :key="c.code"
+                  class="px-1.5 py-0.5 text-xs font-mono bg-white border border-amber-300 rounded text-header-700"
+                  :title="c.libelle"
+                >
+                  {{ c.code }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex items-start gap-2 p-3 bg-header-50 border border-header-200 rounded-lg cursor-pointer">
+          <input
+            v-model="endPreviousSeason"
+            type="checkbox"
+            class="mt-0.5 w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-2 focus:ring-primary-500"
+          >
+          <span class="text-sm text-header-700">
+            {{ t('operations.seasons.end_previous_season', {
+              season: previousSeasonCode,
+              count: previousSeasonNonEnded
+            }) }}
+          </span>
+        </label>
+      </div>
+    </AdminConfirmModal>
 
     <!-- Confirm delete modal -->
     <AdminConfirmModal
