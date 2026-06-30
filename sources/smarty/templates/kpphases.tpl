@@ -111,6 +111,9 @@
                             {if $smarty.section.j.index is odd}
                                 <br>
                             {/if}
+                            <div class="row text-center">
+                                <span class="chart_num_match">#{$arrayMatchs[$idJournee][j].Numero_ordre}</span>
+                            </div>
                             <div class="row cliquableNomEquipe">
                                 {if $arrayMatchs[$idJournee][j].ScoreA > $arrayMatchs[$idJournee][j].ScoreB}
                                     <div class="col-md-6 col-sm-6 col-xs-6 text-right">
