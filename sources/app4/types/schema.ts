@@ -51,6 +51,7 @@ export interface SchemaMatch {
 export interface SchemaPhase {
   idJournee: number
   phase: string
+  nom: string
   etape: number
   niveau: number
   type: 'C' | 'E'

@@ -45,16 +45,16 @@ const isCp = computed(() => competition.value?.codeTypeclt === 'CP')
 const isChpt = computed(() => competition.value?.codeTypeclt === 'CHPT')
 const isMulti = computed(() => competition.value?.codeTypeclt === 'MULTI')
 
-// Computed: CHPT phases sorted by dateDebut then lieu
+// Computed: CHPT phases sorted by dateDebut (chronological) then gameday name
 const chptPhases = computed(() => {
   if (!schemaData.value) return []
   return [...schemaData.value.phases].sort((a, b) => {
     const da = a.dateDebut ?? ''
     const db = b.dateDebut ?? ''
     if (da !== db) return da.localeCompare(db)
-    const la = a.lieu ?? ''
-    const lb = b.lieu ?? ''
-    return la.localeCompare(lb)
+    const na = a.nom || a.phase || ''
+    const nb = b.nom || b.phase || ''
+    return na.localeCompare(nb)
   })
 })
 
@@ -135,6 +135,7 @@ const loadSummary = async () => {
         ? api.get<SchemaResponse>('/admin/schema', {
             season: props.season,
             competition: props.competitionCode,
+            includeEmpty: 'true',
           }).catch(() => null)
         : Promise.resolve(null),
     ])
@@ -202,7 +203,7 @@ onMounted(() => {
                 {{ competition.codeSaison }}
               </span>
             </h2>
-            <p v-if="competition.soustitre2" class="text-sm text-header-700">
+            <p v-if="competition.soustitre2" class="text-sm text-header-900">
               {{ competition.soustitre2 }}
             </p>
           </div>
@@ -219,31 +220,31 @@ onMounted(() => {
         </span>
         <NuxtLink
           to="/teams"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-700 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.teams_count', { count: competition.nbEquipes }, competition.nbEquipes) }}
         </NuxtLink>
         <NuxtLink
           to="/gamedays"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-700 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.phases_count', { count: competition.nbJournees }, competition.nbJournees) }}
         </NuxtLink>
         <NuxtLink
           to="/games"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-700 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.matches_count', { count: competition.nbMatchs }, competition.nbMatchs) }}
         </NuxtLink>
         <span
-          v-if="isCp && competition.qualifies > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-emerald-50 text-emerald-700"
+          v-if="competition.qualifies > 0"
+          class="px-2 py-1 text-xs font-medium rounded bg-emerald-50 text-emerald-900"
         >
           {{ t('documents.summary.qualified', { count: competition.qualifies }) }}
         </span>
         <span
-          v-if="isCp && competition.elimines > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-danger-50 text-danger-700"
+          v-if="competition.elimines > 0"
+          class="px-2 py-1 text-xs font-medium rounded bg-danger-50 text-danger-900"
         >
           {{ t('documents.summary.eliminated', { count: competition.elimines }) }}
         </span>
@@ -279,13 +280,13 @@ onMounted(() => {
                 <div class="flex items-center justify-center gap-1.5">
                 <span
                   class="inline-block w-5 h-5 text-center text-xs font-bold leading-5 rounded"
-                  :class="phase.type === 'C' ? 'bg-primary-100 text-primary-700' : 'bg-amber-100 text-amber-700'"
+                  :class="phase.type === 'C' ? 'bg-primary-100 text-primary-900' : 'bg-amber-100 text-amber-900'"
                 >
                   {{ phase.type }}
                 </span>
-                <span class="text-sm font-medium text-header-700 truncate">{{ phase.phase }}</span>
+                <span class="text-sm font-medium text-header-900 truncate">{{ phase.phase }}</span>
                 </div>
-              <div class="flex items-center justify-center text-xs text-header-600">
+              <div class="flex items-center justify-center text-xs text-header-900">
                 <span v-if="phase.nbequipes">{{ phase.nbequipes }} {{ t('documents.summary.teams_short', { count: phase.nbequipes }, phase.nbequipes) }} - </span>{{ phase.nbMatchs }} {{ t('documents.summary.matches_short', { count: phase.nbMatchs }, phase.nbMatchs) }}
               </div>
             </NuxtLink>
@@ -301,20 +302,20 @@ onMounted(() => {
           :to="`/games?phase=${phase.idJournee}`"
           class="px-3 py-2 bg-header-50 rounded-lg hover:bg-header-100 transition-colors"
         >
-          <div class="text-sm font-medium text-header-800">{{ phase.phase }}</div>
-          <div class="text-xs text-header-800 mt-0.5 space-y-0.5">
+          <div class="text-sm font-medium text-header-900">{{ phase.nom || phase.phase }}</div>
+          <div class="text-xs text-header-900 mt-0.5 space-y-0.5">
             <div v-if="formatDateRange(phase.dateDebut, phase.dateFin)" class="flex items-center gap-1">
-              <UIcon name="heroicons:calendar" class="w-3 h-3 text-header-600" />
+              <UIcon name="heroicons:calendar" class="w-3 h-3 text-header-900" />
               {{ formatDateRange(phase.dateDebut, phase.dateFin) }}
             </div>
             <div v-if="phase.lieu || phase.departement" class="flex items-center gap-1">
-              <UIcon name="heroicons:map-pin" class="w-3 h-3 text-header-600" />
+              <UIcon name="heroicons:map-pin" class="w-3 h-3 text-header-900" />
               <span v-if="phase.lieu">{{ phase.lieu }}</span>
               <span v-if="phase.lieu && phase.departement"> · </span>
               <span v-if="phase.departement">{{ phase.departement }}</span>
             </div>
             <div class="flex items-center gap-1">
-              <UIcon name="heroicons:user-group" class="w-3 h-3 text-header-600" />
+              <UIcon name="heroicons:user-group" class="w-3 h-3 text-header-900" />
               {{ countTeamsFromMatches(phase) }} {{ t('documents.summary.teams_short', { count: countTeamsFromMatches(phase) }, countTeamsFromMatches(phase)) }}
               -
               {{ phase.nbMatchs }} {{ t('documents.summary.matches_short', { count: phase.nbMatchs }, phase.nbMatchs) }}

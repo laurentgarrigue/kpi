@@ -181,7 +181,7 @@ onMounted(async () => {
           </span>
           <span
             v-if="workContext.pageCompetition.codeTypeclt"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-header-100 text-header-700"
+            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-header-100 text-header-900"
           >
             {{ workContext.pageCompetition.codeTypeclt }}
           </span>
@@ -216,46 +216,46 @@ onMounted(async () => {
           <a
             :href="pdfUrl('FeuilleGroups.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.teams.registered') }}
           </a>
           <a
             :href="pdfUrl('FeuillePresence.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.teams.presence_fr') }}
           </a>
           <a
             :href="pdfUrl('FeuillePresenceEN.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.teams.presence_en') }}
           </a>
           <a
             :href="pdfUrl('FeuillePresenceVisa.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.teams.presence_visa') }}
           </a>
           <a
             :href="pdfUrl('FeuillePresencePhoto.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.teams.presence_photo') }}
           </a>
         </div>
@@ -271,50 +271,50 @@ onMounted(async () => {
           <a
             :href="pdfUrl('FeuilleListeMatchs.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.matches.list_fr') }}
           </a>
           <a
             :href="pdfUrl('FeuilleListeMatchsEN.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.matches.list_en') }}
           </a>
           <a
             :href="pdfUrl('tableau_openspout.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:table-cells" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:table-cells" class="w-6 h-6 text-header-900" />
             {{ t('documents.matches.export_spreadsheet') }}
           </a>
           <a
             v-if="matchSheetsUrl"
             :href="matchSheetsUrl"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
           >
-            <UIcon name="heroicons:document-duplicate" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-duplicate" class="w-6 h-6 text-header-900" />
             {{ t('documents.matches.match_sheets') }}
-            <span class="text-xs text-header-600 italic ml-auto">{{ matchIds.length }} {{ t('documents.matches.matches_count') }}</span>
+            <span class="text-xs text-header-900 italic ml-auto">{{ matchIds.length }} {{ t('documents.matches.matches_count') }}</span>
           </a>
           <div
             v-else-if="loadingMatchIds"
-            class="flex items-center gap-2 px-3 py-2 text-header-400"
+            class="flex items-center gap-2 px-3 py-2 text-header-900"
           >
             <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin" />
             {{ t('common.loading') }}
           </div>
           <div
             v-else
-            class="flex items-center gap-2 px-3 py-2 text-header-400"
+            class="flex items-center gap-2 px-3 py-2 text-header-900"
           >
             <UIcon name="heroicons:document-duplicate" class="w-6 h-6" />
             {{ t('documents.matches.match_sheets') }}
@@ -332,7 +332,7 @@ onMounted(async () => {
         <div class="p-4 space-y-4">
           <!-- No type / no competition selected -->
           <template v-if="!competitionType">
-            <p class="px-3 py-2 text-sm text-header-400 italic">
+            <p class="px-3 py-2 text-sm text-header-900 italic">
               {{ hasCompetition ? t('documents.rankings.no_type') : t('documents.select_competition') }}
             </p>
           </template>
@@ -340,7 +340,7 @@ onMounted(async () => {
           <template v-else>
             <!-- Sub-section: Classement calculé -->
             <div>
-              <p class="px-3 text-xs font-semibold text-header-500 uppercase tracking-wide mb-1">
+              <p class="px-3 text-xs font-semibold text-header-900 uppercase tracking-wide mb-1">
                 {{ t('documents.rankings.computed') }}
               </p>
               <div class="space-y-1">
@@ -349,28 +349,28 @@ onMounted(async () => {
                   <a
                     :href="pdfUrl('FeuilleCltChpt.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.provisional') }}
                   </a>
                   <a
                     :href="pdfUrl('FeuilleCltChptDetail.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_team') }}
                   </a>
                   <a
                     :href="pdfUrl('FeuilleCltNiveauJournee.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_gameday') }}
                   </a>
                 </template>
@@ -379,28 +379,28 @@ onMounted(async () => {
                   <a
                     :href="pdfUrl('FeuilleCltNiveau.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.provisional') }}
                   </a>
                   <a
                     :href="pdfUrl('FeuilleCltNiveauPhase.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_phase') }}
                   </a>
                   <a
                     :href="pdfUrl('FeuilleCltNiveauDetail.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_team') }}
                   </a>
                 </template>
@@ -409,10 +409,10 @@ onMounted(async () => {
                   <a
                     :href="pdfUrl('FeuilleCltMulti.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.multi') }}
                   </a>
                 </template>
@@ -421,7 +421,7 @@ onMounted(async () => {
 
             <!-- Sub-section: Classement publié -->
             <div>
-              <p class="px-3 text-xs font-semibold text-header-500 uppercase tracking-wide mb-1">
+              <p class="px-3 text-xs font-semibold text-header-900 uppercase tracking-wide mb-1">
                 {{ t('documents.rankings.published') }}
               </p>
               <div class="space-y-1">
@@ -430,28 +430,28 @@ onMounted(async () => {
                   <a
                     :href="publicPdfUrl('PdfCltChpt.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.general') }}
                   </a>
                   <a
                     :href="publicPdfUrl('PdfCltChptDetail.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_team') }}
                   </a>
                   <a
                     :href="publicPdfUrl('PdfCltNiveauJournee.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_gameday') }}
                   </a>
                 </template>
@@ -460,28 +460,28 @@ onMounted(async () => {
                   <a
                     :href="publicPdfUrl('PdfCltNiveau.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.general') }}
                   </a>
                   <a
                     :href="publicPdfUrl('PdfCltNiveauPhase.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_phase') }}
                   </a>
                   <a
                     :href="publicPdfUrl('PdfCltNiveauDetail.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.detail_team') }}
                   </a>
                 </template>
@@ -490,10 +490,10 @@ onMounted(async () => {
                   <a
                     :href="publicPdfUrl('PdfCltMulti.php')"
                     target="_blank"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
                   >
-                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+                    <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
                     {{ t('documents.rankings.multi') }}
                   </a>
                 </template>
@@ -524,10 +524,10 @@ onMounted(async () => {
             ]"
             :key="stat.type"
             :to="hasCompetition ? statsRoute(stat.type) : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-purple-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-purple-900" />
             {{ stat.label }}
           </NuxtLink>
         </div>
@@ -542,7 +542,7 @@ onMounted(async () => {
         <div class="p-4 space-y-3">
           <!-- Event selector -->
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">
+            <label class="block text-xs font-medium text-header-900 mb-1">
               {{ t('documents.event.select') }}
             </label>
             <select
@@ -559,37 +559,37 @@ onMounted(async () => {
             <a
               :href="eventPdfUrl('FeuilleListeMatchs.php', 'idEvenement')"
               target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
-              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
               {{ t('documents.event.matches_fr') }}
             </a>
             <a
               :href="eventPdfUrl('FeuilleListeMatchsEN.php', 'idEvenement')"
               target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
-              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
               {{ t('documents.event.matches_en') }}
             </a>
             <a
               :href="eventPdfUrl('PdfQrCodes.php', 'Evt')"
               target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
-              <UIcon name="heroicons:qr-code" class="w-6 h-6 text-header-400" />
+              <UIcon name="heroicons:qr-code" class="w-6 h-6 text-header-900" />
               {{ t('documents.event.qr_codes') }}
             </a>
             <a
               :href="eventPdfUrl('PdfQrCodeApp.php', 'Evt')"
               target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
-              <UIcon name="heroicons:qr-code" class="w-6 h-6 text-header-400" />
+              <UIcon name="heroicons:qr-code" class="w-6 h-6 text-header-900" />
               {{ t('documents.event.qr_code_app') }}
             </a>
           </div>
@@ -605,87 +605,87 @@ onMounted(async () => {
         <div class="p-4 space-y-2">
           <NuxtLink
             :to="hasCompetition ? statsRoute('CJouees3b') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.team_roster_check') }}
           </NuxtLink>
           <NuxtLink
             :to="hasCompetition ? statsRoute('CJouees3') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.irregularities') }}
           </NuxtLink>
           <a
             :href="pdfUrl('FeuillePresenceCat.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.control.presence_category') }}
           </a>
           <a
             :href="pdfUrl('FeuillePresenceU21.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.control.presence_u21') }}
           </a>
           <a
             v-if="profile <= 2"
             :href="pdfUrl('FeuillePresenceNaissance.php')"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.control.presence_naissance') }}
           </a>
           <NuxtLink
             :to="hasCompetition ? statsRoute('CJouees') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.competitions_played_club') }}
           </NuxtLink>
           <NuxtLink
             :to="hasCompetition ? statsRoute('CJouees2') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.competitions_played_team') }}
           </NuxtLink>
           <NuxtLink
             :to="hasCompetition ? statsRoute('LicenciesNationaux') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.national_licensees') }}
           </NuxtLink>
           <NuxtLink
             :to="hasCompetition ? statsRoute('CoherenceMatchs') : undefined"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-400" />
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900" />
             {{ t('documents.control.match_consistency') }}
           </NuxtLink>
           <a
             :href="cardsUrl"
             target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-900 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900" />
             {{ t('documents.control.cumulated_cards') }}
           </a>
         </div>

@@ -657,9 +657,9 @@ const confirmBulkDelete = async () => {
 const getStatusColor = (status: CompetitionStatus) => {
   // Colors matching legacy GestionStyle.css (.statutCompetATT, .statutCompetON, .statutCompetEND)
   switch (status) {
-    case 'ATT': return 'bg-header-400 text-header-50 italic'
+    case 'ATT': return 'bg-header-500 text-header-50 italic'
     case 'ON': return 'bg-success-500 text-success-50 italic'
-    case 'END': return 'bg-primary-800 text-primary-50 italic'
+    case 'END': return 'bg-primary-900 text-primary-50 italic'
     default: return 'bg-header-400 text-header-50'
   }
 }
@@ -756,13 +756,13 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
     <!-- Desktop Table -->
     <div class="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
       <!-- Loading state -->
-      <div v-if="loading && competitions.length === 0" class="px-4 py-8 text-center text-header-500">
+      <div v-if="loading && competitions.length === 0" class="px-4 py-8 text-center text-header-600">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
         {{ t('common.loading') }}
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="competitionsBySection.length === 0" class="px-4 py-8 text-center text-header-500">
+      <div v-else-if="competitionsBySection.length === 0" class="px-4 py-8 text-center text-header-600">
         {{ t('competitions.empty') }}
       </div>
 
@@ -776,11 +776,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           >
             <UIcon
               name="heroicons:chevron-right"
-              class="w-4 h-4 text-header-500 transition-transform"
+              class="w-4 h-4 text-header-600 transition-transform"
               :class="{ 'rotate-90': !isSectionCollapsed(section.section) }"
             />
-            <span class="text-sm font-semibold text-header-700">{{ section.sectionLabel }}</span>
-            <span class="text-xs text-header-500">({{ section.competitions.length }})</span>
+            <span class="text-sm font-semibold text-header-900">{{ section.sectionLabel }}</span>
+            <span class="text-xs text-header-900">({{ section.competitions.length }})</span>
           </button>
 
           <!-- Table for this section -->
@@ -797,49 +797,49 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                       @change="section.competitions.forEach(c => { if (($event.target as HTMLInputElement).checked !== isSelected(c.code)) toggleSelect(c.code) })"
                     >
                   </th> -->
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.publication') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.code') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.edit') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.libelle') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.niveau') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.groupe') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.categorie') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.stage') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.type') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.statut') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.equipes') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.verrou') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.journees') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.matchs') }}
                   </th>
-                  <th class="px-3 py-2 text-right text-xs font-medium text-header-600 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-right text-xs font-medium text-header-900 uppercase tracking-wider">
                     {{ t('competitions.columns.actions') }}
                   </th>
                 </tr>
@@ -878,7 +878,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                       v-else
                       :name="competition.publication ? 'heroicons:eye-solid' : 'heroicons:eye-slash-solid'"
                       class="w-5 h-5"
-                      :class="competition.publication ? 'text-success-500' : 'text-header-400'"
+                      :class="competition.publication ? 'text-success-500' : 'text-header-600'"
                     />
                   </td>
 
@@ -909,7 +909,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   <!-- Libelle -->
                   <td class="px-3 py-1 text-sm text-header-900">
                     <div class="font-medium">{{ competition.libelle }}</div>
-                    <div v-if="competition.soustitre" class="text-xs text-header-500">{{ competition.soustitre }}</div>
+                    <div v-if="competition.soustitre" class="text-xs text-header-700">{{ competition.soustitre }}</div>
                   </td>
 
                   <!-- Level badge -->
@@ -934,17 +934,17 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   </td>
 
                   <!-- Categorie (Soustitre2) -->
-                  <td class="px-3 py-1 text-sm text-header-600">
+                  <td class="px-3 py-1 text-sm text-header-900">
                     {{ competition.soustitre2 || '-' }}
                   </td>
 
                   <!-- Tour -->
-                  <td class="px-3 py-1 text-sm text-header-600">
+                  <td class="px-3 py-1 text-sm text-header-900">
                     {{ competition.codeTour === 10 ? 'F' : competition.codeTour || '-' }}
                   </td>
 
                   <!-- Type -->
-                  <td class="px-3 py-1 text-sm text-header-600">
+                  <td class="px-3 py-1 text-sm text-header-900">
                     {{ competition.codeTypeclt }}
                   </td>
 
