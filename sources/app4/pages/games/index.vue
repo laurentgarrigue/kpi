@@ -1783,7 +1783,7 @@ const openScoring = (gameId: number) => {
       <template #filters>
         <!-- Tour -->
         <div>
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.filter_round') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.filter_round') }}</label>
           <select v-model="selectedTour" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTour ? 'border-warning-400 bg-warning-50' : 'border-header-300'">
             <option value="">{{ t('games.all_rounds') }}</option>
             <option v-for="n in 5" :key="n" :value="String(n)">{{ t('games.round_n', { n }) }}</option>
@@ -1792,7 +1792,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Journee -->
         <div class="min-w-48">
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.filter_journee') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.filter_journee') }}</label>
           <select v-model="selectedJournee" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedJournee !== '*' ? 'border-warning-400 bg-warning-50' : 'border-header-300'">
             <option value="*">{{ t('games.all_journees') }}</option>
             <option v-for="j in journees" :key="j.id" :value="String(j.id)">{{ journeeLabel(j) }}</option>
@@ -1801,7 +1801,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Date -->
         <div>
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.filter_date') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.filter_date') }}</label>
           <select v-model="selectedDate" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedDate ? 'border-warning-400 bg-warning-50' : 'border-header-300'">
             <option value="">{{ t('games.all_dates') }}</option>
             <option v-for="d in availableDates" :key="d" :value="d">{{ formatDate(d) }}</option>
@@ -1810,7 +1810,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Terrain -->
         <div>
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.filter_terrain') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.filter_terrain') }}</label>
           <select v-model="selectedTerrain" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTerrain ? 'border-warning-400 bg-warning-50' : 'border-header-300'">
             <option value="">{{ t('games.all_terrains') }}</option>
             <option v-for="n in 8" :key="n" :value="String(n)">{{ n }}</option>
@@ -1819,7 +1819,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Sort -->
         <div>
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.filter_sort') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.filter_sort') }}</label>
           <select v-model="selectedSort" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedSort !== 'date_time_terrain' ? 'border-warning-400 bg-warning-50' : 'border-header-300'">
             <option value="date_time_terrain">{{ t('games.sort.date_time_terrain') }}</option>
             <option value="competition_date">{{ t('games.sort.competition_date') }}</option>
@@ -1844,17 +1844,17 @@ const openScoring = (gameId: number) => {
           </button>
           <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white border border-header-200 rounded-lg shadow-lg py-1 right-0">
             <!-- Filtres -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
-            <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 cursor-pointer hover:bg-header-50">
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
+            <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 cursor-pointer hover:bg-header-50">
               <input v-model="unlockedOnly" type="checkbox" class="rounded border-header-300 text-primary-600">
               {{ t('games.unlocked_only') }}
             </label>
             <!-- Postes -->
-            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100">{{ t('games.display.posts_section') }}</div>
+            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider border-t border-header-100">{{ t('games.display.posts_section') }}</div>
             <label
               v-for="col in postColumns"
               :key="col.key"
-              class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 cursor-pointer hover:bg-header-50"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 cursor-pointer hover:bg-header-50"
             >
               <input v-model="col.model.value" type="checkbox" class="rounded border-header-300 text-primary-600">
               {{ t(col.labelKey) }}
@@ -1912,9 +1912,9 @@ const openScoring = (gameId: number) => {
           </button>
           <div v-show="bulkActionsOpen" class="absolute z-20 mt-1 w-72 bg-white border border-header-200 rounded-lg shadow-lg py-1 left-0">
             <!-- ── Toggle section ── -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkPublishConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:eye" class="w-5 h-5 text-success-500" />
@@ -1922,7 +1922,7 @@ const openScoring = (gameId: number) => {
             </button>
             <button
               v-if="canLock"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkLockConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:lock-closed" class="w-5 h-5 text-primary-600" />
@@ -1930,14 +1930,14 @@ const openScoring = (gameId: number) => {
             </button>
             <button
               v-if="canLock"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkLockPublishConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:lock-closed" class="w-5 h-5 text-purple-600" />
               {{ t('games.bulk.lock_publish') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkTogglePrinted(); bulkActionsOpen = false"
             >
               <UIcon name="heroicons:printer" class="w-5 h-5 text-header-600" />
@@ -1946,58 +1946,58 @@ const openScoring = (gameId: number) => {
 
             <!-- ── Edit section ── -->
             <div class="border-t border-header-100 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkAutoAssignConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:cpu-chip" class="w-5 h-5 text-emerald-600" />
               {{ t('games.bulk.auto_assign') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkCancelAssignConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:x-circle" class="w-5 h-5 text-warning-500" />
               {{ t('games.bulk.cancel_assign') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkChangeJournee"
             >
               <UIcon name="heroicons:arrow-right-circle" class="w-5 h-5 text-indigo-600" />
               {{ t('games.bulk.change_journee') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkRenumber"
             >
               <UIcon name="heroicons:hashtag" class="w-5 h-5 text-orange-600" />
               {{ t('games.bulk.renumber') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkChangeDate"
             >
               <UIcon name="heroicons:calendar" class="w-5 h-5 text-primary-600" />
               {{ t('games.bulk.change_date') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkIncrementTime"
             >
               <UIcon name="heroicons:clock" class="w-5 h-5 text-teal-600" />
               {{ t('games.bulk.increment_time') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkChangeGroup"
             >
               <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-amber-600" />
               {{ t('games.bulk.change_group') }}
             </button>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="bulkDuplicateConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:document-duplicate" class="w-5 h-5 text-cyan-600" />
@@ -2006,9 +2006,9 @@ const openScoring = (gameId: number) => {
 
             <!-- ── Documents section ── -->
             <div class="border-t border-header-100 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="openBulkMatchSheets"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-danger-600" />
@@ -2030,40 +2030,40 @@ const openScoring = (gameId: number) => {
       <template #before-search>
         <!-- Refresh button -->
         <button
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           :title="t('common.refresh')"
           @click="loadGames"
         >
-          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-600" />
         </button>
 
         <!-- Conflict detection toolbar toggle -->
         <button
           class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
-          :class="conflictBarOpen || selectedTeam ? 'text-warning-700 bg-warning-50 border-warning-400' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
+          :class="conflictBarOpen || selectedTeam ? 'text-warning-700 bg-warning-50 border-warning-400' : 'text-header-900 bg-white border-header-300 hover:bg-header-50'"
           :title="t('games.conflict_toolbar_title')"
           @click="conflictBarOpen ? (conflictBarOpen = false, selectedTeam = '', teamSearchInput = '') : (conflictBarOpen = true)"
         >
-          <UIcon name="heroicons:shield-exclamation" class="w-5 h-5" :class="conflictBarOpen || selectedTeam ? 'text-warning-500' : 'text-header-500'" />
+          <UIcon name="heroicons:shield-exclamation" class="w-5 h-5" :class="conflictBarOpen || selectedTeam ? 'text-warning-500' : 'text-header-600'" />
           <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': conflictBarOpen }" />
         </button>
 
         <!-- Documents dropdown (all games with current filters) -->
         <div v-if="hasContextFilter" ref="documentsRef" class="relative">
           <button
-            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
             @click="documentsOpen = !documentsOpen"
           >
-            <UIcon name="heroicons:document-arrow-down" class="w-5 h-5 text-header-500" />
+            <UIcon name="heroicons:document-arrow-down" class="w-5 h-5 text-header-600" />
             {{ t('games.documents.title') }}
             <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': documentsOpen }" />
           </button>
           <div v-show="documentsOpen" class="absolute z-20 mt-1 w-64 bg-white border border-header-200 rounded-lg shadow-lg py-1 right-0">
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
             <a
               :href="docUrl('FeuilleListeMatchs.php')"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
@@ -2072,7 +2072,7 @@ const openScoring = (gameId: number) => {
             <a
               :href="docUrl('FeuilleListeMatchsEN.php')"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
@@ -2081,7 +2081,7 @@ const openScoring = (gameId: number) => {
             <a
               :href="docUrl('FeuilleMatchMulti.php')"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:document-duplicate" class="w-5 h-5 text-danger-600" />
@@ -2090,86 +2090,86 @@ const openScoring = (gameId: number) => {
             <a
               :href="docUrl('tableau_openspout.php')"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:table-cells" class="w-5 h-5 text-success-500" />
               {{ t('games.documents.export_ods') }}
             </a>
             <div class="border-t border-header-100 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
             <a
               :href="docUrl('PdfListeMatchs.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.public_list_fr') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchsEN.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.public_list_en') }}
             </a>
             <div class="border-t border-header-100 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-400 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
             <a
               :href="docUrl('PdfListeMatchs4TerrainsEn.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_1_4_teams') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchs4TerrainsEn3.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_5_8_teams') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchs4TerrainsEn2.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_1_4_phases') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchs4TerrainsEn4.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_5_8_phases') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchs5TerrainsEn.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_1_5_phases') }}
             </a>
             <a
               :href="docUrl('PdfListeMatchs5TerrainsEnTeams.php', true)"
               target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-500" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600" />
               {{ t('games.documents.pitches_1_5_teams') }}
             </a>
           </div>
@@ -2193,8 +2193,8 @@ const openScoring = (gameId: number) => {
         <!-- Team dropdown -->
         <div ref="teamSearchRef" class="relative">
           <button
-            class="flex items-center justify-between gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border min-w-[250px]"
-            :class="selectedTeam ? 'text-primary-700 bg-primary-50 border-primary-400' : 'text-header-700 bg-white border-header-300 hover:bg-header-50'"
+            class="flex items-center justify-between gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border min-w-62.5"
+            :class="selectedTeam ? 'text-primary-700 bg-primary-50 border-primary-400' : 'text-header-900 bg-white border-header-300 hover:bg-header-50'"
             @click="teamSearchOpen = !teamSearchOpen"
           >
             <span class="flex items-center gap-1.5 min-w-0">
@@ -2235,37 +2235,37 @@ const openScoring = (gameId: number) => {
                 :class="!selectedTeam ? 'font-medium text-primary-700' : 'text-header-700'"
                 @click="selectedTeam = ''; teamSearchInput = ''; teamSearchOpen = false"
               >
-                <UIcon name="heroicons:users" class="w-4 h-4 text-header-400 shrink-0" />
+                <UIcon name="heroicons:users" class="w-4 h-4 text-header-600 shrink-0" />
                 {{ t('games.all_teams') }}
               </button>
 
               <!-- Real teams -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'team')">
-                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider">
+                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 uppercase tracking-wider">
                   {{ t('games.teams_assigned') }}
                 </div>
                 <button
                   v-for="entity in filteredTeamOptions.filter(e => e.kind === 'team')"
                   :key="entity.code"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50 truncate"
-                  :class="selectedTeam === entity.code ? 'font-medium text-primary-700 bg-primary-50' : 'text-header-700'"
+                  :class="selectedTeam === entity.code ? 'font-medium text-primary-700 bg-primary-50' : 'text-header-900'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
-                  <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-400 shrink-0" />
+                  <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-600 shrink-0" />
                   {{ entity.label }}
                 </button>
               </template>
 
               <!-- Nominative referees (people, identified by matricule; club not shown) -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 uppercase tracking-wider border-t border-header-100 mt-1">
                   {{ t('games.referees_nominative_section') }}
                 </div>
                 <button
                   v-for="entity in filteredTeamOptions.filter(e => e.kind === 'referee' && e.refereeNominative)"
                   :key="entity.code"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-info-50 truncate"
-                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-700'"
+                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-900'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
                   <UIcon name="heroicons:identification" class="w-4 h-4 text-info-400 shrink-0" />
@@ -2279,14 +2279,14 @@ const openScoring = (gameId: number) => {
 
               <!-- Team-designated referees (matric=0, e.g. "RKV I") -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && !e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 uppercase tracking-wider border-t border-header-100 mt-1">
                   {{ t('games.referees_team_section') }}
                 </div>
                 <button
                   v-for="entity in filteredTeamOptions.filter(e => e.kind === 'referee' && !e.refereeNominative)"
                   :key="entity.code"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-info-50 truncate"
-                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-700'"
+                  :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-900'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
                   <UIcon name="heroicons:flag" class="w-4 h-4 text-info-400 shrink-0" />
@@ -2300,7 +2300,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Placeholders -->
               <template v-if="filteredTeamOptions.some(e => e.isPlaceholder)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-400 uppercase tracking-wider border-t border-header-100 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 uppercase tracking-wider border-t border-header-100 mt-1">
                   {{ t('games.teams_placeholder') }}
                 </div>
                 <button
@@ -2316,14 +2316,14 @@ const openScoring = (gameId: number) => {
                 </button>
               </template>
 
-              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-400 italic">
+              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-600 italic">
                 {{ t('common.no_results') }}
               </div>
             </div>
           </div>
         </div>
 
-        <span class="text-xs text-header-400 min-w-10 text-center">
+        <span class="text-xs text-header-900 min-w-10 text-center">
           <template v-if="selectedTeam && selectedTeamIndex >= 0">{{ selectedTeamIndex + 1 }}/{{ availableTeams.length }}</template>
           <template v-else>—</template>
         </span>
@@ -2338,7 +2338,7 @@ const openScoring = (gameId: number) => {
       </div>
 
       <!-- Rest threshold -->
-      <div class="flex items-center gap-1.5 text-xs text-header-600" :title="t('games.rest_threshold_tooltip')">
+      <div class="flex items-center gap-1.5 text-xs text-header-900" :title="t('games.rest_threshold_tooltip')">
         <UIcon name="heroicons:clock" class="w-4 h-4 text-warning-500 shrink-0" />
         <label class="whitespace-nowrap cursor-help">{{ t('games.rest_threshold') }}</label>
         <input
@@ -2356,7 +2356,7 @@ const openScoring = (gameId: number) => {
       <div class="h-5 w-px bg-header-200 hidden sm:block" />
 
       <!-- Legend -->
-      <div class="flex flex-wrap items-center gap-3 text-xs text-header-600">
+      <div class="flex flex-wrap items-center gap-3 text-xs text-header-900">
         <span class="flex items-center gap-1.5">
           <span class="inline-block w-3 h-3 rounded-sm bg-danger-200 border border-danger-400 shrink-0" />
           {{ t('games.team_conflict') }}
@@ -2369,7 +2369,7 @@ const openScoring = (gameId: number) => {
 
       <!-- Close -->
       <button
-        class="ml-auto p-1 text-header-400 hover:text-header-600"
+        class="ml-auto p-1 text-header-400 hover:text-header-900"
         :title="t('common.close')"
         @click="conflictBarOpen = false; selectedTeam = ''; teamSearchInput = ''"
       >
@@ -2396,43 +2396,43 @@ const openScoring = (gameId: number) => {
               <!-- Publication -->
               <th v-if="showPublicationColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:eye" class="w-6 h-6" /></th>
               <!-- N° -->
-              <th class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.number') }}</th>
+              <th class="w-10 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.number') }}</th>
               <!-- Actions -->
-              <th v-if="canEdit" class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.actions') }}</th>
+              <th v-if="canEdit" class="w-10 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.actions') }}</th>
               <!-- Scoresheets -->
-              <th v-if="canEdit || canEditScores" class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.actions') }}</th>
+              <th v-if="canEdit || canEditScores" class="w-10 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.actions') }}</th>
               <!-- Time -->
-              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.date_time') }}</th>
+              <th class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.date_time') }}</th>
               <!-- Terrain -->
-              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.terrain') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.terrain') }}</th>
               <!-- Cat -->
-              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.category') }}</th>
+              <th class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.category') }}</th>
               <!-- Phase (conditional) -->
-              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.phase') }}</th>
+              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.phase') }}</th>
               <!-- Type -->
-              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.type') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.type') }}</th>
               <!-- Code (conditional) -->
-              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.code') }}</th>
+              <th v-if="phaseLibelle" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.code') }}</th>
               <!-- Code (non-phaseLibelle) -->
-              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.code') }}</th>
+              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.code') }}</th>
               <!-- Lieu (non-phaseLibelle) -->
-              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.location') }}</th>
+              <th v-if="!phaseLibelle" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.location') }}</th>
               <!-- Team A -->
-              <th class="px-1 py-2 text-right text-header-600 font-medium">{{ t('games.field.team_a') }}</th>
+              <th class="px-1 py-2 text-right text-header-900 font-medium">{{ t('games.field.team_a') }}</th>
               <!-- Score A -->
-              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.score_a') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.score_a') }}</th>
               <!-- Lock -->
-              <th class="w-10 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.lock') }}</th>
+              <th class="w-10 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.lock') }}</th>
               <!-- Score B -->
-              <th class="w-8 px-1 py-2 text-center text-header-600 font-medium">{{ t('games.field.score_b') }}</th>
+              <th class="w-8 px-1 py-2 text-center text-header-900 font-medium">{{ t('games.field.score_b') }}</th>
               <!-- Team B -->
-              <th class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.team_b') }}</th>
+              <th class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.team_b') }}</th>
               <!-- Referee 1 (optional column) -->
-              <th v-if="showReferees" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_1') }}</th>
+              <th v-if="showReferees" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.referee_1') }}</th>
               <!-- Referee 2 (optional column) -->
-              <th v-if="showReferees" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.referee_2') }}</th>
+              <th v-if="showReferees" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.referee_2') }}</th>
               <!-- Shotclock (optional column) -->
-              <th v-if="showShotclock" class="px-1 py-2 text-left text-header-600 font-medium">{{ t('games.field.shotclock') }}</th>
+              <th v-if="showShotclock" class="px-1 py-2 text-left text-header-900 font-medium">{{ t('games.field.shotclock') }}</th>
               <!-- Printed -->
               <th v-if="showPrintedColumn" class="w-8 px-1 py-2 text-center"><UIcon name="heroicons:inbox-arrow-down" class="w-6 h-6" /></th>
               <!-- Delete -->
@@ -2442,21 +2442,21 @@ const openScoring = (gameId: number) => {
           <tbody class="bg-white divide-y divide-header-200">
             <!-- Loading -->
             <tr v-if="loading && games.length === 0">
-              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-600">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-400">
+              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-600">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('games.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="filteredGames.length === 0">
-              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-600">
                 {{ t('games.no_results') }}
               </td>
             </tr>
@@ -2523,7 +2523,7 @@ const openScoring = (gameId: number) => {
                 <button v-if="!isLocked(g) && g.authorized" :title="t('common.edit')" class="text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
                   <UIcon name="heroicons:pencil" class="w-6 h-6" />
                   <br>
-                  <span class="text-xs text-header-700">Edit</span>
+                  <span class="text-xs text-header-900">Edit</span>
                 </button>
               </td>
               <td v-if="canEdit || canEditScores" class="px-1 py-1 text-center" @click.stop>
@@ -2531,22 +2531,22 @@ const openScoring = (gameId: number) => {
                   <a v-if="canEdit && g.authorized" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800">
                     <UIcon name="heroicons:document-text" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-700">PDF</span>
+                    <span class="text-xs text-header-900">PDF</span>
                   </a>
                   <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-700">V2</span>
+                    <span class="text-xs text-header-900">V2</span>
                   </button>
                   <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700" @click.stop="openScoresheet(g.id, 3)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-700">V3</span>
+                    <span class="text-xs text-header-900">V3</span>
                   </button>
                   <button v-if="canScoring && g.authorized" :title="t('scoring.link_title')" class="p-0.5 text-emerald-500 hover:text-emerald-700" @click.stop="openScoring(g.id)">
                     <UIcon name="heroicons:bolt" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-700">{{ t('scoring.link') }}</span>
+                    <span class="text-xs text-header-900">{{ t('scoring.link') }}</span>
                   </button>
                 </div>
               </td>
@@ -2568,7 +2568,7 @@ const openScoring = (gameId: number) => {
                   <span
                     v-else
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
-                    class="text-header-600"
+                    class="text-header-900"
                     @click="startInlineEdit(g, 'Date_match')"
                   >{{ formatDateShort(g.dateMatch) }}</span>
                   <!-- Heure inline -->
@@ -2613,7 +2613,7 @@ const openScoring = (gameId: number) => {
               </td>
 
               <!-- Category -->
-              <td class="px-1 py-1 text-header-600">{{ g.soustitre2 || g.codeCompetition }}</td>
+              <td class="px-1 py-1 text-header-900">{{ g.soustitre2 || g.codeCompetition }}</td>
 
               <!-- Phase (conditional, inline editable via journee select) -->
               <td v-if="phaseLibelle" class="px-1 py-1">
@@ -2649,7 +2649,7 @@ const openScoring = (gameId: number) => {
                   <UIcon
                     :name="g.type === 'C' ? 'heroicons:bars-3' : 'heroicons:arrows-right-left'"
                     class="w-6 h-6"
-                    :class="g.type === 'C' ? 'text-primary-600' : 'text-orange-600'"
+                    :class="g.type === 'C' ? 'text-primary-900' : 'text-orange-600'"
                   />
                 </button>
               </td>
@@ -2677,7 +2677,7 @@ const openScoring = (gameId: number) => {
               </td>
 
               <!-- Lieu (non-phaseLibelle, read-only) -->
-              <td v-if="!phaseLibelle" class="px-1 py-1 text-header-500">{{ g.lieu || '-' }}</td>
+              <td v-if="!phaseLibelle" class="px-1 py-1 text-header-900">{{ g.lieu || '-' }}</td>
 
               <!-- Team A (inline select, right-aligned) -->
               <td class="px-1 py-1 text-right">
@@ -2716,7 +2716,7 @@ const openScoring = (gameId: number) => {
                   <NuxtLink
                     v-if="g.idEquipeA"
                     :to="`/presence/match/${g.id}/team/A`"
-                    class="block text-[10px] text-primary-500 hover:text-primary-700 hover:underline"
+                    class="block text-[10px] text-primary-700 hover:text-primary-900 hover:underline"
                     :title="t('presence.title_match')"
                     @click.stop
                   >
@@ -2843,7 +2843,7 @@ const openScoring = (gameId: number) => {
                   <NuxtLink
                     v-if="g.idEquipeB"
                     :to="`/presence/match/${g.id}/team/B`"
-                    class="block text-[10px] text-primary-500 hover:text-primary-700 hover:underline"
+                    class="block text-[10px] text-primary-700 hover:text-primary-900 hover:underline"
                     :title="t('presence.title_match')"
                     @click.stop
                   >
@@ -2859,7 +2859,7 @@ const openScoring = (gameId: number) => {
                   class="truncate block"
                   :class="[
                     isGameEditable(g) ? 'editable-cell' : '',
-                    selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                    selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-900'),
                   ]"
                   :title="g.arbitrePrincipal"
                   @click="startRefereeEdit(g, 'principal')"
@@ -2873,7 +2873,7 @@ const openScoring = (gameId: number) => {
                 >({{ bracketLabels(g.libelle).refereePrincipal }})</span>
                 <span
                   v-else
-                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  :class="isGameEditable(g) ? 'editable-cell text-header-900' : 'text-header-900'"
                   @click="startRefereeEdit(g, 'principal')"
                 >-</span>
               </td>
@@ -2885,7 +2885,7 @@ const openScoring = (gameId: number) => {
                   class="truncate block"
                   :class="[
                     isGameEditable(g) ? 'editable-cell' : '',
-                    selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-600'),
+                    selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-900'),
                   ]"
                   :title="g.arbitreSecondaire"
                   @click="startRefereeEdit(g, 'secondaire')"
@@ -2899,7 +2899,7 @@ const openScoring = (gameId: number) => {
                 >({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
                 <span
                   v-else
-                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  :class="isGameEditable(g) ? 'editable-cell text-header-900' : 'text-header-900'"
                   @click="startRefereeEdit(g, 'secondaire')"
                 >-</span>
               </td>
@@ -2908,14 +2908,14 @@ const openScoring = (gameId: number) => {
               <td v-if="showShotclock" class="px-1 py-1 max-w-32">
                 <span
                   v-if="g.timeshoot"
-                  class="truncate block text-header-600"
+                  class="truncate block text-header-900"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   :title="g.timeshoot"
                   @click="startShotclockEdit(g)"
                 >{{ g.timeshoot }}</span>
                 <span
                   v-else
-                  :class="isGameEditable(g) ? 'editable-cell text-header-600' : 'text-header-600'"
+                  :class="isGameEditable(g) ? 'editable-cell text-header-900' : 'text-header-900'"
                   @click="startShotclockEdit(g)"
                 >-</span>
               </td>
@@ -3022,14 +3022,14 @@ const openScoring = (gameId: number) => {
                 </template>
                 <span
                   v-else
-                  class="text-header-500 font-normal"
+                  class="text-header-600 font-normal"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   @click="startPhaseEdit(g)"
                 >{{ g.phase }}</span>
               </template>
             </div>
             <!-- Libelle (inline editable) -->
-            <div class="text-sm text-header-600">
+            <div class="text-sm text-header-900">
               <template v-if="editingCell?.id === g.id && editingCell.field === 'Libelle'">
                 <input
                   :id="`inline-${g.id}-Libelle`"
@@ -3080,7 +3080,7 @@ const openScoring = (gameId: number) => {
         <div class="space-y-2 text-sm">
           <!-- Date / Time / Terrain (inline editable) -->
           <div class="flex items-center gap-2">
-            <UIcon name="heroicons:calendar" class="w-5 h-5 text-header-600 shrink-0" />
+            <UIcon name="heroicons:calendar" class="w-5 h-5 text-header-900 shrink-0" />
             <!-- Date inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'Date_match'">
               <input
@@ -3094,7 +3094,7 @@ const openScoring = (gameId: number) => {
             </template>
             <span
               v-else
-              class="text-header-600"
+              class="text-header-900"
               :class="isGameEditable(g) ? 'editable-cell' : ''"
               @click="startInlineEdit(g, 'Date_match')"
             >{{ formatDate(g.dateMatch) }}</span>
@@ -3117,7 +3117,7 @@ const openScoring = (gameId: number) => {
             >{{ g.heureMatch }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <UIcon name="heroicons:map-pin" class="w-5 h-5 text-header-400 shrink-0" />
+            <UIcon name="heroicons:map-pin" class="w-5 h-5 text-header-600 shrink-0" />
             <!-- Terrain inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'Terrain'">
               <input
@@ -3135,7 +3135,7 @@ const openScoring = (gameId: number) => {
               :class="isGameEditable(g) ? 'editable-cell' : ''"
               @click="startInlineEdit(g, 'Terrain')"
             >{{ t('games.field.terrain') }} {{ g.terrain || '-' }}</span>
-            <span v-if="g.lieu" class="text-header-500">| {{ g.lieu }}</span>
+            <span v-if="g.lieu" class="text-header-900">| {{ g.lieu }}</span>
           </div>
 
           <!-- Score: centered, team names close to score -->
@@ -3147,7 +3147,7 @@ const openScoring = (gameId: number) => {
               <NuxtLink
                 v-if="g.idEquipeA"
                 :to="`/presence/match/${g.id}/team/A`"
-                class="block text-[10px] text-primary-500 hover:text-primary-700 hover:underline"
+                class="block text-[10px] text-primary-700 hover:text-primary-900 hover:underline"
                 @click.stop
               >{{ t('games.presence') }}</NuxtLink>
             </span>
@@ -3170,7 +3170,7 @@ const openScoring = (gameId: number) => {
               :class="isScoreEditable(g) ? 'editable-cell' : ''"
               @click="startInlineEdit(g, 'ScoreA')"
             >{{ g.scoreA || '-' }}</span>
-            <span class="text-header-400">-</span>
+            <span class="text-header-600">-</span>
             <!-- Score B inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'ScoreB'">
               <input
@@ -3197,14 +3197,14 @@ const openScoring = (gameId: number) => {
               <NuxtLink
                 v-if="g.idEquipeB"
                 :to="`/presence/match/${g.id}/team/B`"
-                class="block text-[10px] text-primary-500 hover:text-primary-700 hover:underline"
+                class="block text-[10px] text-primary-700 hover:text-primary-900 hover:underline"
                 @click.stop
               >{{ t('games.presence') }}</NuxtLink>
             </span>
           </div>
 
           <!-- Type + Status -->
-          <div class="flex items-center gap-3 text-xs text-header-500">
+          <div class="flex items-center gap-3 text-xs text-header-900">
             <button
               :title="g.type === 'C' ? t('games.type_classification') : t('games.type_elimination')"
               class="p-0.5 rounded"
@@ -3218,7 +3218,7 @@ const openScoring = (gameId: number) => {
                 :class="g.type === 'C' ? 'text-primary-600' : 'text-orange-600'"
               />
             </button>
-            <span class="text-header-400">|</span>
+            <span class="text-header-900">|</span>
             <!-- <span class="text-header-500">{{ t('games.field.status') }}</span> -->
             <button
               v-if="isGameEditable(g)"
@@ -3233,11 +3233,11 @@ const openScoring = (gameId: number) => {
             >{{ statusLabel(g) }}</span>
           </div>
 
-          <div v-if="g.arbitrePrincipal || g.arbitreSecondaire || bracketLabels(g.libelle).refereePrincipal || bracketLabels(g.libelle).refereeSecondaire" class="text-xs text-header-500">
-            <span v-if="g.arbitrePrincipal" :class="{ 'italic text-header-600': g.matricArbitrePrincipal === 0 }">{{ g.arbitrePrincipal }}</span>
+          <div v-if="g.arbitrePrincipal || g.arbitreSecondaire || bracketLabels(g.libelle).refereePrincipal || bracketLabels(g.libelle).refereeSecondaire" class="text-xs text-header-900">
+            <span v-if="g.arbitrePrincipal" :class="{ 'italic text-header-900': g.matricArbitrePrincipal === 0 }">{{ g.arbitrePrincipal }}</span>
             <span v-else-if="bracketLabels(g.libelle).refereePrincipal" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereePrincipal }})</span>
             <template v-if="g.arbitreSecondaire || bracketLabels(g.libelle).refereeSecondaire"> /
-              <span v-if="g.arbitreSecondaire" :class="{ 'italic text-header-600': g.matricArbitreSecondaire === 0 }">{{ g.arbitreSecondaire }}</span>
+              <span v-if="g.arbitreSecondaire" :class="{ 'italic text-header-900': g.matricArbitreSecondaire === 0 }">{{ g.arbitreSecondaire }}</span>
               <span v-else-if="bracketLabels(g.libelle).refereeSecondaire" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
             </template>
           </div>
@@ -3300,7 +3300,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Journee -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.filter_journee') }} *</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.filter_journee') }} *</label>
           <select
             v-model.number="formData.idJournee"
             class="w-full px-3 py-2 border border-header-300 rounded-lg"
@@ -3314,15 +3314,15 @@ const openScoring = (gameId: number) => {
         <!-- Date + Heure + N° -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.date') }} *</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.date') }} *</label>
             <input v-model="formData.dateMatch" type="date" required class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.time') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.time') }}</label>
             <input v-model="formData.heureMatch" type="time" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.game_number') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.game_number') }}</label>
             <input v-model.number="formData.numeroOrdre" type="number" min="0" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
         </div>
@@ -3330,11 +3330,11 @@ const openScoring = (gameId: number) => {
         <!-- Terrain + Type + Intervalle -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.terrain') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.terrain') }}</label>
             <input v-model="formData.terrain" type="text" maxlength="12" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.type') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.type') }}</label>
             <div class="flex flex-col gap-2 mt-2">
               <label class="flex items-center gap-2">
                 <input v-model="formData.type" type="radio" value="C" class="text-primary-600">
@@ -3347,28 +3347,28 @@ const openScoring = (gameId: number) => {
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.interval') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.interval') }}</label>
             <input v-model.number="formData.intervalle" type="number" min="0" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
         </div>
 
         <!-- Libelle -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.label_coding') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.label_coding') }}</label>
           <input v-model="formData.libelle" type="text" maxlength="30" class="w-full px-3 py-2 border border-header-300 rounded-lg">
         </div>
 
         <!-- Teams -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.team_a') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.team_a') }}</label>
             <select v-model.number="formData.idEquipeA" class="w-full px-3 py-2 border border-header-300 rounded-lg">
               <option :value="null">{{ t('games.none') }}</option>
               <option v-for="tm in formTeams" :key="tm.id" :value="tm.id">{{ tm.libelle }}</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.team_b') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.team_b') }}</label>
             <select v-model.number="formData.idEquipeB" class="w-full px-3 py-2 border border-header-300 rounded-lg">
               <option :value="null">{{ t('games.none') }}</option>
               <option v-for="tm in formTeams" :key="tm.id" :value="tm.id">{{ tm.libelle }}</option>
@@ -3379,11 +3379,11 @@ const openScoring = (gameId: number) => {
         <!-- Coefficients -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.coefficient') }} A</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.coefficient') }} A</label>
             <input v-model.number="formData.coeffA" type="number" min="1" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.field.coefficient') }} B</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.field.coefficient') }} B</label>
             <input v-model.number="formData.coeffB" type="number" min="1" class="w-full px-3 py-2 border border-header-300 rounded-lg">
           </div>
         </div>
@@ -3392,7 +3392,7 @@ const openScoring = (gameId: number) => {
         <div class="space-y-4">
             <!-- Referee 1 -->
             <div>
-              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.field.referee_1') }}</label>
+              <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.field.referee_1') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitrePrincipal"
                 :matric="formData.matricArbitrePrincipal"
@@ -3402,7 +3402,7 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitrePrincipal > 0" class="mt-1">
-                <label class="block text-[10px] text-header-400 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-[10px] text-header-700 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
                   class="w-full px-2 py-1 text-xs border border-header-200 rounded bg-header-50"
                   :value="extractTeamFromReferee(formData.arbitrePrincipal)"
@@ -3414,7 +3414,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Referee 2 -->
             <div>
-              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.field.referee_2') }}</label>
+              <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.field.referee_2') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitreSecondaire"
                 :matric="formData.matricArbitreSecondaire"
@@ -3424,7 +3424,7 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitreSecondaire > 0" class="mt-1">
-                <label class="block text-[10px] text-header-400 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-[10px] text-header-700 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
                   class="w-full px-2 py-1 text-xs border border-header-200 rounded bg-header-50"
                   :value="extractTeamFromReferee(formData.arbitreSecondaire)"
@@ -3436,7 +3436,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Shotclock (Timeshoot) — nominative name only, free text allowed -->
             <div>
-              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.field.shotclock') }}</label>
+              <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.field.shotclock') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.timeshoot"
                 :matric="formShotclockMatric"
@@ -3452,7 +3452,7 @@ const openScoring = (gameId: number) => {
         <div class="flex justify-end gap-2 pt-4 border-t">
           <button
             type="button"
-            class="px-4 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+            class="px-4 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
             @click="formModalOpen = false"
           >
             {{ t('common.cancel') }}
@@ -3556,7 +3556,7 @@ const openScoring = (gameId: number) => {
       @close="bulkChangeJourneeOpen = false"
     >
       <div class="space-y-4">
-        <label class="block text-sm font-medium text-header-700">{{ t('games.bulk.change_journee_label') }}</label>
+        <label class="block text-sm font-medium text-header-900">{{ t('games.bulk.change_journee_label') }}</label>
         <select
           v-model.number="bulkJourneeId"
           class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm"
@@ -3568,7 +3568,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="bulkChangeJourneeOpen = false"
         >
           {{ t('common.cancel') }}
@@ -3592,7 +3592,7 @@ const openScoring = (gameId: number) => {
       @close="bulkRenumberOpen = false"
     >
       <div class="space-y-4">
-        <label class="block text-sm font-medium text-header-700">{{ t('games.bulk.renumber_from') }}</label>
+        <label class="block text-sm font-medium text-header-900">{{ t('games.bulk.renumber_from') }}</label>
         <input
           v-model.number="bulkRenumberFrom"
           type="number"
@@ -3603,7 +3603,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="bulkRenumberOpen = false"
         >
           {{ t('common.cancel') }}
@@ -3627,7 +3627,7 @@ const openScoring = (gameId: number) => {
       @close="bulkChangeDateOpen = false"
     >
       <div class="space-y-4">
-        <label class="block text-sm font-medium text-header-700">{{ t('games.bulk.new_date') }}</label>
+        <label class="block text-sm font-medium text-header-900">{{ t('games.bulk.new_date') }}</label>
         <input
           v-model="bulkNewDate"
           type="date"
@@ -3637,7 +3637,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="bulkChangeDateOpen = false"
         >
           {{ t('common.cancel') }}
@@ -3662,7 +3662,7 @@ const openScoring = (gameId: number) => {
     >
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.bulk.start_time') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.bulk.start_time') }}</label>
           <input
             v-model="bulkStartTime"
             type="time"
@@ -3670,7 +3670,7 @@ const openScoring = (gameId: number) => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.bulk.interval_minutes') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.bulk.interval_minutes') }}</label>
           <input
             v-model.number="bulkInterval"
             type="number"
@@ -3682,7 +3682,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="bulkIncrementTimeOpen = false"
         >
           {{ t('common.cancel') }}
@@ -3707,7 +3707,7 @@ const openScoring = (gameId: number) => {
     >
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.bulk.old_group') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.bulk.old_group') }}</label>
           <input
             :value="bulkOldGroup"
             name="oldGroup"
@@ -3719,7 +3719,7 @@ const openScoring = (gameId: number) => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('games.bulk.new_group') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('games.bulk.new_group') }}</label>
           <input
             :value="bulkNewGroup"
             name="newGroup"
@@ -3734,7 +3734,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="bulkChangeGroupOpen = false"
         >
           {{ t('common.cancel') }}
@@ -3799,7 +3799,7 @@ const openScoring = (gameId: number) => {
           />
         </div>
         <div v-if="editingRefereeMatric > 0">
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('games.referee_team_label') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('games.referee_team_label') }}</label>
           <select
             :value="refereeModalTeamValue"
             class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -3813,7 +3813,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="cancelRefereeModal"
         >
           {{ t('common.cancel') }}
@@ -3850,7 +3850,7 @@ const openScoring = (gameId: number) => {
       <template #footer>
         <button
           type="button"
-          class="px-4 py-2 text-sm text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="cancelShotclockModal"
         >
           {{ t('common.cancel') }}

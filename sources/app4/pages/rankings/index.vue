@@ -769,9 +769,9 @@ const editValueForField = (field: string, value: number): string => {
       @competition-change="onCompetitionChange"
     >
       <template #filters>
-        <!-- Type selector (profil ≤ 3) -->
+        <!-- Type selector (profil ≤ 2) -->
         <div v-if="canChangeType && rankingTypes.length > 0">
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('rankings.type.label') }}</label>
+          <label class="block text-xs font-medium text-header-700 mb-1">{{ t('rankings.type.label') }}</label>
           <select
             v-model="selectedType"
             class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -786,12 +786,12 @@ const editValueForField = (field: string, value: number): string => {
         <!-- Refresh button -->
         <button
           v-if="workContext.pageCompetitionCode"
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50 disabled:opacity-50"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 disabled:opacity-50"
           :title="t('common.refresh')"
           :disabled="loading"
           @click="loadRankings"
         >
-          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" :class="{ 'animate-spin': loading }" />
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-700" :class="{ 'animate-spin': loading }" />
         </button>
       </template>
       <template #badges>
@@ -820,7 +820,7 @@ const editValueForField = (field: string, value: number): string => {
             {{ t(`competitions.status.${competitionInfo.statut}`) }}
           </span>
           <!-- Goal-average info -->
-          <span class="text-xs text-header-500">
+          <span class="text-xs text-header-900">
             {{ t('rankings.goalaverage.label') }} : {{ t(`rankings.goalaverage.${competitionInfo.goalaverage || 'gen'}`) }}
           </span>
         </div>
@@ -829,7 +829,7 @@ const editValueForField = (field: string, value: number): string => {
     </AdminPageHeader>
 
     <!-- No competition selected -->
-    <div v-if="!workContext.pageCompetitionCode" class="bg-white rounded-lg shadow p-8 text-center text-header-500">
+    <div v-if="!workContext.pageCompetitionCode" class="bg-white rounded-lg shadow p-8 text-center text-header-700">
       {{ t('teams_page.no_competition') }}
     </div>
 
@@ -860,11 +860,11 @@ const editValueForField = (field: string, value: number): string => {
                 <span class="font-medium">{{ t('rankings.compute.date') }}</span> :
                 {{ formatDate(competitionInfo.dateCalcul) }}
                 ({{ t('rankings.compute.by') }} {{ competitionInfo.userNameCalcul }})
-                <span v-if="competitionInfo.modeCalcul" class="ml-2 text-xs text-header-500">
+                <span v-if="competitionInfo.modeCalcul" class="ml-2 text-xs text-header-700">
                   — {{ competitionInfo.modeCalcul === 'tous' ? t('rankings.compute.mode_all') : t('rankings.compute.mode_locked') }}
                 </span>
               </div>
-              <div v-else class="text-sm text-header-500 italic">
+              <div v-else class="text-sm text-header-700 italic">
                 {{ t('rankings.compute.not_computed') }}
               </div>
             </div>
@@ -934,13 +934,13 @@ const editValueForField = (field: string, value: number): string => {
           </div>
 
           <!-- Loading -->
-          <div v-if="loading && ranking.length === 0" class="p-8 text-center text-header-500">
+          <div v-if="loading && ranking.length === 0" class="p-8 text-center text-header-700">
             <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
             {{ t('common.loading') }}
           </div>
 
           <!-- Empty -->
-          <div v-else-if="ranking.length === 0" class="p-8 text-center text-header-500">
+          <div v-else-if="ranking.length === 0" class="p-8 text-center text-header-700">
             {{ t('rankings.no_teams') }}
           </div>
 
@@ -958,30 +958,30 @@ const editValueForField = (field: string, value: number): string => {
                     <tr class="bg-primary-200">
                       <th class="px-2 py-2"/>
                       <th/>
-                      <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-                      <th class="px-2 py-2 text-left text-xs font-medium text-header-500 uppercase">
+                      <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.rank') }}</th>
+                      <th class="px-2 py-2 text-left text-xs font-medium text-header-700 uppercase">
                         {{ effectiveType === 'MULTI' ? structureLabel : t('rankings.table.team') }}
                       </th>
                       <!-- CHPT columns -->
                       <template v-if="effectiveType === 'CHPT'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.g') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.n') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.p') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.f') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.plus') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.minus') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.diff') }}</th>
                       </template>
                       <!-- CP columns: only J -->
                       <template v-else-if="effectiveType === 'CP'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                       </template>
                       <!-- MULTI columns -->
                       <template v-else-if="effectiveType === 'MULTI'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                       </template>
                     </tr>
                   </thead>
@@ -1162,7 +1162,7 @@ const editValueForField = (field: string, value: number): string => {
                     >▼</span>
                     <div class="flex-1 min-w-0">
                       <div class="font-medium text-header-900">{{ team.libelle }}</div>
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-700 mt-1">
                         <span>{{ t('rankings.table.rank') }}: {{ effectiveType === 'CP' ? team.cltNiveau : team.clt }}</span>
                         <template v-if="effectiveType === 'CHPT'">
                           <span>{{ t('rankings.table.pts') }}: {{ displayPts(team.pts) }}</span>
@@ -1195,7 +1195,7 @@ const editValueForField = (field: string, value: number): string => {
                 <div class="px-4 py-2 bg-primary-300 border-b border-header-200 flex flex-wrap items-center justify-between gap-3">
                   <span class="font-medium text-sm text-header-800">
                     {{ phase.phase }}
-                    <span v-if="phase.lieu" class="text-header-500">({{ phase.lieu }})</span>
+                    <!-- <span v-if="phase.lieu" class="text-header-700">({{ phase.lieu }})</span> -->
                   </span>
                   <!-- Consolidation checkbox (type C only) - on the right -->
                   <label v-if="phase.type === 'C'" class="flex items-center gap-2 text-sm">
@@ -1206,11 +1206,11 @@ const editValueForField = (field: string, value: number): string => {
                       :disabled="!canConsolidate"
                       @change="toggleConsolidation(phase)"
                     >
-                    <span :class="phase.consolidation ? 'font-medium text-primary-700' : 'text-header-600'">
+                    <span :class="phase.consolidation ? 'font-medium text-primary-700' : 'text-header-900'">
                       {{ phase.consolidation ? t('rankings.phases.consolidated') : t('rankings.phases.consolidate') }}
                     </span>
                   </label>
-                  <span v-if="phase.type === 'E'" class="text-sm text-header-600 italic">
+                  <span v-if="phase.type === 'E'" class="text-sm text-header-900 italic">
                     {{ t('rankings.phases.elimination') }}
                   </span>
                 </div>
@@ -1223,17 +1223,17 @@ const editValueForField = (field: string, value: number): string => {
                       <thead class="bg-header-50">
                         <tr class="bg-primary-200">
                           <th v-if="canEditInline && !phase.consolidation" class="px-2 py-2"/>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-                          <th class="px-2 py-2 text-left text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.team') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.rank') }}</th>
+                          <th class="px-2 py-2 text-left text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.team') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.g') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.n') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.p') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.f') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.plus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.minus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.diff') }}</th>
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-header-200">
@@ -1294,11 +1294,11 @@ const editValueForField = (field: string, value: number): string => {
                             </span>
                           </td>
                           <!-- J, G, N, P, F (read-only in phases) -->
-                          <td class="px-2 py-1.5 text-center text-sm text-header-600">{{ pTeam.j }}</td>
-                          <td class="px-2 py-1.5 text-center text-sm text-header-600">{{ pTeam.g }}</td>
-                          <td class="px-2 py-1.5 text-center text-sm text-header-600">{{ pTeam.n }}</td>
-                          <td class="px-2 py-1.5 text-center text-sm text-header-600">{{ pTeam.p }}</td>
-                          <td class="px-2 py-1.5 text-center text-sm text-header-600">{{ pTeam.f }}</td>
+                          <td class="px-2 py-1.5 text-center text-sm text-header-900">{{ pTeam.j }}</td>
+                          <td class="px-2 py-1.5 text-center text-sm text-header-900">{{ pTeam.g }}</td>
+                          <td class="px-2 py-1.5 text-center text-sm text-header-900">{{ pTeam.n }}</td>
+                          <td class="px-2 py-1.5 text-center text-sm text-header-900">{{ pTeam.p }}</td>
+                          <td class="px-2 py-1.5 text-center text-sm text-header-900">{{ pTeam.f }}</td>
                           <!-- Plus (editable if not consolidated) -->
                           <td class="px-2 py-1.5 text-center text-sm">
                             <template v-if="editingCell?.id === pTeam.id && editingCell.field === 'Plus' && editingCell.journeeId === phase.idJournee">
@@ -1371,7 +1371,7 @@ const editValueForField = (field: string, value: number): string => {
                   <div class="lg:hidden divide-y divide-header-200">
                     <div v-for="pTeam in phase.teams" :key="pTeam.id" class="p-3">
                       <div class="font-medium text-header-900 text-sm">{{ pTeam.libelle }}</div>
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-700 mt-1">
                         <span>{{ t('rankings.table.rank') }}: {{ pTeam.clt }}</span>
                         <span>{{ t('rankings.table.pts') }}: {{ displayPts(pTeam.pts) }}</span>
                         <span>{{ t('rankings.table.j') }}: {{ pTeam.j }}</span>
@@ -1393,7 +1393,7 @@ const editValueForField = (field: string, value: number): string => {
                           class="flex-1 text-sm text-right truncate"
                           :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900' : 'text-header-600'"
                         >{{ match.equipeA }}</span>
-                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-700">
+                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-900">
                           <template v-if="showPhaseMatchScore(match, computedIncludesUnlocked)">
                             {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600">*</span>
                           </template>
@@ -1414,11 +1414,11 @@ const editValueForField = (field: string, value: number): string => {
                         </template>
                         <template v-else-if="pTeam.p > 0">
                           <span class="text-xs italic text-danger-600 w-20">{{ t('rankings.loser') }}</span>
-                          <span class="italic text-sm text-header-600">{{ pTeam.libelle }}</span>
+                          <span class="italic text-sm text-header-900">{{ pTeam.libelle }}</span>
                         </template>
                         <template v-else>
-                          <span class="text-xs text-header-400 w-20">—</span>
-                          <span class="text-sm text-header-600">{{ pTeam.libelle }}</span>
+                          <span class="text-xs text-header-600 w-20">—</span>
+                          <span class="text-sm text-header-900">{{ pTeam.libelle }}</span>
                           <button
                             v-if="canEditInline && !phase.consolidation && pTeam.j === 0"
                             class="p-0.5 text-danger-400 hover:text-danger-600 rounded ml-auto"
@@ -1461,7 +1461,7 @@ const editValueForField = (field: string, value: number): string => {
                 <div class="text-sm text-header-700">
                   <span class="font-medium">{{ t('rankings.publish.date_compute') }}</span> :
                   {{ formatDate(competitionInfo.datePublicationCalcul) }}
-                  <span v-if="competitionInfo.modePublicationCalcul" class="ml-2 text-xs text-header-500">
+                  <span v-if="competitionInfo.modePublicationCalcul" class="ml-2 text-xs text-header-700">
                     — {{ competitionInfo.modePublicationCalcul === 'tous' ? t('rankings.compute.mode_all') : t('rankings.compute.mode_locked') }}
                   </span>
                 </div>
@@ -1479,7 +1479,7 @@ const editValueForField = (field: string, value: number): string => {
                   {{ t('rankings.publish.different') }}
                 </div>
               </template>
-              <div v-else class="text-sm text-header-500 italic">
+              <div v-else class="text-sm text-header-700 italic">
                 {{ t('rankings.publish.not_published') }}
               </div>
             </div>
@@ -1542,27 +1542,27 @@ const editValueForField = (field: string, value: number): string => {
                       </th>
                       <th class="px-2 py-2"/>
                       <th/>
-                      <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-                      <th class="px-2 py-2 text-left text-xs font-medium text-header-500 uppercase">
+                      <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.rank') }}</th>
+                      <th class="px-2 py-2 text-left text-xs font-medium text-header-700 uppercase">
                         {{ effectiveType === 'MULTI' ? structureLabel : t('rankings.table.team') }}
                       </th>
                       <template v-if="effectiveType === 'CHPT'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.g') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.n') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.p') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.f') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.plus') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.minus') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.diff') }}</th>
                       </template>
                       <template v-else-if="effectiveType === 'CP'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                       </template>
                       <template v-else-if="effectiveType === 'MULTI'">
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                       </template>
                     </tr>
                   </thead>
@@ -1664,7 +1664,7 @@ const editValueForField = (field: string, value: number): string => {
                     >▼</span>
                     <div class="flex-1 min-w-0">
                       <div class="font-medium text-header-900">{{ team.libelle }}</div>
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-700 mt-1">
                         <span>{{ t('rankings.table.rank') }}: {{ effectiveType === 'CP' ? team.cltNiveauPubli : team.cltPubli }}</span>
                         <template v-if="effectiveType === 'CHPT'">
                           <span>{{ t('rankings.table.pts') }}: {{ displayPts(team.ptsPubli) }}</span>
@@ -1693,9 +1693,9 @@ const editValueForField = (field: string, value: number): string => {
                 <div class="px-4 py-2 bg-success-300 border-b border-header-200 flex items-center justify-between gap-3">
                   <span class="font-medium text-sm text-header-800">
                     {{ phase.phase }}
-                    <span v-if="phase.lieu" class="text-header-500">({{ phase.lieu }})</span>
+                    <span v-if="phase.lieu" class="text-header-700">({{ phase.lieu }})</span>
                   </span>
-                  <span v-if="phase.type === 'E'" class="text-sm text-header-600 italic">{{ t('rankings.phases.elimination') }}</span>
+                  <span v-if="phase.type === 'E'" class="text-sm text-header-900 italic">{{ t('rankings.phases.elimination') }}</span>
                 </div>
 
                 <!-- Phase type C (published, read-only) -->
@@ -1704,17 +1704,17 @@ const editValueForField = (field: string, value: number): string => {
                     <table class="min-w-full divide-y divide-header-200 bg-success-100">
                       <thead class="bg-header-50">
                         <tr class="bg-success-200">
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-                          <th class="px-2 py-2 text-left text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.team') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.rank') }}</th>
+                          <th class="px-2 py-2 text-left text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.team') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.g') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.n') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.p') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.f') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.plus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.minus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.diff') }}</th>
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-header-200">
@@ -1739,7 +1739,7 @@ const editValueForField = (field: string, value: number): string => {
                   <div class="lg:hidden divide-y divide-header-200">
                     <div v-for="pTeam in publishedPhaseTeams(phase.teams)" :key="pTeam.id" class="p-3">
                       <div class="font-medium text-header-900 text-sm">{{ pTeam.libelle }}</div>
-                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
+                      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-700 mt-1">
                         <span>{{ t('rankings.table.rank') }}: {{ pTeam.cltPubli }}</span>
                         <span>{{ t('rankings.table.pts') }}: {{ displayPts(pTeam.ptsPubli) }}</span>
                         <span>{{ t('rankings.table.j') }}: {{ pTeam.jPubli }}</span>
@@ -1778,11 +1778,11 @@ const editValueForField = (field: string, value: number): string => {
                         </template>
                         <template v-else-if="pTeam.pPubli > 0">
                           <span class="text-xs italic text-danger-600 w-20">{{ t('rankings.loser') }}</span>
-                          <span class="italic text-sm text-header-600">{{ pTeam.libelle }}</span>
+                          <span class="italic text-sm text-header-900">{{ pTeam.libelle }}</span>
                         </template>
                         <template v-else>
-                          <span class="text-xs text-header-400 w-20">—</span>
-                          <span class="text-sm text-header-600">{{ pTeam.libelle }}</span>
+                          <span class="text-xs text-header-600 w-20">—</span>
+                          <span class="text-sm text-header-900">{{ pTeam.libelle }}</span>
                         </template>
                       </div>
                     </template>
@@ -1795,7 +1795,7 @@ const editValueForField = (field: string, value: number): string => {
           </template>
 
           <!-- No published ranking -->
-          <div v-else-if="!competitionInfo?.datePublication" class="p-8 text-center text-header-500">
+          <div v-else-if="!competitionInfo?.datePublication" class="p-8 text-center text-header-700">
             {{ t('rankings.publish.not_published') }}
           </div>
         </div>
@@ -1817,25 +1817,25 @@ const editValueForField = (field: string, value: number): string => {
                       <tr class="bg-success-200">
                         <th class="px-2 py-2"/>
                         <th/>
-                        <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-                        <th class="px-2 py-2 text-left text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.team') }}</th>
+                        <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.rank') }}</th>
+                        <th class="px-2 py-2 text-left text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.team') }}</th>
                         <template v-if="effectiveType === 'CHPT'">
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.g') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.n') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.p') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.f') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.plus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.minus') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.diff') }}</th>
                         </template>
                         <template v-else-if="effectiveType === 'CP'">
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                         </template>
                         <template v-else-if="effectiveType === 'MULTI'">
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-                          <th class="px-2 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.pts') }}</th>
+                          <th class="px-2 py-2 text-center text-xs font-medium text-header-700 uppercase">{{ t('rankings.table.j') }}</th>
                         </template>
                       </tr>
                     </thead>
@@ -1880,7 +1880,7 @@ const editValueForField = (field: string, value: number): string => {
                       <span v-else-if="getQualifiedStatus(idx, ranking.length) === 'eliminated'" class="text-danger-600 text-xs mt-0.5">▼</span>
                       <div class="flex-1 min-w-0">
                         <div class="font-medium text-header-900">{{ team.libelle }}</div>
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-500 mt-1">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-header-700 mt-1">
                           <span>{{ t('rankings.table.rank') }}: {{ effectiveType === 'CP' ? team.cltNiveauPubli : team.cltPubli }}</span>
                           <template v-if="effectiveType === 'CHPT'">
                             <span>{{ t('rankings.table.pts') }}: {{ displayPts(team.ptsPubli) }}</span>
@@ -1902,7 +1902,7 @@ const editValueForField = (field: string, value: number): string => {
               </div>
             </div>
           </template>
-          <div v-else-if="!competitionInfo?.datePublication" class="p-8 text-center text-header-500">
+          <div v-else-if="!competitionInfo?.datePublication" class="p-8 text-center text-header-700">
             {{ t('rankings.publish.not_published') }}
           </div>
         </div>
@@ -1992,7 +1992,7 @@ const editValueForField = (field: string, value: number): string => {
         class="pdf-dropdown-menu z-9999 bg-white rounded-lg shadow-lg border border-header-200 py-1 min-w-50"
         :style="pdfDropdownStyle"
       >
-        <div class="px-4 py-1.5 text-xs text-header-400 font-medium select-none">
+        <div class="px-4 py-1.5 text-xs text-header-600 font-medium select-none">
           {{ pdfDropdownMode === 'admin' ? t('rankings.pdf.computed_label') : t('rankings.pdf.published_label') }}
         </div>
         <a
@@ -2002,37 +2002,37 @@ const editValueForField = (field: string, value: number): string => {
           class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
           @click="pdfDropdownOpen = false"
         >
-          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-600" />
           {{ pdfDropdownMode === 'admin' ? t('rankings.pdf.provisional') : t('rankings.pdf.general') }}
         </a>
         <a
           v-if="pdfDropdownMode === 'admin' ? pdfUrls.progress?.admin : pdfUrls.progress?.public"
           :href="pdfDropdownMode === 'admin' ? pdfUrls.progress!.admin : pdfUrls.progress!.public"
           target="_blank"
-          class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+          class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
           @click="pdfDropdownOpen = false"
         >
-          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-600" />
           {{ t('rankings.pdf.progress') }}
         </a>
         <a
           v-if="pdfDropdownMode === 'admin' ? pdfUrls.detail?.admin : pdfUrls.detail?.public"
           :href="pdfDropdownMode === 'admin' ? pdfUrls.detail!.admin : pdfUrls.detail!.public"
           target="_blank"
-          class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+          class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
           @click="pdfDropdownOpen = false"
         >
-          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-600" />
           {{ t('rankings.pdf.detail') }}
         </a>
         <a
           v-if="pdfDropdownMode === 'admin' ? pdfUrls.matches?.admin : pdfUrls.matches?.public"
           :href="pdfDropdownMode === 'admin' ? pdfUrls.matches!.admin : pdfUrls.matches!.public"
           target="_blank"
-          class="flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50"
+          class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50"
           @click="pdfDropdownOpen = false"
         >
-          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-600" />
           {{ t('rankings.pdf.matches') }}
         </a>
       </div>
@@ -2047,12 +2047,12 @@ const editValueForField = (field: string, value: number): string => {
       >
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-700 hover:bg-header-50 disabled:opacity-50 disabled:cursor-not-allowed text-left"
+          class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 hover:bg-header-50 disabled:opacity-50 disabled:cursor-not-allowed text-left"
           :disabled="justificationLoading"
           :title="t('rankings.justification.tooltip')"
           @click="tiesDropdownOpen = false; openJustificationPdf()"
         >
-          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-400" />
+          <UIcon name="heroicons:document-text" class="w-4 h-4 text-header-600" />
           {{ justificationLoading ? t('rankings.justification.loading') : t('rankings.justification.button') }}
         </button>
       </div>
