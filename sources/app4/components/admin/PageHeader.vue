@@ -43,7 +43,7 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
       <div class="flex items-center gap-3">
         <button
           :title="t('common.back')"
-          class="inline-flex items-center p-1.5 text-header-500 hover:text-header-800 hover:bg-header-100 rounded-lg transition-colors"
+          class="inline-flex items-center p-1.5 text-header-700 hover:text-header-800 hover:bg-header-100 rounded-lg transition-colors"
           @click="router.back()"
         >
           <UIcon name="heroicons:arrow-left" class="w-5 h-5" />
@@ -57,13 +57,13 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
     <div v-if="showFilters" class="flex flex-wrap gap-3 items-end">
       <!-- Event / Group filter -->
       <div class="min-w-48 max-w-96">
-        <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventGroupSelect.label') }}</label>
+        <label class="block text-xs font-medium text-header-700 mb-1">{{ t('eventGroupSelect.label') }}</label>
         <AdminEventGroupSelect @change="emit('event-group-change')" />
       </div>
 
       <!-- Competition filter -->
       <div class="min-w-48 max-w-96">
-        <label class="block text-xs font-medium text-header-500 mb-1">{{ t(workContext.competitionFilterLabelKey) }}</label>
+        <label class="block text-xs font-medium text-header-700 mb-1">{{ t(workContext.competitionFilterLabelKey) }}</label>
         <AdminCompetitionSingleSelect
           :show-all-option="showAllOption"
           :filtered-codes="competitionFilteredCodes"
