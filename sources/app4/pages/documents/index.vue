@@ -637,6 +637,16 @@ onMounted(async () => {
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
             {{ t('documents.control.presence_u21') }}
           </a>
+          <a
+            v-if="profile <= 2"
+            :href="pdfUrl('FeuillePresenceNaissance.php')"
+            target="_blank"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"
+            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
+          >
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-400" />
+            {{ t('documents.control.presence_naissance') }}
+          </a>
           <NuxtLink
             :to="hasCompetition ? statsRoute('CJouees') : undefined"
             class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 text-header-700 transition-colors"

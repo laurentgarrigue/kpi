@@ -510,6 +510,7 @@
     "control": {
       "presence_category": "Présence par catégorie",
       "presence_u21": "Présence U21",
+      "presence_naissance": "Présence par année de naissance",
       "competitions_played_club": "Compétitions jouées (club)",
       "competitions_played_team": "Compétitions jouées (équipe)",
       "team_roster_check": "Contrôle feuilles de présence",
