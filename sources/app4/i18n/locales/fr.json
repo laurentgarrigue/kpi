@@ -42,7 +42,11 @@
     "referentials": "Référentiels",
     "rights": "Droits",
     "live": "Live",
-    "operations_group": "Opérations"
+    "operations_group": "Opérations",
+    "documents_short": "Doc",
+    "gamedays_short": "Phases",
+    "statistics_short": "Stats",
+    "administration_short": "Admin"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -2564,12 +2568,15 @@
     "menu_body": "Le menu horizontal donne accès aux compétitions, équipes, journées, matchs, classements, statistiques et à l'administration. C'est votre point de navigation principal.",
     "home_shortcuts_title": "Les raccourcis de l'accueil",
     "home_shortcuts_body": "Ces cartes sur la page d'accueil sont des raccourcis directs vers les sections les plus utilisées, selon votre profil.",
-    "table_links_title": "Les liens dans les tableaux",
-    "table_links_body": "Dans les tableaux (matchs, équipes…), des liens et boutons d'action permettent d'accéder directement aux détails, feuilles de match, saisie de scores, etc. — sans passer par un formulaire séparé.",
     "next": "Suivant",
     "prev": "Précédent",
     "done": "Terminer",
-    "relaunch": "Revoir le tutoriel"
+    "relaunch": "Revoir le tutoriel",
+    "new_badge": "Nouveau",
+    "clickable_cells_title": "Des données cliquables",
+    "clickable_cells_body": "Sur la page Compétitions, plusieurs valeurs du tableau sont cliquables et mènent directement au bon endroit : le groupe, le nombre d'équipes, de journées/phases et de matchs. (Le tableau se remplit une fois un contexte de travail choisi.)",
+    "context_summary_title": "Revenir au contexte de travail",
+    "context_summary_body": "Ce rappel est présent en haut de chaque page : il affiche la saison et le périmètre en cours. Cliquez sur « Modifier » pour revenir à la page d'accueil et changer votre contexte de travail à tout moment."
   },
   "help": {
     "title": "Aide & tutoriel",

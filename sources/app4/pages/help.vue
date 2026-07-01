@@ -14,7 +14,8 @@ const features = [
   { icon: 'heroicons:identification', key: 'mandate' },
   { icon: 'heroicons:adjustments-horizontal', key: 'work_context' },
   { icon: 'heroicons:bars-3', key: 'menu' },
-  { icon: 'heroicons:cursor-arrow-rays', key: 'table_links' },
+  { icon: 'heroicons:cursor-arrow-rays', key: 'clickable_cells' },
+  { icon: 'heroicons:pencil-square', key: 'context_summary' },
 ] as const
 </script>
 

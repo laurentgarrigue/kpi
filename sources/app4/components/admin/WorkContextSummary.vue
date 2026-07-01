@@ -63,7 +63,7 @@ const scopeLabel = computed(() => {
   </div>
 
   <!-- Compact mode (inline badges for PageHeader title row) -->
-  <div v-else class="flex flex-wrap items-center gap-2 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800 rounded-md px-2.5 py-1 text-sm">
+  <div v-else data-tour="context-summary" class="flex flex-wrap items-center gap-2 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800 rounded-md px-2.5 py-1 text-sm">
     <span class="inline-flex items-center gap-1.5">
       <UIcon name="i-heroicons-calendar" class="w-4 h-4 text-primary-600 shrink-0" />
       <span class="font-medium text-header-900 dark:text-header-50">{{ workContext.season || '-' }}</span>

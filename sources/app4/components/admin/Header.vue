@@ -75,7 +75,7 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     items.push({
       to: '/documents',
       icon: 'heroicons:document-text',
-      label: t('menu.documents')
+      label: t('menu.documents_short')
     })
   }
 
@@ -93,7 +93,7 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     items.push({
       to: '/gamedays',
       icon: 'heroicons:calendar',
-      label: t('menu.gamedays')
+      label: t('menu.gamedays_short')
     })
   }
 
@@ -120,7 +120,7 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     items.push({
       to: '/stats',
       icon: 'heroicons:chart-pie',
-      label: t('menu.statistics')
+      label: t('menu.statistics_short')
     })
   }
 
@@ -391,7 +391,7 @@ onMounted(() => {
               @click="toggleDropdown('admin')"
             >
               <UIcon name="heroicons:cog-6-tooth" class="w-4 h-4" />
-              <span>{{ t('menu.administration') }}</span>
+              <span>{{ t('menu.administration_short') }}</span>
               <UIcon
                 name="heroicons:chevron-down"
                 class="w-3 h-3 transition-transform"
@@ -493,26 +493,6 @@ onMounted(() => {
 
         <!-- Right: Language + Theme + User + Mobile toggle -->
         <div class="flex items-center gap-2">
-          <!-- Help / tutorial (relaunch the guided tour) -->
-          <UTooltip :text="t('tour.relaunch')">
-            <button
-              type="button"
-              class="relative hidden lg:flex items-center justify-center w-9 h-9 rounded-lg bg-header-800 hover:bg-header-700 text-header-200 hover:text-light-50 transition-colors cursor-pointer"
-              :aria-label="t('tour.relaunch')"
-              @click="startTour(false)"
-            >
-              <UIcon name="heroicons:question-mark-circle" class="w-5 h-5" />
-              <!-- New features badge -->
-              <span
-                v-if="hasNewSteps"
-                class="absolute -top-1 -right-1 flex h-2.5 w-2.5"
-              >
-                <span class="absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75 animate-ping" />
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500" />
-              </span>
-            </button>
-          </UTooltip>
-
           <!-- Language switcher with flags -->
           <div class="flex gap-2">
             <button
@@ -534,12 +514,20 @@ onMounted(() => {
           <!-- User menu (desktop) -->
           <div ref="userMenuRef" data-tour="mandate" class="hidden lg:block relative">
             <button
-              class="flex items-center gap-2 px-3 py-2 bg-header-800 hover:bg-header-700 rounded-lg transition-colors"
+              class="relative flex items-center gap-2 px-3 py-2 bg-header-800 hover:bg-header-700 rounded-lg transition-colors"
               @click="userMenuOpen = !userMenuOpen"
             >
               <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-sm font-medium">
                 {{ user?.firstname?.[0] ?? 'U' }}{{ user?.name?.[0] ?? '' }}
               </div>
+              <!-- New tutorial features badge -->
+              <span
+                v-if="hasNewSteps"
+                class="absolute -top-1 -right-1 flex h-2.5 w-2.5"
+              >
+                <span class="absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75 animate-ping" />
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500" />
+              </span>
               <UIcon
                 name="heroicons:chevron-down"
                 class="w-4 h-4 text-header-600 transition-transform"
@@ -596,7 +584,21 @@ onMounted(() => {
                   <span>{{ t('users.header.switch_mandate') }}</span>
                 </NuxtLink>
 
-                <!-- Help & tutorial -->
+                <!-- Replay the guided tour -->
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 transition-colors cursor-pointer"
+                  @click="userMenuOpen = false; startTour(false)"
+                >
+                  <UIcon name="heroicons:play-circle" class="w-5 h-5" />
+                  <span>{{ t('tour.relaunch') }}</span>
+                  <span
+                    v-if="hasNewSteps"
+                    class="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200"
+                  >{{ t('tour.new_badge') }}</span>
+                </button>
+
+                <!-- Help & tutorial page -->
                 <NuxtLink
                   to="/help"
                   class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"

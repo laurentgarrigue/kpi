@@ -33,22 +33,31 @@ type Tour = { id: string; version: number; steps: TourStep[] }
    (sélection / section / groupe / événement) ; modifiable à tout moment.
 4. anchor `menu` (route `/`) — raccourci menu horizontal.
 5. anchor `home-shortcuts` (route `/`) — raccourcis en cards sur l'accueil.
-6. anchor `table-links` (route `/games`) — liens rapides dans les tableaux.
+6. anchor `clickable-cells` (route `/competitions`) — données cliquables du tableau
+   (groupe, équipes, journées, matchs). Note : le tableau est vide tant qu'aucun
+   contexte n'est choisi ; l'ancre est posée sur le `<tr>` d'en-tête, et si absent
+   driver.js centre la bulle (le texte reste explicatif).
+7. anchor `context-summary` (route `/competitions`) — le rappel de contexte affiché
+   en haut de chaque page (via `AdminPageHeader` → `WorkContextSummary compact`) ;
+   son bouton « Modifier » renvoie à l'accueil pour changer le contexte.
 
 ## Ancres à poser (data-tour)
-| anchor          | fichier                                   | élément                     |
-|-----------------|-------------------------------------------|-----------------------------|
-| mandate         | components/admin/Header.vue               | bloc mandat du user-menu    |
-| work-context    | components/admin/WorkContextSelector.vue  | conteneur racine            |
-| menu            | components/admin/Header.vue               | `<nav ref="navRef">`        |
-| home-shortcuts  | pages/index.vue                           | grille de cards             |
-| table-links     | pages/games/index.vue                     | 1er lien de ligne           |
+| anchor          | fichier                                   | élément                        |
+|-----------------|-------------------------------------------|--------------------------------|
+| mandate         | components/admin/Header.vue               | bouton du user-menu (desktop)  |
+| work-context    | components/admin/WorkContextSelector.vue  | conteneur racine               |
+| menu            | components/admin/Header.vue               | `<nav ref="navRef">`           |
+| home-shortcuts  | pages/index.vue                           | grille de cards                |
+| clickable-cells | pages/competitions/index.vue              | `<tr data-tour>` d'en-tête     |
+| context-summary | components/admin/WorkContextSummary.vue   | barre compacte (bouton Modifier)|
 
 ## Déclenchement
 - `pages/index.vue` `onMounted` → `useTour().maybeAutoStart()`.
 - Règle : version vue absente → tour complet ; version vue < courante → proposer
   seulement les étapes `isNew` ; sinon rien.
-- Header : bouton `?` (start manuel) + badge si nouveautés dispo.
+- Entrée manuelle : **dans le dropdown du user-menu** (« Revoir le tutoriel » +
+  lien vers `/help`). Le badge « Nouveautés » est porté par le bouton du user-menu
+  (visible dropdown fermé) et par l'entrée « Revoir le tutoriel ».
 
 ## Comment ajouter/mettre en valeur une nouvelle fonctionnalité (procédure de reprise)
 1. Poser un `data-tour="ma-feature"` sur l'élément concerné.

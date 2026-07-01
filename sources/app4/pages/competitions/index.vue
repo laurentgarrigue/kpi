@@ -787,7 +787,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           <div v-show="!isSectionCollapsed(section.section)" class="overflow-x-auto">
             <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
               <thead class="bg-header-50 dark:bg-header-900">
-                <tr>
+                <tr data-tour="clickable-cells">
                   <!-- Checkbox column -->
                   <!-- <th v-if="canDelete" class="px-3 py-2 w-10">
                     <input
