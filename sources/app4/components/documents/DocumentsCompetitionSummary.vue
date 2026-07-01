@@ -78,19 +78,19 @@ const hasSponsor = computed(() => competition.value?.sponsorActif && competition
 // Badge helpers
 const getLevelColor = (level: string) => {
   switch (level) {
-    case 'INT': return 'bg-purple-100 text-purple-800'
-    case 'NAT': return 'bg-primary-100 text-primary-800'
-    case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-200 text-header-900'
+    case 'INT': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100'
+    case 'NAT': return 'bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-100'
+    case 'REG': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-100'
+    default: return 'bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50'
   }
 }
 
 const getTypeColor = (type: string) => {
   switch (type) {
-    case 'CP': return 'bg-success-100 text-success-800'
-    case 'CHPT': return 'bg-primary-100 text-primary-800'
-    case 'MULTI': return 'bg-amber-100 text-amber-800'
-    default: return 'bg-header-200 text-header-900'
+    case 'CP': return 'bg-success-100 dark:bg-success-900 text-success-800 dark:text-success-100'
+    case 'CHPT': return 'bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-100'
+    case 'MULTI': return 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100'
+    default: return 'bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50'
   }
 }
 
@@ -170,13 +170,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="bg-white rounded-lg shadow p-6 text-center">
-    <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-900 mx-auto" />
+  <div v-if="loading" class="bg-white dark:bg-header-900 rounded-lg shadow p-6 text-center">
+    <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-900 dark:text-header-50 mx-auto" />
   </div>
 
-  <div v-else-if="competition" class="bg-white rounded-lg shadow overflow-hidden">
+  <div v-else-if="competition" class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
     <!-- Zone B: Key Data -->
-    <div class="flex flex-wrap items-center gap-3 px-6 py-4 border-b">
+    <div class="flex flex-wrap items-center gap-3 px-6 py-4 border-b border-header-200 dark:border-header-700">
       <!-- Title -->
       <div class="mr-auto">
         <div class="flex items-center gap-3">
@@ -196,14 +196,14 @@ onMounted(() => {
             @error="showLogo = false"
           >
           <div>
-            <h2 class="text-lg font-semibold text-header-900">
+            <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">
               {{ competition.libelle }}
               <!-- Season badge -->
-              <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 text-primary-700">
+              <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-200">
                 {{ competition.codeSaison }}
               </span>
             </h2>
-            <p v-if="competition.soustitre2" class="text-sm text-header-900">
+            <p v-if="competition.soustitre2" class="text-sm text-header-900 dark:text-header-50">
               {{ competition.soustitre2 }}
             </p>
           </div>
@@ -220,31 +220,31 @@ onMounted(() => {
         </span>
         <NuxtLink
           to="/teams"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.teams_count', { count: competition.nbEquipes }, competition.nbEquipes) }}
         </NuxtLink>
         <NuxtLink
           to="/gamedays"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.phases_count', { count: competition.nbJournees }, competition.nbJournees) }}
         </NuxtLink>
         <NuxtLink
           to="/games"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.matches_count', { count: competition.nbMatchs }, competition.nbMatchs) }}
         </NuxtLink>
         <span
           v-if="competition.qualifies > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-emerald-50 text-emerald-900"
+          class="px-2 py-1 text-xs font-medium rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200"
         >
           {{ t('documents.summary.qualified', { count: competition.qualifies }) }}
         </span>
         <span
           v-if="competition.elimines > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-danger-50 text-danger-900"
+          class="px-2 py-1 text-xs font-medium rounded bg-danger-50 dark:bg-danger-950 text-danger-900 dark:text-danger-200"
         >
           {{ t('documents.summary.eliminated', { count: competition.elimines }) }}
         </span>
@@ -269,24 +269,24 @@ onMounted(() => {
           <div
             v-for="stage in stageColumns"
             :key="stage.etape"
-            class="flex-1 min-w-36 rounded-lg p-3 border border-header-200"
+            class="flex-1 min-w-36 rounded-lg p-3 border border-header-200 dark:border-header-700"
           >
             <NuxtLink
               v-for="phase in stage.phases"
               :key="phase.idJournee"
               :to="`/games?phase=${phase.idJournee}`"
-              class="block mb-2 last:mb-0 hover:bg-header-200 rounded px-1 py-0.5 transition-colors"
+              class="block mb-2 last:mb-0 hover:bg-header-200 dark:hover:bg-header-700 rounded px-1 py-0.5 transition-colors"
             >
                 <div class="flex items-center justify-center gap-1.5">
                 <span
                   class="inline-block w-5 h-5 text-center text-xs font-bold leading-5 rounded"
-                  :class="phase.type === 'C' ? 'bg-primary-100 text-primary-900' : 'bg-amber-100 text-amber-900'"
+                  :class="phase.type === 'C' ? 'bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100' : 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100'"
                 >
                   {{ phase.type }}
                 </span>
-                <span class="text-sm font-medium text-header-900 truncate">{{ phase.phase }}</span>
+                <span class="text-sm font-medium text-header-900 dark:text-header-50 truncate">{{ phase.phase }}</span>
                 </div>
-              <div class="flex items-center justify-center text-xs text-header-900">
+              <div class="flex items-center justify-center text-xs text-header-900 dark:text-header-50">
                 <span v-if="phase.nbequipes">{{ phase.nbequipes }} {{ t('documents.summary.teams_short', { count: phase.nbequipes }, phase.nbequipes) }} - </span>{{ phase.nbMatchs }} {{ t('documents.summary.matches_short', { count: phase.nbMatchs }, phase.nbMatchs) }}
               </div>
             </NuxtLink>
@@ -300,22 +300,22 @@ onMounted(() => {
           v-for="phase in chptPhases"
           :key="phase.idJournee"
           :to="`/games?phase=${phase.idJournee}`"
-          class="px-3 py-2 bg-header-50 rounded-lg hover:bg-header-200 transition-colors"
+          class="px-3 py-2 bg-header-50 dark:bg-header-900 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 transition-colors"
         >
-          <div class="text-sm font-medium text-header-900">{{ phase.nom || phase.phase }}</div>
-          <div class="text-xs text-header-900 mt-0.5 space-y-0.5">
+          <div class="text-sm font-medium text-header-900 dark:text-header-50">{{ phase.nom || phase.phase }}</div>
+          <div class="text-xs text-header-900 dark:text-header-50 mt-0.5 space-y-0.5">
             <div v-if="formatDateRange(phase.dateDebut, phase.dateFin)" class="flex items-center gap-1">
-              <UIcon name="heroicons:calendar" class="w-3 h-3 text-header-900" />
+              <UIcon name="heroicons:calendar" class="w-3 h-3 text-header-900 dark:text-header-50" />
               {{ formatDateRange(phase.dateDebut, phase.dateFin) }}
             </div>
             <div v-if="phase.lieu || phase.departement" class="flex items-center gap-1">
-              <UIcon name="heroicons:map-pin" class="w-3 h-3 text-header-900" />
+              <UIcon name="heroicons:map-pin" class="w-3 h-3 text-header-900 dark:text-header-50" />
               <span v-if="phase.lieu">{{ phase.lieu }}</span>
               <span v-if="phase.lieu && phase.departement"> · </span>
               <span v-if="phase.departement">{{ phase.departement }}</span>
             </div>
             <div class="flex items-center gap-1">
-              <UIcon name="heroicons:user-group" class="w-3 h-3 text-header-900" />
+              <UIcon name="heroicons:user-group" class="w-3 h-3 text-header-900 dark:text-header-50" />
               {{ countTeamsFromMatches(phase) }} {{ t('documents.summary.teams_short', { count: countTeamsFromMatches(phase) }, countTeamsFromMatches(phase)) }}
               -
               {{ phase.nbMatchs }} {{ t('documents.summary.matches_short', { count: phase.nbMatchs }, phase.nbMatchs) }}
@@ -325,14 +325,14 @@ onMounted(() => {
       </div>
 
       <!-- MULTI -->
-      <p v-else-if="isMulti" class="text-sm text-header-900 italic">
+      <p v-else-if="isMulti" class="text-sm text-header-900 dark:text-header-50 italic">
         {{ t('documents.summary.multi_competition') }}
       </p>
     </div>
 
     <!-- No phases (only show if schema was loaded but returned empty) -->
     <div v-else-if="!loading && !isMulti && schemaData !== null" class="px-6 py-4">
-      <p class="text-sm text-header-900 italic">{{ t('documents.summary.no_phases') }}</p>
+      <p class="text-sm text-header-900 dark:text-header-50 italic">{{ t('documents.summary.no_phases') }}</p>
     </div>
 
     <!-- Sponsor (below phases) -->

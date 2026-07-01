@@ -197,17 +197,17 @@ const removeImage = () => {
 </script>
 
 <template>
-  <div class="border border-header-200 rounded-lg p-3 bg-white space-y-3">
+  <div class="border border-header-200 dark:border-header-700 rounded-lg p-3 bg-white dark:bg-header-900 space-y-3">
     <!-- Current image preview -->
     <div v-if="modelValue" class="space-y-1">
       <img
         :src="previewUrl!"
         :alt="modelValue"
-        class="max-h-16 w-full object-contain border border-header-200 rounded bg-header-50 p-1"
+        class="max-h-16 w-full object-contain border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900 p-1"
         @error="($event.target as HTMLImageElement).style.display='none'"
       >
       <div class="flex items-center justify-between gap-2">
-        <span class="text-xs text-header-900 font-mono truncate">{{ modelValue }}</span>
+        <span class="text-xs text-header-900 dark:text-header-50 font-mono truncate">{{ modelValue }}</span>
         <button
           v-if="!disabled"
           type="button"
@@ -221,7 +221,7 @@ const removeImage = () => {
 
     <div v-if="!disabled">
       <!-- Mode tabs -->
-      <div class="flex gap-1 border-b border-header-200 mb-3">
+      <div class="flex gap-1 border-b border-header-200 dark:border-header-700 mb-3">
         <button
           v-for="m in (['existing', 'upload', 'url'] as PickerMode[])"
           :key="m"
@@ -229,8 +229,8 @@ const removeImage = () => {
           :class="[
             'px-3 py-1.5 text-xs font-medium rounded-t transition-colors',
             mode === m
-              ? 'bg-white border border-b-white border-header-200 -mb-px text-primary-700'
-              : 'text-header-600 hover:text-header-900'
+              ? 'bg-white dark:bg-header-900 border border-b-white dark:border-b-header-900 border-header-200 dark:border-header-700 -mb-px text-primary-700 dark:text-primary-300'
+              : 'text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'
           ]"
           @click="mode = m"
         >
@@ -248,16 +248,16 @@ const removeImage = () => {
           v-model="searchQuery"
           type="text"
           :placeholder="t('competitions.images.search_placeholder')"
-          class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2"
+          class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2"
         >
-        <div class="border border-header-200 rounded-lg overflow-hidden">
-          <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-600 text-center italic">
+        <div class="border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
+          <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-600 dark:text-header-300 text-center italic">
             {{ t('competitions.images.search_min_chars') }}
           </div>
-          <div v-else-if="listLoading" class="p-3 text-xs text-header-600 text-center">
+          <div v-else-if="listLoading" class="p-3 text-xs text-header-600 dark:text-header-300 text-center">
             {{ t('competitions.images.loading') }}
           </div>
-          <div v-else-if="existingImages.length === 0" class="p-3 text-xs text-header-600 text-center">
+          <div v-else-if="existingImages.length === 0" class="p-3 text-xs text-header-600 dark:text-header-300 text-center">
             {{ t('competitions.images.no_results') }}
           </div>
           <button
@@ -265,20 +265,20 @@ const removeImage = () => {
             :key="img.filename"
             type="button"
             :class="[
-              'w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-header-50 transition-colors border-b border-header-100 last:border-b-0',
-              modelValue === img.filename ? 'bg-primary-50 text-primary-700 font-medium' : 'text-header-900'
+              'w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-header-50 dark:hover:bg-header-800 transition-colors border-b border-header-100 dark:border-header-800 last:border-b-0',
+              modelValue === img.filename ? 'bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-200 font-medium' : 'text-header-900 dark:text-header-50'
             ]"
             @click="selectExisting(img.filename)"
           >
             <UIcon
               v-if="modelValue === img.filename"
               name="heroicons:check-circle-solid"
-              class="w-3.5 h-3.5 text-primary-600 shrink-0"
+              class="w-3.5 h-3.5 text-primary-600 dark:text-primary-300 shrink-0"
             />
             <UIcon
               v-else
               name="heroicons:document-solid"
-              class="w-3.5 h-3.5 text-header-600 shrink-0"
+              class="w-3.5 h-3.5 text-header-600 dark:text-header-300 shrink-0"
             />
             <span class="font-mono truncate">{{ img.filename }}</span>
           </button>
@@ -287,7 +287,7 @@ const removeImage = () => {
 
       <!-- Upload -->
       <template v-else-if="mode === 'upload'">
-        <p class="text-xs text-primary-600 mb-2">
+        <p class="text-xs text-primary-600 dark:text-primary-300 mb-2">
           <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 inline" />
           {{ meta.formatHint }}
         </p>
@@ -296,19 +296,19 @@ const removeImage = () => {
             ref="fileInput"
             type="file"
             :accept="meta.accept"
-            class="flex-1 text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+            class="flex-1 text-xs text-header-900 dark:text-header-50 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-primary-50 dark:file:bg-primary-950 file:text-primary-700 dark:file:text-primary-200 hover:file:bg-primary-100 dark:hover:file:bg-primary-900"
             @change="onFileChange"
           >
           <button
             v-if="selectedFile"
             type="button"
-            class="text-header-600 hover:text-header-900"
+            class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
             @click="clearFile"
           >
             <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
           </button>
         </div>
-        <p v-if="selectedFile" class="text-xs text-header-600 mt-1">
+        <p v-if="selectedFile" class="text-xs text-header-600 dark:text-header-300 mt-1">
           {{ selectedFile.name }} ({{ Math.round(selectedFile.size / 1024) }} Ko)
         </p>
         <button
@@ -333,7 +333,7 @@ const removeImage = () => {
             v-model="externalUrl"
             type="url"
             :placeholder="t('competitions.images.url_placeholder')"
-            class="flex-1 px-2 py-1.5 text-xs border border-header-300 rounded-lg focus:ring-1 focus:ring-primary-500"
+            class="flex-1 px-2 py-1.5 text-xs border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500"
           >
           <button
             type="button"
