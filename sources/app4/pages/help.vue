@@ -7,7 +7,7 @@ definePageMeta({
 const { t } = useI18n()
 
 // Relance du tour guidé depuis la page d'aide. Voir DOC/specs/TUTORIEL_ADMIN2.md
-const { startTour } = useTour('welcome')
+const { startTour } = useGuidedTour('welcome')
 
 // Nouveautés mises en valeur (les 4 essentielles du MVP).
 const features = [
