@@ -190,10 +190,10 @@ TODO :
 - Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
 - Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
-- Dark mode,
-- ❓ Blue mode ?
-- Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
-- Tutoriel admin2 : créer un tutoriel pour les admins legacy qui ne connaissent pas app4, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
+- ⚠️ Dark mode,
+- ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
+- Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
+Les nouveautés à mettre en valeur : choix éventuel du mandat après authentification, puis choix du contexte de travail sur la page d'accueil (saison, périmètre par sélection, section, groupe ou événement) modifiable par la suite, raccourcis (menu, boutons sur la page d'accueil, liens au sein des tableaux), 
 - Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
 - ❓ ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
 - Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.

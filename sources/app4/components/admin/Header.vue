@@ -31,6 +31,9 @@ const router = useRouter()
 const authStore = useAuthStore()
 const route = useRoute()
 
+// Tutoriel guidé (onboarding admin2) — voir DOC/specs/TUTORIEL_ADMIN2.md
+const { startTour, hasNewSteps } = useTour('welcome')
+
 const activeMandateSummary = computed(() =>
   authStore.activeMandate
     ? authStore.mandates.find(m => m.id === authStore.activeMandate!.id) ?? null
@@ -356,7 +359,7 @@ onMounted(() => {
         </div>
 
         <!-- Center: Horizontal menu (desktop only) -->
-        <nav ref="navRef" class="hidden lg:flex items-center space-x-1">
+        <nav ref="navRef" data-tour="menu" class="hidden lg:flex items-center space-x-1">
           <!-- Section: Competition Management -->
           <template v-for="item in competitionMenuItems" :key="item.label">
             <NuxtLink
@@ -490,6 +493,26 @@ onMounted(() => {
 
         <!-- Right: Language + Theme + User + Mobile toggle -->
         <div class="flex items-center gap-2">
+          <!-- Help / tutorial (relaunch the guided tour) -->
+          <UTooltip :text="t('tour.relaunch')">
+            <button
+              type="button"
+              class="relative hidden lg:flex items-center justify-center w-9 h-9 rounded-lg bg-header-800 hover:bg-header-700 text-header-200 hover:text-light-50 transition-colors cursor-pointer"
+              :aria-label="t('tour.relaunch')"
+              @click="startTour(false)"
+            >
+              <UIcon name="heroicons:question-mark-circle" class="w-5 h-5" />
+              <!-- New features badge -->
+              <span
+                v-if="hasNewSteps"
+                class="absolute -top-1 -right-1 flex h-2.5 w-2.5"
+              >
+                <span class="absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75 animate-ping" />
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500" />
+              </span>
+            </button>
+          </UTooltip>
+
           <!-- Language switcher with flags -->
           <div class="flex gap-2">
             <button
@@ -509,7 +532,7 @@ onMounted(() => {
           </div>
 
           <!-- User menu (desktop) -->
-          <div ref="userMenuRef" class="hidden lg:block relative">
+          <div ref="userMenuRef" data-tour="mandate" class="hidden lg:block relative">
             <button
               class="flex items-center gap-2 px-3 py-2 bg-header-800 hover:bg-header-700 rounded-lg transition-colors"
               @click="userMenuOpen = !userMenuOpen"
@@ -571,6 +594,16 @@ onMounted(() => {
                 >
                   <UIcon name="heroicons:arrows-right-left" class="w-5 h-5" />
                   <span>{{ t('users.header.switch_mandate') }}</span>
+                </NuxtLink>
+
+                <!-- Help & tutorial -->
+                <NuxtLink
+                  to="/help"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
+                  @click="userMenuOpen = false"
+                >
+                  <UIcon name="heroicons:question-mark-circle" class="w-5 h-5" />
+                  <span>{{ t('help.title') }}</span>
                 </NuxtLink>
 
                 <!-- Theme selector: light / dark / system -->

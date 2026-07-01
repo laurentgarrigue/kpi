@@ -7,6 +7,14 @@ definePageMeta({
 const { t } = useI18n()
 const authStore = useAuthStore()
 // Note: workContext is initialized by WorkContextSelector component
+
+// Tutoriel guidé — lance le tour à la 1re visite, ou propose les nouveautés au retour.
+// Voir DOC/specs/TUTORIEL_ADMIN2.md
+const { maybeAutoStart } = useTour('welcome')
+onMounted(() => {
+  // Léger délai pour laisser le contexte de travail se monter avant le surlignage.
+  setTimeout(() => { maybeAutoStart() }, 600)
+})
 </script>
 
 <template>
@@ -27,7 +35,7 @@ const authStore = useAuthStore()
     </div>
 
     <!-- Quick stats / navigation cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div data-tour="home-shortcuts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Competitions card -->
       <NuxtLink
         v-if="authStore.hasProfile(10)"
