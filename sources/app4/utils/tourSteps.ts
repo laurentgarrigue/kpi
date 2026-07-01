@@ -57,10 +57,16 @@ export const WELCOME_TOUR: Tour = {
       bodyKey: 'tour.home_shortcuts_body',
     },
     {
-      route: '/games',
-      anchor: 'table-links',
-      titleKey: 'tour.table_links_title',
-      bodyKey: 'tour.table_links_body',
+      route: '/competitions',
+      anchor: 'clickable-cells',
+      titleKey: 'tour.clickable_cells_title',
+      bodyKey: 'tour.clickable_cells_body',
+    },
+    {
+      route: '/competitions',
+      anchor: 'context-summary',
+      titleKey: 'tour.context_summary_title',
+      bodyKey: 'tour.context_summary_body',
     },
   ],
 }
