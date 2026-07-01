@@ -226,48 +226,54 @@ h1, h2 {
   font-family: 'Agency FB', 'Arial Narrow', Arial, sans-serif;
 }
 
-/* ===== Force Light Mode for Admin Interface ===== */
+/* ===== Color scheme ===== */
 :root {
   color-scheme: light;
 }
 
-/* Neutralize dark mode: restore light-mode UI variables even when .dark class is on <html> */
 .dark {
-  --ui-text-dimmed: var(--ui-color-neutral-400);
-  --ui-text-muted: var(--ui-color-neutral-500);
-  --ui-text-toned: var(--ui-color-neutral-600);
-  --ui-text: var(--ui-color-neutral-700);
-  --ui-text-highlighted: var(--ui-color-neutral-900);
-  --ui-text-inverted: #fff;
-  --ui-bg: #fff;
-  --ui-bg-muted: var(--ui-color-neutral-50);
-  --ui-bg-elevated: var(--ui-color-neutral-100);
-  --ui-bg-accented: var(--ui-color-neutral-200);
-  --ui-bg-inverted: var(--ui-color-neutral-900);
-  --ui-border: var(--ui-color-neutral-200);
-  --ui-border-muted: var(--ui-color-neutral-200);
-  --ui-border-accented: var(--ui-color-neutral-300);
-  --ui-border-inverted: var(--ui-color-neutral-900);
+  color-scheme: dark;
 }
 
-/* Ensure dropdowns and popover menus have dark text on white backgrounds */
-.bg-white,
-[class*="bg-white"] {
+/* Dark-mode Nuxt UI surface/text tokens.
+   Built on the header (deep-blue) neutral scale so UButton/UInput/UCard/etc. blend with the
+   dark-blue admin chrome instead of the default zinc. Mirrors the light-mode :root values. */
+.dark {
+  --ui-text-dimmed: var(--color-header-500);
+  --ui-text-muted: var(--color-header-400);
+  --ui-text-toned: var(--color-header-300);
+  --ui-text: var(--color-header-200);
+  --ui-text-highlighted: var(--color-header-50);
+  --ui-text-inverted: var(--color-header-950);
+  --ui-bg: var(--color-header-950);
+  --ui-bg-muted: var(--color-header-900);
+  --ui-bg-elevated: var(--color-header-800);
+  --ui-bg-accented: var(--color-header-700);
+  --ui-bg-inverted: var(--color-header-50);
+  --ui-border: var(--color-header-800);
+  --ui-border-muted: var(--color-header-800);
+  --ui-border-accented: var(--color-header-700);
+  --ui-border-inverted: var(--color-header-50);
+}
+
+/* In light mode, ensure dropdowns and popover menus have dark text on white backgrounds.
+   Scoped to :root:not(.dark) — `.dark` lives on <html>, which IS :root, so plain :root would
+   also match in dark mode and force black text on the dark surfaces. */
+:root:not(.dark) .bg-white,
+:root:not(.dark) [class*="bg-white"] {
   color: rgb(17 24 39);
 }
 
-/* Force dark text on light backgrounds in dropdown menus */
-div[class*="dropdown"],
-div[class*="menu"],
-div[class*="popover"],
-.absolute.z-10.bg-white {
+:root:not(.dark) div[class*="dropdown"],
+:root:not(.dark) div[class*="menu"],
+:root:not(.dark) div[class*="popover"],
+:root:not(.dark) .absolute.z-10.bg-white {
   color: rgb(17 24 39);
 }
 
-/* Ensure buttons in dropdowns have proper text color */
-.absolute.z-10 button,
-div[class*="dropdown"] button,
-div[class*="menu"] button {
+:root:not(.dark) .absolute.z-10 button,
+:root:not(.dark) div[class*="dropdown"] button,
+:root:not(.dark) div[class*="menu"] button {
   color: rgb(17 24 39);
 }
 
@@ -304,6 +310,10 @@ table button {
 
 table button:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark table button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Toggle buttons (publication, app) should be more visible */
@@ -355,6 +365,13 @@ input:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-header-900) inset !important;
+  -webkit-text-fill-color: var(--color-header-100) !important;
+}
+
 /* ===== Nuxt UI Component Improvements ===== */
 
 /* Buttons - removed overly broad [class*="bg-*"] selectors that
@@ -370,6 +387,13 @@ select:not([data-ui]) {
   font-size: 0.875rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   color: rgb(17 24 39);
+}
+
+.dark input[type="date"],
+.dark select:not([data-ui]) {
+  background-color: var(--color-header-900);
+  border-color: var(--color-header-700);
+  color: var(--color-header-100);
 }
 
 input[type="date"]:focus,
@@ -442,6 +466,25 @@ table tbody tr {
 
 table tbody tr:hover {
   background-color: rgb(249 250 251);
+}
+
+.dark table thead {
+  background-color: var(--color-header-800);
+  border-bottom-color: var(--color-header-700);
+}
+
+.dark table tbody tr {
+  border-bottom-color: var(--color-header-800);
+}
+
+.dark table tbody tr:hover {
+  background-color: var(--color-header-800);
+}
+
+/* Default cell text colour in dark mode: uncoloured <td> content (match number, terrain,
+   code, score, etc.) inherits black otherwise and is unreadable on the dark rows. */
+.dark table tbody {
+  color: var(--color-header-50);
 }
 
 /* Pagination improvements */
@@ -659,6 +702,16 @@ label[for] {
   border-color: rgb(96 165 250);
 }
 
+.dark .editable-cell {
+  border-color: var(--color-header-600);
+  background-color: var(--color-header-800);
+}
+
+.dark .editable-cell:hover {
+  background-color: var(--color-header-700);
+  border-color: var(--color-primary-400);
+}
+
 /* Mobile variant - slightly more compact */
 @media (max-width: 767px) {
   .editable-cell {
@@ -685,6 +738,15 @@ label[for] {
 
 .link-value:hover {
   background-color: rgb(229 231 235);
+}
+
+.dark .link-value {
+  background-color: var(--color-header-800);
+  color: var(--color-header-100);
+}
+
+.dark .link-value:hover {
+  background-color: var(--color-header-700);
 }
 
 /* ===== Print Styles ===== */

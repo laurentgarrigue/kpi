@@ -67,9 +67,9 @@ export default defineNuxtConfig({
     '@nuxt/ui'
   ],
 
-  // Force light mode for admin interface
+  // Light by default; users can opt into dark via the header toggle (persisted in localStorage).
   colorMode: {
-    preference: 'light',
+    preference: 'system',
     fallback: 'light',
     classSuffix: '',
     storageKey: 'nuxt-color-mode-admin4',

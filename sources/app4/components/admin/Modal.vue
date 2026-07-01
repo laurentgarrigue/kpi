@@ -35,19 +35,19 @@ const maxWidthClasses = {
 
       <!-- Modal content -->
       <div
-        class="relative bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto"
+        class="relative bg-white dark:bg-header-900 rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto"
         :class="maxWidthClasses[maxWidth]"
       >
         <!-- Header -->
-        <div v-if="title || $slots.header" class="flex items-center justify-between p-6 border-b border-header-200">
+        <div v-if="title || $slots.header" class="flex items-center justify-between p-6 border-b border-header-200 dark:border-header-800">
           <slot name="header">
-            <h3 class="text-lg font-semibold text-header-900">
+            <h3 class="text-lg font-semibold text-header-900 dark:text-header-50">
               {{ title }}
             </h3>
           </slot>
           <button
             type="button"
-            class="text-header-400 hover:text-header-600 p-1"
+            class="text-header-400 dark:text-header-500 hover:text-header-600 dark:hover:text-header-200 p-1"
             @click="emit('close')"
           >
             <UIcon name="heroicons:x-mark" class="w-6 h-6" />
@@ -55,7 +55,7 @@ const maxWidthClasses = {
         </div>
 
         <!-- Body -->
-        <div class="p-6">
+        <div class="p-6 text-header-900 dark:text-header-100">
           <slot />
         </div>
 

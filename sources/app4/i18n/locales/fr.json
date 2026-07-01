@@ -5,6 +5,12 @@
   "footer": {
     "version": "Version"
   },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
   "status": {
     "online": "En ligne",
     "offline": "Hors connexion",
