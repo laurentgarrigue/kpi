@@ -116,7 +116,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
 </script>
 
 <template>
-  <div class="bg-white dark:bg-header-900 rounded-lg shadow p-6">
+  <div data-tour="work-context" class="bg-white dark:bg-header-900 rounded-lg shadow p-6">
     <div class="flex items-center gap-2 mb-4">
       <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5 text-header-600 dark:text-header-600" />
       <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">{{ t('context.title') }}</h2>

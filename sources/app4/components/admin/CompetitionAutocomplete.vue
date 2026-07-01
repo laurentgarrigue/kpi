@@ -142,7 +142,7 @@ onUnmounted(() => {
         type="text"
         :disabled="disabled"
         :placeholder="t('competitions.search_previous_placeholder')"
-        class="w-full px-3 py-2 pr-10 border border-header-300 rounded-lg bg-white text-header-900 placeholder-header-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
+        class="w-full px-3 py-2 pr-10 border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-400 dark:placeholder-header-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-700 disabled:cursor-not-allowed"
         @focus="isOpen = results.length > 0"
       >
 
@@ -155,7 +155,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 hover:text-header-900"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           @click="clearSelection"
         >
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,12 +168,12 @@ onUnmounted(() => {
     <!-- Dropdown results -->
     <div
       v-if="isOpen && !disabled"
-      class="absolute z-50 w-full mt-1 bg-white border border-header-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-50 w-full mt-1 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
     >
       <!-- Min 2 chars message -->
       <div
         v-if="searchQuery.length < 2"
-        class="px-4 py-3 text-sm text-header-600 text-center"
+        class="px-4 py-3 text-sm text-header-600 dark:text-header-300 text-center"
       >
         {{ t('competitions.min_2_chars') }}
       </div>
@@ -181,7 +181,7 @@ onUnmounted(() => {
       <!-- No results -->
       <div
         v-else-if="!isLoading && results.length === 0"
-        class="px-4 py-3 text-sm text-header-600 text-center"
+        class="px-4 py-3 text-sm text-header-600 dark:text-header-300 text-center"
       >
         {{ t('competitions.no_results') }}
       </div>
@@ -192,13 +192,13 @@ onUnmounted(() => {
           v-for="comp in results"
           :key="`${comp.code}-${comp.latestSeasonCode}`"
           type="button"
-          class="w-full px-4 py-3 text-left hover:bg-primary-50 focus:bg-primary-50 focus:outline-none border-b border-header-100 last:border-b-0 transition-colors"
+          class="w-full px-4 py-3 text-left hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-50 dark:focus:bg-primary-950 focus:outline-none border-b border-header-100 dark:border-header-800 last:border-b-0 transition-colors"
           @click="selectCompetition(comp)"
         >
-          <div class="text-sm font-medium text-header-900">
+          <div class="text-sm font-medium text-header-900 dark:text-header-50">
             {{ formatLabel(comp) }}
           </div>
-          <div class="text-xs text-header-600 mt-1">
+          <div class="text-xs text-header-600 dark:text-header-300 mt-1">
             {{ t('competitions.latest_season') }}: {{ comp.latestSeasonCode }}
           </div>
         </button>
