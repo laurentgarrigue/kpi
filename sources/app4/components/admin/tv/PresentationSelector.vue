@@ -17,7 +17,7 @@ const groupedPresentations = computed(() => {
 <template>
   <select
     v-model="modelValue"
-    class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[220px]"
+    class="px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 min-w-[220px]"
   >
     <option value="">{{ t('tv.messages.select_presentation') }}</option>
     <optgroup

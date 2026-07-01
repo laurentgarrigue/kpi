@@ -192,7 +192,7 @@ const copyCompetitions = async () => {
 <template>
   <div class="space-y-6">
     <!-- Internal sub-tab navigation -->
-    <div class="border-b border-header-200">
+    <div class="border-b border-header-200 dark:border-header-700">
       <nav class="-mb-px flex space-x-1 overflow-x-auto" aria-label="Competitions tabs">
         <button
           v-for="tab in [
@@ -204,7 +204,7 @@ const copyCompetitions = async () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
+              : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -219,26 +219,26 @@ const copyCompetitions = async () => {
     <section v-if="activeSubTab === 'change_code'">
       <div class="max-w-xl space-y-4">
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.codes.source_code') }}
           </label>
           <input
             v-model="sourceCode"
             type="text"
             placeholder="ex: N1H"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
           >
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.codes.target_code') }}
           </label>
           <input
             v-model="targetCode"
             type="text"
             placeholder="ex: N1M"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
           >
         </div>
 
@@ -247,25 +247,25 @@ const copyCompetitions = async () => {
             <input
               v-model="allSeasons"
               type="checkbox"
-              class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
+              class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-900">{{ t('operations.codes.all_seasons') }}</span>
+            <span class="text-sm text-header-900 dark:text-header-50">{{ t('operations.codes.all_seasons') }}</span>
           </label>
 
           <label class="flex items-center gap-3 cursor-pointer">
             <input
               v-model="targetExists"
               type="checkbox"
-              class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
+              class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-900">{{ t('operations.codes.target_exists') }}</span>
+            <span class="text-sm text-header-900 dark:text-header-50">{{ t('operations.codes.target_exists') }}</span>
           </label>
         </div>
 
-        <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
+        <div class="bg-primary-50 dark:bg-primary-950 border border-primary-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
-            <UIcon name="i-heroicons-information-circle" class="w-5 h-5 text-primary-600 mt-0.5 shrink-0" />
-            <div class="text-sm text-primary-800">
+            <UIcon name="i-heroicons-information-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300 mt-0.5 shrink-0" />
+            <div class="text-sm text-primary-800 dark:text-primary-200">
               <p v-if="allSeasons">Modifiera le code dans <strong>toutes les saisons</strong>.</p>
               <p v-else>Modifiera le code uniquement pour la <strong>saison active</strong>.</p>
             </div>
@@ -287,12 +287,12 @@ const copyCompetitions = async () => {
     <section v-if="activeSubTab === 'copy_rc'">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.seasons.source_season') }}
           </label>
           <select
             v-model="copyRcSource"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
           >
             <option value="">--</option>
             <option v-for="season in seasons" :key="season.code" :value="season.code">
@@ -301,12 +301,12 @@ const copyCompetitions = async () => {
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.seasons.target_season') }}
           </label>
           <select
             v-model="copyRcTarget"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
           >
             <option value="">--</option>
             <option
@@ -336,12 +336,12 @@ const copyCompetitions = async () => {
       <div class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.seasons.source_season') }}
             </label>
             <select
               v-model="copyCompSource"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
               <option value="">--</option>
               <option v-for="season in seasons" :key="season.code" :value="season.code">
@@ -350,12 +350,12 @@ const copyCompetitions = async () => {
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.seasons.target_season') }}
             </label>
             <select
               v-model="copyCompTarget"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
               <option value="">--</option>
               <option
@@ -373,29 +373,29 @@ const copyCompetitions = async () => {
         <!-- Competitions selection -->
         <div v-if="competitions.length > 0">
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-medium text-header-900">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50">
               {{ t('operations.seasons.select_competitions') }}
             </label>
             <div class="flex gap-2">
-              <button class="text-sm text-primary-600 hover:underline" @click="selectAllCompetitions">
+              <button class="text-sm text-primary-600 dark:text-primary-300 hover:underline" @click="selectAllCompetitions">
                 {{ t('stats.params.select_all') }}
               </button>
-              <button class="text-sm text-header-900 hover:underline" @click="deselectAllCompetitions">
+              <button class="text-sm text-header-900 dark:text-header-50 hover:underline" @click="deselectAllCompetitions">
                 {{ t('stats.params.deselect_all') }}
               </button>
             </div>
           </div>
-          <div class="max-h-48 overflow-y-auto border border-header-200 rounded-lg p-2 space-y-1">
+          <div class="max-h-48 overflow-y-auto border border-header-200 dark:border-header-700 rounded-lg p-2 space-y-1">
             <label
               v-for="comp in competitions"
               :key="comp.code"
-              class="flex items-center gap-2 p-2 hover:bg-header-50 rounded cursor-pointer"
+              class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 rounded cursor-pointer"
             >
               <input
                 v-model="selectedCompetitions"
                 type="checkbox"
                 :value="comp.code"
-                class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
+                class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
               >
               <span class="text-sm">{{ comp.code }} - {{ comp.libelle }}</span>
             </label>
@@ -408,9 +408,9 @@ const copyCompetitions = async () => {
             <input
               v-model="copyMatches"
               type="checkbox"
-              class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
+              class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-900">{{ t('operations.seasons.copy_matches') }}</span>
+            <span class="text-sm text-header-900 dark:text-header-50">{{ t('operations.seasons.copy_matches') }}</span>
           </label>
         </div>
 

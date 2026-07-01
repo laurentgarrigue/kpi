@@ -64,19 +64,19 @@ function save() {
     <div class="space-y-6 max-h-[60vh] overflow-y-auto">
       <!-- Channels -->
       <div>
-        <h4 class="text-sm font-semibold text-header-900 mb-2">{{ t('tv.labels.channels') }}</h4>
+        <h4 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('tv.labels.channels') }}</h4>
         <div class="space-y-1">
           <div
             v-for="n in CHANNEL_MAX"
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-600 w-12 text-right">Ch. {{ n }}</span>
+            <span class="text-xs text-header-600 dark:text-header-300 w-12 text-right">Ch. {{ n }}</span>
             <input
               v-model="localChannels[n]"
               type="text"
               maxlength="100"
-              class="flex-1 px-2 py-1 text-sm border border-header-300 rounded bg-white"
+              class="flex-1 px-2 py-1 text-sm border border-header-300 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
               :placeholder="n <= 4 ? `Pitch ${n}` : ''"
             >
           </div>
@@ -85,19 +85,19 @@ function save() {
 
       <!-- Scenarios -->
       <div>
-        <h4 class="text-sm font-semibold text-header-900 mb-2">{{ t('tv.labels.scenarios') }}</h4>
+        <h4 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('tv.labels.scenarios') }}</h4>
         <div class="space-y-1">
           <div
             v-for="n in SCENARIO_COUNT"
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-600 w-12 text-right">Sc. {{ n }}</span>
+            <span class="text-xs text-header-600 dark:text-header-300 w-12 text-right">Sc. {{ n }}</span>
             <input
               v-model="localScenarios[n]"
               type="text"
               maxlength="100"
-              class="flex-1 px-2 py-1 text-sm border border-header-300 rounded bg-white"
+              class="flex-1 px-2 py-1 text-sm border border-header-300 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
             >
           </div>
         </div>
@@ -107,7 +107,7 @@ function save() {
     <template #footer>
       <button
         type="button"
-        class="px-4 py-2 text-sm font-medium text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
+        class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700"
         @click="emit('close')"
       >
         {{ t('tv.labels.cancel') }}

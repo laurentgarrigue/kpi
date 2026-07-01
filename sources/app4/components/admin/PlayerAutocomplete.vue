@@ -140,7 +140,7 @@ onUnmounted(() => {
         type="text"
         :disabled="disabled"
         :placeholder="placeholder || t('common.search_player_placeholder')"
-        class="w-full px-3 py-2 pr-10 border border-header-300 rounded-lg bg-white text-header-900 placeholder-header-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
+        class="w-full px-3 py-2 pr-10 border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-400 dark:placeholder-header-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-800 disabled:cursor-not-allowed"
         @focus="isOpen = results.length > 0"
       >
       <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -151,7 +151,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 hover:text-header-900"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           @click="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -162,11 +162,11 @@ onUnmounted(() => {
     <!-- Dropdown results -->
     <div
       v-if="isOpen && !disabled"
-      class="absolute z-50 w-full mt-1 bg-white border border-header-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-50 w-full mt-1 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
     >
       <div
         v-if="!isLoading && results.length === 0 && searchQuery.length >= 2"
-        class="px-4 py-3 text-sm text-header-600 text-center"
+        class="px-4 py-3 text-sm text-header-600 dark:text-header-300 text-center"
       >
         {{ t('common.no_results') }}
       </div>
@@ -175,35 +175,35 @@ onUnmounted(() => {
         v-for="player in results"
         :key="player.matric"
         type="button"
-        class="w-full px-3 py-2 text-left hover:bg-primary-50 border-b border-header-100 last:border-b-0 transition-colors"
+        class="w-full px-3 py-2 text-left text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 border-b border-header-100 dark:border-header-800 last:border-b-0 transition-colors"
         @click="selectPlayer(player)"
       >
         <div class="font-medium text-sm">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-        <div class="text-xs text-header-600 font-mono flex items-center gap-2">
+        <div class="text-xs text-header-600 dark:text-header-300 font-mono flex items-center gap-2">
           <span>{{ player.icf ? `ICF-${player.icf}` : player.matric }}</span>
           <span v-if="player.club">&mdash; {{ player.club }}</span>
-          <span v-if="player.arbitre" class="px-1 rounded bg-primary-100 text-primary-700 not-italic">{{ player.arbitre }}</span>
+          <span v-if="player.arbitre" class="px-1 rounded bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 not-italic">{{ player.arbitre }}</span>
         </div>
       </button>
     </div>
 
     <!-- Selected player display -->
-    <div v-if="modelValue" class="mt-2 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+    <div v-if="modelValue" class="mt-2 p-3 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-900 rounded-lg">
       <div class="flex items-center justify-between">
         <div>
-          <span class="font-semibold text-header-900">{{ formatNom(modelValue.nom) }} {{ formatPrenom(modelValue.prenom) }}</span>
-          <span class="text-sm text-header-600 ml-2">{{ modelValue.matric }}</span>
+          <span class="font-semibold text-header-900 dark:text-header-50">{{ formatNom(modelValue.nom) }} {{ formatPrenom(modelValue.prenom) }}</span>
+          <span class="text-sm text-header-600 dark:text-header-300 ml-2">{{ modelValue.matric }}</span>
         </div>
         <button
           v-if="!disabled"
           type="button"
-          class="text-header-600 hover:text-header-900"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           @click="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
-      <div class="text-xs text-header-900 mt-1">
+      <div class="text-xs text-header-900 dark:text-header-50 mt-1">
         {{ modelValue.club }}
       </div>
     </div>
