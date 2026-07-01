@@ -10,7 +10,7 @@ const authStore = useAuthStore()
 
 // Tutoriel guidé — lance le tour à la 1re visite, ou propose les nouveautés au retour.
 // Voir DOC/specs/TUTORIEL_ADMIN2.md
-const { maybeAutoStart } = useTour('welcome')
+const { maybeAutoStart } = useGuidedTour('welcome')
 onMounted(() => {
   // Léger délai pour laisser le contexte de travail se monter avant le surlignage.
   setTimeout(() => { maybeAutoStart() }, 600)
