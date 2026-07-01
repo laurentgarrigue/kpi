@@ -91,7 +91,7 @@ const handleChange = (event: Event) => {
     :value="modelValue || ''"
     :required="required"
     :disabled="disabled"
-    class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+    class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
     @change="handleChange"
   >
     <!-- Option "National (sans compétition)" -->

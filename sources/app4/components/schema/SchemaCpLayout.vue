@@ -35,11 +35,11 @@ const formatTimeRange = (start: string | null, end: string | null) => {
         <!-- Phases in this column -->
         <div v-for="phase in stage.phases" :key="phase.idJournee" class="mb-4 last:mb-0">
           <!-- Phase header: title + meta on same line -->
-          <h6 class="font-semibold text-header-700 mb-1 text-center">
+          <h6 class="font-semibold text-header-900 mb-1 text-center">
             {{ phase.phase }}
             <span
               v-if="(showMatchCount && phase.nbMatchs) || (showTimeSlots && formatTimeRange(phase.startTime, phase.endTime))"
-              class="font-normal text-header-400 text-xs"
+              class="font-normal text-header-600 text-xs"
             >
               ·
               <template v-if="showMatchCount">{{ phase.nbMatchs }} {{ t('schema.phase_games', { count: phase.nbMatchs }, phase.nbMatchs) }}</template>

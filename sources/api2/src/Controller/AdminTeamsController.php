@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
+use App\Trait\CompetitionLockTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminTeamsController extends AbstractController
 {
     use AdminLoggableTrait;
+    use CompetitionLockTrait;
 
     public function __construct(
         private readonly Connection $connection
@@ -660,6 +662,10 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Team not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($this->isCompetitionReadOnly($team['Code_compet'], $team['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         $poule = strtoupper(trim($data['poule'] ?? ''));
         $tirage = (int) ($data['tirage'] ?? 0);
 
@@ -708,6 +714,10 @@ class AdminTeamsController extends AbstractController
 
         if (!$team) {
             return $this->json(['message' => 'Team not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($this->isCompetitionReadOnly($team['Code_compet'], $team['Code_saison'])) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $logo = trim($data['logo'] ?? '');
@@ -804,6 +814,10 @@ class AdminTeamsController extends AbstractController
 
         if (empty($season) || empty($targetCompetition) || empty($sourceCompetition)) {
             return $this->json(['message' => 'Season, target and source competition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($this->isCompetitionReadOnly($targetCompetition, $season)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $this->connection->beginTransaction();
@@ -904,6 +918,10 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
         }
 
+        if ($this->isCompetitionReadOnly($competition, $season)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
+        }
+
         // Get teams for this competition
         $sql = "SELECT ce.Id, ce.Code_club, ce.Numero, ce.logo
                 FROM kp_competition_equipe ce
@@ -976,6 +994,10 @@ class AdminTeamsController extends AbstractController
 
         if (empty($season) || empty($competition)) {
             return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($this->isCompetitionReadOnly($competition, $season)) {
+            return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $this->connection->beginTransaction();

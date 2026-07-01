@@ -75,16 +75,9 @@ TODO :
 * ✅ Journées/Phases : Générer la feuille de jury d'appel à partir des officiels de la compétition, avec possibilité de modifier les données avant impression
 * ✅ App2 : masquer la progression pout les compétitions en attente. 
 * ✅ dans opérations : pouvoir déclencher les cron d'import PCE et de verrou présences manuellement, en plus de leur exécution automatique programmée.
-- Reproduire les pdf en stateless ?
-- Mode nuit
 - ✅ Association événement : à tester
-- Matchs : tester en profondeur,
-- Classements : tester en profondeur
 - ✅ Lien vers app2 depuis app4
-- Droits par profil :
-  - Les profils > 2 ne peuvent pas créer, modifier ou supprimer quoi que ce soit dans les saisons antérieures à la saison active.
-  - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
-- Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
+- ✅ Les profils > 2 ne peuvent pas créer, modifier ou supprimer quoi que ce soit dans les saisons antérieures à la saison active.
 - ✅ Copie de système de jeu : type CP par défaut
 - ✅ Gamedays : lien global vers schéma de compétition à partir du moment ou une compétition (CP ?) est sélectionnée.
 - ✅ Gamedays + Games : nb éléments par page : par défaut Tous si au moins un événement, un groupe ou une compétition est sélectionné, sinon 50 par page.
@@ -138,27 +131,14 @@ TODO :
 - ✅ Empêcher l'import d'événement en prod sans double confirmation, en ajoutant une étape de validation supplémentaire dans le processus d'importation.
 - ✅ Ouverture FMV2 et FMV3 depuis app4 : ouvrir dans une fenêtre identique si déjà ouverte.
 - ✅ Feuille de marque : Yc est devenu Pld.
-- Feat: Jury d'appel : 3 représentants des athlètes.
-- Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - ✅ Journées/Phases : autocomplete sur les officiels, etc... mais permettre saisie libre.
 - ✅ Journées/Phases : Obliger la sélection d'un événement, d'un groupe ou d'une compétition, comme sur la page Matchs.
 - ✅ Journées/phases : bouton refresh
 - ✅ Copie compétition : ne pas reprendre les informations laissées vides,
-- Copie compétition : proposer de reprende les informations d'une journée existante dans la compétition cible ?
-- Pré-remplir certaines valeurs dans le formulaire de création.
 - ✅ Matchs : ajouter un match : "journée/phase -tous-" pas possible.
 - ✅ Matchs : permettre la saisie directe ou la modification directe en oubliant un ou deux crochets (détection d'un encodage malgré l'absence de crochets)
-- Games : Action : imprimer un programme des matchs cochés uniquement,
 - ✅ Games : Action : "changer de phase/journée"
-- Reprise de compo d'une compétition ou d'une saison à l'autre : reprendre les noms et prénoms depuis la base des licenciés.
-- Prévoir la mise à jour des identités des joueurs dans les compo ou les matchs depuis la base des licenciés.
-- Revoir le système des incrustations ?
-- api legacy encore utilisée ?
-- Stat participation à 50% des matchs de la saison régulière (déjà existant ?).
-- Verrouillage compets : vérouiller plus tôt dans la nuit.
 - ✅ clubs/team/<teamId> : ajouter le code compétition entre la saison et la compétition, le classement final (CHPT ou CP ou MULTI) de l'équipe à la place de la colonne Equipe.
-- Contexte de travail : s'il n'y a qu'une seule compétition sélectionnée, activer cette compétition dans le filtre.
-- QRCode App Evt : s'assurer que ça fonctionne aussi pour les groupes.
 - ✅ Création compte, initialisation du mdp : manque l'information de l'identifiant de connexion dans l'email de création de compte. Permettre la connexion à partir de l'adresse email ?
 - ✅ Competitions : Ajout de compétition : ajouter au contexte si c'est le même groupe ou la même section, ou encore ajouter à la sélection de compétitions dans le contexte.
 - ✅ Competitions : ajouter la colonne Categorie (champs catégorie/libellé court)
@@ -183,33 +163,72 @@ TODO :
 - ✅ bouton refresh sur le team roster.
 - ✅ Scrutineering App2 : dans le select des équipes, ou sur un état distinct, lister les équipes qui ont été contrôlées partiellement (au moins un joueur a un élément contrôlé) ou totalement (chaque joueur ou capitaine a tous ses éléments au vert), avec possibilité de filtrer sur ces équipes.
 - ✅ Games : Ajouter en option une colonne Shotclock après arbitre 1 et 2, modifiable inline avec autocomplétion sur les arbitres (pas d'équipe, uniquement désignation nominative). le champs existe déjà en base : kp_match.Timeshoot
-- Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.
-- Schéma de compétition : pouvoir changer de compétition sur la page ?
-- ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
-- Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
-- Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
-- Vérifier s'il y a d'autres choses à upgrader.
-- Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
-- Tutoriel admin2 : créer un tutoriel pour les admins legacy qui ne connaissent pas app4, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
-- Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
-- copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
-- Basculer le scrutineering sur app4 ?
-- Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
 - ✅ Rashedi Mehrdad proposé dans le pool arbitres pour IRI er FRA alors qu'il est inactif dans IRI
 (GET https://www.kayak-polo.info/api2/admin/games/autocomplete/referees?q=rash&journeeId=9953&lang=en)
-- Dark mode, blue mode?
-- Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
 - ✅ App4 en mode smartphone portrait, je ne peux pas dérouler le sous-menu administration et accéder aux items du bas.
 - ✅ App4 Games : dans le formulaire de modification d'un match, ajouter le champs shotclock (Timeshoot) avec autocomplétion sur les arbitres, et permettre la saisie directe même si l'arbitre n'est pas dans la liste.
-- Incrustation Teams only (clubs) : adapter le design à la css
-- Revoir incrustation live game, les événements restent affichés.
 - ✅ Rankings, matchs éliminatoires : ne pas afficher le score si le match n'est pas encore validé ?
-- Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - ✅ Refresh sur la page ranking.
-- Feuille protocole : ajouter un bouton pour générer la feuille de protocole à partir des données de la compétition, avec possibilité de compléter, modifier les données avant impression.
-- ⚠️
+- ✅ Vérifier qu'une compétition END vérouille aussi la saisie des présences, les matchs, les classements, etc... et pas seulement la saisie des résultats.
+- ✅ générer une extraction pdf des feuilles de présence sur le modèle de FeuillePresenceCat.php, avec un saut de page par année de naissance, et trié par mois de naissance, avec les colonnes Num Cap Licence Nom Prenom Equipe Club, et un lien depuis la page documents uniquement pour les profils <= 2.
 
-Scoring:
+
+⚠️ ❓ ✅
+
+
+**Infra**:
+- Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
+- Vérifier s'il y a d'autres choses à upgrader.
+- Verrouillage compets : vérouiller plus tôt dans la nuit.
+- ❓ api legacy encore utilisée ?
+- ❓ Reproduire les pdf en stateless ?
+
+
+**App4**:
+- Visuel colonnes (refs, shotclock) : ajouter la possibilité de gérer l'affichage d'autres colonnes dans le tableau des matchs (lignes, secrétaire, chronomètre, autre bénévole...) avec saisie en ligne, masquage éventuel des équipes et scores ainsi que d'autres colonnes. Profil dédié (chef arbitre, chef bénévoles ?)
+- Feuille protocole : ajouter un bouton pour générer la feuille de protocole à partir des données de la compétition, avec possibilité de compléter, modifier les données avant impression.
+- Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
+- copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
+- Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
+- ⚠️ Dark mode,
+- ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
+- ✅ Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
+Les nouveautés à mettre en valeur : choix éventuel du mandat après authentification, puis choix du contexte de travail sur la page d'accueil (saison, périmètre par sélection, section, groupe ou événement) modifiable par la suite, raccourcis (menu, boutons sur la page d'accueil, liens au sein des tableaux), 
+- Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
+- ❓ ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
+- Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.
+- ❓ Schéma de compétition : pouvoir changer de compétition sur la page ?
+- Contexte de travail : s'il n'y a qu'une seule compétition sélectionnée, activer cette compétition dans le filtre.
+- QRCode App Evt : s'assurer que ça fonctionne aussi pour les groupes.
+- Reprise de compo d'une compétition ou d'une saison à l'autre : reprendre les noms et prénoms depuis la base des licenciés.
+- Prévoir la mise à jour des identités des joueurs dans les compo ou les matchs depuis la base des licenciés.
+- ❓ Stat participation à 50% des matchs de la saison régulière (déjà existant ?) ?
+- ❓ Copie compétition : proposer de reprende les informations d'une journée existante dans la compétition cible ?
+- ❓ Pré-remplir certaines valeurs dans le formulaire de création ?
+- Games : Action : imprimer un programme des matchs cochés uniquement,
+- Feat: Jury d'appel : 3 représentants des athlètes.
+- Créer pages d'administration (profil 1) pour les comités départementaux / pays
+- Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
+- ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
+
+
+
+**App2**:
+- Afficher case sélection active
+- Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
+- ❓ Basculer le scrutineering sur app4 ?
+
+
+**TV Panel**:
+- Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
+- Page avec affichage horloge simple du temps officiel
+- Page pub pour nous «want us to manage your tournament contact ..." + page insta et fb
+- Revoir incrustation live game, les événements restent affichés.
+- Incrustation Teams only (clubs) : adapter le design à la css
+- ❓ Revoir le système des incrustations ?
+
+
+**Scoring**:
 - durées des périodes, des temps morts, des prolongations, etc... paramétrables dans la compétition
 - gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
 - départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/stop du chrono, pour le départ/reprise du timeshoot et pour la pause du timeshoot. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
@@ -221,5 +240,5 @@ Scoring:
 - Tracer toutes les actions dans le journal
 
 - Vérifier la durée des prolongations dans les règlements.
-- Objectif zéro papier : prévoir un nouveau statut "signé" pour le scoring ?
+- ❓ Objectif zéro papier : prévoir un nouveau statut "signé" pour le scoring ?
 - Title de la page : Scoring match <numero> - <nom équipe A> | <nom équipe B>. (ex : Scoring match 1 - Team A | Team B). match -> game en anglais.

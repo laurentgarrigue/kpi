@@ -266,9 +266,9 @@ onUnmounted(() => {
         :placeholder="placeholder || t('games.referee_placeholder')"
         :class="[
           compact
-            ? 'w-full px-1 py-0 text-xs border border-primary-400 rounded bg-white'
-            : 'w-full px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-          disabled ? 'bg-header-100 cursor-not-allowed' : '',
+            ? 'w-full px-1 py-0 text-xs border border-primary-400 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50'
+            : 'w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+          disabled ? 'bg-header-200 dark:bg-header-800 cursor-not-allowed' : '',
         ]"
         @focus="isOpen = results.length > 0"
         @keydown="handleKeydown"
@@ -282,7 +282,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-400 hover:text-header-600"
+          class="text-header-600 hover:text-header-900"
           @mousedown.prevent="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -292,7 +292,7 @@ onUnmounted(() => {
       <button
         v-if="compact && searchQuery && !disabled"
         type="button"
-        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
         @mousedown.prevent="clearSelection"
       >
         <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
@@ -303,14 +303,14 @@ onUnmounted(() => {
     <Teleport to="body">
       <div
         v-if="isOpen && !disabled && results.length > 0"
-        class="fixed z-9999 bg-white border border-header-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        class="fixed z-9999 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         :style="dropdownStyle"
       >
         <template v-for="(item, idx) in results" :key="idx">
           <!-- Separator -->
           <div
             v-if="item.type === 'separator'"
-            class="px-3 py-1 text-[10px] font-semibold text-header-400 bg-header-50 uppercase tracking-wider"
+            class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-600 bg-header-50 dark:bg-header-800 uppercase tracking-wider"
           >
             {{ item.label }}
           </div>
@@ -326,8 +326,8 @@ onUnmounted(() => {
             v-else
             :data-idx="idx"
             type="button"
-            class="w-full px-3 py-1.5 text-left border-b border-header-50 transition-colors text-xs"
-            :class="idx === activeIndex ? 'bg-primary-100' : 'hover:bg-primary-50'"
+            class="w-full px-3 py-1.5 text-left border-b border-header-50 dark:border-header-800 text-header-900 dark:text-header-50 transition-colors text-xs"
+            :class="idx === activeIndex ? 'bg-primary-100 dark:bg-primary-800' : 'hover:bg-primary-50 dark:hover:bg-header-800'"
             @mousedown.prevent="selectItem(item)"
             @mousemove="activeIndex = idx"
           >

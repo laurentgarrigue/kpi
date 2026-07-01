@@ -324,7 +324,7 @@ const confirmMove = async () => {
 <template>
   <div class="space-y-6">
     <!-- Internal sub-tab navigation -->
-    <div class="border-b border-header-200">
+    <div class="border-b border-header-200 dark:border-header-700">
       <nav class="-mb-px flex space-x-1 overflow-x-auto" aria-label="Teams tabs">
         <button
           v-for="tab in [
@@ -337,7 +337,7 @@ const confirmMove = async () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -353,44 +353,44 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Team search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.team') }}
           </label>
           <input
             v-model="renameSearch"
             type="text"
             :placeholder="t('operations.teams.search_team')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showRenameDropdown = renameResults.length > 0"
             @blur="setTimeout(() => showRenameDropdown = false, 200)"
           >
           <div
             v-if="showRenameDropdown && renameResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="team in renameResults"
               :key="team.numero"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectRenameTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- New name -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.new_name') }}
           </label>
           <input
             v-model="newTeamName"
             type="text"
             :disabled="!selectedRenameTeam"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-header-100"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-header-200"
           >
         </div>
       </div>
@@ -409,60 +409,60 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Source team -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.source_team') }}
           </label>
           <input
             v-model="mergeSourceSearch"
             type="text"
             :placeholder="t('operations.teams.search_team')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showMergeSourceDropdown = mergeSourceResults.length > 0"
             @blur="setTimeout(() => showMergeSourceDropdown = false, 200)"
           >
           <div
             v-if="showMergeSourceDropdown && mergeSourceResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="team in mergeSourceResults"
               :key="team.numero"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectMergeSource(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- Target team -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.target_team') }}
           </label>
           <input
             v-model="mergeTargetSearch"
             type="text"
             :placeholder="t('operations.teams.search_team')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showMergeTargetDropdown = mergeTargetResults.length > 0"
             @blur="setTimeout(() => showMergeTargetDropdown = false, 200)"
           >
           <div
             v-if="showMergeTargetDropdown && mergeTargetResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="team in mergeTargetResults"
               :key="team.numero"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectMergeTarget(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -482,60 +482,60 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Team search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.team') }}
           </label>
           <input
             v-model="moveTeamSearch"
             type="text"
             :placeholder="t('operations.teams.search_team')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showMoveTeamDropdown = moveTeamResults.length > 0"
             @blur="setTimeout(() => showMoveTeamDropdown = false, 200)"
           >
           <div
             v-if="showMoveTeamDropdown && moveTeamResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="team in moveTeamResults"
               :key="team.numero"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectMoveTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- Club search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.teams.target_club') }}
           </label>
           <input
             v-model="moveClubSearch"
             type="text"
             :placeholder="t('operations.teams.search_club')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showMoveClubDropdown = moveClubResults.length > 0"
             @blur="setTimeout(() => showMoveClubDropdown = false, 200)"
           >
           <div
             v-if="showMoveClubDropdown && moveClubResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="club in moveClubResults"
               :key="club.numero"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectMoveClub(club)"
             >
               <div class="font-medium">{{ club.nom }}</div>
-              <div class="text-xs text-header-500">{{ club.numero }} - {{ club.departement }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300">{{ club.numero }} - {{ club.departement }}</div>
             </button>
           </div>
         </div>
@@ -552,7 +552,7 @@ const confirmMove = async () => {
 
     <!-- Competition locks -->
     <section v-if="activeSubTab === 'locks'">
-      <p class="text-sm text-header-600 mb-4">
+      <p class="text-sm text-header-900 dark:text-header-50 mb-4">
         {{ t('operations.import_export.locks_description') }}
       </p>
       <button

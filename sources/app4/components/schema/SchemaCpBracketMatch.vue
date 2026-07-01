@@ -56,7 +56,7 @@ const teamNameClass = (side: 'A' | 'B') => {
 <template>
   <div class="flex items-center space-x-2">
     <!-- Match number -->
-    <div v-if="match.numeroOrdre" class="text-xs text-header-400 italic font-medium shrink-0 w-8 text-right">
+    <div v-if="match.numeroOrdre" class="text-xs text-header-600 italic font-medium shrink-0 w-8 text-right">
       #{{ match.numeroOrdre }}
     </div>
     <div v-else class="w-8 shrink-0" />

@@ -31,6 +31,7 @@ export interface Gameday {
   authorized: boolean
   competitionLibelle: string | null
   competitionTypeClt: string | null
+  competitionStatut: string | null
 }
 
 // Form data for create/edit

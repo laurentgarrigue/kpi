@@ -62,27 +62,27 @@ function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre
 
 <template>
   <div>
-    <label class="block text-sm font-medium text-header-700 mb-1">
+    <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">
       {{ t('context.competitions_from_context') }}
     </label>
 
-    <div v-if="availableCompetitions.length === 0" class="text-sm text-header-500 italic">
+    <div v-if="availableCompetitions.length === 0" class="text-sm text-header-600 dark:text-header-600 italic">
       {{ t('context.no_competitions') }}
     </div>
 
-    <div v-else class="border border-header-300 rounded-md overflow-hidden">
+    <div v-else class="border border-header-300 dark:border-header-700 rounded-md overflow-hidden">
       <!-- "All" option -->
       <label
-        class="flex items-center gap-2 p-2 hover:bg-header-50 cursor-pointer border-b border-header-200"
+        class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 cursor-pointer border-b border-header-200 dark:border-header-700"
       >
         <input
           type="checkbox"
           :checked="allSelected"
           :indeterminate="someSelected && !allSelected"
-          class="rounded border-header-300 text-primary-600 focus:ring-primary-500"
+          class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
           @change="toggleAll"
         >
-        <span class="font-medium text-header-900">
+        <span class="font-medium text-header-900 dark:text-header-50">
           {{ t('context.all_competitions') }} ({{ availableCompetitions.length }})
         </span>
       </label>
@@ -92,21 +92,21 @@ function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre
         <label
           v-for="comp in availableCompetitions"
           :key="comp.code"
-          class="flex items-center gap-2 p-2 hover:bg-header-50 cursor-pointer"
+          class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 cursor-pointer"
         >
           <input
             type="checkbox"
             :checked="selectedCodes.includes(comp.code)"
-            class="rounded border-header-300 text-primary-600 focus:ring-primary-500"
+            class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
             @change="toggleCompetition(comp.code)"
           >
-          <span class="text-sm text-header-700">{{ formatCompetitionLabel(comp) }}</span>
+          <span class="text-sm text-header-900 dark:text-header-200">{{ formatCompetitionLabel(comp) }}</span>
         </label>
       </div>
     </div>
 
     <!-- Selection count -->
-    <p v-if="someSelected" class="mt-1 text-xs text-header-500">
+    <p v-if="someSelected" class="mt-1 text-xs text-header-600 dark:text-header-600">
       {{ t('context.competitions_count', { count: selectedCodes.length }) }}
     </p>
   </div>

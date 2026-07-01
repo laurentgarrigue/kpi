@@ -99,7 +99,7 @@ onUnmounted(() => {
         type="text"
         :disabled="disabled"
         :placeholder="placeholder || t('common.club')"
-        class="w-full px-2 py-1 border border-header-300 rounded text-xs bg-white placeholder-header-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+        class="w-full px-2 py-1 border border-header-300 rounded text-xs bg-white placeholder-header-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
         @focus="isOpen = results.length > 0"
       >
       <div class="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -107,7 +107,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-400 hover:text-header-600"
+          class="text-header-600 hover:text-header-900"
           @click="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
@@ -121,7 +121,7 @@ onUnmounted(() => {
     >
       <div
         v-if="!isLoading && results.length === 0 && searchQuery.length >= 2"
-        class="px-3 py-2 text-xs text-header-500 text-center"
+        class="px-3 py-2 text-xs text-header-600 text-center"
       >
         {{ t('common.no_results') }}
       </div>
@@ -133,7 +133,7 @@ onUnmounted(() => {
         @click="selectClub(club)"
       >
         <div class="text-xs font-medium text-header-900">{{ club.nom }}</div>
-        <div class="text-xs text-header-500 font-mono">{{ club.numero }}</div>
+        <div class="text-xs text-header-600 font-mono">{{ club.numero }}</div>
       </button>
     </div>
   </div>

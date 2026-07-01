@@ -27,14 +27,15 @@ const formatDateRange = (start: string | null, end: string | null) => {
     <!-- Gameday header -->
     <div class="px-4 py-2 bg-header-50 border-b border-header-200">
       <div class="flex items-center gap-2">
-        <span class="font-semibold text-header-800">{{ phase.phase }}</span>
+        <span class="font-semibold text-header-900">{{ phase.nom || phase.phase }}</span>
+        <span v-if="phase.nom && phase.phase" class="text-sm text-header-600">{{ phase.phase }}</span>
         <template v-if="phase.lieu || phase.departement">
-          <span class="text-header-400">—</span>
-          <span class="text-sm text-header-600">
+          <span class="text-header-600">—</span>
+          <span class="text-sm text-header-900">
             {{ phase.lieu }}<span v-if="phase.departement"> ({{ phase.departement }})</span>
           </span>
         </template>
-        <span v-if="phase.dateDebut" class="text-sm text-header-500 ml-auto">
+        <span v-if="phase.dateDebut" class="text-sm text-header-600 ml-auto">
           {{ formatDateRange(phase.dateDebut, phase.dateFin) }}
         </span>
       </div>

@@ -12,6 +12,10 @@ La page Compétitions permet de gérer les compétitions d'une saison : créatio
 - Profil ≤ 3 : Modification / Verrouillage / Images
 - Profil ≤ 2 : Création / Suppression / Copie / Code de compétition modifiable à l'import
 
+**Restrictions transverses** (voir [§ 11](#11-statut-end-et-lecture-seule)) :
+- Une compétition au statut **END** est en **lecture seule** (équipes, journées/phases, présents inclus).
+- Les **saisons antérieures** à la saison active sont en lecture seule pour les profils **> 2** (seuls les profils ≤ 2 peuvent rouvrir une compétition passée).
+
 **Page PHP Legacy** : `GestionCompetition.php`
 
 ---
@@ -28,9 +32,11 @@ La page Compétitions permet de gérer les compétitions d'une saison : créatio
 | 4 | Replier/déplier toutes les sections | ≤ 10 | ✅ Implémenté |
 | 5 | Afficher nb équipes / journées / matchs | ≤ 10 | ✅ Implémenté |
 | 6 | Toggle publication | ≤ 4 | ✅ Implémenté |
-| 7 | Toggle verrou FDM | ≤ 3 | ✅ Implémenté |
-| 8 | Changement de statut (ATT→ON→END, cycle) | ≤ 3 | ✅ Implémenté |
+| 7 | Toggle verrou FDM | ≤ 3 (désactivé si END) | ✅ Implémenté |
+| 8 | Changement de statut (ATT→ON→END→ATT, cycle) | ≤ 3 — ≤ 2 si saison passée | ✅ Implémenté |
 | 9 | Import depuis saison précédente (autocomplete) | ≤ 2 | ✅ Implémenté |
+
+> **Statut END** : le passage à END verrouille automatiquement la compétition (`Verrou='O'`) et la rend lecture seule partout (cf. [§ 11](#11-statut-end-et-lecture-seule)). La modification (✏️) ouvre alors le formulaire en consultation, et le toggle verrou est désactivé. Le cycle de statut reste possible (END→ATT pour rouvrir) selon le profil et la saison.
 
 ### 2.2 Formulaire création/modification
 
@@ -127,9 +133,9 @@ Formats acceptés : JPG ou PNG. Stockage dans `/img/logo/` (backend PHP legacy).
 | Groupe | Code du groupe | Lien vers Journées (groupe) |
 | Étape | Numéro de tour/phase | - |
 | Type | CHPT / CP / MULTI | - |
-| Statut | ATT / ON / END | Click pour changer statut (profil ≤3) |
+| Statut | ATT / ON / END | Click pour cycler le statut (profil ≤3 ; ≤2 en saison passée) |
 | Équipes | Nombre d'équipes | Lien vers page Équipes |
-| 🔒 Verrou | Verrouiller FDM | Toggle (profil ≤3) |
+| 🔒 Verrou | Verrouiller FDM | Toggle (profil ≤3 ; désactivé si END) |
 | Journées | Nb journées/phases | Lien vers Journées |
 | Matchs | Nombre de matchs | Lien vers Matchs |
 | Actions | RC + Suppression | Profil ≤2 pour suppression |
@@ -247,7 +253,12 @@ Select multiple groupé par section (compétitions de la saison courante).
 | POST | `/admin/competitions/bulk-delete` | Suppression en masse | ≤2 |
 | PATCH | `/admin/competitions/{code}/publish` | Toggle publication | ≤4 |
 | PATCH | `/admin/competitions/{code}/lock` | Toggle verrou FDM | ≤3 |
-| PATCH | `/admin/competitions/{code}/status` | Changer statut | ≤3 |
+| PATCH | `/admin/competitions/{code}/status` | Changer statut (END ⇒ pose aussi `Verrou='O'`) | ≤3 — ≤2 si saison antérieure à la saison active |
+
+> **`PATCH .../status`** — Comportement particulier :
+> - `statut=END` : pose `Statut='END'` **et** `Verrou='O'` dans le même UPDATE. La réponse renvoie `{ code, statut, verrou }` (`verrou=true` quand END, `null` sinon) pour que le front mette à jour le toggle sans second appel.
+> - Garde **saison antérieure** : si `niveau > 2` et que la saison concernée est strictement antérieure à la saison active → **403**. Seuls les profils ≤ 2 peuvent ainsi rouvrir (END→ATT) une compétition passée.
+> - Sortir de END (END→ATT) ne déverrouille **pas** automatiquement ; le verrou se rebascule via le toggle dédié.
 
 ### 6.2 Images (réutilisation de l'API Operations)
 
@@ -306,9 +317,9 @@ Select multiple groupé par section (compétitions de la saison courante).
 | Elimines | int | Nb équipes éliminées |
 | Points | varchar(10) | Barème (4-2-1-0 ou 3-1-0-0) |
 | goalaverage | varchar(10) | gen / part |
-| Statut | varchar(3) | ATT / ON / END |
+| Statut | varchar(3) | ATT / ON / END — END ⇒ lecture seule (cf. § 11) |
 | Publication | char(1) | O/N |
-| Verrou | char(1) | O/N — Verrou FDM |
+| Verrou | char(1) | O/N — Verrou FDM ; posé automatiquement au passage à END |
 | commentairesCompet | text | Notes privées |
 
 > **Note** : `BandeauLink`, `LogoLink`, `SponsorLink` stockent le nom de fichier seul. L'API retourne le chemin complet `/img/logo/{filename}` via `buildImageLink()`. Le composant picker travaille avec le nom de fichier seul et construit l'URL de prévisualisation via `legacyBaseUrl + /img/logo/`.
@@ -345,6 +356,9 @@ sources/app4/components/admin/
 
 sources/app4/types/
 └── competitions.ts                    # Types TypeScript
+
+sources/api2/src/Trait/
+└── CompetitionLockTrait.php           # Garde lecture seule END / verrou / saison passée (cf. § 11)
 ```
 
 ### 8.2 Type `CompetitionFormData`
@@ -399,6 +413,8 @@ Props :
 - Suppression bloquée si équipes/journées/matchs existants
 - Upload/import images : validation MIME par magic bytes, limite 10 Mo, redimensionnement automatique
 - Import URL : `filter_var(FILTER_VALIDATE_URL)` + validation contenu image côté serveur
+- **Lecture seule END** : écritures (équipes, journées) refusées en 403 si la compétition est END ou verrouillée (`CompetitionLockTrait`, cf. [§ 11.1](#111-statut-end--lecture-seule-complète))
+- **Saison antérieure** : changement de statut refusé en 403 pour les profils > 2 (cf. [§ 11.2](#112-clôture-à-lactivation-dune-nouvelle-saison))
 
 ## 10. Audit
 
@@ -407,10 +423,58 @@ Actions journalisées dans `kp_journal` :
 - `Modif Competition`
 - `Upload Image` / `Import URL Image`
 - `Publication competition`
-- `Verrou Compet`
+- `Verrou Compet` (également posé lors du passage à END)
+- `Statut Competition`
+- `Change Saison Active` / `Cloture compétitions saison précédente` (page Opérations — cf. [§ 11.2](#112-clôture-à-lactivation-dune-nouvelle-saison))
+
+---
+
+## 11. Statut END et lecture seule
+
+Deux mécanismes complémentaires figent les données : le **statut END** d'une compétition, et la **lecture seule des saisons antérieures** pour les profils > 2. Le second s'appuie sur le premier.
+
+### 11.1 Statut END → lecture seule complète
+
+Quand une compétition passe au statut **END** :
+
+- Le backend (`AdminCompetitionsController::changeStatus`) pose `Statut='END'` **et** `Verrou='O'` en une seule opération.
+- La compétition devient **lecture seule partout** : équipes, journées/phases, et présents (feuilles de présence) inclus.
+
+**Implémentation (back) — refus 403 sur toute écriture** quand la compétition est END ou verrouillée, via `App\Trait\CompetitionLockTrait` :
+
+| Méthode | Rôle |
+|---------|------|
+| `isCompetitionReadOnly($code, $season)` | `true` si `Verrou='O'` **ou** `Statut='END'` (les deux, pour rester robuste à d'éventuelles lignes END sans verrou) |
+| `filterEditableGamedayIds($ids)` | Filtre une liste d'ids de journées pour ne garder que celles modifiables (utilisé par les opérations en masse) |
+
+Contrôleurs couverts :
+- `AdminGamedaysController` : `create`, `update`, `togglePublication`, `toggleType`, `inlineUpdate`, `duplicate`, `delete` + les 4 opérations en masse (publication / calendrier / officiels / suppression).
+- `AdminTeamsController` : `pool-draw`, `colors`, `duplicate`, `update-logos`, `init-starters` (les `create` / `delete` / `bulk-delete` vérifiaient déjà `Verrou`).
+
+**Implémentation (front)** :
+- Page **Compétitions** : la modification (✏️) ouvre le formulaire en **consultation** (`isFormReadOnly` quand `statut === 'END'`) ; le toggle verrou est désactivé sur une compétition END.
+- Page **Équipes** : `isReadOnly` (`verrou` ou `statut === 'END'`) désactive l'édition inline, les opérations spéciales, l'ajout/suppression et l'édition des propriétés.
+- Page **Journées/Phases** : la liste pouvant mélanger plusieurs compétitions, le contrôle est **par ligne** via `canEditGameday(g)` (`g.competitionStatut !== 'END'`). Le DTO `Gameday` porte `competitionStatut`.
+
+> Sortir de END (END→ATT) ne déverrouille **pas** automatiquement la compétition : le verrou reste posé tant qu'il n'est pas rebasculé manuellement.
+
+### 11.2 Clôture à l'activation d'une nouvelle saison
+
+Règle métier : **les profils > 2 ne peuvent rien créer/modifier/supprimer dans une saison antérieure à la saison active**. Plutôt qu'un garde global sur toutes les routes d'écriture, la règle s'applique via le statut END + un garde ciblé sur le changement de statut :
+
+1. **Garde changement de statut** — `changeStatus` refuse (403) si `niveau > 2` et saison strictement antérieure à la saison active (`CompetitionLockTrait::isPastSeason()`, comparaison des codes saison comme chaînes : `"2024-2025" < "2025-2026"`). Côté front, `canCycleStatus` (Compétitions) et `canChangeStatus` (Classements) tombent à profil ≤ 2 en saison passée.
+
+2. **Clôture à l'activation** (page **Opérations → Saisons**, profil ≤ 2 / `ROLE_ADMIN`) — à l'activation d'une nouvelle saison, l'ancienne saison active peut être clôturée : toutes ses compétitions non encore END passent à `Statut='END'` + `Verrou='O'`.
+   - `GET /admin/operations/seasons/{code}/activate-preview` → `{ previousSeason, nonEndedCount, sections[] }` (compétitions non terminées **groupées par section**).
+   - `PATCH /admin/operations/seasons/{code}/activate` accepte `{ endPreviousSeason: bool }` ; renvoie `{ code, endedCompetitions }`.
+   - **Modale de confirmation** (`SeasonsTab.vue`) : si l'ancienne saison a des compétitions non terminées, elles sont **listées par section (codes)** avec un avertissement. L'opérateur choisit :
+     - **clôturer** ces compétitions (case cochée par défaut) puis activer, ou
+     - **annuler** pour corriger manuellement le statut de certaines compétitions avant de réactiver.
+
+> Si la case est décochée, les compétitions passées restées non-END demeurent éditables (équipes/journées) par les profils > 2 : c'est un choix assumé par l'opérateur ≤ 2 qui a vu l'avertissement. Le **statut** de ces compétitions reste toutefois non modifiable par les profils > 2 (garde « changement de statut » ci-dessus, point 1).
 
 ---
 
 **Document créé le** : 2026-02-01
-**Dernière mise à jour** : 2026-05-04
+**Dernière mise à jour** : 2026-06-29
 **Statut** : ✅ Implémenté

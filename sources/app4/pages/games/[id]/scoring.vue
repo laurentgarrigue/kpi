@@ -218,7 +218,7 @@ const toggleLock = async () => {
 
 <template>
   <div class="p-4">
-    <div v-if="!canView" class="text-center text-header-600 py-12">
+    <div v-if="!canView" class="text-center text-header-900 py-12">
       {{ t('scoring.no_access') }}
     </div>
 
@@ -241,7 +241,7 @@ const toggleLock = async () => {
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-xl font-bold">{{ t('scoring.title') }} — #{{ match.id }}</h1>
-          <p class="text-sm text-header-600">
+          <p class="text-sm text-header-900">
             {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
           </p>
         </div>
@@ -289,7 +289,7 @@ const toggleLock = async () => {
       <div v-if="isLive" class="flex flex-col items-center gap-2">
         <div
           class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-          :class="isRunning ? 'text-success-600' : 'text-header-700'"
+          :class="isRunning ? 'text-success-600' : 'text-header-900'"
         >
           {{ clockDisplay }}
         </div>
@@ -356,12 +356,12 @@ const toggleLock = async () => {
         <div class="flex flex-wrap items-end gap-3 justify-center">
           <!-- Period -->
           <div>
-            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.time.period') }}</label>
+            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.period') }}</label>
             <USelect v-model="eventPeriod" :items="periods" :disabled="!canScore" size="sm" class="w-28" />
           </div>
           <!-- Event time -->
           <div>
-            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.time.label') }}</label>
+            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.label') }}</label>
             <div class="flex items-center gap-1">
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
@@ -374,7 +374,7 @@ const toggleLock = async () => {
           </div>
           <!-- Reason (cards) -->
           <div>
-            <label class="block text-xs text-header-500 mb-1">{{ t('scoring.reason.label') }}</label>
+            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.reason.label') }}</label>
             <USelect
               v-model="eventReason"
               :items="reasonCodes.map(c => ({ label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c), value: c }))"
@@ -410,7 +410,7 @@ const toggleLock = async () => {
       />
     </div>
 
-    <div v-else class="text-center text-header-600 py-12">
+    <div v-else class="text-center text-header-900 py-12">
       {{ t('scoring.not_found') }}
     </div>
   </div>

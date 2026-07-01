@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <div class="min-h-screen bg-header-100">
+  <div class="min-h-screen bg-header-200">
     <slot />
   </div>
 </template>

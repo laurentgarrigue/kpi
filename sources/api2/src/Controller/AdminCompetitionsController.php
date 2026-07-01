@@ -877,6 +877,14 @@ class AdminCompetitionsController extends AbstractController
         // Get season from request or fallback to active season
         $season = $this->getSeasonOrActive($request, $data);
 
+        // Profiles > 2 cannot change a competition status in a season prior to the
+        // active one. This is what keeps past seasons read-only for them: a profile
+        // 1-2 ends past competitions (END + lock), and only a profile 1-2 may reopen
+        // one of them later if results still need to be entered.
+        if ($user && $user->getNiveau() > 2 && $this->isPastSeason($season)) {
+            return $this->json(['message' => 'Past seasons are read-only for this profile'], Response::HTTP_FORBIDDEN);
+        }
+
         // Check if competition exists
         $sql = "SELECT Code FROM kp_competition WHERE Code = ? AND Code_saison = ?";
         $stmt = $this->connection->prepare($sql);
@@ -885,9 +893,19 @@ class AdminCompetitionsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $updateSql = "UPDATE kp_competition SET Statut = ? WHERE Code = ? AND Code_saison = ?";
-        $stmt = $this->connection->prepare($updateSql);
-        $stmt->executeStatement([$newStatus, $code, $season]);
+        // Moving to END locks the competition so the "présents" can no longer be
+        // modified. The lock is set in the same update to keep both pages
+        // (competitions and rankings) consistent without a second round-trip.
+        if ($newStatus === 'END') {
+            $updateSql = "UPDATE kp_competition SET Statut = ?, Verrou = 'O' WHERE Code = ? AND Code_saison = ?";
+            $stmt = $this->connection->prepare($updateSql);
+            $stmt->executeStatement([$newStatus, $code, $season]);
+            $this->logActionForCompetition('Verrou Compet', $season, $code, 'O');
+        } else {
+            $updateSql = "UPDATE kp_competition SET Statut = ? WHERE Code = ? AND Code_saison = ?";
+            $stmt = $this->connection->prepare($updateSql);
+            $stmt->executeStatement([$newStatus, $code, $season]);
+        }
 
         // Log action
         $this->logActionForCompetition('Statut Competition', $season, $code, $newStatus);
@@ -895,6 +913,7 @@ class AdminCompetitionsController extends AbstractController
         return $this->json([
             'code' => $code,
             'statut' => $newStatus,
+            'verrou' => $newStatus === 'END' ? true : null,
         ]);
     }
 

@@ -328,14 +328,14 @@ const formatDate = (dateStr: string) => {
     >
       <template #badges>
         <div v-if="presenceStore.match" class="flex flex-wrap items-center gap-2 text-sm">
-          <span class="text-header-500">{{ presenceStore.competition?.code }}</span>
-          <span class="text-header-400">&bull;</span>
-          <span class="text-header-500">{{ formatDate(presenceStore.match.dateMatch) }} {{ presenceStore.match.heureMatch }}</span>
-          <span class="text-header-400">&bull;</span>
-          <span class="text-header-500">{{ t('games.field.terrain') }} {{ presenceStore.match.terrain }}</span>
-          <span class="text-header-400">&bull;</span>
-          <span class="font-mono text-header-500">#{{ presenceStore.match.numeroOrdre }}</span>
-          <span class="text-header-400">&bull;</span>
+          <span class="text-header-600">{{ presenceStore.competition?.code }}</span>
+          <span class="text-header-600">&bull;</span>
+          <span class="text-header-600">{{ formatDate(presenceStore.match.dateMatch) }} {{ presenceStore.match.heureMatch }}</span>
+          <span class="text-header-600">&bull;</span>
+          <span class="text-header-600">{{ t('games.field.terrain') }} {{ presenceStore.match.terrain }}</span>
+          <span class="text-header-600">&bull;</span>
+          <span class="font-mono text-header-600">#{{ presenceStore.match.numeroOrdre }}</span>
+          <span class="text-header-600">&bull;</span>
           <span v-if="presenceStore.team" class="font-semibold text-header-900">
             {{ teamCode === 'A' ? t('common.team_a') : t('common.team_b') }}: {{ presenceStore.team.libelle }}
           </span>
@@ -348,7 +348,7 @@ const formatDate = (dateStr: string) => {
           <UIcon
             v-else
             name="heroicons:lock-open"
-            class="w-5 h-5 text-header-400"
+            class="w-5 h-5 text-header-600"
             :title="t('common.unlocked')"
           />
         </div>
@@ -409,13 +409,13 @@ const formatDate = (dateStr: string) => {
     <!-- Loading state -->
     <div v-if="presenceStore.loading" class="text-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto text-success-500" />
-      <p class="mt-2 text-sm text-header-500">{{ t('common.loading') }}</p>
+      <p class="mt-2 text-sm text-header-600">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="filteredPlayers.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
-      <UIcon name="i-heroicons-user-group" class="w-12 h-12 mx-auto text-header-400" />
-      <p class="mt-2 text-sm text-header-500">{{ t('presence.no_players') }}</p>
+      <UIcon name="i-heroicons-user-group" class="w-12 h-12 mx-auto text-header-600" />
+      <p class="mt-2 text-sm text-header-600">{{ t('presence.no_players') }}</p>
       <button
         v-if="canInitializeFromTeam"
         class="mt-4 px-4 py-2 text-sm font-medium text-white bg-success-500 hover:bg-success-700 rounded-lg"
@@ -438,15 +438,15 @@ const formatDate = (dateStr: string) => {
                 @change="toggleSelectAll"
               >
             </th>
-            <th class="w-16 px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">#</th>
-            <th class="w-12 px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">Cap</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.last_name') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.first_name') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.license') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.club') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.category') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.paddle') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.certificate') }}</th>
+            <th class="w-16 px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">#</th>
+            <th class="w-12 px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">Cap</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.last_name') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.first_name') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.license') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.club') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.category') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.paddle') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.certificate') }}</th>
             <th v-if="canEdit" class="w-16 px-3 py-1"/>
           </tr>
         </thead>
@@ -515,7 +515,7 @@ const formatDate = (dateStr: string) => {
 
             <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
             <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-            <td class="px-3 py-1 text-sm text-header-500 font-mono">
+            <td class="px-3 py-1 text-sm text-header-600 font-mono">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
                   class="link-value"
@@ -523,7 +523,7 @@ const formatDate = (dateStr: string) => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-            <td class="px-3 py-1 text-sm text-header-500">
+            <td class="px-3 py-1 text-sm text-header-600">
                 <NuxtLink
                   :to="`/clubs?code=${player.numeroClub}`"
                   class="link-value"
@@ -532,11 +532,11 @@ const formatDate = (dateStr: string) => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-            <td class="px-3 py-1 text-sm text-header-500">{{ player.categ }}-{{ player.sexe }}</td>
+            <td class="px-3 py-1 text-sm text-header-600">{{ player.categ }}-{{ player.sexe }}</td>
 
             <!-- Pagaie -->
             <td class="px-3 py-1 text-sm">
-              <span :class="player.pagaieValide === 0 ? 'text-danger-600' : 'text-header-700'">
+              <span :class="player.pagaieValide === 0 ? 'text-danger-600' : 'text-header-900'">
                 {{ player.pagaieValide === 0 ? `(${player.pagaieLabel})` : player.pagaieLabel }}
               </span>
             </td>
@@ -558,8 +558,8 @@ const formatDate = (dateStr: string) => {
 
           <!-- Coaches (E) -->
           <template v-if="coaches.length > 0">
-            <tr class="bg-header-100">
-              <td :colspan="canEdit ? 11 : 10" class="px-3 py-1 text-xs text-header-500 text-center">
+            <tr class="bg-header-200">
+              <td :colspan="canEdit ? 11 : 10" class="px-3 py-1 text-xs text-header-600 text-center">
                 {{ t('presence.section_coaches') }}
               </td>
             </tr>
@@ -575,7 +575,7 @@ const formatDate = (dateStr: string) => {
               <td class="px-3 py-1 text-sm">{{ statusLabel(player.capitaine) }}</td>
               <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
               <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-              <td class="px-3 py-1 text-sm text-header-500 font-mono">
+              <td class="px-3 py-1 text-sm text-header-600 font-mono">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
                   class="link-value"
@@ -583,9 +583,9 @@ const formatDate = (dateStr: string) => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500">{{ player.numeroClub }}</td>
-              <td class="px-3 py-1 text-sm text-header-500">{{ player.categ }}-{{ player.sexe }}</td>
-              <td class="px-3 py-1 text-sm text-header-700">{{ player.pagaieLabel }}</td>
+              <td class="px-3 py-1 text-sm text-header-600">{{ player.numeroClub }}</td>
+              <td class="px-3 py-1 text-sm text-header-600">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-900">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm">
                 <span :class="player.certifCK === 'OUI' ? 'text-success-500' : 'text-danger-600'">
                   {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
@@ -602,7 +602,7 @@ const formatDate = (dateStr: string) => {
       </table>
 
       <!-- Footer -->
-      <div class="px-4 py-1 bg-header-50 border-t border-header-200 text-sm text-header-600">
+      <div class="px-4 py-1 bg-header-50 border-t border-header-200 text-sm text-header-900">
         {{ t('presence.total_players', { count: presenceStore.players.length }) }}
       </div>
     </div>
@@ -640,7 +640,7 @@ const formatDate = (dateStr: string) => {
             </span>
             <span
               class="px-2 py-1 text-xs font-medium rounded"
-              :class="player.capitaine === 'C' ? 'bg-warning-200 text-warning-800' : 'bg-header-100 text-header-600'"
+              :class="player.capitaine === 'C' ? 'bg-warning-200 text-warning-800' : 'bg-header-200 text-header-900'"
             >
               {{ statusLabel(player.capitaine) }}
             </span>
@@ -649,19 +649,19 @@ const formatDate = (dateStr: string) => {
 
         <div class="space-y-1 text-sm">
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.club') }}:</span>
+            <span class="text-header-600">{{ t('common.club') }}:</span>
             <span>{{ player.numeroClub }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.category') }}:</span>
+            <span class="text-header-600">{{ t('common.category') }}:</span>
             <span>{{ player.categ }}-{{ player.sexe }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.paddle') }}:</span>
+            <span class="text-header-600">{{ t('common.paddle') }}:</span>
             <span :class="player.pagaieValide === 0 ? 'text-danger-600' : ''">{{ player.pagaieLabel }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.certificate') }}:</span>
+            <span class="text-header-600">{{ t('common.certificate') }}:</span>
             <span :class="player.certifCK === 'OUI' ? 'text-success-500' : 'text-danger-600'">
               {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
             </span>
@@ -732,7 +732,7 @@ const formatDate = (dateStr: string) => {
         <div class="flex gap-2">
           <button
             class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="copyScope === 'day' ? 'bg-primary-600 text-white' : 'bg-header-100 text-header-700 hover:bg-header-200'"
+            :class="copyScope === 'day' ? 'bg-primary-600 text-white' : 'bg-header-200 text-header-900 hover:bg-header-200'"
             @click="copyScope = 'day'"
           >
             {{ t('presence.scope_day') }}
@@ -740,7 +740,7 @@ const formatDate = (dateStr: string) => {
           <button
             v-if="canCopyToCompetition"
             class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="copyScope === 'competition' ? 'bg-primary-600 text-white' : 'bg-header-100 text-header-700 hover:bg-header-200'"
+            :class="copyScope === 'competition' ? 'bg-primary-600 text-white' : 'bg-header-200 text-header-900 hover:bg-header-200'"
             @click="copyScope = 'competition'"
           >
             {{ t('presence.scope_competition') }}
@@ -748,7 +748,7 @@ const formatDate = (dateStr: string) => {
         </div>
 
         <!-- Match list -->
-        <div v-if="copyableMatches.length === 0" class="text-center py-4 text-sm text-header-500">
+        <div v-if="copyableMatches.length === 0" class="text-center py-4 text-sm text-header-600">
           {{ t('presence.no_copyable_matches') }}
         </div>
         <div v-else class="space-y-2 max-h-64 overflow-y-auto">
@@ -767,7 +767,7 @@ const formatDate = (dateStr: string) => {
               <div class="font-medium text-header-900">
                 {{ match.equipeA }} vs {{ match.equipeB }}
               </div>
-              <div class="text-header-500">
+              <div class="text-header-600">
                 {{ formatDate(match.dateMatch) }} {{ match.heureMatch }} &bull; {{ t('games.field.terrain') }} {{ match.terrain }}
               </div>
             </div>
@@ -778,7 +778,7 @@ const formatDate = (dateStr: string) => {
       <div class="mt-6 flex justify-end gap-3">
         <button
           type="button"
-          class="px-4 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="px-4 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           @click="copyToMatchesModalOpen = false"
         >
           {{ t('common.cancel') }}
@@ -811,7 +811,7 @@ const formatDate = (dateStr: string) => {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.select_player') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.select_player') }}</label>
             <select
               v-model="addFormData.matric"
               class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -828,7 +828,7 @@ const formatDate = (dateStr: string) => {
         <div class="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            class="px-4 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+            class="px-4 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
             @click="addModalOpen = false"
           >
             {{ t('common.cancel') }}

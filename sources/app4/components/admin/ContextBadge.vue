@@ -11,12 +11,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="workContext.hasValidContext" class="flex items-center gap-2 text-sm text-header-600 mb-4">
+  <div v-if="workContext.hasValidContext" class="flex items-center gap-2 text-sm text-header-900 dark:text-header-300 mb-4">
     <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
     <span>{{ t('context.season') }}: <strong>{{ workContext.season }}</strong></span>
-    <span class="text-header-400">|</span>
+    <span class="text-header-600 dark:text-header-600">|</span>
     <span>{{ workContext.contextLabel }}</span>
-    <span class="text-header-400">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
+    <span class="text-header-600 dark:text-header-600">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
     <NuxtLink to="/" class="text-primary-600 hover:underline text-xs ml-2">
       {{ t('context.change') }}
     </NuxtLink>
