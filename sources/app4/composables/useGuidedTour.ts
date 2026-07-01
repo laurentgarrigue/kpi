@@ -25,7 +25,10 @@ function setSeenVersion(tourId: string, version: number): void {
   localStorage.setItem(storageKey(tourId), String(version))
 }
 
-export const useTour = (tourId: string = 'welcome') => {
+// NOTE: named useGuidedTour (not useTour) to avoid a Nuxt auto-import collision with
+// @nuxt/ui's own useTour composable, which otherwise shadowed this one in the prod
+// build and made maybeAutoStart/startTour undefined ("... is not a function").
+export const useGuidedTour = (tourId: string = 'welcome') => {
   const { t } = useI18n()
   const router = useRouter()
 
