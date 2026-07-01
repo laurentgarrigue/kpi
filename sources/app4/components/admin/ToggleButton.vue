@@ -43,7 +43,7 @@ const sizeClasses = {
   <button
     :class="[
       'p-1 transition-colors',
-      active ? activeColorClasses[activeColor] : 'text-header-400',
+      active ? activeColorClasses[activeColor] : 'text-header-600',
       disabled ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'
     ]"
     :title="active ? activeTitle : inactiveTitle"

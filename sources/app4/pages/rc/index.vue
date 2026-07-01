@@ -319,7 +319,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
         <!-- Copy RC button -->
         <button
           v-if="canCopy"
-          class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
+          class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
           @click="openCopyModal"
         >
           <UIcon name="heroicons:document-duplicate" class="w-4 h-4" />
@@ -341,19 +341,19 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
                 @change="selectedIds = selectedIds.length === filteredRc.length ? [] : filteredRc.map(r => r.id)"
               >
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">
               {{ t('rc.field.competition') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">
               {{ t('rc.field.ordre') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">
               {{ t('common.last_name') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">
               {{ t('common.first_name') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">
               {{ t('rc.field.licence') }}
             </th>
             <th v-if="canEdit" class="w-16 px-3 py-3" />
@@ -386,7 +386,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
             <td class="px-3 py-4 text-sm text-header-900">
               {{ formatPrenom(rc.prenom) }}
             </td>
-            <td class="px-3 py-4 text-sm text-header-500 font-mono">
+            <td class="px-3 py-4 text-sm text-header-600 font-mono">
               {{ rc.matric }}
             </td>
             <td v-if="canEdit" class="px-3 py-4" @click.stop>
@@ -398,7 +398,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
             </td>
           </tr>
           <tr v-if="filteredRc.length === 0">
-            <td :colspan="canDelete ? 7 : 6" class="px-3 py-8 text-center text-sm text-header-500">
+            <td :colspan="canDelete ? 7 : 6" class="px-3 py-8 text-center text-sm text-header-600">
               {{ loading ? t('common.loading') : t('rc.no_results') }}
             </td>
           </tr>
@@ -406,7 +406,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
       </table>
 
       <!-- Footer -->
-      <div class="px-4 py-3 bg-header-50 border-t border-header-200 text-sm text-header-600">
+      <div class="px-4 py-3 bg-header-50 border-t border-header-200 text-sm text-header-900">
         {{ t('rc.total', { count: filteredRc.length }) }}
       </div>
     </div>
@@ -424,13 +424,13 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
         <template #header>
           <div>
             <div class="font-bold">{{ formatNom(rc.nom) }} {{ formatPrenom(rc.prenom) }}</div>
-            <div class="text-sm text-header-500">{{ rc.competitionLabel }}</div>
+            <div class="text-sm text-header-600">{{ rc.competitionLabel }}</div>
           </div>
         </template>
 
         <div class="space-y-1 text-sm">
-          <div><span class="text-header-500">{{ t('rc.field.ordre') }}:</span> {{ rc.ordre }}</div>
-          <div><span class="text-header-500">{{ t('rc.field.licence') }}:</span> {{ rc.matric }}</div>
+          <div><span class="text-header-600">{{ t('rc.field.ordre') }}:</span> {{ rc.ordre }}</div>
+          <div><span class="text-header-600">{{ t('rc.field.licence') }}:</span> {{ rc.matric }}</div>
         </div>
       </AdminCard>
     </AdminCardList>
@@ -451,7 +451,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 
         <!-- Player search -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.field.search_person') }} *
           </label>
           <AdminPlayerAutocomplete
@@ -463,20 +463,20 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 
         <!-- Season (readonly) -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.field.season') }}
           </label>
           <input
             v-model="formData.season"
             type="text"
             readonly
-            class="w-full px-3 py-2 border border-header-300 rounded-lg bg-header-100"
+            class="w-full px-3 py-2 border border-header-300 rounded-lg bg-header-200"
           >
         </div>
 
         <!-- Competition -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.field.competition') }}
           </label>
           <AdminCompetitionGroupedSelect
@@ -487,7 +487,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 
         <!-- Ordre -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.field.ordre') }} *
           </label>
           <input
@@ -504,7 +504,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
         <div class="flex justify-end gap-2 pt-4 border-t">
           <button
             type="button"
-            class="px-4 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+            class="px-4 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
             @click="addModalOpen = false; editModalOpen = false"
           >
             {{ t('common.cancel') }}
@@ -535,7 +535,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 
         <!-- Source season -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.copy_source') }}
           </label>
           <select
@@ -552,7 +552,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 
         <!-- Target season -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('rc.copy_target') }}
           </label>
           <select
@@ -582,7 +582,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
         <div class="flex justify-end gap-2 pt-4 border-t">
           <button
             type="button"
-            class="px-4 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+            class="px-4 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
             @click="copyModalOpen = false"
           >
             {{ t('common.cancel') }}

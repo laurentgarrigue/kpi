@@ -814,10 +814,10 @@ const globalPdfControlUrl = computed(() => `${legacyBase.value}/admin/FeuilleCon
 // Status badge colors
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'ATT': return 'bg-header-500 text-header-50 italic'
+    case 'ATT': return 'bg-header-600 text-header-50 italic'
     case 'ON': return 'bg-success-500 text-success-50 italic'
     case 'END': return 'bg-primary-900 text-primary-50 italic'
-    default: return 'bg-header-400 text-header-50'
+    default: return 'bg-header-600 text-header-50'
   }
 }
 
@@ -826,7 +826,7 @@ const getLevelColor = (level: string) => {
     case 'INT': return 'bg-purple-100 text-purple-800'
     case 'NAT': return 'bg-primary-100 text-primary-800'
     case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-100 text-header-800'
+    default: return 'bg-header-200 text-header-900'
   }
 }
 
@@ -886,7 +886,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           >
             {{ competitionInfo.codeNiveau }}
           </span>
-          <span class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900">
+          <span class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900">
             {{ competitionInfo.codeTypeclt }}
           </span>
           <span
@@ -900,7 +900,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           <button
             v-if="canManageSpecialOps"
             class="p-1.5 rounded-lg transition-colors"
-            :class="competitionInfo.verrou ? 'text-danger-600 hover:bg-danger-50' : 'text-header-600 hover:bg-header-50'"
+            :class="competitionInfo.verrou ? 'text-danger-600 hover:bg-danger-50' : 'text-header-900 hover:bg-header-50'"
             :title="competitionInfo.verrou ? t('teams_page.locked') : t('teams_page.unlocked')"
             @click="toggleLock"
           >
@@ -928,7 +928,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
     </AdminPageHeader>
 
     <!-- No competition selected -->
-    <div v-if="!workContext.pageCompetitionCode" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+    <div v-if="!workContext.pageCompetitionCode" class="bg-white rounded-lg shadow p-8 text-center text-header-900">
       {{ t('teams_page.no_competition') }}
     </div>
 
@@ -1030,13 +1030,13 @@ const getLogoUrl = (team: CompetitionTeam) => {
       </div>
 
       <!-- Loading state -->
-      <div v-if="loading && teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+      <div v-if="loading && teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-900">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
         {{ t('common.loading') }}
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+      <div v-else-if="teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-900">
         {{ t('teams_page.empty') }}
       </div>
 
@@ -1044,7 +1044,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
       <div v-else class="space-y-4">
         <div v-for="group in teamsByPool" :key="group.pool" class="bg-white rounded-lg shadow overflow-hidden">
           <!-- Pool header -->
-          <div class="px-4 py-2 bg-header-100 border-b border-header-200">
+          <div class="px-4 py-2 bg-header-200 border-b border-header-200">
             <h3 class="text-sm font-semibold text-header-900">
               {{ group.label }}
             </h3>
@@ -1186,7 +1186,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   </td>
 
                   <!-- Club -->
-                  <td class="px-3 py-2 text-sm text-header-500 text-center">
+                  <td class="px-3 py-2 text-sm text-header-600 text-center">
                     <NuxtLink
                       :to="`/clubs?code=${team.codeClub}`"
                       class="link-value"
@@ -1218,7 +1218,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     <div class="flex items-center justify-center gap-1">
                       <!-- Presence sheet dropdown -->
                       <button
-                        class="presence-dropdown-trigger p-1 text-header-600 hover:bg-header-50 rounded"
+                        class="presence-dropdown-trigger p-1 text-header-900 hover:bg-header-50 rounded"
                         :title="t('teams_page.columns.pdf')"
                         @click="togglePresenceDropdown(team.id, $event)"
                       >
@@ -1291,7 +1291,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
                 <div class="flex-1 min-w-0">
                   <div class="font-medium text-header-900">{{ team.libelle }}</div>
-                  <div class="flex flex-wrap items-center gap-2 text-xs text-header-500 mt-1">
+                  <div class="flex flex-wrap items-center gap-2 text-xs text-header-600 mt-1">
                     <!-- Poule inline edit (mobile) -->
                     <template v-if="showPoolDrawColumns">
                       <template v-if="editingCell?.id === team.id && editingCell.field === 'poule'">
@@ -1350,7 +1350,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     <UIcon name="heroicons:user-group" class="w-6 h-6" />
                   </NuxtLink>
                   <button
-                    class="presence-dropdown-trigger p-1 text-header-600"
+                    class="presence-dropdown-trigger p-1 text-header-900"
                     :title="t('teams_page.presence_sheet')"
                     @click="togglePresenceDropdown(team.id, $event)"
                   >
@@ -1485,7 +1485,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-              :class="addFormTab === 'history' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-500 hover:text-header-900'"
+              :class="addFormTab === 'history' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 hover:text-header-900'"
               @click="addFormTab = 'history'; addFormData.mode = 'history'; focusHistorySearch()"
             >
               {{ t('teams_page.add_modal.tab_history') }}
@@ -1493,7 +1493,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-              :class="addFormTab === 'manual' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-500 hover:text-header-900'"
+              :class="addFormTab === 'manual' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 hover:text-header-900'"
               @click="addFormTab = 'manual'; addFormData.mode = 'manual'; focusManualLibelle()"
             >
               {{ t('teams_page.add_modal.tab_manual') }}
@@ -1504,7 +1504,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           <template v-if="addFormTab === 'manual'">
             <!-- Team name -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('teams_page.add_modal.libelle') }} <span class="text-danger-500">*</span>
               </label>
               <div class="relative">
@@ -1520,7 +1520,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="addFormData.libelle"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-900"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                   @click="addFormData.libelle = ''; focusManualLibelle()"
                 >
                   <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -1530,7 +1530,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
             <!-- Club autocomplete -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('teams_page.add_modal.club') }}
               </label>
               <div class="relative">
@@ -1544,7 +1544,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="clubSearchQuery"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-900"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                   @click="clearClubSearch"
                 >
                   <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -1567,7 +1567,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
               <!-- Club filters (collapsible) -->
               <details class="mt-2">
-                <summary class="text-xs text-header-500 cursor-pointer hover:text-header-900">
+                <summary class="text-xs text-header-600 cursor-pointer hover:text-header-900">
                   {{ t('teams_page.add_modal.filter_cr') }} / {{ t('teams_page.add_modal.filter_cd') }}
                 </summary>
                 <div class="mt-2 grid grid-cols-3 gap-2">
@@ -1624,7 +1624,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="historySearchQuery"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-900"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                   @click="historySearchQuery = ''; historySearchResults = []; focusHistorySearch()"
                 >
                   <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -1636,7 +1636,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <div v-if="historySearchResults.length > 0" class="border border-header-200 rounded-lg max-h-60 overflow-y-auto">
               <!-- France teams -->
               <div v-if="historySearchResults.filter(t => !t.international).length > 0">
-                <div class="px-3 py-1 bg-header-50 text-xs font-medium text-header-500 uppercase sticky top-0">
+                <div class="px-3 py-1 bg-header-50 text-xs font-medium text-header-600 uppercase sticky top-0">
                   {{ t('teams_page.add_modal.france') }}
                 </div>
                 <div
@@ -1651,13 +1651,13 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     class="w-4 h-4 rounded border-header-300 text-primary-600 pointer-events-none"
                   >
                   <span class="text-sm flex-1">{{ ht.libelle }}</span>
-                  <span class="text-xs text-header-400">{{ ht.codeClub }}</span>
+                  <span class="text-xs text-header-600">{{ ht.codeClub }}</span>
                 </div>
               </div>
 
               <!-- International teams -->
               <div v-if="historySearchResults.filter(t => t.international).length > 0">
-                <div class="px-3 py-1 bg-header-50 text-xs font-medium text-header-600 uppercase sticky top-0">
+                <div class="px-3 py-1 bg-header-50 text-xs font-medium text-header-900 uppercase sticky top-0">
                   {{ t('teams_page.add_modal.international') }}
                 </div>
                 <div
@@ -1672,7 +1672,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     class="w-4 h-4 rounded border-header-300 text-primary-600 pointer-events-none"
                   >
                   <span class="text-sm flex-1">{{ ht.libelle }}</span>
-                  <span class="text-xs text-header-400">{{ ht.codeClub }}</span>
+                  <span class="text-xs text-header-600">{{ ht.codeClub }}</span>
                 </div>
               </div>
             </div>
@@ -1716,7 +1716,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     {{ comp.season }} - {{ comp.competitionLibelle }} ({{ t('teams_page.add_modal.players', { count: comp.playerCount }) }})
                   </option>
                 </select>
-                <p v-if="compositions.length === 0 && !compositionsLoading" class="text-xs text-header-400 mt-1">
+                <p v-if="compositions.length === 0 && !compositionsLoading" class="text-xs text-header-600 mt-1">
                   {{ t('teams_page.add_modal.no_compositions') }}
                 </p>
               </div>
@@ -1752,7 +1752,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="addModalOpen = false"
           >
             {{ t('common.cancel') }}
@@ -1796,7 +1796,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           <!-- Team name (read only) -->
           <div>
             <label class="block text-sm font-medium text-header-900 mb-1">{{ t('teams_page.columns.equipe') }}</label>
-            <div class="px-3 py-2 bg-header-100 rounded-lg font-medium">{{ editingTeam?.libelle }}</div>
+            <div class="px-3 py-2 bg-header-200 rounded-lg font-medium">{{ editingTeam?.libelle }}</div>
           </div>
 
           <!-- Logo -->
@@ -1817,7 +1817,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 class="h-30 max-w-30 object-contain border border-header-100 rounded"
                 @error="($event.target as HTMLImageElement).style.opacity = '0.3'"
               >
-              <div class="text-xs text-header-400">{{ colorsFormData.logo }}</div>
+              <div class="text-xs text-header-600">{{ colorsFormData.logo }}</div>
             </div>
           </div>
 
@@ -1890,7 +1890,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="editModalOpen = false"
           >
             {{ t('common.cancel') }}
@@ -1967,7 +1967,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="duplicateModalOpen = false"
           >
             {{ t('common.cancel') }}

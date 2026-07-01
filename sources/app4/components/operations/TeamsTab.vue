@@ -337,7 +337,7 @@ const confirmMove = async () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -353,7 +353,7 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Team search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.team') }}
           </label>
           <input
@@ -376,21 +376,21 @@ const confirmMove = async () => {
               @click="selectRenameTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- New name -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.new_name') }}
           </label>
           <input
             v-model="newTeamName"
             type="text"
             :disabled="!selectedRenameTeam"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-header-100"
+            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 disabled:bg-header-200"
           >
         </div>
       </div>
@@ -409,7 +409,7 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Source team -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.source_team') }}
           </label>
           <input
@@ -432,14 +432,14 @@ const confirmMove = async () => {
               @click="selectMergeSource(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- Target team -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.target_team') }}
           </label>
           <input
@@ -462,7 +462,7 @@ const confirmMove = async () => {
               @click="selectMergeTarget(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -482,7 +482,7 @@ const confirmMove = async () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Team search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.team') }}
           </label>
           <input
@@ -505,14 +505,14 @@ const confirmMove = async () => {
               @click="selectMoveTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-500">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-xs text-header-600">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
 
         <!-- Club search -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.teams.target_club') }}
           </label>
           <input
@@ -535,7 +535,7 @@ const confirmMove = async () => {
               @click="selectMoveClub(club)"
             >
               <div class="font-medium">{{ club.nom }}</div>
-              <div class="text-xs text-header-500">{{ club.numero }} - {{ club.departement }}</div>
+              <div class="text-xs text-header-600">{{ club.numero }} - {{ club.departement }}</div>
             </button>
           </div>
         </div>
@@ -552,7 +552,7 @@ const confirmMove = async () => {
 
     <!-- Competition locks -->
     <section v-if="activeSubTab === 'locks'">
-      <p class="text-sm text-header-600 mb-4">
+      <p class="text-sm text-header-900 mb-4">
         {{ t('operations.import_export.locks_description') }}
       </p>
       <button

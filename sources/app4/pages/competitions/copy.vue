@@ -120,7 +120,7 @@ const getLevelColor = (level: string) => {
     case 'INT': return 'bg-purple-100 text-purple-800'
     case 'NAT': return 'bg-primary-100 text-primary-800'
     case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-100 text-header-800'
+    default: return 'bg-header-200 text-header-900'
   }
 }
 
@@ -304,7 +304,7 @@ onMounted(async () => {
       <div class="flex flex-wrap gap-4 items-end">
         <!-- Nb Equipes -->
         <div class="w-32">
-          <label class="block text-xs font-medium text-header-500 mb-1">
+          <label class="block text-xs font-medium text-header-600 mb-1">
             {{ t('competitionCopy.search.nbEquipes') }}
           </label>
           <input
@@ -318,7 +318,7 @@ onMounted(async () => {
 
         <!-- Type filter -->
         <div class="w-40">
-          <label class="block text-xs font-medium text-header-500 mb-1">
+          <label class="block text-xs font-medium text-header-600 mb-1">
             {{ t('competitionCopy.search.type') }}
           </label>
           <select
@@ -333,7 +333,7 @@ onMounted(async () => {
 
         <!-- Sort -->
         <div class="w-40">
-          <label class="block text-xs font-medium text-header-500 mb-1">
+          <label class="block text-xs font-medium text-header-600 mb-1">
             {{ t('competitionCopy.search.sortBy') }}
           </label>
           <select
@@ -373,21 +373,21 @@ onMounted(async () => {
         <table class="w-full text-sm">
           <thead class="bg-header-50 border-b border-header-200">
             <tr>
-              <th class="px-3 py-2 text-left font-medium text-header-600">{{ t('competitionCopy.table.season') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-600">{{ t('competitionCopy.table.code') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.type') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-600">{{ t('competitionCopy.table.level') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-600">{{ t('competitionCopy.table.label') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.teams') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.pitches') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.rounds') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.phases') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.matches') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.encoded') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.info') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.viewSchema') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.switchTo') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-600">{{ t('competitionCopy.table.copyTo') }}</th>
+              <th class="px-3 py-2 text-left font-medium text-header-900">{{ t('competitionCopy.table.season') }}</th>
+              <th class="px-3 py-2 text-left font-medium text-header-900">{{ t('competitionCopy.table.code') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.type') }}</th>
+              <th class="px-3 py-2 text-left font-medium text-header-900">{{ t('competitionCopy.table.level') }}</th>
+              <th class="px-3 py-2 text-left font-medium text-header-900">{{ t('competitionCopy.table.label') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.teams') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.pitches') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.rounds') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.phases') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.matches') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.encoded') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.info') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.viewSchema') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.switchTo') }}</th>
+              <th class="px-3 py-2 text-center font-medium text-header-900">{{ t('competitionCopy.table.copyTo') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -399,7 +399,7 @@ onMounted(async () => {
               <td class="px-3 py-2 text-header-900 font-medium">{{ schema.season }}</td>
               <td class="px-3 py-2 text-header-900 font-mono text-xs">{{ schema.code }}</td>
               <td class="px-3 py-2 text-center">
-                <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-header-100 text-header-700">
+                <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-header-200 text-header-900">
                   {{ schema.codeTypeclt }}
                 </span>
               </td>
@@ -409,29 +409,29 @@ onMounted(async () => {
                 </span>
               </td>
               <td class="px-3 py-2">
-                <div v-for="(line, idx) in getDisplayLabel(schema)" :key="idx" class="text-header-900" :class="idx > 0 ? 'text-header-500 text-xs' : ''">
+                <div v-for="(line, idx) in getDisplayLabel(schema)" :key="idx" class="text-header-900" :class="idx > 0 ? 'text-header-600 text-xs' : ''">
                   {{ line }}
                 </div>
-                <div v-if="schema.codeTour === '10'" class="text-xs text-header-500 italic">
+                <div v-if="schema.codeTour === '10'" class="text-xs text-header-600 italic">
                   {{ t('competitionCopy.table.final') }}
                 </div>
               </td>
-              <td class="px-3 py-2 text-center text-header-700">{{ schema.nbEquipes }}</td>
-              <td class="px-3 py-2 text-center text-header-700">{{ schema.nbTerrains }}</td>
-              <td class="px-3 py-2 text-center text-header-700">{{ schema.nbTours }}</td>
-              <td class="px-3 py-2 text-center text-header-700">{{ schema.nbPhases }}</td>
-              <td class="px-3 py-2 text-center text-header-700 font-medium">{{ schema.nbMatchs }}</td>
+              <td class="px-3 py-2 text-center text-header-900">{{ schema.nbEquipes }}</td>
+              <td class="px-3 py-2 text-center text-header-900">{{ schema.nbTerrains }}</td>
+              <td class="px-3 py-2 text-center text-header-900">{{ schema.nbTours }}</td>
+              <td class="px-3 py-2 text-center text-header-900">{{ schema.nbPhases }}</td>
+              <td class="px-3 py-2 text-center text-header-900 font-medium">{{ schema.nbMatchs }}</td>
               <td class="px-3 py-2 text-center">
                 <UIcon
                   :name="schema.matchsEncodes ? 'i-heroicons-check-circle-solid' : 'i-heroicons-x-circle-solid'"
                   class="w-6 h-6"
-                  :class="schema.matchsEncodes ? 'text-success-500' : 'text-header-400'"
+                  :class="schema.matchsEncodes ? 'text-success-500' : 'text-header-600'"
                 />
               </td>
               <td class="px-3 py-2 text-center">
                 <button
                   class="p-1 rounded hover:bg-header-200 transition-colors"
-                  :class="schema.commentaires ? 'text-primary-600' : 'text-header-400'"
+                  :class="schema.commentaires ? 'text-primary-600' : 'text-header-600'"
                   :title="schema.commentaires || t('competitionCopy.table.info')"
                   @click="openCommentModal(schema)"
                 >
@@ -475,12 +475,12 @@ onMounted(async () => {
         </table>
 
         <!-- No results -->
-        <div v-if="schemas.length === 0 && !searchLoading" class="px-4 py-8 text-center text-header-500">
+        <div v-if="schemas.length === 0 && !searchLoading" class="px-4 py-8 text-center text-header-600">
           {{ t('competitionCopy.table.noResults') }}
         </div>
 
         <!-- Loading -->
-        <div v-if="searchLoading" class="px-4 py-8 text-center text-header-500">
+        <div v-if="searchLoading" class="px-4 py-8 text-center text-header-600">
           <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin mx-auto" />
         </div>
       </div>
@@ -501,7 +501,7 @@ onMounted(async () => {
         />
         <div class="flex justify-end gap-3">
           <button
-            class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors"
+            class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200 transition-colors"
             @click="commentModalOpen = false"
           >
             {{ t('competitionCopy.comments.cancel') }}
@@ -524,15 +524,15 @@ onMounted(async () => {
       max-width="xl"
       @close="copyModalOpen = false"
     >
-      <div v-if="copyOriginLoading" class="py-8 text-center text-header-500">
+      <div v-if="copyOriginLoading" class="py-8 text-center text-header-600">
         <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin mx-auto" />
       </div>
 
       <div v-else-if="copyOrigin" class="space-y-6">
         <!-- Origin summary -->
         <div class="bg-header-50 border border-header-200 rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('competitionCopy.copy.origin') }}</h3>
-          <div class="flex flex-wrap gap-3 text-sm text-header-600">
+          <h3 class="text-sm font-semibold text-header-900 mb-2">{{ t('competitionCopy.copy.origin') }}</h3>
+          <div class="flex flex-wrap gap-3 text-sm text-header-900">
             <span class="font-medium text-header-900">{{ copyOrigin.season }}</span>
             <span class="font-mono">{{ copyOrigin.code }}</span>
             <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-header-200">{{ copyOrigin.codeTypeclt }}</span>
@@ -541,8 +541,8 @@ onMounted(async () => {
           </div>
           <!-- Phases -->
           <div v-if="copyOrigin.journees.length > 0" class="mt-2">
-            <span class="text-xs font-medium text-header-500">{{ t('competitionCopy.copy.phases') }}:</span>
-            <span class="text-xs text-header-600 ml-1">
+            <span class="text-xs font-medium text-header-600">{{ t('competitionCopy.copy.phases') }}:</span>
+            <span class="text-xs text-header-900 ml-1">
               {{ copyOrigin.journees.map(j => j.phase).join(' > ') }}
             </span>
           </div>
@@ -550,11 +550,11 @@ onMounted(async () => {
 
         <!-- Destination -->
         <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-header-700 mb-3">{{ t('competitionCopy.copy.destination') }}</h3>
+          <h3 class="text-sm font-semibold text-header-900 mb-3">{{ t('competitionCopy.copy.destination') }}</h3>
           <div class="flex flex-wrap gap-4 items-end">
             <!-- Season -->
             <div class="w-32">
-              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('competitionCopy.copy.season') }}</label>
+              <label class="block text-xs font-medium text-header-600 mb-1">{{ t('competitionCopy.copy.season') }}</label>
               <select
                 v-model="copyDestSeason"
                 class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -566,7 +566,7 @@ onMounted(async () => {
             </div>
             <!-- Competition -->
             <div class="flex-1 min-w-48">
-              <label class="block text-xs font-medium text-header-500 mb-1">{{ t('competitionCopy.copy.competition') }}</label>
+              <label class="block text-xs font-medium text-header-600 mb-1">{{ t('competitionCopy.copy.competition') }}</label>
               <select
                 v-model="copyDestCompetition"
                 class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -582,7 +582,7 @@ onMounted(async () => {
             </div>
           </div>
           <!-- Destination info -->
-          <div v-if="selectedDestCompetition" class="mt-2 flex flex-wrap gap-3 text-xs text-header-600">
+          <div v-if="selectedDestCompetition" class="mt-2 flex flex-wrap gap-3 text-xs text-header-900">
             <span>{{ t('competitionCopy.copy.type') }}: <strong>{{ selectedDestCompetition.codeTypeclt }}</strong></span>
             <span>{{ selectedDestCompetition.nbEquipes }} {{ t('competitionCopy.copy.teams') }}</span>
             <span>{{ t('competitionCopy.copy.qualified') }}: {{ selectedDestCompetition.qualifies }}</span>
@@ -592,29 +592,29 @@ onMounted(async () => {
 
         <!-- Common values -->
         <div class="border border-header-200 rounded-lg p-4">
-          <h3 class="text-sm font-semibold text-header-700 mb-1">{{ t('competitionCopy.copy.commonValues') }}</h3>
-          <p v-if="!isCpDestination" class="text-xs text-header-500 mb-4 flex items-center gap-1">
+          <h3 class="text-sm font-semibold text-header-900 mb-1">{{ t('competitionCopy.copy.commonValues') }}</h3>
+          <p v-if="!isCpDestination" class="text-xs text-header-600 mb-4 flex items-center gap-1">
             <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
             {{ t('competitionCopy.copy.commonValuesHelp') }}
           </p>
-          <p v-else class="text-xs text-header-500 mb-4 flex items-center gap-1">
+          <p v-else class="text-xs text-header-600 mb-4 flex items-center gap-1">
             <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
             {{ t('competitionCopy.copy.commonValuesHelpCp') }}
           </p>
 
           <!-- Public params -->
-          <p class="text-xs font-medium text-header-500 mb-2">{{ t('competitionCopy.copy.publicParams') }}</p>
+          <p class="text-xs font-medium text-header-600 mb-2">{{ t('competitionCopy.copy.publicParams') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.dateDebut') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.dateDebut') }}</label>
               <input v-model="copyDateDebut" type="date" class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.dateFin') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.dateFin') }}</label>
               <input v-model="copyDateFin" type="date" class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.lieu') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.lieu') }}</label>
               <AdminTextAutocomplete
                 :model-value="copyLieu"
                 api-url="/admin/gamedays/autocomplete/communes"
@@ -627,24 +627,24 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.departement') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.departement') }}</label>
               <input v-model="copyDepartement" type="text" maxlength="3" class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm uppercase focus:ring-2 focus:ring-primary-500">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.nom') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.nom') }}</label>
               <input v-model="copyNom" type="text" class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.planEau') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.planEau') }}</label>
               <input v-model="copyPlanEau" type="text" class="w-full px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
           </div>
 
           <!-- Responsables -->
-          <p class="text-xs font-medium text-header-500 mb-2">{{ t('competitionCopy.copy.responsables') }}</p>
+          <p class="text-xs font-medium text-header-600 mb-2">{{ t('competitionCopy.copy.responsables') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.organisateur') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.organisateur') }}</label>
               <AdminTextAutocomplete
                 :model-value="copyOrganisateur"
                 api-url="/admin/clubs/search-all"
@@ -656,7 +656,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.responsableR1') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.responsableR1') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyRespR1"
                 :placeholder="t('competitionCopy.copy.responsableR1')"
@@ -664,7 +664,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.responsableInsc') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.responsableInsc') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyRespInsc"
                 :placeholder="t('competitionCopy.copy.responsableInsc')"
@@ -672,7 +672,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-500 mb-1">{{ t('competitionCopy.copy.delegue') }}</label>
+              <label class="block text-xs text-header-600 mb-1">{{ t('competitionCopy.copy.delegue') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyDelegue"
                 :placeholder="t('competitionCopy.copy.delegue')"
@@ -691,7 +691,7 @@ onMounted(async () => {
             class="mt-0.5 rounded border-header-300 text-primary-600 focus:ring-primary-500"
           >
           <div>
-            <label for="initPremierTour" class="text-sm text-header-700 cursor-pointer">
+            <label for="initPremierTour" class="text-sm text-header-900 cursor-pointer">
               {{ t('competitionCopy.copy.initFirstRound') }}
             </label>
             <p class="text-xs text-amber-600 mt-0.5">
@@ -703,7 +703,7 @@ onMounted(async () => {
         <!-- Actions -->
         <div class="flex justify-end gap-3 pt-2 border-t border-header-200">
           <button
-            class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors"
+            class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200 transition-colors"
             @click="copyModalOpen = false"
           >
             {{ t('competitionCopy.copy.cancel') }}

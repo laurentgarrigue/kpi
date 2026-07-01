@@ -207,7 +207,7 @@ const removeImage = () => {
         @error="($event.target as HTMLImageElement).style.display='none'"
       >
       <div class="flex items-center justify-between gap-2">
-        <span class="text-xs text-header-600 font-mono truncate">{{ modelValue }}</span>
+        <span class="text-xs text-header-900 font-mono truncate">{{ modelValue }}</span>
         <button
           v-if="!disabled"
           type="button"
@@ -230,7 +230,7 @@ const removeImage = () => {
             'px-3 py-1.5 text-xs font-medium rounded-t transition-colors',
             mode === m
               ? 'bg-white border border-b-white border-header-200 -mb-px text-primary-700'
-              : 'text-header-500 hover:text-header-700'
+              : 'text-header-600 hover:text-header-900'
           ]"
           @click="mode = m"
         >
@@ -251,13 +251,13 @@ const removeImage = () => {
           class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2"
         >
         <div class="border border-header-200 rounded-lg overflow-hidden">
-          <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-500 text-center italic">
+          <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-600 text-center italic">
             {{ t('competitions.images.search_min_chars') }}
           </div>
-          <div v-else-if="listLoading" class="p-3 text-xs text-header-500 text-center">
+          <div v-else-if="listLoading" class="p-3 text-xs text-header-600 text-center">
             {{ t('competitions.images.loading') }}
           </div>
-          <div v-else-if="existingImages.length === 0" class="p-3 text-xs text-header-500 text-center">
+          <div v-else-if="existingImages.length === 0" class="p-3 text-xs text-header-600 text-center">
             {{ t('competitions.images.no_results') }}
           </div>
           <button
@@ -266,7 +266,7 @@ const removeImage = () => {
             type="button"
             :class="[
               'w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-header-50 transition-colors border-b border-header-100 last:border-b-0',
-              modelValue === img.filename ? 'bg-primary-50 text-primary-700 font-medium' : 'text-header-700'
+              modelValue === img.filename ? 'bg-primary-50 text-primary-700 font-medium' : 'text-header-900'
             ]"
             @click="selectExisting(img.filename)"
           >
@@ -278,7 +278,7 @@ const removeImage = () => {
             <UIcon
               v-else
               name="heroicons:document-solid"
-              class="w-3.5 h-3.5 text-header-400 shrink-0"
+              class="w-3.5 h-3.5 text-header-600 shrink-0"
             />
             <span class="font-mono truncate">{{ img.filename }}</span>
           </button>
@@ -302,13 +302,13 @@ const removeImage = () => {
           <button
             v-if="selectedFile"
             type="button"
-            class="text-header-500 hover:text-header-900"
+            class="text-header-600 hover:text-header-900"
             @click="clearFile"
           >
             <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
           </button>
         </div>
-        <p v-if="selectedFile" class="text-xs text-header-500 mt-1">
+        <p v-if="selectedFile" class="text-xs text-header-600 mt-1">
           {{ selectedFile.name }} ({{ Math.round(selectedFile.size / 1024) }} Ko)
         </p>
         <button

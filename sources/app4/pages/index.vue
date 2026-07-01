@@ -16,7 +16,7 @@ const authStore = useAuthStore()
       <h1 class="text-2xl font-bold text-header-900">
         {{ t('dashboard.title') }}
       </h1>
-      <p class="mt-1 text-sm text-header-500">
+      <p class="mt-1 text-sm text-header-600">
         {{ t('dashboard.welcome', { name: authStore.user?.firstname }) }}
       </p>
     </div>
@@ -40,7 +40,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.competition') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_competitions') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_competitions') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -57,7 +57,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.teams') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_teams') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_teams') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -74,7 +74,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.gamedays') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_gamedays') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_gamedays') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -91,7 +91,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.rankings') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_rankings') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_rankings') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -108,7 +108,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.documents') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_documents') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_documents') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -125,7 +125,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.matches') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_games') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_games') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -142,7 +142,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.statistics') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.view_statistics') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.view_statistics') }}</p>
           </div>
         </div>
       </NuxtLink>

@@ -52,11 +52,11 @@ const confirmPurge = async () => {
       <div class="bg-header-50 rounded-lg p-4">
         <div class="flex items-start gap-4">
           <div class="p-3 bg-white rounded-lg shadow-sm">
-            <UIcon name="i-heroicons-trash" class="w-6 h-6 text-header-600" />
+            <UIcon name="i-heroicons-trash" class="w-6 h-6 text-header-900" />
           </div>
           <div class="flex-1">
             <h3 class="font-medium text-header-900">{{ t('operations.system.purge_cache') }}</h3>
-            <p class="mt-1 text-sm text-header-600">{{ t('operations.system.purge_description') }}</p>
+            <p class="mt-1 text-sm text-header-900">{{ t('operations.system.purge_description') }}</p>
             <button
               :disabled="loading"
               class="mt-4 px-4 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

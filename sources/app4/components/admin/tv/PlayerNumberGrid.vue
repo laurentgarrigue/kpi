@@ -14,7 +14,7 @@ const numbers = Array.from({ length: 22 }, (_, i) => i)
         class="px-2 py-1 text-xs font-medium rounded border transition-colors"
         :class="modelValue === n
           ? 'bg-primary-600 text-white border-primary-600'
-          : 'bg-white text-header-700 border-header-300 hover:bg-header-100'"
+          : 'bg-white text-header-900 border-header-300 hover:bg-header-200'"
         @click="modelValue = n"
       >
         {{ n }}

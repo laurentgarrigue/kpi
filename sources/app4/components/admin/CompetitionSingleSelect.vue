@@ -112,7 +112,7 @@ function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre
 
 <template>
   <div>
-    <div v-if="!hasCompetitions" class="text-sm text-header-500 dark:text-header-400 italic">
+    <div v-if="!hasCompetitions" class="text-sm text-header-600 dark:text-header-600 italic">
       {{ t('context.no_competitions') }}
     </div>
 

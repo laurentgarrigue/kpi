@@ -85,7 +85,7 @@ function getLevelBadgeClass(level: string) {
     case 'INT': return 'bg-purple-100 text-purple-800'
     case 'NAT': return 'bg-primary-100 text-primary-800'
     case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-100 text-header-800'
+    default: return 'bg-header-200 text-header-900'
   }
 }
 
@@ -154,14 +154,14 @@ onMounted(async () => {
           >
             {{ data.competition.codeNiveau }}
           </span>
-          <span class="px-2 py-1 text-xs font-medium rounded uppercase bg-header-100 text-header-800">
+          <span class="px-2 py-1 text-xs font-medium rounded uppercase bg-header-200 text-header-900">
             {{ data.competition.codeTypeclt }}
           </span>
         </template>
 
         <!-- Toggles (CP only) -->
         <template v-if="isCp">
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-600 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showMatchCount"
@@ -170,7 +170,7 @@ onMounted(async () => {
             >
             {{ t('schema.show_game_count') }}
           </label>
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-600 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showTimeSlots"
@@ -184,7 +184,7 @@ onMounted(async () => {
         <!-- PDF button -->
         <button
           v-if="data"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
           @click="printPdf"
         >
           <UIcon name="heroicons:arrow-down-tray" class="w-4 h-4" />
@@ -193,7 +193,7 @@ onMounted(async () => {
 
         <!-- Close button -->
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
           @click="closeWindow"
         >
           <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -203,13 +203,13 @@ onMounted(async () => {
     </div>
 
     <!-- No params provided -->
-    <div v-if="!competitionCode || !season" class="bg-white rounded-lg shadow p-8 text-center text-header-500">
+    <div v-if="!competitionCode || !season" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
       {{ t('schema.no_competition') }}
     </div>
 
     <!-- Loading -->
     <div v-else-if="loading" class="bg-white rounded-lg shadow p-8 text-center">
-      <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-400 mx-auto" />
+      <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-600 mx-auto" />
     </div>
 
     <!-- Content -->
@@ -274,7 +274,7 @@ onMounted(async () => {
     </div>
 
     <!-- No data -->
-    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-500">
+    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-600">
       {{ t('schema.no_data') }}
     </div>
   </div>

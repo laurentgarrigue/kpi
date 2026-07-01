@@ -17,9 +17,9 @@ withDefaults(defineProps<Props>(), {
 
 const variantClasses = {
   primary: 'text-white bg-primary-600 border-primary-600 hover:bg-primary-700',
-  secondary: 'text-header-700 bg-white border-header-300 hover:bg-header-50',
+  secondary: 'text-header-900 bg-white border-header-300 hover:bg-header-50',
   danger: 'text-danger-700 bg-white border-danger-300 hover:bg-danger-50',
-  ghost: 'text-header-600 bg-transparent border-transparent hover:bg-header-100'
+  ghost: 'text-header-900 bg-transparent border-transparent hover:bg-header-200'
 }
 
 const sizeClasses = {

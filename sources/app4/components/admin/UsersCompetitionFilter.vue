@@ -127,7 +127,7 @@ watch(() => props.season, () => {
       <button
         v-if="modelValue.length > 0"
         type="button"
-        class="ml-auto text-header-400 dark:text-header-500 hover:text-header-600"
+        class="ml-auto text-header-600 dark:text-header-600 hover:text-header-900"
         @click="clear"
       >
         <UIcon name="i-heroicons-x-circle" class="w-4 h-4" />
@@ -140,9 +140,9 @@ watch(() => props.season, () => {
       class="absolute z-50 mt-1 w-full min-w-55 max-w-90 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg overflow-hidden"
     >
       <div v-if="isLoading" class="flex justify-center py-3">
-        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-400 dark:text-header-500" />
+        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-600 dark:text-header-600" />
       </div>
-      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-500 dark:text-header-400">
+      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-600 dark:text-header-600">
         {{ $t('common.no_results') }}
       </div>
       <ul v-else class="max-h-48 overflow-y-auto divide-y divide-header-100">
@@ -152,9 +152,9 @@ watch(() => props.season, () => {
           class="px-3 py-2 text-sm cursor-pointer hover:bg-primary-50"
           @mousedown.prevent="select(option)"
         >
-          <span class="font-medium text-header-800 dark:text-header-100">{{ option.code }}</span>
-          <span class="text-header-500 dark:text-header-400 ml-1">– {{ option.libelle }}</span>
-          <span v-if="!season" class="text-header-400 dark:text-header-500 text-xs ml-1">({{ option.season }})</span>
+          <span class="font-medium text-header-900 dark:text-header-100">{{ option.code }}</span>
+          <span class="text-header-600 dark:text-header-600 ml-1">– {{ option.libelle }}</span>
+          <span v-if="!season" class="text-header-600 dark:text-header-600 text-xs ml-1">({{ option.season }})</span>
         </li>
       </ul>
     </div>

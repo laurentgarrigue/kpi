@@ -181,7 +181,7 @@ onMounted(async () => {
           </span>
           <span
             v-if="workContext.pageCompetition.codeTypeclt"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-header-100 text-header-900"
+            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-header-200 text-header-900"
           >
             {{ workContext.pageCompetition.codeTypeclt }}
           </span>
@@ -198,7 +198,7 @@ onMounted(async () => {
     />
 
     <!-- Loading state -->
-    <div v-if="loading" class="text-center py-12 text-header-500">
+    <div v-if="loading" class="text-center py-12 text-header-600">
       <UIcon name="heroicons:arrow-path" class="w-8 h-8 animate-spin mx-auto mb-3" />
       {{ t('common.loading') }}
     </div>

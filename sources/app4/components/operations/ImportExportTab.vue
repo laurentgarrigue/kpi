@@ -186,7 +186,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -201,7 +201,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
     <section v-if="activeSubTab === 'export'">
       <div class="max-w-xl space-y-4">
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.import_export.select_event') }}
           </label>
           <input
@@ -225,7 +225,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
               @click="selectExportEvent(event)"
             >
               <div class="font-medium">{{ event.libelle }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600">
                 ID: {{ event.id }} - {{ event.lieu || 'Sans lieu' }}
               </div>
             </button>
@@ -235,7 +235,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600" />
               <span class="text-sm font-medium">{{ selectedExportEvent.libelle }}</span>
-              <span class="text-xs text-header-500">(ID: {{ selectedExportEvent.id }})</span>
+              <span class="text-xs text-header-600">(ID: {{ selectedExportEvent.id }})</span>
             </div>
           </div>
         </div>
@@ -264,7 +264,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
       <div class="max-w-xl space-y-4">
         <!-- Event ID input -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.import_export.event_id') }}
           </label>
           <input
@@ -278,7 +278,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
 
         <!-- File input -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.import_export.json_file') }}
           </label>
           <div class="flex items-center gap-3">
@@ -291,13 +291,13 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
             >
             <button
               v-if="importFile"
-              class="px-3 py-2 text-header-600 hover:text-header-900"
+              class="px-3 py-2 text-header-900 hover:text-header-900"
               @click="clearImportFile"
             >
               <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
             </button>
           </div>
-          <p v-if="importFile" class="mt-1 text-sm text-header-500">
+          <p v-if="importFile" class="mt-1 text-sm text-header-600">
             {{ importFile.name }} ({{ Math.round(importFile.size / 1024) }} Ko)
           </p>
         </div>

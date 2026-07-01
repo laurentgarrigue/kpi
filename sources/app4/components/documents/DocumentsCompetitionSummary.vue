@@ -81,7 +81,7 @@ const getLevelColor = (level: string) => {
     case 'INT': return 'bg-purple-100 text-purple-800'
     case 'NAT': return 'bg-primary-100 text-primary-800'
     case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-100 text-header-800'
+    default: return 'bg-header-200 text-header-900'
   }
 }
 
@@ -90,7 +90,7 @@ const getTypeColor = (type: string) => {
     case 'CP': return 'bg-success-100 text-success-800'
     case 'CHPT': return 'bg-primary-100 text-primary-800'
     case 'MULTI': return 'bg-amber-100 text-amber-800'
-    default: return 'bg-header-100 text-header-800'
+    default: return 'bg-header-200 text-header-900'
   }
 }
 
@@ -171,7 +171,7 @@ onMounted(() => {
 
 <template>
   <div v-if="loading" class="bg-white rounded-lg shadow p-6 text-center">
-    <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-600 mx-auto" />
+    <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-900 mx-auto" />
   </div>
 
   <div v-else-if="competition" class="bg-white rounded-lg shadow overflow-hidden">
@@ -220,19 +220,19 @@ onMounted(() => {
         </span>
         <NuxtLink
           to="/teams"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.teams_count', { count: competition.nbEquipes }, competition.nbEquipes) }}
         </NuxtLink>
         <NuxtLink
           to="/gamedays"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.phases_count', { count: competition.nbJournees }, competition.nbJournees) }}
         </NuxtLink>
         <NuxtLink
           to="/games"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-900 hover:bg-header-200 transition-colors"
+          class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 hover:bg-header-200 transition-colors"
         >
           {{ t('documents.summary.matches_count', { count: competition.nbMatchs }, competition.nbMatchs) }}
         </NuxtLink>
@@ -275,7 +275,7 @@ onMounted(() => {
               v-for="phase in stage.phases"
               :key="phase.idJournee"
               :to="`/games?phase=${phase.idJournee}`"
-              class="block mb-2 last:mb-0 hover:bg-header-100 rounded px-1 py-0.5 transition-colors"
+              class="block mb-2 last:mb-0 hover:bg-header-200 rounded px-1 py-0.5 transition-colors"
             >
                 <div class="flex items-center justify-center gap-1.5">
                 <span
@@ -300,7 +300,7 @@ onMounted(() => {
           v-for="phase in chptPhases"
           :key="phase.idJournee"
           :to="`/games?phase=${phase.idJournee}`"
-          class="px-3 py-2 bg-header-50 rounded-lg hover:bg-header-100 transition-colors"
+          class="px-3 py-2 bg-header-50 rounded-lg hover:bg-header-200 transition-colors"
         >
           <div class="text-sm font-medium text-header-900">{{ phase.nom || phase.phase }}</div>
           <div class="text-xs text-header-900 mt-0.5 space-y-0.5">
@@ -325,14 +325,14 @@ onMounted(() => {
       </div>
 
       <!-- MULTI -->
-      <p v-else-if="isMulti" class="text-sm text-header-800 italic">
+      <p v-else-if="isMulti" class="text-sm text-header-900 italic">
         {{ t('documents.summary.multi_competition') }}
       </p>
     </div>
 
     <!-- No phases (only show if schema was loaded but returned empty) -->
     <div v-else-if="!loading && !isMulti && schemaData !== null" class="px-6 py-4">
-      <p class="text-sm text-header-600 italic">{{ t('documents.summary.no_phases') }}</p>
+      <p class="text-sm text-header-900 italic">{{ t('documents.summary.no_phases') }}</p>
     </div>
 
     <!-- Sponsor (below phases) -->

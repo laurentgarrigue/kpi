@@ -518,7 +518,7 @@ const onTypeChange = (type: ImageType) => {
   <div class="space-y-6">
     <!-- Image type selector (shared across all sub-tabs) -->
     <div>
-      <label class="block text-sm font-medium text-header-700 mb-2">
+      <label class="block text-sm font-medium text-header-900 mb-2">
         {{ t('operations.images.type') }}
       </label>
       <div class="flex flex-wrap gap-2">
@@ -529,7 +529,7 @@ const onTypeChange = (type: ImageType) => {
             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
             selectedImageType === type.value
               ? 'bg-primary-600 text-white'
-              : 'bg-header-100 text-header-700 hover:bg-header-200',
+              : 'bg-header-200 text-header-900 hover:bg-header-200',
           ]"
           @click="onTypeChange(type.value as ImageType)"
         >
@@ -555,7 +555,7 @@ const onTypeChange = (type: ImageType) => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -571,11 +571,11 @@ const onTypeChange = (type: ImageType) => {
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-lg font-semibold text-header-900">
           {{ t('operations.images.gallery') }}
-          <span class="ml-2 text-sm font-normal text-header-500">({{ galleryTotal }})</span>
+          <span class="ml-2 text-sm font-normal text-header-600">({{ galleryTotal }})</span>
         </h2>
         <div class="flex items-center gap-2">
           <div class="relative">
-            <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
+            <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
             <input
               v-model="gallerySearch"
               type="text"
@@ -585,7 +585,7 @@ const onTypeChange = (type: ImageType) => {
             >
           </div>
           <button
-            class="p-2 text-header-500 hover:text-header-700"
+            class="p-2 text-header-600 hover:text-header-900"
             :title="t('operations.images.refresh')"
             @click="loadGallery"
           >
@@ -594,19 +594,19 @@ const onTypeChange = (type: ImageType) => {
         </div>
       </div>
 
-      <div v-if="galleryLoading && galleryImages.length === 0" class="text-center py-8 text-header-400">
+      <div v-if="galleryLoading && galleryImages.length === 0" class="text-center py-8 text-header-600">
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto mb-2" />
         {{ t('common.loading') }}
       </div>
 
-      <div v-else-if="galleryImages.length === 0" class="text-center py-8 text-header-400">
+      <div v-else-if="galleryImages.length === 0" class="text-center py-8 text-header-600">
         <UIcon name="i-heroicons-photo" class="w-8 h-8 mx-auto mb-2" />
         {{ t('operations.images.gallery_empty') }}
       </div>
 
       <div v-else class="border border-header-200 rounded-lg overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-header-50 text-header-600 text-xs uppercase">
+          <thead class="bg-header-50 text-header-900 text-xs uppercase">
             <tr>
               <th class="px-3 py-2 text-left w-16">{{ t('operations.images.col_preview') }}</th>
               <th class="px-3 py-2 text-left">{{ t('operations.images.col_filename') }}</th>
@@ -624,29 +624,29 @@ const onTypeChange = (type: ImageType) => {
                     <img
                       :src="imageUrl(entry.filename)"
                       :alt="entry.filename"
-                      class="h-10 w-16 object-contain bg-header-100 rounded border border-header-200"
+                      class="h-10 w-16 object-contain bg-header-200 rounded border border-header-200"
                       loading="lazy"
                     >
                   </a>
                 </td>
-                <td class="px-3 py-2 font-mono text-xs text-header-800">
+                <td class="px-3 py-2 font-mono text-xs text-header-900">
                   <a :href="imageUrl(entry.filename)" target="_blank" rel="noopener" class="hover:underline hover:text-primary-600">
                     {{ entry.filename }}
                   </a>
                 </td>
-                <td class="px-3 py-2 text-right text-header-500">{{ formatBytes(entry.size) }}</td>
-                <td class="px-3 py-2 text-right text-header-500">{{ formatDate(entry.modified) }}</td>
+                <td class="px-3 py-2 text-right text-header-600">{{ formatBytes(entry.size) }}</td>
+                <td class="px-3 py-2 text-right text-header-600">{{ formatDate(entry.modified) }}</td>
                 <td class="px-3 py-2 text-right">
                   <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      class="p-1.5 rounded text-header-500 hover:text-primary-600 hover:bg-primary-50"
+                      class="p-1.5 rounded text-header-600 hover:text-primary-600 hover:bg-primary-50"
                       :title="t('operations.images.rename_button')"
                       @click="startRename(entry)"
                     >
                       <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
                     </button>
                     <button
-                      class="p-1.5 rounded text-header-500 hover:text-error-600 hover:bg-error-50"
+                      class="p-1.5 rounded text-header-600 hover:text-error-600 hover:bg-error-50"
                       :title="t('common.delete')"
                       @click="openDeleteModal(entry)"
                     >
@@ -662,7 +662,7 @@ const onTypeChange = (type: ImageType) => {
                   <img
                     :src="imageUrl(entry.filename)"
                     :alt="entry.filename"
-                    class="h-10 w-16 object-contain bg-header-100 rounded border border-header-200"
+                    class="h-10 w-16 object-contain bg-header-200 rounded border border-header-200"
                     loading="lazy"
                   >
                 </td>
@@ -684,7 +684,7 @@ const onTypeChange = (type: ImageType) => {
                       <span v-else>{{ t('common.confirm') }}</span>
                     </button>
                     <button
-                      class="px-3 py-1 text-xs bg-header-200 text-header-700 rounded hover:bg-header-300"
+                      class="px-3 py-1 text-xs bg-header-200 text-header-900 rounded hover:bg-header-300"
                       @click="cancelRename"
                     >
                       {{ t('common.cancel') }}
@@ -700,14 +700,14 @@ const onTypeChange = (type: ImageType) => {
 
       <!-- Pagination -->
       <div v-if="galleryPageCount > 1" class="flex items-center justify-between mt-4">
-        <p class="text-sm text-header-500">
+        <p class="text-sm text-header-600">
           {{ (galleryPage - 1) * galleryPageSize + 1 }}–{{ Math.min(galleryPage * galleryPageSize, galleryTotal) }}
           / {{ galleryTotal }}
         </p>
         <div class="flex items-center gap-1">
           <button
             :disabled="galleryPage === 1"
-            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-600 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-900 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="galleryGoToPage(galleryPage - 1)"
           >
             ←
@@ -719,7 +719,7 @@ const onTypeChange = (type: ImageType) => {
                 'px-3 py-1.5 rounded text-sm border',
                 p === galleryPage
                   ? 'bg-primary-600 text-white border-primary-600'
-                  : 'border-header-300 text-header-600 hover:bg-header-50'
+                  : 'border-header-300 text-header-900 hover:bg-header-50'
               ]"
               @click="galleryGoToPage(p)"
             >
@@ -727,12 +727,12 @@ const onTypeChange = (type: ImageType) => {
             </button>
             <span
               v-else-if="p === galleryPage - 3 || p === galleryPage + 3"
-              class="px-1 text-header-400"
+              class="px-1 text-header-600"
             >…</span>
           </template>
           <button
             :disabled="galleryPage === galleryPageCount"
-            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-600 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-900 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="galleryGoToPage(galleryPage + 1)"
           >
             →
@@ -748,7 +748,7 @@ const onTypeChange = (type: ImageType) => {
         <template v-if="needsCompetitionFields">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.code_competition') }}
               </label>
               <input
@@ -759,7 +759,7 @@ const onTypeChange = (type: ImageType) => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
@@ -774,7 +774,7 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsClubField">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.images.club_number') }}
             </label>
             <div ref="clubSearchRef" class="relative">
@@ -787,15 +787,15 @@ const onTypeChange = (type: ImageType) => {
                   @input="onClubSearchInput"
                   @focus="onClubSearchInput"
                 >
-                <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
+                <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
                 <button
                   v-if="clubSearch && !clubSearchLoading"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                   @click="clearClubSearch"
                 >
                   <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
                 </button>
-                <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400 animate-spin" />
+                <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
               </div>
               <div
                 v-if="clubSearchOpen && clubSearchResults.length > 0"
@@ -807,7 +807,7 @@ const onTypeChange = (type: ImageType) => {
                   class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
                   @click="selectClub(club)"
                 >
-                  <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
+                  <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
                   <span>{{ club.nom }}</span>
                 </button>
               </div>
@@ -817,7 +817,7 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsNationField">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.images.nation_code') }}
             </label>
             <input
@@ -832,7 +832,7 @@ const onTypeChange = (type: ImageType) => {
         <template v-else-if="needsTeamField">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.team_search') }}
               </label>
               <div ref="teamSearchRef" class="relative">
@@ -845,15 +845,15 @@ const onTypeChange = (type: ImageType) => {
                     @input="onTeamSearchInput"
                     @focus="onTeamSearchInput"
                   >
-                  <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
+                  <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
                   <button
                     v-if="teamSearch && !teamSearchLoading"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                     @click="clearTeamSearch"
                   >
                     <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
                   </button>
-                  <UIcon v-if="teamSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400 animate-spin" />
+                  <UIcon v-if="teamSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
                 </div>
                 <div
                   v-if="teamSearchOpen && teamSearchResults.length > 0"
@@ -866,13 +866,13 @@ const onTypeChange = (type: ImageType) => {
                     @click="selectTeam(team)"
                   >
                     <span class="font-medium">{{ team.libelle }}</span>
-                    <span class="text-xs text-header-500">{{ team.numero }} — {{ team.club }}</span>
+                    <span class="text-xs text-header-600">{{ team.numero }} — {{ team.club }}</span>
                   </button>
                 </div>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
@@ -887,7 +887,7 @@ const onTypeChange = (type: ImageType) => {
 
         <!-- File input -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.images.file') }}
           </label>
           <div class="flex items-center gap-3">
@@ -898,11 +898,11 @@ const onTypeChange = (type: ImageType) => {
               class="flex-1 px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               @change="onFileSelected"
             >
-            <button v-if="selectedFile" class="px-3 py-2 text-header-600 hover:text-header-900" @click="clearFile">
+            <button v-if="selectedFile" class="px-3 py-2 text-header-900 hover:text-header-900" @click="clearFile">
               <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
             </button>
           </div>
-          <p v-if="selectedFile" class="mt-1 text-sm text-header-500">
+          <p v-if="selectedFile" class="mt-1 text-sm text-header-600">
             {{ selectedFile.name }} ({{ formatBytes(selectedFile.size) }})
           </p>
         </div>
@@ -926,7 +926,7 @@ const onTypeChange = (type: ImageType) => {
         <template v-if="needsCompetitionFields">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.code_competition') }}
               </label>
               <input
@@ -937,7 +937,7 @@ const onTypeChange = (type: ImageType) => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
@@ -952,7 +952,7 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsClubField">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.images.club_number') }}
             </label>
             <input
@@ -966,7 +966,7 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsNationField">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.images.nation_code') }}
             </label>
             <input
@@ -981,7 +981,7 @@ const onTypeChange = (type: ImageType) => {
         <template v-else-if="needsTeamField">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.team_number') }}
               </label>
               <input
@@ -992,7 +992,7 @@ const onTypeChange = (type: ImageType) => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
@@ -1006,7 +1006,7 @@ const onTypeChange = (type: ImageType) => {
         </template>
 
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.images.import_url_label') }}
           </label>
           <input

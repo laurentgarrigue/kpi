@@ -657,10 +657,10 @@ const confirmBulkDelete = async () => {
 const getStatusColor = (status: CompetitionStatus) => {
   // Colors matching legacy GestionStyle.css (.statutCompetATT, .statutCompetON, .statutCompetEND)
   switch (status) {
-    case 'ATT': return 'bg-header-500 text-header-50 italic'
+    case 'ATT': return 'bg-header-600 text-header-50 italic'
     case 'ON': return 'bg-success-500 text-success-50 italic'
     case 'END': return 'bg-primary-900 text-primary-50 italic'
-    default: return 'bg-header-400 text-header-50'
+    default: return 'bg-header-600 text-header-50'
   }
 }
 
@@ -726,7 +726,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
     >
       <template v-if="competitionsBySection.length > 1" #left>
         <button
-          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-600 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
           :disabled="collapsedSections.size === competitionsBySection.length"
           @click="collapseAll"
         >
@@ -734,7 +734,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           {{ t('common.collapse_all') }}
         </button>
         <button
-          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-600 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
           :disabled="collapsedSections.size === 0"
           @click="expandAll"
         >
@@ -745,7 +745,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
       <template v-if="canCreate" #right>
         <NuxtLink
           to="/competitions/copy"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-header-600 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-header-900 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors"
         >
           <UIcon name="heroicons:document-duplicate" class="w-3.5 h-3.5" />
           {{ t('competitions.copy') }}
@@ -756,13 +756,13 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
     <!-- Desktop Table -->
     <div class="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
       <!-- Loading state -->
-      <div v-if="loading && competitions.length === 0" class="px-4 py-8 text-center text-header-600">
+      <div v-if="loading && competitions.length === 0" class="px-4 py-8 text-center text-header-900">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
         {{ t('common.loading') }}
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="competitionsBySection.length === 0" class="px-4 py-8 text-center text-header-600">
+      <div v-else-if="competitionsBySection.length === 0" class="px-4 py-8 text-center text-header-900">
         {{ t('competitions.empty') }}
       </div>
 
@@ -771,12 +771,12 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
         <div v-for="section in competitionsBySection" :key="section.section" class="border-b border-header-200 last:border-b-0">
           <!-- Section header (accordion toggle) -->
           <button
-            class="w-full bg-header-100 hover:bg-header-200 px-4 py-2 flex items-center gap-2 transition-colors cursor-pointer"
+            class="w-full bg-header-200 hover:bg-header-200 px-4 py-2 flex items-center gap-2 transition-colors cursor-pointer"
             @click="toggleSection(section.section)"
           >
             <UIcon
               name="heroicons:chevron-right"
-              class="w-4 h-4 text-header-600 transition-transform"
+              class="w-4 h-4 text-header-900 transition-transform"
               :class="{ 'rotate-90': !isSectionCollapsed(section.section) }"
             />
             <span class="text-sm font-semibold text-header-900">{{ section.sectionLabel }}</span>
@@ -878,7 +878,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                       v-else
                       :name="competition.publication ? 'heroicons:eye-solid' : 'heroicons:eye-slash-solid'"
                       class="w-5 h-5"
-                      :class="competition.publication ? 'text-success-500' : 'text-header-600'"
+                      :class="competition.publication ? 'text-success-500' : 'text-header-900'"
                     />
                   </td>
 
@@ -909,7 +909,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   <!-- Libelle -->
                   <td class="px-3 py-1 text-sm text-header-900">
                     <div class="font-medium">{{ competition.libelle }}</div>
-                    <div v-if="competition.soustitre" class="text-xs text-header-700">{{ competition.soustitre }}</div>
+                    <div v-if="competition.soustitre" class="text-xs text-header-900">{{ competition.soustitre }}</div>
                   </td>
 
                   <!-- Level badge -->
@@ -923,7 +923,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   </td>
 
                   <!-- Group -->
-                  <td class="px-3 py-1 text-sm text-header-500">
+                  <td class="px-3 py-1 text-sm text-header-600">
                     <button
                       class="link-value"
                       :title="t('competitions.columns.groupe')"
@@ -964,7 +964,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   </td>
 
                   <!-- Teams count -->
-                  <td class="px-3 py-1 text-sm text-center text-header-500">
+                  <td class="px-3 py-1 text-sm text-center text-header-600">
                     <NuxtLink
                         :to="`/teams?competition=${competition.code}`"
                         class="link-value"
@@ -993,12 +993,12 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                       v-else
                       :name="competition.verrou ? 'heroicons:lock-closed-solid' : 'heroicons:lock-open-solid'"
                       class="w-5 h-5"
-                      :class="competition.verrou ? 'text-danger-600' : 'text-header-400'"
+                      :class="competition.verrou ? 'text-danger-600' : 'text-header-600'"
                     />
                   </td>
 
                   <!-- Journées/Phases count -->
-                  <td class="px-3 py-1 text-sm text-center text-header-500">
+                  <td class="px-3 py-1 text-sm text-center text-header-600">
                     <button
                       class="link-value"
                       :title="t('competitions.columns.journees')"
@@ -1009,7 +1009,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   </td>
 
                   <!-- Matches count -->
-                  <td class="px-3 py-1 text-sm text-center text-header-500">
+                  <td class="px-3 py-1 text-sm text-center text-header-600">
                     <button
                       class="link-value"
                       :title="t('competitions.columns.matchs')"
@@ -1046,7 +1046,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
         </div>
 
         <!-- Total -->
-        <div class="px-4 py-1 bg-header-50 text-sm text-header-600">
+        <div class="px-4 py-1 bg-header-50 text-sm text-header-900">
           {{ t('competitions.total_competitions', { count: totalCompetitions }) }}
         </div>
       </div>
@@ -1067,11 +1067,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
         >
           <UIcon
             name="heroicons:chevron-right"
-            class="w-4 h-4 text-header-500 transition-transform"
+            class="w-4 h-4 text-header-600 transition-transform"
             :class="{ 'rotate-90': !isSectionCollapsed(section.section) }"
           />
-          <span class="text-sm font-semibold text-header-700">{{ section.sectionLabel }}</span>
-          <span class="text-xs text-header-500">({{ section.competitions.length }})</span>
+          <span class="text-sm font-semibold text-header-900">{{ section.sectionLabel }}</span>
+          <span class="text-xs text-header-600">({{ section.competitions.length }})</span>
         </button>
 
         <template v-if="!isSectionCollapsed(section.section)">
@@ -1117,8 +1117,8 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
             <!-- Content -->
             <div class="space-y-2">
               <div class="font-medium text-header-900">{{ competition.libelle }}</div>
-              <div v-if="competition.soustitre" class="text-sm text-header-500">{{ competition.soustitre }}</div>
-              <div class="flex flex-wrap gap-2 text-sm text-header-500">
+              <div v-if="competition.soustitre" class="text-sm text-header-600">{{ competition.soustitre }}</div>
+              <div class="flex flex-wrap gap-2 text-sm text-header-600">
                 <span>{{ competition.codeTypeclt }}</span>
                 <span v-if="competition.codeRef">| {{ competition.codeRef }}</span>
                 <span v-if="competition.soustitre2">| {{ competition.soustitre2 }}</span>
@@ -1177,7 +1177,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
       </template>
 
       <!-- Total mobile -->
-      <div v-if="competitionsBySection.length > 0" class="px-1 py-2 text-sm text-header-600">
+      <div v-if="competitionsBySection.length > 0" class="px-1 py-2 text-sm text-header-900">
         {{ t('competitions.total_competitions', { count: totalCompetitions }) }}
       </div>
     </AdminCardList>
@@ -1216,7 +1216,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
         <div class="space-y-4 max-h-[70vh] overflow-y-auto px-1">
           <!-- Autocomplete (only when creating) -->
           <div v-if="!editingCompetition" class="border-b border-header-200 pb-4">
-            <label class="block text-sm font-medium text-header-700 mb-2">
+            <label class="block text-sm font-medium text-header-900 mb-2">
               {{ t('competitions.form.search_competition') }}
             </label>
             <AdminCompetitionAutocomplete
@@ -1226,14 +1226,14 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               :current-season-code="workContext.season"
               @selected="onCompetitionSelected"
             />
-            <div v-else class="text-sm text-header-500 italic">
+            <div v-else class="text-sm text-header-600 italic">
               Chargement...
             </div>
           </div>
 
           <!-- Code (only for create) -->
           <div v-if="!editingCompetition">
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('competitions.form.code') }} <span class="text-danger-500">*</span>
             </label>
 
@@ -1259,26 +1259,26 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               :disabled="!canEditCode"
               maxlength="12"
               required
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase disabled:bg-header-100 disabled:cursor-not-allowed"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase disabled:bg-header-200 disabled:cursor-not-allowed"
             >
-            <p class="mt-1 text-xs text-header-500">{{ t('competitions.form.code_hint') }}</p>
+            <p class="mt-1 text-xs text-header-600">{{ t('competitions.form.code_hint') }}</p>
           </div>
 
           <!-- Code display (for edit) -->
           <div v-else>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.code') }}</label>
-            <div class="px-3 py-2 bg-header-100 rounded-lg font-mono">{{ formData.code }}</div>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.code') }}</label>
+            <div class="px-3 py-2 bg-header-200 rounded-lg font-mono">{{ formData.code }}</div>
           </div>
 
           <!-- Row: Niveau + Type -->
           <div class="grid grid-cols-2 gap-4">
             <!-- Niveau -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.niveau') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.niveau') }}</label>
               <select
                 v-model="formData.codeNiveau"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="INT">{{ t('competitions.levels.INT') }}</option>
                 <option value="NAT">{{ t('competitions.levels.NAT') }}</option>
@@ -1288,11 +1288,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Type -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.type') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.type') }}</label>
               <select
                 v-model="formData.codeTypeclt"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="CHPT">{{ t('competitions.types_long.CHPT') }}</option>
                 <option value="CP">{{ t('competitions.types_long.CP') }}</option>
@@ -1303,7 +1303,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
           <!-- Libelle -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('competitions.form.libelle') }} <span v-if="!isFormReadOnly" class="text-danger-500">*</span>
             </label>
             <input
@@ -1313,33 +1313,33 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               maxlength="80"
               :required="!isFormReadOnly"
               :readonly="isFormReadOnly"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
             >
           </div>
 
           <!-- Soustitre -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.soustitre') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.soustitre') }}</label>
             <input
               v-model="formData.soustitre"
               type="text"
               :placeholder="t('competitions.form.soustitre_placeholder')"
               maxlength="80"
               :readonly="isFormReadOnly"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
             >
           </div>
 
           <!-- Soustitre 2 -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.soustitre2') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.soustitre2') }}</label>
             <input
               v-model="formData.soustitre2"
               type="text"
               :placeholder="t('competitions.form.soustitre2_placeholder')"
               maxlength="80"
               :readonly="isFormReadOnly"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
             >
           </div>
 
@@ -1347,11 +1347,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           <div class="grid grid-cols-2 gap-4">
             <!-- Groupe -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.groupe') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.groupe') }}</label>
               <select
                 v-model="formData.codeRef"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="">{{ t('competitions.form.groupe_placeholder') }}</option>
                 <option v-for="group in groups" :key="group.id" :value="group.groupe">
@@ -1362,14 +1362,14 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Group Order -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.group_order') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.group_order') }}</label>
               <input
                 v-model.number="formData.groupOrder"
                 type="number"
                 min="0"
                 max="99"
                 :readonly="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
               >
             </div>
           </div>
@@ -1378,11 +1378,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           <div class="grid grid-cols-2 gap-4">
             <!-- Tour -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.tour') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.tour') }}</label>
               <select
                 v-model="formData.codeTour"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option v-for="opt in tourOptions" :key="opt.value" :value="opt.value">
                   {{ opt.label }}
@@ -1392,11 +1392,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Statut -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.statut') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.statut') }}</label>
               <select
                 v-model="formData.statut"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="ATT">{{ t('competitions.status.ATT') }}</option>
                 <option value="ON">{{ t('competitions.status.ON') }}</option>
@@ -1408,7 +1408,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           <!-- Row: Qualifies + Elimines (only for non-MULTI) -->
           <div v-if="!isMultiType" class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.qualifies') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.qualifies') }}</label>
               <input
                 v-model.number="formData.qualifies"
                 type="number"
@@ -1417,7 +1417,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.elimines') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.elimines') }}</label>
               <input
                 v-model.number="formData.elimines"
                 type="number"
@@ -1431,11 +1431,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           <div v-if="!isMultiType" class="grid grid-cols-2 gap-4">
             <!-- Points -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.points') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.points') }}</label>
               <select
                 v-model="formData.points"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="4-2-1-0">{{ t('competitions.points_options.4-2-1-0') }}</option>
                 <option value="3-1-0-0">{{ t('competitions.points_options.3-1-0-0') }}</option>
@@ -1444,11 +1444,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Goal average -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.goalaverage') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.goalaverage') }}</label>
               <select
                 v-model="formData.goalaverage"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="gen">{{ t('competitions.goalaverage_options.gen') }}</option>
                 <option value="part">{{ t('competitions.goalaverage_options.part') }}</option>
@@ -1462,11 +1462,11 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Ranking type -->
             <div class="mb-4">
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.multi.ranking_type') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.multi.ranking_type') }}</label>
               <select
                 v-model="formData.rankingStructureType"
                 :disabled="isFormReadOnly"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white disabled:bg-header-100 disabled:cursor-not-allowed"
+                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white disabled:bg-header-200 disabled:cursor-not-allowed"
               >
                 <option value="team">{{ t('competitions.multi.ranking_types.team') }}</option>
                 <option value="club">{{ t('competitions.multi.ranking_types.club') }}</option>
@@ -1483,13 +1483,13 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
             <!-- Source competitions -->
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('competitions.multi.source_competitions') }}
               </label>
-              <p class="text-xs text-header-500 mb-2">{{ t('competitions.multi.source_competitions_hint') }}</p>
-              <div class="max-h-48 overflow-y-auto border border-header-300 rounded-lg bg-white p-2" :class="isFormReadOnly ? 'bg-header-100' : ''">
+              <p class="text-xs text-header-600 mb-2">{{ t('competitions.multi.source_competitions_hint') }}</p>
+              <div class="max-h-48 overflow-y-auto border border-header-300 rounded-lg bg-white p-2" :class="isFormReadOnly ? 'bg-header-200' : ''">
                 <div v-for="section in competitionsForMulti" :key="section.section" class="mb-2">
-                  <div class="text-xs font-medium text-header-500 uppercase mb-1">{{ section.sectionLabel }}</div>
+                  <div class="text-xs font-medium text-header-600 uppercase mb-1">{{ section.sectionLabel }}</div>
                   <div v-for="comp in section.competitions" :key="comp.code" class="flex items-center gap-2 py-1">
                     <input
                       :id="`multi-${comp.code}`"
@@ -1499,7 +1499,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                       :disabled="isFormReadOnly"
                       class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500 disabled:cursor-not-allowed"
                     >
-                    <label :for="`multi-${comp.code}`" class="text-sm text-header-700" :class="isFormReadOnly ? '' : 'cursor-pointer'">
+                    <label :for="`multi-${comp.code}`" class="text-sm text-header-900" :class="isFormReadOnly ? '' : 'cursor-pointer'">
                       {{ comp.code }} - {{ comp.libelle }}
                     </label>
                   </div>
@@ -1510,19 +1510,19 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
           <!-- Web link -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.web') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.web') }}</label>
             <input
               v-model="formData.web"
               type="url"
               :placeholder="t('competitions.form.web_placeholder')"
               :readonly="isFormReadOnly"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
             >
           </div>
 
           <!-- Display options -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-2">{{ t('competitions.form.options') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-2">{{ t('competitions.form.options') }}</label>
             <div class="grid grid-cols-2 gap-2">
               <label class="flex items-center gap-2" :class="isFormReadOnly ? '' : 'cursor-pointer'">
                 <input v-model="formData.titreActif" type="checkbox" :disabled="isFormReadOnly" class="w-4 h-4 rounded border-header-300 text-primary-600 disabled:cursor-not-allowed" >
@@ -1553,25 +1553,25 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
           <!-- Comments -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('competitions.form.commentaires') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('competitions.form.commentaires') }}</label>
             <textarea
               v-model="formData.commentairesCompet"
               rows="3"
               :placeholder="t('competitions.form.commentaires_placeholder')"
               :readonly="isFormReadOnly"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-100 read-only:cursor-default"
+              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 read-only:bg-header-200 read-only:cursor-default"
             />
           </div>
 
           <!-- Images (profile <= 3 only) -->
           <div v-if="canEdit" class="border-t border-header-200 pt-4">
-            <label class="block text-sm font-medium text-header-700 mb-3">
+            <label class="block text-sm font-medium text-header-900 mb-3">
               {{ t('competitions.form.images_section') }}
             </label>
             <div class="space-y-4">
               <!-- Bandeau -->
               <div>
-                <p class="text-xs font-medium text-header-600 mb-1">{{ t('competitions.images.bandeau') }}</p>
+                <p class="text-xs font-medium text-header-900 mb-1">{{ t('competitions.images.bandeau') }}</p>
                 <AdminCompetitionImagePicker
                   v-model="formData.bandeauLink"
                   image-kind="bandeau_competition"
@@ -1581,7 +1581,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               </div>
               <!-- Logo -->
               <div>
-                <p class="text-xs font-medium text-header-600 mb-1">{{ t('competitions.images.logo') }}</p>
+                <p class="text-xs font-medium text-header-900 mb-1">{{ t('competitions.images.logo') }}</p>
                 <AdminCompetitionImagePicker
                   v-model="formData.logoLink"
                   image-kind="logo_competition"
@@ -1591,7 +1591,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
               </div>
               <!-- Sponsor -->
               <div>
-                <p class="text-xs font-medium text-header-600 mb-1">{{ t('competitions.images.sponsor') }}</p>
+                <p class="text-xs font-medium text-header-900 mb-1">{{ t('competitions.images.sponsor') }}</p>
                 <AdminCompetitionImagePicker
                   v-model="formData.sponsorLink"
                   image-kind="sponsor_competition"
@@ -1607,7 +1607,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="closeModal"
           >
             {{ isFormReadOnly ? t('common.close') : t('competitions.form.cancel') }}

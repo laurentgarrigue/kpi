@@ -65,7 +65,7 @@ const changeTab = (tabId: OperationsTab) => {
             :class="[
               activeTab === tab.id
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+                : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
               'whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors'
             ]"
             @click="changeTab(tab.id)"

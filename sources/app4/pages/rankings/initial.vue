@@ -172,7 +172,7 @@ const fieldLabel = (field: string) => {
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <NuxtLink
         to="/rankings"
-        class="px-3 py-2 border border-header-300 text-header-700 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1 shrink-0"
+        class="px-3 py-2 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1 shrink-0"
       >
         <UIcon name="heroicons:arrow-left" class="w-4 h-4" />
         {{ t('rankings.initial.back') }}
@@ -180,7 +180,7 @@ const fieldLabel = (field: string) => {
       <div>
         <h1 class="text-2xl font-bold text-header-900">{{ t('rankings.initial.title') }}</h1>
         <div class="flex flex-wrap items-center gap-2 mt-1">
-          <p v-if="competitionCode" class="text-sm text-header-500">
+          <p v-if="competitionCode" class="text-sm text-header-600">
             {{ t('rankings.initial.subtitle', { competition: competitionCode }) }}
           </p>
           <span
@@ -207,7 +207,7 @@ const fieldLabel = (field: string) => {
     <!-- Toolbar -->
     <div v-if="canEdit" class="mb-4 bg-white rounded-lg shadow p-4 flex flex-wrap items-center gap-2">
       <button
-        class="px-3 py-1.5 border border-header-300 text-header-700 rounded-lg hover:bg-header-50 transition-colors text-sm"
+        class="px-3 py-1.5 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm"
         :disabled="loading"
         @click="loadData"
       >
@@ -223,7 +223,7 @@ const fieldLabel = (field: string) => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading && teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-500">
+    <div v-if="loading && teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
       <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
       {{ t('common.loading') }}
     </div>
@@ -235,17 +235,17 @@ const fieldLabel = (field: string) => {
         <table class="min-w-full divide-y divide-header-200">
           <thead class="bg-header-50">
             <tr>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.rank') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.team') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.pts') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.j') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.g') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.n') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.p') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.f') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.plus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.minus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-500 uppercase">{{ t('rankings.table.diff') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.rank') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.team') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.pts') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.j') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.g') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.n') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.p') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.f') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.plus') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.minus') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.diff') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-header-200">
@@ -303,9 +303,9 @@ const fieldLabel = (field: string) => {
       <div class="lg:hidden divide-y divide-header-200">
         <div v-for="team in teams" :key="team.id" class="p-3">
           <div class="font-medium text-header-900 text-sm mb-1">{{ team.libelle }}</div>
-          <div class="grid grid-cols-5 gap-1 text-xs text-header-600">
+          <div class="grid grid-cols-5 gap-1 text-xs text-header-900">
             <div v-for="field in editableFields" :key="field" class="text-center">
-              <div class="text-[10px] text-header-400 uppercase">{{ fieldLabel(field) }}</div>
+              <div class="text-[10px] text-header-600 uppercase">{{ fieldLabel(field) }}</div>
               <span
                 :class="canEdit ? 'editable-cell' : ''"
                 @click="canEdit && startEdit(team.id, field, (team as Record<string, any>)[{ Clt: 'clt', Pts: 'pts', J: 'j', G: 'g', N: 'n', P: 'p', F: 'f', Plus: 'plus', Moins: 'moins', Diff: 'diff' }[field]])"
@@ -319,7 +319,7 @@ const fieldLabel = (field: string) => {
     </div>
 
     <!-- Empty state -->
-    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-500">
+    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-600">
       {{ t('rankings.no_teams') }}
     </div>
 

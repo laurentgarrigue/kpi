@@ -223,7 +223,7 @@ const onClickOutside = () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -239,7 +239,7 @@ const onClickOutside = () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Source player -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.players.source_player') }}
           </label>
           <input
@@ -263,7 +263,7 @@ const onClickOutside = () => {
               @click="selectSource(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
@@ -273,14 +273,14 @@ const onClickOutside = () => {
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600" />
               <span class="text-sm font-medium">{{ formatNom(selectedSource.nom) }} {{ formatPrenom(selectedSource.prenom) }}</span>
-              <span class="text-xs text-header-500">({{ selectedSource.matric }})</span>
+              <span class="text-xs text-header-600">({{ selectedSource.matric }})</span>
             </div>
           </div>
         </div>
 
         <!-- Target player -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.players.target_player') }}
           </label>
           <input
@@ -304,7 +304,7 @@ const onClickOutside = () => {
               @click="selectTarget(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
@@ -314,7 +314,7 @@ const onClickOutside = () => {
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-success-500" />
               <span class="text-sm font-medium">{{ formatNom(selectedTarget.nom) }} {{ formatPrenom(selectedTarget.prenom) }}</span>
-              <span class="text-xs text-header-500">({{ selectedTarget.matric }})</span>
+              <span class="text-xs text-header-600">({{ selectedTarget.matric }})</span>
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ const onClickOutside = () => {
 
     <!-- PCE import -->
     <section v-if="activeSubTab === 'pce'">
-      <p class="text-sm text-header-600 mb-4">
+      <p class="text-sm text-header-900 mb-4">
         {{ t('operations.import_export.pce_description') }}
       </p>
       <button

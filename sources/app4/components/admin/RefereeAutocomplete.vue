@@ -268,7 +268,7 @@ onUnmounted(() => {
           compact
             ? 'w-full px-1 py-0 text-xs border border-primary-400 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50'
             : 'w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-          disabled ? 'bg-header-100 dark:bg-header-800 cursor-not-allowed' : '',
+          disabled ? 'bg-header-200 dark:bg-header-800 cursor-not-allowed' : '',
         ]"
         @focus="isOpen = results.length > 0"
         @keydown="handleKeydown"
@@ -282,7 +282,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-400 hover:text-header-600"
+          class="text-header-600 hover:text-header-900"
           @mousedown.prevent="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -292,7 +292,7 @@ onUnmounted(() => {
       <button
         v-if="compact && searchQuery && !disabled"
         type="button"
-        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
         @mousedown.prevent="clearSelection"
       >
         <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
@@ -310,7 +310,7 @@ onUnmounted(() => {
           <!-- Separator -->
           <div
             v-if="item.type === 'separator'"
-            class="px-3 py-1 text-[10px] font-semibold text-header-400 dark:text-header-400 bg-header-50 dark:bg-header-800 uppercase tracking-wider"
+            class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-600 bg-header-50 dark:bg-header-800 uppercase tracking-wider"
           >
             {{ item.label }}
           </div>

@@ -148,7 +148,7 @@ onMounted(async () => {
       <h1 class="text-2xl font-bold text-header-900">{{ t('tv.title') }}</h1>
       <button
         type="button"
-        class="px-3 py-2 text-sm font-medium text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors flex items-center gap-1"
+        class="px-3 py-2 text-sm font-medium text-header-900 bg-header-200 rounded-lg hover:bg-header-200 transition-colors flex items-center gap-1"
         @click="labelsModalOpen = true"
       >
         <UIcon name="heroicons:cog-6-tooth" class="w-4 h-4" />
@@ -163,7 +163,7 @@ onMounted(async () => {
         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
         :class="activeTab === 'channels'
           ? 'border-primary-600 text-primary-600'
-          : 'border-transparent text-header-500 hover:text-header-700'"
+          : 'border-transparent text-header-600 hover:text-header-900'"
         @click="activeTab = 'channels'"
       >
         {{ t('tv.tabs.channels') }}
@@ -173,7 +173,7 @@ onMounted(async () => {
         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
         :class="activeTab === 'scenarios'
           ? 'border-primary-600 text-primary-600'
-          : 'border-transparent text-header-500 hover:text-header-700'"
+          : 'border-transparent text-header-600 hover:text-header-900'"
         @click="activeTab = 'scenarios'"
       >
         {{ t('tv.tabs.scenarios') }}
@@ -189,7 +189,7 @@ onMounted(async () => {
         :match-data="matchData"
       />
 
-      <div v-if="!globalFilters.eventId" class="mt-6 text-center text-header-500 py-8">
+      <div v-if="!globalFilters.eventId" class="mt-6 text-center text-header-600 py-8">
         {{ t('tv.messages.select_event') }}
       </div>
 
