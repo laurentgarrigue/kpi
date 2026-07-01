@@ -341,7 +341,7 @@ const formatDate = (date: string | null) => {
   <div>
     <!-- Page header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-header-900">
+      <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
         {{ t('events.title') }}
       </h1>
     </div>
@@ -359,23 +359,23 @@ const formatDate = (date: string | null) => {
     />
 
     <!-- Desktop Table -->
-    <div class="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-header-200">
-          <thead class="bg-header-50">
+        <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
+          <thead class="bg-header-50 dark:bg-header-900">
             <tr>
               <!-- Checkbox column -->
               <th v-if="authStore.isSuperAdmin" class="px-4 py-3 w-10">
                 <input
                   v-model="selectAll"
                   type="checkbox"
-                  class="w-5 h-5 rounded border-header-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                  class="w-5 h-5 rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
                   @change="toggleSelectAll"
                 >
               </th>
 
               <!-- Publication -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Publication')">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Publication')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.publication') }}
                   <UIcon :name="getSortIcon('Publication')" class="w-4 h-4" />
@@ -383,7 +383,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- App -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('app')">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('app')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.app') }}
                   <UIcon :name="getSortIcon('app')" class="w-4 h-4" />
@@ -391,7 +391,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- ID -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Id')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Id')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.id') }}
                   <UIcon :name="getSortIcon('Id')" />
@@ -399,12 +399,12 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Edit action -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
                 {{ t('common.edit') }}
               </th>
 
               <!-- Libelle -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Libelle')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Libelle')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.libelle') }}
                   <UIcon :name="getSortIcon('Libelle')" class="w-4 h-4" />
@@ -412,7 +412,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Lieu -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Lieu')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Lieu')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.lieu') }}
                   <UIcon :name="getSortIcon('Lieu')" class="w-4 h-4" />
@@ -420,7 +420,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date debut -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Date_debut')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_debut')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_debut') }}
                   <UIcon :name="getSortIcon('Date_debut')" class="w-4 h-4" />
@@ -428,7 +428,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date fin -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Date_fin')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_fin')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_fin') }}
                   <UIcon :name="getSortIcon('Date_fin')" class="w-4 h-4" />
@@ -436,26 +436,26 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Associate -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
                 {{ t('events.columns.associate') }}
               </th>
 
               <!-- Nb gamedays -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                 {{ t('events.columns.nb_gamedays') }}
               </th>
 
               <!-- Actions -->
-              <th class="px-4 py-3 text-right text-xs font-medium text-header-900 uppercase tracking-wider">
+              <th class="px-4 py-3 text-right text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                 {{ t('events.columns.actions') }}
               </th>
             </tr>
           </thead>
 
-          <tbody class="bg-white divide-y divide-header-200">
+          <tbody class="bg-white dark:bg-header-900 divide-y divide-header-200 dark:divide-header-700">
             <!-- Loading state -->
             <tr v-if="loading && events.length === 0">
-              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600">
+              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
@@ -463,7 +463,7 @@ const formatDate = (date: string | null) => {
 
             <!-- Empty state -->
             <tr v-else-if="events.length === 0">
-              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600">
+              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
                 {{ t('events.empty') }}
               </td>
             </tr>
@@ -472,15 +472,15 @@ const formatDate = (date: string | null) => {
             <tr
               v-for="event in events"
               :key="event.id"
-              class="hover:bg-header-50"
-              :class="{ 'bg-primary-50': isSelected(event.id) }"
+              class="hover:bg-header-50 dark:hover:bg-header-800"
+              :class="{ 'bg-primary-50 dark:bg-primary-950': isSelected(event.id) }"
             >
               <!-- Checkbox -->
               <td v-if="authStore.isSuperAdmin" class="px-4 py-3">
                 <input
                   :checked="isSelected(event.id)"
                   type="checkbox"
-                  class="w-5 h-5 rounded border-header-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                  class="w-5 h-5 rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
                   @change="toggleSelect(event.id)"
                 >
               </td>
@@ -504,7 +504,7 @@ const formatDate = (date: string | null) => {
                 <AdminToggleButton
                   :active="event.app"
                   active-icon="heroicons:device-phone-mobile-solid"
-                  inactive-icon="heroicons:device-phone-mobile-solid"
+                  inactive-icon="heroicons:device-phone-mobile"
                   active-color="primary"
                   :active-title="t('events.app_enabled')"
                   :inactive-title="t('events.app_disabled')"
@@ -514,14 +514,14 @@ const formatDate = (date: string | null) => {
               </td>
 
               <!-- ID -->
-              <td class="px-4 py-3 text-sm text-header-900">
+              <td class="px-4 py-3 text-sm text-header-900 dark:text-header-50">
                 {{ event.id }}
               </td>
 
               <!-- Edit -->
               <td class="px-4 py-3 text-center">
                 <button
-                  class="p-1.5 text-primary-600"
+                  class="p-1.5 text-primary-600 dark:text-primary-300"
                   :title="t('common.edit')"
                   @click="openEditModal(event)"
                 >
@@ -530,22 +530,22 @@ const formatDate = (date: string | null) => {
               </td>
 
               <!-- Libelle -->
-              <td class="px-4 py-3 text-sm text-header-900 font-medium">
+              <td class="px-4 py-3 text-sm text-header-900 dark:text-header-50 font-medium">
                 {{ event.libelle }}
               </td>
 
               <!-- Lieu -->
-              <td class="px-4 py-3 text-sm text-header-600">
+              <td class="px-4 py-3 text-sm text-header-600 dark:text-header-300">
                 {{ event.lieu || '-' }}
               </td>
 
               <!-- Date debut -->
-              <td class="px-4 py-3 text-sm text-header-600">
+              <td class="px-4 py-3 text-sm text-header-600 dark:text-header-300">
                 {{ formatDate(event.dateDebut) }}
               </td>
 
               <!-- Date fin -->
-              <td class="px-4 py-3 text-sm text-header-600">
+              <td class="px-4 py-3 text-sm text-header-600 dark:text-header-300">
                 {{ formatDate(event.dateFin) }}
               </td>
 
@@ -553,7 +553,7 @@ const formatDate = (date: string | null) => {
               <td class="px-4 py-3 text-center">
                 <button
                   v-if="authStore.profile <= 3"
-                  class="p-1.5 text-purple-600 hover:text-purple-800"
+                  class="p-1.5 text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200"
                   :title="t('events.manage_gameday_associations')"
                   @click="navigateTo(`/events/${event.id}/gamedays`)"
                 >
@@ -562,7 +562,7 @@ const formatDate = (date: string | null) => {
               </td>
 
               <!-- Nb gamedays -->
-              <td class="px-4 py-3 text-center text-sm text-header-900">
+              <td class="px-4 py-3 text-center text-sm text-header-900 dark:text-header-50">
                 {{ event.nbGamedays }}
               </td>
 
@@ -571,7 +571,7 @@ const formatDate = (date: string | null) => {
                 <div class="flex items-center justify-end gap-1">
                   <button
                     v-if="authStore.isSuperAdmin"
-                    class="p-1.5 text-danger-600"
+                    class="p-1.5 text-danger-600 dark:text-danger-400"
                     :title="t('common.delete')"
                     @click="openDeleteModal(event)"
                   >
@@ -612,27 +612,27 @@ const formatDate = (date: string | null) => {
       >
         <!-- Header -->
         <template #header>
-          <h3 class="font-semibold text-header-900 truncate">
+          <h3 class="font-semibold text-header-900 dark:text-header-50 truncate">
             {{ event.libelle }}
           </h3>
         </template>
         <template #header-right>
-          <span class="text-sm text-header-900 shrink-0 ml-2">ID: {{ event.id }}</span>
+          <span class="text-sm text-header-900 dark:text-header-50 shrink-0 ml-2">ID: {{ event.id }}</span>
         </template>
 
         <!-- Content -->
         <div v-if="event.lieu" class="flex items-start gap-2 text-sm">
-          <UIcon name="heroicons:map-pin-solid" class="w-5 h-5 text-header-600 shrink-0 mt-0.5" />
-          <span class="text-header-900">{{ event.lieu }}</span>
+          <UIcon name="heroicons:map-pin-solid" class="w-5 h-5 text-header-600 dark:text-header-300 shrink-0 mt-0.5" />
+          <span class="text-header-900 dark:text-header-50">{{ event.lieu }}</span>
         </div>
 
         <div class="flex flex-col gap-2 text-sm">
           <div v-if="event.dateDebut" class="flex items-center gap-2">
-            <UIcon name="heroicons:calendar-solid" class="w-5 h-5 text-header-600 shrink-0" />
+            <UIcon name="heroicons:calendar-solid" class="w-5 h-5 text-header-600 dark:text-header-300 shrink-0" />
             <div>
-              <span class="text-header-900 ml-1">{{ formatDate(event.dateDebut) }}</span>
+              <span class="text-header-900 dark:text-header-50 ml-1">{{ formatDate(event.dateDebut) }}</span>
               -
-              <span class="text-header-900 ml-1">{{ formatDate(event.dateFin) }}</span>
+              <span class="text-header-900 dark:text-header-50 ml-1">{{ formatDate(event.dateFin) }}</span>
             </div>
           </div>
         </div>
@@ -651,7 +651,7 @@ const formatDate = (date: string | null) => {
           <AdminToggleButton
             :active="event.app"
             active-icon="heroicons:device-phone-mobile-solid"
-            inactive-icon="heroicons:device-phone-mobile-solid"
+            inactive-icon="heroicons:device-phone-mobile"
             active-color="primary"
             :active-title="t('events.app_enabled')"
             :inactive-title="t('events.app_disabled')"
@@ -709,7 +709,7 @@ const formatDate = (date: string | null) => {
           <!-- Error message -->
           <div
             v-if="formError"
-            class="flex items-start gap-3 p-4 bg-danger-50 border border-danger-200 rounded-lg text-danger-800"
+            class="flex items-start gap-3 p-4 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-900 rounded-lg text-danger-800 dark:text-danger-200"
           >
             <UIcon name="heroicons:exclamation-triangle" class="w-5 h-5 shrink-0 mt-0.5" />
             <span class="text-sm">{{ formError }}</span>
@@ -717,8 +717,8 @@ const formatDate = (date: string | null) => {
 
           <!-- Libelle -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
-              {{ t('events.form.libelle') }} <span class="text-danger-500">*</span>
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
+              {{ t('events.form.libelle') }} <span class="text-danger-500 dark:text-danger-400">*</span>
             </label>
             <input
               v-model="formData.libelle"
@@ -726,13 +726,13 @@ const formatDate = (date: string | null) => {
               :placeholder="t('events.form.libelle_placeholder')"
               maxlength="40"
               required
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
           </div>
 
           <!-- Lieu -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('events.form.lieu') }}
             </label>
             <input
@@ -740,40 +740,40 @@ const formatDate = (date: string | null) => {
               type="text"
               :placeholder="t('events.form.lieu_placeholder')"
               maxlength="40"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
           </div>
 
           <!-- Date debut -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('events.form.date_debut') }}
             </label>
             <input
               v-model="formData.dateDebut"
               type="date"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
           </div>
 
           <!-- Date fin -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('events.form.date_fin') }}
             </label>
             <input
               v-model="formData.dateFin"
               type="date"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200 dark:border-header-700">
           <button
             type="button"
-            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 dark:text-header-50 border border-header-300 dark:border-header-700 hover:bg-header-200 dark:hover:bg-header-700 rounded-lg transition-colors"
             @click="closeModal"
           >
             {{ t('events.form.cancel') }}

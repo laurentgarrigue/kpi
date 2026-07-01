@@ -192,7 +192,7 @@ TODO :
 - Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
 - ⚠️ Dark mode,
 - ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
-- Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
+- ✅ Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
 Les nouveautés à mettre en valeur : choix éventuel du mandat après authentification, puis choix du contexte de travail sur la page d'accueil (saison, périmètre par sélection, section, groupe ou événement) modifiable par la suite, raccourcis (menu, boutons sur la page d'accueil, liens au sein des tableaux), 
 - Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
 - ❓ ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
@@ -210,6 +210,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
+
 
 
 **App2**:

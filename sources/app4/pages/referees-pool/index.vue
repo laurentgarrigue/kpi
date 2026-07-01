@@ -330,10 +330,10 @@ onMounted(loadPool)
     <!-- Page header -->
     <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
       <div>
-        <h1 class="text-2xl font-bold text-header-900">
+        <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
           {{ t('referees_pool_page.title') }}
         </h1>
-        <p class="text-sm text-header-600 mt-1">
+        <p class="text-sm text-header-600 dark:text-header-300 mt-1">
           {{ t('referees_pool_page.subtitle') }}
         </p>
       </div>
@@ -342,7 +342,7 @@ onMounted(loadPool)
           v-if="groups.length > 0"
           :href="pdfUrl"
           target="_blank"
-          class="px-3 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200 flex items-center gap-1.5"
+          class="px-3 py-2 text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 flex items-center gap-1.5"
         >
           <UIcon name="i-heroicons-document-arrow-down" class="w-4 h-4" />
           {{ t('referees_pool_page.export_pdf') }}
@@ -361,7 +361,7 @@ onMounted(loadPool)
     <!-- Toolbar: collapse/expand on the left, below the title -->
     <div v-if="groups.length > 0" class="flex items-center gap-2 mb-4 flex-wrap">
       <button
-        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
         :disabled="noneExpanded"
         @click="collapseAll"
       >
@@ -369,7 +369,7 @@ onMounted(loadPool)
         {{ t('common.collapse_all') }}
       </button>
       <button
-        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 hover:text-header-900 bg-white border border-header-300 rounded-md hover:bg-header-50 transition-colors disabled:opacity-40 disabled:cursor-default"
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
         :disabled="allExpanded"
         @click="expandAll"
       >
@@ -380,24 +380,24 @@ onMounted(loadPool)
 
     <!-- Loading -->
     <div v-if="loading" class="space-y-3">
-      <div v-for="i in 4" :key="i" class="h-14 bg-header-200 rounded-lg animate-pulse" />
+      <div v-for="i in 4" :key="i" class="h-14 bg-header-200 dark:bg-header-700 rounded-lg animate-pulse" />
     </div>
 
     <!-- Empty -->
-    <div v-else-if="groups.length === 0" class="text-center py-16 text-header-600">
+    <div v-else-if="groups.length === 0" class="text-center py-16 text-header-600 dark:text-header-300">
       <UIcon name="i-heroicons-flag" class="w-12 h-12 mx-auto mb-3" />
       <p>{{ t('referees_pool_page.no_groups') }}</p>
     </div>
 
     <!-- Groups -->
     <div v-else class="space-y-3">
-      <div v-for="group in groups" :key="group.id" class="bg-white rounded-lg shadow overflow-hidden">
+      <div v-for="group in groups" :key="group.id" class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
         <!-- Group header -->
-        <div class="flex items-center justify-between px-4 py-3 bg-header-50 border-b border-header-200">
+        <div class="flex items-center justify-between px-4 py-3 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700">
           <button class="flex items-center gap-3 flex-1 text-left" @click="toggleGroup(group.id)">
             <UIcon
               :name="expandedIds.has(group.id) ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
-              class="w-5 h-5 text-header-600 shrink-0"
+              class="w-5 h-5 text-header-600 dark:text-header-300 shrink-0"
             />
             <img
               v-if="groupLogoUrl(group)"
@@ -406,28 +406,28 @@ onMounted(loadPool)
               class="w-6 h-6 object-contain shrink-0"
               @error="($event.target as HTMLImageElement).style.display = 'none'"
             >
-            <span class="font-semibold text-header-900">{{ group.libelle }}</span>
-            <span class="text-xs text-header-600">
+            <span class="font-semibold text-header-900 dark:text-header-50">{{ group.libelle }}</span>
+            <span class="text-xs text-header-600 dark:text-header-300">
               {{ t('referees_pool_page.referee_count', { count: group.refereeCount }) }}
             </span>
           </button>
           <div v-if="canManage" class="flex items-center gap-1">
             <button
-              class="p-1.5 text-header-600 hover:text-primary-600 hover:bg-primary-50 rounded"
+              class="p-1.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950 rounded"
               :title="t('referees_pool_page.add_referee')"
               @click="openAddReferee(group)"
             >
               <UIcon name="i-heroicons-user-plus" class="w-4 h-4" />
             </button>
             <button
-              class="p-1.5 text-header-600 hover:text-primary-600 hover:bg-primary-50 rounded"
+              class="p-1.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950 rounded"
               :title="t('referees_pool_page.rename_group')"
               @click="openRenameGroup(group)"
             >
               <UIcon name="i-heroicons-pencil-square" class="w-4 h-4" />
             </button>
             <button
-              class="p-1.5 text-header-600 hover:text-danger-600 hover:bg-danger-50 rounded"
+              class="p-1.5 text-header-600 dark:text-header-300 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 rounded"
               :title="t('referees_pool_page.delete_group')"
               @click="openDeleteGroup(group)"
             >
@@ -438,12 +438,12 @@ onMounted(loadPool)
 
         <!-- Referees -->
         <div v-if="expandedIds.has(group.id)">
-          <div v-if="group.referees.length === 0" class="px-4 py-6 text-sm text-header-600 text-center">
+          <div v-if="group.referees.length === 0" class="px-4 py-6 text-sm text-header-600 dark:text-header-300 text-center">
             {{ t('referees_pool_page.no_referees') }}
           </div>
           <table v-else class="w-full text-sm">
             <thead>
-              <tr class="text-left text-xs text-header-600 uppercase border-b border-header-100">
+              <tr class="text-left text-xs text-header-600 dark:text-header-300 uppercase border-b border-header-100 dark:border-header-800">
                 <th class="px-4 py-2 font-medium">{{ t('common.license') }}</th>
                 <th class="px-4 py-2 font-medium">{{ t('common.last_name') }}</th>
                 <th class="px-4 py-2 font-medium">{{ t('common.first_name') }}</th>
@@ -457,23 +457,23 @@ onMounted(loadPool)
               <tr
                 v-for="ref_ in group.referees"
                 :key="ref_.matric"
-                class="border-b border-header-50 hover:bg-header-50"
+                class="border-b border-header-50 dark:border-header-900 hover:bg-header-50 dark:hover:bg-header-800"
                 :class="ref_.status === 'X' ? 'opacity-50' : ''"
               >
-                <td class="px-4 py-2 font-mono text-xs text-header-900">
+                <td class="px-4 py-2 font-mono text-xs text-header-900 dark:text-header-50">
                   {{ ref_.matric }}
                   <UIcon
                     v-if="ref_.licensed"
                     name="i-heroicons-lock-closed"
-                    class="w-3 h-3 inline text-header-600 ml-1"
+                    class="w-3 h-3 inline text-header-600 dark:text-header-300 ml-1"
                     :title="t('referees_pool_page.licensed_readonly')"
                   />
                 </td>
-                <td class="px-4 py-2 font-medium text-header-900">{{ ref_.nom }}</td>
-                <td class="px-4 py-2 text-header-900">{{ ref_.prenom }}</td>
-                <td class="px-2 py-2 text-header-900">{{ ref_.sexe }}</td>
+                <td class="px-4 py-2 font-medium text-header-900 dark:text-header-50">{{ ref_.nom }}</td>
+                <td class="px-4 py-2 text-header-900 dark:text-header-50">{{ ref_.prenom }}</td>
+                <td class="px-2 py-2 text-header-900 dark:text-header-50">{{ ref_.sexe }}</td>
                 <td class="px-2 py-2">
-                  <span v-if="ref_.arbitreLabel" class="inline-block px-2 py-0.5 text-xs bg-primary-50 text-primary-700 rounded">
+                  <span v-if="ref_.arbitreLabel" class="inline-block px-2 py-0.5 text-xs bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded">
                     {{ ref_.arbitreLabel }}
                   </span>
                 </td>
@@ -482,7 +482,7 @@ onMounted(loadPool)
                     v-if="canManage"
                     :value="ref_.status"
                     :disabled="statusSaving === ref_.matric"
-                    class="px-2 py-1 text-xs border border-header-300 rounded bg-white focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                    class="px-2 py-1 text-xs border border-header-300 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
                     @change="changeStatus(group, ref_, ($event.target as HTMLSelectElement).value as PoolStatus)"
                   >
                     <option value="A">{{ t('referees_pool_page.status_active') }}</option>
@@ -491,7 +491,7 @@ onMounted(loadPool)
                   <span
                     v-else
                     class="inline-block px-2 py-0.5 text-xs rounded"
-                    :class="ref_.status === 'X' ? 'bg-header-200 text-header-600' : 'bg-success-50 text-success-700'"
+                    :class="ref_.status === 'X' ? 'bg-header-200 dark:bg-header-700 text-header-600 dark:text-header-300' : 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300'"
                   >
                     {{ ref_.status === 'X' ? t('referees_pool_page.status_inactive') : t('referees_pool_page.status_active') }}
                   </span>
@@ -499,14 +499,14 @@ onMounted(loadPool)
                 <td v-if="canManage" class="px-4 py-2 text-right whitespace-nowrap">
                   <button
                     v-if="!ref_.licensed"
-                    class="p-1.5 text-header-600 hover:text-primary-600 hover:bg-primary-50 rounded"
+                    class="p-1.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950 rounded"
                     :title="t('referees_pool_page.edit_referee')"
                     @click="openEditReferee(group, ref_)"
                   >
                     <UIcon name="i-heroicons-pencil-square" class="w-4 h-4" />
                   </button>
                   <button
-                    class="p-1.5 text-header-600 hover:text-danger-600 hover:bg-danger-50 rounded"
+                    class="p-1.5 text-header-600 dark:text-header-300 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 rounded"
                     :title="t('referees_pool_page.remove_referee')"
                     @click="openRemoveReferee(group, ref_)"
                   >
@@ -529,20 +529,20 @@ onMounted(loadPool)
     >
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
-            {{ t('referees_pool_page.group_name') }} <span class="text-danger-500">*</span>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
+            {{ t('referees_pool_page.group_name') }} <span class="text-danger-500 dark:text-danger-400">*</span>
           </label>
           <input
             v-model="groupForm.libelle"
             type="text"
             maxlength="30"
             :placeholder="t('referees_pool_page.group_name_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             @keyup.enter="submitGroup"
           >
         </div>
         <div v-if="groupModalMode === 'create'">
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('referees_pool_page.club_code') }}
           </label>
           <input
@@ -550,12 +550,12 @@ onMounted(loadPool)
             type="text"
             maxlength="6"
             :placeholder="t('referees_pool_page.club_code_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
         </div>
       </div>
       <template #footer>
-        <button class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200" @click="groupModalOpen = false">
+        <button class="px-4 py-2 text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700" @click="groupModalOpen = false">
           {{ t('common.cancel') }}
         </button>
         <button
@@ -578,17 +578,17 @@ onMounted(loadPool)
     >
       <div class="space-y-4">
         <!-- Mode tabs (add only) -->
-        <div v-if="refereeModalMode === 'add'" class="flex gap-2 border-b border-header-200">
+        <div v-if="refereeModalMode === 'add'" class="flex gap-2 border-b border-header-200 dark:border-header-700">
           <button
             class="px-3 py-2 text-sm font-medium border-b-2 -mb-px"
-            :class="addMode === 'licence' ? 'border-primary-600 text-primary-700' : 'border-transparent text-header-600 hover:text-header-900'"
+            :class="addMode === 'licence' ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'"
             @click="addMode = 'licence'"
           >
             {{ t('referees_pool_page.add_mode_licence') }}
           </button>
           <button
             class="px-3 py-2 text-sm font-medium border-b-2 -mb-px"
-            :class="addMode === 'manual' ? 'border-primary-600 text-primary-700' : 'border-transparent text-header-600 hover:text-header-900'"
+            :class="addMode === 'manual' ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'"
             @click="addMode = 'manual'"
           >
             {{ t('referees_pool_page.add_mode_manual') }}
@@ -597,36 +597,36 @@ onMounted(loadPool)
 
         <!-- Licence search -->
         <div v-if="refereeModalMode === 'add' && addMode === 'licence'" class="relative">
-          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('common.license') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('common.license') }}</label>
           <input
             v-model="licenceQuery"
             type="text"
             :placeholder="t('referees_pool_page.search_licence_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
           <div v-if="licenceSearching" class="absolute right-3 top-9">
-            <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-600" />
+            <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-600 dark:text-header-300" />
           </div>
           <div
             v-if="licenceResults.length > 0"
-            class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+            class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
           >
             <button
               v-for="item in licenceResults"
               :key="item.matric"
-              class="w-full px-3 py-2 text-left text-sm hover:bg-primary-50 flex items-center gap-2 border-b border-header-50"
+              class="w-full px-3 py-2 text-left text-sm hover:bg-primary-50 dark:hover:bg-primary-950 flex items-center gap-2 border-b border-header-50 dark:border-header-900"
               @click="selectLicence(item)"
             >
-              <span class="font-mono text-xs text-header-600">{{ item.matric }}</span>
+              <span class="font-mono text-xs text-header-600 dark:text-header-300">{{ item.matric }}</span>
               <span class="font-medium">{{ item.nom }} {{ item.prenom }}</span>
-              <span v-if="item.clubLibelle" class="text-xs text-header-600">({{ item.clubLibelle }})</span>
-              <span v-if="item.arbitreLabel" class="ml-auto text-xs text-primary-600">{{ item.arbitreLabel }}</span>
+              <span v-if="item.clubLibelle" class="text-xs text-header-600 dark:text-header-300">({{ item.clubLibelle }})</span>
+              <span v-if="item.arbitreLabel" class="ml-auto text-xs text-primary-600 dark:text-primary-300">{{ item.arbitreLabel }}</span>
             </button>
           </div>
-          <p v-if="selectedLicence" class="mt-2 text-sm text-success-700 flex items-center gap-1">
+          <p v-if="selectedLicence" class="mt-2 text-sm text-success-700 dark:text-success-300 flex items-center gap-1">
             <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
             {{ selectedLicence.nom }} {{ selectedLicence.prenom }}
-            <span class="text-header-600">— {{ t('referees_pool_page.licensed') }} ({{ selectedLicence.matric }})</span>
+            <span class="text-header-600 dark:text-header-300">— {{ t('referees_pool_page.licensed') }} ({{ selectedLicence.matric }})</span>
           </p>
         </div>
 
@@ -634,48 +634,48 @@ onMounted(loadPool)
         <template v-if="refereeModalMode === 'edit' || (refereeModalMode === 'add' && addMode === 'manual')">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
-                {{ t('common.last_name') }} <span class="text-danger-500">*</span>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
+                {{ t('common.last_name') }} <span class="text-danger-500 dark:text-danger-400">*</span>
               </label>
-              <input v-model="refereeForm.nom" type="text" maxlength="30" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+              <input v-model="refereeForm.nom" type="text" maxlength="30" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('common.first_name') }}</label>
-              <input v-model="refereeForm.prenom" type="text" maxlength="30" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('common.first_name') }}</label>
+              <input v-model="refereeForm.prenom" type="text" maxlength="30" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('referees_pool_page.sex') }}</label>
-              <select v-model="refereeForm.sexe" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('referees_pool_page.sex') }}</label>
+              <select v-model="refereeForm.sexe" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 <option value="" />
                 <option value="M">M</option>
                 <option value="F">F</option>
               </select>
             </div>
             <div v-if="refereeModalMode === 'add'">
-              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('referees_pool_page.birthdate') }}</label>
-              <input v-model="refereeForm.naissance" type="date" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('referees_pool_page.birthdate') }}</label>
+              <input v-model="refereeForm.naissance" type="date" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
             </div>
           </div>
 
           <!-- Arbitration status -->
-          <div class="grid grid-cols-2 gap-3 pt-2 border-t border-header-100">
+          <div class="grid grid-cols-2 gap-3 pt-2 border-t border-header-100 dark:border-header-800">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('referees_pool_page.arbitration') }}</label>
-              <select v-model="refereeForm.arbitre" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('referees_pool_page.arbitration') }}</label>
+              <select v-model="refereeForm.arbitre" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 <option value="">{{ t('referees_pool_page.arbitration_none') }}</option>
                 <option v-for="code in ARBITRATION_CODES" :key="code" :value="code">{{ code }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('referees_pool_page.arbitration_level') }}</label>
-              <input v-model="refereeForm.niveau" type="text" maxlength="1" class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('referees_pool_page.arbitration_level') }}</label>
+              <input v-model="refereeForm.niveau" type="text" maxlength="1" class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
             </div>
           </div>
         </template>
       </div>
 
       <template #footer>
-        <button class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200" @click="refereeModalOpen = false">
+        <button class="px-4 py-2 text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700" @click="refereeModalOpen = false">
           {{ t('common.cancel') }}
         </button>
         <button

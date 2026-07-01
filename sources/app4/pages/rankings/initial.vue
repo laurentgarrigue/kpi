@@ -172,15 +172,15 @@ const fieldLabel = (field: string) => {
     <div class="mb-4 flex flex-wrap items-center gap-3">
       <NuxtLink
         to="/rankings"
-        class="px-3 py-2 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1 shrink-0"
+        class="px-3 py-2 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm flex items-center gap-1 shrink-0"
       >
         <UIcon name="heroicons:arrow-left" class="w-4 h-4" />
         {{ t('rankings.initial.back') }}
       </NuxtLink>
       <div>
-        <h1 class="text-2xl font-bold text-header-900">{{ t('rankings.initial.title') }}</h1>
+        <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">{{ t('rankings.initial.title') }}</h1>
         <div class="flex flex-wrap items-center gap-2 mt-1">
-          <p v-if="competitionCode" class="text-sm text-header-600">
+          <p v-if="competitionCode" class="text-sm text-header-600 dark:text-header-300">
             {{ t('rankings.initial.subtitle', { competition: competitionCode }) }}
           </p>
           <span
@@ -205,9 +205,9 @@ const fieldLabel = (field: string) => {
     </div>
 
     <!-- Toolbar -->
-    <div v-if="canEdit" class="mb-4 bg-white rounded-lg shadow p-4 flex flex-wrap items-center gap-2">
+    <div v-if="canEdit" class="mb-4 bg-white dark:bg-header-900 rounded-lg shadow p-4 flex flex-wrap items-center gap-2">
       <button
-        class="px-3 py-1.5 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm"
+        class="px-3 py-1.5 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm"
         :disabled="loading"
         @click="loadData"
       >
@@ -223,33 +223,33 @@ const fieldLabel = (field: string) => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading && teams.length === 0" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+    <div v-if="loading && teams.length === 0" class="bg-white dark:bg-header-900 rounded-lg shadow p-8 text-center text-header-600 dark:text-header-300">
       <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
       {{ t('common.loading') }}
     </div>
 
     <!-- Table -->
-    <div v-else-if="teams.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+    <div v-else-if="teams.length > 0" class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
       <!-- Desktop table -->
       <div class="hidden lg:block overflow-x-auto">
-        <table class="min-w-full divide-y divide-header-200">
-          <thead class="bg-header-50">
+        <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
+          <thead class="bg-header-50 dark:bg-header-900">
             <tr>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.rank') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.team') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.pts') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.j') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.g') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.n') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.p') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.f') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.plus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.minus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 uppercase">{{ t('rankings.table.diff') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.rank') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.team') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.pts') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.j') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.g') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.n') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.p') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.f') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.plus') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.minus') }}</th>
+              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.diff') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-header-200">
-            <tr v-for="team in teams" :key="team.id" class="hover:bg-header-50">
+          <tbody class="divide-y divide-header-200 dark:divide-header-700">
+            <tr v-for="team in teams" :key="team.id" class="hover:bg-header-50 dark:hover:bg-header-800">
               <!-- Clt -->
               <td class="px-3 py-1.5 text-center text-sm">
                 <template v-if="editingCell?.id === team.id && editingCell.field === 'Clt'">
@@ -258,7 +258,7 @@ const fieldLabel = (field: string) => {
                     v-model="editingValue"
                     type="tel"
                     maxlength="3"
-                    class="w-10 px-1 py-0.5 border border-primary-400 rounded text-center text-sm focus:ring-2 focus:ring-primary-500"
+                    class="w-10 px-1 py-0.5 border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-center text-sm focus:ring-2 focus:ring-primary-500"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -272,7 +272,7 @@ const fieldLabel = (field: string) => {
                 </span>
               </td>
               <!-- Team name -->
-              <td class="px-3 py-1.5 text-sm font-medium text-header-900">{{ team.libelle }}</td>
+              <td class="px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50">{{ team.libelle }}</td>
               <!-- Pts, J, G, N, P, F, Plus, Moins, Diff -->
               <td v-for="field in (['Pts', 'J', 'G', 'N', 'P', 'F', 'Plus', 'Moins', 'Diff'] as const)" :key="field" class="px-3 py-1.5 text-center text-sm">
                 <template v-if="editingCell?.id === team.id && editingCell.field === field">
@@ -281,7 +281,7 @@ const fieldLabel = (field: string) => {
                     v-model="editingValue"
                     type="tel"
                     maxlength="5"
-                    class="w-12 px-1 py-0.5 border border-primary-400 rounded text-center text-sm focus:ring-2 focus:ring-primary-500"
+                    class="w-12 px-1 py-0.5 border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-center text-sm focus:ring-2 focus:ring-primary-500"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -300,12 +300,12 @@ const fieldLabel = (field: string) => {
       </div>
 
       <!-- Mobile cards -->
-      <div class="lg:hidden divide-y divide-header-200">
+      <div class="lg:hidden divide-y divide-header-200 dark:divide-header-700">
         <div v-for="team in teams" :key="team.id" class="p-3">
-          <div class="font-medium text-header-900 text-sm mb-1">{{ team.libelle }}</div>
-          <div class="grid grid-cols-5 gap-1 text-xs text-header-900">
+          <div class="font-medium text-header-900 dark:text-header-50 text-sm mb-1">{{ team.libelle }}</div>
+          <div class="grid grid-cols-5 gap-1 text-xs text-header-900 dark:text-header-50">
             <div v-for="field in editableFields" :key="field" class="text-center">
-              <div class="text-[10px] text-header-600 uppercase">{{ fieldLabel(field) }}</div>
+              <div class="text-[10px] text-header-600 dark:text-header-300 uppercase">{{ fieldLabel(field) }}</div>
               <span
                 :class="canEdit ? 'editable-cell' : ''"
                 @click="canEdit && startEdit(team.id, field, (team as Record<string, any>)[{ Clt: 'clt', Pts: 'pts', J: 'j', G: 'g', N: 'n', P: 'p', F: 'f', Plus: 'plus', Moins: 'moins', Diff: 'diff' }[field]])"
@@ -319,7 +319,7 @@ const fieldLabel = (field: string) => {
     </div>
 
     <!-- Empty state -->
-    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+    <div v-else class="bg-white dark:bg-header-900 rounded-lg shadow p-8 text-center text-header-600 dark:text-header-300">
       {{ t('rankings.no_teams') }}
     </div>
 

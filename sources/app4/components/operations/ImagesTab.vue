@@ -518,7 +518,7 @@ const onTypeChange = (type: ImageType) => {
   <div class="space-y-6">
     <!-- Image type selector (shared across all sub-tabs) -->
     <div>
-      <label class="block text-sm font-medium text-header-900 mb-2">
+      <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-2">
         {{ t('operations.images.type') }}
       </label>
       <div class="flex flex-wrap gap-2">
@@ -529,21 +529,21 @@ const onTypeChange = (type: ImageType) => {
             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
             selectedImageType === type.value
               ? 'bg-primary-600 text-white'
-              : 'bg-header-200 text-header-900 hover:bg-header-200',
+              : 'bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-700',
           ]"
           @click="onTypeChange(type.value as ImageType)"
         >
           {{ type.label }}
         </button>
       </div>
-      <p v-if="currentFormatHint" class="mt-2 text-sm text-primary-600 flex items-center gap-1">
+      <p v-if="currentFormatHint" class="mt-2 text-sm text-primary-600 dark:text-primary-300 flex items-center gap-1">
         <UIcon name="i-heroicons-information-circle" class="w-4 h-4" />
         {{ currentFormatHint }}
       </p>
     </div>
 
     <!-- Internal sub-tab navigation -->
-    <div class="border-b border-header-200">
+    <div class="border-b border-header-200 dark:border-header-700">
       <nav class="-mb-px flex space-x-1 overflow-x-auto" aria-label="Images tabs">
         <button
           v-for="tab in [
@@ -555,7 +555,7 @@ const onTypeChange = (type: ImageType) => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
+              : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -569,23 +569,23 @@ const onTypeChange = (type: ImageType) => {
     <!-- ── Gallery ──────────────────────────────────────────────────────── -->
     <section v-if="activeSubTab === 'gallery'">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-header-900">
+        <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">
           {{ t('operations.images.gallery') }}
-          <span class="ml-2 text-sm font-normal text-header-600">({{ galleryTotal }})</span>
+          <span class="ml-2 text-sm font-normal text-header-600 dark:text-header-300">({{ galleryTotal }})</span>
         </h2>
         <div class="flex items-center gap-2">
           <div class="relative">
-            <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
+            <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
             <input
               v-model="gallerySearch"
               type="text"
               :placeholder="t('operations.images.gallery_search_placeholder')"
-              class="pl-9 pr-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 w-56"
+              class="pl-9 pr-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 w-56"
               @input="onGallerySearchInput"
             >
           </div>
           <button
-            class="p-2 text-header-600 hover:text-header-900"
+            class="p-2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
             :title="t('operations.images.refresh')"
             @click="loadGallery"
           >
@@ -594,19 +594,19 @@ const onTypeChange = (type: ImageType) => {
         </div>
       </div>
 
-      <div v-if="galleryLoading && galleryImages.length === 0" class="text-center py-8 text-header-600">
+      <div v-if="galleryLoading && galleryImages.length === 0" class="text-center py-8 text-header-600 dark:text-header-300">
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto mb-2" />
         {{ t('common.loading') }}
       </div>
 
-      <div v-else-if="galleryImages.length === 0" class="text-center py-8 text-header-600">
+      <div v-else-if="galleryImages.length === 0" class="text-center py-8 text-header-600 dark:text-header-300">
         <UIcon name="i-heroicons-photo" class="w-8 h-8 mx-auto mb-2" />
         {{ t('operations.images.gallery_empty') }}
       </div>
 
-      <div v-else class="border border-header-200 rounded-lg overflow-hidden">
+      <div v-else class="border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-header-50 text-header-900 text-xs uppercase">
+          <thead class="bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 text-xs uppercase">
             <tr>
               <th class="px-3 py-2 text-left w-16">{{ t('operations.images.col_preview') }}</th>
               <th class="px-3 py-2 text-left">{{ t('operations.images.col_filename') }}</th>
@@ -615,38 +615,38 @@ const onTypeChange = (type: ImageType) => {
               <th class="px-3 py-2 text-right w-28">{{ t('operations.images.col_actions') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-header-100">
+          <tbody class="divide-y divide-header-100 dark:divide-header-800">
             <template v-for="entry in galleryImages" :key="entry.filename">
               <!-- Normal row -->
-              <tr v-if="renamingFilename !== entry.filename" class="hover:bg-header-50 group">
+              <tr v-if="renamingFilename !== entry.filename" class="hover:bg-header-50 dark:hover:bg-header-800 group">
                 <td class="px-3 py-1">
                   <a :href="imageUrl(entry.filename)" target="_blank" rel="noopener">
                     <img
                       :src="imageUrl(entry.filename)"
                       :alt="entry.filename"
-                      class="h-10 w-16 object-contain bg-header-200 rounded border border-header-200"
+                      class="h-10 w-16 object-contain bg-header-200 dark:bg-header-700 rounded border border-header-200 dark:border-header-700"
                       loading="lazy"
                     >
                   </a>
                 </td>
-                <td class="px-3 py-2 font-mono text-xs text-header-900">
+                <td class="px-3 py-2 font-mono text-xs text-header-900 dark:text-header-50">
                   <a :href="imageUrl(entry.filename)" target="_blank" rel="noopener" class="hover:underline hover:text-primary-600">
                     {{ entry.filename }}
                   </a>
                 </td>
-                <td class="px-3 py-2 text-right text-header-600">{{ formatBytes(entry.size) }}</td>
-                <td class="px-3 py-2 text-right text-header-600">{{ formatDate(entry.modified) }}</td>
+                <td class="px-3 py-2 text-right text-header-600 dark:text-header-300">{{ formatBytes(entry.size) }}</td>
+                <td class="px-3 py-2 text-right text-header-600 dark:text-header-300">{{ formatDate(entry.modified) }}</td>
                 <td class="px-3 py-2 text-right">
                   <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      class="p-1.5 rounded text-header-600 hover:text-primary-600 hover:bg-primary-50"
+                      class="p-1.5 rounded text-header-600 dark:text-header-300 hover:text-primary-600 hover:bg-primary-50"
                       :title="t('operations.images.rename_button')"
                       @click="startRename(entry)"
                     >
                       <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
                     </button>
                     <button
-                      class="p-1.5 rounded text-header-600 hover:text-error-600 hover:bg-error-50"
+                      class="p-1.5 rounded text-header-600 dark:text-header-300 hover:text-error-600 hover:bg-error-50"
                       :title="t('common.delete')"
                       @click="openDeleteModal(entry)"
                     >
@@ -657,12 +657,12 @@ const onTypeChange = (type: ImageType) => {
               </tr>
 
               <!-- Inline rename row -->
-              <tr v-else class="bg-primary-50">
+              <tr v-else class="bg-primary-50 dark:bg-primary-950">
                 <td class="px-3 py-1">
                   <img
                     :src="imageUrl(entry.filename)"
                     :alt="entry.filename"
-                    class="h-10 w-16 object-contain bg-header-200 rounded border border-header-200"
+                    class="h-10 w-16 object-contain bg-header-200 dark:bg-header-700 rounded border border-header-200 dark:border-header-700"
                     loading="lazy"
                   >
                 </td>
@@ -684,7 +684,7 @@ const onTypeChange = (type: ImageType) => {
                       <span v-else>{{ t('common.confirm') }}</span>
                     </button>
                     <button
-                      class="px-3 py-1 text-xs bg-header-200 text-header-900 rounded hover:bg-header-300"
+                      class="px-3 py-1 text-xs bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 rounded hover:bg-header-300"
                       @click="cancelRename"
                     >
                       {{ t('common.cancel') }}
@@ -700,14 +700,14 @@ const onTypeChange = (type: ImageType) => {
 
       <!-- Pagination -->
       <div v-if="galleryPageCount > 1" class="flex items-center justify-between mt-4">
-        <p class="text-sm text-header-600">
+        <p class="text-sm text-header-600 dark:text-header-300">
           {{ (galleryPage - 1) * galleryPageSize + 1 }}–{{ Math.min(galleryPage * galleryPageSize, galleryTotal) }}
           / {{ galleryTotal }}
         </p>
         <div class="flex items-center gap-1">
           <button
             :disabled="galleryPage === 1"
-            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-900 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 rounded text-sm border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="galleryGoToPage(galleryPage - 1)"
           >
             ←
@@ -719,7 +719,7 @@ const onTypeChange = (type: ImageType) => {
                 'px-3 py-1.5 rounded text-sm border',
                 p === galleryPage
                   ? 'bg-primary-600 text-white border-primary-600'
-                  : 'border-header-300 text-header-900 hover:bg-header-50'
+                  : 'border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800'
               ]"
               @click="galleryGoToPage(p)"
             >
@@ -727,12 +727,12 @@ const onTypeChange = (type: ImageType) => {
             </button>
             <span
               v-else-if="p === galleryPage - 3 || p === galleryPage + 3"
-              class="px-1 text-header-600"
+              class="px-1 text-header-600 dark:text-header-300"
             >…</span>
           </template>
           <button
             :disabled="galleryPage === galleryPageCount"
-            class="px-3 py-1.5 rounded text-sm border border-header-300 text-header-900 hover:bg-header-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 rounded text-sm border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-40 disabled:cursor-not-allowed"
             @click="galleryGoToPage(galleryPage + 1)"
           >
             →
@@ -748,25 +748,25 @@ const onTypeChange = (type: ImageType) => {
         <template v-if="needsCompetitionFields">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.code_competition') }}
               </label>
               <input
                 v-model="codeCompetition"
                 type="text"
                 placeholder="ex: N1H"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
                 v-model="saison"
                 type="text"
                 placeholder="ex: 2024-2025"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
               >
             </div>
           </div>
@@ -774,7 +774,7 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsClubField">
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.images.club_number') }}
             </label>
             <div ref="clubSearchRef" class="relative">
@@ -783,31 +783,31 @@ const onTypeChange = (type: ImageType) => {
                   v-model="clubSearch"
                   type="text"
                   :placeholder="t('operations.images.club_search_placeholder')"
-                  class="w-full px-3 py-2 pl-9 pr-8 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                  class="w-full px-3 py-2 pl-9 pr-8 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                   @input="onClubSearchInput"
                   @focus="onClubSearchInput"
                 >
-                <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
+                <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
                 <button
                   v-if="clubSearch && !clubSearchLoading"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
                   @click="clearClubSearch"
                 >
                   <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
                 </button>
-                <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
+                <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
               </div>
               <div
                 v-if="clubSearchOpen && clubSearchResults.length > 0"
-                class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+                class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
               >
                 <button
                   v-for="club in clubSearchResults"
                   :key="club.numero"
-                  class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
+                  class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
                   @click="selectClub(club)"
                 >
-                  <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
+                  <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
                   <span>{{ club.nom }}</span>
                 </button>
               </div>
@@ -817,14 +817,14 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsNationField">
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.images.nation_code') }}
             </label>
             <input
               v-model="codeNation"
               type="text"
               placeholder="ex: FRA"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
             >
           </div>
         </template>
@@ -832,7 +832,7 @@ const onTypeChange = (type: ImageType) => {
         <template v-else-if="needsTeamField">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.team_search') }}
               </label>
               <div ref="teamSearchRef" class="relative">
@@ -841,45 +841,45 @@ const onTypeChange = (type: ImageType) => {
                     v-model="teamSearch"
                     type="text"
                     :placeholder="t('operations.images.team_search_placeholder')"
-                    class="w-full px-3 py-2 pl-9 pr-8 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                    class="w-full px-3 py-2 pl-9 pr-8 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                     @input="onTeamSearchInput"
                     @focus="onTeamSearchInput"
                   >
-                  <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
+                  <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
                   <button
                     v-if="teamSearch && !teamSearchLoading"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
                     @click="clearTeamSearch"
                   >
                     <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
                   </button>
-                  <UIcon v-if="teamSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
+                  <UIcon v-if="teamSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
                 </div>
                 <div
                   v-if="teamSearchOpen && teamSearchResults.length > 0"
-                  class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+                  class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
                 >
                   <button
                     v-for="team in teamSearchResults"
                     :key="team.numero"
-                    class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:outline-none flex flex-col"
+                    class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 focus:outline-none flex flex-col"
                     @click="selectTeam(team)"
                   >
                     <span class="font-medium">{{ team.libelle }}</span>
-                    <span class="text-xs text-header-600">{{ team.numero }} — {{ team.club }}</span>
+                    <span class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} — {{ team.club }}</span>
                   </button>
                 </div>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
                 v-model="saisonEquipe"
                 type="text"
                 placeholder="ex: 2024"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
               >
             </div>
           </div>
@@ -887,7 +887,7 @@ const onTypeChange = (type: ImageType) => {
 
         <!-- File input -->
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.images.file') }}
           </label>
           <div class="flex items-center gap-3">
@@ -895,14 +895,14 @@ const onTypeChange = (type: ImageType) => {
               ref="fileInput"
               type="file"
               :accept="currentAccept"
-              class="flex-1 px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+              class="flex-1 px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               @change="onFileSelected"
             >
-            <button v-if="selectedFile" class="px-3 py-2 text-header-900 hover:text-header-900" @click="clearFile">
+            <button v-if="selectedFile" class="px-3 py-2 text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50" @click="clearFile">
               <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
             </button>
           </div>
-          <p v-if="selectedFile" class="mt-1 text-sm text-header-600">
+          <p v-if="selectedFile" class="mt-1 text-sm text-header-600 dark:text-header-300">
             {{ selectedFile.name }} ({{ formatBytes(selectedFile.size) }})
           </p>
         </div>
@@ -926,25 +926,25 @@ const onTypeChange = (type: ImageType) => {
         <template v-if="needsCompetitionFields">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.code_competition') }}
               </label>
               <input
                 v-model="importUrlCompetition"
                 type="text"
                 placeholder="ex: N1H"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
                 v-model="importUrlSaison"
                 type="text"
                 placeholder="ex: 2024-2025"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
               >
             </div>
           </div>
@@ -952,28 +952,28 @@ const onTypeChange = (type: ImageType) => {
 
         <template v-else-if="needsClubField">
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.images.club_number') }}
             </label>
             <input
               v-model="importUrlClub"
               type="text"
               placeholder="ex: 12345"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             >
           </div>
         </template>
 
         <template v-else-if="needsNationField">
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('operations.images.nation_code') }}
             </label>
             <input
               v-model="importUrlNation"
               type="text"
               placeholder="ex: FRA"
-              class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
+              class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 uppercase"
             >
           </div>
         </template>
@@ -981,39 +981,39 @@ const onTypeChange = (type: ImageType) => {
         <template v-else-if="needsTeamField">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.team_number') }}
               </label>
               <input
                 v-model="importUrlTeam"
                 type="text"
                 placeholder="ex: 12345"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('operations.images.season') }}
               </label>
               <input
                 v-model="importUrlSaisonEquipe"
                 type="text"
                 placeholder="ex: 2024"
-                class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
               >
             </div>
           </div>
         </template>
 
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.images.import_url_label') }}
           </label>
           <input
             v-model="importUrl"
             type="url"
             placeholder="https://example.com/image.png"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
           >
         </div>
 
