@@ -32,7 +32,7 @@ const authStore = useAuthStore()
 const route = useRoute()
 
 // Tutoriel guidé (onboarding admin2) — voir DOC/specs/TUTORIEL_ADMIN2.md
-const { startTour, hasNewSteps } = useTour('welcome')
+const { startTour, hasNewSteps } = useGuidedTour('welcome')
 
 const activeMandateSummary = computed(() =>
   authStore.activeMandate
