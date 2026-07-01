@@ -1,7 +1,7 @@
 # Spécification — Dark mode dans app4 (admin2)
 
-> Statut : **en cours** — socle + toggle + page `games` + composants partagés faits ; ~29 pages
-> et ~28 composants restent à convertir (voir §7 Suivi).
+> Statut : **en cours** — socle + toggle + page `games` + composants partagés faits ; ~23 pages
+> et ~26 composants restent à convertir (voir §7 Suivi).
 > Cible : **app4** uniquement (Nuxt 4 + Nuxt UI v3 + Tailwind v4). Ne concerne pas app2/app3.
 > Branche de travail : `darktheme`.
 
@@ -142,6 +142,15 @@ gagnaient la cascade même en dark. Corrigées :
   reçoit `dark:text-header-100` pour que le texte non coloré (labels radio, etc.) reste lisible.
 - **Surlignages de lignes** (sélection, verrouillé, conflit, repos) : ternaires `:class` édités à
   la main avec variantes foncées.
+- **Barres de titre à couleur fixe `bg-<c>-300`/`bg-<c>-200`** (en-têtes de poule/phase, bandeaux
+  de section) avec texte `text-header-900 dark:text-header-50` : le script passe le texte en clair
+  mais laisse le fond clair fixe → **texte clair sur fond clair**. Ajouter le `dark:` du fond pour
+  l'assombrir (ex. rankings : `bg-primary-300 dark:bg-primary-800`, `bg-success-300 dark:bg-success-800`).
+  Ces fonds `-300`/`-200` sont hors mapping §3.2, donc jamais traités automatiquement.
+- **Inputs/selects natifs sans classe `bg`** : beaucoup de champs (dates, `type="text"`, selects de
+  filtre) n'ont que `border … rounded-lg` et héritent du fond blanc navigateur → **blanc sur blanc**
+  en dark. Ajouter `bg-white dark:bg-header-900 text-header-900 dark:text-header-50`. Le script
+  n'ajoute pas de `bg` là où il n'y en a pas.
 
 ## 6. Fichiers déjà convertis (référence)
 
@@ -150,7 +159,8 @@ gagnaient la cascade même en dark. Corrigées :
 **Composants partagés** (donc dark OK sur toute l'app) : `Header`, `PageHeader`, `Toolbar`,
 `Pagination`, `CardList`, `Card`, `ContextBadge`, `WorkContextSelector`, `WorkContextSummary`,
 `EventGroupSelect`, `CompetitionGroupedSelect`, `CompetitionMultiSelect`, `CompetitionSingleSelect`,
-`UsersCompetitionFilter`, `Modal`, `ConfirmModal`, `RefereeAutocomplete`.
+`UsersCompetitionFilter`, `Modal`, `ConfirmModal`, `RefereeAutocomplete`, `TextAutocomplete`,
+`AthleteAutocomplete`.
 
 **Page pilote (complète, à prendre comme modèle)** :
 [`pages/games/index.vue`](../../sources/app4/pages/games/index.vue) — tableau, toolbar, filtres,
@@ -158,13 +168,14 @@ dropdowns, modale de formulaire, autocompletes.
 
 **Pages converties ensuite** : `documents/index`, `competitions/index`, `teams/index` (tableaux
 sectionnés/par poule, badges de niveau/statut, bannières verrou/erreur, modales de formulaire,
-dropdowns téléportés, recherches club/historique).
+dropdowns téléportés, recherches club/historique), puis `gamedays/index`, `rankings/index`,
+`stats/index` (édition inline, colonnes calendrier vert, en-têtes de poule/phase à couleur fixe,
+export XLSX/PDF, modales calendrier/officiels/transfert, autocompletes commune/athlète).
 
 ## 7. Suivi — reste à faire
 
 ### 7.1 Pages non converties (contiennent des `bg-white` sans `dark:`)
-`gamedays/index`, `users/index`, `stats/index`, `rankings/index`,
-`presence/team/[teamId]`, `journal/index`, `index` (home),
+`users/index`, `presence/team/[teamId]`, `journal/index`, `index` (home),
 `athletes/index`, `presence/match/[matchId]/team/[teamCode]`, `referees-pool/index`, `rc/index`,
 `gamedays/schema`, `rankings/initial`, `live/cache-manager`, `groups/index`, `clubs/index`,
 `events/[id]/gamedays`, `clubs/team/[numero]`, `select-mandate`, `events/index`,
@@ -175,12 +186,14 @@ dropdowns téléportés, recherches club/historique).
 `tv/*` (ConditionalParams, ScenarioEditor, GlobalBar, LabelsModal, PresentationSelector,
 PlayerNumberGrid, ChannelSelector, ChannelPanel), `UserMandateForm`, `UserEditModal`,
 `AthleteEditModal`, `operations/*` (TeamsTab, SeasonsTab, PlayersTab, ImagesTab, SystemTab,
-ImportExportTab), `TextAutocomplete`, `PlayerAutocomplete`,
-`ClubAutocomplete`, `AthleteAutocomplete`,
+ImportExportTab), `PlayerAutocomplete`,
+`ClubAutocomplete`,
 `ActionButton`, `PointsGridEditor`, `schema/*`.
 
 **Convertis** : `documents/DocumentsCompetitionSummary`, `CompetitionAutocomplete`,
-`CompetitionImagePicker` (fait en même temps que les pages documents/competitions/teams).
+`CompetitionImagePicker` (fait en même temps que les pages documents/competitions/teams),
+`TextAutocomplete`, `AthleteAutocomplete` (fait avec gamedays/rankings/stats — input + dropdown +
+bouton clear).
 
 > Priorité suggérée : les **autocompletes** (`*Autocomplete.vue`) et **modales de formulaire**
 > (`UserEditModal`, `AthleteEditModal`, `UserMandateForm`) d'abord — mêmes pièges blanc-sur-blanc
@@ -188,10 +201,15 @@ ImportExportTab), `TextAutocomplete`, `PlayerAutocomplete`,
 
 ### 7.3 Méthode par page (checklist)
 1. Appliquer le script §3.3 avec le mapping §3.2 sur la page.
-2. `grep -nE 'bg-white' <page> | grep -v dark:` → doit être vide.
+2. `grep -nE 'bg-white' <page> | grep -v dark:` → doit être vide. Vérifier aussi l'absence de
+   `dark:` dupliqué (`(dark:\S+)\s+\1`) que le script peut produire.
 3. Éditer à la main les ternaires `:class` d'états actifs (`bg-*-50/100`) → variantes §3.2.
-4. Vérifier inputs/autocompletes : `text-…` **et** `dark:bg-…` présents (piège blanc/blanc).
-5. `npx eslint <page>` et contrôle visuel en dark **et** clair.
+4. **Inputs/selects sans classe `bg`** (piège blanc/blanc) : ajouter
+   `bg-white dark:bg-header-900 text-header-900 dark:text-header-50`. Idem autocompletes (composant partagé).
+5. **Barres de titre à couleur fixe** `bg-<c>-300`/`-200` (hors mapping) : ajouter le `dark:` du fond
+   (`dark:bg-<c>-800`) sinon texte clair sur fond clair.
+6. Contrôle visuel en dark **et** clair. (⚠️ `npx eslint` échoue dans le conteneur `kpi_node_app4` —
+   `Object.groupBy is not a function`, Node trop ancien — utiliser les greps ci-dessus à la place.)
 
 ## 8. Vérification manuelle
 Pas de tests auto sur le rendu couleur. Vérifier chaque page dans les deux modes (toggle via
