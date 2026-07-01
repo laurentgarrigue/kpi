@@ -99,7 +99,7 @@ watch(() => props.season, () => {
 
 <template>
   <div ref="containerRef" class="relative">
-    <div class="flex flex-wrap items-center gap-1 px-2 py-1.5 min-w-45 max-w-[320px] min-h-9.5 text-sm border border-header-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
+    <div class="flex flex-wrap items-center gap-1 px-2 py-1.5 min-w-45 max-w-[320px] min-h-9.5 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500">
       <!-- Selected badges -->
       <span
         v-for="code in modelValue"
@@ -117,7 +117,7 @@ watch(() => props.season, () => {
         ref="inputRef"
         v-model="query"
         type="text"
-        class="flex-1 min-w-20 outline-none bg-transparent text-header-900 placeholder-header-400 text-sm"
+        class="flex-1 min-w-20 outline-none bg-transparent text-header-900 dark:text-header-50 placeholder-header-400 text-sm"
         :placeholder="modelValue.length === 0 ? (placeholder ?? '') : ''"
         @input="onInput"
         @keydown.escape="isOpen = false"
@@ -127,7 +127,7 @@ watch(() => props.season, () => {
       <button
         v-if="modelValue.length > 0"
         type="button"
-        class="ml-auto text-header-400 hover:text-header-600"
+        class="ml-auto text-header-400 dark:text-header-500 hover:text-header-600"
         @click="clear"
       >
         <UIcon name="i-heroicons-x-circle" class="w-4 h-4" />
@@ -137,12 +137,12 @@ watch(() => props.season, () => {
     <!-- Dropdown -->
     <div
       v-if="isOpen || isLoading"
-      class="absolute z-50 mt-1 w-full min-w-55 max-w-90 bg-white border border-header-200 rounded-lg shadow-lg overflow-hidden"
+      class="absolute z-50 mt-1 w-full min-w-55 max-w-90 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg overflow-hidden"
     >
       <div v-if="isLoading" class="flex justify-center py-3">
-        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-400" />
+        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-400 dark:text-header-500" />
       </div>
-      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-500">
+      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-500 dark:text-header-400">
         {{ $t('common.no_results') }}
       </div>
       <ul v-else class="max-h-48 overflow-y-auto divide-y divide-header-100">
@@ -152,9 +152,9 @@ watch(() => props.season, () => {
           class="px-3 py-2 text-sm cursor-pointer hover:bg-primary-50"
           @mousedown.prevent="select(option)"
         >
-          <span class="font-medium text-header-800">{{ option.code }}</span>
-          <span class="text-header-500 ml-1">– {{ option.libelle }}</span>
-          <span v-if="!season" class="text-header-400 text-xs ml-1">({{ option.season }})</span>
+          <span class="font-medium text-header-800 dark:text-header-100">{{ option.code }}</span>
+          <span class="text-header-500 dark:text-header-400 ml-1">– {{ option.libelle }}</span>
+          <span v-if="!season" class="text-header-400 dark:text-header-500 text-xs ml-1">({{ option.season }})</span>
         </li>
       </ul>
     </div>

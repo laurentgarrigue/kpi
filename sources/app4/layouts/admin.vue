@@ -14,7 +14,7 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-header-50">
+  <div class="flex flex-col min-h-screen bg-header-50 dark:bg-header-950">
     <!-- Mobile menu backdrop -->
     <div
       v-if="mobileMenuOpen"
@@ -35,7 +35,7 @@ watch(() => route.path, () => {
     </main>
 
     <!-- Footer -->
-    <footer class="bg-header-100 border-t border-header-200 py-3 px-4 text-center text-sm text-header-500">
+    <footer class="bg-header-100 dark:bg-header-900 border-t border-header-200 dark:border-header-800 py-3 px-4 text-center text-sm text-header-500 dark:text-header-400">
       {{ t('app.title') }} - {{ t('footer.version') }} {{ version }}
     </footer>
   </div>

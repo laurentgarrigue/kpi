@@ -44,6 +44,15 @@ const languages = [
   { code: 'en', label: 'EN', flag: '🇬🇧' }
 ]
 
+// Theme selector: light / dark / system (persisted by @nuxtjs/color-mode in localStorage,
+// see nuxt.config.ts). `preference` holds the chosen mode ('system' follows the OS).
+const colorMode = useColorMode()
+const themeOptions = [
+  { value: 'light', icon: 'heroicons:sun', labelKey: 'theme.light' },
+  { value: 'dark', icon: 'heroicons:moon', labelKey: 'theme.dark' },
+  { value: 'system', icon: 'heroicons:computer-desktop', labelKey: 'theme.system' },
+] as const
+
 // Competition management menu items (linked to work context)
 const competitionMenuItems = computed<MenuItem[]>(() => {
   const profile = authStore.profile
@@ -479,7 +488,7 @@ onMounted(() => {
           </div>
         </nav>
 
-        <!-- Right: Language + User + Mobile toggle -->
+        <!-- Right: Language + Theme + User + Mobile toggle -->
         <div class="flex items-center gap-2">
           <!-- Language switcher with flags -->
           <div class="flex gap-2">
@@ -526,21 +535,25 @@ onMounted(() => {
             >
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-header-200 py-1 z-50"
+                class="absolute right-0 mt-2 w-64 bg-white dark:bg-header-900 rounded-lg shadow-lg border border-header-200 dark:border-header-700 py-1 z-50"
               >
-                <!-- User info -->
-                <div class="px-4 py-3 border-b border-header-200">
-                  <div class="text-sm font-medium text-header-900">
+                <!-- User identity -->
+                <div class="px-4 py-3 border-b border-header-200 dark:border-header-800">
+                  <div class="text-sm font-medium text-header-900 dark:text-header-50">
                     {{ user?.name }} {{ user?.firstname }}
                   </div>
-                  <div v-if="!authStore.activeMandate" class="text-xs text-header-500 mt-1">
+                </div>
+
+                <!-- Profile / active mandate -->
+                <div class="px-4 py-2">
+                  <div v-if="!authStore.activeMandate" class="text-xs text-header-500 dark:text-header-400">
                     {{ t('profile') }} {{ user?.profile }}
                   </div>
                   <!-- Active mandate display -->
-                  <div v-if="authStore.activeMandate" class="mt-1.5 px-2 py-1 bg-primary-50 rounded text-xs text-primary-700">
+                  <div v-if="authStore.activeMandate" class="px-2 py-1 bg-primary-50 dark:bg-primary-950 rounded text-xs text-primary-700 dark:text-primary-200">
                     <div class="font-medium">{{ t('users.header.current_mandate') }}</div>
                     <div>{{ authStore.activeMandate.libelle }}</div>
-                    <div class="text-primary-500">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
+                    <div class="text-primary-500 dark:text-primary-400">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
                     <div v-if="activeMandateSummary?.filters.clubs?.length || activeMandateSummary?.filters.journees?.length || activeMandateSummary?.filters.events?.length" class="text-orange-500 mt-0.5 space-y-0.5">
                       <div v-if="activeMandateSummary.filters.clubs?.length">{{ t('users.modal.filter_clubs') }}: {{ activeMandateSummary.filters.clubs.join(', ') }}</div>
                       <div v-if="activeMandateSummary.filters.journees?.length">{{ t('users.modal.filter_gamedays') }}: {{ activeMandateSummary.filters.journees.join(', ') }}</div>
@@ -553,16 +566,41 @@ onMounted(() => {
                 <NuxtLink
                   v-if="authStore.hasMandates"
                   to="/select-mandate"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-700 hover:bg-header-50 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-700 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
                   @click="userMenuOpen = false"
                 >
                   <UIcon name="heroicons:arrows-right-left" class="w-5 h-5" />
                   <span>{{ t('users.header.switch_mandate') }}</span>
                 </NuxtLink>
 
+                <!-- Theme selector: light / dark / system -->
+                <ClientOnly>
+                  <div class="px-4 py-2 border-b border-header-200 dark:border-header-800">
+                    <div class="text-xs font-medium text-header-500 dark:text-header-400 mb-1.5">{{ t('theme.label') }}</div>
+                    <div class="flex gap-1 p-0.5 bg-header-100 dark:bg-header-800 rounded-lg">
+                      <button
+                        v-for="opt in themeOptions"
+                        :key="opt.value"
+                        type="button"
+                        :class="[
+                          'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer',
+                          colorMode.preference === opt.value
+                            ? 'bg-white dark:bg-header-950 text-header-900 dark:text-header-50 shadow-sm'
+                            : 'text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'
+                        ]"
+                        :title="t(opt.labelKey)"
+                        @click="colorMode.preference = opt.value"
+                      >
+                        <UIcon :name="opt.icon" class="w-4 h-4 shrink-0" />
+                        <span class="truncate max-w-full">{{ t(opt.labelKey) }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </ClientOnly>
+
                 <!-- Menu items -->
                 <button
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
                   @click="handleLogout"
                 >
                   <UIcon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5" />
@@ -713,6 +751,31 @@ onMounted(() => {
               </UButton>
             </div>
           </div>
+
+          <!-- Theme selector (mobile): light / dark / system -->
+          <ClientOnly>
+            <div class="mt-3">
+              <div class="text-xs font-medium text-header-400 mb-1.5">{{ t('theme.label') }}</div>
+              <div class="flex gap-1 p-0.5 bg-header-800 rounded-lg">
+                <button
+                  v-for="opt in themeOptions"
+                  :key="opt.value"
+                  type="button"
+                  :class="[
+                    'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer',
+                    colorMode.preference === opt.value
+                      ? 'bg-header-950 text-white shadow-sm'
+                      : 'text-header-300 hover:text-white'
+                  ]"
+                  :title="t(opt.labelKey)"
+                  @click="colorMode.preference = opt.value"
+                >
+                  <UIcon :name="opt.icon" class="w-4 h-4 shrink-0" />
+                  <span class="truncate max-w-full">{{ t(opt.labelKey) }}</span>
+                </button>
+              </div>
+            </div>
+          </ClientOnly>
         </div>
       </nav>
     </div>
