@@ -73,7 +73,7 @@ const handleSubmit = async () => {
       <!-- Logo -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-600">{{ t('login.subtitle') }}</p>
+        <p class="mt-2 text-header-900">{{ t('login.subtitle') }}</p>
       </div>
 
       <!-- Login form -->
@@ -93,7 +93,7 @@ const handleSubmit = async () => {
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <!-- Username -->
           <div>
-            <label for="username" class="block text-sm font-medium text-header-700 mb-1">
+            <label for="username" class="block text-sm font-medium text-header-900 mb-1">
               {{ t('login.username') }}
             </label>
             <UInput
@@ -111,7 +111,7 @@ const handleSubmit = async () => {
           <!-- Password -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label for="password" class="block text-sm font-medium text-header-700">
+              <label for="password" class="block text-sm font-medium text-header-900">
                 {{ t('login.password') }}
               </label>
               <NuxtLink
@@ -148,7 +148,7 @@ const handleSubmit = async () => {
         <div class="mt-4 text-center">
           <NuxtLink
             to="/access-request"
-            class="text-sm text-header-500 hover:text-header-700"
+            class="text-sm text-header-600 hover:text-header-900"
           >
             {{ t('login.request_access') }}
           </NuxtLink>

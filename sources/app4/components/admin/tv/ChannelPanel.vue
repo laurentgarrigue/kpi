@@ -91,7 +91,7 @@ function openReport() {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow border border-header-200 p-4 flex flex-col">
+  <div class="bg-white dark:bg-header-900 rounded-lg shadow border border-header-200 dark:border-header-700 p-4 flex flex-col">
     <!-- Body: left form + right preview -->
     <div class="flex gap-4 flex-1">
       <!-- Left column: form fields -->
@@ -99,7 +99,7 @@ function openReport() {
         <!-- Channel + Presentation -->
         <div class="flex flex-wrap items-end gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-header-600">{{ t('tv.panel.channel') }}</label>
+            <label class="text-xs font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.channel') }}</label>
             <AdminTvChannelSelector
               v-model="panel.channel"
               :labels="channelLabels"
@@ -108,7 +108,7 @@ function openReport() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-header-600">{{ t('tv.panel.presentation') }}</label>
+            <label class="text-xs font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.presentation') }}</label>
             <AdminTvPresentationSelector v-model="panel.presentation" />
           </div>
         </div>
@@ -125,7 +125,7 @@ function openReport() {
       <div class="flex flex-col items-end gap-2 shrink-0">
         <button
           type="button"
-          class="text-header-400 hover:text-danger-500 p-1 transition-colors"
+          class="text-header-600 dark:text-header-300 hover:text-danger-500 p-1 transition-colors"
           :title="t('tv.actions.remove_panel')"
           @click="emit('remove')"
         >
@@ -136,10 +136,10 @@ function openReport() {
     </div>
 
     <!-- Bottom: actions row -->
-    <div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-header-100">
+    <div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-header-100 dark:border-header-800">
       <button
         type="button"
-        class="px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+        class="px-3 py-1.5 text-sm font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 rounded-lg hover:bg-primary-100 transition-colors"
         @click="openControl"
       >
         {{ t('tv.actions.control') }}
@@ -148,7 +148,7 @@ function openReport() {
       <button
         v-if="panel.match"
         type="button"
-        class="px-3 py-1.5 text-sm font-medium text-header-700 bg-header-50 rounded-lg hover:bg-header-100 transition-colors"
+        class="px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 transition-colors"
         @click="openReport"
       >
         {{ t('tv.actions.report') }}
@@ -156,7 +156,7 @@ function openReport() {
 
       <button
         type="button"
-        class="px-3 py-1.5 text-sm font-medium text-header-700 bg-header-50 rounded-lg hover:bg-header-100 transition-colors"
+        class="px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 transition-colors"
         @click="generateUrl"
       >
         {{ t('tv.actions.url') }}
@@ -168,7 +168,7 @@ function openReport() {
         type="text"
         :value="panel.generatedUrl"
         readonly
-        class="flex-1 px-3 py-1.5 text-xs border border-header-200 rounded-lg bg-header-50 text-header-600 min-w-[200px]"
+        class="flex-1 px-3 py-1.5 text-xs border border-header-200 dark:border-header-700 rounded-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 min-w-[200px]"
         @click="($event.target as HTMLInputElement).select()"
       >
 
@@ -176,7 +176,7 @@ function openReport() {
 
       <button
         type="button"
-        class="px-3 py-1.5 text-sm font-medium text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors"
+        class="px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 transition-colors"
         :disabled="!panel.channel || activating"
         @click="blank"
       >

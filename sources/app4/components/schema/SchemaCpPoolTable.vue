@@ -65,7 +65,7 @@ const isHighlighted = (team: string) => {
             @mouseenter="emit('hoverTeam', team.libelle)"
             @mouseleave="emit('hoverTeam', null)"
           >
-            <td class="px-1 py-1 text-xs text-header-500">{{ team.clt }}</td>
+            <td class="px-1 py-1 text-xs text-header-600">{{ team.clt }}</td>
             <td class="px-1 py-1 text-xs font-medium truncate max-w-30" :title="team.libelle">{{ team.libelle }}</td>
             <td class="px-1 py-1 text-center text-xs font-bold">{{ team.pts }}</td>
             <td class="px-1 py-1 text-center text-xs">{{ team.j }}</td>
@@ -94,7 +94,7 @@ const isHighlighted = (team: string) => {
       <div
         v-for="team in teamsFromMatches"
         :key="team"
-        class="py-0.5 px-1 rounded transition-colors duration-100 text-xs text-header-700"
+        class="py-0.5 px-1 rounded transition-colors duration-100 text-xs text-header-900"
         :class="{ 'bg-warning-100': isHighlighted(team) }"
         @mouseenter="emit('hoverTeam', team)"
         @mouseleave="emit('hoverTeam', null)"
@@ -105,7 +105,7 @@ const isHighlighted = (team: string) => {
 
     <!-- Empty rows -->
     <div v-else>
-      <div v-for="n in emptyRows" :key="n" class="py-0.5 px-1 text-header-400 border-b border-header-100 text-xs">
+      <div v-for="n in emptyRows" :key="n" class="py-0.5 px-1 text-header-600 border-b border-header-100 text-xs">
         —
       </div>
     </div>

@@ -116,16 +116,16 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow p-6">
+  <div data-tour="work-context" class="bg-white dark:bg-header-900 rounded-lg shadow p-6">
     <div class="flex items-center gap-2 mb-4">
-      <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5 text-header-500" />
-      <h2 class="text-lg font-semibold text-header-900">{{ t('context.title') }}</h2>
+      <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5 text-header-600 dark:text-header-600" />
+      <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">{{ t('context.title') }}</h2>
     </div>
 
     <!-- Loading state -->
     <div v-if="workContext.loading" class="flex items-center justify-center py-8">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-header-500 animate-spin" />
-      <span class="ml-2 text-header-500">{{ t('common.loading') }}</span>
+      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-header-600 dark:text-header-600 animate-spin" />
+      <span class="ml-2 text-header-600 dark:text-header-600">{{ t('common.loading') }}</span>
     </div>
 
     <div v-else>
@@ -135,12 +135,12 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
         <div class="space-y-6">
           <!-- Season -->
           <div>
-            <label class="block text-sm font-medium text-header-500 mb-1">
+            <label class="block text-sm font-medium text-header-600 dark:text-header-600 mb-1">
               {{ t('context.season') }}
             </label>
             <select
               :value="workContext.season"
-              class="w-full rounded-md border-header-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              class="w-full rounded-md border-header-300 dark:border-header-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               @change="onSeasonChange(($event.target as HTMLSelectElement).value)"
             >
               <option value="" disabled>{{ t('context.select_season') }}</option>
@@ -156,7 +156,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
 
           <!-- Scope -->
           <div>
-            <label class="block text-sm font-medium text-header-500 mb-3">
+            <label class="block text-sm font-medium text-header-600 dark:text-header-600 mb-3">
               {{ t('context.scope') }}
             </label>
 
@@ -173,7 +173,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                 >
                 <div class="flex-1">
                   <div class="flex items-center gap-3">
-                    <label for="type-selection" class="block text-sm font-medium text-header-500 cursor-pointer">
+                    <label for="type-selection" class="block text-sm font-medium text-header-600 dark:text-header-600 cursor-pointer">
                       {{ t('context.type_selection') }}
                     </label>
                     <template v-if="workContext.selectionType === 'selection'">
@@ -184,7 +184,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                       >
                         {{ t('context.select_all') }}
                       </button>
-                      <span class="text-header-400">|</span>
+                      <span class="text-header-600 dark:text-header-600">|</span>
                       <button
                         type="button"
                         class="text-xs text-primary-600 hover:text-primary-800 underline"
@@ -196,28 +196,28 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                   </div>
                   <div
                     v-if="workContext.selectionType === 'selection'"
-                    class="mt-1 max-h-48 overflow-y-auto border border-header-200 rounded-md p-2 space-y-1"
+                    class="mt-1 max-h-48 overflow-y-auto border border-header-200 dark:border-header-700 rounded-md p-2 space-y-1"
                   >
                     <template v-for="group in workContext.groups" :key="group.section">
-                      <div class="text-xs font-semibold text-header-500 mt-1 first:mt-0 px-1">
+                      <div class="text-xs font-semibold text-header-600 dark:text-header-600 mt-1 first:mt-0 px-1">
                         {{ t(`groups.sections.${group.section}`) }}
                       </div>
                       <label
                         v-for="comp in group.competitions"
                         :key="comp.code"
-                        class="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-header-50 cursor-pointer text-sm"
+                        class="flex items-center gap-2 px-1 py-0.5 rounded hover:bg-header-50 dark:hover:bg-header-800 cursor-pointer text-sm"
                       >
                         <input
                           type="checkbox"
                           :checked="workContext.selectedCompetitionCodes.includes(comp.code)"
-                          class="rounded border-header-300 text-primary-600 focus:ring-primary-500"
+                          class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
                           @change="onCompetitionToggle(comp.code)"
                         >
                         <span class="truncate">{{ formatCompetitionLabel(comp) }}</span>
                       </label>
                     </template>
                   </div>
-                  <p v-if="workContext.selectionType === 'selection' && workContext.selectedCompetitionCodes.length > 0" class="text-xs text-header-500 mt-1">
+                  <p v-if="workContext.selectionType === 'selection' && workContext.selectedCompetitionCodes.length > 0" class="text-xs text-header-600 dark:text-header-600 mt-1">
                     {{ t('context.competitions_count', { count: workContext.selectedCompetitionCodes.length }) }}
                   </p>
                 </div>
@@ -234,14 +234,14 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                   @change="onSelectionTypeChange('section')"
                 >
                 <div class="flex-1">
-                  <label for="type-section" class="block text-sm font-medium text-header-500 cursor-pointer">
+                  <label for="type-section" class="block text-sm font-medium text-header-600 dark:text-header-600 cursor-pointer">
                     {{ t('context.type_section') }}
                   </label>
                   <select
                     v-if="workContext.selectionType === 'section'"
                     ref="sectionSelect"
                     :value="workContext.sectionId ?? ''"
-                    class="mt-1 w-full rounded-md border-header-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                    class="mt-1 w-full rounded-md border-header-300 dark:border-header-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                     @change="onSectionChange(($event.target as HTMLSelectElement).value)"
                   >
                     <option value="" disabled>{{ t('context.select_section') }}</option>
@@ -267,14 +267,14 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                   @change="onSelectionTypeChange('group')"
                 >
                 <div class="flex-1">
-                  <label for="type-group" class="block text-sm font-medium text-header-500 cursor-pointer">
+                  <label for="type-group" class="block text-sm font-medium text-header-600 dark:text-header-600 cursor-pointer">
                     {{ t('context.type_group') }}
                   </label>
                   <select
                     v-if="workContext.selectionType === 'group'"
                     ref="groupSelect"
                     :value="workContext.groupCode ?? ''"
-                    class="mt-1 w-full rounded-md border-header-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                    class="mt-1 w-full rounded-md border-header-300 dark:border-header-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                     @change="onGroupChange(($event.target as HTMLSelectElement).value)"
                   >
                     <option value="" disabled>{{ t('context.select_group') }}</option>
@@ -306,14 +306,14 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                   @change="onSelectionTypeChange('event')"
                 >
                 <div class="flex-1">
-                  <label for="type-event" class="block text-sm font-medium text-header-500 cursor-pointer">
+                  <label for="type-event" class="block text-sm font-medium text-header-600 dark:text-header-600 cursor-pointer">
                     {{ t('context.type_event') }}
                   </label>
                   <select
                     v-if="workContext.selectionType === 'event'"
                     ref="eventSelect"
                     :value="workContext.eventId ?? ''"
-                    class="mt-1 w-full rounded-md border-header-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                    class="mt-1 w-full rounded-md border-header-300 dark:border-header-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
                     @change="onEventChange(($event.target as HTMLSelectElement).value)"
                   >
                     <option value="" disabled>{{ t('context.select_event') }}</option>

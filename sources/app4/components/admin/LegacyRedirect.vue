@@ -28,7 +28,7 @@ onMounted(() => {
         {{ title }}
       </h1>
 
-      <p class="text-header-600 mb-6">
+      <p class="text-header-900 mb-6">
         {{ t('legacy_redirect.message') }}
       </p>
 

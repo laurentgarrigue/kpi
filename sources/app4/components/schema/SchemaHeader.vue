@@ -46,14 +46,14 @@ const hasLogo = computed(() => props.competition.logoActif && props.competition.
               {{ competition.season }}
             </span>
           </h2>
-          <p v-if="competition.soustitre2" class="text-sm text-header-700">
+          <p v-if="competition.soustitre2" class="text-sm text-header-900">
             {{ competition.soustitre2 }}
           </p>
         </div>
       </div>
 
       <!-- Game count badge (right side) -->
-      <span v-if="showMatchCount" class="px-2 py-1 text-xs font-medium rounded bg-header-100 text-header-700">
+      <span v-if="showMatchCount" class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900">
         {{ t('schema.games_count', { count: totalMatches }, totalMatches) }}
       </span>
     </div>

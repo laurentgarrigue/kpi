@@ -211,7 +211,7 @@ const onClickOutside = () => {
 <template>
   <div class="space-y-6" @click.self="onClickOutside">
     <!-- Internal sub-tab navigation -->
-    <div class="border-b border-header-200">
+    <div class="border-b border-header-200 dark:border-header-700">
       <nav class="-mb-px flex space-x-1 overflow-x-auto" aria-label="Players tabs">
         <button
           v-for="tab in [
@@ -223,7 +223,7 @@ const onClickOutside = () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -239,82 +239,82 @@ const onClickOutside = () => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Source player -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.players.source_player') }}
           </label>
           <input
             v-model="searchSource"
             type="text"
             :placeholder="t('operations.players.search_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showSourceDropdown = sourceResults.length > 0"
             @blur="hideSourceDropdown"
           >
           <!-- Dropdown -->
           <div
             v-if="showSourceDropdown && sourceResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="player in sourceResults"
               :key="player.matric"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm text-header-900"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm text-header-900 dark:text-header-50"
               @click="selectSource(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600 dark:text-header-300">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
           </div>
           <!-- Selected indicator -->
-          <div v-if="selectedSource" class="mt-2 p-2 bg-primary-50 border border-primary-200 rounded-lg">
+          <div v-if="selectedSource" class="mt-2 p-2 bg-primary-50 dark:bg-primary-950 border border-primary-200 rounded-lg">
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600" />
+              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               <span class="text-sm font-medium">{{ formatNom(selectedSource.nom) }} {{ formatPrenom(selectedSource.prenom) }}</span>
-              <span class="text-xs text-header-500">({{ selectedSource.matric }})</span>
+              <span class="text-xs text-header-600 dark:text-header-300">({{ selectedSource.matric }})</span>
             </div>
           </div>
         </div>
 
         <!-- Target player -->
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.players.target_player') }}
           </label>
           <input
             v-model="searchTarget"
             type="text"
             :placeholder="t('operations.players.search_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showTargetDropdown = targetResults.length > 0"
             @blur="hideTargetDropdown"
           >
           <!-- Dropdown -->
           <div
             v-if="showTargetDropdown && targetResults.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="player in targetResults"
               :key="player.matric"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm text-header-900"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm text-header-900 dark:text-header-50"
               @click="selectTarget(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600 dark:text-header-300">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
           </div>
           <!-- Selected indicator -->
-          <div v-if="selectedTarget" class="mt-2 p-2 bg-success-50 border border-success-200 rounded-lg">
+          <div v-if="selectedTarget" class="mt-2 p-2 bg-success-50 dark:bg-success-950 border border-success-200 rounded-lg">
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-success-500" />
               <span class="text-sm font-medium">{{ formatNom(selectedTarget.nom) }} {{ formatPrenom(selectedTarget.prenom) }}</span>
-              <span class="text-xs text-header-500">({{ selectedTarget.matric }})</span>
+              <span class="text-xs text-header-600 dark:text-header-300">({{ selectedTarget.matric }})</span>
             </div>
           </div>
         </div>
@@ -332,11 +332,11 @@ const onClickOutside = () => {
 
     <!-- Auto merge -->
     <section v-if="activeSubTab === 'auto_merge'">
-      <div class="bg-warning-50 border border-warning-200 rounded-lg p-4">
+      <div class="bg-warning-50 dark:bg-warning-950 border border-warning-200 rounded-lg p-4">
         <div class="flex items-start gap-3">
-          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 mt-0.5 shrink-0" />
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5 shrink-0" />
           <div>
-            <p class="text-sm text-warning-800">{{ t('operations.players.auto_merge_description') }}</p>
+            <p class="text-sm text-warning-800 dark:text-warning-200">{{ t('operations.players.auto_merge_description') }}</p>
             <button
               :disabled="loading"
               class="mt-4 px-4 py-2 bg-warning-600 text-white rounded-lg hover:bg-warning-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -352,7 +352,7 @@ const onClickOutside = () => {
 
     <!-- PCE import -->
     <section v-if="activeSubTab === 'pce'">
-      <p class="text-sm text-header-600 mb-4">
+      <p class="text-sm text-header-900 dark:text-header-50 mb-4">
         {{ t('operations.import_export.pce_description') }}
       </p>
       <button

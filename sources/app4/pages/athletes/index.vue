@@ -329,7 +329,7 @@ onBeforeUnmount(() => {
 <template>
   <div>
     <!-- Page Title -->
-    <h1 class="text-2xl font-bold text-header-900 mb-6">
+    <h1 class="text-2xl font-bold text-header-900 dark:text-header-50 mb-6">
       {{ t('athletes.title') }}
     </h1>
 
@@ -339,8 +339,8 @@ onBeforeUnmount(() => {
         type="button"
         class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors"
         :class="hasActiveFilters
-          ? 'border-primary-400 bg-primary-50 text-primary-700'
-          : 'border-header-300 text-header-600 hover:bg-header-50'"
+          ? 'border-primary-400 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300'
+          : 'border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800'"
         @click="filtersOpen = !filtersOpen"
       >
         <UIcon name="i-heroicons-funnel" class="w-4 h-4" />
@@ -349,15 +349,15 @@ onBeforeUnmount(() => {
         <UIcon :name="filtersOpen ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-3 h-3 ml-1" />
       </button>
 
-      <div v-if="filtersOpen" class="mt-3 bg-white border border-header-200 rounded-lg p-4">
+      <div v-if="filtersOpen" class="mt-3 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg p-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
 
           <!-- Région -->
           <div>
-            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('athletes.filters.region') }}</label>
+            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('athletes.filters.region') }}</label>
             <select
               v-model="filters.regionCode"
-              class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               @change="onRegionChange"
             >
               <option value="">{{ t('athletes.filters.region_placeholder') }}</option>
@@ -367,10 +367,10 @@ onBeforeUnmount(() => {
 
           <!-- Comité dép. (cascade région) -->
           <div>
-            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('athletes.filters.dept') }}</label>
+            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('athletes.filters.dept') }}</label>
             <select
               v-model="filters.deptCode"
-              class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               @change="onDeptChange"
             >
               <option value="">{{ t('athletes.filters.dept_placeholder') }}</option>
@@ -380,22 +380,22 @@ onBeforeUnmount(() => {
 
           <!-- Club (cascade dept/région) -->
           <div ref="clubFilterRef" class="relative">
-            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('athletes.filters.club') }}</label>
+            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('athletes.filters.club') }}</label>
             <div class="relative">
               <input
                 v-model="clubSearch"
                 type="text"
                 :placeholder="t('athletes.filters.club_placeholder')"
-                class="w-full px-2 py-1.5 pr-7 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                :class="filters.clubCode ? 'border-primary-400 bg-primary-50' : ''"
+                class="w-full px-2 py-1.5 pr-7 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                :class="filters.clubCode ? 'border-primary-400 bg-primary-50 dark:bg-primary-950' : ''"
                 @input="onClubSearchInput"
                 @focus="onClubSearchInput"
               >
-              <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
+              <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-header-900 dark:text-header-50 animate-spin" />
               <button
                 v-else-if="filters.clubCode"
                 type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-700"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50"
                 @click="clearClubFilter"
               >
                 <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -403,15 +403,15 @@ onBeforeUnmount(() => {
             </div>
             <div
               v-if="clubOpen && clubResults.length > 0"
-              class="absolute z-30 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+              class="absolute z-30 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
             >
               <button
                 v-for="club in clubResults"
                 :key="club.code"
-                class="w-full px-3 py-2 text-left text-xs text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none"
+                class="w-full px-3 py-2 text-left text-xs text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-100 dark:focus:bg-primary-900 focus:outline-none"
                 @click="selectClub(club)"
               >
-                <span class="font-mono text-header-500">{{ club.code }}</span>
+                <span class="font-mono text-header-600 dark:text-header-300">{{ club.code }}</span>
                 <span class="ml-2">{{ club.libelle }}</span>
               </button>
             </div>
@@ -419,10 +419,10 @@ onBeforeUnmount(() => {
 
           <!-- Sexe -->
           <div>
-            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('athletes.filters.sexe') }}</label>
+            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('athletes.filters.sexe') }}</label>
             <select
               v-model="filters.sexe"
-              class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               @change="onFilterChange"
             >
               <option value="">{{ t('athletes.filters.sexe_all') }}</option>
@@ -433,10 +433,10 @@ onBeforeUnmount(() => {
 
           <!-- Niveau arbitrage -->
           <div>
-            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('athletes.filters.arb_niveau') }}</label>
+            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('athletes.filters.arb_niveau') }}</label>
             <select
               v-model="filters.arbNiveau"
-              class="w-full px-2 py-1.5 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               @change="onFilterChange"
             >
               <option value="">{{ t('athletes.filters.arb_all') }}</option>
@@ -451,7 +451,7 @@ onBeforeUnmount(() => {
             <button
               v-if="hasActiveFilters"
               type="button"
-              class="w-full px-3 py-1.5 text-sm font-medium text-danger-600 border border-danger-200 rounded-lg hover:bg-danger-50 transition-colors"
+              class="w-full px-3 py-1.5 text-sm font-medium text-danger-600 dark:text-danger-400 border border-danger-200 dark:border-danger-900 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
               @click="resetFilters"
             >
               {{ t('athletes.filters.reset') }}
@@ -469,16 +469,16 @@ onBeforeUnmount(() => {
           v-model="search"
           type="text"
           :placeholder="t('athletes.search_placeholder')"
-          class="w-full px-4 py-3 pl-10 pr-10 border border-header-300 text-primary-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-full px-4 py-3 pl-10 pr-10 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           @input="onSearchInput"
           @focus="onSearchInput"
         >
-        <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-600" />
-        <UIcon v-if="searchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-600 animate-spin" />
+        <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-900 dark:text-header-50" />
+        <UIcon v-if="searchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-900 dark:text-header-50 animate-spin" />
         <button
           v-else-if="search"
           type="button"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-700"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50"
           @click="clearSearch"
         >
           <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
@@ -488,27 +488,27 @@ onBeforeUnmount(() => {
       <!-- Search results dropdown -->
       <div
         v-if="searchOpen && searchResults.length > 0"
-        class="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+        class="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
       >
         <button
           v-for="result in searchResults"
           :key="result.matric"
-          class="w-full px-4 py-2.5 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-3"
+          class="w-full px-4 py-2.5 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-100 dark:focus:bg-primary-900 focus:outline-none flex items-center gap-3"
           @click="selectAthlete(result)"
         >
-          <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded shrink-0">{{ result.matric }}</span>
+          <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded shrink-0">{{ result.matric }}</span>
           <span class="font-medium">{{ formatNom(result.nom) }} {{ formatPrenom(result.prenom) }}</span>
-          <span v-if="result.club" class="text-header-600 text-xs truncate">— {{ result.club }}</span>
+          <span v-if="result.club" class="text-header-900 dark:text-header-50 text-xs truncate">— {{ result.club }}</span>
         </button>
       </div>
     </div>
 
     <!-- ═══ Loading skeleton ═══ -->
     <div v-if="athleteLoading" class="space-y-4">
-      <div class="bg-white border border-header-200 rounded-lg p-6 animate-pulse">
-        <div class="h-6 bg-header-200 rounded w-64 mb-4" />
+      <div class="bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg p-6 animate-pulse">
+        <div class="h-6 bg-header-200 dark:bg-header-700 rounded w-64 mb-4" />
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div v-for="i in 4" :key="i" class="h-24 bg-header-100 rounded" />
+          <div v-for="i in 4" :key="i" class="h-24 bg-header-200 dark:bg-header-700 rounded" />
         </div>
       </div>
     </div>
@@ -516,23 +516,23 @@ onBeforeUnmount(() => {
     <!-- ═══ No athlete selected ═══ -->
     <div
       v-else-if="!athlete"
-      class="bg-white border border-header-200 rounded-lg p-12 text-center"
+      class="bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg p-12 text-center"
     >
-      <UIcon name="i-heroicons-user-group" class="w-12 h-12 text-header-600 mx-auto mb-4" />
-      <p class="text-header-600 text-sm">{{ t('athletes.no_athlete_selected') }}</p>
+      <UIcon name="i-heroicons-user-group" class="w-12 h-12 text-header-900 dark:text-header-50 mx-auto mb-4" />
+      <p class="text-header-900 dark:text-header-50 text-sm">{{ t('athletes.no_athlete_selected') }}</p>
     </div>
 
     <!-- ═══ Athlete Profile ═══ -->
     <template v-else>
-      <div class="bg-white border border-header-200 rounded-lg p-3 mb-3">
+      <div class="bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg p-3 mb-3">
         <!-- Identity header -->
         <div class="mb-5">
           <div class="flex items-center justify-between gap-4">
-            <h2 class="text-lg font-bold text-header-900">
+            <h2 class="text-lg font-bold text-header-900 dark:text-header-50">
               {{ t('athletes.licence') }}{{ athlete.matric }}
               <span class="ml-3">{{ formatNom(athlete.nom) }} {{ formatPrenom(athlete.prenom) }}</span>
-              <span class="text-header-600 font-normal ml-2">({{ athlete.sexe }})</span>
-              <span v-if="athlete.naissance" class="text-header-600 font-normal ml-2">
+              <span class="text-header-900 dark:text-header-50 font-normal ml-2">({{ athlete.sexe }})</span>
+              <span v-if="athlete.naissance" class="text-header-900 dark:text-header-50 font-normal ml-2">
                 {{ formatDate(athlete.naissance) }}
               </span>
             </h2>
@@ -550,53 +550,53 @@ onBeforeUnmount(() => {
         <!-- Info cards grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
           <!-- Club -->
-          <div class="bg-header-50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('athletes.club.title') }}</h3>
+          <div class="bg-header-50 dark:bg-header-900 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('athletes.club.title') }}</h3>
             <div class="space-y-1 text-sm">
               <div v-if="athlete.club.code" class="font-medium">
                 {{ athlete.club.code }} {{ athlete.club.libelle }}
               </div>
-              <div v-if="athlete.comiteDep.code" class="text-header-600 text-xs">
+              <div v-if="athlete.comiteDep.code" class="text-header-900 dark:text-header-50 text-xs">
                 {{ athlete.comiteDep.code }} {{ athlete.comiteDep.libelle }}
               </div>
-              <div v-if="athlete.comiteReg.code" class="text-header-600 text-xs">
+              <div v-if="athlete.comiteReg.code" class="text-header-900 dark:text-header-50 text-xs">
                 {{ athlete.comiteReg.code }} {{ athlete.comiteReg.libelle }}
               </div>
             </div>
           </div>
 
           <!-- Pagaie -->
-          <div class="bg-header-50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('athletes.pagaie.title') }}</h3>
+          <div class="bg-header-50 dark:bg-header-900 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('athletes.pagaie.title') }}</h3>
             <div class="space-y-1 text-sm">
               <div>
-                <span class="text-header-600">{{ t('athletes.pagaie.eau_vive') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.pagaie.eau_vive') }} :</span>
                 {{ athlete.pagaie.eauVive || '-' }}
               </div>
               <div>
-                <span class="text-header-600">{{ t('athletes.pagaie.mer') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.pagaie.mer') }} :</span>
                 {{ athlete.pagaie.mer || '-' }}
               </div>
               <div>
-                <span class="text-header-600">{{ t('athletes.pagaie.eau_calme') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.pagaie.eau_calme') }} :</span>
                 {{ athlete.pagaie.eauCalme || '-' }}
               </div>
             </div>
           </div>
 
           <!-- Certificats -->
-          <div class="bg-header-50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('athletes.certificats.title') }}</h3>
+          <div class="bg-header-50 dark:bg-header-900 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('athletes.certificats.title') }}</h3>
             <div class="space-y-1 text-sm">
               <div>
-                <span class="text-header-600">{{ t('athletes.certificats.aps') }} :</span>
-                <span :class="athlete.certificats.aps === 'OUI' ? 'text-success-600 font-medium' : 'text-danger-500'">
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.certificats.aps') }} :</span>
+                <span :class="athlete.certificats.aps === 'OUI' ? 'text-success-600 dark:text-success-400 font-medium' : 'text-danger-500 dark:text-danger-400'">
                   {{ athlete.certificats.aps || '-' }}
                 </span>
               </div>
               <div>
-                <span class="text-header-600">{{ t('athletes.certificats.ck') }} :</span>
-                <span :class="athlete.certificats.ck === 'OUI' ? 'text-success-600 font-medium' : 'text-danger-600'">
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.certificats.ck') }} :</span>
+                <span :class="athlete.certificats.ck === 'OUI' ? 'text-success-600 dark:text-success-400 font-medium' : 'text-danger-600 dark:text-danger-400'">
                   {{ athlete.certificats.ck || '-' }}
                 </span>
               </div>
@@ -604,63 +604,63 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Licence -->
-          <div class="bg-header-50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('athletes.licence_bloc.title') }}</h3>
+          <div class="bg-header-50 dark:bg-header-900 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('athletes.licence_bloc.title') }}</h3>
             <div class="space-y-1 text-sm">
-              <div v-if="athlete.icf" class="text-header-600 text-xs">
+              <div v-if="athlete.icf" class="text-header-900 dark:text-header-50 text-xs">
                 {{ t('athletes.icf_number') }}{{ athlete.icf }}
               </div>
               <div v-if="athlete.typeLicence">
                 {{ athlete.typeLicence }}
               </div>
-              <div class="text-header-800 font-semibold">
+              <div class="text-header-900 dark:text-header-50 font-semibold">
                 {{ t('athletes.club.last_season') }} : {{ athlete.origine || '-' }}
               </div>
               <div v-if="athlete.categorieAge">
-                <span class="text-header-600">{{ t('athletes.licence_bloc.categorie') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.categorie') }} :</span>
                 {{ athlete.categorieAge.code }}
-                <span class="text-header-600 text-xs">({{ athlete.categorieAge.libelle }})</span>
+                <span class="text-header-900 dark:text-header-50 text-xs">({{ athlete.categorieAge.libelle }})</span>
               </div>
-              <div v-if="athlete.surclassement" class="mt-1 pt-1 border-t border-header-200">
-                <span class="text-header-600">{{ t('athletes.licence_bloc.surclassement') }} :</span>
+              <div v-if="athlete.surclassement" class="mt-1 pt-1 border-t border-header-200 dark:border-header-700">
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.surclassement') }} :</span>
                 <span class="font-medium">{{ athlete.surclassement.cat }}</span>
-                <span class="text-header-600 text-xs ml-1">({{ formatDate(athlete.surclassement.date) }})</span>
+                <span class="text-header-900 dark:text-header-50 text-xs ml-1">({{ formatDate(athlete.surclassement.date) }})</span>
               </div>
             </div>
           </div>
 
           <!-- Arbitrage -->
-          <div class="bg-header-50 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-header-700 mb-2">{{ t('athletes.arbitrage.title') }}</h3>
+          <div class="bg-header-50 dark:bg-header-900 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('athletes.arbitrage.title') }}</h3>
             <div v-if="athlete.arbitrage.qualification" class="space-y-1 text-sm">
               <div>
-                <span class="text-header-600">{{ t('athletes.arbitrage.niveau') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.arbitrage.niveau') }} :</span>
                 {{ t(`athletes.arbitrage.qualification.${athlete.arbitrage.qualification}`, athlete.arbitrage.qualification) }}
                 {{ athlete.arbitrage.niveau || '' }}
               </div>
               <div v-if="athlete.arbitrage.saison">
-                <span class="text-header-600">{{ t('athletes.arbitrage.saison') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.arbitrage.saison') }} :</span>
                 {{ athlete.arbitrage.saison }}
               </div>
               <div v-if="athlete.arbitrage.livret">
-                <span class="text-header-600">{{ t('athletes.arbitrage.livret') }} :</span>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.arbitrage.livret') }} :</span>
                 {{ athlete.arbitrage.livret }}
               </div>
             </div>
-            <p v-else class="text-sm text-header-600">-</p>
+            <p v-else class="text-sm text-header-900 dark:text-header-50">-</p>
           </div>
         </div>
 
       </div>
 
       <!-- ═══ Participations ═══ -->
-      <div class="bg-white border border-header-200 rounded-lg p-6">
+      <div class="bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg p-6">
         <!-- Season selector -->
         <div class="flex flex-wrap items-center gap-4 mb-4">
-          <label class="text-sm font-medium text-header-700">{{ t('athletes.participations.season') }} :</label>
+          <label class="text-sm font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.season') }} :</label>
           <select
             v-model="participationsSeason"
-            class="px-3 py-1.5 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
             <option v-for="s in workContext.seasons" :key="s.code" :value="s.code">
               {{ s.code }}
@@ -669,41 +669,41 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Tabs -->
-        <div class="border-b border-header-200 mb-4">
+        <div class="border-b border-header-200 dark:border-header-700 mb-4">
           <nav class="flex gap-4 -mb-px">
             <button
               class="py-2 px-1 text-sm font-medium border-b-2 transition-colors"
               :class="activeTab === 'presence'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-header-600 hover:text-header-700 hover:border-header-300'"
+                ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                : 'border-transparent text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300'"
               @click="activeTab = 'presence'"
             >
               {{ t('athletes.participations.presence.title') }}
-              <span v-if="participations?.presences.length" class="ml-1 text-xs bg-header-100 text-header-600 px-1.5 py-0.5 rounded-full">
+              <span v-if="participations?.presences.length" class="ml-1 text-xs bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 px-1.5 py-0.5 rounded-full">
                 {{ participations.presences.length }}
               </span>
             </button>
             <button
               class="py-2 px-1 text-sm font-medium border-b-2 transition-colors"
               :class="activeTab === 'officiels'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-header-600 hover:text-header-700 hover:border-header-300'"
+                ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                : 'border-transparent text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300'"
               @click="activeTab = 'officiels'"
             >
               {{ t('athletes.participations.officiels.title') }}
-              <span v-if="participations?.officiels.length" class="ml-1 text-xs bg-header-100 text-header-600 px-1.5 py-0.5 rounded-full">
+              <span v-if="participations?.officiels.length" class="ml-1 text-xs bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 px-1.5 py-0.5 rounded-full">
                 {{ participations.officiels.length }}
               </span>
             </button>
             <button
               class="py-2 px-1 text-sm font-medium border-b-2 transition-colors"
               :class="activeTab === 'matchs'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-header-600 hover:text-header-700 hover:border-header-300'"
+                ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                : 'border-transparent text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300'"
               @click="activeTab = 'matchs'"
             >
               {{ t('athletes.participations.matchs.title') }}
-              <span v-if="participations?.matchs.length" class="ml-1 text-xs bg-header-100 text-header-600 px-1.5 py-0.5 rounded-full">
+              <span v-if="participations?.matchs.length" class="ml-1 text-xs bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 px-1.5 py-0.5 rounded-full">
                 {{ participations.matchs.length }}
               </span>
             </button>
@@ -712,32 +712,32 @@ onBeforeUnmount(() => {
 
         <!-- Loading -->
         <div v-if="participationsLoading" class="flex items-center justify-center py-8">
-          <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-header-600 animate-spin" />
+          <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-header-900 dark:text-header-50 animate-spin" />
         </div>
 
         <!-- ── Tab: Presence ── -->
         <div v-else-if="activeTab === 'presence'">
-          <div v-if="!participations?.presences.length" class="text-center py-8 text-sm text-header-600 italic">
+          <div v-if="!participations?.presences.length" class="text-center py-8 text-sm text-header-900 dark:text-header-50 italic">
             {{ t('athletes.participations.presence.empty') }}
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="bg-header-50 text-left">
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.presence.competition') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.presence.equipe') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.presence.numero') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.presence.role') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.presence.categorie') }}</th>
+                <tr class="bg-header-50 dark:bg-header-900 text-left">
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.presence.competition') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.presence.equipe') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.presence.numero') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.presence.role') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.presence.categorie') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-header-100">
-                <tr v-for="(p, i) in participations.presences" :key="i" class="hover:bg-header-50">
+              <tbody class="divide-y divide-header-100 dark:divide-header-800">
+                <tr v-for="(p, i) in participations.presences" :key="i" class="hover:bg-header-50 dark:hover:bg-header-800">
                   <td class="px-3 py-2 font-mono text-xs">{{ p.competition }}</td>
                   <td class="px-3 py-2">{{ p.equipe }}</td>
                   <td class="px-3 py-2 text-center">{{ p.numero ?? '' }}</td>
                   <td class="px-3 py-2 text-center">{{ t(`athletes.roles.${p.capitaine}`, p.capitaine) }}</td>
-                  <td class="px-3 py-2 text-header-600">{{ p.categorie }}</td>
+                  <td class="px-3 py-2 text-header-900 dark:text-header-50">{{ p.categorie }}</td>
                 </tr>
               </tbody>
             </table>
@@ -746,53 +746,53 @@ onBeforeUnmount(() => {
 
         <!-- ── Tab: Officiels ── -->
         <div v-else-if="activeTab === 'officiels'">
-          <div v-if="!participations?.officiels.length" class="text-center py-8 text-sm text-header-600 italic">
+          <div v-if="!participations?.officiels.length" class="text-center py-8 text-sm text-header-900 dark:text-header-50 italic">
             {{ t('athletes.participations.officiels.empty') }}
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="bg-header-50 text-left">
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.officiels.date') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.officiels.heure') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600">{{ t('athletes.participations.officiels.competition') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.match') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.arb_principal') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.arb_secondaire') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.secretaire') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.chronometreur') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.timekeeper') }}</th>
-                  <th class="px-3 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.officiels.ligne') }}</th>
+                <tr class="bg-header-50 dark:bg-header-900 text-left">
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.officiels.date') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.officiels.heure') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.officiels.competition') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.match') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.arb_principal') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.arb_secondaire') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.secretaire') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.chronometreur') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.timekeeper') }}</th>
+                  <th class="px-3 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.officiels.ligne') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-header-100">
+              <tbody class="divide-y divide-header-100 dark:divide-header-800">
                 <tr
                   v-for="o in participations.officiels"
                   :key="o.matchId"
-                  class="hover:bg-header-50"
-                  :class="{ 'italic text-header-600': !o.scoreValide }"
+                  class="hover:bg-header-50 dark:hover:bg-header-800"
+                  :class="{ 'italic text-header-900 dark:text-header-50': !o.scoreValide }"
                 >
                   <td class="px-3 py-2">{{ formatDateShort(o.date) }}</td>
                   <td class="px-3 py-2">{{ o.heure }}</td>
                   <td class="px-3 py-2 font-mono text-xs">{{ o.competition }}</td>
                   <td class="px-3 py-2 text-center">{{ o.matchNumero }}</td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.arbitrePrincipal" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-success-600 inline-block" />
+                    <UIcon v-if="o.arbitrePrincipal" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-success-600 dark:text-success-400 inline-block" />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.arbitreSecondaire" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-success-600 inline-block" />
+                    <UIcon v-if="o.arbitreSecondaire" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-success-600 dark:text-success-400 inline-block" />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.secretaire" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 inline-block" />
+                    <UIcon v-if="o.secretaire" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 dark:text-primary-300 inline-block" />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.chronometreur" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 inline-block" />
+                    <UIcon v-if="o.chronometreur" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 dark:text-primary-300 inline-block" />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.timekeeper" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 inline-block" />
+                    <UIcon v-if="o.timekeeper" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 dark:text-primary-300 inline-block" />
                   </td>
                   <td class="px-3 py-2 text-center">
-                    <UIcon v-if="o.ligne" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 inline-block" />
+                    <UIcon v-if="o.ligne" name="i-heroicons-check-circle-solid" class="w-4 h-4 text-primary-600 dark:text-primary-300 inline-block" />
                   </td>
                 </tr>
               </tbody>
@@ -802,42 +802,42 @@ onBeforeUnmount(() => {
 
         <!-- ── Tab: Matchs ── -->
         <div v-else-if="activeTab === 'matchs'">
-          <div v-if="!participations?.matchs.length" class="text-center py-8 text-sm text-header-600 italic">
+          <div v-if="!participations?.matchs.length" class="text-center py-8 text-sm text-header-900 dark:text-header-50 italic">
             {{ t('athletes.participations.matchs.empty') }}
           </div>
           <div v-else class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
-                <tr class="bg-header-50 text-left">
-                  <th class="px-2 py-2 font-medium text-header-600">{{ t('athletes.participations.matchs.date') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600">{{ t('athletes.participations.matchs.competition') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.matchs.match') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600">{{ t('athletes.participations.matchs.equipes') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.matchs.score') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.matchs.numero') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center">{{ t('athletes.participations.matchs.role') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-header-100">{{ t('athletes.participations.matchs.buts') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-success-50">{{ t('athletes.participations.matchs.vert') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-warning-50">{{ t('athletes.participations.matchs.jaune') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-danger-50">{{ t('athletes.participations.matchs.rouge') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-danger-50">{{ t('athletes.participations.matchs.rouge_def') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-header-100">{{ t('athletes.participations.matchs.tir') }}</th>
-                  <th class="px-2 py-2 font-medium text-header-600 text-center bg-header-100">{{ t('athletes.participations.matchs.arret') }}</th>
+                <tr class="bg-header-50 dark:bg-header-900 text-left">
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.matchs.date') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.matchs.competition') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.matchs.match') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50">{{ t('athletes.participations.matchs.equipes') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.matchs.score') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.matchs.numero') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center">{{ t('athletes.participations.matchs.role') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-header-200 dark:bg-header-700">{{ t('athletes.participations.matchs.buts') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-success-50 dark:bg-success-950">{{ t('athletes.participations.matchs.vert') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-warning-50 dark:bg-warning-950">{{ t('athletes.participations.matchs.jaune') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-danger-50 dark:bg-danger-950">{{ t('athletes.participations.matchs.rouge') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-danger-50 dark:bg-danger-950">{{ t('athletes.participations.matchs.rouge_def') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-header-200 dark:bg-header-700">{{ t('athletes.participations.matchs.tir') }}</th>
+                  <th class="px-2 py-2 font-medium text-header-900 dark:text-header-50 text-center bg-header-200 dark:bg-header-700">{{ t('athletes.participations.matchs.arret') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-header-100">
+              <tbody class="divide-y divide-header-100 dark:divide-header-800">
                 <tr
                   v-for="m in participations.matchs"
                   :key="m.matchId"
-                  class="hover:bg-header-50"
-                  :class="{ 'italic text-header-600': !m.scoreValide }"
+                  class="hover:bg-header-50 dark:hover:bg-header-800"
+                  :class="{ 'italic text-header-900 dark:text-header-50': !m.scoreValide }"
                 >
                   <td class="px-2 py-2 whitespace-nowrap">{{ formatDateShort(m.date) }}</td>
                   <td class="px-2 py-2 font-mono text-xs">{{ m.competition }}</td>
                   <td class="px-2 py-2 text-center">{{ m.matchNumero }}</td>
                   <td class="px-2 py-2 whitespace-nowrap">
                     <span :class="{ 'font-bold': m.equipe === 'A' }">{{ m.equipeA }}</span>
-                    <span class="text-header-600 mx-1">-</span>
+                    <span class="text-header-900 dark:text-header-50 mx-1">-</span>
                     <span :class="{ 'font-bold': m.equipe === 'B' }">{{ m.equipeB }}</span>
                   </td>
                   <td class="px-2 py-2 text-center whitespace-nowrap">
@@ -847,25 +847,25 @@ onBeforeUnmount(() => {
                   </td>
                   <td class="px-2 py-2 text-center">{{ m.numero ?? '' }}</td>
                   <td class="px-2 py-2 text-center">{{ t(`athletes.roles.${m.capitaine}`, m.capitaine) }}</td>
-                  <td class="px-2 py-2 text-center bg-header-50" :class="{ 'font-bold': m.buts > 0 }">
+                  <td class="px-2 py-2 text-center bg-header-50 dark:bg-header-900" :class="{ 'font-bold': m.buts > 0 }">
                     {{ m.buts || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center" :class="m.verts > 0 ? 'bg-success-100 font-medium' : ''">
+                  <td class="px-2 py-2 text-center" :class="m.verts > 0 ? 'bg-success-100 dark:bg-success-900 font-medium' : ''">
                     {{ m.verts || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center" :class="m.jaunes > 0 ? 'bg-warning-100 font-medium' : ''">
+                  <td class="px-2 py-2 text-center" :class="m.jaunes > 0 ? 'bg-warning-100 dark:bg-warning-900 font-medium' : ''">
                     {{ m.jaunes || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center" :class="m.rouges > 0 ? 'bg-danger-100 font-medium text-danger-700' : ''">
+                  <td class="px-2 py-2 text-center" :class="m.rouges > 0 ? 'bg-danger-100 dark:bg-danger-900 font-medium text-danger-700 dark:text-danger-200' : ''">
                     {{ m.rouges || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center" :class="m.rougesDefinitifs > 0 ? 'bg-danger-200 font-bold text-danger-800' : ''">
+                  <td class="px-2 py-2 text-center" :class="m.rougesDefinitifs > 0 ? 'bg-danger-200 dark:bg-danger-800 font-bold text-danger-800 dark:text-danger-100' : ''">
                     {{ m.rougesDefinitifs || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center bg-header-50">
+                  <td class="px-2 py-2 text-center bg-header-50 dark:bg-header-900">
                     {{ m.tirs || '' }}
                   </td>
-                  <td class="px-2 py-2 text-center bg-header-50">
+                  <td class="px-2 py-2 text-center bg-header-50 dark:bg-header-900">
                     {{ m.arrets || '' }}
                   </td>
                 </tr>

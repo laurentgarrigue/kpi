@@ -72,8 +72,8 @@ const profileLabel = (niveau: number) => {
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-600">{{ t('users.select_mandate.title') }}</p>
-        <p class="mt-1 text-sm text-header-500">
+        <p class="mt-2 text-header-900">{{ t('users.select_mandate.title') }}</p>
+        <p class="mt-1 text-sm text-header-600">
           {{ t('users.select_mandate.subtitle', { name: authStore.user?.name }) }}
         </p>
       </div>
@@ -98,11 +98,11 @@ const profileLabel = (niveau: number) => {
               <div class="font-semibold text-header-900">
                 {{ t('users.select_mandate.base_profile') }}
               </div>
-              <div class="text-sm text-header-500 mt-0.5">
+              <div class="text-sm text-header-600 mt-0.5">
                 {{ profileLabel(authStore.user?.profile ?? 99) }}
               </div>
             </div>
-            <UIcon name="i-heroicons-user-circle" class="w-8 h-8 text-header-400" />
+            <UIcon name="i-heroicons-user-circle" class="w-8 h-8 text-header-600" />
           </div>
         </button>
 
@@ -117,10 +117,10 @@ const profileLabel = (niveau: number) => {
           <div class="flex items-center justify-between">
             <div>
               <div class="font-semibold text-header-900">{{ mandate.libelle }}</div>
-              <div class="text-sm text-header-500 mt-0.5">
+              <div class="text-sm text-header-600 mt-0.5">
                 {{ profileLabel(mandate.niveau) }}
               </div>
-              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-xs text-header-400 mt-1 space-y-0.5">
+              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-xs text-header-600 mt-1 space-y-0.5">
                 <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length" class="flex flex-wrap gap-x-2">
                   <span v-if="mandate.filters.seasons?.length">
                     {{ t('users.select_mandate.seasons') }}: {{ mandate.filters.seasons.join(', ') }}
@@ -148,7 +148,7 @@ const profileLabel = (niveau: number) => {
       </div>
 
       <!-- Loading indicator -->
-      <div v-if="loading" class="mt-4 text-center text-sm text-header-500">
+      <div v-if="loading" class="mt-4 text-center text-sm text-header-600">
         {{ t('users.select_mandate.loading') }}
       </div>
     </div>

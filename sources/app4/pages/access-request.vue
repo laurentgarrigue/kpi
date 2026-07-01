@@ -85,7 +85,7 @@ async function handleSubmit() {
       <!-- Logo -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-600">{{ t('access_request.subtitle') }}</p>
+        <p class="mt-2 text-header-900">{{ t('access_request.subtitle') }}</p>
       </div>
 
       <div class="bg-white rounded-lg shadow-lg p-8">
@@ -109,7 +109,7 @@ async function handleSubmit() {
 
         <!-- Form -->
         <form v-else class="space-y-4" @submit.prevent="handleSubmit">
-          <p class="text-xs text-header-500">{{ t('access_request.required_fields') }}</p>
+          <p class="text-xs text-header-600">{{ t('access_request.required_fields') }}</p>
 
           <!-- Error -->
           <div
@@ -121,7 +121,7 @@ async function handleSubmit() {
 
           <!-- Email * -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('access_request.email') }} *
             </label>
             <UInput
@@ -137,7 +137,7 @@ async function handleSubmit() {
           <!-- Nom * + Prénom * -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('access_request.prenom') }} *
               </label>
               <UInput
@@ -149,7 +149,7 @@ async function handleSubmit() {
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('access_request.nom') }} *
               </label>
               <UInput
@@ -164,7 +164,7 @@ async function handleSubmit() {
 
           <!-- Licence (optionnel) -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('access_request.licence') }}
             </label>
             <UInput
@@ -177,7 +177,7 @@ async function handleSubmit() {
 
           <!-- Club (optionnel) -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('access_request.club') }}
             </label>
             <UInput
@@ -190,7 +190,7 @@ async function handleSubmit() {
 
           <!-- Responsabilités * -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('access_request.responsabilites') }} *
             </label>
             <UInput
@@ -204,7 +204,7 @@ async function handleSubmit() {
 
           <!-- Message * -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('access_request.message') }} *
             </label>
             <UTextarea
@@ -229,7 +229,7 @@ async function handleSubmit() {
             </UButton>
             <NuxtLink
               to="/login"
-              class="text-center text-sm text-header-500 hover:text-header-700"
+              class="text-center text-sm text-header-600 hover:text-header-900"
             >
               {{ t('access_request.back_to_login') }}
             </NuxtLink>

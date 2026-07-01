@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="bg-white rounded-lg shadow overflow-hidden border border-header-200"
+    class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden border border-header-200 dark:border-header-700"
     :class="{ 'ring-2 ring-primary-500': selected }"
   >
     <!-- Card header -->
@@ -28,7 +28,7 @@ const emit = defineEmits<{
           v-if="showCheckbox"
           :checked="checked"
           type="checkbox"
-          class="w-5 h-5 rounded border-header-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-shrink-0"
+          class="w-5 h-5 rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer flex-shrink-0"
           @change="emit('toggle-select')"
         >
         <slot name="header" />

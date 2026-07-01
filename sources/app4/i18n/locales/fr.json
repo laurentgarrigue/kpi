@@ -5,6 +5,12 @@
   "footer": {
     "version": "Version"
   },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
   "status": {
     "online": "En ligne",
     "offline": "Hors connexion",
@@ -36,7 +42,11 @@
     "referentials": "Référentiels",
     "rights": "Droits",
     "live": "Live",
-    "operations_group": "Opérations"
+    "operations_group": "Opérations",
+    "documents_short": "Doc",
+    "gamedays_short": "Phases",
+    "statistics_short": "Stats",
+    "administration_short": "Admin"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -510,6 +520,7 @@
     "control": {
       "presence_category": "Présence par catégorie",
       "presence_u21": "Présence U21",
+      "presence_naissance": "Présence par année de naissance",
       "competitions_played_club": "Compétitions jouées (club)",
       "competitions_played_team": "Compétitions jouées (équipe)",
       "team_roster_check": "Contrôle feuilles de présence",
@@ -722,6 +733,8 @@
       "copy_competitions_button": "Copier les compétitions",
       "confirm_activate": "Activer cette saison ?",
       "confirm_activate_message": "Cette saison deviendra la saison active.",
+      "non_ended_warning": "La saison {season} compte {count} compétition(s) non terminée(s) :",
+      "end_previous_season": "Clôturer la saison {season} : passer ses {count} compétition(s) non terminée(s) au statut « Terminé » et les verrouiller (lecture seule). Sinon, annulez et corrigez leur statut manuellement.",
       "success_add": "Saison ajoutée avec succès",
       "success_activate": "Saison activée",
       "success_copy_rc": "{copied} RC copiés ({skipped} ignorés)",
@@ -2543,5 +2556,36 @@
     "identifier_placeholder": "Votre identifiant ou adresse email",
     "submit": "Envoyer le lien",
     "success": "Si un compte correspond à cet identifiant, vous recevrez un email avec un lien de réinitialisation valable 48h."
+  },
+  "tour": {
+    "welcome_title": "Bienvenue dans la nouvelle administration",
+    "welcome_body": "Vous connaissez l'ancienne administration (Admin1). Voici Admin2, la nouvelle interface. Ce court tutoriel présente l'essentiel — vous pourrez le relancer à tout moment via le bouton « ? » en haut à droite.",
+    "mandate_title": "Votre mandat",
+    "mandate_body": "Après authentification, si vous disposez de plusieurs mandats (rôles), vous choisissez celui sous lequel travailler. Le mandat actif est rappelé dans ce menu et peut être changé à tout moment.",
+    "work_context_title": "Votre contexte de travail",
+    "work_context_body": "Choisissez ici la saison et le périmètre de travail : par sélection de compétitions, par section, par groupe ou par événement. Tout le reste de l'application s'adapte à ce contexte, que vous pouvez modifier quand vous le souhaitez.",
+    "menu_title": "Le menu",
+    "menu_body": "Le menu horizontal donne accès aux compétitions, équipes, journées, matchs, classements, statistiques et à l'administration. C'est votre point de navigation principal.",
+    "home_shortcuts_title": "Les raccourcis de l'accueil",
+    "home_shortcuts_body": "Ces cartes sur la page d'accueil sont des raccourcis directs vers les sections les plus utilisées, selon votre profil.",
+    "next": "Suivant",
+    "prev": "Précédent",
+    "done": "Terminer",
+    "relaunch": "Revoir le tutoriel",
+    "new_badge": "Nouveau",
+    "clickable_cells_title": "Des données cliquables",
+    "clickable_cells_body": "Sur la page Compétitions, plusieurs valeurs du tableau sont cliquables et mènent directement au bon endroit : le groupe, le nombre d'équipes, de journées/phases et de matchs. (Le tableau se remplit une fois un contexte de travail choisi.)",
+    "context_summary_title": "Revenir au contexte de travail",
+    "context_summary_body": "Ce rappel est présent en haut de chaque page : il affiche la saison et le périmètre en cours. Cliquez sur « Modifier » pour revenir à la page d'accueil et changer votre contexte de travail à tout moment."
+  },
+  "help": {
+    "title": "Aide & tutoriel",
+    "subtitle": "Prise en main de la nouvelle administration (Admin2).",
+    "start_tour": "Lancer le tutoriel",
+    "diff_title": "Admin1 (ancienne) vs Admin2 (nouvelle)",
+    "diff_body": "Admin2 remplace progressivement l'ancienne administration. Les données sont les mêmes : vous retrouvez compétitions, équipes, journées et matchs. Les principales différences sont l'ajout d'un contexte de travail (saison + périmètre) appliqué à toute l'application, une navigation par menu unifiée, et des actions directes depuis les tableaux.",
+    "features_title": "Les nouveautés essentielles",
+    "nav_title": "Naviguer efficacement",
+    "nav_body": "1. Choisissez votre mandat si vous en avez plusieurs.\n2. Définissez votre contexte de travail sur l'accueil (saison + périmètre).\n3. Utilisez le menu ou les cartes d'accueil pour accéder aux sections.\n4. Dans les tableaux, servez-vous des liens d'action pour aller droit au but.\nVous pouvez modifier le contexte et relancer ce tutoriel à tout moment."
   }
 }

@@ -5,6 +5,12 @@
   "footer": {
     "version": "Version"
   },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
   "status": {
     "online": "Online",
     "offline": "Offline",
@@ -36,7 +42,11 @@
     "referentials": "Referentials",
     "rights": "Rights",
     "live": "Live",
-    "operations_group": "Operations"
+    "operations_group": "Operations",
+    "documents_short": "Doc",
+    "gamedays_short": "Phases",
+    "statistics_short": "Stats",
+    "administration_short": "Admin"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -509,6 +519,7 @@
     "control": {
       "presence_category": "Presence by category",
       "presence_u21": "Presence U21",
+      "presence_naissance": "Presence by birth year",
       "competitions_played_club": "Competitions played (club)",
       "competitions_played_team": "Competitions played (team)",
       "team_roster_check": "Team roster check",
@@ -721,6 +732,8 @@
       "copy_competitions_button": "Copy Competitions",
       "confirm_activate": "Activate this season?",
       "confirm_activate_message": "This season will become the active season.",
+      "non_ended_warning": "Season {season} has {count} unfinished competition(s):",
+      "end_previous_season": "Close season {season}: set its {count} unfinished competition(s) to \"Ended\" and lock them (read-only). Otherwise, cancel and fix their status manually.",
       "success_add": "Season added successfully",
       "success_activate": "Season activated",
       "success_copy_rc": "{copied} RC copied ({skipped} skipped)",
@@ -988,8 +1001,8 @@
     "title": "Team Management",
     "select_competition": "Select a competition",
     "total": "Total: {count} team(s)",
-    "pool_header": "Pool {letter}",
-    "no_pool": "No pool",
+    "pool_header": "Group {letter}",
+    "no_pool": "No group",
     "empty": "No teams registered in this competition",
     "no_competition": "Please select a competition",
     "add": "Add",
@@ -1001,7 +1014,7 @@
     "deselect_all": "Deselect all",
     "draw": "Draw",
     "columns": {
-      "poule": "Pool",
+      "poule": "Group",
       "tirage": "Draw",
       "logo": "Logo",
       "equipe": "Team",
@@ -1019,7 +1032,7 @@
       "libelle": "Team name",
       "libelle_placeholder": "e.g. My Team KP",
       "club": "Club",
-      "poule": "Pool",
+      "poule": "Group",
       "poule_placeholder": "A-Z",
       "tirage": "Draw",
       "search_team": "Search team...",
@@ -1075,7 +1088,7 @@
     "players": "Players",
     "manage_composition": "Manage roster",
     "global_pdf": "PDF Exports",
-    "pdf_pools": "Pools",
+    "pdf_pools": "Groups",
     "presence_sheet": "Roster sheet",
     "presence_sheet_en": "Roster sheet (EN)",
     "presence_sheet_cat": "Roster by category",
@@ -1445,7 +1458,7 @@
     "display": {
       "title": "Display",
       "filters_section": "Filters",
-      "posts_section": "Posts"
+      "posts_section": "Officials"
     },
     "type_classification": "Classification",
     "type_elimination": "Elimination",
@@ -1500,7 +1513,7 @@
       "auto_assign": "Auto-assign",
       "cancel_assign": "Cancel assignment",
       "change_journee": "Change phase/gameday",
-      "change_journee_title": "Change Gameday / Phase / Pool",
+      "change_journee_title": "Change Gameday / Phase / Group",
       "change_journee_label": "New gameday",
       "renumber": "Renumber",
       "renumber_title": "Renumber games",
@@ -1561,7 +1574,7 @@
     "bulk_group_changed": "Group changed for {count} game(s).",
     "bulk_auto_assign_confirm": "Run auto-assignment for {count} selected game(s)?",
     "bulk_auto_assigned": "{count} game(s) auto-assigned.",
-    "bulk_auto_assign_pool_not_consolidated": "{count} slot(s) not assigned: the source pool is not consolidated. Consolidate the pool ranking before assigning the next rounds.",
+    "bulk_auto_assign_pool_not_consolidated": "{count} slot(s) not assigned: the source group is not consolidated. Consolidate the group ranking before assigning the next rounds.",
     "bulk_auto_assign_unresolved": "{count} slot(s) could not be resolved (source game not locked or result unavailable).",
     "bulk_auto_assign_none": "No game assigned: no slot could be resolved.",
     "bulk_cancel_assign_confirm": "Clear teams and referees for {count} selected game(s)?",
@@ -1875,7 +1888,7 @@
       "1": "1 - Super Admin",
       "2": "2 - CNAKP Bureau",
       "3": "3 - Division Manager",
-      "4": "4 - Pool/Competition Manager",
+      "4": "4 - Group/Competition Manager",
       "5": "5 - Federal Delegate",
       "6": "6 - Gameday Organizer",
       "7": "7 - Club/Team Manager",
@@ -2531,5 +2544,36 @@
     "identifier_placeholder": "Your username or email address",
     "submit": "Send reset link",
     "success": "If an account matches this identifier, you will receive an email with a reset link valid for 48 hours."
+  },
+  "tour": {
+    "welcome_title": "Welcome to the new administration",
+    "welcome_body": "You know the old administration (Admin1). This is Admin2, the new interface. This short tutorial covers the essentials — you can relaunch it anytime via the \"?\" button in the top right.",
+    "mandate_title": "Your mandate",
+    "mandate_body": "After signing in, if you have several mandates (roles), you pick the one to work under. The active mandate is shown in this menu and can be switched at any time.",
+    "work_context_title": "Your work context",
+    "work_context_body": "Choose your season and scope here: by competition selection, by section, by group or by event. The rest of the application adapts to this context, which you can change whenever you like.",
+    "menu_title": "The menu",
+    "menu_body": "The horizontal menu gives access to competitions, teams, game days, games, rankings, statistics and administration. It is your main navigation point.",
+    "home_shortcuts_title": "Home shortcuts",
+    "home_shortcuts_body": "These cards on the home page are direct shortcuts to the most-used sections, based on your profile.",
+    "next": "Next",
+    "prev": "Previous",
+    "done": "Done",
+    "relaunch": "Replay the tutorial",
+    "new_badge": "New",
+    "clickable_cells_title": "Clickable data",
+    "clickable_cells_body": "On the Competitions page, several table values are clickable and take you straight to the right place: the group, and the counts of teams, game days/phases and games. (The table fills in once you pick a work context.)",
+    "context_summary_title": "Back to your work context",
+    "context_summary_body": "This reminder appears at the top of every page: it shows the current season and scope. Click \"Change\" to return to the home page and update your work context at any time."
+  },
+  "help": {
+    "title": "Help & tutorial",
+    "subtitle": "Getting started with the new administration (Admin2).",
+    "start_tour": "Start the tutorial",
+    "diff_title": "Admin1 (old) vs Admin2 (new)",
+    "diff_body": "Admin2 gradually replaces the old administration. The data is the same: you still find competitions, teams, game days and games. The main differences are a work context (season + scope) applied across the whole application, unified menu navigation, and direct actions from tables.",
+    "features_title": "Key new features",
+    "nav_title": "Navigate efficiently",
+    "nav_body": "1. Pick your mandate if you have several.\n2. Set your work context on the home page (season + scope).\n3. Use the menu or the home cards to reach the sections.\n4. In tables, use the action links to get straight to the point.\nYou can change the context and replay this tutorial at any time."
   }
 }

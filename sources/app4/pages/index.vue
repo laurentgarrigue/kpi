@@ -7,6 +7,14 @@ definePageMeta({
 const { t } = useI18n()
 const authStore = useAuthStore()
 // Note: workContext is initialized by WorkContextSelector component
+
+// Tutoriel guidé — lance le tour à la 1re visite, ou propose les nouveautés au retour.
+// Voir DOC/specs/TUTORIEL_ADMIN2.md
+const { maybeAutoStart } = useTour('welcome')
+onMounted(() => {
+  // Léger délai pour laisser le contexte de travail se monter avant le surlignage.
+  setTimeout(() => { maybeAutoStart() }, 600)
+})
 </script>
 
 <template>
@@ -16,7 +24,7 @@ const authStore = useAuthStore()
       <h1 class="text-2xl font-bold text-header-900">
         {{ t('dashboard.title') }}
       </h1>
-      <p class="mt-1 text-sm text-header-500">
+      <p class="mt-1 text-sm text-header-600">
         {{ t('dashboard.welcome', { name: authStore.user?.firstname }) }}
       </p>
     </div>
@@ -27,7 +35,7 @@ const authStore = useAuthStore()
     </div>
 
     <!-- Quick stats / navigation cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div data-tour="home-shortcuts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Competitions card -->
       <NuxtLink
         v-if="authStore.hasProfile(10)"
@@ -40,7 +48,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.competition') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_competitions') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_competitions') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -57,7 +65,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.teams') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_teams') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_teams') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -74,7 +82,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.gamedays') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_gamedays') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_gamedays') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -91,7 +99,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.rankings') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_rankings') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_rankings') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -108,7 +116,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.documents') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_documents') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_documents') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -125,7 +133,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.matches') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.manage_games') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.manage_games') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -142,7 +150,7 @@ const authStore = useAuthStore()
           </div>
           <div>
             <h3 class="font-semibold text-header-900">{{ t('menu.statistics') }}</h3>
-            <p class="text-sm text-header-500">{{ t('dashboard.view_statistics') }}</p>
+            <p class="text-sm text-header-600">{{ t('dashboard.view_statistics') }}</p>
           </div>
         </div>
       </NuxtLink>

@@ -38,6 +38,7 @@ class AdminSchemaController extends AbstractController
         $season = $request->query->get('season', '');
         $competition = $request->query->get('competition', '');
         $lang = $request->query->get('lang', 'fr');
+        $includeEmpty = $request->query->getBoolean('includeEmpty');
 
         if (empty($season) || empty($competition)) {
             return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
@@ -57,7 +58,7 @@ class AdminSchemaController extends AbstractController
         }
 
         // 2. Load phases (journées with match counts)
-        $phases = $this->loadPhases($competition, $season);
+        $phases = $this->loadPhases($competition, $season, $includeEmpty);
 
         // 3. Load published rankings per phase
         $phaseRankings = $this->loadPhaseRankings($competition, $season);
@@ -102,6 +103,7 @@ class AdminSchemaController extends AbstractController
             $result[] = [
                 'idJournee' => $jId,
                 'phase' => $phase['Phase'] ?? '',
+                'nom' => $phase['Nom'] ?? '',
                 'etape' => $etape,
                 'niveau' => (int) ($phase['Niveau'] ?? 0),
                 'type' => $phase['Type'] ?? 'C',
@@ -179,21 +181,23 @@ class AdminSchemaController extends AbstractController
     }
 
     /**
-     * Load journées/phases with match counts, excluding Break/Pause and empty phases.
+     * Load journées/phases with match counts, excluding Break/Pause.
+     * By default empty phases (0 matches) are filtered out; pass $includeEmpty to keep them.
      */
-    private function loadPhases(string $competition, string $season): array
+    private function loadPhases(string $competition, string $season, bool $includeEmpty = false): array
     {
-        $sql = "SELECT j.Id AS Id_journee, j.Phase, j.Etape, j.Nbequipes, j.Niveau,
+        $having = $includeEmpty ? '' : 'HAVING nb_matchs > 0';
+
+        $sql = "SELECT j.Id AS Id_journee, j.Phase, j.Nom, j.Etape, j.Nbequipes, j.Niveau,
                        j.Type, j.Date_debut, j.Date_fin, j.Lieu, j.Departement,
                        COUNT(m.Id) AS nb_matchs
                 FROM kp_journee j
                 LEFT JOIN kp_match m ON j.Id = m.Id_journee
                 WHERE j.Code_competition = ?
                 AND j.Code_saison = ?
-                AND j.Phase != 'Break'
-                AND j.Phase != 'Pause'
+                AND (j.Phase IS NULL OR (j.Phase != 'Break' AND j.Phase != 'Pause'))
                 GROUP BY j.Id
-                HAVING nb_matchs > 0
+                $having
                 ORDER BY j.Etape ASC, j.Niveau DESC, j.Date_debut DESC, j.Phase ASC";
 
         return $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();

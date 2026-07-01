@@ -175,7 +175,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
 <template>
   <div class="space-y-6">
     <!-- Internal sub-tab navigation -->
-    <div class="border-b border-header-200">
+    <div class="border-b border-header-200 dark:border-header-700">
       <nav class="-mb-px flex space-x-1 overflow-x-auto" aria-label="Import/Export tabs">
         <button
           v-for="tab in [
@@ -186,7 +186,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -201,41 +201,41 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
     <section v-if="activeSubTab === 'export'">
       <div class="max-w-xl space-y-4">
         <div class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.import_export.select_event') }}
           </label>
           <input
             v-model="searchEvent"
             type="text"
             :placeholder="t('operations.import_export.search_event')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
             @focus="showEventDropdown = events.length > 0"
             @blur="onBlur"
           >
           <!-- Dropdown -->
           <div
             v-if="showEventDropdown && events.length > 0"
-            class="absolute z-10 w-full mt-1 bg-white border border-header-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            class="absolute z-10 w-full mt-1 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg max-h-60 overflow-auto"
           >
             <button
               v-for="event in events"
               :key="event.id"
               type="button"
-              class="w-full px-4 py-2 text-left hover:bg-header-50 text-sm"
+              class="w-full px-4 py-2 text-left hover:bg-header-50 dark:hover:bg-header-800 text-sm"
               @click="selectExportEvent(event)"
             >
               <div class="font-medium">{{ event.libelle }}</div>
-              <div class="text-xs text-header-500">
+              <div class="text-xs text-header-600 dark:text-header-300">
                 ID: {{ event.id }} - {{ event.lieu || 'Sans lieu' }}
               </div>
             </button>
           </div>
           <!-- Selected indicator -->
-          <div v-if="selectedExportEvent" class="mt-2 p-2 bg-primary-50 border border-primary-200 rounded-lg">
+          <div v-if="selectedExportEvent" class="mt-2 p-2 bg-primary-50 dark:bg-primary-950 border border-primary-200 rounded-lg">
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600" />
+              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               <span class="text-sm font-medium">{{ selectedExportEvent.libelle }}</span>
-              <span class="text-xs text-header-500">(ID: {{ selectedExportEvent.id }})</span>
+              <span class="text-xs text-header-600 dark:text-header-300">(ID: {{ selectedExportEvent.id }})</span>
             </div>
           </div>
         </div>
@@ -254,17 +254,17 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
 
     <!-- Import section -->
     <section v-if="activeSubTab === 'import'">
-      <div class="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-4">
+      <div class="bg-warning-50 dark:bg-warning-950 border border-warning-200 rounded-lg p-4 mb-4">
         <div class="flex items-start gap-3">
-          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 mt-0.5 shrink-0" />
-          <p class="text-sm text-warning-800">{{ t('operations.import_export.import_warning') }}</p>
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5 shrink-0" />
+          <p class="text-sm text-warning-800 dark:text-warning-200">{{ t('operations.import_export.import_warning') }}</p>
         </div>
       </div>
 
       <div class="max-w-xl space-y-4">
         <!-- Event ID input -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.import_export.event_id') }}
           </label>
           <input
@@ -272,13 +272,13 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
             type="number"
             min="1"
             :placeholder="t('operations.import_export.event_id_placeholder')"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500"
           >
         </div>
 
         <!-- File input -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('operations.import_export.json_file') }}
           </label>
           <div class="flex items-center gap-3">
@@ -286,18 +286,18 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
               ref="importFileInput"
               type="file"
               accept="application/json"
-              class="flex-1 px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+              class="flex-1 px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-1 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               @change="onImportFileSelected"
             >
             <button
               v-if="importFile"
-              class="px-3 py-2 text-header-600 hover:text-header-900"
+              class="px-3 py-2 text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50"
               @click="clearImportFile"
             >
               <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
             </button>
           </div>
-          <p v-if="importFile" class="mt-1 text-sm text-header-500">
+          <p v-if="importFile" class="mt-1 text-sm text-header-600 dark:text-header-300">
             {{ importFile.name }} ({{ Math.round(importFile.size / 1024) }} Ko)
           </p>
         </div>
@@ -343,7 +343,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
         v-model="doubleConfirmInput"
         type="text"
         :placeholder="t('operations.import_export.double_confirm_placeholder')"
-        class="mt-4 w-full px-3 py-2 border border-header-300 rounded-lg focus:ring-2 focus:ring-danger-500 font-mono text-center"
+        class="mt-4 w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-danger-500 font-mono text-center"
       >
     </AdminConfirmModal>
 

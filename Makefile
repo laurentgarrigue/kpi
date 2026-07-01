@@ -36,6 +36,8 @@ app3_dev app3_build app3_generate_dev app3_generate_preprod app3_generate_prod a
 app3_npm_install app3_npm_ls app3_npm_clean app3_npm_update app3_npm_add app3_npm_add_dev app3_bash \
 app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
+app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
+app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
 backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_npm_clean backend_npm_init \
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
@@ -550,6 +552,66 @@ app4_npm_add: ## Ajoute un package npm à app4 (usage: make app4_npm_add package
 app4_npm_add_dev: ## Ajoute un package npm de dev à app4 (usage: make app4_npm_add_dev package=eslint)
 	@echo "Ajout du package de dev $(package) pour app4 (container: $(NODE4_CONTAINER_NAME))..."
 	$(DOCKER_EXEC_NODE4) sh -c "npm install -D $(package)"
+
+
+## APP_WSM / APP_LIVE (Vue CLI - build statique servi par Apache sous /app_wsm et /app_live)
+# Build via container Node temporaire (node:22-alpine), puis copie du dist/ vers le dossier
+# servi (sources/app_wsm, sources/app_live) qui est monté dans le container PHP (DocumentRoot).
+# Aucun container Node permanent requis : idéal pour preprod/prod.
+
+app_wsm_generate_dev: ## Build app_wsm (Vue CLI) en mode development et déploie dans sources/app_wsm
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_wsm_dev/package-lock.json
+	@echo "Building app_wsm (development) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_wsm_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:dev"
+	@echo "Déploiement du build vers sources/app_wsm..."
+	rm -rf sources/app_wsm/* && cp -r sources/app_wsm_dev/dist/. sources/app_wsm/
+	@echo "App_wsm déployée dans sources/app_wsm (servie sous /app_wsm)."
+
+app_wsm_generate_preprod: ## Build app_wsm (Vue CLI) en mode preprod et déploie dans sources/app_wsm
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_wsm_dev/package-lock.json
+	@echo "Building app_wsm (preprod) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_wsm_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:preprod"
+	@echo "Déploiement du build vers sources/app_wsm..."
+	rm -rf sources/app_wsm/* && cp -r sources/app_wsm_dev/dist/. sources/app_wsm/
+	@echo "App_wsm déployée dans sources/app_wsm (servie sous /app_wsm)."
+
+app_wsm_generate_prod: ## Build app_wsm (Vue CLI) en mode production et déploie dans sources/app_wsm
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_wsm_dev/package-lock.json
+	@echo "Building app_wsm (production) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_wsm_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:prod"
+	@echo "Déploiement du build vers sources/app_wsm..."
+	rm -rf sources/app_wsm/* && cp -r sources/app_wsm_dev/dist/. sources/app_wsm/
+	@echo "App_wsm déployée dans sources/app_wsm (servie sous /app_wsm)."
+
+app_live_generate_dev: ## Build app_live (Vue CLI) en mode development et déploie dans sources/app_live
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_live_dev/package-lock.json
+	@echo "Building app_live (development) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_live_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:dev"
+	@echo "Déploiement du build vers sources/app_live..."
+	rm -rf sources/app_live/* && cp -r sources/app_live_dev/dist/. sources/app_live/
+	@echo "App_live déployée dans sources/app_live (servie sous /app_live)."
+
+app_live_generate_preprod: ## Build app_live (Vue CLI) en mode preprod et déploie dans sources/app_live
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_live_dev/package-lock.json
+	@echo "Building app_live (preprod) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_live_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:preprod"
+	@echo "Déploiement du build vers sources/app_live..."
+	rm -rf sources/app_live/* && cp -r sources/app_live_dev/dist/. sources/app_live/
+	@echo "App_live déployée dans sources/app_live (servie sous /app_live)."
+
+app_live_generate_prod: ## Build app_live (Vue CLI) en mode production et déploie dans sources/app_live
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app_live_dev/package-lock.json
+	@echo "Building app_live (production) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources/app_live_dev:/app" -w /app node:22-alpine sh -c "npm ci && npm run build:prod"
+	@echo "Déploiement du build vers sources/app_live..."
+	rm -rf sources/app_live/* && cp -r sources/app_live_dev/dist/. sources/app_live/
+	@echo "App_live déployée dans sources/app_live (servie sous /app_live)."
 
 
 ## BACKEND - COMPOSER (PHP)

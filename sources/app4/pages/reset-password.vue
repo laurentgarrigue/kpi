@@ -103,7 +103,7 @@ async function handleSubmit() {
 
           <!-- New password -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('users.reset_password.new_password') }}
             </label>
             <UInput
@@ -114,7 +114,7 @@ async function handleSubmit() {
           </div>
 
           <!-- Rules checklist -->
-          <div class="text-xs text-header-600 space-y-0.5">
+          <div class="text-xs text-header-900 space-y-0.5">
             <div class="font-medium mb-1">{{ t('users.reset_password.rules') }}</div>
             <div
               v-for="rule in rules"
@@ -123,16 +123,16 @@ async function handleSubmit() {
             >
               <UIcon
                 :name="rule.valid ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
-                :class="rule.valid ? 'text-success-500' : 'text-header-400'"
+                :class="rule.valid ? 'text-success-500' : 'text-header-600'"
                 class="w-4 h-4"
               />
-              <span :class="rule.valid ? 'text-success-700' : 'text-header-500'">{{ rule.label }}</span>
+              <span :class="rule.valid ? 'text-success-700' : 'text-header-600'">{{ rule.label }}</span>
             </div>
           </div>
 
           <!-- Confirm password -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('users.reset_password.confirm_password') }}
             </label>
             <UInput
