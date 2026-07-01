@@ -598,8 +598,8 @@ const pdfLinks = computed(() => {
     >
       <template #badges>
         <div v-if="presenceStore.team" class="flex flex-wrap items-center gap-2 text-sm">
-          <span class="text-header-500">{{ presenceStore.competition?.code }} - {{ presenceStore.team.codeSaison }}</span>
-          <span class="text-header-400">&bull;</span>
+          <span class="text-header-600">{{ presenceStore.competition?.code }} - {{ presenceStore.team.codeSaison }}</span>
+          <span class="text-header-600">&bull;</span>
           <!-- Team dropdown selector -->
           <select
             v-if="siblingTeams.length >= 2"
@@ -648,7 +648,7 @@ const pdfLinks = computed(() => {
           <UIcon
             v-else
             name="heroicons:lock-open-solid"
-            class="w-6 h-6 text-header-400"
+            class="w-6 h-6 text-header-600"
             :title="t('common.unlocked')"
           />
         </div>
@@ -680,17 +680,17 @@ const pdfLinks = computed(() => {
       <template #before-search>
         <!-- Refresh button -->
         <button
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           :title="t('common.refresh')"
           @click="presenceStore.initTeamMode(teamId, api)"
         >
-          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-600" />
         </button>
 
         <!-- PDF dropdown -->
         <button
           v-if="Object.keys(pdfLinks).length > 0"
-          class="pdf-dropdown-trigger px-3 py-2 border border-header-300 text-header-700 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
+          class="pdf-dropdown-trigger px-3 py-2 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
           @click="togglePdfDropdown($event)"
         >
           <UIcon name="heroicons:document-text" class="w-5 h-5" />
@@ -703,7 +703,7 @@ const pdfLinks = computed(() => {
         <!-- Init starters button -->
         <button
           v-if="canInitStarters"
-          class="px-3 py-2 border border-header-300 text-header-700 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
+          class="px-3 py-2 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
           @click="initStartersModalOpen = true"
         >
           <UIcon name="heroicons:user-group" class="w-5 h-5" />
@@ -713,7 +713,7 @@ const pdfLinks = computed(() => {
         <!-- Copy from button -->
         <button
           v-if="canCopy"
-          class="px-3 py-2 border border-header-300 text-header-700 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
+          class="px-3 py-2 border border-header-300 text-header-900 rounded-lg hover:bg-header-50 transition-colors text-sm flex items-center gap-1"
           @click="openCopyModal"
         >
           <UIcon name="heroicons:document-duplicate" class="w-5 h-5" />
@@ -734,7 +734,7 @@ const pdfLinks = computed(() => {
           :key="key"
           :href="link"
           target="_blank"
-          class="block px-3 py-2 text-sm text-header-700 hover:bg-header-50 first:rounded-t-lg last:rounded-b-lg"
+          class="block px-3 py-2 text-sm text-header-900 hover:bg-header-50 first:rounded-t-lg last:rounded-b-lg"
           @click="pdfDropdownOpen = false"
         >
           {{ t(`presence.pdf_${key}`) }}
@@ -745,13 +745,13 @@ const pdfLinks = computed(() => {
     <!-- Loading state -->
     <div v-if="presenceStore.loading" class="text-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto text-primary-600" />
-      <p class="mt-2 text-sm text-header-500">{{ t('common.loading') }}</p>
+      <p class="mt-2 text-sm text-header-600">{{ t('common.loading') }}</p>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="filteredPlayers.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
-      <UIcon name="i-heroicons-user-group" class="w-12 h-12 mx-auto text-header-400" />
-      <p class="mt-2 text-sm text-header-500">{{ t('presence.no_players') }}</p>
+      <UIcon name="i-heroicons-user-group" class="w-12 h-12 mx-auto text-header-600" />
+      <p class="mt-2 text-sm text-header-600">{{ t('presence.no_players') }}</p>
     </div>
 
     <!-- Desktop Table -->
@@ -767,17 +767,17 @@ const pdfLinks = computed(() => {
                 @change="toggleSelectAll"
               >
             </th>
-            <th class="w-16 px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">#</th>
-            <th class="w-24 px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('presence.status') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.last_name') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-500 uppercase">{{ t('common.first_name') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('common.license') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('common.club') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('common.category') }}</th>
-            <th v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase" :title="t('presence.surclassement')">{{ t('presence.surclassement') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('common.paddle') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('common.certificate') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-500 uppercase">{{ t('presence.status_referee') }}</th>
+            <th class="w-16 px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">#</th>
+            <th class="w-24 px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('presence.status') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.last_name') }}</th>
+            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 uppercase">{{ t('common.first_name') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('common.license') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('common.club') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('common.category') }}</th>
+            <th v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase" :title="t('presence.surclassement')">{{ t('presence.surclassement') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('common.paddle') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('common.certificate') }}</th>
+            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 uppercase">{{ t('presence.status_referee') }}</th>
             <th v-if="canEdit" class="w-16 px-3 py-1"/>
           </tr>
         </thead>
@@ -847,7 +847,7 @@ const pdfLinks = computed(() => {
 
             <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
             <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-            <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
+            <td class="px-3 py-1 text-sm text-header-600 font-mono text-center">
               <NuxtLink
                 :to="`/athletes?matric=${player.matric}`"
                 class="link-value"
@@ -855,7 +855,7 @@ const pdfLinks = computed(() => {
                 {{ getLicenseDisplay(player) }}
               </NuxtLink>
             </td>
-            <td class="px-3 py-1 text-sm text-header-500 text-center">
+            <td class="px-3 py-1 text-sm text-header-600 text-center">
               <NuxtLink
                 :to="`/clubs?code=${player.numeroClub}`"
                 class="link-value"
@@ -864,7 +864,7 @@ const pdfLinks = computed(() => {
                 {{ player.numeroClub }}
               </NuxtLink>
             </td>
-            <td class="px-3 py-1 text-sm text-header-500 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+            <td class="px-3 py-1 text-sm text-header-600 text-center">{{ player.categ }}-{{ player.sexe }}</td>
 
             <!-- Surclassement (national competitions only) -->
             <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
@@ -889,7 +889,7 @@ const pdfLinks = computed(() => {
               >
                 ({{ player.pagaieLabel }})
               </span>
-              <span v-else class="text-header-700">
+              <span v-else class="text-header-900">
                 {{ player.pagaieLabel }}
               </span>
             </td>
@@ -908,7 +908,7 @@ const pdfLinks = computed(() => {
             </td>
 
             <!-- Arbitre -->
-            <td class="px-3 py-1 text-sm text-header-500 text-center font-mono">
+            <td class="px-3 py-1 text-sm text-header-600 text-center font-mono">
               {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
             </td>
 
@@ -983,7 +983,7 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
               <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-              <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
+              <td class="px-3 py-1 text-sm text-header-600 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
                   class="link-value"
@@ -991,7 +991,7 @@ const pdfLinks = computed(() => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">
+              <td class="px-3 py-1 text-sm text-header-600 text-center">
                 <NuxtLink
                   :to="`/clubs?code=${player.numeroClub}`"
                   class="link-value"
@@ -1000,7 +1000,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <span
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1013,12 +1013,12 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-700 text-center">{{ player.pagaieLabel }}</td>
+              <td class="px-3 py-1 text-sm text-header-900 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
                 <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600">{{ t('common.no') }}</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center font-mono">
+              <td class="px-3 py-1 text-sm text-header-600 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
@@ -1089,7 +1089,7 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
               <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-              <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
+              <td class="px-3 py-1 text-sm text-header-600 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
                   class="link-value"
@@ -1097,7 +1097,7 @@ const pdfLinks = computed(() => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">
+              <td class="px-3 py-1 text-sm text-header-600 text-center">
                 <NuxtLink
                   :to="`/clubs?code=${player.numeroClub}`"
                   class="link-value"
@@ -1106,7 +1106,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <span
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1119,12 +1119,12 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-700 text-center">{{ player.pagaieLabel }}</td>
+              <td class="px-3 py-1 text-sm text-header-900 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
                 <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600">{{ t('common.no') }}</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center font-mono">
+              <td class="px-3 py-1 text-sm text-header-600 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
@@ -1195,7 +1195,7 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900">{{ formatNom(player.nom) }}</td>
               <td class="px-3 py-1 text-sm text-header-900">{{ formatPrenom(player.prenom) }}</td>
-              <td class="px-3 py-1 text-sm text-header-500 font-mono text-center">
+              <td class="px-3 py-1 text-sm text-header-600 font-mono text-center">
                 <NuxtLink
                   :to="`/athletes?matric=${player.matric}`"
                   class="link-value"
@@ -1203,7 +1203,7 @@ const pdfLinks = computed(() => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">
+              <td class="px-3 py-1 text-sm text-header-600 text-center">
                 <NuxtLink
                   :to="`/clubs?code=${player.numeroClub}`"
                   class="link-value"
@@ -1212,7 +1212,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <span
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1225,12 +1225,12 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-700 text-center">{{ player.pagaieLabel }}</td>
+              <td class="px-3 py-1 text-sm text-header-900 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
                 <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600">{{ t('common.no') }}</span>
               </td>
-              <td class="px-3 py-1 text-sm text-header-500 text-center font-mono">
+              <td class="px-3 py-1 text-sm text-header-600 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
@@ -1244,7 +1244,7 @@ const pdfLinks = computed(() => {
       </table>
 
       <!-- Footer -->
-      <div class="px-4 py-1 bg-header-50 border-t border-header-200 text-sm text-header-600">
+      <div class="px-4 py-1 bg-header-50 border-t border-header-200 text-sm text-header-900">
         <div class="flex items-center justify-between">
           <div>
             {{ t('presence.total_players', { count: presenceStore.players.length }) }}
@@ -1259,7 +1259,7 @@ const pdfLinks = computed(() => {
         <p>{{ t('presence.notice_inactive') }}</p>
         <p>{{ t('presence.notice_staff_referee') }}</p>
       </div>
-      <div v-if="presenceStore.lastUpdate" class="px-4 py-2 bg-header-50 border border-header-200 rounded-lg text-xs text-header-500 text-center">
+      <div v-if="presenceStore.lastUpdate" class="px-4 py-2 bg-header-50 border border-header-200 rounded-lg text-xs text-header-600 text-center">
         {{ t('presence.last_update') }} {{ formatLastUpdateDate(presenceStore.lastUpdate.date) }} {{ t('presence.last_update_by') }} {{ presenceStore.lastUpdate.user }}
       </div>
     </div>
@@ -1318,7 +1318,7 @@ const pdfLinks = computed(() => {
               v-if="!canEdit || editingCell?.matric !== player.matric || editingCell?.field !== 'capitaine'"
               class="px-2 py-1 text-xs font-medium rounded"
               :class="[
-                player.capitaine === 'C' ? 'bg-warning-200 text-warning-800' : 'bg-header-100 text-header-600',
+                player.capitaine === 'C' ? 'bg-warning-200 text-warning-800' : 'bg-header-200 text-header-900',
                 canEdit ? 'cursor-pointer border border-dashed border-transparent hover:border-primary-400 hover:bg-primary-50' : ''
               ]"
               @click="canEdit && startEdit(player, 'capitaine')"
@@ -1344,25 +1344,25 @@ const pdfLinks = computed(() => {
 
         <div class="space-y-1 text-sm">
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.club') }}:</span>
+            <span class="text-header-600">{{ t('common.club') }}:</span>
             <span>{{ player.numeroClub }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.category') }}:</span>
+            <span class="text-header-600">{{ t('common.category') }}:</span>
             <span>{{ player.categ }}-{{ player.sexe }}</span>
           </div>
           <div v-if="presenceStore.isNationalCompetition && player.surclassementNeeded" class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('presence.surclassement') }}:</span>
+            <span class="text-header-600">{{ t('presence.surclassement') }}:</span>
             <span :class="player.surclassementOk ? 'text-success-500' : 'text-danger-600'">
               {{ player.surclassementOk ? t('presence.surclassement_ok') : t('presence.surclassement_missing') }}
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.paddle') }}:</span>
+            <span class="text-header-600">{{ t('common.paddle') }}:</span>
             <span :class="player.pagaieValide === 0 ? 'text-danger-600' : ''">{{ player.pagaieLabel }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-header-500">{{ t('common.certificate') }}:</span>
+            <span class="text-header-600">{{ t('common.certificate') }}:</span>
             <span :class="player.certifCK === 'OUI' ? 'text-success-500' : 'text-danger-600'">
               {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
             </span>
@@ -1490,7 +1490,7 @@ const pdfLinks = computed(() => {
             <button
               type="button"
               class="px-4 py-1 text-sm font-medium border-b-2 transition-colors"
-              :class="addMode === 'existing' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-500 hover:text-header-700'"
+              :class="addMode === 'existing' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 hover:text-header-900'"
               @click="addMode = 'existing'; addFormData.mode = 'existing'"
             >
               {{ t('presence.add_existing_player') }}
@@ -1499,7 +1499,7 @@ const pdfLinks = computed(() => {
               v-if="!presenceStore.isNationalCompetition"
               type="button"
               class="px-4 py-1 text-sm font-medium border-b-2 transition-colors"
-              :class="addMode === 'create' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-500 hover:text-header-700'"
+              :class="addMode === 'create' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 hover:text-header-900'"
               @click="() => {
                 const q = playerAutocompleteRef.value?.getSearchQuery()?.trim() || ''
                 addMode = 'create'
@@ -1516,13 +1516,13 @@ const pdfLinks = computed(() => {
             <!-- Filters -->
             <div class="grid grid-cols-3 gap-2">
               <div>
-                <label class="block text-xs font-medium text-header-600 mb-1">{{ t('common.club') }}</label>
+                <label class="block text-xs font-medium text-header-900 mb-1">{{ t('common.club') }}</label>
                 <AdminClubAutocomplete
                   v-model="searchFilterClub"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-600 mb-1">{{ t('presence.sex') }}</label>
+                <label class="block text-xs font-medium text-header-900 mb-1">{{ t('presence.sex') }}</label>
                 <select
                   v-model="searchFilterSexe"
                   class="w-full px-2 py-1 border border-header-300 rounded text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -1533,7 +1533,7 @@ const pdfLinks = computed(() => {
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-600 mb-1">{{ t('presence.referee_qualification') }}</label>
+                <label class="block text-xs font-medium text-header-900 mb-1">{{ t('presence.referee_qualification') }}</label>
                 <select
                   v-model="searchFilterArbitre"
                   class="w-full px-2 py-1 border border-header-300 rounded text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
@@ -1548,7 +1548,7 @@ const pdfLinks = computed(() => {
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.search_placeholder') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.search_placeholder') }}</label>
               <AdminPlayerAutocomplete
                 ref="playerAutocompleteRef"
                 :model-value="selectedPlayer"
@@ -1566,7 +1566,7 @@ const pdfLinks = computed(() => {
           <template v-if="addMode === 'create'">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('common.last_name') }} *</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('common.last_name') }} *</label>
                 <input
                   ref="nomInputRef"
                   :value="addFormData.nom"
@@ -1577,7 +1577,7 @@ const pdfLinks = computed(() => {
                 >
               </div>
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('common.first_name') }} *</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('common.first_name') }} *</label>
                 <input
                   :value="addFormData.prenom"
                   type="text"
@@ -1608,7 +1608,7 @@ const pdfLinks = computed(() => {
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.sex') }} *</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.sex') }} *</label>
                 <select
                   v-model="addFormData.sexe"
                   required
@@ -1620,7 +1620,7 @@ const pdfLinks = computed(() => {
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.birth_date') }}</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.birth_date') }}</label>
                 <input
                   v-model="addFormData.naissance"
                   type="date"
@@ -1628,7 +1628,7 @@ const pdfLinks = computed(() => {
                 >
               </div>
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.referee_qualification') }}</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.referee_qualification') }}</label>
                 <select
                   v-model="addFormData.arbitre"
                   class="w-full px-3 py-1 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -1642,7 +1642,7 @@ const pdfLinks = computed(() => {
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.referee_level') }}</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.referee_level') }}</label>
                 <select
                   v-model="addFormData.niveau"
                   class="w-full px-3 py-1 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -1655,7 +1655,7 @@ const pdfLinks = computed(() => {
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.icf_number') }}</label>
+                <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.icf_number') }}</label>
                 <input
                   :value="addFormData.numicf ?? ''"
                   type="text"
@@ -1672,7 +1672,7 @@ const pdfLinks = computed(() => {
           <!-- Common fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">#</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">#</label>
               <input
                 ref="numeroInputRef"
                 v-model.number="addFormData.numero"
@@ -1683,7 +1683,7 @@ const pdfLinks = computed(() => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.status') }}</label>
+              <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.status') }}</label>
               <select
                 v-model="addFormData.capitaine"
                 class="w-full px-3 py-1 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -1701,7 +1701,7 @@ const pdfLinks = computed(() => {
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-1 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-1 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="addModalOpen = false"
           >
             {{ t('common.cancel') }}
@@ -1751,7 +1751,7 @@ const pdfLinks = computed(() => {
 
         <!-- Season -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.source_season') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.source_season') }}</label>
           <select
             v-model="copyFormData.sourceSeason"
             class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -1763,12 +1763,12 @@ const pdfLinks = computed(() => {
 
         <!-- Available compositions -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('presence.source_competition') }}</label>
-          <div v-if="loadingCompositions" class="text-sm text-header-500 py-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('presence.source_competition') }}</label>
+          <div v-if="loadingCompositions" class="text-sm text-header-600 py-1">
             <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin inline mr-1" />
             {{ t('common.loading') }}
           </div>
-          <div v-else-if="availableCompositions.length === 0" class="text-sm text-header-500 py-1">
+          <div v-else-if="availableCompositions.length === 0" class="text-sm text-header-600 py-1">
             {{ t('presence.no_compositions') }}
           </div>
           <div v-else class="max-h-48 overflow-y-auto border border-header-200 rounded-lg">
@@ -1782,7 +1782,7 @@ const pdfLinks = computed(() => {
             >
               <div class="flex items-center justify-between">
                 <span class="font-medium">{{ comp.competitionCode }} - {{ comp.competitionLibelle }}</span>
-                <span class="text-xs text-header-500">{{ comp.playerCount }} {{ t('presence.players_count_short') }}</span>
+                <span class="text-xs text-header-600">{{ comp.playerCount }} {{ t('presence.players_count_short') }}</span>
               </div>
             </button>
           </div>
@@ -1793,7 +1793,7 @@ const pdfLinks = computed(() => {
       <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
         <button
           type="button"
-          class="px-4 py-1 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+          class="px-4 py-1 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
           @click="copyModalOpen = false"
         >
           {{ t('common.cancel') }}

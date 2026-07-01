@@ -66,7 +66,7 @@ const emit = defineEmits<{
 
         <!-- Body -->
         <div class="p-6">
-          <p class="text-header-600 dark:text-header-300">
+          <p class="text-header-900 dark:text-header-300">
             {{ message }}
           </p>
           <p v-if="itemName" class="mt-2 font-medium text-header-900 dark:text-header-50">
@@ -79,7 +79,7 @@ const emit = defineEmits<{
         <div class="flex justify-end gap-2 p-6 pt-4 border-t border-header-200 dark:border-header-800 bg-header-50 dark:bg-header-950 rounded-b-lg">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 dark:text-header-200 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-100 dark:hover:bg-header-800 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 dark:text-header-200 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-200 dark:hover:bg-header-800 rounded-lg transition-colors"
             @click="emit('close')"
           >
             {{ cancelText }}

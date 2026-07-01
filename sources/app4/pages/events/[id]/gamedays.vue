@@ -260,7 +260,7 @@ onMounted(async () => {
       </button>
 
       <div v-if="eventLoading" class="h-16 flex items-center">
-        <UIcon name="heroicons:arrow-path" class="w-5 h-5 animate-spin text-header-400" />
+        <UIcon name="heroicons:arrow-path" class="w-5 h-5 animate-spin text-header-600" />
       </div>
       <div v-else-if="eventNotFound" class="text-danger-600 text-sm">
         {{ t('events.association.event_not_found') }}
@@ -269,7 +269,7 @@ onMounted(async () => {
         <h1 class="text-lg font-semibold text-header-900">
           {{ t('events.association.page_title') }} — <span class="text-primary-700">#{{ event.id }} {{ event.libelle }}</span>
         </h1>
-        <div class="flex flex-wrap gap-4 mt-1 text-sm text-header-600">
+        <div class="flex flex-wrap gap-4 mt-1 text-sm text-header-900">
           <span v-if="event.dateDebut || event.dateFin">
             <UIcon name="heroicons:calendar-days" class="w-4 h-4 inline mr-1" />
             {{ formatDate(event.dateDebut) }}
@@ -297,7 +297,7 @@ onMounted(async () => {
       <div class="flex flex-wrap gap-3">
         <!-- Season filter -->
         <div class="min-w-30">
-          <label class="block text-xs font-medium text-header-600 mb-1">
+          <label class="block text-xs font-medium text-header-900 mb-1">
             {{ t('events.association.filter_season') }}
           </label>
           <select
@@ -312,7 +312,7 @@ onMounted(async () => {
 
         <!-- State filter -->
         <div class="min-w-35">
-          <label class="block text-xs font-medium text-header-600 mb-1">
+          <label class="block text-xs font-medium text-header-900 mb-1">
             {{ t('events.association.filter_state') }}
           </label>
           <select
@@ -327,11 +327,11 @@ onMounted(async () => {
 
         <!-- Search -->
         <div class="flex-1 min-w-50">
-          <label class="block text-xs font-medium text-header-600 mb-1">
+          <label class="block text-xs font-medium text-header-900 mb-1">
             &nbsp;
           </label>
           <div class="relative">
-            <UIcon name="heroicons:magnifying-glass" class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
+            <UIcon name="heroicons:magnifying-glass" class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
             <input
               v-model="search"
               type="search"
@@ -380,14 +380,14 @@ onMounted(async () => {
 
     <!-- Desktop table -->
     <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
-      <div v-if="loading && candidates.length === 0" class="py-12 text-center text-header-400">
+      <div v-if="loading && candidates.length === 0" class="py-12 text-center text-header-600">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
       </div>
-      <div v-else-if="filteredCandidates.length === 0" class="py-12 text-center text-header-400 text-sm">
+      <div v-else-if="filteredCandidates.length === 0" class="py-12 text-center text-header-600 text-sm">
         {{ t('events.association.no_candidates') }}
       </div>
       <table v-else class="w-full text-sm">
-        <thead class="bg-header-50 text-header-600 text-xs uppercase">
+        <thead class="bg-header-50 text-header-900 text-xs uppercase">
           <tr>
             <th class="px-4 py-3 text-center w-10">
               <UIcon name="heroicons:link" class="w-4 h-4" />
@@ -417,26 +417,26 @@ onMounted(async () => {
                 @change="toggleAssociation(g)"
               >
             </td>
-            <td class="px-4 py-2 text-header-500 font-mono text-xs">
+            <td class="px-4 py-2 text-header-600 font-mono text-xs">
               {{ g.id }}
             </td>
-            <td class="px-4 py-2 font-medium text-header-800">
+            <td class="px-4 py-2 font-medium text-header-900">
               {{ g.codeCompetition }}
-              <span v-if="g.competitionLibelle" class="font-normal text-header-500 text-xs ml-1">{{ g.competitionLibelle }}</span>
+              <span v-if="g.competitionLibelle" class="font-normal text-header-600 text-xs ml-1">{{ g.competitionLibelle }}</span>
             </td>
-            <td class="px-4 py-2 text-header-700">
+            <td class="px-4 py-2 text-header-900">
               {{ g.phase || '—' }}
             </td>
-            <td class="px-4 py-2 text-header-600">
+            <td class="px-4 py-2 text-header-900">
               {{ formatDate(g.dateDebut) }}
               <template v-if="g.dateFin && g.dateFin !== g.dateDebut">
                 — {{ formatDate(g.dateFin) }}
               </template>
             </td>
-            <td class="px-4 py-2 text-header-600">
+            <td class="px-4 py-2 text-header-900">
               {{ g.lieu || '—' }}
             </td>
-            <td class="px-4 py-2 text-header-500">
+            <td class="px-4 py-2 text-header-600">
               {{ g.departement || '—' }}
             </td>
             <td class="px-4 py-2 text-center">
@@ -449,7 +449,7 @@ onMounted(async () => {
               </span>
               <span
                 v-else
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-100 text-header-500"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-200 text-header-600"
               >
                 {{ t('events.association.unlinked_badge') }}
               </span>
@@ -493,13 +493,13 @@ onMounted(async () => {
           </span>
           <span
             v-else
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-100 text-header-500"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-200 text-header-600"
           >
             {{ t('events.association.unlinked_badge') }}
           </span>
         </template>
 
-        <div class="space-y-1 text-sm text-header-600">
+        <div class="space-y-1 text-sm text-header-900">
           <div v-if="g.dateDebut">
             <UIcon name="heroicons:calendar-days" class="w-4 h-4 inline mr-1" />
             {{ formatDate(g.dateDebut) }}

@@ -40,7 +40,7 @@ function matchLabel(m: TvMatch): string {
   <div class="flex flex-wrap items-end gap-3">
     <!-- Competition -->
     <div v-if="needs('competition')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.competition') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.competition') }}</label>
       <select
         v-model="panel.competition"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[120px]"
@@ -52,7 +52,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Match -->
     <div v-if="needs('match')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.match') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.match') }}</label>
       <select
         v-model.number="panel.match"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[280px]"
@@ -66,7 +66,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Team A/B -->
     <div v-if="needs('team')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.team') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.team') }}</label>
       <select
         v-model="panel.team"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -78,7 +78,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Team select (for frame_team) -->
     <div v-if="needs('teamSelect')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.team') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.team') }}</label>
       <select
         v-model.number="panel.teamSelect"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[180px]"
@@ -92,13 +92,13 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Player number -->
     <div v-if="needs('number')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.player') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.player') }}</label>
       <AdminTvPlayerNumberGrid v-model="panel.number" />
     </div>
 
     <!-- Pitch -->
     <div v-if="needs('pitch')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.pitch') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.pitch') }}</label>
       <select
         v-model.number="panel.pitch"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -109,7 +109,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Pitchs (text) -->
     <div v-if="needs('pitchs')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.pitchs') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.pitchs') }}</label>
       <input
         v-model="panel.pitchs"
         type="text"
@@ -120,7 +120,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Medal -->
     <div v-if="needs('medal')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.medal') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.medal') }}</label>
       <select
         v-model="panel.medal"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -133,7 +133,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Zone -->
     <div v-if="needs('zone')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.zone') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.zone') }}</label>
       <select
         v-model="panel.zone"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -145,7 +145,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Mode -->
     <div v-if="needs('mode')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.mode') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.mode') }}</label>
       <select
         v-model="panel.mode"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -159,7 +159,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Round -->
     <div v-if="needs('round')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.round') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.round') }}</label>
       <select
         v-model="panel.round"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -171,7 +171,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Start -->
     <div v-if="needs('start')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.start') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.start') }}</label>
       <select
         v-model.number="panel.start"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -185,7 +185,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Animate -->
     <div v-if="needs('animate')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.animate') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.animate') }}</label>
       <select
         v-model="panel.animate"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -197,7 +197,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Speaker -->
     <div v-if="needs('speaker')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.speaker') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.speaker') }}</label>
       <select
         v-model.number="panel.speaker"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -210,7 +210,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Count -->
     <div v-if="needs('count')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.count') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.count') }}</label>
       <select
         v-model.number="panel.count"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -221,7 +221,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- First game (lnStart) -->
     <div v-if="needs('lnStart')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.first_game') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.first_game') }}</label>
       <input
         v-model.number="panel.lnStart"
         type="number"
@@ -232,7 +232,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Game count (lnLen) -->
     <div v-if="needs('lnLen')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.game_count') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.game_count') }}</label>
       <input
         v-model.number="panel.lnLen"
         type="number"
@@ -243,7 +243,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Competitions (text) -->
     <div v-if="needs('competList')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.competitions') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.competitions') }}</label>
       <input
         v-model="panel.competList"
         type="text"
@@ -254,7 +254,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Format -->
     <div v-if="needs('format')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.format') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.format') }}</label>
       <select
         v-model="panel.format"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -266,7 +266,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Option -->
     <div v-if="needs('option')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.option') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.option') }}</label>
       <select
         v-model.number="panel.option"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"
@@ -279,7 +279,7 @@ function matchLabel(m: TvMatch): string {
 
     <!-- Navbar -->
     <div v-if="needs('navGroup')" class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.panel.navbar') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.panel.navbar') }}</label>
       <select
         v-model="panel.navGroup"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white"

@@ -47,7 +47,7 @@ const maxWidthClasses = {
           </slot>
           <button
             type="button"
-            class="text-header-400 dark:text-header-500 hover:text-header-600 dark:hover:text-header-200 p-1"
+            class="text-header-600 dark:text-header-600 hover:text-header-900 dark:hover:text-header-200 p-1"
             @click="emit('close')"
           >
             <UIcon name="heroicons:x-mark" class="w-6 h-6" />

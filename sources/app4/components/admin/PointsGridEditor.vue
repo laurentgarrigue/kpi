@@ -125,10 +125,10 @@ const jsonPreview = computed(() => {
 
 <template>
   <div>
-    <label class="block text-sm font-medium text-header-700 mb-1">
+    <label class="block text-sm font-medium text-header-900 mb-1">
       {{ t('competitions.multi.points_grid') }}
     </label>
-    <p class="text-xs text-header-500 mb-2">
+    <p class="text-xs text-header-600 mb-2">
       {{ t('competitions.multi.points_grid_hint') }}
     </p>
 
@@ -147,7 +147,7 @@ const jsonPreview = computed(() => {
     <div v-else class="space-y-3">
       <!-- Number of positions -->
       <div class="flex items-center gap-2">
-        <label class="text-sm text-header-600">
+        <label class="text-sm text-header-900">
           {{ t('competitions.multi.points_grid_editor.num_positions') }}
         </label>
         <input
@@ -157,14 +157,14 @@ const jsonPreview = computed(() => {
           max="50"
           class="w-20 px-2 py-1 border border-header-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         >
-        <span class="text-xs text-header-400">{{ t('competitions.multi.points_grid_editor.num_positions_hint') }}</span>
+        <span class="text-xs text-header-600">{{ t('competitions.multi.points_grid_editor.num_positions_hint') }}</span>
       </div>
 
       <!-- Positions grid -->
       <div class="max-h-64 overflow-y-auto border border-header-300 rounded-lg bg-white p-2">
         <div class="space-y-1">
           <div v-for="(_, idx) in positions" :key="idx" class="flex items-center justify-between gap-2">
-            <label :for="`pos-${idx}`" class="text-sm text-header-700 min-w-24">{{ getPositionLabel(idx + 1) }}</label>
+            <label :for="`pos-${idx}`" class="text-sm text-header-900 min-w-24">{{ getPositionLabel(idx + 1) }}</label>
             <input
               :id="`pos-${idx}`"
               v-model.number="positions[idx]"
@@ -179,7 +179,7 @@ const jsonPreview = computed(() => {
 
       <!-- Default points -->
       <div class="flex items-center gap-2">
-        <label for="default-points" class="text-sm text-header-600">
+        <label for="default-points" class="text-sm text-header-900">
           {{ t('competitions.multi.points_grid_editor.default_points') }}
         </label>
         <input
@@ -189,21 +189,21 @@ const jsonPreview = computed(() => {
           min="0"
           class="w-20 px-2 py-1 border border-header-300 rounded text-sm text-right focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         >
-        <span class="text-xs text-header-400">{{ t('competitions.multi.points_grid_editor.default_points_hint') }}</span>
+        <span class="text-xs text-header-600">{{ t('competitions.multi.points_grid_editor.default_points_hint') }}</span>
       </div>
 
       <!-- JSON preview -->
       <div>
         <button
           type="button"
-          class="text-xs text-header-500 hover:text-header-700"
+          class="text-xs text-header-600 hover:text-header-900"
           @click="showPreview = !showPreview"
         >
           {{ showPreview ? '▾' : '▸' }} {{ t('competitions.multi.points_grid_editor.json_preview') }}
         </button>
         <pre
           v-if="showPreview"
-          class="mt-1 p-2 bg-header-100 rounded text-xs font-mono text-header-700 overflow-x-auto"
+          class="mt-1 p-2 bg-header-200 rounded text-xs font-mono text-header-900 overflow-x-auto"
         >{{ jsonPreview }}</pre>
       </div>
 

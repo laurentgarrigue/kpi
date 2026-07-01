@@ -38,7 +38,7 @@ watch(filters, (val) => {
   <div class="flex flex-wrap items-end gap-4 p-4 bg-header-50 rounded-lg border border-header-200">
     <!-- Event -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.global.event') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.global.event') }}</label>
       <select
         v-model.number="filters.eventId"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[250px]"
@@ -52,7 +52,7 @@ watch(filters, (val) => {
 
     <!-- Date -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.global.date') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.global.date') }}</label>
       <select
         v-model="filters.date"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[140px]"
@@ -64,7 +64,7 @@ watch(filters, (val) => {
 
     <!-- Style -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.global.style') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.global.style') }}</label>
       <select
         v-model="filters.css"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[180px]"
@@ -75,7 +75,7 @@ watch(filters, (val) => {
 
     <!-- Language -->
     <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-header-600">{{ t('tv.global.language') }}</label>
+      <label class="text-xs font-medium text-header-900">{{ t('tv.global.language') }}</label>
       <select
         v-model="filters.lang"
         class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[80px]"

@@ -204,7 +204,7 @@ const copyCompetitions = async () => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id"
@@ -219,7 +219,7 @@ const copyCompetitions = async () => {
     <section v-if="activeSubTab === 'change_code'">
       <div class="max-w-xl space-y-4">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.codes.source_code') }}
           </label>
           <input
@@ -231,7 +231,7 @@ const copyCompetitions = async () => {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.codes.target_code') }}
           </label>
           <input
@@ -249,7 +249,7 @@ const copyCompetitions = async () => {
               type="checkbox"
               class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-700">{{ t('operations.codes.all_seasons') }}</span>
+            <span class="text-sm text-header-900">{{ t('operations.codes.all_seasons') }}</span>
           </label>
 
           <label class="flex items-center gap-3 cursor-pointer">
@@ -258,7 +258,7 @@ const copyCompetitions = async () => {
               type="checkbox"
               class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-700">{{ t('operations.codes.target_exists') }}</span>
+            <span class="text-sm text-header-900">{{ t('operations.codes.target_exists') }}</span>
           </label>
         </div>
 
@@ -287,7 +287,7 @@ const copyCompetitions = async () => {
     <section v-if="activeSubTab === 'copy_rc'">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.source_season') }}
           </label>
           <select
@@ -301,7 +301,7 @@ const copyCompetitions = async () => {
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.target_season') }}
           </label>
           <select
@@ -336,7 +336,7 @@ const copyCompetitions = async () => {
       <div class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.seasons.source_season') }}
             </label>
             <select
@@ -350,7 +350,7 @@ const copyCompetitions = async () => {
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('operations.seasons.target_season') }}
             </label>
             <select
@@ -373,14 +373,14 @@ const copyCompetitions = async () => {
         <!-- Competitions selection -->
         <div v-if="competitions.length > 0">
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-medium text-header-700">
+            <label class="block text-sm font-medium text-header-900">
               {{ t('operations.seasons.select_competitions') }}
             </label>
             <div class="flex gap-2">
               <button class="text-sm text-primary-600 hover:underline" @click="selectAllCompetitions">
                 {{ t('stats.params.select_all') }}
               </button>
-              <button class="text-sm text-header-600 hover:underline" @click="deselectAllCompetitions">
+              <button class="text-sm text-header-900 hover:underline" @click="deselectAllCompetitions">
                 {{ t('stats.params.deselect_all') }}
               </button>
             </div>
@@ -410,7 +410,7 @@ const copyCompetitions = async () => {
               type="checkbox"
               class="w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-primary-500"
             >
-            <span class="text-sm text-header-700">{{ t('operations.seasons.copy_matches') }}</span>
+            <span class="text-sm text-header-900">{{ t('operations.seasons.copy_matches') }}</span>
           </label>
         </div>
 

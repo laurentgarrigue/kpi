@@ -141,7 +141,7 @@ function setQuickDate(d: WorkerDate) {
 function statusBadgeClass(c: WorkerConfig): string {
   if (c.isRunning) return 'bg-green-100 text-green-700'
   if (c.isPaused) return 'bg-yellow-100 text-yellow-700'
-  return 'bg-header-100 text-header-500'
+  return 'bg-header-200 text-header-600'
 }
 
 // ─── Watchers ───
@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
     <!-- Header -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-header-900">{{ t('eventCacheManager.title') }}</h1>
-      <p class="mt-1 text-sm text-header-500">{{ t('eventCacheManager.subtitle') }}</p>
+      <p class="mt-1 text-sm text-header-600">{{ t('eventCacheManager.subtitle') }}</p>
     </div>
 
     <!-- Active workers -->
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <div v-if="configs.length === 0" class="px-5 py-10 text-center text-header-400">
+      <div v-if="configs.length === 0" class="px-5 py-10 text-center text-header-600">
         {{ t('eventCacheManager.active_workers.none') }}
       </div>
 
@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold text-header-900">Event #{{ c.idEvent }}</span>
-              <span v-if="eventLabel(c.idEvent)" class="text-sm text-header-500">{{ eventLabel(c.idEvent) }}</span>
+              <span v-if="eventLabel(c.idEvent)" class="text-sm text-header-600">{{ eventLabel(c.idEvent) }}</span>
               <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', statusBadgeClass(c)]">
                 {{ t(`eventCacheManager.status.${c.status}`) }}
               </span>
@@ -207,14 +207,14 @@ onBeforeUnmount(() => {
               </span>
             </div>
             <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.date') }} : </span><span class="text-header-700">{{ c.dateEvent }}</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.initial_time') }} : </span><span class="text-header-700">{{ c.hourEventInitial.slice(0, 5) }}</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.current_time') }} : </span><span class="font-medium text-primary-600">{{ c.currentSimulatedTime.slice(0, 5) }}</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.pitches') }} : </span><span class="text-header-700">{{ c.pitchEvent }}</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.warmup') }} : </span><span class="text-header-700">{{ c.offsetEvent }} min</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.delay') }} : </span><span class="text-header-700">{{ c.delayEvent }}s</span></div>
-              <div><span class="text-header-400">{{ t('eventCacheManager.active_workers.executions') }} : </span><span class="text-header-700">{{ c.executionCount }}</span></div>
-              <div v-if="c.lastExecution"><span class="text-header-400">{{ t('eventCacheManager.active_workers.last_execution') }} : </span><span class="text-header-700">{{ c.lastExecution.slice(11, 19) }}</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.date') }} : </span><span class="text-header-900">{{ c.dateEvent }}</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.initial_time') }} : </span><span class="text-header-900">{{ c.hourEventInitial.slice(0, 5) }}</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.current_time') }} : </span><span class="font-medium text-primary-600">{{ c.currentSimulatedTime.slice(0, 5) }}</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.pitches') }} : </span><span class="text-header-900">{{ c.pitchEvent }}</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.warmup') }} : </span><span class="text-header-900">{{ c.offsetEvent }} min</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.delay') }} : </span><span class="text-header-900">{{ c.delayEvent }}s</span></div>
+              <div><span class="text-header-600">{{ t('eventCacheManager.active_workers.executions') }} : </span><span class="text-header-900">{{ c.executionCount }}</span></div>
+              <div v-if="c.lastExecution"><span class="text-header-600">{{ t('eventCacheManager.active_workers.last_execution') }} : </span><span class="text-header-900">{{ c.lastExecution.slice(11, 19) }}</span></div>
             </div>
           </div>
 
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
       <div class="px-5 py-4 space-y-4">
         <!-- Event select -->
         <div>
-          <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.event') }}</label>
+          <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.event') }}</label>
           <select
             v-model="form.idEvent"
             class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
 
         <!-- Quick date buttons -->
         <div v-if="dates.length > 0">
-          <p class="mb-2 text-xs font-medium text-header-500">{{ t('eventCacheManager.form.quick_date') }}</p>
+          <p class="mb-2 text-xs font-medium text-header-600">{{ t('eventCacheManager.form.quick_date') }}</p>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="d in dates"
@@ -278,24 +278,24 @@ onBeforeUnmount(() => {
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.date') }}</label>
+            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.date') }}</label>
             <input v-model="form.dateEvent" type="date" class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.hour') }}</label>
+            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.hour') }}</label>
             <input v-model="form.hourEvent" type="time" class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
-            <span class="text-xs text-header-400 mt-0.5 block">{{ t('eventCacheManager.form.hour_help') }}</span>
+            <span class="text-xs text-header-600 mt-0.5 block">{{ t('eventCacheManager.form.hour_help') }}</span>
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.offset') }}</label>
+            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.offset') }}</label>
             <input v-model.number="form.offsetEvent" type="number" min="0" max="120" class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.pitch') }}</label>
+            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.pitch') }}</label>
             <input v-model.number="form.pitchEvent" type="number" min="1" max="20" class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-500 mb-1">{{ t('eventCacheManager.form.delay') }}</label>
+            <label class="block text-xs font-medium text-header-600 mb-1">{{ t('eventCacheManager.form.delay') }}</label>
             <input v-model.number="form.delayEvent" type="number" min="5" max="60" class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
         </div>
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
             {{ confirmStopAll ? t('eventCacheManager.confirm.stop_all') : t('eventCacheManager.confirm.stop_one', { id: confirmStopIdEvent }) }}
           </h3>
           <div class="flex justify-end gap-3">
-            <button type="button" class="px-4 py-2 text-sm font-medium text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors" @click="confirmStopOpen = false">
+            <button type="button" class="px-4 py-2 text-sm font-medium text-header-900 bg-header-200 rounded-lg hover:bg-header-200 transition-colors" @click="confirmStopOpen = false">
               {{ t('common.cancel') }}
             </button>
             <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors" @click="confirmStop">
@@ -342,13 +342,13 @@ onBeforeUnmount(() => {
               <h3 class="text-base font-semibold text-header-900">
                 {{ t('eventCacheManager.monitor.title') }} — {{ t('eventCacheManager.monitor.event') }} #{{ monitorConfig.idEvent }}
               </h3>
-              <p class="mt-0.5 text-sm text-header-500">
+              <p class="mt-0.5 text-sm text-header-600">
                 {{ t('eventCacheManager.monitor.date') }} {{ monitorConfig.dateEvent }} ·
                 {{ t('eventCacheManager.monitor.initial_time') }} {{ monitorConfig.hourEventInitial.slice(0, 5) }} ·
                 {{ t('eventCacheManager.monitor.refresh_every', { seconds: monitorConfig.delayEvent }) }}
               </p>
             </div>
-            <button type="button" class="p-1 rounded hover:bg-header-100 text-header-500 hover:text-header-700 transition-colors" @click="closeMonitor">
+            <button type="button" class="p-1 rounded hover:bg-header-200 text-header-600 hover:text-header-900 transition-colors" @click="closeMonitor">
               <UIcon name="heroicons:x-mark" class="w-5 h-5" />
             </button>
           </div>
@@ -359,30 +359,30 @@ onBeforeUnmount(() => {
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-header-200 text-left">
-                    <th class="pb-2 pr-4 font-semibold text-header-600">{{ t('eventCacheManager.monitor.pitch') }}</th>
-                    <th class="pb-2 pr-4 font-semibold text-header-600">{{ t('eventCacheManager.monitor.current_game') }}</th>
-                    <th class="pb-2 font-semibold text-header-600">{{ t('eventCacheManager.monitor.next_game') }}</th>
+                    <th class="pb-2 pr-4 font-semibold text-header-900">{{ t('eventCacheManager.monitor.pitch') }}</th>
+                    <th class="pb-2 pr-4 font-semibold text-header-900">{{ t('eventCacheManager.monitor.current_game') }}</th>
+                    <th class="pb-2 font-semibold text-header-900">{{ t('eventCacheManager.monitor.next_game') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="p in monitorData.pitches" :key="p.pitch" class="border-b border-header-100">
-                    <td class="py-2.5 pr-4 font-semibold text-header-800">{{ p.pitch }}</td>
+                    <td class="py-2.5 pr-4 font-semibold text-header-900">{{ p.pitch }}</td>
                     <td class="py-2.5 pr-4">
-                      <span v-if="p.game" class="font-medium text-header-800">
+                      <span v-if="p.game" class="font-medium text-header-900">
                         {{ p.time?.slice(0, 5) }} · #{{ p.num }} · ID {{ p.game }}
                       </span>
-                      <span v-else class="italic text-header-400">{{ t('eventCacheManager.monitor.waiting') }}</span>
+                      <span v-else class="italic text-header-600">{{ t('eventCacheManager.monitor.waiting') }}</span>
                     </td>
                     <td class="py-2.5">
-                      <span v-if="p.next.id" class="text-header-600">
+                      <span v-if="p.next.id" class="text-header-900">
                         {{ p.next.time?.slice(0, 5) }} · #{{ p.next.num }} · ID {{ p.next.id }}
                       </span>
-                      <span v-else class="italic text-header-400">{{ t('eventCacheManager.monitor.waiting') }}</span>
+                      <span v-else class="italic text-header-600">{{ t('eventCacheManager.monitor.waiting') }}</span>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <div class="mt-3 flex items-center justify-between text-xs text-header-400 pt-2 border-t border-header-100">
+              <div class="mt-3 flex items-center justify-between text-xs text-header-600 pt-2 border-t border-header-100">
                 <span>
                   {{ t('eventCacheManager.monitor.time_current') }} {{ monitorData.time.currentTime }} ·
                   {{ t('eventCacheManager.monitor.time_working') }} {{ monitorData.time.workingTime }}
@@ -390,7 +390,7 @@ onBeforeUnmount(() => {
                 <span v-if="monitorLastUpdate">{{ t('eventCacheManager.monitor.last_update', { time: monitorLastUpdate }) }}</span>
               </div>
             </div>
-            <div v-else class="py-6 text-center text-header-400">
+            <div v-else class="py-6 text-center text-header-600">
               {{ t('eventCacheManager.monitor.load_failed') }}
             </div>
           </div>

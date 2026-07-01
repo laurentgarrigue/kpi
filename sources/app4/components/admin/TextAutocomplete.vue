@@ -148,7 +148,7 @@ onUnmounted(() => {
         :disabled="disabled"
         :placeholder="placeholder"
         class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        :class="disabled ? 'bg-header-100 cursor-not-allowed' : ''"
+        :class="disabled ? 'bg-header-200 cursor-not-allowed' : ''"
         @focus="isOpen = results.length > 0"
         @keydown="handleKeydown"
         @blur="handleBlur"
@@ -161,7 +161,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-400 hover:text-header-600"
+          class="text-header-600 hover:text-header-900"
           @mousedown.prevent="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -182,7 +182,7 @@ onUnmounted(() => {
         @mousedown.prevent="selectItem(item)"
       >
         <div class="text-sm font-medium">{{ item[labelField] }}</div>
-        <div v-if="detailField && item[detailField]" class="text-xs text-header-500">{{ item[detailField] }}</div>
+        <div v-if="detailField && item[detailField]" class="text-xs text-header-600">{{ item[detailField] }}</div>
       </button>
     </div>
   </div>

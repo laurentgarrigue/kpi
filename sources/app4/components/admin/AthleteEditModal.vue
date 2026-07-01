@@ -195,7 +195,7 @@ async function handleSubmit() {
 
       <!-- Nom -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.nom') }} <span class="text-danger-500">*</span>
         </label>
         <input
@@ -208,7 +208,7 @@ async function handleSubmit() {
 
       <!-- Prenom -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.prenom') }} <span class="text-danger-500">*</span>
         </label>
         <input
@@ -221,7 +221,7 @@ async function handleSubmit() {
 
       <!-- Sexe -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.sexe') }} <span class="text-danger-500">*</span>
         </label>
         <select
@@ -235,7 +235,7 @@ async function handleSubmit() {
 
       <!-- Date de naissance -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.naissance') }} <span class="text-danger-500">*</span>
         </label>
         <input
@@ -247,7 +247,7 @@ async function handleSubmit() {
 
       <!-- Derniere saison -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.derniere_saison') }}
         </label>
         <input
@@ -260,7 +260,7 @@ async function handleSubmit() {
 
       <!-- Numero ICF -->
       <div>
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.icf') }}
         </label>
         <input
@@ -273,7 +273,7 @@ async function handleSubmit() {
       <!-- Arbitrage qualification -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('athletes.edit.arb_qualification') }}
           </label>
           <select
@@ -287,7 +287,7 @@ async function handleSubmit() {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('athletes.edit.arb_niveau') }}
           </label>
           <select
@@ -303,7 +303,7 @@ async function handleSubmit() {
 
       <!-- Club change autocomplete -->
       <div ref="clubSearchRef" class="relative">
-        <label class="block text-sm font-medium text-header-700 mb-1">
+        <label class="block text-sm font-medium text-header-900 mb-1">
           {{ t('athletes.edit.new_club') }}
         </label>
         <div class="relative">
@@ -315,8 +315,8 @@ async function handleSubmit() {
             @input="onClubSearchInput"
             @focus="onClubSearchInput"
           >
-          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
-          <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400 animate-spin" />
+          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
+          <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
         </div>
         <!-- Dropdown results -->
         <div
@@ -329,7 +329,7 @@ async function handleSubmit() {
             class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
             @click="selectClub(result)"
           >
-            <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ result.code }}</span>
+            <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ result.code }}</span>
             <span>{{ result.libelle }}</span>
           </button>
         </div>
@@ -338,7 +338,7 @@ async function handleSubmit() {
 
     <template #footer>
       <button
-        class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200"
+        class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
         @click="emit('close')"
       >
         {{ t('common.cancel') }}

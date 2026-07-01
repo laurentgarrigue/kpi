@@ -508,13 +508,13 @@ const profileOptions = computed(() => {
         <!-- View mode toggle -->
         <div class="inline-flex rounded-lg border border-header-300 overflow-hidden text-sm">
           <button
-            :class="['px-3 py-2 transition-colors', viewMode === 'users' ? 'bg-primary-600 text-white' : 'bg-white text-header-600 hover:bg-header-50']"
+            :class="['px-3 py-2 transition-colors', viewMode === 'users' ? 'bg-primary-600 text-white' : 'bg-white text-header-900 hover:bg-header-50']"
             @click="switchViewMode('users')"
           >
             {{ t('users.view_mode_users') }}
           </button>
           <button
-            :class="['px-3 py-2 transition-colors border-l border-header-300', viewMode === 'mandates' ? 'bg-primary-600 text-white' : 'bg-white text-header-600 hover:bg-header-50']"
+            :class="['px-3 py-2 transition-colors border-l border-header-300', viewMode === 'mandates' ? 'bg-primary-600 text-white' : 'bg-white text-header-900 hover:bg-header-50']"
             @click="switchViewMode('mandates')"
           >
             {{ t('users.view_mode_mandates') }}
@@ -558,12 +558,12 @@ const profileOptions = computed(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-header-400" />
+      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-header-600" />
     </div>
 
     <!-- Desktop Table — Mode Mandats -->
     <div v-if="!loading && viewMode === 'mandates'" class="hidden lg:block overflow-x-auto">
-      <div v-if="!filterProfile && !filterSeason && filterCompetitions.length === 0" class="text-center py-12 text-header-500">
+      <div v-if="!filterProfile && !filterSeason && filterCompetitions.length === 0" class="text-center py-12 text-header-600">
         <UIcon name="i-heroicons-funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
         {{ t('users.mandate_scopes_no_filter') }}
       </div>
@@ -573,13 +573,13 @@ const profileOptions = computed(() => {
             <th v-if="canDelete" class="w-10 px-3 py-3">
               <input type="checkbox" :checked="scopesAllSelected" @change="toggleSelectAllScopes">
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.identity') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.profile') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.seasons') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.competitions') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.clubs') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.view_mode_mandates') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.actions') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.identity') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.profile') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.seasons') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.competitions') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.clubs') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.view_mode_mandates') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.actions') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200">
@@ -593,18 +593,18 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2">
               <div class="text-sm font-medium text-header-900">{{ scope.identite }}</div>
-              <div class="text-xs text-header-500">({{ scope.userCode }})</div>
+              <div class="text-xs text-header-600">({{ scope.userCode }})</div>
             </td>
-            <td class="px-3 py-2 text-sm font-medium text-header-800">{{ scope.niveau }}</td>
-            <td class="px-3 py-2 text-sm text-header-600">{{ formatFilter(scope.filtreSaison, t('users.table.seasons_all')) }}</td>
-            <td class="px-3 py-2 text-sm text-header-600 max-w-50 truncate" :title="formatFilter(scope.filtreCompetition, t('users.table.competitions_all'))">
+            <td class="px-3 py-2 text-sm font-medium text-header-900">{{ scope.niveau }}</td>
+            <td class="px-3 py-2 text-sm text-header-900">{{ formatFilter(scope.filtreSaison, t('users.table.seasons_all')) }}</td>
+            <td class="px-3 py-2 text-sm text-header-900 max-w-50 truncate" :title="formatFilter(scope.filtreCompetition, t('users.table.competitions_all'))">
               {{ formatFilter(scope.filtreCompetition, t('users.table.competitions_all')) }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">{{ scope.limitClubs || '—' }}</td>
+            <td class="px-3 py-2 text-sm text-header-900">{{ scope.limitClubs || '—' }}</td>
             <td class="px-3 py-2">
               <span
                 v-if="scope.scopeType === 'base'"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-header-100 text-header-600 text-xs font-medium"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-header-200 text-header-900 text-xs font-medium"
                 :title="t('users.mandate_scope_base_aria')"
               >
                 <UIcon name="i-heroicons-user" class="w-3 h-3" />
@@ -615,7 +615,7 @@ const profileOptions = computed(() => {
             <td class="px-3 py-2">
               <button
                 v-if="scope.scopeType === 'base' && canEdit"
-                class="p-1.5 text-header-500 hover:text-primary-600 rounded"
+                class="p-1.5 text-header-600 hover:text-primary-600 rounded"
                 :title="t('common.edit')"
                 @click="openEditModalOnMandate(scope)"
               >
@@ -633,7 +633,7 @@ const profileOptions = computed(() => {
           </tr>
         </tbody>
       </table>
-      <div v-else class="text-center py-12 text-header-500">{{ t('users.mandate_scopes_empty') }}</div>
+      <div v-else class="text-center py-12 text-header-600">{{ t('users.mandate_scopes_empty') }}</div>
     </div>
 
     <!-- Pagination mode mandats -->
@@ -662,14 +662,14 @@ const profileOptions = computed(() => {
                 @change="toggleSelectAll"
               >
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.identity') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.function') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.profile') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.seasons') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.competitions') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.events_gamedays') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.clubs') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('users.table.actions') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.identity') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.function') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.profile') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.seasons') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.competitions') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.events_gamedays') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.clubs') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('users.table.actions') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200">
@@ -683,9 +683,9 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2">
               <div class="text-sm font-medium text-header-900">{{ user.identite }}</div>
-              <div class="text-xs text-header-500">({{ user.code }})</div>
+              <div class="text-xs text-header-600">({{ user.code }})</div>
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">{{ user.fonction }}</td>
+            <td class="px-3 py-2 text-sm text-header-900">{{ user.fonction }}</td>
             <td class="px-3 py-2">
               <span class="text-sm font-medium">{{ user.niveau }}</span>
               <div v-if="user.mandateCount > 0" class="relative inline-block ml-1">
@@ -701,23 +701,23 @@ const profileOptions = computed(() => {
                 </button>
               </div>
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ formatFilter(user.filtreSaison, t('users.table.seasons_all')) }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600 max-w-50 truncate" :title="formatFilter(user.filtreCompetition, t('users.table.competitions_all'))">
+            <td class="px-3 py-2 text-sm text-header-900 max-w-50 truncate" :title="formatFilter(user.filtreCompetition, t('users.table.competitions_all'))">
               {{ formatFilter(user.filtreCompetition, t('users.table.competitions_all')) }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ formatEventsGamedays(user) }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ user.limitClubs || '—' }}
             </td>
             <td class="px-3 py-2">
               <div class="flex items-center gap-1">
                 <button
                   v-if="canEditUser(user.niveau)"
-                  class="p-1.5 text-header-500 hover:text-primary-600 rounded"
+                  class="p-1.5 text-header-600 hover:text-primary-600 rounded"
                   :title="t('common.edit')"
                   @click="openEditModal(user)"
                 >
@@ -734,7 +734,7 @@ const profileOptions = computed(() => {
                   </button>
                   <span
                     v-else-if="canEdit"
-                    class="p-1.5 text-header-500 cursor-help"
+                    class="p-1.5 text-header-600 cursor-help"
                     :title="t('users.table.edit_not_allowed')"
                   >
                     <UIcon name="i-heroicons-information-circle" class="w-5 h-5" />
@@ -742,7 +742,7 @@ const profileOptions = computed(() => {
                 </template>
                 <button
                   v-if="canDeleteUser(user.niveau)"
-                  class="p-1.5 text-header-500 hover:text-danger-600 rounded"
+                  class="p-1.5 text-header-600 hover:text-danger-600 rounded"
                   :title="t('common.delete')"
                   @click="confirmDeleteUser(user)"
                 >
@@ -753,7 +753,7 @@ const profileOptions = computed(() => {
           </tr>
         </tbody>
       </table>
-      <div v-else class="text-center py-12 text-header-500">
+      <div v-else class="text-center py-12 text-header-600">
         {{ t('common.no_results') }}
       </div>
     </div>
@@ -776,7 +776,7 @@ const profileOptions = computed(() => {
         <template #header>
           <div>
             <span class="font-medium">{{ user.identite }}</span>
-            <span class="text-xs text-header-500 ml-1">({{ user.code }})</span>
+            <span class="text-xs text-header-600 ml-1">({{ user.code }})</span>
           </div>
         </template>
         <template #header-right>
@@ -794,7 +794,7 @@ const profileOptions = computed(() => {
             />
           </button>
         </template>
-        <div class="space-y-1 text-sm text-header-600">
+        <div class="space-y-1 text-sm text-header-900">
           <div v-if="user.fonction">{{ user.fonction }}</div>
           <div>{{ t('users.table.seasons') }}: {{ formatFilter(user.filtreSaison, t('users.table.seasons_all')) }}</div>
           <div>{{ t('users.table.competitions') }}: {{ formatFilter(user.filtreCompetition, t('users.table.competitions_all')) }}</div>
@@ -891,12 +891,12 @@ const profileOptions = computed(() => {
 
           <template v-if="!bulkAddSeasonResult">
             <!-- Summary -->
-            <p class="text-sm text-header-600 mb-4">
+            <p class="text-sm text-header-900 mb-4">
               {{ t('users.bulk_add_season_summary', { base: selectedBaseCount, mandates: selectedMandateCount }) }}
             </p>
 
             <!-- Season select -->
-            <label class="block text-sm font-medium text-header-700 mb-1">{{ t('users.bulk_add_season_select_label') }}</label>
+            <label class="block text-sm font-medium text-header-900 mb-1">{{ t('users.bulk_add_season_select_label') }}</label>
             <select
               v-model="bulkAddSeasonValue"
               class="w-full px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-4"
@@ -915,7 +915,7 @@ const profileOptions = computed(() => {
 
             <div class="flex justify-end gap-2">
               <button
-                class="px-4 py-2 text-sm text-header-600 hover:text-header-800"
+                class="px-4 py-2 text-sm text-header-900 hover:text-header-900"
                 @click="bulkAddSeasonOpen = false"
               >
                 {{ t('common.cancel') }}
@@ -938,7 +938,7 @@ const profileOptions = computed(() => {
                 <UIcon name="i-heroicons-check-circle" class="w-4 h-4 shrink-0" />
                 {{ t('users.bulk_add_season_result_updated', { count: bulkAddSeasonResult.updated, season: bulkAddSeasonResult.season }) }}
               </div>
-              <div v-if="bulkAddSeasonResult.alreadyPresent > 0" class="flex items-center gap-2 text-header-500">
+              <div v-if="bulkAddSeasonResult.alreadyPresent > 0" class="flex items-center gap-2 text-header-600">
                 <UIcon name="i-heroicons-minus-circle" class="w-4 h-4 shrink-0" />
                 {{ t('users.bulk_add_season_result_already_present', { count: bulkAddSeasonResult.alreadyPresent }) }}
               </div>
@@ -972,9 +972,9 @@ const profileOptions = computed(() => {
       >
         <template v-for="mandate in users.find(u => u.code === tooltipUser)?.mandates ?? []" :key="mandate.id">
           <div class="mb-2 last:mb-0">
-            <div class="font-semibold text-header-800">{{ mandate.libelle }}</div>
-            <div class="text-header-500 mt-0.5">
-              <span class="font-medium text-header-600">P{{ mandate.niveau }}</span>
+            <div class="font-semibold text-header-900">{{ mandate.libelle }}</div>
+            <div class="text-header-600 mt-0.5">
+              <span class="font-medium text-header-900">P{{ mandate.niveau }}</span>
               <span class="mx-1">·</span>
               <span>{{ formatMandateFilters(mandate) }}</span>
             </div>

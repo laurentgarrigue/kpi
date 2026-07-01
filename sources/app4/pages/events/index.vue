@@ -375,7 +375,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Publication -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Publication')">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Publication')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.publication') }}
                   <UIcon :name="getSortIcon('Publication')" class="w-4 h-4" />
@@ -383,7 +383,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- App -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('app')">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('app')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.app') }}
                   <UIcon :name="getSortIcon('app')" class="w-4 h-4" />
@@ -391,7 +391,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- ID -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Id')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Id')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.id') }}
                   <UIcon :name="getSortIcon('Id')" />
@@ -399,12 +399,12 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Edit action -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-700 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider w-12">
                 {{ t('common.edit') }}
               </th>
 
               <!-- Libelle -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Libelle')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Libelle')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.libelle') }}
                   <UIcon :name="getSortIcon('Libelle')" class="w-4 h-4" />
@@ -412,7 +412,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Lieu -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Lieu')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Lieu')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.lieu') }}
                   <UIcon :name="getSortIcon('Lieu')" class="w-4 h-4" />
@@ -420,7 +420,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date debut -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Date_debut')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Date_debut')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_debut') }}
                   <UIcon :name="getSortIcon('Date_debut')" class="w-4 h-4" />
@@ -428,7 +428,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date fin -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-700 uppercase tracking-wider cursor-pointer hover:bg-header-100" @click="handleSort('Date_fin')">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 uppercase tracking-wider cursor-pointer hover:bg-header-200" @click="handleSort('Date_fin')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_fin') }}
                   <UIcon :name="getSortIcon('Date_fin')" class="w-4 h-4" />
@@ -436,17 +436,17 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Associate -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-700 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider w-12">
                 {{ t('events.columns.associate') }}
               </th>
 
               <!-- Nb gamedays -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-700 uppercase tracking-wider">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 uppercase tracking-wider">
                 {{ t('events.columns.nb_gamedays') }}
               </th>
 
               <!-- Actions -->
-              <th class="px-4 py-3 text-right text-xs font-medium text-header-700 uppercase tracking-wider">
+              <th class="px-4 py-3 text-right text-xs font-medium text-header-900 uppercase tracking-wider">
                 {{ t('events.columns.actions') }}
               </th>
             </tr>
@@ -455,7 +455,7 @@ const formatDate = (date: string | null) => {
           <tbody class="bg-white divide-y divide-header-200">
             <!-- Loading state -->
             <tr v-if="loading && events.length === 0">
-              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
@@ -463,7 +463,7 @@ const formatDate = (date: string | null) => {
 
             <!-- Empty state -->
             <tr v-else-if="events.length === 0">
-              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-500">
+              <td :colspan="authStore.isSuperAdmin ? 12 : 11" class="px-4 py-8 text-center text-header-600">
                 {{ t('events.empty') }}
               </td>
             </tr>
@@ -535,17 +535,17 @@ const formatDate = (date: string | null) => {
               </td>
 
               <!-- Lieu -->
-              <td class="px-4 py-3 text-sm text-header-500">
+              <td class="px-4 py-3 text-sm text-header-600">
                 {{ event.lieu || '-' }}
               </td>
 
               <!-- Date debut -->
-              <td class="px-4 py-3 text-sm text-header-500">
+              <td class="px-4 py-3 text-sm text-header-600">
                 {{ formatDate(event.dateDebut) }}
               </td>
 
               <!-- Date fin -->
-              <td class="px-4 py-3 text-sm text-header-500">
+              <td class="px-4 py-3 text-sm text-header-600">
                 {{ formatDate(event.dateFin) }}
               </td>
 
@@ -562,7 +562,7 @@ const formatDate = (date: string | null) => {
               </td>
 
               <!-- Nb gamedays -->
-              <td class="px-4 py-3 text-center text-sm text-header-700">
+              <td class="px-4 py-3 text-center text-sm text-header-900">
                 {{ event.nbGamedays }}
               </td>
 
@@ -617,18 +617,18 @@ const formatDate = (date: string | null) => {
           </h3>
         </template>
         <template #header-right>
-          <span class="text-sm text-header-600 shrink-0 ml-2">ID: {{ event.id }}</span>
+          <span class="text-sm text-header-900 shrink-0 ml-2">ID: {{ event.id }}</span>
         </template>
 
         <!-- Content -->
         <div v-if="event.lieu" class="flex items-start gap-2 text-sm">
-          <UIcon name="heroicons:map-pin-solid" class="w-5 h-5 text-header-400 shrink-0 mt-0.5" />
-          <span class="text-header-700">{{ event.lieu }}</span>
+          <UIcon name="heroicons:map-pin-solid" class="w-5 h-5 text-header-600 shrink-0 mt-0.5" />
+          <span class="text-header-900">{{ event.lieu }}</span>
         </div>
 
         <div class="flex flex-col gap-2 text-sm">
           <div v-if="event.dateDebut" class="flex items-center gap-2">
-            <UIcon name="heroicons:calendar-solid" class="w-5 h-5 text-header-400 shrink-0" />
+            <UIcon name="heroicons:calendar-solid" class="w-5 h-5 text-header-600 shrink-0" />
             <div>
               <span class="text-header-900 ml-1">{{ formatDate(event.dateDebut) }}</span>
               -
@@ -717,7 +717,7 @@ const formatDate = (date: string | null) => {
 
           <!-- Libelle -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('events.form.libelle') }} <span class="text-danger-500">*</span>
             </label>
             <input
@@ -732,7 +732,7 @@ const formatDate = (date: string | null) => {
 
           <!-- Lieu -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('events.form.lieu') }}
             </label>
             <input
@@ -746,7 +746,7 @@ const formatDate = (date: string | null) => {
 
           <!-- Date debut -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('events.form.date_debut') }}
             </label>
             <input
@@ -758,7 +758,7 @@ const formatDate = (date: string | null) => {
 
           <!-- Date fin -->
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('events.form.date_fin') }}
             </label>
             <input
@@ -773,7 +773,7 @@ const formatDate = (date: string | null) => {
         <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-header-200">
           <button
             type="button"
-            class="px-4 py-2 text-header-700 border border-header-300 hover:bg-header-100 rounded-lg transition-colors"
+            class="px-4 py-2 text-header-900 border border-header-300 hover:bg-header-200 rounded-lg transition-colors"
             @click="closeModal"
           >
             {{ t('events.form.cancel') }}

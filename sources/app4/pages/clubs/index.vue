@@ -485,8 +485,8 @@ onBeforeUnmount(() => {
       <!-- Map (left) -->
       <div class="flex-1 min-w-0">
         <!-- Map loading skeleton -->
-        <div v-if="mapLoading" class="w-full h-100 sm:h-125 lg:h-[calc(100vh-220px)] bg-header-100 rounded-lg animate-pulse flex items-center justify-center">
-          <UIcon name="i-heroicons-map-pin" class="w-8 h-8 text-header-400" />
+        <div v-if="mapLoading" class="w-full h-100 sm:h-125 lg:h-[calc(100vh-220px)] bg-header-200 rounded-lg animate-pulse flex items-center justify-center">
+          <UIcon name="i-heroicons-map-pin" class="w-8 h-8 text-header-600" />
         </div>
 
         <!-- Leaflet Map -->
@@ -519,7 +519,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <p class="mt-2 text-xs text-header-500">
+        <p class="mt-2 text-xs text-header-600">
           {{ t('clubs.map.no_club_on_map') }}
         </p>
       </div>
@@ -538,15 +538,15 @@ onBeforeUnmount(() => {
                 @input="onClubSearchInput"
                 @focus="onClubSearchInput"
               >
-              <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400" />
+              <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
               <button
                 v-if="clubSearch && !clubSearchLoading"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-header-400 hover:text-header-600"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
                 @click="clearClubSearch"
               >
                 <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
               </button>
-              <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-400 animate-spin" />
+              <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
             </div>
             <!-- Dropdown results -->
             <div
@@ -559,7 +559,7 @@ onBeforeUnmount(() => {
                 class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
                 @click="selectClub(result)"
               >
-                <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ result.code }}</span>
+                <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ result.code }}</span>
                 <span>{{ result.libelle }}</span>
               </button>
             </div>
@@ -569,10 +569,10 @@ onBeforeUnmount(() => {
           <template v-if="selectedClub">
             <div class="mb-3 text-sm">
               <div class="flex items-center gap-2 mb-1">
-                <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ selectedClub.code }}</span>
+                <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ selectedClub.code }}</span>
                 <span class="font-semibold text-header-900">{{ selectedClub.libelle }}</span>
               </div>
-              <span v-if="selectedClub.libelleComiteDep" class="text-xs text-header-600">
+              <span v-if="selectedClub.libelleComiteDep" class="text-xs text-header-900">
                 {{ selectedClub.libelleComiteDep }}
               </span>
             </div>
@@ -591,7 +591,7 @@ onBeforeUnmount(() => {
             <div v-if="canEdit" class="space-y-3">
               <!-- Postal -->
               <div>
-                <label class="block text-xs font-bold text-header-700 mb-1">{{ t('clubs.update.postal') }}</label>
+                <label class="block text-xs font-bold text-header-900 mb-1">{{ t('clubs.update.postal') }}</label>
                 <input
                   v-model="updateForm.postal"
                   type="text"
@@ -603,7 +603,7 @@ onBeforeUnmount(() => {
 
               <!-- Website -->
               <div>
-                <label class="block text-xs font-bold text-header-700 mb-1">{{ t('clubs.update.www') }}</label>
+                <label class="block text-xs font-bold text-header-900 mb-1">{{ t('clubs.update.www') }}</label>
                 <input
                   v-model="updateForm.www"
                   type="text"
@@ -615,7 +615,7 @@ onBeforeUnmount(() => {
 
               <!-- Email -->
               <div>
-                <label class="block text-xs font-bold text-header-700 mb-1">{{ t('clubs.update.email') }}</label>
+                <label class="block text-xs font-bold text-header-900 mb-1">{{ t('clubs.update.email') }}</label>
                 <input
                   v-model="updateForm.email"
                   type="text"
@@ -627,7 +627,7 @@ onBeforeUnmount(() => {
 
               <!-- GPS Coordinates -->
               <div>
-                <label class="block text-xs font-bold text-header-700 mb-1">{{ t('clubs.update.coord') }}</label>
+                <label class="block text-xs font-bold text-header-900 mb-1">{{ t('clubs.update.coord') }}</label>
                 <input
                   v-model="updateForm.coord"
                   type="text"
@@ -651,7 +651,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Read-only for non-admins -->
-            <div v-else class="space-y-2 text-sm text-header-600">
+            <div v-else class="space-y-2 text-sm text-header-900">
               <div v-if="selectedClub.postal"><span class="font-bold">{{ t('clubs.update.postal') }}:</span> {{ selectedClub.postal }}</div>
               <div v-if="selectedClub.www"><span class="font-bold">{{ t('clubs.update.www') }}:</span> {{ selectedClub.www }}</div>
               <div v-if="selectedClub.email"><span class="font-bold">{{ t('clubs.update.email') }}:</span> {{ selectedClub.email }}</div>
@@ -660,7 +660,7 @@ onBeforeUnmount(() => {
           </template>
 
           <!-- No club selected -->
-          <p v-else class="text-sm text-header-400 italic">
+          <p v-else class="text-sm text-header-600 italic">
             {{ t('clubs.update.select_first') }}
           </p>
 
@@ -672,13 +672,13 @@ onBeforeUnmount(() => {
               </h3>
 
               <!-- Loading -->
-              <div v-if="clubTeamsLoading" class="flex items-center gap-2 text-sm text-header-400">
+              <div v-if="clubTeamsLoading" class="flex items-center gap-2 text-sm text-header-600">
                 <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
                 <span>{{ t('common.loading') }}</span>
               </div>
 
               <!-- No teams -->
-              <p v-else-if="clubTeams.length === 0" class="text-sm text-header-400 italic">
+              <p v-else-if="clubTeams.length === 0" class="text-sm text-header-600 italic">
                 {{ t('clubs.teams.no_teams') }}
               </p>
 
@@ -692,9 +692,9 @@ onBeforeUnmount(() => {
                 >
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-header-900 group-hover:text-primary-700">{{ team.libelle }}</span>
-                    <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-header-400 group-hover:text-primary-500" />
+                    <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-header-600 group-hover:text-primary-500" />
                   </div>
-                  <div class="flex items-center gap-3 text-xs text-header-500 mt-0.5">
+                  <div class="flex items-center gap-3 text-xs text-header-600 mt-0.5">
                     <span v-if="team.derniereSaison">{{ t('clubs.teams.last_season') }} : {{ team.derniereSaison }}</span>
                     <span v-if="team.nbCompetitions > 0">{{ team.nbCompetitions }} {{ t('clubs.teams.competitions_count') }}</span>
                   </div>
@@ -721,7 +721,7 @@ onBeforeUnmount(() => {
 
         <!-- CR autocomplete -->
         <div ref="crSearchRef" class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_cd.comite_reg') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -742,7 +742,7 @@ onBeforeUnmount(() => {
               class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
               @click="selectCR(cr)"
             >
-              <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ cr.code }}</span>
+              <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ cr.code }}</span>
               <span>{{ cr.libelle }}</span>
             </button>
           </div>
@@ -750,7 +750,7 @@ onBeforeUnmount(() => {
 
         <!-- Code -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_cd.code') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -763,7 +763,7 @@ onBeforeUnmount(() => {
 
         <!-- Libelle -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_cd.libelle') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -777,7 +777,7 @@ onBeforeUnmount(() => {
 
       <template #footer>
         <button
-          class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200"
+          class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
           @click="cdModalOpen = false"
         >
           {{ t('common.cancel') }}
@@ -808,7 +808,7 @@ onBeforeUnmount(() => {
 
         <!-- CD autocomplete -->
         <div ref="cdSearchRef" class="relative">
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_club.comite_dep') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -829,7 +829,7 @@ onBeforeUnmount(() => {
               class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
               @click="selectCD(cd)"
             >
-              <span class="font-mono text-xs text-header-700 bg-header-100 px-1.5 py-0.5 rounded">{{ cd.code }}</span>
+              <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ cd.code }}</span>
               <span>{{ cd.libelle }}</span>
             </button>
           </div>
@@ -837,7 +837,7 @@ onBeforeUnmount(() => {
 
         <!-- Code -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_club.code') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -850,7 +850,7 @@ onBeforeUnmount(() => {
 
         <!-- Libelle -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('clubs.add_club.libelle') }} <span class="text-danger-500">*</span>
           </label>
           <input
@@ -863,7 +863,7 @@ onBeforeUnmount(() => {
 
         <!-- Postal -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('clubs.add_club.postal') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('clubs.add_club.postal') }}</label>
           <input
             v-model="newClubForm.postal"
             type="text"
@@ -874,7 +874,7 @@ onBeforeUnmount(() => {
 
         <!-- Website -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('clubs.add_club.www') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('clubs.add_club.www') }}</label>
           <input
             v-model="newClubForm.www"
             type="text"
@@ -885,7 +885,7 @@ onBeforeUnmount(() => {
 
         <!-- Email -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('clubs.add_club.email') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('clubs.add_club.email') }}</label>
           <input
             v-model="newClubForm.email"
             type="text"
@@ -896,7 +896,7 @@ onBeforeUnmount(() => {
 
         <!-- GPS -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('clubs.add_club.coord') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('clubs.add_club.coord') }}</label>
           <input
             v-model="newClubForm.coord"
             type="text"
@@ -907,14 +907,14 @@ onBeforeUnmount(() => {
 
         <!-- New team (optional) -->
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">{{ t('clubs.add_club.equipe') }}</label>
+          <label class="block text-sm font-medium text-header-900 mb-1">{{ t('clubs.add_club.equipe') }}</label>
           <input
             v-model="newClubForm.equipe"
             type="text"
             maxlength="40"
             class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-          <p class="mt-1 text-xs text-header-500">
+          <p class="mt-1 text-xs text-header-600">
             {{ t('clubs.add_club.equipe_help') }}
           </p>
         </div>
@@ -922,7 +922,7 @@ onBeforeUnmount(() => {
 
       <template #footer>
         <button
-          class="px-4 py-2 text-sm text-header-700 bg-header-100 rounded-lg hover:bg-header-200"
+          class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
           @click="clubModalOpen = false"
         >
           {{ t('common.cancel') }}

@@ -203,16 +203,16 @@ onMounted(() => {
       <template #before-search>
         <!-- Refresh button -->
         <button
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-700 bg-white border border-header-300 rounded-lg hover:bg-header-50"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50"
           :title="t('common.refresh')"
           @click="loadJournal"
         >
-          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-500" />
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-600" />
         </button>
 
         <!-- User filter -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.user') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.user') }}</label>
           <select
             v-model="filterUser"
             class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -226,7 +226,7 @@ onMounted(() => {
 
         <!-- Action filter with optgroups -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.action') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.action') }}</label>
           <select
             :value="filterAction"
             class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -248,7 +248,7 @@ onMounted(() => {
 
         <!-- Season filter -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.season') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.season') }}</label>
           <select
             v-model="filterSeason"
             class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -262,7 +262,7 @@ onMounted(() => {
 
         <!-- Competition filter (text input) -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.competition') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.competition') }}</label>
           <input
             v-model="filterCompetition"
             type="text"
@@ -273,7 +273,7 @@ onMounted(() => {
 
         <!-- Date from -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.date_from') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.date_from') }}</label>
           <input
             v-model="filterDateFrom"
             type="date"
@@ -283,7 +283,7 @@ onMounted(() => {
 
         <!-- Date to -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-500">{{ t('journal.filters.date_to') }}</label>
+          <label class="text-xs font-medium text-header-600">{{ t('journal.filters.date_to') }}</label>
           <input
             v-model="filterDateTo"
             type="date"
@@ -295,7 +295,7 @@ onMounted(() => {
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-12">
-      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-header-400" />
+      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-header-600" />
     </div>
 
     <!-- Desktop Table -->
@@ -303,18 +303,18 @@ onMounted(() => {
       <table v-if="entries.length > 0" class="min-w-full divide-y divide-header-200 bg-white rounded-lg shadow-sm">
         <thead class="bg-header-50">
           <tr>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.date') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.identite') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.action') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.detail') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.competition') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.gameday') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-500 uppercase">{{ t('journal.table.match') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.date') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.identite') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.action') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.detail') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.competition') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.gameday') }}</th>
+            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 uppercase">{{ t('journal.table.match') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200">
           <tr v-for="entry in entries" :key="entry.id" class="hover:bg-header-50">
-            <td class="px-3 py-2 text-sm text-header-600 whitespace-nowrap">
+            <td class="px-3 py-2 text-sm text-header-900 whitespace-nowrap">
               {{ formatDate(entry.date) }}
             </td>
             <td class="px-3 py-2">
@@ -322,27 +322,27 @@ onMounted(() => {
                 {{ entry.userIdentite }}
               </div>
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ entry.action }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600 max-w-md truncate" :title="entry.journal || ''">
+            <td class="px-3 py-2 text-sm text-header-900 max-w-md truncate" :title="entry.journal || ''">
               {{ entry.journal || '' }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600 whitespace-nowrap">
+            <td class="px-3 py-2 text-sm text-header-900 whitespace-nowrap">
               <span v-if="entry.competition" class="font-semibold">{{ entry.competition }}</span>
               <span v-if="entry.competition && entry.saison"> - </span>
               <span v-if="entry.saison">{{ entry.saison }}</span>
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ entry.journee ?? '' }}
             </td>
-            <td class="px-3 py-2 text-sm text-header-600">
+            <td class="px-3 py-2 text-sm text-header-900">
               {{ entry.match ?? '' }}
             </td>
           </tr>
         </tbody>
       </table>
-      <div v-else class="text-center py-12 text-header-500">
+      <div v-else class="text-center py-12 text-header-600">
         {{ hasActiveFilters ? t('journal.empty_filtered') : t('journal.empty') }}
       </div>
     </div>
@@ -359,7 +359,7 @@ onMounted(() => {
         :key="entry.id"
       >
         <template #header>
-          <span class="text-sm text-header-600">{{ formatDate(entry.date) }}</span>
+          <span class="text-sm text-header-900">{{ formatDate(entry.date) }}</span>
         </template>
         <template #header-right>
           <span v-if="formatCompSaison(entry)" class="text-xs font-medium text-primary-700 bg-primary-50 px-2 py-0.5 rounded">
@@ -370,9 +370,9 @@ onMounted(() => {
           <div class="font-medium text-header-900" :title="entry.userFonction">
             {{ entry.userIdentite }}
           </div>
-          <div class="text-header-700">{{ entry.action }}</div>
-          <div v-if="entry.journal" class="text-header-500">{{ entry.journal }}</div>
-          <div v-if="entry.journee || entry.match" class="text-xs text-header-400">
+          <div class="text-header-900">{{ entry.action }}</div>
+          <div v-if="entry.journal" class="text-header-600">{{ entry.journal }}</div>
+          <div v-if="entry.journee || entry.match" class="text-xs text-header-600">
             <span v-if="entry.journee">{{ t('journal.table.gameday') }}: {{ entry.journee }}</span>
             <span v-if="entry.journee && entry.match"> · </span>
             <span v-if="entry.match">{{ t('journal.table.match') }}: {{ entry.match }}</span>

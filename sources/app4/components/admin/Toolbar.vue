@@ -47,7 +47,7 @@ const emit = defineEmits<{
       <div class="relative flex-1 min-w-40 sm:flex-none">
         <UIcon
           name="heroicons:magnifying-glass"
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-400 dark:text-header-500 pointer-events-none"
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-600 dark:text-header-600 pointer-events-none"
         />
         <input
           v-model="search"

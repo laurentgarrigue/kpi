@@ -24,10 +24,10 @@ const NEXT: Record<MatchStatus, MatchStatus> = { ATT: 'ON', ON: 'END', END: 'ATT
 // Colors matching the competition status badge (legacy GestionStyle.css equivalents).
 const colorClass = computed(() => {
   switch (props.status) {
-    case 'ATT': return 'bg-header-400 text-header-50'
+    case 'ATT': return 'bg-header-600 text-header-50'
     case 'ON': return 'bg-success-500 text-success-50'
     case 'END': return 'bg-primary-800 text-primary-50'
-    default: return 'bg-header-400 text-header-50'
+    default: return 'bg-header-600 text-header-50'
   }
 })
 

@@ -64,14 +64,14 @@ function save() {
     <div class="space-y-6 max-h-[60vh] overflow-y-auto">
       <!-- Channels -->
       <div>
-        <h4 class="text-sm font-semibold text-header-700 mb-2">{{ t('tv.labels.channels') }}</h4>
+        <h4 class="text-sm font-semibold text-header-900 mb-2">{{ t('tv.labels.channels') }}</h4>
         <div class="space-y-1">
           <div
             v-for="n in CHANNEL_MAX"
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-500 w-12 text-right">Ch. {{ n }}</span>
+            <span class="text-xs text-header-600 w-12 text-right">Ch. {{ n }}</span>
             <input
               v-model="localChannels[n]"
               type="text"
@@ -85,14 +85,14 @@ function save() {
 
       <!-- Scenarios -->
       <div>
-        <h4 class="text-sm font-semibold text-header-700 mb-2">{{ t('tv.labels.scenarios') }}</h4>
+        <h4 class="text-sm font-semibold text-header-900 mb-2">{{ t('tv.labels.scenarios') }}</h4>
         <div class="space-y-1">
           <div
             v-for="n in SCENARIO_COUNT"
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-500 w-12 text-right">Sc. {{ n }}</span>
+            <span class="text-xs text-header-600 w-12 text-right">Sc. {{ n }}</span>
             <input
               v-model="localScenarios[n]"
               type="text"
@@ -107,7 +107,7 @@ function save() {
     <template #footer>
       <button
         type="button"
-        class="px-4 py-2 text-sm font-medium text-header-700 bg-header-100 rounded-lg hover:bg-header-200"
+        class="px-4 py-2 text-sm font-medium text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
         @click="emit('close')"
       >
         {{ t('tv.labels.cancel') }}

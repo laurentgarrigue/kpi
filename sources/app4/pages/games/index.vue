@@ -1747,7 +1747,7 @@ const statusBtnClass = (game: Game) => {
   switch (game.statut) {
     case 'ON': return 'bg-primary-100 text-primary-700 border-primary-200'
     case 'END': return 'bg-success-100 text-success-700 border-success-200'
-    default: return 'bg-header-100 dark:bg-header-800 text-header-600 dark:text-header-300 border-header-200 dark:border-header-700'
+    default: return 'bg-header-200 dark:bg-header-800 text-header-900 dark:text-header-300 border-header-200 dark:border-header-700'
   }
 }
 
@@ -1783,7 +1783,7 @@ const openScoring = (gameId: number) => {
       <template #filters>
         <!-- Tour -->
         <div>
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.filter_round') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_round') }}</label>
           <select v-model="selectedTour" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTour ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_rounds') }}</option>
             <option v-for="n in 5" :key="n" :value="String(n)">{{ t('games.round_n', { n }) }}</option>
@@ -1792,7 +1792,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Journee -->
         <div class="min-w-48">
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.filter_journee') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_journee') }}</label>
           <select v-model="selectedJournee" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedJournee !== '*' ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="*">{{ t('games.all_journees') }}</option>
             <option v-for="j in journees" :key="j.id" :value="String(j.id)">{{ journeeLabel(j) }}</option>
@@ -1801,7 +1801,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Date -->
         <div>
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.filter_date') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_date') }}</label>
           <select v-model="selectedDate" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedDate ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_dates') }}</option>
             <option v-for="d in availableDates" :key="d" :value="d">{{ formatDate(d) }}</option>
@@ -1810,7 +1810,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Terrain -->
         <div>
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.filter_terrain') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_terrain') }}</label>
           <select v-model="selectedTerrain" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTerrain ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_terrains') }}</option>
             <option v-for="n in 8" :key="n" :value="String(n)">{{ n }}</option>
@@ -1819,7 +1819,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Sort -->
         <div>
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.filter_sort') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_sort') }}</label>
           <select v-model="selectedSort" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedSort !== 'date_time_terrain' ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="date_time_terrain">{{ t('games.sort.date_time_terrain') }}</option>
             <option value="competition_date">{{ t('games.sort.competition_date') }}</option>
@@ -1834,7 +1834,7 @@ const openScoring = (gameId: number) => {
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
-            :class="activeDisplayCount > 0 ? 'text-primary-700 dark:text-primary-200 border-primary-400 bg-primary-50 dark:bg-primary-950' : 'text-header-700 dark:text-header-200 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+            :class="activeDisplayCount > 0 ? 'text-primary-700 dark:text-primary-200 border-primary-400 bg-primary-50 dark:bg-primary-950' : 'text-header-900 dark:text-header-200 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
             @click="displayOpen = !displayOpen"
           >
             <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
@@ -1844,13 +1844,13 @@ const openScoring = (gameId: number) => {
           </button>
           <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
             <!-- Filtres -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
             <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800">
               <input v-model="unlockedOnly" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600">
               {{ t('games.unlocked_only') }}
             </label>
             <!-- Postes -->
-            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800">{{ t('games.display.posts_section') }}</div>
+            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800">{{ t('games.display.posts_section') }}</div>
             <label
               v-for="col in postColumns"
               :key="col.key"
@@ -1888,7 +1888,7 @@ const openScoring = (gameId: number) => {
     >
       <template #left>
         <!-- Total count (when nothing selected) -->
-        <span v-if="selectedIds.length === 0 && total > 0" class="text-sm text-header-600 dark:text-header-300">
+        <span v-if="selectedIds.length === 0 && total > 0" class="text-sm text-header-900 dark:text-header-300">
           <template v-if="unlockedOnly">
             {{ t('games.filtered', { filtered: filteredGames.length, total }) }}
           </template>
@@ -1912,7 +1912,7 @@ const openScoring = (gameId: number) => {
           </button>
           <div v-show="bulkActionsOpen" class="absolute z-20 mt-1 w-72 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 left-0">
             <!-- ── Toggle section ── -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkPublishConfirmOpen = true; bulkActionsOpen = false"
@@ -1940,13 +1940,13 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkTogglePrinted(); bulkActionsOpen = false"
             >
-              <UIcon name="heroicons:printer" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:printer" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.bulk.toggle_printed') }}
             </button>
 
             <!-- ── Edit section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkAutoAssignConfirmOpen = true; bulkActionsOpen = false"
@@ -2006,7 +2006,7 @@ const openScoring = (gameId: number) => {
 
             <!-- ── Documents section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="openBulkMatchSheets"
@@ -2034,7 +2034,7 @@ const openScoring = (gameId: number) => {
           :title="t('common.refresh')"
           @click="loadGames"
         >
-          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-600 dark:text-header-300" />
+          <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-900 dark:text-header-300" />
         </button>
 
         <!-- Conflict detection toolbar toggle -->
@@ -2044,7 +2044,7 @@ const openScoring = (gameId: number) => {
           :title="t('games.conflict_toolbar_title')"
           @click="conflictBarOpen ? (conflictBarOpen = false, selectedTeam = '', teamSearchInput = '') : (conflictBarOpen = true)"
         >
-          <UIcon name="heroicons:shield-exclamation" class="w-5 h-5" :class="conflictBarOpen || selectedTeam ? 'text-warning-500' : 'text-header-600 dark:text-header-300'" />
+          <UIcon name="heroicons:shield-exclamation" class="w-5 h-5" :class="conflictBarOpen || selectedTeam ? 'text-warning-500' : 'text-header-900 dark:text-header-300'" />
           <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': conflictBarOpen }" />
         </button>
 
@@ -2054,12 +2054,12 @@ const openScoring = (gameId: number) => {
             class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
             @click="documentsOpen = !documentsOpen"
           >
-            <UIcon name="heroicons:document-arrow-down" class="w-5 h-5 text-header-600 dark:text-header-300" />
+            <UIcon name="heroicons:document-arrow-down" class="w-5 h-5 text-header-900 dark:text-header-300" />
             {{ t('games.documents.title') }}
             <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': documentsOpen }" />
           </button>
           <div v-show="documentsOpen" class="absolute z-20 mt-1 w-64 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
             <a
               :href="docUrl('FeuilleListeMatchs.php')"
               target="_blank"
@@ -2097,14 +2097,14 @@ const openScoring = (gameId: number) => {
               {{ t('games.documents.export_ods') }}
             </a>
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
             <a
               :href="docUrl('PdfListeMatchs.php', true)"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.public_list_fr') }}
             </a>
             <a
@@ -2113,18 +2113,18 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.public_list_en') }}
             </a>
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
+            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
             <a
               :href="docUrl('PdfListeMatchs4TerrainsEn.php', true)"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_1_4_teams') }}
             </a>
             <a
@@ -2133,7 +2133,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_5_8_teams') }}
             </a>
             <a
@@ -2142,7 +2142,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_1_4_phases') }}
             </a>
             <a
@@ -2151,7 +2151,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_5_8_phases') }}
             </a>
             <a
@@ -2160,7 +2160,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_1_5_phases') }}
             </a>
             <a
@@ -2169,7 +2169,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-600 dark:text-header-300" />
+              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
               {{ t('games.documents.pitches_1_5_teams') }}
             </a>
           </div>
@@ -2182,7 +2182,7 @@ const openScoring = (gameId: number) => {
       <!-- Prev / dropdown / Next navigation -->
       <div class="flex items-center gap-1">
         <button
-          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-600 dark:text-header-300 disabled:opacity-30"
+          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
           :disabled="availableTeams.length === 0"
           :title="t('games.team_prev')"
           @click="selectPrevTeam"
@@ -2201,7 +2201,7 @@ const openScoring = (gameId: number) => {
               <UIcon
                 :name="selectedTeamEntity?.isReferee ? 'heroicons:identification' : selectedTeamEntity?.isPlaceholder ? 'heroicons:clock' : 'heroicons:user-group'"
                 class="w-5 h-5 shrink-0"
-                :class="selectedTeam ? (selectedTeamEntity?.isReferee ? 'text-info-500' : selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-500 dark:text-header-400'"
+                :class="selectedTeam ? (selectedTeamEntity?.isReferee ? 'text-info-500' : selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-600 dark:text-header-600'"
               />
               <span
                 class="truncate"
@@ -2232,16 +2232,16 @@ const openScoring = (gameId: number) => {
               <!-- All teams option -->
               <button
                 class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50 dark:hover:bg-header-800"
-                :class="!selectedTeam ? 'font-medium text-primary-700' : 'text-header-700 dark:text-header-200'"
+                :class="!selectedTeam ? 'font-medium text-primary-700' : 'text-header-900 dark:text-header-200'"
                 @click="selectedTeam = ''; teamSearchInput = ''; teamSearchOpen = false"
               >
-                <UIcon name="heroicons:users" class="w-4 h-4 text-header-600 dark:text-header-300 shrink-0" />
+                <UIcon name="heroicons:users" class="w-4 h-4 text-header-900 dark:text-header-300 shrink-0" />
                 {{ t('games.all_teams') }}
               </button>
 
               <!-- Real teams -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'team')">
-                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">
+                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">
                   {{ t('games.teams_assigned') }}
                 </div>
                 <button
@@ -2251,14 +2251,14 @@ const openScoring = (gameId: number) => {
                   :class="selectedTeam === entity.code ? 'font-medium text-primary-700 bg-primary-50' : 'text-header-900 dark:text-header-50'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
-                  <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-600 dark:text-header-300 shrink-0" />
+                  <UIcon name="heroicons:user-group" class="w-4 h-4 text-header-900 dark:text-header-300 shrink-0" />
                   {{ entity.label }}
                 </button>
               </template>
 
               <!-- Nominative referees (people, identified by matricule; club not shown) -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.referees_nominative_section') }}
                 </div>
                 <button
@@ -2279,7 +2279,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Team-designated referees (matric=0, e.g. "RKV I") -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && !e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.referees_team_section') }}
                 </div>
                 <button
@@ -2300,7 +2300,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Placeholders -->
               <template v-if="filteredTeamOptions.some(e => e.isPlaceholder)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.teams_placeholder') }}
                 </div>
                 <button
@@ -2312,11 +2312,11 @@ const openScoring = (gameId: number) => {
                 >
                   <UIcon name="heroicons:clock" class="w-4 h-4 text-orange-300 shrink-0" />
                   <span class="italic">{{ entity.label }}</span>
-                  <span class="ml-auto text-[10px] text-header-400 dark:text-header-500 font-mono shrink-0">{{ entity.code }}</span>
+                  <span class="ml-auto text-[10px] text-header-600 dark:text-header-600 font-mono shrink-0">{{ entity.code }}</span>
                 </button>
               </template>
 
-              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-600 dark:text-header-300 italic">
+              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-900 dark:text-header-300 italic">
                 {{ t('common.no_results') }}
               </div>
             </div>
@@ -2328,7 +2328,7 @@ const openScoring = (gameId: number) => {
           <template v-else>—</template>
         </span>
         <button
-          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-600 dark:text-header-300 disabled:opacity-30"
+          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
           :disabled="availableTeams.length === 0"
           :title="t('games.team_next')"
           @click="selectNextTeam"
@@ -2369,7 +2369,7 @@ const openScoring = (gameId: number) => {
 
       <!-- Close -->
       <button
-        class="ml-auto p-1 text-header-400 dark:text-header-500 hover:text-header-900 dark:hover:text-header-50"
+        class="ml-auto p-1 text-header-600 dark:text-header-600 hover:text-header-900 dark:hover:text-header-50"
         :title="t('common.close')"
         @click="conflictBarOpen = false; selectedTeam = ''; teamSearchInput = ''"
       >
@@ -2442,21 +2442,21 @@ const openScoring = (gameId: number) => {
           <tbody class="bg-white dark:bg-header-900 divide-y divide-header-200 dark:divide-header-700">
             <!-- Loading -->
             <tr v-if="loading && games.length === 0">
-              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-300">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-600 dark:text-header-300">
+              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-900 dark:text-header-300">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('games.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="filteredGames.length === 0">
-              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-300">
                 {{ t('games.no_results') }}
               </td>
             </tr>
@@ -2642,7 +2642,7 @@ const openScoring = (gameId: number) => {
                 <button
                   :title="g.type === 'C' ? t('games.type_classification') : t('games.type_elimination')"
                   class="p-0.5 rounded"
-                  :class="isGameEditable(g) ? 'hover:bg-header-100 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
+                  :class="isGameEditable(g) ? 'hover:bg-header-200 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
                   :disabled="!isGameEditable(g)"
                   @click="isGameEditable(g) && toggleType(g)"
                 >
@@ -2778,7 +2778,7 @@ const openScoring = (gameId: number) => {
                   >{{ statusLabel(g) }}</span>
                 </div>
                 <!-- Provisional score when ON or END -->
-                <div v-if="(g.statut === 'ON' || g.statut === 'END') && (g.scoreDetailA || g.scoreDetailB)" class="text-[9px] text-header-500 dark:text-header-400 leading-tight">
+                <div v-if="(g.statut === 'ON' || g.statut === 'END') && (g.scoreDetailA || g.scoreDetailB)" class="text-[9px] text-header-600 dark:text-header-600 leading-tight">
                   {{ g.scoreDetailA || '0' }}-{{ g.scoreDetailB || '0' }}
                   <span v-if="g.periode && g.statut === 'ON'">({{ g.periode }})</span>
                 </div>
@@ -3022,7 +3022,7 @@ const openScoring = (gameId: number) => {
                 </template>
                 <span
                   v-else
-                  class="text-header-600 dark:text-header-300 font-normal"
+                  class="text-header-900 dark:text-header-300 font-normal"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   @click="startPhaseEdit(g)"
                 >{{ g.phase }}</span>
@@ -3117,7 +3117,7 @@ const openScoring = (gameId: number) => {
             >{{ g.heureMatch }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <UIcon name="heroicons:map-pin" class="w-5 h-5 text-header-600 dark:text-header-300 shrink-0" />
+            <UIcon name="heroicons:map-pin" class="w-5 h-5 text-header-900 dark:text-header-300 shrink-0" />
             <!-- Terrain inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'Terrain'">
               <input
@@ -3170,7 +3170,7 @@ const openScoring = (gameId: number) => {
               :class="isScoreEditable(g) ? 'editable-cell' : ''"
               @click="startInlineEdit(g, 'ScoreA')"
             >{{ g.scoreA || '-' }}</span>
-            <span class="text-header-600 dark:text-header-300">-</span>
+            <span class="text-header-900 dark:text-header-300">-</span>
             <!-- Score B inline -->
             <template v-if="editingCell?.id === g.id && editingCell.field === 'ScoreB'">
               <input
@@ -3208,7 +3208,7 @@ const openScoring = (gameId: number) => {
             <button
               :title="g.type === 'C' ? t('games.type_classification') : t('games.type_elimination')"
               class="p-0.5 rounded"
-              :class="isGameEditable(g) ? 'hover:bg-header-100 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
+              :class="isGameEditable(g) ? 'hover:bg-header-200 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
               :disabled="!isGameEditable(g)"
               @click="isGameEditable(g) && toggleType(g)"
             >
@@ -3219,7 +3219,7 @@ const openScoring = (gameId: number) => {
               />
             </button>
             <span class="text-header-900 dark:text-header-50">|</span>
-            <!-- <span class="text-header-500 dark:text-header-400">{{ t('games.field.status') }}</span> -->
+            <!-- <span class="text-header-600 dark:text-header-600">{{ t('games.field.status') }}</span> -->
             <button
               v-if="isGameEditable(g)"
               class="px-2 py-0.5 text-xs font-medium rounded-full border"
@@ -3392,7 +3392,7 @@ const openScoring = (gameId: number) => {
         <div class="space-y-4">
             <!-- Referee 1 -->
             <div>
-              <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.field.referee_1') }}</label>
+              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_1') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitrePrincipal"
                 :matric="formData.matricArbitrePrincipal"
@@ -3402,7 +3402,7 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitrePrincipal > 0" class="mt-1">
-                <label class="block text-[10px] text-header-700 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-[10px] text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
                   class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
                   :value="extractTeamFromReferee(formData.arbitrePrincipal)"
@@ -3414,7 +3414,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Referee 2 -->
             <div>
-              <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.field.referee_2') }}</label>
+              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_2') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitreSecondaire"
                 :matric="formData.matricArbitreSecondaire"
@@ -3424,7 +3424,7 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitreSecondaire > 0" class="mt-1">
-                <label class="block text-[10px] text-header-700 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-[10px] text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
                   class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
                   :value="extractTeamFromReferee(formData.arbitreSecondaire)"
@@ -3436,7 +3436,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Shotclock (Timeshoot) — nominative name only, free text allowed -->
             <div>
-              <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.field.shotclock') }}</label>
+              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.shotclock') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.timeshoot"
                 :matric="formShotclockMatric"
@@ -3799,7 +3799,7 @@ const openScoring = (gameId: number) => {
           />
         </div>
         <div v-if="editingRefereeMatric > 0">
-          <label class="block text-xs font-medium text-header-700 dark:text-header-200 mb-1">{{ t('games.referee_team_label') }}</label>
+          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.referee_team_label') }}</label>
           <select
             :value="refereeModalTeamValue"
             class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900"

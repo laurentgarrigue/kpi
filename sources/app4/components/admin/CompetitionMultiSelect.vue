@@ -62,11 +62,11 @@ function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre
 
 <template>
   <div>
-    <label class="block text-sm font-medium text-header-700 dark:text-header-200 mb-1">
+    <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">
       {{ t('context.competitions_from_context') }}
     </label>
 
-    <div v-if="availableCompetitions.length === 0" class="text-sm text-header-500 dark:text-header-400 italic">
+    <div v-if="availableCompetitions.length === 0" class="text-sm text-header-600 dark:text-header-600 italic">
       {{ t('context.no_competitions') }}
     </div>
 
@@ -100,13 +100,13 @@ function formatCompetitionLabel(comp: { code: string; libelle: string; soustitre
             class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
             @change="toggleCompetition(comp.code)"
           >
-          <span class="text-sm text-header-700 dark:text-header-200">{{ formatCompetitionLabel(comp) }}</span>
+          <span class="text-sm text-header-900 dark:text-header-200">{{ formatCompetitionLabel(comp) }}</span>
         </label>
       </div>
     </div>
 
     <!-- Selection count -->
-    <p v-if="someSelected" class="mt-1 text-xs text-header-500 dark:text-header-400">
+    <p v-if="someSelected" class="mt-1 text-xs text-header-600 dark:text-header-600">
       {{ t('context.competitions_count', { count: selectedCodes.length }) }}
     </p>
   </div>

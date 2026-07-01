@@ -255,7 +255,7 @@ onMounted(() => {
           :class="[
             activeSubTab === tab.id
               ? 'border-primary-500 text-primary-600 bg-primary-50'
-              : 'border-transparent text-header-500 hover:text-header-700 hover:border-header-300',
+              : 'border-transparent text-header-600 hover:text-header-900 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
           @click="activeSubTab = tab.id as 'list' | 'add'"
@@ -272,38 +272,38 @@ onMounted(() => {
         <table class="min-w-full divide-y divide-header-200">
           <thead class="bg-header-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.code') }}
               </th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-600 uppercase">
                 {{ t('common.edit') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.status') }}
               </th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-center text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.activate') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.nat_start') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.nat_end') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.inter_start') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 uppercase">
                 {{ t('operations.seasons.inter_end') }}
               </th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-header-500 uppercase">
+              <th class="px-4 py-3 text-right text-xs font-medium text-header-600 uppercase">
                 {{ t('common.actions') }}
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-header-200">
             <tr v-if="loading && seasons.length === 0">
-              <td colspan="9" class="px-4 py-8 text-center text-header-500">
+              <td colspan="9" class="px-4 py-8 text-center text-header-600">
                 <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
@@ -315,7 +315,7 @@ onMounted(() => {
               <td class="px-4 py-3 text-center">
                 <button
                   :title="t('common.edit')"
-                  class="p-1 text-header-500 hover:text-header-900 rounded"
+                  class="p-1 text-header-600 hover:text-header-900 rounded"
                   @click="openEditModal(season)"
                 >
                   <UIcon name="i-heroicons-pencil-square" class="w-5 h-5" />
@@ -325,7 +325,7 @@ onMounted(() => {
                 <span
                   :class="[
                     'px-2 py-1 rounded-full text-xs font-medium',
-                    season.active ? 'bg-success-100 text-success-800' : 'bg-header-100 text-header-600'
+                    season.active ? 'bg-success-100 text-success-800' : 'bg-header-200 text-header-900'
                   ]"
                 >
                   {{ season.active ? t('operations.seasons.active') : t('operations.seasons.inactive') }}
@@ -341,10 +341,10 @@ onMounted(() => {
                   <UIcon name="i-heroicons-check-circle" class="w-5 h-5" />
                 </button>
               </td>
-              <td class="px-4 py-3 text-sm text-header-500">{{ formatDate(season.natDebut) }}</td>
-              <td class="px-4 py-3 text-sm text-header-500">{{ formatDate(season.natFin) }}</td>
-              <td class="px-4 py-3 text-sm text-header-500">{{ formatDate(season.interDebut) }}</td>
-              <td class="px-4 py-3 text-sm text-header-500">{{ formatDate(season.interFin) }}</td>
+              <td class="px-4 py-3 text-sm text-header-600">{{ formatDate(season.natDebut) }}</td>
+              <td class="px-4 py-3 text-sm text-header-600">{{ formatDate(season.natFin) }}</td>
+              <td class="px-4 py-3 text-sm text-header-600">{{ formatDate(season.interDebut) }}</td>
+              <td class="px-4 py-3 text-sm text-header-600">{{ formatDate(season.interFin) }}</td>
               <td class="px-4 py-3 text-right">
                 <button
                   v-if="!season.active"
@@ -366,7 +366,7 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.code') }} *
           </label>
           <input
@@ -377,7 +377,7 @@ onMounted(() => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.nat_start') }}
           </label>
           <input
@@ -387,7 +387,7 @@ onMounted(() => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.nat_end') }}
           </label>
           <input
@@ -397,7 +397,7 @@ onMounted(() => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.inter_start') }}
           </label>
           <input
@@ -407,7 +407,7 @@ onMounted(() => {
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-header-700 mb-1">
+          <label class="block text-sm font-medium text-header-900 mb-1">
             {{ t('operations.seasons.inter_end') }}
           </label>
           <input
@@ -437,7 +437,7 @@ onMounted(() => {
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.seasons.nat_start') }}
               </label>
               <input
@@ -447,7 +447,7 @@ onMounted(() => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.seasons.nat_end') }}
               </label>
               <input
@@ -457,7 +457,7 @@ onMounted(() => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.seasons.inter_start') }}
               </label>
               <input
@@ -467,7 +467,7 @@ onMounted(() => {
               >
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-700 mb-1">
+              <label class="block text-sm font-medium text-header-900 mb-1">
                 {{ t('operations.seasons.inter_end') }}
               </label>
               <input
@@ -519,14 +519,14 @@ onMounted(() => {
           </p>
           <div class="mt-2 max-h-48 overflow-y-auto space-y-2">
             <div v-for="sec in previousSeasonSections" :key="sec.section">
-              <div class="text-xs font-semibold text-header-600 uppercase tracking-wider">
+              <div class="text-xs font-semibold text-header-900 uppercase tracking-wider">
                 {{ t(`groups.sections.${sec.section}`) }}
               </div>
               <div class="flex flex-wrap gap-1 mt-1">
                 <span
                   v-for="c in sec.competitions"
                   :key="c.code"
-                  class="px-1.5 py-0.5 text-xs font-mono bg-white border border-amber-300 rounded text-header-700"
+                  class="px-1.5 py-0.5 text-xs font-mono bg-white border border-amber-300 rounded text-header-900"
                   :title="c.libelle"
                 >
                   {{ c.code }}
@@ -542,7 +542,7 @@ onMounted(() => {
             type="checkbox"
             class="mt-0.5 w-4 h-4 rounded border-header-300 text-primary-600 focus:ring-2 focus:ring-primary-500"
           >
-          <span class="text-sm text-header-700">
+          <span class="text-sm text-header-900">
             {{ t('operations.seasons.end_previous_season', {
               season: previousSeasonCode,
               count: previousSeasonNonEnded

@@ -46,7 +46,7 @@ onMounted(() => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center gap-2 text-header-400">
+    <div v-if="loading" class="flex items-center gap-2 text-header-600">
       <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin" />
       <span>{{ t('common.loading') }}</span>
     </div>
@@ -59,10 +59,10 @@ onMounted(() => {
             {{ team.libelle }}
           </h1>
 
-          <div class="flex flex-wrap items-center gap-4 text-sm text-header-600">
+          <div class="flex flex-wrap items-center gap-4 text-sm text-header-900">
           <!-- Club -->
           <div class="flex items-center gap-1.5">
-            <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-header-400" />
+            <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-header-600" />
             <span class="font-bold">{{ t('clubs.teams.club') }} :</span>
             <NuxtLink :to="`/clubs?code=${team.codeClub}`" class="text-primary-600 hover:text-primary-800">
               {{ team.libelleClub }} ({{ team.codeClub }})
@@ -113,12 +113,12 @@ onMounted(() => {
       <div class="bg-white border border-header-200 rounded-lg p-5">
         <h2 class="text-lg font-semibold text-header-900 mb-3">
           {{ t('clubs.teams.competitions') }}
-          <span v-if="team.competitions.length > 0" class="text-sm font-normal text-header-400">
+          <span v-if="team.competitions.length > 0" class="text-sm font-normal text-header-600">
             ({{ team.competitions.length }})
           </span>
         </h2>
 
-        <p v-if="team.competitions.length === 0" class="text-sm text-header-400 italic">
+        <p v-if="team.competitions.length === 0" class="text-sm text-header-600 italic">
           {{ t('clubs.teams.no_competitions') }}
         </p>
 
@@ -126,10 +126,10 @@ onMounted(() => {
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-header-200">
-                <th class="text-left py-2 px-3 font-medium text-header-700">{{ t('clubs.teams.season') }}</th>
-                <th class="text-left py-2 px-3 font-medium text-header-700">{{ t('clubs.teams.code') }}</th>
-                <th class="text-left py-2 px-3 font-medium text-header-700">{{ t('clubs.teams.competition') }}</th>
-                <th class="text-left py-2 px-3 font-medium text-header-700">{{ t('clubs.teams.final_ranking') }}</th>
+                <th class="text-left py-2 px-3 font-medium text-header-900">{{ t('clubs.teams.season') }}</th>
+                <th class="text-left py-2 px-3 font-medium text-header-900">{{ t('clubs.teams.code') }}</th>
+                <th class="text-left py-2 px-3 font-medium text-header-900">{{ t('clubs.teams.competition') }}</th>
+                <th class="text-left py-2 px-3 font-medium text-header-900">{{ t('clubs.teams.final_ranking') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -139,12 +139,12 @@ onMounted(() => {
                 :class="idx % 2 === 0 ? 'bg-white' : 'bg-header-50'"
                 class="border-b border-header-100"
               >
-                <td class="py-2 px-3 font-mono text-xs text-header-500">{{ comp.codeSaison }}</td>
-                <td class="py-2 px-3 font-mono text-xs text-header-500">{{ comp.codeCompet }}</td>
+                <td class="py-2 px-3 font-mono text-xs text-header-600">{{ comp.codeSaison }}</td>
+                <td class="py-2 px-3 font-mono text-xs text-header-600">{{ comp.codeCompet }}</td>
                 <td class="py-2 px-3 text-header-900">
                   <span class="align-middle">{{ comp.libelleCompet || comp.codeCompet }}</span>
                   <span
-                    class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-header-100 text-header-600 align-middle"
+                    class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-header-200 text-header-900 align-middle"
                   >{{ comp.codeTypeclt }}</span>
                 </td>
                 <td class="py-2 px-3 font-semibold text-header-900">

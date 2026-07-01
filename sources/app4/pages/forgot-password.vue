@@ -73,7 +73,7 @@ async function handleSubmit() {
         <h2 class="text-xl font-semibold text-header-900 mb-2">
           {{ t('forgot_password.title') }}
         </h2>
-        <p class="text-sm text-header-600 mb-6">{{ t('forgot_password.subtitle') }}</p>
+        <p class="text-sm text-header-900 mb-6">{{ t('forgot_password.subtitle') }}</p>
 
         <!-- Success -->
         <div v-if="submitted" class="space-y-4">
@@ -98,7 +98,7 @@ async function handleSubmit() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-header-700 mb-1">
+            <label class="block text-sm font-medium text-header-900 mb-1">
               {{ t('forgot_password.identifier') }}
             </label>
             <UInput
@@ -123,7 +123,7 @@ async function handleSubmit() {
 
           <NuxtLink
             to="/login"
-            class="block text-center text-sm text-header-500 hover:text-header-700"
+            class="block text-center text-sm text-header-600 hover:text-header-900"
           >
             {{ t('access_request.back_to_login') }}
           </NuxtLink>

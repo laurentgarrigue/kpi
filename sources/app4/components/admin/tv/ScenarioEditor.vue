@@ -62,7 +62,7 @@ onMounted(() => loadScenario())
     <!-- Scenario selector + refresh -->
     <div class="flex items-end gap-3 mb-4">
       <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-header-600">{{ t('tv.scenario.title') }}</label>
+        <label class="text-xs font-medium text-header-900">{{ t('tv.scenario.title') }}</label>
         <select
           v-model.number="selectedScenario"
           class="px-3 py-2 text-sm border border-header-300 rounded-lg bg-white min-w-[250px]"
@@ -75,7 +75,7 @@ onMounted(() => loadScenario())
 
       <button
         type="button"
-        class="px-3 py-2 text-sm font-medium text-header-700 bg-header-100 rounded-lg hover:bg-header-200 transition-colors"
+        class="px-3 py-2 text-sm font-medium text-header-900 bg-header-200 rounded-lg hover:bg-header-200 transition-colors"
         :disabled="loading"
         @click="loadScenario"
       >
@@ -88,9 +88,9 @@ onMounted(() => loadScenario())
       <table class="w-full text-sm">
         <thead class="bg-header-50 border-b border-header-200">
           <tr>
-            <th class="px-4 py-2 text-left font-medium text-header-600 w-24">{{ t('tv.scenario.channel') }}</th>
-            <th class="px-4 py-2 text-left font-medium text-header-600">{{ t('tv.scenario.url') }}</th>
-            <th class="px-4 py-2 text-left font-medium text-header-600 w-32">{{ t('tv.scenario.delay') }}</th>
+            <th class="px-4 py-2 text-left font-medium text-header-900 w-24">{{ t('tv.scenario.channel') }}</th>
+            <th class="px-4 py-2 text-left font-medium text-header-900">{{ t('tv.scenario.url') }}</th>
+            <th class="px-4 py-2 text-left font-medium text-header-900 w-32">{{ t('tv.scenario.delay') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -99,7 +99,7 @@ onMounted(() => loadScenario())
             :key="scene.voie"
             class="border-b border-header-100 last:border-0"
           >
-            <td class="px-4 py-2 text-header-500 font-mono">{{ scene.voie }}</td>
+            <td class="px-4 py-2 text-header-600 font-mono">{{ scene.voie }}</td>
             <td class="px-4 py-2">
               <input
                 v-model="scene.url"
