@@ -6,6 +6,11 @@ node_modules
 # local env files
 .env.local
 .env.*.local
+# but keep versioned env files (public config only, no secrets)
+!.env.development
+!.env.production
+!.env.preprod
+!.env.dist
 
 # Log files
 npm-debug.log*
