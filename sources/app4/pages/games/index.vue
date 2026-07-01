@@ -2519,7 +2519,7 @@ const openScoring = (gameId: number) => {
               </td>
 
               <!-- Actions -->
-              <td v-if="canEdit" class="px-1 py-1 text-center" @click.stop>
+              <td v-if="canEdit" data-tour="table-links" class="px-1 py-1 text-center" @click.stop>
                 <button v-if="!isLocked(g) && g.authorized" :title="t('common.edit')" class="text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
                   <UIcon name="heroicons:pencil" class="w-6 h-6" />
                   <br>

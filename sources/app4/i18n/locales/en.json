@@ -2540,5 +2540,33 @@
     "identifier_placeholder": "Your username or email address",
     "submit": "Send reset link",
     "success": "If an account matches this identifier, you will receive an email with a reset link valid for 48 hours."
+  },
+  "tour": {
+    "welcome_title": "Welcome to the new administration",
+    "welcome_body": "You know the old administration (Admin1). This is Admin2, the new interface. This short tutorial covers the essentials — you can relaunch it anytime via the \"?\" button in the top right.",
+    "mandate_title": "Your mandate",
+    "mandate_body": "After signing in, if you have several mandates (roles), you pick the one to work under. The active mandate is shown in this menu and can be switched at any time.",
+    "work_context_title": "Your work context",
+    "work_context_body": "Choose your season and scope here: by competition selection, by section, by group or by event. The rest of the application adapts to this context, which you can change whenever you like.",
+    "menu_title": "The menu",
+    "menu_body": "The horizontal menu gives access to competitions, teams, game days, games, rankings, statistics and administration. It is your main navigation point.",
+    "home_shortcuts_title": "Home shortcuts",
+    "home_shortcuts_body": "These cards on the home page are direct shortcuts to the most-used sections, based on your profile.",
+    "table_links_title": "Links within tables",
+    "table_links_body": "In tables (games, teams…), links and action buttons let you jump straight to details, game sheets, score entry and more — without going through a separate form.",
+    "next": "Next",
+    "prev": "Previous",
+    "done": "Done",
+    "relaunch": "Replay the tutorial"
+  },
+  "help": {
+    "title": "Help & tutorial",
+    "subtitle": "Getting started with the new administration (Admin2).",
+    "start_tour": "Start the tutorial",
+    "diff_title": "Admin1 (old) vs Admin2 (new)",
+    "diff_body": "Admin2 gradually replaces the old administration. The data is the same: you still find competitions, teams, game days and games. The main differences are a work context (season + scope) applied across the whole application, unified menu navigation, and direct actions from tables.",
+    "features_title": "Key new features",
+    "nav_title": "Navigate efficiently",
+    "nav_body": "1. Pick your mandate if you have several.\n2. Set your work context on the home page (season + scope).\n3. Use the menu or the home cards to reach the sections.\n4. In tables, use the action links to get straight to the point.\nYou can change the context and replay this tutorial at any time."
   }
 }
