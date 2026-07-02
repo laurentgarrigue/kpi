@@ -2564,7 +2564,9 @@
     "clickable_cells_title": "Clickable data",
     "clickable_cells_body": "On the Competitions page, several table values are clickable and take you straight to the right place: the group, and the counts of teams, game days/phases and games. (The table fills in once you pick a work context.)",
     "context_summary_title": "Back to your work context",
-    "context_summary_body": "This reminder appears at the top of every page: it shows the current season and scope. Click \"Change\" to return to the home page and update your work context at any time."
+    "context_summary_body": "This reminder appears at the top of every page: it shows the current season and scope. Click \"Change\" to return to the home page and update your work context at any time.",
+    "outro_title": "You're all set!",
+    "outro_body": "That's it for the essentials. You're back on the home page: pick your work context to get started. You can replay this tutorial anytime via the \"?\" button in the top right."
   },
   "help": {
     "title": "Help & tutorial",

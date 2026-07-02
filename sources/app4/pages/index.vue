@@ -21,10 +21,10 @@ onMounted(() => {
   <div>
     <!-- Page header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-header-900">
+      <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
         {{ t('dashboard.title') }}
       </h1>
-      <p class="mt-1 text-sm text-header-600">
+      <p class="mt-1 text-sm text-header-600 dark:text-header-300">
         {{ t('dashboard.welcome', { name: authStore.user?.firstname }) }}
       </p>
     </div>
@@ -40,15 +40,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(10)"
         to="/competitions"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-trophy" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-trophy" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.competition') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_competitions') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.competition') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_competitions') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -57,15 +57,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9)"
         to="/teams"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-user-group" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-user-group" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.teams') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_teams') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.teams') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_teams') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -74,15 +74,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9)"
         to="/gamedays"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-calendar-days" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-calendar-days" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.gamedays') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_gamedays') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.gamedays') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_gamedays') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -91,15 +91,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9)"
         to="/rankings"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-chart-bar-square" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-chart-bar-square" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.rankings') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_rankings') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.rankings') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_rankings') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -108,15 +108,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9) && authStore.profile !== 7"
         to="/documents"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-document-text" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-document-text" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.documents') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_documents') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.documents') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_documents') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -125,15 +125,15 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9)"
         to="/games"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-play-circle" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-play-circle" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.matches') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.manage_games') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.matches') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_games') }}</p>
           </div>
         </div>
       </NuxtLink>
@@ -142,27 +142,27 @@ onMounted(() => {
       <NuxtLink
         v-if="authStore.hasProfile(9)"
         to="/stats"
-        class="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
         <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 rounded-lg">
-            <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 text-primary-600" />
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-chart-bar" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
           </div>
           <div>
-            <h3 class="font-semibold text-header-900">{{ t('menu.statistics') }}</h3>
-            <p class="text-sm text-header-600">{{ t('dashboard.view_statistics') }}</p>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.statistics') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.view_statistics') }}</p>
           </div>
         </div>
       </NuxtLink>
     </div>
 
     <!-- Beta notice -->
-    <div class="mt-8 p-4 bg-warning-50 border border-warning-200 rounded-lg">
+    <div class="mt-8 p-4 bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-900 rounded-lg">
       <div class="flex items-start gap-3">
-        <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 mt-0.5" />
+        <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5" />
         <div>
-          <h4 class="font-medium text-warning-800">{{ t('dashboard.beta_notice_title') }}</h4>
-          <p class="mt-1 text-sm text-warning-700">{{ t('dashboard.beta_notice_message') }}</p>
+          <h4 class="font-medium text-warning-800 dark:text-warning-200">{{ t('dashboard.beta_notice_title') }}</h4>
+          <p class="mt-1 text-sm text-warning-700 dark:text-warning-300">{{ t('dashboard.beta_notice_message') }}</p>
         </div>
       </div>
     </div>
