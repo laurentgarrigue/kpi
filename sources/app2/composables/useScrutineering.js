@@ -87,6 +87,79 @@ export const useScrutineering = () => {
     }
   }
 
+  // Composition adjustment (number / status) on the real team composition.
+  // Returns { ok, error } so the caller can distinguish a lock (403) from other failures.
+  const updateComposition = async (playerId, changes) => {
+    if (!prefs.value?.lastEvent?.id || !prefs.value?.scr_team_id) {
+      console.error('Missing event or team ID')
+      return { ok: false, error: 'Missing event or team ID' }
+    }
+
+    try {
+      const response = await postApi(
+        `/staff/${prefs.value.lastEvent.id}/team/${prefs.value.scr_team_id}/composition/${playerId}`,
+        changes,
+        'PUT'
+      )
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        return { ok: false, error: data.error || 'Failed to update composition', status: response.status }
+      }
+
+      store.updatePlayerComposition(playerId, changes)
+      return { ok: true }
+    } catch (error) {
+      console.error('Error updating composition:', error)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  // Add an existing licensed player to the composition.
+  // Returns { ok, error } so the caller can surface conflicts (already present, etc.).
+  const addCompositionPlayer = async ({ matric, numero, capitaine }) => {
+    if (!prefs.value?.lastEvent?.id || !prefs.value?.scr_team_id) {
+      console.error('Missing event or team ID')
+      return { ok: false, error: 'Missing event or team ID' }
+    }
+
+    try {
+      const response = await postApi(
+        `/staff/${prefs.value.lastEvent.id}/team/${prefs.value.scr_team_id}/player`,
+        { matric, numero, capitaine },
+        'POST'
+      )
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        return { ok: false, error: data.error || 'Failed to add player' }
+      }
+
+      await loadPlayers()
+      return { ok: true }
+    } catch (error) {
+      console.error('Error adding player:', error)
+      return { ok: false, error: error.message }
+    }
+  }
+
+  // Autocomplete search for licensed players to add to the composition.
+  const searchPlayers = async (q) => {
+    if (!prefs.value?.lastEvent?.id || !prefs.value?.scr_team_id) return []
+    if (!q || q.trim().length < 2) return []
+
+    try {
+      const response = await getApi(
+        `/staff/${prefs.value.lastEvent.id}/team/${prefs.value.scr_team_id}/players/search?q=${encodeURIComponent(q.trim())}`
+      )
+      if (!response.ok) return []
+      return await response.json()
+    } catch (error) {
+      console.error('Error searching players:', error)
+      return []
+    }
+  }
+
   const resetTeam = async () => {
     if (!prefs.value?.lastEvent?.id || !prefs.value?.scr_team_id) {
       console.error('Missing event or team ID')
@@ -119,6 +192,9 @@ export const useScrutineering = () => {
     loadPlayers,
     updatePlayer,
     updateComment,
+    updateComposition,
+    addCompositionPlayer,
+    searchPlayers,
     resetTeam
   }
 }
