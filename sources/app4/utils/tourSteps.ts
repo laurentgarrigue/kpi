@@ -68,6 +68,12 @@ export const WELCOME_TOUR: Tour = {
       titleKey: 'tour.context_summary_title',
       bodyKey: 'tour.context_summary_body',
     },
+    {
+      route: '/',
+      anchor: '',
+      titleKey: 'tour.outro_title',
+      bodyKey: 'tour.outro_body',
+    },
   ],
 }
 
