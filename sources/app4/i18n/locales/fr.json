@@ -2576,7 +2576,9 @@
     "clickable_cells_title": "Des données cliquables",
     "clickable_cells_body": "Sur la page Compétitions, plusieurs valeurs du tableau sont cliquables et mènent directement au bon endroit : le groupe, le nombre d'équipes, de journées/phases et de matchs. (Le tableau se remplit une fois un contexte de travail choisi.)",
     "context_summary_title": "Revenir au contexte de travail",
-    "context_summary_body": "Ce rappel est présent en haut de chaque page : il affiche la saison et le périmètre en cours. Cliquez sur « Modifier » pour revenir à la page d'accueil et changer votre contexte de travail à tout moment."
+    "context_summary_body": "Ce rappel est présent en haut de chaque page : il affiche la saison et le périmètre en cours. Cliquez sur « Modifier » pour revenir à la page d'accueil et changer votre contexte de travail à tout moment.",
+    "outro_title": "Vous êtes prêt !",
+    "outro_body": "Voilà pour l'essentiel. Vous êtes de retour sur la page d'accueil : choisissez votre contexte de travail pour commencer. Vous pouvez revoir ce tutoriel à tout moment via le bouton « ? » en haut à droite."
   },
   "help": {
     "title": "Aide & tutoriel",
