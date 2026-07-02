@@ -179,7 +179,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                     <template v-if="workContext.selectionType === 'selection'">
                       <button
                         type="button"
-                        class="text-xs text-primary-600 hover:text-primary-800 underline"
+                        class="text-xs text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 underline"
                         @click="selectAllCompetitions"
                       >
                         {{ t('context.select_all') }}
@@ -187,7 +187,7 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
                       <span class="text-header-600 dark:text-header-600">|</span>
                       <button
                         type="button"
-                        class="text-xs text-primary-600 hover:text-primary-800 underline"
+                        class="text-xs text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200 underline"
                         @click="deselectAllCompetitions"
                       >
                         {{ t('context.deselect_all') }}
@@ -336,21 +336,21 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
           <!-- Context summary -->
           <div
             v-if="workContext.hasValidContext"
-            class="bg-primary-50 border border-primary-200 rounded-lg p-4"
+            class="bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-900 rounded-lg p-4"
           >
             <div class="flex items-center gap-2 mb-2">
-              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600" />
-              <span class="font-medium text-primary-800">
+              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
+              <span class="font-medium text-primary-800 dark:text-primary-200">
                 {{ t('context.competitions_count', { count: workContext.competitionCount }) }}
               </span>
             </div>
-            <ul v-if="workContext.selectionType !== 'all' && workContext.competitionCount <= 20" class="text-sm text-primary-600 ml-4 space-y-1">
+            <ul v-if="workContext.selectionType !== 'all' && workContext.competitionCount <= 20" class="text-sm text-primary-600 dark:text-primary-300 ml-4 space-y-1">
               <li
                 v-for="comp in workContext.contextCompetitions"
                 :key="comp.code"
                 class="flex items-center gap-1"
               >
-                <span class="text-primary-400">&rarr;</span>
+                <span class="text-primary-400 dark:text-primary-500">&rarr;</span>
                 {{ formatCompetitionLabel(comp) }}
               </li>
             </ul>
@@ -359,11 +359,11 @@ function formatEventLabel(event: { id: number; libelle: string; dateDebut: strin
           <!-- No context warning -->
           <div
             v-else-if="workContext.selectionType && workContext.selectionType !== 'all' && workContext.competitionCodes.length === 0"
-            class="bg-warning-50 border border-warning-200 rounded-lg p-4"
+            class="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-900 rounded-lg p-4"
           >
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600" />
-              <span class="text-warning-800">{{ t('context.no_competitions') }}</span>
+              <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300" />
+              <span class="text-warning-800 dark:text-warning-200">{{ t('context.no_competitions') }}</span>
             </div>
           </div>
         </div>

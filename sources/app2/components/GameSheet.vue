@@ -35,13 +35,13 @@
 
         <!-- Score -->
         <div class="text-center">
-          <div class="flex items-center justify-center gap-2">
+          <div v-if="!isPending" class="flex items-center justify-center gap-2">
             <span class="lcd text-4xl font-bold px-4 py-2 bg-gray-800 text-white rounded">{{ matchData.game.g_score_a ?? '-' }}</span>
             <span class="text-2xl text-gray-400">-</span>
             <span class="lcd text-4xl font-bold px-4 py-2 bg-gray-800 text-white rounded">{{ matchData.game.g_score_b ?? '-' }}</span>
           </div>
           <!-- Halftime score -->
-          <div v-if="matchData.halftime_score" class="text-sm text-gray-500 mt-2">
+          <div v-if="!isPending && matchData.halftime_score" class="text-sm text-gray-500 mt-2">
             ({{ matchData.halftime_score.team_a }} - {{ matchData.halftime_score.team_b }})
           </div>
           <!-- Status badge -->
@@ -82,22 +82,24 @@
             <tr>
               <th class="px-2 py-1 text-left">#</th>
               <th class="px-2 py-1 text-left">{{ t('MatchSheet.Player') }}</th>
-              <th class="px-2 py-1 text-center">{{ t('MatchSheet.Goals') }}</th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-green-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-12"></div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="relative inline-block">
-                  <div class="absolute bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
-                  <div class="relative bg-red-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
-                </div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-red-600 text-white w-3 h-4 rounded-sm transform -rotate-12">E</div>
-              </th>
+              <template v-if="!isPending">
+                <th class="px-2 py-1 text-center">{{ t('MatchSheet.Goals') }}</th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-green-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="relative inline-block">
+                    <div class="absolute bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
+                    <div class="relative bg-red-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                  </div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-red-600 text-white w-3 h-4 rounded-sm transform -rotate-12">E</div>
+                </th>
+              </template>
             </tr>
           </thead>
           <tbody>
@@ -110,11 +112,13 @@
                 <span v-if="player.captain === 'C'" class="ml-1 bg-black text-white text-xs font-bold w-4 h-4 inline-flex items-center justify-center rounded-sm">C</span>
                 <span v-if="player.captain === 'E'" class="ml-1 text-xs text-gray-500">({{ t('MatchSheet.Coach') }})</span>
               </td>
-              <td class="px-2 py-1 text-center font-bold">{{ player.stats.goals || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.green_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.yellow_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.red_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.exclusions || '' }}</td>
+              <template v-if="!isPending">
+                <td class="px-2 py-1 text-center font-bold">{{ player.stats.goals || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.green_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.yellow_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.red_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.exclusions || '' }}</td>
+              </template>
             </tr>
           </tbody>
         </table>
@@ -130,22 +134,24 @@
             <tr>
               <th class="px-2 py-1 text-left">#</th>
               <th class="px-2 py-1 text-left">{{ t('MatchSheet.Player') }}</th>
-              <th class="px-2 py-1 text-center">{{ t('MatchSheet.Goals') }}</th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-green-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-12"></div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="relative inline-block">
-                  <div class="absolute bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
-                  <div class="relative bg-red-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
-                </div>
-              </th>
-              <th class="px-2 py-1 text-center">
-                <div class="inline-block bg-red-600 text-white w-3 h-4 rounded-sm transform -rotate-12">E</div>
-              </th>
+              <template v-if="!isPending">
+                <th class="px-2 py-1 text-center">{{ t('MatchSheet.Goals') }}</th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-green-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="relative inline-block">
+                    <div class="absolute bg-yellow-400 w-3 h-4 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
+                    <div class="relative bg-red-500 w-3 h-4 rounded-sm transform -rotate-12"></div>
+                  </div>
+                </th>
+                <th class="px-2 py-1 text-center">
+                  <div class="inline-block bg-red-600 text-white w-3 h-4 rounded-sm transform -rotate-12">E</div>
+                </th>
+              </template>
             </tr>
           </thead>
           <tbody>
@@ -158,11 +164,13 @@
                 <span v-if="player.captain === 'C'" class="ml-1 bg-black text-white text-xs font-bold w-4 h-4 inline-flex items-center justify-center rounded-sm">C</span>
                 <span v-if="player.captain === 'E'" class="ml-1 text-xs text-gray-500">({{ t('MatchSheet.Coach') }})</span>
               </td>
-              <td class="px-2 py-1 text-center font-bold">{{ player.stats.goals || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.green_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.yellow_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.red_cards || '' }}</td>
-              <td class="px-2 py-1 text-center">{{ player.stats.exclusions || '' }}</td>
+              <template v-if="!isPending">
+                <td class="px-2 py-1 text-center font-bold">{{ player.stats.goals || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.green_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.yellow_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.red_cards || '' }}</td>
+                <td class="px-2 py-1 text-center">{{ player.stats.exclusions || '' }}</td>
+              </template>
             </tr>
           </tbody>
         </table>
@@ -170,7 +178,7 @@
     </div>
 
     <!-- Events Timeline -->
-    <div v-if="matchData.events && matchData.events.length > 0" class="mt-4 border border-gray-300 rounded-lg overflow-hidden">
+    <div v-if="!isPending && matchData.events && matchData.events.length > 0" class="mt-4 border border-gray-300 rounded-lg overflow-hidden">
       <div class="bg-gray-800 text-white px-3 py-2 font-bold text-sm">
         {{ t('MatchSheet.Timeline') }}
       </div>
@@ -262,6 +270,9 @@ const props = defineProps({
 })
 
 defineEmits(['refresh'])
+
+// Match pending: hide score, goals/cards and timeline
+const isPending = computed(() => props.matchData?.game?.g_status === 'ATT')
 
 const statusClass = computed(() => {
   if (!props.matchData?.game) return 'bg-gray-500'

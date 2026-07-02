@@ -228,7 +228,7 @@ class PublicController extends AbstractController
         $conn = $this->entityManager->getConnection();
         $gameId = (int) $gameId;
 
-        // Get game info - if in progress (ON) or finished (END), not pending (ATT)
+        // Get game info - pending (ATT), in progress (ON) or finished (END)
         $gameSql = "
             SELECT c.Code c_code, c.Code_saison c_season, j.Phase d_phase, j.Niveau d_level, j.Type d_type,
                 j.Lieu d_place, j.Libelle d_label, c.Soustitre2 c_label, c.Code_typeclt c_type,
@@ -251,7 +251,7 @@ class PublicController extends AbstractController
             INNER JOIN kp_journee j ON (m.Id_journee = j.Id)
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
             WHERE m.Id = ?
-            AND m.Statut IN ('ON', 'END')
+            AND m.Statut IN ('ATT', 'ON', 'END')
             AND c.Publication = 'O'
             AND j.Publication = 'O'
             AND m.Publication = 'O'

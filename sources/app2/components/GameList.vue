@@ -441,9 +441,9 @@ const getStatusLabel = (game) => {
   return t('Games.Status.' + game.g_status)
 }
 
-// Check if match sheet is available (match in progress or finished, not pending)
+// Check if match sheet is available (pending, in progress or finished)
 const isMatchSheetAvailable = (game) => {
-  return game.g_status === 'ON' || game.g_status === 'END'
+  return game.g_status === 'ATT' || game.g_status === 'ON' || game.g_status === 'END'
 }
 
 // Get the URL for the match sheet (internal page instead of PDF)
