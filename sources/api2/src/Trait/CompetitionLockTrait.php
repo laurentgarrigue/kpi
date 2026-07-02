@@ -3,12 +3,13 @@
 namespace App\Trait;
 
 /**
- * Trait to guard write operations against a locked / ended competition.
+ * Trait to guard write operations against an ended competition.
  *
- * A competition is read-only when it is locked (Verrou = 'O') or when its
- * status is END. Moving a competition to END also sets the lock, so checking
- * either covers the case, but we test both to stay robust against legacy data
- * where a competition could be END without the lock having been set.
+ * A competition is read-only for its structural data (gamedays, teams, …) only
+ * when its status is END. The lock flag (Verrou = 'O') is NOT a read-only
+ * signal here: it exclusively freezes the presence sheets and is enforced
+ * independently by the presence controller. Structural edits (e.g. editing a
+ * gameday phase inline) must stay possible on a merely locked competition.
  *
  * Controllers using this trait must have a `$this->connection`
  * (Doctrine DBAL Connection) property.
@@ -16,28 +17,31 @@ namespace App\Trait;
 trait CompetitionLockTrait
 {
     /**
-     * Whether the given competition is read-only (locked or ended).
+     * Whether the given competition is read-only, i.e. its status is END.
+     *
+     * The lock flag (Verrou) is deliberately ignored: it only guards presence
+     * sheets, not structural competition data.
      *
      * Returns false when the competition cannot be found, leaving the caller's
      * own "not found" handling untouched.
      */
     private function isCompetitionReadOnly(string $code, string $season): bool
     {
-        $sql = "SELECT Statut, Verrou FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+        $sql = "SELECT Statut FROM kp_competition WHERE Code = ? AND Code_saison = ?";
         $row = $this->connection->prepare($sql)->executeQuery([$code, $season])->fetchAssociative();
 
         if (!$row) {
             return false;
         }
 
-        return $row['Verrou'] === 'O' || $row['Statut'] === 'END';
+        return $row['Statut'] === 'END';
     }
 
     /**
      * Filter a list of gameday IDs, keeping only those whose competition is
-     * still editable (not locked, not ended). Used by bulk operations so that
-     * gamedays of an ended competition are silently skipped instead of failing
-     * the whole batch.
+     * still editable (status not END). Used by bulk operations so that gamedays
+     * of an ended competition are silently skipped instead of failing the whole
+     * batch. The lock flag (Verrou) is ignored: it only guards presence sheets.
      *
      * @param int[] $ids
      * @return int[] the subset of $ids that may be written to
@@ -54,7 +58,7 @@ trait CompetitionLockTrait
                 INNER JOIN kp_competition c
                     ON c.Code = j.Code_competition AND c.Code_saison = j.Code_saison
                 WHERE j.Id IN ($placeholders)
-                  AND (c.Verrou = 'O' OR c.Statut = 'END')";
+                  AND c.Statut = 'END'";
 
         $lockedIds = $this->connection->prepare($sql)
             ->executeQuery(array_values($ids))
