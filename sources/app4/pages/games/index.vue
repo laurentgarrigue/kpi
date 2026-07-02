@@ -155,6 +155,9 @@ const teamSearchRef = ref<HTMLDivElement | null>(null)
 const selectedTeam = ref('')
 const teamSearchInput = ref('')
 const restMinutes = ref(60)
+// Minimum gap (minutes) between two consecutive games on the SAME pitch. Below this, the pitch
+// is considered double-booked (a same-timeslot clash is just the gap = 0 case).
+const terrainMinInterval = ref(30)
 
 // ─── Legacy base URL ───
 const legacyBase = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
@@ -416,6 +419,40 @@ const teamConflictGameIds = computed((): Set<number> => {
   const conflicted = new Set<number>()
   for (const ids of slotMap.values()) {
     if (ids.length > 1) ids.forEach(id => conflicted.add(id))
+  }
+  return conflicted
+})
+
+// ─── Terrain double-booking: consecutive games on the same pitch too close together ───
+// Independent of any team selection — scans ALL loaded games (the whole event/competition
+// currently in view). Games are grouped by date+terrain, sorted by start time; any pair of
+// consecutive games whose start-time gap is STRICTLY below terrainMinInterval is flagged
+// (a same-timeslot clash is just the gap = 0 case). A game only counts when it has a terrain
+// AND a date+time; unassigned slots are ignored. Only computed while the planning bar is open
+// (mirrors the team-conflict gating), so the highlight is opt-in and costs nothing otherwise.
+const terrainConflictGameIds = computed((): Set<number> => {
+  if (!conflictBarOpen.value) return new Set()
+  const MIN_GAP = terrainMinInterval.value
+  // group key "date|terrain" → games with parsed start minutes
+  const groups = new Map<string, { id: number; minutes: number }[]>()
+  for (const g of games.value) {
+    if (!g.terrain || !g.dateMatch || !g.heureMatch) continue
+    const [h, m] = g.heureMatch.split(':').map(Number)
+    if (Number.isNaN(h) || Number.isNaN(m)) continue
+    const key = `${g.dateMatch}|${g.terrain.trim().toLowerCase()}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push({ id: g.id, minutes: h * 60 + m })
+  }
+  const conflicted = new Set<number>()
+  for (const list of groups.values()) {
+    if (list.length < 2) continue
+    list.sort((a, b) => a.minutes - b.minutes)
+    for (let i = 1; i < list.length; i++) {
+      if (list[i].minutes - list[i - 1].minutes < MIN_GAP) {
+        conflicted.add(list[i - 1].id)
+        conflicted.add(list[i].id)
+      }
+    }
   }
   return conflicted
 })
@@ -2352,6 +2389,21 @@ const openScoring = (gameId: number) => {
         <span>{{ t('games.rest_minutes') }}</span>
       </div>
 
+      <!-- Terrain min interval threshold -->
+      <div class="flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50" :title="t('games.terrain_interval_tooltip')">
+        <UIcon name="heroicons:map-pin" class="w-4 h-4 text-danger-500 shrink-0" />
+        <label class="whitespace-nowrap cursor-help">{{ t('games.terrain_interval') }}</label>
+        <input
+          v-model.number="terrainMinInterval"
+          type="number"
+          min="1"
+          max="240"
+          :title="t('games.terrain_interval_tooltip')"
+          class="w-14 px-1.5 py-1 text-xs border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
+        >
+        <span>{{ t('games.rest_minutes') }}</span>
+      </div>
+
       <!-- Divider -->
       <div class="h-5 w-px bg-header-200 dark:bg-header-700 hidden sm:block" />
 
@@ -2364,6 +2416,19 @@ const openScoring = (gameId: number) => {
         <span class="flex items-center gap-1.5">
           <span class="inline-block w-3 h-3 rounded-sm bg-warning-200 border border-warning-400 shrink-0" />
           {{ t('games.team_rest_warning') }}
+        </span>
+        <!-- Terrain double-booking: global, independent of the selected team -->
+        <span
+          class="flex items-center gap-1.5"
+          :class="terrainConflictGameIds.size ? 'text-danger-700 dark:text-danger-400 font-medium' : ''"
+          :title="t('games.terrain_conflict_tooltip')"
+        >
+          <UIcon name="heroicons:map-pin" class="w-4 h-4 text-danger-500 shrink-0" />
+          {{ t('games.terrain_conflict') }}
+          <span
+            v-if="terrainConflictGameIds.size"
+            class="px-1.5 py-0.5 rounded-full bg-danger-100 text-danger-700 text-[10px] font-semibold"
+          >{{ terrainConflictGameIds.size }}</span>
         </span>
       </div>
 
@@ -2467,9 +2532,9 @@ const openScoring = (gameId: number) => {
               class="hover:bg-header-50 dark:hover:bg-header-800"
               :class="{
                 'bg-primary-50 dark:bg-primary-950': selectedIds.includes(g.id),
-                'bg-amber-50/50 dark:bg-amber-950/40': isLocked(g) && !teamConflictGameIds.has(g.id) && !teamRestWarningGameIds.has(g.id),
-                'bg-danger-100 dark:bg-danger-950 border-l-2 border-danger-400': teamConflictGameIds.has(g.id),
-                'bg-warning-100 dark:bg-warning-950 border-l-2 border-warning-400': !teamConflictGameIds.has(g.id) && teamRestWarningGameIds.has(g.id),
+                'bg-amber-50/50 dark:bg-amber-950/40': isLocked(g) && !teamConflictGameIds.has(g.id) && !terrainConflictGameIds.has(g.id) && !teamRestWarningGameIds.has(g.id),
+                'bg-danger-100 dark:bg-danger-950 border-l-2 border-danger-400': teamConflictGameIds.has(g.id) || terrainConflictGameIds.has(g.id),
+                'bg-warning-100 dark:bg-warning-950 border-l-2 border-warning-400': !teamConflictGameIds.has(g.id) && !terrainConflictGameIds.has(g.id) && teamRestWarningGameIds.has(g.id),
               }"
             >
               <!-- Checkbox -->
