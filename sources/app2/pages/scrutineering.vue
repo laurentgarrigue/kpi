@@ -20,6 +20,15 @@
         <div class="flex items-center gap-1">
           <button
             v-if="prefs?.scr_team_id"
+            @click="toggleMode"
+            class="p-2 rounded-md hover:bg-gray-100 cursor-pointer"
+            :class="mode === 'composition' ? 'text-blue-600 bg-blue-50' : ''"
+            :title="mode === 'composition' ? t('Scrutineering.Composition.SwitchToControl') : t('Scrutineering.Composition.SwitchToComposition')"
+          >
+            <UIcon :name="mode === 'composition' ? 'i-heroicons-clipboard-document-check' : 'i-heroicons-user-group'" class="h-6 w-6" />
+          </button>
+          <button
+            v-if="prefs?.scr_team_id"
             @click="backToOverview"
             class="p-2 rounded-md hover:bg-gray-100 cursor-pointer"
             :title="t('Scrutineering.Overview.Title')"
@@ -75,7 +84,8 @@
             </div>
           </div>
 
-        <div v-if="prefs?.scr_team_id" class="p-2">
+        <!-- Equipment control mode -->
+        <div v-if="prefs?.scr_team_id && mode === 'control'" class="p-2">
           <div class="overflow-x-auto">
             <table class="min-w-full bg-white border border-gray-300">
               <thead class="bg-gray-50">
@@ -101,7 +111,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="player in players" :key="player.player_id" class="border-b hover:bg-gray-50">
+                <tr v-for="player in controlPlayers" :key="player.player_id" class="border-b hover:bg-gray-50">
                   <td class="px-2 py-2">
                     <span v-if="player.cap !== 'E'" class="inline-block px-2 py-1 text-xs font-bold text-white bg-gray-800 rounded">
                       {{ player.num }}
@@ -244,6 +254,135 @@
             </div>
           </div>
         </div>
+
+        <!-- Composition mode -->
+        <div v-if="prefs?.scr_team_id && mode === 'composition'" class="p-2">
+          <div
+            v-if="compositionLocked"
+            class="mb-3 flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800"
+          >
+            <UIcon name="i-heroicons-lock-closed" class="h-5 w-5 shrink-0" />
+            {{ t('Scrutineering.Composition.Locked') }}
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-2 py-2 text-center text-sm font-medium text-gray-700 border-b w-16">
+                    {{ t('Scrutineering.Composition.Number') }}
+                  </th>
+                  <th class="px-2 py-2 text-left text-sm font-medium text-gray-700 border-b w-32">
+                    {{ t('Scrutineering.Composition.Status') }}
+                  </th>
+                  <th class="px-2 py-2 text-left text-sm font-medium text-gray-700 border-b">
+                    {{ t('Scrutineering.Player') }}
+                  </th>
+                  <th class="px-2 py-2 text-center text-sm font-medium text-gray-700 border-b w-24">
+                    {{ t('Scrutineering.Composition.Club') }}
+                  </th>
+                  <th class="px-2 py-2 border-b w-12"/>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="section in compositionSections" :key="section.key">
+                  <template v-if="section.rows.length > 0">
+                    <tr class="bg-gray-100">
+                      <td colspan="5" class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-600 border-b border-t-2 border-gray-300">
+                        {{ section.label }}
+                      </td>
+                    </tr>
+                    <tr v-for="player in section.rows" :key="player.player_id" class="border-b hover:bg-gray-50">
+                      <!-- Number (inline edit) -->
+                      <td class="px-2 py-1 text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="99"
+                          :value="player.num"
+                          :disabled="compositionLocked"
+                          class="w-14 px-1 py-1 text-center text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          @change="onNumberChange(player, $event)"
+                        >
+                      </td>
+                      <!-- Status (inline select) -->
+                      <td class="px-2 py-1">
+                        <select
+                          :value="player.cap || '-'"
+                          :disabled="compositionLocked"
+                          class="w-28 px-1 py-1 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 cursor-pointer"
+                          @change="onStatusChange(player, $event)"
+                        >
+                          <option value="-">{{ t('Scrutineering.Composition.StatusPlayer') }}</option>
+                          <option value="C">{{ t('Scrutineering.Composition.StatusCaptain') }}</option>
+                          <option value="E">{{ t('Scrutineering.Composition.StatusCoach') }}</option>
+                          <option value="A">{{ t('Scrutineering.Composition.StatusReferee') }}</option>
+                          <option value="X">{{ t('Scrutineering.Composition.StatusInactive') }}</option>
+                        </select>
+                      </td>
+                      <td class="px-2 py-1 text-sm text-gray-800">
+                        {{ player.last_name }} {{ player.first_name }}
+                      </td>
+                      <td class="px-2 py-1 text-center text-sm text-gray-600">
+                        {{ player.club_code }}
+                      </td>
+                      <td class="px-2 py-1 text-center">
+                        <button
+                          v-if="player.cap !== 'X'"
+                          type="button"
+                          :disabled="compositionLocked"
+                          class="text-red-600 hover:text-red-800 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          :title="t('Scrutineering.Composition.Deactivate')"
+                          @click="deactivatePlayer(player)"
+                        >
+                          <UIcon name="i-heroicons-trash" class="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Add player -->
+          <div v-if="!compositionLocked" class="mt-4 max-w-md">
+            <label class="text-sm font-medium text-gray-700 mb-1 block">
+              {{ t('Scrutineering.Composition.AddPlayer') }}
+            </label>
+            <div class="relative">
+              <input
+                v-model="playerSearch"
+                type="text"
+                :placeholder="t('Scrutineering.Composition.SearchPlayer')"
+                class="w-full px-3 py-2 text-sm bg-white border-2 border-gray-400 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                @input="onSearchInput"
+              >
+              <div
+                v-if="searchResults.length > 0"
+                class="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
+              >
+                <button
+                  v-for="result in searchResults"
+                  :key="result.matric"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-b-0 flex items-center justify-between gap-2"
+                  :disabled="addingPlayer"
+                  @click="selectPlayerToAdd(result)"
+                >
+                  <span>{{ result.nom }} {{ result.prenom }}</span>
+                  <span class="text-xs text-gray-500 shrink-0">{{ result.club_label || result.club }} · {{ result.matric }}</span>
+                </button>
+              </div>
+              <div
+                v-else-if="playerSearch.trim().length >= 2 && !searching"
+                class="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg px-3 py-2 text-sm text-gray-400 italic"
+              >
+                {{ t('Scrutineering.Composition.NoResults') }}
+              </div>
+            </div>
+          </div>
+        </div>
         </div><!-- end team detail view -->
       </div>
 
@@ -339,7 +478,8 @@ const { t } = useI18n()
 const { user, getUser } = useUser()
 const { authorized, checkAuthorized, checkOnline } = useStatus()
 const { prefs, getPrefs, updatePref } = usePrefs()
-const { players, loadPlayers, updatePlayer, updateComment, resetTeam } = useScrutineering()
+const { players, loadPlayers, updatePlayer, updateComment, updateComposition, addCompositionPlayer, searchPlayers, resetTeam } = useScrutineering()
+const toast = useToast()
 const { getApi } = useApi()
 const preferenceStore = usePreferenceStore()
 const visibleButton = ref(true)
@@ -424,6 +564,134 @@ const availableTeams = ref([])
 
 const isResetModalOpen = ref(false)
 const resetting = ref(false)
+
+// --- Composition mode ---
+const mode = ref('control') // 'control' | 'composition'
+const compositionLocked = ref(false)
+const playerSearch = ref('')
+const searchResults = ref([])
+const searching = ref(false)
+const addingPlayer = ref(false)
+let searchDebounce = null
+
+const toggleMode = () => {
+  mode.value = mode.value === 'control' ? 'composition' : 'control'
+  if (mode.value === 'control') {
+    playerSearch.value = ''
+    searchResults.value = []
+  }
+}
+
+// Control mode keeps the original behaviour: only active players + staff,
+// referees ('A') and inactive ('X') are hidden (they are shown in composition mode).
+const controlPlayers = computed(() =>
+  players.value.filter(p => p.cap !== 'A' && p.cap !== 'X')
+)
+
+// Composition mode splits players into three groups (players/captains, staff, referees/inactive).
+const compositionPlayers = computed(() =>
+  players.value.filter(p => p.cap === '-' || p.cap === 'C' || !p.cap)
+)
+const compositionStaff = computed(() =>
+  players.value.filter(p => p.cap === 'E')
+)
+const compositionOthers = computed(() =>
+  players.value.filter(p => p.cap === 'A' || p.cap === 'X')
+)
+
+// Ordered sections for the composition table (only rendered when non-empty).
+const compositionSections = computed(() => [
+  { key: 'players', label: t('Scrutineering.Composition.SectionPlayers'), rows: compositionPlayers.value },
+  { key: 'staff', label: t('Scrutineering.Composition.SectionStaff'), rows: compositionStaff.value },
+  { key: 'others', label: t('Scrutineering.Composition.SectionOthers'), rows: compositionOthers.value }
+])
+
+// Flip to read-only if the backend reports the competition is locked.
+const handleLocked = () => {
+  compositionLocked.value = true
+  toast.add({ title: t('Scrutineering.Composition.Locked'), color: 'warning', duration: 4000 })
+}
+
+const reportCompositionError = (result) => {
+  if (result.status === 403 || result.error === 'Competition is locked') {
+    handleLocked()
+  } else {
+    toast.add({ title: t('Scrutineering.Composition.SaveError'), description: result.error, color: 'error', duration: 3000 })
+  }
+}
+
+const onNumberChange = async (player, event) => {
+  const numero = parseInt(event.target.value) || 0
+  if (numero === (player.num || 0)) return
+  const prev = player.num
+  const result = await updateComposition(player.player_id, { numero })
+  if (result.ok) {
+    toast.add({ title: t('Scrutineering.Composition.Saved'), color: 'success', duration: 1500 })
+  } else {
+    event.target.value = prev ?? 0
+    reportCompositionError(result)
+  }
+}
+
+const onStatusChange = async (player, event) => {
+  const capitaine = event.target.value
+  if (capitaine === (player.cap || '-')) return
+  const prev = player.cap || '-'
+  const result = await updateComposition(player.player_id, { capitaine })
+  if (result.ok) {
+    toast.add({ title: t('Scrutineering.Composition.Saved'), color: 'success', duration: 1500 })
+  } else {
+    event.target.value = prev
+    reportCompositionError(result)
+  }
+}
+
+// "Delete" a player from the composition = move to Inactive ('X').
+// A real deletion is only possible from admin2 to avoid mishandling.
+const deactivatePlayer = async (player) => {
+  if (player.cap === 'X') return
+  const result = await updateComposition(player.player_id, { capitaine: 'X' })
+  if (result.ok) {
+    toast.add({ title: t('Scrutineering.Composition.Saved'), color: 'success', duration: 1500 })
+  } else {
+    reportCompositionError(result)
+  }
+}
+
+const onSearchInput = () => {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  const q = playerSearch.value.trim()
+  if (q.length < 2) {
+    searchResults.value = []
+    searching.value = false
+    return
+  }
+  searching.value = true
+  searchDebounce = setTimeout(async () => {
+    searchResults.value = await searchPlayers(q)
+    searching.value = false
+  }, 350)
+}
+
+const selectPlayerToAdd = async (result) => {
+  addingPlayer.value = true
+  try {
+    const { ok, error } = await addCompositionPlayer({ matric: result.matric, numero: 0, capitaine: '-' })
+    if (ok) {
+      toast.add({ title: t('Scrutineering.Composition.Saved'), color: 'success', duration: 2000 })
+      playerSearch.value = ''
+      searchResults.value = []
+    } else if (error === 'Competition is locked') {
+      handleLocked()
+    } else if (error === 'Player already in composition') {
+      toast.add({ title: t('Scrutineering.Composition.AlreadyPresent'), color: 'warning', duration: 3000 })
+    } else {
+      toast.add({ title: t('Scrutineering.Composition.AddError'), description: error, color: 'error', duration: 3000 })
+    }
+  } finally {
+    addingPlayer.value = false
+  }
+}
 
 // Sum of validated paddles across non-coach players
 const totalValidPaddles = computed(() =>
