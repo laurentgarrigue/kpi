@@ -179,17 +179,24 @@ class StaffController extends AbstractController
             return $this->tokenAuthService->createUnauthorizedResponse();
         }
 
+        // Ensure the team belongs to the authenticated event (IDOR protection).
+        if (!$this->getTeamCompositionInfo($teamId, $eventId)) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
+        }
+
         $conn = $this->entityManager->getConnection();
 
+        // Return every player of the composition (including referees 'A' and inactive 'X'):
+        // the equipment-control mode filters those out client-side, while the composition
+        // mode needs them all so the scrutineer can change any player's status.
         $sql = "SELECT cej.Matric player_id, cej.Nom last_name, cej.Prenom first_name,
-            cej.Sexe gender, cej.Numero num, cej.Capitaine cap,
+            cej.Sexe gender, cej.Numero num, cej.Capitaine cap, l.Numero_club club_code,
             sc.kayak_status, sc.kayak_print, sc.vest_status, sc.vest_print, sc.helmet_status,
             sc.helmet_print, sc.paddle_count, sc.paddle_print, sc.comment
             FROM kp_competition_equipe_joueur cej
+            LEFT OUTER JOIN kp_licence l ON cej.Matric = l.Matric
             LEFT OUTER JOIN kp_scrutineering sc ON (cej.Id_equipe = sc.id_equipe AND cej.Matric = sc.matric)
             WHERE cej.Id_equipe = ?
-            AND cej.Capitaine != 'A'
-            AND cej.Capitaine != 'X'
             ORDER BY FIELD(IF(cej.Capitaine='C', '-', IF(cej.Capitaine='', '-', cej.Capitaine)), '-', 'E', 'A', 'X'), num, last_name, first_name";
 
         $stmt = $conn->prepare($sql);
@@ -268,6 +275,11 @@ class StaffController extends AbstractController
         }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        // Ensure the team belongs to the authenticated event (IDOR protection).
+        if (!$this->getTeamCompositionInfo($teamId, $eventId)) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
         }
 
         $conn = $this->entityManager->getConnection();
@@ -353,6 +365,11 @@ class StaffController extends AbstractController
         }
         if (!$auth) {
             return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        // Ensure the team belongs to the authenticated event (IDOR protection).
+        if (!$this->getTeamCompositionInfo($teamId, $eventId)) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
         }
 
         $conn = $this->entityManager->getConnection();
@@ -542,6 +559,322 @@ class StaffController extends AbstractController
             'clubs'      => $clubs,
             'teams'      => $teams,
         ]);
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
+        return $response;
+    }
+
+    // -----------------------------------------------------------------------
+    // Composition adjustment (kp_competition_equipe_joueur)
+    //
+    // These endpoints let a scrutineer (profile <= 3, event token) adjust the
+    // actual team composition (player number, status, adding a player), not just
+    // the equipment-scrutineering data. They are blocked when the competition is
+    // locked (kp_competition.Verrou = 'O').
+    // -----------------------------------------------------------------------
+
+    /**
+     * Team info (season/competition/lock) for a composition team that belongs to the
+     * given event, or null if the team is unknown OR not part of that event.
+     *
+     * The event scoping is essential: the token is validated against $eventId, so we
+     * must reject a teamId that belongs to a different event (IDOR protection).
+     */
+    private function getTeamCompositionInfo(int $teamId, int $eventId): ?array
+    {
+        $conn = $this->entityManager->getConnection();
+        $row = $conn->fetchAssociative(
+            "SELECT ce.Code_compet, ce.Code_saison, comp.Verrou
+             FROM kp_competition_equipe ce
+             INNER JOIN kp_journee j
+                 ON (ce.Code_compet = j.Code_competition AND ce.Code_saison = j.Code_saison)
+             INNER JOIN kp_evenement_journee ej
+                 ON (j.Id = ej.Id_journee)
+             LEFT JOIN kp_competition comp
+                 ON (ce.Code_compet = comp.Code AND ce.Code_saison = comp.Code_saison)
+             WHERE ce.Id = ? AND ej.Id_evenement = ?
+             LIMIT 1",
+            [$teamId, $eventId]
+        );
+        if (!$row) {
+            return null;
+        }
+        return [
+            'code_compet' => $row['Code_compet'],
+            'code_saison' => (string) $row['Code_saison'],
+            'locked'      => $row['Verrou'] === 'O',
+        ];
+    }
+
+    /** Compute a player's category id from birth date and season (same logic as admin presence). */
+    private function computeCategory(?string $birthDate, string $season): string
+    {
+        if (!$birthDate) {
+            return '';
+        }
+        $age = (int) $season - (int) substr($birthDate, 0, 4);
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            "SELECT id FROM kp_categorie WHERE age_min <= ? AND age_max >= ? LIMIT 1",
+            [$age, $age]
+        );
+        return $row ? (string) $row['id'] : '';
+    }
+
+    #[Route('/{eventId}/team/{teamId}/composition/{playerId}', name: 'update_composition', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/staff/{eventId}/team/{teamId}/composition/{playerId}',
+        summary: 'Adjust a player composition (number / status)',
+        description: 'Updates the player number and/or status (Capitaine) in the real team composition. Blocked if the competition is locked.',
+        tags: ['3. App2 - Staff'],
+        security: [['ApiToken' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'numero', type: 'integer', nullable: true, example: 12),
+                    new OA\Property(property: 'capitaine', type: 'string', nullable: true, enum: ['-', 'C', 'E', 'A', 'X'])
+                ]
+            )
+        ),
+        parameters: [
+            new OA\Parameter(name: 'eventId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'playerId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Composition updated'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Competition locked'),
+            new OA\Response(response: 405, description: 'Invalid parameter')
+        ]
+    )]
+    public function updateComposition(Request $request, int $eventId, int $teamId, int $playerId): JsonResponse
+    {
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
+        if (!$auth) {
+            return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        $info = $this->getTeamCompositionInfo($teamId, $eventId);
+        if (!$info) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
+        }
+        if ($info['locked']) {
+            return new JsonResponse(['error' => 'Competition is locked'], 403);
+        }
+
+        $input = json_decode($request->getContent(), true) ?: [];
+        $set = [];
+        $params = [];
+
+        if (array_key_exists('numero', $input)) {
+            $set[] = 'Numero = ?';
+            $params[] = (int) $input['numero'];
+        }
+        if (array_key_exists('capitaine', $input)) {
+            $capitaine = (string) $input['capitaine'];
+            if (!in_array($capitaine, ['-', 'C', 'E', 'A', 'X'], true)) {
+                return new JsonResponse(['error' => 'Invalid status'], 405);
+            }
+            $set[] = 'Capitaine = ?';
+            $params[] = $capitaine;
+        }
+
+        if (empty($set)) {
+            return new JsonResponse(['error' => 'No fields to update'], 405);
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $params[] = $teamId;
+        $params[] = $playerId;
+        $conn->executeStatement(
+            'UPDATE kp_competition_equipe_joueur SET ' . implode(', ', $set) . ' WHERE Id_equipe = ? AND Matric = ?',
+            $params
+        );
+
+        try {
+            $conn->executeStatement(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Journal) VALUES (NOW(), ?, 'Scrut composition', ?, ?)",
+                [$auth['user'], $eventId, "Equipe $teamId - Joueur $playerId - " . json_encode($input)]
+            );
+        } catch (\Exception) {
+        }
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/{eventId}/team/{teamId}/player', name: 'add_composition_player', methods: ['POST'])]
+    #[OA\Post(
+        path: '/staff/{eventId}/team/{teamId}/player',
+        summary: 'Add an existing licensed player to the composition',
+        description: 'Adds an existing player (by matric) to the team composition. Blocked if the competition is locked.',
+        tags: ['3. App2 - Staff'],
+        security: [['ApiToken' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'matric', type: 'integer', example: 123456),
+                    new OA\Property(property: 'numero', type: 'integer', nullable: true, example: 12),
+                    new OA\Property(property: 'capitaine', type: 'string', nullable: true, enum: ['-', 'C', 'E', 'A', 'X'])
+                ]
+            )
+        ),
+        parameters: [
+            new OA\Parameter(name: 'eventId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(response: 201, description: 'Player added'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 403, description: 'Competition locked'),
+            new OA\Response(response: 404, description: 'Player not found'),
+            new OA\Response(response: 409, description: 'Player already in composition')
+        ]
+    )]
+    public function addCompositionPlayer(Request $request, int $eventId, int $teamId): JsonResponse
+    {
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
+        if (!$auth) {
+            return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        $info = $this->getTeamCompositionInfo($teamId, $eventId);
+        if (!$info) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
+        }
+        if ($info['locked']) {
+            return new JsonResponse(['error' => 'Competition is locked'], 403);
+        }
+
+        $input = json_decode($request->getContent(), true) ?: [];
+        $matric = isset($input['matric']) ? (int) $input['matric'] : 0;
+        if ($matric <= 0) {
+            return new JsonResponse(['error' => 'Matric is required'], 405);
+        }
+        $numero = isset($input['numero']) ? (int) $input['numero'] : 0;
+        $capitaine = (string) ($input['capitaine'] ?? '-');
+        if (!in_array($capitaine, ['-', 'C', 'E', 'A', 'X'], true)) {
+            return new JsonResponse(['error' => 'Invalid status'], 405);
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        $licence = $conn->fetchAssociative(
+            "SELECT Nom, Prenom, Sexe, Naissance FROM kp_licence WHERE Matric = ?",
+            [$matric]
+        );
+        if (!$licence) {
+            return new JsonResponse(['error' => 'Player not found in license database'], 404);
+        }
+
+        $categ = $this->computeCategory($licence['Naissance'] ?? null, $info['code_saison']);
+
+        try {
+            $conn->executeStatement(
+                "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [$teamId, $matric, $licence['Nom'], $licence['Prenom'], $licence['Sexe'], $categ, $numero, $capitaine]
+            );
+        } catch (\Exception $e) {
+            if (str_contains($e->getMessage(), 'Duplicate')) {
+                return new JsonResponse(['error' => 'Player already in composition'], 409);
+            }
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
+        try {
+            $conn->executeStatement(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Journal) VALUES (NOW(), ?, 'Scrut ajout joueur', ?, ?)",
+                [$auth['user'], $eventId, "Equipe $teamId - Joueur $matric"]
+            );
+        } catch (\Exception) {
+        }
+
+        return new JsonResponse(['success' => true, 'matric' => $matric], 201);
+    }
+
+    #[Route('/{eventId}/team/{teamId}/players/search', name: 'players_search', methods: ['GET'])]
+    #[OA\Get(
+        path: '/staff/{eventId}/team/{teamId}/players/search',
+        summary: 'Search licensed players to add to the composition',
+        description: 'Autocomplete on kp_licence (name / matric). Requires at least 2 characters.',
+        tags: ['3. App2 - Staff'],
+        security: [['ApiToken' => []]],
+        parameters: [
+            new OA\Parameter(name: 'eventId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Matching players'),
+            new OA\Response(response: 401, description: 'Unauthorized')
+        ]
+    )]
+    public function searchCompositionPlayers(Request $request, int $eventId, int $teamId): JsonResponse
+    {
+        try {
+            $auth = $this->tokenAuthService->validateToken($request, null, $eventId, 3);
+        } catch (\RuntimeException) {
+            return $this->tokenAuthService->createForbiddenResponse();
+        }
+        if (!$auth) {
+            return $this->tokenAuthService->createUnauthorizedResponse();
+        }
+
+        // Ensure the team belongs to the authenticated event (IDOR protection).
+        if (!$this->getTeamCompositionInfo($teamId, $eventId)) {
+            return new JsonResponse(['error' => 'Team not found'], 404);
+        }
+
+        $query = trim((string) $request->query->get('q', ''));
+        if (strlen($query) < 2) {
+            return new JsonResponse([]);
+        }
+        $limit = min(20, max(1, (int) $request->query->get('limit', 10)));
+
+        $conn = $this->entityManager->getConnection();
+
+        // Split on spaces: each word must appear in Nom or Prenom (order-independent).
+        // A single numeric token also matches the licence number (Matric).
+        $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
+        $conditions = [];
+        $params = [];
+        foreach ($words as $word) {
+            $term = '%' . $word . '%';
+            $conditions[] = '(l.Nom LIKE ? OR l.Prenom LIKE ?)';
+            $params[] = $term;
+            $params[] = $term;
+        }
+        if (count($words) === 1 && ctype_digit($words[0])) {
+            // Replace the last name/first-name condition with a matric-or-name match
+            array_pop($conditions);
+            array_pop($params);
+            array_pop($params);
+            $conditions[] = '(l.Nom LIKE ? OR l.Prenom LIKE ? OR l.Matric = ?)';
+            $params[] = '%' . $words[0] . '%';
+            $params[] = '%' . $words[0] . '%';
+            $params[] = (int) $words[0];
+        }
+
+        $sql = "SELECT l.Matric matric, l.Nom nom, l.Prenom prenom, l.Numero_club club,
+                       COALESCE(c.Libelle, l.Numero_club, '') club_label
+                FROM kp_licence l
+                LEFT JOIN kp_club c ON l.Numero_club = c.Code
+                WHERE " . implode(' AND ', $conditions) . "
+                ORDER BY l.Nom, l.Prenom
+                LIMIT $limit";
+
+        $rows = $conn->fetchAllAssociative($sql, $params);
+
+        $response = new JsonResponse($rows);
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
         return $response;
     }
