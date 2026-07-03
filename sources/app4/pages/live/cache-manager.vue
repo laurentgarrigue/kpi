@@ -23,6 +23,9 @@ const form = ref<WorkerForm>({
   pitchEvent: 4,
   delayEvent: 10,
 })
+// When checked, the initial time is captured at worker start (avoids any drift with
+// the real wall-clock time in a genuine live event).
+const useCurrentTime = ref(false)
 const monitorOpen = ref(false)
 const monitorConfig = ref<WorkerConfig | null>(null)
 const monitorData = ref<WorkerMonitor | null>(null)
@@ -56,6 +59,13 @@ async function loadStatus() {
 }
 
 async function startWorker() {
+  // Capture the current date & time at start when "current time" is checked, so the
+  // simulated clock matches the real wall-clock (true live) with no drift.
+  if (useCurrentTime.value) {
+    const now = new Date()
+    form.value.dateEvent = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    form.value.hourEvent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  }
   if (!form.value.idEvent || !form.value.dateEvent || !form.value.hourEvent) {
     toast.add({ title: t('eventCacheManager.errors.missing_fields'), color: 'warning' })
     return
@@ -279,12 +289,17 @@ onBeforeUnmount(() => {
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.date') }}</label>
-            <input v-model="form.dateEvent" type="date" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+            <input v-if="!useCurrentTime" v-model="form.dateEvent" type="date" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+            <span v-else class="text-sm text-header-900 dark:text-header-50 block px-3 py-2">{{ t('eventCacheManager.form.date_now_help') }}</span>
           </div>
           <div>
             <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.hour') }}</label>
-            <input v-model="form.hourEvent" type="time" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
-            <span class="text-xs text-header-600 dark:text-header-300 mt-0.5 block">{{ t('eventCacheManager.form.hour_help') }}</span>
+            <label class="flex items-center gap-2 mb-1.5 text-sm text-header-900 dark:text-header-50 cursor-pointer">
+              <input v-model="useCurrentTime" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500" >
+              {{ t('eventCacheManager.form.hour_now') }}
+            </label>
+            <input v-if="!useCurrentTime" v-model="form.hourEvent" type="time" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
+            <span class="text-xs text-header-600 dark:text-header-300 mt-0.5 block">{{ useCurrentTime ? t('eventCacheManager.form.hour_now_help') : t('eventCacheManager.form.hour_help') }}</span>
           </div>
           <div>
             <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.offset') }}</label>

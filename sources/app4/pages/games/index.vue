@@ -844,8 +844,9 @@ const confirmToggleStatut = async () => {
   const game = statusGame.value
   statusConfirmOpen.value = false
   try {
-    const response = await api.patch<{ statut: string }>(`/admin/games/${game.id}/statut`)
+    const response = await api.patch<{ statut: string; periode: string | null }>(`/admin/games/${game.id}/statut`)
     game.statut = response.statut
+    game.periode = response.periode
     toast.add({ title: t('common.saved'), color: 'success' })
   } catch {
     // Error already shown
