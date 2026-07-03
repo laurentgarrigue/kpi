@@ -317,14 +317,13 @@ class AdminEventWorkerController extends AbstractController
         $config['isStopped'] = $config['status'] === 'stopped';
 
         if ($config['status'] === 'running' || $config['status'] === 'paused') {
-            // Simulated time advances with real wall-clock elapsed since the worker
-            // was (re)started (created_at is reset on start). This mirrors the worker
-            // daemon's own model (initialTime + real elapsed seconds) instead of the
-            // former execution_count × delay estimate, which drifted whenever the
-            // heartbeat cadence differed from delay_event.
+            // Simulated time = initial event time + execution_count × delay_event.
+            // This mirrors what the JSON-generating worker daemon actually produced,
+            // and stays correct across worker restarts — unlike time() - created_at,
+            // whose anchor (row insert) drifts from the daemon's in-process startTime
+            // and made the app4 monitor lag the live/event.php page.
             $initialTime    = strtotime($config['date_event'] . ' ' . $config['hour_event_initial']);
-            $startedAt      = strtotime($config['created_at']);
-            $elapsedSeconds = max(0, time() - $startedAt);
+            $elapsedSeconds = (int) $config['execution_count'] * (int) $config['delay_event'];
             $config['currentSimulatedTime'] = date('H:i:s', $initialTime + $elapsedSeconds);
         } else {
             $config['currentSimulatedTime'] = $config['hour_event'];
