@@ -774,7 +774,7 @@ class AdminGamesController extends AbstractController
         }
 
         $row = $this->connection->prepare(
-            "SELECT m.Id, m.Id_journee, m.Statut, j.Code_saison, j.Code_competition FROM kp_match m INNER JOIN kp_journee j ON m.Id_journee = j.Id WHERE m.Id = ?"
+            "SELECT m.Id, m.Id_journee, m.Statut, m.Periode, j.Code_saison, j.Code_competition FROM kp_match m INNER JOIN kp_journee j ON m.Id_journee = j.Id WHERE m.Id = ?"
         )->executeQuery([$id])->fetchAssociative();
 
         if (!$row) {
@@ -791,11 +791,20 @@ class AdminGamesController extends AbstractController
             default => 'ON',
         };
 
-        $this->connection->update('kp_match', ['Statut' => $newValue, 'Code_uti' => $user?->getUserIdentifier()], ['Id' => $id]);
+        $update = ['Statut' => $newValue, 'Code_uti' => $user?->getUserIdentifier()];
+
+        // When starting a match with no period yet defined, default it to M1.
+        $periode = $row['Periode'];
+        if ($newValue === 'ON' && ($periode === null || $periode === '')) {
+            $periode = 'M1';
+            $update['Periode'] = $periode;
+        }
+
+        $this->connection->update('kp_match', $update, ['Id' => $id]);
 
         $this->logActionForMatch('Statut match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
 
-        return $this->json(['id' => $id, 'statut' => $newValue]);
+        return $this->json(['id' => $id, 'statut' => $newValue, 'periode' => $periode]);
     }
 
     /**
