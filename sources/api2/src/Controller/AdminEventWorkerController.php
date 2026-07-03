@@ -66,10 +66,13 @@ class AdminEventWorkerController extends AbstractController
         );
 
         if ($existing !== false) {
+            // created_at is the simulation anchor: reset it so the simulated clock
+            // restarts from hour_event_initial (execution_count is reset too).
             $this->connection->executeStatement(
                 "UPDATE kp_event_worker_config
                  SET status = 'running', date_event = ?, hour_event = ?, hour_event_initial = ?,
-                     offset_event = ?, pitch_event = ?, delay_event = ?, error_message = NULL, updated_at = NOW()
+                     offset_event = ?, pitch_event = ?, delay_event = ?, execution_count = 0,
+                     error_message = NULL, created_at = NOW(), updated_at = NOW()
                  WHERE id = ?",
                 [$dateEvent, $hourEvent, $hourEvent, $offsetEvent, $pitchEvent, $delayEvent, $existing['id']]
             );
@@ -272,7 +275,7 @@ class AdminEventWorkerController extends AbstractController
         $result = [];
         foreach ($pitches as $pitch) {
             $best = $this->getBestMatch($rows, (string) $pitch, $workingMinutes);
-            $next = $this->getNextMatch($rows, (string) $pitch, $workingMinutes);
+            $next = $this->getNextMatch($rows, (string) $pitch, $best, $workingMinutes);
             $result[] = [
                 'pitch' => (string) $pitch,
                 'game'  => $best['id'],
@@ -314,8 +317,14 @@ class AdminEventWorkerController extends AbstractController
         $config['isStopped'] = $config['status'] === 'stopped';
 
         if ($config['status'] === 'running' || $config['status'] === 'paused') {
+            // Simulated time advances with real wall-clock elapsed since the worker
+            // was (re)started (created_at is reset on start). This mirrors the worker
+            // daemon's own model (initialTime + real elapsed seconds) instead of the
+            // former execution_count × delay estimate, which drifted whenever the
+            // heartbeat cadence differed from delay_event.
             $initialTime    = strtotime($config['date_event'] . ' ' . $config['hour_event_initial']);
-            $elapsedSeconds = (int) $config['execution_count'] * (int) $config['delay_event'];
+            $startedAt      = strtotime($config['created_at']);
+            $elapsedSeconds = max(0, time() - $startedAt);
             $config['currentSimulatedTime'] = date('H:i:s', $initialTime + $elapsedSeconds);
         } else {
             $config['currentSimulatedTime'] = $config['hour_event'];
@@ -365,41 +374,77 @@ class AdminEventWorkerController extends AbstractController
         return sprintf('%02d:%02d', $h, $m);
     }
 
+    /**
+     * Current match on a pitch = the one flagged Statut = 'ON'.
+     *
+     * The live Statut is authoritative (staff flip matches ON/END as they are
+     * played), so it stays correct even when the real programme runs late and no
+     * longer matches the scheduled Heure_match. If no match is ON yet (e.g. during
+     * warm-up before the first game), fall back to the latest scheduled match at or
+     * before the working time so the panel is not empty.
+     *
+     * $matches is ordered by Heure_match ASC.
+     */
     private function getBestMatch(array $matches, string $pitch, int $workingMinutes): array
     {
-        $bestIdx  = -1;
-        $bestTime = -1;
+        $fallbackIdx  = -1;
+        $fallbackTime = -1;
 
         foreach ($matches as $i => $m) {
-            if ($m['Terrain'] != $pitch || $m['Statut'] === 'ATT') {
+            if ($m['Terrain'] != $pitch) {
                 continue;
             }
+            if ($m['Statut'] === 'ON') {
+                return [
+                    'id'   => (int) $m['Id'],
+                    'time' => $m['Heure_match'],
+                    'num'  => $m['Numero_ordre'] !== null ? (int) $m['Numero_ordre'] : null,
+                ];
+            }
+            if ($m['Statut'] === 'ATT') {
+                continue;
+            }
+            // Non-ON, non-ATT (END): candidate only for the warm-up fallback
             $t = $this->hhmmToMinutes($m['Heure_match']);
-            if ($t <= $workingMinutes && $t > $bestTime) {
-                $bestTime = $t;
-                $bestIdx  = $i;
+            if ($t <= $workingMinutes && $t > $fallbackTime) {
+                $fallbackTime = $t;
+                $fallbackIdx  = $i;
             }
         }
 
-        if ($bestIdx === -1) {
+        if ($fallbackIdx === -1) {
             return ['id' => null, 'time' => null, 'num' => null];
         }
 
         return [
-            'id'   => (int) $matches[$bestIdx]['Id'],
-            'time' => $matches[$bestIdx]['Heure_match'],
-            'num'  => $matches[$bestIdx]['Numero_ordre'] !== null ? (int) $matches[$bestIdx]['Numero_ordre'] : null,
+            'id'   => (int) $matches[$fallbackIdx]['Id'],
+            'time' => $matches[$fallbackIdx]['Heure_match'],
+            'num'  => $matches[$fallbackIdx]['Numero_ordre'] !== null ? (int) $matches[$fallbackIdx]['Numero_ordre'] : null,
         ];
     }
 
-    private function getNextMatch(array $matches, string $pitch, int $workingMinutes): array
+    /**
+     * Next match on a pitch = the first ATT match scheduled after the current one.
+     *
+     * Anchored to the current match's Heure_match (not to the simulated clock) so a
+     * late-running programme still shows the real upcoming game. If there is no
+     * current match, the earliest ATT match after the working time is used.
+     *
+     * @param array{id: int|null, time: string|null, num: int|null} $current
+     */
+    private function getNextMatch(array $matches, string $pitch, array $current, int $workingMinutes): array
     {
+        $anchorMinutes = $current['time'] !== null
+            ? $this->hhmmToMinutes($current['time'])
+            : $workingMinutes;
+
         foreach ($matches as $m) {
             if ($m['Terrain'] != $pitch || $m['Statut'] !== 'ATT') {
                 continue;
             }
-            $t = $this->hhmmToMinutes($m['Heure_match']);
-            if ($t > $workingMinutes) {
+            // Rows are ordered by Heure_match ASC, so the first ATT strictly after
+            // the current match is the next one to be played.
+            if ($this->hhmmToMinutes($m['Heure_match']) > $anchorMinutes) {
                 return [
                     'id'   => (int) $m['Id'],
                     'time' => $m['Heure_match'],
