@@ -122,14 +122,17 @@ async function openMonitor(c: WorkerConfig) {
 
 async function refreshMonitor() {
   if (!monitorConfig.value) return
+  // Read the freshest config from `configs` (refreshed every 5s by loadStatus) so the
+  // simulated clock keeps advancing; monitorConfig is only a snapshot from modal open.
+  const live = configs.value.find(c => c.idEvent === monitorConfig.value!.idEvent) ?? monitorConfig.value
   try {
     monitorData.value = await api.get<WorkerMonitor>(
-      `/admin/events/worker/${monitorConfig.value.idEvent}/monitor`,
+      `/admin/events/worker/${live.idEvent}/monitor`,
       {
-        dateEvent: monitorConfig.value.dateEvent,
-        hourEvent: monitorConfig.value.currentSimulatedTime.slice(0, 5),
-        offsetEvent: monitorConfig.value.offsetEvent,
-        pitchEvent: monitorConfig.value.pitchEvent,
+        dateEvent: live.dateEvent,
+        hourEvent: live.currentSimulatedTime.slice(0, 5),
+        offsetEvent: live.offsetEvent,
+        pitchEvent: live.pitchEvent,
       }
     )
     monitorLastUpdate.value = new Date().toLocaleTimeString()
