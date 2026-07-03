@@ -33,7 +33,7 @@ class EventCacheWorkerCommand extends Command
 {
     private bool $running = true;
 
-    /** @var array<int, array{startTime: float, initialTime: int, idEvent: int}> */
+    /** @var array<int, array{startTime: int, initialTime: int, idEvent: int}> */
     private array $eventStates = [];
 
     public function __construct(
@@ -127,10 +127,17 @@ class EventCacheWorkerCommand extends Command
         $configId = (int) $config['id'];
         $idEvent  = (int) $config['id_event'];
 
+        // Clock origin = created_at (reset to NOW() on every start by the controller).
+        // Using the persisted created_at instead of an in-process microtime() ensures
+        // the daemon's simulated clock stays identical to the one AdminEventWorkerController
+        // shows on the app4 card & monitor — same anchor, no drift between the two.
+        $startTime   = (int) strtotime($config['created_at']);
+        $initialTime = (int) strtotime($config['date_event'] . ' ' . $config['hour_event_initial']);
+
         if (!isset($this->eventStates[$configId])) {
             $this->eventStates[$configId] = [
-                'startTime'   => microtime(true),
-                'initialTime' => (int) strtotime($config['date_event'] . ' ' . $config['hour_event_initial']),
+                'startTime'   => $startTime,
+                'initialTime' => $initialTime,
                 'idEvent'     => $idEvent,
             ];
             $io->writeln(sprintf(
@@ -141,11 +148,10 @@ class EventCacheWorkerCommand extends Command
             ));
         }
 
-        $state = $this->eventStates[$configId];
-
-        // Simulated current time = initial event time + real elapsed seconds
-        $elapsed              = microtime(true) - $state['startTime'];
-        $currentSimulatedTime = $state['initialTime'] + (int) $elapsed;
+        // Simulated current time = initial event time + real seconds elapsed since
+        // created_at (the shared clock origin).
+        $elapsed              = max(0, time() - $startTime);
+        $currentSimulatedTime = $initialTime + $elapsed;
         $currentHourEvent     = date('H:i', $currentSimulatedTime);
 
         // Apply the warm-up offset to compute the "working" time used for selection
