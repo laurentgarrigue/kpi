@@ -69,7 +69,7 @@ class EventCacheService
         $result = [];
         foreach ($eventPitches as $pitch) {
             $best = $this->getBestMatch($matches, (string) $pitch, $timeWork);
-            $next = $this->getNextMatch($matches, (string) $pitch, $timeWork);
+            $next = $this->getNextMatch($matches, (string) $pitch, $best, $timeWork);
 
             $this->writePitch($idEvent, (string) $pitch, $best['id'], $next);
 
@@ -227,28 +227,43 @@ class EventCacheService
      */
     private function getBestMatch(array $matches, string $pitch, int $time): array
     {
-        $bestIdx  = -1;
-        $bestTime = 0;
+        // Current match on a pitch = the one flagged Statut = 'ON'. The live Statut
+        // is authoritative (staff flip matches ON/END as they play), so it stays
+        // correct even when the real programme runs late. If none is ON yet (warm-up
+        // before the first game), fall back to the latest scheduled match at or
+        // before the working time so the pitch file is not empty.
+        $fallbackIdx  = -1;
+        $fallbackTime = 0;
 
         foreach ($matches as $i => $m) {
-            if ((string) $m['Terrain'] !== $pitch || $m['Statut'] === 'ATT') {
+            if ((string) $m['Terrain'] !== $pitch) {
+                continue;
+            }
+            if ($m['Statut'] === 'ON') {
+                return [
+                    'id'   => (int) $m['Id'],
+                    'time' => $m['Heure_match'],
+                    'num'  => $m['Numero_ordre'] !== null ? (int) $m['Numero_ordre'] : null,
+                ];
+            }
+            if ($m['Statut'] === 'ATT') {
                 continue;
             }
             $t = $this->hhmmToMinutes($m['Heure_match']);
-            if ($t <= $time && ($bestIdx === -1 || $bestTime < $t)) {
-                $bestIdx  = $i;
-                $bestTime = $t;
+            if ($t <= $time && ($fallbackIdx === -1 || $fallbackTime < $t)) {
+                $fallbackIdx  = $i;
+                $fallbackTime = $t;
             }
         }
 
-        if ($bestIdx === -1) {
+        if ($fallbackIdx === -1) {
             return ['id' => null, 'time' => null, 'num' => null];
         }
 
         return [
-            'id'   => (int) $matches[$bestIdx]['Id'],
-            'time' => $matches[$bestIdx]['Heure_match'],
-            'num'  => $matches[$bestIdx]['Numero_ordre'] !== null ? (int) $matches[$bestIdx]['Numero_ordre'] : null,
+            'id'   => (int) $matches[$fallbackIdx]['Id'],
+            'time' => $matches[$fallbackIdx]['Heure_match'],
+            'num'  => $matches[$fallbackIdx]['Numero_ordre'] !== null ? (int) $matches[$fallbackIdx]['Numero_ordre'] : null,
         ];
     }
 
@@ -257,8 +272,14 @@ class EventCacheService
      *
      * @return array{id: int|null, time: string|null, num: int|null}
      */
-    private function getNextMatch(array $matches, string $pitch, int $time): array
+    private function getNextMatch(array $matches, string $pitch, array $current, int $time): array
     {
+        // Next match = the first ATT match scheduled after the current one. Anchored
+        // to the current match's Heure_match (not the simulated clock) so a
+        // late-running programme still shows the real upcoming game. Rows are ordered
+        // by Heure_match ASC. If there is no current match, anchor on the working time.
+        $anchor = $current['time'] !== null ? $this->hhmmToMinutes($current['time']) : $time;
+
         $nextIdx = -1;
 
         foreach ($matches as $i => $m) {
@@ -266,7 +287,7 @@ class EventCacheService
                 continue;
             }
             $t = $this->hhmmToMinutes($m['Heure_match']);
-            if ($nextIdx === -1 && $t <= $time) {
+            if ($nextIdx === -1 && $t > $anchor) {
                 $nextIdx = $i;
             }
         }
