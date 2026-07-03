@@ -33,12 +33,43 @@ const monitorLastUpdate = ref<string>('')
 const confirmStopOpen = ref(false)
 const confirmStopAll = ref(false)
 const confirmStopIdEvent = ref<number | null>(null)
+// Wall-clock ref ticked every second while the monitor is open, so the displayed
+// simulated clock advances smoothly instead of jumping with the loadStatus cadence.
+const nowTick = ref(Date.now())
 
 let statusTimer: ReturnType<typeof setInterval> | null = null
 let monitorTimer: ReturnType<typeof setInterval> | null = null
+let clockTimer: ReturnType<typeof setInterval> | null = null
 
 // ─── Computed ───
 const hasRunning = computed(() => configs.value.some(c => c.isRunning))
+
+// Simulated event clock = initial event time + real seconds elapsed since createdAt.
+// Mirrors AdminEventWorkerController::enrichConfig so the monitor stays in sync with
+// the JSON the worker daemon generates, and keeps ticking between backend refreshes.
+function simulatedMinutes(cfg: WorkerConfig): number {
+  const started = new Date(cfg.createdAt.replace(' ', 'T')).getTime()
+  const [h = 0, m = 0] = cfg.hourEventInitial.split(':').map(Number)
+  const initialMinutes = h * 60 + m
+  const elapsedMin = Math.max(0, Math.floor((nowTick.value - started) / 60000))
+  return initialMinutes + elapsedMin
+}
+
+function minutesToHhmm(total: number): string {
+  const h = Math.floor(total / 60) % 24
+  const m = total % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+const monitorClock = computed(() => {
+  if (!monitorConfig.value) return null
+  const live = configs.value.find(c => c.idEvent === monitorConfig.value!.idEvent) ?? monitorConfig.value
+  const current = simulatedMinutes(live)
+  return {
+    currentTime: minutesToHhmm(current),
+    workingTime: minutesToHhmm(current + live.offsetEvent),
+  }
+})
 
 function eventLabel(idEvent: number): string {
   const e = events.value.find(e => e.id === idEvent)
@@ -115,9 +146,12 @@ async function confirmStop() {
 async function openMonitor(c: WorkerConfig) {
   monitorConfig.value = c
   monitorOpen.value = true
+  nowTick.value = Date.now()
   await refreshMonitor()
   if (monitorTimer) clearInterval(monitorTimer)
   monitorTimer = setInterval(refreshMonitor, c.delayEvent * 1000)
+  if (clockTimer) clearInterval(clockTimer)
+  clockTimer = setInterval(() => { nowTick.value = Date.now() }, 1000)
 }
 
 async function refreshMonitor() {
@@ -130,7 +164,9 @@ async function refreshMonitor() {
       `/admin/events/worker/${live.idEvent}/monitor`,
       {
         dateEvent: live.dateEvent,
-        hourEvent: live.currentSimulatedTime.slice(0, 5),
+        // Client-computed simulated time so the match selection matches the clock shown
+        // in the footer and keeps advancing even if currentSimulatedTime stagnates.
+        hourEvent: minutesToHhmm(simulatedMinutes(live)),
         offsetEvent: live.offsetEvent,
         pitchEvent: live.pitchEvent,
       }
@@ -144,6 +180,7 @@ function closeMonitor() {
   monitorConfig.value = null
   monitorData.value = null
   if (monitorTimer) { clearInterval(monitorTimer); monitorTimer = null }
+  if (clockTimer) { clearInterval(clockTimer); clockTimer = null }
 }
 
 function setQuickDate(d: WorkerDate) {
@@ -174,6 +211,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (statusTimer) clearInterval(statusTimer)
   if (monitorTimer) clearInterval(monitorTimer)
+  if (clockTimer) clearInterval(clockTimer)
 })
 </script>
 
@@ -394,9 +432,9 @@ onBeforeUnmount(() => {
                 </tbody>
               </table>
               <div class="mt-3 flex items-center justify-between text-xs text-header-600 dark:text-header-300 pt-2 border-t border-header-100 dark:border-header-800">
-                <span>
-                  {{ t('eventCacheManager.monitor.time_current') }} {{ monitorData.time.currentTime }} ·
-                  {{ t('eventCacheManager.monitor.time_working') }} {{ monitorData.time.workingTime }}
+                <span v-if="monitorClock">
+                  {{ t('eventCacheManager.monitor.time_current') }} {{ monitorClock.currentTime }} ·
+                  {{ t('eventCacheManager.monitor.time_working') }} {{ monitorClock.workingTime }}
                 </span>
                 <span v-if="monitorLastUpdate">{{ t('eventCacheManager.monitor.last_update', { time: monitorLastUpdate }) }}</span>
               </div>
