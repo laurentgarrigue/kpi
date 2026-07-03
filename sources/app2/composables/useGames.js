@@ -296,7 +296,7 @@ export const useGames = () => {
       case 'Today':
         newFilteredGames = newFilteredGames.filter(value => value.g_date === dayjs().format('YYYY-MM-DD'))
         break
-      case 'Tomorrow':
+      case 'Tomorow':
         newFilteredGames = newFilteredGames.filter(
           value => value.g_date === dayjs().add(1, 'day').format('YYYY-MM-DD')
         )
