@@ -86,8 +86,6 @@ class GamesController extends AbstractController
                 AND c.Publication = 'O'
                 AND j.Publication = 'O'
                 AND m.Publication = 'O'
-                AND j.Phase != 'Break'
-                AND j.Phase != 'Pause'
                 ORDER BY m.Date_match, m.Heure_match, m.Terrain";
         } else {
             $sql = "SELECT j.Code_competition c_code, c.Code_saison c_season, j.Phase d_phase, j.Niveau d_level,
