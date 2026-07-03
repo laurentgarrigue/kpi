@@ -38,7 +38,7 @@ jq(document).ready(function(){
         ],
         initComplete: function () {
             // filtres date, categorie, lieu terrain
-            this.api().columns([1,2,3,4]).every( function () {
+            this.api().columns([1,2,3,4]).every( function ( colIdx ) {
                 var column = this;
                 var select = jq('<select><option value="">Tout</option></select>')
                     .appendTo( jq(column.footer()).empty() )
@@ -50,9 +50,29 @@ jq(document).ready(function(){
                             .search( val, true, false )
                             .draw();
                     } );
-                column.cache( 'search' ).unique().sort().each( function ( d, j ) {
-                    select.append( '<option value="'+d+'">'+d+'</option>' );
-                } );
+                if ( colIdx === 1 ) {
+                    // colonne Date : trier chronologiquement (data-order = Date_EN) et non alphabétiquement
+                    var search = column.cache( 'search' ).toArray();
+                    var order = column.cache( 'order' ).toArray();
+                    var seen = {};
+                    var dates = [];
+                    for ( var k = 0; k < search.length; k++ ) {
+                        if ( ! seen.hasOwnProperty( search[k] ) ) {
+                            seen[ search[k] ] = true;
+                            dates.push( { label: search[k], sort: order[k] } );
+                        }
+                    }
+                    dates.sort( function ( a, b ) {
+                        return a.sort < b.sort ? -1 : ( a.sort > b.sort ? 1 : 0 );
+                    } );
+                    dates.forEach( function ( d ) {
+                        select.append( '<option value="'+d.label+'">'+d.label+'</option>' );
+                    } );
+                } else {
+                    column.cache( 'search' ).unique().sort().each( function ( d, j ) {
+                        select.append( '<option value="'+d+'">'+d+'</option>' );
+                    } );
+                }
             } );
             
             // filtre équipes
@@ -138,7 +158,7 @@ jq(document).ready(function(){
         ],
         initComplete: function () {
             // filtres date, categorie, lieu terrain
-            this.api().columns([1,2,3,4]).every( function () {
+            this.api().columns([1,2,3,4]).every( function ( colIdx ) {
                 var column = this;
                 var select = jq('<select><option value="">All</option></select>')
                     .appendTo( jq(column.footer()).empty() )
@@ -150,9 +170,29 @@ jq(document).ready(function(){
                             .search( val, true, false )
                             .draw();
                     } );
-                column.cache( 'search' ).unique().sort().each( function ( d, j ) {
-                    select.append( '<option value="'+d+'">'+d+'</option>' );
-                } );
+                if ( colIdx === 1 ) {
+                    // colonne Date : trier chronologiquement (data-order = Date_EN) et non alphabétiquement
+                    var search = column.cache( 'search' ).toArray();
+                    var order = column.cache( 'order' ).toArray();
+                    var seen = {};
+                    var dates = [];
+                    for ( var k = 0; k < search.length; k++ ) {
+                        if ( ! seen.hasOwnProperty( search[k] ) ) {
+                            seen[ search[k] ] = true;
+                            dates.push( { label: search[k], sort: order[k] } );
+                        }
+                    }
+                    dates.sort( function ( a, b ) {
+                        return a.sort < b.sort ? -1 : ( a.sort > b.sort ? 1 : 0 );
+                    } );
+                    dates.forEach( function ( d ) {
+                        select.append( '<option value="'+d.label+'">'+d.label+'</option>' );
+                    } );
+                } else {
+                    column.cache( 'search' ).unique().sort().each( function ( d, j ) {
+                        select.append( '<option value="'+d+'">'+d+'</option>' );
+                    } );
+                }
             } );
             
             // filtre équipes
