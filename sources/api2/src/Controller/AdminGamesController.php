@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\EventCacheService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -26,8 +27,30 @@ class AdminGamesController extends AbstractController
     use AdminLoggableTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly EventCacheService $eventCache,
     ) {
+    }
+
+    /**
+     * Regenerate the live overlay cache (<idMatch>_match_global.json) for a match.
+     *
+     * The cache file is a snapshot consumed by the TV / scoreboard overlays. It is first
+     * written when the match appears as "next" on a pitch — often before the teams of a
+     * later round are known — and is otherwise never refreshed. Every mutation that changes
+     * a field exposed in that snapshot (teams, status, schedule, referees…) must therefore
+     * rewrite it, exactly like the legacy admin/v2/StatutPeriode.php did after each update.
+     *
+     * Failures are swallowed: the DB update already succeeded and the overlay cache is
+     * regenerated on the next worker pass anyway — a cache write must never fail the request.
+     */
+    private function refreshMatchCache(int $idMatch): void
+    {
+        try {
+            $this->eventCache->generateMatchGlobal($idMatch);
+        } catch (\Throwable) {
+            // Non-fatal: the overlay cache is best-effort.
+        }
     }
 
     /**
@@ -119,6 +142,14 @@ class AdminGamesController extends AbstractController
             $where[] = 'm.Id_journee = ?';
             $params[] = (int) $journeeId;
         }
+
+        // Snapshot the scope filters (competition/event/tour/journee + profile restrictions)
+        // BEFORE the transient date/terrain/search filters are appended. The date dropdown must
+        // always list every available date for the current competition scope, independent of the
+        // date currently selected — otherwise selecting a date would shrink the list to that one
+        // date, leaving the persisted selection with no matching <option> after a reload.
+        $datesWhere = $where;
+        $datesParams = $params;
 
         // Date filter
         if (!empty($date)) {
@@ -217,17 +248,19 @@ class AdminGamesController extends AbstractController
         $singleCompetition = count($competitionCodes) === 1 ? $competitionCodes[0] : '';
         $phaseLibelle = $this->detectPhaseLibelle($singleCompetition, $season, $rows);
 
-        // Collect distinct dates
+        // Collect distinct dates for the date dropdown. Uses the scope-only where clause
+        // (no date/terrain/search) so the full list is returned regardless of the selected date.
+        $datesWhereClause = 'WHERE ' . implode(' AND ', $datesWhere);
         $datesSql = "SELECT DISTINCT m.Date_match
                      FROM kp_match m
                      INNER JOIN kp_journee j ON m.Id_journee = j.Id
                      LEFT JOIN kp_competition_equipe cea ON m.Id_equipeA = cea.Id
                      LEFT JOIN kp_competition_equipe ceb ON m.Id_equipeB = ceb.Id
                      $joinEvent
-                     $whereClause
+                     $datesWhereClause
                      AND m.Date_match IS NOT NULL
                      ORDER BY m.Date_match";
-        $datesRows = $this->connection->prepare($datesSql)->executeQuery($params)->fetchAllAssociative();
+        $datesRows = $this->connection->prepare($datesSql)->executeQuery($datesParams)->fetchAllAssociative();
         $dates = array_map(fn($r) => $r['Date_match'], $datesRows);
 
         $games = array_map(function ($row) use ($allowedJournees) {
@@ -511,6 +544,8 @@ class AdminGamesController extends AbstractController
 
         $this->logActionForMatch('Modification match', $existing['Code_saison'], $existing['Code_competition'], (int) $existing['Id_journee'], $id);
 
+        $this->refreshMatchCache($id);
+
         return $this->json(['message' => 'Game updated']);
     }
 
@@ -661,6 +696,8 @@ class AdminGamesController extends AbstractController
 
         $this->logActionForMatch('Modification match inline', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $field);
 
+        $this->refreshMatchCache($id);
+
         return $this->json(['id' => $id, 'field' => $field, 'value' => $value]);
     }
 
@@ -693,6 +730,8 @@ class AdminGamesController extends AbstractController
 
         $this->logActionForMatch('Publication match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
 
+        $this->refreshMatchCache($id);
+
         return $this->json(['id' => $id, 'publication' => $newValue]);
     }
 
@@ -724,6 +763,8 @@ class AdminGamesController extends AbstractController
         $this->connection->update('kp_match', ['Validation' => $newValue, 'Code_uti' => $user?->getUserIdentifier()], ['Id' => $id]);
 
         $this->logActionForMatch('Validation match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
+
+        $this->refreshMatchCache($id);
 
         return $this->json(['id' => $id, 'validation' => $newValue]);
     }
@@ -803,6 +844,8 @@ class AdminGamesController extends AbstractController
         $this->connection->update('kp_match', $update, ['Id' => $id]);
 
         $this->logActionForMatch('Statut match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
+
+        $this->refreshMatchCache($id);
 
         return $this->json(['id' => $id, 'statut' => $newValue, 'periode' => $periode]);
     }
@@ -894,6 +937,8 @@ class AdminGamesController extends AbstractController
         }
 
         $this->logActionForMatch('Changement équipe match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, "équipe $team -> " . ($teamName ?? 'vide'));
+
+        $this->refreshMatchCache($id);
 
         return $this->json(['id' => $id, 'team' => $team, 'idEquipe' => $updateVal, 'equipe' => $teamName]);
     }
