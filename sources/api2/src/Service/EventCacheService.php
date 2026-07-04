@@ -296,10 +296,15 @@ class EventCacheService
             return ['id' => null, 'time' => null, 'num' => null];
         }
 
-        $idNext = (int) $matches[$nextIdx]['Id'];
+        $idNext   = (int) $matches[$nextIdx]['Id'];
+        $nextFile = $this->cacheDir . '/' . $idNext . '_match_global.json';
 
-        // Generate the global file for the upcoming match if not yet present
-        if (!is_file($this->cacheDir . '/' . $idNext . '_match_global.json')) {
+        // Generate the global file for the upcoming match if not yet present, or
+        // refresh it if it was written too early (before the teams were assigned)
+        // and both teams are now known in the database. Without this, a next-game
+        // overlay generated before the draw stays stuck with equipe1/equipe2 = null
+        // forever, since the file already exists.
+        if (!is_file($nextFile) || $this->matchGlobalMissingTeams($nextFile, $matches[$nextIdx])) {
             $this->generateMatchGlobal($idNext);
         }
 
@@ -308,6 +313,34 @@ class EventCacheService
             'time' => $matches[$nextIdx]['Heure_match'],
             'num'  => $matches[$nextIdx]['Numero_ordre'] !== null ? (int) $matches[$nextIdx]['Numero_ordre'] : null,
         ];
+    }
+
+    /**
+     * True when an already-written match_global.json is missing its teams
+     * (equipe1/equipe2 ids null) while the match row now has both teams assigned.
+     * Used to refresh a "next game" overlay generated before the draw.
+     *
+     * @param array<string, mixed> $matchRow the kp_match row for the next match
+     */
+    private function matchGlobalMissingTeams(string $file, array $matchRow): bool
+    {
+        // Nothing to refresh unless the database now has both teams
+        if ((int) $matchRow['Id_equipeA'] <= 0 || (int) $matchRow['Id_equipeB'] <= 0) {
+            return false;
+        }
+
+        $content = @file_get_contents($file);
+        if ($content === false) {
+            return false;
+        }
+
+        $data = json_decode($content, true);
+        if (!is_array($data)) {
+            // Unreadable/corrupt file → let it be regenerated
+            return true;
+        }
+
+        return empty($data['equipe1']['id']) || empty($data['equipe2']['id']);
     }
 
     // ─────────────────────────────────────────────
