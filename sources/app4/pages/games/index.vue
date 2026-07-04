@@ -583,9 +583,10 @@ const loadGames = async (keepSelection = false) => {
     total.value = response.total
     totalPages.value = response.totalPages
     phaseLibelle.value = response.phaseLibelle
-    if (!selectedDate.value) {
-      availableDates.value = response.dates || []
-    }
+    // The backend returns the full date list for the current competition scope regardless of the
+    // selected date, so always refresh it — otherwise a persisted date restored on reload would
+    // have no matching <option> (empty dropdown showing only "all").
+    availableDates.value = response.dates || []
 
     if (keepSelection) {
       // After bulk action: keep only IDs that still exist in the reloaded data
