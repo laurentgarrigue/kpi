@@ -45,9 +45,6 @@ const editingOriginalValue = ref('')
 const bulkActionsOpen = ref(false)
 const bulkActionsRef = ref<HTMLDivElement | null>(null)
 
-// Bulk init starters (confirm modal)
-const bulkInitStartersModalOpen = ref(false)
-
 // Presence sheet dropdown state
 const openDropdownId = ref<number | null>(null)
 const dropdownStyle = ref<{ top: string; left: string }>({ top: '0px', left: '0px' })
@@ -986,6 +983,16 @@ const getLogoUrl = (team: CompetitionTeam) => {
           <div class="flex-1" />
 
           <!-- Common actions (right) -->
+
+          <!-- Init starters (all teams) -->
+          <button
+            v-if="canManageSpecialOps && teams.length > 0 && selectedIds.length === 0"
+            class="px-3 py-2 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm flex items-center gap-1"
+            @click="initStartersModalOpen = true"
+          >
+            <UIcon name="heroicons:user-group" class="w-5 h-5" />
+            {{ t('teams_page.init_starters') }}
+          </button>
 
           <!-- Update logos -->
           <button
