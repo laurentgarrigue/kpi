@@ -5,6 +5,12 @@ depuis la saisie sur le matériel de la table de marque jusqu'à l'incrustation 
 Le mode **complet propriétaire** est décrit en priorité ; les modes **alternatifs et dégradés** (feuille
 de marque KPI, saisie a posteriori) font l'objet de la **§14**.
 
+> **Documents liés** : les trajectoires de refonte sont comparées dans
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
+> (révisé), et la revue critique — principes DRY/SOLID/DDD/TDD, décisions structurantes, périmètre
+> de consolidation du legacy — dans
+> [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+
 - **Code concerné** :
   - `sources/app_wsm_dev/` — application **WSM** (WebSocket Manager)
   - `sources/app_live_dev/` — application **Live** (incrustation)
@@ -812,6 +818,14 @@ Le même cache JSON alimente plusieurs consommateurs — ce n'est pas propre à 
 >
 > Chaque famille existe en version *nations* (`score*`) et *clubs* (`score_club*`).
 > `presentationHD.php` s'appuie sur `score.js` (pas `match.js`) mais lit le même cache.
+
+> ⚠️ **Dette identifiée — cible de consolidation (DRY).** Cette famille représente **~20 pages
+> quasi dupliquées** : mêmes données, variantes mécaniques nations/clubs × suffixes d'affichage
+> (`_o`/`_e`/`_s`/HD). C'est **le plus gros gisement d'harmonisation du legacy live**, et la
+> condition de la mort du cache JSON fichier : tant que ces pages existent, la génération de cache
+> reste obligatoire. La refonte prévoit leur consolidation en page(s) paramétrée(s) — voir
+> [propositions §9, phase P3bis](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) et
+> [revue §4](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
 
 Points à retenir :
 - **`app_live` n'est pas 100 % broker** : il lit aussi le cache (score `_match_score`, chrono

@@ -4,6 +4,13 @@
 > pour cela voir [LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md).
 > Il ne modifie aucun code ; il compare des trajectoires de refonte avec avantages,
 > inconvénients, forces, faiblesses et complexité de mise en œuvre.
+>
+> **Révisé suite à la revue critique**
+> [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md) (principes
+> DRY/SOLID/DDD/TDD, vérification contre le code réel). Principales corrections : P0 réduit à
+> zéro code, agent « semi-dumb » au lieu de « smart », abandon du nommage « v2 », extension de
+> `ScoringController` en place, `kp_*` reste canonique, timestamps client sous replay, décisions
+> d'arbitrage tranchées en amont, phase de consolidation du chemin de lecture ajoutée.
 
 ---
 
@@ -195,12 +202,23 @@ sinon on redéplace sur l'agent la complexité qu'on cherche justement à suppri
 **décide** rien du match : il transmet des commandes ; c'est le serveur qui les **impute** au bon
 match courant (§7.4, `active_source`).
 
-**Deux variantes selon où vit la traduction (rôle 2) :**
+**Trois variantes selon où vit la traduction (rôle 2) :**
 
 | Variante | Ce que fait l'agent | Force | Faiblesse |
 |----------|---------------------|-------|-----------|
-| **Agent « dumb pipe »** | relaie les messages STOMP **bruts** vers KPI ; le **worker serveur traduit** | boîtier quasi immuable (jamais de MAJ métier) ; **une seule** version de la logique propriétaire (serveur) | traduction dépend du lien Internet (le buffer couvre les coupures) |
-| **Agent « smart »** *(recommandé)* | **traduit** (réutilise `wsMixin.js`) et POST des **commandes normalisées** (`goal`, `card`, `clock run/stop`) | **autonome** ; buffer local rejoue des **commandes propres** après coupure | logique propriétaire sur le boîtier → à mettre à jour à distance (fleet) |
+| **Agent « dumb pipe »** | relaie les messages STOMP **bruts** vers KPI ; le **worker serveur traduit** | boîtier quasi immuable (jamais de MAJ métier) ; **une seule** version de la logique propriétaire (serveur) | bufferise aussi le tic-tac des chronos (plusieurs messages/s) → buffer volumineux, dédoublonnage serveur |
+| **Agent « semi-dumb »** *(recommandé)* | **filtre** les ticks de chrono (ne transmet que les **transitions** — ce que `wsMixin.js` fait déjà implicitement) et relaie les trames **brutes filtrées** ; la traduction propriétaire vit **une seule fois côté serveur** (ACL) | boîtier quasi-firmware (le filtrage de ticks est stable, jamais de MAJ métier) ; buffer petit (transitions seules) ; **DRY** : une seule implémentation de la logique propriétaire, versionnée avec le reste | le filtrage doit connaître la forme minimale des trames chrono (risque faible : format stable) |
+| **Agent « smart »** | **traduit** (réutilise `wsMixin.js`) et POST des **commandes normalisées** (`goal`, `card`, `clock run/stop`) | autonome ; buffer local rejoue des **commandes propres** après coupure | **duplique la logique propriétaire sur une flotte de boîtiers** à mettre à jour à distance (fleet) — contradiction directe avec l'objectif d'harmonisation |
+
+> **Pourquoi pas « smart »** : le binaire dumb/smart initialement posé était faux. Le seul vrai
+> argument pro-smart (ne pas bufferiser le tic-tac) est couvert par le filtrage de ticks du
+> semi-dumb, qui conserve l'atout décisif du dumb pipe : **la traduction propriétaire n'existe qu'à un
+> seul endroit**, côté serveur, testable par golden files (sessions STOMP enregistrées → écritures
+> attendues). Voir la revue, §3.4.
+>
+> **Kit boîtier** : prévoir NTP obligatoire (cf. §7.8.2, timestamps client) et une **clé 4G** de
+> secours — « ne dépend pas du réseau du site » suppose quand même une sortie Internet, or Wi-Fi
+> captif et filtrage sortant existent sur les sites sportifs.
 
 ### 5.2 Avantages / Forces
 - **O1 atteint** : plus d'onglet à surveiller ; le boîtier démarre au boot, tourne tout seul.
@@ -230,20 +248,25 @@ config réseau du site.
 
 ### 6.1 Principe
 
-On **garde** `app_wsm` dans un navigateur mais on attaque chaque cause de fragilité :
+On **garde** `app_wsm` dans un navigateur mais on attaque les causes de fragilité **par la seule
+configuration d'exploitation — zéro code applicatif** :
 
-- **Service Worker + PWA** : la logique de relais migre dans un Service Worker (survit à la
-  fermeture d'onglet, tourne en arrière-plan tant que le navigateur vit).
 - **Mode kiosque** : poste dédié en kiosk (Chrome `--kiosk`), veille désactivée, relance auto de
   Chrome par l'OS si crash.
 - **Watchdog** : heartbeat vers le serveur ; si le heartbeat s'arrête, alerte (mail/notif) pour
   intervention humaine.
 - **`databaseSync` toujours ON**, plus de piège de config (suppression des réglages dangereux).
 
+> ~~**Service Worker + PWA** : la logique de relais migre dans un Service Worker~~ — **écarté**
+> (revue §3.3) : investir du code dans une architecture qu'on a décidé de tuer contredit l'objectif
+> de consolidation, pour un gain que ce document qualifiait lui-même de partiel (un SW n'est pas un
+> démon : throttling, kill mémoire, pas de redémarrage sans onglet). P0 doit rester **jetable par
+> construction**.
+
 ### 6.2 Avantages / Forces
-- **Effort le plus faible** : on capitalise 100 % de `app_wsm` existant.
+- **Effort quasi nul** : pure configuration d'exploitation, on capitalise 100 % de `app_wsm` existant.
 - Pas de matériel nouveau si un poste est déjà sur place.
-- Améliore réellement O2 (kiosk relance) et réduit O1 (SW survit à l'onglet).
+- Améliore réellement O2 (kiosk relance) sans écrire une ligne de code à jeter ensuite.
 
 ### 6.3 Inconvénients / Faiblesses
 - **N'élimine pas O1** : il faut toujours un **poste allumé** avec un navigateur vivant. Un Service
@@ -328,14 +351,32 @@ naturellement :
 C'est **le** bénéfice décisif. Puisque l'état vit en base et non dans la source :
 
 1. On introduit un champ **`active_source` par terrain/match** (ex. `HARDWARE`, `MANUAL`, `SCORE_ONLY`).
-2. Basculer = **changer `active_source`** ; l'état déjà en base est **conservé tel quel**.
-3. Règle d'**arbitrage** pour éviter les conflits (deux sources qui écrivent) :
-   - Écritures **taguées par source** + `updated_at` ; la source **non active** est ignorée (ou
-     journalisée en shadow) tant qu'elle n'est pas promue.
-   - Ou stratégie *last-write-wins* horodatée si l'on veut autoriser le co-pilotage.
+2. Basculer = **changer `active_source`** (une « **promotion de source** », horodatée et journalisée) ;
+   l'état déjà en base est **conservé tel quel**.
+3. Règle d'**arbitrage — tranchée : source active exclusive** (pas de *last-write-wins* / co-pilotage,
+   trop risqué en situation de match) :
+   - Chaque commande porte **`{source, client_ts, idempotency_key}`** ; les commandes d'une source
+     **non active** sont **journalisées en shadow**, jamais appliquées.
+   - Au **replay** du buffer d'un agent, les commandes **antérieures à la dernière promotion de
+     source** sont **rejetées** : elles dateraient d'avant une bascule `HARDWARE → MANUAL` et
+     écraseraient des corrections manuelles. L'`idempotency_key` protège du double-replay.
+   - **Ré-ancrage de la baseline** : la propriétaire envoie des **scores cumulés** ; l'action but/annulation
+     est déduite **par comparaison avec l'état précédent**. Après resync ou redémarrage d'agent,
+     cette baseline est perdue → la première trame post-resync sert à **ré-ancrer** la comparaison
+     (aucun événement n'en est déduit), sinon buts fantômes ou ratés.
 4. La reprise (agent qui revient après coupure) fait un **`GET` de l'état courant** puis se
    **resynchronise** dessus au lieu d'imposer son état local — inverse de la logique actuelle
    (où le local du navigateur fait foi).
+5. **Divergence base ↔ console de marque** : le console de marque a son **propre état, incorrigible à distance**
+   (hors `set-teams`). Si la base dit 3–2 et le console de marque 4–2, il n'y a **pas de résolution
+   automatique** : tant que `HARDWARE` est la source active, le hardware fait foi pour son terrain ;
+   la supervision app4 reçoit une **alerte de divergence** et l'opérateur tranche (correction
+   manuelle après bascule, ou resync).
+
+> **Sécurité de l'ingestion (prérequis P3)** : `/admin/scoring/*` est aujourd'hui derrière un JWT +
+> mandat conçus pour des **humains** (`ROLE_ADMIN`). Un agent non surveillé dans un gymnase exige
+> un **credential machine** : token **scopé événement + terrain**, durée de vie bornée à
+> l'événement, révocable depuis app4. À spécifier avant tout déploiement de boîtier.
 
 ### 7.5 Avantages / Forces
 - Répond à **O3–O7 d'un coup**, indépendamment du transport hardware.
@@ -400,8 +441,16 @@ avec seulement **quatre champs** :
 |----------------|------|
 | `init_ms` | valeur de départ du décompte (ex. `600000` = 10 min ; `60000` = shotclock) |
 | `elapsed_ms` | temps écoulé **figé au dernier arrêt** |
-| `started_at` | timestamp **serveur** du dernier `run` (null si arrêté) |
+| `started_at` | timestamp **client** du dernier `run` (null si arrêté) — voir encadré ci-dessous |
 | `running` | `true` / `false` |
+
+> ⚠️ **`started_at` est un timestamp *client*, pas serveur.** L'atout décisif de l'agent local
+> (option 2) est de **bufferiser pendant une coupure WAN** puis de rejouer : pendant la coupure,
+> aucun timestamp serveur n'existe, et tamponner à l'heure de **réception** au replay fausserait
+> toute l'horloge (un `run` rejoué 10 min plus tard décalerait le chrono de 10 min). Les commandes
+> portent donc leur **`client_ts`** (agent sous **NTP obligatoire** — au kit boîtier) ; le serveur
+> ne sert que de tie-breaker et de contrôle de dérive (rejet si `|client_ts − server_ts|` dépasse
+> un seuil hors replay).
 
 L'affichage est **dérivé** en temps réel côté écran :
 ```
@@ -500,6 +549,16 @@ même VPS) et est un **WebSocket natif non-STOMP** : `app_live` s'y abonne via
 On **réutilise ce canal** ; on change seulement **qui publie** : plus `app_wsm` dans un onglet, mais
 un **publieur serveur**.
 
+> **Alternative à instruire avant de reconduire le broker : Mercure.** Le mécanisme de `tick` de
+> version avec détection de trous et resync (§7.9.2) est conçu **à la main** — c'est très exactement
+> ce que **Mercure** (hub SSE idiomatique de l'écosystème Symfony) fournit nativement : reconnexion
+> avec `Last-Event-ID` = **replay automatique des messages manqués**, auth par JWT cohérente avec
+> api2, hub supervisé sur le même VPS, et un dépôt externe personnel de moins dans le chemin
+> critique. Le broker actuel reste défendable (les incrustations existantes le parlent déjà, et le
+> `tick` reste utile pour le resync depuis le cache), mais la décision doit être **prise sur
+> comparaison écrite, pas héritée**. Critères : coût de migration des abonnés (`app_live` + nouvelles
+> incrustations) vs coût de maintenir la logique tick/resync custom + le broker externe.
+
 #### 7.9.4 Le publieur DB → broker : quelle techno ?
 
 Le publieur est un **petit service serveur** qui : (1) détecte les changements d'état en base,
@@ -524,18 +583,19 @@ api2 après écriture (webhook interne), l'outbox restant le filet de sécurité
 
 | Techno | Pourquoi | Points d'attention |
 |--------|----------|--------------------|
-| **Symfony Messenger** *(recommandé pour du neuf en parallèle)* | pattern **natif Symfony 7.3** : `ScoringController` `dispatch()` un message `ScoringStateChanged` sur un **transport async** ; un `MessageHandler` le consomme et pousse au broker. Le « publieur » devient un simple `messenger:consume` (process Symfony standard, supervisé). **L'outbox = le transport `doctrine://`** (réutilise MariaDB, aucune infra nouvelle). | Messenger à activer (`messenger.yaml`, non configuré à ce jour) ; client WebSocket PHP dans le handler |
-| **PHP CLI worker** (jumeau Event Worker) | **même modèle opérationnel** que `event_worker.php` (boucle + `pcntl_signal`, supervisé). Réutilise `Bdd_PDO`. Pertinent surtout si l'on veut **fusionner** génération de cache + push broker dans un seul process. | client WebSocket PHP ; drainage d'outbox « à la main » (ce que Messenger fait pour vous) |
+| **Extension du worker api2 existant** *(recommandé)* | api2 a **déjà** son modèle de worker supervisé (`EventCacheWorkerCommand`, commande `app:event-cache-worker`) : y ajouter le **drainage de l'outbox** (lire `scoring_outbox`, pousser au broker, marquer `published_at`) = **un seul paradigme async** pour toute la stack, un seul process à exploiter. | client WebSocket PHP ; garder le drainage dans un **service dédié** (SRP), pas fondu dans la logique de cache |
+| **Symfony Messenger** | pattern **natif Symfony** : `dispatch()` d'un `ScoringStateChanged` sur un transport async ; le publieur = `messenger:consume`. **L'outbox = le transport `doctrine://`**. | **ni `symfony/messenger` ni `symfony/doctrine-messenger` ne sont installés** dans api2 (vérifié `composer.json` — Symfony **7.4**) : ajout de dépendances + config + failure transport + retries = un **2ᵉ paradigme de worker** à exploiter à côté du cache worker |
+| **PHP CLI worker legacy** (jumeau `event_worker.php`) | même modèle opérationnel que le worker legacy, réutilise `Bdd_PDO`. | prolonge le paradigme legacy hors api2 — contraire à la consolidation |
 | **Node.js worker** | WebSocket **natif/idéal** en Node (`ws`), réutilise la logique JS de `app_wsm`/`app_live`. | ajoute une techno de service à superviser côté serveur |
 
-> **Recommandation : Symfony Messenger avec transport `doctrine://`.** Raisons : (1) c'est le
-> pattern **transactional outbox** idiomatique — on `dispatch()` dans la même logique que l'écriture
-> d'état, et le transport Doctrine *est* l'outbox, en base, rejouable ; (2) **aucune infra
-> nouvelle** (réutilise MariaDB) ; (3) supervision standard (`messenger:consume` sous systemd/Docker) ;
-> (4) idéal pour un **module neuf en parallèle** (voir §7.10) sans toucher aux vieux fichiers PHP.
-> Le **PHP CLI worker jumeau de l'Event Worker** reste pertinent si l'on préfère **fusionner** cache
-> et push dans un seul process supervisé ; Node reste une alternative si l'on veut un pont WS
-> idiomatique.
+> **Recommandation révisée : étendre le worker api2 existant.** Pour quelques messages/seconde sur
+> 5 terrains, le drainage d'outbox « à la main » est trivial (une requête, une boucle), et l'enjeu
+> réel n'est pas le confort d'écriture mais le **nombre de paradigmes exploités en production** :
+> l'objectif de consolidation interdit d'ajouter un modèle async (`messenger:consume` + retries +
+> failure transport) à côté du worker existant pour un si petit volume. **Messenger reste un bon
+> choix à une condition** : s'engager à y migrer **aussi** le cache worker, pour ne pas exploiter
+> deux paradigmes en régime permanent. L'atomicité transactionnelle (encadré ci-dessous) est
+> identique dans les deux cas : c'est la **table outbox** qui la porte, pas Messenger.
 
 > ⚠️ **La « fusion » écriture-DB + envoi-broker se fait au niveau *atomicité*, pas *synchrone*.**
 > On **ne pousse pas** au broker dans la requête HTTP : si le broker est lent/down, l'écriture
@@ -544,9 +604,10 @@ api2 après écriture (webhook interne), l'outbox restant le filet de sécurité
 > de diffusion (outbox / transport Doctrine) — atomique. La diffusion effective vers le broker se
 > fait **hors** du chemin critique, par le consumer, et se **rejoue** si le broker était down.
 
-##### Messenger `doctrine://` = polling interne (sans impact sur le dixième)
+##### Si Messenger est retenu : `doctrine://` = polling interne (sans impact sur le dixième)
 
-Nuance à connaître : avec le transport **`doctrine://`**, `messenger:consume` **fait du polling** —
+Nuance à connaître (valable aussi pour le drainage d'outbox du worker api2, qui fonctionne à
+l'identique) : avec le transport **`doctrine://`**, `messenger:consume` **fait du polling** —
 il boucle et interroge la table `messenger_messages` à intervalle régulier (défaut **1 s**,
 réglable via `--sleep`, ex. `--sleep=0.3`). Il faut donc distinguer **deux étages** :
 
@@ -595,53 +656,69 @@ Approche retenue : **construire le nouveau système à côté de l'ancien**, le 
 puis basculer — sans jamais modifier les chemins de production tant que la nouvelle méthode n'est
 pas validée. Trois décisions structurent cette cohabitation.
 
-#### 7.10.1 Tables & routes v2 dédiées (isolation des écritures)
+#### 7.10.1 Tables `scoring_live_*` dédiées, extension de `ScoringController` en place
 
-- **Nouvelles tables** `scoring_state`, `scoring_clock`, `scoring_event` (+ le transport Messenger
-  `messenger_messages` qui tient lieu d'**outbox**). **On n'écrit pas** dans `kp_chrono` / `kp_match`
-  pendant l'expérimentation → l'ancien scoring (`ScoringController` actuel, `v2/*.php`) continue de
-  tourner intact.
-- **Nouvelles routes** `/admin/scoring/v2/...` en api2, à côté des existantes. L'auth, le contrôle
-  d'accès par mandat et la journalisation (`AdminLoggableTrait`) sont **hérités** — bénéfice direct
-  vs les `v2/*.php` legacy qui n'ont ni auth ni logging.
-- **Topic broker distinct** (ex. clé `p = {event}_{pitch}_v2`) : on branche une **incrustation de
+> ⚠️ **Nommage : « v2 » est banni.** Ce nom désigne **déjà deux choses** dans la base de code
+> (`sources/live/v2/*.php` et FeuilleMarque **V2**) ; un troisième sens garantirait la confusion.
+> Les nouveaux éléments sont nommés par leur **rôle** : `scoring_live_*`.
+
+- **Nouvelles tables** `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`
+  (+ la table d'**outbox** `scoring_outbox`). Elles portent l'**état live éphémère** (agrégat du
+  contexte « Live Scoring ») ; **`kp_*` reste le modèle canonique** du contexte « Résultats /
+  Classements » : l'état live y est **consolidé en fin de match** (comme le fait déjà la clôture
+  actuelle : `ScoreA/ScoreB`, `Statut`, `Heure_fin`). Conséquences : le reporting legacy (fiche,
+  classements, PDF) n'est **jamais** impacté par l'expérimentation, et il n'y a **aucune double
+  écriture continue** à maintenir pendant la transition.
+- **Extension du `ScoringController` existant** (nouvelles routes d'état/horloges **sous la même
+  surface** `/admin/scoring/*`), **pas** un contrôleur parallèle : la console Scoring app4 est déjà
+  branchée dessus — la dédoubler obligerait à re-migrer la console juste après sa livraison et
+  créerait un 4ᵉ chemin d'écriture. L'auth, le contrôle d'accès par mandat et la journalisation
+  (`AdminLoggableTrait`) sont **déjà là** — bénéfice direct vs les `v2/*.php` legacy qui n'ont ni
+  auth ni logging. L'isolation « module parallèle » se justifie **vis-à-vis du legacy PHP**, pas à
+  l'intérieur d'api2 qui est neuf, authentifié et journalisé.
+- **Topic broker distinct** (ex. clé `p = {event}_{pitch}_live`) : on branche une **incrustation de
   test** sur le nouveau flux **sans perturber** les incrustations de prod, qui restent sur l'ancien
   topic. Le broker (`laurentgarrigue/broker`) est **le même**, seul le topic change.
 
-> **Bascule** = pointer les incrustations sur le nouveau topic (et/ou faire écrire les tables v2
-> vers `kp_*` si l'on veut conserver la compat lecture), une fois la chaîne validée. **Rollback** =
-> repointer sur l'ancien topic. Aucune donnée de prod n'a été touchée entre-temps.
+> **Bascule** = pointer les incrustations sur le nouveau topic, une fois la chaîne validée.
+> **Rollback** = repointer sur l'ancien topic. La consolidation fin-de-match vers `kp_*` garantit
+> la compat lecture sans double écriture. Aucune donnée de prod n'a été touchée entre-temps.
+>
+> **Critère de décommission (P4) — chiffré et daté, sinon le legacy ne meurt jamais** : la nouvelle
+> chaîne a couvert **N événements réels** (à fixer, ex. 3) avec **zéro divergence** entre l'état
+> live consolidé et la saisie de référence.
 
 #### 7.10.2 Persistance dans api2, pas dans les vieux fichiers PHP
 
-La persistance v2 vit **entièrement dans api2** (contrôleur + service + entités/DBAL), pas dans
-`sources/live/v2/*.php`. Le `ScoringController` actuel montre déjà le patron (DBAL direct, JWT,
+La persistance `scoring_live` vit **entièrement dans api2** (contrôleur + service + entités/DBAL),
+pas dans `sources/live/v2/*.php`. Le `ScoringController` actuel montre déjà le patron (DBAL direct, JWT,
 `assertMatchAuthorized`, journalisation). **Les vieux fichiers PHP ne sont pas modifiés** : ils
 restent la voie de prod jusqu'à la bascule, puis sont décommissionnés (P4).
 
-#### 7.10.3 Le cache JSON reste-t-il pertinent avec Messenger ?
+#### 7.10.3 Le cache JSON reste-t-il pertinent avec le push broker ?
 
-**Oui — mais son rôle change.** Messenger est le *transport du push* (DB→broker) ; il **ne
-remplace pas** une **source d'état lisible au démarrage** (un abonné WebSocket ne reçoit que le
-*futur*, jamais l'état passé). Il faut distinguer trois fonctions que le cache assure aujourd'hui :
+**Oui — mais son rôle change.** La chaîne outbox→publieur est le *transport du push* (DB→broker) ;
+elle **ne remplace pas** une **source d'état lisible au démarrage** (un abonné WebSocket ne reçoit
+que le *futur*, jamais l'état passé). Il faut distinguer trois fonctions que le cache assure
+aujourd'hui :
 
-| Fonction | Messenger la couvre ? | Conséquence |
+| Fonction | Le push broker la couvre ? | Conséquence |
 |----------|----------------------|-------------|
 | **Diffusion temps réel** des changements | ✅ oui (DB→broker→écrans) | le cache **n'est plus la voie temps réel** |
 | **Resync / fallback** au (re)démarrage d'un écran | ❌ non | il faut **une source d'état à lire au boot** |
 | **Alimenter les incrustations PHP legacy** | ❌ non (elles lisent des `.json` **statiques par chemin fixe** — vérifié dans `live/js/match.js`) | le cache reste **obligatoire** tant qu'elles existent |
 
-Pour la **source de resync**, le module parallèle a désormais un choix (l'état vit en tables v2
-propres) :
+Pour la **source de resync**, le module parallèle a désormais un choix (l'état vit en tables
+`scoring_live_*` propres) :
 
-- **Endpoint api2** `GET /admin/scoring/v2/state/{match}` — lit directement les tables v2. Plus
+- **Endpoint api2** `GET /admin/scoring/state/{match}` — lit directement les tables `scoring_live_*`. Plus
   frais, pas de fichier à régénérer. **Recommandé pour les *nouvelles* incrustations** (elles font
   `GET state` au boot, puis suivent le broker).
 - **Cache JSON** — **obligatoire de toute façon** pour les incrustations PHP legacy, qui ne savent
   lire qu'un fichier statique.
 
 > **Verdict.** Le cache passe de **colonne vertébrale** à **couche de compatibilité** : il ne porte
-> plus le temps réel (le broker le fait via Messenger), il ne sert plus qu'aux **vieux écrans** et,
+> plus le temps réel (le broker le fait via l'outbox), il ne sert plus qu'aux **vieux écrans** et,
 > optionnellement, de fallback. Sa génération est **déjà dans api2** (`EventCacheService`, portage
 > de `create_cache_match.php`, via la commande `app:event-cache-worker`) — **aucun vieux fichier PHP
 > à faire évoluer**. Le jour où les incrustations legacy sont décommissionnées, la génération de
@@ -653,17 +730,18 @@ propres) :
 
 ```mermaid
 flowchart TB
-    subgraph new["Module v2 (en parallèle, api2)"]
-        ING["POST /admin/scoring/v2/*<br/>(auth + logging hérités)"]
-        ING -->|1 transaction : état + message| DB[("Tables v2 + messenger_messages<br/>(outbox Doctrine)")]
-        DB -->|messenger:consume| HAND["MessageHandler<br/>→ push broker"]
+    subgraph new["Module scoring_live (en parallèle, api2)"]
+        ING["Extension ScoringController<br/>/admin/scoring/* (auth + logging existants)"]
+        ING -->|1 transaction : état + message| DB[("Tables scoring_live_* + scoring_outbox")]
+        DB -->|drainage outbox<br/>(worker api2)| HAND["Publieur<br/>→ push broker"]
     end
-    HAND -->|topic {event}_{pitch}_v2| BRK(("Broker (inchangé)"))
-    BRK -->|push| NEWLIVE["Nouvelles incrustations<br/>GET /v2/state au boot + suivi broker"]
-    DB -->|GET /v2/state/{match}| NEWLIVE
+    HAND -->|topic {event}_{pitch}_live| BRK(("Broker (inchangé)"))
+    BRK -->|push| NEWLIVE["Nouvelles incrustations<br/>GET /state au boot + suivi broker"]
+    DB -->|GET /admin/scoring/state/{match}| NEWLIVE
+    DB -->|consolidation fin de match| KP
 
     subgraph old["Prod inchangée"]
-        OLD["ScoringController + v2/*.php"] --> KP[("kp_chrono / kp_match")]
+        OLD["Routes scoring actuelles + v2/*.php legacy"] --> KP[("kp_chrono / kp_match")]
         EWC["EventCacheService<br/>(app:event-cache-worker)"] --> CACHE["cache JSON"]
         CACHE --> OLDLIVE["Incrustations PHP legacy"]
     end
@@ -676,20 +754,20 @@ base** ? La réponse tient à un constat : **dans le modèle push + interpolatio
 plus de lecture répétée en régime établi.**
 
 - **Écritures** : uniquement aux transitions (quelques/s/terrain) — négligeable.
-- **Lectures** : uniquement quand un écran **(re)démarre / resync** (`GET /v2/state`) — rare et
+- **Lectures** : uniquement quand un écran **(re)démarre / resync** (`GET /state`) — rare et
   ponctuel. Le polling `_match_chrono.json` toutes les ~800 ms/écran de l'ancien monde **disparaît**.
 
 Donc le cache **perd sa justification « soulager la BDD »** en régime normal, *sauf* dans ces cas :
 
 | Situation | Cache encore justifié ? |
 |-----------|-------------------------|
-| Régime normal (écrans abonnés au broker, resync rare) | **Non** — `GET /v2/state` ponctuel suffit, MariaDB ne le sent pas |
+| Régime normal (écrans abonnés au broker, resync rare) | **Non** — `GET /state` ponctuel suffit, MariaDB ne le sent pas |
 | **Rafale** de resync (reconnexion massive après coupure réseau du site) | **Oui** — servir du statique évite N requêtes DB simultanées |
 | API/DB momentanément indisponible | **Oui, marginalement** — un fichier sur disque reste lisible |
 | Point de resync **hors** api2 (CDN, edge, autre serveur, pur serveur de fichiers) | **Oui** — un fichier se réplique / se met en cache HTTP trivialement |
 
 > **Recommandation (post-legacy) : remplacer le *fichier JSON généré par un worker* par un *cache
-> HTTP sur l'endpoint* `GET /v2/state`** (`Cache-Control` / `ETag`, invalidé par `updated_at`). Le
+> HTTP sur l'endpoint* `GET /state`** (`Cache-Control` / `ETag`, invalidé par `updated_at`). Le
 > reverse-proxy déjà en place (Nginx / Traefik) sert la réponse en cache **sans toucher MariaDB**
 > pendant N secondes → même « soulagement » de la base, **sans** worker de génération à maintenir et
 > **sans** risque de cache périmé (invalidation par état, pas par horloge). Autrement dit, le rôle
@@ -730,27 +808,48 @@ transport hardware, et l'Option 3 comme palier transitoire.** L'option 1 reste e
 Raison : O1/O2 sans dépendre de la config réseau des sites = agent local (opt. 2) ; O3–O7 =
 couche d'état (opt. 4). Les deux sont complémentaires, pas concurrents.
 
+### Décisions structurantes — tranchées (revue [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md) §3.1)
+
+Ces décisions conditionnent P1–P3 et sont **actées avant tout code** (elles étaient initialement
+reléguées en fin de document alors que ce sont les seuls points durs) :
+
+1. **Arbitrage multi-source** : source active **exclusive** (pas de last-write-wins). Commandes
+   `{source, client_ts, idempotency_key}`, shadow-journal des sources inactives, rejet au replay
+   des commandes pré-bascule, ré-ancrage de baseline post-resync, alerte (sans résolution auto)
+   sur divergence base ↔ console de marque. Détail : §7.4.
+2. **Timestamps** : `client_ts` + NTP obligatoire sur l'agent (le timestamp serveur est incompatible
+   avec le replay offline). Détail : §7.8.2.
+3. **Modèle canonique** : **`kp_*` reste la vérité** du contexte Résultats ; les tables
+   `scoring_live_*` portent l'état live et sont **consolidées en fin de match**. Pas de double
+   écriture continue. Détail : §7.10.1.
+4. **Auth machine** de l'agent : token scopé événement + terrain, borné à l'événement, révocable.
+   Détail : §7.4 (encadré).
+
 ### Trajectoire suggérée (du moins cher au plus structurant)
 
 | Phase | Contenu | Objectifs couverts | Effort |
 |-------|---------|--------------------|--------|
-| **P0 — Durcissement immédiat** | WSM en kiosk + `databaseSync` forcé + watchdog heartbeat (opt. 3). Gain rapide sans refonte. | O1(partiel), O2(partiel) | ★★☆☆☆ |
-| **P1 — État canonique en base** | Étendre le schéma + `ScoringController` pour porter **tout** l'état live (shotclock, pénalités, chrono complet), horodaté + tagué source. Le publieur DB→broker/cache. | O4, O3 | ★★★★☆ |
-| **P2 — Adaptateurs & modes** | Formaliser adaptateurs (Hardware / Console Scoring / Score-seul / Import) sur l'API d'ingestion ; table `pitch_mode` ; `active_source` + arbitrage. | O5, O6, O7 | ★★★☆☆ |
-| **P3 — Agent local headless** | Porter `app_wsm` en daemon supervisé + buffer offline ; supervision app4 lit la base. Retrait progressif de l'onglet WSM. | O1, O2 (plein) | ★★★☆☆ |
-| **P4 — Décommission legacy** | Retirer `/api/wsm/*`, FeuilleMarque V2/V3, onglet WSM navigateur une fois la console Scoring + agent en production. | dette | ★★☆☆☆ |
+| **P0 — Durcissement d'exploitation (zéro code)** | WSM en kiosk + veille désactivée + `databaseSync` forcé + watchdog heartbeat (opt. 3, **sans** SW/PWA). Jetable par construction. | O1(partiel), O2(partiel) | ★☆☆☆☆ |
+| **P1 — État canonique + contrat de commande** | Tables `scoring_live_*` + extension `ScoringController` **en place** pour porter **tout** l'état live (shotclock, pénalités, chrono complet) ; **contrat de commande** (idempotence, `client_ts`, source) ; state machine développée **en TDD** (logique pure, sans DB) ; **golden files** propriétaire (sessions STOMP enregistrées → écritures attendues) ; publieur = drainage d'outbox dans le worker api2 existant. | O4, O3 | ★★★★☆ |
+| **P2 — Adaptateurs & modes** | Formaliser adaptateurs (Hardware / Console Scoring / Score-seul / Import) sur l'API d'ingestion ; table `pitch_mode` ; `active_source` + promotion. Le Faker devient la **suite de contrat commune** que chaque adaptateur doit passer. | O5, O6, O7 | ★★★☆☆ |
+| **P3 — Agent local headless (semi-dumb)** | Boîtier filtrant (transitions seules), buffer offline avec **replay testé automatiquement**, auth machine, NTP + clé 4G au kit ; la traduction propriétaire reste **serveur** (ACL unique). Supervision app4 lit la base. Retrait progressif de l'onglet WSM. | O1, O2 (plein) | ★★★☆☆ |
+| **P3bis — Consolidation du chemin de lecture** | Famille des **~20 incrustations PHP** (`score*` × 9 variantes, `next_game*`, `teams*`, `multi_score*`…) → page(s) paramétrée(s) ; le cache fichier devient cache HTTP sur `GET /state` (§7.10.4). **Prérequis à la mort du cache fichier.** | dette (lecture) | ★★★☆☆ |
+| **P4 — Décommission legacy** | Retirer `/api/wsm/*`, FeuilleMarque V2/V3, onglet WSM, génération de cache fichier. **Critère chiffré et daté** : N événements réels sans divergence (§7.10.1). | dette (écriture) | ★★☆☆☆ |
 
 > **Ordre important** : faire **P1 avant P3**. Tant que l'état n'est pas canonique en base
 > (P1), déplacer le relais (P3) ne fait que déménager la fragilité. Une fois P1 acquis, l'agent
 > local devient un simple client d'une API robuste, et la bascule de mode (P2) est triviale.
+> **P3bis est indispensable à l'objectif d'harmonisation** : sans lui, le plan ne consolide que le
+> chemin d'écriture et le cache fichier reste « obligatoire de toute façon » pour toujours.
 
-### Points à trancher avant de démarrer
+### Points restant à instruire avant de démarrer
 1. **passerelle peut-elle émettre vers le serveur ?** (débloque/écarte l'option 1). — À vérifier propriétaire.
-2. **Matériel agent** : mini-PC vs Raspberry vs conteneur sur un portable déjà présent sur site.
-3. **Stratégie d'arbitrage** multi-source : source active exclusive (simple, sûr) vs co-pilotage
-   *last-write-wins* (souple, plus risqué).
-4. **Périmètre broker** : garde-t-on le broker externe (`laurentgarrigue/broker`) comme unique voie
-   temps réel, alimenté par le publieur ? (recommandé : oui).
+2. **Matériel agent** : mini-PC vs Raspberry vs conteneur sur un portable déjà présent sur site —
+   avec **clé 4G** de secours au kit dans tous les cas.
+3. **Broker vs Mercure** : comparaison écrite (coût de migration des abonnés vs coût de maintenir
+   tick/resync custom + broker externe) — voir §7.9.3. Ne pas reconduire par héritage.
+4. **Si Messenger** : uniquement avec engagement de migrer aussi le cache worker (un seul paradigme
+   async en régime permanent) — voir §7.9.4.
 
 ---
 
