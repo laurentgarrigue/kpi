@@ -210,6 +210,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
+- bug filtre date au changement de page ou au changement de compétition.
 
 
 
@@ -217,6 +218,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Afficher case sélection active
 - Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
 - ❓ Basculer le scrutineering sur app4 ?
+- Filtre date ok, filtre Demain ko.
 
 
 **TV Panel**:
@@ -226,6 +228,11 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Revoir incrustation live game, les événements restent affichés.
 - Incrustation Teams only (clubs) : adapter le design à la css
 - ❓ Revoir le système des incrustations ?
+- tv.kayak-polo.info?600 à créer
+- Incrustation teams_club.php : Saint-domineuc - Acigné 18 I (+ logo) passe sur deux lignes
+- Programme général du week-end pour le grand public
+- horaires et terrains des matchs éliminatoires pour le grand public ?
+- app_wsm : s'assurer de conserver l'événement au rechargement de page.
 
 
 **Scoring**:
@@ -242,3 +249,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Vérifier la durée des prolongations dans les règlements.
 - ❓ Objectif zéro papier : prévoir un nouveau statut "signé" pour le scoring ?
 - Title de la page : Scoring match <numero> - <nom équipe A> | <nom équipe B>. (ex : Scoring match 1 - Team A | Team B). match -> game en anglais.
+
+
+- changement de statut depuis Games : mettre en période 1 si pas de période déjà définie.
+- 
