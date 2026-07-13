@@ -149,9 +149,13 @@ class EventCacheWorkerCommand extends Command
         }
 
         // Simulated current time = initial event time + real seconds elapsed since
-        // created_at (the shared clock origin).
+        // created_at (the shared clock origin). Both the DATE and the hour are derived
+        // from this timestamp, so a worker started on day 1 naturally rolls over to the
+        // following match days as real time passes (a multi-day event stayed stuck on
+        // date_event otherwise, only the hour advanced).
         $elapsed              = max(0, time() - $startTime);
         $currentSimulatedTime = $initialTime + $elapsed;
+        $dateEventWork        = date('Y-m-d', $currentSimulatedTime);
         $currentHourEvent     = date('H:i', $currentSimulatedTime);
 
         // Apply the warm-up offset to compute the "working" time used for selection
@@ -167,7 +171,7 @@ class EventCacheWorkerCommand extends Command
         try {
             $this->eventCache->generateEvent(
                 $idEvent,
-                $config['date_event'],
+                $dateEventWork,
                 $hourEventWork,
                 $currentHourEvent,
                 $pitches

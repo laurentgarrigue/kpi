@@ -68,6 +68,20 @@ Ces fichiers sont utilisés par les pages d'incrustation (`score.php`, `teams.ph
 
 ---
 
+## 📅 Événement sur plusieurs jours
+
+Le worker gère un événement **du premier au dernier jour** sans intervention.
+
+- L'horloge simulée démarre à la **date + heure de départ** que vous avez configurées, puis avance au rythme du temps réel.
+- Quand un jour se termine et que le lendemain commence, **la date avance automatiquement** : le worker sélectionne alors les matchs du jour suivant du planning. Vous n'avez pas besoin de le redémarrer chaque matin.
+- Dans l'interface (carte du worker et monitor), l'heure courante s'affiche **précédée de la date** dès que le worker a changé de jour par rapport à la date de départ.
+
+> ℹ️ Un worker lancé le premier jour continue donc de fonctionner correctement les jours suivants. Il n'est **pas** nécessaire de l'arrêter et de le relancer chaque jour.
+
+**Bon à savoir** : au démarrage, l'horloge repart de l'heure de départ configurée. Si vous relancez le worker en cours d'événement (par exemple le 3ᵉ jour), pensez à **régler la date et l'heure de départ sur le moment réel** pour qu'il reprenne au bon endroit du planning.
+
+---
+
 ## 🔧 Cas d'usage typique
 
 **Situation** : Vous organisez un tournoi avec live streaming sur YouTube
@@ -105,6 +119,18 @@ Si vous voyez "Worker may not be running properly" :
 2. Vérifiez la configuration (nombre de terrains, heure de départ)
 3. Essayez de redémarrer le worker
 
+### Le worker reste bloqué sur le mauvais jour
+
+Le worker fait avancer la date automatiquement (voir [Événement sur plusieurs jours](#-événement-sur-plusieurs-jours)). Si l'heure avance mais que la **date** ne change pas d'un jour à l'autre :
+
+1. Vérifiez que la date de départ configurée correspond bien au **premier** jour de l'événement
+2. Redémarrez le worker en réglant la date/heure de départ sur le moment réel
+3. Si le problème persiste, contactez l'administrateur
+
+### Le match suivant s'affiche sans les équipes
+
+Cela arrive quand le prochain match a été mis en cache **avant** le tirage des équipes du tour suivant. Le worker corrige cela automatiquement : dès que les deux équipes sont affectées, il régénère la fiche du match au tick suivant. Si l'incrustation reste vide, vérifiez simplement que les équipes sont bien renseignées dans le planning.
+
 ---
 
 ## 💡 Conseils
@@ -123,6 +149,6 @@ Pour les administrateurs et développeurs, voir la documentation technique compl
 
 ---
 
-**Version** : 1.0
-**Date** : Décembre 2025
+**Version** : 1.1
+**Date** : Juillet 2026
 **Public** : Organisateurs de tournois, responsables live streaming
