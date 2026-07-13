@@ -2,6 +2,40 @@
 
 Application de gestion du websocket (WebSocket Manager) pour KPI (Kayak Polo Info).
 
+## 🎯 Rôle dans la chaîne temps réel
+
+WSM est le **pont** entre le matériel de la table de marque et KPI :
+
+```
+console de marque propriétaire → passerelle (STOMP, LAN) → app_wsm → KPI (écritures DB)
+                                              └──→ broker KPI → app_live (incrustation)
+```
+
+Il se connecte en **STOMP** aux flux de la passerelle (un par terrain), **persiste** les données du
+match dans KPI via `fetch`/AJAX (`/api/wsm/*`), et **rediffuse** optionnellement les événements vers
+le broker WebSocket KPI que consomme l'incrustation `app_live`. Clé d'échange broker :
+`<numeroEvenement>_<numero_terrain>`.
+
+> ⚠️ **Dépendance au cache** : le chargement des équipes (`set-teams`) et l'enchaînement des matchs
+> reposent sur les fichiers JSON `event{event}_pitch{pitch}.json` (`id_match` = match courant,
+> `id_next` = match suivant) **générés par l'Event Cache Manager**, désormais un **worker en
+> arrière-plan**. Le worker doit tourner pendant l'événement, sinon WSM chargerait un mauvais match.
+> Voir [Event Cache Manager](../../DOC/user/EVENT_CACHE_MANAGER.md).
+
+> ℹ️ **Persistance** : score, période, buts/cartons, joueurs actifs et chrono de jeu sont écrits en
+> base. Le **shotclock** (`POSSES`) et le **compteur de pénalités** sont **live seulement** (broker +
+> affichage), non persistés.
+
+> 🔌 **Périmètre — mode complet propriétaire uniquement** : WSM ne couvre que les terrains équipés
+> **console de marque + passerelle**. Les terrains **sans ce matériel** sont gérés en parallèle par la **feuille
+> de marque KPI** (`FeuilleMarque2.php` = écritures PHP sans WebSocket ; `FeuilleMarque3.php` =
+> écritures PHP + broker WebSocket) ou en **saisie a posteriori** (incrustation des noms d'équipe
+> seuls). Voir §14 « Modes de fonctionnement » de la doc technique.
+
+📖 **Documentation technique complète** (protocoles STOMP, payloads, diagrammes, démarrage/
+enchaînement, contrôles visuels, **modes dégradés**) :
+[DOC/developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](../../DOC/developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)
+
 ## 🚀 Démarrage rapide
 
 ### Développement

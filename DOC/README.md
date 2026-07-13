@@ -34,6 +34,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
 - **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture technique complète de l'application web (stack, PWA, gestion erreurs, API)
 - **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Documentation complète API2 (Symfony 7.3 + API Platform 4.2)
+- **[LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)** - Chaîne temps réel d'un match : console de marque propriétaire → passerelle (STOMP) → app_wsm → KPI/broker → app_live (incrustation)
 
 ### [Guides](developer/guides/)
 

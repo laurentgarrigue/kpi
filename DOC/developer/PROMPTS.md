@@ -182,6 +182,8 @@ TODO :
 - Verrouillage compets : vérouiller plus tôt dans la nuit.
 - ❓ api legacy encore utilisée ?
 - ❓ Reproduire les pdf en stateless ?
+- CI/CD sécurisé, github actions, docker, etc...
+- 
 
 
 **App4**:
@@ -210,7 +212,8 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
-- bug filtre date au changement de page ou au changement de compétition.
+- ✅ bug filtre date au changement de page ou au changement de compétition.
+- Pré-remplir les champs secrétaire, chronomètre, shotclock, lignes avec les noms d'équipes entre parenthèse de arbitre 1 et 2 s'il ne sont pas désignés nominativement (voir à quel moment ils sont alimentés et mis à jour)
 
 
 
@@ -221,7 +224,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Filtre date ok, filtre Demain ko.
 
 
-**TV Panel**:
+**TV Panel - Incrustations**:
 - Nouvelle incrustation avec une image centrée (uploadée au préalable, par exemple qrcode du live streaming) et un texte en bas (ex : "Live streaming sur YouTube") pour les matchs diffusés en direct. Existe déjà côté Clubs.
 - Page avec affichage horloge simple du temps officiel
 - Page pub pour nous «want us to manage your tournament contact ..." + page insta et fb
@@ -232,7 +235,18 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Incrustation teams_club.php : Saint-domineuc - Acigné 18 I (+ logo) passe sur deux lignes
 - Programme général du week-end pour le grand public
 - horaires et terrains des matchs éliminatoires pour le grand public ?
+- Envoyer et utiliser le statut Poule consolidée / Match élimatoire joué vers les TV pour l'affichage du programme du week-end.
+- https://youtu.be/WTMxXCMBie0?t=9853 exemple 2022 incrustation carton, pénalité, but avec photos.
+- décompte des deux minutes sur les pénalités
+- 
+
+
+**WebSocket**:
 - app_wsm : s'assurer de conserver l'événement au rechargement de page.
+- Crée un schéma pour retranscrire l'ordonnancement des matchs dans cache manager selon leur statut, l'heure de début, le délai de warmup...
+- LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md : tu connais maintenant la situation actuelle, qui est trop complexe et trop fragile. en situation de match, il y a de trop nombreux paramètres à gérer et qui peuvent être oubliés ou disfonctionnels. il faut simplifier et fiabiliser le système de scoring, avec notamment une architecture qui ne nécessite pas que je laisse un ordinateur et un navigateur ouverts pendant toute la durée de la compétition ou de l'événement pour que websocket manager puisse faire le relais entre les deux websockets, et qui puisse relancer automatiquement les services en cas de crash ou de perte de connexion. il faut aussi que le système de scoring puisse fonctionner même si websocket manager n'est pas actif, et que les données soient sauvegardées dans la base de données pour pouvoir être récupérées et affichées à tout moment, même après un crash ou une perte de connexion de l'un des éléments. 
+- Il faut aussi pouvoir gérer des situations dégradées (incrustation mais pas de hardware scoring, ou hardware scoring mais pas d'incrustation, saisie dans la feuille de marque v3 (bientôt la nouvelle page Scoring dans admin2...) etc...) pouvoir gérer des situations différentes d'un terrain à l'autre au sein d'un même événementet pouvoir basculer d'une situation à l'autre sans perdre les données ni l'état du match ?
+
 
 
 **Scoring**:
@@ -242,6 +256,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - autocomplete sur les officiels
 - gérer autant de prolongations que nécessaire (actuellement limité à 2)
 - Scoring : gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
+- Gestion uniquement du score
 - Scoring : départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du timeshoot, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - les routes api2 doivent générer les json comme sur legacy...
 - Tracer toutes les actions dans le journal
