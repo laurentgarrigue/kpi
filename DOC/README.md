@@ -119,6 +119,7 @@ Documentation technique pour le développement et la maintenance du projet.
 
 ### [Audits & Analyses](developer/audits/)
 
+- **[LIVE_MATCH_REFACTORING_REVIEW.md](developer/audits/LIVE_MATCH_REFACTORING_REVIEW.md)** - Revue critique de la refonte du scoring live (DRY/SOLID/DDD/TDD)
 - **[AUDIT_PHASE_0.md](developer/audits/AUDIT_PHASE_0.md)** - Audit initial du code (phase 0)
 - **[AUDIT_SUMMARY.txt](developer/audits/AUDIT_SUMMARY.txt)** - Résumé textuel de l'audit
 - **[JS_LIBRARIES_AUDIT.md](developer/audits/JS_LIBRARIES_AUDIT.md)** - Audit complet bibliothèques JavaScript
