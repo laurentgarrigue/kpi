@@ -2,14 +2,29 @@
 
 Documentation technique de la chaîne de diffusion en direct d'un match de kayak-polo,
 depuis la saisie sur le matériel de la table de marque jusqu'à l'incrustation vidéo.
-Le mode **complet propriétaire** est décrit en priorité ; les modes **alternatifs et dégradés** (feuille
+Le mode **complet matériel** est décrit en priorité ; les modes **alternatifs et dégradés** (feuille
 de marque KPI, saisie a posteriori) font l'objet de la **§14**.
 
-> **Documents liés** : les trajectoires de refonte sont comparées dans
-> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
-> (révisé), et la revue critique — principes DRY/SOLID/DDD/TDD, décisions structurantes, périmètre
-> de consolidation du legacy — dans
-> [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+> **Documents liés** : le plan de refonte (ce qu'on construit, dans quel ordre, ce qu'on supprime
+> ensuite) est dans
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md), et la
+> revue critique — principes DRY/SOLID/DDD/TDD, décisions structurantes, périmètre de consolidation
+> du legacy — dans [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+
+### Terminologie — le matériel de la table de marque
+
+La documentation ne nomme **pas la marque** du matériel de scoring. Les termes génériques employés
+partout renvoient à un **panneau de score du commerce**, dont le protocole est **fermé** (non
+documenté publiquement) :
+
+| Terme employé | Ce que c'est |
+|---------------|--------------|
+| **Console de marque** | le boîtier de saisie de la table de marque (score, chrono, shotclock, cartons, pénalités) |
+| **Passerelle** (réseau) | le boîtier qui décode la sortie série de la console et l'expose en WebSocket STOMP sur le LAN |
+| **Protocole propriétaire** / **trames propriétaires** | le format série ASCII fermé émis par la console |
+| **Matériel propriétaire** | l'ensemble console + passerelle, par opposition aux modes de saisie manuelle KPI |
+
+Ce matériel n'équipe **pas tous les terrains** — voir les modes alternatifs et dégradés en **§14**.
 
 - **Code concerné** :
   - `sources/app_wsm_dev/` — application **WSM** (WebSocket Manager)
@@ -51,7 +66,7 @@ chaque rencontre. La clé d'échange `<numeroEvenement>_<numero_terrain>` (§6) 
 ```mermaid
 flowchart LR
     subgraph terrain["🏟️ Terrain — réseau local (série RJ45 ou pont wifi)"]
-        SP["console de marque propriétaire<br/>(table de marque)"]
+        SP["Console de marque<br/>(table de marque)"]
         SB["Scoreboard<br/>(filaire / radio / HDMI)"]
         SAT1["Écran satellite<br/>shotclock (côté 1)"]
         SAT2["Écran satellite<br/>shotclock (côté 2)"]
@@ -86,7 +101,7 @@ flowchart LR
     CACHE -->|même cache JSON| PHPINC
 ```
 
-**Idée directrice** : le console de marque propriétaire est la **source de vérité** de la saisie live. La passerelle
+**Idée directrice** : la console de marque est la **source de vérité** de la saisie live. La passerelle
 transforme le protocole propriétaire en messages STOMP standard. `app_wsm` fait le pont entre
 le LAN du terrain et Internet : il **persiste** les données dans KPI et, en option, les
 **rediffuse** vers le broker KPI.
@@ -112,7 +127,7 @@ WebSocket — c'est la source commune de toutes les incrustations (Vue et PHP).
 
 ## 2. Les maillons de la chaîne
 
-### 2.1 console de marque propriétaire (hardware, table de marque)
+### 2.1 Console de marque (hardware, table de marque)
 Console de saisie de la table de marque. L'opérateur y saisit en direct : score, chrono de jeu
 (TPS-JEU), shotclock (POSSES / temps de possession), pénalités, cartons, buts joueur, période.
 
@@ -123,9 +138,9 @@ Il pilote les afficheurs physiques :
   **radio**.
 - **Écran externe** (le cas échéant) — en **HDMI**.
 
-**Sortie protocole vers la passerelle** : le console de marque expose une **sortie série RJ45** (RS-232,
-9600 bauds, 8 bits + start + stop, sans parité) transmettant des **trames ASCII** propriétaires
-propriétaire (trames de la forme `SOH · adresse · STX · CTRL · Message · ETX · LRC`). Le détail des trames
+**Sortie protocole vers la passerelle** : la console de marque expose une **sortie série RJ45** (RS-232,
+9600 bauds, 8 bits + start + stop, sans parité) transmettant des **trames ASCII propriétaires**
+(trames de la forme `SOH · adresse · STX · CTRL · Message · ETX · LRC`). Le détail des trames
 est **hors périmètre** de ce document. C'est ce flux que la passerelle décode puis convertit en
 WebSocket STOMP.
 
@@ -133,8 +148,8 @@ WebSocket STOMP.
 > par **câble RJ45 direct**, soit via un **pont wifi** (bridge) sur ce même LAN. Le choix dépend de
 > l'**équipement réseau disponible et de la configuration du site**.
 
-### 2.2 passerelle (passerelle)
-Boîtier sur le réseau local. Reçoit les trames **série ASCII propriétaire (9600 bauds)** du console de marque — via
+### 2.2 Passerelle réseau
+Boîtier sur le réseau local. Reçoit les trames **série ASCII propriétaire (9600 bauds)** de la console de marque — via
 **RJ45 ou pont wifi** sur le LAN — les **décode**, puis les **convertit en WebSocket STOMP** (même
 réseau local). C'est elle qui expose l'URL `ws://<ip-passerelle>:<port>` à laquelle `app_wsm` se connecte.
 
@@ -174,7 +189,7 @@ incrustations (liste exhaustive en §13.3).
 
 ```mermaid
 sequenceDiagram
-    participant SP as console de marque propriétaire
+    participant SP as Console de marque
     participant BXP as passerelle
     participant WSM as app_wsm
     participant DB as KPI (DB via /api/wsm)
@@ -199,12 +214,12 @@ Deux sens coexistent sur le lien STOMP WSM ↔ passerelle :
 
 | Sens | Destination STOMP | Contenu | Déclencheur |
 |------|-------------------|---------|-------------|
-| **passerelle → WSM** (abonnements) | `/game/chrono`, `/game/data-game`, `/game/period`, `/game/player-info`, `/game/game-state`, `/game/team-game`, `/game/set-teams`, `/game/ready-to-start-game`, `/game/game-phase` | état live saisi sur le console de marque | saisie table de marque |
+| **passerelle → WSM** (abonnements) | `/game/chrono`, `/game/data-game`, `/game/period`, `/game/player-info`, `/game/game-state`, `/game/team-game`, `/game/set-teams`, `/game/ready-to-start-game`, `/game/game-phase` | état live saisi sur la console de marque | saisie table de marque |
 | **WSM → passerelle** (publications) | `/api/game/set-teams`, `/api/game/sync` | compositions d'équipes (issues de KPI), demande de resynchro | chargement d'un match, ready-to-start |
 
 Sur `ready-to-start-game`, WSM charge le match suivant depuis KPI (`fetchGame`) et **pousse la
 composition** (`set-teams` : noms, couleurs, maillots, logos base64, coachs) vers la passerelle, qui
-peut ainsi préremplir le console de marque.
+peut ainsi préremplir la console de marque.
 
 ---
 
@@ -229,7 +244,7 @@ Exemples de mapping (extraits de `app_wsm_dev/src/mixins/wsMixin.js`) :
 | `/game/team-game` | joueur actif/inactif | `setPlayerStatus(...)` |
 | `/game/game-state` (`QUIT_MATCH`, `MATCH_NOT_STARTED`) | fin de match → `Statut='END'`, `Heure_fin` | `setGameParams(...)` |
 
-Codes cartons (propriétaire → KPI) : `GREEN→V`, `YELLOW→J`, `YELLOW_RED/RED→R`, `RED_EJECTION→D`.
+Codes cartons (matériel → KPI) : `GREEN→V`, `YELLOW→J`, `YELLOW_RED/RED→R`, `RED_EJECTION→D`.
 
 > **Format exact des payloads STOMP** (structure JSON, champs, valeurs possibles) : voir §9.
 
@@ -311,7 +326,7 @@ cours après un rechargement de page ou une coupure.
 
 | Élément | Entrée | Sortie | Persiste ? |
 |---------|--------|--------|-----------|
-| console de marque propriétaire | saisie manuelle | scoreboard/satellites (filaire/radio), HDMI, série ASCII propriétaire vers passerelle | non |
+| Console de marque | saisie manuelle | scoreboard/satellites (filaire/radio), HDMI, série ASCII propriétaire vers passerelle | non |
 | passerelle | série ASCII propriétaire 9600 bauds (RJ45/pont wifi) | STOMP (LAN) | non |
 | app_wsm | STOMP (passerelle) | fetch DB + WS broker | IndexedDB local |
 | Event Cache Manager (worker) | programmation DB | cache JSON (`id_match`/`id_next`, compos, score, chrono) | fichiers cache |
@@ -531,7 +546,7 @@ Particularités du mapping (dans `setTeams()`) :
 
 ```mermaid
 sequenceDiagram
-    participant SP as console de marque propriétaire
+    participant SP as Console de marque
     participant BXP as passerelle
     participant WSM as app_wsm
     participant KPI as KPI
@@ -565,7 +580,7 @@ WSM de forcer le chargement :
 - **« Set Teams (Next) »** → `setTeams(n, true)` : charge le match **suivant** ;
 - **« Set Teams (Current) »** → `setTeams(n, false)` : (re)charge le match **courant**.
 
-Utile si le console de marque n'a pas émis `ready-to-start`, si la mauvaise composition a été poussée, ou
+Utile si la console de marque n'a pas émis `ready-to-start`, si la mauvaise composition a été poussée, ou
 pour réinjecter les compositions après un incident.
 
 ### 10.3 « Suivant » vs « courant »
@@ -823,9 +838,8 @@ Le même cache JSON alimente plusieurs consommateurs — ce n'est pas propre à 
 > quasi dupliquées** : mêmes données, variantes mécaniques nations/clubs × suffixes d'affichage
 > (`_o`/`_e`/`_s`/HD). C'est **le plus gros gisement d'harmonisation du legacy live**, et la
 > condition de la mort du cache JSON fichier : tant que ces pages existent, la génération de cache
-> reste obligatoire. La refonte prévoit leur consolidation en page(s) paramétrée(s) — voir
-> [propositions §9, phase P3bis](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) et
-> [revue §4](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+> reste obligatoire. La refonte les remplace par **une page unique paramétrée** — voir
+> [le plan de refonte, §3.2 et étape 3](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 
 Points à retenir :
 - **`app_live` n'est pas 100 % broker** : il lit aussi le cache (score `_match_score`, chrono
@@ -848,7 +862,7 @@ Points à retenir :
 
 ## 14. Modes de fonctionnement (complet, alternatifs, dégradés)
 
-Le fonctionnement décrit dans les §1–13 est le mode **complet propriétaire** : console de marque + passerelle sur le
+Le fonctionnement décrit dans les §1–13 est le mode **complet matériel** : console de marque + passerelle sur le
 terrain, `app_wsm` qui persiste et rediffuse. Mais sur un événement réel, **tous les terrains ne
 disposent pas** de ce matériel (pas de console de marque, ou pas de connexion passerelle pour certains terrains).
 La gestion du match se fait alors **en parallèle**, par d'autres outils de saisie. Le point commun
@@ -859,7 +873,7 @@ moins les bonnes informations.
 
 | Mode | Saisie | Écritures DB | Temps réel (broker WS) | Incrustation obtenue |
 |------|--------|--------------|------------------------|----------------------|
-| **A — Complet propriétaire** (§1–13) | console de marque → passerelle (STOMP) → `app_wsm` | `fetch` `/api/wsm/*` | oui (WSM → broker) | complète (score, chrono, shotclock, événements) |
+| **A — Complet matériel** (§1–13) | console de marque → passerelle (STOMP) → `app_wsm` | `fetch` `/api/wsm/*` | oui (WSM → broker) | complète (score, chrono, shotclock, événements) |
 | **B — Feuille de marque V2** | opérateur, `FeuilleMarque2.php` | écritures directes via **fichiers PHP** (`v2/*.php`) | **non** | via cache : score, période, événements (pas de flux live broker) |
 | **C — Feuille de marque V3** | opérateur, `FeuilleMarque3.php` | écritures directes via **fichiers PHP** (`v2/*.php`) | **oui** (broker WS, non-STOMP) | complète, proche du mode A |
 | **D — Saisie a posteriori** | après le match (ou aucune saisie live) | à froid | non | **minimale** : noms d'équipe uniquement |
@@ -892,7 +906,7 @@ broker (latence = période de rafraîchissement du cache).
   `app_live` (cf. §4.2) ;
 - `fm3_A.js` publie les événements (`socket.send(JSON.stringify(...))`) sur ce broker.
 
-C'est donc un mode **quasi complet sans matériel propriétaire** : l'opérateur remplace le console de marque, KPI
+C'est donc un mode **quasi complet sans matériel propriétaire** : l'opérateur remplace la console de marque, KPI
 remplace la passerelle/WSM pour la partie diffusion. L'incrustation reçoit à la fois le **live broker**
 et le **cache**.
 

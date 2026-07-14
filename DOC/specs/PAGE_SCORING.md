@@ -19,8 +19,7 @@ marque papier** + **panneau de score**, et **en parallèle ou après coup sur KP
 KPI est de **tendre vers le zéro papier** :
 
 - **saisie directe sur KPI** (Scoring) avec affichage scoreboard + shotclock ; ou
-- **captation des live datas** depuis le matériel de scoring / panneau de score (matériel propriétaire ou
-  équivalent) ; puis **diffusion** via WebSocket et **incrustations** (`/live`).
+- **captation des live datas** depuis le matériel de scoring / panneau de score (matériel propriétaire) ; puis **diffusion** via WebSocket et **incrustations** (`/live`).
 
 ### 1.1 Deux usages
 
@@ -51,7 +50,7 @@ KPI est de **tendre vers le zéro papier** :
 | Terme | Désigne | Usage code/UI |
 |---|---|---|
 | **Scoring** | La **console de saisie KPI** (saisie manuelle : chrono, score, buts/cartons). | Nom unique partout : route `/games/[id]/scoring`, `scoringStore`, api2 `ScoringController` / `/scoring`, libellé UI « Scoring ». |
-| **Hardware Scoring** | La **captation des live datas** depuis le **matériel** (panneau de score matériel propriétaire ou équivalent). **Qualificatif obligatoire** pour ne pas confondre avec la saisie manuelle. | `useHardwareScoring`, mode « Hardware Scoring » dans l'UI. |
+| **Hardware Scoring** | La **captation des live datas** depuis le **matériel** (panneau de score propriétaire). **Qualificatif obligatoire** pour ne pas confondre avec la saisie manuelle. | `useHardwareScoring`, mode « Hardware Scoring » dans l'UI. |
 | **WSM** (WebSocket Manager) | Brique `app_wsm` de **relai** matériel ↔ KPI (transport WebSocket). | Nom technique inchangé. |
 | **broker** | Serveur WebSocket interne (https://github.com/laurentgarrigue/broker), même VPS que KPI. | Nom technique inchangé ; paramètres résolus **par événement** (JSON WSM), cf. §6.5. |
 | **Feuille de match** | Le **PDF de contrôle** papier (`FeuilleMatchMulti.php`). | Réservé au document imprimé, jamais à l'outil live. |
@@ -83,7 +82,7 @@ KPI est de **tendre vers le zéro papier** :
 |---|---|
 | Mode | **Online-first** (api2 + WebSocket). Offline/PWA **non bloquant** → dernière phase. |
 | Usages | Direct **et** post-match (saisie/correction + validation/verrouillage par profil). |
-| Captation matériel | Mode **Hardware Scoring** (panneau matériel propriétaire ou équivalent via WSM/broker), distinct de la saisie manuelle. Branché en Phase 3. |
+| Captation matériel | Mode **Hardware Scoring** (panneau propriétaire via WSM/broker), distinct de la saisie manuelle. Branché en Phase 3. |
 | Monétisation | À explorer plus tard. **Aucun Stripe/paywall maintenant.** Exigence unique : isolation **par mandat/organisation côté serveur** + gating par rôle via un composable unique. |
 | Langues | **fr/en** uniquement (alignement app4). Le **cn** (présent dans app3) = chantier de suivi séparé sur toute app4. |
 | Serveur WS | **broker** interne (même VPS). **Activation/paramètres par événement** via le JSON WSM `event{idEvent}_network.json` (présent → broker actif ; 404 → diffusion locale seule), cf. §6.5. Évolution possible : porter ce réglage dans app4 (par événement/compétition). |
@@ -435,7 +434,7 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   > cache). Non tranché ; le MVP Phase 3 peut d'abord **consommer le JSON existant** pour ne rien
   > casser, l'évolution venant ensuite.
 - **Hardware Scoring (Phase 3)** : `useHardwareScoring.ts` reçoit les live datas du matériel
-  (panneau matériel propriétaire ou équivalent) via le broker (WSM) et **alimente le `scoringStore`** au lieu
+  (panneau propriétaire) via le broker (WSM) et **alimente le `scoringStore`** au lieu
   de la saisie manuelle. Même store, même diffusion ; seule la **source** des données change
   (humain vs matériel). Un sélecteur de mode (« Scoring » / « Hardware Scoring ») bascule la
   source.
@@ -804,7 +803,7 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
 - **Phase 3 — WebSocket broker + cache + Hardware Scoring** : `useWebSocket` (broker),
   **génération des JSON de diffusion `live/cache/{idMatch}_match_{global,score,chrono}.json`**
   (parité `CacheMatch` legacy, alimentent les incrustations `/live` — cf. §6.2 « Génération des
-  JSON »), incrustations `/live`, `useHardwareScoring` (captation panneau matériel propriétaire ou équivalent).
+  JSON »), incrustations `/live`, `useHardwareScoring` (captation panneau propriétaire).
 - **Phase 4 — Offline/PWA (reporté)** : file d'attente d'écritures IndexedDB derrière le store,
   service worker. Uniquement après un online-first solide.
 
@@ -833,7 +832,7 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
    3 TODO de `ScoringController`) — parité `CacheMatch` legacy, consommés par `/live` (contrat à
    respecter, cf. §6.2 « Génération des JSON »). Reporté en **Phase 3**.
 3. **broker / Hardware Scoring** — serveur WS interne maîtrisé ; protocole de captation du
-   matériel (matériel propriétaire ou équivalent) à formaliser (format des live datas entrantes). Risque
+   matériel (matériel propriétaire) à formaliser (format des live datas entrantes). Risque
    maîtrisé (propriété interne).
 4. **cn** — hors périmètre MVP ; chantier de suivi séparé sur toute app4.
 5. **Prolongations non bornées (but en or)** — le legacy plafonne à 2 (`P1`/`P2`) ; généraliser
@@ -873,7 +872,7 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
   → 401 ; vérifier que `app_wsm` legacy (`/api/wsm/`) fonctionne toujours.
 - **Phase 2** : ouvrir scoreboard + shotclock en 2ᵉ fenêtre → synchro live.
 - **Phase 3** : connecter le broker + une incrustation `/live` → réception via `{p,t,v}` ;
-  brancher un panneau matériel propriétaire (ou équivalent) en mode Hardware Scoring → le store se met à jour
+  brancher un panneau propriétaire en mode Hardware Scoring → le store se met à jour
   depuis le matériel.
 
 ## 12. Suivi des développements

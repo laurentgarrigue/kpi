@@ -1,5 +1,18 @@
 # Revue critique — Refonte du scoring live (harmonisation, simplification, consolidation)
 
+> ⚠️ **Document historique — les conclusions ont été intégrées, la trajectoire a changé depuis.**
+> Cette revue portait sur une **version antérieure** du document de propositions, qui comparait
+> quatre options d'architecture et six phases (P0–P4). Ce document a depuis été **entièrement
+> réécrit** en un plan unique et simplifié :
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
+>
+> **Ce qui reste valable ici** : l'analyse par principes (§2), les cinq corrections de fond (§3) et
+> le périmètre manquant du chemin de lecture (§4) — c'est **le raisonnement qui a produit** le plan
+> actuel, utile pour comprendre *pourquoi* ces choix.
+> **Ce qui est périmé** : tous les renvois de section (§7.4, §7.9, §7.10…), les noms d'options
+> (1/2/3/4) et de phases (P0–P4). Ils désignent une structure qui n'existe plus. Pour ce qu'on fait
+> **aujourd'hui**, se référer au plan, pas à cette revue.
+
 > **Audit** des documents [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
 > et [LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](../reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md),
 > vérifié contre le code réel (`ScoringController`, `EventCacheWorkerCommand`, `wsMixin.js`,
@@ -39,7 +52,7 @@ référence ont été **amendés en conséquence** (voir §6 — liste des corre
 
 | Duplication | État | Exigence |
 |-------------|------|----------|
-| **Logique de traduction propriétaire** | 1 implémentation (`wsMixin.js`, navigateur) ; l'agent « smart » l'aurait **dupliquée sur N boîtiers** à maintenir à distance | **Une seule implémentation, côté serveur** (agent « semi-dumb », §3.4). La logique propriétaire est versionnée et déployée avec le reste, jamais sur le terrain |
+| **Logique de traduction du protocole propriétaire** | 1 implémentation (`wsMixin.js`, navigateur) ; l'agent « smart » l'aurait **dupliquée sur N boîtiers** à maintenir à distance | **Une seule implémentation, côté serveur** (agent « semi-dumb », §3.4). La logique de traduction propriétaire est versionnée et déployée avec le reste, jamais sur le terrain |
 | **Chemins d'écriture scoring** | 3 aujourd'hui (`/api/wsm/*`, `v2/*.php`, `ScoringController`) ; le plan initial en créait un **4ᵉ** (`/admin/scoring/v2/*`) | Faire évoluer `ScoringController` **en place** ; toute route dupliquée doit avoir une date de mort écrite |
 | **~20 pages d'incrustation PHP** | `score.php` × 9 variantes (nations/clubs × suffixes `_o/_e/_s`/HD), `next_game*`, `teams*`, `multi_score*`… quasi identiques, toutes sur `live/js/match.js` | **Phase dédiée de consolidation** en une page paramétrée (ou vues app_live). C'est la condition réelle de la mort du cache JSON fichier |
 | **Paradigmes de workers** | `event_worker.php` (CLI legacy) + `EventCacheWorkerCommand` (api2) ; le plan initial ajoutait `messenger:consume` | **Un seul modèle opérationnel** : étendre le pattern worker api2 existant (drainage d'outbox dans la même boucle), ou tout migrer sur Messenger — pas les deux indéfiniment |
@@ -94,7 +107,7 @@ référence ont été **amendés en conséquence** (voir §6 — liste des corre
 Le legacy à migrer est massif et **non testé**. La refonte est l'occasion de renverser cela, et le
 domaine s'y prête exceptionnellement bien (logique pure, entrées/sorties sérialisables) :
 
-1. **Tests de caractérisation d'abord.** Avant de porter la traduction propriétaire côté serveur,
+1. **Tests de caractérisation d'abord.** Avant de porter la traduction du protocole propriétaire côté serveur,
    enregistrer des **sessions STOMP réelles** (le Faker de `Manager.vue` fournit déjà les payloads
    de référence, §9 de l'archi) et capturer les écritures `/api/wsm/*` produites par le `wsMixin.js`
    actuel. Ces paires (trames → écritures) deviennent des **golden files** : le port serveur de la
@@ -162,11 +175,11 @@ n'est pas un démon et ne redémarre pas seul).
 
 ### 3.4 Agent « semi-dumb », pas « smart »
 
-La recommandation « smart » (traduction propriétaire embarquée sur le boîtier) optimisait le buffer au
+La recommandation « smart » (traduction du protocole propriétaire embarquée sur le boîtier) optimisait le buffer au
 prix d'une **duplication de la logique métier sur une flotte de boîtiers** — la faiblesse fleet
 management que le document identifiait lui-même. Le binaire smart/dumb était faux : l'agent
 **semi-dumb** filtre les ticks de chrono (ne transmet que les transitions — ce que `wsMixin.js`
-fait déjà implicitement) et relaie les trames **brutes filtrées** ; la traduction propriétaire vit une
+fait déjà implicitement) et relaie les trames **brutes filtrées** ; la traduction du protocole propriétaire vit une
 seule fois, côté serveur, dans l'ACL. Le buffer reste petit (transitions uniquement), le boîtier
 devient quasi-firmware (jamais de mise à jour métier), et DRY est respecté. Prévoir la **clé 4G**
 dans le kit boîtier (le « ne dépend pas du réseau du site » du comparatif supposait quand même une
@@ -209,7 +222,7 @@ comme contrainte de compatibilité du cache. Or :
 | Phase | Contenu | Garde-fous |
 |-------|---------|------------|
 | **P0 — Exploitation seule** | Kiosk + veille off + `databaseSync` forcé + heartbeat. **Zéro code applicatif** (SW/PWA écartés). | Jetable par construction |
-| **P1 — État canonique + contrat** | Tables `scoring_live_*`, extension `ScoringController` en place, **contrat de commande** (idempotence, `client_ts`, source), state machine **en TDD**, golden files propriétaire, publieur outbox dans le worker api2 existant. Décisions §3.1 tranchées et écrites. | `kp_*` reste canonique ; consolidation fin de match |
+| **P1 — État canonique + contrat** | Tables `scoring_live_*`, extension `ScoringController` en place, **contrat de commande** (idempotence, `client_ts`, source), state machine **en TDD**, golden files du protocole propriétaire, publieur outbox dans le worker api2 existant. Décisions §3.1 tranchées et écrites. | `kp_*` reste canonique ; consolidation fin de match |
 | **P2 — Adaptateurs & arbitrage** | Adaptateurs sur le contrat (Console déjà branchée, Score-seul, Import), `active_source` + promotion, suite de contrat commune (ex-Faker). | Test LSP : même suite pour toutes les sources |
 | **P3 — Agent semi-dumb** | Boîtier filtrant (transitions uniquement), buffer replay testé, auth machine scopée, NTP + 4G au kit. Traduction propriétaire = ACL serveur unique. | Golden files = non-régression du protocole |
 | **P3bis — Consolidation lecture** | Famille des ~20 incrustations PHP → page(s) paramétrée(s) ; le cache fichier passe en cache HTTP sur `GET /state`. | Prérequis à la mort du cache |
