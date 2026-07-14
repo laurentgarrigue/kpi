@@ -238,7 +238,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Envoyer et utiliser le statut Poule consolidée / Match élimatoire joué vers les TV pour l'affichage du programme du week-end.
 - https://youtu.be/WTMxXCMBie0?t=9853 exemple 2022 incrustation carton, pénalité, but avec photos.
 - décompte des deux minutes sur les pénalités
-- 
+- live_match : inclure la transition dans l'enchaînement des matchs (score final ou provisoire selon la période et le type de match éliminatoire ou non, après un délai écoulé après le chrono à zéro, prochain match après un délai écoulé et si on est dans le temps du warmup avant l'heure du next_game, etc.). Optionnel et paramétrable.
 
 
 **WebSocket**:
