@@ -35,8 +35,9 @@ vocabulaire (`but`, `carton`, `chrono démarre`, `chrono s'arrête`).
 actuel fait déjà** — pousser des messages du serveur vers les écrans, en temps réel. Trois
 différences pratiques :
 
-- C'est un **logiciel standard** (un « hub »), maintenu par la communauté Symfony, qu'on installe à
-  côté d'api2. Ce n'est plus un dépôt personnel à maintenir dans le chemin critique.
+- C'est un **logiciel standard** (un « hub »), maintenu par la communauté Symfony. Ce n'est plus un
+  dépôt personnel à maintenir dans le chemin critique. **Où il tourne exactement** — un conteneur à
+  part ou, mieux, embarqué dans le FrankenPHP d'api2 — est tranché au §4.6.
 - Le navigateur s'y connecte en **SSE** (*Server-Sent Events*) : un WebSocket en plus simple, à
   **sens unique**. Le serveur envoie, l'écran reçoit. Une incrustation n'a jamais besoin de parler
   dans l'autre sens — SSE suffit largement.
@@ -52,7 +53,7 @@ worker qui écrit des fichiers.
 
 | | Aujourd'hui | Demain |
 |---|---|---|
-| **Mécanisme** | un worker recalcule `10842_match_score.json` toutes les N secondes ; l'écran lit le fichier | l'écran appelle `GET /api2/scoring/state/10842` ; **Nginx garde la réponse en mémoire quelques secondes** |
+| **Mécanisme** | un worker recalcule `10842_match_score.json` toutes les N secondes ; l'écran lit le fichier | l'écran appelle `GET /api2/scoring/state/10842` ; **le serveur web garde la réponse en mémoire quelques secondes** (Nginx aujourd'hui, ou Caddy/FrankenPHP après la migration du §4.6) |
 | **Fraîcheur** | dépend de la cadence du worker (risque de fichier périmé) | invalidé par l'état lui-même (`ETag` / `updated_at`) |
 | **À maintenir** | un worker de génération, des fichiers sur disque | rien : une en-tête HTTP |
 
@@ -233,6 +234,49 @@ Ce nom désigne **déjà deux choses** dans la base de code (`sources/live/v2/*.
 V2) ; un troisième sens garantirait la confusion. Les nouveaux éléments sont nommés par leur **rôle** :
 `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`.
 
+### 4.6 Où tourne le hub Mercure : dans api2, pas à côté
+
+> Cette décision **remplace** la formulation « un hub qu'on installe à côté d'api2 » du §1.2. Elle est
+> analysée en détail dans
+> [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md).
+
+Le §1.2 présentait Mercure comme « un logiciel standard qu'on installe **à côté** d'api2 ». C'est vrai
+avec l'infrastructure Apache actuelle : il faudrait alors un **conteneur Mercure séparé** (l'image
+officielle `dunglas/mercure`), avec sa propre configuration, son propre TLS interne et ses propres
+labels Traefik.
+
+Mais la trajectoire d'infrastructure d'api2 croise directement ce besoin. L'audit FrankenPHP propose
+d'**extraire api2 dans un conteneur FrankenPHP** en mode worker (pour les performances de l'API). Or
+**FrankenPHP embarque un hub Mercure natif** : le hub n'est plus un service à déployer et à maintenir
+à part, c'est une **directive du Caddyfile** du conteneur api2. C'est le même binaire qui sert l'API
+et diffuse les événements.
+
+**Conséquence pour cette refonte :**
+
+| | Sans FrankenPHP (Apache) | Avec FrankenPHP (recommandé) |
+|---|---|---|
+| Le hub Mercure | conteneur `mercure` dédié | **directive Caddyfile dans api2** — rien à déployer en plus |
+| Le cache HTTP du §1.3 | supposait Nginx | **fourni par Caddy/FrankenPHP** — même mécanisme, même conteneur |
+| Surface à exploiter | 1 conteneur de plus | **0 conteneur de plus** |
+| TLS interne du hub | à configurer | Traefik termine déjà le TLS ; le hub écoute en HTTP interne |
+
+**Ce que ça ne change pas.** Mercure reste Mercure : SSE, rejeu natif des messages ratés, canal
+séparé de l'actuel (étape 2). Le protocole vu par l'incrustation (étape 3) est **identique** quel que
+soit l'hôte du hub. Cette décision ne porte que sur **où le hub s'exécute**, pas sur ce qu'il fait.
+
+**Ordre des chantiers.** La migration FrankenPHP d'api2 est un **prérequis souhaitable mais non
+bloquant** de l'étape 2 :
+
+- Si FrankenPHP est en place **avant** l'étape 2, le hub Mercure est simplement activé dans le
+  Caddyfile existant — coût quasi nul.
+- Sinon, l'étape 2 démarre avec un conteneur `dunglas/mercure` provisoire, remplacé plus tard par le
+  hub natif lors de la bascule FrankenPHP. Le canal et le code de publication (la table `scoring_outbox`
+  et son worker) sont **inchangés** : seule l'URL du hub bouge, dans une variable d'environnement.
+
+> ⚠️ **Ne pas conditionner l'étape 2 à la migration FrankenPHP.** L'état canonique (étape 1) et la
+> diffusion (étape 2) restent le cœur du sujet ; l'hôte du hub est un **détail d'infrastructure**
+> qu'on peut faire converger après coup. La boussole du §3 s'applique : le tuyau est secondaire.
+
 ---
 
 ## 5. La trajectoire
@@ -272,6 +316,10 @@ sans base ni réseau) + fichiers de référence + la table de sortie (`scoring_o
 
 **Ce qu'on fait.** Un petit service serveur détecte les changements en base et les pousse sur Mercure,
 **sur un canal séparé** de l'actuel — donc sans perturber les incrustations de production.
+
+**Où tourne le hub.** Voir §4.6 : le hub Mercure est **embarqué dans le conteneur FrankenPHP d'api2**
+si la migration d'infrastructure est faite, sinon un conteneur `dunglas/mercure` provisoire.
+Cette étape ne dépend **pas** de ce choix — seule l'URL du hub change, dans une variable d'env.
 
 **Le mécanisme (table de sortie).** Quand api2 écrit un changement d'état, il dépose **dans la même
 transaction** une ligne dans une table `scoring_outbox`. Un worker draine cette table et publie sur

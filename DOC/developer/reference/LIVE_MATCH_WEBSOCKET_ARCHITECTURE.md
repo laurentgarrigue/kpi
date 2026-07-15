@@ -10,6 +10,13 @@ de marque KPI, saisie a posteriori) font l'objet de la **§14**.
 > [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md), et la
 > revue critique — principes DRY/SOLID/DDD/TDD, décisions structurantes, périmètre de consolidation
 > du legacy — dans [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+>
+> **Ce document décrit l'existant.** Deux briques d'infrastructure décrites ici sont vouées à
+> disparaître dans la cible : le **broker WebSocket personnel** (§2.4) sera remplacé par **Mercure**,
+> et le **cache JSON fichier** (§13) par un cache HTTP. L'audit
+> [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md) montre comment
+> l'extraction d'api2 sous **FrankenPHP** fournit nativement le hub Mercure et ce cache HTTP — voir le
+> §4.6 du plan de refonte pour la trajectoire.
 
 ### Terminologie — le matériel de la table de marque
 
@@ -167,6 +174,9 @@ C'est le **cœur** du système :
 Broker WebSocket hébergé côté KPI. **Ce n'est pas du STOMP** : `app_wsm` y publie des messages
 JSON « à plat » (voir §4.2). Sert uniquement à la diffusion temps réel vers l'incrustation ;
 il n'est pas la source de persistance.
+
+> 🔭 **Cible.** Ce broker (dépôt personnel `laurentgarrigue/broker`) est destiné à être remplacé par
+> **Mercure**, embarqué dans le conteneur FrankenPHP d'api2 — voir le bloc « Documents liés » en tête.
 
 ### 2.5 app_live — Incrustation (`sources/app_live_dev/`)
 Construit l'**incrustation vidéo** du match (score, chrono, événements). Application « lecture

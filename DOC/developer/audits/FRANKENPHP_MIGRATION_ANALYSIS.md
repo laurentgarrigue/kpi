@@ -99,8 +99,14 @@ Un binaire unique. Plus de cascade de `a2enmod`, plus de `rm -f /var/run/apache2
 
 ### Mercure / SSE intégrés
 
-Utile si `event-cache-worker` ou app3/app4 devaient pousser du temps réel sans WebSocket maison.
-Pas un besoin actuel — c'est de l'optionnalité gratuite.
+FrankenPHP embarque un **hub Mercure natif** (une directive du Caddyfile, pas un service à déployer).
+
+Ce n'est plus une simple optionnalité : la **refonte du scoring live** en fait un besoin concret.
+Son plan ([LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md),
+§4.6) prévoit de diffuser l'état des matchs via Mercure. Sous Apache, il faudrait un conteneur
+`dunglas/mercure` séparé ; en extrayant api2 sous FrankenPHP, le hub vit **dans le même conteneur que
+l'API**. La migration décrite ici est donc un **prérequis souhaitable** de l'étape 2 de cette refonte
+— sans en être un bloquant (voir le §4.6 du plan pour la trajectoire de convergence).
 
 ---
 
