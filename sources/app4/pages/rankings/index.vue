@@ -32,9 +32,6 @@ const rankingTypes = ref<RankingTypeOption[]>([])
 const ranking = ref<RankingTeam[]>([])
 const phases = ref<RankingPhase[]>([])
 
-// Active tab kept for non-admin users only (profile > 6)
-const activeTab = ref<'computed' | 'published'>(authStore.profile <= 6 ? 'computed' : 'published')
-
 // Selected ranking type (profil ≤ 3 can change it)
 const selectedType = ref<CompetitionType | ''>('')
 

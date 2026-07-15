@@ -165,7 +165,7 @@ export const useApi = () => {
   ): Promise<T> => {
     const url = `${baseUrl}${endpoint}`
     let response: Response | null = null
-    let fetchError: Error | null = null
+    let fetchError: Error | null
 
     try {
       // Add timeout wrapper
@@ -306,7 +306,7 @@ export const useApi = () => {
   const upload = async <T>(endpoint: string, formData: FormData, silentStatuses: number[] = []): Promise<T> => {
     const url = `${baseUrl}${endpoint}`
     let response: Response | null = null
-    let fetchError: Error | null = null
+    let fetchError: Error | null
 
     try {
       // Add timeout wrapper
@@ -377,7 +377,7 @@ export const useApi = () => {
   const getBlob = async (endpoint: string): Promise<ArrayBuffer> => {
     const url = `${baseUrl}${endpoint}`
     let response: Response | null = null
-    let fetchError: Error | null = null
+    let fetchError: Error | null
 
     try {
       response = await Promise.race([

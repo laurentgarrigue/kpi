@@ -12,6 +12,12 @@ import { TOURS } from '~/utils/tourSteps'
 
 const storageKey = (tourId: string) => `kpi_admin_tour_${tourId}_version`
 
+// Flag module-level : un tour est en cours de lecture. Empêche maybeAutoStart de
+// relancer un second tour quand une étape navigue vers `/` (ce qui remonte la page
+// d'accueil et rappelle maybeAutoStart) — sinon boucle infinie à la 1re lecture,
+// tant que la version « vue » n'a pas encore été persistée par onDestroyed.
+let tourRunning = false
+
 /** Version du tour déjà vue par l'utilisateur (0 si jamais). */
 function getSeenVersion(tourId: string): number {
   if (!import.meta.client) return 0
@@ -67,13 +73,15 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
    * celles marquées `isNew` (re-déclenchement pour utilisateurs déjà venus).
    */
   async function startTour(onlyNew = false): Promise<void> {
-    if (!import.meta.client || !tour) return
+    if (!import.meta.client || !tour || tourRunning) return
 
     const { driver } = await import('driver.js')
     await import('driver.js/dist/driver.css')
 
     const steps = onlyNew ? tour.steps.filter(s => s.isNew) : tour.steps
     if (steps.length === 0) return
+
+    tourRunning = true
 
     const driverObj = driver({
       showProgress: true,
@@ -106,6 +114,7 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
       }),
       onDestroyed: () => {
         setSeenVersion(tour.id, tour.version)
+        tourRunning = false
       },
     })
 
