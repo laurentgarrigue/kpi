@@ -408,8 +408,18 @@ app2_npm_update: ## Met à jour toutes les dépendances npm de app2
 	$(DOCKER_EXEC_NODE) sh -c "npm update"
 
 app2_npm_update_lock: ## Régénère le package-lock.json de app2 via container temporaire (Node 22)
-	@echo "Régénération du package-lock.json pour app2..."
-	docker run --rm -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm install --package-lock-only --ignore-scripts"
+	@echo "Régénération du package-lock.json pour app2 (vrai npm install en dossier isolé)..."
+	@# NE PAS utiliser --package-lock-only : il ne résout pas les peer deps et produit
+	@# un lock désynchronisé (npm ci échoue ensuite). NE PAS installer sur sources/app2
+	@# monté : node_modules/.nuxt seraient écrits en root et casseraient le dev (EACCES).
+	@# On copie uniquement les manifests dans un dossier temporaire, on installe pour de
+	@# vrai, puis on récupère le seul package-lock.json régénéré.
+	@tmp=$$(mktemp -d) ; \
+		cp sources/app2/package.json sources/app2/package-lock.json "$$tmp/" ; \
+		docker run --rm -v "$$tmp:/app" -w /app node:22-alpine \
+			sh -c "npm install --ignore-scripts --no-audit --no-fund && rm -rf node_modules" ; \
+		cp "$$tmp/package-lock.json" sources/app2/package-lock.json ; \
+		rm -rf "$$tmp"
 	@echo "package-lock.json mis à jour. Pensez à le committer."
 
 app2_npm_add: ## Ajoute un package npm à app2 (usage: make app2_npm_add package=uuid)
@@ -466,8 +476,18 @@ app3_npm_update: ## Met à jour toutes les dépendances npm de app3
 	$(DOCKER_EXEC_NODE3) sh -c "npm update"
 
 app3_npm_update_lock: ## Régénère le package-lock.json de app3 via container temporaire (Node 22)
-	@echo "Régénération du package-lock.json pour app3..."
-	docker run --rm -v "$(CURDIR)/sources/app3:/app" -w /app node:22-alpine sh -c "npm install --package-lock-only --ignore-scripts"
+	@echo "Régénération du package-lock.json pour app3 (vrai npm install en dossier isolé)..."
+	@# NE PAS utiliser --package-lock-only : il ne résout pas les peer deps et produit
+	@# un lock désynchronisé (npm ci échoue ensuite). NE PAS installer sur sources/app3
+	@# monté : node_modules/.nuxt seraient écrits en root et casseraient le dev (EACCES).
+	@# On copie uniquement les manifests dans un dossier temporaire, on installe pour de
+	@# vrai, puis on récupère le seul package-lock.json régénéré.
+	@tmp=$$(mktemp -d) ; \
+		cp sources/app3/package.json sources/app3/package-lock.json "$$tmp/" ; \
+		docker run --rm -v "$$tmp:/app" -w /app node:22-alpine \
+			sh -c "npm install --ignore-scripts --no-audit --no-fund && rm -rf node_modules" ; \
+		cp "$$tmp/package-lock.json" sources/app3/package-lock.json ; \
+		rm -rf "$$tmp"
 	@echo "package-lock.json mis à jour. Pensez à le committer."
 
 app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=uuid)
@@ -541,8 +561,18 @@ app4_npm_update: ## Met à jour toutes les dépendances npm de app4
 	$(DOCKER_EXEC_NODE4) sh -c "npm update"
 
 app4_npm_update_lock: ## Régénère le package-lock.json de app4 via container temporaire (Node 22)
-	@echo "Régénération du package-lock.json pour app4..."
-	docker run --rm -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm install --package-lock-only --ignore-scripts"
+	@echo "Régénération du package-lock.json pour app4 (vrai npm install en dossier isolé)..."
+	@# NE PAS utiliser --package-lock-only : il ne résout pas les peer deps et produit
+	@# un lock désynchronisé (npm ci échoue ensuite). NE PAS installer sur sources/app4
+	@# monté : node_modules/.nuxt seraient écrits en root et casseraient le dev (EACCES).
+	@# On copie uniquement les manifests dans un dossier temporaire, on installe pour de
+	@# vrai, puis on récupère le seul package-lock.json régénéré.
+	@tmp=$$(mktemp -d) ; \
+		cp sources/app4/package.json sources/app4/package-lock.json "$$tmp/" ; \
+		docker run --rm -v "$$tmp:/app" -w /app node:22-alpine \
+			sh -c "npm install --ignore-scripts --no-audit --no-fund && rm -rf node_modules" ; \
+		cp "$$tmp/package-lock.json" sources/app4/package-lock.json ; \
+		rm -rf "$$tmp"
 	@echo "package-lock.json mis à jour. Pensez à le committer."
 
 app4_npm_add: ## Ajoute un package npm à app4 (usage: make app4_npm_add package=uuid)
