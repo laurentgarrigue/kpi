@@ -17,6 +17,18 @@
 
 Trois termes reviennent partout. Ils sont simples ; ils sont juste mal expliqués ailleurs.
 
+> **Note de terminologie — deux « événements ».** Le mot « événement » a **deux sens** dans KPI, à
+> ne pas confondre :
+> - l'**événement KPI** = un **rassemblement** multi-journées/multi-compétitions sur un site (2–5
+>   jours) — c'est ce sens qui apparaît dans « pendant tout l'événement », « `event{id}_pitch{p}` »,
+>   « auth scopée événement + terrain » ;
+> - le **fait de match** (ou « fait de jeu ») = un **fait ponctuel dans un match** (but, carton ;
+>   plus tard tir, passe, arrêt du gardien…) — la table `scoring_live_event`.
+>
+> Dans ce document, « événement » **seul** désigne l'**événement KPI**. Quand il s'agit d'un but/carton,
+> on dit **« fait de match »**. (Le modèle de données est détaillé dans
+> [PAGE_SCORING.md §0.4–§0.5](../../specs/PAGE_SCORING.md).)
+
 ### 1.1 « Matériel propriétaire »
 
 On désigne ainsi, dans toute la documentation, le **panneau de score du commerce** installé sur les
@@ -75,7 +87,7 @@ Tout le reste en découle :
 | Symptôme | Cause |
 |---|---|
 | Un onglet Chrome doit rester ouvert pendant tout l'événement | c'est lui qui porte l'état et fait le relais |
-| Un match resté « en attente » ne persiste **aucun** événement | la machine à états vit dans l'onglet |
+| Un match resté « en attente » ne persiste **aucun** fait de jeu | la machine à états vit dans l'onglet |
 | Le shotclock est perdu à la moindre coupure | il n'est jamais écrit |
 | Changer de mode de saisie en cours de match est risqué | chaque mode a **son** état, pas un état commun |
 | ~20 pages d'incrustation PHP quasi identiques | chacune reconstruit l'affichage depuis des fichiers |
@@ -93,7 +105,7 @@ flowchart TB
     SCO["Mode score seul"] --> ING
     IMP["Import a posteriori"] --> ING
 
-    ING["<b>Une seule porte d'entrée</b><br/>api2 — ScoringController étendu"] --> DB[("<b>État complet du match</b><br/>score, période, chronos,<br/>shotclock, pénalités, événements")]
+    ING["<b>Une seule porte d'entrée</b><br/>api2 — ScoringController étendu"] --> DB[("<b>État complet du match</b><br/>score, période, chronos,<br/>shotclock, pénalités, faits de jeu")]
 
     DB --> PUB["Publieur<br/>(détecte les changements)"]
     PUB --> MER(("Mercure"))
@@ -158,7 +170,7 @@ mécanisme au shotclock et aux pénalités**, qui aujourd'hui n'existent que le 
 
 Aujourd'hui : une vingtaine de pages PHP quasi identiques (`score.php`, `score_o.php`,
 `score_club_e.php`, `next_game.php`, `teams.php`, `multi_score.php`…). Mêmes données, variantes
-mécaniques : nations/clubs × suffixes d'affichage (score seul / événements seuls / événements figés
+mécaniques : nations/clubs × suffixes d'affichage (score seul / faits de jeu seuls / faits de jeu figés
 / HD).
 
 Demain : **une page, des paramètres.** Chaque variante devient une option, pas un fichier :
@@ -166,7 +178,7 @@ Demain : **une page, des paramètres.** Chaque variante devient une option, pas 
 | Paramètre | Valeurs |
 |---|---|
 | Terrain | numéro de terrain |
-| Blocs affichés | score, chrono, shotclock, pénalités, événements, compositions, prochain match |
+| Blocs affichés | score, chrono, shotclock, pénalités, faits de jeu, compositions, prochain match |
 | Habillage | nations / clubs |
 | Format | standard / HD |
 
@@ -177,6 +189,55 @@ recevoir le chrono si on n'affiche que le score).
 **C'est le plus gros gain caché de la refonte**, et c'est **la condition pour que le cache JSON
 puisse mourir** : tant que ces 20 pages existent, il faut continuer à générer les fichiers pour
 elles.
+
+### 3.3 L'abonnement ciblé : événement + terrain + blocs
+
+**Le problème.** Plusieurs événements KPI peuvent se dérouler **en même temps** (deux tournois le
+même week-end, chacun sur ses terrains). Si toutes les incrustations recevaient tout, on aurait des
+**conflits d'affichage** : l'écran du terrain 2 de l'événement 236 ne doit voir **que** le flux de ce
+terrain-là, jamais celui d'un autre événement. Il faut donc **adresser** finement à quoi chaque
+incrustation s'abonne.
+
+**La solution — les *topics* Mercure.** Mercure est nativement organisé en **topics** : un abonné
+déclare l'adresse exacte qu'il veut écouter, et ne reçoit que ce qui est publié dessus. On adresse
+donc chaque flux par une **URI hiérarchique** événement → terrain → bloc de donnée :
+
+```
+/scoring/event/236/pitch/2/score      ← le score du terrain 2 de l'événement 236
+/scoring/event/236/pitch/2/clock      ← le chrono du même terrain
+/scoring/event/236/pitch/2/shotclock
+/scoring/event/236/pitch/2/penalty
+/scoring/event/236/pitch/2/fact        ← les faits de jeu (buts, cartons)
+```
+
+- **Isolation par événement + terrain** : l'incrustation « event 236, terrain 2 » ne s'abonne
+  qu'aux URIs commençant par `/scoring/event/236/pitch/2/…` → **aucun risque de recevoir un autre
+  événement**, même s'ils tournent simultanément.
+- **Sélection par bloc** : elle ne s'abonne qu'aux **derniers segments** dont elle a besoin. Une
+  incrustation « score seul » écoute `.../score` et ignore `.../clock`, `.../shotclock`, etc. C'est
+  le « uniquement les flux dont elle a besoin » du §3.2, rendu concret par l'adressage.
+- **Correspondance avec l'écriture** : le **publieur** (étape 2) publie chaque changement d'état sur
+  l'URI correspondante — il connaît l'événement, le terrain et le type de donnée depuis la ligne
+  d'outbox. Le `topic` de la table `scoring_outbox` **porte cette URI**.
+
+> **Mercure sait aussi grouper.** Un abonné peut écouter un **motif** (ex.
+> `/scoring/event/236/pitch/2/{type}`) pour recevoir tous les blocs d'un terrain d'un coup, ou une
+> supervision peut écouter `/scoring/event/236/pitch/{pitch}/{type}` pour voir **tout** l'événement
+> 236. La granularité est choisie **par l'abonné**, pas imposée par le publieur.
+
+**Paramètres de la page d'incrustation (complément du §3.2).** L'adresse d'abonnement se déduit
+directement des paramètres de la page :
+
+| Paramètre | Rôle dans l'abonnement |
+|---|---|
+| **Événement** (`event`) | 1er niveau de l'URI — **isole l'événement** (évite les conflits multi-événements) |
+| **Terrain** (`pitch`) | 2ᵉ niveau — isole le terrain au sein de l'événement |
+| **Blocs affichés** | derniers segments souscrits (`score`, `clock`, `shotclock`, `penalty`, `fact`…) |
+
+> Ce mécanisme **remplace** la clé d'échange legacy `event{id}_pitch{p}` du broker actuel (cf.
+> [architecture §6](LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)) : même idée d'un flux stable par
+> **événement + terrain**, mais portée par les topics Mercure (adressage natif + rejeu) au lieu
+> d'une clé applicative à router à la main.
 
 ---
 
@@ -249,7 +310,7 @@ Mais la trajectoire d'infrastructure d'api2 croise directement ce besoin. L'audi
 d'**extraire api2 dans un conteneur FrankenPHP** en mode worker (pour les performances de l'API). Or
 **FrankenPHP embarque un hub Mercure natif** : le hub n'est plus un service à déployer et à maintenir
 à part, c'est une **directive du Caddyfile** du conteneur api2. C'est le même binaire qui sert l'API
-et diffuse les événements.
+et diffuse les faits de jeu.
 
 **Conséquence pour cette refonte :**
 
@@ -323,7 +384,10 @@ Cette étape ne dépend **pas** de ce choix — seule l'URL du hub change, dans 
 
 **Le mécanisme (table de sortie).** Quand api2 écrit un changement d'état, il dépose **dans la même
 transaction** une ligne dans une table `scoring_outbox`. Un worker draine cette table et publie sur
-Mercure.
+Mercure. **Chaque ligne porte le topic de destination** — l'URI événement/terrain/bloc du §3.3
+(ex. `/scoring/event/236/pitch/2/score`) — que le worker utilise comme adresse de publication : c'est
+ce qui garantit que le message n'atteint que les incrustations abonnées à **ce** terrain de **cet**
+événement.
 
 > ⚠️ **Pourquoi une table intermédiaire plutôt que publier directement dans la requête HTTP ?**
 > Si Mercure est lent ou en panne, l'écriture de l'état ne doit **jamais** être bloquée ni perdue —
@@ -345,7 +409,9 @@ nativement.**
 ### Étape 3 — La page d'incrustation unique
 
 **Ce qu'on fait.** Une page qui lit `GET /state` au démarrage (servi par cache HTTP), puis s'abonne à
-Mercure — uniquement aux flux dont elle a besoin, selon ses paramètres d'affichage (§3.2).
+Mercure sur les **topics ciblés événement + terrain + blocs** (§3.3) — donc uniquement le flux de
+**son** terrain de **son** événement, et uniquement les blocs qu'elle affiche (§3.2). C'est
+l'abonnement ciblé qui évite tout conflit quand plusieurs événements tournent en même temps.
 
 **Ce qu'elle remplace.** Toute la famille des ~20 pages PHP, et à terme `app_live_dev`.
 

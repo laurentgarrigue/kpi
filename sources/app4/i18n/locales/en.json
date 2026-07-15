@@ -2433,7 +2433,7 @@
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
     "field": "Field",
-    "history": "Event history",
+    "history": "Game action history",
     "not_found": "Match not found",
     "select_player_first": "Select a player first",
     "no_access": "Restricted access (experimentation phase)",
@@ -2443,14 +2443,14 @@
       "post": "Post-match"
     },
     "edit": {
-      "title": "Edit event",
+      "title": "Edit game action",
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
-      "edit_hint": "Click an event to edit it"
+      "edit_hint": "Click a game action to edit it"
     },
     "time": {
-      "label": "Event time",
+      "label": "Game action time",
       "period": "Period"
     },
     "adjust": {

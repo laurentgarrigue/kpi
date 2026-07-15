@@ -2445,7 +2445,7 @@
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
     "field": "Terrain",
-    "history": "Historique des événements",
+    "history": "Historique des faits de jeu",
     "not_found": "Match introuvable",
     "select_player_first": "Sélectionnez d'abord un joueur",
     "no_access": "Accès réservé (phase d'expérimentation)",
@@ -2455,14 +2455,14 @@
       "post": "Post-match"
     },
     "edit": {
-      "title": "Modifier l'événement",
+      "title": "Modifier le fait de jeu",
       "save": "Enregistrer",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "edit_hint": "Cliquez sur un événement pour le modifier"
+      "edit_hint": "Cliquez sur un fait de jeu pour le modifier"
     },
     "time": {
-      "label": "Temps de l'événement",
+      "label": "Temps du fait de jeu",
       "period": "Période"
     },
     "adjust": {

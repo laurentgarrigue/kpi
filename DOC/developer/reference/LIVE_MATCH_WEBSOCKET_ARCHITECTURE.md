@@ -62,6 +62,14 @@ des compositions (§10) : à ce rythme, la table de marque ne peut pas reconfigu
 chaque rencontre. La clé d'échange `<numeroEvenement>_<numero_terrain>` (§6) identifie donc un
 **flux de terrain stable sur toute la durée** de l'événement, quel que soit le match en cours.
 
+> ⚠️ **Deux « événements » à ne pas confondre.** Ci-dessus, « événement » = **événement KPI** (ce
+> rassemblement multi-journées). Ailleurs dans ce document, « événement » désigne parfois un **fait
+> de match** — un but ou un carton (p.ex. « Événement joueur » §9.5, `setGameEvent`, « buts/cartons »).
+> Ce sont **deux échelles différentes** : l'événement KPI **contient** des centaines de matchs, chaque
+> match contient des faits de match. Quand le contexte prête à confusion, on précise **« fait de
+> match »** pour le second. (Modèle de données cible : `scoring_live_event`, cf.
+> [PAGE_SCORING.md §0.4](../../specs/PAGE_SCORING.md).)
+
 > ⚠️ Ce document décrit d'abord le fonctionnement **complet** avec matériel propriétaire (console de marque +
 > passerelle). En pratique, **tous les terrains n'ont pas ce matériel** : les modes **alternatifs et
 > dégradés** (saisie via la feuille de marque KPI, saisie a posteriori) sont décrits en **§14**.
@@ -116,7 +124,7 @@ le LAN du terrain et Internet : il **persiste** les données dans KPI et, en opt
 **Deux canaux alimentent les incrustations**, à ne pas confondre :
 
 1. **Le broker WebSocket** (temps réel, volatil) — `app_wsm` y pousse le flux live (score, chrono,
-   shotclock, événements) que `app_live` consomme pour l'incrustation animée.
+   shotclock, faits de jeu) que `app_live` consomme pour l'incrustation animée.
 2. **Le cache JSON** (`/live/cache/*.json`) — généré côté serveur par l'**Event Cache Manager**
    (worker), qui calcule pour **chaque terrain** le **match en cours** (`id_match`) et le **match
    suivant** (`id_next`). Ce cache est lu par **plusieurs consommateurs** :
@@ -168,7 +176,7 @@ Application Vue 3 exploitée près du terrain, sur le même réseau local que la
 C'est le **cœur** du système :
 - se **connecte en STOMP** aux flux de la passerelle (un par terrain) ;
 - **traduit** chaque message STOMP en écritures base de données KPI (via `fetch`/AJAX) ;
-- **rediffuse** optionnellement les événements vers le broker WebSocket KPI pour le live.
+- **rediffuse** optionnellement les faits de jeu vers le broker WebSocket KPI pour le live.
 
 ### 2.4 Broker WebSocket KPI (non-STOMP)
 Broker WebSocket hébergé côté KPI. **Ce n'est pas du STOMP** : `app_wsm` y publie des messages
@@ -179,7 +187,7 @@ il n'est pas la source de persistance.
 > **Mercure**, embarqué dans le conteneur FrankenPHP d'api2 — voir le bloc « Documents liés » en tête.
 
 ### 2.5 app_live — Incrustation (`sources/app_live_dev/`)
-Construit l'**incrustation vidéo** du match (score, chrono, événements). Application « lecture
+Construit l'**incrustation vidéo** du match (score, chrono, faits de jeu). Application « lecture
 seule » du point de vue des données : elle n'écrit pas en base. Elle s'alimente à **deux sources** :
 - le **broker WebSocket** (temps réel volatil : chrono, shotclock, buts/cartons) ;
 - le **cache JSON** (`/live/cache/*.json`) pour l'aiguillage terrain et certaines valeurs —
@@ -267,7 +275,7 @@ Codes cartons (matériel → KPI) : `GREEN→V`, `YELLOW→J`, `YELLOW_RED/RED�
 
 - `p` = **clé d'échange** (voir §6) ;
 - `t` = topic court (`chrono`, `posses`, `scoreA`, `scoreB`, `penA`, `penB`, `period`, `evt`) ;
-- `v` = valeur (score, temps formaté, objet événement joueur…).
+- `v` = valeur (score, temps formaté, objet fait de jeu joueur…).
 
 `app_live` s'abonne à cette clé et reconstruit l'affichage de l'incrustation.
 
@@ -282,7 +290,7 @@ si** la préférence `databaseSync` est active :
 |--------------|----------|------|
 | `sync()` | `PUT /api/wsm/gameParam/{gameId}` | param unitaire (Score, Statut, Periode, Heure_fin…) |
 | `syncTimer()` | `PUT /api/wsm/gameTimer/{gameId}` | état du chrono (startTime, runTime, maxTime, action) |
-| `syncGameEvt()` | `PUT /api/wsm/gameEvent/{gameId}` | événement (but, carton) avec période/temps/joueur |
+| `syncGameEvt()` | `PUT /api/wsm/gameEvent/{gameId}` | fait de jeu (but, carton) avec période/temps/joueur |
 | `syncPlayerSelected()` | `PUT /api/wsm/playerStatus/{gameId}` | joueur actif/inactif |
 | `generateJson()` | `PUT /api/wsm/eventNetwork/{event}` | config réseau de l'événement (URL broker global) |
 
@@ -430,7 +438,7 @@ Mapping vers KPI (`period[id]`) : période normale → `M<currentPeriod>` ; prol
 > **Seul le `score` est persisté** ici (`setGameParams('ScoreDetailA/B')`). `nbPenalities` alimente
 > `penA[id]`/`penB[id]` et n'existe **que le temps du live** (broker + affichage WSM) — voir §12.
 
-### 9.5 Événement joueur (but / carton)
+### 9.5 Fait de jeu joueur (but / carton)
 
 **`/game/player-info`**
 ```json
@@ -510,7 +518,7 @@ Seul le champ `selected` (joueur actif/inactif) est actuellement synchronisé en
 ## 10. Démarrage & enchaînement des matchs (WSM ↔ passerelle)
 
 C'est l'étape **la plus sensible** du système : elle charge la bonne composition d'équipes dans le
-console de marque au bon moment, et détermine sur quel match les événements suivants seront imputés. Un
+console de marque au bon moment, et détermine sur quel match les faits de jeu suivants seront imputés. Un
 `set-teams` sur le mauvais match écrit les buts/cartons sur la mauvaise fiche en base.
 
 ### 10.1 Message sortant `/api/game/set-teams` (WSM → passerelle)
@@ -623,7 +631,7 @@ stateDiagram-v2
 
 **Point critique** : les handlers qui **écrivent en base** (`data-game`→score, `player-info`,
 `chrono TPS-JEU`, `period`) ne le font **que si `statutMatch[id] === 'ON'`**. Un match resté en
-`ATT` (composition non confirmée par `set-teams`) ne persiste **aucun** événement — d'où
+`ATT` (composition non confirmée par `set-teams`) ne persiste **aucun** fait de jeu — d'où
 l'importance de vérifier visuellement le passage à `ON` (voir §11).
 
 > À l'inverse, les données **live seulement** échappent en partie à cette garde : le **shotclock**
@@ -664,7 +672,7 @@ une désynchronisation. Une **carte par terrain** (`pitch`) présente :
 | **Statut du match** (badge) | `statutMatch[n]` | **gris = ATT**, **bleu = ON**, **vert = END** |
 | **Heure** | `game[n].heure` | horaire programmé |
 | **N° d'ordre** | `game[n].numero_ordre` | position du match dans la programmation |
-| **Flux de logs** | `printLog()` | fil des événements reçus/traités en direct |
+| **Flux de logs** | `printLog()` | fil des faits de jeu reçus/traités en direct |
 
 > Le **code couleur du chrono** (vert/rouge) et le **statut** (gris/bleu/vert) sont les deux
 > repères les plus utiles : un chrono rouge alors que le jeu tourne, ou un statut resté **ATT**
@@ -689,7 +697,7 @@ une désynchronisation. Une **carte par terrain** (`pitch`) présente :
   actives) ; base de la clé d'échange `<event>_<terrain>`.
 - **Pitches** (slider 1–8) — nombre de terrains affichés.
 - **Database sync** (interrupteur) — active/coupe les écritures DB (`prefs.databaseSync`). **Coupé,
-  aucun événement n'est persisté** (utile en test).
+  aucun fait de jeu n'est persisté** (utile en test).
 - **KPI Broker** (carte) — connexion au broker de diffusion live (`id 0`), avec bouton
   **Generate sub json** (`generateJson()` → écrit la config réseau de l'événement) ; un badge
   **Running…** confirme la connexion.
@@ -722,7 +730,7 @@ rediffusion broker vers l'incrustation), puis disparaissent.
 | Donnée | Message source | Où elle vit | Pourquoi non persistée |
 |--------|----------------|-------------|------------------------|
 | **Shotclock** (temps de possession) | `/game/chrono` `POSSES` | `possesFormated[id]` (badge WSM) + `broadcast('/posses')` vers broker | valeur volatile (change chaque dixième), n'a de sens qu'en direct ; l'incrustation la réaffiche en temps réel |
-| **Pénalités** (nombre par équipe) | `/game/data-game` (`nbPenalities`) | `penA[id]`/`penB[id]` (pastilles WSM) + `broadcast('/penA' / '/penB')` | compteur d'état instantané ; seuls les cartons individuels (`player-info`) sont archivés comme événements |
+| **Pénalités** (nombre par équipe) | `/game/data-game` (`nbPenalities`) | `penA[id]`/`penB[id]` (pastilles WSM) + `broadcast('/penA' / '/penB')` | compteur d'état instantané ; seuls les cartons individuels (`player-info`) sont archivés comme faits de jeu |
 | **Chronos de pénalité** | `/game/chrono` `PEN_H1/H2/G1/G2` | — (non traités) | non exploités actuellement |
 | **`listPenaltyGames`, `listCoachGame`** | `/game/team-game` | — | reçus mais non exploités |
 | **Fautes / temps morts** | `data-game.fault`, `.timeOut` | — | champs ignorés |
@@ -739,7 +747,7 @@ flowchart LR
 > **À retenir** : le **shotclock** et le **compteur de pénalités** sont des données d'affichage
 > temps réel. Elles transitent WSM → broker → `app_live` mais **ne laissent aucune trace** dans la
 > fiche de match. Seuls les **cartons individuels** (issus de `player-info`) sont historisés comme
-> événements via `setGameEvent()`.
+> événements via `setGameEvent()` (faits de jeu).
 
 ---
 
@@ -838,7 +846,7 @@ Le même cache JSON alimente plusieurs consommateurs — ce n'est pas propre à 
 > [`sources/app4/types/tv.ts`](../../../sources/app4/types/tv.ts), `TV_PRESENTATIONS`) :
 > - `_o` = **Score only** (bandeau score seul) ;
 > - `_e` = **Events only** (buts/cartons seuls) ;
-> - `_s` = **Static events** (événements figés) ;
+> - `_s` = **Static events** (faits de jeu figés) ;
 > - sans suffixe = **Live score** (bandeau complet) ; `HD` = variante haute définition.
 >
 > Chaque famille existe en version *nations* (`score*`) et *clubs* (`score_club*`).
@@ -883,8 +891,8 @@ moins les bonnes informations.
 
 | Mode | Saisie | Écritures DB | Temps réel (broker WS) | Incrustation obtenue |
 |------|--------|--------------|------------------------|----------------------|
-| **A — Complet matériel** (§1–13) | console de marque → passerelle (STOMP) → `app_wsm` | `fetch` `/api/wsm/*` | oui (WSM → broker) | complète (score, chrono, shotclock, événements) |
-| **B — Feuille de marque V2** | opérateur, `FeuilleMarque2.php` | écritures directes via **fichiers PHP** (`v2/*.php`) | **non** | via cache : score, période, événements (pas de flux live broker) |
+| **A — Complet matériel** (§1–13) | console de marque → passerelle (STOMP) → `app_wsm` | `fetch` `/api/wsm/*` | oui (WSM → broker) | complète (score, chrono, shotclock, faits de jeu) |
+| **B — Feuille de marque V2** | opérateur, `FeuilleMarque2.php` | écritures directes via **fichiers PHP** (`v2/*.php`) | **non** | via cache : score, période, faits de jeu (pas de flux live broker) |
 | **C — Feuille de marque V3** | opérateur, `FeuilleMarque3.php` | écritures directes via **fichiers PHP** (`v2/*.php`) | **oui** (broker WS, non-STOMP) | complète, proche du mode A |
 | **D — Saisie a posteriori** | après le match (ou aucune saisie live) | à froid | non | **minimale** : noms d'équipe uniquement |
 | **E — Score seul** *(manquant)* | score en direct, sans chrono | — | — | **souhaité** : noms + score, sans le temps — **non implémenté** |
@@ -898,7 +906,7 @@ du match ; chaque changement est **écrit directement en base via des fichiers P
 |--------|-----------|
 | Statut de match / période | `v2/StatutPeriode.php` |
 | Chrono (lancement / arrêt) | `v2/setChrono.php`, `v2/ajax_updateChrono.php` |
-| Événement (but, carton) | `v2/evt_match.php` |
+| Fait de jeu (but, carton) | `v2/evt_match.php` |
 
 **Aucun WebSocket** : `fm2_*.js` ne contient ni broker, ni STOMP. L'incrustation reste alimentée
 **par le cache** (le worker relit la base et régénère `_match_global/_score/_chrono.json`). C'est le
@@ -914,7 +922,7 @@ broker (latence = période de rafraîchissement du cache).
 - `fm3_C.js` lit `../live/cache/event{event}_network.json` (champ `network.global`) pour obtenir
   l'URL du broker, puis ouvre `new WebSocket(url, topic)` — **broker brut, non-STOMP**, comme
   `app_live` (cf. §4.2) ;
-- `fm3_A.js` publie les événements (`socket.send(JSON.stringify(...))`) sur ce broker.
+- `fm3_A.js` publie les faits de jeu (`socket.send(JSON.stringify(...))`) sur ce broker.
 
 C'est donc un mode **quasi complet sans matériel propriétaire** : l'opérateur remplace la console de marque, KPI
 remplace la passerelle/WSM pour la partie diffusion. L'incrustation reçoit à la fois le **live broker**
