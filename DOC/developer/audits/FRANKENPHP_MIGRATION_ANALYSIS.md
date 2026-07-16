@@ -1,8 +1,9 @@
 # Analyse : remplacer Apache-PHP par FrankenPHP ?
 
 **Date** : 2026-07-14
-**Statut** : Analyse / proposition — non implémenté
-**Périmètre** : conteneur `kpi` (PHP 8.4 + Apache), API2 (Symfony 7.3 / API Platform 4.2), WordPress, legacy PHP
+**Mise à jour** : 2026-07-16 — corrections §1/§7, ajout §7.8 (Mercure) et §7.9 (préprod)
+**Statut** : Validé — implémentation en cours (déclencheur : refonte scoring Mercure)
+**Périmètre** : conteneur `kpi` (PHP 8.4 + Apache), API2 (Symfony 7.4 LTS / API Platform 4.3), WordPress, legacy PHP
 
 ---
 
@@ -63,9 +64,14 @@ Fichiers de configuration concernés :
 
 Vérifications effectuées sur `sources/api2/` :
 
-- ✅ `symfony/runtime` déjà présent (`7.4.*`) — prérequis du mode worker FrankenPHP
+- ✅ `symfony/runtime` déjà présent (`7.4.*`) — **nécessaire mais pas suffisant** (voir ci-dessous)
 - ✅ `public/index.php` utilise déjà `autoload_runtime.php` et retourne une closure → **aucune
   modification du front controller nécessaire**
+- ⚠️ **`runtime/frankenphp-symfony` est requis en plus** pour le mode worker, avec
+  `APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime`. C'est ce package qui fournit la boucle
+  `frankenphp_handle_request()` gardant le kernel en mémoire. Sans lui, le bloc `worker` du
+  Caddyfile démarre sans erreur mais chaque requête reboote le kernel : **tout le risque, aucun
+  gain**. C'est le seul changement `composer.json` de cette migration.
 - ✅ **Aucune propriété statique mutable** détectée dans `src/` (`grep` sur `static $`)
 - ✅ Session en `storage_factory_id: session.storage.factory.mock_file` (pas d'état de session serveur)
 - ✅ Authentification **JWT (Lexik)** → stateless
@@ -137,10 +143,13 @@ pools/conteneurs distincts, soit conditionner le prepend dans le PHP lui-même.
 À remplacer par `trusted_proxies` dans Caddy. Simple, mais critique : sans cela, on perd les vraies
 IP client dans les logs et dans toute logique dépendant de `REMOTE_ADDR`.
 
-### Logs
+### Logs — changement d'habitude (voir §7.10)
 
 Le compose monte `${HOST_APACHE2_LOG_PATH}:/var/log/apache2/`. Caddy loggue en **JSON sur stdout**.
-Tout outil ou habitude lisant `docker/apachelogs_8/access.log` change de format.
+
+**Conséquence concrète** : `docker/apachelogs_8/error.log` ne contiendra **plus rien concernant
+api2**. Ce fichier reste celui du legacy Apache uniquement. Les logs d'api2 se consultent via
+`make api2_logs`. Voir §7.10 pour le détail.
 
 ---
 
@@ -196,7 +205,12 @@ et WordPress, inchangé.**
 | Risque WordPress | Élevé | **Nul** |
 | Risque legacy | Élevé | **Nul** |
 | Rollback | Redéploiement complet | **Un label Traefik** |
-| Effort | Semaines | **Une demi-journée** |
+| Effort | Semaines | **~1 journée** (voir note) |
+
+> **Note effort (rev. 2026-07-16)** : l'estimation initiale « une demi-journée » supposait qu'aucun
+> changement `composer.json` n'était nécessaire. C'est faux : le mode worker exige
+> `runtime/frankenphp-symfony` (cf. §1), donc une régénération du `composer.lock`. Compter une
+> journée, dont une part de validation dev + préprod.
 
 Étapes :
 
@@ -319,15 +333,19 @@ WORKDIR /app
             - TZ=Europe/Paris
             - LANG=fr_FR.UTF-8
             - LC_ALL=fr_FR.UTF-8
-            # En dev : pas de worker (rechargement du code à chaque requête).
-            # Retirer cette ligne pour tester le mode worker.
-            - FRANKENPHP_CONFIG=
+            - APP_ENV=dev
+            # Active le mode worker (cf. §1 : exige runtime/frankenphp-symfony).
+            - APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime
         volumes:
             - ../sources/api2:/app
             # ⚠️ INDISPENSABLE — voir §7.7.
             # EventCacheService et AdminTvController écrivent/lisent sous
             # /var/www/html/live/cache (live_document_root). Sans ce montage,
             # AdminGamesController et AdminTvController cassent en HTTP.
+            #
+            # C'est le SEUL montage legacy nécessaire : api2 ne référence ni
+            # MyParams.php, ni MyConfig.php, ni DOC/ (vérifié par grep sur src/,
+            # config/, public/, bin/). Ne pas recopier les montages du service kpi.
             - ../sources:/var/www/html
         networks:
             - network_kpi
@@ -413,7 +431,21 @@ RUN chmod 644 /etc/apache2/conf-available/apache-api2.conf && a2enconf apache-ap
 Avec le `stripprefix`, Symfony reçoit les requêtes **sans** le préfixe `/api2`. Les URLs générées
 (API Platform, documentation OpenAPI, liens hypermedia) doivent donc être forcées.
 
-Vérifier dans `sources/api2/.env` :
+**⚠️ Constat au 2026-07-16 : le piège est déjà refermé.** `sources/api2/.env` contient
+aujourd'hui :
+
+```dotenv
+DEFAULT_URI=http://kpi.localhost      # ❌ pas de /api2, et HTTP au lieu de HTTPS
+API_DOCS_SERVER_URL='https://kpi.localhost/api2'   # ✅ correct
+```
+
+`.env.dist` est encore plus faux (`DEFAULT_URI=http://localhost`).
+
+Aujourd'hui sous Apache, cette valeur est sans conséquence visible : l'`Alias /api2` fait que
+Symfony reçoit les requêtes **avec** leur préfixe, et `DEFAULT_URI` ne sert qu'aux URLs générées
+hors contexte HTTP (CLI, mailer). **Avec le `stripprefix`, elle devient structurante.**
+
+Valeur cible en dev :
 
 ```dotenv
 DEFAULT_URI=https://kpi.localhost/api2
@@ -422,7 +454,7 @@ API_DOCS_SERVER_URL='https://kpi.localhost/api2'
 
 **C'est le piège le plus probable de cette migration** : la doc OpenAPI et les liens IRI générés
 par API Platform pointeront vers la racine (`/games` au lieu de `/api2/games`) si `DEFAULT_URI`
-n'est pas correct.
+n'est pas correct. À adapter par environnement (préprod/prod : le domaine réel).
 
 *Alternative* : ne pas utiliser `stripprefix`, et configurer un
 `Alias`/`base path` côté Symfony. Le `stripprefix` reste plus simple si `DEFAULT_URI` est bien posé.
@@ -520,6 +552,205 @@ une écriture atomique (`file_put_contents` dans un fichier temporaire + `rename
 
 ---
 
+## 7.7bis Hub Mercure natif (le déclencheur)
+
+Le hub est activé dans [Caddyfile.api2](../../../docker/config/Caddyfile.api2) — **aucun conteneur
+`dunglas/mercure` à déployer** :
+
+```caddyfile
+mercure {
+    publisher_jwt {$MERCURE_PUBLISHER_JWT_KEY}
+    subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
+    cors_origins {$MERCURE_CORS_ORIGINS}
+    anonymous {$MERCURE_ANONYMOUS:0}
+}
+```
+
+Le hub est exposé sur **`/.well-known/mercure`**, donc — préfixe Traefik compris —
+**`https://kpi.localhost/api2/.well-known/mercure`** côté client. Validé : HTTP 200 (flux SSE).
+
+| Variable (docker/.env) | Dev | Préprod / Prod |
+|---|---|---|
+| `MERCURE_JWT_SECRET` | valeur de dev | **à régénérer** : `openssl rand -hex 32` |
+| `MERCURE_CORS_ORIGINS` | `*` | `https://${KPI_DOMAIN_NAME}` |
+| `MERCURE_ANONYMOUS` | `1` | `0` (abonnements authentifiés) |
+
+> ⚠️ `MERCURE_JWT_SECRET` est un **secret** : `docker/.env` n'est pas versionné, mais `.env.dist`
+> contient un placeholder à remplacer impérativement en préprod et en production.
+
+**Côté Symfony** : `symfony/mercure-bundle` (v0.4.2) est désormais installé, avec `MERCURE_URL` /
+`MERCURE_PUBLIC_URL` / `MERCURE_JWT_SECRET` passés au conteneur par
+[compose.dev.yaml](../../../docker/compose.dev.yaml). Un **banc de test** (profil 1, onglet Mercure
+de la page Opérations d'app4 → `AdminMercureController`) valide la chaîne publish/subscribe de bout
+en bout. La logique métier de diffusion reste le périmètre de la refonte scoring
+(cf. [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) §4.6).
+
+Trois points à connaître :
+
+| Variable | Valeur dev | Pourquoi |
+|---|---|---|
+| `MERCURE_URL` | `http://localhost/.well-known/mercure` | Publication **interne au conteneur** : évite Traefik et son certificat auto-signé. |
+| `MERCURE_PUBLIC_URL` | `https://kpi.localhost/api2/.well-known/mercure` | URL d'**abonnement navigateur** : passe par Traefik, donc préfixe `/api2` inclus. |
+| `MERCURE_JWT_SECRET` | = `MERCURE_JWT_SECRET` de `docker/.env` | **Doit être identique** au secret du hub, sinon les JWT publisher sont rejetés (403). |
+
+> ⚠️ **La recette Flex de `symfony/mercure-bundle` ajoute un service `dunglas/mercure` dans
+> `sources/api2/compose.yaml`** — exactement ce que cette migration évite. Ces fichiers ne sont pas
+> utilisés par le projet (qui tourne sur `docker/compose.*.yaml`) : les modifications de la recette
+> ont été **annulées**. Ne pas les réintroduire.
+
+> ⚠️ `EventSource` ne peut pas envoyer de header `Authorization`. En dev, l'abonnement navigateur
+> repose donc sur `MERCURE_ANONYMOUS=1`. En préprod/prod (`MERCURE_ANONYMOUS=0`), il faudra un JWT
+> subscriber passé en cookie ou en query string — **à traiter dans la refonte scoring**.
+
+---
+
+## 7.8 Pièges rencontrés à l'implémentation (2026-07-16)
+
+Trois écarts entre les fichiers proposés au §7 et la réalité. **Les trois échouent silencieusement** :
+le conteneur démarre, l'API répond, et seul le gain de perf manque.
+
+### a. Chemin du Caddyfile
+
+L'image `dunglas/frankenphp` lit **`/etc/frankenphp/Caddyfile`**, pas `/etc/caddy/Caddyfile` (le
+§7.2 indiquait ce dernier). Copier au mauvais endroit ne lève **aucune erreur** : le Caddyfile par
+défaut de l'image prend le relais, `auto_https` se réactive et le worker ne démarre jamais.
+
+**Symptôme** : `docker logs kpi_api2 | grep "using config from file"` pointe sur
+`/etc/frankenphp/Caddyfile` alors qu'on croit avoir fourni le sien.
+
+### b. `max_requests` n'existe pas comme sous-directive `worker`
+
+FrankenPHP 1.x refuse `max_requests` dans le bloc `worker` (là, au moins, l'erreur est explicite et
+le conteneur redémarre en boucle). Directives valides : `name`, `file`, `num`, `env`, `watch`,
+`match`, `max_consecutive_failures`, `max_threads`.
+
+Le garde-fou anti-fuite mémoire passe par la **variable d'env `MAX_REQUESTS`**, lue par
+`runtime/frankenphp-symfony` :
+
+```caddyfile
+worker {
+    file /app/public/index.php
+    num {$FRANKENPHP_NUM_WORKERS:4}
+    env MAX_REQUESTS {$FRANKENPHP_MAX_REQUESTS:500}
+    watch {$FRANKENPHP_WATCH:/app/src}
+    max_consecutive_failures 3
+}
+```
+
+> `max_requests: 0` dans la ligne de log `FrankenPHP started 🐘` est un **compteur global**, sans
+> rapport avec le worker. Ne pas s'y fier pour diagnostiquer. La source de vérité est l'API admin
+> de Caddy : `curl -s http://localhost:2019/config/ | grep workers`.
+
+### c. `setcap` pour le port 80
+
+Le conteneur tourne en `user: ${USER_ID}` (non-root) mais Caddy doit binder le port 80, privilégié.
+Sans `setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp` dans le Dockerfile, le conteneur
+démarre puis meurt sur un « permission denied » au bind.
+
+### d. `watch` remplace le compromis opcache en dev
+
+En mode worker, `opcache.validate_timestamps=1` **ne suffit pas** : le kernel reste en mémoire, donc
+une modification de code n'est pas vue. La directive `watch /app/src` recycle le worker à chaque
+changement — c'est ce qui rend le mode worker utilisable en dev.
+
+En préprod/prod, `FRANKENPHP_WATCH=` (vide) désactive la surveillance : le code est figé, et
+**`make api2_restart` devient obligatoire après tout déploiement** (cf. §5, « déploiement plus
+délicat »).
+
+---
+
+## 7.9 Découverte connexe : dérive Symfony 8 → retour en 7.4 LTS
+
+**Trouvé en tentant d'installer le worker, sans rapport direct avec FrankenPHP.**
+
+`composer require runtime/frankenphp-symfony` a échoué : le package exige
+`symfony/http-kernel ^7.0`, or le lock imposait **v8.0.14**.
+
+Diagnostic : le `composer.json` déclarait `7.4.*` partout, mais **18 paquets Symfony étaient
+verrouillés en 8.x** dans le `composer.lock` — dont `symfony/runtime` en v8.0.13 pour une contrainte
+`7.4.*`. `composer.json` et `composer.lock` étaient **désynchronisés** : le lock faisant foi à
+l'`install`, préprod et production tournaient déjà sur des composants Symfony 8 non voulus.
+
+**Symfony 8.0 n'est pas souhaitée pour ce projet : la cible est 7.4, qui est la LTS.**
+
+Correction appliquée (`composer update` complet dans `kpi_php`) :
+
+- ✅ 17 paquets Symfony redescendus en v7.4.x, **plus aucun paquet Symfony en 8.x**
+- ✅ `symfony/runtime` v8.0.13 → **v7.4.14**, `http-kernel` v8.0.14 → **v7.4.14**
+- ✅ `runtime/frankenphp-symfony` 1.0.0 installé → **worker débloqué**
+
+Vérifications post-downgrade : `cache:clear` OK, `lint:container` OK, **278 routes**, mapping
+Doctrine OK, `app:event-cache-worker` démarre. Conforme à l'attendu — 7.4 et 8.0 partagent le même
+code, 8.0 ne faisant que retirer ce que 7.4 déprécie.
+
+> **À vérifier au déploiement** : préprod et prod doivent faire un `composer install` (le lock a
+> changé) pour redescendre en 7.4. C'est un changement **indépendant de FrankenPHP**, qui aurait dû
+> être fait de toute façon.
+
+---
+
+## 7.10 Logs et secrets : ce qui change au quotidien
+
+### Où lire les logs d'api2 ?
+
+**L'habitude `docker/apachelogs_8/error.log` ne s'applique plus à api2.** Ce fichier reste celui du
+legacy Apache. Sous FrankenPHP, tout part sur stdout/stderr, récupéré par le driver `json-file` de
+Docker — **identique en dev, préprod et production**, ce qui supprime l'écart entre environnements.
+
+| Besoin | Commande |
+|---|---|
+| Suivre les logs d'api2 en direct | `make api2_logs` (ou `make api2_logs lines=500`) |
+| Ne voir que les erreurs | `make api2_logs_errors` |
+| Legacy / WordPress (inchangé) | `docker/apachelogs_8/error.log` |
+
+Ce qui remonte dans `make api2_logs` :
+
+- **Erreurs PHP** (fatales, warnings) — via `php-error-logging-api2.ini` → `/dev/stderr`
+- **Logs applicatifs Symfony** — Monolog était **déjà** configuré sur `php://stderr`
+- **Erreurs Caddy** (routage, TLS, worker)
+- **Requêtes HTTP en échec** uniquement (cf. ci-dessous)
+
+Validé : une exception levée pendant une requête produit bien une ligne `"level":"error"` avec
+message et stack trace.
+
+### ⚠️ Piège : `log_errors=Off` par défaut
+
+L'image FrankenPHP a `log_errors=Off` et `error_log` vide. `php-error-logging.ini` n'est copié que
+dans les images **Apache** — sans un équivalent dédié, **une fatale PHP dans api2 ne serait loggée
+nulle part**. D'où [php-error-logging-api2.ini](../../../docker/config/php-error-logging-api2.ini).
+
+Différence assumée avec Apache : `display_errors=Off` (Apache : `On`). api2 renvoie du JSON — une
+erreur PHP imprimée dedans casserait le parsing côté app2/app4 et fuiterait des chemins serveur.
+Symfony sérialise déjà les exceptions proprement.
+
+### Volume des logs d'accès
+
+Les logs d'accès Caddy sont en JSON : **une requête réussie = ~20 lignes de JSON**. Illisible au
+quotidien.
+
+`CADDY_ACCESS_LOG_LEVEL` (défaut : `ERROR`) ne loggue donc que les requêtes en échec. Les erreurs
+PHP et applicatives remontent indépendamment de ce réglage.
+
+Pour déboguer un problème de routage, passer temporairement à `INFO` (toutes les requêtes, avec
+headers `X-Forwarded-*` — utile pour vérifier le `stripprefix`) :
+
+```yaml
+- CADDY_ACCESS_LOG_LEVEL=INFO
+```
+
+### Secret Mercure
+
+```bash
+make mercure_generate_secret   # affiche une ligne MERCURE_JWT_SECRET=<32 octets hex>
+```
+
+La commande **n'écrit pas** dans `docker/.env` : elle affiche la ligne à copier. Modifier `.env`
+automatiquement serait risqué (fichier non versionné, propre à chaque serveur).
+
+**Un secret différent par environnement.** `docker/.env.dist` ne contient qu'un placeholder.
+
+---
+
 ## 8. Plan de validation
 
 Avant bascule, vérifier :
@@ -555,10 +786,33 @@ frontend étant inchangées, le retour arrière est transparent pour app2/app4.
 | Option | Verdict |
 |---|---|
 | Remplacer Apache par FrankenPHP partout | ❌ Effort élevé, risque élevé, gain nul sur legacy/WP |
-| **Extraire API2 en FrankenPHP worker** | ✅ **Recommandé** |
-| Statu quo | 🟡 Acceptable — aucun problème de perf avéré à ce jour |
+| **Extraire API2 en FrankenPHP worker** | ✅ **Décidé et implémenté en dev (2026-07-16)** |
+| Statu quo | ❌ Caduc — voir déclencheur ci-dessous |
 
-L'extraction d'API2 n'a d'intérêt que si la latence de l'API devient un problème mesuré. En
-l'absence de métrique montrant que le bootstrap Symfony coûte cher en production, **le statu quo
-reste une option légitime** : le document ci-dessus permettra de basculer rapidement le jour où le
-besoin se manifeste.
+### Déclencheur (2026-07-16)
+
+La version initiale concluait que le statu quo restait légitime faute de problème de latence
+mesuré. **Ce n'est plus le critère.** La décision est prise sur deux motifs :
+
+1. **Refonte du scoring live avec Mercure** — le hub Mercure natif de FrankenPHP évite de déployer
+   et maintenir un conteneur `dunglas/mercure` dédié. C'est un gain de **simplicité
+   d'infrastructure**, indépendant de toute mesure de performance.
+2. **Performance d'API2** — bénéfice saisi à l'occasion, pas moteur de la décision.
+
+### Résultat constaté en dev
+
+| Vérification (§8) | Résultat |
+|---|---|
+| `https://kpi.localhost/api2/api` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
+| Latence `/api` (worker chaud) | ✅ ~1,8 ms (vs 20–60 ms de bootstrap) |
+| Legacy + WordPress via Apache | ✅ Intacts (`/` → `Apache/2.4.65`) |
+| API legacy `/api/events` | ✅ 401 (front controller opérationnel) |
+| CORS | ✅ Un seul `Access-Control-Allow-Origin` |
+| JWT | ✅ `/api2/admin/events` → 401 (route trouvée, header transmis) |
+| OpenAPI `servers` | ✅ `/api2` |
+| Vraie IP client | ✅ `client_ip` ≠ `remote_ip` (trusted_proxies) |
+| Cache live (§7.7) | ✅ lisible **et** inscriptible depuis `kpi_api2` |
+| Hub Mercure | ✅ `/.well-known/mercure` → 200 (SSE) |
+| `event-cache-worker` | ✅ inchangé |
+
+**Reste à faire** : validation préprod, puis production.

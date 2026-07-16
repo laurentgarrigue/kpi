@@ -1,0 +1,55 @@
+ARG BASE_IMAGE_FRANKENPHP=dunglas/frankenphp:php8.4
+
+FROM ${BASE_IMAGE_FRANKENPHP}
+
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# Extensions requises par API2 (Doctrine + API Platform + intl).
+# gd/zip/mysqli ne sont pas nécessaires ici : mPDF/OpenSpout restent côté legacy Apache.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        libicu-dev \
+        libzip-dev \
+        libcap2-bin \
+        locales \
+        unzip \
+        git \
+    && docker-php-ext-install pdo pdo_mysql intl zip \
+    && sed -i '/fr_FR.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Opcache : indispensable en mode worker.
+# validate_timestamps est piloté par environnement (0 en prod, 1 en dev) : voir
+# docker/config/opcache-api2-dev.ini monté en volume par compose.dev.yaml.
+RUN { \
+        echo "opcache.enable=1"; \
+        echo "opcache.memory_consumption=256"; \
+        echo "opcache.max_accelerated_files=20000"; \
+        echo "opcache.validate_timestamps=0"; \
+    } > /usr/local/etc/php/conf.d/opcache-worker.ini
+
+# Logging des erreurs PHP vers stderr → `make api2_logs`.
+# L'image FrankenPHP a log_errors=Off par défaut : sans ce fichier, une fatale
+# PHP dans le worker ne serait loggée nulle part.
+COPY php-error-logging-api2.ini /usr/local/etc/php/conf.d/
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# ⚠️ L'image dunglas/frankenphp lit /etc/frankenphp/Caddyfile, PAS /etc/caddy/Caddyfile.
+# Copier au mauvais endroit ne produit AUCUNE erreur : le Caddyfile par défaut de
+# l'image prend le relais et le worker ne démarre jamais (max_requests=0 dans les logs).
+COPY Caddyfile.api2 /etc/frankenphp/Caddyfile
+
+# FrankenPHP tourne en non-root (user: ${USER_ID} côté compose) mais Caddy doit
+# pouvoir binder le port 80, qui est privilégié. Sans ce setcap, le conteneur
+# démarre puis meurt sur "permission denied" au bind.
+RUN setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/frankenphp
+
+# Le worker écrit dans var/cache et var/log : ces répertoires doivent appartenir
+# à l'UID hôte, sinon EACCES au boot du kernel (cf. déboires app4/.nuxt en root).
+RUN mkdir -p /app/var \
+    && chown -R ${USER_ID}:${GROUP_ID} /app /data/caddy /config/caddy 2>/dev/null || true
+
+WORKDIR /app

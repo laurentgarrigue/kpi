@@ -41,6 +41,8 @@ app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
 backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_npm_clean backend_npm_init \
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
+api2_restart api2_logs api2_logs_errors mercure_generate_secret \
+dev dev_status dev_logs dev_down dev_certs app2_logs app3_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_start backend_worker_start_prod backend_worker_stop backend_worker_status backend_worker_logs backend_worker_restart \
@@ -282,6 +284,31 @@ check_env: ## Vérifie que les fichiers d'environnement existent et sont configu
 	fi
 
 ## DOCKER - DÉVELOPPEMENT
+dev: docker_dev_up ## ⭐ Lance TOUT l'environnement de dev en détaché (legacy + api2 + app2/3/4)
+	@echo
+	@echo "Environnement de développement démarré (détaché)."
+	@echo
+	@$(MAKE) --no-print-directory dev_status
+
+dev_status: ## Affiche l'état et les URLs de l'environnement de développement
+	@printf '  %-22s %-34s %s\n' "SERVICE" "URL" "ÉTAT"
+	@printf '  %-22s %-34s ' "legacy (Apache)" "https://$(KPI_DOMAIN_NAME)/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 3 "https://$(KPI_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "api2 (FrankenPHP)" "https://$(KPI_DOMAIN_NAME)/api2/api"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 3 "https://$(KPI_DOMAIN_NAME)/api2/api" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "app2 (Nuxt)" "https://$(NODE_DOMAIN_NAME)/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "app4 admin (Nuxt)" "https://$(NODE4_DOMAIN_NAME)/admin2/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE4_DOMAIN_NAME)/admin2/" 2>/dev/null || echo "KO"
+	@echo
+	@echo "  Logs : make api2_logs | make app2_logs | make app4_logs | make dev_logs"
+	@echo "  (200/401 = OK. Les serveurs Nuxt mettent ~15 s à démarrer.)"
+
+dev_logs: ## Affiche les logs de tous les containers de dev (Ctrl-C pour quitter)
+	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml logs -f --tail 50
+
+dev_down: docker_dev_down ## Arrête tout l'environnement de développement
+
 docker_dev_up: ## Lance les containers Docker en mode développement
 	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml up -d
 	@docker network connect network_${APPLICATION_NAME} mailpit 2>/dev/null || true
@@ -355,8 +382,14 @@ docker_prod_status: ## Affiche le statut des containers de production
 
 
 ## APP2 - NUXT (Scrutineering/Charts)
-app2_dev: ## Lance le serveur Nuxt (app2) en mode développement (port 3002)
-	$(DOCKER_EXEC_NODE) sh -c "npm run dev"
+app2_dev: ## Suit les logs du serveur Nuxt (app2, port 3002) - démarré par docker_dev_up
+	@echo "ℹ️  Le serveur Nuxt (app2) démarre automatiquement avec les containers."
+	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
+	@echo
+	@$(MAKE) --no-print-directory app2_logs
+
+app2_logs: ## Affiche les logs du serveur Nuxt (app2). Options: lines=200
+	docker logs -f --tail $(or $(lines),50) $(NODE_CONTAINER_NAME)
 
 app2_build: ## Build l'application Nuxt (app2) pour la production
 	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npm run build"
@@ -432,7 +465,12 @@ app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_
 
 
 ## APP3 - NUXT (Match Sheet)
-app3_dev: ## Lance le serveur Nuxt (app3) en mode développement (port 3003)
+app3_logs: ## Affiche les logs du container app3. Options: lines=200
+	docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME)
+
+# app3 ne démarre PAS automatiquement : son `npm run dev` échoue sur "dotenv: not found"
+# (dotenv-cli absent des node_modules). Lancer `make app3_npm_install` avant.
+app3_dev: ## Lance le serveur Nuxt (app3) dans le terminal courant (port 3003)
 	$(DOCKER_EXEC_NODE3) sh -c "npm run dev"
 
 app3_build: ## Build l'application Nuxt (app3) pour la production
@@ -500,8 +538,14 @@ app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_
 
 
 ## APP4 - NUXT (Admin)
-app4_dev: ## Lance le serveur Nuxt (app4 admin) en mode développement (port 3004)
-	$(DOCKER_EXEC_NODE4) sh -c "npm run dev"
+app4_dev: ## Suit les logs du serveur Nuxt (app4 admin, port 3004) - démarré par docker_dev_up
+	@echo "ℹ️  Le serveur Nuxt (app4) démarre automatiquement avec les containers."
+	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
+	@echo
+	@$(MAKE) --no-print-directory app4_logs
+
+app4_logs: ## Affiche les logs du serveur Nuxt (app4 admin). Options: lines=200
+	docker logs -f --tail $(or $(lines),50) $(NODE4_CONTAINER_NAME)
 
 app4_build: ## Build l'application Nuxt (app4 admin) pour la production
 	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm run build"
@@ -742,7 +786,7 @@ backend_npm_clean: ## Supprime node_modules du backend (attention: supprime tout
 	@echo "node_modules et package-lock.json supprimés"
 
 
-## API2 - SYMFONY (Symfony 7.3 + API Platform 4.2)
+## API2 - SYMFONY (Symfony 7.4 LTS + API Platform 4.3) - servi par FrankenPHP (worker + Mercure)
 api2_composer_install: ## Installe les dépendances Composer pour API2 (Symfony)
 	@echo "Installation des dépendances Composer pour API2 (container: $(PHP_CONTAINER_NAME))..."
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer install --no-interaction --prefer-dist --optimize-autoloader"
@@ -762,10 +806,58 @@ api2_composer_require: ## Ajoute un package Composer à API2 (usage: make api2_c
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer require $(package) --no-interaction"
 	@echo "Package $(package) ajouté à API2"
 
-api2_cache_clear: ## Vide le cache Symfony de API2
+api2_cache_clear: ## Vide le cache Symfony de API2 (+ recycle le worker FrankenPHP)
 	@echo "Vidage du cache Symfony pour API2 (container: $(PHP_CONTAINER_NAME))..."
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console cache:clear"
 	@echo "Cache Symfony vidé pour API2"
+	@$(MAKE) --no-print-directory api2_restart
+
+api2_restart: ## Recycle le worker FrankenPHP d'API2 (obligatoire après un changement de code/cache)
+	@echo "Redémarrage du worker FrankenPHP ($(APPLICATION_NAME)_api2)..."
+	@docker restart $(APPLICATION_NAME)_api2 >/dev/null 2>&1 \
+		&& echo "Worker FrankenPHP redémarré" \
+		|| echo "Conteneur $(APPLICATION_NAME)_api2 introuvable (api2 servi par Apache ?)"
+
+api2_logs: ## Affiche les logs d'API2/FrankenPHP (erreurs PHP + Symfony). Options: lines=200
+	docker logs -f --tail $(or $(lines),100) $(APPLICATION_NAME)_api2
+
+api2_logs_errors: ## Filtre uniquement les erreurs dans les logs d'API2
+	@docker logs --tail 2000 $(APPLICATION_NAME)_api2 2>&1 \
+		| grep -iE 'error|fatal|exception|warning|deprecat' \
+		| tail -50 \
+		|| echo "Aucune erreur dans les 2000 dernières lignes"
+
+TRAEFIK_CERTS_PATH ?= /home/laurent/Documents/dev/traefik/certs
+
+dev_certs: ## Régénère le certificat mkcert pour les domaines .localhost (supprime les alertes Firefox)
+	@command -v mkcert >/dev/null 2>&1 || { echo "❌ mkcert absent. Installer: apt install mkcert"; exit 1; }
+	@test -d "$(TRAEFIK_CERTS_PATH)" || { echo "❌ $(TRAEFIK_CERTS_PATH) introuvable (variable TRAEFIK_CERTS_PATH)"; exit 1; }
+	@echo "Sauvegarde du certificat actuel..."
+	@cd "$(TRAEFIK_CERTS_PATH)" && cp local-cert.pem local-cert.pem.bak 2>/dev/null || true
+	@cd "$(TRAEFIK_CERTS_PATH)" && cp local-key.pem local-key.pem.bak 2>/dev/null || true
+	@echo "Génération du certificat (.localhost + .local existants)..."
+	@cd "$(TRAEFIK_CERTS_PATH)" && mkcert -cert-file local-cert.pem -key-file local-key.pem \
+		'$(KPI_DOMAIN_NAME)' '*.$(KPI_DOMAIN_NAME)' '$(NODE_DOMAIN_NAME)' '$(NODE4_DOMAIN_NAME)' \
+		'$(NODE_LIVE_DOMAIN_NAME)' '$(MYADMIN_DOMAIN_NAME)' '$(APP3_DOMAIN_NAME)' \
+		'localhost' '127.0.0.1' '::1' \
+		'kpi.local' 'kpi-node.local' 'kpi-8.local' 'kpi-myadmin.local' 'dashboard.local'
+	@echo
+	@echo "✅ Certificat régénéré. Redémarrage de Traefik..."
+	@docker restart traefik >/dev/null 2>&1 && echo "✅ Traefik redémarré" || echo "⚠️  Redémarrez Traefik manuellement"
+	@echo
+	@echo "→ Fermez complètement Firefox et rouvrez : plus d'exception de sécurité."
+	@echo "  (Si l'alerte persiste : mkcert -install, puis redémarrer Firefox.)"
+
+mercure_generate_secret: ## Génère un secret JWT Mercure (usage: make mercure_generate_secret)
+	@echo "Secret JWT Mercure généré (32 octets, hex) :"
+	@echo
+	@echo "  MERCURE_JWT_SECRET=$$(openssl rand -hex 32)"
+	@echo
+	@echo "→ Copiez cette ligne dans docker/.env (remplacez la valeur existante),"
+	@echo "  puis redémarrez api2 : make api2_restart"
+	@echo
+	@echo "⚠️  Un secret DIFFÉRENT par environnement (dev / préprod / prod)."
+	@echo "    Ne jamais le committer : docker/.env n'est pas versionné."
 
 api2_cache_warmup: ## Préchauffe le cache Symfony de API2
 	@echo "Préchauffage du cache Symfony pour API2 (container: $(PHP_CONTAINER_NAME))..."

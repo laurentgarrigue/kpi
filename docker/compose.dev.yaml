@@ -44,6 +44,71 @@ services:
             - "traefik.http.routers.kpi.tls=true"
             # Configure Traefik to trust X-Forwarded-* headers and preserve real client IP
             - "traefik.http.services.kpi.loadbalancer.passhostheader=true"
+    # API2 - Symfony sous FrankenPHP (mode worker) + hub Mercure natif
+    # cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md
+    api2:
+        container_name: ${APPLICATION_NAME}_api2
+        build:
+            context: ./config
+            dockerfile: Dockerfile.api2
+            args:
+                USER_ID: ${USER_ID}
+                GROUP_ID: ${GROUP_ID}
+                BASE_IMAGE_FRANKENPHP: ${BASE_IMAGE_FRANKENPHP}
+        user: ${USER_ID}:${GROUP_ID}
+        environment:
+            - TZ=Europe/Paris
+            - LANG=fr_FR.UTF-8
+            - LANGUAGE=fr_FR:fr
+            - LC_ALL=fr_FR.UTF-8
+            - APP_ENV=dev
+            # Mode worker : exige runtime/frankenphp-symfony dans composer.json
+            - APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime
+            - FRANKENPHP_NUM_WORKERS=2
+            - FRANKENPHP_MAX_REQUESTS=500
+            # Hub Mercure (dev : abonnements anonymes autorisés)
+            - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
+            - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}
+            - MERCURE_CORS_ORIGINS=*
+            - MERCURE_ANONYMOUS=1
+            # Côté Symfony (symfony/mercure-bundle) : publication des updates.
+            # Même secret que le hub ci-dessus, sinon les JWT publisher sont rejetés.
+            - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
+            # Publication en direct dans le conteneur : on court-circuite Traefik
+            # (et son certificat auto-signé en dev).
+            - MERCURE_URL=http://localhost/.well-known/mercure
+            # URL d'abonnement renvoyée au navigateur : via Traefik, préfixe /api2 compris.
+            - MERCURE_PUBLIC_URL=https://${KPI_DOMAIN_NAME}/api2/.well-known/mercure
+        volumes:
+            - ../sources/api2:/app
+            # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/
+            # partagé avec Apache et event-cache-worker (EventCacheService,
+            # AdminTvController). Seul montage legacy nécessaire : api2 n'utilise
+            # ni MyParams.php, ni MyConfig.php, ni DOC/.
+            - ../sources:/var/www/html
+            - ./config/opcache-api2-dev.ini:/usr/local/etc/php/conf.d/opcache-api2-dev.ini
+        networks:
+            - network_kpi
+            - traefiknetwork
+        depends_on:
+            - db
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.api2.rule=Host(`${KPI_DOMAIN_NAME}`) && PathPrefix(`/api2`)"
+            - "traefik.http.routers.api2.entrypoints=websecure"
+            - "traefik.http.routers.api2.tls=true"
+            # Priorité > routeur kpi (Host seul), sinon Apache capterait /api2.
+            - "traefik.http.routers.api2.priority=100"
+            # Symfony est monté sur /app/public et route depuis la racine.
+            - "traefik.http.routers.api2.middlewares=api2-stripprefix"
+            - "traefik.http.middlewares.api2-stripprefix.stripprefix.prefixes=/api2"
+            - "traefik.http.services.api2.loadbalancer.server.port=80"
     event-cache-worker:
         container_name: ${APPLICATION_NAME}_event_cache_worker
         build:
@@ -138,6 +203,10 @@ services:
             dockerfile: ../../docker/node/Dockerfile # Crée ce Dockerfile si besoin
         working_dir: /app
         user: "${USER_ID}:${GROUP_ID}"
+        # Démarre le serveur Nuxt avec le conteneur : `make docker_dev_up` suffit,
+        # plus besoin d'un terminal dédié pour `make app2_dev`.
+        # Logs : `make app2_logs`. Le mode terminal reste dispo via `make app2_dev`.
+        command: sh -c "npm run dev"
         volumes:
             - ../sources/app2:/app
         environment:
@@ -167,6 +236,11 @@ services:
             dockerfile: ../../docker/node/Dockerfile
         working_dir: /app
         user: "${USER_ID}:${GROUP_ID}"
+        # ⚠️ Pas de démarrage automatique (contrairement à node_app2 / node_app4) :
+        # `npm run dev` échoue sur "dotenv: not found" — dotenv-cli manque dans les
+        # node_modules d'app3. Problème préexistant, indépendant de FrankenPHP.
+        # Pour lancer app3 : `make app3_npm_install` puis `make app3_dev_terminal`.
+        command: ["tail", "-f", "/dev/null"]
         volumes:
             - ../sources/app3:/app
         environment:
@@ -251,6 +325,8 @@ services:
             dockerfile: ../../docker/node/Dockerfile
         working_dir: /app
         user: "${USER_ID}:${GROUP_ID}"
+        # Démarre le serveur Nuxt avec le conteneur (cf. node_app2). Logs : `make app4_logs`.
+        command: sh -c "npm run dev"
         volumes:
             - ../sources/app4:/app
         environment:

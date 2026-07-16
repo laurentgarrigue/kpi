@@ -1,0 +1,60 @@
+{
+	# Traefik termine déjà le TLS : FrankenPHP écoute en HTTP simple sur le réseau interne.
+	auto_https off
+
+	# Vraie IP client derrière Traefik (équivalent de mod_remoteip côté Apache).
+	servers {
+		trusted_proxies static 172.16.0.0/12 127.0.0.1 ::1
+	}
+
+	frankenphp {
+		# Mode worker : le kernel Symfony reste en mémoire entre les requêtes.
+		# Exige runtime/frankenphp-symfony + APP_RUNTIME (cf. compose).
+		worker {
+			file /app/public/index.php
+			num {$FRANKENPHP_NUM_WORKERS:4}
+			# ⚠️ Pas de directive `max_requests` dans FrankenPHP 1.x : le garde-fou
+			# anti-fuite mémoire se pilote côté PHP via la variable d'env
+			# MAX_REQUESTS, lue par runtime/frankenphp-symfony (0 = illimité).
+			env MAX_REQUESTS {$FRANKENPHP_MAX_REQUESTS:500}
+			# Redémarre le worker quand le code change (dev uniquement).
+			watch {$FRANKENPHP_WATCH:/app/src}
+			max_consecutive_failures 3
+		}
+	}
+}
+
+:80 {
+	root * /app/public
+
+	# Hub Mercure natif — évite un conteneur dunglas/mercure dédié.
+	# Consommé par la refonte du scoring live (cf. LIVE_MATCH_SCORING_REFACTORING_PROPOSALS §4.6).
+	mercure {
+		publisher_jwt {$MERCURE_PUBLISHER_JWT_KEY}
+		subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
+		# CORS : mêmes origines que l'API (app2 / app4).
+		cors_origins {$MERCURE_CORS_ORIGINS}
+		# En dev uniquement : autorise les abonnements anonymes.
+		anonymous {$MERCURE_ANONYMOUS:0}
+	}
+
+	encode zstd br gzip
+
+	# Le worker Symfony gère tout ce qui n'est pas un fichier statique.
+	php_server
+
+	# Logs d'accès sur stdout, récupérés par le driver json-file de Docker
+	# (`make api2_logs`). Il n'y a plus de fichier à lire : rien n'arrive dans
+	# docker/apachelogs_8/, qui ne concerne que le legacy Apache.
+	#
+	# CADDY_ACCESS_LOG_LEVEL pilote le volume :
+	#   - ERROR (défaut) : seules les requêtes en échec. Les logs applicatifs et
+	#     les erreurs PHP (Monolog → stderr) remontent quand même.
+	#   - INFO : toutes les requêtes, une ligne JSON par requête. Très verbeux —
+	#     à n'activer que le temps d'un débogage de routage.
+	log {
+		output stdout
+		format json
+		level {$CADDY_ACCESS_LOG_LEVEL:ERROR}
+	}
+}
