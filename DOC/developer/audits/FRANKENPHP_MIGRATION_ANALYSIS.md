@@ -781,6 +781,156 @@ frontend étant inchangées, le retour arrière est transparent pour app2/app4.
 
 ---
 
+## 8bis. Procédure de déploiement (préprod et production)
+
+Même procédure pour les deux environnements : seul le suffixe des cibles `make` change
+(`docker_preprod_*` / `docker_prod_*`) et, bien sûr, les valeurs mises dans les `.env`.
+
+> **L'essentiel du travail est dans les deux fichiers `.env`, qui ne sont pas versionnés.** Le code
+> arrive par `git pull`, mais `docker/.env` et `sources/api2/.env` sont propres à chaque serveur :
+> personne ne les met à jour à ta place, et c'est là que se logent les erreurs (cf. §8ter).
+
+### Étape 1 — Récupérer le code
+
+```bash
+git pull    # sur la branche déployée sur ce serveur
+```
+
+### Étape 2 — Compléter `docker/.env`
+
+Deux variables **nouvelles** à ajouter (absentes des `.env` existants, présentes dans `.env.dist`) :
+
+```bash
+BASE_IMAGE_FRANKENPHP=dunglas/frankenphp:php8.4
+MERCURE_JWT_SECRET=<secret propre à CET environnement>
+```
+
+```bash
+make mercure_generate_secret   # affiche la ligne à copier — n'écrit PAS dans .env
+```
+
+**Un secret différent par environnement.** Ne jamais reprendre celui du dev ni le placeholder de
+`.env.dist`.
+
+### Étape 3 — Compléter `sources/api2/.env`
+
+⚠️ **C'est l'étape la plus piégeuse.** Le `.env.dist` est calibré pour le **dev** : le copier tel
+quel donne un api2 qui ne trouve ni la base, ni les bonnes origines CORS. Chaque valeur ci-dessous
+doit être adaptée au serveur.
+
+```bash
+# Hôte = nom du conteneur DB = ${APPLICATION_NAME}_db, PAS "kpi_db" (cf. §8ter)
+DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@${APPLICATION_NAME}_db:3306/<DB_NAME>?serverVersion=11.5.2-MariaDB&charset=utf8mb4"
+
+APP_ENV=prod
+
+# Doit inclure /api2 : Traefik strippe le préfixe, sans quoi les IRIs sont fausses (cf. §7.6)
+DEFAULT_URI=https://<domaine>/api2
+
+# Origines réelles des frontends — la valeur par défaut ne couvre que *.localhost
+CORS_ALLOW_ORIGIN='<regex des origines de cet environnement>'
+
+MERCURE_URL=http://localhost/.well-known/mercure                       # publication interne
+MERCURE_PUBLIC_URL=https://<domaine>/api2/.well-known/mercure          # abonnement navigateur
+MERCURE_JWT_SECRET="<LE MÊME secret qu'à l'étape 2>"                   # sinon publish → 403
+```
+
+`DB_USER`, `DB_PASSWORD`, `DB_NAME` et `APPLICATION_NAME` se lisent dans le `docker/.env` du serveur.
+
+### Étape 4 — Réinstaller les dépendances PHP
+
+**Obligatoire** : le `composer.lock` a changé (retour de Symfony 8 vers 7.4 LTS + ajout de
+`runtime/frankenphp-symfony`, cf. §7.9).
+
+```bash
+make api2_composer_install
+```
+
+**Ne jamais faire de `composer update` ici** : cela repartirait vers Symfony 8, non voulue.
+
+### Étape 5 — Rebuild et démarrage
+
+`Dockerfile.api2` est nouveau : un simple `up` ne suffit pas, il faut un rebuild.
+
+```bash
+make docker_preprod_rebuild     # ou docker_prod_rebuild
+make docker_preprod_status      # ou docker_prod_status
+```
+
+### Étape 6 — Vérifier
+
+Reprise du plan §8, adaptée au serveur :
+
+```bash
+make api2_logs_errors                                   # doit être silencieux
+curl -I https://<domaine>/api2/api                      # 200 + "server: FrankenPHP Caddy"
+curl -I https://<domaine>/                              # legacy toujours servi par Apache
+docker exec ${APPLICATION_NAME}_api2 ls /var/www/html/live/cache   # montage ../sources présent
+docker logs ${APPLICATION_NAME}_event_cache_worker      # démon inchangé, pas d'erreur DB
+docker stats ${APPLICATION_NAME}_api2                   # RSS se stabilise, ne croît pas
+```
+
+Côté navigateur : app2/app4 sans erreur CORS, **un seul** header `Access-Control-Allow-Origin`, JWT
+accepté, et `servers` de l'OpenAPI préfixé `/api2`.
+
+### ⚠️ Après ce déploiement : `make api2_restart` devient obligatoire
+
+`FRANKENPHP_WATCH=` est vide hors dev : le kernel reste en mémoire. **Un `git pull` ne suffit plus à
+déployer du code api2** — il faut recycler le worker :
+
+```bash
+git pull && make api2_restart
+```
+
+C'est le changement d'habitude le plus durable de cette migration (cf. §5 et §7.8d).
+
+---
+
+## 8ter. Erreur classique : `SQLSTATE[HY000] [2002] Connection refused`
+
+**Symptôme** — au démarrage, `${APPLICATION_NAME}_event_cache_worker` boucle sur :
+
+```
+[ERROR] Worker error: An exception occurred in the driver: SQLSTATE[HY000] [2002] Connection refused
+```
+
+**Cause** — `DATABASE_URL` de `sources/api2/.env` pointe sur l'hôte **`kpi_db`**, valeur codée en dur
+dans `.env.dist` pour le dev. Or le conteneur DB s'appelle `${APPLICATION_NAME}_db` : sur une préprod
+où `APPLICATION_NAME=kpi_preprod`, c'est `kpi_preprod_db`. L'hôte `kpi_db` n'existe pas sur ce
+réseau → connexion refusée. C'est le piège multi-environnement décrit dans
+[MAKEFILE_MULTI_ENVIRONMENT.md](../guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md) : tout est
+paramétré par `APPLICATION_NAME`, **sauf ce fichier non versionné**.
+
+**Ce n'est pas une course au démarrage.** `depends_on` n'attend que le démarrage du conteneur DB, pas
+que MariaDB accepte les connexions — une vraie course produit une ou deux erreurs puis se résorbe
+(`restart: unless-stopped`). Une erreur **qui persiste** est un problème de configuration.
+
+**Correction** — dans `sources/api2/.env` :
+
+```bash
+DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@${APPLICATION_NAME}_db:3306/<DB_NAME>?serverVersion=11.5.2-MariaDB&charset=utf8mb4"
+```
+
+puis redémarrer **les deux** consommateurs de ce fichier :
+
+```bash
+docker restart ${APPLICATION_NAME}_event_cache_worker
+make api2_restart
+```
+
+> **api2 est touché par la même erreur**, mais silencieusement : le worker CLI échoue bruyamment au
+> démarrage, alors qu'api2 n'échouera qu'à la première requête atteignant la base. Le
+> `event-cache-worker` sert ici de détecteur précoce d'un `DATABASE_URL` faux.
+
+Vérifier au passage les deux autres valeurs héritées du dev dans ce même fichier :
+
+| Valeur `.env.dist` (dev) | À vérifier en préprod/prod |
+|---|---|
+| `root:root` | doit valoir `DB_USER`/`DB_PASSWORD` du `docker/.env` |
+| base `kayak_polo` (ou `my_database`) | doit valoir `DB_NAME` du `docker/.env` |
+
+---
+
 ## 9. Décision
 
 | Option | Verdict |
@@ -815,4 +965,5 @@ mesuré. **Ce n'est plus le critère.** La décision est prise sur deux motifs :
 | Hub Mercure | ✅ `/.well-known/mercure` → 200 (SSE) |
 | `event-cache-worker` | ✅ inchangé |
 
-**Reste à faire** : validation préprod, puis production.
+**Reste à faire** : validation préprod, puis production — procédure pas à pas en **§8bis**, erreurs
+classiques en **§8ter**.

@@ -806,9 +806,13 @@ api2_composer_require: ## Ajoute un package Composer à API2 (usage: make api2_c
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer require $(package) --no-interaction"
 	@echo "Package $(package) ajouté à API2"
 
+# ⚠️ La console DOIT tourner dans le conteneur api2 (FrankenPHP), pas dans le conteneur
+# Apache : celui-ci n'a pas APP_ENV=prod, il écrivait donc un cache "dev" dans le volume
+# partagé var/cache/ d'un api2 tournant en prod → 404 au redémarrage du worker.
 api2_cache_clear: ## Vide le cache Symfony de API2 (+ recycle le worker FrankenPHP)
-	@echo "Vidage du cache Symfony pour API2 (container: $(PHP_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console cache:clear"
+	@echo "Vidage du cache Symfony pour API2 (container: $(APPLICATION_NAME)_api2)..."
+	@docker exec $(APPLICATION_NAME)_api2 php bin/console cache:clear \
+		|| { echo "Échec : conteneur $(APPLICATION_NAME)_api2 introuvable ou console en erreur"; exit 1; }
 	@echo "Cache Symfony vidé pour API2"
 	@$(MAKE) --no-print-directory api2_restart
 
