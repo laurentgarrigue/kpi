@@ -460,10 +460,10 @@ n'est pas correct. À adapter par environnement (préprod/prod : le domaine rée
 
 #### Comment le reconnaître : les headers de réponse
 
-`/api2/api` répond **200**, mais tous ses liens sont en 404. La cause est lisible dans les headers :
+`/api2/doc` répond **200**, mais tous ses liens sont en 404. La cause est lisible dans les headers :
 
 ```bash
-curl -sI https://<domaine>/api2/api
+curl -sI https://<domaine>/api2/doc
 # content-location: /api/.well-known/genid/...      ← /api au lieu de /api2 → Apache → 404
 # link: <http://<domaine>/api/docs.jsonld>; ...     ← et http au lieu de https
 ```
@@ -814,7 +814,7 @@ automatiquement serait risqué (fichier non versionné, propre à chaque serveur
 
 Avant bascule, vérifier :
 
-1. **Routage** — `GET https://kpi.localhost/api2/api` sert bien la doc API Platform depuis le
+1. **Routage** — `GET https://kpi.localhost/api2/doc` sert bien la doc API Platform depuis le
    nouveau conteneur (`docker logs kpi_api2` doit montrer la requête).
 2. **Le legacy est intact** — `https://kpi.localhost/` et WordPress répondent toujours via Apache.
 3. **CORS** — app2 et app4 (origines `*.localhost`) n'ont pas d'erreur console. Vérifier
@@ -943,14 +943,14 @@ Reprise du plan §8, adaptée au serveur :
 
 ```bash
 make api2_logs_errors                                   # doit être silencieux
-curl -sI https://<domaine>/api2/api                     # 200 + "server: FrankenPHP Caddy"
+curl -sI https://<domaine>/api2/doc                     # 200 + "server: FrankenPHP Caddy"
 curl -sI https://<domaine>/                             # legacy toujours servi par Apache
 docker exec ${APPLICATION_NAME}_api2 ls /var/www/html/live/cache   # montage ../sources présent
 docker logs ${APPLICATION_NAME}_event_cache_worker      # démon inchangé (cf. §8ter.d)
 docker stats ${APPLICATION_NAME}_api2                   # RSS se stabilise, ne croît pas
 ```
 
-Sur `/api2/api`, contrôler **aussi les headers** `content-location` et `link` : ils doivent porter le
+Sur `/api2/doc`, contrôler **aussi les headers** `content-location` et `link` : ils doivent porter le
 préfixe `/api2` et `https`. Un `/api` nu = `DEFAULT_URI` faux (cf. §7.6).
 
 Côté navigateur : app2/app4 sans erreur CORS, **un seul** header `Access-Control-Allow-Origin`, JWT
@@ -963,7 +963,7 @@ en cache navigateur.
 ```bash
 make api2_cache_clear
 for i in $(seq 1 20); do
-  curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" https://<domaine>/api2/api
+  curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" https://<domaine>/api2/doc
 done
 # Attendu : 20 × 200. Un seul appel plus lent (~300 ms) = le worker recyclé, c'est normal.
 # Des 404 → cf. §8quater.
@@ -996,12 +996,12 @@ un 404** — pour quatre causes distinctes. D'où la règle générale :
 
 ### a. `DEFAULT_URI` sans le préfixe `/api2` → tous les liens en 404
 
-**Symptôme** — `/api2/api` répond 200, mais tout ce qu'elle référence est en 404.
+**Symptôme** — `/api2/doc` répond 200, mais tout ce qu'elle référence est en 404.
 
 **Diagnostic** — les headers de la réponse trahissent la cause :
 
 ```bash
-curl -sI https://<domaine>/api2/api
+curl -sI https://<domaine>/api2/doc
 # content-location: /api/.well-known/genid/...        ← /api au lieu de /api2
 # link: <http://<domaine>/api/docs.jsonld>; ...       ← et http au lieu de https
 ```
@@ -1182,7 +1182,7 @@ mesuré. **Ce n'est plus le critère.** La décision est prise sur deux motifs :
 
 | Vérification (§8) | Résultat |
 |---|---|
-| `https://kpi.localhost/api2/api` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
+| `https://kpi.localhost/api2/doc` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
 | Latence `/api` (worker chaud) | ✅ ~1,8 ms (vs 20–60 ms de bootstrap) |
 | Legacy + WordPress via Apache | ✅ Intacts (`/` → `Apache/2.4.65`) |
 | API legacy `/api/events` | ✅ 401 (front controller opérationnel) |
@@ -1201,7 +1201,7 @@ correctifs — chacun documenté en §8ter :
 
 | Vérification | Résultat |
 |---|---|
-| `https://preprod.kayak-polo.info/api2/api` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
+| `https://preprod.kayak-polo.info/api2/doc` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
 | Legacy via Apache | ✅ Intact |
 | Hub Mercure | ✅ abonnements SSE constatés dans les logs |
 | `DEFAULT_URI` | ⚠️ → ✅ après correction (§8ter.a) |

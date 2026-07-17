@@ -2,7 +2,7 @@
 
 ## Base URL
 - Development: `https://kpi.localhost/api2/`
-- API Platform UI: `https://kpi.localhost/api2/api`
+- API Platform UI: `https://kpi.localhost/api2/doc`
 
 ## Public Endpoints
 
@@ -1257,6 +1257,6 @@ The `/_error/` routes are internal Symfony routes used for error handling:
 - **URL Changes:** Games/Charts/Team-stats routes now use `/event/{eventId}/` prefix pattern
 - **Groups API:** New season-based group endpoints (`/groups/{season}`, `/group/{season}/{groupCode}/...`)
 - **Caching:** All staff endpoints return fresh data with no-cache headers
-- The `/api2/api` or `/api2/doc` URL is only for the API Platform UI documentation. The actual API endpoints use `/api2/` directly.
+- The `/api2/doc` or `/api2/doc` URL is only for the API Platform UI documentation. The actual API endpoints use `/api2/` directly.
 
 All endpoints return the same JSON structure as the legacy API.

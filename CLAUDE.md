@@ -165,7 +165,7 @@ make backend_npm_add package=flatpickr
 **Server**: FrankenPHP (Caddy) worker mode, container `${APPLICATION_NAME}_api2` - **not Apache**
 **Documentation**: See [sources/api2/README.md](sources/api2/README.md)
 **Base URL**: `https://kpi.localhost/api2/`
-**API Documentation**: `https://kpi.localhost/api2/api` (API Platform interface)
+**API Documentation**: `https://kpi.localhost/api2/doc` (API Platform interface)
 **Mercure hub**: `https://kpi.localhost/api2/.well-known/mercure` (SSE)
 
 > **Logs**: `docker/apachelogs_8/` contains **nothing** about api2 - it's the Apache/legacy log.
@@ -259,7 +259,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - **Purpose**: Modern REST API replacing legacy PHP API with same functionality
 - **Location**: `sources/api2/`
 - **Base URL**: `https://kpi.localhost/api2/`
-- **API Documentation**: `https://kpi.localhost/api2/api` (OpenAPI/Swagger UI)
+- **API Documentation**: `https://kpi.localhost/api2/doc` (OpenAPI/Swagger UI)
 - **Features**:
   - REST API with automatic OpenAPI documentation
   - Doctrine ORM for database abstraction

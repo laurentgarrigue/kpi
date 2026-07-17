@@ -836,7 +836,7 @@ Estimation : 100 admins simultanés × 1 requête/5 s = 20 req/s sur `/admin/eve
    - `update` → `PATCH /{idEvent}`
    - `dates` (GET)
    - `monitor` (GET) — **port natif** de `CacheMatch::Event()` + `GetBestMatch` + `GetNextMatch`, sans écriture de fichiers.
-3. **Tester via Swagger** (URL `/api2/api`) avec un JWT admin valide.
+3. **Tester via Swagger** (URL `/api2/doc`) avec un JWT admin valide.
 
 ### Phase 2 — Frontend Nuxt
 

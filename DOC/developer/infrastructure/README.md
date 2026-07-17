@@ -180,7 +180,7 @@ Apache était réactivé en parallèle du routage Traefik, les deux serveurs ré
 headers pourraient réapparaître en double. Vérifier qui répond :
 
 ```bash
-curl -skI https://kpi.localhost/api2/api | grep -i '^server:'   # attendu : FrankenPHP Caddy
+curl -skI https://kpi.localhost/api2/doc | grep -i '^server:'   # attendu : FrankenPHP Caddy
 ```
 
 #### 3. Une erreur dans api2 n'apparaît nulle part

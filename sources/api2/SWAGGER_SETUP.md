@@ -162,4 +162,4 @@ Pour toute question, consulter :
 - [Documentation NelmioApiDocBundle](https://symfony.com/bundles/NelmioApiDocBundle/current/index.html)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - `/sources/api2/README.md` - Documentation API2
-- `/sources/api2/API_ENDPOINTS.md` - Référence rapide des endpoints
+- `/sources/api2/doc_ENDPOINTS.md` - Référence rapide des endpoints

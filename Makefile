@@ -294,8 +294,8 @@ dev_status: ## Affiche l'état et les URLs de l'environnement de développement
 	@printf '  %-22s %-34s %s\n' "SERVICE" "URL" "ÉTAT"
 	@printf '  %-22s %-34s ' "legacy (Apache)" "https://$(KPI_DOMAIN_NAME)/"; \
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 3 "https://$(KPI_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
-	@printf '  %-22s %-34s ' "api2 (FrankenPHP)" "https://$(KPI_DOMAIN_NAME)/api2/api"; \
-		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 3 "https://$(KPI_DOMAIN_NAME)/api2/api" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "api2 (FrankenPHP)" "https://$(KPI_DOMAIN_NAME)/api2/doc"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 3 "https://$(KPI_DOMAIN_NAME)/api2/doc" 2>/dev/null || echo "KO"
 	@printf '  %-22s %-34s ' "app2 (Nuxt)" "https://$(NODE_DOMAIN_NAME)/"; \
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@printf '  %-22s %-34s ' "app4 admin (Nuxt)" "https://$(NODE4_DOMAIN_NAME)/admin2/"; \
