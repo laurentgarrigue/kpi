@@ -456,6 +456,41 @@ API_DOCS_SERVER_URL='https://kpi.localhost/api2'
 par API Platform pointeront vers la racine (`/games` au lieu de `/api2/games`) si `DEFAULT_URI`
 n'est pas correct. À adapter par environnement (préprod/prod : le domaine réel).
 
+**Confirmé en préprod le 2026-07-17** — le piège s'est bien refermé, exactement comme prévu ici.
+
+#### Comment le reconnaître : les headers de réponse
+
+`/api2/api` répond **200**, mais tous ses liens sont en 404. La cause est lisible dans les headers :
+
+```bash
+curl -sI https://<domaine>/api2/api
+# content-location: /api/.well-known/genid/...      ← /api au lieu de /api2 → Apache → 404
+# link: <http://<domaine>/api/docs.jsonld>; ...     ← et http au lieu de https
+```
+
+Un préfixe `/api` (au lieu de `/api2`) dans `content-location` ou `link` **est** la signature d'un
+`DEFAULT_URI` faux. Après correction, ces headers doivent porter `/api2` **et** `https`.
+
+#### ⚠️ `DEFAULT_URI` ne couvre pas les assets
+
+`DEFAULT_URI` ne pilote que le **routeur**. Le composant `asset` a un réglage **distinct** : sans
+lui, la page Swagger demande son CSS/JS à la racine (`/bundles/...`) → Apache → 404, et s'affiche
+nue alors que l'API fonctionne. D'où, dans
+[framework.yaml](../../../sources/api2/config/packages/framework.yaml) :
+
+```yaml
+framework:
+    assets:
+        base_path: '/api2'
+```
+
+Vrai dans **tous** les environnements (l'URL publique est toujours `/api2`), donc non conditionné.
+
+> Après avoir modifié ces réglages, **recycler le worker** : `config/` n'est pas surveillé par le
+> `watch` (cf. §7.8d), la nouvelle valeur reste sans effet jusqu'à `make api2_cache_clear`.
+> Vérifier ce que le worker a réellement chargé :
+> `docker exec ${APPLICATION_NAME}_api2 php bin/console debug:config framework assets`
+
 *Alternative* : ne pas utiliser `stripprefix`, et configurer un
 `Alias`/`base path` côté Symfony. Le `stripprefix` reste plus simple si `DEFAULT_URI` est bien posé.
 
@@ -653,6 +688,30 @@ En mode worker, `opcache.validate_timestamps=1` **ne suffit pas** : le kernel re
 une modification de code n'est pas vue. La directive `watch /app/src` recycle le worker à chaque
 changement — c'est ce qui rend le mode worker utilisable en dev.
 
+#### ⚠️ Limite : le `watch` ne couvre que `/app/src`
+
+**Une modification dans `config/` ne recycle pas le worker, même en dev.** La valeur par défaut de
+`FRANKENPHP_WATCH` est `/app/src` (cf. Caddyfile.api2) : tout ce qui est hors de `src/` est invisible
+pour la surveillance. Concrètement, éditer `config/packages/*.yaml` ne produit **aucun effet** tant
+que le worker n'est pas recyclé à la main :
+
+```bash
+make api2_cache_clear     # config/routes modifiés → vide, préchauffe et recycle
+make api2_restart         # code hors src/ → recycle seulement
+```
+
+C'est déroutant parce que le symptôme n'est pas une erreur : l'ancienne config continue simplement
+de s'appliquer, silencieusement. Cas vécu (2026-07-17) : l'ajout de `framework.assets.base_path`
+n'a rien changé jusqu'au `api2_restart`, ce qui a fait croire à tort que le réglage était faux.
+
+> **Vérifier plutôt que deviner** : `docker exec ${APPLICATION_NAME}_api2 php bin/console debug:config framework assets`
+> affiche la config **réellement chargée par le worker**. Si elle ne correspond pas au fichier sur le
+> disque, c'est un problème de recyclage, pas de configuration.
+
+Le `watch` n'est volontairement pas étendu à `/app/config` : la portée restreinte évite des
+recyclages intempestifs, et la règle « config modifiée → `make api2_cache_clear` » est de toute façon
+celle qui s'applique en préprod et en production.
+
 En préprod/prod, `FRANKENPHP_WATCH=` (vide) désactive la surveillance : le code est figé, et
 **`make api2_restart` devient obligatoire après tout déploiement** (cf. §5, « déploiement plus
 délicat »).
@@ -818,24 +877,41 @@ make mercure_generate_secret   # affiche la ligne à copier — n'écrit PAS dan
 quel donne un api2 qui ne trouve ni la base, ni les bonnes origines CORS. Chaque valeur ci-dessous
 doit être adaptée au serveur.
 
-```bash
-# Hôte = nom du conteneur DB = ${APPLICATION_NAME}_db, PAS "kpi_db" (cf. §8ter)
-DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@${APPLICATION_NAME}_db:3306/<DB_NAME>?serverVersion=11.5.2-MariaDB&charset=utf8mb4"
+> **⚠️ Jamais de commentaire en fin de ligne dans un `.env`.** Contrairement au shell, le parseur
+> Dotenv de Symfony n'isole pas toujours un `#` placé après une valeur : il peut finir **dans** la
+> valeur. Les commentaires vont sur leur **propre ligne**. (Erreur commise par cette doc même, qui a
+> coûté un déploiement le 2026-07-17.)
 
+```dotenv
+# Hôte = nom du conteneur DB = ${APPLICATION_NAME}_db (kpi_preprod_db en préprod),
+# et NON "kpi_db" comme dans .env.dist, calibré pour le dev.
+DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@<APPLICATION_NAME>_db:3306/<DB_NAME>?serverVersion=11.5.2-MariaDB&charset=utf8mb4"
+
+# Le conteneur api2 impose déjà APP_ENV=prod par son environnement, mais toute console
+# lancée hors de ce conteneur relit CE fichier : laisser "dev" ici regénère un cache dev
+# dans le volume partagé (cf. §8ter.b).
 APP_ENV=prod
 
-# Doit inclure /api2 : Traefik strippe le préfixe, sans quoi les IRIs sont fausses (cf. §7.6)
+# Doit inclure /api2 : Traefik strippe le préfixe, sans quoi les IRIs sont fausses (cf. §7.6).
 DEFAULT_URI=https://<domaine>/api2
+API_DOCS_SERVER_URL='https://<domaine>/api2'
 
-# Origines réelles des frontends — la valeur par défaut ne couvre que *.localhost
+# Origines réelles des frontends — la valeur par défaut ne couvre que *.localhost.
 CORS_ALLOW_ORIGIN='<regex des origines de cet environnement>'
 
-MERCURE_URL=http://localhost/.well-known/mercure                       # publication interne
-MERCURE_PUBLIC_URL=https://<domaine>/api2/.well-known/mercure          # abonnement navigateur
-MERCURE_JWT_SECRET="<LE MÊME secret qu'à l'étape 2>"                   # sinon publish → 403
+# MERCURE_URL : publication interne (bypasse Traefik).
+MERCURE_URL=http://localhost/.well-known/mercure
+# MERCURE_PUBLIC_URL : abonnement navigateur, avec le préfixe /api2.
+MERCURE_PUBLIC_URL=https://<domaine>/api2/.well-known/mercure
+# Doit être IDENTIQUE au MERCURE_JWT_SECRET de docker/.env, sinon les publish → 403.
+MERCURE_JWT_SECRET="<LE MÊME secret qu'à l'étape 2>"
 ```
 
 `DB_USER`, `DB_PASSWORD`, `DB_NAME` et `APPLICATION_NAME` se lisent dans le `docker/.env` du serveur.
+
+> **Vérifier qu'aucune clé n'est en double** dans le fichier final : en `.env`, **la dernière
+> occurrence gagne**. Une valeur corrigée en début de fichier reste sans effet si une ancienne
+> traîne plus bas.
 
 ### Étape 4 — Réinstaller les dépendances PHP
 
@@ -857,21 +933,41 @@ make docker_preprod_rebuild     # ou docker_prod_rebuild
 make docker_preprod_status      # ou docker_prod_status
 ```
 
+> **Le conteneur legacy doit être recréé, pas seulement redémarré.** Ses labels Traefik ont changé
+> (exclusion de `/api2` et `/admin2`, cf. §8quater) et Docker ne les relit qu'à la **recréation** :
+> `docker_*_rebuild` ou `docker_*_up` le font, `docker_*_restart` **non**.
+
 ### Étape 6 — Vérifier
 
 Reprise du plan §8, adaptée au serveur :
 
 ```bash
 make api2_logs_errors                                   # doit être silencieux
-curl -I https://<domaine>/api2/api                      # 200 + "server: FrankenPHP Caddy"
-curl -I https://<domaine>/                              # legacy toujours servi par Apache
+curl -sI https://<domaine>/api2/api                     # 200 + "server: FrankenPHP Caddy"
+curl -sI https://<domaine>/                             # legacy toujours servi par Apache
 docker exec ${APPLICATION_NAME}_api2 ls /var/www/html/live/cache   # montage ../sources présent
-docker logs ${APPLICATION_NAME}_event_cache_worker      # démon inchangé, pas d'erreur DB
+docker logs ${APPLICATION_NAME}_event_cache_worker      # démon inchangé (cf. §8ter.d)
 docker stats ${APPLICATION_NAME}_api2                   # RSS se stabilise, ne croît pas
 ```
 
+Sur `/api2/api`, contrôler **aussi les headers** `content-location` et `link` : ils doivent porter le
+préfixe `/api2` et `https`. Un `/api` nu = `DEFAULT_URI` faux (cf. §7.6).
+
 Côté navigateur : app2/app4 sans erreur CORS, **un seul** header `Access-Control-Allow-Origin`, JWT
-accepté, et `servers` de l'OpenAPI préfixé `/api2`.
+accepté, `servers` de l'OpenAPI préfixé `/api2`, et **la page Swagger avec son CSS** (sinon :
+`asset.base_path`, cf. §7.6). Penser au rechargement forcé (Ctrl+Shift+R) : les 404 d'assets restent
+en cache navigateur.
+
+**Vérifier l'absence de coupure** — un `make api2_cache_clear` ne doit produire aucun 404 :
+
+```bash
+make api2_cache_clear
+for i in $(seq 1 20); do
+  curl -s -o /dev/null -w "%{http_code} %{time_total}s\n" https://<domaine>/api2/api
+done
+# Attendu : 20 × 200. Un seul appel plus lent (~300 ms) = le worker recyclé, c'est normal.
+# Des 404 → cf. §8quater.
+```
 
 ### ⚠️ Après ce déploiement : `make api2_restart` devient obligatoire
 
@@ -879,55 +975,188 @@ accepté, et `servers` de l'OpenAPI préfixé `/api2`.
 déployer du code api2** — il faut recycler le worker :
 
 ```bash
-git pull && make api2_restart
+git pull && make api2_restart          # code (src/)
+git pull && make api2_cache_clear      # config/ ou routes modifiées
 ```
 
-C'est le changement d'habitude le plus durable de cette migration (cf. §5 et §7.8d).
+C'est le changement d'habitude le plus durable de cette migration (cf. §5 et §7.8d). Depuis le
+2026-07-17, `api2_restart` recycle **à chaud** (API admin de Caddy) : plus de coupure de service,
+contrairement au `docker restart` initial (cf. §8quater).
 
 ---
 
-## 8ter. Erreur classique : `SQLSTATE[HY000] [2002] Connection refused`
+## 8ter. Pannes rencontrées au déploiement préprod (2026-07-17)
 
-**Symptôme** — au démarrage, `${APPLICATION_NAME}_event_cache_worker` boucle sur :
+Journal du premier déploiement préprod réel. Les quatre problèmes ont produit **le même symptôme —
+un 404** — pour quatre causes distinctes. D'où la règle générale :
+
+> **Un 404 sur `/api2` ne dit rien de sa cause.** Toujours commencer par `curl -sI` et regarder le
+> header **`server:`** : `Apache` → api2 n'est pas dans la boucle (routage/conteneur absent) ;
+> `FrankenPHP Caddy` → api2 répond, le problème est applicatif.
+
+### a. `DEFAULT_URI` sans le préfixe `/api2` → tous les liens en 404
+
+**Symptôme** — `/api2/api` répond 200, mais tout ce qu'elle référence est en 404.
+
+**Diagnostic** — les headers de la réponse trahissent la cause :
+
+```bash
+curl -sI https://<domaine>/api2/api
+# content-location: /api/.well-known/genid/...        ← /api au lieu de /api2
+# link: <http://<domaine>/api/docs.jsonld>; ...       ← et http au lieu de https
+```
+
+Symfony génère des URLs sous `/api` : elles partent chez **Apache**, qui n'a pas ces routes → 404.
+
+**Cause** — `DEFAULT_URI` ne contenait pas le `/api2` (cf. §7.6). Traefik strippe le préfixe, donc
+Symfony ne peut pas le deviner.
+
+**Correction** — `DEFAULT_URI=https://<domaine>/api2` dans `sources/api2/.env`, puis
+`make api2_cache_clear`.
+
+### b. Cache `dev` écrit dans un conteneur `prod` → 404 après chaque restart
+
+**Symptôme** — api2 fonctionne, un `make api2_restart` le casse, un `cache:clear` manuel le répare.
+Déroutant parce qu'apparemment aléatoire.
+
+**Cause** — `make api2_cache_clear` et `api2_cache_warmup` exécutaient la console dans le conteneur
+**Apache** (`PHP_CONTAINER_NAME`), qui n'a pas `APP_ENV=prod`. Ils écrivaient donc un cache **dev**
+dans le `var/cache/` partagé d'un api2 tournant en **prod**. Le worker chargeait ce cache incohérent
+au redémarrage.
+
+**Indice** — `docker exec ${APPLICATION_NAME}_api2 ls /app/var/cache/` montre `dev` **et** `prod`
+côte à côte, alors que le conteneur tourne en prod.
+
+**Correction** — ✅ **corrigé dans le Makefile** : les deux cibles exécutent désormais la console
+dans le conteneur api2. Vérifier aussi `APP_ENV=prod` dans `sources/api2/.env` : toute console
+lancée hors du conteneur api2 relit ce fichier et repartirait en `dev`.
+
+### c. Assets du Swagger en 404 (`asset.base_path`)
+
+**Symptôme** — l'API fonctionne, mais la page Swagger s'affiche nue (CSS/JS en 404 à la racine).
+
+**Cause** — `DEFAULT_URI` ne couvre **que le routeur**. Le composant `asset` a son propre réglage et
+générait `/bundles/...` à la racine → Apache → 404.
+
+**Correction** — ✅ `framework.assets.base_path: '/api2'` dans
+[framework.yaml](../../../sources/api2/config/packages/framework.yaml).
+
+### d. `SQLSTATE[HY000] [2002] Connection refused` sur le `event-cache-worker`
+
+**Symptôme** — au tout premier démarrage :
 
 ```
 [ERROR] Worker error: An exception occurred in the driver: SQLSTATE[HY000] [2002] Connection refused
 ```
 
-**Cause** — `DATABASE_URL` de `sources/api2/.env` pointe sur l'hôte **`kpi_db`**, valeur codée en dur
-dans `.env.dist` pour le dev. Or le conteneur DB s'appelle `${APPLICATION_NAME}_db` : sur une préprod
-où `APPLICATION_NAME=kpi_preprod`, c'est `kpi_preprod_db`. L'hôte `kpi_db` n'existe pas sur ce
-réseau → connexion refusée. C'est le piège multi-environnement décrit dans
-[MAKEFILE_MULTI_ENVIRONMENT.md](../guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md) : tout est
-paramétré par `APPLICATION_NAME`, **sauf ce fichier non versionné**.
+**Cause** — **course au démarrage bénigne** : `depends_on: db` n'attend que le *démarrage* du
+conteneur MariaDB, pas qu'il accepte les connexions. Le worker se connecte trop tôt, échoue, et
+`restart: unless-stopped` le relance. Le message provient du PID 1 initial.
 
-**Ce n'est pas une course au démarrage.** `depends_on` n'attend que le démarrage du conteneur DB, pas
-que MariaDB accepte les connexions — une vraie course produit une ou deux erreurs puis se résorbe
-(`restart: unless-stopped`). Une erreur **qui persiste** est un problème de configuration.
-
-**Correction** — dans `sources/api2/.env` :
+**Comment trancher** — une course **se résorbe seule** en quelques secondes. Une erreur **qui
+persiste** est une vraie erreur de configuration : vérifier alors que l'hôte de `DATABASE_URL`
+correspond bien au conteneur DB de cet environnement, soit `${APPLICATION_NAME}_db` (`kpi_preprod_db`
+en préprod, et non `kpi_db` comme dans le `.env.dist` calibré pour le dev — piège multi-environnement
+classique, cf. [MAKEFILE_MULTI_ENVIRONMENT.md](../guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)).
 
 ```bash
-DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@${APPLICATION_NAME}_db:3306/<DB_NAME>?serverVersion=11.5.2-MariaDB&charset=utf8mb4"
+docker logs --tail 20 ${APPLICATION_NAME}_event_cache_worker   # encore des erreurs ? → config
 ```
 
-puis redémarrer **les deux** consommateurs de ce fichier :
+---
+
+## 8quater. `docker restart` d'api2 → ~25 s de 404 : le piège Traefik + healthcheck
+
+**Le piège le plus coûteux de cette migration**, et celui qui explique la majorité des 404 ci-dessus.
+
+### Le symptôme
+
+Après un `docker restart` du conteneur api2, `/api2` renvoie des 404 pendant **~25 secondes**, puis
+tout repart seul. Mesuré en préprod (sondage 1/s) :
+
+```
+01..29  404  ~35 ms        ← Apache : api2 n'est pas dans la boucle
+30      200  303 ms        ← le worker boote enfin
+31..40  200  ~40 ms
+```
+
+### La cause : deux mécanismes cumulés
+
+1. **Les labels Traefik vivent sur le conteneur api2.** `docker restart` le fait disparaître du
+   réseau : Traefik retire le routeur `api2`, et le routeur legacy (`Host` seul, sans contrainte de
+   chemin) **récupère `/api2` par défaut**. Apache reçoit une URL qu'il ne connaît pas → 404.
+2. **Le healthcheck hérité de l'image FrankenPHP** (`curl -f http://localhost:2019/metrics`) n'a ni
+   `start_period` ni `interval` : Docker applique ses défauts (~30 s). Traefik n'enregistre pas un
+   conteneur qui n'est pas `healthy` — d'où l'essentiel de l'attente.
+
+> Ce n'est **pas** le cache qui se reconstruit. Deux indices le prouvent : les 404 sont **rapides**
+> (~35 ms — un Symfony qui bootstrap serait *lent*, pas absent), et le header dit **`server: Apache`**.
+
+### Correction 1 — recycler à chaud, sans `docker restart`
+
+✅ **`make api2_restart` recycle désormais les workers via l'API admin de Caddy** (`localhost:2019`),
+sans arrêter le conteneur : Traefik ne décroche jamais, le healthcheck n'est pas réinitialisé.
+**Zéro coupure**, mesurée en sondage continu.
 
 ```bash
-docker restart ${APPLICATION_NAME}_event_cache_worker
-make api2_restart
+docker exec <api2> curl -X POST http://localhost:2019/load \
+  -H "Content-Type: application/json" \
+  -H "Cache-Control: must-revalidate" \
+  -d @/config/caddy/autosave.json
 ```
 
-> **api2 est touché par la même erreur**, mais silencieusement : le worker CLI échoue bruyamment au
-> démarrage, alors qu'api2 n'échouera qu'à la première requête atteignant la base. Le
-> `event-cache-worker` sert ici de détecteur précoce d'un `DATABASE_URL` faux.
+> ⚠️ **`Cache-Control: must-revalidate` est obligatoire.** Sans ce header, Caddy répond
+> `"config is unchanged"` et **ne recycle rien** — le reload paraît réussir (HTTP 200) alors qu'il
+> n'a rien fait. Vérifier dans les logs la présence de `FrankenPHP started 🐘` / `stopped 🐘`.
 
-Vérifier au passage les deux autres valeurs héritées du dev dans ce même fichier :
+Repli automatique sur `docker restart` si l'API admin est injoignable (conteneur arrêté), avec
+avertissement explicite sur la coupure attendue.
 
-| Valeur `.env.dist` (dev) | À vérifier en préprod/prod |
+### Correction 2 — le legacy n'usurpe plus `/api2`
+
+✅ **Le routeur legacy exclut désormais `/api2` et `/admin2`** dans les trois composes :
+
+```yaml
+- "traefik.http.routers.kpi.rule=Host(`${KPI_DOMAIN_NAME}`) && !PathPrefix(`/api2`) && !PathPrefix(`/admin2`)"
+```
+
+En production, les parenthèses autour du `||` des deux `Host` sont **obligatoires** (précédence des
+opérateurs).
+
+Effet quand api2 est absent :
+
+| | Avant | Après |
+|---|---|---|
+| `/api2` | `404` + **page Apache** (trompeur) | `404 page not found` de **Traefik**, aucun header `server:` |
+| `/` legacy | 200 | 200 (inchangé) |
+| `/admin2` | nginx | nginx (inchangé) |
+
+L'erreur ne ment plus : Traefik dit « aucune route ne matche » au lieu de laisser Apache se faire
+passer pour api2. `/admin2` (nginx_app4) bénéficie de la même protection — il avait le même défaut.
+
+> **Ce n'est pas un 503.** Un vrai 503 exigerait un routeur de repli déclaré dans la configuration
+> **statique** de Traefik (priorité intermédiaire, service sans backend) — impossible depuis ce
+> dépôt, le Traefik étant partagé avec d'autres projets. Le 404 franc de Traefik a été jugé
+> suffisant : il ne trompe plus le diagnostic.
+
+### Ordre correct des opérations
+
+`cache:clear` **supprime** le cache : si les workers redémarrent aussitôt, ils rebootent sur un cache
+vide et les requêtes qui arrivent pendant la reconstruction échouent. D'où l'enchaînement retenu dans
+`api2_cache_clear` :
+
+```
+cache:clear  →  cache:warmup  →  recyclage à chaud
+```
+
+C'est aussi pourquoi **`cache:clear` n'est PAS inclus dans `api2_restart`** : ce dernier doit rester
+l'opération rapide et sûre du quotidien, et supprimer le cache à chaque redémarrage infligerait un
+bootstrap complet aux premières requêtes en production.
+
+| Situation | Commande |
 |---|---|
-| `root:root` | doit valoir `DB_USER`/`DB_PASSWORD` du `docker/.env` |
-| base `kayak_polo` (ou `my_database`) | doit valoir `DB_NAME` du `docker/.env` |
+| Changement de code (`src/`) | `make api2_restart` |
+| Changement de config / routes | `make api2_cache_clear` (préchauffe et recycle) |
 
 ---
 
@@ -965,5 +1194,24 @@ mesuré. **Ce n'est plus le critère.** La décision est prise sur deux motifs :
 | Hub Mercure | ✅ `/.well-known/mercure` → 200 (SSE) |
 | `event-cache-worker` | ✅ inchangé |
 
-**Reste à faire** : validation préprod, puis production — procédure pas à pas en **§8bis**, erreurs
-classiques en **§8ter**.
+### Résultat constaté en préprod (2026-07-17)
+
+Premier déploiement réel sur `preprod.kayak-polo.info`. **api2 est fonctionnel**, après quatre
+correctifs — chacun documenté en §8ter :
+
+| Vérification | Résultat |
+|---|---|
+| `https://preprod.kayak-polo.info/api2/api` | ✅ HTTP 200, `server: FrankenPHP Caddy` |
+| Legacy via Apache | ✅ Intact |
+| Hub Mercure | ✅ abonnements SSE constatés dans les logs |
+| `DEFAULT_URI` | ⚠️ → ✅ après correction (§8ter.a) |
+| Cache dev/prod mélangé | ⚠️ → ✅ Makefile corrigé (§8ter.b) |
+| Assets Swagger | ⚠️ → ✅ `asset.base_path` (§8ter.c) |
+| Coupure au redémarrage | ⚠️ ~25 s → ✅ 0 s, recyclage à chaud (§8quater) |
+
+**Reste à faire** :
+
+- **Vérifications §8 non encore effectuées en préprod** : mémoire du worker sous charge
+  (`docker stats`), contrôleurs TV/Games touchant le cache live, vraie IP client dans les logs.
+- **Déploiement en production** — procédure §8bis, en tenant compte des correctifs ci-dessus (le
+  chemin est désormais balisé : les quatre pièges sont connus et corrigés dans le dépôt).

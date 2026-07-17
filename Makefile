@@ -820,11 +820,25 @@ api2_cache_clear: ## Vide le cache Symfony de API2 (+ préchauffe, puis recycle 
 	@$(MAKE) --no-print-directory api2_cache_warmup
 	@$(MAKE) --no-print-directory api2_restart
 
-api2_restart: ## Recycle le worker FrankenPHP d'API2 (obligatoire après un changement de code/cache)
-	@echo "Redémarrage du worker FrankenPHP ($(APPLICATION_NAME)_api2)..."
-	@docker restart $(APPLICATION_NAME)_api2 >/dev/null 2>&1 \
-		&& echo "Worker FrankenPHP redémarré" \
-		|| echo "Conteneur $(APPLICATION_NAME)_api2 introuvable (api2 servi par Apache ?)"
+# Recyclage À CHAUD via l'API admin de Caddy (localhost:2019), et NON `docker restart` :
+# un restart fait disparaître le conteneur du réseau, Traefik retire alors le routeur
+# api2preprod et le routeur legacy (Host seul) récupère /api2 → ~25 s de 404 Apache.
+# Le reload garde le conteneur en place : zéro coupure (cf. §8quater de l'analyse).
+# `Cache-Control: must-revalidate` est nécessaire, sinon Caddy répond "config is
+# unchanged" et ne recycle rien.
+api2_restart: ## Recycle le worker FrankenPHP d'API2 à chaud, sans coupure (après un changement de code/cache)
+	@echo "Recyclage à chaud du worker FrankenPHP ($(APPLICATION_NAME)_api2)..."
+	@docker exec $(APPLICATION_NAME)_api2 sh -c 'curl -fsS -X POST http://localhost:2019/load \
+		-H "Content-Type: application/json" \
+		-H "Cache-Control: must-revalidate" \
+		-d @/config/caddy/autosave.json -o /dev/null' >/dev/null 2>&1 \
+		&& { echo "Worker FrankenPHP recyclé (sans coupure)"; exit 0; } \
+		|| { \
+			echo "API admin injoignable — repli sur docker restart (coupure de ~25 s attendue)"; \
+			docker restart $(APPLICATION_NAME)_api2 >/dev/null 2>&1 \
+				&& echo "Worker FrankenPHP redémarré (via docker restart)" \
+				|| echo "Conteneur $(APPLICATION_NAME)_api2 introuvable (api2 servi par Apache ?)"; \
+		}
 
 api2_logs: ## Affiche les logs d'API2/FrankenPHP (erreurs PHP + Symfony). Options: lines=200
 	docker logs -f --tail $(or $(lines),100) $(APPLICATION_NAME)_api2

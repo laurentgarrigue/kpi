@@ -39,7 +39,10 @@ services:
         restart: unless-stopped
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.kpi.rule=Host(`${KPI_DOMAIN_NAME}`)"
+            # Les exclusions !PathPrefix sont VOLONTAIRES : sans elles, ce routeur (Host seul)
+            # récupère /api2 et /admin2 dès que leur conteneur disparaît, et Apache répond un
+            # 404 trompeur au lieu d'une erreur franche. cf. §8quater de FRANKENPHP_MIGRATION_ANALYSIS.md
+            - "traefik.http.routers.kpi.rule=Host(`${KPI_DOMAIN_NAME}`) && !PathPrefix(`/api2`) && !PathPrefix(`/admin2`)"
             - "traefik.http.routers.kpi.entrypoints=websecure"
             - "traefik.http.routers.kpi.tls=true"
             # Configure Traefik to trust X-Forwarded-* headers and preserve real client IP
