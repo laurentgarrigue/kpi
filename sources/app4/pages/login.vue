@@ -168,6 +168,10 @@ const handleSubmit = async () => {
 #username,
 #password {
   background-color: var(--color-primary-50) !important;
+  color: var(--color-header-900);
+  --autofill-bg: var(--color-primary-50);
+  --autofill-fg: var(--color-header-900);
+  --autofill-ring: var(--ui-color-primary-300);
 }
 
 .login-input [data-slot="base"] {
