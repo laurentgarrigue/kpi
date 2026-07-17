@@ -1,7 +1,7 @@
 # Analyse : remplacer Apache-PHP par FrankenPHP ?
 
 **Date** : 2026-07-14
-**Mise à jour** : 2026-07-17 — ajout §7.7ter (persistance de l'historique Mercure + reprise après coupure)
+**Mise à jour** : 2026-07-17 — ajout §7.7ter (persistance Mercure + reprise) et §7.7quater (FRANKENPHP_WATCH)
 **Mise à jour** : 2026-07-16 — corrections §1/§7, ajout §7.8 (Mercure) et §7.9 (préprod)
 **Statut** : Validé — implémentation en cours (déclencheur : refonte scoring Mercure)
 **Périmètre** : conteneur `kpi` (PHP 8.4 + Apache), API2 (Symfony 7.4 LTS / API Platform 4.3), WordPress, legacy PHP
@@ -751,6 +751,43 @@ Pour une feuille de marque, prévoir donc la ceinture **et** les bretelles : Mer
 réel, plus un `GET` de l'état complet du match **à chaque `onopen`**. La reconnexion redemande la
 vérité au serveur ; l'historique ne sert qu'à lisser les micro-coupures réseau. Un client ne doit
 **jamais** déduire d'un rattrapage réussi qu'il est à jour.
+
+---
+
+## 7.7quater `FRANKENPHP_WATCH` : une valeur vide n'éteint pas le watcher (2026-07-17)
+
+Découvert en lisant les logs de préprod, qui étaient noyés d'événements
+`"path_name":"/app/var/cache/dev/…","effect_type":"destroy"` — alors que préprod tourne en
+`APP_ENV=prod` et déclarait `FRANKENPHP_WATCH=` précisément pour figer le code.
+
+**Une variable d'environnement vide n'est pas une variable absente.** Le fallback `{$VAR:defaut}` de
+Caddy ne s'applique **que si la variable est absente**. Vide, Caddy reçoit une chaîne vide et
+FrankenPHP applique **son propre défaut interne**, bien plus large que celui du Caddyfile :
+
+| `FRANKENPHP_WATCH` | Ce que le watcher surveille réellement |
+|---|---|
+| *absent* (cas du **dev**) | `/app/src` — le défaut du Caddyfile ✅ |
+| **`=` (vide)** — ancien réglage préprod/prod | **`./**/*.{env,php,twig,yaml,yml}`** → **tout `/app`**, `var/cache/` compris ❌ |
+| `=/watch-disabled` (dossier vide de l'image) | rien ✅ |
+| chemin **inexistant** | ❌ boucle : `"watcher was closed prematurely, retrying..."` |
+
+L'effet était donc **l'inverse de l'intention** : préprod/prod surveillaient *plus* de fichiers que
+le dev. Or le watcher **redémarre le worker** à chaque changement, et Symfony écrit dans
+`var/cache/` — un `cache:clear` déclenchait une rafale de redémarrages, exactement ce que le mode
+worker cherche à éviter.
+
+**Correctif retenu** : un dossier sentinelle **vide et existant**, créé dans l'image
+(`RUN mkdir -p /watch-disabled` dans [Dockerfile.api2](../../../docker/config/Dockerfile.api2)), vers
+lequel pointe `FRANKENPHP_WATCH` en préprod et en prod. Le watcher démarre proprement et n'a rien à
+observer. Les deux alternatives ont été écartées après mesure : la valeur vide (élargit le watcher)
+et le chemin inexistant (fait boucler le watcher).
+
+Vérifié après correctif : préprod/prod → aucun événement sur modification de `/app/src`, aucune
+boucle de retry, 0 % CPU. **Dev → hot reload préservé** (le compose n'y définit pas la variable,
+donc le défaut `/app/src` s'applique toujours).
+
+> ℹ️ Ces événements sont loggués au niveau **info**, indépendamment de `CADDY_ACCESS_LOG_LEVEL` qui
+> ne pilote que les logs d'**accès**. C'est ce qui rendait `make api2_logs` illisible en préprod.
 
 ---
 

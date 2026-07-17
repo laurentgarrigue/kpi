@@ -74,7 +74,14 @@ services:
             - FRANKENPHP_NUM_WORKERS=4
             - FRANKENPHP_MAX_REQUESTS=500
             # Pas de rechargement à chaud hors dev : code figé.
-            - FRANKENPHP_WATCH=
+            # ⚠️ NE PAS mettre une valeur vide : elle n'éteint PAS le watcher, elle
+            # le rend PLUS large (FrankenPHP applique alors son défaut interne
+            # `./**/*.{env,php,twig,yaml,yml}`, qui surveille tout /app, var/cache/
+            # compris → redémarrages du worker à chaque cache:clear).
+            # /watch-disabled est un dossier vide créé dans l'image (Dockerfile.api2) :
+            # le watcher démarre proprement et n'a rien à surveiller. Un chemin
+            # inexistant, lui, ferait boucler le watcher. Mesuré le 2026-07-17.
+            - FRANKENPHP_WATCH=/watch-disabled
             # Hub Mercure (préprod : abonnements authentifiés uniquement)
             - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}

@@ -17,7 +17,11 @@
 			# anti-fuite mémoire se pilote côté PHP via la variable d'env
 			# MAX_REQUESTS, lue par runtime/frankenphp-symfony (0 = illimité).
 			env MAX_REQUESTS {$FRANKENPHP_MAX_REQUESTS:500}
-			# Redémarre le worker quand le code change (dev uniquement).
+			# Redémarre le worker quand le code change. Le défaut /app/src ne
+			# s'applique QUE si FRANKENPHP_WATCH est absent (cas du dev).
+			# ⚠️ Hors dev, la neutralisation passe par FRANKENPHP_WATCH=/watch-disabled
+			# (dossier vide de l'image) : une valeur VIDE élargirait le watcher au
+			# lieu de l'éteindre. cf. §7.7quater de FRANKENPHP_MIGRATION_ANALYSIS.md
 			watch {$FRANKENPHP_WATCH:/app/src}
 			max_consecutive_failures 3
 		}
