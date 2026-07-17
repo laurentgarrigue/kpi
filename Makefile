@@ -809,11 +809,15 @@ api2_composer_require: ## Ajoute un package Composer à API2 (usage: make api2_c
 # ⚠️ La console DOIT tourner dans le conteneur api2 (FrankenPHP), pas dans le conteneur
 # Apache : celui-ci n'a pas APP_ENV=prod, il écrivait donc un cache "dev" dans le volume
 # partagé var/cache/ d'un api2 tournant en prod → 404 au redémarrage du worker.
-api2_cache_clear: ## Vide le cache Symfony de API2 (+ recycle le worker FrankenPHP)
+api2_cache_clear: ## Vide le cache Symfony de API2 (+ préchauffe, puis recycle le worker)
 	@echo "Vidage du cache Symfony pour API2 (container: $(APPLICATION_NAME)_api2)..."
 	@docker exec $(APPLICATION_NAME)_api2 php bin/console cache:clear \
 		|| { echo "Échec : conteneur $(APPLICATION_NAME)_api2 introuvable ou console en erreur"; exit 1; }
 	@echo "Cache Symfony vidé pour API2"
+	@# Préchauffage AVANT le restart : les workers redémarrent sur un cache complet.
+	@# Sans cela, les 4 workers rebootent en parallèle sur un cache vide et les
+	@# requêtes qui arrivent pendant la reconstruction partent en 404.
+	@$(MAKE) --no-print-directory api2_cache_warmup
 	@$(MAKE) --no-print-directory api2_restart
 
 api2_restart: ## Recycle le worker FrankenPHP d'API2 (obligatoire après un changement de code/cache)
@@ -863,9 +867,12 @@ mercure_generate_secret: ## Génère un secret JWT Mercure (usage: make mercure_
 	@echo "⚠️  Un secret DIFFÉRENT par environnement (dev / préprod / prod)."
 	@echo "    Ne jamais le committer : docker/.env n'est pas versionné."
 
-api2_cache_warmup: ## Préchauffe le cache Symfony de API2
-	@echo "Préchauffage du cache Symfony pour API2 (container: $(PHP_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console cache:warmup"
+# ⚠️ Comme api2_cache_clear : la console doit tourner dans le conteneur api2 (APP_ENV=prod
+# hors dev), sinon on regénère un cache "dev" dans le volume partagé var/cache/.
+api2_cache_warmup: ## Préchauffe le cache Symfony de API2 (sans recycler le worker)
+	@echo "Préchauffage du cache Symfony pour API2 (container: $(APPLICATION_NAME)_api2)..."
+	@docker exec $(APPLICATION_NAME)_api2 php bin/console cache:warmup \
+		|| { echo "Échec : conteneur $(APPLICATION_NAME)_api2 introuvable ou console en erreur"; exit 1; }
 	@echo "Cache Symfony préchauffé pour API2"
 
 api2_migrations_diff: ## Génère une migration Doctrine pour API2 (détecte les changements)
