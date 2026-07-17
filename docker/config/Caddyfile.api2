@@ -36,6 +36,25 @@
 		cors_origins {$MERCURE_CORS_ORIGINS}
 		# En dev uniquement : autorise les abonnements anonymes.
 		anonymous {$MERCURE_ANONYMOUS:0}
+		# Transport persistant : sans lui, le défaut est `local` (buffer mémoire
+		# sans historique) et un abonné déconnecté perd définitivement les updates
+		# publiés pendant sa coupure — son Last-Event-ID n'a rien à rejouer.
+		# bolt écrit les updates sur disque. ⚠️ Le FICHIER survit à un restart, mais
+		# pas le point de reprise : après `make api2_restart`, plus aucun rattrapage
+		# (mesuré 2026-07-17) — la resync applicative à onopen reste obligatoire.
+		# /data doit être inscriptible par ${USER_ID} (le conteneur tourne non-root).
+		#
+		# ⚠️ Syntaxe : `transport <module> { … }`. L'ancienne forme `transport_url
+		# bolt://…?size=N` est REFUSÉE par le hub actuel — il loggue une erreur puis
+		# retombe SILENCIEUSEMENT sur le transport `local` : le publish répond 200,
+		# mais rien n'est persisté et aucune reprise n'est possible. Vérifier que
+		# /data/mercure.db existe après le premier publish (cf. §7.7ter de l'analyse).
+		#   size : nombre d'updates conservés ; au-delà, les plus vieux sautent, et
+		#          un abonné absent plus longtemps a un trou SILENCIEUX.
+		transport bolt {
+			path {$MERCURE_TRANSPORT_PATH:/data/mercure.db}
+			size {$MERCURE_HISTORY_SIZE:1000}
+		}
 	}
 
 	encode zstd br gzip

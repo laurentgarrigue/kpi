@@ -85,6 +85,15 @@ services:
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/
             # partagé avec Apache et event-cache-worker (cf. §7.7 de l'analyse).
             - ../sources:/var/www/html
+            # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
+            # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
+            # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
+            # mais PAS le point de reprise : après `make api2_restart`, plus aucun
+            # rattrapage (mesuré, cf. §7.7ter) → resync applicative obligatoire.
+            # ⚠️ Chemin propre à CETTE instance : préprod et prod tournant sur le
+            # même VPS, un chemin partagé ferait écrire deux hubs dans le même
+            # fichier bolt (verrou exclusif → l'un des deux ne démarre pas).
+            - ./mercure_data:/data
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         networks:

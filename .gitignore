@@ -130,6 +130,10 @@ docker/apachelogs_8/*
 docker/wordpress/*
 !docker/wordpress/.gitkeep
 
+# Historique du hub Mercure (bolt) — donnée d'exécution, propre à l'environnement.
+docker/mercure_data/*
+!docker/mercure_data/.gitkeep
+
 sources/wordpress_archive/*
 
 .gemini/.env

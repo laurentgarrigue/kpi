@@ -784,6 +784,11 @@
       "subscribe": "Subscribe",
       "topic": "Topic",
       "topic_hint": "The prefix is enforced by api2: this test page cannot publish to real topics.",
+      "resume": "Resume from an id",
+      "resume_hint": "Replays updates published after this id. Disconnect, publish from another browser, then reconnect: the catch-up should deliver what was missed, without touching the network.",
+      "resume_placeholder": "urn:uuid:… (empty = no catch-up)",
+      "use_last_id": "Last received",
+      "last_id": "Last received id:",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "publish": "Publish",
@@ -797,7 +802,8 @@
       "not_configured": "The Mercure hub is not configured: MERCURE_PUBLIC_URL is missing from the api2 environment.",
       "success_publish": "Update published (id: {id})",
       "error_publish": "Failed to publish to the hub",
-      "error_config": "Could not read the hub configuration"
+      "error_config": "Could not read the hub configuration",
+      "replayed": "Replayed"
     }
   },
   "competitions": {

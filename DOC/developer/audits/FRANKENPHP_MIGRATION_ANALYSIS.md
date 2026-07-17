@@ -1,6 +1,7 @@
 # Analyse : remplacer Apache-PHP par FrankenPHP ?
 
 **Date** : 2026-07-14
+**Mise à jour** : 2026-07-17 — ajout §7.7ter (persistance de l'historique Mercure + reprise après coupure)
 **Mise à jour** : 2026-07-16 — corrections §1/§7, ajout §7.8 (Mercure) et §7.9 (préprod)
 **Statut** : Validé — implémentation en cours (déclencheur : refonte scoring Mercure)
 **Périmètre** : conteneur `kpi` (PHP 8.4 + Apache), API2 (Symfony 7.4 LTS / API Platform 4.3), WordPress, legacy PHP
@@ -598,6 +599,7 @@ mercure {
     subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
     cors_origins {$MERCURE_CORS_ORIGINS}
     anonymous {$MERCURE_ANONYMOUS:0}
+    transport bolt://{$MERCURE_TRANSPORT_PATH:/data/mercure.db}?size={$MERCURE_HISTORY_SIZE:1000}&cleanup_frequency=0.3
 }
 ```
 
@@ -636,6 +638,119 @@ Trois points à connaître :
 > ⚠️ `EventSource` ne peut pas envoyer de header `Authorization`. En dev, l'abonnement navigateur
 > repose donc sur `MERCURE_ANONYMOUS=1`. En préprod/prod (`MERCURE_ANONYMOUS=0`), il faudra un JWT
 > subscriber passé en cookie ou en query string — **à traiter dans la refonte scoring**.
+
+---
+
+## 7.7ter Persistance de l'historique et reprise après coupure (2026-07-17)
+
+### Le défaut `local` ne permet aucune reprise
+
+Sans directive `transport`, le hub tourne sur le transport **`local`** : les updates sont diffusés
+aux abonnés connectés **à l'instant du publish**, et rien n'est conservé. Un abonné déconnecté à cet
+instant a **définitivement** perdu l'update. Le `Last-Event-ID` que le navigateur renvoie
+consciencieusement à la reconnexion n'a alors rien à rejouer, et **échoue en silence** : le client se
+croit à jour alors qu'il a un trou.
+
+D'où la directive `transport bolt { … }` ajoutée ci-dessus, qui écrit les updates sur disque.
+
+| Paramètre | Défaut retenu | Effet |
+|---|---|---|
+| `MERCURE_TRANSPORT_PATH` | `/data/mercure.db` | Fichier bolt, dans le volume monté (voir ci-dessous). |
+| `MERCURE_HISTORY_SIZE` | `1000` | Updates conservés. **Au-delà, les plus vieux sautent** : un abonné absent plus longtemps que `size` updates a un trou **silencieux**. |
+
+> ⚠️ **Syntaxe** : `transport <module> { … }`. L'ancienne forme `transport_url bolt://…?size=N` est
+> **refusée** par le hub actuel (`"Setting the transport_url directive is not available anymore"`) —
+> il loggue l'erreur puis **retombe silencieusement sur `local`** : le publish répond toujours 200,
+> mais rien n'est persisté. Constaté à l'implémentation (2026-07-17). Vérifier `/data/mercure.db`
+> plutôt que de se fier au code HTTP.
+
+### ⚠️ La persistance disque ne suffit pas à survivre à un redémarrage
+
+**Mesuré le 2026-07-17**, et contre-intuitif :
+
+| Scénario | Rattrapage via `lastEventID` |
+|---|---|
+| Publish, coupure de l'abonné, reconnexion — **même vie du conteneur** | ✅ Les updates manqués sont rejoués |
+| Idem, mais avec un **`docker restart`** entre les deux | ❌ **Rien n'est rejoué** |
+
+Le fichier bolt survit pourtant : il grossit, et `strings /data/mercure.db` montre les updates
+toujours présents après le restart. C'est donc le **point de reprise** que le hub ne retrouve plus,
+pas la donnée. Autrement dit, `bolt` protège des micro-coupures **côté client**, mais **pas** d'un
+redémarrage **côté serveur**.
+
+> **Conséquence directe pour le scoring** : un `make api2_restart` en prod (obligatoire après chaque
+> déploiement, cf. §7.9) **coupe le rattrapage pour tous les clients connectés**. La resynchronisation
+> applicative à `onopen` n'est donc pas une ceinture optionnelle — c'est le **seul** mécanisme qui
+> couvre le redéploiement. Voir « Conséquence pour la refonte scoring » ci-dessous.
+
+### Le volume `/data`, et pourquoi il diffère par environnement
+
+Les trois `compose.*.yaml` montent **`./mercure_data:/data`**. Le répertoire est versionné vide
+(`.gitkeep`) et son contenu ignoré, selon la convention déjà en place pour `apachelogs_8/` et
+`wordpress/`.
+
+> ⚠️ **Bolt prend un verrou exclusif sur son fichier.** Préprod et prod tournant sur le même VPS, un
+> chemin partagé empêcherait le second conteneur de démarrer. Le chemin étant relatif au répertoire
+> `docker/` de chaque clone, chaque instance a naturellement le sien — **ne pas remplacer par un
+> chemin absolu commun**.
+
+> ⚠️ Le conteneur tourne en `user: ${USER_ID}:${GROUP_ID}` (non-root) : `docker/mercure_data/` doit
+> lui être **inscriptible**. Git ne restitue pas les permissions — à vérifier après un `git pull` en
+> préprod/prod (`chown` si besoin), sinon le hub ne démarre pas.
+
+> ℹ️ Ce volume est la **seule** interaction possible entre les hubs préprod et prod. Ils ne peuvent
+> pas se parler autrement : `MERCURE_URL=http://localhost/…` publie *dans* le conteneur, les réseaux
+> `network_${APPLICATION_NAME}` sont distincts, et Traefik route sur des domaines différents. Le
+> `MERCURE_JWT_SECRET` doit néanmoins être **régénéré par environnement** — non pour éviter un
+> conflit, mais parce qu'un secret partagé rendrait un JWT publisher de préprod valide en prod.
+
+### Tester la reprise : le `lastEventID` pilotable
+
+La reprise est normalement **invisible** : le navigateur mémorise le dernier id et renvoie
+`Last-Event-ID` tout seul à la reconnexion, sans qu'on puisse ni choisir le point de reprise, ni
+observer ce qui est demandé.
+
+Le hub accepte le même mécanisme via un **query param `lastEventID`** sur l'URL d'abonnement. Le banc
+de test ([MercureTab.vue](../../../sources/app4/components/operations/MercureTab.vue)) l'expose :
+chaque message affiche son id Mercure, un champ « Reprendre depuis un id » permet de le rejouer, et
+les updates issus d'un rattrapage portent un badge **« Rejoué »**.
+
+Protocole, **sans toucher au réseau** :
+
+1. S'abonner à `test/ping`, publier depuis un autre navigateur, noter l'id reçu.
+2. **Se déconnecter** — c'est la « coupure », propre et instantanée.
+3. Publier 2-3 messages numérotés depuis l'autre navigateur.
+4. Cocher « Reprendre depuis un id » avec l'id de l'étape 1, **se reconnecter**.
+5. ✅ Les messages manqués arrivent d'un bloc, badgés « Rejoué ».
+
+Ce mode permet aussi ce que la coupure réseau ne permet pas : un id **très ancien** montre jusqu'où
+l'historique remonte réellement (donc où est la falaise de `size`), un id **inconnu** montre comment
+le hub réagit quand le point de reprise est introuvable.
+
+> ℹ️ Le rejeu démarre **strictement après** l'id fourni : l'update portant cet id n'est pas
+> renvoyé. Un id introuvable ne rejoue **rien** (plutôt que tout) — c'est aussi ce qu'on observe
+> après un redémarrage du conteneur (voir plus haut).
+
+> ⚠️ **Ce test valide le hub, pas le navigateur.** Il ne prouve pas que l'`EventSource` renvoie
+> correctement `Last-Event-ID` de lui-même, ni qu'il se reconnecte avec le bon backoff. Pour ça, il
+> faut une **vraie** coupure : couper le Wi-Fi, ou `docker stop`/`start` du conteneur api2. Le mode
+> « hors connexion » des DevTools **ne suffit pas** : il n'intercepte que les *nouvelles* requêtes et
+> laisse vivre le socket SSE déjà ouvert — le client continue de recevoir alors qu'il ne peut plus
+> publier. Corollaire pour le scoring : **recevoir ne prouve pas qu'on peut émettre**, les deux sens
+> doivent être surveillés séparément.
+
+### Conséquence pour la refonte scoring
+
+Le rattrapage Mercure est **insuffisant à lui seul**, pour deux raisons cumulatives :
+
+1. **L'historique est borné** — au-delà de `size` updates, le trou est silencieux.
+2. **Un redémarrage d'api2 annule le rattrapage** (mesuré, voir plus haut) — or c'est un geste de
+   déploiement **routinier**, pas un incident.
+
+Pour une feuille de marque, prévoir donc la ceinture **et** les bretelles : Mercure pour le temps
+réel, plus un `GET` de l'état complet du match **à chaque `onopen`**. La reconnexion redemande la
+vérité au serveur ; l'historique ne sert qu'à lisser les micro-coupures réseau. Un client ne doit
+**jamais** déduire d'un rattrapage réussi qu'il est à jour.
 
 ---
 
@@ -831,6 +946,14 @@ Avant bascule, vérifier :
    pas, le montage `../sources:/var/www/html` manque.
 9. **Contrôleurs TV / Games** — appeler les endpoints d'`AdminTvController` et `AdminGamesController`
    qui touchent le cache : ils doivent lire et écrire sans erreur.
+10. **Historique Mercure persisté** (cf. §7.7ter) — `docker exec kpi_api2 ls -l /data` doit montrer
+    `mercure.db` **non vide** après un premier publish. S'il est absent, le montage `./mercure_data`
+    manque ou n'est pas inscriptible par `${USER_ID}` : le hub tourne alors sans historique et
+    **aucune reprise après coupure n'est possible**.
+11. **Reprise après coupure** — via le banc de test (§7.7ter) : se déconnecter, publier, se
+    reconnecter avec « Reprendre depuis un id ». Les messages manqués doivent arriver badgés
+    « Rejoué ». ⚠️ Ne pas faire de `make api2_restart` entre les deux : le rattrapage ne survit
+    **pas** au redémarrage (comportement mesuré et attendu, cf. §7.7ter).
 10. **`event-cache-worker` intact** — `docker logs ${APPLICATION_NAME}_event_cache_worker` continue
     d'émettre ses passes, et `kp_event_worker_config.last_execution` avance. Le démon ne doit être
     affecté d'aucune manière.
