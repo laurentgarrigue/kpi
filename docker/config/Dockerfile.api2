@@ -6,7 +6,19 @@ ARG USER_ID=1000
 ARG GROUP_ID=1000
 
 # Extensions requises par API2 (Doctrine + API Platform + intl).
-# gd/zip/mysqli ne sont pas nécessaires ici : mPDF/OpenSpout restent côté legacy Apache.
+#
+# ⚠️ gd est volontairement ABSENTE, mais ce n'est PAS parce que mPDF/PhpSpreadsheet
+# seraient cantonnés au legacy : api2 les utilise réellement (AdminStatsController,
+# AdminRankingsController → /admin/stats/export/{pdf,xlsx}).
+# Vérifié le 2026-07-17 : sans gd, mPDF génère un PDF (image PNG incluse) et
+# PhpSpreadsheet un XLSX. mpdf/composer.json déclare pourtant ext-gd en `require`
+# strict — contrainte bloquante à l'install, mais pas au runtime : gd n'est appelée
+# que pour certains traitements d'image (alpha, redimensionnement, masques).
+# Conséquences :
+#   - `composer install` doit tourner dans le conteneur Apache (il a gd), cf. Makefile.
+#   - Risque résiduel si un PDF manipule des images non triviales : cf. §8quinquies de
+#     DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md
+# Ajouter gd ici lèverait les deux points, au prix d'un rebuild et d'une image plus grosse.
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libicu-dev \
         libzip-dev \

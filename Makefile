@@ -9,6 +9,16 @@ export GROUP_ID := $(GID)
 APPLICATION_NAME ?= kpi
 NETWORK_KPI_NAME = network_$(APPLICATION_NAME)
 PHP_CONTAINER_NAME = $(APPLICATION_NAME)_php
+# API2 tourne sous FrankenPHP dans son propre conteneur, et non dans le conteneur Apache.
+# La console Symfony d'api2 doit passer par CE conteneur : lui seul porte le bon APP_ENV.
+# Passer par le conteneur Apache relit sources/api2/.env et peut écrire un cache "dev" dans
+# le var/cache/ partagé, ce qui casse le worker au recyclage suivant.
+# Seule exception : composer (voir api2_composer_install — besoin d'ext-gd, absente ici).
+# cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md §8ter.b
+API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
+# Démon CLI régénérant les caches JSON du live. Sans rapport avec le worker FrankenPHP
+# d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
+WORKER_CONTAINER_NAME = $(APPLICATION_NAME)_event_cache_worker
 NODE_CONTAINER_NAME = $(APPLICATION_NAME)_node_app2
 NODE3_CONTAINER_NAME = $(APPLICATION_NAME)_node_app3
 NODE4_CONTAINER_NAME = kpi_node_app4
@@ -18,6 +28,9 @@ DOCKER_COMPOSE = docker compose
 DOCKER_EXEC = docker exec -ti
 DOCKER_EXEC_PHP = docker exec -ti $(PHP_CONTAINER_NAME)
 DOCKER_EXEC_PHP_NON_INTERACTIVE = docker exec $(PHP_CONTAINER_NAME)
+# WORKDIR du conteneur api2 = /app : pas de `cd` nécessaire avant bin/console.
+DOCKER_EXEC_API2 = docker exec -ti $(API2_CONTAINER_NAME)
+DOCKER_EXEC_API2_NON_INTERACTIVE = docker exec $(API2_CONTAINER_NAME)
 DOCKER_EXEC_NODE = docker exec -ti $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE_NON_INTERACTIVE = docker exec $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
@@ -45,7 +58,7 @@ api2_restart api2_logs api2_logs_errors mercure_generate_secret \
 dev dev_status dev_logs dev_down dev_certs app2_logs app3_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
-backend_worker_start backend_worker_start_prod backend_worker_stop backend_worker_status backend_worker_logs backend_worker_restart \
+backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean
 
@@ -787,13 +800,19 @@ backend_npm_clean: ## Supprime node_modules du backend (attention: supprime tout
 
 
 ## API2 - SYMFONY (Symfony 7.4 LTS + API Platform 4.3) - servi par FrankenPHP (worker + Mercure)
+# ⚠️ EXCEPTION : composer reste dans le conteneur Apache, contrairement aux cibles console.
+# composer.json d'api2 dépend de mpdf et phpoffice/phpspreadsheet, qui exigent ext-gd.
+# L'image FrankenPHP n'embarque que pdo/pdo_mysql/intl/zip (cf. Dockerfile.api2) : composer
+# y refuse l'install ("requires ext-gd"). Le conteneur Apache a gd et monte le même
+# sources/api2, le vendor/ produit est donc identique.
+# Ne PAS "corriger" en passant sur DOCKER_EXEC_API2 sans avoir ajouté gd à Dockerfile.api2.
 api2_composer_install: ## Installe les dépendances Composer pour API2 (Symfony)
-	@echo "Installation des dépendances Composer pour API2 (container: $(PHP_CONTAINER_NAME))..."
+	@echo "Installation des dépendances Composer pour API2 (container: $(PHP_CONTAINER_NAME) - a ext-gd)..."
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer install --no-interaction --prefer-dist --optimize-autoloader"
 	@echo "Dépendances Composer installées pour API2"
 
 api2_composer_update: ## Met à jour les dépendances Composer pour API2
-	@echo "Mise à jour des dépendances Composer pour API2 (container: $(PHP_CONTAINER_NAME))..."
+	@echo "Mise à jour des dépendances Composer pour API2 (container: $(PHP_CONTAINER_NAME) - a ext-gd)..."
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer update --no-interaction"
 	@echo "Dépendances Composer mises à jour pour API2"
 
@@ -802,7 +821,7 @@ api2_composer_require: ## Ajoute un package Composer à API2 (usage: make api2_c
 		echo "Erreur: spécifiez un package (make api2_composer_require package=vendor/package)"; \
 		exit 1; \
 	fi
-	@echo "Ajout du package $(package) à API2 (container: $(PHP_CONTAINER_NAME))..."
+	@echo "Ajout du package $(package) à API2 (container: $(PHP_CONTAINER_NAME) - a ext-gd)..."
 	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && composer require $(package) --no-interaction"
 	@echo "Package $(package) ajouté à API2"
 
@@ -890,18 +909,18 @@ api2_cache_warmup: ## Préchauffe le cache Symfony de API2 (sans recycler le wor
 	@echo "Cache Symfony préchauffé pour API2"
 
 api2_migrations_diff: ## Génère une migration Doctrine pour API2 (détecte les changements)
-	@echo "Génération d'une migration Doctrine pour API2 (container: $(PHP_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console doctrine:migrations:diff"
+	@echo "Génération d'une migration Doctrine pour API2 (container: $(API2_CONTAINER_NAME))..."
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:diff
 	@echo "Migration générée pour API2"
 
 api2_migrations_migrate: ## Exécute les migrations Doctrine pour API2
-	@echo "Exécution des migrations Doctrine pour API2 (container: $(PHP_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console doctrine:migrations:migrate --no-interaction"
+	@echo "Exécution des migrations Doctrine pour API2 (container: $(API2_CONTAINER_NAME))..."
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction
 	@echo "Migrations exécutées pour API2"
 
 api2_assets_install: ## Installe les assets pour API2
-	@echo "Installation des assets pour API2 (container: $(PHP_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && php bin/console assets:install public"
+	@echo "Installation des assets pour API2 (container: $(API2_CONTAINER_NAME))..."
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console assets:install public
 	@echo "Assets installés pour API2"
 
 api2_jwt_generate_keys: ## Génère les clés RSA pour JWT (API2) - reproductible sur chaque environnement
@@ -911,7 +930,7 @@ api2_jwt_generate_keys: ## Génère les clés RSA pour JWT (API2) - reproductibl
 		echo "   Exécutez d'abord: make init_env_api2"; \
 		exit 1; \
 	fi
-	$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "cd /var/www/html/api2 && \
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) sh -c "\
 		if ! grep -q '^JWT_PASSPHRASE=' .env; then \
 			echo 'Erreur: JWT_PASSPHRASE non défini dans sources/api2/.env'; \
 			echo '   Exemple: JWT_PASSPHRASE=votre_passphrase_secrete'; \
@@ -936,55 +955,25 @@ db_bash: ## Ouvre un shell dans le container MySQL
 
 
 ## BACKEND - EVENT WORKER
-backend_worker_start: ## Démarre le worker d'événements en arrière-plan (dans le container PHP existant)
-	@echo "Démarrage du worker d'événements..."
-	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "mkdir -p /var/www/html/live/logs && chmod 755 /var/www/html/live/logs"
-	@if $(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "pgrep -f '[a]pp:event-cache-worker' > /dev/null"; then \
-		echo "Worker déjà en cours d'exécution (rien à faire)"; \
-	else \
-		echo "Lancement du processus worker (commande Symfony app:event-cache-worker)..."; \
-		docker exec -d $(PHP_CONTAINER_NAME) bash -c "php /var/www/html/api2/bin/console app:event-cache-worker >> /var/www/html/live/logs/event_worker.log 2>&1"; \
-		sleep 2; \
-		echo "Worker démarré en arrière-plan"; \
-	fi
-	@echo "Vérifiez le statut avec: make backend_worker_status"
-	@echo "Consultez les logs avec: make backend_worker_logs"
-
-backend_worker_start_prod: ## Lance immédiatement le worker en PROD dans le container PHP existant (sans rebuild/impacter la compose)
-	@echo "Démarrage immédiat du worker d'événements en PRODUCTION..."
-	@echo "Container ciblé: $(PHP_CONTAINER_NAME) (défini par APPLICATION_NAME dans docker/.env)"
-	@$(MAKE) backend_worker_start
-	@echo ""
-	@echo "ℹ️  Ce worker tourne dans le container PHP courant. Il s'arrêtera si le container redémarre."
-	@echo "ℹ️  Pour un worker persistant au redémarrage, ajoutez le service 'event-cache-worker' à la compose"
-	@echo "    (présent dans compose.prod.yaml) puis: make docker_prod_up"
-
-backend_worker_stop: ## Arrête le worker d'événements
-	@echo "Arrêt du worker d'événements..."
-	-@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c "pkill -f '[a]pp:event-cache-worker'" 2>/dev/null || true
-	@echo "Worker arrêté"
-	@echo "Note: Vous pouvez aussi arrêter via l'interface web (Event Cache Manager dans app4)"
-
+# Le worker d'événements tourne dans son propre conteneur ($(WORKER_CONTAINER_NAME)), défini
+# dans les trois compose avec `restart: unless-stopped` : il démarre et redémarre tout seul
+# avec `make docker_*_up`. Il n'y a donc rien à lancer ni à arrêter à la main.
+# Les anciennes cibles backend_worker_start/stop/restart lançaient un second worker dans le
+# conteneur Apache, concurrent de celui-ci sur le même cache : supprimées (2026-07-17).
 backend_worker_status: ## Affiche le statut du worker d'événements
-	@echo "Statut du worker d'événements:"
-	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c 'if pgrep -f "[a]pp:event-cache-worker" > /dev/null; then \
-		echo "  Worker en cours d'"'"'exécution"; \
-		echo "  PID: $$(pgrep -f "[a]pp:event-cache-worker")"; \
-	else \
-		echo "  Worker arrêté"; \
-	fi'
+	@echo "Statut du worker d'événements (container: $(WORKER_CONTAINER_NAME)):"
+	@docker ps --filter name=$(WORKER_CONTAINER_NAME) --format "  {{.Names}} : {{.Status}}" \
+		| grep . || echo "  Worker arrêté (démarrer avec: make docker_dev_up)"
 	@echo "Pour plus de détails, accédez à l'interface web: Event Cache Manager (app4)"
 
-backend_worker_logs: ## Affiche les logs du worker d'événements
-	@echo "Logs du worker d'événements (Ctrl+C pour quitter):"
-	@echo "---"
-	@$(DOCKER_EXEC_PHP_NON_INTERACTIVE) bash -c 'tail -f /var/www/html/live/logs/event_worker.log 2>/dev/null || echo "Aucun log disponible. Le worker n'"'"'a peut-être pas encore été démarré."'
+backend_worker_logs: ## Affiche les logs du worker d'événements. Options: lines=200
+	docker logs -f --tail $(or $(lines),100) $(WORKER_CONTAINER_NAME)
 
-backend_worker_restart: ## Redémarre le worker d'événements
-	@echo "Redémarrage du worker d'événements..."
-	@$(MAKE) backend_worker_stop
-	@sleep 2
-	@$(MAKE) backend_worker_start
+backend_worker_restart: ## Redémarre le conteneur du worker d'événements
+	@echo "Redémarrage du worker d'événements ($(WORKER_CONTAINER_NAME))..."
+	@docker restart $(WORKER_CONTAINER_NAME) >/dev/null 2>&1 \
+		&& echo "Worker redémarré" \
+		|| echo "Conteneur $(WORKER_CONTAINER_NAME) introuvable (lancer: make docker_dev_up)"
 
 
 ## DOCKER - RÉSEAUX

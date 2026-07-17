@@ -1160,6 +1160,74 @@ bootstrap complet aux premières requêtes en production.
 
 ---
 
+## 8quinquies. `ext-gd` absente de l'image api2 : risque résiduel assumé
+
+**Découvert le 2026-07-17** en tentant de faire passer les cibles composer par le conteneur api2 :
+`composer install` y échoue sur `mpdf/mpdf requires ext-gd`.
+
+### Ce qui est établi
+
+`Dockerfile.api2` n'installe que `pdo pdo_mysql intl zip`. Son commentaire affirmait que
+« mPDF/OpenSpout restent côté legacy Apache » — **c'est faux, et ce commentaire a été corrigé** :
+
+| Lib | Usage réel dans api2 |
+|---|---|
+| `mpdf/mpdf` | `AdminRankingsController:1260`, `AdminStatsController:334` |
+| `phpoffice/phpspreadsheet` | `AdminStatsController:190` |
+
+Routes concernées, servies par FrankenPHP : `/api2/admin/stats/export/pdf`,
+`/api2/admin/stats/export/xlsx`.
+
+### Pourquoi ça fonctionne quand même
+
+Testé dans `kpi_api2`, **sans gd** :
+
+- mPDF génère un PDF de 22 Ko, **image PNG incluse** ✅
+- PhpSpreadsheet génère un XLSX de 6 Ko ✅
+
+`mpdf/composer.json` déclare pourtant `ext-gd` dans `require` (pas dans `suggest`). La contrainte
+est donc **bloquante à l'`install`, mais pas au runtime** : mPDF n'appelle gd que pour certains
+traitements d'image (transparence alpha, redimensionnement, masques), que le chemin nominal
+n'emprunte pas. Déclaration prudente de l'auteur, pas nécessité stricte.
+
+### Le risque résiduel
+
+> ⚠️ **Non levé** : les tests ci-dessus ont été menés en CLI dans le conteneur (même PHP, mêmes
+> extensions), avec un PNG simple. Les endpoints étant authentifiés, **le code de génération n'a
+> pas été exercé de bout en bout avec les vraies données de production**. Si un logo de club utilise
+> de la transparence alpha ou un format que mPDF doit convertir, gd pourrait être sollicitée et
+> l'appel échouerait — sur ce chemin précis uniquement.
+
+Symptôme à guetter : une erreur mentionnant `gd`, `imagecreate*` ou `Image not found` dans
+`make api2_logs_errors`, lors d'un export PDF **et seulement celui-là** (le reste d'api2 est
+indifférent à gd).
+
+**Décision : risque assumé, pas de rebuild.** Motifs : les exports fonctionnent en préprod, gd
+n'apporterait rien au reste d'api2, et l'ajouter coûte un rebuild des trois environnements pour une
+image plus grosse.
+
+### Comment lever le doute (5 min, recommandé)
+
+Appeler `/admin/stats/export/pdf` **authentifié**, sur une compétition qui a des logos de club :
+si le PDF sort, le sujet est clos définitivement.
+
+### Si le risque se matérialise
+
+Ajouter gd à [Dockerfile.api2](../../../docker/config/Dockerfile.api2) :
+
+```dockerfile
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        libpng-dev libjpeg-dev libfreetype-dev \
+        ... \
+    && docker-php-ext-configure gd --with-jpeg --with-freetype \
+    && docker-php-ext-install pdo pdo_mysql intl zip gd
+```
+
+puis `make docker_*_rebuild`. Bénéfice annexe : les cibles composer pourraient repasser sur le
+conteneur api2 (cf. l'exception documentée dans le Makefile).
+
+---
+
 ## 9. Décision
 
 | Option | Verdict |

@@ -31,26 +31,24 @@ mkdir -p sources/live/logs
 chmod 755 sources/live/logs
 ```
 
-### 3️⃣ Démarrer le daemon worker
+### 3️⃣ Le daemon worker : rien à lancer
 
 Le daemon génère les fichiers JSON tant qu'une config est `running` dans
-`kp_event_worker_config`. Il faut donc qu'il tourne en permanence.
-
-**En développement / lancement immédiat** (dans le container PHP existant) :
-
-```bash
-make backend_worker_start     # lance le daemon en arrière-plan
-```
-
-**En production, sans rebuild ni redémarrage des containers** :
+`kp_event_worker_config`. Il tourne en permanence dans son **propre conteneur**
+(`${APPLICATION_NAME}_event_cache_worker`), défini dans les trois compose avec
+`restart: unless-stopped` : il démarre donc avec les autres conteneurs et
+redémarre tout seul.
 
 ```bash
-make backend_worker_start_prod   # lance le daemon dans le container PHP courant
+make docker_dev_up            # (ou docker_preprod_up / docker_prod_up)
+make backend_worker_status    # vérifier qu'il tourne
 ```
 
-> ⚠️ Lancé ainsi, le daemon s'arrête si le container PHP redémarre. Pour un
-> worker **persistant** (redémarrage automatique), voir la section
-> « Service Docker persistant » ci-dessous.
+> **Il n'y a plus de lancement manuel.** Les anciennes cibles
+> `backend_worker_start` / `_start_prod` / `_stop` lançaient un second daemon
+> dans le conteneur Apache, concurrent du conteneur dédié sur le même cache.
+> Elles ont été supprimées (2026-07-17). Voir « Service Docker persistant »
+> ci-dessous.
 
 ### 4️⃣ Utiliser l'interface web (Event Cache Manager)
 
@@ -119,11 +117,8 @@ make backend_worker_status
 # Voir les logs en temps réel
 make backend_worker_logs
 
-# Redémarrer le worker
+# Redémarrer le worker (redémarre son conteneur)
 make backend_worker_restart
-
-# Arrêter le worker
-make backend_worker_stop
 ```
 
 ---
@@ -141,7 +136,7 @@ Avant d'utiliser le worker en production :
 - [ ] Table `kp_event_worker_config` créée
 - [ ] Dossier `sources/live/logs/` existant avec permissions 755
 - [ ] Conteneurs Docker en cours d'exécution
-- [ ] **Daemon worker lancé** (`make backend_worker_start_prod` ou service `event-cache-worker` de la compose)
+- [ ] **Daemon worker actif** (`make backend_worker_status` → conteneur `Up`)
 - [ ] Accès à l'Event Cache Manager (app4) fonctionnel
 - [ ] Test de démarrage/arrêt du worker
 - [ ] Vérification des fichiers JSON générés dans `sources/live/cache/`

@@ -68,21 +68,19 @@ chmod 755 sources/live/logs
 
 ### Via les commandes Make
 
-```bash
-# Démarrer le worker
-make backend_worker_start
+Le worker tourne dans son propre conteneur (`${APPLICATION_NAME}_event_cache_worker`,
+`restart: unless-stopped`) : il démarre avec `make docker_*_up` et il n'y a ni
+démarrage ni arrêt manuel.
 
+```bash
 # Vérifier le statut
 make backend_worker_status
 
-# Consulter les logs en temps réel
+# Consulter les logs en temps réel (options : lines=200)
 make backend_worker_logs
 
-# Redémarrer le worker
+# Redémarrer le worker (redémarre son conteneur)
 make backend_worker_restart
-
-# Arrêter le worker
-make backend_worker_stop
 ```
 
 ---
