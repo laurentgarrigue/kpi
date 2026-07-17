@@ -2,7 +2,10 @@
 /**
  * Auto-prepend file for PHP
  * Automatically included before every PHP script execution
- * Handles CORS headers for all endpoints (API, custom files, api2)
+ * Handles CORS headers for Apache-served endpoints (API, custom files, WordPress).
+ *
+ * /api2 is NOT covered: it runs in a separate FrankenPHP container where this
+ * Apache-level directive does not apply. CORS there is NelmioCorsBundle's job.
  */
 
 // Only set CORS headers for requests with Origin header (AJAX/fetch requests)

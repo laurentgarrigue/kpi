@@ -326,8 +326,14 @@ class AdminEventWorkerController extends AbstractController
             $initialTime    = strtotime($config['date_event'] . ' ' . $config['hour_event_initial']);
             $startedAt      = strtotime($config['created_at']);
             $elapsedSeconds = max(0, time() - $startedAt);
-            $config['currentSimulatedTime'] = date('H:i:s', $initialTime + $elapsedSeconds);
+            $simulatedTs    = $initialTime + $elapsedSeconds;
+            // Date and hour are both derived from the simulated timestamp so the
+            // monitor rolls over to the following match days, in lock-step with the
+            // daemon (which now uses the simulated date for its cache generation).
+            $config['currentSimulatedDate'] = date('Y-m-d', $simulatedTs);
+            $config['currentSimulatedTime'] = date('H:i:s', $simulatedTs);
         } else {
+            $config['currentSimulatedDate'] = $config['date_event'];
             $config['currentSimulatedTime'] = $config['hour_event'];
         }
 
@@ -354,6 +360,7 @@ class AdminEventWorkerController extends AbstractController
             'executionCount'           => (int) $config['execution_count'],
             'errorMessage'             => $config['error_message'],
             'secondsSinceLastExecution'=> $secondsSince !== null ? (int) $secondsSince : null,
+            'currentSimulatedDate'     => $config['currentSimulatedDate'],
             'currentSimulatedTime'     => $config['currentSimulatedTime'],
             'isRunning'                => $config['isRunning'],
             'isPaused'                 => $config['isPaused'],

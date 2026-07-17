@@ -17,6 +17,9 @@ if (!authStore.hasProfile(2)) {
 // Current active tab
 const activeTab = ref<OperationsTab>('seasons')
 
+// Banc de test Mercure : profil 1 uniquement (l'endpoint api2 est ROLE_SUPER_ADMIN).
+const canTestMercure = computed(() => authStore.hasProfile(1))
+
 // Tab definitions
 const tabs = computed(() => [
   { id: 'images' as OperationsTab, label: t('operations.tabs.images'), icon: 'i-heroicons-photo' },
@@ -25,7 +28,10 @@ const tabs = computed(() => [
   { id: 'codes' as OperationsTab, label: t('operations.tabs.codes'), icon: 'i-heroicons-trophy' },
   { id: 'import-export' as OperationsTab, label: t('operations.tabs.import_export'), icon: 'i-heroicons-arrow-down-tray' },
   { id: 'seasons' as OperationsTab, label: t('operations.tabs.seasons'), icon: 'i-heroicons-calendar-days' },
-  { id: 'system' as OperationsTab, label: t('operations.tabs.system'), icon: 'i-heroicons-cog-6-tooth' }
+  { id: 'system' as OperationsTab, label: t('operations.tabs.system'), icon: 'i-heroicons-cog-6-tooth' },
+  ...(canTestMercure.value
+    ? [{ id: 'mercure' as OperationsTab, label: t('operations.tabs.mercure'), icon: 'i-heroicons-signal' }]
+    : [])
 ])
 
 // Handle tab change
@@ -100,6 +106,7 @@ const changeTab = (tabId: OperationsTab) => {
       <OperationsImportExportTab v-if="activeTab === 'import-export'" />
       <OperationsSeasonsTab v-if="activeTab === 'seasons'" />
       <OperationsSystemTab v-if="activeTab === 'system'" />
+      <OperationsMercureTab v-if="activeTab === 'mercure' && canTestMercure" />
     </div>
   </div>
 </template>

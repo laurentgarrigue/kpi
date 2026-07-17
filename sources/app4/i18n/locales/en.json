@@ -549,7 +549,8 @@
       "codes": "Competitions",
       "import_export": "Import/Export",
       "seasons": "Seasons",
-      "system": "System"
+      "system": "System",
+      "mercure": "Mercure"
     },
     "images": {
       "title": "Image Management",
@@ -768,6 +769,35 @@
       "execute": "Execute",
       "warning": "Warning",
       "irreversibles": "These actions are irreversibles."
+    },
+    "mercure": {
+      "title": "Mercure test bench",
+      "description": "Validates FrankenPHP's built-in Mercure hub: publishing goes through api2 (authenticated), subscribing happens directly from the browser over SSE.",
+      "hub_url": "Hub URL",
+      "status": "Connection",
+      "state": {
+        "disconnected": "Disconnected",
+        "connecting": "Connecting…",
+        "connected": "Connected",
+        "error": "Error — reconnecting automatically"
+      },
+      "subscribe": "Subscribe",
+      "topic": "Topic",
+      "topic_hint": "The prefix is enforced by api2: this test page cannot publish to real topics.",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "publish": "Publish",
+      "message": "Message",
+      "private": "Private update",
+      "private_hint": "A private update is only delivered to authenticated subscribers: this page's anonymous subscription will not receive it.",
+      "publish_button": "Publish to hub",
+      "received": "Received messages ({count})",
+      "no_messages": "No messages received. Subscribe, then publish.",
+      "clear": "Clear",
+      "not_configured": "The Mercure hub is not configured: MERCURE_PUBLIC_URL is missing from the api2 environment.",
+      "success_publish": "Update published (id: {id})",
+      "error_publish": "Failed to publish to the hub",
+      "error_config": "Could not read the hub configuration"
     }
   },
   "competitions": {
@@ -2433,7 +2463,7 @@
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
     "field": "Field",
-    "history": "Event history",
+    "history": "Game action history",
     "not_found": "Match not found",
     "select_player_first": "Select a player first",
     "no_access": "Restricted access (experimentation phase)",
@@ -2443,14 +2473,14 @@
       "post": "Post-match"
     },
     "edit": {
-      "title": "Edit event",
+      "title": "Edit game action",
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
-      "edit_hint": "Click an event to edit it"
+      "edit_hint": "Click a game action to edit it"
     },
     "time": {
-      "label": "Event time",
+      "label": "Game action time",
       "period": "Period"
     },
     "adjust": {

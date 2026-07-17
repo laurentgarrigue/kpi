@@ -177,11 +177,13 @@ TODO :
 
 
 **Infra**:
-- Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
+- ✅ Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
 - Vérifier s'il y a d'autres choses à upgrader.
 - Verrouillage compets : vérouiller plus tôt dans la nuit.
 - ❓ api legacy encore utilisée ?
 - ❓ Reproduire les pdf en stateless ?
+- ✅ Mercure
+- ✅ FrankenPHP
 
 
 **App4**:
@@ -190,7 +192,7 @@ TODO :
 - Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
 - Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
-- ⚠️ Dark mode,
+- ✅ Dark mode,
 - ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
 - ✅ Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
 Les nouveautés à mettre en valeur : choix éventuel du mandat après authentification, puis choix du contexte de travail sur la page d'accueil (saison, périmètre par sélection, section, groupe ou événement) modifiable par la suite, raccourcis (menu, boutons sur la page d'accueil, liens au sein des tableaux), 
@@ -210,6 +212,23 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
+- bug filtre date au changement de page ou au changement de compétition. Résolu ❓
+
+**Nours**:
+- "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
+- Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.
+- Dans le parcours Ajouter un joueur → Équipe, le champ Club reste en mode clair alors que le reste de l’interface est en mode sombre.
+- Anomalies sur les calculs – Compétition multi (R20) : Des incohérences ont été observées :
+Exemple : Le Havre affiche seulement 4 points pour une seule compétition alors que le calcul annonce 16 points 
+Contexte :
+1 journée au format championnat
+1 journée au format coupe
+À noter également :
+La table des points avait disparu et a dû être reparamétrée
+- Ce matin, lors du premier match du Havre (le 520), le verrou était grisé dans la page des matchs lorsque j’ai essayé de le verrouiller.
+ce n’était pas le verrou qui s’activait, mais le statut du match qui changeait.
+Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus.
+(le verrou et le statut du match sont trop proches l’un de l’autre, ce qui peut prêter à confusion ?)
 
 
 
@@ -217,6 +236,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Afficher case sélection active
 - Permettre la modification de la feuille de présence depuis scrutineering ? (numero, capitaine, suppression joueur)
 - ❓ Basculer le scrutineering sur app4 ?
+- Filtre date ok, filtre Demain ko.
 
 
 **TV Panel**:
@@ -226,6 +246,11 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Revoir incrustation live game, les événements restent affichés.
 - Incrustation Teams only (clubs) : adapter le design à la css
 - ❓ Revoir le système des incrustations ?
+- tv.kayak-polo.info?600 à créer
+- Incrustation teams_club.php : Saint-domineuc - Acigné 18 I (+ logo) passe sur deux lignes
+- Programme général du week-end pour le grand public
+- horaires et terrains des matchs éliminatoires pour le grand public ?
+- app_wsm : s'assurer de conserver l'événement au rechargement de page.
 
 
 **Scoring**:
@@ -242,3 +267,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Vérifier la durée des prolongations dans les règlements.
 - ❓ Objectif zéro papier : prévoir un nouveau statut "signé" pour le scoring ?
 - Title de la page : Scoring match <numero> - <nom équipe A> | <nom équipe B>. (ex : Scoring match 1 - Team A | Team B). match -> game en anglais.
+
+
+- changement de statut depuis Games : mettre en période 1 si pas de période déjà définie.
+- 

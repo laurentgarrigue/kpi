@@ -9,6 +9,30 @@ export type OperationsTab =
   | 'import-export'
   | 'seasons'
   | 'system'
+  | 'mercure'
+
+// Configuration du hub Mercure exposée par /admin/mercure/config
+export interface MercureConfig {
+  publicUrl: string
+  topicPrefix: string
+  configured: boolean
+}
+
+// Résultat d'une publication de test
+export interface MercurePublishResult {
+  success: boolean
+  id: string
+  topic: string
+  private: boolean
+}
+
+// Message reçu via SSE, tel qu'affiché dans le journal de la page de test
+export interface MercureReceivedMessage {
+  id: string
+  topic: string
+  receivedAt: string
+  raw: string
+}
 
 // Season type
 export interface OperationsSeason {

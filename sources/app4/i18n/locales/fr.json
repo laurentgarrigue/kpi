@@ -550,7 +550,8 @@
       "codes": "Compétitions",
       "import_export": "Import/Export",
       "seasons": "Saisons",
-      "system": "Système"
+      "system": "Système",
+      "mercure": "Mercure"
     },
     "images": {
       "title": "Gestion des images",
@@ -769,6 +770,35 @@
       "execute": "Exécuter",
       "warning": "Attention",
       "irreversibles": "Ces actions sont irréversibles."
+    },
+    "mercure": {
+      "title": "Banc de test Mercure",
+      "description": "Valide le hub Mercure natif de FrankenPHP : la publication passe par api2 (authentifiée), l'abonnement se fait en direct depuis le navigateur en SSE.",
+      "hub_url": "URL du hub",
+      "status": "Connexion",
+      "state": {
+        "disconnected": "Déconnecté",
+        "connecting": "Connexion…",
+        "connected": "Connecté",
+        "error": "Erreur — reconnexion automatique"
+      },
+      "subscribe": "S'abonner",
+      "topic": "Topic",
+      "topic_hint": "Le préfixe est imposé par api2 : la page de test ne peut pas publier sur les topics réels.",
+      "connect": "Se connecter",
+      "disconnect": "Se déconnecter",
+      "publish": "Publier",
+      "message": "Message",
+      "private": "Update privé",
+      "private_hint": "Un update privé n'est délivré qu'aux abonnés authentifiés : l'abonnement anonyme de cette page ne le recevra pas.",
+      "publish_button": "Publier sur le hub",
+      "received": "Messages reçus ({count})",
+      "no_messages": "Aucun message reçu. Abonnez-vous, puis publiez.",
+      "clear": "Vider",
+      "not_configured": "Le hub Mercure n'est pas configuré : MERCURE_PUBLIC_URL est absent de l'environnement d'api2.",
+      "success_publish": "Update publié (id : {id})",
+      "error_publish": "Échec de la publication sur le hub",
+      "error_config": "Impossible de lire la configuration du hub"
     }
   },
   "competitions": {
@@ -2445,7 +2475,7 @@
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
     "field": "Terrain",
-    "history": "Historique des événements",
+    "history": "Historique des faits de jeu",
     "not_found": "Match introuvable",
     "select_player_first": "Sélectionnez d'abord un joueur",
     "no_access": "Accès réservé (phase d'expérimentation)",
@@ -2455,14 +2485,14 @@
       "post": "Post-match"
     },
     "edit": {
-      "title": "Modifier l'événement",
+      "title": "Modifier le fait de jeu",
       "save": "Enregistrer",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "edit_hint": "Cliquez sur un événement pour le modifier"
+      "edit_hint": "Cliquez sur un fait de jeu pour le modifier"
     },
     "time": {
-      "label": "Temps de l'événement",
+      "label": "Temps du fait de jeu",
       "period": "Période"
     },
     "adjust": {

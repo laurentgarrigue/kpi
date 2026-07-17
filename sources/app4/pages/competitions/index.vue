@@ -282,13 +282,12 @@ const isPastSeason = computed(() => {
 })
 
 // Per-competition helpers for END state
-const canEditCompetition = (c: AdminCompetition) => canEdit.value && c.statut !== 'END'
 const canToggleLockCompetition = (c: AdminCompetition) => canToggleLock.value && c.statut !== 'END'
 // In a past season (older than the active one), only profiles <= 2 may change a
 // competition status — both to end it and to reopen one. Profiles > 2 are fully
 // read-only on past seasons (PROMPTS.md). In the active/future season, the usual
 // lock-toggle right applies.
-const canCycleStatus = (c: AdminCompetition) =>
+const canCycleStatus = (_c: AdminCompetition) =>
   isPastSeason.value
     ? authStore.profile <= 2
     : canToggleLock.value

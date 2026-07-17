@@ -1,12 +1,30 @@
 # CORS Configuration - Global PHP Auto-Prepend
 
 **Date**: 2025-12-21
+**Mise à jour**: 2026-07-16 — **le périmètre exclut désormais `/api2`** (migration FrankenPHP)
 **Status**: ✅ Implemented
-**Scope**: All PHP endpoints (API, custom files, api2)
+**Scope**: Legacy PHP endpoints served by **Apache** (`/api/`, custom files, WordPress) — **not `/api2`**
+
+> ## ⚠️ `/api2` n'est plus concerné par ce document
+>
+> Depuis la migration FrankenPHP (2026-07-16), `/api2` est servi par un **conteneur Caddy dédié**,
+> pas par Apache. Le mécanisme `auto_prepend_file` décrit ici est une directive PHP posée dans
+> l'image **Apache** : elle **ne s'exécute pas** dans le conteneur api2.
+>
+> **CORS pour `/api2` = NelmioCorsBundle**, configuré côté Symfony
+> ([config/packages/nelmio_cors.yaml](../../../sources/api2/config/packages/nelmio_cors.yaml),
+> variable `CORS_ALLOW_ORIGIN` dans `sources/api2/.env`).
+>
+> Historiquement, l'`Alias /api2` d'Apache imposait de **désactiver** l'auto-prepend pour ce chemin
+> (`php_admin_value auto_prepend_file none` dans `apache-api2.conf`) afin d'éviter des headers
+> `Access-Control-Allow-Origin` en double. **Ce contournement n'a plus lieu d'être** : l'isolation
+> par conteneur règle le problème par construction.
+>
+> Voir [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md).
 
 ## Overview
 
-This document describes the global CORS (Cross-Origin Resource Sharing) configuration implemented via PHP auto-prepend mechanism to ensure consistent CORS headers across all PHP endpoints.
+This document describes the global CORS (Cross-Origin Resource Sharing) configuration implemented via PHP auto-prepend mechanism to ensure consistent CORS headers across **the legacy Apache-served PHP endpoints**.
 
 ## Problem Statement
 
@@ -69,7 +87,8 @@ PHP's `auto_prepend_file` directive automatically includes a file before every P
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Actual PHP Script Execution                     │
-│       (api/index.php, custom files, api2/*, etc.)           │
+│       (api/index.php, custom files, WordPress, etc.)        │
+│       ⚠️ api2 est EXCLU : servi par FrankenPHP, pas Apache   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -84,7 +103,8 @@ PHP's `auto_prepend_file` directive automatically includes a file before every P
 /**
  * Auto-prepend file for PHP
  * Automatically included before every PHP script execution
- * Handles CORS headers for all endpoints (API, custom files, api2)
+ * Handles CORS headers for Apache-served endpoints (API, custom files, WordPress).
+ * ⚠️ /api2 is NOT covered: it runs under FrankenPHP and uses NelmioCorsBundle.
  */
 
 // Only set CORS headers for requests with Origin header (AJAX/fetch requests)
@@ -282,9 +302,9 @@ This immediately returns 200 OK for OPTIONS requests after setting CORS headers,
 
 ### 4. Compatibility
 - Works with legacy API (`/api/`)
-- Works with new API (`/api2/`)
 - Works with custom PHP files
 - Works with WordPress endpoints
+- ⚠️ **Does not apply to `/api2/`** (FrankenPHP container → NelmioCorsBundle)
 
 ## Migration from Legacy Setup
 
@@ -488,5 +508,5 @@ This allows cookies/sessions. Only enable for trusted origins.
 ## Related Documentation
 
 - [Nginx Static App Deployment](NGINX_STATIC_APP_DEPLOYMENT.md)
-- [Docker Infrastructure](DOCKER_INFRASTRUCTURE.md)
+- [Architecture web actuelle (FrankenPHP / Apache)](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
 - [API Reference](../reference/KPI_FUNCTIONALITY_INVENTORY.md)

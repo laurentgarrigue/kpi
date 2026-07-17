@@ -27,6 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **[Infrastructure](DOC/developer/infrastructure/)** - Docker, WordPress, configuration
 
 **Key documents:**
+- **[FrankenPHP Migration Analysis](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
+- **[Dev environment](DOC/developer/guides/infrastructure/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
 - **[Makefile Multi-Environment Support](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
 - **[PHP 8.4 Migration Complete](DOC/developer/archive/completed-migrations/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
 
@@ -145,7 +147,7 @@ make backend_npm_add package=flatpickr
 - `make backend_composer_require_dev package=<vendor/package>` - Add Composer dev package
 - `make backend_composer_dump` - Regenerate Composer autoloader
 
-### API2 - Symfony (Symfony 7.3 + API Platform 4.2)
+### API2 - Symfony (Symfony 7.4 LTS + API Platform 4.3, FrankenPHP)
 - `make api2_composer_install` - Install Composer dependencies for API2
 - `make api2_composer_update` - Update Composer dependencies for API2
 - `make api2_composer_require package=<vendor/package>` - Add package to API2
@@ -153,11 +155,21 @@ make backend_npm_add package=flatpickr
 - `make api2_cache_warmup` - Warmup Symfony cache for API2
 - `make api2_migrations_diff` - Generate Doctrine migration (detect changes)
 - `make api2_migrations_migrate` - Execute Doctrine migrations
+- `make api2_assets_install` - Install API2 public assets
+- `make api2_jwt_generate_keys` - Generate the Lexik JWT key pair
+- `make api2_restart` - **Restart the FrankenPHP container** (required in prod after deploying code)
+- `make api2_logs` / `make api2_logs_errors` - **API2 logs** (accept `lines=200`)
+- `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
 
-**Location**: `sources/api2/` - Modern REST API with Symfony 7.3 and API Platform 4.2
-**Documentation**: See [sources/api2/README.md](sources/api2/README.md) and [sources/api2/API_ENDPOINTS.md](sources/api2/API_ENDPOINTS.md)
+**Location**: `sources/api2/` - Modern REST API with Symfony 7.4 LTS and API Platform 4.3
+**Server**: FrankenPHP (Caddy) worker mode, container `${APPLICATION_NAME}_api2` - **not Apache**
+**Documentation**: See [sources/api2/README.md](sources/api2/README.md)
 **Base URL**: `https://kpi.localhost/api2/`
-**API Documentation**: `https://kpi.localhost/api2/api` (API Platform interface)
+**API Documentation**: `https://kpi.localhost/api2/doc` (API Platform interface)
+**Mercure hub**: `https://kpi.localhost/api2/.well-known/mercure` (SSE)
+
+> **Logs**: `docker/apachelogs_8/` contains **nothing** about api2 - it's the Apache/legacy log.
+> Use `make api2_logs`. See the API2 architecture section below.
 
 ### Shell Access
 - `make backend_bash` - Open bash in PHP 8.4 container
@@ -187,7 +199,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - `docker/.env` - Main Docker environment configuration (not versioned, use docker/.env.dist as template)
   - **Important**: `APPLICATION_NAME` determines container names (e.g., `kpi`, `kpi_preprod`, `kpi_prod`)
   - Makefile automatically detects container names from this variable
-  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](WORKFLOW_AI/MAKEFILE_MULTI_ENVIRONMENT.md))
+  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md))
 - `sources/app2/.env.development` - Nuxt dev environment (API_BASE_URL, BACKEND_BASE_URL)
 - `sources/app2/.env.production` - Nuxt production environment
 - `sources/api2/.env` - Symfony/API Platform configuration (not versioned, use sources/api2/.env.dist as template)
@@ -205,7 +217,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
   - `commun/` - Shared PHP utilities and database classes
   - `api/` - Legacy PHP REST API endpoints
-  - `api2/` - **NEW**: Modern REST API (Symfony 7.3 + API Platform 4.2)
+  - `api2/` - Modern REST API (Symfony 7.4 LTS + API Platform 4.3, served by FrankenPHP)
   - `wordpress/` - WordPress integration
 - `docker/` - Docker configuration and compose files
 - `SQL/` - Database scripts
@@ -241,16 +253,18 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Offline-first with IndexedDB storage
   - Progressive Web App (PWA)
 
-### API2 (Modern REST API - Symfony 7.3 + API Platform 4.2)
-- **Framework**: Symfony 7.3 with API Platform 4.2
+### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)
+- **Framework**: Symfony 7.4 LTS with API Platform 4.3
+- **Server**: **FrankenPHP (Caddy) in worker mode** - dedicated `${APPLICATION_NAME}_api2` container, **not Apache**
 - **Purpose**: Modern REST API replacing legacy PHP API with same functionality
 - **Location**: `sources/api2/`
 - **Base URL**: `https://kpi.localhost/api2/`
-- **API Documentation**: `https://kpi.localhost/api2/api` (OpenAPI/Swagger UI)
+- **API Documentation**: `https://kpi.localhost/api2/doc` (OpenAPI/Swagger UI)
 - **Features**:
   - REST API with automatic OpenAPI documentation
   - Doctrine ORM for database abstraction
-  - CORS support for cross-origin requests
+  - CORS via **NelmioCorsBundle** (not the legacy PHP auto-prepend - see below)
+  - Built-in **Mercure hub** for SSE (no separate `dunglas/mercure` container)
   - Same database as legacy API (MariaDB 11.5)
   - All endpoints from legacy API (`/api/`) replicated
 - **Endpoints**:
@@ -258,8 +272,51 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Staff: teams, players, scrutineering management
   - Report: game details with events and players
   - WSM: live score management, game events, timer, statistics
-- **Documentation**: See [sources/api2/README.md](sources/api2/README.md) and [sources/api2/API_ENDPOINTS.md](sources/api2/API_ENDPOINTS.md)
-- **Status**: ✅ Fully implemented - ready for testing and migration from legacy API
+- **Documentation**: See [sources/api2/README.md](sources/api2/README.md)
+- **Status**: ✅ Implemented - FrankenPHP validated in dev; **preprod/prod validation pending**
+
+**⚠️ Symfony version is pinned to 7.4 (LTS). Symfony 8 is not wanted.** The `composer.lock` had
+silently drifted to 8.x while `composer.json` declared `7.4.*`; this was corrected. Preprod and prod
+need a `composer install` to pick up the corrected lock. Never `composer update` api2 in a way that
+pulls Symfony 8.
+
+#### API2 runs on FrankenPHP, the rest runs on Apache
+
+This is the single most important thing to know about the current architecture:
+
+| | Server | Worker mode |
+|---|---|---|
+| `sources/api2/` (`/api2/*`) | **FrankenPHP / Caddy** (`kpi_api2`) | ✅ Yes - kernel stays in memory |
+| Legacy PHP, `sources/api/`, WordPress | **Apache + mod_php** (`kpi_php`) | ❌ No (and must never be) |
+
+Traefik routes `PathPrefix('/api2')` to the FrankenPHP container with **higher priority** than the
+legacy router, and **strips the `/api2` prefix** before forwarding. Consequences that bite:
+
+- **`.htaccess` does not apply to api2.** Caddy does not read it. It still governs the legacy tree.
+- **`auto_prepend_file` does not apply to api2** - CORS there is NelmioCorsBundle's job.
+- **`DEFAULT_URI` must include `/api2`** (because of the stripprefix), or API Platform generates
+  IRIs pointing at the wrong path.
+- **api2 logs are not in `docker/apachelogs_8/`.** Use `make api2_logs` / `make api2_logs_errors`.
+  That directory is Apache/legacy only.
+- **In prod, code changes need `make api2_restart`** - the worker holds the kernel in memory.
+
+Full rationale, pitfalls and validation plan:
+[DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+
+#### Mercure (SSE)
+
+FrankenPHP embeds the Mercure hub, exposed at **`https://kpi.localhost/api2/.well-known/mercure`**.
+`symfony/mercure-bundle` is installed, so api2 can publish via `HubInterface`.
+
+- `MERCURE_URL` - internal publish URL (`http://localhost/...`), bypasses Traefik
+- `MERCURE_PUBLIC_URL` - browser subscribe URL, includes the `/api2` prefix
+- `MERCURE_JWT_SECRET` - **must match** `MERCURE_JWT_SECRET` in `docker/.env`, or publishes 403
+
+A profile-1-only test bench lives in app4 under **Operations → Mercure**.
+
+**⚠️ Do not re-run the `symfony/mercure-bundle` Flex recipe**: it adds a standalone `dunglas/mercure`
+service to `sources/api2/compose.yaml` (unused by this project), which is exactly what the built-in
+hub replaces. Those recipe edits were reverted deliberately.
 
 ### PHP Backend
 - **PHP Version**: PHP 8.4 in all environments (dev, preprod, prod)
@@ -282,17 +339,39 @@ The project uses Docker Compose with multiple environments:
 - **Pre-production**: `docker/compose.preprod.yaml` - staging environment for testing
 - **Production**: `docker/compose.prod.yaml` - optimized for production deployment
 
-Services include PHP 8.4, MySQL databases, phpMyAdmin, and Node.js containers for frontend applications.
+Main services (dev):
+
+| Service | Container | Role |
+|---|---|---|
+| `kpi` | `${APPLICATION_NAME}_php` | **Apache + PHP 8.4** - legacy PHP, `sources/api/`, WordPress |
+| `api2` | `${APPLICATION_NAME}_api2` | **FrankenPHP (Caddy) worker + Mercure hub** - Symfony 7.4 / API Platform 4.3 |
+| `event-cache-worker` | `${APPLICATION_NAME}_event_cache_worker` | CLI daemon regenerating live cache JSON |
+| `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
+| `node_app2` … `node_app4` | | Nuxt dev servers |
+| `nginx_app2` / `nginx_app4` | | Static serving of generated Nuxt output |
+
+**Two web servers coexist**: Apache serves everything legacy, FrankenPHP serves `/api2` only.
+Traefik terminates TLS and routes between them. See the API2 section above for what that implies.
+
+> **`event-cache-worker` and the FrankenPHP worker are unrelated** despite the shared name: the
+> former is a CLI daemon (`bin/console app:event-cache-worker`) that never handles HTTP; the latter
+> is an HTTP serving mode. They share only the database and `sources/live/cache/`.
+>
+> That shared cache is why the api2 container mounts **`../sources:/var/www/html`** in addition to
+> `../sources/api2:/app`: `live_document_root` points there, and `AdminTvController` /
+> `AdminGamesController` read and write it. Removing that mount breaks them.
 
 ## Important Notes
 
 - **PHP 8.4**: All environments now run PHP 8.4 - migration from PHP 7.4 is complete
 - **Libraries Modernization**: Successfully migrated to modern PHP 8+ compatible libraries (mPDF, OpenSpout, Smarty v4)
 - **JavaScript Migration**: jQuery elimination and library modernization is ongoing (Flatpickr, Axios→fetch, etc.)
-- **API2 (NEW)**: Modern REST API built with Symfony 7.3 + API Platform 4.2 in `sources/api2/`
+- **API2**: Modern REST API built with Symfony **7.4 LTS** + API Platform **4.3** in `sources/api2/`
+  - Runs on **FrankenPHP (worker mode)**, in its own container - **not Apache**
+  - Symfony pinned to **7.4 LTS**; Symfony 8 is not wanted
+  - Embeds the **Mercure hub** (`/api2/.well-known/mercure`)
   - Replicates all functionalities from legacy API (`sources/api/`)
-  - Provides automatic OpenAPI documentation
-  - Ready for testing and gradual migration
+  - Logs via `make api2_logs`, **not** `docker/apachelogs_8/`
   - See [sources/api2/README.md](sources/api2/README.md) for details
 - App2 is the primary modern frontend application being actively developed
 - App3 provides live match sheet management with real-time features

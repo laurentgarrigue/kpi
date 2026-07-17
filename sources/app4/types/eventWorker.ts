@@ -27,6 +27,7 @@ export interface WorkerConfig {
   executionCount: number
   errorMessage: string | null
   secondsSinceLastExecution: number | null
+  currentSimulatedDate: string
   currentSimulatedTime: string
   isRunning: boolean
   isPaused: boolean

@@ -53,9 +53,12 @@ COPY php-uploads.ini /usr/local/etc/php/conf.d/
 COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
 RUN chmod 644 /etc/apache2/sites-enabled/000-default.conf
 
-# Copy Apache API2 configuration
+# API2 est servi par le conteneur FrankenPHP (${APPLICATION_NAME}_api2), routé par Traefik.
+# cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md
+# Le fichier est conservé (non activé) pour permettre un rollback immédiat :
+# réactiver `a2enconf apache-api2` + retirer le service api2 du compose.
 COPY apache-api2.conf /etc/apache2/conf-available/
-RUN chmod 644 /etc/apache2/conf-available/apache-api2.conf && a2enconf apache-api2
+RUN chmod 644 /etc/apache2/conf-available/apache-api2.conf
 
 # Copy Apache mod_remoteip configuration
 COPY apache-remoteip.conf /etc/apache2/conf-available/

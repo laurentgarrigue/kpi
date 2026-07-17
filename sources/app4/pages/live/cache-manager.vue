@@ -47,27 +47,41 @@ const hasRunning = computed(() => configs.value.some(c => c.isRunning))
 // Simulated event clock = initial event time + real seconds elapsed since createdAt.
 // Mirrors AdminEventWorkerController::enrichConfig so the monitor stays in sync with
 // the JSON the worker daemon generates, and keeps ticking between backend refreshes.
-function simulatedMinutes(cfg: WorkerConfig): number {
+// Returns the simulated moment as a full Date so the date rolls over across the event's
+// match days (a multi-day event only advanced the hour before).
+function simulatedDate(cfg: WorkerConfig): Date {
   const started = new Date(cfg.createdAt.replace(' ', 'T')).getTime()
-  const [h = 0, m = 0] = cfg.hourEventInitial.split(':').map(Number)
-  const initialMinutes = h * 60 + m
-  const elapsedMin = Math.max(0, Math.floor((nowTick.value - started) / 60000))
-  return initialMinutes + elapsedMin
+  const initial = new Date(`${cfg.dateEvent}T${cfg.hourEventInitial}`).getTime()
+  const elapsedMs = Math.max(0, nowTick.value - started)
+  return new Date(initial + elapsedMs)
 }
 
-function minutesToHhmm(total: number): string {
-  const h = Math.floor(total / 60) % 24
-  const m = total % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function dateToYmd(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function dateToHhmm(d: Date): string {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Add the warm-up offset (minutes) to a simulated Date and format as HH:mm.
+function offsetHhmm(d: Date, offsetMin: number): string {
+  const shifted = new Date(d.getTime() + offsetMin * 60000)
+  return dateToHhmm(shifted)
 }
 
 const monitorClock = computed(() => {
   if (!monitorConfig.value) return null
   const live = configs.value.find(c => c.idEvent === monitorConfig.value!.idEvent) ?? monitorConfig.value
-  const current = simulatedMinutes(live)
+  const current = simulatedDate(live)
   return {
-    currentTime: minutesToHhmm(current),
-    workingTime: minutesToHhmm(current + live.offsetEvent),
+    currentDate: dateToYmd(current),
+    currentTime: dateToHhmm(current),
+    workingTime: offsetHhmm(current, live.offsetEvent),
   }
 })
 
@@ -160,13 +174,14 @@ async function refreshMonitor() {
   // simulated clock keeps advancing; monitorConfig is only a snapshot from modal open.
   const live = configs.value.find(c => c.idEvent === monitorConfig.value!.idEvent) ?? monitorConfig.value
   try {
+    // Client-computed simulated moment so the match selection matches the clock shown
+    // in the footer and keeps advancing (date + hour) even if the backend snapshot lags.
+    const sim = simulatedDate(live)
     monitorData.value = await api.get<WorkerMonitor>(
       `/admin/events/worker/${live.idEvent}/monitor`,
       {
-        dateEvent: live.dateEvent,
-        // Client-computed simulated time so the match selection matches the clock shown
-        // in the footer and keeps advancing even if currentSimulatedTime stagnates.
-        hourEvent: minutesToHhmm(simulatedMinutes(live)),
+        dateEvent: dateToYmd(sim),
+        hourEvent: dateToHhmm(sim),
         offsetEvent: live.offsetEvent,
         pitchEvent: live.pitchEvent,
       }
@@ -260,7 +275,7 @@ onBeforeUnmount(() => {
             <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
               <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.date') }} : </span><span class="text-header-900 dark:text-header-50">{{ c.dateEvent }}</span></div>
               <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.initial_time') }} : </span><span class="text-header-900 dark:text-header-50">{{ c.hourEventInitial.slice(0, 5) }}</span></div>
-              <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.current_time') }} : </span><span class="font-medium text-primary-600 dark:text-primary-300">{{ c.currentSimulatedTime.slice(0, 5) }}</span></div>
+              <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.current_time') }} : </span><span class="font-medium text-primary-600 dark:text-primary-300"><template v-if="c.currentSimulatedDate && c.currentSimulatedDate !== c.dateEvent">{{ c.currentSimulatedDate }} </template>{{ c.currentSimulatedTime.slice(0, 5) }}</span></div>
               <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.pitches') }} : </span><span class="text-header-900 dark:text-header-50">{{ c.pitchEvent }}</span></div>
               <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.warmup') }} : </span><span class="text-header-900 dark:text-header-50">{{ c.offsetEvent }} min</span></div>
               <div><span class="text-header-600 dark:text-header-300">{{ t('eventCacheManager.active_workers.delay') }} : </span><span class="text-header-900 dark:text-header-50">{{ c.delayEvent }}s</span></div>
@@ -433,7 +448,7 @@ onBeforeUnmount(() => {
               </table>
               <div class="mt-3 flex items-center justify-between text-xs text-header-600 dark:text-header-300 pt-2 border-t border-header-100 dark:border-header-800">
                 <span v-if="monitorClock">
-                  {{ t('eventCacheManager.monitor.time_current') }} {{ monitorClock.currentTime }} ·
+                  {{ t('eventCacheManager.monitor.time_current') }} <template v-if="monitorConfig && monitorClock.currentDate !== monitorConfig.dateEvent">{{ monitorClock.currentDate }} </template>{{ monitorClock.currentTime }} ·
                   {{ t('eventCacheManager.monitor.time_working') }} {{ monitorClock.workingTime }}
                 </span>
                 <span v-if="monitorLastUpdate">{{ t('eventCacheManager.monitor.last_update', { time: monitorLastUpdate }) }}</span>

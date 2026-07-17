@@ -356,20 +356,34 @@ header.sticky {
 }
 
 /* ===== Browser Autofill Override ===== */
-/* Prevent browser autofill from overriding input background colors */
+/* Chromium repaints autofilled inputs with its own background and text color.
+   The only way to override the background is an opaque inset box-shadow -- but
+   Nuxt UI draws input borders with a ring (also a box-shadow), so painting the
+   background naively erases the border on filled fields. Both are restated here
+   in one declaration: ring first, opaque fill behind it. Firefox ignores
+   :-webkit-autofill entirely and keeps its normal styling either way.
+
+   --autofill-bg / --autofill-fg let a field with a custom background opt into
+   matching autofill colors instead of the default white/dark surface. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px white inset !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
+  -webkit-box-shadow:
+    0 0 0 1px var(--autofill-ring, var(--ui-border, rgb(209 213 219))) inset,
+    0 0 0 1000px var(--autofill-bg, white) inset !important;
+  -webkit-text-fill-color: var(--autofill-fg, rgb(17 24 39)) !important;
+  caret-color: var(--autofill-fg, rgb(17 24 39));
   transition: background-color 5000s ease-in-out 0s;
 }
 
 .dark input:-webkit-autofill,
 .dark input:-webkit-autofill:hover,
 .dark input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px var(--color-header-900) inset !important;
-  -webkit-text-fill-color: var(--color-header-100) !important;
+  -webkit-box-shadow:
+    0 0 0 1px var(--autofill-ring, var(--ui-border, var(--color-header-700))) inset,
+    0 0 0 1000px var(--autofill-bg, var(--color-header-900)) inset !important;
+  -webkit-text-fill-color: var(--autofill-fg, var(--color-header-100)) !important;
+  caret-color: var(--autofill-fg, var(--color-header-100));
 }
 
 /* ===== Nuxt UI Component Improvements ===== */

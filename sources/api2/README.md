@@ -1,14 +1,62 @@
-# API2 - Symfony 7.3 + API Platform 4.2
+# API2 - Symfony 7.4 LTS + API Platform 4.3 (FrankenPHP)
 
-This is a modern REST API built with Symfony 7.3 and API Platform 4.2, providing the same functionalities as the legacy PHP API in `/sources/api`.
+This is a modern REST API built with Symfony 7.4 LTS and API Platform 4.3, providing the same functionalities as the legacy PHP API in `/sources/api`.
+
+Since 2026-07-16 it runs on **FrankenPHP in worker mode**, in its own container (`${APPLICATION_NAME}_api2`) — **separate from the Apache container that serves the legacy code and WordPress**.
 
 ## Features
 
-- **Symfony 7.3** - Modern PHP framework
-- **API Platform 4.2** - REST API with OpenAPI documentation
+- **Symfony 7.4 LTS** - pinned; Symfony 8 is deliberately not used
+- **API Platform 4.3** - REST API with OpenAPI documentation
+- **FrankenPHP worker mode** - Symfony kernel stays in memory between requests (~1.8 ms vs 20–60 ms bootstrap)
+- **Built-in Mercure hub** - SSE without a separate `dunglas/mercure` container
 - **Doctrine ORM** - Database abstraction layer
-- **CORS Support** - Cross-Origin Resource Sharing enabled
+- **CORS Support** - via NelmioCorsBundle
 - **Same Database** - Uses the existing KPI database (MariaDB 11.5)
+
+## Runtime architecture
+
+Traefik terminates TLS and routes `PathPrefix('/api2')` here (priority over the legacy router),
+**stripping the `/api2` prefix** before forwarding. Symfony therefore receives requests at the root.
+
+What this changes compared to the old Apache setup:
+
+| Topic | Under FrankenPHP |
+|---|---|
+| `.htaccess` | **Ignored** — Caddy does not read it (`public/.htaccess` is now dead weight) |
+| CORS | NelmioCorsBundle only — the legacy PHP `auto_prepend_file` does **not** run here |
+| `DEFAULT_URI` | **Must** include `/api2` (stripprefix), else API Platform emits wrong IRIs |
+| Logs | `make api2_logs` / `make api2_logs_errors` — **nothing** lands in `docker/apachelogs_8/` |
+| Code changes | Dev: hot-reloaded via Caddy's `watch`. **Prod: `make api2_restart` is required** |
+| Mount | Needs `../sources:/var/www/html` too, for the shared live cache (`live_document_root`) |
+
+Rationale, pitfalls and validation plan:
+[FRANKENPHP_MIGRATION_ANALYSIS.md](../../DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+
+### Mercure
+
+The hub is served by FrankenPHP itself at `https://kpi.localhost/api2/.well-known/mercure`.
+`symfony/mercure-bundle` is installed, so publishing is done with `HubInterface`:
+
+```php
+$hub->publish(new Update('test/ping', json_encode(['message' => 'hello'])));
+```
+
+| Variable | Dev value | Purpose |
+|---|---|---|
+| `MERCURE_URL` | `http://localhost/.well-known/mercure` | Publish from Symfony, **inside** the container (bypasses Traefik + its self-signed cert) |
+| `MERCURE_PUBLIC_URL` | `https://kpi.localhost/api2/.well-known/mercure` | Subscribe from the browser, **through** Traefik |
+| `MERCURE_JWT_SECRET` | = `MERCURE_JWT_SECRET` in `docker/.env` | **Must match the hub's secret**, otherwise publishes get 403 |
+
+A test bench (profile 1 only) is available in app4 under **Operations → Mercure**.
+
+> ⚠️ `EventSource` cannot send an `Authorization` header. In dev, browser subscriptions rely on
+> `MERCURE_ANONYMOUS=1`. In preprod/prod (`MERCURE_ANONYMOUS=0`) a subscriber JWT will be needed —
+> to be handled by the live scoring refactor.
+
+> ⚠️ Do **not** re-run the `symfony/mercure-bundle` Flex recipe: it injects a standalone
+> `dunglas/mercure` service into `compose.yaml`/`compose.override.yaml` (files unused by this
+> project) — precisely what the built-in hub makes unnecessary. Those edits were reverted on purpose.
 
 ## Installation
 
@@ -241,7 +289,7 @@ The API is served through Apache in the Docker container. The document root is `
 ### Accessing the API
 
 - Development: `https://kpi.localhost/api2/`
-- API Platform UI: `https://kpi.localhost/api2/api` (API Platform interface)
+- API Platform UI: `https://kpi.localhost/api2/doc` (API Platform interface)
 - **Swagger UI**: `https://kpi.localhost/api2/doc` (Complete OpenAPI documentation - requires NelmioApiDocBundle)
 
 **Note**: For complete Swagger/OpenAPI documentation with all endpoints, see [SWAGGER_SETUP.md](SWAGGER_SETUP.md) for installation instructions.

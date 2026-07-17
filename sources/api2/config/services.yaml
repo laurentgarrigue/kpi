@@ -40,6 +40,10 @@ services:
             $ffckPceUser: '%env(FFCK_PCE_USER)%'
             $ffckPcePwd: '%env(FFCK_PCE_PWD)%'
 
+    App\Controller\AdminMercureController:
+        arguments:
+            $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
+
     App\Controller\AdminPresenceController:
         arguments:
             $surclassementCompetitions: '%env(csv:SURCLASSEMENT_COMPETITIONS)%'
