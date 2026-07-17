@@ -54,6 +54,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # l'image prend le relais et le worker ne démarre jamais (max_requests=0 dans les logs).
 COPY Caddyfile.api2 /etc/frankenphp/Caddyfile
 
+# Dossier sentinelle pour NEUTRALISER le watcher hors dev (cf. FRANKENPHP_WATCH
+# dans compose.preprod/prod.yaml). Il doit être vide et EXISTER :
+#   - `FRANKENPHP_WATCH=` (vide) ne désactive pas le watcher : Caddy reçoit une
+#     valeur vide et FrankenPHP applique son propre défaut `./**/*.{env,php,…}`,
+#     qui balaie tout /app — var/cache/ compris.
+#   - un chemin INEXISTANT fait boucler le watcher ("watcher was closed
+#     prematurely, retrying...").
+# Un dossier vide et existant : le watcher démarre proprement et n'a rien à voir.
+RUN mkdir -p /watch-disabled
+
 # FrankenPHP tourne en non-root (user: ${USER_ID} côté compose) mais Caddy doit
 # pouvoir binder le port 80, qui est privilégié. Sans ce setcap, le conteneur
 # démarre puis meurt sur "permission denied" au bind.

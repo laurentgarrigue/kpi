@@ -89,6 +89,14 @@ services:
             # AdminTvController). Seul montage legacy nécessaire : api2 n'utilise
             # ni MyParams.php, ni MyConfig.php, ni DOC/.
             - ../sources:/var/www/html
+            # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
+            # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
+            # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
+            # mais PAS le point de reprise : après `make api2_restart`, plus aucun
+            # rattrapage (mesuré, cf. §7.7ter) → resync applicative obligatoire.
+            # Bind mount plutôt que volume nommé : le projet n'utilise que des
+            # bind mounts, et ça garde le .db inspectable.
+            - ./mercure_data:/data
             - ./config/opcache-api2-dev.ini:/usr/local/etc/php/conf.d/opcache-api2-dev.ini
         networks:
             - network_kpi

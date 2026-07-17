@@ -785,6 +785,11 @@
       "subscribe": "S'abonner",
       "topic": "Topic",
       "topic_hint": "Le préfixe est imposé par api2 : la page de test ne peut pas publier sur les topics réels.",
+      "resume": "Reprendre depuis un id",
+      "resume_hint": "Rejoue les updates publiés après cet id. Déconnectez-vous, publiez depuis un autre navigateur, puis reconnectez-vous : le rattrapage doit livrer ce qui a été manqué, sans toucher au réseau.",
+      "resume_placeholder": "urn:uuid:… (laisser vide = pas de rattrapage)",
+      "use_last_id": "Dernier reçu",
+      "last_id": "Dernier id reçu :",
       "connect": "Se connecter",
       "disconnect": "Se déconnecter",
       "publish": "Publier",
@@ -798,7 +803,8 @@
       "not_configured": "Le hub Mercure n'est pas configuré : MERCURE_PUBLIC_URL est absent de l'environnement d'api2.",
       "success_publish": "Update publié (id : {id})",
       "error_publish": "Échec de la publication sur le hub",
-      "error_config": "Impossible de lire la configuration du hub"
+      "error_config": "Impossible de lire la configuration du hub",
+      "replayed": "Rejoué"
     }
   },
   "competitions": {

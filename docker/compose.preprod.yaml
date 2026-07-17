@@ -74,7 +74,14 @@ services:
             - FRANKENPHP_NUM_WORKERS=4
             - FRANKENPHP_MAX_REQUESTS=500
             # Pas de rechargement à chaud hors dev : code figé.
-            - FRANKENPHP_WATCH=
+            # ⚠️ NE PAS mettre une valeur vide : elle n'éteint PAS le watcher, elle
+            # le rend PLUS large (FrankenPHP applique alors son défaut interne
+            # `./**/*.{env,php,twig,yaml,yml}`, qui surveille tout /app, var/cache/
+            # compris → redémarrages du worker à chaque cache:clear).
+            # /watch-disabled est un dossier vide créé dans l'image (Dockerfile.api2) :
+            # le watcher démarre proprement et n'a rien à surveiller. Un chemin
+            # inexistant, lui, ferait boucler le watcher. Mesuré le 2026-07-17.
+            - FRANKENPHP_WATCH=/watch-disabled
             # Hub Mercure (préprod : abonnements authentifiés uniquement)
             - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}
@@ -85,6 +92,15 @@ services:
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/
             # partagé avec Apache et event-cache-worker (cf. §7.7 de l'analyse).
             - ../sources:/var/www/html
+            # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
+            # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
+            # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
+            # mais PAS le point de reprise : après `make api2_restart`, plus aucun
+            # rattrapage (mesuré, cf. §7.7ter) → resync applicative obligatoire.
+            # ⚠️ Chemin propre à CETTE instance : préprod et prod tournant sur le
+            # même VPS, un chemin partagé ferait écrire deux hubs dans le même
+            # fichier bolt (verrou exclusif → l'un des deux ne démarre pas).
+            - ./mercure_data:/data
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         networks:

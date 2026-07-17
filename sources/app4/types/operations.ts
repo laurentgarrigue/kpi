@@ -32,6 +32,12 @@ export interface MercureReceivedMessage {
   topic: string
   receivedAt: string
   raw: string
+  // Id Mercure réel de l'update, s'il en a un. Distinct de `id`, qui n'est
+  // qu'une clé de rendu (générée quand le hub n'envoie pas d'id). C'est cette
+  // valeur qu'on rejoue via lastEventID pour tester la reprise après coupure.
+  eventId: string | null
+  // Update reçu lors d'un rattrapage d'historique plutôt qu'en direct.
+  replayed: boolean
 }
 
 // Season type
