@@ -21,7 +21,11 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: "20"
+  # Node 22 = version utilisée par tous les builds (Makefile : node:22-alpine) et
+  # par les conteneurs de dev. Ne pas repasser en 20 : @nuxt/eslint 1.16 tire
+  # eslint-flat-config-utils 3.x, qui utilise Object.groupBy (Node 21+) et casse
+  # `npx eslint .` avec "TypeError: Object.groupBy is not a function".
+  NODE_VERSION: "22"
   PHP_VERSION: "8.4"
 
 jobs:
