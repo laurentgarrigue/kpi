@@ -1090,5 +1090,5 @@ pr_web: ## Push la branche courante et ouvre le formulaire de PR pré-rempli dan
 pr_status: ## Affiche l'état de tes PR sur ce repo
 	gh pr status
 
-pr_checks: ## Affiche l'état de la CI (Phase 1) sur la PR de la branche courante
-	gh pr checks
+pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
+	gh pr checks --watch

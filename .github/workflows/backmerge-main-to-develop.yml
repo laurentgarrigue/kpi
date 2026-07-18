@@ -1,0 +1,73 @@
+name: Back-merge main → develop
+
+# Répercute automatiquement main vers develop après chaque push sur main
+# (typiquement : merge d'une PR Dependabot *security update*, qui cible toujours
+# `main` en ignorant `target-branch`, ou une release).
+#
+# Stratégie : ouvre/actualise UNE PR `main → develop` plutôt qu'un merge direct.
+# => develop reste sous contrôle, et un éventuel conflit se voit dans la PR au
+#    lieu d'échouer en silence.
+
+on:
+  push:
+    branches: [main]
+  # Permet de le déclencher à la main depuis l'onglet Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: backmerge-main-develop
+  cancel-in-progress: false
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rien à répercuter ?
+        id: check
+        run: |
+          git fetch origin main develop
+          if git merge-base --is-ancestor origin/main origin/develop; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+            echo "develop contient déjà main, rien à faire."
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ouvrir / mettre à jour la PR de back-merge
+        if: steps.check.outputs.up_to_date == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Branche intermédiaire dédiée au back-merge (une seule, réutilisée).
+          BRANCH="chore/backmerge-main-to-develop"
+
+          git checkout -B "$BRANCH" origin/main
+          git push --force-with-lease origin "$BRANCH"
+
+          # PR existante sur cette branche ?
+          existing=$(gh pr list --head "$BRANCH" --base develop --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "PR de back-merge déjà ouverte (#$existing), actualisée par le push."
+          else
+            {
+              echo "PR automatique : répercute les changements de main (ex. security update"
+              echo "Dependabot, qui cible toujours main) vers develop."
+              echo ""
+              echo "Générée par .github/workflows/backmerge-main-to-develop.yml."
+              echo "Merge-la pour réaligner develop sur main. En cas de conflit, résous-le"
+              echo "sur la branche $BRANCH."
+            } > /tmp/backmerge-body.md
+            gh pr create \
+              --base develop \
+              --head "$BRANCH" \
+              --title "chore: back-merge main → develop" \
+              --body-file /tmp/backmerge-body.md
+          fi

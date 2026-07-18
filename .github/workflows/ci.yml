@@ -183,8 +183,12 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           recursive: true
-          # Advisory pour démarrer : les Dockerfiles legacy ont de la dette.
-          # On durcira (failure-threshold: warning) une fois nettoyés.
+          # Ne FAIT échouer que sur les findings de niveau `error` : les Dockerfiles
+          # legacy ont de la dette (warnings DL3018/DL3008/DL3059… non pinnage de
+          # versions, RUN consécutifs) qu'on ne veut pas bloquer en Phase 1.
+          # NB : l'action logue TOUS les findings en `::error::` (y compris les
+          # warnings), mais seul un vrai niveau `error` fait échouer le job.
+          # À durcir en `warning` une fois la dette Dockerfile nettoyée (Phase 2/3).
           failure-threshold: error
 
       - name: docker compose config (dev/preprod/prod)
