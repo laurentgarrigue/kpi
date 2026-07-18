@@ -5,8 +5,9 @@
 # Contexte KPI : le stack Docker monte `../sources` relatif au dossier courant, et
 # plusieurs fichiers requis (docker/.env, sources/api2/.env, MyParams.php, .env.*)
 # sont gitignorés. Un worktree fraîchement créé ne les a donc PAS. Ce script les
-# recopie/relie depuis le repo principal pour que `make docker_dev_up` fonctionne
-# dans le worktree.
+# recopie depuis le repo principal pour que `make docker_dev_up` fonctionne dans
+# le worktree. Idem pour node_modules/ et api2/vendor (cf. COPY_DIRS : la copie
+# est délibérée, les symlinks cassent Docker).
 #
 # Règle d'or : UN SEUL stack Docker à la fois. Arrête le stack courant avant de
 # `make docker_dev_up` depuis un autre worktree (conflits de ports/noms sinon).
@@ -20,7 +21,10 @@
 set -euo pipefail
 
 # Répertoire du repo principal (celui qui contient le .git réel).
-MAIN_REPO="$(git rev-parse --show-toplevel)"
+# ⚠️ PAS `--show-toplevel` : lancé depuis un worktree il retourne le worktree,
+# et les nouveaux worktrees seraient créés imbriqués dedans. `--git-common-dir`
+# pointe toujours vers le .git du repo principal, worktree ou non.
+MAIN_REPO="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 # Les worktrees vivent à côté du repo principal, dans un dossier frère.
 WT_ROOT="$(dirname "$MAIN_REPO")/$(basename "$MAIN_REPO")-worktrees"
 DEFAULT_BASE="develop"
@@ -34,13 +38,32 @@ COPY_FILES=(
   "sources/api2/.env"
   "sources/app2/.env.development"
   "sources/app3/.env.development"
-  "sources/app4/.env.development"
+  # app4 utilise .env (pas .env.development comme app2/app3).
+  "sources/app4/.env"
+  # Tests Playwright en dev local (cf. tests/playwright/README.md).
+  "sources/app4/.env.test.local"
+  # Clés Lexik JWT : sans elles, /auth/login renvoie 500 (« unable to encode
+  # the JWT token »). On copie plutôt que régénérer, sinon la passphrase de
+  # sources/api2/.env ne correspond plus à la clé privée.
+  "sources/api2/config/jwt/private.pem"
+  "sources/api2/config/jwt/public.pem"
 )
 
-# Dossiers lourds à partager par symlink plutôt que réinstaller (node_modules).
-# Symlink = gain de temps ET d'espace ; sûr tant qu'on ne fait pas tourner deux
-# `npm install` concurrents (on ne fait qu'un stack à la fois de toute façon).
-LINK_DIRS=(
+# Dossiers lourds recopiés du repo principal (~1,8 Go, ~10 s) plutôt que
+# réinstallés via npm/composer (plusieurs minutes, et `npm install` app4 est
+# fragile : OOM/crash-loop).
+#
+# ⚠️ NE PAS remplacer par des symlinks (ce fut le cas, ça cassait le stack) :
+#   1. Docker ne suit pas un symlink dont la cible sort de ses montages. Le
+#      conteneur ne voit qu'un lien pendant → « autoload_runtime.php not found »
+#      (api2), « nuxt: not found » (app2/app4), et boucle de redémarrage.
+#   2. Même en montant le repo principal dans le conteneur, ça casse : Vite et
+#      Symfony ÉCRIVENT dans ces dossiers (node_modules/.cache, var/cache via le
+#      projectDir résolu). En lecture seule → EROFS / « Unable to write in the
+#      cache directory » ; en écriture → deux worktrees se disputent les mêmes
+#      caches, avec des chemins absolus pointant vers le mauvais dépôt.
+# Le coût est ~1,8 Go par worktree. C'est le prix de l'isolation.
+COPY_DIRS=(
   "sources/app2/node_modules"
   "sources/app3/node_modules"
   "sources/app4/node_modules"
@@ -63,13 +86,56 @@ propagate_files() {
       warn "  absent dans le repo principal, ignoré : $rel"
     fi
   done
-  for rel in "${LINK_DIRS[@]}"; do
+  for rel in "${COPY_DIRS[@]}"; do
+    # Un symlink hérité d'une ancienne version du script : on le remplace.
+    if [ -L "$dest/$rel" ]; then
+      warn "  symlink obsolète remplacé par une copie : $rel"
+      rm "$dest/$rel"
+    fi
     if [ -d "$MAIN_REPO/$rel" ] && [ ! -e "$dest/$rel" ]; then
       mkdir -p "$dest/$(dirname "$rel")"
-      ln -s "$MAIN_REPO/$rel" "$dest/$rel"
-      echo "  lié   : $rel -> repo principal"
+      cp -a "$MAIN_REPO/$rel" "$dest/$rel"
+      # Caches du repo principal : chemins absolus vers le MAUVAIS dossier.
+      rm -rf "$dest/$rel/.cache" "$dest/$rel/.vite"
+      echo "  copié : $rel ($(du -sh "$dest/$rel" 2>/dev/null | cut -f1))"
     fi
   done
+  # Cache Symfony compilé du repo principal : mêmes chemins en dur.
+  rm -rf "$dest/sources/api2/var/cache"
+  point_db_to_main_repo "$dest"
+}
+
+# HOST_DB_PATH/HOST_DBWP_PATH sont relatifs au dossier docker/ : tel quel, chaque
+# worktree initialiserait une base MariaDB VIDE (« Table kp_user doesn't exist »
+# au login). On les réécrit en absolu vers le repo principal pour partager les
+# données de dev.
+#
+# Sans danger tant qu'UN SEUL stack tourne à la fois (règle du projet) : deux
+# MariaDB sur le même datadir corrompraient InnoDB.
+# ⚠️ Contrepartie : une migration Doctrine jouée depuis un worktree affecte la
+# base de TOUTES les branches.
+point_db_to_main_repo() {
+  local dest="$1"
+  local env_file="$dest/docker/.env"
+  [ -f "$env_file" ] || return 0
+
+  local changed=0
+  for var in HOST_DB_PATH HOST_DBWP_PATH; do
+    local cur
+    cur="$(grep -E "^${var}=" "$env_file" | head -1 | cut -d= -f2-)"
+    # Déjà absolu (worktree resynchronisé, ou choix délibéré) : on n'y touche pas.
+    case "$cur" in
+      /*) continue ;;
+      '') continue ;;
+    esac
+    # ./db/mysql/ -> <repo principal>/docker/db/mysql/
+    local abs="$MAIN_REPO/docker/${cur#./}"
+    sed -i "s|^${var}=.*|${var}=${abs}|" "$env_file"
+    echo "  base partagée : $var -> $abs"
+    changed=1
+  done
+  [ "$changed" = 1 ] && warn "  ⚠ base de dev PARTAGÉE avec le repo principal : un seul stack Docker à la fois."
+  return 0
 }
 
 cmd_new() {
