@@ -13,3 +13,9 @@
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/
 ###< lexik/jwt-authentication-bundle ###
+
+# Dans un worktree (scripts/git-wt.sh), vendor est un SYMLINK vers le repo
+# principal. Le pattern `/vendor/` ci-dessus, avec son slash final, ne matche
+# que les répertoires : un symlink resterait untracked. Sans slash, les deux
+# cas sont couverts.
+/vendor

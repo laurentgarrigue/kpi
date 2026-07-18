@@ -174,6 +174,15 @@ Rappel workflow du projet : les PR ciblent **`develop`** (intégration). Le pass
   `sync` puis remplace le symlink par un vrai `npm ci` dans le worktree concerné
   (supprime le lien, `npm ci` local). Tant que les deps sont identiques, le lien
   suffit.
+- **Symlink vu comme untracked** : un pattern `.gitignore` terminé par `/` (ex.
+  `/vendor/`) ne matche **que les vrais répertoires**. Dans le repo principal
+  `vendor` est un dossier → ignoré ; dans un worktree c'est un symlink → git le
+  voit comme un fichier et le signale untracked. Ne le commite jamais (un
+  `git add -A` distrait avalerait le lien et casserait le repo pour les autres).
+  Le correctif est un pattern **sans slash final**, qui couvre les deux cas :
+  c'est ce que font déjà les `.gitignore` d'app2/3/4 pour `node_modules`, et ce
+  qui a été ajouté à `sources/api2/.gitignore` pour `vendor`. Attention à placer
+  la règle **hors** des blocs `###> symfony/… ###`, régénérés par Flex.
 - **`docker/.env`** est copié, pas lié : si tu changes `APPLICATION_NAME` dans un
   worktree pour tenter deux stacks en parallèle, tu sors du cas « un stack à la
   fois » — non couvert ici (ports en dur dans compose.dev.yaml).
