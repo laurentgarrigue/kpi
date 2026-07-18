@@ -1099,7 +1099,25 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
 	fi; \
 	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
-	gh pr merge --squash --delete-branch; \
-	echo "Bascule sur develop et mise à jour..."; \
-	git checkout develop && git pull; \
-	git branch -D "$$branch" 2>/dev/null && echo "Branche locale '$$branch' supprimée." || echo "(branche locale '$$branch' déjà supprimée par gh)"
+	gh pr merge --squash --delete-branch || exit 1; \
+	main_repo=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	main_repo=$$(dirname "$$main_repo"); \
+	if [ "$$main_repo" != "$$(git rev-parse --show-toplevel)" ]; then \
+		echo "Worktree détecté : develop est géré dans $$main_repo"; \
+		git -C "$$main_repo" checkout develop && git -C "$$main_repo" pull || exit 1; \
+		echo "Suppression du worktree courant..."; \
+		wt=$$(git rev-parse --show-toplevel); \
+		cd "$$main_repo" && git worktree remove "$$wt" \
+			&& echo "Worktree '$$wt' supprimé." \
+			|| { echo "⚠ Worktree non supprimé (modifs locales ?). Manuel : git worktree remove --force '$$wt'"; exit 1; }; \
+		git -C "$$main_repo" branch -D "$$branch" 2>/dev/null \
+			&& echo "Branche locale '$$branch' supprimée." \
+			|| echo "(branche locale '$$branch' déjà supprimée)"; \
+		echo; echo "✔ Terminé. Tu es encore dans un dossier supprimé : cd $$main_repo"; \
+	else \
+		echo "Bascule sur develop et mise à jour..."; \
+		git checkout develop && git pull || exit 1; \
+		git branch -D "$$branch" 2>/dev/null \
+			&& echo "Branche locale '$$branch' supprimée." \
+			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
+	fi

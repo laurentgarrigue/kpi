@@ -37,8 +37,18 @@ function setSeenVersion(tourId: string, version: number): void {
 export const useGuidedTour = (tourId: string = 'welcome') => {
   const { t } = useI18n()
   const router = useRouter()
+  const authStore = useAuthStore()
 
   const tour: Tour | undefined = TOURS[tourId]
+
+  /**
+   * Le profil courant a-t-il accès à ce tour ? `maxProfile` absent = tous profils.
+   * Rappel : plus le numéro est petit, plus les droits sont élevés.
+   */
+  const isAllowed = computed(() => {
+    if (!tour) return false
+    return tour.maxProfile === undefined || authStore.profile <= tour.maxProfile
+  })
 
   /** True si de nouvelles étapes (isNew) existent depuis la dernière visite. */
   const hasNewSteps = computed(() => {
@@ -73,7 +83,7 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
    * celles marquées `isNew` (re-déclenchement pour utilisateurs déjà venus).
    */
   async function startTour(onlyNew = false): Promise<void> {
-    if (!import.meta.client || !tour || tourRunning) return
+    if (!import.meta.client || !tour || tourRunning || !isAllowed.value) return
 
     const { driver } = await import('driver.js')
     await import('driver.js/dist/driver.css')
@@ -135,7 +145,7 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
    * ou seulement les nouveautés si l'utilisateur revient après une mise à jour.
    */
   async function maybeAutoStart(): Promise<void> {
-    if (!import.meta.client || !tour) return
+    if (!import.meta.client || !tour || !isAllowed.value) return
     if (isFirstVisit.value) {
       await startTour(false)
     } else if (hasNewSteps.value) {
@@ -146,7 +156,21 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
   return {
     hasNewSteps,
     isFirstVisit,
+    isAllowed,
     startTour,
     maybeAutoStart,
   }
+}
+
+/**
+ * Liste des tours proposables à l'utilisateur courant (page /help).
+ * Filtre sur `maxProfile` — un tour hors droits n'est jamais listé.
+ */
+export const useAvailableTours = () => {
+  const authStore = useAuthStore()
+  return computed(() =>
+    Object.values(TOURS).filter(
+      tour => tour.maxProfile === undefined || authStore.profile <= tour.maxProfile
+    )
+  )
 }
