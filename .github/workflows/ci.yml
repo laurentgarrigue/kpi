@@ -1,0 +1,218 @@
+name: CI
+
+# Phase 1 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Lint & checks statiques par brique, déclenchés uniquement si la brique change.
+# Le job final `ci-summary` est l'unique required check à câbler dans le ruleset `main`
+# (à faire APRÈS le premier run vert — voir DOC .../CI_CD_PHASE1_NOTES.md).
+
+on:
+  pull_request:
+    branches: [develop, main]
+  # Permet aussi de lancer la CI à la main depuis l'onglet Actions.
+  workflow_dispatch:
+
+# Annule les runs obsolètes quand on pousse un nouveau commit sur la même PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege : la CI n'a besoin que de lire le contenu.
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20"
+  PHP_VERSION: "8.4"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Détection des changements par brique (path filters).
+  #    Toute nouvelle brique = un filtre à ajouter ici, rien d'autre.
+  # ---------------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      legacy: ${{ steps.filter.outputs.legacy }}
+      api2: ${{ steps.filter.outputs.api2 }}
+      app2: ${{ steps.filter.outputs.app2 }}
+      app3: ${{ steps.filter.outputs.app3 }}
+      app4: ${{ steps.filter.outputs.app4 }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            legacy:
+              - 'sources/**'
+              - '!sources/api2/**'
+              - '!sources/app2/**'
+              - '!sources/app3/**'
+              - '!sources/app4/**'
+            api2:
+              - 'sources/api2/**'
+            app2:
+              - 'sources/app2/**'
+            app3:
+              - 'sources/app3/**'
+            app4:
+              - 'sources/app4/**'
+            docker:
+              - 'docker/**'
+              - 'Makefile'
+
+  # ---------------------------------------------------------------------------
+  # 2. Lint ESLint des apps Nuxt (app2 / app3 / app4).
+  #    Un seul job matriciel : ne tourne que sur les apps réellement modifiées.
+  # ---------------------------------------------------------------------------
+  lint-nuxt:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Skip les apps non modifiées à l'intérieur de la matrice.
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: sources/${{ matrix.app }}/package-lock.json
+
+      - name: Install (npm ci)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm ci
+
+      - name: ESLint
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npx eslint .
+
+  # ---------------------------------------------------------------------------
+  # 3. api2 — checks statiques Symfony SANS outils tiers à installer.
+  #    Phase 1 : lint YAML + container + schéma. PHPStan/php-cs-fixer = Phase 2
+  #    (à ajouter d'abord à composer, voir les notes de phase).
+  # ---------------------------------------------------------------------------
+  lint-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      - name: Lint YAML (config/)
+        working-directory: sources/api2
+        run: php bin/console lint:yaml config --env=dev
+
+      - name: Lint container (services)
+        working-directory: sources/api2
+        run: php bin/console lint:container --env=dev
+
+  # ---------------------------------------------------------------------------
+  # 4. Legacy PHP — syntaxe seulement (php -l). Pas de lint de style : trop de
+  #    dette. C'est juste un filet contre les <?php cassés.
+  # ---------------------------------------------------------------------------
+  lint-legacy:
+    needs: changes
+    if: needs.changes.outputs.legacy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - name: php -l sur le legacy modifié (parallèle)
+        run: |
+          find sources -name '*.php' \
+            -not -path 'sources/api2/*' \
+            -not -path '*/vendor/*' \
+            -not -path '*/node_modules/*' \
+            -print0 | xargs -0 -n1 -P4 php -l
+
+  # ---------------------------------------------------------------------------
+  # 5. Docker — lint des Dockerfiles + validation des compose.
+  # ---------------------------------------------------------------------------
+  lint-docker:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hadolint sur les Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+          # Advisory pour démarrer : les Dockerfiles legacy ont de la dette.
+          # On durcira (failure-threshold: warning) une fois nettoyés.
+          failure-threshold: error
+
+      - name: docker compose config (dev/preprod/prod)
+        run: |
+          for f in docker/compose.dev.yaml docker/compose.preprod.yaml docker/compose.prod.yaml; do
+            echo "::group::$f"
+            docker compose -f "$f" config --quiet && echo "OK: $f"
+            echo "::endgroup::"
+          done
+
+  # ---------------------------------------------------------------------------
+  # 6. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
+  #    Passe si tous les jobs nécessaires ont réussi OU ont été skippés
+  #    (une brique non touchée => job skipped => ne doit pas bloquer).
+  # ---------------------------------------------------------------------------
+  ci-summary:
+    needs: [changes, lint-nuxt, lint-api2, lint-legacy, lint-docker]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier qu'aucun job requis n'a échoué
+        run: |
+          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }}"
+          echo "Résultats: $results"
+          for r in $results; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::Un job de CI a échoué ($r)"
+              exit 1
+            fi
+          done
+          echo "CI OK ✅"
