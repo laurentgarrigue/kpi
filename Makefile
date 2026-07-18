@@ -60,7 +60,8 @@ api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
-docker_networks_create docker_networks_list docker_networks_clean
+docker_networks_create docker_networks_list docker_networks_clean \
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_merge
 
 
 
@@ -1052,3 +1053,53 @@ git_images_list_protected: ## Liste les images actuellement protégées (skip-wo
 	@echo "Images protégées (skip-worktree) :"
 	@git ls-files -v -- 'sources/img/**/*.png' 'sources/img/**/*.jpg' | \
 		grep '^S' || echo "(aucune image protégée)"
+
+
+## GIT - WORKTREES & PR (développement parallèle de features)
+# Développer plusieurs features en parallèle via git worktrees, puis ouvrir les PR.
+# Voir DOC/developer/guides/PARALLEL_FEATURES_WORKTREES.md.
+# Rappel : UN SEUL stack Docker à la fois (ports fixes + ../sources monté en relatif).
+# Les commandes exécutées sont affichées (pas de @) pour rester transparentes.
+
+wt_new: ## Crée un worktree + branche feature/<name> (make wt_new name=scoring [base=develop])
+	@[ -n "$(name)" ] || { echo "Usage: make wt_new name=<feature> [base=<branche>]"; exit 1; }
+	./scripts/git-wt.sh new $(name) $(base)
+
+wt_list: ## Liste les worktrees existants
+	./scripts/git-wt.sh list
+
+wt_sync: ## Re-copie les fichiers non-versionnés (.env, etc.) dans un worktree (make wt_sync name=scoring)
+	@[ -n "$(name)" ] || { echo "Usage: make wt_sync name=<feature>"; exit 1; }
+	./scripts/git-wt.sh sync $(name)
+
+wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
+	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
+	./scripts/git-wt.sh rm $(name)
+
+pr_push: ## Push la branche courante et la suit sur origin (git push -u)
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+
+pr_create: ## Push la branche courante puis ouvre une PR vers develop (make pr_create [base=develop])
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+	gh pr create --base $(if $(base),$(base),develop) --fill
+
+pr_web: ## Push la branche courante et ouvre le formulaire de PR pré-rempli dans le navigateur
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+	gh pr create --base $(if $(base),$(base),develop) --web
+
+pr_status: ## Affiche l'état de tes PR sur ce repo
+	gh pr status
+
+pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
+	gh pr checks --watch
+
+pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à jour et nettoie la branche locale
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
+	fi; \
+	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
+	gh pr merge --squash --delete-branch; \
+	echo "Bascule sur develop et mise à jour..."; \
+	git checkout develop && git pull; \
+	git branch -D "$$branch" 2>/dev/null && echo "Branche locale '$$branch' supprimée." || echo "(branche locale '$$branch' déjà supprimée par gh)"
