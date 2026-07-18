@@ -1093,5 +1093,13 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
 	gh pr checks --watch
 
-pr_merge: ## Merge la PR de la branche courante dans develop (squash + suppr. branche)
-	gh pr merge --squash --delete-branch
+pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à jour et nettoie la branche locale
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
+	fi; \
+	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
+	gh pr merge --squash --delete-branch; \
+	echo "Bascule sur develop et mise à jour..."; \
+	git checkout develop && git pull; \
+	git branch -D "$$branch" 2>/dev/null && echo "Branche locale '$$branch' supprimée." || echo "(branche locale '$$branch' déjà supprimée par gh)"

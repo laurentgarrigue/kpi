@@ -57,7 +57,7 @@ code ~/Documents/dev/kpi-worktrees/scoring
 # 3. Y bosser, committer normalement — c'est une branche à part entière
 cd ~/Documents/dev/kpi-worktrees/scoring
 # ... edits ...
-git add -A && git commit -m "..."
+git add -A && git commit -m "..."       # ⚠️ committer AVANT de pousser (make pr_* ne committe pas)
 
 # 4. Tester dans Docker (si besoin) — arrête d'abord tout autre stack
 make docker_dev_down     # depuis le worktree/repo qui tournait
@@ -65,12 +65,19 @@ make docker_dev_up       # depuis CE worktree
 
 # 5. Pousser + ouvrir la PR vers develop en une commande
 make pr_create           # = git push -u origin <branche> && gh pr create --base develop --fill
-make pr_checks           # suivre l'état de la CI sur la PR
+make pr_checks           # suivre l'état de la CI sur la PR (attend le vert)
 
-# 6. Une fois la PR mergée, nettoyer
+# 6. Merger dans develop (bascule sur develop à jour + nettoie la branche locale)
+make pr_merge
+
+# 7. Nettoyer le worktree
 make wt_rm name=scoring
-git branch -d feature/scoring           # depuis le repo principal
 ```
+
+> **Les cibles `make pr_*` ne committent jamais** : l'ordre est toujours
+> `git add` → `git commit -m "..."` → `make pr_push`/`pr_create`. Committer reste
+> un geste manuel (choix du message et du périmètre) — un `git push` sans commit
+> préalable ne pousse rien de nouveau.
 
 ### Cibles Make (raccourcis)
 
@@ -85,7 +92,7 @@ git branch -d feature/scoring           # depuis le repo principal
 | `make pr_web [base=<b>]` | push + ouvre le formulaire PR dans le navigateur | `… + gh pr create --web` |
 | `make pr_status` | état de tes PR | `gh pr status` |
 | `make pr_checks` | suit la CI de la PR courante jusqu'à la fin | `gh pr checks --watch` |
-| `make pr_merge` | merge la PR courante dans develop (squash + suppr. branche) | `gh pr merge --squash --delete-branch` |
+| `make pr_merge` | merge la PR courante (squash), bascule sur develop à jour, supprime la branche | `gh pr merge --squash --delete-branch` + `checkout develop` + `pull` + `branch -D` |
 
 Le script `scripts/git-wt.sh` reste utilisable directement (mêmes sous-commandes
 `new/list/rm/sync`) ; les cibles Make ne sont que des raccourcis.
@@ -93,14 +100,23 @@ Le script `scripts/git-wt.sh` reste utilisable directement (mêmes sous-commande
 ### Merger la PR une fois la CI verte
 
 ```bash
-make pr_merge        # depuis la branche de la PR (= gh pr merge --squash --delete-branch)
+make pr_merge        # depuis la branche de la PR (PAS depuis develop/main)
 # ou : bouton "Merge pull request" sur la page GitHub de la PR
 ```
 
-`gh pr merge` sans numéro cible la PR de la branche courante. `develop` n'impose pas
-d'historique linéaire (seule `main` le fait) : `--squash`, `--merge` ou `--rebase`
-fonctionnent. `--squash` garde `develop` propre (un commit par PR). Après merge,
-nettoie le worktree : `make wt_rm name=<n>`.
+`make pr_merge` enchaîne : merge squash de la PR de la branche courante + suppression
+de la branche **distante**, puis `git checkout develop && git pull`, puis suppression
+de la branche **locale**. Tu finis sur `develop` à jour, sans branche orpheline.
+
+Deux points :
+- **Lance-le depuis la branche de la PR**, pas depuis `develop`/`main` (la cible
+  refuse dans ce cas — sinon `gh` ne saurait pas quelle PR viser).
+- Git refuse de supprimer la branche locale sur laquelle on est *checkouté* : c'est
+  pour ça que la cible bascule sur `develop` **avant** de la supprimer. `--squash`
+  garde `develop` propre (un commit par PR) ; `develop` n'impose pas d'historique
+  linéaire (seule `main` le fait).
+
+Ensuite, nettoie le worktree si tu en avais un : `make wt_rm name=<n>`.
 
 ---
 
