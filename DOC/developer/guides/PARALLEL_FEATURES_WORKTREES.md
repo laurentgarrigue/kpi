@@ -84,40 +84,59 @@ git branch -d feature/scoring           # depuis le repo principal
 | `make pr_create [base=<b>]` | push + ouvre la PR (base `develop`) | `git push -u …` + `gh pr create --fill` |
 | `make pr_web [base=<b>]` | push + ouvre le formulaire PR dans le navigateur | `… + gh pr create --web` |
 | `make pr_status` | état de tes PR | `gh pr status` |
-| `make pr_checks` | état de la CI sur la PR courante | `gh pr checks` |
+| `make pr_checks` | suit la CI de la PR courante jusqu'à la fin | `gh pr checks --watch` |
+| `make pr_merge` | merge la PR courante dans develop (squash + suppr. branche) | `gh pr merge --squash --delete-branch` |
 
 Le script `scripts/git-wt.sh` reste utilisable directement (mêmes sous-commandes
 `new/list/rm/sync`) ; les cibles Make ne sont que des raccourcis.
+
+### Merger la PR une fois la CI verte
+
+```bash
+make pr_merge        # depuis la branche de la PR (= gh pr merge --squash --delete-branch)
+# ou : bouton "Merge pull request" sur la page GitHub de la PR
+```
+
+`gh pr merge` sans numéro cible la PR de la branche courante. `develop` n'impose pas
+d'historique linéaire (seule `main` le fait) : `--squash`, `--merge` ou `--rebase`
+fonctionnent. `--squash` garde `develop` propre (un commit par PR). Après merge,
+nettoie le worktree : `make wt_rm name=<n>`.
 
 ---
 
 ## Faciliter les PR : GitHub CLI (`gh`)
 
-`gh` n'est pas encore installé sur le poste. C'est lui qui transforme « pousser une
-branche » en « PR ouverte » sans quitter le terminal.
+✅ **`gh` est installé et configuré sur le poste** (authentifié en SSH, scope `repo`).
+C'est lui qui transforme « pousser une branche » en « PR ouverte » sans quitter le
+terminal, via les cibles `make pr_*` ci-dessus (ou `gh` directement).
+
+**⚠️ Configuration importante déjà faite** : le repo a **deux remotes** (`origin` =
+`laurentgarrigue/kpi`, `remote_ffck_kpi` = `FFCK/kpi`). `gh` a donc besoin de savoir
+lequel cibler, sinon `gh pr create` échoue (« No default remote repository ») et
+risquerait d'ouvrir une PR **vers le repo FFCK**. C'est réglé une fois pour toutes :
 
 ```bash
-# Installation (Debian/Ubuntu)
-sudo apt install gh          # ou : https://cli.github.com
+gh repo set-default laurentgarrigue/kpi     # déjà fait — à refaire si tu re-clones
+```
 
-# Auth (une fois)
-gh auth login                # choisir GitHub.com + SSH
+Commandes `gh` sous-jacentes (rappel) :
 
-# Ouvrir une PR depuis un worktree
-gh pr create --base develop --fill          # titre/desc depuis les commits
-gh pr create --base develop --web           # ouvre le formulaire pré-rempli dans le navigateur
-gh pr status                                # état de tes PR
-gh pr checks                                # état de la CI (Phase 1) sur la PR courante
+```bash
+gh pr create --base develop --fill    # PR, titre/desc depuis les commits (= make pr_create)
+gh pr create --base develop --web     # formulaire pré-rempli navigateur   (= make pr_web)
+gh pr status                          # état de tes PR                      (= make pr_status)
+gh pr checks --watch                  # suit la CI jusqu'à la fin           (= make pr_checks)
+gh pr merge <n> --squash --delete-branch   # merge la PR
 ```
 
 Rappel workflow du projet : les PR ciblent **`develop`** (intégration). Le passage
 `develop → main` se fait par une PR de release séparée. `main` est protégée
 (Require PR + linear history) — voir le plan CI/CD.
 
-### Sans `gh`
-
-`git push` affiche un lien « Create a pull request » cliquable, ou va sur
-`https://github.com/laurentgarrigue/kpi/pulls` → New pull request.
+> **Note Dependabot** : les *security updates* Dependabot créent leurs PR sur `main`
+> (elles ignorent `target-branch: develop` — limitation GitHub). Un workflow
+> `.github/workflows/backmerge-main-to-develop.yml` ouvre automatiquement une PR
+> `main → develop` après chaque push sur `main` pour réaligner develop.
 
 ---
 

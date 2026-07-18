@@ -1,12 +1,17 @@
 # Phase 1 CI/CD — Notes d'exécution
 
-**Statut** : 🟡 Brouillon prêt, à exécuter plus tard
+**Statut** : 🟢 CI verte sur la PR #216 — reste à merger dans `develop` puis câbler le required check
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md) — Phase 1
 
-Ce brouillon met en place le lint & les checks statiques par brique sur chaque PR
-vers `develop` ou `main`, avec un job récapitulatif `ci-summary` destiné à devenir
-l'unique required check du ruleset `main`.
+Met en place le lint & les checks statiques par brique sur chaque PR vers `develop`
+ou `main`, avec un job récapitulatif `ci-summary` destiné à devenir l'unique required
+check du ruleset `main`.
+
+**Outillage** : `gh` est installé et configuré (voir
+[PARALLEL_FEATURES_WORKTREES.md](../../guides/PARALLEL_FEATURES_WORKTREES.md)) — la CI se
+suit via `make pr_checks` (= `gh pr checks --watch`) et se merge via
+`gh pr merge <n> --squash --delete-branch`.
 
 ---
 
@@ -46,49 +51,47 @@ Décisions prises pour ne pas faire de checks fictifs :
    « rien » comme lint de style sur le legacy vu la dette. 7000+ fichiers PHP →
    le `php -l` reste un filet léger contre les `<?php` cassés.
 
-4. **hadolint en `failure-threshold: error`** (advisory) pour démarrer : les
-   Dockerfiles legacy ont de la dette. À durcir en `warning` une fois nettoyés.
+4. **hadolint en `failure-threshold: error`** : ne bloque que sur les findings de
+   niveau `error` (les Dockerfiles legacy ont beaucoup de `warning`/`info` de dette
+   qu'on ne veut pas bloquer). Le premier run a révélé **un seul `error`** :
+   `docker/db/Dockerfile:3 DL3020 ADD→COPY`, corrigé. À durcir en `warning` une fois
+   la dette Dockerfile nettoyée (Phase 2/3).
 
 5. **Node 20** (jamais 22 — cf. contraintes app2/app3 du projet).
 
 ---
 
-## Étapes d'exécution (à faire plus tard)
+## Historique d'exécution
 
-1. **Basculer sur `develop`** (jamais committer sur `main` directement) :
+- ✅ Fichiers committés sur `feature/worktree_workflow`, PR **#216** ouverte vers `develop`.
+- ✅ Premier run rouge → il a fait remonter le seul finding hadolint bloquant
+  (DL3020 ADD→COPY dans `docker/db/Dockerfile`). Corrigé.
+- ✅ Second run **vert** : `changes` ✓, `lint-legacy` ✓, `lint-docker` ✓, `ci-summary` ✓,
+  `lint-api2`/`lint-nuxt` skipped (non touchés). CI < 1 min.
+
+## Étapes restantes
+
+1. **Merger la PR #216 dans `develop`** :
    ```bash
-   git checkout develop && git pull
-   git checkout -b feature/ci-phase1   # ou directement sur develop selon ton habitude
+   gh pr merge 216 --squash --delete-branch
    ```
+   Cela fait exister la CI sur `develop` → toute future PR vers `develop` la déclenchera.
 
-2. **Committer les deux fichiers** :
-   ```bash
-   git add .github/workflows/ci.yml DOC/developer/in-progress/plans/CI_CD_PHASE1_NOTES.md
-   git commit   # message au choix
-   git push
-   ```
-
-3. **Ouvrir une PR vers `develop`** et vérifier dans l'onglet Actions que la CI
-   tourne. Sur une PR mono-brique, seul le lint concerné doit s'exécuter.
-
-4. **Attendre un premier run vert** (corriger les éventuelles erreurs ESLint
-   révélées — c'est le but). NE PAS câbler le required check avant d'avoir vu vert
-   au moins une fois, sinon toute PR se retrouve bloquée.
-
-5. **Câbler `ci-summary` comme required check** (le clic laissé de côté en Phase 0) :
+2. **Câbler `ci-summary` comme required check** (le clic laissé de côté en Phase 0) :
    GitHub → Settings → Rules → ruleset `main_ruleset` → cocher **Require status
-   checks to pass** → ajouter **`ci-summary`**. (Optionnel : même chose sur un
-   futur ruleset `develop` si tu décides de le protéger un jour.)
+   checks to pass** → ajouter **`ci-summary`**. NE le faire qu'après avoir vu la CI
+   verte (c'est fait). (Optionnel : idem sur un futur ruleset `develop`.)
 
 ---
 
 ## Validation Phase 1 (checklist du plan §1.4)
 
-- [ ] PR touchant uniquement `sources/app2/**` → seul le lint app2 tourne
+- [ ] PR touchant uniquement `sources/app2/**` → seul le lint app2 tourne *(à vérifier
+      sur une vraie PR app2 ; le mécanisme skipped est validé côté api2/nuxt)*
 - [ ] PR touchant `sources/api2/**` → seul le lint api2 tourne
 - [ ] PR avec une erreur ESLint volontaire → CI rouge, merge bloqué
-- [ ] Temps CI < 2 min sur PR mono-brique
-- [ ] `ci-summary` visible et coché comme required check sur `main`
+- [x] Temps CI < 2 min sur PR mono-brique *(≈1 min observé)*
+- [ ] `ci-summary` visible et coché comme required check sur `main` *(étape restante n°2)*
 
 ---
 

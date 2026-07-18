@@ -61,7 +61,7 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_merge
 
 
 
@@ -1092,3 +1092,6 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 
 pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
 	gh pr checks --watch
+
+pr_merge: ## Merge la PR de la branche courante dans develop (squash + suppr. branche)
+	gh pr merge --squash --delete-branch
