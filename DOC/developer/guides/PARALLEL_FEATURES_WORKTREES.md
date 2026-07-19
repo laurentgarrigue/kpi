@@ -1,10 +1,129 @@
-# Développer plusieurs features en parallèle (git worktrees)
+# Workflow de développement : une feature à la fois, ou plusieurs en parallèle
 
-**But** : bosser sur plusieurs branches feature simultanément sur le même poste,
-dans des fenêtres VS Code / terminaux distincts, sans `git stash` ni `checkout`
-qui écrase le travail en cours — puis ouvrir les PR facilement.
+**But** : dérouler une feature du premier commit au merge dans `develop`, puis
+en production. Deux modes :
 
-Outil : [`scripts/git-wt.sh`](../../../scripts/git-wt.sh).
+| Mode | Quand | Où |
+|---|---|---|
+| **Solo sur `develop`** (cas courant) | une feature à la fois, rien en cours ailleurs | `~/Documents/dev/kpi` |
+| **Worktrees** | plusieurs branches simultanées, ou un travail en cours qu'on ne veut pas `stash` | `~/Documents/dev/kpi-worktrees/<nom>` |
+
+Le workflow PR (`make pr_create` → `pr_checks` → `pr_merge`) est **identique**
+dans les deux cas ; seules la création de la branche et le nettoyage final
+diffèrent.
+
+➡️ **Si tu développes une feature à la fois** (le cas le plus fréquent), va
+directement au [Workflow solo](#workflow-solo--une-feature-à-la-fois-sur-develop)
+et ignore tout ce qui concerne les worktrees.
+
+Outil worktrees : [`scripts/git-wt.sh`](../../../scripts/git-wt.sh).
+
+---
+
+## Workflow solo — une feature à la fois, sur `develop`
+
+Pas de worktree, pas de copie de deps, un seul stack Docker par construction :
+tout se passe dans `~/Documents/dev/kpi`.
+
+```
+branche ──► code/commit ──► make dev ──► pr_create ──► pr_checks ──► pr_merge ──► (release)
+```
+
+### 1. Partir d'un `develop` à jour
+
+```bash
+cd ~/Documents/dev/kpi
+git checkout develop && git pull
+git checkout -b feature/scoring
+```
+
+Le working tree, les `node_modules`, `sources/api2/vendor`, les `.env` et la base
+MariaDB sont **déjà en place** — rien à copier ni à réinstaller.
+
+> **Si `git checkout develop` refuse** (« Your local changes would be
+> overwritten ») : tu as du travail non committé. Committe-le, ou `git stash`,
+> ou passe en [mode worktree](#workflow-worktrees--plusieurs-features-en-parallèle)
+> — c'est exactement le cas d'usage qui le justifie.
+
+### 2. Développer et tester
+
+```bash
+# ... edits ...
+git add -A && git commit -m "feat: ..."   # ⚠️ les cibles pr_* ne committent JAMAIS
+
+make dev            # démarre tout le stack (détaché)
+make dev_status     # 200/401 = OK ; les Nuxt mettent ~15 s
+make dev_logs       # ou api2_logs / app2_logs / app4_logs
+```
+
+Le stack peut rester allumé pendant tout le développement : les montages sont
+relatifs à ce dossier et il n'y a pas d'autre candidat. Après un changement de
+code PHP dans api2, `make api2_restart` (le worker garde le kernel en mémoire).
+
+Si `package.json` ou `composer.json` a bougé sur la branche :
+
+```bash
+make app4_npm_install          # ou app2_/app3_
+make api2_composer_install
+```
+
+### 3. Ouvrir la PR vers `develop`
+
+```bash
+make pr_create      # push -u origin feature/scoring + gh pr create --base develop --fill
+make pr_checks      # suit la CI jusqu'au vert (gh pr checks --watch)
+```
+
+Titre et description viennent des commits (`--fill`) — d'où l'intérêt de messages
+soignés. `pr_create` échoue si tu n'as rien committé.
+
+### 4. Merger
+
+```bash
+make pr_merge       # depuis feature/scoring (refusé sur develop/main)
+```
+
+Depuis le repo principal, la cible fait : `gh pr merge --squash --delete-branch`,
+puis `git checkout develop && git pull`, puis `git branch -D feature/scoring`.
+Tu te retrouves sur un `develop` à jour, prêt pour la feature suivante. **Aucun
+worktree à supprimer**, et le garde-fou « stack Docker servi depuis ce worktree »
+ne s'applique pas : le stack peut continuer à tourner pendant le merge.
+
+### 5. Enchaîner
+
+```bash
+git checkout -b feature/suivante    # develop est déjà à jour après pr_merge
+```
+
+Pas besoin de re-`pull` : `pr_merge` l'a fait.
+
+### 6. Publier en production
+
+Voir [Publier en production (develop → main)](#5-publier-en-production-develop--main)
+— étape commune aux deux modes.
+
+### Pièges du mode solo
+
+- **Merger dans `develop` sans PR** : `develop` accepte les push directs, mais la
+  CI ne tourne alors pas. Passe toujours par `make pr_create`.
+- **Oublier de repartir de `develop`** : `git checkout -b` depuis une branche
+  feature précédente empile les commits de l'autre feature dans la PR. Toujours
+  `git checkout develop && git pull` d'abord.
+- **`main` est protégée** : pas de push direct, la release passe par une PR
+  `develop → main`.
+- **Basculer de branche avec le stack allumé** est sans danger (les montages sont
+  relatifs au dossier, pas à la branche), mais un `git checkout` qui change
+  `composer.json`/`package.json` demande un `make api2_composer_install` /
+  `make app4_npm_install` et souvent un `make api2_restart`.
+
+---
+
+## Workflow worktrees — plusieurs features en parallèle
+
+Tout ce qui suit ne concerne **que** le mode multi-branches : bosser sur
+plusieurs branches feature simultanément sur le même poste, dans des fenêtres
+VS Code / terminaux distincts, sans `git stash` ni `checkout` qui écrase le
+travail en cours.
 
 ---
 
@@ -85,7 +204,7 @@ limite.
 
 ---
 
-## Workflow complet, de la feature au merge
+## Workflow complet (mode worktree), de la feature au merge
 
 ### Vue d'ensemble
 
@@ -96,8 +215,6 @@ wt_new ──► code/commit ──► make dev ──► pr_create ──► pr
 ```
 
 ### 1. Démarrer une nouvelle feature
-
-**Avec worktree** (recommandé si tu as déjà du travail en cours ailleurs) :
 
 ```bash
 make wt_new name=scoring              # branche feature/scoring depuis develop
@@ -124,17 +241,9 @@ code ~/Documents/dev/kpi-worktrees/scoring
 Durée : ~10 s, dont ~7 s de copie. Aucun accès réseau hors le `fetch`.
 </details>
 
-**Sans worktree** (si tu n'as rien en cours) — travaille directement dans
-`~/Documents/dev/kpi` :
-
-```bash
-cd ~/Documents/dev/kpi
-git checkout develop && git pull
-git checkout -b feature/scoring
-```
-
-Tout le reste du workflow est **identique** ; seules les étapes de nettoyage
-final diffèrent (pas de worktree à supprimer).
+**Sans worktree** — voir le
+[Workflow solo](#workflow-solo--une-feature-à-la-fois-sur-develop) : le reste des
+étapes (2 à 5) est identique, seul le nettoyage final diffère.
 
 ### 2. Développer et tester en local
 
@@ -178,24 +287,45 @@ l'intérêt de messages soignés.
 make pr_merge       # depuis la branche de la PR (refusé sur develop/main)
 ```
 
+> **⚠️ Si le stack Docker tourne depuis ce worktree, bascule-le d'abord.**
+> `git worktree remove` échoue sur un dossier non vide, et le stack y maintient
+> `docker/db/` (le datadir MariaDB) + les `node_modules`. La cible **refuse
+> désormais de merger** dans ce cas, avant tout appel à `gh` :
+>
+> ```bash
+> make dev_down                              # depuis le worktree
+> cd ~/Documents/dev/kpi && make dev         # relance depuis le repo principal
+> ```
+>
+> Pour savoir quel dossier est servi :
+> `docker inspect kpi_php --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}'`
+
 <details>
 <summary><b>Ce qui se passe en arrière-plan</b></summary>
 
 1. Garde-fou : refuse si tu es sur `develop` ou `main` (sinon `gh` ne sait pas
    quelle PR viser) ;
-2. `gh pr merge --squash --delete-branch` — squash dans develop + suppression de
+2. Garde-fou : refuse si le **stack Docker est servi depuis ce worktree** (il
+   empêcherait le `worktree remove`) — vérifié **avant** le merge, car un merge
+   ne se rejoue pas ;
+3. `gh pr merge --squash --delete-branch` — squash dans develop + suppression de
    la branche **distante** ;
-3. **puis, selon le contexte** :
+4. **puis, selon le contexte** :
 
 | | Dans le repo principal | Dans un worktree |
 |---|---|---|
-| develop | `git checkout develop && git pull` | `git -C <repo-principal> checkout develop && pull` |
+| develop | `git checkout develop && git pull` | `git -C <repo-principal> pull` (checkout seulement si besoin) |
 | worktree | — | `git worktree remove` (le worktree courant) |
 | branche locale | `git branch -D` | `git -C <repo-principal> branch -D` |
 
 Depuis un worktree, `git checkout develop` sur place est **impossible** (develop
 est déjà checkouté dans le repo principal — une branche = un worktree). La cible
 détecte le cas via `git rev-parse --git-common-dir` et opère à distance.
+
+Elle vérifie aussi la branche **déjà** checkoutée dans le repo principal : si
+c'est `develop` (le cas nominal), le `checkout` est sauté et seul le `pull` est
+fait. Sans ça, git refuse (`'develop' is already used by worktree at …`) et le
+nettoyage s'arrête alors que la PR est **déjà mergée**.
 
 ⚠️ **Après un `pr_merge` depuis un worktree, ton shell est dans un dossier
 supprimé.** La cible te le rappelle : fais `cd ~/Documents/dev/kpi`.
@@ -230,18 +360,21 @@ le workflow `backmerge-main-to-develop.yml` réaligne develop automatiquement.
 
 ### Cibles Make (raccourcis)
 
+Les cibles `wt_*` ne servent **qu'en mode worktree** ; les cibles `pr_*`
+s'utilisent dans les deux modes.
+
 | Cible | Effet | Commande sous-jacente |
 |---|---|---|
-| `make wt_new name=<n> [base=<b>]` | crée `feature/<n>` + worktree + fichiers env | `scripts/git-wt.sh new <n> <b>` |
-| `make wt_list` | liste les worktrees | `scripts/git-wt.sh list` |
-| `make wt_sync name=<n>` | re-copie les fichiers non-versionnés | `scripts/git-wt.sh sync <n>` |
-| `make wt_rm name=<n>` | supprime le worktree (garde la branche) | `scripts/git-wt.sh rm <n>` |
+| `make wt_new name=<n> [base=<b>]` | *(worktree)* crée `feature/<n>` + worktree + fichiers env | `scripts/git-wt.sh new <n> <b>` |
+| `make wt_list` | *(worktree)* liste les worktrees | `scripts/git-wt.sh list` |
+| `make wt_sync name=<n>` | *(worktree)* re-copie les fichiers non-versionnés | `scripts/git-wt.sh sync <n>` |
+| `make wt_rm name=<n>` | *(worktree)* supprime le worktree (garde la branche) | `scripts/git-wt.sh rm <n>` |
 | `make pr_push` | push la branche courante en suivi | `git push -u origin <branche>` |
 | `make pr_create [base=<b>]` | push + ouvre la PR (base `develop`) | `git push -u …` + `gh pr create --fill` |
 | `make pr_web [base=<b>]` | push + ouvre le formulaire PR dans le navigateur | `… + gh pr create --web` |
 | `make pr_status` | état de tes PR | `gh pr status` |
 | `make pr_checks` | suit la CI de la PR courante jusqu'à la fin | `gh pr checks --watch` |
-| `make pr_merge` | merge la PR (squash), remet develop à jour, supprime branche **et worktree** | `gh pr merge --squash --delete-branch` + `checkout develop` + `pull` + `worktree remove` + `branch -D` |
+| `make pr_merge` | merge la PR (squash), remet develop à jour, supprime branche **et worktree** — refuse si le stack Docker tourne depuis ce worktree | `gh pr merge --squash --delete-branch` + `pull` (+ `checkout develop` si besoin) + `worktree remove` + `branch -D` |
 
 Le script `scripts/git-wt.sh` reste utilisable directement (mêmes sous-commandes
 `new/list/rm/sync`) ; les cibles Make ne sont que des raccourcis.
@@ -254,7 +387,45 @@ d'historique linéaire, seule `main` le fait.
 
 ---
 
-## Situations particulières
+## Situations particulières (mode worktree)
+
+Ces cas ne se présentent qu'en mode worktree — en solo, il n'y a ni worktree à
+supprimer, ni fichiers `.env` à recopier, ni ambiguïté sur le dossier servi par
+Docker. Pour les pièges du mode solo, voir
+[Pièges du mode solo](#pièges-du-mode-solo).
+
+### `pr_merge` s'est arrêté après le merge (nettoyage incomplet)
+
+Symptôme : la PR est **mergée sur GitHub**, mais la cible a échoué ensuite —
+typiquement `fatal: 'develop' is already used by worktree at …` (corrigé
+depuis), ou un `worktree remove` refusé sur un dossier non vide.
+
+**Rien n'est perdu** : le merge est distant et acquis. Il reste à finir le
+nettoyage local, à la main :
+
+```bash
+# 1. Vérifier que la PR est bien mergée
+gh pr view <n> --json state,mergeCommit --jq '"\(.state) \(.mergeCommit.oid[0:8])"'
+
+# 2. Mettre develop à jour dans le repo principal (il y est déjà checkouté)
+cd ~/Documents/dev/kpi && git pull --ff-only
+
+# 3. Si le stack tourne encore depuis le worktree, le basculer
+#    (sinon le remove échouera — voir l'encadré de l'étape 4)
+cd ~/Documents/dev/kpi-worktrees/<nom> && make dev_down
+cd ~/Documents/dev/kpi && make dev
+
+# 4. Supprimer le worktree, puis la branche locale
+git worktree remove ~/Documents/dev/kpi-worktrees/<nom>
+git branch -D feature/<nom>
+```
+
+> **Si `git worktree remove` a déjà tourné et échoué sur « dossier non vide »** :
+> git a pu **désenregistrer** le worktree tout en laissant les fichiers. Il
+> disparaît de `git worktree list` mais occupe toujours le disque (~1,5 Go :
+> `node_modules` + `docker/db/`). Vérifie qu'aucun conteneur ne le sert et
+> qu'il ne contient rien d'unique (`docker/.env`, datadir MariaDB) **avant** de
+> faire `rm -rf` dessus.
 
 ### Changer de worktree (aligner l'environnement)
 
