@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
+use App\Trait\CompetitionLockTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminCompetitionsController extends AbstractController
 {
     use AdminLoggableTrait;
+    use CompetitionLockTrait;
 
     private const SECTION_LABELS = [
         1 => 'International',
@@ -160,7 +162,7 @@ class AdminCompetitionsController extends AbstractController
         $competitions = $result->fetchAllAssociative();
 
         // Format competitions
-        $items = array_map(function ($row) use ($season) {
+        $items = array_map(function ($row) {
             $section = (int) ($row['section'] ?? 100);
             return [
                 'code' => $row['Code'],
