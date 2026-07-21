@@ -61,7 +61,7 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_merge
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_merge sync_develop_from_main
 
 
 
@@ -1136,3 +1136,29 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 			&& echo "Branche locale '$$branch' supprimée." \
 			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
 	fi
+
+sync_develop_from_main: ## Rapatrie les PR mergées sur main (Dependabot security) dans develop et push
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⛔ Working tree non propre. Committe ou stash avant (le merge écraserait tes modifs)."; \
+		git status -sb; exit 1; \
+	fi; \
+	start=$$(git rev-parse --abbrev-ref HEAD); \
+	echo "→ Mise à jour de main..."; \
+	git checkout main && git pull --ff-only || { echo "⛔ Échec du pull de main."; git checkout "$$start" 2>/dev/null; exit 1; }; \
+	echo "→ Mise à jour de develop..."; \
+	git checkout develop && git pull --ff-only || { echo "⛔ Échec du pull de develop."; exit 1; }; \
+	if git merge-base --is-ancestor main develop; then \
+		echo "✔ develop contient déjà main — rien à rapatrier."; \
+		if [ "$$start" != "develop" ]; then git checkout "$$start"; fi; \
+		exit 0; \
+	fi; \
+	echo "→ Merge de main dans develop..."; \
+	if ! git merge --no-edit main; then \
+		echo; echo "⛔ Conflit de merge. Résous-le à la main, puis :"; \
+		echo "     git add -A && git commit && git push origin develop"; \
+		echo "   (ou 'git merge --abort' pour annuler)"; exit 1; \
+	fi; \
+	echo "→ Push de develop..."; \
+	git push origin develop || exit 1; \
+	echo; echo "✔ develop est à jour avec main sur origin."; \
+	if [ "$$start" != "develop" ]; then echo "(tu étais sur '$$start' ; tu es maintenant sur develop)"; fi
