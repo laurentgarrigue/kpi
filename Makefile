@@ -1098,15 +1098,30 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
 	fi; \
-	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
-	gh pr merge --squash --delete-branch || exit 1; \
 	main_repo=$$(git rev-parse --path-format=absolute --git-common-dir); \
 	main_repo=$$(dirname "$$main_repo"); \
-	if [ "$$main_repo" != "$$(git rev-parse --show-toplevel)" ]; then \
+	wt=$$(git rev-parse --show-toplevel); \
+	if [ "$$main_repo" != "$$wt" ]; then \
+		served=$$(docker inspect $(PHP_CONTAINER_NAME) --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' 2>/dev/null || true); \
+		case "$$served" in "$$wt"/*|"$$wt") \
+			echo "⛔ Le stack Docker tourne depuis ce worktree ($$served)."; \
+			echo "   Le worktree ne pourra pas être supprimé après le merge."; \
+			echo "   Bascule le stack d'abord :"; \
+			echo "     make dev_down                     # ici"; \
+			echo "     cd $$main_repo && make dev        # depuis le repo principal"; \
+			exit 1;; \
+		esac; \
+	fi; \
+	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
+	gh pr merge --squash --delete-branch || exit 1; \
+	if [ "$$main_repo" != "$$wt" ]; then \
 		echo "Worktree détecté : develop est géré dans $$main_repo"; \
-		git -C "$$main_repo" checkout develop && git -C "$$main_repo" pull || exit 1; \
+		cur=$$(git -C "$$main_repo" rev-parse --abbrev-ref HEAD); \
+		if [ "$$cur" != "develop" ]; then \
+			git -C "$$main_repo" checkout develop || exit 1; \
+		fi; \
+		git -C "$$main_repo" pull || exit 1; \
 		echo "Suppression du worktree courant..."; \
-		wt=$$(git rev-parse --show-toplevel); \
 		cd "$$main_repo" && git worktree remove "$$wt" \
 			&& echo "Worktree '$$wt' supprimé." \
 			|| { echo "⚠ Worktree non supprimé (modifs locales ?). Manuel : git worktree remove --force '$$wt'"; exit 1; }; \
