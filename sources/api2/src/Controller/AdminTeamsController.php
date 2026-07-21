@@ -625,7 +625,7 @@ class AdminTeamsController extends AbstractController
             }
 
             $this->connection->commit();
-            $this->logActionForCompetition('Suppression equipes', $season, $competition ?? null, "$deletedCount équipe(s) supprimée(s)");
+            $this->logActionForCompetition('Suppression equipes', $season, $competition, "$deletedCount équipe(s) supprimée(s)");
 
             return $this->json([
                 'message' => "$deletedCount team(s) deleted" . ($skippedCount > 0 ? ", $skippedCount skipped (have matches)" : ''),

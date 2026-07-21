@@ -150,6 +150,57 @@ jobs:
         run: php bin/console lint:container --env=dev
 
   # ---------------------------------------------------------------------------
+  # 3bis. api2 — analyse statique PHPStan (Phase 2).
+  #    Level 3 sans dette (voir sources/api2/phpstan.dist.neon). Ne nécessite
+  #    AUCUNE base de données : l'extension Doctrine lit les métadonnées de
+  #    mapping (attributs), pas une connexion. On réchauffe seulement le
+  #    container `dev` pour que l'extension Symfony résolve les services.
+  # ---------------------------------------------------------------------------
+  phpstan-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          # gd : requis par mpdf/phpspreadsheet présents dans le lock (sinon
+          # composer install échoue sur la plateforme). intl/zip : mêmes deps.
+          extensions: gd, intl, zip
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      # PHPStan (extension Symfony) a besoin du container compilé ; le warmup lit
+      # la config mais n'ouvre pas de connexion DB. .env.dist fournit APP_SECRET
+      # et un DATABASE_URL qui doit juste PARSER (jamais contacté ici).
+      - name: Préparer l'environnement (.env + container dev)
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: |
+          cp .env.dist .env
+          php bin/console cache:warmup --env=dev
+
+      - name: PHPStan
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: composer phpstan
+
+  # ---------------------------------------------------------------------------
   # 4. Legacy PHP — syntaxe seulement (php -l). Pas de lint de style : trop de
   #    dette. C'est juste un filet contre les <?php cassés.
   # ---------------------------------------------------------------------------
@@ -204,18 +255,93 @@ jobs:
           done
 
   # ---------------------------------------------------------------------------
-  # 6. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
+  # 6. Sécurité statique (Phase 2).
+  # ---------------------------------------------------------------------------
+
+  # 6a. composer audit — CVE des dépendances PHP d'api2 (base d'advisories
+  #     Packagist). Ne bloque que sur une vulnérabilité connue du lock.
+  audit-composer:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer
+      # --locked : audite directement composer.lock sans `composer install`
+      # préalable (inutile pour un scan de vulnérabilités, et évite les deps à
+      # extensions natives comme mpdf/phpspreadsheet).
+      - name: composer audit (api2)
+        working-directory: sources/api2
+        run: composer audit --locked --no-interaction
+
+  # 6b. npm audit — CVE des dépendances de prod des apps Nuxt modifiées.
+  #     `--omit=dev` + `--audit-level=high` : on ne bloque que sur high/critical
+  #     côté runtime. Les advisories des outils de dev (transitives, souvent non
+  #     corrigeables sans casser) ne doivent pas bloquer une PR — Dependabot
+  #     s'en charge de son côté sur `main`.
+  audit-npm:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm audit (prod, high+)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm audit --omit=dev --audit-level=high
+
+  # 6c. Gitleaks — détection de secrets commités (clés, tokens, mots de passe).
+  #     Tourne sur toute PR : un secret peut arriver dans n'importe quelle brique.
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet : gitleaks scanne le diff de la PR, pas seulement
+          # le dernier commit.
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # 7. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
   #    Passe si tous les jobs nécessaires ont réussi OU ont été skippés
   #    (une brique non touchée => job skipped => ne doit pas bloquer).
   # ---------------------------------------------------------------------------
   ci-summary:
-    needs: [changes, lint-nuxt, lint-api2, lint-legacy, lint-docker]
+    needs: [changes, lint-nuxt, lint-api2, phpstan-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier qu'aucun job requis n'a échoué
         run: |
-          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }}"
+          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }}"
           echo "Résultats: $results"
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
