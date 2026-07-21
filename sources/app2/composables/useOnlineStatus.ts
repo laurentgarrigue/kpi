@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useToast } from '#imports'
 
 // Global state to ensure single initialization

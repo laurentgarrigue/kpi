@@ -70,14 +70,14 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-const { t } = useI18n()
 import ChartGroup from './ChartGroup.vue'
 import ChartGame from './ChartGame.vue'
 import ChartChptRanking from './ChartChptRanking.vue'
 import ChartCpRanking from './ChartCpRanking.vue'
 
-const props = defineProps({
+const { t } = useI18n()
+
+defineProps({
   chartData: {
     type: Object,
     default: null

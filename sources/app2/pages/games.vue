@@ -214,8 +214,6 @@ const {
   isGroupMode,
   categories,
   game_dates,
-  teams,
-  refs,
   teamsFilteredByCategories,
   showRefs,
   showShotclock,
@@ -225,8 +223,7 @@ const {
   fav_dates,
   loadGames,
   getFav,
-  changeFav,
-  resetAllFilters
+  changeFav
 } = useGames()
 
 const gameStore = useGameStore()

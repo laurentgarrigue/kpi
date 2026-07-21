@@ -90,7 +90,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['select-team'])
+defineEmits(['select-team'])
 
 const { t } = useI18n()
 const { getApi } = useApi()

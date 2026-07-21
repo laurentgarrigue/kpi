@@ -6,8 +6,9 @@
       teamBlockClass,
       'px-2 py-1 rounded hover:opacity-80 cursor-pointer inline-block text-xs sm:text-sm'
     ]"
-    v-html="displayName"
-  />
+  >
+    <span v-html="displayName" />
+  </NuxtLink>
   <span
     v-else
     :class="[
@@ -65,7 +66,7 @@ const displayName = computed(() => {
   if (props.teamLabel[0] === '¤') {
     const parts = props.teamLabel.split('|')
     if (parts.length === 4) {
-      const [, number, type, extra] = parts
+      const [, , type, extra] = parts
       if (type === 'Group') {
         return teamNameResize(`${t('Games.Code.Group')}${extra}`)
       } else if (type === 'Winner') {
