@@ -109,7 +109,7 @@ docker exec kpi_api2 sh -lc 'cd /app && composer phpstan-baseline'   # gèle la 
 
 | Job | Outil | Politique |
 |---|---|---|
-| `audit-composer` | `composer audit` | Bloque sur toute CVE connue du lock api2 (clean à l'ajout) |
+| `audit-composer` | `composer audit --locked` | Scanne `composer.lock` sans `composer install` (inutile pour un audit) ; bloque sur toute CVE connue du lock api2 (clean à l'ajout) |
 | `audit-npm` | `npm audit --omit=dev --audit-level=high` | Bloque **seulement** sur high/critical côté **runtime**. Les advisories des outils de dev (transitives, souvent non corrigeables) ne bloquent pas — Dependabot gère ça sur `main` |
 | `secrets-scan` | `gitleaks/gitleaks-action@v2` | Scanne l'historique de la PR (`fetch-depth: 0`). Gratuit sur repo perso (la licence n'est requise que pour les orgs) |
 

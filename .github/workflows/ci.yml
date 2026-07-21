@@ -270,11 +270,13 @@ jobs:
         with:
           php-version: ${{ env.PHP_VERSION }}
           coverage: none
-          extensions: gd, intl, zip
           tools: composer
+      # --locked : audite directement composer.lock sans `composer install`
+      # préalable (inutile pour un scan de vulnérabilités, et évite les deps à
+      # extensions natives comme mpdf/phpspreadsheet).
       - name: composer audit (api2)
         working-directory: sources/api2
-        run: composer audit --no-interaction
+        run: composer audit --locked --no-interaction
 
   # 6b. npm audit — CVE des dépendances de prod des apps Nuxt modifiées.
   #     `--omit=dev` + `--audit-level=high` : on ne bloque que sur high/critical
