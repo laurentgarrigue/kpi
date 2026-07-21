@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import createDb from '../../plugins/dexie'
-import { get } from '@vueuse/core'
 
 const db = createDb('select', 'maj_ref')
 
