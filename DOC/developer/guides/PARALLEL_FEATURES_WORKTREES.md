@@ -116,6 +116,61 @@ Voir [Publier en production (develop → main)](#5-publier-en-production-develop
   `composer.json`/`package.json` demande un `make api2_composer_install` /
   `make app4_npm_install` et souvent un `make api2_restart`.
 
+#### J'ai committé sur `develop` au lieu de créer une branche feature
+
+Le piège le plus fréquent : on oublie le `git checkout -b` et on committe
+directement sur `develop`. **Rien n'est perdu** — tant que ce n'est pas poussé,
+les commits se déplacent sur une branche feature en trois commandes.
+
+**1. Vérifier l'état** — combien de commits en avance, et rien en cours :
+
+```bash
+git status -sb                          # "## develop...origin/develop [devant N]"
+git log --oneline origin/develop..develop   # les N commits à déplacer
+```
+
+Si le working tree n'est **pas** propre, committe ou `git stash` d'abord : le
+`reset --hard` de l'étape 3 détruirait les modifications non committées.
+
+**2. Créer la branche, puis VÉRIFIER qu'elle existe** :
+
+```bash
+git branch feature/workflow-solo
+git rev-parse --verify feature/workflow-solo   # doit afficher le SHA du dernier commit
+```
+
+> **⚠️ Ne saute pas le `rev-parse`.** C'est lui qui rend l'étape 3 sûre : le
+> `reset --hard` ne détruit rien *parce que* la branche pointe déjà sur les
+> commits. Si `git branch` a échoué (nom déjà pris, faute de frappe) et que tu
+> resets quand même, les commits deviennent non référencés — récupérables via
+> `git reflog`, mais autant ne pas en arriver là. Tant que la commande n'affiche
+> pas un SHA, **ne continue pas**.
+
+**3. Rembobiner `develop` et basculer sur la branche** :
+
+```bash
+git reset --hard origin/develop     # develop redevient identique au distant
+git checkout feature/workflow-solo  # les commits sont ici
+make pr_create
+```
+
+**Si les commits sont déjà poussés sur `develop`**, ne fais **pas** ce
+`reset --hard` : réécrire une branche partagée casse le clone des autres.
+Deux cas :
+
+- travail non critique → laisse-le sur `develop`, il partira à la prochaine
+  release `develop → main` (au prix de la CI de PR non jouée) ;
+- travail à faire relire → `git revert` les commits sur `develop`, puis
+  `git cherry-pick` sur une branche feature et ouvre la PR normalement.
+
+**Variante — le commit contient des changements qui n'ont rien à voir.** C'est
+courant si des fichiers traînaient déjà modifiés avant le `git add -A`. Regarde
+ce qui part réellement avant d'ouvrir la PR :
+
+```bash
+git show --stat HEAD
+```
+
 ---
 
 ## Workflow worktrees — plusieurs features en parallèle
