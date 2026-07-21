@@ -9,7 +9,7 @@ ou `main`, avec un job récapitulatif `ci-summary` destiné à devenir l'unique 
 check du ruleset `main`.
 
 **Outillage** : `gh` est installé et configuré (voir
-[PARALLEL_FEATURES_WORKTREES.md](../../guides/PARALLEL_FEATURES_WORKTREES.md)) — la CI se
+[GIT_WORKFLOW.md](../../guides/GIT_WORKFLOW.md)) — la CI se
 suit via `make pr_checks` (= `gh pr checks --watch`) et se merge via
 `gh pr merge <n> --squash --delete-branch`.
 

@@ -408,6 +408,42 @@ le workflow `backmerge-main-to-develop.yml` réaligne develop automatiquement.
 > directement (elles ignorent `target-branch: develop`, limitation GitHub) —
 > d'où ce back-merge automatique.
 
+### 6. Rapatrier main → develop (Dependabot security)
+
+Les *security updates* Dependabot sont mergées **sur `main`** (voir la note
+ci-dessus). Le workflow `backmerge-main-to-develop.yml` ouvre une PR
+`main → develop` pour réaligner develop — mais si tu veux le faire **à la main**
+depuis ton poste (ou si le back-merge automatique n'a pas encore tourné), une
+seule cible suffit :
+
+```bash
+make sync_develop_from_main
+```
+
+Elle remplace la séquence manuelle `checkout main → pull → checkout develop →
+merge main → push`, avec les garde-fous :
+
+1. **refuse si le working tree n'est pas propre** (le merge écraserait tes
+   modifs non committées) ;
+2. `git checkout main && git pull --ff-only`, puis idem pour `develop` —
+   `--ff-only` évite tout merge surprise ;
+3. si `develop` **contient déjà** `main`, s'arrête sur *« rien à rapatrier »* ;
+4. `git merge --no-edit main`, puis `git push origin develop` ;
+5. en cas de **conflit**, s'arrête avec la marche à suivre (`git add` +
+   `commit` + `push`, ou `git merge --abort`) plutôt que de laisser un état
+   bancal ;
+6. te ramène sur ta branche de départ si tu n'étais pas sur `develop`.
+
+Comme les autres cibles git, elle ne crée pas de PR : `develop` accepte les push
+directs, donc le rapatriement d'un back-merge trivial n'a pas besoin de repasser
+par la CI de PR. (Les commits Dependabot, eux, ont déjà été validés par leur
+propre PR sur `main`.)
+
+> **Rien à faire côté build après ça.** Les `package-lock.json` mis à jour par
+> Dependabot sont rapatriés tels quels ; les cibles `app*_generate_preprod` /
+> `_prod` font un `npm ci` en conteneur jetable au moment du build et
+> réinstallent exactement ce lock — pas de `npm install` local à prévoir.
+
 > **Les cibles `make pr_*` ne committent jamais** : l'ordre est toujours
 > `git add` → `git commit -m "..."` → `make pr_push`/`pr_create`. Committer reste
 > un geste manuel (choix du message et du périmètre) — un `git push` sans commit
@@ -430,6 +466,7 @@ s'utilisent dans les deux modes.
 | `make pr_status` | état de tes PR | `gh pr status` |
 | `make pr_checks` | suit la CI de la PR courante jusqu'à la fin | `gh pr checks --watch` |
 | `make pr_merge` | merge la PR (squash), remet develop à jour, supprime branche **et worktree** — refuse si le stack Docker tourne depuis ce worktree | `gh pr merge --squash --delete-branch` + `pull` (+ `checkout develop` si besoin) + `worktree remove` + `branch -D` |
+| `make sync_develop_from_main` | rapatrie les PR mergées sur `main` (Dependabot security) dans `develop` et push — refuse si le working tree n'est pas propre | `checkout main && pull --ff-only` + idem `develop` + `merge --no-edit main` + `push origin develop` |
 
 Le script `scripts/git-wt.sh` reste utilisable directement (mêmes sous-commandes
 `new/list/rm/sync`) ; les cibles Make ne sont que des raccourcis.
