@@ -4,26 +4,25 @@ name: CodeQL
 # (app2/app3/app4) et remonte les findings dans l'onglet Security du repo.
 #
 # Workflow SÉPARÉ de ci.yml volontairement :
-#  - CodeQL est plus lent (~3-5 min) et n'a pas la granularité par-brique de la CI ;
+#  - CodeQL est plus lent (~1m40s avec security-extended) et n'a pas la granularité
+#    par-brique de la CI ;
 #  - ses résultats vivent dans l'onglet Security (code scanning), pas dans un job
-#    bloquant. Il n'est donc PAS branché dans `ci-summary`. On pourra l'ajouter
-#    comme required check plus tard une fois la base de findings à zéro.
+#    bloquant. Il n'est donc PAS branché dans `ci-summary`.
 #
 # Le legacy PHP et api2 ne sont pas couverts ici : CodeQL PHP n'existe pas
 # (langage non supporté). Leur analyse statique passe par PHPStan / audits.
+#
+# ⚠️ NE tourne PLUS sur chaque PR (choix 2026-07-22) : comme CodeQL n'est pas
+# bloquant et que la surface de sécurité JS/TS bouge peu entre deux PR, le coût
+# per-PR (~1m40s) ne se justifiait pas. On garde le scan hebdomadaire (attrape les
+# advisories publiées sur du code inchangé) + le déclenchement manuel à la demande.
+# Pour analyser une branche avant merge : onglet Actions → CodeQL → Run workflow.
 
 on:
-  pull_request:
-    branches: [develop, main]
-    paths:
-      - 'sources/app2/**'
-      - 'sources/app3/**'
-      - 'sources/app4/**'
-      - '.github/workflows/codeql.yml'
-  # Analyse hebdomadaire complète : attrape les advisories nouvellement publiées
-  # sur du code qui n'a pas changé (lundi 6h UTC).
+  # Analyse hebdomadaire complète (lundi 6h UTC).
   schedule:
     - cron: '0 6 * * 1'
+  # Déclenchement manuel (onglet Actions → Run workflow) sur n'importe quelle branche.
   workflow_dispatch:
 
 # CodeQL a besoin d'écrire les résultats de code-scanning ; le reste en lecture.

@@ -41,7 +41,8 @@ reportés en Phase 3bis. Commandes validées en local avant ajout.
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
 
 > **CodeQL** vit dans un workflow **séparé** ([`codeql.yml`](../../../../.github/workflows/codeql.yml)),
-> hors `ci-summary` : PR sur `app*` + cron hebdo, résultats dans l'onglet Security.
+> hors `ci-summary` : **cron hebdo (lundi) + déclenchement manuel** (plus de per-PR
+> depuis 2026-07-22 — non bloquant et coûteux ~1m40s), résultats dans l'onglet Security.
 
 Une brique non touchée ⇒ son job est **skipped**, et `ci-summary` traite skipped
 comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
@@ -126,7 +127,7 @@ docker exec kpi_api2 sh -lc 'cd /app && composer phpstan-baseline'   # gèle la 
 | `audit-npm` | `npm audit --omit=dev --audit-level=high` | Bloque **seulement** sur high/critical côté **runtime**. Les advisories des outils de dev (transitives, souvent non corrigeables) ne bloquent pas — Dependabot gère ça sur `main` |
 | `secrets-scan` | `gitleaks/gitleaks-action@v2` | Scanne l'historique de la PR (`fetch-depth: 0`). Gratuit sur repo perso (la licence n'est requise que pour les orgs) |
 | `trivy-config` | `aquasecurity/trivy-action` (mode `config`) | Scan des **fichiers** `docker/` (Dockerfiles/compose) — mauvaises configs. Bloque **uniquement sur CRITICAL** (0 à l'ajout) ; les nombreux HIGH de dette legacy (root user DS-0002, apt sans `--no-install-recommends`) sont laissés, comme pour hadolint. Pas d'image à builder |
-| **CodeQL** (workflow séparé `codeql.yml`) | `github/codeql-action` | SAST JS/TS des apps Nuxt → onglet **Security**. **Non branché dans `ci-summary`** (plus lent, résultats en code-scanning). PR sur `app*` + cron hebdo. PHP non supporté par CodeQL → couvert par PHPStan/audits |
+| **CodeQL** (workflow séparé `codeql.yml`) | `github/codeql-action` | SAST JS/TS des apps Nuxt → onglet **Security**. **Non branché dans `ci-summary`** (plus lent, résultats en code-scanning). **Cron hebdo (lundi) + manuel uniquement** — plus de per-PR (2026-07-22 : non bloquant + ~1m40s). PHP non supporté par CodeQL → couvert par PHPStan/audits |
 
 **php-cs-fixer : volontairement reporté.** Un dry-run `@Symfony` reformaterait
 **56 des 57 fichiers** de `src/` — un commit de churn massif, à valeur purement

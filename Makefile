@@ -61,7 +61,7 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_merge sync_develop_from_main
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main
 
 
 
@@ -1092,6 +1092,15 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 
 pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
 	gh pr checks --watch
+
+pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+		echo "Refus : tu es sur '$$branch'. Lance pr_close depuis la branche de la PR jetable."; exit 1; \
+	fi; \
+	echo "Fermeture SANS merge de la PR de la branche '$$branch' + suppression de la branche..."; \
+	gh pr close --delete-branch || exit 1; \
+	echo "PR fermée. Pense à revenir sur develop : git checkout develop"
 
 pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à jour et nettoie la branche locale
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
