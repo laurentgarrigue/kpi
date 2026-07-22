@@ -403,3 +403,5 @@ networks:
     traefiknetwork:
         name: traefiknetwork
         external: true
+
+# ci-touch-all: no-op pour éprouver lint-docker + trivy-config (PR jetable, ne pas merger)

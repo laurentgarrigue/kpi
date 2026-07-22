@@ -301,3 +301,5 @@ Propriétaire - KPI / Kayak Polo Information
 
 - Application développée pour le système KPI
 - Basée sur FeuilleMarque3.php existant
+
+<!-- ci-touch-all: no-op pour éprouver les checks CI skipped (PR jetable, ne pas merger) -->
