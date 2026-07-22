@@ -1,8 +1,21 @@
 # Plan d'action CI/CD GitHub Actions
 
-**Date** : 2026-07-17
-**Statut** : 🟡 À valider — plan progressif
+**Date** : 2026-07-17 (mis à jour 2026-07-22)
+**Statut** : 🟢 En cours — Phases 0-1 terminées, Phase 2 en cours
 **Objectif** : Mettre en place un pipeline CI/CD progressif, sécurisé et adapté aux différentes briques du projet (legacy PHP, api2 Symfony/FrankenPHP, Nuxt app2/app3/app4, WordPress), avec déploiement one-click préprod/prod sur VPS et support de features expérimentales en préprod.
+
+> **📍 Avancement** (voir le journal d'exécution :
+> [CI_CD_PHASE1_NOTES.md](./CI_CD_PHASE1_NOTES.md)) :
+>
+> | Phase | Statut |
+> |---|---|
+> | **0** Fondations | ✅ Terminée |
+> | **1** Lint & format | ✅ Terminée — `.github/workflows/ci.yml`, `ci-summary` required check sur `main` |
+> | **2** Sécurité statique | 🟢 En cours — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks faits ; **CodeQL + Trivy + php-cs-fixer** en cours |
+> | **3-8** | ⬜ À faire |
+>
+> Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
+> lieu de 20, PHPStan démarré au level 3, etc.) sont tracés dans le journal.
 
 ---
 
@@ -29,7 +42,7 @@
 5. **Rollback-first** : chaque déploiement prépare son rollback avant de committer le changement.
 6. **Least privilege** : les credentials de préprod ne doivent JAMAIS pouvoir toucher la prod.
 
-### État de départ
+### État de départ (au 2026-07-17)
 
 - ✅ Dependabot configuré (`.github/dependabot.yml`) — cible `develop`
 - ✅ Makefile complet couvrant tous les environnements
@@ -37,6 +50,9 @@
 - ❌ Aucun workflow GitHub Actions (`.github/workflows/` absent)
 - ❌ Aucun test automatisé exécuté (des dossiers `tests/playwright` existent dans `app4` mais pas industrialisés)
 - ❌ Déploiement 100 % manuel via SSH + `make` sur le VPS
+
+> **Depuis** : `.github/workflows/ci.yml` existe (Phases 1-2), `ci-summary` est le
+> required check sur `main`. Le déploiement reste manuel (Phases 5-6 à faire).
 
 ---
 
@@ -166,10 +182,18 @@ Toute nouvelle brique (app5, api3…) = un filtre à ajouter, rien d'autre à to
 
 | Brique | Lint | Format | Runner |
 |---|---|---|---|
-| `app2`, `app3`, `app4` | `npx eslint .` | déjà géré par ESLint | ubuntu, Node 20 |
-| `api2` | `php-cs-fixer --dry-run` + `phpstan analyse` (niveau 1 pour démarrer) | idem | ubuntu, PHP 8.4 |
-| `legacy` | Phase 1 = **rien** (trop de dette). Phase 2 verra `phpcs` en mode `--warning-severity=0` juste pour bloquer les régressions syntaxiques via `php -l` | | ubuntu, PHP 8.4 |
+| `app2`, `app3`, `app4` | `npx eslint .` | déjà géré par ESLint | ubuntu, **Node 22** (voir note) |
+| `api2` | `lint:yaml config` + `lint:container` (php-cs-fixer/PHPStan → Phase 2) | idem | ubuntu, PHP 8.4 |
+| `legacy` | Phase 1 = `php -l` (syntaxe) seulement — trop de dette pour un lint de style | | ubuntu, PHP 8.4 |
 | `docker` | `hadolint` sur les Dockerfiles, `docker compose config` en dry-run | | ubuntu |
+
+> **Node 22 (pas 20)** : `@nuxt/eslint` tire `eslint-flat-config-utils` 3.x qui
+> utilise `Object.groupBy` (Node 21+) ; en Node 20, `npx eslint .` casse
+> (`Object.groupBy is not a function`). Voir l'en-tête de `ci.yml`.
+>
+> **api2 en Phase 1** : seulement les linters natifs Symfony (`lint:yaml`,
+> `lint:container`), qui n'installent aucun outil tiers. PHPStan et php-cs-fixer
+> sont arrivés en Phase 2.
 
 ### 1.3 Job récapitulatif
 
@@ -655,6 +679,12 @@ Aucun autre changement, la CI reste modulaire.
 
 ## ✅ Prochaine étape recommandée
 
-**Valider ce plan** puis attaquer la **Phase 0** seule (environments + secrets + user deploy VPS). C'est l'unique phase qui bloque toutes les autres.
+Phases 0-1 terminées, Phase 2 en cours (voir le bandeau d'avancement en tête et le
+journal [CI_CD_PHASE1_NOTES.md](./CI_CD_PHASE1_NOTES.md)).
 
-Les Phases 1 et 2 peuvent ensuite être menées en une journée chacune. Phase 5 (déploiement continu préprod) est le premier grand palier de valeur — j'y viserais dans les 2 semaines suivant Phase 0.
+**Reste en Phase 2** : CodeQL (SAST JS/TS), Trivy (images Docker), php-cs-fixer
+(style api2), puis durcir hadolint.
+
+**Ensuite — Phase 3 (Build & smoke)** : garantir que `develop` reste buildable
+(build Nuxt effectif, boot smoke api2, build Docker). Après quoi **Phase 5**
+(déploiement continu préprod) est le premier grand palier de valeur opérationnelle.
