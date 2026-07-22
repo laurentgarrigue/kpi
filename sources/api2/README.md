@@ -367,3 +367,5 @@ For future versions, consider:
 ## Support
 
 For questions or issues, refer to the main KPI documentation in `/WORKFLOW_AI/` or contact the development team.
+
+<!-- ci-touch-all: no-op pour éprouver les checks CI skipped (PR jetable, ne pas merger) -->
