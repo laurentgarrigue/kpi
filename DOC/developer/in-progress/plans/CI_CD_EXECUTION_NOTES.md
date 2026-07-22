@@ -5,8 +5,9 @@ ce qui a été réellement livré, les écarts assumés et les pièges rencontr�
 
 **Statut Phase 1** : ✅ **terminée et verrouillée** — CI sur `develop`, `ci-summary`
 est le required check sur `main_ruleset`.
-**Statut Phase 2** : 🟢 **en cours** — PHPStan (api2), `composer audit`, `npm audit`,
-Gitleaks faits ; CodeQL + Trivy + php-cs-fixer à venir.
+**Statut Phase 2** : ✅ **éprouvée** — PHPStan (api2), `composer audit`, `npm audit`,
+Gitleaks, CodeQL, Trivy config faits et **validés par une épreuve touche-à-tout
+(17 checks verts, 0 skipped)** ; php-cs-fixer volontairement reporté.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -168,6 +169,17 @@ régression sans bénéfice).
 
 > Les deux corrections vivent sur `develop` (branche `fix/nuxt-lockfile-eslint-desync`),
 > pas sur la PR jetable — cette dernière n'a servi qu'à **révéler** la dette.
+
+### Résultat final — ✅ épreuve concluante (2026-07-22)
+
+Une fois les deux dettes corrigées et la PR jetable recréée à neuf depuis `develop`
+(branche minimale, no-op only — les commits de bump de versions ajoutés à la 1ʳᵉ
+tentative provoquaient une collision au rebase) :
+
+**`17 successful, 0 skipped, 0 failing, 0 pending`.** Les 7 jobs path-filtered ont
+tous tourné et réussi — dont **`trivy-config`, exécuté pour la première fois**. Chaque
+brique (`api2`, `app2/3/4`, `docker`) est donc validée de bout en bout. La PR jetable
+a été **fermée sans merge**. La Phase 2 est éprouvée intégralement.
 
 ---
 
