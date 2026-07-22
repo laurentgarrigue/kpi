@@ -1,4 +1,7 @@
-# CI/CD Phases 1 & 2 — Journal d'exécution
+# Journal d'exécution CI/CD
+
+Notes d'exécution du plan [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md), phase par phase :
+ce qui a été réellement livré, les écarts assumés et les pièges rencontrés.
 
 **Statut Phase 1** : ✅ **terminée et verrouillée** — CI sur `develop`, `ci-summary`
 est le required check sur `main_ruleset`.
