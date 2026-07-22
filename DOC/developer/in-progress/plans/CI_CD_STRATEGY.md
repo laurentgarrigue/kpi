@@ -5,7 +5,7 @@
 **Objectif** : Mettre en place un pipeline CI/CD progressif, sécurisé et adapté aux différentes briques du projet (legacy PHP, api2 Symfony/FrankenPHP, Nuxt app2/app3/app4, WordPress), avec déploiement one-click préprod/prod sur VPS et support de features expérimentales en préprod.
 
 > **📍 Avancement** (voir le journal d'exécution :
-> [CI_CD_PHASE1_NOTES.md](./CI_CD_PHASE1_NOTES.md)) :
+> [CI_CD_EXECUTION_NOTES.md](./CI_CD_EXECUTION_NOTES.md)) :
 >
 > | Phase | Statut |
 > |---|---|
@@ -680,7 +680,7 @@ Aucun autre changement, la CI reste modulaire.
 ## ✅ Prochaine étape recommandée
 
 Phases 0-1 terminées, Phase 2 en cours (voir le bandeau d'avancement en tête et le
-journal [CI_CD_PHASE1_NOTES.md](./CI_CD_PHASE1_NOTES.md)).
+journal [CI_CD_EXECUTION_NOTES.md](./CI_CD_EXECUTION_NOTES.md)).
 
 **Reste en Phase 2** : CodeQL (SAST JS/TS), Trivy (images Docker), php-cs-fixer
 (style api2), puis durcir hadolint.
