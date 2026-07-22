@@ -11,7 +11,7 @@
 > |---|---|
 > | **0** Fondations | ✅ Terminée |
 > | **1** Lint & format | ✅ Terminée — `.github/workflows/ci.yml`, `ci-summary` required check sur `main` |
-> | **2** Sécurité statique | 🟢 En cours — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks faits ; **CodeQL + Trivy + php-cs-fixer** en cours |
+> | **2** Sécurité statique | ✅ Quasi complète — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks, **CodeQL** (JS/TS), **Trivy config** faits ; php-cs-fixer reporté (churn 56/57 fichiers) |
 > | **3-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au

@@ -27,7 +27,11 @@ Gitleaks faits ; CodeQL + Trivy + php-cs-fixer à venir.
 | `audit-composer` | `sources/api2/**` | **`composer audit`** (Phase 2) — CVE des deps PHP |
 | `audit-npm` | `sources/app*/**` | **`npm audit --omit=dev --audit-level=high`** (Phase 2) |
 | `secrets-scan` | toujours | **Gitleaks** (Phase 2) — secrets commités |
+| `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
+
+> **CodeQL** vit dans un workflow **séparé** ([`codeql.yml`](../../../../.github/workflows/codeql.yml)),
+> hors `ci-summary` : PR sur `app*` + cron hebdo, résultats dans l'onglet Security.
 
 Une brique non touchée ⇒ son job est **skipped**, et `ci-summary` traite skipped
 comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
@@ -111,9 +115,16 @@ docker exec kpi_api2 sh -lc 'cd /app && composer phpstan-baseline'   # gèle la 
 | `audit-composer` | `composer audit --locked` | Scanne `composer.lock` sans `composer install` (inutile pour un audit) ; bloque sur toute CVE connue du lock api2 (clean à l'ajout) |
 | `audit-npm` | `npm audit --omit=dev --audit-level=high` | Bloque **seulement** sur high/critical côté **runtime**. Les advisories des outils de dev (transitives, souvent non corrigeables) ne bloquent pas — Dependabot gère ça sur `main` |
 | `secrets-scan` | `gitleaks/gitleaks-action@v2` | Scanne l'historique de la PR (`fetch-depth: 0`). Gratuit sur repo perso (la licence n'est requise que pour les orgs) |
+| `trivy-config` | `aquasecurity/trivy-action` (mode `config`) | Scan des **fichiers** `docker/` (Dockerfiles/compose) — mauvaises configs. Bloque **uniquement sur CRITICAL** (0 à l'ajout) ; les nombreux HIGH de dette legacy (root user DS-0002, apt sans `--no-install-recommends`) sont laissés, comme pour hadolint. Pas d'image à builder |
+| **CodeQL** (workflow séparé `codeql.yml`) | `github/codeql-action` | SAST JS/TS des apps Nuxt → onglet **Security**. **Non branché dans `ci-summary`** (plus lent, résultats en code-scanning). PR sur `app*` + cron hebdo. PHP non supporté par CodeQL → couvert par PHPStan/audits |
 
-**Reportés** (plus lourds, Phase 2bis/3) : Trivy (images Docker), CodeQL (SAST),
-durcir hadolint en `failure-threshold: warning`.
+**php-cs-fixer : volontairement reporté.** Un dry-run `@Symfony` reformaterait
+**56 des 57 fichiers** de `src/` — un commit de churn massif, à valeur purement
+stylistique et zéro correctness. On ne l'ajoute pas maintenant pour ne pas noyer
+l'historique ; à faire dans un lot dédié « reformat @Symfony » si souhaité.
+
+**Reporté en Phase 2bis/3** : Trivy en mode **image** (HIGH/CRITICAL, après build
+Phase 3), durcir hadolint/trivy en HIGH.
 
 ---
 
@@ -142,13 +153,15 @@ durcir hadolint en `failure-threshold: warning`.
 
 ---
 
-## Reste en Phase 2 (en cours)
+## Phase 2 — état
 
-- [ ] **CodeQL** (SAST JS/TS pour app2/3/4, gratuit, onglet Security)
-- [ ] **Trivy** (scan des images Docker HIGH/CRITICAL)
-- [ ] **php-cs-fixer** (style api2, dry-run bloquant)
+- [x] **CodeQL** (SAST JS/TS app2/3/4) — `codeql.yml`, onglet Security
+- [x] **Trivy config** (misconfig `docker/`, bloquant CRITICAL only)
+- [~] **php-cs-fixer** — reporté (churn 56/57 fichiers, valeur purement stylistique)
 
 ## Reporté en Phase 2bis / 3
 
 - PHPStan level 4 → 5 (baseline + réduction)
-- Durcir hadolint (`failure-threshold: warning`)
+- Trivy mode **image** (HIGH/CRITICAL) après le build Phase 3
+- Durcir hadolint + trivy-config en HIGH une fois la dette Dockerfile nettoyée
+- php-cs-fixer `@Symfony` dans un lot de reformat dédié (si souhaité)

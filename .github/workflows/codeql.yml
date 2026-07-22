@@ -1,0 +1,57 @@
+name: CodeQL
+
+# SAST GitHub natif (Phase 2 du plan CI/CD). Analyse JS/TS des apps Nuxt
+# (app2/app3/app4) et remonte les findings dans l'onglet Security du repo.
+#
+# Workflow SÉPARÉ de ci.yml volontairement :
+#  - CodeQL est plus lent (~3-5 min) et n'a pas la granularité par-brique de la CI ;
+#  - ses résultats vivent dans l'onglet Security (code scanning), pas dans un job
+#    bloquant. Il n'est donc PAS branché dans `ci-summary`. On pourra l'ajouter
+#    comme required check plus tard une fois la base de findings à zéro.
+#
+# Le legacy PHP et api2 ne sont pas couverts ici : CodeQL PHP n'existe pas
+# (langage non supporté). Leur analyse statique passe par PHPStan / audits.
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'sources/app2/**'
+      - 'sources/app3/**'
+      - 'sources/app4/**'
+      - '.github/workflows/codeql.yml'
+  # Analyse hebdomadaire complète : attrape les advisories nouvellement publiées
+  # sur du code qui n'a pas changé (lundi 6h UTC).
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# CodeQL a besoin d'écrire les résultats de code-scanning ; le reste en lecture.
+permissions:
+  contents: read
+  security-events: write
+
+# Annule un run obsolète quand on pousse un nouveau commit sur la même PR.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyse CodeQL (JS/TS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialiser CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # Requête étendue : sécurité + qualité. `security-extended` ajoute des
+          # règles de sécurité au-delà du set par défaut.
+          queries: security-extended
+
+      - name: Analyser
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
