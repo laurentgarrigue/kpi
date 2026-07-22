@@ -1,8 +1,12 @@
-# CI/CD Phases 1 & 2 — Notes d'exécution
+# Journal d'exécution CI/CD
 
-**Statut Phase 1** : ✅ **terminée** — CI vit sur `develop`, ~10 runs verts sur PRs réelles.
-Reste **un seul** geste manuel : cocher `ci-summary` comme required check (voir plus bas).
-**Statut Phase 2** : 🟢 **amorcée** — PHPStan (api2) + audits sécurité ajoutés à la CI.
+Notes d'exécution du plan [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md), phase par phase :
+ce qui a été réellement livré, les écarts assumés et les pièges rencontrés.
+
+**Statut Phase 1** : ✅ **terminée et verrouillée** — CI sur `develop`, `ci-summary`
+est le required check sur `main_ruleset`.
+**Statut Phase 2** : 🟢 **en cours** — PHPStan (api2), `composer audit`, `npm audit`,
+Gitleaks faits ; CodeQL + Trivy + php-cs-fixer à venir.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -26,7 +30,11 @@ Reste **un seul** geste manuel : cocher `ci-summary` comme required check (voir 
 | `audit-composer` | `sources/api2/**` | **`composer audit`** (Phase 2) — CVE des deps PHP |
 | `audit-npm` | `sources/app*/**` | **`npm audit --omit=dev --audit-level=high`** (Phase 2) |
 | `secrets-scan` | toujours | **Gitleaks** (Phase 2) — secrets commités |
+| `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
+
+> **CodeQL** vit dans un workflow **séparé** ([`codeql.yml`](../../../../.github/workflows/codeql.yml)),
+> hors `ci-summary` : PR sur `app*` + cron hebdo, résultats dans l'onglet Security.
 
 Une brique non touchée ⇒ son job est **skipped**, et `ci-summary` traite skipped
 comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
@@ -34,22 +42,20 @@ comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
 
 ---
 
-## Le SEUL reste bloquant : câbler `ci-summary` en required check
+## Required check `ci-summary` — ✅ fait
 
-**Non fait à ce jour.** Les rulesets `main_ruleset`, `main_protection` et
-`develop_protection` n'ont **aucun** `required_status_checks`. Tant que ce n'est
-pas coché, une PR peut être mergée CI rouge — Phase 1 n'est pas verrouillée.
+`ci-summary` est désormais le **required status check** sur `main_ruleset`
+(vérifié). Une PR CI-rouge ne peut plus être mergée dans `main`.
+`develop_protection` reste **volontairement** sans required check (develop garde le
+push direct).
 
-> ⚠️ **À faire à la main dans l'UI GitHub** : le PAT classique du poste
-> (scopes `repo, read:org, gist, admin:public_key`) **ne peut pas** écrire les
-> rulesets via l'API — tout `PATCH /repos/.../rulesets/<id>` renvoie `404` malgré
-> le droit admin. Il faut passer par l'interface (ou un token fine-grained avec
-> « Repository rulesets: write »).
-
-**Marche à suivre** : GitHub → **Settings → Rules → Rulesets → `main_ruleset`** →
-**Require status checks to pass** → ajouter **`ci-summary`** → Save. Idem
-possible sur `develop_protection`. NE le faire qu'avec une CI déjà vue verte (c'est
-le cas). Une fois coché : Phase 1 verrouillée.
+> ⚠️ **Piège retenu — écrire les rulesets = UI uniquement.** Le PAT classique du
+> poste (scopes `repo, read:org, gist, admin:public_key`) **ne peut pas** écrire
+> les rulesets via l'API : tout `PATCH /repos/.../rulesets/<id>` renvoie `404`
+> malgré le droit admin. Le câblage a donc été fait à la main dans l'UI (Settings →
+> Rules → Rulesets → `main_ruleset` → Require status checks). Pour toute future
+> édition de ruleset : UI, ou un token fine-grained avec « Repository rulesets:
+> write ».
 
 ---
 
@@ -112,9 +118,16 @@ docker exec kpi_api2 sh -lc 'cd /app && composer phpstan-baseline'   # gèle la 
 | `audit-composer` | `composer audit --locked` | Scanne `composer.lock` sans `composer install` (inutile pour un audit) ; bloque sur toute CVE connue du lock api2 (clean à l'ajout) |
 | `audit-npm` | `npm audit --omit=dev --audit-level=high` | Bloque **seulement** sur high/critical côté **runtime**. Les advisories des outils de dev (transitives, souvent non corrigeables) ne bloquent pas — Dependabot gère ça sur `main` |
 | `secrets-scan` | `gitleaks/gitleaks-action@v2` | Scanne l'historique de la PR (`fetch-depth: 0`). Gratuit sur repo perso (la licence n'est requise que pour les orgs) |
+| `trivy-config` | `aquasecurity/trivy-action` (mode `config`) | Scan des **fichiers** `docker/` (Dockerfiles/compose) — mauvaises configs. Bloque **uniquement sur CRITICAL** (0 à l'ajout) ; les nombreux HIGH de dette legacy (root user DS-0002, apt sans `--no-install-recommends`) sont laissés, comme pour hadolint. Pas d'image à builder |
+| **CodeQL** (workflow séparé `codeql.yml`) | `github/codeql-action` | SAST JS/TS des apps Nuxt → onglet **Security**. **Non branché dans `ci-summary`** (plus lent, résultats en code-scanning). PR sur `app*` + cron hebdo. PHP non supporté par CodeQL → couvert par PHPStan/audits |
 
-**Reportés** (plus lourds, Phase 2bis/3) : Trivy (images Docker), CodeQL (SAST),
-durcir hadolint en `failure-threshold: warning`.
+**php-cs-fixer : volontairement reporté.** Un dry-run `@Symfony` reformaterait
+**56 des 57 fichiers** de `src/` — un commit de churn massif, à valeur purement
+stylistique et zéro correctness. On ne l'ajoute pas maintenant pour ne pas noyer
+l'historique ; à faire dans un lot dédié « reformat @Symfony » si souhaité.
+
+**Reporté en Phase 2bis/3** : Trivy en mode **image** (HIGH/CRITICAL, après build
+Phase 3), durcir hadolint/trivy en HIGH.
 
 ---
 
@@ -137,15 +150,21 @@ durcir hadolint en `failure-threshold: warning`.
 - [x] Mécanisme skipped/fail validé en conditions réelles
 - [x] Temps CI < 2 min sur PR mono-brique (≈1 min observé, Phase 1)
 - [x] PHPStan level 3 vert sur api2 (Phase 2)
-- [x] `composer audit` vert sur api2
-- [ ] **`ci-summary` coché comme required check sur `main`** ← *le seul reste*
-- [ ] `audit-npm` / `secrets-scan` observés verts sur une vraie PR *(à voir au 1er run)*
+- [x] `composer audit --locked` vert sur api2
+- [x] **`ci-summary` required check sur `main`** ✅
+- [x] `audit-npm` / `secrets-scan` opérationnels (run vert observé)
 
 ---
 
-## TODO reportés en Phase 2bis / 3
+## Phase 2 — état
+
+- [x] **CodeQL** (SAST JS/TS app2/3/4) — `codeql.yml`, onglet Security
+- [x] **Trivy config** (misconfig `docker/`, bloquant CRITICAL only)
+- [~] **php-cs-fixer** — reporté (churn 56/57 fichiers, valeur purement stylistique)
+
+## Reporté en Phase 2bis / 3
 
 - PHPStan level 4 → 5 (baseline + réduction)
-- php-cs-fixer (style api2)
-- Trivy (scan images Docker), CodeQL (SAST)
-- Durcir hadolint (`failure-threshold: warning`)
+- Trivy mode **image** (HIGH/CRITICAL) après le build Phase 3
+- Durcir hadolint + trivy-config en HIGH une fois la dette Dockerfile nettoyée
+- php-cs-fixer `@Symfony` dans un lot de reformat dédié (si souhaité)

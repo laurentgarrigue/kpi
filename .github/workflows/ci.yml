@@ -329,19 +329,45 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # 6d. Trivy (mode config) — détecte les MAUVAISES CONFIGURATIONS des Dockerfiles
+  #     et des compose (secrets en clair, capabilities dangereuses…). Scan de
+  #     FICHIERS, pas d'images : aucune image à builder (le scan d'images
+  #     HIGH/CRITICAL viendra en Phase 3, une fois les images buildées en CI).
+  #     La détection de CVE des deps est déjà couverte par composer/npm audit.
+  #
+  #     ⚠️ Ne bloque QUE sur CRITICAL. Comme hadolint (bloqué au seul niveau
+  #     `error`), les Dockerfiles legacy ont beaucoup de HIGH de dette (root user
+  #     DS-0002, apt sans --no-install-recommends DS-0029…) qu'on ne veut pas
+  #     bloquer maintenant. À l'ajout : 0 finding CRITICAL. À durcir en HIGH une
+  #     fois la dette Dockerfile nettoyée (même échéance que hadolint).
+  trivy-config:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy config scan (docker/)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: docker
+          severity: CRITICAL
+          exit-code: '1'
+          hide-progress: true
+
   # ---------------------------------------------------------------------------
   # 7. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
   #    Passe si tous les jobs nécessaires ont réussi OU ont été skippés
   #    (une brique non touchée => job skipped => ne doit pas bloquer).
   # ---------------------------------------------------------------------------
   ci-summary:
-    needs: [changes, lint-nuxt, lint-api2, phpstan-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan]
+    needs: [changes, lint-nuxt, lint-api2, phpstan-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier qu'aucun job requis n'a échoué
         run: |
-          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }}"
+          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
           echo "Résultats: $results"
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
