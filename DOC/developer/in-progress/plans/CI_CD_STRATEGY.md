@@ -11,8 +11,9 @@
 > |---|---|
 > | **0** Fondations | ✅ Terminée |
 > | **1** Lint & format | ✅ Terminée — `.github/workflows/ci.yml`, `ci-summary` required check sur `main` |
-> | **2** Sécurité statique | ✅ Quasi complète — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks, **CodeQL** (JS/TS), **Trivy config** faits ; php-cs-fixer reporté (churn 56/57 fichiers) |
-> | **3-8** | ⬜ À faire |
+> | **2** Sécurité statique | ✅ Éprouvée — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks, **CodeQL** (JS/TS), **Trivy config** ; validée par une épreuve touche-à-tout (17 checks verts) ; php-cs-fixer reporté |
+> | **3** Build & smoke | 🟢 En cours — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) ajoutés ; build Docker + Trivy image → Phase 3bis |
+> | **4-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
 > lieu de 20, PHPStan démarré au level 3, etc.) sont tracés dans le journal.

@@ -8,6 +8,10 @@ est le required check sur `main_ruleset`.
 **Statut Phase 2** : ✅ **éprouvée** — PHPStan (api2), `composer audit`, `npm audit`,
 Gitleaks, CodeQL, Trivy config faits et **validés par une épreuve touche-à-tout
 (17 checks verts, 0 skipped)** ; php-cs-fixer volontairement reporté.
+**Statut Phase 3** : 🟢 **en cours** — jobs `build-nuxt` (build Nuxt effectif app2/3/4)
+et `smoke-api2` (boot Symfony : `cache:clear` + `doctrine:schema:validate --skip-sync`,
+sans DB) ajoutés à `ci.yml`, branchés dans `ci-summary`. Build Docker + Trivy image
+reportés en Phase 3bis. Commandes validées en local avant ajout.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -32,6 +36,8 @@ Gitleaks, CodeQL, Trivy config faits et **validés par une épreuve touche-à-to
 | `audit-npm` | `sources/app*/**` | **`npm audit --omit=dev --audit-level=high`** (Phase 2) |
 | `secrets-scan` | toujours | **Gitleaks** (Phase 2) — secrets commités |
 | `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
+| `build-nuxt` | `sources/app2\|app3\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
+| `smoke-api2` | `sources/api2/**` | **boot Symfony** (Phase 3) — `cache:clear` + `doctrine:schema:validate --skip-sync`, **sans DB** |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
 
 > **CodeQL** vit dans un workflow **séparé** ([`codeql.yml`](../../../../.github/workflows/codeql.yml)),
@@ -183,6 +189,57 @@ a été **fermée sans merge**. La Phase 2 est éprouvée intégralement.
 
 ---
 
+## Phase 3 — Build & smoke tests
+
+**Objectif** : garantir que `develop` reste **buildable** (pas seulement lintable),
+sans encore exiger de tests fonctionnels (Phase 4).
+
+### `build-nuxt` (app2 / app3 / app4)
+
+`npm ci` + `npm run build` (= `nuxt build`), en matrice, path-filtered sur chaque app.
+Un `.vue`/`.ts` cassé, un import manquant ou une config Nuxt invalide fait échouer le
+build → CI rouge. Décisions :
+
+- **`build` et non `generate`** : `generate` passe par `dotenv -e .env.production`
+  (app2/app3), absent en CI. `nuxt.config.ts` des 3 apps a des **fallbacks**
+  (`?? 'https://…'`) pour toutes les vars d'env → `nuxt build` tourne sans `.env`.
+- `postinstall: nuxt prepare` s'exécute pendant `npm ci` (types + `.nuxt/`).
+- Cache npm par `package-lock.json` (comme `lint-nuxt`).
+- **Validé en local avant ajout** : `nuxt build` app3 en scratch Node 22 → `✨ Build
+  complete!`, exit 0, `.output/` généré (~3.25 MB).
+
+### `smoke-api2`
+
+Boot du kernel Symfony pour garantir que le conteneur FrankenPHP démarrerait :
+
+```
+composer install --no-scripts
+cp .env.dist .env
+php bin/console cache:clear --env=dev            # boot réel
+php bin/console doctrine:schema:validate --skip-sync   # mapping Doctrine
+```
+
+- **Aucune base de données requise** : `--skip-sync` ne valide QUE les métadonnées de
+  mapping (attributs sur les entités), sans comparer à une DB. Le `DATABASE_URL` de
+  `.env.dist` doit juste **parser** (jamais contacté). **Validé en local** avec un
+  `DATABASE_URL` bidon : `[OK] The mapping files are correct` + `[SKIPPED] database`,
+  exit 0 ; `cache:clear` exit 0.
+- `lint:container` / `lint:yaml` **ne sont pas dupliqués** ici (déjà dans `lint-api2`).
+  Ce job apporte le boot (`cache:clear`) + la validation de mapping.
+- Mêmes extensions PHP (`gd, intl, zip`) et cache Composer que `phpstan-api2`.
+
+### Ce qui n'est PAS dans ce lot
+
+- **Build Docker** (`docker compose build`) et **Trivy mode image** (HIGH/CRITICAL) :
+  reportés en **Phase 3bis** — lourds, à coupler ensemble (Trivy image a besoin des
+  images buildées). Le plan les associe déjà.
+- **Legacy** : reste au seul `php -l` (pas de build à smoke-tester).
+
+Les deux jobs sont branchés dans `ci-summary` (`needs` + vérif des `results`), donc
+couverts par le required check `main`. Vérifié : YAML valide, aucun job orphelin.
+
+---
+
 ## Écarts historiques assumés (Phase 1, toujours valables)
 
 1. **Legacy : uniquement `php -l`** (syntaxe) — pas de lint de style vu la dette.
@@ -206,6 +263,8 @@ a été **fermée sans merge**. La Phase 2 est éprouvée intégralement.
 - [x] **`ci-summary` required check sur `main`** ✅
 - [x] `audit-npm` / `secrets-scan` opérationnels (run vert observé)
 - [x] Épreuve « touche-à-tout » : jobs skipped → verts par brique (a révélé + corrigé 2 dettes, voir section dédiée)
+- [x] Phase 3 : `nuxt build` app3 validé en local (exit 0) + smoke api2 sans DB validé en local (exit 0)
+- [ ] Phase 3 : `build-nuxt` / `smoke-api2` verts sur une PR réelle (à observer une fois pushé)
 
 ---
 

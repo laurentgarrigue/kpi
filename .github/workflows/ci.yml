@@ -1,9 +1,13 @@
 name: CI
 
-# Phase 1 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
-# Lint & checks statiques par brique, déclenchés uniquement si la brique change.
-# Le job final `ci-summary` est l'unique required check à câbler dans le ruleset `main`
-# (à faire APRÈS le premier run vert — voir DOC .../CI_CD_PHASE1_NOTES.md).
+# Phases 1-3 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md) :
+#   - Phase 1 : lint & format par brique (lint-nuxt, lint-api2, lint-legacy, lint-docker)
+#   - Phase 2 : sécurité statique (phpstan-api2, audit-composer, audit-npm, secrets-scan,
+#               trivy-config ; CodeQL vit dans codeql.yml)
+#   - Phase 3 : build & smoke (build-nuxt, smoke-api2)
+# Tout est path-filtered : chaque job ne tourne que si sa brique change.
+# Le job final `ci-summary` est l'unique required check câblé dans le ruleset `main`.
+# Voir le journal d'exécution : DOC/.../CI_CD_EXECUTION_NOTES.md.
 
 on:
   pull_request:
@@ -113,6 +117,57 @@ jobs:
         run: npx eslint .
 
   # ---------------------------------------------------------------------------
+  # 2bis. Build Nuxt effectif (Phase 3) — app2 / app3 / app4.
+  #    Garantit que `develop` reste buildable : un .vue/.ts cassé, un import
+  #    manquant ou une erreur de config Nuxt fait échouer `nuxt build`.
+  #    On utilise `build` (SSR/nitro) et NON `generate` : `generate` passe par
+  #    `dotenv -e .env.production` (app2/app3), absent en CI. `nuxt.config.ts` a
+  #    des fallbacks (`?? 'https://…'`) pour toutes les vars → aucun .env requis.
+  # ---------------------------------------------------------------------------
+  build-nuxt:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Skip les apps non modifiées à l'intérieur de la matrice.
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: sources/${{ matrix.app }}/package-lock.json
+
+      # postinstall = `nuxt prepare` (types + .nuxt) tourne pendant npm ci.
+      - name: Install (npm ci)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm ci
+
+      - name: Build (nuxt build)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
   # 3. api2 — checks statiques Symfony SANS outils tiers à installer.
   #    Phase 1 : lint YAML + container + schéma. PHPStan/php-cs-fixer = Phase 2
   #    (à ajouter d'abord à composer, voir les notes de phase).
@@ -199,6 +254,53 @@ jobs:
         env:
           APP_ENV: dev
         run: composer phpstan
+
+  # ---------------------------------------------------------------------------
+  # 3ter. api2 — boot smoke test (Phase 3).
+  #    Garantit que le kernel Symfony démarre et que le mapping Doctrine est
+  #    cohérent — donc que le conteneur FrankenPHP pourra booter. AUCUNE base de
+  #    données requise : `--skip-sync` ne valide QUE les métadonnées de mapping
+  #    (attributs sur les entités), sans comparer à une DB. Le `DATABASE_URL` de
+  #    .env.dist doit juste PARSER (jamais contacté ici).
+  #    NB : `lint:container` / `lint:yaml` sont déjà couverts par `lint-api2` ;
+  #    on ne les duplique pas. Ce job apporte le cache:clear (boot réel) + la
+  #    validation de mapping.
+  # ---------------------------------------------------------------------------
+  smoke-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          # gd/intl/zip : requis par mpdf/phpspreadsheet présents dans le lock,
+          # sinon `composer install` échoue sur la plateforme (comme phpstan-api2).
+          extensions: gd, intl, zip
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      - name: Boot smoke (cache:clear + schema mapping)
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: |
+          cp .env.dist .env
+          php bin/console cache:clear --env=dev --no-interaction
+          php bin/console doctrine:schema:validate --skip-sync --no-interaction
 
   # ---------------------------------------------------------------------------
   # 4. Legacy PHP — syntaxe seulement (php -l). Pas de lint de style : trop de
@@ -361,13 +463,13 @@ jobs:
   #    (une brique non touchée => job skipped => ne doit pas bloquer).
   # ---------------------------------------------------------------------------
   ci-summary:
-    needs: [changes, lint-nuxt, lint-api2, phpstan-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
+    needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier qu'aucun job requis n'a échoué
         run: |
-          results="${{ needs.lint-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
+          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
           echo "Résultats: $results"
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
