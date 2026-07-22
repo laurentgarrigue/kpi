@@ -131,6 +131,46 @@ Phase 3), durcir hadolint/trivy en HIGH.
 
 ---
 
+## Épreuve d'intégration « touche-à-tout » (2026-07-22)
+
+Pour valider que les jobs *skipped* (path-filtered) passent bien au vert quand leur
+brique est touchée — la case « PR touchant chaque brique » de la checklist — une PR
+jetable a modifié un no-op dans chaque brique (`api2`, `app2/3/4`, `docker`). Elle a
+**réveillé deux dettes réelles préexistantes sur `develop`**, sans rapport avec le
+no-op lui-même :
+
+### 1. Lockfiles Nuxt désynchronisés → `npm ci` échouait (app2/app3/app4)
+
+Le job `lint-nuxt` démarre par `npm ci`, qui est strict. Les **3 locks** committés
+échouaient (`Missing eslint@10.7.0` + cascade `@eslint/*` pour app2/app3 ;
+`oxc-parser`/`cac`/`commander` pour app4) : ils avaient été générés avec
+`npm install --package-lock-only` **avant** que les cibles `make appN_npm_update_lock`
+ne soient corrigées (elles font désormais un vrai `npm install` en dossier isolé).
+
+**Fix** : régénérer les 3 locks via `make app2/3/4_npm_update_lock` (vrai `npm install`
+Node 22 en scratch), validés `npm ci` EXIT=0. Diff app2/app3 = additions pures
+(sous-arbre eslint@10 nested) ; app4 = `+492 -84` (versions transitives réordonnées,
+aucune entrée `node_modules/` retirée). Aucun `package.json` touché. La **cause racine
+est déjà réglée dans le Makefile** — ne pas re-suggérer de retirer `--package-lock-only`.
+
+### 2. app3 jamais linté → 19 errors ESLint → config assouplie
+
+`app3` (feuille de marque, gelé depuis déc. 2025) n'était jamais passé sous ESLint.
+`npx eslint .` sortait **19 errors + 66 warnings**. Les errors venaient de 3 règles :
+`@typescript-eslint/no-explicit-any` (13×), `no-unused-vars` (3×), `ban-ts-comment` (1×).
+
+**Décision** (module en maintenance, pas de dev actif) : rétrograder ces 3 règles en
+`warn` dans [`sources/app3/eslint.config.mjs`](../../../../sources/app3/eslint.config.mjs)
+(pattern `withNuxt({ rules })`, aligné sur app2). Résultat : **0 errors, 85 warnings**,
+job vert, dette entièrement visible dans les logs. Réversible (`warn`→`error`) si app3
+redevient actif. Alternative écartée : typer les 13 `any` sur du code figé (risque de
+régression sans bénéfice).
+
+> Les deux corrections vivent sur `develop` (branche `fix/nuxt-lockfile-eslint-desync`),
+> pas sur la PR jetable — cette dernière n'a servi qu'à **révéler** la dette.
+
+---
+
 ## Écarts historiques assumés (Phase 1, toujours valables)
 
 1. **Legacy : uniquement `php -l`** (syntaxe) — pas de lint de style vu la dette.
@@ -153,6 +193,7 @@ Phase 3), durcir hadolint/trivy en HIGH.
 - [x] `composer audit --locked` vert sur api2
 - [x] **`ci-summary` required check sur `main`** ✅
 - [x] `audit-npm` / `secrets-scan` opérationnels (run vert observé)
+- [x] Épreuve « touche-à-tout » : jobs skipped → verts par brique (a révélé + corrigé 2 dettes, voir section dédiée)
 
 ---
 
