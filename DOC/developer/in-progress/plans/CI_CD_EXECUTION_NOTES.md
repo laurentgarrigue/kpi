@@ -8,10 +8,10 @@ est le required check sur `main_ruleset`.
 **Statut Phase 2** : ✅ **éprouvée** — PHPStan (api2), `composer audit`, `npm audit`,
 Gitleaks, CodeQL, Trivy config faits et **validés par une épreuve touche-à-tout
 (17 checks verts, 0 skipped)** ; php-cs-fixer volontairement reporté.
-**Statut Phase 3** : 🟢 **en cours** — jobs `build-nuxt` (build Nuxt effectif app2/3/4)
+**Statut Phase 3** : ✅ **éprouvée** — jobs `build-nuxt` (build Nuxt effectif app2/3/4)
 et `smoke-api2` (boot Symfony : `cache:clear` + `doctrine:schema:validate --skip-sync`,
-sans DB) ajoutés à `ci.yml`, branchés dans `ci-summary`. Build Docker + Trivy image
-reportés en Phase 3bis. Commandes validées en local avant ajout.
+sans DB) ajoutés à `ci.yml`, branchés dans `ci-summary`, **vus verts sur une épreuve
+touche-à-tout minimale (app3 + api2)**. Build Docker + Trivy image → Phase 3bis.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -265,7 +265,7 @@ couverts par le required check `main`. Vérifié : YAML valide, aucun job orphel
 - [x] `audit-npm` / `secrets-scan` opérationnels (run vert observé)
 - [x] Épreuve « touche-à-tout » : jobs skipped → verts par brique (a révélé + corrigé 2 dettes, voir section dédiée)
 - [x] Phase 3 : `nuxt build` app3 validé en local (exit 0) + smoke api2 sans DB validé en local (exit 0)
-- [ ] Phase 3 : `build-nuxt` / `smoke-api2` verts sur une PR réelle (à observer une fois pushé)
+- [x] Phase 3 : `build-nuxt` / `smoke-api2` **verts sur PR réelle** (épreuve touche-à-tout minimale app3 + api2)
 
 ---
 
