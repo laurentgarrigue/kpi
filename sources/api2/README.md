@@ -367,3 +367,5 @@ For future versions, consider:
 ## Support
 
 For questions or issues, refer to the main KPI documentation in `/WORKFLOW_AI/` or contact the development team.
+
+<!-- ci-touch phase3: no-op pour éprouver build-nuxt + smoke-api2 (PR jetable, ne pas merger) -->
