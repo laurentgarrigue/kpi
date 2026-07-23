@@ -11,7 +11,10 @@ Gitleaks, CodeQL, Trivy config faits et **validés par une épreuve touche-à-to
 **Statut Phase 3** : ✅ **éprouvée** — jobs `build-nuxt` (build Nuxt effectif app2/3/4)
 et `smoke-api2` (boot Symfony : `cache:clear` + `doctrine:schema:validate --skip-sync`,
 sans DB) ajoutés à `ci.yml`, branchés dans `ci-summary`, **vus verts sur une épreuve
-touche-à-tout minimale (app3 + api2)**. Build Docker + Trivy image → Phase 3bis.
+touche-à-tout minimale (app3 + api2)**.
+**Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
+base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
+manuel). Build Docker complet volontairement écarté (voir section).
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -238,6 +241,49 @@ php bin/console doctrine:schema:validate --skip-sync   # mapping Doctrine
 
 Les deux jobs sont branchés dans `ci-summary` (`needs` + vérif des `results`), donc
 couverts par le required check `main`. Vérifié : YAML valide, aucun job orphelin.
+
+---
+
+## Phase 3bis — Trivy image (scan CVE des images de base)
+
+Workflow **séparé** [`trivy-image.yml`](../../../../.github/workflows/trivy-image.yml),
+hors `ci-summary`. Scanne les **images de base** du projet — `php:8.4.x-apache`,
+`dunglas/frankenphp:php8.4`, `mariadb:11.5.x` — lues depuis `docker/.env.dist`
+(source versionnée, job `resolve-images` → matrice JSON, une catégorie SARIF par image).
+
+### Pourquoi on ne builde PAS les images, et pourquoi c'est NON bloquant
+
+Le plan prévoyait « builder les images puis Trivy image (HIGH/CRITICAL, bloquant) ».
+La mesure locale a tranché autrement :
+
+| Image de base | HIGH/CRITICAL (Trivy `vuln`, mesuré 2026-07) |
+|---|---|
+| `php:8.4.13-apache-trixie` | **596** (569 HIGH, 27 CRITICAL) |
+| `mariadb:11.5.2` | 49 (45 HIGH, 4 CRITICAL) |
+| `dunglas/frankenphp:php8.4` | ~1 (varie) |
+
+Ces centaines de CVE vivent dans l'image **amont** (Debian « full » + PHP), beaucoup
+en `fix_deferred`/`affected` sans correctif disponible → **non actionnables de notre
+côté**. Un job bloquant serait donc rouge en permanence pour rien. Décisions :
+
+- **Scan des images de base tirées du registry, SANS `docker build`** : l'essentiel
+  de la dette OS/runtime est en amont ; builder (lourd, ~5-8 min pour l'image Apache
+  legacy) n'ajouterait que nos quelques couches. Rapide (pull only).
+- **`exit-code: 0` (non bloquant) + upload SARIF → onglet Security** : c'est de la
+  **veille**, pas un gate. Même politique que `trivy-config`/hadolint sur la dette
+  Dockerfile. On voit les CVE et on est alerté d'une nouvelle CRITICAL sans casser
+  la CI.
+- **Hors `ci-summary`, cron hebdo (mardi) + `push` sur `docker/.env.dist` + manuel** :
+  les images de base ne changent que sur un bump explicite. Pas de per-PR.
+- L'upload SARIF marche car le code scanning est déjà activé (CodeQL l'utilise).
+
+### Ce qui reste ouvert
+
+- Durcir un jour vers un scan **bloquant** supposerait d'abord une image de base
+  **slim/distroless** (réduire les 596 findings à un volume gérable) — hors scope CI.
+- Le build Docker en CI (valider que `docker compose build` passe) n'apporte pas de
+  valeur sécurité ici et reste coûteux ; `lint-docker` (hadolint + `compose config`)
+  couvre déjà la validité des Dockerfiles/compose. Non retenu.
 
 ---
 
