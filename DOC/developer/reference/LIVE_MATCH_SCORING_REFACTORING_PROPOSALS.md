@@ -474,8 +474,28 @@ Voir §6 — **avec un critère chiffré, sinon le legacy ne meurt jamais.**
 | L'app d'incrustation Vue | `sources/app_live_dev/` | la page unique la remplace aussi |
 | Le broker WebSocket personnel | dépôt `laurentgarrigue/broker` | plus personne ne s'y abonne (Mercure a pris le relais) |
 | Les FeuilleMarque V2 et V3 | `sources/admin/FeuilleMarque2.php`, `FeuilleMarque3.php`, `sources/live/v2/*.php` | la console Scoring d'app4 les remplace |
+| Le prototype de feuille de marque Nuxt | `sources/app3/` | idem — même remplaçant (voir ci-dessous) |
 | Les endpoints de relais | `sources/api/` → `/api/wsm/*` | l'onglet WSM disparaît (étape 4) |
 | L'app WSM | `sources/app_wsm_dev/` | idem |
+
+> **Le cas `app3`.** C'est un **prototype**, pas une brique de production : il n'existe **qu'en dev**
+> (`app3.localhost` ; aucune occurrence dans `compose.preprod.yaml` ni `compose.prod.yaml`), et ses
+> derniers commits fonctionnels sont anciens — le reste n'est que du bump de dépendances. Il a déjà
+> été **retiré de Dependabot** pour cette raison.
+>
+> Il relève du chantier **écriture** (§7), pas du chantier lecture : son remplaçant est la **console
+> Scoring d'app4**, pas la page d'incrustation unique. Son sort dépend donc de l'avancement de
+> [PAGE_SCORING.md](../../specs/PAGE_SCORING.md), **pas** de l'étape 3.
+>
+> **On le garde tant que le port n'est pas fini** : c'est le seul endroit où `useTimer.ts`,
+> `useBroadcast.ts` et `useWebSocket.ts` tournent réellement, et PAGE_SCORING.md les désigne
+> explicitement comme sources du port vers app4. Il sert de **référence de comportement** pendant
+> l'implémentation de la console.
+>
+> **Quand il peut mourir** : la console Scoring couvre chrono + shotclock + faits de jeu, et le port
+> des trois composables est validé. Le ménage comprend alors `sources/app3/`, le service `node_app3`
+> de `docker/compose.dev.yaml`, la variable `APP3_DOMAIN_NAME`, les cibles `make app3_*` et les
+> entrées `app3` de `.github/workflows/ci.yml`.
 
 ### Le garde-fou
 
