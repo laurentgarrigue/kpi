@@ -15,10 +15,12 @@ touche-à-tout minimale (app3 + api2)**.
 **Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
-**Statut Phase 5** : 🟡 **workflow prêt, wrapper VPS à installer** — `deploy-preprod.yml`
-(déclencheur `workflow_run` après CI verte sur `develop`, environment `preprod`) livré ;
-le `deploy-wrapper.sh` (hors repo, à copier sur le VPS) + le lock `authorized_keys`
-restent à poser manuellement (voir section Phase 5).
+**Statut Phase 5** : 🟢 **wrapper validé sur le VPS, déclenchement auto à éprouver** —
+`deploy-preprod.yml` (déclencheur `workflow_run` après CI verte sur `develop`,
+environment `preprod`) livré ; `deploy-wrapper.sh` (repo `vps-manager` privé, symlinké
+en `/home/deploy/`) **a déployé la préprod avec succès de bout en bout le 2026-07-23**
+(toutes briques vertes + smoke OK). Reste : éprouver le déclenchement **automatique**
+par GitHub Actions, et (optionnel) le lock `command=` dans `authorized_keys`.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -412,13 +414,38 @@ Nuxt (`if (app._context.provides.usehead) return;`). Validé en scratch : lock r
 en `3.2.3` partout, **0 v2 résiduelle**, `nuxt generate` exit 0 avec sortie complète.
 Lock régénéré via `make app4_npm_update_lock` (vrai `npm install`).
 
-### Validation (à faire une fois le wrapper posé)
+### ✅ Premier déploiement préprod RÉUSSI (2026-07-23)
+
+Après correction des 3 bugs ci-dessus, `./deploy-wrapper.sh preprod 9f827653…` a
+déployé la préprod **de bout en bout** : code à jour, `.htaccess` préservé, 55 fichiers
+changés → briques `apps` + `api2` détectées, app2/app3/app4 générées, composer +
+migrations + cache + worker FrankenPHP recyclé, stack redémarré, **smoke OK**.
+
+Deux améliorations tirées de ce run :
+
+**1. Smoke test avec retry (indispensable).** Un premier run avait rollback sur un
+`404` — l'URL était pourtant bonne (vérifié : `preprod.kayak-polo.info/api2/doc` répond
+200). Le 404 était **transitoire** : FrankenPHP/Symfony n'a pas fini de recharger juste
+après `docker compose restart`. Le smoke réessaie donc maintenant (`SMOKE_RETRIES` ×
+`SMOKE_DELAY`, surchargeables par env).
+⚠️ **Au run réussi, l'API a mis ~25 s (6 essais × 5 s) à répondre 200** — soit pile la
+limite d'alors. Marge portée à **10 × 6 s ≈ 60 s** pour éviter un rollback à tort sur un
+déploiement un peu plus lent. Même logique anti-faux-positif que `health-check.sh`.
+
+**2. Logs concis.** Les `make` (npm ci, nuxt generate, composer) noyaient l'essentiel.
+Leur sortie part désormais dans `$DEPLOY_LOG` ; l'écran n'affiche qu'**une ligne de
+statut par étape** (`✅ app2 généré`…). Le log n'est déversé (40 dernières lignes) **que
+si une étape échoue**. `VERBOSE=1` force l'affichage intégral. Le « … en cours » n'est
+émis que sur un vrai TTY (sortie propre dans les logs GitHub Actions).
+
+### Validation
 
 - [x] Wrapper exécuté à la main sur le VPS : préservation + reset + rollback OK
-- [ ] Merge PR sur `develop` → CI verte → préprod déployée sans clic
+- [x] **Déploiement préprod complet réussi** (toutes briques + smoke)
+- [x] Build app4 réparé (override `@unhead/vue` v3)
+- [ ] Merge PR sur `develop` → CI verte → préprod déployée **sans clic** (déclenchement auto)
 - [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée
 - [ ] Le job `preprod` ne peut PAS lire les secrets `production`
-- [ ] Build app4 réparé (conflit `@unhead/vue`) — sinon tout déploiement touchant app4 rollback
 
 ---
 
