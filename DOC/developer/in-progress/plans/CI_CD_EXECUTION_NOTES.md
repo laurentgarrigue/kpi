@@ -15,6 +15,10 @@ touche-à-tout minimale (app3 + api2)**.
 **Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
+**Statut Phase 5** : 🟡 **workflow prêt, wrapper VPS à installer** — `deploy-preprod.yml`
+(déclencheur `workflow_run` après CI verte sur `develop`, environment `preprod`) livré ;
+le `deploy-wrapper.sh` (hors repo, à copier sur le VPS) + le lock `authorized_keys`
+restent à poser manuellement (voir section Phase 5).
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -284,6 +288,86 @@ côté**. Un job bloquant serait donc rouge en permanence pour rien. Décisions 
 - Le build Docker en CI (valider que `docker compose build` passe) n'apporte pas de
   valeur sécurité ici et reste coûteux ; `lint-docker` (hadolint + `compose config`)
   couvre déjà la validité des Dockerfiles/compose. Non retenu.
+
+---
+
+## Phase 5 — Déploiement continu préprod
+
+**Objectif** : tout commit sur `develop` qui passe la CI est déployé en préprod sans
+intervention.
+
+### Fondations (Phase 0) — ✅ déjà en place (vérifié 2026-07-23)
+
+- GitHub Environments **`preprod`** et **`production`** existent ; chacun porte ses 5
+  secrets (`SSH_HOST`, `SSH_USER`, `SSH_KEY`, `SSH_PORT`, `DEPLOY_PATH`), scopés →
+  un job `preprod` ne peut PAS lire les secrets `production`.
+- `production` a un **required reviewer** (approbation manuelle) + branch policy.
+- User `deploy` sur le VPS (groupe `docker`, clé-only) validé.
+
+### Livré : `deploy-preprod.yml`
+
+Déclencheur **`workflow_run`** : attend que le workflow **"CI"** se termine EN SUCCÈS
+sur `develop`, puis déploie le `head_sha` validé → on ne déploie jamais un état
+CI-rouge. `workflow_dispatch` permet aussi un redéploiement manuel. `environment:
+preprod` charge les secrets SSH. Le SHA est **validé `^[0-9a-f]{40}$`** (via variable
+d'env, jamais interpolé brut dans un `run:`) avant d'être passé au wrapper.
+`concurrency: deploy-preprod` avec `cancel-in-progress: false` (un déploiement à
+moitié appliqué est pire qu'un déploiement en retard).
+
+### À poser MANUELLEMENT sur le VPS (hors repo)
+
+**1. Le wrapper** `deploy-wrapper.sh` — **versionné dans le repo `vps-manager`**
+(privé, github.com/laurentgarrigue/vps-manager), aux côtés de `backup.sh` /
+`health-check.sh`. Toute la config sensible (chemins, domaines) vit dans son `.env`
+(gitignoré), placeholders dans `.env.dist` — même discipline que les autres scripts.
+Points clés :
+
+- **Whitelist ENV** `preprod|production` + **chemin lu depuis `.env`**
+  (`DEPLOY_PATH_PREPROD=/data/kpi_preprod`, `DEPLOY_PATH_PRODUCTION=/data/kpi`) —
+  surtout PAS `/srv/kpi_$ENV` (cf. [[reference_vps_deploy_paths]]).
+- **Snapshot du SHA courant** dans `.last-deploy-sha` AVANT tout changement.
+- **Rebuild sélectif** selon `git diff` : `sources/app*` → `make appN_generate_preprod`,
+  `sources/api2/` → composer+migrations+cache+`api2_restart`, `docker/` →
+  `docker_preprod_rebuild` (sinon `docker_preprod_restart`).
+- **Smoke test** `curl -fsS $SMOKE_URL_PREPROD` (ex. `.../api2/doc`) → **rollback
+  automatique** (`git checkout <sha précédent>` + restart) si KO.
+- Validé en local : `bash -n` OK, les 9 cibles `make` existent, whitelist ENV +
+  regex SHA testées (exit 1 sur entrée invalide).
+- ⚠️ `api2_migrations_migrate` migre sans backup — acceptable en préprod ; pour la
+  **prod (Phase 6)** il faudra un backup DB AVANT la migration (cf. `backup.sh` de
+  vps-manager).
+
+> **Installation VPS** : `vps-manager` est déjà checkouté sur le VPS (backup/health).
+> Le workflow appelle `/home/deploy/deploy-wrapper.sh` (chemin stable) → créer un
+> **symlink** vers le fichier réel du checkout vps-manager :
+> `ln -s <chemin_checkout_vps-manager>/deploy-wrapper.sh /home/deploy/deploy-wrapper.sh`.
+> Puis renseigner les 4 variables `DEPLOY_PATH_*` / `SMOKE_URL_*` dans le `.env` de
+> vps-manager sur le VPS (valeurs réelles ; les placeholders sont dans `.env.dist`).
+
+**2. Verrouiller la clé** dans `~deploy/.ssh/authorized_keys` (reporté depuis Phase 0) :
+
+```
+command="/home/deploy/deploy-wrapper.sh",no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty ssh-ed25519 AAAA...
+```
+
+⚠️ Avec `command=`, les args réels arrivent dans `$SSH_ORIGINAL_COMMAND` — si tu
+poses ce lock, le wrapper doit parser `$SSH_ORIGINAL_COMMAND` au lieu de `$1 $2`.
+**Tant que le lock n'est pas posé**, le workflow appelle directement
+`deploy-wrapper.sh preprod <sha>` (forme actuelle du script). Poser le lock est un
+durcissement optionnel à faire une fois le flux validé.
+
+### Pièges VPS à respecter (cf. [[reference_vps_deploy_paths]])
+
+- **sshd `AllowGroups`** : le user `deploy` doit être dans un groupe autorisé, sinon
+  rejet avant même la clé.
+- **fail2ban actif** : tester avec `-o PreferredAuthentications=publickey -o
+  IdentitiesOnly=yes` pour ne pas bannir l'IP. Logs SSH réels : `journalctl -u ssh`.
+
+### Validation (à faire une fois le wrapper posé)
+
+- [ ] Merge PR sur `develop` → CI verte → préprod déployée sans clic
+- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée
+- [ ] Le job `preprod` ne peut PAS lire les secrets `production`
 
 ---
 

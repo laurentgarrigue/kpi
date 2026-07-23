@@ -1,0 +1,73 @@
+name: Deploy preprod
+
+# Phase 5 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Déploiement continu de la préprod : tout commit qui atterrit sur `develop` ET
+# passe la CI est déployé sur le VPS préprod, sans intervention.
+#
+# Déclencheur : `workflow_run` — on attend que le workflow "CI" se termine EN
+# SUCCÈS sur `develop`, puis on déploie le SHA exact qui a été validé. On ne
+# déploie donc JAMAIS un état qui n'a pas passé la CI.
+#
+# Toute la logique de déploiement vit dans `deploy-wrapper.sh`, versionné dans le
+# repo PRIVÉ `vps-manager` (aux côtés de backup.sh / health-check.sh), PAS dans ce
+# repo : ça évite d'exposer la topologie du serveur, et rend le déploiement testable
+# à la main en SSH. Sur le VPS, `/home/deploy/deploy-wrapper.sh` est un SYMLINK vers
+# le fichier du checkout vps-manager (chemin stable côté workflow, indépendant de
+# l'emplacement du clone). Ce workflow ne fait que déclencher le wrapper avec le SHA.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [develop]
+    types: [completed]
+  # Permet un redéploiement manuel de la préprod sur le dernier develop.
+  workflow_dispatch:
+
+# Least privilege : lecture seule du repo.
+permissions:
+  contents: read
+
+concurrency:
+  # Un seul déploiement préprod à la fois ; on n'annule pas celui en cours (un
+  # déploiement à moitié appliqué est pire qu'un déploiement en retard).
+  group: deploy-preprod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Sur workflow_run : ne déploie que si la CI a RÉUSSI. Sur workflow_dispatch :
+    # github.event.workflow_run est nul → la condition `!= 'failure'` laisse passer.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    # ← charge les secrets SSH_* + DEPLOY_PATH scopés à la préprod. Un job ne peut
+    #   PAS lire les secrets de l'environment `production`.
+    environment: preprod
+    steps:
+      - name: Résoudre le SHA à déployer
+        id: sha
+        env:
+          # workflow_run fournit le SHA validé ; workflow_dispatch retombe sur le
+          # SHA courant de la branche du dispatch.
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          FALLBACK_SHA: ${{ github.sha }}
+        run: |
+          sha="${WORKFLOW_RUN_SHA:-$FALLBACK_SHA}"
+          # Garde-fou anti-injection : un SHA git est exactement 40 hex.
+          if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::SHA invalide: '$sha'"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Déploiement préprod du SHA $sha"
+
+      - name: Déployer via SSH (wrapper VPS)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          # Le wrapper reçoit (env, sha) ; il pilote le chemin via DEPLOY_PATH
+          # côté VPS, pas via l'argument env (voir le wrapper). Les args sont sûrs :
+          # `preprod` est littéral, le SHA est validé 40-hex ci-dessus.
+          script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }}
