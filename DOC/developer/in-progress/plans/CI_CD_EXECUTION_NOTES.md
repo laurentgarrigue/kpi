@@ -363,11 +363,62 @@ durcissement optionnel à faire une fois le flux validé.
 - **fail2ban actif** : tester avec `-o PreferredAuthentications=publickey -o
   IdentitiesOnly=yes` pour ne pas bannir l'IP. Logs SSH réels : `journalctl -u ssh`.
 
+### Premier test à blanc sur le VPS (2026-07-23) — mécanique validée, 2 bugs révélés
+
+Lancé à la main : `./deploy-wrapper.sh preprod <sha>` depuis le checkout vps-manager
+(⚠️ le script fait `cd "$(dirname "$0")"` pour trouver son `.env` → l'invoquer par son
+chemin, pas depuis `/data/kpi_preprod`).
+
+**Ce qui a fonctionné** ✅ : préservation `.htaccess` (`🛡 préservé` / `♻ restauré`),
+`reset --hard` passant outre la dérive `reference.php`, génération app2 + app3, et
+surtout **le rollback automatique** qui a proprement restauré la préprod après échec.
+
+**Bug 1 — `git checkout` ne suffit pas en déploiement auto.** Le working tree préprod
+avait `sources/api2/config/reference.php` modifié (dump de config Symfony **généré**,
+dont l'ordre des annotations `// Default: null` varie → dérive de pur bruit). Un
+`git checkout <sha>` échoue dessus. **Corrigé** : `git reset --hard` + liste
+`PRESERVE_TRACKED` (voir ci-dessus). À noter : garder `reference.php` versionné est le
+bon choix (il documente les options des bundles), mais **ne PAS** ajouter de job CI
+« échoue si le fichier diffère » — la génération n'étant pas déterministe, ce check
+serait rouge aléatoirement.
+
+**Bug 2 — migrations Doctrine : faux échec systématique.**
+`doctrine:migrations:migrate` sortait en ERREUR (`The version "latest" couldn't be
+reached, there are no registered migrations`) car **api2 n'a aucune migration**
+(`sources/api2/migrations/` ne contient qu'un `.gitignore` ; le schéma vient de la
+base legacy partagée). Chaque déploiement aurait donc rollback à tort. **Corrigé** :
+`--allow-no-migration` ajouté à la cible `api2_migrations_migrate` du Makefile.
+
+**Bug 3 (hors CI/CD, préexistant) — le build app4 est cassé.**
+`nuxt generate` app4 échoue : `[MISSING_EXPORT] "legacyPlugins" is not exported by
+@unhead/vue/dist/legacy.mjs`. Cause : **conflit de dépendances** — `@nuxt/ui` exige
+`@unhead/vue@^2.1.15` (encore en 4.10.0, la dernière), `nuxt` 4.5 exige `^3.1.8`. npm
+hisse la **v2** au top-level, le build résout celle-ci → export manquant.
+⚠️ **Vérifié : ce n'est PAS causé par la régénération des locks** (Phase 3) — la
+résolution `@unhead/vue` est identique avant et après ce commit. Le bug était latent
+et n'avait jamais été vu car la CI `build-nuxt` n'avait encore jamais buildé app4.
+
+**Correctif retenu — `overrides` npm dans `sources/app4/package.json`** :
+
+```json
+"overrides": { "@unhead/vue": "^3.2.1", "unhead": "^3.2.1" }
+```
+
+Force la v3 pour tout l'arbre (bumper `@nuxt/ui` ne sert à rien : même sa dernière
+version 4.10.0 demande encore `@unhead/vue@^2.1.15`). **Vérifié sans risque pour
+`@nuxt/ui`** : il n'utilise que `createHead` / `useHead` / `injectHead`, APIs stables
+présentes en v3, et son plugin `runtime/vue/plugins/head.js` s'auto-désactive sous
+Nuxt (`if (app._context.provides.usehead) return;`). Validé en scratch : lock résolu
+en `3.2.3` partout, **0 v2 résiduelle**, `nuxt generate` exit 0 avec sortie complète.
+Lock régénéré via `make app4_npm_update_lock` (vrai `npm install`).
+
 ### Validation (à faire une fois le wrapper posé)
 
+- [x] Wrapper exécuté à la main sur le VPS : préservation + reset + rollback OK
 - [ ] Merge PR sur `develop` → CI verte → préprod déployée sans clic
 - [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée
 - [ ] Le job `preprod` ne peut PAS lire les secrets `production`
+- [ ] Build app4 réparé (conflit `@unhead/vue`) — sinon tout déploiement touchant app4 rollback
 
 ---
 
