@@ -61,7 +61,8 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main \
+hooks
 
 
 
@@ -82,7 +83,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks ## Initialisation complète du projet (env, réseaux)
+init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
 	@echo ""
 	@echo "Initialisation complète terminée!"
 	@echo ""
@@ -102,6 +103,12 @@ init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_netw
 	@echo "  6. Lancez Nuxt: make app2_dev"
 	@echo ""
 	@echo "Note: Pour une préprod/prod, vérifiez APPLICATION_NAME dans docker/.env"
+
+hooks: ## Active les git hooks versionnés (scripts/hooks/) via core.hooksPath
+	@git config core.hooksPath scripts/hooks
+	@chmod +x scripts/hooks/* 2>/dev/null || true
+	@echo "Git hooks activés : core.hooksPath → scripts/hooks"
+	@echo "  - post-commit : auto-bump version app2/app4 (package.json) + api2 (nelmio_api_doc.yaml)"
 
 init_env: ## Initialise le fichier docker/.env depuis docker/.env.dist
 	@if [ ! -f docker/.env ]; then \
