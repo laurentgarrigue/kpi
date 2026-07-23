@@ -5,8 +5,8 @@ depuis la saisie sur le matériel de la table de marque jusqu'à l'incrustation 
 Le mode **complet matériel** est décrit en priorité ; les modes **alternatifs et dégradés** (feuille
 de marque KPI, saisie a posteriori) font l'objet de la **§14**.
 
-> **Documents liés** : le plan de refonte (ce qu'on construit, dans quel ordre, ce qu'on supprime
-> ensuite) est dans
+> **Documents liés** : la stratégie et le plan d'action de la refonte (ce qu'on construit, dans
+> quel ordre, ce qu'on supprime ensuite) sont dans
 > [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md), et la
 > revue critique — principes DRY/SOLID/DDD/TDD, décisions structurantes, périmètre de consolidation
 > du legacy — dans [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
@@ -857,7 +857,7 @@ Le même cache JSON alimente plusieurs consommateurs — ce n'est pas propre à 
 > (`_o`/`_e`/`_s`/HD). C'est **le plus gros gisement d'harmonisation du legacy live**, et la
 > condition de la mort du cache JSON fichier : tant que ces pages existent, la génération de cache
 > reste obligatoire. La refonte les remplace par **une page unique paramétrée** — voir
-> [le plan de refonte, §3.2 et étape 3](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
+> [le plan d'action, §3.2 et lot 4](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 
 Points à retenir :
 - **`app_live` n'est pas 100 % broker** : il lit aussi le cache (score `_match_score`, chrono

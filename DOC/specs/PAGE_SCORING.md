@@ -3,6 +3,8 @@
 > Statut : en cours — Phase 0 terminée, Phase 1 en cours (voir §12 Suivi)
 > ⚠️ **Réaligné sur le plan de refonte live — lire §0 en premier** (l'état live migre vers
 > `scoring_live_*`, la diffusion passe à Mercure). §0 prime sur le reste en cas de contradiction.
+> **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
+> raccourcis paramétrables, relais matériel).
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et le prototype standalone `sources/app3`
@@ -23,7 +25,7 @@ sources de saisie (matériel propriétaire via relais, **console Scoring**, mode
 posteriori) écrivent le **même état, dans le même format**, par **une seule porte d'entrée**
 (`ScoringController` d'api2). Un publieur diffuse les changements via **Mercure** ; les incrustations
 lisent l'état au démarrage puis suivent Mercure. **La console Scoring de cette spec est la première
-source à alimenter ce nouveau modèle — c'est l'étape 1 du plan.**
+source à alimenter ce nouveau modèle — c'est le cœur des lots 1 et 3 du plan.**
 
 ### 0.1 Ce qui change (3 points)
 
@@ -82,7 +84,7 @@ Mercure est lent ou tombé, l'écriture d'état n'est ni bloquée ni perdue, et 
 
 **Le worker.** On **étend le worker api2 existant** `app:event-cache-worker`
 (`EventCacheWorkerCommand` / `EventCacheService`, déjà présents) pour drainer l'outbox — **pas** un
-nouveau paradigme (pas de Symfony Messenger). Cf. plan §étape 2.
+nouveau paradigme (pas de Symfony Messenger). Cf. plan lot 2.
 
 **Ce que deviennent les 3 `// TODO (Phase 3): generate broadcast cache here`** du `ScoringController` :
 ils ne génèrent **plus de fichiers JSON**. Ils **insèrent dans `scoring_outbox`**. La parité cache
@@ -150,7 +152,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 |---|---|---|
 | `id` | int (PK) | |
 | `id_match` | int | match |
-| `kind` | enum `GAME`/`SHOTCLOCK`/`PENALTY` | type d'horloge |
+| `kind` | enum `GAME`/`SHOTCLOCK`/`PENALTY`/`BREAK` | type d'horloge (`BREAK` = pause inter-périodes indicative, cf. §7.5) |
 | `team` | enum `A`/`B`/NULL | équipe (pénalités) ; NULL pour le chrono de jeu et le shotclock |
 | `slot` | tinyint | pour les pénalités : **1 ou 2** (au plus 2 exclusions concurrentes **par équipe**) ; `0`/NULL pour `GAME` et `SHOTCLOCK` |
 | `id_player` | varchar/NULL | joueur exclu (licence), si applicable |
@@ -160,8 +162,8 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 | `started_at` | datetime(3)/NULL | horodatage **client** du dernier `run` (NULL si arrêté), cf. plan §4.2 |
 | `running` | bool | en marche / arrêté |
 
-> **Cardinalité (règle métier, cf. §7.4).** Une seule ligne `GAME` et une seule `SHOTCLOCK` par
-> match. Pour les pénalités : **au plus 2 par équipe** (`slot` ∈ {1, 2}), soit **4 au maximum au
+> **Cardinalité (règle métier, cf. §7.4).** Une seule ligne `GAME`, une seule `SHOTCLOCK` et au
+> plus une `BREAK` par match. Pour les pénalités : **au plus 2 par équipe** (`slot` ∈ {1, 2}), soit **4 au maximum au
 > total** (2×A + 2×B). Ce n'est **pas** un plafond arbitraire mais une **contrainte de jeu** : une
 > équipe présente 5 joueurs à l'engagement et **ne peut descendre sous 3** sur le terrain — donc au
 > plus 2 exclusions concurrentes par équipe. Contrainte d'unicité recommandée : `UNIQUE(id_match,
@@ -183,7 +185,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 | `motif` | varchar/NULL | motif (cartons) |
 | `created_at` | datetime | ordre d'insertion |
 
-**`scoring_outbox`** — file de diffusion (plan §étape 2).
+**`scoring_outbox`** — file de diffusion (plan lot 2).
 
 | Colonne | Type | Rôle |
 |---|---|---|
@@ -229,10 +231,25 @@ Le découpage §8 reste, avec ces **substitutions** :
   reste en Phase 3 : le matériel devient **une source de plus** écrivant le même `scoring_live_*`.
 - Le reste (Phase 2 diffusion locale `BroadcastChannel`/scoreboard, Phase 4 offline) est inchangé.
 
-> **Ordre à respecter (plan §étape 1 avant étape 4).** L'état canonique `scoring_live_*` (Point A)
+> **Ordre à respecter (plan : lot 1 avant lot 5).** L'état canonique `scoring_live_*` (Point A)
 > est le **prérequis** de tout le reste : c'est lui qui permet à Mercure de diffuser un état unique
 > et au futur relais matériel de se brancher sans perte. À faire **avant** de toucher au transport
 > matériel.
+
+### 0.8 Décisions complémentaires (2026-07-23)
+
+Tranchées lors du passage du plan en **stratégie + plan d'action**
+([plan §4.7–§4.12](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)). Les
+sections concernées de cette spec ont été mises à jour ; ce tableau sert d'index :
+
+| Décision | Résumé | Sections mises à jour |
+|---|---|---|
+| **PWA installable d'abord** | La console est une PWA installable dès sa livraison (manifest + service worker + app shell) ; la saisie reste online-first, la **file d'écritures offline** reste en dernière phase | §3, §8 (Phases 2 et 4) |
+| **Pauses inter-périodes** | 3 min entre `M1`–`M2`, 3 min entre `M2`–`P1`, 1 min entre chaque prolongation — décomptes **indicatifs**, durées dans `ScoringConfig`. **Pas de temps mort d'équipe** | §6.2, §7.5, §0.5 (horloge `BREAK`) |
+| **Shotclock : départ manuel + pause indépendante** | Jamais lancé par le chrono ; une fois lancé, suit le chrono (pause auto) ; pause manuelle indépendante ; **départ/reprise ≠ reset** (resets 60 s / 40 s = commandes distinctes) | §6.5, §10.9 |
+| **Raccourcis paramétrables** | Préférence par poste/utilisateur ; défauts : `Espace` chrono, `Entrée` départ/reprise shotclock, `0` pause shotclock, resets 60/40 sur touches dédiées | §6.5 |
+| **Canaux d'affichage** | Confirmé : **BroadcastChannel** pour les fenêtres locales du même poste, **Mercure** pour les écrans distants et incrustations | §6.5 |
+| **Relais matériel** | Un seul composant relais Stomp (brut, traduction serveur), déployable **côté serveur KPI** (site avec redirection de port vers la passerelle) **ou en boîtier local** (optionnel, selon le site) | plan §4.7 ; impacte `useHardwareScoring` (Phase 3) |
 
 ---
 
@@ -310,7 +327,7 @@ KPI est de **tendre vers le zéro papier** :
 
 | Sujet | Décision |
 |---|---|
-| Mode | **Online-first** (api2 + WebSocket). Offline/PWA **non bloquant** → dernière phase. |
+| Mode | **Online-first** (api2 + Mercure), **PWA installable dès la livraison** (manifest + service worker + app shell, cf. §0.8). La **file d'écritures offline** reste non bloquante → dernière phase. |
 | Usages | Direct **et** post-match (saisie/correction + validation/verrouillage par profil). |
 | Captation matériel | Mode **Hardware Scoring** (panneau propriétaire via relais), **source de plus** écrivant le même `scoring_live_*` (cf. §0.2). Branché en Phase 3. |
 | Monétisation | À explorer plus tard. **Aucun Stripe/paywall maintenant.** Exigence unique : isolation **par mandat/organisation côté serveur** + gating par rôle via un composable unique. |
@@ -425,7 +442,7 @@ Contenu (à compléter à l'implémentation) :
 | Clé | Valeur(s) | Aujourd'hui | Cf. |
 |---|---|---|---|
 | `periodDurations` | durées par période (s) | `{ M1:600, M2:600, P1:180, P2:180, TB:180 }` | §6.4, §7.5 |
-| `halftimeDuration` | chrono de mi-temps indicatif (s) | `180` (3 min) | §7.5 |
+| `breakDurations` | pauses inter-périodes indicatives (s) : `{ halftime, beforeOvertime, betweenOvertimes }` | `{ halftime: 180, beforeOvertime: 180, betweenOvertimes: 60 }` | §7.5, §0.8 |
 | `shotclockDurations` | `{ full, offensiveRebound }` (s) | `{ full: 60, offensiveRebound: 40 }` | §6.5 |
 | `shotclockOffensiveReboundEnabled` | le reset 40 s est-il actif | `false` jusqu'à l'entrée en vigueur | §6.5 |
 | `allowTimerAdjustWhileRunning` | ajustement fin du chrono **autorisé chrono en marche** (= synchro avec un chrono Hardware Scoring) | `false` (sinon : ajustement seulement à l'arrêt) | §6.4 |
@@ -603,7 +620,9 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   `kpi_channel`, contrat `timer/timer_status/shotclock/period/teams/scores/penA/penB`).
   **BroadcastChannel est same-origin** → on **porte le markup** de `scoreboard.php` +
   `v2/scoreboard.js` en routes Nuxt (`scoreboard.vue`/`shotclock.vue`), ouvertes même origine
-  via `window.open`.
+  via `window.open`. **Décision confirmée (§0.8)** : le canal **local** (fenêtres du même poste)
+  reste BroadcastChannel — zéro réseau, zéro latence, fonctionne sans Internet ; les écrans
+  **distants** et incrustations consomment **Mercure**.
 - **Shotclock — temps d'action de but (Phase 2)** : compte à rebours, buzzer à 0
   (`targetAchieved`), suit le chrono (pause quand le chrono s'arrête), **caché quand le temps de
   jeu restant est inférieur au shotclock** (`shotClockShow`), affiché `--` sinon. Ajustements
@@ -624,26 +643,44 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   > s'applique, seul le **60 s** est utilisé (`shotclockOffensiveReboundEnabled = false` → le 40 s
   > reste masqué/désactivé jusqu'à l'entrée en vigueur).
 
-  > **Déclenchement du shotclock indépendant du chrono principal (important).** Au coup d'envoi
-  > de **chaque période**, **le chrono principal démarre mais le shotclock NE démarre PAS** : il
-  > reste à l'arrêt tant qu'**aucune équipe n'a pris la première possession**. Le shotclock n'est
-  > lancé qu'**au premier reset** (déclenché par la **touche de reset du shotclock** quand une
-  > équipe récupère le ballon) — **sans bouton de démarrage supplémentaire** : le reset _est_ le
-  > démarrage. Conséquence sur le modèle (vs legacy, où le shotclock suivait directement le start
-  > du chrono) : découpler l'état « shotclock armé/lancé » de l'état « chrono lancé ». Tant que le
-  > shotclock n'a pas été lancé pour la période, l'afficher **inactif** (`--`), même chrono en
-  > marche. Ensuite, il **suit le chrono** (pause/reprise) normalement.
+  > **Pilotage du shotclock — départ manuel, suivi auto, pause indépendante (décision
+  > 2026-07-23, cf. §0.8 et plan §4.11).** Au coup d'envoi de **chaque période**, **le chrono
+  > principal démarre mais le shotclock NE démarre PAS** : il reste **inactif** (`--`), même
+  > chrono en marche, tant que l'opérateur ne l'a pas lancé (première possession). Le shotclock a
+  > **trois commandes distinctes** :
+  > - **Départ / reprise** : lance ou reprend **la valeur affichée** — ce n'est **jamais** un
+  >   reset ;
+  > - **Pause** : suspend le shotclock **seul**, même chrono en marche (reprise via
+  >   « départ/reprise ») ;
+  > - **Reset 60 s** / **reset 40 s** : rechargent la valeur (engagement / rebond offensif) sans
+  >   changer l'état marche/arrêt.
+  >
+  > Une fois lancé, le shotclock **suit le chrono principal** : arrêt du chrono ⇒ pause
+  > automatique, reprise du chrono ⇒ reprise automatique — en plus de sa pause manuelle.
+  > Conséquence sur le modèle (vs legacy, où le shotclock suivait directement le start du
+  > chrono) : découpler l'état « shotclock lancé » de l'état « chrono lancé », et distinguer la
+  > **pause manuelle** (ne repart pas quand le chrono repart, il faut « départ/reprise ») de la
+  > **pause suiveuse** (repart avec le chrono).
 
-- **Raccourcis clavier (Phase 2, avec le shotclock)** : `Espace` = run/stop du chrono,
-  `0` = **reset/lancement shotclock à 60 s** (engagement — c'est aussi ce qui **arme** le
-  shotclock en début de période, cf. ci-dessus), **`.` (point du pavé numérique) = reset/lancement
-  shotclock à 40 s** (rebond offensif ; choisi pour sa **proximité du `0`** sur le pavé numérique),
-  `+` / `−` = shotclock ±1 s (legacy fm3_C.js). Neutralisés quand le focus est dans un champ de
-  saisie (temps de fait de jeu, commentaires…).
+- **Raccourcis clavier (Phase 2, avec le shotclock) — paramétrables** (décision 2026-07-23,
+  cf. §0.8) : les touches sont une **préférence par poste/utilisateur** (écran de réglage dans la
+  console, persistée en localStorage), avec ces valeurs par défaut :
+
+  | Action | Touche par défaut |
+  |---|---|
+  | Chrono principal : départ / arrêt | `Espace` |
+  | Shotclock : départ / reprise (**jamais** de reset) | `Entrée` |
+  | Shotclock : pause | `0` |
+  | Shotclock : reset 60 s (engagement) | `.` (pavé numérique, proche du `0`) — proposé, à valider |
+  | Shotclock : reset 40 s (rebond offensif) | `*` — proposé ; actif seulement si `shotclockOffensiveReboundEnabled` |
+  | Shotclock : ±1 s | `+` / `−` (legacy fm3_C.js) |
+
+  Neutralisés quand le focus est dans un champ de saisie (temps de fait de jeu, commentaires…).
 - **Arrêt du chrono sur but (option, Phase 2)** : paramètre `arret_chrono_sur_but` (legacy) — un
   but déclenche un stop chrono automatique (temps mort). **Désactivé par défaut** (l'était aussi
   en legacy), à exposer comme option.
-- **WebSocket broker (Phase 3)** : port de `app3/composables/useWebSocket.ts` (format
+- ~~**WebSocket broker (Phase 3)**~~ — **caduc, cf. §0.3** (la diffusion cible est Mercure ;
+  conservé pour mémoire) : port de `app3/composables/useWebSocket.ts` (format
   `{p:"eventId_terrain", t:type, v:value}`). Mirroring des diffusions vers le broker →
   incrustations `/live` + clients distants. Implémenter en parallèle la **génération des JSON de
   diffusion** (`live/cache/{idMatch}_match_{global,score,chrono}.json` — les
@@ -669,11 +706,14 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   > événement, ou par compétition** — via un réglage exposé côté api2 (et non plus un fichier de
   > cache). Non tranché ; le MVP Phase 3 peut d'abord **consommer le JSON existant** pour ne rien
   > casser, l'évolution venant ensuite.
-- **Hardware Scoring (Phase 3)** : `useHardwareScoring.ts` reçoit les live datas du matériel
-  (panneau propriétaire) via le broker (WSM) et **alimente le `scoringStore`** au lieu
-  de la saisie manuelle. Même store, même diffusion ; seule la **source** des données change
-  (humain vs matériel). Un sélecteur de mode (« Scoring » / « Hardware Scoring ») bascule la
-  source.
+- **Hardware Scoring (Phase 3, réaligné — cf. §0.8 et plan §4.7/lot 5)** : le matériel est **une
+  source de plus** écrivant le même `scoring_live_*` **côté serveur** (relais Stomp — déployé sur
+  le serveur KPI ou en boîtier local selon le site — → ingestion api2 → traduction serveur). **La
+  captation ne passe plus par le navigateur.** Côté console, le mode « Hardware Scoring » devient
+  une **supervision** : `useHardwareScoring.ts` bascule la **source active** du terrain
+  (promotion, plan §4.1), affiche l'état reçu (GET /state + Mercure) et alerte en cas de
+  divergence base/panneau ; la saisie manuelle est désactivée tant que le matériel est la source
+  active.
 
 ### 6.6 i18n
 
@@ -724,7 +764,7 @@ Découpage indicatif (à affiner à l'implémentation) :
 ## 7. Déroulement d'un match (workflow de la table de marque)
 
 > Cette section décrit le **parcours fonctionnel attendu** de la console Scoring, calqué sur la
-> feuille de marque en ligne V3 (FMV3) et complété par les nouveautés (chrono de mi-temps,
+> feuille de marque en ligne V3 (FMV3) et complété par les nouveautés (pauses inter-périodes,
 > prolongations « but en or », alertes cartons). **Principe directeur : la page Scoring doit
 > exposer, d'une manière ou d'une autre, toutes les informations présentes sur le PDF de
 > contrôle `FeuilleMatchMulti.php`** (entête match, officiels, joueurs A/B, détail des
@@ -933,9 +973,13 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
 
 - **Match de classement (type C)** : **2 mi-temps de 10 minutes** (`M1`/`M2`), durée
   **paramétrable** (`periodDurations`, défaut 600 s). Égalité possible (pas de prolongation).
-- **Chrono de mi-temps (nouveauté)** : à la fin du temps de **`M1`**, **signal sonore** (buzzer),
-  puis déclenchement automatique d'un **chrono de mi-temps de 3 minutes**. Ce décompte est
-  **indicatif** pour l'arbitre (repère pour reprendre), il ne bloque pas.
+- **Pauses inter-périodes (nouveauté, généralisée — décision 2026-07-23, cf. §0.8)** : à la fin
+  du temps d'une période, **signal sonore** (buzzer), puis déclenchement automatique d'un
+  **chrono de pause indicatif** (repère pour l'arbitre pour reprendre, ne bloque rien) :
+  **3 min** entre `M1` et `M2` (mi-temps), **3 min** entre `M2` et `P1` (avant prolongations),
+  **1 min** entre chaque prolongation (`P1`→`P2`, `P2`→`P3`, …). Durées dans
+  `ScoringConfig.breakDurations` (cf. §6.2), à terme paramétrables par compétition. **Pas de
+  temps mort d'équipe** en kayak-polo : rien d'autre à modéliser de ce côté.
 - **Match éliminatoire (type E)** : en cas d'**égalité à la fin du temps réglementaire**,
   enchaîner **autant de prolongations que nécessaire** jusqu'au **premier but marqué (but en or)**
   → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations dépendante de la
@@ -960,8 +1004,9 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
   l'expose que si la compétition l'autorise.
 - États de période à gérer dans le store : `M1`/`M2` (mi-temps), **prolongations non bornées**
   (série **`P{n}`** — `P1`, `P2`, `P3`… **sans plafond**, cf. §0.6 qui tranche ce codage), `TB`
-  (tirs au but, **optionnel par compétition**) ; le **chrono de mi-temps** est un état dérivé
-  (countdown indicatif entre `M1` et `M2`), pas un code de période persisté.
+  (tirs au but, **optionnel par compétition**) ; les **pauses inter-périodes** sont des états
+  dérivés (countdown indicatif entre deux périodes, porté par l'horloge `BREAK` de
+  `scoring_live_clock`, cf. §0.5), pas des codes de période persistés.
 
 > **Codage tranché (cf. §0.6).** L'ancien « à trancher (`P{n}` ou `OT{n}`) » est **décidé** : c'est
 > **`P{n}`**, porté par `scoring_live_state.periode` (varchar, pas d'enum figé) — donc **pas de
@@ -1040,17 +1085,22 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
   clavier-first** (cf. §7.1) ; **sélecteurs statut/période en badge cyclique** (calqués sur
   `competitions/index.vue`, confirmation + durée non standard à part, cf. §7.1).
 - **Phase 2 — Diffusion locale** : `useBroadcast` + `useTimer`, `scoreboard.vue` +
-  `shotclock.vue`, **UI pénalités**, **shotclock** (ajustements + reset), **raccourcis clavier**
-  (Espace/0/+/−), **buzzer / test son**, **arrêt chrono sur but** (option), couleurs/drapeaux
-  équipes, « Match suivant… » (cf. §6.5, §7.8).
+  `shotclock.vue`, **UI pénalités**, **shotclock nouveau modèle** (départ manuel, pause
+  indépendante, suivi auto, départ/reprise ≠ resets 60/40 — cf. §6.5), **pauses inter-périodes**
+  (cf. §7.5), **raccourcis clavier paramétrables** (défauts Espace/Entrée/0 — cf. §6.5),
+  **buzzer / test son**, **arrêt chrono sur but** (option), couleurs/drapeaux équipes,
+  « Match suivant… » (cf. §7.8), **coquille PWA installable** (manifest + service worker + cache
+  de l'app shell, saisie toujours online-first — cf. §0.8).
 - **Phase 3 — Diffusion Mercure + Hardware Scoring** (réaligné, cf. §0.3/§0.4) : chaque écriture
   d'état dépose dans **`scoring_outbox`** → le **worker api2 existant** (`app:event-cache-worker`,
   étendu) **publie sur Mercure** ; la page d'incrustation unique lit `GET /state` puis suit Mercure ;
   `useHardwareScoring` branche le **matériel comme source de plus** sur `scoring_live_*`.
   ~~génération des JSON `live/cache/*` (parité `CacheMatch`) + broker WebSocket~~ = **abandonné**
   (le cache fichier et le broker personnel sont supprimés par le plan de refonte).
-- **Phase 4 — Offline/PWA (reporté)** : file d'attente d'écritures IndexedDB derrière le store,
-  service worker. Uniquement après un online-first solide.
+- **Phase 4 — Offline complet (reporté)** : file d'attente d'écritures IndexedDB derrière le
+  store + resynchronisation à la reconnexion. La **coquille PWA** (installable) est déjà livrée
+  en Phase 2 (cf. §0.8) ; cette phase n'ajoute que la couche de synchro. Uniquement après un
+  online-first solide.
 
 ## 9. Fichiers critiques
 
@@ -1092,11 +1142,12 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
    `event{idEvent}_network.json` (présence = broker actif, 404 = fallback local) ; **évolution à
    évaluer** : porter ce réglage dans app4 (par événement ou par compétition) plutôt qu'un fichier
    de cache (cf. §6.5). Phase 3 : consommer l'existant d'abord.
-9. **Double shotclock 60 s / 40 s + déclenchement indépendant** (évolution réglementaire saison
-   prochaine, cf. §6.5) — écart de modèle vs legacy (le shotclock ne suit plus automatiquement le
-   start du chrono : il est **armé au premier reset** de la période). Impacte `useTimer`, le store
-   (deux durées + état « armé »), l'UI (double reset) et les raccourcis clavier (touche dédiée au
-   reset 40 s). À cadrer en Phase 2 ; durées à terme paramétrables par compétition.
+9. **Shotclock nouveau modèle** (cf. §6.5, décisions §0.8) — écart de modèle vs legacy : départ
+   manuel (ne suit plus le start du chrono), pause manuelle indépendante distincte de la pause
+   suiveuse, départ/reprise ≠ reset, double reset 60 s / 40 s (évolution réglementaire saison
+   prochaine). Impacte `useTimer`, le store (deux durées + états « lancé » / « pause manuelle »),
+   l'UI et les raccourcis paramétrables. À cadrer en Phase 2 ; durées à terme paramétrables par
+   compétition.
 10. **Reprise / persistance partielle** (cf. §6.4 « Reprise d'un match en cours ») — le chrono
     principal est restauré depuis `kp_chrono` (failover terminal OK), mais **shotclock et
     pénalités ne sont pas persistés** → re-saisie après reprise. **Évolution future à évaluer** :
@@ -1159,7 +1210,7 @@ jeter** : la structure est bonne, seule la couche de stockage et deux détails s
 | Brique développée | Conforme ? | Action |
 |---|---|---|
 | UI complète (`scoring.vue`, `components/scoring/*`, store, permissions, i18n, mode direct/post-match, historique symétrique, badges cycliques) | ✅ **Oui** | Indépendante du stockage (parle à des endpoints). **Aucune reprise.** |
-| `ScoringController` = porte d'entrée unique (auth JWT `^/admin`, scope mandat, journal `kp_journal`) | ✅ **Oui** | C'est l'étape 1 du plan. **Conservé tel quel.** |
+| `ScoringController` = porte d'entrée unique (auth JWT `^/admin`, scope mandat, journal `kp_journal`) | ✅ **Oui** | C'est le lot 1 du plan. **Conservé tel quel.** |
 | Modèle d'horloge (`max_time`/`start_time`/`start_time_server` + restauration serveur) | ✅ **Oui**, partiel | Le modèle est le bon (plan §3.1). **Le transposer** de `kp_chrono` vers `scoring_live_clock` et **l'étendre** au shotclock + pénalités (≤ 2 par équipe, §0.5). |
 | Écritures `gameParam`→`kp_match`, `gameEvent`→`kp_match_detail`, `gameTimer`→`kp_chrono` | ❌ **Non** | **Re-router** vers `scoring_live_*` + consolidation fin de match (§0.2). Endpoints/payloads inchangés → UI intacte. |
 | Type `Period = 'M1'\|'M2'\|'P1'\|'P2'\|'TB'` (front) + `Periode` figé | ❌ **Non** | Plafonne à P2. **Remplacer** par `P{number}` non borné (§0.6). |
