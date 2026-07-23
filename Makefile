@@ -916,7 +916,11 @@ api2_migrations_diff: ## Génère une migration Doctrine pour API2 (détecte les
 
 api2_migrations_migrate: ## Exécute les migrations Doctrine pour API2
 	@echo "Exécution des migrations Doctrine pour API2 (container: $(API2_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction
+	@# --allow-no-migration : api2 n'a AUCUNE migration enregistrée (migrations/ est
+	@# vide, le schéma vient de la base legacy partagée). Sans cette option, Doctrine
+	@# sort en ERREUR ("The version latest couldn't be reached"), ce qui ferait
+	@# échouer — et rollback — chaque déploiement automatisé (Phase 5).
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 	@echo "Migrations exécutées pour API2"
 
 api2_assets_install: ## Installe les assets pour API2
