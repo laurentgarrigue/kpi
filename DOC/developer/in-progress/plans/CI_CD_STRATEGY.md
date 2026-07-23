@@ -14,7 +14,7 @@
 > | **2** Sécurité statique | ✅ Éprouvée — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks, **CodeQL** (JS/TS), **Trivy config** ; validée par une épreuve touche-à-tout (17 checks verts) ; php-cs-fixer reporté |
 > | **3** Build & smoke | ✅ Éprouvée — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) verts sur PR réelle |
 > | **3bis** Trivy image | 🟢 En cours — `trivy-image.yml` scanne les images de base (php-apache/frankenphp/mariadb) ; **non bloquant → onglet Security** (596 HIGH/CRITICAL amont non actionnables), cron hebdo + manuel. Build Docker écarté (couvert par lint-docker) |
-> | **5** CD préprod | 🟡 Workflow `deploy-preprod.yml` prêt (`workflow_run` après CI verte, env `preprod`) ; **`deploy-wrapper.sh` à copier sur le VPS** + lock `authorized_keys` (durcissement optionnel) |
+> | **5** CD préprod | 🟢 Workflow `deploy-preprod.yml` + `deploy-wrapper.sh` (repo `vps-manager`) : **déploiement préprod complet réussi à la main le 2026-07-23** (smoke avec retry, logs concis). Reste : éprouver le déclenchement **auto** par Actions |
 > | **4, 6-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
