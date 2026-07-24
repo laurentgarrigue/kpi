@@ -1,12 +1,16 @@
 name: Deploy preprod
 
 # Phase 5 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
-# Déploiement continu de la préprod : tout commit qui atterrit sur `develop` ET
-# passe la CI est déployé sur le VPS préprod, sans intervention.
+# Déploiement continu de la préprod : tout commit qui atterrit sur `develop` est
+# déployé sur le VPS préprod, sans intervention.
 #
-# Déclencheur : `workflow_run` — on attend que le workflow "CI" se termine EN
-# SUCCÈS sur `develop`, puis on déploie le SHA exact qui a été validé. On ne
-# déploie donc JAMAIS un état qui n'a pas passé la CI.
+# Déclencheur : `push` sur `develop`. La garantie « code testé » est STRUCTURELLE :
+# `develop` exige une PR à CI verte (ruleset), donc un commit ne peut y arriver que
+# validé — inutile de re-jouer la CI (pas de 2e run). Filet final : le smoke test du
+# wrapper + rollback auto protègent la préprod même en cas de push exceptionnel.
+# On a délibérément abandonné le déclencheur `workflow_run` : il n'écoutait que les CI
+# qui se terminent sur develop, or `ci.yml` ne tourne que sur `pull_request` (jamais
+# sur push develop) → il ne se déclenchait JAMAIS. Voir le journal d'exécution.
 #
 # Toute la logique de déploiement vit dans `deploy-wrapper.sh`, versionné dans le
 # repo PRIVÉ `vps-manager` (aux côtés de backup.sh / health-check.sh), PAS dans ce
@@ -16,10 +20,8 @@ name: Deploy preprod
 # l'emplacement du clone). Ce workflow ne fait que déclencher le wrapper avec le SHA.
 
 on:
-  workflow_run:
-    workflows: ["CI"]
+  push:
     branches: [develop]
-    types: [completed]
   # Permet un redéploiement manuel de la préprod sur le dernier develop.
   workflow_dispatch:
 
@@ -35,9 +37,6 @@ concurrency:
 
 jobs:
   deploy:
-    # Sur workflow_run : ne déploie que si la CI a RÉUSSI. Sur workflow_dispatch :
-    # github.event.workflow_run est nul → la condition `!= 'failure'` laisse passer.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     # ← charge les secrets SSH_* + DEPLOY_PATH scopés à la préprod. Un job ne peut
     #   PAS lire les secrets de l'environment `production`.
@@ -46,12 +45,11 @@ jobs:
       - name: Résoudre le SHA à déployer
         id: sha
         env:
-          # workflow_run fournit le SHA validé ; workflow_dispatch retombe sur le
-          # SHA courant de la branche du dispatch.
-          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
-          FALLBACK_SHA: ${{ github.sha }}
+          # push sur develop comme workflow_dispatch : github.sha = le HEAD de develop
+          # à déployer, dans les deux cas.
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          sha="${WORKFLOW_RUN_SHA:-$FALLBACK_SHA}"
+          sha="$COMMIT_SHA"
           # Garde-fou anti-injection : un SHA git est exactement 40 hex.
           if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
             echo "::error::SHA invalide: '$sha'"
