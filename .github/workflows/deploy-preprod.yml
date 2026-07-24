@@ -65,7 +65,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          # Le wrapper reçoit (env, sha) ; il pilote le chemin via DEPLOY_PATH
-          # côté VPS, pas via l'argument env (voir le wrapper). Les args sont sûrs :
-          # `preprod` est littéral, le SHA est validé 40-hex ci-dessus.
+          # `timeout` = délai d'établissement de la connexion SSH. Le défaut (30s)
+          # produisait des `dial tcp: i/o timeout` transitoires (réseau runner↔VPS
+          # intermittent) alors que le déploiement suivant repassait. On l'élargit.
+          # `command_timeout` couvre toute la durée du wrapper (generate + composer).
+          timeout: 60s
+          command_timeout: 15m
           script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }}
