@@ -16,12 +16,22 @@ touche-à-tout minimale (app3 + api2)**.
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
 **Statut Phase 5** : ✅ **CD préprod OPÉRATIONNEL** — `deploy-preprod.yml` (déclencheur
-`workflow_run` après CI verte sur `develop`, environment `preprod`) + `deploy-wrapper.sh`
-(repo `vps-manager` privé, symlinké en `/home/deploy/`). **Déploiement préprod complet
-réussi via GitHub Actions le 2026-07-24** (SSH → wrapper → git → restart → smoke OK).
-Il a fallu franchir une cascade de 6 pièges d'infra (voir section « pièges Phase 5 »).
-Reste : éprouver le déclenchement 100 % **auto** (merge develop, pas juste Run workflow)
-et un run touchant les apps (rebuild app*) ; lock `command=` optionnel.
+**`push: develop`**, environment `preprod`) + `deploy-wrapper.sh` (repo `vps-manager`
+privé, symlinké en `/home/deploy/`). **Déploiement préprod complet réussi via GitHub
+Actions le 2026-07-24** (SSH → wrapper → git → restart → smoke OK).
+Il a fallu franchir une cascade de 6 pièges d'infra (voir section « pièges Phase 5 »)
+**+ un 7e** : le déclencheur (voir ci-dessous).
+Reste : éprouver le déclenchement 100 % auto sur un vrai merge, et un run touchant les
+apps (rebuild app*) ; lock `command=` optionnel.
+
+> **7e piège — `workflow_run` ne se déclenchait jamais.** Le déclencheur initial était
+> `workflow_run` (CI terminée sur develop). Mais `ci.yml` ne tourne que sur
+> `pull_request`, **jamais sur `push develop`** → aucune CI ne se termine sur develop →
+> `deploy-preprod` ne partait pas après un merge. **Fix** : déclencheur = **`push: develop`**,
+> sans re-run CI. La garantie « code testé » devient **structurelle** : `develop` exige
+> désormais une **PR à CI verte** (règle ajoutée au ruleset develop, 2026-07-24) — un
+> commit ne peut y arriver que validé. Filet final : smoke test + rollback du wrapper.
+> `github.sha` (HEAD de develop) est le commit déployé, en push comme en dispatch.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
