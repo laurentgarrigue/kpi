@@ -1,111 +1,28 @@
 #!/usr/bin/env bash
-# Auto-bump version after each commit, per brique touchée par le commit.
-#   - app2 / app4 → champ "version" de package.json (+ package-lock.json en phase)
-#   - api2        → champ info.version de config/packages/nelmio_api_doc.yaml
-#                   (affiché sur /api2/doc ; pas de package.json côté Symfony)
+# post-commit — volontairement NO-OP.
 #
-# Type de bump, déduit du message de commit (parser TOLÉRANT au format libre du
-# repo : squash-merge « feature/… », préfixes « Feat: », « Fix: », etc.) :
-#   - feat / feature  (feat:  feat/  feature:  feature/ , casse indifférente) → minor
-#   - tout le reste (fix, chore, docs, ci…)                                   → patch
+# Le bump automatique de version NE se fait plus ici. Il vivait dans ce hook
+# post-commit local, mais c'était structurellement inadapté au workflow du repo :
 #
-# Garde /tmp/kpi-version-bump contre la récursion (le hook recommet lui-même).
+#   - `develop` n'accepte que des PR (ruleset `pull_request`) → on ne commit
+#     jamais directement dessus ;
+#   - le squash-merge est exécuté par GitHub côté serveur, où AUCUN hook local ne
+#     tourne ;
+#   - les PR ouvertes via l'UI GitHub, `gh`, ou Dependabot ne déclenchent aucun
+#     hook local non plus.
 #
-# ─── Installation ───────────────────────────────────────────────────────────
-# Ce hook est VERSIONNÉ ici et activé via `core.hooksPath` (et NON en copiant
-# dans .git/hooks/). Une seule commande, idempotente :
-#     make hooks        # ← câble git sur scripts/hooks/ (fait aussi par `make init`)
-# Vérifier : `git config core.hooksPath` doit renvoyer `scripts/hooks`.
+# Résultat : api2 n'était jamais bumpé (aucun commit local ne l'avait touché
+# depuis l'ajout de la logique), et le mécanisme dépendait de la discipline.
+#
+# Le bump est désormais porté par un workflow GitHub Actions qui s'exécute APRÈS
+# chaque push sur `develop` (donc après tout merge, quelle qu'en soit l'origine) :
+#
+#     .github/workflows/version-bump.yml
+#
+# Il détecte les briques touchées (app2/app4/api2), bumpe les fichiers de version
+# et ouvre une PR « chore: bump versions » (auto-merge si activé sur le repo).
+#
+# Ce fichier reste présent (câblé via `core.hooksPath`, cf. `make hooks`) pour ne
+# pas casser l'installation, mais ne fait plus rien.
 
-GUARD="/tmp/kpi-version-bump"
-[ -f "$GUARD" ] && exit 0
-
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-COMMIT_MSG="$(git log -1 --pretty=%s)"
-
-# Determine bump type from commit message (tolérant : « : » OU « / » après le mot,
-# n'importe où en tête, casse indifférente). feat/feature → minor, sinon patch.
-if echo "$COMMIT_MSG" | grep -qiE '^(feat|feature)[:/]'; then
-  BUMP="minor"
-else
-  BUMP="patch"
-fi
-
-bump_version() {
-  local version="$1"
-  local major minor patch
-  IFS='.' read -r major minor patch <<< "$version"
-  if [ "$BUMP" = "minor" ]; then
-    echo "$major.$((minor + 1)).0"
-  else
-    echo "$major.$minor.$((patch + 1))"
-  fi
-}
-
-update_package_json() {
-  local pkg="$1"
-  [ -f "$pkg" ] || return 1
-  local current new lock
-  current="$(grep -oP '(?<="version": ")[^"]+' "$pkg" | head -1)"
-  [ -z "$current" ] && return 1
-  new="$(bump_version "$current")"
-  sed -i "s/\"version\": \"$current\"/\"version\": \"$new\"/" "$pkg"
-  # Keep package-lock.json in sync: the root version appears twice at the top
-  # of the file ("version" + packages[""].version). Out-of-sync lock breaks
-  # `npm ci` in prod (see make app*_generate_prod).
-  lock="${pkg%/package.json}/package-lock.json"
-  [ -f "$lock" ] && sed -i "0,/\"version\": \"$current\"/s//\"version\": \"$new\"/;0,/\"version\": \"$current\"/s//\"version\": \"$new\"/" "$lock"
-  echo "$new"
-}
-
-# api2 : version portée par le YAML nelmio (info.version), pas un package.json.
-# On cible spécifiquement la ligne indentée « version: X.Y.Z » sous info: en
-# exigeant un X.Y.Z (3 nombres) pour ne PAS toucher openapi: 3.1.0 juste au-dessus.
-update_nelmio_yaml() {
-  local yaml="$1"
-  [ -f "$yaml" ] || return 1
-  local current new
-  current="$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$yaml" | head -1)"
-  [ -z "$current" ] && return 1
-  new="$(bump_version "$current")"
-  # Ancrage sur « version: <current> » (avec l'indentation) → un seul remplacement.
-  sed -i "s/\(version:[[:space:]]*\)$current\b/\1$new/" "$yaml"
-  echo "$new"
-}
-
-# Detect which briques were touched in the last commit
-CHANGED="$(git diff-tree --no-commit-id -r --name-only HEAD)"
-BUMPED=""
-ADDED=()
-
-for app in app2 app4; do
-  if echo "$CHANGED" | grep -q "^sources/$app/"; then
-    pkg="$REPO_ROOT/sources/$app/package.json"
-    new_ver="$(update_package_json "$pkg")"
-    if [ -n "$new_ver" ]; then
-      ADDED+=("$pkg" "$REPO_ROOT/sources/$app/package-lock.json")
-      BUMPED="$BUMPED $app@$new_ver"
-    fi
-  fi
-done
-
-# api2 : ne bumpe pas si SEUL le YAML de version a changé (évite qu'un bump
-# précédent, recommité, déclenche un nouveau bump en boucle via le guard).
-if echo "$CHANGED" | grep -q '^sources/api2/'; then
-  yaml="$REPO_ROOT/sources/api2/config/packages/nelmio_api_doc.yaml"
-  changed_api2="$(echo "$CHANGED" | grep '^sources/api2/' | grep -v '^sources/api2/config/packages/nelmio_api_doc.yaml$' || true)"
-  if [ -n "$changed_api2" ]; then
-    new_ver="$(update_nelmio_yaml "$yaml")"
-    if [ -n "$new_ver" ]; then
-      ADDED+=("$yaml")
-      BUMPED="$BUMPED api2@$new_ver"
-    fi
-  fi
-fi
-
-[ -z "$BUMPED" ] && exit 0
-
-git add "${ADDED[@]}"
-touch "$GUARD"
-git commit --no-verify -m "chore: bump versions -$BUMPED"
-rm -f "$GUARD"
+exit 0
