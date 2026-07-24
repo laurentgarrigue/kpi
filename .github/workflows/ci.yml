@@ -1,0 +1,480 @@
+name: CI
+
+# Phases 1-3 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md) :
+#   - Phase 1 : lint & format par brique (lint-nuxt, lint-api2, lint-legacy, lint-docker)
+#   - Phase 2 : sécurité statique (phpstan-api2, audit-composer, audit-npm, secrets-scan,
+#               trivy-config ; CodeQL vit dans codeql.yml)
+#   - Phase 3 : build & smoke (build-nuxt, smoke-api2)
+# Tout est path-filtered : chaque job ne tourne que si sa brique change.
+# Le job final `ci-summary` est l'unique required check câblé dans le ruleset `main`.
+# Voir le journal d'exécution : DOC/.../CI_CD_EXECUTION_NOTES.md.
+
+on:
+  pull_request:
+    branches: [develop, main]
+  # Permet aussi de lancer la CI à la main depuis l'onglet Actions.
+  workflow_dispatch:
+
+# Annule les runs obsolètes quand on pousse un nouveau commit sur la même PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege : la CI n'a besoin que de lire le contenu.
+permissions:
+  contents: read
+
+env:
+  # Node 22 = version utilisée par tous les builds (Makefile : node:22-alpine) et
+  # par les conteneurs de dev. Ne pas repasser en 20 : @nuxt/eslint 1.16 tire
+  # eslint-flat-config-utils 3.x, qui utilise Object.groupBy (Node 21+) et casse
+  # `npx eslint .` avec "TypeError: Object.groupBy is not a function".
+  NODE_VERSION: "22"
+  PHP_VERSION: "8.4"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Détection des changements par brique (path filters).
+  #    Toute nouvelle brique = un filtre à ajouter ici, rien d'autre.
+  # ---------------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      legacy: ${{ steps.filter.outputs.legacy }}
+      api2: ${{ steps.filter.outputs.api2 }}
+      app2: ${{ steps.filter.outputs.app2 }}
+      app3: ${{ steps.filter.outputs.app3 }}
+      app4: ${{ steps.filter.outputs.app4 }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            legacy:
+              - 'sources/**'
+              - '!sources/api2/**'
+              - '!sources/app2/**'
+              - '!sources/app3/**'
+              - '!sources/app4/**'
+            api2:
+              - 'sources/api2/**'
+            app2:
+              - 'sources/app2/**'
+            app3:
+              - 'sources/app3/**'
+            app4:
+              - 'sources/app4/**'
+            docker:
+              - 'docker/**'
+              - 'Makefile'
+
+  # ---------------------------------------------------------------------------
+  # 2. Lint ESLint des apps Nuxt (app2 / app3 / app4).
+  #    Un seul job matriciel : ne tourne que sur les apps réellement modifiées.
+  # ---------------------------------------------------------------------------
+  lint-nuxt:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Skip les apps non modifiées à l'intérieur de la matrice.
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: sources/${{ matrix.app }}/package-lock.json
+
+      - name: Install (npm ci)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm ci
+
+      - name: ESLint
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npx eslint .
+
+  # ---------------------------------------------------------------------------
+  # 2bis. Build Nuxt effectif (Phase 3) — app2 / app3 / app4.
+  #    Garantit que `develop` reste buildable : un .vue/.ts cassé, un import
+  #    manquant ou une erreur de config Nuxt fait échouer `nuxt build`.
+  #    On utilise `build` (SSR/nitro) et NON `generate` : `generate` passe par
+  #    `dotenv -e .env.production` (app2/app3), absent en CI. `nuxt.config.ts` a
+  #    des fallbacks (`?? 'https://…'`) pour toutes les vars → aucun .env requis.
+  # ---------------------------------------------------------------------------
+  build-nuxt:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Skip les apps non modifiées à l'intérieur de la matrice.
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: sources/${{ matrix.app }}/package-lock.json
+
+      # postinstall = `nuxt prepare` (types + .nuxt) tourne pendant npm ci.
+      - name: Install (npm ci)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm ci
+
+      - name: Build (nuxt build)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # 3. api2 — checks statiques Symfony SANS outils tiers à installer.
+  #    Phase 1 : lint YAML + container + schéma. PHPStan/php-cs-fixer = Phase 2
+  #    (à ajouter d'abord à composer, voir les notes de phase).
+  # ---------------------------------------------------------------------------
+  lint-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      - name: Lint YAML (config/)
+        working-directory: sources/api2
+        run: php bin/console lint:yaml config --env=dev
+
+      - name: Lint container (services)
+        working-directory: sources/api2
+        run: php bin/console lint:container --env=dev
+
+  # ---------------------------------------------------------------------------
+  # 3bis. api2 — analyse statique PHPStan (Phase 2).
+  #    Level 3 sans dette (voir sources/api2/phpstan.dist.neon). Ne nécessite
+  #    AUCUNE base de données : l'extension Doctrine lit les métadonnées de
+  #    mapping (attributs), pas une connexion. On réchauffe seulement le
+  #    container `dev` pour que l'extension Symfony résolve les services.
+  # ---------------------------------------------------------------------------
+  phpstan-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          # gd : requis par mpdf/phpspreadsheet présents dans le lock (sinon
+          # composer install échoue sur la plateforme). intl/zip : mêmes deps.
+          extensions: gd, intl, zip
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      # PHPStan (extension Symfony) a besoin du container compilé ; le warmup lit
+      # la config mais n'ouvre pas de connexion DB. .env.dist fournit APP_SECRET
+      # et un DATABASE_URL qui doit juste PARSER (jamais contacté ici).
+      - name: Préparer l'environnement (.env + container dev)
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: |
+          cp .env.dist .env
+          php bin/console cache:warmup --env=dev
+
+      - name: PHPStan
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: composer phpstan
+
+  # ---------------------------------------------------------------------------
+  # 3ter. api2 — boot smoke test (Phase 3).
+  #    Garantit que le kernel Symfony démarre et que le mapping Doctrine est
+  #    cohérent — donc que le conteneur FrankenPHP pourra booter. AUCUNE base de
+  #    données requise : `--skip-sync` ne valide QUE les métadonnées de mapping
+  #    (attributs sur les entités), sans comparer à une DB. Le `DATABASE_URL` de
+  #    .env.dist doit juste PARSER (jamais contacté ici).
+  #    NB : `lint:container` / `lint:yaml` sont déjà couverts par `lint-api2` ;
+  #    on ne les duplique pas. Ce job apporte le cache:clear (boot réel) + la
+  #    validation de mapping.
+  # ---------------------------------------------------------------------------
+  smoke-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          # gd/intl/zip : requis par mpdf/phpspreadsheet présents dans le lock,
+          # sinon `composer install` échoue sur la plateforme (comme phpstan-api2).
+          extensions: gd, intl, zip
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      - name: Boot smoke (cache:clear + schema mapping)
+        working-directory: sources/api2
+        env:
+          APP_ENV: dev
+        run: |
+          cp .env.dist .env
+          php bin/console cache:clear --env=dev --no-interaction
+          php bin/console doctrine:schema:validate --skip-sync --no-interaction
+
+  # ---------------------------------------------------------------------------
+  # 4. Legacy PHP — syntaxe seulement (php -l). Pas de lint de style : trop de
+  #    dette. C'est juste un filet contre les <?php cassés.
+  # ---------------------------------------------------------------------------
+  lint-legacy:
+    needs: changes
+    if: needs.changes.outputs.legacy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - name: php -l sur le legacy modifié (parallèle)
+        run: |
+          find sources -name '*.php' \
+            -not -path 'sources/api2/*' \
+            -not -path '*/vendor/*' \
+            -not -path '*/node_modules/*' \
+            -print0 | xargs -0 -n1 -P4 php -l
+
+  # ---------------------------------------------------------------------------
+  # 5. Docker — lint des Dockerfiles + validation des compose.
+  # ---------------------------------------------------------------------------
+  lint-docker:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hadolint sur les Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          recursive: true
+          # Ne FAIT échouer que sur les findings de niveau `error` : les Dockerfiles
+          # legacy ont de la dette (warnings DL3018/DL3008/DL3059… non pinnage de
+          # versions, RUN consécutifs) qu'on ne veut pas bloquer en Phase 1.
+          # NB : l'action logue TOUS les findings en `::error::` (y compris les
+          # warnings), mais seul un vrai niveau `error` fait échouer le job.
+          # À durcir en `warning` une fois la dette Dockerfile nettoyée (Phase 2/3).
+          failure-threshold: error
+
+      - name: docker compose config (dev/preprod/prod)
+        run: |
+          for f in docker/compose.dev.yaml docker/compose.preprod.yaml docker/compose.prod.yaml; do
+            echo "::group::$f"
+            docker compose -f "$f" config --quiet && echo "OK: $f"
+            echo "::endgroup::"
+          done
+
+  # ---------------------------------------------------------------------------
+  # 6. Sécurité statique (Phase 2).
+  # ---------------------------------------------------------------------------
+
+  # 6a. composer audit — CVE des dépendances PHP d'api2 (base d'advisories
+  #     Packagist). Ne bloque que sur une vulnérabilité connue du lock.
+  audit-composer:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer
+      # --locked : audite directement composer.lock sans `composer install`
+      # préalable (inutile pour un scan de vulnérabilités, et évite les deps à
+      # extensions natives comme mpdf/phpspreadsheet).
+      - name: composer audit (api2)
+        working-directory: sources/api2
+        run: composer audit --locked --no-interaction
+
+  # 6b. npm audit — CVE des dépendances de prod des apps Nuxt modifiées.
+  #     `--omit=dev` + `--audit-level=high` : on ne bloque que sur high/critical
+  #     côté runtime. Les advisories des outils de dev (transitives, souvent non
+  #     corrigeables sans casser) ne doivent pas bloquer une PR — Dependabot
+  #     s'en charge de son côté sur `main`.
+  audit-npm:
+    needs: changes
+    if: >-
+      needs.changes.outputs.app2 == 'true' ||
+      needs.changes.outputs.app3 == 'true' ||
+      needs.changes.outputs.app4 == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app3, app4]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          case "${{ matrix.app }}" in
+            app2) changed="${{ needs.changes.outputs.app2 }}" ;;
+            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
+            app4) changed="${{ needs.changes.outputs.app4 }}" ;;
+          esac
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm audit (prod, high+)
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm audit --omit=dev --audit-level=high
+
+  # 6c. Gitleaks — détection de secrets commités (clés, tokens, mots de passe).
+  #     Tourne sur toute PR : un secret peut arriver dans n'importe quelle brique.
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet : gitleaks scanne le diff de la PR, pas seulement
+          # le dernier commit.
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 6d. Trivy (mode config) — détecte les MAUVAISES CONFIGURATIONS des Dockerfiles
+  #     et des compose (secrets en clair, capabilities dangereuses…). Scan de
+  #     FICHIERS, pas d'images : aucune image à builder (le scan d'images
+  #     HIGH/CRITICAL viendra en Phase 3, une fois les images buildées en CI).
+  #     La détection de CVE des deps est déjà couverte par composer/npm audit.
+  #
+  #     ⚠️ Ne bloque QUE sur CRITICAL. Comme hadolint (bloqué au seul niveau
+  #     `error`), les Dockerfiles legacy ont beaucoup de HIGH de dette (root user
+  #     DS-0002, apt sans --no-install-recommends DS-0029…) qu'on ne veut pas
+  #     bloquer maintenant. À l'ajout : 0 finding CRITICAL. À durcir en HIGH une
+  #     fois la dette Dockerfile nettoyée (même échéance que hadolint).
+  trivy-config:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy config scan (docker/)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: docker
+          severity: CRITICAL
+          exit-code: '1'
+          hide-progress: true
+
+  # ---------------------------------------------------------------------------
+  # 7. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
+  #    Passe si tous les jobs nécessaires ont réussi OU ont été skippés
+  #    (une brique non touchée => job skipped => ne doit pas bloquer).
+  # ---------------------------------------------------------------------------
+  ci-summary:
+    needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier qu'aucun job requis n'a échoué
+        run: |
+          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
+          echo "Résultats: $results"
+          for r in $results; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::Un job de CI a échoué ($r)"
+              exit 1
+            fi
+          done
+          echo "CI OK ✅"

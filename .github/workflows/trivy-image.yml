@@ -1,0 +1,98 @@
+name: Trivy image
+
+# Phase 3bis du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Scan de vulnérabilités des IMAGES DE BASE du projet (php-apache, frankenphp,
+# mariadb) — celles dont héritent les Dockerfiles de docker/config/.
+#
+# Choix de conception :
+#  - On scanne les images de base tirées du registry, SANS builder localement :
+#    l'essentiel des CVE OS/runtime vient de l'amont (Debian/PHP/MariaDB), pas des
+#    quelques couches ajoutées par nos Dockerfiles. C'est rapide (pull only).
+#  - NON BLOQUANT (exit-code 0) et HORS `ci-summary` : ces images de base cumulent
+#    des centaines de HIGH/CRITICAL non actionnables de notre côté (elles vivent
+#    dans l'image amont publiée). Bloquer dessus rendrait la CI rouge en permanence
+#    pour rien. On remonte donc les résultats dans l'onglet Security (SARIF), comme
+#    une veille — pas comme un gate. Même politique que trivy-config/hadolint sur la
+#    dette Dockerfile.
+#  - Cron hebdo + manuel uniquement (pas de per-PR) : les images de base changent
+#    rarement (bump explicite dans docker/.env.dist), et c'est de la veille.
+#
+# Les CVE des DÉPENDANCES applicatives (composer/npm) sont déjà couvertes par
+# audit-composer / audit-npm dans ci.yml. Ici c'est la couche OS/runtime.
+
+on:
+  # Veille hebdomadaire (mardi 6h UTC — décalé du CodeQL de lundi).
+  schedule:
+    - cron: '0 6 * * 2'
+  # Déclenchement manuel (onglet Actions → Run workflow).
+  workflow_dispatch:
+  # Aussi quand les images de base elles-mêmes changent dans le repo.
+  push:
+    branches: [develop, main]
+    paths:
+      - 'docker/.env.dist'
+      - '.github/workflows/trivy-image.yml'
+
+# Trivy écrit ses findings dans l'onglet Security via SARIF.
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: trivy-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Lit les images de base depuis docker/.env.dist (source versionnée) et les
+  # expose en matrice JSON, pour scanner chacune avec sa propre catégorie SARIF.
+  resolve-images:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.read.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lire les BASE_IMAGE_* de docker/.env.dist
+        id: read
+        run: |
+          php_img="$(grep -E '^BASE_IMAGE_PHP=' docker/.env.dist | cut -d= -f2-)"
+          frankenphp_img="$(grep -E '^BASE_IMAGE_FRANKENPHP=' docker/.env.dist | cut -d= -f2-)"
+          db_img="$(grep -E '^BASE_IMAGE_DB=' docker/.env.dist | cut -d= -f2-)"
+          # slug = catégorie SARIF stable et sûre (pas de : ou /)
+          matrix="$(jq -c -n \
+            --arg php "$php_img" \
+            --arg fp "$frankenphp_img" \
+            --arg db "$db_img" \
+            '{include: [
+              {slug: "php-apache",  image: $php},
+              {slug: "frankenphp",  image: $fp},
+              {slug: "mariadb",     image: $db}
+            ]}')"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Images à scanner : $matrix"
+
+  scan:
+    needs: resolve-images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-images.outputs.matrix) }}
+    steps:
+      - name: Trivy image (${{ matrix.slug }})
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.image }}
+          format: sarif
+          output: trivy-${{ matrix.slug }}.sarif
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          # Veille : ne JAMAIS faire échouer le job (voir l'en-tête).
+          exit-code: '0'
+          hide-progress: true
+
+      - name: Upload SARIF vers l'onglet Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.slug }}.sarif
+          category: trivy-image-${{ matrix.slug }}
