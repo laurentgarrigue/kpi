@@ -14,7 +14,7 @@
 > | **2** Sécurité statique | ✅ Éprouvée — PHPStan (api2, level 3), `composer audit`, `npm audit`, Gitleaks, **CodeQL** (JS/TS), **Trivy config** ; validée par une épreuve touche-à-tout (17 checks verts) ; php-cs-fixer reporté |
 > | **3** Build & smoke | ✅ Éprouvée — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) verts sur PR réelle |
 > | **3bis** Trivy image | 🟢 En cours — `trivy-image.yml` scanne les images de base (php-apache/frankenphp/mariadb) ; **non bloquant → onglet Security** (596 HIGH/CRITICAL amont non actionnables), cron hebdo + manuel. Build Docker écarté (couvert par lint-docker) |
-> | **5** CD préprod | ✅ **OPÉRATIONNEL** — `deploy-preprod.yml` + `deploy-wrapper.sh` (`vps-manager`) : **déploiement préprod réussi via GitHub Actions le 2026-07-24** après 6 pièges d'infra (workflow_run→main, symlink/.env, politique branche, git safe.directory, ACL deploy, artefacts root). Reste : éprouver le 100 % auto (merge) + un run touchant app* |
+> | **5** CD préprod | ✅ **COMPLET** — `deploy-preprod.yml` (push develop) + `deploy-wrapper.sh` (`vps-manager`). **Merge develop → déploiement préprod 100 % AUTO réussi le 2026-07-24, rebuild des 3 apps inclus** (#246). 8 pièges d'infra franchis (le `i/o timeout` = aléa réseau transitoire de connexion + build long ~7 min, PAS l'IPv6). Reste non bloquant : rollback via Actions, optim durée |
 > | **4, 6-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
