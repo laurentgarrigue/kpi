@@ -15,14 +15,15 @@ touche-à-tout minimale (app3 + api2)**.
 **Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
-**Statut Phase 5** : ✅ **CD préprod OPÉRATIONNEL** — `deploy-preprod.yml` (déclencheur
-**`push: develop`**, environment `preprod`) + `deploy-wrapper.sh` (repo `vps-manager`
-privé, symlinké en `/home/deploy/`). **Déploiement préprod complet réussi via GitHub
-Actions le 2026-07-24** (SSH → wrapper → git → restart → smoke OK).
-Il a fallu franchir une cascade de 6 pièges d'infra (voir section « pièges Phase 5 »)
-**+ un 7e** : le déclencheur (voir ci-dessous).
-Reste : éprouver le déclenchement 100 % auto sur un vrai merge, et un run touchant les
-apps (rebuild app*) ; lock `command=` optionnel.
+**Statut Phase 5** : ✅ **CD préprod COMPLET & VALIDÉ** — `deploy-preprod.yml`
+(déclencheur **`push: develop`**, environment `preprod`) + `deploy-wrapper.sh` (repo
+`vps-manager` privé, symlinké en `/home/deploy/`). **Le 2026-07-24, un merge sur develop
+(#246) a déclenché AUTOMATIQUEMENT un déploiement préprod complet — AVEC rebuild des 3
+apps — réussi de bout en bout** (7m25s : app2+app3+app4 generate + restart + smoke OK).
+app4 inclus → le fix `@unhead/vue` et les artefacts root ne bloquent pas. Il a fallu
+franchir **8 pièges d'infra** (voir section « pièges Phase 5 »).
+Reste (non bloquant) : rollback auto sur smoke KO (déjà vu en test manuel) ; optimiser
+la durée du build apps (~7 min, pas de cache npm) ; lock `command=` optionnel.
 
 > **7e piège — `workflow_run` ne se déclenchait jamais.** Le déclencheur initial était
 > `workflow_run` (CI terminée sur develop). Mais `ci.yml` ne tourne que sur
@@ -509,26 +510,34 @@ filtre) ; les IP des runners GitHub passent.
      qui a marché utilisait les mêmes).
    - **PAS sshd** : `journalctl -u ssh` ne montre AUCUNE connexion runner pendant un run
      en timeout → le paquet n'atteint jamais sshd.
-   → C'est un **aléa réseau en amont** (routage runner↔VPS ou firewall hébergeur
-     invisible de l'OS). **Piste testée en premier** : forcer l'**IPv4 en dur** dans
-     `SSH_HOST` (`93.127.163.83`) — le VPS écoute aussi `[::]:22`, et si le secret était
-     un hostname résolvant en IPv6, le routage IPv6 runner↔VPS est un classique du
-     timeout intermittent. IPv4:22 confirmé joignable (bannière `OpenSSH_9.2p1 Debian`).
-   - Mitigation appliquée en //: `timeout` connexion 30s → **60s** (+ `command_timeout:
-     15m`). Résidu → `gh run rerun`.
-   - **Plan B si l'IPv4 ne suffit pas** : passer en modèle **PULL** (le VPS tire le
-     déploiement — cron/webhook `git pull` + wrapper) au lieu du PUSH SSH depuis GitHub,
-     éliminant la dépendance à une connexion SSH entrante.
+   → **Diagnostic honnête a posteriori** : c'était un **aléa réseau transitoire**
+     runner↔VPS sur l'**établissement de connexion** (`dial tcp: i/o timeout`), PAS un
+     blocage structurel. Preuves : les runs échoués duraient 39s/13s/4s (= le délai de
+     connexion qui expire, pas un build), et `SSH_HOST` contenait **déjà** l'IPv4
+     (l'hypothèse « hostname résolvant en IPv6 » un temps envisagée était FAUSSE —
+     ré-écrire le secret n'a rien changé au fond). Mitigation : `timeout` connexion
+     30s → **60s** (+ `command_timeout: 15m`). Résidu rare → `gh run rerun`. Pas de
+     cause côté VPS ni secrets : rien à « réparer », c'est du réseau intermittent.
+
+8. **Faux « blocage » = vrai build long (~7 min).** Un run auto est resté `in_progress`
+   >5 min → cru bloqué. En réalité c'était le **premier run rebuildant les apps**
+   (`npm ci && nuxt generate` × app2/app3/app4 dans des containers `node:22-alpine`
+   jetables, **sans cache npm** → tout retéléchargé à chaque fois). `ps -u deploy` a
+   montré le `nuxt generate` d'app4 en cours, pas un process figé. Il a fini en **7m25s**
+   avec succès. `command_timeout: 15m` dans `ssh-action` couvre bien cette durée. Piste
+   d'optim (non bloquant) : cache npm côté VPS ou builds incrémentaux. **Ne pas confondre
+   un déploiement qui rebuild les apps (~7 min) avec un blocage** — un run « aucune brique
+   à rebuilder » prend ~48s.
 
 ### Validation
 
 - [x] Wrapper exécuté à la main sur le VPS : préservation + reset + rollback OK
 - [x] **Déploiement préprod complet réussi via GitHub Actions** (SSH → wrapper → smoke)
 - [x] Build app4 réparé (override `@unhead/vue` v3)
-- [ ] Merge PR sur `develop` → CI verte → préprod déployée **sans clic** (100 % auto, pas Run workflow)
-- [ ] Run touchant `sources/app*` → vérifier que `make appN_generate_preprod` passe (artefacts root)
-- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée
-- [ ] Le job `preprod` ne peut PAS lire les secrets `production`
+- [x] **Merge PR sur `develop` → préprod déployée 100 % AUTO sans clic** (#246, 2026-07-24)
+- [x] **Run touchant `sources/app*` → `make appN_generate_preprod` passe** (app4 inclus, artefacts root OK)
+- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée (vu en test manuel, pas encore via Actions)
+- [ ] Le job `preprod` ne peut PAS lire les secrets `production` (à tester explicitement)
 
 ---
 
