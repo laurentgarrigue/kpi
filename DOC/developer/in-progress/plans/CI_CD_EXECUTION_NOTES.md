@@ -495,8 +495,30 @@ qui rejouera les mêmes sur `/data/kpi` :
    dessus (cf. EACCES app4 connu). Ce run-ci ne rebuildait pas les apps → non exercé.
 
 Réseau : le VPS n'a PAS de firewall applicatif (iptables INPUT = ACCEPT, seul fail2ban
-filtre) ; les IP des runners GitHub passent. Le premier `i/o timeout` observé était
-transitoire, pas un blocage structurel.
+filtre) ; les IP des runners GitHub passent.
+
+7. **`dial tcp: i/o timeout` (le plus coriace).** Un déploiement réussit (12:26) puis
+   tous les suivants timeout (13:45, 13:50…), même config. Diagnostic **méthodique** qui
+   a écarté les fausses pistes :
+   - **PAS fail2ban** : `Currently banned: 0`, `f2b-sshd` = juste `RETURN` (les bans du
+     log sont des scanners SSH random, pas des runners).
+   - **PAS le firewall VPS** : `iptables -S` et `nft list ruleset` ne contiennent QUE
+     des règles Docker (isolation des bridges `br-*`) — rien sur le port 22/entrée
+     Internet. Le VPS accepte tout sur 22.
+   - **PAS les secrets** : `SSH_HOST`/`SSH_PORT` inchangés depuis le 2026-07-17 (le run
+     qui a marché utilisait les mêmes).
+   - **PAS sshd** : `journalctl -u ssh` ne montre AUCUNE connexion runner pendant un run
+     en timeout → le paquet n'atteint jamais sshd.
+   → C'est un **aléa réseau en amont** (routage runner↔VPS ou firewall hébergeur
+     invisible de l'OS). **Piste testée en premier** : forcer l'**IPv4 en dur** dans
+     `SSH_HOST` (`93.127.163.83`) — le VPS écoute aussi `[::]:22`, et si le secret était
+     un hostname résolvant en IPv6, le routage IPv6 runner↔VPS est un classique du
+     timeout intermittent. IPv4:22 confirmé joignable (bannière `OpenSSH_9.2p1 Debian`).
+   - Mitigation appliquée en //: `timeout` connexion 30s → **60s** (+ `command_timeout:
+     15m`). Résidu → `gh run rerun`.
+   - **Plan B si l'IPv4 ne suffit pas** : passer en modèle **PULL** (le VPS tire le
+     déploiement — cron/webhook `git pull` + wrapper) au lieu du PUSH SSH depuis GitHub,
+     éliminant la dépendance à une connexion SSH entrante.
 
 ### Validation
 
