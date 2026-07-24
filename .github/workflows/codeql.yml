@@ -1,0 +1,56 @@
+name: CodeQL
+
+# SAST GitHub natif (Phase 2 du plan CI/CD). Analyse JS/TS des apps Nuxt
+# (app2/app3/app4) et remonte les findings dans l'onglet Security du repo.
+#
+# Workflow SÉPARÉ de ci.yml volontairement :
+#  - CodeQL est plus lent (~1m40s avec security-extended) et n'a pas la granularité
+#    par-brique de la CI ;
+#  - ses résultats vivent dans l'onglet Security (code scanning), pas dans un job
+#    bloquant. Il n'est donc PAS branché dans `ci-summary`.
+#
+# Le legacy PHP et api2 ne sont pas couverts ici : CodeQL PHP n'existe pas
+# (langage non supporté). Leur analyse statique passe par PHPStan / audits.
+#
+# ⚠️ NE tourne PLUS sur chaque PR (choix 2026-07-22) : comme CodeQL n'est pas
+# bloquant et que la surface de sécurité JS/TS bouge peu entre deux PR, le coût
+# per-PR (~1m40s) ne se justifiait pas. On garde le scan hebdomadaire (attrape les
+# advisories publiées sur du code inchangé) + le déclenchement manuel à la demande.
+# Pour analyser une branche avant merge : onglet Actions → CodeQL → Run workflow.
+
+on:
+  # Analyse hebdomadaire complète (lundi 6h UTC).
+  schedule:
+    - cron: '0 6 * * 1'
+  # Déclenchement manuel (onglet Actions → Run workflow) sur n'importe quelle branche.
+  workflow_dispatch:
+
+# CodeQL a besoin d'écrire les résultats de code-scanning ; le reste en lecture.
+permissions:
+  contents: read
+  security-events: write
+
+# Annule un run obsolète quand on pousse un nouveau commit sur la même PR.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyse CodeQL (JS/TS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialiser CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # Requête étendue : sécurité + qualité. `security-extended` ajoute des
+          # règles de sécurité au-delà du set par défaut.
+          queries: security-extended
+
+      - name: Analyser
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
