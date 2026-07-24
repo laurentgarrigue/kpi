@@ -8,6 +8,13 @@
 #
 # Les updates sont groupées par répertoire/écosystème : un seul PR (et donc un
 # seul recalcul de lockfile) au lieu d'un PR par paquet -> moins de conflits.
+#
+# `/sources/app3` est volontairement ABSENT : c'est un prototype de feuille de
+# marque jamais déployé (dev uniquement, aucune occurrence dans
+# compose.preprod/prod.yaml), en cours d'absorption par la console Scoring
+# d'app4 (DOC/specs/PAGE_SCORING.md). Le suivre ne produisait que des PR de bump
+# sur du code qui ne tourne nulle part. Voir §6 de
+# DOC/developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
 
 version: 2
 updates:
@@ -15,7 +22,6 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/sources/app2"
-      - "/sources/app3"
       - "/sources/app4"
       - "/sources/app_dev"
       - "/sources/app_live_dev"

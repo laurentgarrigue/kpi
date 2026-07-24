@@ -1,0 +1,180 @@
+name: Version bump
+
+# Bump automatique du numéro de version, par brique touchée par le merge, APRÈS
+# chaque push sur `develop` (typiquement un squash-merge de PR — UI, gh, ou
+# Dependabot ; peu importe comment la PR a été ouverte, tout arrive ici).
+#
+#   - app2 / app4 → champ "version" de package.json (+ package-lock.json en phase)
+#   - api2        → info.version de config/packages/nelmio_api_doc.yaml
+#                   ET version de config/packages/api_platform.yaml (gardés alignés)
+#
+# Pourquoi un workflow et non le hook post-commit local : develop n'accepte que
+# des PR (ruleset `pull_request`), le squash-merge est fait côté GitHub où aucun
+# hook local ne tourne. Ce workflow est le SEUL point par lequel passent tous les
+# merges. Le hook local a donc été vidé de sa logique de bump (voir
+# scripts/hooks/post-commit) pour éviter tout double-bump.
+#
+# Type de bump, déduit du message du commit de merge (parser tolérant au format
+# libre du repo : « Feat: … », « feature/… », squash-merge, etc.) :
+#   - feat / feature (feat: feat/ feature: feature/, casse indifférente) → minor
+#   - tout le reste (fix, chore, docs, ci…)                              → patch
+#
+# Anti-boucle : si le commit ne touche QUE des fichiers de version (le merge de la
+# PR de bump elle-même), on ne rebumpe pas → le workflow s'arrête.
+#
+# Stratégie de dépôt : develop refusant le push direct, on ouvre une PR
+# « chore: bump versions » (calqué sur backmerge-main-to-develop.yml) et on tente
+# d'activer l'auto-merge (squash). Si « Allow auto-merge » est désactivé sur le
+# repo, la PR reste simplement ouverte pour un merge manuel.
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculer et appliquer les bumps
+        id: bump
+        run: |
+          set -euo pipefail
+
+          COMMIT_MSG="$(git log -1 --pretty=%s)"
+
+          # feat/feature → minor, sinon patch
+          if echo "$COMMIT_MSG" | grep -qiE '^(feat|feature)[:/]'; then
+            BUMP="minor"
+          else
+            BUMP="patch"
+          fi
+
+          bump_version() {
+            local version="$1" major minor patch
+            IFS='.' read -r major minor patch <<< "$version"
+            if [ "$BUMP" = "minor" ]; then
+              echo "$major.$((minor + 1)).0"
+            else
+              echo "$major.$minor.$((patch + 1))"
+            fi
+          }
+
+          # Bump du champ "version" d'un package.json + son lock (2 occurrences en
+          # tête du lock : "version" racine + packages[""].version). Un lock
+          # désynchronisé casse `npm ci` en prod (cf. make app*_generate_prod).
+          update_package_json() {
+            local pkg="$1" current new lock
+            [ -f "$pkg" ] || return 1
+            current="$(grep -oP '(?<="version": ")[^"]+' "$pkg" | head -1)"
+            [ -z "$current" ] && return 1
+            new="$(bump_version "$current")"
+            sed -i "s/\"version\": \"$current\"/\"version\": \"$new\"/" "$pkg"
+            lock="${pkg%/package.json}/package-lock.json"
+            [ -f "$lock" ] && sed -i "0,/\"version\": \"$current\"/s//\"version\": \"$new\"/;0,/\"version\": \"$current\"/s//\"version\": \"$new\"/" "$lock"
+            echo "$new"
+          }
+
+          # Bump d'une ligne « version: X.Y.Z » (3 nombres exigés → ne touche pas
+          # « openapi: 3.1.0 »). Utilisé pour les DEUX YAML api2, gardés alignés.
+          update_yaml_version() {
+            local yaml="$1" current new
+            [ -f "$yaml" ] || return 1
+            current="$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$yaml" | head -1)"
+            [ -z "$current" ] && return 1
+            new="$(bump_version "$current")"
+            sed -i "s/\(version:[[:space:]]*\)$current\b/\1$new/" "$yaml"
+            echo "$new"
+          }
+
+          CHANGED="$(git diff-tree --no-commit-id -r --name-only HEAD)"
+          BUMPED=""
+
+          for app in app2 app4; do
+            if echo "$CHANGED" | grep -q "^sources/$app/"; then
+              new_ver="$(update_package_json "sources/$app/package.json")" || true
+              [ -n "${new_ver:-}" ] && BUMPED="$BUMPED $app@$new_ver"
+            fi
+          done
+
+          # api2 : ne bumpe pas si SEULS les fichiers de version api2 ont changé
+          # (le merge de la PR de bump elle-même) → évite la boucle.
+          NELMIO="sources/api2/config/packages/nelmio_api_doc.yaml"
+          APIPLATFORM="sources/api2/config/packages/api_platform.yaml"
+          if echo "$CHANGED" | grep -q '^sources/api2/'; then
+            other_api2="$(echo "$CHANGED" | grep '^sources/api2/' \
+              | grep -vE "^($NELMIO|$APIPLATFORM)$" || true)"
+            if [ -n "$other_api2" ]; then
+              new_ver="$(update_yaml_version "$NELMIO")" || true
+              # api_platform.yaml suit la MÊME version (même bump depuis la même base
+              # si elles sont alignées ; sinon il calcule la sienne, ce qui les
+              # réaligne au bump suivant).
+              update_yaml_version "$APIPLATFORM" >/dev/null 2>&1 || true
+              [ -n "${new_ver:-}" ] && BUMPED="$BUMPED api2@$new_ver"
+            fi
+          fi
+
+          if [ -z "$BUMPED" ]; then
+            echo "Aucune brique versionnée touchée (ou commit de bump) → rien à faire."
+            echo "bumped=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "bumped=$BUMPED" >> "$GITHUB_OUTPUT"
+          echo "Bumps :$BUMPED"
+
+      - name: Ouvrir la PR de bump (+ auto-merge si activé)
+        if: steps.bump.outputs.bumped != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMPED: ${{ steps.bump.outputs.bumped }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="chore/version-bump"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add -A
+          git commit -m "chore: bump versions -$BUMPED"
+          git push --force-with-lease origin "$BRANCH"
+
+          existing="$(gh pr list --head "$BRANCH" --base develop --state open \
+            --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "PR de bump déjà ouverte (#$existing), actualisée par le push."
+            pr="$existing"
+          else
+            pr="$(gh pr create \
+              --base develop \
+              --head "$BRANCH" \
+              --title "chore: bump versions -$BUMPED" \
+              --body "PR automatique de bump de version (voir .github/workflows/version-bump.yml).
+
+          Briques bumpées :$BUMPED" \
+              --json number --jq '.number' 2>/dev/null || \
+              gh pr create --base develop --head "$BRANCH" \
+                --title "chore: bump versions -$BUMPED" \
+                --body "PR automatique de bump de version.")"
+          fi
+
+          # Tente l'auto-merge (squash). Échoue silencieusement si « Allow
+          # auto-merge » est désactivé sur le repo → la PR reste ouverte pour un
+          # merge manuel.
+          gh pr merge "$BRANCH" --squash --auto --delete-branch \
+            && echo "Auto-merge activé sur la PR de bump." \
+            || echo "Auto-merge indisponible (réglage repo off) → merge manuel de la PR."

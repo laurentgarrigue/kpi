@@ -188,5 +188,13 @@ export default defineNuxtConfig({
   vite: {
     plugins: [
     ],
+    optimizeDeps: {
+      // Pré-bundle des dépendances applicatives que Vite ne détecte pas au
+      // scan initial (elles ne sont importées que dans des stores/utils chargés
+      // à la demande). Sans ça, Vite les découvre à l'exécution et recharge la
+      // page en dev. On se limite à NOS deps : les internals Nuxt/i18n/devtools
+      // sont gérés par Nuxt lui-même, inutile de les lister ici.
+      include: ['uuid', 'dexie', 'qrcode', 'dayjs'],
+    },
   },
 })

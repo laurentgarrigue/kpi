@@ -297,10 +297,6 @@ const getLogoUrl = (logo) => {
   return `${baseUrl}/img/${logo}`
 }
 
-const getPdfUrl = () => {
-  return `${baseUrl}/PdfMatchMulti.php?listMatch=${props.gameId}`
-}
-
 // Format referee name - remove level after parenthesis (e.g., "NAME (COUNTRY) INT-B" -> "NAME (COUNTRY)")
 const formatReferee = (referee) => {
   if (!referee) return ''
@@ -357,17 +353,8 @@ const getPeriodLabel = (period) => {
   return labels[period] || period
 }
 
-const formatTime = (time, period) => {
+const formatTime = (time, _period) => {
   if (!time) return '--:--'
-
-  // Period durations in seconds
-  const periodDurations = {
-    'M1': 600, // 10 minutes
-    'M2': 600, // 10 minutes
-    'P1': 300, // 5 minutes
-    'P2': 300  // 5 minutes
-    // TB: no countdown, show elapsed time
-  }
 
   let elapsedSeconds = 0
 
