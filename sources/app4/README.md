@@ -82,3 +82,4 @@ app4/
 
 - **[APP4_STRUCTURE.md](../../DOC/developer/reference/APP4_STRUCTURE.md)** - Architecture détaillée, stores, composants, patterns
 - **[API2_ENDPOINTS.md](../../DOC/developer/reference/API2_ENDPOINTS.md)** - Référence complète des endpoints API
+

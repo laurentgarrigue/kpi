@@ -15,12 +15,13 @@ touche-à-tout minimale (app3 + api2)**.
 **Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
-**Statut Phase 5** : 🟢 **wrapper validé sur le VPS, déclenchement auto à éprouver** —
-`deploy-preprod.yml` (déclencheur `workflow_run` après CI verte sur `develop`,
-environment `preprod`) livré ; `deploy-wrapper.sh` (repo `vps-manager` privé, symlinké
-en `/home/deploy/`) **a déployé la préprod avec succès de bout en bout le 2026-07-23**
-(toutes briques vertes + smoke OK). Reste : éprouver le déclenchement **automatique**
-par GitHub Actions, et (optionnel) le lock `command=` dans `authorized_keys`.
+**Statut Phase 5** : ✅ **CD préprod OPÉRATIONNEL** — `deploy-preprod.yml` (déclencheur
+`workflow_run` après CI verte sur `develop`, environment `preprod`) + `deploy-wrapper.sh`
+(repo `vps-manager` privé, symlinké en `/home/deploy/`). **Déploiement préprod complet
+réussi via GitHub Actions le 2026-07-24** (SSH → wrapper → git → restart → smoke OK).
+Il a fallu franchir une cascade de 6 pièges d'infra (voir section « pièges Phase 5 »).
+Reste : éprouver le déclenchement 100 % **auto** (merge develop, pas juste Run workflow)
+et un run touchant les apps (rebuild app*) ; lock `command=` optionnel.
 
 **Fichier livré** : [`.github/workflows/ci.yml`](../../../../.github/workflows/ci.yml)
 **Plan de référence** : [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md)
@@ -438,12 +439,62 @@ statut par étape** (`✅ app2 généré`…). Le log n'est déversé (40 derni�
 si une étape échoue**. `VERBOSE=1` force l'affichage intégral. Le « … en cours » n'est
 émis que sur un vrai TTY (sortie propre dans les logs GitHub Actions).
 
+### ⚠️ La cascade de 6 pièges d'infra du 1er run GitHub Actions → SSH (2026-07-24)
+
+Faire tourner le déploiement **depuis GitHub Actions** (et non à la main) a buté sur
+six obstacles successifs, chacun instructif — **à connaître avant la Phase 6 (prod)**,
+qui rejouera les mêmes sur `/data/kpi` :
+
+1. **`workflow_run` ne se déclenche que depuis `main`.** `deploy-preprod.yml` était sur
+   `develop` mais absent de `main` (la branche par défaut) → GitHub ne connaissait même
+   pas le workflow (404), rien ne partait sur merge. **Idem `schedule`** : les crons
+   Trivy/CodeQL et le backmerge ne tournaient jamais non plus. **Fix** : synchroniser
+   tout `.github/workflows/` sur `main`. (C'est **contre-intuitif** : le workflow
+   *déploie develop*, mais son *fichier* doit vivre sur `main`.)
+
+2. **Symlink → `.env` introuvable.** Le workflow appelle `/home/deploy/deploy-wrapper.sh`
+   (symlink). Le wrapper faisait `cd "$(dirname "$0")"` → `/home/deploy` (pas de `.env`).
+   **Fix** : `SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"` suit le lien jusqu'au vrai
+   fichier dans `vps-manager`. (Marchait à la main car lancé depuis `/data/vps-manager`.)
+
+3. **Politique de branche de l'environment.** `preprod` autorise `develop`/`feature/*`/
+   `hotfix/*`, **pas `main`**. Un « Run workflow » depuis `main` est rejeté
+   (`Branch "main" is not allowed to deploy to preprod`). **Le sélecteur de branche du
+   bouton Run détermine la branche de déploiement**, soumise à cette politique → lancer
+   depuis `develop`. (⚠️ le déclenchement *auto* `workflow_run`, lui, prend toujours la
+   version du fichier sur `main` — deux choses distinctes.)
+
+4. **`git` : dubious ownership.** Le checkout `/data/kpi_preprod` appartient à
+   `laurent:www-data` ; `deploy` (uid 1002) y lançant git → `fatal: detected dubious
+   ownership` → **exit 128** (~1s de session). **Fix** :
+   `sudo -u deploy git config --global --add safe.directory /data/kpi_preprod` (+ `/data/kpi`).
+
+5. **`deploy` ne pouvait pas écrire dans le checkout.** Dossiers en `laurent:www-data`,
+   groupe `r-x`, et `deploy` **pas** dans `www-data`. **Fix retenu = ACL** (le plus
+   chirurgical — ni chown qui déposséderait laurent, ni ajout à www-data trop large) :
+   ```
+   sudo setfacl -R    -m u:deploy:rwX /data/kpi_preprod /data/kpi
+   sudo setfacl -R -d -m u:deploy:rwX /data/kpi_preprod /data/kpi   # -d = héritage
+   ```
+   (`acl` installé via `apt install acl`.)
+
+6. **Artefacts `.output`/`.nuxt`/`dist` en `root:root`** (créés par les containers Docker
+   `node:22-alpine` qui tournent en root). Non bloquant pour ce run car **gitignorés**
+   (le `reset --hard` ne les touche pas) et **réécrits par un container root** (root
+   écrase root). Mais à surveiller : un `make appN_generate_preprod` pourrait buter
+   dessus (cf. EACCES app4 connu). Ce run-ci ne rebuildait pas les apps → non exercé.
+
+Réseau : le VPS n'a PAS de firewall applicatif (iptables INPUT = ACCEPT, seul fail2ban
+filtre) ; les IP des runners GitHub passent. Le premier `i/o timeout` observé était
+transitoire, pas un blocage structurel.
+
 ### Validation
 
 - [x] Wrapper exécuté à la main sur le VPS : préservation + reset + rollback OK
-- [x] **Déploiement préprod complet réussi** (toutes briques + smoke)
+- [x] **Déploiement préprod complet réussi via GitHub Actions** (SSH → wrapper → smoke)
 - [x] Build app4 réparé (override `@unhead/vue` v3)
-- [ ] Merge PR sur `develop` → CI verte → préprod déployée **sans clic** (déclenchement auto)
+- [ ] Merge PR sur `develop` → CI verte → préprod déployée **sans clic** (100 % auto, pas Run workflow)
+- [ ] Run touchant `sources/app*` → vérifier que `make appN_generate_preprod` passe (artefacts root)
 - [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée
 - [ ] Le job `preprod` ne peut PAS lire les secrets `production`
 
