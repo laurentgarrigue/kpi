@@ -2602,23 +2602,34 @@
     "next": "Next",
     "prev": "Previous",
     "done": "Done",
-    "relaunch": "Replay the tutorial",
     "new_badge": "New",
     "clickable_cells_title": "Clickable data",
     "clickable_cells_body": "On the Competitions page, several table values are clickable and take you straight to the right place: the group, and the counts of teams, game days/phases and games. (The table fills in once you pick a work context.)",
     "context_summary_title": "Back to your work context",
     "context_summary_body": "This reminder appears at the top of every page: it shows the current season and scope. Click \"Change\" to return to the home page and update your work context at any time.",
     "outro_title": "You're all set!",
-    "outro_body": "That's it for the essentials. You're back on the home page: pick your work context to get started. You can replay this tutorial anytime via the \"?\" button in the top right."
+    "outro_body": "That's it for the essentials. You're back on the home page: pick your work context to get started. You can replay this tutorial anytime via the \"?\" button in the top right.",
+    "welcome_label": "Getting started with Admin2",
+    "rankings_label": "Consolidating rankings",
+    "rankings_intro_title": "Rankings: what's new",
+    "rankings_intro_body": "Two new features on this page: the \"Tie-break justification\" to review ties, and consolidation of completed phases. Order matters: check the ties, then consolidate, and only then run the automatic team assignment in Games.",
+    "rankings_ties_title": "1. Check the ties",
+    "rankings_ties_body": "When teams are tied on points, a \"Ties\" button appears here. It gives access to the \"Tie-break justification\": a PDF detailing, criterion by criterion, how the teams were separated. Review it before consolidating.",
+    "rankings_consolidate_title": "2. Consolidate the phase",
+    "rankings_consolidate_body": "This applies to Cup/Tournament (CP) competitions. Once ties have been checked, tick \"Consolidate phase\" on each completed pool phase. Consolidation freezes the ranking: values can no longer be edited inline, and this frozen ranking becomes the reference.",
+    "rankings_outro_title": "3. Then assign teams in Games",
+    "rankings_outro_body": "Only once phases are consolidated can the automatic team assignment be run from the Games page. Without consolidation, qualified teams cannot be carried over. You can replay this tutorial at any time from the help page."
   },
   "help": {
-    "title": "Help & tutorial",
+    "title": "Help and tutorials",
     "subtitle": "Getting started with the new administration (Admin2).",
-    "start_tour": "Start the tutorial",
     "diff_title": "Admin1 (old) vs Admin2 (new)",
     "diff_body": "Admin2 gradually replaces the old administration. The data is the same: you still find competitions, teams, game days and games. The main differences are a work context (season + scope) applied across the whole application, unified menu navigation, and direct actions from tables.",
     "features_title": "Key new features",
     "nav_title": "Navigate efficiently",
-    "nav_body": "1. Pick your mandate if you have several.\n2. Set your work context on the home page (season + scope).\n3. Use the menu or the home cards to reach the sections.\n4. In tables, use the action links to get straight to the point.\nYou can change the context and replay this tutorial at any time."
+    "nav_body": "1. Pick your mandate if you have several.\n2. Set your work context on the home page (season + scope).\n3. Use the menu or the home cards to reach the sections.\n4. In tables, use the action links to get straight to the point.\nYou can change the context and replay this tutorial at any time.",
+    "tours_title": "Interactive tutorials",
+    "tours_subtitle": "Replay a guided tutorial at any time, directly on the relevant pages.",
+    "replay": "Replay"
   }
 }

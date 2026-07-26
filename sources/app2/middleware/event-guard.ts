@@ -4,7 +4,7 @@ import { usePreferenceStore } from '~/stores/preferenceStore'
  * Middleware to protect routes that require an event to be selected
  * Redirects to home page if no event is selected
  */
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to, _from) => {
   const preferenceStore = usePreferenceStore()
 
   // Allow access to home, about, login and any other public pages

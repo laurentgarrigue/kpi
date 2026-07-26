@@ -1,0 +1,36 @@
+# PHPStan — analyse statique api2 (Phase 2 du plan CI/CD).
+#
+# Le code passe sans dette jusqu'au level 3 (après correction des 4 bugs du
+# premier passage). On remonte le niveau progressivement (viser 5) : chaque
+# palier = un commit qui incrémente `level` et vide le baseline correspondant.
+#
+# Lancement local (mémoire : le défaut 128M ne suffit pas, d'où --memory-limit) :
+#   docker exec kpi_api2 sh -lc 'cd /app && composer phpstan'
+# Geler la dette avant de monter d'un niveau :
+#   docker exec kpi_api2 sh -lc 'cd /app && composer phpstan-baseline'
+includes:
+    # Extensions : compréhension des services Symfony (autowiring, container) et
+    # des entités/repositories Doctrine. Sans elles, PHPStan crie sur du code
+    # parfaitement valide (magie du framework).
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
+parameters:
+    # Level 3 passe sans dette (0 erreur) une fois corrigés les 4 bugs révélés au
+    # premier passage (méthodes/variables inexistantes — voir le commit associé).
+    # Le plan visait « démarrer au niveau 1 » ; le code était en fait sain jusqu'à
+    # 3. Prochain palier : level 4 (~14 findings au moment de l'ajout) — à traiter
+    # en gelant un baseline (`composer phpstan-baseline`) puis en le vidant.
+    level: 3
+
+    paths:
+        - src
+
+    # Le container compilé permet à l'extension Symfony de résoudre les services
+    # (types réels derrière les interfaces). Chemin de l'env `dev` déjà réchauffé.
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+
+    # Doctrine : pointe l'ObjectManager pour typer les repositories/entités.
+    doctrine:
+        objectManagerLoader: tests/phpstan-object-manager.php

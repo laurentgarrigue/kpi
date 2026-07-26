@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# post-commit — volontairement NO-OP.
+#
+# Le bump automatique de version NE se fait plus ici. Il vivait dans ce hook
+# post-commit local, mais c'était structurellement inadapté au workflow du repo :
+#
+#   - `develop` n'accepte que des PR (ruleset `pull_request`) → on ne commit
+#     jamais directement dessus ;
+#   - le squash-merge est exécuté par GitHub côté serveur, où AUCUN hook local ne
+#     tourne ;
+#   - les PR ouvertes via l'UI GitHub, `gh`, ou Dependabot ne déclenchent aucun
+#     hook local non plus.
+#
+# Résultat : api2 n'était jamais bumpé (aucun commit local ne l'avait touché
+# depuis l'ajout de la logique), et le mécanisme dépendait de la discipline.
+#
+# Le bump est désormais porté par un workflow GitHub Actions qui s'exécute APRÈS
+# chaque push sur `develop` (donc après tout merge, quelle qu'en soit l'origine) :
+#
+#     .github/workflows/version-bump.yml
+#
+# Il détecte les briques touchées (app2/app4/api2), bumpe les fichiers de version
+# et ouvre une PR « chore: bump versions » (auto-merge si activé sur le repo).
+#
+# Ce fichier reste présent (câblé via `core.hooksPath`, cf. `make hooks`) pour ne
+# pas casser l'installation, mais ne fait plus rien.
+
+exit 0

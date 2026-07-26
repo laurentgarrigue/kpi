@@ -344,9 +344,10 @@ class AdminRcController extends AbstractController
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $sql = "DELETE FROM kp_rc WHERE Id IN ($placeholders)";
             $stmt = $this->connection->prepare($sql);
-            $stmt->executeStatement($ids);
-
-            $deleted = $stmt->rowCount();
+            // DBAL 3: Statement::executeStatement() renvoie directement le nombre
+            // de lignes affectées. Statement n'a pas de rowCount() (c'est Result
+            // qui en a un) — l'appeler était un fatal à l'exécution.
+            $deleted = $stmt->executeStatement($ids);
 
             // Log action
             $idsStr = implode(', ', $ids);

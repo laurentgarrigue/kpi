@@ -382,15 +382,15 @@ import { useGames } from '~/composables/useGames'
 import { useCharts } from '~/composables/useCharts'
 import { useAutoRefresh } from '~/composables/useAutoRefresh'
 import { formatNom, formatPrenom } from '~/utils/nameFormat'
+import { usePreferenceStore } from '~/stores/preferenceStore'
+import { useApi } from '~/composables/useApi'
+import GameList from '~/components/GameList.vue'
+import TeamName from '~/components/TeamName.vue'
 
 // Protect this page - require event selection
 definePageMeta({
   middleware: 'event-guard'
 })
-import { usePreferenceStore } from '~/stores/preferenceStore'
-import { useApi } from '~/composables/useApi'
-import GameList from '~/components/GameList.vue'
-import TeamName from '~/components/TeamName.vue'
 
 const { t } = useI18n()
 const route = useRoute()

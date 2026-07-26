@@ -465,14 +465,14 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useScrutineering } from '~/composables/useScrutineering'
 import { useUser } from '~/composables/useUser'
 import { useStatus } from '~/composables/useStatus'
+import { usePrefs } from '~/composables/usePrefs'
+import { usePreferenceStore } from '~/stores/preferenceStore'
+import CommentModal from '~/components/CommentModal.vue'
 
 // Protect this page - require event selection
 definePageMeta({
   middleware: 'event-guard'
 })
-import { usePrefs } from '~/composables/usePrefs'
-import { usePreferenceStore } from '~/stores/preferenceStore'
-import CommentModal from '~/components/CommentModal.vue'
 
 const { t } = useI18n()
 const { user, getUser } = useUser()

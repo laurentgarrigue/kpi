@@ -60,7 +60,9 @@ api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
-docker_networks_create docker_networks_list docker_networks_clean
+docker_networks_create docker_networks_list docker_networks_clean \
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main \
+hooks
 
 
 
@@ -81,7 +83,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks ## Initialisation complète du projet (env, réseaux)
+init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
 	@echo ""
 	@echo "Initialisation complète terminée!"
 	@echo ""
@@ -101,6 +103,12 @@ init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_netw
 	@echo "  6. Lancez Nuxt: make app2_dev"
 	@echo ""
 	@echo "Note: Pour une préprod/prod, vérifiez APPLICATION_NAME dans docker/.env"
+
+hooks: ## Active les git hooks versionnés (scripts/hooks/) via core.hooksPath
+	@git config core.hooksPath scripts/hooks
+	@chmod +x scripts/hooks/* 2>/dev/null || true
+	@echo "Git hooks activés : core.hooksPath → scripts/hooks"
+	@echo "  - post-commit : auto-bump version app2/app4 (package.json) + api2 (nelmio_api_doc.yaml)"
 
 init_env: ## Initialise le fichier docker/.env depuis docker/.env.dist
 	@if [ ! -f docker/.env ]; then \
@@ -915,7 +923,11 @@ api2_migrations_diff: ## Génère une migration Doctrine pour API2 (détecte les
 
 api2_migrations_migrate: ## Exécute les migrations Doctrine pour API2
 	@echo "Exécution des migrations Doctrine pour API2 (container: $(API2_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction
+	@# --allow-no-migration : api2 n'a AUCUNE migration enregistrée (migrations/ est
+	@# vide, le schéma vient de la base legacy partagée). Sans cette option, Doctrine
+	@# sort en ERREUR ("The version latest couldn't be reached"), ce qui ferait
+	@# échouer — et rollback — chaque déploiement automatisé (Phase 5).
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 	@echo "Migrations exécutées pour API2"
 
 api2_assets_install: ## Installe les assets pour API2
@@ -1052,3 +1064,121 @@ git_images_list_protected: ## Liste les images actuellement protégées (skip-wo
 	@echo "Images protégées (skip-worktree) :"
 	@git ls-files -v -- 'sources/img/**/*.png' 'sources/img/**/*.jpg' | \
 		grep '^S' || echo "(aucune image protégée)"
+
+
+## GIT - WORKTREES & PR (développement parallèle de features)
+# Développer plusieurs features en parallèle via git worktrees, puis ouvrir les PR.
+# Voir DOC/developer/guides/PARALLEL_FEATURES_WORKTREES.md.
+# Rappel : UN SEUL stack Docker à la fois (ports fixes + ../sources monté en relatif).
+# Les commandes exécutées sont affichées (pas de @) pour rester transparentes.
+
+wt_new: ## Crée un worktree + branche feature/<name> (make wt_new name=scoring [base=develop])
+	@[ -n "$(name)" ] || { echo "Usage: make wt_new name=<feature> [base=<branche>]"; exit 1; }
+	./scripts/git-wt.sh new $(name) $(base)
+
+wt_list: ## Liste les worktrees existants
+	./scripts/git-wt.sh list
+
+wt_sync: ## Re-copie les fichiers non-versionnés (.env, etc.) dans un worktree (make wt_sync name=scoring)
+	@[ -n "$(name)" ] || { echo "Usage: make wt_sync name=<feature>"; exit 1; }
+	./scripts/git-wt.sh sync $(name)
+
+wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
+	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
+	./scripts/git-wt.sh rm $(name)
+
+pr_push: ## Push la branche courante et la suit sur origin (git push -u)
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+
+pr_create: ## Push la branche courante puis ouvre une PR vers develop (make pr_create [base=develop])
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+	gh pr create --base $(if $(base),$(base),develop) --fill
+
+pr_web: ## Push la branche courante et ouvre le formulaire de PR pré-rempli dans le navigateur
+	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
+	gh pr create --base $(if $(base),$(base),develop) --web
+
+pr_status: ## Affiche l'état de tes PR sur ce repo
+	gh pr status
+
+pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
+	gh pr checks --watch
+
+pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+		echo "Refus : tu es sur '$$branch'. Lance pr_close depuis la branche de la PR jetable."; exit 1; \
+	fi; \
+	echo "Fermeture SANS merge de la PR de la branche '$$branch' + suppression de la branche..."; \
+	gh pr close --delete-branch || exit 1; \
+	echo "PR fermée. Pense à revenir sur develop : git checkout develop"
+
+pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à jour et nettoie la branche locale
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
+	fi; \
+	main_repo=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	main_repo=$$(dirname "$$main_repo"); \
+	wt=$$(git rev-parse --show-toplevel); \
+	if [ "$$main_repo" != "$$wt" ]; then \
+		served=$$(docker inspect $(PHP_CONTAINER_NAME) --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' 2>/dev/null || true); \
+		case "$$served" in "$$wt"/*|"$$wt") \
+			echo "⛔ Le stack Docker tourne depuis ce worktree ($$served)."; \
+			echo "   Le worktree ne pourra pas être supprimé après le merge."; \
+			echo "   Bascule le stack d'abord :"; \
+			echo "     make dev_down                     # ici"; \
+			echo "     cd $$main_repo && make dev        # depuis le repo principal"; \
+			exit 1;; \
+		esac; \
+	fi; \
+	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
+	gh pr merge --squash --delete-branch || exit 1; \
+	if [ "$$main_repo" != "$$wt" ]; then \
+		echo "Worktree détecté : develop est géré dans $$main_repo"; \
+		cur=$$(git -C "$$main_repo" rev-parse --abbrev-ref HEAD); \
+		if [ "$$cur" != "develop" ]; then \
+			git -C "$$main_repo" checkout develop || exit 1; \
+		fi; \
+		git -C "$$main_repo" pull || exit 1; \
+		echo "Suppression du worktree courant..."; \
+		cd "$$main_repo" && git worktree remove "$$wt" \
+			&& echo "Worktree '$$wt' supprimé." \
+			|| { echo "⚠ Worktree non supprimé (modifs locales ?). Manuel : git worktree remove --force '$$wt'"; exit 1; }; \
+		git -C "$$main_repo" branch -D "$$branch" 2>/dev/null \
+			&& echo "Branche locale '$$branch' supprimée." \
+			|| echo "(branche locale '$$branch' déjà supprimée)"; \
+		echo; echo "✔ Terminé. Tu es encore dans un dossier supprimé : cd $$main_repo"; \
+	else \
+		echo "Bascule sur develop et mise à jour..."; \
+		git checkout develop && git pull || exit 1; \
+		git branch -D "$$branch" 2>/dev/null \
+			&& echo "Branche locale '$$branch' supprimée." \
+			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
+	fi
+
+sync_develop_from_main: ## Rapatrie les PR mergées sur main (Dependabot security) dans develop et push
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⛔ Working tree non propre. Committe ou stash avant (le merge écraserait tes modifs)."; \
+		git status -sb; exit 1; \
+	fi; \
+	start=$$(git rev-parse --abbrev-ref HEAD); \
+	echo "→ Mise à jour de main..."; \
+	git checkout main && git pull --ff-only || { echo "⛔ Échec du pull de main."; git checkout "$$start" 2>/dev/null; exit 1; }; \
+	echo "→ Mise à jour de develop..."; \
+	git checkout develop && git pull --ff-only || { echo "⛔ Échec du pull de develop."; exit 1; }; \
+	if git merge-base --is-ancestor main develop; then \
+		echo "✔ develop contient déjà main — rien à rapatrier."; \
+		if [ "$$start" != "develop" ]; then git checkout "$$start"; fi; \
+		exit 0; \
+	fi; \
+	echo "→ Merge de main dans develop..."; \
+	if ! git merge --no-edit main; then \
+		echo; echo "⛔ Conflit de merge. Résous-le à la main, puis :"; \
+		echo "     git add -A && git commit && git push origin develop"; \
+		echo "   (ou 'git merge --abort' pour annuler)"; exit 1; \
+	fi; \
+	echo "→ Push de develop..."; \
+	git push origin develop || exit 1; \
+	echo; echo "✔ develop est à jour avec main sur origin."; \
+	if [ "$$start" != "develop" ]; then echo "(tu étais sur '$$start' ; tu es maintenant sur develop)"; fi

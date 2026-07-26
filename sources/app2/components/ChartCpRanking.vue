@@ -42,7 +42,7 @@ import TeamName from '~/components/TeamName.vue'
 
 const { t } = useI18n()
 
-const props = defineProps({
+defineProps({
   chartRanking: {
     type: Array,
     default: () => []

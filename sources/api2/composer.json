@@ -72,7 +72,9 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "phpstan": "phpstan analyse --no-progress --memory-limit=512M",
+        "phpstan-baseline": "phpstan analyse --generate-baseline --memory-limit=512M"
     },
     "conflict": {
         "symfony/symfony": "*"
@@ -84,6 +86,9 @@
         }
     },
     "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
         "symfony/maker-bundle": "^1.67.0"
     }
 }
