@@ -6,7 +6,7 @@ const dbPromise = async () => {
   }
 
   return openDB('kpi', 6, {
-    upgrade: (db, oldVersion, newVersion, transaction) => {
+    upgrade: (db, oldVersion) => {
       switch (oldVersion) {
         case 0:
         case 1:
@@ -25,11 +25,11 @@ const dbPromise = async () => {
       }
 
       function upgradeDBfromV0toV4 () {
-        try { db.deleteObjectStore('Photo') } catch (e) {}
-        try { db.deleteObjectStore('preferences') } catch (e) {}
-        try { db.deleteObjectStore('user') } catch (e) {}
-        try { db.deleteObjectStore('games') } catch (e) {}
-        try { db.deleteObjectStore('charts') } catch (e) {}
+        try { db.deleteObjectStore('Photo') } catch { /* store may not exist */ }
+        try { db.deleteObjectStore('preferences') } catch { /* store may not exist */ }
+        try { db.deleteObjectStore('user') } catch { /* store may not exist */ }
+        try { db.deleteObjectStore('games') } catch { /* store may not exist */ }
+        try { db.deleteObjectStore('charts') } catch { /* store may not exist */ }
       }
 
       function upgradeDBfromV4toV5 () {

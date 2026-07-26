@@ -1,6 +1,6 @@
 {
   "name": "kpi-app2",
-  "version": "1.4.3",
+  "version": "1.4.7",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,8 @@
     "dev": "dotenv -e .env.development -- nuxt dev --host 0.0.0.0 --port 3000",
     "generate": "dotenv -e .env.production -- nuxt generate",
     "preview": "nuxt preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {

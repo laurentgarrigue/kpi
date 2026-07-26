@@ -512,7 +512,7 @@ export const useGames = () => {
   }
 
   const gameEncode = (gameCode, codeNumber) => {
-    const readCode = gameCode ? gameCode.split(/[\[\]]/)[1].split(/[-/*,;]/g)[codeNumber - 1] : null
+    const readCode = gameCode ? gameCode.split(/[[\]]/)[1].split(/[-/*,;]/g)[codeNumber - 1] : null
     if (!readCode) {
       return null
     }

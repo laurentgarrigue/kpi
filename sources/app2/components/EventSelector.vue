@@ -181,13 +181,6 @@ const availableEventSeasons = computed(() => {
   return sortedYears
 })
 
-// Computed
-const events = computed(() => {
-  if (eventMode.value === 'std') {
-    return [...eventStore.events].sort((a, b) => b.id - a.id)
-  }
-  return eventStore.events
-})
 
 // Filtered events by selected season
 const filteredEvents = computed(() => {

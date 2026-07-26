@@ -306,12 +306,19 @@ watch(
   }
 )
 
+// Tutoriel guidé de la page (profils <= 4, 1re visite). Voir DOC/specs/TUTORIEL_ADMIN2.md
+const { maybeAutoStart: maybeAutoStartRankingsTour } = useGuidedTour('rankings')
+
 // Load on mount
 onMounted(async () => {
   await workContext.initContext()
   if (workContext.pageCompetitionCode) {
     await loadRankings()
   }
+  // Après le chargement : les ancres (case « Consolider », bouton « Égalités »)
+  // n'existent dans le DOM qu'une fois le classement rendu.
+  await nextTick()
+  maybeAutoStartRankingsTour()
 })
 
 // Competition change handler
@@ -677,6 +684,12 @@ const hasTies = computed(() => {
   return false
 })
 
+// Première phase consolidable (type C) : porte l'ancre du tutoriel guidé, pour
+// que `[data-tour="phase-consolidation"]` ne matche qu'un seul élément.
+const firstConsolidablePhaseId = computed(
+  () => sortedPhases.value.find(ph => ph.type === 'C')?.idJournee ?? null
+)
+
 const justificationLoading = ref(false)
 
 const openJustificationPdf = async () => {
@@ -882,7 +895,7 @@ const editValueForField = (field: string, value: number): string => {
             </div>
 
             <!-- "Égalités" dropdown — only when teams are tied (poules or general ranking) -->
-            <div v-if="hasTies" class="relative">
+            <div v-if="hasTies" class="relative" data-tour="ties-justification">
               <button
                 class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 transition-colors text-sm flex items-center gap-1"
                 @click="toggleTiesDropdown($event)"
@@ -1195,7 +1208,13 @@ const editValueForField = (field: string, value: number): string => {
                     <!-- <span v-if="phase.lieu" class="text-header-900 dark:text-header-50">({{ phase.lieu }})</span> -->
                   </span>
                   <!-- Consolidation checkbox (type C only) - on the right -->
-                  <label v-if="phase.type === 'C'" class="flex items-center gap-2 text-sm">
+                  <!-- data-tour posé sur la 1re phase consolidable seulement : le
+                       sélecteur du tutoriel doit rester unique dans la page. -->
+                  <label
+                    v-if="phase.type === 'C'"
+                    :data-tour="phase.idJournee === firstConsolidablePhaseId ? 'phase-consolidation' : undefined"
+                    class="flex items-center gap-2 text-sm"
+                  >
                     <input
                       :checked="phase.consolidation"
                       type="checkbox"

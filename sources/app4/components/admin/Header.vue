@@ -32,7 +32,8 @@ const authStore = useAuthStore()
 const route = useRoute()
 
 // Tutoriel guidé (onboarding admin2) — voir DOC/specs/TUTORIEL_ADMIN2.md
-const { startTour, hasNewSteps } = useGuidedTour('welcome')
+// Seul le badge « Nouveautés » subsiste ici : la relance se fait depuis /help.
+const { hasNewSteps } = useGuidedTour('welcome')
 
 const activeMandateSummary = computed(() =>
   authStore.activeMandate
@@ -584,21 +585,7 @@ onMounted(() => {
                   <span>{{ t('users.header.switch_mandate') }}</span>
                 </NuxtLink>
 
-                <!-- Replay the guided tour -->
-                <button
-                  type="button"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 transition-colors cursor-pointer"
-                  @click="userMenuOpen = false; startTour(false)"
-                >
-                  <UIcon name="heroicons:play-circle" class="w-5 h-5" />
-                  <span>{{ t('tour.relaunch') }}</span>
-                  <span
-                    v-if="hasNewSteps"
-                    class="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200"
-                  >{{ t('tour.new_badge') }}</span>
-                </button>
-
-                <!-- Help & tutorial page -->
+                <!-- Help & tutorials page (les tutoriels se relancent depuis /help) -->
                 <NuxtLink
                   to="/help"
                   class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
@@ -606,6 +593,10 @@ onMounted(() => {
                 >
                   <UIcon name="heroicons:question-mark-circle" class="w-5 h-5" />
                   <span>{{ t('help.title') }}</span>
+                  <span
+                    v-if="hasNewSteps"
+                    class="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200"
+                  >{{ t('tour.new_badge') }}</span>
                 </NuxtLink>
 
                 <!-- Theme selector: light / dark / system -->

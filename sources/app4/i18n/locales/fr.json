@@ -2614,23 +2614,34 @@
     "next": "Suivant",
     "prev": "Précédent",
     "done": "Terminer",
-    "relaunch": "Revoir le tutoriel",
     "new_badge": "Nouveau",
     "clickable_cells_title": "Des données cliquables",
     "clickable_cells_body": "Sur la page Compétitions, plusieurs valeurs du tableau sont cliquables et mènent directement au bon endroit : le groupe, le nombre d'équipes, de journées/phases et de matchs. (Le tableau se remplit une fois un contexte de travail choisi.)",
     "context_summary_title": "Revenir au contexte de travail",
     "context_summary_body": "Ce rappel est présent en haut de chaque page : il affiche la saison et le périmètre en cours. Cliquez sur « Modifier » pour revenir à la page d'accueil et changer votre contexte de travail à tout moment.",
     "outro_title": "Vous êtes prêt !",
-    "outro_body": "Voilà pour l'essentiel. Vous êtes de retour sur la page d'accueil : choisissez votre contexte de travail pour commencer. Vous pouvez revoir ce tutoriel à tout moment via le bouton « ? » en haut à droite."
+    "outro_body": "Voilà pour l'essentiel. Vous êtes de retour sur la page d'accueil : choisissez votre contexte de travail pour commencer. Vous pouvez revoir ce tutoriel à tout moment via le bouton « ? » en haut à droite.",
+    "welcome_label": "Découverte d'Admin2",
+    "rankings_label": "Consolidation des classements",
+    "rankings_intro_title": "Classements : ce qui change",
+    "rankings_intro_body": "Deux nouveautés sur cette page : la « Justification du départage » pour contrôler les égalités, et la consolidation des phases terminées. L'ordre compte : on vérifie les égalités, puis on consolide, et seulement ensuite on lance l'affectation automatique des équipes dans Matchs.",
+    "rankings_ties_title": "1. Vérifier les égalités",
+    "rankings_ties_body": "Lorsque des équipes sont à égalité de points, un bouton « Égalités » apparaît ici. Il donne accès à la « Justification du départage » : un PDF détaillant, critère par critère, comment les équipes ont été départagées. Contrôlez-le avant de consolider.",
+    "rankings_consolidate_title": "2. Consolider la phase",
+    "rankings_consolidate_body": "Cela concerne les compétitions de type Coupe/Tournoi (CP). Une fois les égalités vérifiées, cochez « Consolider la phase » sur chaque phase de poule terminée. La consolidation fige le classement : les valeurs ne sont plus modifiables en ligne, et c'est ce classement figé qui servira de référence.",
+    "rankings_outro_title": "3. Puis l'affectation dans Matchs",
+    "rankings_outro_body": "Ce n'est qu'une fois les phases consolidées que l'affectation automatique des équipes peut être lancée depuis la page Matchs. Sans consolidation, les équipes qualifiées ne peuvent pas être reportées. Vous pouvez revoir ce tutoriel à tout moment depuis l'aide."
   },
   "help": {
-    "title": "Aide & tutoriel",
+    "title": "Aide et tutoriels",
     "subtitle": "Prise en main de la nouvelle administration (Admin2).",
-    "start_tour": "Lancer le tutoriel",
     "diff_title": "Admin1 (ancienne) vs Admin2 (nouvelle)",
     "diff_body": "Admin2 remplace progressivement l'ancienne administration. Les données sont les mêmes : vous retrouvez compétitions, équipes, journées et matchs. Les principales différences sont l'ajout d'un contexte de travail (saison + périmètre) appliqué à toute l'application, une navigation par menu unifiée, et des actions directes depuis les tableaux.",
     "features_title": "Les nouveautés essentielles",
     "nav_title": "Naviguer efficacement",
-    "nav_body": "1. Choisissez votre mandat si vous en avez plusieurs.\n2. Définissez votre contexte de travail sur l'accueil (saison + périmètre).\n3. Utilisez le menu ou les cartes d'accueil pour accéder aux sections.\n4. Dans les tableaux, servez-vous des liens d'action pour aller droit au but.\nVous pouvez modifier le contexte et relancer ce tutoriel à tout moment."
+    "nav_body": "1. Choisissez votre mandat si vous en avez plusieurs.\n2. Définissez votre contexte de travail sur l'accueil (saison + périmètre).\n3. Utilisez le menu ou les cartes d'accueil pour accéder aux sections.\n4. Dans les tableaux, servez-vous des liens d'action pour aller droit au but.\nVous pouvez modifier le contexte et relancer ce tutoriel à tout moment.",
+    "tours_title": "Tutoriels interactifs",
+    "tours_subtitle": "Rejouez à tout moment un tutoriel guidé, directement sur les pages concernées.",
+    "replay": "Rejouer"
   }
 }

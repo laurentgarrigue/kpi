@@ -84,7 +84,7 @@ import TeamName from '~/components/TeamName.vue'
 
 const { t } = useI18n()
 
-const props = defineProps({
+defineProps({
   chartGames: {
     type: Array,
     default: () => []

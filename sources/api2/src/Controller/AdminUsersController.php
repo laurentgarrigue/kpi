@@ -991,7 +991,7 @@ class AdminUsersController extends AbstractController
     #[OA\Response(response: 200, description: 'Reset token generated')]
     #[OA\Response(response: 403, description: 'Profile insufficient')]
     #[OA\Response(response: 404, description: 'User not found')]
-    public function resetPassword(string $code): JsonResponse
+    public function resetPassword(string $code, Request $request): JsonResponse
     {
         /** @var User|null $currentUser */
         $currentUser = $this->getUser();
