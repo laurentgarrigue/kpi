@@ -1,0 +1,63 @@
+name: Test env isolation (preprod ≠ production)
+
+# Phase 5 du plan CI/CD — ferme la case « le job preprod ne peut PAS lire les
+# secrets de l'environment production ».
+#
+# Principe : ce job tourne en `environment: preprod`. Il tente de lire un secret
+# SENTINELLE, `PROD_ISOLATION_CANARY`, qui doit être défini UNIQUEMENT dans
+# l'environment `production` (ni au niveau repo, ni dans preprod). GitHub scope les
+# secrets d'environment : un job preprod ne voit QUE les secrets de preprod + repo.
+# Donc, correctement configuré, le canary ressort VIDE ici → isolation prouvée.
+# S'il ressort non-vide, c'est une FUITE (canary défini au niveau repo, ou dans
+# preprod par erreur) → le job échoue bruyamment.
+#
+# ⚠️ On ne peut pas AFFICHER la valeur (GitHub masque les secrets dans les logs).
+# On teste donc seulement « vide vs non-vide », sans jamais imprimer le contenu.
+#
+# Manuel uniquement (workflow_dispatch) : c'est un test ponctuel, pas un gate CI.
+# À supprimer avec le secret sentinelle une fois la case cochée.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Job 1 — tourne en preprod : le canary production NE DOIT PAS être visible.
+  preprod-must-not-see-canary:
+    runs-on: ubuntu-latest
+    environment: preprod
+    steps:
+      - name: Le canary production doit être vide en preprod
+        env:
+          CANARY: ${{ secrets.PROD_ISOLATION_CANARY }}
+        run: |
+          if [ -n "$CANARY" ]; then
+            echo "::error::FUITE — le secret production 'PROD_ISOLATION_CANARY' est"
+            echo "::error::visible depuis l'environment preprod. Vérifie qu'il n'est"
+            echo "::error::PAS défini au niveau repo ni dans preprod, seulement dans production."
+            exit 1
+          fi
+          echo "✅ Isolation OK : le canary production est INVISIBLE en preprod."
+
+  # Job 2 (témoin) — tourne en production : le canary DOIT y être visible.
+  # Prouve que le canary existe bien (sinon le job 1 serait vert pour la mauvaise
+  # raison : un secret jamais créé serait aussi « vide » en preprod).
+  # ⚠️ `environment: production` peut exiger une approbation manuelle (required
+  # reviewer) — c'est attendu ; approuve le run pour laisser ce job témoin tourner.
+  production-must-see-canary:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Le canary doit être présent en production
+        env:
+          CANARY: ${{ secrets.PROD_ISOLATION_CANARY }}
+        run: |
+          if [ -z "$CANARY" ]; then
+            echo "::error::Le canary 'PROD_ISOLATION_CANARY' est ABSENT de production."
+            echo "::error::Le test d'isolation n'est pas concluant tant qu'il n'existe"
+            echo "::error::pas là — crée-le dans l'environment production puis relance."
+            exit 1
+          fi
+          echo "✅ Le canary est bien présent en production (témoin valide)."
