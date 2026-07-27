@@ -570,6 +570,85 @@ class ScoringController extends AbstractController
         return new JsonResponse(['success' => true, 'activeSource' => $source, 'tick' => $tick]);
     }
 
+    #[Route('/officials/{matchId}', name: 'officials_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/officials/{matchId}',
+        summary: 'Update the match officials (referees, secretary, timekeepers, line judges)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['officials'],
+                properties: [
+                    new OA\Property(
+                        property: 'officials',
+                        type: 'object',
+                        description: 'Any subset of: arbitrePrincipal, arbitreSecondaire, matricArbitrePrincipal, matricArbitreSecondaire, secretaire, chronometre, timeshoot, ligne1, ligne2'
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Officials updated'),
+            new OA\Response(response: 400, description: 'Game locked or nothing to update')
+        ]
+    )]
+    public function putOfficials(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+
+        // Officials are match-sheet metadata, not live state: they write kp_match directly
+        // (parity FMV3 saveOfficiel/saveArbitres — spec §7.8, plan lot 1.5). Whitelisted map
+        // payload key → kp_match column; only the provided keys are updated.
+        $columns = [
+            'arbitrePrincipal' => 'Arbitre_principal',
+            'arbitreSecondaire' => 'Arbitre_secondaire',
+            'matricArbitrePrincipal' => 'Matric_arbitre_principal',
+            'matricArbitreSecondaire' => 'Matric_arbitre_secondaire',
+            'secretaire' => 'Secretaire',
+            'chronometre' => 'Chronometre',
+            'timeshoot' => 'Timeshoot',
+            'ligne1' => 'Ligne1',
+            'ligne2' => 'Ligne2',
+        ];
+
+        $sets = [];
+        $values = [];
+        foreach ($columns as $key => $column) {
+            if (property_exists($data->officials ?? new \stdClass(), $key)) {
+                $sets[] = "$column = ?";
+                $values[] = $data->officials->$key;
+            }
+        }
+
+        if ($sets === []) {
+            return new JsonResponse(['error' => 'Nothing to update'], 400);
+        }
+
+        $values[] = $matchId;
+        $this->connection->executeStatement(
+            'UPDATE kp_match SET ' . implode(', ', $sets) . " WHERE Id = ? AND Validation != 'O'",
+            $values
+        );
+
+        $this->logScoring('Scoring officiels', $matchId, implode(', ', array_map(
+            fn (string $k): string => $k . ' = ' . ($data->officials->$k ?? ''),
+            array_keys(array_intersect_key($columns, (array) ($data->officials ?? [])))
+        )));
+
+        return new JsonResponse(['success' => true]);
+    }
+
     #[Route('/stats', name: 'stats', methods: ['PUT'])]
     #[OA\Put(
         path: '/admin/scoring/stats',

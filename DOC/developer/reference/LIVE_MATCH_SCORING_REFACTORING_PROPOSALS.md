@@ -579,9 +579,10 @@ consolidation ; fichiers de référence intégrés aux tests.
 >   `ScoringLiveService` (endpoints/payloads inchangés ; transition : seed depuis `kp_*` au
 >   premier contact, fallback lecture legacy) ;
 > - ✅ 1.4 — `gameTimer` généralisé aux N horloges (`kind`/`team`/`slot`, GAME par défaut) ;
-> - ✅ 1.5 (partiel) — `GET /state` (ETag = tick) et `PUT /source` (promotion §4.1, garde
->   « source active » sur toutes les écritures) livrés ; **officiels / recharge présents : à
->   faire** ;
+> - ✅ 1.5 (partiel) — `GET /state` (ETag = tick), `PUT /source` (promotion §4.1, garde
+>   « source active » sur toutes les écritures) et `PUT /officials` (édition des officiels,
+>   parité FMV3) livrés ; **recharge des présents / charge par n° court : à vérifier contre
+>   l'existant presence** ;
 > - ✅ 1.6 — consolidation `kp_*` au passage `Statut → END` (état + reconstruction
 >   `kp_match_detail` depuis les faits live) ;
 > - ✅ 1.7 — journal `kp_journal` sur toutes les routes (y c. rejets de source et
