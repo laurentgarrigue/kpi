@@ -66,6 +66,16 @@ l'état live consolidé vers `kp_*` — exactement comme la clôture actuelle é
 le **reporting existant** (fiche, classements, PDF, `FeuilleMatchMulti.php`) n'est **jamais** impacté
 pendant le match, et il n'y a **aucune double écriture continue** à maintenir.
 
+> ⚠️ **Impact de transition à traiter (2026-07-27).** Certains consommateurs de `kp_*` affichent
+> aujourd'hui le **déroulement du match y compris en cours** (le legacy écrit `kp_match_detail` en
+> live) : le **PDF `FeuilleMatchMulti.php`** imprimé pendant un match, et **app2** (affichage
+> public du détail des matchs). Quand la console écrira dans `scoring_live_*`, ces consommateurs ne
+> verront plus rien avant la consolidation de fin de match. **Prévoir leur évolution** (lecture de
+> l'état live via `GET /scoring/state` / Mercure, ou tout autre mécanisme) — planifiée au
+> [plan, lot 4](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (étape
+> « consommateurs kp_* en cours de match »). Tant que cette évolution n'est pas faite, la bascule
+> de la saisie vers `scoring_live_*` dégrade l'affichage « en cours » de ces consommateurs.
+
 > **Impact sur le code déjà écrit (Phase 1).** Le `ScoringController` écrit aujourd'hui dans `kp_*`
 > (vérifié : `gameParam`→`kp_match`, `gameEvent`→`kp_match_detail`, `gameTimer`→`kp_chrono`). Ces
 > écritures sont **re-routées** vers `scoring_live_*`. La **forme des endpoints ne change pas**
@@ -137,7 +147,7 @@ sont figées : **prolongations non bornées** (`Px`), **N horloges** (shotclock 
 
 | Colonne | Type | Rôle |
 |---|---|---|
-| `id_match` | int (PK) | match |
+| `id_match` | int (PK) | match (= `kp_match.Id_match`, conservé en int — cf. décision §0.9/plan §4.13 : un `uid` public court **additif** est prévu côté match pour les usages offline/import futurs, sans toucher aux clés legacy) |
 | `score_a` / `score_b` | int | score courant |
 | `periode` | varchar | code de période (voir §0.6 : `M1`/`M2`/`P1`/`P2`/`P3`… **non borné**) |
 | `statut` | enum `ATT`/`ON`/`END` | statut live |
@@ -150,7 +160,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 
 | Colonne | Type | Rôle |
 |---|---|---|
-| `id` | int (PK) | |
+| `id` | **uuid (PK)** | identifiant généré côté émetteur (console/relais) — permet l'idempotence et la création hors ligne sans compteur central (décision §0.9 ; table neuve, zéro impact legacy) |
 | `id_match` | int | match |
 | `kind` | enum `GAME`/`SHOTCLOCK`/`PENALTY`/`BREAK` | type d'horloge (`BREAK` = pause inter-périodes indicative, cf. §7.5) |
 | `team` | enum `A`/`B`/NULL | équipe (pénalités) ; NULL pour le chrono de jeu et le shotclock |
@@ -246,10 +256,32 @@ sections concernées de cette spec ont été mises à jour ; ce tableau sert d'i
 |---|---|---|
 | **PWA installable d'abord** | La console est une PWA installable dès sa livraison (manifest + service worker + app shell) ; la saisie reste online-first, la **file d'écritures offline** reste en dernière phase | §3, §8 (Phases 2 et 4) |
 | **Pauses inter-périodes** | 3 min entre `M1`–`M2`, 3 min entre `M2`–`P1`, 1 min entre chaque prolongation — décomptes **indicatifs**, durées dans `ScoringConfig`. **Pas de temps mort d'équipe** | §6.2, §7.5, §0.5 (horloge `BREAK`) |
-| **Shotclock : départ manuel + pause indépendante** | Jamais lancé par le chrono ; une fois lancé, suit le chrono (pause auto) ; pause manuelle indépendante ; **départ/reprise ≠ reset** (resets 60 s / 40 s = commandes distinctes) | §6.5, §10.9 |
-| **Raccourcis paramétrables** | Préférence par poste/utilisateur ; défauts : `Espace` chrono, `Entrée` départ/reprise shotclock, `0` pause shotclock, resets 60/40 sur touches dédiées | §6.5 |
+| **Shotclock : départ manuel** | Jamais lancé par le démarrage du chrono principal ; une fois lancé, suit le chrono (suspension auto). ~~Pause manuelle indépendante, départ/reprise ≠ reset~~ → **remplacé le 2026-07-27 par le modèle « 3 commandes »** (le départ EST un reset, l'arrêt remet à `--`), cf. §0.9 | §6.5, §10.9 |
+| **Raccourcis paramétrables** | Préférence par poste/utilisateur ; défauts `Espace`/`Entrée`/`0` — affectations **revues le 2026-07-27** avec le modèle 3 commandes, cf. §0.9 et §6.5 | §6.5 |
 | **Canaux d'affichage** | Confirmé : **BroadcastChannel** pour les fenêtres locales du même poste, **Mercure** pour les écrans distants et incrustations | §6.5 |
 | **Relais matériel** | Un seul composant relais Stomp (brut, traduction serveur), déployable **côté serveur KPI** (site avec redirection de port vers la passerelle) **ou en boîtier local** (optionnel, selon le site) | plan §4.7 ; impacte `useHardwareScoring` (Phase 3) |
+
+### 0.9 Décisions complémentaires (2026-07-27)
+
+Deuxième passe de revue ; les sections concernées ont été mises à jour, ce tableau sert d'index :
+
+| Décision | Résumé | Sections mises à jour |
+|---|---|---|
+| **Terminologie shotclock** | Traduction française : **« chronomètre de tir »**. Ne plus employer « temps d'action de but » ni « temps d'action de jeu » (UI, doc, i18n). Le terme technique `shotclock` reste en code | §6.5, §7.1 |
+| **Shotclock : 3 commandes** | Le départ **est** un reset : ① **départ/reset 60 s** (indépendant du chrono principal), ② **départ/reset 40 s**, ③ **arrêt** (affiche `--`, retour à l'état initial en attente d'un départ — ce n'est pas une pause). Raccourcis revus | §6.5, §10.9 |
+| **Shotclock 40 s actif immédiatement** | Le nouveau système applique d'emblée le règlement 2027 : `shotclockOffensiveReboundEnabled = true` par défaut. Le legacy (fin de saison 2026) reste inchangé | §6.2, §6.5 |
+| **Carton d'exclusion définitive (noir)** | `D` devient **« carton d'exclusion définitive »** (EN : *Ejection card*), couleur **noire** — règlement 2027, appliqué immédiatement dans le nouveau système ; le legacy conserve « rouge définitif » jusqu'à la fin de saison 2026 | §7.4, i18n |
+| **Progression des cartons** | Ordre vert → jaune → rouge : un joueur ne peut pas recevoir un 2ᵉ/3ᵉ carton **identique ou inférieur** au précédent ; un jaune (ou rouge) **peut être le premier** carton ; l'exclusion définitive est applicable **à tout moment** | §7.4 |
+| **Levée anticipée — rouge pour cumul** | Le rouge (`R`, cumul) empêche le joueur sanctionné de **revenir en jeu**, mais sur but encaissé avant la fin des 2 min — ou à leur issue — il peut être **remplacé**. Les **chronos de pénalité ne changent pas** de comportement | §7.4 |
+| **Motif de carton par défaut** | Pré-sélectionné à **« Autre/Non précisé »** (`unknown`) pour une saisie rapide sans étape supplémentaire | §7.3, §7.4 |
+| **Prolongations : 5 min** | Durée des prolongations = **5 minutes** dans les règlements ICF **et** FFCK (correction de l'ancienne mention 3 min FFCK). Défaut `P{n}` = 300 s | §6.2, §6.4, §7.5 |
+| **Clôture : heure de fin pré-remplie** | `Heure_fin` proposée à l'**heure réelle au moment de la clôture**, modifiable | §7.6 |
+| **Logos / drapeaux d'équipe** | Charger le **logo de l'équipe** ; à défaut seulement, dériver le drapeau depuis le code club | §7.8 |
+| **Buzzer** | Sonne aussi en **fin de pause inter-périodes** (en plus de la fin de période et du shotclock) | §7.5, §7.8 |
+| **Tirs / arrêts = stats du match** | C'est la même fonctionnalité ; **hors périmètre** pour l'instant (les deux lignes de §7.8 fusionnent) | §7.8 |
+| **Identifiants (uid)** | `kp_match.Id_match` (int) **conservé** — le remplacer casserait tout le legacy ; on ajoute un **`uid` public court additif** côté match pour les usages futurs (offline, import). `scoring_live_clock` passe en **PK UUID** (table neuve, zéro impact) | §0.5 ; plan §4.13 |
+| **PWA : mise à jour immédiate** | Le service worker doit garantir que l'utilisateur bénéficie **immédiatement de la dernière version** (détection + activation immédiate + rechargement) ; mécanisme à réutiliser sur **app2** | §3, §8 ; plan §4.9 |
+| **Zéro papier — responsable d'équipe (profil 7)** | Étapes ultérieures : validation/ajustement de la **compo d'équipe** avant match (délai réglementaire) et **consultation + réclamation** après match (délai réglementaire) | §1, plan lot 9 |
 
 ---
 
@@ -266,7 +298,23 @@ marque papier** + **panneau de score**, et **en parallèle ou après coup sur KP
 KPI est de **tendre vers le zéro papier** :
 
 - **saisie directe sur KPI** (Scoring) avec affichage scoreboard + shotclock ; ou
-- **captation des live datas** depuis le matériel de scoring / panneau de score (matériel propriétaire) ; puis **diffusion** via WebSocket et **incrustations** (`/live`).
+- **captation des live datas** depuis le matériel de scoring / panneau de score (matériel propriétaire) ; puis **diffusion** via la stack Mercure et **incrustations** (`/live`).
+
+> **Vers le zéro papier — étapes ultérieures « responsable d'équipe » (profil 7), décision §0.9.**
+> Au-delà de la console, l'objectif zéro papier passera par des fonctionnalités dédiées au
+> **responsable d'équipe** (profil 7), planifiées au
+> [plan, lot 9](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) :
+> - **Avant match** : valider/ajuster **sa composition d'équipe pour chaque match**, à partir de la
+>   feuille de présence, **dans un délai fixé réglementairement** (ex. jusqu'à 30 min avant le
+>   match) : possibilité de **supprimer** des joueurs absents pour ce match uniquement, et — selon
+>   le règlement, donc **selon les paramètres de la compétition** — de **changer les numéros** de
+>   maillot et le **capitaine**.
+> - **Après match** : **consulter le déroulement numérique** du match et **déposer une
+>   réclamation**, immédiatement et **dans un délai fixé au règlement** (ex. jusqu'à 30 min après
+>   la fin du match), horodatée et journalisée.
+>
+> Ces deux volets dépendent du paramétrage par compétition (délais, droits) et ne font **pas**
+> partie du périmètre de la console décrite ici.
 
 ### 1.1 Deux usages
 
@@ -327,7 +375,7 @@ KPI est de **tendre vers le zéro papier** :
 
 | Sujet | Décision |
 |---|---|
-| Mode | **Online-first** (api2 + Mercure), **PWA installable dès la livraison** (manifest + service worker + app shell, cf. §0.8). La **file d'écritures offline** reste non bloquante → dernière phase. |
+| Mode | **Online-first** (api2 + Mercure), **PWA installable dès la livraison** (manifest + service worker + app shell, cf. §0.8) avec **mise à jour immédiate garantie** : détection de nouvelle version, activation immédiate (`skipWaiting`/`clients.claim`) et rechargement, pour que l'utilisateur soit toujours sur la dernière version (cf. §0.9 — mécanisme à réutiliser sur **app2**). La **file d'écritures offline** reste non bloquante → dernière phase. |
 | Usages | Direct **et** post-match (saisie/correction + validation/verrouillage par profil). |
 | Captation matériel | Mode **Hardware Scoring** (panneau propriétaire via relais), **source de plus** écrivant le même `scoring_live_*` (cf. §0.2). Branché en Phase 3. |
 | Monétisation | À explorer plus tard. **Aucun Stripe/paywall maintenant.** Exigence unique : isolation **par mandat/organisation côté serveur** + gating par rôle via un composable unique. |
@@ -441,16 +489,17 @@ Contenu (à compléter à l'implémentation) :
 
 | Clé | Valeur(s) | Aujourd'hui | Cf. |
 |---|---|---|---|
-| `periodDurations` | durées par période (s) | `{ M1:600, M2:600, P1:180, P2:180, TB:180 }` | §6.4, §7.5 |
+| `periodDurations` | durées par période (s) | `{ M1:600, M2:600, P:300, TB:180 }` — prolongations `P{n}` = **300 s (5 min, ICF et FFCK**, cf. §0.9**)** | §6.4, §7.5 |
 | `breakDurations` | pauses inter-périodes indicatives (s) : `{ halftime, beforeOvertime, betweenOvertimes }` | `{ halftime: 180, beforeOvertime: 180, betweenOvertimes: 60 }` | §7.5, §0.8 |
 | `shotclockDurations` | `{ full, offensiveRebound }` (s) | `{ full: 60, offensiveRebound: 40 }` | §6.5 |
-| `shotclockOffensiveReboundEnabled` | le reset 40 s est-il actif | `false` jusqu'à l'entrée en vigueur | §6.5 |
+| `shotclockOffensiveReboundEnabled` | le départ/reset 40 s est-il actif | **`true`** — le nouveau système applique d'emblée le règlement 2027 (cf. §0.9) ; le legacy reste inchangé | §6.5 |
 | `allowTimerAdjustWhileRunning` | ajustement fin du chrono **autorisé chrono en marche** (= synchro avec un chrono Hardware Scoring) | `false` (sinon : ajustement seulement à l'arrêt) | §6.4 |
 | `penaltyDuration` | durée d'une pénalité de carton (s) | `120` (2 min) | §7.4 |
 | `overtimeUnlimited` | prolongations non bornées (but en or) | `true` (règlement) | §7.5 |
 | `shootoutEnabled` | tirs au but autorisés | `false` (option tournoi) | §7.5 |
 | `stopClockOnGoal` | arrêt chrono auto sur but | `false` | §6.5 |
-| `federationProfile` | profil de durées (ICF/FFCK) | indicatif | §6.4 |
+| `defaultCardReason` | motif de carton pré-sélectionné | `unknown` (Autre/Non précisé — saisie rapide, cf. §0.9) | §7.3, §7.4 |
+| `federationProfile` | profil de durées (ICF/FFCK) | indicatif — les durées de prolongation sont désormais **identiques** (5 min) dans les deux règlements (§0.9) | §6.4 |
 
 > **Cible (évolution).** Quand la **compétition** portera ces réglages, on **hydrate
 > `store.config`** depuis la réponse api2 du match/compétition (au lieu de `DEFAULT_SCORING_CONFIG`)
@@ -489,9 +538,13 @@ comme les autres actions utilisateurs**. `AdminGamesController` le fait déjà v
 > indépendamment de la console).
 
 Le scoring legacy **régénère, à chaque action, des fichiers JSON dans `sources/live/cache/`** qui
-alimentent les **incrustations vidéo (`/live`)**, le scoreboard et les clients distants. Le
-Scoring api2 **doit produire les mêmes fichiers** (le contrat est consommé par l'existant `/live`,
-**ne pas le casser**). Générateur legacy = classe **`CacheMatch`** (`live/create_cache_match.php`),
+alimentent les **incrustations vidéo (`/live`)**, le scoreboard et les clients distants. ~~Le
+Scoring api2 doit produire les mêmes fichiers~~ — **non : la console n'en produira jamais**
+(cf. bannière ci-dessus et §0.3) ; le contrat est décrit ici uniquement parce que les incrustations
+PHP legacy le consomment encore, alimentées par le worker de cache existant jusqu'à leur
+remplacement par la page d'incrustation unique
+([PAGE_INCRUSTATION.md](PAGE_INCRUSTATION.md), plan lot 4).
+Générateur legacy = classe **`CacheMatch`** (`live/create_cache_match.php`),
 appelée par `setChrono.php`, `StatutPeriode.php`, `evt_match.php`, `ajax_updateChrono.php`,
 `getNextGame.php`. Fichiers par match (vérifié sur des exemples réels) :
 
@@ -501,13 +554,12 @@ appelée par `setChrono.php`, `StatutPeriode.php`, `evt_match.php`, `ajax_update
 | `{idMatch}_match_score.json` | `periode`, `score1`/`score2`, **liste `event`** (détail `kp_match_detail` enrichi nom/prénom) | tout événement, changement de score/période |
 | `{idMatch}_match_chrono.json` | `action` (run/stop), `start_time`, `start_time_server`, `run_time`, `max_time`, `shotclock`, `penalties` (JSON), `tick` | toute action chrono/shotclock/pénalité |
 
-> **Cadrage phase.** Ces TODO sont marqués **Phase 3** dans `ScoringController`
-> (`// TODO (Phase 3): generate broadcast cache here`, ×3 : gameParam, gameEvent, gameTimer) et
-> alignés sur le mécanisme broker (§6.5) — **c'est là qu'ils seront implémentés**, calqués sur
-> `CacheMatch` (et sur `AdminEventWorkerController`/`AdminTvController` qui écrivent déjà dans
-> `live/cache/` côté api2). **Décision : la journalisation `kp_journal` est dès la Phase 1** (peu
-> coûteuse, cohérence d'audit) ; **la génération des JSON d'incrustation reste en Phase 3** avec la
-> diffusion. À garder en tête dès maintenant pour ne pas avoir à re-router les écritures plus tard.
+> **Cadrage phase (mis à jour 2026-07-27).** Les 3 TODO du `ScoringController`
+> (`// TODO (Phase 3): generate broadcast cache here`, ×3 : gameParam, gameEvent, gameTimer) seront
+> implémentés en Phase 3 sous la forme **« insérer dans `scoring_outbox` »** (→ worker → Mercure,
+> cf. §0.3) — **il n'y aura jamais de génération de fichiers JSON par la console**, l'ancienne
+> formulation (« parité `CacheMatch` en Phase 3 ») est caduque. **La journalisation `kp_journal`
+> est dès la Phase 1** (peu coûteuse, cohérence d'audit — fait).
 
 ### 6.3 Permissions & monétisation-readiness
 
@@ -611,8 +663,9 @@ boutons **−10 / −1 / +1 / +10 s** sur le temps de jeu, plus **réglage de la
 et **ajustable manuellement à la volée** par période (réglage de la durée dans le dialog
 d'ajustement chrono). **Évolution prévue (hors MVP)** : ces durées (comme **toutes** les valeurs
 de `ScoringConfig`) deviennent **paramétrables au niveau de la compétition** (le legacy code en
-dur deux profils fédération — ICF prolongations 5 min, FFCK 3 min, via `duree_prolongations` —
-qu'on remplacera par un réglage porté par la compétition, en **hydratant `store.config`**).
+dur deux profils fédération via `duree_prolongations` — devenu sans objet : les prolongations
+sont à **5 min dans les règlements ICF et FFCK** (cf. §0.9) — qu'on remplacera par un réglage
+porté par la compétition, en **hydratant `store.config`**).
 
 ### 6.5 Temps réel & captation matériel
 
@@ -623,71 +676,67 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   via `window.open`. **Décision confirmée (§0.8)** : le canal **local** (fenêtres du même poste)
   reste BroadcastChannel — zéro réseau, zéro latence, fonctionne sans Internet ; les écrans
   **distants** et incrustations consomment **Mercure**.
-- **Shotclock — temps d'action de but (Phase 2)** : compte à rebours, buzzer à 0
-  (`targetAchieved`), suit le chrono (pause quand le chrono s'arrête), **caché quand le temps de
-  jeu restant est inférieur au shotclock** (`shotClockShow`), affiché `--` sinon. Ajustements
-  **−10 / −1 / +1 / +10 s** et **remise à zéro**, autorisés **seulement chrono à l'arrêt**
+- **Shotclock — chronomètre de tir (Phase 2)** (terminologie §0.9 : « chronomètre de tir », ne
+  plus employer « temps d'action de but ») : compte à rebours, buzzer à 0 (`targetAchieved`),
+  suit le chrono (pause quand le chrono s'arrête), **caché quand le temps de jeu restant est
+  inférieur au shotclock** (`shotClockShow`), affiché `--` quand il est à l'arrêt. Ajustements
+  **−10 / −1 / +1 / +10 s**, autorisés **seulement chrono à l'arrêt**
   (`allowShotclockUpdateWhileRunning = false`). Le shotclock ne concerne que le **mode direct**.
 
-  > **Deux durées de shotclock (évolution réglementaire — saison prochaine).** Les règlements
-  > international (ICF) **et** français (FFCK) introduisent **deux durées** :
+  > **Deux durées de shotclock (règlement 2027 — appliqué d'emblée dans le nouveau système,
+  > cf. §0.9).** Les règlements international (ICF) **et** français (FFCK) définissent **deux
+  > durées** :
   > - **60 s** : durée à l'**engagement** (nouvelle possession après but, sortie, faute…) ;
   > - **40 s** : durée **réduite** lorsque **l'équipe qui vient de tenter un tir vers le but
   >   récupère le ballon** (rebond offensif conservé).
   >
-  > Le système doit gérer ces **deux valeurs** : un **reset à 60 s** (possession « normale ») et
-  > un **reset à 40 s** (rebond offensif). Les deux durées vivent dans **`ScoringConfig`**
+  > Les deux durées vivent dans **`ScoringConfig`**
   > (`shotclockDurations = { full: 60, offensiveRebound: 40 }`, cf. §6.2 — même endroit que les
-  > durées de période, à terme paramétrable par compétition) et **deux commandes de reset
-  > distinctes** (UI + raccourcis clavier dédiés, cf. ci-dessous). Tant que le règlement actuel
-  > s'applique, seul le **60 s** est utilisé (`shotclockOffensiveReboundEnabled = false` → le 40 s
-  > reste masqué/désactivé jusqu'à l'entrée en vigueur).
+  > durées de période, à terme paramétrable par compétition). **Le 40 s est actif par défaut dans
+  > le nouveau Scoring** (`shotclockOffensiveReboundEnabled = true`) ; seul le legacy, qui reste
+  > sur l'ancien règlement jusqu'à la fin de saison 2026, ne le connaît pas.
 
-  > **Pilotage du shotclock — départ manuel, suivi auto, pause indépendante (décision
-  > 2026-07-23, cf. §0.8 et plan §4.11).** Au coup d'envoi de **chaque période**, **le chrono
-  > principal démarre mais le shotclock NE démarre PAS** : il reste **inactif** (`--`), même
-  > chrono en marche, tant que l'opérateur ne l'a pas lancé (première possession). Le shotclock a
-  > **trois commandes distinctes** :
-  > - **Départ / reprise** : lance ou reprend **la valeur affichée** — ce n'est **jamais** un
-  >   reset ;
-  > - **Pause** : suspend le shotclock **seul**, même chrono en marche (reprise via
-  >   « départ/reprise ») ;
-  > - **Reset 60 s** / **reset 40 s** : rechargent la valeur (engagement / rebond offensif) sans
-  >   changer l'état marche/arrêt.
+  > **Pilotage du shotclock — trois commandes, le départ EST un reset (décision 2026-07-27,
+  > cf. §0.9 et plan §4.11).** Au coup d'envoi de **chaque période**, **le chrono principal
+  > démarre mais le shotclock NE démarre PAS** : il reste **à l'arrêt** (`--`), même chrono en
+  > marche, tant que l'opérateur ne l'a pas lancé (première possession). Le shotclock a
+  > **exactement trois commandes** :
+  > - **Départ/reset 60 s** : charge 60 s **et lance** le décompte (engagement, nouvelle
+  >   possession) — indépendant du départ du chrono principal ;
+  > - **Départ/reset 40 s** : charge 40 s **et lance** le décompte (rebond offensif) ;
+  > - **Arrêt** : **ce n'est pas une pause** — le shotclock repasse à l'affichage `--` et revient
+  >   à l'**état initial**, en attente d'un nouveau départ 60 s ou 40 s.
   >
-  > Une fois lancé, le shotclock **suit le chrono principal** : arrêt du chrono ⇒ pause
-  > automatique, reprise du chrono ⇒ reprise automatique — en plus de sa pause manuelle.
-  > Conséquence sur le modèle (vs legacy, où le shotclock suivait directement le start du
-  > chrono) : découpler l'état « shotclock lancé » de l'état « chrono lancé », et distinguer la
-  > **pause manuelle** (ne repart pas quand le chrono repart, il faut « départ/reprise ») de la
-  > **pause suiveuse** (repart avec le chrono).
+  > Une fois lancé, le shotclock **suit le chrono principal** : arrêt du chrono ⇒ suspension
+  > automatique du décompte, reprise du chrono ⇒ reprise automatique (c'est la seule « pause »
+  > qui existe, et elle est **suiveuse**, jamais manuelle). Conséquence sur le modèle : trois
+  > états seulement — **arrêté** (`--`), **en décompte**, **suspendu par le chrono** — et l'état
+  > « shotclock lancé » reste découplé de l'état « chrono lancé ».
 
-- **Raccourcis clavier (Phase 2, avec le shotclock) — paramétrables** (décision 2026-07-23,
-  cf. §0.8) : les touches sont une **préférence par poste/utilisateur** (écran de réglage dans la
-  console, persistée en localStorage), avec ces valeurs par défaut :
+- **Raccourcis clavier (Phase 2, avec le shotclock) — paramétrables** (décisions 2026-07-23 et
+  2026-07-27, cf. §0.8/§0.9) : les touches sont une **préférence par poste/utilisateur** (écran
+  de réglage dans la console, persistée en localStorage), avec ces valeurs par défaut :
 
   | Action | Touche par défaut |
   |---|---|
   | Chrono principal : départ / arrêt | `Espace` |
-  | Shotclock : départ / reprise (**jamais** de reset) | `Entrée` |
-  | Shotclock : pause | `0` |
-  | Shotclock : reset 60 s (engagement) | `.` (pavé numérique, proche du `0`) — proposé, à valider |
-  | Shotclock : reset 40 s (rebond offensif) | `*` — proposé ; actif seulement si `shotclockOffensiveReboundEnabled` |
+  | Shotclock : **départ/reset 60 s** (engagement) | `Entrée` |
+  | Shotclock : **départ/reset 40 s** (rebond offensif) | `.` (pavé numérique, proche de `Entrée` et `0`) — proposé, à valider |
+  | Shotclock : **arrêt** (retour à `--`, état initial) | `0` |
   | Shotclock : ±1 s | `+` / `−` (legacy fm3_C.js) |
 
   Neutralisés quand le focus est dans un champ de saisie (temps de fait de jeu, commentaires…).
 - **Arrêt du chrono sur but (option, Phase 2)** : paramètre `arret_chrono_sur_but` (legacy) — un
   but déclenche un stop chrono automatique (temps mort). **Désactivé par défaut** (l'était aussi
   en legacy), à exposer comme option.
-- ~~**WebSocket broker (Phase 3)**~~ — **caduc, cf. §0.3** (la diffusion cible est Mercure ;
-  conservé pour mémoire) : port de `app3/composables/useWebSocket.ts` (format
-  `{p:"eventId_terrain", t:type, v:value}`). Mirroring des diffusions vers le broker →
-  incrustations `/live` + clients distants. Implémenter en parallèle la **génération des JSON de
-  diffusion** (`live/cache/{idMatch}_match_{global,score,chrono}.json` — les
-  `// TODO (Phase 3): generate broadcast cache here` ×3 du contrôleur, cf. §6.2 « Génération des
-  JSON » pour le contrat exact), calquée sur `CacheMatch` legacy et `AdminEventWorkerController`.
+- ~~**WebSocket broker (Phase 3)**~~ — **caduc, cf. §0.3** (la diffusion cible est Mercure via
+  `scoring_outbox`, **aucun** port de `useWebSocket.ts`, **aucune** génération de JSON par la
+  console — cf. §6.2 « Cadrage phase »). Le descriptif ci-dessous (format
+  `{p:"eventId_terrain", t:type, v:value}`, mirroring vers le broker) est conservé **pour
+  mémoire** uniquement.
 
-  > **Activation du broker — mécanisme existant (à reprendre puis faire évoluer).** Aujourd'hui,
+  > **Activation du broker — mécanisme legacy, pour mémoire (caduc dans la cible : l'abonnement
+  > ciblé Mercure, plan §3.3, remplace toute résolution par fichier réseau).** Aujourd'hui,
   > l'URL/credentials du broker **ne sont pas** une config globale : ils sont définis **par
   > événement** dans un JSON généré par le **WebSocket Manager (WSM)**, p.ex.
   > `sources/live/cache/event{idEvent}_network.json` :
@@ -697,15 +746,11 @@ qu'on remplacera par un réglage porté par la compétition, en **hydratant `sto
   > ```
   > Le legacy (`fm3_C.js` `checkWebSocket`) **POST** sur ce fichier : s'il **existe** → on se
   > connecte au broker avec ces paramètres ; s'il renvoie **404** → **pas de broker**, on retombe
-  > sur la seule diffusion locale `BroadcastChannel`. Le WebSocket n'est donc **activable que si
-  > le JSON est présent pour l'événement**. Le Scoring doit reproduire ce comportement
-  > (résolution par événement + fallback local sans broker).
+  > sur la seule diffusion locale `BroadcastChannel`.
   >
-  > **Piste d'évolution (à évaluer plus tard).** Plutôt que ce JSON par-événement généré par le
-  > WSM, **définir l'activation/les paramètres du broker dans app4** — vraisemblablement **par
-  > événement, ou par compétition** — via un réglage exposé côté api2 (et non plus un fichier de
-  > cache). Non tranché ; le MVP Phase 3 peut d'abord **consommer le JSON existant** pour ne rien
-  > casser, l'évolution venant ensuite.
+  > **Tranché (cf. §0.3 et plan §3.3)** : dans la cible, il n'y a **ni broker ni JSON réseau par
+  > événement** — la console publie via `scoring_outbox` → Mercure (topics
+  > `/scoring/event/{e}/pitch/{p}/…`), et le fallback local reste `BroadcastChannel`.
 - **Hardware Scoring (Phase 3, réaligné — cf. §0.8 et plan §4.7/lot 5)** : le matériel est **une
   source de plus** écrivant le même `scoring_live_*` **côté serveur** (relais Stomp — déployé sur
   le serveur KPI ou en boîtier local selon le site — → ingestion api2 → traduction serveur). **La
@@ -786,7 +831,7 @@ match… » ↔ « Paramètres du match… ») :
    > gestion du match / de la compétition (où ils sont déjà éditables, cf. games/index.vue), pas
    > de la table de marque. La console les **montre pour contrôle** (s'assurer du bon type avant
    > coup d'envoi) sans permettre de les changer ici.
-   - **Officiels** : secrétaire, chronométreur, chronométreur temps d'action de but, arbitre
+   - **Officiels** : secrétaire, chronométreur, chronométreur de tir (shotclock), arbitre
      principal, arbitre secondaire, juges de ligne (×2) — **cliquer pour modifier** ; rappel des
      infos d'organisation (club organisateur, resp. organisation, délégué, chef des arbitres, RC).
    - **Équipe A / Équipe B** : liste des joueurs présents (N°, statut, nom, prénom, licence,
@@ -922,8 +967,9 @@ La table suit l'arbitre pour : **démarrer / arrêter le chrono**, saisir les **
 - **Saisie d'un fait de jeu** (legacy fm3_C.js) : sélectionner **un joueur** (ou l'équipe pour un
   carton d'équipe), **un type de fait de jeu** (but / carton V/J/R/D), saisir le **temps**
   (pré-rempli depuis le chrono en direct, ajustable −60/−10/−1/+1/+10/+60 s ; **tapé à la main en
-  post-match**), et le **motif** pour un carton (modal, cf. 7.4). Pour un but, **attribution à un
-  joueur** obligatoire.
+  post-match**), et le **motif** pour un carton (modal, cf. 7.4 — **pré-sélectionné à
+  « Autre/Non précisé »** pour ne pas ralentir la saisie, cf. §0.9). Pour un but, **attribution à
+  un joueur** obligatoire.
 
 #### Édition et suppression d'un fait de jeu déjà saisi (MVP Phase 1)
 
@@ -946,22 +992,39 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
 - **Cardinalité (règle de jeu) :** une équipe présente **5 joueurs** à l'engagement et **ne peut
   descendre sous 3** sur le terrain → **au plus 2 exclusions concurrentes par équipe**, soit **4 au
   maximum au total**. C'est ce qui borne `scoring_live_clock.slot` à {1, 2} par équipe (cf. §0.5).
-- **Levée anticipée sur but adverse** (fin de l'infériorité) : si l'équipe en infériorité **encaisse
-  un but** pendant l'exclusion, celle-ci est **annulée** (le joueur peut revenir) — **après
-  confirmation de l'opérateur**. **Exception : le carton rouge définitif (`D`) ne se lève jamais**
-  sur but adverse ; sa suspension va **à son terme** quoi qu'il arrive (d'où la colonne `card_code`
-  sur l'horloge de pénalité, §0.5, pour distinguer le cas `D`).
-- Si une équipe a **deux exclusions en cours**, c'est la **plus ancienne** (hors rouge définitif)
-  qui est levée par un but adverse.
-- **Motif de carton** (optionnel) à définir à la saisie. Motifs existants (réutilisés de FMV3,
-  clés i18n) : `r_pad` (Pagaie), `r_kt` (Éperonnage), `r_ht` (Poussée / Accrochage), `r_p`
-  (Possession), `r_o` (Obstruction), `r_un` (antijeu/non sportif), `r_rep` (Remplacement),
-  `unknown` (autre/non précisé).
-- **Règle de progression des cartons (alerte)** : un même joueur **ne peut pas** faire l'objet
-  de **deux cartons de la même couleur** dans un même match. Le deuxième carton est
-  **obligatoirement au minimum de la couleur supérieure** dans l'ordre
-  **vert → jaune → rouge → rouge définitif**. **Déclencher une alerte** si l'opérateur tente de
-  saisir un carton qui ne respecte pas cette progression.
+- **Nommage des cartons (règlement 2027 — décision §0.9).** `D` devient le **« carton
+  d'exclusion définitive »** (EN : *Ejection card*), de couleur **noire** (token ⬛ dans l'UI).
+  Le nouveau Scoring applique **immédiatement** cette appellation et cette couleur (i18n
+  `scoring.*`) ; le **legacy n'est pas touché** et conserve « rouge définitif » jusqu'à la fin de
+  saison 2026. Le code `D` est conservé en base (compat).
+- **Levée anticipée sur but adverse** (fin de l'infériorité) : si l'équipe en infériorité
+  **encaisse un but** pendant l'exclusion, celle-ci est **levée** — **après confirmation de
+  l'opérateur**. Les **chronos de pénalité ont le même comportement quel que soit le carton**
+  (levée sur but encaissé, ou expiration des 2 min) ; ce qui diffère, c'est **qui revient**
+  (cf. §0.9) :
+  - carton **vert/jaune** (`V`/`J`) : le joueur sanctionné **revient en jeu** ;
+  - carton **rouge pour cumul** (`R`) : le joueur sanctionné **ne revient jamais en jeu**, mais à
+    la levée de la pénalité (but encaissé **ou** fin des 2 min) l'équipe **le remplace** par un
+    autre joueur (retour à effectif complet) ;
+  - carton **d'exclusion définitive** (`D`, noir) : même logique que `R` — joueur exclu du match,
+    **remplacement** à la levée de la pénalité.
+  La colonne `card_code` de l'horloge de pénalité (§0.5) sert donc à l'**affichage et au statut
+  du joueur** (marqué exclu pour `R`/`D`), pas à un comportement d'horloge différencié.
+- Si une équipe a **deux exclusions en cours**, c'est la **plus ancienne** qui est levée par un
+  but adverse.
+- **Motif de carton** à définir à la saisie, **pré-sélectionné à « Autre/Non précisé »**
+  (`unknown`) pour permettre une validation immédiate sans étape supplémentaire (décision §0.9 ;
+  `ScoringConfig.defaultCardReason`). Motifs existants (réutilisés de FMV3, clés i18n) : `r_pad`
+  (Pagaie), `r_kt` (Éperonnage), `r_ht` (Poussée / Accrochage), `r_p` (Possession), `r_o`
+  (Obstruction), `r_un` (antijeu/non sportif), `r_rep` (Remplacement), `unknown`
+  (autre/non précisé — **défaut**).
+- **Règle de progression des cartons (alerte — précisée §0.9)** : ordre
+  **vert → jaune → rouge**. Un joueur **ne peut pas** recevoir un 2ᵉ ou 3ᵉ carton **identique ou
+  inférieur** au précédent (après un jaune : seulement rouge ; après un rouge : plus aucun carton
+  de progression). En revanche, **rien n'impose de commencer par un vert** : un jaune — ou un
+  rouge — peut être le **premier** carton selon la gravité. Le **carton d'exclusion définitive**
+  (`D`, noir) est applicable **à tout moment**, quelle que soit la progression. **Déclencher une
+  alerte** si l'opérateur tente de saisir un carton qui ne respecte pas cette règle.
 
 ### 7.5 Périodes, mi-temps et prolongations
 
@@ -977,15 +1040,16 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
   du temps d'une période, **signal sonore** (buzzer), puis déclenchement automatique d'un
   **chrono de pause indicatif** (repère pour l'arbitre pour reprendre, ne bloque rien) :
   **3 min** entre `M1` et `M2` (mi-temps), **3 min** entre `M2` et `P1` (avant prolongations),
-  **1 min** entre chaque prolongation (`P1`→`P2`, `P2`→`P3`, …). Durées dans
-  `ScoringConfig.breakDurations` (cf. §6.2), à terme paramétrables par compétition. **Pas de
-  temps mort d'équipe** en kayak-polo : rien d'autre à modéliser de ce côté.
+  **1 min** entre chaque prolongation (`P1`→`P2`, `P2`→`P3`, …). Le **buzzer sonne aussi en fin
+  de pause** (signal de reprise — décision §0.9). Durées dans `ScoringConfig.breakDurations`
+  (cf. §6.2), à terme paramétrables par compétition. **Pas de temps mort d'équipe** en
+  kayak-polo : rien d'autre à modéliser de ce côté.
 - **Match éliminatoire (type E)** : en cas d'**égalité à la fin du temps réglementaire**,
   enchaîner **autant de prolongations que nécessaire** jusqu'au **premier but marqué (but en or)**
-  → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations dépendante de la
-  fédération** : ICF = 5 min, FFCK = 3 min (legacy `duree_prolongations`, override PHP forçant
-  3 min). Pour le MVP : durée par défaut + ajustable manuellement ; cible = réglage porté par la
-  compétition (cf. §6.4).
+  → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations : 5 minutes dans les
+  deux règlements (ICF et FFCK — correction §0.9**, l'ancienne mention « FFCK = 3 min » et
+  l'override legacy `duree_prolongations` sont caducs**)**. Défaut `P{n}` = 300 s, ajustable
+  manuellement ; cible = réglage porté par la compétition (cf. §6.4).
 
   > **Écart vs legacy à corriger (important).** FMV3 ne propose que **deux** boutons de
   > prolongation figés (`P1`, `P2`) → **maximum 2 prolongations**, ce qui **viole le règlement**
@@ -1017,7 +1081,8 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
 
 À la fin du match, la table de marque :
 
-1. indique l'**heure de fin** (`Heure_fin`),
+1. indique l'**heure de fin** (`Heure_fin`) — **pré-remplie à l'heure réelle au moment de la
+   clôture** (décision §0.9), modifiable si besoin,
 2. saisit les **commentaires** éventuels (capitaines et arbitre — `Commentaires_officiels`),
 3. **valide le score** (passe `Statut` → `END`), puis **verrouille** si le profil l'autorise
    (`Validation = 'O'`, via `PATCH /admin/games/{id}/validation`).
@@ -1060,11 +1125,10 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
 | **Édition inline officiels / arbitres** (autocomplete) | `fm3_C.js` (jEditable `saveOfficiel`/`saveArbitres`) | P1 | « Cliquer pour modifier » sur chaque officiel ; autocomplete licence/arbitre. |
 | **Édition n° maillot / statut joueur** (capitaine / coach) | `fm3_C.js` (`saveNo`/`saveStatut`) | P1 | Déjà listé §7.2 ; mappe sur `playerStatus`. |
 | **Suppression joueur / recharger présents** | `fm3_C.js` (`delJoueur`/`initPresents`) | P1 | « Recharger les joueurs présents » = re-init depuis la feuille de présence. |
-| **Drapeaux de nation A/B** | `FeuilleMarque3.php` (`paysA`/`paysB` dérivés des 3 premiers car. du `Code_club`, fallback `FRA` si numérique) | P1 (entête) / P2 (scoreboard) | Logique de dérivation à porter. |
+| **Logos / drapeaux de nation A/B** | `FeuilleMarque3.php` (`paysA`/`paysB` dérivés des 3 premiers car. du `Code_club`, fallback `FRA` si numérique) | P1 (entête) / P2 (scoreboard) | **Décision §0.9 : charger d'abord le logo de l'équipe** ; la dérivation du drapeau depuis le `Code_club` n'est qu'un **fallback** en l'absence de logo. |
 | **Couleurs équipes (maillots)** | `kp_competition_equipe` (`color1/2`, `colortext`) | P2 | Pour le scoreboard et les pastilles A/B. |
-| **Buzzer / test son** | `FeuilleMarque3.php` (`buzzer`, audio) | P2 | Avec le shotclock + fin de période. |
-| **Stats du match** | `fm3_D.js` (`FeuilleMarque2stats.php`) | P2+ | Bouton « Stats » ; à recâbler sur l'équivalent app4/api2. |
-| **Tirs / arrêts** (events `T`/`A`, compteurs `nb_tirs`/`nb_arrets`) | `FeuilleMarque3.php` (markup **commenté**) | — | **Désactivés** dans l'UI legacy actuelle → **hors périmètre** sauf décision contraire. |
+| **Buzzer / test son** | `FeuilleMarque3.php` (`buzzer`, audio) | P2 | Avec le shotclock, la fin de période **et la fin de pause inter-périodes** (§0.9). |
+| **Stats du match** (= « tirs / arrêts » : events `T`/`A`, compteurs `nb_tirs`/`nb_arrets`, `FeuilleMarque2stats.php`) | `fm3_D.js` + markup **commenté** de `FeuilleMarque3.php` | — | **Une seule et même fonctionnalité** (décision §0.9) : **hors périmètre pour l'instant**. Le modèle `scoring_live_event.kind` reste prêt à l'accueillir (`SHOT`/`SAVE`, cf. §0.4). |
 
 ## 8. Plan par phases
 
@@ -1085,9 +1149,10 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
   clavier-first** (cf. §7.1) ; **sélecteurs statut/période en badge cyclique** (calqués sur
   `competitions/index.vue`, confirmation + durée non standard à part, cf. §7.1).
 - **Phase 2 — Diffusion locale** : `useBroadcast` + `useTimer`, `scoreboard.vue` +
-  `shotclock.vue`, **UI pénalités**, **shotclock nouveau modèle** (départ manuel, pause
-  indépendante, suivi auto, départ/reprise ≠ resets 60/40 — cf. §6.5), **pauses inter-périodes**
-  (cf. §7.5), **raccourcis clavier paramétrables** (défauts Espace/Entrée/0 — cf. §6.5),
+  `shotclock.vue`, **UI pénalités**, **shotclock nouveau modèle 3 commandes** (départ/reset 60 s,
+  départ/reset 40 s actif d'emblée, arrêt `--`, suivi auto du chrono — cf. §6.5), **pauses
+  inter-périodes** (cf. §7.5), **raccourcis clavier paramétrables** (défauts Espace/Entrée/0 —
+  cf. §6.5),
   **buzzer / test son**, **arrêt chrono sur but** (option), couleurs/drapeaux équipes,
   « Match suivant… » (cf. §7.8), **coquille PWA installable** (manifest + service worker + cache
   de l'app shell, saisie toujours online-first — cf. §0.8).
@@ -1121,37 +1186,44 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
 
 ## 10. Risques / inconnues
 
+> Mis à jour 2026-07-27 avec les décisions actées (§0.8/§0.9) : les anciens risques 2 (JSON), 3
+> (broker), 5 (prolongations) et 8 (activation broker) sont **clos**.
+
 1. **Logique chrono/shotclock/pénalités de `fm3_C.js`** — plus gros effort de portage
    (type de match C vs E, expiration des pénalités → messages `penA/penB`).
-2. **Génération des JSON de diffusion api2** (`{idMatch}_match_{global,score,chrono}.json`, les
-   3 TODO de `ScoringController`) — parité `CacheMatch` legacy, consommés par `/live` (contrat à
-   respecter, cf. §6.2 « Génération des JSON »). Reporté en **Phase 3**.
-3. **broker / Hardware Scoring** — serveur WS interne maîtrisé ; protocole de captation du
-   matériel (matériel propriétaire) à formaliser (format des live datas entrantes). Risque
-   maîtrisé (propriété interne).
+2. ~~Génération des JSON de diffusion api2~~ — **clos (décision §0.3)** : la console ne génère
+   **aucun** fichier JSON ; les 3 TODO du contrôleur insèrent dans `scoring_outbox` → Mercure.
+   Le cache fichier reste alimenté par le worker legacy pour les seules incrustations PHP,
+   jusqu'à leur remplacement ([PAGE_INCRUSTATION.md](PAGE_INCRUSTATION.md), plan lot 4).
+3. **Hardware Scoring** — ~~broker~~ **clos côté transport (décisions §4.6/§4.7 du plan)** :
+   Mercure diffuse, le relais Stomp (serveur ou boîtier) capte. Reste le **protocole
+   propriétaire à formaliser** (fichiers de référence, plan lot 0.5/1.8) — risque contenu par la
+   méthode d'enregistrement de sessions réelles.
 4. **cn** — hors périmètre MVP ; chantier de suivi séparé sur toute app4.
-5. **Prolongations non bornées (but en or)** — le legacy plafonne à 2 (`P1`/`P2`) ; généraliser
-   en série illimitée impose de revoir le **codage de `kp_match.Periode`** (extension `P{n}`/`OT{n}`
-   ou champ complémentaire) et la logique de fin (clôture immédiate au 1ᵉʳ but). À traiter dans le
-   lot prolongations (cf. §7.5), pas au MVP P1.
+5. ~~Prolongations non bornées~~ — **clos (décisions §0.6/§0.9)** : codage `P{n}` non borné porté
+   par `scoring_live_state.periode` (varchar), `kp_match.Periode` n'est écrit qu'à la
+   consolidation et accepte déjà `P{n}` ; durée unique 5 min (ICF = FFCK). Reste l'implémentation
+   front (type `P${number}`, sélecteur « prolongation suivante », clôture au but en or).
 6. **Tirs au but optionnels par compétition** — nécessite un **paramètre de compétition**
-   (activation + format) non encore disponible ; reporté.
+   (activation + format) non encore disponible ; reporté (plan lot 6).
 7. **Contrôle fin des droits** — point dédié à venir (cf. §6.3) ; règle déjà fixée :
-   `canLock = profile ≤ 6`.
-8. **Activation du broker par événement** — aujourd'hui via le JSON WSM
-   `event{idEvent}_network.json` (présence = broker actif, 404 = fallback local) ; **évolution à
-   évaluer** : porter ce réglage dans app4 (par événement ou par compétition) plutôt qu'un fichier
-   de cache (cf. §6.5). Phase 3 : consommer l'existant d'abord.
-9. **Shotclock nouveau modèle** (cf. §6.5, décisions §0.8) — écart de modèle vs legacy : départ
-   manuel (ne suit plus le start du chrono), pause manuelle indépendante distincte de la pause
-   suiveuse, départ/reprise ≠ reset, double reset 60 s / 40 s (évolution réglementaire saison
-   prochaine). Impacte `useTimer`, le store (deux durées + états « lancé » / « pause manuelle »),
-   l'UI et les raccourcis paramétrables. À cadrer en Phase 2 ; durées à terme paramétrables par
-   compétition.
-10. **Reprise / persistance partielle** (cf. §6.4 « Reprise d'un match en cours ») — le chrono
-    principal est restauré depuis `kp_chrono` (failover terminal OK), mais **shotclock et
-    pénalités ne sont pas persistés** → re-saisie après reprise. **Évolution future à évaluer** :
-    persister shotclock + pénalités côté serveur pour une reprise complète. Non bloquant MVP.
+   `canLock = profile ≤ 6`. S'élargira avec le lot 9 (profil 7 : compo + réclamation).
+8. ~~Activation du broker par événement~~ — **clos (décision §0.3/plan §3.3)** : plus de broker ni
+   de JSON réseau par événement ; l'abonnement ciblé Mercure (topics événement/terrain/bloc) rend
+   le mécanisme sans objet.
+9. **Shotclock nouveau modèle 3 commandes** (cf. §6.5, décisions §0.9) — écart de modèle vs
+   legacy : départ/reset 60 s et 40 s (le départ **est** un reset, indépendant du chrono
+   principal), arrêt = retour à `--` (pas de pause manuelle), suspension automatique par l'arrêt
+   du chrono. Impacte `useTimer`, le store (deux durées + trois états), l'UI et les raccourcis
+   paramétrables. À cadrer en Phase 2 ; durées à terme paramétrables par compétition.
+10. **Reprise / persistance partielle** — **résolu par la cible** (`scoring_live_clock` persiste
+    chrono + shotclock + pénalités + pause, plan lot 1) ; reste vrai **tant que le re-routage
+    n'est pas fait** (aujourd'hui seul le chrono principal est restauré depuis `kp_chrono`,
+    shotclock/pénalités re-saisis après reprise).
+11. **Transition des consommateurs `kp_*` en cours de match** (nouveau, cf. §0.2) —
+    `FeuilleMatchMulti.php` et app2 affichent le déroulement depuis `kp_*` y compris pendant le
+    match ; sans leur évolution (plan lot 4), la bascule vers `scoring_live_*` dégrade leur
+    affichage « en cours ».
 
 ## 11. Vérification de bout en bout
 
@@ -1166,10 +1238,13 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
   laisse une ligne dans `kp_journal` ; match verrouillé → lecture seule ; **profil > 2 → lien
   masqué + accès refusé (UI + 403)** ; appel non authentifié à `PUT /api2/scoring/gameParam/{id}`
   → 401 ; vérifier que `app_wsm` legacy (`/api/wsm/`) fonctionne toujours.
-- **Phase 2** : ouvrir scoreboard + shotclock en 2ᵉ fenêtre → synchro live.
-- **Phase 3** : connecter le broker + une incrustation `/live` → réception via `{p,t,v}` ;
-  brancher un panneau propriétaire en mode Hardware Scoring → le store se met à jour
-  depuis le matériel.
+- **Phase 2** : ouvrir scoreboard + shotclock en 2ᵉ fenêtre → synchro live (BroadcastChannel) ;
+  vérifier le shotclock 3 commandes (60/40/arrêt), les pauses inter-périodes et la mise à jour
+  immédiate de la PWA (nouvelle version → rechargement).
+- **Phase 3 (réaligné §0.3)** : saisir à la console → les messages apparaissent sur les topics
+  Mercure `/scoring/event/{e}/pitch/{p}/…` (banc app4 Operations → Mercure), rejeu après coupure
+  (`Last-Event-ID`) ; brancher un panneau propriétaire via le relais Stomp → l'état
+  `scoring_live_*` se met à jour depuis le matériel et la console (mode supervision) le reflète.
 
 ## 12. Suivi des développements
 

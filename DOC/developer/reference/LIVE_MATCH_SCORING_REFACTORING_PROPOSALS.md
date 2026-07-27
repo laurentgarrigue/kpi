@@ -276,7 +276,8 @@ Ses caractéristiques structurantes (toutes actées, détail dans la spec) :
 ## 4. Les décisions actées
 
 C'étaient les seuls points réellement difficiles. Ils sont **actés avant tout code** ; le reste est
-de l'exécution. Les décisions §4.7 à §4.12 ont été tranchées le **2026-07-23**.
+de l'exécution. Les décisions §4.7 à §4.12 ont été tranchées le **2026-07-23**, les §4.13 et
+§4.14 (et les compléments datés dans les sections précédentes) le **2026-07-27**.
 
 ### 4.1 Qui a le droit d'écrire : une seule source à la fois
 
@@ -313,6 +314,14 @@ Le live et les résultats sont **deux mondes distincts** :
 
 Conséquence directe : **le reporting existant n'est jamais impacté** par l'expérimentation, et il n'y
 a **aucune double écriture à maintenir** pendant la transition.
+
+> ⚠️ **Un cas à traiter quand même (2026-07-27)** : certains consommateurs de `kp_*` affichent le
+> **déroulement du match en cours** (le legacy écrit `kp_match_detail` en live) — le PDF
+> **`FeuilleMatchMulti.php`** imprimé pendant un match et **app2** (détail public des matchs). Une
+> fois la saisie basculée sur `scoring_live_*`, ils ne verront plus rien avant la consolidation de
+> fin de match. Leur **évolution** (lecture de l'état live via `GET /scoring/state` / Mercure) est
+> planifiée au **lot 4** (étape 4.4) et conditionne la bascule des terrains où cet affichage « en
+> cours » est utilisé.
 
 ### 4.4 Un relais non surveillé a besoin de son propre mot de passe
 
@@ -392,6 +401,13 @@ même sans réseau). La **saisie reste online-first** dans un premier temps ; la
 offline** (IndexedDB + resynchronisation) est un lot dédié de fin de chantier (lot 7) — on ne
 complexifie pas le MVP avec de la synchro bidirectionnelle.
 
+**Exigence associée (2026-07-27) : mise à jour immédiate.** Le service worker doit garantir que
+l'utilisateur bénéficie **immédiatement de la dernière version** de l'application : détection de
+nouvelle version au chargement et en cours de session, activation immédiate
+(`skipWaiting`/`clients.claim`) et rechargement contrôlé — jamais d'app shell périmé silencieux.
+Ce mécanisme est à concevoir **réutilisable pour app2** (même besoin de fraîcheur côté affichage
+public), chantier connexe à mener avec le lot 3.
+
 ### 4.10 Horloges : pauses inter-périodes, pas de temps morts d'équipe
 
 Le modèle d'horloges (§3.1) couvre, en plus du chrono de jeu, du shotclock et des pénalités, les
@@ -403,32 +419,39 @@ Le modèle d'horloges (§3.1) couvre, en plus du chrono de jeu, du shotclock et 
 | Entre M2 et P1 (avant prolongations) | **3 min** |
 | Entre chaque prolongation (P1→P2, P2→P3, …) | **1 min** |
 
-Ces durées sont des valeurs par défaut de `ScoringConfig`, **paramétrables par compétition dans un
-second temps** (lot 6). **Il n'y a pas de temps mort d'équipe** en kayak-polo : rien à modéliser
-de ce côté.
+Le **buzzer** signale la fin de période **et la fin de pause** (signal de reprise). Ces durées
+sont des valeurs par défaut de `ScoringConfig`, **paramétrables par compétition dans un second
+temps** (lot 6). **Il n'y a pas de temps mort d'équipe** en kayak-polo : rien à modéliser de ce
+côté.
 
-### 4.11 Shotclock : départ manuel, suivi auto, pause indépendante, raccourcis paramétrables
+### 4.11 Shotclock (chronomètre de tir) : trois commandes, le départ EST un reset
 
-Comportement acté (détail UI dans la spec §6.5) :
+**Terminologie (2026-07-27)** : la traduction française de *shotclock* est **« chronomètre de
+tir »** — ne plus employer « temps d'action de but » ni « temps d'action de jeu » dans l'UI et la
+documentation.
 
-- **Départ manuel** : le démarrage du chrono principal **ne lance jamais** le shotclock. En début
-  de période il reste inactif (`--`) tant que l'opérateur ne l'a pas lancé (première possession).
-- **Suivi automatique une fois lancé** : arrêt du chrono principal ⇒ **pause automatique** du
-  shotclock ; reprise du chrono ⇒ reprise du shotclock.
-- **Pause indépendante** : un bouton/touche Pause suspend le shotclock **seul**, chrono en marche
-  (et le reprend).
-- **Départ/reprise ≠ reset** : la commande « départ/reprise » lance ou reprend **la valeur
-  affichée**, jamais de remise à 60/40. Les **resets 60 s** (engagement) et **40 s** (rebond
-  offensif, règlement à venir) sont des **commandes distinctes** sur des touches dédiées.
-- **Raccourcis clavier paramétrables** (préférence par poste/utilisateur), avec ces défauts :
+Comportement acté 2026-07-27 (détail UI dans la spec §6.5) — **exactement trois commandes** :
+
+- **Départ/reset 60 s** : charge 60 s **et lance** le décompte (engagement, nouvelle possession).
+  **Indépendant du chrono principal** : le démarrage du chrono ne lance jamais le shotclock ; en
+  début de période il reste à `--` tant qu'aucune équipe n'a pris la possession.
+- **Départ/reset 40 s** : charge 40 s **et lance** le décompte (rebond offensif). **Actif
+  d'emblée** dans le nouveau système (cf. §4.14).
+- **Arrêt** : **ce n'est pas une pause** — retour à l'affichage `--` et à l'**état initial**, en
+  attente d'un nouveau départ 60 s ou 40 s.
+
+Une fois lancé, le shotclock **suit le chrono principal** (arrêt du chrono ⇒ suspension
+automatique, reprise ⇒ reprise) : c'est la seule « pause » existante, et elle est automatique.
+Trois états en tout : **arrêté** (`--`), **en décompte**, **suspendu par le chrono**.
+
+**Raccourcis clavier paramétrables** (préférence par poste/utilisateur), avec ces défauts :
 
 | Action | Touche par défaut |
 |---|---|
 | Chrono principal : départ / arrêt | `Espace` |
-| Shotclock : départ / reprise | `Entrée` |
-| Shotclock : pause | `0` |
-| Shotclock : reset 60 s | touche dédiée paramétrable (défaut proposé : `.`) |
-| Shotclock : reset 40 s | touche dédiée paramétrable (défaut proposé : `*`) |
+| Shotclock : **départ/reset 60 s** | `Entrée` |
+| Shotclock : **départ/reset 40 s** | `.` (pavé numérique) — proposé, à valider |
+| Shotclock : **arrêt** (retour `--`) | `0` |
 
 ### 4.12 Les durées viennent de `ScoringConfig`, puis de la compétition
 
@@ -437,6 +460,44 @@ prolongation, de pauses, de shotclock 60/40, de pénalité, options but-en-or/TB
 vivent dans un objet unique `ScoringConfig` avec des valeurs par défaut (spec §6.2). **Dans un
 second temps** (lot 6), ces réglages sont portés par la **compétition** et hydratent
 `ScoringConfig` — sans changer aucun point d'appel, le défaut restant le fallback.
+
+**Correction 2026-07-27** : la durée des prolongations est de **5 minutes** dans les règlements
+ICF **et** FFCK (l'ancienne mention « FFCK = 3 min » était erronée). Défaut `P{n}` = 300 s.
+
+### 4.13 Identifiants : les clés legacy restent en int, l'uid est additif
+
+Question posée (offline, import de matchs) : faut-il passer l'id du match en uid court, et les
+horloges en UUID ?
+
+- **`kp_match.Id_match` (int) est conservé.** Il est partout dans le legacy : clés étrangères
+  (`kp_match_detail`, `kp_match_joueur`, `kp_chrono`…), URLs (`FeuilleMarque3.php?id=…`), noms de
+  fichiers de cache (`{idMatch}_match_score.json`), réponses des deux API. Le remplacer serait une
+  migration massive à risque pour un bénéfice nul côté legacy.
+- **Un `uid` public court, additif**, est ajouté au match (colonne nullable unique, générée à la
+  création — type nanoid court). Le legacy l'ignore (zéro impact) ; les usages futurs — création
+  **hors ligne**, **import de matchs**, adressage public — passent par lui, avec correspondance
+  `uid ↔ id` côté serveur. À poser au lot 1 (migration) pour ne pas re-migrer ensuite.
+- **`scoring_live_clock` passe en PK UUID** (généré par l'émetteur : console ou relais) — table
+  neuve, **aucun impact legacy**, et l'idempotence/création hors ligne sont gratuites.
+  `scoring_live_event.uid` (généré client) existait déjà dans le cadrage.
+
+### 4.14 Règlement 2027 appliqué d'emblée : carton noir et shotclock 40 s
+
+Le nouveau système de scoring sera mis en place en **2027, sur le nouveau règlement**. Deux
+conséquences immédiates dans la console et le modèle — **sans toucher au legacy**, qui reste sur
+l'ancien règlement jusqu'à la fin de saison 2026 :
+
+- Le carton `D` devient le **« carton d'exclusion définitive »** (EN : *Ejection card*), de
+  couleur **noire** (UI, i18n, historique) — l'appellation « rouge définitif » disparaît du
+  nouveau système. Le code `D` est conservé en base (compat).
+- Le **départ/reset 40 s** du shotclock (rebond offensif) est **actif par défaut**
+  (`shotclockOffensiveReboundEnabled = true`).
+
+La **progression des cartons** est précisée au passage (spec §7.4) : ordre vert → jaune → rouge,
+un 2ᵉ/3ᵉ carton ne peut être identique ou inférieur au précédent, un jaune ou un rouge peut être
+le premier carton, l'exclusion définitive est applicable à tout moment. Sur but encaissé, la
+pénalité est levée quel que soit le carton (chronos identiques) ; pour `R`/`D` le joueur
+sanctionné ne revient pas, il est **remplacé**.
 
 ---
 
@@ -455,11 +516,12 @@ second temps** (lot 6), ces réglages sont portés par la **compétition** et hy
 | **1** | L'état canonique en base (`scoring_live_*` + routes api2 complètes) | 0 | PAGE_SCORING §0.2, §0.5 |
 | **2** | Diffusion Mercure (outbox → worker → hub) | 1 | PAGE_SCORING §0.3 |
 | **3** | Console Scoring app4 complète (direct + post-match, PWA) | 1 (partiellement parallèle) | PAGE_SCORING §6–§8 (Phases 1–2 + PWA) |
-| **4** | Page d'incrustation unique | 2 | — |
+| **4** | Page d'incrustation unique + consommateurs `kp_*` en cours de match | 2 | [PAGE_INCRUSTATION.md](../../specs/PAGE_INCRUSTATION.md) |
 | **5** | Relais matériel (serveur ou boîtier) | 1, 2 | PAGE_SCORING §6.5 (Hardware Scoring) |
 | **6** | Paramétrage par compétition | 3 | PAGE_SCORING §6.2 (cible ScoringConfig) |
 | **7** | Offline complet (file d'écritures PWA) | 3 | PAGE_SCORING §8 (Phase 4) |
 | **8** | Le ménage | 3, 4, 5 + garde-fou | — |
+| **9** | Zéro papier — responsable d'équipe (profil 7) | 3, 6 | PAGE_SCORING §1 |
 
 L'**écriture d'abord** : le lot 1 conditionne tout le reste. Les lots 3 et 4 peuvent avancer en
 parallèle dès que les lots 1 et 2 fournissent leurs contrats (routes + topics).
@@ -494,7 +556,7 @@ incrustations actuelles. Ils restent la voie de production.
 
 | # | Étape | Détail |
 |---|---|---|
-| 1.1 | **Tables** `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox` | schéma cadré dans PAGE_SCORING §0.5 (migration Doctrine) ; `scoring_live_clock` inclut les horloges de **pause inter-périodes** (§4.10) |
+| 1.1 | **Tables** `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox` | schéma cadré dans PAGE_SCORING §0.5 (migration Doctrine) ; `scoring_live_clock` inclut les horloges de **pause inter-périodes** (§4.10) et a une **PK UUID** (§4.13) ; la même migration ajoute le **`uid` public additif** du match (§4.13) |
 | 1.2 | **Machine à états du match** (statuts, périodes `P{n}` non bornées, transitions, règles cartons/pénalités, but en or) | logique pure, **développée test-first** (sans base ni réseau) |
 | 1.3 | **Re-routage SQL du `ScoringController`** : `gameParam`/`gameEvent`/`gameTimer`/`playerStatus` écrivent dans `scoring_live_*` (endpoints et payloads inchangés → l'UI existante ne bouge pas) | cf. PAGE_SCORING §0.2 |
 | 1.4 | **Extension horloges** : `gameTimer` généralisé aux N horloges (`GAME`, `SHOTCLOCK`, `PENALTY` ×4, `BREAK`) — le modèle validé sur `kp_chrono` se transpose et s'étend | résout « shotclock/pénalités perdus à la reprise » |
@@ -548,10 +610,10 @@ Mercure, avec rejeu correct après coupure simulée de l'abonné et après coupu
 |---|---|---|
 | 3.1 | **Solde de la Phase 1** : statut joueur, édition inline officiels/n° maillot, recharge présents, publication (lecture seule), charge par ID#/n° court, alertes progression cartons, durée de période non standard, test fonctionnel complet authentifié | spec §12 « Reste à faire » |
 | 3.2 | **Prolongations non bornées** côté front (`Period = 'M1'\|'M2'\|`P${number}`\|'TB'`, sélecteur « prolongation suivante », but en or) | spec §0.6, §7.5 |
-| 3.3 | **Chrono/shotclock/pénalités — nouveau modèle** : shotclock départ manuel + pause indépendante + suivi auto (§4.11), pénalités ≤ 2/équipe avec levée sur but adverse, **pauses inter-périodes** avec buzzer (§4.10) | spec §6.4–§6.5, §7.4–§7.5 |
+| 3.3 | **Chrono/shotclock/pénalités — nouveau modèle** : shotclock 3 commandes (départ/reset 60 s, départ/reset 40 s actif d'emblée, arrêt `--` — §4.11/§4.14), pénalités ≤ 2/équipe avec levée sur but encaissé et remplacement pour `R`/`D` (§4.14), cartons **noirs** d'exclusion définitive, **pauses inter-périodes** avec buzzer en fin de pause (§4.10) | spec §6.4–§6.5, §7.4–§7.5 |
 | 3.4 | **Raccourcis paramétrables** : défauts §4.11, écran de réglage, préférence par poste (localStorage), neutralisés dans les champs de saisie | spec §6.5 |
 | 3.5 | **Scoreboard + shotclock plein écran** (routes Nuxt) synchronisés par **BroadcastChannel** en local ; les écrans **distants** consomment Mercure (lot 4) — canal local sans réseau, canal distant par le hub | spec §6.5 |
-| 3.6 | **PWA installable** : manifest, service worker, cache app shell (saisie toujours online-first) | §4.9 |
+| 3.6 | **PWA installable** : manifest, service worker, cache app shell (saisie toujours online-first) + **mise à jour immédiate garantie** (détection de version, `skipWaiting`/`clients.claim`, rechargement contrôlé) — mécanisme conçu **réutilisable pour app2** | §4.9 |
 | 3.7 | **Console abonnée à Mercure** (topics de son terrain) pour la reprise multi-terminal et la cohérence multi-onglets | remplace le « rechargement pour resynchroniser » |
 | 3.8 | **Mode « score seul »** : saisie minimale (score/période/statut) comme source de plus, même porte d'entrée | §3, §4.1 |
 
@@ -564,17 +626,22 @@ tablette ; reprise sur un second terminal validée en cours de match.
 ### Lot 4 — La page d'incrustation unique
 
 **Objectif.** Une page paramétrée (terrain, blocs, habillage, format — §3.2) qui lit
-`GET /state` au démarrage puis s'abonne aux topics ciblés (§3.3). Elle remplace, à terme, les ~20
-pages PHP et `app_live_dev`.
+`GET /state` au démarrage puis s'abonne aux topics ciblés (§3.3), **entièrement autonome** (aucune
+interaction utilisateur — calque OBS). Elle remplace, à terme, les ~20 pages PHP et
+`app_live_dev`. **Spécification détaillée : [PAGE_INCRUSTATION.md](../../specs/PAGE_INCRUSTATION.md).**
 
 | # | Étape | Détail |
 |---|---|---|
-| 4.1 | Page (app4 ou route publique dédiée) : lecture `GET /state` + abonnement SSE, interpolation locale des horloges (§3.1) | fond transparent/chroma pour la régie |
-| 4.2 | Variantes par paramètres : score seul, faits de jeu, compositions, prochain match, HD, nations/clubs | une page, des options |
-| 4.3 | **Validation en parallèle** : les anciennes incrustations tournent sur le cache JSON ; la nouvelle page est branchée sur un terrain, on compare | bascule terrain par terrain, week-end par week-end |
+| 4.1 | Page (Nuxt 4 + Tailwind, 1920×1080 par défaut) : lecture `GET /state` + abonnement SSE, interpolation locale des horloges (§3.1) | fond transparent / magenta / chromakey paramétrable (spec §5) |
+| 4.2 | Variantes par paramètres d'URL : score seul, faits de jeu, compositions, prochain match, HD, nations/clubs, style | une page, des options (spec §4) |
+| 4.3 | **Aiguillage sans polling** : l'event-cache-worker calcule toujours current/next par terrain, mais **publie le « programme du terrain » via outbox → Mercure** (topic `…/program`) + `GET /scoring/program/{event}/{pitch}` au démarrage — remplace le polling de `event{e}_pitch{p}.json` | spec §6 |
+| 4.4 | **Enchaînement automatique paramétré par événement** : délais d'affichage (score mi-temps, score final, présentation du prochain match…) stockés en base au niveau événement, servis par api2, modifiables dans app4 | spec §7 |
+| 4.5 | **Consommateurs `kp_*` en cours de match** : faire évoluer `FeuilleMatchMulti.php` et app2 pour lire l'état live (`GET /scoring/state` / Mercure) quand le match est en cours — condition de bascule des terrains où l'affichage « en cours » est utilisé (§4.3, encadré) | nouveau 2026-07-27 |
+| 4.6 | **Validation en parallèle** : les anciennes incrustations tournent sur le cache JSON ; la nouvelle page est branchée sur un terrain, on compare | bascule terrain par terrain, week-end par week-end |
 
 **Critère de sortie.** Chaque variante legacy a son équivalent paramétré, validé en réel sur au
-moins un événement.
+moins un événement ; l'enchaînement avant-match → match → fin de match → prochain match se
+déroule sans intervention humaine.
 
 ---
 
@@ -633,6 +700,23 @@ Voir §6 — **avec le critère chiffré fixé au lot 0.6, sinon le legacy ne me
 
 ---
 
+### Lot 9 — Zéro papier : le responsable d'équipe (profil 7)
+
+**Objectif (décision 2026-07-27).** Prolonger l'objectif zéro papier au-delà de la table de
+marque : donner au **responsable d'équipe** (profil 7) ses deux gestes réglementaires, dans app4,
+avec des délais **paramétrés par la compétition** (d'où la dépendance au lot 6).
+
+| # | Étape | Détail |
+|---|---|---|
+| 9.1 | **Validation de la composition avant match** : pour chaque match, le responsable d'équipe valide/ajuste **sa** compo à partir de la feuille de présence, **dans un délai réglementaire** (ex. jusqu'à 30 min avant le match, paramètre de compétition) | droits limités : **supprimer** des joueurs absents pour ce match uniquement ; **changer les numéros** de maillot et le **capitaine** seulement si le règlement de la compétition l'autorise (paramètre). Hors délai → lecture seule. Actions journalisées |
+| 9.2 | **Consultation + réclamation après match** : le responsable d'équipe consulte le **déroulement numérique** du match (faits de jeu horodatés) et peut déposer une **réclamation**, immédiatement et **dans un délai réglementaire** (ex. jusqu'à 30 min après la fin, paramètre de compétition) | réclamation horodatée, journalisée, notifiée à l'organisation ; hors délai → dépôt refusé ; consultation libre au-delà |
+| 9.3 | **Permissions** : extension de la revue des droits (spec §6.3) au profil 7 — scope strict « son équipe, ses matchs », délais évalués **côté serveur** | jamais de gating uniquement client |
+
+**Critère de sortie.** Sur un événement réel, une équipe valide sa compo et dépose une
+réclamation sans papier ; les délais sont respectés côté serveur ; tout est journalisé.
+
+---
+
 ## 6. Ce qui devient obsolète
 
 À supprimer **dans cet ordre** : chaque ligne dépend de la précédente.
@@ -685,7 +769,7 @@ La refonte a **deux moitiés**, et il est facile de n'en voir qu'une.
 
 | | La question | Lots | Sans elle… |
 |---|---|---|---|
-| **Écriture** (saisir) | Comment l'info **arrive** dans KPI ? | 1, 3, 5, 7 | belle incrustation… toujours alimentée par un onglet Chrome qui peut se fermer |
+| **Écriture** (saisir) | Comment l'info **arrive** dans KPI ? | 1, 3, 5, 7, 9 | belle incrustation… toujours alimentée par un onglet Chrome qui peut se fermer |
 | **Lecture** (afficher) | Comment les écrans **reçoivent** l'info ? | 2, 4 | l'état est propre, mais les 20 pages dupliquées restent et le cache JSON ne peut pas mourir |
 
 Les deux sont nécessaires. **L'écriture d'abord** : le lot 1 conditionne tout le reste.
