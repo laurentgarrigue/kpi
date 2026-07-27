@@ -5,10 +5,14 @@ controllers:
     type: attribute
 
 # NelmioApiDocBundle routes
-app.swagger_ui:
-    path: /doc
-    methods: GET
-    defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+# ⚠️ TEST TEMPORAIRE — validation du rollback auto préprod (Phase 5, case restante).
+# La route /doc est volontairement DÉSACTIVÉE : le kernel boote toujours (smoke-api2
+# CI reste vert), mais `curl /api2/doc` renvoie 404 → le smoke du deploy-wrapper échoue
+# → rollback auto attendu. À RESTAURER immédiatement après (PR de réparation dédiée).
+#app.swagger_ui:
+#    path: /doc
+#    methods: GET
+#    defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
 
 app.swagger:
     path: /doc.json
