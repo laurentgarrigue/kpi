@@ -536,8 +536,61 @@ filtre) ; les IP des runners GitHub passent.
 - [x] Build app4 réparé (override `@unhead/vue` v3)
 - [x] **Merge PR sur `develop` → préprod déployée 100 % AUTO sans clic** (#246, 2026-07-24)
 - [x] **Run touchant `sources/app*` → `make appN_generate_preprod` passe** (app4 inclus, artefacts root OK)
-- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée (vu en test manuel, pas encore via Actions)
-- [ ] Le job `preprod` ne peut PAS lire les secrets `production` (à tester explicitement)
+- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée (vu en test manuel, pas encore via Actions) — **procédure prête, voir « Clôture Phase 5 » ci-dessous**
+- [ ] Le job `preprod` ne peut PAS lire les secrets `production` — **workflow prêt, voir « Clôture Phase 5 » ci-dessous**
+
+### Clôture Phase 5 — les 2 dernières cases (procédure, 2026-07-27)
+
+Les deux tests sont **préparés dans le working tree** (branches locales, à pousser + MR
+selon le workflow habituel — moi je ne pousse ni ne merge).
+
+**Case 1 — rollback auto via Actions.** Branche **`test/preprod-rollback-break`** : elle
+commente la route `app.swagger_ui` dans
+[`sources/api2/config/routes.yaml`](../../../../sources/api2/config/routes.yaml). Vecteur
+choisi parce que **`smoke-api2` (CI) ne teste jamais `/doc`** — il fait seulement
+`cache:clear` + `doctrine:schema:validate`, qui ne touchent pas les routes → une route en
+moins **passe la CI** (YAML validé `[OK]`), mais `curl $SMOKE_URL_PREPROD` (=
+`preprod.kayak-polo.info/api2/doc`) renvoie **404** → smoke du wrapper KO → **rollback
+auto**. Séquence :
+
+```bash
+git push -u origin test/preprod-rollback-break
+gh pr create -B develop -H test/preprod-rollback-break -t "test(cd): valider rollback auto préprod" -b "Casse /api2/doc pour prouver le rollback. À reverter aussitôt."
+# CI verte → merge → déclenche deploy-preprod.yml
+gh pr merge <n> --squash --delete-branch
+gh run watch      # observer : smoke KO → "rolling back" → git reset --hard <sha préc.> → smoke final vert
+```
+
+> ⚠️ **Le rollback restaure le working tree du VPS au SHA précédent, PAS `develop` sur
+> GitHub.** Sans réparation, le prochain déploiement re-casserait `/api2/doc`. **Immédiatement
+> après le test**, reverter :
+> ```bash
+> git checkout develop && git pull
+> git revert <sha-du-squash-merge>   # recrée app.swagger_ui
+> git push   # (via PR si develop l'exige) → redéploie une préprod saine
+> ```
+
+**Case 2 — isolation des secrets `production`.** Branche **`test/env-isolation`** : workflow
+[`test-env-isolation.yml`](../../../../.github/workflows/test-env-isolation.yml)
+(`workflow_dispatch`, 2 jobs). Le job `environment: preprod` **échoue** si le secret
+sentinelle `PROD_ISOLATION_CANARY` y est visible ; un job témoin `environment: production`
+confirme que le canary existe (sinon le job preprod serait vert pour la mauvaise raison — un
+secret jamais créé est aussi « vide »). Secrets lus via `env:`, jamais imprimés (GitHub les
+masque de toute façon → on teste « vide vs non-vide », pas la valeur). Séquence :
+
+1. Créer le secret **`PROD_ISOLATION_CANARY`** (valeur au choix, ex. `LEAKED`)
+   **UNIQUEMENT** dans l'environment `production` (Settings → Environments → production →
+   Secrets). **PAS** au niveau repo, **PAS** dans `preprod`.
+2. Merger `test/env-isolation` sur develop, puis **s'assurer que le fichier atteint `main`**
+   (le back-merge auto s'en charge, ou une PR develop→main) — sinon le bouton « Run
+   workflow » n'apparaît pas (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis
+   la branche par défaut).
+3. Actions → « Test env isolation » → **Run workflow depuis `develop`**. Approuver le run
+   `production` (required reviewer) pour laisser le job témoin tourner.
+4. Attendu : job **preprod ✅** (« canary INVISIBLE en preprod ») + job **production ✅**
+   (« canary présent, témoin valide »). ⇒ isolation prouvée.
+5. **Nettoyer** : supprimer le workflow `test-env-isolation.yml` **et** le secret
+   `PROD_ISOLATION_CANARY`.
 
 ---
 
