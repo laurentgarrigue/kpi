@@ -151,9 +151,11 @@ terrain et à intervalle régulier, le match courant — `GetBestMatch` — et l
 ## 7. Enchaînement d'affichage : la séquence, paramétrée par événement
 
 La page déroule automatiquement le **cycle de vie d'un match sur un terrain**. Les **durées et
-options de chaque étape sont des réglages de l'événement**, stockés en base, servis par
-`GET /program` et modifiables dans app4 (supervision TV/événement) ; toute modification est
-publiée sur le topic `program` (prise en compte sans rechargement).
+options de chaque étape ont des valeurs par défaut** (constantes serveur), **surchargeables en
+base au niveau de l'événement, puis du terrain** (résolution : défauts → événement → terrain,
+le plus spécifique gagne). Les réglages résolus sont servis par `GET /program` et modifiables
+dans app4 (supervision TV/événement) ; toute modification est publiée sur le topic `program`
+(prise en compte sans rechargement).
 
 **Séquence type** (bloc `score` + `next` actifs) :
 
@@ -165,7 +167,8 @@ avant-match ──► match en cours ──► fin de période ──► périod
                                          jusqu'à la reprise)                    statut END)
 ```
 
-**Réglages par événement** (valeurs par défaut à fixer à l'implémentation, liste extensible) :
+**Réglages** (valeurs par défaut à fixer à l'implémentation, surchargeables par événement puis
+par terrain, liste extensible) :
 
 | Réglage | Rôle | Exemple |
 |---|---|---|

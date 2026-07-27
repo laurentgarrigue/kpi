@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\ScoringLiveService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * serves the human scoring console (app4 /games/[id]/scoring). See DOC/specs/PAGE_SCORING.md.
  *
  * Routes are under /admin/scoring so they sit behind the existing JWT firewall (^/admin).
+ *
+ * Storage (lot 1 of the refactoring plan): live writes go to the canonical scoring_live_*
+ * tables via ScoringLiveService — NOT to kp_* anymore. kp_* is only written back by the
+ * end-of-match consolidation (Statut → END). Endpoints and payloads are unchanged, so the
+ * console UI did not move. See LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
  *
  * ⚠️ Experimentation phase: access restricted to ROLE_ADMIN (profile <= 2). Open up to
  * ROLE_SCORER (profile 9 "Table de marque") once validated — see spec §6.3.
@@ -44,9 +50,30 @@ class ScoringController extends AbstractController
     private ?array $matchContext = null;
 
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ScoringLiveService $live
     ) {
         $this->connection = $entityManager->getConnection();
+    }
+
+    /**
+     * Enforce plan §4.1 (single active source): the console writes as MANUAL; if another
+     * source has been promoted on this match, the command is journalized but NOT applied.
+     * Returns a 409 JsonResponse to send back, or null when writing is allowed.
+     */
+    private function assertSourceAllowed(int $matchId, string $detail): ?JsonResponse
+    {
+        $state = $this->live->ensureState($matchId);
+        if ($this->live->isSourceAllowed($state, 'MANUAL')) {
+            return null;
+        }
+
+        $this->logScoring('Scoring rejeté (source)', $matchId, $detail . ' — source active: ' . $state['active_source']);
+
+        return new JsonResponse(
+            ['error' => 'Another source is active for this match', 'activeSource' => $state['active_source']],
+            Response::HTTP_CONFLICT
+        );
     }
 
     /**
@@ -156,13 +183,28 @@ class ScoringController extends AbstractController
             return new JsonResponse(['error' => 'Invalid parameter'], 401);
         }
 
-        $sql = "UPDATE kp_match
-            SET {$data->param} = ?
-            WHERE Id = ?
-            AND Validation != 'O'";
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
 
         try {
-            $this->connection->executeStatement($sql, [$data->value, $matchId]);
+            if (in_array($data->param, ['ScoreA', 'ScoreB'], true)) {
+                // Official score validation is a result concern, not live state: it keeps
+                // writing kp_match directly (spec §7.6 — "Valider ce score").
+                $this->connection->executeStatement(
+                    "UPDATE kp_match SET {$data->param} = ? WHERE Id = ? AND Validation != 'O'",
+                    [$data->value, $matchId]
+                );
+            } else {
+                // Live state → scoring_live_state (+ tick + outbox, one transaction).
+                // Statut → END also consolidates back to kp_* (plan §4.3).
+                if ($err = $this->assertSourceAllowed($matchId, "{$data->param} = {$data->value}")) return $err;
+                $this->live->setParam($matchId, $data->param, (string) $data->value);
+            }
 
             // Journal: "Scoring score/statut/période" depending on the param
             $label = match ($data->param) {
@@ -171,8 +213,10 @@ class ScoringController extends AbstractController
                 default => 'Scoring score',
             };
             $this->logScoring($label, $matchId, "{$data->param} = {$data->value}");
+            if ($data->param === 'Statut' && $data->value === 'END') {
+                $this->logScoring('Scoring consolidation', $matchId, 'Statut END → kp_*');
+            }
 
-            // TODO (Phase 3): generate broadcast cache here
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
@@ -205,64 +249,39 @@ class ScoringController extends AbstractController
         $p = $data->params;
         $action = $p->action ?? '';
 
-        if ($action === 'add') {
-            $uid = $p->uid ?? str_replace('-', '', uniqid('', true));
-
-            $sql = "INSERT INTO kp_match_detail (Id, Id_match, Periode, Temps, Id_evt_match,
-                Competiteur, Numero, Equipe_A_B, motif)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            $this->connection->executeStatement($sql, [
-                $uid, $matchId, $p->period, $this->normalizeTemps($p->tpsJeu), $p->code,
-                $p->player, $p->number, $p->team, $p->reason
-            ]);
-
-            $this->logScoring('Scoring événement', $matchId, "add {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}");
-        } elseif ($action === 'update') {
-            // Edit an existing event in place (period/time/player/number/code/team/reason),
-            // located by its uid. Central to post-match correction (spec §7.3).
-            if (empty($p->uid)) {
-                return new JsonResponse(['error' => 'uid required for update'], 400);
-            }
-
-            $sql = "UPDATE kp_match_detail
-                SET Periode = ?, Temps = ?, Id_evt_match = ?, Competiteur = ?,
-                    Numero = ?, Equipe_A_B = ?, motif = ?
-                WHERE Id = ? AND Id_match = ?";
-
-            $this->connection->executeStatement($sql, [
-                $p->period, $this->normalizeTemps($p->tpsJeu), $p->code, $p->player,
-                $p->number, $p->team, $p->reason, $p->uid, $matchId
-            ]);
-
-            $this->logScoring('Scoring événement', $matchId, "update {$p->uid} {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}");
-        } elseif ($action === 'remove') {
-            // Prefer removal by uid (precise); fall back to the legacy match-by-fields delete.
-            if (!empty($p->uid)) {
-                $this->connection->executeStatement(
-                    "DELETE FROM kp_match_detail WHERE Id = ? AND Id_match = ?",
-                    [$p->uid, $matchId]
-                );
-                $this->logScoring('Scoring événement', $matchId, "remove {$p->uid}");
-            } else {
-                $sql = "DELETE FROM kp_match_detail
-                    WHERE Id_match = ?
-                    AND Periode = ?
-                    AND Competiteur = ?
-                    AND Id_evt_match = ?
-                    ORDER BY date_insert DESC
-                    LIMIT 1";
-
-                $this->connection->executeStatement($sql, [
-                    $matchId, $p->period, $p->player, $p->code
-                ]);
-                $this->logScoring('Scoring événement', $matchId, "remove {$p->code} {$p->period} player {$p->player}");
-            }
-        } else {
+        if (!in_array($action, ['add', 'update', 'remove'], true)) {
             return new JsonResponse(['error' => 'Invalid action'], 400);
         }
+        if ($action === 'update' && empty($p->uid)) {
+            // Edit in place, located by uid — central to post-match correction (spec §7.3).
+            return new JsonResponse(['error' => 'uid required for update'], 400);
+        }
 
-        // TODO (Phase 3): generate broadcast cache here
+        if ($err = $this->assertSourceAllowed($matchId, "event $action")) return $err;
+
+        $uid = $p->uid ?? str_replace('-', '', uniqid('', true));
+
+        // Live facts → scoring_live_event (+ tick + outbox on the /fact topic).
+        // kp_match_detail is only rebuilt at consolidation (Statut → END).
+        $this->live->writeEvent($matchId, $action, [
+            'uid' => $action === 'add' ? $uid : ($p->uid ?? null),
+            'code' => $p->code ?? null,
+            'period' => $p->period ?? null,
+            'temps' => isset($p->tpsJeu) ? $this->normalizeTemps($p->tpsJeu) : null,
+            'tpsJeu' => $p->tpsJeu ?? null,
+            'team' => $p->team ?? null,
+            'player' => $p->player ?? null,
+            'number' => $p->number ?? null,
+            'reason' => $p->reason ?? null,
+        ]);
+
+        $detail = match ($action) {
+            'add' => "add {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}",
+            'update' => "update {$p->uid} {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}",
+            'remove' => !empty($p->uid) ? "remove {$p->uid}" : "remove {$p->code} {$p->period} player {$p->player}",
+        };
+        $this->logScoring('Scoring événement', $matchId, $detail);
+
         return new JsonResponse(['success' => true]);
     }
 
@@ -279,19 +298,34 @@ class ScoringController extends AbstractController
     {
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
-        // Mirrors ReportController event enrichment (player name from kp_licence).
-        // Temps is a TIME column stored as 00:MM:SS (legacy prefixes '00:'); the console works
-        // in MM:SS, so format it back to MM:SS here (a half lasts ≤ 10 min — no hours to show).
+        // Live facts from scoring_live_event (player name from kp_licence, as before).
+        // Temps is stored 00:MM:SS (legacy convention kept); format back to MM:SS.
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT md.Id uid, md.Periode period, TIME_FORMAT(md.Temps, '%i:%s') tpsJeu,
-                md.Id_evt_match code, md.Competiteur player, md.Numero number,
-                md.Equipe_A_B team, md.motif reason, l.Nom nom, l.Prenom prenom
-             FROM kp_match_detail md
-             LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric)
-             WHERE md.Id_match = ?
-             ORDER BY md.Periode DESC, md.Temps ASC, md.date_insert ASC",
+            "SELECT e.uid, e.periode period, TIME_FORMAT(e.temps, '%i:%s') tpsJeu,
+                e.code, e.id_player player, e.numero number,
+                e.team, e.motif reason, l.Nom nom, l.Prenom prenom
+             FROM scoring_live_event e
+             LEFT OUTER JOIN kp_licence l ON (e.id_player = l.Matric)
+             WHERE e.id_match = ?
+             ORDER BY e.periode DESC, e.temps ASC, e.created_at ASC",
             [$matchId]
         );
+
+        // Transition: a match never touched by the new flow has no live rows yet — fall
+        // back to the legacy detail table (read-only; the live table is seeded on the
+        // first mutation, see ScoringLiveService::ensureState).
+        if ($rows === []) {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT md.Id uid, md.Periode period, TIME_FORMAT(md.Temps, '%i:%s') tpsJeu,
+                    md.Id_evt_match code, md.Competiteur player, md.Numero number,
+                    md.Equipe_A_B team, md.motif reason, l.Nom nom, l.Prenom prenom
+                 FROM kp_match_detail md
+                 LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric)
+                 WHERE md.Id_match = ?
+                 ORDER BY md.Periode DESC, md.Temps ASC, md.date_insert ASC",
+                [$matchId]
+            );
+        }
 
         $response = new JsonResponse(['events' => $rows]);
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
@@ -353,14 +387,39 @@ class ScoringController extends AbstractController
     {
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
+        // Server time in seconds since midnight (same basis as start_time_server)
+        $nowServer = time() % 86400;
+
+        // Live clock (kind GAME) first — same response contract as the kp_chrono era so
+        // the console restore logic is untouched.
+        $clock = $this->connection->fetchAssociative(
+            "SELECT init_ms, elapsed_ms, started_at, running
+             FROM scoring_live_clock
+             WHERE id_match = ? AND kind = 'GAME'",
+            [$matchId]
+        );
+
+        if ($clock !== false) {
+            $elapsed = (int) round(((int) $clock['elapsed_ms']) / 1000);
+
+            return new JsonResponse([
+                'action' => ((bool) $clock['running']) ? 'run' : 'stop',
+                'startTime' => $elapsed,
+                'startTimeServer' => $clock['started_at'] !== null
+                    ? strtotime($clock['started_at']) % 86400
+                    : null,
+                'runTime' => $elapsed,
+                'maxTime' => (int) round(((int) $clock['init_ms']) / 1000),
+                'nowServer' => $nowServer,
+            ]);
+        }
+
+        // Transition fallback: matches last driven under the legacy flow.
         $row = $this->connection->fetchAssociative(
             "SELECT `action`, start_time, start_time_server, run_time, max_time
              FROM kp_chrono WHERE IdMatch = ?",
             [$matchId]
         );
-
-        // Server time in seconds since midnight (same basis as start_time_server)
-        $nowServer = time() % 86400;
 
         if (!$row) {
             return new JsonResponse(['action' => null, 'nowServer' => $nowServer]);
@@ -404,29 +463,111 @@ class ScoringController extends AbstractController
             return new JsonResponse(['error' => 'Game locked'], 400);
         }
 
-        if ($data->params->action === 'RAZ') {
-            $sql = "DELETE FROM kp_chrono WHERE IdMatch = ?";
-            $this->connection->executeStatement($sql, [$matchId]);
-        } else {
-            $data->params->startTimeServer = time() % 86400;
-            $sql = "REPLACE kp_chrono
-                SET IdMatch = ?,
-                `action` = ?,
-                start_time = ?,
-                start_time_server = ?,
-                run_time = ?,
-                max_time = ?";
+        if ($err = $this->assertSourceAllowed($matchId, 'timer ' . ($data->params->action ?? ''))) return $err;
 
-            $this->connection->executeStatement($sql, [
-                $matchId, $data->params->action, $data->params->startTime, $data->params->startTimeServer,
-                $data->params->runTime, $data->params->maxTime
+        // Clock kind defaults to the main game clock; the same endpoint drives the
+        // shotclock, penalties and inter-period breaks (spec §0.5 — N clocks per match).
+        $kind = strtoupper($data->params->kind ?? 'GAME');
+        $team = (string) ($data->params->team ?? '');
+        $slot = (int) ($data->params->slot ?? 0);
+
+        if ($data->params->action === 'RAZ') {
+            $this->live->removeClock($matchId, $kind, $team, $slot);
+        } else {
+            // Payload stays in seconds (unchanged endpoint contract); storage is ms.
+            $this->live->setClock($matchId, [
+                'kind' => $kind,
+                'team' => $team,
+                'slot' => $slot,
+                'playerId' => $data->params->playerId ?? null,
+                'cardCode' => $data->params->cardCode ?? null,
+                'initMs' => (int) round(((float) ($data->params->maxTime ?? 0)) * 1000),
+                'elapsedMs' => (int) round(((float) ($data->params->startTime ?? 0)) * 1000),
+                'running' => $data->params->action === 'run',
             ]);
         }
 
-        $this->logScoring('Scoring chrono', $matchId, $data->params->action);
+        $this->logScoring('Scoring chrono', $matchId, trim("{$kind} {$data->params->action} {$team}{$slot}", ' 0'));
 
-        // TODO (Phase 3): generate broadcast cache here
         return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/state/{matchId}', name: 'state_get', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/state/{matchId}',
+        summary: 'Full canonical live state of a match (state + clocks + facts)',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: 'Live state (exists = false when the match was never touched live)'),
+            new OA\Response(response: 304, description: 'Not modified (If-None-Match / tick)')
+        ]
+    )]
+    public function getState(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $state = $this->live->getState($matchId);
+
+        if ($state === null) {
+            return new JsonResponse(['exists' => false, 'matchId' => $matchId]);
+        }
+
+        // Cheap HTTP cache: the tick IS the version (plan §1.3). 304 when unchanged.
+        $etag = 'W/"scoring-' . $matchId . '-' . $state['tick'] . '"';
+        if ($request->headers->get('If-None-Match') === $etag) {
+            return new JsonResponse(null, Response::HTTP_NOT_MODIFIED);
+        }
+
+        $response = new JsonResponse(['exists' => true] + $state + ['nowServer' => time() % 86400]);
+        $response->headers->set('ETag', $etag);
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
+
+        return $response;
+    }
+
+    #[Route('/source/{matchId}', name: 'source_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/source/{matchId}',
+        summary: 'Promote the active writing source of a match (plan §4.1)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['source'],
+                properties: [
+                    new OA\Property(property: 'source', type: 'string', enum: ['MANUAL', 'HARDWARE', 'SCORE_ONLY', 'IMPORT'])
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Source promoted (timestamped, journalized)'),
+            new OA\Response(response: 400, description: 'Unknown source or locked game')
+        ]
+    )]
+    public function putSource(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+        $source = strtoupper((string) ($data->source ?? ''));
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+
+        try {
+            $tick = $this->live->promoteSource($matchId, $source);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
+        $this->logScoring('Scoring source', $matchId, "promotion → {$source}");
+
+        return new JsonResponse(['success' => true, 'activeSource' => $source, 'tick' => $tick]);
     }
 
     #[Route('/stats', name: 'stats', methods: ['PUT'])]

@@ -1422,6 +1422,19 @@ enregistré dans `kp_match_detail.motif`, affiché inline entre parenthèses dan
 **Vérifié** : ESLint OK (via container node:22 — le `kpi_node_app4` en Node 20 ne peut pas exécuter
 le flat-config actuel, `Object.groupBy` absent < Node 21) ; `php -l ScoringController.php` OK.
 
+**Re-routage `scoring_live_*` ✅ (plan lot 1, première tranche — 2026-07-27) :**
+
+| Fichier | Détail |
+|---|---|
+| `SQL/migrations/2026-07-27_scoring_live_tables.sql` | **Créé.** `scoring_live_state` (score/période/statut/`heure_fin`/`active_source`/`promoted_at`/`tick`), `scoring_live_clock` (PK **UUID**, `kind` GAME/SHOTCLOCK/PENALTY/BREAK, unicité `(id_match,kind,team,slot)`), `scoring_live_event` (uid PK, `kind` extensible), `scoring_outbox`, + `kp_match.uid` additif (§4.13 du plan). **À exécuter en dev.** |
+| `src/Service/ScoringLiveService.php` | **Créé.** Porte d'écriture unique de l'état live : chaque mutation = **une transaction** (écriture + `tick`+1 + dépôt `scoring_outbox` avec topic événement/terrain/bloc résolu via `kp_evenement_journee` + `Terrain`, fallback `/scoring/match/{id}/…`). Garde « source active » (§4.1). `ensureState()` **seed depuis `kp_*`** au premier contact (transition : match commencé en legacy conservé, `kp_match_detail` importé une fois dans `scoring_live_event`). `consolidateToKp()` au passage `END` : état → `kp_match`, faits → reconstruction `kp_match_detail` (uid partagés). |
+| `src/Controller/ScoringController.php` | **Re-routé** (endpoints/payloads inchangés) : `gameParam` (Statut/Periode/ScoreDetail/Heure_fin → live ; **ScoreA/ScoreB officiels restent sur `kp_match`**, cf. §7.6), `gameEvent` → `scoring_live_event` (fallback lecture legacy si table vide), `gameTimer` GET/PUT → `scoring_live_clock` kind GAME (contrat s conservé, stockage ms ; PUT accepte déjà `kind`/`team`/`slot`/`playerId`/`cardCode` pour shotclock/pénalités/pause en Phase 2 ; fallback lecture `kp_chrono`). **Nouveaux** : `GET /admin/scoring/state/{id}` (état complet + **ETag = tick**, 304), `PUT /admin/scoring/source/{id}` (promotion §4.1). Toute écriture d'une source non active → **409** + journal « Scoring rejeté (source) ». Les 3 TODO Phase 3 sont réalisés : chaque écriture dépose dans l'outbox. |
+| `stores/scoringStore.ts` | `load()` appelle aussi `GET /admin/scoring/state/{id}` et **superpose l'état live** (statut/période/scores) au snapshot `kp_match` de `/admin/games/{id}` — pendant un match, `kp_*` n'est plus écrit avant la consolidation. |
+
+Reste sur ce lot : machine à états test-first (1.2), fichiers de référence matériel (1.8, dépend
+de l'action 0.5), routes officiels/recharge présents (1.5), et l'exécution de la migration +
+test de bout en bout en dev.
+
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification
   base + restauration visuelle du chrono au rechargement + vérif 403 hors mandat + **vérif des

@@ -55,6 +55,22 @@ interface ScoringEventsResponse {
   }>
 }
 
+/**
+ * Response shape of GET /admin/scoring/state/{id} — canonical live state (subset we use).
+ * Since the backend re-route (plan lot 1), the live status/period/scores of a match being
+ * scored live in scoring_live_state, kp_match (served by /admin/games/{id}) only reflects
+ * them after the end-of-match consolidation: the live state overlays the match on load.
+ */
+interface ScoringLiveStateResponse {
+  exists: boolean
+  tick?: number
+  statut?: MatchStatus
+  periode?: Period
+  scoreA?: number
+  scoreB?: number
+  activeSource?: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
+}
+
 /** Generate a uid in the same shape the backend produces (uniqid without dashes). */
 function genUid(): string {
   return (Date.now().toString(16) + Math.random().toString(16).slice(2, 10)).replace(/-/g, '')
@@ -114,11 +130,21 @@ export const useScoringStore = defineStore('scoring', {
 
       try {
         const match = await api.get<ScoringMatch>(`/admin/games/${matchId}`)
-        const [resA, resB, resEvents] = await Promise.all([
+        const [resA, resB, resEvents, liveState] = await Promise.all([
           api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'A' }),
           api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'B' }),
-          api.get<ScoringEventsResponse>(`/admin/scoring/events/${matchId}`)
+          api.get<ScoringEventsResponse>(`/admin/scoring/events/${matchId}`),
+          api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${matchId}`)
         ])
+
+        // Overlay the canonical live state on top of the kp_match snapshot: during a match
+        // kp_* is only written at consolidation (Statut → END), so the live values win.
+        if (liveState.exists) {
+          if (liveState.statut) match.statut = liveState.statut
+          if (liveState.periode) match.periode = liveState.periode
+          if (typeof liveState.scoreA === 'number') match.scoreDetailA = String(liveState.scoreA)
+          if (typeof liveState.scoreB === 'number') match.scoreDetailB = String(liveState.scoreB)
+        }
 
         this.match = match
         this.playersA = resA.players.map(p => ({ ...p, team: 'A' as TeamSide }))

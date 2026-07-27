@@ -572,6 +572,25 @@ incrustations actuelles. Ils restent la voie de production.
 **Livrables.** Tables + migration ; machine à états testée ; contrôleur complet re-routé ;
 consolidation ; fichiers de référence intégrés aux tests.
 
+> **Suivi d'exécution (2026-07-27) — première tranche livrée :**
+> - ✅ 1.1 — migration SQL écrite (`SQL/migrations/2026-07-27_scoring_live_tables.sql`, PK UUID
+>   horloges + `kp_match.uid` additif) — **à exécuter en dev** ;
+> - ✅ 1.3 — `ScoringController` re-routé vers `scoring_live_*` via le nouveau
+>   `ScoringLiveService` (endpoints/payloads inchangés ; transition : seed depuis `kp_*` au
+>   premier contact, fallback lecture legacy) ;
+> - ✅ 1.4 — `gameTimer` généralisé aux N horloges (`kind`/`team`/`slot`, GAME par défaut) ;
+> - ✅ 1.5 (partiel) — `GET /state` (ETag = tick) et `PUT /source` (promotion §4.1, garde
+>   « source active » sur toutes les écritures) livrés ; **officiels / recharge présents : à
+>   faire** ;
+> - ✅ 1.6 — consolidation `kp_*` au passage `Statut → END` (état + reconstruction
+>   `kp_match_detail` depuis les faits live) ;
+> - ✅ 1.7 — journal `kp_journal` sur toutes les routes (y c. rejets de source et
+>   consolidation) ; l'outbox est alimentée à chaque écriture (le worker qui la draine =
+>   lot 2) ;
+> - ⬜ 1.2 (machine à états test-first) et 1.8 (fichiers de référence, dépend de 0.5).
+>
+> Détail d'implémentation dans [PAGE_SCORING.md §12](../../specs/PAGE_SCORING.md).
+
 **Critère de sortie.** Un match complet (direct puis correction post-match) saisi via les routes
 api2 aboutit à un état `scoring_live_*` cohérent, consolidé dans `kp_*` à la clôture, chaque action
 journalisée — l'existant legacy intact.
@@ -635,7 +654,7 @@ interaction utilisateur — calque OBS). Elle remplace, à terme, les ~20 pages 
 | 4.1 | Page (Nuxt 4 + Tailwind, 1920×1080 par défaut) : lecture `GET /state` + abonnement SSE, interpolation locale des horloges (§3.1) | fond transparent / magenta / chromakey paramétrable (spec §5) |
 | 4.2 | Variantes par paramètres d'URL : score seul, faits de jeu, compositions, prochain match, HD, nations/clubs, style | une page, des options (spec §4) |
 | 4.3 | **Aiguillage sans polling** : l'event-cache-worker calcule toujours current/next par terrain, mais **publie le « programme du terrain » via outbox → Mercure** (topic `…/program`) + `GET /scoring/program/{event}/{pitch}` au démarrage — remplace le polling de `event{e}_pitch{p}.json` | spec §6 |
-| 4.4 | **Enchaînement automatique paramétré par événement** : délais d'affichage (score mi-temps, score final, présentation du prochain match…) stockés en base au niveau événement, servis par api2, modifiables dans app4 | spec §7 |
+| 4.4 | **Enchaînement automatique paramétré** : délais d'affichage (score mi-temps, score final, présentation du prochain match…) et fond — **valeurs par défaut, surchargeables en base par événement puis par terrain** —, servis par api2, modifiables dans app4 | spec §7 |
 | 4.5 | **Consommateurs `kp_*` en cours de match** : faire évoluer `FeuilleMatchMulti.php` et app2 pour lire l'état live (`GET /scoring/state` / Mercure) quand le match est en cours — condition de bascule des terrains où l'affichage « en cours » est utilisé (§4.3, encadré) | nouveau 2026-07-27 |
 | 4.6 | **Validation en parallèle** : les anciennes incrustations tournent sur le cache JSON ; la nouvelle page est branchée sur un terrain, on compare | bascule terrain par terrain, week-end par week-end |
 
