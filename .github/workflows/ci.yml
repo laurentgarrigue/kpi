@@ -204,6 +204,12 @@ jobs:
         working-directory: sources/api2
         run: php bin/console lint:container --env=dev
 
+      # Règles pures du scoring (plan lot 1.2) — runner autonome sans framework
+      # de test (api2 n'a pas encore de test pack), exit 1 si une assertion casse.
+      - name: Tests unitaires ScoringRules
+        working-directory: sources/api2
+        run: php tests/Scoring/scoring_rules_test.php
+
   # ---------------------------------------------------------------------------
   # 3bis. api2 — analyse statique PHPStan (Phase 2).
   #    Level 3 sans dette (voir sources/api2/phpstan.dist.neon). Ne nécessite

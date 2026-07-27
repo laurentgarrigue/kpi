@@ -587,7 +587,13 @@ consolidation ; fichiers de référence intégrés aux tests.
 > - ✅ 1.7 — journal `kp_journal` sur toutes les routes (y c. rejets de source et
 >   consolidation) ; l'outbox est alimentée à chaque écriture (le worker qui la draine =
 >   lot 2) ;
-> - ⬜ 1.2 (machine à états test-first) et 1.8 (fichiers de référence, dépend de 0.5).
+> - ✅ 1.2 — règles pures livrées **test-first** : `src/Scoring/ScoringRules.php` (périodes
+>   `P{n}` non bornées + but en or, durées et pauses, progression des cartons 2027, slots de
+>   pénalité + levée du plus ancien + qui revient, machine à états shotclock 3 commandes) ;
+>   62 assertions dans `tests/Scoring/scoring_rules_test.php` (runner autonome sans framework,
+>   branché dans le job CI `lint-api2`) — à migrer vers PHPUnit quand un test pack entrera
+>   dans api2 ;
+> - ⬜ 1.8 (fichiers de référence matériel, dépend de 0.5).
 >
 > Détail d'implémentation dans [PAGE_SCORING.md §12](../../specs/PAGE_SCORING.md).
 
