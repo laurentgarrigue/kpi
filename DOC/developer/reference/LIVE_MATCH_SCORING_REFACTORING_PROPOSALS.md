@@ -623,6 +623,22 @@ nativement** (`Last-Event-ID`).
 **Critère de sortie.** Un match saisi via la console fait apparaître ses changements sur les topics
 Mercure, avec rejeu correct après coupure simulée de l'abonné et après coupure simulée du hub.
 
+> **Suivi d'exécution (2026-07-27) :**
+> - ✅ 2.1 — outbox transactionnelle livrée au lot 1 (`ScoringLiveService::deposit`).
+> - ✅ 2.2 — `ScoringOutboxPublisher` (drainage **ordonné par id, stoppé à la première
+>   erreur** — un message ne double jamais un échec —, at-least-once : marquage
+>   `published_at` après acceptation par le hub, dédup côté abonnés par `tick` ; `id` SSE
+>   `urn:kpi:scoring:{id}`, `type` SSE = `payload.type` ; purge bornée des lignes publiées
+>   > 60 min). Intégré à `app:event-cache-worker` : **drainage toutes les ~1 s** (sommeil
+>   découpé), y compris **sans aucune config événement active**, cadence du cache inchangée.
+>   **Correctif d'infra inclus** : les conteneurs `event-cache-worker` (dev/preprod/prod)
+>   reçoivent `MERCURE_URL=http://api2/.well-known/mercure` + `MERCURE_JWT_SECRET` — le
+>   `.env` monté pointe `localhost`, qui n'est valide que depuis le conteneur api2.
+> - ✅ 2.3 (partiel) — `ETag` = tick sur `GET /state` (lot 1) ; la mise en cache Caddy
+>   côté FrankenPHP reste optionnelle (à évaluer quand l'incrustation consommera l'état).
+> - ⬜ 2.4 — banc de validation en réel (saisie console → banc Mercure app4, coupures
+>   simulées) : nécessite la base + le hub en dev.
+
 ---
 
 ### Lot 3 — La console Scoring app4, complète

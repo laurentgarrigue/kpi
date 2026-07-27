@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\EventCacheService;
+use App\Service\ScoringOutboxPublisher;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,6 +19,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * (driven by the app4 "Event Cache Manager" page via AdminEventWorkerController)
  * and continuously regenerates the live cache JSON files
  * (event<id>_pitch<pitch>.json + on-demand <idMatch>_match_global.json).
+ *
+ * Since the scoring refactoring (plan lot 2) it ALSO drains scoring_outbox to the
+ * Mercure hub: cache generation keeps its own cadence (delay_event per config), while
+ * the outbox is drained every second — including when no event config is active, since
+ * live scoring does not require a cache config to run. Same worker, no second daemon
+ * model (no Messenger) — see LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
  *
  * Replaces the legacy live/event_worker.php daemon.
  *
@@ -36,9 +43,13 @@ class EventCacheWorkerCommand extends Command
     /** @var array<int, array{startTime: int, initialTime: int, idEvent: int}> */
     private array $eventStates = [];
 
+    /** Unix timestamp of the last scoring_outbox prune (throttled to every 10 min). */
+    private int $lastOutboxPrune = 0;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
+        private readonly ScoringOutboxPublisher $outboxPublisher,
     ) {
         parent::__construct();
     }
@@ -69,11 +80,21 @@ class EventCacheWorkerCommand extends Command
                 $delay = 10;
             }
 
+            $this->drainOutbox($io);
+
             if ($once) {
                 break;
             }
 
-            sleep($delay);
+            // Sleep in 1 s slices, draining the outbox each time: cache generation keeps
+            // its own cadence ($delay) while scoring messages reach Mercure within ~1 s.
+            for ($slept = 0; $slept < $delay && $this->running; $slept++) {
+                sleep(1);
+                if (function_exists('pcntl_signal_dispatch')) {
+                    pcntl_signal_dispatch();
+                }
+                $this->drainOutbox($io);
+            }
         }
 
         $io->writeln('Event Cache Worker stopped');
@@ -209,6 +230,32 @@ class EventCacheWorkerCommand extends Command
             );
         } catch (\Throwable) {
             // Heartbeat failures must not kill the worker loop
+        }
+    }
+
+    /**
+     * One outbox pass: publish pending scoring messages to Mercure, prune old published
+     * rows every 10 minutes. Failures are logged and never kill the worker loop — the
+     * unpublished rows stay first in line for the next pass (at-least-once, ordered).
+     */
+    private function drainOutbox(SymfonyStyle $io): void
+    {
+        try {
+            $published = $this->outboxPublisher->drain();
+            if ($published > 0 && $io->isVerbose()) {
+                $io->writeln(sprintf('scoring_outbox: %d message(s) published to Mercure', $published));
+            }
+        } catch (\Throwable $e) {
+            $io->warning('scoring_outbox drain error (will retry): ' . $e->getMessage());
+        }
+
+        if (time() - $this->lastOutboxPrune >= 600) {
+            $this->lastOutboxPrune = time();
+            try {
+                $this->outboxPublisher->prune();
+            } catch (\Throwable $e) {
+                $io->warning('scoring_outbox prune error: ' . $e->getMessage());
+            }
         }
     }
 

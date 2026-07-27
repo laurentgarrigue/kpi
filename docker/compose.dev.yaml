@@ -135,6 +135,13 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Drainage scoring_outbox → Mercure (refonte scoring, lot 2).
+            # Le hub vit DANS le conteneur api2 : depuis ce conteneur-ci,
+            # "localhost" (valeur du .env, pensée pour api2) serait le worker
+            # lui-même → on passe par le réseau docker (service api2, HTTP interne).
+            # Les vraies variables d'env priment sur le .env chargé par Symfony.
+            - MERCURE_URL=http://api2/.well-known/mercure
+            - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html
