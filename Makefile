@@ -1,9 +1,17 @@
 -include docker/.env
 
-UID := $(shell id -u)
-GID := $(shell id -g)
-export USER_ID := $(UID)
-export GROUP_ID := $(GID)
+# USER_ID / GROUP_ID pilotent l'utilisateur des conteneurs (bind mounts en rw).
+# Priorité au `.env` (chargé ci-dessus) : c'est la source de vérité PAR ENVIRONNEMENT
+# — préprod/prod fixent 1000:33 pour rester propriétaires des volumes de logs/sources.
+# `?=` n'assigne QUE si la variable n'est pas déjà définie (par le .env ou l'env shell).
+# Le fallback `id -u`/`id -g` ne sert qu'en dev local sans .env.
+#
+# ⚠️ NE PAS revenir à `:= $(shell id -u)` : quand la CI/CD lance `make` en tant que
+# `deploy` (uid 1002), ça écraserait le 1000:33 du .env → le conteneur tournerait en
+# 1002 et ne pourrait plus écrire les volumes possédés par 1000:33 (Apache crash-loop
+# « Permission denied … error.log », caches EROFS, etc.). Vu en préprod le 2026-07-27.
+export USER_ID ?= $(shell id -u)
+export GROUP_ID ?= $(shell id -g)
 
 # Variables pour les noms des réseaux et containers
 APPLICATION_NAME ?= kpi
@@ -61,7 +69,8 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main \
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge backmerge_main_to_develop \
+last_merge_sha preprod_rollback \
 hooks
 
 
@@ -1157,28 +1166,37 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
 	fi
 
-sync_develop_from_main: ## Rapatrie les PR mergées sur main (Dependabot security) dans develop et push
-	@if [ -n "$$(git status --porcelain)" ]; then \
-		echo "⛔ Working tree non propre. Committe ou stash avant (le merge écraserait tes modifs)."; \
-		git status -sb; exit 1; \
-	fi; \
-	start=$$(git rev-parse --abbrev-ref HEAD); \
-	echo "→ Mise à jour de main..."; \
-	git checkout main && git pull --ff-only || { echo "⛔ Échec du pull de main."; git checkout "$$start" 2>/dev/null; exit 1; }; \
-	echo "→ Mise à jour de develop..."; \
-	git checkout develop && git pull --ff-only || { echo "⛔ Échec du pull de develop."; exit 1; }; \
-	if git merge-base --is-ancestor main develop; then \
-		echo "✔ develop contient déjà main — rien à rapatrier."; \
-		if [ "$$start" != "develop" ]; then git checkout "$$start"; fi; \
-		exit 0; \
-	fi; \
-	echo "→ Merge de main dans develop..."; \
-	if ! git merge --no-edit main; then \
-		echo; echo "⛔ Conflit de merge. Résous-le à la main, puis :"; \
-		echo "     git add -A && git commit && git push origin develop"; \
-		echo "   (ou 'git merge --abort' pour annuler)"; exit 1; \
-	fi; \
-	echo "→ Push de develop..."; \
-	git push origin develop || exit 1; \
-	echo; echo "✔ develop est à jour avec main sur origin."; \
-	if [ "$$start" != "develop" ]; then echo "(tu étais sur '$$start' ; tu es maintenant sur develop)"; fi
+backmerge_main_to_develop: ## Déclenche le workflow qui ouvre la PR de back-merge main → develop (Dependabot security / release)
+	@echo "→ Déclenchement du workflow « Back-merge main → develop »..."
+	@gh workflow run "Back-merge main → develop" --ref main || { \
+		echo "⛔ Échec du déclenchement. Vérifie 'gh auth status' et que le workflow existe sur main."; exit 1; }
+	@echo "✔ Workflow lancé. Il ouvre/actualise UNE PR 'chore/backmerge-main-to-develop → develop'."
+	@echo "  Suis-la et merge-la :  gh pr list --base develop --head chore/backmerge-main-to-develop"
+	@echo "  (develop exige une PR — le push direct est refusé par le ruleset, d'où ce workflow.)"
+
+last_merge_sha: ## Affiche le SHA du dernier commit de develop (= dernier squash-merge de PR), utile pour un revert
+	@git fetch origin develop --quiet
+	@echo "Dernier commit sur origin/develop (à reverter si c'est la PR à annuler) :"
+	@git log origin/develop -1 --format='  %C(yellow)%h%Creset  %s%n  %C(dim)%ci — %an%Creset'
+	@echo
+	@echo "Pour reverter précisément une PR fusionnée, retrouve son commit de merge :"
+	@echo "  gh pr view <num> --json mergeCommit --jq .mergeCommit.oid"
+	@echo "Puis :  make preprod_rollback sha=<ce_sha>"
+
+preprod_rollback: ## Prépare le revert local d'un commit fusionné dans develop (make preprod_rollback sha=<sha>) — ouvre ensuite une PR
+	@[ -n "$(sha)" ] || { \
+		echo "Usage: make preprod_rollback sha=<sha_du_commit_a_reverter>"; \
+		echo "       (récupère-le avec 'make last_merge_sha')"; exit 1; }
+	@git rev-parse --verify --quiet "$(sha)^{commit}" >/dev/null || { \
+		echo "⛔ SHA introuvable : $(sha). Lance 'git fetch' ou vérifie la valeur."; exit 1; }
+	@[ -z "$$(git status --porcelain)" ] || { \
+		echo "⛔ Working tree non propre. Committe ou stash avant le revert."; git status -sb; exit 1; }
+	@git fetch origin develop --quiet
+	@branch="revert/$$(git rev-parse --short $(sha))"; \
+	echo "→ Création de la branche $$branch depuis origin/develop..."; \
+	git checkout -b "$$branch" origin/develop --quiet || exit 1; \
+	echo "→ Revert de $(sha)..."; \
+	git revert --no-edit "$(sha)" || { \
+		echo "⛔ Conflit de revert. Résous-le, 'git revert --continue', puis 'make pr_create'."; exit 1; }; \
+	echo "✔ Revert prêt sur $$branch."; \
+	echo "  Ouvre la PR :  make pr_create      (puis merge → déploie une préprod saine)"
