@@ -1452,6 +1452,23 @@ Vérifié : ESLint OK sur tous les fichiers modifiés (node 22) ; les 62 asserti
 règles restent la référence. Tests fonctionnels à dérouler :
 [SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
 
+**Shotclock 3 commandes + pauses + buzzer + raccourcis ✅ (plan lot 3, 2ᵉ tranche — 2026-07-27) :**
+
+| Fichier | Détail |
+|---|---|
+| `composables/useShotclock.ts` | **Créé.** Modèle 3 commandes (§6.5) : `start(s)` (le départ EST un reset, 60 ou 40), `stopToIdle()` (retour `--`), `suspend()`/`resume()` (**seule** pause, pilotée par le chrono). Décompte par horodatage (sans dérive), gel à 0 + `onExpired` (buzzer), `restore()` depuis `scoring_live_clock`, `elapsedSeconds` pour la persistance. Transitions = miroir des règles testées (`shotclockTransition`). |
+| `composables/useBuzzer.ts` | **Créé.** Web Audio (aucun asset, compatible PWA offline) : `beep()` + `test()`. Sonne en fin de période, à l'expiration du shotclock et en **fin de pause** (§0.9). |
+| `composables/useScoringShortcuts.ts` | **Créé.** Raccourcis **paramétrables par poste** (localStorage `kpi.scoring.shortcuts`), défauts §0.9 : `Espace`/`Entrée`/`.`/`0`/`+`/`−`. Une touche = une action (réassignation vole la touche), neutralisés dans les champs éditables, désactivables (post-match, modale ouverte). |
+| `components/scoring/Shotclock.vue` | **Créé** (`<ScoringShotclock>`). Affichage `--`/secondes (vert = décompte, ambre = suspendu), boutons 60 s / 40 s (si actif) / Arrêt / ±1 s (suspendu seulement) / test son. Masquage `shotClockShow` (temps restant < shotclock) via prop `masked`. |
+| `components/scoring/ShortcutsModal.vue` | **Créé** (`<ScoringShortcutsModal>`). Réglage des touches (capture au clavier, Échap annule), remise aux défauts — pattern modal maison (admin/ConfirmModal). |
+| `pages/games/[id]/scoring.vue` | Câblage : suivi auto chrono↔shotclock (watch `isRunning`), persistance kind `SHOTCLOCK` (run/stop/RAZ) + **restauration** depuis `store.liveClocks`, **pause inter-périodes automatique** en fin de période (durée via `breakDurationBefore`, persistance kind `BREAK`, restauration, bouton « Terminer la pause », clôturée au changement de période), buzzer, bouton réglages raccourcis (engrenage). |
+| `stores/scoringStore.ts` / `types/scoring.ts` | `LiveClock` typé, `liveClocks` alimenté par l'overlay `GET /state`, `setTimer` accepte `kind`/`team`/`slot`/`playerId`/`cardCode`. |
+| Locales fr/en | `scoring.shotclock.*`, `scoring.break.*`, `scoring.shortcuts.*`, `scoring.sound_test`. |
+
+Reste sur la Phase 2 : **pénalités** (2 slots/équipe, levée sur but encaissé avec
+confirmation, remplacement pour `R`/`D`) — tranche suivante. Tests :
+[SCORING_DEV_CHECKLIST.md §lot 3, 2ᵉ tranche](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
+
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification
   base + restauration visuelle du chrono au rechargement + vérif 403 hors mandat + **vérif des

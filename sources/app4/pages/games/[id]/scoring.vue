@@ -74,14 +74,115 @@ const eventReason = ref('')
 // When set, the event buttons commit an UPDATE of this existing event instead of a new one.
 const editingUid = ref<string | null>(null)
 
+// ─── Buzzer (shotclock expiry, period end, end of break — decision §0.9) ───
+const buzzer = useBuzzer()
+
 // ─── Game clock (easytimer) ───
 const { display: clockDisplay, gameTime, elapsed, isRunning, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
   useTimer({
     onTargetReached: () => {
-      // Buzzer at period end; persist the stop server-side
+      // Buzzer at period end; persist the stop server-side; start the indicative
+      // inter-period break countdown when one applies (spec §7.5 — 3'/3'/1').
+      buzzer.beep()
       void scoringStore.setTimer('stop', { startTime: elapsed.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
+      const m = scoringStore.match
+      if (m && isLive.value) {
+        const next = nextPeriodFor(m.type, (m.periode ?? 'M1') as Period, scoreLevel.value, scoringStore.config.shootoutEnabled)
+        const dur = next ? breakDurationBefore(next, scoringStore.config.breakDurations) : null
+        if (dur) startBreak(dur)
+      }
     }
   })
+
+// ─── Shotclock (chronomètre de tir) — 3 commands, auto-follows the game clock (§6.5) ───
+const shotclock = useShotclock({ onExpired: () => buzzer.beep() })
+
+const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
+  void scoringStore.setTimer(action, {
+    kind: 'SHOTCLOCK',
+    startTime: action === 'RAZ' ? 0 : Math.round(shotclock.elapsedSeconds.value),
+    runTime: 0,
+    maxTime: shotclock.initSeconds.value
+  })
+}
+const shotclockStart = (seconds: number) => {
+  if (!canScore.value || !isLive.value) return
+  shotclock.start(seconds)
+  persistShotclock('run')
+}
+const shotclockStop = () => {
+  if (!canScore.value || shotclock.state.value === 'IDLE') return
+  shotclock.stopToIdle()
+  persistShotclock('RAZ')
+}
+const shotclockAdjust = (delta: number) => {
+  if (!canScore.value || shotclock.state.value !== 'SUSPENDED') return
+  shotclock.adjust(delta)
+  persistShotclock('stop')
+}
+// Auto-follow: game clock stop ⇒ suspension, restart ⇒ resume — the ONLY pause (§0.9).
+watch(isRunning, (running) => {
+  if (running) {
+    if (shotclock.state.value === 'SUSPENDED') {
+      shotclock.resume()
+      persistShotclock('run')
+    }
+  } else if (shotclock.state.value === 'RUNNING') {
+    shotclock.suspend()
+    persistShotclock('stop')
+  }
+})
+// Legacy shotClockShow rule: masked when the game time remaining is below the shotclock.
+const gameRemaining = computed(() => Math.max(0, scoringStore.currentPeriodDuration - elapsed.value))
+const shotclockMasked = computed(() =>
+  shotclock.state.value !== 'IDLE' && gameRemaining.value < shotclock.remainingMs.value / 1000
+)
+
+// ─── Inter-period break — indicative countdown, buzzer at its end (spec §7.5/§0.9) ───
+const breakRemaining = ref<number | null>(null)
+let breakInterval: ReturnType<typeof setInterval> | null = null
+const stopBreak = (persist = true) => {
+  if (breakInterval) {
+    clearInterval(breakInterval)
+    breakInterval = null
+  }
+  if (breakRemaining.value !== null && persist) void scoringStore.setTimer('RAZ', { kind: 'BREAK' })
+  breakRemaining.value = null
+}
+const startBreak = (seconds: number, persist = true) => {
+  stopBreak(false)
+  breakRemaining.value = seconds
+  if (persist) void scoringStore.setTimer('run', { kind: 'BREAK', startTime: 0, runTime: 0, maxTime: seconds })
+  breakInterval = setInterval(() => {
+    if (breakRemaining.value === null) return
+    breakRemaining.value = Math.max(0, breakRemaining.value - 1)
+    if (breakRemaining.value <= 0) {
+      buzzer.beep() // end of break = resume signal
+      stopBreak()
+    }
+  }, 1000)
+}
+const breakDisplay = computed(() => {
+  const s = breakRemaining.value ?? 0
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+})
+onUnmounted(() => stopBreak(false))
+
+// ─── Configurable keyboard shortcuts (spec §6.5, decision §0.9) ───
+const shortcutsOpen = ref(false)
+const shortcutsEnabled = computed(() => isLive.value && canScore.value && !shortcutsOpen.value)
+const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
+  gameClockToggle: () => timer(isRunning.value ? 'stop' : 'run'),
+  shotclockStart60: () => shotclockStart(scoringStore.config.shotclockDurations.full),
+  shotclockStart40: () => {
+    if (scoringStore.config.shotclockOffensiveReboundEnabled) {
+      shotclockStart(scoringStore.config.shotclockDurations.offensiveRebound)
+    }
+  },
+  shotclockStop,
+  shotclockPlus: () => shotclockAdjust(1),
+  shotclockMinus: () => shotclockAdjust(-1)
+}, { enabled: shortcutsEnabled })
 
 // In live mode keep the event-time field tracking the clock (unless editing a row).
 watch(gameTime, (v) => {
@@ -110,6 +211,18 @@ onMounted(async () => {
       })
     } else {
       timerSetPeriod(scoringStore.currentPeriodDuration)
+    }
+    // Restore the shotclock / break persisted server-side (scoring_live_clock, GET /state).
+    const sc = scoringStore.liveClocks.find(c => c.kind === 'SHOTCLOCK')
+    if (sc && isLive.value) {
+      shotclock.restore({ initMs: sc.initMs, elapsedMs: sc.elapsedMs, running: sc.running })
+      // A shotclock can only run while the game clock runs: align after restore.
+      if (!isRunning.value && shotclock.state.value === 'RUNNING') shotclock.suspend()
+    }
+    const br = scoringStore.liveClocks.find(c => c.kind === 'BREAK')
+    if (br && isLive.value) {
+      const left = Math.max(0, Math.round((br.initMs - br.elapsedMs) / 1000))
+      if (left > 0) startBreak(left, false)
     }
   } catch {
     // useApi already shows a toast
@@ -231,6 +344,10 @@ const setPeriod = (p: Period) => {
   if (!canScore.value) return
   scoringStore.setPeriod(p)
   eventPeriod.value = p
+  // The break ends when the next period is set up; the shotclock goes back to "--"
+  // (it only starts on the first possession of the new period — spec §6.5).
+  stopBreak()
+  if (shotclock.state.value !== 'IDLE') shotclockStop()
   // Reconfigure the clock to the new period duration (fresh countdown)
   if (isLive.value) timerSetPeriod(periodDurationOf(p, scoringStore.config.periodDurations))
 }
@@ -320,6 +437,13 @@ const toggleLock = async () => {
               @click="mode = 'post'"
             >{{ t('scoring.mode.post') }}</UButton>
           </div>
+          <UButton
+            size="xs"
+            variant="ghost"
+            icon="i-heroicons-cog-6-tooth"
+            :aria-label="t('scoring.shortcuts.title')"
+            @click="shortcutsOpen = true"
+          />
           <UBadge :color="scoringStore.isLocked ? 'error' : 'success'">
             {{ scoringStore.isLocked ? t('scoring.locked') : t('scoring.status.' + match.statut) }}
           </UBadge>
@@ -346,19 +470,44 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Game clock + adjust (live mode only) -->
-      <div v-if="isLive" class="flex flex-col items-center gap-2">
-        <div
-          class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-          :class="isRunning ? 'text-success-600' : 'text-header-900'"
-        >
-          {{ clockDisplay }}
+      <!-- Game clock + shotclock + break (live mode only) -->
+      <div v-if="isLive" class="flex flex-wrap items-start justify-center gap-10">
+        <div class="flex flex-col items-center gap-2">
+          <div
+            class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
+            :class="isRunning ? 'text-success-600' : 'text-header-900'"
+          >
+            {{ clockDisplay }}
+          </div>
+          <div class="flex gap-1">
+            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
+            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
+            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
+            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
+          </div>
         </div>
-        <div class="flex gap-1">
-          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
-          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
-          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
-          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
+
+        <!-- Shotclock (chronomètre de tir): 3 commands — 60 s / 40 s / arrêt (spec §6.5) -->
+        <ScoringShotclock
+          :display="shotclock.display.value"
+          :state="shotclock.state.value"
+          :durations="scoringStore.config.shotclockDurations"
+          :offensive-rebound-enabled="scoringStore.config.shotclockOffensiveReboundEnabled"
+          :masked="shotclockMasked"
+          :can-score="canScore"
+          @start="shotclockStart"
+          @stop="shotclockStop"
+          @adjust="shotclockAdjust"
+          @test-sound="buzzer.test()"
+        />
+
+        <!-- Inter-period break — indicative countdown (spec §7.5) -->
+        <div v-if="breakRemaining !== null" class="flex flex-col items-center gap-1">
+          <div class="text-xs uppercase tracking-wide text-header-600">{{ t('scoring.break.title') }}</div>
+          <div class="text-4xl font-mono font-bold tabular-nums text-amber-600">{{ breakDisplay }}</div>
+          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="stopBreak()">
+            {{ t('scoring.break.skip') }}
+          </UButton>
         </div>
       </div>
 
@@ -482,6 +631,15 @@ const toggleLock = async () => {
         :cancel-text="t('scoring.edit.cancel')"
         @confirm="() => { goldenGoalOpen = false; setStatus('END') }"
         @close="goldenGoalOpen = false"
+      />
+
+      <!-- Keyboard shortcuts settings (per-device preference) -->
+      <ScoringShortcutsModal
+        :open="shortcutsOpen"
+        :bindings="bindings"
+        @close="shortcutsOpen = false"
+        @set="setBinding"
+        @reset="resetDefaults"
       />
 
       <!-- Events history (editable) — symmetric A | time | B on wide screens, list on mobile -->

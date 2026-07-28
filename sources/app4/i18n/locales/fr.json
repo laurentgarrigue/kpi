@@ -2535,7 +2535,29 @@
       "title": "But en or",
       "message": "But marqué en {period} : le règlement met fin au match immédiatement. Clore le match maintenant ?",
       "close_match": "Clore le match"
-    }
+    },
+    "shotclock": {
+      "title": "Chronomètre de tir",
+      "stop": "Arrêt"
+    },
+    "break": {
+      "title": "Pause",
+      "skip": "Terminer la pause"
+    },
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "hint": "Préférence propre à ce poste. Cliquez « Modifier » puis pressez la touche voulue (Échap pour annuler). Une touche = une action.",
+      "change": "Modifier",
+      "press_key": "Pressez…",
+      "reset": "Valeurs par défaut",
+      "gameClockToggle": "Chrono : départ / arrêt",
+      "shotclockStart60": "Chrono de tir : départ/reset 60 s",
+      "shotclockStart40": "Chrono de tir : départ/reset 40 s",
+      "shotclockStop": "Chrono de tir : arrêt (--)",
+      "shotclockPlus": "Chrono de tir : +1 s",
+      "shotclockMinus": "Chrono de tir : −1 s"
+    },
+    "sound_test": "Tester le son"
   },
   "competition": {
     "ended_title": "Compétition terminée — lecture seule",

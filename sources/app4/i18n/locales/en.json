@@ -2523,7 +2523,29 @@
       "title": "Golden goal",
       "message": "Goal scored in {period}: the rules end the match immediately. Close the match now?",
       "close_match": "Close the match"
-    }
+    },
+    "shotclock": {
+      "title": "Shot clock",
+      "stop": "Stop"
+    },
+    "break": {
+      "title": "Break",
+      "skip": "End break"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "hint": "Per-device preference. Click \"Change\" then press the desired key (Escape to cancel). One key = one action.",
+      "change": "Change",
+      "press_key": "Press…",
+      "reset": "Reset defaults",
+      "gameClockToggle": "Game clock: start / stop",
+      "shotclockStart60": "Shot clock: start/reset 60 s",
+      "shotclockStart40": "Shot clock: start/reset 40 s",
+      "shotclockStop": "Shot clock: stop (--)",
+      "shotclockPlus": "Shot clock: +1 s",
+      "shotclockMinus": "Shot clock: −1 s"
+    },
+    "sound_test": "Test sound"
   },
   "competition": {
     "ended_title": "Competition ended — read only",

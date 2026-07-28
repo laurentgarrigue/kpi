@@ -112,9 +112,25 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.9 | Sélecteur de période de la zone de saisie (édition post-match) | liste M1/M2 + toutes les prolongations utilisées +1 ; une période TB héritée d'un vieux match reste sélectionnable |
 | 3.10 | Édition d'un fait `P3` d'un match ancien | s'affiche et s'édite normalement (type `P{number}` non borné) |
 
+### Tests fonctionnels — 2ᵉ tranche (shotclock, pauses, buzzer, raccourcis)
+
+| # | Test | Attendu |
+|---|---|---|
+| 3.11 | Démarrer le **chrono principal** (mode direct) | le shotclock reste à `--` (il ne démarre **jamais** avec le chrono) |
+| 3.12 | Bouton **60 s** (ou `Entrée`) | le shotclock charge 60 et décompte ; re-appuyer recharge 60 (le départ EST un reset) ; **40 s** (ou `.`) recharge 40 |
+| 3.13 | **Arrêter le chrono principal** pendant que le shotclock tourne | le shotclock se **suspend** automatiquement (ambre) ; relancer le chrono → il repart tout seul |
+| 3.14 | Bouton **Arrêt** (ou `0`) | retour à `--` (état initial) — ce n'est pas une pause : 60/40 requis pour repartir |
+| 3.15 | Shotclock à **0** | buzzer ; l'affichage reste à 0 jusqu'à une commande |
+| 3.16 | **±1 s** | actifs uniquement chrono arrêté (shotclock suspendu) ; inopérants pendant le décompte |
+| 3.17 | `SELECT * FROM scoring_live_clock WHERE kind='SHOTCLOCK'` puis **recharger la page** | ligne persistée (init/elapsed/running) ; après rechargement le shotclock revient dans le même état (RAZ en base après « Arrêt ») |
+| 3.18 | Laisser le chrono principal atteindre **0** en fin de M1 | buzzer + décompte de **pause 3 min** affiché (1 min entre prolongations) ; buzzer en **fin de pause** ; « Terminer la pause » l'interrompt ; changer de période la clôt aussi |
+| 3.19 | **Raccourcis** : `Espace` chrono, `Entrée`/`.`/`0`/`+`/`−` shotclock | agissent partout **sauf** quand le focus est dans un champ de saisie ; inactifs en post-match |
+| 3.20 | Modale **Raccourcis clavier** (engrenage) : réassigner une touche déjà utilisée | l'autre action perd sa touche (une touche = une action) ; persiste au rechargement (localStorage) ; « Valeurs par défaut » restaure |
+| 3.21 | Masquage : temps de jeu restant **inférieur** au shotclock | le shotclock affiche `--` (règle legacy `shotClockShow`) |
+
 ### Reste à livrer sur le lot 3 (tests à ajouter ici au fil de l'eau)
 
-Shotclock 3 commandes + pauses inter-périodes + raccourcis paramétrables (Phase 2 spec) ;
+Pénalités (2 slots/équipe, levée sur but encaissé, remplacement R/D) ;
 scoreboard/shotclock plein écran (BroadcastChannel) ; PWA installable + mise à jour
 immédiate ; abonnement Mercure de la console ; mode score seul ; solde §7.8 (statut
 joueur, officiels UI, recharge présents, n° court).

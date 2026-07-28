@@ -132,6 +132,23 @@ export interface ShotclockDurations {
 }
 
 /**
+ * One live clock row of scoring_live_clock, as served by GET /admin/scoring/state
+ * (4-value model, plan §3.1: everything needed to recompute the display locally).
+ */
+export interface LiveClock {
+  id: string
+  kind: 'GAME' | 'SHOTCLOCK' | 'PENALTY' | 'BREAK'
+  team: '' | TeamSide
+  slot: number
+  playerId: string | null
+  cardCode: string | null
+  initMs: number
+  elapsedMs: number
+  startedAt: string | null
+  running: boolean
+}
+
+/**
  * Central match configuration (spec §6.2 «Configuration du match centralisée») — the
  * single place for every adjustable value. Held by scoringStore.config, initialized from
  * DEFAULT_SCORING_CONFIG; later hydrated from the competition settings (plan lot 6)

@@ -680,6 +680,24 @@ tablette ; reprise sur un second terminal validée en cours de match.
 > - ✅ miroir TS des règles pures : `app4/utils/scoringRules.ts` (aligné sur
 >   `api2/src/Scoring/ScoringRules.php`, réutilisé par la Phase 2 shotclock/pénalités).
 > - Commandes dev + tests fonctionnels : [SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md).
+>
+> **Suivi d'exécution (2026-07-27) — deuxième tranche (étape 3.3/3.4 partiel) :**
+> - ✅ **Shotclock 3 commandes** (§4.11) : `useShotclock` (états IDLE `--` / RUNNING /
+>   SUSPENDED, transitions = miroir des règles testées), composant `ScoringShotclock`
+>   (départ/reset 60 s, 40 s actif d'emblée, arrêt, ±1 s seulement à l'arrêt du chrono,
+>   masquage temps-restant < shotclock), **suivi automatique du chrono** (suspension/
+>   reprise — seule « pause » existante), persistance `scoring_live_clock` kind
+>   `SHOTCLOCK` + restauration à la reprise via `GET /state` ;
+> - ✅ **Pauses inter-périodes** (§4.10) : décompte indicatif automatique en fin de
+>   période (3'/3'/1' selon la période suivante), persistance kind `BREAK`, restauration,
+>   bouton « Terminer la pause » ;
+> - ✅ **Buzzer** (`useBuzzer`, Web Audio, zéro asset) : fin de période, expiration du
+>   shotclock, **fin de pause** (§0.9) + bouton test son ;
+> - ✅ **Raccourcis paramétrables** (§4.11) : `useScoringShortcuts` (localStorage par
+>   poste, une touche = une action, neutralisés dans les champs) + modale de réglage ;
+>   défauts Espace / Entrée / `.` / `0` / `+` / `−` ;
+> - ⬜ reste sur 3.3 : **pénalités** (2 slots/équipe, levée sur but encaissé,
+>   remplacement R/D) — tranche suivante.
 
 ---
 

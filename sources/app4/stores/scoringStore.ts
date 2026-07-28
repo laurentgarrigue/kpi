@@ -7,7 +7,8 @@ import type {
   Period,
   MatchStatus,
   TeamSide,
-  ScoringConfig
+  ScoringConfig,
+  LiveClock
 } from '~/types/scoring'
 
 /**
@@ -84,6 +85,9 @@ interface ScoringLiveStateResponse {
   scoreA?: number
   scoreB?: number
   activeSource?: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
+  clocks?: LiveClock[]
+  /** Server seconds since midnight — drift basis for restoring running clocks */
+  nowServer?: number
 }
 
 /** Generate a uid in the same shape the backend produces (uniqid without dashes). */
@@ -99,6 +103,8 @@ interface ScoringState {
   events: ScoringEvent[]
   penalties: Penalty[]
   config: ScoringConfig
+  /** Live clocks snapshot from GET /admin/scoring/state (shotclock, penalties, break…) */
+  liveClocks: LiveClock[]
   loading: boolean
   initialized: boolean
 }
@@ -112,6 +118,7 @@ export const useScoringStore = defineStore('scoring', {
     events: [],
     penalties: [],
     config: defaultScoringConfig(),
+    liveClocks: [],
     loading: false,
     initialized: false
   }),
@@ -167,6 +174,7 @@ export const useScoringStore = defineStore('scoring', {
             match.scoreDetailB = String(liveState.scoreB)
             match.scoreB = String(liveState.scoreB)
           }
+          this.liveClocks = liveState.clocks ?? []
         }
 
         this.match = match
@@ -371,10 +379,23 @@ export const useScoringStore = defineStore('scoring', {
       }>(`/admin/scoring/gameTimer/${this.match.id}`)
     },
 
-    /** Control the match timer (run/stop/RAZ) — persisted to kp_chrono */
+    /**
+     * Control one match clock — persisted to scoring_live_clock. `kind` defaults to the
+     * main game clock; the same endpoint drives the shotclock, penalties and inter-period
+     * breaks (spec §0.5 — N clocks per match). Seconds in the payload, ms server-side.
+     */
     async setTimer(
       action: 'run' | 'stop' | 'RAZ',
-      params: { startTime?: number; runTime?: number; maxTime?: number } = {},
+      params: {
+        startTime?: number
+        runTime?: number
+        maxTime?: number
+        kind?: LiveClock['kind']
+        team?: '' | TeamSide
+        slot?: number
+        playerId?: string | null
+        cardCode?: string | null
+      } = {},
       apiInstance?: ReturnType<typeof useApi>
     ) {
       if (!this.match) return
