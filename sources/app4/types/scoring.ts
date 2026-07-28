@@ -9,8 +9,12 @@
  * - "Hardware Scoring" = live data captured from hardware (matériel propriétaire or equivalent), Phase 3
  */
 
-/** Match period */
-export type Period = 'M1' | 'M2' | 'P1' | 'P2' | 'TB'
+/**
+ * Match period. Overtimes are UNBOUNDED (spec §0.6 — golden goal: as many `P{n}` as
+ * needed while the score stays level); the template literal keeps P1/P2 valid while
+ * removing the legacy cap.
+ */
+export type Period = 'M1' | 'M2' | `P${number}` | 'TB'
 
 /** Match status */
 export type MatchStatus = 'ATT' | 'ON' | 'END'
@@ -22,8 +26,10 @@ export type MatchType = 'C' | 'E'
 export type TeamSide = 'A' | 'B'
 
 /**
- * Event code stored in kp_match_detail.Id_evt_match
- * B = but (goal), V/J/R = green/yellow/red card, D = red card "définitif"
+ * Event code stored in kp_match_detail.Id_evt_match / scoring_live_event.code.
+ * B = but (goal), V/J = green/yellow card, R = red card (cumul),
+ * D = carton d'exclusion définitive — BLACK card under the 2027 rules ("Ejection card",
+ * spec §0.9); the code stays D for storage compatibility, only labels/colors changed.
  */
 export type ScoringEventCode = 'B' | 'V' | 'J' | 'R' | 'D'
 
@@ -96,5 +102,57 @@ export interface Penalty {
   duration: number // seconds
 }
 
-/** Period durations in seconds (defaults; M1/M2 = 10 min, P1/P2/TB = 3 min) */
-export type PeriodDurations = Record<Period, number>
+/**
+ * Period durations in seconds. `P` is the duration shared by EVERY overtime P{n}
+ * (spec §0.6 — 5 min in both ICF and FFCK rules, §0.9).
+ */
+export interface PeriodDurations {
+  M1: number
+  M2: number
+  P: number
+  TB: number
+}
+
+/** Inter-period break durations in seconds (spec §7.5 / plan §4.10 — indicative clocks). */
+export interface BreakDurations {
+  /** Between M1 and M2 (halftime) */
+  halftime: number
+  /** Between M2 and P1 (before overtimes) */
+  beforeOvertime: number
+  /** Between two overtimes (P{n} → P{n+1}) */
+  betweenOvertimes: number
+}
+
+/** Shotclock durations in seconds (spec §6.5 — 2027 rules applied from the start). */
+export interface ShotclockDurations {
+  /** Start/reset at engagement (new possession) */
+  full: number
+  /** Start/reset after an offensive rebound */
+  offensiveRebound: number
+}
+
+/**
+ * Central match configuration (spec §6.2 «Configuration du match centralisée») — the
+ * single place for every adjustable value. Held by scoringStore.config, initialized from
+ * DEFAULT_SCORING_CONFIG; later hydrated from the competition settings (plan lot 6)
+ * without changing any call site.
+ */
+export interface ScoringConfig {
+  periodDurations: PeriodDurations
+  breakDurations: BreakDurations
+  shotclockDurations: ShotclockDurations
+  /** 40 s offensive-rebound reset active (true by default — 2027 rules, spec §0.9) */
+  shotclockOffensiveReboundEnabled: boolean
+  /** Fine clock adjust allowed while running (hardware-sync use case only, spec §6.4) */
+  allowTimerAdjustWhileRunning: boolean
+  /** Card penalty duration in seconds (2 min) */
+  penaltyDuration: number
+  /** Unbounded golden-goal overtimes (regulation) */
+  overtimeUnlimited: boolean
+  /** Penalty shootout available (tournament option — competition setting, spec §7.5) */
+  shootoutEnabled: boolean
+  /** Automatic clock stop on goal (legacy option, off by default) */
+  stopClockOnGoal: boolean
+  /** Pre-selected card reason for fast entry (spec §0.9 — 'unknown' = Autre/Non précisé) */
+  defaultCardReason: string
+}

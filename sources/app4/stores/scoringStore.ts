@@ -7,7 +7,7 @@ import type {
   Period,
   MatchStatus,
   TeamSide,
-  PeriodDurations
+  ScoringConfig
 } from '~/types/scoring'
 
 /**
@@ -19,13 +19,28 @@ import type {
  * update + rollback on error. See DOC/specs/PAGE_SCORING.md.
  */
 
-/** Default period durations in seconds */
-const DEFAULT_PERIOD_DURATIONS: PeriodDurations = {
-  M1: 600,
-  M2: 600,
-  P1: 180,
-  P2: 180,
-  TB: 180
+/**
+ * Central match configuration defaults (spec §6.2 — «Configuration du match centralisée»).
+ * Single source for every adjustable value; later hydrated from the competition settings
+ * (plan lot 6) without touching any call site. Factory (not a shared const) so each store
+ * instance mutates its own copy.
+ */
+function defaultScoringConfig(): ScoringConfig {
+  return {
+    // M1/M2 = 10 min; every overtime P{n} = 5 min (ICF & FFCK — spec §0.9); TB = 3 min
+    periodDurations: { M1: 600, M2: 600, P: 300, TB: 180 },
+    // Indicative inter-period breaks: 3' halftime, 3' before overtimes, 1' between them
+    breakDurations: { halftime: 180, beforeOvertime: 180, betweenOvertimes: 60 },
+    // 2027 rules applied from the start: 60 s engagement / 40 s offensive rebound
+    shotclockDurations: { full: 60, offensiveRebound: 40 },
+    shotclockOffensiveReboundEnabled: true,
+    allowTimerAdjustWhileRunning: false,
+    penaltyDuration: 120,
+    overtimeUnlimited: true,
+    shootoutEnabled: false,
+    stopClockOnGoal: false,
+    defaultCardReason: 'unknown'
+  }
 }
 
 /** Response shape of GET /admin/matches/{id}/players (subset we use) */
@@ -83,7 +98,7 @@ interface ScoringState {
   playersB: ScoringPlayer[]
   events: ScoringEvent[]
   penalties: Penalty[]
-  periodDurations: PeriodDurations
+  config: ScoringConfig
   loading: boolean
   initialized: boolean
 }
@@ -96,7 +111,7 @@ export const useScoringStore = defineStore('scoring', {
     playersB: [],
     events: [],
     penalties: [],
-    periodDurations: { ...DEFAULT_PERIOD_DURATIONS },
+    config: defaultScoringConfig(),
     loading: false,
     initialized: false
   }),
@@ -110,10 +125,10 @@ export const useScoringStore = defineStore('scoring', {
     /** Competition is ended — no modifications allowed */
     isCompetitionEnded: (state): boolean => state.match?.competitionStatut === 'END',
 
-    /** Duration (seconds) of the currently selected period */
+    /** Duration (seconds) of the currently selected period (P{n} share config.periodDurations.P) */
     currentPeriodDuration: (state): number => {
       const p = state.match?.periode as Period | null | undefined
-      return p ? state.periodDurations[p] : state.periodDurations.M1
+      return periodDurationOf(p ?? 'M1', state.config.periodDurations)
     },
 
     scoreA: (state): number => Number(state.match?.scoreA ?? 0),
@@ -142,8 +157,16 @@ export const useScoringStore = defineStore('scoring', {
         if (liveState.exists) {
           if (liveState.statut) match.statut = liveState.statut
           if (liveState.periode) match.periode = liveState.periode
-          if (typeof liveState.scoreA === 'number') match.scoreDetailA = String(liveState.scoreA)
-          if (typeof liveState.scoreB === 'number') match.scoreDetailB = String(liveState.scoreB)
+          if (typeof liveState.scoreA === 'number') {
+            // The console keeps the displayed score (scoreA/B) aligned with the live goal
+            // count during the match; the official score is only frozen at validation.
+            match.scoreDetailA = String(liveState.scoreA)
+            match.scoreA = String(liveState.scoreA)
+          }
+          if (typeof liveState.scoreB === 'number') {
+            match.scoreDetailB = String(liveState.scoreB)
+            match.scoreB = String(liveState.scoreB)
+          }
         }
 
         this.match = match

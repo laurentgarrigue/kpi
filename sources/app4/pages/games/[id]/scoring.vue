@@ -19,23 +19,45 @@ const { canView, canScore: canScoreBase, canValidate } = useScoringPermissions(
 )
 const canScore = computed(() => canScoreBase.value && !scoringStore.isCompetitionEnded)
 
-// Periods available depend on match type (C = no overtime unless needed)
-const periods: Period[] = ['M1', 'M2', 'P1', 'P2', 'TB']
+// D = black ejection card under the 2027 rules (spec §0.9) — code kept for storage compat.
 const eventCodes: { code: ScoringEventCode; labelKey: string; color: string }[] = [
   { code: 'B', labelKey: 'scoring.event.goal', color: 'primary' },
   { code: 'V', labelKey: 'scoring.event.card_green', color: 'success' },
   { code: 'J', labelKey: 'scoring.event.card_yellow', color: 'warning' },
   { code: 'R', labelKey: 'scoring.event.card_red', color: 'error' },
-  { code: 'D', labelKey: 'scoring.event.card_red_def', color: 'error' }
+  { code: 'D', labelKey: 'scoring.event.card_black', color: 'neutral' }
 ]
-// Card reasons (motifs) reused from FMV3 — '' = none
+// Card reasons (motifs) reused from FMV3 — '' = none, 'unknown' pre-selected (spec §0.9)
 const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
+
+/** Human label of a period — P{n} share one parameterized i18n key (unbounded, spec §0.6). */
+const periodLabel = (p: Period): string => {
+  const n = overtimeIndex(p)
+  return n !== null ? t('scoring.period.overtime', { n }) : t('scoring.period.' + p)
+}
 
 // Selected player for the next event
 const selected = ref<{ team: TeamSide; player: ScoringPlayer } | null>(null)
 
 const match = computed(() => scoringStore.match)
 const loading = computed(() => scoringStore.loading)
+
+// Level score conditions the E-type advance into (further) overtime (golden goal, §7.5).
+const scoreLevel = computed(() => scoringStore.scoreA === scoringStore.scoreB)
+
+// Periods offered in the event entry select: M1/M2, overtimes up to the furthest one
+// in use +1 (type E — unbounded), TB when enabled or already used (post-match edits).
+const periodItems = computed(() => {
+  const list: Period[] = ['M1', 'M2']
+  if (match.value?.type === 'E') {
+    const fromEvents = scoringStore.events.reduce((m, e) => Math.max(m, overtimeIndex(e.period) ?? 0), 0)
+    const maxN = Math.max(overtimeIndex(match.value?.periode ?? 'M1') ?? 0, fromEvents) + 1
+    for (let n = 1; n <= maxN; n++) list.push(`P${n}`)
+  }
+  if (scoringStore.config.shootoutEnabled || match.value?.periode === 'TB'
+    || scoringStore.events.some(e => e.period === 'TB')) list.push('TB')
+  return list.map(p => ({ label: periodLabel(p), value: p }))
+})
 
 // ─── Direct vs post-match mode (spec §1.1) ───
 // In post-match the live clock (run/stop/RAZ + current time) is hidden; only the per-event
@@ -73,6 +95,8 @@ onMounted(async () => {
     // Default mode from status, period field from the match's current period.
     mode.value = scoringStore.match?.statut === 'END' ? 'post' : 'live'
     eventPeriod.value = (scoringStore.match?.periode ?? 'M1') as Period
+    // Card reason pre-selected for fast entry (spec §0.9 — Autre/Non précisé)
+    eventReason.value = scoringStore.config.defaultCardReason
     // Restore the clock from kp_chrono if a state was persisted, else start fresh.
     const state = await scoringStore.loadTimerState()
     if (state && state.action) {
@@ -97,6 +121,11 @@ const selectPlayer = (team: TeamSide, player: ScoringPlayer) => {
   selected.value = { team, player }
 }
 
+// Card-progression warning modal (spec §7.4: alert, the operator stays sovereign) and
+// golden-goal closing proposal (spec §7.5).
+const cardWarning = ref<{ code: ScoringEventCode; violation: string } | null>(null)
+const goldenGoalOpen = ref(false)
+
 /** Commit the event buttons: add a new event, or update the one being edited. */
 const commitEvent = async (code: ScoringEventCode) => {
   if (!canScore.value || !match.value) return
@@ -108,7 +137,7 @@ const commitEvent = async (code: ScoringEventCode) => {
         code,
         period: eventPeriod.value,
         tpsJeu: eventTime.value,
-        reason: eventReason.value
+        reason: code === 'B' ? '' : eventReason.value
       })
       cancelEdit()
     } catch { /* toast handled */ }
@@ -119,6 +148,27 @@ const commitEvent = async (code: ScoringEventCode) => {
     toast.add({ title: t('common.error'), description: t('scoring.select_player_first'), color: 'warning' })
     return
   }
+
+  // Card progression rule (spec §7.4, 2027): warn when the new card is identical/lower
+  // than the player's previous one, or when the player is already out (R/D). The modal
+  // lets the operator record it anyway (paper sheet stays the referee's authority).
+  if (code !== 'B') {
+    const previous = scoringStore.events
+      .filter(e => e.code !== 'B' && e.player === String(selected.value?.player.matric))
+      .map(e => e.code)
+    const verdict = validateCardProgression(previous, code)
+    if (verdict !== true) {
+      cardWarning.value = { code, violation: verdict }
+      return
+    }
+  }
+
+  await pushEvent(code)
+}
+
+/** Actually record the event (after the progression check or its override). */
+const pushEvent = async (code: ScoringEventCode) => {
+  if (!selected.value || !match.value) return
   const { team, player } = selected.value
   const event: ScoringEvent = {
     code,
@@ -127,15 +177,26 @@ const commitEvent = async (code: ScoringEventCode) => {
     team,
     player: String(player.matric),
     number: player.numero,
-    reason: eventReason.value,
+    reason: code === 'B' ? '' : eventReason.value,
     nom: player.nom,
     prenom: player.prenom
   }
   try {
     await scoringStore.addEvent(event)
     selected.value = null
-    eventReason.value = ''
+    eventReason.value = scoringStore.config.defaultCardReason
+    // Golden goal (spec §7.5): a goal during overtime of a type-E match ends it — offer
+    // the closure right away (Statut → END triggers the kp_* consolidation server-side).
+    if (code === 'B' && goalEndsMatch(match.value.type, eventPeriod.value) && !scoreLevel.value) {
+      goldenGoalOpen.value = true
+    }
   } catch { /* toast handled */ }
+}
+
+const confirmCardWarning = async () => {
+  const code = cardWarning.value?.code
+  cardWarning.value = null
+  if (code) await pushEvent(code)
 }
 
 /** Load an existing event into the entry zone for editing. */
@@ -148,7 +209,7 @@ const startEdit = (e: ScoringEvent) => {
 }
 const cancelEdit = () => {
   editingUid.value = null
-  eventReason.value = ''
+  eventReason.value = scoringStore.config.defaultCardReason
   if (isLive.value) eventTime.value = gameTime.value
 }
 const removeEvent = async (e: ScoringEvent) => {
@@ -171,7 +232,7 @@ const setPeriod = (p: Period) => {
   scoringStore.setPeriod(p)
   eventPeriod.value = p
   // Reconfigure the clock to the new period duration (fresh countdown)
-  if (isLive.value) timerSetPeriod(scoringStore.periodDurations[p])
+  if (isLive.value) timerSetPeriod(periodDurationOf(p, scoringStore.config.periodDurations))
 }
 const setStatus = (s: MatchStatus) => { if (canScore.value) scoringStore.setStatus(s) }
 
@@ -312,6 +373,8 @@ const toggleLock = async () => {
           :period="match.periode"
           :type="match.type"
           :can-change="canScore"
+          :score-level="scoreLevel"
+          :shootout-enabled="scoringStore.config.shootoutEnabled"
           @change="setPeriod"
         />
         <div v-if="isLive" class="flex gap-1">
@@ -357,7 +420,7 @@ const toggleLock = async () => {
           <!-- Period -->
           <div>
             <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.period') }}</label>
-            <USelect v-model="eventPeriod" :items="periods" :disabled="!canScore" size="sm" class="w-28" />
+            <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-36" />
           </div>
           <!-- Event time -->
           <div>
@@ -395,6 +458,31 @@ const toggleLock = async () => {
           >{{ t(evt.labelKey) }}</UButton>
         </div>
       </div>
+
+      <!-- Card progression alert (spec §7.4) — the operator can record anyway -->
+      <AdminConfirmModal
+        :open="cardWarning !== null"
+        variant="warning"
+        :title="t('scoring.card_progression.title')"
+        :message="t('scoring.card_progression.' + (cardWarning?.violation ?? 'card_not_higher'))
+          + ' ' + t('scoring.card_progression.confirm')"
+        :confirm-text="t('scoring.edit.save')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="confirmCardWarning"
+        @close="cardWarning = null"
+      />
+
+      <!-- Golden goal (spec §7.5): offer to close the match right after the winning goal -->
+      <AdminConfirmModal
+        :open="goldenGoalOpen"
+        variant="warning"
+        :title="t('scoring.golden_goal.title')"
+        :message="t('scoring.golden_goal.message', { period: periodLabel(eventPeriod) })"
+        :confirm-text="t('scoring.golden_goal.close_match')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="() => { goldenGoalOpen = false; setStatus('END') }"
+        @close="goldenGoalOpen = false"
+      />
 
       <!-- Events history (editable) — symmetric A | time | B on wide screens, list on mobile -->
       <ScoringEventHistory

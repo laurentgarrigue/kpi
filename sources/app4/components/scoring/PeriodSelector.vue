@@ -2,14 +2,13 @@
 import type { Period, MatchType } from '~/types/scoring'
 
 /**
- * Period selector (spec §7.1): instead of showing every period as a row of buttons, expose
- * a single "next period" action that advances by match type, plus a direct-access dropdown
- * (escape hatch, useful for post-match correction).
+ * Period selector (spec §7.1 / §0.6): a single "next period" action that advances by
+ * match type, plus a direct-access dropdown (escape hatch for post-match correction).
  *
- * - type C (classement): M1 → M2 → (end)
- * - type E (elimination): M1 → M2 → P1 → P2 → TB
- *   (TB stays available as the legacy last step; unbounded "golden goal" overtime is a later
- *    lot — spec §7.5 — so the codes M1/M2/P1/P2/TB are kept for now.)
+ * - type C (classement): M1 → M2 → (end, draw allowed)
+ * - type E (elimination): M1 → M2 → P1 → P2 → … — overtimes are UNBOUNDED (golden goal:
+ *   the advance stays available while the score is level); TB only when the competition
+ *   enables the shootout (spec §7.5).
  *
  * Changing period resets the clock to the new period duration → confirmation modal.
  * Props down / events up: emits `change` with the chosen period; the page mutates the store.
@@ -19,33 +18,42 @@ const props = defineProps<{
   type: MatchType
   /** When false, the selector is read-only. */
   canChange?: boolean
+  /** Score currently level — conditions the E-type advance into (further) overtime. */
+  scoreLevel?: boolean
+  /** Shootout allowed by the competition (spec §7.5 — tournament option). */
+  shootoutEnabled?: boolean
 }>()
 
 const emit = defineEmits<{ change: [period: Period] }>()
 
 const { t } = useI18n()
 
-// Ordered period progression per match type.
-const SEQUENCE: Record<MatchType, Period[]> = {
-  C: ['M1', 'M2'],
-  E: ['M1', 'M2', 'P1', 'P2', 'TB']
+/** Human label of a period — P{n} share a single parameterized i18n key (unbounded). */
+const periodLabel = (p: Period): string => {
+  const n = overtimeIndex(p)
+  return n !== null ? t('scoring.period.overtime', { n }) : t('scoring.period.' + p)
 }
 
-const sequence = computed(() => SEQUENCE[props.type] ?? SEQUENCE.C)
+const currentLabel = computed(() => (props.period ? periodLabel(props.period) : '—'))
 
-const currentLabel = computed(() => (props.period ? t('scoring.period.' + props.period) : '—'))
-
-// The next period in the sequence (null when already at the last one).
-const nextPeriod = computed<Period | null>(() => {
-  const seq = sequence.value
-  const idx = props.period ? seq.indexOf(props.period) : -1
-  return idx >= 0 && idx < seq.length - 1 ? seq[idx + 1] : (idx < 0 ? seq[0] : null)
+// The next period, from the shared pure rules (utils/scoringRules — mirror of api2).
+const nextP = computed<Period | null>(() => {
+  if (!props.period) return 'M1'
+  return nextPeriodFor(props.type, props.period, props.scoreLevel ?? true, props.shootoutEnabled ?? false)
 })
 
-// Direct-access menu: all periods of the sequence.
-const directItems = computed(() =>
-  sequence.value.map(p => ({ label: t('scoring.period.' + p), value: p }))
-)
+// Direct-access menu: M1/M2, every overtime up to the current one +1 (type E), TB when
+// enabled — and always the current period, so odd legacy values stay selectable.
+const directItems = computed(() => {
+  const list: Period[] = ['M1', 'M2']
+  if (props.type === 'E') {
+    const maxN = Math.max(overtimeIndex(props.period ?? 'M1') ?? 0, 0) + 1
+    for (let n = 1; n <= maxN; n++) list.push(`P${n}`)
+  }
+  if (props.shootoutEnabled || props.period === 'TB') list.push('TB')
+  if (props.period && !list.includes(props.period)) list.push(props.period)
+  return list.map(p => ({ label: periodLabel(p), value: p }))
+})
 
 // Confirmation modal state — holds the period we are about to switch to.
 const pending = ref<Period | null>(null)
@@ -68,15 +76,15 @@ const cancel = () => { pending.value = null }
     <!-- Current period badge -->
     <UBadge color="neutral" variant="soft" class="uppercase">{{ currentLabel }}</UBadge>
 
-    <!-- Advance to next period -->
+    <!-- Advance to next period (unbounded overtimes for type E while level) -->
     <UButton
-      v-if="nextPeriod"
+      v-if="nextP"
       size="xs"
       icon="i-heroicons-forward"
       :disabled="!canChange"
-      @click="requestChange(nextPeriod)"
+      @click="requestChange(nextP)"
     >
-      {{ t('scoring.period_next') }} — {{ t('scoring.period.' + nextPeriod) }}
+      {{ t('scoring.period_next') }} — {{ periodLabel(nextP) }}
     </UButton>
 
     <!-- Direct access (escape hatch) — pick any period of the sequence -->
@@ -96,7 +104,7 @@ const cancel = () => { pending.value = null }
       :open="confirmOpen"
       variant="warning"
       :title="t('scoring.period_confirm_title')"
-      :message="t('scoring.period_confirm_message', { period: pending ? t('scoring.period.' + pending) : '' })"
+      :message="t('scoring.period_confirm_message', { period: pending ? periodLabel(pending) : '' })"
       :confirm-text="t('scoring.edit.save')"
       :cancel-text="t('scoring.edit.cancel')"
       @confirm="confirm"

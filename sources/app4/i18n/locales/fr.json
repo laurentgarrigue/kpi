@@ -2463,14 +2463,15 @@
       "M2": "2ème mi-temps",
       "P1": "Prolongation 1",
       "P2": "Prolongation 2",
-      "TB": "Tir au but"
+      "TB": "Tir au but",
+      "overtime": "Prolongation {n}"
     },
     "event": {
       "goal": "But",
       "card_green": "Carton vert",
       "card_yellow": "Carton jaune",
       "card_red": "Carton rouge",
-      "card_red_def": "Carton rouge définitif"
+      "card_black": "Carton noir (exclusion définitive)"
     },
     "timer": {
       "start": "Démarrer",
@@ -2522,7 +2523,19 @@
     "period_confirm_title": "Changer de période ?",
     "period_confirm_message": "Passer en {period} réinitialisera le chronomètre à la durée de cette période.",
     "team": "Équipe",
-    "history_table_hint": "Cliquez une ligne pour la modifier ; survolez pour supprimer."
+    "history_table_hint": "Cliquez une ligne pour la modifier ; survolez pour supprimer.",
+    "card_progression": {
+      "title": "Progression des cartons",
+      "card_not_higher": "Ce joueur a déjà reçu un carton de couleur égale ou supérieure : le carton suivant doit être strictement supérieur (vert → jaune → rouge).",
+      "player_already_out": "Ce joueur est déjà exclu pour ce match (carton rouge ou noir) : aucun carton supplémentaire n'est possible.",
+      "unknown_card": "Code de carton inconnu.",
+      "confirm": "Enregistrer quand même ?"
+    },
+    "golden_goal": {
+      "title": "But en or",
+      "message": "But marqué en {period} : le règlement met fin au match immédiatement. Clore le match maintenant ?",
+      "close_match": "Clore le match"
+    }
   },
   "competition": {
     "ended_title": "Compétition terminée — lecture seule",

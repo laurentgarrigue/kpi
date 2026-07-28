@@ -2451,14 +2451,15 @@
       "M2": "2nd half",
       "P1": "Overtime 1",
       "P2": "Overtime 2",
-      "TB": "Penalty shootout"
+      "TB": "Penalty shootout",
+      "overtime": "Overtime {n}"
     },
     "event": {
       "goal": "Goal",
       "card_green": "Green card",
       "card_yellow": "Yellow card",
       "card_red": "Red card",
-      "card_red_def": "Red card (final)"
+      "card_black": "Black card (ejection)"
     },
     "timer": {
       "start": "Start",
@@ -2510,7 +2511,19 @@
     "period_confirm_title": "Change period?",
     "period_confirm_message": "Switching to {period} will reset the clock to that period's duration.",
     "team": "Team",
-    "history_table_hint": "Click a row to edit; hover to delete."
+    "history_table_hint": "Click a row to edit; hover to delete.",
+    "card_progression": {
+      "title": "Card progression",
+      "card_not_higher": "This player already received a card of equal or higher color: the next card must be strictly higher (green → yellow → red).",
+      "player_already_out": "This player is already out for this match (red or black card): no further card is possible.",
+      "unknown_card": "Unknown card code.",
+      "confirm": "Record anyway?"
+    },
+    "golden_goal": {
+      "title": "Golden goal",
+      "message": "Goal scored in {period}: the rules end the match immediately. Close the match now?",
+      "close_match": "Close the match"
+    }
   },
   "competition": {
     "ended_title": "Competition ended — read only",

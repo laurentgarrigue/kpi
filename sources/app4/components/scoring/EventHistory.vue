@@ -49,11 +49,12 @@ const sorted = computed(() =>
 )
 
 const codeLabel = (code: ScoringEventCode): string =>
-  t('scoring.event.' + ({ B: 'goal', V: 'card_green', J: 'card_yellow', R: 'card_red', D: 'card_red_def' }[code]))
+  t('scoring.event.' + ({ B: 'goal', V: 'card_green', J: 'card_yellow', R: 'card_red', D: 'card_black' }[code]))
 
 // Visual token for an event (emoji avoids shipping the legacy PNGs).
 const tokenFor = (code: ScoringEventCode): string =>
-  ({ B: '🥅', V: '🟢', J: '🟡', R: '🔴', D: '🟥' }[code])
+  // D = black ejection card (2027 rules, spec §0.9)
+  ({ B: '🥅', V: '🟢', J: '🟡', R: '🔴', D: '⬛' }[code])
 
 const playerLabel = (e: ScoringEvent): string => {
   if (e.player === '0' || !e.nom) return t('scoring.team') + ' ' + e.team

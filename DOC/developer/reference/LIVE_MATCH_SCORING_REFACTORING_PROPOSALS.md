@@ -8,7 +8,9 @@
 > [LIVE_MATCH_REFACTORING_REVIEW.md](../audits/LIVE_MATCH_REFACTORING_REVIEW.md).
 > La **spécification fonctionnelle détaillée de la console de saisie** est
 > [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) — ce plan dit *quand* et *dans quel ordre*,
-> la spec dit *quoi* et *comment*.
+> la spec dit *quoi* et *comment*. Les **commandes à exécuter en dev et les tests
+> fonctionnels par lot** sont dans
+> [SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md).
 >
 > **Principe directeur : on ne touche à rien tant que le neuf ne marche pas.** Le nouveau système se
 > construit **à côté** de l'ancien — nouvelles tables, nouveau canal de diffusion. La production
@@ -662,6 +664,22 @@ Mercure, avec rejeu correct après coupure simulée de l'abonné et après coupu
 **Critère de sortie.** Un événement réel tenu de bout en bout à la console (préparation, direct,
 clôture, correction post-match, verrouillage) sans ouvrir FMV3 ; console installée en PWA sur
 tablette ; reprise sur un second terminal validée en cours de match.
+
+> **Suivi d'exécution (2026-07-27) — première tranche :**
+> - ✅ 3.2 — prolongations **non bornées** côté front : type `Period = 'M1'|'M2'|`
+>   `` `P${number}` ``|`'TB'`, `PeriodSelector` avance sans plafond tant que le score est à
+>   égalité (type E), TB seulement si la compétition l'active, libellés « Prolongation n »
+>   paramétrés ; **but en or** : modale de clôture immédiate après un but en prolongation ;
+> - ✅ (partiel) 3.1 — **alerte de progression des cartons** (règles 2027, contournable par
+>   l'opérateur) et **motif par défaut « Autre/Non précisé »** ; reste : statut joueur,
+>   officiels UI, recharge présents, n° court, durée non standard ;
+> - ✅ `ScoringConfig` **centralisée** dans le store (P{n} = 300 s, pauses 3'/3'/1',
+>   shotclock 60/40 **actif**, `defaultCardReason`…) — plus aucune durée éparse ;
+> - ✅ **carton noir** d'exclusion définitive dans l'UI (libellés fr/en, token ⬛,
+>   couleur neutre) — « rouge définitif » a disparu du nouveau système ;
+> - ✅ miroir TS des règles pures : `app4/utils/scoringRules.ts` (aligné sur
+>   `api2/src/Scoring/ScoringRules.php`, réutilisé par la Phase 2 shotclock/pénalités).
+> - Commandes dev + tests fonctionnels : [SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md).
 
 ---
 

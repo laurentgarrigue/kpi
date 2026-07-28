@@ -1432,8 +1432,25 @@ le flat-config actuel, `Object.groupBy` absent < Node 21) ; `php -l ScoringContr
 | `stores/scoringStore.ts` | `load()` appelle aussi `GET /admin/scoring/state/{id}` et **superpose l'état live** (statut/période/scores) au snapshot `kp_match` de `/admin/games/{id}` — pendant un match, `kp_*` n'est plus écrit avant la consolidation. |
 | `src/Scoring/ScoringRules.php` + `tests/Scoring/scoring_rules_test.php` | **Créés (lot 1.2, test-first).** Règles pures sans base ni réseau : périodes `P{n}` non bornées + but en or (§0.6/§7.5), durées et pauses inter-périodes (§4.10), **progression des cartons 2027** (§7.4 : jamais identique/inférieur, premier carton libre, noir à tout moment, plus rien après `R`/`D`), slots de pénalité ≤ 2/équipe + levée du plus ancien + `playerReturnsAfterPenalty` (§0.9), **machine à états shotclock 3 commandes** (start60/start40/stop + suspension auto par le chrono — il n'existe **pas** de commande pause). 62 assertions, runner autonome (`php tests/Scoring/scoring_rules_test.php`), exécuté par le job CI `lint-api2` ; à migrer vers PHPUnit quand api2 aura un test pack. À porter en TS (miroir) pour la console en Phase 2. |
 
-Reste sur ce lot : fichiers de référence matériel (1.8, dépend de l'action 0.5), routes
-officiels/recharge présents (1.5), et l'exécution de la migration + test de bout en bout en dev.
+Reste sur ce lot : fichiers de référence matériel (1.8, dépend de l'action 0.5), recharge
+présents/n° court (1.5), et l'exécution de la migration + test de bout en bout en dev
+(cf. [SCORING_DEV_CHECKLIST.md](../developer/in-progress/SCORING_DEV_CHECKLIST.md)).
+
+**Prolongations non bornées + cartons 2027 côté console ✅ (plan lot 3, 1ʳᵉ tranche — 2026-07-27) :**
+
+| Fichier | Détail |
+|---|---|
+| `types/scoring.ts` | `Period = 'M1' \| 'M2' \| `P${number}` \| 'TB'` (non borné, §0.6) ; `PeriodDurations` avec durée `P` **partagée** (300 s) ; nouveaux `BreakDurations`, `ShotclockDurations`, **`ScoringConfig`** (§6.2). |
+| `utils/scoringRules.ts` | **Créé** — miroir TS de `api2/src/Scoring/ScoringRules.php` (référence testée 62 assertions) : périodes/but en or/durées/pauses, progression des cartons, pénalités, transitions shotclock 3 commandes. Sert déjà la console, servira la Phase 2. |
+| `stores/scoringStore.ts` | `config: ScoringConfig` **centralisée** (remplace `periodDurations` épars) : P{n} = 300 s (ICF/FFCK §0.9), pauses 3'/3'/1', shotclock 60/40 **actif**, `defaultCardReason = 'unknown'`… `currentPeriodDuration` via `periodDurationOf`. |
+| `components/scoring/PeriodSelector.vue` | Avance **non bornée** (type E, tant que le score est à égalité — `scoreLevel` en prop), TB seulement si `shootoutEnabled`, libellés `scoring.period.overtime {n}`, accès direct incluant P1..P{n+1}. |
+| `pages/games/[id]/scoring.vue` | **Alerte progression des cartons** (modale, contournable — §7.4), **modale but en or** (propose Statut → END après un but en P{n} d'un match E), sélecteur de période de saisie dynamique (P{n} + TB hérité), **motif pré-sélectionné** `unknown` (les buts n'envoient pas de motif), carton `D` = **noir** (couleur neutre). |
+| `components/scoring/EventHistory.vue` | Token `D` : 🟥 → **⬛** ; libellé `card_black`. |
+| `i18n/locales/fr.json` / `en.json` | `card_red_def` → **`card_black`** (« Carton noir (exclusion définitive) » / « Black card (ejection) »), `period.overtime`, `card_progression.*`, `golden_goal.*`. |
+
+Vérifié : ESLint OK sur tous les fichiers modifiés (node 22) ; les 62 assertions PHP des
+règles restent la référence. Tests fonctionnels à dérouler :
+[SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
 
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification
