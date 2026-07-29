@@ -2271,7 +2271,8 @@
     "title": "Contrôle TV",
     "tabs": {
       "channels": "Channels",
-      "scenarios": "Scénarios"
+      "scenarios": "Scénarios",
+      "overlays": "Incrustations"
     },
     "global": {
       "event": "Événement",
@@ -2370,6 +2371,42 @@
       "with_stats": "Joueurs avec stats",
       "all": "Tous les joueurs",
       "without_stats": "Tous sans stats"
+    },
+    "overlays": {
+      "select_event": "Sélectionnez d'abord un événement dans l'onglet Chaînes.",
+      "tokens_title": "Jetons d'affichage",
+      "tokens_hint": "Chaque incrustation s'authentifie par un jeton porté dans son URL : limité à l'événement (et éventuellement à un terrain), il expire et se révoque en un clic.",
+      "pitch": "Terrain",
+      "all_pitches": "Tous",
+      "label": "Libellé",
+      "label_placeholder": "Régie terrain 2, écran hall…",
+      "days": "Jours",
+      "create_token": "Créer un jeton",
+      "token_created": "Jeton créé",
+      "token_created_hint": "Utilisez « Copier l'URL » sur la ligne correspondante pour obtenir l'adresse à coller dans la source navigateur d'OBS.",
+      "expires": "Expire le",
+      "last_used": "Dernière utilisation",
+      "revoked": "Révoqué",
+      "copy_url": "Copier l'URL",
+      "revoke": "Révoquer",
+      "copied": "URL copiée",
+      "no_token": "Aucun jeton pour cet événement.",
+      "settings_title": "Enchaînement de l'affichage",
+      "settings_hint": "Délais (en secondes) et habillage. Laissez vide pour hériter : terrain → événement → valeur par défaut.",
+      "scope": "Portée",
+      "scope_event": "Événement (vide)",
+      "save": "Enregistrer",
+      "settings_saved": "Réglages enregistrés",
+      "inherit_hint": "Un champ vide hérite du niveau supérieur ; l'espace réservé indique la valeur réellement appliquée.",
+      "field": {
+        "halftimeScoreDelay": "Score mi-temps après (s)",
+        "finalScoreDelay": "Score final après (s)",
+        "finalScoreDuration": "Durée du score final (s)",
+        "nextGameDelay": "Prochain match après (s)",
+        "nextGameDuration": "Durée présentation (s, 0 = jusqu’au coup d’envoi)",
+        "background": "Fond (transparent, magenta…)",
+        "styleId": "Style"
+      }
     }
   },
   "eventCacheManager": {

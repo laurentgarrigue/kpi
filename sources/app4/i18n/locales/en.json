@@ -2259,7 +2259,8 @@
     "title": "TV Control",
     "tabs": {
       "channels": "Channels",
-      "scenarios": "Scenarios"
+      "scenarios": "Scenarios",
+      "overlays": "Overlays"
     },
     "global": {
       "event": "Event",
@@ -2358,6 +2359,42 @@
       "with_stats": "Players with stats",
       "all": "All players",
       "without_stats": "All without stats"
+    },
+    "overlays": {
+      "select_event": "Select an event in the Channels tab first.",
+      "tokens_title": "Display tokens",
+      "tokens_hint": "Each overlay authenticates with a token carried in its URL: scoped to the event (and optionally to one pitch), it expires and can be revoked in one click.",
+      "pitch": "Pitch",
+      "all_pitches": "All",
+      "label": "Label",
+      "label_placeholder": "Pitch 2 control room, hall screen…",
+      "days": "Days",
+      "create_token": "Create a token",
+      "token_created": "Token created",
+      "token_created_hint": "Use \"Copy URL\" on the matching row to get the address to paste into the OBS browser source.",
+      "expires": "Expires on",
+      "last_used": "Last used",
+      "revoked": "Revoked",
+      "copy_url": "Copy URL",
+      "revoke": "Revoke",
+      "copied": "URL copied",
+      "no_token": "No token for this event.",
+      "settings_title": "Display chaining",
+      "settings_hint": "Delays (in seconds) and styling. Leave empty to inherit: pitch → event → default value.",
+      "scope": "Scope",
+      "scope_event": "Event (empty)",
+      "save": "Save",
+      "settings_saved": "Settings saved",
+      "inherit_hint": "An empty field inherits from the level above; the placeholder shows the value actually applied.",
+      "field": {
+        "halftimeScoreDelay": "Half-time score after (s)",
+        "finalScoreDelay": "Final score after (s)",
+        "finalScoreDuration": "Final score duration (s)",
+        "nextGameDelay": "Next game after (s)",
+        "nextGameDuration": "Presentation duration (s, 0 = until kick-off)",
+        "background": "Background (transparent, magenta…)",
+        "styleId": "Style"
+      }
     }
   },
   "eventCacheManager": {

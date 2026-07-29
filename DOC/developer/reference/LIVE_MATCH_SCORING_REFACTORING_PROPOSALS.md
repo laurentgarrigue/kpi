@@ -822,8 +822,16 @@ déroule sans intervention humaine.
 >   `publicControllers.php` ne changent **qu'un identifiant** dans leur `FROM` — aucune
 >   double écriture (§4.3 respecté), aucune logique dupliquée. Échafaudage supprimable
 >   quand les lecteurs legacy disparaîtront.
-> - ⬜ reste : 4.6 (validation en parallèle, terrain par terrain), UI de gestion des jetons
->   et des délais dans app4 (avec le lot 6), styles par compétition (§10, second temps).
+> - ✅ **Administration dans app4** (nouvel onglet **TV → Incrustations**) :
+>   `AdminScoringDisplayController` + `TvOverlaysTab` — création/**révocation en un clic**
+>   des jetons (§4.4 : « révocable depuis app4 » — un jeton vit dans une configuration OBS
+>   qui peut finir n'importe où), **URL OBS prête à coller**, colonne « dernière
+>   utilisation » pour repérer un jeton encore actif après un événement, et réglage des
+>   **délais d'enchaînement** par événement ou par terrain (champ vide = **hériter**,
+>   l'espace réservé montrant la valeur réellement appliquée). Un jeton révoqué est
+>   **conservé** (traçabilité), jamais supprimé. Actions journalisées.
+> - ⬜ reste : 4.6 (validation en parallèle, terrain par terrain — activité terrain),
+>   styles par compétition (§10, second temps).
 
 ---
 

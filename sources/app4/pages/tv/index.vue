@@ -20,7 +20,7 @@ if (authStore.profile > 2) {
 
 // ─── State ───
 
-const activeTab = ref<'channels' | 'scenarios'>('channels')
+const activeTab = ref<'channels' | 'scenarios' | 'overlays'>('channels')
 
 const globalFilters = ref<TvGlobalFilters>({
   eventId: null,
@@ -178,6 +178,16 @@ onMounted(async () => {
       >
         {{ t('tv.tabs.scenarios') }}
       </button>
+      <button
+        type="button"
+        class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        :class="activeTab === 'overlays'
+          ? 'border-primary-600 text-primary-600 dark:text-primary-300'
+          : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'"
+        @click="activeTab = 'overlays'"
+      >
+        {{ t('tv.tabs.overlays') }}
+      </button>
     </div>
 
     <!-- Channels tab -->
@@ -249,6 +259,11 @@ onMounted(async () => {
     <!-- Scenarios tab -->
     <div v-if="activeTab === 'scenarios'">
       <AdminTvScenarioEditor :scenario-labels="scenarioLabels" />
+    </div>
+
+    <!-- Overlays tab: display tokens + chaining settings (refonte scoring, lot 4) -->
+    <div v-if="activeTab === 'overlays'">
+      <TvOverlaysTab :event-id="globalFilters.eventId" />
     </div>
 
     <!-- Labels modal -->

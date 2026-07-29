@@ -222,8 +222,12 @@ make api2_restart          # contrôleur public + services programme/accès
 make docker_dev_up         # le worker publie désormais le programme des terrains
 ```
 
-Créer un jeton d'affichage pour l'événement 236 (tous terrains ; ajouter `pitch` pour le
-restreindre à un seul) :
+**Créer un jeton d'affichage : app4 → TV → onglet « Incrustations »** (sélectionner d'abord
+l'événement dans l'onglet Chaînes), puis « Copier l'URL » pour obtenir l'adresse à coller
+dans la source navigateur d'OBS. Le même onglet règle les **délais d'enchaînement** (portée
+vide = événement, sinon numéro de terrain).
+
+En SQL si besoin (dépannage) :
 
 ```sql
 INSERT INTO scoring_display_token (token, id_event, pitch, label, expires_at)
@@ -267,11 +271,24 @@ URL type (source navigateur OBS, 1920×1080) :
 | 4.17 | Après **clôture** (Statut → END, consolidation) | mêmes valeurs qu'avant la bascule ; **aucun doublon** (la vue exclut `kp_match_detail` dès qu'un état live existe) |
 | 4.18 | Classements / exports / autres écrans lisant `kp_*` | **inchangés** (ils ne consomment pas les vues ; `kp_*` reste la vérité des résultats) |
 
+### Tests fonctionnels — administration des incrustations (app4 → TV → Incrustations)
+
+| # | Test | Attendu |
+|---|---|---|
+| 4.19 | Onglet **Incrustations** sans événement sélectionné | invite à choisir un événement dans l'onglet Chaînes |
+| 4.20 | **Créer un jeton** (tous terrains, 7 jours) puis « Copier l'URL » | jeton listé ; l'URL collée dans OBS affiche l'incrustation |
+| 4.21 | Créer un jeton **restreint au terrain 2** | il fonctionne sur `pitch=2` et est **refusé** sur un autre terrain |
+| 4.22 | **Révoquer** un jeton pendant que l'incrustation tourne | l'incrustation passe en « jeton révoqué » au prochain rafraîchissement ; la ligne reste listée (traçabilité), grisée |
+| 4.23 | Colonne **Dernière utilisation** | se met à jour quand une incrustation consomme le jeton (repérer un jeton encore actif après un événement) |
+| 4.24 | Régler un délai **au niveau événement**, laisser les autres champs vides | seul le champ saisi est stocké ; les autres affichent la valeur par défaut en espace réservé |
+| 4.25 | Régler ensuite le **même délai pour le terrain 2** | le terrain 2 utilise sa valeur, les autres terrains gardent celle de l'événement (héritage) |
+| 4.26 | Vider un champ déjà réglé puis enregistrer | retour à l'héritage (`NULL`), **pas** une valeur zéro |
+| 4.27 | `kp_journal` | lignes « Incrustation jeton créé / révoqué » et « Incrustation réglages » |
+
 ### Reste à livrer sur le lot 4
 
-Validation en parallèle terrain par terrain (4.6) ; UI de gestion des **jetons d'affichage**
-et de réglage des **délais** dans app4 (avec le lot 6) ; refonte du système de styles
-(spec §10, second temps).
+Validation en parallèle terrain par terrain (4.6, activité terrain) ; refonte du système de
+styles (spec §10, second temps).
 
 ---
 
