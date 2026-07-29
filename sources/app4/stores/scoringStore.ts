@@ -432,6 +432,110 @@ export const useScoringStore = defineStore('scoring', {
       }))
     },
 
+    /**
+     * Update a player's jersey number and/or captain status (spec §7.2/§7.8).
+     * Reuses the presence endpoint (same kp_match_joueur row, already journalized) —
+     * no duplicate write path for the same data.
+     */
+    async updatePlayer(
+      team: TeamSide,
+      matric: number,
+      patch: { numero?: number, capitaine?: '-' | 'C' | 'E' },
+      apiInstance?: ReturnType<typeof useApi>
+    ) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? useApi()
+      const list = team === 'A' ? this.playersA : this.playersB
+      const idx = list.findIndex(p => p.matric === matric)
+      if (idx === -1) return
+      const previous = { ...list[idx] }
+      list[idx] = { ...list[idx], ...patch }
+      try {
+        await api.patch(`/admin/matches/${this.match.id}/players/${matric}`, { teamCode: team, ...patch })
+      } catch (error) {
+        list[idx] = previous
+        throw error
+      }
+    },
+
+    /** Remove a player from the match composition (spec §7.2). */
+    async removePlayer(team: TeamSide, matric: number, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? useApi()
+      const list = team === 'A' ? this.playersA : this.playersB
+      const idx = list.findIndex(p => p.matric === matric)
+      if (idx === -1) return
+      const [removed] = list.splice(idx, 1)
+      try {
+        await api.del(`/admin/matches/${this.match.id}/players`, {
+          teamCode: team,
+          matricIds: [matric]
+        })
+      } catch (error) {
+        list.splice(idx, 0, removed)
+        throw error
+      }
+    },
+
+    /**
+     * Reload a team's composition from the presence sheet (« Recharger les joueurs
+     * présents », spec §7.2) — replaces the current list, then refetches it.
+     */
+    async reloadPresentPlayers(team: TeamSide, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? useApi()
+      await api.post(`/admin/matches/${this.match.id}/players/initialize`, { teamCode: team })
+      const res = await api.get<MatchPlayersResponse>(
+        `/admin/matches/${this.match.id}/players`, { teamCode: team }
+      )
+      const players = res.players.map(p => ({ ...p, team }))
+      if (team === 'A') this.playersA = players
+      else this.playersB = players
+    },
+
+    /**
+     * Promote the active writing source of the match (plan §4.1). Used when the console
+     * switches to score-only, or hands over to the hardware relay: a single source writes
+     * at any time, the others are journalized but rejected (409).
+     */
+    async setSource(
+      source: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT',
+      apiInstance?: ReturnType<typeof useApi>
+    ) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? useApi()
+      await api.put(`/admin/scoring/source/${this.match.id}`, { source })
+      this.activeSource = source
+    },
+
+    /** Update the match officials (referees, secretary, timekeepers, line judges). */
+    async setOfficials(officials: Record<string, string | number | null>, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? useApi()
+      await api.put(`/admin/scoring/officials/${this.match.id}`, { officials })
+    },
+
+    /**
+     * Resolve a short game number (Numero_ordre) into a match id, relative to the
+     * current match (same gameday → same competition → same event). Returns null when
+     * unknown or ambiguous.
+     */
+    async resolveShortNumber(number: number, apiInstance?: ReturnType<typeof useApi>): Promise<number | null> {
+      if (!this.match) return null
+      const api = apiInstance ?? useApi()
+      try {
+        const res = await api.get<{ id: number }>(`/admin/scoring/resolve/${this.match.id}/${number}`)
+        return res.id ?? null
+      } catch {
+        return null
+      }
+    },
+
     /** Read the persisted timer state (for clock restore on reload) */
     async loadTimerState(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return null

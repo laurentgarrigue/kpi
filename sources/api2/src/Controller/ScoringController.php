@@ -59,14 +59,18 @@ class ScoringController extends AbstractController
     }
 
     /**
-     * Enforce plan §4.1 (single active source): the console writes as MANUAL; if another
-     * source has been promoted on this match, the command is journalized but NOT applied.
+     * Enforce plan §4.1 (single active source). This controller IS the human console, in
+     * either of its two flavours — full entry (MANUAL) or score-only (SCORE_ONLY): both
+     * are the same operator at the same table, so both are accepted here. What must be
+     * rejected is a write while an EXTERNAL source owns the match (hardware relay,
+     * import): the command is then journalized but NOT applied.
      * Returns a 409 JsonResponse to send back, or null when writing is allowed.
      */
     private function assertSourceAllowed(int $matchId, string $detail): ?JsonResponse
     {
         $state = $this->live->ensureState($matchId);
-        if ($this->live->isSourceAllowed($state, 'MANUAL')) {
+        if ($this->live->isSourceAllowed($state, 'MANUAL')
+            || $this->live->isSourceAllowed($state, 'SCORE_ONLY')) {
             return null;
         }
 
@@ -576,6 +580,60 @@ class ScoringController extends AbstractController
         $this->logScoring('Scoring source', $matchId, "promotion → {$source}");
 
         return new JsonResponse(['success' => true, 'activeSource' => $source, 'tick' => $tick]);
+    }
+
+    #[Route('/resolve/{matchId}/{number}', name: 'resolve_short_number', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/resolve/{matchId}/{number}',
+        summary: 'Resolve a short game number (Numero_ordre) into a match id, relative to the current match',
+        description: 'Port of the legacy getShortGame.php: searches the same gameday first, then the same competition, then the same KPI event — the first scope with exactly one hit wins.',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: 'Resolved match id'),
+            new OA\Response(response: 404, description: 'No match, or several matches carry this number in every scope')
+        ]
+    )]
+    public function resolveShortNumber(int $matchId, int $number): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        if ($number <= 0) {
+            return new JsonResponse(['error' => 'Invalid number'], 400);
+        }
+
+        // Three widening scopes, in the legacy order. A scope returning several matches
+        // is ambiguous and must NOT silently fall through to a wider one.
+        $scopes = [
+            // Same gameday
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_match m2 ON m1.Id_journee = m2.Id_journee
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+            // Same competition
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_journee j1 ON m1.Id_journee = j1.Id
+             JOIN kp_journee j2 ON j2.Code_competition = j1.Code_competition
+                               AND j2.Code_saison = j1.Code_saison
+             JOIN kp_match m2 ON m2.Id_journee = j2.Id
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+            // Same KPI event
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_evenement_journee ej1 ON m1.Id_journee = ej1.Id_journee
+             JOIN kp_evenement_journee ej2 ON ej1.Id_evenement = ej2.Id_evenement
+             JOIN kp_match m2 ON m2.Id_journee = ej2.Id_journee
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+        ];
+
+        foreach ($scopes as $sql) {
+            $ids = $this->connection->fetchFirstColumn($sql . ' LIMIT 2', [$matchId, $number]);
+            if (count($ids) === 1) {
+                return new JsonResponse(['id' => (int) $ids[0]]);
+            }
+            if (count($ids) > 1) {
+                return new JsonResponse(['error' => 'Several games carry this number'], Response::HTTP_NOT_FOUND);
+            }
+        }
+
+        return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
     }
 
     #[Route('/officials/{matchId}', name: 'officials_put', methods: ['PUT'])]

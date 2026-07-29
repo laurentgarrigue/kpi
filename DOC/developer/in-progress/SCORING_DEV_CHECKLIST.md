@@ -178,9 +178,27 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.45 | Promouvoir la source sur `HARDWARE` depuis un autre client, puis écrire depuis la console | la console reçoit **409** (déjà couvert en 1.7) **et** reflète les changements poussés par la source active |
 | 3.46 | Match **hors événement KPI** (sans terrain) | l'abonnement utilise le topic de repli `/scoring/match/{id}/{type}` et fonctionne pareil |
 
-### Reste à livrer sur le lot 3 (tests à ajouter ici au fil de l'eau)
+### Tests fonctionnels — 6ᵉ tranche (mode score seul, vue Paramètres)
 
-Mode score seul ; solde §7.8 (statut joueur, officiels UI, recharge présents, n° court).
+| # | Test | Attendu |
+|---|---|---|
+| 3.47 | Activer **« Score seul »** dans l'entête | les listes de joueurs et la zone de saisie des faits **disparaissent** ; des boutons **±1** apparaissent de part et d'autre du score ; `scoring_live_state.active_source` passe à **`SCORE_ONLY`** |
+| 3.48 | **+1** puis **−1** pour une équipe | le score monte puis redescend ; en base, un fait `GOAL` avec `id_player = '0'` est créé puis supprimé (fait d'équipe, sans attribution) |
+| 3.49 | Revenir en mode complet | la source repasse à **`MANUAL`**, listes et zone de saisie reviennent ; la saisie détaillée fonctionne toujours |
+| 3.50 | Bouton **« Paramètres du match… »** | bascule vers la vue Paramètres ; le bouton propose alors « Déroulement du match… » |
+| 3.51 | Vue Paramètres : **type de match** et **publication** | affichés en **lecture seule** (badges), avec la mention « modifiable depuis la gestion du match » |
+| 3.52 | Modifier un **officiel** (secrétaire, chronométreur de tir, arbitres, juges de ligne) puis **Enregistrer** | `kp_match` mis à jour, ligne « Scoring officiels » dans `kp_journal`, toast de confirmation |
+| 3.53 | Modifier un **n° de maillot** et un **statut capitaine** | `kp_match_joueur` mis à jour (endpoint presence, déjà journalisé) ; annulation propre si l'appel échoue |
+| 3.54 | **Supprimer** un joueur puis **« Recharger les présents »** | le joueur disparaît, puis la composition est **réinitialisée depuis la feuille de présence** |
+| 3.55 | **Charger un autre match** par **n° court** (≤ 5 chiffres) | résolution serveur (même journée → même compétition → même événement) et navigation vers ce match |
+| 3.56 | Charger par **ID#** complet (8-9 chiffres) | navigation directe |
+| 3.57 | N° court **inconnu** ou **ambigu** (présent dans plusieurs matchs du même périmètre) | message « aucun match trouvé (ou plusieurs correspondances) » — **aucune** navigation hasardeuse |
+| 3.58 | Match **verrouillé** | vue Paramètres en lecture seule (officiels et joueurs non modifiables) |
+
+### Reste à livrer sur le lot 3
+
+Rien : le périmètre du lot est couvert. Les évolutions sont renvoyées aux lots suivants
+(paramétrage par compétition = lot 6, file d'écritures offline = lot 7).
 
 ---
 

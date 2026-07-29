@@ -1537,6 +1537,17 @@ precache, `skipWaiting`/`clientsClaim` présents) ; ESLint OK. Tests :
 [SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md)
 (2ᵉ tranche 3.11–3.21, 3ᵉ 3.22–3.31, 4ᵉ 3.32–3.39).
 
+**Mode score seul + vue Paramètres ✅ (plan lot 3, 6ᵉ tranche — 2026-07-29) :**
+
+| Fichier | Détail |
+|---|---|
+| `pages/games/[id]/scoring.vue` | **Bascule « Paramètres » / « Déroulement »** (§7.1) et **mode score seul** : promeut la source `SCORE_ONLY` (§4.1), masque listes de joueurs et zone de saisie, expose des boutons **±1** par équipe ; les buts y sont des **faits d'équipe** (joueur `0`), le `−1` retirant le dernier but de l'équipe. |
+| `components/scoring/SettingsPanel.vue` | **Créé** (`<ScoringSettingsPanel>`). Type de match et publication **en lecture seule** ; **officiels** (7 champs, enregistrement groupé) ; **n° de maillot / capitaine** éditables, **suppression** de joueur, **recharge des présents** ; **chargement d'un autre match** par n° court ou ID#. Props down / events up : aucune requête dans le composant. |
+| `stores/scoringStore.ts` | Actions `updatePlayer`, `removePlayer`, `reloadPresentPlayers` (branchées sur les **endpoints presence existants** — mêmes lignes `kp_match_joueur`, déjà journalisées, **pas de second chemin d'écriture**), `setOfficials`, `setSource`, `resolveShortNumber`. |
+| `src/Controller/ScoringController.php` | **`GET /admin/scoring/resolve/{matchId}/{number}`** : portage de `getShortGame.php` — même journée → même compétition → même événement ; un scope **ambigu n'élargit pas** silencieusement (404 explicite). Garde de source élargi : la console écrit en `MANUAL` **ou** `SCORE_ONLY` (même opérateur) ; seule une source externe bloque. |
+| `src/Controller/AdminGamesController.php` | `GET /admin/games/{id}` expose enfin `secretaire`, `chronometre`, `timeshoot`, `ligne1/2`, `commentairesOfficiels`, `heureFin` (colonnes déjà lues par `m.*`). |
+| `types/scoring.ts` | `ScoringMatch` complété (publication + officiels + clôture). |
+
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification
   base + restauration visuelle du chrono au rechargement + vérif 403 hors mandat + **vérif des

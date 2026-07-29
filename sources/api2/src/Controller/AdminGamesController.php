@@ -368,6 +368,15 @@ class AdminGamesController extends AbstractController
             'matricArbitrePrincipal' => (int) ($row['Matric_arbitre_principal'] ?? 0),
             'arbitreSecondaire' => $row['Arbitre_secondaire'],
             'matricArbitreSecondaire' => (int) ($row['Matric_arbitre_secondaire'] ?? 0),
+            // Remaining officials — displayed and edited by the Scoring console's
+            // "Paramètres" view (spec §7.2); already selected by m.* above.
+            'secretaire' => $row['Secretaire'],
+            'chronometre' => $row['Chronometre'],
+            'timeshoot' => $row['Timeshoot'],
+            'ligne1' => $row['Ligne1'],
+            'ligne2' => $row['Ligne2'],
+            'commentairesOfficiels' => $row['Commentaires_officiels'],
+            'heureFin' => $row['Heure_fin'],
             'codeCompetition' => $row['Code_competition'],
             'competitionStatut' => $row['CompetitionStatut'] ?? 'ATT',
             'phase' => $row['Phase'],

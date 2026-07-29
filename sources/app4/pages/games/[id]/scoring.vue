@@ -67,6 +67,46 @@ type ScoringMode = 'live' | 'post'
 const mode = ref<ScoringMode>('live')
 const isLive = computed(() => mode.value === 'live')
 
+// ─── Two views: "Paramètres" (before kick-off) / "Déroulement" (spec §7.1) ───
+const view = ref<'run' | 'settings'>('run')
+
+// ─── Score-only mode (spec §3, plan §4.1 source SCORE_ONLY) ───
+// Some tables only follow the score, without attributing goals to players (no roster, or
+// no time for it). The console then shows score/period/status alone: same single entry
+// door, same live state — only the level of detail changes. Goals recorded this way carry
+// no player, so the history stays consistent with what was really captured.
+const scoreOnly = ref(false)
+watch(scoreOnly, (on) => {
+  // Declare the active source so another writer (hardware relay) knows what is going on.
+  void scoringStore.setSource(on ? 'SCORE_ONLY' : 'MANUAL')
+})
+
+/** Score-only goal: +1/−1 for a team, recorded as a team-level fact (player '0'). */
+const bumpScore = async (team: TeamSide, delta: 1 | -1) => {
+  if (!canScore.value || !match.value) return
+  if (delta === 1) {
+    try {
+      await scoringStore.addEvent({
+        code: 'B',
+        period: eventPeriod.value,
+        tpsJeu: eventTime.value,
+        team,
+        player: '0', // team-level fact — no player attribution in this mode
+        number: null,
+        reason: ''
+      })
+    } catch { /* toast handled */ }
+    return
+  }
+  // −1 removes the most recent team-level goal of that team (correction of a mis-click).
+  const last = [...scoringStore.events].reverse().find(e => e.code === 'B' && e.team === team)
+  if (last) {
+    try {
+      await scoringStore.removeEvent(last)
+    } catch { /* toast handled */ }
+  }
+}
+
 // ─── Event time/reason entry (period + MM:SS) ───
 // In live mode it is pre-filled from the clock; in post-match it is typed/edited by hand.
 const eventPeriod = ref<Period>('M1')
@@ -581,6 +621,41 @@ const adjustClock = (deltaSec: number) => {
   })
 }
 
+// ─── "Paramètres" view handlers (spec §7.2/§7.8) ───
+const updatePlayer = async (team: TeamSide, matric: number, patch: { numero?: number, capitaine?: '-' | 'C' | 'E' }) => {
+  try { await scoringStore.updatePlayer(team, matric, patch) } catch { /* toast handled */ }
+}
+const removePlayer = async (team: TeamSide, matric: number) => {
+  try { await scoringStore.removePlayer(team, matric) } catch { /* toast handled */ }
+}
+const reloadPlayers = async (team: TeamSide) => {
+  try { await scoringStore.reloadPresentPlayers(team) } catch { /* toast handled */ }
+}
+const saveOfficials = async (officials: Record<string, string>) => {
+  try {
+    await scoringStore.setOfficials(officials)
+    if (scoringStore.match) Object.assign(scoringStore.match, officials)
+    toast.add({ title: t('scoring.settings.officials_saved'), color: 'success' })
+  } catch { /* toast handled */ }
+}
+
+/**
+ * Load another match from the "Paramètres" view: a full id navigates straight away, a
+ * short number is resolved server-side against the current match (same gameday, then
+ * competition, then event — spec §7.8).
+ */
+const loadOtherMatch = async (input: string) => {
+  const value = Number(String(input).trim())
+  if (!Number.isFinite(value) || value <= 0) return
+  // Short numbers are ≤ 5 digits, ids are 8-9 (legacy convention).
+  const target = String(value).length <= 5 ? await scoringStore.resolveShortNumber(value) : value
+  if (!target) {
+    toast.add({ title: t('common.error'), description: t('scoring.settings.game_not_found'), color: 'warning' })
+    return
+  }
+  await navigateTo(`/games/${target}/scoring`)
+}
+
 const toggleLock = async () => {
   if (!canValidate.value) return
   try {
@@ -619,6 +694,14 @@ const toggleLock = async () => {
           </p>
         </div>
         <div class="flex items-center gap-2">
+          <!-- Settings / run views (spec §7.1) -->
+          <UButton
+            size="xs"
+            variant="outline"
+            :icon="view === 'run' ? 'i-heroicons-adjustments-horizontal' : 'i-heroicons-play'"
+            @click="view = view === 'run' ? 'settings' : 'run'"
+          >{{ view === 'run' ? t('scoring.settings.title') : t('scoring.run.title') }}</UButton>
+
           <!-- Direct / post-match mode -->
           <div class="flex gap-1">
             <UButton
@@ -632,6 +715,16 @@ const toggleLock = async () => {
               @click="mode = 'post'"
             >{{ t('scoring.mode.post') }}</UButton>
           </div>
+
+          <!-- Score-only: minimal capture, no player attribution (spec §3) -->
+          <UButton
+            size="xs"
+            :variant="scoreOnly ? 'solid' : 'outline'"
+            :color="scoreOnly ? 'warning' : 'neutral'"
+            :disabled="!canScore"
+            :title="t('scoring.score_only.hint')"
+            @click="scoreOnly = !scoreOnly"
+          >{{ t('scoring.score_only.label') }}</UButton>
           <!-- Live sync indicator: the console follows this match's Mercure topics, so a
                change made on another terminal (or by the hardware relay) lands here. -->
           <UBadge
@@ -682,16 +775,41 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Score -->
+      <!-- ══ Paramètres view (before kick-off / control) ══ -->
+      <ScoringSettingsPanel
+        v-if="view === 'settings'"
+        :match="match"
+        :players-a="scoringStore.playersA"
+        :players-b="scoringStore.playersB"
+        :can-score="canScore"
+        :can-manage-players="canScore"
+        @update-player="updatePlayer"
+        @remove-player="removePlayer"
+        @reload-players="reloadPlayers"
+        @save-officials="saveOfficials"
+        @load-match="loadOtherMatch"
+      />
+
+      <!-- ══ Déroulement view ══ -->
+      <template v-else>
+      <!-- Score — in score-only mode, ±1 buttons make it the whole entry surface -->
       <div class="flex items-center justify-center gap-6 py-4 bg-header-50 rounded-lg">
         <div class="text-right flex-1">
           <div class="font-semibold">{{ match.equipeA }}</div>
+          <div v-if="scoreOnly" class="flex gap-1 justify-end mt-1">
+            <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('A', -1)">−1</UButton>
+            <UButton size="xs" :disabled="!canScore" @click="bumpScore('A', 1)">+1</UButton>
+          </div>
         </div>
         <div class="text-4xl font-mono font-bold tabular-nums">
           {{ scoringStore.scoreA }} - {{ scoringStore.scoreB }}
         </div>
         <div class="text-left flex-1">
           <div class="font-semibold">{{ match.equipeB }}</div>
+          <div v-if="scoreOnly" class="flex gap-1 mt-1">
+            <UButton size="xs" :disabled="!canScore" @click="bumpScore('B', 1)">+1</UButton>
+            <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('B', -1)">−1</UButton>
+          </div>
         </div>
       </div>
 
@@ -768,8 +886,8 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Teams + events -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Teams + events — hidden in score-only mode (no player attribution, spec §3) -->
+      <div v-if="!scoreOnly" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div v-for="(players, team) in { A: scoringStore.playersA, B: scoringStore.playersB }" :key="team">
           <h2 class="font-semibold mb-2">{{ team === 'A' ? match.equipeA : match.equipeB }}</h2>
           <div class="space-y-1">
@@ -795,7 +913,7 @@ const toggleLock = async () => {
       </div>
 
       <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
-      <div class="border-t pt-4 space-y-3">
+      <div v-if="!scoreOnly" class="border-t pt-4 space-y-3">
         <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600">
           <UIcon name="i-heroicons-pencil-square" />
           {{ t('scoring.edit.title') }}
@@ -903,6 +1021,7 @@ const toggleLock = async () => {
         @edit="startEdit"
         @remove="removeEvent"
       />
+      </template>
     </div>
 
     <div v-else class="text-center text-header-900 py-12">

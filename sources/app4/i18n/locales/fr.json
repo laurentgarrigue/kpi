@@ -2579,6 +2579,44 @@
       "error": "Synchronisation temps réel interrompue (reconnexion…)",
       "idle": "Synchronisation temps réel inactive",
       "remote_change": "Modification reçue d’un autre terminal"
+    },
+    "settings": {
+      "title": "Paramètres du match…",
+      "type": "Type de match",
+      "type_ranking": "Classement",
+      "type_elimination": "Élimination",
+      "read_only_hint": "Modifiable depuis la gestion du match",
+      "publication": "Publication",
+      "publication_public": "Public",
+      "publication_private": "Privé",
+      "load_game": "Charger un autre match",
+      "load_game_placeholder": "N° ou ID#",
+      "load": "Charger",
+      "game_not_found": "Aucun match trouvé pour ce numéro (ou plusieurs correspondances).",
+      "officials": "Officiels",
+      "officials_saved": "Officiels enregistrés",
+      "reload_players": "Recharger les présents",
+      "no_player": "Aucun joueur",
+      "number": "N°",
+      "player": "Joueur",
+      "captain": "Capitaine",
+      "remove_player": "Retirer le joueur"
+    },
+    "run": {
+      "title": "Déroulement du match…"
+    },
+    "score_only": {
+      "label": "Score seul",
+      "hint": "Saisie minimale : score, période et statut, sans attribution des buts aux joueurs."
+    },
+    "officials": {
+      "secretaire": "Secrétaire",
+      "chronometre": "Chronométreur",
+      "timeshoot": "Chronométreur de tir",
+      "arbitrePrincipal": "Arbitre principal",
+      "arbitreSecondaire": "Arbitre secondaire",
+      "ligne1": "Juge de ligne 1",
+      "ligne2": "Juge de ligne 2"
     }
   },
   "competition": {

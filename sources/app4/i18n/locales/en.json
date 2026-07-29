@@ -2567,6 +2567,44 @@
       "error": "Live sync interrupted (reconnecting…)",
       "idle": "Live sync inactive",
       "remote_change": "Change received from another terminal"
+    },
+    "settings": {
+      "title": "Match settings…",
+      "type": "Match type",
+      "type_ranking": "Ranking",
+      "type_elimination": "Elimination",
+      "read_only_hint": "Edited from the match management",
+      "publication": "Publication",
+      "publication_public": "Public",
+      "publication_private": "Private",
+      "load_game": "Load another game",
+      "load_game_placeholder": "Number or ID#",
+      "load": "Load",
+      "game_not_found": "No game found for this number (or several matches).",
+      "officials": "Officials",
+      "officials_saved": "Officials saved",
+      "reload_players": "Reload present players",
+      "no_player": "No player",
+      "number": "No.",
+      "player": "Player",
+      "captain": "Captain",
+      "remove_player": "Remove player"
+    },
+    "run": {
+      "title": "Match run…"
+    },
+    "score_only": {
+      "label": "Score only",
+      "hint": "Minimal capture: score, period and status, without attributing goals to players."
+    },
+    "officials": {
+      "secretaire": "Secretary",
+      "chronometre": "Timekeeper",
+      "timeshoot": "Shot-clock timekeeper",
+      "arbitrePrincipal": "Main referee",
+      "arbitreSecondaire": "Second referee",
+      "ligne1": "Line judge 1",
+      "ligne2": "Line judge 2"
     }
   },
   "competition": {

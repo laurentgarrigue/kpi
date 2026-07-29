@@ -46,6 +46,7 @@ export interface ScoringMatch {
   libelle: string | null
   terrain: string
   validation: string // 'O' = locked, else unlocked
+  publication: string // 'O' = public, else private (read-only in the console, spec §7.1)
   statut: MatchStatus
   type: MatchType
   periode: Period | null
@@ -60,6 +61,17 @@ export interface ScoringMatch {
   codeCompetition: string | null
   competitionStatut: 'ATT' | 'ON' | 'END'
   phase: string | null
+  // Officials (editable from the "Paramètres" view — spec §7.2/§7.8)
+  arbitrePrincipal?: string | null
+  arbitreSecondaire?: string | null
+  secretaire?: string | null
+  chronometre?: string | null
+  timeshoot?: string | null // chronométreur de tir (shotclock)
+  ligne1?: string | null
+  ligne2?: string | null
+  // Closing (spec §7.6)
+  commentairesOfficiels?: string | null
+  heureFin?: string | null
 }
 
 /**

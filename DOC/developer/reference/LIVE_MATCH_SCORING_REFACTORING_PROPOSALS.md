@@ -745,8 +745,28 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   d'écho** de nos propres écritures via `store.lastMutationAt` (fenêtre 2 s), sans
 >   toucher au contrat d'écriture. Indicateur d'état dans l'entête + **signal visuel**
 >   quand l'état a bougé depuis un autre terminal (failover, source matérielle).
-> - ⬜ reste sur le lot 3 : mode score seul, solde §7.8 (statut joueur, officiels UI,
->   recharge présents, n° court).
+> **Suivi d'exécution (2026-07-29) — sixième tranche (étapes 3.1 solde et 3.8) :**
+> - ✅ 3.8 — **mode score seul** : bascule dans l'entête qui **promeut la source
+>   `SCORE_ONLY`** (§4.1) et réduit la console au score (±1 par équipe), période et
+>   statut — buts enregistrés comme **faits d'équipe** (joueur `0`), donc l'historique
+>   reflète ce qui a réellement été capté. Le garde de source accepte les **deux
+>   variantes de la console** (`MANUAL`/`SCORE_ONLY`) : c'est le même opérateur ; seule
+>   une source **externe** (relais matériel, import) bloque la saisie ;
+> - ✅ 3.1 (solde) — **vue « Paramètres »** (`ScoringSettingsPanel`, spec §7.1/§7.2) :
+>   type de match et publication **en lecture seule** (écart assumé vs FMV3), **édition
+>   des officiels** (7 champs → `PUT /officials`), **n° de maillot et statut
+>   capitaine/coach** éditables, **suppression** d'un joueur et **recharge des présents**
+>   — tous branchés sur les **endpoints presence existants** (mêmes lignes
+>   `kp_match_joueur`, déjà journalisées : pas de second chemin d'écriture) ;
+>   **chargement d'un autre match** par n° court ou ID#, avec portage de la résolution
+>   legacy (`GET /scoring/resolve` : même journée → même compétition → même événement, un
+>   scope ambigu **n'élargit pas** silencieusement) ;
+> - ✅ `GET /admin/games/{id}` complété (secrétaire, chronométreurs, juges de ligne,
+>   commentaires, heure de fin) — colonnes déjà lues par `m.*`, simplement non exposées.
+>
+> **Le lot 3 est ainsi couvert** ; restent les vérifications en dev
+> ([SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md)) et les évolutions
+> renvoyées aux lots suivants (paramétrage par compétition = lot 6, offline = lot 7).
 
 ---
 
