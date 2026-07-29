@@ -2561,6 +2561,12 @@
     "display": {
       "scoreboard": "Open the scoreboard",
       "shotclock": "Open the shot clock"
+    },
+    "sync": {
+      "connected": "Live sync active",
+      "error": "Live sync interrupted (reconnecting…)",
+      "idle": "Live sync inactive",
+      "remote_change": "Change received from another terminal"
     }
   },
   "competition": {

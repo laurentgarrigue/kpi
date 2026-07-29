@@ -366,6 +366,10 @@ class ScoringLiveService
 
         return [
             'matchId' => $matchId,
+            // Mercure addressing of this match (plan §3.3): the SERVER owns the topic
+            // scheme, clients never build it themselves. Subscribers append the block
+            // they need (/score, /clock, …) or use the {type} URI template for all.
+            'topicBase' => $this->topicBase($matchId),
             'tick' => (int) $state['tick'],
             'updatedAt' => $state['updated_at'],
             'statut' => $state['statut'],
@@ -492,16 +496,26 @@ class ScoringLiveService
     }
 
     /**
+     * Topic prefix of a match: event/pitch scoped (plan §3.3), or match scoped when the
+     * match belongs to no KPI event / has no pitch. Blocks are appended to it.
+     */
+    private function topicBase(int $matchId): string
+    {
+        $ctx = $this->resolveTopicContext($matchId);
+
+        return $ctx === null
+            ? "/scoring/match/{$matchId}"
+            : "/scoring/event/{$ctx['event']}/pitch/{$ctx['pitch']}";
+    }
+
+    /**
      * Deposit an outbox row addressed to the event/pitch/block topic (plan §3.3).
      * Falls back to a match-scoped topic when the match is not attached to a KPI event
      * or has no numeric pitch.
      */
     private function deposit(int $matchId, string $block, array $payload): void
     {
-        $ctx = $this->resolveTopicContext($matchId);
-        $topic = $ctx === null
-            ? "/scoring/match/{$matchId}/{$block}"
-            : "/scoring/event/{$ctx['event']}/pitch/{$ctx['pitch']}/{$block}";
+        $topic = $this->topicBase($matchId) . '/' . $block;
 
         $payload['matchId'] = $matchId;
 

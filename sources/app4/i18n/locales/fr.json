@@ -2573,6 +2573,12 @@
     "display": {
       "scoreboard": "Ouvrir le tableau de score",
       "shotclock": "Ouvrir le chronomètre de tir"
+    },
+    "sync": {
+      "connected": "Synchronisation temps réel active",
+      "error": "Synchronisation temps réel interrompue (reconnexion…)",
+      "idle": "Synchronisation temps réel inactive",
+      "remote_change": "Modification reçue d’un autre terminal"
     }
   },
   "competition": {

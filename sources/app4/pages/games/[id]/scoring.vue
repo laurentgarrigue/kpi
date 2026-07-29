@@ -287,6 +287,72 @@ watch(gameTime, (v) => {
   if (isLive.value && !editingUid.value) eventTime.value = v
 })
 
+// ─── Live coherence between terminals (Mercure/SSE — plan lot 3) ───
+// A change made on another terminal (or by the hardware relay) is signalled on the
+// match's topics; the console refetches the canonical state instead of merging a diff.
+const liveSync = useScoringLiveSync({
+  lastLocalWrite: () => scoringStore.lastMutationAt,
+  onRemoteChange: async () => {
+    try {
+      await scoringStore.refreshLiveState()
+      await applyServerClocks()
+      flashRemoteSync()
+      broadcast.broadcastAll()
+    } catch { /* useApi already toasts */ }
+  }
+})
+// Brief visual feedback when the state was changed elsewhere: the operator must notice
+// that the score/clock moved without them touching anything (failover, hardware source).
+const remoteSynced = ref(false)
+let remoteSyncTimeout: ReturnType<typeof setTimeout> | null = null
+const flashRemoteSync = () => {
+  remoteSynced.value = true
+  if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout)
+  remoteSyncTimeout = setTimeout(() => { remoteSynced.value = false }, 2000)
+}
+onUnmounted(() => { if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout) })
+
+/**
+ * Re-prime the local clocks from the canonical state — used on load AND when a remote
+ * change is signalled. Everything is derived from the server, so a second terminal (or a
+ * reload) always lands on the same displayed time (plan §3.1).
+ *
+ * The game clock goes through GET /gameTimer, which returns the server time alongside the
+ * state: that is the only path that compensates the elapsed drift exactly (and handles
+ * midnight). The shot clock and the break are re-primed from their persisted value; a
+ * sub-second drift is possible right after a takeover, which is irrelevant at their scale.
+ */
+const applyServerClocks = async () => {
+  if (!isLive.value) return
+
+  const state = await scoringStore.loadTimerState()
+  if (state && state.action) {
+    restoreFromServer({
+      action: state.action,
+      maxTime: state.maxTime || scoringStore.currentPeriodDuration,
+      elapsed: state.startTime ?? 0,
+      startTimeServer: state.startTimeServer ?? undefined,
+      nowServer: state.nowServer
+    })
+  } else {
+    timerSetPeriod(scoringStore.currentPeriodDuration)
+  }
+
+  const sc = scoringStore.liveClocks.find(c => c.kind === 'SHOTCLOCK')
+  if (sc) {
+    shotclock.restore({ initMs: sc.initMs, elapsedMs: sc.elapsedMs, running: sc.running })
+    // A shotclock can only run while the game clock runs: align after restore.
+    if (!isRunning.value && shotclock.state.value === 'RUNNING') shotclock.suspend()
+  } else if (shotclock.state.value !== 'IDLE') {
+    shotclock.stopToIdle()
+  }
+
+  const br = scoringStore.liveClocks.find(c => c.kind === 'BREAK')
+  const left = br ? Math.max(0, Math.round((br.initMs - br.elapsedMs) / 1000)) : 0
+  if (left > 0) startBreak(left, false)
+  else stopBreak(false)
+}
+
 onMounted(async () => {
   if (!canView.value) return
   try {
@@ -296,32 +362,10 @@ onMounted(async () => {
     eventPeriod.value = (scoringStore.match?.periode ?? 'M1') as Period
     // Card reason pre-selected for fast entry (spec §0.9 — Autre/Non précisé)
     eventReason.value = scoringStore.config.defaultCardReason
-    // Restore the clock from kp_chrono if a state was persisted, else start fresh.
-    const state = await scoringStore.loadTimerState()
-    if (state && state.action) {
-      restoreFromServer({
-        action: state.action,
-        maxTime: state.maxTime || scoringStore.currentPeriodDuration,
-        // We persist the elapsed seconds in start_time (see store.setTimer)
-        elapsed: state.startTime ?? 0,
-        startTimeServer: state.startTimeServer ?? undefined,
-        nowServer: state.nowServer
-      })
-    } else {
-      timerSetPeriod(scoringStore.currentPeriodDuration)
-    }
-    // Restore the shotclock / break persisted server-side (scoring_live_clock, GET /state).
-    const sc = scoringStore.liveClocks.find(c => c.kind === 'SHOTCLOCK')
-    if (sc && isLive.value) {
-      shotclock.restore({ initMs: sc.initMs, elapsedMs: sc.elapsedMs, running: sc.running })
-      // A shotclock can only run while the game clock runs: align after restore.
-      if (!isRunning.value && shotclock.state.value === 'RUNNING') shotclock.suspend()
-    }
-    const br = scoringStore.liveClocks.find(c => c.kind === 'BREAK')
-    if (br && isLive.value) {
-      const left = Math.max(0, Math.round((br.initMs - br.elapsedMs) / 1000))
-      if (left > 0) startBreak(left, false)
-    }
+    // Restore every clock from the canonical server state (chrono, shotclock, break).
+    if (isLive.value) await applyServerClocks()
+    else timerSetPeriod(scoringStore.currentPeriodDuration)
+
     const penClocks = scoringStore.liveClocks.filter(c => c.kind === 'PENALTY')
     if (penClocks.length && isLive.value) {
       penalties.restore(
@@ -346,6 +390,10 @@ onMounted(async () => {
     // Local channel for the scoreboard / shotclock windows, then a first full snapshot.
     broadcast.init()
     broadcast.broadcastAll()
+
+    // Subscribe to this match's topics: another terminal (or the hardware relay) taking
+    // over is reflected here without a reload.
+    liveSync.connect(scoringStore.mercureUrl, scoringStore.topicBase)
   } catch {
     // useApi already shows a toast
   }
@@ -584,6 +632,19 @@ const toggleLock = async () => {
               @click="mode = 'post'"
             >{{ t('scoring.mode.post') }}</UButton>
           </div>
+          <!-- Live sync indicator: the console follows this match's Mercure topics, so a
+               change made on another terminal (or by the hardware relay) lands here. -->
+          <UBadge
+            v-if="isLive"
+            size="xs"
+            variant="soft"
+            :color="liveSync.status.value === 'connected' ? 'success' : liveSync.status.value === 'error' ? 'warning' : 'neutral'"
+            :title="remoteSynced ? t('scoring.sync.remote_change') : t('scoring.sync.' + liveSync.status.value)"
+            :class="remoteSynced ? 'animate-pulse ring-2 ring-primary-500' : ''"
+          >
+            <UIcon :name="liveSync.status.value === 'connected' ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'" />
+          </UBadge>
+
           <!-- Full-screen displays (same origin → BroadcastChannel keeps them in sync) -->
           <UButton
             v-if="isLive"

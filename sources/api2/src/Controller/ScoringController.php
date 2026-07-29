@@ -51,7 +51,9 @@ class ScoringController extends AbstractController
 
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private ScoringLiveService $live
+        private ScoringLiveService $live,
+        /** Browser-facing Mercure subscribe URL (never the JWT secret). */
+        private string $mercurePublicUrl = ''
     ) {
         $this->connection = $entityManager->getConnection();
     }
@@ -518,7 +520,13 @@ class ScoringController extends AbstractController
             return new JsonResponse(null, Response::HTTP_NOT_MODIFIED);
         }
 
-        $response = new JsonResponse(['exists' => true] + $state + ['nowServer' => time() % 86400]);
+        // The console subscribes to its own match's topics to stay coherent across
+        // terminals (plan lot 3): it gets the hub URL and the topic base from here, so
+        // the addressing scheme stays server-owned. Public info — never the JWT secret.
+        $response = new JsonResponse(['exists' => true] + $state + [
+            'mercureUrl' => $this->mercurePublicUrl,
+            'nowServer' => time() % 86400,
+        ]);
         $response->headers->set('ETag', $etag);
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
 

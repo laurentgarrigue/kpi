@@ -44,6 +44,12 @@ services:
         arguments:
             $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
 
+    # La console Scoring renvoie l'URL d'abonnement du hub dans GET /state pour que
+    # les terminaux d'un même match restent cohérents (refonte scoring, lot 3).
+    App\Controller\ScoringController:
+        arguments:
+            $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
+
     App\Controller\AdminPresenceController:
         arguments:
             $surclassementCompetitions: '%env(csv:SURCLASSEMENT_COMPETITIONS)%'

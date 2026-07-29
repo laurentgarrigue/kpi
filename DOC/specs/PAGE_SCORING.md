@@ -1522,7 +1522,17 @@ modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), pers
 | `nuxt.config.ts` + `package.json` | **`@vite-pwa/nuxt`** ajouté : `registerType: 'autoUpdate'`, `skipWaiting` + `clientsClaim`, `cleanupOutdatedCaches`, manifest `standalone`/paysage scope `/admin2/`, `navigateFallbackDenylist` sur `/api2` et `/api` (le shell ne répond jamais à un appel API), **service worker désactivé en dev**. |
 | `composables/usePwaUpdate.ts` | **Créé.** Boucle de fraîcheur : vérification au chargement, au retour d'onglet et toutes les 5 min ; **rechargement automatique** quand le nouveau worker prend la main (sans reload au premier enregistrement). Sûr car online-first : tout est déjà persisté serveur. **À réutiliser tel quel sur app2** (§0.9). |
 
-Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés (111 entrées de
+**Console abonnée à Mercure ✅ (plan lot 3, 5ᵉ tranche — 2026-07-29) :**
+
+| Fichier | Détail |
+|---|---|
+| `src/Controller/ScoringController.php` + `services.yaml` | `GET /state` renvoie **`topicBase`** (`/scoring/event/{e}/pitch/{p}` ou repli `/scoring/match/{id}`) et **`mercureUrl`** (URL d'abonnement publique, **jamais** le secret JWT). L'adressage reste **propriété du serveur** : le client ne fabrique jamais un topic (plan §3.3). Le banc `/admin/mercure/config` étant réservé au profil 1, la console (profil ≤ 2) passe par cette route. |
+| `src/Service/ScoringLiveService.php` | `topicBase()` extrait de `deposit()` : publication et abonnement partagent la **même** source d'adressage. |
+| `composables/useScoringLiveSync.ts` | **Créé.** Abonnement SSE au gabarit d'URI `{topicBase}/{type}` (tous les blocs du match d'un coup). Sur message : **pas de fusion de diff** (elle dériverait de la logique serveur) mais **refetch de l'état canonique** (débounce 400 ms, gratuit grâce à l'`ETag`) → **auto-réparant** si un message est perdu ou arrive hors ordre. **Suppression d'écho** de nos propres écritures via `store.lastMutationAt` (fenêtre 2 s) — aucun changement du contrat d'écriture. |
+| `stores/scoringStore.ts` | `mercureUrl`/`topicBase`/`activeSource`/`lastMutationAt` en state (horodatage posé par **toutes** les actions mutantes) ; nouvelle action **`refreshLiveState()`** (état + faits). |
+| `pages/games/[id]/scoring.vue` | `applyServerClocks()` **factorisé** (chargement initial **et** changement distant) : chrono principal via `GET /gameTimer` (seul chemin qui compense la dérive exactement), shotclock/pause depuis l'état ; badge d'état de synchronisation dans l'entête + **signal visuel** quand l'état a bougé depuis un autre terminal (failover, source matérielle). |
+
+Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés (113 entrées de
 precache, `skipWaiting`/`clientsClaim` présents) ; ESLint OK. Tests :
 [SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md)
 (2ᵉ tranche 3.11–3.21, 3ᵉ 3.22–3.31, 4ᵉ 3.32–3.39).

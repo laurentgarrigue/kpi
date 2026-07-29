@@ -164,10 +164,23 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.38 | Couper le réseau puis **relancer** la PWA installée | l'application démarre (app shell en cache) ; les données du match nécessitent le réseau (file d'écritures offline = lot 7) |
 | 3.39 | En **dev** (`make app4_dev`) | **aucun** service worker enregistré (pas de cache des chunks Vite) |
 
+### Tests fonctionnels — 5ᵉ tranche (console abonnée à Mercure)
+
+> Prérequis : lots 1 et 2 déployés en dev (tables + worker qui draine l'outbox).
+
+| # | Test | Attendu |
+|---|---|---|
+| 3.40 | Ouvrir la console d'un match en mode direct | badge **antenne verte** dans l'entête (`scoring.sync.connected`) |
+| 3.41 | Ouvrir **le même match sur un 2ᵉ terminal** (autre navigateur/poste), y saisir un but | le 1ᵉʳ terminal se met à jour **sans rechargement** en ~1 s (score + historique), le badge **clignote** (« modification reçue d'un autre terminal ») |
+| 3.42 | Lancer/arrêter le **chrono** depuis le 2ᵉ terminal | le 1ᵉʳ terminal reprend le chrono **synchronisé** (dérive compensée via `GET /gameTimer`) ; idem shotclock et pause |
+| 3.43 | Saisir **uniquement** sur le 1ᵉʳ terminal (rafale d'actions) | **aucun** refetch parasite : l'écho de nos propres écritures est ignoré (fenêtre 2 s) — vérifier dans l'onglet Réseau qu'il n'y a pas de `GET /state` après chaque écriture |
+| 3.44 | Couper le réseau 30 s puis le rétablir | le badge passe **orange** puis revient vert ; l'état se resynchronise tout seul (rejeu `Last-Event-ID` + refetch) |
+| 3.45 | Promouvoir la source sur `HARDWARE` depuis un autre client, puis écrire depuis la console | la console reçoit **409** (déjà couvert en 1.7) **et** reflète les changements poussés par la source active |
+| 3.46 | Match **hors événement KPI** (sans terrain) | l'abonnement utilise le topic de repli `/scoring/match/{id}/{type}` et fonctionne pareil |
+
 ### Reste à livrer sur le lot 3 (tests à ajouter ici au fil de l'eau)
 
-Abonnement Mercure de la console ; mode score seul ; solde §7.8 (statut joueur,
-officiels UI, recharge présents, n° court).
+Mode score seul ; solde §7.8 (statut joueur, officiels UI, recharge présents, n° court).
 
 ---
 

@@ -88,6 +88,9 @@ interface ScoringLiveStateResponse {
   clocks?: LiveClock[]
   /** Server seconds since midnight — drift basis for restoring running clocks */
   nowServer?: number
+  /** Mercure subscribe URL + topic base of this match (addressing is server-owned) */
+  mercureUrl?: string
+  topicBase?: string
 }
 
 /** Generate a uid in the same shape the backend produces (uniqid without dashes). */
@@ -105,6 +108,16 @@ interface ScoringState {
   config: ScoringConfig
   /** Live clocks snapshot from GET /admin/scoring/state (shotclock, penalties, break…) */
   liveClocks: LiveClock[]
+  /** Mercure subscribe URL and topic base of the match (from GET /state) */
+  mercureUrl: string
+  topicBase: string
+  /** Active writing source of the match (plan §4.1) */
+  activeSource: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
+  /**
+   * Epoch ms of the last LOCAL mutation. The live sync uses it to ignore the echo of
+   * our own writes coming back on the Mercure channel (see useScoringLiveSync).
+   */
+  lastMutationAt: number
   loading: boolean
   initialized: boolean
 }
@@ -119,6 +132,10 @@ export const useScoringStore = defineStore('scoring', {
     penalties: [],
     config: defaultScoringConfig(),
     liveClocks: [],
+    mercureUrl: '',
+    topicBase: '',
+    activeSource: 'MANUAL',
+    lastMutationAt: 0,
     loading: false,
     initialized: false
   }),
@@ -175,7 +192,10 @@ export const useScoringStore = defineStore('scoring', {
             match.scoreB = String(liveState.scoreB)
           }
           this.liveClocks = liveState.clocks ?? []
+          if (liveState.activeSource) this.activeSource = liveState.activeSource
         }
+        this.mercureUrl = liveState.mercureUrl ?? ''
+        this.topicBase = liveState.topicBase ?? ''
 
         this.match = match
         this.playersA = resA.players.map(p => ({ ...p, team: 'A' as TeamSide }))
@@ -204,6 +224,7 @@ export const useScoringStore = defineStore('scoring', {
     /** Update a match parameter (score/status/period) via api2, optimistic + rollback */
     async setParam(param: string, value: string, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       const previous = (this.match as Record<string, unknown>)[
         param.charAt(0).toLowerCase() + param.slice(1)
@@ -241,6 +262,7 @@ export const useScoringStore = defineStore('scoring', {
     /** Add a match event (goal/card); score auto-incremented for goals */
     async addEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       // Assign a uid up front so optimistic state, server row and later edits all agree.
       if (!event.uid) event.uid = genUid()
@@ -280,6 +302,7 @@ export const useScoringStore = defineStore('scoring', {
     /** Remove an event (by uid when known, else by period/player/code) */
     async removeEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       const idx = event.uid
         ? this.events.findIndex(e => e.uid === event.uid)
@@ -320,6 +343,7 @@ export const useScoringStore = defineStore('scoring', {
      */
     async updateEvent(uid: string, patch: Partial<ScoringEvent>, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       const idx = this.events.findIndex(e => e.uid === uid)
       if (idx < 0) return
@@ -365,6 +389,49 @@ export const useScoringStore = defineStore('scoring', {
       this.match.scoreB = String(b)
     },
 
+    /**
+     * Re-read the canonical live state and re-apply it on top of the local one.
+     * Used when Mercure signals a change made on ANOTHER terminal (plan lot 3): the
+     * console refetches instead of merging a diff, so it can never drift from the
+     * server. Cheap thanks to the ETag (304 when nothing moved).
+     */
+    async refreshLiveState(apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      const api = apiInstance ?? useApi()
+      const [liveState, resEvents] = await Promise.all([
+        api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${this.match.id}`),
+        api.get<ScoringEventsResponse>(`/admin/scoring/events/${this.match.id}`)
+      ])
+
+      if (liveState.exists && this.match) {
+        if (liveState.statut) this.match.statut = liveState.statut
+        if (liveState.periode) this.match.periode = liveState.periode
+        if (typeof liveState.scoreA === 'number') {
+          this.match.scoreDetailA = String(liveState.scoreA)
+          this.match.scoreA = String(liveState.scoreA)
+        }
+        if (typeof liveState.scoreB === 'number') {
+          this.match.scoreDetailB = String(liveState.scoreB)
+          this.match.scoreB = String(liveState.scoreB)
+        }
+        this.liveClocks = liveState.clocks ?? []
+        if (liveState.activeSource) this.activeSource = liveState.activeSource
+      }
+
+      this.events = resEvents.events.map(e => ({
+        uid: e.uid,
+        code: e.code,
+        period: e.period,
+        tpsJeu: e.tpsJeu,
+        team: e.team,
+        player: e.player,
+        number: e.number,
+        reason: e.reason ?? '',
+        nom: e.nom ?? undefined,
+        prenom: e.prenom ?? undefined
+      }))
+    },
+
     /** Read the persisted timer state (for clock restore on reload) */
     async loadTimerState(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return null
@@ -399,6 +466,7 @@ export const useScoringStore = defineStore('scoring', {
       apiInstance?: ReturnType<typeof useApi>
     ) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       await api.put(`/admin/scoring/gameTimer/${this.match.id}`, { params: { action, ...params } })
     },
@@ -406,6 +474,7 @@ export const useScoringStore = defineStore('scoring', {
     /** Validate / lock toggle (reuses AdminGames endpoint) */
     async toggleValidation(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
+      this.lastMutationAt = Date.now()
       const api = apiInstance ?? useApi()
       const res = await api.patch<{ validation: string }>(
         `/admin/games/${this.match.id}/validation`

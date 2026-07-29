@@ -735,8 +735,18 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   Service worker **désactivé en dev** (jamais de cache des chunks Vite). Mécanisme
 >   conçu pour être **réutilisé tel quel sur app2**. Build Nuxt validé (`sw.js` généré,
 >   111 entrées de precache) ;
-> - ⬜ reste sur le lot 3 : abonnement Mercure de la console, mode score seul,
->   solde §7.8 (statut joueur, officiels UI, recharge présents, n° court).
+> - ✅ 3.7 — **console abonnée à Mercure** (2026-07-29) : `useScoringLiveSync` s'abonne
+>   au **gabarit d'URI `{topicBase}/{type}`** du match (tous les blocs d'un coup) ;
+>   `GET /state` renvoie désormais **`topicBase` et `mercureUrl`** — l'adressage reste
+>   **propriété du serveur**, le client ne fabrique jamais un topic. Sur message : pas de
+>   fusion de diff (qui dériverait de la logique serveur) mais un **refetch de l'état
+>   canonique** (débounce 400 ms, gratuit grâce à l'`ETag`) puis re-amorçage des horloges
+>   — donc **auto-réparant** même si un message est perdu ou hors ordre. **Suppression
+>   d'écho** de nos propres écritures via `store.lastMutationAt` (fenêtre 2 s), sans
+>   toucher au contrat d'écriture. Indicateur d'état dans l'entête + **signal visuel**
+>   quand l'état a bougé depuis un autre terminal (failover, source matérielle).
+> - ⬜ reste sur le lot 3 : mode score seul, solde §7.8 (statut joueur, officiels UI,
+>   recharge présents, n° court).
 
 ---
 
