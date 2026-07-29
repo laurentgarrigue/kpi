@@ -1,0 +1,101 @@
+name: Deploy production
+
+# Phase 6 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Déploiement PRODUCTION, déclenché À LA MAIN + approbation obligatoire.
+#
+# Différences avec Deploy preprod (déclencheur `push develop`, auto, sans clic) :
+#   - Déclencheur = `workflow_dispatch` UNIQUEMENT (bouton « Run workflow »). Une
+#     release se DÉCIDE, elle ne part pas toute seule sur un push.
+#   - `environment: production` porte un REQUIRED REVIEWER (Phase 0) → GitHub met le
+#     run en pause et EXIGE une approbation manuelle avant d'exécuter le job.
+#   - On VÉRIFIE que le ref à déployer est bien un ancêtre de `main` : impossible de
+#     pousser en prod une branche arbitraire (feature, develop non mergé…).
+#
+# ⚠️ Pièges d'infra Phase 5 REJOUÉS sur /data/kpi (cf. reference_cd_github_actions_ssh_pitfalls) :
+#   - Ce fichier doit vivre sur `main` (branche par défaut) pour que le bouton
+#     « Run workflow » apparaisse — comme tout workflow_dispatch.
+#   - L'environment `production` n'autorise QUE la branche `main` (politique de
+#     branche Phase 0) → le SÉLECTEUR de branche du bouton Run doit rester sur `main`.
+#   - Côté VPS, /data/kpi a déjà : `git safe.directory` pour `deploy` + ACL rwX
+#     (posés en Phase 5, vérifiés). Le wrapper gère `production` (whitelist ENV,
+#     DEPLOY_PATH_PRODUCTION, SMOKE_URL_PRODUCTION) et backup DB avant migration.
+#
+# Toute la logique de déploiement vit dans `deploy-wrapper.sh` (repo PRIVÉ
+# vps-manager), symlinké en `/home/deploy/deploy-wrapper.sh`. Voir deploy-preprod.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Tag, SHA ou branche à déployer (DOIT être sur main). Défaut : main'
+        required: true
+        default: 'main'
+
+# Least privilege : lecture seule du repo (checkout de vérification uniquement).
+permissions:
+  contents: read
+
+concurrency:
+  # Un seul déploiement prod à la fois ; on n'annule jamais celui en cours (un
+  # déploiement à moitié appliqué est pire qu'un déploiement en retard).
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # ← charge les secrets SSH_* + DEPLOY_PATH scopés à la PRODUCTION et DÉCLENCHE
+    #   l'approbation manuelle (required reviewer de l'environment production).
+    #   Un job ciblant `preprod` ne peut PAS lire ces secrets (isolation prouvée
+    #   en Phase 5, test-env-isolation.yml).
+    environment: production
+    steps:
+      - name: Checkout (résolution + vérification du ref)
+        uses: actions/checkout@v4
+        with:
+          # Historique complet requis pour `git merge-base --is-ancestor`.
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+
+      - name: Vérifier que le ref est sur main + résoudre le SHA
+        id: sha
+        env:
+          # `inputs.ref` est une entrée non fiable : on ne l'interpole JAMAIS dans un
+          # `run:` (risque d'injection shell). On la passe par l'environnement et on
+          # la référence via "$REQ_REF" (quoté). Le checkout ci-dessus l'a déjà
+          # résolue côté action (paramètre `ref:`, non-shell) ; ici on ne fait que
+          # l'AFFICHER — le SHA déployé vient de `git rev-parse HEAD`.
+          REQ_REF: ${{ inputs.ref }}
+        run: |
+          # Le ref demandé DOIT être un ancêtre de origin/main : on ne déploie
+          # jamais en prod du code qui n'est pas passé par main (donc par la CI +
+          # la revue de la PR de release). Empêche de pousser une feature arbitraire.
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::Le ref demandé n'est PAS sur main. La prod ne déploie que du code mergé dans main."
+            exit 1
+          fi
+
+          # SHA effectif du HEAD checkouté (résout tag/branche → SHA concret déployé).
+          sha="$(git rev-parse HEAD)"
+          # Garde-fou anti-injection : un SHA git est exactement 40 hex.
+          if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::SHA résolu invalide: '$sha'"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          printf '✅ %s est sur main → déploiement production du SHA %s\n' "$REQ_REF" "$sha"
+
+      - name: Déployer via SSH (wrapper VPS)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          # `timeout` = délai d'établissement de la connexion SSH (aléa réseau
+          # runner↔VPS transitoire vu en Phase 5, élargi à 60s). `command_timeout`
+          # couvre toute la durée du wrapper (generate + composer + migration ~7 min).
+          timeout: 60s
+          command_timeout: 20m
+          script: /home/deploy/deploy-wrapper.sh production ${{ steps.sha.outputs.sha }}

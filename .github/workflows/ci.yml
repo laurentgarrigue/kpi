@@ -43,7 +43,6 @@ jobs:
       legacy: ${{ steps.filter.outputs.legacy }}
       api2: ${{ steps.filter.outputs.api2 }}
       app2: ${{ steps.filter.outputs.app2 }}
-      app3: ${{ steps.filter.outputs.app3 }}
       app4: ${{ steps.filter.outputs.app4 }}
       docker: ${{ steps.filter.outputs.docker }}
     steps:
@@ -62,8 +61,6 @@ jobs:
               - 'sources/api2/**'
             app2:
               - 'sources/app2/**'
-            app3:
-              - 'sources/app3/**'
             app4:
               - 'sources/app4/**'
             docker:
@@ -71,20 +68,21 @@ jobs:
               - 'Makefile'
 
   # ---------------------------------------------------------------------------
-  # 2. Lint ESLint des apps Nuxt (app2 / app3 / app4).
+  # 2. Lint ESLint des apps Nuxt (app2 / app4).
   #    Un seul job matriciel : ne tourne que sur les apps réellement modifiées.
+  #    app3 (feuille de marque, gelé) n'est plus buildé/testé/déployé — il ne
+  #    reste que comme référence pour le scoring d'app4 → hors CI.
   # ---------------------------------------------------------------------------
   lint-nuxt:
     needs: changes
     if: >-
       needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app3 == 'true' ||
       needs.changes.outputs.app4 == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        app: [app2, app3, app4]
+        app: [app2, app4]
     steps:
       - uses: actions/checkout@v4
 
@@ -94,7 +92,6 @@ jobs:
         run: |
           case "${{ matrix.app }}" in
             app2) changed="${{ needs.changes.outputs.app2 }}" ;;
-            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
             app4) changed="${{ needs.changes.outputs.app4 }}" ;;
           esac
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
@@ -117,24 +114,24 @@ jobs:
         run: npx eslint .
 
   # ---------------------------------------------------------------------------
-  # 2bis. Build Nuxt effectif (Phase 3) — app2 / app3 / app4.
+  # 2bis. Build Nuxt effectif (Phase 3) — app2 / app4.
   #    Garantit que `develop` reste buildable : un .vue/.ts cassé, un import
   #    manquant ou une erreur de config Nuxt fait échouer `nuxt build`.
   #    On utilise `build` (SSR/nitro) et NON `generate` : `generate` passe par
-  #    `dotenv -e .env.production` (app2/app3), absent en CI. `nuxt.config.ts` a
+  #    `dotenv -e .env.production` (app2), absent en CI. `nuxt.config.ts` a
   #    des fallbacks (`?? 'https://…'`) pour toutes les vars → aucun .env requis.
+  #    app3 (gelé, référence uniquement) est hors CI.
   # ---------------------------------------------------------------------------
   build-nuxt:
     needs: changes
     if: >-
       needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app3 == 'true' ||
       needs.changes.outputs.app4 == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        app: [app2, app3, app4]
+        app: [app2, app4]
     steps:
       - uses: actions/checkout@v4
 
@@ -144,7 +141,6 @@ jobs:
         run: |
           case "${{ matrix.app }}" in
             app2) changed="${{ needs.changes.outputs.app2 }}" ;;
-            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
             app4) changed="${{ needs.changes.outputs.app4 }}" ;;
           esac
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
@@ -389,13 +385,12 @@ jobs:
     needs: changes
     if: >-
       needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app3 == 'true' ||
       needs.changes.outputs.app4 == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        app: [app2, app3, app4]
+        app: [app2, app4]
     steps:
       - uses: actions/checkout@v4
       - name: Cette app est-elle concernée ?
@@ -403,7 +398,6 @@ jobs:
         run: |
           case "${{ matrix.app }}" in
             app2) changed="${{ needs.changes.outputs.app2 }}" ;;
-            app3) changed="${{ needs.changes.outputs.app3 }}" ;;
             app4) changed="${{ needs.changes.outputs.app4 }}" ;;
           esac
           echo "changed=$changed" >> "$GITHUB_OUTPUT"

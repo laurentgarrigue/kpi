@@ -51,11 +51,12 @@ DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
 docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_logs docker_dev_status \
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
+docker_production_restart docker_production_rebuild \
 app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_build app3_generate_dev app3_generate_preprod app3_generate_prod app3_lint \
+app3_dev app3_build app3_generate_dev app3_lint \
 app3_npm_install app3_npm_ls app3_npm_clean app3_npm_update app3_npm_add app3_npm_add_dev app3_bash \
-app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_lint \
+app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -404,6 +405,11 @@ docker_prod_rebuild: ## Reconstruit et relance les containers de production (apr
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d
 	@echo "Containers reconstruits et relancés"
 
+# Alias `production` (nom long) pour que deploy-wrapper.sh puisse cibler les mêmes
+# briques via `make docker_$${ENV}_restart` avec ENV=preprod|production sans casse.
+docker_production_restart: docker_prod_restart ## Alias production de docker_prod_restart (deploy-wrapper.sh)
+docker_production_rebuild: docker_prod_rebuild ## Alias production de docker_prod_rebuild (deploy-wrapper.sh)
+
 docker_prod_logs: ## Affiche les logs des containers de production
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml logs -f
 
@@ -509,15 +515,9 @@ app3_build: ## Build l'application Nuxt (app3) pour la production
 app3_generate_dev: ## Génère l'application Nuxt (app3) en mode statique pour développement
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npx dotenv-cli -e .env.development -- nuxt generate"
 
-app3_generate_preprod: ## Génère l'application Nuxt (app3) en mode statique pour pré-production (utilise container temporaire)
-	@echo "Building app3 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app3:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
-	@echo "Build complete! Files are in sources/app3/.output/public/"
-
-app3_generate_prod: ## Génère l'application Nuxt (app3) en mode statique pour production (utilise container temporaire)
-	@echo "Building app3 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app3:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
-	@echo "Build complete! Files are in sources/app3/.output/public/"
+# app3 (feuille de marque) n'est plus déployé : les cibles generate preprod/prod/
+# production ont été retirées. app3 ne subsiste que comme RÉFÉRENCE locale pour le
+# scoring d'app4 → seules restent les cibles dev/lint/npm ci-dessous.
 
 app3_lint: ## Exécute ESLint sur app3
 	$(DOCKER_EXEC_NODE3) sh -c "npm run lint"
@@ -609,6 +609,8 @@ app4_generate_prod: ## Génère l'application Nuxt (app4 admin) en mode statique
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
 	@echo "App4 generated and nginx restarted!"
+
+app4_generate_production: app4_generate_prod ## Alias production de app4_generate_prod (deploy-wrapper.sh)
 
 app4_lint: ## Exécute ESLint sur app4
 	$(DOCKER_EXEC_NODE4) sh -c "npm run lint"
