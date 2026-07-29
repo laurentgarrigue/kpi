@@ -51,7 +51,7 @@ npm) ; lock `command=` optionnel dans `authorized_keys`.
 | Job | Déclencheur (path filter) | Ce qu'il vérifie |
 |---|---|---|
 | `changes` | toujours | Calcule quels dossiers ont changé (dorny/paths-filter) |
-| `lint-nuxt` | `sources/app2\|app3\|app4/**` | `npm ci` + `npx eslint .` sur chaque app modifiée (matrice) |
+| `lint-nuxt` | `sources/app2\|app4/**` | `npm ci` + `npx eslint .` sur chaque app modifiée (matrice) |
 | `lint-api2` | `sources/api2/**` | `composer install` + `lint:yaml config` + `lint:container` |
 | `phpstan-api2` | `sources/api2/**` | **PHPStan level 3** (Phase 2) — analyse statique, sans DB |
 | `lint-legacy` | `sources/**` (hors api2/app*) | `php -l` sur les fichiers PHP legacy (parallèle -P4) |
@@ -60,7 +60,7 @@ npm) ; lock `command=` optionnel dans `authorized_keys`.
 | `audit-npm` | `sources/app*/**` | **`npm audit --omit=dev --audit-level=high`** (Phase 2) |
 | `secrets-scan` | toujours | **Gitleaks** (Phase 2) — secrets commités |
 | `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
-| `build-nuxt` | `sources/app2\|app3\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
+| `build-nuxt` | `sources/app2\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
 | `smoke-api2` | `sources/api2/**` | **boot Symfony** (Phase 3) — `cache:clear` + `doctrine:schema:validate --skip-sync`, **sans DB** |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
 
@@ -71,6 +71,17 @@ npm) ; lock `command=` optionnel dans `authorized_keys`.
 Une brique non touchée ⇒ son job est **skipped**, et `ci-summary` traite skipped
 comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
 `secrets-scan` tourne en revanche sur **toute** PR (un secret peut arriver partout).
+
+> **app3 retiré du CI/CD (2026-07-29).** La feuille de marque (`sources/app3/`)
+> n'est plus **buildée, testée ni déployée** : elle ne subsiste que comme
+> **référence** pour la construction du scoring dans app4. Retiré partout :
+> matrices `lint-nuxt` / `build-nuxt` / `audit-npm` (→ `app2, app4`), filtre
+> `changes.app3` (l'exclusion `!sources/app3/**` du filtre `legacy` RESTE, sinon un
+> commit app3 réveillerait le lint legacy), cibles Makefile `app3_generate_preprod/
+> prod/production`, et l'appel `make app3_generate_${ENV}` du `deploy-wrapper.sh`.
+> Restent : les cibles `app3_dev`/`app3_build`/`app3_generate_dev`/`app3_lint`/npm
+> (usage local) et le scan CodeQL global (balaie tout le JS/TS de l'arbre, sans
+> config par-chemin). Dependabot ne suivait déjà pas app3.
 
 ---
 
@@ -623,6 +634,120 @@ masque de toute façon → on teste « vide vs non-vide », pas la valeur). Séq
 > côtés d'un coup, il faudrait soit assouplir temporairement les politiques de branche, soit
 > deux workflows séparés. Ici l'objectif (isolation preprod↛production) est atteint par le
 > seul job preprod, donc on n'y touche pas.
+
+---
+
+## Phase 6 — Déploiement production (2026-07-27)
+
+**Objectif** : déployer la prod (`/data/kpi`) **à la main, avec approbation**, en
+rejouant l'outillage éprouvé en préprod. Choix actés avec l'utilisateur :
+**déclencheur `workflow_dispatch` seul** (pas de push de tag) + **backup DB avant
+migration** via le `backup.sh` existant de vps-manager.
+
+### Ce qui était DÉJÀ prêt (hérité de la Phase 5)
+
+- **Le wrapper `deploy-wrapper.sh` gère déjà `production`** : whitelist ENV
+  `preprod|production`, `BASE=$DEPLOY_PATH_PRODUCTION` (`/data/kpi`),
+  `SMOKE_URL=$SMOKE_URL_PRODUCTION`. Snapshot `.last-deploy-sha`, `reset --hard`,
+  rebuild sélectif, smoke + **rollback auto** : tout est ENV-agnostique.
+- **VPS `/data/kpi` prêt** (vérifié 2026-07-27, posé en Phase 5 en même temps que
+  préprod) : `git config --global safe.directory /data/kpi` **présent** pour
+  `deploy`, **ACL `u:deploy:rwX`** (avec héritage `-d`) **présent**. Les conteneurs
+  prod (`kpi_php`, `kpi_api2`, `kpi_db`…) tournent.
+
+### Le piège qui aurait cassé le 1er déploiement prod : nommage `_prod` vs `_production`
+
+Le wrapper appelle `make appN_generate_${ENV}` / `make docker_${ENV}_restart`. Avec
+`ENV=production`, ça donne `app4_generate_production`, `docker_production_restart`,
+etc. Or le Makefile n'avait **que `app2_generate_production`** — app4 et docker
+n'exposaient que le nom court **`_prod`** (`app4_generate_prod`, `docker_prod_restart`).
+Donc un déploiement prod aurait échoué sur les étapes app4/docker (`make: *** No
+rule to make target`). En préprod le hasard jouait : `docker_preprod_restart` /
+`appN_generate_preprod` existent tous.
+
+**Fix (Makefile, ce lot)** : ajout d'alias `production` pointant sur le `_prod`
+canonique, sur le modèle de l'alias `app2_generate_prod: app2_generate_production`
+déjà présent :
+
+```make
+docker_production_restart: docker_prod_restart
+docker_production_rebuild: docker_prod_rebuild
+app4_generate_production:  app4_generate_prod
+```
+
+Ajoutés au `.PHONY`. `make -n` sur les cibles `*_production` → résolution OK. Le
+wrapper reste **générique** (aucun `case $ENV` sur les noms de cibles).
+
+> **MàJ 2026-07-29** : app3 ayant été **retiré du déploiement** (voir l'encadré
+> « app3 retiré du CI/CD » plus haut), l'alias `app3_generate_production` initialement
+> ajouté ici a été **supprimé** en même temps que les cibles `app3_generate_*`, et
+> l'appel `make app3_generate_${ENV}` a été retiré du wrapper. Restent les alias
+> app2/app4/docker.
+
+### Backup DB avant migration (prod only) — patch wrapper
+
+Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
+`REBUILD_API2` du wrapper, **juste avant `api2_migrations_migrate`**, gardé par
+`[ "$ENV" = "production" ]` :
+
+```bash
+if [ "$ENV" = "production" ] && [ "$deploy_ok" = 1 ]; then
+  run_quiet "backup DB prod (kpi) avant migration" "$SCRIPT_DIR/backup.sh" kpi \
+    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier backup.sh)"
+fi
+```
+
+- `backup.sh <service>` (déjà dans vps-manager) accepte un service unique ; le service
+  **`kpi`** = la base prod principale (conteneur `kpi_db`), défini dans
+  `SERVICES_TO_BACKUP`. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors
+  scope.
+- **Un backup KO ne bloque PAS le déploiement** (le cron `backup.sh` reste le filet
+  principal), mais il est tracé en `❌`. Rationnel : aujourd'hui api2 n'a **aucune
+  migration versionnée** (schéma = base legacy partagée, `migrate --allow-no-migration`
+  = no-op), donc ce backup est surtout un filet pour le futur ; le rendre bloquant
+  ferait échouer des déploiements pour un no-op.
+- ⚠️ **Cette modif vit dans le repo `vps-manager` (privé), PAS dans kpi.** Elle a été
+  **appliquée directement** dans le checkout local `~/Documents/dev/vps-manager`
+  (`deploy-wrapper.sh`, branche `main`) — Laurent n'a plus qu'à committer + pusher, puis
+  `git pull` côté VPS (`/data/vps-manager`, en tant que `laurent` : le checkout VPS est
+  `read-only` pour `deploy`). Le même lot y retire aussi l'appel `make app3_generate_${ENV}`
+  (app3 sorti du déploiement).
+
+### `deploy-prod.yml` (ce lot)
+
+`workflow_dispatch` avec input `ref` (défaut `main`). `environment: production` →
+**approbation manuelle** (required reviewer Phase 0). Étapes :
+
+1. `checkout` (fetch-depth 0) du `ref` demandé.
+2. **`git merge-base --is-ancestor HEAD origin/main`** : refuse tout ref qui n'est pas
+   sur `main` (donc pas passé par CI + revue de la PR de release). `inputs.ref` est
+   passé via `env: REQ_REF` et jamais interpolé dans un `run:` (anti-injection). Le SHA
+   déployé = `git rev-parse HEAD`, revalidé `^[0-9a-f]{40}$`.
+3. SSH → `deploy-wrapper.sh production <sha>`. `timeout: 60s`, `command_timeout: 20m`
+   (marge vs les 15m préprod : la prod peut rebuild les 3 apps + migration + backup).
+
+### Go-live checklist Phase 6 (à faire par Laurent — je ne pousse ni ne merge)
+
+- [ ] **vps-manager** : `deploy-wrapper.sh` est déjà modifié dans le checkout local
+      (`~/Documents/dev/vps-manager`, branche `main` : backup DB prod + retrait de l'appel
+      app3). → committer + pusher, puis `git pull` côté VPS (`/data/vps-manager`, en tant
+      que `laurent`).
+- [ ] Merger `deploy-prod.yml` sur `develop` **puis s'assurer qu'il atteint `main`**
+      (back-merge ou PR de release) — sinon le bouton « Run workflow » n'apparaît pas
+      (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis la branche par
+      défaut).
+- [ ] Vérifier que l'environment `production` autorise **`main`** (politique de branche)
+      → lancer le run avec le sélecteur sur **`main`** (3e piège Phase 5).
+- [ ] 1er run réel : Actions → « Deploy production » → Run (ref `main`) → **approuver** →
+      suivre le wrapper (smoke + rollback auto identiques à la préprod).
+- [ ] Cocher les cases de validation §6.5 du plan.
+
+### Ce qui reste ouvert (non bloquant)
+
+- **Rollback DB prod** : §6.4 du plan veut un runbook + backup horaire. Le backup
+  pré-migration est en place ; le runbook de restauration reste à écrire (Phase 8,
+  `DEPLOYMENT_RUNBOOK.md`).
+- Lock `command=` dans `authorized_keys` (durcissement optionnel, cf. Phase 5).
 
 ---
 

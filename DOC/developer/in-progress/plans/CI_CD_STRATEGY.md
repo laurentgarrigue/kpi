@@ -15,7 +15,8 @@
 > | **3** Build & smoke | ✅ Éprouvée — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) verts sur PR réelle |
 > | **3bis** Trivy image | 🟢 En cours — `trivy-image.yml` scanne les images de base (php-apache/frankenphp/mariadb) ; **non bloquant → onglet Security** (596 HIGH/CRITICAL amont non actionnables), cron hebdo + manuel. Build Docker écarté (couvert par lint-docker) |
 > | **5** CD préprod | ✅ **COMPLET** — `deploy-preprod.yml` (push develop) + `deploy-wrapper.sh` (`vps-manager`). **Merge develop → déploiement préprod 100 % AUTO réussi le 2026-07-24, rebuild des 3 apps inclus** (#246). 8 pièges d'infra franchis (le `i/o timeout` = aléa réseau transitoire de connexion + build long ~7 min, PAS l'IPv6). Reste non bloquant : rollback via Actions, optim durée |
-> | **4, 6-8** | ⬜ À faire |
+> | **6** Deploy prod | 🟢 **Workflow + outillage prêts** — `deploy-prod.yml` (`workflow_dispatch`, `environment: production` → approbation manuelle, vérif `merge-base --is-ancestor origin/main`). Makefile : aliases `production` ajoutés (app3/app4/docker n'avaient que `_prod` → le `${ENV}` du wrapper cassait). Wrapper : **backup DB `kpi` avant migration** (prod only). VPS prêt (`safe.directory` + ACL `/data/kpi` posés en Phase 5). **Reste : appliquer le patch wrapper sur `vps-manager`, pousser `deploy-prod.yml` sur `main`, 1er run réel** |
+> | **4, 7-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
 > lieu de 20, PHPStan démarré au level 3, etc.) sont tracés dans le journal.

@@ -67,6 +67,7 @@ Ce guide décrit **deux choses qui s'imbriquent** :
 |---|---|---|---|
 | **CI** (`ci.yml`) | PR vers `develop` ou `main` | lint · PHPStan · audits · build Nuxt · smoke api2 · secrets-scan → `ci-summary` | **Oui sur `main`** (`ci-summary` = required check) |
 | **Deploy preprod** (`deploy-preprod.yml`) | **push** sur `develop` (= un merge de PR) | SSH vers le VPS → `deploy-wrapper.sh` : rebuild sélectif + smoke + **rollback auto** | Non (déploie, ne garde rien) |
+| **Deploy production** (`deploy-prod.yml`) | **manuel** (`workflow_dispatch`, ref sur `main`) + **approbation** | SSH → `deploy-wrapper.sh production` : backup DB + rebuild + smoke + **rollback auto** | Non (déploie ; approbation requise) |
 | **Version bump** (`version-bump.yml`) | **push** sur `develop` | ouvre une PR `chore/version-bump` (auto-merge squash) si une app a changé | Non |
 | **Back-merge** (`backmerge-main-to-develop.yml`) | **push** sur `main` + manuel | ouvre une PR `chore/backmerge-main-to-develop → develop` | Non |
 | **CodeQL** (`codeql.yml`) | cron lundi 6 h + manuel | SAST JS/TS → onglet Security | Non |
@@ -275,6 +276,26 @@ Donc :
 Une fois mergée (push sur `main`), le workflow **Back-merge** ouvre
 automatiquement une PR `chore/backmerge-main-to-develop → develop` pour réaligner
 develop. Merge-la (squash) pour refermer la boucle.
+
+### Déployer en production (manuel + approbation)
+
+**Le push sur `main` ne déploie RIEN tout seul** (contrairement à `develop` → préprod).
+La prod se déploie **à la main, avec approbation** via le workflow **Deploy production**
+(`deploy-prod.yml`) :
+
+1. Actions → **« Deploy production »** → **Run workflow**.
+2. Sélecteur de branche sur **`main`** (l'environment `production` n'autorise que `main`) ;
+   input `ref` = `main` (ou un SHA/tag précis, qui **doit être sur `main`** — vérifié par
+   `git merge-base --is-ancestor`).
+3. GitHub met le run **en pause** et demande une **approbation** (required reviewer de
+   l'environment `production`) → approuve pour lancer.
+4. Le run fait SSH → `deploy-wrapper.sh production <sha>` sur le VPS (`/data/kpi`) :
+   **backup DB avant migration**, rebuild sélectif, smoke test, **rollback auto** si KO —
+   même mécanique que la préprod.
+
+> **Rollback prod** : identique à la préprod (le wrapper restaure `.last-deploy-sha`).
+> Pour re-déployer un état sain après un rollback, relancer « Deploy production » sur un
+> `ref` antérieur connu bon, ou reverter le commit fautif sur `main` via PR.
 
 > **Note Dependabot** : ses *security updates* ouvrent leurs PR **sur `main`**
 > directement (elles ignorent `target-branch: develop`, limitation GitHub) — d'où
