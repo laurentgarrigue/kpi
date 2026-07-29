@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Service\EventCacheService;
 use App\Service\ScoringOutboxPublisher;
+use App\Service\ScoringProgramService;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -50,6 +51,7 @@ class EventCacheWorkerCommand extends Command
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
         private readonly ScoringOutboxPublisher $outboxPublisher,
+        private readonly ScoringProgramService $programService,
     ) {
         parent::__construct();
     }
@@ -201,6 +203,18 @@ class EventCacheWorkerCommand extends Command
         } catch (\Throwable $e) {
             $io->warning(sprintf('Event #%d generation error: %s', $idEvent, $e->getMessage()));
             $this->sendHeartbeat($configId, $e->getMessage());
+        }
+
+        // Program of each pitch (current/next match + display settings) → Mercure, but
+        // only when it actually changed. This is what replaces the overlay's polling of
+        // event{e}_pitch{p}.json (PAGE_INCRUSTATION.md §6). The legacy JSON files keep
+        // being written above for the legacy overlays: nothing is taken away yet.
+        foreach ($pitches as $pitch) {
+            try {
+                $this->programService->publishIfChanged($idEvent, (string) $pitch);
+            } catch (\Throwable $e) {
+                $io->warning(sprintf('Event #%d pitch %s program error: %s', $idEvent, $pitch, $e->getMessage()));
+            }
         }
     }
 

@@ -50,6 +50,11 @@ services:
         arguments:
             $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
 
+    # Lecture publique du live (page d'incrustation, lot 4) : même URL de hub.
+    App\Controller\ScoringLiveController:
+        arguments:
+            $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
+
     App\Controller\AdminPresenceController:
         arguments:
             $surclassementCompetitions: '%env(csv:SURCLASSEMENT_COMPETITIONS)%'

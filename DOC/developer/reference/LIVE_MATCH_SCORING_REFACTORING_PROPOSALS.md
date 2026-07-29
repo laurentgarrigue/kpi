@@ -790,6 +790,31 @@ interaction utilisateur — calque OBS). Elle remplace, à terme, les ~20 pages 
 moins un événement ; l'enchaînement avant-match → match → fin de match → prochain match se
 déroule sans intervention humaine.
 
+> **Suivi d'exécution (2026-07-29) — première tranche :**
+> - ✅ 4.3 — **aiguillage sans polling** : `ScoringProgramService` (match courant/suivant du
+>   terrain + réglages résolus) et **publication par différence** (`publishIfChanged`,
+>   signature du programme) → ligne d'outbox → topic `…/program`. **Recalcul immédiat au
+>   changement de statut** depuis la console (best effort, n'interrompt jamais la saisie),
+>   et passe régulière du worker en filet. Le fichier `event{e}_pitch{p}.json` continue
+>   d'être écrit pour les incrustations legacy : **rien n'est retiré**.
+> - ✅ 4.4 — **réglages d'enchaînement** : table `scoring_display_settings`
+>   (`SQL/migrations/2026-07-29_…`), résolution **défauts → événement → terrain**, `NULL`
+>   = hériter (jamais « zéro »). Édition dans app4 : à faire avec le lot 6.
+> - ✅ 4.1/4.2 — **page d'incrustation unique** `pages/live/overlay.vue` : scène 1920×1080
+>   mise à l'échelle, contrat d'URL complet (`event`, `pitch`, `blocks`, `skin`, `variant`,
+>   `bg`, `debug`), blocs score/chrono/shotclock/pénalités/faits/prochain match, séquence
+>   d'affichage pilotée par les **faits serveur + délais configurés**, interpolation locale
+>   des horloges (`useInterpolatedClock`, modèle 4 valeurs — continue de tourner pendant
+>   une coupure), `useOverlayProgram` (boot `GET /program` + `GET /state`, puis SSE ;
+>   **auto-réparant** : refetch sur message, au réveil d'onglet et toutes les 5 min).
+> - ✅ **Lecture publique** : `ScoringLiveController` (`GET /scoring/program/{event}/{pitch}`
+>   et `GET /scoring/state/{matchId}`), **GET uniquement**, `ETag` + cache court. Public
+>   assumé et borné : l'incrustation tourne sans opérateur dans un mélangeur vidéo et ne
+>   peut pas porter de JWT ; les données sont celles déjà affichées sur les écrans du site
+>   (les anciennes incrustations PHP sont publiques aussi — **aucune régression**).
+> - ⬜ reste : 4.5 (consommateurs `kp_*` en cours de match), 4.6 (validation en parallèle,
+>   terrain par terrain), styles par compétition (§10 de la spec, second temps).
+
 ---
 
 ### Lot 5 — Le relais matériel (remplacement de WSM)

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\ScoringLiveService;
+use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -52,6 +53,7 @@ class ScoringController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ScoringLiveService $live,
+        private ScoringProgramService $program,
         /** Browser-facing Mercure subscribe URL (never the JWT secret). */
         private string $mercurePublicUrl = ''
     ) {
@@ -221,6 +223,21 @@ class ScoringController extends AbstractController
             $this->logScoring($label, $matchId, "{$data->param} = {$data->value}");
             if ($data->param === 'Statut' && $data->value === 'END') {
                 $this->logScoring('Scoring consolidation', $matchId, 'Statut END → kp_*');
+            }
+
+            // A status change moves the pitch's program (this match starts/ends, the next
+            // one becomes current): republish it right away instead of waiting for the
+            // worker's next pass — that latency is exactly what the legacy polling cost.
+            // Never let this break the scoring action itself.
+            if ($data->param === 'Statut') {
+                try {
+                    $location = $this->program->locateMatch($matchId);
+                    if ($location !== null) {
+                        $this->program->publishIfChanged($location['event'], $location['pitch']);
+                    }
+                } catch (\Throwable) {
+                    // Best effort: the worker will republish on its next pass.
+                }
             }
 
             return new JsonResponse(['success' => true]);

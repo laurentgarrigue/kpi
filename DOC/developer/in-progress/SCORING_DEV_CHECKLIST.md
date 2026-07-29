@@ -202,8 +202,51 @@ Rien : le périmètre du lot est couvert. Les évolutions sont renvoyées aux lo
 
 ---
 
-## Lots suivants (placeholders)
+---
 
-- **Lot 4 — Incrustation** : cf. [PAGE_INCRUSTATION.md §12](../../specs/PAGE_INCRUSTATION.md) (autonomie, temps réel, enchaînement, isolation multi-événements, OBS, parité par famille legacy).
+## Lot 4 — Page d'incrustation unique (1ʳᵉ tranche)
+
+### Commandes
+
+```bash
+# Table des réglages d'affichage (défauts → événement → terrain)
+docker exec -i ${DB_CONTAINER_NAME} sh -c \
+  'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  < SQL/migrations/2026-07-29_scoring_display_settings.sql
+
+make api2_restart          # nouveau contrôleur public + service programme
+make docker_dev_up         # le worker publie désormais le programme des terrains
+```
+
+URL type (source navigateur OBS, 1920×1080) :
+`https://kpi.localhost/admin2/live/overlay?event=236&pitch=2&blocks=score,clock,shotclock,penalty,fact,next&debug`
+
+### Tests fonctionnels
+
+| # | Test | Attendu |
+|---|---|---|
+| 4.1 | Ouvrir l'URL dans un navigateur **non connecté** (fenêtre privée) | l'incrustation s'affiche : **aucune authentification** requise, aucune interaction possible |
+| 4.2 | `GET /api2/scoring/program/236/2` et `GET /api2/scoring/state/{id}` | JSON public, en-tête `ETag` ; re-appel avec `If-None-Match` → **304** |
+| 4.3 | Saisir un but / lancer le chrono à la console | l'incrustation suit en ~1 s (score, chrono, chronomètre de tir, pénalités, faits) |
+| 4.4 | **Couper le réseau** de la machine d'incrustation 30 s pendant que le chrono tourne | les horloges **continuent de tourner** (interpolation locale) ; au retour, l'état se recale tout seul |
+| 4.5 | Recharger la page (ou redémarrer OBS) | retour à l'état correct en une requête — l'URL suffit |
+| 4.6 | Passer le match courant à **Terminé** | score final affiché après le délai configuré, puis **présentation du match suivant** — sans intervention |
+| 4.7 | Le match suivant passe **En cours** | l'incrustation **bascule d'elle-même** sur ce match (topic `…/program`), sans rechargement |
+| 4.8 | Vérifier la latence de bascule | quasi immédiate (recalcul du programme au changement de statut), **pas** au rythme du worker |
+| 4.9 | Deux événements simultanés, deux incrustations ouvertes | chacune ne reçoit **que** son terrain de son événement (topics) |
+| 4.10 | `blocks=score` seul, puis `blocks=fact` | seuls les blocs demandés s'affichent |
+| 4.11 | `bg=magenta` puis `bg=transparent` dans OBS | fond chromakey / alpha correct |
+| 4.12 | Insérer une ligne `scoring_display_settings` pour l'événement, puis une pour le terrain | les délais du **terrain** l'emportent ; une colonne `NULL` **hérite** (jamais « zéro ») |
+| 4.13 | Comparer avec l'incrustation legacy du même terrain (cache JSON toujours généré) | mêmes valeurs affichées — condition de bascule terrain par terrain |
+
+### Reste à livrer sur le lot 4
+
+Consommateurs `kp_*` en cours de match (`FeuilleMatchMulti.php`, app2 — étape 4.5) ;
+validation en parallèle terrain par terrain (4.6) ; UI de réglage des délais dans app4
+(avec le lot 6) ; refonte du système de styles (spec §10, second temps).
+
+---
+
+## Lots suivants (placeholders)
 - **Lot 5 — Relais matériel** : jeton machine, ingestion, terrain équipé en parallèle de WSM.
 - **Lot 0.3 (rappel)** : validation FrankenPHP + hub Mercure en **preprod puis prod** avant tout usage réel du lot 2 hors dev.

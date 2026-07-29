@@ -1,6 +1,14 @@
 # Spécification — Page d'incrustation unique (overlay vidéo live)
 
-> Statut : cadrage (2026-07-27) — implémentation au **lot 4** du
+> **Statut : 1ʳᵉ tranche implémentée (2026-07-29)** — page `sources/app4/pages/live/overlay.vue`,
+> composables `useOverlayProgram` / `useInterpolatedClock`, backend `ScoringProgramService` +
+> `ScoringLiveController` (routes publiques `GET /scoring/program/{event}/{pitch}` et
+> `GET /scoring/state/{matchId}`), table `scoring_display_settings`. Restent : évolution des
+> consommateurs `kp_*` en cours de match, validation terrain par terrain, UI de réglage des
+> délais, refonte des styles (§10). Tests :
+> [SCORING_DEV_CHECKLIST.md §lot 4](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
+>
+> Cadrage initial (2026-07-27) — implémentation au **lot 4** du
 > [plan d'action](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 > Cible : remplace les **~20 pages d'incrustation PHP** (`sources/live/*.php`) **et**
 > l'application Vue **app_live** (`sources/app_live_dev/`).
