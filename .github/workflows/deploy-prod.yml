@@ -86,7 +86,17 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           printf '✅ %s est sur main → déploiement production du SHA %s\n' "$REQ_REF" "$sha"
 
-      - name: Déployer via SSH (wrapper VPS)
+      # Déploiement via SSH, avec UN retry automatique (bloc « retry » plus bas).
+      # Couvre l'aléa réseau connu : le `dial tcp: i/o timeout` transitoire sur
+      # l'ÉTABLISSEMENT de la connexion runner↔VPS (échec en ~25-40s, avant que le
+      # wrapper démarre). SANS risque de demi-déploiement : le wrapper repart de zéro
+      # (snapshot + reset --hard + backup DB + rebuild + smoke + rollback auto), conçu
+      # pour être rejoué. `continue-on-error` sur la 1re tentative → c'est le retry qui
+      # tranche. NB prod : un retour à zéro relance le backup DB pré-migration, ce qui
+      # est inoffensif (backup.sh est rejouable, gardé par deploy_ok).
+      - name: Déployer via SSH (wrapper VPS) — tentative 1
+        id: deploy1
+        continue-on-error: true
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -96,6 +106,26 @@ jobs:
           # `timeout` = délai d'établissement de la connexion SSH (aléa réseau
           # runner↔VPS transitoire vu en Phase 5, élargi à 60s). `command_timeout`
           # couvre toute la durée du wrapper (generate + composer + migration ~7 min).
+          timeout: 60s
+          command_timeout: 20m
+          script: /home/deploy/deploy-wrapper.sh production ${{ steps.sha.outputs.sha }}
+
+      # Ne tourne QUE si la 1re tentative a échoué. Pause, puis on rejoue le wrapper.
+      # Si CETTE tentative échoue à son tour, l'étape (sans continue-on-error) fait
+      # échouer le job — on ne masque pas un vrai problème (build cassé, smoke KO →
+      # rollback, migration KO…).
+      - name: Pause avant retry
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 20
+
+      - name: Déployer via SSH (wrapper VPS) — retry
+        if: steps.deploy1.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           timeout: 60s
           command_timeout: 20m
           script: /home/deploy/deploy-wrapper.sh production ${{ steps.sha.outputs.sha }}
