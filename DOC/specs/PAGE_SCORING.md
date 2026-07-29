@@ -1481,9 +1481,29 @@ règles restent la référence. Tests fonctionnels à dérouler :
 | `stores/scoringStore.ts` / `types/scoring.ts` | `LiveClock` typé, `liveClocks` alimenté par l'overlay `GET /state`, `setTimer` accepte `kind`/`team`/`slot`/`playerId`/`cardCode`. |
 | Locales fr/en | `scoring.shotclock.*`, `scoring.break.*`, `scoring.shortcuts.*`, `scoring.sound_test`. |
 
-Reste sur la Phase 2 : **pénalités** (2 slots/équipe, levée sur but encaissé avec
-confirmation, remplacement pour `R`/`D`) — tranche suivante. Tests :
-[SCORING_DEV_CHECKLIST.md §lot 3, 2ᵉ tranche](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
+**Pénalités ✅ (plan lot 3, 3ᵉ tranche — règles §0.10) :** `composables/usePenalties.ts`
+(≤ 2 horloges/équipe, suivi du chrono, expiration → buzzer + message « retour » ou
+« remplacement » selon le carton, `liftCandidate` = plus ancienne **levable**),
+`components/scoring/Penalties.vue` (décomptes A/B, retrait manuel), câblage dans
+`scoring.vue` (création auto sur `V`/`J`/`R`, message dédié pour `D` **sans horloge**,
+modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), persistance
+`kind PENALTY` + restauration via `GET /state`.
+
+**Affichages plein écran + PWA ✅ (plan lot 3, 4ᵉ tranche — 2026-07-29) :**
+
+| Fichier | Détail |
+|---|---|
+| `composables/useScoringBroadcast.ts` | **Créé.** Émetteur (`useScoringBroadcast`) et récepteur (`useScoringDisplay`) sur le canal **`kpi_channel`** — contrat legacy conservé (`timer`, `timer_status`, `shotclock`, `period`, `teams`, `scores`, `penA`/`penB`) enrichi de `shotclock_state`, du **`matchId`** (deux matchs sur un même poste) et du **handshake `ready`** (un affichage qui s'ouvre réclame un instantané complet). **Same-origin, zéro réseau** (§6.5). |
+| `pages/games/[id]/scoreboard.vue` | **Créée.** Tableau de score plein écran (`layout: false`) : équipes, score géant, période, chrono, chronomètre de tir, pénalités par équipe. Remplace `admin/scoreboard.php`. |
+| `pages/games/[id]/shotclock.vue` | **Créée.** Chronomètre de tir plein écran (chiffre géant + rappel du chrono). Remplace `admin/shotclock.php`. |
+| `pages/games/[id]/scoring.vue` | Boutons **TV** / **horloge** dans l'entête (mode direct) ; `watch` sur chrono/shotclock/score/période/pénalités → diffusion à chaque changement ; instantané complet au chargement. |
+| `nuxt.config.ts` + `package.json` | **`@vite-pwa/nuxt`** ajouté : `registerType: 'autoUpdate'`, `skipWaiting` + `clientsClaim`, `cleanupOutdatedCaches`, manifest `standalone`/paysage scope `/admin2/`, `navigateFallbackDenylist` sur `/api2` et `/api` (le shell ne répond jamais à un appel API), **service worker désactivé en dev**. |
+| `composables/usePwaUpdate.ts` | **Créé.** Boucle de fraîcheur : vérification au chargement, au retour d'onglet et toutes les 5 min ; **rechargement automatique** quand le nouveau worker prend la main (sans reload au premier enregistrement). Sûr car online-first : tout est déjà persisté serveur. **À réutiliser tel quel sur app2** (§0.9). |
+
+Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés (111 entrées de
+precache, `skipWaiting`/`clientsClaim` présents) ; ESLint OK. Tests :
+[SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md)
+(2ᵉ tranche 3.11–3.21, 3ᵉ 3.22–3.31, 4ᵉ 3.32–3.39).
 
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification

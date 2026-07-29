@@ -714,6 +714,24 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   kind `PENALTY` (team/slot/playerId/cardCode) + restauration via `GET /state`.
 >   Règles pures mises à jour des deux côtés (`cardCreatesPenaltyClock`,
 >   `penaltyLiftableOnGoal`, `penaltySlotToLift` filtré) — **71 assertions PHP**.
+>
+> **Suivi d'exécution (2026-07-29) — quatrième tranche (étapes 3.5 et 3.6) :**
+> - ✅ 3.5 — **scoreboard + chronomètre de tir plein écran** : routes Nuxt
+>   `/games/{id}/scoreboard` et `/games/{id}/shotclock` (layout `false`, lecture seule),
+>   alimentées par **BroadcastChannel** (`useScoringBroadcast`, canal `kpi_channel` —
+>   contrat legacy conservé + `matchId` et handshake `ready`). **Zéro réseau** : les
+>   écrans branchés sur le poste de saisie fonctionnent même sans Internet, conformément
+>   à la décision « BroadcastChannel local + Mercure distant » ; les écrans distants et
+>   incrustations restent sur Mercure (lot 4) ;
+> - ✅ 3.6 — **PWA installable + mise à jour immédiate** : module `@vite-pwa/nuxt`
+>   (`registerType: 'autoUpdate'`, `skipWaiting`/`clientsClaim`, manifest `standalone`
+>   scope `/admin2/`) + `usePwaUpdate` (vérification au chargement, au retour d'onglet et
+>   toutes les 5 min, **rechargement automatique** quand le nouveau worker prend la main).
+>   Service worker **désactivé en dev** (jamais de cache des chunks Vite). Mécanisme
+>   conçu pour être **réutilisé tel quel sur app2**. Build Nuxt validé (`sw.js` généré,
+>   111 entrées de precache) ;
+> - ⬜ reste sur le lot 3 : abonnement Mercure de la console, mode score seul,
+>   solde §7.8 (statut joueur, officiels UI, recharge présents, n° court).
 
 ---
 

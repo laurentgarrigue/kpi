@@ -2557,6 +2557,10 @@
       "lift_title": "Goal conceded — penalty lift",
       "lift_message": "The short-handed team just conceded a goal: lift the oldest penalty (#{number})? The player returns. (A red-card penalty is never lifted: its 2 minutes run to the end.)",
       "lift_confirm": "Lift the penalty"
+    },
+    "display": {
+      "scoreboard": "Open the scoreboard",
+      "shotclock": "Open the shot clock"
     }
   },
   "competition": {

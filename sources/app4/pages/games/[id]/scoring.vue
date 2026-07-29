@@ -75,6 +75,10 @@ const eventReason = ref('')
 // When set, the event buttons commit an UPDATE of this existing event instead of a new one.
 const editingUid = ref<string | null>(null)
 
+// The console is a PWA installed on the scoring table's tablet and stays open for days:
+// make sure a new deployment is picked up immediately (spec §0.9).
+usePwaUpdate()
+
 // ─── Buzzer (shotclock expiry, period end, end of break — decision §0.9) ───
 const buzzer = useBuzzer()
 
@@ -237,6 +241,31 @@ const breakDisplay = computed(() => {
 })
 onUnmounted(() => stopBreak(false))
 
+// ─── Local broadcast to the full-screen displays (spec §6.5 — same origin, no network) ───
+const broadcast = useScoringBroadcast(() => ({
+  matchId: matchId.value,
+  teamA: match.value?.equipeA ?? '',
+  teamB: match.value?.equipeB ?? '',
+  scoreA: scoringStore.scoreA,
+  scoreB: scoringStore.scoreB,
+  period: match.value?.periode ?? null,
+  timer: gameTime.value,
+  timerRunning: isRunning.value,
+  shotclock: shotclockMasked.value ? '--' : shotclock.display.value,
+  shotclockState: shotclock.state.value,
+  penalties: penalties.penalties.value
+}))
+
+// Push each change as it happens (cheap: BroadcastChannel is in-process messaging).
+watch(gameTime, () => broadcast.timer())
+watch(isRunning, () => broadcast.timerStatus())
+watch(() => shotclock.display.value, () => broadcast.shotclock())
+watch(() => shotclock.state.value, () => broadcast.shotclock())
+watch(() => [scoringStore.scoreA, scoringStore.scoreB], () => broadcast.scores())
+watch(() => match.value?.periode, () => broadcast.period())
+watch(() => penalties.penalties.value.map(p => `${p.slot}${p.team}${Math.ceil(p.remainingMs / 1000)}${p.running}`).join(),
+  () => broadcast.penalties())
+
 // ─── Configurable keyboard shortcuts (spec §6.5, decision §0.9) ───
 const shortcutsOpen = ref(false)
 const shortcutsEnabled = computed(() => isLive.value && canScore.value && !shortcutsOpen.value)
@@ -314,6 +343,9 @@ onMounted(async () => {
         p.playerNumber = roster.find(pl => String(pl.matric) === p.playerId)?.numero ?? null
       }
     }
+    // Local channel for the scoreboard / shotclock windows, then a first full snapshot.
+    broadcast.init()
+    broadcast.broadcastAll()
   } catch {
     // useApi already shows a toast
   }
@@ -552,6 +584,23 @@ const toggleLock = async () => {
               @click="mode = 'post'"
             >{{ t('scoring.mode.post') }}</UButton>
           </div>
+          <!-- Full-screen displays (same origin → BroadcastChannel keeps them in sync) -->
+          <UButton
+            v-if="isLive"
+            size="xs"
+            variant="ghost"
+            icon="i-heroicons-tv"
+            :aria-label="t('scoring.display.scoreboard')"
+            @click="broadcast.openScoreboard(matchId)"
+          />
+          <UButton
+            v-if="isLive"
+            size="xs"
+            variant="ghost"
+            icon="i-heroicons-clock"
+            :aria-label="t('scoring.display.shotclock')"
+            @click="broadcast.openShotclock(matchId)"
+          />
           <UButton
             size="xs"
             variant="ghost"

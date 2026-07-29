@@ -143,11 +143,27 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.30 | Croix de **retrait manuel** d'une pénalité | horloge retirée + RAZ en base (correction d'erreur de saisie) |
 | 3.31 | Joueur avec carton `R` | marqué **🔴** dans l'effectif (remplacement à l'issue) ; avec `D` → **⬛** |
 
+### Tests fonctionnels — 4ᵉ tranche (affichages plein écran, PWA)
+
+> ⚠️ La PWA ne s'active **qu'en build** (service worker désactivé en dev, volontairement,
+> pour ne pas mettre en cache les chunks Vite). Pour les tests 3.36+ :
+> `make app4_generate_dev` (ou `npm run build` dans le conteneur) puis servir `.output/public`.
+
+| # | Test | Attendu |
+|---|---|---|
+| 3.32 | Bouton **TV** de l'entête (mode direct) | ouvre `/games/{id}/scoreboard` dans une fenêtre : équipes, score, période, chrono, chronomètre de tir et pénalités s'affichent **immédiatement** (handshake `ready` → snapshot complet) |
+| 3.33 | Saisir un but / lancer le chrono / lancer le shotclock / créer une pénalité | le tableau de score suit **en direct**, sans réseau (débrancher le Wi-Fi pour vérifier : la fenêtre reste synchronisée) |
+| 3.34 | Bouton **horloge** de l'entête | ouvre `/games/{id}/shotclock` (grand chiffre + rappel du chrono) ; vert = décompte, ambre = suspendu, `--` = à l'arrêt |
+| 3.35 | Ouvrir **deux matchs différents** dans deux consoles + leurs affichages | chaque affichage ne reçoit que **son** match (filtrage `matchId`) |
+| 3.36 | Ouvrir la console **buildée** sur tablette → menu navigateur | l'application est **installable** (« Ajouter à l'écran d'accueil ») ; lancée depuis l'icône, elle s'ouvre en plein écran (standalone, paysage) |
+| 3.37 | Déployer une **nouvelle version** pendant que la console est ouverte | la page se **recharge d'elle-même** dans les 5 min (ou immédiatement au retour sur l'onglet) et sert la nouvelle version — jamais d'app shell périmé |
+| 3.38 | Couper le réseau puis **relancer** la PWA installée | l'application démarre (app shell en cache) ; les données du match nécessitent le réseau (file d'écritures offline = lot 7) |
+| 3.39 | En **dev** (`make app4_dev`) | **aucun** service worker enregistré (pas de cache des chunks Vite) |
+
 ### Reste à livrer sur le lot 3 (tests à ajouter ici au fil de l'eau)
 
-Scoreboard/shotclock plein écran (BroadcastChannel) ; PWA installable + mise à jour
-immédiate ; abonnement Mercure de la console ; mode score seul ; solde §7.8 (statut
-joueur, officiels UI, recharge présents, n° court).
+Abonnement Mercure de la console ; mode score seul ; solde §7.8 (statut joueur,
+officiels UI, recharge présents, n° court).
 
 ---
 

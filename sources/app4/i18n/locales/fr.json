@@ -2569,6 +2569,10 @@
       "lift_title": "But encaissé — levée de pénalité",
       "lift_message": "L'équipe en infériorité vient d'encaisser un but : lever la pénalité la plus ancienne (n°{number}) ? Le joueur revient en jeu. (Un carton rouge n'est jamais levé : ses 2 minutes vont à leur terme.)",
       "lift_confirm": "Lever la pénalité"
+    },
+    "display": {
+      "scoreboard": "Ouvrir le tableau de score",
+      "shotclock": "Ouvrir le chronomètre de tir"
     }
   },
   "competition": {

@@ -64,8 +64,56 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@pinia/nuxt',
     '@nuxtjs/i18n',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@vite-pwa/nuxt'
   ],
+
+  // PWA — installable console for the scoring table's tablet (spec §0.8 / plan §4.9).
+  //
+  // Two deliberate choices:
+  //  - `registerType: 'autoUpdate'` + `skipWaiting`/`clientsClaim`: a new deployment is
+  //    activated immediately, never a stale app shell (the "mise à jour immédiate"
+  //    requirement — the same mechanism is to be reused on app2). `usePwaUpdate` reloads
+  //    the page once the new worker takes control.
+  //  - navigateFallback denylist on /api2 and /api: the SPA shell must never answer an
+  //    API call. Precaching stays limited to the built assets: match data is always
+  //    fetched online (offline write queue = plan lot 7).
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'KPI Scoring',
+      short_name: 'KPI Scoring',
+      description: 'Console de scoring KPI — table de marque',
+      lang: 'fr',
+      start_url: `${baseUrl}/`,
+      scope: `${baseUrl}/`,
+      display: 'standalone',
+      orientation: 'landscape',
+      background_color: '#000000',
+      theme_color: '#1e40af',
+      icons: [
+        { src: `${baseUrl}/favicon.png`, sizes: '192x192', type: 'image/png', purpose: 'any' }
+      ]
+    },
+    workbox: {
+      // Keep the shell fresh: activate the new service worker as soon as it is installed.
+      skipWaiting: true,
+      clientsClaim: true,
+      cleanupOutdatedCaches: true,
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+      navigateFallback: `${baseUrl}/`,
+      navigateFallbackDenylist: [/^\/api2\//, /^\/api\//]
+    },
+    client: {
+      // We drive the reload ourselves (usePwaUpdate) instead of the module's prompt.
+      installPrompt: false,
+      periodicSyncForUpdates: 300 // check for a new version every 5 min during an event
+    },
+    devOptions: {
+      // Never register a service worker in dev: it would cache the Vite dev chunks.
+      enabled: false
+    }
+  },
 
   // Light by default; users can opt into dark via the header toggle (persisted in localStorage).
   colorMode: {
