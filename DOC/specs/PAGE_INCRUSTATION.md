@@ -242,6 +242,47 @@ sans redessiner.
 - **adaptation à d'autres formats d'affichage** (vertical, 4K, LED bord de bassin…) par variantes
   de layout du même thème.
 
+## 11bis. Accès : jeton d'affichage, et pourquoi le same-origin ne suffit pas
+
+**La question posée (2026-07-29) :** ces routes sont publiques, sans JWT — peut-on au moins
+imposer le *same-origin* pour éviter qu'elles soient exploitées par des outils tiers ?
+
+**La réponse honnête : non, pas comme contrôle d'accès.** `Origin`, `Referer` et
+`Sec-Fetch-Site` sont posés par le **navigateur** et se falsifient en une ligne de `curl`.
+Ils arrêtent *un autre site web* qui voudrait consommer nos données dans le navigateur d'un
+visiteur, et le hotlinking naïf — **rien de plus**. Trois niveaux, du plus faible au plus
+solide :
+
+| Mécanisme | Ce qu'il arrête réellement | Ce qu'il n'arrête pas |
+|---|---|---|
+| Vérification `Origin`/`Sec-Fetch-Site` | un `fetch` **cross-site** évident depuis un autre site | un script, `curl`, un scraper (en-têtes falsifiables) |
+| **CORS** (pas de `*`) | la lecture de la réponse par le **JavaScript d'un site tiers** | un appel serveur à serveur |
+| **Jeton d'affichage** ✅ | **tout appel non autorisé** : portée, expiration, révocation | rien (c'est le vrai verrou) |
+
+**Décision : jeton d'affichage** (`scoring_display_token`), porté par l'URL configurée une
+fois dans OBS — coût d'exploitation nul :
+
+- **portée** : un événement, éventuellement **un seul terrain** ;
+- **expiration** (fin de l'événement) et **révocation immédiate** ;
+- il autorise `GET /scoring/program` et `GET /scoring/state` (401 sinon) ;
+- il **fabrique le JWT d'abonné Mercure**, restreint aux **topics du jeton** : une
+  incrustation ne peut jamais écouter le terrain d'un autre événement.
+
+> ⚠️ **Ce point n'était pas qu'une question de sécurité, c'était un défaut fonctionnel.**
+> En preprod et en production le hub tourne avec **`MERCURE_ANONYMOUS=0`** : sans JWT
+> d'abonné, l'abonnement SSE de l'incrustation **aurait été refusé**. Cela fonctionnait en
+> dev (`MERCURE_ANONYMOUS=1`) et serait tombé à la première mise en preprod. Le jeton
+> d'affichage résout les deux problèmes d'un coup.
+
+Les vérifications `Origin`/`Sec-Fetch-Site` sont **conservées en défense en profondeur**
+(403 sur un appel cross-site manifeste), avec cette limite explicitement documentée dans le
+code : ce n'est **pas** la serrure. À noter : la réponse de `/program` embarque un JWT →
+elle est marquée `private` (jamais de cache partagé) ; `/state` n'a pas de secret et garde
+un cache public court.
+
+Quand le jeton est refusé, la page **le dit à l'écran** : une incrustation vide ressemble
+sinon à un problème de données et se diagnostique mal en régie.
+
 ## 11. Ce que la page ne fait pas
 
 - **Aucune écriture, aucun POST** (hors requêtes GET/SSE).

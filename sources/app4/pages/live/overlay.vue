@@ -9,9 +9,13 @@
  * locally so it keeps ticking even during a network blackout.
  *
  * URL contract (§4):
- *   /live/overlay?event=236&pitch=2&blocks=score,clock,shotclock&skin=nations
+ *   /live/overlay?event=236&pitch=2&token=…&blocks=score,clock,shotclock&skin=nations
  *                &style=…&variant=live|events|static|hd&bg=transparent|magenta|#rrggbb
  *                &lang=fr|en&debug
+ *
+ * `token` is the **display token** (scoped to the event/pitch, expiring, revocable): it
+ * authorizes the public read routes and yields the Mercure subscriber JWT. It is set once
+ * in the OBS source URL — see PAGE_INCRUSTATION.md §11bis.
  */
 definePageMeta({ layout: false })
 
@@ -21,13 +25,14 @@ const config = useRuntimeConfig()
 // ─── URL options (§4) ───
 const event = Number(route.query.event ?? 0)
 const pitch = String(route.query.pitch ?? '')
+const token = String(route.query.token ?? '')
 const blocks = computed(() => String(route.query.blocks ?? 'score,clock').split(',').map(b => b.trim()))
 const has = (block: string) => blocks.value.includes(block)
 const skin = computed(() => (route.query.skin === 'clubs' ? 'clubs' : 'nations'))
 const variant = computed(() => String(route.query.variant ?? 'live'))
 const debug = computed(() => route.query.debug !== undefined)
 
-const { program, state, status } = useOverlayProgram(event, pitch, config.public.api2BaseUrl)
+const { program, state, status } = useOverlayProgram(event, pitch, config.public.api2BaseUrl, token)
 
 const settings = computed(() => program.value?.settings ?? null)
 
@@ -161,6 +166,11 @@ const CARD_COLOUR: Record<string, string> = {
         <div class="next-teams">{{ next.equipeA }} <span class="sep">vs</span> {{ next.equipeB }}</div>
       </div>
 
+      <!-- Token refused: a silent empty overlay would look like a data problem -->
+      <div v-if="status === 'denied'" class="denied">
+        Jeton d'affichage invalide, expiré ou révoqué
+      </div>
+
       <!-- Diagnostics — never in production, only with ?debug -->
       <div v-if="debug" class="debug">
         event={{ event }} pitch={{ pitch }} · sse={{ status }} · phase={{ phase }} ·
@@ -266,6 +276,16 @@ const CARD_COLOUR: Record<string, string> = {
 .next-title { font-size: 30px; letter-spacing: .18em; opacity: .8; }
 .next-teams { font-size: 54px; font-weight: 800; margin-top: 10px; }
 
+.denied {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  background: rgba(153, 27, 27, .9);
+  padding: 12px 24px;
+  border-radius: 8px;
+}
 .debug {
   position: absolute;
   top: 12px;

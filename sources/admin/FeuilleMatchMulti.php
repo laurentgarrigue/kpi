@@ -83,8 +83,8 @@ class FeuilleMatch extends MyPage
                 ce2.color1 color1B, ce2.color2 color2B, ce1.colortext colortextB,
                 b.Nom, b.Phase, b.Libelle, b.Lieu, b.Departement, b.Organisateur, b.Responsable_R1, 
                 b.Responsable_insc, b.Delegue, b.ChefArbitre, b.Code_competition, b.Code_saison 
-                FROM kp_match a
-                LEFT JOIN kp_journee b ON a.Id_journee = b.Id 
+                FROM v_match_live a
+                LEFT JOIN kp_journee b ON a.Id_journee = b.Id
                 LEFT OUTER JOIN kp_competition_equipe ce1 ON a.Id_equipeA = ce1.Id
                 LEFT OUTER JOIN kp_competition_equipe ce2 ON a.Id_equipeB = ce2.Id
                 WHERE a.Id = ? ";
@@ -397,9 +397,14 @@ class FeuilleMatch extends MyPage
             $scoreDetailA = 0;
             $scoreDetailB = 0;
 
-            $sql5 = "SELECT d.Id, d.Id_match, d.Periode, d.Temps, d.Id_evt_match, d.Competiteur, d.Numero, 
-                d.Equipe_A_B, d.motif, c.Nom, c.Prenom 
-                FROM kp_match_detail d 
+            // v_match_detail : vue de compatibilité (SQL/migrations/2026-07-29_scoring_live_compat_views.sql).
+            // Pendant un match, les faits vivent dans scoring_live_event ; kp_match_detail
+            // n'est écrit qu'à la consolidation (fin de match). La vue sert le live quand il
+            // existe et retombe sur kp_match_detail sinon — ce PDF reste donc imprimable
+            // EN COURS de match, sans double écriture ni logique dupliquée.
+            $sql5 = "SELECT d.Id, d.Id_match, d.Periode, d.Temps, d.Id_evt_match, d.Competiteur, d.Numero,
+                d.Equipe_A_B, d.motif, c.Nom, c.Prenom
+                FROM v_match_detail d
                 LEFT OUTER JOIN kp_licence c ON d.Competiteur = c.Matric 
                 WHERE d.Id_match = ? 
                 AND d.Id_evt_match != 'T' 

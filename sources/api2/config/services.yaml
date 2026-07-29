@@ -55,6 +55,13 @@ services:
         arguments:
             $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
 
+    # Accès des afficheurs : jeton d'affichage + JWT d'abonné Mercure restreint aux topics
+    # du jeton (indispensable en preprod/prod où MERCURE_ANONYMOUS=0).
+    App\Service\ScoringDisplayAccessService:
+        arguments:
+            $mercureJwtSecret: '%env(default::MERCURE_JWT_SECRET)%'
+            $trustedOrigins: '%env(default::CORS_ALLOW_ORIGIN)%'
+
     App\Controller\AdminPresenceController:
         arguments:
             $surclassementCompetitions: '%env(csv:SURCLASSEMENT_COMPETITIONS)%'

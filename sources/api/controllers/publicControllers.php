@@ -507,7 +507,7 @@ function GetTeamStatsController($route, $params)
     if ($event_id < 3000) {
         $sql = $base_sql . " 
             LEFT JOIN (
-                kp_match_detail md 
+                v_match_detail md
                 JOIN kp_match m ON md.Id_match = m.Id
                 JOIN kp_evenement_journee ej ON m.Id_journee = ej.Id_journee AND ej.Id_evenement = ?
             ) ON l.Matric = md.Competiteur
@@ -521,7 +521,7 @@ function GetTeamStatsController($route, $params)
     } else {
         $sql = $base_sql . " 
             LEFT JOIN (
-                kp_match_detail md 
+                v_match_detail md
                 JOIN kp_match m ON md.Id_match = m.Id AND m.Id_journee = ?
             ) ON l.Matric = md.Competiteur
             WHERE j.Id_equipe = ? 

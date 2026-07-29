@@ -2,8 +2,9 @@
  * Data plumbing of the video overlay (PAGE_INCRUSTATION.md §5/§6/§9).
  *
  * Boot: GET /scoring/program/{event}/{pitch} then GET /scoring/state/{matchId} — both
- * public and ETag-cached. Then: Mercure/SSE on `{topicBase}/{type}`, which carries both
- * the match blocks (score/clock/…) and the pitch **program** (match switching).
+ * authorized by the **display token** carried in the URL and ETag-cached. Then: Mercure/SSE
+ * on `{topicBase}/{type}`, which carries both the match blocks (score/clock/…) and the
+ * pitch **program** (match switching).
  *
  * Deliberate choices, straight from the spec:
  *  - **no polling**: the program arrives by push (P4 — the server decides what is played);
@@ -62,26 +63,36 @@ export interface OverlayState {
   }>
 }
 
-export function useOverlayProgram(event: number, pitch: string, apiBase: string) {
+export function useOverlayProgram(event: number, pitch: string, apiBase: string, token: string) {
   const program = ref<{
     current: OverlayProgramMatch | null
     next: OverlayProgramMatch | null
     settings: OverlaySettings
     topicBase: string
     mercureUrl: string
+    /** Subscriber JWT restricted to this display token's topics (see backend). */
+    mercureToken?: string
   } | null>(null)
 
   const state = ref<OverlayState | null>(null)
-  /** 'boot' | 'live' | 'blind' — surfaced only in ?debug mode. */
-  const status = ref<'boot' | 'live' | 'blind'>('boot')
+  /** 'boot' | 'live' | 'blind' | 'denied' — surfaced only in ?debug mode. */
+  const status = ref<'boot' | 'live' | 'blind' | 'denied'>('boot')
 
   let source: EventSource | null = null
   let debounce: ReturnType<typeof setTimeout> | null = null
   let currentMatchId: number | null = null
 
+  // The display token authorizes every read and scopes the Mercure subscription.
+  const auth = `token=${encodeURIComponent(token)}`
+
   const fetchProgram = async () => {
-    const res = await fetch(`${apiBase}/scoring/program/${event}/${encodeURIComponent(pitch)}`)
-    if (!res.ok) return
+    const res = await fetch(`${apiBase}/scoring/program/${event}/${encodeURIComponent(pitch)}?${auth}`)
+    if (!res.ok) {
+      // 401/403: the token is missing, expired or revoked — say so instead of showing
+      // an empty overlay that looks like a data problem.
+      status.value = res.status === 401 || res.status === 403 ? 'denied' : 'blind'
+      return
+    }
     program.value = await res.json()
   }
 
@@ -92,7 +103,7 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string)
       currentMatchId = null
       return
     }
-    const res = await fetch(`${apiBase}/scoring/state/${id}`)
+    const res = await fetch(`${apiBase}/scoring/state/${id}?${auth}`)
     // 404 = the match exists but was never touched live yet: keep an empty board.
     state.value = res.ok ? await res.json() : null
     currentMatchId = id
@@ -125,6 +136,11 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string)
 
     const url = new URL(hub)
     url.searchParams.append('topic', `${base}/{type}`)
+    // EventSource cannot set an Authorization header: the hub accepts the subscriber JWT
+    // as a query parameter. Required in preprod/prod (MERCURE_ANONYMOUS=0); harmless in
+    // dev where anonymous subscription is allowed.
+    const jwt = program.value?.mercureToken
+    if (jwt) url.searchParams.append('authorization', jwt)
 
     try {
       source = new EventSource(url.toString())

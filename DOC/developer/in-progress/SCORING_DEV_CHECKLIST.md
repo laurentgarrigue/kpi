@@ -209,24 +209,42 @@ Rien : le périmètre du lot est couvert. Les évolutions sont renvoyées aux lo
 ### Commandes
 
 ```bash
-# Table des réglages d'affichage (défauts → événement → terrain)
-docker exec -i ${DB_CONTAINER_NAME} sh -c \
-  'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
-  < SQL/migrations/2026-07-29_scoring_display_settings.sql
+DB="docker exec -i ${DB_CONTAINER_NAME} sh -c 'mysql -u\"\$MYSQL_USER\" -p\"\$MYSQL_PASSWORD\" \"\$MYSQL_DATABASE\"'"
 
-make api2_restart          # nouveau contrôleur public + service programme
+# 1) Réglages d'affichage (défauts → événement → terrain)
+eval $DB < SQL/migrations/2026-07-29_scoring_display_settings.sql
+# 2) Jetons d'affichage (accès des incrustations)
+eval $DB < SQL/migrations/2026-07-29_scoring_display_token.sql
+# 3) Vues de compatibilité legacy ↔ live (FeuilleMatchMulti, app2, fiches publiques)
+eval $DB < SQL/migrations/2026-07-29_scoring_live_compat_views.sql
+
+make api2_restart          # contrôleur public + services programme/accès
 make docker_dev_up         # le worker publie désormais le programme des terrains
 ```
 
+Créer un jeton d'affichage pour l'événement 236 (tous terrains ; ajouter `pitch` pour le
+restreindre à un seul) :
+
+```sql
+INSERT INTO scoring_display_token (token, id_event, pitch, label, expires_at)
+VALUES (SHA2(UUID(), 256), 236, NULL, 'Régie test', DATE_ADD(NOW(), INTERVAL 7 DAY));
+SELECT token FROM scoring_display_token WHERE label = 'Régie test';
+```
+
 URL type (source navigateur OBS, 1920×1080) :
-`https://kpi.localhost/admin2/live/overlay?event=236&pitch=2&blocks=score,clock,shotclock,penalty,fact,next&debug`
+`https://kpi.localhost/admin2/live/overlay?event=236&pitch=2&token=<jeton>&blocks=score,clock,shotclock,penalty,fact,next&debug`
 
 ### Tests fonctionnels
 
 | # | Test | Attendu |
 |---|---|---|
-| 4.1 | Ouvrir l'URL dans un navigateur **non connecté** (fenêtre privée) | l'incrustation s'affiche : **aucune authentification** requise, aucune interaction possible |
-| 4.2 | `GET /api2/scoring/program/236/2` et `GET /api2/scoring/state/{id}` | JSON public, en-tête `ETag` ; re-appel avec `If-None-Match` → **304** |
+| 4.1 | Ouvrir l'URL **avec jeton** dans un navigateur non connecté (fenêtre privée) | l'incrustation s'affiche : **aucune session** requise, aucune interaction possible |
+| 4.1a | Ouvrir la **même URL sans `token`** (ou avec un jeton inventé) | **401** côté API et message « Jeton d'affichage invalide, expiré ou révoqué » à l'écran — pas d'incrustation vide muette |
+| 4.1b | `UPDATE scoring_display_token SET revoked_at = NOW()` puis recharger | l'accès est **coupé immédiatement** (idem après `expires_at` dépassé) |
+| 4.1c | Jeton **restreint à un terrain** (`pitch='2'`) utilisé sur `pitch=3` | refusé (401) — la portée est respectée |
+| 4.1d | Vérifier le **JWT d'abonné Mercure** : dans `?debug`, l'état SSE doit passer à `live` | l'abonnement fonctionne ; ⚠️ **c'est ce test qui compte en preprod/prod** (`MERCURE_ANONYMOUS=0`) — en dev l'anonyme masquerait le problème |
+| 4.2 | `GET /api2/scoring/program/236/2?token=…` et `GET /api2/scoring/state/{id}?token=…` | JSON + `ETag` ; re-appel avec `If-None-Match` → **304** ; `/program` répond `Cache-Control: private` (il contient un JWT) |
+| 4.2a | Appel **cross-site** simulé (en-tête `Origin: https://exemple.tld`) | **403** (défense en profondeur ; ce n'est pas la serrure — le jeton l'est) |
 | 4.3 | Saisir un but / lancer le chrono à la console | l'incrustation suit en ~1 s (score, chrono, chronomètre de tir, pénalités, faits) |
 | 4.4 | **Couper le réseau** de la machine d'incrustation 30 s pendant que le chrono tourne | les horloges **continuent de tourner** (interpolation locale) ; au retour, l'état se recale tout seul |
 | 4.5 | Recharger la page (ou redémarrer OBS) | retour à l'état correct en une requête — l'URL suffit |
@@ -239,11 +257,21 @@ URL type (source navigateur OBS, 1920×1080) :
 | 4.12 | Insérer une ligne `scoring_display_settings` pour l'événement, puis une pour le terrain | les délais du **terrain** l'emportent ; une colonne `NULL` **hérite** (jamais « zéro ») |
 | 4.13 | Comparer avec l'incrustation legacy du même terrain (cache JSON toujours généré) | mêmes valeurs affichées — condition de bascule terrain par terrain |
 
+### Tests fonctionnels — compatibilité legacy ↔ live (étape 4.5, vues)
+
+| # | Test | Attendu |
+|---|---|---|
+| 4.14 | **Pendant** un match saisi à la console (non terminé), imprimer le **PDF `FeuilleMatchMulti.php`** | buts/cartons, score, statut et période **à jour** (lecture via `v_match_detail` / `v_match_live`) |
+| 4.15 | Même match : fiche publique / app2 (endpoints legacy `report`/`public`) | déroulement **à jour en cours de match** |
+| 4.16 | Match **jamais touché** par la nouvelle console (données legacy uniquement) | affichage **inchangé** — les vues retombent sur `kp_*` |
+| 4.17 | Après **clôture** (Statut → END, consolidation) | mêmes valeurs qu'avant la bascule ; **aucun doublon** (la vue exclut `kp_match_detail` dès qu'un état live existe) |
+| 4.18 | Classements / exports / autres écrans lisant `kp_*` | **inchangés** (ils ne consomment pas les vues ; `kp_*` reste la vérité des résultats) |
+
 ### Reste à livrer sur le lot 4
 
-Consommateurs `kp_*` en cours de match (`FeuilleMatchMulti.php`, app2 — étape 4.5) ;
-validation en parallèle terrain par terrain (4.6) ; UI de réglage des délais dans app4
-(avec le lot 6) ; refonte du système de styles (spec §10, second temps).
+Validation en parallèle terrain par terrain (4.6) ; UI de gestion des **jetons d'affichage**
+et de réglage des **délais** dans app4 (avec le lot 6) ; refonte du système de styles
+(spec §10, second temps).
 
 ---
 

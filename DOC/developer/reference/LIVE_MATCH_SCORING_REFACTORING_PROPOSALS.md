@@ -807,13 +807,23 @@ déroule sans intervention humaine.
 >   des horloges (`useInterpolatedClock`, modèle 4 valeurs — continue de tourner pendant
 >   une coupure), `useOverlayProgram` (boot `GET /program` + `GET /state`, puis SSE ;
 >   **auto-réparant** : refetch sur message, au réveil d'onglet et toutes les 5 min).
-> - ✅ **Lecture publique** : `ScoringLiveController` (`GET /scoring/program/{event}/{pitch}`
->   et `GET /scoring/state/{matchId}`), **GET uniquement**, `ETag` + cache court. Public
->   assumé et borné : l'incrustation tourne sans opérateur dans un mélangeur vidéo et ne
->   peut pas porter de JWT ; les données sont celles déjà affichées sur les écrans du site
->   (les anciennes incrustations PHP sont publiques aussi — **aucune régression**).
-> - ⬜ reste : 4.5 (consommateurs `kp_*` en cours de match), 4.6 (validation en parallèle,
->   terrain par terrain), styles par compétition (§10 de la spec, second temps).
+> - ✅ **Lecture sans session, mais pas ouverte** : `ScoringLiveController`
+>   (`GET /scoring/program/{event}/{pitch}`, `GET /scoring/state/{matchId}`), **GET
+>   uniquement**, `ETag`. L'accès est porté par un **jeton d'affichage**
+>   (`scoring_display_token`) : portée événement (+ terrain), expiration, révocation — cf.
+>   spec §11bis, qui explique pourquoi un contrôle *same-origin* ne peut pas être la
+>   serrure (en-têtes falsifiables) et reste une simple défense en profondeur.
+>   **Le jeton mint aussi le JWT d'abonné Mercure restreint à ses topics** : sans lui
+>   l'abonnement SSE serait **refusé en preprod/prod** (`MERCURE_ANONYMOUS=0`) — défaut
+>   fonctionnel corrigé au passage, invisible en dev.
+> - ✅ 4.5 — **consommateurs `kp_*` en cours de match** : deux **vues de compatibilité**
+>   (`v_match_detail`, `v_match_live`) qui servent l'état live et **retombent sur `kp_*`**
+>   pour les matchs sans état live. `FeuilleMatchMulti.php`, `reportControllers.php` et
+>   `publicControllers.php` ne changent **qu'un identifiant** dans leur `FROM` — aucune
+>   double écriture (§4.3 respecté), aucune logique dupliquée. Échafaudage supprimable
+>   quand les lecteurs legacy disparaîtront.
+> - ⬜ reste : 4.6 (validation en parallèle, terrain par terrain), UI de gestion des jetons
+>   et des délais dans app4 (avec le lot 6), styles par compétition (§10, second temps).
 
 ---
 

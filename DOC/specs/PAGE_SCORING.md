@@ -67,15 +67,28 @@ l'état live consolidé vers `kp_*` — exactement comme la clôture actuelle é
 le **reporting existant** (fiche, classements, PDF, `FeuilleMatchMulti.php`) n'est **jamais** impacté
 pendant le match, et il n'y a **aucune double écriture continue** à maintenir.
 
-> ⚠️ **Impact de transition à traiter (2026-07-27).** Certains consommateurs de `kp_*` affichent
-> aujourd'hui le **déroulement du match y compris en cours** (le legacy écrit `kp_match_detail` en
-> live) : le **PDF `FeuilleMatchMulti.php`** imprimé pendant un match, et **app2** (affichage
-> public du détail des matchs). Quand la console écrira dans `scoring_live_*`, ces consommateurs ne
-> verront plus rien avant la consolidation de fin de match. **Prévoir leur évolution** (lecture de
-> l'état live via `GET /scoring/state` / Mercure, ou tout autre mécanisme) — planifiée au
-> [plan, lot 4](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (étape
-> « consommateurs kp_* en cours de match »). Tant que cette évolution n'est pas faite, la bascule
-> de la saisie vers `scoring_live_*` dégrade l'affichage « en cours » de ces consommateurs.
+> ✅ **Impact de transition — traité le 2026-07-29 par des vues de compatibilité.**
+> Certains consommateurs de `kp_*` affichent le **déroulement du match y compris en cours** : le
+> **PDF `FeuilleMatchMulti.php`** imprimé pendant un match, et les endpoints legacy consommés par
+> **app2** / les fiches publiques. Sans rien faire, ils n'auraient plus rien affiché avant la
+> consolidation.
+>
+> **Solution retenue** (`SQL/migrations/2026-07-29_scoring_live_compat_views.sql`) : deux vues qui
+> présentent l'état live **dans la forme legacy**, avec repli automatique —
+>
+> | Vue | Sert | Repli |
+> |---|---|---|
+> | `v_match_detail` | les faits de `scoring_live_event` (forme `kp_match_detail`) | `kp_match_detail` pour les matchs **sans** état live |
+> | `v_match_live` | `kp_match` avec `Statut`/`Periode`/`ScoreDetailA/B`/`Heure_fin` **surchargés** par `scoring_live_state` | les colonnes `kp_match` telles quelles |
+>
+> **Les lecteurs ne changent qu'un identifiant** dans leur `FROM` (fait :
+> `FeuilleMatchMulti.php`, `api/controllers/reportControllers.php`,
+> `api/controllers/publicControllers.php`). **Aucune double écriture** n'est introduite — le plan
+> §4.3 l'interdit — et aucune logique n'est dupliquée : un match live est servi live, un match
+> consolidé est servi depuis `kp_*`, exactement comme avant.
+>
+> **Cycle de vie** : ces vues sont un **échafaudage de transition**. Quand les lecteurs legacy
+> auront disparu (page d'incrustation unique, app4), elles se suppriment sans rien casser.
 
 > **Impact sur le code déjà écrit (Phase 1).** Le `ScoringController` écrit aujourd'hui dans `kp_*`
 > (vérifié : `gameParam`→`kp_match`, `gameEvent`→`kp_match_detail`, `gameTimer`→`kp_chrono`). Ces
