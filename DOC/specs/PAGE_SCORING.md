@@ -776,6 +776,27 @@ porté par la compétition, en **hydratant `store.config`**).
   divergence base/panneau ; la saisie manuelle est désactivée tant que le matériel est la source
   active.
 
+### 6.5bis Affichages plein écran — écrans non standards (décision 2026-07-29)
+
+Le **scoreboard** et surtout le **chronomètre de tir** ne sont pas destinés à un écran
+d'ordinateur : ils sont diffusés sur des **écrans de dimensions et de formes variées** —
+panneaux **LED extérieurs**, **satellites** de bord de bassin, moniteurs **portrait**,
+bandeaux ultra-larges. Aucune règle de mise en page figée (ni `px`, ni media query) ne
+couvre ce cas : **la taille est mesurée, pas devinée**.
+
+| Exigence | Mise en œuvre |
+|---|---|
+| **S'adapter à la taille et à la forme** de l'écran | `useFitText` mesure les métriques d'**encre** des glyphes (canvas `actualBoundingBoxAscent/Descent`) et calcule la police maximale tenable ; `ResizeObserver` recalcule à chaque redimensionnement/rotation. Le scoreboard **bascule en disposition colonne** quand le rapport largeur/hauteur passe sous 1,2 (portrait/étroit). |
+| **Taille maximale possible** pour le chronomètre de tir | le chiffre occupe **toute la surface** disponible (94 % par défaut) ; le chrono principal, **optionnel**, ne prend que 18 % de la hauteur en bas. |
+| **Contraste maximal** | **blanc sur noir** par défaut, **noir sur blanc** en option (`?theme=light`). Aucun aplat de couleur sur le nombre : l'état « suspendu/à l'arrêt » est signalé par une **atténuation**, jamais par une teinte (qui casserait le contraste). |
+| **Valeurs affichées** | maximum **`60`** ; **sous 10 s, dixièmes** (`8.8`) — le tic à 100 ms fournit exactement cette résolution. La taille est calculée sur les **candidats `60` et `8.8`** ensemble, donc le chiffre **ne change pas de taille** au passage en dixièmes. |
+| **Lisibilité des chiffres** | neo-grotesque **grasse** (800) à **chiffres tabulaires** (`tabular-nums`/`tnum`) : toutes les chasses sont égales, le nombre ne « danse » pas pendant le décompte. **Aucune police web chargée** (démarrage instantané, fonctionnement hors ligne en PWA) ; une police embarquée pourra être substituée dans la classe `.scoring-digits` sans toucher à la mise en page. |
+| **Zéro interaction** | ces pages n'attendent aucune action : elles s'ouvrent, se règlent par l'URL et vivent seules (même esprit que la page d'incrustation). |
+
+**Options d'URL** — `?theme=light` (noir sur blanc), `?clock=0` (masquer le chrono
+principal sous le chronomètre de tir), `?shotclock=0` (masquer le chronomètre de tir du
+scoreboard).
+
 ### 6.6 i18n
 
 Namespace `scoring.*` dans `i18n/locales/fr.json` et `en.json` (périodes, statuts, codes
@@ -1494,8 +1515,9 @@ modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), pers
 | Fichier | Détail |
 |---|---|
 | `composables/useScoringBroadcast.ts` | **Créé.** Émetteur (`useScoringBroadcast`) et récepteur (`useScoringDisplay`) sur le canal **`kpi_channel`** — contrat legacy conservé (`timer`, `timer_status`, `shotclock`, `period`, `teams`, `scores`, `penA`/`penB`) enrichi de `shotclock_state`, du **`matchId`** (deux matchs sur un même poste) et du **handshake `ready`** (un affichage qui s'ouvre réclame un instantané complet). **Same-origin, zéro réseau** (§6.5). |
-| `pages/games/[id]/scoreboard.vue` | **Créée.** Tableau de score plein écran (`layout: false`) : équipes, score géant, période, chrono, chronomètre de tir, pénalités par équipe. Remplace `admin/scoreboard.php`. |
-| `pages/games/[id]/shotclock.vue` | **Créée.** Chronomètre de tir plein écran (chiffre géant + rappel du chrono). Remplace `admin/shotclock.php`. |
+| `pages/games/[id]/scoreboard.vue` | **Créée.** Tableau de score plein écran (`layout: false`) : équipes, score géant, période, chrono, chronomètre de tir, pénalités par équipe. Remplace `admin/scoreboard.php`. **Adaptatif** (cf. §6.5bis) : score auto-ajusté, bascule en colonnes sur écran portrait/étroit, blocs secondaires en `vmin`. Options d'URL : `?theme=light`, `?shotclock=0`. |
+| `pages/games/[id]/shotclock.vue` | **Créée.** Chronomètre de tir plein écran (chiffre à la **taille maximale possible**, contraste maximal, chrono principal en option dessous). Remplace `admin/shotclock.php`. Options d'URL : `?theme=light`, `?clock=0`. |
+| `composables/useFitText.ts` | **Créé.** Ajustement automatique d'une ligne de texte à la plus grande taille tenable par le conteneur : mesure des **métriques d'encre** des glyphes (canvas `actualBoundingBox*` — la boîte de ligne CSS gaspillerait ~40 % de la hauteur), taille calculée sur un **jeu de chaînes candidates** (stabilité), recalcul par `ResizeObserver` (rotation, changement de résolution du mur LED) et après chargement des polices. |
 | `pages/games/[id]/scoring.vue` | Boutons **TV** / **horloge** dans l'entête (mode direct) ; `watch` sur chrono/shotclock/score/période/pénalités → diffusion à chaque changement ; instantané complet au chargement. |
 | `nuxt.config.ts` + `package.json` | **`@vite-pwa/nuxt`** ajouté : `registerType: 'autoUpdate'`, `skipWaiting` + `clientsClaim`, `cleanupOutdatedCaches`, manifest `standalone`/paysage scope `/admin2/`, `navigateFallbackDenylist` sur `/api2` et `/api` (le shell ne répond jamais à un appel API), **service worker désactivé en dev**. |
 | `composables/usePwaUpdate.ts` | **Créé.** Boucle de fraîcheur : vérification au chargement, au retour d'onglet et toutes les 5 min ; **rechargement automatique** quand le nouveau worker prend la main (sans reload au premier enregistrement). Sûr car online-first : tout est déjà persisté serveur. **À réutiliser tel quel sur app2** (§0.9). |

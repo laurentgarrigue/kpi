@@ -722,7 +722,12 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   contrat legacy conservé + `matchId` et handshake `ready`). **Zéro réseau** : les
 >   écrans branchés sur le poste de saisie fonctionnent même sans Internet, conformément
 >   à la décision « BroadcastChannel local + Mercure distant » ; les écrans distants et
->   incrustations restent sur Mercure (lot 4) ;
+>   incrustations restent sur Mercure (lot 4). **Écrans non standards** (précision
+>   2026-07-29, spec §6.5bis) : panneaux LED extérieurs, satellites, portrait,
+>   ultra-larges → `useFitText` mesure les métriques d'encre des glyphes et met le nombre
+>   à la **taille maximale tenable** (recalcul par `ResizeObserver`), **contraste
+>   maximal** commutable (`?theme=light`), **dixièmes sous 10 s** à taille stable, police
+>   grasse à chiffres tabulaires sans police web (démarrage instantané, hors ligne) ;
 > - ✅ 3.6 — **PWA installable + mise à jour immédiate** : module `@vite-pwa/nuxt`
 >   (`registerType: 'autoUpdate'`, `skipWaiting`/`clientsClaim`, manifest `standalone`
 >   scope `/admin2/`) + `usePwaUpdate` (vérification au chargement, au retour d'onglet et

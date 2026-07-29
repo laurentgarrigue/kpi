@@ -52,10 +52,19 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
     tick()
   }
 
-  /** Displayed value: "--" when idle, else whole remaining seconds (rounded up). */
-  const display = computed(() =>
-    state.value === 'IDLE' ? '--' : String(Math.ceil(remainingMs.value / 1000))
-  )
+  /**
+   * Displayed value (spec §6.5 — decision 2026-07-29):
+   *  - "--" when idle;
+   *  - whole seconds, rounded up, from 60 down to 10 (max width: 2 chars, "60");
+   *  - **tenths under 10 s** ("8.8"), as scoreboards do for the last seconds.
+   * The 100 ms tick gives exactly the resolution the tenths need.
+   */
+  const display = computed(() => {
+    if (state.value === 'IDLE') return '--'
+    const ms = remainingMs.value
+    if (ms >= 10_000) return String(Math.ceil(ms / 1000))
+    return (Math.floor(ms / 100) / 10).toFixed(1)
+  })
 
   const isRunning = computed(() => state.value === 'RUNNING')
 

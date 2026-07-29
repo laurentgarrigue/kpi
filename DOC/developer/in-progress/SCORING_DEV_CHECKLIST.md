@@ -153,7 +153,11 @@ make app4_dev                  # ou le serveur dev habituel
 |---|---|---|
 | 3.32 | Bouton **TV** de l'entête (mode direct) | ouvre `/games/{id}/scoreboard` dans une fenêtre : équipes, score, période, chrono, chronomètre de tir et pénalités s'affichent **immédiatement** (handshake `ready` → snapshot complet) |
 | 3.33 | Saisir un but / lancer le chrono / lancer le shotclock / créer une pénalité | le tableau de score suit **en direct**, sans réseau (débrancher le Wi-Fi pour vérifier : la fenêtre reste synchronisée) |
-| 3.34 | Bouton **horloge** de l'entête | ouvre `/games/{id}/shotclock` (grand chiffre + rappel du chrono) ; vert = décompte, ambre = suspendu, `--` = à l'arrêt |
+| 3.34 | Bouton **horloge** de l'entête | ouvre `/games/{id}/shotclock` : chiffre **occupant tout l'écran**, blanc sur noir ; atténué quand suspendu ou à l'arrêt (`--`) ; chrono principal en petit dessous |
+| 3.34a | **Redimensionner** la fenêtre du chronomètre de tir (très large, très haute, carrée) et la **faire pivoter** (tablette) | le chiffre se **remet à l'échelle** à chaque fois pour occuper la surface — jamais de débordement ni de marge perdue, sans rechargement |
+| 3.34b | Laisser le chronomètre de tir descendre **sous 10 s** | affichage en **dixièmes** (`9.9` … `0.0`) et **la taille du chiffre ne change pas** au passage (calcul sur les candidats `60`/`8.8`) |
+| 3.34c | Ouvrir `/games/{id}/shotclock?theme=light` puis `?clock=0` | noir sur blanc ; chrono principal masqué (le chiffre reprend toute la hauteur) |
+| 3.34d | Ouvrir le scoreboard sur un écran **portrait** ou une fenêtre étroite | bascule en **disposition colonne** (équipe A / score / équipe B empilés) ; `?theme=light` et `?shotclock=0` fonctionnent |
 | 3.35 | Ouvrir **deux matchs différents** dans deux consoles + leurs affichages | chaque affichage ne reçoit que **son** match (filtrage `matchId`) |
 | 3.36 | Ouvrir la console **buildée** sur tablette → menu navigateur | l'application est **installable** (« Ajouter à l'écran d'accueil ») ; lancée depuis l'icône, elle s'ouvre en plein écran (standalone, paysage) |
 | 3.37 | Déployer une **nouvelle version** pendant que la console est ouverte | la page se **recharge d'elle-même** dans les 5 min (ou immédiatement au retour sur l'onglet) et sert la nouvelle version — jamais d'app shell périmé |
