@@ -497,9 +497,17 @@ l'ancien règlement jusqu'à la fin de saison 2026 :
 
 La **progression des cartons** est précisée au passage (spec §7.4) : ordre vert → jaune → rouge,
 un 2ᵉ/3ᵉ carton ne peut être identique ou inférieur au précédent, un jaune ou un rouge peut être
-le premier carton, l'exclusion définitive est applicable à tout moment. Sur but encaissé, la
-pénalité est levée quel que soit le carton (chronos identiques) ; pour `R`/`D` le joueur
-sanctionné ne revient pas, il est **remplacé**.
+le premier carton, l'exclusion définitive est applicable à tout moment.
+
+**Pénalités (correctif réglementaire 2026-07-29, cf. spec §0.10)** :
+
+- **`V`/`J`** : pénalité de 2 min, **levée sur but encaissé** (confirmation opérateur) ou à
+  l'expiration — le **joueur revient** ;
+- **`R`** : pénalité de 2 min **qui va toujours à son terme**, même si un ou plusieurs buts
+  sont encaissés ; **remplacement uniquement à l'issue** (le joueur sanctionné ne revient
+  jamais) ;
+- **`D` (noir)** : **aucune pénalité de 2 min** — exclusion immédiate et définitive, **aucun
+  remplacement jusqu'à la fin du match** : l'équipe termine à effectif réduit.
 
 ---
 
@@ -696,8 +704,16 @@ tablette ; reprise sur un second terminal validée en cours de match.
 > - ✅ **Raccourcis paramétrables** (§4.11) : `useScoringShortcuts` (localStorage par
 >   poste, une touche = une action, neutralisés dans les champs) + modale de réglage ;
 >   défauts Espace / Entrée / `.` / `0` / `+` / `−` ;
-> - ⬜ reste sur 3.3 : **pénalités** (2 slots/équipe, levée sur but encaissé,
->   remplacement R/D) — tranche suivante.
+> - ✅ **Pénalités** (§7.4, règles corrigées 2026-07-29 — cf. spec §0.10) : `usePenalties`
+>   (≤ 2 horloges/équipe via `freePenaltySlot`, suivi du chrono, expiration → buzzer +
+>   toast « le joueur revient » / « remplacement autorisé » selon `V`/`J` vs `R`),
+>   création automatique sur carton `V`/`J`/`R` (`D` = exclusion sèche sans horloge,
+>   message dédié), **levée sur but encaissé** proposée à l'opérateur pour la plus
+>   ancienne pénalité **levable** (`V`/`J` — jamais `R`), composant `ScoringPenalties`
+>   (décomptes, retrait manuel), **marqueurs 🔴/⬛ dans les effectifs**, persistance
+>   kind `PENALTY` (team/slot/playerId/cardCode) + restauration via `GET /state`.
+>   Règles pures mises à jour des deux côtés (`cardCreatesPenaltyClock`,
+>   `penaltyLiftableOnGoal`, `penaltySlotToLift` filtré) — **71 assertions PHP**.
 
 ---
 

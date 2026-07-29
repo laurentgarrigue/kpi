@@ -92,6 +92,24 @@ export function playerReturnsAfterPenalty(cardCode: ScoringEventCode): boolean {
   return !NO_RETURN_CARDS.includes(cardCode)
 }
 
+/**
+ * §7.4 (correction 2026-07-29): the black ejection card (D) carries NO 2-minute penalty —
+ * immediate and definitive exclusion, no replacement until the end of the match (the team
+ * finishes short-handed). Only V/J/R start a penalty clock.
+ */
+export function cardCreatesPenaltyClock(cardCode: string): cardCode is 'V' | 'J' | 'R' {
+  return cardCode === 'V' || cardCode === 'J' || cardCode === 'R'
+}
+
+/**
+ * §7.4 (correction 2026-07-29): early lift on a conceded goal applies to V/J only (the
+ * player returns). An R penalty runs its FULL 2 minutes whatever happens — even if one or
+ * several goals are conceded — and the replacement is only allowed at its end.
+ */
+export function penaltyLiftableOnGoal(cardCode: string): boolean {
+  return cardCode === 'V' || cardCode === 'J'
+}
+
 /** First free penalty slot (1|2) for a team, or null when both are busy (spec §7.4). */
 export function freePenaltySlot(busySlots: number[]): 1 | 2 | null {
   if (!busySlots.includes(1)) return 1
@@ -101,11 +119,15 @@ export function freePenaltySlot(busySlots: number[]): 1 | 2 | null {
 
 /**
  * Which penalty slot is lifted when the short-handed team concedes a goal: the OLDEST
- * running one (clock behavior identical for every card — spec §7.4).
+ * among the LIFTABLE ones only (V/J — spec §7.4, correction 2026-07-29). R penalties are
+ * never lifted early; D never has a clock.
  */
-export function penaltySlotToLift(penalties: Array<{ slot: number, startedAt: string }>): number | null {
-  if (penalties.length === 0) return null
-  return [...penalties].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0].slot
+export function penaltySlotToLift(
+  penalties: Array<{ slot: number, startedAt: string, cardCode: string }>
+): number | null {
+  const liftable = penalties.filter(p => penaltyLiftableOnGoal(p.cardCode))
+  if (liftable.length === 0) return null
+  return [...liftable].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0].slot
 }
 
 // ─── Shotclock — 3 commands, 3 states (spec §6.5, decision 2026-07-27) ───

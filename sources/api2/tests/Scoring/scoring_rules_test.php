@@ -87,8 +87,19 @@ check('unknown card refused', 'unknown_card', R::validateCardProgression([], 'X'
 // who returns after the penalty (§0.9)
 check('V player returns', true, R::playerReturnsAfterPenalty('V'));
 check('J player returns', true, R::playerReturnsAfterPenalty('J'));
-check('R player replaced', false, R::playerReturnsAfterPenalty('R'));
-check('D player replaced', false, R::playerReturnsAfterPenalty('D'));
+check('R player replaced (at penalty end only)', false, R::playerReturnsAfterPenalty('R'));
+check('D player never replaced', false, R::playerReturnsAfterPenalty('D'));
+
+// which cards start a penalty clock (§7.4, correction 2026-07-29)
+check('V starts a penalty clock', true, R::cardCreatesPenaltyClock('V'));
+check('J starts a penalty clock', true, R::cardCreatesPenaltyClock('J'));
+check('R starts a penalty clock', true, R::cardCreatesPenaltyClock('R'));
+check('D starts NO penalty clock (definitive exclusion)', false, R::cardCreatesPenaltyClock('D'));
+
+// early lift on conceded goal: V/J only — R runs its full 2 minutes
+check('V liftable on conceded goal', true, R::penaltyLiftableOnGoal('V'));
+check('J liftable on conceded goal', true, R::penaltyLiftableOnGoal('J'));
+check('R NOT liftable on conceded goal', false, R::penaltyLiftableOnGoal('R'));
 
 // ---------------------------------------------------------------- penalties
 check('free slot when none busy', 1, R::freePenaltySlot([]));
@@ -96,12 +107,19 @@ check('free slot when 1 busy', 2, R::freePenaltySlot([1]));
 check('free slot when 2 busy', 1, R::freePenaltySlot([2]));
 check('no third concurrent penalty', null, R::freePenaltySlot([1, 2]));
 
-check('lift oldest penalty', 2, R::penaltySlotToLift([
-    ['slot' => 1, 'startedAt' => '2026-07-27 15:04:10.000'],
-    ['slot' => 2, 'startedAt' => '2026-07-27 15:02:00.000'],
+check('lift oldest liftable penalty', 2, R::penaltySlotToLift([
+    ['slot' => 1, 'startedAt' => '2026-07-27 15:04:10.000', 'cardCode' => 'V'],
+    ['slot' => 2, 'startedAt' => '2026-07-27 15:02:00.000', 'cardCode' => 'J'],
 ]));
-check('lift single penalty', 1, R::penaltySlotToLift([
-    ['slot' => 1, 'startedAt' => '2026-07-27 15:04:10.000'],
+check('lift single V penalty', 1, R::penaltySlotToLift([
+    ['slot' => 1, 'startedAt' => '2026-07-27 15:04:10.000', 'cardCode' => 'V'],
+]));
+check('R penalty never lifted early (full 2 minutes)', null, R::penaltySlotToLift([
+    ['slot' => 1, 'startedAt' => '2026-07-27 15:02:00.000', 'cardCode' => 'R'],
+]));
+check('oldest is R → lift the younger J instead', 2, R::penaltySlotToLift([
+    ['slot' => 1, 'startedAt' => '2026-07-27 15:02:00.000', 'cardCode' => 'R'],
+    ['slot' => 2, 'startedAt' => '2026-07-27 15:04:10.000', 'cardCode' => 'J'],
 ]));
 check('nothing to lift', null, R::penaltySlotToLift([]));
 

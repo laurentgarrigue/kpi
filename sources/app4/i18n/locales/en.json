@@ -2545,7 +2545,19 @@
       "shotclockPlus": "Shot clock: +1 s",
       "shotclockMinus": "Shot clock: −1 s"
     },
-    "sound_test": "Test sound"
+    "sound_test": "Test sound",
+    "penalty": {
+      "title": "Penalties",
+      "remove": "Remove penalty",
+      "full_slots": "This team already has 2 exclusions running: no further penalty can be created (never fewer than 3 players).",
+      "black_no_penalty": "Definitive ejection: no 2-minute penalty, no replacement until the end of the match — the team finishes short-handed.",
+      "expired_title": "Penalty over",
+      "expired_return": "Penalty of #{number} is over: the player returns.",
+      "expired_replace": "Penalty of #{number} (red card) is over: replacement allowed — the sanctioned player does not return.",
+      "lift_title": "Goal conceded — penalty lift",
+      "lift_message": "The short-handed team just conceded a goal: lift the oldest penalty (#{number})? The player returns. (A red-card penalty is never lifted: its 2 minutes run to the end.)",
+      "lift_confirm": "Lift the penalty"
+    }
   },
   "competition": {
     "ended_title": "Competition ended — read only",

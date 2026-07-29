@@ -4,7 +4,8 @@
 > ⚠️ **Réaligné sur le plan de refonte live — lire §0 en premier** (l'état live migre vers
 > `scoring_live_*`, la diffusion passe à Mercure). §0 prime sur le reste en cas de contradiction.
 > **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
-> raccourcis paramétrables, relais matériel).
+> raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9** et **correctif
+> réglementaire pénalités du 2026-07-29 en §0.10**.
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et le prototype standalone `sources/app3`
@@ -166,7 +167,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 | `team` | enum `A`/`B`/NULL | équipe (pénalités) ; NULL pour le chrono de jeu et le shotclock |
 | `slot` | tinyint | pour les pénalités : **1 ou 2** (au plus 2 exclusions concurrentes **par équipe**) ; `0`/NULL pour `GAME` et `SHOTCLOCK` |
 | `id_player` | varchar/NULL | joueur exclu (licence), si applicable |
-| `card_code` | varchar/NULL | carton d'origine de la pénalité (`V`/`J`/`R`/`D`) — sert la règle du rouge définitif (cf. §7.4) |
+| `card_code` | varchar/NULL | carton d'origine de la pénalité (`V`/`J`/`R` — **jamais `D`**, qui ne crée pas d'horloge, cf. §0.10) : `V`/`J` = levable sur but encaissé, `R` = 2 min complètes (cf. §7.4) |
 | `init_ms` | int | durée de départ (600000 = 10 min ; 60000 ou 40000 = shotclock ; **120000 = exclusion 2 min**) |
 | `elapsed_ms` | int | temps écoulé figé au dernier arrêt |
 | `started_at` | datetime(3)/NULL | horodatage **client** du dernier `run` (NULL si arrêté), cf. plan §4.2 |
@@ -272,7 +273,7 @@ Deuxième passe de revue ; les sections concernées ont été mises à jour, ce 
 | **Shotclock 40 s actif immédiatement** | Le nouveau système applique d'emblée le règlement 2027 : `shotclockOffensiveReboundEnabled = true` par défaut. Le legacy (fin de saison 2026) reste inchangé | §6.2, §6.5 |
 | **Carton d'exclusion définitive (noir)** | `D` devient **« carton d'exclusion définitive »** (EN : *Ejection card*), couleur **noire** — règlement 2027, appliqué immédiatement dans le nouveau système ; le legacy conserve « rouge définitif » jusqu'à la fin de saison 2026 | §7.4, i18n |
 | **Progression des cartons** | Ordre vert → jaune → rouge : un joueur ne peut pas recevoir un 2ᵉ/3ᵉ carton **identique ou inférieur** au précédent ; un jaune (ou rouge) **peut être le premier** carton ; l'exclusion définitive est applicable **à tout moment** | §7.4 |
-| **Levée anticipée — rouge pour cumul** | Le rouge (`R`, cumul) empêche le joueur sanctionné de **revenir en jeu**, mais sur but encaissé avant la fin des 2 min — ou à leur issue — il peut être **remplacé**. Les **chronos de pénalité ne changent pas** de comportement | §7.4 |
+| **Levée anticipée — rouge pour cumul** | ~~Sur but encaissé le `R` peut être remplacé avant la fin des 2 min~~ → **corrigé le 2026-07-29, cf. §0.10** : le `R` va toujours au terme de ses 2 min (remplacement à l'issue seulement) ; le `D` n'a **aucune** pénalité | §0.10, §7.4 |
 | **Motif de carton par défaut** | Pré-sélectionné à **« Autre/Non précisé »** (`unknown`) pour une saisie rapide sans étape supplémentaire | §7.3, §7.4 |
 | **Prolongations : 5 min** | Durée des prolongations = **5 minutes** dans les règlements ICF **et** FFCK (correction de l'ancienne mention 3 min FFCK). Défaut `P{n}` = 300 s | §6.2, §6.4, §7.5 |
 | **Clôture : heure de fin pré-remplie** | `Heure_fin` proposée à l'**heure réelle au moment de la clôture**, modifiable | §7.6 |
@@ -282,6 +283,21 @@ Deuxième passe de revue ; les sections concernées ont été mises à jour, ce 
 | **Identifiants (uid)** | `kp_match.Id_match` (int) **conservé** — le remplacer casserait tout le legacy ; on ajoute un **`uid` public court additif** côté match pour les usages futurs (offline, import). `scoring_live_clock` passe en **PK UUID** (table neuve, zéro impact) | §0.5 ; plan §4.13 |
 | **PWA : mise à jour immédiate** | Le service worker doit garantir que l'utilisateur bénéficie **immédiatement de la dernière version** (détection + activation immédiate + rechargement) ; mécanisme à réutiliser sur **app2** | §3, §8 ; plan §4.9 |
 | **Zéro papier — responsable d'équipe (profil 7)** | Étapes ultérieures : validation/ajustement de la **compo d'équipe** avant match (délai réglementaire) et **consultation + réclamation** après match (délai réglementaire) | §1, plan lot 9 |
+
+### 0.10 Correctif réglementaire — pénalités des cartons rouge et noir (2026-07-29)
+
+Précision apportée après la 2ᵉ passe, qui **remplace** la ligne « Levée anticipée — rouge pour
+cumul » du §0.9 :
+
+| Carton | Pénalité 2 min ? | Levée sur but encaissé ? | Qui revient à la fin ? |
+|---|---|---|---|
+| **Vert / Jaune** (`V`/`J`) | oui | **oui** (après confirmation opérateur) | le **joueur sanctionné** revient |
+| **Rouge** (`R`, cumul) | oui | **NON — jamais** : les 2 minutes vont à leur terme même si un ou plusieurs buts sont encaissés | un **remplaçant**, uniquement à l'issue des 2 min (le joueur sanctionné ne revient jamais) |
+| **Noir** (`D`, exclusion définitive) | **NON — aucune pénalité** | sans objet (pas d'horloge) | **personne** : aucun remplacement jusqu'à la fin du match, l'équipe termine à effectif réduit |
+
+Conséquences : `scoring_live_clock.card_code` ∈ `V`/`J`/`R` seulement (§0.5) ; la levée sur but
+encaissé cible la **plus ancienne pénalité levable** (`V`/`J`) ; règles portées par
+`ScoringRules::cardCreatesPenaltyClock()` / `penaltyLiftableOnGoal()` (PHP + miroir TS, testées).
 
 ---
 
@@ -985,10 +1001,12 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
 
 ### 7.4 Pénalités (cartons)
 
-- Un **carton** déclenche une **exclusion de 2 minutes** du joueur sanctionné, dont le **décompte
-  suit le chrono** (se met en pause quand le chrono est arrêté). Pendant l'exclusion, **le joueur
-  n'est PAS remplacé** : l'équipe joue en **infériorité numérique** (situation de *powerplay* pour
-  l'adversaire).
+- Un carton **vert, jaune ou rouge** (`V`/`J`/`R`) déclenche une **exclusion de 2 minutes** du
+  joueur sanctionné, dont le **décompte suit le chrono** (se met en pause quand le chrono est
+  arrêté). Pendant l'exclusion, **le joueur n'est PAS remplacé** : l'équipe joue en **infériorité
+  numérique** (situation de *powerplay* pour l'adversaire). **Le carton noir (`D`) ne déclenche
+  AUCUNE pénalité de 2 minutes** (correctif §0.10) : exclusion immédiate et définitive, **sans
+  remplacement jusqu'à la fin du match** — l'équipe termine à effectif réduit.
 - **Cardinalité (règle de jeu) :** une équipe présente **5 joueurs** à l'engagement et **ne peut
   descendre sous 3** sur le terrain → **au plus 2 exclusions concurrentes par équipe**, soit **4 au
   maximum au total**. C'est ce qui borne `scoring_live_clock.slot` à {1, 2} par équipe (cf. §0.5).
@@ -997,21 +1015,19 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
   Le nouveau Scoring applique **immédiatement** cette appellation et cette couleur (i18n
   `scoring.*`) ; le **legacy n'est pas touché** et conserve « rouge définitif » jusqu'à la fin de
   saison 2026. Le code `D` est conservé en base (compat).
-- **Levée anticipée sur but adverse** (fin de l'infériorité) : si l'équipe en infériorité
-  **encaisse un but** pendant l'exclusion, celle-ci est **levée** — **après confirmation de
-  l'opérateur**. Les **chronos de pénalité ont le même comportement quel que soit le carton**
-  (levée sur but encaissé, ou expiration des 2 min) ; ce qui diffère, c'est **qui revient**
-  (cf. §0.9) :
-  - carton **vert/jaune** (`V`/`J`) : le joueur sanctionné **revient en jeu** ;
-  - carton **rouge pour cumul** (`R`) : le joueur sanctionné **ne revient jamais en jeu**, mais à
-    la levée de la pénalité (but encaissé **ou** fin des 2 min) l'équipe **le remplace** par un
-    autre joueur (retour à effectif complet) ;
-  - carton **d'exclusion définitive** (`D`, noir) : même logique que `R` — joueur exclu du match,
-    **remplacement** à la levée de la pénalité.
-  La colonne `card_code` de l'horloge de pénalité (§0.5) sert donc à l'**affichage et au statut
-  du joueur** (marqué exclu pour `R`/`D`), pas à un comportement d'horloge différencié.
-- Si une équipe a **deux exclusions en cours**, c'est la **plus ancienne** qui est levée par un
-  but adverse.
+- **Levée anticipée sur but encaissé** (fin de l'infériorité — **correctif réglementaire
+  §0.10, 2026-07-29**) : si l'équipe en infériorité **encaisse un but** pendant une exclusion,
+  seule une pénalité de carton **vert ou jaune** est **levée** — **après confirmation de
+  l'opérateur** — et **le joueur sanctionné revient en jeu**. La pénalité d'un carton
+  **rouge** (`R`) **n'est jamais levée par un but** : ses **2 minutes vont à leur terme quoi
+  qu'il arrive** (même si un ou plusieurs buts sont encaissés) ; **à l'issue seulement**,
+  l'équipe peut faire entrer un **remplaçant** (le joueur sanctionné ne revient jamais). Le
+  carton **noir** (`D`) n'a pas d'horloge du tout (voir ci-dessus). La colonne `card_code` de
+  l'horloge de pénalité (§0.5) porte donc bien un **comportement différencié** : levable sur
+  but (`V`/`J`) ou non (`R`).
+- Si une équipe a **deux exclusions en cours**, c'est la **plus ancienne des pénalités
+  levables (`V`/`J`)** qui est levée par un but encaissé ; une pénalité `R` plus ancienne
+  n'est pas levée (elle court jusqu'au bout).
 - **Motif de carton** à définir à la saisie, **pré-sélectionné à « Autre/Non précisé »**
   (`unknown`) pour permettre une validation immédiate sans étape supplémentaire (décision §0.9 ;
   `ScoringConfig.defaultCardReason`). Motifs existants (réutilisés de FMV3, clés i18n) : `r_pad`

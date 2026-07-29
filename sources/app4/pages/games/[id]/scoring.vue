@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Period, MatchStatus, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
+import type { PenaltyClock } from '~/composables/usePenalties'
 
 definePageMeta({
   layout: 'admin',
@@ -120,17 +121,85 @@ const shotclockAdjust = (delta: number) => {
   shotclock.adjust(delta)
   persistShotclock('stop')
 }
+// ─── Penalties (spec §7.4 — rules corrected 2026-07-29) ───
+// V/J/R start a 2-min clock; D is a dry definitive exclusion (no clock, no replacement).
+// V/J lift early on a conceded goal (player returns); R always runs its full 2 minutes
+// (replacement at the end only, even if goals are conceded meanwhile).
+const penalties = usePenalties({
+  onExpired: (p) => {
+    buzzer.beep(400)
+    void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
+    toast.add({
+      title: t('scoring.penalty.expired_title'),
+      description: t(
+        p.cardCode === 'R' ? 'scoring.penalty.expired_replace' : 'scoring.penalty.expired_return',
+        { number: p.playerNumber ?? '?' }
+      ),
+      color: 'info'
+    })
+  }
+})
+
+const persistPenalty = (p: PenaltyClock, action: 'run' | 'stop') => {
+  void scoringStore.setTimer(action, {
+    kind: 'PENALTY',
+    team: p.team,
+    slot: p.slot,
+    playerId: p.playerId,
+    cardCode: p.cardCode,
+    startTime: Math.max(0, Math.round(scoringStore.config.penaltyDuration - p.remainingMs / 1000)),
+    runTime: 0,
+    maxTime: scoringStore.config.penaltyDuration
+  })
+}
+const persistAllPenalties = () => {
+  for (const p of penalties.penalties.value) persistPenalty(p, p.running ? 'run' : 'stop')
+}
+
+const removePenalty = (id: string) => {
+  if (!canScore.value) return
+  const p = penalties.remove(id)
+  if (p) void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
+}
+
+// Conceded-goal early lift — asked to the operator (spec §7.4: after confirmation).
+const liftPending = ref<PenaltyClock | null>(null)
+const confirmLift = () => {
+  const p = liftPending.value
+  liftPending.value = null
+  if (!p) return
+  penalties.remove(p.id)
+  void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
+}
+
+// Excluded-player markers in the rosters (R = 🔴 replacement at penalty end, D = ⬛ out
+// for the whole match, team short-handed to the end).
+const excludedToken = computed(() => {
+  const m = new Map<string, string>()
+  for (const e of scoringStore.events) {
+    if (e.code === 'D') m.set(e.player, '⬛')
+    else if (e.code === 'R' && m.get(e.player) !== '⬛') m.set(e.player, '🔴')
+  }
+  return m
+})
+
 // Auto-follow: game clock stop ⇒ suspension, restart ⇒ resume — the ONLY pause (§0.9).
+// Penalty countdowns follow the game clock the same way.
 watch(isRunning, (running) => {
   if (running) {
     if (shotclock.state.value === 'SUSPENDED') {
       shotclock.resume()
       persistShotclock('run')
     }
-  } else if (shotclock.state.value === 'RUNNING') {
-    shotclock.suspend()
-    persistShotclock('stop')
+    penalties.resumeAll()
+  } else {
+    if (shotclock.state.value === 'RUNNING') {
+      shotclock.suspend()
+      persistShotclock('stop')
+    }
+    penalties.suspendAll()
   }
+  persistAllPenalties()
 })
 // Legacy shotClockShow rule: masked when the game time remaining is below the shotclock.
 const gameRemaining = computed(() => Math.max(0, scoringStore.currentPeriodDuration - elapsed.value))
@@ -224,6 +293,27 @@ onMounted(async () => {
       const left = Math.max(0, Math.round((br.initMs - br.elapsedMs) / 1000))
       if (left > 0) startBreak(left, false)
     }
+    const penClocks = scoringStore.liveClocks.filter(c => c.kind === 'PENALTY')
+    if (penClocks.length && isLive.value) {
+      penalties.restore(
+        penClocks.map(c => ({
+          id: c.id,
+          team: c.team as TeamSide,
+          slot: c.slot,
+          playerId: c.playerId,
+          cardCode: c.cardCode,
+          initMs: c.initMs,
+          elapsedMs: c.elapsedMs,
+          running: c.running
+        })),
+        isRunning.value
+      )
+      // Enrich the jersey numbers from the rosters (not persisted on the clock).
+      for (const p of penalties.penalties.value) {
+        const roster = p.team === 'A' ? scoringStore.playersA : scoringStore.playersB
+        p.playerNumber = roster.find(pl => String(pl.matric) === p.playerId)?.numero ?? null
+      }
+    }
   } catch {
     // useApi already shows a toast
   }
@@ -298,10 +388,35 @@ const pushEvent = async (code: ScoringEventCode) => {
     await scoringStore.addEvent(event)
     selected.value = null
     eventReason.value = scoringStore.config.defaultCardReason
-    // Golden goal (spec §7.5): a goal during overtime of a type-E match ends it — offer
-    // the closure right away (Statut → END triggers the kp_* consolidation server-side).
-    if (code === 'B' && goalEndsMatch(match.value.type, eventPeriod.value) && !scoreLevel.value) {
-      goldenGoalOpen.value = true
+
+    if (code === 'B') {
+      // Conceded goal: propose the early lift of the conceding team's oldest liftable
+      // (V/J) penalty — an R runs its full 2 minutes whatever happens (spec §7.4).
+      const conceding: TeamSide = team === 'A' ? 'B' : 'A'
+      const lift = penalties.liftCandidate(conceding)
+      if (lift) liftPending.value = lift
+      // Golden goal (spec §7.5): a goal during overtime of a type-E match ends it — offer
+      // the closure right away (Statut → END triggers the kp_* consolidation server-side).
+      if (goalEndsMatch(match.value.type, eventPeriod.value) && !scoreLevel.value) {
+        goldenGoalOpen.value = true
+      }
+    } else if (cardCreatesPenaltyClock(code)) {
+      // V/J/R: start the 2-min penalty clock (follows the game clock) — in live mode only.
+      if (isLive.value) {
+        const clock = penalties.add({
+          team,
+          playerId: String(player.matric),
+          playerNumber: player.numero,
+          cardCode: code,
+          durationSec: scoringStore.config.penaltyDuration,
+          running: isRunning.value
+        })
+        if (clock) persistPenalty(clock, clock.running ? 'run' : 'stop')
+        else toast.add({ title: t('scoring.penalty.title'), description: t('scoring.penalty.full_slots'), color: 'warning' })
+      }
+    } else if (code === 'D') {
+      // Black card: definitive exclusion, NO penalty clock, no replacement to the end.
+      toast.add({ title: t('scoring.event.card_black'), description: t('scoring.penalty.black_no_penalty'), color: 'info' })
     }
   } catch { /* toast handled */ }
 }
@@ -511,6 +626,16 @@ const toggleLock = async () => {
         </div>
       </div>
 
+      <!-- Active penalties A/B (spec §7.4) — live mode, shown when at least one runs -->
+      <ScoringPenalties
+        v-if="isLive && penalties.penalties.value.length"
+        :penalties="penalties.penalties.value"
+        :team-a-name="match.equipeA"
+        :team-b-name="match.equipeB"
+        :can-score="canScore"
+        @remove="removePenalty"
+      />
+
       <!-- Status (cyclic badge) + Period (advance/direct) + Timer -->
       <div class="flex flex-wrap items-center justify-between gap-2">
         <ScoringStatusBadge
@@ -550,6 +675,8 @@ const toggleLock = async () => {
             >
               <span class="font-mono w-6 text-center">{{ p.numero }}</span>
               <span class="flex-1">{{ p.nom.toUpperCase() }} {{ p.prenom }}</span>
+              <!-- Exclusion markers: 🔴 = replacement at penalty end, ⬛ = out to the end -->
+              <span v-if="excludedToken.get(String(p.matric))">{{ excludedToken.get(String(p.matric)) }}</span>
               <UBadge v-if="p.capitaine === 'C'" size="xs" variant="soft">Cap.</UBadge>
               <UBadge v-else-if="p.capitaine === 'E'" size="xs" variant="soft" color="neutral">Coach</UBadge>
             </button>
@@ -631,6 +758,18 @@ const toggleLock = async () => {
         :cancel-text="t('scoring.edit.cancel')"
         @confirm="() => { goldenGoalOpen = false; setStatus('END') }"
         @close="goldenGoalOpen = false"
+      />
+
+      <!-- Conceded-goal early lift of a V/J penalty (spec §7.4 — operator confirms) -->
+      <AdminConfirmModal
+        :open="liftPending !== null"
+        variant="warning"
+        :title="t('scoring.penalty.lift_title')"
+        :message="t('scoring.penalty.lift_message', { number: liftPending?.playerNumber ?? '?' })"
+        :confirm-text="t('scoring.penalty.lift_confirm')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="confirmLift"
+        @close="liftPending = null"
       />
 
       <!-- Keyboard shortcuts settings (per-device preference) -->

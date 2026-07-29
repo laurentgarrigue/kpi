@@ -128,10 +128,24 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.20 | Modale **Raccourcis clavier** (engrenage) : réassigner une touche déjà utilisée | l'autre action perd sa touche (une touche = une action) ; persiste au rechargement (localStorage) ; « Valeurs par défaut » restaure |
 | 3.21 | Masquage : temps de jeu restant **inférieur** au shotclock | le shotclock affiche `--` (règle legacy `shotClockShow`) |
 
+### Tests fonctionnels — 3ᵉ tranche (pénalités, règles §0.10)
+
+| # | Test | Attendu |
+|---|---|---|
+| 3.22 | Carton **vert/jaune/rouge** en direct | pénalité **2:00** créée pour l'équipe du joueur (token 🟢/🟡/🔴 + n° maillot), décompte **suivant le chrono** (gel quand le chrono s'arrête) ; ligne `scoring_live_clock` kind `PENALTY` (team/slot/playerId/cardCode) |
+| 3.23 | Carton **noir** (`D`) | **aucune pénalité créée** ; message « exclusion définitive, pas de 2 min, aucun remplacement » ; joueur marqué **⬛** dans l'effectif |
+| 3.24 | **3ᵉ carton** pour la même équipe pendant 2 exclusions en cours | avertissement « déjà 2 exclusions » — aucune 3ᵉ horloge (jamais < 3 joueurs) |
+| 3.25 | **But encaissé** par l'équipe en infériorité (pénalité V/J en cours) | modale « lever la pénalité la plus ancienne ? » ; confirmer → l'horloge disparaît + RAZ en base |
+| 3.26 | **But encaissé** avec **seulement une pénalité `R`** en cours | **aucune proposition de levée** : les 2 min continuent (règle §0.10) |
+| 3.27 | Pénalités `R` (plus ancienne) **+** `J` en cours, but encaissé | c'est la **`J`** qui est proposée à la levée, jamais la `R` |
+| 3.28 | **Expiration** d'une pénalité (2:00 écoulées, chrono en marche) | buzzer + toast : `V`/`J` → « le joueur revient » ; `R` → « remplacement autorisé, le joueur ne revient pas » ; horloge retirée + RAZ en base |
+| 3.29 | **Rechargement** de la page avec pénalités en cours | les décomptes reviennent (équipe/slot/n°/carton) dans le bon état run/suspendu |
+| 3.30 | Croix de **retrait manuel** d'une pénalité | horloge retirée + RAZ en base (correction d'erreur de saisie) |
+| 3.31 | Joueur avec carton `R` | marqué **🔴** dans l'effectif (remplacement à l'issue) ; avec `D` → **⬛** |
+
 ### Reste à livrer sur le lot 3 (tests à ajouter ici au fil de l'eau)
 
-Pénalités (2 slots/équipe, levée sur but encaissé, remplacement R/D) ;
-scoreboard/shotclock plein écran (BroadcastChannel) ; PWA installable + mise à jour
+Scoreboard/shotclock plein écran (BroadcastChannel) ; PWA installable + mise à jour
 immédiate ; abonnement Mercure de la console ; mode score seul ; solde §7.8 (statut
 joueur, officiels UI, recharge présents, n° court).
 

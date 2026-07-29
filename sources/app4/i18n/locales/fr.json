@@ -2557,7 +2557,19 @@
       "shotclockPlus": "Chrono de tir : +1 s",
       "shotclockMinus": "Chrono de tir : −1 s"
     },
-    "sound_test": "Tester le son"
+    "sound_test": "Tester le son",
+    "penalty": {
+      "title": "Pénalités",
+      "remove": "Retirer la pénalité",
+      "full_slots": "Cette équipe a déjà 2 exclusions en cours : aucune pénalité supplémentaire ne peut être créée (jamais moins de 3 joueurs).",
+      "black_no_penalty": "Exclusion définitive : pas de pénalité de 2 minutes, aucun remplacement possible jusqu'à la fin du match — l'équipe termine à effectif réduit.",
+      "expired_title": "Fin de pénalité",
+      "expired_return": "Pénalité du n°{number} terminée : le joueur revient en jeu.",
+      "expired_replace": "Pénalité du n°{number} (carton rouge) terminée : remplacement autorisé — le joueur sanctionné ne revient pas.",
+      "lift_title": "But encaissé — levée de pénalité",
+      "lift_message": "L'équipe en infériorité vient d'encaisser un but : lever la pénalité la plus ancienne (n°{number}) ? Le joueur revient en jeu. (Un carton rouge n'est jamais levé : ses 2 minutes vont à leur terme.)",
+      "lift_confirm": "Lever la pénalité"
+    }
   },
   "competition": {
     "ended_title": "Compétition terminée — lecture seule",

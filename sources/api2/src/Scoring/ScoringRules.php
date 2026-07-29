@@ -19,8 +19,11 @@ final class ScoringRules
     /** Card ranks for the progression rule (§7.4). D (black, ejection) is out of the ladder. */
     private const CARD_RANK = ['V' => 1, 'J' => 2, 'R' => 3];
 
-    /** Cards whose sanctioned player never comes back (replaced at penalty end, §7.4). */
+    /** Cards whose sanctioned player never comes back on the water (§7.4, 2026-07-29). */
     private const NO_RETURN_CARDS = ['R', 'D'];
+
+    /** Cards whose penalty is lifted early when the short-handed team concedes a goal. */
+    private const LIFTABLE_CARDS = ['V', 'J'];
 
     public const SHOTCLOCK_IDLE = 'IDLE';           // displayed "--", waiting for a start
     public const SHOTCLOCK_RUNNING = 'RUNNING';
@@ -160,6 +163,27 @@ final class ScoringRules
         return !in_array($cardCode, self::NO_RETURN_CARDS, true);
     }
 
+    /**
+     * §7.4 (correction 2026-07-29): the black ejection card (D) carries NO 2-minute
+     * penalty at all — immediate and definitive exclusion, no replacement until the end
+     * of the match (the team finishes short-handed). Only V/J/R start a penalty clock.
+     */
+    public static function cardCreatesPenaltyClock(string $cardCode): bool
+    {
+        return in_array($cardCode, ['V', 'J', 'R'], true);
+    }
+
+    /**
+     * §7.4 (correction 2026-07-29): early lift on a conceded goal applies to V/J only
+     * (the player returns). A red-card (R) penalty runs its FULL 2 minutes whatever
+     * happens — even if one or several goals are conceded — and the replacement is only
+     * allowed at its end.
+     */
+    public static function penaltyLiftableOnGoal(string $cardCode): bool
+    {
+        return in_array($cardCode, self::LIFTABLE_CARDS, true);
+    }
+
     // ------------------------------------------------------------------
     // Penalties (§7.4 — ≤ 2 concurrent per team, slots 1|2)
     // ------------------------------------------------------------------
@@ -182,21 +206,26 @@ final class ScoringRules
     }
 
     /**
-     * Which penalty is lifted when the short-handed team concedes a goal (§7.4): the
-     * OLDEST running one. Clocks behave identically for every card (2026-07-27); only the
-     * player/substitute distinction differs (see playerReturnsAfterPenalty()).
+     * Which penalty is lifted when the short-handed team concedes a goal (§7.4,
+     * correction 2026-07-29): the OLDEST among the LIFTABLE ones only (V/J — the player
+     * returns). R penalties are never lifted early (full 2 minutes, replacement at the
+     * end); D never has a clock (see cardCreatesPenaltyClock()).
      *
-     * @param array<int,array{slot:int,startedAt:string}> $penalties active penalties of the team
-     * @return int|null slot to lift, null when none
+     * @param array<int,array{slot:int,startedAt:string,cardCode:string}> $penalties active penalties of the team
+     * @return int|null slot to lift, null when none is liftable
      */
     public static function penaltySlotToLift(array $penalties): ?int
     {
-        if ($penalties === []) {
+        $liftable = array_values(array_filter(
+            $penalties,
+            static fn (array $p): bool => self::penaltyLiftableOnGoal($p['cardCode'])
+        ));
+        if ($liftable === []) {
             return null;
         }
-        usort($penalties, static fn (array $a, array $b): int => strcmp($a['startedAt'], $b['startedAt']));
+        usort($liftable, static fn (array $a, array $b): int => strcmp($a['startedAt'], $b['startedAt']));
 
-        return $penalties[0]['slot'];
+        return $liftable[0]['slot'];
     }
 
     // ------------------------------------------------------------------
