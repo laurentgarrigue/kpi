@@ -530,8 +530,20 @@ filtre) ; les IP des runners GitHub passent.
      connexion qui expire, pas un build), et `SSH_HOST` contenait **déjà** l'IPv4
      (l'hypothèse « hostname résolvant en IPv6 » un temps envisagée était FAUSSE —
      ré-écrire le secret n'a rien changé au fond). Mitigation : `timeout` connexion
-     30s → **60s** (+ `command_timeout: 15m`). Résidu rare → `gh run rerun`. Pas de
-     cause côté VPS ni secrets : rien à « réparer », c'est du réseau intermittent.
+     30s → **60s** (+ `command_timeout: 15m`). Pas de cause côté VPS ni secrets : rien
+     à « réparer », c'est du réseau intermittent.
+   → **MàJ 2026-07-29 — retry automatique.** Ce résidu se manifestait encore : un
+     déploiement préprod échouait en ~25-40s puis **repassait au re-run manuel** (2 KO
+     observés #15/#16, cf. `gh run list`). On a donc automatisé le re-run : l'étape SSH
+     est dédoublée en **« tentative 1 » (`continue-on-error: true`) + « retry »**
+     (`if: steps.deploy1.outcome == 'failure'`, après `sleep 20`) dans
+     `deploy-preprod.yml` ET `deploy-prod.yml`. SANS risque de demi-déploiement :
+     l'échec est sur la CONNEXION (avant que le wrapper démarre) et le wrapper repart
+     de zéro (snapshot + reset --hard + rebuild + smoke + rollback), il est rejouable.
+     Si le retry échoue à son tour, le job échoue (pas de masquage d'un vrai bug :
+     build cassé, smoke KO, migration KO). NB prod : le retry relance le backup DB
+     pré-migration, inoffensif (backup.sh rejouable). Résidu ultra-rare (2 KO
+     consécutifs) → `gh run rerun` reste dispo.
 
 8. **Faux « blocage » = vrai build long (~7 min).** Un run auto est resté `in_progress`
    >5 min → cru bloqué. En réalité c'était le **premier run rebuildant les apps**
