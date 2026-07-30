@@ -19,3 +19,8 @@
 # que les répertoires : un symlink resterait untracked. Sans slash, les deux
 # cas sont couverts.
 /vendor
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

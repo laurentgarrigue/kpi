@@ -335,9 +335,18 @@ Le principe : **on ne rend le job de tests bloquant qu'après qu'une brique ait 
 
 ### 4.5 Validation Phase 4
 
-- [ ] Suite api2 : couverture ≥ 30 % sur `src/Controller/`
-- [ ] Suite app4 : 1 test Playwright login + dashboard passe en < 30 s
-- [ ] Chaque brique testée a un badge de couverture dans son README
+- [x] **Socle PHPUnit posé sur api2** (2026-07-30) : deux suites `unit` /
+      `integration`, job CI `tests-api2` bloquant, **27 tests / 115 assertions
+      verts**. Voir le journal d'exécution.
+- [x] **Fixtures de test versionnées** (`SQL/fixtures/`) + MariaDB éphémère en CI
+- [ ] Suite api2 : couverture ≥ 30 % sur `src/Controller/` — *non atteint : 1
+      contrôleur public couvert sur ~30. Le socle permet d'y aller brique par
+      brique, c'était l'objet de la phase.*
+- [ ] Suite app4 : 1 test Playwright login + dashboard passe en < 30 s — *non
+      fait : aucun framework de test JS installé. Voir « ce qui reste » dans le
+      journal.*
+- [ ] Chaque brique testée a un badge de couverture dans son README — *reporté
+      (nécessite `coverage: xdebug` en CI, non installé)*
 
 ---
 
@@ -593,9 +602,22 @@ Un cron sur le VPS (systemd timer ou `crontab -u deploy`) vérifie toutes les he
 
 ### 7.6 Validation Phase 7
 
+Outillage livré le 2026-07-30 (workflow + wrapper + bandeau + cron) ; les 3 cases
+demandent un **run réel** et restent donc à cocher.
+
 - [ ] Déployer `feature/test` sur préprod via bouton
 - [ ] Bandeau expérimental visible sur toutes les apps
 - [ ] Après TTL, retour auto sur `develop`
+
+**Écart assumé vs §7.3** : le marqueur n'est PAS `sources/EXPERIMENTAL_FLAG.json`
+mais `experimental-flag.json` déposé dans **`.output/public/` de chaque app**.
+Raison : les apps sont générées en statique et servies par nginx depuis
+`.output/public/` — un fichier dans `sources/` ne serait pas accessible en HTTP,
+donc les apps ne pourraient pas le lire. Corollaire : il s'écrit **après**
+`nuxt generate` (qui efface `.output/`), et le mode expérimental **force** le
+rebuild des apps pour garantir sa présence. L'état faisant foi pour l'expiration
+vit dans `<checkout>/.experimental-deploy.json`, hors arbre git (survit au
+`reset --hard` et aux rebuilds).
 
 ---
 
@@ -645,9 +667,25 @@ Un `DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md` documente :
 
 ### 8.5 Validation Phase 8
 
-- [ ] Un déploiement KO déclenche une notification claire en < 1 min
-- [ ] Runbook rédigé, testé par un tiers (ou toi le lundi suivant)
-- [ ] Rollback documenté et testé au moins une fois
+- [x] **Smoke tests étendus** (§8.1) : une URL **par brique** (api2 `/doc`,
+      endpoint public api2, app2, app4, legacy `index.php`), chacune avec retry,
+      n'importe laquelle en échec ⇒ rollback. Listes dans le `.env` de
+      `vps-manager` (`SMOKE_URLS_*`), avec repli sur l'URL unique historique.
+- [x] **Runbook rédigé** :
+      [DEPLOYMENT_RUNBOOK.md](../../infrastructure/DEPLOYMENT_RUNBOOK.md) —
+      déclenchement (préprod/prod/expérimental), où regarder, table des échecs
+      courants, rollback code, rollback DB, contacts.
+- [x] **Rollback du code documenté ET prouvé** en conditions réelles (2026-07-27,
+      PR #261 → rollback auto ; cf. journal d'exécution).
+- [x] **Rollback DB documenté** (§5 du runbook, depuis `pre-migration/`) — non
+      testé, faute de migration versionnée à casser (api2 n'en a aucune
+      aujourd'hui).
+- [ ] Un déploiement KO déclenche une notification claire en < 1 min — **§8.2
+      volontairement reporté** (décision 2026-07-30 : pas de webhook pour
+      l'instant ; on lit l'onglet Actions). Le runbook le liste explicitement
+      dans « ce qui n'est PAS en place ».
+- [ ] Alerting long terme / uptime externe (§8.3) — hors scope CI/CD strict,
+      `health-check.sh` du VPS couvre déjà les URLs avec alerte mail.
 
 ---
 

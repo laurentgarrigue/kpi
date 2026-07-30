@@ -438,14 +438,18 @@ app2_generate_dev: ## Génère l'application Nuxt (app2) en mode statique pour d
 
 app2_generate_preprod: ## Génère l'application Nuxt (app2) en mode statique pour pré-production (utilise container temporaire)
 	@echo "Building app2 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
+# APP_ENV passé par -e (et NON via .env.preprod) parce que les .env.* d'app2 sont
+# GITIGNORÉS : une variable qui n'y vit que localement n'atteindrait jamais le VPS.
+# Ici c'est versionné. Active le bandeau « préprod expérimentale » (Phase 7 CI/CD).
+	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
 	@echo "App2 generated and nginx restarted!"
 
 app2_generate_production: ## Génère l'application Nuxt (app2) en mode statique pour production (utilise container temporaire)
 	@echo "Building app2 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
+# APP_ENV=production : bandeau expérimental inconditionnellement désactivé en prod.
+	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
 	@echo "App2 generated and nginx restarted!"
@@ -596,7 +600,10 @@ app4_generate_preprod: ## Génère l'application Nuxt (app4 admin) en mode stati
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
 	git checkout -- sources/app4/package-lock.json
 	@echo "Building app4 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
+# APP_ENV=preprod : lu par nuxt.config.ts (runtimeConfig.public.appEnv). C'est ce
+# qui active le bandeau « préprod expérimentale » (Phase 7 CI/CD) — sans lui,
+# appEnv retomberait sur 'development' et le bandeau ne s'afficherait JAMAIS.
+	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
 	@echo "App4 generated and nginx restarted!"
@@ -605,7 +612,9 @@ app4_generate_prod: ## Génère l'application Nuxt (app4 admin) en mode statique
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
 	git checkout -- sources/app4/package-lock.json
 	@echo "Building app4 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
+# APP_ENV=production : en prod le bandeau expérimental est inconditionnellement
+# désactivé (aucune requête sur experimental-flag.json).
+	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
 	@echo "App4 generated and nginx restarted!"

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  PHPUnit — tests fonctionnels api2 (Phase 4 du plan CI/CD).
+
+  DEUX SUITES, volontairement séparées par leur besoin d'infrastructure :
+
+    unit        → logique pure, AUCUNE base de données, AUCUN kernel Symfony.
+                  Tourne partout, en < 1 s. C'est la suite BLOQUANTE en CI.
+    integration → boot du kernel + requêtes HTTP réelles sur les endpoints,
+                  donc EXIGE une base MariaDB peuplée par SQL/fixtures/.
+                  Non bloquante en CI tant que la couverture est mince.
+
+  Cette séparation est ce qui rend la Phase 4 adoptable de façon incrémentale :
+  on peut rendre `unit` obligatoire tout de suite sans dépendre d'une DB en CI.
+
+  Lancement local (via le conteneur, pas de php sur l'hôte) :
+    docker exec kpi_api2 sh -lc 'cd /app && composer test-unit'
+    docker exec kpi_api2 sh -lc 'cd /app && composer test'        # les deux suites
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory="var/.phpunit.cache"
+         displayDetailsOnTestsThatTriggerDeprecations="false"
+         failOnWarning="true"
+         failOnRisky="true"
+>
+    <php>
+        <ini name="display_errors" value="1"/>
+        <ini name="error_reporting" value="-1"/>
+        <server name="APP_ENV" value="test" force="true"/>
+        <server name="SHELL_VERBOSITY" value="-1"/>
+        <!-- Les tests d'intégration sont ignorés si cette variable ne vaut pas 1.
+             Ça évite qu'un `composer test` local sans DB parte en erreurs rouges :
+             la suite integration se marque « skipped » avec un message explicite. -->
+        <env name="API2_TEST_DB" value="0"/>
+    </php>
+
+    <testsuites>
+        <testsuite name="unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+
+    <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+</phpunit>
