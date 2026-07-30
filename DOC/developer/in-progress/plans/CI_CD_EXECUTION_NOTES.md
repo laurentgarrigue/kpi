@@ -3,6 +3,40 @@
 Notes d'exécution du plan [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md), phase par phase :
 ce qui a été réellement livré, les écarts assumés et les pièges rencontrés.
 
+---
+
+## 📌 État de reprise (dernière session : 2026-07-30)
+
+**Où on en est** : Phases 0-1-2-3-5-6 **faites** ; la **prod tourne** (1er déploiement
+réel réussi le 2026-07-30). Phases 3bis (Trivy image) 🟢, Phases **4 / 7 / 8** à faire.
+
+**⚠️ TODO immédiats à reprendre en début de prochaine session** (rien n'est bloquant, la
+prod est saine) :
+
+1. **Poser l'ACL backup sur le VPS** (sudo, en tant que `laurent`) — sinon le prochain
+   déploiement touchant api2 refera échouer le backup pré-migration :
+   ```bash
+   sudo setfacl -R    -m u:deploy:rwX /data/backups/kpi
+   sudo setfacl -R -d -m u:deploy:rwX /data/backups/kpi
+   ```
+2. **Committer + pusher `vps-manager`** (`~/Documents/dev/vps-manager`, branche `main`,
+   `deploy-wrapper.sh` modifié : dump pré-migration dédié + retrait app3), puis **`git
+   pull` côté VPS** (`/data/vps-manager`, en tant que `laurent`).
+3. **PR kpi** : `CI_CD_STRATEGY.md` + `CI_CD_EXECUTION_NOTES.md` sont modifiés dans le
+   working tree (clôture doc de cette session) → à intégrer via PR vers `develop`.
+4. **Re-vérifier le backup pré-migration** au prochain déploiement api2 : un fichier doit
+   apparaître dans `/data/backups/kpi/pre-migration/kpi_<date-heure>_<sha7>.sql.gz`.
+
+**Améliorations non bloquantes en attente** (à décider) :
+- **Durcir le retry SSH** : les 2 tentatives tiennent dans la même fenêtre d'aléa réseau
+  (60s + pause 20s + 60s) → passer `timeout` à **120s** et la pause retry à **60s** dans
+  `deploy-preprod.yml` + `deploy-prod.yml`. (Ce matin : double timeout → `gh run rerun` a
+  suffi.)
+- **Runbook rollback DB prod** (Phase 8) : documenter la restauration depuis
+  `pre-migration/`.
+
+**Détails** : voir « Phase 6 » plus bas + [[project_cicd_pipeline]] en mémoire.
+
 **Statut Phase 1** : ✅ **terminée et verrouillée** — CI sur `develop`, `ci-summary`
 est le required check sur `main_ruleset`.
 **Statut Phase 2** : ✅ **éprouvée** — PHPStan (api2), `composer audit`, `npm audit`,
@@ -696,7 +730,7 @@ wrapper reste **générique** (aucun `case $ENV` sur les noms de cibles).
 > l'appel `make app3_generate_${ENV}` a été retiré du wrapper. Restent les alias
 > app2/app4/docker.
 
-### Backup DB avant migration (prod only) — patch wrapper
+### Backup DB avant migration (prod only) — dump dédié horodaté
 
 Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
 `REBUILD_API2` du wrapper, **juste avant `api2_migrations_migrate`**, gardé par
@@ -704,20 +738,34 @@ Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
 
 ```bash
 if [ "$ENV" = "production" ] && [ "$deploy_ok" = 1 ]; then
-  run_quiet "backup DB prod (kpi) avant migration" "$SCRIPT_DIR/backup.sh" kpi \
-    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier backup.sh)"
+  run_quiet "backup DB prod (kpi) avant migration" backup_db_pre_migration \
+    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier les droits sur $BACKUP_BASE_DIR/kpi)"
 fi
 ```
 
-- `backup.sh <service>` (déjà dans vps-manager) accepte un service unique ; le service
-  **`kpi`** = la base prod principale (conteneur `kpi_db`), défini dans
-  `SERVICES_TO_BACKUP`. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors
-  scope.
+- **Fonction dédiée `backup_db_pre_migration`** (et NON `backup.sh kpi`) : elle dumpe la
+  base prod **`kpi`** (conteneur `kpi_db`) dans un fichier **horodaté**
+  `pre-migration/kpi_<DATE-HEURE>_<sha7>.sql.gz`. Raison : `backup.sh <svc>` écrit
+  `kpi_<DATE>.sql.gz` (nom **journalier**) → un dump pré-migration **écraserait** le
+  backup cron de la nuit ; le fichier horodaté ne l'écrase jamais et reste traçable par
+  déploiement. Les identifiants (container/db/user/pass) sont lus depuis
+  `SERVICES_TO_BACKUP` (déjà `source`é du `.env` — **aucun secret en dur**). `pipefail`
+  fait échouer la fonction si le `mariadb-dump` échoue ; garde-fou `[ -s ]` sur les dumps
+  vides. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors scope.
 - **Un backup KO ne bloque PAS le déploiement** (le cron `backup.sh` reste le filet
   principal), mais il est tracé en `❌`. Rationnel : aujourd'hui api2 n'a **aucune
   migration versionnée** (schéma = base legacy partagée, `migrate --allow-no-migration`
   = no-op), donc ce backup est surtout un filet pour le futur ; le rendre bloquant
   ferait échouer des déploiements pour un no-op.
+- ⚠️ **Prérequis d'infra (ACL)** : `deploy` doit pouvoir écrire dans
+  `$BACKUP_BASE_DIR/kpi/` (= `/data/backups/kpi/`). Au 1er déploiement prod (2026-07-30)
+  ce n'était PAS le cas → le backup a échoué en `Permission non accordée` (dossiers
+  possédés par `laurent`, ACL Phase 5 posée seulement sur les checkouts `/data/kpi*`).
+  **Fix à poser une fois** (comme les ACL Phase 5) :
+  ```bash
+  sudo setfacl -R    -m u:deploy:rwX /data/backups/kpi
+  sudo setfacl -R -d -m u:deploy:rwX /data/backups/kpi
+  ```
 - ⚠️ **Cette modif vit dans le repo `vps-manager` (privé), PAS dans kpi.** Elle a été
   **appliquée directement** dans le checkout local `~/Documents/dev/vps-manager`
   (`deploy-wrapper.sh`, branche `main`) — Laurent n'a plus qu'à committer + pusher, puis
@@ -738,26 +786,41 @@ fi
 3. SSH → `deploy-wrapper.sh production <sha>`. `timeout: 60s`, `command_timeout: 20m`
    (marge vs les 15m préprod : la prod peut rebuild les 3 apps + migration + backup).
 
-### Go-live checklist Phase 6 (à faire par Laurent — je ne pousse ni ne merge)
+### Go-live checklist Phase 6 — ✅ FAIT (2026-07-30)
 
-- [ ] **vps-manager** : `deploy-wrapper.sh` est déjà modifié dans le checkout local
-      (`~/Documents/dev/vps-manager`, branche `main` : backup DB prod + retrait de l'appel
-      app3). → committer + pusher, puis `git pull` côté VPS (`/data/vps-manager`, en tant
-      que `laurent`).
-- [ ] Merger `deploy-prod.yml` sur `develop` **puis s'assurer qu'il atteint `main`**
-      (back-merge ou PR de release) — sinon le bouton « Run workflow » n'apparaît pas
-      (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis la branche par
-      défaut).
-- [ ] Vérifier que l'environment `production` autorise **`main`** (politique de branche)
-      → lancer le run avec le sélecteur sur **`main`** (3e piège Phase 5).
-- [ ] 1er run réel : Actions → « Deploy production » → Run (ref `main`) → **approuver** →
-      suivre le wrapper (smoke + rollback auto identiques à la préprod).
-- [ ] Cocher les cases de validation §6.5 du plan.
+- [x] **vps-manager** : `deploy-wrapper.sh` modifié (dump pré-migration dédié + retrait
+      app3). ⚠️ **reste à committer/pusher + `git pull` VPS** (cf. « État de reprise »).
+- [x] `deploy-prod.yml` mergé jusqu'à `main` (via PR de release develop→main #266, après
+      résolution du conflit doc #268) → bouton « Run workflow » visible.
+- [x] Environment `production` autorise `main` → run lancé depuis `main`.
+- [x] **1er run réel réussi** : Actions → « Deploy production » → approuvé → wrapper OK
+      (rebuild api2 + migration + smoke). A nécessité **2 corrections en vol** (remote git
+      SSH→HTTPS, cf. plus bas) et **1 `gh run rerun`** (aléa réseau : les 2 tentatives SSH
+      ont timeout dans la même fenêtre).
+- [x] Cases §6.5 du plan mises à jour.
+
+### Les 2 pièges Phase 6 (en plus des 8 de Phase 5)
+
+**Piège A — remote git prod en SSH.** `/data/kpi` avait `origin =
+git@github.com:laurentgarrigue/kpi.git`. `deploy` n'a ni clé github ni `known_hosts` →
+`git fetch` = `Host key verification failed` → **exit 128** dès « Récupération du code ».
+Préprod marchait car son remote est en **HTTPS** (`https://github.com/...`, repo public,
+lecture sans clé). **Fix** : `git remote set-url origin https://github.com/laurentgarrigue/kpi`
+sur `/data/kpi` (fait). *Leçon : aligner les 2 checkouts sur HTTPS.*
+
+**Piège B — backup pré-migration `Permission non accordée`.** `deploy` ne peut pas écrire
+dans `/data/backups/kpi/` (possédé par `laurent`, l'ACL Phase 5 ne couvrait que les
+checkouts `/data/kpi*`). Le backup a donc échoué — **sans bloquer** (best-effort) → la
+prod s'est déployée quand même, et la migration était un no-op (api2 sans migration
+versionnée). **Fix ACL à poser** (cf. « État de reprise » + section « Backup DB »).
 
 ### Ce qui reste ouvert (non bloquant)
 
-- **Rollback DB prod** : §6.4 du plan veut un runbook + backup horaire. Le backup
-  pré-migration est en place ; le runbook de restauration reste à écrire (Phase 8,
+- **ACL backup `/data/backups/kpi`** à poser (voir « État de reprise » §1).
+- **Durcir le retry SSH** (timeout 120s + pause 60s) — les 2 tentatives tombaient dans la
+  même fenêtre d'aléa réseau.
+- **Rollback DB prod** : §6.4 du plan veut un runbook. Le dump pré-migration dédié est en
+  place (`pre-migration/`) ; le runbook de restauration reste à écrire (Phase 8,
   `DEPLOYMENT_RUNBOOK.md`).
 - Lock `command=` dans `authorized_keys` (durcissement optionnel, cf. Phase 5).
 

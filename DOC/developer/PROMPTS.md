@@ -214,6 +214,8 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
 
+- Tuto interactif : le tuto classement doit être accessible aux profils <= 6 (et non 4).
+
 **Nours**:
 - "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
 - Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.
@@ -254,11 +256,13 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 
 
 **Scoring**:
-- durées des périodes, des temps morts, des prolongations, etc... paramétrables dans la compétition avec des valeurs par défaut.
+- durées des périodes, des temps morts, des prolongations, etc... paramétrables dans la compétition
+- gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
+- départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/stop du chrono, pour le départ/reprise du timeshoot et pour la pause du timeshoot. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - autocomplete sur les officiels
 - gérer autant de prolongations que nécessaire (actuellement limité à 2)
-- Scoring : gestion du chrono, shotclock, scoreboard optionnels (pas utile s'il s'agit d'une saisie après match)
-- Scoring : départ du shotclock manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du shotclock, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du shotclock et 0 pour la pause du shotclock.
+- Scoring : gestion du chrono, timeshoot, scoreboard, shotclock, websocket optionnels (pas utile s'il s'agit d'une saisie après match)
+- Scoring : départ du timeshoot manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du timeshoot, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du timeshoot et 0 pour la pause du timeshoot.
 - les routes api2 doivent générer les json comme sur legacy...
 - Tracer toutes les actions dans le journal
 
@@ -268,16 +272,4 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 
 
 - changement de statut depuis Games : mettre en période 1 si pas de période déjà définie.
-
-**Scoring refactoring**:
-- relis le document @live_match_scoring_refactoring_proposals.md pour vérifier que tout est cadré, notamment que les fonctionnalités de scoring seront bien couvertes par les routes api2, que l'alimentation du scoring sera couverte soit par le matériel propriétaire, avec remplacement de wsm pour traduire le websocket Stomp, soit par une nouvelle interface de saisie dans app4 qui sera pwa, qui remplacera la feuille de marque V2 et V3 ainsi que le début d'implémentation app3, avec la possibilité de gérer le scoring en direct ou après match, avec mercure côté backend.
-- Ce n'est plus une proposition mais une stratégie et un plan d'action pour la mise en place du scoring dans app4, rédige un plan d'action organisé et clair avec toutes les étapes, les fonctionnalités dans des specs si elles doivent être détaillées.
-- Pose-moi toutes les questions nécessaires en les regroupant autant que possible pour éviter les allers-retours, pour lever les doutes et les ambiguïtés, et pour que je puisse te répondre de manière complète et précise.
-- Sur l'interface de saisie du scoring :
-  - reprendre les fonctionnalités existantes de la feuille de marque v3 (sauf websocket remplacer par la stack mercure). Ces fonctionnalités sont normalement décrites dans @PAGE_SCORING.md mais doivent être en accord avec la nouvelle stratégie autour de Mercure et app4.
-  - les durées des périodes, des temps morts, des prolongations, etc... seront dans un second temps paramétrables dans la compétition avec des valeurs par défaut.
-  - gérer autant de prolongations que nécessaire (actuellement limité à 2)
-  - gestion du chrono, shotclock, scoreboard optionnels (pas utile s'il s'agit d'une saisie après match)
-  - départ du shotclock manuel et pas en même temps que le chrono + Bouton Pause. touches de raccourcis paramétrables pour le départ/reprise et la pause du shotclock, et pour le départ/reprise du chrono. Par défaut : espace pour le départ/stop du chrono, entrée pour le départ/reprise du shotclock et 0 pour la pause du shotclock.
-  - Tracer toutes les actions dans le journal
 - 
