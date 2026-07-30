@@ -8,6 +8,10 @@
     "CachedData": "Cached data",
     "CachedDataDescription": "This data may not be up to date."
   },
+  "Experimental": {
+    "Title": "PREPROD — Experimental feature:",
+    "ExpiresIn": "back to develop in {hours} h"
+  },
   "nav": {
     "Home": "Home",
     "Login": "Login",

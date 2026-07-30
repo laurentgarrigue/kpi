@@ -304,6 +304,68 @@ php bin/console cache:clear
 php bin/console cache:warmup
 ```
 
+### Tests (PHPUnit)
+
+Two suites, deliberately separated by their infrastructure needs
+(see [`phpunit.dist.xml`](phpunit.dist.xml)):
+
+| Suite | What it covers | Needs a database? |
+|---|---|---|
+| `unit` | Pure logic — date validation, competition/season locking rules | **No** (no kernel either) |
+| `integration` | Kernel boot + real HTTP requests on the public endpoints | **Yes** — fixtures from `SQL/fixtures/` |
+
+There is no PHP binary on the host: run everything through the container.
+
+```bash
+# Unit suite — fast, no infrastructure, always runnable
+docker exec kpi_api2 sh -lc 'cd /app && composer test-unit'
+
+# Both suites; without a test DB the integration one SKIPS with an explicit message
+docker exec kpi_api2 sh -lc 'cd /app && composer test'
+```
+
+To actually run the integration suite locally, create the fixture database and
+set `API2_TEST_DB=1` — the full recipe (including the `_test` suffix pitfall) is
+in **[`SQL/fixtures/README.md`](../../SQL/fixtures/README.md)**.
+
+> ⚠️ **The `_test` suffix is a safety feature.** In `APP_ENV=test`, Doctrine
+> appends `_test` to the database name (`dbname_suffix` in
+> `config/packages/doctrine.yaml`). A `DATABASE_URL` pointing at `kpi` therefore
+> hits `kpi_test`, which makes it *impossible* to run the test suite against the
+> dev/preprod/prod database by mistyping a variable. Name the fixture database
+> `<name>_test` and cite `<name>` in the URL.
+
+In CI, the `tests-api2` job runs both suites (Phase 4 of the CI/CD plan): the
+`unit` suite bare, then `integration` against a throwaway MariaDB service loaded
+with `SQL/fixtures/`.
+
+#### Adding a test
+
+- **Pure logic** → `tests/Unit/`, extend `PHPUnit\Framework\TestCase`. No kernel,
+  no database; mock the DBAL `Connection` if the code under test takes one (see
+  `tests/Unit/Trait/CompetitionLockTraitTest.php` for the pattern used on traits
+  whose methods are `private` — do **not** widen visibility in production code
+  just to test it).
+- **Endpoint behaviour** → `tests/Integration/`, extend `ApiTestCase` (which
+  handles the skip-without-DB logic and gives you `getJson()`). Add the rows your
+  test needs to `SQL/fixtures/data.sql`, **with a comment** naming the case.
+- Integration tests currently only `SELECT`. If one ever needs to write, wrap it
+  in a rolled-back transaction — never leave persistent mutations, or tests
+  become order-dependent.
+
+> **Migrating the standalone scoring runner.** The scoring work
+> (`claude/scoring-refactoring-strategy-*`) predates this test pack, so it ships
+> `tests/Scoring/scoring_rules_test.php`: a zero-dependency runner
+> (`php …/scoring_rules_test.php`, exit 0 = green) written that way precisely
+> because api2 had no test framework. Its own header says « Migrate to PHPUnit
+> as-is when a test pack lands » — this is that pack. When the scoring branch
+> merges, move those 62 assertions to `tests/Unit/Scoring/ScoringRulesTest.php`:
+> `ScoringRules` is pure static logic, so each `check($label, $expected,
+> $actual)` becomes one `self::assertSame($expected, $actual, $label)`, grouped
+> per rule family (periods, cards, penalties, shotclock). The `require` of the
+> source file goes away (autoloading covers `App\Scoring\`), and the runner file
+> is deleted so the rules have exactly one test home.
+
 ## Complete API Documentation
 
 For complete endpoint reference with examples and migration guide, see:
