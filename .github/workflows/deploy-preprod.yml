@@ -58,17 +58,46 @@ jobs:
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "Déploiement préprod du SHA $sha"
 
-      - name: Déployer via SSH (wrapper VPS)
+      # Déploiement via SSH, avec UN retry automatique (voir le bloc « retry » plus
+      # bas). Le retry couvre l'aléa réseau connu : le `dial tcp: i/o timeout`
+      # transitoire sur l'ÉTABLISSEMENT de la connexion runner↔VPS (échec en ~25-40s,
+      # avant même que le wrapper démarre). Un simple re-run manuel le corrigeait
+      # jusqu'ici — on l'automatise. C'est SANS risque de demi-déploiement : le
+      # wrapper repart de zéro (snapshot + reset --hard + rebuild sélectif + smoke +
+      # rollback auto), il est conçu pour être rejoué. `continue-on-error` sur la 1re
+      # tentative pour ne PAS échouer le job si elle rate — c'est le retry qui tranche.
+      - name: Déployer via SSH (wrapper VPS) — tentative 1
+        id: deploy1
+        continue-on-error: true
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          # `timeout` = délai d'établissement de la connexion SSH. Le défaut (30s)
-          # produisait des `dial tcp: i/o timeout` transitoires (réseau runner↔VPS
-          # intermittent) alors que le déploiement suivant repassait. On l'élargit.
-          # `command_timeout` couvre toute la durée du wrapper (generate + composer).
+          # `timeout` = délai d'établissement de la connexion SSH (élargi vs le défaut
+          # 30s à cause de l'aléa réseau ci-dessus). `command_timeout` couvre toute la
+          # durée du wrapper (generate + composer).
+          timeout: 60s
+          command_timeout: 15m
+          script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }}
+
+      # Ne tourne QUE si la 1re tentative a échoué. Petite pause pour laisser passer
+      # l'aléa réseau, puis on rejoue le wrapper à l'identique. Si CETTE tentative
+      # échoue à son tour, l'étape (sans continue-on-error) fait échouer le job — on
+      # ne masque donc pas un vrai problème (build cassé, smoke KO → rollback…).
+      - name: Pause avant retry
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 20
+
+      - name: Déployer via SSH (wrapper VPS) — retry
+        if: steps.deploy1.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           timeout: 60s
           command_timeout: 15m
           script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }}

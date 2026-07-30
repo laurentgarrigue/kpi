@@ -22,8 +22,11 @@ manuel). Build Docker complet volontairement écarté (voir section).
 apps — réussi de bout en bout** (7m25s : app2+app3+app4 generate + restart + smoke OK).
 app4 inclus → le fix `@unhead/vue` et les artefacts root ne bloquent pas. Il a fallu
 franchir **8 pièges d'infra** (voir section « pièges Phase 5 »).
-Reste (non bloquant) : rollback auto sur smoke KO (déjà vu en test manuel) ; optimiser
-la durée du build apps (~7 min, pas de cache npm) ; lock `command=` optionnel.
+**Les 2 dernières cases de validation sont closes (2026-07-27)** : rollback auto via Actions
+(PR #261, cf. « Résultat case 1 ») et isolation des secrets preprod↛production (run
+`test-env-isolation.yml`, cf. « Clôture Phase 5 »). **La Phase 5 est intégralement éprouvée.**
+Reste seulement de l'optimisation non bloquante : durée du build apps (~7 min, pas de cache
+npm) ; lock `command=` optionnel dans `authorized_keys`.
 
 > **7e piège — `workflow_run` ne se déclenchait jamais.** Le déclencheur initial était
 > `workflow_run` (CI terminée sur develop). Mais `ci.yml` ne tourne que sur
@@ -48,7 +51,7 @@ la durée du build apps (~7 min, pas de cache npm) ; lock `command=` optionnel.
 | Job | Déclencheur (path filter) | Ce qu'il vérifie |
 |---|---|---|
 | `changes` | toujours | Calcule quels dossiers ont changé (dorny/paths-filter) |
-| `lint-nuxt` | `sources/app2\|app3\|app4/**` | `npm ci` + `npx eslint .` sur chaque app modifiée (matrice) |
+| `lint-nuxt` | `sources/app2\|app4/**` | `npm ci` + `npx eslint .` sur chaque app modifiée (matrice) |
 | `lint-api2` | `sources/api2/**` | `composer install` + `lint:yaml config` + `lint:container` |
 | `phpstan-api2` | `sources/api2/**` | **PHPStan level 3** (Phase 2) — analyse statique, sans DB |
 | `lint-legacy` | `sources/**` (hors api2/app*) | `php -l` sur les fichiers PHP legacy (parallèle -P4) |
@@ -57,7 +60,7 @@ la durée du build apps (~7 min, pas de cache npm) ; lock `command=` optionnel.
 | `audit-npm` | `sources/app*/**` | **`npm audit --omit=dev --audit-level=high`** (Phase 2) |
 | `secrets-scan` | toujours | **Gitleaks** (Phase 2) — secrets commités |
 | `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
-| `build-nuxt` | `sources/app2\|app3\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
+| `build-nuxt` | `sources/app2\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
 | `smoke-api2` | `sources/api2/**` | **boot Symfony** (Phase 3) — `cache:clear` + `doctrine:schema:validate --skip-sync`, **sans DB** |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
 
@@ -68,6 +71,17 @@ la durée du build apps (~7 min, pas de cache npm) ; lock `command=` optionnel.
 Une brique non touchée ⇒ son job est **skipped**, et `ci-summary` traite skipped
 comme non-bloquant. Donc une PR mono-brique ne lance que les jobs concernés.
 `secrets-scan` tourne en revanche sur **toute** PR (un secret peut arriver partout).
+
+> **app3 retiré du CI/CD (2026-07-29).** La feuille de marque (`sources/app3/`)
+> n'est plus **buildée, testée ni déployée** : elle ne subsiste que comme
+> **référence** pour la construction du scoring dans app4. Retiré partout :
+> matrices `lint-nuxt` / `build-nuxt` / `audit-npm` (→ `app2, app4`), filtre
+> `changes.app3` (l'exclusion `!sources/app3/**` du filtre `legacy` RESTE, sinon un
+> commit app3 réveillerait le lint legacy), cibles Makefile `app3_generate_preprod/
+> prod/production`, et l'appel `make app3_generate_${ENV}` du `deploy-wrapper.sh`.
+> Restent : les cibles `app3_dev`/`app3_build`/`app3_generate_dev`/`app3_lint`/npm
+> (usage local) et le scan CodeQL global (balaie tout le JS/TS de l'arbre, sans
+> config par-chemin). Dependabot ne suivait déjà pas app3.
 
 ---
 
@@ -516,8 +530,20 @@ filtre) ; les IP des runners GitHub passent.
      connexion qui expire, pas un build), et `SSH_HOST` contenait **déjà** l'IPv4
      (l'hypothèse « hostname résolvant en IPv6 » un temps envisagée était FAUSSE —
      ré-écrire le secret n'a rien changé au fond). Mitigation : `timeout` connexion
-     30s → **60s** (+ `command_timeout: 15m`). Résidu rare → `gh run rerun`. Pas de
-     cause côté VPS ni secrets : rien à « réparer », c'est du réseau intermittent.
+     30s → **60s** (+ `command_timeout: 15m`). Pas de cause côté VPS ni secrets : rien
+     à « réparer », c'est du réseau intermittent.
+   → **MàJ 2026-07-29 — retry automatique.** Ce résidu se manifestait encore : un
+     déploiement préprod échouait en ~25-40s puis **repassait au re-run manuel** (2 KO
+     observés #15/#16, cf. `gh run list`). On a donc automatisé le re-run : l'étape SSH
+     est dédoublée en **« tentative 1 » (`continue-on-error: true`) + « retry »**
+     (`if: steps.deploy1.outcome == 'failure'`, après `sleep 20`) dans
+     `deploy-preprod.yml` ET `deploy-prod.yml`. SANS risque de demi-déploiement :
+     l'échec est sur la CONNEXION (avant que le wrapper démarre) et le wrapper repart
+     de zéro (snapshot + reset --hard + rebuild + smoke + rollback), il est rejouable.
+     Si le retry échoue à son tour, le job échoue (pas de masquage d'un vrai bug :
+     build cassé, smoke KO, migration KO). NB prod : le retry relance le backup DB
+     pré-migration, inoffensif (backup.sh rejouable). Résidu ultra-rare (2 KO
+     consécutifs) → `gh run rerun` reste dispo.
 
 8. **Faux « blocage » = vrai build long (~7 min).** Un run auto est resté `in_progress`
    >5 min → cru bloqué. En réalité c'était le **premier run rebuildant les apps**
@@ -536,39 +562,51 @@ filtre) ; les IP des runners GitHub passent.
 - [x] Build app4 réparé (override `@unhead/vue` v3)
 - [x] **Merge PR sur `develop` → préprod déployée 100 % AUTO sans clic** (#246, 2026-07-24)
 - [x] **Run touchant `sources/app*` → `make appN_generate_preprod` passe** (app4 inclus, artefacts root OK)
-- [ ] Commit cassé → smoke KO → rollback auto → préprod restaurée (vu en test manuel, pas encore via Actions) — **procédure prête, voir « Clôture Phase 5 » ci-dessous**
-- [ ] Le job `preprod` ne peut PAS lire les secrets `production` — **workflow prêt, voir « Clôture Phase 5 » ci-dessous**
+- [x] **Commit cassé → rollback auto → préprod restaurée, via Actions** — ✅ **PROUVÉ le 2026-07-27** (PR #261 « casse /api2/doc » mergée → Deploy preprod → **rollback auto**). Voir « Résultat case 1 » ci-dessous : le rollback s'est déclenché plus tôt que prévu (échec `composer install`, pas le smoke), mais le mécanisme auto est validé de bout en bout.
+- [x] **Le job `preprod` ne peut PAS lire les secrets `production`** — ✅ **PROUVÉ le 2026-07-27** via `test-env-isolation.yml` (run #1) : le job `preprod-must-not-see-canary` est VERT, càd le secret `PROD_ISOLATION_CANARY` (défini uniquement dans l'environment `production`) est INVISIBLE depuis un job `environment: preprod`. Voir la note « job témoin » ci-dessous.
 
 ### Clôture Phase 5 — les 2 dernières cases (procédure, 2026-07-27)
 
 Les deux tests sont **préparés dans le working tree** (branches locales, à pousser + MR
 selon le workflow habituel — moi je ne pousse ni ne merge).
 
-**Case 1 — rollback auto via Actions.** Branche **`test/preprod-rollback-break`** : elle
-commente la route `app.swagger_ui` dans
+**Case 1 — rollback auto via Actions ✅ PROUVÉ (2026-07-27).** Branche
+`test/preprod-rollback-break` : elle commente la route `app.swagger_ui` dans
 [`sources/api2/config/routes.yaml`](../../../../sources/api2/config/routes.yaml). Vecteur
 choisi parce que **`smoke-api2` (CI) ne teste jamais `/doc`** — il fait seulement
 `cache:clear` + `doctrine:schema:validate`, qui ne touchent pas les routes → une route en
-moins **passe la CI** (YAML validé `[OK]`), mais `curl $SMOKE_URL_PREPROD` (=
-`preprod.kayak-polo.info/api2/doc`) renvoie **404** → smoke du wrapper KO → **rollback
-auto**. Séquence :
+moins **passe la CI** (YAML validé `[OK]`). Mergée en PR #261 → **Deploy preprod** déclenché.
 
-```bash
-git push -u origin test/preprod-rollback-break
-gh pr create -B develop -H test/preprod-rollback-break -t "test(cd): valider rollback auto préprod" -b "Casse /api2/doc pour prouver le rollback. À reverter aussitôt."
-# CI verte → merge → déclenche deploy-preprod.yml
-gh pr merge <n> --squash --delete-branch
-gh run watch      # observer : smoke KO → "rolling back" → git reset --hard <sha préc.> → smoke final vert
+**Résultat case 1 — le rollback a fonctionné, mais s'est déclenché plus tôt que le smoke.**
+Dans le run réel, le wrapper a rollback **avant** d'atteindre le smoke `/api2/doc` : l'étape
+`api2_composer_install` a échoué (`composer install` code 2, conteneur `kpi_preprod_php` en
+`restarting`), ce qui a suffi à déclencher le `rollback` :
 ```
+❌ composer install (code 2)
+✅ migrations Doctrine / cache vidé / worker recyclé   (étapes suivantes tentées)
+❌ une étape de rebuild a échoué → rollback
+🔙 ROLLBACK vers dcb75aaf…
+❌ Déploiement ANNULÉ — preprod restaurée sur dcb75aaf…
+```
+Donc **le rollback auto est validé de bout en bout via Actions** (échec détecté → restauration
+du SHA précédent → préprod saine), mais **pas exactement par le chemin prévu** : le déclencheur
+a été un échec de rebuild api2, pas le 404 du smoke. Deux enseignements :
+- Le wrapper rollback sur **toute** étape de rebuild KO, pas seulement le smoke — c'est plus
+  robuste que prévu (défense en profondeur).
+- Le `composer install` en `code 2` sur une simple route commentée est un **effet de bord à
+  comprendre** (probablement le conteneur php préprod déjà instable / en redémarrage au moment
+  du déploiement, indépendamment du changement). À creuser si ça se reproduit, mais **hors
+  scope de la validation du rollback**, qui est acquise.
 
 > ⚠️ **Le rollback restaure le working tree du VPS au SHA précédent, PAS `develop` sur
-> GitHub.** Sans réparation, le prochain déploiement re-casserait `/api2/doc`. **Immédiatement
-> après le test**, reverter :
+> GitHub.** Sans réparation, le prochain déploiement re-casserait api2. **Revert obligatoire**
+> — désormais outillé par deux cibles Make (voir [[GIT_WORKFLOW]] §3 Rollback) :
 > ```bash
-> git checkout develop && git pull
-> git revert <sha-du-squash-merge>   # recrée app.swagger_ui
-> git push   # (via PR si develop l'exige) → redéploie une préprod saine
+> make last_merge_sha                 # trouve le SHA du commit fautif sur develop
+> make preprod_rollback sha=<sha>     # crée revert/<sha> avec le commit inversé
+> make pr_create && make pr_merge     # PR de revert → redéploie une préprod saine
 > ```
+> Fait le 2026-07-27 via la branche `fix/restore-api2-doc-route` (revert de #261).
 
 **Case 2 — isolation des secrets `production`.** Branche **`test/env-isolation`** : workflow
 [`test-env-isolation.yml`](../../../../.github/workflows/test-env-isolation.yml)
@@ -585,12 +623,143 @@ masque de toute façon → on teste « vide vs non-vide », pas la valeur). Séq
    (le back-merge auto s'en charge, ou une PR develop→main) — sinon le bouton « Run
    workflow » n'apparaît pas (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis
    la branche par défaut).
-3. Actions → « Test env isolation » → **Run workflow depuis `develop`**. Approuver le run
-   `production` (required reviewer) pour laisser le job témoin tourner.
-4. Attendu : job **preprod ✅** (« canary INVISIBLE en preprod ») + job **production ✅**
-   (« canary présent, témoin valide »). ⇒ isolation prouvée.
+3. Actions → « Test env isolation » → **Run workflow depuis `develop`**.
+4. **Résultat réel (run #1, 2026-07-27)** : job **`preprod-must-not-see-canary` ✅**
+   (« canary INVISIBLE en preprod ») ⇒ **isolation PROUVÉE**. Le job témoin
+   **`production-must-see-canary` a ÉCHOUÉ**, mais **PAS** sur le test : rejeté par la
+   *politique de branche* de l'environment `production` — `Branch "develop" is not allowed
+   to deploy to production due to environment protection rules` (production n'autorise que
+   `main`, cf. Phase 0). C'est un **conflit de contraintes irréductible dans un seul run** :
+   le job preprod EXIGE `develop`, le témoin production EXIGE `main` — impossible de
+   satisfaire les deux ensemble. Le témoin n'était qu'un garde-fou (« le canary existe-t-il
+   vraiment ? ») ; comme le secret **a bien été créé** dans production (confirmé
+   manuellement), l'invisibilité en preprod n'est pas un faux positif « secret inexistant ».
+   **La case est donc validée par le seul job preprod.** (Pour une preuve exhaustive
+   facultative : relancer « Run workflow depuis `main` » → le témoin production ✅ y
+   confirmerait l'existence du canary, tandis que le job preprod y échouerait
+   symétriquement. Non nécessaire.)
 5. **Nettoyer** : supprimer le workflow `test-env-isolation.yml` **et** le secret
    `PROD_ISOLATION_CANARY`.
+
+> **Leçon retenue — un workflow à 2 jobs sur 2 environments à politiques de branche
+> disjointes ne peut pas tout prouver en un run.** Si un futur test devait valider les deux
+> côtés d'un coup, il faudrait soit assouplir temporairement les politiques de branche, soit
+> deux workflows séparés. Ici l'objectif (isolation preprod↛production) est atteint par le
+> seul job preprod, donc on n'y touche pas.
+
+---
+
+## Phase 6 — Déploiement production (2026-07-27)
+
+**Objectif** : déployer la prod (`/data/kpi`) **à la main, avec approbation**, en
+rejouant l'outillage éprouvé en préprod. Choix actés avec l'utilisateur :
+**déclencheur `workflow_dispatch` seul** (pas de push de tag) + **backup DB avant
+migration** via le `backup.sh` existant de vps-manager.
+
+### Ce qui était DÉJÀ prêt (hérité de la Phase 5)
+
+- **Le wrapper `deploy-wrapper.sh` gère déjà `production`** : whitelist ENV
+  `preprod|production`, `BASE=$DEPLOY_PATH_PRODUCTION` (`/data/kpi`),
+  `SMOKE_URL=$SMOKE_URL_PRODUCTION`. Snapshot `.last-deploy-sha`, `reset --hard`,
+  rebuild sélectif, smoke + **rollback auto** : tout est ENV-agnostique.
+- **VPS `/data/kpi` prêt** (vérifié 2026-07-27, posé en Phase 5 en même temps que
+  préprod) : `git config --global safe.directory /data/kpi` **présent** pour
+  `deploy`, **ACL `u:deploy:rwX`** (avec héritage `-d`) **présent**. Les conteneurs
+  prod (`kpi_php`, `kpi_api2`, `kpi_db`…) tournent.
+
+### Le piège qui aurait cassé le 1er déploiement prod : nommage `_prod` vs `_production`
+
+Le wrapper appelle `make appN_generate_${ENV}` / `make docker_${ENV}_restart`. Avec
+`ENV=production`, ça donne `app4_generate_production`, `docker_production_restart`,
+etc. Or le Makefile n'avait **que `app2_generate_production`** — app4 et docker
+n'exposaient que le nom court **`_prod`** (`app4_generate_prod`, `docker_prod_restart`).
+Donc un déploiement prod aurait échoué sur les étapes app4/docker (`make: *** No
+rule to make target`). En préprod le hasard jouait : `docker_preprod_restart` /
+`appN_generate_preprod` existent tous.
+
+**Fix (Makefile, ce lot)** : ajout d'alias `production` pointant sur le `_prod`
+canonique, sur le modèle de l'alias `app2_generate_prod: app2_generate_production`
+déjà présent :
+
+```make
+docker_production_restart: docker_prod_restart
+docker_production_rebuild: docker_prod_rebuild
+app4_generate_production:  app4_generate_prod
+```
+
+Ajoutés au `.PHONY`. `make -n` sur les cibles `*_production` → résolution OK. Le
+wrapper reste **générique** (aucun `case $ENV` sur les noms de cibles).
+
+> **MàJ 2026-07-29** : app3 ayant été **retiré du déploiement** (voir l'encadré
+> « app3 retiré du CI/CD » plus haut), l'alias `app3_generate_production` initialement
+> ajouté ici a été **supprimé** en même temps que les cibles `app3_generate_*`, et
+> l'appel `make app3_generate_${ENV}` a été retiré du wrapper. Restent les alias
+> app2/app4/docker.
+
+### Backup DB avant migration (prod only) — patch wrapper
+
+Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
+`REBUILD_API2` du wrapper, **juste avant `api2_migrations_migrate`**, gardé par
+`[ "$ENV" = "production" ]` :
+
+```bash
+if [ "$ENV" = "production" ] && [ "$deploy_ok" = 1 ]; then
+  run_quiet "backup DB prod (kpi) avant migration" "$SCRIPT_DIR/backup.sh" kpi \
+    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier backup.sh)"
+fi
+```
+
+- `backup.sh <service>` (déjà dans vps-manager) accepte un service unique ; le service
+  **`kpi`** = la base prod principale (conteneur `kpi_db`), défini dans
+  `SERVICES_TO_BACKUP`. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors
+  scope.
+- **Un backup KO ne bloque PAS le déploiement** (le cron `backup.sh` reste le filet
+  principal), mais il est tracé en `❌`. Rationnel : aujourd'hui api2 n'a **aucune
+  migration versionnée** (schéma = base legacy partagée, `migrate --allow-no-migration`
+  = no-op), donc ce backup est surtout un filet pour le futur ; le rendre bloquant
+  ferait échouer des déploiements pour un no-op.
+- ⚠️ **Cette modif vit dans le repo `vps-manager` (privé), PAS dans kpi.** Elle a été
+  **appliquée directement** dans le checkout local `~/Documents/dev/vps-manager`
+  (`deploy-wrapper.sh`, branche `main`) — Laurent n'a plus qu'à committer + pusher, puis
+  `git pull` côté VPS (`/data/vps-manager`, en tant que `laurent` : le checkout VPS est
+  `read-only` pour `deploy`). Le même lot y retire aussi l'appel `make app3_generate_${ENV}`
+  (app3 sorti du déploiement).
+
+### `deploy-prod.yml` (ce lot)
+
+`workflow_dispatch` avec input `ref` (défaut `main`). `environment: production` →
+**approbation manuelle** (required reviewer Phase 0). Étapes :
+
+1. `checkout` (fetch-depth 0) du `ref` demandé.
+2. **`git merge-base --is-ancestor HEAD origin/main`** : refuse tout ref qui n'est pas
+   sur `main` (donc pas passé par CI + revue de la PR de release). `inputs.ref` est
+   passé via `env: REQ_REF` et jamais interpolé dans un `run:` (anti-injection). Le SHA
+   déployé = `git rev-parse HEAD`, revalidé `^[0-9a-f]{40}$`.
+3. SSH → `deploy-wrapper.sh production <sha>`. `timeout: 60s`, `command_timeout: 20m`
+   (marge vs les 15m préprod : la prod peut rebuild les 3 apps + migration + backup).
+
+### Go-live checklist Phase 6 (à faire par Laurent — je ne pousse ni ne merge)
+
+- [ ] **vps-manager** : `deploy-wrapper.sh` est déjà modifié dans le checkout local
+      (`~/Documents/dev/vps-manager`, branche `main` : backup DB prod + retrait de l'appel
+      app3). → committer + pusher, puis `git pull` côté VPS (`/data/vps-manager`, en tant
+      que `laurent`).
+- [ ] Merger `deploy-prod.yml` sur `develop` **puis s'assurer qu'il atteint `main`**
+      (back-merge ou PR de release) — sinon le bouton « Run workflow » n'apparaît pas
+      (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis la branche par
+      défaut).
+- [ ] Vérifier que l'environment `production` autorise **`main`** (politique de branche)
+      → lancer le run avec le sélecteur sur **`main`** (3e piège Phase 5).
+- [ ] 1er run réel : Actions → « Deploy production » → Run (ref `main`) → **approuver** →
+      suivre le wrapper (smoke + rollback auto identiques à la préprod).
+- [ ] Cocher les cases de validation §6.5 du plan.
+
+### Ce qui reste ouvert (non bloquant)
+
+- **Rollback DB prod** : §6.4 du plan veut un runbook + backup horaire. Le backup
+  pré-migration est en place ; le runbook de restauration reste à écrire (Phase 8,
+  `DEPLOYMENT_RUNBOOK.md`).
+- Lock `command=` dans `authorized_keys` (durcissement optionnel, cf. Phase 5).
 
 ---
 
