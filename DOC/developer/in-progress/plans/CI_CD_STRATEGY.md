@@ -15,7 +15,7 @@
 > | **3** Build & smoke | ✅ Éprouvée — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) verts sur PR réelle |
 > | **3bis** Trivy image | 🟢 En cours — `trivy-image.yml` scanne les images de base (php-apache/frankenphp/mariadb) ; **non bloquant → onglet Security** (596 HIGH/CRITICAL amont non actionnables), cron hebdo + manuel. Build Docker écarté (couvert par lint-docker) |
 > | **5** CD préprod | ✅ **COMPLET** — `deploy-preprod.yml` (push develop) + `deploy-wrapper.sh` (`vps-manager`). **Merge develop → déploiement préprod 100 % AUTO réussi le 2026-07-24, rebuild des 3 apps inclus** (#246). 8 pièges d'infra franchis (le `i/o timeout` = aléa réseau transitoire de connexion + build long ~7 min, PAS l'IPv6). Reste non bloquant : rollback via Actions, optim durée |
-> | **6** Deploy prod | 🟢 **Workflow + outillage prêts** — `deploy-prod.yml` (`workflow_dispatch`, `environment: production` → approbation manuelle, vérif `merge-base --is-ancestor origin/main`). Makefile : aliases `production` ajoutés (app3/app4/docker n'avaient que `_prod` → le `${ENV}` du wrapper cassait). Wrapper : **backup DB `kpi` avant migration** (prod only). VPS prêt (`safe.directory` + ACL `/data/kpi` posés en Phase 5). **Reste : appliquer le patch wrapper sur `vps-manager`, pousser `deploy-prod.yml` sur `main`, 1er run réel** |
+> | **6** Deploy prod | ✅ **1er déploiement prod RÉUSSI (2026-07-30)** — `deploy-prod.yml` (`workflow_dispatch`, `environment: production` → approbation manuelle, vérif `merge-base --is-ancestor origin/main`) + retry SSH auto. 2 pièges Phase 6 franchis : **remote git `/data/kpi` SSH→HTTPS** (deploy sans clé github) et **backup pré-migration** (ACL `deploy` sur `/data/backups/kpi` à poser). Backup pré-migration = **dump dédié horodaté** (n'écrase plus le cron). Reste NON bloquant : poser l'ACL backup + re-vérifier au prochain déploiement api2 ; durcir le retry (timeout 120s) ; runbook rollback DB (Phase 8) |
 > | **4, 7-8** | ⬜ À faire |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
@@ -513,10 +513,17 @@ Deux niveaux :
 
 ### 6.5 Validation Phase 6
 
-- [ ] Bouton "Deploy to production" dans l'onglet Actions
-- [ ] Approbation demandée avant exécution
-- [ ] Tag `v1.0.0-test` déployable et rollbackable
-- [ ] Secrets prod jamais lisibles en préprod
+- [x] Bouton "Deploy to production" dans l'onglet Actions (`deploy-prod.yml` sur `main`)
+- [x] Approbation demandée avant exécution (environment `production`, required reviewer)
+- [x] **1er déploiement prod réel réussi (2026-07-30)** — SSH → wrapper → rebuild api2 +
+      migration + smoke OK sur `/data/kpi`. Voir le journal pour les 2 pièges Phase 6
+      franchis (remote git SSH→HTTPS, ACL backup) et l'aléa réseau (rerun).
+- [x] Secrets prod jamais lisibles en préprod (prouvé en Phase 5, `test-env-isolation.yml`)
+- [ ] **Backup DB pré-migration effectif** — le dump dédié horodaté est codé, mais l'ACL
+      `deploy` sur `/data/backups/kpi` reste à poser (cf. journal) → à re-vérifier au
+      prochain déploiement touchant api2.
+- [ ] Déclenchement par tag `v*` — **volontairement écarté** (choix : `workflow_dispatch`
+      seul). Rollback prod runbook → Phase 8.
 
 ---
 
