@@ -1171,8 +1171,39 @@ pr_web: ## Push la branche courante et ouvre le formulaire de PR pré-rempli dan
 pr_status: ## Affiche l'état de tes PR sur ce repo
 	gh pr status
 
-pr_checks: ## Suit la CI (Phase 1) de la PR courante jusqu'à la fin (--watch)
-	gh pr checks --watch
+# En-tête (n° + titre + URL de la PR) puis suivi de la CI, et durée TOTALE en fin.
+# `gh pr checks` n'affiche ni l'un ni l'autre : il ne sait pas de quelle PR il parle
+# (il la déduit de la branche courante) et ne chronomètre rien. Or c'est justement ce
+# qu'on veut savoir quand plusieurs PR/worktrees tournent en parallèle, et pour juger
+# si la CI dérive (cf. objectif « < 2 min sur PR mono-brique » du plan CI/CD).
+#
+# La durée mesurée est le WALL-CLOCK de la commande, pas la somme des temps de job :
+# c'est le temps réellement attendu (jobs en parallèle + files d'attente des runners
+# inclus). `date +%s` suffit — pas besoin de la précision milliseconde.
+#
+# Le `|| rc=$$?` est indispensable : `gh pr checks --watch` sort en ERREUR si un check
+# échoue. Sans ça (et avec le `set -e` implicite de make), la durée ne serait affichée
+# que sur succès — exactement le cas où on veut le moins la perdre. On réémet le vrai
+# code de sortie à la fin pour que `make pr_checks && …` garde son sens.
+pr_checks: ## Suit la CI de la PR courante jusqu'à la fin (--watch) + n° de PR et durée totale
+	@branch=$$(git rev-parse --abbrev-ref HEAD); \
+	pr=$$(gh pr view --json number,title,url 2>/dev/null) || { \
+		echo "Aucune PR ouverte pour la branche '$$branch' (make pr_create pour en ouvrir une)."; exit 1; }; \
+	num=$$(printf '%s' "$$pr" | sed -n 's/.*"number":\([0-9]*\).*/\1/p'); \
+	url=$$(printf '%s' "$$pr" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p'); \
+	title=$$(printf '%s' "$$pr" | sed -n 's/.*"title":"\(.*\)","url".*/\1/p'); \
+	echo "PR #$$num — $$title"; \
+	echo "   branche : $$branch"; \
+	echo "   URL     : $$url"; \
+	echo "   début   : $$(date '+%H:%M:%S')"; \
+	echo ""; \
+	start=$$(date +%s); \
+	rc=0; gh pr checks --watch || rc=$$?; \
+	elapsed=$$(( $$(date +%s) - start )); \
+	echo ""; \
+	if [ $$rc -eq 0 ]; then verdict="✅ CI verte"; else verdict="❌ CI en échec (code $$rc)"; fi; \
+	printf '%s — PR #%s — durée totale : %dm%02ds\n' "$$verdict" "$$num" $$(( elapsed / 60 )) $$(( elapsed % 60 )); \
+	exit $$rc
 
 pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
