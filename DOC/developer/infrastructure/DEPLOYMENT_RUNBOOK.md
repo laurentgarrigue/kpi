@@ -17,6 +17,9 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 
 | Je veux… | Où | Comment |
 |---|---|---|
+| **Amener mon code** sur `develop` (→ préprod) | ⌨️ | `make pr_create` → `make pr_checks` → `make pr_merge` ([§1.0](#10-amener-le-code-jusquà-la-branche-qui-déploie)) |
+| **Préparer une release** `develop` → `main` (→ prod) | ⌨️ | `make pr_web base=main` puis merge dans l'UI ([§1.0.3](#103-de-develop-vers-main--la-release)) |
+| **Tester avant de pousser** | ⌨️ | `make api2_test` (unit + integration, ce que fait la CI) |
 | Déployer en **préprod** | — | Rien à faire : tout merge sur `develop` déploie automatiquement |
 | Déployer en **production** | 🌐 | Actions → « Deploy production » → Run workflow depuis `main` → approuver |
 | Tester une **branche feature** en préprod | 🌐 | Actions → « Deploy preprod (experimental) » → branche + TTL |
@@ -34,6 +37,66 @@ ratées).
 ---
 
 ## 1. Déployer
+
+### 1.0 Amener le code jusqu'à la branche qui déploie
+
+Les déploiements ci-dessous se déclenchent sur `develop` (préprod) et `main`
+(prod). **On ne pousse jamais en direct sur ces deux branches** : leur ruleset
+exige une PR. Voici les commandes `make` du poste de dev qui y mènent — la
+conception et les cas particuliers (worktrees, back-merge) sont dans
+[GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md).
+
+#### 1.0.1 Vérifier avant de pousser (optionnel mais rentable)
+
+⌨️ La CI rejouera tout, mais en local c'est ~1 s au lieu d'un aller-retour GitHub :
+
+```bash
+make api2_test          # les DEUX suites PHPUnit = équivalent local du job CI `tests-api2`
+make api2_test_unit     # suite `unit` seule : logique pure, sans base, < 1 s
+```
+
+`api2_test_integration` recharge d'abord les fixtures de `SQL/fixtures/` dans une
+base **dédiée** `kpi_fixtures_test` (jamais la base de dev) via
+`make api2_test_fixtures`. Ces cibles ont besoin du stack dev démarré
+(`make dev`) : elles s'exécutent dans les conteneurs `kpi_api2` et `kpi_db`.
+
+#### 1.0.2 De la branche feature vers `develop` (→ préprod)
+
+⌨️ Depuis la branche de travail :
+
+```bash
+make pr_create      # push la branche + ouvre la PR vers develop (base=develop par défaut)
+make pr_checks      # suit la CI jusqu'au bout (gh pr checks --watch)
+make pr_merge       # squash-merge, revient sur develop à jour, supprime la branche
+```
+
+Le merge pousse sur `develop` → **« Deploy preprod » part tout seul** ([§1.1](#11-préprod-—-automatique-aucun-clic)).
+
+| Cible | À savoir |
+|---|---|
+| `make pr_create` | `base=main` pour viser `main` ; `make pr_web` ouvre le formulaire pré-rempli dans le navigateur |
+| `make pr_merge` | **Refuse** de tourner depuis `develop`/`main`, et refuse si le stack Docker tourne depuis le worktree à supprimer |
+| `make pr_close` | Ferme **SANS merger** + supprime la branche — pour une PR jetable, jamais pour une vraie |
+| `make pr_status` | État de toutes tes PR |
+
+#### 1.0.3 De `develop` vers `main` : la release
+
+⌨️ La PR de release ne se merge pas avec `pr_merge` (qui vise `develop`) :
+
+```bash
+git checkout develop && git pull
+make pr_web base=main    # ouvre la PR develop → main dans le navigateur
+```
+
+🌐 Puis merger dans l'UI GitHub, une fois `ci-summary` vert — c'est un
+**required check** sur `main`, le bouton de merge reste bloqué sans lui.
+
+Le push sur `main` déclenche le workflow **Back-merge** qui ouvre une PR
+`chore/backmerge-main-to-develop` : la merger pour réaligner `develop`. Si elle
+n'apparaît pas (ou a été fermée), la relancer avec ⌨️ `make backmerge_main_to_develop`.
+
+> ⚠️ Un merge sur `main` **ne déploie rien**. La prod reste sur l'ancienne
+> version jusqu'au déclenchement manuel de [§1.2](#12-production-—-manuelle-avec-approbation).
 
 ### 1.1 Préprod — automatique, aucun clic
 
@@ -58,7 +121,7 @@ Redéploiement manuel de la préprod sur le dernier `develop` :
 
 ### 1.2 Production — manuelle, avec approbation
 
-1. La release doit être sur `main` (PR `develop` → `main` mergée).
+1. La release doit être sur `main` (PR `develop` → `main` mergée : [§1.0.3](#103-de-develop-vers-main--la-release)).
 2. 🌐 Actions → **« Deploy production »** → Run workflow, **branche `main`**.
 3. Approuver (l'environment `production` a un *required reviewer*).
 4. Le workflow refuse tout `ref` qui n'est pas un ancêtre de `origin/main` — donc
