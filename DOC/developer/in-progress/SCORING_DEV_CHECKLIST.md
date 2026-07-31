@@ -61,6 +61,8 @@ sur un match de test **non verrouillé**.
 | # | Test | Attendu |
 |---|---|---|
 | 1.1 | Saisir un but, un carton, lancer/arrêter le chrono, changer de période/statut | chaque action répond `success` ; l'UI se met à jour |
+| 1.1a | Console du navigateur ouverte pendant toute la saisie | **aucune erreur** ; en particulier pas de `<SelectItem /> must have a value prop that is not an empty string` (elle avortait la mise à jour du composant : plus rien n'était cliquable) ni de `Must be called at the top of a \`setup\` function` (le chronomètre de tir s'affichait sans jamais être persisté) |
+| 1.1b | Un seul badge de statut | le statut n'est affiché **qu'une fois** (badge cliquable de la vue Déroulement) ; l'entête n'affiche plus qu'un badge **Verrouillé**, et seulement si le match l'est |
 | 1.2 | En base (phpMyAdmin) : `scoring_live_state`, `scoring_live_clock` (kind `GAME`), `scoring_live_event` | les lignes reflètent la saisie ; **`kp_match` / `kp_match_detail` / `kp_chrono` ne bougent PAS** pendant le match |
 | 1.3 | `scoring_outbox` | une ligne par écriture, `topic` = `/scoring/event/{e}/pitch/{p}/…` (ou `/scoring/match/{id}/…` si match hors événement), `published_at` NULL tant que le lot 2 ne draine pas |
 | 1.4 | `GET /api2/admin/scoring/state/{id}` (avec JWT) | état complet + en-tête `ETag` ; re-GET avec `If-None-Match` → **304** |

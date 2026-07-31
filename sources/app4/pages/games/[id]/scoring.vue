@@ -11,6 +11,10 @@ const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
 const scoringStore = useScoringStore()
+// Build the api client here (setup context) and hand it to the store: most scoring
+// actions fire from callbacks (clock tick, shortcut, penalty expiry) where the store
+// cannot build one itself — useApi() calls useI18n(), which requires setup.
+scoringStore.setApi(useApi())
 
 const matchId = computed(() => parseInt(route.params.id as string))
 
@@ -30,6 +34,14 @@ const eventCodes: { code: ScoringEventCode; labelKey: string; color: string }[] 
 ]
 // Card reasons (motifs) reused from FMV3 — '' = none, 'unknown' pre-selected (spec §0.9)
 const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
+// Reka UI's <SelectItem> refuses an empty-string value (it reserves '' to mean "cleared",
+// and throws during setup — which aborted the whole page update). '' stays the stored
+// value for "no reason": the sentinel below never leaves this component.
+const NO_REASON = '__none__'
+const reasonItems = computed(() => reasonCodes.map(c => ({
+  label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c),
+  value: c === '' ? NO_REASON : c
+})))
 
 /** Human label of a period — P{n} share one parameterized i18n key (unbounded, spec §0.6). */
 const periodLabel = (p: Period): string => {
@@ -112,6 +124,12 @@ const bumpScore = async (team: TeamSide, delta: 1 | -1) => {
 const eventPeriod = ref<Period>('M1')
 const eventTime = ref('00:00')
 const eventReason = ref('')
+// Bridge the sentinel <-> '' so the select never sees an empty value while the rest of the
+// page (and the API) keeps working with '' for "no reason".
+const eventReasonSelect = computed({
+  get: () => eventReason.value === '' ? NO_REASON : eventReason.value,
+  set: (v: string) => { eventReason.value = v === NO_REASON ? '' : v }
+})
 // When set, the event buttons commit an UPDATE of this existing event instead of a new one.
 const editingUid = ref<string | null>(null)
 
@@ -762,8 +780,11 @@ const toggleLock = async () => {
             :aria-label="t('scoring.shortcuts.title')"
             @click="shortcutsOpen = true"
           />
-          <UBadge :color="scoringStore.isLocked ? 'error' : 'success'">
-            {{ scoringStore.isLocked ? t('scoring.locked') : t('scoring.status.' + match.statut) }}
+          <!-- Lock state only: the match status has its own (clickable) badge in the run
+               view. Showing it twice was redundant, and diverged once locked — the header
+               said "Verrouillé" while the other still showed the status. -->
+          <UBadge v-if="scoringStore.isLocked" color="error">
+            {{ t('scoring.locked') }}
           </UBadge>
           <UButton
             v-if="canValidate"
@@ -943,8 +964,8 @@ const toggleLock = async () => {
           <div>
             <label class="block text-xs text-header-600 mb-1">{{ t('scoring.reason.label') }}</label>
             <USelect
-              v-model="eventReason"
-              :items="reasonCodes.map(c => ({ label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c), value: c }))"
+              v-model="eventReasonSelect"
+              :items="reasonItems"
               :disabled="!canScore"
               size="sm"
               class="w-48"

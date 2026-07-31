@@ -1003,7 +1003,8 @@ API2_TEST_DB_NAME  = $(API2_TEST_DB_BASE)_test
 
 api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base de données)
 	@echo "Tests unitaires API2 (suite unit, sans DB)..."
-	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
+	@$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit \
+		&& echo "✅ Suite unit passée"
 
 api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
 	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
@@ -1015,7 +1016,7 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
-	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
+	@echo "✅ Fixtures chargées dans $(API2_TEST_DB_NAME)"
 
 # Le DATABASE_URL cite $(API2_TEST_DB_BASE) — Doctrine y ajoute `_test` et tombe
 # donc sur $(API2_TEST_DB_NAME), la base réellement créée ci-dessus.
@@ -1025,10 +1026,11 @@ api2_test_integration: api2_test_fixtures ## Lance la suite PHPUnit `integration
 		-e APP_ENV=test \
 		-e API2_TEST_DB=1 \
 		-e DATABASE_URL='mysql://root:$(DB_ROOT_PASSWORD)@$(DB_CONTAINER_NAME):3306/$(API2_TEST_DB_BASE)?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-		$(API2_CONTAINER_NAME) composer test-integration
+		$(API2_CONTAINER_NAME) composer test-integration \
+		&& echo "✅ Suite integration passée"
 
 api2_test: api2_test_unit api2_test_integration ## Lance les DEUX suites PHPUnit d'API2 (unit + integration) — ce que fait la CI
-	@echo "✔ Suites unit + integration passées (équivalent local du job CI tests-api2)"
+	@echo "✅ Suites unit + integration passées (équivalent local du job CI tests-api2)"
 
 
 ## ACCÈS SHELLS

@@ -122,6 +122,19 @@ interface ScoringState {
   initialized: boolean
 }
 
+/**
+ * `useApi()` is a composable: it calls `useI18n()`, which throws
+ * ("Must be called at the top of a `setup` function") outside a setup context.
+ * Store actions fired from a callback (timer tick, keyboard shortcut, penalty
+ * expiry…) are exactly that context, so the `apiInstance` fallback below could not
+ * create one on the fly.
+ *
+ * The page calls `setApi()` once during setup; every action then reuses that
+ * instance. Kept module-level (not in state) because it holds functions and has no
+ * business being made reactive.
+ */
+let sharedApi: ReturnType<typeof useApi> | null = null
+
 export const useScoringStore = defineStore('scoring', {
   state: (): ScoringState => ({
     matchId: null,
@@ -160,9 +173,18 @@ export const useScoringStore = defineStore('scoring', {
   },
 
   actions: {
+    /**
+     * Hand the store an api instance built during component setup, so actions called
+     * later from callbacks (outside setup) can still reach the API. Call it once, from
+     * the page's setup.
+     */
+    setApi(api: ReturnType<typeof useApi>) {
+      sharedApi = api
+    },
+
     /** Load match header + both team rosters */
     async load(matchId: number, apiInstance?: ReturnType<typeof useApi>) {
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       this.matchId = matchId
       this.loading = true
       this.initialized = false
@@ -225,7 +247,7 @@ export const useScoringStore = defineStore('scoring', {
     async setParam(param: string, value: string, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const previous = (this.match as Record<string, unknown>)[
         param.charAt(0).toLowerCase() + param.slice(1)
       ]
@@ -263,7 +285,7 @@ export const useScoringStore = defineStore('scoring', {
     async addEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       // Assign a uid up front so optimistic state, server row and later edits all agree.
       if (!event.uid) event.uid = genUid()
       this.events.push(event)
@@ -303,7 +325,7 @@ export const useScoringStore = defineStore('scoring', {
     async removeEvent(event: ScoringEvent, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const idx = event.uid
         ? this.events.findIndex(e => e.uid === event.uid)
         : this.events.findIndex(
@@ -344,7 +366,7 @@ export const useScoringStore = defineStore('scoring', {
     async updateEvent(uid: string, patch: Partial<ScoringEvent>, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const idx = this.events.findIndex(e => e.uid === uid)
       if (idx < 0) return
       const previous = { ...this.events[idx] }
@@ -397,7 +419,7 @@ export const useScoringStore = defineStore('scoring', {
      */
     async refreshLiveState(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const [liveState, resEvents] = await Promise.all([
         api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${this.match.id}`),
         api.get<ScoringEventsResponse>(`/admin/scoring/events/${this.match.id}`)
@@ -445,7 +467,7 @@ export const useScoringStore = defineStore('scoring', {
     ) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const list = team === 'A' ? this.playersA : this.playersB
       const idx = list.findIndex(p => p.matric === matric)
       if (idx === -1) return
@@ -463,7 +485,7 @@ export const useScoringStore = defineStore('scoring', {
     async removePlayer(team: TeamSide, matric: number, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const list = team === 'A' ? this.playersA : this.playersB
       const idx = list.findIndex(p => p.matric === matric)
       if (idx === -1) return
@@ -486,7 +508,7 @@ export const useScoringStore = defineStore('scoring', {
     async reloadPresentPlayers(team: TeamSide, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       await api.post(`/admin/matches/${this.match.id}/players/initialize`, { teamCode: team })
       const res = await api.get<MatchPlayersResponse>(
         `/admin/matches/${this.match.id}/players`, { teamCode: team }
@@ -507,7 +529,7 @@ export const useScoringStore = defineStore('scoring', {
     ) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       await api.put(`/admin/scoring/source/${this.match.id}`, { source })
       this.activeSource = source
     },
@@ -516,7 +538,7 @@ export const useScoringStore = defineStore('scoring', {
     async setOfficials(officials: Record<string, string | number | null>, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       await api.put(`/admin/scoring/officials/${this.match.id}`, { officials })
     },
 
@@ -527,7 +549,7 @@ export const useScoringStore = defineStore('scoring', {
      */
     async resolveShortNumber(number: number, apiInstance?: ReturnType<typeof useApi>): Promise<number | null> {
       if (!this.match) return null
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       try {
         const res = await api.get<{ id: number }>(`/admin/scoring/resolve/${this.match.id}/${number}`)
         return res.id ?? null
@@ -539,7 +561,7 @@ export const useScoringStore = defineStore('scoring', {
     /** Read the persisted timer state (for clock restore on reload) */
     async loadTimerState(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return null
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       return api.get<{
         action: 'run' | 'stop' | null
         startTime?: number
@@ -571,7 +593,7 @@ export const useScoringStore = defineStore('scoring', {
     ) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       await api.put(`/admin/scoring/gameTimer/${this.match.id}`, { params: { action, ...params } })
     },
 
@@ -579,7 +601,7 @@ export const useScoringStore = defineStore('scoring', {
     async toggleValidation(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
-      const api = apiInstance ?? useApi()
+      const api = apiInstance ?? sharedApi ?? useApi()
       const res = await api.patch<{ validation: string }>(
         `/admin/games/${this.match.id}/validation`
       )
