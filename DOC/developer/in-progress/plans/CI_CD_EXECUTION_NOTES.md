@@ -5,37 +5,69 @@ ce qui a été réellement livré, les écarts assumés et les pièges rencontr�
 
 ---
 
-## 📌 État de reprise (dernière session : 2026-07-30, 2ᵉ passe)
+## 📌 État de reprise (dernière session : 2026-07-31, 3ᵉ passe)
 
-**Où on en est** : **toutes les phases 0 → 8 sont livrées**. La prod tourne (1er
-déploiement réel le 2026-07-30). Phase 3bis (Trivy image) 🟢. Les phases **4, 7 et 8**
-ont été traitées dans cette 2ᵉ passe.
+**Où on en est** : **toutes les phases 0 → 8 sont livrées, déployées ET éprouvées**. La
+prod tourne (déploiement du 2026-07-31 avec les smoke tests multi-URL actifs), et la
+**Phase 7 a été validée par un run réel le 2026-07-31** (bandeau sur app2 + app4, retour
+auto à `develop` par le cron). Phase 3bis (Trivy image) 🟢.
 
-**⚠️ TODO immédiats à reprendre en début de prochaine session** :
+**Le plan CI/CD est terminé.** Ce qui suit n'est que de l'affinage optionnel.
 
-1. **Committer + pusher `vps-manager`** (`~/Documents/dev/vps-manager`, branche `main`) :
-   `deploy-wrapper.sh` (mode `--experimental` + `--check-expiry` + smoke multi-URL),
-   `.env.dist` (`SMOKE_URLS_*`, `DEPLOY_DEFAULT_BRANCH`), `Makefile`
-   (`install-cron-experimental-expiry`). Puis **`git pull` côté VPS**
-   (`/data/vps-manager`, en tant que `laurent`).
-2. **Renseigner `SMOKE_URLS_PREPROD` / `SMOKE_URLS_PRODUCTION`** dans le `.env` du VPS
-   (valeurs réelles ; `.env.dist` ne porte que des placeholders). ⚠️ **Sans ça, le
-   comportement reste l'ancien** (repli sur `SMOKE_URL_*`, une seule URL) — ce n'est pas
-   une panne, juste la Phase 8.1 non active.
-3. **Installer le cron d'expiration** sur le VPS : `make install-cron-experimental-expiry`
-   (depuis `/data/vps-manager`). Sans lui, un déploiement expérimental **ne reviendrait
-   jamais** à `develop` tout seul.
-4. **PR kpi** : le working tree porte la Phase 4 (PHPUnit + fixtures + job CI), la
-   Phase 7 (workflow + bandeau app2/app4) et la Phase 8 (runbook) → à intégrer via PR
-   vers `develop`.
-5. **Valider la Phase 7 par un run réel** (les 3 cases §7.6 attendent ça) : déployer une
-   branche jetable avec `--ttl 1`, vérifier le bandeau sur app2 **et** app4, puis
-   attendre le cron (HH:15) pour constater le retour auto à `develop`.
+**✅ Plus aucun TODO immédiat.** Les deux derniers sont clos :
 
-**Fait dans cette session (les TODO de la passe précédente sont soldés)** :
-- ✅ ACL backup posée sur le VPS (`setfacl` sur `/data/backups/kpi`, avec `-d`)
-- ✅ `vps-manager` de la passe 1 committé/poussé + `git pull` VPS
-- ✅ PR doc de clôture Phase 6 mergée (#270)
+1. ~~Rejouer l'épreuve Phase 7 avec un marqueur réellement commité~~ — **fait** (2ᵉ run,
+   commit `fcd4ea45`) : bandeau au SHA `fcd4ea4` ≠ `develop` ⇒ le code de la branche est
+   bien servi. Réserve levée, cf. « 2ᵉ run » plus bas.
+2. ~~Poser l'ACL `deploy` sur `/data/backups/kpi`~~ — **posée le 2026-07-31**. Reste
+   seulement à **constater** un dump pré-migration réellement écrit au prochain
+   déploiement prod touchant api2 (la migration est un no-op aujourd'hui).
+
+**Prochain chantier choisi** (décision utilisateur, 2026-07-31) : **étendre la couverture
+de tests api2** — plus tard, pas dans l'immédiat. Le socle PHPUnit est posé et vert en CI ;
+c'est de l'adoption incrémentale (§4.1 du plan), pas un manque d'outillage.
+
+**Fait dans cette session** :
+- ✅ Phases 4 / 7 / 8 mergées dans `develop` (PR #278)
+- ✅ **`tests-api2` vert sur CI réelle** — run `30631272236`, **44 s** (le service MariaDB
+  + les fixtures fonctionnent sur runner GitHub, pas seulement en local)
+- ✅ **Déploiement prod effectué** et **Phase 8.1 validée** : `.env` du VPS complété
+  (`SMOKE_URLS_*` présent, vérifié en SSH), smoke multi-URL réellement à l'œuvre
+- ✅ `vps-manager` poussé + `git pull` VPS : le wrapper connaît `--check-expiry`
+  (testé en SSH : *« Aucun déploiement expérimental actif — rien à faire »*),
+  `DEPLOY_DEFAULT_BRANCH` et la cible make sont en place
+- ✅ **Cron d'expiration installé** sous `laurent` (`15 * * * *`) — l'infra Phase 7 est
+  complète, le retour auto à `develop` est armé
+- ✅ **Phase 7 validée par un run réel** : les 3 cases §7.6 cochées (avec une réserve sur
+  la 1ʳᵉ, cf. « Épreuve Phase 7 »)
+- ✅ `make pr_checks` enrichi : **n° + titre + URL de la PR** en tête, **durée totale** en
+  fin (y compris quand la CI échoue)
+
+**Vérifications SSH du 2026-07-31** (pour ne pas les refaire) :
+
+| Élément sur le VPS | État |
+|---|---|
+| `deploy-wrapper.sh` avec `--experimental` / `--check-expiry` | ✅ déployé et fonctionnel |
+| `SMOKE_URLS_*` dans `/data/vps-manager/.env` | ✅ présent (2 lignes) |
+| `DEPLOY_DEFAULT_BRANCH` | ✅ présent |
+| `install-cron-experimental-expiry` dans le Makefile | ✅ présent |
+| **Cron `--check-expiry` installé** | ✅ **présent** — `15 * * * * … deploy-wrapper.sh preprod --check-expiry`, sous **`laurent`** |
+
+**L'infra de la Phase 7 est donc COMPLÈTE** : il ne manque que le run de validation.
+
+> ⚠️ **Deux pièges de diagnostic à distance, tous deux rencontrés le 2026-07-31** — ils ont
+> produit deux fausses conclusions successives :
+>
+> 1. **`crontab -l` ne montre QUE la crontab de l'utilisateur courant.** Depuis ce poste on
+>    ne peut se connecter qu'en `deploy` ; or les crons vps-manager vivent sous **`laurent`**.
+>    Un `crontab -l` vide côté `deploy` ne prouve donc **rien** — le cron d'expiration était
+>    bien installé. La bonne formulation d'un tel constat est « absent côté `deploy`, non
+>    vérifiable pour `laurent` d'ici », pas « absent ». Vérification fiable : `make
+>    install-cron-experimental-expiry` (idempotent, il répond « déjà existant et actif »).
+> 2. **Le hook local de réécriture de commandes fuit dans les commandes SSH** (`rtk :
+>    commande introuvable`), ce qui a d'abord fait croire que le wrapper n'était pas
+>    déployé. **Vérifier fonctionnellement** (lancer le script) plutôt que par `grep`, ou
+>    neutraliser le code retour (`n=$(grep -c … ; true)`).
 
 **Améliorations non bloquantes en attente** (à décider) :
 - **Durcir le retry SSH** : les 2 tentatives tiennent dans la même fenêtre d'aléa réseau
@@ -782,15 +814,17 @@ fi
   migration versionnée** (schéma = base legacy partagée, `migrate --allow-no-migration`
   = no-op), donc ce backup est surtout un filet pour le futur ; le rendre bloquant
   ferait échouer des déploiements pour un no-op.
-- ⚠️ **Prérequis d'infra (ACL)** : `deploy` doit pouvoir écrire dans
+- ✅ **Prérequis d'infra (ACL) — POSÉ le 2026-07-31.** `deploy` doit pouvoir écrire dans
   `$BACKUP_BASE_DIR/kpi/` (= `/data/backups/kpi/`). Au 1er déploiement prod (2026-07-30)
   ce n'était PAS le cas → le backup a échoué en `Permission non accordée` (dossiers
   possédés par `laurent`, ACL Phase 5 posée seulement sur les checkouts `/data/kpi*`).
-  **Fix à poser une fois** (comme les ACL Phase 5) :
+  **Fix appliqué** (comme les ACL Phase 5) :
   ```bash
   sudo setfacl -R    -m u:deploy:rwX /data/backups/kpi
   sudo setfacl -R -d -m u:deploy:rwX /data/backups/kpi
   ```
+  Reste à **constater** un dump réellement écrit au prochain déploiement prod touchant
+  api2 (aujourd'hui la migration est un no-op, cf. ci-dessus).
 - ⚠️ **Cette modif vit dans le repo `vps-manager` (privé), PAS dans kpi.** Elle a été
   **appliquée directement** dans le checkout local `~/Documents/dev/vps-manager`
   (`deploy-wrapper.sh`, branche `main`) — Laurent n'a plus qu'à committer + pusher, puis
@@ -837,11 +871,12 @@ sur `/data/kpi` (fait). *Leçon : aligner les 2 checkouts sur HTTPS.*
 dans `/data/backups/kpi/` (possédé par `laurent`, l'ACL Phase 5 ne couvrait que les
 checkouts `/data/kpi*`). Le backup a donc échoué — **sans bloquer** (best-effort) → la
 prod s'est déployée quand même, et la migration était un no-op (api2 sans migration
-versionnée). **Fix ACL à poser** (cf. « État de reprise » + section « Backup DB »).
+versionnée). **Fix ACL POSÉ le 2026-07-31** (cf. section « Backup DB »).
 
 ### Ce qui reste ouvert (non bloquant)
 
-- **ACL backup `/data/backups/kpi`** à poser (voir « État de reprise » §1).
+- ~~ACL backup `/data/backups/kpi`~~ — ✅ **posée le 2026-07-31**. Reste à constater un
+  dump réellement écrit au prochain déploiement prod touchant api2.
 - **Durcir le retry SSH** (timeout 120s + pause 60s) — les 2 tentatives tombaient dans la
   même fenêtre d'aléa réseau.
 - **Rollback DB prod** : §6.4 du plan veut un runbook. Le dump pré-migration dédié est en
@@ -1043,6 +1078,73 @@ découvertes en chemin :
 
 Le composable est **dupliqué** entre app2 et app4 (projets Nuxt indépendants, pas de paquet
 partagé) : les deux fichiers le disent en en-tête, toute correction doit être reportée.
+
+### Épreuve Phase 7 — run réel du 2026-07-31
+
+Déploiement de `test/phase7-experimental` avec `ttl_hours=1`, puis attente du cron.
+
+| Case §7.6 | Résultat |
+|---|---|
+| Déployer une branche via bouton | ✅ **validée** — run OK, wrapper en mode expérimental |
+| Bandeau visible sur **toutes** les apps | ✅ **validée** — bandeau fuchsia constaté sur **app2 ET app4** (captures), avec nom de branche, « retour à develop dans 1 h » et SHA court `79f848a` |
+| Retour auto à `develop` après TTL | ✅ **validée** — le cron a bien détecté l'expiration, redéployé, et nettoyé le marqueur |
+
+Log du cron, exactement le comportement attendu (no-op tant que valide, puis bascule) :
+
+```
+Déploiement expérimental 'test/phase7-experimental' encore valide (expire 2026-07-31T15:08:34Z) — rien à faire.
+⏱ TTL dépassé (expiré 2026-07-31T15:08:34Z) → retour à 'develop'.
+ SHA cible : 79f848af931065be3bc5d8dd5c6e2fd51ef2f95d
+…
+Aucun déploiement expérimental actif — rien à faire.
+```
+
+Après coup : `.experimental-deploy.json` **absent**, préprod sur `develop`, plus de bandeau.
+**La mécanique Phase 7 est donc éprouvée de bout en bout.**
+
+> ⚠️ **Nuance importante — ce que ce run n'a PAS prouvé.** Le marqueur `[PHASE7-TEST]`
+> n'était **pas visible** dans les apps. Cause : la branche avait été **poussée sans le
+> commit du marqueur** (les modifs étaient restées non commitées dans le working tree), si
+> bien que `origin/test/phase7-experimental` était **identique à `develop`** — vérifié
+> après coup, les deux pointaient sur `79f848af` et le `fr.json` poussé portait le titre
+> d'origine.
+>
+> Conséquences à connaître :
+> - le run a validé **le bandeau, le TTL et le retour auto**, mais **pas** que le code de
+>   la branche feature est réellement servi en préprod (déployer `develop` sur `develop`
+>   ne le démontre pas) ;
+> - le « retour à develop » était un **no-op de code** (`SHA cible` = `SHA actuel` =
+>   `79f848af`) : c'est le **nettoyage du marqueur** qui a été prouvé, pas la restauration
+>   d'un état différent ;
+> - le rebuild forcé des apps a quand même eu lieu (mode expérimental), ce qui explique
+>   que les bandeaux soient bien apparus.
+>
+> **Leçon de méthode** : une branche de test doit être **commitée** avant d'être poussée —
+> une consigne « pousse la branche » ne suffit pas quand le contenu n'est qu'un
+> working-tree. Le commit `fcd4ea45` corrige ça ; un simple force-push suffit pour rejouer
+> l'épreuve complète.
+
+### 2ᵉ run (marqueur commité) — ✅ réserve LEVÉE
+
+Rejeu avec le commit `fcd4ea45`. Le bandeau affiche cette fois le SHA **`fcd4ea4`** (et
+non plus `79f848a` = `develop`) : **preuve directe que le code de la branche feature est
+réellement servi en préprod**, et non un simple redéploiement de `develop`. Le marqueur
+`[PHASE7-TEST]` est visible dans le **pied de page d'app4**.
+
+**La Phase 7 est donc validée sans réserve** : bouton → déploiement du code de la branche
+→ bandeau sur les deux apps → retour auto à `develop` par le cron.
+
+> **Piège rencontré — un marqueur de test sur une clé i18n MORTE.** Côté app2, le marqueur
+> restait invisible. Ce n'était **pas** un défaut du déploiement : la clé `message` que
+> j'avais choisie (la première du `fr.json`) **n'est rendue par aucun composant** — la page
+> d'accueil affiche un `<h1>KPI Application</h1>` **en dur**, pas une clé i18n. Corrigé
+> dans `eebcea33` en déplaçant le marqueur sur `Event.TutoTitle` (« Comment naviguer »),
+> réellement affiché sous le QR code.
+>
+> À retenir pour toute future épreuve visuelle : **vérifier que la chaîne modifiée est
+> effectivement rendue** (`grep -r "t('<clé>')" sources/appN`) avant de conclure quoi que
+> ce soit d'une absence à l'écran. Une non-apparition peut venir du test, pas du système
+> testé.
 Il relit le fichier toutes les **5 min** (`cache: 'no-store'`) pour qu'un onglet resté
 ouvert voie le bandeau disparaître après le retour à `develop`, et **ignore un flag expiré**
 côté client (si le cron a du retard, on n'affiche pas une échéance mensongère). Toute erreur
@@ -1070,6 +1172,10 @@ api2 `/doc`, un endpoint public api2 (qui atteint la base et sérialise), app2, 
   router après un `docker compose restart`, un curl unique provoquerait un rollback à tort.
   C'est la leçon du 2026-07-23 (l'API avait mis ~25 s), on ne l'a pas perdue en passant au
   multi-URL.
+
+> ✅ **8.1 VALIDÉE en conditions réelles (2026-07-31)** : `.env` du VPS complété
+> (`SMOKE_URLS_*`) et **déploiement prod effectué** avec les smoke tests multi-URL actifs.
+> Le repli sur `SMOKE_URL_*` n'est donc plus le chemin emprunté en préprod/prod.
 
 ### 8.4 Runbook
 
@@ -1125,13 +1231,15 @@ versionnée à casser aujourd'hui.
 - [x] Phase 4 : PHPUnit api2 **27 tests / 115 assertions verts** en local (conteneur `kpi_api2` + base de fixtures)
 - [x] Phase 4 : suite `integration` **skippée proprement** sans base (`11 skipped`, message explicite)
 - [x] Phase 4 : PHPStan toujours `[OK] No errors` après ajout des tests et modif de `doctrine.yaml`
-- [ ] Phase 4 : job `tests-api2` **vert sur PR réelle** (à constater au 1er push)
+- [x] Phase 4 : job `tests-api2` **vert sur CI réelle** — run `30631272236` (2026-07-31), **44 s**, service MariaDB + fixtures OK sur runner GitHub
 - [x] Phase 7 : garde-fous du wrapper testés en sandbox (12 cas : ENV, SHA, `--experimental` refusé en prod, injection dans `--branch`, `..`, TTL hors bornes, options exclusives…)
 - [x] Phase 7 : `--check-expiry` validé sur ses 4 chemins (non expiré / `expires_at` absent / non parsable / expiré sans remote)
 - [x] Phase 7 : dépôt du marqueur validé (2 apps, app absente, aucune app, `clear` idempotent) + JSON conforme au composable
 - [x] Phase 7 : ESLint vert sur les fichiers ajoutés d'app2 et app4 (exit 0)
-- [ ] Phase 7 : **run réel** — bandeau visible sur app2 + app4, puis retour auto à `develop` par le cron (§7.6)
+- [x] Phase 7 : **run réel du 2026-07-31** — bandeau visible sur app2 **et** app4, puis retour auto à `develop` par le cron (§7.6) ✅
+- [x] Phase 7 : **2ᵉ run avec marqueur commité** — bandeau au SHA `fcd4ea4` (≠ `develop`) + `[PHASE7-TEST]` visible dans app4 ⇒ **le code de la branche est bien servi**, réserve levée ✅
 - [x] Phase 8 : `bash -n` OK sur le wrapper ; smoke multi-URL avec repli sur `SMOKE_URL_*`
+- [x] Phase 8 : **smoke multi-URL actif en réel** — `.env` VPS complété + déploiement prod passé avec (2026-07-31)
 - [x] Phase 8 : runbook rédigé et référencé dans l'index infrastructure
 - [ ] Phase 8 : rollback DB **testé** (impossible aujourd'hui : aucune migration versionnée)
 
