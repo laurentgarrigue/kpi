@@ -122,6 +122,23 @@ CREATE TABLE `kp_evenement_journee` (
   KEY `fk_evenements_journee` (`Id_journee`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Équipes d'une compétition : jointes par le programme d'incrustation pour
+-- afficher les libellés (ScoringProgramService::currentMatch/nextMatch).
+-- Sous-ensemble volontaire des colonnes réelles — seules celles lues ici.
+DROP TABLE IF EXISTS `kp_competition_equipe`;
+CREATE TABLE `kp_competition_equipe` (
+  `Id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Code_compet` varchar(12) NOT NULL DEFAULT '',
+  `Code_saison` char(4) NOT NULL DEFAULT '',
+  `Libelle` varchar(40) DEFAULT NULL,
+  `Code_club` varchar(6) DEFAULT NULL,
+  `logo` varchar(50) DEFAULT NULL,
+  `Numero` smallint(6) DEFAULT NULL,
+  `Poule` varchar(3) NOT NULL DEFAULT '',
+  PRIMARY KEY (`Id`),
+  KEY `idx_competition_equipe_compet` (`Code_compet`,`Code_saison`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 DROP TABLE IF EXISTS `kp_match`;
 CREATE TABLE `kp_match` (
   `Id` int(10) UNSIGNED NOT NULL,

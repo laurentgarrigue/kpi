@@ -29,27 +29,29 @@ Rappels :
 
 ```bash
 # 1) Migration SQL (nouvelles tables + kp_match.uid additif) — idempotente (IF NOT EXISTS)
+#    ⚠️ le client s'appelle `mariadb` (pas `mysql`, absent de l'image MariaDB 11.5)
 docker exec -i ${DB_CONTAINER_NAME} sh -c \
-  'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
+  'mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
   < SQL/migrations/2026-07-27_scoring_live_tables.sql
 
 # 2) Redémarrer api2 (nouveau code contrôleur/service)
 make api2_restart
 
-# 3) Tests des règles pures (PHPUnit, suite unit — aucune base requise)
-docker exec kpi_api2 sh -lc 'cd /app && composer test-unit'
+# 3) Tests (cibles Makefile — elles gèrent la base de fixtures toutes seules)
+make api2_test_unit           # règles pures, aucune base requise
+make api2_test_fixtures       # (re)charge SQL/fixtures/ dans kpi_fixtures_test
+make api2_test_integration    # recharge les fixtures puis joue la suite integration
 ```
 
 Les tests d'**intégration** (contrôle d'accès des incrustations, `ScoringPublicEndpointsTest`)
-exigent la base de fixtures — voir [SQL/fixtures/README.md](../../../SQL/fixtures/README.md) :
+s'appuient sur la base de fixtures `kpi_fixtures_test` — voir
+[SQL/fixtures/README.md](../../../SQL/fixtures/README.md). `make api2_test_integration`
+la recrée à chaque exécution : pas de commande `docker exec` à taper à la main.
 
-```bash
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/schema.sql
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/data.sql
-docker exec -e API2_TEST_DB=1 \
-  -e DATABASE_URL='mysql://root:<pass>@kpi_db:3306/kpi_test?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-  kpi_api2 sh -lc 'cd /app && composer test-integration'
-```
+> **Ajouter un test qui touche une nouvelle table `kp_*`** : il faut l'ajouter à
+> `SQL/fixtures/schema.sql` (et ses lignes à `data.sql`), sinon l'endpoint répond **500**
+> `TableNotFoundException` au lieu du code attendu. Les fixtures sont un sous-ensemble
+> volontairement minimal du schéma réel — on n'y met que les colonnes réellement lues.
 
 ### Tests fonctionnels
 

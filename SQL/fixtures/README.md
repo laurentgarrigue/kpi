@@ -31,19 +31,16 @@ par défaut, etc.).
 ## Utilisation
 
 En CI, le job `tests-api2` crée un service MariaDB, charge ces deux fichiers,
-puis lance `composer test-integration`. En local :
+puis lance `composer test-integration`. En local, tout passe par le Makefile —
+la base de test `kpi_fixtures_test` est (re)créée et rechargée automatiquement :
 
 ```bash
-# base de test dédiée, dans le conteneur MariaDB existant
-docker exec -i kpi_db mariadb -uroot -p<pass> -e "CREATE DATABASE IF NOT EXISTS kpi_test"
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/schema.sql
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/data.sql
-
-# puis, en pointant api2 sur cette base :
-docker exec -e API2_TEST_DB=1 \
-  -e DATABASE_URL='mysql://root:<pass>@kpi_db:3306/kpi_test?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-  kpi_api2 sh -lc 'cd /app && composer test-integration'
+make api2_test_fixtures       # (re)charge schema.sql puis data.sql
+make api2_test_integration    # recharge les fixtures, puis joue la suite integration
 ```
+
+Inutile de taper les `docker exec` à la main : les cibles gèrent la création de la
+base, le chargement des deux fichiers et le `DATABASE_URL` de la suite.
 
 ⚠️ **Ne jamais pointer la suite `integration` sur la base de dev/préprod/prod** :
 les tests supposent ces fixtures et n'ont aucune raison d'y trouver leurs ids.
@@ -58,6 +55,7 @@ chemin de lecture public des incrustations. Chaque jeton couvre un motif de refu
 |---|---|
 | `kp_evenement_journee` (9001 → 9101) | rattache la journée à l'événement : c'est ce qui donne sa portée à un jeton |
 | `kp_match` 99001 (journée 9101, terrain `2`) | match cible de `/scoring/state/{id}` ; **aucun** état live associé, pour vérifier le 404 explicite |
+| `kp_competition_equipe` 9201 / 9202 | les deux équipes du match : `/scoring/program` les joint pour les libellés — sans la table, l'endpoint répond 500 au lieu du code attendu |
 | `tsttok-valid-event-9001` | jeton valide, portée événement → accès accordé |
 | `tsttok-valid-pitch2` | valide mais restreint au terrain `2` → refusé sur un autre terrain |
 | `tsttok-expired` | expiré → refusé |

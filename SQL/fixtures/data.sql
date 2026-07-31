@@ -104,12 +104,20 @@ INSERT INTO `kp_journee`
 INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES
   (9001, 9101);
 
+-- Les deux équipes du match : le programme d'incrustation les joint pour
+-- afficher les libellés.
+INSERT INTO `kp_competition_equipe`
+  (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `Numero`, `Poule`)
+VALUES
+  (9201, 'TESTCOMP', '2999', 'Equipe A Test', 'TSTA', 1, 'A'),
+  (9202, 'TESTCOMP', '2999', 'Equipe B Test', 'TSTB', 2, 'A');
+
 -- Un match publié, terrain 2, dans l'événement 9001.
 INSERT INTO `kp_match`
   (`Id`, `Id_journee`, `Libelle`, `Type`, `Statut`, `Date_match`, `Heure_match`,
-   `Terrain`, `Numero_ordre`, `Periode`, `Publication`, `Validation`)
+   `Terrain`, `Numero_ordre`, `Periode`, `Id_equipeA`, `Id_equipeB`, `Publication`, `Validation`)
 VALUES
-  (99001, 9101, 'Match Test', 'C', 'ON', '2999-01-10', '10:00', '2', 1, 'M1', 'O', 'N');
+  (99001, 9101, 'Match Test', 'C', 'ON', '2999-01-10', '10:00', '2', 1, 'M1', 9201, 9202, 'O', 'N');
 
 -- Jetons d'affichage : un par cas de la matrice d'accès.
 INSERT INTO `scoring_display_token`
