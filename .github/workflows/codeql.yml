@@ -1,7 +1,9 @@
 name: CodeQL
 
 # SAST GitHub natif (Phase 2 du plan CI/CD). Analyse JS/TS des apps Nuxt
-# (app2/app3/app4) et remonte les findings dans l'onglet Security du repo.
+# (app2/app4) et remonte les findings dans l'onglet Security du repo.
+# (CodeQL scanne tout le JS/TS de l'arbre sans config par-chemin ; app3, resté
+# comme référence, est donc encore balayé, mais n'est plus buildé/testé/déployé.)
 #
 # Workflow SÉPARÉ de ci.yml volontairement :
 #  - CodeQL est plus lent (~1m40s avec security-extended) et n'a pas la granularité

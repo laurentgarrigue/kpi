@@ -599,11 +599,12 @@ consolidation ; fichiers de référence intégrés aux tests.
 >   consolidation) ; l'outbox est alimentée à chaque écriture (le worker qui la draine =
 >   lot 2) ;
 > - ✅ 1.2 — règles pures livrées **test-first** : `src/Scoring/ScoringRules.php` (périodes
->   `P{n}` non bornées + but en or, durées et pauses, progression des cartons 2027, slots de
->   pénalité + levée du plus ancien + qui revient, machine à états shotclock 3 commandes) ;
->   62 assertions dans `tests/Scoring/scoring_rules_test.php` (runner autonome sans framework,
->   branché dans le job CI `lint-api2`) — à migrer vers PHPUnit quand un test pack entrera
->   dans api2 ;
+>   `P{n}` non bornées + but en or, durées et pauses, progression des cartons 2027,
+>   pénalités et levée sur but encaissé, machine à états shotclock 3 commandes) ;
+>   **`tests/Unit/Scoring/ScoringRulesTest.php`** — PHPUnit, suite `unit` (59 cas,
+>   73 assertions), bloquante en CI via `composer test-unit`. *(Livré d'abord comme runner
+>   autonome faute de test pack dans api2 ; converti dès que PHPUnit est arrivé sur
+>   `develop`.)*
 > - ⬜ 1.8 (fichiers de référence matériel, dépend de 0.5).
 >
 > Détail d'implémentation dans [PAGE_SCORING.md §12](../../specs/PAGE_SCORING.md).

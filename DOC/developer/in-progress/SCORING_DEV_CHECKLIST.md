@@ -36,8 +36,19 @@ docker exec -i ${DB_CONTAINER_NAME} sh -c \
 # 2) Redémarrer api2 (nouveau code contrôleur/service)
 make api2_restart
 
-# 3) Tests unitaires des règles pures (aucune dépendance)
-php sources/api2/tests/Scoring/scoring_rules_test.php   # attendu : "OK — 62 assertions passed"
+# 3) Tests des règles pures (PHPUnit, suite unit — aucune base requise)
+docker exec kpi_api2 sh -lc 'cd /app && composer test-unit'
+```
+
+Les tests d'**intégration** (contrôle d'accès des incrustations, `ScoringPublicEndpointsTest`)
+exigent la base de fixtures — voir [SQL/fixtures/README.md](../../../SQL/fixtures/README.md) :
+
+```bash
+docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/schema.sql
+docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/data.sql
+docker exec -e API2_TEST_DB=1 \
+  -e DATABASE_URL='mysql://root:<pass>@kpi_db:3306/kpi_test?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
+  kpi_api2 sh -lc 'cd /app && composer test-integration'
 ```
 
 ### Tests fonctionnels

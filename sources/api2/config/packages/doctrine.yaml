@@ -35,6 +35,15 @@ when@test:
     doctrine:
         dbal:
             # "TEST_TOKEN" is typically set by ParaTest
+            #
+            # ⚠️ Ce suffixe est un GARDE-FOU, pas un détail : en APP_ENV=test,
+            # Doctrine ajoute `_test` au nom de base du DATABASE_URL. Donc
+            # `DATABASE_URL=…/kpi` attaque en réalité `kpi_test`, et il est
+            # IMPOSSIBLE de faire tourner la suite de tests sur la base de
+            # dev/préprod/prod par simple erreur de variable d'environnement.
+            # Conséquence pratique (Phase 4) : la base de fixtures doit s'appeler
+            # `<nom>_test`, et le DATABASE_URL des tests doit citer `<nom>` SANS
+            # le suffixe. Voir SQL/fixtures/README.md.
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:

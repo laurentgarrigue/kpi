@@ -3,8 +3,8 @@ nelmio_api_doc:
         openapi: 3.1.0
         info:
             title: KPI API2
-            description: Modern REST API for Kayak Polo management (Symfony 7.3 + API Platform 4.2)
-            version: 2.0.0
+            description: Modern REST API for Kayak Polo management (Symfony 7.4 + API Platform 4.3)
+            version: 2.1.0
         servers:
             - url: '%env(API_DOCS_SERVER_URL)%'
               description: '%env(API_DOCS_SERVER_DESCRIPTION)%'

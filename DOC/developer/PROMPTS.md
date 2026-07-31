@@ -214,6 +214,8 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
 
+- Tuto interactif : le tuto classement doit être accessible aux profils <= 6 (et non 4).
+
 **Nours**:
 - "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
 - Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.

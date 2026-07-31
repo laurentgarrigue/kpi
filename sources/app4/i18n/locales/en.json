@@ -17,6 +17,10 @@
     "offline_description": "You are currently offline.",
     "back_online": "Connection restored"
   },
+  "experimental": {
+    "title": "PREPROD — Experimental feature:",
+    "expires_in": "back to develop in {hours} h"
+  },
   "menu": {
     "competition": "Competitions",
     "documents": "Documents",

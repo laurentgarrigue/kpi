@@ -17,6 +17,10 @@
     "offline_description": "Vous êtes actuellement hors ligne.",
     "back_online": "Connexion rétablie"
   },
+  "experimental": {
+    "title": "PRÉPROD — Feature expérimentale :",
+    "expires_in": "retour à develop dans {hours} h"
+  },
   "menu": {
     "competition": "Compétitions",
     "documents": "Documents",

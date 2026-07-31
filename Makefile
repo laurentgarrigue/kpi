@@ -1,9 +1,17 @@
 -include docker/.env
 
-UID := $(shell id -u)
-GID := $(shell id -g)
-export USER_ID := $(UID)
-export GROUP_ID := $(GID)
+# USER_ID / GROUP_ID pilotent l'utilisateur des conteneurs (bind mounts en rw).
+# Priorité au `.env` (chargé ci-dessus) : c'est la source de vérité PAR ENVIRONNEMENT
+# — préprod/prod fixent 1000:33 pour rester propriétaires des volumes de logs/sources.
+# `?=` n'assigne QUE si la variable n'est pas déjà définie (par le .env ou l'env shell).
+# Le fallback `id -u`/`id -g` ne sert qu'en dev local sans .env.
+#
+# ⚠️ NE PAS revenir à `:= $(shell id -u)` : quand la CI/CD lance `make` en tant que
+# `deploy` (uid 1002), ça écraserait le 1000:33 du .env → le conteneur tournerait en
+# 1002 et ne pourrait plus écrire les volumes possédés par 1000:33 (Apache crash-loop
+# « Permission denied … error.log », caches EROFS, etc.). Vu en préprod le 2026-07-27.
+export USER_ID ?= $(shell id -u)
+export GROUP_ID ?= $(shell id -g)
 
 # Variables pour les noms des réseaux et containers
 APPLICATION_NAME ?= kpi
@@ -43,11 +51,12 @@ DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
 docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_logs docker_dev_status \
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
+docker_production_restart docker_production_rebuild \
 app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_build app3_generate_dev app3_generate_preprod app3_generate_prod app3_lint \
+app3_dev app3_build app3_generate_dev app3_lint \
 app3_npm_install app3_npm_ls app3_npm_clean app3_npm_update app3_npm_add app3_npm_add_dev app3_bash \
-app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_lint \
+app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -55,13 +64,16 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures \
 dev dev_status dev_logs dev_down dev_certs app2_logs app3_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge sync_develop_from_main
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge backmerge_main_to_develop \
+last_merge_sha preprod_rollback \
+hooks
 
 
 
@@ -82,7 +94,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks ## Initialisation complète du projet (env, réseaux)
+init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
 	@echo ""
 	@echo "Initialisation complète terminée!"
 	@echo ""
@@ -102,6 +114,12 @@ init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_netw
 	@echo "  6. Lancez Nuxt: make app2_dev"
 	@echo ""
 	@echo "Note: Pour une préprod/prod, vérifiez APPLICATION_NAME dans docker/.env"
+
+hooks: ## Active les git hooks versionnés (scripts/hooks/) via core.hooksPath
+	@git config core.hooksPath scripts/hooks
+	@chmod +x scripts/hooks/* 2>/dev/null || true
+	@echo "Git hooks activés : core.hooksPath → scripts/hooks"
+	@echo "  - post-commit : auto-bump version app2/app4 (package.json) + api2 (nelmio_api_doc.yaml)"
 
 init_env: ## Initialise le fichier docker/.env depuis docker/.env.dist
 	@if [ ! -f docker/.env ]; then \
@@ -388,6 +406,11 @@ docker_prod_rebuild: ## Reconstruit et relance les containers de production (apr
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d
 	@echo "Containers reconstruits et relancés"
 
+# Alias `production` (nom long) pour que deploy-wrapper.sh puisse cibler les mêmes
+# briques via `make docker_$${ENV}_restart` avec ENV=preprod|production sans casse.
+docker_production_restart: docker_prod_restart ## Alias production de docker_prod_restart (deploy-wrapper.sh)
+docker_production_rebuild: docker_prod_rebuild ## Alias production de docker_prod_rebuild (deploy-wrapper.sh)
+
 docker_prod_logs: ## Affiche les logs des containers de production
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml logs -f
 
@@ -416,14 +439,18 @@ app2_generate_dev: ## Génère l'application Nuxt (app2) en mode statique pour d
 
 app2_generate_preprod: ## Génère l'application Nuxt (app2) en mode statique pour pré-production (utilise container temporaire)
 	@echo "Building app2 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
+# APP_ENV passé par -e (et NON via .env.preprod) parce que les .env.* d'app2 sont
+# GITIGNORÉS : une variable qui n'y vit que localement n'atteindrait jamais le VPS.
+# Ici c'est versionné. Active le bandeau « préprod expérimentale » (Phase 7 CI/CD).
+	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
 	@echo "App2 generated and nginx restarted!"
 
 app2_generate_production: ## Génère l'application Nuxt (app2) en mode statique pour production (utilise container temporaire)
 	@echo "Building app2 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
+# APP_ENV=production : bandeau expérimental inconditionnellement désactivé en prod.
+	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
 	@echo "App2 generated and nginx restarted!"
@@ -493,15 +520,9 @@ app3_build: ## Build l'application Nuxt (app3) pour la production
 app3_generate_dev: ## Génère l'application Nuxt (app3) en mode statique pour développement
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npx dotenv-cli -e .env.development -- nuxt generate"
 
-app3_generate_preprod: ## Génère l'application Nuxt (app3) en mode statique pour pré-production (utilise container temporaire)
-	@echo "Building app3 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app3:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
-	@echo "Build complete! Files are in sources/app3/.output/public/"
-
-app3_generate_prod: ## Génère l'application Nuxt (app3) en mode statique pour production (utilise container temporaire)
-	@echo "Building app3 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app3:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
-	@echo "Build complete! Files are in sources/app3/.output/public/"
+# app3 (feuille de marque) n'est plus déployé : les cibles generate preprod/prod/
+# production ont été retirées. app3 ne subsiste que comme RÉFÉRENCE locale pour le
+# scoring d'app4 → seules restent les cibles dev/lint/npm ci-dessous.
 
 app3_lint: ## Exécute ESLint sur app3
 	$(DOCKER_EXEC_NODE3) sh -c "npm run lint"
@@ -580,7 +601,10 @@ app4_generate_preprod: ## Génère l'application Nuxt (app4 admin) en mode stati
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
 	git checkout -- sources/app4/package-lock.json
 	@echo "Building app4 for pre-production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
+# APP_ENV=preprod : lu par nuxt.config.ts (runtimeConfig.public.appEnv). C'est ce
+# qui active le bandeau « préprod expérimentale » (Phase 7 CI/CD) — sans lui,
+# appEnv retomberait sur 'development' et le bandeau ne s'afficherait JAMAIS.
+	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
 	@echo "App4 generated and nginx restarted!"
@@ -589,10 +613,14 @@ app4_generate_prod: ## Génère l'application Nuxt (app4 admin) en mode statique
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
 	git checkout -- sources/app4/package-lock.json
 	@echo "Building app4 for production using temporary Node.js container..."
-	docker run --rm -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
+# APP_ENV=production : en prod le bandeau expérimental est inconditionnellement
+# désactivé (aucune requête sur experimental-flag.json).
+	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
 	@echo "Restarting nginx to remount volume..."
 	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
 	@echo "App4 generated and nginx restarted!"
+
+app4_generate_production: app4_generate_prod ## Alias production de app4_generate_prod (deploy-wrapper.sh)
 
 app4_lint: ## Exécute ESLint sur app4
 	$(DOCKER_EXEC_NODE4) sh -c "npm run lint"
@@ -953,6 +981,55 @@ api2_jwt_generate_keys: ## Génère les clés RSA pour JWT (API2) - reproductibl
 	@echo ""
 	@echo "Commande à exécuter aussi sur preprod/prod avec le même JWT_PASSPHRASE"
 
+# --- Tests PHPUnit api2 (Phase 4 du plan CI/CD) -------------------------------
+# DEUX suites, séparées par leur besoin d'infra (cf. sources/api2/phpunit.dist.xml) :
+#   unit        → logique pure, ni DB ni kernel. Tourne partout en < 1 s.
+#   integration → boot du kernel + requêtes HTTP réelles, EXIGE une base peuplée
+#                 par SQL/fixtures/. Sans API2_TEST_DB=1 la suite se met en SKIP
+#                 explicite (ApiTestCase::setUp) au lieu de partir en rouge.
+#
+# ⚠️ Base de test DÉDIÉE, jamais la base de dev : les tests assertent sur les ids
+# des fixtures. Ils ne font que des SELECT aujourd'hui, mais la garde reste la
+# règle (cf. SQL/fixtures/README.md).
+#
+# ⚠️ Piège Doctrine : en APP_ENV=test, `dbname_suffix: '_test…'`
+# (config/packages/doctrine.yaml) ajoute `_test` au nom de base. La base PHYSIQUE
+# s'appelle donc $(API2_TEST_DB_NAME) mais le DATABASE_URL cite
+# $(API2_TEST_DB_BASE) — sinon Doctrine chercherait « kpi_test_test ». Ce suffixe
+# est un garde-fou volontaire (impossible de taper une vraie base par erreur de
+# variable), on ne le retire pas.
+API2_TEST_DB_BASE ?= kpi_fixtures
+API2_TEST_DB_NAME  = $(API2_TEST_DB_BASE)_test
+
+api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base de données)
+	@echo "Tests unitaires API2 (suite unit, sans DB)..."
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
+
+api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
+	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
+		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
+	@echo "Création de la base de test $(API2_TEST_DB_NAME) dans $(DB_CONTAINER_NAME)..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
+		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
+		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
+	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
+	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
+
+# Le DATABASE_URL cite $(API2_TEST_DB_BASE) — Doctrine y ajoute `_test` et tombe
+# donc sur $(API2_TEST_DB_NAME), la base réellement créée ci-dessus.
+api2_test_integration: api2_test_fixtures ## Lance la suite PHPUnit `integration` d'API2 (recharge les fixtures d'abord)
+	@echo "Tests d'intégration API2 (suite integration, sur $(API2_TEST_DB_NAME))..."
+	@docker exec \
+		-e APP_ENV=test \
+		-e API2_TEST_DB=1 \
+		-e DATABASE_URL='mysql://root:$(DB_ROOT_PASSWORD)@$(DB_CONTAINER_NAME):3306/$(API2_TEST_DB_BASE)?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
+		$(API2_CONTAINER_NAME) composer test-integration
+
+api2_test: api2_test_unit api2_test_integration ## Lance les DEUX suites PHPUnit d'API2 (unit + integration) — ce que fait la CI
+	@echo "✔ Suites unit + integration passées (équivalent local du job CI tests-api2)"
+
 
 ## ACCÈS SHELLS
 db_bash: ## Ouvre un shell dans le container MySQL
@@ -1150,28 +1227,37 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
 	fi
 
-sync_develop_from_main: ## Rapatrie les PR mergées sur main (Dependabot security) dans develop et push
-	@if [ -n "$$(git status --porcelain)" ]; then \
-		echo "⛔ Working tree non propre. Committe ou stash avant (le merge écraserait tes modifs)."; \
-		git status -sb; exit 1; \
-	fi; \
-	start=$$(git rev-parse --abbrev-ref HEAD); \
-	echo "→ Mise à jour de main..."; \
-	git checkout main && git pull --ff-only || { echo "⛔ Échec du pull de main."; git checkout "$$start" 2>/dev/null; exit 1; }; \
-	echo "→ Mise à jour de develop..."; \
-	git checkout develop && git pull --ff-only || { echo "⛔ Échec du pull de develop."; exit 1; }; \
-	if git merge-base --is-ancestor main develop; then \
-		echo "✔ develop contient déjà main — rien à rapatrier."; \
-		if [ "$$start" != "develop" ]; then git checkout "$$start"; fi; \
-		exit 0; \
-	fi; \
-	echo "→ Merge de main dans develop..."; \
-	if ! git merge --no-edit main; then \
-		echo; echo "⛔ Conflit de merge. Résous-le à la main, puis :"; \
-		echo "     git add -A && git commit && git push origin develop"; \
-		echo "   (ou 'git merge --abort' pour annuler)"; exit 1; \
-	fi; \
-	echo "→ Push de develop..."; \
-	git push origin develop || exit 1; \
-	echo; echo "✔ develop est à jour avec main sur origin."; \
-	if [ "$$start" != "develop" ]; then echo "(tu étais sur '$$start' ; tu es maintenant sur develop)"; fi
+backmerge_main_to_develop: ## Déclenche le workflow qui ouvre la PR de back-merge main → develop (Dependabot security / release)
+	@echo "→ Déclenchement du workflow « Back-merge main → develop »..."
+	@gh workflow run "Back-merge main → develop" --ref main || { \
+		echo "⛔ Échec du déclenchement. Vérifie 'gh auth status' et que le workflow existe sur main."; exit 1; }
+	@echo "✔ Workflow lancé. Il ouvre/actualise UNE PR 'chore/backmerge-main-to-develop → develop'."
+	@echo "  Suis-la et merge-la :  gh pr list --base develop --head chore/backmerge-main-to-develop"
+	@echo "  (develop exige une PR — le push direct est refusé par le ruleset, d'où ce workflow.)"
+
+last_merge_sha: ## Affiche le SHA du dernier commit de develop (= dernier squash-merge de PR), utile pour un revert
+	@git fetch origin develop --quiet
+	@echo "Dernier commit sur origin/develop (à reverter si c'est la PR à annuler) :"
+	@git log origin/develop -1 --format='  %C(yellow)%h%Creset  %s%n  %C(dim)%ci — %an%Creset'
+	@echo
+	@echo "Pour reverter précisément une PR fusionnée, retrouve son commit de merge :"
+	@echo "  gh pr view <num> --json mergeCommit --jq .mergeCommit.oid"
+	@echo "Puis :  make preprod_rollback sha=<ce_sha>"
+
+preprod_rollback: ## Prépare le revert local d'un commit fusionné dans develop (make preprod_rollback sha=<sha>) — ouvre ensuite une PR
+	@[ -n "$(sha)" ] || { \
+		echo "Usage: make preprod_rollback sha=<sha_du_commit_a_reverter>"; \
+		echo "       (récupère-le avec 'make last_merge_sha')"; exit 1; }
+	@git rev-parse --verify --quiet "$(sha)^{commit}" >/dev/null || { \
+		echo "⛔ SHA introuvable : $(sha). Lance 'git fetch' ou vérifie la valeur."; exit 1; }
+	@[ -z "$$(git status --porcelain)" ] || { \
+		echo "⛔ Working tree non propre. Committe ou stash avant le revert."; git status -sb; exit 1; }
+	@git fetch origin develop --quiet
+	@branch="revert/$$(git rev-parse --short $(sha))"; \
+	echo "→ Création de la branche $$branch depuis origin/develop..."; \
+	git checkout -b "$$branch" origin/develop --quiet || exit 1; \
+	echo "→ Revert de $(sha)..."; \
+	git revert --no-edit "$(sha)" || { \
+		echo "⛔ Conflit de revert. Résous-le, 'git revert --continue', puis 'make pr_create'."; exit 1; }; \
+	echo "✔ Revert prêt sur $$branch."; \
+	echo "  Ouvre la PR :  make pr_create      (puis merge → déploie une préprod saine)"
