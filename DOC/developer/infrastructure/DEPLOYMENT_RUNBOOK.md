@@ -26,8 +26,10 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 | Savoir **quelle version** tourne | 🖥 | `cat /data/kpi/.last-deploy-sha` (et `git -C /data/kpi rev-parse HEAD`) |
 
 **Accès VPS** : `ssh -i ~/.ssh/kpi-deploy/kpi_deploy_ed25519 -p 22 deploy@<host>`
-(l'utilisateur `deploy` est dans le groupe `docker`, sans `sudo` ; ⚠️ fail2ban est
-actif, ne pas multiplier les tentatives ratées).
+(l'utilisateur `deploy` est dans le groupe `docker`, **sans `sudo` — volontairement**,
+cf. [§3.1](#31-deploy-na-volontairement-pas-de-sudo) : les commandes d'admin système se
+jouent en tant que `laurent` ; ⚠️ fail2ban est actif, ne pas multiplier les tentatives
+ratées).
 
 ---
 
@@ -134,6 +136,30 @@ un endpoint public api2, app2, app4, legacy `index.php`). Chacune est réessayé
 | `Branch "x" is not allowed to deploy to y` | Mauvaise branche dans le sélecteur du bouton Run | Relancer depuis la bonne branche (§1.2) |
 | Le bouton « Run workflow » **n'apparaît pas** | Le fichier du workflow n'est pas sur la **branche par défaut** (`main`) | Faire remonter `.github/workflows/` jusqu'à `main` |
 | Bandeau expérimental affiché alors que la préprod est normale | Marqueur resté en place | 🖥 supprimer `<checkout>/.experimental-deploy.json` + les `experimental-flag.json` des `.output/public/`, ou relancer un déploiement préprod normal |
+| Mail `*** SECURITY information *** … deploy : user NOT in sudoers` | Une commande lancée **sous `deploy`** a appelé `sudo` (cf. §3.1) | Ne rien « réparer » côté déploiement : c'est une commande d'admin jouée sous le mauvais compte. La rejouer en tant que `laurent` |
+
+### 3.1 `deploy` n'a **volontairement** pas de `sudo`
+
+Le compte `deploy` sert **uniquement** à déployer : `git`, `make`, et Docker (via le
+groupe `docker`). Il n'est **pas sudoer**, et ce n'est pas un oubli — c'est ce qui
+limite ce qu'un attaquant obtiendrait en compromettant la clé SSH exposée à GitHub
+Actions. **Ne pas l'ajouter aux sudoers** pour faire passer une commande.
+
+Conséquence pratique : toute commande d'administration système (`fail2ban-client`,
+`journalctl`, `iptables`, `systemctl status`…) doit être jouée **en tant que
+`laurent`**, pas via la session `deploy`.
+
+Si on l'oublie, `sudo` envoie une alerte `*** SECURITY information ***` par mail à
+`root` — c'est le comportement normal de sudo, pas une intrusion. Le mail
+mentionne la commande fautive et `PWD=/home/deploy`, ce qui suffit à l'identifier.
+
+> **Piège rencontré (2026-07-30)** : le mail est arrivé pendant une période de
+> déploiements, ce qui a fait croire à un problème du pipeline. Il n'en était rien —
+> `deploy-wrapper.sh` ne contient **aucun** `sudo`, et le user `deploy` n'a
+> **aucune** crontab. La cause était une cible du `Makefile` de **vps-manager**
+> (`server-status`) appelant `sudo fail2ban-client`, jouée manuellement sous
+> `deploy`. Les cibles concernées utilisent désormais `sudo -n` derrière une sonde
+> de droit et **dégradent proprement** (`⏭️ non interrogeable`) au lieu d'alerter.
 
 ---
 
