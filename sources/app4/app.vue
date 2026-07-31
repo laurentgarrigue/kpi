@@ -18,6 +18,10 @@ useHead({
 
 <template>
   <UApp :toaster="{ position: 'bottom-right' }">
+    <!-- Bandeau « préprod expérimentale » (Phase 7 CI/CD) : ne s'affiche que si
+         une branche feature a été déployée en préprod à la place de develop.
+         Hors préprod, le composant ne fait aucune requête et ne rend rien. -->
+    <ExperimentalBanner />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

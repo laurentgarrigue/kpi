@@ -6,6 +6,24 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 
 ### Déploiement et Architecture
 
+#### [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md) ⭐
+**Status**: ✅ Opérationnel (2026-07-30) — préprod auto + prod manuelle
+
+**Runbook** des déploiements : à lire **en situation**, quand il faut agir.
+
+**Sujets couverts**:
+- Déclencher un déploiement préprod / production / **expérimental** (branche feature + TTL)
+- Où regarder pour constater un problème (Actions, log du wrapper, `make api2_logs`)
+- Table des échecs courants et de leur correctif (timeout SSH, ACL, remote git, politique de branche)
+- Rollback du **code** : automatique, réparation de `develop`, procédure manuelle
+- Rollback de la **base de données** prod depuis `pre-migration/`
+- Ce qui n'est PAS en place (notifications, uptime externe)
+
+**Pour qui**: Mainteneur, astreinte
+**Pré-requis**: Accès SSH VPS, droits GitHub Actions
+
+---
+
 #### [NGINX_STATIC_APP_DEPLOYMENT.md](NGINX_STATIC_APP_DEPLOYMENT.md)
 **Status**: ✅ Implémenté (2025-12-21)
 

@@ -8,6 +8,11 @@ const matomoUrl = process.env.MATOMO_URL ?? ''
 const matomoSiteId = process.env.MATOMO_SITE_ID ?? ''
 const matomoEnabled = process.env.MATOMO_ENABLED === 'true'
 
+// 'development' | 'preprod' | 'production' — même convention qu'app4.
+// Sert au bandeau « préprod expérimentale » (Phase 7 CI/CD) : il ne s'active
+// qu'en préprod, donc aucune requête n'est faite en dev ni en prod.
+const appEnv = process.env.APP_ENV ?? (process.env.NODE_ENV === 'production' ? 'production' : 'development')
+
 // Generate unique build ID based on timestamp to force cache invalidation
 // This ensures browser cache is invalidated when deploying new builds
 const buildId = `v${Date.now()}`
@@ -44,7 +49,8 @@ export default defineNuxtConfig({
       backendBaseUrl,
       matomoUrl,
       matomoSiteId,
-      matomoEnabled
+      matomoEnabled,
+      appEnv
     }
   },
   compatibilityDate: '2025-07-15',

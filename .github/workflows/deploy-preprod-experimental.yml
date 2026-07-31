@@ -1,0 +1,149 @@
+name: Deploy preprod (experimental)
+
+# Phase 7 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+#
+# Déploie TEMPORAIREMENT une branche `feature/*` en préprod, pour la tester en
+# conditions réelles avant de la merger dans `develop`.
+#
+# ⚠️ Ce workflow ÉCRASE l'état normal de la préprod (le dernier `develop`). Deux
+# garde-fous rendent ça acceptable :
+#   1. un bandeau fuchsia s'affiche dans app2/app4 tant que le déploiement
+#      expérimental est actif (composant ExperimentalBanner, alimenté par le
+#      fichier `experimental-flag.json` déposé par le wrapper) ;
+#   2. un TTL : passé le délai, un cron côté VPS redéploie `develop` tout seul.
+#      Personne n'a à se souvenir de « remettre la préprod en état ».
+#
+# Sécurité :
+#   - `environment: preprod` est EN DUR → impossible de viser la prod avec ce
+#     workflow, et il ne peut lire que les secrets scopés à la préprod ;
+#   - la branche demandée est validée par une regex AVANT d'atteindre le VPS, et
+#     n'est jamais interpolée directement dans un `run:` (anti-injection) ;
+#   - le wrapper revalide de son côté (défense en profondeur).
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branche à déployer en préprod (ex. feature/scoring)'
+        required: true
+        type: string
+      ttl_hours:
+        description: 'Durée avant retour automatique à develop (heures, 1-168)'
+        required: false
+        default: '24'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  # MÊME groupe que `deploy-preprod.yml` : un déploiement expérimental et un
+  # déploiement automatique de `develop` ne doivent JAMAIS s'entrelacer sur la
+  # même préprod. `cancel-in-progress: false` — un déploiement à moitié appliqué
+  # est pire qu'un déploiement en retard.
+  group: deploy-preprod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: preprod
+    steps:
+      # Validation AVANT tout usage. Les entrées `workflow_dispatch` sont du
+      # texte libre : sans ça, une valeur comme `x; rm -rf /` finirait dans une
+      # commande SSH. On passe par `env:` (jamais `${{ }}` dans le corps du run).
+      - name: Valider les entrées
+        id: input
+        env:
+          REQ_BRANCH: ${{ inputs.branch }}
+          REQ_TTL: ${{ inputs.ttl_hours }}
+        run: |
+          # Même regex que le wrapper (plan §7.5) : caractères autorisés dans un
+          # nom de branche git, rien d'autre. Pas de `..` (traversée de chemin).
+          if ! printf '%s' "$REQ_BRANCH" | grep -qE '^[A-Za-z0-9._/-]{1,100}$'; then
+            echo "::error::Nom de branche invalide: '$REQ_BRANCH'"
+            exit 1
+          fi
+          case "$REQ_BRANCH" in
+            *..*) echo "::error::'..' interdit dans le nom de branche"; exit 1 ;;
+          esac
+
+          # TTL : entier 1-168 h (1 semaine max). Au-delà, ce n'est plus un
+          # déploiement « temporaire » et la préprod cesserait d'être fiable.
+          if ! printf '%s' "$REQ_TTL" | grep -qE '^[0-9]{1,3}$' || [ "$REQ_TTL" -lt 1 ] || [ "$REQ_TTL" -gt 168 ]; then
+            echo "::error::TTL invalide: '$REQ_TTL' (entier attendu, 1-168)"
+            exit 1
+          fi
+
+          echo "branch=$REQ_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "ttl=$REQ_TTL"       >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          # Une branche validée par l'étape précédente : on ne checkout jamais un
+          # `ref` brut venant de l'input.
+          ref: ${{ steps.input.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Résoudre le SHA à déployer
+        id: sha
+        run: |
+          sha="$(git rev-parse HEAD)"
+          if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::SHA invalide: '$sha'"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Récapitulatif
+        env:
+          BRANCH: ${{ steps.input.outputs.branch }}
+          TTL: ${{ steps.input.outputs.ttl }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          {
+            echo "### 🧪 Déploiement préprod EXPÉRIMENTAL"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Branche | \`$BRANCH\` |"
+            echo "| SHA | \`$SHA\` |"
+            echo "| TTL | ${TTL} h |"
+            echo ""
+            echo "⚠️ La préprod ne reflète plus \`develop\` tant que ce déploiement est actif."
+            echo "Un bandeau est affiché dans app2/app4, et le cron du VPS restaure"
+            echo "\`develop\` automatiquement à expiration."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Même mécanique de retry que deploy-preprod.yml : l'aléa réseau connu
+      # (`dial tcp: i/o timeout`) frappe l'ÉTABLISSEMENT de la connexion, avant
+      # que le wrapper démarre. Le wrapper est rejouable (snapshot + reset --hard
+      # + rebuild + smoke + rollback), donc réessayer est sans risque.
+      - name: Déployer via SSH (wrapper VPS) — tentative 1
+        id: deploy1
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          timeout: 60s
+          command_timeout: 20m
+          script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }} --experimental --branch ${{ steps.input.outputs.branch }} --ttl ${{ steps.input.outputs.ttl }}
+
+      - name: Pause avant retry
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 20
+
+      - name: Déployer via SSH (wrapper VPS) — retry
+        if: steps.deploy1.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          timeout: 60s
+          command_timeout: 20m
+          script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }} --experimental --branch ${{ steps.input.outputs.branch }} --ttl ${{ steps.input.outputs.ttl }}

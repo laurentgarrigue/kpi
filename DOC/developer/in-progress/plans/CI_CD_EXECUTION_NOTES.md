@@ -3,6 +3,52 @@
 Notes d'exécution du plan [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md), phase par phase :
 ce qui a été réellement livré, les écarts assumés et les pièges rencontrés.
 
+---
+
+## 📌 État de reprise (dernière session : 2026-07-30, 2ᵉ passe)
+
+**Où on en est** : **toutes les phases 0 → 8 sont livrées**. La prod tourne (1er
+déploiement réel le 2026-07-30). Phase 3bis (Trivy image) 🟢. Les phases **4, 7 et 8**
+ont été traitées dans cette 2ᵉ passe.
+
+**⚠️ TODO immédiats à reprendre en début de prochaine session** :
+
+1. **Committer + pusher `vps-manager`** (`~/Documents/dev/vps-manager`, branche `main`) :
+   `deploy-wrapper.sh` (mode `--experimental` + `--check-expiry` + smoke multi-URL),
+   `.env.dist` (`SMOKE_URLS_*`, `DEPLOY_DEFAULT_BRANCH`), `Makefile`
+   (`install-cron-experimental-expiry`). Puis **`git pull` côté VPS**
+   (`/data/vps-manager`, en tant que `laurent`).
+2. **Renseigner `SMOKE_URLS_PREPROD` / `SMOKE_URLS_PRODUCTION`** dans le `.env` du VPS
+   (valeurs réelles ; `.env.dist` ne porte que des placeholders). ⚠️ **Sans ça, le
+   comportement reste l'ancien** (repli sur `SMOKE_URL_*`, une seule URL) — ce n'est pas
+   une panne, juste la Phase 8.1 non active.
+3. **Installer le cron d'expiration** sur le VPS : `make install-cron-experimental-expiry`
+   (depuis `/data/vps-manager`). Sans lui, un déploiement expérimental **ne reviendrait
+   jamais** à `develop` tout seul.
+4. **PR kpi** : le working tree porte la Phase 4 (PHPUnit + fixtures + job CI), la
+   Phase 7 (workflow + bandeau app2/app4) et la Phase 8 (runbook) → à intégrer via PR
+   vers `develop`.
+5. **Valider la Phase 7 par un run réel** (les 3 cases §7.6 attendent ça) : déployer une
+   branche jetable avec `--ttl 1`, vérifier le bandeau sur app2 **et** app4, puis
+   attendre le cron (HH:15) pour constater le retour auto à `develop`.
+
+**Fait dans cette session (les TODO de la passe précédente sont soldés)** :
+- ✅ ACL backup posée sur le VPS (`setfacl` sur `/data/backups/kpi`, avec `-d`)
+- ✅ `vps-manager` de la passe 1 committé/poussé + `git pull` VPS
+- ✅ PR doc de clôture Phase 6 mergée (#270)
+
+**Améliorations non bloquantes en attente** (à décider) :
+- **Durcir le retry SSH** : les 2 tentatives tiennent dans la même fenêtre d'aléa réseau
+  (60s + pause 20s + 60s) → passer `timeout` à **120s** et la pause retry à **60s** dans
+  `deploy-preprod.yml` + `deploy-prod.yml`. (Non fait : à trancher, ça allonge le temps
+  d'échec des vraies pannes.)
+- **Notification de déploiement** (§8.2) : volontairement **écartée** cette session
+  (décision utilisateur). Reste possible plus tard (webhook Discord/Slack).
+- **Couverture de tests** : le socle PHPUnit est posé, la couverture reste mince (1
+  contrôleur public sur ~30). À étendre brique par brique.
+
+**Détails** : voir « Phase 6 » plus bas + [[project_cicd_pipeline]] en mémoire.
+
 **Statut Phase 1** : ✅ **terminée et verrouillée** — CI sur `develop`, `ci-summary`
 est le required check sur `main_ruleset`.
 **Statut Phase 2** : ✅ **éprouvée** — PHPStan (api2), `composer audit`, `npm audit`,
@@ -15,6 +61,18 @@ touche-à-tout minimale (app3 + api2)**.
 **Statut Phase 3bis** : 🟢 **en cours** — `trivy-image.yml` (scan CVE des images de
 base php-apache/frankenphp/mariadb, **non bloquant → onglet Security**, cron hebdo +
 manuel). Build Docker complet volontairement écarté (voir section).
+**Statut Phase 4** : ✅ **socle livré** (2026-07-30) — PHPUnit sur api2, **2 suites**
+(`unit` sans DB / `integration` sur fixtures), job CI `tests-api2` **bloquant**,
+**27 tests / 115 assertions verts**. La *couverture* reste à étendre (c'est
+l'adoption incrémentale prévue au plan §4.1), pas le socle.
+**Statut Phase 7** : ✅ **outillage livré** (2026-07-30) — workflow
+`deploy-preprod-experimental.yml`, mode `--experimental` / `--check-expiry` du wrapper,
+bandeau dans app2 **et** app4, cron de retour auto. ⚠️ **Les 3 cases de validation
+§7.6 attendent un run réel** (voir « État de reprise » §5).
+**Statut Phase 8** : ✅ **livrée** — smoke tests **multi-URL** (une par brique) dans le
+wrapper + **[DEPLOYMENT_RUNBOOK.md](../../infrastructure/DEPLOYMENT_RUNBOOK.md)**
+(déclenchement, diagnostic, rollback code, rollback DB). §8.2 (notification) et §8.3
+(uptime externe) **volontairement écartés**.
 **Statut Phase 5** : ✅ **CD préprod COMPLET & VALIDÉ** — `deploy-preprod.yml`
 (déclencheur **`push: develop`**, environment `preprod`) + `deploy-wrapper.sh` (repo
 `vps-manager` privé, symlinké en `/home/deploy/`). **Le 2026-07-24, un merge sur develop
@@ -62,6 +120,7 @@ npm) ; lock `command=` optionnel dans `authorized_keys`.
 | `trivy-config` | `docker/**`, `Makefile` | **Trivy config** (Phase 2) — misconfig Dockerfiles, CRITICAL only |
 | `build-nuxt` | `sources/app2\|app4/**` | **`npm ci` + `nuxt build`** (Phase 3) — build effectif, matrice, chaque app modifiée |
 | `smoke-api2` | `sources/api2/**` | **boot Symfony** (Phase 3) — `cache:clear` + `doctrine:schema:validate --skip-sync`, **sans DB** |
+| `tests-api2` | `sources/api2/**` | **PHPUnit** (Phase 4) — suite `unit` (sans DB) puis `integration` sur une **MariaDB éphémère** peuplée par `SQL/fixtures/` |
 | `ci-summary` | toujours (`if: always()`) | Échoue si un job requis a échoué/annulé ; sinon vert |
 
 > **CodeQL** vit dans un workflow **séparé** ([`codeql.yml`](../../../../.github/workflows/codeql.yml)),
@@ -696,7 +755,7 @@ wrapper reste **générique** (aucun `case $ENV` sur les noms de cibles).
 > l'appel `make app3_generate_${ENV}` a été retiré du wrapper. Restent les alias
 > app2/app4/docker.
 
-### Backup DB avant migration (prod only) — patch wrapper
+### Backup DB avant migration (prod only) — dump dédié horodaté
 
 Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
 `REBUILD_API2` du wrapper, **juste avant `api2_migrations_migrate`**, gardé par
@@ -704,20 +763,34 @@ Le plan §6.3 exige un backup DB avant migration en prod. Ajouté dans le bloc
 
 ```bash
 if [ "$ENV" = "production" ] && [ "$deploy_ok" = 1 ]; then
-  run_quiet "backup DB prod (kpi) avant migration" "$SCRIPT_DIR/backup.sh" kpi \
-    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier backup.sh)"
+  run_quiet "backup DB prod (kpi) avant migration" backup_db_pre_migration \
+    || ko "backup DB pré-migration EN ÉCHEC (déploiement poursuivi ; vérifier les droits sur $BACKUP_BASE_DIR/kpi)"
 fi
 ```
 
-- `backup.sh <service>` (déjà dans vps-manager) accepte un service unique ; le service
-  **`kpi`** = la base prod principale (conteneur `kpi_db`), défini dans
-  `SERVICES_TO_BACKUP`. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors
-  scope.
+- **Fonction dédiée `backup_db_pre_migration`** (et NON `backup.sh kpi`) : elle dumpe la
+  base prod **`kpi`** (conteneur `kpi_db`) dans un fichier **horodaté**
+  `pre-migration/kpi_<DATE-HEURE>_<sha7>.sql.gz`. Raison : `backup.sh <svc>` écrit
+  `kpi_<DATE>.sql.gz` (nom **journalier**) → un dump pré-migration **écraserait** le
+  backup cron de la nuit ; le fichier horodaté ne l'écrase jamais et reste traçable par
+  déploiement. Les identifiants (container/db/user/pass) sont lus depuis
+  `SERVICES_TO_BACKUP` (déjà `source`é du `.env` — **aucun secret en dur**). `pipefail`
+  fait échouer la fonction si le `mariadb-dump` échoue ; garde-fou `[ -s ]` sur les dumps
+  vides. WordPress (`kpi_wordpress`) n'est pas migré par Doctrine → hors scope.
 - **Un backup KO ne bloque PAS le déploiement** (le cron `backup.sh` reste le filet
   principal), mais il est tracé en `❌`. Rationnel : aujourd'hui api2 n'a **aucune
   migration versionnée** (schéma = base legacy partagée, `migrate --allow-no-migration`
   = no-op), donc ce backup est surtout un filet pour le futur ; le rendre bloquant
   ferait échouer des déploiements pour un no-op.
+- ⚠️ **Prérequis d'infra (ACL)** : `deploy` doit pouvoir écrire dans
+  `$BACKUP_BASE_DIR/kpi/` (= `/data/backups/kpi/`). Au 1er déploiement prod (2026-07-30)
+  ce n'était PAS le cas → le backup a échoué en `Permission non accordée` (dossiers
+  possédés par `laurent`, ACL Phase 5 posée seulement sur les checkouts `/data/kpi*`).
+  **Fix à poser une fois** (comme les ACL Phase 5) :
+  ```bash
+  sudo setfacl -R    -m u:deploy:rwX /data/backups/kpi
+  sudo setfacl -R -d -m u:deploy:rwX /data/backups/kpi
+  ```
 - ⚠️ **Cette modif vit dans le repo `vps-manager` (privé), PAS dans kpi.** Elle a été
   **appliquée directement** dans le checkout local `~/Documents/dev/vps-manager`
   (`deploy-wrapper.sh`, branche `main`) — Laurent n'a plus qu'à committer + pusher, puis
@@ -738,28 +811,289 @@ fi
 3. SSH → `deploy-wrapper.sh production <sha>`. `timeout: 60s`, `command_timeout: 20m`
    (marge vs les 15m préprod : la prod peut rebuild les 3 apps + migration + backup).
 
-### Go-live checklist Phase 6 (à faire par Laurent — je ne pousse ni ne merge)
+### Go-live checklist Phase 6 — ✅ FAIT (2026-07-30)
 
-- [ ] **vps-manager** : `deploy-wrapper.sh` est déjà modifié dans le checkout local
-      (`~/Documents/dev/vps-manager`, branche `main` : backup DB prod + retrait de l'appel
-      app3). → committer + pusher, puis `git pull` côté VPS (`/data/vps-manager`, en tant
-      que `laurent`).
-- [ ] Merger `deploy-prod.yml` sur `develop` **puis s'assurer qu'il atteint `main`**
-      (back-merge ou PR de release) — sinon le bouton « Run workflow » n'apparaît pas
-      (1er piège Phase 5 : `workflow_dispatch` ne se voit que depuis la branche par
-      défaut).
-- [ ] Vérifier que l'environment `production` autorise **`main`** (politique de branche)
-      → lancer le run avec le sélecteur sur **`main`** (3e piège Phase 5).
-- [ ] 1er run réel : Actions → « Deploy production » → Run (ref `main`) → **approuver** →
-      suivre le wrapper (smoke + rollback auto identiques à la préprod).
-- [ ] Cocher les cases de validation §6.5 du plan.
+- [x] **vps-manager** : `deploy-wrapper.sh` modifié (dump pré-migration dédié + retrait
+      app3). ⚠️ **reste à committer/pusher + `git pull` VPS** (cf. « État de reprise »).
+- [x] `deploy-prod.yml` mergé jusqu'à `main` (via PR de release develop→main #266, après
+      résolution du conflit doc #268) → bouton « Run workflow » visible.
+- [x] Environment `production` autorise `main` → run lancé depuis `main`.
+- [x] **1er run réel réussi** : Actions → « Deploy production » → approuvé → wrapper OK
+      (rebuild api2 + migration + smoke). A nécessité **2 corrections en vol** (remote git
+      SSH→HTTPS, cf. plus bas) et **1 `gh run rerun`** (aléa réseau : les 2 tentatives SSH
+      ont timeout dans la même fenêtre).
+- [x] Cases §6.5 du plan mises à jour.
+
+### Les 2 pièges Phase 6 (en plus des 8 de Phase 5)
+
+**Piège A — remote git prod en SSH.** `/data/kpi` avait `origin =
+git@github.com:laurentgarrigue/kpi.git`. `deploy` n'a ni clé github ni `known_hosts` →
+`git fetch` = `Host key verification failed` → **exit 128** dès « Récupération du code ».
+Préprod marchait car son remote est en **HTTPS** (`https://github.com/...`, repo public,
+lecture sans clé). **Fix** : `git remote set-url origin https://github.com/laurentgarrigue/kpi`
+sur `/data/kpi` (fait). *Leçon : aligner les 2 checkouts sur HTTPS.*
+
+**Piège B — backup pré-migration `Permission non accordée`.** `deploy` ne peut pas écrire
+dans `/data/backups/kpi/` (possédé par `laurent`, l'ACL Phase 5 ne couvrait que les
+checkouts `/data/kpi*`). Le backup a donc échoué — **sans bloquer** (best-effort) → la
+prod s'est déployée quand même, et la migration était un no-op (api2 sans migration
+versionnée). **Fix ACL à poser** (cf. « État de reprise » + section « Backup DB »).
 
 ### Ce qui reste ouvert (non bloquant)
 
-- **Rollback DB prod** : §6.4 du plan veut un runbook + backup horaire. Le backup
-  pré-migration est en place ; le runbook de restauration reste à écrire (Phase 8,
+- **ACL backup `/data/backups/kpi`** à poser (voir « État de reprise » §1).
+- **Durcir le retry SSH** (timeout 120s + pause 60s) — les 2 tentatives tombaient dans la
+  même fenêtre d'aléa réseau.
+- **Rollback DB prod** : §6.4 du plan veut un runbook. Le dump pré-migration dédié est en
+  place (`pre-migration/`) ; le runbook de restauration reste à écrire (Phase 8,
   `DEPLOYMENT_RUNBOOK.md`).
 - Lock `command=` dans `authorized_keys` (durcissement optionnel, cf. Phase 5).
+
+---
+
+## Phase 4 — Tests fonctionnels : le socle PHPUnit d'api2 (2026-07-30)
+
+**Objectif tenu** : poser un socle de tests **réel** (pas de test fictif) et le rendre
+bloquant, sans attendre une couverture large. Le plan §4.1 prévoyait l'inverse (job non
+bloquant tant qu'un seuil de couverture n'est pas atteint) — voir l'écart plus bas.
+
+### Décision structurante : DEUX suites, séparées par leur besoin d'infra
+
+C'est ce qui rend la phase adoptable tout de suite :
+
+| Suite | Contenu | Infra | En CI |
+|---|---|---|---|
+| `unit` | Logique pure (`DateValidationTrait`, `CompetitionLockTrait`) | **rien** (ni DB ni kernel) | toujours, < 1 s |
+| `integration` | Boot du kernel + requêtes HTTP réelles sur les endpoints publics | MariaDB + fixtures | service éphémère |
+
+Sans cette séparation, il aurait fallu une base de données pour lancer le moindre test →
+personne ne les lance en local → ils pourrissent. Là, `composer test-unit` tourne partout,
+et `integration` se met en **SKIP explicite** (message clair) si `API2_TEST_DB=1` n'est
+pas posé. Vérifié : `27 tests, 34 assertions, 11 skipped` sans base ;
+`27 tests, 115 assertions, OK` avec.
+
+### Alignement avec la branche scoring (demandé par l'utilisateur)
+
+La branche `claude/scoring-refactoring-strategy-*` avait choisi, pour son lot 1.2, un
+**runner PHP sans dépendance** (`sources/api2/tests/Scoring/scoring_rules_test.php`, 62
+assertions, exit 0 = vert). Son en-tête dit explicitement *« api2 has no test framework
+yet … Migrate to PHPUnit as-is when a test pack lands »*. Ce lot **est** ce test pack.
+
+- On n'a **pas** porté ce fichier ici : `src/Scoring/ScoringRules.php` **n'existe pas sur
+  `develop`** (il n'est que sur la branche scoring), un test le requérant échouerait.
+- La **procédure de migration est documentée** dans
+  [`sources/api2/README.md`](../../../../sources/api2/README.md) (§ Tests → « Migrating the
+  standalone scoring runner ») : au merge de la branche scoring, les 62 `check()` deviennent
+  autant de `assertSame` dans `tests/Unit/Scoring/ScoringRulesTest.php`, et le runner est
+  supprimé pour que les règles aient **un seul** foyer de test.
+
+### Ce que les tests protègent réellement
+
+On n'a pas écrit des tests « pour la couverture ». Chaque test verrouille une décision
+qu'un refactor bien intentionné casserait :
+
+- **`CompetitionLockTrait`** — PHPStan avait déjà révélé qu'un contrôleur avait **oublié**
+  `use CompetitionLockTrait;` (garde « saison passée » morte, fatal à l'exécution, cf.
+  Phase 2). L'analyse statique attrape l'absence du trait ; **seuls des tests attrapent une
+  inversion de logique dedans**. Notamment : `Verrou` est **délibérément ignoré** (il ne
+  gèle que les feuilles de présence) — une « correction » qui l'ajouterait casserait
+  l'édition inline des phases. Le test le fige.
+- **`DateValidationTrait`** — `DateTime::createFromFormat` est laxiste et « roule » les
+  dates hors bornes (`2026-02-31` → `2026-03-03`). C'est la comparaison
+  `format('Y-m-d') === $date` qui les rejette : un test dédié empêche de la supprimer par
+  méprise.
+- **`/events/{mode}` et `/event/{id}`** — trois logiques non triviales : la whitelist de
+  `mode` (403 sinon), des **filtres de publication différents selon le mode** (`app` pour
+  `std`, `Publication` pour `all` — subtil, contre-intuitif, facile à « corriger » à tort),
+  et la bascule `id < 3000` (en dessous un tournoi `kp_evenement`, au-dessus une journée
+  `kp_journee`).
+
+### Fixtures : `SQL/fixtures/`, 100 % synthétiques
+
+Saisons `2999`/`2998`, compétitions `TST*`, événements ≥ 9000. **Aucune donnée réelle**
+(RGPD, et des jeux stables qui ne cassent pas quand un vrai match est saisi). Chaque ligne
+porte un commentaire disant quel cas elle couvre — les paires publié/non-publié sont ce qui
+prouve que les filtres marchent, il ne faut pas les « nettoyer ».
+
+Le schéma est un **sous-ensemble** de la prod copié depuis `SHOW CREATE TABLE`, **sans les
+clés étrangères** vers les tables hors périmètre (sinon il faudrait recopier la moitié du
+schéma). Types et défauts identiques à la prod : c'est ce qui compte pour que le SQL des
+contrôleurs se comporte pareil.
+
+> **Détail attrapé au passage** : `kp_saison.Code` est un **`char(4)`** (l'année : `2026`),
+> pas un `2025-2026`. Les premiers tests utilisaient le mauvais format — la logique de
+> comparaison est identique, mais les fixtures auraient menti sur le réel.
+
+### ⚠️ Le piège `_test` : Doctrine renomme la base sous vos pieds
+
+`config/packages/doctrine.yaml` porte `dbname_suffix: '_test%env(default::TEST_TOKEN)%'`
+en `when@test` (recette Symfony standard). Conséquence qui a fait échouer les 10 premiers
+tests avec `Unknown database 'kpi_test_test'` : **en `APP_ENV=test`, Doctrine ajoute `_test`
+au nom de base du `DATABASE_URL`**.
+
+**On l'a GARDÉ** (et documenté dans le YAML) au lieu de le retirer, parce que c'est un
+**garde-fou de sécurité** : il rend *impossible* de lancer la suite de tests sur la base de
+dev/préprod/prod par une simple erreur de variable d'environnement. Règle à retenir : la
+base de fixtures s'appelle `<nom>_test`, et le `DATABASE_URL` cite `<nom>` **sans** le
+suffixe.
+
+### Installation : `ext-gd` manquant dans le conteneur api2
+
+`composer require --dev phpunit/phpunit` échoue dans `kpi_api2` :
+`mpdf/mpdf … requires ext-gd * -> it is missing from your system`. L'extension est déclarée
+par des deps du lock mais **absente du conteneur api2** (c'est déjà pourquoi les jobs CI
+api2 installent `gd, intl, zip`). Contournement : `--ignore-platform-req=ext-gd`
+(+ `COMPOSER_CACHE_DIR=/tmp/...`, le cache par défaut n'étant pas inscriptible).
+
+> La recette Flex de `phpunit-bridge` a tenté d'injecter un bloc `<extensions>` dans
+> `phpunit.dist.xml` et a échoué (fichier écrit à la main avant) — **sans dommage**, elle
+> n'a pas écrasé le fichier. Vérifié : Symfony **reste en 7.4.14**, aucun `compose.yaml`
+> touché.
+
+### Écart assumé vs le plan : job **bloquant** tout de suite
+
+Le plan §4.1 voulait un job `continue-on-error` jusqu'à un seuil de couverture. On a fait
+l'inverse : `tests-api2` est **bloquant dès l'ajout**, parce que les deux suites sont vertes
+et rapides (< 1 min). Un job non bloquant est un job qu'on cesse de regarder. Ce qui reste
+incrémental, c'est la **couverture** — pas la sévérité.
+
+**Non fait, assumé** : les suites **Playwright/Vitest** (app2/app4). Aucun framework de
+test JS n'est installé dans le projet (le `sources/app4/tests/playwright/` existant n'est
+qu'une **procédure manuelle** pour piloter l'app via Playwright MCP + des captures, pas une
+suite exécutable). Les monter demanderait un lot dédié (build Nuxt + API + DB en CI).
+
+---
+
+## Phase 7 — Déploiement de features expérimentales en préprod (2026-07-30)
+
+**Objectif** : déployer une branche `feature/*` en préprod sans passer par `develop`, pour
+la tester en conditions réelles — sans jamais laisser croire que la préprod est dans son
+état de référence.
+
+### Le fichier livré : `deploy-preprod-experimental.yml`
+
+`workflow_dispatch` avec `branch` + `ttl_hours`. Trois choses valent d'être notées :
+
+- **`environment: preprod` EN DUR** → il est structurellement impossible de viser la prod
+  avec ce workflow, et il ne peut lire que les secrets scopés préprod.
+- **`concurrency: deploy-preprod`, le MÊME groupe que `deploy-preprod.yml`** : un
+  déploiement expérimental et le déploiement auto d'un merge sur `develop` ne doivent
+  jamais s'entrelacer sur la même préprod.
+- **Entrées validées avant tout usage** : `branch` sur `^[A-Za-z0-9._/-]{1,100}$` + refus
+  de `..`, `ttl_hours` entier 1-168. Les valeurs passent par `env:` et ne sont **jamais**
+  interpolées brutes dans un `run:`. Le wrapper **revalide** de son côté (défense en
+  profondeur : il est aussi appelable à la main en SSH).
+
+### Écart vs §7.3 : où vit le marqueur (et pourquoi)
+
+Le plan disait `sources/EXPERIMENTAL_FLAG.json`. **Ça ne pouvait pas marcher** : les apps
+sont générées en **statique** et servies par nginx depuis `.output/public/` — un fichier
+dans `sources/` n'est pas accessible en HTTP, donc les apps ne peuvent pas le lire.
+
+Retenu : **`experimental-flag.json` déposé dans `.output/public/` de chaque app**, avec
+deux conséquences qui ont dicté le code :
+
+1. il s'écrit **APRÈS** `nuxt generate` (qui recrée `.output/` de zéro) ;
+2. le mode expérimental **force le rebuild des apps** même si la branche ne touche pas
+   `sources/app*` — sinon `.output/public/` pourrait ne pas exister, et le bandeau
+   manquerait à l'appel. Le bandeau est la contrepartie de l'écrasement de la préprod : il
+   ne doit jamais manquer.
+
+L'état **faisant foi pour l'expiration** vit à part, dans
+`<checkout>/.experimental-deploy.json` : **hors arbre git**, donc il survit au
+`reset --hard` et aux rebuilds (contrairement au marqueur servi, jetable et régénérable).
+
+### Le TTL, et les 3 chemins de nettoyage
+
+`deploy-wrapper.sh preprod --check-expiry` (cron horaire, `install-cron-experimental-expiry`
+dans `vps-manager`) est un **no-op silencieux** s'il n'y a pas de déploiement expérimental
+actif ou si le TTL n'est pas atteint — il peut donc tourner en permanence sans bruit.
+Quand le TTL est dépassé, il **se rappelle lui-même** avec le SHA de `origin/develop` :
+toute la mécanique éprouvée (snapshot, reset, rebuild sélectif, smoke, rollback) est
+réutilisée telle quelle plutôt que réécrite en variante.
+
+Trois nettoyages, chacun pour un scénario réel :
+
+| Scénario | Ce qui nettoie |
+|---|---|
+| Le TTL expire | le cron `--check-expiry` → redéploie `develop` |
+| Un merge sur `develop` arrive **pendant** un déploiement expérimental | le déploiement normal retire marqueur + état (sinon la préprod redeviendrait saine **en continuant d'afficher le bandeau** — pire que pas de bandeau) |
+| Le déploiement expérimental **échoue** (rollback) | le `rollback()` retire marqueur + état (sinon bandeau pour une branche qui n'est plus déployée) |
+
+Cas d'échec du cron traités : `expires_at` absent ou non parsable → marqueur retiré (exit
+0, on ne boucle pas) ; `origin/develop` non résoluble → marqueur **conservé** et **exit 1**,
+on réessaiera au prochain cron. Testé en sandbox : les 4 chemins font ce qui est écrit.
+
+### Côté apps : `appEnv`, et la variable qui n'existait pas
+
+Le bandeau ne doit **jamais** tourner ailleurs qu'en préprod (aucune requête en dev/prod).
+Le composable se garde donc sur `runtimeConfig.public.appEnv === 'preprod'`. Deux
+découvertes en chemin :
+
+- **app2 n'avait pas d'`appEnv`** → ajouté dans `nuxt.config.ts`, sur le modèle d'app4.
+- **`APP_ENV` n'était câblé NULLE PART dans les builds Nuxt.** `sources/app4/.env.dist` ne
+  l'a qu'en commentaire, et les cibles `appN_generate_*` ne passaient aucune variable →
+  `appEnv` retombait toujours sur `development`, et le bandeau **ne se serait jamais
+  affiché**. Corrigé dans le Makefile : `-e APP_ENV=preprod|production` sur les 4 cibles
+  `app2/app4_generate_preprod|prod`.
+- ⚠️ **Pourquoi par le Makefile et pas par `.env.preprod` d'app2** : les `.env.*` d'app2
+  sont **gitignorés** (`sources/app2/.gitignore` : `.env.*`). Une variable qui n'y vit que
+  localement **n'atteindrait jamais le VPS**. Le Makefile, lui, est versionné. (Piège vérifié
+  au `git check-ignore` après avoir d'abord écrit dans `.env.preprod` — édition annulée.)
+
+Le composable est **dupliqué** entre app2 et app4 (projets Nuxt indépendants, pas de paquet
+partagé) : les deux fichiers le disent en en-tête, toute correction doit être reportée.
+Il relit le fichier toutes les **5 min** (`cache: 'no-store'`) pour qu'un onglet resté
+ouvert voie le bandeau disparaître après le retour à `develop`, et **ignore un flag expiré**
+côté client (si le cron a du retard, on n'affiche pas une échéance mensongère). Toute erreur
+(404, JSON invalide, réseau) ⇒ pas de bandeau : un bandeau d'information ne doit jamais
+faire échouer l'app.
+
+---
+
+## Phase 8 — Post-déploiement & observabilité (2026-07-30)
+
+### 8.1 Smoke tests : d'une URL à une par brique
+
+Le smoke d'origine ne testait que `/api2/doc` : **api2 pouvait répondre alors qu'app2
+servait une page blanche ou que le legacy était cassé**. Désormais une URL **par brique** —
+api2 `/doc`, un endpoint public api2 (qui atteint la base et sérialise), app2, app4, legacy
+`index.php`. **N'importe laquelle en échec ⇒ rollback.**
+
+- Les listes viennent du `.env` de `vps-manager` (`SMOKE_URLS_PREPROD` /
+  `SMOKE_URLS_PRODUCTION`, séparées par des espaces) — **aucun domaine en dur** dans le
+  script versionné (repo public).
+- **Repli** sur l'ancien `SMOKE_URL_*` si la liste n'est pas définie : un `.env` non mis à
+  jour continue de fonctionner à l'identique. ⚠️ Corollaire : **tant que le `.env` du VPS
+  n'est pas complété, la Phase 8.1 n'est pas active** (cf. « État de reprise » §2).
+- Le **retry par URL est conservé** (10 × 6 s ≈ 60 s) : FrankenPHP met plusieurs secondes à
+  router après un `docker compose restart`, un curl unique provoquerait un rollback à tort.
+  C'est la leçon du 2026-07-23 (l'API avait mis ~25 s), on ne l'a pas perdue en passant au
+  multi-URL.
+
+### 8.4 Runbook
+
+[**DEPLOYMENT_RUNBOOK.md**](../../infrastructure/DEPLOYMENT_RUNBOOK.md) — pensé pour être lu
+**en situation**, pas pour expliquer la conception (c'est le rôle de ce journal) :
+carte express « je veux… → comment », déclenchement des 3 types de déploiement, où regarder
+pour diagnostiquer, **table des échecs courants** (les pièges des Phases 5 et 6 convertis en
+correctifs actionnables), rollback du code (auto / réparation de `develop` / manuel),
+**rollback de la base** prod, contacts, et une section « ce qui n'est PAS en place » pour ne
+pas chercher une fonctionnalité inexistante.
+
+Le rollback DB (§6.4 du plan) commence par **dumper l'état courant** avant de restaurer : si
+la restauration se révèle être une erreur d'analyse, on doit pouvoir revenir à l'état
+« cassé » pour l'étudier. Documenté mais **non testé** — api2 n'a aucune migration
+versionnée à casser aujourd'hui.
+
+### Écarté volontairement
+
+- **§8.2 notification** (Discord/Slack/mail sur succès/échec) : **décision utilisateur de
+  cette session** — pas de webhook pour l'instant, on lit l'onglet Actions. Le runbook le
+  dit explicitement pour éviter qu'on cherche l'alerte qui n'arrivera pas.
+- **§8.3 alerting long terme / uptime externe** : hors scope CI/CD strict. Le
+  `health-check.sh` du VPS surveille déjà les URLs toutes les 5 min avec alerte mail et
+  anti-faux-positifs.
 
 ---
 
@@ -788,6 +1122,18 @@ fi
 - [x] Épreuve « touche-à-tout » : jobs skipped → verts par brique (a révélé + corrigé 2 dettes, voir section dédiée)
 - [x] Phase 3 : `nuxt build` app3 validé en local (exit 0) + smoke api2 sans DB validé en local (exit 0)
 - [x] Phase 3 : `build-nuxt` / `smoke-api2` **verts sur PR réelle** (épreuve touche-à-tout minimale app3 + api2)
+- [x] Phase 4 : PHPUnit api2 **27 tests / 115 assertions verts** en local (conteneur `kpi_api2` + base de fixtures)
+- [x] Phase 4 : suite `integration` **skippée proprement** sans base (`11 skipped`, message explicite)
+- [x] Phase 4 : PHPStan toujours `[OK] No errors` après ajout des tests et modif de `doctrine.yaml`
+- [ ] Phase 4 : job `tests-api2` **vert sur PR réelle** (à constater au 1er push)
+- [x] Phase 7 : garde-fous du wrapper testés en sandbox (12 cas : ENV, SHA, `--experimental` refusé en prod, injection dans `--branch`, `..`, TTL hors bornes, options exclusives…)
+- [x] Phase 7 : `--check-expiry` validé sur ses 4 chemins (non expiré / `expires_at` absent / non parsable / expiré sans remote)
+- [x] Phase 7 : dépôt du marqueur validé (2 apps, app absente, aucune app, `clear` idempotent) + JSON conforme au composable
+- [x] Phase 7 : ESLint vert sur les fichiers ajoutés d'app2 et app4 (exit 0)
+- [ ] Phase 7 : **run réel** — bandeau visible sur app2 + app4, puis retour auto à `develop` par le cron (§7.6)
+- [x] Phase 8 : `bash -n` OK sur le wrapper ; smoke multi-URL avec repli sur `SMOKE_URL_*`
+- [x] Phase 8 : runbook rédigé et référencé dans l'index infrastructure
+- [ ] Phase 8 : rollback DB **testé** (impossible aujourd'hui : aucune migration versionnée)
 
 ---
 

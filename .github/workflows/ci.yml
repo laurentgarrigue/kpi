@@ -5,6 +5,7 @@ name: CI
 #   - Phase 2 : sécurité statique (phpstan-api2, audit-composer, audit-npm, secrets-scan,
 #               trivy-config ; CodeQL vit dans codeql.yml)
 #   - Phase 3 : build & smoke (build-nuxt, smoke-api2)
+#   - Phase 4 : tests fonctionnels (tests-api2 : PHPUnit unit + integration)
 # Tout est path-filtered : chaque job ne tourne que si sa brique change.
 # Le job final `ci-summary` est l'unique required check câblé dans le ruleset `main`.
 # Voir le journal d'exécution : DOC/.../CI_CD_EXECUTION_NOTES.md.
@@ -299,6 +300,95 @@ jobs:
           php bin/console doctrine:schema:validate --skip-sync --no-interaction
 
   # ---------------------------------------------------------------------------
+  # 3quater. api2 — tests PHPUnit (Phase 4).
+  #    DEUX suites, séparées par leur besoin d'infra (cf. phpunit.dist.xml) :
+  #      - `unit`        : logique pure (traits de validation/verrouillage).
+  #                        Aucune DB, aucun kernel → toujours exécutée.
+  #      - `integration` : boot du kernel + requêtes HTTP sur les endpoints
+  #                        publics, sur une MariaDB ÉPHÉMÈRE peuplée par
+  #                        SQL/fixtures/. Le service `mariadb` ci-dessous est
+  #                        jetable : aucune donnée réelle n'est jamais utilisée.
+  #
+  #    ⚠️ Piège Doctrine : en APP_ENV=test, `dbname_suffix: '_test…'`
+  #    (config/packages/doctrine.yaml) ajoute `_test` au nom de base. On crée
+  #    donc la base `kpi_fixtures_test` mais le DATABASE_URL cite
+  #    `kpi_fixtures` — sinon Doctrine cherche `kpi_fixtures_test_test`. Ce
+  #    suffixe est un garde-fou volontaire (impossible de taper une vraie base
+  #    par erreur de variable), on ne le retire pas.
+  #
+  #    Politique d'adoption (plan §4.1) : le job est BLOQUANT dès maintenant,
+  #    parce que les deux suites sont vertes à l'ajout et rapides (< 1 min).
+  #    Ce qui reste incrémental, c'est la COUVERTURE (on ajoute des tests brique
+  #    par brique), pas la sévérité du job.
+  # ---------------------------------------------------------------------------
+  tests-api2:
+    needs: changes
+    if: needs.changes.outputs.api2 == 'true'
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        # Même version majeure que la prod (cf. docker/.env.dist) pour que les
+        # spécificités SQL (ONLY_FULL_GROUP_BY, dates « zéro », utf8mb3) se
+        # comportent pareil qu'en production.
+        image: mariadb:11.5
+        env:
+          MARIADB_ROOT_PASSWORD: fixtures
+          MARIADB_DATABASE: kpi_fixtures_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          # gd/intl/zip : requis par mpdf/phpspreadsheet du lock (comme les
+          # autres jobs api2), sinon `composer install` échoue sur la plateforme.
+          extensions: gd, intl, zip, pdo_mysql
+          tools: composer
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-api2-${{ hashFiles('sources/api2/composer.lock') }}
+          restore-keys: composer-api2-
+
+      - name: Install deps (sans scripts, tolérant en CI)
+        working-directory: sources/api2
+        run: composer install --no-interaction --no-progress --no-scripts
+
+      # La suite `unit` ne lit aucune variable d'env, mais le bootstrap charge
+      # .env s'il existe : on le fournit pour rester au plus près du local.
+      - name: Préparer l'environnement (.env)
+        working-directory: sources/api2
+        run: cp .env.dist .env
+
+      - name: Tests unitaires (logique pure, sans DB)
+        working-directory: sources/api2
+        run: composer test-unit
+
+      - name: Charger les fixtures dans la MariaDB éphémère
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -pfixtures kpi_fixtures_test < SQL/fixtures/schema.sql
+          mysql -h 127.0.0.1 -P 3306 -uroot -pfixtures kpi_fixtures_test < SQL/fixtures/data.sql
+
+      - name: Tests d'intégration (endpoints publics sur fixtures)
+        working-directory: sources/api2
+        env:
+          APP_ENV: test
+          API2_TEST_DB: '1'
+          # `kpi_fixtures` SANS `_test` : Doctrine ajoute le suffixe (voir plus haut).
+          DATABASE_URL: 'mysql://root:fixtures@127.0.0.1:3306/kpi_fixtures?serverVersion=11.5.2-MariaDB&charset=utf8mb4'
+        run: composer test-integration
+
+  # ---------------------------------------------------------------------------
   # 4. Legacy PHP — syntaxe seulement (php -l). Pas de lint de style : trop de
   #    dette. C'est juste un filet contre les <?php cassés.
   # ---------------------------------------------------------------------------
@@ -457,13 +547,13 @@ jobs:
   #    (une brique non touchée => job skipped => ne doit pas bloquer).
   # ---------------------------------------------------------------------------
   ci-summary:
-    needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
+    needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier qu'aucun job requis n'a échoué
         run: |
-          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
+          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.tests-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
           echo "Résultats: $results"
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
