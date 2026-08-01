@@ -635,35 +635,51 @@ appelée par `setChrono.php`, `StatutPeriode.php`, `evt_match.php`, `ajax_update
 
 ### 6.4 Chrono
 
-Réutiliser **easytimer.js** (comme app3/fm3 ; absent de app4 → ajouter aux deps). Port de
-`app3/composables/useTimer.ts` (countdown principal + shotclock + buzzer `targetAchieved`,
-précision `secondTenths`). **Le chrono devient autoritatif côté serveur** via `gameTimer` →
-un rechargement reconstruit l'horloge depuis `kp_chrono` (upgrade clé vs app3).
+#### Modèle d'horloge : horodatage, pas décrémentation (décision 2026-08-02)
+
+Les **trois horloges à précision** — chrono principal, chronomètre de tir, pénalités — suivent
+le **même principe** : la vérité est un **instant d'expiration** (`endAt = Date.now() + restant`)
+et l'intervalle de 100 ms ne sert **qu'à rafraîchir l'affichage**. Aucune valeur arrondie ne peut
+donc **retourner dans l'état**. C'est aussi le modèle de l'incrustation
+(`useInterpolatedClock`, cf. [PAGE_INCRUSTATION.md](PAGE_INCRUSTATION.md)).
+
+> **Pourquoi easytimer.js a été abandonné pour le chrono principal (2026-08-02).**
+> `useTimer` s'appuyait sur **easytimer.js** (hérité de app3/fm3). Or `startValues` n'accepte
+> que des **secondes entières**, et son tick **écrase** le restant précis par sa propre valeur
+> arrondie. Conséquence : un chrono arrêté à **09:06.5** repartait à **09:07.0**, et cette valeur
+> corrompue était **re-persistée** au prochain arrêt — les dixièmes étaient donc reperdus **à
+> chaque cycle arrêt/relance** (jusqu'à **+0,9 s offert par cycle**, toujours en faveur du temps
+> restant). La persistance au dixième (§0.5) ne suffisait pas : il fallait supprimer la source
+> de l'arrondi. `usePenalties` et `useShotclock` étaient **déjà** en horodatage et n'étaient donc
+> **pas affectés**.
+>
+> **Règle à tenir :** ne jamais réintroduire une bibliothèque de chrono qui impose une
+> granularité à la seconde sur le **chemin de relance**. La **pause inter-période** fait
+> exception (voir ci-dessous).
+
+**Exception assumée — la pause inter-période.** Le décompte de pause (§7.5) reste un simple
+`setInterval` à la seconde : il est **purement indicatif**, non interrompu en cours de décompte,
+et aucune décision de jeu n'en dépend. Le dixième n'y a pas de sens.
+
+**Précision persistée.** `elapsed_ms` est écrit **au dixième** (le front envoie des secondes
+**fractionnaires** sur `/gameTimer`, cf. §0.5) ; `started_at` est un `datetime(3)` et la
+compensation de dérive est **sub-seconde** (`nowServer`/`startTimeServer` avec millisecondes).
 
 #### Reprise d'un match en cours (résilience / failover terminal)
 
-Au **chargement d'un match déjà en cours**, le **chrono principal et son statut (run/stop)** sont
-**recalculés depuis l'état serveur** (`kp_chrono` : `action`, `start_time`, `start_time_server`,
-`run_time`, `max_time` + heure serveur) pour se **resynchroniser automatiquement** — déjà
-implémenté (cf. §6.4 « modèle de chrono », §12). La précision est **à quelques dixièmes de seconde
-près**, **acceptable** dans ce contexte.
+Au **chargement d'un match déjà en cours**, **toutes les horloges** (chrono principal et son
+statut run/stop, chronomètre de tir, pénalités) sont **recalculées depuis l'état serveur**
+(`scoring_live_clock` + heure serveur) pour se **resynchroniser automatiquement**.
 
 **Cas d'usage (déjà fonctionnel en legacy) : reprise sans interruption du jeu.** Si le terminal
 qui gère le match a un **problème technique** (plantage, batterie, navigateur fermé…), on peut
 **rouvrir le match sur un autre onglet / navigateur / terminal** et le chrono **repart synchronisé**
 sans arrêter le jeu. C'est une **exigence de résilience** à préserver dans le Scoring.
 
-> **Limite actuelle à connaître (et évolution future à noter).** Seul le **chrono principal** est
-> persisté côté serveur. À la reprise :
-> - le **flux WebSocket** est momentanément indisponible (reconnexion broker, cf. §6.5) ;
-> - le **shotclock** et les **pénalités en cours** **ne sont PAS restaurés** : ils ne sont **pas
->   sauvegardés côté serveur** à ce stade (en legacy ils transitaient dans le cache chrono /
->   messages, pas dans un état serveur fiable pour la reprise). L'opérateur les **re-saisit**
->   après reprise (relancer le shotclock au prochain reset, recréer les pénalités actives).
->
-> **Évolution future (à évaluer) :** **persister shotclock + pénalités côté serveur** (étendre
-> `kp_chrono` ou table dédiée) pour les restaurer aussi à la reprise. Non bloquant pour le MVP ;
-> noté pour ne pas l'oublier.
+> **Historique.** La spec notait ici que le shotclock et les pénalités n'étaient **pas** restaurés
+> (ils ne transitaient que par le cache chrono legacy) et renvoyait leur persistance à une
+> « évolution future ». C'est **fait** : le lot 1 les persiste dans `scoring_live_clock`
+> (kinds `SHOTCLOCK` / `PENALTY` / `BREAK`) et la console les restaure à l'ouverture.
 
 **Le chrono n'est affiché qu'en mode direct** (cf. §1.1) : masqué en post-match. **Distinction
 importante** : ce qui est masqué, c'est **l'horloge live** (run/stop/RAZ + affichage du temps de
@@ -1100,6 +1116,22 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
   de pause** (signal de reprise — décision §0.9). Durées dans `ScoringConfig.breakDurations`
   (cf. §6.2), à terme paramétrables par compétition. **Pas de temps mort d'équipe** en
   kayak-polo : rien d'autre à modéliser de ce côté.
+
+  > **Cycle de vie du chrono de pause (décision 2026-08-02 — corrigé).** Le décompte de pause
+  > **survit au changement de période**. L'opérateur prépare la période suivante (sélecteur de
+  > période, compositions, corrections) **pendant** que les équipes se reposent : il doit
+  > continuer à voir le temps de pause restant. Trois façons — et **seulement** trois — de le
+  > terminer :
+  >
+  > | Événement | Effet |
+  > |---|---|
+  > | **Lancement du chrono principal** | arrête **et supprime** la pause (le jeu a repris : le décompte n'a plus de sens) |
+  > | **Fin naturelle du décompte** | buzzer de reprise (§0.9), puis retrait |
+  > | **Bouton « Terminer la pause »** | retrait manuel explicite |
+  >
+  > **Le changement de période ne l'arrête pas** (c'était le comportement initial, corrigé).
+  > À ne pas confondre avec le **chronomètre de tir**, qui lui repasse bien à `--` au
+  > changement de période (il ne démarre qu'à la première possession — §6.5).
 - **Match éliminatoire (type E)** : en cas d'**égalité à la fin du temps réglementaire**,
   enchaîner **autant de prolongations que nécessaire** jusqu'au **premier but marqué (but en or)**
   → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations : 5 minutes dans les
@@ -1317,7 +1349,7 @@ Artefacts créés/modifiés dans `sources/app4` :
 | `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2/TB=180s. **Actions de chargement/mutation → Phase 1.** |
 | `composables/useScoringPermissions.ts` | **Créé.** Signature `(isLocked)`. **Accès gaté profil ≤ 2** via constante `SCORING_ACCESS_MAX_PROFILE = 2`. Retourne `canView`, `canScore`, `canManagePlayers`, `canValidate`, `canLock`. Cible post-validation documentée en commentaire (relever la constante + le contrôle serveur). |
 | `i18n/locales/fr.json`, `en.json` | **Modifiés.** Namespace `scoring.*` ajouté (title, link, hardware, status ATT/ON/END, period M1/M2/P1/P2/TB, event goal/cards, timer, scoreboard, locked). |
-| `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version qu'app3/fm3). |
+| `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version qu'app3/fm3). ⚠️ **Obsolète depuis le 2026-08-02** : `useTimer` est passé en horodatage, la dépendance n'est plus utilisée par le Scoring (cf. §6.4). |
 
 **Note environnement** : le container `kpi_node_app4` avait un `node_modules` partiellement
 détenu par `root` (~7175 entrées, install antérieure en root) + 80 artefacts temporaires
@@ -1388,9 +1420,9 @@ logs du dev server.
 
 | Fichier | Détail |
 |---|---|
-| `composables/useTimer.ts` | **Créé.** Wrapper Vue réactif autour d'easytimer.js. Countdown du temps de jeu, précision `secondTenths`. Expose `display` (MM:SS.d), `gameTime` (MM:SS, pour horodater les événements), `elapsed`, `isRunning`, et `setPeriod` / `start` / `stop` / `reset` / `restoreFromServer`. Buzzer/stop auto sur `targetAchieved`. |
-| `src/Controller/ScoringController.php` | **Ajout** `GET /admin/scoring/gameTimer/{matchId}` : renvoie l'état persisté de `kp_chrono` (action, start_time, start_time_server, run_time, max_time) + `nowServer` (heure serveur en s % 86400) pour le calcul de restauration. |
-| `stores/scoringStore.ts` | **Ajout** `loadTimerState()`. `setTimer` persiste `startTime = elapsed` (secondes écoulées dans la période) + `maxTime`. |
+| `composables/useTimer.ts` | **Créé.** Countdown du temps de jeu. Expose `display` (MM:SS.d), `gameTime` (MM:SS, pour horodater les événements), `elapsed`, `isRunning`, et `setPeriod` / `start` / `stop` / `reset` / `restoreFromServer`. Buzzer/stop auto au passage à zéro. **Réécrit le 2026-08-02** : horodatage (`endAt`) au lieu d'easytimer.js, qui reperdait les dixièmes à chaque relance ; ajout d'`elapsedPrecise` (valeur persistée). Cf. §6.4. |
+| `src/Controller/ScoringController.php` | **Ajout** `GET /admin/scoring/gameTimer/{matchId}` : renvoie l'état persisté (action, start_time, start_time_server, run_time, max_time) + `nowServer` (heure serveur en s % 86400) pour le calcul de restauration. **Depuis le lot 1** la source est `scoring_live_clock` (`kp_chrono` = repli de transition) ; **depuis le 2026-08-02** les temps sont des **flottants** porteurs des dixièmes et `nowServer`/`startTimeServer` sont **sub-seconde**. |
+| `stores/scoringStore.ts` | **Ajout** `loadTimerState()`. `setTimer` persiste `startTime = elapsedPrecise` (secondes écoulées dans la période, **dixièmes compris**) + `maxTime`. |
 | `pages/games/[id]/scoring.vue` | Affichage live du chrono (vert si running) ; `onMounted` appelle `loadTimerState()` → `restoreFromServer()` si un état existe, sinon `setPeriod()` ; les événements sont horodatés via `gameTime` ; changement de période reconfigure le countdown. |
 
 **Modèle de chrono retenu** (plus simple que l'encodage fm3) : `max_time` = durée période,

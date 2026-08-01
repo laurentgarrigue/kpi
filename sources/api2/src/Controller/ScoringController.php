@@ -427,11 +427,14 @@ class ScoringController extends AbstractController
     {
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
-        // Server time in seconds since midnight (same basis as start_time_server)
-        $nowServer = time() % 86400;
+        // Server time in seconds since midnight (same basis as start_time_server).
+        // Sub-second: the drift compensation on the console side is only as precise as
+        // this reference, so truncating here would throw away the stored tenths.
+        $nowServer = fmod(microtime(true), 86400);
 
         // Live clock (kind GAME) first — same response contract as the kp_chrono era so
-        // the console restore logic is untouched.
+        // the console restore logic is untouched. Times are exposed as floats carrying
+        // tenths; a client reading them as integers still gets a valid (rounded) value.
         $clock = $this->connection->fetchAssociative(
             "SELECT init_ms, elapsed_ms, started_at, running
              FROM scoring_live_clock
@@ -440,16 +443,17 @@ class ScoringController extends AbstractController
         );
 
         if ($clock !== false) {
-            $elapsed = (int) round(((int) $clock['elapsed_ms']) / 1000);
+            $elapsed = ((int) $clock['elapsed_ms']) / 1000;
 
             return new JsonResponse([
                 'action' => ((bool) $clock['running']) ? 'run' : 'stop',
                 'startTime' => $elapsed,
+                // started_at is a datetime(3): keep the milliseconds, strtotime drops them
                 'startTimeServer' => $clock['started_at'] !== null
-                    ? strtotime($clock['started_at']) % 86400
+                    ? fmod((float) (new \DateTimeImmutable($clock['started_at']))->format('U.u'), 86400)
                     : null,
                 'runTime' => $elapsed,
-                'maxTime' => (int) round(((int) $clock['init_ms']) / 1000),
+                'maxTime' => ((int) $clock['init_ms']) / 1000,
                 'nowServer' => $nowServer,
             ]);
         }
@@ -465,13 +469,15 @@ class ScoringController extends AbstractController
             return new JsonResponse(['action' => null, 'nowServer' => $nowServer]);
         }
 
+        // kp_chrono only ever stored whole seconds: report `nowServer` on the same basis so
+        // the drift delta is not inflated by a fraction the stored start time cannot match.
         return new JsonResponse([
             'action' => $row['action'],
             'startTime' => (int) $row['start_time'],
             'startTimeServer' => $row['start_time_server'] !== null ? (int) $row['start_time_server'] : null,
             'runTime' => (int) $row['run_time'],
             'maxTime' => (int) $row['max_time'],
-            'nowServer' => $nowServer,
+            'nowServer' => (int) $nowServer,
         ]);
     }
 

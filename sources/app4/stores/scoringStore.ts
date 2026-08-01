@@ -575,7 +575,8 @@ export const useScoringStore = defineStore('scoring', {
     /**
      * Control one match clock — persisted to scoring_live_clock. `kind` defaults to the
      * main game clock; the same endpoint drives the shotclock, penalties and inter-period
-     * breaks (spec §0.5 — N clocks per match). Seconds in the payload, ms server-side.
+     * breaks (spec §0.5 — N clocks per match). Seconds in the payload (tenths allowed —
+     * they are what `scoring_live_clock` stores in ms), ms server-side.
      */
     async setTimer(
       action: 'run' | 'stop' | 'RAZ',

@@ -158,14 +158,14 @@ useHead({ title: pageTitle })
 // ─── Buzzer (shotclock expiry, period end, end of break — decision §0.9) ───
 const buzzer = useBuzzer()
 
-// ─── Game clock (easytimer) ───
-const { display: clockDisplay, gameTime, elapsed, isRunning, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
+// ─── Game clock (timestamp-based, like the shotclock and the penalties) ───
+const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
   useTimer({
     onTargetReached: () => {
       // Buzzer at period end; persist the stop server-side; start the indicative
       // inter-period break countdown when one applies (spec §7.5 — 3'/3'/1').
       buzzer.beep()
-      void scoringStore.setTimer('stop', { startTime: elapsed.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
+      void scoringStore.setTimer('stop', { startTime: elapsedPrecise.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
       const m = scoringStore.match
       if (m && isLive.value) {
         const next = nextPeriodFor(m.type, (m.periode ?? 'M1') as Period, scoreLevel.value, scoringStore.config.shootoutEnabled)
@@ -181,7 +181,7 @@ const shotclock = useShotclock({ onExpired: () => buzzer.beep() })
 const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
   void scoringStore.setTimer(action, {
     kind: 'SHOTCLOCK',
-    startTime: action === 'RAZ' ? 0 : Math.round(shotclock.elapsedSeconds.value),
+    startTime: action === 'RAZ' ? 0 : shotclock.elapsedSeconds.value,
     runTime: 0,
     maxTime: shotclock.initSeconds.value
   })
@@ -236,7 +236,7 @@ const persistPenalty = (p: PenaltyClock, action: 'run' | 'stop') => {
     slot: p.slot,
     playerId: p.playerId,
     cardCode: p.cardCode,
-    startTime: Math.max(0, Math.round(scoringStore.config.penaltyDuration - p.remainingMs / 1000)),
+    startTime: Math.max(0, scoringStore.config.penaltyDuration - p.remainingMs / 1000),
     runTime: 0,
     maxTime: scoringStore.config.penaltyDuration
   })
@@ -702,39 +702,52 @@ const setPeriod = (p: Period) => {
   if (!canScore.value) return
   scoringStore.setPeriod(p)
   eventPeriod.value = p
-  // The break ends when the next period is set up; the shotclock goes back to "--"
-  // (it only starts on the first possession of the new period — spec §6.5).
-  stopBreak()
+  // The break countdown deliberately SURVIVES the period change (spec §7.5): the operator
+  // sets up the next period while the teams are still resting, and needs to keep seeing the
+  // time left. Only the game clock starting ends it (see `timer('run')`).
+  // The shotclock, however, goes back to "--": it only starts on the first possession of
+  // the new period (spec §6.5).
   if (shotclock.state.value !== 'IDLE') shotclockStop()
   // Reconfigure the clock to the new period duration (fresh countdown)
   if (isLive.value) timerSetPeriod(periodDurationOf(p, scoringStore.config.periodDurations))
 }
 const setStatus = (s: MatchStatus) => { if (canScore.value) scoringStore.setStatus(s) }
 
-// ─── Timer controls (UI + server persistence to kp_chrono) ───
+// ─── Timer controls (UI + server persistence to scoring_live_clock) ───
 const timer = (action: 'run' | 'stop' | 'RAZ') => {
   if (!canScore.value) return
   const maxTime = scoringStore.currentPeriodDuration
   if (action === 'run') {
+    // Starting the game clock is the ONLY thing that ends the inter-period break: play has
+    // resumed, so the rest countdown no longer means anything (spec §7.5).
+    stopBreak()
     timerStart()
   } else if (action === 'stop') {
     timerStop()
   } else {
     timerReset()
   }
-  // Persist: elapsed seconds in the current period + period duration
+  // Persist: elapsed time in the current period (at the tenth) + period duration
   void scoringStore.setTimer(action, {
-    startTime: action === 'RAZ' ? 0 : elapsed.value,
+    startTime: action === 'RAZ' ? 0 : elapsedPrecise.value,
     runTime: 0,
     maxTime
   })
 }
 
 // Fine-adjust the live clock (±1/±10 s). Only meaningful in live mode.
+// `deltaSec` is expressed on the DISPLAYED time (a countdown): +1 adds a second to the time
+// left, so it SUBTRACTS a second from the elapsed time. Getting this backwards inverted the
+// buttons (fixed 2026-08-02).
 const adjustClock = (deltaSec: number) => {
   if (!canScore.value) return
   const wasRunning = isRunning.value
-  const next = Math.max(0, elapsed.value + deltaSec)
+  // Clamped at both ends: never below 0, never past the period duration (which would show
+  // a negative remaining time).
+  const next = Math.min(
+    scoringStore.currentPeriodDuration,
+    Math.max(0, elapsed.value - deltaSec)
+  )
   timerSetPeriod(scoringStore.currentPeriodDuration, next) // re-primes the clock (paused)
   if (wasRunning) timerStart() // keep it running if it was
   void scoringStore.setTimer(wasRunning ? 'run' : 'stop', {
