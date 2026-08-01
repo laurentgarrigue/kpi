@@ -130,6 +130,30 @@ export function penaltySlotToLift(
   return [...liftable].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0].slot
 }
 
+// ─── Event time (MM:SS) — the operator types digits only, the ':' is added for them ───
+
+/**
+ * Normalize a typed game time into `MM:SS`. The operator types 3 or 4 digits ("750",
+ * "0800") without ever reaching for the ':' — the last two digits are always the seconds,
+ * whatever comes before is the minutes:
+ *
+ *   "750" → "07:50" · "0800" → "08:00" · "139" → "01:39" · "12" → "00:12" · "" → "00:00"
+ *
+ * An already punctuated value ("9:9", "09:09") is accepted and re-padded. Seconds ≥ 60 are
+ * carried over into the minutes ("0170" → "02:10") so ±1 s adjustments never produce a
+ * value the operator cannot read back. Minutes are not capped (post-match editing may
+ * legitimately reference a long overtime).
+ */
+export function normalizeGameTime(input: string): string {
+  const digits = String(input ?? '').replace(/\D/g, '')
+  if (digits === '') return '00:00'
+  // Everything but the last two digits is the minutes part (empty → 0).
+  const minutes = Number(digits.slice(0, -2) || '0')
+  const seconds = Number(digits.slice(-2))
+  const total = minutes * 60 + seconds
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 // ─── Shotclock — 3 commands, 3 states (spec §6.5, decision 2026-07-27) ───
 
 export type ShotclockState = 'IDLE' | 'RUNNING' | 'SUSPENDED'

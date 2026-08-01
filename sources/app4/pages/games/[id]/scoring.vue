@@ -542,6 +542,8 @@ const validatePending = async () => {
 /** Commit the event buttons: add a new event, or update the one being edited. */
 const commitEvent = async (code: ScoringEventCode) => {
   if (!canScore.value || !match.value) return
+  // `Entrée` validates without blurring: format the digits typed by the operator here too.
+  normalizeEventTime()
 
   if (editingUid.value) {
     // Editing an existing row: keep its team/player, change code/time/period/reason.
@@ -675,6 +677,25 @@ const adjustEventTime = (deltaSec: number) => {
   const [m, s] = eventTime.value.split(':').map(Number)
   const total = Math.max(0, (m || 0) * 60 + (s || 0) + deltaSec)
   eventTime.value = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+/**
+ * The operator types digits only ("750", "0800"): the ':' is inserted for them. Done on
+ * blur and just before recording — never on each keystroke, which would fight the caret
+ * while the value is still half-typed.
+ */
+const normalizeEventTime = () => {
+  eventTime.value = normalizeGameTime(eventTime.value)
+}
+
+/**
+ * Select the whole time on focus so a click is enough to retype it — the operator corrects
+ * the time far more often than they edit one digit of it, and a second click (or a manual
+ * selection) at that moment costs seconds during play. On `focus` rather than `click`: it
+ * also covers tab-in, and it leaves a deliberate second click free to place the caret.
+ */
+const selectEventTime = (e: FocusEvent) => {
+  (e.target as HTMLInputElement | null)?.select()
 }
 
 const setPeriod = (p: Period) => {
@@ -1050,6 +1071,10 @@ const toggleLock = async () => {
                 size="sm"
                 class="w-20 font-mono text-center"
                 :class="pendingCode ? 'ring-2 ring-primary-500 rounded' : ''"
+                inputmode="numeric"
+                maxlength="5"
+                @focus="selectEventTime"
+                @blur="normalizeEventTime"
                 @keydown.enter.prevent="validatePending"
                 @keydown.esc.prevent="pendingCode ? cancelPending() : cancelEdit()"
               />

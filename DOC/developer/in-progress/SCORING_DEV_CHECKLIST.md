@@ -147,6 +147,8 @@ partait avec le temps affiché avant, sans validation.
 | 3.10e | `Entrée` dans le champ temps | valide le fait — **ne déclenche pas** le raccourci shotclock 60 s (raccourcis neutralisés dans les champs de saisie) |
 | 3.10f | Clic sur un fait de l'historique | ligne **surlignée** (fond + liseré), **joueur re-sélectionné** dans l'effectif, focus sur le temps, bouton **Enregistrer** (et non « Valider ») |
 | 3.10g | Modifier le temps puis **Enregistrer** | le fait est mis à jour **sur place** (pas de doublon) ; la zone d'édition se referme |
+| 3.10h | Saisir le temps **en chiffres seuls** : `750`, `0800`, `139`, `12` | les `:` sont ajoutés tout seuls à la validation (et à la perte de focus) → `07:50`, `08:00`, `01:39`, `00:12` ; les deux derniers chiffres sont **toujours** les secondes. L'historique n'affiche plus jamais de `0750` / `0800` bruts |
+| 3.10i | Saisir un temps déjà ponctué (`09:09`) ou dépasser 59 s (`0170`) | `09:09` inchangé ; `0170` → `02:10` (report des secondes en minutes) — jamais de valeur illisible en base (colonne `TIME`) |
 
 ### Tests fonctionnels — 2ᵉ tranche (shotclock, pauses, buzzer, raccourcis)
 

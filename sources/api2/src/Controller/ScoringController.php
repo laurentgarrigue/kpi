@@ -129,11 +129,28 @@ class ScoringController extends AbstractController
      * The console works in MM:SS (a half lasts ≤ 10 min). Legacy (v2/evt_match.php) prefixed
      * '00:' before insert; we do the same so MySQL doesn't read "01:28" as 1h28. Already-3-part
      * values are passed through.
+     *
+     * A client may also send unpunctuated digits ("750", "0800"): the ':' is inserted here as
+     * well — the last two digits are the seconds — otherwise '00:' . '0800' reaches the TIME
+     * column malformed and the fact is stored with a wrong (or zero) time.
      */
     private function normalizeTemps(string $tpsJeu): string
     {
         $tpsJeu = trim($tpsJeu);
-        return substr_count($tpsJeu, ':') >= 2 ? $tpsJeu : '00:' . $tpsJeu;
+        if (substr_count($tpsJeu, ':') >= 2) {
+            return $tpsJeu;
+        }
+        if (str_contains($tpsJeu, ':')) {
+            return '00:' . $tpsJeu;
+        }
+        // Digits only: last two are the seconds, the rest are the minutes (carry over 60s).
+        $digits = preg_replace('/\D/', '', $tpsJeu) ?? '';
+        if ($digits === '') {
+            return '00:00:00';
+        }
+        $total = ((int) (substr($digits, 0, -2) ?: '0')) * 60 + (int) substr($digits, -2);
+
+        return sprintf('00:%02d:%02d', intdiv($total, 60), $total % 60);
     }
 
     /**
