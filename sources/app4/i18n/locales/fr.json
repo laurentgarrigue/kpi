@@ -2539,6 +2539,10 @@
       "delete": "Supprimer",
       "edit_hint": "Cliquez sur un fait de jeu pour le modifier"
     },
+    "pending": {
+      "hint": "{event} — ajustez le temps puis validez (Entrée)",
+      "validate": "Valider"
+    },
     "time": {
       "label": "Temps du fait de jeu",
       "period": "Période"

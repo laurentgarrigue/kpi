@@ -1800,12 +1800,18 @@ const openScoresheet = (gameId: number, version: 2 | 3) => {
 }
 
 // ─── Scoring console (new in-app match console) ───
-// Open in a new tab. router.resolve() prepends the app base path (/admin2),
-// so the new tab targets the correct URL. Reuse a per-match tab name to avoid duplicates.
-// (reuses the `router` already declared above)
+// Open in a tab. router.resolve() prepends the app base path (/admin2), so the tab targets
+// the correct URL.
+//
+// ONE shared tab for the whole console (window name `scoring`, not `scoring_{id}`): the
+// scoring table works on one match at a time, and a per-match name left a trail of stale
+// tabs — one per match ever opened. Re-clicking Scoring therefore navigates the existing
+// tab to the new match and brings it to the front, instead of piling up windows.
+// `focus()` is best-effort: some browsers only honour it for a window this page opened.
 const openScoring = (gameId: number) => {
   const { href } = router.resolve(`/games/${gameId}/scoring`)
-  window.open(href, `scoring_${gameId}`)
+  const win = window.open(href, 'scoring')
+  win?.focus()
 }
 </script>
 

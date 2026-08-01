@@ -69,12 +69,12 @@ const onRowClick = (e: ScoringEvent) => {
 <template>
   <div>
     <h3 class="font-semibold mb-2">{{ t('scoring.history') }}</h3>
-    <p class="text-xs text-header-600 mb-2">{{ t('scoring.edit.edit_hint') }}</p>
+    <p class="text-xs text-header-600 dark:text-header-300 mb-2">{{ t('scoring.edit.edit_hint') }}</p>
 
     <!-- Symmetric table (PC / large tablet) -->
     <table class="hidden md:table w-full text-sm border-collapse">
       <thead>
-        <tr class="text-xs text-header-600 border-b border-header-200">
+        <tr class="text-xs text-header-600 dark:text-header-300 border-b border-header-200 dark:border-header-700">
           <th class="py-1 text-left w-[42%]">{{ teamAName }}</th>
           <th class="py-1 text-center w-[16%]">{{ t('scoring.time.label') }}</th>
           <th class="py-1 text-right w-[42%]">{{ teamBName }}</th>
@@ -83,9 +83,11 @@ const onRowClick = (e: ScoringEvent) => {
       <tbody>
         <tr
           v-for="(e, i) in sorted" :key="e.uid ?? i"
-          class="border-b border-header-100 align-middle"
+          class="border-b border-header-100 dark:border-header-800 align-middle"
           :class="[
-            editingUid === e.uid ? 'bg-primary-50' : 'hover:bg-header-50',
+            editingUid === e.uid
+              ? 'bg-primary-100 dark:bg-primary-900/40 ring-2 ring-inset ring-primary-500'
+              : 'hover:bg-header-50 dark:hover:bg-header-800',
             canScore ? 'cursor-pointer' : ''
           ]"
           @click="onRowClick(e)"
@@ -101,19 +103,19 @@ const onRowClick = (e: ScoringEvent) => {
               <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
-              <span v-if="e.reason" class="text-header-600 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
+              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
             </div>
           </td>
 
           <!-- CENTER: period + time -->
-          <td class="py-1 text-center whitespace-nowrap font-mono text-header-900">
+          <td class="py-1 text-center whitespace-nowrap font-mono text-header-900 dark:text-header-300">
             {{ e.period }} {{ fmtTime(e.tpsJeu) }}
           </td>
 
           <!-- RIGHT: team B (mirrored) -->
           <td class="py-1 pl-2">
             <div v-if="e.team === 'B'" class="group flex items-center gap-2 justify-end">
-              <span v-if="e.reason" class="text-header-600 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
+              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
               <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
@@ -129,11 +131,11 @@ const onRowClick = (e: ScoringEvent) => {
     </table>
 
     <!-- Vertical list (mobile) -->
-    <ul class="md:hidden text-sm divide-y divide-header-100">
+    <ul class="md:hidden text-sm divide-y divide-header-100 dark:divide-header-800">
       <li
         v-for="(e, i) in sorted" :key="e.uid ?? i"
         class="flex items-center gap-2 py-1"
-        :class="editingUid === e.uid ? 'bg-primary-50' : ''"
+        :class="editingUid === e.uid ? 'bg-primary-100 dark:bg-primary-900/40 ring-2 ring-inset ring-primary-500' : ''"
       >
         <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
         <span class="font-mono w-20">{{ e.period }} {{ fmtTime(e.tpsJeu) }}</span>
@@ -141,8 +143,8 @@ const onRowClick = (e: ScoringEvent) => {
         <span class="font-mono w-8 text-center">#{{ e.number }}</span>
         <span class="flex-1 truncate">
           {{ playerLabel(e) }}
-          <span class="text-header-600">· {{ codeLabel(e.code) }}</span>
-          <span v-if="e.reason" class="text-header-600">({{ t('scoring.reason.' + e.reason) }})</span>
+          <span class="text-header-600 dark:text-header-300">· {{ codeLabel(e.code) }}</span>
+          <span v-if="e.reason" class="text-header-600 dark:text-header-300">({{ t('scoring.reason.' + e.reason) }})</span>
         </span>
         <UButton
           size="xs" variant="ghost" icon="i-heroicons-pencil-square"
@@ -156,7 +158,7 @@ const onRowClick = (e: ScoringEvent) => {
     </ul>
 
     <!-- Row actions for the symmetric table (delete; edit is the row click) -->
-    <p v-if="sorted.length" class="hidden md:block text-xs text-header-600 mt-2">
+    <p v-if="sorted.length" class="hidden md:block text-xs text-header-600 dark:text-header-300 mt-2">
       {{ t('scoring.history_table_hint') }}
     </p>
   </div>

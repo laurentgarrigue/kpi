@@ -946,6 +946,12 @@ bassin) :
   annulation par `Échap`, comme le legacy `#time_evt` validant sur `Entrée`).
 - **Enchaînement minimal** pour un fait de jeu courant : viser **but = joueur + touche** (le temps
   étant pré-rempli par le chrono en direct), sans étapes superflues.
+  > ⚠️ « Minimal » ne veut **pas** dire « sans validation ». L'enchaînement legacy à conserver
+  > est : joueur → fait → (motif pour un carton) → **focus auto sur le temps** → **`Entrée`**.
+  > Un clic sur un bouton de fait **n'enregistre jamais directement** : le fait s'est presque
+  > toujours produit quelques secondes avant qu'on le saisisse, l'opérateur doit pouvoir
+  > corriger le temps pré-rempli. Supprimer cette étape (tenté puis **annulé le 2026-07-31**)
+  > enregistre le fait avec le temps d'avant, sans confirmation possible.
 - **Pré-remplissage intelligent** : temps depuis le chrono (direct), période courante, dernier
   contexte ; **focus** placé automatiquement sur le bon champ.
 - Les composants exposent des **cibles de saisie clavier** (tabindex cohérent, `@keydown`),

@@ -63,6 +63,9 @@ sur un match de test **non verrouillé**.
 | 1.1 | Saisir un but, un carton, lancer/arrêter le chrono, changer de période/statut | chaque action répond `success` ; l'UI se met à jour |
 | 1.1a | Console du navigateur ouverte pendant toute la saisie | **aucune erreur** ; en particulier pas de `<SelectItem /> must have a value prop that is not an empty string` (elle avortait la mise à jour du composant : plus rien n'était cliquable) ni de `Must be called at the top of a \`setup\` function` (le chronomètre de tir s'affichait sans jamais être persisté) |
 | 1.1b | Un seul badge de statut | le statut n'est affiché **qu'une fois** (badge cliquable de la vue Déroulement) ; l'entête n'affiche plus qu'un badge **Verrouillé**, et seulement si le match l'est |
+| 1.1c | **Titre de l'onglet** du navigateur | « Scoring — Match N°{numéro} · Terrain {n} · {équipe A} - {équipe B} » : le **numéro de match** (Numero_ordre, celui de la feuille), **pas l'id interne** — on identifie l'onglet sans y basculer. L'ID# reste visible en sous-titre de la page |
+| 1.1d | Depuis **Matchs**, cliquer « Scoring » sur un match, puis sur **un autre** | **un seul onglet** de console : le second clic **réutilise** l'onglet existant (il navigue vers le nouveau match et repasse au premier plan), au lieu d'empiler un onglet par match |
+| 1.1e | **Mode sombre** sur toute la page | aucun texte délavé : entête/sous-titre, score et noms d'équipes, effectifs, historique (temps, motifs, en-têtes), chronos (vert en marche, ambre suspendu) et pénalités restent lisibles ; joueur sélectionné et fait en cours d'édition visibles (fond + liseré) |
 | 1.2 | En base (phpMyAdmin) : `scoring_live_state`, `scoring_live_clock` (kind `GAME`), `scoring_live_event` | les lignes reflètent la saisie ; **`kp_match` / `kp_match_detail` / `kp_chrono` ne bougent PAS** pendant le match |
 | 1.3 | `scoring_outbox` | une ligne par écriture, `topic` = `/scoring/event/{e}/pitch/{p}/…` (ou `/scoring/match/{id}/…` si match hors événement), `published_at` NULL tant que le lot 2 ne draine pas |
 | 1.4 | `GET /api2/admin/scoring/state/{id}` (avec JWT) | état complet + en-tête `ETag` ; re-GET avec `If-None-Match` → **304** |
@@ -123,15 +126,34 @@ make app4_dev                  # ou le serveur dev habituel
 | 3.5 | **But en or** : but saisi en P{n} d'un match E | modale « But en or … Clore le match ? » ; confirmer → statut END + consolidation `kp_*` |
 | 3.6 | **Progression des cartons** : jaune puis jaune au même joueur ; jaune puis vert ; rouge puis n'importe quoi ; noir en premier | alertes « carton identique/inférieur », « joueur déjà exclu » ; **premier carton jaune ou rouge accepté sans alerte** ; noir accepté à tout moment ; « Enregistrer quand même » force la saisie |
 | 3.7 | Carton `D` | libellé « **Carton noir (exclusion définitive)** », bouton neutre (noir), token **⬛** dans l'historique — plus aucun « rouge définitif » à l'écran |
-| 3.8 | Zone de saisie d'un carton | motif pré-sélectionné « **Autre/Non précisé** » — un carton se valide en un geste ; les buts n'enregistrent pas de motif |
+| 3.8 | Zone de saisie d'un carton | motif pré-sélectionné « **Autre/Non précisé** » — le motif se change en un geste ; les buts n'enregistrent pas de motif |
 | 3.9 | Sélecteur de période de la zone de saisie (édition post-match) | liste M1/M2 + toutes les prolongations utilisées +1 ; une période TB héritée d'un vieux match reste sélectionnable |
 | 3.10 | Édition d'un fait `P3` d'un match ancien | s'affiche et s'édite normalement (type `P{number}` non borné) |
+
+#### Enchaînement de saisie (workflow legacy restauré le 2026-07-31)
+
+Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place le **focus sur
+le temps** (pré-rempli par le chrono, texte sélectionné) et attend une **validation
+explicite**. Le fait de jeu s'est presque toujours produit quelques secondes plus tôt : la
+correction du temps doit rester possible. Viser « un seul geste » la supprimait — le fait
+partait avec le temps affiché avant, sans validation.
+
+| # | Test | Attendu |
+|---|---|---|
+| 3.10a | Joueur → **But** | **rien n'est enregistré** ; le bouton passe en plein, le focus va sur le temps (texte sélectionné), bandeau « … ajustez le temps puis validez (Entrée) » + boutons **Valider** / **Annuler** |
+| 3.10b | Corriger le temps puis **`Entrée`** (ou **Valider**) | le fait est enregistré **avec le temps corrigé** (et non celui d'avant) |
+| 3.10c | Joueur → **Carton** → changer le **motif** → `Entrée` | même enchaînement ; le motif choisi est bien celui enregistré |
+| 3.10d | **`Échap`** (ou **Annuler**) sur un fait armé | rien n'est enregistré, l'armement est levé |
+| 3.10e | `Entrée` dans le champ temps | valide le fait — **ne déclenche pas** le raccourci shotclock 60 s (raccourcis neutralisés dans les champs de saisie) |
+| 3.10f | Clic sur un fait de l'historique | ligne **surlignée** (fond + liseré), **joueur re-sélectionné** dans l'effectif, focus sur le temps, bouton **Enregistrer** (et non « Valider ») |
+| 3.10g | Modifier le temps puis **Enregistrer** | le fait est mis à jour **sur place** (pas de doublon) ; la zone d'édition se referme |
 
 ### Tests fonctionnels — 2ᵉ tranche (shotclock, pauses, buzzer, raccourcis)
 
 | # | Test | Attendu |
 |---|---|---|
 | 3.11 | Démarrer le **chrono principal** (mode direct) | le shotclock reste à `--` (il ne démarre **jamais** avec le chrono) |
+| 3.11a | **60 s / 40 s pendant que le chrono principal est à l'arrêt** | le shotclock **charge la valeur mais ne défile pas** (suspendu, ambre) ; il ne démarre qu'au lancement du chrono principal — il suit le chrono, toujours |
 | 3.12 | Bouton **60 s** (ou `Entrée`) | le shotclock charge 60 et décompte ; re-appuyer recharge 60 (le départ EST un reset) ; **40 s** (ou `.`) recharge 40 |
 | 3.13 | **Arrêter le chrono principal** pendant que le shotclock tourne | le shotclock se **suspend** automatiquement (ambre) ; relancer le chrono → il repart tout seul |
 | 3.14 | Bouton **Arrêt** (ou `0`) | retour à `--` (état initial) — ce n'est pas une pause : 60/40 requis pour repartir |

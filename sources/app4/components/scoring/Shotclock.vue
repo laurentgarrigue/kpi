@@ -29,15 +29,15 @@ const { t } = useI18n()
 
 const shown = computed(() => (props.masked ? '--' : props.display))
 const digitClass = computed(() => {
-  if (props.state === 'RUNNING' && !props.masked) return 'text-success-600'
-  if (props.state === 'SUSPENDED') return 'text-amber-600'
-  return 'text-header-400'
+  if (props.state === 'RUNNING' && !props.masked) return 'text-success-600 dark:text-success-400'
+  if (props.state === 'SUSPENDED') return 'text-amber-600 dark:text-amber-400'
+  return 'text-header-400 dark:text-header-500'
 })
 </script>
 
 <template>
   <div class="flex flex-col items-center gap-1">
-    <div class="text-xs uppercase tracking-wide text-header-600">{{ t('scoring.shotclock.title') }}</div>
+    <div class="text-xs uppercase tracking-wide text-header-600 dark:text-header-300">{{ t('scoring.shotclock.title') }}</div>
     <div class="text-4xl font-mono font-bold tabular-nums px-4" :class="digitClass">
       {{ shown }}
     </div>

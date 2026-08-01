@@ -2527,6 +2527,10 @@
       "delete": "Delete",
       "edit_hint": "Click a game action to edit it"
     },
+    "pending": {
+      "hint": "{event} — adjust the time, then validate (Enter)",
+      "validate": "Validate"
+    },
     "time": {
       "label": "Game action time",
       "period": "Period"

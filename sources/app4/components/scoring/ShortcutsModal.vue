@@ -58,7 +58,7 @@ onUnmounted(() => {
           <h3 class="text-lg font-semibold text-header-900 dark:text-header-50">
             {{ t('scoring.shortcuts.title') }}
           </h3>
-          <p class="text-xs text-header-600 mt-1">{{ t('scoring.shortcuts.hint') }}</p>
+          <p class="text-xs text-header-600 dark:text-header-300 mt-1">{{ t('scoring.shortcuts.hint') }}</p>
         </div>
 
         <div class="p-4 space-y-1">

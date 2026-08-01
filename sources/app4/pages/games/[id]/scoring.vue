@@ -137,6 +137,24 @@ const editingUid = ref<string | null>(null)
 // make sure a new deployment is picked up immediately (spec §0.9).
 usePwaUpdate()
 
+/**
+ * Tab title: the operator often has several consoles open at once (one per pitch), so the
+ * tab must say WHICH match it is without switching to it. Match **number** (Numero_ordre,
+ * the one printed on the schedule) and pitch — never the internal id, which means nothing
+ * to the scoring table. Falls back to the short id while the match is still loading.
+ */
+const pageTitle = computed(() => {
+  const m = match.value
+  if (!m) return t('scoring.title')
+  const parts = [
+    m.numeroOrdre ? `${t('games.field.game_number')}${m.numeroOrdre}` : `#${m.id}`,
+    m.terrain ? `${t('scoring.field')} ${m.terrain}` : null,
+    m.equipeA && m.equipeB ? `${m.equipeA} - ${m.equipeB}` : null
+  ].filter(Boolean)
+  return `${t('scoring.title')} — ${parts.join(' · ')}`
+})
+useHead({ title: pageTitle })
+
 // ─── Buzzer (shotclock expiry, period end, end of break — decision §0.9) ───
 const buzzer = useBuzzer()
 
@@ -171,6 +189,15 @@ const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
 const shotclockStart = (seconds: number) => {
   if (!canScore.value || !isLive.value) return
   shotclock.start(seconds)
+  // The shotclock follows the game clock (§6.5): loading 60/40 while the game clock is
+  // stopped must NOT make it count down — it waits, suspended, until the game restarts.
+  // The auto-follow watcher below only sees game-clock *transitions*, so a start issued
+  // while already stopped has to be suspended here.
+  if (!isRunning.value) {
+    shotclock.suspend()
+    persistShotclock('stop')
+    return
+  }
   persistShotclock('run')
 }
 const shotclockStop = () => {
@@ -467,6 +494,51 @@ const selectPlayer = (team: TeamSide, player: ScoringPlayer) => {
 const cardWarning = ref<{ code: ScoringEventCode; violation: string } | null>(null)
 const goldenGoalOpen = ref(false)
 
+/**
+ * Staged fact awaiting its time (legacy workflow, restored 2026-07-31).
+ *
+ * Clicking a fact button does NOT record straight away: the operator still has to set the
+ * time — in live mode the clock pre-fills it, but the fact almost always happened a few
+ * seconds earlier, so it must stay adjustable. We stage the code, focus the time field and
+ * wait for an explicit validation (`Entrée`, or the confirm button). `Échap` cancels.
+ * Aiming for "one gesture" cost the operator the time correction — that trade was wrong.
+ */
+const pendingCode = ref<ScoringEventCode | null>(null)
+const timeInput = ref<{ $el?: HTMLElement } | HTMLElement | null>(null)
+
+/** Focus + select the time field so typing overwrites it right away. */
+const focusTimeField = async () => {
+  await nextTick()
+  const root = (timeInput.value as { $el?: HTMLElement })?.$el ?? (timeInput.value as HTMLElement | null)
+  const input = root?.tagName === 'INPUT' ? root as HTMLInputElement : root?.querySelector('input')
+  input?.focus()
+  input?.select()
+}
+
+/** Stage a fact (or an edit) and hand the focus to the time field. */
+const stageEvent = async (code: ScoringEventCode) => {
+  if (!canScore.value || !match.value) return
+  if (!selected.value && !editingUid.value) {
+    toast.add({ title: t('common.error'), description: t('scoring.select_player_first'), color: 'warning' })
+    return
+  }
+  pendingCode.value = code
+  await focusTimeField()
+}
+
+/** Drop the staged fact without recording it (`Échap`). */
+const cancelPending = () => {
+  pendingCode.value = null
+}
+
+/** Validate the staged fact (`Entrée` in the time field, or the confirm button). */
+const validatePending = async () => {
+  const code = pendingCode.value
+  if (!code) return
+  pendingCode.value = null
+  await commitEvent(code)
+}
+
 /** Commit the event buttons: add a new event, or update the one being edited. */
 const commitEvent = async (code: ScoringEventCode) => {
   if (!canScore.value || !match.value) return
@@ -565,16 +637,28 @@ const confirmCardWarning = async () => {
   if (code) await pushEvent(code)
 }
 
-/** Load an existing event into the entry zone for editing. */
-const startEdit = (e: ScoringEvent) => {
+/**
+ * Load an existing fact into the entry zone for editing: re-select its player (so the
+ * rosters show who it belongs to), re-stage its code (the confirm button then commits the
+ * change) and focus the time field — same gestures as a fresh entry.
+ */
+const startEdit = async (e: ScoringEvent) => {
   if (!canScore.value || !e.uid) return
   editingUid.value = e.uid
   eventPeriod.value = e.period
   eventTime.value = e.tpsJeu
   eventReason.value = e.reason
+  pendingCode.value = e.code
+  // Re-select the player the fact belongs to (team-level facts, player '0', have none).
+  const roster = e.team === 'A' ? scoringStore.playersA : scoringStore.playersB
+  const player = roster.find(p => String(p.matric) === e.player)
+  selected.value = player ? { team: e.team, player } : null
+  await focusTimeField()
 }
 const cancelEdit = () => {
   editingUid.value = null
+  pendingCode.value = null
+  selected.value = null
   eventReason.value = scoringStore.config.defaultCardReason
   if (isLive.value) eventTime.value = gameTime.value
 }
@@ -684,7 +768,7 @@ const toggleLock = async () => {
 
 <template>
   <div class="p-4">
-    <div v-if="!canView" class="text-center text-header-900 py-12">
+    <div v-if="!canView" class="text-center text-header-900 dark:text-header-300 py-12">
       {{ t('scoring.no_access') }}
     </div>
 
@@ -706,9 +790,14 @@ const toggleLock = async () => {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-xl font-bold">{{ t('scoring.title') }} — #{{ match.id }}</h1>
-          <p class="text-sm text-header-900">
+          <h1 class="text-xl font-bold">
+            {{ t('scoring.title') }} —
+            <template v-if="match.numeroOrdre">{{ t('games.field.game_number') }}{{ match.numeroOrdre }}</template>
+            <template v-else>#{{ match.id }}</template>
+          </h1>
+          <p class="text-sm text-header-900 dark:text-header-300">
             {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
+            <span class="text-header-600 dark:text-header-400">· ID#{{ match.id }}</span>
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -814,19 +903,19 @@ const toggleLock = async () => {
       <!-- ══ Déroulement view ══ -->
       <template v-else>
       <!-- Score — in score-only mode, ±1 buttons make it the whole entry surface -->
-      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 rounded-lg">
+      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 dark:bg-header-800 rounded-lg">
         <div class="text-right flex-1">
-          <div class="font-semibold">{{ match.equipeA }}</div>
+          <div class="font-semibold text-header-900 dark:text-header-100">{{ match.equipeA }}</div>
           <div v-if="scoreOnly" class="flex gap-1 justify-end mt-1">
             <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('A', -1)">−1</UButton>
             <UButton size="xs" :disabled="!canScore" @click="bumpScore('A', 1)">+1</UButton>
           </div>
         </div>
-        <div class="text-4xl font-mono font-bold tabular-nums">
+        <div class="text-4xl font-mono font-bold tabular-nums text-header-900 dark:text-header-100">
           {{ scoringStore.scoreA }} - {{ scoringStore.scoreB }}
         </div>
         <div class="text-left flex-1">
-          <div class="font-semibold">{{ match.equipeB }}</div>
+          <div class="font-semibold text-header-900 dark:text-header-100">{{ match.equipeB }}</div>
           <div v-if="scoreOnly" class="flex gap-1 mt-1">
             <UButton size="xs" :disabled="!canScore" @click="bumpScore('B', 1)">+1</UButton>
             <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('B', -1)">−1</UButton>
@@ -839,7 +928,7 @@ const toggleLock = async () => {
         <div class="flex flex-col items-center gap-2">
           <div
             class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-            :class="isRunning ? 'text-success-600' : 'text-header-900'"
+            :class="isRunning ? 'text-success-600 dark:text-success-400' : 'text-header-900 dark:text-header-100'"
           >
             {{ clockDisplay }}
           </div>
@@ -867,8 +956,8 @@ const toggleLock = async () => {
 
         <!-- Inter-period break — indicative countdown (spec §7.5) -->
         <div v-if="breakRemaining !== null" class="flex flex-col items-center gap-1">
-          <div class="text-xs uppercase tracking-wide text-header-600">{{ t('scoring.break.title') }}</div>
-          <div class="text-4xl font-mono font-bold tabular-nums text-amber-600">{{ breakDisplay }}</div>
+          <div class="text-xs uppercase tracking-wide text-header-600 dark:text-header-300">{{ t('scoring.break.title') }}</div>
+          <div class="text-4xl font-mono font-bold tabular-nums text-amber-600 dark:text-amber-400">{{ breakDisplay }}</div>
           <UButton size="xs" variant="ghost" :disabled="!canScore" @click="stopBreak()">
             {{ t('scoring.break.skip') }}
           </UButton>
@@ -917,8 +1006,8 @@ const toggleLock = async () => {
               type="button"
               class="w-full flex items-center gap-2 px-2 py-1 rounded text-left text-sm border"
               :class="selected?.player.matric === p.matric
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-header-200 hover:bg-header-50'"
+                ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/40 ring-2 ring-inset ring-primary-500'
+                : 'border-header-200 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
               :disabled="!canScore"
               @click="selectPlayer(team as TeamSide, p)"
             >
@@ -935,7 +1024,7 @@ const toggleLock = async () => {
 
       <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
       <div v-if="!scoreOnly" class="border-t pt-4 space-y-3">
-        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600">
+        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400">
           <UIcon name="i-heroicons-pencil-square" />
           {{ t('scoring.edit.title') }}
           <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
@@ -944,17 +1033,26 @@ const toggleLock = async () => {
         <div class="flex flex-wrap items-end gap-3 justify-center">
           <!-- Period -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.period') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
             <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-36" />
           </div>
           <!-- Event time -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.label') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
             <div class="flex items-center gap-1">
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-1)">−1</UButton>
-              <UInput v-model="eventTime" :disabled="!canScore" size="sm" class="w-20 font-mono text-center" />
+              <UInput
+                ref="timeInput"
+                v-model="eventTime"
+                :disabled="!canScore"
+                size="sm"
+                class="w-20 font-mono text-center"
+                :class="pendingCode ? 'ring-2 ring-primary-500 rounded' : ''"
+                @keydown.enter.prevent="validatePending"
+                @keydown.esc.prevent="pendingCode ? cancelPending() : cancelEdit()"
+              />
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(1)">+1</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
@@ -962,7 +1060,7 @@ const toggleLock = async () => {
           </div>
           <!-- Reason (cards) -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.reason.label') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
             <USelect
               v-model="eventReasonSelect"
               :items="reasonItems"
@@ -973,14 +1071,28 @@ const toggleLock = async () => {
           </div>
         </div>
 
-        <!-- Event buttons -->
+        <!-- Event buttons: they STAGE the fact (the time is set next), they do not record it -->
         <div class="flex flex-wrap gap-2 justify-center">
           <UButton
             v-for="evt in eventCodes" :key="evt.code"
             :color="evt.color as any"
+            :variant="pendingCode === evt.code ? 'solid' : 'outline'"
             :disabled="!canScore || (!selected && !editingUid)"
-            @click="commitEvent(evt.code)"
+            @click="stageEvent(evt.code)"
           >{{ t(evt.labelKey) }}</UButton>
+        </div>
+
+        <!-- Explicit validation of the staged fact (spec §7.2: focus the time, then Entrée) -->
+        <div v-if="pendingCode" class="flex flex-wrap items-center gap-2 justify-center">
+          <span class="text-sm text-header-600 dark:text-header-300">
+            {{ t('scoring.pending.hint', { event: t(eventCodes.find(e => e.code === pendingCode)!.labelKey) }) }}
+          </span>
+          <UButton color="primary" icon="i-heroicons-check" :disabled="!canScore" @click="validatePending">
+            {{ editingUid ? t('scoring.edit.save') : t('scoring.pending.validate') }}
+          </UButton>
+          <UButton variant="ghost" :disabled="!canScore" @click="editingUid ? cancelEdit() : cancelPending()">
+            {{ t('scoring.edit.cancel') }}
+          </UButton>
         </div>
       </div>
 
@@ -1045,7 +1157,7 @@ const toggleLock = async () => {
       </template>
     </div>
 
-    <div v-else class="text-center text-header-900 py-12">
+    <div v-else class="text-center text-header-900 dark:text-header-300 py-12">
       {{ t('scoring.not_found') }}
     </div>
   </div>

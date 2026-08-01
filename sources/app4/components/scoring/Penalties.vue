@@ -32,21 +32,21 @@ const byTeam = (penalties: PenaltyClock[], team: TeamSide) =>
 <template>
   <div class="grid grid-cols-2 gap-4">
     <div v-for="team in (['A', 'B'] as TeamSide[])" :key="team">
-      <div class="text-xs uppercase tracking-wide text-header-600 mb-1">
+      <div class="text-xs uppercase tracking-wide text-header-600 dark:text-header-300 mb-1">
         {{ t('scoring.penalty.title') }} — {{ team === 'A' ? (teamAName ?? 'A') : (teamBName ?? 'B') }}
       </div>
-      <div v-if="byTeam(penalties, team).length === 0" class="text-sm text-header-400">—</div>
+      <div v-if="byTeam(penalties, team).length === 0" class="text-sm text-header-400 dark:text-header-500">—</div>
       <div v-else class="space-y-1">
         <div
           v-for="p in byTeam(penalties, team)"
           :key="p.id"
-          class="flex items-center gap-2 px-2 py-1 rounded border border-header-200 text-sm"
+          class="flex items-center gap-2 px-2 py-1 rounded border border-header-200 dark:border-header-700 text-sm"
         >
           <span>{{ CARD_TOKEN[p.cardCode] }}</span>
           <span class="font-mono w-6 text-center">{{ p.playerNumber ?? '?' }}</span>
           <span
             class="font-mono font-bold tabular-nums flex-1"
-            :class="p.running ? 'text-error-600' : 'text-amber-600'"
+            :class="p.running ? 'text-error-600 dark:text-error-400' : 'text-amber-600 dark:text-amber-400'"
           >{{ fmt(p.remainingMs) }}</span>
           <UButton
             size="xs"

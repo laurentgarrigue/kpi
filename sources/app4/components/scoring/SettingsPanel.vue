@@ -73,22 +73,22 @@ const CAPTAIN_OPTIONS = [
     <!-- Control block: read-only match settings + escape hatches -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="space-y-1">
-        <div class="text-xs uppercase text-header-600">{{ t('scoring.settings.type') }}</div>
+        <div class="text-xs uppercase text-header-600 dark:text-header-300">{{ t('scoring.settings.type') }}</div>
         <UBadge variant="soft" color="neutral">
           {{ t('scoring.settings.type_' + (match.type === 'E' ? 'elimination' : 'ranking')) }}
         </UBadge>
-        <p class="text-xs text-header-400">{{ t('scoring.settings.read_only_hint') }}</p>
+        <p class="text-xs text-header-400 dark:text-header-500">{{ t('scoring.settings.read_only_hint') }}</p>
       </div>
 
       <div class="space-y-1">
-        <div class="text-xs uppercase text-header-600">{{ t('scoring.settings.publication') }}</div>
+        <div class="text-xs uppercase text-header-600 dark:text-header-300">{{ t('scoring.settings.publication') }}</div>
         <UBadge variant="soft" :color="match.publication === 'O' ? 'success' : 'neutral'">
           {{ t('scoring.settings.publication_' + (match.publication === 'O' ? 'public' : 'private')) }}
         </UBadge>
       </div>
 
       <div class="space-y-1">
-        <label class="text-xs uppercase text-header-600">{{ t('scoring.settings.load_game') }}</label>
+        <label class="text-xs uppercase text-header-600 dark:text-header-300">{{ t('scoring.settings.load_game') }}</label>
         <div class="flex gap-1">
           <UInput
             v-model="gameLookup"
@@ -116,7 +116,7 @@ const CAPTAIN_OPTIONS = [
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div v-for="field in OFFICIAL_FIELDS" :key="field">
-          <label class="block text-xs text-header-600 mb-1">{{ t('scoring.officials.' + field) }}</label>
+          <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.officials.' + field) }}</label>
           <UInput
             v-model="officials[field]"
             size="sm"
@@ -141,11 +141,11 @@ const CAPTAIN_OPTIONS = [
           >{{ t('scoring.settings.reload_players') }}</UButton>
         </div>
 
-        <div v-if="team.players.length === 0" class="text-sm text-header-400">
+        <div v-if="team.players.length === 0" class="text-sm text-header-400 dark:text-header-500">
           {{ t('scoring.settings.no_player') }}
         </div>
         <table v-else class="w-full text-sm">
-          <thead class="text-xs text-header-600">
+          <thead class="text-xs text-header-600 dark:text-header-300">
             <tr>
               <th class="text-left w-16">{{ t('scoring.settings.number') }}</th>
               <th class="text-left">{{ t('scoring.settings.player') }}</th>
@@ -154,7 +154,7 @@ const CAPTAIN_OPTIONS = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in team.players" :key="p.matric" class="border-t border-header-100">
+            <tr v-for="p in team.players" :key="p.matric" class="border-t border-header-100 dark:border-header-800">
               <td class="py-1">
                 <UInput
                   :model-value="p.numero"
