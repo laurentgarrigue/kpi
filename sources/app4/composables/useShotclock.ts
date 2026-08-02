@@ -37,12 +37,6 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
   const tick = () => {
     const left = Math.max(0, endAt - Date.now())
     remainingMs.value = left
-    // TODO(temporaire) — trace dixièmes chronomètre de tir, à retirer après validation 1.2
-    console.log(
-      `[shotclock] ${display.value}  restant=${(left / 1000).toFixed(1)}s  ` +
-      `elapsed=${elapsedSeconds.value.toFixed(1)}s  → elapsed_ms=${Math.round(elapsedSeconds.value * 1000)}  ` +
-      `state=${state.value}`
-    )
     if (left <= 0) {
       clearTick()
       if (!expiredFired) {

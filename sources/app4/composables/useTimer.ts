@@ -89,11 +89,6 @@ export function useTimer(options: TimerOptions = {}) {
 
   const tick = () => {
     remainingMs.value = Math.max(0, endAt - Date.now())
-    // TODO(temporaire) — trace dixièmes chrono principal, à retirer après validation 1.2
-    console.log(
-      `[chrono] ${display.value}  restant=${(remainingMs.value / 1000).toFixed(1)}s  ` +
-      `elapsedPrecise=${elapsedPrecise.value.toFixed(1)}s  → elapsed_ms=${Math.round(elapsedPrecise.value * 1000)}`
-    )
     options.onTick?.(display.value)
     if (remainingMs.value <= 0) {
       clearTick()
