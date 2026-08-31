@@ -24,3 +24,9 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+# Artefact régénéré par Symfony (PhpConfigReferenceDumpPass) à chaque
+# cache:clear. Le versionner casse le déploiement : en préprod/prod le fichier
+# appartient à `deploy` alors que le conteneur écrit en dockeruser:www-data,
+# d'où un « Permission denied » qui fait échouer composer install.
+/config/reference.php
