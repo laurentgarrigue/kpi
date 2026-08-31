@@ -138,6 +138,12 @@ class AdminRankingsController extends AbstractController
                 // 2. Apply initial values
                 $this->applyInitialValues($competition, $season);
 
+                // 2b. Re-inject the frozen totals of consolidated phases.
+                // The global table was fully reset in step 1, but processMatches skips
+                // the matches of consolidated phases: without this their contribution
+                // would vanish from the general ranking (J, Pts, PtsNiveau, buts...).
+                $this->applyConsolidatedPhases($competition, $season);
+
                 // 3. Process matches
                 $this->processMatches($competition, $season, $includeUnlocked, $pointsStr);
 
@@ -1550,17 +1556,18 @@ class AdminRankingsController extends AbstractController
 
     private function razNiveauRanking(string $competition, string $season): void
     {
-        // Delete non-consolidated niveau rows
-        // We need to figure out which niveaux are consolidated
+        // Delete every niveau row, unconditionally.
+        //
+        // Keeping the rows of "consolidated niveaux" would be wrong as soon as a single
+        // niveau holds both a consolidated and a non-consolidated phase: the preserved
+        // row would then be incremented again by processMatches() for the phase that is
+        // not consolidated, double-counting it at every recompute.
+        // The frozen totals are rebuilt from kp_competition_equipe_journee instead, by
+        // applyConsolidatedPhases().
         $sql = "DELETE cen FROM kp_competition_equipe_niveau cen
                 INNER JOIN kp_competition_equipe ce ON cen.Id = ce.Id
-                WHERE ce.Code_compet = ? AND ce.Code_saison = ?
-                AND cen.Niveau NOT IN (
-                    SELECT DISTINCT j.Niveau FROM kp_journee j
-                    WHERE j.Code_competition = ? AND j.Code_saison = ?
-                    AND j.Consolidation = 'O' AND j.Niveau IS NOT NULL
-                )";
-        $this->connection->prepare($sql)->executeStatement([$competition, $season, $competition, $season]);
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)->executeStatement([$competition, $season]);
     }
 
     private function applyInitialValues(string $competition, string $season): void
@@ -1574,6 +1581,67 @@ class AdminRankingsController extends AbstractController
                     ce.Moins = i.Moins, ce.Diff = i.Diff
                 WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
         $this->connection->prepare($sql)->executeStatement([$competition, $season]);
+    }
+
+    /**
+     * Re-inject into the global rankings the totals frozen in the consolidated phases.
+     *
+     * A consolidated phase keeps its kp_competition_equipe_journee rows untouched
+     * (they are neither reset nor recomputed), but its matches are excluded from
+     * processMatches(). Since kp_competition_equipe and kp_competition_equipe_niveau are
+     * fully reset at each recompute, those totals must be added back here, otherwise the
+     * teams whose games were all played in consolidated phases end up with J = 0 /
+     * PtsNiveau = 0 and cannot be separated in the general ranking.
+     */
+    private function applyConsolidatedPhases(string $competition, string $season): void
+    {
+        // Totals of the consolidated phases, per team and per niveau.
+        $sql = "SELECT cej.Id, j.Niveau,
+                       SUM(cej.Pts) AS Pts, SUM(cej.J) AS J, SUM(cej.G) AS G,
+                       SUM(cej.N) AS N, SUM(cej.P) AS P, SUM(cej.F) AS F,
+                       SUM(cej.Plus) AS Plus, SUM(cej.Moins) AS Moins,
+                       SUM(cej.Diff) AS Diff, SUM(cej.PtsNiveau) AS PtsNiveau
+                FROM kp_competition_equipe_journee cej
+                INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                INNER JOIN kp_competition_equipe ce ON ce.Id = cej.Id
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND j.Consolidation = 'O'
+                AND ce.Code_compet = ? AND ce.Code_saison = ?
+                GROUP BY cej.Id, j.Niveau";
+        $rows = $this->connection->prepare($sql)
+            ->executeQuery([$competition, $season, $competition, $season])
+            ->fetchAllAssociative();
+
+        foreach ($rows as $row) {
+            $teamId = (int) $row['Id'];
+            $niveau = (int) ($row['Niveau'] ?? 0);
+            $values = [
+                (int) $row['Pts'], (int) $row['J'], (int) $row['G'], (int) $row['N'],
+                (int) $row['P'], (int) $row['F'], (int) $row['Plus'], (int) $row['Moins'],
+                (int) $row['Diff'], (float) $row['PtsNiveau'],
+            ];
+
+            // General ranking.
+            $sql = "UPDATE kp_competition_equipe
+                    SET Pts = Pts + ?, J = J + ?, G = G + ?, N = N + ?,
+                        P = P + ?, F = F + ?, Plus = Plus + ?, Moins = Moins + ?,
+                        Diff = Diff + ?, PtsNiveau = PtsNiveau + ?
+                    WHERE Id = ?";
+            $this->connection->prepare($sql)->executeStatement([...$values, $teamId]);
+
+            // Per-niveau ranking (deleted wholesale by razNiveauRanking()).
+            $sql = "INSERT IGNORE INTO kp_competition_equipe_niveau
+                    (Id, Niveau, Pts, Clt, J, G, N, P, F, Plus, Moins, Diff, PtsNiveau, CltNiveau)
+                    VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)";
+            $this->connection->prepare($sql)->executeStatement([$teamId, $niveau]);
+
+            $sql = "UPDATE kp_competition_equipe_niveau
+                    SET Pts = Pts + ?, J = J + ?, G = G + ?, N = N + ?,
+                        P = P + ?, F = F + ?, Plus = Plus + ?, Moins = Moins + ?,
+                        Diff = Diff + ?, PtsNiveau = PtsNiveau + ?
+                    WHERE Id = ? AND Niveau = ?";
+            $this->connection->prepare($sql)->executeStatement([...$values, $teamId, $niveau]);
+        }
     }
 
     private function processMatches(string $competition, string $season, bool $includeUnlocked, string $pointsStr): void
