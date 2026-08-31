@@ -378,6 +378,12 @@ class GestionClassement extends MyPageSecure
 			$this->RazClassementCompetitionEquipeNiveau($codeCompet, $codeSaison);
 			$this->RazClassementCompetitionEquipeJournee($codeCompet, $codeSaison);
 
+			// Réinjection des totaux figés des phases consolidées : les tables globales
+			// viennent d'être remises à zéro, or CalculClassement() exclut les matchs des
+			// phases consolidées. Sans cela leur contribution disparaîtrait du classement
+			// général (J, Pts, PtsNiveau, buts...).
+			$this->ReportClassementPhasesConsolidees($codeCompet, $codeSaison);
+
 			$this->CalculClassement($codeCompet, $typeClt, $tousLesMatchs);
 
 			$egalites = $this->FinalisationClassementChpt($codeCompet, $codeSaison, $goalaverage, $tousLesMatchs);
@@ -479,6 +485,87 @@ class GestionClassement extends MyPageSecure
 	}
 
 	
+	/**
+	 * Réinjecte dans le classement général les totaux figés des phases consolidées.
+	 *
+	 * Une phase consolidée conserve ses lignes kp_competition_equipe_journee (elles ne
+	 * sont ni remises à zéro ni recalculées), mais ses matchs sont exclus de
+	 * CalculClassementJournee(). Comme kp_competition_equipe et
+	 * kp_competition_equipe_niveau sont intégralement remises à zéro à chaque recalcul,
+	 * ces totaux doivent être réajoutés ici : sinon les équipes dont tous les matchs ont
+	 * été joués en phases consolidées se retrouvent avec J = 0 / PtsNiveau = 0 et ne
+	 * peuvent plus être départagées dans le classement général.
+	 */
+	function ReportClassementPhasesConsolidees($codeCompet, $codeSaison)
+	{
+		$myBdd = $this->myBdd;
+
+		// Totaux par équipe et par niveau des phases consolidées ...
+		$sql = "SELECT a.Id, b.Niveau,
+			SUM(a.Pts) Pts, SUM(a.J) J, SUM(a.G) G, SUM(a.N) N, SUM(a.P) P, SUM(a.F) F,
+			SUM(a.Plus) Plus, SUM(a.Moins) Moins, SUM(a.Diff) Diff, SUM(a.PtsNiveau) PtsNiveau
+			FROM kp_competition_equipe_journee a, kp_journee b, kp_competition_equipe c
+			WHERE a.Id_journee = b.Id
+			AND a.Id = c.Id
+			AND b.Code_competition = ?
+			AND b.Code_saison = ?
+			AND b.Consolidation = 'O'
+			AND c.Code_compet = ?
+			AND c.Code_saison = ?
+			GROUP BY a.Id, b.Niveau ";
+		$result = $myBdd->pdo->prepare($sql);
+		$result->execute(array($codeCompet, $codeSaison, $codeCompet, $codeSaison));
+		$rows = $result->fetchAll();
+
+		$sqlEquipe = "UPDATE kp_competition_equipe
+			SET Pts = Pts + ?,
+			J = J + ?,
+			G = G + ?,
+			N = N + ?,
+			P = P + ?,
+			F = F + ?,
+			Plus = Plus + ?,
+			Moins = Moins + ?,
+			Diff = Diff + ?,
+			PtsNiveau = PtsNiveau + ?
+			WHERE Id = ? ";
+		$resultEquipe = $myBdd->pdo->prepare($sqlEquipe);
+
+		$sqlNiveau = "UPDATE kp_competition_equipe_niveau
+			SET Pts = Pts + ?,
+			J = J + ?,
+			G = G + ?,
+			N = N + ?,
+			P = P + ?,
+			F = F + ?,
+			Plus = Plus + ?,
+			Moins = Moins + ?,
+			Diff = Diff + ?,
+			PtsNiveau = PtsNiveau + ?
+			WHERE Id = ?
+			AND Niveau = ? ";
+		$resultNiveau = $myBdd->pdo->prepare($sqlNiveau);
+
+		foreach ($rows as $row) {
+			$niveau = (int) $row['Niveau'];
+
+			// Classement général ...
+			$resultEquipe->execute(array(
+				$row['Pts'], $row['J'], $row['G'], $row['N'],
+				$row['P'], $row['F'], $row['Plus'], $row['Moins'],
+				$row['Diff'], $row['PtsNiveau'], $row['Id']
+			));
+
+			// Classement par niveau (également remis à zéro plus haut) ...
+			$this->ExistCompetitionEquipeNiveau($row['Id'], $niveau);
+			$resultNiveau->execute(array(
+				$row['Pts'], $row['J'], $row['G'], $row['N'],
+				$row['P'], $row['F'], $row['Plus'], $row['Moins'],
+				$row['Diff'], $row['PtsNiveau'], $row['Id'], $niveau
+			));
+		}
+	}
+
 	function CalculClassement($codeCompet, $typeClt, $tousLesMatchs=false)
 	{
 		$this->CalculClassementJournee($codeCompet, $typeClt, $tousLesMatchs);
