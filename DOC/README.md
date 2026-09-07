@@ -103,6 +103,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[BUG_SQL_COMPET_ASTERISK.md](developer/fixes/bugs/BUG_SQL_COMPET_ASTERISK.md)** - Bug SQL avec astérisque
 - **[FIX_CSV_EXPORT_OPENSPOUT.md](developer/fixes/bugs/FIX_CSV_EXPORT_OPENSPOUT.md)** - Fix export CSV OpenSpout
 - **[FIX_MYPDF_OPEN_METHOD.md](developer/fixes/bugs/FIX_MYPDF_OPEN_METHOD.md)** - Fix méthode Open() MyPDF
+- **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/fixes/bugs/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Fix classement général / phases consolidées (compétitions 2026 à corriger)
 
 #### [Fonctionnalités](developer/fixes/features/)
 - **[STAT_LICENCIES_CATEGORIE.md](developer/fixes/features/STAT_LICENCIES_CATEGORIE.md)** - ✅ Statistique licenciés FFCK par catégorie d'âge

@@ -147,11 +147,21 @@ class AdminRankingsController extends AbstractController
                 // 3. Process matches
                 $this->processMatches($competition, $season, $includeUnlocked, $pointsStr);
 
-                // 4. Finalize rankings (all types: CHPT and CP)
+                // 4. Settle the per-phase ranking (Clt) first: PtsNiveau now derives
+                //    from it, so it has to be known before the totals are built.
+                $this->finalizeJourneeChptRanking($competition, $season, $goalaverage);
+
+                // 4b. Rewrite PtsNiveau from the pool rank for classification phases,
+                //     then rebuild the totals it feeds. This is what makes a Niveau
+                //     change (or a manual Clt fix) reach the general ranking, including
+                //     on consolidated phases.
+                $this->applyRankBasedPtsNiveau($competition, $season);
+                $this->rebuildPtsNiveauTotals($competition, $season);
+
+                // 5. Finalize the rankings that consume those totals.
                 $this->finalizeChptRanking($competition, $season, $goalaverage);
                 $this->finalizeNiveauRanking($competition, $season);
                 $this->finalizeNiveauNiveauRanking($competition, $season);
-                $this->finalizeJourneeChptRanking($competition, $season, $goalaverage);
                 $this->finalizeJourneeNiveauRanking($competition, $season);
             }
 
@@ -2439,6 +2449,89 @@ class AdminRankingsController extends AbstractController
             $this->connection->prepare($sql)->executeStatement([$clt, (int) $row['Id'], $journeeId]);
             $j++;
         }
+    }
+
+    /**
+     * Recompute PtsNiveau from the pool rank (Clt) for classification phases (Type 'C').
+     *
+     * PtsNiveau is the only channel through which a phase contributes to the general
+     * ranking (kp_competition_equipe.PtsNiveau drives CltNiveau). Deriving it from the
+     * match results alone had two defects:
+     *
+     *  - it froze the phase's Niveau at the time of the computation, so changing a
+     *    phase's Niveau afterwards had no effect on a consolidated phase (its rows are
+     *    never recomputed), leaving the general ranking silently inconsistent;
+     *  - it ignored manual corrections of the pool ranking: an admin can edit Clt, but
+     *    Clt was never read back by the general ranking.
+     *
+     * Basing it on the rank instead makes the value reconstructible at every recompute
+     * and makes the general ranking honour the pool ranking, manual fixes included:
+     *
+     *     PtsNiveau = pow(64, Niveau) * (nb_teams_in_phase - Clt + 1)
+     *
+     * The 64 factor keeps a higher Niveau always dominant over a lower one, as before.
+     *
+     * Elimination phases (Type 'E') keep the match-result formula: they have no pool
+     * ranking to honour (90 of them are 2-team knockouts) and nothing to preserve there.
+     *
+     * Must run AFTER finalizeJourneeChptRanking(), which settles Clt for the
+     * non-consolidated phases; consolidated phases keep the Clt they were frozen with.
+     */
+    private function applyRankBasedPtsNiveau(string $competition, string $season): void
+    {
+        // Rank-based value for every classification phase, consolidated or not.
+        $sql = "UPDATE kp_competition_equipe_journee cej
+                INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                INNER JOIN (
+                    SELECT cej2.Id_journee, COUNT(*) AS n
+                    FROM kp_competition_equipe_journee cej2
+                    GROUP BY cej2.Id_journee
+                ) sz ON sz.Id_journee = cej.Id_journee
+                SET cej.PtsNiveau = POW(64, j.Niveau) * (sz.n - cej.Clt + 1)
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND (j.Type IS NULL OR j.Type = 'C')
+                AND cej.Clt > 0";
+        $this->connection->prepare($sql)->executeStatement([$competition, $season]);
+    }
+
+    /**
+     * Rebuild the PtsNiveau aggregates (global and per-niveau) from the phase rows.
+     *
+     * applyRankBasedPtsNiveau() rewrites the phase-level values, so the totals that
+     * processMatches() and applyConsolidatedPhases() had accumulated are stale. Only
+     * PtsNiveau is rebuilt here: Pts, J, G, N, P, F, Plus, Moins and Diff keep the
+     * values those two steps produced.
+     */
+    private function rebuildPtsNiveauTotals(string $competition, string $season): void
+    {
+        // Global total per team.
+        $sql = "UPDATE kp_competition_equipe ce
+                LEFT JOIN (
+                    SELECT cej.Id, SUM(cej.PtsNiveau) AS total
+                    FROM kp_competition_equipe_journee cej
+                    INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                    WHERE j.Code_competition = ? AND j.Code_saison = ?
+                    GROUP BY cej.Id
+                ) t ON t.Id = ce.Id
+                SET ce.PtsNiveau = COALESCE(t.total, 0)
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)
+            ->executeStatement([$competition, $season, $competition, $season]);
+
+        // Per-niveau total.
+        $sql = "UPDATE kp_competition_equipe_niveau cen
+                INNER JOIN kp_competition_equipe ce ON ce.Id = cen.Id
+                LEFT JOIN (
+                    SELECT cej.Id, j.Niveau, SUM(cej.PtsNiveau) AS total
+                    FROM kp_competition_equipe_journee cej
+                    INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                    WHERE j.Code_competition = ? AND j.Code_saison = ?
+                    GROUP BY cej.Id, j.Niveau
+                ) t ON t.Id = cen.Id AND t.Niveau = cen.Niveau
+                SET cen.PtsNiveau = COALESCE(t.total, 0)
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)
+            ->executeStatement([$competition, $season, $competition, $season]);
     }
 
     private function calculateMulti(string $competition, string $season, array $compRow): void
