@@ -548,3 +548,118 @@ sur les 32 compétitions CP de 2026 portant des équipes, en transaction annulé
   passés l'ont déjà fait, les valeurs actuelles en base sont issues de cet écrasement et
   ne sont pas restaurées.
 - Impact prod non mesuré : les chiffres ci-dessus valent pour la dev.
+
+---
+---
+
+# Runbook de remédiation post-déploiement
+
+> Consolide les séquences décrites en Partie 1 et Partie 2. À exécuter **après** déploiement
+> du correctif (code) en prod, compétition par compétition. Les chiffres de compétitions et
+> de poules cités proviennent de la dev (2026-09-01 / 2026-09-04 / 2026-09-07) — **à
+> revérifier en prod avant toute action**, via les requêtes de contrôle du document.
+
+## 0. Préalable — rejouer les requêtes de détection en prod
+
+Avant toute remédiation, rejouer sur la prod :
+
+- la requête « niveaux mixtes » (bug B, §Requêtes de contrôle) ;
+- la requête « écart J stocké / J réel » (bug A, §Requêtes de contrôle) ;
+- un recalcul en transaction annulée sur chaque compétition CP 2026 pour mesurer l'écart
+  réel avant/après (comme fait en dev), afin de confirmer que la liste ci-dessous est toujours
+  valable et n'a pas besoin d'être complétée.
+
+## 1. Compétitions concernées
+
+8 compétitions distinctes, toutes `Code_saison = 2026`, cumulant les deux bugs :
+
+| Code | Libellé | Bug(s) | Statut (dev) | Nature de l'écart |
+|---|---|---|---|---|
+| **N3O** | Nationale 3 - 1/2 Finales Ouest | A | `END` | J sous-compté |
+| **N3E** | Nationale 3 - 1/2 Finales Est | A + B | `END` | J sur-compté (double comptage niveau) |
+| **T-62D1** | Tournoi International du Pas de Calais | A + C/D | `END` | J sous-compté + inversion GBR U21/SG Liblar |
+| **T-62D2** | Tournoi International du Pas de Calais (2) | C/D | `END` | inversion Michiel de Ruyter 2 / Meridian X |
+| **N3** | Nationale 3 | C/D | `END` | inversion Montpellier I / Cestas I |
+| **N18** | Nationale 18 | C/D | `END` | inversion Ploërmel-Vern / Pont d'Ouilly |
+| **NPOH** | Nationale Pôles Hommes | C/D | `END` | inversion Condé-sur-Vire I / Saint-Grégoire I |
+| **REG20A** | Régional 20 A | C/D | `END` | ex æquo Thury-Harcourt à résoudre |
+
+Compétitions **`ON`** touchées, corrigées **sans manip particulière** au premier recalcul
+normal (pas de bascule de statut) :
+
+- **T-AVRD1** (bug A/B)
+- **REG07U12** (bug C/D)
+- **T-AVRD2** (bug C, déjà corrigée en dev, cf. §Validation partie 2)
+
+Compétitions consolidées **sans niveau mixte** (12 : ECA1, ECA1U21, ECA1U21W, ECA1W, N15,
+N18¹, NPOF, NPOH¹, REG20B, T-62D2¹, T-AVRD2¹ — ¹déjà listées ci-dessus pour un autre bug) :
+non exposées au bug B, mais à recalculer par précaution si elles portent des phases
+consolidées (bug A potentiel).
+
+> **NEM** : niveau mixte présent mais jamais recalculée depuis l'introduction du bug → saine,
+> aucune action requise, sauf recalcul de routine.
+
+## 2. Séquence par compétition `END`
+
+À répéter **individuellement** pour chacune des 8 compétitions du tableau ci-dessus. Ne pas
+grouper les bascules de statut : traiter une compétition de bout en bout avant de passer à
+la suivante, pour limiter la fenêtre où un classement publié est temporairement rouvert.
+
+1. **Sauvegarder** (dump SQL ciblé, pas juste un export) :
+   - `kp_competition_equipe` (lignes de la compétition/saison)
+   - `kp_competition_equipe_niveau` (idem)
+   - `kp_competition_equipe_journee` (idem)
+   - `kp_competition` (la ligne de la compétition — pour restaurer le `Statut` en cas
+     d'interruption)
+2. **Basculer le statut** `END` → `ON` (nécessite un profil ≤ 3).
+3. **Recalculer le classement** (admin api2 ou legacy — les deux moteurs donnent désormais
+   un résultat identique, cf. Validation).
+4. **Vérifier avant republication** :
+   - `J` par équipe contre `kp_competition_equipe_journee` (somme des matchs réellement
+     joués, phases consolidées incluses) ;
+   - pour les compétitions listées bug C/D : le rang général respecte le rang de poule dans
+     la **poule décisive** indiquée au tableau « Poules décisives à contrôler » ;
+   - pour T-62D1, N3E, N3O : re-rejouer la requête « écart J » (§0) pour confirmer J_stocké
+     = J_attendu ;
+   - si `goalaverage = part` sur la compétition (N3, N18, NPOH, N3E) : vérifier à la main que
+     le classement de la poule décisive respecte la cascade FFCK (points h2h → diff
+     particulière → diff générale → buts marqués → cartons) — cf. §4 ci-dessous, cette
+     vérification n'a jamais été faite via l'interface réelle pour ces compétitions.
+5. **Republier** le classement (bascule `CltNiveau` → `CltNiveau_publi`, etc. — c'est ce qui
+   rend le changement visible au public).
+6. **Rebasculer le statut** `ON` → `END`.
+7. **Consigner** : compétition traitée, date, écart constaté avant/après, personne ayant
+   validé la republication (ces compétitions sont publiques et déjà terminées — la
+   republication modifie un résultat officiel consulté).
+
+## 3. Compétitions `ON` (T-AVRD1, REG07U12)
+
+Pas de bascule de statut nécessaire. Un recalcul + republication normaux suffisent. Vérifier
+tout de même le point 4 ci-dessous en priorité pour ces deux-là : ce sont les seules où le
+correctif peut être validé en conditions réelles sans manip de statut, donc les meilleures
+candidates pour combler la réserve du §4 avant de s'attaquer aux compétitions `END`.
+
+## 4. Combler la réserve bug D avant de traiter les compétitions `part`
+
+Le document signale que la portée du bug D (repli `DiffGen`/`PlusGen`) n'a été testée
+qu'isolément (poule AF de T-3RIV), `DoClassement()` legacy exigeant une session HTTP
+(`MyPageSecure`) non disponible en CLI. Avant de traiter **N3, N18, NPOH, N3E** (toutes en
+`goalaverage = part`, toutes `END`) :
+
+1. Choisir 1 à 2 compétitions `part` déjà terminées (T-3RIV a déjà servi de cas de test ;
+   prendre une deuxième pour croiser) et rejouer un recalcul comparatif **via l'interface
+   admin réelle** (pas en CLI), legacy et api2, en environnement de dev ou preprod.
+2. Comparer les classements obtenus poule par poule sur les cas d'égalité de points sans
+   confrontation directe décisive.
+3. Ne traiter N3 / N18 / NPOH / N3E (§2) qu'une fois ce point validé — ce sont exactement les
+   compétitions où cette réserve peut se matérialiser en prod.
+
+## 5. Ordre de traitement recommandé
+
+1. **REG07U12** et **T-AVRD1** (`ON`, aucune manip de statut, risque le plus faible) —
+   valider le pipeline de bout en bout en conditions réelles.
+2. **§4** — combler la réserve bug D sur 1-2 compétitions `part` terminées.
+3. **N3O** (bug A seul, pas de dépendance au goal-average `part` a priori — à vérifier).
+4. **T-62D2, REG20A** (bug C/D, hors `part` ou impact limité à un ex æquo).
+5. **N3, N18, NPOH, N3E, T-62D1** (bug C/D en `goalaverage = part`, ou cumul A+B+C/D pour
+   T-62D1 et N3E) — en dernier, une fois le §4 validé.
