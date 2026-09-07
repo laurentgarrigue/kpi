@@ -219,6 +219,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - rankings : le score des équipes perdantes ne doit pas être en gras pour les matchs éliminatoires
 gamedays/schema : au survol d'une équipe mettre le texte clair pour contraster avec le background sombre dans les poules, mettre le texte sombre pour contraster avec le background clair dans les matchs éliminatoires.
 presence/team/ : joueurs inactifs, mettre le texte sombre pour contraster avec le background clair.
+- Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
 
 **Nours**:
 - "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.

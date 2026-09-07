@@ -386,13 +386,23 @@ class GestionClassement extends MyPageSecure
 
 			$this->CalculClassement($codeCompet, $typeClt, $tousLesMatchs);
 
+			// Le classement par phase (Clt) est fixé en premier : PtsNiveau en dérive
+			// désormais, il doit donc être connu avant la construction des totaux.
+			$this->FinalisationClassementJourneeChpt($codeCompet, $codeSaison, $goalaverage, $tousLesMatchs);
+
+			// PtsNiveau recalculé depuis le rang de poule pour les phases de classement,
+			// puis reconstruction des totaux qu'il alimente. C'est ce qui fait remonter
+			// un changement de Niveau (ou une correction manuelle de Clt) au classement
+			// général, y compris sur les phases consolidées.
+			$this->AppliquePtsNiveauSurRang($codeCompet, $codeSaison);
+			$this->ReconstruitTotauxPtsNiveau($codeCompet, $codeSaison);
+
 			$egalites = $this->FinalisationClassementChpt($codeCompet, $codeSaison, $goalaverage, $tousLesMatchs);
 			$this->FinalisationClassementNiveau($codeCompet, $codeSaison);
 
 			$this->FinalisationClassementNiveauChpt($codeCompet, $codeSaison);
 			$this->FinalisationClassementNiveauNiveau($codeCompet, $codeSaison);
 
-			$this->FinalisationClassementJourneeChpt($codeCompet, $codeSaison, $goalaverage, $tousLesMatchs);
 			$this->FinalisationClassementJourneeNiveau($codeCompet, $codeSaison);
 		}
 	
@@ -496,6 +506,98 @@ class GestionClassement extends MyPageSecure
 	 * été joués en phases consolidées se retrouvent avec J = 0 / PtsNiveau = 0 et ne
 	 * peuvent plus être départagées dans le classement général.
 	 */
+	/**
+	 * Recalcule PtsNiveau à partir du rang de poule (Clt) pour les phases de
+	 * classement (Type 'C').
+	 *
+	 * PtsNiveau est le seul canal par lequel une phase alimente le classement général
+	 * (kp_competition_equipe.PtsNiveau détermine CltNiveau). Le dériver des seuls
+	 * résultats de matchs posait deux problèmes :
+	 *
+	 *  - la valeur figeait le Niveau de la phase au moment du calcul : modifier ce
+	 *    Niveau après coup restait sans effet sur une phase consolidée (dont les lignes
+	 *    ne sont jamais recalculées), laissant le classement général incohérent ;
+	 *  - les corrections manuelles du classement de poule étaient ignorées : un
+	 *    administrateur peut modifier Clt, mais Clt n'était jamais relu par le général.
+	 *
+	 * Le baser sur le rang rend la valeur reconstructible à chaque recalcul et fait
+	 * enfin respecter le classement de poule par le classement général, corrections
+	 * manuelles comprises :
+	 *
+	 *     PtsNiveau = pow(64, Niveau) * (nb_equipes_phase - Clt + 1)
+	 *
+	 * Le facteur 64 conserve la domination d'un Niveau supérieur, comme auparavant.
+	 *
+	 * Les phases éliminatoires (Type 'E') gardent la formule sur résultat de match :
+	 * elles n'ont pas de classement de poule à respecter et rien à y préserver.
+	 *
+	 * Doit tourner APRÈS FinalisationClassementJourneeChpt(), qui fixe Clt pour les
+	 * phases non consolidées ; les phases consolidées gardent leur Clt figé.
+	 */
+	function AppliquePtsNiveauSurRang($codeCompet, $codeSaison)
+	{
+		$myBdd = $this->myBdd;
+
+		$sql = "UPDATE kp_competition_equipe_journee cej
+			INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+			INNER JOIN (
+				SELECT cej2.Id_journee, COUNT(*) AS n
+				FROM kp_competition_equipe_journee cej2
+				GROUP BY cej2.Id_journee
+			) sz ON sz.Id_journee = cej.Id_journee
+			SET cej.PtsNiveau = POW(64, j.Niveau) * (sz.n - cej.Clt + 1)
+			WHERE j.Code_competition = ?
+			AND j.Code_saison = ?
+			AND (j.Type IS NULL OR j.Type = 'C')
+			AND cej.Clt > 0 ";
+		$result = $myBdd->pdo->prepare($sql);
+		$result->execute(array($codeCompet, $codeSaison));
+	}
+
+	/**
+	 * Reconstruit les totaux de PtsNiveau (général et par niveau) depuis les phases.
+	 *
+	 * AppliquePtsNiveauSurRang() réécrit les valeurs au niveau phase : les totaux
+	 * accumulés par CalculClassement() et ReportClassementPhasesConsolidees() sont donc
+	 * périmés. Seul PtsNiveau est reconstruit ici ; Pts, J, G, N, P, F, Plus, Moins et
+	 * Diff conservent les valeurs produites par ces deux étapes.
+	 */
+	function ReconstruitTotauxPtsNiveau($codeCompet, $codeSaison)
+	{
+		$myBdd = $this->myBdd;
+
+		// Total général par équipe.
+		$sql = "UPDATE kp_competition_equipe ce
+			LEFT JOIN (
+				SELECT cej.Id, SUM(cej.PtsNiveau) AS total
+				FROM kp_competition_equipe_journee cej
+				INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+				WHERE j.Code_competition = ? AND j.Code_saison = ?
+				GROUP BY cej.Id
+			) t ON t.Id = ce.Id
+			SET ce.PtsNiveau = COALESCE(t.total, 0)
+			WHERE ce.Code_compet = ?
+			AND ce.Code_saison = ? ";
+		$result = $myBdd->pdo->prepare($sql);
+		$result->execute(array($codeCompet, $codeSaison, $codeCompet, $codeSaison));
+
+		// Total par niveau.
+		$sql = "UPDATE kp_competition_equipe_niveau cen
+			INNER JOIN kp_competition_equipe ce ON ce.Id = cen.Id
+			LEFT JOIN (
+				SELECT cej.Id, j.Niveau, SUM(cej.PtsNiveau) AS total
+				FROM kp_competition_equipe_journee cej
+				INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+				WHERE j.Code_competition = ? AND j.Code_saison = ?
+				GROUP BY cej.Id, j.Niveau
+			) t ON t.Id = cen.Id AND t.Niveau = cen.Niveau
+			SET cen.PtsNiveau = COALESCE(t.total, 0)
+			WHERE ce.Code_compet = ?
+			AND ce.Code_saison = ? ";
+		$result = $myBdd->pdo->prepare($sql);
+		$result->execute(array($codeCompet, $codeSaison, $codeCompet, $codeSaison));
+	}
+
 	function ReportClassementPhasesConsolidees($codeCompet, $codeSaison)
 	{
 		$myBdd = $this->myBdd;
@@ -1095,6 +1197,12 @@ class GestionClassement extends MyPageSecure
 				$rEgalites[$clt][$idEquipeB]['Diff'] = $rEgalites[$clt][$idEquipeB]['Diff'] + $arrayCltB['Diff'];
 			}
 
+			if (!isset($rEgalites[$clt])) {
+				// Aucun match trouvé entre les équipes à égalité (ex: matchs non encore
+				// validés si $tousLesMatchs est false) : on garde le classement Pts/Diff/Plus
+				// déjà posé par FinalisationClassementChpt et on passe au groupe suivant.
+				continue;
+			}
 
 			foreach ($rEgalites[$clt] as $team => $team_value) {
 				$arrayCltGlobal[$clt][] = [
@@ -1233,39 +1341,82 @@ class GestionClassement extends MyPageSecure
 				continue;
 			}
 
+				// Statistiques générales des équipes concernées, utilisées comme critères
+				// de repli quand la confrontation directe ne départage pas (match pas
+				// encore joué, ou nul). Aligne le legacy sur la cascade FFCK d'api2 :
+				// points h2h -> diff h2h -> diff générale -> buts marqués. Sans ce repli
+				// les équipes restaient ex aequo, et le classement général en héritait
+				// (PtsNiveau dérivant désormais du rang de poule).
+				$statsGen = [];
+				$sqlGen = "SELECT Id, Diff, Plus
+					FROM kp_competition_equipe_journee
+					WHERE Id_journee = ?
+					AND Id IN ($listTeams) ";
+				$resultGen = $myBdd->pdo->prepare($sqlGen);
+				$resultGen->execute(array($journee));
+				while ($rowGen = $resultGen->fetch()) {
+					$statsGen[$rowGen['Id']] = [
+						'Diff' => (int) $rowGen['Diff'],
+						'Plus' => (int) $rowGen['Plus'],
+					];
+				}
+
 				foreach ($rEgalites[$clt] as $team => $team_value) {
 					$arrayCltGlobal[$clt][] = [
 						'clt' => $clt,
 						'team' => $team,
 						'Pts' => $team_value['Pts'],
 						'Plus' => $team_value['Plus'],
-						'Diff' => $team_value['Diff']
+						'Diff' => $team_value['Diff'],
+						'DiffGen' => $statsGen[$team]['Diff'] ?? 0,
+						'PlusGen' => $statsGen[$team]['Plus'] ?? 0
 					];
 				}
-	
+
 				// Tri sur plusieurs colonnes, façon BDD
-				// Ajoute $data en tant que dernier paramètre, 
+				// Ajoute $data en tant que dernier paramètre,
 				// pour trier par la clé commune
 				array_multisort(
-					array_column($arrayCltGlobal[$clt], 'Pts'), SORT_DESC, 
-					array_column($arrayCltGlobal[$clt], 'Diff'), SORT_DESC, 
-					array_column($arrayCltGlobal[$clt], 'Plus'), SORT_DESC, 
+					array_column($arrayCltGlobal[$clt], 'Pts'), SORT_DESC,
+					array_column($arrayCltGlobal[$clt], 'Diff'), SORT_DESC,
+					array_column($arrayCltGlobal[$clt], 'Plus'), SORT_DESC,
+					array_column($arrayCltGlobal[$clt], 'DiffGen'), SORT_DESC,
+					array_column($arrayCltGlobal[$clt], 'PlusGen'), SORT_DESC,
 					$arrayCltGlobal[$clt]
 				);
-	
+
 				$sql = "UPDATE kp_competition_equipe_journee 
 					SET Clt = ? 
 					WHERE Id = ? 
 					AND Id_journee = ? ";
 				$result = $myBdd->pdo->prepare($sql);
 				
-				// incrémentation de 1 classement à partir du 2ème
+				// Incrémentation à partir du 2ème, en conservant l'ex aequo lorsque tous
+				// les critères sont épuisés : deux équipes que la cascade ne sépare pas
+				// gardent le même rang (comportement d'api2, dont la cascade se termine
+				// sur "non_departage" plutôt que sur un ordre arbitraire).
+				$critereTri = ['Pts', 'Diff', 'Plus', 'DiffGen', 'PlusGen'];
+				$cltCourant = $clt;
 				for ($i = 1; $i < count($arrayCltGlobal[$clt]); $i ++) {
-					$arrayCltGlobal[$clt][$i]['clt'] += $i;
-					
+					$precedent = $arrayCltGlobal[$clt][$i - 1];
+					$courant = $arrayCltGlobal[$clt][$i];
+
+					$identiques = true;
+					foreach ($critereTri as $critere) {
+						if ($precedent[$critere] != $courant[$critere]) {
+							$identiques = false;
+							break;
+						}
+					}
+
+					if (!$identiques) {
+						$cltCourant = $clt + $i;
+					}
+					$arrayCltGlobal[$clt][$i]['clt'] = $cltCourant;
+
 					// update BDD pour la journée
 					$result->execute(array(
-						$arrayCltGlobal[$clt][$i]['clt'], $arrayCltGlobal[$clt][$i]['team'], $journee
+						$cltCourant, $arrayCltGlobal[$clt][$i]['team'], $journee
 					));
 				}
 	
@@ -1430,14 +1581,19 @@ class GestionClassement extends MyPageSecure
 
 
 		// Chargement des Equipes par ordre de Pts ...
-		$sql = "SELECT a.Id, a.Id_journee, a.Clt, a.Pts, a.J, a.G, a.N, a.P, 
-			a.F, a.Plus, a.Moins, a.Diff, j.Type 
+		// Les phases consolidées sont exclues : leur classement est figé (corrections
+		// manuelles comprises) et ne doit pas être recalculé. api2 applique déjà ce
+		// filtre ; sans lui le legacy écrasait le Clt figé, et ce Clt alimente
+		// désormais PtsNiveau donc le classement général.
+		$sql = "SELECT a.Id, a.Id_journee, a.Clt, a.Pts, a.J, a.G, a.N, a.P,
+			a.F, a.Plus, a.Moins, a.Diff, j.Type
 			FROM kp_competition_equipe b, kp_competition_equipe_journee a
 			LEFT OUTER JOIN kp_journee j ON a.Id_journee = j.Id
-			WHERE a.Id = b.Id 
-			AND b.Code_compet = ? 
-			AND b.Code_saison = ? 
-			ORDER BY a.Id_journee, a.Pts DESC, a.Diff DESC, a.Plus DESC ";	 
+			WHERE a.Id = b.Id
+			AND b.Code_compet = ?
+			AND b.Code_saison = ?
+			AND (j.Consolidation IS NULL OR j.Consolidation != 'O')
+			ORDER BY a.Id_journee, a.Pts DESC, a.Diff DESC, a.Plus DESC ";
 		$result = $myBdd->pdo->prepare($sql);
 		$result->execute(array($codeCompet, $codeSaison));
 		while ($row = $result->fetch()) {
