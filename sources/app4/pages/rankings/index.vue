@@ -906,7 +906,7 @@ const editValueForField = (field: string, value: number): string => {
             <!-- "Égalités" dropdown — only when teams are tied (poules or general ranking) -->
             <div v-if="hasTies" class="relative" data-tour="ties-justification">
               <button
-                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 transition-colors text-sm flex items-center gap-1"
+                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 dark:hover:bg-warning-950 transition-colors text-sm flex items-center gap-1"
                 @click="toggleTiesDropdown($event)"
               >
                 <UIcon name="heroicons:scale" class="w-4 h-4" />
@@ -1470,7 +1470,17 @@ const editValueForField = (field: string, value: number): string => {
         <div id="published-ranking" class="flex-1 min-w-0 bg-white dark:bg-header-900 rounded-lg shadow">
           <!-- Column header -->
           <div class="px-4 py-3 bg-success-700 rounded-t-lg flex items-center justify-between gap-2">
-            <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+              <span
+                v-if="isRankingDifferent"
+                class="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-800 dark:text-amber-200"
+                :title="t('rankings.publish.different')"
+              >
+                <UIcon name="heroicons:exclamation-triangle" class="w-4 h-4 shrink-0" />
+                {{ t('rankings.publish.different_short') }}
+              </span>
+            </div>
             <a
               href="#computed-ranking"
               class="lg:hidden text-xs text-success-200 hover:text-white flex items-center gap-1"
@@ -1496,14 +1506,6 @@ const editValueForField = (field: string, value: number): string => {
                   <span class="font-medium">{{ t('rankings.publish.date_publish') }}</span> :
                   {{ formatDate(competitionInfo.datePublication) }}
                   ({{ t('rankings.compute.by') }} {{ competitionInfo.userNamePublication }})
-                </div>
-                <!-- Alert if different -->
-                <div
-                  v-if="isRankingDifferent"
-                  class="mt-1 flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200"
-                >
-                  <UIcon name="heroicons:exclamation-triangle" class="w-5 h-5 shrink-0" />
-                  {{ t('rankings.publish.different') }}
                 </div>
               </template>
               <div v-else class="text-sm text-header-900 dark:text-header-50 italic">

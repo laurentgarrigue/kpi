@@ -2054,6 +2054,7 @@
       "unpublish": "Delete published ranking",
       "not_published": "Ranking not published",
       "different": "Warning: published ranking differs from computed ranking",
+      "different_short": "Differs from computed",
       "publishing": "Publishing...",
       "unpublishing": "Deleting..."
     },

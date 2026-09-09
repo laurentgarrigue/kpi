@@ -2066,6 +2066,7 @@
       "unpublish": "Supprimer le classement publié",
       "not_published": "Classement non publié",
       "different": "Attention : le classement publié est différent du classement calculé",
+      "different_short": "Différent du calculé",
       "publishing": "Publication en cours...",
       "unpublishing": "Suppression en cours..."
     },
