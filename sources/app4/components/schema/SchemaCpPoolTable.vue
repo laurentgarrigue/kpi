@@ -43,7 +43,7 @@ const isHighlighted = (team: string) => {
   <div class="p-1">
     <!-- Ranking table -->
     <div v-if="hasRanking" class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="w-full text-sm schema-pool-table">
         <thead>
           <tr class="bg-header-200">
             <th class="px-1 py-1 text-left text-xs">{{ t('schema.table.rank') }}</th>
@@ -59,7 +59,7 @@ const isHighlighted = (team: string) => {
             :key="team.id"
             class="border-t transition-colors duration-100"
             :class="{
-              'bg-warning-100 text-black': isHighlighted(team.libelle),
+              'bg-warning-200 text-black': isHighlighted(team.libelle),
               'bg-header-50 text-black': !isHighlighted(team.libelle),
             }"
             @mouseenter="emit('hoverTeam', team.libelle)"
@@ -81,7 +81,7 @@ const isHighlighted = (team: string) => {
         v-for="team in phase.poolTeams"
         :key="team.id"
         class="py-0.5 px-1 rounded transition-colors duration-100 text-xs"
-        :class="{ 'bg-warning-100': isHighlighted(team.libelle) }"
+        :class="{ 'bg-warning-200 text-black': isHighlighted(team.libelle) }"
         @mouseenter="emit('hoverTeam', team.libelle)"
         @mouseleave="emit('hoverTeam', null)"
       >
@@ -95,7 +95,7 @@ const isHighlighted = (team: string) => {
         v-for="team in teamsFromMatches"
         :key="team"
         class="py-0.5 px-1 rounded transition-colors duration-100 text-xs text-header-900"
-        :class="{ 'bg-warning-100': isHighlighted(team) }"
+        :class="{ 'bg-warning-200 text-black': isHighlighted(team) }"
         @mouseenter="emit('hoverTeam', team)"
         @mouseleave="emit('hoverTeam', null)"
       >

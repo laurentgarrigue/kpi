@@ -482,6 +482,16 @@ table tbody tr:hover {
   background-color: rgb(249 250 251);
 }
 
+/* Schema pool ranking table: hovering a row always highlights that same team (yellow
+   bg-warning-200/text-black, see SchemaCpPoolTable.vue's isHighlighted/hoveredTeam).
+   Override the generic light-mode row hover above (higher specificity than the plain
+   bg-warning-200 utility), which otherwise paints the hovered row pale gray and hides
+   the highlight on exactly the row under the cursor. */
+.schema-pool-table tbody tr:hover {
+  background-color: var(--ui-color-warning-200);
+  color: black;
+}
+
 .dark table thead {
   background-color: var(--color-header-800);
   border-bottom-color: var(--color-header-700);
@@ -499,6 +509,16 @@ table tbody tr:hover {
    code, score, etc.) inherits black otherwise and is unreadable on the dark rows. */
 .dark table tbody {
   color: var(--color-header-50);
+}
+
+/* Schema pool ranking table: hovering a row always highlights that same team (yellow
+   bg-warning-200/text-black, see SchemaCpPoolTable.vue's isHighlighted/hoveredTeam).
+   Override the generic dark-mode row hover above (higher specificity than the plain
+   bg-warning-200 utility), which otherwise paints the hovered row dark blue and hides
+   the highlight on exactly the row under the cursor. */
+.dark .schema-pool-table tbody tr:hover {
+  background-color: var(--ui-color-warning-200);
+  color: black;
 }
 
 /* Pagination improvements */
