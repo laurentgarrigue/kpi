@@ -1435,14 +1435,17 @@ class AdminPresenceController extends AbstractController
 
     private function getLastUpdate(string $table, int $id): ?array
     {
+        // Journal entries use two formats depending on origin:
+        // - api2: "Equipe {id} - ..."
+        // - legacy admin: "Equipe : {id} - ..."
         $sql = "SELECT Dates, Users, Actions
                 FROM kp_journal
-                WHERE Journal LIKE ?
+                WHERE Journal LIKE ? OR Journal LIKE ?
                 ORDER BY Dates DESC
                 LIMIT 1";
 
         $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery(["%Equipe {$id}%"]);
+        $result = $stmt->executeQuery(["%Equipe {$id}%", "%Equipe : {$id}%"]);
         $row = $result->fetchAssociative();
 
         if (!$row) {
