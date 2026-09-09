@@ -948,11 +948,15 @@
     },
     "points_options": {
       "4-2-1-0": "4-2-1-0 (V/N/P/F)",
-      "3-1-0-0": "3-1-0-0 (V/N/P/F)"
+      "3-1-0-0": "3-1-0-0 (V/N/P/F)",
+      "ffck_hint": "Règlement FFCK : 4 points victoire, 2 nul, 1 défaite, 0 forfait.",
+      "icf_hint": "Règlement ICF : 3 points victoire, 1 nul, 0 défaite, 0 forfait."
     },
     "goalaverage_options": {
       "gen": "Général",
-      "part": "Particulier"
+      "part": "Particulier",
+      "gen_hint": "Règlement ICF : différence de buts calculée sur l'ensemble des matchs de la poule.",
+      "part_hint": "Règlement FFCK : différence de buts calculée uniquement sur les matchs entre équipes à égalité."
     },
     "tour_options": {
       "1": "Tour 1",
@@ -2062,6 +2066,7 @@
       "unpublish": "Supprimer le classement publié",
       "not_published": "Classement non publié",
       "different": "Attention : le classement publié est différent du classement calculé",
+      "different_short": "Différent du calculé",
       "publishing": "Publication en cours...",
       "unpublishing": "Suppression en cours..."
     },

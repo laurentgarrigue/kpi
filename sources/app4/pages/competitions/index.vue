@@ -1439,6 +1439,9 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                 <option value="4-2-1-0">{{ t('competitions.points_options.4-2-1-0') }}</option>
                 <option value="3-1-0-0">{{ t('competitions.points_options.3-1-0-0') }}</option>
               </select>
+              <p class="mt-1 text-xs text-header-600 dark:text-header-300">
+                {{ t(`competitions.points_options.${formData.points === '3-1-0-0' ? 'icf_hint' : 'ffck_hint'}`) }}
+              </p>
             </div>
 
             <!-- Goal average -->
@@ -1452,6 +1455,9 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                 <option value="gen">{{ t('competitions.goalaverage_options.gen') }}</option>
                 <option value="part">{{ t('competitions.goalaverage_options.part') }}</option>
               </select>
+              <p class="mt-1 text-xs text-header-600 dark:text-header-300">
+                {{ t(`competitions.goalaverage_options.${formData.goalaverage === 'part' ? 'part_hint' : 'gen_hint'}`) }}
+              </p>
             </div>
           </div>
 

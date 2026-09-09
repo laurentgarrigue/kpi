@@ -182,6 +182,15 @@ const showPhaseMatchScore = (match: RankingPhaseMatch, includesUnlocked: boolean
 // A winner/loser may only be highlighted once the game is validated.
 const phaseMatchHasWinner = (match: RankingPhaseMatch): boolean => match.validated
 
+// Winner/loser text styling for elimination phase matches (name + score).
+const phaseMatchSideClass = (match: RankingPhaseMatch, includesUnlocked: boolean, isSideA: boolean): string => {
+  if (!showPhaseMatchScore(match, includesUnlocked) || !phaseMatchHasWinner(match)) return 'text-header-900 dark:text-header-50'
+  const isWinner = isSideA ? match.scoreA! > match.scoreB! : match.scoreB! > match.scoreA!
+  return isWinner
+    ? 'font-bold text-success-700 dark:text-success-300'
+    : 'text-header-500 dark:text-header-400'
+}
+
 // Status badge colors (same as teams page)
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -897,7 +906,7 @@ const editValueForField = (field: string, value: number): string => {
             <!-- "Égalités" dropdown — only when teams are tied (poules or general ranking) -->
             <div v-if="hasTies" class="relative" data-tour="ties-justification">
               <button
-                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 transition-colors text-sm flex items-center gap-1"
+                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 dark:hover:bg-warning-950 transition-colors text-sm flex items-center gap-1"
                 @click="toggleTiesDropdown($event)"
               >
                 <UIcon name="heroicons:scale" class="w-4 h-4" />
@@ -1407,17 +1416,19 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, computedIncludesUnlocked, true)"
                         >{{ match.equipeA }}</span>
-                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-900 dark:text-header-50">
+                        <span class="w-16 text-center text-sm font-mono">
                           <template v-if="showPhaseMatchScore(match, computedIncludesUnlocked)">
-                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
+                            <span :class="phaseMatchSideClass(match, computedIncludesUnlocked, true)">{{ match.scoreA }}</span>
+                            <span class="text-header-900 dark:text-header-50"> - </span>
+                            <span :class="phaseMatchSideClass(match, computedIncludesUnlocked, false)">{{ match.scoreB }}</span><span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
                           </template>
-                          <template v-else>—</template>
+                          <template v-else><span class="text-header-900 dark:text-header-50">—</span></template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, computedIncludesUnlocked, false)"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>
@@ -1459,7 +1470,17 @@ const editValueForField = (field: string, value: number): string => {
         <div id="published-ranking" class="flex-1 min-w-0 bg-white dark:bg-header-900 rounded-lg shadow">
           <!-- Column header -->
           <div class="px-4 py-3 bg-success-700 rounded-t-lg flex items-center justify-between gap-2">
-            <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+              <span
+                v-if="isRankingDifferent"
+                class="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-800 dark:text-amber-200"
+                :title="t('rankings.publish.different')"
+              >
+                <UIcon name="heroicons:exclamation-triangle" class="w-4 h-4 shrink-0" />
+                {{ t('rankings.publish.different_short') }}
+              </span>
+            </div>
             <a
               href="#computed-ranking"
               class="lg:hidden text-xs text-success-200 hover:text-white flex items-center gap-1"
@@ -1485,14 +1506,6 @@ const editValueForField = (field: string, value: number): string => {
                   <span class="font-medium">{{ t('rankings.publish.date_publish') }}</span> :
                   {{ formatDate(competitionInfo.datePublication) }}
                   ({{ t('rankings.compute.by') }} {{ competitionInfo.userNamePublication }})
-                </div>
-                <!-- Alert if different -->
-                <div
-                  v-if="isRankingDifferent"
-                  class="mt-1 flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200"
-                >
-                  <UIcon name="heroicons:exclamation-triangle" class="w-5 h-5 shrink-0" />
-                  {{ t('rankings.publish.different') }}
                 </div>
               </template>
               <div v-else class="text-sm text-header-900 dark:text-header-50 italic">
@@ -1772,17 +1785,19 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, publishedIncludesUnlocked, true)"
                         >{{ match.equipeA }}</span>
-                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-900 dark:text-header-50">
+                        <span class="w-16 text-center text-sm font-mono">
                           <template v-if="showPhaseMatchScore(match, publishedIncludesUnlocked)">
-                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
+                            <span :class="phaseMatchSideClass(match, publishedIncludesUnlocked, true)">{{ match.scoreA }}</span>
+                            <span class="text-header-900 dark:text-header-50"> - </span>
+                            <span :class="phaseMatchSideClass(match, publishedIncludesUnlocked, false)">{{ match.scoreB }}</span><span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
                           </template>
-                          <template v-else>—</template>
+                          <template v-else><span class="text-header-900 dark:text-header-50">—</span></template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, publishedIncludesUnlocked, false)"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>

@@ -875,7 +875,7 @@ const pdfLinks = computed(() => {
               >✗</span>
               <span
                 v-else-if="player.surclassementNeeded && player.surclassementOk"
-                class="text-success-500 text-lg font-bold"
+                class="text-success-500 dark:text-success-400 text-lg font-bold"
                 :title="t('presence.surclassement_ok')"
               >✓</span>
             </td>
@@ -898,7 +898,7 @@ const pdfLinks = computed(() => {
             <td class="px-3 py-1 text-sm text-center">
               <span
                 v-if="player.certifCK === 'OUI'"
-                class="text-success-500"
+                class="text-success-500 dark:text-success-400"
               >
                 {{ t('common.yes') }}
               </span>
@@ -1009,13 +1009,13 @@ const pdfLinks = computed(() => {
                 >✗</span>
                 <span
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 text-lg font-bold"
+                  class="text-success-500 dark:text-success-400 text-lg font-bold"
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
+                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
@@ -1115,13 +1115,13 @@ const pdfLinks = computed(() => {
                 >✗</span>
                 <span
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 text-lg font-bold"
+                  class="text-success-500 dark:text-success-400 text-lg font-bold"
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
+                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
@@ -1145,7 +1145,7 @@ const pdfLinks = computed(() => {
             <tr
               v-for="player in inactivePlayers"
               :key="player.matric"
-              class="bg-dark-200 opacity-80 italic"
+              class="bg-header-100 dark:bg-header-800/60 opacity-80 italic"
             >
               <td v-if="canEdit" class="px-3 py-1">
                 <input v-model="selectedPlayerIds" type="checkbox" :value="player.matric" class="rounded border-header-300 dark:border-header-700" >
@@ -1170,7 +1170,7 @@ const pdfLinks = computed(() => {
                 >
               </td>
               <!-- Capitaine (inline edit) -->
-              <td class="px-3 py-1 text-sm">
+              <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">
                 <span
                   v-if="editingCell?.matric !== player.matric || editingCell?.field !== 'capitaine'"
                   :class="canEdit ? 'editable-cell' : ''"
@@ -1221,13 +1221,13 @@ const pdfLinks = computed(() => {
                 >✗</span>
                 <span
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 text-lg font-bold"
+                  class="text-success-500 dark:text-success-400 text-lg font-bold"
                   :title="t('presence.surclassement_ok')"
                 >✓</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500">{{ t('common.yes') }}</span>
+                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
                 <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">

@@ -47,7 +47,7 @@ const scoreBlockClass = (side: 'A' | 'B') => {
 }
 
 const teamNameClass = (side: 'A' | 'B') => {
-  if (isHighlighted(side)) return 'bg-warning-100'
+  if (isHighlighted(side)) return 'bg-warning-200 text-black'
   if (isWinner(side)) return 'bg-header-800 text-white font-semibold'
   return 'bg-header-200 text-black'
 }

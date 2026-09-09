@@ -215,11 +215,19 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
 
 - ✅ Tuto interactif : le tuto classement doit être accessible aux profils <= 6 (et non 4).
-- Le tuto ne doit pas se lancer tant que l'utilisateur n'est pas authentifié et qu'il n'a pas choisi son mandat.
-- rankings : le score des équipes perdantes ne doit pas être en gras pour les matchs éliminatoires
+- ✅ Le tuto ne doit pas se lancer tant que l'utilisateur n'est pas authentifié et qu'il n'a pas choisi son mandat.
+- ✅ rankings : le score des équipes perdantes ne doit pas être en gras pour les matchs éliminatoires
 gamedays/schema : au survol d'une équipe mettre le texte clair pour contraster avec le background sombre dans les poules, mettre le texte sombre pour contraster avec le background clair dans les matchs éliminatoires.
 presence/team/ : joueurs inactifs, mettre le texte sombre pour contraster avec le background clair.
+- ✅ Problème mode nuit sur les associations de journées aux événements (capture d'écran)
+- ✅ Compétitions : formulaire Création / modification : Goal average : préciser règlement FFCK / ICF.
+- ✅ Classements : Inclure les matchs non verrouillés : passer ligne en dessous, devant Recalculer. Publier le classement : aligner à droite. Alerte 'Attention : le classement publié est différent du classement calculé' : éviter le décalage vertical (raccourcir le texte, placer à côté de l'entête de colonne "Classement publié" ?)
+- ✅ Feuille de présence, dernière modification : afficher quelque soit le profil
+
+**Nouveau règlement**:
 - Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
+- Cartons noirs
+- 
 
 **Nours**:
 - "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.

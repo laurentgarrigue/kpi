@@ -936,11 +936,15 @@
     },
     "points_options": {
       "4-2-1-0": "4-2-1-0 (W/D/L/F)",
-      "3-1-0-0": "3-1-0-0 (W/D/L/F)"
+      "3-1-0-0": "3-1-0-0 (W/D/L/F)",
+      "ffck_hint": "FFCK rule: 4 points for a win, 2 for a draw, 1 for a loss, 0 for a forfeit.",
+      "icf_hint": "ICF rule: 3 points for a win, 1 for a draw, 0 for a loss, 0 for a forfeit."
     },
     "goalaverage_options": {
       "gen": "General",
-      "part": "Head-to-head"
+      "part": "Head-to-head",
+      "gen_hint": "ICF rule: goal difference calculated across all games in the pool.",
+      "part_hint": "FFCK rule: goal difference calculated only between tied teams' games."
     },
     "tour_options": {
       "1": "Round 1",
@@ -2050,6 +2054,7 @@
       "unpublish": "Delete published ranking",
       "not_published": "Ranking not published",
       "different": "Warning: published ranking differs from computed ranking",
+      "different_short": "Differs from computed",
       "publishing": "Publishing...",
       "unpublishing": "Deleting..."
     },

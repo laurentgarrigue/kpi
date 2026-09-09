@@ -211,7 +211,7 @@ const removeImage = () => {
         <button
           v-if="!disabled"
           type="button"
-          class="text-xs text-danger-600 hover:text-danger-800 shrink-0"
+          class="text-xs text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-300 shrink-0"
           @click="removeImage"
         >
           {{ t('competitions.images.remove') }}
@@ -248,7 +248,7 @@ const removeImage = () => {
           v-model="searchQuery"
           type="text"
           :placeholder="t('competitions.images.search_placeholder')"
-          class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2"
+          class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
         <div class="border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
           <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-600 dark:text-header-300 text-center italic">
@@ -333,7 +333,7 @@ const removeImage = () => {
             v-model="externalUrl"
             type="url"
             :placeholder="t('competitions.images.url_placeholder')"
-            class="flex-1 px-2 py-1.5 text-xs border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500"
+            class="flex-1 px-2 py-1.5 text-xs border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
           >
           <button
             type="button"
