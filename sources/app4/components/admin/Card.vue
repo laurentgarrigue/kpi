@@ -22,7 +22,7 @@ const emit = defineEmits<{
     :class="{ 'ring-2 ring-primary-500': selected }"
   >
     <!-- Card header -->
-    <div class="flex items-center justify-between px-4 py-3 bg-primary-50 border-b border-primary-100">
+    <div class="flex items-center justify-between px-4 py-3 bg-primary-50 dark:bg-primary-950 border-b border-primary-100 dark:border-primary-800">
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <input
           v-if="showCheckbox"
@@ -44,7 +44,7 @@ const emit = defineEmits<{
     <!-- Card footer -->
     <div
       v-if="$slots.footer || $slots['footer-left'] || $slots['footer-right']"
-      class="px-4 py-3 bg-primary-50 border-t border-primary-100 flex items-center justify-between gap-3"
+      class="px-4 py-3 bg-primary-50 dark:bg-primary-950 border-t border-primary-100 dark:border-primary-800 flex items-center justify-between gap-3"
     >
       <div class="flex items-center gap-3">
         <slot name="footer-left" />

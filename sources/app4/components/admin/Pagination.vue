@@ -43,7 +43,7 @@ const localLimit = computed({
 
 <template>
   <div class="px-4 py-3 border-t border-header-200 dark:border-header-700 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-header-900">
-    <div class="text-sm text-header-600 dark:text-header-600">
+    <div class="text-sm text-header-600 dark:text-header-300">
       <span v-if="total > 0">
         {{ showingTextFormatted }}
       </span>

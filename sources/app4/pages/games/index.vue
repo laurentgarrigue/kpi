@@ -3089,7 +3089,7 @@ const openScoring = (gameId: number) => {
                 </template>
                 <span
                   v-else
-                  class="text-header-900 dark:text-header-300 font-normal"
+                  class="text-header-900 dark:text-header-50 font-normal"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   @click="startPhaseEdit(g)"
                 >{{ g.phase }}</span>
