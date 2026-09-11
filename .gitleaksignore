@@ -1,0 +1,47 @@
+# Faux positifs / secrets historiques vérifiés non sensibles pour Gitleaks.
+# Format : <fingerprint tel que rapporté par `gitleaks detect`>
+#
+# Contexte de chaque groupe ci-dessous : voir la review menée le 2026-09-11
+# pour débloquer le check requis `ci-summary` sur les PR vers `main`.
+
+# --- APP_SECRET Symfony committé par erreur (2025-11-15), retiré depuis ---
+# Vérifié par comparaison de hash SHA256 : ne correspond à aucune valeur
+# actuellement utilisée en préprod ou en prod. sources/api2/.env est
+# maintenant gitignoré ; sources/api2/.env.dev est vide.
+0099d6d7aa3871f83ee0dec513a3c974bbc7a8db:sources/api2/.env.dev:generic-api-key:3
+0099d6d7aa3871f83ee0dec513a3c974bbc7a8db:sources/api2/.env:generic-api-key:19
+cebf9b06fdc11db9fc0e5d155a041acb7fb6574a:sources/api2/.env.dev:generic-api-key:3
+cebf9b06fdc11db9fc0e5d155a041acb7fb6574a:sources/api2/.env:generic-api-key:19
+
+# --- Constantes FontAwesome (noms d'icônes, pas des secrets) ---
+255607d2901de334aba0aad5003f4e44d2b13706:sources/program/libraries/fontawesome/advanced-options/use-with-node-js/fontawesome-free-brands/index.d.ts:linkedin-client-id:178
+255607d2901de334aba0aad5003f4e44d2b13706:sources/program/libraries/fontawesome/advanced-options/use-with-node-js/fontawesome-free-brands/index.d.ts:linkedin-client-id:179
+6f02cdbda86e5de0839336c31420f27fa3ab97c5:sources/report/libraries/fontawesome/advanced-options/use-with-node-js/fontawesome-free-brands/index.d.ts:linkedin-client-id:178
+6f02cdbda86e5de0839336c31420f27fa3ab97c5:sources/report/libraries/fontawesome/advanced-options/use-with-node-js/fontawesome-free-brands/index.d.ts:linkedin-client-id:179
+
+# --- Exemples de documentation (X-Auth-Token placeholders) ---
+42858a41349052d146ee9b448703d025349e2054:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:167
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:148
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:155
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:159
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:181
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:116
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:152
+7db5a49df920270b9e0b7f4aa30ff1212cdb6775:sources/api2/README.md:generic-api-key:61
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:148
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:155
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:159
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:curl-auth-header:181
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:116
+804639f32c5de6dd974c4cd6a79bc9141009617e:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:152
+804639f32c5de6dd974c4cd6a79bc9141009617e:sources/api2/README.md:generic-api-key:61
+affacb5ad59866bff5b6d5b72965f30ca9f1a683:DOC/developer/in-progress/implementations/API2_SERVICES_IMPLEMENTATION.md:generic-api-key:197
+dedf09ff012676d2328c5ebb212e9bf3ad2f2395:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:342
+e389ff8397bda7e0365725618314e522cfc9b0fc:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:342
+ed3d6d06d26afbed9ac34e73048e734356b90457:DOC/developer/reference/API2_ENDPOINTS.md:generic-api-key:167
+
+# --- Clé API Google Maps front-end historique (2016) et son cache compilé Smarty ---
+8345fc90f58d4e9dd76f1e201f92726a6817b4b3:sources/smarty/templates/pageMap.tpl:generic-api-key:40
+bebc52db918519707a6fe7d8f7fca3d9a4e4213f:smarty/templates/pageMap.tpl:generic-api-key:40
+bebc52db918519707a6fe7d8f7fca3d9a4e4213f:smarty/templates_c/%%6C^6C0^6C01AA6E%%pageMap.tpl.php:generic-api-key:48
+ca73fa61b747e2870d87d5f95bca731c8389a215:smarty/templates_c/%%6C^6C0^6C01AA6E%%pageMap.tpl.php:generic-api-key:48
