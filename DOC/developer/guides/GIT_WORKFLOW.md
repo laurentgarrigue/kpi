@@ -100,16 +100,21 @@ et ignore les worktrees.
 Un seul stack Docker, tout dans `~/Documents/dev/kpi`.
 
 ```
-branche ─► code/commit ─► make dev ─► pr_create ─► pr_checks ─► pr_merge ─► (release)
+make feature ─► code/commit ─► make dev ─► pr_create ─► pr_checks ─► pr_merge ─► (release)
 ```
 
 **1. Partir d'un `main` à jour**
 
 ```bash
 cd ~/Documents/dev/kpi
-git checkout main && git pull
-git checkout -b feature/scoring
+make feature                 # demande le nom au prompt, ou : make feature name=scoring
 ```
+
+Une seule commande qui remplace `git checkout main && git pull && git checkout -b …` :
+elle refuse un working tree sale, remet `main` sur `origin/main` (`reset --hard`,
+même raison qu'au §4 de `pr_merge`), puis crée la branche. Le préfixe `feature/`
+est ajouté tout seul — sauf si tu donnes déjà un préfixe connu (`fix/`, `hotfix/`,
+`chore/`, `docs/`, `refactor/`).
 
 Working tree, `node_modules`, `api2/vendor`, `.env`, base MariaDB : **déjà en
 place**, rien à copier.
@@ -283,23 +288,66 @@ Une release se **décide** : elle ne part pas toute seule au fil de l'eau. Elle 
 fait en deux temps — le bump passe par une PR (comme tout le reste), puis le tag
 est posé sur `main`.
 
+**D'abord : savoir où tu en es.**
+
+```bash
+make version
+```
+
+```
+Versions dans le working tree (main) :
+  app2   1.5.0
+  app4   1.25.3
+  api2   2.2.0
+
+Dernier tag de release : v1.26.0  (2026-09-20)
+  commits sur main depuis ce tag : 7
+
+Versions DÉPLOYÉES (api2, lu en direct) :
+  préprod  api2 2.2.0
+  prod     api2 2.1.2
+```
+
+**⚠️ Les trois briques ont des versions INDÉPENDANTES**, et c'est voulu : app2,
+app4 et api2 n'évoluent pas au même rythme (l'historique des bumps le montre :
+`app4@1.25.3`, `app4@1.25.0 api2@2.2.0`, `api2@2.1.2`). On ne les aligne pas sur
+un numéro commun — cela ferait bondir app2 de `1.5.x` ou régresser app4.
+
 ```bash
 cd ~/Documents/dev/kpi
 git checkout main && git pull
 
-# 1. Bump des versions (app2, app4, api2) sur une branche release/vX.Y.Z
-make release version=1.26.0
+# 1. Bump — UNIQUEMENT les briques qui changent
+make release app4=1.25.4                  # une seule brique
+make release app4=1.26.0 api2=2.3.0       # plusieurs d'un coup
 
 # 2. Cycle PR habituel
 make pr_create && make pr_checks && make pr_merge
 
-# 3. Poser et pousser le tag (APRÈS le merge)
+# 3. Poser et pousser le tag GLOBAL (APRÈS le merge)
 make release_tag version=1.26.0
 ```
 
-`make release` refuse un working tree sale, une version mal formée, ou un tag qui
-existe déjà (localement **ou** sur origin). `make release_tag` vérifie que le bump
-est bien mergé avant de taguer.
+Le **tag de release est un numéro à part**, qui désigne l'état global du dépôt à
+un instant donné — il n'a pas à coïncider avec la version d'une brique.
+
+`make release` sans argument affiche l'usage **et** l'état des versions. Il refuse
+un working tree sale et une version mal formée ; `make release_tag` refuse un tag
+déjà existant (local ou distant) et vérifie que ton `HEAD` est bien sur
+`origin/main` (donc que la PR de bump est mergée).
+
+### Où la version est-elle visible ?
+
+| Brique | Où l'utilisateur la voit | Source |
+|---|---|---|
+| **app2** | pied de page de l'app | `import pkg from '~/package.json'` ([AppFooter.vue](../../../sources/app2/components/app/AppFooter.vue)) |
+| **app4** | pied de page de l'admin | `import { version } from '~/package.json'` ([layouts/admin.vue](../../../sources/app4/layouts/admin.vue)) |
+| **api2** | `/api2/doc` → champ `info.version` | `nelmio_api_doc.yaml` + `api_platform.yaml` (gardés alignés) |
+
+Les deux Nuxt lisent leur `package.json` **au build** : une version bumpée n'apparaît
+donc qu'après régénération de l'app (ce que fait le déploiement). `make version` lit
+la prod et la préprod en direct via `/api2/doc.json` — c'est le moyen le plus sûr de
+savoir *ce qui tourne réellement* avant de déclencher un déploiement.
 
 > **Pourquoi un tag et non « le HEAD de main »** : un tag est **immuable**. Il
 > désigne sans ambiguïté ce qui tourne en production, là où « le HEAD de `main` au
@@ -462,6 +510,8 @@ Les `wt_*` ne servent qu'en mode worktree ; les `pr_*` dans les deux modes.
 
 | Cible | Effet |
 |---|---|
+| `make feature [name=<n>]` | remet `main` à jour et crée la branche feature (nom au prompt si omis) |
+| `make version` | versions de chaque brique + dernier tag + **versions déployées** (préprod/prod) |
 | `make wt_new name=<n> [base=<b>]` | *(worktree)* crée `feature/<n>` + worktree + env |
 | `make wt_list` / `wt_sync name=<n>` / `wt_rm name=<n>` | *(worktree)* liste / re-copie env / supprime |
 | `make pr_push` | push la branche courante en suivi |
@@ -470,8 +520,8 @@ Les `wt_*` ne servent qu'en mode worktree ; les `pr_*` dans les deux modes.
 | `make pr_status` / `pr_checks` | état des PR / suit la CI jusqu'au bout |
 | `make pr_merge` | merge (squash) + remet main à jour + nettoie branche/worktree |
 | `make pr_close` | ferme la PR **sans** merger + supprime la branche (PR jetable) |
-| `make release version=X.Y.Z` | bump des versions sur une branche `release/vX.Y.Z` → PR |
-| `make release_tag version=X.Y.Z` | pose et pousse le tag `vX.Y.Z` sur main (après merge) |
+| `make release app4=X.Y.Z [app2=…] [api2=…]` | bump **par brique** (versions indépendantes) → PR |
+| `make release_tag version=X.Y.Z` | pose et pousse le tag global `vX.Y.Z` sur main (après merge) |
 | `make last_merge_sha` | affiche le SHA du dernier merge sur main (pour un revert) |
 | `make preprod_rollback sha=<sha>` | prépare le revert local d'un commit fusionné → PR |
 
