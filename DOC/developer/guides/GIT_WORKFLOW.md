@@ -226,7 +226,22 @@ du run :
 > est côté serveur, pas côté dépôt. **Sans revert, le prochain déploiement
 > re-déploiera le commit cassé** et re-rollbackera.
 
-### La marche à suivre après un rollback
+### Le revert est désormais AUTOMATIQUE
+
+Depuis le 2026-09-13, quand le déploiement préprod échoue, le workflow ouvre
+**tout seul** une PR `revert/<sha>` qui annule le commit fautif (étape
+`if: failure()` de `deploy-preprod.yml`). Tu n'as qu'à :
+
+1. **lire la cause de l'échec** dans le run lié depuis la PR ;
+2. **merger la PR** si le commit est bien en cause → la préprod se redéploie saine ;
+3. **fermer la PR** si l'échec venait d'ailleurs (aléa réseau, VPS) — il n'y a
+   alors rien à reverter.
+
+> Si le revert **conflicte** (le commit fautif a été suivi d'autres changements sur
+> les mêmes fichiers), aucune PR n'est ouverte : une **issue** l'est à la place,
+> avec la marche à suivre manuelle ci-dessous.
+
+### La marche à suivre manuelle (revert en conflit)
 
 Il faut **reverter le commit fautif dans `main`** — via une PR (push direct
 interdit). Deux cibles Make automatisent ça :

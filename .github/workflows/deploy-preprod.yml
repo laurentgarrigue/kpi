@@ -40,7 +40,14 @@ on:
 
 # Least privilege : lecture seule du repo.
 permissions:
-  contents: read
+  # `write` (et non `read`) UNIQUEMENT pour l'étape de revert automatique en fin de
+  # fichier : quand un déploiement échoue, le wrapper restaure le VPS mais le commit
+  # fautif RESTE sur `main` — sans revert, le déploiement suivant le re-déploierait
+  # et re-rollbackerait. L'étape ouvre donc une PR de revert (jamais de push direct :
+  # `main` l'interdit, ruleset).
+  contents: write
+  pull-requests: write
+  issues: write
 
 concurrency:
   # Un seul déploiement préprod à la fois ; on n'annule pas celui en cours (un
@@ -114,3 +121,90 @@ jobs:
           timeout: 60s
           command_timeout: 15m
           script: /home/deploy/deploy-wrapper.sh preprod ${{ steps.sha.outputs.sha }}
+
+      # --- Revert automatique quand le déploiement a échoué --------------------
+      #
+      # POURQUOI. Le wrapper rollback le VPS tout seul (il restaure
+      # `.last-deploy-sha`), mais ce rollback est CÔTÉ SERVEUR : le commit fautif
+      # reste sur `main`. Sans revert, le prochain push redéploierait exactement le
+      # même commit cassé, qui re-rollbackerait — la boucle que ce projet a vécue.
+      #
+      # Le revert passe par une PR : `main` refuse le push direct (ruleset), et une
+      # PR laisse la CI se prononcer sur le revert avant qu'il n'atterrisse.
+      #
+      # Si le revert CONFLICTE (le commit fautif a été suivi d'autres changements
+      # sur les mêmes fichiers), on n'échoue pas en silence : on ouvre une ISSUE
+      # avec la marche à suivre manuelle.
+      #
+      # Ce workflow ne checkoute rien pour déployer (il ne fait que du SSH) : ce
+      # checkout-ci est donc nécessaire, avec `fetch-depth: 0` pour que `git revert`
+      # dispose de l'historique.
+      - name: Checkout pour le revert
+        if: failure()
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Ouvrir une PR de revert (ou une issue si conflit)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Le SHA est déjà validé `^[0-9a-f]{40}$` par l'étape « Résoudre le SHA »,
+          # mais on le passe par l'environnement plutôt que de l'interpoler dans le
+          # `run:` — règle du projet, sans exception (anti-injection).
+          BAD_SHA: ${{ steps.sha.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          short="$(printf '%s' "$BAD_SHA" | cut -c1-8)"
+          branch="revert/$short"
+          subject="$(git log -1 --pretty=%s "$BAD_SHA")"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Une PR de revert est peut-être déjà ouverte (déploiement rejoué).
+          if gh pr list --head "$branch" --base main --state open \
+               --json number --jq '.[0].number // empty' | grep -q .; then
+            echo "Une PR de revert est déjà ouverte pour $short — rien à faire."
+            exit 0
+          fi
+
+          git checkout -B "$branch" "origin/main"
+
+          if git revert --no-edit "$BAD_SHA"; then
+            git push --force-with-lease origin "$branch"
+            gh pr create --base main --head "$branch" \
+              --title "revert: déploiement préprod KO sur $short" \
+              --body "Le déploiement préprod du commit \`$BAD_SHA\` a échoué et la préprod a été **rollbackée côté VPS**.
+
+          Commit reverté : \`$short\` — $subject
+          Run en échec : $RUN_URL
+
+          ⚠️ **Cette PR est nécessaire** : le rollback du wrapper ne touche que le serveur.
+          Sans ce revert, le prochain déploiement re-déploierait le commit fautif.
+
+          Vérifie la cause de l'échec dans le run avant de merger — si le problème vient
+          d'ailleurs (aléa réseau, VPS), ferme cette PR plutôt que de la merger."
+            echo "✅ PR de revert ouverte pour $short."
+          else
+            git revert --abort || true
+            gh issue create \
+              --title "⚠️ Revert automatique impossible pour $short (conflit)" \
+              --body "Le déploiement préprod de \`$BAD_SHA\` a échoué (préprod rollbackée côté VPS),
+          mais le revert automatique **conflicte** — il touche des fichiers modifiés depuis.
+
+          Commit à reverter : \`$short\` — $subject
+          Run en échec : $RUN_URL
+
+          Marche à suivre manuelle :
+          \`\`\`bash
+          make preprod_rollback sha=$BAD_SHA
+          # résous les conflits, puis :
+          git revert --continue
+          make pr_create && make pr_checks && make pr_merge
+          \`\`\`"
+            echo "::warning::Revert en conflit — une issue a été ouverte pour $short."
+          fi
