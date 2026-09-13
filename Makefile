@@ -1252,7 +1252,14 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 		echo; echo "✔ Terminé. Tu es encore dans un dossier supprimé : cd $$main_repo"; \
 	else \
 		echo "Bascule sur develop et mise à jour..."; \
-		git checkout develop && git pull || exit 1; \
+		if ! git diff --quiet || ! git diff --cached --quiet; then \
+			echo "⛔ Working tree sale : la PR est MERGÉE, mais le nettoyage local s'arrête ici."; \
+			echo "   Committe ou stashe, puis : git checkout develop && git fetch origin develop && git reset --hard origin/develop"; \
+			exit 1; \
+		fi; \
+		git fetch origin develop || exit 1; \
+		git checkout develop || exit 1; \
+		git reset --hard origin/develop || exit 1; \
 		git branch -D "$$branch" 2>/dev/null \
 			&& echo "Branche locale '$$branch' supprimée." \
 			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
