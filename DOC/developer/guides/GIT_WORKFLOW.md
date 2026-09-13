@@ -37,8 +37,9 @@ Ce guide décrit **deux choses qui s'imbriquent** :
    └─────────┬──────────┘                │  lint · phpstan · audits ·   │
              │ make pr_checks (vert)     │  build-nuxt · smoke-api2 ·   │
              │                           │  secrets-scan → ci-summary   │
-             │ make pr_merge (squash)    │  (+ fix-dependabot-lock)     │
-             ▼                           └──────────────────────────────┘
+             │ make pr_merge (squash)    │  (+ fix-dependabot-lock      │
+             ▼                           │   + bump-version auto)       │
+                                          └──────────────────────────────┘
    ═════════════════════ main ═══════════════════════
              │ (push main — hors bumps & docs)
              │              ┌──────────────────────────────────────┐
@@ -48,8 +49,8 @@ Ce guide décrit **deux choses qui s'imbriquent** :
                             │  ❌ smoke KO → ROLLBACK auto          │
                             └──────────────────────────────────────┘
              │
-             │ make release version=X.Y.Z   (bump → PR → merge)
-             │ make release_tag version=X.Y.Z
+             │ (le bump par brique est AUTOMATIQUE — voir §4)
+             │ make release_tag version=X.Y.Z   (tag global, sans PR)
              ▼
    ┌────────────────────┐   ┌──────────────────────────────────────┐
    │  tag vX.Y.Z        │──►│ Deploy production (deploy-prod.yml)  │
@@ -63,7 +64,7 @@ Ce guide décrit **deux choses qui s'imbriquent** :
 
 | Workflow | Déclencheur | Ce qu'il fait | Bloquant ? |
 |---|---|---|---|
-| **CI** (`ci.yml`) | PR vers `main` | lint · PHPStan · audits · build Nuxt · smoke api2 · secrets-scan → `ci-summary` | **Oui** (`ci-summary` = required check) |
+| **CI** (`ci.yml`) | PR vers `main` | lint · PHPStan · audits · build Nuxt · smoke api2 · secrets-scan → `ci-summary` (+ `fix-dependabot-lock`, `bump-version` : committent sur la branche de la PR, hors `ci-summary`) | **Oui** (`ci-summary` = required check) |
 | **Deploy preprod** (`deploy-preprod.yml`) | **push** sur `main` (= un merge de PR), **sauf** bumps de version et docs | SSH vers le VPS → `deploy-wrapper.sh` : rebuild sélectif + smoke + **rollback auto** | Non (déploie, ne garde rien) |
 | **Deploy preprod (experimental)** (`deploy-preprod-experimental.yml`) | **manuel** | déploie temporairement une branche **ou un tag** en préprod, avec bandeau + TTL | Non |
 | **Deploy production** (`deploy-prod.yml`) | **manuel** (`workflow_dispatch`, `ref` = tag/SHA sur `main`) + **approbation** | SSH → `deploy-wrapper.sh production` : backup DB + rebuild + smoke + **rollback auto** | Non (déploie ; approbation requise) |
@@ -284,9 +285,42 @@ make preprod_rollback sha=<ce_sha>
 
 ## 4. Publier en production (release + tag)
 
-Une release se **décide** : elle ne part pas toute seule au fil de l'eau. Elle se
-fait en deux temps — le bump passe par une PR (comme tout le reste), puis le tag
-est posé sur `main`.
+Une release se **décide** : le tag ne part jamais tout seul. Le **bump des
+versions**, lui, est automatique depuis le 2026-09-14 — tu n'as normalement rien
+à faire pour ça.
+
+### Le bump par brique est automatique (job `bump-version` de `ci.yml`)
+
+Toute PR touchant `sources/app2/`, `sources/app4/` ou `sources/api2/` déclenche
+un job CI qui bumpe la brique concernée et pousse le commit **directement sur ta
+branche**, pendant que la PR est ouverte — il est donc inclus dans le squash
+final, en un seul commit sur `main`. Rien à lancer, rien à merger en plus.
+
+- **Type de bump** : dérivé du **titre de la PR** (celui que `--fill` donne
+  depuis ton premier commit, et que `gh pr merge --squash` reprend comme message
+  final) — `feat:`/`feature:` (ou `feature/…`) → **minor**, tout le reste → **patch**.
+- **Par brique** : seules les briques touchées bougent ; une PR sur app2 seul ne
+  touche pas app4 ni api2.
+- Le commit de bump apparaît sur ta branche après un cycle de CI — attends que
+  `make pr_checks` reparte au vert avant de merger, il inclut ce commit.
+
+C'est le remplaçant de l'ancien `version-bump.yml` (supprimé à la consolidation
+du 2026-09-13, défaut 4 de
+[GIT_WORKFLOW_SIMPLIFICATION.md](GIT_WORKFLOW_SIMPLIFICATION.md)), avec un
+ancrage différent : l'ancien tournait *après* le merge et devait rouvrir une 2ᵉ
+PR (`develop` refusait le push direct). Ici le bump committe *pendant* que la PR
+est ouverte, sur sa propre branche — un seul commit sur `main`, sans PR
+supplémentaire. Il ne tourne pas sur les PR Dependabot (`fix-dependabot-lock`
+s'en occupe déjà, et un bump n'a pas de sens sémantique pour une PR de
+dépendances).
+
+### `make release` — le bump manuel, pour les cas que l'automatique ne couvre pas
+
+Deux cas où tu bumpes toi-même :
+
+- une brique à versionner **sans** que du code y ait changé (ex. tu veux marquer
+  une nouvelle version d'api2 pour une raison externe au diff) ;
+- corriger ou forcer une version précise, hors du calcul patch/minor automatique.
 
 **D'abord : savoir où tu en es.**
 
@@ -313,18 +347,21 @@ app4 et api2 n'évoluent pas au même rythme (l'historique des bumps le montre :
 `app4@1.25.3`, `app4@1.25.0 api2@2.2.0`, `api2@2.1.2`). On ne les aligne pas sur
 un numéro commun — cela ferait bondir app2 de `1.5.x` ou régresser app4.
 
-```bash
-cd ~/Documents/dev/kpi
-git checkout main && git pull
+**Bump manuel** (cas exceptionnel — voir plus haut) : une branche dédiée, comme
+`make release`, avec le cycle PR habituel.
 
-# 1. Bump — UNIQUEMENT les briques qui changent
+```bash
+make feature name=bump-api2
 make release app4=1.25.4                  # une seule brique
 make release app4=1.26.0 api2=2.3.0       # plusieurs d'un coup
-
-# 2. Cycle PR habituel
 make pr_create && make pr_checks && make pr_merge
+```
 
-# 3. Poser et pousser le tag GLOBAL (APRÈS le merge)
+**Poser le tag global** — dans le cas courant (bump déjà inclus par la CI dans ta
+dernière PR mergée), c'est la **seule** étape qui reste :
+
+```bash
+git checkout main && git pull
 make release_tag version=1.26.0
 ```
 
@@ -334,7 +371,7 @@ un instant donné — il n'a pas à coïncider avec la version d'une brique.
 `make release` sans argument affiche l'usage **et** l'état des versions. Il refuse
 un working tree sale et une version mal formée ; `make release_tag` refuse un tag
 déjà existant (local ou distant) et vérifie que ton `HEAD` est bien sur
-`origin/main` (donc que la PR de bump est mergée).
+`origin/main` (donc que ta dernière PR — bump manuel ou non — est mergée).
 
 ### Où la version est-elle visible ?
 
@@ -520,7 +557,7 @@ Les `wt_*` ne servent qu'en mode worktree ; les `pr_*` dans les deux modes.
 | `make pr_status` / `pr_checks` | état des PR / suit la CI jusqu'au bout |
 | `make pr_merge` | merge (squash) + remet main à jour + nettoie branche/worktree |
 | `make pr_close` | ferme la PR **sans** merger + supprime la branche (PR jetable) |
-| `make release app4=X.Y.Z [app2=…] [api2=…]` | bump **par brique** (versions indépendantes) → PR |
+| `make release app4=X.Y.Z [app2=…] [api2=…]` | **bump manuel** exceptionnel (le bump normal est automatique en CI, §4) |
 | `make release_tag version=X.Y.Z` | pose et pousse le tag global `vX.Y.Z` sur main (après merge) |
 | `make last_merge_sha` | affiche le SHA du dernier merge sur main (pour un revert) |
 | `make preprod_rollback sha=<sha>` | prépare le revert local d'un commit fusionné → PR |
