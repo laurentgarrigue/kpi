@@ -22,10 +22,13 @@ updates:
     directories:
       - "/sources/app2"
       - "/sources/app4"
-      - "/sources/app_dev"
-      - "/sources/app_live_dev"
-      - "/sources/app_wsm_dev"
       - "/sources"
+      # `/sources/app_dev`, `/sources/app_live_dev`, `/sources/app_wsm_dev` sont
+      # volontairement ABSENTS, pour la même raison qu'app3 (cf. en-tête) : ces
+      # applications Vue.js legacy ne sont ni buildées, ni testées, ni déployées
+      # par le CI/CD. Aucun job de `ci.yml` ne les couvre (matrices `[app2, app4]`),
+      # donc leurs PR de bump ne peuvent pas être validées — elles n'apportaient
+      # que du bruit et des lockfiles à arbitrer à la main.
     target-branch: "develop"
     schedule:
       interval: "weekly"

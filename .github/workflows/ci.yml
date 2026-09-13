@@ -500,6 +500,94 @@ jobs:
         working-directory: sources/${{ matrix.app }}
         run: npm audit --omit=dev --audit-level=high
 
+  # ---------------------------------------------------------------------------
+  # 6b-bis. Resynchronisation des lockfiles des PR Dependabot.
+  #
+  # POURQUOI : Dependabot met à jour `package.json` et recalcule le lock
+  # PARTIELLEMENT — il ne résout pas les dépendances optionnelles
+  # multi-plateformes ni certaines peer deps transitives. `npm ci` refuse alors
+  # le lock ("npm error code EUSAGE … Missing: oxc-parser@… from lock file"), et
+  # lint-nuxt/build-nuxt échouent avant même de tester quoi que ce soit.
+  # Cas réel : PR #309 (18 paquets manquants). Même piège que l'incident app4
+  # documenté (eslint peer dep) — d'où le VRAI `npm install` ci-dessous, jamais
+  # `--package-lock-only`, qui reproduirait exactement le lock incomplet.
+  #
+  # Ne tourne QUE sur les PR ouvertes par Dependabot : ailleurs, un lock
+  # désynchronisé est une erreur de l'auteur, qui doit rester visible.
+  fix-dependabot-lock:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    # Seul job de cette CI à écrire (un commit de resync sur la branche de la PR).
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [app2, app4]
+    steps:
+      # `github.head_ref` est le nom de la branche source, contrôlé par l'auteur
+      # de la PR : il ne doit JAMAIS être interpolé dans un `run:`. On le passe
+      # par `env:` et on le valide avant tout usage (défense en profondeur —
+      # ici l'auteur est déjà restreint à dependabot[bot] par le `if:`).
+      - name: Valider le nom de branche
+        id: branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if ! printf '%s' "$HEAD_REF" | grep -qE '^dependabot/[A-Za-z0-9._/-]{1,200}$'; then
+            echo "::error::Branche inattendue pour un run Dependabot: '$HEAD_REF'"
+            exit 1
+          fi
+          case "$HEAD_REF" in
+            *..*) echo "::error::'..' interdit dans le nom de branche"; exit 1 ;;
+          esac
+          echo "ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # L'app est-elle concernée ? Inutile de réinstaller app4 si seul app2 bouge.
+      - name: Cette app est-elle concernée ?
+        id: relevant
+        run: |
+          if [ -f "sources/${{ matrix.app }}/package-lock.json" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.relevant.outputs.changed == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # `--ignore-scripts` : on veut UNIQUEMENT réconcilier l'arbre de
+      # dépendances, pas exécuter les postinstall (`nuxt prepare`) — c'est le
+      # rôle de build-nuxt, qui tourne ensuite avec un lock enfin valide.
+      - name: Resynchroniser le lockfile
+        if: steps.relevant.outputs.changed == 'true'
+        working-directory: sources/${{ matrix.app }}
+        run: npm install --ignore-scripts
+
+      - name: Commiter le lock si besoin
+        if: steps.relevant.outputs.changed == 'true'
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          if git diff --quiet -- "sources/$APP/package-lock.json"; then
+            echo "Lock déjà synchrone pour $APP — rien à commiter."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "sources/$APP/package-lock.json"
+          git commit -m "chore: resynchronise le lockfile $APP (PR Dependabot)"
+          # `--rebase` : les deux apps de la matrice peuvent pousser en parallèle.
+          git pull --rebase origin "$GITHUB_HEAD_REF"
+          git push origin "HEAD:$GITHUB_HEAD_REF"
+
   # 6c. Gitleaks — détection de secrets commités (clés, tokens, mots de passe).
   #     Tourne sur toute PR : un secret peut arriver dans n'importe quelle brique.
   secrets-scan:
@@ -514,6 +602,12 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Config par RÈGLES (.gitleaks.toml) et non par fingerprints
+          # (.gitleaksignore, supprimé) : un fingerprint contient le SHA du
+          # commit, donc tout nouveau commit sur un fichier « allowlisté »
+          # rouvrait un faux positif et rendait ce check requis instable.
+          # Voir DOC/developer/guides/GIT_WORKFLOW_SIMPLIFICATION.md §2.
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   # 6d. Trivy (mode config) — détecte les MAUVAISES CONFIGURATIONS des Dockerfiles
   #     et des compose (secrets en clair, capabilities dangereuses…). Scan de
@@ -545,6 +639,11 @@ jobs:
   # 7. Récapitulatif : UNIQUE required check à mettre dans le ruleset `main`.
   #    Passe si tous les jobs nécessaires ont réussi OU ont été skippés
   #    (une brique non touchée => job skipped => ne doit pas bloquer).
+  #
+  #    `fix-dependabot-lock` est VOLONTAIREMENT absent des `needs` : il ne
+  #    vérifie rien, il RÉPARE (il pousse un commit de resync, qui relance lui-même
+  #    une CI complète). Son succès ne concerne donc que le run suivant, et
+  #    l'attendre ici ne ferait que retarder le verdict sans rien garantir de plus.
   # ---------------------------------------------------------------------------
   ci-summary:
     needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
