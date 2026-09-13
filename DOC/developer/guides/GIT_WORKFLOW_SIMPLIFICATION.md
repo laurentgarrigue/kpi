@@ -1,7 +1,8 @@
 # Simplification & consolidation du workflow Git / CI-CD
 
-> **Statut** : proposition, non appliquée. Rédigée le 2026-09-12 à partir des runs
-> en échec, des PR en attente et de l'incident `make pr_merge` du 2026-09-11.
+> **Statut** : ✅ **APPLIQUÉE** (lots 1 et 3, le 2026-09-13). Rédigée le 2026-09-12
+> à partir des runs en échec, des PR en attente et de l'incident `make pr_merge`
+> du 2026-09-11. Conservée comme dossier d'analyse et journal de la bascule.
 > Document compagnon de [GIT_WORKFLOW.md](GIT_WORKFLOW.md) (qui décrit l'existant).
 
 ---
@@ -567,9 +568,9 @@ make release version=1.26.0
 Ordonné par **ratio bénéfice/risque décroissant**. Les trois premiers lots
 débloquent le quotidien et sont indépendants du choix de topologie.
 
-### Lot 1 — Débloquer l'immédiat (≈ 1 h, aucun risque)
+### Lot 1 — Débloquer l'immédiat ✅ APPLIQUÉ (PR #311, 2026-09-13)
 
-1. Corriger `pr_merge` (`reset --hard origin/develop` + garde working tree) ;
+1. Corriger `pr_merge` (`reset --hard` sur la branche cible + garde working tree) ;
 2. Créer `.gitleaks.toml` par règles, supprimer `.gitleaksignore` ;
 3. Ajouter `fix-dependabot-lock` à `ci.yml` ;
 4. Élaguer `dependabot.yml` (retirer `app_dev`, `app_live_dev`, `app_wsm_dev`).
@@ -577,27 +578,33 @@ débloquent le quotidien et sont indépendants du choix de topologie.
 **Effet** : PR #309 passe, `ci-summary` redevient fiable, `pr_merge` cesse de
 finir en `fatal`.
 
-### Lot 2 — Calmer les boucles (≈ 1 h, risque faible)
+### Lot 2 — Calmer les boucles (partiellement absorbé par le lot 3)
 
-5. `concurrency: deploy-preprod` ;
-6. `paths-ignore` sur le déploiement (bumps, docs) ;
-7. PR de revert automatique sur échec de déploiement.
+5. ~~`concurrency: deploy-preprod`~~ — **était déjà en place** (constat du §2, défaut 4) ;
+6. ✅ `paths-ignore` sur le déploiement (bumps, docs) — appliqué avec le lot 3 ;
+7. ⏳ PR de revert automatique sur échec de déploiement — **reste à faire**
+   (seul élément non livré ; voir défaut 6).
 
-### Lot 3 — Simplifier la topologie (≈ 1/2 j, à décider)
+### Lot 3 — Simplifier la topologie ✅ APPLIQUÉ (2026-09-13)
 
-8. Résoudre la PR #304 (voir §5) ;
-9. Faire de `main` la branche par défaut, y pointer les rulesets et Dependabot ;
-10. Supprimer `backmerge-main-to-develop.yml` et `version-bump.yml` ;
-11. Ajouter la cible `make release version=X.Y.Z` ;
-12. `deploy-prod.yml` : accepter un **tag** comme `ref` (garder la vérification
-    d'ancêtre de `main`) ;
-13. **Basculer la branche de référence de la préprod expérimentale** (cf. §2bis) :
+8. ✅ PR #304, #308 et #309 fermées — **la cause réelle était tout autre** : `main`
+   était un **historique orphelin** (2 commits, aucun ancêtre commun avec
+   `develop`), d'où l'impossibilité de merger. Réparé par force-push de `develop`
+   sur `main` (sauvegarde : tag `backup/main-before-reset-20260913`) ;
+9. ✅ `main` est la branche par défaut ; rulesets et Dependabot y pointent
+   (`target-branch: "develop"` retiré des 3 écosystèmes) ;
+10. ✅ `backmerge-main-to-develop.yml` et `version-bump.yml` supprimés ;
+11. ✅ Cibles `make release version=X.Y.Z` **et** `make release_tag version=X.Y.Z` ;
+12. ✅ `deploy-prod.yml` documente le tag comme `ref` attendu (la vérification
+    d'ancêtre fonctionnait déjà pour un tag, aucun code à changer) ;
+13. ⏳ **Basculer la branche de référence de la préprod expérimentale** (cf. §2bis) :
     `DEPLOY_DEFAULT_BRANCH="main"` dans `/data/vps-manager/.env` **et** dans son
-    `.env.dist` ; rafraîchir les commentaires de `useExperimentalFlag.ts`
-    (app2 + app4) ;
-14. Archiver `develop` (`git branch -m develop archive/develop-2026-09`), ne pas
-    la supprimer tout de suite ;
-15. Mettre à jour [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
+    `.env.dist` — **RESTE À FAIRE, côté VPS** (dépôt `vps-manager`, hors de ce
+    repo). Les commentaires de `useExperimentalFlag.ts` (app2 + app4) et du
+    workflow experimental sont ✅ à jour ;
+14. ⏳ Archiver `develop` (`git branch -m develop archive/develop-2026-09`) — à
+    faire une fois la nouvelle topologie éprouvée sur quelques cycles ;
+15. ✅ [GIT_WORKFLOW.md](GIT_WORKFLOW.md) réécrit pour la topologie mono-branche.
 
 ### Lot 4 — Hygiène (optionnel)
 

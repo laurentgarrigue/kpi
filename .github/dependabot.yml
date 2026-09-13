@@ -1,10 +1,13 @@
 # Dependabot configuration
 #
-# Toutes les mises à jour ciblent `develop` (et non `main`) pour suivre le flow
-# de branches du projet : features -> develop -> PR develop -> main.
-# Sans `target-branch`, Dependabot vise la branche par défaut (main), ce qui
-# faisait diverger develop et provoquait des conflits de lockfile lors des PR
-# develop -> main (notamment package-lock.json et composer.lock).
+# Les mises à jour ciblent la branche par défaut (`main`), seule branche longue
+# durée depuis la consolidation du 2026-09-13 (voir
+# DOC/developer/guides/GIT_WORKFLOW_SIMPLIFICATION.md).
+#
+# `target-branch: "develop"` a été RETIRÉ : il n'y a plus de branche `develop`.
+# Accessoirement, cela règle la limitation GitHub qui faisait ouvrir les
+# *security updates* sur `main` en ignorant `target-branch` — la divergence
+# structurelle qu'elle provoquait n'a plus d'objet.
 #
 # Les updates sont groupées par répertoire/écosystème : un seul PR (et donc un
 # seul recalcul de lockfile) au lieu d'un PR par paquet -> moins de conflits.
@@ -29,7 +32,6 @@ updates:
       # par le CI/CD. Aucun job de `ci.yml` ne les couvre (matrices `[app2, app4]`),
       # donc leurs PR de bump ne peuvent pas être validées — elles n'apportaient
       # que du bruit et des lockfiles à arbitrer à la main.
-    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -43,7 +45,6 @@ updates:
     directories:
       - "/sources/api2"
       - "/sources"
-    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -55,6 +56,5 @@ updates:
   # ---- GitHub Actions (au cas où des workflows seraient ajoutés) ----
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "develop"
     schedule:
       interval: "weekly"

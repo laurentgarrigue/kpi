@@ -21,8 +21,21 @@ name: Deploy preprod
 
 on:
   push:
-    branches: [develop]
-  # Permet un redéploiement manuel de la préprod sur le dernier develop.
+    branches: [main]
+    # Un bump de version pur ou une modif de doc ne change AUCUN comportement :
+    # les redéployer est du bruit (et, avant la consolidation, ce bruit ouvrait
+    # des fenêtres de conflit). `paths-ignore` ne filtre QUE ce déclencheur
+    # `push` : le `workflow_dispatch` ci-dessous et le retour automatique du cron
+    # `--check-expiry` (qui appelle le wrapper directement sur le VPS) ne sont
+    # pas concernés.
+    paths-ignore:
+      - '**/package.json'
+      - '**/composer.json'
+      - 'sources/api2/config/packages/nelmio_api_doc.yaml'
+      - 'sources/api2/config/packages/api_platform.yaml'
+      - 'DOC/**'
+      - '**/*.md'
+  # Permet un redéploiement manuel de la préprod sur le dernier main.
   workflow_dispatch:
 
 # Least privilege : lecture seule du repo.
