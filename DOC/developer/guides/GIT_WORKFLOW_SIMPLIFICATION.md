@@ -1,9 +1,13 @@
 # Simplification & consolidation du workflow Git / CI-CD
 
-> **Statut** : ✅ **APPLIQUÉE** (lots 1 et 3, le 2026-09-13). Rédigée le 2026-09-12
-> à partir des runs en échec, des PR en attente et de l'incident `make pr_merge`
-> du 2026-09-11. Conservée comme dossier d'analyse et journal de la bascule.
-> Document compagnon de [GIT_WORKFLOW.md](GIT_WORKFLOW.md) (qui décrit l'existant).
+> **Statut** : ✅ **TERMINÉE** — lots 1, 2 et 3 appliqués et éprouvés le 2026-09-13.
+> Rédigée le 2026-09-12 à partir des runs en échec, des PR en attente et de
+> l'incident `make pr_merge` du 2026-09-11. Conservée comme dossier d'analyse et
+> journal de la bascule. Document compagnon de [GIT_WORKFLOW.md](GIT_WORKFLOW.md),
+> qui décrit le workflow **tel qu'il est** aujourd'hui.
+>
+> **Bilan** : 6 défauts sur 6 corrigés, workflows 9 → 7, une seule branche longue
+> durée, aucun garde-fou retiré (§6). Ce qui reste est listé en [§8](#8-ce-qui-reste).
 
 ---
 
@@ -547,19 +551,32 @@ make install-cron-experimental-expiry
 ### Le cycle quotidien
 
 ```bash
-git checkout main && git pull        # (ff garanti : plus de divergence possible)
-git checkout -b feature/scoring
+make feature                         # remet main à jour + checkout -b (nom au prompt)
 # ... code, commit ...
 make pr_create && make pr_checks && make pr_merge
 ```
 
 ### La release
 
+**Aucun bump n'est automatique.** Contrairement à l'ancien `version-bump.yml` qui
+tournait sur chaque push `develop`, le versioning est désormais une décision
+explicite, prise à la release — c'est le sens même du passage « bump à chaque
+merge » → « bump à la release » (défaut 4, point 3). Publier en prod prend donc
+**deux commandes Make**, pas une :
+
 ```bash
-make release version=1.26.0
-# → bump des versions (app2/app4/api2), commit, tag v1.26.0, push
+# 1. Bump — PAR BRIQUE (app2/app4/api2 ont des versions indépendantes,
+#    voir make version pour l'état actuel), passe par une PR comme tout le reste
+make release app4=1.26.0
+make pr_create && make pr_checks && make pr_merge
+
+# 2. Tag global — APRÈS le merge, sans PR (les rulesets portent sur les branches)
+make release_tag version=1.26.0
 # → puis : Actions → Deploy production → ref = v1.26.0 → approbation
 ```
+
+Détail complet, y compris pourquoi les versions ne sont pas alignées entre briques
+et comment savoir où on en est (`make version`) : [GIT_WORKFLOW.md §4](GIT_WORKFLOW.md#4-publier-en-production-release--tag).
 
 ---
 
@@ -595,17 +612,25 @@ finir en `fatal`.
 9. ✅ `main` est la branche par défaut ; rulesets et Dependabot y pointent
    (`target-branch: "develop"` retiré des 3 écosystèmes) ;
 10. ✅ `backmerge-main-to-develop.yml` et `version-bump.yml` supprimés ;
-11. ✅ Cibles `make release version=X.Y.Z` **et** `make release_tag version=X.Y.Z` ;
+11. ✅ Cibles `make release` **et** `make release_tag` — avec une **correction
+    importante du 2026-09-13** : la première mouture forçait une version unique
+    sur les trois briques. C'était faux : l'historique des bumps montre des
+    versions **indépendantes** (`app4@1.25.3`, `api2@2.1.2`…), et un numéro commun
+    aurait fait bondir app2 (`1.5.x`) ou régresser app4. La cible bumpe désormais
+    **par brique** (`make release app4=1.25.4 [api2=…]`), le tag global restant
+    un numéro à part. S'y ajoute `make version`, qui affiche l'état des briques,
+    le dernier tag, et les **versions réellement déployées** en préprod et prod ;
 12. ✅ `deploy-prod.yml` documente le tag comme `ref` attendu (la vérification
     d'ancêtre fonctionnait déjà pour un tag, aucun code à changer) ;
-13. ⏳ **Basculer la branche de référence de la préprod expérimentale** (cf. §2bis) :
-    `DEPLOY_DEFAULT_BRANCH="main"` dans `/data/vps-manager/.env` **et** dans son
-    `.env.dist` — **RESTE À FAIRE, côté VPS** (dépôt `vps-manager`, hors de ce
-    repo). Les commentaires de `useExperimentalFlag.ts` (app2 + app4) et du
-    workflow experimental sont ✅ à jour ;
-14. ⏳ Archiver `develop` **et** `chore/backmerge-main-to-develop` (vestige du
-    workflow supprimé) — la topologie a désormais tourné sur plusieurs cycles
-    verts, c'est la dernière étape ;
+13. ✅ **Branche de référence de la préprod expérimentale basculée** (cf. §2bis) :
+    `DEPLOY_DEFAULT_BRANCH="main"` dans `/data/vps-manager/.env` et son `.env.dist`.
+    Commentaires de `useExperimentalFlag.ts` (app2 + app4) et du workflow
+    experimental ✅ à jour ;
+14. ✅ `develop` archivée en `archive/develop-2026-09` puis supprimée, ainsi que
+    `chore/backmerge-main-to-develop` (vestige du workflow supprimé). Il a fallu
+    **désactiver puis supprimer les rulesets `develop_protection` et
+    `develop_ruleset`** : tous deux portaient une règle `deletion` avec
+    `bypass_actors: []`, qui refusait la suppression même en admin ;
 15. ✅ [GIT_WORKFLOW.md](GIT_WORKFLOW.md) réécrit pour la topologie mono-branche.
 
 ### Lot 4 — Hygiène (optionnel)
@@ -754,3 +779,67 @@ imprudent) emporte bien plus que le projet auquel il appartient.
 > points 3 à 5 relèvent d'un chantier d'infra à planifier — à ne pas entamer en
 > même temps que la refonte du workflow git, pour garder des changements
 > diagnosticables un par un.
+
+---
+
+## 8. Ce qui reste
+
+Le plan lui-même est terminé. Ce qui suit n'en fait pas partie — ce sont les
+chantiers identifiés **pendant** la bascule, listés ici pour ne pas les perdre.
+
+| Sujet | Pourquoi | Priorité |
+|---|---|---|
+| **Revert auto non éprouvé en réel** | validé statiquement (YAML + `bash -n` + relecture) ; son vrai test sera le premier déploiement en échec | à observer |
+| **Compte `deploy` partagé** | rayon d'explosion : `docker` = root de fait sur tout le VPS (§7) — points 1-2 faisables en une session | 🟠 sécurité |
+| **`vps-manager` hors CI/CD** | c'est lui qui déploie, et rien ne valide ses scripts (§7) | 🟠 |
+| **Security updates Dependabot** | ils **ignorent** la config `directories` et scannent tout le dépôt (constaté sur #312/#313 : `app3`, `flag-icon-css-master`). L'élagage du lot 1 ne les couvre pas | à connaître |
+| **Couverture de tests api2** | principal affinage qualité restant | 🟢 |
+| **Lot 4 (hygiène)** | `actions/checkout@v4` → `@v5` ; timeout SSH 60 s → 120 s | 🟢 |
+
+### Le premier déploiement en production sera un jalon
+
+`main` a été reconstruite (historique orphelin réparé par force-push). La prod
+tourne encore sur `4ae8801f`, l'ancien commit orphelin — **aucun déploiement prod
+n'a eu lieu depuis la réparation**. Le prochain sera donc le premier passage sur le
+nouvel historique : garde un œil sur ce run-là, et pose un tag avant
+(`make release_tag`) pour disposer d'un point de retour immuable.
+
+---
+
+## 9. Addendum du 2026-09-14 — le bump automatique était une régression
+
+En rédigeant §4 et le tableau §8 (« Où la version est-elle visible ? »), le plan
+avait retiré tout bump automatique : la consolidation avait supprimé
+`version-bump.yml`, et la seule cible restante (`make release`) demandait un
+geste manuel explicite. C'était une **perte de service par rapport à
+l'existant** — l'ancien système bumpait automatiquement à chaque merge, sans
+aucun geste — et non un choix voulu du plan initial.
+
+**Correctif** : un job `bump-version` a été ajouté à `ci.yml`, qui reproduit le
+comportement de l'ancien `version-bump.yml` (bump par brique, minor si `feat:`
+sinon patch, anti-boucle sur les fichiers de version) mais avec un **ancrage
+différent**, rendu possible par la mono-branche :
+
+| | Ancien `version-bump.yml` | Nouveau `bump-version` (job de `ci.yml`) |
+|---|---|---|
+| Déclencheur | push sur `develop`, **après** le merge | `pull_request`, **pendant** que la PR est ouverte |
+| Où committe | nouvelle branche `chore/version-bump` | la branche de LA PR en cours |
+| Résultat sur `main` | 2 commits (le tien + le bump, PR séparée) | 1 seul commit (squash, bump inclus) |
+| Pourquoi une PR séparée avant | `develop` refusait le push direct — fallait forcément une 2ᵉ PR | `main` refuse aussi le push direct, mais committer AVANT le merge évite d'en avoir besoin |
+
+C'est le même mécanisme que `fix-dependabot-lock` (déjà dans `ci.yml` depuis le
+lot 1), étendu à un déclencheur plus large et un calcul de version au lieu d'une
+simple resync de lock. Les deux jobs sont mutuellement exclusifs sur les PR
+Dependabot (`bump-version` s'y désactive explicitement) pour éviter une course
+d'écriture sur les mêmes fichiers.
+
+**Point non trivial rencontré en testant** : `git add -A -- <chemins explicites>`
+échoue en `fatal` dès qu'un seul chemin n'existe pas — le cas normal pour une PR
+qui ne touche qu'une seule brique (app4 seul n'a pas de fichiers api2 à ajouter).
+Corrigé en ne passant à `git add` que les fichiers réellement présents.
+
+`make release` reste utile pour le cas que l'automatique ne couvre pas : bumper
+une brique **sans** changement de code qui la justifie (une raison externe au
+diff), ou forcer une version précise hors du calcul patch/minor. `make release_tag`
+est inchangé — le tag de release reste un geste toujours manuel, distinct du
+bump de brique.

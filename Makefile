@@ -72,7 +72,7 @@ backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
 wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
-last_merge_sha preprod_rollback release release_tag \
+last_merge_sha preprod_rollback release release_tag feature version \
 hooks
 
 
@@ -1142,7 +1142,7 @@ git_images_list_protected: ## Liste les images actuellement protégées (skip-wo
 # Rappel : UN SEUL stack Docker à la fois (ports fixes + ../sources monté en relatif).
 # Les commandes exécutées sont affichées (pas de @) pour rester transparentes.
 
-wt_new: ## Crée un worktree + branche feature/<name> (make wt_new name=scoring [base=develop])
+wt_new: ## Crée un worktree + branche feature/<name> (make wt_new name=scoring [base=main])
 	@[ -n "$(name)" ] || { echo "Usage: make wt_new name=<feature> [base=<branche>]"; exit 1; }
 	./scripts/git-wt.sh new $(name) $(base)
 
@@ -1156,6 +1156,73 @@ wt_sync: ## Re-copie les fichiers non-versionnés (.env, etc.) dans un worktree 
 wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
+
+feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring)
+	@[ -z "$$(git status --porcelain)" ] || { \
+		echo "⛔ Working tree non propre — committe ou stashe avant de changer de branche."; \
+		git status -sb; exit 1; }
+	@name="$(name)"; \
+	if [ -z "$$name" ]; then \
+		printf "Nom de la feature (sans le préfixe 'feature/') : "; \
+		read name; \
+	fi; \
+	name="$$(printf '%s' "$$name" | tr -d '[:space:]')"; \
+	[ -n "$$name" ] || { echo "⛔ Nom vide — abandon."; exit 1; }; \
+	case "$$name" in \
+		feature/*) branch="$$name" ;; \
+		fix/*|hotfix/*|chore/*|docs/*|refactor/*) branch="$$name" ;; \
+		*) branch="feature/$$name" ;; \
+	esac; \
+	printf '%s' "$$branch" | grep -qE '^[A-Za-z0-9._/-]{1,100}$$' || { \
+		echo "⛔ Nom de branche invalide : '$$branch'"; exit 1; }; \
+	git rev-parse --verify --quiet "$$branch" >/dev/null && { \
+		echo "⛔ La branche '$$branch' existe déjà en local."; exit 1; } || true; \
+	echo "→ Mise à jour de main..."; \
+	git fetch origin main --quiet || exit 1; \
+	git checkout main --quiet || exit 1; \
+	git reset --hard origin/main --quiet || exit 1; \
+	git checkout -b "$$branch" --quiet || exit 1; \
+	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
+
+version: ## Affiche les versions actuelles de chaque brique + le dernier tag de release
+	@echo "Versions dans le working tree ($$(git rev-parse --abbrev-ref HEAD)) :"
+	@for app in app2 app4; do \
+		f="sources/$$app/package.json"; \
+		[ -f "$$f" ] || continue; \
+		v=$$(grep -oP '(?<="version": ")[^"]+' "$$f" | head -1); \
+		printf "  %-6s %s\n" "$$app" "$$v"; \
+	done
+	@v=$$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' sources/api2/config/packages/nelmio_api_doc.yaml 2>/dev/null | head -1); \
+	v2=$$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' sources/api2/config/packages/api_platform.yaml 2>/dev/null | head -1); \
+	printf "  %-6s %s" "api2" "$$v"; \
+	[ "$$v" = "$$v2" ] || printf "   ⚠️ api_platform.yaml dit %s (désaligné)" "$$v2"; \
+	echo
+	@echo
+	@git fetch origin --tags --quiet 2>/dev/null || true
+	@last=$$(git tag --list 'v*' --sort=-v:refname | head -1); \
+	if [ -n "$$last" ]; then \
+		echo "Dernier tag de release : $$last  ($$(git log -1 --format='%ci' "$$last" 2>/dev/null | cut -d' ' -f1))"; \
+		n=$$(git rev-list --count "$$last"..origin/main 2>/dev/null || echo '?'); \
+		echo "  commits sur main depuis ce tag : $$n"; \
+	else \
+		echo "Dernier tag de release : AUCUN (pas encore de release taguée)"; \
+	fi
+	@echo
+	@echo "Versions servies (ce que voient les utilisateurs) :"
+	@echo "  app2  → pied de page (AppFooter.vue)      app4 → pied de page (layouts/admin.vue)"
+	@echo "  api2  → /api2/doc, champ info.version"
+	@echo
+	@echo "Versions DÉPLOYÉES (api2, lu en direct) :"
+	@for env in "préprod|https://preprod.kayak-polo.info" "prod   |https://kayak-polo.info"; do \
+		name="$${env%%|*}"; url="$${env#*|}"; \
+		printf "  %s  " "$$name"; \
+		v=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
+			| grep -oE '"version" *: *"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 \
+			| grep -oE '[0-9]+\.[0-9]+\.[0-9]+'); \
+		[ -n "$$v" ] && echo "api2 $$v" || echo "(injoignable — vérifie sur $$url/api2/doc)"; \
+	done
+	@echo "  (app2/app4 : leur version s'affiche en pied de page de l'app)"
 
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
@@ -1296,58 +1363,70 @@ preprod_rollback: ## Prépare le revert local d'un commit fusionné dans main (m
 # --- Release (remplace l'ancien workflow version-bump.yml) --------------------
 #
 # Depuis la consolidation du 2026-09-13, le bump ne se fait PLUS à chaque merge :
-# il se fait au moment de la RELEASE, explicitement. `main` est la seule branche
-# longue durée ; une release est un TAG posé dessus, et c'est ce tag qu'on déploie
-# en production (workflow « Deploy production », input `ref`).
+# il se fait au moment de la RELEASE, explicitement.
 #
-# Un tag est immuable : il désigne sans ambiguïté ce qui tourne en prod, là où
-# « le HEAD de main au moment du clic » est une cible mouvante.
+# ⚠️ LES BRIQUES ONT DES VERSIONS INDÉPENDANTES, et c'est voulu : l'historique des
+# bumps le montre (« app4@1.25.3 », « app4@1.25.0 api2@2.2.0 », « api2@2.1.2 »).
+# app2, app4 et api2 n'évoluent pas au même rythme — les forcer à un numéro commun
+# ferait RÉGRESSER app4 (1.25.x) ou bondir app2 (1.5.x) sans raison.
+# On bumpe donc chaque brique séparément, et le TAG de release est un numéro à part
+# qui désigne l'état global du dépôt.
 #
-# `main` refusant le push direct (ruleset), le bump passe par une PR normale ;
-# le TAG, lui, se pousse directement (les rulesets portent sur les branches).
-release: ## Prépare une release : bump des versions + PR, puis tag vX.Y.Z (make release version=1.26.0)
-	@[ -n "$(version)" ] || { \
-		echo "Usage: make release version=X.Y.Z"; \
-		echo "  Exemple: make release version=1.26.0"; exit 1; }
-	@printf '%s' "$(version)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
-		echo "⛔ Version invalide : '$(version)' (attendu X.Y.Z, ex. 1.26.0)"; exit 1; }
+#   make release app4=1.25.4                 → bump d'une seule brique
+#   make release app4=1.26.0 api2=2.3.0      → plusieurs briques d'un coup
+#   make release tag=1.26.0 app4=1.25.4      → + fixe le tag (défaut : voir plus bas)
+#
+# Le tag posé ensuite par `make release_tag` est indépendant des versions de brique.
+release: ## Bump des versions par brique + PR (make release app4=1.25.4 [app2=...] [api2=...])
+	@[ -n "$(app2)$(app4)$(api2)" ] || { \
+		echo "Usage: make release app4=1.25.4 [app2=1.5.1] [api2=2.3.0]"; \
+		echo; \
+		echo "  Les briques ont des versions INDÉPENDANTES — ne passe que celles qui changent."; \
+		echo "  État actuel :"; \
+		$(MAKE) --no-print-directory version | sed 's/^/    /'; \
+		exit 1; }
 	@[ -z "$$(git status --porcelain)" ] || { \
 		echo "⛔ Working tree non propre. Committe ou stashe avant la release."; git status -sb; exit 1; }
+	@for pair in "app2:$(app2)" "app4:$(app4)" "api2:$(api2)"; do \
+		v="$${pair#*:}"; [ -n "$$v" ] || continue; \
+		printf '%s' "$$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
+			echo "⛔ Version invalide pour $${pair%%:*} : '$$v' (attendu X.Y.Z)"; exit 1; }; \
+	done
 	@git fetch origin main --quiet
-	@git rev-parse --verify --quiet "refs/tags/v$(version)" >/dev/null && { \
-		echo "⛔ Le tag v$(version) existe déjà en local."; exit 1; } || true
-	@git ls-remote --exit-code --tags origin "refs/tags/v$(version)" >/dev/null 2>&1 && { \
-		echo "⛔ Le tag v$(version) existe déjà sur origin."; exit 1; } || true
-	@branch="release/v$(version)"; \
-	echo "→ Création de la branche $$branch depuis origin/main..."; \
+	@bumped=""; \
+	branch="release/$$(date +%Y%m%d-%H%M%S)"; \
 	git checkout -b "$$branch" origin/main --quiet || exit 1; \
-	echo "→ Bump des versions vers $(version)..."; \
 	for app in app2 app4; do \
+		case "$$app" in app2) new="$(app2)" ;; app4) new="$(app4)" ;; esac; \
+		[ -n "$$new" ] || continue; \
 		f="sources/$$app/package.json"; \
-		[ -f "$$f" ] || continue; \
 		cur=$$(grep -oP '(?<="version": ")[^"]+' "$$f" | head -1); \
-		[ -n "$$cur" ] || continue; \
-		sed -i "s/\"version\": \"$$cur\"/\"version\": \"$(version)\"/" "$$f"; \
+		[ -n "$$cur" ] || { echo "⛔ Version introuvable dans $$f"; exit 1; }; \
+		sed -i "s/\"version\": \"$$cur\"/\"version\": \"$$new\"/" "$$f"; \
 		lock="sources/$$app/package-lock.json"; \
-		[ -f "$$lock" ] && sed -i "0,/\"version\": \"$$cur\"/s//\"version\": \"$(version)\"/;0,/\"version\": \"$$cur\"/s//\"version\": \"$(version)\"/" "$$lock"; \
-		echo "   $$app : $$cur → $(version)"; \
+		[ -f "$$lock" ] && sed -i "0,/\"version\": \"$$cur\"/s//\"version\": \"$$new\"/;0,/\"version\": \"$$cur\"/s//\"version\": \"$$new\"/" "$$lock"; \
+		echo "   $$app : $$cur → $$new"; \
+		bumped="$$bumped $$app@$$new"; \
 	done; \
-	for y in sources/api2/config/packages/nelmio_api_doc.yaml sources/api2/config/packages/api_platform.yaml; do \
-		[ -f "$$y" ] || continue; \
-		cur=$$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$$y" | head -1); \
-		[ -n "$$cur" ] || continue; \
-		sed -i "s/\(version:[[:space:]]*\)$$cur\b/\1$(version)/" "$$y"; \
-		echo "   $$(basename $$y) : $$cur → $(version)"; \
-	done; \
+	if [ -n "$(api2)" ]; then \
+		for y in sources/api2/config/packages/nelmio_api_doc.yaml sources/api2/config/packages/api_platform.yaml; do \
+			[ -f "$$y" ] || continue; \
+			cur=$$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$$y" | head -1); \
+			[ -n "$$cur" ] || continue; \
+			sed -i "s/\(version:[[:space:]]*\)$$cur\b/\1$(api2)/" "$$y"; \
+		done; \
+		echo "   api2 : → $(api2)  (nelmio + api_platform alignés)"; \
+		bumped="$$bumped api2@$(api2)"; \
+	fi; \
 	git add -A; \
 	git diff --cached --quiet && { echo "⛔ Aucun fichier de version modifié."; exit 1; }; \
-	git commit -q -m "chore: release v$(version)" || exit 1; \
+	git commit -q -m "chore: release -$$bumped" || exit 1; \
 	echo; \
-	echo "✔ Bump prêt sur $$branch."; \
+	echo "✔ Bump prêt sur $$branch :$$bumped"; \
 	echo; \
 	echo "  Étapes suivantes :"; \
 	echo "    make pr_create && make pr_checks && make pr_merge"; \
-	echo "    make release_tag version=$(version)     # APRÈS le merge de la PR"
+	echo "    make release_tag version=X.Y.Z     # APRÈS le merge (tag global, indépendant)"
 
 release_tag: ## Pose et pousse le tag vX.Y.Z sur main (à lancer APRÈS le merge de la PR de release)
 	@[ -n "$(version)" ] || { echo "Usage: make release_tag version=X.Y.Z"; exit 1; }
@@ -1355,9 +1434,9 @@ release_tag: ## Pose et pousse le tag vX.Y.Z sur main (à lancer APRÈS le merge
 		echo "⛔ Version invalide : '$(version)' (attendu X.Y.Z)"; exit 1; }
 	@git fetch origin main --quiet
 	@git log origin/main -1 --format='  dernier commit de main : %C(yellow)%h%Creset %s'
-	@grep -q '"version": "$(version)"' sources/app4/package.json 2>/dev/null || { \
-		echo "⛔ sources/app4/package.json n'est pas en $(version) sur ton working tree."; \
-		echo "   La PR de release a-t-elle bien été mergée ? (git checkout main && git pull)"; exit 1; }
+	@[ "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" ] || { \
+		echo "⛔ Ton HEAD n'est pas sur origin/main — la PR de release est-elle mergée ?"; \
+		echo "   Fais : git checkout main && git pull"; exit 1; }
 	@git tag -a "v$(version)" origin/main -m "Release v$(version)" || exit 1
 	@git push origin "v$(version)" || exit 1
 	@echo "✔ Tag v$(version) poussé sur origin (pointe sur origin/main)."
