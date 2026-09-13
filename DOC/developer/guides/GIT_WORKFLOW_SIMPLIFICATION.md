@@ -582,8 +582,9 @@ finir en `fatal`.
 
 5. ~~`concurrency: deploy-preprod`~~ — **était déjà en place** (constat du §2, défaut 4) ;
 6. ✅ `paths-ignore` sur le déploiement (bumps, docs) — appliqué avec le lot 3 ;
-7. ⏳ PR de revert automatique sur échec de déploiement — **reste à faire**
-   (seul élément non livré ; voir défaut 6).
+7. ✅ PR de revert automatique sur échec de déploiement — appliqué le 2026-09-13
+   (étape `if: failure()` de `deploy-preprod.yml` : ouvre une PR `revert/<sha>`,
+   ou une **issue** si le revert conflicte ; voir défaut 6).
 
 ### Lot 3 — Simplifier la topologie ✅ APPLIQUÉ (2026-09-13)
 
@@ -602,8 +603,9 @@ finir en `fatal`.
     `.env.dist` — **RESTE À FAIRE, côté VPS** (dépôt `vps-manager`, hors de ce
     repo). Les commentaires de `useExperimentalFlag.ts` (app2 + app4) et du
     workflow experimental sont ✅ à jour ;
-14. ⏳ Archiver `develop` (`git branch -m develop archive/develop-2026-09`) — à
-    faire une fois la nouvelle topologie éprouvée sur quelques cycles ;
+14. ⏳ Archiver `develop` **et** `chore/backmerge-main-to-develop` (vestige du
+    workflow supprimé) — la topologie a désormais tourné sur plusieurs cycles
+    verts, c'est la dernière étape ;
 15. ✅ [GIT_WORKFLOW.md](GIT_WORKFLOW.md) réécrit pour la topologie mono-branche.
 
 ### Lot 4 — Hygiène (optionnel)
