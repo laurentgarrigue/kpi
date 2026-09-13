@@ -1233,7 +1233,7 @@ pr_merge: ## Merge la PR courante dans main (squash), bascule sur main à jour e
 			exit 1;; \
 		esac; \
 	fi; \
-	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
+	echo "Merge de la PR de la branche '$$branch' dans main..."; \
 	gh pr merge --squash --delete-branch || exit 1; \
 	if [ "$$main_repo" != "$$wt" ]; then \
 		echo "Worktree détecté : main est géré dans $$main_repo"; \
@@ -1241,7 +1241,8 @@ pr_merge: ## Merge la PR courante dans main (squash), bascule sur main à jour e
 		if [ "$$cur" != "main" ]; then \
 			git -C "$$main_repo" checkout main || exit 1; \
 		fi; \
-		git -C "$$main_repo" pull || exit 1; \
+		git -C "$$main_repo" fetch origin main || exit 1; \
+		git -C "$$main_repo" reset --hard origin/main || exit 1; \
 		echo "Suppression du worktree courant..."; \
 		cd "$$main_repo" && git worktree remove "$$wt" \
 			&& echo "Worktree '$$wt' supprimé." \
