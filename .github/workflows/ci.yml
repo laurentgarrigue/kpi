@@ -12,7 +12,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
   # Permet aussi de lancer la CI à la main depuis l'onglet Actions.
   workflow_dispatch:
 
@@ -571,8 +571,12 @@ jobs:
         working-directory: sources/${{ matrix.app }}
         run: npm install --ignore-scripts
 
+      # `continue-on-error` : ce job RÉPARE, il ne valide rien. Si le push échoue
+      # (Dependabot republie sa branche en permanence), le verdict de la CI doit
+      # rester celui des jobs de vérification — pas celui du réparateur.
       - name: Commiter le lock si besoin
         if: steps.relevant.outputs.changed == 'true'
+        continue-on-error: true
         env:
           APP: ${{ matrix.app }}
         run: |
@@ -584,9 +588,30 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "sources/$APP/package-lock.json"
           git commit -m "chore: resynchronise le lockfile $APP (PR Dependabot)"
-          # `--rebase` : les deux apps de la matrice peuvent pousser en parallèle.
-          git pull --rebase origin "$GITHUB_HEAD_REF"
-          git push origin "HEAD:$GITHUB_HEAD_REF"
+
+          # Dependabot FORCE-PUSHE sa branche à chaque recalcul : entre notre
+          # `fetch` et notre `push`, la référence distante a pu être réécrite
+          # (« ! [rejected] … (fetch first) », constaté sur la PR #312).
+          # On réessaie donc en rebasant sur l'état distant le plus récent ;
+          # si la branche bouge plus vite qu'on ne pousse, on abandonne
+          # proprement — la CI suivante, déclenchée par SON push, rejouera ce job.
+          pushed=0
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:$GITHUB_HEAD_REF"; then
+              pushed=1
+              break
+            fi
+            echo "Push refusé (tentative $attempt) — la branche Dependabot a bougé, rebase et retry."
+            git fetch origin "$GITHUB_HEAD_REF" || break
+            git rebase "origin/$GITHUB_HEAD_REF" || { git rebase --abort || true; break; }
+            sleep 5
+          done
+
+          if [ "$pushed" = "1" ]; then
+            echo "✅ Lock $APP resynchronisé et poussé."
+          else
+            echo "::warning::Lock $APP resynchronisé localement mais NON poussé (branche Dependabot trop mouvante). La CI relancée par le prochain push de Dependabot rejouera ce job."
+          fi
 
   # 6c. Gitleaks — détection de secrets commités (clés, tokens, mots de passe).
   #     Tourne sur toute PR : un secret peut arriver dans n'importe quelle brique.

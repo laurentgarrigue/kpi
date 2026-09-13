@@ -27,9 +27,16 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Tag, SHA ou branche à déployer (DOIT être sur main). Défaut : main'
+        description: 'Tag de release (ex. v1.26.0), SHA ou branche — DOIT être sur main. Défaut : main'
         required: true
         default: 'main'
+        # Depuis la consolidation du 2026-09-13, une release est un TAG posé sur
+        # `main` (`make release version=X.Y.Z`) : c'est le ref à saisir ici.
+        # Un tag est immuable, donc il désigne sans ambiguïté ce qui tourne en
+        # prod — contrairement à « le HEAD de main au moment du clic ».
+        # Aucune adaptation n'est nécessaire côté vérification : le checkout
+        # résout le tag, et `git merge-base --is-ancestor HEAD origin/main`
+        # valide un tag exactement comme un SHA.
 
 # Least privilege : lecture seule du repo (checkout de vérification uniquement).
 permissions:

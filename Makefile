@@ -71,8 +71,8 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
-wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge backmerge_main_to_develop \
-last_merge_sha preprod_rollback \
+wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
+last_merge_sha preprod_rollback release release_tag \
 hooks
 
 
@@ -1160,13 +1160,13 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
 
-pr_create: ## Push la branche courante puis ouvre une PR vers develop (make pr_create [base=develop])
+pr_create: ## Push la branche courante puis ouvre une PR vers main (make pr_create [base=main])
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
-	gh pr create --base $(if $(base),$(base),develop) --fill
+	gh pr create --base $(if $(base),$(base),main) --fill
 
 pr_web: ## Push la branche courante et ouvre le formulaire de PR pré-rempli dans le navigateur
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
-	gh pr create --base $(if $(base),$(base),develop) --web
+	gh pr create --base $(if $(base),$(base),main) --web
 
 pr_status: ## Affiche l'état de tes PR sur ce repo
 	gh pr status
@@ -1214,7 +1214,7 @@ pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable 
 	gh pr close --delete-branch || exit 1; \
 	echo "PR fermée. Pense à revenir sur develop : git checkout develop"
 
-pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à jour et nettoie la branche locale
+pr_merge: ## Merge la PR courante dans main (squash), bascule sur main à jour et nettoie la branche locale
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
 	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
@@ -1236,10 +1236,10 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 	echo "Merge de la PR de la branche '$$branch' dans develop..."; \
 	gh pr merge --squash --delete-branch || exit 1; \
 	if [ "$$main_repo" != "$$wt" ]; then \
-		echo "Worktree détecté : develop est géré dans $$main_repo"; \
+		echo "Worktree détecté : main est géré dans $$main_repo"; \
 		cur=$$(git -C "$$main_repo" rev-parse --abbrev-ref HEAD); \
-		if [ "$$cur" != "develop" ]; then \
-			git -C "$$main_repo" checkout develop || exit 1; \
+		if [ "$$cur" != "main" ]; then \
+			git -C "$$main_repo" checkout main || exit 1; \
 		fi; \
 		git -C "$$main_repo" pull || exit 1; \
 		echo "Suppression du worktree courant..."; \
@@ -1251,38 +1251,30 @@ pr_merge: ## Merge la PR courante dans develop (squash), bascule sur develop à 
 			|| echo "(branche locale '$$branch' déjà supprimée)"; \
 		echo; echo "✔ Terminé. Tu es encore dans un dossier supprimé : cd $$main_repo"; \
 	else \
-		echo "Bascule sur develop et mise à jour..."; \
+		echo "Bascule sur main et mise à jour..."; \
 		if ! git diff --quiet || ! git diff --cached --quiet; then \
 			echo "⛔ Working tree sale : la PR est MERGÉE, mais le nettoyage local s'arrête ici."; \
-			echo "   Committe ou stashe, puis : git checkout develop && git fetch origin develop && git reset --hard origin/develop"; \
+			echo "   Committe ou stashe, puis : git checkout main && git fetch origin main && git reset --hard origin/main"; \
 			exit 1; \
 		fi; \
-		git fetch origin develop || exit 1; \
-		git checkout develop || exit 1; \
-		git reset --hard origin/develop || exit 1; \
+		git fetch origin main || exit 1; \
+		git checkout main || exit 1; \
+		git reset --hard origin/main || exit 1; \
 		git branch -D "$$branch" 2>/dev/null \
 			&& echo "Branche locale '$$branch' supprimée." \
 			|| echo "(branche locale '$$branch' déjà supprimée par gh)"; \
 	fi
 
-backmerge_main_to_develop: ## Déclenche le workflow qui ouvre la PR de back-merge main → develop (Dependabot security / release)
-	@echo "→ Déclenchement du workflow « Back-merge main → develop »..."
-	@gh workflow run "Back-merge main → develop" --ref main || { \
-		echo "⛔ Échec du déclenchement. Vérifie 'gh auth status' et que le workflow existe sur main."; exit 1; }
-	@echo "✔ Workflow lancé. Il ouvre/actualise UNE PR 'chore/backmerge-main-to-develop → develop'."
-	@echo "  Suis-la et merge-la :  gh pr list --base develop --head chore/backmerge-main-to-develop"
-	@echo "  (develop exige une PR — le push direct est refusé par le ruleset, d'où ce workflow.)"
-
-last_merge_sha: ## Affiche le SHA du dernier commit de develop (= dernier squash-merge de PR), utile pour un revert
-	@git fetch origin develop --quiet
-	@echo "Dernier commit sur origin/develop (à reverter si c'est la PR à annuler) :"
-	@git log origin/develop -1 --format='  %C(yellow)%h%Creset  %s%n  %C(dim)%ci — %an%Creset'
+last_merge_sha: ## Affiche le SHA du dernier commit de main (= dernier squash-merge de PR), utile pour un revert
+	@git fetch origin main --quiet
+	@echo "Dernier commit sur origin/main (à reverter si c'est la PR à annuler) :"
+	@git log origin/main -1 --format='  %C(yellow)%h%Creset  %s%n  %C(dim)%ci — %an%Creset'
 	@echo
 	@echo "Pour reverter précisément une PR fusionnée, retrouve son commit de merge :"
 	@echo "  gh pr view <num> --json mergeCommit --jq .mergeCommit.oid"
 	@echo "Puis :  make preprod_rollback sha=<ce_sha>"
 
-preprod_rollback: ## Prépare le revert local d'un commit fusionné dans develop (make preprod_rollback sha=<sha>) — ouvre ensuite une PR
+preprod_rollback: ## Prépare le revert local d'un commit fusionné dans main (make preprod_rollback sha=<sha>) — ouvre ensuite une PR
 	@[ -n "$(sha)" ] || { \
 		echo "Usage: make preprod_rollback sha=<sha_du_commit_a_reverter>"; \
 		echo "       (récupère-le avec 'make last_merge_sha')"; exit 1; }
@@ -1290,12 +1282,85 @@ preprod_rollback: ## Prépare le revert local d'un commit fusionné dans develop
 		echo "⛔ SHA introuvable : $(sha). Lance 'git fetch' ou vérifie la valeur."; exit 1; }
 	@[ -z "$$(git status --porcelain)" ] || { \
 		echo "⛔ Working tree non propre. Committe ou stash avant le revert."; git status -sb; exit 1; }
-	@git fetch origin develop --quiet
+	@git fetch origin main --quiet
 	@branch="revert/$$(git rev-parse --short $(sha))"; \
-	echo "→ Création de la branche $$branch depuis origin/develop..."; \
-	git checkout -b "$$branch" origin/develop --quiet || exit 1; \
+	echo "→ Création de la branche $$branch depuis origin/main..."; \
+	git checkout -b "$$branch" origin/main --quiet || exit 1; \
 	echo "→ Revert de $(sha)..."; \
 	git revert --no-edit "$(sha)" || { \
 		echo "⛔ Conflit de revert. Résous-le, 'git revert --continue', puis 'make pr_create'."; exit 1; }; \
 	echo "✔ Revert prêt sur $$branch."; \
 	echo "  Ouvre la PR :  make pr_create      (puis merge → déploie une préprod saine)"
+
+# --- Release (remplace l'ancien workflow version-bump.yml) --------------------
+#
+# Depuis la consolidation du 2026-09-13, le bump ne se fait PLUS à chaque merge :
+# il se fait au moment de la RELEASE, explicitement. `main` est la seule branche
+# longue durée ; une release est un TAG posé dessus, et c'est ce tag qu'on déploie
+# en production (workflow « Deploy production », input `ref`).
+#
+# Un tag est immuable : il désigne sans ambiguïté ce qui tourne en prod, là où
+# « le HEAD de main au moment du clic » est une cible mouvante.
+#
+# `main` refusant le push direct (ruleset), le bump passe par une PR normale ;
+# le TAG, lui, se pousse directement (les rulesets portent sur les branches).
+release: ## Prépare une release : bump des versions + PR, puis tag vX.Y.Z (make release version=1.26.0)
+	@[ -n "$(version)" ] || { \
+		echo "Usage: make release version=X.Y.Z"; \
+		echo "  Exemple: make release version=1.26.0"; exit 1; }
+	@printf '%s' "$(version)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
+		echo "⛔ Version invalide : '$(version)' (attendu X.Y.Z, ex. 1.26.0)"; exit 1; }
+	@[ -z "$$(git status --porcelain)" ] || { \
+		echo "⛔ Working tree non propre. Committe ou stashe avant la release."; git status -sb; exit 1; }
+	@git fetch origin main --quiet
+	@git rev-parse --verify --quiet "refs/tags/v$(version)" >/dev/null && { \
+		echo "⛔ Le tag v$(version) existe déjà en local."; exit 1; } || true
+	@git ls-remote --exit-code --tags origin "refs/tags/v$(version)" >/dev/null 2>&1 && { \
+		echo "⛔ Le tag v$(version) existe déjà sur origin."; exit 1; } || true
+	@branch="release/v$(version)"; \
+	echo "→ Création de la branche $$branch depuis origin/main..."; \
+	git checkout -b "$$branch" origin/main --quiet || exit 1; \
+	echo "→ Bump des versions vers $(version)..."; \
+	for app in app2 app4; do \
+		f="sources/$$app/package.json"; \
+		[ -f "$$f" ] || continue; \
+		cur=$$(grep -oP '(?<="version": ")[^"]+' "$$f" | head -1); \
+		[ -n "$$cur" ] || continue; \
+		sed -i "s/\"version\": \"$$cur\"/\"version\": \"$(version)\"/" "$$f"; \
+		lock="sources/$$app/package-lock.json"; \
+		[ -f "$$lock" ] && sed -i "0,/\"version\": \"$$cur\"/s//\"version\": \"$(version)\"/;0,/\"version\": \"$$cur\"/s//\"version\": \"$(version)\"/" "$$lock"; \
+		echo "   $$app : $$cur → $(version)"; \
+	done; \
+	for y in sources/api2/config/packages/nelmio_api_doc.yaml sources/api2/config/packages/api_platform.yaml; do \
+		[ -f "$$y" ] || continue; \
+		cur=$$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$$y" | head -1); \
+		[ -n "$$cur" ] || continue; \
+		sed -i "s/\(version:[[:space:]]*\)$$cur\b/\1$(version)/" "$$y"; \
+		echo "   $$(basename $$y) : $$cur → $(version)"; \
+	done; \
+	git add -A; \
+	git diff --cached --quiet && { echo "⛔ Aucun fichier de version modifié."; exit 1; }; \
+	git commit -q -m "chore: release v$(version)" || exit 1; \
+	echo; \
+	echo "✔ Bump prêt sur $$branch."; \
+	echo; \
+	echo "  Étapes suivantes :"; \
+	echo "    make pr_create && make pr_checks && make pr_merge"; \
+	echo "    make release_tag version=$(version)     # APRÈS le merge de la PR"
+
+release_tag: ## Pose et pousse le tag vX.Y.Z sur main (à lancer APRÈS le merge de la PR de release)
+	@[ -n "$(version)" ] || { echo "Usage: make release_tag version=X.Y.Z"; exit 1; }
+	@printf '%s' "$(version)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { \
+		echo "⛔ Version invalide : '$(version)' (attendu X.Y.Z)"; exit 1; }
+	@git fetch origin main --quiet
+	@git log origin/main -1 --format='  dernier commit de main : %C(yellow)%h%Creset %s'
+	@grep -q '"version": "$(version)"' sources/app4/package.json 2>/dev/null || { \
+		echo "⛔ sources/app4/package.json n'est pas en $(version) sur ton working tree."; \
+		echo "   La PR de release a-t-elle bien été mergée ? (git checkout main && git pull)"; exit 1; }
+	@git tag -a "v$(version)" origin/main -m "Release v$(version)" || exit 1
+	@git push origin "v$(version)" || exit 1
+	@echo "✔ Tag v$(version) poussé sur origin (pointe sur origin/main)."
+	@echo
+	@echo "  Déployer en production :"
+	@echo "    Actions → « Deploy production » → Run workflow"
+	@echo "    ref = v$(version)   (puis approuver le run)"
