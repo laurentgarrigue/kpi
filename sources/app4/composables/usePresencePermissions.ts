@@ -13,14 +13,15 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   const canView = computed(() => authStore.profile <= 10)
 
   // Edit permission (inline edit, add, delete)
+  // Niveau 8 "Consultation" is read-only in both modes; editing starts at niveau 7 (club/team manager).
   const canEdit = computed(() => {
     if (isLocked.value) return false
     if (mode === 'team') {
       // Also enforce server-side club access check returned in the response
       if (!presenceStore.canEdit) return false
-      return authStore.profile <= 8
+      return authStore.profile <= 7
     }
-    if (mode === 'match') return authStore.profile <= 9
+    if (mode === 'match') return authStore.profile <= 7
     return false
   })
 
@@ -59,14 +60,14 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   const canInitializeFromTeam = computed(() => {
     if (mode !== 'match') return false
     if (isLocked.value) return false
-    return authStore.profile <= 9
+    return authStore.profile <= 7
   })
 
   // Clear all players (Match Mode only)
   const canClearAll = computed(() => {
     if (mode !== 'match') return false
     if (isLocked.value) return false
-    return authStore.profile <= 9
+    return authStore.profile <= 7
   })
 
   return {

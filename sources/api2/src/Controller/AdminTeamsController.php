@@ -20,8 +20,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * CRUD operations for competition teams management
  * (kp_competition_equipe, kp_equipe tables)
  * Migrated from GestionEquipe.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '26. App4 - Teams')]
 class AdminTeamsController extends AbstractController
 {
@@ -37,6 +43,7 @@ class AdminTeamsController extends AbstractController
      * List teams for a competition
      */
     #[Route('/admin/competition-teams', name: 'admin_competition_teams_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');
@@ -118,11 +125,12 @@ class AdminTeamsController extends AbstractController
      * Search historical teams (kp_equipe)
      */
     #[Route('/admin/teams/search', name: 'admin_teams_search', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchTeams(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -167,11 +175,12 @@ class AdminTeamsController extends AbstractController
      * Get available compositions for a team (for copy)
      */
     #[Route('/admin/teams/{numero}/compositions', name: 'admin_teams_compositions', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function getCompositions(int $numero, Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -205,13 +214,19 @@ class AdminTeamsController extends AbstractController
 
     /**
      * Search clubs (autocomplete)
+     *
+     * priority: higher than AdminClubsController::detail() (`/admin/clubs/{code}`), whose
+     * {code} requirement (`[A-Za-z0-9]+`) also matches the literal "search" segment. Without
+     * this, Symfony picks whichever route was registered first (undefined/scan-order
+     * dependent) and `search` gets treated as a club code, returning a 404 "Club not found".
      */
-    #[Route('/admin/clubs/search', name: 'admin_clubs_search', methods: ['GET'])]
+    #[Route('/admin/clubs/search', name: 'admin_clubs_search', methods: ['GET'], priority: 1)]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchClubs(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -263,6 +278,7 @@ class AdminTeamsController extends AbstractController
      * List regional committees
      */
     #[Route('/admin/regional-committees', name: 'admin_regional_committees', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listRegionalCommittees(): JsonResponse
     {
         $sql = "SELECT Code, Libelle FROM kp_cr ORDER BY Code";
@@ -284,6 +300,7 @@ class AdminTeamsController extends AbstractController
      * List departmental committees
      */
     #[Route('/admin/departmental-committees', name: 'admin_departmental_committees', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listDepartmentalCommittees(Request $request): JsonResponse
     {
         $cr = $request->query->get('cr', '');
@@ -318,6 +335,7 @@ class AdminTeamsController extends AbstractController
      * List clubs (with optional CR/CD filter)
      */
     #[Route('/admin/clubs', name: 'admin_clubs_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listClubs(Request $request): JsonResponse
     {
         $cd = $request->query->get('cd', '');
@@ -356,7 +374,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -494,7 +512,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -556,7 +574,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -646,7 +664,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -700,7 +718,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -800,7 +818,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -906,7 +924,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -983,7 +1001,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1085,7 +1103,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 

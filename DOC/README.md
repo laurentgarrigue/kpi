@@ -34,6 +34,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
 - **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture technique complète de l'application web (stack, PWA, gestion erreurs, API)
 - **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Documentation complète API2 (Symfony 7.3 + API Platform 4.2)
+- **[PROFILE_ROLES.md](developer/reference/PROFILE_ROLES.md)** - Correspondance niveau de profil ↔ rôle Symfony, profil principal vs mandat actif, piège des `#[IsGranted]` par méthode
 
 ### [Guides](developer/guides/)
 

@@ -90,7 +90,8 @@ export const useAuth = () => {
       const response = await fetch(`${baseUrl}/auth/refresh`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${authStore.token}`
+          'Authorization': `Bearer ${authStore.token}`,
+          ...(authStore.activeMandate ? { 'X-Active-Mandate': String(authStore.activeMandate.id) } : {})
         }
       })
 
@@ -120,7 +121,8 @@ export const useAuth = () => {
     try {
       const response = await fetch(`${baseUrl}/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${authStore.token}`
+          'Authorization': `Bearer ${authStore.token}`,
+          ...(authStore.activeMandate ? { 'X-Active-Mandate': String(authStore.activeMandate.id) } : {})
         }
       })
 

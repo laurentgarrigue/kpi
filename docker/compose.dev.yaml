@@ -82,6 +82,8 @@ services:
             - MERCURE_URL=http://localhost/.well-known/mercure
             # URL d'abonnement renvoyée au navigateur : via Traefik, préfixe /api2 compris.
             - MERCURE_PUBLIC_URL=https://${KPI_DOMAIN_NAME}/api2/.well-known/mercure
+            # Debug ponctuel : voir docker/.env (retirer après diagnostic)
+            - CADDY_ACCESS_LOG_LEVEL=${CADDY_ACCESS_LOG_LEVEL:-ERROR}
         volumes:
             - ../sources/api2:/app
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/

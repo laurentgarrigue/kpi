@@ -19,9 +19,15 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  *
  * CRUD operations for competitions management (kp_competition table)
  * Migrated from GestionCompetition.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
 #[Route('/admin/competitions')]
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '25. App4 - Competitions')]
 class AdminCompetitionsController extends AbstractController
 {
@@ -46,6 +52,7 @@ class AdminCompetitionsController extends AbstractController
      * List all competitions with pagination and filters
      */
     #[Route('', name: 'admin_competitions_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $this->getSeasonOrActive($request);
@@ -220,6 +227,7 @@ class AdminCompetitionsController extends AbstractController
      * Returns distinct competitions with their latest season code
      */
     #[Route('/-search-previous-seasons', name: 'admin_competitions_search_previous', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchPreviousSeasons(Request $request): JsonResponse
     {
         $query = trim($request->query->get('query', ''));
@@ -289,6 +297,7 @@ class AdminCompetitionsController extends AbstractController
      * Used to pre-fill form when importing from previous season
      */
     #[Route('/-from-previous-season/{code}/{seasonCode}', name: 'admin_competitions_from_previous', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function getFromPreviousSeason(string $code, string $seasonCode): JsonResponse
     {
         // Validate season code format
@@ -348,6 +357,7 @@ class AdminCompetitionsController extends AbstractController
      * Get a single competition by code
      */
     #[Route('/{code}', name: 'admin_competitions_get', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function get(string $code, Request $request): JsonResponse
     {
         $season = $this->getSeasonOrActive($request);
@@ -421,7 +431,7 @@ class AdminCompetitionsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -524,7 +534,7 @@ class AdminCompetitionsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -637,7 +647,7 @@ class AdminCompetitionsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -703,7 +713,7 @@ class AdminCompetitionsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -785,7 +795,7 @@ class AdminCompetitionsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -818,14 +828,14 @@ class AdminCompetitionsController extends AbstractController
     }
 
     /**
-     * Toggle competition lock status (profile <= 3)
+     * Toggle competition lock status (profile <= 4)
      */
     #[Route('/{code}/lock', name: 'admin_competitions_toggle_lock', methods: ['PATCH'])]
     public function toggleLock(string $code, Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -858,14 +868,14 @@ class AdminCompetitionsController extends AbstractController
     }
 
     /**
-     * Change competition status (profile <= 3)
+     * Change competition status (profile <= 4)
      */
     #[Route('/{code}/status', name: 'admin_competitions_change_status', methods: ['PATCH'])]
     public function changeStatus(string $code, Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -883,7 +893,7 @@ class AdminCompetitionsController extends AbstractController
         // active one. This is what keeps past seasons read-only for them: a profile
         // 1-2 ends past competitions (END + lock), and only a profile 1-2 may reopen
         // one of them later if results still need to be entered.
-        if ($user && $user->getNiveau() > 2 && $this->isPastSeason($season)) {
+        if ($user && $user->getEffectiveNiveau() > 2 && $this->isPastSeason($season)) {
             return $this->json(['message' => 'Past seasons are read-only for this profile'], Response::HTTP_FORBIDDEN);
         }
 
@@ -923,6 +933,7 @@ class AdminCompetitionsController extends AbstractController
      * List all groups for select dropdown
      */
     #[Route('-groups', name: 'admin_competitions_groups', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listGroups(): JsonResponse
     {
         $sql = "SELECT id, Groupe, Libelle, Code_niveau, section, ordre
@@ -952,6 +963,7 @@ class AdminCompetitionsController extends AbstractController
      * List competitions for MULTI select (non-MULTI competitions, filtered by user perimeter)
      */
     #[Route('-for-multi', name: 'admin_competitions_for_multi', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listForMulti(Request $request): JsonResponse
     {
         $season = $this->getSeasonOrActive($request);

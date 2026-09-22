@@ -19,8 +19,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Unified management of team and match player compositions
  * (kp_competition_equipe_joueur, kp_match_joueur tables)
  * Migrated from GestionEquipeJoueur.php and GestionMatchEquipeJoueur.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '27. App4 - Presence')]
 class AdminPresenceController extends AbstractController
 {
@@ -41,6 +47,7 @@ class AdminPresenceController extends AbstractController
      * Get team players composition
      */
     #[Route('/admin/teams/{teamId}/players', name: 'admin_team_players_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     public function getTeamPlayers(int $teamId): JsonResponse
     {
@@ -73,9 +80,9 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
         }
 
-        // Compute canEdit: not locked + profile <= 8 + club not restricted
+        // Compute canEdit: not locked + profile <= 7 (niveau 8 "Consultation" is read-only) + club not restricted
         $isLocked = $teamRow['Verrou'] === 'O';
-        $hasProfileAccess = $user && $user->getNiveau() <= 8;
+        $hasProfileAccess = $user && $user->getEffectiveNiveau() <= 7;
         $allowedClubs = $user?->getAllowedClubs();
         $hasClubAccess = $allowedClubs === null || in_array($teamRow['Code_club'], $allowedClubs);
         $canEdit = !$isLocked && $hasProfileAccess && $hasClubAccess;
@@ -169,7 +176,7 @@ class AdminPresenceController extends AbstractController
         // Check user profile
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -183,7 +190,7 @@ class AdminPresenceController extends AbstractController
 
         if ($mode === 'create') {
             // Create new non-licensed player (profile <= 4 required)
-            if ($user->getNiveau() > 4) {
+            if ($user->getEffectiveNiveau() > 4) {
                 return $this->json(['message' => 'Profile <= 4 required to create players'], Response::HTTP_FORBIDDEN);
             }
 
@@ -238,7 +245,7 @@ class AdminPresenceController extends AbstractController
                 if (!empty($validationErrors)) {
                     $forceAdd = !empty($data['forceAdd']);
                     // Profile <= 2 may override validation, but only as staff (E) or non-playing referee (A)
-                    if ($forceAdd && $user->getNiveau() <= 2) {
+                    if ($forceAdd && $user->getEffectiveNiveau() <= 2) {
                         $allowedStatuses = ['E', 'A'];
                         $capitaine = $data['capitaine'] ?? '';
                         if (!in_array($capitaine, $allowedStatuses)) {
@@ -319,7 +326,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -379,7 +386,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -413,6 +420,7 @@ class AdminPresenceController extends AbstractController
      * Search players by name or matric (for adding to team composition)
      */
     #[Route('/admin/players/search', name: 'admin_players_search', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string'))]
     public function searchPlayers(Request $request): JsonResponse
     {
@@ -484,6 +492,7 @@ class AdminPresenceController extends AbstractController
      * Get available compositions for copy (other competitions where this team's club has players)
      */
     #[Route('/admin/teams/{teamId}/compositions', name: 'admin_team_compositions', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function getAvailableCompositions(int $teamId, Request $request): JsonResponse
     {
         $teamInfo = $this->getTeamInfo($teamId);
@@ -538,7 +547,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -614,6 +623,7 @@ class AdminPresenceController extends AbstractController
      * Get match players for a team (A or B)
      */
     #[Route('/admin/matches/{matchId}/players', name: 'admin_match_players_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
     public function getMatchPlayers(int $matchId, Request $request): JsonResponse
@@ -759,7 +769,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -815,7 +825,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -865,7 +875,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -921,7 +931,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -960,7 +970,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -976,6 +986,7 @@ class AdminPresenceController extends AbstractController
      * Get copyable matches (same team in same journee or competition)
      */
     #[Route('/admin/matches/{matchId}/copyable-matches', name: 'admin_match_copyable', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
     #[OA\Parameter(name: 'scope', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['day', 'competition']))]
@@ -1108,7 +1119,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 

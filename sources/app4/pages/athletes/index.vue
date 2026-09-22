@@ -19,6 +19,7 @@ const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 
 const canEdit = computed(() => authStore.hasProfile(2))
+const canFilter = computed(() => authStore.hasProfile(4))
 
 // ── Search state ──
 const search = ref('')
@@ -334,7 +335,7 @@ onBeforeUnmount(() => {
     </h1>
 
     <!-- ═══ Filter Panel ═══ -->
-    <div class="mb-4">
+    <div v-if="canFilter" class="mb-4">
       <button
         type="button"
         class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors"
