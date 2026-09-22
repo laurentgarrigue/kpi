@@ -273,7 +273,12 @@ const canCreate = computed(() => authStore.profile <= 2)
 const canEdit = computed(() => authStore.profile <= 3)
 const canDelete = computed(() => authStore.profile <= 2)
 const canTogglePublish = computed(() => authStore.profile <= 4)
-const canToggleLock = computed(() => authStore.profile <= 3)
+const canToggleLock = computed(() => authStore.profile <= 4)
+// RC (Responsables de Compétition) management is reserved to profile <= 2, same as
+// admin/rc backend routes (AdminRcController, #[IsGranted('ROLE_ADMIN')] at class level).
+const canManageRc = computed(() => authStore.profile <= 2)
+// Whether the Actions column has anything to show at all for the current profile
+const showActionsColumn = computed(() => canManageRc.value || canDelete.value)
 
 // True when the selected season is strictly older than the active season
 const isPastSeason = computed(() => {
@@ -838,7 +843,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                     {{ t('competitions.columns.matchs') }}
                   </th>
-                  <th class="px-3 py-2 text-right text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
+                  <th v-if="showActionsColumn" class="px-3 py-2 text-right text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                     {{ t('competitions.columns.actions') }}
                   </th>
                 </tr>
@@ -1019,9 +1024,10 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   </td>
 
                   <!-- Actions -->
-                  <td class="px-3 py-1">
+                  <td v-if="showActionsColumn" class="px-3 py-1">
                     <div class="flex items-center justify-end gap-1">
                       <NuxtLink
+                        v-if="canManageRc"
                         :to="`/rc?competition=${competition.code}`"
                         class="p-1.5 text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
                         :title="t('competitions.rc')"

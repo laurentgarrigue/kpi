@@ -48,3 +48,13 @@ services:
         arguments:
             $surclassementCompetitions: '%env(csv:SURCLASSEMENT_COMPETITIONS)%'
             $surclassementExemptCategories: '%env(csv:SURCLASSEMENT_EXEMPT_CATEGORIES)%'
+
+    # Replaces Symfony's default role_hierarchy_voter: it reads roles from the security
+    # token's cached getRoleNames() (frozen at the first access_control check, before the
+    # active mandate is applied), which makes every #[IsGranted(...)] blind to mandates.
+    # MandateAwareRoleHierarchyVoter reads straight from the User entity instead. See
+    # its docblock and DOC/developer/reference/PROFILE_ROLES.md for the full story.
+    security.access.role_hierarchy_voter:
+        class: App\Security\MandateAwareRoleHierarchyVoter
+        arguments:
+            $roleHierarchy: '@security.role_hierarchy'

@@ -197,6 +197,30 @@ d'écran et des explications sur les différences entre les deux applications, l
 - ❓ api legacy encore utilisée ?
 - ❓ Reproduire les pdf en stateless ?
 
+**CI/CD** :
+- trivy-image.yaml : 7 warnings
+resolve-images
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+scan (mariadb, mariadb:11.5.2)
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+scan (mariadb, mariadb:11.5.2)
+CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
+scan (frankenphp, dunglas/frankenphp:php8.4)
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+scan (frankenphp, dunglas/frankenphp:php8.4)
+CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
+scan (php-apache, php:8.4.13-apache-trixie)
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+scan (php-apache, php:8.4.13-apache-trixie)
+CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
+
+- codeql.yaml : 2 warnings
+Analyse CodeQL (JS/TS)
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, github/codeql-action/analyze@v3, github/codeql-action/init@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Analyse CodeQL (JS/TS)
+CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
+
+
 
 **App4**:
 - Visuel colonnes (refs, shotclock) : ajouter la possibilité de gérer l'affichage d'autres colonnes dans le tableau des matchs (lignes, secrétaire, chronomètre, autre bénévole...) avec saisie en ligne, masquage éventuel des équipes et scores ainsi que d'autres colonnes. Profil dédié (chef arbitre, chef bénévoles ?)
@@ -222,6 +246,18 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
+- Création nouvelle compétition : par défaut système et goal average ICF pour niveau International, FFCK pour national et régional.
+- Création nouvelle compétition : Goal average : inverser l'ordre des valeurs dans le select
+- Utilisateurs - ajouter un mandat : select multiples background clair en mode sombre, illisibles.
+- Utilisateurs : formulaire permet la modification du mot de passe d'un utilisateur, mais pas l'API.
+- Utilisateurs : envoi de lien de réinitialisation du mot de passe à l'utilisateur ne semble pas fonctionner.
+- Cartouche utilisateur : manque de contraste sur Profil X, Thème, Déconnexion.
+- Timer connexion 45 minutes ?
+- ✅ Profil 9 devrait-il pouvoir changer le statut d'un match ? Oui
+- Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
+- clubs/team/XXX : ajouter catégorie (sous-titre 2) dans la colonne Compétition
+- id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
+- 
 
 **Nouveau règlement**:
 - Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
@@ -229,10 +265,10 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - 
 
 **Nours**:
-- "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
-- Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.
 - ✅ Dans le parcours Ajouter un joueur → Équipe, le champ Club reste en mode clair alors que le reste de l’interface est en mode sombre.
 - ✅ Anomalies sur les calculs – Compétition multi (R20) : Des incohérences ont été observées :
+- "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
+- Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.
 Exemple : Le Havre affiche seulement 4 points pour une seule compétition alors que le calcul annonce 16 points 
 Contexte :
 1 journée au format championnat
@@ -243,6 +279,22 @@ La table des points avait disparu et a dû être reparamétrée
 ce n’était pas le verrou qui s’activait, mais le statut du match qui changeait.
 Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus.
 (le verrou et le statut du match sont trop proches l’un de l’autre, ce qui peut prêter à confusion ?)
+
+**17/09/2026** :
+- Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
+- Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
+- Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
+
+
+
+**Nico (14/09/2026)**:
+- ✅ Page « Equipes » : (PROBLEME CRITIQUE) Je ne parviens pas à ajouter de joueurs dans aucune composition, je pense c’est l’auto-complétion qui génère une erreur de droits, voir image ci-dessous  « Accès refusé, vous n’avez pas les droits nécessaires » en notification (à chaque lettre que je rajoute). Je suis repassé par l’admin V1 pour ajouter les joueurs dans les compos (de mémoire à Combourg j’avais eu le même genre de difficulté). A tester peut être avec d’autres profils que le mien… ?
+- ✅ Page classements : Bouton « extractions PDF » côté classement public => les 3 pdf proposés génèrent une erreur 500 « Internal Server Error ». C’est pareil en admin V1 d’ailleurs donc pas lié à l’interface V2 probablement. Par contre côté classement privé RAS ça fonctionne.
+- Vérification des licences : Les licences « loisirs » (sans option compétition) apparaissent comme les autres, sans distinction ni warning les concernant (sauf le certificat médical compétition qui était absent, c’est ce qui m’a mis la puce à l’oreille). Je ne sais pas si exalto permet de mettre un certif « compét » avec une licence loisir mais si c’est possible on risque d’en râter.
+- Vérification des licences (idée d’amélioration) : Prévoir 3 modes de vérification des licences dans les feuilles de présence (en paramètre de la compétition) :
+  - Mode national (comme actuellement, licence compétition active, certif compétition, pagaie verte, surclassement)
+  - Mode régional (licence compétition active, certif compétition, pagaie jaune)
+  - Mode libre (aucun vérification ou alors juste licence)
 
 
 

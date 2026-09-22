@@ -19,9 +19,15 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  *
  * Ranking computation, publication, inline edit, consolidation, and team transfer.
  * Migrated from GestionClassement.php and GestionClassementInit.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
 #[Route('/admin/rankings')]
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '30. App4 - Rankings')]
 class AdminRankingsController extends AbstractController
 {
@@ -37,6 +43,7 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('', name: 'admin_rankings_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');
@@ -97,7 +104,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        $niveau = $user ? $user->getNiveau() : 99;
+        $niveau = $user ? $user->getEffectiveNiveau() : 99;
 
         if ($niveau > 6 && $niveau !== 9) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
@@ -197,7 +204,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -282,7 +289,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -356,7 +363,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -430,7 +437,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -473,7 +480,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -520,7 +527,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -641,11 +648,12 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/transfer-competitions', name: 'admin_rankings_transfer_competitions', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function transferCompetitions(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -678,11 +686,12 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/initial', name: 'admin_rankings_initial_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function initialList(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 6) {
+        if (!$user || $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -752,7 +761,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -795,7 +804,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -837,12 +846,13 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/justification', name: 'admin_rankings_justification', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function justification(Request $request): Response
     {
         /** @var User|null $user */
         $user = $this->getUser();
         // Read-only, aligned with ranking consultation (≤ 10).
-        if (!$user || $user->getNiveau() > 10) {
+        if (!$user || $user->getEffectiveNiveau() > 10) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 

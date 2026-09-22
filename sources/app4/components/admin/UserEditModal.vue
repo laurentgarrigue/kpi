@@ -841,9 +841,9 @@ onBeforeUnmount(() => {
             <!-- Seasons -->
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('users.modal.filter_seasons') }}</label>
-              <div class="border border-header-300 dark:border-header-700 rounded-lg max-h-36 overflow-y-auto p-2">
+              <div class="border border-header-300 dark:border-header-700 rounded-lg max-h-36 overflow-y-auto p-2 bg-white dark:bg-header-900">
                 <label
-                  class="flex items-center gap-2 text-sm mb-1"
+                  class="flex items-center gap-2 text-sm mb-1 text-header-900 dark:text-header-50"
                   :class="profileRestrictsAll ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'"
                 >
                   <input
@@ -857,7 +857,7 @@ onBeforeUnmount(() => {
                 <label
                   v-for="s in seasons"
                   :key="s.code"
-                  class="flex items-center gap-2 text-sm mb-1 cursor-pointer"
+                  class="flex items-center gap-2 text-sm mb-1 cursor-pointer text-header-900 dark:text-header-50"
                 >
                   <input
                     type="checkbox"
@@ -873,9 +873,9 @@ onBeforeUnmount(() => {
             <!-- Competitions -->
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('users.modal.filter_competitions') }}</label>
-              <div class="border border-header-300 dark:border-header-700 rounded-lg p-2">
+              <div class="border border-header-300 dark:border-header-700 rounded-lg p-2 bg-white dark:bg-header-900">
                 <label
-                  class="flex items-center gap-2 text-sm mb-2"
+                  class="flex items-center gap-2 text-sm mb-2 text-header-900 dark:text-header-50"
                   :class="profileRestrictsAll ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'"
                 >
                   <input
@@ -890,7 +890,7 @@ onBeforeUnmount(() => {
                   <input
                     v-model="competitionSearch"
                     type="text"
-                    class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+                    class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
                     :class="competitionSearch ? 'pr-6' : ''"
                     :placeholder="t('users.modal.filter_competitions_search')"
                   >
@@ -908,7 +908,7 @@ onBeforeUnmount(() => {
                     <label
                       v-for="c in group.items"
                       :key="c.code"
-                      class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
+                      class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
                     >
                       <input
                         type="checkbox"
@@ -979,11 +979,11 @@ onBeforeUnmount(() => {
           <!-- Events (profile <= 2 only) -->
           <div v-if="adminNiveau <= 2 && events.length > 0" class="mb-4">
             <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('users.modal.filter_events') }}</label>
-            <div class="border border-header-300 dark:border-header-700 rounded-lg max-h-36 overflow-y-auto p-2">
+            <div class="border border-header-300 dark:border-header-700 rounded-lg max-h-36 overflow-y-auto p-2 bg-white dark:bg-header-900">
               <label
                 v-for="evt in events"
                 :key="evt.id"
-                class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer"
+                class="flex items-center gap-2 text-sm mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
               >
                 <input
                   type="checkbox"
@@ -1017,7 +1017,7 @@ onBeforeUnmount(() => {
             class="flex items-center justify-between p-2 bg-header-50 dark:bg-header-900 rounded-lg text-sm"
           >
             <div>
-              <span class="font-medium">{{ mandate.libelle }}</span>
+              <span class="font-medium text-header-900 dark:text-header-50">{{ mandate.libelle }}</span>
               <span class="text-header-600 dark:text-header-300 ml-2">P{{ mandate.niveau }}</span>
               <span v-if="mandate.filtreSaison" class="text-header-600 dark:text-header-300 ml-2 text-xs">
                 {{ mandate.filtreSaison.split('|').filter(v => v).join(', ') }}
@@ -1059,11 +1059,11 @@ onBeforeUnmount(() => {
       <div class="border-t pt-4">
         <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-3">{{ t('users.modal.email_section') }}</h3>
         <div class="space-y-2">
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <label class="flex items-center gap-2 text-sm cursor-pointer text-header-900 dark:text-header-50">
             <input v-model="form.sendResetEmail" type="checkbox">
             {{ t('users.modal.send_reset_email') }}
           </label>
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <label class="flex items-center gap-2 text-sm cursor-pointer text-header-900 dark:text-header-50">
             <input v-model="form.includeDocLink" type="checkbox">
             {{ t('users.modal.include_doc_link') }}
           </label>

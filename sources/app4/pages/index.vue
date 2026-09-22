@@ -38,7 +38,7 @@ onMounted(() => {
     <div data-tour="home-shortcuts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Competitions card -->
       <NuxtLink
-        v-if="authStore.hasProfile(10)"
+        v-if="authStore.hasProfile(8)"
         to="/competitions"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -55,7 +55,7 @@ onMounted(() => {
 
       <!-- Teams card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/teams"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -72,7 +72,7 @@ onMounted(() => {
 
       <!-- Gamedays/Phases card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/gamedays"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -89,7 +89,7 @@ onMounted(() => {
 
       <!-- Rankings card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/rankings"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -106,7 +106,7 @@ onMounted(() => {
 
       <!-- Documents card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9) && authStore.profile !== 7"
+        v-if="authStore.hasProfile(8) && authStore.profile !== 7"
         to="/documents"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -140,7 +140,7 @@ onMounted(() => {
 
       <!-- Statistics card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/stats"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >

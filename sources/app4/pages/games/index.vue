@@ -166,6 +166,7 @@ const tzParam = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZ
 // ─── Permissions ───
 const canEdit = computed(() => authStore.profile <= 6)
 const canEditScores = computed(() => authStore.profile <= 6 || authStore.profile === 9)
+const canEditStatut = computed(() => authStore.profile <= 6 || authStore.profile === 9)
 // Scoring console (new in-app match console).
 // DEV-ONLY restriction: during development the Scoring button is visible to a single
 // user (login 42054). Remove SCORING_DEV_USER and revert to `authStore.profile <= 2`
@@ -762,6 +763,7 @@ const hasScore = (game: Game) => !!(game.scoreA || game.scoreB)
 const isCompetitionEnded = (game: Game) => game.competitionStatut === 'END'
 const isGameEditable = (game: Game) => canEdit.value && !isLocked(game) && !isCompetitionEnded(game) && game.authorized
 const isScoreEditable = (game: Game) => canEditScores.value && !isLocked(game) && !isCompetitionEnded(game) && game.authorized
+const isStatutEditable = (game: Game) => canEditStatut.value && !isLocked(game) && !isCompetitionEnded(game) && game.authorized
 const isDeletable = (game: Game) => isGameEditable(game) && !hasScore(game)
 
 // True when ALL loaded games belong to ended competitions (single-competition filter case)
@@ -1784,8 +1786,8 @@ const statusLabel = (game: Game) => {
 
 const statusBtnClass = (game: Game) => {
   switch (game.statut) {
-    case 'ON': return 'bg-primary-100 text-primary-700 border-primary-200'
-    case 'END': return 'bg-success-100 text-success-700 border-success-200'
+    case 'ON': return 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-100 border-primary-200 dark:border-primary-800'
+    case 'END': return 'bg-success-100 dark:bg-success-900 text-success-700 dark:text-success-100 border-success-200 dark:border-success-800'
     default: return 'bg-header-200 dark:bg-header-800 text-header-900 dark:text-header-300 border-header-200 dark:border-header-700'
   }
 }
@@ -2833,7 +2835,7 @@ const openScoring = (gameId: number) => {
                 <!-- Statut -->
                 <div class="mt-0.5">
                   <button
-                    v-if="isGameEditable(g)"
+                    v-if="isStatutEditable(g)"
                     class="px-1.5 py-1 text-[10px] font-medium rounded-full border leading-tight text-nowrap"
                     :class="statusBtnClass(g)"
                     @click="openStatusConfirm(g)"
@@ -3288,7 +3290,7 @@ const openScoring = (gameId: number) => {
             <span class="text-header-900 dark:text-header-50">|</span>
             <!-- <span class="text-header-600 dark:text-header-600">{{ t('games.field.status') }}</span> -->
             <button
-              v-if="isGameEditable(g)"
+              v-if="isStatutEditable(g)"
               class="px-2 py-0.5 text-xs font-medium rounded-full border"
               :class="statusBtnClass(g)"
               @click="openStatusConfirm(g)"

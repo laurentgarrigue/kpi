@@ -17,9 +17,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  *
  * Read-only visualization of competition phases: pool rankings and elimination brackets.
  * Migrated from GestionSchema.php
+ *
+ * ROLE_VIEWER (niveau <= 8, consultation) explicitly, not a class-level #[IsGranted]: this
+ * used to carry #[IsGranted('ROLE_DIVISION')] at class level, wrongly blocking niveau 8
+ * (mandate or base profile) even for this read-only visualization. See
+ * DOC/developer/reference/PROFILE_ROLES.md for the general #[IsGranted] cumulative pitfall.
  */
 #[Route('/admin/schema')]
-#[IsGranted('ROLE_DIVISION')]
 #[OA\Tag(name: '31. App4 - Schema')]
 class AdminSchemaController extends AbstractController
 {
@@ -33,6 +37,7 @@ class AdminSchemaController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('', name: 'admin_schema_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');

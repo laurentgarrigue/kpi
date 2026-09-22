@@ -25,11 +25,20 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Admin Operations Controller
  *
- * System administration operations (Super Admin only)
+ * Mostly system administration operations (Super Admin only), but also hosts a few
+ * generic search/autocomplete endpoints reused by non-super-admin pages (team presence
+ * sheets, RC assignment). Each method declares its own #[IsGranted(...)] explicitly —
+ * there is intentionally NO class-level #[IsGranted] here.
+ *
+ * ⚠️ #[IsGranted] does NOT override between class and method: Symfony merges class-level
+ * and method-level attributes (ControllerEvent::getAttributes()) and requires ALL of them
+ * to pass. A class-level ROLE_SUPER_ADMIN guard plus a method-level ROLE_ADMIN override
+ * would therefore still require ROLE_SUPER_ADMIN — the "override" would silently do
+ * nothing. See DOC/developer/reference/PROFILE_ROLES.md.
+ *
  * Migrated from GestionOperations.php
  */
 #[Route('/admin/operations')]
-#[IsGranted('ROLE_SUPER_ADMIN')]
 #[OA\Tag(name: '24. App4 - Operations')]
 class AdminOperationsController extends AbstractController
 {
@@ -209,6 +218,7 @@ class AdminOperationsController extends AbstractController
      * Copy competitions from one season to another
      */
     #[Route('/seasons/copy-competitions', name: 'admin_operations_seasons_copy_competitions', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function copyCompetitions(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -235,6 +245,7 @@ class AdminOperationsController extends AbstractController
      * Get competitions for a season
      */
     #[Route('/seasons/{code}/competitions', name: 'admin_operations_seasons_competitions', methods: ['GET'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function getSeasonCompetitions(string $code): JsonResponse
     {
         return $this->json($this->seasonService->getCompetitions($code));
@@ -246,6 +257,7 @@ class AdminOperationsController extends AbstractController
      * Get image types configuration
      */
     #[Route('/images/types', name: 'admin_operations_images_types', methods: ['GET'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function getImageTypes(): JsonResponse
     {
         return $this->json($this->imageService->getImageTypesConfig());
@@ -255,6 +267,7 @@ class AdminOperationsController extends AbstractController
      * Upload an image
      */
     #[Route('/images/upload', name: 'admin_operations_images_upload', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function uploadImage(Request $request): JsonResponse
     {
         $imageType = $request->request->get('imageType', '');
@@ -298,6 +311,7 @@ class AdminOperationsController extends AbstractController
      * List images for a given type
      */
     #[Route('/images/list', name: 'admin_operations_images_list', methods: ['GET'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function listImages(Request $request): JsonResponse
     {
         $imageType = $request->query->get('imageType', '');
@@ -321,6 +335,7 @@ class AdminOperationsController extends AbstractController
      * Import image from external URL
      */
     #[Route('/images/import-url', name: 'admin_operations_images_import_url', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function importImageFromUrl(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -363,6 +378,7 @@ class AdminOperationsController extends AbstractController
      * Delete an image (refused if still referenced in a competition)
      */
     #[Route('/images/delete', name: 'admin_operations_images_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function deleteImage(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -393,6 +409,7 @@ class AdminOperationsController extends AbstractController
      * Rename an image
      */
     #[Route('/images/rename', name: 'admin_operations_images_rename', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function renameImage(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -420,6 +437,7 @@ class AdminOperationsController extends AbstractController
      * Merge two players
      */
     #[Route('/players/merge', name: 'admin_operations_players_merge', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function mergePlayers(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -448,6 +466,7 @@ class AdminOperationsController extends AbstractController
      * Auto-merge non-federal players
      */
     #[Route('/players/auto-merge', name: 'admin_operations_players_auto_merge', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function autoMergePlayers(): JsonResponse
     {
         try {
@@ -461,8 +480,14 @@ class AdminOperationsController extends AbstractController
 
     /**
      * Search players for autocomplete
+     *
+     * Used by team presence sheets, RC (competition delegate) assignment, and the
+     * super-admin player merge tool. Overrides the controller-wide ROLE_SUPER_ADMIN
+     * guard down to ROLE_VIEWER (niveau <= 8) to match the legacy behaviour, where
+     * this search ("Find") was open to profiles up to 8. See DOC/developer/reference/PROFILE_ROLES.md.
      */
     #[Route('/autocomplete/players', name: 'admin_operations_autocomplete_players', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchPlayers(Request $request): JsonResponse
     {
         $query = $request->query->get('q', '');
@@ -623,6 +648,7 @@ class AdminOperationsController extends AbstractController
      * Rename a team
      */
     #[Route('/teams/rename', name: 'admin_operations_teams_rename', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function renameTeam(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -647,6 +673,7 @@ class AdminOperationsController extends AbstractController
      * Merge two teams
      */
     #[Route('/teams/merge', name: 'admin_operations_teams_merge', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function mergeTeams(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -675,6 +702,7 @@ class AdminOperationsController extends AbstractController
      * Move team to another club
      */
     #[Route('/teams/move', name: 'admin_operations_teams_move', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function moveTeam(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -697,8 +725,12 @@ class AdminOperationsController extends AbstractController
 
     /**
      * Search teams for autocomplete
+     *
+     * See searchPlayers() above: overrides the controller-wide ROLE_SUPER_ADMIN guard,
+     * this autocomplete is used from non-super-admin contexts (e.g. presence sheets).
      */
     #[Route('/autocomplete/teams', name: 'admin_operations_autocomplete_teams', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchTeams(Request $request): JsonResponse
     {
         $query = $request->query->get('q', '');
@@ -734,8 +766,13 @@ class AdminOperationsController extends AbstractController
 
     /**
      * Search clubs for autocomplete
+     *
+     * See searchPlayers() above: overrides the controller-wide ROLE_SUPER_ADMIN guard,
+     * this autocomplete is used from non-super-admin contexts (e.g. presence sheets'
+     * club filter in ClubAutocomplete.vue).
      */
     #[Route('/autocomplete/clubs', name: 'admin_operations_autocomplete_clubs', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchClubs(Request $request): JsonResponse
     {
         $query = $request->query->get('q', '');
@@ -773,6 +810,7 @@ class AdminOperationsController extends AbstractController
      * Change competition/club code
      */
     #[Route('/codes/change', name: 'admin_operations_codes_change', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function changeCode(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -806,6 +844,7 @@ class AdminOperationsController extends AbstractController
      * Export event data as JSON
      */
     #[Route('/events/{id}/export', name: 'admin_operations_events_export', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function exportEvent(int $id): StreamedResponse
     {
         $exportData = $this->eventService->exportEvent($id);
@@ -825,6 +864,7 @@ class AdminOperationsController extends AbstractController
      * Import event data from JSON
      */
     #[Route('/events/{id}/import', name: 'admin_operations_events_import', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function importEvent(int $id, Request $request): JsonResponse
     {
         $file = $request->files->get('jsonFile');
@@ -853,6 +893,7 @@ class AdminOperationsController extends AbstractController
      * Import PCE license file from FFCK extranet
      */
     #[Route('/licenses/import-pce', name: 'admin_operations_licenses_import_pce', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function importPce(): JsonResponse
     {
         try {
@@ -890,6 +931,7 @@ class AdminOperationsController extends AbstractController
      * Update competition locks (lock upcoming, unlock recent)
      */
     #[Route('/competitions/update-locks', name: 'admin_operations_competitions_update_locks', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function updateCompetitionLocks(): JsonResponse
     {
         try {
@@ -929,6 +971,7 @@ class AdminOperationsController extends AbstractController
      * Purge cache files
      */
     #[Route('/cache/purge', name: 'admin_operations_cache_purge', methods: ['POST'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function purgeCache(): JsonResponse
     {
         // In Docker: api2/src/Controller -> dirname 3 levels = /var/www/html, then /live/cache/
