@@ -2228,7 +2228,9 @@
       "viewSchema": "Voir le schéma",
       "copyTo": "Copier vers...",
       "final": "F",
-      "noResults": "Aucun résultat"
+      "noResults": "Aucun résultat",
+      "filterLabel": "Filtrer...",
+      "filterAll": "Tous"
     },
     "confirm": {
       "switchTo": "Basculer vers la compétition {code} (saison {season}) ?"

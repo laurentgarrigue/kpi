@@ -259,7 +259,7 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 (le verrou et le statut du match sont trop proches l’un de l’autre, ce qui peut prêter à confusion ?)
 
 **17/09/2026** :
-- Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
+- ✅ Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
 - Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
 - ✅ Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
 

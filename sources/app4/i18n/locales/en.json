@@ -2216,7 +2216,9 @@
       "viewSchema": "View schema",
       "copyTo": "Copy to...",
       "final": "F",
-      "noResults": "No results"
+      "noResults": "No results",
+      "filterLabel": "Filter...",
+      "filterAll": "All"
     },
     "confirm": {
       "switchTo": "Switch to competition {code} (season {season})?"
