@@ -852,7 +852,7 @@ class AdminCompetitionsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $newValue = $current === 'O' ? '' : 'O';
+        $newValue = $current === 'O' ? 'N' : 'O';
 
         $updateSql = "UPDATE kp_competition SET Verrou = ? WHERE Code = ? AND Code_saison = ?";
         $stmt = $this->connection->prepare($updateSql);

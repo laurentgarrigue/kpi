@@ -162,7 +162,7 @@ onMounted(() => {
         <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5" />
         <div>
           <h4 class="font-medium text-warning-800 dark:text-warning-200">{{ t('dashboard.beta_notice_title') }}</h4>
-          <p class="mt-1 text-sm text-warning-700 dark:text-warning-300">{{ t('dashboard.beta_notice_message') }}</p>
+          <p class="mt-1 text-sm text-warning-700 dark:text-warning-300">{{ t('dashboard.beta_notice_message') }} <a href="mailto:contact@kayak-polo.info" class="underline hover:no-underline">contact@kayak-polo.info</a></p>
         </div>
       </div>
     </div>

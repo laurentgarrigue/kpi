@@ -84,7 +84,7 @@
     "view_statistics": "View statistics",
     "system_operations": "System operations",
     "beta_notice_title": "Beta Version",
-    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue."
+    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to"
   },
   "events": {
     "title": "Event Management",
