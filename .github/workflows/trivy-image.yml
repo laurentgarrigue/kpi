@@ -91,7 +91,7 @@ jobs:
           hide-progress: true
 
       - name: Upload SARIF vers l'onglet Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-${{ matrix.slug }}.sarif
