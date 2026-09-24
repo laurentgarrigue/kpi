@@ -2,7 +2,7 @@
 if(!isset($_SESSION)) {
 	session_start(); 
 }
-$_SESSION['lang'] = 'en';
+$_SESSION['lang'] = 'fr';
 
-header('Location: /?lang=en');
+header('Location: /?lang=fr');
 exit;
