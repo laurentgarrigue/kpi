@@ -115,7 +115,7 @@ class AdminTeamsController extends AbstractController
                 'codeNiveau' => $competitionRow['Code_niveau'],
                 'codeTypeclt' => $competitionRow['Code_typeclt'],
                 'statut' => $competitionRow['Statut'],
-                'verrou' => (bool) $competitionRow['Verrou'],
+                'verrou' => $competitionRow['Verrou'] === 'O',
             ],
             'total' => count($teams),
         ]);
@@ -396,7 +396,7 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($compRow['Verrou']) {
+        if ($compRow['Verrou'] === 'O') {
             return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
@@ -540,7 +540,7 @@ class AdminTeamsController extends AbstractController
         $stmt = $this->connection->prepare($sql);
         $result = $stmt->executeQuery([$team['Code_compet'], $team['Code_saison']]);
         $compRow = $result->fetchAssociative();
-        if ($compRow && $compRow['Verrou']) {
+        if ($compRow && $compRow['Verrou'] === 'O') {
             return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
@@ -593,7 +593,7 @@ class AdminTeamsController extends AbstractController
             $stmt = $this->connection->prepare($sql);
             $result = $stmt->executeQuery([$competition, $season]);
             $compRow = $result->fetchAssociative();
-            if ($compRow && $compRow['Verrou']) {
+            if ($compRow && $compRow['Verrou'] === 'O') {
                 return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
             }
         }
@@ -1125,7 +1125,7 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $newVerrou = $current === 'O' ? '' : 'O';
+        $newVerrou = $current === 'O' ? 'N' : 'O';
         $sql = "UPDATE kp_competition SET Verrou = ? WHERE Code = ? AND Code_saison = ?";
         $stmt = $this->connection->prepare($sql);
         $stmt->executeStatement([$newVerrou, $competition, $season]);

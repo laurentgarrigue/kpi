@@ -487,6 +487,16 @@ onMounted(() => {
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
                   <span>KPI App</span>
                 </a>
+                <div class="border-t border-header-700 my-1" />
+                <a
+                  :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  @click="publicMenuOpen = false"
+                >
+                  <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+                  <span>KPI Admin 1 (legacy)</span>
+                </a>
               </div>
             </Transition>
           </div>
@@ -673,6 +683,14 @@ onMounted(() => {
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI App</span>
+          </a>
+          <a
+            :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
+            target="_blank"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+          >
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
+            <span>KPI Admin1 (legacy)</span>
           </a>
           <!-- Section: Competition Management -->
           <template v-for="item in competitionMenuItems" :key="item.label">

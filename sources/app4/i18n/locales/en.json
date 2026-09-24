@@ -84,7 +84,7 @@
     "view_statistics": "View statistics",
     "system_operations": "System operations",
     "beta_notice_title": "Beta Version",
-    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue."
+    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to"
   },
   "events": {
     "title": "Event Management",
@@ -2216,7 +2216,9 @@
       "viewSchema": "View schema",
       "copyTo": "Copy to...",
       "final": "F",
-      "noResults": "No results"
+      "noResults": "No results",
+      "filterLabel": "Filter...",
+      "filterAll": "All"
     },
     "confirm": {
       "switchTo": "Switch to competition {code} (season {season})?"

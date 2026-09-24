@@ -84,7 +84,7 @@
     "view_statistics": "Voir les statistiques",
     "system_operations": "Opérations système",
     "beta_notice_title": "Version Beta",
-    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté."
+    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté à"
   },
   "events": {
     "title": "Gestion des événements",
@@ -2228,7 +2228,9 @@
       "viewSchema": "Voir le schéma",
       "copyTo": "Copier vers...",
       "final": "F",
-      "noResults": "Aucun résultat"
+      "noResults": "Aucun résultat",
+      "filterLabel": "Filtrer...",
+      "filterAll": "Tous"
     },
     "confirm": {
       "switchTo": "Basculer vers la compétition {code} (saison {season}) ?"

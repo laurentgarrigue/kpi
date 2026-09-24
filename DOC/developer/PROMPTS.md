@@ -197,29 +197,7 @@ d'écran et des explications sur les différences entre les deux applications, l
 - ❓ api legacy encore utilisée ?
 - ❓ Reproduire les pdf en stateless ?
 
-**CI/CD** :
-- trivy-image.yaml : 7 warnings
-resolve-images
-Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-scan (mariadb, mariadb:11.5.2)
-Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-scan (mariadb, mariadb:11.5.2)
-CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
-scan (frankenphp, dunglas/frankenphp:php8.4)
-Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-scan (frankenphp, dunglas/frankenphp:php8.4)
-CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
-scan (php-apache, php:8.4.13-apache-trixie)
-Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: github/codeql-action/upload-sarif@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-scan (php-apache, php:8.4.13-apache-trixie)
-CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
-
-- codeql.yaml : 2 warnings
-Analyse CodeQL (JS/TS)
-Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, github/codeql-action/analyze@v3, github/codeql-action/init@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
-Analyse CodeQL (JS/TS)
-CodeQL Action v3 will be deprecated in December 2026. Please update all occurrences of the CodeQL Action in your workflow files to v4. For more information, see https://github.blog/changelog/2025-10-28-upcoming-deprecation-of-codeql-action-v3/
-
+- evaluer le changement dans la CI/CD pour que les déploiement préprod et prod soient buildés avant d'interrompre l'application.
 
 
 **App4**:
@@ -281,9 +259,9 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 (le verrou et le statut du match sont trop proches l’un de l’autre, ce qui peut prêter à confusion ?)
 
 **17/09/2026** :
-- Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
+- ✅ Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
 - Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
-- Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
+- ✅ Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
 
 
 

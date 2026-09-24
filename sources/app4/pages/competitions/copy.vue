@@ -83,6 +83,13 @@ const doSearch = async () => {
 
   searchLoading.value = true
   hasSearched.value = true
+  filterCode.value = ''
+  filterLabel.value = ''
+  filterType.value = ''
+  filterLevel.value = ''
+  filterEncoded.value = ''
+  filterInfo.value = ''
+  sortColumn.value = null
   try {
     schemas.value = await copyApi.searchSchemas(
       searchNbEquipes.value,
@@ -114,6 +121,94 @@ const getDisplayLabel = (s: SchemaSearchResult) => {
   if (s.soustitre2) lines.push(s.soustitre2)
   return lines
 }
+
+const getSchemaLabel = (s: SchemaSearchResult) => getDisplayLabel(s).join(' ')
+
+// --- Results table: column sort ---
+type SortColumn = 'season' | 'code' | 'codeTypeclt' | 'codeNiveau' | 'libelle' | 'nbEquipes' | 'nbTerrains' | 'nbTours' | 'nbPhases' | 'nbMatchs' | 'matchsEncodes' | 'hasInfo'
+const sortColumn = ref<SortColumn | null>(null)
+const sortOrder = ref<'ASC' | 'DESC'>('ASC')
+
+const handleSort = (column: SortColumn) => {
+  if (sortColumn.value === column) {
+    sortOrder.value = sortOrder.value === 'ASC' ? 'DESC' : 'ASC'
+  } else {
+    sortColumn.value = column
+    sortOrder.value = 'ASC'
+  }
+}
+
+const getSortIcon = (column: SortColumn) => {
+  if (sortColumn.value !== column) return 'i-heroicons-arrows-up-down'
+  return sortOrder.value === 'ASC' ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'
+}
+
+// --- Results table: column filters ---
+const filterCode = ref('')
+const filterLabel = ref('')
+const filterType = ref('')
+const filterLevel = ref('')
+const filterEncoded = ref('')
+const filterInfo = ref('')
+
+const levelOptions = computed(() => {
+  const levels = new Set(schemas.value.map(s => s.codeNiveau).filter(Boolean))
+  return Array.from(levels).sort()
+})
+
+const filteredSortedSchemas = computed(() => {
+  let result = schemas.value
+
+  if (filterCode.value) {
+    const needle = filterCode.value.toLowerCase()
+    result = result.filter(s => s.code.toLowerCase().includes(needle))
+  }
+  if (filterLabel.value) {
+    const needle = filterLabel.value.toLowerCase()
+    result = result.filter(s => getSchemaLabel(s).toLowerCase().includes(needle))
+  }
+  if (filterType.value) {
+    result = result.filter(s => s.codeTypeclt === filterType.value)
+  }
+  if (filterLevel.value) {
+    result = result.filter(s => s.codeNiveau === filterLevel.value)
+  }
+  if (filterEncoded.value) {
+    const wantEncoded = filterEncoded.value === 'yes'
+    result = result.filter(s => s.matchsEncodes === wantEncoded)
+  }
+  if (filterInfo.value) {
+    const wantInfo = filterInfo.value === 'yes'
+    result = result.filter(s => Boolean(s.commentaires) === wantInfo)
+  }
+
+  if (sortColumn.value) {
+    const col = sortColumn.value
+    const dir = sortOrder.value === 'ASC' ? 1 : -1
+    result = [...result].sort((a, b) => {
+      let va: string | number
+      let vb: string | number
+      if (col === 'libelle') {
+        va = getSchemaLabel(a)
+        vb = getSchemaLabel(b)
+      } else if (col === 'hasInfo') {
+        va = a.commentaires ? 1 : 0
+        vb = b.commentaires ? 1 : 0
+      } else {
+        va = (a as unknown as Record<string, string | number | boolean>)[col] as string | number
+        vb = (b as unknown as Record<string, string | number | boolean>)[col] as string | number
+      }
+      if (typeof va === 'boolean') va = va ? 1 : 0
+      if (typeof vb === 'boolean') vb = vb ? 1 : 0
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return va.localeCompare(vb) * dir
+      }
+      return ((va as number) - (vb as number)) * dir
+    })
+  }
+
+  return result
+})
 
 const getLevelColor = (level: string) => {
   switch (level) {
@@ -369,30 +464,157 @@ onMounted(async () => {
       </div>
 
       <!-- Table -->
-      <div class="overflow-x-auto">
+      <div class="overflow-auto max-h-[70vh]">
         <table class="w-full text-sm">
-          <thead class="bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700">
+          <thead class="bg-header-50 dark:bg-header-900">
             <tr>
-              <th class="px-3 py-2 text-left font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.season') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.code') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.type') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.level') }}</th>
-              <th class="px-3 py-2 text-left font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.label') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.teams') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.pitches') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.rounds') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.phases') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.matches') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.encoded') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.info') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.viewSchema') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.switchTo') }}</th>
-              <th class="px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.copyTo') }}</th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-left font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('season')">
+                <div class="flex items-center gap-1">
+                  {{ t('competitionCopy.table.season') }}
+                  <UIcon :name="getSortIcon('season')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-left font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('code')">
+                <div class="flex items-center gap-1">
+                  {{ t('competitionCopy.table.code') }}
+                  <UIcon :name="getSortIcon('code')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('codeTypeclt')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.type') }}
+                  <UIcon :name="getSortIcon('codeTypeclt')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-left font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('codeNiveau')">
+                <div class="flex items-center gap-1">
+                  {{ t('competitionCopy.table.level') }}
+                  <UIcon :name="getSortIcon('codeNiveau')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-left font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('libelle')">
+                <div class="flex items-center gap-1">
+                  {{ t('competitionCopy.table.label') }}
+                  <UIcon :name="getSortIcon('libelle')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('nbEquipes')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.teams') }}
+                  <UIcon :name="getSortIcon('nbEquipes')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('nbTerrains')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.pitches') }}
+                  <UIcon :name="getSortIcon('nbTerrains')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('nbTours')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.rounds') }}
+                  <UIcon :name="getSortIcon('nbTours')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('nbPhases')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.phases') }}
+                  <UIcon :name="getSortIcon('nbPhases')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('nbMatchs')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.matches') }}
+                  <UIcon :name="getSortIcon('nbMatchs')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('matchsEncodes')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.encoded') }}
+                  <UIcon :name="getSortIcon('matchsEncodes')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('hasInfo')">
+                <div class="flex items-center justify-center gap-1">
+                  {{ t('competitionCopy.table.info') }}
+                  <UIcon :name="getSortIcon('hasInfo')" class="w-4 h-4" />
+                </div>
+              </th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.viewSchema') }}</th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.switchTo') }}</th>
+              <th class="sticky top-0 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-3 py-2 text-center font-medium text-header-900 dark:text-header-50">{{ t('competitionCopy.table.copyTo') }}</th>
+            </tr>
+            <!-- Filter row -->
+            <tr>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <input
+                  v-model="filterCode"
+                  type="text"
+                  :placeholder="t('competitionCopy.table.filterLabel')"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <select
+                  v-model="filterType"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
+                  <option value="CHPT">CHPT</option>
+                  <option value="CP">CP</option>
+                </select>
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <select
+                  v-model="filterLevel"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
+                  <option v-for="lvl in levelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
+                </select>
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <input
+                  v-model="filterLabel"
+                  type="text"
+                  :placeholder="t('competitionCopy.table.filterLabel')"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <select
+                  v-model="filterEncoded"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
+                  <option value="yes">✓</option>
+                  <option value="no">✗</option>
+                </select>
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
+                <select
+                  v-model="filterInfo"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
+                  <option value="yes">✓</option>
+                  <option value="no">✗</option>
+                </select>
+              </th>
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
+              <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="schema in schemas"
+              v-for="schema in filteredSortedSchemas"
               :key="`${schema.code}-${schema.season}`"
               class="border-b border-header-100 dark:border-header-800 hover:bg-header-50 dark:hover:bg-header-800"
             >
@@ -477,7 +699,7 @@ onMounted(async () => {
         </table>
 
         <!-- No results -->
-        <div v-if="schemas.length === 0 && !searchLoading" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
+        <div v-if="filteredSortedSchemas.length === 0 && !searchLoading" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
           {{ t('competitionCopy.table.noResults') }}
         </div>
 
