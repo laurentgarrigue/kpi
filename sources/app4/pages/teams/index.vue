@@ -10,7 +10,9 @@ import type {
   DuplicateFormData,
   RegionalCommittee,
   DepartmentalCommittee,
-  Club
+  Club,
+  RankingSourceCompetition,
+  RankingSourceResponse
 } from '~/types/teams'
 
 definePageMeta({
@@ -109,7 +111,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutsideDropdo
 
 // Add modal state
 const addModalOpen = ref(false)
-const addFormTab = ref<'manual' | 'history'>('history')
+const addFormTab = ref<'manual' | 'history' | 'ranking'>('history')
 const addFormData = ref<TeamAddFormData>(getDefaultAddFormData())
 const addFormError = ref('')
 const addFormSaving = ref(false)
@@ -132,6 +134,15 @@ const historySearchQuery = ref('')
 const historySearchResults = ref<HistoricalTeam[]>([])
 const historySearchLoading = ref(false)
 let historySearchTimeout: ReturnType<typeof setTimeout> | null = null
+
+// Previous ranking tab
+const rankingSeason = ref('')
+const rankingCompetitions = ref<RankingSourceCompetition[]>([])
+const rankingCompetition = ref('')
+const rankingData = ref<RankingSourceResponse | null>(null)
+const rankingLoading = ref(false)
+const rankingSelectedNumbers = ref<number[]>([])
+const rankingCopyComposition = ref(false)
 
 // Composition copy state
 const showCopyComposition = ref(false)
@@ -422,6 +433,8 @@ const openAddModal = () => {
   compositions.value = []
   selectedCR.value = ''
   selectedCD.value = ''
+  rankingSelectedNumbers.value = []
+  rankingCopyComposition.value = false
   addModalOpen.value = true
   loadRegionalCommittees()
   focusHistorySearch()
@@ -533,6 +546,86 @@ const toggleHistoryTeam = (numero: number) => {
 
 const isHistoryTeamSelected = (numero: number) => addFormData.value.teamNumbers.includes(numero)
 
+// Previous ranking tab
+const seasonOptions = computed(() => [...workContext.seasons].map(s => s.code).sort().reverse())
+
+// Numeros of the teams already in the current competition (cannot be added again)
+const currentTeamNumbers = computed(() => new Set(teams.value.map(tm => tm.numero)))
+
+// Teams of the source ranking that can still be added
+const rankingSelectableNumbers = computed(() =>
+  (rankingData.value?.teams ?? []).map(tm => tm.numero).filter(n => !currentTeamNumbers.value.has(n))
+)
+
+const allRankingTeamsSelected = computed(() =>
+  rankingSelectableNumbers.value.length > 0
+  && rankingSelectableNumbers.value.every(n => rankingSelectedNumbers.value.includes(n))
+)
+
+const openRankingTab = () => {
+  addFormTab.value = 'ranking'
+  addFormData.value.mode = 'history'
+  if (!rankingSeason.value) {
+    // Default to the season preceding the working season
+    rankingSeason.value = seasonOptions.value.find(code => code < workContext.season) || workContext.season
+  }
+}
+
+const loadRankingCompetitions = async () => {
+  rankingCompetitions.value = []
+  rankingCompetition.value = ''
+  if (!rankingSeason.value) return
+  try {
+    rankingCompetitions.value = await api.get<RankingSourceCompetition[]>('/admin/competition-teams/ranking-sources', { season: rankingSeason.value })
+  } catch {
+    // Ignore
+  }
+}
+
+const loadRankingSource = async () => {
+  rankingData.value = null
+  rankingSelectedNumbers.value = []
+  if (!rankingSeason.value || !rankingCompetition.value) return
+  rankingLoading.value = true
+  try {
+    rankingData.value = await api.get<RankingSourceResponse>('/admin/competition-teams/ranking-source', {
+      season: rankingSeason.value,
+      competition: rankingCompetition.value
+    })
+  } catch {
+    rankingData.value = null
+  } finally {
+    rankingLoading.value = false
+  }
+}
+
+watch(rankingSeason, loadRankingCompetitions)
+watch(rankingCompetition, loadRankingSource)
+
+// Promoted (▲) / relegated (▼) status, same rule as the rankings page
+const getRankingQualifiedStatus = (index: number) => {
+  const data = rankingData.value
+  if (!data) return null
+  const { qualifies, elimines } = data.competition
+  if (qualifies > 0 && index < qualifies) return 'qualified'
+  if (elimines > 0 && index >= data.teams.length - elimines) return 'eliminated'
+  return null
+}
+
+const toggleRankingTeam = (numero: number) => {
+  if (currentTeamNumbers.value.has(numero)) return
+  const index = rankingSelectedNumbers.value.indexOf(numero)
+  if (index > -1) {
+    rankingSelectedNumbers.value.splice(index, 1)
+  } else {
+    rankingSelectedNumbers.value.push(numero)
+  }
+}
+
+const toggleAllRankingTeams = () => {
+  rankingSelectedNumbers.value = allRankingTeamsSelected.value ? [] : [...rankingSelectableNumbers.value]
+}
+
 // Load compositions for selected team (history mode)
 const loadCompositions = async (numero: number) => {
   if (!workContext.season) return
@@ -555,6 +648,11 @@ const saveAddForm = async (keepOpen = false) => {
       addFormError.value = 'Le nom de l\'équipe est obligatoire'
       return
     }
+  } else if (addFormTab.value === 'ranking') {
+    if (rankingSelectedNumbers.value.length === 0) {
+      addFormError.value = 'Sélectionnez au moins une équipe'
+      return
+    }
   } else {
     if (addFormData.value.teamNumbers.length === 0) {
       addFormError.value = 'Sélectionnez au moins une équipe'
@@ -575,6 +673,11 @@ const saveAddForm = async (keepOpen = false) => {
     if (addFormData.value.mode === 'manual') {
       body.libelle = addFormData.value.libelle
       body.codeClub = addFormData.value.codeClub
+    } else if (addFormTab.value === 'ranking') {
+      body.teamNumbers = rankingSelectedNumbers.value
+      if (rankingCopyComposition.value) {
+        body.copyComposition = { season: rankingSeason.value, competition: rankingCompetition.value }
+      }
     } else {
       body.teamNumbers = addFormData.value.teamNumbers
       if (addFormData.value.copyComposition) {
@@ -597,6 +700,7 @@ const saveAddForm = async (keepOpen = false) => {
       historySearchResults.value = []
       showCopyComposition.value = false
       compositions.value = []
+      rankingSelectedNumbers.value = []
       if (currentTab === 'history') {
         focusHistorySearch()
       } else {
@@ -1500,6 +1604,14 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              :class="addFormTab === 'ranking' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'"
+              @click="openRankingTab()"
+            >
+              {{ t('teams_page.add_modal.tab_ranking') }}
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
               :class="addFormTab === 'manual' ? 'border-primary-600 text-primary-600' : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'"
               @click="addFormTab = 'manual'; addFormData.mode = 'manual'; focusManualLibelle()"
             >
@@ -1728,6 +1840,115 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 </p>
               </div>
             </div>
+          </template>
+
+          <!-- Previous ranking tab -->
+          <template v-if="addFormTab === 'ranking'">
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
+                  {{ t('teams_page.add_modal.ranking_season') }}
+                </label>
+                <select
+                  v-model="rankingSeason"
+                  class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 rounded-lg text-sm"
+                >
+                  <option v-for="code in seasonOptions" :key="code" :value="code">{{ code }}</option>
+                </select>
+              </div>
+              <div class="col-span-2">
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
+                  {{ t('teams_page.add_modal.ranking_competition') }}
+                </label>
+                <select
+                  v-model="rankingCompetition"
+                  class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 rounded-lg text-sm"
+                  :disabled="rankingCompetitions.length === 0"
+                >
+                  <option value="">
+                    {{ rankingCompetitions.length === 0 ? t('teams_page.add_modal.ranking_no_competition') : t('teams_page.add_modal.ranking_select_competition') }}
+                  </option>
+                  <option v-for="comp in rankingCompetitions" :key="comp.code" :value="comp.code">
+                    {{ comp.code }} - {{ comp.libelle }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div v-if="rankingLoading" class="text-center py-4 text-header-600 dark:text-header-300">
+              <UIcon name="heroicons:arrow-path" class="w-5 h-5 animate-spin" />
+            </div>
+
+            <template v-else-if="rankingData">
+              <p v-if="rankingData.teams.length === 0" class="text-sm text-header-600 dark:text-header-300">
+                {{ t('teams_page.add_modal.ranking_no_team') }}
+              </p>
+              <template v-else>
+                <div class="flex items-center justify-between">
+                  <button
+                    type="button"
+                    class="text-sm text-primary-600 dark:text-primary-300 hover:underline disabled:opacity-50 disabled:no-underline"
+                    :disabled="rankingSelectableNumbers.length === 0"
+                    @click="toggleAllRankingTeams"
+                  >
+                    {{ t('teams_page.add_modal.ranking_toggle_all') }}
+                  </button>
+                  <span class="text-xs text-header-600 dark:text-header-300">
+                    {{ t(`teams_page.add_modal.ranking_type_${rankingData.competition.codeTypeclt}`) }}
+                  </span>
+                </div>
+                <div class="border border-header-200 dark:border-header-700 rounded-lg max-h-72 overflow-y-auto">
+                  <div
+                    v-for="(rt, idx) in rankingData.teams"
+                    :key="rt.numero"
+                    class="flex items-center gap-2 px-3 py-2 border-b border-header-100 dark:border-header-800 last:border-0"
+                    :class="currentTeamNumbers.has(rt.numero)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-primary-50 dark:hover:bg-primary-950 cursor-pointer'"
+                    @click="toggleRankingTeam(rt.numero)"
+                  >
+                    <input
+                      :checked="rankingSelectedNumbers.includes(rt.numero)"
+                      :disabled="currentTeamNumbers.has(rt.numero)"
+                      type="checkbox"
+                      class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 pointer-events-none"
+                    >
+                    <span class="w-4 text-center text-xs">
+                      <span
+                        v-if="getRankingQualifiedStatus(idx) === 'qualified'"
+                        class="text-success-500"
+                        :title="t('rankings.qualified')"
+                      >▲</span>
+                      <span
+                        v-else-if="getRankingQualifiedStatus(idx) === 'eliminated'"
+                        class="text-danger-600 dark:text-danger-400"
+                        :title="t('rankings.eliminated')"
+                      >▼</span>
+                    </span>
+                    <span class="w-6 text-right text-sm font-medium text-header-900 dark:text-header-50">{{ rt.rank || '-' }}</span>
+                    <span class="text-sm flex-1">{{ rt.libelle }}</span>
+                    <span v-if="currentTeamNumbers.has(rt.numero)" class="text-xs italic text-header-600 dark:text-header-300">
+                      {{ t('teams_page.add_modal.ranking_already_added') }}
+                    </span>
+                    <span v-else class="text-xs text-header-600 dark:text-header-300">{{ rt.codeClub }}</span>
+                  </div>
+                </div>
+              </template>
+            </template>
+
+            <div v-if="rankingSelectedNumbers.length > 0" class="text-sm text-primary-600 font-medium">
+              {{ t('teams_page.add_modal.selected_teams', { count: rankingSelectedNumbers.length }) }}
+            </div>
+
+            <!-- Copy composition from the source competition -->
+            <label v-if="rankingData && rankingData.teams.length > 0" class="flex items-center gap-2 cursor-pointer">
+              <input
+                v-model="rankingCopyComposition"
+                type="checkbox"
+                class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600"
+              >
+              <span class="text-sm">{{ t('teams_page.add_modal.copy_composition') }}</span>
+            </label>
           </template>
 
           <!-- Common fields: Poule and Tirage -->
