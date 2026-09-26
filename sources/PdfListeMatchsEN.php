@@ -227,7 +227,7 @@ class PdfListeMatchs extends MyPage
 
         // QRCode
         $qrcode = new QRcode('https://www.kayak-polo.info/kpmatchs.php?Compet=' . $codeCompet . '&Group=' . $arrayCompetition['Code_ref'] . '&Saison=' . $codeSaison . '&lang=en', 'L'); // error level : L, M, Q, H
-        $qrcode->displayFPDF($pdf, $qr_x, 9, 21);
+        $qrcode->displayFPDF($pdf, $qr_x, 35, 21);
 
         // Réactiver AutoPageBreak après placement des images
         if (($arrayCompetition['Sponsor_actif'] ?? '') == 'O' && isset($visuels['sponsor'])) {
@@ -247,7 +247,7 @@ class PdfListeMatchs extends MyPage
         $pdf->Cell(136, 5, $titreDate, 0, 1, 'R');
         $pdf->SetFont('Arial', 'B', 14);
         $pdf->Cell(273, 6, "Game list", 0, 1, 'C');
-        $pdf->Ln(3);
+        $pdf->Ln(11);
         $heure1 = '';
 
         foreach ($resultarray as $row) {

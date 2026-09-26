@@ -235,7 +235,7 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
 - clubs/team/XXX : ajouter catégorie (sous-titre 2) dans la colonne Compétition
 - id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
-- 
+- Page d'accueil, rappeler Kayak-Polo.info Administration + favicon
 
 **Nouveau règlement**:
 - Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
@@ -273,6 +273,8 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
   - Mode national (comme actuellement, licence compétition active, certif compétition, pagaie verte, surclassement)
   - Mode régional (licence compétition active, certif compétition, pagaie jaune)
   - Mode libre (aucun vérification ou alors juste licence)
+
+- Changement de joueur X, A, E vers -, C => contrôle validité licence, certificat médical, pagaie verte, surclassement, etc... (côté front et back) selon le profil/mandat de l'utilisateur. Être sûr que l
 
 
 

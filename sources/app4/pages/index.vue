@@ -19,6 +19,11 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Site title -->
+    <p class="mb-4 text-sm text-center text-xl font-bold text-header-800 dark:text-header-100">
+      {{ t('app.title') }}
+    </p>
+
     <!-- Page header -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
