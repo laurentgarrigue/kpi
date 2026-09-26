@@ -44,6 +44,27 @@ export interface HistoricalTeam {
   international: boolean
 }
 
+// Finished competition usable as a ranking source (GET /admin/competition-teams/ranking-sources)
+export interface RankingSourceCompetition {
+  code: string
+  libelle: string
+  codeTypeclt: CompetitionType
+}
+
+// Published ranking of a finished competition (GET /admin/competition-teams/ranking-source)
+export interface RankingSourceResponse {
+  competition: RankingSourceCompetition & {
+    qualifies: number
+    elimines: number
+  }
+  teams: {
+    numero: number
+    libelle: string
+    codeClub: string
+    rank: number
+  }[]
+}
+
 // Team composition for copy (from GET /admin/teams/{numero}/compositions)
 export interface TeamComposition {
   season: string

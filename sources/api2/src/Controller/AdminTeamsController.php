@@ -213,6 +213,102 @@ class AdminTeamsController extends AbstractController
     }
 
     /**
+     * List finished competitions (Statut = END) of a season, usable as a ranking source
+     * for the "From a previous ranking" add mode.
+     */
+    #[Route('/admin/competition-teams/ranking-sources', name: 'admin_competition_teams_ranking_sources', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
+    public function rankingSources(Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if ($user && $user->getEffectiveNiveau() > 3) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $season = $request->query->get('season', '');
+        if (empty($season)) {
+            return $this->json(['message' => 'Season is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $sql = "SELECT Code, Libelle, Code_typeclt
+                FROM kp_competition
+                WHERE Code_saison = ? AND Statut = 'END'
+                ORDER BY Code_niveau, COALESCE(Code_ref, 'z'), Code_tour, Code";
+        $rows = $this->connection->prepare($sql)->executeQuery([$season])->fetchAllAssociative();
+
+        return $this->json(array_map(fn($r) => [
+            'code' => $r['Code'],
+            'libelle' => $r['Libelle'],
+            'codeTypeclt' => $r['Code_typeclt'] ?: 'CHPT',
+        ], $rows));
+    }
+
+    /**
+     * Published ranking of a finished competition, ordered like the public ranking
+     * (by Code_typeclt), with the qualified / eliminated counts for promotion arrows.
+     */
+    #[Route('/admin/competition-teams/ranking-source', name: 'admin_competition_teams_ranking_source', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
+    public function rankingSource(Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if ($user && $user->getEffectiveNiveau() > 3) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $season = $request->query->get('season', '');
+        $competition = $request->query->get('competition', '');
+        if (empty($season) || empty($competition)) {
+            return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $sql = "SELECT Code, Libelle, Code_typeclt, Statut, Qualifies, Elimines
+                FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+        $comp = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAssociative();
+        if (!$comp) {
+            return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
+        }
+        if ($comp['Statut'] !== 'END') {
+            return $this->json(['message' => 'Competition is not finished'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $type = $comp['Code_typeclt'] ?: 'CHPT';
+
+        // Same ordering as the published ranking (app4 rankings page / public PDFs)
+        if ($type === 'CP') {
+            $orderBy = 'ce.CltNiveau_publi ASC, ce.Diff_publi DESC, ce.Plus_publi DESC, ce.Libelle ASC';
+        } elseif ($type === 'MULTI') {
+            $orderBy = 'ce.Pts_publi DESC, ce.J_publi DESC, ce.Libelle ASC';
+        } else {
+            $orderBy = 'ce.Clt_publi ASC, ce.Pts_publi DESC, ce.Diff_publi DESC, ce.Plus_publi DESC, ce.Libelle ASC';
+        }
+
+        $sql = "SELECT ce.Numero, ce.Libelle, ce.Code_club, ce.Clt_publi, ce.CltNiveau_publi
+                FROM kp_competition_equipe ce
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?
+                ORDER BY $orderBy";
+        $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
+
+        return $this->json([
+            'competition' => [
+                'code' => $comp['Code'],
+                'libelle' => $comp['Libelle'],
+                'codeTypeclt' => $type,
+                'qualifies' => (int) $comp['Qualifies'],
+                'elimines' => (int) $comp['Elimines'],
+            ],
+            'teams' => array_map(fn($r) => [
+                'numero' => (int) $r['Numero'],
+                'libelle' => $r['Libelle'],
+                'codeClub' => $r['Code_club'] ?: '',
+                'rank' => (int) ($type === 'CP' ? $r['CltNiveau_publi'] : $r['Clt_publi']),
+            ], $rows),
+        ]);
+    }
+
+    /**
      * Search clubs (autocomplete)
      *
      * priority: higher than AdminClubsController::detail() (`/admin/clubs/{code}`), whose
