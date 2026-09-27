@@ -23,6 +23,7 @@ const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 const config = useRuntimeConfig()
 const toast = useToast()
+const { notifyIneligible } = useEligibilityMessages()
 const imageVersionStore = useImageVersionStore()
 
 // State
@@ -65,6 +66,7 @@ const transferCompetitions = ref<TransferCompetition[]>([])
 const transferCompetition = ref('')
 const transferring = ref(false)
 const transferCompetitionsLoading = ref(false)
+const transferIncludePlayers = ref(true)
 
 // Confirm modal state
 const confirmModal = ref<{ open: boolean; title: string; message: string; action: () => void }>({
@@ -92,7 +94,8 @@ const canEditInline = computed(() => authStore.profile <= 6 && competitionInfo.v
 const canPublish = computed(() => authStore.profile <= 6 && competitionInfo.value?.statut === 'ON')
 const canUnpublish = computed(() => authStore.profile <= 3 && competitionInfo.value?.statut === 'ON')
 const canConsolidate = computed(() => authStore.profile <= 6 && competitionInfo.value?.statut === 'ON')
-const canTransfer = computed(() => authStore.profile <= 4)
+// Assigning teams from a ranking is only meaningful once the competition is over
+const canTransfer = computed(() => authStore.profile <= 4 && competitionInfo.value?.statut === 'END')
 const canChangeType = computed(() => authStore.profile <= 2)
 // Past seasons (older than the active one) are read-only for profiles > 2, so
 // only profiles <= 2 may change a competition status there (PROMPTS.md).
@@ -564,13 +567,15 @@ const doTransfer = async () => {
     const result = await api.post<TransferResult>('/admin/rankings/transfer', {
       teamIds: selectedIds.value,
       targetSeason: transferSeason.value,
-      targetCompetition: transferCompetition.value
+      targetCompetition: transferCompetition.value,
+      includePlayers: transferIncludePlayers.value
     })
     let msg = t('rankings.transfer.success', { count: result.transferred })
     if (result.skipped > 0) {
       msg += ' - ' + t('rankings.transfer.skipped', { count: result.skipped })
     }
     toast.add({ title: t('common.success'), description: msg, color: 'success', duration: 4000 })
+    notifyIneligible(result.ineligible)
     selectedIds.value = []
     selectAll.value = false
   } catch (error: unknown) {
@@ -1516,15 +1521,6 @@ const editValueForField = (field: string, value: number): string => {
             <div class="flex-1" />
 
             <!-- RIGHT: Action buttons -->
-            <button
-              v-if="canTransfer && selectedIds.length > 0"
-              class="px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center gap-1"
-              @click="transferModalOpen = true"
-            >
-              <UIcon name="heroicons:arrow-right-circle" class="w-4 h-4" />
-              {{ t('rankings.transfer.button') }} ({{ selectedIds.length }})
-            </button>
-
             <!-- PDF dropdown (public) -->
             <div v-if="pdfUrls" class="relative">
               <button
@@ -1711,6 +1707,19 @@ const editValueForField = (field: string, value: number): string => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Assign checked teams (right below the table, no scroll needed after selecting) -->
+              <div v-if="canTransfer" class="mt-2 flex justify-end">
+                <button
+                  class="px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="selectedIds.length === 0"
+                  :title="selectedIds.length === 0 ? t('rankings.transfer.nothing_selected') : undefined"
+                  @click="transferModalOpen = true"
+                >
+                  <UIcon name="heroicons:arrow-right-circle" class="w-4 h-4" />
+                  {{ t('rankings.transfer.button') }} ({{ selectedIds.length }})
+                </button>
               </div>
             </div>
 
@@ -1981,6 +1990,12 @@ const editValueForField = (field: string, value: number): string => {
             </option>
           </select>
         </div>
+
+        <!-- Include presence sheets -->
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="transferIncludePlayers" type="checkbox" class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600" >
+          <span class="text-sm text-header-900 dark:text-header-50">{{ t('rankings.transfer.include_players') }}</span>
+        </label>
       </div>
 
       <template #footer>

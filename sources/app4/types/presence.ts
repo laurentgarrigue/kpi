@@ -20,6 +20,7 @@ export interface Player {
 
   // License info
   origine: string // season of license
+  typeLicence?: string | null // kp_licence.Type_licence, e.g. "Carte 1 an Compétition" (team mode)
   numeroClub: string
   clubLibelle: string
 
@@ -44,6 +45,10 @@ export interface Player {
   dateSurclassement: string | null
   surclassementNeeded: boolean  // true if competition requires surclassement for this category
   surclassementOk: boolean      // true if not needed, or needed and present
+
+  // Eligibility ("joueur en règle") error codes for this competition, empty when compliant
+  // or when the competition has no control (team mode only)
+  eligibilityErrors?: string[]
 
   // ICF number (international)
   icf: number | null
@@ -74,6 +79,30 @@ export interface CompetitionInfo {
   verrou: boolean
   codeNiveau: string
   statut: string
+  eligibility?: EligibilityRules | null
+}
+
+/**
+ * Eligibility rule set applied to a competition ("joueur en règle").
+ * Defined server-side only, in api2 src/Eligibility/PlayerEligibilityRules.php.
+ */
+export interface EligibilityRules {
+  level: 'national' | 'regional'
+  enforcement: 'block' | 'warn'
+  forceMaxProfile: number
+  forceAddStatuses: string[]
+  forceStatusChangeStatuses: string[]
+  playingStatuses: string[]
+  minPagaieECA: string | null
+  surclassement: boolean
+}
+
+/**
+ * Eligibility outcome of a roster copy (non-compliant players made inactive or reported)
+ */
+export interface IneligibleSummary {
+  enforcement: 'block' | 'warn' | null
+  count: number
 }
 
 /**

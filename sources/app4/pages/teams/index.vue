@@ -14,6 +14,7 @@ import type {
   RankingSourceCompetition,
   RankingSourceResponse
 } from '~/types/teams'
+import type { IneligibleSummary } from '~/types/presence'
 
 definePageMeta({
   layout: 'admin',
@@ -26,6 +27,7 @@ const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 const config = useRuntimeConfig()
 const toast = useToast()
+const { notifyIneligible } = useEligibilityMessages()
 const imageVersionStore = useImageVersionStore()
 
 // State
@@ -685,8 +687,9 @@ const saveAddForm = async (keepOpen = false) => {
       }
     }
 
-    await api.post('/admin/competition-teams', body)
+    const result = await api.post<{ ineligible?: IneligibleSummary }>('/admin/competition-teams', body)
     toast.add({ title: t('common.success'), description: t('teams_page.success_added'), color: 'success', duration: 3000 })
+    notifyIneligible(result.ineligible)
     loadTeams()
     if (keepOpen) {
       const currentTab = addFormTab.value
@@ -766,7 +769,7 @@ const saveDuplicateForm = async () => {
 
   duplicateFormSaving.value = true
   try {
-    await api.post('/admin/competition-teams/duplicate', {
+    const result = await api.post<{ ineligible?: IneligibleSummary }>('/admin/competition-teams/duplicate', {
       season: workContext.season,
       targetCompetition: workContext.pageCompetitionCode,
       sourceCompetition: duplicateFormData.value.sourceCompetition,
@@ -775,6 +778,7 @@ const saveDuplicateForm = async () => {
       copyPlayers: duplicateFormData.value.copyPlayers
     })
     toast.add({ title: t('common.success'), description: t('teams_page.success_duplicated'), color: 'success', duration: 3000 })
+    notifyIneligible(result.ineligible)
     duplicateModalOpen.value = false
     loadTeams()
   } catch (error: unknown) {
@@ -1832,7 +1836,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     :key="`${comp.season}-${comp.competition}`"
                     :value="`${comp.season}|${comp.competition}`"
                   >
-                    {{ comp.season }} - {{ comp.competitionLibelle }} ({{ t('teams_page.add_modal.players', { count: comp.playerCount }) }})
+                    {{ comp.season }} - {{ comp.competition }} - {{ comp.competitionLibelle }} ({{ t('teams_page.add_modal.players', { count: comp.playerCount }) }})
                   </option>
                 </select>
                 <p v-if="compositions.length === 0 && !compositionsLoading" class="text-xs text-header-600 dark:text-header-300 mt-1">

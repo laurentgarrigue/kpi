@@ -179,45 +179,26 @@ ORDER BY
 
 ## 4. Règles de Validation
 
-### 4.1 Compétitions Nationales (Team Mode)
+### 4.1 Joueurs en règle — compétitions nationales et régionales (Team Mode)
 
-**Détection:**
-```php
-// GestionEquipeJoueur.php:106-111
-if (substr($Code_compet, 0, 1) == 'N')
-    $typeCompet = 'CH'; // Championnat
-elseif (substr($Code_compet, 0, 2) == 'CF')
-    $typeCompet = 'CF'; // Coupe de France
-else
-    $typeCompet = '';
-```
+> Référence complète : [PLAYER_ELIGIBILITY_RULES.md](../developer/reference/PLAYER_ELIGIBILITY_RULES.md).
+> Paramétrage **unique** : `sources/api2/src/Eligibility/PlayerEligibilityRules.php`.
 
-**Validation obligatoire pour N* et CF*:**
+| Niveau | Détection | Critères | Application |
+|---|---|---|---|
+| National | code `N*` ou `CF*` | saison de licence, certificat CK, pagaie ECA verte min., surclassement | Bloquant |
+| Régional | `Code_niveau = 'REG'` | saison de licence, licence « Carte 1 an Compétition », certificat CK, pagaie ECA jaune min. | Alertes |
 
-| Critère | Champ DB | Valeur attendue | Erreur |
-|---------|----------|----------------|--------|
-| Saison licence | `lc.Origine` | >= saison compétition | "Saison_licence" |
-| Certificat CK | `lc.Etat_certificat_CK` | 'OUI' | "Certif" |
-| Pagaie ECA | `lc.Pagaie_ECA` | NOT IN ('', 'PAGJ', 'PAGB') | "Pagaie_couleur" |
-| Surclassement | `s.Date` | NOT NULL (si nécessaire) | "Surclassement" |
+**National** :
+- Ajout d'un joueur non en règle refusé ; profils ≤ 2 : ajout forcé en Arbitre (A) ou Staff (E) uniquement.
+- Changement de statut d'un joueur non en règle : Staff / Arbitre / Inactif toujours autorisés ;
+  Joueur / Capitaine refusés, forçables par les profils ≤ 2 (confirmation).
+- « Copier depuis » : les joueurs non en règle (statut Joueur/Capitaine) passent en Inactif.
 
-**Compétitions nécessitant surclassement:**
-```javascript
-// GestionEquipeJoueur.php:112-119
-const surcl_necessaire = [
-  'N1D', 'N1F', 'N1H', 'N2', 'N2H', 'N3H', 'N4H',
-  'NQH', 'CFF', 'CFH', 'MCP'
-]
-const surcl_necessaire2 = ['N3', 'N4']
-```
+**Régional** : mêmes contrôles, mais simples alertes (aucun refus, aucun statut modifié).
 
-**Catégories exemptées de surclassement:**
-- JUN, SEN, V1, V2, V3, V4
-
-**Message d'erreur si validation échoue:**
-```
-"Ce joueur n'est pas en règle pour cette compétition (vérifier licence, certificat médical, pagaie, surclassement)"
-```
+Codes d'erreur : `Saison_licence`, `Type_licence`, `Certif`, `Pagaie_couleur`, `Surclassement`
+(traduits par `presence.error_<code>`).
 
 ### 4.2 Numéro de Maillot
 
@@ -419,7 +400,7 @@ WHERE Id_equipe = (
 
 **Important**: La copie est un **remplacement complet** : tous les joueurs existants sont supprimés avant d'insérer les joueurs sources. Le filtre par `Numero` garantit que seule l'équipe portant le même numéro (équipe 1, équipe 2...) au sein du même club est proposée comme source.
 
-#### GET /admin/teams/:teamId/compositions
+#### GET /admin/competition-teams/:teamId/compositions
 
 **Description**: Récupère les compositions disponibles pour copie (filtrées par même club ET même Numero d'équipe)
 
@@ -1979,7 +1960,7 @@ $em->flush();
 | `GestionEquipeJoueur.php?Cmd=Find` | `RechercheLicence.php` (legacy redirect) | - |
 | `UpdateCellJQ.php` | `PATCH /admin/teams/:teamId/players/:matric` | PATCH |
 | `CopyTeamComposition.php` | `POST /admin/teams/:teamId/players/copy` | POST |
-| `GetTeamCompetitions.php` | `GET /admin/teams/:teamId/compositions` | GET |
+| `GetTeamCompetitions.php` | `GET /admin/competition-teams/:teamId/compositions` | GET |
 
 **Match Mode:**
 

@@ -303,6 +303,14 @@ final, en un seul commit sur `main`. Rien à lancer, rien à merger en plus.
   touche pas app4 ni api2.
 - Le commit de bump apparaît sur ta branche après un cycle de CI — attends que
   `make pr_checks` reparte au vert avant de merger, il inclut ce commit.
+- **Le run CI de ce commit est « Action required »** : poussé par
+  `github-actions[bot]`, GitHub exige une approbation (« Approve and run ») avant de
+  le lancer. Sans elle, le nouveau HEAD n'a aucun check (`gh pr checks` : « no checks
+  reported ») et la PR reste `BLOCKED` (`ci-summary` requis absent).
+  **`make pr_checks` l'approuve tout seul** ([scripts/pr-checks.sh](../../../scripts/pr-checks.sh),
+  API `actions/runs/{id}/approve`) puis suit le nouveau HEAD : aucun clic à faire.
+  Il n'approuve que les runs déclenchés par `github-actions[bot]` depuis ce dépôt
+  (jamais un fork ni un autre acteur, qu'il signale sans y toucher).
 
 C'est le remplaçant de l'ancien `version-bump.yml` (supprimé à la consolidation
 du 2026-09-13, défaut 4 de
@@ -588,7 +596,7 @@ Commandes sous-jacentes :
 
 ```bash
 gh pr create --base main --fill            # = make pr_create
-gh pr checks --watch                       # = make pr_checks
+gh pr checks --watch                       # ≈ make pr_checks (sans l'approbation auto du run de bump)
 gh pr merge <n> --squash --delete-branch   # merge une PR
 gh pr view <n> --json mergeCommit --jq .mergeCommit.oid   # SHA de merge (pour revert)
 gh run list --workflow=deploy-preprod.yml --limit 5       # suivi des déploiements

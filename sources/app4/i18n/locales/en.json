@@ -1122,7 +1122,7 @@
       "source_competition_placeholder": "Select a competition",
       "mode_append": "Add to existing teams",
       "mode_replace": "Clear and replace",
-      "copy_players": "Also copy player rosters",
+      "copy_players": "Include team roster(s)",
       "warning_replace": "Warning: all current teams will be deleted!"
     },
     "confirm_delete": "Delete team \"{name}\"?",
@@ -1325,10 +1325,10 @@
     "surclassement_ok": "Overclassing valid",
     "surclassement_missing": "Overclassing missing",
     "surclassement_not_required": "",
-    "validation_errors_title": "This player does not meet the national competition requirements:",
+    "validation_errors_title": "This player is not eligible for this competition:",
     "error_Saison_licence": "Invalid license season (license not current for this season)",
     "error_Certif": "Medical certificate missing",
-    "error_Pagaie_couleur": "Invalid paddle color (yellow, white or missing)",
+    "error_Pagaie_couleur": "Still-water paddle level too low ({min} minimum)",
     "error_Surclassement": "Age overclassing missing",
     "override_allowed_title": "Add despite failed validation",
     "override_allowed_notice": "As an administrator, you may add this player only as a non-playing referee (A) or staff (E).",
@@ -1336,7 +1336,28 @@
     "override_confirm": "Add anyway",
     "override_cancel": "Cancel",
     "save_and_add": "Save and add another",
-    "save_and_close": "Save and close"
+    "save_and_close": "Save and close",
+    "error_Type_licence": "Not a competition licence (1-year Competition card required)",
+    "paddle_colors": {
+      "PAGB": "white",
+      "PAGJ": "yellow",
+      "PAGV": "green",
+      "PAGBL": "blue",
+      "PAGR": "red",
+      "PAGN": "black"
+    },
+    "eligibility_warning_title": "Non-eligible player(s)",
+    "eligibility_not_compliant": "Not eligible for this competition:",
+    "copy_ineligible_inactivated": "{count} non-eligible player(s) set to Inactive.",
+    "copy_ineligible_warned": "{count} non-eligible player(s) (regional competition: status kept, please check).",
+    "status_change_refused": "Status refused: player not eligible",
+    "force_status_title": "Force status?",
+    "force_status_message": "{name} is not eligible for this competition. Force the \"{status}\" status anyway?",
+    "force_status_confirm": "Force status",
+    "regional_control": "Regional check",
+    "regional_validation_warning": "Regional competition: competition licence, certificate and yellow paddle checked (warnings only, no blocking)",
+    "licence_not_competition": "Non-comp.",
+    "paddle_none": "none"
   },
   "gamedays": {
     "title": "Gamedays / Phases",
@@ -2086,7 +2107,8 @@
       "success": "{count} team(s) transferred",
       "skipped": "{count} team(s) skipped (already present)",
       "transferring": "Transferring...",
-      "confirm": "Transfer {count} team(s) to {competition} ({season})?"
+      "confirm": "Transfer {count} team(s) to {competition} ({season})?",
+      "include_players": "Include team roster(s)"
     },
     "pdf": {
       "title": "PDF Exports",

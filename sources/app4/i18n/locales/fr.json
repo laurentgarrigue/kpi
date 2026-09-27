@@ -1134,7 +1134,7 @@
       "source_competition_placeholder": "Sélectionner une compétition",
       "mode_append": "Ajouter aux équipes existantes",
       "mode_replace": "Vider et remplacer",
-      "copy_players": "Copier aussi les compositions joueurs",
+      "copy_players": "Inclure la/les feuille(s) de présence",
       "warning_replace": "Attention : toutes les équipes actuelles seront supprimées !"
     },
     "confirm_delete": "Supprimer l'équipe \"{name}\" ?",
@@ -1337,10 +1337,10 @@
     "surclassement_ok": "Surclassement valide",
     "surclassement_missing": "Surclassement manquant",
     "surclassement_not_required": "",
-    "validation_errors_title": "Ce joueur ne satisfait pas les critères de la compétition nationale :",
+    "validation_errors_title": "Ce joueur n'est pas en règle pour cette compétition :",
     "error_Saison_licence": "Saison de licence invalide (licence non à jour pour cette saison)",
     "error_Certif": "Certificat médical manquant",
-    "error_Pagaie_couleur": "Pagaie couleur invalide (jaune, blanche ou absente)",
+    "error_Pagaie_couleur": "Pagaie couleur eau calme insuffisante ({min} minimum)",
     "error_Surclassement": "Surclassement manquant",
     "override_allowed_title": "Ajout malgré la non-validation",
     "override_allowed_notice": "En tant qu'administrateur, vous pouvez ajouter ce joueur uniquement en tant qu'arbitre non-joueur (A) ou staff (E).",
@@ -1348,7 +1348,28 @@
     "override_confirm": "Ajouter malgré tout",
     "override_cancel": "Annuler",
     "save_and_add": "Enregistrer et ajouter",
-    "save_and_close": "Enregistrer et fermer"
+    "save_and_close": "Enregistrer et fermer",
+    "error_Type_licence": "Licence non compétition (Carte 1 an Compétition requise)",
+    "paddle_colors": {
+      "PAGB": "blanche",
+      "PAGJ": "jaune",
+      "PAGV": "verte",
+      "PAGBL": "bleue",
+      "PAGR": "rouge",
+      "PAGN": "noire"
+    },
+    "eligibility_warning_title": "Joueur(s) non en règle",
+    "eligibility_not_compliant": "Non en règle pour cette compétition :",
+    "copy_ineligible_inactivated": "{count} joueur(s) non en règle placé(s) au statut Inactif.",
+    "copy_ineligible_warned": "{count} joueur(s) non en règle (compétition régionale : statut conservé, à vérifier).",
+    "status_change_refused": "Statut refusé : joueur non en règle",
+    "force_status_title": "Forcer le statut ?",
+    "force_status_message": "{name} n'est pas en règle pour cette compétition. Forcer malgré tout le statut « {status} » ?",
+    "force_status_confirm": "Forcer le statut",
+    "regional_control": "Contrôle régional",
+    "regional_validation_warning": "Compétition régionale : licence compétition, certificat et pagaie jaune vérifiés (alertes, sans blocage)",
+    "licence_not_competition": "Non compét.",
+    "paddle_none": "aucune"
   },
   "gamedays": {
     "title": "Journées / Phases",
@@ -2098,7 +2119,8 @@
       "success": "{count} équipe(s) transférée(s)",
       "skipped": "{count} équipe(s) ignorée(s) (déjà présentes)",
       "transferring": "Transfert en cours...",
-      "confirm": "Transférer {count} équipe(s) vers {competition} ({season}) ?"
+      "confirm": "Transférer {count} équipe(s) vers {competition} ({season}) ?",
+      "include_players": "Inclure la/les feuille(s) de présence"
     },
     "pdf": {
       "title": "Extractions PDF",

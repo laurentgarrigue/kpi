@@ -843,3 +843,22 @@ une brique **sans** changement de code qui la justifie (une raison externe au
 diff), ou forcer une version précise hors du calcul patch/minor. `make release_tag`
 est inchangé — le tag de release reste un geste toujours manuel, distinct du
 bump de brique.
+
+### Addendum du 2026-09-27 — le run du commit de bump attendait une approbation
+
+Effet de bord non vu le 2026-09-14 : le commit de `bump-version`, poussé avec le
+`GITHUB_TOKEN` (acteur `github-actions[bot]`), crée bien un run CI mais en
+**« Action required »**. Toutes les PR depuis ont été débloquées par un clic
+« Approve and run » (d'où `run_attempt = 2` sur chacun de ces runs). Sans ce clic,
+`make pr_checks` échoue (« no checks reported » sur le nouveau HEAD) et la PR reste
+`BLOCKED`, puisque `ci-summary` est requis sur le HEAD.
+
+**Correctif** : `make pr_checks` délègue à [`scripts/pr-checks.sh`](../../../scripts/pr-checks.sh),
+qui approuve ces runs par l'API (`POST actions/runs/{id}/approve`, équivalent exact
+du bouton) — **uniquement** s'ils sont déclenchés par `github-actions[bot]` depuis ce
+dépôt — puis suit le nouveau HEAD jusqu'au verdict. `make pr_create && make pr_checks
+&& make pr_merge` redevient entièrement autonome. Éprouvé sur la PR #327.
+
+Alternative écartée : pousser le bump avec un PAT (le run serait alors déclenché par
+toi, sans approbation). Elle ajoute un secret à durée de vie limitée, lié à un compte
+personnel, pour un gain nul par rapport à l'approbation ciblée côté `pr_checks`.
