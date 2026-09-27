@@ -1245,7 +1245,7 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 # celui de `gh pr checks`, pour que `make pr_checks && make pr_merge` garde son sens.
 # Détail : scripts/pr-checks.sh.
 pr_checks: ## Suit la CI de la PR courante jusqu'au bout (approuve le run du commit de bump) + durée totale
-	@scripts/pr-checks.sh
+	@bash scripts/pr-checks.sh
 
 pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
