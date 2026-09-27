@@ -260,7 +260,7 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 
 **17/09/2026** :
 - ✅ Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
-- Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
+- ✅ Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
 - ✅ Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
 
 
@@ -268,13 +268,13 @@ Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus
 **Nico (14/09/2026)**:
 - ✅ Page « Equipes » : (PROBLEME CRITIQUE) Je ne parviens pas à ajouter de joueurs dans aucune composition, je pense c’est l’auto-complétion qui génère une erreur de droits, voir image ci-dessous  « Accès refusé, vous n’avez pas les droits nécessaires » en notification (à chaque lettre que je rajoute). Je suis repassé par l’admin V1 pour ajouter les joueurs dans les compos (de mémoire à Combourg j’avais eu le même genre de difficulté). A tester peut être avec d’autres profils que le mien… ?
 - ✅ Page classements : Bouton « extractions PDF » côté classement public => les 3 pdf proposés génèrent une erreur 500 « Internal Server Error ». C’est pareil en admin V1 d’ailleurs donc pas lié à l’interface V2 probablement. Par contre côté classement privé RAS ça fonctionne.
-- Vérification des licences : Les licences « loisirs » (sans option compétition) apparaissent comme les autres, sans distinction ni warning les concernant (sauf le certificat médical compétition qui était absent, c’est ce qui m’a mis la puce à l’oreille). Je ne sais pas si exalto permet de mettre un certif « compét » avec une licence loisir mais si c’est possible on risque d’en râter.
-- Vérification des licences (idée d’amélioration) : Prévoir 3 modes de vérification des licences dans les feuilles de présence (en paramètre de la compétition) :
+- ✅ Vérification des licences : Les licences « loisirs » (sans option compétition) apparaissent comme les autres, sans distinction ni warning les concernant (sauf le certificat médical compétition qui était absent, c’est ce qui m’a mis la puce à l’oreille). Je ne sais pas si exalto permet de mettre un certif « compét » avec une licence loisir mais si c’est possible on risque d’en râter.
+- ✅ Vérification des licences (idée d’amélioration) : Prévoir 3 modes de vérification des licences dans les feuilles de présence (en paramètre de la compétition) :
   - Mode national (comme actuellement, licence compétition active, certif compétition, pagaie verte, surclassement)
   - Mode régional (licence compétition active, certif compétition, pagaie jaune)
   - Mode libre (aucun vérification ou alors juste licence)
 
-- Changement de joueur X, A, E vers -, C => contrôle validité licence, certificat médical, pagaie verte, surclassement, etc... (côté front et back) selon le profil/mandat de l'utilisateur. Être sûr que l
+- ✅ Changement de joueur X, A, E vers -, C => contrôle validité licence, certificat médical, pagaie verte, surclassement, etc... (côté front et back) selon le profil/mandat de l'utilisateur.
 
 
 

@@ -1,5 +1,6 @@
 // Types for rankings page
 import type { CompetitionLevel, CompetitionType, CompetitionStatus, RankingStructureType } from './competitions'
+import type { IneligibleSummary } from './presence'
 
 // Competition info returned by ranking endpoints
 export interface RankingCompetitionInfo {
@@ -163,6 +164,8 @@ export interface TransferResult {
   transferred: number
   skipped: number
   details: TransferDetail[]
+  // Non-compliant players made inactive (national) or reported (regional), see api2 PlayerEligibilityRules
+  ineligible?: IneligibleSummary
 }
 
 export interface TransferDetail {

@@ -26,7 +26,19 @@ const { canEdit, canCopy } = usePresencePermissions(
   computed(() => presenceStore.isLocked)
 )
 const authStore = useAuthStore()
-const canOverride = computed(() => authStore.profile <= 2)
+// Eligibility rules ("joueur en règle") come from api2 (PlayerEligibilityRules.php)
+const { errorLabels, notifyWarnings, notifyIneligible } = useEligibilityMessages()
+const eligibility = computed(() => presenceStore.eligibility)
+const minPagaie = computed(() => eligibility.value?.minPagaieECA ?? null)
+const canOverride = computed(() => authStore.profile <= (eligibility.value?.forceMaxProfile ?? 2))
+
+// Blocking rules: a non-compliant player cannot take a playing status (-, C) unless forced
+const isPlayingStatusLocked = (player: Player): boolean =>
+  eligibility.value?.enforcement === 'block' && !!player.eligibilityErrors?.length && !canOverride.value
+
+// Forced status change (profile <= forceMaxProfile) for a non-compliant player
+const forceStatusTarget = ref<{ matric: number; value: string; name: string; errors: string[] } | null>(null)
+const forceStatusSaving = ref(false)
 const canInitStarters = computed(() => authStore.profile <= 6)
 
 // Init starters state
@@ -300,10 +312,40 @@ const saveInlineEdit = async () => {
   if (String(value) === editingOriginalValue.value) return
 
   try {
-    await presenceStore.updatePlayerInline(matric, field, value, api)
+    const warnings = await presenceStore.updatePlayerInline(matric, field, value, api)
     toast.add({ title: t('common.saved'), color: 'success' })
+    notifyWarnings(warnings, minPagaie.value)
+  } catch (error: unknown) {
+    const err = error as { message?: string; errors?: string[]; canForce?: boolean }
+    if (field === 'capitaine' && err.errors?.length) {
+      if (err.canForce) {
+        const player = presenceStore.players.find(p => p.matric === matric)
+        forceStatusTarget.value = {
+          matric,
+          value: String(value),
+          name: player ? `${formatNom(player.nom)} ${formatPrenom(player.prenom)}` : String(matric),
+          errors: err.errors
+        }
+      } else {
+        toast.add({ title: t('presence.status_change_refused'), description: errorLabels(err.errors, minPagaie.value).join(' · '), color: 'error', duration: 6000 })
+      }
+      return
+    }
+    toast.add({ title: t('common.error'), description: err.message, color: 'error' })
+  }
+}
+
+const confirmForceStatus = async () => {
+  if (!forceStatusTarget.value) return
+  forceStatusSaving.value = true
+  try {
+    await presenceStore.updatePlayerInline(forceStatusTarget.value.matric, 'capitaine', forceStatusTarget.value.value, api, true)
+    toast.add({ title: t('common.saved'), color: 'success' })
+    forceStatusTarget.value = null
   } catch (error: unknown) {
     toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
+  } finally {
+    forceStatusSaving.value = false
   }
 }
 
@@ -349,7 +391,7 @@ const addExistingPlayer = async (keepOpen = false) => {
   addFormValidationErrors.value = []
 
   try {
-    await presenceStore.addPlayer({
+    const warnings = await presenceStore.addPlayer({
       mode: 'existing',
       matric: selectedPlayer.value.matric,
       numero: addFormData.value.numero,
@@ -357,6 +399,7 @@ const addExistingPlayer = async (keepOpen = false) => {
     }, api)
 
     toast.add({ title: t('presence.player_added'), color: 'success' })
+    notifyWarnings(warnings, minPagaie.value)
     if (keepOpen) {
       resetAddForm(true)
       nextTick(() => playerAutocompleteRef.value?.focus())
@@ -414,11 +457,12 @@ const createNewPlayer = async (keepOpen = false) => {
   addFormError.value = ''
 
   try {
-    await presenceStore.addPlayer({
+    const warnings = await presenceStore.addPlayer({
       ...addFormData.value
     }, api)
 
     toast.add({ title: t('presence.player_created'), color: 'success' })
+    notifyWarnings(warnings, minPagaie.value)
     if (keepOpen) {
       resetAddForm(true)
       nextTick(() => nomInputRef.value?.focus())
@@ -427,7 +471,10 @@ const createNewPlayer = async (keepOpen = false) => {
       resetAddForm()
     }
   } catch (error: unknown) {
-    addFormError.value = (error as { message?: string })?.message || t('presence.create_player_failed')
+    const err = error as { message?: string; errors?: string[] }
+    addFormError.value = err.errors?.length
+      ? errorLabels(err.errors, minPagaie.value).join(' · ')
+      : err.message || t('presence.create_player_failed')
   } finally {
     addFormSaving.value = false
   }
@@ -481,8 +528,9 @@ const copyComposition = async () => {
   if (!copyFormData.value.sourceCompetition) return
 
   try {
-    await presenceStore.copyComposition(copyFormData.value, api)
+    const ineligible = await presenceStore.copyComposition(copyFormData.value, api)
     toast.add({ title: t('presence.composition_copied'), color: 'success' })
+    notifyIneligible(ineligible)
     copyModalOpen.value = false
   } catch (error: unknown) {
     toast.add({ title: t('common.error'), description: (error as { message?: string })?.message, color: 'error' })
@@ -535,17 +583,6 @@ const confirmSingleDelete = async () => {
   } finally {
     isSingleDeleting.value = false
   }
-}
-
-// License display: show ICF (Reserve) if available, otherwise Matric
-// Show season in parentheses if older than working season
-const getLicenseDisplay = (player: Player): string => {
-  const licenseNumber = player.icf ? `ICF-${player.icf}` : player.matric.toString()
-  const workingSeason = presenceStore.team?.codeSaison || ''
-  if (player.origine && workingSeason && player.origine < workingSeason) {
-    return `${licenseNumber} (${player.origine})`
-  }
-  return licenseNumber
 }
 
 // Format date from "YYYY-MM-DD HH:mm:ss" to "DD/MM/YYYY HH:mm:ss"
@@ -634,6 +671,16 @@ const pdfLinks = computed(() => {
           >
             <UIcon name="i-heroicons-shield-check" class="w-3 h-3" />
             {{ t('common.national') }}
+          </span>
+
+          <!-- Regional competition badge (eligibility rules as warnings only) -->
+          <span
+            v-if="presenceStore.isRegionalCompetition"
+            class="px-2 py-1 text-xs font-medium rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 flex items-center gap-1"
+            :title="t('presence.regional_validation_warning')"
+          >
+            <UIcon name="i-heroicons-shield-exclamation" class="w-3 h-3" />
+            {{ t('presence.regional_control') }}
           </span>
 
           <!-- Lock indicator -->
@@ -837,23 +884,18 @@ const pdfLinks = computed(() => {
                 class="px-2 py-1 border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm focus:ring-2 focus:ring-primary-500"
                 @blur="saveInlineEdit"
               >
-                <option value="-">{{ t('presence.status_player') }}</option>
-                <option value="C">{{ t('presence.status_captain') }}</option>
+                <option value="-" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_player') }}</option>
+                <option value="C" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_captain') }}</option>
                 <option value="E">{{ t('presence.status_coach') }}</option>
                 <option value="A">{{ t('presence.status_referee') }}</option>
                 <option value="X">{{ t('presence.status_inactive') }}</option>
               </select>
             </td>
 
-            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}</td>
+            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
             <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-              <NuxtLink
-                :to="`/athletes?matric=${player.matric}`"
-                class="link-value"
-              >
-                {{ getLicenseDisplay(player) }}
-              </NuxtLink>
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
             </td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
               <NuxtLink
@@ -868,44 +910,25 @@ const pdfLinks = computed(() => {
 
             <!-- Surclassement (national competitions only) -->
             <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
-              <span
+              <UIcon
                 v-if="player.surclassementNeeded && !player.surclassementOk"
-                class="text-danger-600 dark:text-danger-400 text-lg font-bold"
+                name="i-heroicons-x-circle-solid"
+                class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
                 :title="t('presence.surclassement_missing')"
-              >✗</span>
-              <span
+              />
+              <UIcon
                 v-else-if="player.surclassementNeeded && player.surclassementOk"
-                class="text-success-500 dark:text-success-400 text-lg font-bold"
+                name="i-heroicons-check-circle-solid"
+                class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
                 :title="t('presence.surclassement_ok')"
-              >✓</span>
+              />
             </td>
 
             <!-- Pagaie with validation -->
-            <td class="px-3 py-1 text-sm text-center">
-              <span
-                v-if="player.pagaieValide === 0"
-                class="text-danger-600"
-                :title="t('presence.invalid_paddle')"
-              >
-                ({{ player.pagaieLabel }})
-              </span>
-              <span v-else class="text-header-900 dark:text-header-50">
-                {{ player.pagaieLabel }}
-              </span>
-            </td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
 
             <!-- Certificate -->
-            <td class="px-3 py-1 text-sm text-center">
-              <span
-                v-if="player.certifCK === 'OUI'"
-                class="text-success-500 dark:text-success-400"
-              >
-                {{ t('common.yes') }}
-              </span>
-              <span v-else class="text-danger-600 dark:text-danger-400">
-                {{ t('common.no') }}
-              </span>
-            </td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
 
             <!-- Arbitre -->
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
@@ -974,22 +997,17 @@ const pdfLinks = computed(() => {
                   @change="saveInlineEdit"
                   @blur="saveInlineEdit"
                 >
-                  <option value="-">{{ t('presence.status_player') }}</option>
-                  <option value="C">{{ t('presence.status_captain') }}</option>
+                  <option value="-" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_player') }}</option>
+                  <option value="C" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_captain') }}</option>
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <NuxtLink
-                  :to="`/athletes?matric=${player.matric}`"
-                  class="link-value"
-                >
-                  {{ getLicenseDisplay(player) }}
-                </NuxtLink>
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1002,22 +1020,21 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
-                <span
+                <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
-                  class="text-danger-600 dark:text-danger-400 text-lg font-bold"
+                  name="i-heroicons-x-circle-solid"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
                   :title="t('presence.surclassement_missing')"
-                >✗</span>
-                <span
+                />
+                <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 dark:text-success-400 text-lg font-bold"
+                  name="i-heroicons-check-circle-solid"
+                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
                   :title="t('presence.surclassement_ok')"
-                >✓</span>
+                />
               </td>
-              <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
-              <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
-                <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
-              </td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1080,22 +1097,17 @@ const pdfLinks = computed(() => {
                   @change="saveInlineEdit"
                   @blur="saveInlineEdit"
                 >
-                  <option value="-">{{ t('presence.status_player') }}</option>
-                  <option value="C">{{ t('presence.status_captain') }}</option>
+                  <option value="-" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_player') }}</option>
+                  <option value="C" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_captain') }}</option>
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <NuxtLink
-                  :to="`/athletes?matric=${player.matric}`"
-                  class="link-value"
-                >
-                  {{ getLicenseDisplay(player) }}
-                </NuxtLink>
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1108,22 +1120,21 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
-                <span
+                <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
-                  class="text-danger-600 dark:text-danger-400 text-lg font-bold"
+                  name="i-heroicons-x-circle-solid"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
                   :title="t('presence.surclassement_missing')"
-                >✗</span>
-                <span
+                />
+                <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 dark:text-success-400 text-lg font-bold"
+                  name="i-heroicons-check-circle-solid"
+                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
                   :title="t('presence.surclassement_ok')"
-                >✓</span>
+                />
               </td>
-              <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
-              <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
-                <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
-              </td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1186,22 +1197,17 @@ const pdfLinks = computed(() => {
                   @change="saveInlineEdit"
                   @blur="saveInlineEdit"
                 >
-                  <option value="-">{{ t('presence.status_player') }}</option>
-                  <option value="C">{{ t('presence.status_captain') }}</option>
+                  <option value="-" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_player') }}</option>
+                  <option value="C" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_captain') }}</option>
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}</td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <NuxtLink
-                  :to="`/athletes?matric=${player.matric}`"
-                  class="link-value"
-                >
-                  {{ getLicenseDisplay(player) }}
-                </NuxtLink>
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1214,22 +1220,21 @@ const pdfLinks = computed(() => {
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
-                <span
+                <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
-                  class="text-danger-600 dark:text-danger-400 text-lg font-bold"
+                  name="i-heroicons-x-circle-solid"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
                   :title="t('presence.surclassement_missing')"
-                >✗</span>
-                <span
+                />
+                <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
-                  class="text-success-500 dark:text-success-400 text-lg font-bold"
+                  name="i-heroicons-check-circle-solid"
+                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
                   :title="t('presence.surclassement_ok')"
-                >✓</span>
+                />
               </td>
-              <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50 text-center">{{ player.pagaieLabel }}</td>
-              <td class="px-3 py-1 text-sm text-center">
-                <span v-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
-                <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
-              </td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1282,13 +1287,8 @@ const pdfLinks = computed(() => {
               class="rounded border-header-300 dark:border-header-700"
             >
             <div>
-              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <NuxtLink
-                :to="`/athletes?matric=${player.matric}`"
-                class="link-value text-sm"
-              >
-                {{ getLicenseDisplay(player) }}
-              </NuxtLink>
+              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></div>
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
             </div>
           </div>
           <!-- Numero + Capitaine badges -->
@@ -1333,8 +1333,8 @@ const pdfLinks = computed(() => {
               @change="saveInlineEdit"
               @blur="saveInlineEdit"
             >
-              <option value="-">{{ t('presence.status_player') }}</option>
-              <option value="C">{{ t('presence.status_captain') }}</option>
+              <option value="-" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_player') }}</option>
+              <option value="C" :disabled="isPlayingStatusLocked(player)">{{ t('presence.status_captain') }}</option>
               <option value="E">{{ t('presence.status_coach') }}</option>
               <option value="A">{{ t('presence.status_referee') }}</option>
               <option value="X">{{ t('presence.status_inactive') }}</option>
@@ -1353,19 +1353,18 @@ const pdfLinks = computed(() => {
           </div>
           <div v-if="presenceStore.isNationalCompetition && player.surclassementNeeded" class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('presence.surclassement') }}:</span>
-            <span :class="player.surclassementOk ? 'text-success-500 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'">
+            <span class="flex items-center gap-1 font-semibold" :class="player.surclassementOk ? 'text-success-500 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'">
+              <UIcon :name="player.surclassementOk ? 'i-heroicons-check-circle-solid' : 'i-heroicons-x-circle-solid'" class="w-6 h-6" />
               {{ player.surclassementOk ? t('presence.surclassement_ok') : t('presence.surclassement_missing') }}
             </span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.paddle') }}:</span>
-            <span :class="player.pagaieValide === 0 ? 'text-danger-600 dark:text-danger-400' : ''">{{ player.pagaieLabel }}</span>
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" />
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.certificate') }}:</span>
-            <span :class="player.certifCK === 'OUI' ? 'text-success-500 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'">
-              {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
-            </span>
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" />
           </div>
         </div>
 
@@ -1432,8 +1431,8 @@ const pdfLinks = computed(() => {
               <div>
                 <p class="font-medium mb-1">{{ t('presence.validation_errors_title') }}</p>
                 <ul class="list-disc list-inside space-y-0.5">
-                  <li v-for="err in addFormValidationErrors" :key="err">
-                    {{ t(`presence.error_${err}`) }}
+                  <li v-for="(label, i) in errorLabels(addFormValidationErrors, minPagaie)" :key="addFormValidationErrors[i]">
+                    {{ label }}
                   </li>
                 </ul>
               </div>
@@ -1808,6 +1807,23 @@ const pdfLinks = computed(() => {
         </button>
       </div>
     </AdminModal>
+
+    <!-- Forced status change for a non-compliant player (profile <= forceMaxProfile) -->
+    <AdminConfirmModal
+      :open="!!forceStatusTarget"
+      :title="t('presence.force_status_title')"
+      :message="t('presence.force_status_message', { name: forceStatusTarget?.name ?? '', status: statusLabel(forceStatusTarget?.value ?? '-') || t('presence.status_player') })"
+      :confirm-text="t('presence.force_status_confirm')"
+      :cancel-text="t('common.cancel')"
+      :loading="forceStatusSaving"
+      variant="warning"
+      @close="forceStatusTarget = null"
+      @confirm="confirmForceStatus"
+    >
+      <ul class="mt-3 list-disc list-inside text-sm text-danger-700 dark:text-danger-300 space-y-0.5">
+        <li v-for="label in errorLabels(forceStatusTarget?.errors ?? [], minPagaie)" :key="label">{{ label }}</li>
+      </ul>
+    </AdminConfirmModal>
 
     <!-- Init Starters Confirmation Modal -->
     <AdminConfirmModal

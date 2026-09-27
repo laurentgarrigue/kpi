@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -34,7 +35,8 @@ class AdminRankingsController extends AbstractController
     use AdminLoggableTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly PlayerEligibilityChecker $eligibility
     ) {
     }
 
@@ -535,6 +537,8 @@ class AdminRankingsController extends AbstractController
         $teamIds = $data['teamIds'] ?? [];
         $targetSeason = $data['targetSeason'] ?? '';
         $targetCompetition = $data['targetCompetition'] ?? '';
+        // Copy the presence sheets (rosters) of the transferred teams (default: yes, legacy behaviour)
+        $includePlayers = (bool) ($data['includePlayers'] ?? true);
 
         if (empty($teamIds) || empty($targetSeason) || empty($targetCompetition)) {
             return $this->json(['message' => 'teamIds, targetSeason and targetCompetition are required'], Response::HTTP_BAD_REQUEST);
@@ -557,6 +561,7 @@ class AdminRankingsController extends AbstractController
             $details = [];
             $transferred = 0;
             $skipped = 0;
+            $eligibilityResults = [];
 
             // Get target season year for age category calculation
             $targetYear = (int) $targetSeason;
@@ -605,17 +610,22 @@ class AdminRankingsController extends AbstractController
                 ]);
                 $newId = (int) $this->connection->lastInsertId();
 
-                // Copy players with age recalculation
-                $sql = "INSERT INTO kp_competition_equipe_joueur
-                            (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
-                        SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe,
-                               COALESCE(d.id, a.Categ), a.Numero, a.Capitaine
-                        FROM kp_competition_equipe_joueur a
-                        LEFT JOIN kp_licence e ON a.Matric = e.Matric
-                        LEFT JOIN kp_categorie d ON (? - YEAR(e.Naissance)) BETWEEN d.age_min AND d.age_max
-                                                    AND (d.sexe = '' OR d.sexe = a.Sexe)
-                        WHERE a.Id_equipe = ?";
-                $this->connection->prepare($sql)->executeStatement([$newId, $targetYear, $teamId]);
+                if ($includePlayers) {
+                    // Copy players with age recalculation
+                    $sql = "INSERT INTO kp_competition_equipe_joueur
+                                (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
+                            SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe,
+                                   COALESCE(d.id, a.Categ), a.Numero, a.Capitaine
+                            FROM kp_competition_equipe_joueur a
+                            LEFT JOIN kp_licence e ON a.Matric = e.Matric
+                            LEFT JOIN kp_categorie d ON (? - YEAR(e.Naissance)) BETWEEN d.age_min AND d.age_max
+                                                        AND (d.sexe = '' OR d.sexe = a.Sexe)
+                            WHERE a.Id_equipe = ?";
+                    $this->connection->prepare($sql)->executeStatement([$newId, $targetYear, $teamId]);
+
+                    // Non-compliant players are made inactive (national) or reported (regional)
+                    $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newId);
+                }
 
                 $details[] = ['teamId' => $teamId, 'libelle' => $srcTeam['Libelle'], 'status' => 'created', 'newId' => $newId];
                 $transferred++;
@@ -636,6 +646,7 @@ class AdminRankingsController extends AbstractController
                 'transferred' => $transferred,
                 'skipped' => $skipped,
                 'details' => $details,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ]);
         } catch (\Throwable $e) {
             $this->connection->rollBack();

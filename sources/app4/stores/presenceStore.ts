@@ -12,7 +12,9 @@ import type {
   MatchAddPlayerFormData,
   CopyCompositionFormData,
   AvailableComposition,
-  CopyableMatch
+  CopyableMatch,
+  EligibilityRules,
+  IneligibleSummary
 } from '~/types/presence'
 
 interface PresenceState {
@@ -80,12 +82,14 @@ export const usePresenceStore = defineStore('presence', {
       return state.players.filter(p => ['E', 'A', 'X'].includes(p.capitaine))
     },
 
-    // Check if national competition (N* or CF*)
-    isNationalCompetition: (state): boolean => {
-      if (!state.competition) return false
-      const code = state.competition.code
-      return code.startsWith('N') || code.startsWith('CF')
-    },
+    // Eligibility rule set of the competition (null = no control), defined in api2 PlayerEligibilityRules
+    eligibility: (state): EligibilityRules | null => state.competition?.eligibility ?? null,
+
+    // Check if national competition (blocking eligibility rules)
+    isNationalCompetition: (state): boolean => state.competition?.eligibility?.level === 'national',
+
+    // Check if regional competition (eligibility rules as warnings only)
+    isRegionalCompetition: (state): boolean => state.competition?.eligibility?.level === 'regional',
 
     // Get context label for display
     contextLabel: (state): string => {
@@ -172,12 +176,14 @@ export const usePresenceStore = defineStore('presence', {
     },
 
     // Team Mode: Add player
-    async addPlayer(data: AddPlayerFormData, apiInstance?: ReturnType<typeof useApi>) {
+    // Returns eligibility warnings (regional competitions)
+    async addPlayer(data: AddPlayerFormData, apiInstance?: ReturnType<typeof useApi>): Promise<string[]> {
       if (!this.teamId) throw new Error('Team ID not set')
 
       const api = apiInstance ?? useApi()
-      await api.post(`/admin/teams/${this.teamId}/players/add`, data)
+      const response = await api.post<{ warnings?: string[] }>(`/admin/teams/${this.teamId}/players/add`, data)
       await this.reload(api)
+      return response.warnings ?? []
     },
 
     // Match Mode: Add player
@@ -219,14 +225,18 @@ export const usePresenceStore = defineStore('presence', {
       await this.reload(api)
     },
 
-    // Update player inline (numero or capitaine)
-    async updatePlayerInline(matric: number, field: 'numero' | 'capitaine', value: number | string, apiInstance?: ReturnType<typeof useApi>) {
+    // Update player inline (numero or capitaine). `force` overrides a blocking eligibility
+    // rule on a status change (team mode, profile <= forceMaxProfile). Returns eligibility warnings.
+    async updatePlayerInline(matric: number, field: 'numero' | 'capitaine', value: number | string, apiInstance?: ReturnType<typeof useApi>, force = false): Promise<string[]> {
       const api = apiInstance ?? useApi()
+      let warnings: string[] = []
 
       if (this.mode === 'team' && this.teamId) {
-        await api.patch(`/admin/teams/${this.teamId}/players/${matric}`, {
-          [field]: value
+        const response = await api.patch<{ warnings?: string[] }>(`/admin/teams/${this.teamId}/players/${matric}`, {
+          [field]: value,
+          ...(force ? { force: true } : {})
         })
+        warnings = response.warnings ?? []
       } else if (this.mode === 'match' && this.matchId && this.teamCode) {
         await api.patch(`/admin/matches/${this.matchId}/players/${matric}`, {
           [field]: value,
@@ -243,15 +253,18 @@ export const usePresenceStore = defineStore('presence', {
           player.capitaine = value as Player['capitaine']
         }
       }
+      return warnings
     },
 
     // Team Mode: Copy composition from another competition
-    async copyComposition(data: CopyCompositionFormData, apiInstance?: ReturnType<typeof useApi>) {
+    // Returns the eligibility outcome (non-compliant players made inactive or reported)
+    async copyComposition(data: CopyCompositionFormData, apiInstance?: ReturnType<typeof useApi>): Promise<IneligibleSummary | null> {
       if (!this.teamId) throw new Error('Team ID not set')
 
       const api = apiInstance ?? useApi()
-      await api.post(`/admin/teams/${this.teamId}/players/copy`, data)
+      const response = await api.post<{ ineligible?: IneligibleSummary }>(`/admin/teams/${this.teamId}/players/copy`, data)
       await this.reload(api)
+      return response.ineligible ?? null
     },
 
     // Team Mode: Get available compositions for copy
@@ -260,7 +273,7 @@ export const usePresenceStore = defineStore('presence', {
 
       const api = apiInstance ?? useApi()
       const response = await api.get<{ compositions: AvailableComposition[] }>(
-        `/admin/teams/${this.teamId}/compositions`,
+        `/admin/competition-teams/${this.teamId}/compositions`,
         season ? { season } : undefined
       )
       return response.compositions

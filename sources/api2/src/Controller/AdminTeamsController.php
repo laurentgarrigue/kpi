@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use App\Trait\CompetitionLockTrait;
@@ -35,7 +36,8 @@ class AdminTeamsController extends AbstractController
     use CompetitionLockTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly PlayerEligibilityChecker $eligibility
     ) {
     }
 
@@ -499,6 +501,7 @@ class AdminTeamsController extends AbstractController
         $this->connection->beginTransaction();
         try {
             $addedCount = 0;
+            $eligibilityResults = [];
 
             if ($mode === 'manual') {
                 $libelle = trim($data['libelle'] ?? '');
@@ -581,6 +584,7 @@ class AdminTeamsController extends AbstractController
                     // Copy composition if requested
                     if ($copyComposition && !empty($copyComposition['season']) && !empty($copyComposition['competition'])) {
                         $this->copyComposition($numero, $copyComposition['season'], $copyComposition['competition'], $newTeamId, $season);
+                        $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
                     }
 
                     $addedCount++;
@@ -593,6 +597,7 @@ class AdminTeamsController extends AbstractController
             return $this->json([
                 'message' => "$addedCount team(s) added successfully",
                 'count' => $addedCount,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             $this->connection->rollBack();
@@ -962,6 +967,7 @@ class AdminTeamsController extends AbstractController
             $sourceTeams = $result->fetchAllAssociative();
 
             $addedCount = 0;
+            $eligibilityResults = [];
             foreach ($sourceTeams as $sourceTeam) {
                 // Check if already exists in target
                 $sql = "SELECT Id FROM kp_competition_equipe
@@ -994,6 +1000,9 @@ class AdminTeamsController extends AbstractController
                             WHERE Id_equipe = ?";
                     $stmt = $this->connection->prepare($sql);
                     $stmt->executeStatement([$newTeamId, $sourceTeamId]);
+
+                    // Non-compliant players are made inactive (national) or reported (regional)
+                    $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
                 }
 
                 $addedCount++;
@@ -1005,6 +1014,7 @@ class AdminTeamsController extends AbstractController
             return $this->json([
                 'message' => "$addedCount team(s) duplicated successfully",
                 'count' => $addedCount,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ]);
         } catch (\Exception $e) {
             $this->connection->rollBack();
