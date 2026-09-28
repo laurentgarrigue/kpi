@@ -26,6 +26,7 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 | Voir **pourquoi ça a échoué** | 🌐 | Actions → le run → étape « Déployer via SSH » |
 | **Annuler** un déploiement préprod cassé | ⌨️ | `make last_merge_sha` puis `make preprod_rollback sha=…` |
 | **Restaurer la base** de prod | 🖥 | [§5](#5-rollback-de-la-base-de-données-prod) |
+| **Médias** (logos, photos) : état, sauvegarde, restauration | 🖥 | `make media_status` / `media_backup` / `media_restore` — [MEDIA_STORAGE.md](MEDIA_STORAGE.md) |
 | Savoir **quelle version** tourne | 🖥 | `cat /data/kpi/.last-deploy-sha` (et `git -C /data/kpi rev-parse HEAD`) |
 
 **Accès VPS** : `ssh -i ~/.ssh/kpi-deploy/kpi_deploy_ed25519 -p 22 deploy@<host>`

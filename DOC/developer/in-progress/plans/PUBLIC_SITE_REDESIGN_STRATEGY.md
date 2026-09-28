@@ -1,7 +1,7 @@
 # Stratégie de refonte de la partie publique (kayak-polo.info)
 
 **Date** : 28 septembre 2026 (v3 : décisions Q1–Q12 et Q-A–Q-G intégrées, charte FFCK)
-**Statut** : ✅ Orientations validées — derniers points en [§ 13](#13-questions-restantes)
+**Statut** : ✅ Orientations validées — phases 0a et 0b réalisées côté dépôt (§ 12)
 **Périmètre** : page d'accueil et contenus WordPress, pages publiques `kp*.php`, affichages `frame_*.php`, exports publics (PDF, ICS), médias, articulation avec app2 / app4 / api2
 
 ---
@@ -111,9 +111,13 @@ L'ancien `sources/app3` (prototype de feuille de marque, gelé, hors CI et hors 
 
 ### 3.2 Procédure
 
-1. **Coordination avec le chantier scoring** (`claude/scoring-refactoring-strategy-3d43ac`) : il utilise encore l'ancien app3 comme référence de portage. Avant suppression, poser un **tag Git `archive/app3-matchsheet`** sur le dernier commit qui contient l'ancien app3, et remplacer dans `PAGE_SCORING.md` / `LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md` les chemins `sources/app3/...` par une référence à ce tag.
+> ✅ **Réalisé le 28/09/2026** (commit « Chore: remove legacy app3 match-sheet prototype »). Deux points restent ouverts :
+> - le **tag `archive/app3-matchsheet`** n'a pas pu être publié depuis l'environnement de travail. À créer une fois : `git tag -a archive/app3-matchsheet cdb2081014 -m "Archive: former app3 match-sheet prototype" && git push origin archive/app3-matchsheet` (`cdb2081014` = dernier commit de `main` contenant l'ancien app3) ;
+> - `PAGE_SCORING.md` et `LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md` citent encore `sources/app3/...` comme source du portage. Ils n'ont **pas été modifiés** ici, car la branche `claude/scoring-refactoring-strategy-3d43ac` réécrit ces mêmes passages : c'est à elle de remplacer ces chemins par le tag (`git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`). Le composable `useTimer` est déjà porté dans app4 ; `useBroadcast` et `useWebSocket` ne le sont pas encore.
+
+1. Coordination avec le chantier scoring : tag d'archive posé sur le dernier commit contenant l'ancien app3, référencé par les docs de portage.
 2. Supprimer `sources/app3/`, le service `node_app3`, les cibles Makefile, `APP3_DOMAIN_NAME`, les exclusions CI/Dependabot/CodeQL, et nettoyer la documentation.
-3. **Commit dédié** (« Chore: remove legacy app3 match-sheet prototype »), séparé de la création du nouveau site, pour pouvoir le restaurer facilement.
+3. **Commit dédié**, séparé de la création du nouveau site, pour pouvoir le restaurer facilement.
 4. Recréer ensuite `sources/app3/` (site public), avec ses propres cibles : `app3_dev`, `app3_build`, `app3_restart`, `app3_logs`, `init_env_app3`, les services `node_app3` (dev) et `site_app3` (SSR, préprod/prod), et `APP3_DOMAIN_NAME` réutilisé pour `beta.` en préprod.
 
 > Attention au **cache navigateur** : l'ancien app3 a pu être servi sur `app3.localhost` avec un service worker PWA. En dev, vider les données du site ou changer de domaine local évite des surprises.
@@ -314,21 +318,14 @@ S'y ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module
 - **Un seul stockage médias, hors de l'arborescence du dépôt**, désigné par une variable `HOST_MEDIA_PATH` dans `docker/.env` (même principe que `HOST_WORDPRESS_PATH`) :
   ```
   ${HOST_MEDIA_PATH}/
-  ├── competitions/   (ex img/logo)
-  ├── clubs/          (ex img/KIP/logo, KIP/colors)
-  ├── teams/          (ex img/KIP/teams)
-  ├── players/        (ex img/KIP/players)
-  ├── nations/        (ex img/Nations)
-  ├── presentations/  (ex img/presentations)
-  ├── schemas/        (ex img/schemas)
-  ├── referees/       (ex img/referees)
-  ├── content/        (articles, pages, galeries — dont ex wp-content/uploads)
-  └── forms/          (pièces jointes éventuelles des inscriptions)
+  ├── img/            (mêmes noms qu'avant : logo/, KIP/, Nations/, presentations/, schemas/, referees/)
+  └── content/        (réservé : articles, pages, galeries — dont ex wp-content/uploads — et formulaires)
   ```
-  Les noms exacts de sous-dossiers seront fixés à l'inventaire des sous-dossiers de `KIP/` (phase 0b).
+  Les dossiers gardent leur nom historique : aucun chemin ni aucune URL ne change. Seul api2 a dû être corrigé :
+  sous FrankenPHP, il résolvait mal le chemin de `sources/img/` (paramètre `legacy_document_root`). Le détail d'exploitation est dans [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md).
 - **URL et chemins existants préservés** : chaque sous-dossier est **monté à son ancien emplacement** (`/var/www/html/img/logo`, `/var/www/html/img/KIP/teams`…) dans les conteneurs **Apache (`kpi`), `api2` et `event-cache-worker`**, pour les 3 environnements. Le legacy, api2 (qui lit et écrit dans ces dossiers : `img/logo/`, `img/KIP/logo/`, `img/KIP/teams/`) et les PDF fonctionnent sans modification de code. Les nouveaux médias sont servis sous `/media/...`.
 - **Pourquoi hors du dépôt** : tant que les fichiers vivent dans le dépôt, une opération Git (`pull`, `checkout` d'une autre branche, `clean`) peut les créer, les écraser ou les supprimer. Hors du dépôt, Git ne peut plus les toucher (§ 8.4).
-- **Dev** : cible `make media_sync_from_prod` (rsync de la prod, ou archive de référence), et image par défaut quand un logo manque.
+- **Dev** : `make media_init` (récupère les images depuis l'historique Git et installe les images par défaut), et `make media_sync_from src=…` pour une copie de la prod.
 
 ### 8.3 Sauvegarde dédiée des médias
 
@@ -339,7 +336,7 @@ S'y ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module
 | Destination | **Sur le VPS lui-même** pour l'instant : dépôt restic dans un répertoire dédié (`/srv/backups/kpi-media`), distinct de `HOST_MEDIA_PATH` et des dossiers Docker |
 | Fréquence / rétention | Quotidienne ; 7 quotidiennes, 4 hebdomadaires, 12 mensuelles |
 | Cohérence | Exécutée juste après le dump SQL quotidien, pour que base et médias restent cohérents à la restauration |
-| Cibles Makefile | `media_backup`, `media_restore snapshot=…`, `media_backup_list`, `media_backup_check`, `media_sync_prod_to_preprod` |
+| Cibles Makefile | `media_init`, `media_status`, `media_backup`, `media_backup_list`, `media_backup_check`, `media_restore snapshot=…`, `media_sync_from src=…` |
 | Vérification | Test de restauration documenté dans `DEPLOYMENT_RUNBOOK.md` ; e-mail en cas d'échec |
 
 > ⚠️ Une sauvegarde sur le même VPS protège contre les **erreurs** (suppression, écrasement, mauvaise manipulation), **pas contre la perte du serveur**. L'externalisation est un chantier ultérieur, déjà décidé. Avec restic, elle se limitera à déclarer un second dépôt distant et à y lancer `restic copy`. Aucune refonte ne sera nécessaire.
@@ -434,7 +431,7 @@ Source : *FFCK – Charte graphique Rebranding v2* (avril 2021, Studio Ellair), 
 | **Marine FFCK** (univers institutionnel) | `#20265b` | 14,1 ✅ | 1,18 | Pied de page et bandeau institutionnel portant le logo FFCK |
 
 - Les **gammes Tailwind 50→950** (`--color-kpi-primary-*`, `--color-kpi-accent-*`…) sont générées à partir de ces ancres dans `kpi-layer` et exposées à Nuxt UI (`app.config.ts` → `ui.colors.primary = 'kpi-primary'`, etc.).
-- La palette n'a **pas de bronze** : on conserve le bronze actuel des classements (`img/BRONZE.png`) ou on le fait valider par la FFCK (Q-H).
+- La palette n'a **pas de bronze** : on conserve le bronze actuel des classements (`img/BRONZE.png`).
 - **Mode sombre** : fond `#1e1e1c`, primaire `#69b9e6`, accent `#c94a4c` réservé aux aplats (contraste 3,6 : insuffisant pour du petit texte).
 - **app2 et app4** reçoivent la même palette par le layer ; app4 peut garder une densité « outil » tout en partageant les couleurs.
 
@@ -442,16 +439,16 @@ Source : *FFCK – Charte graphique Rebranding v2* (avril 2021, Studio Ellair), 
 
 | Usage | Police de la charte | Web |
 |---|---|---|
-| Titres, sous-titres, chiffres forts (scores, rangs) | **Agency FB** (Thin, Light, Regular, Bold) | ⚠️ Police commerciale (Monotype/Microsoft) : son usage web exige une **licence webfont** (Q-I). Sans licence, substitut libre proche, auto-hébergé : **Saira Condensed** ou **Barlow Condensed** (OFL). |
+| Titres, sous-titres, chiffres forts (scores, rangs) | **Agency FB** (Thin, Light, Regular, Bold) | ✅ Déjà utilisée dans app4 **sous licence FFCK** (`sources/app4/public/fonts/agencyfb.ttf`, déclarée dans `assets/css/admin.css` et `tailwind.config.ts`). Elle passe dans `kpi-layer` (convertie en WOFF2) pour être partagée par app2, app3 et app4. |
 | Texte courant | **Raleway** (Thin → Black, italiques) | Libre (OFL), **auto-hébergée** dans `kpi-layer` (pas d'appel à Google Fonts, cohérent avec l'approche RGPD) |
 
 Les chiffres de score et de classement utilisent des **chiffres tabulaires** (`font-variant-numeric: tabular-nums`) pour l'alignement.
 
 ### 10.3 Logo et pictogrammes
 
-- **Logo FFCK** : jamais modifié (pas de contour, d'ombre, de déformation, de recoloration). Logo couleur sur fond clair, blanc sur fond foncé. Choisir la **version responsive** adaptée à la taille (≥ 100 px, 100–50 px, 50–25 px, < 25 px) et respecter la **zone de respiration**. Il faut les fichiers vectoriels officiels (Q-H).
-- **Marque « kayak-polo.info »** : sa place à côté du logo FFCK (co-marquage, déclinaison dans l'univers Compétition) est à valider avec la FFCK (Q-H).
-- **Pictogrammes** : la charte fournit un pictogramme **Kayak-Polo** et une série de pictogrammes web de style amérindien (Partager, Rechercher, Lieu, Temps, Statistiques, Photos, Retour, Paramètres…). Intégrés en SVG comme **collection d'icônes personnalisée** Nuxt Icon (`kpi:share`, `kpi:search`…), complétés par Heroicons pour le reste.
+- **Logo FFCK** : jamais modifié (pas de contour, d'ombre, de déformation, de recoloration). Logo couleur sur fond clair, blanc sur fond foncé. Choisir la **version responsive** adaptée à la taille (≥ 100 px, 100–50 px, 50–25 px, < 25 px) et respecter la **zone de respiration**. Aucun fichier vectoriel officiel n'est disponible : on utilise les logos existants du dépôt (`sources/img/LOGO_FFCK.png`, logos KPI) à leur meilleure résolution, sans jamais les redessiner. Les versions vectorielles seront intégrées si la FFCK les fournit un jour.
+- **Marque « kayak-polo.info »** : on reprend le co-marquage actuel (logo FFCK + nom du site). Aucune règle officielle n'existe.
+- **Pictogrammes** : la charte fournit un pictogramme **Kayak-Polo** et une série de pictogrammes web de style amérindien (Partager, Rechercher, Lieu, Temps, Statistiques, Photos, Retour, Paramètres…). Ils ne sont **pas disponibles en fichiers** : l'interface utilise **Heroicons** (déjà dans app2/app4). Les pictogrammes FFCK pourront être ajoutés plus tard comme collection d'icônes personnalisée Nuxt Icon, s'ils sont obtenus.
 - La possibilité de **déformer Agency FB** (texte incurvé) est réservée aux visuels éditoriaux (images d'articles), pas à l'interface.
 
 ---
@@ -482,8 +479,8 @@ Règles de mise en œuvre :
 
 | Phase | Contenu | Livrable | Charge indicative |
 |---|---|---|---|
-| **0a. Nettoyage app3** | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | 1–2 j |
-| **0b. Médias** | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) | Médias hors Git et sauvegardés | 1 sem. |
+| **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag à publier) |
+| **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait côté dépôt ; **migration serveur à exécuter** |
 | **0c. Cadrage** | Jetons de la charte FFCK univers Compétition (§ 10), polices, pictogrammes SVG, maquettes (accueil, compétition, club, article, formulaire), table de redirections, validation des pages reprises | Maquettes validées | 1–2 sem. |
 | **1. Socle** | `kpi-layer` (thème, client api2, types), squelette app3 SSR (layout, menu, i18n, SEO), conteneur `site_app3` dans les 3 compose, cibles Makefile, CI, déploiement sur **beta.kayak-polo.info** | Site vide navigable en beta | 2 sem. |
 | **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |
@@ -528,13 +525,10 @@ Règles de mise en œuvre :
 | Q-F | `presentations/`, `schemas/`, `Nations/`, `referees/` = **uploads** → stockage médias |
 | Q-G | RGPD : chantier distinct ultérieur ; principe de limitation appliqué dès maintenant |
 | — | Brique distincte **app3** (ancien app3 supprimé) ; **URL en anglais** ; **pas de réécriture de l'historique Git** (§ 8.4) ; live dans le chantier scoring |
+| Q-H | Pas de fichiers de marque disponibles : logos raster existants, Heroicons, bronze actuel conservé |
+| Q-I | **Agency FB** déjà disponible dans app4 sous licence FFCK → partagée via `kpi-layer` |
 
-### Derniers points (non bloquants pour démarrer les phases 0a / 0b)
-
-- **Q-H — Fichiers de marque** : pouvez-vous obtenir auprès de la FFCK les **logos vectoriels** (versions responsive), les **pictogrammes SVG** (dont Kayak-Polo et la série web), et une règle de co-marquage FFCK / « kayak-polo.info » ? Une couleur « bronze » validée pour les classements ?
-  *Hypothèse : fichiers demandés en phase 0c ; bronze actuel conservé.*
-- **Q-I — Agency FB** : la FFCK dispose-t-elle d'une **licence webfont** Agency FB utilisable par kayak-polo.info ? Sinon, validez-vous un substitut libre (Saira Condensed ou Barlow Condensed) ?
-  *Hypothèse : pas de licence web → Saira Condensed, à valider sur maquette.*
+Aucune question ouverte à ce stade.
 
 ---
 

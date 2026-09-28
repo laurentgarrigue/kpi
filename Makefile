@@ -65,6 +65,7 @@ api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
+media_init media_status media_sync_from media_backup media_backup_list media_backup_check media_restore \
 docker_networks_create docker_networks_list docker_networks_clean \
 wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
 last_merge_sha preprod_rollback release release_tag feature version \
@@ -1003,6 +1004,28 @@ docker_networks_clean: ## Supprime les réseaux Docker du projet (attention: seu
 
 
 ## WORDPRESS
+## MÉDIAS (hors Git) - cf. DOC/developer/infrastructure/MEDIA_STORAGE.md
+media_init: ## Migre sources/img/{logo,KIP,Nations,...} vers HOST_MEDIA_PATH (idempotent, ne supprime rien)
+	@scripts/media/media.sh init
+
+media_status: ## Affiche l'état du stockage médias et vérifie les montages dans les conteneurs
+	@scripts/media/media.sh status
+
+media_sync_from: ## Copie un autre stockage médias dans celui-ci (usage: make media_sync_from src=/data/media/kpi)
+	@scripts/media/media.sh sync-from "$(src)"
+
+media_backup: ## Sauvegarde restic des médias + rétention 7j/4s/12m (à lancer par cron après le dump SQL)
+	@scripts/media/media.sh backup
+
+media_backup_list: ## Liste les sauvegardes restic des médias
+	@scripts/media/media.sh snapshots
+
+media_backup_check: ## Vérifie l'intégrité du dépôt restic (lit 5% des données)
+	@scripts/media/media.sh check
+
+media_restore: ## Restaure À CÔTÉ du stockage (usage: make media_restore snapshot=latest [path=img/logo/x.png])
+	@scripts/media/media.sh restore "$(or $(snapshot),latest)" "$(path)"
+
 wordpress_backup: ## Crée une sauvegarde du dossier WordPress
 	@echo "Création d'une sauvegarde de WordPress..."
 	@tar -czf docker/wordpress_backup_$$(date +%Y%m%d_%H%M%S).tar.gz -C docker/wordpress . 2>/dev/null || \

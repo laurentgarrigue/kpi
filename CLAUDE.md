@@ -174,6 +174,15 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - WordPress content is stored in `docker/wordpress/` (excluded from Git)
 - WordPress path is configured via `HOST_WORDPRESS_PATH` in docker/.env
 
+### Media (uploaded images) - NOT in Git
+- Uploaded images (`sources/img/{logo,KIP,Nations,presentations,schemas,referees}/`) live **outside the repo**
+  in `HOST_MEDIA_PATH` (docker/.env) and are **bind-mounted back** at their historical paths in `kpi`, `api2`
+  and `event-cache-worker` (URLs `/img/...` unchanged). These dirs are git-ignored; do not commit images there.
+- api2 must reach the legacy tree through the `legacy_document_root` parameter (`/var/www/html`), never via
+  `$_SERVER['DOCUMENT_ROOT']` (= `/app/public` under FrankenPHP) or `__DIR__`.
+- `make media_init` / `media_status` / `media_backup` / `media_backup_list` / `media_restore snapshot=… [path=…]`
+- Full procedure (server migration order, restic backups, cron): [MEDIA_STORAGE.md](DOC/developer/infrastructure/MEDIA_STORAGE.md)
+
 ### Environment Files
 - `docker/.env` - Main Docker environment configuration (not versioned, use docker/.env.dist as template)
   - **Important**: `APPLICATION_NAME` determines container names (e.g., `kpi`, `kpi_preprod`, `kpi_prod`)

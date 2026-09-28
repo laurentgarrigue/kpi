@@ -53,6 +53,7 @@ Documentation technique pour le développement et la maintenance du projet.
 
 #### [Infrastructure](developer/infrastructure/)
 - **[NGINX_STATIC_APP_DEPLOYMENT.md](developer/infrastructure/NGINX_STATIC_APP_DEPLOYMENT.md)** - ✅ Déploiement app2/app4 via Nginx (SSG, builds dev/prod, containers temporaires)
+- **[MEDIA_STORAGE.md](developer/infrastructure/MEDIA_STORAGE.md)** - ✅ Médias uploadés hors Git (`HOST_MEDIA_PATH`), montages Docker, sauvegarde restic
 - **[CORS_CONFIGURATION.md](developer/infrastructure/CORS_CONFIGURATION.md)** - ✅ Configuration CORS globale via PHP auto-prepend (tous endpoints)
 - **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - ✅ Stratégie cache busting avec buildId timestamp (app2)
 - **[MAKEFILE_MULTI_ENVIRONMENT.md](developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Gestion multi-environnements (dev, preprod, prod)

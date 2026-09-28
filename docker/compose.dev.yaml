@@ -19,6 +19,14 @@ services:
             - 80${DOCKER_SUFFIXE_PORT}:80
         volumes:
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - ../DOC:/var/www/html/DOC
             - ${HOST_WORDPRESS_PATH}:/var/www/html/wordpress
             - ./MyParams.php:/var/www/html/commun/MyParams.php
@@ -91,6 +99,14 @@ services:
             # AdminTvController). Seul montage legacy nécessaire : api2 n'utilise
             # ni MyParams.php, ni MyConfig.php, ni DOC/.
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
             # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
             # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
@@ -140,6 +156,14 @@ services:
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - ./MyParams.php:/var/www/html/commun/MyParams.php
             - ./MyConfig.php:/var/www/html/commun/MyConfig.php
         networks:
