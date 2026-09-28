@@ -28,7 +28,6 @@ API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
 # d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
 WORKER_CONTAINER_NAME = $(APPLICATION_NAME)_event_cache_worker
 NODE_CONTAINER_NAME = $(APPLICATION_NAME)_node_app2
-NODE3_CONTAINER_NAME = $(APPLICATION_NAME)_node_app3
 NODE4_CONTAINER_NAME = kpi_node_app4
 DB_CONTAINER_NAME = $(APPLICATION_NAME)_db
 
@@ -41,21 +40,17 @@ DOCKER_EXEC_API2 = docker exec -ti $(API2_CONTAINER_NAME)
 DOCKER_EXEC_API2_NON_INTERACTIVE = docker exec $(API2_CONTAINER_NAME)
 DOCKER_EXEC_NODE = docker exec -ti $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE_NON_INTERACTIVE = docker exec $(NODE_CONTAINER_NAME)
-DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
-DOCKER_EXEC_NODE3_NON_INTERACTIVE = docker exec $(NODE3_CONTAINER_NAME)
 DOCKER_EXEC_NODE4 = docker exec -ti $(NODE4_CONTAINER_NAME)
 DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
 .DEFAULT_GOAL = help
 
-.PHONY: help init init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks \
+.PHONY: help init init_env init_env_app2 init_env_app4 init_env_api2 init_networks \
 docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_logs docker_dev_status \
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
 docker_production_restart docker_production_rebuild \
 app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_build app3_generate_dev app3_lint \
-app3_npm_install app3_npm_ls app3_npm_clean app3_npm_update app3_npm_add app3_npm_add_dev app3_bash \
 app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
@@ -65,7 +60,7 @@ backend_composer_install backend_composer_update backend_composer_require backen
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures \
-dev dev_status dev_logs dev_down dev_certs app2_logs app3_logs app4_logs \
+dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
@@ -94,7 +89,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
+init: init_env init_env_app2 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
 	@echo ""
 	@echo "Initialisation complète terminée!"
 	@echo ""
@@ -154,16 +149,6 @@ init_env_app2: ## Initialise les fichiers .env.development, .env.preprod et .env
 	else \
 		echo "Le fichier .env.production existe déjà pour app2"; \
 	fi
-
-init_env_app3: ## Initialise les fichiers .env.development, .env.preprod et .env.production pour app3
-	@if [ ! -f sources/app3/.env.preprod ]; then \
-		cp sources/app3/.env.preprod.dist sources/app3/.env.preprod; \
-		echo "Fichier .env.preprod créé pour app3"; \
-		echo "N'oubliez pas de configurer le domaine de préproduction dans .env.preprod"; \
-	else \
-		echo "Le fichier .env.preprod existe déjà pour app3"; \
-	fi
-	@echo "Les autres fichiers .env pour app3 sont déjà créés dans sources/app3/"
 
 init_env_app4: ## Initialise le fichier .env pour app4 (admin) depuis .env.dist
 	@if [ ! -f sources/app4/.env ]; then \
@@ -505,73 +490,6 @@ app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
 
 
-## APP3 - NUXT (Match Sheet)
-app3_logs: ## Affiche les logs du container app3. Options: lines=200
-	docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME)
-
-# app3 ne démarre PAS automatiquement : son `npm run dev` échoue sur "dotenv: not found"
-# (dotenv-cli absent des node_modules). Lancer `make app3_npm_install` avant.
-app3_dev: ## Lance le serveur Nuxt (app3) dans le terminal courant (port 3003)
-	$(DOCKER_EXEC_NODE3) sh -c "npm run dev"
-
-app3_build: ## Build l'application Nuxt (app3) pour la production
-	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run build"
-
-app3_generate_dev: ## Génère l'application Nuxt (app3) en mode statique pour développement
-	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npx dotenv-cli -e .env.development -- nuxt generate"
-
-# app3 (feuille de marque) n'est plus déployé : les cibles generate preprod/prod/
-# production ont été retirées. app3 ne subsiste que comme RÉFÉRENCE locale pour le
-# scoring d'app4 → seules restent les cibles dev/lint/npm ci-dessous.
-
-app3_lint: ## Exécute ESLint sur app3
-	$(DOCKER_EXEC_NODE3) sh -c "npm run lint"
-
-app3_bash: ## Ouvre un shell dans le container Node (app3)
-	$(DOCKER_EXEC_NODE3) sh
-
-
-## APP3 - NPM
-app3_npm_install: ## Installe toutes les dépendances npm pour app3
-	@echo "Installation des dépendances npm pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "npm install"
-
-app3_npm_ls: ## Liste les modules npm installés dans app3
-	@echo "Modules npm dans app3 (container: $(NODE3_CONTAINER_NAME)):"
-	$(DOCKER_EXEC_NODE3) sh -c "ls -l node_modules/@nuxtjs"
-
-app3_npm_clean: ## Supprime node_modules et package-lock.json de app3
-	@echo "Nettoyage de node_modules pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "rm -rf node_modules package-lock.json"
-
-app3_npm_update: ## Met à jour toutes les dépendances npm de app3
-	@echo "Mise à jour des dépendances npm pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "npm update"
-
-app3_npm_update_lock: ## Régénère le package-lock.json de app3 via container temporaire (Node 22)
-	@echo "Régénération du package-lock.json pour app3 (vrai npm install en dossier isolé)..."
-	@# NE PAS utiliser --package-lock-only : il ne résout pas les peer deps et produit
-	@# un lock désynchronisé (npm ci échoue ensuite). NE PAS installer sur sources/app3
-	@# monté : node_modules/.nuxt seraient écrits en root et casseraient le dev (EACCES).
-	@# On copie uniquement les manifests dans un dossier temporaire, on installe pour de
-	@# vrai, puis on récupère le seul package-lock.json régénéré.
-	@tmp=$$(mktemp -d) ; \
-		cp sources/app3/package.json sources/app3/package-lock.json "$$tmp/" ; \
-		docker run --rm -v "$$tmp:/app" -w /app node:22-alpine \
-			sh -c "npm install --ignore-scripts --no-audit --no-fund && rm -rf node_modules" ; \
-		cp "$$tmp/package-lock.json" sources/app3/package-lock.json ; \
-		rm -rf "$$tmp"
-	@echo "package-lock.json mis à jour. Pensez à le committer."
-
-app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=uuid)
-	@echo "Ajout du package $(package) pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "npm install $(package)"
-
-app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_add_dev package=eslint)
-	@echo "Ajout du package de dev $(package) pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "npm install -D $(package)"
-
-
 ## APP4 - NUXT (Admin)
 app4_dev: ## Suit les logs du serveur Nuxt (app4 admin, port 3004) - démarré par docker_dev_up
 	@echo "ℹ️  Le serveur Nuxt (app4) démarre automatiquement avec les containers."
@@ -908,7 +826,7 @@ dev_certs: ## Régénère le certificat mkcert pour les domaines .localhost (sup
 	@echo "Génération du certificat (.localhost + .local existants)..."
 	@cd "$(TRAEFIK_CERTS_PATH)" && mkcert -cert-file local-cert.pem -key-file local-key.pem \
 		'$(KPI_DOMAIN_NAME)' '*.$(KPI_DOMAIN_NAME)' '$(NODE_DOMAIN_NAME)' '$(NODE4_DOMAIN_NAME)' \
-		'$(NODE_LIVE_DOMAIN_NAME)' '$(MYADMIN_DOMAIN_NAME)' '$(APP3_DOMAIN_NAME)' \
+		'$(NODE_LIVE_DOMAIN_NAME)' '$(MYADMIN_DOMAIN_NAME)' \
 		'localhost' '127.0.0.1' '::1' \
 		'kpi.local' 'kpi-node.local' 'kpi-8.local' 'kpi-myadmin.local' 'dashboard.local'
 	@echo

@@ -1,8 +1,8 @@
-# Cache Busting Strategy - App2 & App3
+# Cache Busting Strategy - App2
 
 **Date**: 2025-12-21
 **Status**: ✅ Implemented
-**Scope**: app2, app3 (Nuxt SSG)
+**Scope**: app2 (Nuxt SSG)
 
 ## Problem Statement
 
@@ -19,7 +19,6 @@ This causes users to see old URLs or configuration even after deployment.
 
 **Files Modified**:
 - `sources/app2/nuxt.config.ts`
-- `sources/app3/nuxt.config.ts`
 
 **Code**:
 ```typescript

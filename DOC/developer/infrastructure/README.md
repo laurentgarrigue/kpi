@@ -27,7 +27,7 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 #### [NGINX_STATIC_APP_DEPLOYMENT.md](NGINX_STATIC_APP_DEPLOYMENT.md)
 **Status**: ✅ Implémenté (2025-12-21)
 
-Documentation complète sur le déploiement des applications Nuxt (app2 & app3) via Nginx en mode SSG (Static Site Generation).
+Documentation complète sur le déploiement des applications Nuxt (app2 & app4) via Nginx en mode SSG (Static Site Generation).
 
 **Sujets couverts**:
 - Architecture Nginx + Nuxt SSG
@@ -230,7 +230,7 @@ Pour toute question technique:
 
 | Date | Document | Changement |
 |------|----------|------------|
-| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2/app3 |
+| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2 |
 | 2025-12-21 | CORS_CONFIGURATION.md | ✅ Création - CORS global via PHP auto-prepend |
 | 2024-xx-xx | MAKEFILE_MULTI_ENVIRONMENT.md | ✅ Support multi-environnements |
 | 2024-xx-xx | NPM_BACKEND_PRODUCTION_GUIDE.md | ✅ NPM pour backend PHP |

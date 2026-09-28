@@ -5,6 +5,11 @@ ce qui a été réellement livré, les écarts assumés et les pièges rencontr�
 
 ---
 
+> **Note (28/09/2026)** : les mentions d'`app3` dans ce journal désignent l'ancien prototype
+> de feuille de marque, **supprimé** du dépôt. Son code est conservé au tag Git
+> `archive/app3-matchsheet`. Le nom `sources/app3/` est désormais réservé au futur site public
+> (cf. [PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md)).
+
 ## 📌 État de reprise (dernière session : 2026-07-31, 3ᵉ passe)
 
 **Où on en est** : **toutes les phases 0 → 8 sont livrées, déployées ET éprouvées**. La

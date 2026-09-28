@@ -52,9 +52,9 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[MIGRATION_PDFMATCHMULTI_NOTES.md](developer/guides/migrations/MIGRATION_PDFMATCHMULTI_NOTES.md)** - Notes migration PDF multi-matchs
 
 #### [Infrastructure](developer/infrastructure/)
-- **[NGINX_STATIC_APP_DEPLOYMENT.md](developer/infrastructure/NGINX_STATIC_APP_DEPLOYMENT.md)** - ✅ Déploiement app2/app3 via Nginx (SSG, builds dev/prod, containers temporaires)
+- **[NGINX_STATIC_APP_DEPLOYMENT.md](developer/infrastructure/NGINX_STATIC_APP_DEPLOYMENT.md)** - ✅ Déploiement app2/app4 via Nginx (SSG, builds dev/prod, containers temporaires)
 - **[CORS_CONFIGURATION.md](developer/infrastructure/CORS_CONFIGURATION.md)** - ✅ Configuration CORS globale via PHP auto-prepend (tous endpoints)
-- **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - ✅ Stratégie cache busting avec buildId timestamp (app2/app3)
+- **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - ✅ Stratégie cache busting avec buildId timestamp (app2)
 - **[MAKEFILE_MULTI_ENVIRONMENT.md](developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Gestion multi-environnements (dev, preprod, prod)
 - **[NPM_BACKEND_PRODUCTION_GUIDE.md](developer/guides/infrastructure/NPM_BACKEND_PRODUCTION_GUIDE.md)** - NPM pour backend PHP
 - **[TOOLTIP_TESTING_GUIDE.md](developer/guides/infrastructure/TOOLTIP_TESTING_GUIDE.md)** - Guide de test tooltips
