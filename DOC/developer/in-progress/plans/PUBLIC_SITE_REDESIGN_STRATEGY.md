@@ -1,7 +1,7 @@
 # Stratégie de refonte de la partie publique (kayak-polo.info)
 
-**Date** : 28 septembre 2026 (v2, intègre les décisions du 28/09)
-**Statut** : ✅ Orientations validées — questions résiduelles en [§ 12](#12-questions-restantes)
+**Date** : 28 septembre 2026 (v3 : décisions Q1–Q12 et Q-A–Q-G intégrées, charte FFCK)
+**Statut** : ✅ Orientations validées — derniers points en [§ 13](#13-questions-restantes)
 **Périmètre** : page d'accueil et contenus WordPress, pages publiques `kp*.php`, affichages `frame_*.php`, exports publics (PDF, ICS), médias, articulation avec app2 / app4 / api2
 
 ---
@@ -16,7 +16,9 @@
 | **URL** | **Termes anglais**, alignés sur app4 (`/games`, `/pitches`, `/ranking`, `/teams/{id}`…). Anciennes URL redirigées en 301. |
 | **Domaine** | Remplace `www.kayak-polo.info` ; prévisualisation sur **`beta.kayak-polo.info`**. |
 | **app2** | Reste séparée (`app.kayak-polo.info`) ; son authentification disparaîtra (le contrôle/scrutineering migre dans app4, chantier distinct). Convergence réévaluée après la bascule. |
-| **Médias** | Les images uploadées (logos clubs/compétitions, photos d'équipes…) **sortent de Git** vers un stockage non versionné, avec une **sauvegarde dédiée** (§ 8). |
+| **Médias** | Les images uploadées (logos clubs/compétitions, photos d'équipes…) **sortent de Git** vers un stockage non versionné, avec une **sauvegarde dédiée** (§ 8). **Pas de réécriture de l'historique Git** (§ 8.4). |
+| **Identité visuelle** | Charte FFCK, **univers Compétition** : bleus `#69b9e6` / `#357b9c`, rouges `#c94a4c` / `#882831`, noir `#1e1e1c`, gris `#c6c7c7` ; titres en Agency FB, textes en Raleway (§ 10). |
+| **Paiement** | Pas de paiement dans KPI : les formulaires payants renvoient vers **HelloAsso**. |
 | **Hors périmètre initial** | Écrans et iframes tiers (`frame_*.php`) → legacy, puis phase 7. PDF publics → legacy. **Live** → branche `claude/scoring-refactoring-strategy-3d43ac`. |
 
 ---
@@ -73,7 +75,7 @@ Passer app2 en SSR casserait sa stratégie hors-ligne (Dexie, service worker, `n
 
 - **`sources/app3/`** — nouveau site public, Nuxt 4 SSR, servi sur `www.kayak-polo.info`.
 - **`sources/kpi-layer/`** — Nuxt Layer (`extends: ['../kpi-layer']`) utilisé par app2, app3 et app4 :
-  - thème Tailwind et `app.config.ts` Nuxt UI (couleurs, typographie, dark mode — cf. `DOC/specs/DARK_MODE.md`), avec les **couleurs et typographies de la charte FFCK** ;
+  - thème Tailwind et `app.config.ts` Nuxt UI (couleurs, typographie, dark mode — cf. `DOC/specs/DARK_MODE.md`), construits à partir des **jetons de la charte FFCK, univers Compétition** (§ 10) ;
   - client api2 typé (`useApi2`) et types TypeScript des réponses publiques ;
   - composants d'affichage **en lecture seule** : liste de matchs, feuille de match, classement, tableau de phases, carte des clubs, nom/logo d'équipe, sélecteur de langue, bouton de partage ;
   - clés i18n communes (phases, statuts de match, libellés de classement).
@@ -203,13 +205,19 @@ Constructeur **volontairement simple** :
 - rattachement optionnel à un événement ou une compétition ;
 - RGPD : mention d'information, durée de conservation, purge automatique après l'événement.
 
-Si un **paiement en ligne** est nécessaire, on ne le développe pas : on renvoie vers une plateforme spécialisée (voir Q-A).
+**Inscriptions payantes** : aucun paiement n'est traité par KPI. Le formulaire est paramétré en mode « HelloAsso » :
+- l'organisateur saisit l'URL de sa billetterie ou de son formulaire HelloAsso ;
+- le site affiche soit le **widget HelloAsso intégré** (iframe officielle), soit un bouton vers la page HelloAsso ;
+- la liste publique des inscrits reste possible à partir d'un **import CSV** de l'export HelloAsso dans app4.
+
+La synchronisation automatique via l'API HelloAsso (webhooks de paiement) est une amélioration possible, mais hors MVP.
 
 ### 5.4 Reprise du contenu WordPress
 
-- **Périmètre** : environ **50 articles** (sur 325) et les pages utiles (sur 43), choisis par les rédacteurs (Q-C).
-- **Outil** : commande Symfony `app:import-wordpress` lisant la base `dbwp` à partir d'une **liste d'identifiants**, qui convertit le HTML, rapatrie les médias référencés dans le stockage médias (§ 8), et produit un **rapport** (liens internes cassés, shortcodes non convertis — ex. `[ninja_form]`, `[table]`, galeries).
-- **Articles non repris** : ils ne sont pas perdus sans le dire. Ils renvoient un **410 Gone** (ou une redirection vers `/news`), et le dump WordPress complet est archivé.
+- **Périmètre** : les **50 articles publiés les plus récents** (`post_status = 'publish'`, tri par `post_date` décroissant) et les pages utiles (sur 43), dont la liste est validée par les rédacteurs.
+- **Outil** : commande Symfony `app:import-wordpress --articles=50 --pages=<ids>` lisant la base `dbwp`. Elle convertit le HTML, rapatrie les médias référencés (images, galeries) dans le stockage médias (§ 8) et produit un **rapport** : liens internes cassés, shortcodes non convertis (`[ninja_form]`, `[table]`, `[gallery]`…).
+- **Galeries** : les photos sont rapatriées dans `media/content/` sur le serveur et regroupées en albums.
+- **Articles non repris** : **redirection 301 vers `/news`**. Le dump WordPress complet (base + `wp-content/uploads`) est archivé.
 - **Redirections** : table `/?p=123` et permaliens WordPress → nouvelles URL `/news/{slug}`.
 
 ---
@@ -254,7 +262,7 @@ Les anciennes URL (`kp*.php?Compet=N1&Saison=2026&Group=N&J=…&lang=en`) sont r
 - **Factoriser** en services (`src/Service/...`) la logique aujourd'hui dans les contrôleurs admin (classements, stats, clubs, compétitions), appelés des deux côtés, sans copier-coller.
 - Ne renvoyer que le **publié** (`Publication = 'O'` sur compétition, journée, match), comme `/game-sheet`.
 - En-têtes `Cache-Control` et `ETag` ; limitation de débit sur `/search` et sur l'envoi de formulaires.
-- **Données personnelles** : exactement les mêmes champs qu'aujourd'hui (nom, prénom, numéro, club), rien de plus. **Évaluation RGPD à mener** (§ 10) avant la mise en production.
+- **Données personnelles** : exactement les mêmes champs qu'aujourd'hui (nom, prénom, numéro, catégorie, équipe, club ou nation), rien de plus, via des DTO publics dédiés (§ 11). L'évaluation RGPD complète est un chantier ultérieur.
 - Symfony reste en **7.4 LTS** : aucun nouveau bundle ne doit tirer Symfony 8.
 
 ### 7.2 Endpoints à créer
@@ -285,49 +293,82 @@ Côté admin (app4) : CRUD `/admin/news`, `/admin/pages`, `/admin/menu`, `/admin
 
 ### 8.1 Constat
 
-`sources/img/` contient **1 450 fichiers versionnés (≈ 113 Mo)**, dont une majorité de contenus **uploadés** qui n'ont rien à faire dans Git :
+Sur le serveur de production, `sources/img/` pèse **≈ 437 Mo**. Seule une partie est versionnée : **1 450 fichiers, ≈ 113 Mo**. Le reste est déjà ignoré par Git (`KIP/players`, `KIP/teams/`, `boats`, `vests`, `helmets`…), mais vit **dans l'arborescence du dépôt**, sans sauvegarde dédiée.
 
-| Dossier | Fichiers | Taille | Nature | Cible |
+Tous les dossiers ci-dessous sont **alimentés par des uploads** (confirmé) :
+
+| Dossier | Fichiers versionnés | Taille versionnée | Contenu | Cible |
 |---|---|---|---|---|
-| `img/KIP/` (logo, teams, colors…) | 345 | 71 Mo | Logos de clubs, photos d'équipes, couleurs — uploads | **Stockage médias** |
-| `img/logo/` | 674 | 26 Mo | Logos et bandeaux de compétitions — uploads via app4 | **Stockage médias** |
-| `img/presentations/` | 56 | 4,9 Mo | Visuels de présentation (écrans/TV) | À classer (Q-F) |
-| `img/schemas/` | 13 | 3,3 Mo | Schémas | À classer (Q-F) |
-| `img/Nations/` | 71 | 2,2 Mo | Logos d'équipes nationales | À classer (Q-F) |
-| `img/referees/` | 15 | 0,4 Mo | ? | À classer (Q-F) |
+| `img/KIP/` (logo, teams, colors, players…) | 345 | 71 Mo | Logos de clubs, photos d'équipes et de joueurs, couleurs | **Stockage médias** |
+| `img/logo/` | 674 | 26 Mo | Logos et bandeaux de compétitions | **Stockage médias** |
+| `img/presentations/` | 56 | 4,9 Mo | Visuels de présentation (écrans/TV) | **Stockage médias** |
+| `img/schemas/` | 13 | 3,3 Mo | Schémas | **Stockage médias** |
+| `img/Nations/` | 71 | 2,2 Mo | Logos d'équipes nationales | **Stockage médias** |
+| `img/referees/` | 15 | 0,4 Mo | Arbitres | **Stockage médias** |
 | `img/Pays/`, icônes `*.gif`/`*.png` à la racine, `calendar/`, `admin-choice/` | ~250 | < 1 Mo | Ressources de l'application | **Restent versionnés** |
 
-`.gitignore` exclut déjà une partie de `img/KIP/` (`players`, `boats`, `vests`, `helmets`, `teams/`), mais des fichiers ont été commités avant l'exclusion. À cela s'ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module éditorial.
+S'y ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module éditorial (articles, galeries, formulaires).
 
 ### 8.2 Cible
 
-- **Un seul stockage médias non versionné** sur l'hôte, configuré par une variable `HOST_MEDIA_PATH` dans `docker/.env` (même principe que `HOST_WORDPRESS_PATH`), par exemple :
+- **Un seul stockage médias, hors de l'arborescence du dépôt**, désigné par une variable `HOST_MEDIA_PATH` dans `docker/.env` (même principe que `HOST_WORDPRESS_PATH`) :
   ```
-  media/
-  ├── clubs/        (ex img/KIP/logo, colors)
-  ├── teams/        (ex img/KIP/teams)
-  ├── competitions/ (ex img/logo)
-  ├── players/      (ex img/KIP/players — déjà hors Git)
-  ├── content/      (articles, pages, galeries — ex wp-content/uploads)
-  └── forms/        (pièces jointes éventuelles des inscriptions)
+  ${HOST_MEDIA_PATH}/
+  ├── competitions/   (ex img/logo)
+  ├── clubs/          (ex img/KIP/logo, KIP/colors)
+  ├── teams/          (ex img/KIP/teams)
+  ├── players/        (ex img/KIP/players)
+  ├── nations/        (ex img/Nations)
+  ├── presentations/  (ex img/presentations)
+  ├── schemas/        (ex img/schemas)
+  ├── referees/       (ex img/referees)
+  ├── content/        (articles, pages, galeries — dont ex wp-content/uploads)
+  └── forms/          (pièces jointes éventuelles des inscriptions)
   ```
-- **URL existantes préservées** : on monte les sous-dossiers aux anciens emplacements (`/var/www/html/img/logo`, `/var/www/html/img/KIP/...`) dans les conteneurs **Apache (`kpi`), `api2` et `event-cache-worker`**, pour les 3 environnements. Le legacy, api2 (qui écrit dans ces dossiers et référence `img/logo/`, `img/KIP/logo/`) et les PDF continuent de fonctionner sans modification. Les nouveaux médias sont servis sous `/media/...`.
-- **Git** : `git rm --cached` des dossiers concernés + règles `.gitignore`, **après** copie sur chaque serveur (dev, préprod, prod), sinon le `git pull` suivant supprimerait les fichiers. Réécrire l'historique (`git filter-repo`) pour récupérer les 113 Mo n'est **pas recommandé** : cela casse les clones et les branches en cours.
-- **Dev** : cible `make media_sync_from_prod` (ou archive de référence) pour disposer des images en local.
+  Les noms exacts de sous-dossiers seront fixés à l'inventaire des sous-dossiers de `KIP/` (phase 0b).
+- **URL et chemins existants préservés** : chaque sous-dossier est **monté à son ancien emplacement** (`/var/www/html/img/logo`, `/var/www/html/img/KIP/teams`…) dans les conteneurs **Apache (`kpi`), `api2` et `event-cache-worker`**, pour les 3 environnements. Le legacy, api2 (qui lit et écrit dans ces dossiers : `img/logo/`, `img/KIP/logo/`, `img/KIP/teams/`) et les PDF fonctionnent sans modification de code. Les nouveaux médias sont servis sous `/media/...`.
+- **Pourquoi hors du dépôt** : tant que les fichiers vivent dans le dépôt, une opération Git (`pull`, `checkout` d'une autre branche, `clean`) peut les créer, les écraser ou les supprimer. Hors du dépôt, Git ne peut plus les toucher (§ 8.4).
+- **Dev** : cible `make media_sync_from_prod` (rsync de la prod, ou archive de référence), et image par défaut quand un logo manque.
 
 ### 8.3 Sauvegarde dédiée des médias
 
-| Élément | Proposition |
+| Élément | Décision |
 |---|---|
-| Outil | **restic** (chiffré, dédupliqué, incrémental), conteneur ou cron hôte |
+| Outil | **restic** (chiffré, dédupliqué, incrémental), lancé par cron sur l'hôte |
 | Périmètre | `HOST_MEDIA_PATH` complet (et, pendant la transition, `docker/wordpress/wp-content/uploads`) |
-| Destination | **Hors du VPS** : stockage objet S3-compatible ou serveur distant (Q-E) |
+| Destination | **Sur le VPS lui-même** pour l'instant : dépôt restic dans un répertoire dédié (`/srv/backups/kpi-media`), distinct de `HOST_MEDIA_PATH` et des dossiers Docker |
 | Fréquence / rétention | Quotidienne ; 7 quotidiennes, 4 hebdomadaires, 12 mensuelles |
 | Cohérence | Exécutée juste après le dump SQL quotidien, pour que base et médias restent cohérents à la restauration |
-| Cibles Makefile | `media_backup`, `media_restore snapshot=…`, `media_backup_check`, `media_sync_prod_to_preprod` |
-| Vérification | Test de restauration trimestriel documenté dans `DEPLOYMENT_RUNBOOK.md` ; alerte en cas d'échec (mail) |
+| Cibles Makefile | `media_backup`, `media_restore snapshot=…`, `media_backup_list`, `media_backup_check`, `media_sync_prod_to_preprod` |
+| Vérification | Test de restauration documenté dans `DEPLOYMENT_RUNBOOK.md` ; e-mail en cas d'échec |
 
-Ce chantier est **indépendant** du site et profite déjà à l'admin : il peut démarrer immédiatement (phase 0).
+> ⚠️ Une sauvegarde sur le même VPS protège contre les **erreurs** (suppression, écrasement, mauvaise manipulation), **pas contre la perte du serveur**. L'externalisation est un chantier ultérieur, déjà décidé. Avec restic, elle se limitera à déclarer un second dépôt distant et à y lancer `restic copy`. Aucune refonte ne sera nécessaire.
+
+Ce chantier est **indépendant** du site et profite déjà à l'admin : il peut démarrer immédiatement (phase 0b).
+
+### 8.4 Faut-il réécrire l'historique Git ? — Non
+
+**La sortie des médias ne nécessite pas de réécrire l'historique.** C'est un commit ordinaire (`git rm -r --cached` + règles `.gitignore`) : les fichiers ne sont plus suivis à partir de ce commit, mais restent dans les commits passés. Les SHA existants ne changent pas, et les branches en cours restent valides.
+
+**Ce que coûte le fait de ne pas réécrire** : le dossier `.git` garde son poids (≈ 274 Mo aujourd'hui, dont ≈ 113 Mo d'images). C'est acceptable : on ne clone le dépôt que rarement, et un clone partiel (`--filter=blob:none`) contourne le problème si besoin.
+
+**Impacts réels du commit de suppression, et parades** :
+
+| Situation | Effet | Parade |
+|---|---|---|
+| `git pull` du commit sur un serveur (dev, préprod, prod) | Git **supprime du disque** les fichiers qui étaient suivis | **Copier d'abord** les dossiers vers `HOST_MEDIA_PATH` et activer les montages, **puis** tirer le commit. Procédure pas à pas dans le runbook, environnement par environnement. |
+| `checkout` sur un serveur d'une branche antérieure au commit (ex. préprod expérimentale) | Git **recrée** les anciens fichiers dans `sources/img/…` | Sans effet : le conteneur voit le montage `HOST_MEDIA_PATH`, qui masque le dossier du dépôt. Les fichiers disparaissent à nouveau au retour sur une branche récente. |
+| Branche en cours qui **ajoute ou modifie** une image de ces dossiers | Conflit *modify/delete* au merge | Garder la suppression, déposer l'image dans le stockage médias. **Au 28/09/2026, aucune des 11 branches distantes ne touche `sources/img/`.** |
+| Branche en cours qui ne touche pas ces dossiers | Aucun : la suppression arrive au prochain merge de `main` | — |
+| Nouveau clone de dev | Pas d'images | `make media_sync_from_prod` ou image par défaut |
+
+**Réécriture de l'historique (`git filter-repo`) : déconseillée.** Le seul gain serait de récupérer ≈ 113 Mo dans `.git`. En contrepartie :
+- tous les SHA changent ;
+- chaque branche, worktree et PR ouverte doit être recréée ou rebasée, et chaque serveur recloné ;
+- les liens vers des commits (issues, PR, documentation) sont cassés ;
+- les forks et clones existants divergent.
+
+Si elle devenait un jour souhaitable, il faudrait la faire à un moment sans aucune branche ouverte, en chantier séparé.
 
 ---
 
@@ -374,31 +415,82 @@ Légende api2 : ✅ existe · 🟡 logique présente côté admin, à exposer ·
 
 ---
 
-## 10. RGPD — points à évaluer
+## 10. Identité visuelle — charte FFCK, univers Compétition
 
-Évaluation à mener avant l'ouverture de beta au public (pas seulement à la bascule) :
+Source : *FFCK – Charte graphique Rebranding v2* (avril 2021, Studio Ellair), pages « Univers FFCK », « Typographie », « Interdits » et « Univers Compétition ». Le site suit l'**univers Compétition**. Le bleu marine institutionnel ne sert qu'aux zones qui portent le logo FFCK.
 
-- **Résultats et compositions** (nom, prénom, club, numéro, buts, cartons) : base légale (intérêt légitime / mission de la fédération), information des licenciés, **procédure d'opposition** et moyen technique de masquer un athlète (flag en base respecté par tous les endpoints publics et par le legacy).
-- **Formulaires d'inscription** : minimisation des champs, mention d'information, durée de conservation et purge, accès restreint aux organisateurs, journal des e-mails.
-- **Mesure d'audience** : Matomo configuré sans cookie ou avec consentement.
-- **Recherche globale** : n'indexe pas les personnes (cohérent avec l'exclusion des pages joueur).
-- **Registre des traitements** à compléter avec le référent RGPD de la FFCK (Q-G).
+### 10.1 Palette et usage (valeurs RVB = supports numériques)
+
+| Rôle | Couleur | Contraste sur blanc | Contraste sur `#1e1e1c` | Usage proposé |
+|---|---|---|---|---|
+| **Primaire** | `#357b9c` bleu compétition foncé | 4,70 ✅ AA | 3,55 | Liens, boutons, onglets actifs, titres de section (mode clair) |
+| **Primaire clair** | `#69b9e6` bleu compétition | 2,17 ❌ texte | 7,70 ✅ | Bandeaux, aplats, survols, fonds d'en-tête ; **jamais du texte sur blanc** ; primaire en mode sombre |
+| **Accent** | `#c94a4c` rouge | 4,60 ✅ AA | 3,63 | « En cours / live », alertes, appels à l'action |
+| **Accent foncé** | `#882831` rouge foncé | 8,77 ✅ | 1,90 | Survol des accents, texte d'alerte |
+| **Texte** | `#1e1e1c` noir | 16,7 ✅ | — | Texte courant ; fond du mode sombre |
+| **Neutre** | `#c6c7c7` gris | 1,69 | 9,86 ✅ | Bordures, séparateurs, états désactivés |
+| **Or** (secondaire) | `#e9b410` / `#9a7208` | 1,91 / 4,39 | 8,75 / 3,80 | Médaille d'or, 1<sup>re</sup> place (aplat ; texte en `#9a7208` ou noir) |
+| **Vert** (secondaire) | `#209452` / `#186a32` | 3,88 / 6,67 ✅ | 4,31 / 2,50 | Victoire, qualifié, formulaire ouvert |
+| **Marine FFCK** (univers institutionnel) | `#20265b` | 14,1 ✅ | 1,18 | Pied de page et bandeau institutionnel portant le logo FFCK |
+
+- Les **gammes Tailwind 50→950** (`--color-kpi-primary-*`, `--color-kpi-accent-*`…) sont générées à partir de ces ancres dans `kpi-layer` et exposées à Nuxt UI (`app.config.ts` → `ui.colors.primary = 'kpi-primary'`, etc.).
+- La palette n'a **pas de bronze** : on conserve le bronze actuel des classements (`img/BRONZE.png`) ou on le fait valider par la FFCK (Q-H).
+- **Mode sombre** : fond `#1e1e1c`, primaire `#69b9e6`, accent `#c94a4c` réservé aux aplats (contraste 3,6 : insuffisant pour du petit texte).
+- **app2 et app4** reçoivent la même palette par le layer ; app4 peut garder une densité « outil » tout en partageant les couleurs.
+
+### 10.2 Typographie
+
+| Usage | Police de la charte | Web |
+|---|---|---|
+| Titres, sous-titres, chiffres forts (scores, rangs) | **Agency FB** (Thin, Light, Regular, Bold) | ⚠️ Police commerciale (Monotype/Microsoft) : son usage web exige une **licence webfont** (Q-I). Sans licence, substitut libre proche, auto-hébergé : **Saira Condensed** ou **Barlow Condensed** (OFL). |
+| Texte courant | **Raleway** (Thin → Black, italiques) | Libre (OFL), **auto-hébergée** dans `kpi-layer` (pas d'appel à Google Fonts, cohérent avec l'approche RGPD) |
+
+Les chiffres de score et de classement utilisent des **chiffres tabulaires** (`font-variant-numeric: tabular-nums`) pour l'alignement.
+
+### 10.3 Logo et pictogrammes
+
+- **Logo FFCK** : jamais modifié (pas de contour, d'ombre, de déformation, de recoloration). Logo couleur sur fond clair, blanc sur fond foncé. Choisir la **version responsive** adaptée à la taille (≥ 100 px, 100–50 px, 50–25 px, < 25 px) et respecter la **zone de respiration**. Il faut les fichiers vectoriels officiels (Q-H).
+- **Marque « kayak-polo.info »** : sa place à côté du logo FFCK (co-marquage, déclinaison dans l'univers Compétition) est à valider avec la FFCK (Q-H).
+- **Pictogrammes** : la charte fournit un pictogramme **Kayak-Polo** et une série de pictogrammes web de style amérindien (Partager, Rechercher, Lieu, Temps, Statistiques, Photos, Retour, Paramètres…). Intégrés en SVG comme **collection d'icônes personnalisée** Nuxt Icon (`kpi:share`, `kpi:search`…), complétés par Heroicons pour le reste.
+- La possibilité de **déformer Agency FB** (texte incurvé) est réservée aux visuels éditoriaux (images d'articles), pas à l'interface.
 
 ---
 
-## 11. Phasage
+## 11. Données personnelles
+
+L'évaluation RGPD complète est un **chantier distinct, ultérieur**. Le principe applicable dès maintenant est la **limitation des données exposées**. Les seules données personnelles publiées (pages, API publiques, flux, exports ICS, recherche) sont :
+
+| Donnée | Publiée |
+|---|---|
+| Nom, prénom de l'athlète | ✅ |
+| Numéro de joueur | ✅ |
+| Catégorie (âge) | ✅ si pertinente pour la compétition |
+| Équipe, club ou nation | ✅ |
+| Statistiques de match (buts, cartons) rattachées à ces données | ✅ comme aujourd'hui |
+| Date de naissance, n° de licence, sexe hors libellé de catégorie, photo individuelle, coordonnées | ❌ |
+
+Règles de mise en œuvre :
+- **DTO publics dédiés** dans api2 : les endpoints publics ne sérialisent jamais une entité complète. Un **test automatisé** vérifie la liste des champs exposés.
+- **Pas de page joueur** ; la **recherche globale n'indexe pas les personnes**.
+- Formulaires : minimisation des champs, mention d'information, purge après l'événement. Pour les inscriptions payantes, les données de paiement restent chez **HelloAsso**.
+- Matomo en mode sans cookie ; polices et icônes auto-hébergées (aucun appel à un tiers).
+- Le chantier RGPD ultérieur couvrira : registre des traitements, base légale, procédure d'opposition (masquage d'un athlète), durées de conservation.
+
+---
+
+## 12. Phasage
 
 | Phase | Contenu | Livrable | Charge indicative |
 |---|---|---|---|
 | **0a. Nettoyage app3** | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | 1–2 j |
 | **0b. Médias** | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) | Médias hors Git et sauvegardés | 1 sem. |
-| **0c. Cadrage** | Charte FFCK → design tokens, maquettes (accueil, compétition, club, article, formulaire), table de redirections, liste des articles repris | Maquettes validées | 1–2 sem. |
+| **0c. Cadrage** | Jetons de la charte FFCK univers Compétition (§ 10), polices, pictogrammes SVG, maquettes (accueil, compétition, club, article, formulaire), table de redirections, validation des pages reprises | Maquettes validées | 1–2 sem. |
 | **1. Socle** | `kpi-layer` (thème, client api2, types), squelette app3 SSR (layout, menu, i18n, SEO), conteneur `site_app3` dans les 3 compose, cibles Makefile, CI, déploiement sur **beta.kayak-polo.info** | Site vide navigable en beta | 2 sem. |
 | **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |
 | **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | 3–4 sem. |
 | **4a. Éditorial** | Articles, pages, menu, médias, galeries, SEO, partage, blocs d'accueil, droit Rédacteur, RSS ; import des ~50 articles et des pages | CMS opérationnel, contenu repris | 3–4 sem. |
-| **4b. Formulaires** | Constructeur, inscriptions, notifications, journal des e-mails, export, liste publique, anti-spam | Remplacement de Ninja Forms / TablePress | 2 sem. |
-| **5. Bascule** | Évaluation RGPD bouclée, inversion du routage Traefik, redirections 301/410 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |
+| **4b. Formulaires** | Constructeur, inscriptions, notifications, journal des e-mails, export, liste publique, anti-spam, mode HelloAsso (widget/lien + import CSV) | Remplacement de Ninja Forms / TablePress | 2 sem. |
+| **5. Bascule** | Vérification des champs exposés (§ 11), inversion du routage Traefik, redirections 301 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |
 | **6. Décommissionnement** | WordPress en lecture seule puis arrêt (`dbwp`), suppression des `kp*.php`, `json-*.php`, templates et CSS « material » | Legacy public retiré | 1 sem. |
 | **7. Écrans / embeds** | `/embed/...` + thèmes, redirection des `frame_*.php` | Fin de la dépendance Apache pour l'affichage | 2–3 sem. |
 
@@ -410,9 +502,9 @@ Légende api2 : ✅ existe · 🟡 logique présente côté admin, à exposer ·
 
 ---
 
-## 12. Questions restantes
+## 13. Questions restantes
 
-### Décisions déjà prises (28/09/2026)
+### Décisions prises
 
 | # | Décision |
 |---|---|
@@ -425,27 +517,24 @@ Légende api2 : ✅ existe · 🟡 logique présente côté admin, à exposer ·
 | Q7 | **kpi-layer** accepté |
 | Q8 | app2 reste séparée ; son authentification disparaît (scrutineering → app4) ; réévaluation après bascule |
 | Q9 | Écrans et iframes tiers : legacy, puis phase 7 |
-| Q10 | Identité **modernisée**, partiellement alignée sur app2/app4, **conforme à la charte FFCK** |
+| Q10 | Identité **modernisée**, partiellement alignée sur app2/app4, **charte FFCK univers Compétition** (§ 10) |
 | Q11 | Recherche globale et ICS par compétition **inclus** ; pages joueur **exclues** |
-| Q12 | Mêmes données qu'aujourd'hui ; **conformité RGPD à évaluer** |
-| — | Brique distincte, nommée **app3** (ancien app3 supprimé) ; **URL en anglais** ; **médias hors Git + sauvegarde** ; live dans le chantier scoring |
+| Q12 | Données exposées limitées (§ 11) ; évaluation RGPD = chantier ultérieur |
+| Q-A | Inscriptions parfois payantes → **HelloAsso** pour le paiement (§ 5.3) |
+| Q-B | Galeries **stockées sur le serveur** ; `sources/img/` pèse ≈ 437 Mo en prod |
+| Q-C | Reprise des **50 articles publiés les plus récents** ; les autres → **301 vers `/news`** |
+| Q-D | Charte FFCK Rebranding v2, **univers Compétition** |
+| Q-E | Sauvegardes **sur le VPS** pour l'instant ; externalisation = chantier ultérieur |
+| Q-F | `presentations/`, `schemas/`, `Nations/`, `referees/` = **uploads** → stockage médias |
+| Q-G | RGPD : chantier distinct ultérieur ; principe de limitation appliqué dès maintenant |
+| — | Brique distincte **app3** (ancien app3 supprimé) ; **URL en anglais** ; **pas de réécriture de l'historique Git** (§ 8.4) ; live dans le chantier scoring |
 
-### Nouvelles questions
+### Derniers points (non bloquants pour démarrer les phases 0a / 0b)
 
-- **Q-A — Formulaires d'inscription** : les inscriptions actuelles comportent-elles un **paiement** ? Combien de formulaires par saison, avec quels champs typiques ? La liste publique des inscrits (TablePress) est-elle remplie automatiquement ou à la main ?
-  *Hypothèse : pas de paiement en ligne (sinon lien vers HelloAsso) ; quelques formulaires par saison ; la liste publique est générée à partir des inscriptions.*
-- **Q-B — Galerie photo** : volume attendu et hébergement ? Photos stockées sur le serveur, ou liens vers un service externe (Flickr, Google Photos…) ?
-  *Hypothèse : galeries modestes (quelques dizaines de photos par article), stockées localement et redimensionnées.*
-- **Q-C — Sélection des ~50 articles** : critère (date, liste choisie par les rédacteurs) ? Pour les articles non repris : **410** (supprimé) ou redirection vers `/news` ?
-  *Hypothèse : liste fournie par les rédacteurs ; 410 + archive WordPress conservée hors ligne.*
-- **Q-D — Charte FFCK** : disposez-vous des éléments officiels (logos vectoriels, palette, typographies, règles d'usage avec la marque « kayak-polo.info ») ?
-  *Hypothèse : à demander à la FFCK en phase 0c.*
-- **Q-E — Destination des sauvegardes médias** : stockage objet (OVH, Scaleway, Backblaze…), autre serveur, NAS ? Un budget de quelques euros par mois est-il acceptable ?
-  *Hypothèse : stockage objet S3-compatible, < 5 €/mois pour ~ 1 Go.*
-- **Q-F — Classement des dossiers d'images** : `presentations/`, `schemas/`, `Nations/`, `referees/` sont-ils alimentés par des uploads (→ stockage médias) ou font-ils partie de l'application (→ restent versionnés) ?
-  *Hypothèse : `Nations/` et `presentations/` sont des uploads ; `schemas/` et `referees/` font partie de l'application.*
-- **Q-G — RGPD** : y a-t-il un référent RGPD / DPO à la FFCK à associer, et une procédure d'opposition existe-t-elle déjà ?
-  *Hypothèse : à contacter en phase 0c ; flag « non diffusé » à créer.*
+- **Q-H — Fichiers de marque** : pouvez-vous obtenir auprès de la FFCK les **logos vectoriels** (versions responsive), les **pictogrammes SVG** (dont Kayak-Polo et la série web), et une règle de co-marquage FFCK / « kayak-polo.info » ? Une couleur « bronze » validée pour les classements ?
+  *Hypothèse : fichiers demandés en phase 0c ; bronze actuel conservé.*
+- **Q-I — Agency FB** : la FFCK dispose-t-elle d'une **licence webfont** Agency FB utilisable par kayak-polo.info ? Sinon, validez-vous un substitut libre (Saira Condensed ou Barlow Condensed) ?
+  *Hypothèse : pas de licence web → Saira Condensed, à valider sur maquette.*
 
 ---
 
