@@ -75,7 +75,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[MASKED_INPUT_MIGRATION_STATUS.md](developer/in-progress/status/MASKED_INPUT_MIGRATION_STATUS.md)** - ⏳ Migration masked input
 
 #### [Plans d'action](developer/in-progress/plans/)
-- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Stratégie de refonte de la partie publique (WordPress + kp*.php → Nuxt SSR + api2)
+- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Stratégie de refonte de la partie publique (WordPress + kp*.php → app3 Nuxt SSR + api2, médias hors Git)
 - **[JQUERY_ELIMINATION_STRATEGY.md](developer/in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md)** - Stratégie élimination jQuery
 - **[JS_LIBRARIES_CLEANUP_PLAN.md](developer/in-progress/plans/JS_LIBRARIES_CLEANUP_PLAN.md)** - Plan nettoyage bibliothèques JS
 - **[PLAN_MIGRATION_BOOTSTRAP.md](developer/in-progress/plans/PLAN_MIGRATION_BOOTSTRAP.md)** - Plan migration Bootstrap
