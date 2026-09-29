@@ -10,7 +10,8 @@ import type { ShotclockState } from '~/utils/scoringRules'
  * into the scoring workstation stay in sync even without Internet. Remote screens and
  * video overlays do NOT use this channel — they consume Mercure (plan §3.3).
  *
- * Port of app3/composables/useBroadcast.ts on the new model: the channel name
+ * Port of the former app3 prototype's composables/useBroadcast.ts (git tag
+ * archive/app3-matchsheet) on the new model: the channel name
  * ('kpi_channel') and the message contract (timer / timer_status / shotclock / period /
  * teams / scores / penA / penB) are kept so the legacy scoreboard.php markup could still
  * be plugged during the transition. Additions: `matchId` on every message (a workstation

@@ -256,7 +256,8 @@ Côté **écriture manuelle**, la cible est **une seule interface** : la console
 
 - la **FeuilleMarque V2** (`sources/admin/FeuilleMarque2.php`) ;
 - la **FeuilleMarque V3** (`sources/admin/FeuilleMarque3.php` + `sources/live/v2/*.php`) ;
-- le **prototype app3** (`sources/app3/`, jamais allé en production).
+- le **prototype app3** (`sources/app3/`, jamais allé en production) — **supprimé depuis** ; code
+  conservé au tag Git `archive/app3-matchsheet` (voir « Le cas `app3` » plus bas).
 
 Ses caractéristiques structurantes (toutes actées, détail dans la spec) :
 
@@ -919,7 +920,7 @@ réclamation sans papier ; les délais sont respectés côté serveur ; tout est
 | L'app d'incrustation Vue | `sources/app_live_dev/` | la page unique la remplace aussi |
 | Le broker WebSocket personnel | dépôt `laurentgarrigue/broker` | plus personne ne s'y abonne (Mercure a pris le relais) |
 | Les FeuilleMarque V2 et V3 | `sources/admin/FeuilleMarque2.php`, `FeuilleMarque3.php`, `sources/live/v2/*.php` | la console Scoring d'app4 les remplace (lot 3 validé) |
-| Le prototype de feuille de marque Nuxt | `sources/app3/` | idem — même remplaçant (voir ci-dessous) |
+| Le prototype de feuille de marque Nuxt | ~~`sources/app3/`~~ | **Fait (28/09/2026)** — supprimé, code au tag `archive/app3-matchsheet` (voir ci-dessous) |
 | Les endpoints de relais | `sources/api/` → `/api/wsm/*` | l'onglet WSM disparaît (lot 5) |
 | L'app WSM | `sources/app_wsm_dev/` | idem |
 
@@ -932,15 +933,24 @@ réclamation sans papier ; les délais sont respectés côté serveur ; tout est
 > Scoring d'app4**, pas la page d'incrustation unique. Son sort dépend donc de l'avancement du
 > **lot 3**, pas du lot 4.
 >
-> **On le garde tant que le port n'est pas fini** : c'est le seul endroit où `useTimer.ts`,
-> `useBroadcast.ts` et `useWebSocket.ts` tournent réellement, et PAGE_SCORING.md les désigne
-> explicitement comme sources du port vers app4. Il sert de **référence de comportement** pendant
-> l'implémentation de la console.
+> ~~**On le garde tant que le port n'est pas fini**~~ : il était le seul endroit où `useTimer.ts`,
+> `useBroadcast.ts` et `useWebSocket.ts` tournaient réellement, et PAGE_SCORING.md les désignait
+> comme sources du port vers app4.
 >
-> **Quand il peut mourir** : la console Scoring couvre chrono + shotclock + faits de jeu, et le port
-> des composables est validé. Le ménage comprend alors `sources/app3/`, le service `node_app3`
-> de `docker/compose.dev.yaml`, la variable `APP3_DOMAIN_NAME`, les cibles `make app3_*` et les
-> entrées `app3` de `.github/workflows/ci.yml`.
+> **Supprimé le 28/09/2026, avant la fin du lot 3**, par le chantier refonte du site public, qui a
+> besoin du nom `sources/app3/` (cf. `PUBLIC_SITE_REDESIGN_STRATEGY.md`). Ce qui justifiait de le
+> garder ne tient plus :
+> - **la référence de comportement reste disponible** au tag Git **`archive/app3-matchsheet`**
+>   (`git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`, idem pour
+>   `useTimer.ts`, `useWebSocket.ts`, `stores/matchStore.ts`) ;
+> - `useTimer.ts` est porté (et réécrit en horodatage, cf. PAGE_SCORING.md §6.4) ;
+> - `useBroadcast.ts` est porté en `useScoringBroadcast.ts` (contrat `kpi_channel` conservé) ;
+> - `useWebSocket.ts` n'a **pas** à être porté : la diffusion distante passe par Mercure (§0.3 de
+>   la spec).
+>
+> Le ménage a couvert `sources/app3/`, le service `node_app3` de `docker/compose.dev.yaml`, la
+> variable `APP3_DOMAIN_NAME`, les cibles `make app3_*` et les entrées `app3` de
+> `.github/workflows/ci.yml`.
 
 ### Le garde-fou
 

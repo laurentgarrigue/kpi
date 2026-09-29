@@ -8,7 +8,11 @@
 > réglementaire pénalités du 2026-07-29 en §0.10**.
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
->            (legacy jQuery) et le prototype standalone `sources/app3`
+>            (legacy jQuery) et l'ancien prototype standalone app3 (feuille de marque Nuxt)
+> Ancien app3 : **supprimé du dépôt** (chantier refonte du site public, le nom `sources/app3/`
+>            est désormais réservé au futur site public). Son code, cité ci-dessous comme source
+>            du portage, reste consultable au tag Git **`archive/app3-matchsheet`** :
+>            `git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`
 > Conserve : `sources/admin/FeuilleMatchMulti.php` (= **PDF de contrôle**, document papier)
 
 ---
@@ -408,7 +412,7 @@ KPI est de **tendre vers le zéro papier** :
 | Usages | Direct **et** post-match (saisie/correction + validation/verrouillage par profil). |
 | Captation matériel | Mode **Hardware Scoring** (panneau propriétaire via relais), **source de plus** écrivant le même `scoring_live_*` (cf. §0.2). Branché en Phase 3. |
 | Monétisation | À explorer plus tard. **Aucun Stripe/paywall maintenant.** Exigence unique : isolation **par mandat/organisation côté serveur** + gating par rôle via un composable unique. |
-| Langues | **fr/en** uniquement (alignement app4). Le **cn** (présent dans app3) = chantier de suivi séparé sur toute app4. |
+| Langues | **fr/en** uniquement (alignement app4). Le **cn** (présent dans l'ancien app3) = chantier de suivi séparé sur toute app4. |
 | Serveur temps réel | **Mercure** (cf. §0.3). ~~broker interne résolu par `event{idEvent}_network.json`~~ = mécanisme legacy décrit au §6.5, remplacé par Mercure dans la cible. |
 
 ## 4. Point de sécurité (vérifié)
@@ -434,9 +438,9 @@ app4 (Nuxt 4 SPA, origine /admin2)
  │    ├─ ScoringTeamRoster.vue · ScoringTimer.vue · ScoringShotclock.vue
  │    ├─ ScoringPenalties.vue · ScoringEventButtons.vue · ScoringEventHistory.vue
  │    └─ ScoringScore.vue · ScoringStatusBadge.vue · ScoringPeriodSelector.vue · …
- ├─ stores/scoringStore.ts            ← état du match (port app3 → api2)
+ ├─ stores/scoringStore.ts            ← état du match (port de l'ancien app3 → api2)
  ├─ composables/useScoringPermissions.ts
- ├─ composables/useTimer.ts | useBroadcast.ts | useWebSocket.ts (port app3)
+ ├─ composables/useTimer.ts | useScoringBroadcast.ts (port de l'ancien app3 ; useWebSocket non porté → Mercure, §0.3)
  ├─ composables/useHardwareScoring.ts ← mode Hardware Scoring (Phase 3)
  └─ types/scoring.ts
 
@@ -480,7 +484,7 @@ Après validation définitive (hors périmètre de ce plan), les boutons V2/V3 e
 
 ### 6.2 État — `stores/scoringStore.ts`
 
-Port de `app3/stores/matchStore.ts`, en :
+Port de `sources/app3/stores/matchStore.ts` de l'ancien app3 (tag `archive/app3-matchsheet`), en :
 - **retirant** IndexedDB/dexie/uuid/toRaw/`saveMatchToLocal` (offline reporté) ;
 - **chargeant** le match via `GET /admin/games/{id}` (forme camelCase déjà fournie par
   `AdminGamesController::get`) et les joueurs via `GET /admin/matches/{id}/players?teamCode=A|B`
@@ -644,7 +648,7 @@ donc **retourner dans l'état**. C'est aussi le modèle de l'incrustation
 (`useInterpolatedClock`, cf. [PAGE_INCRUSTATION.md](PAGE_INCRUSTATION.md)).
 
 > **Pourquoi easytimer.js a été abandonné pour le chrono principal (2026-08-02).**
-> `useTimer` s'appuyait sur **easytimer.js** (hérité de app3/fm3). Or `startValues` n'accepte
+> `useTimer` s'appuyait sur **easytimer.js** (hérité de l'ancien app3 et de fm3). Or `startValues` n'accepte
 > que des **secondes entières**, et son tick **écrase** le restant précis par sa propre valeur
 > arrondie. Conséquence : un chrono arrêté à **09:06.5** repartait à **09:07.0**, et cette valeur
 > corrompue était **re-persistée** au prochain arrêt — les dixièmes étaient donc reperdus **à
@@ -714,7 +718,8 @@ porté par la compétition, en **hydratant `store.config`**).
 
 ### 6.5 Temps réel & captation matériel
 
-- **Diffusion locale (Phase 2)** : port de `app3/composables/useBroadcast.ts` (canal
+- **Diffusion locale (Phase 2)** : port de `sources/app3/composables/useBroadcast.ts` de l'ancien app3 (tag
+  `archive/app3-matchsheet`), devenu `useScoringBroadcast.ts` (canal
   `kpi_channel`, contrat `timer/timer_status/shotclock/period/teams/scores/penA/penB`).
   **BroadcastChannel est same-origin** → on **porte le markup** de `scoreboard.php` +
   `v2/scoreboard.js` en routes Nuxt (`scoreboard.vue`/`shotclock.vue`), ouvertes même origine
@@ -1260,7 +1265,7 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
 | Fichier | Action |
 |---|---|
 | `sources/app4/pages/games/[id]/scoring.vue` | **Créer** — console Scoring |
-| `sources/app4/stores/scoringStore.ts` | **Créer** — port app3 → api2 + useApi |
+| `sources/app4/stores/scoringStore.ts` | **Créer** — port de l'ancien app3 → api2 + useApi |
 | `sources/api2/src/Controller/WsmController.php` | **Renommer** en `ScoringController.php` + rôle/mandat (P1) ; cache TODO (P3) |
 | `sources/api2/config/packages/security.yaml` | **Modifier** — firewall + access_control `^/scoring` (`ROLE_SCORER`) |
 | `sources/app4/composables/useScoringPermissions.ts` | **Créer** — miroir usePresencePermissions |
@@ -1349,7 +1354,7 @@ Artefacts créés/modifiés dans `sources/app4` :
 | `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2/TB=180s. **Actions de chargement/mutation → Phase 1.** |
 | `composables/useScoringPermissions.ts` | **Créé.** Signature `(isLocked)`. **Accès gaté profil ≤ 2** via constante `SCORING_ACCESS_MAX_PROFILE = 2`. Retourne `canView`, `canScore`, `canManagePlayers`, `canValidate`, `canLock`. Cible post-validation documentée en commentaire (relever la constante + le contrôle serveur). |
 | `i18n/locales/fr.json`, `en.json` | **Modifiés.** Namespace `scoring.*` ajouté (title, link, hardware, status ATT/ON/END, period M1/M2/P1/P2/TB, event goal/cards, timer, scoreboard, locked). |
-| `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version qu'app3/fm3). ⚠️ **Obsolète depuis le 2026-08-02** : `useTimer` est passé en horodatage, la dépendance n'est plus utilisée par le Scoring (cf. §6.4). |
+| `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version que l'ancien app3 et fm3). ⚠️ **Obsolète depuis le 2026-08-02** : `useTimer` est passé en horodatage, la dépendance n'est plus utilisée par le Scoring (cf. §6.4). |
 
 **Note environnement** : le container `kpi_node_app4` avait un `node_modules` partiellement
 détenu par `root` (~7175 entrées, install antérieure en root) + 80 artefacts temporaires
