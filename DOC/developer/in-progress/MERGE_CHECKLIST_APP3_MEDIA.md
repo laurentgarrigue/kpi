@@ -13,7 +13,10 @@ procédure détaillée des médias dans [MEDIA_STORAGE.md](../infrastructure/MED
 
 ## Pourquoi l'ordre compte
 
-Le merge sur `develop` **déploie automatiquement la préprod**. Le déploiement (`git reset --hard`)
+Il n'y a plus de branche `develop` : tout passe par `main` (cf. [GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md)).
+Le merge de la PR sur `main` **déploie automatiquement la préprod**. Toute release taguée ensuite
+(`vX.Y.Z`) contiendra ce changement : la prod doit être préparée **avant** le premier
+« Deploy production » sur un tag postérieur au merge. Le déploiement (`git reset --hard`)
 **supprime du disque** les images qui étaient suivies par Git. Les fichiers jamais commités ne sont
 pas touchés. De plus, dès ce déploiement, `docker compose` **refuse de démarrer** si `HOST_MEDIA_PATH`
 est absent de `docker/.env`.
@@ -86,7 +89,7 @@ make media_status        # ✔ 6/6 pour les trois conteneurs
 
 ## Étape 1 — Préprod (`/data/kpi_preprod`)
 
-### 1.1 🖥 AVANT le merge sur `develop`
+### 1.1 🖥 AVANT le merge sur `main`
 
 ```bash
 cd /data/kpi_preprod
@@ -114,9 +117,13 @@ bash /tmp/media.sh init
 - [ ] `bash /tmp/media.sh init` affiche un nombre de fichiers non nul pour chaque dossier
 - [ ] Taille cohérente : `du -sh /data/media/kpi_preprod` ≈ `du -sh sources/img/{logo,KIP,Nations,presentations,schemas,referees}`
 
-### 1.2 🌐 Merger la PR sur `develop`
+### 1.2 ⌨️ Merger la PR sur `main`
 
-Le déploiement préprod est automatique.
+```bash
+make pr_checks && make pr_merge     # squash-merge sur main
+```
+
+Le push sur `main` déclenche « Deploy preprod » automatiquement.
 
 - [ ] Workflow de déploiement préprod vert
 
@@ -163,7 +170,7 @@ sudo setfacl -R -m u:deploy:rwX /data/media/kpi /data/backups/kpi
 sudo setfacl -R -d -m u:deploy:rwX /data/media/kpi /data/backups/kpi
 
 git fetch origin main
-git show origin/main:scripts/media/media.sh > /tmp/media.sh     # une fois la release mergée sur main
+git show origin/main:scripts/media/media.sh > /tmp/media.sh     # la PR est mergée sur main depuis l'étape 1.2
 bash /tmp/media.sh init
 ```
 
@@ -171,9 +178,16 @@ bash /tmp/media.sh init
 - [ ] `init` OK. En prod, le volume attendu est d'environ **437 Mo** au total pour `sources/img/`,
   dont la plus grande partie dans ces six dossiers.
 
-### 2.2 🌐 Déployer
+### 2.2 ⌨️ 🌐 Taguer puis déployer
 
-Actions → « Deploy production » → Run workflow depuis `main` → approuver.
+⌨️ Poser le tag de release sur `main` à jour (s'il n'existe pas déjà un tag postérieur au merge) :
+
+```bash
+git checkout main && git pull
+make release_tag version=X.Y.Z
+```
+
+🌐 Actions → « Deploy production » → Run workflow depuis `main`, input `ref` = `vX.Y.Z` → approuver.
 
 - [ ] Workflow vert
 
@@ -247,9 +261,9 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 | 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☐ |
 | 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☐ |
 | 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☐ |
-| 1.2 | 🌐 | Merge sur `develop` | ☐ |
+| 1.2 | ⌨️ | Merge de la PR sur `main` (→ préprod auto) | ☐ |
 | 1.3 | 🖥 | Préprod : `docker_preprod_up`, `media_status`, 1er backup, contrôles | ☐ |
 | 2.1 | 🖥 | Prod : variables, dossiers, `media.sh init` **avant déploiement** | ☐ |
-| 2.2 | 🌐 | Deploy production | ☐ |
+| 2.2 | ⌨️ 🌐 | `make release_tag` puis Deploy production sur le tag | ☐ |
 | 2.3 | 🖥 | Prod : `docker_prod_up`, `media_status`, 1er backup, contrôles | ☐ |
 | 2.4 | 🖥 | Cron de sauvegarde dans `vps-manager` + test de restauration | ☐ |

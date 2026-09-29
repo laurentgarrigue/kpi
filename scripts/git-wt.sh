@@ -27,7 +27,7 @@ set -euo pipefail
 MAIN_REPO="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 # Les worktrees vivent à côté du repo principal, dans un dossier frère.
 WT_ROOT="$(dirname "$MAIN_REPO")/$(basename "$MAIN_REPO")-worktrees"
-DEFAULT_BASE="develop"
+DEFAULT_BASE="main"
 
 # Fichiers non-versionnés à propager du repo principal vers chaque worktree.
 # Copie (pas lien) pour docker/.env : on peut vouloir l'ajuster par worktree.

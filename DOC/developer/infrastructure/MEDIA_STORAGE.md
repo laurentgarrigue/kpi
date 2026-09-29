@@ -72,9 +72,10 @@ La règle reste pourtant de **migrer avant de déployer**. En prod, des fichiers
 **remplacés sur place** par un upload (même nom). Seule leur version sur disque est à jour ;
 l'historique Git n'en a que l'ancienne.
 
-### 3.1 Préprod — AVANT de merger la PR sur `develop`
+### 3.1 Préprod — AVANT de merger la PR sur `main`
 
-Le merge sur `develop` déploie automatiquement la préprod. On prépare donc le terrain avant.
+Le merge sur `main` déploie automatiquement la préprod (il n'y a plus de branche `develop`, cf.
+[GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md)). On prépare donc le terrain avant.
 
 🖥 En tant que `laurent`, dans `/data/kpi_preprod` :
 
@@ -110,8 +111,9 @@ une page publique legacy avec logos, un PDF de classement (logo KPI).
 ### 3.2 Production — AVANT « Deploy production »
 
 Même procédure dans `/data/kpi`, avec `HOST_MEDIA_PATH=/data/media/kpi` et
-`MEDIA_BACKUP_REPO=/data/backups/kpi/media-restic`. Le `media.sh init` de l'étape 2 est lancé
-depuis `main` (ou la branche de release) **avant** de déclencher le workflow, puis
+`MEDIA_BACKUP_REPO=/data/backups/kpi/media-restic`. Le `media.sh init` de l'étape 2 est lu
+depuis `origin/main` et lancé **avant** le premier « Deploy production » sur un tag (`vX.Y.Z`)
+postérieur au merge, puis
 `make docker_prod_up`, `make api2_restart`, `make media_status`, `make media_backup`.
 
 ### 3.3 Poste de dev

@@ -3,7 +3,7 @@
  * Bandeau « préprod expérimentale » (Phase 7 du plan CI/CD).
  *
  * Affiché UNIQUEMENT quand une branche `feature/*` a été déployée en préprod à
- * la place de `develop` (voir `useExperimentalFlag`). Volontairement criard et
+ * la place de `main` (voir `useExperimentalFlag`). Volontairement criard et
  * non masquable : son but est qu'un testeur ne puisse pas prendre cet état
  * temporaire pour la préprod de référence.
  */

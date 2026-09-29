@@ -1190,16 +1190,16 @@ pr_checks: ## Suit la CI de la PR courante jusqu'au bout (approuve le run du com
 
 pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+	if [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_close depuis la branche de la PR jetable."; exit 1; \
 	fi; \
 	echo "Fermeture SANS merge de la PR de la branche '$$branch' + suppression de la branche..."; \
 	gh pr close --delete-branch || exit 1; \
-	echo "PR fermée. Pense à revenir sur develop : git checkout develop"
+	echo "PR fermée. Pense à revenir sur main : git checkout main && git pull"
 
 pr_merge: ## Merge la PR courante dans main (squash), bascule sur main à jour et nettoie la branche locale
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+	if [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
 	fi; \
 	main_repo=$$(git rev-parse --path-format=absolute --git-common-dir); \

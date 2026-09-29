@@ -113,7 +113,7 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # 2bis. Build Nuxt effectif (Phase 3) — app2 / app4.
-  #    Garantit que `develop` reste buildable : un .vue/.ts cassé, un import
+  #    Garantit que `main` reste buildable : un .vue/.ts cassé, un import
   #    manquant ou une erreur de config Nuxt fait échouer `nuxt build`.
   #    On utilise `build` (SSR/nitro) et NON `generate` : `generate` passe par
   #    `dotenv -e .env.production` (app2), absent en CI. `nuxt.config.ts` a

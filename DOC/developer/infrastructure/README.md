@@ -15,7 +15,7 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 - Déclencher un déploiement préprod / production / **expérimental** (branche feature + TTL)
 - Où regarder pour constater un problème (Actions, log du wrapper, `make api2_logs`)
 - Table des échecs courants et de leur correctif (timeout SSH, ACL, remote git, politique de branche)
-- Rollback du **code** : automatique, réparation de `develop`, procédure manuelle
+- Rollback du **code** : automatique, réparation de `main`, procédure manuelle
 - Rollback de la **base de données** prod depuis `pre-migration/`
 - Ce qui n'est PAS en place (notifications, uptime externe)
 
