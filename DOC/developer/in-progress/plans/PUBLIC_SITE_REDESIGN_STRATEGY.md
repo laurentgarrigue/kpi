@@ -111,9 +111,10 @@ L'ancien `sources/app3` (prototype de feuille de marque, gelé, hors CI et hors 
 
 ### 3.2 Procédure
 
-> ✅ **Réalisé le 28/09/2026** (commit « Chore: remove legacy app3 match-sheet prototype »). Deux points restent ouverts :
-> - le **tag `archive/app3-matchsheet`** n'a pas pu être publié depuis l'environnement de travail. À créer une fois : `git tag -a archive/app3-matchsheet cdb2081014 -m "Archive: former app3 match-sheet prototype" && git push origin archive/app3-matchsheet` (`cdb2081014` = dernier commit de `main` contenant l'ancien app3) ;
-> - `PAGE_SCORING.md` et `LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md` citent encore `sources/app3/...` comme source du portage. Ils n'ont **pas été modifiés** ici, car la branche `claude/scoring-refactoring-strategy-3d43ac` réécrit ces mêmes passages : c'est à elle de remplacer ces chemins par le tag (`git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`). Le composable `useTimer` est déjà porté dans app4 ; `useBroadcast` et `useWebSocket` ne le sont pas encore.
+> ✅ **Réalisé le 28/09/2026** (commit « Chore: remove legacy app3 match-sheet prototype »), et finalisé le 29/09/2026 :
+> - le **tag `archive/app3-matchsheet`** est publié ; il pointe sur `cdb2081014`, dernier commit de `main` contenant l'ancien app3 ;
+> - la branche `claude/scoring-refactoring-strategy-3d43ac` a mis à jour `PAGE_SCORING.md` et `LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md` pour citer ce tag (`git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`). Ces deux fichiers ne sont pas modifiés dans cette branche-ci, pour éviter les conflits.
+> - Côté portage : `useTimer` est porté (réécrit en horodatage), `useBroadcast` est porté en `useScoringBroadcast` (contrat `kpi_channel` conservé). `useWebSocket` n'a pas à être porté : la diffusion distante passe par Mercure.
 
 1. Coordination avec le chantier scoring : tag d'archive posé sur le dernier commit contenant l'ancien app3, référencé par les docs de portage.
 2. Supprimer `sources/app3/`, le service `node_app3`, les cibles Makefile, `APP3_DOMAIN_NAME`, les exclusions CI/Dependabot/CodeQL, et nettoyer la documentation.
@@ -479,7 +480,7 @@ Règles de mise en œuvre :
 
 | Phase | Contenu | Livrable | Charge indicative |
 |---|---|---|---|
-| **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag à publier) |
+| **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié) |
 | **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait côté dépôt ; **migration serveur à exécuter** |
 | **0c. Cadrage** | Jetons de la charte FFCK univers Compétition (§ 10), polices, pictogrammes SVG, maquettes (accueil, compétition, club, article, formulaire), table de redirections, validation des pages reprises | Maquettes validées | 1–2 sem. |
 | **1. Socle** | `kpi-layer` (thème, client api2, types), squelette app3 SSR (layout, menu, i18n, SEO), conteneur `site_app3` dans les 3 compose, cibles Makefile, CI, déploiement sur **beta.kayak-polo.info** | Site vide navigable en beta | 2 sem. |

@@ -30,7 +30,7 @@ trop précoce. Il ne peut en revanche rien pour une image **remplacée sur place
 
 ### 0.1 ⌨️ Publier le tag d'archive de l'ancien app3
 
-L'environnement de travail n'a pas pu pousser le tag. Commande à lancer une seule fois :
+✅ **Fait le 29/09/2026** : le tag pointe sur `cdb2081014`. Commande utilisée, pour mémoire :
 
 ```bash
 git fetch origin
@@ -40,15 +40,16 @@ git push origin archive/app3-matchsheet
 
 `cdb2081014` est le dernier commit de `main` contenant l'ancien `sources/app3/`.
 
-- [ ] Tag publié : `git ls-remote --tags origin archive/app3-matchsheet` renvoie une ligne
+- [x] Tag publié : `git ls-remote --tags origin archive/app3-matchsheet` renvoie une ligne
 
 ### 0.2 ⌨️ Coordination avec la branche scoring
 
-La branche `claude/scoring-refactoring-strategy-3d43ac` porte encore des références à `sources/app3/...`
-dans `DOC/specs/PAGE_SCORING.md` et `DOC/developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md`.
-Ces fichiers **n'ont pas été modifiés ici**, pour éviter les conflits.
+✅ **Fait le 29/09/2026** : la branche `claude/scoring-refactoring-strategy-3d43ac` référence désormais le
+tag dans `DOC/specs/PAGE_SCORING.md` et `DOC/developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md`.
+Ces fichiers **ne sont pas modifiés ici**, pour éviter les conflits : c'est la version de la branche scoring
+qui fait foi.
 
-- [ ] Signaler à cette branche de remplacer les chemins par le tag, par exemple :
+- [x] Signaler à cette branche de remplacer les chemins par le tag, par exemple :
   `git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`
 - [ ] Conflits attendus au merge : `Makefile` et `docker/compose.dev.yaml` sont modifiés des deux
   côtés, mais dans des zones différentes. Résolution : **garder la suppression des blocs app3** et
@@ -241,8 +242,8 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 
 | # | Où | Quoi | Fait |
 |---|---|---|---|
-| 0.1 | ⌨️ | Publier le tag `archive/app3-matchsheet` | ☐ |
-| 0.2 | ⌨️ | Prévenir la branche scoring (chemins app3 → tag) | ☐ |
+| 0.1 | ⌨️ | Publier le tag `archive/app3-matchsheet` | ☑ |
+| 0.2 | ⌨️ | Prévenir la branche scoring (chemins app3 → tag) | ☑ |
 | 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☐ |
 | 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☐ |
 | 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☐ |
