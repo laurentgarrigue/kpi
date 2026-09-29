@@ -42,6 +42,12 @@ class UserProvider implements UserProviderInterface
 
         $row = $this->connection->fetchAssociative($select . ' WHERE u.Code = ?', [$identifier]);
 
+        // Like the legacy login: a licence number typed with its leading zeros
+        // (e.g. 6-digit "012345") matches the shorter code stored in base ("12345").
+        if (!$row && ($stripped = self::stripLicenceZeros($identifier)) !== null) {
+            $row = $this->connection->fetchAssociative($select . ' WHERE u.Code = ?', [$stripped]);
+        }
+
         if (!$row) {
             throw new UserNotFoundException(sprintf('User "%s" not found.', $identifier));
         }
@@ -61,6 +67,19 @@ class UserProvider implements UserProviderInterface
     public function supportsClass(string $class): bool
     {
         return User::class === $class || is_subclass_of($class, User::class);
+    }
+
+    /**
+     * Return the identifier without its leading zeros when it is a zero-padded
+     * number, or null when there is nothing to strip.
+     */
+    public static function stripLicenceZeros(string $identifier): ?string
+    {
+        if (!preg_match('/^0+([1-9][0-9]*)$/', trim($identifier), $m)) {
+            return null;
+        }
+
+        return $m[1];
     }
 
     private function createUserFromRow(array $row): User
