@@ -277,6 +277,14 @@ class AdminAuthController extends AbstractController
             [$identifier, $identifier]
         );
 
+        // Licence number typed with its leading zeros (see UserProvider::stripLicenceZeros)
+        if (!$row && ($stripped = UserProvider::stripLicenceZeros($identifier)) !== null) {
+            $row = $this->connection->fetchAssociative(
+                'SELECT Code, Mail FROM kp_user WHERE Code = ?',
+                [$stripped]
+            );
+        }
+
         // Always return 200 to avoid user enumeration
         if (!$row || empty($row['Mail'])) {
             return $this->json(['message' => 'If an account exists, a reset link has been sent.']);
