@@ -1,6 +1,6 @@
 # Checklist de merge — suppression de l'ancien app3 et médias hors Git
 
-**Branche** : `claude/keen-feynman-meumrx`
+**Branche** : `claude/public_site_redesign_strategy`
 **Commits concernés** : `cd4ef770` (Chore: remove legacy app3 match-sheet prototype) et `2033ca0d`
 (Feat: move uploaded media out of Git with restic backups)
 **Contexte** : phases 0a et 0b de [PUBLIC_SITE_REDESIGN_STRATEGY.md](plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) ;
@@ -104,8 +104,8 @@ sudo setfacl -R -m u:deploy:rwX /data/media/kpi_preprod /data/backups/kpi_prepro
 sudo setfacl -R -d -m u:deploy:rwX /data/media/kpi_preprod /data/backups/kpi_preprod
 
 # c. Copier les médias avec le script de la branche, sans toucher à l'arbre de travail
-git fetch origin claude/keen-feynman-meumrx
-git show origin/claude/keen-feynman-meumrx:scripts/media/media.sh > /tmp/media.sh
+git fetch origin claude/public_site_redesign_strategy
+git show origin/claude/public_site_redesign_strategy:scripts/media/media.sh > /tmp/media.sh
 bash /tmp/media.sh init
 ```
 
