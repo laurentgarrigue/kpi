@@ -18,6 +18,8 @@ useHead({
 
 <template>
   <UApp :toaster="{ position: 'bottom-right' }">
+    <!-- Injects <link rel="manifest"> (@vite-pwa/nuxt does not add it on its own). -->
+    <NuxtPwaManifest />
     <!-- Bandeau « préprod expérimentale » (Phase 7 CI/CD) : ne s'affiche que si
          une branche feature a été déployée en préprod à la place de develop.
          Hors préprod, le composant ne fait aucune requête et ne rend rien. -->

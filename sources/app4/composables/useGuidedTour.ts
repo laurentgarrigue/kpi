@@ -44,9 +44,15 @@ export const useGuidedTour = (tourId: string = 'welcome') => {
   /**
    * Le profil courant a-t-il accès à ce tour ? `maxProfile` absent = tous profils.
    * Rappel : plus le numéro est petit, plus les droits sont élevés.
+   *
+   * Exige aussi une authentification complète : pas de tour avant login, et pas de
+   * tour tant qu'un utilisateur multi-mandats n'a pas choisi son mandat actif
+   * (sinon le tour peut se lancer sur `/select-mandate` ou juste avant redirection).
    */
   const isAllowed = computed(() => {
     if (!tour) return false
+    if (!authStore.isAuthenticated) return false
+    if (authStore.hasMandates && !authStore.activeMandate) return false
     return tour.maxProfile === undefined || authStore.profile <= tour.maxProfile
   })
 

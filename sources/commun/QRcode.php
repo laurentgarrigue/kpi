@@ -66,15 +66,15 @@ if (!defined('__CLASS_QRCODE__')) {
             try {
                 $this->size = $size;
 
-                $result = Builder::create()
-                    ->writer(new PngWriter())
-                    ->data($this->data)
-                    ->encoding(new Encoding('UTF-8'))
-                    ->errorCorrectionLevel($this->errorCorrectionLevel)
-                    ->size($size)
-                    ->margin($this->borderEnabled ? 10 : 0)
-                    ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-                    ->build();
+                $result = (new Builder())->build(
+                    writer: new PngWriter(),
+                    data: $this->data,
+                    encoding: new Encoding('UTF-8'),
+                    errorCorrectionLevel: $this->errorCorrectionLevel,
+                    size: $size,
+                    margin: $this->borderEnabled ? 10 : 0,
+                    roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                );
 
                 // Convert result to GD image resource
                 return imagecreatefromstring($result->getString());
@@ -187,15 +187,15 @@ if (!defined('__CLASS_QRCODE__')) {
         public function displayPNG(): void
         {
             try {
-                $result = Builder::create()
-                    ->writer(new PngWriter())
-                    ->data($this->data)
-                    ->encoding(new Encoding('UTF-8'))
-                    ->errorCorrectionLevel($this->errorCorrectionLevel)
-                    ->size($this->size)
-                    ->margin($this->borderEnabled ? 10 : 0)
-                    ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-                    ->build();
+                $result = (new Builder())->build(
+                    writer: new PngWriter(),
+                    data: $this->data,
+                    encoding: new Encoding('UTF-8'),
+                    errorCorrectionLevel: $this->errorCorrectionLevel,
+                    size: $this->size,
+                    margin: $this->borderEnabled ? 10 : 0,
+                    roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                );
 
                 header('Content-Type: ' . $result->getMimeType());
                 echo $result->getString();
@@ -217,15 +217,15 @@ if (!defined('__CLASS_QRCODE__')) {
         public function displayFPDF($pdf, float $x, float $y, float $w, array $background = [255, 255, 255], array $color = [0, 0, 0]): void
         {
             try {
-                $result = Builder::create()
-                    ->writer(new PngWriter())
-                    ->data($this->data)
-                    ->encoding(new Encoding('UTF-8'))
-                    ->errorCorrectionLevel($this->errorCorrectionLevel)
-                    ->size(300) // Fixed size for PDF
-                    ->margin($this->borderEnabled ? 10 : 0)
-                    ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-                    ->build();
+                $result = (new Builder())->build(
+                    writer: new PngWriter(),
+                    data: $this->data,
+                    encoding: new Encoding('UTF-8'),
+                    errorCorrectionLevel: $this->errorCorrectionLevel,
+                    size: 300, // Fixed size for PDF
+                    margin: $this->borderEnabled ? 10 : 0,
+                    roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                );
 
                 // Create temporary file for the QR code
                 $tempFile = tempnam(sys_get_temp_dir(), 'qr_') . '.png';

@@ -34,6 +34,8 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
 - **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture technique complète de l'application web (stack, PWA, gestion erreurs, API)
 - **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Documentation complète API2 (Symfony 7.3 + API Platform 4.2)
+- **[PLAYER_ELIGIBILITY_RULES.md](developer/reference/PLAYER_ELIGIBILITY_RULES.md)** - Règles « joueur en règle » (national bloquant / régional en alerte), point de paramétrage unique `PlayerEligibilityRules.php`
+- **[PROFILE_ROLES.md](developer/reference/PROFILE_ROLES.md)** - Correspondance niveau de profil ↔ rôle Symfony, profil principal vs mandat actif, piège des `#[IsGranted]` par méthode
 
 ### [Guides](developer/guides/)
 
@@ -103,6 +105,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[BUG_SQL_COMPET_ASTERISK.md](developer/fixes/bugs/BUG_SQL_COMPET_ASTERISK.md)** - Bug SQL avec astérisque
 - **[FIX_CSV_EXPORT_OPENSPOUT.md](developer/fixes/bugs/FIX_CSV_EXPORT_OPENSPOUT.md)** - Fix export CSV OpenSpout
 - **[FIX_MYPDF_OPEN_METHOD.md](developer/fixes/bugs/FIX_MYPDF_OPEN_METHOD.md)** - Fix méthode Open() MyPDF
+- **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/fixes/bugs/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Fix classement général / phases consolidées (compétitions 2026 à corriger)
 
 #### [Fonctionnalités](developer/fixes/features/)
 - **[STAT_LICENCIES_CATEGORIE.md](developer/fixes/features/STAT_LICENCIES_CATEGORIE.md)** - ✅ Statistique licenciés FFCK par catégorie d'âge

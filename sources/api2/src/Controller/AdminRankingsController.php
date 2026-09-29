@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -19,16 +20,23 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  *
  * Ranking computation, publication, inline edit, consolidation, and team transfer.
  * Migrated from GestionClassement.php and GestionClassementInit.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
 #[Route('/admin/rankings')]
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '30. App4 - Rankings')]
 class AdminRankingsController extends AbstractController
 {
     use AdminLoggableTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly PlayerEligibilityChecker $eligibility
     ) {
     }
 
@@ -37,6 +45,7 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('', name: 'admin_rankings_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');
@@ -97,7 +106,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        $niveau = $user ? $user->getNiveau() : 99;
+        $niveau = $user ? $user->getEffectiveNiveau() : 99;
 
         if ($niveau > 6 && $niveau !== 9) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
@@ -138,14 +147,30 @@ class AdminRankingsController extends AbstractController
                 // 2. Apply initial values
                 $this->applyInitialValues($competition, $season);
 
+                // 2b. Re-inject the frozen totals of consolidated phases.
+                // The global table was fully reset in step 1, but processMatches skips
+                // the matches of consolidated phases: without this their contribution
+                // would vanish from the general ranking (J, Pts, PtsNiveau, buts...).
+                $this->applyConsolidatedPhases($competition, $season);
+
                 // 3. Process matches
                 $this->processMatches($competition, $season, $includeUnlocked, $pointsStr);
 
-                // 4. Finalize rankings (all types: CHPT and CP)
+                // 4. Settle the per-phase ranking (Clt) first: PtsNiveau now derives
+                //    from it, so it has to be known before the totals are built.
+                $this->finalizeJourneeChptRanking($competition, $season, $goalaverage);
+
+                // 4b. Rewrite PtsNiveau from the pool rank for classification phases,
+                //     then rebuild the totals it feeds. This is what makes a Niveau
+                //     change (or a manual Clt fix) reach the general ranking, including
+                //     on consolidated phases.
+                $this->applyRankBasedPtsNiveau($competition, $season);
+                $this->rebuildPtsNiveauTotals($competition, $season);
+
+                // 5. Finalize the rankings that consume those totals.
                 $this->finalizeChptRanking($competition, $season, $goalaverage);
                 $this->finalizeNiveauRanking($competition, $season);
                 $this->finalizeNiveauNiveauRanking($competition, $season);
-                $this->finalizeJourneeChptRanking($competition, $season, $goalaverage);
                 $this->finalizeJourneeNiveauRanking($competition, $season);
             }
 
@@ -181,7 +206,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -266,7 +291,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -340,7 +365,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -414,7 +439,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -457,7 +482,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -504,7 +529,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -512,6 +537,8 @@ class AdminRankingsController extends AbstractController
         $teamIds = $data['teamIds'] ?? [];
         $targetSeason = $data['targetSeason'] ?? '';
         $targetCompetition = $data['targetCompetition'] ?? '';
+        // Copy the presence sheets (rosters) of the transferred teams (default: yes, legacy behaviour)
+        $includePlayers = (bool) ($data['includePlayers'] ?? true);
 
         if (empty($teamIds) || empty($targetSeason) || empty($targetCompetition)) {
             return $this->json(['message' => 'teamIds, targetSeason and targetCompetition are required'], Response::HTTP_BAD_REQUEST);
@@ -534,6 +561,7 @@ class AdminRankingsController extends AbstractController
             $details = [];
             $transferred = 0;
             $skipped = 0;
+            $eligibilityResults = [];
 
             // Get target season year for age category calculation
             $targetYear = (int) $targetSeason;
@@ -582,17 +610,22 @@ class AdminRankingsController extends AbstractController
                 ]);
                 $newId = (int) $this->connection->lastInsertId();
 
-                // Copy players with age recalculation
-                $sql = "INSERT INTO kp_competition_equipe_joueur
-                            (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
-                        SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe,
-                               COALESCE(d.id, a.Categ), a.Numero, a.Capitaine
-                        FROM kp_competition_equipe_joueur a
-                        LEFT JOIN kp_licence e ON a.Matric = e.Matric
-                        LEFT JOIN kp_categorie d ON (? - YEAR(e.Naissance)) BETWEEN d.age_min AND d.age_max
-                                                    AND (d.sexe = '' OR d.sexe = a.Sexe)
-                        WHERE a.Id_equipe = ?";
-                $this->connection->prepare($sql)->executeStatement([$newId, $targetYear, $teamId]);
+                if ($includePlayers) {
+                    // Copy players with age recalculation
+                    $sql = "INSERT INTO kp_competition_equipe_joueur
+                                (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
+                            SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe,
+                                   COALESCE(d.id, a.Categ), a.Numero, a.Capitaine
+                            FROM kp_competition_equipe_joueur a
+                            LEFT JOIN kp_licence e ON a.Matric = e.Matric
+                            LEFT JOIN kp_categorie d ON (? - YEAR(e.Naissance)) BETWEEN d.age_min AND d.age_max
+                                                        AND (d.sexe = '' OR d.sexe = a.Sexe)
+                            WHERE a.Id_equipe = ?";
+                    $this->connection->prepare($sql)->executeStatement([$newId, $targetYear, $teamId]);
+
+                    // Non-compliant players are made inactive (national) or reported (regional)
+                    $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newId);
+                }
 
                 $details[] = ['teamId' => $teamId, 'libelle' => $srcTeam['Libelle'], 'status' => 'created', 'newId' => $newId];
                 $transferred++;
@@ -613,6 +646,7 @@ class AdminRankingsController extends AbstractController
                 'transferred' => $transferred,
                 'skipped' => $skipped,
                 'details' => $details,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ]);
         } catch (\Throwable $e) {
             $this->connection->rollBack();
@@ -625,11 +659,12 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/transfer-competitions', name: 'admin_rankings_transfer_competitions', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function transferCompetitions(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 4) {
+        if (!$user || $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -662,11 +697,12 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/initial', name: 'admin_rankings_initial_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function initialList(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 6) {
+        if (!$user || $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -736,7 +772,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -779,7 +815,7 @@ class AdminRankingsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 3) {
+        if (!$user || $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -821,12 +857,13 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/justification', name: 'admin_rankings_justification', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function justification(Request $request): Response
     {
         /** @var User|null $user */
         $user = $this->getUser();
         // Read-only, aligned with ranking consultation (≤ 10).
-        if (!$user || $user->getNiveau() > 10) {
+        if (!$user || $user->getEffectiveNiveau() > 10) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1550,17 +1587,18 @@ class AdminRankingsController extends AbstractController
 
     private function razNiveauRanking(string $competition, string $season): void
     {
-        // Delete non-consolidated niveau rows
-        // We need to figure out which niveaux are consolidated
+        // Delete every niveau row, unconditionally.
+        //
+        // Keeping the rows of "consolidated niveaux" would be wrong as soon as a single
+        // niveau holds both a consolidated and a non-consolidated phase: the preserved
+        // row would then be incremented again by processMatches() for the phase that is
+        // not consolidated, double-counting it at every recompute.
+        // The frozen totals are rebuilt from kp_competition_equipe_journee instead, by
+        // applyConsolidatedPhases().
         $sql = "DELETE cen FROM kp_competition_equipe_niveau cen
                 INNER JOIN kp_competition_equipe ce ON cen.Id = ce.Id
-                WHERE ce.Code_compet = ? AND ce.Code_saison = ?
-                AND cen.Niveau NOT IN (
-                    SELECT DISTINCT j.Niveau FROM kp_journee j
-                    WHERE j.Code_competition = ? AND j.Code_saison = ?
-                    AND j.Consolidation = 'O' AND j.Niveau IS NOT NULL
-                )";
-        $this->connection->prepare($sql)->executeStatement([$competition, $season, $competition, $season]);
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)->executeStatement([$competition, $season]);
     }
 
     private function applyInitialValues(string $competition, string $season): void
@@ -1574,6 +1612,67 @@ class AdminRankingsController extends AbstractController
                     ce.Moins = i.Moins, ce.Diff = i.Diff
                 WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
         $this->connection->prepare($sql)->executeStatement([$competition, $season]);
+    }
+
+    /**
+     * Re-inject into the global rankings the totals frozen in the consolidated phases.
+     *
+     * A consolidated phase keeps its kp_competition_equipe_journee rows untouched
+     * (they are neither reset nor recomputed), but its matches are excluded from
+     * processMatches(). Since kp_competition_equipe and kp_competition_equipe_niveau are
+     * fully reset at each recompute, those totals must be added back here, otherwise the
+     * teams whose games were all played in consolidated phases end up with J = 0 /
+     * PtsNiveau = 0 and cannot be separated in the general ranking.
+     */
+    private function applyConsolidatedPhases(string $competition, string $season): void
+    {
+        // Totals of the consolidated phases, per team and per niveau.
+        $sql = "SELECT cej.Id, j.Niveau,
+                       SUM(cej.Pts) AS Pts, SUM(cej.J) AS J, SUM(cej.G) AS G,
+                       SUM(cej.N) AS N, SUM(cej.P) AS P, SUM(cej.F) AS F,
+                       SUM(cej.Plus) AS Plus, SUM(cej.Moins) AS Moins,
+                       SUM(cej.Diff) AS Diff, SUM(cej.PtsNiveau) AS PtsNiveau
+                FROM kp_competition_equipe_journee cej
+                INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                INNER JOIN kp_competition_equipe ce ON ce.Id = cej.Id
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND j.Consolidation = 'O'
+                AND ce.Code_compet = ? AND ce.Code_saison = ?
+                GROUP BY cej.Id, j.Niveau";
+        $rows = $this->connection->prepare($sql)
+            ->executeQuery([$competition, $season, $competition, $season])
+            ->fetchAllAssociative();
+
+        foreach ($rows as $row) {
+            $teamId = (int) $row['Id'];
+            $niveau = (int) ($row['Niveau'] ?? 0);
+            $values = [
+                (int) $row['Pts'], (int) $row['J'], (int) $row['G'], (int) $row['N'],
+                (int) $row['P'], (int) $row['F'], (int) $row['Plus'], (int) $row['Moins'],
+                (int) $row['Diff'], (float) $row['PtsNiveau'],
+            ];
+
+            // General ranking.
+            $sql = "UPDATE kp_competition_equipe
+                    SET Pts = Pts + ?, J = J + ?, G = G + ?, N = N + ?,
+                        P = P + ?, F = F + ?, Plus = Plus + ?, Moins = Moins + ?,
+                        Diff = Diff + ?, PtsNiveau = PtsNiveau + ?
+                    WHERE Id = ?";
+            $this->connection->prepare($sql)->executeStatement([...$values, $teamId]);
+
+            // Per-niveau ranking (deleted wholesale by razNiveauRanking()).
+            $sql = "INSERT IGNORE INTO kp_competition_equipe_niveau
+                    (Id, Niveau, Pts, Clt, J, G, N, P, F, Plus, Moins, Diff, PtsNiveau, CltNiveau)
+                    VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)";
+            $this->connection->prepare($sql)->executeStatement([$teamId, $niveau]);
+
+            $sql = "UPDATE kp_competition_equipe_niveau
+                    SET Pts = Pts + ?, J = J + ?, G = G + ?, N = N + ?,
+                        P = P + ?, F = F + ?, Plus = Plus + ?, Moins = Moins + ?,
+                        Diff = Diff + ?, PtsNiveau = PtsNiveau + ?
+                    WHERE Id = ? AND Niveau = ?";
+            $this->connection->prepare($sql)->executeStatement([...$values, $teamId, $niveau]);
+        }
     }
 
     private function processMatches(string $competition, string $season, bool $includeUnlocked, string $pointsStr): void
@@ -2371,6 +2470,89 @@ class AdminRankingsController extends AbstractController
             $this->connection->prepare($sql)->executeStatement([$clt, (int) $row['Id'], $journeeId]);
             $j++;
         }
+    }
+
+    /**
+     * Recompute PtsNiveau from the pool rank (Clt) for classification phases (Type 'C').
+     *
+     * PtsNiveau is the only channel through which a phase contributes to the general
+     * ranking (kp_competition_equipe.PtsNiveau drives CltNiveau). Deriving it from the
+     * match results alone had two defects:
+     *
+     *  - it froze the phase's Niveau at the time of the computation, so changing a
+     *    phase's Niveau afterwards had no effect on a consolidated phase (its rows are
+     *    never recomputed), leaving the general ranking silently inconsistent;
+     *  - it ignored manual corrections of the pool ranking: an admin can edit Clt, but
+     *    Clt was never read back by the general ranking.
+     *
+     * Basing it on the rank instead makes the value reconstructible at every recompute
+     * and makes the general ranking honour the pool ranking, manual fixes included:
+     *
+     *     PtsNiveau = pow(64, Niveau) * (nb_teams_in_phase - Clt + 1)
+     *
+     * The 64 factor keeps a higher Niveau always dominant over a lower one, as before.
+     *
+     * Elimination phases (Type 'E') keep the match-result formula: they have no pool
+     * ranking to honour (90 of them are 2-team knockouts) and nothing to preserve there.
+     *
+     * Must run AFTER finalizeJourneeChptRanking(), which settles Clt for the
+     * non-consolidated phases; consolidated phases keep the Clt they were frozen with.
+     */
+    private function applyRankBasedPtsNiveau(string $competition, string $season): void
+    {
+        // Rank-based value for every classification phase, consolidated or not.
+        $sql = "UPDATE kp_competition_equipe_journee cej
+                INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                INNER JOIN (
+                    SELECT cej2.Id_journee, COUNT(*) AS n
+                    FROM kp_competition_equipe_journee cej2
+                    GROUP BY cej2.Id_journee
+                ) sz ON sz.Id_journee = cej.Id_journee
+                SET cej.PtsNiveau = POW(64, j.Niveau) * (sz.n - cej.Clt + 1)
+                WHERE j.Code_competition = ? AND j.Code_saison = ?
+                AND (j.Type IS NULL OR j.Type = 'C')
+                AND cej.Clt > 0";
+        $this->connection->prepare($sql)->executeStatement([$competition, $season]);
+    }
+
+    /**
+     * Rebuild the PtsNiveau aggregates (global and per-niveau) from the phase rows.
+     *
+     * applyRankBasedPtsNiveau() rewrites the phase-level values, so the totals that
+     * processMatches() and applyConsolidatedPhases() had accumulated are stale. Only
+     * PtsNiveau is rebuilt here: Pts, J, G, N, P, F, Plus, Moins and Diff keep the
+     * values those two steps produced.
+     */
+    private function rebuildPtsNiveauTotals(string $competition, string $season): void
+    {
+        // Global total per team.
+        $sql = "UPDATE kp_competition_equipe ce
+                LEFT JOIN (
+                    SELECT cej.Id, SUM(cej.PtsNiveau) AS total
+                    FROM kp_competition_equipe_journee cej
+                    INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                    WHERE j.Code_competition = ? AND j.Code_saison = ?
+                    GROUP BY cej.Id
+                ) t ON t.Id = ce.Id
+                SET ce.PtsNiveau = COALESCE(t.total, 0)
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)
+            ->executeStatement([$competition, $season, $competition, $season]);
+
+        // Per-niveau total.
+        $sql = "UPDATE kp_competition_equipe_niveau cen
+                INNER JOIN kp_competition_equipe ce ON ce.Id = cen.Id
+                LEFT JOIN (
+                    SELECT cej.Id, j.Niveau, SUM(cej.PtsNiveau) AS total
+                    FROM kp_competition_equipe_journee cej
+                    INNER JOIN kp_journee j ON j.Id = cej.Id_journee
+                    WHERE j.Code_competition = ? AND j.Code_saison = ?
+                    GROUP BY cej.Id, j.Niveau
+                ) t ON t.Id = cen.Id AND t.Niveau = cen.Niveau
+                SET cen.PtsNiveau = COALESCE(t.total, 0)
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?";
+        $this->connection->prepare($sql)
+            ->executeStatement([$competition, $season, $competition, $season]);
     }
 
     private function calculateMulti(string $competition, string $season, array $compRow): void

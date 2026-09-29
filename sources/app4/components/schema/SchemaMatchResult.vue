@@ -33,6 +33,8 @@ const getTeamTextClass = (side: 'A' | 'B') => {
 
 const getScoreClass = (side: 'A' | 'B') => {
   if (!hasScore.value) return ''
+  const teamName = side === 'A' ? props.match.equipeA : props.match.equipeB
+  if (props.hoveredTeam && teamName === props.hoveredTeam) return 'text-warning-800 font-bold'
   if (winnerSide.value === side) return 'text-primary-700 font-bold'
   if (winnerSide.value !== null) return 'text-header-600'
   return 'text-header-900'

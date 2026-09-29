@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
-const baseUrl = process.env.BASE_URL ?? '/admin2'
+// Without trailing slash: used to build `${baseUrl}/...` paths below.
+const baseUrl = (process.env.BASE_URL ?? '/admin2').replace(/\/+$/, '')
 const api2BaseUrl = process.env.API2_BASE_URL ?? 'https://kpi.localhost/api2'
 const legacyBaseUrl = process.env.LEGACY_BASE_URL ?? 'https://kpi.localhost'
 const app2BaseUrl = process.env.APP2_BASE_URL ?? 'https://app.kpi.localhost'
@@ -16,7 +17,9 @@ export default defineNuxtConfig({
   ssr: false,
 
   app: {
-    baseURL: baseUrl,
+    // Trailing slash required: @vite-pwa/nuxt concatenates it as-is (`${baseURL}sw.js`),
+    // without it the worker registers at /admin2sw.js and resolves its precache outside /admin2/.
+    baseURL: `${baseUrl}/`,
     head: {
       title: 'KPI Admin',
       meta: [

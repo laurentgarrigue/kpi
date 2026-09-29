@@ -1,0 +1,81 @@
+# Configuration Gitleaks du projet KPI.
+#
+# POURQUOI CE FICHIER REMPLACE `.gitleaksignore` :
+# `.gitleaksignore` liste des *fingerprints* de la forme
+#   <SHA_COMMIT>:<fichier>:<règle>:<ligne>
+# Le SHA du commit fait partie de la clé : tout nouveau commit touchant un de ces
+# fichiers produit un fingerprint INÉDIT, donc non couvert, donc une CI rouge.
+# Combiné à `fetch-depth: 0` (scan de tout l'historique), l'allowlist devait être
+# ré-alimentée après chaque échec et ne pouvait jamais converger.
+#
+# Ici, on décrit des RÈGLES stables (chemins vendorés/générés, une regex ciblée),
+# qui restent valables quels que soient les commits à venir.
+#
+# ⚠️ Ce fichier n'autorise QUE des faux positifs vérifiés le 2026-09-11 :
+# répertoires de librairies tierces, caches générés, placeholders de doc, et une
+# clé Google Maps front-end publique de 2016. Un secret dans du code applicatif
+# reste détecté normalement — n'élargis ces règles qu'après vérification.
+
+title = "KPI gitleaks config"
+
+[extend]
+# Toutes les règles par défaut de Gitleaks s'appliquent ; on ne fait qu'ajouter
+# des exceptions ciblées ci-dessous.
+useDefault = true
+
+[allowlist]
+description = "Faux positifs structurels — vérifiés le 2026-09-11 (voir GIT_WORKFLOW_SIMPLIFICATION.md §2)"
+
+paths = [
+  # --- Librairies tierces vendorées ---
+  # FontAwesome : `export const faLinkedin: IconDefinition;` est un NOM D'ICÔNE,
+  # détecté à tort comme `linkedin-client-id`.
+  '''sources/(program|report)/libraries/fontawesome/.*''',
+
+  # --- Templates Smarty et leurs caches compilés ---
+  # `pageMap.tpl` porte une clé Google Maps API v2 de 2016 (cf. regexes plus bas) ;
+  # `templates_c/` en est le cache GÉNÉRÉ, qui recopie le contenu du template et
+  # duplique donc chaque finding. Le fichier n'existe plus dans le working tree :
+  # ces findings sont purement HISTORIQUES, et le scan remonte tout l'historique.
+  '''smarty/templates_c/.*''',
+  '''sources/smarty/templates_c/.*''',
+  '''smarty/templates/pageMap\.tpl''',
+  '''sources/smarty/templates/pageMap\.tpl''',
+
+  # --- Secrets Symfony historiques, déjà tranchés ---
+  # APP_SECRET committé par erreur en 2025-11-15, retiré depuis. Vérifié le
+  # 2026-09-11 par comparaison de hash SHA256 : ne correspond à AUCUNE valeur
+  # utilisée en préprod ou en prod. `sources/api2/.env` est aujourd'hui gitignoré
+  # (findings historiques), `.env.dev` ne contient plus d'APP_SECRET, et
+  # `.env.dist` — seul fichier encore suivi — ne porte qu'un PLACEHOLDER de
+  # template (`f8a6b3c9…`, motif de démonstration, jamais déployé).
+  '''sources/api2/\.env(\.dist|\.dev)?$''',
+
+  # --- Clé Google Maps v3 front-end retirée (commits 2018) ---
+  # `sources/js/kpclubs.js` a porté une clé `AIza…` en 2018 — déjà DANS DU CODE
+  # COMMENTÉ à l'époque, et absente de la version actuelle du fichier (vérifié :
+  # 0 occurrence aujourd'hui). Findings purement historiques.
+  # Volontairement allowlisté PAR CHEMIN et non par une regex `AIza…` générique :
+  # une telle regex masquerait toute future clé GCP ailleurs dans le dépôt.
+  '''sources/js/kpclubs\.js''',
+
+  # --- Placeholders de documentation ---
+  # Exemples `curl -H "X-Auth-Token: …"` et clés factices dans la doc d'API.
+  '''DOC/developer/reference/API2_ENDPOINTS\.md''',
+  '''DOC/developer/in-progress/implementations/API2_SERVICES_IMPLEMENTATION\.md''',
+  '''sources/api2/README\.md''',
+]
+
+regexes = [
+  # Clé Google Maps API **v2** (préfixe `ABQIAAAA`) de 2016, dans pageMap.tpl et
+  # ses caches compilés — dont certains ont un nom illisible
+  # (`%%6C^6C0^6C01AA6E%%pageMap.tpl.php`) que les règles par chemin couvrent mal.
+  #
+  # Trois raisons de ne pas la traiter comme un secret :
+  #   1. une clé Maps côté navigateur est PUBLIQUE par construction (servie dans
+  #      le HTML) — sa protection passe par les restrictions de la console Google,
+  #      jamais par la confidentialité ;
+  #   2. l'API Maps v2 est FERMÉE par Google depuis ~2013 : la clé n'ouvre plus rien ;
+  #   3. le fichier n'existe plus dans le working tree (finding historique).
+  '''ABQIAAAA[0-9A-Za-z\-_]{20,80}''',
+]

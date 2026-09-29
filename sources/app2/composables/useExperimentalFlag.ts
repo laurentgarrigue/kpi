@@ -7,14 +7,14 @@ import { computed, onScopeDispose, ref } from 'vue'
  * étant des projets Nuxt indépendants (pas de paquet partagé), le code est
  * dupliqué volontairement. Toute correction ici doit être reportée là-bas.
  *
- * La préprod héberge normalement le dernier `develop`. Le workflow
+ * La préprod héberge normalement le dernier `main`. Le workflow
  * `deploy-preprod-experimental.yml` permet d'y déployer TEMPORAIREMENT une
- * branche `feature/*` : l'état de la préprod n'est alors plus celui qu'on croit,
+ * branche `feature/*` (ou un tag) : l'état de la préprod n'est alors plus celui qu'on croit,
  * d'où ce bandeau.
  *
  * Pourquoi un fichier JSON lu à l'exécution, et non une variable de build : les
  * apps sont générées en STATIQUE (`nuxt generate`) et servies par nginx. Le
- * déploiement expérimental et son expiration (retour auto à `develop`) doivent
+ * déploiement expérimental et son expiration (retour auto à `main`) doivent
  * changer l'état du bandeau SANS rebuild — seul un fichier lu au runtime le
  * permet. Le wrapper de déploiement dépose/supprime donc
  * `experimental-flag.json` à la racine servie de chaque app.
@@ -32,7 +32,7 @@ export interface ExperimentalFlag {
 }
 
 /**
- * Le retour automatique à `develop` est piloté par un cron côté VPS : un onglet
+ * Le retour automatique à `main` est piloté par un cron côté VPS : un onglet
  * resté ouvert doit voir le bandeau disparaître sans rechargement.
  */
 const POLL_INTERVAL_MS = 5 * 60 * 1000
@@ -49,7 +49,7 @@ export const useExperimentalFlag = () => {
 
     try {
       // cache: 'no-store' : sinon le fichier resterait en cache après
-      // l'expiration et le bandeau survivrait au retour sur develop.
+      // l'expiration et le bandeau survivrait au retour sur main.
       const base = (config.public.baseUrl as string) || ''
       const res = await fetch(`${base}/experimental-flag.json`, { cache: 'no-store' })
 
@@ -75,7 +75,7 @@ export const useExperimentalFlag = () => {
     onScopeDispose(() => window.clearInterval(timer))
   }
 
-  /** Heures restantes avant retour automatique à `develop` (arrondi haut, ≥ 0). */
+  /** Heures restantes avant retour automatique à `main` (arrondi haut, ≥ 0). */
   const hoursLeft = computed(() => {
     if (!flag.value) return 0
     const ms = new Date(flag.value.expires_at).getTime() - Date.now()

@@ -3,14 +3,14 @@ import { computed, onScopeDispose, ref } from 'vue'
 /**
  * Bandeau « préprod expérimentale » (Phase 7 du plan CI/CD).
  *
- * La préprod héberge normalement le dernier `develop`. Le workflow
+ * La préprod héberge normalement le dernier `main`. Le workflow
  * `deploy-preprod-experimental.yml` permet d'y déployer TEMPORAIREMENT une
- * branche `feature/*` : l'état de la préprod n'est alors plus celui qu'on croit,
+ * branche `feature/*` (ou un tag) : l'état de la préprod n'est alors plus celui qu'on croit,
  * d'où ce bandeau — il doit être impossible de confondre les deux.
  *
  * Pourquoi un fichier JSON récupéré à l'exécution, et non une variable de build :
  * les apps sont générées en STATIQUE (`nuxt generate`) et servies par nginx. Le
- * déploiement expérimental et son expiration (retour auto à `develop`) doivent
+ * déploiement expérimental et son expiration (retour auto à `main`) doivent
  * pouvoir changer l'état du bandeau SANS rebuild — seul un fichier lu au runtime
  * le permet. Le wrapper de déploiement dépose/supprime donc
  * `experimental-flag.json` à la racine servie de chaque app.
@@ -28,7 +28,7 @@ export interface ExperimentalFlag {
 }
 
 /**
- * Re-vérification périodique : le retour automatique à `develop` est piloté par
+ * Re-vérification périodique : le retour automatique à `main` est piloté par
  * un cron côté VPS, donc un onglet resté ouvert doit voir le bandeau disparaître
  * sans rechargement. 5 min = compromis entre fraîcheur et bruit réseau (le
  * fichier pèse quelques centaines d'octets).
@@ -75,7 +75,7 @@ export const useExperimentalFlag = () => {
     onScopeDispose(() => window.clearInterval(timer))
   }
 
-  /** Heures restantes avant retour automatique à `develop` (arrondi haut, ≥ 0). */
+  /** Heures restantes avant retour automatique à `main` (arrondi haut, ≥ 0). */
   const hoursLeft = computed(() => {
     if (!flag.value) return 0
     const ms = new Date(flag.value.expires_at).getTime() - Date.now()

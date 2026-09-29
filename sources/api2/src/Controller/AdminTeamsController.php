@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use App\Trait\CompetitionLockTrait;
@@ -20,8 +21,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * CRUD operations for competition teams management
  * (kp_competition_equipe, kp_equipe tables)
  * Migrated from GestionEquipe.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '26. App4 - Teams')]
 class AdminTeamsController extends AbstractController
 {
@@ -29,7 +36,8 @@ class AdminTeamsController extends AbstractController
     use CompetitionLockTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly PlayerEligibilityChecker $eligibility
     ) {
     }
 
@@ -37,6 +45,7 @@ class AdminTeamsController extends AbstractController
      * List teams for a competition
      */
     #[Route('/admin/competition-teams', name: 'admin_competition_teams_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');
@@ -108,7 +117,7 @@ class AdminTeamsController extends AbstractController
                 'codeNiveau' => $competitionRow['Code_niveau'],
                 'codeTypeclt' => $competitionRow['Code_typeclt'],
                 'statut' => $competitionRow['Statut'],
-                'verrou' => (bool) $competitionRow['Verrou'],
+                'verrou' => $competitionRow['Verrou'] === 'O',
             ],
             'total' => count($teams),
         ]);
@@ -118,11 +127,12 @@ class AdminTeamsController extends AbstractController
      * Search historical teams (kp_equipe)
      */
     #[Route('/admin/teams/search', name: 'admin_teams_search', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchTeams(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -167,11 +177,12 @@ class AdminTeamsController extends AbstractController
      * Get available compositions for a team (for copy)
      */
     #[Route('/admin/teams/{numero}/compositions', name: 'admin_teams_compositions', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function getCompositions(int $numero, Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -204,14 +215,116 @@ class AdminTeamsController extends AbstractController
     }
 
     /**
-     * Search clubs (autocomplete)
+     * List finished competitions (Statut = END) of a season, usable as a ranking source
+     * for the "From a previous ranking" add mode.
      */
-    #[Route('/admin/clubs/search', name: 'admin_clubs_search', methods: ['GET'])]
+    #[Route('/admin/competition-teams/ranking-sources', name: 'admin_competition_teams_ranking_sources', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
+    public function rankingSources(Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if ($user && $user->getEffectiveNiveau() > 3) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $season = $request->query->get('season', '');
+        if (empty($season)) {
+            return $this->json(['message' => 'Season is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $sql = "SELECT Code, Libelle, Code_typeclt
+                FROM kp_competition
+                WHERE Code_saison = ? AND Statut = 'END'
+                ORDER BY Code_niveau, COALESCE(Code_ref, 'z'), Code_tour, Code";
+        $rows = $this->connection->prepare($sql)->executeQuery([$season])->fetchAllAssociative();
+
+        return $this->json(array_map(fn($r) => [
+            'code' => $r['Code'],
+            'libelle' => $r['Libelle'],
+            'codeTypeclt' => $r['Code_typeclt'] ?: 'CHPT',
+        ], $rows));
+    }
+
+    /**
+     * Published ranking of a finished competition, ordered like the public ranking
+     * (by Code_typeclt), with the qualified / eliminated counts for promotion arrows.
+     */
+    #[Route('/admin/competition-teams/ranking-source', name: 'admin_competition_teams_ranking_source', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
+    public function rankingSource(Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if ($user && $user->getEffectiveNiveau() > 3) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $season = $request->query->get('season', '');
+        $competition = $request->query->get('competition', '');
+        if (empty($season) || empty($competition)) {
+            return $this->json(['message' => 'Season and competition are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $sql = "SELECT Code, Libelle, Code_typeclt, Statut, Qualifies, Elimines
+                FROM kp_competition WHERE Code = ? AND Code_saison = ?";
+        $comp = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAssociative();
+        if (!$comp) {
+            return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
+        }
+        if ($comp['Statut'] !== 'END') {
+            return $this->json(['message' => 'Competition is not finished'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $type = $comp['Code_typeclt'] ?: 'CHPT';
+
+        // Same ordering as the published ranking (app4 rankings page / public PDFs)
+        if ($type === 'CP') {
+            $orderBy = 'ce.CltNiveau_publi ASC, ce.Diff_publi DESC, ce.Plus_publi DESC, ce.Libelle ASC';
+        } elseif ($type === 'MULTI') {
+            $orderBy = 'ce.Pts_publi DESC, ce.J_publi DESC, ce.Libelle ASC';
+        } else {
+            $orderBy = 'ce.Clt_publi ASC, ce.Pts_publi DESC, ce.Diff_publi DESC, ce.Plus_publi DESC, ce.Libelle ASC';
+        }
+
+        $sql = "SELECT ce.Numero, ce.Libelle, ce.Code_club, ce.Clt_publi, ce.CltNiveau_publi
+                FROM kp_competition_equipe ce
+                WHERE ce.Code_compet = ? AND ce.Code_saison = ?
+                ORDER BY $orderBy";
+        $rows = $this->connection->prepare($sql)->executeQuery([$competition, $season])->fetchAllAssociative();
+
+        return $this->json([
+            'competition' => [
+                'code' => $comp['Code'],
+                'libelle' => $comp['Libelle'],
+                'codeTypeclt' => $type,
+                'qualifies' => (int) $comp['Qualifies'],
+                'elimines' => (int) $comp['Elimines'],
+            ],
+            'teams' => array_map(fn($r) => [
+                'numero' => (int) $r['Numero'],
+                'libelle' => $r['Libelle'],
+                'codeClub' => $r['Code_club'] ?: '',
+                'rank' => (int) ($type === 'CP' ? $r['CltNiveau_publi'] : $r['Clt_publi']),
+            ], $rows),
+        ]);
+    }
+
+    /**
+     * Search clubs (autocomplete)
+     *
+     * priority: higher than AdminClubsController::detail() (`/admin/clubs/{code}`), whose
+     * {code} requirement (`[A-Za-z0-9]+`) also matches the literal "search" segment. Without
+     * this, Symfony picks whichever route was registered first (undefined/scan-order
+     * dependent) and `search` gets treated as a club code, returning a 404 "Club not found".
+     */
+    #[Route('/admin/clubs/search', name: 'admin_clubs_search', methods: ['GET'], priority: 1)]
+    #[IsGranted('ROLE_VIEWER')]
     public function searchClubs(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -263,6 +376,7 @@ class AdminTeamsController extends AbstractController
      * List regional committees
      */
     #[Route('/admin/regional-committees', name: 'admin_regional_committees', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listRegionalCommittees(): JsonResponse
     {
         $sql = "SELECT Code, Libelle FROM kp_cr ORDER BY Code";
@@ -284,6 +398,7 @@ class AdminTeamsController extends AbstractController
      * List departmental committees
      */
     #[Route('/admin/departmental-committees', name: 'admin_departmental_committees', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listDepartmentalCommittees(Request $request): JsonResponse
     {
         $cr = $request->query->get('cr', '');
@@ -318,6 +433,7 @@ class AdminTeamsController extends AbstractController
      * List clubs (with optional CR/CD filter)
      */
     #[Route('/admin/clubs', name: 'admin_clubs_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function listClubs(Request $request): JsonResponse
     {
         $cd = $request->query->get('cd', '');
@@ -356,7 +472,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -378,13 +494,14 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($compRow['Verrou']) {
+        if ($compRow['Verrou'] === 'O') {
             return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
         $this->connection->beginTransaction();
         try {
             $addedCount = 0;
+            $eligibilityResults = [];
 
             if ($mode === 'manual') {
                 $libelle = trim($data['libelle'] ?? '');
@@ -467,6 +584,7 @@ class AdminTeamsController extends AbstractController
                     // Copy composition if requested
                     if ($copyComposition && !empty($copyComposition['season']) && !empty($copyComposition['competition'])) {
                         $this->copyComposition($numero, $copyComposition['season'], $copyComposition['competition'], $newTeamId, $season);
+                        $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
                     }
 
                     $addedCount++;
@@ -479,6 +597,7 @@ class AdminTeamsController extends AbstractController
             return $this->json([
                 'message' => "$addedCount team(s) added successfully",
                 'count' => $addedCount,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
             $this->connection->rollBack();
@@ -494,7 +613,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -522,7 +641,7 @@ class AdminTeamsController extends AbstractController
         $stmt = $this->connection->prepare($sql);
         $result = $stmt->executeQuery([$team['Code_compet'], $team['Code_saison']]);
         $compRow = $result->fetchAssociative();
-        if ($compRow && $compRow['Verrou']) {
+        if ($compRow && $compRow['Verrou'] === 'O') {
             return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
 
@@ -556,7 +675,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -575,7 +694,7 @@ class AdminTeamsController extends AbstractController
             $stmt = $this->connection->prepare($sql);
             $result = $stmt->executeQuery([$competition, $season]);
             $compRow = $result->fetchAssociative();
-            if ($compRow && $compRow['Verrou']) {
+            if ($compRow && $compRow['Verrou'] === 'O') {
                 return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
             }
         }
@@ -646,7 +765,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -700,7 +819,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -800,7 +919,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 3) {
+        if ($user && $user->getEffectiveNiveau() > 3) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -848,6 +967,7 @@ class AdminTeamsController extends AbstractController
             $sourceTeams = $result->fetchAllAssociative();
 
             $addedCount = 0;
+            $eligibilityResults = [];
             foreach ($sourceTeams as $sourceTeam) {
                 // Check if already exists in target
                 $sql = "SELECT Id FROM kp_competition_equipe
@@ -880,6 +1000,9 @@ class AdminTeamsController extends AbstractController
                             WHERE Id_equipe = ?";
                     $stmt = $this->connection->prepare($sql);
                     $stmt->executeStatement([$newTeamId, $sourceTeamId]);
+
+                    // Non-compliant players are made inactive (national) or reported (regional)
+                    $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
                 }
 
                 $addedCount++;
@@ -891,6 +1014,7 @@ class AdminTeamsController extends AbstractController
             return $this->json([
                 'message' => "$addedCount team(s) duplicated successfully",
                 'count' => $addedCount,
+                'ineligible' => PlayerEligibilityChecker::summarize($eligibilityResults),
             ]);
         } catch (\Exception $e) {
             $this->connection->rollBack();
@@ -906,7 +1030,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 2) {
+        if ($user && $user->getEffectiveNiveau() > 2) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -983,7 +1107,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1085,7 +1209,7 @@ class AdminTeamsController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 4) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1107,7 +1231,7 @@ class AdminTeamsController extends AbstractController
             return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $newVerrou = $current === 'O' ? '' : 'O';
+        $newVerrou = $current === 'O' ? 'N' : 'O';
         $sql = "UPDATE kp_competition SET Verrou = ? WHERE Code = ? AND Code_saison = ?";
         $stmt = $this->connection->prepare($sql);
         $stmt->executeStatement([$newVerrou, $competition, $season]);

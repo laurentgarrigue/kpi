@@ -192,3 +192,12 @@ sources/app4/.env
 # Playwright test screenshots — keep the folder, ignore generated images
 sources/app4/tests/playwright/screenshots/*
 !sources/app4/tests/playwright/screenshots/.gitkeep
+
+# Marqueurs de déploiement déposés par deploy-wrapper.sh (dépôt vps-manager) à la
+# RACINE du checkout préprod/prod. Non versionnés par nature : ils décrivent l'état
+# d'UN serveur, pas le code. Sans cette règle ils apparaissent en « non suivi » dans
+# le `git status` du VPS et peuvent être committés par accident.
+#   .last-deploy-sha         → SHA d'AVANT le déploiement (cible du rollback auto)
+#   .experimental-deploy.json → déploiement expérimental actif (branche/tag + TTL)
+.last-deploy-sha
+.experimental-deploy.json

@@ -2,15 +2,15 @@ name: Deploy preprod (experimental)
 
 # Phase 7 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
 #
-# Déploie TEMPORAIREMENT une branche `feature/*` en préprod, pour la tester en
-# conditions réelles avant de la merger dans `develop`.
+# Déploie TEMPORAIREMENT une branche `feature/*` (ou un TAG de release) en préprod,
+# pour la tester en conditions réelles avant de la merger dans `main`.
 #
-# ⚠️ Ce workflow ÉCRASE l'état normal de la préprod (le dernier `develop`). Deux
+# ⚠️ Ce workflow ÉCRASE l'état normal de la préprod (le dernier `main`). Deux
 # garde-fous rendent ça acceptable :
 #   1. un bandeau fuchsia s'affiche dans app2/app4 tant que le déploiement
 #      expérimental est actif (composant ExperimentalBanner, alimenté par le
 #      fichier `experimental-flag.json` déposé par le wrapper) ;
-#   2. un TTL : passé le délai, un cron côté VPS redéploie `develop` tout seul.
+#   2. un TTL : passé le délai, un cron côté VPS redéploie `main` tout seul.
 #      Personne n'a à se souvenir de « remettre la préprod en état ».
 #
 # Sécurité :
@@ -28,7 +28,7 @@ on:
         required: true
         type: string
       ttl_hours:
-        description: 'Durée avant retour automatique à develop (heures, 1-168)'
+        description: 'Durée avant retour automatique à main (heures, 1-168)'
         required: false
         default: '24'
         type: string
@@ -38,7 +38,7 @@ permissions:
 
 concurrency:
   # MÊME groupe que `deploy-preprod.yml` : un déploiement expérimental et un
-  # déploiement automatique de `develop` ne doivent JAMAIS s'entrelacer sur la
+  # déploiement automatique de `main` ne doivent JAMAIS s'entrelacer sur la
   # même préprod. `cancel-in-progress: false` — un déploiement à moitié appliqué
   # est pire qu'un déploiement en retard.
   group: deploy-preprod
@@ -110,9 +110,9 @@ jobs:
             echo "| SHA | \`$SHA\` |"
             echo "| TTL | ${TTL} h |"
             echo ""
-            echo "⚠️ La préprod ne reflète plus \`develop\` tant que ce déploiement est actif."
+            echo "⚠️ La préprod ne reflète plus \`main\` tant que ce déploiement est actif."
             echo "Un bandeau est affiché dans app2/app4, et le cron du VPS restaure"
-            echo "\`develop\` automatiquement à expiration."
+            echo "\`main\` automatiquement à expiration."
           } >> "$GITHUB_STEP_SUMMARY"
 
       # Même mécanique de retry que deploy-preprod.yml : l'aléa réseau connu

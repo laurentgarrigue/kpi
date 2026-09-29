@@ -19,6 +19,11 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Site title -->
+    <p class="mb-4 text-sm text-center text-xl font-bold text-header-800 dark:text-header-100">
+      {{ t('app.title') }}
+    </p>
+
     <!-- Page header -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
@@ -38,7 +43,7 @@ onMounted(() => {
     <div data-tour="home-shortcuts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- Competitions card -->
       <NuxtLink
-        v-if="authStore.hasProfile(10)"
+        v-if="authStore.hasProfile(8)"
         to="/competitions"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -55,7 +60,7 @@ onMounted(() => {
 
       <!-- Teams card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/teams"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -72,7 +77,7 @@ onMounted(() => {
 
       <!-- Gamedays/Phases card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/gamedays"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -89,7 +94,7 @@ onMounted(() => {
 
       <!-- Rankings card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/rankings"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -106,7 +111,7 @@ onMounted(() => {
 
       <!-- Documents card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9) && authStore.profile !== 7"
+        v-if="authStore.hasProfile(8) && authStore.profile !== 7"
         to="/documents"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -140,7 +145,7 @@ onMounted(() => {
 
       <!-- Statistics card -->
       <NuxtLink
-        v-if="authStore.hasProfile(9)"
+        v-if="authStore.hasProfile(8)"
         to="/stats"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >
@@ -162,7 +167,7 @@ onMounted(() => {
         <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5" />
         <div>
           <h4 class="font-medium text-warning-800 dark:text-warning-200">{{ t('dashboard.beta_notice_title') }}</h4>
-          <p class="mt-1 text-sm text-warning-700 dark:text-warning-300">{{ t('dashboard.beta_notice_message') }}</p>
+          <p class="mt-1 text-sm text-warning-700 dark:text-warning-300">{{ t('dashboard.beta_notice_message') }} <a href="mailto:contact@kayak-polo.info" class="underline hover:no-underline">contact@kayak-polo.info</a></p>
         </div>
       </div>
     </div>

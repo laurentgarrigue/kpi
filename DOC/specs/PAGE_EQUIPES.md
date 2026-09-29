@@ -86,6 +86,13 @@ La page Équipes permet de gérer les équipes inscrites à une compétition : a
 | 1 | Dupliquer équipes depuis une compétition source | ≤ 3 | Essentielle | ✅ Conserver |
 | 2 | Mode "Remplacer et dupliquer" (vider puis copier) | ≤ 3 | Spécialisé | ✅ Conserver |
 | 3 | Copie des compositions joueurs lors de la duplication | ≤ 3 | Spécialisé | ✅ Conserver |
+| 4 | Joueurs non en règle copiés → statut Inactif (compétition nationale) ou alerte (régionale) | ≤ 3 | Essentielle | ✅ Conserver |
+
+> Les feuilles de présence copiées (« Ajouter » avec « Inclure la/les feuille(s) de présence »,
+> « Dupliquer ») sont contrôlées pour la compétition cible : voir
+> [PLAYER_ELIGIBILITY_RULES.md](../developer/reference/PLAYER_ELIGIBILITY_RULES.md).
+> Les réponses de `POST /admin/competition-teams` et `POST /admin/competition-teams/duplicate`
+> incluent `ineligible: { enforcement, count }`.
 
 ### 2.7 Opérations spéciales
 

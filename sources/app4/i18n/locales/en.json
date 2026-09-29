@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "KPI Administration"
+    "title": "Kayak-Polo.Info - Administration"
   },
   "footer": {
     "version": "Version"
@@ -84,7 +84,7 @@
     "view_statistics": "View statistics",
     "system_operations": "System operations",
     "beta_notice_title": "Beta Version",
-    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue."
+    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to"
   },
   "events": {
     "title": "Event Management",
@@ -936,11 +936,15 @@
     },
     "points_options": {
       "4-2-1-0": "4-2-1-0 (W/D/L/F)",
-      "3-1-0-0": "3-1-0-0 (W/D/L/F)"
+      "3-1-0-0": "3-1-0-0 (W/D/L/F)",
+      "ffck_hint": "FFCK rule: 4 points for a win, 2 for a draw, 1 for a loss, 0 for a forfeit.",
+      "icf_hint": "ICF rule: 3 points for a win, 1 for a draw, 0 for a loss, 0 for a forfeit."
     },
     "goalaverage_options": {
       "gen": "General",
-      "part": "Head-to-head"
+      "part": "Head-to-head",
+      "gen_hint": "ICF rule: goal difference calculated across all games in the pool.",
+      "part_hint": "FFCK rule: goal difference calculated only between tied teams' games."
     },
     "tour_options": {
       "1": "Round 1",
@@ -1069,6 +1073,17 @@
       "title": "Add a team",
       "tab_manual": "Manual creation",
       "tab_history": "From history",
+      "tab_ranking": "From a previous ranking",
+      "ranking_season": "Season",
+      "ranking_competition": "Competition (finished)",
+      "ranking_select_competition": "Select a competition",
+      "ranking_no_competition": "No finished competition",
+      "ranking_no_team": "No team in this competition",
+      "ranking_toggle_all": "Check / uncheck all",
+      "ranking_already_added": "already added",
+      "ranking_type_CHPT": "Championship ranking",
+      "ranking_type_CP": "Cup / tournament ranking",
+      "ranking_type_MULTI": "Multi-competition ranking",
       "libelle": "Team name",
       "libelle_placeholder": "e.g. My Team KP",
       "club": "Club",
@@ -1079,7 +1094,7 @@
       "search_club": "Search club...",
       "france": "France",
       "international": "International",
-      "copy_composition": "Copy player roster",
+      "copy_composition": "Include team roster(s)",
       "select_source": "From competition",
       "no_compositions": "No composition available",
       "filter_cr": "Regional committee",
@@ -1107,7 +1122,7 @@
       "source_competition_placeholder": "Select a competition",
       "mode_append": "Add to existing teams",
       "mode_replace": "Clear and replace",
-      "copy_players": "Also copy player rosters",
+      "copy_players": "Include team roster(s)",
       "warning_replace": "Warning: all current teams will be deleted!"
     },
     "confirm_delete": "Delete team \"{name}\"?",
@@ -1310,10 +1325,10 @@
     "surclassement_ok": "Overclassing valid",
     "surclassement_missing": "Overclassing missing",
     "surclassement_not_required": "",
-    "validation_errors_title": "This player does not meet the national competition requirements:",
+    "validation_errors_title": "This player is not eligible for this competition:",
     "error_Saison_licence": "Invalid license season (license not current for this season)",
     "error_Certif": "Medical certificate missing",
-    "error_Pagaie_couleur": "Invalid paddle color (yellow, white or missing)",
+    "error_Pagaie_couleur": "Still-water paddle level too low ({min} minimum)",
     "error_Surclassement": "Age overclassing missing",
     "override_allowed_title": "Add despite failed validation",
     "override_allowed_notice": "As an administrator, you may add this player only as a non-playing referee (A) or staff (E).",
@@ -1321,7 +1336,28 @@
     "override_confirm": "Add anyway",
     "override_cancel": "Cancel",
     "save_and_add": "Save and add another",
-    "save_and_close": "Save and close"
+    "save_and_close": "Save and close",
+    "error_Type_licence": "Not a competition licence (1-year Competition card required)",
+    "paddle_colors": {
+      "PAGB": "white",
+      "PAGJ": "yellow",
+      "PAGV": "green",
+      "PAGBL": "blue",
+      "PAGR": "red",
+      "PAGN": "black"
+    },
+    "eligibility_warning_title": "Non-eligible player(s)",
+    "eligibility_not_compliant": "Not eligible for this competition:",
+    "copy_ineligible_inactivated": "{count} non-eligible player(s) set to Inactive.",
+    "copy_ineligible_warned": "{count} non-eligible player(s) (regional competition: status kept, please check).",
+    "status_change_refused": "Status refused: player not eligible",
+    "force_status_title": "Force status?",
+    "force_status_message": "{name} is not eligible for this competition. Force the \"{status}\" status anyway?",
+    "force_status_confirm": "Force status",
+    "regional_control": "Regional check",
+    "regional_validation_warning": "Regional competition: competition licence, certificate and yellow paddle checked (warnings only, no blocking)",
+    "licence_not_competition": "Non-comp.",
+    "paddle_none": "none"
   },
   "gamedays": {
     "title": "Gamedays / Phases",
@@ -2050,6 +2086,7 @@
       "unpublish": "Delete published ranking",
       "not_published": "Ranking not published",
       "different": "Warning: published ranking differs from computed ranking",
+      "different_short": "Differs from computed",
       "publishing": "Publishing...",
       "unpublishing": "Deleting..."
     },
@@ -2070,7 +2107,8 @@
       "success": "{count} team(s) transferred",
       "skipped": "{count} team(s) skipped (already present)",
       "transferring": "Transferring...",
-      "confirm": "Transfer {count} team(s) to {competition} ({season})?"
+      "confirm": "Transfer {count} team(s) to {competition} ({season})?",
+      "include_players": "Include team roster(s)"
     },
     "pdf": {
       "title": "PDF Exports",
@@ -2211,7 +2249,9 @@
       "viewSchema": "View schema",
       "copyTo": "Copy to...",
       "final": "F",
-      "noResults": "No results"
+      "noResults": "No results",
+      "filterLabel": "Filter...",
+      "filterAll": "All"
     },
     "confirm": {
       "switchTo": "Switch to competition {code} (season {season})?"

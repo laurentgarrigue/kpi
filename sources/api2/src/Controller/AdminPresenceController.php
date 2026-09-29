@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -19,8 +20,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Unified management of team and match player compositions
  * (kp_competition_equipe_joueur, kp_match_joueur tables)
  * Migrated from GestionEquipeJoueur.php and GestionMatchEquipeJoueur.php
+ *
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
+ * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
+ * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
+ * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
+ * #[IsGranted('ROLE_VIEWER')].
  */
-#[IsGranted('ROLE_TEAM')]
 #[OA\Tag(name: '27. App4 - Presence')]
 class AdminPresenceController extends AbstractController
 {
@@ -28,8 +35,7 @@ class AdminPresenceController extends AbstractController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly array $surclassementCompetitions = [],
-        private readonly array $surclassementExemptCategories = []
+        private readonly PlayerEligibilityChecker $eligibility
     ) {
     }
 
@@ -41,6 +47,7 @@ class AdminPresenceController extends AbstractController
      * Get team players composition
      */
     #[Route('/admin/teams/{teamId}/players', name: 'admin_team_players_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     public function getTeamPlayers(int $teamId): JsonResponse
     {
@@ -73,9 +80,9 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
         }
 
-        // Compute canEdit: not locked + profile <= 8 + club not restricted
+        // Compute canEdit: not locked + profile <= 7 (niveau 8 "Consultation" is read-only) + club not restricted
         $isLocked = $teamRow['Verrou'] === 'O';
-        $hasProfileAccess = $user && $user->getNiveau() <= 8;
+        $hasProfileAccess = $user && $user->getEffectiveNiveau() <= 7;
         $allowedClubs = $user?->getAllowedClubs();
         $hasClubAccess = $allowedClubs === null || in_array($teamRow['Code_club'], $allowedClubs);
         $canEdit = !$isLocked && $hasProfileAccess && $hasClubAccess;
@@ -87,6 +94,7 @@ class AdminPresenceController extends AbstractController
                        lc.Pagaie_ECA, lc.Pagaie_EVI, lc.Pagaie_MER,
                        lc.Etat_certificat_CK, lc.Date_certificat_CK,
                        lc.Etat_certificat_APS, lc.Date_certificat_APS,
+                       lc.Type_licence,
                        arb.arbitre, arb.niveau,
                        s.Date AS date_surclassement,
                        lc.Reserve AS icf
@@ -113,9 +121,9 @@ class AdminPresenceController extends AbstractController
 
         $season = $teamRow['Code_saison'];
         $competCode = $teamRow['Code_compet'];
-        $isNational = $this->isNationalCompetition($competCode);
-        $players = array_map(function ($row) use ($season, $competCode, $isNational) {
-            return $this->formatPlayer($row, $season, $isNational ? $competCode : null);
+        $eligibilityLevel = $this->eligibility->levelFor($competCode, $teamRow['Code_niveau']);
+        $players = array_map(function ($row) use ($season, $competCode, $eligibilityLevel) {
+            return $this->formatPlayer($row, $season, $competCode, $eligibilityLevel);
         }, $playerRows);
 
         // Get last update from journal
@@ -139,7 +147,8 @@ class AdminPresenceController extends AbstractController
                 'libelle' => $teamRow['comp_libelle'] ?? '',
                 'verrou' => $isLocked,
                 'codeNiveau' => $teamRow['Code_niveau'] ?? '',
-                'statut' => $teamRow['Statut'] ?? ''
+                'statut' => $teamRow['Statut'] ?? '',
+                'eligibility' => $this->eligibility->describe($eligibilityLevel)
             ],
             'canEdit' => $canEdit,
             'players' => $players,
@@ -169,7 +178,7 @@ class AdminPresenceController extends AbstractController
         // Check user profile
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -180,11 +189,29 @@ class AdminPresenceController extends AbstractController
 
         $mode = $data['mode'] ?? 'existing';
         $matric = null;
+        $capitaine = $data['capitaine'] ?? '-';
+        $eligibilityLevel = $this->eligibility->levelFor($teamInfo['code_compet'], $teamInfo['code_niveau']);
+        $warnings = [];
 
         if ($mode === 'create') {
             // Create new non-licensed player (profile <= 4 required)
-            if ($user->getNiveau() > 4) {
+            if ($user->getEffectiveNiveau() > 4) {
                 return $this->json(['message' => 'Profile <= 4 required to create players'], Response::HTTP_FORBIDDEN);
+            }
+
+            // A created player has no competition licence, certificate nor paddle yet
+            if ($eligibilityLevel !== null) {
+                $errors = $this->eligibility->evaluate(
+                    ['Origine' => $teamInfo['code_saison'], 'Etat_certificat_CK' => 'NON', 'Pagaie_ECA' => ''],
+                    $eligibilityLevel,
+                    $teamInfo['code_saison'],
+                    $teamInfo['code_compet'],
+                    $this->eligibility->calculateCategory($data['naissance'] ?? null, $teamInfo['code_saison'])
+                );
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings);
+                if ($rejection) {
+                    return $rejection;
+                }
             }
 
             // Generate new matric >= 2000000
@@ -232,28 +259,12 @@ class AdminPresenceController extends AbstractController
                 return $this->json(['message' => 'Matric is required'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Validate player for national competitions
-            if ($this->isNationalCompetition($teamInfo['code_compet'])) {
-                $validationErrors = $this->validatePlayerForNational($matric, $teamInfo);
-                if (!empty($validationErrors)) {
-                    $forceAdd = !empty($data['forceAdd']);
-                    // Profile <= 2 may override validation, but only as staff (E) or non-playing referee (A)
-                    if ($forceAdd && $user->getNiveau() <= 2) {
-                        $allowedStatuses = ['E', 'A'];
-                        $capitaine = $data['capitaine'] ?? '';
-                        if (!in_array($capitaine, $allowedStatuses)) {
-                            return $this->json([
-                                'message' => 'Force add only allowed with status E (staff) or A (referee)',
-                                'errors' => $validationErrors
-                            ], Response::HTTP_BAD_REQUEST);
-                        }
-                        // Override accepted — proceed with insert
-                    } else {
-                        return $this->json([
-                            'message' => 'Player not valid for national competition',
-                            'errors' => $validationErrors
-                        ], Response::HTTP_BAD_REQUEST);
-                    }
+            // Eligibility rules ("joueur en règle"), see App\Eligibility\PlayerEligibilityRules
+            if ($eligibilityLevel !== null) {
+                $errors = $this->eligibility->checkPlayer((int) $matric, $eligibilityLevel, $teamInfo['code_saison'], $teamInfo['code_compet']);
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings);
+                if ($rejection) {
+                    return $rejection;
                 }
             }
         }
@@ -269,7 +280,7 @@ class AdminPresenceController extends AbstractController
         }
 
         // Calculate category
-        $categ = $this->calculateCategory($licenceRow['Naissance'], $teamInfo['code_saison']);
+        $categ = $this->eligibility->calculateCategory($licenceRow['Naissance'], $teamInfo['code_saison']);
 
         // Insert into kp_competition_equipe_joueur
         try {
@@ -281,7 +292,7 @@ class AdminPresenceController extends AbstractController
                 'Sexe' => $licenceRow['Sexe'],
                 'Categ' => $categ,
                 'Numero' => $data['numero'] ?? 0,
-                'Capitaine' => $data['capitaine'] ?? '-'
+                'Capitaine' => $capitaine
             ]);
         } catch (\Exception $e) {
             if (str_contains($e->getMessage(), 'Duplicate')) {
@@ -295,7 +306,8 @@ class AdminPresenceController extends AbstractController
 
         return $this->json([
             'success' => true,
-            'matric' => $matric
+            'matric' => $matric,
+            'warnings' => $warnings
         ], Response::HTTP_CREATED);
     }
 
@@ -319,7 +331,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -340,6 +352,26 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => 'No fields to update'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Eligibility rules on status change, see App\Eligibility\PlayerEligibilityRules
+        $warnings = [];
+        $eligibilityLevel = $this->eligibility->levelFor($teamInfo['code_compet'], $teamInfo['code_niveau']);
+        if (isset($updateData['Capitaine']) && $eligibilityLevel !== null) {
+            $currentStatus = $this->connection->fetchOne(
+                "SELECT Capitaine FROM kp_competition_equipe_joueur WHERE Id_equipe = ? AND Matric = ?",
+                [$teamId, $matric]
+            );
+            if ($currentStatus === false) {
+                return $this->json(['message' => 'Player not in composition'], Response::HTTP_NOT_FOUND);
+            }
+            if ($currentStatus !== $updateData['Capitaine']) {
+                $errors = $this->eligibility->checkPlayer($matric, $eligibilityLevel, $teamInfo['code_saison'], $teamInfo['code_compet']);
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_STATUS_CHANGE, $updateData['Capitaine'], !empty($data['force']), $user, $warnings);
+                if ($rejection) {
+                    return $rejection;
+                }
+            }
+        }
+
         $this->connection->update(
             'kp_competition_equipe_joueur',
             $updateData,
@@ -351,7 +383,7 @@ class AdminPresenceController extends AbstractController
         $value = $updateData[$field];
         $this->logActionForCompetition('Modification kp_competition_equipe_joueur', $teamInfo['code_saison'], $teamInfo['code_compet'], "Equipe {$teamId} - Joueur {$matric} - {$field}={$value}");
 
-        return $this->json(['success' => true]);
+        return $this->json(['success' => true, 'warnings' => $warnings]);
     }
 
     /**
@@ -379,7 +411,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -413,6 +445,7 @@ class AdminPresenceController extends AbstractController
      * Search players by name or matric (for adding to team composition)
      */
     #[Route('/admin/players/search', name: 'admin_players_search', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string'))]
     public function searchPlayers(Request $request): JsonResponse
     {
@@ -468,7 +501,7 @@ class AdminPresenceController extends AbstractController
                 'nom' => $row['Nom'] ?? '',
                 'prenom' => $row['Prenom'] ?? '',
                 'sexe' => $row['Sexe'] ?? 'M',
-                'categ' => $row['Naissance'] ? $this->calculateCategory($row['Naissance'], date('Y')) : '',
+                'categ' => $row['Naissance'] ? $this->eligibility->calculateCategory($row['Naissance'], date('Y')) : '',
                 'numeroClub' => $row['Numero_club'] ?? '',
                 'clubLibelle' => $row['Club'] ?? '',
                 'pagaieLabel' => $pagaieLabel,
@@ -483,7 +516,10 @@ class AdminPresenceController extends AbstractController
     /**
      * Get available compositions for copy (other competitions where this team's club has players)
      */
-    #[Route('/admin/teams/{teamId}/compositions', name: 'admin_team_compositions', methods: ['GET'])]
+    // Under /admin/competition-teams (competition team Id): /admin/teams/{numero}/compositions belongs to
+    // AdminTeamsController (kp_equipe Numero) and the two routes used to shadow each other.
+    #[Route('/admin/competition-teams/{teamId}/compositions', name: 'admin_team_compositions', methods: ['GET'], requirements: ['teamId' => '\d+'])]
+    #[IsGranted('ROLE_VIEWER')]
     public function getAvailableCompositions(int $teamId, Request $request): JsonResponse
     {
         $teamInfo = $this->getTeamInfo($teamId);
@@ -538,7 +574,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -597,12 +633,16 @@ class AdminPresenceController extends AbstractController
             $copied++;
         }
 
-        $this->logActionForCompetition('Copie composition', $teamInfo['code_saison'], $teamInfo['code_compet'], "Equipe {$teamId} <- {$sourceCompetition}: {$copied} joueur(s)");
+        // Non-compliant players are made inactive (national) or reported (regional)
+        $ineligible = $this->eligibility->enforceOnCopiedRoster($teamId);
+
+        $this->logActionForCompetition('Copie composition', $teamInfo['code_saison'], $teamInfo['code_compet'], "Equipe {$teamId} <- {$sourceCompetition}: {$copied} joueur(s), {$ineligible['count']} non en regle");
 
         return $this->json([
             'success' => true,
             'copied' => $copied,
             'total' => count($sourcePlayers),
+            'ineligible' => $ineligible,
         ]);
     }
 
@@ -614,6 +654,7 @@ class AdminPresenceController extends AbstractController
      * Get match players for a team (A or B)
      */
     #[Route('/admin/matches/{matchId}/players', name: 'admin_match_players_list', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
     public function getMatchPlayers(int $matchId, Request $request): JsonResponse
@@ -759,7 +800,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -815,7 +856,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -865,7 +906,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -921,7 +962,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -960,7 +1001,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -976,6 +1017,7 @@ class AdminPresenceController extends AbstractController
      * Get copyable matches (same team in same journee or competition)
      */
     #[Route('/admin/matches/{matchId}/copyable-matches', name: 'admin_match_copyable', methods: ['GET'])]
+    #[IsGranted('ROLE_VIEWER')]
     #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
     #[OA\Parameter(name: 'scope', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['day', 'competition']))]
@@ -1108,7 +1150,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getNiveau() > 8) {
+        if (!$user || $user->getEffectiveNiveau() > 7) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1236,7 +1278,7 @@ class AdminPresenceController extends AbstractController
             'nom' => $row['Nom'] ?? '',
             'prenom' => $row['Prenom'] ?? '',
             'sexe' => $row['Sexe'] ?? 'M',
-            'categ' => $row['Naissance'] ? $this->calculateCategory($row['Naissance'], date('Y')) : '',
+            'categ' => $row['Naissance'] ? $this->eligibility->calculateCategory($row['Naissance'], date('Y')) : '',
             'naissance' => $row['Naissance'] ?? null,
             'numero' => (int) ($row['Numero'] ?? 0),
             'capitaine' => $capitaine,
@@ -1259,7 +1301,7 @@ class AdminPresenceController extends AbstractController
         ];
     }
 
-    private function formatPlayer(array $row, ?string $season = null, ?string $competCode = null): array
+    private function formatPlayer(array $row, string $season, string $competCode, ?string $eligibilityLevel): array
     {
         // Determine pagaie validity and label
         $pagaieValide = 0;
@@ -1277,13 +1319,19 @@ class AdminPresenceController extends AbstractController
         }
 
         // Recompute category from birth date + season (ignores stale stored Categ)
-        $categ = $season && !empty($row['Naissance'])
-            ? $this->calculateCategory($row['Naissance'], $season)
+        $categ = !empty($row['Naissance'])
+            ? $this->eligibility->calculateCategory($row['Naissance'], $season)
             : ($row['Categ'] ?? '');
 
-        // Indicate whether surclassement is required and whether it's present
-        $surclassementNeeded = $competCode !== null && $this->requiresSurclassement($competCode, $categ);
+        // Indicate whether surclassement is required (only where the rule set checks it) and whether it's present
+        $eligibility = $this->eligibility->describe($eligibilityLevel);
+        $surclassementNeeded = ($eligibility['surclassement'] ?? false) && $this->eligibility->requiresSurclassement($competCode, $categ);
         $surclassementOk = !$surclassementNeeded || !empty($row['date_surclassement']);
+
+        // Compliance with the competition's eligibility rules (empty when compliant or not controlled)
+        $eligibilityErrors = $eligibilityLevel !== null
+            ? $this->eligibility->evaluate($row, $eligibilityLevel, $season, $competCode, $categ)
+            : [];
 
         return [
             'matric' => (int) $row['Matric'],
@@ -1311,6 +1359,8 @@ class AdminPresenceController extends AbstractController
             'dateSurclassement' => $row['date_surclassement'] ?? null,
             'surclassementNeeded' => $surclassementNeeded,
             'surclassementOk' => $surclassementOk,
+            'typeLicence' => $row['Type_licence'] ?? null,
+            'eligibilityErrors' => $eligibilityErrors,
             'icf' => $row['icf'] ? (int) $row['icf'] : null
         ];
     }
@@ -1333,7 +1383,7 @@ class AdminPresenceController extends AbstractController
     {
         $sql = "SELECT ce.Code_compet, ce.Code_saison, ce.Code_club, ce.Numero,
                        c.Libelle AS club_libelle,
-                       comp.Verrou
+                       comp.Verrou, comp.Code_niveau
                 FROM kp_competition_equipe ce
                 LEFT JOIN kp_club c ON ce.Code_club = c.Code
                 LEFT JOIN kp_competition comp ON ce.Code_compet = comp.Code
@@ -1354,95 +1404,46 @@ class AdminPresenceController extends AbstractController
             'code_club' => $row['Code_club'],
             'numero' => (int) $row['Numero'],
             'club_libelle' => $row['club_libelle'] ?? '',
-            'verrou' => $row['Verrou'] === 'O'
+            'verrou' => $row['Verrou'] === 'O',
+            'code_niveau' => $row['Code_niveau'] ?? null
         ];
     }
 
-    private function isNationalCompetition(string $code): bool
+    /**
+     * Turn an eligibility decision into an HTTP rejection (null when the action may proceed).
+     * Warnings of a non-blocking rule set are appended to $warnings.
+     *
+     * @param string[] $errors
+     * @param string[] $warnings
+     */
+    private function applyEligibilityDecision(string $level, array $errors, string $operation, string $status, bool $force, User $user, array &$warnings): ?JsonResponse
     {
-        return str_starts_with($code, 'N') || str_starts_with($code, 'CF');
-    }
-
-    private function validatePlayerForNational(int $matric, array $teamInfo): array
-    {
-        $errors = [];
-
-        $sql = "SELECT lc.Origine, lc.Pagaie_ECA, lc.Etat_certificat_CK, lc.Naissance,
-                       s.Date AS date_surclassement
-                FROM kp_licence lc
-                LEFT JOIN kp_surclassement s ON lc.Matric = s.Matric
-                    AND s.Saison = ?
-                WHERE lc.Matric = ?";
-
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$teamInfo['code_saison'], $matric]);
-        $row = $result->fetchAssociative();
-
-        if (!$row) {
-            $errors[] = 'Player not found';
-            return $errors;
+        $decision = $this->eligibility->decide($level, $errors, $operation, $status, $force, $user->getEffectiveNiveau());
+        if ($decision['allowed']) {
+            array_push($warnings, ...$decision['warnings']);
+            return null;
         }
 
-        // Check license season
-        if ($row['Origine'] < $teamInfo['code_saison']) {
-            $errors[] = 'Saison_licence';
-        }
-
-        // Check certificate
-        if ($row['Etat_certificat_CK'] !== 'OUI') {
-            $errors[] = 'Certif';
-        }
-
-        // Check pagaie
-        if (in_array($row['Pagaie_ECA'], ['', 'PAGJ', 'PAGB'])) {
-            $errors[] = 'Pagaie_couleur';
-        }
-
-        // Check surclassement if needed
-        $categ = $this->calculateCategory($row['Naissance'], $teamInfo['code_saison']);
-        if ($this->requiresSurclassement($teamInfo['code_compet'], $categ) && !$row['date_surclassement']) {
-            $errors[] = 'Surclassement';
-        }
-
-        return $errors;
-    }
-
-    private function requiresSurclassement(string $competitionCode, string $categ): bool
-    {
-        if (in_array($categ, $this->surclassementExemptCategories)) {
-            return false;
-        }
-
-        return in_array($competitionCode, $this->surclassementCompetitions);
-    }
-
-    private function calculateCategory(?string $birthDate, string $season): string
-    {
-        if (!$birthDate) {
-            return '';
-        }
-
-        $birthYear = (int) substr($birthDate, 0, 4);
-        $age = (int) $season - $birthYear;
-
-        $row = $this->connection->fetchAssociative(
-            "SELECT id FROM kp_categorie WHERE age_min <= ? AND age_max >= ? LIMIT 1",
-            [$age, $age]
-        );
-
-        return $row ? $row['id'] : '';
+        return $this->json([
+            'message' => 'Player not eligible for this competition',
+            'errors' => $errors,
+            'canForce' => $decision['canForce'],
+        ], Response::HTTP_BAD_REQUEST);
     }
 
     private function getLastUpdate(string $table, int $id): ?array
     {
+        // Journal entries use two formats depending on origin:
+        // - api2: "Equipe {id} - ..."
+        // - legacy admin: "Equipe : {id} - ..."
         $sql = "SELECT Dates, Users, Actions
                 FROM kp_journal
-                WHERE Journal LIKE ?
+                WHERE Journal LIKE ? OR Journal LIKE ?
                 ORDER BY Dates DESC
                 LIMIT 1";
 
         $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery(["%Equipe {$id}%"]);
+        $result = $stmt->executeQuery(["%Equipe {$id}%", "%Equipe : {$id}%"]);
         $row = $result->fetchAssociative();
 
         if (!$row) {

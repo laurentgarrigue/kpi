@@ -487,6 +487,16 @@ onMounted(() => {
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
                   <span>KPI App</span>
                 </a>
+                <div class="border-t border-header-700 my-1" />
+                <a
+                  :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  @click="publicMenuOpen = false"
+                >
+                  <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+                  <span>KPI Admin 1 (legacy)</span>
+                </a>
               </div>
             </Transition>
           </div>
@@ -558,7 +568,7 @@ onMounted(() => {
 
                 <!-- Profile / active mandate -->
                 <div class="px-4 py-2">
-                  <div v-if="!authStore.activeMandate" class="text-xs text-header-600 dark:text-header-600">
+                  <div v-if="!authStore.activeMandate" class="text-xs text-header-600 dark:text-header-300">
                     {{ t('profile') }} {{ user?.profile }}
                   </div>
                   <!-- Active mandate display -->
@@ -602,7 +612,7 @@ onMounted(() => {
                 <!-- Theme selector: light / dark / system -->
                 <ClientOnly>
                   <div class="px-4 py-2 border-b border-header-200 dark:border-header-800">
-                    <div class="text-xs font-medium text-header-600 dark:text-header-600 mb-1.5">{{ t('theme.label') }}</div>
+                    <div class="text-xs font-medium text-header-600 dark:text-header-300 mb-1.5">{{ t('theme.label') }}</div>
                     <div class="flex gap-1 p-0.5 bg-header-200 dark:bg-header-800 rounded-lg">
                       <button
                         v-for="opt in themeOptions"
@@ -626,7 +636,7 @@ onMounted(() => {
 
                 <!-- Menu items -->
                 <button
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
                   @click="handleLogout"
                 >
                   <UIcon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5" />
@@ -673,6 +683,14 @@ onMounted(() => {
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI App</span>
+          </a>
+          <a
+            :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
+            target="_blank"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+          >
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
+            <span>KPI Admin1 (legacy)</span>
           </a>
           <!-- Section: Competition Management -->
           <template v-for="item in competitionMenuItems" :key="item.label">
@@ -741,7 +759,7 @@ onMounted(() => {
               <div class="text-sm font-medium text-white">
                 {{ user?.name }} {{ user?.firstname }}
               </div>
-              <div v-if="!authStore.activeMandate" class="text-xs text-header-600">
+              <div v-if="!authStore.activeMandate" class="text-xs text-header-300">
                 {{ t('profile') }} {{ user?.profile }}
               </div>
               <!-- Active mandate display (mobile) -->
@@ -781,7 +799,7 @@ onMounted(() => {
           <!-- Theme selector (mobile): light / dark / system -->
           <ClientOnly>
             <div class="mt-3">
-              <div class="text-xs font-medium text-header-600 mb-1.5">{{ t('theme.label') }}</div>
+              <div class="text-xs font-medium text-header-300 mb-1.5">{{ t('theme.label') }}</div>
               <div class="flex gap-1 p-0.5 bg-header-800 rounded-lg">
                 <button
                   v-for="opt in themeOptions"

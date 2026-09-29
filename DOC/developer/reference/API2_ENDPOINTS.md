@@ -677,7 +677,7 @@ POST   /admin/teams/{teamId}/players/add        Add player to team composition
 PATCH  /admin/teams/{teamId}/players/{matric}   Update player (numero/capitaine)
 DELETE /admin/teams/{teamId}/players            Delete players from composition
 GET    /admin/players/search                    Search players by name or matric
-GET    /admin/teams/{teamId}/compositions       Get available compositions for copy
+GET    /admin/competition-teams/{teamId}/compositions  Get available compositions for copy
 POST   /admin/teams/{teamId}/players/copy       Copy composition from another team
 ```
 

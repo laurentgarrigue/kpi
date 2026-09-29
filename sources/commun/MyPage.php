@@ -67,7 +67,7 @@ class MyPage
 			array_push($arrayMenu, array('name' => 'Historique', 'href' => 'kphistorique.php'));
 			array_push($arrayMenu, array('name' => 'Equipes', 'href' => 'kpequipes.php'));
 			array_push($arrayMenu, array('name' => 'Clubs', 'href' => 'kpclubs.php'));
-			array_push($arrayMenu, array('name' => 'Administration', 'href' => 'admin/GestionCompetition.php'));
+			array_push($arrayMenu, array('name' => 'Administration', 'href' => 'AdminChoice.php'));
 		}
 		else
 		{

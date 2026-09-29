@@ -171,19 +171,33 @@ TODO :
 - ✅ Refresh sur la page ranking.
 - ✅ Vérifier qu'une compétition END vérouille aussi la saisie des présences, les matchs, les classements, etc... et pas seulement la saisie des résultats.
 - ✅ générer une extraction pdf des feuilles de présence sur le modèle de FeuillePresenceCat.php, avec un saut de page par année de naissance, et trié par mois de naissance, avec les colonnes Num Cap Licence Nom Prenom Equipe Club, et un lien depuis la page documents uniquement pour les profils <= 2.
-
+- ✅ Tuto interactif : le tuto classement doit être accessible aux profils <= 6 (et non 4).
+- ✅ Le tuto ne doit pas se lancer tant que l'utilisateur n'est pas authentifié et qu'il n'a pas choisi son mandat.
+- ✅ rankings : le score des équipes perdantes ne doit pas être en gras pour les matchs éliminatoires
+gamedays/schema : au survol d'une équipe mettre le texte clair pour contraster avec le background sombre dans les poules, mettre le texte sombre pour contraster avec le background clair dans les matchs éliminatoires.
+presence/team/ : joueurs inactifs, mettre le texte sombre pour contraster avec le background clair.
+- ✅ Problème mode nuit sur les associations de journées aux événements (capture d'écran)
+- ✅ Compétitions : formulaire Création / modification : Goal average : préciser règlement FFCK / ICF.
+- ✅ Classements : Inclure les matchs non verrouillés : passer ligne en dessous, devant Recalculer. Publier le classement : aligner à droite. Alerte 'Attention : le classement publié est différent du classement calculé' : éviter le décalage vertical (raccourcir le texte, placer à côté de l'entête de colonne "Classement publié" ?)
+- ✅ Feuille de présence, dernière modification : afficher quelque soit le profil
+- ✅ Dark mode,
+- ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
+- ✅ Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures 
+d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
 
 ⚠️ ❓ ✅
 
 
 **Infra**:
 - ✅ Infra dev : node 22 pour le lint, sinon ça ne fonctionne pas.
+- ✅ Mercure
+- ✅ FrankenPHP
 - Vérifier s'il y a d'autres choses à upgrader.
 - Verrouillage compets : vérouiller plus tôt dans la nuit.
 - ❓ api legacy encore utilisée ?
 - ❓ Reproduire les pdf en stateless ?
-- ✅ Mercure
-- ✅ FrankenPHP
+
+- evaluer le changement dans la CI/CD pour que les déploiement préprod et prod soient buildés avant d'interrompre l'application.
 
 
 **App4**:
@@ -192,15 +206,12 @@ TODO :
 - Alertes sur les journées/phases d'une compétition non intégrées à un événement si les autres le sont...
 - copier ou définir les paramètres R1, RC, délégué, chef arbitre, scrutineering, pour tout un événement, un groupe ou une compétition, et pas seulement pour une journée/phase. Pickup depuis une journée existante via la page de gestion des associations d'événements @sources/app4/pages/events/[id]/gamedays.vue + modification avant application à l'ensemble des journée.
 - Ajouter Chief scrutineering dans les rôles officiels des journées/phases.
-- ✅ Dark mode,
-- ✅ Admin : page de choix Admin1 ou Admin2 pour tous cet été (avec message, capture d'écran, etc...) pour éviter les confusions entre les deux versions.
-- ✅ Tutoriel admin2 : créer un bref tutoriel dynamique pour les admins legacy qui ne connaissent pas app4 et arrivent pour la première fois, avec des captures d'écran et des explications sur les différences entre les deux applications, les fonctionnalités disponibles dans app4, et comment naviguer et utiliser efficacement l'application. avec Playwright.
 Les nouveautés à mettre en valeur : choix éventuel du mandat après authentification, puis choix du contexte de travail sur la page d'accueil (saison, périmètre par sélection, section, groupe ou événement) modifiable par la suite, raccourcis (menu, boutons sur la page d'accueil, liens au sein des tableaux), 
 - Nouveau(x) Profil(s) Chef arbitre / arbitre / scrutineering
 - ❓ ajouter un système de notation (5 étoiles) sur les systèmes de jeu des compétitions pour savoir lesquelles utiliser ou éviter (limité à notre propre usage) ?
 - Fonction planification des matchs : définir les règles de planification (ex : pas de matchs consécutifs pour une même équipe, intervalle matchs, heures début et fin de journée, nombre de terrains, repos avant et après un match, un arbitrage, intervalle avant les matchs du tour suivant pour permettre les calculs et affectations d'équipes, intervalle spécifique pour certains matchs, demi, finales, etc...) et les implémenter dans la fonctionnalité de planification automatique des matchs.
 - ❓ Schéma de compétition : pouvoir changer de compétition sur la page ?
-- Contexte de travail : s'il n'y a qu'une seule compétition sélectionnée, activer cette compétition dans le filtre.
+- ✅ Contexte de travail : s'il n'y a qu'une seule compétition sélectionnée, activer cette compétition dans le filtre.
 - QRCode App Evt : s'assurer que ça fonctionne aussi pour les groupes.
 - Reprise de compo d'une compétition ou d'une saison à l'autre : reprendre les noms et prénoms depuis la base des licenciés.
 - Prévoir la mise à jour des identités des joueurs dans les compo ou les matchs depuis la base des licenciés.
@@ -213,24 +224,58 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
+- Création nouvelle compétition : par défaut système et goal average ICF pour niveau International, FFCK pour national et régional.
+- Création nouvelle compétition : Goal average : inverser l'ordre des valeurs dans le select
+- Utilisateurs - ajouter un mandat : select multiples background clair en mode sombre, illisibles.
+- Utilisateurs : formulaire permet la modification du mot de passe d'un utilisateur, mais pas l'API.
+- Utilisateurs : envoi de lien de réinitialisation du mot de passe à l'utilisateur ne semble pas fonctionner.
+- Cartouche utilisateur : manque de contraste sur Profil X, Thème, Déconnexion.
+- Timer connexion 45 minutes ?
+- ✅ Profil 9 devrait-il pouvoir changer le statut d'un match ? Oui
+- Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
+- clubs/team/XXX : ajouter catégorie (sous-titre 2) dans la colonne Compétition
+- id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
+- Page d'accueil, rappeler Kayak-Polo.info Administration + favicon
+- Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://api.iconify.design/lucide.json?icons=x. (Reason: CORS request did not succeed). Status code: (null) (en dev)
 
-- Tuto interactif : le tuto classement doit être accessible aux profils <= 6 (et non 4).
+**Nouveau règlement**:
+- Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
+- Cartons noirs
+- 
 
 **Nours**:
+- ✅ Dans le parcours Ajouter un joueur → Équipe, le champ Club reste en mode clair alors que le reste de l’interface est en mode sombre.
+- ✅ Anomalies sur les calculs – Compétition multi (R20) : Des incohérences ont été observées :
 - "Serait-il possible de mettre à disposition, dans les officiels, la liste des joueurs par équipe. ex: secretariat -> equipe abitre secondaire". Voir pour simplifier la saisie des officiels en permettant de sélectionner les joueurs de l'équipe associée à l'arbitrage principal (juges de ligne) ou secondaire (table de marque, chrono, shotclock) ou inversement.
 - Statut de compétition : Mettre en place un verrouillage automatique (statut END) X jours après la dernière phase/journée, si aucune action n’a été réalisée.
-- Dans le parcours Ajouter un joueur → Équipe, le champ Club reste en mode clair alors que le reste de l’interface est en mode sombre.
-- Anomalies sur les calculs – Compétition multi (R20) : Des incohérences ont été observées :
 Exemple : Le Havre affiche seulement 4 points pour une seule compétition alors que le calcul annonce 16 points 
 Contexte :
 1 journée au format championnat
 1 journée au format coupe
 À noter également :
 La table des points avait disparu et a dû être reparamétrée
-- Ce matin, lors du premier match du Havre (le 520), le verrou était grisé dans la page des matchs lorsque j’ai essayé de le verrouiller.
+- ❓ Ce matin, lors du premier match du Havre (le 520), le verrou était grisé dans la page des matchs lorsque j’ai essayé de le verrouiller.
 ce n’était pas le verrou qui s’activait, mais le statut du match qui changeait.
 Pourtant, le verrou devenait bien accessible (surligné) quand je passais dessus.
 (le verrou et le statut du match sont trop proches l’un de l’autre, ce qui peut prêter à confusion ?)
+
+**17/09/2026** :
+- ✅ Copie système de jeu : est ce que tu pourrais rajouter des filtres en haut et par exemple ajouter une fonction croissant décroissant ? + figer les en-têtes de colonne quand tu descends l’ascenseur
+- ✅ Cohérence et ergonomie : affecter les équipes cochées dans la page classement n’est pas dans le menu admin  (je vous laisse décider si c’est judicieux ou non ) mais naturellement j’ai été cherché la fonction dans le menu admin. (note : depuis la page Equipes, option pour affecter depuis un classement d'une autre compétition/saison terminée, mais pas depuis le classement de la compétition en cours)
+- ✅ Compétition affichée comme Verrouillée dans Equipes alors qu'elle est déverrouillée dans Competitions (problème de statut en BDD entre admin1 et admin2 ?)
+
+
+
+**Nico (14/09/2026)**:
+- ✅ Page « Equipes » : (PROBLEME CRITIQUE) Je ne parviens pas à ajouter de joueurs dans aucune composition, je pense c’est l’auto-complétion qui génère une erreur de droits, voir image ci-dessous  « Accès refusé, vous n’avez pas les droits nécessaires » en notification (à chaque lettre que je rajoute). Je suis repassé par l’admin V1 pour ajouter les joueurs dans les compos (de mémoire à Combourg j’avais eu le même genre de difficulté). A tester peut être avec d’autres profils que le mien… ?
+- ✅ Page classements : Bouton « extractions PDF » côté classement public => les 3 pdf proposés génèrent une erreur 500 « Internal Server Error ». C’est pareil en admin V1 d’ailleurs donc pas lié à l’interface V2 probablement. Par contre côté classement privé RAS ça fonctionne.
+- ✅ Vérification des licences : Les licences « loisirs » (sans option compétition) apparaissent comme les autres, sans distinction ni warning les concernant (sauf le certificat médical compétition qui était absent, c’est ce qui m’a mis la puce à l’oreille). Je ne sais pas si exalto permet de mettre un certif « compét » avec une licence loisir mais si c’est possible on risque d’en râter.
+- ✅ Vérification des licences (idée d’amélioration) : Prévoir 3 modes de vérification des licences dans les feuilles de présence (en paramètre de la compétition) :
+  - Mode national (comme actuellement, licence compétition active, certif compétition, pagaie verte, surclassement)
+  - Mode régional (licence compétition active, certif compétition, pagaie jaune)
+  - Mode libre (aucun vérification ou alors juste licence)
+
+- ✅ Changement de joueur X, A, E vers -, C => contrôle validité licence, certificat médical, pagaie verte, surclassement, etc... (côté front et back) selon le profil/mandat de l'utilisateur.
 
 
 

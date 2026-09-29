@@ -23,6 +23,7 @@ const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 const config = useRuntimeConfig()
 const toast = useToast()
+const { notifyIneligible } = useEligibilityMessages()
 const imageVersionStore = useImageVersionStore()
 
 // State
@@ -65,6 +66,7 @@ const transferCompetitions = ref<TransferCompetition[]>([])
 const transferCompetition = ref('')
 const transferring = ref(false)
 const transferCompetitionsLoading = ref(false)
+const transferIncludePlayers = ref(true)
 
 // Confirm modal state
 const confirmModal = ref<{ open: boolean; title: string; message: string; action: () => void }>({
@@ -92,7 +94,8 @@ const canEditInline = computed(() => authStore.profile <= 6 && competitionInfo.v
 const canPublish = computed(() => authStore.profile <= 6 && competitionInfo.value?.statut === 'ON')
 const canUnpublish = computed(() => authStore.profile <= 3 && competitionInfo.value?.statut === 'ON')
 const canConsolidate = computed(() => authStore.profile <= 6 && competitionInfo.value?.statut === 'ON')
-const canTransfer = computed(() => authStore.profile <= 4)
+// Assigning teams from a ranking is only meaningful once the competition is over
+const canTransfer = computed(() => authStore.profile <= 4 && competitionInfo.value?.statut === 'END')
 const canChangeType = computed(() => authStore.profile <= 2)
 // Past seasons (older than the active one) are read-only for profiles > 2, so
 // only profiles <= 2 may change a competition status there (PROMPTS.md).
@@ -181,6 +184,15 @@ const showPhaseMatchScore = (match: RankingPhaseMatch, includesUnlocked: boolean
 
 // A winner/loser may only be highlighted once the game is validated.
 const phaseMatchHasWinner = (match: RankingPhaseMatch): boolean => match.validated
+
+// Winner/loser text styling for elimination phase matches (name + score).
+const phaseMatchSideClass = (match: RankingPhaseMatch, includesUnlocked: boolean, isSideA: boolean): string => {
+  if (!showPhaseMatchScore(match, includesUnlocked) || !phaseMatchHasWinner(match)) return 'text-header-900 dark:text-header-50'
+  const isWinner = isSideA ? match.scoreA! > match.scoreB! : match.scoreB! > match.scoreA!
+  return isWinner
+    ? 'font-bold text-success-700 dark:text-success-300'
+    : 'text-header-500 dark:text-header-400'
+}
 
 // Status badge colors (same as teams page)
 const getStatusColor = (status: string) => {
@@ -555,13 +567,15 @@ const doTransfer = async () => {
     const result = await api.post<TransferResult>('/admin/rankings/transfer', {
       teamIds: selectedIds.value,
       targetSeason: transferSeason.value,
-      targetCompetition: transferCompetition.value
+      targetCompetition: transferCompetition.value,
+      includePlayers: transferIncludePlayers.value
     })
     let msg = t('rankings.transfer.success', { count: result.transferred })
     if (result.skipped > 0) {
       msg += ' - ' + t('rankings.transfer.skipped', { count: result.skipped })
     }
     toast.add({ title: t('common.success'), description: msg, color: 'success', duration: 4000 })
+    notifyIneligible(result.ineligible)
     selectedIds.value = []
     selectAll.value = false
   } catch (error: unknown) {
@@ -897,7 +911,7 @@ const editValueForField = (field: string, value: number): string => {
             <!-- "Égalités" dropdown — only when teams are tied (poules or general ranking) -->
             <div v-if="hasTies" class="relative" data-tour="ties-justification">
               <button
-                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 transition-colors text-sm flex items-center gap-1"
+                class="ties-dropdown-trigger px-3 py-1.5 border border-warning-400 dark:border-warning-600 text-warning-700 dark:text-warning-300 rounded-lg hover:bg-warning-50 dark:hover:bg-warning-950 transition-colors text-sm flex items-center gap-1"
                 @click="toggleTiesDropdown($event)"
               >
                 <UIcon name="heroicons:scale" class="w-4 h-4" />
@@ -1407,17 +1421,19 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, computedIncludesUnlocked, true)"
                         >{{ match.equipeA }}</span>
-                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-900 dark:text-header-50">
+                        <span class="w-16 text-center text-sm font-mono">
                           <template v-if="showPhaseMatchScore(match, computedIncludesUnlocked)">
-                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
+                            <span :class="phaseMatchSideClass(match, computedIncludesUnlocked, true)">{{ match.scoreA }}</span>
+                            <span class="text-header-900 dark:text-header-50"> - </span>
+                            <span :class="phaseMatchSideClass(match, computedIncludesUnlocked, false)">{{ match.scoreB }}</span><span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
                           </template>
-                          <template v-else>—</template>
+                          <template v-else><span class="text-header-900 dark:text-header-50">—</span></template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="showPhaseMatchScore(match, computedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, computedIncludesUnlocked, false)"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>
@@ -1459,7 +1475,17 @@ const editValueForField = (field: string, value: number): string => {
         <div id="published-ranking" class="flex-1 min-w-0 bg-white dark:bg-header-900 rounded-lg shadow">
           <!-- Column header -->
           <div class="px-4 py-3 bg-success-700 rounded-t-lg flex items-center justify-between gap-2">
-            <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-white">{{ t('rankings.tabs.published') }}</span>
+              <span
+                v-if="isRankingDifferent"
+                class="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-800 dark:text-amber-200"
+                :title="t('rankings.publish.different')"
+              >
+                <UIcon name="heroicons:exclamation-triangle" class="w-4 h-4 shrink-0" />
+                {{ t('rankings.publish.different_short') }}
+              </span>
+            </div>
             <a
               href="#computed-ranking"
               class="lg:hidden text-xs text-success-200 hover:text-white flex items-center gap-1"
@@ -1486,14 +1512,6 @@ const editValueForField = (field: string, value: number): string => {
                   {{ formatDate(competitionInfo.datePublication) }}
                   ({{ t('rankings.compute.by') }} {{ competitionInfo.userNamePublication }})
                 </div>
-                <!-- Alert if different -->
-                <div
-                  v-if="isRankingDifferent"
-                  class="mt-1 flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded text-sm text-amber-800 dark:text-amber-200"
-                >
-                  <UIcon name="heroicons:exclamation-triangle" class="w-5 h-5 shrink-0" />
-                  {{ t('rankings.publish.different') }}
-                </div>
               </template>
               <div v-else class="text-sm text-header-900 dark:text-header-50 italic">
                 {{ t('rankings.publish.not_published') }}
@@ -1503,15 +1521,6 @@ const editValueForField = (field: string, value: number): string => {
             <div class="flex-1" />
 
             <!-- RIGHT: Action buttons -->
-            <button
-              v-if="canTransfer && selectedIds.length > 0"
-              class="px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center gap-1"
-              @click="transferModalOpen = true"
-            >
-              <UIcon name="heroicons:arrow-right-circle" class="w-4 h-4" />
-              {{ t('rankings.transfer.button') }} ({{ selectedIds.length }})
-            </button>
-
             <!-- PDF dropdown (public) -->
             <div v-if="pdfUrls" class="relative">
               <button
@@ -1699,6 +1708,19 @@ const editValueForField = (field: string, value: number): string => {
                   </div>
                 </div>
               </div>
+
+              <!-- Assign checked teams (right below the table, no scroll needed after selecting) -->
+              <div v-if="canTransfer" class="mt-2 flex justify-end">
+                <button
+                  class="px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="selectedIds.length === 0"
+                  :title="selectedIds.length === 0 ? t('rankings.transfer.nothing_selected') : undefined"
+                  @click="transferModalOpen = true"
+                >
+                  <UIcon name="heroicons:arrow-right-circle" class="w-4 h-4" />
+                  {{ t('rankings.transfer.button') }} ({{ selectedIds.length }})
+                </button>
+              </div>
             </div>
 
             <!-- Published phases (CP only, read-only, sorted by niveau ASC) -->
@@ -1772,17 +1794,19 @@ const editValueForField = (field: string, value: number): string => {
                       <div v-for="match in phase.matches" :key="match.id" class="flex items-center gap-1 py-1">
                         <span
                           class="flex-1 text-sm text-right truncate"
-                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreA! > match.scoreB! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, publishedIncludesUnlocked, true)"
                         >{{ match.equipeA }}</span>
-                        <span class="w-16 text-center text-sm font-mono font-semibold text-header-900 dark:text-header-50">
+                        <span class="w-16 text-center text-sm font-mono">
                           <template v-if="showPhaseMatchScore(match, publishedIncludesUnlocked)">
-                            {{ match.scoreA }} - {{ match.scoreB }}<span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
+                            <span :class="phaseMatchSideClass(match, publishedIncludesUnlocked, true)">{{ match.scoreA }}</span>
+                            <span class="text-header-900 dark:text-header-50"> - </span>
+                            <span :class="phaseMatchSideClass(match, publishedIncludesUnlocked, false)">{{ match.scoreB }}</span><span v-if="!match.validated" :title="t('rankings.provisional')" class="text-warning-600 dark:text-warning-400">*</span>
                           </template>
-                          <template v-else>—</template>
+                          <template v-else><span class="text-header-900 dark:text-header-50">—</span></template>
                         </span>
                         <span
                           class="flex-1 text-sm truncate"
-                          :class="showPhaseMatchScore(match, publishedIncludesUnlocked) && phaseMatchHasWinner(match) && match.scoreB! > match.scoreA! ? 'font-bold text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
+                          :class="phaseMatchSideClass(match, publishedIncludesUnlocked, false)"
                         >{{ match.equipeB }}</span>
                       </div>
                     </template>
@@ -1966,6 +1990,12 @@ const editValueForField = (field: string, value: number): string => {
             </option>
           </select>
         </div>
+
+        <!-- Include presence sheets -->
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input v-model="transferIncludePlayers" type="checkbox" class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600" >
+          <span class="text-sm text-header-900 dark:text-header-50">{{ t('rankings.transfer.include_players') }}</span>
+        </label>
       </div>
 
       <template #footer>

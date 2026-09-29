@@ -117,9 +117,7 @@ class AdminAuthController extends AbstractController
         $mandates = $this->loadMandates($user->getCode());
         $userData = $user->toArray();
         $userData['mandates'] = $mandates;
-        $userData['activeMandate'] = null;
-        $userData['effectiveProfile'] = $user->getNiveau();
-        $userData['effectiveFilters'] = $userData['filters'];
+        $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
         return $this->json([
             'user' => $userData
@@ -148,14 +146,47 @@ class AdminAuthController extends AbstractController
 
         $userData = $user->toArray();
         $userData['mandates'] = $mandates;
-        $userData['activeMandate'] = null;
-        $userData['effectiveProfile'] = $user->getNiveau();
-        $userData['effectiveFilters'] = $userData['filters'];
+        $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
         return $this->json([
             'token' => $token,
             'user' => $userData
         ]);
+    }
+
+    /**
+     * Populate activeMandate/effectiveProfile/effectiveFilters on $userData from whichever
+     * mandate is currently active on $user (set by ActiveMandateListener from the
+     * X-Active-Mandate header), mirroring AdminAuthMandateController::switchMandate().
+     *
+     * @param array<string, mixed> $userData
+     * @param array<int, array<string, mixed>> $mandates
+     */
+    private function applyActiveMandateToUserData(array &$userData, User $user, array $mandates): void
+    {
+        $activeMandateId = $user->getActiveMandateId();
+        $mandate = null;
+        if ($activeMandateId !== null) {
+            foreach ($mandates as $m) {
+                if ($m['id'] === $activeMandateId) {
+                    $mandate = $m;
+                    break;
+                }
+            }
+        }
+
+        if ($mandate) {
+            $userData['activeMandate'] = [
+                'id' => $mandate['id'],
+                'libelle' => $mandate['libelle'],
+            ];
+            $userData['effectiveProfile'] = $mandate['niveau'];
+            $userData['effectiveFilters'] = $mandate['filters'];
+        } else {
+            $userData['activeMandate'] = null;
+            $userData['effectiveProfile'] = $user->getNiveau();
+            $userData['effectiveFilters'] = $userData['filters'];
+        }
     }
 
     /**

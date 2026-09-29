@@ -1,7 +1,9 @@
 # Plan d'action CI/CD GitHub Actions
 
-**Date** : 2026-07-17 (mis à jour 2026-07-22)
-**Statut** : 🟢 En cours — Phases 0-1 terminées, Phase 2 en cours
+**Date** : 2026-07-17 (mis à jour 2026-07-31)
+**Statut** : ✅ **Terminé** — phases 0 à 8 livrées, déployées et éprouvées en conditions
+réelles (préprod auto, prod manuelle, préprod expérimentale). Ne restent que des
+affinages optionnels, tracés dans le journal d'exécution.
 **Objectif** : Mettre en place un pipeline CI/CD progressif, sécurisé et adapté aux différentes briques du projet (legacy PHP, api2 Symfony/FrankenPHP, Nuxt app2/app3/app4, WordPress), avec déploiement one-click préprod/prod sur VPS et support de features expérimentales en préprod.
 
 > **📍 Avancement** (voir le journal d'exécution :
@@ -15,8 +17,10 @@
 > | **3** Build & smoke | ✅ Éprouvée — `build-nuxt` (nuxt build app2/3/4) + `smoke-api2` (boot Symfony sans DB) verts sur PR réelle |
 > | **3bis** Trivy image | 🟢 En cours — `trivy-image.yml` scanne les images de base (php-apache/frankenphp/mariadb) ; **non bloquant → onglet Security** (596 HIGH/CRITICAL amont non actionnables), cron hebdo + manuel. Build Docker écarté (couvert par lint-docker) |
 > | **5** CD préprod | ✅ **COMPLET** — `deploy-preprod.yml` (push develop) + `deploy-wrapper.sh` (`vps-manager`). **Merge develop → déploiement préprod 100 % AUTO réussi le 2026-07-24, rebuild des 3 apps inclus** (#246). 8 pièges d'infra franchis (le `i/o timeout` = aléa réseau transitoire de connexion + build long ~7 min, PAS l'IPv6). Reste non bloquant : rollback via Actions, optim durée |
-> | **6** Deploy prod | ✅ **1er déploiement prod RÉUSSI (2026-07-30)** — `deploy-prod.yml` (`workflow_dispatch`, `environment: production` → approbation manuelle, vérif `merge-base --is-ancestor origin/main`) + retry SSH auto. 2 pièges Phase 6 franchis : **remote git `/data/kpi` SSH→HTTPS** (deploy sans clé github) et **backup pré-migration** (ACL `deploy` sur `/data/backups/kpi` à poser). Backup pré-migration = **dump dédié horodaté** (n'écrase plus le cron). Reste NON bloquant : poser l'ACL backup + re-vérifier au prochain déploiement api2 ; durcir le retry (timeout 120s) ; runbook rollback DB (Phase 8) |
-> | **4, 7-8** | ⬜ À faire |
+> | **6** Deploy prod | ✅ **1er déploiement prod RÉUSSI (2026-07-30)** — `deploy-prod.yml` (`workflow_dispatch`, `environment: production` → approbation manuelle, vérif `merge-base --is-ancestor origin/main`) + retry SSH auto. 2 pièges Phase 6 franchis : **remote git `/data/kpi` SSH→HTTPS** (deploy sans clé github) et **backup pré-migration** (ACL `deploy` sur `/data/backups/kpi` à poser). Backup pré-migration = **dump dédié horodaté** (n'écrase plus le cron), **ACL backup posée le 2026-07-31**. Reste NON bloquant : constater un dump au prochain déploiement api2 ; durcir le retry (timeout 120s) |
+> | **4** Tests fonctionnels | ✅ **Socle livré** — PHPUnit sur api2, 2 suites (`unit` sans DB / `integration` sur fixtures `SQL/fixtures/` + MariaDB éphémère), job `tests-api2` **bloquant**, 27 tests / 115 assertions. Vert sur CI réelle (44 s). Reste à étendre la **couverture**, brique par brique |
+> | **7** Préprod expérimentale | ✅ **Éprouvée (2026-07-31)** — `deploy-preprod-experimental.yml` + modes `--experimental` / `--check-expiry` du wrapper + bandeau app2/app4 + cron horaire. 2 runs réels : bandeau sur les 2 apps, code de la branche bien servi (SHA ≠ develop), retour auto à `develop` par le cron |
+> | **8** Post-déploiement | ✅ **Livrée** — smoke tests **multi-URL** (une par brique, actifs en préprod/prod) + [DEPLOYMENT_RUNBOOK.md](../../infrastructure/DEPLOYMENT_RUNBOOK.md) (déclenchement, diagnostic, rollback code, rollback DB). §8.2 notification et §8.3 uptime externe **volontairement écartés** |
 >
 > Ce document reste le **plan cible** ; les écarts d'exécution assumés (Node 22 au
 > lieu de 20, PHPStan démarré au level 3, etc.) sont tracés dans le journal.
@@ -528,9 +532,9 @@ Deux niveaux :
       migration + smoke OK sur `/data/kpi`. Voir le journal pour les 2 pièges Phase 6
       franchis (remote git SSH→HTTPS, ACL backup) et l'aléa réseau (rerun).
 - [x] Secrets prod jamais lisibles en préprod (prouvé en Phase 5, `test-env-isolation.yml`)
-- [ ] **Backup DB pré-migration effectif** — le dump dédié horodaté est codé, mais l'ACL
-      `deploy` sur `/data/backups/kpi` reste à poser (cf. journal) → à re-vérifier au
-      prochain déploiement touchant api2.
+- [x] **Backup DB pré-migration** — dump dédié horodaté codé, et **ACL `deploy` sur
+      `/data/backups/kpi` posée le 2026-07-31**. Reste à *constater* un dump réellement
+      écrit au prochain déploiement prod touchant api2 (migration = no-op aujourd'hui).
 - [ ] Déclenchement par tag `v*` — **volontairement écarté** (choix : `workflow_dispatch`
       seul). Rollback prod runbook → Phase 8.
 
@@ -602,12 +606,19 @@ Un cron sur le VPS (systemd timer ou `crontab -u deploy`) vérifie toutes les he
 
 ### 7.6 Validation Phase 7
 
-Outillage livré le 2026-07-30 (workflow + wrapper + bandeau + cron) ; les 3 cases
-demandent un **run réel** et restent donc à cocher.
+Outillage livré le 2026-07-30 (workflow + wrapper + bandeau + cron), **éprouvé par
+un run réel le 2026-07-31** (branche `test/phase7-experimental`, `ttl_hours=1`).
 
-- [ ] Déployer `feature/test` sur préprod via bouton
-- [ ] Bandeau expérimental visible sur toutes les apps
-- [ ] Après TTL, retour auto sur `develop`
+- [x] Déployer `feature/test` sur préprod via bouton
+- [x] Bandeau expérimental visible sur toutes les apps — constaté sur **app2 et app4**
+- [x] Après TTL, retour auto sur `develop` — cron `--check-expiry`, marqueur nettoyé
+
+Un **2ᵉ run** (marqueur réellement commité) a levé la seule réserve du 1ᵉʳ : le
+bandeau y affiche le SHA `fcd4ea4` — **différent de `develop`** — et le marqueur
+`[PHASE7-TEST]` apparaît dans app4. **Le code de la branche feature est donc bien
+servi en préprod**, et pas seulement le bandeau. Détail des deux runs et des deux
+pièges rencontrés : « Épreuve Phase 7 » dans
+[CI_CD_EXECUTION_NOTES.md](./CI_CD_EXECUTION_NOTES.md).
 
 **Écart assumé vs §7.3** : le marqueur n'est PAS `sources/EXPERIMENTAL_FLAG.json`
 mais `experimental-flag.json` déposé dans **`.output/public/` de chaque app**.

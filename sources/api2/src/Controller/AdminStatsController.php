@@ -106,7 +106,7 @@ class AdminStatsController extends AbstractController
 
         // Get active season if not provided
         if (!$codeSaison) {
-            $sql = "SELECT Code FROM kp_saison WHERE Actif = 'O' LIMIT 1";
+            $sql = "SELECT Code FROM kp_saison WHERE Etat = 'A' LIMIT 1";
             $result = $this->connection->executeQuery($sql);
             $codeSaison = $result->fetchOne() ?: date('Y');
         }
@@ -123,7 +123,7 @@ class AdminStatsController extends AbstractController
 
         // Check profile restrictions
         $user = $this->getUser();
-        $profile = $user instanceof \App\Entity\User ? $user->getNiveau() : 10;
+        $profile = $user instanceof \App\Entity\User ? $user->getEffectiveNiveau() : 10;
         $restrictedTypes = ['CJouees3', 'CJouees3b', 'LicenciesNationaux', 'CoherenceMatchs'];
         if ($profile > 6 && in_array($statType, $restrictedTypes)) {
             return $this->json(['message' => 'Access denied for this stat type'], 403);
@@ -399,14 +399,14 @@ class AdminStatsController extends AbstractController
 
         // Get active season if not provided
         if (!$codeSaison) {
-            $sql = "SELECT Code FROM kp_saison WHERE Actif = 'O' LIMIT 1";
+            $sql = "SELECT Code FROM kp_saison WHERE Etat = 'A' LIMIT 1";
             $result = $this->connection->executeQuery($sql);
             $codeSaison = $result->fetchOne() ?: date('Y');
         }
 
         // Check profile restrictions
         $user = $this->getUser();
-        $profile = $user instanceof \App\Entity\User ? $user->getNiveau() : 10;
+        $profile = $user instanceof \App\Entity\User ? $user->getEffectiveNiveau() : 10;
         $restrictedTypes = ['CJouees3', 'CJouees3b', 'LicenciesNationaux', 'CoherenceMatchs'];
         if ($profile > 6 && in_array($statType, $restrictedTypes)) {
             return $this->json(['message' => 'Access denied for this stat type'], 403);

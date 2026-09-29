@@ -250,28 +250,28 @@ function handleSave() {
 <template>
   <div>
     <button
-      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-300 rounded-lg hover:bg-primary-100 transition-colors"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 border border-primary-300 dark:border-primary-800 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900 transition-colors"
       @click="toggleExpanded"
     >
       <UIcon :name="expanded ? 'i-heroicons-minus' : 'i-heroicons-plus'" class="w-4 h-4" />
       {{ t('users.modal.mandate_add') }}
     </button>
 
-    <div v-if="expanded" class="mt-3 p-3 border border-primary-200 bg-primary-50/50 rounded-lg space-y-3">
+    <div v-if="expanded" class="mt-3 p-3 border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-950/50 rounded-lg space-y-3">
       <!-- Error message -->
-      <div v-if="saveError" class="p-2 bg-danger-50 border border-danger-200 rounded text-xs text-danger-700">
+      <div v-if="saveError" class="p-2 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded text-xs text-danger-700 dark:text-danger-300">
         {{ saveError }}
       </div>
 
       <!-- Profile + Label -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.mandate_profile') }} <span class="text-danger-500">*</span>
           </label>
           <select
             v-model="form.niveau"
-            class="w-full px-2 py-1.5 border border-header-300 rounded text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-2 py-1.5 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
             <option v-for="opt in profileOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -279,14 +279,14 @@ function handleSave() {
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.mandate_label') }} <span class="text-danger-500">*</span>
           </label>
           <input
             v-model="form.libelle"
             type="text"
             maxlength="100"
-            class="w-full px-2 py-1.5 border border-header-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-2 py-1.5 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
         </div>
       </div>
@@ -294,14 +294,14 @@ function handleSave() {
       <!-- Seasons + Competitions -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.filter_seasons') }} <span class="text-danger-500">*</span>
           </label>
-          <div class="border border-header-300 rounded max-h-38 overflow-y-auto p-1.5 bg-white">
+          <div class="border border-header-300 dark:border-header-700 rounded max-h-38 overflow-y-auto p-1.5 bg-white dark:bg-header-900">
             <label
               v-for="s in seasons"
               :key="s.code"
-              class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer"
+              class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
             >
               <input
                 type="checkbox"
@@ -313,14 +313,14 @@ function handleSave() {
           </div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.filter_competitions') }}
             <span v-if="form.niveau >= 3" class="text-danger-500">*</span>
           </label>
-          <div class="border border-header-300 rounded p-1.5 bg-white">
+          <div class="border border-header-300 dark:border-header-700 rounded p-1.5 bg-white dark:bg-header-900">
             <label
               v-if="form.niveau < 3"
-              class="flex items-center gap-1.5 text-xs mb-1.5 cursor-pointer"
+              class="flex items-center gap-1.5 text-xs mb-1.5 cursor-pointer text-header-900 dark:text-header-50"
             >
               <input type="checkbox" :checked="allCompetitions" @change="toggleAllCompetitions">
               <span class="font-medium">{{ t('users.modal.filter_competitions_all') }}</span>
@@ -329,29 +329,29 @@ function handleSave() {
               <input
                 v-model="competitionSearch"
                 type="text"
-                class="w-full px-2 py-1 text-xs border border-header-200 rounded focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+                class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
                 :class="competitionSearch ? 'pr-6' : ''"
                 :placeholder="t('users.modal.filter_competitions_search')"
               >
               <button
                 v-if="competitionSearch"
-                class="absolute right-1.5 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
                 @click="competitionSearch = ''"
               >
                 <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
               </button>
             </div>
             <div class="relative max-h-28 overflow-y-auto">
-              <div v-if="competitionsLoading" class="absolute inset-0 flex items-center justify-center bg-white/70">
-                <span class="text-[10px] text-header-600">{{ t('common.loading') }}</span>
+              <div v-if="competitionsLoading" class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-header-900/70">
+                <span class="text-[10px] text-header-600 dark:text-header-300">{{ t('common.loading') }}</span>
               </div>
               <template v-if="!competitionsLoading">
                 <template v-for="(group, key) in groupedCompetitions" :key="key">
-                  <div class="text-[10px] font-semibold text-header-600 mt-1 mb-0.5">— {{ group.label }} —</div>
+                  <div class="text-[10px] font-semibold text-header-600 dark:text-header-300 mt-1 mb-0.5">— {{ group.label }} —</div>
                   <label
                     v-for="c in group.items"
                     :key="c.code"
-                    class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer"
+                    class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
                   >
                     <input
                       type="checkbox"
@@ -362,7 +362,7 @@ function handleSave() {
                     {{ c.code }} - {{ c.libelle }}
                   </label>
                 </template>
-                <div v-if="Object.keys(groupedCompetitions).length === 0" class="text-[10px] text-header-600 italic py-1">
+                <div v-if="Object.keys(groupedCompetitions).length === 0" class="text-[10px] text-header-600 dark:text-header-300 italic py-1">
                   {{ t('users.modal.filter_competitions_no_results') }}
                 </div>
               </template>
@@ -374,7 +374,7 @@ function handleSave() {
       <!-- Clubs + Journées -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.filter_clubs') }}
             <span v-if="form.niveau === 7" class="text-danger-500">*</span>
           </label>
@@ -382,15 +382,15 @@ function handleSave() {
             <input
               v-model="clubQuery"
               type="text"
-              class="w-full px-2 py-1.5 border border-header-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-2 py-1.5 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               :placeholder="t('users.modal.filter_clubs_placeholder')"
             >
-            <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-2 top-2 w-3.5 h-3.5 animate-spin text-header-600" />
-            <div v-if="showClubDropdown" class="absolute z-30 mt-1 w-full bg-white border border-header-200 rounded shadow-lg max-h-36 overflow-y-auto">
+            <UIcon v-if="clubLoading" name="i-heroicons-arrow-path" class="absolute right-2 top-2 w-3.5 h-3.5 animate-spin text-header-600 dark:text-header-300" />
+            <div v-if="showClubDropdown" class="absolute z-30 mt-1 w-full bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded shadow-lg max-h-36 overflow-y-auto">
               <button
                 v-for="club in clubResults"
                 :key="club.code"
-                class="w-full px-2 py-1.5 text-left text-xs hover:bg-primary-50"
+                class="w-full px-2 py-1.5 text-left text-xs text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950"
                 @click="selectClub(club)"
               >
                 {{ club.code }} - {{ club.libelle }}
@@ -401,22 +401,22 @@ function handleSave() {
             <span
               v-for="club in selectedClubs"
               :key="club.code"
-              class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary-100 text-primary-800 text-[10px] rounded-full"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-300 text-[10px] rounded-full"
             >
               {{ club.code }} - {{ club.libelle }}
-              <button class="text-primary-600 hover:text-primary-800 leading-none" @click="removeClub(club.code)">×</button>
+              <button class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 leading-none" @click="removeClub(club.code)">×</button>
             </span>
           </div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-header-900 mb-1">
+          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('users.modal.filter_gamedays') }}
             <span v-if="form.niveau === 5 || form.niveau === 6" class="text-danger-500">*</span>
           </label>
           <input
             v-model="form.filtreJournee"
             type="text"
-            class="w-full px-2 py-1.5 border border-header-300 rounded text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-2 py-1.5 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             :placeholder="t('users.modal.filter_gamedays_placeholder')"
           >
         </div>
@@ -424,12 +424,12 @@ function handleSave() {
 
       <!-- Events (profile <= 2 only) -->
       <div v-if="adminNiveau <= 2 && events.length > 0">
-        <label class="block text-xs font-medium text-header-900 mb-1">{{ t('users.modal.filter_events') }}</label>
-        <div class="border border-header-300 rounded max-h-38 overflow-y-auto p-1.5 bg-white">
+        <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('users.modal.filter_events') }}</label>
+        <div class="border border-header-300 dark:border-header-700 rounded max-h-38 overflow-y-auto p-1.5 bg-white dark:bg-header-900">
           <label
             v-for="evt in events"
             :key="evt.id"
-            class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer"
+            class="flex items-center gap-1.5 text-xs mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
           >
             <input
               type="checkbox"
@@ -444,7 +444,7 @@ function handleSave() {
       <!-- Actions -->
       <div class="flex justify-end gap-3 pt-2">
         <button
-          class="px-4 py-2 text-sm font-medium text-header-900 bg-header-200 border border-header-300 rounded-lg hover:bg-header-200 transition-colors"
+          class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 border border-header-300 dark:border-header-600 rounded-lg hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
           @click="expanded = false"
         >
           {{ t('users.modal.mandate_cancel') }}

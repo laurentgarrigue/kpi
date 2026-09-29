@@ -114,7 +114,7 @@ class FeuilleCltNiveau extends MyPage
         // QRCode en haut à droite - displayFPDF fonctionne avec MyPDF !
         $qr_x = 265;
         $qrcode = new QRcode('https://www.kayak-polo.info/Classements.php?Compet=' . $codeCompet . '&Group=' . $arrayCompetition['Code_ref'] . '&Saison=' . $codeSaison, 'L');
-        $qrcode->displayFPDF($pdf, $qr_x, 9, 21);
+        $qrcode->displayFPDF($pdf, $qr_x, 29, 21);
 
         // Pattern 8: Réactiver AutoPageBreak avec marges appropriées
         if ($arrayCompetition['Sponsor_actif'] == 'O' && isset($visuels['sponsor'])) {

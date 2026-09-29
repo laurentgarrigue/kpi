@@ -398,7 +398,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -473,7 +473,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -567,7 +567,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -642,11 +642,11 @@ class AdminGamesController extends AbstractController
         $refereeFields = ['Arbitre_principal', 'Arbitre_secondaire'];
 
         if (in_array($field, $scoreFields)) {
-            if ($user && $user->getNiveau() > 9) {
+            if ($user && $user->getEffectiveNiveau() > 9) {
                 return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
             }
         } elseif (in_array($field, $otherFields) || in_array($field, $refereeFields)) {
-            if ($user && $user->getNiveau() > 6) {
+            if ($user && $user->getEffectiveNiveau() > 6) {
                 return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
             }
         } else {
@@ -719,7 +719,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -748,12 +748,12 @@ class AdminGamesController extends AbstractController
      * Toggle validation/lock
      */
     #[Route('/{id}/validation', name: 'admin_games_toggle_validation', methods: ['PATCH'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_COMPETITION')]
+    #[IsGranted('ROLE_ORGANIZER')]
     public function toggleValidation(int $id): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 4) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -787,7 +787,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -814,12 +814,13 @@ class AdminGamesController extends AbstractController
      * Cycle statut ATT → ON → END → ATT
      */
     #[Route('/{id}/statut', name: 'admin_games_toggle_statut', methods: ['PATCH'], requirements: ['id' => '\d+'])]
-    #[IsGranted('ROLE_ORGANIZER')]
+    #[IsGranted('ROLE_SCORER')]
     public function toggleStatut(int $id): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        $niveau = $user?->getEffectiveNiveau() ?? 99;
+        if ($niveau > 6 && $niveau !== 9) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -868,7 +869,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -900,7 +901,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -961,7 +962,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -998,7 +999,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1062,7 +1063,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1105,7 +1106,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1147,7 +1148,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1183,7 +1184,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1220,7 +1221,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1271,7 +1272,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1313,7 +1314,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1375,7 +1376,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1430,7 +1431,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1497,7 +1498,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1773,7 +1774,7 @@ class AdminGamesController extends AbstractController
     {
         /** @var User|null $user */
         $user = $this->getUser();
-        if ($user && $user->getNiveau() > 6) {
+        if ($user && $user->getEffectiveNiveau() > 6) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
