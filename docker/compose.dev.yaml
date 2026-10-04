@@ -84,8 +84,7 @@ services:
             - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_CORS_ORIGINS=*
-            # Directive brute insérée dans le bloc mercure du Caddyfile (flag sans argument)
-            - MERCURE_EXTRA_DIRECTIVES=anonymous
+            - MERCURE_ANONYMOUS=1
             # Côté Symfony (symfony/mercure-bundle) : publication des updates.
             # Même secret que le hub ci-dessus, sinon les JWT publisher sont rejetés.
             - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}

@@ -38,12 +38,8 @@
 		subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
 		# CORS : mêmes origines que l'API (app2 / app4).
 		cors_origins {$MERCURE_CORS_ORIGINS}
-		# Directives optionnelles, injectées telles quelles. En dev : `anonymous`
-		# (abonnements anonymes autorisés) ; vide hors dev.
-		# ⚠️ `anonymous` est un FLAG sans argument : `anonymous 0` (ancienne forme) fait
-		# planter le parsing depuis FrankenPHP 1.13 (« unknown mercure directive "0" »),
-		# et le conteneur boucle en redémarrage sans autre log. Mesuré le 2026-10-04.
-		{$MERCURE_EXTRA_DIRECTIVES}
+		# En dev uniquement : autorise les abonnements anonymes.
+		anonymous {$MERCURE_ANONYMOUS:0}
 		# Transport persistant : sans lui, le défaut est `local` (buffer mémoire
 		# sans historique) et un abonné déconnecté perd définitivement les updates
 		# publiés pendant sa coupure — son Last-Event-ID n'a rien à rejouer.

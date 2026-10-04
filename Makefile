@@ -1098,26 +1098,11 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
 
-feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring [carry=1])
-	@# Modifications en cours : sur confirmation (ou carry=1), elles sont remisées (stash, non
-	@# suivis compris), main est mis à jour, puis elles sont réappliquées sur la nouvelle branche.
-	@# Sans confirmation : abandon, rien n'est touché. Le stash protège aussi les modifs du
-	@# `reset --hard origin/main` ci-dessous.
-	@carry=0; \
-	if [ -n "$$(git status --porcelain)" ]; then \
-		echo "Modifications en cours :"; \
-		git status -sb; \
-		if [ "$(carry)" = "1" ]; then \
-			carry=1; \
-		elif [ -t 0 ]; then \
-			printf "Les embarquer dans la nouvelle branche ? [o/N] "; \
-			read answer; \
-			case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) carry=1 ;; esac; \
-		fi; \
-		[ "$$carry" = "1" ] || { \
-			echo "⛔ Abandon — committe ou stashe, ou relance avec carry=1 pour les embarquer."; exit 1; }; \
-	fi; \
-	name="$(name)"; \
+feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring)
+	@[ -z "$$(git status --porcelain)" ] || { \
+		echo "⛔ Working tree non propre — committe ou stashe avant de changer de branche."; \
+		git status -sb; exit 1; }
+	@name="$(name)"; \
 	if [ -z "$$name" ]; then \
 		printf "Nom de la feature (sans le préfixe 'feature/') : "; \
 		read name; \
@@ -1133,28 +1118,12 @@ feature: ## Part d'un main à jour et crée une branche feature (nom demandé au
 		echo "⛔ Nom de branche invalide : '$$branch'"; exit 1; }; \
 	git rev-parse --verify --quiet "$$branch" >/dev/null && { \
 		echo "⛔ La branche '$$branch' existe déjà en local."; exit 1; } || true; \
-	if [ "$$carry" = "1" ]; then \
-		echo "→ Mise de côté des modifications (git stash -u)..."; \
-		git stash push -u --quiet -m "make feature → $$branch" || exit 1; \
-	fi; \
-	restore() { \
-		[ "$$carry" = "1" ] || return 0; \
-		if git stash pop --quiet; then \
-			echo "✔ Modifications réappliquées sur '$$(git rev-parse --abbrev-ref HEAD)'."; \
-		else \
-			echo "⚠️  Conflit en réappliquant les modifications : elles restent dans 'git stash list'"; \
-			echo "   (stash@{0}). Résous les conflits, puis 'git stash drop'."; \
-			return 1; \
-		fi; \
-	}; \
 	echo "→ Mise à jour de main..."; \
-	{ git fetch origin main --quiet \
-		&& git checkout main --quiet \
-		&& git reset --hard origin/main --quiet \
-		&& git checkout -b "$$branch" --quiet; } || { \
-		echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+	git fetch origin main --quiet || exit 1; \
+	git checkout main --quiet || exit 1; \
+	git reset --hard origin/main --quiet || exit 1; \
+	git checkout -b "$$branch" --quiet || exit 1; \
 	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
-	restore || exit 1; \
 	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
 
 version: ## Affiche les versions actuelles de chaque brique + le dernier tag de release

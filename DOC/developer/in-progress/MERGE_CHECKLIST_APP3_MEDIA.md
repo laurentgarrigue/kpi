@@ -131,9 +131,9 @@ git show FETCH_HEAD:scripts/media/media.sh > /tmp/media.sh
 bash /tmp/media.sh init
 ```
 
-- [x] `docker/.env` contient les 3 variables
-- [x] `bash /tmp/media.sh init` affiche un nombre de fichiers non nul pour chaque dossier
-- [x] Taille cohérente : `du -sh /data/media/kpi_preprod` ≈ `du -sh sources/img/{logo,KIP,Nations,presentations,schemas,referees}`
+- [ ] `docker/.env` contient les 3 variables
+- [ ] `bash /tmp/media.sh init` affiche un nombre de fichiers non nul pour chaque dossier
+- [ ] Taille cohérente : `du -sh /data/media/kpi_preprod` ≈ `du -sh sources/img/{logo,KIP,Nations,presentations,schemas,referees}`
 
 ### 1.2 ⌨️ Merger la PR sur `main`
 
@@ -144,20 +144,6 @@ make pr_checks && make pr_merge     # squash-merge sur main
 Le push sur `main` déclenche « Deploy preprod » automatiquement.
 
 - [ ] Workflow de déploiement préprod vert
-
-> **Piège rencontré en préprod (04/10/2026)** : « Deploy preprod » a échoué dès `git reset --hard` avec
-> `Entry 'sources/img/KIP/…' not uptodate. Cannot merge.` Cause : ~1 200 images de `sources/img/`
-> portaient le bit **`skip-worktree`** (ancienne astuce pour que les uploads ne gênent pas les
-> déploiements). `reset --hard` refuse de supprimer un fichier marqué ainsi. Corrigé en levant le bit
-> (cf. commande en 2.1), puis en relançant le job. **La prod a le même piège (1 203 fichiers)**.
->
-> **Second échec (même jour)** : api2 en boucle de redémarrage, sans aucun message dans ses logs. Le
-> rebuild a tiré `dunglas/frankenphp:php8.4` en **FrankenPHP 1.13.0** (1.12.4 en dev), dont le module
-> Mercure refuse `anonymous 0` : `anonymous` y est un flag sans argument. Visible seulement via
-> `frankenphp validate --config /etc/frankenphp/Caddyfile` dans l'image. Corrigé : directive injectée par
-> `MERCURE_EXTRA_DIRECTIVES` (`anonymous` en dev, non définie ailleurs). `MERCURE_ANONYMOUS` disparaît.
-> Le rollback automatique a lui aussi échoué (cf. Retour arrière) : la préprod est restée sur le nouveau
-> code, api2 hors service. La PR de revert ouverte par le workflow (#331) est à **fermer sans merger**.
 
 ### 1.3 🖥 Après le déploiement
 
@@ -173,7 +159,6 @@ make media_backup_list
 ```
 
 - [ ] `make media_status` : 6/6 sur les trois conteneurs
-- [ ] api2 démarre (`docker ps` : `healthy`, pas `Restarting`) — sinon `docker exec`/`docker run … frankenphp validate --config /etc/frankenphp/Caddyfile`
 - [ ] gd présente dans api2 (image reconstruite) : `docker exec kpi_preprod_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
 - [ ] Premier backup OK, **mot de passe copié en lieu sûr**
 - [ ] Uploads égarés (bug corrigé) : `ls -R sources/api2/public/img 2>/dev/null | head`
@@ -208,23 +193,7 @@ git show FETCH_HEAD:scripts/media/media.sh > /tmp/media.sh      # FETCH_HEAD : c
 bash /tmp/media.sh init
 ```
 
-**Puis lever le bit `skip-worktree`** (sinon « Deploy production » échoue sur `reset --hard`, cf. 1.2).
-D'abord vérifier qu'aucun fichier marqué ne diffère de sa version Git **hors des 6 dossiers** (ex.
-`sources/img/Pays/`, qui reste suivi : un fichier modifié y serait écrasé par le déploiement) :
-
-```bash
-cd /data/kpi
-git ls-files -v | grep '^S ' | cut -c3- | while IFS= read -r f; do
-  [ -e "$f" ] && [ "$(git rev-parse ":$f")" != "$(git hash-object -- "$f")" ] && echo "DIFF $f"
-done
-# → DIFF hors des 6 dossiers : copier le fichier de côté avant de continuer
-git ls-files -v -z | tr '\0' '\n' | grep '^S ' | cut -c3- | tr '\n' '\0' | xargs -0 git update-index --no-skip-worktree --
-git ls-files -v | grep -c '^S '     # → 0
-git status --short                  # → vide (sinon : ce sont des modifs locales réelles, à examiner)
-```
-
 - [ ] Variables présentes dans `docker/.env`
-- [ ] Plus aucun fichier `skip-worktree` (`git ls-files -v | grep -c '^S '` → 0)
 - [ ] `init` OK. En prod, le volume attendu est d'environ **437 Mo** au total pour `sources/img/`,
   dont la plus grande partie dans ces six dossiers.
 
@@ -300,7 +269,7 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 | « mkdir(): Permission denied » à l'upload, ou live/cache introuvable | `LEGACY_DOCUMENT_ROOT` absent de l'environnement d'api2 ou du worker : `docker exec <app>_api2 printenv LEGACY_DOCUMENT_ROOT`, puis `make docker_<env>_up` et `make api2_cache_clear` |
 | Images manquantes après déploiement | `make media_init` (récupère depuis l'historique Git), puis `make media_status` |
 | Image écrasée ou supprimée par erreur | `make media_restore snapshot=latest path=img/...`, puis `rsync` (commande affichée) |
-| Retour au code précédent (`make preprod_rollback sha=…`, ou rollback auto du wrapper) | ⚠️ **Échoue tel quel** : l'ancien code veut recréer les images suivies dans `sources/img/{logo,Nations,…}`, mais Docker y a créé les points de montage, possédés par `root` → « unable to create file … Permission non accordée », `reset --hard` avorte. Il faut d'abord vider ces dossiers (root/sudo, conteneurs arrêtés) **ou** préférer un correctif en avant. Les médias, eux, ne risquent rien : ils restent dans `HOST_MEDIA_PATH`. Les uploads faits entre-temps sont à recopier dans `sources/img/` si le retour arrière dure (`rsync -a --ignore-existing /data/media/<env>/img/ sources/img/`). |
+| Retour au code précédent (`make preprod_rollback sha=…`) | Sans risque pour les médias : ils restent dans le stockage. L'ancien code recrée les fichiers suivis dans `sources/img/`, et les anciens compose ne montent plus le stockage. Les uploads faits entre-temps restent dans `HOST_MEDIA_PATH` : à recopier dans `sources/img/` si le retour arrière dure (`rsync -a --ignore-existing /data/media/<env>/img/ sources/img/`). |
 
 ---
 
@@ -312,10 +281,10 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 | 0.2 | ⌨️ | Prévenir la branche scoring (chemins app3 → tag) | ☑ |
 | 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☑ |
 | 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☐ |
-| 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☑ |
+| 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☐ |
 | 1.2 | ⌨️ | Merge de la PR sur `main` (→ préprod auto) | ☐ |
 | 1.3 | 🖥 | Préprod : `docker_preprod_up`, `media_status`, 1er backup, contrôles | ☐ |
-| 2.1 | 🖥 | Prod : variables, dossiers, `media.sh init`, lever `skip-worktree` **avant déploiement** | ☐ |
+| 2.1 | 🖥 | Prod : variables, dossiers, `media.sh init` **avant déploiement** | ☐ |
 | 2.2 | ⌨️ 🌐 | `make release_tag` puis Deploy production sur le tag | ☐ |
 | 2.3 | 🖥 | Prod : `docker_prod_up`, `media_status`, 1er backup, contrôles | ☐ |
 | 2.4 | 🖥 | Cron de sauvegarde dans `vps-manager` + test de restauration | ☐ |

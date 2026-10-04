@@ -112,15 +112,8 @@ make feature                 # demande le nom au prompt, ou : make feature name=
 ```
 
 Une seule commande qui remplace `git checkout main && git pull && git checkout -b …` :
-elle remet `main` sur `origin/main` (`reset --hard`, même raison qu'au §4 de `pr_merge`),
-puis crée la branche.
-
-**Modifications en cours** (oubli de créer la branche avant de coder) : elle les affiche
-et demande `Les embarquer dans la nouvelle branche ? [o/N]`. Sur « o », elle les remise
-(`git stash -u`, non suivis compris), met `main` à jour, crée la branche et les y réapplique.
-Toute autre réponse : abandon, rien n'est touché. Hors terminal (script, CI), il faut
-`carry=1` pour confirmer. En cas de conflit à la réapplication, la branche est créée et
-les modifications restent dans `git stash list` : résoudre, puis `git stash drop`. Le préfixe `feature/`
+elle refuse un working tree sale, remet `main` sur `origin/main` (`reset --hard`,
+même raison qu'au §4 de `pr_merge`), puis crée la branche. Le préfixe `feature/`
 est ajouté tout seul — sauf si tu donnes déjà un préfixe connu (`fix/`, `hotfix/`,
 `chore/`, `docs/`, `refactor/`).
 
@@ -562,7 +555,7 @@ Les `wt_*` ne servent qu'en mode worktree ; les `pr_*` dans les deux modes.
 
 | Cible | Effet |
 |---|---|
-| `make feature [name=<n>] [carry=1]` | remet `main` à jour et crée la branche feature (nom au prompt si omis) ; embarque les modifs en cours après confirmation |
+| `make feature [name=<n>]` | remet `main` à jour et crée la branche feature (nom au prompt si omis) |
 | `make version` | versions de chaque brique + dernier tag + **versions déployées** (préprod/prod) |
 | `make wt_new name=<n> [base=<b>]` | *(worktree)* crée `feature/<n>` + worktree + env |
 | `make wt_list` / `wt_sync name=<n>` / `wt_rm name=<n>` | *(worktree)* liste / re-copie env / supprime |
