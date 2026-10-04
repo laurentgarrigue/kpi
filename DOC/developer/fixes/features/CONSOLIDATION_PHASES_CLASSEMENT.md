@@ -432,7 +432,7 @@ Testé et compatible avec :
 
 4. **API REST**
    - Endpoint pour consolider via API
-   - Intégration avec app2
+   - Intégration avec app2/app3
 
 ## Références
 

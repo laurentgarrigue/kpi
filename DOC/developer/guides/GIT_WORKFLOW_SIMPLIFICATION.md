@@ -11,11 +11,6 @@
 
 ---
 
-> **Note (28/09/2026)** : les mentions d'`app3` dans ce document désignent l'ancien prototype
-> de feuille de marque, **supprimé** du dépôt. Son code est conservé au tag Git
-> `archive/app3-matchsheet`. Le nom `sources/app3/` est désormais réservé au futur site public
-> (cf. [PUBLIC_SITE_REDESIGN_STRATEGY.md](../in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
-
 ## 0. Résumé exécutif
 
 Les pannes à répétition (merge develop, déploiement préprod, merge main, PR

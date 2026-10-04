@@ -86,11 +86,10 @@ class ImageOperationsService
 
     private string $documentRoot;
 
-    public function __construct(string $legacyDocumentRoot)
+    public function __construct()
     {
-        // Legacy tree root (/var/www/html), where img/ lives. Not $_SERVER['DOCUMENT_ROOT']:
-        // under FrankenPHP it is /app/public, which would write uploads into api2/public/img.
-        $this->documentRoot = rtrim($legacyDocumentRoot, '/');
+        // Get document root from server or use default
+        $this->documentRoot = $_SERVER['DOCUMENT_ROOT'] ?? dirname(__DIR__, 4);
     }
 
     /**

@@ -282,7 +282,7 @@ class AdminStatsController extends AbstractController
         }
 
         // Logo path
-        $logoPath = $this->getParameter('legacy_document_root') . '/img/logoKPI-medium.png';
+        $logoPath = dirname(__DIR__, 3) . '/img/logoKPI-medium.png';
         $logoBase64 = '';
         if (file_exists($logoPath)) {
             $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));

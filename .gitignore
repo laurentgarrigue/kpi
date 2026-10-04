@@ -105,6 +105,11 @@ sources/live/cache/
 !sources/live/cache/.gitkeep
 !sources/live/cache/logos/.gitkeep
 !sources/live/cache/archives/.gitkeep
+sources/img/KIP/players/*.png
+!sources/img/KIP/players/none.png
+sources/img/KIP/boats/*.png
+sources/img/KIP/vests/*.png
+sources/img/KIP/helmets/*.png
 docker/db/mysql/*
 !docker/db/mysql/.gitkeep
 docker/db/mysqlwp/*
@@ -174,18 +179,8 @@ sources/live/logs
 
 # Medias
 sources/doc/*.wmv
-# Médias uploadés : stockés HORS du dépôt (HOST_MEDIA_PATH), montés à ces emplacements.
-# Liste à garder alignée sur MEDIA_DIRS (scripts/media/media.sh) et les montages compose.
-# Cf. DOC/developer/infrastructure/MEDIA_STORAGE.md
-sources/img/KIP/
-sources/img/logo/
-sources/img/Nations/
-sources/img/presentations/
-sources/img/schemas/
-sources/img/referees/
-# Stockage médias local par défaut (HOST_MEDIA_PATH=./media/) et restaurations
-docker/media/
-docker/media.restore-*/
+sources/img/KIP/teams/
+sources/img/KIP/players_2022/
 
 docker/nginxlogs/access.log
 docker/nginxlogs/error.log

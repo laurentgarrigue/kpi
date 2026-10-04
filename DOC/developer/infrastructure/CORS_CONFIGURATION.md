@@ -211,7 +211,7 @@ Same configuration as development.
 ```php
 preg_match('/^https?:\/\/.*\.localhost$/', $origin)
 ```
-Matches any subdomain of `.localhost` (e.g., `app.kpi.localhost`, `test.kpi.localhost`)
+Matches any subdomain of `.localhost` (e.g., `app3.localhost`, `test.kpi.localhost`)
 
 ## CORS Headers Explained
 

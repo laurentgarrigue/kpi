@@ -19,14 +19,6 @@ services:
             - 80${DOCKER_SUFFIXE_PORT}:80
         volumes:
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - ../DOC:/var/www/html/DOC
             - ${HOST_WORDPRESS_PATH}:/var/www/html/wordpress
             - ./MyParams.php:/var/www/html/commun/MyParams.php
@@ -72,9 +64,6 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
-            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
-            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
-            - LEGACY_DOCUMENT_ROOT=/var/www/html
             - APP_ENV=dev
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json
             - APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime
@@ -102,14 +91,6 @@ services:
             # AdminTvController). Seul montage legacy nécessaire : api2 n'utilise
             # ni MyParams.php, ni MyConfig.php, ni DOC/.
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
             # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
             # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
@@ -156,20 +137,9 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
-            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
-            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
-            - LEGACY_DOCUMENT_ROOT=/var/www/html
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - ./MyParams.php:/var/www/html/commun/MyParams.php
             - ./MyConfig.php:/var/www/html/commun/MyConfig.php
         networks:
@@ -271,6 +241,40 @@ services:
             - "traefik.http.routers.app2.entrypoints=websecure"
             - "traefik.http.routers.app2.tls=true"
             - "traefik.http.services.app2.loadbalancer.server.port=3000"
+
+    node_app3:
+        container_name: kpi_node_app3
+        build:
+            context: ../sources/app3
+            dockerfile: ../../docker/node/Dockerfile
+        working_dir: /app
+        user: "${USER_ID}:${GROUP_ID}"
+        # ⚠️ Pas de démarrage automatique (contrairement à node_app2 / node_app4) :
+        # `npm run dev` échoue sur "dotenv: not found" — dotenv-cli manque dans les
+        # node_modules d'app3. Problème préexistant, indépendant de FrankenPHP.
+        # Pour lancer app3 : `make app3_npm_install` puis `make app3_dev_terminal`.
+        command: ["tail", "-f", "/dev/null"]
+        volumes:
+            - ../sources/app3:/app
+        environment:
+            - HOST=0.0.0.0
+            - PORT=3003
+            - TZ=Europe/Paris
+            - LANG=fr_FR.UTF-8
+            - LANGUAGE=fr_FR:fr
+            - LC_ALL=fr_FR.UTF-8
+        networks:
+            - network_kpi
+            - traefiknetwork
+        ports:
+            - "3003:3003"
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app3.rule=Host(`${APP3_DOMAIN_NAME}`)"
+            - "traefik.http.routers.app3.entrypoints=websecure"
+            - "traefik.http.routers.app3.tls=true"
+            - "traefik.http.services.app3.loadbalancer.server.port=3003"
 
     node_wsm:
         container_name: kpi_node_wsm

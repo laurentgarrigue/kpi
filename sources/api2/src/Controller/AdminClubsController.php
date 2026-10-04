@@ -338,7 +338,7 @@ class AdminClubsController extends AbstractController
         $compets = $this->connection->fetchAllAssociative($sqlCompets, [$numero]);
 
         // Find the most recent team photo from /img/KIP/teams/
-        $teamsDir = $this->getParameter('legacy_document_root') . '/img/KIP/teams/';
+        $teamsDir = ($_SERVER['DOCUMENT_ROOT'] ?? dirname(__DIR__, 4)) . '/img/KIP/teams/';
         $latestPhoto = null;
         $latestSaison = null;
         if (is_dir($teamsDir)) {

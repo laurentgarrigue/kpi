@@ -4,7 +4,7 @@
 **Statut** : ✅ **Terminé** — phases 0 à 8 livrées, déployées et éprouvées en conditions
 réelles (préprod auto, prod manuelle, préprod expérimentale). Ne restent que des
 affinages optionnels, tracés dans le journal d'exécution.
-**Objectif** : Mettre en place un pipeline CI/CD progressif, sécurisé et adapté aux différentes briques du projet (legacy PHP, api2 Symfony/FrankenPHP, Nuxt app2/app4, WordPress), avec déploiement one-click préprod/prod sur VPS et support de features expérimentales en préprod.
+**Objectif** : Mettre en place un pipeline CI/CD progressif, sécurisé et adapté aux différentes briques du projet (legacy PHP, api2 Symfony/FrankenPHP, Nuxt app2/app3/app4, WordPress), avec déploiement one-click préprod/prod sur VPS et support de features expérimentales en préprod.
 
 > **📍 Avancement** (voir le journal d'exécution :
 > [CI_CD_EXECUTION_NOTES.md](./CI_CD_EXECUTION_NOTES.md)) :
@@ -26,12 +26,6 @@ affinages optionnels, tracés dans le journal d'exécution.
 > lieu de 20, PHPStan démarré au level 3, etc.) sont tracés dans le journal.
 
 ---
-
-> **⚠️ Note (29/09/2026) — `develop` n'existe plus.** Depuis la consolidation du 2026-09-13,
-> `main` est la seule branche permanente : un merge sur `main` déploie la préprod, et la prod se
-> déploie à partir d'un tag `vX.Y.Z` posé sur `main`. Les mentions de `develop` dans ce document
-> décrivent l'organisation d'origine. Référence à jour : [GIT_WORKFLOW.md](../../guides/GIT_WORKFLOW.md) et
-> [DEPLOYMENT_RUNBOOK.md](../../infrastructure/DEPLOYMENT_RUNBOOK.md).
 
 ## 🎯 Vision d'ensemble
 
@@ -168,6 +162,7 @@ jobs:
       legacy: ${{ steps.filter.outputs.legacy }}
       api2:   ${{ steps.filter.outputs.api2 }}
       app2:   ${{ steps.filter.outputs.app2 }}
+      app3:   ${{ steps.filter.outputs.app3 }}
       app4:   ${{ steps.filter.outputs.app4 }}
       docker: ${{ steps.filter.outputs.docker }}
     steps:
@@ -180,20 +175,22 @@ jobs:
               - 'sources/**'
               - '!sources/api2/**'
               - '!sources/app2/**'
+              - '!sources/app3/**'
               - '!sources/app4/**'
             api2:   ['sources/api2/**']
             app2:   ['sources/app2/**']
+            app3:   ['sources/app3/**']
             app4:   ['sources/app4/**']
             docker: ['docker/**', 'Makefile']
 ```
 
-Toute nouvelle brique (site public app3, api3…) = un filtre à ajouter, rien d'autre à toucher côté CI.
+Toute nouvelle brique (app5, api3…) = un filtre à ajouter, rien d'autre à toucher côté CI.
 
 ### 1.2 Jobs de lint par brique
 
 | Brique | Lint | Format | Runner |
 |---|---|---|---|
-| `app2`, `app4` | `npx eslint .` | déjà géré par ESLint | ubuntu, **Node 22** (voir note) |
+| `app2`, `app3`, `app4` | `npx eslint .` | déjà géré par ESLint | ubuntu, **Node 22** (voir note) |
 | `api2` | `lint:yaml config` + `lint:container` (php-cs-fixer/PHPStan → Phase 2) | idem | ubuntu, PHP 8.4 |
 | `legacy` | Phase 1 = `php -l` (syntaxe) seulement — trop de dette pour un lint de style | | ubuntu, PHP 8.4 |
 | `docker` | `hadolint` sur les Dockerfiles, `docker compose config` en dry-run | | ubuntu |
@@ -320,7 +317,7 @@ Le principe : **on ne rend le job de tests bloquant qu'après qu'une brique ait 
 | **api2** | PHPUnit + Panther/API Platform | endpoints publics (events, games, ratings) + schéma OpenAPI | 5 endpoints couverts |
 | **app4** (admin) | Playwright (déjà présent en germe) | flow login + navigation critique | 1 flow smoke |
 | **app2** | Vitest (unit) + Playwright (e2e) | composables de charts + parsing API | 3 composables |
-| **Scoring app4** (console de match) | Vitest + Playwright | timer + shot clock + BroadcastChannel | 1 flow match complet |
+| **app3** (match sheet) | Vitest + Playwright | timer + shot clock + BroadcastChannel | 1 flow match complet |
 | **Legacy** | Aucune adoption prévue. Tests d'intégration via Playwright sur les pages Smarty critiques (`kpclassement.php`, `feuillemarque.php`) uniquement si régression réelle. | | jamais bloquant sauf `php -l` |
 
 ### 4.2 Base de données de test

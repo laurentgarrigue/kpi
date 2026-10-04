@@ -974,7 +974,8 @@ class AdminOperationsController extends AbstractController
     #[IsGranted('ROLE_SUPER_ADMIN')]
     public function purgeCache(): JsonResponse
     {
-        $cacheDir = $this->getParameter('live_document_root') . '/live/cache/';
+        // In Docker: api2/src/Controller -> dirname 3 levels = /var/www/html, then /live/cache/
+        $cacheDir = dirname(__DIR__, 3) . '/live/cache/';
 
         if (!is_dir($cacheDir)) {
             return $this->json(['message' => 'Cache directory does not exist'], Response::HTTP_NOT_FOUND);

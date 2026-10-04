@@ -48,12 +48,15 @@ Use `make help` to see all available commands.
 - `make docker_dev_up` - Start development environment
 - `make backend_composer_install` - Install PHP/Composer dependencies (mPDF, etc.)
 - `make app2_npm_install` - Install NPM dependencies for app2
+- `make app3_npm_install` - Install NPM dependencies for app3
 - `make app2_dev` - Run Nuxt development server for app2 (port 3002)
+- `make app3_dev` - Run Nuxt development server for app3 (port 3003)
 
 ### Initialization
 - `make init` - Complete initialization (env files + networks)
 - `make init_env` - Initialize docker/.env from docker/.env.dist
 - `make init_env_app2` - Initialize .env.development and .env.production for app2
+- `make init_env_app3` - Initialize .env files for app3
 - `make init_env_api2` - Initialize .env for API2 from .env.dist
 - `make init_networks` - Create required Docker networks
 
@@ -92,6 +95,16 @@ Use `make help` to see all available commands.
 
 **Note**: `app2_generate_preprod` and `app2_generate_production` use a temporary Node.js container, so they work even without a permanent Node container (ideal for preprod/production servers).
 
+### App3 - Nuxt (Match Sheet)
+- `make app3_dev` - Run Nuxt development server (port 3003)
+- `make app3_build` - Build Nuxt for production
+- `make app3_generate_dev` - Generate static Nuxt site for development (uses .env.development, requires Node container)
+- `make app3_generate_preprod` - Generate static Nuxt site for pre-production (uses .env.preprod, temporary container)
+- `make app3_generate_prod` - Generate static Nuxt site for production (uses .env.production, temporary container)
+- `make app3_lint` - Run ESLint on app3
+
+**Note**: `app3_generate_preprod` and `app3_generate_prod` use a temporary Node.js container, so they work even without a permanent Node container (ideal for preprod/production servers).
+
 ### App2 - NPM
 - `make app2_npm_install` - Install all npm dependencies
 - `make app2_npm_clean` - Remove node_modules and package-lock.json
@@ -99,6 +112,14 @@ Use `make help` to see all available commands.
 - `make app2_npm_add package=<name>` - Add npm package
 - `make app2_npm_add_dev package=<name>` - Add npm dev package
 - `make app2_npm_ls` - List installed npm modules
+
+### App3 - NPM
+- `make app3_npm_install` - Install all npm dependencies
+- `make app3_npm_clean` - Remove node_modules and package-lock.json
+- `make app3_npm_update` - Update all npm dependencies
+- `make app3_npm_add package=<name>` - Add npm package
+- `make app3_npm_add_dev package=<name>` - Add npm dev package
+- `make app3_npm_ls` - List installed npm modules
 
 ### Backend - NPM (JavaScript Libraries)
 Manage JavaScript libraries (Flatpickr, Day.js, etc.) in the PHP backend via temporary Node.js container:
@@ -154,6 +175,7 @@ make backend_npm_add package=flatpickr
 ### Shell Access
 - `make backend_bash` - Open bash in PHP 8.4 container
 - `make app2_bash` - Open shell in Node container (app2)
+- `make app3_bash` - Open shell in Node container (app3)
 - `make app4_bash` - Open shell in Node container (app4)
 - `make db_bash` - Open shell in MySQL container
 
@@ -174,15 +196,6 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - WordPress content is stored in `docker/wordpress/` (excluded from Git)
 - WordPress path is configured via `HOST_WORDPRESS_PATH` in docker/.env
 
-### Media (uploaded images) - NOT in Git
-- Uploaded images (`sources/img/{logo,KIP,Nations,presentations,schemas,referees}/`) live **outside the repo**
-  in `HOST_MEDIA_PATH` (docker/.env) and are **bind-mounted back** at their historical paths in `kpi`, `api2`
-  and `event-cache-worker` (URLs `/img/...` unchanged). These dirs are git-ignored; do not commit images there.
-- api2 must reach the legacy tree through the `legacy_document_root` parameter (`/var/www/html`), never via
-  `$_SERVER['DOCUMENT_ROOT']` (= `/app/public` under FrankenPHP) or `__DIR__`.
-- `make media_init` / `media_status` / `media_backup` / `media_backup_list` / `media_restore snapshot=… [path=…]`
-- Full procedure (server migration order, restic backups, cron): [MEDIA_STORAGE.md](DOC/developer/infrastructure/MEDIA_STORAGE.md)
-
 ### Environment Files
 - `docker/.env` - Main Docker environment configuration (not versioned, use docker/.env.dist as template)
   - **Important**: `APPLICATION_NAME` determines container names (e.g., `kpi`, `kpi_preprod`, `kpi_prod`)
@@ -201,7 +214,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 ### Core Structure
 - `sources/` - Main application code
   - `app2/` - Nuxt 4 application (primary frontend - scrutineering/charts)
-  - `app3/` - *(reserved)* future public website (Nuxt 4 SSR) - see [PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)
+  - `app3/` - Nuxt 4 application (match sheet management)
   - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
   - `commun/` - Shared PHP utilities and database classes
   - `api/` - Legacy PHP REST API endpoints
@@ -226,11 +239,20 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Prod: `make app2_generate_production` (uses temporary Docker container, works without permanent Node.js setup)
   - After build: `make docker_dev_restart`, `make docker_preprod_restart`, or `make docker_prod_restart` to restart Nginx
 
-### App3 (future public website)
-- **Status**: not started. `sources/app3/` is reserved for the Nuxt 4 SSR public website replacing WordPress
-  and the `kp*.php` pages - see [PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)
-- The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**
-  (reference for the app4 scoring console, see [PAGE_SCORING.md](DOC/specs/PAGE_SCORING.md))
+### App3 (Nuxt Application - Match Sheet)
+- **Framework**: Nuxt 4 with Vue 3, TypeScript, Tailwind CSS
+- **Purpose**: Live match management with real-time scoring, timer, and broadcasting
+- **Modules**: Pinia, Dexie (IndexedDB), i18n, PWA, easytimer.js
+- **Domain**: `app3.localhost` (via Traefik)
+- **Development**: Runs on port 3003 inside container
+- **Features**:
+  - Create/load matches with teams and players
+  - Real-time match timer and shot clock
+  - Event tracking (goals, cards, penalties)
+  - BroadcastChannel API for scoreboard/shotclock synchronization
+  - WebSocket support (optional)
+  - Offline-first with IndexedDB storage
+  - Progressive Web App (PWA)
 
 ### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)
 - **Framework**: Symfony 7.4 LTS with API Platform 4.3
@@ -353,11 +375,11 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   - Logs via `make api2_logs`, **not** `docker/apachelogs_8/`
   - See [sources/api2/README.md](sources/api2/README.md) for details
 - App2 is the primary modern frontend application being actively developed
-- `sources/app3/` is reserved for the future public website (not started)
+- App3 provides live match sheet management with real-time features
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments
-- ESLint configuration is managed by Nuxt for app2 and app4
+- ESLint configuration is managed by Nuxt for app2 and app3
 
 ## File Patterns
 

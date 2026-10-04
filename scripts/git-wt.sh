@@ -27,7 +27,7 @@ set -euo pipefail
 MAIN_REPO="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 # Les worktrees vivent à côté du repo principal, dans un dossier frère.
 WT_ROOT="$(dirname "$MAIN_REPO")/$(basename "$MAIN_REPO")-worktrees"
-DEFAULT_BASE="main"
+DEFAULT_BASE="develop"
 
 # Fichiers non-versionnés à propager du repo principal vers chaque worktree.
 # Copie (pas lien) pour docker/.env : on peut vouloir l'ajuster par worktree.
@@ -37,7 +37,8 @@ COPY_FILES=(
   "docker/MyConfig.php"
   "sources/api2/.env"
   "sources/app2/.env.development"
-  # app4 utilise .env (pas .env.development comme app2).
+  "sources/app3/.env.development"
+  # app4 utilise .env (pas .env.development comme app2/app3).
   "sources/app4/.env"
   # Tests Playwright en dev local (cf. tests/playwright/README.md).
   "sources/app4/.env.test.local"
@@ -64,6 +65,7 @@ COPY_FILES=(
 # Le coût est ~1,8 Go par worktree. C'est le prix de l'isolation.
 COPY_DIRS=(
   "sources/app2/node_modules"
+  "sources/app3/node_modules"
   "sources/app4/node_modules"
   "sources/api2/vendor"
 )

@@ -1322,12 +1322,6 @@ bootstrap complet aux premières requêtes en production.
 
 ## 8quinquies. `ext-gd` absente de l'image api2 : risque résiduel assumé
 
-> ✅ **Levé le 2026-09-29 : gd (JPEG + PNG) est désormais installée dans `Dockerfile.api2`.**
-> L'hypothèse « le reste d'api2 est indifférent à gd » était fausse : `ImageOperationsService`
-> (app4 → Opérations → images) redimensionne les uploads avec `imagecreatefromjpeg/png` et
-> renvoyait une 500 « undefined function imagecreatefromjpeg ». La suite de cette section est
-> conservée pour l'historique.
-
 **Découvert le 2026-07-17** en tentant de faire passer les cibles composer par le conteneur api2 :
 `composer install` y échoue sur `mpdf/mpdf requires ext-gd`.
 

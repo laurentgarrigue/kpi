@@ -4,7 +4,7 @@
  *
  * Jumeau de `sources/app4/components/ExperimentalBanner.vue`. Affiché UNIQUEMENT
  * quand une branche `feature/*` a été déployée en préprod à la place de
- * `main`. Volontairement criard et non masquable : son but est qu'un testeur
+ * `develop`. Volontairement criard et non masquable : son but est qu'un testeur
  * ne puisse pas prendre cet état temporaire pour la préprod de référence.
  */
 const { flag, isExperimental, hoursLeft } = useExperimentalFlag()

@@ -1,17 +1,16 @@
 name: Deploy preprod
 
 # Phase 5 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
-# Déploiement continu de la préprod : tout commit qui atterrit sur `main` est
-# déployé sur le VPS préprod, sans intervention (hors bumps de version et docs).
+# Déploiement continu de la préprod : tout commit qui atterrit sur `develop` est
+# déployé sur le VPS préprod, sans intervention.
 #
-# Déclencheur : `push` sur `main` (seule branche permanente depuis la consolidation du
-# 2026-09-13 ; `develop` n'existe plus). La garantie « code testé » est STRUCTURELLE :
-# `main` exige une PR à CI verte (ruleset), donc un commit ne peut y arriver que
+# Déclencheur : `push` sur `develop`. La garantie « code testé » est STRUCTURELLE :
+# `develop` exige une PR à CI verte (ruleset), donc un commit ne peut y arriver que
 # validé — inutile de re-jouer la CI (pas de 2e run). Filet final : le smoke test du
 # wrapper + rollback auto protègent la préprod même en cas de push exceptionnel.
 # On a délibérément abandonné le déclencheur `workflow_run` : il n'écoutait que les CI
-# qui se terminaient sur la branche de déploiement, or `ci.yml` ne tourne que sur
-# `pull_request` (jamais sur push) → il ne se déclenchait JAMAIS. Voir le journal d'exécution.
+# qui se terminent sur develop, or `ci.yml` ne tourne que sur `pull_request` (jamais
+# sur push develop) → il ne se déclenchait JAMAIS. Voir le journal d'exécution.
 #
 # Toute la logique de déploiement vit dans `deploy-wrapper.sh`, versionné dans le
 # repo PRIVÉ `vps-manager` (aux côtés de backup.sh / health-check.sh), PAS dans ce
@@ -66,7 +65,7 @@ jobs:
       - name: Résoudre le SHA à déployer
         id: sha
         env:
-          # push sur main comme workflow_dispatch : github.sha = le HEAD de main
+          # push sur develop comme workflow_dispatch : github.sha = le HEAD de develop
           # à déployer, dans les deux cas.
           COMMIT_SHA: ${{ github.sha }}
         run: |

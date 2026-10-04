@@ -1,9 +1,8 @@
 /**
  * Types for Scoring (live match console)
  *
- * Replaces the legacy "feuille de marque" (FeuilleMarque2/3.php) and the former
- * standalone match-sheet prototype (git tag archive/app3-matchsheet).
- * See DOC/specs/PAGE_SCORING.md.
+ * Replaces the legacy "feuille de marque" (FeuilleMarque2/3.php) and the standalone
+ * app3 prototype. See DOC/specs/PAGE_SCORING.md.
  *
  * Naming convention:
  * - "Scoring"          = manual KPI console (this module)

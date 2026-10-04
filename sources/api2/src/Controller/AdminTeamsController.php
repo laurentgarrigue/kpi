@@ -1054,8 +1054,8 @@ class AdminTeamsController extends AbstractController
         $result = $stmt->executeQuery([$competition, $season]);
         $teams = $result->fetchAllAssociative();
 
-        // Legacy tree root for file existence checks (img/ is not reachable from /app under FrankenPHP)
-        $imgRoot = $this->getParameter('legacy_document_root') . '/img/';
+        // Document root for file existence checks (img/ is sibling to api2/)
+        $imgRoot = $this->getParameter('kernel.project_dir') . '/../img/';
 
         $updatedCount = 0;
         foreach ($teams as $team) {

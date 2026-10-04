@@ -17,16 +17,15 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 
 | Je veux… | Où | Comment |
 |---|---|---|
-| **Amener mon code** sur `main` (→ préprod) | ⌨️ | `make pr_create` → `make pr_checks` → `make pr_merge` ([§1.0](#10-amener-le-code-jusquà-main)) |
-| **Préparer une release** (→ prod) | ⌨️ | `make release_tag version=X.Y.Z` sur `main` à jour ([§1.0.3](#103-la-release--un-tag-sur-main)) |
+| **Amener mon code** sur `develop` (→ préprod) | ⌨️ | `make pr_create` → `make pr_checks` → `make pr_merge` ([§1.0](#10-amener-le-code-jusquà-la-branche-qui-déploie)) |
+| **Préparer une release** `develop` → `main` (→ prod) | ⌨️ | `make pr_web base=main` puis merge dans l'UI ([§1.0.3](#103-de-develop-vers-main--la-release)) |
 | **Tester avant de pousser** | ⌨️ | `make api2_test` (unit + integration, ce que fait la CI) |
-| Déployer en **préprod** | — | Rien à faire : tout merge sur `main` déploie automatiquement (sauf bumps de version et docs) |
-| Déployer en **production** | 🌐 | Actions → « Deploy production » → Run workflow depuis `main`, `ref` = tag `vX.Y.Z` → approuver |
-| Tester une **branche feature** (ou un tag) en préprod | 🌐 | Actions → « Deploy preprod (experimental) » → branche/tag + TTL |
+| Déployer en **préprod** | — | Rien à faire : tout merge sur `develop` déploie automatiquement |
+| Déployer en **production** | 🌐 | Actions → « Deploy production » → Run workflow depuis `main` → approuver |
+| Tester une **branche feature** en préprod | 🌐 | Actions → « Deploy preprod (experimental) » → branche + TTL |
 | Voir **pourquoi ça a échoué** | 🌐 | Actions → le run → étape « Déployer via SSH » |
 | **Annuler** un déploiement préprod cassé | ⌨️ | `make last_merge_sha` puis `make preprod_rollback sha=…` |
 | **Restaurer la base** de prod | 🖥 | [§5](#5-rollback-de-la-base-de-données-prod) |
-| **Médias** (logos, photos) : état, sauvegarde, restauration | 🖥 | `make media_status` / `media_backup` / `media_restore` — [MEDIA_STORAGE.md](MEDIA_STORAGE.md) |
 | Savoir **quelle version** tourne | 🖥 | `cat /data/kpi/.last-deploy-sha` (et `git -C /data/kpi rev-parse HEAD`) |
 
 **Accès VPS** : `ssh -i ~/.ssh/kpi-deploy/kpi_deploy_ed25519 -p 22 deploy@<host>`
@@ -39,13 +38,12 @@ ratées).
 
 ## 1. Déployer
 
-### 1.0 Amener le code jusqu'à `main`
+### 1.0 Amener le code jusqu'à la branche qui déploie
 
-`main` est la **seule branche permanente** (`develop` n'existe plus depuis le
-2026-09-13). Un merge sur `main` déploie la préprod ; la prod se déploie à la main
-à partir d'un **tag** posé sur `main`. **On ne pousse jamais en direct sur `main`** :
-son ruleset exige une PR à CI verte. Voici les commandes `make` du poste de dev qui
-y mènent — la conception et les cas particuliers (worktrees) sont dans
+Les déploiements ci-dessous se déclenchent sur `develop` (préprod) et `main`
+(prod). **On ne pousse jamais en direct sur ces deux branches** : leur ruleset
+exige une PR. Voici les commandes `make` du poste de dev qui y mènent — la
+conception et les cas particuliers (worktrees, back-merge) sont dans
 [GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md).
 
 #### 1.0.1 Vérifier avant de pousser (optionnel mais rentable)
@@ -62,51 +60,52 @@ base **dédiée** `kpi_fixtures_test` (jamais la base de dev) via
 `make api2_test_fixtures`. Ces cibles ont besoin du stack dev démarré
 (`make dev`) : elles s'exécutent dans les conteneurs `kpi_api2` et `kpi_db`.
 
-#### 1.0.2 De la branche feature vers `main` (→ préprod)
+#### 1.0.2 De la branche feature vers `develop` (→ préprod)
 
 ⌨️ Depuis la branche de travail :
 
 ```bash
-make pr_create      # push la branche + ouvre la PR vers main (base=main par défaut)
+make pr_create      # push la branche + ouvre la PR vers develop (base=develop par défaut)
 make pr_checks      # suit la CI jusqu'au bout (gh pr checks --watch)
-make pr_merge       # squash-merge, revient sur main à jour, supprime la branche
+make pr_merge       # squash-merge, revient sur develop à jour, supprime la branche
 ```
 
-Le merge pousse sur `main` → **« Deploy preprod » part tout seul** ([§1.1](#11-préprod-—-automatique-aucun-clic)).
+Le merge pousse sur `develop` → **« Deploy preprod » part tout seul** ([§1.1](#11-préprod-—-automatique-aucun-clic)).
 
 | Cible | À savoir |
 |---|---|
-| `make pr_create` | vise `main` par défaut ; `make pr_web` ouvre le formulaire pré-rempli dans le navigateur |
-| `make pr_merge` | **Refuse** de tourner depuis `main`, et refuse si le stack Docker tourne depuis le worktree à supprimer |
+| `make pr_create` | `base=main` pour viser `main` ; `make pr_web` ouvre le formulaire pré-rempli dans le navigateur |
+| `make pr_merge` | **Refuse** de tourner depuis `develop`/`main`, et refuse si le stack Docker tourne depuis le worktree à supprimer |
 | `make pr_close` | Ferme **SANS merger** + supprime la branche — pour une PR jetable, jamais pour une vraie |
 | `make pr_status` | État de toutes tes PR |
 
-#### 1.0.3 La release : un tag sur `main`
+#### 1.0.3 De `develop` vers `main` : la release
 
-⌨️ Il n'y a plus de PR de release : le bump de version par brique est fait
-automatiquement par la CI dans chaque PR. Une fois la dernière PR mergée :
+⌨️ La PR de release ne se merge pas avec `pr_merge` (qui vise `develop`) :
 
 ```bash
-git checkout main && git pull
-make release_tag version=X.Y.Z    # pose et pousse le tag global vX.Y.Z (sans PR)
+git checkout develop && git pull
+make pr_web base=main    # ouvre la PR develop → main dans le navigateur
 ```
 
-`make release_tag` refuse un tag déjà existant et vérifie que `HEAD` est bien sur
-`origin/main`. Détail (bump manuel, `make release`) :
-[GIT_WORKFLOW.md §4](../guides/GIT_WORKFLOW.md).
+🌐 Puis merger dans l'UI GitHub, une fois `ci-summary` vert — c'est un
+**required check** sur `main`, le bouton de merge reste bloqué sans lui.
 
-> ⚠️ Poser un tag **ne déploie rien**. La prod reste sur l'ancienne version
-> jusqu'au déclenchement manuel de [§1.2](#12-production-—-manuelle-avec-approbation).
+Le push sur `main` déclenche le workflow **Back-merge** qui ouvre une PR
+`chore/backmerge-main-to-develop` : la merger pour réaligner `develop`. Si elle
+n'apparaît pas (ou a été fermée), la relancer avec ⌨️ `make backmerge_main_to_develop`.
+
+> ⚠️ Un merge sur `main` **ne déploie rien**. La prod reste sur l'ancienne
+> version jusqu'au déclenchement manuel de [§1.2](#12-production-—-manuelle-avec-approbation).
 
 ### 1.1 Préprod — automatique, aucun clic
 
-Tout commit qui atterrit sur `main` est déployé en préprod, **sauf** les bumps de
-version et les modifications de doc (`paths-ignore` : `DOC/**`, `*.md`, fichiers de
-version). La garantie « code testé » est **structurelle** : le ruleset de `main`
-exige une PR à CI verte, donc un commit ne peut y arriver que validé.
+Tout commit qui atterrit sur `develop` est déployé. La garantie « code testé » est
+**structurelle** : le ruleset de `develop` exige une PR à CI verte, donc un commit
+ne peut y arriver que validé.
 
 ```
-PR → CI verte → merge sur main → « Deploy preprod » → smoke tests → OK
+PR → CI verte → merge sur develop → « Deploy preprod » → smoke tests → OK
                                                         ↘ KO → rollback auto
 ```
 
@@ -117,15 +116,13 @@ le sont (`npm ci` + `nuxt generate` sans cache npm).
 > `in_progress` 5 min n'est pas figé : c'est le rebuild des apps. Pour en être
 > sûr : 🖥 `ps -u deploy` doit montrer un `nuxt generate` en cours.
 
-Redéploiement manuel de la préprod sur le dernier `main` :
-🌐 Actions → « Deploy preprod » → Run workflow (**depuis `main`**).
+Redéploiement manuel de la préprod sur le dernier `develop` :
+🌐 Actions → « Deploy preprod » → Run workflow (**depuis `develop`**).
 
 ### 1.2 Production — manuelle, avec approbation
 
-1. La release doit être taguée sur `main` ([§1.0.3](#103-la-release--un-tag-sur-main)).
-2. 🌐 Actions → **« Deploy production »** → Run workflow, **branche `main`**, input
-   `ref` = **le tag** (`vX.Y.Z`). Un SHA ou `main` fonctionne aussi, mais le tag est
-   immuable : il désigne sans ambiguïté ce qui part en prod.
+1. La release doit être sur `main` (PR `develop` → `main` mergée : [§1.0.3](#103-de-develop-vers-main--la-release)).
+2. 🌐 Actions → **« Deploy production »** → Run workflow, **branche `main`**.
 3. Approuver (l'environment `production` a un *required reviewer*).
 4. Le workflow refuse tout `ref` qui n'est pas un ancêtre de `origin/main` — donc
    pas passé par la CI et la revue.
@@ -133,8 +130,9 @@ Redéploiement manuel de la préprod sur le dernier `main` :
 En prod, un **dump de la base est pris avant toute migration** Doctrine, dans
 `/data/backups/kpi/pre-migration/kpi_<date-heure>_<sha7>.sql.gz`.
 
-> ⚠️ La politique de branche de l'environment `production` est **stricte** : il
-> n'accepte que `main`. Un « Run workflow » depuis une autre branche est rejeté avec
+> ⚠️ La politique de branche de chaque environment est **stricte** : `preprod`
+> n'accepte pas `main`, `production` n'accepte que `main`. Un « Run workflow »
+> depuis la mauvaise branche est rejeté avec
 > `Branch "x" is not allowed to deploy to y`. Le **sélecteur de branche du bouton
 > Run** est ce qui compte.
 
@@ -144,20 +142,20 @@ En prod, un **dump de la base est pris avant toute migration** Doctrine, dans
 
 | Champ | Valeur |
 |---|---|
-| `branch` | la branche **ou le tag** à déployer (ex. `feature/scoring`, `v1.26.0`) |
-| `ttl_hours` | durée avant retour auto à `main` (1 à 168, défaut 24) |
+| `branch` | la branche à déployer (ex. `feature/scoring`) |
+| `ttl_hours` | durée avant retour auto à `develop` (1 à 168, défaut 24) |
 
 Ce que ça implique, à savoir **avant** de cliquer :
 
-- la préprod **ne reflète plus `main`** jusqu'à expiration ;
+- la préprod **ne reflète plus `develop`** jusqu'à expiration ;
 - un **bandeau fuchsia** s'affiche dans app2 et app4 (nom de branche, SHA court,
   heures restantes) — impossible de croire à une préprod normale ;
-- passé le TTL, le **cron du VPS redéploie `main`** tout seul (à HH:15) ;
-- un merge sur `main` pendant ce temps **reprend la main** (déploiement normal)
+- passé le TTL, le **cron du VPS redéploie `develop`** tout seul (à HH:15) ;
+- un merge sur `develop` pendant ce temps **reprend la main** (déploiement normal)
   et retire le bandeau.
 
-Revenir à `main` **immédiatement**, sans attendre le TTL :
-🌐 Actions → « Deploy preprod » → Run workflow depuis `main`.
+Revenir à `develop` **immédiatement**, sans attendre le TTL :
+🌐 Actions → « Deploy preprod » → Run workflow depuis `develop`.
 
 ---
 
@@ -241,17 +239,17 @@ en erreur. Prouvé en conditions réelles (2026-07-27).
 ❌ Déploiement ANNULÉ — preprod restaurée sur dcb75aaf…
 ```
 
-> ⚠️ **Le rollback restaure le VPS, PAS `main` sur GitHub.** Le commit fautif
-> est toujours sur `main` : sans réparation, le **prochain déploiement
+> ⚠️ **Le rollback restaure le VPS, PAS `develop` sur GitHub.** Le commit fautif
+> est toujours sur `develop` : sans réparation, le **prochain déploiement
 > recassera**. Le revert est obligatoire (§4.2).
 
-### 4.2 Réparer `main` après un rollback
+### 4.2 Réparer `develop` après un rollback
 
 ⌨️ Sur le poste de dev (détail dans
 [GIT_WORKFLOW.md §3](../guides/GIT_WORKFLOW.md#3-rollback--quand-un-déploiement-préprod-casse)) :
 
 ```bash
-make last_merge_sha              # SHA du commit fautif sur main
+make last_merge_sha              # SHA du commit fautif sur develop
 make preprod_rollback sha=<sha>  # crée revert/<sha> avec le commit inversé
 make pr_create && make pr_merge  # PR de revert → redéploie une préprod saine
 ```

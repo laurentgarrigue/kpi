@@ -51,6 +51,15 @@ déjà lancé. **Ctrl-C quitte les logs, le serveur continue de tourner.**
 > **Nuxt met ~15 s à démarrer.** Un 404 juste après `make dev` est normal : relancer
 > `make dev_status`.
 
+### Cas particulier : app3
+
+app3 **ne démarre pas** automatiquement : son `npm run dev` échoue sur `dotenv: not found`
+(`dotenv-cli` absent de ses `node_modules`). **Problème préexistant**, sans lien avec ce changement.
+
+Pour l'utiliser : `make app3_npm_install`, puis `make app3_dev` (mode terminal classique).
+
+---
+
 ## Certificats : fin des exceptions Firefox
 
 ### Le problème
@@ -99,7 +108,7 @@ Cette cible sauvegarde l'ancien certificat (`.bak`), régénère avec les domain
 **Après un `make dev_certs`, fermer complètement Firefox et le rouvrir.** Si une alerte persiste :
 `mkcert -install` puis redémarrer Firefox.
 
-Validé : `kpi.localhost`, `kpi-node.localhost`, `kpi-node4.localhost` et
+Validé : `kpi.localhost`, `kpi-node.localhost`, `kpi-node4.localhost`, `app3.localhost` et
 `kpi-myadmin.localhost` valident tous contre la CA mkcert.
 
 ---

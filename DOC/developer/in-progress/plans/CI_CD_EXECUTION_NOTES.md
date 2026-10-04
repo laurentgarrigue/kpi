@@ -5,17 +5,6 @@ ce qui a été réellement livré, les écarts assumés et les pièges rencontr�
 
 ---
 
-> **Note (28/09/2026)** : les mentions d'`app3` dans ce journal désignent l'ancien prototype
-> de feuille de marque, **supprimé** du dépôt. Son code est conservé au tag Git
-> `archive/app3-matchsheet`. Le nom `sources/app3/` est désormais réservé au futur site public
-> (cf. [PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md)).
-
-> **⚠️ Note (29/09/2026) — `develop` n'existe plus.** Depuis la consolidation du 2026-09-13,
-> `main` est la seule branche permanente : un merge sur `main` déploie la préprod, et la prod se
-> déploie à partir d'un tag `vX.Y.Z` posé sur `main`. Les mentions de `develop` dans ce document
-> décrivent l'organisation d'origine. Référence à jour : [GIT_WORKFLOW.md](../../guides/GIT_WORKFLOW.md) et
-> [DEPLOYMENT_RUNBOOK.md](../../infrastructure/DEPLOYMENT_RUNBOOK.md).
-
 ## 📌 État de reprise (dernière session : 2026-07-31, 3ᵉ passe)
 
 **Où on en est** : **toutes les phases 0 → 8 sont livrées, déployées ET éprouvées**. La

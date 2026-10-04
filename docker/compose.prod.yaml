@@ -22,14 +22,6 @@ services:
             - "host.docker.internal:host-gateway"
         volumes:
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - ../DOC:/var/www/html/DOC
             - ${HOST_WORDPRESS_PATH}:/var/www/html/wordpress
             - ${HOST_APACHE2_LOG_PATH}:/var/log/apache2/
@@ -75,9 +67,6 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
-            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
-            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
-            - LEGACY_DOCUMENT_ROOT=/var/www/html
             - APP_ENV=prod
             - APP_DEBUG=0
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json
@@ -103,14 +92,6 @@ services:
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/
             # partagé avec Apache et event-cache-worker (cf. §7.7 de l'analyse).
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
             # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
             # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
@@ -159,20 +140,9 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
-            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
-            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
-            - LEGACY_DOCUMENT_ROOT=/var/www/html
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html
-            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
-            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
-            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         networks:

@@ -1195,7 +1195,7 @@ class AdminRankingsController extends AbstractController
         $gaLabel = $comp['goalaverage'] === 'part' ? $L['ga_part'] : $L['ga_gen'];
         $title = sprintf($L['title'], $comp['libelle']);
 
-        $logoPath = $this->getParameter('legacy_document_root') . '/img/logoKPI-medium.png';
+        $logoPath = dirname(__DIR__, 3) . '/img/logoKPI-medium.png';
         $logoBase64 = file_exists($logoPath)
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : '';

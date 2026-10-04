@@ -19,7 +19,7 @@
   },
   "experimental": {
     "title": "PRÉPROD — Feature expérimentale :",
-    "expires_in": "retour à main dans {hours} h"
+    "expires_in": "retour à develop dans {hours} h"
   },
   "menu": {
     "competition": "Compétitions",

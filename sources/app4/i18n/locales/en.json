@@ -19,7 +19,7 @@
   },
   "experimental": {
     "title": "PREPROD — Experimental feature:",
-    "expires_in": "back to main in {hours} h"
+    "expires_in": "back to develop in {hours} h"
   },
   "menu": {
     "competition": "Competitions",
