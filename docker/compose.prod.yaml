@@ -75,6 +75,9 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
+            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
+            - LEGACY_DOCUMENT_ROOT=/var/www/html
             - APP_ENV=prod
             - APP_DEBUG=0
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json
@@ -156,6 +159,9 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
+            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
+            - LEGACY_DOCUMENT_ROOT=/var/www/html
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html

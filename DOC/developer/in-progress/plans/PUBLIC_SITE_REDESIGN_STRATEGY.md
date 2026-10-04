@@ -265,7 +265,7 @@ Les anciennes URL (`kp*.php?Compet=N1&Saison=2026&Group=N&J=…&lang=en`) sont r
 
 - Endpoints publics **en lecture seule** dans des contrôleurs `Public*Controller`, sans authentification (hors envoi de formulaire).
 - **Factoriser** en services (`src/Service/...`) la logique aujourd'hui dans les contrôleurs admin (classements, stats, clubs, compétitions), appelés des deux côtés, sans copier-coller.
-- Ne renvoyer que le **publié** (`Publication = 'O'` sur compétition, journée, match), comme `/game-sheet`.
+- Ne renvoyer que le **publié** (`Publication = 'O'` sur compétition, journée, match, champs *_publi pour les classements), comme `/game-sheet`.
 - En-têtes `Cache-Control` et `ETag` ; limitation de débit sur `/search` et sur l'envoi de formulaires.
 - **Données personnelles** : exactement les mêmes champs qu'aujourd'hui (nom, prénom, numéro, catégorie, équipe, club ou nation), rien de plus, via des DTO publics dédiés (§ 11). L'évaluation RGPD complète est un chantier ultérieur.
 - Symfony reste en **7.4 LTS** : aucun nouveau bundle ne doit tirer Symfony 8.

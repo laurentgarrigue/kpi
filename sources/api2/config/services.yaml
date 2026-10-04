@@ -8,7 +8,13 @@ parameters:
     # ⚠️ Ne PAS la déduire de __DIR__ ni de $_SERVER['DOCUMENT_ROOT'] : sous FrankenPHP,
     # api2 vit dans /app (DOCUMENT_ROOT = /app/public), plus dans sources/api2/ comme sous Apache.
     # Les médias (img/logo, img/KIP…) y sont montés depuis HOST_MEDIA_PATH (cf. docker/compose.*.yaml).
-    legacy_document_root: '/var/www/html'
+    # ⚠️ Via une variable d'environnement (définie dans docker/compose.*.yaml), JAMAIS en dur :
+    # var/cache/ est partagé entre api2 (projet dans /app) et event-cache-worker / conteneur
+    # Apache (projet dans /var/www/html/api2). Compilé depuis ces derniers, un '/var/www/html'
+    # littéral est un ancêtre du cache : le dumper le réécrit en dirname(__DIR__, 5), ce qui
+    # donne '/' dans api2 → « mkdir(): Permission denied » à l'upload, live/cache introuvable.
+    # Une variable d'environnement est lue à l'exécution et n'est jamais figée dans le cache.
+    legacy_document_root: '%env(LEGACY_DOCUMENT_ROOT)%'
     live_document_root: '%legacy_document_root%'
 
 services:

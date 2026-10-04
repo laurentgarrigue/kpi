@@ -69,8 +69,23 @@ make api2_test                 # unit + integration
 make api2_cache_clear          # le conteneur Symfony doit compiler sans erreur (nouveau bind)
 ```
 
-- [ ] `make api2_test` vert
-- [ ] Aucune erreur de compilation du conteneur (`legacy_document_root`, bind `$legacyDocumentRoot`)
+- [x] `make api2_test` vert (29/09/2026)
+- [x] Aucune erreur de compilation du conteneur (`legacy_document_root`, bind `$legacyDocumentRoot`)
+
+> **Bug trouvé au contrôle d'upload (29/09/2026)** : « Warning: mkdir(): Permission denied ».
+> `legacy_document_root` valait le littéral `'/var/www/html'`. Quand le cache est compilé depuis
+> `event-cache-worker` ou le conteneur Apache (projet dans `/var/www/html/api2`), ce chemin est un
+> ancêtre de `var/cache/` : le dumper Symfony le réécrit en `dirname(__DIR__, 5)`, soit `/` dans
+> api2 (projet dans `/app`). Corrigé : paramètre lu depuis la variable d'env `LEGACY_DOCUMENT_ROOT`,
+> définie dans `docker/compose.*.yaml` (api2 + worker) et `sources/api2/.env.test`. L'ancien
+> `live_document_root` avait le même défaut (cause probable de « Cache directory does not exist »).
+>
+> **Second bug au même contrôle** : 500 « undefined function imagecreatefromjpeg ». L'image api2 était
+> construite **sans gd** (choix de l'analyse FrankenPHP §8quinquies, qui n'avait pas vu
+> `ImageOperationsService`). Corrigé : gd (JPEG + PNG) ajoutée dans `docker/config/Dockerfile.api2`.
+> **L'image api2 doit être reconstruite** sur chaque serveur ; vérifier après déploiement :
+> `docker exec <app>_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'` → `bool(true)`.
+> Sinon : `make docker_<env>_rebuild`, ou plus ciblé `docker compose -f docker/compose.<env>.yaml build api2<_preprod>` puis `up -d`.
 
 ### 0.4 ⌨️ Poste de dev
 
@@ -108,8 +123,11 @@ sudo setfacl -R -m u:deploy:rwX /data/media/kpi_preprod /data/backups/kpi_prepro
 sudo setfacl -R -d -m u:deploy:rwX /data/media/kpi_preprod /data/backups/kpi_preprod
 
 # c. Copier les médias avec le script de la branche, sans toucher à l'arbre de travail
+# FETCH_HEAD et non origin/<branche> : .git/logs/refs/remotes/ appartient à `deploy` (CI),
+# `laurent` ne peut pas y écrire → « cannot update the ref … Permission non accordée ».
+# Le fetch réussit quand même (objets + FETCH_HEAD) ; NE PAS toucher aux droits de .git.
 git fetch origin claude/public_site_redesign_strategy
-git show origin/claude/public_site_redesign_strategy:scripts/media/media.sh > /tmp/media.sh
+git show FETCH_HEAD:scripts/media/media.sh > /tmp/media.sh
 bash /tmp/media.sh init
 ```
 
@@ -141,6 +159,7 @@ make media_backup_list
 ```
 
 - [ ] `make media_status` : 6/6 sur les trois conteneurs
+- [ ] gd présente dans api2 (image reconstruite) : `docker exec kpi_preprod_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
 - [ ] Premier backup OK, **mot de passe copié en lieu sûr**
 - [ ] Uploads égarés (bug corrigé) : `ls -R sources/api2/public/img 2>/dev/null | head`
   - vide → rien à faire
@@ -169,8 +188,8 @@ sudo chown 1000:33 /data/media/kpi
 sudo setfacl -R -m u:deploy:rwX /data/media/kpi /data/backups/kpi
 sudo setfacl -R -d -m u:deploy:rwX /data/media/kpi /data/backups/kpi
 
-git fetch origin main
-git show origin/main:scripts/media/media.sh > /tmp/media.sh     # la PR est mergée sur main depuis l'étape 1.2
+git fetch origin main                                            # la PR est mergée sur main depuis l'étape 1.2
+git show FETCH_HEAD:scripts/media/media.sh > /tmp/media.sh      # FETCH_HEAD : cf. 1.1 (droits .git)
 bash /tmp/media.sh init
 ```
 
@@ -204,6 +223,7 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 ```
 
 - [ ] 6/6 montages sur les trois conteneurs
+- [ ] gd présente dans api2 : `docker exec kpi_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
 - [ ] Premier backup OK, mot de passe copié
 - [ ] `sources/api2/public/img/` vérifié et rapatrié si besoin (cf. 1.3)
 - [ ] Contrôles fonctionnels
@@ -246,6 +266,7 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 | Problème | Action |
 |---|---|
 | Conteneurs qui ne démarrent pas (« HOST_MEDIA_PATH absent ») | Ajouter la variable dans `docker/.env`, puis `make docker_<env>_up` |
+| « mkdir(): Permission denied » à l'upload, ou live/cache introuvable | `LEGACY_DOCUMENT_ROOT` absent de l'environnement d'api2 ou du worker : `docker exec <app>_api2 printenv LEGACY_DOCUMENT_ROOT`, puis `make docker_<env>_up` et `make api2_cache_clear` |
 | Images manquantes après déploiement | `make media_init` (récupère depuis l'historique Git), puis `make media_status` |
 | Image écrasée ou supprimée par erreur | `make media_restore snapshot=latest path=img/...`, puis `rsync` (commande affichée) |
 | Retour au code précédent (`make preprod_rollback sha=…`) | Sans risque pour les médias : ils restent dans le stockage. L'ancien code recrée les fichiers suivis dans `sources/img/`, et les anciens compose ne montent plus le stockage. Les uploads faits entre-temps restent dans `HOST_MEDIA_PATH` : à recopier dans `sources/img/` si le retour arrière dure (`rsync -a --ignore-existing /data/media/<env>/img/ sources/img/`). |
@@ -258,7 +279,7 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 |---|---|---|---|
 | 0.1 | ⌨️ | Publier le tag `archive/app3-matchsheet` | ☑ |
 | 0.2 | ⌨️ | Prévenir la branche scoring (chemins app3 → tag) | ☑ |
-| 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☐ |
+| 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☑ |
 | 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☐ |
 | 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☐ |
 | 1.2 | ⌨️ | Merge de la PR sur `main` (→ préprod auto) | ☐ |
