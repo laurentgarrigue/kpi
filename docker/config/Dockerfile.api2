@@ -1,6 +1,10 @@
-ARG BASE_IMAGE_FRANKENPHP=dunglas/frankenphp:php8.4
-
-FROM ${BASE_IMAGE_FRANKENPHP}
+# Version ÉPINGLÉE ici, dans le dépôt, et non via BASE_IMAGE_FRANKENPHP dans docker/.env :
+# le tag flottant `php8.4` a fait passer la préprod de 1.12.4 à 1.13.0 au détour d'un
+# rebuild (2026-10-04), avec deux changements cassants du module Mercure dans le
+# Caddyfile (cf. Caddyfile.api2) → api2 en boucle de redémarrage, sans aucun log.
+# Monter de version = une PR : changer ce tag, rebuilder en dev, puis valider :
+#   docker exec <app>_api2 frankenphp validate --config /etc/frankenphp/Caddyfile
+FROM dunglas/frankenphp:1.13.0-php8.4
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000

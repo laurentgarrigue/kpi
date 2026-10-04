@@ -158,6 +158,14 @@ Le push sur `main` déclenche « Deploy preprod » automatiquement.
 > `MERCURE_EXTRA_DIRECTIVES` (`anonymous` en dev, non définie ailleurs). `MERCURE_ANONYMOUS` disparaît.
 > Le rollback automatique a lui aussi échoué (cf. Retour arrière) : la préprod est restée sur le nouveau
 > code, api2 hors service. La PR de revert ouverte par le workflow (#331) est à **fermer sans merger**.
+>
+> **Troisième échec (05/10)** : (1) le wrapper lançait les étapes api2 (`docker exec`) AVANT le rebuild
+> de la stack, donc dans le conteneur cassé → corrigé dans vps-manager (`a7c6450`, ordre stack → apps
+> → composer → api2 ; le rollback rebuild aussi). (2) Un 2ᵉ changement cassant de Mercure en 1.13 :
+> `publisher_jwt`/`subscriber_jwt` exigent `protocol_version_compatibility 8` (1.12 n'acceptait que 7).
+> **FrankenPHP est désormais épinglé dans `Dockerfile.api2`** (`1.13.0-php8.4`) ; `BASE_IMAGE_FRANKENPHP`
+> de `docker/.env` n'est plus lue (on peut la retirer des `.env`). Validé en dev : api2 `healthy`,
+> publish JWT valide 200 / invalide 401, abonnement anonyme 200.
 
 ### 1.3 🖥 Après le déploiement
 
