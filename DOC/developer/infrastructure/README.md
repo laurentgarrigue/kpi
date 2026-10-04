@@ -15,7 +15,7 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 - Déclencher un déploiement préprod / production / **expérimental** (branche feature + TTL)
 - Où regarder pour constater un problème (Actions, log du wrapper, `make api2_logs`)
 - Table des échecs courants et de leur correctif (timeout SSH, ACL, remote git, politique de branche)
-- Rollback du **code** : automatique, réparation de `develop`, procédure manuelle
+- Rollback du **code** : automatique, réparation de `main`, procédure manuelle
 - Rollback de la **base de données** prod depuis `pre-migration/`
 - Ce qui n'est PAS en place (notifications, uptime externe)
 
@@ -24,10 +24,18 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 
 ---
 
+#### [MEDIA_STORAGE.md](MEDIA_STORAGE.md)
+**Status**: ✅ Implémenté (2026-09-28) — migration serveur à exécuter
+
+Images uploadées (logos, photos, visuels) stockées hors du dépôt dans `HOST_MEDIA_PATH`, montées à leur
+emplacement historique, sauvegardées par restic (`make media_*`). **Ordre de migration par environnement.**
+
+---
+
 #### [NGINX_STATIC_APP_DEPLOYMENT.md](NGINX_STATIC_APP_DEPLOYMENT.md)
 **Status**: ✅ Implémenté (2025-12-21)
 
-Documentation complète sur le déploiement des applications Nuxt (app2 & app3) via Nginx en mode SSG (Static Site Generation).
+Documentation complète sur le déploiement des applications Nuxt (app2 & app4) via Nginx en mode SSG (Static Site Generation).
 
 **Sujets couverts**:
 - Architecture Nginx + Nuxt SSG
@@ -230,7 +238,7 @@ Pour toute question technique:
 
 | Date | Document | Changement |
 |------|----------|------------|
-| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2/app3 |
+| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2 |
 | 2025-12-21 | CORS_CONFIGURATION.md | ✅ Création - CORS global via PHP auto-prepend |
 | 2024-xx-xx | MAKEFILE_MULTI_ENVIRONMENT.md | ✅ Support multi-environnements |
 | 2024-xx-xx | NPM_BACKEND_PRODUCTION_GUIDE.md | ✅ NPM pour backend PHP |

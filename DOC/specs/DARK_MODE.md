@@ -2,7 +2,7 @@
 
 > Statut : **en cours** — socle + toggle + page `games` + composants partagés faits ; ~23 pages
 > et ~26 composants restent à convertir (voir §7 Suivi).
-> Cible : **app4** uniquement (Nuxt 4 + Nuxt UI v3 + Tailwind v4). Ne concerne pas app2/app3.
+> Cible : **app4** uniquement (Nuxt 4 + Nuxt UI v3 + Tailwind v4). Ne concerne pas app2.
 > Branche de travail : `darktheme`.
 
 ## 1. Contexte et objectif

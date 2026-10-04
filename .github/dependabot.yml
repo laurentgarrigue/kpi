@@ -11,12 +11,6 @@
 #
 # Les updates sont groupées par répertoire/écosystème : un seul PR (et donc un
 # seul recalcul de lockfile) au lieu d'un PR par paquet -> moins de conflits.
-#
-# `/sources/app3` est volontairement ABSENT : la feuille de marque n'est plus
-# buildée/testée/déployée (retirée du CI/CD) — elle ne subsiste que comme
-# RÉFÉRENCE pour la construction du scoring dans app4 (DOC/specs/PAGE_SCORING.md).
-# La suivre ne produirait que des PR de bump sur du code qui ne tourne nulle part.
-# Voir §6 de DOC/developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
 
 version: 2
 updates:
@@ -27,7 +21,7 @@ updates:
       - "/sources/app4"
       - "/sources"
       # `/sources/app_dev`, `/sources/app_live_dev`, `/sources/app_wsm_dev` sont
-      # volontairement ABSENTS, pour la même raison qu'app3 (cf. en-tête) : ces
+      # volontairement ABSENTS : ces
       # applications Vue.js legacy ne sont ni buildées, ni testées, ni déployées
       # par le CI/CD. Aucun job de `ci.yml` ne les couvre (matrices `[app2, app4]`),
       # donc leurs PR de bump ne peuvent pas être validées — elles n'apportaient

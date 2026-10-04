@@ -3,13 +3,14 @@ name: Deploy production
 # Phase 6 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
 # Déploiement PRODUCTION, déclenché À LA MAIN + approbation obligatoire.
 #
-# Différences avec Deploy preprod (déclencheur `push develop`, auto, sans clic) :
+# Différences avec Deploy preprod (déclencheur `push main`, auto, sans clic) :
 #   - Déclencheur = `workflow_dispatch` UNIQUEMENT (bouton « Run workflow »). Une
 #     release se DÉCIDE, elle ne part pas toute seule sur un push.
 #   - `environment: production` porte un REQUIRED REVIEWER (Phase 0) → GitHub met le
 #     run en pause et EXIGE une approbation manuelle avant d'exécuter le job.
 #   - On VÉRIFIE que le ref à déployer est bien un ancêtre de `main` : impossible de
-#     pousser en prod une branche arbitraire (feature, develop non mergé…).
+#     pousser en prod une branche arbitraire (feature non mergée…). Le ref attendu est
+#     un tag de release `vX.Y.Z` posé sur main (`make release_tag`).
 #
 # ⚠️ Pièges d'infra Phase 5 REJOUÉS sur /data/kpi (cf. reference_cd_github_actions_ssh_pitfalls) :
 #   - Ce fichier doit vivre sur `main` (branche par défaut) pour que le bouton

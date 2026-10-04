@@ -10,7 +10,7 @@
   },
   "Experimental": {
     "Title": "PRÉPROD — Feature expérimentale :",
-    "ExpiresIn": "retour à develop dans {hours} h"
+    "ExpiresIn": "retour à main dans {hours} h"
   },
   "nav": {
     "Home": "Accueil",

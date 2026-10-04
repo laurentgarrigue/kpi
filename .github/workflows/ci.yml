@@ -56,7 +56,6 @@ jobs:
               - 'sources/**'
               - '!sources/api2/**'
               - '!sources/app2/**'
-              - '!sources/app3/**'
               - '!sources/app4/**'
             api2:
               - 'sources/api2/**'
@@ -71,8 +70,6 @@ jobs:
   # ---------------------------------------------------------------------------
   # 2. Lint ESLint des apps Nuxt (app2 / app4).
   #    Un seul job matriciel : ne tourne que sur les apps réellement modifiées.
-  #    app3 (feuille de marque, gelé) n'est plus buildé/testé/déployé — il ne
-  #    reste que comme référence pour le scoring d'app4 → hors CI.
   # ---------------------------------------------------------------------------
   lint-nuxt:
     needs: changes
@@ -116,12 +113,11 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # 2bis. Build Nuxt effectif (Phase 3) — app2 / app4.
-  #    Garantit que `develop` reste buildable : un .vue/.ts cassé, un import
+  #    Garantit que `main` reste buildable : un .vue/.ts cassé, un import
   #    manquant ou une erreur de config Nuxt fait échouer `nuxt build`.
   #    On utilise `build` (SSR/nitro) et NON `generate` : `generate` passe par
   #    `dotenv -e .env.production` (app2), absent en CI. `nuxt.config.ts` a
   #    des fallbacks (`?? 'https://…'`) pour toutes les vars → aucun .env requis.
-  #    app3 (gelé, référence uniquement) est hors CI.
   # ---------------------------------------------------------------------------
   build-nuxt:
     needs: changes
