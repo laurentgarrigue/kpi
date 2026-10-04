@@ -68,7 +68,6 @@ services:
             args:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
-                BASE_IMAGE_FRANKENPHP: ${BASE_IMAGE_FRANKENPHP}
         user: ${USER_ID}:${GROUP_ID}
         environment:
             - TZ=Europe/Paris

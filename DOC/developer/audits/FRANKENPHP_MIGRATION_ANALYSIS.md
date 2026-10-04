@@ -1017,12 +1017,16 @@ git pull    # sur la branche déployée sur ce serveur
 
 ### Étape 2 — Compléter `docker/.env`
 
-Deux variables **nouvelles** à ajouter (absentes des `.env` existants, présentes dans `.env.dist`) :
+Variable **nouvelle** à ajouter (absente des `.env` existants, présente dans `.env.dist`) :
 
 ```bash
-BASE_IMAGE_FRANKENPHP=dunglas/frankenphp:php8.4
 MERCURE_JWT_SECRET=<secret propre à CET environnement>
 ```
+
+> `BASE_IMAGE_FRANKENPHP` n'est plus lue depuis le 2026-10-05 : la version est épinglée dans
+> `docker/config/Dockerfile.api2` (`FROM dunglas/frankenphp:1.13.0-php8.4`). Le tag flottant
+> `php8.4` avait fait passer la préprod en 1.13 au détour d'un rebuild, avec deux changements
+> cassants de Mercure (cf. commentaires de `Caddyfile.api2`).
 
 ```bash
 make mercure_generate_secret   # affiche la ligne à copier — n'écrit PAS dans .env

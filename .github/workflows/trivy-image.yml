@@ -31,6 +31,7 @@ on:
     branches: [main]
     paths:
       - 'docker/.env.dist'
+      - 'docker/config/Dockerfile.api2'
       - '.github/workflows/trivy-image.yml'
 
 # Trivy écrit ses findings dans l'onglet Security via SARIF.
@@ -55,7 +56,8 @@ jobs:
         id: read
         run: |
           php_img="$(grep -E '^BASE_IMAGE_PHP=' docker/.env.dist | cut -d= -f2-)"
-          frankenphp_img="$(grep -E '^BASE_IMAGE_FRANKENPHP=' docker/.env.dist | cut -d= -f2-)"
+          # FrankenPHP : épinglée dans le Dockerfile (et non dans .env.dist), cf. son en-tête
+          frankenphp_img="$(grep -m1 -E '^FROM ' docker/config/Dockerfile.api2 | awk '{print $2}')"
           db_img="$(grep -E '^BASE_IMAGE_DB=' docker/.env.dist | cut -d= -f2-)"
           # slug = catégorie SARIF stable et sûre (pas de : ou /)
           matrix="$(jq -c -n \

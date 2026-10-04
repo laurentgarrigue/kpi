@@ -34,6 +34,13 @@
 	# Hub Mercure natif — évite un conteneur dunglas/mercure dédié.
 	# Consommé par la refonte du scoring live (cf. LIVE_MATCH_SCORING_REFACTORING_PROPOSALS §4.6).
 	mercure {
+		# ⚠️ Depuis FrankenPHP 1.13, publisher_jwt/subscriber_jwt n'existent plus qu'en
+		# « mode compatibilité » (validation des jetons assouplie) ; sans cette ligne,
+		# le module refuse de démarrer et le conteneur boucle sans log. Le mode moderne
+		# exige de passer à un bloc `issuer`, à faire avec la refonte du scoring live
+		# (abonnés authentifiés). Version 8 = la seule acceptée par 1.13 ; 1.12 n'acceptait
+		# que 7 → FrankenPHP est épinglé (BASE_IMAGE_FRANKENPHP), cf. Dockerfile.api2.
+		protocol_version_compatibility 8
 		publisher_jwt {$MERCURE_PUBLISHER_JWT_KEY}
 		subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
 		# CORS : mêmes origines que l'API (app2 / app4).
