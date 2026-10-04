@@ -97,7 +97,7 @@ services:
             - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_CORS_ORIGINS=https://${KPI_DOMAIN_NAME}
-            - MERCURE_ANONYMOUS=0
+            # Pas de MERCURE_EXTRA_DIRECTIVES : abonnements anonymes refusés (cf. Caddyfile.api2)
         volumes:
             - ../sources/api2:/app
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/

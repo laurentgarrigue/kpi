@@ -598,7 +598,7 @@ mercure {
     publisher_jwt {$MERCURE_PUBLISHER_JWT_KEY}
     subscriber_jwt {$MERCURE_SUBSCRIBER_JWT_KEY}
     cors_origins {$MERCURE_CORS_ORIGINS}
-    anonymous {$MERCURE_ANONYMOUS:0}
+    {$MERCURE_EXTRA_DIRECTIVES}   # dev : `anonymous` (flag sans argument, cf. Caddyfile.api2)
     transport bolt://{$MERCURE_TRANSPORT_PATH:/data/mercure.db}?size={$MERCURE_HISTORY_SIZE:1000}&cleanup_frequency=0.3
 }
 ```
@@ -610,7 +610,7 @@ Le hub est exposé sur **`/.well-known/mercure`**, donc — préfixe Traefik com
 |---|---|---|
 | `MERCURE_JWT_SECRET` | valeur de dev | **à régénérer** : `openssl rand -hex 32` |
 | `MERCURE_CORS_ORIGINS` | `*` | `https://${KPI_DOMAIN_NAME}` |
-| `MERCURE_ANONYMOUS` | `1` | `0` (abonnements authentifiés) |
+| `MERCURE_EXTRA_DIRECTIVES` | `anonymous` | non définie (abonnements authentifiés) |
 
 > ⚠️ `MERCURE_JWT_SECRET` est un **secret** : `docker/.env` n'est pas versionné, mais `.env.dist`
 > contient un placeholder à remplacer impérativement en préprod et en production.
@@ -636,7 +636,7 @@ Trois points à connaître :
 > ont été **annulées**. Ne pas les réintroduire.
 
 > ⚠️ `EventSource` ne peut pas envoyer de header `Authorization`. En dev, l'abonnement navigateur
-> repose donc sur `MERCURE_ANONYMOUS=1`. En préprod/prod (`MERCURE_ANONYMOUS=0`), il faudra un JWT
+> repose donc sur `MERCURE_EXTRA_DIRECTIVES=anonymous`. En préprod/prod (variable non définie), il faudra un JWT
 > subscriber passé en cookie ou en query string — **à traiter dans la refonte scoring**.
 
 ---
