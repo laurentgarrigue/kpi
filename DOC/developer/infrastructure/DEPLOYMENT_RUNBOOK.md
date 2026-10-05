@@ -68,7 +68,7 @@ base **dédiée** `kpi_fixtures_test` (jamais la base de dev) via
 
 ```bash
 make pr_create      # push la branche + ouvre la PR vers main (base=main par défaut)
-make pr_checks      # suit la CI jusqu'au bout (gh pr checks --watch)
+make pr_checks      # suit la CI jusqu'au bout, sans clic (approuve le run du bump, relance un run bloqué)
 make pr_merge       # squash-merge, revient sur main à jour, supprime la branche
 ```
 

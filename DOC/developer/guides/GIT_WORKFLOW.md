@@ -307,9 +307,17 @@ final, en un seul commit sur `main`. Rien à lancer, rien à merger en plus.
   depuis ton premier commit, et que `gh pr merge --squash` reprend comme message
   final) — `feat:`/`feature:` (ou `feature/…`) → **minor**, tout le reste → **patch**.
 - **Par brique** : seules les briques touchées bougent ; une PR sur app2 seul ne
-  touche pas app4 ni api2.
-- Le commit de bump apparaît sur ta branche après un cycle de CI — attends que
-  `make pr_checks` reparte au vert avant de merger, il inclut ce commit.
+  touche pas app4 ni api2. « Touchée » se lit sur **toute la PR**, pas sur le seul
+  dernier commit.
+- **Idempotent** : la cible est toujours *bump(version sur `main` à jour)*. Pousser
+  de nouveaux commits après le bump ne rebumpe pas. Si une autre PR a bumpé `main`
+  entre-temps, la cible suit. Un titre passé de `fix` à `feat` monte en minor, mais
+  rien n'est jamais rétrogradé (ni un bump manuel, ni un titre repassé en `fix`).
+- Le commit de bump est poussé **en tout début de CI** : `bump-version` passe avant
+  les jobs lourds, et s'il pousse, ceux-ci sont skippés sur le SHA périmé. La CI
+  complète ne tourne donc **qu'une fois**, sur le commit de bump. Avant, deux CI
+  complètes tournaient en parallèle et s'annulaient l'une l'autre via le groupe
+  `concurrency` (PR #336). `make pr_checks` suit ce nouveau HEAD jusqu'au vert.
 - **Le run CI de ce commit est « Action required »** : poussé par
   `github-actions[bot]`, GitHub exige une approbation (« Approve and run ») avant de
   le lancer. Sans elle, le nouveau HEAD n'a aucun check (`gh pr checks` : « no checks
@@ -318,6 +326,12 @@ final, en un seul commit sur `main`. Rien à lancer, rien à merger en plus.
   API `actions/runs/{id}/approve`) puis suit le nouveau HEAD : aucun clic à faire.
   Il n'approuve que les runs déclenchés par `github-actions[bot]` depuis ce dépôt
   (jamais un fork ni un autre acteur, qu'il signale sans y toucher).
+- `make pr_checks` affiche la progression job par job et répare seul les deux
+  incidents rencontrés : un job coincé « queued » sans runner depuis plus de 5 min
+  (incident GitHub) est annulé puis relancé, et un run du HEAD trouvé annulé est
+  relancé, une fois chacun. Il est relançable à tout moment.
+  **N'approuve et ne relance rien dans l'UI** pendant qu'il tourne : chaque run qui
+  démarre annule l'autre (groupe `concurrency`).
 
 C'est le remplaçant de l'ancien `version-bump.yml` (supprimé à la consolidation
 du 2026-09-13, défaut 4 de
@@ -603,7 +617,7 @@ Commandes sous-jacentes :
 
 ```bash
 gh pr create --base main --fill            # = make pr_create
-gh pr checks --watch                       # ≈ make pr_checks (sans l'approbation auto du run de bump)
+gh pr checks --watch                       # ≈ make pr_checks (sans approbation/relance auto ni progression)
 gh pr merge <n> --squash --delete-branch   # merge une PR
 gh pr view <n> --json mergeCommit --jq .mergeCommit.oid   # SHA de merge (pour revert)
 gh run list --workflow=deploy-preprod.yml --limit 5       # suivi des déploiements
