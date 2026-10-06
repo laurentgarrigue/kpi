@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { version } from '~/package.json'
+
 definePageMeta({
   layout: 'default',
   middleware: 'auth'
@@ -160,6 +162,9 @@ const handleSubmit = async () => {
           {{ t('login.beta_message') }}
         </div>
       </div>
+
+      <!-- App version -->
+      <p class="mt-4 text-center text-xs text-header-500 italic">v{{ version }}</p>
     </div>
   </div>
 </template>

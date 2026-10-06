@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+import { version as appVersion } from './package.json'
+
 const baseUrl = process.env.BASE_URL ?? ''
 const apiBaseUrl = process.env.API_BASE_URL ?? 'https://kpi.localhost/api'
 const backendBaseUrl = process.env.BACKEND_BASE_URL ?? 'https://kpi.localhost'
@@ -29,6 +31,8 @@ export default defineNuxtConfig({
     head: {
       meta: [
         { name: 'theme-color', content: '#1f2937' },
+        // Lu par `make version` (curl) : ssr:false → le texte affiché n'est pas dans le HTML
+        { name: 'app-version', content: appVersion },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }

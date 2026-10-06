@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+import { version as appVersion } from './package.json'
+
 const baseUrl = process.env.BASE_URL ?? '/admin2'
 const api2BaseUrl = process.env.API2_BASE_URL ?? 'https://kpi.localhost/api2'
 const legacyBaseUrl = process.env.LEGACY_BASE_URL ?? 'https://kpi.localhost'
@@ -21,6 +23,8 @@ export default defineNuxtConfig({
       title: 'KPI Admin',
       meta: [
         { name: 'theme-color', content: '#1e40af' },
+        // Lu par `make version` (curl) : ssr:false → le texte affiché n'est pas dans le HTML
+        { name: 'app-version', content: appVersion },
         { name: 'description', content: 'KPI Administration Panel' }
       ],
       link: [
