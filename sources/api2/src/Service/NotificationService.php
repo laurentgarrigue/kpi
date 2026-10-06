@@ -31,7 +31,7 @@ class NotificationService
 
             $this->mailer->send($email);
         } catch (\Throwable $e) {
-            $this->logger->warning('Failed to send notification email', [
+            $this->logger->error('Failed to send notification email', [
                 'subject' => $subject,
                 'error' => $e->getMessage(),
             ]);
@@ -91,7 +91,7 @@ class NotificationService
 
             $this->mailer->send($email);
         } catch (\Throwable $e) {
-            $this->logger->warning('Failed to send password reset email', [
+            $this->logger->error('Failed to send password reset email', [
                 'to' => $toEmail,
                 'error' => $e->getMessage(),
             ]);

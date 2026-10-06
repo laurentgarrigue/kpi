@@ -226,18 +226,18 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
 - Création nouvelle compétition : par défaut système et goal average ICF pour niveau International, FFCK pour national et régional.
 - Création nouvelle compétition : Goal average : inverser l'ordre des valeurs dans le select
-- Utilisateurs - ajouter un mandat : select multiples background clair en mode sombre, illisibles.
+- ✅ Utilisateurs - ajouter un mandat : select multiples background clair en mode sombre, illisibles.
 - Utilisateurs : formulaire permet la modification du mot de passe d'un utilisateur, mais pas l'API.
-- Utilisateurs : envoi de lien de réinitialisation du mot de passe à l'utilisateur ne semble pas fonctionner.
-- Cartouche utilisateur : manque de contraste sur Profil X, Thème, Déconnexion.
+- ✅ Utilisateurs : envoi de lien de réinitialisation du mot de passe à l'utilisateur ne semble pas fonctionner.
+- ✅ Cartouche utilisateur : manque de contraste sur Profil X, Thème, Déconnexion.
 - Timer connexion 45 minutes ?
 - ✅ Profil 9 devrait-il pouvoir changer le statut d'un match ? Oui
-- Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
+- ✅ Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
 - ✅ clubs/team/XXX : ajouter catégorie (sous-titre 2) dans la colonne Compétition
-- id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
 - ✅ Page d'accueil, rappeler Kayak-Polo.info Administration
 - ✅ favicon
 - ✅ Cohérence des droits app4 / api2 : ajout d'images (logos compétition), 
+- id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
 
 **Nouveau règlement**:
 - Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
