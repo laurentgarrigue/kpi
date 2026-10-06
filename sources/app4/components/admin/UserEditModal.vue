@@ -656,11 +656,6 @@ onBeforeUnmount(() => {
     @close="emit('close')"
   >
     <div class="space-y-5">
-      <!-- Error banner -->
-      <div v-if="formError" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 rounded-lg text-sm text-danger-700 dark:text-danger-300">
-        {{ formError }}
-      </div>
-
       <!-- Mandates-only notice for profiles 3-4 in edit mode -->
       <div v-if="mandatesOnly" class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-lg text-sm text-amber-800 dark:text-amber-200">
         <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0 mt-0.5" />
@@ -1085,6 +1080,11 @@ onBeforeUnmount(() => {
             />
           </div>
         </div>
+      </div>
+
+      <!-- Error banner (just above the Save button) -->
+      <div v-if="formError" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-sm text-danger-700 dark:text-danger-300">
+        {{ formError }}
       </div>
     </div>
 

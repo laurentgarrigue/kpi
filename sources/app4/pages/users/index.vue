@@ -521,7 +521,7 @@ const profileOptions = computed(() => {
           </button>
         </div>
       </template>
-      <template #before-search>
+      <template #after-search>
         <!-- Profile filter -->
         <select
           v-model="filterProfile"
