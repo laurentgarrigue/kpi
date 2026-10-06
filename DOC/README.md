@@ -75,7 +75,6 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[TOOLTIP_MIGRATION_STATUS.md](developer/in-progress/status/TOOLTIP_MIGRATION_STATUS.md)** - ⏳ Migration tooltips
 - **[MASKED_INPUT_MIGRATION_STATUS.md](developer/in-progress/status/MASKED_INPUT_MIGRATION_STATUS.md)** - ⏳ Migration masked input
 
-- **[MERGE_CHECKLIST_APP3_MEDIA.md](developer/in-progress/MERGE_CHECKLIST_APP3_MEDIA.md)** - ☐ Checklist de merge : suppression de l'ancien app3 + médias hors Git (préprod puis prod)
 #### [Plans d'action](developer/in-progress/plans/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Stratégie de refonte de la partie publique (WordPress + kp*.php → app3 Nuxt SSR + api2, médias hors Git)
 - **[JQUERY_ELIMINATION_STRATEGY.md](developer/in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md)** - Stratégie élimination jQuery
@@ -87,6 +86,7 @@ Documentation technique pour le développement et la maintenance du projet.
 
 #### [Migrations terminées](developer/archive/completed-migrations/)
 - **[PHP8_MIGRATION_COMPLETE.md](developer/archive/completed-migrations/PHP8_MIGRATION_COMPLETE.md)** - ✅ Migration PHP 8.4 TERMINÉE
+- **[MERGE_CHECKLIST_APP3_MEDIA.md](developer/archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md)** - ✅ Suppression de l'ancien app3 + médias hors Git, dev/préprod/prod (clos le 06/10/2026)
 - **[PHP8_MIGRATION_SUMMARY.md](developer/archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** - ✅ Synthèse migration PHP 8.4
 - **[MIGRATION_FPDF_MYPDF_SUCCESS.md](developer/archive/completed-migrations/MIGRATION_FPDF_MYPDF_SUCCESS.md)** - ✅ Succès migration mPDF
 - **[AUTOCOMPLETE_MIGRATION_SUMMARY.md](developer/archive/completed-migrations/AUTOCOMPLETE_MIGRATION_SUMMARY.md)** - ✅ Synthèse migration autocomplete

@@ -25,7 +25,7 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 ---
 
 #### [MEDIA_STORAGE.md](MEDIA_STORAGE.md)
-**Status**: ✅ Implémenté (2026-09-28) — migration serveur à exécuter
+**Status**: ✅ Implémenté (2026-09-28) — migré en dev, préprod et prod, sauvegarde quotidienne active (2026-10-06)
 
 Images uploadées (logos, photos, visuels) stockées hors du dépôt dans `HOST_MEDIA_PATH`, montées à leur
 emplacement historique, sauvegardées par restic (`make media_*`). **Ordre de migration par environnement.**

@@ -235,7 +235,9 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Users : formulaire : placer les messages d'alerte juste au dessus du bouton d'action (Enregistrer, Valider le mandat) plutôt que tout en haut du formulaire ou de la rubrique mandats.
 - clubs/team/XXX : ajouter catégorie (sous-titre 2) dans la colonne Compétition
 - id match : reinitialiser la séquence à un chiffre plus bas ? à évaluer.
-- Page d'accueil, rappeler Kayak-Polo.info Administration + favicon
+- ✅ Page d'accueil, rappeler Kayak-Polo.info Administration
+- favicon
+- Cohérence des droits app4 / api2 : ajout d'images (logos compétition), 
 
 **Nouveau règlement**:
 - Prendre en compte la modification de règlement concernant l'affichage obligatoire des décisions du jury d'appel sur le site officiel de la compétition, et prévoir un affichage spécifique pour ces décisions dans l'application app4, avec possibilité de les consulter par les utilisateurs autorisés.
