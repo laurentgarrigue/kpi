@@ -952,6 +952,7 @@
       "ffck_hint": "Règlement FFCK : 4 points victoire, 2 nul, 1 défaite, 0 forfait.",
       "icf_hint": "Règlement ICF : 3 points victoire, 1 nul, 0 défaite, 0 forfait."
     },
+    "goalaverage_short": "Diff.",
     "goalaverage_options": {
       "gen": "Général",
       "part": "Particulier",

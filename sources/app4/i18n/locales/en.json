@@ -940,6 +940,7 @@
       "ffck_hint": "FFCK rule: 4 points for a win, 2 for a draw, 1 for a loss, 0 for a forfeit.",
       "icf_hint": "ICF rule: 3 points for a win, 1 for a draw, 0 for a loss, 0 for a forfeit."
     },
+    "goalaverage_short": "GA",
     "goalaverage_options": {
       "gen": "General",
       "part": "Head-to-head",

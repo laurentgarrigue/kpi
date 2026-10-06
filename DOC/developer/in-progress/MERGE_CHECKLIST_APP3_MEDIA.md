@@ -231,6 +231,11 @@ git ls-files -v | grep -c '^S '     # → 0
 git status --short                  # → vide (sinon : ce sont des modifs locales réelles, à examiner)
 ```
 
+- [ ] Fichiers non suivis (`git status --short`, `??`) : ceux des 6 dossiers doivent être dans le
+  stockage (`cmp sources/img/<f> /data/media/kpi/img/<f>`) ; ceux d'autres dossiers versionnés (ex.
+  `sources/img/Pays/`) sont à **committer** ; ceux de `sources/api2/public/img/` (uploads égarés) sont
+  à copier dans `/data/media/kpi/img/` **et** dans `sources/img/` (visibles tout de suite en prod).
+  Fait le 05/10 : 7 images déjà dans le stockage, `Pays/WAL.png` committée, `logo/L-WCM-2026.png` rapatriée.
 - [ ] Variables présentes dans `docker/.env`
 - [ ] Plus aucun fichier `skip-worktree` (`git ls-files -v | grep -c '^S '` → 0)
 - [ ] `init` OK. En prod, le volume attendu est d'environ **437 Mo** au total pour `sources/img/`,
@@ -269,17 +274,30 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 
 ### 2.4 🖥 Planifier la sauvegarde (dépôt privé `vps-manager`)
 
-À ajouter aux crons, **après** le dump SQL nocturne :
+Script `media-backup.sh` + cibles make dans `vps-manager`. Il appelle `make media_backup` /
+`media_backup_check` / `media_restore` du dépôt KPI de chaque instance (`MEDIA_BACKUP_TARGETS`),
+journalise dans `$LOGS_BASE_DIR/media-backup/` et alerte par email (variables `HEALTH_CHECK_*`).
 
-```cron
-30 3 * * *  cd /data/kpi && make media_backup >> /var/log/kpi-media-backup.log 2>&1 || mail -s "KPI: media_backup en échec" <admin> < /var/log/kpi-media-backup.log
-0  5 * * 0  cd /data/kpi && make media_backup_check >> /var/log/kpi-media-backup.log 2>&1
+- Sauvegarde : tous les jours à **3h30**, après le dump SQL de 2h
+- Contrôle : chaque **dimanche à 5h**, avec trois vérifications : `restic check` (5 % des données),
+  restauration d'un fichier tiré au hasard comparée à l'original, et alerte si la dernière sauvegarde
+  réussie a plus de `MEDIA_BACKUP_MAX_AGE_HOURS` (26 h)
+
+```bash
+cd <vps-manager>
+# .env : ajouter MEDIA_BACKUP_TARGETS et MEDIA_BACKUP_MAX_AGE_HOURS (cf. .env.dist)
+make media-backup            # 1re exécution manuelle (préprod + prod)
+make media-backup-check      # doit être vert (restauration test comprise)
+make install-cron-media-backup
+make media-backup-status
 ```
 
-- [ ] Cron ajouté dans `vps-manager` et déployé
-- [ ] Lendemain : `make media_backup_list` montre un nouvel instantané
-- [ ] Test de restauration d'un fichier :
-  `make media_restore snapshot=latest path=img/logo/<un-fichier>`, puis `cmp` avec l'original
+> L'utilisateur du crontab doit être dans le groupe `docker` (restic tourne en conteneur, en root :
+> c'est lui qui lit le mot de passe et écrit le dépôt) et pouvoir lire `/data/kpi` (Makefile, `docker/.env`).
+
+- [ ] `.env` de `vps-manager` complété, `make media-backup-check` vert
+- [ ] `make install-cron-media-backup` : deux lignes `media-backup.sh` dans `crontab -l`
+- [ ] Lendemain : `make media-backup-status` affiche ✅ et un nouvel instantané pour chaque instance
 
 ---
 
@@ -306,6 +324,7 @@ cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de p
 |---|---|
 | Conteneurs qui ne démarrent pas (« HOST_MEDIA_PATH absent ») | Ajouter la variable dans `docker/.env`, puis `make docker_<env>_up` |
 | « mkdir(): Permission denied » à l'upload, ou live/cache introuvable | `LEGACY_DOCUMENT_ROOT` absent de l'environnement d'api2 ou du worker : `docker exec <app>_api2 printenv LEGACY_DOCUMENT_ROOT`, puis `make docker_<env>_up` et `make api2_cache_clear` |
+| 404 sur `/img/...` alors que le fichier est dans `HOST_MEDIA_PATH` | Montage perdu dans un conteneur en marche : le point de montage `sources/img/<d>` a été supprimé sur l'hôte (changement de branche, `git pull`/`reset` qui retire les images suivies), le noyau a retiré le montage. `make media_status` (lit `/proc/mounts`) → `docker restart <conteneur>` |
 | Images manquantes après déploiement | `make media_init` (récupère depuis l'historique Git), puis `make media_status` |
 | Image écrasée ou supprimée par erreur | `make media_restore snapshot=latest path=img/...`, puis `rsync` (commande affichée) |
 | Retour au code précédent (`make preprod_rollback sha=…`, ou rollback auto du wrapper) | ⚠️ **Échoue tel quel** : l'ancien code veut recréer les images suivies dans `sources/img/{logo,Nations,…}`, mais Docker y a créé les points de montage, possédés par `root` → « unable to create file … Permission non accordée », `reset --hard` avorte. Il faut d'abord vider ces dossiers (root/sudo, conteneurs arrêtés) **ou** préférer un correctif en avant. Les médias, eux, ne risquent rien : ils restent dans `HOST_MEDIA_PATH`. Les uploads faits entre-temps sont à recopier dans `sources/img/` si le retour arrière dure (`rsync -a --ignore-existing /data/media/<env>/img/ sources/img/`). |

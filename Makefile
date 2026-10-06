@@ -1211,12 +1211,13 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 	gh pr status
 
 # Suit la CI de la PR courante jusqu'au bout, sans intervention : en-tête (n°, titre,
-# URL), approbation automatique du run « Action required » créé par le commit de bump
-# de la CI (github-actions[bot] — GitHub exige sinon un clic « Approve and run »),
-# suivi du nouveau HEAD, puis verdict et durée totale (wall-clock). Code de sortie =
-# celui de `gh pr checks`, pour que `make pr_checks && make pr_merge` garde son sens.
+# URL), progression job par job, approbation immédiate du run « Action required » créé
+# par le commit de bump de la CI (github-actions[bot] — GitHub exige sinon un clic
+# « Approve and run »), bascule sur le nouveau HEAD, relance d'un run bloqué (job sans
+# runner) ou annulé, puis verdict et durée totale. Code de sortie non-nul en cas
+# d'échec, pour que `make pr_checks && make pr_merge` garde son sens.
 # Détail : scripts/pr-checks.sh.
-pr_checks: ## Suit la CI de la PR courante jusqu'au bout (approuve le run du commit de bump) + durée totale
+pr_checks: ## Suit la CI de la PR courante jusqu'au bout, sans clic (approbation du bump, relance si bloqué) + durée
 	@bash scripts/pr-checks.sh
 
 pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)

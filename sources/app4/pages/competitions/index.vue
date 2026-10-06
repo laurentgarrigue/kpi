@@ -914,6 +914,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">
                     <div class="font-medium">{{ competition.libelle }}</div>
                     <div v-if="competition.soustitre" class="text-xs text-header-900 dark:text-header-50">{{ competition.soustitre }}</div>
+                    <AdminCompetitionRulesBadges :competition="competition" class="mt-0.5" />
                   </td>
 
                   <!-- Level badge -->
@@ -1123,6 +1124,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
             <div class="space-y-2">
               <div class="font-medium text-header-900 dark:text-header-50">{{ competition.libelle }}</div>
               <div v-if="competition.soustitre" class="text-sm text-header-600 dark:text-header-300">{{ competition.soustitre }}</div>
+              <AdminCompetitionRulesBadges :competition="competition" />
               <div class="flex flex-wrap gap-2 text-sm text-header-600 dark:text-header-300">
                 <span>{{ competition.codeTypeclt }}</span>
                 <span v-if="competition.codeRef">| {{ competition.codeRef }}</span>
@@ -1410,15 +1412,16 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
             </div>
           </div>
 
-          <!-- Row: Qualifies + Elimines (only for non-MULTI) -->
-          <div v-if="!isMultiType" class="grid grid-cols-2 gap-4">
+          <!-- Row: Qualifies + Elimines -->
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('competitions.form.qualifies') }}</label>
               <input
                 v-model.number="formData.qualifies"
                 type="number"
                 min="0"
-                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                :disabled="isFormReadOnly"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-700 disabled:cursor-not-allowed"
               >
             </div>
             <div>
@@ -1427,7 +1430,8 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                 v-model.number="formData.elimines"
                 type="number"
                 min="0"
-                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                :disabled="isFormReadOnly"
+                class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-700 disabled:cursor-not-allowed"
               >
             </div>
           </div>

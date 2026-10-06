@@ -74,11 +74,12 @@ const loadImages = async () => {
   }
   listLoading.value = true
   try {
-    const result = await api.get<ExistingImage[]>('/admin/operations/images/list', {
+    const result = await api.get<{ total: number; items: ExistingImage[] }>('/admin/operations/images/list', {
       imageType: props.imageKind,
-      q: searchQuery.value
+      q: searchQuery.value,
+      limit: 5
     })
-    existingImages.value = result.slice(0, 5)
+    existingImages.value = result.items
   } catch {
     toast.add({
       title: t('common.error'),

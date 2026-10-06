@@ -7,6 +7,8 @@ name: CI
 #   - Phase 3 : build & smoke (build-nuxt, smoke-api2)
 #   - Phase 4 : tests fonctionnels (tests-api2 : PHPUnit unit + integration)
 # Tout est path-filtered : chaque job ne tourne que si sa brique change.
+# Les jobs lourds attendent aussi `bump-version` : s'il pousse un commit de bump, ils sont
+# skippés sur ce SHA périmé et la CI complète tourne UNE fois, sur le run du commit de bump.
 # Le job final `ci-summary` est l'unique required check câblé dans le ruleset `main`.
 # Voir le journal d'exécution : DOC/.../CI_CD_EXECUTION_NOTES.md.
 
@@ -72,10 +74,11 @@ jobs:
   #    Un seul job matriciel : ne tourne que sur les apps réellement modifiées.
   # ---------------------------------------------------------------------------
   lint-nuxt:
-    needs: changes
+    needs: [changes, bump-version]
     if: >-
-      needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app4 == 'true'
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      (needs.changes.outputs.app2 == 'true' || needs.changes.outputs.app4 == 'true')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -120,10 +123,11 @@ jobs:
   #    des fallbacks (`?? 'https://…'`) pour toutes les vars → aucun .env requis.
   # ---------------------------------------------------------------------------
   build-nuxt:
-    needs: changes
+    needs: [changes, bump-version]
     if: >-
-      needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app4 == 'true'
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      (needs.changes.outputs.app2 == 'true' || needs.changes.outputs.app4 == 'true')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -166,8 +170,11 @@ jobs:
   #    (à ajouter d'abord à composer, voir les notes de phase).
   # ---------------------------------------------------------------------------
   lint-api2:
-    needs: changes
-    if: needs.changes.outputs.api2 == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.api2 == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -205,8 +212,11 @@ jobs:
   #    container `dev` pour que l'extension Symfony résolve les services.
   # ---------------------------------------------------------------------------
   phpstan-api2:
-    needs: changes
-    if: needs.changes.outputs.api2 == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.api2 == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -260,8 +270,11 @@ jobs:
   #    validation de mapping.
   # ---------------------------------------------------------------------------
   smoke-api2:
-    needs: changes
-    if: needs.changes.outputs.api2 == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.api2 == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -318,8 +331,11 @@ jobs:
   #    par brique), pas la sévérité du job.
   # ---------------------------------------------------------------------------
   tests-api2:
-    needs: changes
-    if: needs.changes.outputs.api2 == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.api2 == 'true'
     runs-on: ubuntu-latest
     services:
       mariadb:
@@ -389,8 +405,11 @@ jobs:
   #    dette. C'est juste un filet contre les <?php cassés.
   # ---------------------------------------------------------------------------
   lint-legacy:
-    needs: changes
-    if: needs.changes.outputs.legacy == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.legacy == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -412,8 +431,11 @@ jobs:
   # 5. Docker — lint des Dockerfiles + validation des compose.
   # ---------------------------------------------------------------------------
   lint-docker:
-    needs: changes
-    if: needs.changes.outputs.docker == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -445,8 +467,11 @@ jobs:
   # 6a. composer audit — CVE des dépendances PHP d'api2 (base d'advisories
   #     Packagist). Ne bloque que sur une vulnérabilité connue du lock.
   audit-composer:
-    needs: changes
-    if: needs.changes.outputs.api2 == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.api2 == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -468,10 +493,11 @@ jobs:
   #     corrigeables sans casser) ne doivent pas bloquer une PR — Dependabot
   #     s'en charge de son côté sur `main`.
   audit-npm:
-    needs: changes
+    needs: [changes, bump-version]
     if: >-
-      needs.changes.outputs.app2 == 'true' ||
-      needs.changes.outputs.app4 == 'true'
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      (needs.changes.outputs.app2 == 'true' || needs.changes.outputs.app4 == 'true')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -632,9 +658,15 @@ jobs:
   #   - feat / feature (feat: feat/ feature: feature/, casse indifférente) → minor
   #   - tout le reste (fix, chore, docs, ci…)                              → patch
   #
-  # Anti-boucle : si le commit HEAD de la branche ne touche QUE des fichiers de
-  # version (ce job vient de tourner une 2e fois sur son propre push), on ne
-  # rebumpe pas.
+  # Idempotent : la cible d'une brique est TOUJOURS bump(version sur `main` à
+  # jour), et les briques touchées se lisent sur TOUTE la PR (merge-base..HEAD).
+  # Rejouer le job ne change donc rien : pas de re-bump sur le run du commit de
+  # bump, ni sur un nouveau push après bump, et une brique touchée par un commit
+  # antérieur au dernier est bien bumpée (deux défauts de l'ancienne version, qui
+  # ne regardait que le dernier commit). Si une autre PR a bumpé `main` entre-temps,
+  # la cible suit (pas de doublon de numéro). Jamais de rétrogradation : une
+  # version déjà au-delà de la cible (bump manuel, titre repassé de feat à fix)
+  # est laissée telle quelle.
   bump-version:
     needs: changes
     # `github.actor != 'dependabot[bot]'` : Dependabot est géré par
@@ -652,6 +684,13 @@ jobs:
     # bump sur la branche de la PR.
     permissions:
       contents: write
+    # `pushed == 'true'` → le SHA de ce run est périmé : les jobs lourds (qui
+    # dépendent tous de ce job) sont skippés, et c'est le run du commit de bump
+    # qui fait la CI complète. Sans ça, deux CI complètes tournaient en
+    # parallèle (SHA d'origine + SHA du bump) et se cannibalisaient via le groupe
+    # `concurrency` dès que le second était approuvé (PR #336).
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
     steps:
       # `github.head_ref` est le nom de la branche source, contrôlé par l'auteur
       # de la PR : il ne doit JAMAIS être interpolé dans un `run:`. Même règle
@@ -684,18 +723,19 @@ jobs:
           # Le titre de la PR est une entrée utilisateur : jamais interpolé
           # dans le corps du `run:`, seulement lu depuis l'environnement.
           PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
 
-          # Anti-boucle : le commit HEAD ne touche QUE des fichiers de version
-          # → c'est ce job qui vient de committer, on ne rebumpe pas.
-          CHANGED="$(git diff-tree --no-commit-id -r --name-only HEAD)"
+          # Base = `main` À JOUR (pas l'état au moment de la création de la branche).
+          git fetch --no-tags --quiet origin "$BASE_REF"
+          BASE="$(git rev-parse FETCH_HEAD)"
+          MB="$(git merge-base "$BASE" HEAD)"
+
+          # Fichiers touchés par TOUTE la PR, hors fichiers de version (sinon le
+          # commit de bump suffirait à « toucher » une brique).
           VERSION_FILES='^sources/(app2|app4)/package(-lock)?\.json$|^sources/api2/config/packages/(nelmio_api_doc|api_platform)\.yaml$'
-          if [ -n "$CHANGED" ] && ! echo "$CHANGED" | grep -qvE "$VERSION_FILES"; then
-            echo "Le dernier commit ne touche que des fichiers de version — pas de re-bump."
-            echo "bumped=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          CHANGED="$(git diff --name-only "$MB" HEAD | grep -vE "$VERSION_FILES" || true)"
 
           if echo "$PR_TITLE" | grep -qiE '^(feat|feature)[:/]'; then
             BUMP="minor"
@@ -713,61 +753,64 @@ jobs:
             fi
           }
 
-          # Bump du champ "version" d'un package.json + son lock (2 occurrences
-          # en tête du lock : "version" racine + packages[""].version). Un lock
-          # désynchronisé casse `npm ci` en prod.
-          update_package_json() {
-            local pkg="$1" current new lock
-            [ -f "$pkg" ] || return 1
-            current="$(grep -oP '(?<="version": ")[^"]+' "$pkg" | head -1)"
-            [ -z "$current" ] && return 1
-            new="$(bump_version "$current")"
-            sed -i "s/\"version\": \"$current\"/\"version\": \"$new\"/" "$pkg"
-            lock="${pkg%/package.json}/package-lock.json"
-            [ -f "$lock" ] && sed -i "0,/\"version\": \"$current\"/s//\"version\": \"$new\"/;0,/\"version\": \"$current\"/s//\"version\": \"$new\"/" "$lock"
-            echo "$new"
+          # Version à appliquer (stdout), ou rien si la branche est déjà à la
+          # cible — ou au-delà (bump manuel, feat→fix) : on ne rétrograde jamais.
+          target_for() {
+            local base_ver="$1" cur="$2" target
+            target="$(bump_version "$base_ver")"
+            [ "$cur" = "$target" ] && return 0
+            if [ "$(printf '%s\n%s\n' "$cur" "$target" | sort -V | tail -1)" = "$cur" ]; then
+              echo "  $cur > cible $target : version laissée telle quelle" >&2
+              return 0
+            fi
+            echo "$target"
           }
 
-          # Bump d'une ligne « version: X.Y.Z » (3 nombres exigés → ne touche
-          # pas « openapi: 3.1.0 »). Utilisé pour les DEUX YAML api2, alignés.
-          update_yaml_version() {
-            local yaml="$1" current new
-            [ -f "$yaml" ] || return 1
-            current="$(grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$yaml" | head -1)"
-            [ -z "$current" ] && return 1
-            new="$(bump_version "$current")"
-            sed -i "s/\(version:[[:space:]]*\)$current\b/\1$new/" "$yaml"
-            echo "$new"
-          }
+          # Lecture de version sur stdin (fichier courant ou `git show` de la base).
+          # « version: X.Y.Z » à 3 nombres → ne confond pas « openapi: 3.1.0 ».
+          pkg_version()  { { grep -oP '(?<="version": ")[^"]+' || true; } | head -1; }
+          yaml_version() { { grep -oP '^\s*version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' || true; } | head -1; }
+          base_file()    { git show "$BASE:$1" 2>/dev/null || true; }
 
           BUMPED=""
 
+          # package.json + son lock (2 occurrences en tête du lock : "version"
+          # racine + packages[""].version). Un lock désynchronisé casse `npm ci`.
           for app in app2 app4; do
-            if echo "$CHANGED" | grep -q "^sources/$app/"; then
-              new_ver="$(update_package_json "sources/$app/package.json")" || true
-              [ -n "${new_ver:-}" ] && BUMPED="$BUMPED $app@$new_ver"
-            fi
+            echo "$CHANGED" | grep -q "^sources/$app/" || continue
+            pkg="sources/$app/package.json"
+            lock="sources/$app/package-lock.json"
+            cur="$(pkg_version < "$pkg")"
+            base_ver="$(base_file "$pkg" | pkg_version)"
+            [ -n "$cur" ] && [ -n "$base_ver" ] || continue
+            new="$(target_for "$base_ver" "$cur")"
+            [ -n "$new" ] || continue
+            sed -i "s/\"version\": \"$cur\"/\"version\": \"$new\"/" "$pkg"
+            [ -f "$lock" ] && sed -i "0,/\"version\": \"$cur\"/s//\"version\": \"$new\"/;0,/\"version\": \"$cur\"/s//\"version\": \"$new\"/" "$lock"
+            BUMPED="$BUMPED $app@$new"
           done
 
-          # api2 : ne bumpe pas si SEULS les fichiers de version api2 ont changé
-          # (déjà couvert par l'anti-boucle ci-dessus, filet de sécurité en plus).
+          # api2 : deux YAML alignés — nelmio_api_doc.yaml fait foi, api_platform.yaml
+          # le suit (et se réaligne s'il avait divergé).
           NELMIO="sources/api2/config/packages/nelmio_api_doc.yaml"
           APIPLATFORM="sources/api2/config/packages/api_platform.yaml"
           if echo "$CHANGED" | grep -q '^sources/api2/'; then
-            other_api2="$(echo "$CHANGED" | grep '^sources/api2/' \
-              | grep -vE "^($NELMIO|$APIPLATFORM)$" || true)"
-            if [ -n "$other_api2" ]; then
-              new_ver="$(update_yaml_version "$NELMIO")" || true
-              # api_platform.yaml suit la MÊME version (même bump depuis la même
-              # base si alignées ; sinon calcule la sienne, ce qui les réaligne
-              # au bump suivant).
-              update_yaml_version "$APIPLATFORM" >/dev/null 2>&1 || true
-              [ -n "${new_ver:-}" ] && BUMPED="$BUMPED api2@$new_ver"
+            cur="$(yaml_version < "$NELMIO")"
+            base_ver="$(base_file "$NELMIO" | yaml_version)"
+            if [ -n "$cur" ] && [ -n "$base_ver" ]; then
+              new="$(target_for "$base_ver" "$cur")"
+              want="${new:-$cur}"
+              [ -n "$new" ] && sed -i "s/\(version:[[:space:]]*\)$cur\b/\1$new/" "$NELMIO"
+              ap="$(yaml_version < "$APIPLATFORM")"
+              [ -n "$ap" ] && [ "$ap" != "$want" ] && sed -i "s/\(version:[[:space:]]*\)$ap\b/\1$want/" "$APIPLATFORM"
+              if [ -n "$new" ] || { [ -n "$ap" ] && [ "$ap" != "$want" ]; }; then
+                BUMPED="$BUMPED api2@$want"
+              fi
             fi
           fi
 
           if [ -z "$BUMPED" ]; then
-            echo "Aucune brique versionnée touchée → rien à faire."
+            echo "Versions déjà à jour (ou aucune brique versionnée touchée) → rien à faire."
             echo "bumped=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -780,6 +823,7 @@ jobs:
       # tourne) ne doit jamais faire échouer la CI — même logique que
       # fix-dependabot-lock.
       - name: Commiter le bump si besoin
+        id: commit
         if: steps.bump.outputs.bumped != ''
         continue-on-error: true
         env:
@@ -814,7 +858,8 @@ jobs:
           done
 
           if [ "$pushed" = "1" ]; then
-            echo "✅ Bump poussé :$BUMPED"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Bump poussé :$BUMPED — la CI complète tourne sur le run de ce nouveau commit."
           else
             echo "::warning::Bump appliqué localement mais NON poussé (branche mouvante). La CI relancée par le prochain push rejouera ce job."
           fi
@@ -852,8 +897,11 @@ jobs:
   #     bloquer maintenant. À l'ajout : 0 finding CRITICAL. À durcir en HIGH une
   #     fois la dette Dockerfile nettoyée (même échéance que hadolint).
   trivy-config:
-    needs: changes
-    if: needs.changes.outputs.docker == 'true'
+    needs: [changes, bump-version]
+    if: >-
+      !cancelled() && needs.changes.result == 'success' &&
+      needs.bump-version.outputs.pushed != 'true' &&
+      needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -875,6 +923,10 @@ jobs:
   #    vérifie rien, il RÉPARE (il pousse un commit de resync, qui relance lui-même
   #    une CI complète). Son succès ne concerne donc que le run suivant, et
   #    l'attendre ici ne ferait que retarder le verdict sans rien garantir de plus.
+  #
+  #    Quand `bump-version` a poussé, tous les jobs lourds de CE run sont skippés
+  #    → ci-summary passe, mais sur un SHA qui n'est plus le HEAD de la PR : seul
+  #    le ci-summary du run du commit de bump compte pour le ruleset.
   # ---------------------------------------------------------------------------
   ci-summary:
     needs: [changes, lint-nuxt, build-nuxt, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]

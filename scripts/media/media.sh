@@ -133,15 +133,18 @@ cmd_status() {
   echo "Montages :"
   for c in "${php:-${APPLICATION_NAME}_php}" "${APPLICATION_NAME}_api2" "${APPLICATION_NAME}_event_cache_worker"; do
     if ! docker inspect "$c" >/dev/null 2>&1; then printf '  %-36s (conteneur absent)\n' "$c"; continue; fi
+    # Montages ACTIFS (/proc/mounts) et non déclarés (docker inspect) : si un point de montage
+    # sources/img/<d> est supprimé sur l'hôte (changement de branche, git pull), le noyau retire
+    # le montage du conteneur en marche, alors que docker inspect l'annonce toujours.
     local mounts n=0
-    mounts="$(docker inspect -f '{{range .Mounts}}{{.Destination}} {{end}}' "$c")"
+    mounts="$(docker exec "$c" cut -d' ' -f2 /proc/mounts 2>/dev/null | tr '\n' ' ')"
     for d in "${MEDIA_DIRS[@]}"; do
       case " $mounts " in *" /var/www/html/img/$d "*) n=$((n+1)) ;; esac
     done
     if [ "$n" -eq "${#MEDIA_DIRS[@]}" ]; then
       printf '  %-36s ✔ %d/%d\n' "$c" "$n" "${#MEDIA_DIRS[@]}"
     else
-      printf '  %-36s ✖ %d/%d → recréer le conteneur (make docker_<env>_up)\n' "$c" "$n" "${#MEDIA_DIRS[@]}"; rc=1
+      printf '  %-36s ✖ %d/%d → docker restart %s (ou make docker_<env>_up si jamais monté)\n' "$c" "$n" "${#MEDIA_DIRS[@]}" "$c"; rc=1
     fi
   done
   return $rc
