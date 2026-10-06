@@ -329,7 +329,7 @@ class AdminClubsController extends AbstractController
 
         $sqlCompets = "SELECT ce.Code_compet, ce.Code_saison, ce.Libelle AS libelleEquipe,
                               ce.Clt_publi AS cltPubli, ce.CltNiveau_publi AS cltNiveauPubli,
-                              comp.Libelle AS libelleCompet, comp.Code_typeclt AS codeTypeclt
+                              comp.Libelle AS libelleCompet, comp.Soustitre2 AS soustitre2, comp.Code_typeclt AS codeTypeclt
                        FROM kp_competition_equipe ce
                        LEFT JOIN kp_competition comp ON comp.Code = ce.Code_compet AND comp.Code_saison = ce.Code_saison
                        WHERE ce.Numero = ?
@@ -380,6 +380,7 @@ class AdminClubsController extends AbstractController
                     'codeSaison' => $r['Code_saison'],
                     'libelleEquipe' => $r['libelleEquipe'] ?? '',
                     'libelleCompet' => $r['libelleCompet'] ?? '',
+                    'soustitre2' => $r['soustitre2'] ?? '',
                     'codeTypeclt' => $type,
                     'classementFinal' => $clt,
                 ];

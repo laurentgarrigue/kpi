@@ -872,7 +872,7 @@
       "qualifies": "Qualifiés",
       "elimines": "Éliminés",
       "points": "Système de points",
-      "goalaverage": "Goal average",
+      "goalaverage": "Diff. de buts (goal average)",
       "statut": "Statut",
       "web": "Lien web",
       "web_placeholder": "URL du site web",
@@ -917,7 +917,8 @@
       "success_upload": "Image uploadée : {filename}",
       "success_upload_resized": "Image uploadée et redimensionnée : {filename}",
       "success_import": "Image importée : {filename}",
-      "success_import_resized": "Image importée et redimensionnée : {filename}"
+      "success_import_resized": "Image importée et redimensionnée : {filename}",
+      "request_hint": "Image absente ? Demandez son ajout (fichier en pièce jointe ou lien, {format}) par e-mail à"
     },
     "filters": {
       "season": "Saison",
@@ -1956,6 +1957,7 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "mandates_title": "Mandats",
+      "base_profile": "Profil principal",
       "mandates_empty": "Aucun mandat attribué",
       "mandate_add": "Ajouter un mandat",
       "mandate_label": "Libellé du mandat",
@@ -1963,6 +1965,8 @@
       "mandate_validate": "Valider le mandat",
       "mandate_cancel": "Annuler",
       "mandate_confirm_delete": "Supprimer ce mandat ?",
+      "mandate_move_to_season": "Déplacer le mandat sur la saison {season}",
+      "mandate_confirm_move_season": "Remplacer la ou les saisons de ce mandat ({from}) par la saison en cours {season} ?\nLe mandat ne s'appliquera plus aux saisons précédentes.",
       "no_competitions_for_seasons": "Aucune compétition pour les saisons sélectionnées"
     },
     "mandates": {
@@ -2000,6 +2004,7 @@
     "error_club_required": "Le filtre club est obligatoire pour les profils 7 et 8",
     "error_profile_restricted": "Vous ne pouvez pas attribuer ce profil",
     "validation_club_required": "Pour le profil 7, sélectionnez au moins un club",
+    "validation_forced_password_weak": "Le mot de passe forcé ne respecte pas les critères de sécurité minimum",
     "validation_competition_required": "Pour les profils 3 et supérieurs, sélectionnez au moins une compétition",
     "validation_gameday_required": "Pour les profils 5 et 6, sélectionnez au moins une journée",
     "validation_season_required": "Un mandat doit avoir au moins une saison sélectionnée",

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Security\PasswordPolicy;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
@@ -216,7 +217,7 @@ class AdminAuthController extends AbstractController
         }
 
         // Validate password complexity
-        $complexityError = $this->validatePasswordComplexity($password);
+        $complexityError = PasswordPolicy::validate($password);
         if ($complexityError) {
             return $this->json(['message' => $complexityError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
         }
@@ -442,25 +443,5 @@ class AdminAuthController extends AbstractController
     {
         $values = self::parseCommaFilter($value);
         return $values !== null ? array_map('intval', $values) : null;
-    }
-
-    private function validatePasswordComplexity(string $password): ?string
-    {
-        if (mb_strlen($password) < 10) {
-            return 'Password must be at least 10 characters';
-        }
-        if (!preg_match('/[A-Z]/', $password)) {
-            return 'Password must contain at least 1 uppercase letter';
-        }
-        if (!preg_match('/[a-z]/', $password)) {
-            return 'Password must contain at least 1 lowercase letter';
-        }
-        if (!preg_match('/[0-9]/', $password)) {
-            return 'Password must contain at least 1 digit';
-        }
-        if (!preg_match('/[!@#$%^&*()\-_=+\[\]{}\\\\|;:\'",.<>?\/~`]/', $password)) {
-            return 'Password must contain at least 1 special character';
-        }
-        return null;
     }
 }

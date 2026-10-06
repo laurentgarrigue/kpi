@@ -3,17 +3,24 @@
 **Branche** : `claude/public_site_redesign_strategy`
 **Commits concernés** : `cd4ef770` (Chore: remove legacy app3 match-sheet prototype) et `2033ca0d`
 (Feat: move uploaded media out of Git with restic backups)
-**Contexte** : phases 0a et 0b de [PUBLIC_SITE_REDESIGN_STRATEGY.md](plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) ;
-procédure détaillée des médias dans [MEDIA_STORAGE.md](../infrastructure/MEDIA_STORAGE.md)
+**Contexte** : phases 0a et 0b de [PUBLIC_SITE_REDESIGN_STRATEGY.md](../../in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) ;
+procédure détaillée des médias dans [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md)
 
-> **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ = poste de dev,
+> ✅ **Clos le 06/10/2026** : toutes les étapes ont été faites, en dev, en préprod et en prod. Le document
+> est archivé pour mémoire, en particulier pour les pièges rencontrés (`skip-worktree`, FrankenPHP 1.13,
+> droits `.git`, rollback bloqué par les points de montage).
+> Sauvegarde médias en place (cron `vps-manager`) : au 06/10, `make media-backup-status` affiche ✅ pour
+> `kpi` et `kpi_preprod` (backup de 3h30 OK, environ 411 Mo par instance). Le premier contrôle
+> hebdomadaire (`check`) aura lieu le dimanche 11/10 à 5h.
+
+> **Convention** (comme le [runbook](../../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ = poste de dev,
 > 🖥 = sur le VPS (en SSH, en tant que `laurent`), 🌐 = interface GitHub.
 
 ---
 
 ## Pourquoi l'ordre compte
 
-Il n'y a plus de branche `develop` : tout passe par `main` (cf. [GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md)).
+Il n'y a plus de branche `develop` : tout passe par `main` (cf. [GIT_WORKFLOW.md](../../guides/GIT_WORKFLOW.md)).
 Le merge de la PR sur `main` **déploie automatiquement la préprod**. Toute release taguée ensuite
 (`vX.Y.Z`) contiendra ce changement : la prod doit être préparée **avant** le premier
 « Deploy production » sur un tag postérieur au merge. Le déploiement (`git reset --hard`)
@@ -54,7 +61,7 @@ qui fait foi.
 
 - [x] Signaler à cette branche de remplacer les chemins par le tag, par exemple :
   `git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`
-- [ ] Conflits attendus au merge : `Makefile` et `docker/compose.dev.yaml` sont modifiés des deux
+- [x] Conflits attendus au merge : `Makefile` et `docker/compose.dev.yaml` sont modifiés des deux
   côtés, mais dans des zones différentes. Résolution : **garder la suppression des blocs app3** et
   les ajouts scoring.
 
@@ -96,9 +103,9 @@ make docker_dev_up       # recrée kpi / api2 / worker avec les montages
 make media_status        # ✔ 6/6 pour les trois conteneurs
 ```
 
-- [ ] `make media_status` : 6/6 montages sur `kpi_php`, `kpi_api2`, `kpi_event_cache_worker`
-- [ ] Contrôles fonctionnels en dev (voir [§ Contrôles](#contrôles-fonctionnels))
-- [ ] Worktrees existants : ajouter la même ligne `HOST_MEDIA_PATH` dans leur `docker/.env`
+- [x] `make media_status` : 6/6 montages sur `kpi_php`, `kpi_api2`, `kpi_event_cache_worker`
+- [x] Contrôles fonctionnels en dev (voir [§ Contrôles](#contrôles-fonctionnels))
+- [x] Worktrees existants : ajouter la même ligne `HOST_MEDIA_PATH` dans leur `docker/.env`
 
 ---
 
@@ -143,7 +150,7 @@ make pr_checks && make pr_merge     # squash-merge sur main
 
 Le push sur `main` déclenche « Deploy preprod » automatiquement.
 
-- [ ] Workflow de déploiement préprod vert
+- [x] Workflow de déploiement préprod vert
 
 > **Piège rencontré en préprod (04/10/2026)** : « Deploy preprod » a échoué dès `git reset --hard` avec
 > `Entry 'sources/img/KIP/…' not uptodate. Cannot merge.` Cause : ~1 200 images de `sources/img/`
@@ -180,14 +187,14 @@ cat /data/backups/kpi_preprod/.media-restic-password   # → gestionnaire de mot
 make media_backup_list
 ```
 
-- [ ] `make media_status` : 6/6 sur les trois conteneurs
-- [ ] api2 démarre (`docker ps` : `healthy`, pas `Restarting`) — sinon `docker exec`/`docker run … frankenphp validate --config /etc/frankenphp/Caddyfile`
-- [ ] gd présente dans api2 (image reconstruite) : `docker exec kpi_preprod_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
-- [ ] Premier backup OK, **mot de passe copié en lieu sûr**
-- [ ] Uploads égarés (bug corrigé) : `ls -R sources/api2/public/img 2>/dev/null | head`
+- [x] `make media_status` : 6/6 sur les trois conteneurs
+- [x] api2 démarre (`docker ps` : `healthy`, pas `Restarting`) — sinon `docker exec`/`docker run … frankenphp validate --config /etc/frankenphp/Caddyfile`
+- [x] gd présente dans api2 (image reconstruite) : `docker exec kpi_preprod_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
+- [x] Premier backup OK, **mot de passe copié en lieu sûr**
+- [x] Uploads égarés (bug corrigé) : `ls -R sources/api2/public/img 2>/dev/null | head`
   - vide → rien à faire
   - sinon → `rsync -a --ignore-existing sources/api2/public/img/ /data/media/kpi_preprod/img/` (vérifier d'abord les doublons)
-- [ ] Contrôles fonctionnels (voir [§ Contrôles](#contrôles-fonctionnels))
+- [x] Contrôles fonctionnels (voir [§ Contrôles](#contrôles-fonctionnels))
 
 ---
 
@@ -231,14 +238,14 @@ git ls-files -v | grep -c '^S '     # → 0
 git status --short                  # → vide (sinon : ce sont des modifs locales réelles, à examiner)
 ```
 
-- [ ] Fichiers non suivis (`git status --short`, `??`) : ceux des 6 dossiers doivent être dans le
+- [x] Fichiers non suivis (`git status --short`, `??`) : ceux des 6 dossiers doivent être dans le
   stockage (`cmp sources/img/<f> /data/media/kpi/img/<f>`) ; ceux d'autres dossiers versionnés (ex.
   `sources/img/Pays/`) sont à **committer** ; ceux de `sources/api2/public/img/` (uploads égarés) sont
   à copier dans `/data/media/kpi/img/` **et** dans `sources/img/` (visibles tout de suite en prod).
   Fait le 05/10 : 7 images déjà dans le stockage, `Pays/WAL.png` committée, `logo/L-WCM-2026.png` rapatriée.
-- [ ] Variables présentes dans `docker/.env`
-- [ ] Plus aucun fichier `skip-worktree` (`git ls-files -v | grep -c '^S '` → 0)
-- [ ] `init` OK. En prod, le volume attendu est d'environ **437 Mo** au total pour `sources/img/`,
+- [x] Variables présentes dans `docker/.env`
+- [x] Plus aucun fichier `skip-worktree` (`git ls-files -v | grep -c '^S '` → 0)
+- [x] `init` OK. En prod, le volume attendu est d'environ **437 Mo** au total pour `sources/img/`,
   dont la plus grande partie dans ces six dossiers.
 
 ### 2.2 ⌨️ 🌐 Taguer puis déployer
@@ -252,7 +259,7 @@ make release_tag version=X.Y.Z
 
 🌐 Actions → « Deploy production » → Run workflow depuis `main`, input `ref` = `vX.Y.Z` → approuver.
 
-- [ ] Workflow vert
+- [x] Workflow vert
 
 ### 2.3 🖥 Après le déploiement
 
@@ -266,11 +273,11 @@ make media_backup
 cat /data/backups/kpi/.media-restic-password     # → gestionnaire de mots de passe
 ```
 
-- [ ] 6/6 montages sur les trois conteneurs
-- [ ] gd présente dans api2 : `docker exec kpi_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
-- [ ] Premier backup OK, mot de passe copié
-- [ ] `sources/api2/public/img/` vérifié et rapatrié si besoin (cf. 1.3)
-- [ ] Contrôles fonctionnels
+- [x] 6/6 montages sur les trois conteneurs
+- [x] gd présente dans api2 : `docker exec kpi_api2 php -r 'var_dump(gd_info()["JPEG Support"]);'`
+- [x] Premier backup OK, mot de passe copié
+- [x] `sources/api2/public/img/` vérifié et rapatrié si besoin (cf. 1.3)
+- [x] Contrôles fonctionnels
 
 ### 2.4 🖥 Planifier la sauvegarde (dépôt privé `vps-manager`)
 
@@ -295,9 +302,9 @@ make media-backup-status
 > L'utilisateur du crontab doit être dans le groupe `docker` (restic tourne en conteneur, en root :
 > c'est lui qui lit le mot de passe et écrit le dépôt) et pouvoir lire `/data/kpi` (Makefile, `docker/.env`).
 
-- [ ] `.env` de `vps-manager` complété, `make media-backup-check` vert
-- [ ] `make install-cron-media-backup` : deux lignes `media-backup.sh` dans `crontab -l`
-- [ ] Lendemain : `make media-backup-status` affiche ✅ et un nouvel instantané pour chaque instance
+- [x] `.env` de `vps-manager` complété, `make media-backup-check` vert
+- [x] `make install-cron-media-backup` : deux lignes `media-backup.sh` dans `crontab -l`
+- [x] Lendemain : `make media-backup-status` affiche ✅ et un nouvel instantané pour chaque instance
 
 ---
 
@@ -305,16 +312,16 @@ make media-backup-status
 
 À faire en dev, puis en préprod, puis en prod :
 
-- [ ] **app4** : un logo de compétition s'affiche (Compétitions / Documents)
-- [ ] **app4** : upload d'un logo ou d'une photo d'équipe (Opérations → images) → le fichier
+- [x] **app4** : un logo de compétition s'affiche (Compétitions / Documents)
+- [x] **app4** : upload d'un logo ou d'une photo d'équipe (Opérations → images) → le fichier
   apparaît dans `HOST_MEDIA_PATH/img/...`, **pas** dans `sources/api2/public/img/`
-- [ ] **app4** : fiche club → la photo d'équipe la plus récente s'affiche
-- [ ] **app4** : PDF de classement et PDF de stats → le logo KPI apparaît en en-tête
-- [ ] **app4** : Opérations → purge du cache live → ne renvoie plus « Cache directory does not exist »
-- [ ] **Legacy public** : `kpequipes.php` / `kpclubs.php` affichent les logos de clubs (`/img/KIP/logo/...`)
-- [ ] **Legacy public** : `kpclassement.php` avec bandeau/logo de compétition (`/img/logo/...`)
-- [ ] **Legacy admin** : upload d'un logo via l'ancienne interface → le fichier arrive dans le stockage
-- [ ] **Incrustations / TV** : une page `live/` ou `frame_*.php` avec logos s'affiche
+- [x] **app4** : fiche club → la photo d'équipe la plus récente s'affiche
+- [x] **app4** : PDF de classement et PDF de stats → le logo KPI apparaît en en-tête
+- [x] **app4** : Opérations → purge du cache live → ne renvoie plus « Cache directory does not exist »
+- [x] **Legacy public** : `kpequipes.php` / `kpclubs.php` affichent les logos de clubs (`/img/KIP/logo/...`)
+- [x] **Legacy public** : `kpclassement.php` avec bandeau/logo de compétition (`/img/logo/...`)
+- [x] **Legacy admin** : upload d'un logo via l'ancienne interface → le fichier arrive dans le stockage
+- [x] **Incrustations / TV** : une page `live/` ou `frame_*.php` avec logos s'affiche
 
 ---
 
@@ -338,11 +345,11 @@ make media-backup-status
 | 0.1 | ⌨️ | Publier le tag `archive/app3-matchsheet` | ☑ |
 | 0.2 | ⌨️ | Prévenir la branche scoring (chemins app3 → tag) | ☑ |
 | 0.3 | ⌨️ | `make api2_test` + compilation du conteneur | ☑ |
-| 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☐ |
+| 0.4 | ⌨️ | Dev : `HOST_MEDIA_PATH`, `media_init`, `docker_dev_up`, contrôles | ☑ |
 | 1.1 | 🖥 | Préprod : variables, dossiers, `media.sh init` **avant merge** | ☑ |
-| 1.2 | ⌨️ | Merge de la PR sur `main` (→ préprod auto) | ☐ |
-| 1.3 | 🖥 | Préprod : `docker_preprod_up`, `media_status`, 1er backup, contrôles | ☐ |
-| 2.1 | 🖥 | Prod : variables, dossiers, `media.sh init`, lever `skip-worktree` **avant déploiement** | ☐ |
-| 2.2 | ⌨️ 🌐 | `make release_tag` puis Deploy production sur le tag | ☐ |
-| 2.3 | 🖥 | Prod : `docker_prod_up`, `media_status`, 1er backup, contrôles | ☐ |
-| 2.4 | 🖥 | Cron de sauvegarde dans `vps-manager` + test de restauration | ☐ |
+| 1.2 | ⌨️ | Merge de la PR sur `main` (→ préprod auto) | ☑ |
+| 1.3 | 🖥 | Préprod : `docker_preprod_up`, `media_status`, 1er backup, contrôles | ☑ |
+| 2.1 | 🖥 | Prod : variables, dossiers, `media.sh init`, lever `skip-worktree` **avant déploiement** | ☑ |
+| 2.2 | ⌨️ 🌐 | `make release_tag` puis Deploy production sur le tag | ☑ |
+| 2.3 | 🖥 | Prod : `docker_prod_up`, `media_status`, 1er backup, contrôles | ☑ |
+| 2.4 | 🖥 | Cron de sauvegarde dans `vps-manager` + test de restauration | ☑ |

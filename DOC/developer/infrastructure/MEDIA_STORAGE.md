@@ -60,8 +60,8 @@ MEDIA_BACKUP_PASSWORD_FILE=/data/backups/kpi/.media-restic-password
 
 ## 3. Migration — ordre des opérations (IMPORTANT)
 
-> Version « à cocher » pour le premier merge (y compris le tag app3 et les tests api2) :
-> [MERGE_CHECKLIST_APP3_MEDIA.md](../in-progress/MERGE_CHECKLIST_APP3_MEDIA.md)
+> Migration faite sur les trois environnements (close le 06/10/2026). Checklist archivée, avec les pièges
+> rencontrés : [MERGE_CHECKLIST_APP3_MEDIA.md](../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md)
 
 **Pourquoi l'ordre compte** : dès qu'un serveur tire le commit qui retire ces dossiers de Git
 (`git pull`, ou `git reset --hard` du déploiement automatique), **Git supprime du disque les

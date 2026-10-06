@@ -25,12 +25,20 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         locales \
         unzip \
         git \
+        msmtp \
     && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql intl zip gd \
     && sed -i '/fr_FR.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Envoi de mails (MAILER_DSN=native://default en préprod/prod → sendmail_path).
+# L'image FrankenPHP n'a AUCUN binaire sendmail : sans msmtp, Symfony Mailer échoue
+# et NotificationService avale l'exception (mot de passe oublié muet, cf. 2026-10-06).
+# Même relais que le conteneur Apache : /etc/msmtprc de l'hôte, monté par compose.
+# En dev, MAILER_DSN=smtp://mailpit:1025 : ce réglage n'est pas utilisé.
+RUN echo "sendmail_path = /usr/bin/msmtp -t" > /usr/local/etc/php/conf.d/sendmail.ini
 
 # Opcache : indispensable en mode worker.
 # validate_timestamps est piloté par environnement (0 en prod, 1 en dev) : voir

@@ -1,7 +1,7 @@
 # Stratégie de refonte de la partie publique (kayak-polo.info)
 
 **Date** : 28 septembre 2026 (v3 : décisions Q1–Q12 et Q-A–Q-G intégrées, charte FFCK)
-**Statut** : ✅ Orientations validées — phases 0a et 0b réalisées côté dépôt (§ 12)
+**Statut** : ✅ Orientations validées — phases 0a et 0b **closes** (06/10/2026), prochaine étape : phase 0c (§ 12)
 **Périmètre** : page d'accueil et contenus WordPress, pages publiques `kp*.php`, affichages `frame_*.php`, exports publics (PDF, ICS), médias, articulation avec app2 / app4 / api2
 
 ---
@@ -334,11 +334,11 @@ S'y ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module
 |---|---|
 | Outil | **restic** (chiffré, dédupliqué, incrémental), lancé par cron sur l'hôte |
 | Périmètre | `HOST_MEDIA_PATH` complet (et, pendant la transition, `docker/wordpress/wp-content/uploads`) |
-| Destination | **Sur le VPS lui-même** pour l'instant : dépôt restic dans un répertoire dédié (`/srv/backups/kpi-media`), distinct de `HOST_MEDIA_PATH` et des dossiers Docker |
+| Destination | **Sur le VPS lui-même** pour l'instant : un dépôt restic par instance (`/data/backups/<instance>/media-restic`), distinct de `HOST_MEDIA_PATH` et des dossiers Docker |
 | Fréquence / rétention | Quotidienne ; 7 quotidiennes, 4 hebdomadaires, 12 mensuelles |
 | Cohérence | Exécutée juste après le dump SQL quotidien, pour que base et médias restent cohérents à la restauration |
 | Cibles Makefile | `media_init`, `media_status`, `media_backup`, `media_backup_list`, `media_backup_check`, `media_restore snapshot=…`, `media_sync_from src=…` |
-| Vérification | Test de restauration documenté dans `DEPLOYMENT_RUNBOOK.md` ; e-mail en cas d'échec |
+| Vérification | Contrôle hebdomadaire (dimanche 5h) : `restic check` + restauration d'un fichier au hasard + alerte si la dernière sauvegarde a plus de 26 h ; e-mail en cas d'échec (script `media-backup.sh` du dépôt `vps-manager`) |
 
 > ⚠️ Une sauvegarde sur le même VPS protège contre les **erreurs** (suppression, écrasement, mauvaise manipulation), **pas contre la perte du serveur**. L'externalisation est un chantier ultérieur, déjà décidé. Avec restic, elle se limitera à déclarer un second dépôt distant et à y lancer `restic copy`. Aucune refonte ne sera nécessaire.
 
@@ -480,8 +480,8 @@ Règles de mise en œuvre :
 
 | Phase | Contenu | Livrable | Charge indicative |
 |---|---|---|---|
-| **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié) |
-| **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait côté dépôt ; **migration serveur à exécuter** |
+| **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié, mergé et déployé) |
+| **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait : dev, préprod et prod migrés, cron de sauvegarde actif (06/10/2026) — [checklist archivée](../../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md) |
 | **0c. Cadrage** | Jetons de la charte FFCK univers Compétition (§ 10), polices, pictogrammes SVG, maquettes (accueil, compétition, club, article, formulaire), table de redirections, validation des pages reprises | Maquettes validées | 1–2 sem. |
 | **1. Socle** | `kpi-layer` (thème, client api2, types), squelette app3 SSR (layout, menu, i18n, SEO), conteneur `site_app3` dans les 3 compose, cibles Makefile, CI, déploiement sur **beta.kayak-polo.info** | Site vide navigable en beta | 2 sem. |
 | **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |

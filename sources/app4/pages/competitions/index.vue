@@ -74,6 +74,17 @@ function extractFilename(link: string | null | undefined): string {
   return parts[parts.length - 1] || ''
 }
 
+// Ranking rules by level: ICF for international, FFCK for national and regional
+function getLevelRules(level: string): Pick<CompetitionFormData, 'points' | 'goalaverage'> {
+  return level === 'INT'
+    ? { points: '3-1-0-0', goalaverage: 'gen' }
+    : { points: '4-2-1-0', goalaverage: 'part' }
+}
+
+function onLevelChange() {
+  Object.assign(formData.value, getLevelRules(formData.value.codeNiveau))
+}
+
 // Default form data
 function getDefaultFormData(): CompetitionFormData {
   return {
@@ -88,8 +99,7 @@ function getDefaultFormData(): CompetitionFormData {
     codeTour: 1,
     qualifies: 3,
     elimines: 0,
-    points: '4-2-1-0',
-    goalaverage: 'gen',
+    ...getLevelRules('NAT'),
     statut: 'ATT',
     web: '',
     enActif: true,
@@ -337,8 +347,7 @@ const onCompetitionSelected = async (competition: CompetitionSearchResult) => {
       statut: 'ATT', // Always set to ATT (pending) for new competitions
       qualifies: fullCompetition.qualifies,
       elimines: fullCompetition.elimines,
-      points: fullCompetition.points,
-      goalaverage: fullCompetition.goalaverage,
+      ...getLevelRules(fullCompetition.niveau),
       web: fullCompetition.lienWeb || '',
       enActif: fullCompetition.enActif,
       titreActif: fullCompetition.titreActif,
@@ -1286,6 +1295,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                 v-model="formData.codeNiveau"
                 :disabled="isFormReadOnly"
                 class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-700 disabled:cursor-not-allowed"
+                @change="onLevelChange"
               >
                 <option value="INT">{{ t('competitions.levels.INT') }}</option>
                 <option value="NAT">{{ t('competitions.levels.NAT') }}</option>
@@ -1462,8 +1472,8 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                 :disabled="isFormReadOnly"
                 class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-700 disabled:cursor-not-allowed"
               >
-                <option value="gen">{{ t('competitions.goalaverage_options.gen') }}</option>
                 <option value="part">{{ t('competitions.goalaverage_options.part') }}</option>
+                <option value="gen">{{ t('competitions.goalaverage_options.gen') }}</option>
               </select>
               <p class="mt-1 text-xs text-header-600 dark:text-header-300">
                 {{ t(`competitions.goalaverage_options.${formData.goalaverage === 'part' ? 'part_hint' : 'gen_hint'}`) }}

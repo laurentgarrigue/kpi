@@ -905,7 +905,8 @@
       "success_upload": "Image uploaded: {filename}",
       "success_upload_resized": "Image uploaded and resized: {filename}",
       "success_import": "Image imported: {filename}",
-      "success_import_resized": "Image imported and resized: {filename}"
+      "success_import_resized": "Image imported and resized: {filename}",
+      "request_hint": "Image not listed? Ask for it to be added (file attached or link, {format}) by e-mail to"
     },
     "filters": {
       "season": "Season",
@@ -1944,6 +1945,7 @@
       "save": "Save",
       "cancel": "Cancel",
       "mandates_title": "Mandates",
+      "base_profile": "Main profile",
       "mandates_empty": "No mandates assigned",
       "mandate_add": "Add a mandate",
       "mandate_label": "Mandate label",
@@ -1951,6 +1953,8 @@
       "mandate_validate": "Validate mandate",
       "mandate_cancel": "Cancel",
       "mandate_confirm_delete": "Delete this mandate?",
+      "mandate_move_to_season": "Move the mandate to season {season}",
+      "mandate_confirm_move_season": "Replace this mandate's season(s) ({from}) with the current season {season}?\nThe mandate will no longer apply to previous seasons.",
       "no_competitions_for_seasons": "No competitions for the selected seasons"
     },
     "mandates": {
@@ -1988,6 +1992,7 @@
     "error_club_required": "Club filter is required for profiles 7 and 8",
     "error_profile_restricted": "You cannot assign this profile",
     "validation_club_required": "For profile 7, select at least one club",
+    "validation_forced_password_weak": "The forced password does not meet the minimum security requirements",
     "validation_competition_required": "For profiles 3 and above, select at least one competition",
     "validation_gameday_required": "For profiles 5 and 6, select at least one gameday",
     "validation_season_required": "A mandate must have at least one season selected",

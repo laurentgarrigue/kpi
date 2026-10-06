@@ -119,6 +119,10 @@ services:
             # même VPS, un chemin partagé ferait écrire deux hubs dans le même
             # fichier bolt (verrou exclusif → l'un des deux ne démarre pas).
             - ./mercure_data:/data
+            # Relais SMTP (msmtp → Hostinger), comme le conteneur kpi : sans lui,
+            # MAILER_DSN=native://default n'envoie rien (cf. Dockerfile.api2).
+            - /etc/msmtprc:/etc/msmtprc:ro
+            - /var/log/msmtp:/var/log/msmtp
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         networks:

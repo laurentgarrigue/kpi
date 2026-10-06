@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/authStore'
+
 type ImageKind = 'bandeau_competition' | 'logo_competition' | 'sponsor_competition'
 type PickerMode = 'existing' | 'upload' | 'url'
 
@@ -24,6 +26,15 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const api = useApi()
 const toast = useToast()
+const authStore = useAuthStore()
+
+// Adding an image (upload or URL import) is reserved to profiles <= 2, as in api2.
+// Profiles 3-4 can only pick an existing image, or ask contact@ to add one.
+const canAddImage = computed(() => authStore.profile <= 2)
+const availableModes = computed<PickerMode[]>(() =>
+  canAddImage.value ? ['existing', 'upload', 'url'] : ['existing']
+)
+const contactEmail = 'contact@kayak-polo.info'
 
 // Prefixes & format hints per kind
 const kindMeta: Record<ImageKind, { prefix: string; accept: string; formatHint: string }> = {
@@ -222,9 +233,9 @@ const removeImage = () => {
 
     <div v-if="!disabled">
       <!-- Mode tabs -->
-      <div class="flex gap-1 border-b border-header-200 dark:border-header-700 mb-3">
+      <div v-if="availableModes.length > 1" class="flex gap-1 border-b border-header-200 dark:border-header-700 mb-3">
         <button
-          v-for="m in (['existing', 'upload', 'url'] as PickerMode[])"
+          v-for="m in availableModes"
           :key="m"
           type="button"
           :class="[
@@ -284,10 +295,15 @@ const removeImage = () => {
             <span class="font-mono truncate">{{ img.filename }}</span>
           </button>
         </div>
+        <p v-if="!canAddImage" class="mt-2 text-xs text-header-600 dark:text-header-300">
+          <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 inline" />
+          {{ t('competitions.images.request_hint', { format: meta.formatHint }) }}
+          <a :href="`mailto:${contactEmail}`" class="underline hover:no-underline text-primary-600 dark:text-primary-300">{{ contactEmail }}</a>
+        </p>
       </template>
 
       <!-- Upload -->
-      <template v-else-if="mode === 'upload'">
+      <template v-else-if="mode === 'upload' && canAddImage">
         <p class="text-xs text-primary-600 dark:text-primary-300 mb-2">
           <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 inline" />
           {{ meta.formatHint }}
@@ -328,7 +344,7 @@ const removeImage = () => {
       </template>
 
       <!-- URL import -->
-      <template v-else>
+      <template v-else-if="mode === 'url' && canAddImage">
         <div class="flex gap-2">
           <input
             v-model="externalUrl"
