@@ -657,6 +657,41 @@ async function onMandateSaved(mandateData: MandateForm, mandateId?: number) {
   } catch { /* useApi handles toast */ }
 }
 
+// Move a mandate restricted to past seasons onto the current (active) season
+const currentSeason = computed(() => props.seasons.find(s => s.active)?.code ?? '')
+
+function mandateSeasonCodes(mandate: Mandate): string[] {
+  return mandate.filtreSaison.split('|').filter(v => v)
+}
+
+function canMoveMandateToCurrentSeason(mandate: Mandate): boolean {
+  if (!currentSeason.value || !canDeleteMandate(mandate.niveau)) return false
+  const codes = mandateSeasonCodes(mandate)
+  return codes.length > 0 && codes.every(c => c < currentSeason.value)
+}
+
+async function moveMandateToCurrentSeason(mandate: Mandate) {
+  if (!props.user || !currentSeason.value) return
+  const message = t('users.modal.mandate_confirm_move_season', {
+    from: mandateSeasonCodes(mandate).join(', '),
+    season: currentSeason.value,
+  })
+  if (!confirm(message)) return
+  try {
+    await api.put(`/admin/users/${props.user.code}/mandats/${mandate.id}`, {
+      libelle: mandate.libelle,
+      niveau: mandate.niveau,
+      filtreSaison: `|${currentSeason.value}|`,
+      filtreCompetition: mandate.filtreCompetition,
+      limitClubs: mandate.limitClubs,
+      filtreJournee: mandate.filtreJournee,
+      idEvenement: mandate.idEvenement,
+    } satisfies MandateForm)
+    toast.add({ title: t('users.mandates.success_updated'), color: 'success', duration: 3000 })
+    await loadMandates(props.user.code)
+  } catch { /* useApi handles toast */ }
+}
+
 async function deleteMandate(mandateId: number) {
   if (!props.user) return
   if (!confirm(t('users.modal.mandate_confirm_delete'))) return
@@ -1097,13 +1132,24 @@ onBeforeUnmount(() => {
                   {{ t('users.modal.filter_events') }}: {{ mandate.idEvenement.split('|').filter(v => v).join(', ') }}
                 </span>
               </div>
-              <button
-                v-if="canDeleteMandate(mandate.niveau)"
-                class="p-1 text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
-                @click="deleteMandate(mandate.id)"
-              >
-                <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-              </button>
+              <div class="flex items-center gap-1 shrink-0">
+                <button
+                  v-if="canMoveMandateToCurrentSeason(mandate)"
+                  class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-white bg-primary-600 dark:bg-primary-500 rounded-md shadow-sm cursor-pointer hover:bg-primary-700 dark:hover:bg-primary-400 transition-colors"
+                  :title="t('users.modal.mandate_move_to_season', { season: currentSeason })"
+                  @click="moveMandateToCurrentSeason(mandate)"
+                >
+                  <UIcon name="i-heroicons-arrow-right-circle" class="w-4 h-4" />
+                  {{ currentSeason }}
+                </button>
+                <button
+                  v-if="canDeleteMandate(mandate.niveau)"
+                  class="p-1 text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
+                  @click="deleteMandate(mandate.id)"
+                >
+                  <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </template>

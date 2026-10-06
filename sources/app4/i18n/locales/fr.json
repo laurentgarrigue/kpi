@@ -1965,6 +1965,8 @@
       "mandate_validate": "Valider le mandat",
       "mandate_cancel": "Annuler",
       "mandate_confirm_delete": "Supprimer ce mandat ?",
+      "mandate_move_to_season": "Déplacer le mandat sur la saison {season}",
+      "mandate_confirm_move_season": "Remplacer la ou les saisons de ce mandat ({from}) par la saison en cours {season} ?\nLe mandat ne s'appliquera plus aux saisons précédentes.",
       "no_competitions_for_seasons": "Aucune compétition pour les saisons sélectionnées"
     },
     "mandates": {

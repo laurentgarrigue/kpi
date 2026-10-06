@@ -1953,6 +1953,8 @@
       "mandate_validate": "Validate mandate",
       "mandate_cancel": "Cancel",
       "mandate_confirm_delete": "Delete this mandate?",
+      "mandate_move_to_season": "Move the mandate to season {season}",
+      "mandate_confirm_move_season": "Replace this mandate's season(s) ({from}) with the current season {season}?\nThe mandate will no longer apply to previous seasons.",
       "no_competitions_for_seasons": "No competitions for the selected seasons"
     },
     "mandates": {

@@ -222,12 +222,13 @@ Les nouveautés à mettre en valeur : choix éventuel du mandat après authentif
 - Feat: Jury d'appel : 3 représentants des athlètes.
 - Créer pages d'administration (profil 1) pour les comités départementaux / pays
 - Mandats : revoir l'organisation pour simplifier le renouvellement annuel des droits
+- ✅ dans le formulaire de modification d'un mandat, ajouter un bouton "-><saison en cours>" (exemple : ->2026)" pour changer la saison d'un mandat d'une saison passée à la saison en cours, avec un message d'alerte pour confirmer l'action.
 - ❓ Empêcher la création de plusieurs mandats avec le même profil pour un même utilisateur ? (à étudier)
 - bug filtre date au changement de page ou au changement de compétition. Résolu ❓
-- Création nouvelle compétition : par défaut système et goal average ICF pour niveau International, FFCK pour national et régional.
-- Création nouvelle compétition : Goal average : inverser l'ordre des valeurs dans le select
+- ✅ Création nouvelle compétition : par défaut système et goal average ICF pour niveau International, FFCK pour national et régional.
+- ✅ Création nouvelle compétition : Goal average : inverser l'ordre des valeurs dans le select
 - ✅ Utilisateurs - ajouter un mandat : select multiples background clair en mode sombre, illisibles.
-- Utilisateurs : formulaire permet la modification du mot de passe d'un utilisateur, mais pas l'API.
+- ✅ Utilisateurs : formulaire permet la modification du mot de passe d'un utilisateur, mais pas l'API.
 - ✅ Utilisateurs : envoi de lien de réinitialisation du mot de passe à l'utilisateur ne semble pas fonctionner.
 - ✅ Cartouche utilisateur : manque de contraste sur Profil X, Thème, Déconnexion.
 - Timer connexion 45 minutes ?
