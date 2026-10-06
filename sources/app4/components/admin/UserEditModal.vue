@@ -121,6 +121,8 @@ const competitionSearch = ref('')
 
 // Mandates
 const mandates = ref<Mandate[]>([])
+// Saved base profile of the edited user, shown next to its mandates to avoid duplicating an existing scope
+const baseProfile = ref<UserDetail | null>(null)
 const mandatesLoading = ref(false)
 
 // Standard message template
@@ -133,6 +135,7 @@ watch(() => props.open, async (isOpen) => {
   formError.value = ''
   selectedClubs.value = []
   mandates.value = []
+  baseProfile.value = null
   competitionSearch.value = ''
 
   if (adminNiveau.value <= 2) {
@@ -141,10 +144,10 @@ watch(() => props.open, async (isOpen) => {
 
   if (props.user) {
     if (mandatesOnly.value) {
-      // Mandates-only mode: identity already available from the list, skip the full detail API call
+      // Mandates-only mode: identity already available from the list, skip the full form loading
       form.code = props.user.code
       form.identite = props.user.identite
-      await loadMandates(props.user.code)
+      await Promise.all([loadBaseProfile(props.user.code), loadMandates(props.user.code)])
     } else {
       // Edit mode: load user detail (sets selectedSeasons, which triggers competition reload via watch)
       await loadUserDetail(props.user.code)
@@ -200,6 +203,7 @@ function resetForm() {
 async function loadUserDetail(code: string) {
   try {
     const detail = await api.get<UserDetail>(`/admin/users/${code}`)
+    baseProfile.value = detail
     form.code = detail.code
     form.identite = detail.identite
     form.mail = detail.mail
@@ -294,6 +298,23 @@ async function loadEvents() {
     const data = await api.get<{ events: EventItem[] }>('/admin/filters/events')
     events.value = data.events || []
   } catch { /* ignore */ }
+}
+
+async function loadBaseProfile(code: string) {
+  try {
+    baseProfile.value = await api.get<UserDetail>(`/admin/users/${code}`)
+  } catch { /* ignore */ }
+}
+
+// "<profil> - <rôle> [saisons] <compétitions>" (no competitions for profiles 1-2, which see them all)
+function scopeParts(niveau: number, role: string, filtreSaison: string, filtreCompetition: string) {
+  return {
+    label: `${niveau} - ${role}`,
+    seasons: filtreSaison.split('|').filter(v => v).join(', ') || t('users.table.seasons_all'),
+    competitions: niveau > 2
+      ? (filtreCompetition.split('|').filter(v => v).join(', ') || t('users.table.competitions_all'))
+      : '',
+  }
 }
 
 async function loadMandates(code: string) {
@@ -459,9 +480,19 @@ function toggleEvent(id: number) {
   }
 }
 
+// Forced password complexity (only checked when filled in)
+const forcedPasswordTrimmed = computed(() => form.forcedPassword.trim())
+const { rules: forcedPasswordRules, allRulesValid: forcedPasswordValid } = usePasswordRules(forcedPasswordTrimmed)
+
 // Profile options
-// Profiles 3-4 in edit mode: read-only base profile, mandates only
-const mandatesOnly = computed(() => isEditing.value && adminNiveau.value >= 3 && adminNiveau.value <= 4)
+// Edit mode, read-only base profile, mandates only:
+// - profiles 3-4 (never edit base profiles)
+// - profile 2 on a user with an equal or higher privilege (niveau <= own)
+const mandatesOnly = computed(() => {
+  if (!isEditing.value || adminNiveau.value === 1) return false
+  if (adminNiveau.value >= 3) return true
+  return (props.user?.niveau ?? 0) <= adminNiveau.value
+})
 
 const profileOptions = computed(() => {
   const options = []
@@ -543,6 +574,12 @@ async function handleSubmit() {
   // Profile 7: at least one club required
   if (form.niveau === 7 && selectedClubs.value.length === 0) {
     formError.value = t('users.validation_club_required')
+    return
+  }
+
+  // Forced password: same minimum complexity as a user reset
+  if (authStore.isSuperAdmin && forcedPasswordTrimmed.value && !forcedPasswordValid.value) {
+    formError.value = t('users.validation_forced_password_weak')
     return
   }
 
@@ -824,6 +861,16 @@ onBeforeUnmount(() => {
               :placeholder="t('users.modal.forced_password_placeholder')"
               class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
+            <div v-if="forcedPasswordTrimmed" class="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+              <div v-for="rule in forcedPasswordRules" :key="rule.key" class="flex items-center gap-1.5">
+                <UIcon
+                  :name="rule.valid ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
+                  :class="rule.valid ? 'text-success-500 dark:text-success-400' : 'text-header-600 dark:text-header-300'"
+                  class="w-4 h-4 shrink-0"
+                />
+                <span :class="rule.valid ? 'text-success-700 dark:text-success-300' : 'text-header-600 dark:text-header-300'">{{ rule.label }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1000,45 +1047,66 @@ onBeforeUnmount(() => {
           <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 animate-spin text-header-600 dark:text-header-300" />
         </div>
 
-        <div v-else-if="mandates.length === 0" class="text-sm text-header-600 dark:text-header-300 mb-3">
-          {{ t('users.modal.mandates_empty') }}
-        </div>
-
-        <!-- Existing mandates list -->
-        <div v-else class="space-y-2 mb-3">
+        <template v-else>
+          <!-- Base profile (read-only reminder) -->
           <div
-            v-for="mandate in mandates"
-            :key="mandate.id"
-            class="flex items-center justify-between p-2 bg-header-50 dark:bg-header-900 rounded-lg text-sm"
+            v-if="baseProfile"
+            class="flex items-center gap-2 p-2 mb-2 border border-header-200 dark:border-header-700 rounded-lg text-sm"
           >
-            <div>
-              <span class="font-medium text-header-900 dark:text-header-50">{{ mandate.libelle }}</span>
-              <span class="text-header-600 dark:text-header-300 ml-2">P{{ mandate.niveau }}</span>
-              <span v-if="mandate.filtreSaison" class="text-header-600 dark:text-header-300 ml-2 text-xs">
-                {{ mandate.filtreSaison.split('|').filter(v => v).join(', ') }}
-              </span>
-              <span v-if="mandate.filtreCompetition" class="text-header-600 dark:text-header-300 ml-2 text-xs">
-                {{ mandate.filtreCompetition.split('|').filter(v => v).join(', ') }}
-              </span>
-              <span v-if="mandate.limitClubs" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_clubs')">
-                {{ t('users.modal.filter_clubs') }}: {{ mandate.limitClubs }}
-              </span>
-              <span v-if="mandate.filtreJournee" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_gamedays')">
-                {{ t('users.modal.filter_gamedays') }}: {{ mandate.filtreJournee }}
-              </span>
-              <span v-if="mandate.idEvenement" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_events')">
-                {{ t('users.modal.filter_events') }}: {{ mandate.idEvenement.split('|').filter(v => v).join(', ') }}
-              </span>
-            </div>
-            <button
-              v-if="canDeleteMandate(mandate.niveau)"
-              class="p-1 text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
-              @click="deleteMandate(mandate.id)"
-            >
-              <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-            </button>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 text-xs font-medium shrink-0">
+              <UIcon name="i-heroicons-user" class="w-3 h-3" />
+              {{ t('users.modal.base_profile') }}
+            </span>
+            <template v-for="sc in [scopeParts(baseProfile.niveau, baseProfile.fonction || t(`users.profiles.${baseProfile.niveau}`), baseProfile.filtreSaison, baseProfile.filtreCompetition)]" :key="sc.label">
+              <span class="text-header-900 dark:text-header-50">{{ sc.label }}</span>
+              <span class="inline-block ml-1.5 px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-200 text-xs font-medium">{{ sc.seasons }}</span>
+              <span v-if="sc.competitions" class="ml-1.5 text-header-600 dark:text-header-300 text-xs">{{ sc.competitions }}</span>
+            </template>
+            <span v-if="baseProfile.limitClubs" class="text-orange-500 dark:text-orange-400 text-xs" :title="t('users.modal.filter_clubs')">
+              {{ t('users.modal.filter_clubs') }}: {{ baseProfile.limitClubs }}
+            </span>
+            <span v-if="baseProfile.filtreJournee" class="text-orange-500 dark:text-orange-400 text-xs" :title="t('users.modal.filter_gamedays')">
+              {{ t('users.modal.filter_gamedays') }}: {{ baseProfile.filtreJournee }}
+            </span>
           </div>
-        </div>
+
+          <div v-if="mandates.length === 0" class="text-sm text-header-600 dark:text-header-300 mb-3">
+            {{ t('users.modal.mandates_empty') }}
+          </div>
+
+          <!-- Existing mandates list -->
+          <div v-else class="space-y-2 mb-3">
+            <div
+              v-for="mandate in mandates"
+              :key="mandate.id"
+              class="flex items-center justify-between p-2 bg-header-50 dark:bg-header-900 rounded-lg text-sm"
+            >
+              <div>
+                <template v-for="sc in [scopeParts(mandate.niveau, mandate.libelle, mandate.filtreSaison, mandate.filtreCompetition)]" :key="sc.label">
+                  <span class="text-header-900 dark:text-header-50">{{ sc.label }}</span>
+                  <span class="inline-block ml-1.5 px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-200 text-xs font-medium">{{ sc.seasons }}</span>
+                  <span v-if="sc.competitions" class="ml-1.5 text-header-600 dark:text-header-300 text-xs">{{ sc.competitions }}</span>
+                </template>
+                <span v-if="mandate.limitClubs" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_clubs')">
+                  {{ t('users.modal.filter_clubs') }}: {{ mandate.limitClubs }}
+                </span>
+                <span v-if="mandate.filtreJournee" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_gamedays')">
+                  {{ t('users.modal.filter_gamedays') }}: {{ mandate.filtreJournee }}
+                </span>
+                <span v-if="mandate.idEvenement" class="text-orange-500 dark:text-orange-400 ml-2 text-xs" :title="t('users.modal.filter_events')">
+                  {{ t('users.modal.filter_events') }}: {{ mandate.idEvenement.split('|').filter(v => v).join(', ') }}
+                </span>
+              </div>
+              <button
+                v-if="canDeleteMandate(mandate.niveau)"
+                class="p-1 text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
+                @click="deleteMandate(mandate.id)"
+              >
+                <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </template>
 
         <!-- Add mandate form -->
         <AdminUserMandateForm

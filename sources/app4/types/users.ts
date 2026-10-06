@@ -91,6 +91,8 @@ export interface MandateScope {
   mandateId: number | null
   mandateLabel: string | null
   niveau: number
+  /** Base profile of the user (niveau is the mandate's profile for mandate scopes) */
+  userNiveau: number
   filtreSaison: string
   filtreCompetition: string
   limitClubs: string
