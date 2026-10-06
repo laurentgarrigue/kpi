@@ -264,10 +264,10 @@ class AdminOperationsController extends AbstractController
     }
 
     /**
-     * Upload an image
+     * Upload an image (profiles <= 2)
      */
     #[Route('/images/upload', name: 'admin_operations_images_upload', methods: ['POST'])]
-    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[IsGranted('ROLE_ADMIN')]
     public function uploadImage(Request $request): JsonResponse
     {
         $imageType = $request->request->get('imageType', '');
@@ -308,10 +308,14 @@ class AdminOperationsController extends AbstractController
     }
 
     /**
-     * List images for a given type
+     * List images for a given type.
+     *
+     * Profiles <= 2 may list every type. Profiles 3-4 only reach this through the competition
+     * form's image picker, where they can pick an existing image but not add one: they are
+     * limited to the competition image types.
      */
     #[Route('/images/list', name: 'admin_operations_images_list', methods: ['GET'])]
-    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[IsGranted('ROLE_COMPETITION')]
     public function listImages(Request $request): JsonResponse
     {
         $imageType = $request->query->get('imageType', '');
@@ -323,6 +327,11 @@ class AdminOperationsController extends AbstractController
             return $this->json(['message' => 'imageType is required'], Response::HTTP_BAD_REQUEST);
         }
 
+        if (!$this->isGranted('ROLE_ADMIN')
+            && !in_array($imageType, ['logo_competition', 'bandeau_competition', 'sponsor_competition'], true)) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $images = $this->imageService->listImagesForType($imageType, $search, $page, $limit);
             return $this->json($images);
@@ -332,10 +341,10 @@ class AdminOperationsController extends AbstractController
     }
 
     /**
-     * Import image from external URL
+     * Import image from external URL (profiles <= 2)
      */
     #[Route('/images/import-url', name: 'admin_operations_images_import_url', methods: ['POST'])]
-    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[IsGranted('ROLE_ADMIN')]
     public function importImageFromUrl(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

@@ -917,7 +917,8 @@
       "success_upload": "Image uploadée : {filename}",
       "success_upload_resized": "Image uploadée et redimensionnée : {filename}",
       "success_import": "Image importée : {filename}",
-      "success_import_resized": "Image importée et redimensionnée : {filename}"
+      "success_import_resized": "Image importée et redimensionnée : {filename}",
+      "request_hint": "Image absente ? Demandez son ajout (fichier en pièce jointe ou lien, {format}) par e-mail à"
     },
     "filters": {
       "season": "Saison",
