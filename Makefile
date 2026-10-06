@@ -1182,19 +1182,24 @@ version: ## Affiche les versions actuelles de chaque brique + le dernier tag de 
 	fi
 	@echo
 	@echo "Versions servies (ce que voient les utilisateurs) :"
-	@echo "  app2  → pied de page (AppFooter.vue)      app4 → pied de page (layouts/admin.vue)"
+	@echo "  app2  → pied de page de l'accueil       app4 → page de login + pied de page (layouts/admin.vue)"
 	@echo "  api2  → /api2/doc, champ info.version"
+	@echo "  (app2/app4 exposent aussi <meta name=\"app-version\"> dans leur index.html, lu ci-dessous)"
 	@echo
-	@echo "Versions DÉPLOYÉES (api2, lu en direct) :"
-	@for env in "préprod|https://preprod.kayak-polo.info" "prod   |https://kayak-polo.info"; do \
-		name="$${env%%|*}"; url="$${env#*|}"; \
-		printf "  %s  " "$$name"; \
-		v=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
-			| grep -oE '"version" *: *"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 \
-			| grep -oE '[0-9]+\.[0-9]+\.[0-9]+'); \
-		[ -n "$$v" ] && echo "api2 $$v" || echo "(injoignable — vérifie sur $$url/api2/doc)"; \
+	@echo "Versions DÉPLOYÉES (lu en direct) :"
+	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info" \
+	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info"; do \
+		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; app2url="$${rest#*|}"; \
+		semver='[0-9]+\.[0-9]+\.[0-9]+'; \
+		api2=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
+			| grep -oE "\"version\" *: *\"$$semver\"" | head -1 | grep -oE "$$semver"); \
+		app2=$$(curl -fsS --max-time 8 "$$app2url/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		app4=$$(curl -fsS --max-time 8 "$$url/admin2/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		printf "  %s  api2 %-8s app2 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app4:-?}"; \
 	done
-	@echo "  (app2/app4 : leur version s'affiche en pied de page de l'app)"
+	@echo "  (? = injoignable, ou build antérieur à la balise app-version)"
 
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
