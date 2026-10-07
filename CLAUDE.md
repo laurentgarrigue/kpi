@@ -35,6 +35,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 See [DOC/README.md](DOC/README.md) for the complete index.
 
+## Engineering principles (apply to every change)
+
+- **Spec first**: every page or feature gets a spec with testable acceptance criteria before any code
+  (public website specs: [DOC/specs/public/](DOC/specs/public/README.md)).
+- **TDD**: write the failing test from the acceptance criteria, then the code, then refactor.
+- **Clean code**: DRY, KISS, SOLID, YAGNI, explicit naming, small functions, no magic values, no dead code.
+- **Definition of Done** and per-brick rules (Nuxt, api2, legacy): [DOC/developer/guides/CLEAN_CODE.md](DOC/developer/guides/CLEAN_CODE.md).
+
 ## Project Overview
 
 KPI is a sports management system with multiple Vue.js/Nuxt applications, PHP backend, and Docker infrastructure. The project manages competitions, teams, matches, and player statistics.
