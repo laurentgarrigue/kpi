@@ -31,7 +31,7 @@ What this changes compared to the old Apache setup:
 | Mount | Needs `../sources:/var/www/html` too, for the shared live cache (`live_document_root`) |
 
 Rationale, pitfalls and validation plan:
-[FRANKENPHP_MIGRATION_ANALYSIS.md](../../DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+[FRANKENPHP_MIGRATION_ANALYSIS.md](../../DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 
 ### Mercure
 

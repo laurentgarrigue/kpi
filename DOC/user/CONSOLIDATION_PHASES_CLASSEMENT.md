@@ -173,7 +173,7 @@ Lors d'un **recalcul du classement** (bouton "Recalculer") :
 
 ## Support technique
 
-Pour toute question ou problème concernant cette fonctionnalité, contactez l'équipe de développement ou consultez la documentation technique dans `DOC/developer/fixes/features/CONSOLIDATION_PHASES_CLASSEMENT.md`.
+Pour toute question ou problème concernant cette fonctionnalité, contactez l'équipe de développement ou consultez la documentation technique dans `DOC/developer/reference/features/CONSOLIDATION_PHASES_CLASSEMENT.md`.
 
 ---
 

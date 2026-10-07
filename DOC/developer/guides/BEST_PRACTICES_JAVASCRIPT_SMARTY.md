@@ -275,8 +275,8 @@ Avant de commiter du code mêlant Smarty et JavaScript :
 
 ### Documentation connexe
 
-- [COMPETITION_TYPE_MULTI.md](features/COMPETITION_TYPE_MULTI.md) - Documentation technique MULTI
-- [DOC/user/MULTI_COMPETITION_SCORING_GRID.md](../../user/MULTI_COMPETITION_SCORING_GRID.md) - Documentation utilisateur
+- [COMPETITION_TYPE_MULTI.md](../archive/features/COMPETITION_TYPE_MULTI.md) - Documentation technique MULTI
+- [DOC/user/MULTI_COMPETITION_TYPE.md](../../user/MULTI_COMPETITION_TYPE.md) - Documentation utilisateur
 
 ## 🔄 Mise à jour de ce document
 

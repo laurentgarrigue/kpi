@@ -1,6 +1,6 @@
 name: CI
 
-# Phases 1-3 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md) :
+# Phases 1-3 du plan CI/CD (DOC/developer/archive/ci-cd/CI_CD_STRATEGY.md) :
 #   - Phase 1 : lint & format par brique (lint-nuxt, lint-api2, lint-legacy, lint-docker)
 #   - Phase 2 : sécurité statique (phpstan-api2, audit-composer, audit-npm, secrets-scan,
 #               trivy-config ; CodeQL vit dans codeql.yml)
@@ -10,7 +10,7 @@ name: CI
 # Les jobs lourds attendent aussi `bump-version` : s'il pousse un commit de bump, ils sont
 # skippés sur ce SHA périmé et la CI complète tourne UNE fois, sur le run du commit de bump.
 # Le job final `ci-summary` est l'unique required check câblé dans le ruleset `main`.
-# Voir le journal d'exécution : DOC/.../CI_CD_EXECUTION_NOTES.md.
+# Voir le journal d'exécution : DOC/developer/archive/ci-cd/CI_CD_EXECUTION_NOTES.md.
 
 on:
   pull_request:
@@ -882,7 +882,7 @@ jobs:
           # (.gitleaksignore, supprimé) : un fingerprint contient le SHA du
           # commit, donc tout nouveau commit sur un fichier « allowlisté »
           # rouvrait un faux positif et rendait ce check requis instable.
-          # Voir DOC/developer/guides/GIT_WORKFLOW_SIMPLIFICATION.md §2.
+          # Voir DOC/developer/archive/ci-cd/GIT_WORKFLOW_SIMPLIFICATION.md §2.
           GITLEAKS_CONFIG: .gitleaks.toml
 
   # 6d. Trivy (mode config) — détecte les MAUVAISES CONFIGURATIONS des Dockerfiles

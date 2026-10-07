@@ -13,7 +13,7 @@ Ce guide décrit **deux choses qui s'imbriquent** :
 > **⚠️ Consolidation du 2026-09-13 — une seule branche longue durée.**
 > `develop` n'existe plus. `main` est la seule branche permanente, et une release
 > est un **tag** posé dessus. Raisons, audit et plan complet :
-> [GIT_WORKFLOW_SIMPLIFICATION.md](GIT_WORKFLOW_SIMPLIFICATION.md).
+> [GIT_WORKFLOW_SIMPLIFICATION.md](../archive/ci-cd/GIT_WORKFLOW_SIMPLIFICATION.md).
 >
 > Ce qui a disparu : le back-merge `main → develop`, le bump automatique à chaque
 > merge, et la PR de release `develop → main`. Aucun contrôle de qualité ou de
@@ -335,7 +335,7 @@ final, en un seul commit sur `main`. Rien à lancer, rien à merger en plus.
 
 C'est le remplaçant de l'ancien `version-bump.yml` (supprimé à la consolidation
 du 2026-09-13, défaut 4 de
-[GIT_WORKFLOW_SIMPLIFICATION.md](GIT_WORKFLOW_SIMPLIFICATION.md)), avec un
+[GIT_WORKFLOW_SIMPLIFICATION.md](../archive/ci-cd/GIT_WORKFLOW_SIMPLIFICATION.md)), avec un
 ancrage différent : l'ancien tournait *après* le merge et devait rouvrir une 2ᵉ
 PR (`develop` refusait le push direct). Ici le bump committe *pendant* que la PR
 est ouverte, sur sa propre branche — un seul commit sur `main`, sans PR

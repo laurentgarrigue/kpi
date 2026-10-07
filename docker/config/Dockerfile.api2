@@ -15,7 +15,7 @@ ARG GROUP_ID=1000
 # redimensionne les logos et photos d'équipe avec imagecreatefromjpeg/png. Sans gd :
 # « Attempted to call undefined function imagecreatefromjpeg » (500) à l'upload.
 # Elle sert aussi à mPDF (images non triviales) et lève la contrainte ext-gd de
-# mpdf/composer.json, cf. §8quinquies de DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md.
+# mpdf/composer.json, cf. §8quinquies de DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md.
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libicu-dev \
         libzip-dev \

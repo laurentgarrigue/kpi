@@ -22,7 +22,7 @@ PHP_CONTAINER_NAME = $(APPLICATION_NAME)_php
 # Passer par le conteneur Apache relit sources/api2/.env et peut écrire un cache "dev" dans
 # le var/cache/ partagé, ce qui casse le worker au recyclage suivant.
 # Seule exception : composer (voir api2_composer_install — besoin d'ext-gd, absente ici).
-# cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md §8ter.b
+# cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md §8ter.b
 API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
 # Démon CLI régénérant les caches JSON du live. Sans rapport avec le worker FrankenPHP
 # d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
@@ -1079,7 +1079,7 @@ git_images_list_protected: ## Liste les images actuellement protégées (skip-wo
 
 ## GIT - WORKTREES & PR (développement parallèle de features)
 # Développer plusieurs features en parallèle via git worktrees, puis ouvrir les PR.
-# Voir DOC/developer/guides/PARALLEL_FEATURES_WORKTREES.md.
+# Voir DOC/developer/guides/GIT_WORKFLOW.md (§2.2 Mode worktrees).
 # Rappel : UN SEUL stack Docker à la fois (ports fixes + ../sources monté en relatif).
 # Les commandes exécutées sont affichées (pas de @) pour rester transparentes.
 

@@ -20,7 +20,7 @@
 > `Access-Control-Allow-Origin` en double. **Ce contournement n'a plus lieu d'être** : l'isolation
 > par conteneur règle le problème par construction.
 >
-> Voir [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md).
+> Voir [FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md).
 
 ## Overview
 
@@ -508,5 +508,5 @@ This allows cookies/sessions. Only enable for trusted origins.
 ## Related Documentation
 
 - [Nginx Static App Deployment](NGINX_STATIC_APP_DEPLOYMENT.md)
-- [Architecture web actuelle (FrankenPHP / Apache)](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+- [Architecture web actuelle (FrankenPHP / Apache)](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 - [API Reference](../reference/KPI_FUNCTIONALITY_INVENTORY.md)

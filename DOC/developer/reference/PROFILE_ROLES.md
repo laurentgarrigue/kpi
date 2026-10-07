@@ -77,7 +77,7 @@ Un compte a un **profil principal** (`kp_user.Niveau`) mais peut aussi agir sous
   profil principal 2 + mandat niveau 8 → 403 (restriction, était 200 à tort avant) ; profil principal
   8 + mandat niveau 2 → 200 (élévation). Non-régression confirmée sur toutes les routes des deux
   vagues de correctifs de
-  [MANDATE_NIVEAU_BRUT_AUDIT.md](../fixes/bugs/MANDATE_NIVEAU_BRUT_AUDIT.md).
+  [MANDATE_NIVEAU_BRUT_AUDIT.md](../archive/features/MANDATE_NIVEAU_BRUT_AUDIT.md).
 - **Sans en-tête `X-Active-Mandate`**, c'est toujours le profil principal qui s'applique — ce n'est
   pas un bug, c'est le comportement attendu quand aucun mandat n'est sélectionné côté frontend.
 - **Le header ne porte qu'un ID, jamais un niveau** : `ActiveMandateListener` (lignes 57-65) charge le
@@ -173,4 +173,4 @@ droits incohérents avec le mandat actif de l'utilisateur. **Corrigé le 2026-09
 `getEffectiveNiveau()` + reconstruction mandat-aware de `AdminAuthController::me()`/`refresh()`),
 reste à valider en dev. Le réaudit du pattern de cumul `#[IsGranted]` ci-dessus a aussi été étendu aux
 7 autres contrôleurs qui en semblaient à risque — aucune anomalie trouvée. Voir le détail complet dans
-[MANDATE_NIVEAU_BRUT_AUDIT.md](../fixes/bugs/MANDATE_NIVEAU_BRUT_AUDIT.md).
+[MANDATE_NIVEAU_BRUT_AUDIT.md](../archive/features/MANDATE_NIVEAU_BRUT_AUDIT.md).

@@ -6,7 +6,7 @@ framework:
     # génèrerait des URLs d'assets à la racine (/bundles/...), servies par Apache → 404
     # (Swagger sans CSS ni JS). Réglage DISTINCT de DEFAULT_URI, qui ne couvre que le
     # routeur. Vrai dans tous les environnements : l'URL publique est toujours /api2.
-    # cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md §7.6
+    # cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md §7.6
     assets:
         base_path: '/api2'
 

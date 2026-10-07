@@ -1,6 +1,6 @@
 name: Deploy preprod
 
-# Phase 5 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Phase 5 du plan CI/CD (DOC/developer/archive/ci-cd/CI_CD_STRATEGY.md).
 # Déploiement continu de la préprod : tout commit qui atterrit sur `main` est
 # déployé sur le VPS préprod, sans intervention (hors bumps de version et docs).
 #

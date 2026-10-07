@@ -59,7 +59,7 @@ services:
             - "traefik.http.routers.kpi.tls=true"
             - "traefik.http.routers.kpi.tls.certresolver=myresolver"
     # API2 - Symfony sous FrankenPHP (mode worker) + hub Mercure natif
-    # cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md
+    # cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md
     api2:
         container_name: ${APPLICATION_NAME}_api2
         build:

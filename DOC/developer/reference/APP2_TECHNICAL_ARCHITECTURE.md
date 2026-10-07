@@ -51,7 +51,7 @@ App2 est une Progressive Web Application (PWA) construite avec Nuxt 4, Vue 3 et 
 
 ### useApi.js - Couche d'Abstraction API
 
-**Localisation**: [sources/app2/composables/useApi.js](../../sources/app2/composables/useApi.js)
+**Localisation**: [sources/app2/composables/useApi.js](../../../sources/app2/composables/useApi.js)
 
 **Responsabilités**:
 1. Appels HTTP (GET, POST, PUT, DELETE)
@@ -78,7 +78,7 @@ const response = await getApi('/games/123', { silentErrors: true })
 
 ### useOnlineStatus.ts - Monitoring Réseau et Notifications
 
-**Localisation**: [sources/app2/composables/useOnlineStatus.ts](../../sources/app2/composables/useOnlineStatus.ts)
+**Localisation**: [sources/app2/composables/useOnlineStatus.ts](../../../sources/app2/composables/useOnlineStatus.ts)
 
 **Responsabilités**:
 1. Surveillance état online/offline (navigator.onLine + events)
@@ -96,7 +96,7 @@ const response = await getApi('/games/123', { silentErrors: true })
 
 ### usePwa.ts - Service Worker et Mises à Jour
 
-**Localisation**: [sources/app2/composables/usePwa.ts](../../sources/app2/composables/usePwa.ts)
+**Localisation**: [sources/app2/composables/usePwa.ts](../../../sources/app2/composables/usePwa.ts)
 
 **Responsabilités**:
 1. Enregistrement du Service Worker (production uniquement)
@@ -122,8 +122,8 @@ const initializePwa = () => {
 ### useGames.js / useCharts.js - Données Métier
 
 **Localisation**:
-- [sources/app2/composables/useGames.js](../../sources/app2/composables/useGames.js)
-- [sources/app2/composables/useCharts.js](../../sources/app2/composables/useCharts.js)
+- [sources/app2/composables/useGames.js](../../../sources/app2/composables/useGames.js)
+- [sources/app2/composables/useCharts.js](../../../sources/app2/composables/useCharts.js)
 
 **Stratégie Offline-First**:
 1. Chargement IndexedDB (cache)
@@ -175,7 +175,7 @@ Response OK ?
 
 ### Messages i18n
 
-**Structure dans [sources/app2/i18n/locales/](../../sources/app2/i18n/locales/)**:
+**Structure dans [sources/app2/i18n/locales/](../../../sources/app2/i18n/locales/)**:
 ```
 errors.
   ├─ generic.*
@@ -465,22 +465,22 @@ BACKEND_BASE_URL=https://kayak-polo.info
 ## Fichiers Critiques
 
 ### Composables
-- [sources/app2/composables/useApi.js](../../sources/app2/composables/useApi.js) - Core API layer + error toasts
-- [sources/app2/composables/useOnlineStatus.ts](../../sources/app2/composables/useOnlineStatus.ts) - Network monitoring + toasts
-- [sources/app2/composables/usePwa.ts](../../sources/app2/composables/usePwa.ts) - Service Worker + auto-update
-- [sources/app2/composables/useAuth.js](../../sources/app2/composables/useAuth.js) - Authentication
-- [sources/app2/composables/useGames.js](../../sources/app2/composables/useGames.js) - Games data + offline
-- [sources/app2/composables/useCharts.js](../../sources/app2/composables/useCharts.js) - Rankings data + offline
+- [sources/app2/composables/useApi.js](../../../sources/app2/composables/useApi.js) - Core API layer + error toasts
+- [sources/app2/composables/useOnlineStatus.ts](../../../sources/app2/composables/useOnlineStatus.ts) - Network monitoring + toasts
+- [sources/app2/composables/usePwa.ts](../../../sources/app2/composables/usePwa.ts) - Service Worker + auto-update
+- [sources/app2/composables/useAuth.js](../../../sources/app2/composables/useAuth.js) - Authentication
+- [sources/app2/composables/useGames.js](../../../sources/app2/composables/useGames.js) - Games data + offline
+- [sources/app2/composables/useCharts.js](../../../sources/app2/composables/useCharts.js) - Rankings data + offline
 
 ### Layouts
-- [sources/app2/layouts/default.vue](../../sources/app2/layouts/default.vue) - Main layout with toast container
+- [sources/app2/layouts/default.vue](../../../sources/app2/layouts/default.vue) - Main layout with toast container
 
 ### i18n
-- [sources/app2/i18n/locales/fr.json](../../sources/app2/i18n/locales/fr.json) - French translations
-- [sources/app2/i18n/locales/en.json](../../sources/app2/i18n/locales/en.json) - English translations
+- [sources/app2/i18n/locales/fr.json](../../../sources/app2/i18n/locales/fr.json) - French translations
+- [sources/app2/i18n/locales/en.json](../../../sources/app2/i18n/locales/en.json) - English translations
 
 ### Configuration
-- [sources/app2/nuxt.config.ts](../../sources/app2/nuxt.config.ts) - Nuxt configuration
+- [sources/app2/nuxt.config.ts](../../../sources/app2/nuxt.config.ts) - Nuxt configuration
 - `sources/app2/.env.development` - Dev environment
 - `sources/app2/.env.production` - Production environment
 

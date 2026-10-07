@@ -14,7 +14,7 @@
 
 > Cette section **prime sur le reste du document** partout où il y aurait contradiction. Elle a été
 > ajoutée pour réaligner la console Scoring sur la trajectoire globale définie dans
-> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 > Les sections §1 à §12 restent valables pour tout le **détail fonctionnel et l'UI** ; seuls trois
 > points d'architecture changent, listés ici.
 
@@ -121,7 +121,7 @@ refaire le modèle quand les stats avancées arriveront (cf. §0.5, colonne `kin
 
 > **À reporter dans les docs de refonte.** Cette distinction et l'extensibilité du fait de match
 > valent aussi pour
-> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
 > et [LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](../developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md),
 > qui emploient « événement » dans les deux sens.
 
@@ -189,7 +189,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 |---|---|---|
 | `id` | bigint (PK, auto) | ordre |
 | `id_match` | int | match |
-| `topic` | varchar | **URI Mercure de destination** événement/terrain/bloc, ex. `/scoring/event/236/pitch/2/score` (isole chaque flux — cf. [plan §3.3](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) |
+| `topic` | varchar | **URI Mercure de destination** événement/terrain/bloc, ex. `/scoring/event/236/pitch/2/score` (isole chaque flux — cf. [plan §3.3](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) |
 | `payload` | json | message `{ type, tick, … }` à pousser sur Mercure |
 | `tick` | bigint | version de l'état au moment de l'écriture |
 | `created_at` | datetime | |

@@ -2,7 +2,7 @@
 
 **Date** : 28 septembre 2026
 **Statut** : ✅ Implémenté dans le dépôt, ⏳ **migration à exécuter sur chaque serveur** (§3)
-**Contexte** : phase 0b de [PUBLIC_SITE_REDESIGN_STRATEGY.md](../in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) (§8)
+**Contexte** : phase 0b de [PUBLIC_SITE_REDESIGN_STRATEGY.md](../in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md) (§8)
 
 > **Convention** (comme le [runbook](DEPLOYMENT_RUNBOOK.md)) : ⌨️ = poste de dev, 🖥 = sur le VPS.
 
@@ -61,7 +61,7 @@ MEDIA_BACKUP_PASSWORD_FILE=/data/backups/kpi/.media-restic-password
 ## 3. Migration — ordre des opérations (IMPORTANT)
 
 > Migration faite sur les trois environnements (close le 06/10/2026). Checklist archivée, avec les pièges
-> rencontrés : [MERGE_CHECKLIST_APP3_MEDIA.md](../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md)
+> rencontrés : [MERGE_CHECKLIST_APP3_MEDIA.md](../archive/infrastructure/MERGE_CHECKLIST_APP3_MEDIA.md)
 
 **Pourquoi l'ordre compte** : dès qu'un serveur tire le commit qui retire ces dossiers de Git
 (`git pull`, ou `git reset --hard` du déploiement automatique), **Git supprime du disque les

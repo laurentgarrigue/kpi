@@ -307,9 +307,9 @@ mysql -u root -p kpi_db < backup_structures.sql
 
 ## Documentation complémentaire
 
-- **Documentation technique** : [sources/commun/README_EXTRACTION_STRUCTURES.md](../../sources/commun/README_EXTRACTION_STRUCTURES.md)
+- **Documentation technique** : [sources/commun/README_EXTRACTION_STRUCTURES.md](../../../sources/commun/README_EXTRACTION_STRUCTURES.md)
 - **Référence développeur** : [DOC/developer/reference/EXTRACTION_STRUCTURES_FFCK.md](../reference/EXTRACTION_STRUCTURES_FFCK.md)
-- **Scripts** : [sources/commun/](../../sources/commun/)
+- **Scripts** : [sources/commun/](../../../sources/commun/)
 
 ## Questions fréquentes
 

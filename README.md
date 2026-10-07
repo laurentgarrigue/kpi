@@ -180,16 +180,13 @@ kpi/
 ├── DOC/                         # Documentation organisée
 │   ├── README.md                # Index principal de la documentation
 │   ├── user/                    # Documentation utilisateur (fonctionnalités)
-│   │   ├── KPI_FUNCTIONALITY_INVENTORY.md
-│   │   ├── MATCH_CONSISTENCY_STATS.md
-│   │   └── CRON_DOCUMENTATION.md
+│   ├── specs/                   # Spécifications des pages app4
 │   └── developer/               # Documentation développeur
-│       ├── guides/              # Guides de migration et infrastructure
-│       ├── in-progress/         # Migrations en cours (status + plans)
-│       ├── archive/             # Migrations terminées (PHP 8.4, mPDF, etc.)
-│       ├── fixes/               # Corrections de bugs
-│       ├── audits/              # Rapports d'audit de code
-│       └── infrastructure/      # Docker, WordPress, configuration
+│       ├── reference/           # Architecture et fonctionnement actuels
+│       ├── guides/              # Env. de dev, workflow git, tests, bonnes pratiques
+│       ├── infrastructure/      # Déploiement, médias, Nginx, CORS, cron
+│       ├── in-progress/         # Travaux en cours
+│       └── archive/             # Sujets traités, par thème
 ├── Makefile                     # Commandes Make
 ├── CLAUDE.md                    # Documentation pour Claude Code
 ├── GEMINI.md                    # Documentation pour Gemini
@@ -332,17 +329,14 @@ make app2_dev          # Relancer
 ### Documentation complète
 - **[DOC/](DOC/)** : Documentation organisée et structurée
   - **[DOC/user/](DOC/user/)** - Documentation utilisateur (fonctionnalités, guides)
-    - [Inventaire des fonctionnalités](DOC/user/KPI_FUNCTIONALITY_INVENTORY.md)
-    - [Statistiques de cohérence des matchs](DOC/user/MATCH_CONSISTENCY_STATS.md)
-    - [Tâches cron automatiques](DOC/user/CRON_DOCUMENTATION.md)
+  - **[DOC/specs/](DOC/specs/)** - Spécifications des pages de l'admin app4
   - **[DOC/developer/](DOC/developer/)** - Documentation développeur (technique)
-    - **Guides** - Migration guides (FPDF → mPDF, OpenTBS → OpenSpout, Axios → fetch, etc.)
-    - **En cours** - Migrations en cours (Bootstrap 5.3.8, Flatpickr, jQuery elimination)
-    - **Archives** - ✅ Migrations terminées (PHP 8.4, mPDF, OpenSpout, Axios)
-    - **Fixes** - Corrections de bugs et fixes PHP 8
-    - **Audits** - Audits JavaScript, Bootstrap, code cleanup
-    - **Infrastructure** - Docker, WordPress, configuration
-  - Voir [DOC/README.md](DOC/README.md) pour l'index complet (60+ documents)
+    - **reference/** - Architecture et fonctionnement actuels (API2, app4, rôles, [inventaire des fonctionnalités](DOC/developer/reference/KPI_FUNCTIONALITY_INVENTORY.md))
+    - **guides/** - Environnement de dev, workflow git, tests, bonnes pratiques
+    - **infrastructure/** - Déploiement, médias, Nginx, CORS, [tâches cron](DOC/developer/infrastructure/CRON_DOCUMENTATION.md)
+    - **in-progress/** - Travaux en cours (refonte du site public, scoring live, documents PDF)
+    - **archive/** - Sujets traités, par thème (PHP 8.4, mPDF/OpenSpout, Bootstrap/jQuery, CI/CD…)
+  - Voir [DOC/README.md](DOC/README.md) pour l'index complet
 - **Makefile** : Toutes les commandes disponibles (`make help`)
 - **Wiki GitHub** : https://github.com/FFCK/kpi/wiki
 

@@ -428,6 +428,6 @@ pwa: {
 
 ## Related Documentation
 
-- [Makefile Multi-Environment Support](MAKEFILE_MULTI_ENVIRONMENT.md)
-- [Docker Infrastructure](DOCKER_INFRASTRUCTURE.md)
-- [API CORS Configuration](../reference/API_CORS_CONFIGURATION.md) (to be created)
+- [Makefile Multi-Environment Support](../guides/MAKEFILE_MULTI_ENVIRONMENT.md)
+- [Infrastructure (index)](README.md)
+- [CORS Configuration](CORS_CONFIGURATION.md)

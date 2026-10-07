@@ -16,7 +16,7 @@ use Symfony\Component\Mercure\Update;
  *
  * Banc de test du hub Mercure natif de FrankenPHP (Super Admin uniquement).
  * Sert à valider la chaîne publish/subscribe avant la refonte du scoring live
- * (cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md §7.7bis).
+ * (cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md §7.7bis).
  *
  * Ne porte aucune logique métier : à supprimer ou remplacer quand le scoring
  * publiera ses propres updates.

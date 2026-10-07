@@ -191,9 +191,9 @@ Pour un fichier `pce1.pce` de ~7 Mo avec ~30000 licenciés :
 
 ## Voir aussi
 
-- [README_EXTRACTION_STRUCTURES.md](../../sources/commun/README_EXTRACTION_STRUCTURES.md) - Documentation technique détaillée
-- [USAGE_EXTRACTION_STRUCTURES.sh](../../sources/commun/USAGE_EXTRACTION_STRUCTURES.sh) - Script d'aide interactif
-- [MyBdd.php](../../sources/commun/MyBdd.php) - Classe de gestion BDD avec transformations similaires
+- [README_EXTRACTION_STRUCTURES.md](../../../sources/commun/README_EXTRACTION_STRUCTURES.md) - Documentation technique détaillée
+- [USAGE_EXTRACTION_STRUCTURES.sh](../../../sources/commun/USAGE_EXTRACTION_STRUCTURES.sh) - Script d'aide interactif
+- [MyBdd.php](../../../sources/commun/MyBdd.php) - Classe de gestion BDD avec transformations similaires
 
 ## Support
 

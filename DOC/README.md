@@ -1,163 +1,125 @@
 # Documentation KPI - Index Principal
 
-Cette documentation est organisée en deux sections principales :
+## 🗂️ Organisation
 
-## 📘 [Documentation Utilisateur](user/)
+```
+DOC/
+├── user/                    Guides utilisateurs (fonctionnels, concis)
+│   └── archive/             Synthèses passées
+├── specs/                   Spécifications des pages app4 (admin2)
+└── developer/
+    ├── reference/           Ce qui EXISTE : architecture, API, règles métier
+    │   └── features/        Documentation technique d'une fonctionnalité
+    ├── guides/              Comment FAIRE : workflow git, env. de dev, tests, bonnes pratiques
+    ├── infrastructure/      Comment ça TOURNE : déploiement, médias, Nginx, CORS, cron
+    ├── in-progress/         Travaux EN COURS (plans, migrations non terminées)
+    └── archive/             Sujets TRAITÉS, classés par thème (lecture historique)
+```
 
-Documentation orientée utilisateurs finaux et fonctionnalités du système.
+### Où ranger un document ?
 
-### Fonctionnalités Principales
-- **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Event Cache Manager - Worker en arrière-plan pour incrustations vidéo
-- **[IMAGE_UPLOAD_MANAGEMENT.md](user/IMAGE_UPLOAD_MANAGEMENT.md)** - Upload et gestion d'images (logos, photos)
-- **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe entre compétitions
-- **[MATCH_DAY_BULK_OPERATIONS.md](user/MATCH_DAY_BULK_OPERATIONS.md)** - Opérations de masse sur les matchs (publication, validation, suppression)
-- **[BULK_COMPETITION_COPY.md](user/BULK_COMPETITION_COPY.md)** - Copie en masse de compétitions entre saisons (avec journées et matchs)
+| Le document… | Dossier |
+|---|---|
+| explique une fonctionnalité à un utilisateur | `user/` |
+| spécifie une page de l'admin app4 | `specs/` |
+| décrit l'état actuel du système (architecture, API, règle métier) | `developer/reference/` |
+| décrit techniquement une fonctionnalité précise | `developer/reference/features/` |
+| explique comment travailler au quotidien | `developer/guides/` |
+| concerne le déploiement ou l'exploitation des serveurs | `developer/infrastructure/` |
+| est un plan, une migration ou un correctif **pas encore terminé** | `developer/in-progress/` |
+| relate un travail **terminé** (migration, correctif, audit, plan exécuté) | `developer/archive/<thème>/` |
 
-### Nouvelle Interface Administration (app4)
-- **[ADMIN_STATISTICS.md](user/ADMIN_STATISTICS.md)** - Statistiques - Nouvelle interface (22 types, exports PDF/Excel)
+**Cycle de vie** : un document naît dans `in-progress/`. Quand le sujet est clos, il part dans
+`archive/<thème>/` (avec `git mv`, puis mise à jour des liens) ; si une partie reste vraie
+durablement, elle est extraite dans `reference/` ou `guides/`. Pas de sous-dossier de premier
+niveau supplémentaire : le visualiseur de documentation ([DocViewer](../sources/admin/DocViewer.php))
+ne lit que `user/` et `developer/`, et groupe par premier sous-dossier.
 
-### Fonctionnalités Spécifiques
-- **[MATCH_CONSISTENCY_STATS.md](user/MATCH_CONSISTENCY_STATS.md)** - Statistiques de cohérence des matchs
-- **[CONSOLIDATION_PHASES_CLASSEMENT.md](user/CONSOLIDATION_PHASES_CLASSEMENT.md)** - Consolidation des phases de classement
-- **[MULTI_COMPETITION_TYPE.md](user/MULTI_COMPETITION_TYPE.md)** - Type de compétition MULTI (agrégation multi-compétitions)
-- **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Guide du visualiseur de documentation
-- **[NOUVEAUTES.md](user/NOUVEAUTES.md)** - Dernières nouveautés et fonctionnalités ajoutées
-- **[CRON_DOCUMENTATION.md](user/CRON_DOCUMENTATION.md)** - Tâches planifiées automatiques
-
-Voir [user/README.md](user/README.md) pour plus de détails.
-
-## 💻 [Documentation Développeur](developer/)
-
-Documentation technique pour le développement et la maintenance du projet.
-
-### [Référence](developer/reference/)
-- **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire complet des fonctionnalités (~7000 lignes)
-- **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture technique complète de l'application web (stack, PWA, gestion erreurs, API)
-- **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Documentation complète API2 (Symfony 7.3 + API Platform 4.2)
-- **[PLAYER_ELIGIBILITY_RULES.md](developer/reference/PLAYER_ELIGIBILITY_RULES.md)** - Règles « joueur en règle » (national bloquant / régional en alerte), point de paramétrage unique `PlayerEligibilityRules.php`
-- **[PROFILE_ROLES.md](developer/reference/PROFILE_ROLES.md)** - Correspondance niveau de profil ↔ rôle Symfony, profil principal vs mandat actif, piège des `#[IsGranted]` par méthode
-
-### [Guides](developer/guides/)
-
-#### [Migrations](developer/guides/migrations/)
-- **[CONSOLIDATION_TRADUCTIONS.md](developer/guides/migrations/CONSOLIDATION_TRADUCTIONS.md)** - Consolidation fichiers de traductions (MyLang.conf + MyLang.ini)
-- **[MIGRATION_FPDF_TO_MPDF.md](developer/guides/migrations/MIGRATION_FPDF_TO_MPDF.md)** - Migration FPDF → mPDF
-- **[MIGRATION_SMARTY_V4.md](developer/guides/migrations/MIGRATION_SMARTY_V4.md)** - Migration Smarty v4
-- **[MIGRATION_OPENTBS_TO_OPENSPOUT.md](developer/guides/migrations/MIGRATION_OPENTBS_TO_OPENSPOUT.md)** - Migration OpenTBS → OpenSpout
-- **[FLATPICKR_MIGRATION_GUIDE.md](developer/guides/migrations/FLATPICKR_MIGRATION_GUIDE.md)** - Migration dhtmlgoodies → Flatpickr
-- **[AUTOCOMPLETE_MIGRATION_GUIDE.md](developer/guides/migrations/AUTOCOMPLETE_MIGRATION_GUIDE.md)** - Migration autocomplete
-- **[MIGRATION_AXIOS_FETCH_GUIDE.md](developer/guides/migrations/MIGRATION_AXIOS_FETCH_GUIDE.md)** - Migration Axios → fetch()
-- **[AXIOS_TO_FETCH_MIGRATION.md](developer/guides/migrations/AXIOS_TO_FETCH_MIGRATION.md)** - Analyse technique Axios → fetch()
-- **[QRCODE_MIGRATION.md](developer/guides/migrations/QRCODE_MIGRATION.md)** - Migration QR Code
-- **[MIGRATION_PDFMATCHMULTI_NOTES.md](developer/guides/migrations/MIGRATION_PDFMATCHMULTI_NOTES.md)** - Notes migration PDF multi-matchs
-
-#### [Infrastructure](developer/infrastructure/)
-- **[NGINX_STATIC_APP_DEPLOYMENT.md](developer/infrastructure/NGINX_STATIC_APP_DEPLOYMENT.md)** - ✅ Déploiement app2/app4 via Nginx (SSG, builds dev/prod, containers temporaires)
-- **[MEDIA_STORAGE.md](developer/infrastructure/MEDIA_STORAGE.md)** - ✅ Médias uploadés hors Git (`HOST_MEDIA_PATH`), montages Docker, sauvegarde restic
-- **[CORS_CONFIGURATION.md](developer/infrastructure/CORS_CONFIGURATION.md)** - ✅ Configuration CORS globale via PHP auto-prepend (tous endpoints)
-- **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - ✅ Stratégie cache busting avec buildId timestamp (app2)
-- **[MAKEFILE_MULTI_ENVIRONMENT.md](developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Gestion multi-environnements (dev, preprod, prod)
-- **[NPM_BACKEND_PRODUCTION_GUIDE.md](developer/guides/infrastructure/NPM_BACKEND_PRODUCTION_GUIDE.md)** - NPM pour backend PHP
-- **[TOOLTIP_TESTING_GUIDE.md](developer/guides/infrastructure/TOOLTIP_TESTING_GUIDE.md)** - Guide de test tooltips
-
-#### [Bonnes Pratiques](developer/guides/)
-- **[BEST_PRACTICES_JAVASCRIPT_SMARTY.md](developer/guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md)** - Bonnes pratiques JavaScript & Smarty (traductions, JSON, constructeurs)
-
-#### [Fonctionnalités](developer/guides/features/)
-- **[COMPETITION_TYPE_MULTI.md](developer/guides/features/COMPETITION_TYPE_MULTI.md)** - Documentation développeur type MULTI (héritée, voir version technique ci-dessous)
-- **[COMPETITION_TYPE_MULTI_TECHNICAL.md](developer/guides/features/COMPETITION_TYPE_MULTI_TECHNICAL.md)** - Documentation technique complète compétitions MULTI et éditeur de grille
-
-### [Travaux en cours](developer/in-progress/)
-
-#### [Statuts des migrations](developer/in-progress/status/)
-- **[BOOTSTRAP_MIGRATION_STATUS.md](developer/in-progress/status/BOOTSTRAP_MIGRATION_STATUS.md)** - ⏳ Migration Bootstrap 5.3.8
-- **[FLATPICKR_MIGRATION_STATUS.md](developer/in-progress/status/FLATPICKR_MIGRATION_STATUS.md)** - ⏳ Migration Flatpickr
-- **[TOOLTIP_MIGRATION_STATUS.md](developer/in-progress/status/TOOLTIP_MIGRATION_STATUS.md)** - ⏳ Migration tooltips
-- **[MASKED_INPUT_MIGRATION_STATUS.md](developer/in-progress/status/MASKED_INPUT_MIGRATION_STATUS.md)** - ⏳ Migration masked input
-
-#### [Plans d'action](developer/in-progress/plans/)
-- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Stratégie de refonte de la partie publique (WordPress + kp*.php → app3 Nuxt SSR + api2, médias hors Git)
-- **[JQUERY_ELIMINATION_STRATEGY.md](developer/in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md)** - Stratégie élimination jQuery
-- **[JS_LIBRARIES_CLEANUP_PLAN.md](developer/in-progress/plans/JS_LIBRARIES_CLEANUP_PLAN.md)** - Plan nettoyage bibliothèques JS
-- **[PLAN_MIGRATION_BOOTSTRAP.md](developer/in-progress/plans/PLAN_MIGRATION_BOOTSTRAP.md)** - Plan migration Bootstrap
-- **[NEXT_STEPS_AUTOCOMPLETE.md](developer/in-progress/plans/NEXT_STEPS_AUTOCOMPLETE.md)** - Prochaines étapes autocomplete
-
-### [Archives](developer/archive/)
-
-#### [Migrations terminées](developer/archive/completed-migrations/)
-- **[PHP8_MIGRATION_COMPLETE.md](developer/archive/completed-migrations/PHP8_MIGRATION_COMPLETE.md)** - ✅ Migration PHP 8.4 TERMINÉE
-- **[MERGE_CHECKLIST_APP3_MEDIA.md](developer/archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md)** - ✅ Suppression de l'ancien app3 + médias hors Git, dev/préprod/prod (clos le 06/10/2026)
-- **[PHP8_MIGRATION_SUMMARY.md](developer/archive/completed-migrations/PHP8_MIGRATION_SUMMARY.md)** - ✅ Synthèse migration PHP 8.4
-- **[MIGRATION_FPDF_MYPDF_SUCCESS.md](developer/archive/completed-migrations/MIGRATION_FPDF_MYPDF_SUCCESS.md)** - ✅ Succès migration mPDF
-- **[AUTOCOMPLETE_MIGRATION_SUMMARY.md](developer/archive/completed-migrations/AUTOCOMPLETE_MIGRATION_SUMMARY.md)** - ✅ Synthèse migration autocomplete
-- **[MIGRATIONS_SUMMARY.md](developer/archive/completed-migrations/MIGRATIONS_SUMMARY.md)** - ✅ Résumé général des migrations
-- **[AXIOS_MIGRATION_TEMPLATES_UPDATE.md](developer/archive/completed-migrations/AXIOS_MIGRATION_TEMPLATES_UPDATE.md)** - ✅ Mise à jour templates Axios
-- **[MIGRATION.md](developer/archive/completed-migrations/MIGRATION.md)** - ✅ Guide général migration (historique)
-- **[README_MIGRATION.md](developer/archive/completed-migrations/README_MIGRATION.md)** - ✅ Notes migration (historique)
-- **[PHP8_TESTING_CHECKLIST.md](developer/archive/completed-migrations/PHP8_TESTING_CHECKLIST.md)** - ✅ Checklist tests PHP 8
-
-#### [Phases terminées](developer/archive/completed-phases/)
-- **[BOOTSTRAP_PHASE1_COMPLETE.md](developer/archive/completed-phases/BOOTSTRAP_PHASE1_COMPLETE.md)** - ✅ Bootstrap Phase 1
-- **[BOOTSTRAP_PHASE2_COMPLETE.md](developer/archive/completed-phases/BOOTSTRAP_PHASE2_COMPLETE.md)** - ✅ Bootstrap Phase 2
-- **[BOOTSTRAP_PHASE3_COMPLETE.md](developer/archive/completed-phases/BOOTSTRAP_PHASE3_COMPLETE.md)** - ✅ Bootstrap Phase 3
-- **[JS_CLEANUP_PHASE1_COMPLETE.md](developer/archive/completed-phases/JS_CLEANUP_PHASE1_COMPLETE.md)** - ✅ Nettoyage JS Phase 1
-
-### [Corrections & Fixes](developer/fixes/)
-
-#### [Bugs](developer/fixes/bugs/)
-- **[BUG_SQL_COMPET_ASTERISK.md](developer/fixes/bugs/BUG_SQL_COMPET_ASTERISK.md)** - Bug SQL avec astérisque
-- **[FIX_CSV_EXPORT_OPENSPOUT.md](developer/fixes/bugs/FIX_CSV_EXPORT_OPENSPOUT.md)** - Fix export CSV OpenSpout
-- **[FIX_MYPDF_OPEN_METHOD.md](developer/fixes/bugs/FIX_MYPDF_OPEN_METHOD.md)** - Fix méthode Open() MyPDF
-- **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/fixes/bugs/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Fix classement général / phases consolidées (compétitions 2026 à corriger)
-
-#### [Fonctionnalités](developer/fixes/features/)
-- **[STAT_LICENCIES_CATEGORIE.md](developer/fixes/features/STAT_LICENCIES_CATEGORIE.md)** - ✅ Statistique licenciés FFCK par catégorie d'âge
-
-#### [Correctifs PHP 8](developer/fixes/php8/)
-- **[PHP84_DEPRECATED_FIXES.md](developer/fixes/php8/PHP84_DEPRECATED_FIXES.md)** - Correctifs deprecated PHP 8.4
-- **[SMARTY_PHP8_FIXES.md](developer/fixes/php8/SMARTY_PHP8_FIXES.md)** - Correctifs Smarty pour PHP 8
-- **[WORDPRESS_PHP8_FIXES.md](developer/fixes/php8/WORDPRESS_PHP8_FIXES.md)** - Correctifs WordPress pour PHP 8
-- **[WORDPRESS_PHP84_MIGRATION.md](developer/fixes/php8/WORDPRESS_PHP84_MIGRATION.md)** - Migration WordPress PHP 8.4
-- **[PHP8_GESTIONDOC_FIXES.md](developer/fixes/php8/PHP8_GESTIONDOC_FIXES.md)** - Correctifs GestionDoc.php
-
-#### [Correctifs Docker](developer/fixes/docker/)
-- **[DOCKER_PROD_FIXES.md](developer/fixes/docker/DOCKER_PROD_FIXES.md)** - Correctifs Docker production
-
-### [Audits & Analyses](developer/audits/)
-
-- **[LIVE_MATCH_REFACTORING_REVIEW.md](developer/audits/LIVE_MATCH_REFACTORING_REVIEW.md)** - Revue critique de la refonte du scoring live (DRY/SOLID/DDD/TDD)
-- **[AUDIT_PHASE_0.md](developer/audits/AUDIT_PHASE_0.md)** - Audit initial du code (phase 0)
-- **[AUDIT_SUMMARY.txt](developer/audits/AUDIT_SUMMARY.txt)** - Résumé textuel de l'audit
-- **[JS_LIBRARIES_AUDIT.md](developer/audits/JS_LIBRARIES_AUDIT.md)** - Audit complet bibliothèques JavaScript
-- **[JS_LIBRARIES_USAGE_ANALYSIS.md](developer/audits/JS_LIBRARIES_USAGE_ANALYSIS.md)** - Analyse détaillée usage JS
-- **[BOOTSTRAP_PHASE3_INVENTORY.md](developer/audits/BOOTSTRAP_PHASE3_INVENTORY.md)** - Inventaire Bootstrap 3
-- **[PHASE5_JQUERY_SELECTORS_ANALYSIS.md](developer/audits/PHASE5_JQUERY_SELECTORS_ANALYSIS.md)** - Analyse sélecteurs jQuery
-- **[CLEANUP_QUICK_WINS.md](developer/audits/CLEANUP_QUICK_WINS.md)** - Actions nettoyage rapides
-
-### [Infrastructure](developer/infrastructure/)
-
-#### [Docker](developer/infrastructure/docker/)
-- **[DOCKERFILE_OPTIMIZATIONS.md](developer/infrastructure/docker/DOCKERFILE_OPTIMIZATIONS.md)** - Optimisations Dockerfiles
-- **[PHP8_DOCKER_SWITCH.md](developer/infrastructure/docker/PHP8_DOCKER_SWITCH.md)** - Bascule Docker vers PHP 8
-- **[WORDPRESS_DOCKER_DECISION.md](developer/infrastructure/docker/WORDPRESS_DOCKER_DECISION.md)** - Décision architecture WordPress
-
-#### [WordPress](developer/infrastructure/wordpress/)
-- **[WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md](developer/infrastructure/wordpress/WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md)** - Migration WordPress vers VPS
-- **[PATTERN_8_IMAGES_ARRIERE_PLAN.md](developer/infrastructure/wordpress/PATTERN_8_IMAGES_ARRIERE_PLAN.md)** - Motifs images PDF
-
-#### [Configuration](developer/infrastructure/configuration/)
-- **[MAKEFILE_COMPOSER_UPDATES.md](developer/infrastructure/configuration/MAKEFILE_COMPOSER_UPDATES.md)** - Mises à jour Makefile Composer
-- **[MATOMO_CONFIG.md](developer/infrastructure/configuration/MATOMO_CONFIG.md)** - Configuration Matomo
+Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md).
 
 ---
 
-## 📊 Statistiques
+## 📘 [Documentation Utilisateur](user/)
 
-- **Total documents**: 70+ fichiers
-- **Documentation utilisateur**: 11 fichiers
-- **Documentation développeur**: 60+ fichiers (dont 3 références)
-- **Lignes de documentation**: ~25000+
-- **Dernière mise à jour**: 2026-01-26
+- **[NOUVEAUTES.md](user/NOUVEAUTES.md)** - Dernières nouveautés
+- **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Visualiseur de documentation
+- **[APP2_APPLICATION_WEB.md](user/APP2_APPLICATION_WEB.md)** - Application web (app2)
+- **[ADMIN_STATISTICS.md](user/ADMIN_STATISTICS.md)** - Statistiques - nouvelle interface (app4)
+- **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Worker de cache pour incrustations vidéo
+- **[IMAGE_UPLOAD_MANAGEMENT.md](user/IMAGE_UPLOAD_MANAGEMENT.md)** - Upload et gestion d'images
+- **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe
+- **[MATCH_DAY_BULK_OPERATIONS.md](user/MATCH_DAY_BULK_OPERATIONS.md)** - Opérations de masse sur les matchs
+- **[BULK_COMPETITION_COPY.md](user/BULK_COMPETITION_COPY.md)** - Copie en masse de compétitions entre saisons
+- **[MATCH_CONSISTENCY_STATS.md](user/MATCH_CONSISTENCY_STATS.md)** - Cohérence des plannings de matchs
+- **[CONSOLIDATION_PHASES_CLASSEMENT.md](user/CONSOLIDATION_PHASES_CLASSEMENT.md)** - Consolidation des phases de classement
+- **[MULTI_COMPETITION_TYPE.md](user/MULTI_COMPETITION_TYPE.md)** - Type de compétition MULTI
+- Archive : [SYNTHESE_TRAVAUX_OCT_DEC_2025.md](user/archive/SYNTHESE_TRAVAUX_OCT_DEC_2025.md)
+
+## 📐 [Spécifications app4](specs/)
+
+Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
+[COMMON_ADMIN_SPECS.md](specs/COMMON_ADMIN_SPECS.md), [DROITS_PAR_PROFIL.md](specs/DROITS_PAR_PROFIL.md),
+[MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
+[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
+
+## 💻 [Documentation Développeur](developer/)
+
+### [Référence](developer/reference/) — l'existant
+- **[FRANKENPHP_MIGRATION_ANALYSIS.md](developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ Architecture web actuelle : `/api2` sur FrankenPHP (worker + Mercure), Apache pour le legacy
+- **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Référence complète des endpoints API2
+- **[APP4_STRUCTURE.md](developer/reference/APP4_STRUCTURE.md)** - Architecture app4 (stores, composants, patterns)
+- **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture app2 (PWA, erreurs, API)
+- **[PROFILE_ROLES.md](developer/reference/PROFILE_ROLES.md)** - Profils ↔ rôles Symfony, mandats, piège `#[IsGranted]`
+- **[PLAYER_ELIGIBILITY_RULES.md](developer/reference/PLAYER_ELIGIBILITY_RULES.md)** - Règles « joueur en règle »
+- **[LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)** - Chaîne temps réel d'un match (existant)
+- **[KPI_FUNCTIONALITY_INVENTORY.md](developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Inventaire des fonctionnalités
+- **[EXTRACTION_STRUCTURES_FFCK.md](developer/reference/EXTRACTION_STRUCTURES_FFCK.md)** - Extraction des structures FFCK
+- **[features/](developer/reference/features/)** - Fonctionnalités :
+  [COMPETITION_TYPE_MULTI_TECHNICAL](developer/reference/features/COMPETITION_TYPE_MULTI_TECHNICAL.md),
+  [CONSOLIDATION_PHASES_CLASSEMENT](developer/reference/features/CONSOLIDATION_PHASES_CLASSEMENT.md),
+  [RANKING_STATUS_RESTRICTIONS](developer/reference/features/RANKING_STATUS_RESTRICTIONS.md),
+  [STAT_LICENCIES_CATEGORIE](developer/reference/features/STAT_LICENCIES_CATEGORIE.md)
+
+### [Guides](developer/guides/) — le quotidien
+- **[ENVIRONNEMENT_DEV.md](developer/guides/ENVIRONNEMENT_DEV.md)** - ⭐ `make dev`, où lire les logs de chaque service
+- **[GIT_WORKFLOW.md](developer/guides/GIT_WORKFLOW.md)** - ⭐ Branches, PR, worktrees, versions
+- **[MAKEFILE_MULTI_ENVIRONMENT.md](developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md)** - Plusieurs instances sur un même serveur
+- **[NPM_BACKEND_PRODUCTION_GUIDE.md](developer/guides/NPM_BACKEND_PRODUCTION_GUIDE.md)** - Bibliothèques JS du backend PHP
+- **[QA_APP4_PROFILES.md](developer/guides/QA_APP4_PROFILES.md)** - Checklist de test app4 par profil
+- **[BEST_PRACTICES_JAVASCRIPT_SMARTY.md](developer/guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md)** - Bonnes pratiques JS & Smarty
+- **[JS_TRANSLATIONS_GUIDE.md](developer/guides/JS_TRANSLATIONS_GUIDE.md)** - Traductions côté JS legacy
+- **[PATTERN_8_IMAGES_ARRIERE_PLAN.md](developer/guides/PATTERN_8_IMAGES_ARRIERE_PLAN.md)** - mPDF : images décoratives en arrière-plan
+- **[GUIDE_EXTRACTION_STRUCTURES.md](developer/guides/GUIDE_EXTRACTION_STRUCTURES.md)** - Lancer l'extraction des structures
+- **[PROMPTS.md](developer/guides/PROMPTS.md)** - Exemples de prompts pour Claude Code
+
+### [Infrastructure](developer/infrastructure/) — l'exploitation
+- **[DEPLOYMENT_RUNBOOK.md](developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ Déployer, diagnostiquer, rollback
+- **[MEDIA_STORAGE.md](developer/infrastructure/MEDIA_STORAGE.md)** - Médias hors Git, montages, sauvegarde restic
+- **[NGINX_STATIC_APP_DEPLOYMENT.md](developer/infrastructure/NGINX_STATIC_APP_DEPLOYMENT.md)** - app2/app4 servies par Nginx (SSG)
+- **[CORS_CONFIGURATION.md](developer/infrastructure/CORS_CONFIGURATION.md)** - CORS du legacy (auto-prepend)
+- **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - Cache busting app2
+- **[CRON_DOCUMENTATION.md](developer/infrastructure/CRON_DOCUMENTATION.md)** - Tâches planifiées
+- **[MATOMO_CONFIG.md](developer/infrastructure/MATOMO_CONFIG.md)** - Configuration Matomo
+- **[WORDPRESS_DOCKER_DECISION.md](developer/infrastructure/WORDPRESS_DOCKER_DECISION.md)** - WordPress dans le conteneur PHP (décision)
+- Index détaillé : [infrastructure/README.md](developer/infrastructure/README.md)
+
+### [Travaux en cours](developer/in-progress/)
+- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
+- **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Plan de refonte du scoring live
+- **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
+- **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
+- **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes
+- **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
+
+### [Archives](developer/archive/) — sujets traités
+Index détaillé : [archive/README.md](developer/archive/README.md)
+- **[php8/](developer/archive/php8/)** - Migration PHP 8.4, Smarty v4, correctifs associés
+- **[pdf-exports/](developer/archive/pdf-exports/)** - FPDF → mPDF, OpenTBS → OpenSpout, QR codes
+- **[legacy-frontend/](developer/archive/legacy-frontend/)** - Bootstrap, Flatpickr, autocomplete, Axios, jQuery, tooltips, traductions
+- **[ci-cd/](developer/archive/ci-cd/)** - Stratégie CI/CD et simplification du workflow git
+- **[infrastructure/](developer/archive/infrastructure/)** - Correctifs Docker, migration VPS WordPress, médias hors Git
+- **[features/](developer/archive/features/)** - Plan de création d'app4, audits de recette, correctifs fonctionnels
+- **[audits/](developer/archive/audits/)** - Audit initial (phase 0), revue du scoring live
 
 ---
 
@@ -168,6 +130,4 @@ Documentation technique pour le développement et la maintenance du projet.
 - [GEMINI.md](../GEMINI.md) - Guide pour Gemini
 - [Makefile](../Makefile) - Commandes de développement
 
----
-
-**Organisation**: Documentation organisée pour distinguer clairement les guides utilisateurs (brefs et fonctionnels) des documentations développeur (techniques, détaillées, avec todo lists et archives).
+**Dernière réorganisation** : 2026-10-07
