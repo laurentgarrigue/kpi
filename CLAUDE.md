@@ -209,7 +209,8 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 ### Core Structure
 - `sources/` - Main application code
   - `app2/` - Nuxt 4 application (primary frontend - scrutineering/charts)
-  - `app3/` - *(reserved)* future public website (Nuxt 4 SSR) - see [PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)
+  - `app3/` - Public website (Nuxt 4 SSR, beta) - see [DOC/specs/public/](DOC/specs/public/README.md)
+  - `kpi-layer/` - Shared Nuxt layer (charter, fonts, api2 client), used by app3
   - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
   - `commun/` - Shared PHP utilities and database classes
   - `api/` - Legacy PHP REST API endpoints
@@ -234,11 +235,20 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Prod: `make app2_generate_production` (uses temporary Docker container, works without permanent Node.js setup)
   - After build: `make docker_dev_restart`, `make docker_preprod_restart`, or `make docker_prod_restart` to restart Nginx
 
-### App3 (future public website)
-- **Status**: not started. `sources/app3/` is reserved for the Nuxt 4 SSR public website replacing WordPress
-  and the `kp*.php` pages - see [PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)
-- The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**
-  (reference for the app4 scoring console, see [PAGE_SCORING.md](DOC/specs/PAGE_SCORING.md))
+### App3 (public website, beta) + kpi-layer
+- **What**: Nuxt 4 **SSR** public website replacing WordPress and the `kp*.php` pages, built phase by phase
+  ([PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
+  **Spec first**: [DOC/specs/public/](DOC/specs/public/README.md). App README: [sources/app3/README.md](sources/app3/README.md).
+- **Served on `beta.${KPI_DOMAIN_NAME}` only** (dev `beta.kpi.localhost`, preprod `beta.preprod.kayak-polo.info`,
+  prod `beta.kayak-polo.info`), not indexed while `NUXT_PUBLIC_BETA=true`. It must not impact legacy, app2, app4
+  or api2 until the switch-over: dedicated Traefik router, read-only public api2 endpoints, menu entries fall
+  back to the legacy pages until their app3 page is delivered (`ready` flag in `app/utils/navigation.ts`).
+- **kpi-layer** (`sources/kpi-layer/`): shared Nuxt layer (FFCK charter tokens, fonts, `useApi2`). Consumed by
+  app3 only until phase 6 — do not wire app2/app4 to it before then.
+- **Commands**: `make app3_logs`, `make app3_test`, `make app3_lint`, `make app3_generate_preprod|production`
+  (SSR build in a temporary container + restart of `${APPLICATION_NAME}_app3`), `make app3_restart`.
+- **Tests**: Vitest projects `unit`, `nuxt`, `e2e` (`npm test` in `sources/app3`), named after the spec criteria.
+- The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**.
 
 ### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)
 - **Framework**: Symfony 7.4 LTS with API Platform 4.3
@@ -334,7 +344,8 @@ Main services (dev):
 | `api2` | `${APPLICATION_NAME}_api2` | **FrankenPHP (Caddy) worker + Mercure hub** - Symfony 7.4 / API Platform 4.3 |
 | `event-cache-worker` | `${APPLICATION_NAME}_event_cache_worker` | CLI daemon regenerating live cache JSON |
 | `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
-| `node_app2` … `node_app4` | | Nuxt dev servers |
+| `node_app2` … `node_app4` | | Nuxt dev servers (`node_app3` = public website on `beta.kpi.localhost`) |
+| `app3` (preprod/prod) | `${APPLICATION_NAME}_app3` | Node SSR server of the public website, `beta.${KPI_DOMAIN_NAME}` |
 | `nginx_app2` / `nginx_app4` | | Static serving of generated Nuxt output |
 
 **Two web servers coexist**: Apache serves everything legacy, FrankenPHP serves `/api2` only.
@@ -361,7 +372,7 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   - Logs via `make api2_logs`, **not** `docker/apachelogs_8/`
   - See [sources/api2/README.md](sources/api2/README.md) for details
 - App2 is the primary modern frontend application being actively developed
-- `sources/app3/` is reserved for the future public website (not started)
+- App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments

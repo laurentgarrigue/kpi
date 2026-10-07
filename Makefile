@@ -28,6 +28,9 @@ API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
 # d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
 WORKER_CONTAINER_NAME = $(APPLICATION_NAME)_event_cache_worker
 NODE_CONTAINER_NAME = $(APPLICATION_NAME)_node_app2
+NODE3_CONTAINER_NAME = kpi_node_app3
+# Serveur SSR du site public en préprod/prod (beta.${KPI_DOMAIN_NAME}), cf. DOC/specs/public/SITE_PLATFORM.md
+APP3_CONTAINER_NAME = $(APPLICATION_NAME)_app3
 NODE4_CONTAINER_NAME = kpi_node_app4
 DB_CONTAINER_NAME = $(APPLICATION_NAME)_db
 
@@ -42,6 +45,8 @@ DOCKER_EXEC_NODE = docker exec -ti $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE_NON_INTERACTIVE = docker exec $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE4 = docker exec -ti $(NODE4_CONTAINER_NAME)
 DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
+DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
+DOCKER_EXEC_NODE3_NON_INTERACTIVE = docker exec $(NODE3_CONTAINER_NAME)
 .DEFAULT_GOAL = help
 
 .PHONY: help init init_env init_env_app2 init_env_app4 init_env_api2 init_networks \
@@ -51,6 +56,8 @@ docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_p
 docker_production_restart docker_production_rebuild \
 app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
+app3_dev app3_logs app3_test app3_lint app3_bash app3_npm_install app3_npm_add app3_npm_add_dev \
+app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
 app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
@@ -318,6 +325,8 @@ dev_status: ## Affiche l'état et les URLs de l'environnement de développement
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@printf '  %-22s %-34s ' "app4 admin (Nuxt)" "https://$(NODE4_DOMAIN_NAME)/admin2/"; \
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE4_DOMAIN_NAME)/admin2/" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "app3 site public (Nuxt)" "https://beta.$(KPI_DOMAIN_NAME)/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://beta.$(KPI_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@echo
 	@echo "  Logs : make api2_logs | make app2_logs | make app4_logs | make dev_logs"
 	@echo "  (200/401 = OK. Les serveurs Nuxt mettent ~15 s à démarrer.)"
@@ -489,6 +498,63 @@ app2_npm_add: ## Ajoute un package npm à app2 (usage: make app2_npm_add package
 app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_add_dev package=eslint)
 	@echo "Ajout du package de dev $(package) pour app2 (container: $(NODE_CONTAINER_NAME))..."
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
+
+
+## APP3 - NUXT SSR (site public, beta) — cf. sources/app3/README.md
+app3_dev: ## Suit les logs du serveur Nuxt de dev (app3, https://beta.$(KPI_DOMAIN_NAME)) - démarré par docker_dev_up
+	@$(MAKE) --no-print-directory app3_logs
+
+app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sinon serveur de dev. Options: lines=200
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker logs -f --tail $(or $(lines),50) $(APP3_CONTAINER_NAME); \
+	else \
+		docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME); \
+	fi
+
+app3_test: ## Tests du site public (Vitest : unit, composants, e2e) dans le conteneur de dev
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm test"
+
+app3_lint: ## ESLint + typecheck du site public (app3)
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run lint && npm run typecheck"
+
+app3_bash: ## Ouvre un shell dans le conteneur Node de dev (app3)
+	$(DOCKER_EXEC_NODE3) sh
+
+app3_npm_install: ## Installe les dépendances npm d'app3 (conteneur de dev)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install"
+
+app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=<nom>)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install $(package)"
+
+app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_add_dev package=<nom>)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install -D $(package)"
+
+# Build SSR dans un conteneur Node temporaire (aucun Node requis sur le serveur), puis redémarrage
+# du conteneur app3. Monte sources/ entier : app3 étend ../kpi-layer. Un même build sert préprod et
+# prod (configuration runtime NUXT_* des compose). Appelé par deploy-wrapper.sh (vps-manager).
+# Un conteneur app3 absent n'est PAS une erreur : le beta ne doit jamais faire échouer un déploiement
+# (SITE_PLATFORM.md § 6) — il est créé par `make docker_<env>_up`.
+app3_generate_preprod: ## Construit le site public (SSR) et redémarre le conteneur app3 (préprod)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_production: ## Construit le site public (SSR) et redémarre le conteneur app3 (production)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_prod: app3_generate_production ## Alias pour app3_generate_production
+
+_app3_build_and_restart:
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app3/package-lock.json
+	@echo "Building app3 (SSR) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine sh -c "npm ci && npx nuxt build"
+	@$(MAKE) --no-print-directory app3_restart
+
+app3_restart: ## Redémarre le serveur SSR du site public (app3) pour charger le dernier build
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker restart $(APP3_CONTAINER_NAME) >/dev/null && echo "✅ $(APP3_CONTAINER_NAME) redémarré"; \
+	else \
+		echo "⚠️  $(APP3_CONTAINER_NAME) absent : le créer avec make docker_<env>_up (non bloquant)"; \
+	fi
 
 
 ## APP4 - NUXT (Admin)

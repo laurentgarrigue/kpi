@@ -308,6 +308,55 @@ services:
             # Higher priority than the main kpi router
             - "traefik.http.routers.nginx_app4_preprod.priority=100"
 
+
+    # Site public (app3, Nuxt SSR) servi sur beta.${KPI_DOMAIN_NAME} jusqu'à la bascule de www.
+    # Exécute la sortie de `make app3_generate_<env>` (montée en lecture seule). Routeur DÉDIÉ :
+    # aucun routeur existant n'est modifié (DOC/specs/public/SITE_PLATFORM.md § 5).
+    app3:
+        container_name: ${APPLICATION_NAME}_app3
+        image: node:22-alpine
+        working_dir: /app
+        user: "${USER_ID}:${GROUP_ID}"
+        # Sans build, le conteneur reste démarré et le signale (pas de boucle de redémarrage).
+        command: >-
+            sh -c 'if [ -f .output/server/index.mjs ]; then exec node .output/server/index.mjs;
+            else echo "app3 non construit : lancer make app3_generate_<env>"; exec sleep infinity; fi'
+        volumes:
+            - ../sources/app3/.output:/app/.output:ro
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - TZ=Europe/Paris
+            - NUXT_PUBLIC_I18N_BASE_URL=https://beta.${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_BETA=true
+            - NUXT_API2_INTERNAL_URL=http://${APPLICATION_NAME}_api2
+            - NUXT_PUBLIC_API2_BASE_URL=https://${KPI_DOMAIN_NAME}/api2
+            - NUXT_PUBLIC_LEGACY_BASE_URL=https://${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_APP2_BASE_URL=https://app.${KPI_DOMAIN_NAME}
+        healthcheck:
+            test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthz || exit 1"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+        networks:
+            - network_kpi
+            - traefiknetwork
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app3_preprod.rule=Host(`beta.${KPI_DOMAIN_NAME}`)"
+            - "traefik.http.routers.app3_preprod.entrypoints=websecure"
+            - "traefik.http.routers.app3_preprod.tls=true"
+            - "traefik.http.routers.app3_preprod.tls.certresolver=myresolver"
+            - "traefik.http.services.app3_preprod.loadbalancer.server.port=3000"
+
 networks:
     network_kpi:
         external: true

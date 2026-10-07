@@ -1,7 +1,7 @@
 # Stratégie de refonte de la partie publique (kayak-polo.info)
 
 **Date** : 7 octobre 2026 (v4 : phases 0a/0b closes, domaines beta, livraison continue, méthode specs + clean code)
-**Statut** : ✅ Orientations validées — phases 0a et 0b **closes** (06/10/2026) ; phases 0c (specs du socle) et 1 (socle) **en cours** (§ 12)
+**Statut** : ✅ Orientations validées — phases 0a et 0b **closes** (06/10/2026) ; phase 1 (socle) **livrée dans le dépôt**, activation serveur à faire ; phase 2 = prochaine (§ 12)
 **Périmètre** : page d'accueil et contenus WordPress, pages publiques `kp*.php`, affichages `frame_*.php`, exports publics (PDF, ICS), médias, articulation avec app2 / app4 / api2
 
 ---
@@ -503,7 +503,7 @@ Règles de mise en œuvre :
 | **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié, mergé et déployé) |
 | **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait : dev, préprod et prod migrés, cron de sauvegarde actif (06/10/2026) — [checklist archivée](../../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md) |
 | **0c. Cadrage** 🟡 | Jetons de la charte FFCK univers Compétition (§ 10), polices, **specs du template, des menus et du socle** ; table de redirections et validation des pages reprises, affinées à chaque phase. Pas de maquettes séparées : le beta tient lieu de maquette, validée incrément par incrément | [Specs du socle](../../../specs/public/README.md) | specs du socle rédigées (07/10/2026) |
-| **1. Socle** 🟡 | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI, déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | en cours |
+| **1. Socle** 🟡 | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI (lint, typecheck, 49 tests, build), déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | **code livré (07/10/2026)** ; reste l'activation serveur : DNS + ligne `deploy-wrapper.sh` ([SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md)) |
 | **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |
 | **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | 3–4 sem. |
 | **4a. Éditorial** | Articles, pages, menu, médias, galeries, SEO, partage, blocs d'accueil, droit Rédacteur, RSS ; import des ~50 articles et des pages | CMS opérationnel, contenu repris | 3–4 sem. |

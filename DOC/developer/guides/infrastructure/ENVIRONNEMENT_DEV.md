@@ -8,7 +8,7 @@
 ## En bref
 
 ```bash
-make dev          # lance TOUT en détaché (legacy + api2 + app2 + app4) + affiche l'état
+make dev          # lance TOUT en détaché (legacy + api2 + app2 + app3 + app4) + affiche l'état
 make dev_status   # état + URLs, à tout moment
 make dev_down     # tout arrêter
 ```
@@ -22,6 +22,7 @@ make api2_logs           # api2 (FrankenPHP) : erreurs PHP + Symfony
 make api2_logs_errors    # api2 : erreurs uniquement
 make app2_logs           # serveur Nuxt app2
 make app4_logs           # serveur Nuxt app4
+make app3_logs           # site public app3 (https://beta.kpi.localhost)
 make dev_logs            # tous les containers
 ```
 
