@@ -1,0 +1,67 @@
+{
+  "site": {
+    "name": "kayak-polo.info",
+    "tagline": "French Canoe Polo National Commission",
+    "description": "Results, rankings, calendars and news of canoe polo in France.",
+    "ffckLogoAlt": "French Canoe Kayak and Paddle Sports Federation",
+    "homeLinkLabel": "kayak-polo.info, back to the home page"
+  },
+  "a11y": {
+    "skipToContent": "Skip to content",
+    "mainNav": "Main navigation",
+    "language": "Language",
+    "legacyLink": "(current website)",
+    "externalLink": "(external link)",
+    "betaRegion": "Beta version"
+  },
+  "beta": {
+    "message": "Beta version of the new kayak-polo.info website.",
+    "legacyPrefix": "The current website is still available:",
+    "legacyLink": "go to the current website"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Home",
+    "news": "News",
+    "calendar": "Calendar",
+    "competitions": "Competitions",
+    "competitions-list": "Competitions and results",
+    "history": "History and honours",
+    "teams-clubs": "Teams and clubs",
+    "teams": "Teams",
+    "clubs": "Clubs",
+    "live": "Live"
+  },
+  "footer": {
+    "kayakPolo": "Canoe polo",
+    "cnaLogoAlt": "French Canoe Polo National Commission logo",
+    "ffckSite": "FFCK website",
+    "follow": "Follow",
+    "facebook": "Official Facebook page",
+    "liveApp": "Follow an event live",
+    "partner": "Partner",
+    "kipSportAlt": "KIP Sport",
+    "links": "Links",
+    "legacySite": "Current website",
+    "admin": "Administration",
+    "copyright": "© {year} FFCK — French Canoe Polo National Commission",
+    "version": "Version {version}"
+  },
+  "home": {
+    "title": "Canoe polo in France",
+    "intro": "Results, rankings and calendars of canoe polo competitions, published by the French Canoe Polo National Commission (FFCK).",
+    "competitionsCta": "Competitions and results",
+    "liveCta": "Follow an event live",
+    "recentEvents": "Recent events",
+    "noEvents": "No event published yet.",
+    "eventsUnavailable": "Events are temporarily unavailable."
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The requested page does not exist or has moved.",
+    "genericTitle": "An error occurred",
+    "genericText": "Please try again in a few moments.",
+    "backHome": "Back to the home page",
+    "legacySite": "Go to the current website"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "site": {
+    "name": "kayak-polo.info",
+    "tagline": "Commission Nationale d'Activité Kayak-Polo",
+    "description": "Résultats, classements, calendriers et actualités du kayak-polo en France.",
+    "ffckLogoAlt": "Fédération Française de Canoë Kayak et Sports de Pagaie",
+    "homeLinkLabel": "kayak-polo.info, retour à l'accueil"
+  },
+  "a11y": {
+    "skipToContent": "Aller au contenu",
+    "mainNav": "Navigation principale",
+    "language": "Choix de la langue",
+    "legacyLink": "(site actuel)",
+    "externalLink": "(lien externe)",
+    "betaRegion": "Version bêta"
+  },
+  "beta": {
+    "message": "Version bêta du nouveau site kayak-polo.info.",
+    "legacyPrefix": "Le site actuel reste disponible :",
+    "legacyLink": "accéder au site actuel"
+  },
+  "nav": {
+    "menu": "Menu",
+    "home": "Accueil",
+    "news": "Actualités",
+    "calendar": "Calendrier",
+    "competitions": "Compétitions",
+    "competitions-list": "Compétitions et résultats",
+    "history": "Historique et palmarès",
+    "teams-clubs": "Équipes et clubs",
+    "teams": "Équipes",
+    "clubs": "Clubs",
+    "live": "En direct"
+  },
+  "footer": {
+    "kayakPolo": "Kayak-polo",
+    "cnaLogoAlt": "Logo de la Commission Nationale d'Activité Kayak-Polo",
+    "ffckSite": "Site de la FFCK",
+    "follow": "Suivre",
+    "facebook": "Page Facebook officielle",
+    "liveApp": "Suivre un événement en direct",
+    "partner": "Partenaire",
+    "kipSportAlt": "KIP Sport",
+    "links": "Liens",
+    "legacySite": "Site actuel",
+    "admin": "Administration",
+    "copyright": "© {year} FFCK — Commission Nationale d'Activité Kayak-Polo",
+    "version": "Version {version}"
+  },
+  "home": {
+    "title": "Le kayak-polo en France",
+    "intro": "Résultats, classements et calendriers des compétitions de kayak-polo, publiés par la Commission Nationale d'Activité Kayak-Polo de la FFCK.",
+    "competitionsCta": "Compétitions et résultats",
+    "liveCta": "Suivre un événement en direct",
+    "recentEvents": "Événements récents",
+    "noEvents": "Aucun événement publié pour le moment.",
+    "eventsUnavailable": "Les événements sont momentanément indisponibles."
+  },
+  "error": {
+    "notFoundTitle": "Page introuvable",
+    "notFoundText": "La page demandée n'existe pas ou a été déplacée.",
+    "genericTitle": "Une erreur est survenue",
+    "genericText": "Merci de réessayer dans quelques instants.",
+    "backHome": "Retour à l'accueil",
+    "legacySite": "Accéder au site actuel"
+  }
+}

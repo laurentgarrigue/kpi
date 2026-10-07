@@ -36,11 +36,11 @@ En phase 4a, elle accueillera les contenus éditoriaux (à la une, actualités, 
 | Événements récents | `GET /events/all` (existant, public) | `id`, `libelle`, `place`, `logo`, `year` |
 
 - Les 6 premiers éléments sont sélectionnés **côté app3** : l'endpoint n'est pas modifié (aucun impact sur app2).
-- Cache : `routeRules['/'] = { swr: 300 }` (5 minutes).
+- Cache : `routeRules` `cache: { maxAge: 300, swr: true }` sur `/` et `/en` (5 minutes, stale-while-revalidate).
 
 ## 4. SEO et accessibilité
 
-- Titre : « kayak-polo.info — Kayak-polo en France » ; description par défaut (SITE_LAYOUT.md § 5).
+- Titre : « Le kayak-polo en France — kayak-polo.info » (gabarit commun) ; description par défaut (SITE_LAYOUT.md § 5).
 - Les cartes d'événements forment une liste (`<ul>`) ; chaque carte est un seul lien au libellé explicite.
 
 ## 5. Critères d'acceptation

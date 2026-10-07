@@ -89,14 +89,14 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 - Lien d'évitement vers `#content`, premier élément focusable.
 - Contraste AA pour tout texte (jetons choisis en conséquence ; `primary-light` jamais en texte sur blanc).
 - Focus visible sur tous les éléments interactifs.
-- Attribut `lang` du document égal à la langue courante.
+- Attribut `lang` du document égal à la langue courante (`fr-FR`, `en-GB`).
 
 ## 5. Métadonnées par défaut (SEO)
 
-- Titre : `{titre de la page} — kayak-polo.info` ; accueil : `kayak-polo.info — Kayak-polo en France`.
+- Titre : `{titre de la page} — kayak-polo.info` pour toutes les pages, accueil compris (« Le kayak-polo en France — kayak-polo.info »).
 - Description par défaut (FR/EN) : « Résultats, classements, calendriers et actualités du kayak-polo en France. »
 - `og:site_name` = `kayak-polo.info`, `og:locale`, `og:type=website`, `og:image` = logo CNA Kayak-Polo par défaut.
-- URL canonique = `NUXT_PUBLIC_SITE_URL` + chemin, et liens `hreflang` `fr`, `en`, `x-default`.
+- URL canonique = `NUXT_PUBLIC_I18N_BASE_URL` + chemin, et liens `hreflang` `fr`, `en`, `x-default`.
 - Balise `robots` selon SITE_PLATFORM.md § 4.2.
 
 ## 6. Critères d'acceptation
@@ -106,7 +106,7 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 - **LAY-03** — L'en-tête affiche le logo FFCK avec un texte alternatif et un lien vers l'accueil de la langue courante.
 - **LAY-04** — Le pied de page contient les liens Facebook FFCK, app2, KIP Sport, site actuel et Administration, et l'année courante.
 - **LAY-05** — Le titre de document suit le gabarit `{titre} — kayak-polo.info`.
-- **LAY-06** — Le document porte `lang="fr"` sur les pages françaises et `lang="en"` sous `/en`, ainsi que les liens `hreflang` et l'URL canonique.
+- **LAY-06** — Le document porte `lang="fr-FR"` sur les pages françaises et `lang="en-GB"` sous `/en`, ainsi que les liens `hreflang` et l'URL canonique.
 - **LAY-07** — Une URL inconnue renvoie un statut 404 avec la page d'erreur dans l'enveloppe du site.
 - **LAY-08** — Aucun composant d'app3 ne contient de couleur hexadécimale (contrôle en revue / lint).
 

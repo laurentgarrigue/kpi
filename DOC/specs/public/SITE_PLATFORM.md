@@ -31,7 +31,7 @@ conteneur. **Un même build sert la préprod et la prod**.
 
 | Variable | Côté | Rôle | Dev | Préprod | Prod |
 |---|---|---|---|---|---|
-| `NUXT_PUBLIC_SITE_URL` | public | URL canonique du site | `https://beta.kpi.localhost` | `https://beta.preprod.kayak-polo.info` | `https://beta.kayak-polo.info` |
+| `NUXT_PUBLIC_I18N_BASE_URL` | public | URL canonique du site (canonical, `hreflang` — option `baseUrl` de `@nuxtjs/i18n`, source unique — et `robots.txt`) | `https://beta.kpi.localhost` | `https://beta.preprod.kayak-polo.info` | `https://beta.kayak-polo.info` |
 | `NUXT_PUBLIC_BETA` | public | `true` tant que le site n'est pas officiel : bandeau beta + non-indexation | `true` | `true` | `true` (→ `false` à la bascule) |
 | `NUXT_PUBLIC_API2_BASE_URL` | public | api2 vue du navigateur | `https://kpi.localhost/api2` | `https://preprod.kayak-polo.info/api2` | `https://kayak-polo.info/api2` |
 | `NUXT_API2_INTERNAL_URL` | serveur | api2 vue du serveur Nitro (réseau Docker, sans Traefik ni préfixe `/api2`) | `http://kpi_api2` | `http://kpi_preprod_api2` | `http://kpi_api2` |
