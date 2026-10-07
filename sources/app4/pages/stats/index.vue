@@ -778,13 +778,13 @@ const exportPdf = async () => {
                 v-model.number="tempLimit"
                 type="tel"
                 min="1"
-                max="500"
+                max="5000"
                 class="w-full px-3 py-2 border-y border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 text-center focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
               <button
                 type="button"
                 class="px-3 py-2 border border-header-300 dark:border-header-700 rounded-r-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                @click="tempLimit = Math.min(500, tempLimit + 1)"
+                @click="tempLimit = Math.min(5000, tempLimit + 1)"
               >
                 <UIcon name="heroicons:plus" class="w-4 h-4" />
               </button>
