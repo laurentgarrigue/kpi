@@ -767,7 +767,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
     </AdminToolbar>
 
     <!-- Desktop Table -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
+    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
       <!-- Loading state -->
       <div v-if="loading && competitions.length === 0" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -797,7 +797,7 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
           </button>
 
           <!-- Table for this section -->
-          <div v-show="!isSectionCollapsed(section.section)" class="overflow-x-auto">
+          <div v-show="!isSectionCollapsed(section.section)" class="sticky-thead">
             <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
               <thead class="bg-header-50 dark:bg-header-900">
                 <tr data-tour="clickable-cells">
