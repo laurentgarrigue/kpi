@@ -2447,8 +2447,8 @@ const openScoring = (gameId: number) => {
     </div>
 
     <!-- ═══════ DESKTOP TABLE ═══════ -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
+    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
+      <div class="sticky-thead">
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700 text-xs">
           <thead class="bg-header-50 dark:bg-header-800">
             <tr>

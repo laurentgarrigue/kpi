@@ -1157,16 +1157,16 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
       <!-- Teams grouped by pool -->
       <div v-else class="space-y-4">
-        <div v-for="group in teamsByPool" :key="group.pool" class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
+        <div v-for="group in teamsByPool" :key="group.pool" class="bg-white dark:bg-header-900 rounded-lg shadow">
           <!-- Pool header -->
-          <div class="px-4 py-2 bg-header-200 dark:bg-header-700 border-b border-header-200 dark:border-header-700">
+          <div class="px-4 py-2 rounded-t-lg bg-header-200 dark:bg-header-700 border-b border-header-200 dark:border-header-700">
             <h3 class="text-sm font-semibold text-header-900 dark:text-header-50">
               {{ group.label }}
             </h3>
           </div>
 
           <!-- Desktop table -->
-          <div class="hidden lg:block overflow-x-auto">
+          <div class="hidden lg:block sticky-thead">
             <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
               <thead class="bg-header-50 dark:bg-header-900">
                 <tr>

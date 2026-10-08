@@ -299,7 +299,7 @@ onMounted(() => {
     </div>
 
     <!-- Desktop Table -->
-    <div v-else class="hidden lg:block overflow-x-auto">
+    <div v-else class="hidden lg:block sticky-thead">
       <table v-if="entries.length > 0" class="min-w-full divide-y divide-header-200 dark:divide-header-700 bg-white dark:bg-header-900 rounded-lg shadow-sm">
         <thead class="bg-header-50 dark:bg-header-900">
           <tr>
