@@ -115,7 +115,23 @@ make release_tag version=X.Y.Z      # tag de release contenant la phase 1
 
 **Non-régression prod** : `www.kayak-polo.info`, `app.kayak-polo.info`, `/admin2`, `/api2/doc`. ☐
 
-### 1.6 Retour arrière
+### 1.6 Retours de recette du 08/10/2026 (PR suivante)
+
+Specs mises à jour et **validées** : SITE_LAYOUT (lien admin2 dans l'en-tête, tous les liens app2 en nouvel onglet),
+PAGE_HOME (titre « en France et à l'international », section « Prochains événements »), SITE_NAVIGATION (app2 en
+nouvel onglet). api2 : `/events/{mode}` expose en plus `start` / `end` (ajout seulement, app2 non concerné).
+
+| # | Commande / action | Résultat attendu | ☐ |
+|---|---|---|---|
+| 1 | `make app3_test` | vert (60 tests) ; nouveaux critères `LAY-09`, `HOME-07`, `HOME-08` | ☐ |
+| 2 | `make api2_test` | vert ; `testEventsExposeStartAndEndDates` | ☐ |
+| 3 | `https://beta.kpi.localhost` | « Le kayak-polo, en France et à l'international » ; « Prochains événements » (le plus proche d'abord, badge « En cours ») puis « Événements récents » ; dates sur les cartes | ☐ |
+| 4 | En-tête | « ⚙ Administration » → `https://kpi.localhost/admin2/` (icône seule sous 640 px) | ☐ |
+| 5 | Clic « En direct », bouton « Suivre un événement en direct », pied de page, carte d'événement | app2 s'ouvre dans un **nouvel onglet** | ☐ |
+| 6 | app2 (`https://app.kpi.localhost`) : liste des événements | inchangée | ☐ |
+| 7 | Préprod / prod | comme § 1.4 / § 1.5 ; le diff touche `sources/api2/` → **`make api2_restart`** si le wrapper ne l'a pas fait | ☐ |
+
+### 1.7 Retour arrière
 
 | Situation | Action |
 |---|---|
@@ -131,17 +147,19 @@ Specs : [API_PUBLIC_RESULTS](../../specs/public/API_PUBLIC_RESULTS.md) (api2, cr
 [PAGE_COMPETITIONS](../../specs/public/PAGE_COMPETITIONS.md) (`CPL-*`),
 [PAGE_COMPETITION](../../specs/public/PAGE_COMPETITION.md) (`CMP-*`),
 [PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) (`EVT-*`, `GRP-*`, `AGG-*`).
-Statut : 📝 specs proposées, **en attente de validation** — les lignes « *à préciser* » seront complétées à
-l'implémentation.
+Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), 🛠 implémentation en cours.
 
-### 2.0 Avant de coder : décisions à prendre
+### 2.0 Décisions (prises le 08/10/2026)
 
-| # | Décision | Proposition | ☐ |
+| # | Décision | Retenu | ☑ |
 |---|---|---|---|
-| 1 | Q-P2-1 : retirer `r_1_id` / `r_2_id` (licences d'arbitres) de `/group/…/games` et `/event/{id}/games` | Oui (non lus par app2) | ☐ |
-| 2 | Q-P2-2 : liens PDF | Aucun en phase 2 | ☐ |
-| 3 | Onglet par défaut d'une compétition | `ranking` si terminée, sinon `games` | ☐ |
-| 4 | Specs validées (statut « Validée » dans `DOC/specs/public/README.md`) | — | ☐ |
+| 1 | D-P2-1 : `r_1_id` / `r_2_id` (licences d'arbitres) | **retirés** de `/group/…/games` et `/event/{id}/games` | ☑ |
+| 2 | D-P2-2 : liens PDF | PDF publics appelés en GET (`S`, `Compet`, `lang`, `idEvenement`, `listMatch`) — déjà supportés, vérifiés | ☑ |
+| 3 | Onglet par défaut d'une compétition | `ranking` si terminée, sinon `games` | ☑ |
+| 4 | Déroulement / Phases | **un seul onglet** `progress`, bascule horizontal / vertical | ☑ |
+| 5 | Médailles | rangs 1–3 si `END` et tour final (`Code_tour = 10`) | ☑ |
+| 6 | Statistiques | endpoint extensible `/stats/{kind}` (buteurs en phase 2) | ☑ |
+| 7 | Accès à l'événement | encarts sur Compétitions (100 % du groupe) et Compétition (≥ 75 %) | ☑ |
 
 ### 2.1 Découpage en PR (chacune mergeable et déployable seule)
 
@@ -168,7 +186,7 @@ make app3_test              # unit + nuxt + e2e
 | 1 | `make api2_test` (PR 2a) | vert ; fichiers de référence créés sous `sources/api2/tests/Integration/__snapshots__/` | ☐ |
 | 2 | `make api2_test` (PR 2b) | vert **sans modification** des fichiers de référence (hors retrait `r_1_id`/`r_2_id`, visible dans le diff) | ☐ |
 | 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☐ |
-| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
+| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/stats/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
 | 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☐ |
 | 6 | `https://kpi.localhost/api2/doc` | tag « 3. Site public » avec les nouveaux endpoints | ☐ |
 | 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☐ |
@@ -209,7 +227,7 @@ Comme le § 1.5 (`make release_tag`, « Deploy production »), puis :
 | Situation | Action |
 |---|---|
 | app2 régresse après 2b | Revert de la PR 2b sur `main` (les tests de caractérisation de 2a restent) puis déploiement ; en prod, redéployer le tag précédent ([runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md)) |
-| Page app3 en erreur | Repasser l'entrée de menu à `ready: false` (repli legacy) ou `stop app3` (§ 1.6) |
+| Page app3 en erreur | Repasser l'entrée de menu à `ready: false` (repli legacy) ou `stop app3` (§ 1.7) |
 
 ---
 

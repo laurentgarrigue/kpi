@@ -1,6 +1,6 @@
 # api2 — endpoints publics des résultats (phase 2)
 
-**Phase** : 2 — **Statut** : 📝 Proposée — **Consommé par** : app3 (pages compétitions, compétition,
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **Consommé par** : app3 (pages compétitions, compétition,
 événement, groupe) ; endpoints existants également consommés par **app2**
 **Remplace** : les requêtes SQL embarquées dans `kpclassements.php`, `kpmatchs.php`, `kpterrains.php`,
 `kpdetails.php`, `kpchart.php`, `kpphases.php`, `kpclassement.php`, `kpstats.php`
@@ -63,12 +63,13 @@ En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons` et `/group/…
 | Endpoint | Réponse | Remplace |
 |---|---|---|
 | `GET /seasons` | `{ active: "2026", seasons: ["2026", "2025", …] }` (saisons > 1900 ayant au moins une compétition publiée, décroissantes ; `active` = `kp_saison.Etat = 'A'`) | combos saison |
-| `GET /group/{season}/{code}/competitions` | compétitions publiées du groupe, triées `Code_niveau, Code_tour DESC, GroupOrder, Code`, chacune avec son **classement compact** (§ 5.2) | `kpclassements.php` |
-| `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, triées `GroupOrder`) | en-têtes `kpnavgroup.tpl` |
+| `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées `Code_niveau, Code_tour DESC, GroupOrder, Code`, chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
+| `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, triées `GroupOrder`) + `events` (§ 5.6) | en-têtes `kpnavgroup.tpl` |
 | `GET /competition/{season}/{code}/games` | matchs publiés de la compétition : **même format** que `/group/…/games` | `kpmatchs.php`, `kpterrains.php` |
 | `GET /competition/{season}/{code}/charts` | tours / phases : **même format** qu'un élément de `/group/…/charts` | `kpchart.php`, `kpphases.php` |
 | `GET /competition/{season}/{code}/ranking` | classement général (§ 5.3) | `kpclassement.php` |
-| `GET /competition/{season}/{code}/scorers?limit=20` | meilleurs buteurs (§ 5.4) ; `limit` entre 1 et 100 | `kpstats.php` |
+| `GET /competition/{season}/{code}/stats` | statistiques disponibles : `{ kinds: ["scorers"] }` (§ 5.4) | — |
+| `GET /competition/{season}/{code}/stats/{kind}?limit=20` | une statistique (§ 5.4) ; `limit` entre 1 et 100 ; `kind` inconnu → 404 | `kpstats.php` |
 | `GET /competition/{season}/{code}/info` | journées, officiels, équipes engagées par poule, schéma (§ 5.5) | `kpdetails.php` |
 | `GET /event/{id}/competitions` | compétitions publiées de l'événement (même forme que `siblings`) + en-tête de l'événement (`id`, `libelle`, `place`, `logo`, dates) | `GetOtherCompetitions` (mode événement) |
 
@@ -85,11 +86,12 @@ vérifiée par un test (stratégie § 11).
 `display_title` (règle legacy : `Soustitre` si `Titre_actif != 'O'` et `Soustitre2` non vide, sinon `Libelle`),
 `type` (`CHPT` | `CP` | `MULTI`), `status` (`ATT` | `ON` | `END`), `level` (`INT` | `NAT` | `REG`…),
 `banner` (chemin sous `/img/` si `Bandeau_actif = 'O'`, sinon `null`), `logo` (idem avec `Logo_actif`),
-`web` (URL ou `null`), `qualified`, `eliminated` (nombres), `has_games` (booléen).
+`web` (URL ou `null`), `qualified`, `eliminated` (nombres), `has_games` (booléen),
+`round` (`Code_tour`, 1 à 10), `final` (booléen : `Code_tour = 10`, tour final, affiché « F » dans app4).
 
 ### 5.2 Classement compact (liste des compétitions)
 Pour chaque compétition : `rank` (`Clt_publi`, ou `CltNiveau_publi` pour une CP), `team` (`id`, `number`,
-`label`, `logo`), `points` (`Pts_publi / 100`), `played` (`J_publi`). Équipes au rang 0 exclues.
+`label`, `logo`), `points` (`Pts_publi / 100`), `played` (`J_publi`), `medal` (§ 5.7). Équipes au rang 0 exclues.
 
 ### 5.3 Classement général
 `{ status, type, qualified, eliminated, rows: [...] }` avec, selon le type :
@@ -97,13 +99,24 @@ Pour chaque compétition : `rank` (`Clt_publi`, ou `CltNiveau_publi` pour une CP
   tri `Clt_publi ASC, Diff_publi DESC`, rangs > 0 ;
 - **CP** : idem, rang = `CltNiveau_publi`, tri `CltNiveau_publi ASC, Diff_publi DESC` ;
 - **MULTI** : `rank, team, points, played` uniquement.
+- Chaque ligne porte `medal` (§ 5.7).
 - Si une équipe classée a un rang 0, `qualified` et `eliminated` valent 0 (règle legacy).
 - Le classement n'est renvoyé (`rows` non vide) que si `(CHPT et status ≠ ATT) ou status = END ou MULTI`.
 
-### 5.4 Buteurs
-`rows: [{ rank, first_name, last_name, number, team: { id, number, label }, goals }]` : buts (`Id_evt_match = 'B'`)
-des matchs **validés et publiés**, tri `goals DESC, last_name, first_name`. **Aucun numéro de licence.**
-Le `rank` est partagé en cas d'égalité (1, 2, 2, 4).
+### 5.4 Statistiques (extensibles)
+Chaque statistique est un **fournisseur** indépendant (`CompetitionStatInterface` : `kind()`, `compute(scope, limit)`),
+enregistré par étiquette de service Symfony. Ajouter une statistique (meilleure attaque, meilleure défense,
+cartons, fair-play…) = ajouter une classe et sa spec, **sans modifier** le contrôleur ni les autres statistiques
+(principe ouvert/fermé). Réponse commune : `{ kind, columns: [...], rows: [...] }`, où `columns` décrit les
+valeurs propres à la statistique (clé + type), pour que l'affichage d'app3 soit générique.
+
+Livrée en phase 2 — **`scorers`** (meilleurs buteurs) :
+`rows: [{ rank, first_name, last_name, number, team: { id, number, label }, goals }]`, `columns: [{ key: "goals", type: "integer" }]` :
+buts (`Id_evt_match = 'B'`) des matchs **validés et publiés**, tri `goals DESC, last_name, first_name`.
+**Aucun numéro de licence.** Le `rank` est partagé en cas d'égalité (1, 2, 2, 4).
+
+Pressenties (specs à écrire le moment venu) : `attack` (buts marqués par équipe), `defense` (buts encaissés),
+`cards` (cartons verts, jaunes, rouges par joueur ou équipe).
 
 ### 5.5 Informations
 - `gamedays: [{ id, label, start, end, place, department, organizer, officials: { rc, r1, delegate, chief_referee } }]`
@@ -111,15 +124,38 @@ Le `rank` est partagé en cas d'égalité (1, 2, 2, 4).
 - `teams_by_pool: [{ pool, teams: [{ id, number, label, logo }] }]`, seulement si le statut est `ON` ou `END` ;
 - `schema`: chemin `/img/schemas/schema_{season}_{code}.png` s'il existe dans `legacy_document_root`, sinon `null`.
 
-## 6. Points à valider
+### 5.6 Événements liés
+Un événement (`kp_evenement`, publié) est lié à une portée (compétition ou groupe) quand il contient au moins une
+de ses journées publiées (`kp_evenement_journee`). `events: [{ id, libelle, place, start, end, logo, share }]`,
+triés par `share` décroissant puis date de début, où `share` (0 à 1) = journées publiées de la portée incluses
+dans l'événement / journées publiées de la portée. Les pages s'en servent pour mettre en avant l'événement
+principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
 
-- **Q-P2-1 — Numéros de licence d'arbitres.** `/group/…/games` et `/event/{id}/games` exposent aujourd'hui
-  `r_1_id` / `r_2_id` (`Matric_arbitre_*`, des numéros de licence, exclus par la stratégie § 11). app2 ne les
-  utilise pas (vérifié : seuls `r_1`/`r_2` sont lus). **Proposition** : les retirer lors de la refactorisation,
-  seule exception assumée au « JSON identique » (fichiers de référence mis à jour en conséquence).
-- **Q-P2-2 — Liens PDF.** Les PDF legacy (`PdfCltChpt.php`, `PdfListeMatchs.php`…) lisent encore la session
-  PHP pour certains paramètres ([LEGACY_PDF_STANDALONE_ACCESS.md](../../developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)).
-  **Proposition** : pas de liens PDF en phase 2 ; ajoutés quand les PDF acceptent leurs paramètres en GET.
+### 5.7 Médailles
+`medal` vaut `1`, `2` ou `3` quand la compétition est **terminée** (`status = END`), du **tour final**
+(`final = true`) et que le rang de l'équipe (`rank`, donc `CltNiveau_publi` pour une CP) est 1, 2 ou 3 ; sinon
+`null`. Règle reprise de `kpclassement.tpl` / `kpclassements.tpl`, calculée **une seule fois** dans le service.
+
+## 6. Décisions (validées le 08/10/2026)
+
+- **D-P2-1 — Numéros de licence d'arbitres retirés.** `/group/…/games` et `/event/{id}/games` exposaient
+  `r_1_id` / `r_2_id` (`Matric_arbitre_*`), exclus par la stratégie § 11 et non lus par app2 (seuls `r_1`/`r_2`
+  le sont). Ils sont retirés lors de la refactorisation : seule exception assumée au « JSON identique »
+  (fichiers de référence mis à jour en conséquence, dans un commit distinct).
+- **D-P2-2 — Liens PDF.** Les PDF publics doivent accepter leurs paramètres en GET, comme ceux appelés par
+  app4 ([LEGACY_PDF_STANDALONE_ACCESS.md](../../developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)).
+  Vérification faite : les PDF publics utiles à app3 les acceptent déjà, la session n'étant qu'une valeur par
+  défaut. app3 les appelle **toujours** avec `S` et `Compet` explicites, et `lang` :
+
+  | PDF | Paramètres GET | Utilisé par |
+  |---|---|---|
+  | `PdfCltChpt.php` (CHPT) / `PdfCltNiveauPhase.php` (CP) / `PdfCltMulti.php` (MULTI) | `S`, `Compet`, `lang` | onglet Classement |
+  | `PdfListeMatchs.php` / `PdfListeMatchsEN.php` | `S`, `Compet` (liste séparée par des virgules possible) ou `idEvenement` | onglets Matchs (compétition, groupe, événement) |
+  | `PdfMatchMulti.php` | `listMatch`, `lang` | feuille de marque d'un match validé |
+
+  Tout PDF public qui ne lirait pas l'un de ces paramètres en GET est corrigé selon le motif de
+  LEGACY_PDF_STANDALONE_ACCESS.md § B (`utyGetGet` après la valeur de session), sans changer le comportement
+  de l'administration legacy. Les liens sont construits par **une** fonction pure d'app3 (`pdfUrl`).
 
 ## 7. Critères d'acceptation
 
@@ -136,8 +172,13 @@ Le `rank` est partagé en cas d'égalité (1, 2, 2, 4).
   rang CP = `CltNiveau_publi`).
 - **API-07** — `/competition/{s}/{c}/ranking` respecte, par type, colonnes, tri, condition d'affichage et règle
   qualifiés/éliminés (§ 5.3).
-- **API-08** — `/competition/{s}/{c}/scorers` ne compte que les matchs validés et publiés, gère les égalités et
-  borne `limit` ; aucun champ de licence.
+- **API-08** — `/competition/{s}/{c}/stats/scorers` ne compte que les matchs validés et publiés, gère les égalités
+  et borne `limit` ; aucun champ de licence ; `/stats` liste les statistiques disponibles, un `kind` inconnu → 404.
 - **API-09** — Compétition inconnue ou non publiée → 404 ; paramètres invalides → 400.
 - **API-10** — Chaque DTO public a un test listant exactement ses champs.
 - **API-11** — Les nouveaux endpoints apparaissent dans `/api2/doc` (tag « 3. Site public »).
+- **API-12** — `medal` vaut 1/2/3 seulement pour une compétition `END` du tour final (`Code_tour = 10`), selon
+  le rang propre au type ; `null` sinon (classement compact et classement général).
+- **API-13** — `events` liste les événements publiés contenant des journées publiées de la portée, avec leur
+  `share`, triés par `share` décroissant.
+- **API-14** — `r_1_id` / `r_2_id` n'apparaissent plus dans aucune réponse de matchs (D-P2-1).

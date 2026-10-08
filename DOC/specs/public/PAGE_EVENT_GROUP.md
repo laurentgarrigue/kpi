@@ -1,6 +1,6 @@
 # Vues agrégées « événement » et « groupe »
 
-**Phase** : 2 — **Statut** : 📝 Proposée
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
 **Routes** :
 - `/events/{id}` → `/events/{id}/{tab}`, `tab` ∈ `games` · `pitches` (+ `/en/…`)
 - `/groups/{season}/{code}` → `/groups/{season}/{code}/{tab}`, mêmes onglets (+ `/en/…`)
@@ -45,6 +45,20 @@ Fil d'Ariane : Accueil › {événement}            (vue événement)
 - **Onglets** : seulement **Matchs** et **Terrains** (comme le legacy : les classements, phases et stats n'ont de
   sens que par compétition). Mêmes règles que PAGE_COMPETITION.md § 2 (liens, `aria-current`, mobile).
 
+### 2.1 Accès à ces pages
+
+L'accès à l'événement doit être **direct** depuis les pages de résultats, sans passer par l'accueil :
+
+| Depuis | Règle | Spec |
+|---|---|---|
+| Compétitions (groupe choisi) | événement couvrant **toutes** les journées du groupe → encart + bouton « Voir l'événement » ; sinon liste discrète des événements liés | PAGE_COMPETITIONS.md § 2.4, CPL-11 |
+| Page d'une compétition | événement couvrant **≥ 75 %** de ses journées (ou `?event=`) → encart + fil d'Ariane ; autres événements listés | PAGE_COMPETITION.md § 2.3, CMP-16 |
+| Vue groupe (cette page) | même règle que la page Compétitions, encart sous l'en-tête | GRP-05 |
+| Accueil | cartes « Prochains » / « Récents » → `/events/{id}` | PAGE_HOME.md, § 8 ci-dessous |
+
+La vue groupe est atteinte par « Tous les matchs du groupe » (PAGE_COMPETITIONS.md) ; la vue événement depuis
+l'accueil et ces encarts. Les règles « couvre » s'appuient sur `events[].share` (API_PUBLIC_RESULTS.md § 5.6).
+
 ## 3. Onglets
 
 Les onglets **réutilisent les composants** de PAGE_COMPETITION.md § 3.1 et § 3.2 (liste de matchs, grille des
@@ -57,6 +71,10 @@ terrains, filtres, statuts, score provisoire, liens `PAGE_LINKS`, rafraîchissem
 
 Ordre des matchs : celui d'api2 (date, heure, terrain), groupés par date.
 
+Lien « Liste des matchs (PDF) » (API_PUBLIC_RESULTS.md D-P2-2) : `PdfListeMatchs.php?idEvenement={id}` pour un
+événement, `PdfListeMatchs.php?S={season}&Compet={codes séparés par des virgules}` pour un groupe (`…EN.php` en
+anglais).
+
 ## 4. Données
 
 | Besoin | Endpoint |
@@ -64,7 +82,7 @@ Ordre des matchs : celui d'api2 (date, heure, terrain), groupés par date.
 | Événement : en-tête + compétitions | `GET /event/{id}/competitions` *(nouveau)* |
 | Événement : matchs | `GET /event/{id}/games` *(existant, app2)* |
 | Groupe : libellé | `GET /groups/{season}` *(existant, app2)* |
-| Groupe : compétitions | `GET /group/{season}/{code}/competitions` *(nouveau ; le classement compact n'est pas affiché ici)* |
+| Groupe : compétitions, événements liés | `GET /group/{season}/{code}/competitions` *(nouveau ; le classement compact n'est pas affiché ici)* |
 | Groupe : matchs | `GET /group/{season}/{code}/games` *(existant, app2)* |
 
 Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/groups/**`.
@@ -87,8 +105,10 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 - **GRP-02** — L'en-tête affiche le libellé du groupe (anglais sous `/en` s'il existe), la saison et le lien app2 `{app2}/group/{s}/{c}`.
 - **GRP-03** — Une puce par compétition du groupe, menant à `/competitions/{s}/{c}/{onglet}` (sans paramètre `event`).
 - **GRP-04** — Groupe inconnu ou sans compétition publiée pour la saison → page 404 du site.
+- **GRP-05** — Un événement couvrant tout le groupe est mis en avant sous l'en-tête (même composant et même règle que CPL-11).
 - **AGG-01** — Les vues événement et groupe partagent une seule page paramétrée par la portée et réutilisent les composants Matchs / Terrains de la page compétition (aucune copie).
 - **AGG-02** — Les filtres `day` et `upcoming` fonctionnent comme sur la page compétition ; `gameday` est ignoré.
+- **AGG-04** — Le lien PDF de la liste des matchs utilise `idEvenement` (événement) ou la liste des codes de compétition (groupe).
 - **AGG-03** — Grille de parité : en préprod, mêmes matchs que `kpmatchs.php?…&event=E` et `kpmatchs.php?…&Compet=*&Group=G` sur un événement et un groupe réels.
 
 ## 7. Correspondance des anciennes URL (pour la phase 5)
