@@ -235,7 +235,30 @@ Comme le § 1.5 (`make release_tag`, « Deploy production »), puis :
 
 ## Phase 3 — Transverse (calendrier, ICS, historique, équipes, clubs, recherche)
 
-*À compléter quand les specs seront rédigées.*
+Specs : [API_PUBLIC_TRANSVERSE](../../specs/public/API_PUBLIC_TRANSVERSE.md) (`API3-*`),
+[PAGE_CALENDAR](../../specs/public/PAGE_CALENDAR.md) (`CAL-*`), [PAGE_HISTORY](../../specs/public/PAGE_HISTORY.md) (`HIS-*`),
+[PAGE_TEAM](../../specs/public/PAGE_TEAM.md) (`TEA-*`), [PAGE_CLUBS](../../specs/public/PAGE_CLUBS.md) (`CLB-*`),
+[FEATURE_SEARCH](../../specs/public/FEATURE_SEARCH.md) (`SRC-*`).
+Statut : 📝 specs proposées le 08/10/2026, **en attente de validation**.
+
+### 3.0 Décisions à prendre
+
+| # | Question | Proposition | ☐ |
+|---|---|---|---|
+| 1 | Q-P3-1 moteur de recherche | SQL `LIKE`, sans moteur dédié | ☐ |
+| 2 | Q-P3-2 e-mail des clubs | conservé (structure), en texte | ☐ |
+| 3 | Q-P3-3 photo d'équipe | couleurs oui, photo non (jusqu'au chantier RGPD) | ☐ |
+| 4 | Q-P3-4 vue du calendrier | agenda + grille mensuelle sur grand écran, sans FullCalendar | ☐ |
+| 5 | Q-P3-5 fond de carte | Leaflet auto-hébergé, tuiles OSM chargées après un clic | ☐ |
+
+### 3.1 À prévoir pour les tests et le déploiement (à détailler à l'implémentation)
+- Fixtures SQL : `kp_club`, `kp_equipe`, comités, journées réparties sur plusieurs mois, compétitions finales de
+  plusieurs saisons ; capture des réponses api2 pour app3 (`scripts/capture-api2-fixtures.mjs`).
+- ICS : validation par un analyseur iCalendar dans les tests api2 ; test manuel d'abonnement (Google Agenda,
+  Apple Calendrier, Thunderbird) en préprod.
+- Recherche : test de la limitation de débit (429).
+- Menus `calendar`, `history`, `teams`, `clubs` passés à `ready: true` ; `PAGE_LINKS.team` interne.
+- Préprod : grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php`.
 
 ## Phase 4a — Éditorial (CMS natif, reprise WordPress)
 

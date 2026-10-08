@@ -28,9 +28,12 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [PAGE_COMPETITIONS.md](PAGE_COMPETITIONS.md) | Liste des compétitions d'une saison et d'un groupe, classements compacts | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | [PAGE_COMPETITION.md](PAGE_COMPETITION.md) | Page compétition et ses onglets (games, pitches, info, progress, ranking, stats) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | [PAGE_EVENT_GROUP.md](PAGE_EVENT_GROUP.md) | Vues agrégées événement et groupe (matchs, terrains) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
-| `PAGE_CALENDAR.md` | Calendrier + ICS | 3 | ⏳ À rédiger |
-| `PAGE_HISTORY.md`, `PAGE_TEAM.md`, `PAGE_CLUBS.md` | Historique, fiche équipe, clubs (+ carte, logos) | 3 | ⏳ À rédiger |
-| `FEATURE_SEARCH.md` | Recherche globale | 3 | ⏳ À rédiger |
+| [API_PUBLIC_TRANSVERSE.md](API_PUBLIC_TRANSVERSE.md) | api2 : calendrier, ICS, historique, équipes, clubs, recherche | 3 | 📝 Proposée |
+| [PAGE_CALENDAR.md](PAGE_CALENDAR.md) | Calendrier + abonnements ICS | 3 | 📝 Proposée |
+| [PAGE_HISTORY.md](PAGE_HISTORY.md) | Historique et palmarès | 3 | 📝 Proposée |
+| [PAGE_TEAM.md](PAGE_TEAM.md) | Recherche d'équipe et fiche équipe | 3 | 📝 Proposée |
+| [PAGE_CLUBS.md](PAGE_CLUBS.md) | Clubs : liste, carte, fiche (remplace aussi les logos) | 3 | 📝 Proposée |
+| [FEATURE_SEARCH.md](FEATURE_SEARCH.md) | Recherche globale | 3 | 📝 Proposée |
 | `PAGE_NEWS.md`, `PAGE_CONTENT.md`, `FEATURE_CMS.md` | Articles, pages éditoriales, module éditorial (app4 + api2) | 4a | ⏳ À rédiger |
 | `FEATURE_FORMS.md` | Formulaires d'inscription | 4b | ⏳ À rédiger |
 | `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |
