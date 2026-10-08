@@ -39,11 +39,6 @@ final class PublicResultsRepository
     private const TEAM_JOINS = "LEFT OUTER JOIN kp_competition_equipe cea ON (m.Id_equipeA = cea.Id)
         LEFT OUTER JOIN kp_competition_equipe ceb ON (m.Id_equipeB = ceb.Id)";
 
-    private const PUBLISHED_GAMES = "c.Publication = 'O' AND j.Publication = 'O' AND m.Publication = 'O'";
-
-    /** Journées qui ne sont pas des phases de jeu. */
-    private const NO_BREAKS = "j.Phase != 'Break' AND j.Phase != 'Pause'";
-
     public function __construct(private readonly Connection $connection)
     {
     }
@@ -67,8 +62,8 @@ final class PublicResultsRepository
             {$scope->join()}
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
             WHERE {$scope->condition()}
-            AND " . self::PUBLISHED_GAMES
-            . ($format->listExcludesBreaks() ? ' AND ' . self::NO_BREAKS : '') . "
+            AND " . SqlFilters::PUBLISHED_GAMES
+            . ($format->listExcludesBreaks() ? ' AND ' . SqlFilters::NO_BREAKS : '') . "
             ORDER BY {$format->listOrderBy()}";
 
         return $this->connection->fetchAllAssociative($sql, $scope->parameters());
@@ -91,8 +86,8 @@ final class PublicResultsRepository
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
             WHERE {$scope->condition()}
             AND c.Statut != 'ATT'
-            AND " . self::PUBLISHED_GAMES
-            . ($scope->isSingleGameday() ? '' : ' AND ' . self::NO_BREAKS) . "
+            AND " . SqlFilters::PUBLISHED_GAMES
+            . ($scope->isSingleGameday() ? '' : ' AND ' . SqlFilters::NO_BREAKS) . "
             ORDER BY m.Id_journee, m.Date_match, m.Heure_match, m.Terrain";
 
         return $this->connection->fetchAllAssociative($sql, $scope->parameters());
@@ -106,9 +101,9 @@ final class PublicResultsRepository
     public function findChartTeams(ResultsScope $scope, ResultsFormat $format): array
     {
         // Compétition et journée publiées, quel que soit le format (D-P2-3).
-        $filters = [$scope->condition(), "c.Publication = 'O'", "j.Publication = 'O'"];
+        $filters = [$scope->condition(), SqlFilters::PUBLISHED_GAMEDAYS];
         if (!$scope->isSingleGameday()) {
-            $filters[] = self::NO_BREAKS;
+            $filters[] = SqlFilters::NO_BREAKS;
         }
 
         $sql = "SELECT j.Code_saison c_season, j.Code_competition c_code, c.Code_typeclt c_type,

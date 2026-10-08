@@ -58,7 +58,7 @@ ResultsScope = Event(id) | Group(season, code) | Competition(season, code)
 
 Tous en **GET, publics, en lecture seule**. Ils ne renvoient que le **publié** (`Publication = 'O'` sur la
 compétition, la journée et le match ; journées `Break`/`Pause` exclues), comme les endpoints existants.
-En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons` et `/group/…/competitions`).
+En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons`, `/group/…/competitions` et `…/info`).
 
 | Endpoint | Réponse | Remplace |
 |---|---|---|
@@ -66,12 +66,12 @@ En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons` et `/group/…
 | `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées `Code_niveau, Code_tour DESC, GroupOrder, Code`, chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
 | `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, triées `GroupOrder`) + `events` (§ 5.6) | en-têtes `kpnavgroup.tpl` |
 | `GET /competition/{season}/{code}/games` | matchs publiés de la compétition : **même format** que `/group/…/games` | `kpmatchs.php`, `kpterrains.php` |
-| `GET /competition/{season}/{code}/charts` | tours / phases : **même format** qu'un élément de `/group/…/charts` | `kpchart.php`, `kpphases.php` |
+| `GET /competition/{season}/{code}/charts` | tours / phases : **même format** qu'un élément de `/event/{id}/charts` (le plus riche : libellés d'attente résolus, `d_id` par phase, équipes des poules de CP déduites des matchs) | `kpchart.php`, `kpphases.php` |
 | `GET /competition/{season}/{code}/ranking` | classement général (§ 5.3) | `kpclassement.php` |
 | `GET /competition/{season}/{code}/stats` | statistiques disponibles : `{ kinds: ["scorers"] }` (§ 5.4) | — |
 | `GET /competition/{season}/{code}/stats/{kind}?limit=20` | une statistique (§ 5.4) ; `limit` entre 1 et 100 ; `kind` inconnu → 404 | `kpstats.php` |
 | `GET /competition/{season}/{code}/info` | journées, officiels, équipes engagées par poule, schéma (§ 5.5) | `kpdetails.php` |
-| `GET /event/{id}/competitions` | compétitions publiées de l'événement (même forme que `siblings`) + en-tête de l'événement (`id`, `libelle`, `place`, `logo`, dates) | `GetOtherCompetitions` (mode événement) |
+| `GET /event/{id}/competitions` | `{ event: { id, libelle, place, logo, start, end }, competitions: [{ code, season, display_title, soustitre2 }] }` : tournoi publié (`kp_evenement`) et ses compétitions publiées ayant une journée publiée dans l'événement | `GetOtherCompetitions` (mode événement) |
 
 - Compétition, groupe ou événement **inconnu ou non publié** → `404 {"error": "not_found"}`.
 - `season` doit correspondre à `^\d{4}$`, `code` à `^[A-Za-z0-9_-]{1,12}$` ; sinon `400`.
@@ -83,7 +83,8 @@ vérifiée par un test (stratégie § 11).
 
 ### 5.1 En-tête de compétition
 `code`, `season`, `group` (`code`, `libelle`, `libelle_en`), `libelle`, `soustitre`, `soustitre2`,
-`display_title` (règle legacy : `Soustitre` si `Titre_actif != 'O'` et `Soustitre2` non vide, sinon `Libelle`),
+`display_title` (règle legacy de `kpclassements.tpl` et des PDF : `Libelle` si `Titre_actif = 'O'`, sinon
+`Soustitre`, et `Libelle` si `Soustitre` est vide),
 `type` (`CHPT` | `CP` | `MULTI`), `status` (`ATT` | `ON` | `END`), `level` (`INT` | `NAT` | `REG`…),
 `banner` (chemin sous `/img/` si `Bandeau_actif = 'O'`, sinon `null`), `logo` (idem avec `Logo_actif`),
 `web` (URL ou `null`), `qualified`, `eliminated` (nombres), `has_games` (booléen),
@@ -119,8 +120,9 @@ Pressenties (specs à écrire le moment venu) : `attack` (buts marqués par équ
 `cards` (cartons verts, jaunes, rouges par joueur ou équipe).
 
 ### 5.5 Informations
-- `gamedays: [{ id, label, start, end, place, department, organizer, officials: { rc, r1, delegate, chief_referee } }]`
-  (les noms d'officiels sont publiés aujourd'hui par `kpdetails.php`, et repris à l'identique) ;
+- `gamedays: [{ id, name, phase, start, end, place, department, organizer, officials: { rc, r1, delegate, chief_referee } }]` :
+  journées publiées hors pauses, par date ; noms d'officiels publiés aujourd'hui par `kpdetails.php`, **sans le
+  numéro de licence** stocké entre parenthèses (« NOM Prénom (123456) » → « NOM Prénom », comme `utyGetNomPrenom`) ;
 - `teams_by_pool: [{ pool, teams: [{ id, number, label, logo }] }]`, seulement si le statut est `ON` ou `END` ;
 - `schema`: chemin `/img/schemas/schema_{season}_{code}.png` s'il existe dans `legacy_document_root`, sinon `null`.
 
@@ -181,7 +183,8 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
   et borne `limit` ; aucun champ de licence ; `/stats` liste les statistiques disponibles, un `kind` inconnu → 404.
 - **API-09** — Compétition inconnue ou non publiée → 404 ; paramètres invalides → 400.
 - **API-10** — Chaque DTO public a un test listant exactement ses champs.
-- **API-11** — Les nouveaux endpoints apparaissent dans `/api2/doc` (tag « 3. Site public »).
+- **API-11** — Les nouveaux endpoints apparaissent dans `/api2/doc` (tag « 7. Site public », les numéros 1 à 6
+  étant pris).
 - **API-12** — `medal` vaut 1/2/3 seulement pour une compétition `END` du tour final (`Code_tour = 10`), selon
   le rang propre au type ; `null` sinon (classement compact et classement général).
 - **API-13** — `events` liste les événements publiés contenant des journées publiées de la portée, avec leur

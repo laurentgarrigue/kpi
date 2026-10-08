@@ -188,7 +188,7 @@ make app3_test              # unit + nuxt + e2e
 | 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☐ |
 | 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/stats/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
 | 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☐ |
-| 6 | `https://kpi.localhost/api2/doc` | tag « 3. Site public » avec les nouveaux endpoints | ☐ |
+| 6 | `https://kpi.localhost/api2/doc` | tag « 7. Site public » avec les nouveaux endpoints | ☐ |
 | 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☐ |
 | 8 | `make app3_test` | vert ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☐ |
 | 9 | `https://beta.kpi.localhost/competitions` | redirige vers la saison active ; menu « Compétitions et résultats » sans icône externe | ☐ |
