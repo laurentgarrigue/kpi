@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   eventLogoUrl,
-  eventUrl,
   formatEventDates,
   isOngoing,
   recentEvents,
@@ -84,10 +83,6 @@ describe('formatEventDates', () => {
 })
 
 describe('event links', () => {
-  it('HOME-04: links an event to its app2 page', () => {
-    expect(eventUrl(42, 'https://app.kayak-polo.info/')).toBe('https://app.kayak-polo.info/event/42')
-  })
-
   it('HOME-04: builds the logo URL only when a logo is set', () => {
     expect(eventLogoUrl('logo/cdf.png', 'https://www.kayak-polo.info')).toBe('https://www.kayak-polo.info/img/logo/cdf.png')
     expect(eventLogoUrl(null, 'https://www.kayak-polo.info')).toBeNull()

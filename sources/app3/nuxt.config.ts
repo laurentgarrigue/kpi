@@ -2,8 +2,13 @@
 import { version } from './package.json'
 import { DEFAULT_LOCALE, LOCALES } from './shared/locales'
 
-// PAGE_HOME.md § 3: 5 minutes, stale-while-revalidate.
-const HOME_CACHE = { cache: { maxAge: 300, swr: true } }
+// Cache durations set by each page spec, stale-while-revalidate.
+// Home page and competitions list: 5 minutes (PAGE_HOME.md § 3, PAGE_COMPETITIONS.md § 3).
+const SLOW_CACHE = { cache: { maxAge: 300, swr: true } }
+// Results pages: 1 minute, the browser refreshes live games itself (PAGE_COMPETITION.md § 4, PAGE_EVENT_GROUP.md § 4).
+const RESULTS_CACHE = { cache: { maxAge: 60, swr: true } }
+// Redirections (`/competitions`, default tabs) must follow the current season / status: never cached.
+const NO_CACHE = { cache: false as const }
 
 export default defineNuxtConfig({
   extends: ['../kpi-layer'],
@@ -38,8 +43,17 @@ export default defineNuxtConfig({
 
   // Cache per page, as set by each page spec.
   routeRules: {
-    '/': HOME_CACHE,
-    '/en': HOME_CACHE,
+    ...Object.fromEntries(['', '/en'].flatMap(prefix => [
+      [prefix || '/', SLOW_CACHE],
+      [`${prefix}/competitions`, NO_CACHE],
+      [`${prefix}/competitions/*`, SLOW_CACHE],
+      [`${prefix}/competitions/*/*`, NO_CACHE],
+      [`${prefix}/competitions/*/*/**`, RESULTS_CACHE],
+      [`${prefix}/events/*`, NO_CACHE],
+      [`${prefix}/events/*/**`, RESULTS_CACHE],
+      [`${prefix}/groups/*/*`, NO_CACHE],
+      [`${prefix}/groups/*/*/**`, RESULTS_CACHE],
+    ])),
   },
 
   i18n: {

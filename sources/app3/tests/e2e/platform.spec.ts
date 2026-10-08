@@ -3,8 +3,10 @@ import type { AddressInfo } from 'node:net'
 import { fileURLToPath } from 'node:url'
 import { afterAll, describe, expect, it } from 'vitest'
 import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
+import { api2Fixture } from '../fixtures/api2'
 
-// Fake api2: serves /events/all as JSON but with a wrong Content-Type, as a misconfigured proxy could.
+// Fake api2. /events/all is JSON with a wrong Content-Type, as a misconfigured proxy could send it; every other
+// request is answered with the real api2 response captured on SQL/fixtures (tests/fixtures/api2).
 const EVENTS = [{ id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' }]
 const fakeApi2 = createServer((request, response) => {
   if (request.url === '/events/all') {
@@ -12,13 +14,19 @@ const fakeApi2 = createServer((request, response) => {
     response.end(JSON.stringify(EVENTS))
     return
   }
-  response.writeHead(404).end()
+  try {
+    const fixture = api2Fixture(request.url ?? '')
+    response.writeHead(fixture.status, { 'Content-Type': 'application/json' })
+    response.end(JSON.stringify(fixture.body))
+  } catch {
+    response.writeHead(404).end()
+  }
 })
 await new Promise<void>(resolve => fakeApi2.listen(0, '127.0.0.1', resolve))
 const api2Url = `http://127.0.0.1:${(fakeApi2.address() as AddressInfo).port}`
 
 // Built and served once for the whole file.
-describe('platform (SITE_PLATFORM.md)', async () => {
+describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('../..', import.meta.url)),
     server: true,
@@ -76,5 +84,52 @@ describe('platform (SITE_PLATFORM.md)', async () => {
     expect(html).toMatch(/<link[^>]*rel="canonical"[^>]*href="https:\/\/beta\.kpi\.localhost\/en"/)
     expect(html).toMatch(/hreflang="fr/)
     expect(html).toMatch(/hreflang="x-default"/)
+  })
+
+  // ------------------------------------------------------------- phase 2: redirections, 404, server rendering
+
+  const location = async (path: string) => {
+    const response = await fetch(path, { redirect: 'manual', headers: { Accept: 'text/html' } })
+    return [response.status, response.headers.get('location')]
+  }
+
+  it('CPL-01: /competitions redirects (302) to the active season, keeping the language', async () => {
+    expect(await location('/competitions')).toEqual([302, '/competitions/2999'])
+    expect(await location('/en/competitions')).toEqual([302, '/en/competitions/2999'])
+  })
+
+  it('CPL-08: the selection form without JavaScript lands on the chosen season and group', async () => {
+    expect(await location('/competitions?season=2998&group=TSTRES')).toEqual([302, '/competitions/2998?group=TSTRES'])
+  })
+
+  it('CMP-01: a competition opens on its ranking when finished, on its games otherwise, keeping ?event=', async () => {
+    expect(await location('/competitions/2999/RCP')).toEqual([302, '/competitions/2999/RCP/ranking'])
+    expect(await location('/competitions/2999/RCH?event=77')).toEqual([302, '/competitions/2999/RCH/games?event=77'])
+  })
+
+  it('EVT-01/GRP-01: event and group views open on their games', async () => {
+    expect(await location('/events/77')).toEqual([302, '/events/77/games'])
+    expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])
+  })
+
+  it('CMP-14/EVT-05/GRP-04: unknown or unpublished results are a 404 page', async () => {
+    for (const path of ['/competitions/2999/NOPE/games', '/events/78/games', '/groups/2999/NOPE/games']) {
+      const response = await fetch(path, { headers: { Accept: 'text/html' } })
+      expect(response.status, path).toBe(404)
+      expect(await response.text(), path).toContain('Page introuvable')
+    }
+  })
+
+  it('CMP-04/CMP-10: results are rendered by the server (usable without JavaScript)', async () => {
+    const html = await $fetch<string>('/competitions/2999/RCP/ranking')
+    expect(html).toContain('Classement final')
+    expect(html).toContain('Equipe Echo')
+    expect(html).toMatch(/<a[^>]*aria-current="page"[^>]*>Classement<\/a>/)
+  })
+
+  it('CPL-05: the compact ranking and its « see all » work without JavaScript', async () => {
+    const html = await $fetch<string>('/competitions/2999?group=TSTRES')
+    expect(html).toContain('Equipe Alpha')
+    expect(html).toContain('<form')
   })
 })

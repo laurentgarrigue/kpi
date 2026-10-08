@@ -147,7 +147,7 @@ Specs : [API_PUBLIC_RESULTS](../../specs/public/API_PUBLIC_RESULTS.md) (api2, cr
 [PAGE_COMPETITIONS](../../specs/public/PAGE_COMPETITIONS.md) (`CPL-*`),
 [PAGE_COMPETITION](../../specs/public/PAGE_COMPETITION.md) (`CMP-*`),
 [PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) (`EVT-*`, `GRP-*`, `AGG-*`).
-Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), 🛠 implémentation en cours.
+Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), 🛠 **implémentée** sur la branche, à livrer.
 
 ### 2.0 Décisions (prises le 08/10/2026)
 
@@ -161,16 +161,15 @@ Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), 🛠 implé
 | 6 | Statistiques | endpoint extensible `/stats/{kind}` (buteurs en phase 2) | ☑ |
 | 7 | Accès à l'événement | encarts sur Compétitions (100 % du groupe) et Compétition (≥ 75 %) | ☑ |
 
-### 2.1 Découpage en PR (chacune mergeable et déployable seule)
+### 2.1 Contenu (branche `claude/public_site_redesign_strategy`, une PR, commits relisibles séparément)
 
-| PR | Contenu | Impact hors beta |
+| Commit | Contenu | Impact hors beta |
 |---|---|---|
-| **2a** | api2 : fixtures + tests de caractérisation des 4 endpoints existants, **sans changer le code** | aucun |
-| **2b** | api2 : `ResultsScope` / service / repository ; endpoints existants délégués (JSON inchangé hors Q-P2-1) | api2 (app2) — **vérifier app2** |
-| **2c** | api2 : nouveaux endpoints `/seasons`, `/group/…/competitions`, `/competition/…`, `/event/{id}/competitions` | api2 (ajouts seulement) |
-| **2d** | app3 : page Compétitions + menu `competitions-list` `ready: true` | aucun |
-| **2e** | app3 : page compétition (onglets) | aucun |
-| **2f** | app3 : vues événement / groupe + cartes de l'accueil vers `/events/{id}` | aucun |
+| test(api2) | fixtures « résultats » + tests de caractérisation (snapshots JSON) des 4 endpoints d'app2, **avant** tout changement | aucun |
+| refactor(api2) | `ResultsScope` / `PublicResultsService` / repository ; endpoints d'app2 délégués, snapshots **inchangés** | api2 (app2) — **vérifier app2** |
+| fix(api2) | D-P2-1 (licences d'arbitres retirées) et D-P2-3 (rien de non publié dans les tableaux) : snapshots modifiés par **suppressions seulement** | app2 : plus de `r_1_id`/`r_2_id`, plus de phases de journées non publiées |
+| feat(api2) | 10 endpoints publics (tag « 7. Site public ») | ajouts seulement |
+| feat(app3) | pages Compétitions, compétition (6 onglets), événement, groupe ; menu `competitions-list` `ready: true` ; accueil → `/events/{id}` | aucun (beta) |
 
 ### 2.2 ⌨️ Tester en local
 
@@ -183,23 +182,26 @@ make app3_test              # unit + nuxt + e2e
 
 | # | Commande / action | Résultat attendu | ☐ |
 |---|---|---|---|
-| 1 | `make api2_test` (PR 2a) | vert ; fichiers de référence créés sous `sources/api2/tests/Integration/__snapshots__/` | ☐ |
-| 2 | `make api2_test` (PR 2b) | vert **sans modification** des fichiers de référence (hors retrait `r_1_id`/`r_2_id`, visible dans le diff) | ☐ |
+| 1 | `make api2_test` | unit 48 + integration 50 tests verts (dont `PublicResultsCharacterizationTest`, `PublicCompetitionEndpointsTest`) | ☐ |
+| 2 | `git log -p -- sources/api2/tests/Integration/__snapshots__` | le commit refactor ne touche pas les snapshots ; le commit fix ne fait que des suppressions | ☐ |
 | 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☐ |
 | 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/stats/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
 | 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☐ |
 | 6 | `https://kpi.localhost/api2/doc` | tag « 7. Site public » avec les nouveaux endpoints | ☐ |
 | 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☐ |
-| 8 | `make app3_test` | vert ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☐ |
+| 8 | `make app3_test` | 144 tests verts (unit 69 dont kpi-layer, nuxt 61, e2e 14) ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☐ |
 | 9 | `https://beta.kpi.localhost/competitions` | redirige vers la saison active ; menu « Compétitions et résultats » sans icône externe | ☐ |
 | 10 | Une compétition CHPT, une CP, une MULTI : tous les onglets | contenu conforme ; onglets utilisables sans JavaScript (désactiver JS) | ☐ |
 | 11 | `https://beta.kpi.localhost/events/<id>` et `/groups/<saison>/<code>` | matchs de toutes les compétitions, puces vers chaque compétition | ☐ |
-| 12 | Clic sur une équipe / un match | équipe → `kpequipes.php` (legacy) ; match → app2 `/game/<id>` | ☐ |
+| 12 | Clic sur une équipe / un match | équipe → `kpequipes.php` (legacy) ; match → app2 `/game/<id>` (nouvel onglet) | ☐ |
+| 13 | Liens PDF (classement, liste des matchs, feuille de marque) | le PDF s'ouvre, **sans session** legacy (navigation privée) | ☐ |
+| 14 | Accueil : carte d'un événement | ouvre `/events/<id>` (vue événement du site) | ☐ |
+| 15 | Compétition terminée du tour final (préprod) | médailles 1-2-3 dans la liste et l'onglet Classement | ☐ |
 
 ### 2.3 ⌨️ 🌐 PR et CI
 
-Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2`, `smoke-api2` (PR 2a–2c) ; `lint-nuxt`, `build-nuxt`,
-`tests-app3` (PR 2d–2f) ; `ci-summary` vert. ☐
+Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2`, `smoke-api2` ; `lint-nuxt`, `build-nuxt`,
+`tests-app3` ; `ci-summary` vert. ☐
 
 ### 2.4 🖥 Préprod (`/data/kpi_preprod`)
 
@@ -226,7 +228,7 @@ Comme le § 1.5 (`make release_tag`, « Deploy production »), puis :
 
 | Situation | Action |
 |---|---|
-| app2 régresse après 2b | Revert de la PR 2b sur `main` (les tests de caractérisation de 2a restent) puis déploiement ; en prod, redéployer le tag précédent ([runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md)) |
+| app2 régresse (matchs / tableaux) | Revert des commits refactor/fix api2 sur `main` (les tests de caractérisation restent) puis déploiement ; en prod, redéployer le tag précédent ([runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md)) |
 | Page app3 en erreur | Repasser l'entrée de menu à `ready: false` (repli legacy) ou `stop app3` (§ 1.7) |
 
 ---

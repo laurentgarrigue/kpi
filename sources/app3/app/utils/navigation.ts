@@ -30,7 +30,7 @@ export const MAIN_MENU: readonly MenuItem[] = [
   {
     id: 'competitions',
     children: [
-      { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: false },
+      { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: true },
       { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: false },
     ],
   },

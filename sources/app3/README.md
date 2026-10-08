@@ -17,15 +17,16 @@ Hors Docker : `npm ci && npm run dev` (port 3003).
 
 | Dossier | Contenu | Règle |
 |---|---|---|
-| `app/utils/` | fonctions pures (`navigation.ts`, `events.ts`) | testées unitairement, sans Nuxt |
-| `app/composables/` | état et données (`useMainMenu`, `useSiteSeo`) | pas de rendu |
-| `app/components/` | `site/` (template), `nav/` (menus), `home/` | affichage seul, aucun appel réseau, aucun texte en dur |
+| `app/utils/` | fonctions pures (`navigation.ts`, `events.ts`, `competitions.ts`, `page-links.ts`) | testées unitairement, sans Nuxt |
+| `app/composables/` | état et données (`useMainMenu`, `useSiteSeo`, `useApiResource`, `useAutoRefresh`) | pas de rendu |
+| `app/components/` | `site/` (template), `nav/` (menus), `home/`, `results/` (résultats) | affichage, aucun texte en dur ; appels api2 seulement via `useApiResource` |
 | `app/pages/`, `app/layouts/` | assemblage | |
 | `server/` | `/healthz`, `/robots.txt`, en-tête `X-Robots-Tag` | |
 | `shared/` | code commun app/serveur (`locales.ts`, `utils/robots.ts`) | |
 | `i18n/locales/` | `fr.json`, `en.json` | mêmes clés (vérifié par un test) |
 
-Le thème, les polices et le client api2 viennent de [`../kpi-layer`](../kpi-layer/README.md).
+Le thème, les polices, le client api2 et la logique des résultats (`#kpi-layer/utils/results/*`, types api2 et
+fonctions pures) viennent de [`../kpi-layer`](../kpi-layer/README.md).
 
 ## Livrer une page
 
@@ -44,6 +45,22 @@ npm run lint && npm run typecheck
 ```
 
 Les tests de composants échouent si un composant n'est pas résolu (nom d'auto-import erroné).
+
+### Données de test api2
+
+Les pages de résultats sont testées sur de **vraies réponses d'api2**, capturées sur le jeu de fixtures
+`SQL/fixtures/` et rangées dans `tests/fixtures/api2/` (liste des requêtes : `paths.mjs`). Après un changement
+d'api2 ou des fixtures, les régénérer :
+
+```bash
+make api2_test_fixtures          # charge SQL/fixtures dans la base kpi_fixtures_test
+# api2 sur cette base, port 8099 du conteneur (DATABASE_URL de la base de test, cf. SQL/fixtures/README.md) :
+docker exec -d -e APP_ENV=test -e DATABASE_URL='mysql://…/kpi_fixtures?…' kpi_api2 \
+  php -d variables_order=EGPCS -S 0.0.0.0:8099 -t /app/public
+docker exec kpi_node_app3 node scripts/capture-api2-fixtures.mjs http://kpi_api2:8099
+```
+
+Relire le diff des JSON : il montre ce que le changement d'api2 modifie pour le site.
 
 ## Configuration (runtime, `NUXT_*`)
 

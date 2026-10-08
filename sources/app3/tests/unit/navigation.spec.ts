@@ -33,9 +33,9 @@ describe('MAIN_MENU', () => {
     ])
   })
 
-  it('NAV-10: in phase 1, only the home page is an internal link', () => {
+  it('NAV-10: only delivered pages are internal links (phase 2: home, competitions)', () => {
     const links = resolveMenu(MAIN_MENU, context('fr')).flatMap(item => (isMenuGroup(item) ? item.children : [item]))
-    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home'])
+    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'competitions-list'])
     expect(links.filter(link => link.kind === 'app2').map(link => link.id)).toEqual(['live'])
   })
 })

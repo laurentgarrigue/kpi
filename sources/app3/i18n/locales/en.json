@@ -12,7 +12,8 @@
     "language": "Language",
     "legacyLink": "(current website)",
     "betaRegion": "Beta version",
-    "newTab": "(new tab)"
+    "newTab": "(new tab)",
+    "breadcrumb": "Breadcrumb"
   },
   "beta": {
     "message": "Beta version of the new kayak-polo.info website.",
@@ -69,5 +70,153 @@
   },
   "header": {
     "admin": "Administration"
+  },
+  "results": {
+    "listTitle": "Competitions and results {season}",
+    "listDescription": "Rankings of the {group} canoe polo competitions, season {season}.",
+    "season": "Season",
+    "group": "Competition group",
+    "show": "Show",
+    "section": {
+      "1": "International competitions",
+      "2": "National competitions",
+      "3": "Regional competitions",
+      "4": "International tournaments",
+      "5": "Continents"
+    },
+    "unavailable": "Results are temporarily unavailable.",
+    "noCompetition": "No competition published for this group.",
+    "allGroupGames": "All games of the group",
+    "noRanking": "Ranking not available",
+    "seeAll": "See all",
+    "seeMore": "See more",
+    "type": {
+      "CHPT": "Championship",
+      "CP": "Cup",
+      "MULTI": "Multi"
+    },
+    "competitionStatus": {
+      "ATT": "Upcoming",
+      "ON": "In progress",
+      "END": "Finished"
+    },
+    "status": {
+      "ATT": "Upcoming",
+      "ON": "Live",
+      "END": "Finished"
+    },
+    "medal": {
+      "1": "Gold medal",
+      "2": "Silver medal",
+      "3": "Bronze medal"
+    },
+    "qualified": "Qualified",
+    "eliminated": "Relegated or eliminated",
+    "winner": "(winner)",
+    "partOfEvent": "{scope} is part of the event",
+    "seeEvent": "See the event",
+    "alsoInEvents": "Also in:",
+    "events": "Events:",
+    "competitions": "Competitions",
+    "allCompetitions": "All",
+    "tabs": "Tabs",
+    "tab": {
+      "games": "Games",
+      "pitches": "Pitches",
+      "info": "Info",
+      "progress": "Progress",
+      "ranking": "Ranking",
+      "stats": "Stats"
+    },
+    "tabTitle": "{tab} — {competition} {season}",
+    "tabDescription": {
+      "games": "Games and results of {competition}, season {season}.",
+      "pitches": "Pitch schedule of {competition}, season {season}.",
+      "info": "Gamedays, venues, officials and teams of {competition}, season {season}.",
+      "progress": "Progress and phases of {competition}, season {season}.",
+      "ranking": "Ranking of {competition}, season {season}.",
+      "stats": "Statistics of {competition}, season {season}."
+    },
+    "scopeTitle": "{tab} — {scope}",
+    "scopeDescription": "Games and results of {scope}.",
+    "website": "Competition website",
+    "followLive": "Follow live",
+    "col": {
+      "number": "No.",
+      "time": "Time",
+      "pitch": "Pitch",
+      "competition": "Competition",
+      "phase": "Phase",
+      "teamA": "Team A",
+      "score": "Score",
+      "teamB": "Team B",
+      "referees": "Referees",
+      "status": "Status",
+      "mark": "Qualification or medal",
+      "rank": "Rk",
+      "team": "Team",
+      "player": "Player",
+      "points": "Pts",
+      "played": "P",
+      "won": "W",
+      "drawn": "D",
+      "lost": "L",
+      "forfeits": "F",
+      "goals_for": "+",
+      "goals_against": "−",
+      "goal_diff": "Diff"
+    },
+    "gamesOf": "Games of {date}",
+    "pitchesOf": "Pitches of {date}",
+    "pitch": "Pitch {pitch}",
+    "scoreA11y": "{a} to {b}",
+    "provisional": "provisional",
+    "gameSheet": "Game sheet",
+    "scoreSheetPdf": "Score sheet (PDF)",
+    "gamesPdf": "Games list (PDF)",
+    "rankingPdf": "Ranking (PDF)",
+    "noGames": "No game published.",
+    "noFilteredGames": "No game matches these criteria.",
+    "filters": {
+      "gameday": "Gameday",
+      "all": "All",
+      "day": "Day",
+      "allDays": "All days",
+      "upcoming": "Upcoming games",
+      "apply": "Filter"
+    },
+    "ranking": {
+      "provisional": "Provisional ranking",
+      "final": "Final ranking"
+    },
+    "rankingLater": "The ranking will be published after the first games.",
+    "progressView": "Progress layout",
+    "view": {
+      "horizontal": "Horizontal",
+      "vertical": "Vertical"
+    },
+    "noProgress": "The progress will be published when the competition starts.",
+    "round": "Round {round}",
+    "statsKinds": "Available statistics",
+    "noStats": "No statistics available.",
+    "info": {
+      "gamedays": "Gamedays",
+      "noGamedays": "No gameday published.",
+      "organizer": "Organiser",
+      "rc": "Competition manager",
+      "r1": "R1 manager",
+      "delegate": "Delegate",
+      "chief_referee": "Chief referee",
+      "teams": "Teams",
+      "pool": "Pool {pool}",
+      "schema": "Competition format",
+      "schemaAlt": "Format of {competition}"
+    }
+  },
+  "stats": {
+    "scorers": {
+      "title": "Top scorers",
+      "goals": "Goals"
+    }
   }
 }

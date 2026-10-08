@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "body": {
+    "status": "END",
+    "type": "MULTI",
+    "qualified": 0,
+    "eliminated": 0,
+    "rows": [
+      {
+        "rank": 1,
+        "team": {
+          "id": 9321,
+          "number": 121,
+          "label": "Equipe India",
+          "logo": null
+        },
+        "points": 30,
+        "played": 2,
+        "medal": 1
+      },
+      {
+        "rank": 2,
+        "team": {
+          "id": 9322,
+          "number": 122,
+          "label": "Equipe Juliet",
+          "logo": null
+        },
+        "points": 20,
+        "played": 2,
+        "medal": 2
+      },
+      {
+        "rank": 3,
+        "team": {
+          "id": 9323,
+          "number": 123,
+          "label": "Equipe Kilo",
+          "logo": null
+        },
+        "points": 10,
+        "played": 2,
+        "medal": 3
+      }
+    ]
+  }
+}

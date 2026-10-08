@@ -68,11 +68,6 @@ export function formatEventDates(start: string | null, end: string | null, local
   return format.formatRange(new Date(first), new Date(last))
 }
 
-/** Event page in app2, until app3 has its own (phase 2). */
-export function eventUrl(id: number, app2BaseUrl: string): string {
-  return joinURL(app2BaseUrl, 'event', String(id))
-}
-
 /** Absolute URL of an event logo stored under the legacy `/img/` tree, or `null` without logo. */
 export function eventLogoUrl(logo: string | null, legacyBaseUrl: string): string | null {
   return logo ? joinURL(legacyBaseUrl, 'img', logo) : null

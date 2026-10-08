@@ -47,7 +47,7 @@ describe('home page (PAGE_HOME.md)', () => {
   it('HOME-02: the competitions button has the same target as the menu entry', async () => {
     const wrapper = await mountHome(async () => events)
     expect(wrapper.find('[data-testid="competitions-cta"]').attributes('href'))
-      .toBe('https://kpi.localhost/kpclassements.php?lang=fr')
+      .toBe('/competitions')
   })
 
   it('HOME-07: upcoming events come first, nearest first, ongoing ones flagged', async () => {
@@ -67,13 +67,11 @@ describe('home page (PAGE_HOME.md)', () => {
     expect(api2).toHaveBeenCalledWith('/events/all')
   })
 
-  it('HOME-04: cards open the app2 event page in a new tab, with dates and a logo only when set', async () => {
+  it('HOME-04: cards open the event page of the site, with dates and a logo only when set', async () => {
     const wrapper = await mountHome(async () => events)
     const card = wrapper.find('[data-testid="upcoming-events"] a')
-    expect(card.attributes('href')).toBe('https://app.kpi.localhost/event/3')
-    expect(card.attributes('target')).toBe('_blank')
-    expect(card.attributes('rel')).toContain('noopener')
-    expect(card.text()).toContain('(nouvel onglet)')
+    expect(card.attributes('href')).toBe('/events/3')
+    expect(card.attributes('target')).toBeUndefined()
     expect(card.text()).toMatch(/14\s?–\s?16 juin 2026/)
     expect(card.find('img').attributes('src')).toBe('https://kpi.localhost/img/logo/event3.png')
     expect(wrapper.findAll('[data-testid="upcoming-events"] a')[1]?.find('img').exists()).toBe(false)

@@ -1,0 +1,32 @@
+{
+  "status": 200,
+  "body": {
+    "gamedays": [],
+    "teams_by_pool": [
+      {
+        "pool": "",
+        "teams": [
+          {
+            "id": 9321,
+            "number": 121,
+            "label": "Equipe India",
+            "logo": null
+          },
+          {
+            "id": 9322,
+            "number": 122,
+            "label": "Equipe Juliet",
+            "logo": null
+          },
+          {
+            "id": 9323,
+            "number": 123,
+            "label": "Equipe Kilo",
+            "logo": null
+          }
+        ]
+      }
+    ],
+    "schema": null
+  }
+}

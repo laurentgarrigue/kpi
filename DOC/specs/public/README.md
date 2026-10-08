@@ -24,10 +24,10 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [SITE_LAYOUT.md](SITE_LAYOUT.md) | Template général : en-tête, bandeau beta, contenu, pied de page, thème, accessibilité, SEO par défaut | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
 | [SITE_NAVIGATION.md](SITE_NAVIGATION.md) | Menus et sous-menus, repli vers le legacy, navigation mobile, langue | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
 | [PAGE_HOME.md](PAGE_HOME.md) | Page d'accueil (version phase 1, évolutions phase 4a) | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
-| [API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) | api2 : endpoints publics des résultats, refactorisation sans régression pour app2 | 2 | ✅ Validée — 🛠 En cours |
-| [PAGE_COMPETITIONS.md](PAGE_COMPETITIONS.md) | Liste des compétitions d'une saison et d'un groupe, classements compacts | 2 | ✅ Validée — 🛠 En cours |
-| [PAGE_COMPETITION.md](PAGE_COMPETITION.md) | Page compétition et ses onglets (games, pitches, info, progress, ranking, stats) | 2 | ✅ Validée — 🛠 En cours |
-| [PAGE_EVENT_GROUP.md](PAGE_EVENT_GROUP.md) | Vues agrégées événement et groupe (matchs, terrains) | 2 | ✅ Validée — 🛠 En cours |
+| [API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) | api2 : endpoints publics des résultats, refactorisation sans régression pour app2 | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_COMPETITIONS.md](PAGE_COMPETITIONS.md) | Liste des compétitions d'une saison et d'un groupe, classements compacts | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_COMPETITION.md](PAGE_COMPETITION.md) | Page compétition et ses onglets (games, pitches, info, progress, ranking, stats) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_EVENT_GROUP.md](PAGE_EVENT_GROUP.md) | Vues agrégées événement et groupe (matchs, terrains) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | `PAGE_CALENDAR.md` | Calendrier + ICS | 3 | ⏳ À rédiger |
 | `PAGE_HISTORY.md`, `PAGE_TEAM.md`, `PAGE_CLUBS.md` | Historique, fiche équipe, clubs (+ carte, logos) | 3 | ⏳ À rédiger |
 | `FEATURE_SEARCH.md` | Recherche globale | 3 | ⏳ À rédiger |

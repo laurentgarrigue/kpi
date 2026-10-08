@@ -1,5 +1,9 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import { defineVitestProject } from '@nuxt/test-utils/config'
+
+// Same alias as kpi-layer/nuxt.config.ts, for the plain-Node unit project (the Nuxt one gets it from Nuxt).
+const kpiLayerAlias = { '#kpi-layer': fileURLToPath(new URL('../kpi-layer/app', import.meta.url)) }
 
 // Two projects (CLEAN_CODE.md § 2):
 //  - unit: pure functions (app3 utils, kpi-layer utils), plain Node, fast;
@@ -9,6 +13,7 @@ export default defineConfig({
   test: {
     projects: [
       {
+        resolve: { alias: kpiLayerAlias },
         test: {
           name: 'unit',
           environment: 'node',
@@ -29,6 +34,8 @@ export default defineConfig({
         test: {
           name: 'nuxt',
           environment: 'nuxt',
+          // Starting the Nuxt environment can exceed the 10 s default on a cold, busy machine (CI).
+          hookTimeout: 60_000,
           include: ['tests/nuxt/**/*.spec.ts'],
           setupFiles: ['tests/nuxt/setup.ts'],
         },

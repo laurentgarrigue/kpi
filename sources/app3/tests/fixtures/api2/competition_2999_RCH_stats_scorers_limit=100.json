@@ -1,0 +1,50 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "scorers",
+    "columns": [
+      {
+        "key": "goals",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "first_name": "Ann",
+        "last_name": "ALPHA",
+        "number": 7,
+        "team": {
+          "id": 9301,
+          "number": 101,
+          "label": "Equipe Alpha"
+        },
+        "goals": 2
+      },
+      {
+        "rank": 1,
+        "first_name": "Dan",
+        "last_name": "CHARLIE",
+        "number": 10,
+        "team": {
+          "id": 9303,
+          "number": 103,
+          "label": "Equipe Charlie"
+        },
+        "goals": 2
+      },
+      {
+        "rank": 3,
+        "first_name": "Cid",
+        "last_name": "BRAVO",
+        "number": 4,
+        "team": {
+          "id": 9302,
+          "number": 102,
+          "label": "Equipe Bravo"
+        },
+        "goals": 1
+      }
+    ]
+  }
+}

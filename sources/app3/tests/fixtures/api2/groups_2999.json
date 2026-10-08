@@ -1,0 +1,30 @@
+{
+  "status": 200,
+  "body": {
+    "season": "2999",
+    "sections": [
+      {
+        "section": 1,
+        "label": "Competitions_Internationales",
+        "groups": [
+          {
+            "code": "TSTGRP",
+            "libelle": "Groupe de test",
+            "libelle_en": null
+          }
+        ]
+      },
+      {
+        "section": 2,
+        "label": "Competitions_Nationales",
+        "groups": [
+          {
+            "code": "TSTRES",
+            "libelle": "Groupe Résultats",
+            "libelle_en": "Results group"
+          }
+        ]
+      }
+    ]
+  }
+}

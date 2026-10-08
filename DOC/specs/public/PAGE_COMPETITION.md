@@ -38,8 +38,9 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 - **Contexte événement** : avec `?event={id}`, le fil d'Ariane devient « Accueil › {événement} › {compétition} »,
   les sœurs sont celles de `GET /event/{id}/competitions`, et le paramètre est conservé dans tous les liens
   internes de la page (onglets, sœurs). Sans ce paramètre, les sœurs sont celles du groupe.
-- **Onglets** : liens (pas de JavaScript requis), `aria-current="page"` sur l'onglet actif ; sur mobile, une
-  liste déroulante remplace la barre. Un onglet sans contenu reste accessible et affiche son état vide.
+- **Onglets** : liens (pas de JavaScript requis), `aria-current="page"` sur l'onglet actif ; sur mobile, la barre
+  défile horizontalement (une liste déroulante exigerait du JavaScript pour naviguer). Un onglet sans contenu
+  reste accessible et affiche son état vide.
 
 ### 2.1 Liens vers des pages non encore livrées et PDF
 
@@ -123,9 +124,11 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 
 - Données : `GET /competition/{season}/{code}/charts`.
 - **Horizontal** (défaut) — remplace `kpchart.php` : une colonne par **tour** (`rounds`, par étape), une carte par
-  **phase** (poule ou match à élimination), avec équipes et résultats, comme le composant « charts » d'app2,
-  **porté dans `kpi-layer`** (duplication temporaire avec app2 tracée, cf. stratégie § 2.2). Défilement
-  horizontal sur petit écran.
+  **phase** (poule ou match à élimination), avec équipes et résultats, comme le composant « charts » d'app2. Sa
+  **logique** (tri des poules, équipes d'attente, vainqueur) est réécrite en fonctions pures dans `kpi-layer`
+  (`utils/results/charts.ts`), réutilisables par app2 en phase 6 ; les composants restent dans app3 jusque-là
+  (le layer n'a pas encore d'i18n). Duplication temporaire avec app2 tracée dans le README du layer.
+  Défilement horizontal sur petit écran.
 - **Vertical** — remplace `kpphases.php` : par phase, en ordre de niveau décroissant :
   - **poule** (`type` = `C`) : tableau de classement de la phase (rang, équipe, Pts, J, G, N, P, F, +, −, Diff)
     puis la liste de ses matchs ;

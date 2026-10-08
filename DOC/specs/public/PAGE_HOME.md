@@ -34,8 +34,8 @@ en France ou à l'étranger. Les textes de l'accueil le reflètent.
    - **Aucun** : « Aucun événement publié pour le moment. »
 4. **Cartes** (même composant pour les deux sections) : logo s'il existe (`{legacy}/img/{logo}`, texte
    alternatif = nom de l'événement, chargement différé), nom, lieu, **dates** (« 12–14 juin 2026 », localisées).
-   La carte mène à la page de l'événement dans app2 (`{app2}/event/{id}`, **nouvel onglet**), en attendant la
-   page événement d'app3 (phase 2).
+   La carte mène à la page de l'événement du site (`/events/{id}`, PAGE_EVENT_GROUP.md), même onglet ; en phase 1
+   (avant cette page), elle menait à `{app2}/event/{id}` dans un nouvel onglet.
 5. **api2 indisponible** : un seul message « Les événements sont momentanément indisponibles. » à la place des
    deux sections. Le reste de la page est rendu normalement (statut HTTP 200).
 
@@ -67,8 +67,8 @@ navigateur avec les données (pas de recalcul à l'hydratation).
 - **HOME-01** — La page affiche un unique `<h1>` traduit selon la langue.
 - **HOME-02** — Le bouton « Compétitions et résultats » a la même cible que l'entrée de menu correspondante.
 - **HOME-03** — « Événements récents » : au plus 6 événements terminés, du plus récent au plus ancien.
-- **HOME-04** — Chaque carte mène à `{app2}/event/{id}` dans un nouvel onglet, affiche les dates et le logo
-  seulement s'il est renseigné.
+- **HOME-04** — Chaque carte mène à `/events/{id}` (phase 2), affiche les dates et le logo seulement s'il est
+  renseigné.
 - **HOME-05** — Sections vides → message propre à chacune ; erreur api2 → message d'indisponibilité, page en 200.
 - **HOME-06** — La répartition est faite par des fonctions pures testées avec une date injectée
   (`upcomingEvents(events, today, 6)`, `recentEvents(events, today, 6)`).
@@ -78,8 +78,7 @@ navigateur avec les données (pas de recalcul à l'hydratation).
 
 ## 6. Évolutions prévues
 
-- **Phase 2** : les cartes d'événement mènent à `/events/{id}` (PAGE_EVENT_GROUP.md § 8) ; HOME-04 sera mis à
-  jour dans la PR qui livre la vue événement.
+- **Phase 2** (fait) : les cartes d'événement mènent à `/events/{id}` (PAGE_EVENT_GROUP.md § 8, HOME-04).
 - **Phase 4a** : blocs éditoriaux administrables (à la une, dernières actualités, bandeau d'alerte, partenaires).
 
 Ces évolutions mettront à jour cette spec avant implémentation.

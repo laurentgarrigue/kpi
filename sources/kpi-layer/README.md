@@ -13,6 +13,7 @@ Specs : [SITE_PLATFORM.md](../../DOC/specs/public/SITE_PLATFORM.md), [SITE_LAYOU
 | Jetons de la charte | `app/assets/css/kpi-theme.css` | `@font-face` (Raleway, Agency FB), `@theme static` : couleurs nommées (`navy`, `ink`, `line`, `sky`) et palettes `kpi-blue/red/green/gold` 50→950 |
 | Couleurs Nuxt UI | `app/app.config.ts` | `primary` → `kpi-blue`, `error` → `kpi-red`, `success` → `kpi-green`, `warning` → `kpi-gold` |
 | Client api2 | `app/composables/useApi2.ts`, `app/utils/api2.ts` | `$fetch` lié à l'URL interne (serveur) ou publique (navigateur) |
+| Résultats | `app/utils/results/` (`types`, `games`, `charts`, `ranking`, `events`) | types des réponses publiques d'api2 et règles d'affichage en fonctions pures (tri, filtres, « prochains matchs », grille des terrains, poules, vainqueur, marques de classement, événement principal) ; import explicite `#kpi-layer/utils/results/…` |
 | Configuration | `nuxt.config.ts` | `runtimeConfig.api2InternalUrl` (`NUXT_API2_INTERNAL_URL`), `public.api2BaseUrl` (`NUXT_PUBLIC_API2_BASE_URL`) |
 | Polices | `public/fonts/` | Raleway variable (OFL, `raleway/OFL.txt`), Agency FB (licence FFCK) |
 | Logos | `public/img/brand/` | Logo FFCK et logo CNA Kayak-Polo, fichiers existants **non modifiés** (charte) |
@@ -51,3 +52,4 @@ Les tests du layer (`tests/*.spec.ts`) sont exécutés par le projet `unit` de V
 |---|---|---|
 | `agencyfb.ttf` | `sources/app4/public/fonts/` | app4 n'utilise pas encore le layer |
 | Palette FFCK (valeurs proches) | `sources/app4/assets/css/admin.css` | idem |
+| Logique des tableaux (`utils/results/charts.ts`, `games.ts`) | `sources/app2/components/Chart*.vue` | réécrite en fonctions pures pour app3 ; app2 l'adoptera en phase 6 |

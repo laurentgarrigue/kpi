@@ -105,7 +105,8 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 - **NAV-07** — Le bouton d'un groupe bascule `aria-expanded` et affiche ses entrées ; Échap le referme.
 - **NAV-08** — Sur mobile, le bouton « Menu » ouvre et ferme le panneau (`aria-expanded`).
 - **NAV-09** — Le sélecteur de langue pointe vers la même page dans l'autre langue.
-- **NAV-10** — En phase 1, seule l'entrée « Accueil » est interne ; les autres pointent vers le legacy ou app2.
+- **NAV-10** — Seules les entrées des pages livrées sont internes (phase 1 : « Accueil » ; phase 2 : + « Compétitions
+  et résultats ») ; les autres pointent vers le legacy ou app2.
 
 ## 7. Hors périmètre / questions ouvertes
 

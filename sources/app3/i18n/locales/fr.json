@@ -12,7 +12,8 @@
     "language": "Choix de la langue",
     "legacyLink": "(site actuel)",
     "betaRegion": "Version bêta",
-    "newTab": "(nouvel onglet)"
+    "newTab": "(nouvel onglet)",
+    "breadcrumb": "Fil d'Ariane"
   },
   "beta": {
     "message": "Version bêta du nouveau site kayak-polo.info.",
@@ -69,5 +70,153 @@
   },
   "header": {
     "admin": "Administration"
+  },
+  "results": {
+    "listTitle": "Compétitions et résultats {season}",
+    "listDescription": "Classements des compétitions de kayak-polo {group}, saison {season}.",
+    "season": "Saison",
+    "group": "Groupe de compétitions",
+    "show": "Afficher",
+    "section": {
+      "1": "Compétitions internationales",
+      "2": "Compétitions nationales",
+      "3": "Compétitions régionales",
+      "4": "Tournois internationaux",
+      "5": "Continents"
+    },
+    "unavailable": "Les résultats sont momentanément indisponibles.",
+    "noCompetition": "Aucune compétition publiée pour ce groupe.",
+    "allGroupGames": "Tous les matchs du groupe",
+    "noRanking": "Classement non disponible",
+    "seeAll": "Voir tout",
+    "seeMore": "Voir plus",
+    "type": {
+      "CHPT": "Championnat",
+      "CP": "Coupe",
+      "MULTI": "Multi"
+    },
+    "competitionStatus": {
+      "ATT": "À venir",
+      "ON": "En cours",
+      "END": "Terminé"
+    },
+    "status": {
+      "ATT": "À venir",
+      "ON": "En cours",
+      "END": "Terminé"
+    },
+    "medal": {
+      "1": "Médaille d'or",
+      "2": "Médaille d'argent",
+      "3": "Médaille de bronze"
+    },
+    "qualified": "Qualifié",
+    "eliminated": "Relégué ou éliminé",
+    "winner": "(vainqueur)",
+    "partOfEvent": "{scope} fait partie de l'événement",
+    "seeEvent": "Voir l'événement",
+    "alsoInEvents": "Également dans :",
+    "events": "Événements :",
+    "competitions": "Compétitions",
+    "allCompetitions": "Toutes",
+    "tabs": "Onglets",
+    "tab": {
+      "games": "Matchs",
+      "pitches": "Terrains",
+      "info": "Infos",
+      "progress": "Déroulement",
+      "ranking": "Classement",
+      "stats": "Stats"
+    },
+    "tabTitle": "{tab} — {competition} {season}",
+    "tabDescription": {
+      "games": "Matchs et résultats de {competition}, saison {season}.",
+      "pitches": "Programme des terrains de {competition}, saison {season}.",
+      "info": "Journées, lieux, officiels et équipes de {competition}, saison {season}.",
+      "progress": "Déroulement et phases de {competition}, saison {season}.",
+      "ranking": "Classement de {competition}, saison {season}.",
+      "stats": "Statistiques de {competition}, saison {season}."
+    },
+    "scopeTitle": "{tab} — {scope}",
+    "scopeDescription": "Matchs et résultats de {scope}.",
+    "website": "Site web de la compétition",
+    "followLive": "Suivre en direct",
+    "col": {
+      "number": "N°",
+      "time": "Heure",
+      "pitch": "Terrain",
+      "competition": "Compétition",
+      "phase": "Phase",
+      "teamA": "Équipe A",
+      "score": "Score",
+      "teamB": "Équipe B",
+      "referees": "Arbitres",
+      "status": "Statut",
+      "mark": "Qualification ou médaille",
+      "rank": "Clt",
+      "team": "Équipe",
+      "player": "Joueur",
+      "points": "Pts",
+      "played": "J",
+      "won": "G",
+      "drawn": "N",
+      "lost": "P",
+      "forfeits": "F",
+      "goals_for": "+",
+      "goals_against": "−",
+      "goal_diff": "Diff"
+    },
+    "gamesOf": "Matchs du {date}",
+    "pitchesOf": "Terrains du {date}",
+    "pitch": "Terrain {pitch}",
+    "scoreA11y": "{a} à {b}",
+    "provisional": "provisoire",
+    "gameSheet": "Feuille de match",
+    "scoreSheetPdf": "Feuille de marque (PDF)",
+    "gamesPdf": "Liste des matchs (PDF)",
+    "rankingPdf": "Classement (PDF)",
+    "noGames": "Aucun match publié.",
+    "noFilteredGames": "Aucun match pour ces critères.",
+    "filters": {
+      "gameday": "Journée",
+      "all": "Toutes",
+      "day": "Jour",
+      "allDays": "Tous les jours",
+      "upcoming": "Prochains matchs",
+      "apply": "Filtrer"
+    },
+    "ranking": {
+      "provisional": "Classement provisoire",
+      "final": "Classement final"
+    },
+    "rankingLater": "Le classement sera publié après les premiers matchs.",
+    "progressView": "Présentation du déroulement",
+    "view": {
+      "horizontal": "Horizontal",
+      "vertical": "Vertical"
+    },
+    "noProgress": "Le déroulement sera publié au début de la compétition.",
+    "round": "Tour {round}",
+    "statsKinds": "Statistiques disponibles",
+    "noStats": "Aucune statistique disponible.",
+    "info": {
+      "gamedays": "Journées",
+      "noGamedays": "Aucune journée publiée.",
+      "organizer": "Organisateur",
+      "rc": "Responsable de compétition",
+      "r1": "Responsable R1",
+      "delegate": "Délégué",
+      "chief_referee": "Chef des arbitres",
+      "teams": "Équipes engagées",
+      "pool": "Poule {pool}",
+      "schema": "Schéma de la compétition",
+      "schemaAlt": "Schéma de déroulement de {competition}"
+    }
+  },
+  "stats": {
+    "scorers": {
+      "title": "Meilleurs buteurs",
+      "goals": "Buts"
+    }
   }
 }
