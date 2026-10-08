@@ -49,6 +49,22 @@ docker exec -e API2_TEST_DB=1 \
 les tests supposent ces fixtures et n'ont aucune raison d'y trouver leurs ids.
 Ils ne font que des `SELECT` aujourd'hui, mais la garde reste la règle.
 
+## Jeu « résultats publics » (groupe `TSTRES`)
+
+Consommé par les tests de caractérisation (`tests/Integration/PublicResultsCharacterizationTest.php`) et les
+endpoints du site public ([API_PUBLIC_RESULTS.md](../../DOC/specs/public/API_PUBLIC_RESULTS.md)) :
+
+| Élément | Cas couverts |
+|---|---|
+| `RCH` (CHPT, `ON`) | journées publiées / non publiée / `Pause`, matchs terminés, en cours, à venir, non publié, buteurs |
+| `RCP` (CP, `END`, tour final) | poule classée, poule sans classement (équipes déduites des matchs), finale, placeholders `[V11-P12]`, médailles |
+| `RMU` (MULTI, `END`, tour final) | classement sans match |
+| `RAT` (CHPT, `ATT`) / `RNP` (non publiée) | filtres de statut et de publication |
+| Événement `77` (publié) / `78` (non publié) | ids < 3000 = tournoi `kp_evenement` ; journées liées par `kp_evenement_journee` |
+
+Les fichiers de référence JSON sont dans `sources/api2/tests/Integration/__snapshots__/` ; un changement voulu
+se régénère avec `UPDATE_SNAPSHOTS=1` et se relit dans le diff.
+
 ## Ajouter un cas
 
 1. Ajouter la ligne dans `data.sql` **avec un commentaire** disant quel test la
