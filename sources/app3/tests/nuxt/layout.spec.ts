@@ -30,6 +30,13 @@ describe('site header', () => {
     expect(home.attributes('href')).toBe('/')
     expect(home.find('img').attributes('alt')).toBeTruthy()
   })
+
+  it('LAY-03: shows a visible administration link to admin2', async () => {
+    const wrapper = await mountSuspended(SiteHeader)
+    const admin = wrapper.find('[data-testid="admin-link"]')
+    expect(admin.attributes('href')).toBe('https://kpi.localhost/admin2/')
+    expect(admin.text()).toContain('Administration')
+  })
 })
 
 describe('site footer', () => {
@@ -41,8 +48,22 @@ describe('site footer', () => {
       'https://app.kpi.localhost',
       'https://www.facebook.com/KIPsport',
       'https://kpi.localhost',
-      'https://kpi.localhost/AdminChoice.php',
+      'https://kpi.localhost/admin2/',
     ]))
     expect(wrapper.find('[data-testid="copyright"]').text()).toContain(String(new Date().getFullYear()))
+  })
+})
+
+describe('links to app2', () => {
+  it('LAY-09: every app2 link of the layout opens in a new tab, announced to assistive technologies', async () => {
+    const wrapper = await mountSuspended(DefaultLayout, { slots: { default: () => 'page' } })
+    const app2Links = wrapper.findAll('a').filter(link => link.attributes('href')?.startsWith('https://app.kpi.localhost'))
+    expect(app2Links.length).toBeGreaterThanOrEqual(3) // desktop menu, mobile menu, footer
+    for (const link of app2Links) {
+      expect(link.attributes('target')).toBe('_blank')
+      expect(link.attributes('rel')).toContain('noopener')
+      expect(link.text()).toContain('(nouvel onglet)')
+    }
+    expect(wrapper.findAll('a').some(link => link.attributes('href')?.includes('AdminChoice'))).toBe(false)
   })
 })

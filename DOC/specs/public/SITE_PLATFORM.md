@@ -1,6 +1,6 @@
 # Socle technique du site public (app3 + kpi-layer)
 
-**Phase** : 1 — **Statut** : 📝 Proposée — **Routes techniques** : `/healthz`, `/robots.txt`
+**Phase** : 1 — **Statut** : ✅ Validée (08/10/2026) — **Routes techniques** : `/healthz`, `/robots.txt`
 
 ## 1. Objectif
 

@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 
 // Fake api2: serves /events/all as JSON but with a wrong Content-Type, as a misconfigured proxy could.
-const EVENTS = [{ id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, year: 2026 }]
+const EVENTS = [{ id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' }]
 const fakeApi2 = createServer((request, response) => {
   if (request.url === '/events/all') {
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' })

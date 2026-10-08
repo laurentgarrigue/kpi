@@ -1,6 +1,6 @@
 # Navigation : menus et sous-menus
 
-**Phase** : 1 (structure complète, entrées activées au fil des phases) — **Statut** : 📝 Proposée
+**Phase** : 1 (structure complète, entrées activées au fil des phases) — **Statut** : ✅ Validée (08/10/2026)
 **Remplace** : menu public de `commun/MyPage.php` (`kpmain_menu.tpl`) et menu WordPress
 
 ## 1. Objectif
@@ -85,7 +85,7 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 
 ### Liens externes
 - Liens vers le site actuel : même onglet, icône « lien externe » et mention accessible « (site actuel) ».
-- Lien app2 : même onglet, icône « lien externe ».
+- Lien app2 : **nouvel onglet** (SITE_LAYOUT.md § 2.6), icône « lien externe » et mention accessible « (nouvel onglet) ».
 
 ## 5. Langue
 
@@ -99,7 +99,7 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 - **NAV-01** — `MAIN_MENU` contient, dans l'ordre : home, news, calendar, competitions (competitions-list, history), teams-clubs (teams, clubs), live.
 - **NAV-02** — `resolveMenuLink` renvoie un lien interne localisé pour une entrée `ready` (`/news` en FR, `/en/news` en EN).
 - **NAV-03** — `resolveMenuLink` renvoie l'URL legacy absolue avec `?lang=fr|en` pour une entrée non livrée ayant un `legacyPath`.
-- **NAV-04** — `resolveMenuLink` renvoie l'URL d'app2 pour l'entrée « En direct ».
+- **NAV-04** — `resolveMenuLink` renvoie l'URL d'app2 pour l'entrée « En direct », rendue dans un nouvel onglet.
 - **NAV-05** — Une entrée sans cible est masquée, et un groupe sans entrée visible aussi.
 - **NAV-06** — `isActiveLink` : `/competitions/2026/N1` active « Compétitions et résultats » et son groupe ; `/` n'active que l'accueil.
 - **NAV-07** — Le bouton d'un groupe bascule `aria-expanded` et affiche ses entrées ; Échap le referme.

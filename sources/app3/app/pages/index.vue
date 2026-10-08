@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NEW_TAB_ATTRS } from '~/utils/links'
 import { MAIN_MENU, findMenuLink, resolveMenuLink } from '~/utils/navigation'
 
 // Home page, phase 1 (PAGE_HOME.md).
@@ -29,11 +30,20 @@ const competitionsLink = computed(() => competitionsEntry
         >
           {{ $t('home.competitionsCta') }}
         </UButton>
-        <UButton :to="app2BaseUrl" external size="lg" color="error" variant="outline" data-testid="live-cta">
+        <UButton
+          :to="app2BaseUrl"
+          external
+          v-bind="NEW_TAB_ATTRS"
+          size="lg"
+          color="error"
+          variant="outline"
+          data-testid="live-cta"
+        >
           {{ $t('home.liveCta') }}
+          <span class="sr-only">{{ $t('a11y.newTab') }}</span>
         </UButton>
       </div>
     </section>
-    <HomeRecentEvents />
+    <HomeEvents />
   </div>
 </template>

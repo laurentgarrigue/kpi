@@ -2,7 +2,7 @@
   "site": {
     "name": "kayak-polo.info",
     "tagline": "French Canoe Polo National Commission",
-    "description": "Results, rankings, calendars and news of canoe polo in France.",
+    "description": "Canoe polo results, rankings, schedules and news, in France and worldwide.",
     "ffckLogoAlt": "French Canoe Kayak and Paddle Sports Federation",
     "homeLinkLabel": "kayak-polo.info, back to the home page"
   },
@@ -11,8 +11,8 @@
     "mainNav": "Main navigation",
     "language": "Language",
     "legacyLink": "(current website)",
-    "externalLink": "(external link)",
-    "betaRegion": "Beta version"
+    "betaRegion": "Beta version",
+    "newTab": "(new tab)"
   },
   "beta": {
     "message": "Beta version of the new kayak-polo.info website.",
@@ -48,10 +48,13 @@
     "version": "Version {version}"
   },
   "home": {
-    "title": "Canoe polo in France",
-    "intro": "Results, rankings and calendars of canoe polo competitions, published by the French Canoe Polo National Commission (FFCK).",
+    "title": "Canoe polo, in France and worldwide",
+    "intro": "Results, rankings and schedules of canoe polo competitions — French championships and cups, tournaments, European, world and continental competitions — published by the French Canoe Kayak Federation (FFCK) canoe polo commission.",
     "competitionsCta": "Competitions and results",
     "liveCta": "Follow an event live",
+    "upcomingEvents": "Upcoming events",
+    "noUpcomingEvents": "No upcoming event for now.",
+    "ongoing": "Ongoing",
     "recentEvents": "Recent events",
     "noEvents": "No event published yet.",
     "eventsUnavailable": "Events are temporarily unavailable."
@@ -63,5 +66,8 @@
     "genericText": "Please try again in a few moments.",
     "backHome": "Back to the home page",
     "legacySite": "Go to the current website"
+  },
+  "header": {
+    "admin": "Administration"
   }
 }

@@ -2,7 +2,7 @@
   "site": {
     "name": "kayak-polo.info",
     "tagline": "Commission Nationale d'Activité Kayak-Polo",
-    "description": "Résultats, classements, calendriers et actualités du kayak-polo en France.",
+    "description": "Résultats, classements, calendriers et actualités du kayak-polo, en France et à l'international.",
     "ffckLogoAlt": "Fédération Française de Canoë Kayak et Sports de Pagaie",
     "homeLinkLabel": "kayak-polo.info, retour à l'accueil"
   },
@@ -11,8 +11,8 @@
     "mainNav": "Navigation principale",
     "language": "Choix de la langue",
     "legacyLink": "(site actuel)",
-    "externalLink": "(lien externe)",
-    "betaRegion": "Version bêta"
+    "betaRegion": "Version bêta",
+    "newTab": "(nouvel onglet)"
   },
   "beta": {
     "message": "Version bêta du nouveau site kayak-polo.info.",
@@ -48,10 +48,13 @@
     "version": "Version {version}"
   },
   "home": {
-    "title": "Le kayak-polo en France",
-    "intro": "Résultats, classements et calendriers des compétitions de kayak-polo, publiés par la Commission Nationale d'Activité Kayak-Polo de la FFCK.",
+    "title": "Le kayak-polo, en France et à l'international",
+    "intro": "Résultats, classements et calendriers des compétitions de kayak-polo — championnats et coupes de France, tournois, compétitions européennes, mondiales et continentales — publiés par la Commission Nationale d'Activité Kayak-Polo de la FFCK.",
     "competitionsCta": "Compétitions et résultats",
     "liveCta": "Suivre un événement en direct",
+    "upcomingEvents": "Prochains événements",
+    "noUpcomingEvents": "Aucun événement à venir pour le moment.",
+    "ongoing": "En cours",
     "recentEvents": "Événements récents",
     "noEvents": "Aucun événement publié pour le moment.",
     "eventsUnavailable": "Les événements sont momentanément indisponibles."
@@ -63,5 +66,8 @@
     "genericText": "Merci de réessayer dans quelques instants.",
     "backHome": "Retour à l'accueil",
     "legacySite": "Accéder au site actuel"
+  },
+  "header": {
+    "admin": "Administration"
   }
 }

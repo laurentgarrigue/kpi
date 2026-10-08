@@ -41,7 +41,10 @@ class EventController extends AbstractController
                             new OA\Property(property: 'id', type: 'integer', example: 123),
                             new OA\Property(property: 'libelle', type: 'string', example: 'Tournoi National'),
                             new OA\Property(property: 'place', type: 'string', example: 'Paris'),
-                            new OA\Property(property: 'logo', type: 'string', nullable: true, example: 'logo/event123.png')
+                            new OA\Property(property: 'logo', type: 'string', nullable: true, example: 'logo/event123.png'),
+                            new OA\Property(property: 'year', type: 'integer', example: 2026),
+                            new OA\Property(property: 'start', type: 'string', format: 'date', nullable: true, example: '2026-06-12'),
+                            new OA\Property(property: 'end', type: 'string', format: 'date', nullable: true, example: '2026-06-14')
                         ]
                     )
                 )
@@ -50,7 +53,8 @@ class EventController extends AbstractController
         ]
     )]
     /**
-     * Note: Response includes 'year' field (integer) for filtering by start date year
+     * Note: 'year' (integer) is used by app2 to filter by start year; 'start' / 'end' (YYYY-MM-DD) by the app3
+     * home page (upcoming / recent events).
      */
     public function getEvents(string $mode): JsonResponse
     {
@@ -61,13 +65,15 @@ class EventController extends AbstractController
         $conn = $this->entityManager->getConnection();
 
         if ($mode === 'all') {
-            $sql = "SELECT Id id, Libelle libelle, Lieu place, logo, YEAR(Date_debut) year
+            $sql = "SELECT Id id, Libelle libelle, Lieu place, logo, YEAR(Date_debut) year,
+                Date_debut start, Date_fin end
                 FROM kp_evenement
                 WHERE Publication = 'O'
                 ORDER BY Date_debut DESC, Id DESC";
             $stmt = $conn->prepare($sql);
         } elseif ($mode === 'std') {
-            $sql = "SELECT Id id, Libelle libelle, Lieu place, logo, YEAR(Date_debut) year
+            $sql = "SELECT Id id, Libelle libelle, Lieu place, logo, YEAR(Date_debut) year,
+                Date_debut start, Date_fin end
                 FROM kp_evenement
                 WHERE app = 'O'
                 ORDER BY Date_debut DESC, Id DESC";
@@ -79,7 +85,7 @@ class EventController extends AbstractController
                     WHEN (c.LogoLink != '' AND c.Logo_actif = 'O') THEN CONCAT('logo/', c.LogoLink)
                     ELSE NULL
                 END logo,
-                YEAR(j.Date_debut) year
+                YEAR(j.Date_debut) year, j.Date_debut start, j.Date_fin end
                 FROM kp_journee j
                 JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
                 JOIN kp_groupe g ON (c.Code_ref = g.Groupe)

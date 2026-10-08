@@ -1,6 +1,10 @@
 <script setup lang="ts">
-// Site header: FFCK logo on a light background (charter), site name, language (SITE_LAYOUT.md § 2.2).
+import { joinURL } from 'ufo'
+import { ADMIN_PATH } from '~/utils/links'
+
+// Site header: FFCK logo on a light background (charter), site name, administration, language (SITE_LAYOUT.md § 2.2).
 const localePath = useLocalePath()
+const adminUrl = joinURL(useRuntimeConfig().public.legacyBaseUrl, ADMIN_PATH)
 </script>
 
 <template>
@@ -13,7 +17,13 @@ const localePath = useLocalePath()
           <span class="hidden text-sm text-ink sm:block">{{ $t('site.tagline') }}</span>
         </span>
       </NuxtLink>
-      <SiteLanguageSwitcher />
+      <div class="flex items-center gap-3">
+        <a :href="adminUrl" class="flex items-center gap-1 rounded px-2 py-1 text-sm text-kpi-blue-600 hover:bg-kpi-blue-50" data-testid="admin-link">
+          <UIcon name="i-heroicons-cog-6-tooth" class="size-5" aria-hidden="true" />
+          <span class="sr-only sm:not-sr-only">{{ $t('header.admin') }}</span>
+        </a>
+        <SiteLanguageSwitcher />
+      </div>
     </div>
   </header>
 </template>
