@@ -24,9 +24,10 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [SITE_LAYOUT.md](SITE_LAYOUT.md) | Template général : en-tête, bandeau beta, contenu, pied de page, thème, accessibilité, SEO par défaut | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
 | [SITE_NAVIGATION.md](SITE_NAVIGATION.md) | Menus et sous-menus, repli vers le legacy, navigation mobile, langue | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
 | [PAGE_HOME.md](PAGE_HOME.md) | Page d'accueil (version phase 1, évolutions phase 4a) | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
-| `PAGE_COMPETITIONS.md` | Liste et sélecteur des compétitions d'une saison | 2 | ⏳ À rédiger |
-| `PAGE_COMPETITION.md` | Page compétition et ses onglets (games, pitches, info, progress, phases, ranking, stats) | 2 | ⏳ À rédiger |
-| `PAGE_EVENT.md`, `PAGE_GROUP.md` | Vues événement et groupe | 2 | ⏳ À rédiger |
+| [API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) | api2 : endpoints publics des résultats, refactorisation sans régression pour app2 | 2 | 📝 Proposée |
+| [PAGE_COMPETITIONS.md](PAGE_COMPETITIONS.md) | Liste des compétitions d'une saison et d'un groupe, classements compacts | 2 | 📝 Proposée |
+| [PAGE_COMPETITION.md](PAGE_COMPETITION.md) | Page compétition et ses onglets (games, pitches, info, progress, phases, ranking, stats) | 2 | 📝 Proposée |
+| [PAGE_EVENT_GROUP.md](PAGE_EVENT_GROUP.md) | Vues agrégées événement et groupe (matchs, terrains) | 2 | 📝 Proposée |
 | `PAGE_CALENDAR.md` | Calendrier + ICS | 3 | ⏳ À rédiger |
 | `PAGE_HISTORY.md`, `PAGE_TEAM.md`, `PAGE_CLUBS.md` | Historique, fiche équipe, clubs (+ carte, logos) | 3 | ⏳ À rédiger |
 | `FEATURE_SEARCH.md` | Recherche globale | 3 | ⏳ À rédiger |

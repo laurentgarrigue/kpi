@@ -127,21 +127,89 @@ make release_tag version=X.Y.Z      # tag de release contenant la phase 1
 
 ## Phase 2 — Résultats (compétitions, événements, groupes)
 
-Specs : `PAGE_COMPETITIONS`, `PAGE_COMPETITION`, `PAGE_EVENT`, `PAGE_GROUP`, `PUBLIC_API_RESULTS` (api2).
-Statut : 📝 specs proposées, **en attente de validation** — sections ci-dessous à compléter à l'implémentation.
+Specs : [API_PUBLIC_RESULTS](../../specs/public/API_PUBLIC_RESULTS.md) (api2, critères `API-*`),
+[PAGE_COMPETITIONS](../../specs/public/PAGE_COMPETITIONS.md) (`CPL-*`),
+[PAGE_COMPETITION](../../specs/public/PAGE_COMPETITION.md) (`CMP-*`),
+[PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) (`EVT-*`, `GRP-*`, `AGG-*`).
+Statut : 📝 specs proposées, **en attente de validation** — les lignes « *à préciser* » seront complétées à
+l'implémentation.
 
-### 2.1 ⌨️ Tester en local
+### 2.0 Avant de coder : décisions à prendre
+
+| # | Décision | Proposition | ☐ |
+|---|---|---|---|
+| 1 | Q-P2-1 : retirer `r_1_id` / `r_2_id` (licences d'arbitres) de `/group/…/games` et `/event/{id}/games` | Oui (non lus par app2) | ☐ |
+| 2 | Q-P2-2 : liens PDF | Aucun en phase 2 | ☐ |
+| 3 | Onglet par défaut d'une compétition | `ranking` si terminée, sinon `games` | ☐ |
+| 4 | Specs validées (statut « Validée » dans `DOC/specs/public/README.md`) | — | ☐ |
+
+### 2.1 Découpage en PR (chacune mergeable et déployable seule)
+
+| PR | Contenu | Impact hors beta |
+|---|---|---|
+| **2a** | api2 : fixtures + tests de caractérisation des 4 endpoints existants, **sans changer le code** | aucun |
+| **2b** | api2 : `ResultsScope` / service / repository ; endpoints existants délégués (JSON inchangé hors Q-P2-1) | api2 (app2) — **vérifier app2** |
+| **2c** | api2 : nouveaux endpoints `/seasons`, `/group/…/competitions`, `/competition/…`, `/event/{id}/competitions` | api2 (ajouts seulement) |
+| **2d** | app3 : page Compétitions + menu `competitions-list` `ready: true` | aucun |
+| **2e** | app3 : page compétition (onglets) | aucun |
+| **2f** | app3 : vues événement / groupe + cartes de l'accueil vers `/events/{id}` | aucun |
+
+### 2.2 ⌨️ Tester en local
+
+```bash
+git fetch origin && git checkout <branche de la PR> && git pull
+make docker_dev_up
+make api2_test              # unit + integration (recharge SQL/fixtures/) = job CI tests-api2
+make app3_test              # unit + nuxt + e2e
+```
+
 | # | Commande / action | Résultat attendu | ☐ |
 |---|---|---|---|
-| 1 | `make api2_test` | suites unit + integration vertes, dont les nouveaux tests `Public*Controller` / services | ☐ |
-| 2 | `make app3_test` | tous les tests verts, critères `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*` couverts | ☐ |
-| 3 | Comparaison legacy ↔ app3 sur 3 compétitions de référence (une CHPT, une CP, une multi) | mêmes matchs, scores, classements, stats (grille de parité de `PAGE_COMPETITION.md` § 7) | ☐ |
-| … | *à compléter* | | |
+| 1 | `make api2_test` (PR 2a) | vert ; fichiers de référence créés sous `sources/api2/tests/Integration/__snapshots__/` | ☐ |
+| 2 | `make api2_test` (PR 2b) | vert **sans modification** des fichiers de référence (hors retrait `r_1_id`/`r_2_id`, visible dans le diff) | ☐ |
+| 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☐ |
+| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
+| 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☐ |
+| 6 | `https://kpi.localhost/api2/doc` | tag « 3. Site public » avec les nouveaux endpoints | ☐ |
+| 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☐ |
+| 8 | `make app3_test` | vert ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☐ |
+| 9 | `https://beta.kpi.localhost/competitions` | redirige vers la saison active ; menu « Compétitions et résultats » sans icône externe | ☐ |
+| 10 | Une compétition CHPT, une CP, une MULTI : tous les onglets | contenu conforme ; onglets utilisables sans JavaScript (désactiver JS) | ☐ |
+| 11 | `https://beta.kpi.localhost/events/<id>` et `/groups/<saison>/<code>` | matchs de toutes les compétitions, puces vers chaque compétition | ☐ |
+| 12 | Clic sur une équipe / un match | équipe → `kpequipes.php` (legacy) ; match → app2 `/game/<id>` | ☐ |
 
-### 2.2 Déploiement
-- Le diff touche `sources/api2/` → le wrapper relance composer/migrations/cache et **`api2_restart`** (worker FrankenPHP). ☐
-- Entrées de menu passées à `ready: true` : « Compétitions et résultats ». ☐
-- *à compléter*
+### 2.3 ⌨️ 🌐 PR et CI
+
+Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2`, `smoke-api2` (PR 2a–2c) ; `lint-nuxt`, `build-nuxt`,
+`tests-app3` (PR 2d–2f) ; `ci-summary` vert. ☐
+
+### 2.4 🖥 Préprod (`/data/kpi_preprod`)
+
+| # | Commande / action | Résultat attendu | ☐ |
+|---|---|---|---|
+| 1 | 🌐 « Deploy preprod » (PR touchant `sources/api2/`) | vert ; le wrapper fait composer/cache puis **`make api2_restart`** | ☐ |
+| 2 | `make api2_logs_errors lines=50` | aucune erreur nouvelle | ☐ |
+| 3 | `curl -s https://preprod.kayak-polo.info/api2/seasons` | JSON avec la saison active | ☐ |
+| 4 | app2 préprod : un événement en cours ou récent | matchs et tableaux identiques à avant | ☐ |
+| 5 | `make app3_generate_preprod` *(si non fait par le wrapper)* | build OK + redémarrage | ☐ |
+| 6 | **Grille de parité** ([PAGE_COMPETITION § 7](../../specs/public/PAGE_COMPETITION.md)) sur une CHPT, une CP, une MULTI + un événement et un groupe ([PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) AGG-03) | mêmes matchs, scores, classements, stats que `kp*.php` | ☐ |
+| 7 | Un jour de compétition : page Matchs ouverte | rafraîchissement toutes les 60 s (onglet réseau), arrêt quand l'onglet est masqué | ☐ |
+
+**Non-régression préprod** : `kpclassements.php`, `kpmatchs.php` (legacy), app2, `/admin2`. ☐
+
+### 2.5 Production
+
+Comme le § 1.5 (`make release_tag`, « Deploy production »), puis :
+- 🖥 `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP : sinon l'ancien code reste en mémoire) ; ☐
+- `curl -s https://www.kayak-polo.info/api2/seasons` ; app2 prod sur un événement ; ☐
+- grille de parité réduite (une compétition) sur `beta.kayak-polo.info`. ☐
+
+### 2.6 Retour arrière
+
+| Situation | Action |
+|---|---|
+| app2 régresse après 2b | Revert de la PR 2b sur `main` (les tests de caractérisation de 2a restent) puis déploiement ; en prod, redéployer le tag précédent ([runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md)) |
+| Page app3 en erreur | Repasser l'entrée de menu à `ready: false` (repli legacy) ou `stop app3` (§ 1.6) |
 
 ---
 

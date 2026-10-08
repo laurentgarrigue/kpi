@@ -52,8 +52,10 @@ En phase 4a, elle accueillera les contenus éditoriaux (à la une, actualités, 
 - **HOME-05** — Liste vide → message « aucun événement » ; erreur api2 → message d'indisponibilité, page en 200.
 - **HOME-06** — La sélection des événements est une fonction pure testée (`latestEvents(events, 6)`).
 
-## 6. Évolutions prévues (phase 4a)
+## 6. Évolutions prévues
 
-Blocs éditoriaux administrables (à la une, dernières actualités, bandeau d'alerte, partenaires), remplacement
-des liens app2 par les pages événement d'app3 (phase 2). Ces évolutions mettront à jour cette spec avant
-implémentation.
+- **Phase 2** : les cartes d'événement mènent à `/events/{id}` (PAGE_EVENT_GROUP.md § 8) ; HOME-04 sera mis à
+  jour dans la PR qui livre la vue événement.
+- **Phase 4a** : blocs éditoriaux administrables (à la une, dernières actualités, bandeau d'alerte, partenaires).
+
+Ces évolutions mettront à jour cette spec avant implémentation.
