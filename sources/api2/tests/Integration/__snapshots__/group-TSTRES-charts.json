@@ -350,51 +350,6 @@
                                 "t_b_logo": "KIP/logo/charlie.png"
                             }
                         ]
-                    },
-                    "99-Journée 3": {
-                        "teams": [
-                            {
-                                "c_season": "2999",
-                                "c_code": "RCH",
-                                "c_type": "CHPT",
-                                "c_order": 1,
-                                "c_tour": 1,
-                                "c_category": "Poule A",
-                                "c_status": "ON",
-                                "d_id": 9203,
-                                "d_phase": "Journée 3",
-                                "d_round": 1,
-                                "t_count": 4,
-                                "d_level": 1,
-                                "d_type": "C",
-                                "d_start": "2999-05-01",
-                                "d_end": "2999-05-02",
-                                "d_place": "Cachéville",
-                                "d_dpt": "33",
-                                "t_id": null,
-                                "t_number": null,
-                                "t_label": null,
-                                "t_club": null,
-                                "t_clt": null,
-                                "t_pts": null,
-                                "t_pld": null,
-                                "t_won": null,
-                                "t_draw": null,
-                                "t_lost": null,
-                                "t_f": null,
-                                "t_plus": null,
-                                "t_minus": null,
-                                "t_diff": null,
-                                "t_ptslv": null,
-                                "t_cltlv": null,
-                                "t_logo": "KIP/logo/empty-logo.png"
-                            }
-                        ],
-                        "type": "C",
-                        "libelle": "Journée 3",
-                        "level": 1,
-                        "t_count": 4,
-                        "games": null
                     }
                 }
             }

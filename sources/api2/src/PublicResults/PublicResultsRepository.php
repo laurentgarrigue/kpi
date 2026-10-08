@@ -24,9 +24,11 @@ final class PublicResultsRepository
         CASE WHEN cea.logo IS NULL THEN 'KIP/logo/empty-logo.png' ELSE cea.logo END t_a_logo,
         CASE WHEN ceb.logo IS NULL THEN 'KIP/logo/empty-logo.png' ELSE ceb.logo END t_b_logo";
 
-    /** Officiels d'un match, dans les listes de matchs seulement. */
+    /**
+     * Officiels d'un match, dans les listes de matchs seulement. Leurs numéros de licence (Matric_arbitre_*)
+     * ne servent qu'à la jointure : ils ne sont jamais exposés (D-P2-1).
+     */
     private const OFFICIAL_COLUMNS = "m.Arbitre_principal r_1, m.Arbitre_secondaire r_2,
-        m.Matric_arbitre_principal r_1_id, m.Matric_arbitre_secondaire r_2_id,
         CONCAT(lcp.Nom, ' ', lcp.Prenom) r_1_name,
         CONCAT(lcs.Nom, ' ', lcs.Prenom) r_2_name,
         m.Timeshoot s_name";
@@ -103,10 +105,8 @@ final class PublicResultsRepository
      */
     public function findChartTeams(ResultsScope $scope, ResultsFormat $format): array
     {
-        $filters = [$scope->condition()];
-        if ($format === ResultsFormat::Group) {
-            $filters[] = "c.Publication = 'O'";
-        }
+        // Compétition et journée publiées, quel que soit le format (D-P2-3).
+        $filters = [$scope->condition(), "c.Publication = 'O'", "j.Publication = 'O'"];
         if (!$scope->isSingleGameday()) {
             $filters[] = self::NO_BREAKS;
         }

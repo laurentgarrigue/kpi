@@ -35,8 +35,6 @@
         "t_b_logo": "KIP/logo/bravo.png",
         "r_1": "ARBITRE Un (C001)",
         "r_2": "ARBITRE Deux (C002)",
-        "r_1_id": 9901,
-        "r_2_id": 9902,
         "r_1_name": "ARBITRE Un",
         "r_2_name": "ARBITRE Deux",
         "s_name": "CHRONO Un"
@@ -77,8 +75,6 @@
         "t_b_logo": "KIP/logo/empty-logo.png",
         "r_1": "ARBITRE Deux (C002)",
         "r_2": null,
-        "r_1_id": 9902,
-        "r_2_id": null,
         "r_1_name": "ARBITRE Deux",
         "r_2_name": null,
         "s_name": null

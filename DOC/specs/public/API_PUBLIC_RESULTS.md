@@ -142,6 +142,11 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
   `r_1_id` / `r_2_id` (`Matric_arbitre_*`), exclus par la stratégie § 11 et non lus par app2 (seuls `r_1`/`r_2`
   le sont). Ils sont retirés lors de la refactorisation : seule exception assumée au « JSON identique »
   (fichiers de référence mis à jour en conséquence, dans un commit distinct).
+- **D-P2-3 — Rien de non publié dans les tableaux** (constat des tests de caractérisation, 08/10/2026).
+  `/group/…/charts` listait aussi les phases des journées **non publiées** (sans leurs matchs) et
+  `/event/{id}/charts` ne filtrait ni la compétition ni la journée. Les tableaux ne retiennent désormais que
+  les compétitions et journées publiées (API-04) ; fichiers de référence mis à jour dans le même commit
+  (suppressions seulement).
 - **D-P2-2 — Liens PDF.** Les PDF publics doivent accepter leurs paramètres en GET, comme ceux appelés par
   app4 ([LEGACY_PDF_STANDALONE_ACCESS.md](../../developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)).
   Vérification faite : les PDF publics utiles à app3 les acceptent déjà, la session n'étant qu'une valeur par
@@ -160,7 +165,7 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
 ## 7. Critères d'acceptation
 
 - **API-01** — Les réponses de `/group/{s}/{c}/games|charts` et `/event/{id}/games|charts` sur les fixtures sont
-  identiques aux fichiers de référence capturés **avant** la refactorisation (hors décision Q-P2-1).
+  identiques aux fichiers de référence capturés **avant** la refactorisation (hors décisions D-P2-1 et D-P2-3).
 - **API-02** — Les quatre endpoints historiques et les nouveaux endpoints `games`/`charts` passent par le même
   service ; aucune requête de matchs ou de tableaux n'est dupliquée dans un contrôleur.
 - **API-03** — `/competition/{s}/{c}/games` renvoie exactement les matchs de `/group/{s}/{groupe}/games` dont
