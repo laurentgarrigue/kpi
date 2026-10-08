@@ -1,0 +1,3 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "../../../../kpi-layer/app/assets/css/kpi-theme.css";

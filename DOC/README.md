@@ -26,6 +26,10 @@ Documentation orientée utilisateurs finaux et fonctionnalités du système.
 
 Voir [user/README.md](user/README.md) pour plus de détails.
 
+## 📐 [Specs du site public](specs/public/README.md)
+
+Specs écrites avant l'implémentation (template, navigation, pages) du nouveau site public (app3).
+
 ## 💻 [Documentation Développeur](developer/)
 
 Documentation technique pour le développement et la maintenance du projet.
@@ -61,6 +65,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[TOOLTIP_TESTING_GUIDE.md](developer/guides/infrastructure/TOOLTIP_TESTING_GUIDE.md)** - Guide de test tooltips
 
 #### [Bonnes Pratiques](developer/guides/)
+- **[CLEAN_CODE.md](developer/guides/CLEAN_CODE.md)** - ⭐ Principes (DRY, KISS, SOLID, YAGNI, TDD) et *Definition of Done*, pour tout changement
 - **[BEST_PRACTICES_JAVASCRIPT_SMARTY.md](developer/guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md)** - Bonnes pratiques JavaScript & Smarty (traductions, JSON, constructeurs)
 
 #### [Fonctionnalités](developer/guides/features/)
@@ -75,6 +80,7 @@ Documentation technique pour le développement et la maintenance du projet.
 - **[TOOLTIP_MIGRATION_STATUS.md](developer/in-progress/status/TOOLTIP_MIGRATION_STATUS.md)** - ⏳ Migration tooltips
 - **[MASKED_INPUT_MIGRATION_STATUS.md](developer/in-progress/status/MASKED_INPUT_MIGRATION_STATUS.md)** - ⏳ Migration masked input
 
+- **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - ☐ Site public (app3) : commandes, tests et résultats attendus pour tester et déployer chaque phase
 #### [Plans d'action](developer/in-progress/plans/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Stratégie de refonte de la partie publique (WordPress + kp*.php → app3 Nuxt SSR + api2, médias hors Git)
 - **[JQUERY_ELIMINATION_STRATEGY.md](developer/in-progress/plans/JQUERY_ELIMINATION_STRATEGY.md)** - Stratégie élimination jQuery

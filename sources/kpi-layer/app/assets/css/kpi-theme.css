@@ -1,0 +1,124 @@
+/*
+ * kpi-layer — FFCK charter, "Univers Compétition" (PUBLIC_SITE_REDESIGN_STRATEGY.md § 10).
+ * Import AFTER "tailwindcss" and "@nuxt/ui" in the consuming app's main stylesheet.
+ * Components use these tokens only: no hexadecimal colour in components (CLEAN_CODE.md).
+ */
+
+/* ---------------------------------------------------------------- fonts */
+/* Raleway: SIL Open Font License (public/fonts/raleway/OFL.txt), self-hosted (no third-party call). */
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/raleway/raleway-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Raleway';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/raleway/raleway-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Raleway';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/raleway/raleway-latin-wght-italic.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Raleway';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('/fonts/raleway/raleway-latin-ext-wght-italic.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Agency FB: FFCK licence (same file as app4). */
+@font-face {
+  font-family: 'Agency FB';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('/fonts/agency-fb/agencyfb.ttf') format('truetype');
+}
+
+/* --------------------------------------------------------------- tokens */
+/* `static`: emit every token, because Nuxt UI reads the palettes through CSS variables at runtime. */
+@theme static {
+  --font-sans: 'Raleway', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Agency FB', 'Arial Narrow', Arial, sans-serif;
+
+  /* Charter colours used by name (see SITE_LAYOUT.md § 3) */
+  --color-navy: #20265b;
+  --color-ink: #1e1e1c;
+  --color-line: #c6c7c7;
+  --color-sky: #69b9e6;
+
+  /* Generated palette — scripts/generate-palette.py (do not edit by hand) */
+  /* kpi-blue: 500 = #357b9c */
+  --color-kpi-blue-50: oklch(0.975 0.010 231.75);
+  --color-kpi-blue-100: oklch(0.945 0.022 231.75);
+  --color-kpi-blue-200: oklch(0.890 0.039 231.75);
+  --color-kpi-blue-300: oklch(0.820 0.060 231.75);
+  --color-kpi-blue-400: oklch(0.720 0.078 231.75);
+  --color-kpi-blue-500: oklch(0.553 0.086 231.75);
+  --color-kpi-blue-600: oklch(0.483 0.078 231.75);
+  --color-kpi-blue-700: oklch(0.413 0.078 231.75);
+  --color-kpi-blue-800: oklch(0.353 0.078 231.75);
+  --color-kpi-blue-900: oklch(0.293 0.078 231.75);
+  --color-kpi-blue-950: oklch(0.233 0.078 231.75);
+  /* kpi-red: 500 = #c94a4c */
+  --color-kpi-red-50: oklch(0.975 0.019 22.73);
+  --color-kpi-red-100: oklch(0.945 0.040 22.73);
+  --color-kpi-red-200: oklch(0.890 0.073 22.73);
+  --color-kpi-red-300: oklch(0.820 0.113 22.73);
+  --color-kpi-red-400: oklch(0.720 0.146 22.73);
+  --color-kpi-red-500: oklch(0.582 0.162 22.73);
+  --color-kpi-red-600: oklch(0.512 0.146 22.73);
+  --color-kpi-red-700: oklch(0.442 0.146 22.73);
+  --color-kpi-red-800: oklch(0.382 0.146 22.73);
+  --color-kpi-red-900: oklch(0.322 0.146 22.73);
+  --color-kpi-red-950: oklch(0.262 0.146 22.73);
+  /* kpi-green: 500 = #186a32 */
+  --color-kpi-green-50: oklch(0.975 0.014 149.34);
+  --color-kpi-green-100: oklch(0.945 0.029 149.34);
+  --color-kpi-green-200: oklch(0.890 0.053 149.34);
+  --color-kpi-green-300: oklch(0.820 0.082 149.34);
+  --color-kpi-green-400: oklch(0.720 0.105 149.34);
+  --color-kpi-green-500: oklch(0.463 0.117 149.34);
+  --color-kpi-green-600: oklch(0.393 0.105 149.34);
+  --color-kpi-green-700: oklch(0.323 0.105 149.34);
+  --color-kpi-green-800: oklch(0.263 0.105 149.34);
+  --color-kpi-green-900: oklch(0.203 0.105 149.34);
+  --color-kpi-green-950: oklch(0.143 0.105 149.34);
+  /* kpi-gold: 500 = #9a7208 */
+  --color-kpi-gold-50: oklch(0.975 0.014 83.54);
+  --color-kpi-gold-100: oklch(0.945 0.029 83.54);
+  --color-kpi-gold-200: oklch(0.890 0.052 83.54);
+  --color-kpi-gold-300: oklch(0.820 0.081 83.54);
+  --color-kpi-gold-400: oklch(0.720 0.105 83.54);
+  --color-kpi-gold-500: oklch(0.577 0.116 83.54);
+  --color-kpi-gold-600: oklch(0.507 0.105 83.54);
+  --color-kpi-gold-700: oklch(0.437 0.105 83.54);
+  --color-kpi-gold-800: oklch(0.377 0.105 83.54);
+  --color-kpi-gold-900: oklch(0.317 0.105 83.54);
+  --color-kpi-gold-950: oklch(0.257 0.105 83.54);
+}
+
+/* ----------------------------------------------------------------- base */
+@layer base {
+  body {
+    @apply font-sans text-ink bg-white antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

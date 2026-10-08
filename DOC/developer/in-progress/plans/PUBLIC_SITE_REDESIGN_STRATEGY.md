@@ -1,7 +1,7 @@
 # Stratégie de refonte de la partie publique (kayak-polo.info)
 
-**Date** : 28 septembre 2026 (v3 : décisions Q1–Q12 et Q-A–Q-G intégrées, charte FFCK)
-**Statut** : ✅ Orientations validées — phases 0a et 0b **closes** (06/10/2026), prochaine étape : phase 0c (§ 12)
+**Date** : 7 octobre 2026 (v4 : phases 0a/0b closes, domaines beta, livraison continue, méthode specs + clean code)
+**Statut** : ✅ Orientations validées — phases 0a et 0b **closes** (06/10/2026) ; phase 1 (socle) **livrée dans le dépôt**, activation serveur à faire ; phase 2 = prochaine (§ 12)
 **Périmètre** : page d'accueil et contenus WordPress, pages publiques `kp*.php`, affichages `frame_*.php`, exports publics (PDF, ICS), médias, articulation avec app2 / app4 / api2
 
 ---
@@ -14,7 +14,9 @@
 | **Rendu** | **Nuxt 4 en SSR hybride**, serveur Nitro dans un **conteneur Node** dédié (validé). Cache SWR court sur les résultats, rafraîchissement client + Mercure pour le live. |
 | **CMS** | **Abandon de WordPress** (option C) : module éditorial natif — articles, pages, menu, médias, galeries, SEO, partage social, **formulaires d'inscription** — édité dans **app4**, servi par **api2**. Reprise d'environ **50 articles sur 325** et des **pages utiles sur 43**. |
 | **URL** | **Termes anglais**, alignés sur app4 (`/games`, `/pitches`, `/ranking`, `/teams/{id}`…). Anciennes URL redirigées en 301. |
-| **Domaine** | Remplace `www.kayak-polo.info` ; prévisualisation sur **`beta.kayak-polo.info`**. |
+| **Domaine** | Remplace `www.kayak-polo.info` à la bascule. D'ici là, le site est servi **en parallèle** sur **`beta.preprod.kayak-polo.info`** (préprod) et **`beta.kayak-polo.info`** (prod), non indexé (§ 4.3). |
+| **Livraison** | **Continue et sans impact** : chaque incrément est mergé sur `main` et déployé en préprod puis en prod, sans toucher au legacy, à app2 ni à app4 jusqu'à la bascule (§ 4.3). |
+| **Méthode** | **Spec avant code** pour le template, les menus et chaque page ou fonctionnalité ([DOC/specs/public/](../../../specs/public/README.md)) ; principes **DRY, KISS, SOLID, YAGNI, TDD** ([CLEAN_CODE.md](../../guides/CLEAN_CODE.md)), applicables à ce chantier et aux suivants (§ 12.1). |
 | **app2** | Reste séparée (`app.kayak-polo.info`) ; son authentification disparaîtra (le contrôle/scrutineering migre dans app4, chantier distinct). Convergence réévaluée après la bascule. |
 | **Médias** | Les images uploadées (logos clubs/compétitions, photos d'équipes…) **sortent de Git** vers un stockage non versionné, avec une **sauvegarde dédiée** (§ 8). **Pas de réécriture de l'historique Git** (§ 8.4). |
 | **Identité visuelle** | Charte FFCK, **univers Compétition** : bleus `#69b9e6` / `#357b9c`, rouges `#c94a4c` / `#882831`, noir `#1e1e1c`, gris `#c6c7c7` ; titres en Agency FB, textes en Raleway (§ 10). |
@@ -74,12 +76,12 @@ Passer app2 en SSR casserait sa stratégie hors-ligne (Dexie, service worker, `n
 ### 2.2 Architecture retenue
 
 - **`sources/app3/`** — nouveau site public, Nuxt 4 SSR, servi sur `www.kayak-polo.info`.
-- **`sources/kpi-layer/`** — Nuxt Layer (`extends: ['../kpi-layer']`) utilisé par app2, app3 et app4 :
+- **`sources/kpi-layer/`** — Nuxt Layer (`extends: ['../kpi-layer']`) utilisé **d'abord par app3**, puis par app2 et app4 à partir de la phase 6 (pour ne pas les impacter avant la bascule, § 4.3) :
   - thème Tailwind et `app.config.ts` Nuxt UI (couleurs, typographie, dark mode — cf. `DOC/specs/DARK_MODE.md`), construits à partir des **jetons de la charte FFCK, univers Compétition** (§ 10) ;
   - client api2 typé (`useApi2`) et types TypeScript des réponses publiques ;
   - composants d'affichage **en lecture seule** : liste de matchs, feuille de match, classement, tableau de phases, carte des clubs, nom/logo d'équipe, sélecteur de langue, bouton de partage ;
   - clés i18n communes (phases, statuts de match, libellés de classement).
-- **Extraction progressive** : un composant passe d'app2/app4 au layer au moment où app3 en a besoin, sans bloquer les autres chantiers.
+- **Extraction progressive** : un composant d'app2/app4 est porté dans le layer au moment où app3 en a besoin. app2/app4 gardent leur copie jusqu'à leur adoption du layer : cette duplication temporaire est **tracée** dans [kpi-layer/README.md](../../../../sources/kpi-layer/README.md) et résorbée en phase 6.
 - **Passerelles** : chaque page compétition/événement propose « 📱 Suivre dans l'app » vers app2 ; app2 renvoie vers le site pour l'historique, les clubs et les articles.
 
 **Contrainte de build** : les cibles `make app2_generate_*` ne montent que `sources/app2` dans le conteneur Node temporaire. Avec le layer, il faut monter `sources/` (ou `sources/kpi-layer` en plus) ; idem dans la CI (`.github/workflows/ci.yml`).
@@ -92,7 +94,9 @@ Une fois le scrutineering migré dans app4, app2 devient une application **100 %
 
 ---
 
-## 3. Réutiliser le nom app3 : nettoyage préalable
+## 3. Réutiliser le nom app3 : nettoyage préalable ✅
+
+> ✅ **Terminé** : fusionné sur `main` (#330) et déployé jusqu'en production. Section conservée pour mémoire.
 
 L'ancien `sources/app3` (prototype de feuille de marque, gelé, hors CI et hors déploiement) doit être **entièrement retiré** avant de créer le nouveau site sous le même nom.
 
@@ -119,7 +123,7 @@ L'ancien `sources/app3` (prototype de feuille de marque, gelé, hors CI et hors 
 1. Coordination avec le chantier scoring : tag d'archive posé sur le dernier commit contenant l'ancien app3, référencé par les docs de portage.
 2. Supprimer `sources/app3/`, le service `node_app3`, les cibles Makefile, `APP3_DOMAIN_NAME`, les exclusions CI/Dependabot/CodeQL, et nettoyer la documentation.
 3. **Commit dédié**, séparé de la création du nouveau site, pour pouvoir le restaurer facilement.
-4. Recréer ensuite `sources/app3/` (site public), avec ses propres cibles : `app3_dev`, `app3_build`, `app3_restart`, `app3_logs`, `init_env_app3`, les services `node_app3` (dev) et `site_app3` (SSR, préprod/prod), et `APP3_DOMAIN_NAME` réutilisé pour `beta.` en préprod.
+4. Recréer ensuite `sources/app3/` (site public), avec ses propres cibles `make app3_*` et ses services (`node_app3` en dev, `app3` en préprod/prod) — cf. [SITE_PLATFORM.md](../../../specs/public/SITE_PLATFORM.md). Le domaine est dérivé de `KPI_DOMAIN_NAME` (`beta.${KPI_DOMAIN_NAME}`) : aucune nouvelle variable n'est nécessaire.
 
 > Attention au **cache navigateur** : l'ancien app3 a pu être servi sur `app3.localhost` avec un service worker PWA. En dev, vider les données du site ou changer de domaine local évite des surprises.
 
@@ -144,7 +148,7 @@ routeRules: {
 ```
 
 - **Live** : rafraîchissement côté client (polling comme app2), puis abonnement **Mercure** aux topics publics qu'introduira le chantier scoring.
-- **Conteneur** `${APPLICATION_NAME}_site` : `node:22-alpine`, `.output/server/index.mjs`, sur `network_${APPLICATION_NAME}` pour appeler api2 **en interne** côté serveur (sans repasser par Traefik), et via l'URL publique côté navigateur. `restart: unless-stopped`, healthcheck, `make app3_logs`, `make app3_restart`.
+- **Conteneur** `${APPLICATION_NAME}_app3` : `node:22-alpine` exécutant `.output/server/index.mjs`, sortie de `nuxt build` construite par `make app3_generate_<env>` dans un conteneur temporaire (même principe qu'app2/app4). Il est sur `network_${APPLICATION_NAME}` pour appeler api2 **en interne** côté serveur (`http://${APPLICATION_NAME}_api2`, sans repasser par Traefik), et via l'URL publique côté navigateur. `restart: unless-stopped`, healthcheck sur `/healthz`, `make app3_logs`, `make app3_restart`. Détail : [SITE_PLATFORM.md](../../../specs/public/SITE_PLATFORM.md).
 - **SEO** : `useSeoMeta`, `sitemap.xml` dynamique, données structurées schema.org (`SportsEvent`, `SportsTeam`, `NewsArticle`), `hreflang` FR/EN, image Open Graph par article et par compétition.
 - **Invalidation** : lors de la publication d'un article dans app4, api2 appelle un endpoint interne de purge du cache Nitro, pour que l'article apparaisse immédiatement.
 
@@ -157,12 +161,28 @@ routeRules: {
     /admin2/* ──► Nginx app4 (admin + module éditorial)                       │
     /admin/*, /Pdf*.php, /frame_*.php, /live/*, /api/*, /img/*, /media/*… ──► Apache legacy (liste explicite)
     /*  (tout le reste) ──► Node app3 (SSR) ── appels internes ──► api2
-  beta.kayak-polo.info ──► Node app3 (préprod, avant bascule)
+  beta.kayak-polo.info ──► Node app3 (prod, avant bascule)   — beta.preprod.kayak-polo.info en préprod
   app.kayak-polo.info  ──► Nginx app2 (PWA, inchangée)
 ```
 
 - Aujourd'hui Apache est le **routeur par défaut** (`!PathPrefix('/api2') && !PathPrefix('/admin2')`). À la bascule, **app3 le devient**, et Apache ne reçoit plus qu'une **liste explicite** de préfixes legacy. Cette liste sert de checklist de décommissionnement.
 - WordPress (conteneur `dbwp` compris) est retiré après la migration et une période de sécurité (archive SQL + fichiers conservée).
+
+### 4.3 Livraison continue sans impact jusqu'à la bascule
+
+Le site est développé **par incréments mergés sur `main`** et déployés comme le reste du dépôt (préprod automatique, prod sur tag), **sans attendre la fin du chantier**. Garde-fous :
+
+| Garde-fou | Mise en œuvre |
+|---|---|
+| **Domaine séparé** | Routeur Traefik dédié `Host(beta.${KPI_DOMAIN_NAME})` → `beta.preprod.kayak-polo.info` en préprod, `beta.kayak-polo.info` en prod, `beta.kpi.localhost` en dev. Les routeurs existants (legacy, api2, app2, app4) ne sont **pas modifiés**. |
+| **Pas d'indexation** | Tant que `NUXT_PUBLIC_BETA` vaut `true` (défaut) : `robots.txt` « Disallow: / », en-tête `X-Robots-Tag: noindex, nofollow` et balise `robots`. Aucun contenu dupliqué avec le site actuel. |
+| **Lecture seule** | Le site ne consomme que des endpoints publics GET d'api2. Les nouveaux endpoints sont **ajoutés**, jamais modifiés à la place d'un existant. |
+| **app2 / app4 intacts** | Ils ne consomment pas `kpi-layer` avant la bascule. Leur adoption du layer est un incrément distinct (phase 6), testé séparément. |
+| **Navigation partielle assumée** | Une entrée de menu dont la page n'est pas encore livrée pointe vers la page legacy équivalente sur `www` (cf. [SITE_NAVIGATION.md](../../../specs/public/SITE_NAVIGATION.md)) : le beta est utilisable à chaque incrément. |
+| **Panne isolée** | Si app3 ne démarre pas, seul `beta.*` est indisponible. Son URL n'entre pas dans les smoke tests bloquants avant la bascule. |
+| **Prérequis serveur (une fois)** | Enregistrements DNS `beta.preprod` et `beta` ; ajout de `make app3_generate_${ENV}` dans `deploy-wrapper.sh` (dépôt privé `vps-manager`). Procédure : [SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md). |
+
+La **bascule** (phase 5) se réduit alors à faire pointer `www` vers app3, inverser le routeur par défaut et activer l'indexation.
 
 ---
 
@@ -251,7 +271,7 @@ Langue par défaut FR sans préfixe, anglais sous `/en/...` (slugs de contenu tr
 | `/groups/{season}/{code}/…` | `kp*.php?Group=…&Compet=*` (vue groupe) |
 | `/events/{id}/…` (mêmes sous-pages) | `kp*.php?event=…` |
 | `/history/{groupCode}` | `kphistorique.php` |
-| `/teams/{id}` | `kpequipes.php` |
+| `/teams` (recherche), `/teams/{id}` | `kpequipes.php` |
 | `/clubs`, `/clubs/{code}` | `kpclubs.php`, `kplogos.php` |
 | `/games/{id}` | feuille de match publique (app2 `/game/[id]`) |
 
@@ -342,7 +362,7 @@ S'y ajoutent les **médias WordPress** repris (§ 5.4) et ceux du nouveau module
 
 > ⚠️ Une sauvegarde sur le même VPS protège contre les **erreurs** (suppression, écrasement, mauvaise manipulation), **pas contre la perte du serveur**. L'externalisation est un chantier ultérieur, déjà décidé. Avec restic, elle se limitera à déclarer un second dépôt distant et à y lancer `restic copy`. Aucune refonte ne sera nécessaire.
 
-Ce chantier est **indépendant** du site et profite déjà à l'admin : il peut démarrer immédiatement (phase 0b).
+✅ **En production** depuis la phase 0b (06/10/2026).
 
 ### 8.4 Faut-il réécrire l'historique Git ? — Non
 
@@ -358,7 +378,7 @@ Ce chantier est **indépendant** du site et profite déjà à l'admin : il peut 
 | `checkout` sur un serveur d'une branche antérieure au commit (ex. préprod expérimentale) | Git **recrée** les anciens fichiers dans `sources/img/…` | Sans effet : le conteneur voit le montage `HOST_MEDIA_PATH`, qui masque le dossier du dépôt. Les fichiers disparaissent à nouveau au retour sur une branche récente. |
 | Branche en cours qui **ajoute ou modifie** une image de ces dossiers | Conflit *modify/delete* au merge | Garder la suppression, déposer l'image dans le stockage médias. **Au 28/09/2026, aucune des 11 branches distantes ne touche `sources/img/`.** |
 | Branche en cours qui ne touche pas ces dossiers | Aucun : la suppression arrive au prochain merge de `main` | — |
-| Nouveau clone de dev | Pas d'images | `make media_sync_from_prod` ou image par défaut |
+| Nouveau clone de dev | Pas d'images | `make media_init` (historique Git + images par défaut) ou `make media_sync_from src=…` |
 
 **Réécriture de l'historique (`git filter-repo`) : déconseillée.** Le seul gain serait de récupérer ≈ 113 Mo dans `.git`. En contrepartie :
 - tous les SHA changent ;
@@ -482,21 +502,28 @@ Règles de mise en œuvre :
 |---|---|---|---|
 | **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié, mergé et déployé) |
 | **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait : dev, préprod et prod migrés, cron de sauvegarde actif (06/10/2026) — [checklist archivée](../../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md) |
-| **0c. Cadrage** | Jetons de la charte FFCK univers Compétition (§ 10), polices, pictogrammes SVG, maquettes (accueil, compétition, club, article, formulaire), table de redirections, validation des pages reprises | Maquettes validées | 1–2 sem. |
-| **1. Socle** | `kpi-layer` (thème, client api2, types), squelette app3 SSR (layout, menu, i18n, SEO), conteneur `site_app3` dans les 3 compose, cibles Makefile, CI, déploiement sur **beta.kayak-polo.info** | Site vide navigable en beta | 2 sem. |
+| **0c. Cadrage** 🟡 | Jetons de la charte FFCK univers Compétition (§ 10), polices, **specs du template, des menus et du socle** ; table de redirections et validation des pages reprises, affinées à chaque phase. Pas de maquettes séparées : le beta tient lieu de maquette, validée incrément par incrément | [Specs du socle](../../../specs/public/README.md) | specs du socle rédigées (07/10/2026) |
+| **1. Socle** 🟡 | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI (lint, typecheck, 49 tests, build), déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | **code livré (07/10/2026)** ; reste l'activation serveur : DNS + ligne `deploy-wrapper.sh` ([SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md)) |
 | **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |
 | **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | 3–4 sem. |
 | **4a. Éditorial** | Articles, pages, menu, médias, galeries, SEO, partage, blocs d'accueil, droit Rédacteur, RSS ; import des ~50 articles et des pages | CMS opérationnel, contenu repris | 3–4 sem. |
 | **4b. Formulaires** | Constructeur, inscriptions, notifications, journal des e-mails, export, liste publique, anti-spam, mode HelloAsso (widget/lien + import CSV) | Remplacement de Ninja Forms / TablePress | 2 sem. |
-| **5. Bascule** | Vérification des champs exposés (§ 11), inversion du routage Traefik, redirections 301 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |
-| **6. Décommissionnement** | WordPress en lecture seule puis arrêt (`dbwp`), suppression des `kp*.php`, `json-*.php`, templates et CSS « material » | Legacy public retiré | 1 sem. |
+| **5. Bascule** | Vérification des champs exposés (§ 11), `www` → app3, inversion du routage Traefik, indexation, redirections 301 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |
+| **6. Décommissionnement** | WordPress en lecture seule puis arrêt (`dbwp`), suppression des `kp*.php`, `json-*.php`, templates et CSS « material » ; adoption de `kpi-layer` par app2 et app4 | Legacy public retiré | 1 sem. |
 | **7. Écrans / embeds** | `/embed/...` + thèmes, redirection des `frame_*.php` | Fin de la dépendance Apache pour l'affichage | 2–3 sem. |
 
 **Dépendances** :
-- 0a précède 1.
-- 0b précède 4a (import des médias WordPress dans le stockage).
+- 0a précède 1 ✅. 0b précède 4a ✅.
+- Chaque page des phases 2 à 4 commence par **sa spec** dans `DOC/specs/public/`, validée avant l'implémentation.
 - La mise à jour Mercure du live dépend du chantier scoring ; les phases 2–3 livrent d'abord avec du polling.
-- Tant que la phase 5 n'a pas eu lieu, le site actuel reste intact.
+- Tant que la phase 5 n'a pas eu lieu, le site actuel reste intact (§ 4.3).
+
+### 12.1 Méthode de travail (ce chantier et les suivants)
+
+1. **Spec d'abord** : une spec par élément (template, navigation, page, fonctionnalité) dans [DOC/specs/public/](../../../specs/public/README.md), avec des critères d'acceptation testables. Pas de code sans spec validée.
+2. **TDD** : les critères d'acceptation deviennent des tests (Vitest côté Nuxt, PHPUnit côté api2), écrits avant le code.
+3. **Clean code** : DRY, KISS, SOLID, YAGNI, nommage explicite, fonctions courtes. Règles et *Definition of Done* dans [CLEAN_CODE.md](../../guides/CLEAN_CODE.md), référencé par `CLAUDE.md` pour tous les chantiers.
+4. **Petits incréments** : une PR = une spec (ou une partie), mergeable et déployable seule, sans impact hors `beta.*`.
 
 ---
 

@@ -272,6 +272,42 @@ services:
             - "traefik.http.routers.app2.tls=true"
             - "traefik.http.services.app2.loadbalancer.server.port=3000"
 
+    # Site public (app3, Nuxt SSR) — serveur de dev avec rechargement à chaud.
+    # Monte sources/ entier : app3 étend ../kpi-layer (DOC/specs/public/SITE_PLATFORM.md).
+    # Démarre avec le conteneur (cf. node_app4). Logs : `make app3_logs`.
+    node_app3:
+        container_name: kpi_node_app3
+        build:
+            context: ../sources/app3
+            dockerfile: ../../docker/node/Dockerfile
+        working_dir: /src/app3
+        user: "${USER_ID}:${GROUP_ID}"
+        command: sh -c "npm run dev"
+        volumes:
+            - ../sources:/src
+        environment:
+            - HOST=0.0.0.0
+            - PORT=3003
+            - TZ=Europe/Paris
+            - NUXT_PUBLIC_I18N_BASE_URL=https://beta.${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_BETA=true
+            - NUXT_API2_INTERNAL_URL=http://${APPLICATION_NAME}_api2
+            - NUXT_PUBLIC_API2_BASE_URL=https://${KPI_DOMAIN_NAME}/api2
+            - NUXT_PUBLIC_LEGACY_BASE_URL=https://${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_APP2_BASE_URL=https://app.${KPI_DOMAIN_NAME}
+        networks:
+            - network_kpi
+            - traefiknetwork
+        ports:
+            - "3003:3003"
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app3.rule=Host(`beta.${KPI_DOMAIN_NAME}`)"
+            - "traefik.http.routers.app3.entrypoints=websecure"
+            - "traefik.http.routers.app3.tls=true"
+            - "traefik.http.services.app3.loadbalancer.server.port=3003"
+
     node_wsm:
         container_name: kpi_node_wsm
         build:
