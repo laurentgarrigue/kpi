@@ -56,7 +56,7 @@ docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_p
 docker_production_restart docker_production_rebuild \
 app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_logs app3_test app3_lint app3_bash app3_npm_install app3_npm_add app3_npm_add_dev \
+app3_dev app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
 app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
 app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
@@ -519,6 +519,12 @@ app3_lint: ## ESLint + typecheck du site public (app3)
 
 app3_bash: ## Ouvre un shell dans le conteneur Node de dev (app3)
 	$(DOCKER_EXEC_NODE3) sh
+
+# Premier démarrage : node_app3 lance `npm run dev` au boot et redémarre en boucle sans node_modules,
+# donc `docker exec` y est impossible. Installation via un conteneur temporaire, avec l'UID de l'hôte.
+app3_npm_ci: ## Installe les dépendances d'app3 (lockfile) via un conteneur temporaire — 1er démarrage du dev
+	docker run --rm -u "$(USER_ID):$(GROUP_ID)" -e npm_config_cache=/tmp/.npm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine npm ci
+	@docker restart $(NODE3_CONTAINER_NAME) >/dev/null 2>&1 && echo "✅ $(NODE3_CONTAINER_NAME) redémarré" || true
 
 app3_npm_install: ## Installe les dépendances npm d'app3 (conteneur de dev)
 	$(DOCKER_EXEC_NODE3) sh -c "npm install"

@@ -6,7 +6,7 @@ Specs : [DOC/specs/public/](../../DOC/specs/public/README.md) · principes : [CL
 ## Démarrer
 
 ```bash
-make app3_npm_install     # dépendances (conteneur node_app3)
+make app3_npm_ci          # dépendances (conteneur temporaire ; 1er démarrage)
 make dev                  # tout l'environnement ; app3 sur https://beta.kpi.localhost
 make app3_logs
 ```
