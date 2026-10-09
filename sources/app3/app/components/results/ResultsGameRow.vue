@@ -26,7 +26,7 @@ const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName)
     </td>
     <td class="hidden px-2 py-2 text-sm md:table-cell">{{ game.d_phase }}<template v-if="game.g_code"> · {{ game.g_code }}</template></td>
     <td class="px-2 py-2 text-right">
-      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" />
+      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" />
     </td>
     <td class="px-2 py-2 text-center">
       <a v-if="sheet" :href="sheet.href" v-bind="NEW_TAB_ATTRS" class="hover:underline" data-testid="game-sheet">
@@ -35,7 +35,7 @@ const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName)
       <ResultsScore v-else :game="game" />
     </td>
     <td class="px-2 py-2">
-      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" />
+      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" :season="game.c_season" />
     </td>
     <td class="hidden px-2 py-2 text-sm lg:table-cell">{{ referees }}</td>
     <td class="px-2 py-2">

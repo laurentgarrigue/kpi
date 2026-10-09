@@ -1,0 +1,48 @@
+{
+  "status": 200,
+  "body": {
+    "competitions": [],
+    "events": [
+      {
+        "id": 9001,
+        "libelle": "Tournoi Test Alpha",
+        "place": "Testville",
+        "start": "2999-06-01",
+        "end": "2999-06-02"
+      }
+    ],
+    "teams": [
+      {
+        "number": 105,
+        "label": "Alpha Deux",
+        "club": {
+          "code": "C001",
+          "label": "Club Alpha Lacville"
+        }
+      },
+      {
+        "number": 101,
+        "label": "Equipe Alpha",
+        "club": {
+          "code": "C001",
+          "label": "Club Alpha Lacville"
+        }
+      }
+    ],
+    "clubs": [
+      {
+        "code": "C001",
+        "label": "Club Alpha Lacville",
+        "department": {
+          "code": "CDT33",
+          "label": "Comité Départemental Test 33"
+        },
+        "logo": null,
+        "position": {
+          "lat": 44.84,
+          "lng": -0.58
+        }
+      }
+    ]
+  }
+}

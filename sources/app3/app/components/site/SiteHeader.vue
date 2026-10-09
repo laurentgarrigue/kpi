@@ -2,7 +2,8 @@
 import { joinURL } from 'ufo'
 import { ADMIN_PATH } from '~/utils/links'
 
-// Site header: FFCK logo on a light background (charter), site name, administration, language (SITE_LAYOUT.md § 2.2).
+// Site header: FFCK logo on a light background (charter), site name, search, administration, language
+// (SITE_LAYOUT.md § 2.2). Below `md` the search field folds into an icon leading to the search page (FEATURE_SEARCH.md § 2).
 const localePath = useLocalePath()
 const adminUrl = joinURL(useRuntimeConfig().public.legacyBaseUrl, ADMIN_PATH)
 </script>
@@ -18,6 +19,12 @@ const adminUrl = joinURL(useRuntimeConfig().public.legacyBaseUrl, ADMIN_PATH)
         </span>
       </NuxtLink>
       <div class="flex items-center gap-3">
+        <div class="hidden w-72 md:block" data-testid="header-search">
+          <SiteSearch />
+        </div>
+        <NuxtLink :to="localePath('/search')" class="rounded p-1 text-kpi-blue-600 hover:bg-kpi-blue-50 md:hidden" :aria-label="$t('header.search')" data-testid="header-search-icon">
+          <UIcon name="i-heroicons-magnifying-glass" class="size-5" aria-hidden="true" />
+        </NuxtLink>
         <a :href="adminUrl" class="flex items-center gap-1 rounded px-2 py-1 text-sm text-kpi-blue-600 hover:bg-kpi-blue-50" data-testid="admin-link">
           <UIcon name="i-heroicons-cog-6-tooth" class="size-5" aria-hidden="true" />
           <span class="sr-only sm:not-sr-only">{{ $t('header.admin') }}</span>

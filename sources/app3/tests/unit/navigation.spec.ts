@@ -33,9 +33,10 @@ describe('MAIN_MENU', () => {
     ])
   })
 
-  it('NAV-10: only delivered pages are internal links (phase 2: home, competitions)', () => {
+  it('NAV-10: only delivered pages are internal links (phase 3: CAL-07, HIS-05, TEA-05, CLB-05)', () => {
     const links = resolveMenu(MAIN_MENU, context('fr')).flatMap(item => (isMenuGroup(item) ? item.children : [item]))
-    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'competitions-list'])
+    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'calendar', 'competitions-list', 'history', 'teams', 'clubs'])
+    expect(links.filter(link => link.kind === 'legacy').map(link => link.id)).toEqual(['news'])
     expect(links.filter(link => link.kind === 'app2').map(link => link.id)).toEqual(['live'])
   })
 })

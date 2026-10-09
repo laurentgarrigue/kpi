@@ -243,7 +243,7 @@ Specs : [API_PUBLIC_TRANSVERSE](../../specs/public/API_PUBLIC_TRANSVERSE.md) (`A
 [PAGE_CALENDAR](../../specs/public/PAGE_CALENDAR.md) (`CAL-*`), [PAGE_HISTORY](../../specs/public/PAGE_HISTORY.md) (`HIS-*`),
 [PAGE_TEAM](../../specs/public/PAGE_TEAM.md) (`TEA-*`), [PAGE_CLUBS](../../specs/public/PAGE_CLUBS.md) (`CLB-*`),
 [FEATURE_SEARCH](../../specs/public/FEATURE_SEARCH.md) (`SRC-*`).
-Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), 🛠 **en cours d'implémentation**.
+Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), 🛠 **implémentée** sur la branche, à livrer.
 
 ### 3.0 Décisions (prises le 09/10/2026)
 
@@ -255,14 +255,77 @@ Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), 🛠 **e
 | 4 | Q-P3-4 vue du calendrier | agenda + grille mensuelle sur grand écran, sans FullCalendar | ☑ |
 | 5 | Q-P3-5 fond de carte | Leaflet auto-hébergé, tuiles OSM chargées après un clic | ☑ |
 
-### 3.1 À prévoir pour les tests et le déploiement (à détailler à l'implémentation)
-- Fixtures SQL : `kp_club`, `kp_equipe`, comités, journées réparties sur plusieurs mois, compétitions finales de
-  plusieurs saisons ; capture des réponses api2 pour app3 (`scripts/capture-api2-fixtures.mjs`).
-- ICS : validation par un analyseur iCalendar dans les tests api2 ; test manuel d'abonnement (Google Agenda,
-  Apple Calendrier, Thunderbird) en préprod.
-- Recherche : test de la limitation de débit (429).
-- Menus `calendar`, `history`, `teams`, `clubs` passés à `ready: true` ; `PAGE_LINKS.team` interne.
-- Préprod : grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php`.
+### 3.1 Contenu (branche `claude/public_site_redesign_strategy`, commits relisibles séparément)
+
+| Commit | Contenu | Impact hors beta |
+|---|---|---|
+| docs | décisions Q-P3, specs validées | aucun |
+| feat(api2) | 11 endpoints publics (tag « 7. Site public ») : calendrier, ICS, historique, équipes, clubs, recherche ; fixtures SQL (clubs, comités, équipes, saison 2998) | **`/groups/{season}`** (app2) : sections calculées par un helper partagé, sortie identique ; **`trusted_proxies`** (X-Forwarded-For du réseau privé seulement) ; **`PUBLIC_SITE_URL`** ajouté aux 3 compose → `docker/` modifié |
+| feat(app3) | pages Calendrier, Historique, Équipes, Clubs (carte Leaflet au clic), Recherche (en-tête + page) ; menus `ready: true` ; liens d'équipe internes ; abonnements ICS dans l'onglet Infos ; `leaflet` ajouté | aucun (beta) |
+
+Écarts assumés par rapport au legacy (détaillés dans les specs) : historique **par groupe strict** (plus d'agrégation
+`N…` / `CF…`) ; composition incluant les joueurs **sans statistique** ; club **sans équipe** jamais publié.
+
+### 3.2 ⌨️ Tester en local
+
+```bash
+git fetch origin && git checkout claude/public_site_redesign_strategy && git pull
+make docker_dev_up          # docker/ a changé : api2 reçoit PUBLIC_SITE_URL
+make api2_test              # recharge SQL/fixtures (nouvelles tables kp_club, kp_cd, kp_cr, kp_equipe)
+make app3_npm_ci            # nouvelle dépendance leaflet
+make app3_test && make app3_lint
+```
+
+| # | Commande / action | Résultat attendu | ☐ |
+|---|---|---|---|
+| 1 | `make api2_test` | unit 66 + integration 74 (dont `PublicSiteEndpointsTest` 24, tests `API3-*`) | ☐ |
+| 2 | `make app3_test` | 190 tests verts (unit 87, nuxt 85, e2e 18) ; tests nommés `CAL-*`, `HIS-*`, `TEA-*`, `CLB-*`, `SRC-*` | ☐ |
+| 3 | `curl -sk 'https://kpi.localhost/api2/calendar?start=2026-06-01&end=2026-06-30' \| head -c 300` | JSON des journées publiées | ☐ |
+| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/calendar.ics` | `BEGIN:VCALENDAR`, un `VEVENT` par journée, aucune donnée personnelle | ☐ |
+| 5 | `curl -sk https://kpi.localhost/api2/team/<numéro>/roster/<saison>/<code> \| grep -iE "matric\|sexe\|naiss"` | aucune sortie | ☐ |
+| 6 | `curl -sk https://kpi.localhost/api2/club/<code d'un club sans équipe>` | `404` | ☐ |
+| 7 | `https://beta.kpi.localhost/calendar` | mois courant, navigation mois précédent / suivant, filtres niveau et groupe (désactiver JS : fonctionnent) ; grille du mois à partir de 1024 px | ☐ |
+| 8 | Une compétition → onglet Infos | « S'abonner au calendrier » (`webcal://`), « Télécharger (.ics) », « Ajouter à mon agenda » par journée | ☐ |
+| 9 | `https://beta.kpi.localhost/history` | redirige vers le 1er groupe national ; podiums avec médailles, classement complet repliable | ☐ |
+| 10 | `https://beta.kpi.localhost/teams?q=<nom>` puis une équipe | suggestions au clavier ; fiche : club, couleurs et photo d'équipe (si présentes), palmarès, composition (sélecteur) | ☐ |
+| 11 | Une page de résultats : clic sur une équipe | ouvre `/teams/{n}?season=…&competition=…` (plus de `kpequipes.php`) | ☐ |
+| 12 | `https://beta.kpi.localhost/clubs` puis « Carte » | aucune requête vers `tile.openstreetmap.org` avant le clic sur « Afficher la carte » (onglet réseau) | ☐ |
+| 13 | Champ de recherche de l'en-tête | suggestions groupées après 2 caractères, Échap ferme ; Entrée → `/search?q=…` | ☐ |
+| 14 | 31 recherches en moins d'une minute depuis une IP publique (préprod) | la 31e affiche « Trop de recherches… » ; en dev (IP privée) pas de limite | ☐ |
+
+**Non-régression locale** : app2 (liste des groupes d'une saison, `/groups/{saison}`), `/admin2`, legacy. ☐
+
+### 3.3 ⌨️ 🌐 PR et CI
+
+Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2` ; `lint-nuxt`, `build-nuxt`, `audit-npm`, `tests-app3` ;
+`lint-docker`, `trivy-config` (compose modifiés) ; `ci-summary` vert. ☐
+
+### 3.4 🖥 Préprod (`/data/kpi_preprod`)
+
+| # | Commande / action | Résultat attendu | ☐ |
+|---|---|---|---|
+| 1 | 🌐 « Deploy preprod » | vert. Le diff touche `docker/` (compose) → **`docker_preprod_rebuild`** : courte coupure de toute la préprod | ☐ |
+| 2 | `docker exec kpi_preprod_api2 printenv PUBLIC_SITE_URL` | `https://beta.preprod.kayak-polo.info` | ☐ |
+| 3 | `make app3_generate_preprod` *(si le wrapper 📦 n'est pas encore à jour, § 1.3)* | build OK + redémarrage | ☐ |
+| 4 | Abonnement ICS d'une compétition dans Google Agenda, Apple Calendrier, Thunderbird | journées en « toute la journée », lien vers la page de la compétition sur `beta.preprod…` | ☐ |
+| 5 | Grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php` | mêmes journées, palmarès, compositions, clubs (aux écarts assumés du § 3.1 près) | ☐ |
+| 6 | Recherche depuis un poste extérieur : 31 requêtes / minute | 429 à la 31e (preuve que l'IP du visiteur traverse Traefik → app3 → api2) | ☐ |
+
+**Non-régression préprod** : app2 (événements, groupes), `/admin2`, legacy `kp*.php`. ☐
+
+### 3.5 Production
+
+Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild de la stack car `docker/` change), puis
+`docker exec kpi_api2 printenv PUBLIC_SITE_URL` → `https://beta.kayak-polo.info` ; parité réduite sur
+`beta.kayak-polo.info` (un mois du calendrier, un palmarès, une équipe, un club). ☐
+
+### 3.6 Retour arrière
+
+| Situation | Action |
+|---|---|
+| Une page phase 3 en erreur | Repasser son entrée de menu à `ready: false` (repli legacy) ; `teamLink` peut revenir au legacy de la même façon |
+| Limite de débit trop stricte / IP mal relayée | Retirer temporairement `trusted_proxies` n'est pas la solution (limite globale) : augmenter `SearchThrottle::LIMIT` |
+| Problème hors app3 lié à la release | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) |
 
 ## Phase 4a — Éditorial (CMS natif, reprise WordPress)
 

@@ -69,7 +69,9 @@
     "legacySite": "Accéder au site actuel"
   },
   "header": {
-    "admin": "Administration"
+    "admin": "Administration",
+    "search": "Rechercher",
+    "searchPlaceholder": "Compétition, équipe, club…"
   },
   "results": {
     "listTitle": "Compétitions et résultats {season}",
@@ -218,5 +220,127 @@
       "title": "Meilleurs buteurs",
       "goals": "Buts"
     }
+  },
+  "common": {
+    "level": {
+      "INT": "International",
+      "NAT": "National",
+      "REG": "Régional"
+    },
+    "allLevels": "Tous les niveaux",
+    "allGroups": "Tous les groupes",
+    "level_label": "Niveau",
+    "show": "Afficher",
+    "unavailable": "Ces informations sont momentanément indisponibles.",
+    "suggestions": "Suggestions",
+    "seeAllResults": "Voir tous les résultats",
+    "suggestionsCount": "{count} suggestion | {count} suggestions",
+    "noSuggestion": "Aucune suggestion"
+  },
+  "calendar": {
+    "title": "Calendrier des compétitions",
+    "pageTitle": "Calendrier {month}",
+    "description": "Calendrier des compétitions de kayak-polo, {month}.",
+    "previous": "Mois précédent",
+    "next": "Mois suivant",
+    "today": "Aujourd'hui",
+    "filters": "Filtrer le calendrier",
+    "empty": "Aucune compétition publiée ce mois-ci.",
+    "nextWithEntries": "Prochain mois avec des compétitions : {month}",
+    "list": "Liste des journées",
+    "grid": "Vue du mois",
+    "event": "Événement : {event}",
+    "continued": "suite",
+    "subscribe": "S'abonner au calendrier",
+    "download": "Télécharger (.ics)",
+    "addGameday": "Ajouter à mon agenda",
+    "icsHelp": "L'abonnement met votre agenda à jour automatiquement (Google Agenda, Apple Calendrier, Outlook, Thunderbird…)."
+  },
+  "history": {
+    "title": "Historique et palmarès",
+    "pageTitle": "Palmarès — {group}",
+    "description": "Palmarès du kayak-polo {group}, saison par saison.",
+    "group": "Compétition",
+    "seasons": "Saisons",
+    "fullRanking": "Voir le classement complet",
+    "ranking": "Classement de la compétition"
+  },
+  "teams": {
+    "title": "Équipes",
+    "description": "Rechercher une équipe de kayak-polo, son palmarès et sa composition.",
+    "search": "Nom de l'équipe ou code du club",
+    "minLength": "Saisissez au moins {min} caractères.",
+    "noResult": "Aucune équipe ne correspond à « {query} ».",
+    "results": "Équipes trouvées",
+    "club": "Club",
+    "clubPage": "Fiche du club {club}",
+    "colors": "Couleurs de l'équipe",
+    "colorsAlt": "Couleurs de l'équipe {team}",
+    "photoAlt": "Photo de l'équipe {team} ({season})",
+    "honours": "Palmarès",
+    "noHonours": "Aucun classement dans une compétition terminée.",
+    "col": {
+      "season": "Saison",
+      "competition": "Compétition",
+      "rank": "Rang",
+      "number": "N°",
+      "player": "Joueur",
+      "category": "Catégorie",
+      "role": "Rôle",
+      "goals": "Buts",
+      "green": "Cartons verts",
+      "yellow": "Cartons jaunes",
+      "red": "Cartons rouges",
+      "redFinal": "Rouges définitifs"
+    },
+    "roster": "Composition",
+    "rosterCaption": "Composition de {team} — {competition} {season}",
+    "rosterSelect": "Compétition",
+    "noRoster": "Aucune composition publiée.",
+    "role": {
+      "captain": "Capitaine",
+      "coach": "Entraîneur"
+    },
+    "pageDescription": "Palmarès et composition de l'équipe de kayak-polo {team}.",
+    "honoursCaption": "Palmarès de {team}"
+  },
+  "clubs": {
+    "title": "Clubs",
+    "description": "Les clubs de kayak-polo : coordonnées, équipes et carte.",
+    "search": "Nom ou code du club",
+    "view": {
+      "list": "Liste",
+      "map": "Carte"
+    },
+    "noResult": "Aucun club ne correspond à « {query} ».",
+    "showMap": "Afficher la carte",
+    "mapNotice": "La carte utilise les fonds OpenStreetMap : ils ne sont chargés qu'après un clic.",
+    "mapAttribution": "© contributeurs OpenStreetMap",
+    "mapLabel": "Carte des clubs",
+    "mapLoading": "Chargement de la carte…",
+    "department": "Comité départemental",
+    "region": "Comité régional",
+    "website": "Site web",
+    "email": "E-mail",
+    "address": "Adresse",
+    "teams": "Équipes du club",
+    "noTeam": "Aucune équipe.",
+    "logoAlt": "Logo de {club}",
+    "pageDescription": "Coordonnées et équipes du club de kayak-polo {club}.",
+    "count": "{count} club | {count} clubs"
+  },
+  "search": {
+    "title": "Recherche",
+    "resultsFor": "Résultats pour « {query} »",
+    "minLength": "Saisissez au moins {min} caractères pour lancer la recherche.",
+    "noResult": "Aucun résultat pour « {query} ». Vérifiez l'orthographe ou essayez un autre mot.",
+    "tooMany": "Trop de recherches en peu de temps : merci de patienter une minute.",
+    "category": {
+      "competitions": "Compétitions",
+      "events": "Événements",
+      "teams": "Équipes",
+      "clubs": "Clubs"
+    },
+    "label": "Rechercher sur le site"
   }
 }

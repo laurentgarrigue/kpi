@@ -5,11 +5,10 @@ import { eventLogoUrl, formatEventDates, isOngoing, type PublicEvent } from '~/u
 const props = defineProps<{ event: PublicEvent, today: string }>()
 const { legacyBaseUrl } = useRuntimeConfig().public
 const localePath = useLocalePath()
-const { locale, locales } = useI18n()
 
 const href = computed(() => localePath(`/events/${props.event.id}`))
 const logo = computed(() => eventLogoUrl(props.event.logo, legacyBaseUrl))
-const language = computed(() => locales.value.find(item => item.code === locale.value)?.language ?? locale.value)
+const language = useLanguageTag()
 const dates = computed(() => formatEventDates(props.event.start, props.event.end, language.value))
 const ongoing = computed(() => isOngoing(props.event, props.today))
 </script>

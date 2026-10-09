@@ -4,8 +4,7 @@ import type { ResultsGame } from '#kpi-layer/utils/results/types'
 
 // Games grouped by date, sorted by time then pitch (CMP-05). `competitionHref` adds the competition column.
 const props = defineProps<{ games: ResultsGame[], competitionHref?: (game: ResultsGame) => string }>()
-const { locale, locales } = useI18n()
-const language = computed(() => locales.value.find(item => item.code === locale.value)?.language ?? locale.value)
+const language = useLanguageTag()
 const groups = computed(() => groupGamesByDate(props.games))
 
 function longDate(date: string): string {

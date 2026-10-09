@@ -2,8 +2,9 @@ import { joinURL, withQuery } from 'ufo'
 import type { CompetitionType } from '#kpi-layer/utils/results/types'
 
 /**
- * Links from results pages to pages not delivered by app3 yet (PAGE_COMPETITION.md § 2.1), with the same
- * fallback mechanism as the menu: when a target page is delivered, its function returns the app3 route.
+ * Links from results pages to other pages (PAGE_COMPETITION.md § 2.1), with the same fallback mechanism as the
+ * menu: a page not delivered by app3 yet links to the legacy site; once delivered, its function returns the app3
+ * route (`kind: 'internal'`, path without language prefix).
  */
 
 export interface PageLinkContext {
@@ -13,16 +14,33 @@ export interface PageLinkContext {
 }
 
 export interface PageLink {
-  kind: 'legacy' | 'app2'
+  kind: 'internal' | 'legacy' | 'app2'
   href: string
 }
 
-/** Team page: legacy kpequipes.php until /teams/{id} (phase 3). */
-export function teamLink(team: { number: number | null, competition: string }, context: PageLinkContext): PageLink {
-  return {
-    kind: 'legacy',
-    href: withQuery(joinURL(context.legacyBaseUrl, 'kpequipes.php'), { Equipe: team.number ?? '', Compet: team.competition, lang: context.locale }),
-  }
+/** Team page /teams/{number}, opened on the roster of the competition (PAGE_TEAM.md, TEA-04). */
+export function teamLink(team: { number: number, competition?: string, season?: string }): PageLink {
+  const query = team.competition && team.season ? { season: team.season, competition: team.competition } : {}
+  return { kind: 'internal', href: withQuery(`/teams/${team.number}`, query) }
+}
+
+/** iCalendar files are served by api2 (PAGE_CALENDAR.md § 2.7, CAL-06). */
+export function competitionIcsUrl(api2BaseUrl: string, season: string, competition: string): string {
+  return joinURL(api2BaseUrl, 'competition', season, competition, 'calendar.ics')
+}
+
+export function gamedayIcsUrl(api2BaseUrl: string, gameday: number): string {
+  return joinURL(api2BaseUrl, 'gameday', `${gameday}.ics`)
+}
+
+/** Subscription link: the same URL with the `webcal:` scheme, opened by calendar applications. */
+export function webcalUrl(url: string): string {
+  return url.replace(/^https?:/, 'webcal:')
+}
+
+/** Image stored under the legacy `/img/` tree (logos, flags, team colours and photos), or `null`. */
+export function legacyImageUrl(path: string | null, legacyBaseUrl: string): string | null {
+  return path ? joinURL(legacyBaseUrl, 'img', path) : null
 }
 
 /** Game sheet: stays in app2. */

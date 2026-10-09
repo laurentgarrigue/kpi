@@ -12,8 +12,7 @@ const props = defineProps<{
 }>()
 const route = useRoute()
 const form = useTemplateRef<HTMLFormElement>('form')
-const { locale, locales } = useI18n()
-const language = computed(() => locales.value.find(item => item.code === locale.value)?.language ?? locale.value)
+const language = useLanguageTag()
 
 function shortDate(date: string | null): string {
   return date ? new Intl.DateTimeFormat(language.value, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(date)) : ''

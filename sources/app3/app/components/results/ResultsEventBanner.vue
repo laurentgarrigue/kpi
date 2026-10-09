@@ -9,8 +9,7 @@ const MAX_OTHER_EVENTS = 5
 const props = defineProps<{ events: LinkedEvent[], main: LinkedEvent | null, scope: string }>()
 const localePath = useLocalePath()
 const { legacyBaseUrl } = useRuntimeConfig().public
-const { locale, locales } = useI18n()
-const language = computed(() => locales.value.find(item => item.code === locale.value)?.language ?? locale.value)
+const language = useLanguageTag()
 
 const others = computed(() => props.events.filter(event => event.id !== props.main?.id).slice(0, MAX_OTHER_EVENTS))
 const logo = computed(() => (props.main?.logo ? joinURL(legacyBaseUrl, 'img', props.main.logo) : null))

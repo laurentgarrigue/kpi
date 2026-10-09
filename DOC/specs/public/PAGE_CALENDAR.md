@@ -1,6 +1,6 @@
 # Calendrier des compétitions et abonnements ICS
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Routes** : `/calendar[?month=YYYY-MM][&level=][&group=]` (+ `/en`)
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Routes** : `/calendar[?month=YYYY-MM][&level=][&group=]` (+ `/en`)
 — **Remplace** : `kpcalendrier.php`, `json-events.php`, `upload_ics.php` — **Entrée de menu** : `calendar`
 
 ## 1. Objectif

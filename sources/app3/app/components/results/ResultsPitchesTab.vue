@@ -8,8 +8,7 @@ const props = defineProps<{ games: ResultsGame[], showCompetition?: boolean }>()
 const emit = defineEmits<{ refresh: [] }>()
 const route = useRoute()
 const now = useMinuteClock()
-const { locale, locales } = useI18n()
-const language = computed(() => locales.value.find(item => item.code === locale.value)?.language ?? locale.value)
+const language = useLanguageTag()
 
 const dates = computed(() => gameDates(props.games))
 const day = computed(() => {

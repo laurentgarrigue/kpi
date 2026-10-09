@@ -1,6 +1,6 @@
 # Historique et palmarès
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Routes** : `/history` → `/history/{group}` (+ `/en`)
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Routes** : `/history` → `/history/{group}` (+ `/en`)
 — **Remplace** : `kphistorique.php` — **Entrée de menu** : `history`
 
 ## 1. Objectif

@@ -1,0 +1,65 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "id": 9202,
+      "competition": {
+        "season": "2999",
+        "code": "RCH",
+        "display_title": "Championnat Résultats",
+        "type": "CHPT",
+        "level": "NAT",
+        "group": "TSTRES"
+      },
+      "name": "RCH J2",
+      "place": "Rivecity",
+      "department": "64",
+      "start": "2999-04-01",
+      "end": "2999-04-02",
+      "event": {
+        "id": 77,
+        "libelle": "Tournoi Résultats"
+      }
+    },
+    {
+      "id": 9211,
+      "competition": {
+        "season": "2999",
+        "code": "RCP",
+        "display_title": "Phase finale",
+        "type": "CP",
+        "level": "NAT",
+        "group": "TSTRES"
+      },
+      "name": "RCP Poule A",
+      "place": "Rivecity",
+      "department": "64",
+      "start": "2999-04-01",
+      "end": "2999-04-01",
+      "event": {
+        "id": 77,
+        "libelle": "Tournoi Résultats"
+      }
+    },
+    {
+      "id": 9212,
+      "competition": {
+        "season": "2999",
+        "code": "RCP",
+        "display_title": "Phase finale",
+        "type": "CP",
+        "level": "NAT",
+        "group": "TSTRES"
+      },
+      "name": "RCP Finale",
+      "place": "Rivecity",
+      "department": "64",
+      "start": "2999-04-02",
+      "end": "2999-04-02",
+      "event": {
+        "id": 77,
+        "libelle": "Tournoi Résultats"
+      }
+    }
+  ]
+}

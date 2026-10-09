@@ -9,6 +9,8 @@ const SLOW_CACHE = { cache: { maxAge: 300, swr: true } }
 const RESULTS_CACHE = { cache: { maxAge: 60, swr: true } }
 // Redirections (`/competitions`, default tabs) must follow the current season / status: never cached.
 const NO_CACHE = { cache: false as const }
+// Honours and clubs only change at the end of a competition (PAGE_HISTORY.md § 3, PAGE_CLUBS.md § 3).
+const LONG_CACHE = { cache: { maxAge: 3600, swr: true } }
 
 export default defineNuxtConfig({
   extends: ['../kpi-layer'],
@@ -53,6 +55,16 @@ export default defineNuxtConfig({
       [`${prefix}/events/*/**`, RESULTS_CACHE],
       [`${prefix}/groups/*/*`, NO_CACHE],
       [`${prefix}/groups/*/*/**`, RESULTS_CACHE],
+      // Phase 3 (PAGE_CALENDAR.md, PAGE_HISTORY.md, PAGE_TEAM.md, PAGE_CLUBS.md, FEATURE_SEARCH.md § 3).
+      [`${prefix}/calendar`, SLOW_CACHE],
+      [`${prefix}/history`, NO_CACHE],
+      [`${prefix}/history/*`, LONG_CACHE],
+      [`${prefix}/teams`, SLOW_CACHE],
+      [`${prefix}/teams/*`, SLOW_CACHE],
+      [`${prefix}/clubs`, LONG_CACHE],
+      [`${prefix}/clubs/*`, LONG_CACHE],
+      // Rate-limited per visitor by api2: a shared cache would serve one visitor's search to another.
+      [`${prefix}/search`, NO_CACHE],
     ])),
   },
 

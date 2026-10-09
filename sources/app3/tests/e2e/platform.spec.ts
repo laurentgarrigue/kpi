@@ -8,7 +8,12 @@ import { api2Fixture } from '../fixtures/api2'
 // Fake api2. /events/all is JSON with a wrong Content-Type, as a misconfigured proxy could send it; every other
 // request is answered with the real api2 response captured on SQL/fixtures (tests/fixtures/api2).
 const EVENTS = [{ id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' }]
+// X-Forwarded-For received by api2 on /search: the server rendering relays the visitor address (API3-08).
+const searchForwardedFor: (string | undefined)[] = []
 const fakeApi2 = createServer((request, response) => {
+  if (request.url?.startsWith('/search')) {
+    searchForwardedFor.push(request.headers['x-forwarded-for'] as string | undefined)
+  }
   if (request.url === '/events/all') {
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' })
     response.end(JSON.stringify(EVENTS))
@@ -131,5 +136,35 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     const html = await $fetch<string>('/competitions/2999?group=TSTRES')
     expect(html).toContain('Equipe Alpha')
     expect(html).toContain('<form')
+  })
+
+  // ------------------------------------------------------------- phase 3: calendar, history, teams, clubs, search
+
+  it('HIS-01: /history redirects (302) to the default group, or to the group chosen without JavaScript', async () => {
+    expect(await location('/history')).toEqual([302, '/history/TSTRES'])
+    expect(await location('/en/history?group=TSTRES')).toEqual([302, '/en/history/TSTRES'])
+  })
+
+  it('CAL-07/HIS-02/TEA-02/CLB-01: the phase 3 pages are rendered by the server', async () => {
+    expect(await $fetch<string>('/calendar?month=2999-04')).toContain('Championnat Résultats')
+    expect(await $fetch<string>('/history/TSTRES')).toContain('Equipe Echo')
+    expect(await $fetch<string>('/teams/101')).toContain('ALPHA Ann')
+    expect(await $fetch<string>('/clubs')).toContain('Club Alpha Lacville')
+  })
+
+  it('HIS-05/TEA-05/CLB-03: unknown history group, team or club is a 404 page', async () => {
+    for (const path of ['/history/NOPE', '/teams/9999', '/clubs/NOPE']) {
+      const response = await fetch(path, { headers: { Accept: 'text/html' } })
+      expect(response.status, path).toBe(404)
+    }
+  })
+
+  it('SRC-05: the search page is never indexed and relays the visitor address to api2', async () => {
+    const response = await fetch('/search?q=resultats', { headers: { 'Accept': 'text/html', 'X-Forwarded-For': '203.0.113.9' } })
+    expect(response.status).toBe(200)
+    const html = await response.text()
+    expect(html).toContain('Résultats pour « resultats »')
+    expect(html).toMatch(/<meta name="robots" content="noindex, nofollow">/)
+    expect(searchForwardedFor.at(-1)).toContain('203.0.113.9')
   })
 })

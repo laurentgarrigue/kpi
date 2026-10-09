@@ -69,7 +69,9 @@
     "legacySite": "Go to the current website"
   },
   "header": {
-    "admin": "Administration"
+    "admin": "Administration",
+    "search": "Search",
+    "searchPlaceholder": "Competition, team, club…"
   },
   "results": {
     "listTitle": "Competitions and results {season}",
@@ -218,5 +220,127 @@
       "title": "Top scorers",
       "goals": "Goals"
     }
+  },
+  "common": {
+    "level": {
+      "INT": "International",
+      "NAT": "National",
+      "REG": "Regional"
+    },
+    "allLevels": "All levels",
+    "allGroups": "All groups",
+    "level_label": "Level",
+    "show": "Show",
+    "unavailable": "This information is temporarily unavailable.",
+    "suggestions": "Suggestions",
+    "seeAllResults": "See all results",
+    "suggestionsCount": "{count} suggestion | {count} suggestions",
+    "noSuggestion": "No suggestion"
+  },
+  "calendar": {
+    "title": "Competition calendar",
+    "pageTitle": "Calendar {month}",
+    "description": "Canoe polo competition calendar, {month}.",
+    "previous": "Previous month",
+    "next": "Next month",
+    "today": "Today",
+    "filters": "Filter the calendar",
+    "empty": "No published competition this month.",
+    "nextWithEntries": "Next month with competitions: {month}",
+    "list": "Gamedays",
+    "grid": "Month view",
+    "event": "Event: {event}",
+    "continued": "continued",
+    "subscribe": "Subscribe to the calendar",
+    "download": "Download (.ics)",
+    "addGameday": "Add to my calendar",
+    "icsHelp": "Subscribing keeps your calendar up to date automatically (Google Calendar, Apple Calendar, Outlook, Thunderbird…)."
+  },
+  "history": {
+    "title": "History and honours",
+    "pageTitle": "Honours — {group}",
+    "description": "Canoe polo honours of {group}, season by season.",
+    "group": "Competition",
+    "seasons": "Seasons",
+    "fullRanking": "See the full ranking",
+    "ranking": "Competition ranking"
+  },
+  "teams": {
+    "title": "Teams",
+    "description": "Find a canoe polo team, its honours and its roster.",
+    "search": "Team name or club code",
+    "minLength": "Type at least {min} characters.",
+    "noResult": "No team matches “{query}”.",
+    "results": "Teams found",
+    "club": "Club",
+    "clubPage": "Club page of {club}",
+    "colors": "Team colours",
+    "colorsAlt": "Colours of {team}",
+    "photoAlt": "Team photo of {team} ({season})",
+    "honours": "Honours",
+    "noHonours": "No ranking in a finished competition.",
+    "col": {
+      "season": "Season",
+      "competition": "Competition",
+      "rank": "Rank",
+      "number": "No.",
+      "player": "Player",
+      "category": "Category",
+      "role": "Role",
+      "goals": "Goals",
+      "green": "Green cards",
+      "yellow": "Yellow cards",
+      "red": "Red cards",
+      "redFinal": "Definitive red cards"
+    },
+    "roster": "Roster",
+    "rosterCaption": "Roster of {team} — {competition} {season}",
+    "rosterSelect": "Competition",
+    "noRoster": "No published roster.",
+    "role": {
+      "captain": "Captain",
+      "coach": "Coach"
+    },
+    "pageDescription": "Honours and roster of the canoe polo team {team}.",
+    "honoursCaption": "Honours of {team}"
+  },
+  "clubs": {
+    "title": "Clubs",
+    "description": "Canoe polo clubs: contact details, teams and map.",
+    "search": "Club name or code",
+    "view": {
+      "list": "List",
+      "map": "Map"
+    },
+    "noResult": "No club matches “{query}”.",
+    "showMap": "Show the map",
+    "mapNotice": "The map uses OpenStreetMap tiles: they are only loaded after a click.",
+    "mapAttribution": "© OpenStreetMap contributors",
+    "mapLabel": "Map of the clubs",
+    "mapLoading": "Loading the map…",
+    "department": "Departmental committee",
+    "region": "Regional committee",
+    "website": "Website",
+    "email": "E-mail",
+    "address": "Address",
+    "teams": "Teams of the club",
+    "noTeam": "No team.",
+    "logoAlt": "Logo of {club}",
+    "pageDescription": "Contact details and teams of the canoe polo club {club}.",
+    "count": "{count} club | {count} clubs"
+  },
+  "search": {
+    "title": "Search",
+    "resultsFor": "Results for “{query}”",
+    "minLength": "Type at least {min} characters to search.",
+    "noResult": "No result for “{query}”. Check the spelling or try another word.",
+    "tooMany": "Too many searches in a short time: please wait a minute.",
+    "category": {
+      "competitions": "Competitions",
+      "events": "Events",
+      "teams": "Teams",
+      "clubs": "Clubs"
+    },
+    "label": "Search the site"
   }
 }

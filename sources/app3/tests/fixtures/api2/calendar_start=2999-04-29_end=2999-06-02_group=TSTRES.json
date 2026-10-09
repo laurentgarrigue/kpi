@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "id": 9221,
+      "competition": {
+        "season": "2999",
+        "code": "RAT",
+        "display_title": "Championnat En Attente",
+        "type": "CHPT",
+        "level": "NAT",
+        "group": "TSTRES"
+      },
+      "name": "RAT J1",
+      "place": "Lacville",
+      "department": "33",
+      "start": "2999-06-01",
+      "end": "2999-06-01",
+      "event": null
+    }
+  ]
+}

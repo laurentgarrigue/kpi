@@ -89,10 +89,10 @@ describe('games tab (§ 3.1)', () => {
     expect(wrapper.find('[data-testid="no-filtered-games"]').exists()).toBe(true)
   })
 
-  it('CMP-12: team links to the legacy team page, game sheets to app2 in a new tab, PDF links with explicit parameters', async () => {
+  it('CMP-12 / TEA-04: team links to its site page, game sheets to app2 in a new tab, PDF links with explicit parameters', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games')
     const row = wrapper.find('[data-game="9401"]')
-    expect(row.find('a[data-kind="legacy"]').attributes('href')).toBe('https://kpi.localhost/kpequipes.php?Equipe=101&Compet=RCH&lang=fr')
+    expect(row.find('a[data-kind="team"]').attributes('href')).toBe('/teams/101?season=2999&competition=RCH')
     expect(row.find('[data-testid="game-sheet"]').attributes('href')).toBe('https://app.kpi.localhost/game/9401')
     expect(row.find('[data-testid="game-sheet"]').attributes('target')).toBe('_blank')
     expect(row.find('[data-testid="score-sheet-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfMatchMulti.php?listMatch=9401&lang=fr')

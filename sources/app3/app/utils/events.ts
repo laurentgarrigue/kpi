@@ -1,4 +1,4 @@
-import { joinURL } from 'ufo'
+import { legacyImageUrl } from './page-links'
 
 /** Public event, as returned by api2 `GET /events/{mode}` (PAGE_HOME.md § 3). Dates are `YYYY-MM-DD`. */
 export interface PublicEvent {
@@ -70,5 +70,5 @@ export function formatEventDates(start: string | null, end: string | null, local
 
 /** Absolute URL of an event logo stored under the legacy `/img/` tree, or `null` without logo. */
 export function eventLogoUrl(logo: string | null, legacyBaseUrl: string): string | null {
-  return logo ? joinURL(legacyBaseUrl, 'img', logo) : null
+  return legacyImageUrl(logo, legacyBaseUrl)
 }

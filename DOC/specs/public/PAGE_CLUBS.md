@@ -1,6 +1,6 @@
 # Clubs : liste, carte et fiche club
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Routes** : `/clubs[?q=][&view=map]`, `/clubs/{code}` (+ `/en`)
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Routes** : `/clubs[?q=][&view=map]`, `/clubs/{code}` (+ `/en`)
 — **Remplace** : `kpclubs.php`, `kplogos.php`, `json-clubs.php`, `searchClubs.php` — **Entrée de menu** : `clubs`
 
 ## 1. Objectif

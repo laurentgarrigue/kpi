@@ -1,6 +1,6 @@
 # api2 — endpoints publics transverses (phase 3)
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Consommé par** : app3 (calendrier, historique, équipes, clubs,
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Consommé par** : app3 (calendrier, historique, équipes, clubs,
 recherche) — **Remplace** : `json-events.php`, `upload_ics.php`, requêtes de `kphistorique.php`,
 `kpequipes.php`, `searchEquipes.php`, `kpclubs.php`, `json-clubs.php`, `searchClubs.php`, `kplogos.php`
 
