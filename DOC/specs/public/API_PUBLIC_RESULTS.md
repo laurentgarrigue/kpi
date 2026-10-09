@@ -63,7 +63,7 @@ En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons`, `/group/…/c
 | Endpoint | Réponse | Remplace |
 |---|---|---|
 | `GET /seasons` | `{ active: "2026", seasons: ["2026", "2025", …] }` (saisons > 1900 ayant au moins une compétition publiée, décroissantes ; `active` = `kp_saison.Etat = 'A'`) | combos saison |
-| `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées `Code_niveau, Code_tour DESC, GroupOrder, Code`, chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
+| `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées dans l'**ordre défini** puis l'**ordre du tour** (`GroupOrder, Code_tour, Code`, retour de recette du 09/10/2026 ; même ordre pour `siblings`), chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
 | `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, triées `GroupOrder`) + `events` (§ 5.6) | en-têtes `kpnavgroup.tpl` |
 | `GET /competition/{season}/{code}/games` | matchs publiés de la compétition : **même format** que `/group/…/games` | `kpmatchs.php`, `kpterrains.php` |
 | `GET /competition/{season}/{code}/charts` | tours / phases : **même format** qu'un élément de `/event/{id}/charts` (le plus riche : libellés d'attente résolus, `d_id` par phase, équipes des poules de CP déduites des matchs) | `kpchart.php`, `kpphases.php` |

@@ -114,6 +114,41 @@ describe('pitches tab (§ 3.2)', () => {
   })
 })
 
+describe('pitch game layout (§ 3.2)', () => {
+  it('CMP-07: category and status share the top line; each score sits at the right of its team', async () => {
+    const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
+    const top = game.find('[data-testid="pitch-top"]')
+    expect(top.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
+    expect(top.find('[data-status]').text()).toContain('En cours')
+    const [teamA, teamB] = game.findAll('[data-testid="pitch-team"]')
+    expect(teamA!.text()).toContain('Equipe Alpha')
+    expect(teamA!.find('[data-testid="side-score"]').text()).toContain('1')
+    expect(teamB!.text()).toContain('Equipe Delta')
+    expect(teamB!.find('[data-testid="side-score"]').text()).toContain('0')
+    // The score is provisional (game on): italic and announced.
+    expect(teamA!.find('[data-testid="side-score"]').classes()).toContain('italic')
+  })
+
+  it('CMP-07: a game to come shows no score', async () => {
+    const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9405"]')
+    expect(game.findAll('[data-testid="side-score"]').every(score => score.text().trim() === '' || score.text().trim() === '–')).toBe(true)
+  })
+
+  it('CMP-05: a missing referee (« -1 ») is not shown', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCH/games')
+    const games = await import('../fixtures/api2').then(({ api2Fixture }) => api2Fixture('/competition/2999/RCH/games').body as { r_1?: string, r_2?: string }[])
+    expect(games.length).toBeGreaterThan(0)
+    api2.mockImplementation(async (path: string) => (path === '/competition/2999/RCH/games'
+      ? games.map(game => ({ ...game, r_1: 'CD Loire-Atlantique I F', r_2: '-1' }))
+      : fakeApi2(path)))
+    clearNuxtData()
+    const text = (await mountRoute('/competitions/2999/RCH/games')).find('[data-game="9401"]').text()
+    expect(text).toContain('CD Loire-Atlantique I F')
+    expect(text).not.toContain('-1')
+    expect(wrapper.exists()).toBe(true)
+  })
+})
+
 describe('info tab (§ 3.3)', () => {
   it('CMP-08: gamedays with officials, teams by pool when started', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/info')
@@ -122,6 +157,26 @@ describe('info tab (§ 3.3)', () => {
     expect(gamedays[0]!.text()).toContain('Club Organisateur')
     expect(gamedays[0]!.text()).toContain('CHEF Arb')
     expect(wrapper.find('[data-testid="teams-by-pool"]').text()).toContain('Equipe Delta')
+  })
+
+  it('CMP-08: the phases of a cup, which share every parameter, are shown once without being listed', async () => {
+    const { api2Fixture } = await import('../fixtures/api2')
+    const info = api2Fixture('/competition/2999/RCP/info').body as { gamedays: { start: string, end: string }[] }
+    const [first] = info.gamedays
+    api2.mockImplementation(async (path: string) => (path === '/competition/2999/RCP/info'
+      ? { ...info, gamedays: info.gamedays.map(gameday => ({ ...gameday, start: first!.start, end: first!.end })) }
+      : fakeApi2(path)))
+    const wrapper = await mountRoute('/competitions/2999/RCP/info')
+    const cards = wrapper.findAll('[data-testid="gameday"]')
+    expect(cards).toHaveLength(1)
+    expect(cards[0]!.find('h3').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="gameday-ics"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="ics-subscribe"]').exists()).toBe(true)
+  })
+
+  it('CMP-08: cup phases whose parameters differ are grouped by parameters, titled by their phases', async () => {
+    const cards = (await mountRoute('/competitions/2999/RCP/info')).findAll('[data-testid="gameday"]')
+    expect(cards.map(card => card.find('h3').text())).toEqual(['Poule A, Poule B', 'Finale'])
   })
 
   it('CMP-08: no teams before the competition starts', async () => {

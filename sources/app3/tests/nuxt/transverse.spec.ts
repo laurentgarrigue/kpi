@@ -52,11 +52,19 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     expect(form.find('select[name="level"] option[selected]').attributes('value')).toBe('NAT')
   })
 
-  it('CAL-02: the month grid shows each gameday on its days', async () => {
+  it('CAL-02: the month grid shows each gameday as one coloured bar spread over all its days', async () => {
     const grid = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-grid"]')
-    expect(grid.findAll('tbody tr')).toHaveLength(5)
-    expect(grid.find('[data-date="2999-04-01"]').findAll('li')).toHaveLength(2)
-    expect(grid.find('[data-date="2999-04-02"]').findAll('li')).toHaveLength(2)
+    expect(grid.findAll('[data-testid="calendar-week"]')).toHaveLength(5)
+    expect(grid.findAll('[data-date]')).toHaveLength(35)
+    // 2999-04-01 is a Monday: the 1–2 April gameday is one two-day bar; the two cup phases take one day each.
+    const bars = grid.findAll('[data-testid="calendar-bar"]')
+    expect(bars.map(bar => [bar.attributes('data-gameday'), bar.attributes('style')!.match(/grid-column: ([^;]+)/)![1]])).toEqual([
+      ['9202', '1 / span 2'], ['9211', '1 / span 1'], ['9212', '2 / span 1'],
+    ])
+    expect(bars.every(bar => bar.find('a[data-testid="calendar-competition"]').exists())).toBe(true)
+    // Overlapping bars never share a row; the second day of the cup reuses the free one.
+    expect(bars.map(bar => bar.attributes('style')!.match(/grid-row: (\d+)/)![1])).toEqual(['2', '3', '3'])
+    expect(grid.find('[data-testid="calendar-bar"]').classes().join(' ')).toMatch(/bg-kpi-(blue|gold|green)-100/)
   })
 
   it('CAL-05: an empty month says so and links to the next month having gamedays', async () => {
@@ -81,6 +89,9 @@ describe('history (PAGE_HISTORY.md)', () => {
     const cup = wrapper.find('[data-testid="history-season"] [data-competition="RCP"]')
     expect(cup.findAll('[data-testid="podium"] [data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
     expect(cup.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
+    // The medal replaces the rank number: three medals, then the rank of the fourth team only.
+    expect(cup.findAll('[data-testid="podium"] li').map(item => item.find('[data-testid="podium-rank"]').exists())).toEqual([false, false, false])
+    expect(cup.findAll('[data-testid="other-ranks"] li').map(item => item.find('span').text())).toEqual(['4'])
     expect(cup.find('details summary').text()).toBe('Voir le classement complet')
     expect(cup.findAll('[data-testid="other-ranks"] li')).toHaveLength(1)
   })

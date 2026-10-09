@@ -20,11 +20,12 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
 
     // ---------------------------------------------------- /group/{s}/{c}/competitions
 
-    public function testApi06GroupCompetitionsFollowLegacyOrderAndHidesUnpublished(): void
+    /** Ordre défini (GroupOrder), puis ordre du tour (Code_tour croissant) : le même pour la liste et les pastilles. */
+    public function testApi06GroupCompetitionsFollowGroupOrderThenRoundAndHideUnpublished(): void
     {
         $body = $this->getJson('/group/2999/TSTRES/competitions');
 
-        self::assertSame(['RCP', 'RMU', 'RCH', 'RAT'], self::column($body['competitions'], 'code'));
+        self::assertSame(['RCH', 'RCP', 'RMU', 'RAT'], self::column($body['competitions'], 'code'));
     }
 
     public function testApi06CompactRankingUsesLevelRankForCupsAndHidesUnrankedTeams(): void

@@ -18,7 +18,8 @@ résultats, et ajouter une compétition à son agenda personnel.
    niveau (couleur **et** texte : International / National / Régional). La ligne mène à la page de la
    compétition (`/competitions/{s}/{c}/games`, avec `?gameday=` pour un championnat) ; si la journée fait partie
    d'un événement, un second lien mène à `/events/{id}`.
-5. **Vue mois** (à partir de `lg`, Q-P3-4) : grille lundi → dimanche, journées sur plusieurs jours en bandeau ;
+5. **Vue mois** (à partir de `lg`, Q-P3-4) : grille lundi → dimanche ; chaque journée est **une barre à fond coloré léger** (couleur du niveau)
+   **étalée sur autant de jours que nécessaire**, à la ligne sur la semaine suivante si besoin, avec son titre ;
    la liste reste la vue par défaut sur mobile et pour les lecteurs d'écran.
 6. **Mois sans compétition** : « Aucune compétition publiée ce mois-ci. » + lien vers le mois suivant ayant des
    journées (s'il existe dans les 12 mois).

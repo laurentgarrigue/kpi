@@ -60,7 +60,7 @@ final class PublicCompetitionService
 
         $siblings = array_map(
             fn (array $row) => $this->header($row)->summary(),
-            $this->repository->findGroupCompetitions($season, $header->group['code'], navigationOrder: true),
+            $this->repository->findGroupCompetitions($season, $header->group['code']),
         );
 
         return [

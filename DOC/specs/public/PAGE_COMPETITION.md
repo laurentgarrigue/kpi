@@ -86,7 +86,7 @@ scoring publiera les topics publics.
 - Matchs **groupés par date** (titre de groupe : date longue localisée), puis triés par heure et terrain.
 - Une ligne par match : numéro, heure, terrain, phase / libellé (`d_phase`, `g_code`), équipe A (logo + nom),
   **score** (`g_score_a – g_score_b`, coefficients s'ils diffèrent de 1), équipe B, arbitres (`r_1`, `r_2`,
-  affichés à partir de `lg`), statut.
+  affichés à partir de `lg`), statut. Un arbitre valant « -1 » (pas d'arbitre à ce poste) n'est pas affiché.
 - **Statut** : `ATT` « À venir » ; `ON` « En cours » (+ période `g_period`) en rouge accent ; `END` « Terminé » ;
   score **provisoire** (italique + mention « provisoire ») tant que `g_validation ≠ 'O'`.
 - Un match `ON` ou `END` mène à sa feuille de match (§ 2.1) ; un match validé propose en plus la feuille de
@@ -106,12 +106,17 @@ scoring publiera les topics publics.
   matchs, sinon le dernier.
 - **Grille** : une colonne par terrain (ordre numérique), une ligne par horaire ; cellule = match compact
   (équipes, score, statut). Sur mobile (< `md`) : une section par terrain, matchs dans l'ordre horaire.
+  Dans la cellule : en haut, la **catégorie** (`soustitre2`) à gauche et le **statut** à droite sur la même ligne ;
+  puis une ligne par équipe avec **son score aligné à droite** (provisoire en italique, vainqueur en gras).
 
 ### 3.3 Infos (`info`) — remplace `kpdetails.php`
 
 - Données : `GET /competition/{season}/{code}/info`.
-- **Journées** : libellé, dates (début – fin), lieu et département, organisateur, officiels (RC, R1, délégué,
-  chef des arbitres) quand ils sont renseignés.
+- **Journées** : dates (début – fin), lieu et département, organisateur, officiels (RC, R1, délégué, chef des
+  arbitres) quand ils sont renseignés. Les journées qui ont **exactement les mêmes paramètres** (les phases
+  d'une coupe) sont regroupées en **une seule fiche, sans titre ni liste de phases** ; si les paramètres
+  diffèrent (championnat, coupe sur plusieurs dates), une fiche par groupe, titrée par ses phases. Le lien
+  « Ajouter à mon agenda » n'est proposé que pour une journée seule (l'abonnement à la compétition couvre le reste).
 - **Équipes engagées** par poule (logo, nom), seulement si la compétition est `ON` ou `END` (règle legacy).
 - **Schéma** de la compétition (image) s'il existe, avec un texte alternatif.
 - Lien vers le site web de la compétition s'il est renseigné. L'abonnement ICS arrive en phase 3.

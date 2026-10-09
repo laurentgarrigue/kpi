@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   calendarApiPath, entriesByDate, gamedayCompetitionPath, gridRange, lookaheadRange, monthGrid, monthRange,
-  nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, type CalendarEntry,
+  nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, weekSegments, type CalendarEntry,
 } from '../../app/utils/calendar'
 
 function entry(id: number, start: string, end: string, type = 'CHPT'): CalendarEntry {
@@ -77,5 +77,42 @@ describe('calendar entries', () => {
   it('CAL-05: the next month having gamedays', () => {
     expect(nextMonthWithEntries(entries, '2026-06')).toBe('2026-07')
     expect(nextMonthWithEntries(entries, '2026-07')).toBeNull()
+  })
+})
+
+describe('weekSegments', () => {
+  // June 2026 starts on a Monday: weeks are 06-01…06-07, 06-08…06-14, …
+  const entries = [
+    entry(1, '2026-05-30', '2026-06-01'),
+    entry(2, '2026-06-12', '2026-06-14'),
+    entry(3, '2026-06-12', '2026-06-12', 'CP'),
+    entry(5, '2026-06-06', '2026-06-09'),
+  ]
+  const weeks = monthGrid(entries, '2026-06')
+  const shape = (week: number) => weekSegments(weeks[week]!).map(segment =>
+    [segment.entry.id, segment.column, segment.span, segment.lane, segment.continuesBefore, segment.continuesAfter])
+
+  it('CAL-02: a gameday is one bar spanning all its days of the week', () => {
+    expect(shape(1)).toEqual([
+      [5, 0, 2, 0, true, false],
+      [2, 4, 3, 0, false, false],
+      [3, 4, 1, 1, false, false],
+    ])
+  })
+
+  it('CAL-02: a gameday over two weeks is one bar per week, marked as continued', () => {
+    expect(shape(0)).toEqual([
+      [1, 0, 1, 0, true, false],
+      [5, 5, 2, 0, false, true],
+    ])
+  })
+
+  it('CAL-02: overlapping bars take different lanes, a free lane is reused', () => {
+    const lanes = weekSegments(monthGrid([entry(1, '2026-06-01', '2026-06-02'), entry(2, '2026-06-01', '2026-06-05'), entry(3, '2026-06-03', '2026-06-04')], '2026-06')[0]!)
+    expect(lanes.map(segment => [segment.entry.id, segment.lane])).toEqual([[2, 0], [1, 1], [3, 1]])
+  })
+
+  it('a week without gameday has no bar', () => {
+    expect(weekSegments(weeks[3]!)).toEqual([])
   })
 })

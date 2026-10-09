@@ -8,4 +8,10 @@ describe('personName', () => {
     expect(personName('')).toBeNull()
     expect(personName(null)).toBeNull()
   })
+
+  it('treats the « -1 » placeholder (no referee) as nobody', () => {
+    expect(personName('-1')).toBeNull()
+    expect(personName(' -1 ')).toBeNull()
+    expect(personName('Acigné II')).toBe('Acigné II')
+  })
 })

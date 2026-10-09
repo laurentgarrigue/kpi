@@ -19,8 +19,9 @@ const mark = (entry: PodiumEntry) => (entry.medal ? { kind: 'medal' as const, me
     <p v-if="competition.soustitre2" class="text-sm text-ink/70">{{ competition.soustitre2 }}</p>
     <ol class="mt-3 space-y-1" data-testid="podium">
       <li v-for="entry in parts.top" :key="`${entry.rank}-${entry.team.label}`" class="flex items-center gap-2">
-        <ResultsRankingMark :mark="mark(entry)" />
-        <span class="w-6 text-right tabular-nums">{{ entry.rank }}</span>
+        <!-- The medal replaces the rank number (HIS-03). -->
+        <ResultsRankingMark v-if="entry.medal" :mark="mark(entry)" />
+        <span v-else class="w-6 text-right tabular-nums" data-testid="podium-rank">{{ entry.rank }}</span>
         <ResultsTeamName :label="entry.team.label" :number="entry.team.number" :competition="competition.code" :season="season" strong />
       </li>
     </ol>

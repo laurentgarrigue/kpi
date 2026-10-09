@@ -26,21 +26,21 @@ describe('competitions list (PAGE_COMPETITIONS.md)', () => {
     expect(wrapper.findAll('select[name="season"] option').map(option => option.text())).toEqual(['2999', '2998'])
   })
 
-  it('CPL-04: one card per competition, in api2 order, with title, badges and link', async () => {
+  it('CPL-04: one card per competition, in the defined order then the round order, with title, badges and link', async () => {
     const list = await cards('/competitions/2999?group=TSTRES')
-    expect(list.map(card => card.attributes('data-competition'))).toEqual(['RCP', 'RMU', 'RCH', 'RAT'])
-    expect(list[0]!.find('h2 a').attributes('href')).toBe('/competitions/2999/RCP')
-    expect(list[0]!.find('h2').text()).toBe('Phase finale')
-    expect(list[0]!.text()).toContain('Coupe')
-    expect(list[0]!.text()).toContain('Terminé')
+    expect(list.map(card => card.attributes('data-competition'))).toEqual(['RCH', 'RCP', 'RMU', 'RAT'])
+    expect(list[1]!.find('h2 a').attributes('href')).toBe('/competitions/2999/RCP')
+    expect(list[1]!.find('h2').text()).toBe('Phase finale')
+    expect(list[1]!.text()).toContain('Coupe')
+    expect(list[1]!.text()).toContain('Terminé')
   })
 
   it('CPL-06/CPL-10: medals for a finished final round, qualified and eliminated marks otherwise, with text', async () => {
     const list = await cards('/competitions/2999?group=TSTRES')
-    const cup = list[0]!
+    const cup = list[1]!
     expect(cup.findAll('[data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
     expect(cup.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
-    const championship = list[2]!
+    const championship = list[0]!
     expect(championship.findAll('[data-mark="qualified"]')).toHaveLength(1)
     expect(championship.findAll('[data-mark="eliminated"]')).toHaveLength(1)
     expect(championship.find('[data-mark="qualified"]').text()).toBe('Qualifié')

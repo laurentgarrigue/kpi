@@ -24,6 +24,9 @@ final class PublicCompetitionRepository
         LEFT JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
         WHERE c.Publication = 'O'";
 
+    /** Ordre défini puis ordre du tour : liste des compétitions, pastilles et sœurs (retour de recette 09/10/2026). */
+    private const GROUP_ORDER = 'c.GroupOrder, c.Code_tour, c.Code';
+
     public function __construct(private readonly Connection $connection)
     {
     }
@@ -58,16 +61,14 @@ final class PublicCompetitionRepository
     }
 
     /**
-     * Compétitions publiées d'un groupe, dans l'ordre de kpclassements.php (liste) ou de GroupOrder (navigation).
+     * Compétitions publiées d'un groupe, dans l'ordre défini (GroupOrder) puis dans l'ordre du tour (Code_tour).
      *
      * @return list<array<string, mixed>>
      */
-    public function findGroupCompetitions(string $season, string $groupCode, bool $navigationOrder = false): array
+    public function findGroupCompetitions(string $season, string $groupCode): array
     {
-        $orderBy = $navigationOrder ? 'c.GroupOrder, c.Code' : 'c.Code_niveau, c.Code_tour DESC, c.GroupOrder, c.Code';
-
         return $this->connection->fetchAllAssociative(
-            self::HEADER_SELECT . " AND c.Code_saison = ? AND c.Code_ref = ? ORDER BY $orderBy",
+            self::HEADER_SELECT . ' AND c.Code_saison = ? AND c.Code_ref = ? ORDER BY ' . self::GROUP_ORDER,
             [$season, $groupCode],
         );
     }
@@ -85,7 +86,7 @@ final class PublicCompetitionRepository
                 WHERE ej.Id_evenement = ? AND j.Code_competition = c.Code AND j.Code_saison = c.Code_saison
                 AND j.Publication = 'O'
             )
-            ORDER BY c.Code_niveau, c.Code_ref, c.GroupOrder, c.Code",
+            ORDER BY c.Code_niveau, c.Code_ref, c.GroupOrder, c.Code_tour, c.Code",
             [$eventId],
         );
     }

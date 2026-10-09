@@ -14,6 +14,80 @@
     ],
     "competitions": [
       {
+        "code": "RCH",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Championnat Résultats",
+        "soustitre": "Saison régulière",
+        "soustitre2": "Poule A",
+        "display_title": "Championnat Résultats",
+        "type": "CHPT",
+        "status": "ON",
+        "level": "NAT",
+        "banner": "logo/bandeau-rch.png",
+        "logo": null,
+        "web": "https://example.test",
+        "qualified": 1,
+        "eliminated": 1,
+        "has_games": true,
+        "round": 1,
+        "final": false,
+        "ranking": [
+          {
+            "rank": 1,
+            "team": {
+              "id": 9301,
+              "number": 101,
+              "label": "Equipe Alpha",
+              "logo": "KIP/logo/alpha.png"
+            },
+            "points": 7,
+            "played": 3,
+            "medal": null
+          },
+          {
+            "rank": 2,
+            "team": {
+              "id": 9302,
+              "number": 102,
+              "label": "Equipe Bravo",
+              "logo": "KIP/logo/bravo.png"
+            },
+            "points": 5,
+            "played": 3,
+            "medal": null
+          },
+          {
+            "rank": 3,
+            "team": {
+              "id": 9303,
+              "number": 103,
+              "label": "Equipe Charlie",
+              "logo": "KIP/logo/charlie.png"
+            },
+            "points": 4,
+            "played": 2,
+            "medal": null
+          },
+          {
+            "rank": 4,
+            "team": {
+              "id": 9304,
+              "number": 104,
+              "label": "Equipe Delta",
+              "logo": null
+            },
+            "points": 1,
+            "played": 2,
+            "medal": null
+          }
+        ]
+      },
+      {
         "code": "RCP",
         "season": "2999",
         "group": {
@@ -146,80 +220,6 @@
             "points": 10,
             "played": 2,
             "medal": 3
-          }
-        ]
-      },
-      {
-        "code": "RCH",
-        "season": "2999",
-        "group": {
-          "code": "TSTRES",
-          "libelle": "Groupe Résultats",
-          "libelle_en": "Results group"
-        },
-        "libelle": "Championnat Résultats",
-        "soustitre": "Saison régulière",
-        "soustitre2": "Poule A",
-        "display_title": "Championnat Résultats",
-        "type": "CHPT",
-        "status": "ON",
-        "level": "NAT",
-        "banner": "logo/bandeau-rch.png",
-        "logo": null,
-        "web": "https://example.test",
-        "qualified": 1,
-        "eliminated": 1,
-        "has_games": true,
-        "round": 1,
-        "final": false,
-        "ranking": [
-          {
-            "rank": 1,
-            "team": {
-              "id": 9301,
-              "number": 101,
-              "label": "Equipe Alpha",
-              "logo": "KIP/logo/alpha.png"
-            },
-            "points": 7,
-            "played": 3,
-            "medal": null
-          },
-          {
-            "rank": 2,
-            "team": {
-              "id": 9302,
-              "number": 102,
-              "label": "Equipe Bravo",
-              "logo": "KIP/logo/bravo.png"
-            },
-            "points": 5,
-            "played": 3,
-            "medal": null
-          },
-          {
-            "rank": 3,
-            "team": {
-              "id": 9303,
-              "number": 103,
-              "label": "Equipe Charlie",
-              "logo": "KIP/logo/charlie.png"
-            },
-            "points": 4,
-            "played": 2,
-            "medal": null
-          },
-          {
-            "rank": 4,
-            "team": {
-              "id": 9304,
-              "number": 104,
-              "label": "Equipe Delta",
-              "logo": null
-            },
-            "points": 1,
-            "played": 2,
-            "medal": null
           }
         ]
       },

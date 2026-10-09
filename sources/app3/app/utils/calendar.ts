@@ -150,3 +150,45 @@ export function entryLevel(entry: CalendarEntry): CalendarLevel | null {
   const level = entry.competition.level
   return level && (CALENDAR_LEVELS as readonly string[]).includes(level) ? level as CalendarLevel : null
 }
+
+/** One bar of the month grid: a gameday over the days of a week it covers (CAL-02). */
+export interface WeekSegment {
+  entry: CalendarEntry
+  /** First day of the bar, 0 = Monday … 6 = Sunday. */
+  column: number
+  /** Number of days covered in this week. */
+  span: number
+  /** Row of the bar, so that overlapping bars never share a row. */
+  lane: number
+  /** The gameday started in a previous week / ends in a following one. */
+  continuesBefore: boolean
+  continuesAfter: boolean
+}
+
+/**
+ * Bars of a week (Monday → Sunday): one per gameday, as wide as its days in the week. Longer bars first, then
+ * each takes the first row not yet occupied where it starts.
+ */
+export function weekSegments(week: readonly CalendarDay[]): WeekSegment[] {
+  const first = week[0]!.date
+  const last = week.at(-1)!.date
+  const entries = [...new Map(week.flatMap(day => day.entries).map(entry => [entry.id, entry])).values()]
+
+  const segments = entries.map((entry) => {
+    const column = week.findIndex(day => day.date >= entry.start)
+    const end = week.findLastIndex(day => day.date <= entry.end)
+    const startColumn = entry.start < first ? 0 : column
+    return {
+      entry, column: startColumn, span: end - startColumn + 1, lane: 0,
+      continuesBefore: entry.start < first, continuesAfter: entry.end > last,
+    }
+  }).sort((a, b) => a.column - b.column || b.span - a.span || a.entry.id - b.entry.id)
+
+  const laneEnds: number[] = []
+  for (const segment of segments) {
+    const free = laneEnds.findIndex(laneEnd => laneEnd < segment.column)
+    segment.lane = free === -1 ? laneEnds.length : free
+    laneEnds[segment.lane] = segment.column + segment.span - 1
+  }
+  return segments
+}

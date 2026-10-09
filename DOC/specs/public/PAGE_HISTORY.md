@@ -13,7 +13,7 @@ Le palmarès d'une compétition au fil des saisons (« qui a gagné la Nationale
    vers le premier groupe de la section nationale (règle CPL-02).
 2. `/history/{group}` : `<h1>` « Palmarès — {groupe} » ; une section par saison (décroissante), et dans chaque
    saison une carte par compétition finale terminée : titre (`display_title`, `soustitre2`), **podium** (rangs 1 à
-   3 avec médaille, couleur et texte), puis les autres équipes classées, repliées (« Voir le classement complet »,
+   3 : la **médaille remplace le numéro de rang**, couleur et texte), puis les autres équipes classées, repliées (« Voir le classement complet »,
    `<details>`).
 3. Chaque carte mène au classement de la compétition (`/competitions/{s}/{c}/ranking`) ; chaque équipe à sa fiche
    (`/teams/{number}`).
@@ -34,7 +34,7 @@ saison. » ; une page indexable par groupe.
 
 - **HIS-01** — `/history` redirige vers le groupe par défaut ; le sélecteur fonctionne sans JavaScript.
 - **HIS-02** — Saisons décroissantes ; seules les compétitions publiées, terminées et du tour final apparaissent.
-- **HIS-03** — Podium avec médailles (visuel et texte), puis classement complet repliable.
+- **HIS-03** — Podium : la médaille (visuelle et textuelle) remplace le rang ; puis classement complet repliable, avec rangs.
 - **HIS-04** — Liens vers le classement de chaque compétition et la fiche de chaque équipe.
 - **HIS-05** — Groupe inconnu ou sans palmarès → 404 ; l'entrée de menu « Historique et palmarès » devient interne.
 
