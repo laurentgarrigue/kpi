@@ -129,6 +129,15 @@ describe('pitch game layout (§ 3.2)', () => {
     expect(teamA!.find('[data-testid="side-score"]').classes()).toContain('italic')
   })
 
+  it('CMP-07: the winner of a finished game is in bold', async () => {
+    const game = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
+    const [winner, loser] = game.findAll('[data-testid="pitch-team"]')
+    expect(winner!.find('a').classes()).toContain('font-semibold')
+    expect(loser!.find('a').classes()).not.toContain('font-semibold')
+    const onGame = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-game="9404"]')
+    expect(onGame.findAll('a.font-semibold')).toHaveLength(0)
+  })
+
   it('CMP-07: a game to come shows no score', async () => {
     const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9405"]')
     expect(game.findAll('[data-testid="side-score"]').every(score => score.text().trim() === '' || score.text().trim() === '–')).toBe(true)

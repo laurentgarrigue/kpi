@@ -40,10 +40,18 @@ Fil d'Ariane : Accueil › {événement}            (vue événement)
 - **Puces des compétitions** : « Toutes » (active sur cette vue), puis une puce par compétition publiée
   (libellé `soustitre2`, sinon `display_title`), dans l'ordre d'api2. Une puce mène à la page de la compétition
   sur le **même onglet** :
-  - vue événement : `/competitions/{season}/{code}/{tab}?event={id}` (contexte événement, PAGE_COMPETITION.md § 2) ;
+  - vue événement : **reste dans l'événement** : `/events/{id}/{tab}?competition={code}` (la vue est filtrée sur
+    cette compétition ; la compétition de la puce est marquée courante) ;
   - vue groupe : `/competitions/{season}/{code}/{tab}`.
-- **Onglets** : seulement **Matchs** et **Terrains** (comme le legacy : les classements, phases et stats n'ont de
-  sens que par compétition). Mêmes règles que PAGE_COMPETITION.md § 2 (liens, `aria-current`, mobile).
+- **Onglets de la vue groupe** : seulement **Matchs** et **Terrains** (comme le legacy). Mêmes règles que
+  PAGE_COMPETITION.md § 2 (liens, `aria-current`, mobile).
+- **Onglets de la vue événement** : les six onglets d'une compétition — Matchs, Terrains, Infos, Déroulement,
+  Classement, Stats — **sans quitter l'événement** (`/events/{id}/{tab}`). Matchs et Terrains couvrent tout
+  l'événement, ou la compétition choisie (`?competition=`). Infos, Déroulement, Classement et Stats exigent une
+  compétition : celle du paramètre, sinon **la première de l'événement** ; la puce « Toutes » est alors
+  **grisée** (non cliquable, `aria-disabled`) car inapplicable. Les onglets conservent la compétition choisie
+  explicitement. Le lien de compétition d'un match (colonne « Compétition ») mène lui aussi à
+  `/events/{id}/games?competition={code}`.
 
 ### 2.1 Accès à ces pages
 
@@ -98,7 +106,9 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 
 - **EVT-01** — `/events/{id}` redirige (302) vers `/events/{id}/games` (préfixe `/en` conservé).
 - **EVT-02** — L'en-tête affiche libellé, lieu, dates, logo s'il existe, et le lien app2 `{app2}/event/{id}`.
-- **EVT-03** — Une puce par compétition de l'événement, menant à `/competitions/{s}/{c}/{onglet}?event={id}`.
+- **EVT-03** — Une puce par compétition de l'événement, menant à `/events/{id}/{onglet}?competition={c}` (sans quitter l'événement).
+- **EVT-06** — Avec `?competition=`, seuls les matchs de cette compétition sont listés (Matchs et Terrains), sa puce est courante, le PDF des matchs est celui de cette compétition ; un code inconnu est ignoré.
+- **EVT-07** — La vue événement propose les onglets Infos, Déroulement, Classement et Stats d'une compétition (la première par défaut), « Toutes » grisée sur ces onglets.
 - **EVT-04** — Les matchs de toutes les compétitions de l'événement sont listés, chacun avec sa compétition.
 - **EVT-05** — Événement inconnu ou sans compétition publiée → page 404 du site.
 - **GRP-01** — `/groups/{s}/{c}` redirige (302) vers `/groups/{s}/{c}/games`.

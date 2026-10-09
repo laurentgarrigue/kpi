@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
 
 // Compact game of the pitch grid: category and status on the top line, then each team with its score at the
 // right of its own line (CMP-07).
 const props = defineProps<{ game: ResultsGame, showCompetition?: boolean }>()
+const winner = computed(() => winnerSide(props.game))
 const category = computed(() => (props.showCompetition ? props.game.c_label ?? props.game.c_code : props.game.c_label))
 </script>
 
@@ -14,11 +16,11 @@ const category = computed(() => (props.showCompetition ? props.game.c_label ?? p
       <ResultsGameStatus :game="game" />
     </p>
     <p class="flex items-baseline justify-between gap-2" data-testid="pitch-team">
-      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" />
+      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" :strong="winner === 'A'" />
       <ResultsSideScore :game="game" side="A" />
     </p>
     <p class="flex items-baseline justify-between gap-2" data-testid="pitch-team">
-      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" :season="game.c_season" />
+      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" :season="game.c_season" :strong="winner === 'B'" />
       <ResultsSideScore :game="game" side="B" />
     </p>
   </div>

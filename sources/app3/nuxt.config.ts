@@ -12,6 +12,12 @@ const NO_CACHE = { cache: false as const }
 // Honours and clubs only change at the end of a competition (PAGE_HISTORY.md § 3, PAGE_CLUBS.md § 3).
 const LONG_CACHE = { cache: { maxAge: 3600, swr: true } }
 
+// NuxtLink prefetches the extracted payload of a cached page (`{page}/_payload.json`). That path has one more
+// segment than the page, so a rule written for the page does not cover it: without the second entry, every
+// prefetch is a 404 and the cached payload is never used (PLT-07).
+const cachedPage = (path: string, rule: typeof SLOW_CACHE): [string, typeof SLOW_CACHE][] =>
+  [[path, rule], [`${path === '/' ? '' : path}/_payload.json`, rule]]
+
 export default defineNuxtConfig({
   extends: ['../kpi-layer'],
 
@@ -46,9 +52,9 @@ export default defineNuxtConfig({
   // Cache per page, as set by each page spec.
   routeRules: {
     ...Object.fromEntries(['', '/en'].flatMap(prefix => [
-      [prefix || '/', SLOW_CACHE],
+      ...cachedPage(prefix || '/', SLOW_CACHE),
       [`${prefix}/competitions`, NO_CACHE],
-      [`${prefix}/competitions/*`, SLOW_CACHE],
+      ...cachedPage(`${prefix}/competitions/*`, SLOW_CACHE),
       [`${prefix}/competitions/*/*`, NO_CACHE],
       [`${prefix}/competitions/*/*/**`, RESULTS_CACHE],
       [`${prefix}/events/*`, NO_CACHE],
@@ -56,13 +62,13 @@ export default defineNuxtConfig({
       [`${prefix}/groups/*/*`, NO_CACHE],
       [`${prefix}/groups/*/*/**`, RESULTS_CACHE],
       // Phase 3 (PAGE_CALENDAR.md, PAGE_HISTORY.md, PAGE_TEAM.md, PAGE_CLUBS.md, FEATURE_SEARCH.md § 3).
-      [`${prefix}/calendar`, SLOW_CACHE],
+      ...cachedPage(`${prefix}/calendar`, SLOW_CACHE),
       [`${prefix}/history`, NO_CACHE],
-      [`${prefix}/history/*`, LONG_CACHE],
-      [`${prefix}/teams`, SLOW_CACHE],
-      [`${prefix}/teams/*`, SLOW_CACHE],
-      [`${prefix}/clubs`, LONG_CACHE],
-      [`${prefix}/clubs/*`, LONG_CACHE],
+      ...cachedPage(`${prefix}/history/*`, LONG_CACHE),
+      ...cachedPage(`${prefix}/teams`, SLOW_CACHE),
+      ...cachedPage(`${prefix}/teams/*`, SLOW_CACHE),
+      ...cachedPage(`${prefix}/clubs`, LONG_CACHE),
+      ...cachedPage(`${prefix}/clubs/*`, LONG_CACHE),
       // Rate-limited per visitor by api2: a shared cache would serve one visitor's search to another.
       [`${prefix}/search`, NO_CACHE],
     ])),

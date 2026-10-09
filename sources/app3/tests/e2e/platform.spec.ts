@@ -167,4 +167,19 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(html).toMatch(/<meta name="robots" content="noindex, nofollow">/)
     expect(searchForwardedFor.at(-1)).toContain('203.0.113.9')
   })
+
+  // NuxtLink prefetches `{page}/_payload.json` of cached pages; a route rule that does not cover that path makes
+  // every prefetch a 404 (and the cached payload useless).
+  it('PLT-07: the payload of every cached page is served (link prefetch does not end in 404)', async () => {
+    const pages = [
+      '/', '/calendar', '/history/TSTRES', '/teams', '/teams/101', '/clubs', '/clubs/C001',
+      '/competitions/2999', '/competitions/2999/RCH/games', '/events/77/games', '/events/77/ranking', '/groups/2999/TSTRES/games',
+    ]
+    for (const page of pages) {
+      const path = `${page === '/' ? '' : page}/_payload.json`
+      const response = await fetch(path, { headers: { Accept: '*/*' } })
+      expect(response.status, path).toBe(200)
+      expect(response.headers.get('content-type'), path).toContain('json')
+    }
+  })
 })

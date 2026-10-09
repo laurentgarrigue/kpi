@@ -107,7 +107,8 @@ scoring publiera les topics publics.
 - **Grille** : une colonne par terrain (ordre numérique), une ligne par horaire ; cellule = match compact
   (équipes, score, statut). Sur mobile (< `md`) : une section par terrain, matchs dans l'ordre horaire.
   Dans la cellule : en haut, la **catégorie** (`soustitre2`) à gauche et le **statut** à droite sur la même ligne ;
-  puis une ligne par équipe avec **son score aligné à droite** (provisoire en italique, vainqueur en gras).
+  puis une ligne par équipe avec **son score aligné à droite** (provisoire en italique) ; dans un match
+  **terminé**, l'équipe vainqueur (nom et score) est en **gras**.
 
 ### 3.3 Infos (`info`) — remplace `kpdetails.php`
 

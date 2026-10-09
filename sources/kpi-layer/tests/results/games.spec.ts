@@ -12,6 +12,7 @@ import {
   pitchGrid,
   sortGames,
   winnerSide,
+  gamesOfCompetition,
 } from '../../app/utils/results/games'
 import { game } from './fixtures'
 
@@ -123,7 +124,11 @@ describe('scores', () => {
     expect(hasScore(game({ g_score_a: '?', g_score_b: '?' }))).toBe(false)
   })
 
-  it('CMP-09: the winner of a validated finished game, forfeits included', () => {
+  it('CMP-07: the winner of a finished game, even before the officials validate the score', () => {
+    expect(winnerSide(game({ g_status: 'END', g_validation: '', g_score_a: '3', g_score_b: '1' }))).toBe('A')
+  })
+
+  it('CMP-09: the winner of a finished game, forfeits included', () => {
     expect(winnerSide(game({ g_status: 'END', g_validation: 'O', g_score_a: '3', g_score_b: '1' }))).toBe('A')
     expect(winnerSide(game({ g_status: 'END', g_validation: 'O', g_score_a: 'F', g_score_b: '0' }))).toBe('B')
     expect(winnerSide(game({ g_status: 'END', g_validation: 'O', g_score_a: '2', g_score_b: '2' }))).toBeNull()
@@ -140,5 +145,13 @@ describe('isLive', () => {
     expect(isLive([game({ g_date: '2026-06-14', g_time: '11:30' })], now)).toBe(false)
     expect(isLive([game({ g_date: '2026-06-15', g_time: '10:30' })], now)).toBe(false)
     expect(isLive([game({ g_status: 'END', g_date: '2026-06-14', g_time: '09:00' })], now)).toBe(false)
+  })
+})
+
+describe('gamesOfCompetition', () => {
+  it('EVT-06: keeps the games of one competition, all of them without a code', () => {
+    const games = [game({ g_id: 1, c_code: 'N1H' }), game({ g_id: 2, c_code: 'N1F' })]
+    expect(gamesOfCompetition(games, 'N1F').map(g => g.g_id)).toEqual([2])
+    expect(gamesOfCompetition(games, undefined)).toEqual(games)
   })
 })

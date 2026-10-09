@@ -42,3 +42,18 @@ export function competitionPath(season: string, code: string, tab?: CompetitionT
   const path = ['/competitions', season, code, tab].filter(Boolean).join('/')
   return event === undefined ? path : `${path}?event=${event}`
 }
+
+/** Path of an event view tab (without language prefix), optionally restricted to one competition (EVT-03, EVT-07). */
+export function eventTabPath(event: number, tab: CompetitionTab, competition?: string): string {
+  const path = `/events/${event}/${tab}`
+  return competition ? `${path}?competition=${encodeURIComponent(competition)}` : path
+}
+
+/**
+ * Competition shown by the event view: the one asked for in the query when the event has it; otherwise none
+ * (the whole event), or the first one on tabs that need a competition.
+ */
+export function selectedCompetition<T extends { code: string }>(competitions: readonly T[], requested: unknown, required: boolean): T | undefined {
+  const asked = typeof requested === 'string' ? competitions.find(item => item.code === requested) : undefined
+  return asked ?? (required ? competitions[0] : undefined)
+}

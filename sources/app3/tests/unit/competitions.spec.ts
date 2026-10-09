@@ -3,6 +3,8 @@ import {
   AGGREGATE_TABS,
   COMPETITION_TABS,
   competitionPath,
+  eventTabPath,
+  selectedCompetition,
   defaultGroup,
   defaultTab,
   groupLabel,
@@ -60,5 +62,23 @@ describe('competitionPath', () => {
     expect(competitionPath('2026', 'N1H')).toBe('/competitions/2026/N1H')
     expect(competitionPath('2026', 'N1H', 'ranking')).toBe('/competitions/2026/N1H/ranking')
     expect(competitionPath('2026', 'N1H', 'games', 77)).toBe('/competitions/2026/N1H/games?event=77')
+  })
+})
+
+describe('event view', () => {
+  const competitions = [{ code: 'RCH' }, { code: 'RCP' }]
+
+  it('EVT-03/EVT-07: an event tab, restricted to a competition when given', () => {
+    expect(eventTabPath(77, 'games')).toBe('/events/77/games')
+    expect(eventTabPath(77, 'ranking', 'RCP')).toBe('/events/77/ranking?competition=RCP')
+  })
+
+  it('EVT-06/EVT-07: the requested competition when the event has it; else none, or the first when one is required', () => {
+    expect(selectedCompetition(competitions, 'RCP', false)).toEqual({ code: 'RCP' })
+    expect(selectedCompetition(competitions, 'NOPE', false)).toBeUndefined()
+    expect(selectedCompetition(competitions, undefined, false)).toBeUndefined()
+    expect(selectedCompetition(competitions, undefined, true)).toEqual({ code: 'RCH' })
+    expect(selectedCompetition(competitions, 'NOPE', true)).toEqual({ code: 'RCH' })
+    expect(selectedCompetition([], undefined, true)).toBeUndefined()
   })
 })

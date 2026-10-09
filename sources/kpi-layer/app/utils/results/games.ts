@@ -137,9 +137,9 @@ export function isProvisional(game: ResultsGame): boolean {
   return game.g_status !== 'ATT' && hasScore(game) && game.g_validation !== 'O'
 }
 
-/** Winner of a validated finished game; a forfeit (« F ») loses. */
+/** Winner of a finished game (its score may still be provisional); a forfeit (« F ») loses. */
 export function winnerSide(game: ResultsGame): Side | null {
-  if (game.g_status !== 'END' || game.g_validation !== 'O' || !hasScore(game)) {
+  if (game.g_status !== 'END' || !hasScore(game)) {
     return null
   }
   const [a, b] = [game.g_score_a!, game.g_score_b!]
@@ -158,4 +158,9 @@ export function isLive(games: readonly ResultsGame[], now: Date): boolean {
     const key = gameKey(game)
     return game.g_status === 'ON' || (game.g_status === 'ATT' && key !== null && key >= from && key <= to)
   })
+}
+
+/** Games of one competition; every game when no competition is given (event view filtered by a chip, EVT-06). */
+export function gamesOfCompetition(games: readonly ResultsGame[], code: string | undefined): ResultsGame[] {
+  return code === undefined ? [...games] : games.filter(game => game.c_code === code)
 }

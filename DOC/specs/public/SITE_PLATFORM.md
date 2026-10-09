@@ -113,6 +113,10 @@ beta ne doit pas provoquer le rollback du reste). Elle le sera en phase 5 (`/hea
 - **PLT-06** — `make app3_generate_preprod` / `make app3_generate_production` produisent
   `sources/app3/.output/server/index.mjs` et redémarrent le conteneur `app3`.
 
+- **PLT-07** — Le payload (`{page}/_payload.json`) de chaque page mise en cache est servi (200) : les règles de
+  cache (`routeRules`) couvrent la page **et** son payload, sinon chaque préchargement de lien (`NuxtLink`) est
+  une 404 et le payload mis en cache n'est jamais utilisé.
+
 ## 9. Hors périmètre / questions ouvertes
 
 - Mesure d'audience (Matomo) : ajoutée à la bascule, en mode sans cookie (cf. stratégie § 11).
