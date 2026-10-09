@@ -1,6 +1,6 @@
 # Recherche globale
 
-**Phase** : 3 — **Statut** : 📝 Proposée — **Route** : `/search?q=` (+ `/en`) — **Nouveau** (pas d'équivalent
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Route** : `/search?q=` (+ `/en`) — **Nouveau** (pas d'équivalent
 legacy)
 
 ## 1. Objectif

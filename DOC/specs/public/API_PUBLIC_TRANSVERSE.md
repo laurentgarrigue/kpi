@@ -1,6 +1,6 @@
 # api2 — endpoints publics transverses (phase 3)
 
-**Phase** : 3 — **Statut** : 📝 Proposée — **Consommé par** : app3 (calendrier, historique, équipes, clubs,
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Consommé par** : app3 (calendrier, historique, équipes, clubs,
 recherche) — **Remplace** : `json-events.php`, `upload_ics.php`, requêtes de `kphistorique.php`,
 `kpequipes.php`, `searchEquipes.php`, `kpclubs.php`, `json-clubs.php`, `searchClubs.php`, `kplogos.php`
 
@@ -57,9 +57,12 @@ classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::me
 
 ### 3.4 Équipes
 - Recherche : `[{ number, label, club: { code, label } }]` (`kp_equipe`, libellé ou code club contenant `q`).
-- Fiche : `{ number, label, club: { code, label }, logo, honours: [{ season, competition: { code, display_title,
+- Fiche : `{ number, label, club: { code, label }, logo, colors, photo, honours: [{ season, competition: { code, display_title,
   group }, rank, medal }], seasons: [{ season, competitions: [{ code, display_title }] }] }` ; `honours` = rangs
   dans les compétitions publiées **terminées** (comme `kpequipes.php`), saisons décroissantes.
+  `colors` et `photo` = `{ image, season }` ou `null`, règle de `kpequipes.php` (Q-P3-3) : couleurs
+  `KIP/colors/{n}-{année}-colors.png` de l'année courante à année − 3, puis `KIP/colors/{n}-colors.png`
+  (`season` = `null`) ; photo d'équipe `KIP/teams/{n}-{année}-team.jpg` de l'année courante à année − 5.
 - Composition : `{ players: [{ first_name, last_name, number, category, role, goals, green, yellow, red,
   red_final }] }` ; `role` ∈ `captain|coach|null` (`Capitaine` = C / E) ; joueurs `A` et `X` exclus ; buts et
   cartons des matchs **validés et publiés** ; tri legacy (joueurs, puis encadrement, numéro, nom). **Ni
@@ -81,11 +84,11 @@ classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::me
 **Aucune personne n'est indexée** (stratégie § 11). Limitation de débit : 30 requêtes par minute et par IP
 (Symfony RateLimiter) → `429`.
 
-## 4. Questions ouvertes
+## 4. Décisions (09/10/2026)
 
-- **Q-P3-1 — Recherche : moteur.** Proposition : SQL `LIKE` sur les libellés (volumes faibles : quelques milliers
+- **Q-P3-1 — Recherche : moteur.** ✅ Retenu : SQL `LIKE` sur les libellés (volumes faibles : quelques milliers
   de lignes), sans moteur dédié ; à revoir si les temps de réponse dépassent 200 ms.
-- **Q-P3-2 — E-mail des clubs.** Publié aujourd'hui par `kpclubs.php` (adresse de la structure). Proposition :
+- **Q-P3-2 — E-mail des clubs.** Publié aujourd'hui par `kpclubs.php` (adresse de la structure). ✅ Retenu :
   le conserver, affiché en texte (pas de `mailto:` indexable) ; à retirer si un club le demande.
 
 ## 5. Critères d'acceptation

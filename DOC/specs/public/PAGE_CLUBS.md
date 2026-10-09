@@ -1,6 +1,6 @@
 # Clubs : liste, carte et fiche club
 
-**Phase** : 3 — **Statut** : 📝 Proposée — **Routes** : `/clubs[?q=][&view=map]`, `/clubs/{code}` (+ `/en`)
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Routes** : `/clubs[?q=][&view=map]`, `/clubs/{code}` (+ `/en`)
 — **Remplace** : `kpclubs.php`, `kplogos.php`, `json-clubs.php`, `searchClubs.php` — **Entrée de menu** : `clubs`
 
 ## 1. Objectif
@@ -44,12 +44,11 @@ n'est jamais le seul accès à l'information : la liste reste disponible.
 - **CLB-04** — `kplogos.php` n'a plus d'équivalent séparé : la liste des clubs en tient lieu.
 - **CLB-05** — L'entrée de menu « Clubs » devient interne.
 
-## 6. Questions ouvertes
+## 6. Décisions (09/10/2026)
 
 - **Q-P3-5 — Fond de carte.** Les tuiles OpenStreetMap sont un service tiers (adresse IP du visiteur transmise).
-  Proposition : Leaflet (auto-hébergé, déjà dans le legacy) avec tuiles OSM **chargées seulement après un clic**
-  sur « Afficher la carte », et mention de la source. Alternatives : tuiles auto-hébergées (coût de stockage et
-  de mise à jour) ou pas de carte.
+  ✅ Retenu : Leaflet (auto-hébergé, déjà dans le legacy) avec tuiles OSM **chargées seulement après un clic**
+  sur « Afficher la carte », et mention de la source.
 
 ## 7. Correspondance des anciennes URL (phase 5)
 

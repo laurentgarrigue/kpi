@@ -1,6 +1,6 @@
 # Calendrier des compétitions et abonnements ICS
 
-**Phase** : 3 — **Statut** : 📝 Proposée — **Routes** : `/calendar[?month=YYYY-MM][&level=][&group=]` (+ `/en`)
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 En cours — **Routes** : `/calendar[?month=YYYY-MM][&level=][&group=]` (+ `/en`)
 — **Remplace** : `kpcalendrier.php`, `json-events.php`, `upload_ics.php` — **Entrée de menu** : `calendar`
 
 ## 1. Objectif
@@ -51,10 +51,10 @@ Les fichiers ICS sont servis par api2 (URL publique), pas par app3.
   propose son `.ics`.
 - **CAL-07** — L'entrée de menu « Calendrier » devient interne (`ready: true`).
 
-## 6. Questions ouvertes
+## 6. Décisions (09/10/2026)
 
-- **Q-P3-4 — Vue mois.** Proposition : liste (agenda) d'abord, grille mensuelle sur grand écran, sans
-  bibliothèque (pas de FullCalendar : poids, dépendance et accessibilité). Alternative : liste seule.
+- **Q-P3-4 — Vue mois.** ✅ Retenu : liste (agenda) d'abord, grille mensuelle sur grand écran, sans
+  bibliothèque (pas de FullCalendar : poids, dépendance et accessibilité).
 
 ## 7. Correspondance des anciennes URL (phase 5)
 

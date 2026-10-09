@@ -481,6 +481,7 @@ L'évaluation RGPD complète est un **chantier distinct, ultérieur**. Le princi
 | Équipe, club ou nation | ✅ |
 | Statistiques de match (buts, cartons) rattachées à ces données | ✅ comme aujourd'hui |
 | Date de naissance, n° de licence, sexe hors libellé de catégorie, photo individuelle, coordonnées | ❌ |
+| Photo d'équipe (`img/KIP/teams`), couleurs | ✅ comme aujourd'hui, **jusqu'à l'étude RGPD** (décision Q-P3-3 du 09/10/2026) |
 
 Règles de mise en œuvre :
 - **DTO publics dédiés** dans api2 : les endpoints publics ne sérialisent jamais une entité complète. Un **test automatisé** vérifie la liste des champs exposés.
@@ -500,7 +501,7 @@ Règles de mise en œuvre :
 | **0c. Cadrage** 🟡 | Jetons de la charte FFCK univers Compétition (§ 10), polices, **specs du template, des menus et du socle** ; table de redirections et validation des pages reprises, affinées à chaque phase. Pas de maquettes séparées : le beta tient lieu de maquette, validée incrément par incrément | [Specs du socle](../../../specs/public/README.md) | specs du socle rédigées (07/10/2026) |
 | **1. Socle** ✅ | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI (lint, typecheck, 49 tests, build), déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | **code livré (07/10/2026)** ; reste l'activation serveur : DNS + ligne `deploy-wrapper.sh` ([SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md)) |
 | **2. Résultats** 🟡 | Pages compétition, groupe, événement (games, pitches, info, progress, ranking, stats), logique des résultats dans le layer ; endpoints `competition/*` ([specs](../../../specs/public/README.md)) | Parité avec `kpmatchs` / `kpclassement` / … | specs validées et **implémentées** (08/10/2026), à livrer |
-| **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | [specs proposées](../../../specs/public/README.md) (08/10/2026) ; 3–4 sem. |
+| **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | [specs validées](../../../specs/public/README.md) (09/10/2026), implémentation en cours ; 3–4 sem. |
 | **4a. Éditorial** | Articles, pages, menu, médias, galeries, SEO, partage, blocs d'accueil, droit Rédacteur, RSS ; import des ~50 articles et des pages | CMS opérationnel, contenu repris | 3–4 sem. |
 | **4b. Formulaires** | Constructeur, inscriptions, notifications, journal des e-mails, export, liste publique, anti-spam, mode HelloAsso (widget/lien + import CSV) | Remplacement de Ninja Forms / TablePress | 2 sem. |
 | **5. Bascule** | Vérification des champs exposés (§ 11), `www` → app3, inversion du routage Traefik, indexation, redirections 301 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |

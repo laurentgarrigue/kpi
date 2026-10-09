@@ -26,24 +26,24 @@ make docker_dev_up          # crée kpi_node_app3 (image docker/node) et démarr
 make dev_status             # ligne « app3 site public (Nuxt) » → 200 (attendre ~15 s au 1er démarrage)
 ```
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make app3_logs` | `Nuxt … ready`, `Local: http://0.0.0.0:3003/`, aucune erreur | ☐ |
-| 2 | Navigateur : `https://beta.kpi.localhost` | Bandeau bleu clair « Version bêta… », logo FFCK, barre de navigation marine, « Le kayak-polo en France », 6 événements récents (base de dev) | ☐ |
-| 3 | Clic sur « Compétitions » puis Échap | Le sous-menu s'ouvre au clic, se ferme avec Échap ; entrées marquées d'une icône « lien externe » | ☐ |
-| 4 | Clic sur « Calendrier » | Ouvre `https://kpi.localhost/kpcalendrier.php?lang=fr` (legacy) | ☐ |
-| 5 | Clic sur « EN » | URL `/en`, textes en anglais, `<html lang="en-GB">` ; « Calendar » mène à `…?lang=en` | ☐ |
-| 6 | Fenêtre < 1024 px | Bouton « Menu » ; panneau vertical ; groupes dépliables | ☐ |
-| 7 | Clic sur une carte d'événement | Ouvre `https://app.kpi.localhost/event/<id>` (app2) | ☐ |
-| 8 | `https://beta.kpi.localhost/nimporte-quoi` | Page « Page introuvable » dans le gabarit, statut 404 | ☐ |
-| 9 | `curl -sk https://beta.kpi.localhost/healthz` | `{"status":"ok"}` | ☐ |
-| 10 | `curl -sk https://beta.kpi.localhost/robots.txt` | `User-agent: *` / `Disallow: /` | ☐ |
-| 11 | `curl -skI https://beta.kpi.localhost/ \| grep -i x-robots` | `x-robots-tag: noindex, nofollow` | ☐ |
-| 12 | `make app3_test` | `Test Files 9 passed`, `Tests 49 passed` (unit + nuxt + e2e) | ☐ |
-| 13 | `make app3_lint` | ESLint et typecheck sans erreur | ☐ |
-| 14 | Alerte de certificat sur `beta.kpi.localhost` ? | Non : couvert par `*.kpi.localhost`. Sinon `make dev_certs` puis redémarrer Firefox | ☐ |
+| 1 | `make app3_logs` | `Nuxt … ready`, `Local: http://0.0.0.0:3003/`, aucune erreur | ☑ |
+| 2 | Navigateur : `https://beta.kpi.localhost` | Bandeau bleu clair « Version bêta… », logo FFCK, barre de navigation marine, « Le kayak-polo en France », 6 événements récents (base de dev) | ☑ |
+| 3 | Clic sur « Compétitions » puis Échap | Le sous-menu s'ouvre au clic, se ferme avec Échap ; entrées marquées d'une icône « lien externe » | ☑ |
+| 4 | Clic sur « Calendrier » | Ouvre `https://kpi.localhost/kpcalendrier.php?lang=fr` (legacy) | ☑ |
+| 5 | Clic sur « EN » | URL `/en`, textes en anglais, `<html lang="en-GB">` ; « Calendar » mène à `…?lang=en` | ☑ |
+| 6 | Fenêtre < 1024 px | Bouton « Menu » ; panneau vertical ; groupes dépliables | ☑ |
+| 7 | Clic sur une carte d'événement | Ouvre `https://app.kpi.localhost/event/<id>` (app2) | ☑ |
+| 8 | `https://beta.kpi.localhost/nimporte-quoi` | Page « Page introuvable » dans le gabarit, statut 404 | ☑ |
+| 9 | `curl -sk https://beta.kpi.localhost/healthz` | `{"status":"ok"}` | ☑ |
+| 10 | `curl -sk https://beta.kpi.localhost/robots.txt` | `User-agent: *` / `Disallow: /` | ☑ |
+| 11 | `curl -skI https://beta.kpi.localhost/ \| grep -i x-robots` | `x-robots-tag: noindex, nofollow` | ☑ |
+| 12 | `make app3_test` | `Test Files 9 passed`, `Tests 49 passed` (unit + nuxt + e2e) | ☑ |
+| 13 | `make app3_lint` | ESLint et typecheck sans erreur | ☑ |
+| 14 | Alerte de certificat sur `beta.kpi.localhost` ? | Non : couvert par `*.kpi.localhost`. Sinon `make dev_certs` puis redémarrer Firefox | ☑ |
 
-**Non-régression locale** : `make dev_status` → legacy, api2, app2, app4 inchangés (mêmes codes qu'avant). ☐
+**Non-régression locale** : `make dev_status` → legacy, api2, app2, app4 inchangés (mêmes codes qu'avant). ☑
 
 ### 1.2 ⌨️ 🌐 PR et CI
 
@@ -52,25 +52,29 @@ make pr_create              # PR vers main (titre conseillé : « feat: public w
 make pr_checks
 ```
 
-| Job CI | Attendu | ☐ |
+| Job CI | Attendu | ☑ |
 |---|---|---|
-| `changes` | `app3=true`, `docker=true` (compose + Makefile modifiés), `legacy=false` | ☐ |
-| `lint-nuxt (app3)`, `build-nuxt (app3)`, `audit-npm (app3)` | verts | ☐ |
-| `tests-app3` | typecheck + 49 tests verts (le build e2e prend ~1 min) | ☐ |
-| `lint-docker`, `trivy-config` | verts (nouveaux services compose) | ☐ |
-| `bump-version` | **aucun bump app3** à cette PR (app3 n'existe pas encore sur `main`) ; bump d'app2/app4 seulement s'ils sont touchés (ils ne le sont pas) | ☐ |
-| `ci-summary` | vert | ☐ |
+| `changes` | `app3=true`, `docker=true` (compose + Makefile modifiés), `legacy=false` | ☑ |
+| `lint-nuxt (app3)`, `build-nuxt (app3)`, `audit-npm (app3)` | verts | ☑ |
+| `tests-app3` | typecheck + 49 tests verts (le build e2e prend ~1 min) | ☑ |
+| `lint-docker`, `trivy-config` | verts (nouveaux services compose) | ☑ |
+| `bump-version` | **aucun bump app3** à cette PR (app3 n'existe pas encore sur `main`) ; bump d'app2/app4 seulement s'ils sont touchés (ils ne le sont pas) | ☑ |
+| `ci-summary` | vert | ☑ |
 
-Revue : **valider les 4 specs** (statut « Proposée » → « Validée » dans `DOC/specs/public/README.md`). ☐
+Revue : **valider les 4 specs** (statut « Proposée » → « Validée » dans `DOC/specs/public/README.md`). ☑
 
 ### 1.3 📦 🌍 Prérequis serveur (une fois, avant ou juste après le merge)
 
-| # | Où | Action | Résultat attendu | ☐ |
+| # | Où | Action | Résultat attendu | ☑ |
 |---|---|---|---|---|
-| 1 | 🌍 DNS | Créer `beta.preprod.kayak-polo.info` et `beta.kayak-polo.info` → même cible que `preprod.kayak-polo.info` / `kayak-polo.info` (A/AAAA ou CNAME) | `dig +short beta.preprod.kayak-polo.info` et `dig +short beta.kayak-polo.info` renvoient l'IP du VPS | ☐ |
-| 2 | 📦 `vps-manager` / `deploy-wrapper.sh` | Dans le rebuild sélectif, quand le diff touche `sources/app3/` **ou** `sources/kpi-layer/` : appeler `make app3_generate_${ENV}` (comme `app2`/`app4`). Si la règle actuelle est un motif `sources/app*`, ajouter explicitement `sources/kpi-layer/` | Lecture du diff du wrapper : la nouvelle condition est présente | ☐ |
+| 1 | 🌍 DNS | Créer `beta.preprod.kayak-polo.info` et `beta.kayak-polo.info` → même cible que `preprod.kayak-polo.info` / `kayak-polo.info` (A/AAAA ou CNAME) | `dig +short beta.preprod.kayak-polo.info` et `dig +short beta.kayak-polo.info` renvoient l'IP du VPS | ☑ |
+| 2 | 📦 `vps-manager` / `deploy-wrapper.sh` | Dans le rebuild sélectif, quand le diff touche `sources/app3/` **ou** `sources/kpi-layer/` : appeler `make app3_generate_${ENV}` (comme `app2`/`app4`). Si la règle actuelle est un motif `sources/app*`, ajouter explicitement `sources/kpi-layer/` | Lecture du diff du wrapper : la nouvelle condition est présente |☐ |
 | 3 | 📦 `vps-manager` | Déployer la nouvelle version du wrapper sur le VPS (`git -C /data/vps-manager pull`) | `/home/deploy/deploy-wrapper.sh` (symlink) contient la nouvelle condition | ☐ |
 | 4 | 📦 `vps-manager` | **Ne pas** ajouter `beta.*` aux `SMOKE_URLS_*` avant la bascule (une panne du beta ne doit pas déclencher de rollback) | `SMOKE_URLS_PREPROD` / `_PRODUCTION` inchangés | ☐ |
+
+> **Ligne 2** : version modifiée de `deploy-wrapper.sh` fournie le 09/10/2026 (brique `app3` déclenchée par
+> `sources/app3/` **ou** `sources/kpi-layer/`, **non bloquante**, reconstruite au rollback ; un changement d'app3
+> seul ne régénère plus app2/app4). À déposer sur `vps-manager`, puis ligne 3.
 
 > Le certificat TLS est obtenu automatiquement par Traefik (`certresolver=myresolver`) au premier appel, **une
 > fois le DNS propagé**. Avant : erreur de certificat sur `beta.*`, sans conséquence pour le reste.
@@ -239,17 +243,17 @@ Specs : [API_PUBLIC_TRANSVERSE](../../specs/public/API_PUBLIC_TRANSVERSE.md) (`A
 [PAGE_CALENDAR](../../specs/public/PAGE_CALENDAR.md) (`CAL-*`), [PAGE_HISTORY](../../specs/public/PAGE_HISTORY.md) (`HIS-*`),
 [PAGE_TEAM](../../specs/public/PAGE_TEAM.md) (`TEA-*`), [PAGE_CLUBS](../../specs/public/PAGE_CLUBS.md) (`CLB-*`),
 [FEATURE_SEARCH](../../specs/public/FEATURE_SEARCH.md) (`SRC-*`).
-Statut : 📝 specs proposées le 08/10/2026, **en attente de validation**.
+Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), 🛠 **en cours d'implémentation**.
 
-### 3.0 Décisions à prendre
+### 3.0 Décisions (prises le 09/10/2026)
 
-| # | Question | Proposition | ☐ |
+| # | Question | Retenu | ☑ |
 |---|---|---|---|
-| 1 | Q-P3-1 moteur de recherche | SQL `LIKE`, sans moteur dédié | ☐ |
-| 2 | Q-P3-2 e-mail des clubs | conservé (structure), en texte | ☐ |
-| 3 | Q-P3-3 photo d'équipe | couleurs oui, photo non (jusqu'au chantier RGPD) | ☐ |
-| 4 | Q-P3-4 vue du calendrier | agenda + grille mensuelle sur grand écran, sans FullCalendar | ☐ |
-| 5 | Q-P3-5 fond de carte | Leaflet auto-hébergé, tuiles OSM chargées après un clic | ☐ |
+| 1 | Q-P3-1 moteur de recherche | SQL `LIKE`, sans moteur dédié (à revoir au-delà de 200 ms) | ☑ |
+| 2 | Q-P3-2 e-mail des clubs | conservé (structure), en texte | ☑ |
+| 3 | Q-P3-3 photo d'équipe | **couleurs et photo d'équipe maintenues** (comme `kpequipes.php`) jusqu'à l'étude RGPD | ☑ |
+| 4 | Q-P3-4 vue du calendrier | agenda + grille mensuelle sur grand écran, sans FullCalendar | ☑ |
+| 5 | Q-P3-5 fond de carte | Leaflet auto-hébergé, tuiles OSM chargées après un clic | ☑ |
 
 ### 3.1 À prévoir pour les tests et le déploiement (à détailler à l'implémentation)
 - Fixtures SQL : `kp_club`, `kp_equipe`, comités, journées réparties sur plusieurs mois, compétitions finales de
