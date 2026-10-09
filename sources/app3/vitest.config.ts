@@ -9,8 +9,19 @@ const kpiLayerAlias = { '#kpi-layer': fileURLToPath(new URL('../kpi-layer/app', 
 //  - unit: pure functions (app3 utils, kpi-layer utils), plain Node, fast;
 //  - nuxt: components, in a Nuxt runtime environment;
 //  - e2e: the built server (routes, headers, SSR output).
+/**
+ * The site 404 is raised by `useApiResource` with `createError({ statusCode: 404, fatal: true })` during the async
+ * setup of a page (CMP-14, HIS-05, TEA-05…). In the Nuxt test environment this expected rejection also surfaces
+ * as an « unhandled rejection » once the page is unmounted: ignore exactly that one, report everything else.
+ */
+function isExpectedSiteNotFound(error: unknown): boolean {
+  const { statusCode, cause } = error as { statusCode?: number, cause?: { fatal?: boolean } }
+  return statusCode === 404 && cause?.fatal === true
+}
+
 export default defineConfig({
   test: {
+    onUnhandledError: error => !isExpectedSiteNotFound(error),
     projects: [
       {
         resolve: { alias: kpiLayerAlias },
