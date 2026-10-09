@@ -324,4 +324,54 @@ CREATE TABLE `kp_licence` (
   PRIMARY KEY (`Matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Site public, phase 3 (API_PUBLIC_TRANSVERSE.md) : équipes, clubs et comités. Définitions de production.
+DROP TABLE IF EXISTS `kp_cr`;
+CREATE TABLE `kp_cr` (
+  `Code` varchar(6) NOT NULL DEFAULT '',
+  `Libelle` varchar(100) NOT NULL DEFAULT '',
+  `Officiel` char(1) DEFAULT NULL,
+  `Reserve` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`Code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_cd`;
+CREATE TABLE `kp_cd` (
+  `Code` varchar(6) NOT NULL DEFAULT '',
+  `Libelle` varchar(100) NOT NULL DEFAULT '',
+  `Officiel` char(1) DEFAULT 'O',
+  `Reserve` varchar(20) DEFAULT NULL,
+  `Code_comite_reg` varchar(6) NOT NULL,
+  PRIMARY KEY (`Code`),
+  KEY `fk_cd_cr` (`Code_comite_reg`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_club`;
+CREATE TABLE `kp_club` (
+  `Code` varchar(6) NOT NULL DEFAULT '',
+  `Libelle` varchar(100) NOT NULL DEFAULT '',
+  `Officiel` char(1) DEFAULT NULL,
+  `Reserve` varchar(20) DEFAULT NULL,
+  `Code_comite_dep` varchar(6) NOT NULL,
+  `Coord` varchar(50) DEFAULT NULL,
+  `Postal` varchar(100) DEFAULT NULL,
+  `Coord2` varchar(60) DEFAULT NULL,
+  `www` varchar(60) DEFAULT NULL,
+  `email` varchar(60) DEFAULT NULL,
+  PRIMARY KEY (`Code`),
+  KEY `fk_club_cd` (`Code_comite_dep`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_equipe`;
+CREATE TABLE `kp_equipe` (
+  `Numero` smallint(6) NOT NULL AUTO_INCREMENT,
+  `Libelle` varchar(30) NOT NULL DEFAULT '',
+  `Code_club` varchar(6) NOT NULL DEFAULT '',
+  `color1` varchar(30) DEFAULT NULL,
+  `color2` varchar(30) DEFAULT NULL,
+  `colortext` varchar(30) DEFAULT NULL,
+  `logo` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`Numero`),
+  KEY `fk_equipe_club` (`Code_club`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

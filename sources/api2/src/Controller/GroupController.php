@@ -6,6 +6,7 @@ use App\Http\UnicodeJsonResponse;
 use App\PublicResults\PublicResultsService;
 use App\PublicResults\ResultsFormat;
 use App\PublicResults\Scope\GroupScope;
+use App\PublicSite\GroupSections;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,15 +15,6 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class GroupController extends AbstractController
 {
-    private const SECTION_LABELS = [
-        1 => 'Competitions_Internationales',
-        2 => 'Competitions_Nationales',
-        3 => 'Competitions_Regionales',
-        4 => 'Tournois_Internationaux',
-        5 => 'Continents',
-        100 => 'Divers'
-    ];
-
     public function __construct(
         private EntityManagerInterface $entityManager,
         private readonly PublicResultsService $results
@@ -83,7 +75,7 @@ class GroupController extends AbstractController
 
         $sql = "SELECT g.Groupe as code, g.Libelle as libelle, g.Libelle_en as libelle_en, g.section, g.ordre
             FROM kp_groupe g
-            WHERE g.section < 100
+            WHERE g.section < " . GroupSections::PUBLIC_MAX . "
             AND EXISTS (
                 SELECT 1 FROM kp_competition c
                 WHERE c.Code_ref = g.Groupe
@@ -97,31 +89,9 @@ class GroupController extends AbstractController
         $result = $stmt->executeQuery();
         $rows = $result->fetchAllAssociative();
 
-        // Organize by section
-        $sections = [];
-        $currentSection = null;
-        $sectionIndex = -1;
-
-        foreach ($rows as $row) {
-            if ($currentSection !== $row['section']) {
-                $currentSection = $row['section'];
-                $sectionIndex++;
-                $sections[$sectionIndex] = [
-                    'section' => (int) $row['section'],
-                    'label' => self::SECTION_LABELS[$row['section']] ?? 'Unknown',
-                    'groups' => []
-                ];
-            }
-            $sections[$sectionIndex]['groups'][] = [
-                'code' => $row['code'],
-                'libelle' => $row['libelle'],
-                'libelle_en' => $row['libelle_en']
-            ];
-        }
-
         $response = new JsonResponse([
             'season' => $season,
-            'sections' => array_values($sections)
+            'sections' => GroupSections::organize($rows)
         ]);
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
         return $response;

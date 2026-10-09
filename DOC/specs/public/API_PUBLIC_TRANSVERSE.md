@@ -36,7 +36,7 @@ Mêmes règles que la phase 2 ([API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) §
 
 ### 3.1 Calendrier
 `[{ id, competition: { season, code, display_title, type, level, group }, name, place, department, start, end,
-event }]` : une ligne par journée publiée de compétition publiée ; comme `json-events.php`, les journées d'une
+event }]` (journées « Pause » / « Break » exclues ; chevauchement : début ≤ fin de période et fin ≥ début) : une ligne par journée publiée de compétition publiée ; comme `json-events.php`, les journées d'une
 même compétition **aux mêmes dates et lieu** (phases d'une coupe) sont fusionnées en une seule (`id` = la
 première). `event` = `{ id, libelle }` du premier événement publié contenant la journée, sinon `null`.
 Tri : `start`, `level` (INT, NAT, REG), `GroupOrder`, tour, nom. Filtres optionnels `level` (`INT|NAT|REG`) et
@@ -45,14 +45,17 @@ Tri : `start`, `level` (INT, NAT, REG), `GroupOrder`, tour, nom. Filtres optionn
 ### 3.2 iCalendar
 `text/calendar; charset=utf-8`, RFC 5545 : `VCALENDAR` avec `X-WR-CALNAME` (titre de la compétition et
 saison), un `VEVENT` par journée : `UID` stable (`gameday-{id}@kayak-polo.info`), `DTSTART;VALUE=DATE` /
-`DTEND;VALUE=DATE` (jour suivant la fin), `SUMMARY` (« {compétition} — {journée} »), `LOCATION` (lieu,
-département), `URL` (page de la compétition sur le site), `LAST-MODIFIED`. Lignes repliées à 75 octets,
+`DTEND;VALUE=DATE` (jour suivant la fin), `DTSTAMP`, `SUMMARY` (« {compétition} — {journée} »), `LOCATION` (lieu,
+département), `URL` (page de la compétition sur le site, `PUBLIC_SITE_URL` ; `games?gameday=` pour un championnat).
+Pas de `LAST-MODIFIED` : `kp_journee` n'a pas de date de modification. Lignes repliées à 75 octets,
 caractères spéciaux échappés. Aucune donnée personnelle.
 
 ### 3.3 Historique
 `{ group: { code, libelle, libelle_en }, seasons: [{ season, competitions: [{ code, display_title, soustitre2,
 type, podium: [{ rank, team: { number, label, logo }, medal }] }] }] }` : compétitions **publiées, terminées
-(`END`) et du tour final** du groupe, saisons décroissantes (règle de `kphistorique.php`). `podium` = équipes
+(`END`) et du tour final** du groupe, saisons décroissantes (règle de `kphistorique.php`). Écart assumé : le
+groupe est pris **strictement** (`kphistorique.php` élargissait `N…` à tous les groupes nationaux et `CF…` à toutes
+les coupes de France, ce qui dupliquait les pages). `podium` = équipes
 classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::medal`.
 
 ### 3.4 Équipes
@@ -65,24 +68,29 @@ classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::me
   (`season` = `null`) ; photo d'équipe `KIP/teams/{n}-{année}-team.jpg` de l'année courante à année − 5.
 - Composition : `{ players: [{ first_name, last_name, number, category, role, goals, green, yellow, red,
   red_final }] }` ; `role` ∈ `captain|coach|null` (`Capitaine` = C / E) ; joueurs `A` et `X` exclus ; buts et
-  cartons des matchs **validés et publiés** ; tri legacy (joueurs, puis encadrement, numéro, nom). **Ni
+  cartons des matchs **validés et publiés** ; tri legacy (joueurs, puis encadrement, numéro, nom). Contrairement à
+  `kpequipes.php`, un joueur sans aucune statistique figure aussi dans la composition. **Ni
   licence, ni sexe, ni date de naissance.**
 
 ### 3.5 Clubs
-- Liste : `[{ code, label, department, logo, position }]` : `position` = `{ lat, lng }` depuis `kp_club.Coord`
+- Liste : `[{ code, label, department: { code, label }, logo, position }]`, triée par nom : `position` = `{ lat, lng }` depuis `kp_club.Coord`
   (`null` si absente ou invalide), `logo` = `KIP/logo/{code}-logo.png` s'il existe, sinon drapeau
   `Nations/{3 lettres}.png` s'il existe, sinon `null` (règle de `kpclassements.php`).
 - Fiche : `{ code, label, department: { code, label }, region: { code, label }, www, email, postal, position,
-  logo, teams: [{ number, label }] }`. Coordonnées **du club** (structure), jamais de personne (cf. Q-P3-2).
+  logo, teams: [{ number, label }] }`. Un club **sans équipe** (structure FFCK hors kayak-polo) n'est ni listé ni
+  publié (404) : son e-mail ne sort pas. Coordonnées **du club** (structure), jamais de personne (cf. Q-P3-2).
 
 ### 3.6 Recherche globale
 `{ competitions: [...], events: [...], teams: [...], clubs: [...] }`, 8 résultats au plus par catégorie, `q` de 2
 à 50 caractères (sinon `400`), recherche insensible à la casse et aux accents sur les libellés et codes :
-- compétitions publiées (titre, code), **saison active d'abord**, puis les plus récentes ;
-- événements publiés (libellé, lieu), les plus récents d'abord ;
+- compétitions publiées (titre, sous-titres, code) `{ season, code, display_title, soustitre2, group }`, **saison
+  active d'abord**, puis les plus récentes ;
+- événements publiés (libellé, lieu) `{ id, libelle, place, start, end }`, les plus récents d'abord ;
 - équipes et clubs comme § 3.4 / § 3.5.
-**Aucune personne n'est indexée** (stratégie § 11). Limitation de débit : 30 requêtes par minute et par IP
-(Symfony RateLimiter) → `429`.
+**Aucune personne n'est indexée** (stratégie § 11). Limitation de débit : 30 requêtes par minute et par IP →
+`429 {"error":"too_many_requests"}` + `Retry-After` (fenêtre fixe dans le cache applicatif, `SearchThrottle` : pas de
+dépendance ajoutée). Les adresses **privées** (rendu serveur d'app3) ne sont pas limitées : app3 transmet l'adresse
+du visiteur dans `X-Forwarded-For`, lu par api2 (`trusted_proxies` = réseau privé, en-tête `X-Forwarded-For` seul).
 
 ## 4. Décisions (09/10/2026)
 

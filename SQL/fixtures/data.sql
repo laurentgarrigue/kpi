@@ -24,6 +24,10 @@ DELETE FROM `kp_competition`;
 DELETE FROM `kp_groupe`;
 DELETE FROM `kp_saison`;
 DELETE FROM `kp_evenement`;
+DELETE FROM `kp_equipe`;
+DELETE FROM `kp_club`;
+DELETE FROM `kp_cd`;
+DELETE FROM `kp_cr`;
 
 -- ---------------------------------------------------------------- saisons
 -- Une seule saison à l'état 'A' (active) : c'est l'invariant sur lequel
@@ -239,7 +243,10 @@ INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Preno
   (9301, 9501, 'ALPHA', 'Ann', 'F', 'SEN', 7, 'C'),
   (9301, 9502, 'ALPHA', 'Bob', 'M', 'SEN', 8, '-'),
   (9302, 9503, 'BRAVO', 'Cid', 'M', 'SEN', 4, '-'),
-  (9303, 9504, 'CHARLIE', 'Dan', 'M', 'SEN', 10, '-');
+  (9303, 9504, 'CHARLIE', 'Dan', 'M', 'SEN', 10, '-'),
+  -- composition (phase 3) : entraîneur « E » (après les joueurs) et joueur « X » (exclu)
+  (9301, 9505, 'ALPHA', 'Coach', 'M', 'SEN', NULL, 'E'),
+  (9301, 9506, 'ALPHA', 'Inactif', 'F', 'SEN', 9, 'X');
 
 INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Id_evt_match`, `Competiteur`, `Numero`, `Equipe_A_B`) VALUES
   ('fixture-goal-01', 9401, 'M1', 'B', 9501, '7', 'A'),
@@ -252,3 +259,70 @@ INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Id_evt_match`, `Com
   -- but dans un match NON VALIDÉ (9404) puis dans un match NON PUBLIÉ (9403) : exclus des buteurs
   ('fixture-goal-06', 9404, 'M1', 'B', 9502, '8', 'A'),
   ('fixture-goal-07', 9403, 'M1', 'B', 9502, '8', 'A');
+
+
+-- ================================================================ SITE PUBLIC, PHASE 3 (transverse)
+-- Consommé par tests/Integration/PublicSiteEndpointsTest.php (DOC/specs/public/API_PUBLIC_TRANSVERSE.md).
+-- Équipes (kp_equipe) = numéros 1xx des équipes engagées ci-dessus ; clubs C0xx ; comités CDT/CRT.
+
+INSERT INTO `kp_cr` (`Code`, `Libelle`) VALUES
+  ('CRT', 'Comité Régional Test');
+INSERT INTO `kp_cd` (`Code`, `Libelle`, `Code_comite_reg`) VALUES
+  ('CDT33', 'Comité Départemental Test 33', 'CRT'),
+  ('CDT64', 'Comité Départemental Test 64', 'CRT');
+
+INSERT INTO `kp_club` (`Code`, `Libelle`, `Code_comite_dep`, `Coord`, `Postal`, `www`, `email`) VALUES
+  -- position valide, coordonnées de la structure ; deux équipes (101, 105)
+  ('C001', 'Club Alpha Lacville', 'CDT33', '44.84, -0.58', '1 quai du Lac 99001 Lacville', 'https://alpha.example.test', 'contact@alpha.example.test'),
+  -- sans position
+  ('C002', 'Club Bravo', 'CDT64', NULL, '', '', ''),
+  -- nom avec tiret : trouvé par « saint malo » (motif à tirets, comme searchClubs.php)
+  ('C003', 'Club Charlie Saint-Malo', 'CDT33', '', NULL, NULL, NULL),
+  -- position illisible → null
+  ('C004', 'Club Delta', 'CDT64', 'pas une position', NULL, NULL, NULL),
+  ('C005', 'Club Echo', 'CDT33', NULL, NULL, NULL, NULL),
+  ('C006', 'Club Foxtrot', 'CDT33', NULL, NULL, NULL, NULL),
+  ('C007', 'Club Golf', 'CDT33', NULL, NULL, NULL, NULL),
+  ('C008', 'Club Hotel', 'CDT33', NULL, NULL, NULL, NULL),
+  ('C009', 'Club India', 'CDT64', NULL, NULL, NULL, NULL),
+  ('C010', 'Club Juliet', 'CDT64', NULL, NULL, NULL, NULL),
+  ('C011', 'Club Kilo', 'CDT64', NULL, NULL, NULL, NULL),
+  ('C012', 'Club Lima', 'CDT64', NULL, NULL, NULL, NULL),
+  -- club SANS équipe (structure hors kayak-polo) : jamais publié (liste, fiche, recherche)
+  ('C099', 'Club Sans Equipe', 'CDT33', '45.00, 0.00', NULL, 'https://sans.example.test', 'sans@example.test');
+
+INSERT INTO `kp_equipe` (`Numero`, `Libelle`, `Code_club`) VALUES
+  (101, 'Equipe Alpha', 'C001'), (102, 'Equipe Bravo', 'C002'), (103, 'Equipe Charlie', 'C003'),
+  (104, 'Equipe Delta', 'C004'), (105, 'Alpha Deux', 'C001'),
+  (111, 'Equipe Echo', 'C005'), (112, 'Equipe Foxtrot', 'C006'), (113, 'Equipe Golf', 'C007'),
+  (114, 'Equipe Hotel', 'C008'), (121, 'Equipe India', 'C009'), (122, 'Equipe Juliet', 'C010'),
+  (123, 'Equipe Kilo', 'C011'), (131, 'Equipe Lima', 'C012');
+
+-- Saison 2998 du groupe TSTRES : palmarès sur plusieurs saisons et palmarès d'équipe.
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
+   `Titre_actif`, `Bandeau_actif`, `Logo_actif`, `Code_ref`, `GroupOrder`, `Code_typeclt`, `Code_tour`, `Nb_equipes`,
+   `Statut`, `Qualifies`, `Elimines`, `Publication`) VALUES
+  -- CP terminée du tour final : dans l'historique, médailles
+  ('RCP', '2998', 'NAT', 'Coupe Résultats', 'Phase finale', 'Finale', NULL, '', '', '',
+   'O', 'N', 'N', 'TSTRES', 2, 'CP', 10, 3, 'END', 0, 0, 'O'),
+  -- terminée mais PAS du tour final : absente de l'historique, présente au palmarès d'équipe sans médaille
+  ('RQL', '2998', 'NAT', 'Qualification Résultats', NULL, 'Qualif', NULL, '', '', '',
+   'O', 'N', 'N', 'TSTRES', 1, 'CHPT', 1, 2, 'END', 0, 0, 'O');
+
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`,
+   `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
+  (9241, 'RCP', '2998', '2998-05-10', '2998-05-11', 'RCP 2998', 'Finale', 'Lacville', '33', 'O', 'E', 'Finale', 1, 1, 3, 'O');
+
+INSERT INTO `kp_competition_equipe`
+  (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`,
+   `Pts_publi`, `Clt_publi`, `J_publi`, `G_publi`, `N_publi`, `P_publi`, `F_publi`, `Plus_publi`, `Moins_publi`, `Diff_publi`,
+   `CltNiveau_publi`) VALUES
+  -- RCP 2998 : classement de niveau 1, 2, 3 (CP → CltNiveau_publi)
+  (9341, 'RCP', '2998', 'Equipe Alpha', 'C001', NULL, 101, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+  (9342, 'RCP', '2998', 'Equipe Bravo', 'C002', NULL, 102, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2),
+  (9343, 'RCP', '2998', 'Equipe Charlie', 'C003', NULL, 103, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3),
+  -- RQL 2998 (CHPT) : Equipe Alpha 2e (Clt_publi)
+  (9351, 'RQL', '2998', 'Equipe Alpha', 'C001', NULL, 101, '', 0, 300, 2, 2, 1, 0, 1, 0, 3, 3, 0, 0),
+  (9352, 'RQL', '2998', 'Equipe Delta', 'C004', NULL, 104, '', 0, 600, 1, 2, 2, 0, 0, 0, 5, 1, 4, 0);

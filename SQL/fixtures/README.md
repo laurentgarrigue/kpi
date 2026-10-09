@@ -62,6 +62,19 @@ endpoints du site public ([API_PUBLIC_RESULTS.md](../../DOC/specs/public/API_PUB
 | `RAT` (CHPT, `ATT`) / `RNP` (non publiée) | filtres de statut et de publication |
 | Événement `77` (publié) / `78` (non publié) | ids < 3000 = tournoi `kp_evenement` ; journées liées par `kp_evenement_journee` |
 
+## Jeu « site public, phase 3 » (transverse)
+
+Consommé par `tests/Integration/PublicSiteEndpointsTest.php`
+([API_PUBLIC_TRANSVERSE.md](../../DOC/specs/public/API_PUBLIC_TRANSVERSE.md)) :
+
+| Élément | Cas couverts |
+|---|---|
+| `kp_equipe` 101–131 | équipes engagées ci-dessus ; 105 « Alpha Deux » : deuxième équipe du club C001 |
+| `kp_club` C001–C012, C099 | position valide / absente / illisible, nom à tiret (« Saint-Malo »), club **sans équipe** (C099, jamais publié) |
+| `kp_cd` / `kp_cr` | comités départementaux et régional de la fiche club |
+| `RCP` 2998 (CP, `END`, finale) / `RQL` 2998 (CHPT `END`, tour 1) | historique sur deux saisons ; palmarès d'équipe avec et sans médaille |
+| Joueurs 9505 (`E`) et 9506 (`X`) de l'équipe 9301 | composition : entraîneur après les joueurs, joueur `X` exclu |
+
 Les fichiers de référence JSON sont dans `sources/api2/tests/Integration/__snapshots__/` ; un changement voulu
 se régénère avec `UPDATE_SNAPSHOTS=1` et se relit dans le diff.
 

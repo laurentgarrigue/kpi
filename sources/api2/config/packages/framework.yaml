@@ -12,6 +12,11 @@ framework:
 
     # Note that the session will be started ONLY if you read or write from it.
     session: true
+    # Adresse réelle du visiteur (limite de débit de /search) : api2 est derrière Traefik, et le rendu
+    # serveur d'app3 lui transmet l'adresse du visiteur. On ne fait confiance qu'à X-Forwarded-For, et
+    # seulement venant du réseau privé (Traefik, app3). Schéma et hôte restent ceux de la requête.
+    trusted_proxies: '127.0.0.1,PRIVATE_SUBNETS'
+    trusted_headers: ['x-forwarded-for']
 
     #esi: true
     #fragments: true
