@@ -83,6 +83,26 @@ final class EventEndpointsTest extends ApiTestCase
     }
 
     /**
+     * HOME-08 (DOC/specs/public/PAGE_HOME.md) : `start` / `end` (Date_debut / Date_fin) sont AJOUTÉS pour
+     * l'accueil d'app3 (« prochains » / « récents ») ; les champs historiques lus par app2 restent inchangés.
+     */
+    public function testEventsExposeStartAndEndDates(): void
+    {
+        foreach (['all' => 9001, 'std' => 9001, 'champ' => 9101] as $mode => $id) {
+            $rows = $this->getJson('/events/' . $mode);
+            $row = current(array_filter($rows, static fn (array $r): bool => (int) $r['id'] === $id));
+
+            self::assertIsArray($row, sprintf('mode %s : l\'id %d doit être listé', $mode, $id));
+            self::assertSame(['id', 'libelle', 'place', 'logo', 'year', 'start', 'end'], array_keys($row), $mode);
+        }
+
+        $all = $this->getJson('/events/all');
+        $alpha = current(array_filter($all, static fn (array $r): bool => (int) $r['id'] === 9001));
+        self::assertSame('2999-06-01', $alpha['start']);
+        self::assertSame('2999-06-02', $alpha['end']);
+    }
+
+    /**
      * Mode 'champ' : ne sortent que les journées publiées de compétitions CHPT
      * publiées, dans la saison ACTIVE. Quatre filtres empilés — chacun a sa
      * ligne de fixture dédiée, donc chaque assertion négative teste bien UN filtre.

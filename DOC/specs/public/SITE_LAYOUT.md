@@ -1,6 +1,6 @@
 # Template général du site public
 
-**Phase** : 1 — **Statut** : 📝 Proposée — **S'applique à** : toutes les pages d'app3 (layout `default` et page d'erreur)
+**Phase** : 1 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **S'applique à** : toutes les pages d'app3 (layout `default` et page d'erreur)
 
 ## 1. Objectif
 
@@ -16,7 +16,7 @@ contenu.
 ├──────────────────────────────────────────────────────────────┤
 │ Bandeau beta (si NUXT_PUBLIC_BETA)                            │  bleu clair #69b9e6, texte #1e1e1c
 ├──────────────────────────────────────────────────────────────┤
-│ EN-TÊTE  [logo FFCK] kayak-polo.info              [FR | EN]   │  fond blanc
+│ EN-TÊTE  [logo FFCK] kayak-polo.info  [⚙ Administration] [FR | EN] │  fond blanc
 │          Commission Nationale d'Activité Kayak-Polo           │
 ├──────────────────────────────────────────────────────────────┤
 │ NAVIGATION PRINCIPALE (cf. SITE_NAVIGATION.md)        [☰]     │  fond marine #20265b, texte blanc
@@ -40,6 +40,9 @@ contenu.
   charte, hauteur 48 px (≥ 25 px : version complète autorisée), avec son texte alternatif. Lien vers l'accueil.
 - **Nom du site** « kayak-polo.info » en Agency FB, couleur primaire `#357b9c` ; **sous-titre**
   « Commission Nationale d'Activité Kayak-Polo » en Raleway (masqué sous 640 px).
+- **Lien « Administration »** à droite, avant le sélecteur de langue : icône engrenage + libellé (libellé
+  masqué sous 640 px, conservé pour les lecteurs d'écran), vers l'administration **`{legacy}/admin2/`** (app4).
+  Style discret (texte secondaire) mais visible sans défiler. Jamais `AdminChoice.php`.
 - **Sélecteur de langue** FR / EN à droite (cf. SITE_NAVIGATION.md § 5).
 
 ### 2.3 Zone de contenu
@@ -54,10 +57,15 @@ Quatre colonnes (empilées sur mobile) sur fond marine `#20265b`, texte blanc :
 | **Kayak-polo** | Logo CNA Kayak-Polo (fichier existant, sur pastille blanche), « Commission Nationale d'Activité Kayak-Polo », lien vers le site de la FFCK (`https://www.ffck.org`) |
 | **Suivre** | Page Facebook officielle (`https://www.facebook.com/ffckkp/`) ; « Suivre un événement en direct » → app2 (`NUXT_PUBLIC_APP2_BASE_URL`) |
 | **Partenaire** | KIP Sport (logo existant sur pastille blanche) → `https://www.facebook.com/KIPsport` |
-| **Liens** | Site actuel (legacy), Administration (`{legacy}/AdminChoice.php`) |
+| **Liens** | Site actuel (legacy), Administration (`{legacy}/admin2/`) |
 
 Ligne inférieure : « © {année} FFCK — Commission Nationale d'Activité Kayak-Polo » et numéro de version d'app3.
-Les liens externes s'ouvrent dans le même onglet (pas de `target="_blank"` imposé), sauf Facebook.
+### 2.6 Ouverture des liens externes
+- **Tous les liens vers app2** (menu « En direct », pied de page, accueil, feuilles de match, pages « Suivre en
+  direct ») s'ouvrent **dans un nouvel onglet** (`target="_blank"`, `rel="noopener"`), avec la mention
+  accessible « (nouvel onglet) ». Un composant unique (`SiteExternalLink`) porte cette règle.
+- Facebook et KIP Sport : nouvel onglet également.
+- Site actuel (legacy) et administration : même onglet.
 
 ### 2.5 Page d'erreur
 Même enveloppe. Pour une 404 : titre « Page introuvable », lien vers l'accueil et lien vers le site actuel.
@@ -93,8 +101,9 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 
 ## 5. Métadonnées par défaut (SEO)
 
-- Titre : `{titre de la page} — kayak-polo.info` pour toutes les pages, accueil compris (« Le kayak-polo en France — kayak-polo.info »).
-- Description par défaut (FR/EN) : « Résultats, classements, calendriers et actualités du kayak-polo en France. »
+- Titre : `{titre de la page} — kayak-polo.info` pour toutes les pages, accueil compris (« Le kayak-polo, en France et à l'international — kayak-polo.info »).
+- Description par défaut (FR/EN) : « Résultats, classements, calendriers et actualités du kayak-polo, en France
+  et à l'international. »
 - `og:site_name` = `kayak-polo.info`, `og:locale`, `og:type=website`, `og:image` = logo CNA Kayak-Polo par défaut.
 - URL canonique = `NUXT_PUBLIC_I18N_BASE_URL` + chemin, et liens `hreflang` `fr`, `en`, `x-default`.
 - Balise `robots` selon SITE_PLATFORM.md § 4.2.
@@ -103,8 +112,9 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 
 - **LAY-01** — Le layout rend, dans l'ordre : lien d'évitement, (bandeau beta), `header`, `nav`, `main#content`, `footer`.
 - **LAY-02** — Le bandeau beta est présent si et seulement si `NUXT_PUBLIC_BETA` vaut `true`, et son lien pointe vers l'URL legacy.
-- **LAY-03** — L'en-tête affiche le logo FFCK avec un texte alternatif et un lien vers l'accueil de la langue courante.
-- **LAY-04** — Le pied de page contient les liens Facebook FFCK, app2, KIP Sport, site actuel et Administration, et l'année courante.
+- **LAY-03** — L'en-tête affiche le logo FFCK avec un texte alternatif et un lien vers l'accueil de la langue courante, ainsi que le lien « Administration » vers `{legacy}/admin2/`.
+- **LAY-04** — Le pied de page contient les liens Facebook FFCK, app2, KIP Sport, site actuel et Administration (`{legacy}/admin2/`), et l'année courante.
+- **LAY-09** — Tout lien vers app2 porte `target="_blank"`, `rel="noopener"` et la mention accessible « (nouvel onglet) ».
 - **LAY-05** — Le titre de document suit le gabarit `{titre} — kayak-polo.info`.
 - **LAY-06** — Le document porte `lang="fr-FR"` sur les pages françaises et `lang="en-GB"` sous `/en`, ainsi que les liens `hreflang` et l'URL canonique.
 - **LAY-07** — Une URL inconnue renvoie un statut 404 avec la page d'erreur dans l'enveloppe du site.

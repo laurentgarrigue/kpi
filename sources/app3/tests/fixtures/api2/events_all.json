@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "id": 9001,
+      "libelle": "Tournoi Test Alpha",
+      "place": "Testville",
+      "logo": "logo/alpha.png",
+      "year": 2999,
+      "start": "2999-06-01",
+      "end": "2999-06-02"
+    },
+    {
+      "id": 9003,
+      "libelle": "Tournoi Test Gamma",
+      "place": "Testville",
+      "logo": null,
+      "year": 2999,
+      "start": "2999-04-01",
+      "end": "2999-04-02"
+    },
+    {
+      "id": 77,
+      "libelle": "Tournoi Résultats",
+      "place": "Rivecity",
+      "logo": "logo/resultats.png",
+      "year": 2999,
+      "start": "2999-04-01",
+      "end": "2999-04-02"
+    },
+    {
+      "id": 42,
+      "libelle": "Tournoi Test Retro",
+      "place": "Oldtown",
+      "logo": "logo/retro.png",
+      "year": 2999,
+      "start": "2999-02-01",
+      "end": "2999-02-02"
+    }
+  ]
+}

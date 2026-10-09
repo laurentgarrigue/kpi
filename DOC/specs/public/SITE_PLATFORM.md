@@ -1,6 +1,6 @@
 # Socle technique du site public (app3 + kpi-layer)
 
-**Phase** : 1 — **Statut** : 📝 Proposée — **Routes techniques** : `/healthz`, `/robots.txt`
+**Phase** : 1 — **Statut** : ✅ Validée (08/10/2026) — **Routes techniques** : `/healthz`, `/robots.txt`
 
 ## 1. Objectif
 
@@ -112,6 +112,10 @@ beta ne doit pas provoquer le rollback du reste). Elle le sera en phase 5 (`/hea
   et ne modifient aucun autre routeur (vérifié par `docker compose config` en revue).
 - **PLT-06** — `make app3_generate_preprod` / `make app3_generate_production` produisent
   `sources/app3/.output/server/index.mjs` et redémarrent le conteneur `app3`.
+
+- **PLT-07** — Le payload (`{page}/_payload.json`) de chaque page mise en cache est servi (200) : les règles de
+  cache (`routeRules`) couvrent la page **et** son payload, sinon chaque préchargement de lien (`NuxtLink`) est
+  une 404 et le payload mis en cache n'est jamais utilisé.
 
 ## 9. Hors périmètre / questions ouvertes
 

@@ -1,0 +1,71 @@
+{
+  "status": 200,
+  "body": {
+    "gamedays": [
+      {
+        "id": 9201,
+        "name": "RCH J1",
+        "phase": "Journée 1",
+        "start": "2999-03-01",
+        "end": "2999-03-02",
+        "place": "Lacville",
+        "department": "33",
+        "organizer": "Club Organisateur",
+        "officials": {
+          "rc": "RESP Insc",
+          "r1": "RESP Rone",
+          "delegate": "DELEGUE Del",
+          "chief_referee": "CHEF Arb"
+        }
+      },
+      {
+        "id": 9202,
+        "name": "RCH J2",
+        "phase": "Journée 2",
+        "start": "2999-04-01",
+        "end": "2999-04-02",
+        "place": "Rivecity",
+        "department": "64",
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      }
+    ],
+    "teams_by_pool": [
+      {
+        "pool": "",
+        "teams": [
+          {
+            "id": 9301,
+            "number": 101,
+            "label": "Equipe Alpha",
+            "logo": "KIP/logo/alpha.png"
+          },
+          {
+            "id": 9302,
+            "number": 102,
+            "label": "Equipe Bravo",
+            "logo": "KIP/logo/bravo.png"
+          },
+          {
+            "id": 9303,
+            "number": 103,
+            "label": "Equipe Charlie",
+            "logo": "KIP/logo/charlie.png"
+          },
+          {
+            "id": 9304,
+            "number": 104,
+            "label": "Equipe Delta",
+            "logo": null
+          }
+        ]
+      }
+    ],
+    "schema": null
+  }
+}

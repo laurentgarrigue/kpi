@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { joinURL } from 'ufo'
+import { ADMIN_PATH } from '~/utils/links'
 
 // Site footer (SITE_LAYOUT.md § 2.4, LAY-04).
 const { legacyBaseUrl, app2BaseUrl, version } = useRuntimeConfig().public
-const adminUrl = joinURL(legacyBaseUrl, 'AdminChoice.php')
+const adminUrl = joinURL(legacyBaseUrl, ADMIN_PATH)
 const year = new Date().getFullYear()
 
 const FFCK_URL = 'https://www.ffck.org'
@@ -30,15 +31,15 @@ const KIP_SPORT_URL = 'https://www.facebook.com/KIPsport'
       <section>
         <h2 class="mb-3 text-xl">{{ $t('footer.follow') }}</h2>
         <ul class="space-y-2 text-sm">
-          <li><a :href="FACEBOOK_URL" target="_blank" rel="noopener" class="underline">{{ $t('footer.facebook') }}</a></li>
-          <li><a :href="app2BaseUrl" class="underline">{{ $t('footer.liveApp') }}</a></li>
+          <li><SiteExternalLink :href="FACEBOOK_URL" new-tab class="underline">{{ $t('footer.facebook') }}</SiteExternalLink></li>
+          <li><SiteExternalLink :href="app2BaseUrl" new-tab class="underline">{{ $t('footer.liveApp') }}</SiteExternalLink></li>
         </ul>
       </section>
       <section>
         <h2 class="mb-3 text-xl">{{ $t('footer.partner') }}</h2>
-        <a :href="KIP_SPORT_URL" target="_blank" rel="noopener" class="inline-block rounded bg-white p-2">
+        <SiteExternalLink :href="KIP_SPORT_URL" new-tab class="inline-block rounded bg-white p-2">
           <img src="/img/kip-sport.png" :alt="$t('footer.kipSportAlt')" width="72" height="72" loading="lazy">
-        </a>
+        </SiteExternalLink>
       </section>
       <section>
         <h2 class="mb-3 text-xl">{{ $t('footer.links') }}</h2>

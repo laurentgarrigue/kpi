@@ -4,7 +4,8 @@ import { joinURL } from 'ufo'
 export function useSiteSeo() {
   const { t } = useI18n()
   const config = useRuntimeConfig().public
-  const localeHead = useLocaleHead({ seo: true })
+  // `group` identifies a page of the competitions list (PAGE_COMPETITIONS.md § 4): kept in the canonical URL.
+  const localeHead = useLocaleHead({ seo: { canonicalQueries: ['group'] } })
   const siteName = t('site.name')
 
   useHead(() => ({

@@ -26,19 +26,19 @@ export type MenuItem = MenuLink | MenuGroup
 export const MAIN_MENU: readonly MenuItem[] = [
   { id: 'home', to: '/', ready: true },
   { id: 'news', to: '/news', legacyPath: '/', ready: false },
-  { id: 'calendar', to: '/calendar', legacyPath: '/kpcalendrier.php', ready: false },
+  { id: 'calendar', to: '/calendar', legacyPath: '/kpcalendrier.php', ready: true },
   {
     id: 'competitions',
     children: [
-      { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: false },
-      { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: false },
+      { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: true },
+      { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: true },
     ],
   },
   {
     id: 'teams-clubs',
     children: [
-      { id: 'teams', to: '/teams', legacyPath: '/kpequipes.php', ready: false },
-      { id: 'clubs', to: '/clubs', legacyPath: '/kpclubs.php', ready: false },
+      { id: 'teams', to: '/teams', legacyPath: '/kpequipes.php', ready: true },
+      { id: 'clubs', to: '/clubs', legacyPath: '/kpclubs.php', ready: true },
     ],
   },
   { id: 'live', app2: true, ready: true },

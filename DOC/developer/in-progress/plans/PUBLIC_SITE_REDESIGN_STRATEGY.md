@@ -259,7 +259,7 @@ Langue par défaut FR sans préfixe, anglais sous `/en/...` (slugs de contenu tr
 | `/forms/{slug}` | Formulaires Ninja Forms |
 | `/search?q=` | *(nouveau)* recherche globale |
 | `/calendar` | `kpcalendrier.php` |
-| `/competitions/{season}` (filtres niveau/type) | `kpclassements.php` (sélecteur) |
+| `/competitions` → `/competitions/{season}?group=` | `kpclassements.php` (sélecteur) |
 | `/competitions/{season}/{code}` → `…/games` | `kpmatchs.php` |
 | `…/pitches` | `kpterrains.php` |
 | `…/info` | `kpdetails.php` |
@@ -268,8 +268,8 @@ Langue par défaut FR sans préfixe, anglais sous `/en/...` (slugs de contenu tr
 | `…/ranking` | `kpclassement.php` |
 | `…/stats` | `kpstats.php` |
 | `…/calendar.ics` | *(nouveau)* abonnement ICS par compétition |
-| `/groups/{season}/{code}/…` | `kp*.php?Group=…&Compet=*` (vue groupe) |
-| `/events/{id}/…` (mêmes sous-pages) | `kp*.php?event=…` |
+| `/groups/{season}/{code}/games\|pitches` | `kpmatchs.php` / `kpterrains.php` `?Group=…&Compet=*` (vue groupe) |
+| `/events/{id}/games\|pitches` ; `/competitions/…?event={id}` | `kp*.php?event=…` |
 | `/history/{groupCode}` | `kphistorique.php` |
 | `/teams` (recherche), `/teams/{id}` | `kpequipes.php` |
 | `/clubs`, `/clubs/{code}` | `kpclubs.php`, `kplogos.php` |
@@ -294,13 +294,8 @@ Les anciennes URL (`kp*.php?Compet=N1&Saison=2026&Group=N&J=…&lang=en`) sont r
 
 | Endpoint | Usage |
 |---|---|
-| `GET /seasons` | Sélecteur de saison |
-| `GET /season/{s}/competitions?level=&type=` | Liste des compétitions |
-| `GET /season/{s}/competition/{code}` | En-tête, visuels, journées, officiels (`info`) |
-| `GET /season/{s}/competition/{code}/games` | Matchs d'une compétition seule |
-| `GET /season/{s}/competition/{code}/ranking?gameday=` | Classement, y compris par journée (CHPT) |
-| `GET /season/{s}/competition/{code}/scorers` | Buteurs, cartons |
-| `GET /season/{s}/competition/{code}/calendar.ics`, `GET /gameday/{id}.ics` | Exports et abonnements ICS |
+| `GET /seasons`, `GET /group/{s}/{code}/competitions`, `GET /competition/{s}/{code}[/games\|charts\|ranking\|scorers\|info]`, `GET /event/{id}/competitions` | Résultats (phase 2) — détail, formats et refactorisation des endpoints existants : [API_PUBLIC_RESULTS.md](../../../specs/public/API_PUBLIC_RESULTS.md) |
+| `GET /competition/{s}/{code}/calendar.ics`, `GET /gameday/{id}.ics` | Exports et abonnements ICS (phase 3) |
 | `GET /calendar?start=&end=` | Remplace `json-events.php` |
 | `GET /history/{groupCode}` | Palmarès multi-saisons |
 | `GET /team/{numero}` | Palmarès, compositions par saison |
@@ -486,6 +481,7 @@ L'évaluation RGPD complète est un **chantier distinct, ultérieur**. Le princi
 | Équipe, club ou nation | ✅ |
 | Statistiques de match (buts, cartons) rattachées à ces données | ✅ comme aujourd'hui |
 | Date de naissance, n° de licence, sexe hors libellé de catégorie, photo individuelle, coordonnées | ❌ |
+| Photo d'équipe (`img/KIP/teams`), couleurs | ✅ comme aujourd'hui, **jusqu'à l'étude RGPD** (décision Q-P3-3 du 09/10/2026) |
 
 Règles de mise en œuvre :
 - **DTO publics dédiés** dans api2 : les endpoints publics ne sérialisent jamais une entité complète. Un **test automatisé** vérifie la liste des champs exposés.
@@ -503,9 +499,9 @@ Règles de mise en œuvre :
 | **0a. Nettoyage app3** ✅ | Tag d'archive, suppression de l'ancien app3 et de ses références (§ 3) | Commit dédié | fait (tag publié, mergé et déployé) |
 | **0b. Médias** ✅ | Stockage non versionné, montages, `git rm --cached`, sauvegarde restic (§ 8) — [MEDIA_STORAGE.md](../../infrastructure/MEDIA_STORAGE.md) | Médias hors Git et sauvegardés | fait : dev, préprod et prod migrés, cron de sauvegarde actif (06/10/2026) — [checklist archivée](../../archive/completed-migrations/MERGE_CHECKLIST_APP3_MEDIA.md) |
 | **0c. Cadrage** 🟡 | Jetons de la charte FFCK univers Compétition (§ 10), polices, **specs du template, des menus et du socle** ; table de redirections et validation des pages reprises, affinées à chaque phase. Pas de maquettes séparées : le beta tient lieu de maquette, validée incrément par incrément | [Specs du socle](../../../specs/public/README.md) | specs du socle rédigées (07/10/2026) |
-| **1. Socle** 🟡 | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI (lint, typecheck, 49 tests, build), déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | **code livré (07/10/2026)** ; reste l'activation serveur : DNS + ligne `deploy-wrapper.sh` ([SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md)) |
-| **2. Résultats** | Pages compétition, groupe, événement (games, pitches, info, progress, phases, ranking, stats) avec les composants d'app2 passés au layer ; endpoints `season/competition/*` | Parité avec `kpmatchs` / `kpclassement` / … | 3–4 sem. |
-| **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | 3–4 sem. |
+| **1. Socle** ✅ | `kpi-layer` (jetons, polices, client api2), squelette app3 SSR (layout, menus, i18n, SEO, `/healthz`), service Docker dans les 3 compose, cibles Makefile, CI (lint, typecheck, 49 tests, build), déploiement sur **`beta.*`** | Site navigable sur `beta.*`, menus pointant vers le legacy | **code livré (07/10/2026)** ; reste l'activation serveur : DNS + ligne `deploy-wrapper.sh` ([SITE_PLATFORM.md § 6](../../../specs/public/SITE_PLATFORM.md)) |
+| **2. Résultats** 🟡 | Pages compétition, groupe, événement (games, pitches, info, progress, ranking, stats), logique des résultats dans le layer ; endpoints `competition/*` ([specs](../../../specs/public/README.md)) | Parité avec `kpmatchs` / `kpclassement` / … | specs validées et **implémentées** (08/10/2026), à livrer |
+| **3. Transverse** | Calendrier, ICS, historique, équipes, clubs (+ carte), logos, recherche globale | Parité avec le reste des `kp*.php` | [specs validées](../../../specs/public/README.md) (09/10/2026), implémentée sur la branche (à livrer) |
 | **4a. Éditorial** | Articles, pages, menu, médias, galeries, SEO, partage, blocs d'accueil, droit Rédacteur, RSS ; import des ~50 articles et des pages | CMS opérationnel, contenu repris | 3–4 sem. |
 | **4b. Formulaires** | Constructeur, inscriptions, notifications, journal des e-mails, export, liste publique, anti-spam, mode HelloAsso (widget/lien + import CSV) | Remplacement de Ninja Forms / TablePress | 2 sem. |
 | **5. Bascule** | Vérification des champs exposés (§ 11), `www` → app3, inversion du routage Traefik, indexation, redirections 301 (legacy + WordPress), sitemap, Search Console, suivi Matomo des 404 | `www.kayak-polo.info` servi par app3 | 1 sem. + suivi |

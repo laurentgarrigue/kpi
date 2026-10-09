@@ -1,0 +1,50 @@
+{
+  "status": 200,
+  "body": {
+    "code": "RMU",
+    "season": "2999",
+    "group": {
+      "code": "TSTRES",
+      "libelle": "Groupe Résultats",
+      "libelle_en": "Results group"
+    },
+    "libelle": "Multi Résultats",
+    "soustitre": null,
+    "soustitre2": "Général",
+    "display_title": "Multi Résultats",
+    "type": "MULTI",
+    "status": "END",
+    "level": "NAT",
+    "banner": null,
+    "logo": null,
+    "web": null,
+    "qualified": 0,
+    "eliminated": 0,
+    "has_games": false,
+    "round": 10,
+    "final": true,
+    "siblings": [
+      {
+        "code": "RCH",
+        "display_title": "Championnat Résultats",
+        "soustitre2": "Poule A"
+      },
+      {
+        "code": "RCP",
+        "display_title": "Phase finale",
+        "soustitre2": "Finale"
+      },
+      {
+        "code": "RMU",
+        "display_title": "Multi Résultats",
+        "soustitre2": "Général"
+      },
+      {
+        "code": "RAT",
+        "display_title": "Championnat En Attente",
+        "soustitre2": "Poule B"
+      }
+    ],
+    "events": []
+  }
+}

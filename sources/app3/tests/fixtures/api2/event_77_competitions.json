@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "body": {
+    "event": {
+      "id": 77,
+      "libelle": "Tournoi Résultats",
+      "place": "Rivecity",
+      "logo": "logo/resultats.png",
+      "start": "2999-04-01",
+      "end": "2999-04-02"
+    },
+    "competitions": [
+      {
+        "code": "RCH",
+        "season": "2999",
+        "display_title": "Championnat Résultats",
+        "soustitre2": "Poule A"
+      },
+      {
+        "code": "RCP",
+        "season": "2999",
+        "display_title": "Phase finale",
+        "soustitre2": "Finale"
+      }
+    ]
+  }
+}

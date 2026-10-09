@@ -1,0 +1,253 @@
+{
+  "status": 200,
+  "body": {
+    "events": [
+      {
+        "id": 77,
+        "libelle": "Tournoi Résultats",
+        "place": "Rivecity",
+        "start": "2999-04-01",
+        "end": "2999-04-02",
+        "logo": "logo/resultats.png",
+        "share": 0.667
+      }
+    ],
+    "competitions": [
+      {
+        "code": "RCH",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Championnat Résultats",
+        "soustitre": "Saison régulière",
+        "soustitre2": "Poule A",
+        "display_title": "Championnat Résultats",
+        "type": "CHPT",
+        "status": "ON",
+        "level": "NAT",
+        "banner": "logo/bandeau-rch.png",
+        "logo": null,
+        "web": "https://example.test",
+        "qualified": 1,
+        "eliminated": 1,
+        "has_games": true,
+        "round": 1,
+        "final": false,
+        "ranking": [
+          {
+            "rank": 1,
+            "team": {
+              "id": 9301,
+              "number": 101,
+              "label": "Equipe Alpha",
+              "logo": "KIP/logo/alpha.png"
+            },
+            "points": 7,
+            "played": 3,
+            "medal": null
+          },
+          {
+            "rank": 2,
+            "team": {
+              "id": 9302,
+              "number": 102,
+              "label": "Equipe Bravo",
+              "logo": "KIP/logo/bravo.png"
+            },
+            "points": 5,
+            "played": 3,
+            "medal": null
+          },
+          {
+            "rank": 3,
+            "team": {
+              "id": 9303,
+              "number": 103,
+              "label": "Equipe Charlie",
+              "logo": "KIP/logo/charlie.png"
+            },
+            "points": 4,
+            "played": 2,
+            "medal": null
+          },
+          {
+            "rank": 4,
+            "team": {
+              "id": 9304,
+              "number": 104,
+              "label": "Equipe Delta",
+              "logo": null
+            },
+            "points": 1,
+            "played": 2,
+            "medal": null
+          }
+        ]
+      },
+      {
+        "code": "RCP",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Coupe Résultats",
+        "soustitre": "Phase finale",
+        "soustitre2": "Finale",
+        "display_title": "Phase finale",
+        "type": "CP",
+        "status": "END",
+        "level": "NAT",
+        "banner": null,
+        "logo": "logo/logo-rcp.png",
+        "web": null,
+        "qualified": 0,
+        "eliminated": 0,
+        "has_games": true,
+        "round": 10,
+        "final": true,
+        "ranking": [
+          {
+            "rank": 1,
+            "team": {
+              "id": 9311,
+              "number": 111,
+              "label": "Equipe Echo",
+              "logo": null
+            },
+            "points": 0,
+            "played": 0,
+            "medal": 1
+          },
+          {
+            "rank": 2,
+            "team": {
+              "id": 9313,
+              "number": 113,
+              "label": "Equipe Golf",
+              "logo": null
+            },
+            "points": 0,
+            "played": 0,
+            "medal": 2
+          },
+          {
+            "rank": 3,
+            "team": {
+              "id": 9312,
+              "number": 112,
+              "label": "Equipe Foxtrot",
+              "logo": null
+            },
+            "points": 0,
+            "played": 0,
+            "medal": 3
+          },
+          {
+            "rank": 4,
+            "team": {
+              "id": 9314,
+              "number": 114,
+              "label": "Equipe Hotel",
+              "logo": null
+            },
+            "points": 0,
+            "played": 0,
+            "medal": null
+          }
+        ]
+      },
+      {
+        "code": "RMU",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Multi Résultats",
+        "soustitre": null,
+        "soustitre2": "Général",
+        "display_title": "Multi Résultats",
+        "type": "MULTI",
+        "status": "END",
+        "level": "NAT",
+        "banner": null,
+        "logo": null,
+        "web": null,
+        "qualified": 0,
+        "eliminated": 0,
+        "has_games": false,
+        "round": 10,
+        "final": true,
+        "ranking": [
+          {
+            "rank": 1,
+            "team": {
+              "id": 9321,
+              "number": 121,
+              "label": "Equipe India",
+              "logo": null
+            },
+            "points": 30,
+            "played": 2,
+            "medal": 1
+          },
+          {
+            "rank": 2,
+            "team": {
+              "id": 9322,
+              "number": 122,
+              "label": "Equipe Juliet",
+              "logo": null
+            },
+            "points": 20,
+            "played": 2,
+            "medal": 2
+          },
+          {
+            "rank": 3,
+            "team": {
+              "id": 9323,
+              "number": 123,
+              "label": "Equipe Kilo",
+              "logo": null
+            },
+            "points": 10,
+            "played": 2,
+            "medal": 3
+          }
+        ]
+      },
+      {
+        "code": "RAT",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Championnat En Attente",
+        "soustitre": null,
+        "soustitre2": "Poule B",
+        "display_title": "Championnat En Attente",
+        "type": "CHPT",
+        "status": "ATT",
+        "level": "NAT",
+        "banner": null,
+        "logo": null,
+        "web": null,
+        "qualified": 0,
+        "eliminated": 0,
+        "has_games": true,
+        "round": 1,
+        "final": false,
+        "ranking": []
+      }
+    ]
+  }
+}

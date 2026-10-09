@@ -77,6 +77,8 @@ services:
             # Racine legacy pour api2 (paramètre legacy_document_root) : variable
             # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
             - LEGACY_DOCUMENT_ROOT=/var/www/html
+            # Adresse du site public (app3) pour les liens des fichiers ICS (API_PUBLIC_TRANSVERSE.md § 3.2).
+            - PUBLIC_SITE_URL=https://beta.${KPI_DOMAIN_NAME}
             - APP_ENV=prod
             - APP_DEBUG=0
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json

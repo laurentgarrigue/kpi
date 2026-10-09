@@ -41,12 +41,13 @@ describe('NavMain', () => {
     expect(toggle.attributes('aria-expanded')).toBe('false')
   })
 
-  it('NAV-10: renders the home page as an internal link marked as current, the others as external', async () => {
+  it('NAV-10: delivered pages (phase 3: all but news) are internal, the current one marked; the others external', async () => {
     const wrapper = await mountSuspended(NavMain, { route: '/' })
     const desktop = wrapper.find('[data-testid="main-nav-desktop"]')
-    const kinds = desktop.findAll('a').map(link => link.attributes('data-kind'))
-    expect(kinds.filter(kind => kind === 'internal')).toHaveLength(1)
-    expect(desktop.find('a[data-kind="internal"]').attributes('aria-current')).toBe('page')
+    const internal = desktop.findAll('a[data-kind="internal"]')
+    expect(internal.map(link => link.attributes('href'))).toEqual(['/', '/calendar', '/competitions', '/history', '/teams', '/clubs'])
+    expect(internal[0]?.attributes('aria-current')).toBe('page')
+    expect(desktop.findAll('a').length).toBeGreaterThan(internal.length)
   })
 })
 

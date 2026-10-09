@@ -20,16 +20,20 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 
 | Spec | Objet | Phase | Statut |
 |---|---|---|---|
-| [SITE_PLATFORM.md](SITE_PLATFORM.md) | Socle technique : app3 SSR, `kpi-layer`, environnements, domaines beta, non-indexation, santé, déploiement | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
-| [SITE_LAYOUT.md](SITE_LAYOUT.md) | Template général : en-tête, bandeau beta, contenu, pied de page, thème, accessibilité, SEO par défaut | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
-| [SITE_NAVIGATION.md](SITE_NAVIGATION.md) | Menus et sous-menus, repli vers le legacy, navigation mobile, langue | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
-| [PAGE_HOME.md](PAGE_HOME.md) | Page d'accueil (version phase 1, évolutions phase 4a) | 1 | 📝 Proposée — 🛠 Implémentée (validation à la revue de PR) |
-| `PAGE_COMPETITIONS.md` | Liste et sélecteur des compétitions d'une saison | 2 | ⏳ À rédiger |
-| `PAGE_COMPETITION.md` | Page compétition et ses onglets (games, pitches, info, progress, phases, ranking, stats) | 2 | ⏳ À rédiger |
-| `PAGE_EVENT.md`, `PAGE_GROUP.md` | Vues événement et groupe | 2 | ⏳ À rédiger |
-| `PAGE_CALENDAR.md` | Calendrier + ICS | 3 | ⏳ À rédiger |
-| `PAGE_HISTORY.md`, `PAGE_TEAM.md`, `PAGE_CLUBS.md` | Historique, fiche équipe, clubs (+ carte, logos) | 3 | ⏳ À rédiger |
-| `FEATURE_SEARCH.md` | Recherche globale | 3 | ⏳ À rédiger |
+| [SITE_PLATFORM.md](SITE_PLATFORM.md) | Socle technique : app3 SSR, `kpi-layer`, environnements, domaines beta, non-indexation, santé, déploiement | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
+| [SITE_LAYOUT.md](SITE_LAYOUT.md) | Template général : en-tête, bandeau beta, contenu, pied de page, thème, accessibilité, SEO par défaut | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
+| [SITE_NAVIGATION.md](SITE_NAVIGATION.md) | Menus et sous-menus, repli vers le legacy, navigation mobile, langue | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
+| [PAGE_HOME.md](PAGE_HOME.md) | Page d'accueil (version phase 1, évolutions phase 4a) | 1 | ✅ Validée (retours du 08/10/2026 intégrés) |
+| [API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) | api2 : endpoints publics des résultats, refactorisation sans régression pour app2 | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_COMPETITIONS.md](PAGE_COMPETITIONS.md) | Liste des compétitions d'une saison et d'un groupe, classements compacts | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_COMPETITION.md](PAGE_COMPETITION.md) | Page compétition et ses onglets (games, pitches, info, progress, ranking, stats) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_EVENT_GROUP.md](PAGE_EVENT_GROUP.md) | Vues agrégées événement et groupe (matchs, terrains) | 2 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [API_PUBLIC_TRANSVERSE.md](API_PUBLIC_TRANSVERSE.md) | api2 : calendrier, ICS, historique, équipes, clubs, recherche | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_CALENDAR.md](PAGE_CALENDAR.md) | Calendrier + abonnements ICS | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_HISTORY.md](PAGE_HISTORY.md) | Historique et palmarès | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_TEAM.md](PAGE_TEAM.md) | Recherche d'équipe et fiche équipe | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [PAGE_CLUBS.md](PAGE_CLUBS.md) | Clubs : liste, carte, fiche (remplace aussi les logos) | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
+| [FEATURE_SEARCH.md](FEATURE_SEARCH.md) | Recherche globale | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | `PAGE_NEWS.md`, `PAGE_CONTENT.md`, `FEATURE_CMS.md` | Articles, pages éditoriales, module éditorial (app4 + api2) | 4a | ⏳ À rédiger |
 | `FEATURE_FORMS.md` | Formulaires d'inscription | 4b | ⏳ À rédiger |
 | `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |

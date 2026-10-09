@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "body": {
+    "gamedays": [
+      {
+        "id": 9221,
+        "name": "RAT J1",
+        "phase": "Journée 1",
+        "start": "2999-06-01",
+        "end": "2999-06-01",
+        "place": "Lacville",
+        "department": "33",
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      }
+    ],
+    "teams_by_pool": [],
+    "schema": null
+  }
+}

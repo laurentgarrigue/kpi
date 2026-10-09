@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "body": {
+    "number": 101,
+    "label": "Equipe Alpha",
+    "club": {
+      "code": "C001",
+      "label": "Club Alpha Lacville"
+    },
+    "logo": null,
+    "colors": null,
+    "photo": null,
+    "honours": [
+      {
+        "season": "2998",
+        "competition": {
+          "code": "RCP",
+          "display_title": "Coupe Résultats",
+          "group": "TSTRES"
+        },
+        "rank": 1,
+        "medal": 1
+      },
+      {
+        "season": "2998",
+        "competition": {
+          "code": "RQL",
+          "display_title": "Qualification Résultats",
+          "group": "TSTRES"
+        },
+        "rank": 2,
+        "medal": null
+      }
+    ],
+    "seasons": [
+      {
+        "season": "2999",
+        "competitions": [
+          {
+            "code": "RCH",
+            "display_title": "Championnat Résultats"
+          }
+        ]
+      },
+      {
+        "season": "2998",
+        "competitions": [
+          {
+            "code": "RQL",
+            "display_title": "Qualification Résultats"
+          },
+          {
+            "code": "RCP",
+            "display_title": "Coupe Résultats"
+          }
+        ]
+      }
+    ]
+  }
+}
