@@ -2,7 +2,7 @@
 
 **Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
 **Routes** : `/competitions/{season}/{code}` → `/competitions/{season}/{code}/{tab}` (+ `/en/…`),
-`tab` ∈ `games` · `pitches` · `info` · `progress` · `ranking` · `stats`
+`tab` ∈ `info` · `games` · `pitches` · `progress` · `ranking` · `stats`
 **Remplace** : `kpmatchs.php`, `kpterrains.php`, `kpdetails.php`, `kpchart.php`, `kpphases.php`,
 `kpclassement.php`, `kpstats.php` et la barre `kpnavgroup.tpl`
 
@@ -23,7 +23,7 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 ├─────────────────────────────────────────────────────────────┤
 │ Sœurs : [Poule A] [Poule B] [Classement final] …             │  sélecteur de compétition
 ├─────────────────────────────────────────────────────────────┤
-│ Matchs | Terrains | Infos | Déroulement | Classement | Stats  │  onglets (ResultsTabs)
+│ Infos | Matchs | Terrains | Déroulement | Classement | Stats  │  onglets (ResultsTabs)
 ├─────────────────────────────────────────────────────────────┤
 │ contenu de l'onglet                                          │
 └─────────────────────────────────────────────────────────────┘
@@ -31,8 +31,13 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 
 - **`/competitions/{season}/{code}`** redirige (302) vers l'onglet par défaut : `ranking` si le statut est `END`,
   sinon `games`. Ainsi, chaque contenu a une seule URL.
-- **En-tête** : données de `GET /competition/{season}/{code}`. Le lien « Suivre en direct » mène à
-  `{app2}/group/{season}/{groupe}` (page groupe existante d'app2).
+- **En-tête** : données de `GET /competition/{season}/{code}`, repéré par le libellé « Compétition » et un filet bleu
+  (l'événement a un bandeau marine, cf. PAGE_EVENT_GROUP.md § 2). **« Suivre en direct »** est un **bouton** rouge à point
+  clignotant, en nouvel onglet, vers `{app2}/group/{season}/{groupe}` (page groupe existante d'app2).
+- **Ordre des onglets** : Infos en premier (présentation avant les matchs, utile à qui découvre la compétition) ; la
+  redirection par défaut est inchangée (`ranking` si `END`, sinon `games`).
+- **Matchs** : le vainqueur d'un match terminé a son nom et son score en **gras**, le perdant en graisse normale
+  (match nul ou en cours : aucun gras).
 - **Sélecteur de compétitions sœurs** : `siblings` de l'en-tête (libellé `soustitre2`, sinon `display_title`) ;
   conserve l'onglet courant. Il est masqué s'il n'y a qu'une compétition.
 - **Contexte événement** : avec `?event={id}`, le fil d'Ariane devient « Accueil › {événement} › {compétition} »,

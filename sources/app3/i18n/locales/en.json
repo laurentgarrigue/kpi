@@ -31,7 +31,8 @@
     "teams-clubs": "Teams and clubs",
     "teams": "Teams",
     "clubs": "Clubs",
-    "live": "Live"
+    "live": "Live",
+    "events": "Events"
   },
   "footer": {
     "kayakPolo": "Canoe polo",
@@ -213,7 +214,16 @@
       "pool": "Pool {pool}",
       "schema": "Competition format",
       "schemaAlt": "Format of {competition}"
-    }
+    },
+    "kind": {
+      "event": "Event",
+      "group": "Competition group",
+      "competition": "Competition"
+    },
+    "eventCompetitions": "Competitions of this event",
+    "gamedaysOf": "{count} gameday out of {total} of the competition | {count} gamedays out of {total} of the competition",
+    "allGamedays": "All the gamedays of the competition",
+    "seeCompetition": "See the whole competition"
   },
   "stats": {
     "scorers": {
@@ -373,5 +383,15 @@
       "clubs": "Clubs"
     },
     "label": "Search the site"
+  },
+  "events": {
+    "title": "Events",
+    "pageTitle": "Events {year}",
+    "description": "Canoe polo tournaments and events in {year}.",
+    "year": "Year",
+    "empty": "No event published in {year}.",
+    "intro": "An event gathers one or several competitions in one place over a few days: open it to see all its games.",
+    "previousYear": "Previous year",
+    "nextYear": "Next year"
   }
 }

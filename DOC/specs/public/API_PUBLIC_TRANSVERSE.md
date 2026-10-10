@@ -20,7 +20,8 @@ Mêmes règles que la phase 2 ([API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) §
 
 | Endpoint | Réponse | Remplace |
 |---|---|---|
-| `GET /calendar?start=&end=[&level=][&group=]` | journées publiées chevauchant la période (§ 3.1) ; `start`/`end` au format `YYYY-MM-DD`, période ≤ 400 jours | `json-events.php` |
+| `GET /calendar?start=&end=[&section=][&group=]` | journées publiées chevauchant la période (§ 3.1) ; `start`/`end` au format `YYYY-MM-DD`, période ≤ 400 jours | `json-events.php` |
+| `GET /calendar/groups` | groupes ayant une compétition publiée, par section (format de `/groups/{season}`, section 100 « Divers » incluse) | — *(nouveau)* |
 | `GET /competition/{s}/{c}/calendar.ics` | abonnement iCalendar de la compétition : un événement par journée publiée (§ 3.2) | — *(nouveau)* |
 | `GET /gameday/{id}.ics` | une journée publiée, en iCalendar | `upload_ics.php` |
 | `GET /history` | groupes ayant au moins une compétition terminée du tour final, par section (format de `/groups/{season}`) | sélecteur de `kphistorique.php` |
@@ -35,17 +36,18 @@ Mêmes règles que la phase 2 ([API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) §
 ## 3. Formats
 
 ### 3.1 Calendrier
-`[{ id, competition: { season, code, display_title, type, level, group }, name, place, department, start, end,
+`[{ id, competition: { season, code, display_title, type, section, group }, label, name, place, department, start, end,
 event }]` (journées « Pause » / « Break » exclues ; chevauchement : début ≤ fin de période et fin ≥ début) : une ligne par journée publiée de compétition publiée ; comme `json-events.php`, les journées d'une
 même compétition **aux mêmes dates et lieu** (phases d'une coupe) sont fusionnées en une seule (`id` = la
 première). `event` = `{ id, libelle }` du premier événement publié contenant la journée, sinon `null`.
-Tri : `start`, `level` (INT, NAT, REG), `GroupOrder`, tour, nom. Filtres optionnels `level` (`INT|NAT|REG`) et
+`label` = « {nom} - {lieu} ({département}) » (parties absentes omises, comme le calendrier legacy ; titre de la compétition à défaut). `section` = `kp_groupe.section` (1 internationales, 2 nationales, 3 régionales, 4 tournois, 5 continents, 100 divers, aussi pour une compétition sans groupe).
+Tri : `start`, `section`, `GroupOrder`, tour, nom. Filtres optionnels `section` (valeur ci-dessus) et
 `group` (code de groupe).
 
 ### 3.2 iCalendar
 `text/calendar; charset=utf-8`, RFC 5545 : `VCALENDAR` avec `X-WR-CALNAME` (titre de la compétition et
 saison), un `VEVENT` par journée : `UID` stable (`gameday-{id}@kayak-polo.info`), `DTSTART;VALUE=DATE` /
-`DTEND;VALUE=DATE` (jour suivant la fin), `DTSTAMP`, `SUMMARY` (« {compétition} — {journée} »), `LOCATION` (lieu,
+`DTEND;VALUE=DATE` (jour suivant la fin), `DTSTAMP`, `SUMMARY` (même libellé que le calendrier : « {nom} - {lieu} ({département}) » ; phases d'une coupe aux mêmes dates et lieu fusionnées), `LOCATION` (lieu,
 département), `URL` (page de la compétition sur le site, `PUBLIC_SITE_URL` ; `games?gameday=` pour un championnat).
 Pas de `LAST-MODIFIED` : `kp_journee` n'a pas de date de modification. Lignes repliées à 75 octets,
 caractères spéciaux échappés. Aucune donnée personnelle.
@@ -102,7 +104,7 @@ du visiteur dans `X-Forwarded-For`, lu par api2 (`trusted_proxies` = réseau pri
 ## 5. Critères d'acceptation
 
 - **API3-01** — `/calendar` renvoie les journées publiées chevauchant la période, fusionnées par compétition, date
-  et lieu, triées ; filtres `level` et `group` ; période > 400 jours ou dates invalides → 400.
+  et lieu, triées ; filtres `section` et `group` ; période > 400 jours ou dates invalides → 400.
 - **API3-02** — Les fichiers ICS sont valides RFC 5545 (testés par un analyseur), avec `UID` stables, dates en
   journée entière et aucune donnée personnelle.
 - **API3-03** — `/history/{group}` ne contient que des compétitions publiées, `END` et du tour final, avec

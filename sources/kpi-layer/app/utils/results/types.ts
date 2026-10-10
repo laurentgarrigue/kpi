@@ -207,7 +207,14 @@ export interface Stat {
   rows: (Record<string, unknown> & { rank: number })[]
 }
 
+/** Competition of an event, with the gamedays held at the event out of all its gamedays (PAGE_EVENT_GROUP.md § 2.2). */
+export interface EventCompetition extends Required<CompetitionSummary> {
+  type: string
+  gamedays: number
+  total_gamedays: number
+}
+
 export interface EventCompetitions {
   event: { id: number, libelle: string, place: string | null, logo: string | null, start: string | null, end: string | null }
-  competitions: Required<CompetitionSummary>[]
+  competitions: EventCompetition[]
 }

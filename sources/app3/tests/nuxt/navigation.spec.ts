@@ -45,7 +45,7 @@ describe('NavMain', () => {
     const wrapper = await mountSuspended(NavMain, { route: '/' })
     const desktop = wrapper.find('[data-testid="main-nav-desktop"]')
     const internal = desktop.findAll('a[data-kind="internal"]')
-    expect(internal.map(link => link.attributes('href'))).toEqual(['/', '/calendar', '/competitions', '/history', '/teams', '/clubs'])
+    expect(internal.map(link => link.attributes('href'))).toEqual(['/', '/calendar', '/events', '/competitions', '/history', '/teams', '/clubs'])
     expect(internal[0]?.attributes('aria-current')).toBe('page')
     expect(desktop.findAll('a').length).toBeGreaterThan(internal.length)
   })

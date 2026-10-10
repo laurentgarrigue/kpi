@@ -31,7 +31,8 @@
     "teams-clubs": "Équipes et clubs",
     "teams": "Équipes",
     "clubs": "Clubs",
-    "live": "En direct"
+    "live": "En direct",
+    "events": "Événements"
   },
   "footer": {
     "kayakPolo": "Kayak-polo",
@@ -213,7 +214,16 @@
       "pool": "Poule {pool}",
       "schema": "Schéma de la compétition",
       "schemaAlt": "Schéma de déroulement de {competition}"
-    }
+    },
+    "kind": {
+      "event": "Événement",
+      "group": "Groupe de compétitions",
+      "competition": "Compétition"
+    },
+    "eventCompetitions": "Compétitions de cet événement",
+    "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
+    "allGamedays": "Toutes les journées de la compétition",
+    "seeCompetition": "Voir la compétition entière"
   },
   "stats": {
     "scorers": {
@@ -373,5 +383,15 @@
       "clubs": "Clubs"
     },
     "label": "Rechercher sur le site"
+  },
+  "events": {
+    "title": "Événements",
+    "pageTitle": "Événements {year}",
+    "description": "Tournois et événements de kayak-polo de {year}.",
+    "year": "Année",
+    "empty": "Aucun événement publié en {year}.",
+    "intro": "Un événement réunit sur un même lieu et un même week-end une ou plusieurs compétitions : ouvrez-le pour voir tous ses matchs.",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante"
   }
 }

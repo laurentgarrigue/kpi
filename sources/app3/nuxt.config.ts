@@ -57,6 +57,7 @@ export default defineNuxtConfig({
       ...cachedPage(`${prefix}/competitions/*`, SLOW_CACHE),
       [`${prefix}/competitions/*/*`, NO_CACHE],
       [`${prefix}/competitions/*/*/**`, RESULTS_CACHE],
+      ...cachedPage(`${prefix}/events`, SLOW_CACHE),
       [`${prefix}/events/*`, NO_CACHE],
       [`${prefix}/events/*/**`, RESULTS_CACHE],
       [`${prefix}/groups/*/*`, NO_CACHE],

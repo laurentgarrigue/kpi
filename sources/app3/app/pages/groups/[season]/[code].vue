@@ -41,7 +41,7 @@ useSeoMeta({
 <template>
   <div v-if="list" class="space-y-6">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('results.listTitle', { season }), to: listPath }, { label: name }]" />
-    <ResultsScopeHeader :title="name" :subtitle="season" :live-url="joinURL(app2BaseUrl, 'group', season, code)" />
+    <ResultsScopeHeader kind="group" :title="name" :subtitle="season" :live-url="joinURL(app2BaseUrl, 'group', season, code)" />
     <ResultsEventBanner :events="list.events" :main="main" :scope="name" />
     <ResultsCompetitionChips :items="chips" :all="{ to: localePath(`/groups/${season}/${code}/${current}`), current: true }" />
     <ResultsTabs :tabs="tabs" :current="current" />

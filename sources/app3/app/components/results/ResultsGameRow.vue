@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { normalizeTime } from '#kpi-layer/utils/results/games'
+import { normalizeTime, winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
 import { NEW_TAB_ATTRS } from '~/utils/links'
 import { gameLink, pdfUrl } from '~/utils/page-links'
@@ -9,6 +9,7 @@ import { personName } from '~/utils/people'
 const props = defineProps<{ game: ResultsGame, competitionHref?: string }>()
 const context = usePageLinkContext()
 
+const winner = computed(() => winnerSide(props.game))
 const sheet = computed(() => (props.game.g_status === 'ATT' ? null : gameLink(props.game.g_id, context.value)))
 const scoreSheet = computed(() => (props.game.g_validation === 'O' ? pdfUrl({ kind: 'gameSheet', game: props.game.g_id }, context.value) : null))
 const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName).filter(Boolean).join(', '))
@@ -26,7 +27,7 @@ const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName)
     </td>
     <td class="hidden px-2 py-2 text-sm md:table-cell">{{ game.d_phase }}<template v-if="game.g_code"> · {{ game.g_code }}</template></td>
     <td class="px-2 py-2 text-right">
-      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" />
+      <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" :strong="winner === 'A'" />
     </td>
     <td class="px-2 py-2 text-center">
       <a v-if="sheet" :href="sheet.href" v-bind="NEW_TAB_ATTRS" class="hover:underline" data-testid="game-sheet">
@@ -35,7 +36,7 @@ const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName)
       <ResultsScore v-else :game="game" />
     </td>
     <td class="px-2 py-2">
-      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" :season="game.c_season" />
+      <ResultsTeamName :label="game.t_b_label" :number="game.t_b_number" :competition="game.c_code" :season="game.c_season" :strong="winner === 'B'" />
     </td>
     <td class="hidden px-2 py-2 text-sm lg:table-cell">{{ referees }}</td>
     <td class="px-2 py-2">

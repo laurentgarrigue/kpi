@@ -284,7 +284,7 @@ make app3_test && make app3_lint
 | 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/calendar.ics` | `BEGIN:VCALENDAR`, un `VEVENT` par journée, aucune donnée personnelle | ☐ |
 | 5 | `curl -sk https://kpi.localhost/api2/team/<numéro>/roster/<saison>/<code> \| grep -iE "matric\|sexe\|naiss"` | aucune sortie | ☐ |
 | 6 | `curl -sk https://kpi.localhost/api2/club/<code d'un club sans équipe>` | `404` | ☐ |
-| 7 | `https://beta.kpi.localhost/calendar` | mois courant, navigation mois précédent / suivant, filtres niveau et groupe (désactiver JS : fonctionnent) ; grille du mois à partir de 1024 px | ☐ |
+| 7 | `https://beta.kpi.localhost/calendar` | mois courant, navigation mois précédent / suivant, flèches mois et année, filtres section (couleur par section) et groupe filtré par section (désactiver JS : fonctionnent) ; grille du mois à partir de 1024 px | ☐ |
 | 8 | Une compétition → onglet Infos | « S'abonner au calendrier » (`webcal://`), « Télécharger (.ics) », « Ajouter à mon agenda » par journée | ☐ |
 | 9 | `https://beta.kpi.localhost/history` | redirige vers le 1er groupe national ; podiums avec médailles, classement complet repliable | ☐ |
 | 10 | `https://beta.kpi.localhost/teams?q=<nom>` puis une équipe | suggestions au clavier ; fiche : club, couleurs et photo d'équipe (si présentes), palmarès, composition (sélecteur) | ☐ |
@@ -308,6 +308,8 @@ Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2` ; `lint-nuxt`, `build-
 | 2 | `docker exec kpi_preprod_api2 printenv PUBLIC_SITE_URL` | `https://beta.preprod.kayak-polo.info` | ☐ |
 | 3 | `make app3_generate_preprod` *(si le wrapper 📦 n'est pas encore à jour, § 1.3)* | build OK + redémarrage | ☐ |
 | 4 | Abonnement ICS d'une compétition dans Google Agenda, Apple Calendrier, Thunderbird | journées en « toute la journée », lien vers la page de la compétition sur `beta.preprod…` | ☐ |
+| 4b | Onglet Infos : « Copier le lien d'abonnement » puis tutoriel « Comment s'abonner ? » | lien copié ; étapes Google / Outlook / Apple | ☐ |
+| 4c | `https://beta.kpi.localhost/events` puis un événement | menu « Événements » ; bandeau marine « Événement », panneau « n journées sur total », bouton rouge « Suivre en direct », onglet Infos en premier, vainqueurs en gras dans Matchs | ☐ |
 | 5 | Grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php` | mêmes journées, palmarès, compositions, clubs (aux écarts assumés du § 3.1 près) | ☐ |
 | 6 | Recherche depuis un poste extérieur : 31 requêtes / minute | 429 à la 31e (preuve que l'IP du visiteur traverse Traefik → app3 → api2) | ☐ |
 

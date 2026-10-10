@@ -1,7 +1,7 @@
 # Vues agrégées « événement » et « groupe »
 
 **Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
-**Routes** :
+**Routes** : `/events` (liste, § 2.2) ;
 - `/events/{id}` → `/events/{id}/{tab}`, `tab` ∈ `games` · `pitches` (+ `/en/…`)
 - `/groups/{season}/{code}` → `/groups/{season}/{code}/{tab}`, mêmes onglets (+ `/en/…`)
 
@@ -21,7 +21,7 @@ Fil d'Ariane : Accueil › {événement}            (vue événement)
                Accueil › Compétitions {saison} › {groupe}   (vue groupe)
 ┌─────────────────────────────────────────────────────────────┐
 │ [logo]  {libellé}   {lieu} · {dates}                         │  en-tête (ScopeHeader)
-│ Suivre en direct (app2) ↗                                    │
+│ [Suivre en direct]  (bouton)                                  │
 ├─────────────────────────────────────────────────────────────┤
 │ Compétitions : [Toutes] [N1H Poule A] [N1H Poule B] …        │  puces (ScopeCompetitions)
 ├─────────────────────────────────────────────────────────────┤
@@ -45,13 +45,32 @@ Fil d'Ariane : Accueil › {événement}            (vue événement)
   - vue groupe : `/competitions/{season}/{code}/{tab}`.
 - **Onglets de la vue groupe** : seulement **Matchs** et **Terrains** (comme le legacy). Mêmes règles que
   PAGE_COMPETITION.md § 2 (liens, `aria-current`, mobile).
-- **Onglets de la vue événement** : les six onglets d'une compétition — Matchs, Terrains, Infos, Déroulement,
+- **Onglets de la vue événement** : les six onglets d'une compétition — Infos, Matchs, Terrains, Déroulement,
   Classement, Stats — **sans quitter l'événement** (`/events/{id}/{tab}`). Matchs et Terrains couvrent tout
   l'événement, ou la compétition choisie (`?competition=`). Infos, Déroulement, Classement et Stats exigent une
   compétition : celle du paramètre, sinon **la première de l'événement** ; la puce « Toutes » est alors
   **grisée** (non cliquable, `aria-disabled`) car inapplicable. Les onglets conservent la compétition choisie
   explicitement. Le lien de compétition d'un match (colonne « Compétition ») mène lui aussi à
   `/events/{id}/games?competition={code}`.
+
+### 2.0 Distinguer événement, groupe et compétition
+
+Trois notions que le visiteur confond : un **événement** (lieu + dates, ex. un tournoi), qui réunit des journées de
+**compétitions** ; un **groupe** (ex. Nationale 1) qui rassemble des compétitions d'une saison. Les en-têtes les
+distinguent par un libellé (« Événement », « Groupe de compétitions », « Compétition ») **et** une couleur : bandeau
+marine plein pour l'événement et le groupe (`data-kind`), filet bleu sur fond blanc pour la compétition. « Suivre en
+direct » est un bouton rouge (point clignotant, nouvel onglet) dans les trois en-têtes.
+
+Sous l'en-tête d'un événement, le panneau **« Compétitions de cet événement »** liste chaque compétition avec
+« {n} journée(s) sur {total} de la compétition » (ou « Toutes les journées »), un lien vers sa vue dans l'événement et
+un lien **« Voir la compétition entière »** (`/competitions/{s}/{c}?event={id}`), utile quand l'événement ne
+couvre que quelques journées.
+
+### 2.2 Liste des événements `/events[?year=YYYY]`
+
+Entrée de menu « Événements ». Les événements publiés d'une année (`GET /events/all`, filtre côté app3 sur les
+dates), du plus ancien au plus récent, sous forme de cartes (comme l'accueil) ; puces des années disposant
+d'événements ; année par défaut = l'année courante, sinon la plus récente. Chaque carte mène à `/events/{id}`.
 
 ### 2.1 Accès à ces pages
 
@@ -111,6 +130,10 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 - **EVT-07** — La vue événement propose les onglets Infos, Déroulement, Classement et Stats d'une compétition (la première par défaut), « Toutes » grisée sur ces onglets.
 - **EVT-04** — Les matchs de toutes les compétitions de l'événement sont listés, chacun avec sa compétition.
 - **EVT-05** — Événement inconnu ou sans compétition publiée → page 404 du site.
+- **EVT-08** — L'en-tête d'un événement porte le libellé « Événement » et `data-kind="event"` ; celui d'une compétition « Compétition » ; « Suivre en direct » est un bouton.
+- **EVT-09** — Le panneau des compétitions de l'événement indique « n journée(s) sur total » et lie la compétition entière.
+- **EVL-01** — `/events` liste les événements de l'année demandée, chacun menant à `/events/{id}`.
+- **EVL-02** — Les années proposées sont celles des événements datés ; un événement à cheval sur deux années figure dans les deux.
 - **GRP-01** — `/groups/{s}/{c}` redirige (302) vers `/groups/{s}/{c}/games`.
 - **GRP-02** — L'en-tête affiche le libellé du groupe (anglais sous `/en` s'il existe), la saison et le lien app2 `{app2}/group/{s}/{c}`.
 - **GRP-03** — Une puce par compétition du groupe, menant à `/competitions/{s}/{c}/{onglet}` (sans paramètre `event`).
@@ -138,4 +161,3 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 ## 9. Hors périmètre
 
 - Classement agrégé d'un événement : non prévu (le legacy ne l'offre pas).
-- Liste des événements (`/events`) : couverte par le calendrier (phase 3).

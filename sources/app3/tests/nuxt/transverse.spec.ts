@@ -136,6 +136,18 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 })
 
+describe('events page (PAGE_EVENTS.md)', () => {
+  it('EVL-01/EVL-02: lists the events of the requested year, with the years to switch to', async () => {
+    const wrapper = await mountRoute('/events?year=2999')
+    expect(api2).toHaveBeenCalledWith('/events/all')
+    expect(wrapper.find('h1').text()).toBe('Événements')
+    const years = wrapper.findAll('[data-testid="events-years"] a')
+    expect(years.length).toBeGreaterThan(0)
+    expect(wrapper.find('[data-testid="events-years"] [aria-current="page"]').text()).toBe('2999')
+    expect(wrapper.find('[data-testid="year-events"] a[href="/events/77"]').exists()).toBe(true)
+  })
+})
+
 describe('history (PAGE_HISTORY.md)', () => {
   it('HIS-02/HIS-03: seasons in decreasing order, finished final competitions with their podium and medals', async () => {
     const wrapper = await mountRoute('/history/TSTRES')

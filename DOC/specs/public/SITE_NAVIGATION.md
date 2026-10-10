@@ -96,7 +96,7 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 
 ## 6. Critères d'acceptation
 
-- **NAV-01** — `MAIN_MENU` contient, dans l'ordre : home, news, calendar, competitions (competitions-list, history), teams-clubs (teams, clubs), live.
+- **NAV-01** — `MAIN_MENU` contient, dans l'ordre : home, news, calendar, events, competitions (competitions-list, history), teams-clubs (teams, clubs), live.
 - **NAV-02** — `resolveMenuLink` renvoie un lien interne localisé pour une entrée `ready` (`/news` en FR, `/en/news` en EN).
 - **NAV-03** — `resolveMenuLink` renvoie l'URL legacy absolue avec `?lang=fr|en` pour une entrée non livrée ayant un `legacyPath`.
 - **NAV-04** — `resolveMenuLink` renvoie l'URL d'app2 pour l'entrée « En direct », rendue dans un nouvel onglet.
@@ -106,7 +106,7 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 - **NAV-08** — Sur mobile, le bouton « Menu » ouvre et ferme le panneau (`aria-expanded`).
 - **NAV-09** — Le sélecteur de langue pointe vers la même page dans l'autre langue.
 - **NAV-10** — Seules les entrées des pages livrées sont internes (phase 1 : « Accueil » ; phase 2 : + « Compétitions
-  et résultats ») ; les autres pointent vers le legacy ou app2.
+  et résultats » ; événements : « Événements ») ; les autres pointent vers le legacy ou app2.
 
 ## 7. Hors périmètre / questions ouvertes
 

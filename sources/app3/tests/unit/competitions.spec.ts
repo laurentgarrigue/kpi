@@ -40,7 +40,7 @@ describe('groupLabel', () => {
 
 describe('tabs', () => {
   it('CMP-04: competition tabs, the phases tab merged into progress', () => {
-    expect(COMPETITION_TABS).toEqual(['games', 'pitches', 'info', 'progress', 'ranking', 'stats'])
+    expect(COMPETITION_TABS).toEqual(['info', 'games', 'pitches', 'progress', 'ranking', 'stats'])
     expect(AGGREGATE_TABS).toEqual(['games', 'pitches'])
   })
 

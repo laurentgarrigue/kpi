@@ -69,7 +69,8 @@ useHead(() => ({
 <template>
   <div v-if="event" class="space-y-6">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: event.libelle }]" />
-    <ResultsScopeHeader :title="event.libelle" :subtitle="subtitle" :logo="event.logo" :live-url="joinURL(app2BaseUrl, 'event', String(id))" />
+    <ResultsScopeHeader kind="event" :title="event.libelle" :subtitle="subtitle" :logo="event.logo" :live-url="joinURL(app2BaseUrl, 'event', String(id))" />
+    <ResultsEventCompetitions :event-id="id" :competitions="competitions" />
     <ResultsCompetitionChips :items="chips" :all="all" />
     <ResultsTabs :tabs="tabs" :current="current" />
     <NuxtPage

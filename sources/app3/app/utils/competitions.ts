@@ -1,7 +1,7 @@
 import type { CompetitionStatus, CompetitionGroup, GroupSection } from '#kpi-layer/utils/results/types'
 
 /** Tabs of a competition page (PAGE_COMPETITION.md): « phases » is the vertical view of « progress ». */
-export const COMPETITION_TABS = ['games', 'pitches', 'info', 'progress', 'ranking', 'stats'] as const
+export const COMPETITION_TABS = ['info', 'games', 'pitches', 'progress', 'ranking', 'stats'] as const
 export type CompetitionTab = typeof COMPETITION_TABS[number]
 
 /** Tabs of the event and group views (PAGE_EVENT_GROUP.md). */

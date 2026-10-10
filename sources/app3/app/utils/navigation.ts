@@ -27,6 +27,7 @@ export const MAIN_MENU: readonly MenuItem[] = [
   { id: 'home', to: '/', ready: true },
   { id: 'news', to: '/news', legacyPath: '/', ready: false },
   { id: 'calendar', to: '/calendar', legacyPath: '/kpcalendrier.php', ready: true },
+  { id: 'events', to: '/events', ready: true },
   {
     id: 'competitions',
     children: [

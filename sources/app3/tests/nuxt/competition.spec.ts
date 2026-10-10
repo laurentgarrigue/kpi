@@ -22,6 +22,7 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
     expect(header.find('[data-testid="competition-web"]').attributes('href')).toBe('https://example.test')
     expect(header.find('[data-testid="competition-live"]').attributes('href')).toBe('https://app.kpi.localhost/group/2999/TSTRES')
     expect(header.find('[data-testid="competition-live"]').attributes('target')).toBe('_blank')
+    expect(header.find('[data-testid="competition-live"]').attributes('data-live-button')).toBeDefined()
   })
 
   it('CMP-03: siblings of the group keep the current tab', async () => {
@@ -37,13 +38,13 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
     expect(wrapper.findAll('[data-testid="competition-chips"] a').map(chip => chip.attributes('href'))).toEqual([
       '/competitions/2999/RCH/games?event=77', '/competitions/2999/RCP/games?event=77',
     ])
-    expect(wrapper.find('[data-testid="results-tabs"] a').attributes('href')).toBe('/competitions/2999/RCP/games?event=77')
+    expect(wrapper.findAll('[data-testid="results-tabs"] a')[1]!.attributes('href')).toBe('/competitions/2999/RCP/games?event=77')
   })
 
   it('CMP-04: tabs are links, the current one marked', async () => {
     const tabs = (await mountRoute('/competitions/2999/RCH/info')).findAll('[data-testid="results-tabs"] a')
-    expect(tabs.map(tab => tab.text())).toEqual(['Matchs', 'Terrains', 'Infos', 'Déroulement', 'Classement', 'Stats'])
-    expect(tabs.map(tab => tab.attributes('aria-current'))).toEqual([undefined, undefined, 'page', undefined, undefined, undefined])
+    expect(tabs.map(tab => tab.text())).toEqual(['Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
+    expect(tabs.map(tab => tab.attributes('aria-current'))).toEqual(['page', undefined, undefined, undefined, undefined, undefined])
   })
 
   it('CMP-16: an event covering every gameday is put forward, with the breadcrumb through it', async () => {
@@ -74,6 +75,19 @@ describe('games tab (§ 3.1)', () => {
     expect(live.find('[data-status]').text()).toContain('En cours')
     expect(live.find('[data-testid="provisional"]').exists()).toBe(true)
     expect(wrapper.find('[data-game="9401"] [data-testid="provisional"]').exists()).toBe(false)
+  })
+
+  it('CMP-05: in the games list the winner of a finished game is in bold, the loser and a draw are not', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCH/games')
+    const won = wrapper.find('[data-game="9401"]')
+    const [winner, loser] = won.findAll('a[data-kind="team"]')
+    expect(winner!.classes()).toContain('font-semibold')
+    expect(loser!.classes()).not.toContain('font-semibold')
+    expect(won.find('[data-side="A"]').classes()).toContain('font-bold')
+    expect(won.find('[data-side="B"]').classes()).not.toContain('font-bold')
+    const draw = wrapper.find('[data-game="9402"]')
+    expect(draw.findAll('a[data-kind="team"].font-semibold, [data-side].font-bold')).toHaveLength(0)
+    expect(wrapper.find('[data-game="9404"]').findAll('a.font-semibold')).toHaveLength(0)
   })
 
   it('CMP-06: filters by gameday and day, GET form', async () => {
