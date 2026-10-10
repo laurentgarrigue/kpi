@@ -63,6 +63,13 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await response.text()).toMatch(/<meta name="robots" content="noindex, nofollow">/)
   })
 
+  it('LAY-10: pages declare the app4 favicon, served by app3', async () => {
+    expect(await $fetch<string>('/')).toMatch(/<link[^>]*rel="icon"[^>]*href="\/favicon\.png"/)
+    const icon = await fetch('/favicon.png')
+    expect(icon.status).toBe(200)
+    expect(icon.headers.get('content-type')).toContain('image/png')
+  })
+
   it('LAY-07: an unknown URL returns a 404 inside the site layout', async () => {
     // A browser navigation asks for HTML (otherwise Nitro answers API-style JSON errors).
     const response = await fetch('/this-page-does-not-exist', { headers: { Accept: 'text/html' } })

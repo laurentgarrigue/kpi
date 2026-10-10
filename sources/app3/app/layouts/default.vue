@@ -12,5 +12,6 @@
       <slot />
     </main>
     <SiteFooter />
+    <SiteScrollArrows />
   </div>
 </template>

@@ -63,8 +63,9 @@ classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::me
 ### 3.4 Équipes
 - Recherche : `[{ number, label, club: { code, label } }]` (`kp_equipe`, libellé ou code club contenant `q`).
 - Fiche : `{ number, label, club: { code, label }, logo, colors, photo, honours: [{ season, competition: { code, display_title,
-  group }, rank, medal }], seasons: [{ season, competitions: [{ code, display_title }] }] }` ; `honours` = rangs
-  dans les compétitions publiées **terminées** (comme `kpequipes.php`), saisons décroissantes.
+  group }, rank, medal, final_round }], seasons: [{ season, competitions: [{ code, display_title }] }] }` ; `honours` = rangs
+  dans les compétitions publiées **terminées** (comme `kpequipes.php`), saisons décroissantes ; `final_round` =
+  compétition du tour final (`Code_tour` = 10), `false` pour un tour intermédiaire.
   `colors` et `photo` = `{ image, season }` ou `null`, règle de `kpequipes.php` (Q-P3-3) : couleurs
   `KIP/colors/{n}-{année}-colors.png` de l'année courante à année − 3, puis `KIP/colors/{n}-colors.png`
   (`season` = `null`) ; photo d'équipe `KIP/teams/{n}-{année}-team.jpg` de l'année courante à année − 5.

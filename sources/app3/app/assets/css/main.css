@@ -1,3 +1,19 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 @import "../../../../kpi-layer/app/assets/css/kpi-theme.css";
+
+/*
+ * Column headers stay visible while the page scrolls (SITE_LAYOUT.md § 2, LAY-12), like the `.sticky-thead`
+ * tables of app4. `position: sticky` needs every ancestor up to the page to be `overflow: visible`: the
+ * horizontal scroll wrappers of wide tables are therefore limited to small screens (`lg:overflow-visible`).
+ * The bottom rule is a shadow, because the row border does not follow a sticky cell.
+ */
+@layer base {
+  main thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--color-white);
+    box-shadow: inset 0 -1px 0 var(--color-line);
+  }
+}

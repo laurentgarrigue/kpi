@@ -204,6 +204,32 @@ describe('teams (PAGE_TEAM.md)', () => {
     expect(honours[1]!.find('[data-medal]').exists()).toBe(false)
   })
 
+  it('TEA-07: the medal replaces the rank, intermediate rounds are in italic, a season is shown once', async () => {
+    const wrapper = await mountRoute('/teams/101')
+    const [medalled, intermediate] = wrapper.findAll('[data-testid="honour"]')
+    expect(medalled!.find('[data-testid="honour-rank"]').exists()).toBe(false)
+    expect(medalled!.classes()).not.toContain('italic')
+    expect(intermediate!.classes()).toContain('italic')
+    expect(intermediate!.find('[data-testid="honour-rank"]').text()).toBe('2')
+    expect(wrapper.find('[data-testid="honours-legend"]').exists()).toBe(true)
+    const seasons = wrapper.findAll('[data-testid="honours"] tbody[data-season]')
+    expect(seasons.map(body => body.attributes('data-season'))).toEqual(['2998'])
+    expect(seasons[0]!.find('th[scope="rowgroup"]').attributes('rowspan')).toBe('2')
+  })
+
+  it('TEA-06: the club logo and the colours zoom on hover and keyboard focus', async () => {
+    api2.mockImplementation(async (path: string) => (path === '/team/101'
+      ? { ...(await fakeApi2(path) as object), logo: 'KIP/logo/C001-logo.png', colors: { image: 'KIP/colors/101-colors.png', season: null } }
+      : fakeApi2(path)))
+    const wrapper = await mountRoute('/teams/101')
+    for (const testid of ['team-logo', 'team-colors']) {
+      const image = wrapper.find(`[data-testid="${testid}"]`)
+      expect(image.attributes('data-zoom')).toBeDefined()
+      expect(image.attributes('tabindex')).toBe('0')
+      expect(image.classes()).toEqual(expect.arrayContaining(['hover:scale-300', 'focus-visible:scale-300']))
+    }
+  })
+
   it('TEA-03: the roster of the most recent competition by default, without personal data', async () => {
     const wrapper = await mountRoute('/teams/101')
     expect(api2).toHaveBeenCalledWith('/team/101/roster/2999/RCH')

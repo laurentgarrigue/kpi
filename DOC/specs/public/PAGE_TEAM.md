@@ -17,9 +17,12 @@ Retrouver une équipe, son palmarès et sa composition dans chaque compétition.
 ### 2.2 `/teams/{number}`
 - En-tête : nom de l'équipe, logo du club (règle § 3.5 de l'API), lien vers la fiche du club (`/clubs/{code}`),
   couleurs de l'équipe et photo d'équipe s'il y en a (avec la saison, texte alternatif « Photo de l'équipe {nom}
-  ({saison}) », Q-P3-3).
-- **Palmarès** : tableau saison / compétition / rang, médailles pour les podiums des tours finaux ; chaque ligne
-  mène au classement de la compétition.
+  ({saison}) », Q-P3-3). Le logo du club et les couleurs **s'agrandissent au survol** et au focus clavier
+  (×3, comme la photo d'équipe affichée en grand), sans animation si `prefers-reduced-motion`.
+- **Palmarès** : tableau saison / compétition / rang ; chaque ligne mène au classement de la compétition.
+  **Une cellule de saison par saison** (lignes regroupées, `rowspan`). Pour un podium d'un tour final, **la médaille
+  remplace le rang** (pas de rang à côté). Les classements des **tours intermédiaires** (`Code_tour` ≠ 10 :
+  qualification, poule…) sont en **italique** et grisés, expliqués par une légende ; ils ne portent jamais de médaille.
 - **Composition** : sélecteur saison + compétition (par défaut la plus récente) ; tableau : numéro, NOM Prénom,
   catégorie, rôle (capitaine, entraîneur), buts, cartons verts / jaunes / rouges (icônes **et** texte).
   Aucune licence, date de naissance ni photo individuelle (stratégie § 11).
@@ -48,6 +51,8 @@ Titre « {équipe} — kayak-polo.info » ; données structurées `SportsTeam` (
 - **TEA-03** — La composition par saison et compétition n'expose que nom, prénom, numéro, catégorie, rôle et
   statistiques de match ; la plus récente est sélectionnée par défaut.
 - **TEA-04** — `PAGE_LINKS.team` passe à `/teams/{number}` : tous les liens d'équipe du site sont internes.
+- **TEA-06** — Le logo du club et les couleurs s'agrandissent au survol et au focus clavier.
+- **TEA-07** — Palmarès : saisons regroupées (une cellule par saison), médaille à la place du rang, tours intermédiaires en italique avec légende.
 - **TEA-05** — Équipe inconnue → 404 ; l'entrée de menu « Équipes » devient interne.
 
 ## 6. Décisions (09/10/2026)

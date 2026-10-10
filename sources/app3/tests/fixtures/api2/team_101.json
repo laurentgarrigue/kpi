@@ -19,7 +19,8 @@
           "group": "TSTRES"
         },
         "rank": 1,
-        "medal": 1
+        "medal": 1,
+        "final_round": true
       },
       {
         "season": "2998",
@@ -29,7 +30,8 @@
           "group": "TSTRES"
         },
         "rank": 2,
-        "medal": null
+        "medal": null,
+        "final_round": false
       }
     ],
     "seasons": [

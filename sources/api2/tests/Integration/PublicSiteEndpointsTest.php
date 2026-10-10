@@ -186,9 +186,9 @@ final class PublicSiteEndpointsTest extends ApiTestCase
         self::assertSame(['code' => 'C001', 'label' => 'Club Alpha Lacville'], $team['club']);
         self::assertNull($team['colors'], 'aucun fichier de couleurs dans l\'environnement de test');
         self::assertSame([
-            ['season' => '2998', 'competition' => ['code' => 'RCP', 'display_title' => 'Coupe Résultats', 'group' => 'TSTRES'], 'rank' => 1, 'medal' => 1],
-            ['season' => '2998', 'competition' => ['code' => 'RQL', 'display_title' => 'Qualification Résultats', 'group' => 'TSTRES'], 'rank' => 2, 'medal' => null],
-        ], $team['honours'], 'RCH 2999 en cours : pas au palmarès ; RQL hors tour final : pas de médaille');
+            ['season' => '2998', 'competition' => ['code' => 'RCP', 'display_title' => 'Coupe Résultats', 'group' => 'TSTRES'], 'rank' => 1, 'medal' => 1, 'final_round' => true],
+            ['season' => '2998', 'competition' => ['code' => 'RQL', 'display_title' => 'Qualification Résultats', 'group' => 'TSTRES'], 'rank' => 2, 'medal' => null, 'final_round' => false],
+        ], $team['honours'], 'RCH 2999 en cours : pas au palmarès ; RQL hors tour final : pas de médaille, classement intermédiaire');
         self::assertSame(['2999', '2998'], self::column($team['seasons'], 'season'));
         self::assertSame([['code' => 'RCH', 'display_title' => 'Championnat Résultats']], $team['seasons'][0]['competitions']);
     }

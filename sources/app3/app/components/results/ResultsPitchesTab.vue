@@ -42,7 +42,7 @@ useAutoRefresh(() => isLive(props.games, now.value), () => emit('refresh'))
       </nav>
 
       <!-- md and up: grid -->
-      <div class="hidden overflow-x-auto md:block">
+      <div class="hidden overflow-x-auto md:block lg:overflow-visible">
         <table class="w-full table-fixed text-sm" data-testid="pitch-grid">
           <caption class="sr-only">{{ $t('results.pitchesOf', { date: day ? shortDate(day) : '' }) }}</caption>
           <thead>

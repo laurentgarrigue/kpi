@@ -27,6 +27,13 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // Same favicon as app4 (the KPI logo), served by app3 itself (SITE_LAYOUT.md § 2, LAY-10).
+  app: {
+    head: {
+      link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+    },
+  },
+
   // Fonts are self-hosted by kpi-layer: disable @nuxt/fonts, which would query third-party providers.
   ui: {
     fonts: false,

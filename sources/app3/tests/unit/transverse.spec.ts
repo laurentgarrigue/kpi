@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { clubMarkers, clubView, clubWebsite, type ClubSummary } from '../../app/utils/clubs'
 import { seasonAnchor, splitPodium, type PodiumEntry } from '../../app/utils/history'
 import { searchApiPath, searchHits, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
-import { playerName, selectedRoster } from '../../app/utils/teams'
+import { honoursBySeason, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
 
 describe('team page (PAGE_TEAM.md)', () => {
   const seasons = [
@@ -72,5 +72,20 @@ describe('global search (FEATURE_SEARCH.md)', () => {
     expect(searchHits(results, 'competitions')[0]).toEqual({ key: 'c-2999-RCH', label: 'Championnat Résultats', detail: 'Poule A · 2999', to: '/competitions/2999/RCH' })
     expect(searchHits(results, 'events')[0]!.to).toBe('/events/77')
     expect(searchHits(results, 'clubs')[0]!.to).toBe('/clubs/C001')
+  })
+})
+
+describe('honoursBySeason', () => {
+  const honour = (season: string, code: string): TeamHonour => ({
+    season, competition: { code, display_title: code, group: null }, rank: 1, medal: null, final_round: true,
+  })
+
+  it('TEA-07: groups consecutive honours of the same season, keeping the api2 order', () => {
+    const groups = honoursBySeason([honour('2026', 'N1H'), honour('2026', 'CFH'), honour('2025', 'N1H')])
+    expect(groups.map(group => [group.season, group.honours.map(item => item.competition.code)])).toEqual([
+      ['2026', ['N1H', 'CFH']],
+      ['2025', ['N1H']],
+    ])
+    expect(honoursBySeason([])).toEqual([])
   })
 })

@@ -36,7 +36,7 @@ final class PublicSiteDtoFieldsTest extends TestCase
         $sheet = new TeamSheet($team, null, null, null, [], []);
         self::assertSame(['number', 'label', 'club', 'logo', 'colors', 'photo', 'honours', 'seasons'], array_keys($sheet->jsonSerialize()));
 
-        self::assertSame(['season', 'competition', 'rank', 'medal'], array_keys((new Honour('2026', 'N1H', 'N1', 'N1H', 1, 1))->jsonSerialize()));
+        self::assertSame(['season', 'competition', 'rank', 'medal', 'final_round'], array_keys((new Honour('2026', 'N1H', 'N1', 'N1H', 1, 1, true))->jsonSerialize()));
     }
 
     public function testRosterPlayerHasNoLicenceSexNorBirthDate(): void

@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import DefaultLayout from '~/layouts/default.vue'
 import SiteBetaBanner from '~/components/site/SiteBetaBanner.vue'
 import SiteFooter from '~/components/site/SiteFooter.vue'
 import SiteHeader from '~/components/site/SiteHeader.vue'
+import SiteScrollArrows from '~/components/site/SiteScrollArrows.vue'
 
 describe('default layout (SITE_LAYOUT.md)', () => {
   it('LAY-01: renders skip link, beta banner, header, nav, main#content and footer in order', async () => {
@@ -65,5 +66,23 @@ describe('links to app2', () => {
       expect(link.text()).toContain('(nouvel onglet)')
     }
     expect(wrapper.findAll('a').some(link => link.attributes('href')?.includes('AdminChoice'))).toBe(false)
+  })
+})
+
+describe('scroll arrows', () => {
+  it('LAY-11: the layout has the floating arrows; « go to bottom » and « back to top » scroll the page', async () => {
+    const layout = await mountSuspended(DefaultLayout, { slots: { default: () => 'page' } })
+    expect(layout.find('[data-testid="scroll-arrows"]').exists()).toBe(true)
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 3000, configurable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    Object.defineProperty(window, 'scrollY', { value: 1000, configurable: true })
+    const wrapper = await mountSuspended(SiteScrollArrows)
+    await wrapper.find('[data-testid="scroll-bottom"]').trigger('click')
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: 3000 }))
+    await wrapper.find('[data-testid="scroll-top"]').trigger('click')
+    expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: 0 }))
+    expect(wrapper.find('[data-testid="scroll-top"]').attributes('aria-label')).toBe('Retour en haut')
+    scrollTo.mockRestore()
   })
 })

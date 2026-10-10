@@ -13,7 +13,9 @@
     "legacyLink": "(site actuel)",
     "betaRegion": "Version bêta",
     "newTab": "(nouvel onglet)",
-    "breadcrumb": "Fil d'Ariane"
+    "breadcrumb": "Fil d'Ariane",
+    "scrollTop": "Retour en haut",
+    "scrollBottom": "Aller en bas"
   },
   "beta": {
     "message": "Version bêta du nouveau site kayak-polo.info.",
@@ -343,7 +345,9 @@
       "coach": "Entraîneur"
     },
     "pageDescription": "Palmarès et composition de l'équipe de kayak-polo {team}.",
-    "honoursCaption": "Palmarès de {team}"
+    "honoursCaption": "Palmarès de {team}",
+    "intermediateRound": "tour intermédiaire",
+    "intermediateLegend": "En italique : classement d'un tour intermédiaire (qualification, poule…), pas un classement final."
   },
   "clubs": {
     "title": "Clubs",

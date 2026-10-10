@@ -14,7 +14,7 @@ const CARDS = [
 
 <template>
   <p v-if="players.length === 0" data-testid="no-roster">{{ $t('teams.noRoster') }}</p>
-  <div v-else class="overflow-x-auto">
+  <div v-else class="overflow-x-auto lg:overflow-visible">
     <table class="w-full text-left text-sm" data-testid="roster">
       <caption class="sr-only">{{ caption }}</caption>
       <thead>

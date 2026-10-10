@@ -166,6 +166,7 @@ final class PublicSiteService
                 group: $honour['Code_ref'],
                 rank: $rank,
                 medal: CompetitionRules::medal($honour['Statut'], $final, $rank),
+                finalRound: $final,
             );
         }
 

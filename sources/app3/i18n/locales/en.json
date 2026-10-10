@@ -13,7 +13,9 @@
     "legacyLink": "(current website)",
     "betaRegion": "Beta version",
     "newTab": "(new tab)",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "scrollTop": "Back to top",
+    "scrollBottom": "Go to bottom"
   },
   "beta": {
     "message": "Beta version of the new kayak-polo.info website.",
@@ -343,7 +345,9 @@
       "coach": "Coach"
     },
     "pageDescription": "Honours and roster of the canoe polo team {team}.",
-    "honoursCaption": "Honours of {team}"
+    "honoursCaption": "Honours of {team}",
+    "intermediateRound": "intermediate round",
+    "intermediateLegend": "In italics: ranking of an intermediate round (qualification, pool…), not a final ranking."
   },
   "clubs": {
     "title": "Clubs",
