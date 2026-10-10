@@ -33,6 +33,7 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/event/{id}/competitions',
             // Phase 3 (API_PUBLIC_TRANSVERSE.md, API3-09)
             '/calendar',
+            '/calendar/groups',
             '/competition/{season}/{code}/calendar.ics',
             '/gameday/{id}.ics',
             '/history',

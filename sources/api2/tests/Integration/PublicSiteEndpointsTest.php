@@ -21,11 +21,14 @@ final class PublicSiteEndpointsTest extends ApiTestCase
 
         // 9204 (Pause) exclue ; 9213 fusionnée dans 9211 (même coupe, mêmes dates, même lieu).
         self::assertSame([9202, 9211, 9212], self::column($days, 'id'));
-        self::assertSame(['id', 'competition', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($days[0]));
+        self::assertSame(['id', 'competition', 'label', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($days[0]));
+        // Section du groupe (kp_groupe.section : 2 = compétitions nationales), qui remplace le niveau.
         self::assertSame(
-            ['season' => '2999', 'code' => 'RCH', 'display_title' => 'Championnat Résultats', 'type' => 'CHPT', 'level' => 'NAT', 'group' => 'TSTRES'],
+            ['season' => '2999', 'code' => 'RCH', 'display_title' => 'Championnat Résultats', 'type' => 'CHPT', 'section' => 2, 'group' => 'TSTRES'],
             $days[0]['competition'],
         );
+        // Libellé du legacy : « nom de la journée - lieu (département) ».
+        self::assertSame('RCH J2 - Rivecity (64)', $days[0]['label']);
         self::assertSame(['Rivecity', '64', '2999-04-01', '2999-04-02'], [$days[0]['place'], $days[0]['department'], $days[0]['start'], $days[0]['end']]);
         self::assertSame(['id' => 77, 'libelle' => 'Tournoi Résultats'], $days[0]['event']);
     }
@@ -40,10 +43,23 @@ final class PublicSiteEndpointsTest extends ApiTestCase
         self::assertSame([], $this->getJson('/calendar?start=2999-05-01&end=2999-05-31&group=TSTRES'), '9203 non publiée');
     }
 
-    public function testApi01CalendarFiltersByLevel(): void
+    public function testApi01CalendarFiltersBySection(): void
     {
-        self::assertSame([], $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&level=REG'));
-        self::assertCount(3, $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&level=NAT'));
+        self::assertSame([], $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&section=3'));
+        self::assertCount(3, $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&section=2'));
+        // Divers (100) : un groupe hors des sections publiques reste visible dans le calendrier.
+        self::assertSame([9261], self::column($this->getJson('/calendar?start=2999-07-01&end=2999-07-31&section=100'), 'id'));
+    }
+
+    public function testApi01CalendarGroupsListEveryGroupWithPublishedCompetitionsBySection(): void
+    {
+        $sections = $this->getJson('/calendar/groups')['sections'];
+
+        self::assertSame([1, 2, 100], self::column($sections, 'section'));
+        self::assertSame(['TSTGRP'], array_column($sections[0]['groups'], 'code'));
+        self::assertSame(['TSTRES'], array_column($sections[1]['groups'], 'code'));
+        self::assertSame(['TSTDIV'], array_column($sections[2]['groups'], 'code'), 'Divers inclus, contrairement à /groups/{season}');
+        self::assertSame(['code', 'libelle', 'libelle_en'], array_keys($sections[1]['groups'][0]));
     }
 
     public function testApi01CalendarRejectsInvalidPeriodsAndFilters(): void
@@ -53,7 +69,8 @@ final class PublicSiteEndpointsTest extends ApiTestCase
             '/calendar?start=2999-04-30&end=2999-04-01',
             '/calendar?start=2999-02-30&end=2999-03-31',
             '/calendar?start=2998-01-01&end=2999-03-01',
-            '/calendar?start=2999-04-01&end=2999-04-30&level=XYZ',
+            '/calendar?start=2999-04-01&end=2999-04-30&section=7',
+            '/calendar?start=2999-04-01&end=2999-04-30&section=abc',
             '/calendar?start=2999-04-01&end=2999-04-30&group=bad%20group',
         ] as $uri) {
             self::assertSame(['error' => 'invalid_parameter'], $this->getJson($uri, 400), $uri);
@@ -70,10 +87,21 @@ final class PublicSiteEndpointsTest extends ApiTestCase
         self::assertSame(['gameday-9201@kayak-polo.info', 'gameday-9202@kayak-polo.info'], array_column($events, 'UID'));
         self::assertSame('29990301', $events[0]['DTSTART;VALUE=DATE']);
         self::assertSame('29990303', $events[0]['DTEND;VALUE=DATE'], 'DTEND exclusif : lendemain du dernier jour');
-        self::assertSame('Championnat Résultats — RCH J1', $events[0]['SUMMARY']);
+        // Même libellé que le calendrier (legacy) : « nom de la journée - lieu (département) ».
+        self::assertSame('RCH J1 - Lacville (33)', $events[0]['SUMMARY']);
         self::assertSame('Lacville (33)', $events[0]['LOCATION']);
         self::assertStringEndsWith('/competitions/2999/RCH/games?gameday=9201', $events[0]['URL']);
         self::assertStringContainsString("X-WR-CALNAME:Championnat Résultats (2999)\r\n", $ics);
+    }
+
+    public function testApi02CupPhasesSharingDatesAndPlaceAreOneIcsEvent(): void
+    {
+        // 9211 et 9213 (poules A et B, même jour, même lieu) : un seul événement, comme dans le calendrier.
+        $events = self::parseIcs($this->getIcs('/competition/2999/RCP/calendar.ics'));
+
+        self::assertSame(['gameday-9211@kayak-polo.info', 'gameday-9212@kayak-polo.info'], array_column($events, 'UID'));
+        self::assertSame('RCP Poule A - Rivecity (64)', $events[0]['SUMMARY']);
+        self::assertSame(['29990401', '29990402'], [$events[0]['DTSTART;VALUE=DATE'], $events[0]['DTEND;VALUE=DATE']]);
     }
 
     public function testApi02GamedayIcsAndStableUid(): void

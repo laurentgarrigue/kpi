@@ -326,3 +326,16 @@ INSERT INTO `kp_competition_equipe`
   -- RQL 2998 (CHPT) : Equipe Alpha 2e (Clt_publi)
   (9351, 'RQL', '2998', 'Equipe Alpha', 'C001', NULL, 101, '', 0, 300, 2, 2, 1, 0, 1, 0, 3, 3, 0, 0),
   (9352, 'RQL', '2998', 'Equipe Delta', 'C004', NULL, 104, '', 0, 600, 1, 2, 2, 0, 0, 0, 5, 1, 4, 0);
+
+-- Groupe « Divers » (section 100, hors sections publiques de /groups/{season}) : visible dans le calendrier.
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (100, 1, 'NAT', 'TSTDIV', 'Groupe Divers', 'Misc group');
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
+   `Titre_actif`, `Bandeau_actif`, `Logo_actif`, `Code_ref`, `GroupOrder`, `Code_typeclt`, `Code_tour`, `Nb_equipes`,
+   `Statut`, `Qualifies`, `Elimines`, `Publication`) VALUES
+  ('RDV', '2999', 'NAT', 'Rencontre Divers', NULL, NULL, NULL, '', '', '',
+   'O', 'N', 'N', 'TSTDIV', 1, 'CHPT', 1, 2, 'ATT', 0, 0, 'O');
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
+  (9261, 'RDV', '2999', '2999-07-10', '2999-07-11', 'Rencontre amicale', 'RDV J1', 'Lacville', NULL, 'O', 'C', 'Journée 1', 1, 1, 2, 'O');

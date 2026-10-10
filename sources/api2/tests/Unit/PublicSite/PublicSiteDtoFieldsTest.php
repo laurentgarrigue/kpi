@@ -22,10 +22,10 @@ final class PublicSiteDtoFieldsTest extends TestCase
 {
     public function testCalendarEntryFields(): void
     {
-        $competition = ['season' => '2026', 'code' => 'N1H', 'display_title' => 'N1', 'type' => 'CHPT', 'level' => 'NAT', 'group' => 'N1H'];
-        $entry = new CalendarEntry(1, $competition, 'J1', 'Lieu', '33', '2026-01-01', '2026-01-02', null);
+        $competition = ['season' => '2026', 'code' => 'N1H', 'display_title' => 'N1', 'type' => 'CHPT', 'section' => 2, 'group' => 'N1H'];
+        $entry = new CalendarEntry(1, $competition, 'J1 - Lieu (33)', 'J1', 'Lieu', '33', '2026-01-01', '2026-01-02', null);
 
-        self::assertSame(['id', 'competition', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($entry->jsonSerialize()));
+        self::assertSame(['id', 'competition', 'label', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($entry->jsonSerialize()));
     }
 
     public function testTeamFields(): void

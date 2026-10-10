@@ -33,17 +33,17 @@ final class PublicSiteRepository
 
     /**
      * Journées publiées (hors pauses) de compétitions publiées chevauchant la période, triées pour la fusion
-     * des phases d'une coupe : date, niveau (INT, NAT, REG), ordre dans le groupe, tour, nom.
+     * des phases d'une coupe : date, section du groupe, ordre dans le groupe, tour, nom.
      *
      * @return list<array<string, mixed>>
      */
-    public function findCalendarGamedays(string $start, string $end, ?string $level, ?string $group): array
+    public function findCalendarGamedays(string $start, string $end, ?int $section, ?string $group): array
     {
         $conditions = [SqlFilters::PUBLISHED_GAMEDAYS, SqlFilters::NO_BREAKS, 'j.Date_debut <= ?', 'COALESCE(j.Date_fin, j.Date_debut) >= ?'];
         $parameters = [$end, $start];
-        if ($level !== null) {
-            $conditions[] = 'c.Code_niveau = ?';
-            $parameters[] = $level;
+        if ($section !== null) {
+            $conditions[] = 'COALESCE(g.section, ' . PublicSiteRules::DEFAULT_SECTION . ') = ?';
+            $parameters[] = $section;
         }
         if ($group !== null) {
             $conditions[] = 'c.Code_ref = ?';
@@ -53,16 +53,18 @@ final class PublicSiteRepository
         return $this->connection->fetchAllAssociative(
             'SELECT j.Id, j.Code_competition, j.Code_saison, j.Nom, j.Lieu, j.Departement, j.Date_debut,
             COALESCE(j.Date_fin, j.Date_debut) Date_fin, ' . self::COMPETITION_TITLE_COLUMNS . ',
-            c.Code_typeclt, c.Code_niveau, c.Code_ref, e.Id event_id, e.Libelle event_libelle
+            c.Code_typeclt, c.Code_ref, COALESCE(g.section, ' . PublicSiteRules::DEFAULT_SECTION . ') section,
+            e.Id event_id, e.Libelle event_libelle
             FROM kp_journee j
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            LEFT JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
             LEFT JOIN kp_evenement e ON (e.Id = (
                 SELECT MIN(pe.Id) FROM kp_evenement_journee ej
                 INNER JOIN kp_evenement pe ON (pe.Id = ej.Id_evenement)
                 WHERE ej.Id_journee = j.Id AND pe.Publication = \'O\'
             ))
             WHERE ' . implode(' AND ', $conditions) . "
-            ORDER BY j.Date_debut, FIELD(c.Code_niveau, 'INT', 'NAT', 'REG'), c.GroupOrder, c.Code_tour, j.Nom, j.Id",
+            ORDER BY j.Date_debut, COALESCE(g.section, " . PublicSiteRules::DEFAULT_SECTION . ") , c.GroupOrder, c.Code_tour, j.Nom, j.Id",
             $parameters,
         );
     }
@@ -75,7 +77,7 @@ final class PublicSiteRepository
     public function findIcsGamedays(string $season, string $code): array
     {
         return $this->connection->fetchAllAssociative(
-            'SELECT j.Id, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
+            'SELECT j.Id, j.Code_competition, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
             ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt
             FROM kp_journee j
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
@@ -100,6 +102,22 @@ final class PublicSiteRepository
         );
 
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Groupes ayant au moins une compétition publiée (toutes saisons), « Divers » compris : filtre du calendrier.
+     *
+     * @return list<array{code: string, libelle: string, libelle_en: ?string, section: int|string}>
+     */
+    public function findCalendarGroups(): array
+    {
+        /** @var list<array{code: string, libelle: string, libelle_en: ?string, section: int|string}> */
+        return $this->connection->fetchAllAssociative(
+            'SELECT g.Groupe code, g.Libelle libelle, g.Libelle_en libelle_en, g.section
+            FROM kp_groupe g
+            WHERE EXISTS (SELECT 1 FROM kp_competition c WHERE c.Code_ref = g.Groupe AND c.Publication = \'O\')
+            ORDER BY g.section, g.ordre',
+        );
     }
 
     // ------------------------------------------------------------------ historique

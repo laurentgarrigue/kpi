@@ -54,7 +54,7 @@ class PublicSiteController extends AbstractController
         parameters: [
             new OA\Parameter(name: 'start', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
             new OA\Parameter(name: 'end', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'level', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: PublicSiteRules::LEVELS)),
+            new OA\Parameter(name: 'section', in: 'query', required: false, schema: new OA\Schema(type: 'integer', enum: PublicSiteRules::SECTIONS)),
             new OA\Parameter(name: 'group', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
         ],
     )]
@@ -62,18 +62,25 @@ class PublicSiteController extends AbstractController
     {
         $start = self::date($request->query->getString('start'));
         $end = self::date($request->query->getString('end'));
-        $level = PublicSiteRules::nullIfEmpty($request->query->getString('level'));
+        $section = self::section($request->query->getString('section'));
         $group = PublicSiteRules::nullIfEmpty($request->query->getString('group'));
         if (
             $start === null || $end === null || $end < $start
             || $start->diff($end)->days > self::MAX_CALENDAR_DAYS
-            || ($level !== null && !in_array($level, PublicSiteRules::LEVELS, true))
+            || $section === false
             || ($group !== null && preg_match(self::CODE_PATTERN, $group) !== 1)
         ) {
             return $this->invalidParameter();
         }
 
-        return $this->cached($this->site->calendar($start->format('Y-m-d'), $end->format('Y-m-d'), $level, $group), self::SHORT_MAX_AGE);
+        return $this->cached($this->site->calendar($start->format('Y-m-d'), $end->format('Y-m-d'), $section, $group), self::SHORT_MAX_AGE);
+    }
+
+    #[Route('/calendar/groups', name: 'public_calendar_groups', methods: ['GET'])]
+    #[OA\Get(path: '/calendar/groups', summary: 'Groups having published competitions, by section (Divers included): calendar filter', tags: [self::DOC_TAG])]
+    public function calendarGroups(): JsonResponse
+    {
+        return $this->cached($this->site->calendarGroups(), self::SHORT_MAX_AGE);
     }
 
     #[Route('/competition/{season}/{code}/calendar.ics', name: 'public_competition_ics', methods: ['GET'])]
@@ -195,6 +202,17 @@ class PublicSiteController extends AbstractController
         $term = PublicSiteRules::searchTerm($request->query->getString('q'));
 
         return $term === null ? $this->invalidParameter() : $this->cached($this->site->search($term), self::SHORT_MAX_AGE);
+    }
+
+    /** Section demandée : null si absente, false si invalide. */
+    private static function section(string $value): int|false|null
+    {
+        if ($value === '') {
+            return null;
+        }
+        $section = filter_var($value, FILTER_VALIDATE_INT);
+
+        return is_int($section) && in_array($section, PublicSiteRules::SECTIONS, true) ? $section : false;
     }
 
     private static function date(string $value): ?\DateTimeImmutable

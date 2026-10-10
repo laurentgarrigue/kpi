@@ -233,7 +233,11 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
             'logo' => 'logo/resultats.png', 'start' => '2999-04-01', 'end' => '2999-04-02',
         ], $body['event']);
         self::assertSame(['RCH', 'RCP'], self::column($body['competitions'], 'code'));
-        self::assertSame(['code', 'season', 'display_title', 'soustitre2'], array_keys($body['competitions'][0]));
+        self::assertSame(['code', 'season', 'display_title', 'soustitre2', 'type', 'gamedays', 'total_gamedays'], array_keys($body['competitions'][0]));
+        // Journées de l'événement / journées publiées de la compétition (pauses exclues) : RCH n'en a qu'une sur deux
+        // dans l'événement, la coupe RCP toutes les siennes.
+        self::assertSame([[1, 2], [3, 3]], array_map(static fn (array $c): array => [$c['gamedays'], $c['total_gamedays']], $body['competitions']));
+        self::assertSame(['CHPT', 'CP'], self::column($body['competitions'], 'type'));
     }
 
     public function testUnpublishedEventIsNotFound(): void

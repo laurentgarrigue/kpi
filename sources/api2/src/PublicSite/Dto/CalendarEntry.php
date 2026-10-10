@@ -6,12 +6,13 @@ namespace App\PublicSite\Dto;
 final class CalendarEntry implements \JsonSerializable
 {
     /**
-     * @param array{season: string, code: string, display_title: string, type: string, level: ?string, group: ?string} $competition
+     * @param array{season: string, code: string, display_title: string, type: string, section: int, group: ?string} $competition
      * @param array{id: int, libelle: ?string}|null $event
      */
     public function __construct(
         public readonly int $id,
         public readonly array $competition,
+        public readonly string $label,
         public readonly ?string $name,
         public readonly ?string $place,
         public readonly ?string $department,
@@ -27,6 +28,7 @@ final class CalendarEntry implements \JsonSerializable
         return [
             'id' => $this->id,
             'competition' => $this->competition,
+            'label' => $this->label,
             'name' => $this->name,
             'place' => $this->place,
             'department' => $this->department,

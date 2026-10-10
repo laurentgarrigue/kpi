@@ -149,11 +149,29 @@ final class PublicCompetitionService
                 'start' => $event['Date_debut'],
                 'end' => $event['Date_fin'],
             ],
-            'competitions' => array_map(
-                fn (array $row): array => $this->header($row)->summary()->withSeason(),
-                $this->repository->findEventCompetitions($eventId),
-            ),
+            'competitions' => $this->eventCompetitionList($eventId),
         ];
+    }
+
+    /**
+     * Compétitions d'un événement, avec leur type et la part de leurs journées qui font partie de l'événement
+     * (« 1 journée sur 8 » : l'événement n'en couvre qu'une partie).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function eventCompetitionList(int $eventId): array
+    {
+        $counts = [];
+        foreach ($this->repository->countEventGamedays($eventId) as $row) {
+            $counts[$row['Code_saison'] . '|' . $row['Code']] = [(int) $row['in_event'], (int) $row['total']];
+        }
+
+        return array_map(function (array $row) use ($counts): array {
+            $header = $this->header($row);
+            [$inEvent, $total] = $counts[$header->season . '|' . $header->code] ?? [0, 0];
+
+            return [...$header->summary()->withSeason(), 'type' => $header->type, 'gamedays' => $inEvent, 'total_gamedays' => $total];
+        }, $this->repository->findEventCompetitions($eventId));
     }
 
     /** @param array<string, mixed> $row ligne de PublicCompetitionRepository (HEADER_SELECT) */
