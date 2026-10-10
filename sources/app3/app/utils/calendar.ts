@@ -1,9 +1,26 @@
 import { withQuery } from 'ufo'
 import { competitionPath } from './competitions'
 
-/** Level of a competition in the calendar filter and badges (PAGE_CALENDAR.md § 2). */
-export const CALENDAR_LEVELS = ['INT', 'NAT', 'REG'] as const
-export type CalendarLevel = typeof CALENDAR_LEVELS[number]
+import type { GroupSection } from '#kpi-layer/utils/results/types'
+
+/**
+ * Sections of the competition groups (kp_groupe.section), used for the calendar colours, badges and filter
+ * (PAGE_CALENDAR.md § 2): international, national, regional, tournaments, continents, misc.
+ */
+export const CALENDAR_SECTIONS = [1, 2, 3, 4, 5, 100] as const
+export type CalendarSection = typeof CALENDAR_SECTIONS[number]
+/** Section of a competition whose group has none, or an unknown one. */
+export const MISC_SECTION: CalendarSection = 100
+
+/** Light background and edge of a gameday bar, and its badge, per section. */
+export const SECTION_STYLES: Record<CalendarSection, { bar: string, badge: string }> = {
+  1: { bar: 'bg-kpi-gold-100 border-kpi-gold-500', badge: 'bg-kpi-gold-100 text-kpi-gold-900' },
+  2: { bar: 'bg-kpi-blue-100 border-kpi-blue-500', badge: 'bg-kpi-blue-100 text-kpi-blue-800' },
+  3: { bar: 'bg-kpi-green-100 border-kpi-green-600', badge: 'bg-kpi-green-100 text-kpi-green-800' },
+  4: { bar: 'bg-kpi-red-100 border-kpi-red-500', badge: 'bg-kpi-red-100 text-kpi-red-800' },
+  5: { bar: 'bg-sky/25 border-sky', badge: 'bg-sky/25 text-navy' },
+  100: { bar: 'bg-line/40 border-ink/50', badge: 'bg-line/60 text-ink' },
+}
 
 /** Gameday of `GET /calendar` (API_PUBLIC_TRANSVERSE.md § 3.1). Dates are `YYYY-MM-DD`. */
 export interface CalendarEntry {
@@ -13,9 +30,11 @@ export interface CalendarEntry {
     code: string
     display_title: string
     type: string
-    level: string | null
+    section: number
     group: string | null
   }
+  /** « name - place (department) », as in the legacy calendar and in the .ics files. */
+  label: string
   name: string | null
   place: string | null
   department: string | null
@@ -25,7 +44,7 @@ export interface CalendarEntry {
 }
 
 export interface CalendarFilters {
-  level?: CalendarLevel
+  section?: CalendarSection
   group?: string
 }
 
@@ -41,17 +60,19 @@ const GROUP_PATTERN = /^[\w-]{1,12}$/
 /** How far ahead an empty month looks for the next month having gamedays (CAL-05). */
 export const NEXT_MONTH_LOOKAHEAD = 12
 const DAYS_PER_WEEK = 7
+const MONTHS_PER_YEAR = 12
 
 /** `?month=YYYY-MM` if valid, otherwise the month of `today` (CAL-01). */
 export function parseMonth(value: unknown, today: string): string {
   return typeof value === 'string' && MONTH_PATTERN.test(value) ? value : today.slice(0, 7)
 }
 
-/** Level and group filters of the query, dropped when invalid (CAL-04). */
+/** Section and group filters of the query, dropped when invalid (CAL-04). */
 export function parseFilters(query: Record<string, unknown>): CalendarFilters {
   const filters: CalendarFilters = {}
-  if (typeof query.level === 'string' && (CALENDAR_LEVELS as readonly string[]).includes(query.level)) {
-    filters.level = query.level as CalendarLevel
+  const section = typeof query.section === 'string' && /^\d{1,3}$/.test(query.section) ? Number(query.section) : null
+  if (section !== null && (CALENDAR_SECTIONS as readonly number[]).includes(section)) {
+    filters.section = section as CalendarSection
   }
   if (typeof query.group === 'string' && GROUP_PATTERN.test(query.group)) {
     filters.group = query.group
@@ -72,6 +93,11 @@ function addDays(day: string, days: number): string {
   const date = utcDate(day)
   date.setUTCDate(date.getUTCDate() + days)
   return isoDay(date)
+}
+
+/** Same month, `delta` years later or earlier. */
+export function shiftYear(month: string, delta: number): string {
+  return shiftMonth(month, delta * MONTHS_PER_YEAR)
 }
 
 /** `2026-06` + 1 → `2026-07` (months are calendar months, no time zone involved). */
@@ -145,10 +171,24 @@ export function gamedayCompetitionPath(entry: CalendarEntry): string {
   return entry.competition.type === 'CHPT' ? withQuery(path, { gameday: entry.id }) : path
 }
 
-/** Level of a gameday, when it is one of the calendar levels. */
-export function entryLevel(entry: CalendarEntry): CalendarLevel | null {
-  const level = entry.competition.level
-  return level && (CALENDAR_LEVELS as readonly string[]).includes(level) ? level as CalendarLevel : null
+/** Section of a gameday; the misc one when it is none of the known sections. */
+export function entrySection(entry: CalendarEntry): CalendarSection {
+  const section = entry.competition.section
+  return (CALENDAR_SECTIONS as readonly number[]).includes(section) ? section as CalendarSection : MISC_SECTION
+}
+
+/** The groups of the chosen section only (every group without section filter), for the group dropdown. */
+export function groupsOfSection(sections: readonly GroupSection[], section: CalendarSection | undefined): GroupSection[] {
+  return section === undefined ? [...sections] : sections.filter(item => item.section === section)
+}
+
+/** Filters whose group belongs to the chosen section: a group of another section would show an empty calendar. */
+export function reconcileFilters(filters: CalendarFilters, sections: readonly GroupSection[]): CalendarFilters {
+  if (filters.group === undefined || filters.section === undefined) {
+    return filters
+  }
+  const known = groupsOfSection(sections, filters.section).some(item => item.groups.some(group => group.code === filters.group))
+  return known ? filters : { section: filters.section }
 }
 
 /** One bar of the month grid: a gameday over the days of a week it covers (CAL-02). */

@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "body": {
+    "sections": [
+      {
+        "section": 1,
+        "label": "Competitions_Internationales",
+        "groups": [
+          {
+            "code": "TSTGRP",
+            "libelle": "Groupe de test",
+            "libelle_en": null
+          }
+        ]
+      },
+      {
+        "section": 2,
+        "label": "Competitions_Nationales",
+        "groups": [
+          {
+            "code": "TSTRES",
+            "libelle": "Groupe Résultats",
+            "libelle_en": "Results group"
+          }
+        ]
+      },
+      {
+        "section": 100,
+        "label": "Divers",
+        "groups": [
+          {
+            "code": "TSTDIV",
+            "libelle": "Groupe Divers",
+            "libelle_en": "Misc group"
+          }
+        ]
+      }
+    ]
+  }
+}

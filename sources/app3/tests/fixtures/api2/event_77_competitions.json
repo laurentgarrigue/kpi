@@ -14,13 +14,19 @@
         "code": "RCH",
         "season": "2999",
         "display_title": "Championnat Résultats",
-        "soustitre2": "Poule A"
+        "soustitre2": "Poule A",
+        "type": "CHPT",
+        "gamedays": 1,
+        "total_gamedays": 2
       },
       {
         "code": "RCP",
         "season": "2999",
         "display_title": "Phase finale",
-        "soustitre2": "Finale"
+        "soustitre2": "Finale",
+        "type": "CP",
+        "gamedays": 3,
+        "total_gamedays": 3
       }
     ]
   }

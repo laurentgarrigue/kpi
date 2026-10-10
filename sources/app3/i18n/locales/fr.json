@@ -222,14 +222,7 @@
     }
   },
   "common": {
-    "level": {
-      "INT": "International",
-      "NAT": "National",
-      "REG": "Régional"
-    },
-    "allLevels": "Tous les niveaux",
     "allGroups": "Tous les groupes",
-    "level_label": "Niveau",
     "show": "Afficher",
     "unavailable": "Ces informations sont momentanément indisponibles.",
     "suggestions": "Suggestions",
@@ -253,7 +246,46 @@
     "subscribe": "S'abonner au calendrier",
     "download": "Télécharger (.ics)",
     "addGameday": "Ajouter à mon agenda",
-    "icsHelp": "L'abonnement met votre agenda à jour automatiquement (Google Agenda, Apple Calendrier, Outlook, Thunderbird…)."
+    "icsHelp": "L'abonnement met votre agenda à jour automatiquement (Google Agenda, Apple Calendrier, Outlook, Thunderbird…).",
+    "sections": {
+      "1": "International",
+      "2": "National",
+      "3": "Régional",
+      "4": "Tournoi",
+      "5": "Continental",
+      "100": "Divers"
+    },
+    "section": "Section",
+    "allSections": "Toutes les sections",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante",
+    "linkLabel": "Lien d'abonnement au calendrier",
+    "copy": "Copier le lien d'abonnement",
+    "copied": "Lien copié",
+    "tutorial": {
+      "title": "Comment s'abonner ?",
+      "google": {
+        "name": "Google Agenda",
+        "step1": "Copiez le lien d'abonnement ci-dessus.",
+        "step2": "Sur calendar.google.com, ouvrez « Autres agendas » (+) puis « À partir de l'URL ».",
+        "step3": "Collez le lien et validez avec « Ajouter l'agenda ».",
+        "step4": "Google actualise l'agenda automatiquement, sous quelques heures."
+      },
+      "outlook": {
+        "name": "Outlook",
+        "step1": "Copiez le lien d'abonnement ci-dessus.",
+        "step2": "Dans Outlook (web), ouvrez Calendrier puis « Ajouter un calendrier ».",
+        "step3": "Choisissez « S'abonner à partir du Web », collez le lien et importez.",
+        "step4": "Outlook actualise l'agenda automatiquement."
+      },
+      "apple": {
+        "name": "Apple Calendrier",
+        "step1": "Cliquez sur « S'abonner au calendrier » : l'application s'ouvre et propose l'abonnement.",
+        "step2": "Sinon sur Mac : menu Fichier › Nouvel abonnement à un calendrier, puis collez le lien.",
+        "step3": "Sur iPhone : Réglages › Calendrier › Comptes › Ajouter un compte › Autre › Ajouter un calendrier avec abonnement.",
+        "step4": "Choisissez la fréquence d'actualisation proposée."
+      }
+    }
   },
   "history": {
     "title": "Historique et palmarès",

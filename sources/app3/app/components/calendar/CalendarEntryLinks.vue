@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { entryLevel, gamedayCompetitionPath, type CalendarEntry } from '~/utils/calendar'
+import { entrySection, gamedayCompetitionPath, type CalendarEntry } from '~/utils/calendar'
 
-// One gameday: competition (link), gameday, place, level, and its event when there is one (CAL-02, CAL-03).
+// One gameday, labelled like the legacy calendar « nom - lieu (département) » (link to its competition), then its
+// competition, section and event when there is one (CAL-02, CAL-03). Compact: the label alone, for the grid bars.
 defineProps<{ entry: CalendarEntry, compact?: boolean }>()
 const localePath = useLocalePath()
 </script>
 
 <template>
   <span class="flex flex-col gap-0.5">
-    <span class="flex flex-wrap items-center gap-2">
-      <NuxtLink :to="localePath(gamedayCompetitionPath(entry))" class="font-semibold text-kpi-blue-600 hover:underline" data-testid="calendar-competition">
-        {{ entry.competition.display_title }}
-      </NuxtLink>
-      <CalendarLevelBadge v-if="!compact" :level="entryLevel(entry)" />
-    </span>
-    <span v-if="!compact" class="text-sm">
-      {{ entry.name }}<template v-if="entry.place"> · {{ entry.place }}<template v-if="entry.department"> ({{ entry.department }})</template></template>
+    <NuxtLink :to="localePath(gamedayCompetitionPath(entry))" class="font-semibold text-kpi-blue-600 hover:underline" data-testid="calendar-label">{{ entry.label }}</NuxtLink>
+    <span v-if="!compact" class="flex flex-wrap items-center gap-2 text-sm">
+      <CalendarSectionBadge :section="entrySection(entry)" />
+      <NuxtLink :to="localePath(gamedayCompetitionPath(entry))" class="hover:underline" data-testid="calendar-competition">{{ entry.competition.display_title }}</NuxtLink>
     </span>
     <NuxtLink v-if="entry.event && !compact" :to="localePath(`/events/${entry.event.id}`)" class="text-sm underline" data-testid="calendar-event">
       {{ $t('calendar.event', { event: entry.event.libelle }) }}

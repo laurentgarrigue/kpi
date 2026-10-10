@@ -222,14 +222,7 @@
     }
   },
   "common": {
-    "level": {
-      "INT": "International",
-      "NAT": "National",
-      "REG": "Regional"
-    },
-    "allLevels": "All levels",
     "allGroups": "All groups",
-    "level_label": "Level",
     "show": "Show",
     "unavailable": "This information is temporarily unavailable.",
     "suggestions": "Suggestions",
@@ -253,7 +246,46 @@
     "subscribe": "Subscribe to the calendar",
     "download": "Download (.ics)",
     "addGameday": "Add to my calendar",
-    "icsHelp": "Subscribing keeps your calendar up to date automatically (Google Calendar, Apple Calendar, Outlook, Thunderbird…)."
+    "icsHelp": "Subscribing keeps your calendar up to date automatically (Google Calendar, Apple Calendar, Outlook, Thunderbird…).",
+    "sections": {
+      "1": "International",
+      "2": "National",
+      "3": "Regional",
+      "4": "Tournament",
+      "5": "Continental",
+      "100": "Other"
+    },
+    "section": "Section",
+    "allSections": "All sections",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "linkLabel": "Calendar subscription link",
+    "copy": "Copy subscription link",
+    "copied": "Link copied",
+    "tutorial": {
+      "title": "How to subscribe?",
+      "google": {
+        "name": "Google Calendar",
+        "step1": "Copy the subscription link above.",
+        "step2": "On calendar.google.com, open \"Other calendars\" (+) then \"From URL\".",
+        "step3": "Paste the link and confirm with \"Add calendar\".",
+        "step4": "Google refreshes the calendar automatically, within a few hours."
+      },
+      "outlook": {
+        "name": "Outlook",
+        "step1": "Copy the subscription link above.",
+        "step2": "In Outlook (web), open Calendar then \"Add calendar\".",
+        "step3": "Choose \"Subscribe from web\", paste the link and import.",
+        "step4": "Outlook refreshes the calendar automatically."
+      },
+      "apple": {
+        "name": "Apple Calendar",
+        "step1": "Click \"Subscribe to the calendar\": the app opens and offers the subscription.",
+        "step2": "Otherwise on Mac: File › New Calendar Subscription, then paste the link.",
+        "step3": "On iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar.",
+        "step4": "Pick the refresh frequency offered."
+      }
+    }
   },
   "history": {
     "title": "History and honours",

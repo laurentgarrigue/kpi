@@ -3,7 +3,7 @@ import { joinURL } from 'ufo'
 import { groupGamedays } from '#kpi-layer/utils/results/gamedays'
 import type { CompetitionHeader, CompetitionInfo } from '#kpi-layer/utils/results/types'
 import { formatEventDates } from '~/utils/events'
-import { competitionIcsUrl, gamedayIcsUrl, webcalUrl } from '~/utils/page-links'
+import { competitionIcsUrl, gamedayIcsUrl } from '~/utils/page-links'
 
 // « Info » tab: gamedays with place and officials, teams by pool, schema (CMP-08); calendar subscription and
 // .ics files, served by api2 (CAL-06).
@@ -21,13 +21,7 @@ const ics = computed(() => competitionIcsUrl(api2BaseUrl, props.competition.seas
   <div class="space-y-10">
     <section aria-labelledby="gamedays-title">
       <h2 id="gamedays-title" class="mb-3 text-3xl text-kpi-blue-600">{{ $t('results.info.gamedays') }}</h2>
-      <div v-if="info.gamedays.length" class="mb-4 flex flex-wrap items-center gap-3" data-testid="calendar-subscription">
-        <a :href="webcalUrl(ics)" class="inline-flex items-center gap-1 rounded bg-kpi-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-kpi-blue-700" data-testid="ics-subscribe">
-          <UIcon name="i-heroicons-calendar-days" class="size-5" aria-hidden="true" />{{ $t('calendar.subscribe') }}
-        </a>
-        <a :href="ics" class="text-sm underline" data-testid="ics-download">{{ $t('calendar.download') }}</a>
-        <p class="w-full text-xs text-ink/70">{{ $t('calendar.icsHelp') }}</p>
-      </div>
+      <CalendarSubscribe v-if="info.gamedays.length" :url="ics" />
       <p v-if="info.gamedays.length === 0">{{ $t('results.info.noGamedays') }}</p>
       <ul class="grid gap-4" :class="groups.length > 1 ? 'md:grid-cols-2' : ''">
         <li v-for="group in groups" :key="group.gamedays[0]!.id" class="rounded border border-line p-4" data-testid="gameday">

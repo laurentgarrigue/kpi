@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   calendarApiPath, entriesByDate, gamedayCompetitionPath, gridRange, lookaheadRange, monthGrid, monthRange,
-  nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, weekSegments, type CalendarEntry,
+  nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, shiftYear, weekSegments, type CalendarEntry,
+  CALENDAR_SECTIONS, SECTION_STYLES, entrySection, groupsOfSection, reconcileFilters,
 } from '../../app/utils/calendar'
 
 function entry(id: number, start: string, end: string, type = 'CHPT'): CalendarEntry {
   return {
     id,
-    competition: { season: '2026', code: 'N1H', display_title: 'Nationale 1', type, level: 'NAT', group: 'N1H' },
+    competition: { season: '2026', code: 'N1H', display_title: 'Nationale 1', type, section: 2, group: 'N1H' },
+    label: `J${id} - Lacville (33)`,
     name: `J${id}`,
     place: 'Lacville',
     department: '33',
@@ -25,14 +27,38 @@ describe('calendar month and filters (PAGE_CALENDAR.md)', () => {
     expect(parseMonth(['2026-06'], '2026-10-09')).toBe('2026-10')
   })
 
-  it('CAL-04: level and group filters, dropped when invalid', () => {
-    expect(parseFilters({ level: 'NAT', group: 'N1H' })).toEqual({ level: 'NAT', group: 'N1H' })
-    expect(parseFilters({ level: 'XYZ', group: 'bad group' })).toEqual({})
+  it('CAL-04: section and group filters, dropped when invalid', () => {
+    expect(parseFilters({ section: '2', group: 'N1H' })).toEqual({ section: 2, group: 'N1H' })
+    expect(parseFilters({ section: '100' })).toEqual({ section: 100 })
+    expect(parseFilters({ section: '7', group: 'bad group' })).toEqual({})
+    expect(parseFilters({ section: 'abc' })).toEqual({})
+    expect(parseFilters({ section: ['2'] })).toEqual({})
+  })
+
+  it('CAL-04: a group of another section than the chosen one is dropped; the groups offered follow the section', () => {
+    const sections = [
+      { section: 1, label: 'x', groups: [{ code: 'ECA', libelle: 'Europe', libelle_en: null }] },
+      { section: 2, label: 'x', groups: [{ code: 'N1H', libelle: 'N1 H', libelle_en: null }] },
+    ]
+    expect(groupsOfSection(sections, undefined).map(section => section.section)).toEqual([1, 2])
+    expect(groupsOfSection(sections, 2).map(section => section.section)).toEqual([2])
+    expect(reconcileFilters({ section: 2, group: 'ECA' }, sections)).toEqual({ section: 2 })
+    expect(reconcileFilters({ section: 2, group: 'N1H' }, sections)).toEqual({ section: 2, group: 'N1H' })
+    expect(reconcileFilters({ group: 'ECA' }, sections)).toEqual({ group: 'ECA' })
+  })
+
+  it('CAL-02: six sections, each with its own colours (never the colour alone: the section is also named)', () => {
+    expect(CALENDAR_SECTIONS).toEqual([1, 2, 3, 4, 5, 100])
+    expect(new Set(CALENDAR_SECTIONS.map(section => SECTION_STYLES[section].bar)).size).toBe(6)
+    expect(entrySection(entry(1, '2026-06-01', '2026-06-01'))).toBe(2)
+    expect(entrySection({ ...entry(1, '2026-06-01', '2026-06-01'), competition: { ...entry(1, '', '').competition, section: 42 } })).toBe(100)
   })
 
   it('months shift across years; ranges are calendar days', () => {
     expect(shiftMonth('2026-12', 1)).toBe('2027-01')
     expect(shiftMonth('2026-01', -1)).toBe('2025-12')
+    expect(shiftYear('2026-12', 1)).toBe('2027-12')
+    expect(shiftYear('2026-03', -1)).toBe('2025-03')
     expect(monthRange('2028-02')).toEqual({ start: '2028-02-01', end: '2028-02-29' })
   })
 
@@ -44,8 +70,8 @@ describe('calendar month and filters (PAGE_CALENDAR.md)', () => {
   })
 
   it('api2 path of a period with its filters', () => {
-    expect(calendarApiPath({ start: '2026-06-01', end: '2026-07-05' }, { level: 'NAT', group: 'N1H' }))
-      .toBe('/calendar?start=2026-06-01&end=2026-07-05&level=NAT&group=N1H')
+    expect(calendarApiPath({ start: '2026-06-01', end: '2026-07-05' }, { section: 2, group: 'N1H' }))
+      .toBe('/calendar?start=2026-06-01&end=2026-07-05&section=2&group=N1H')
     expect(lookaheadRange('2026-06')).toEqual({ start: '2026-07-01', end: '2027-06-30' })
   })
 })

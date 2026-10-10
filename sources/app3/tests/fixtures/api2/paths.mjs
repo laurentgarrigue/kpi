@@ -16,7 +16,9 @@ export const FIXTURE_PATHS = [
   ...COMPETITIONS.flatMap(code => [`/competition/2999/${code}`, ...TABS.map(tab => `/competition/2999/${code}/${tab}`)]),
   // Phase 3 (API_PUBLIC_TRANSVERSE.md): requests of the calendar, history, team, club and search pages tested.
   '/calendar?start=2999-04-01&end=2999-05-05',
-  '/calendar?start=2999-04-01&end=2999-05-05&level=NAT&group=TSTRES',
+  '/calendar?start=2999-04-01&end=2999-05-05&section=2&group=TSTRES',
+  '/calendar?start=2999-04-01&end=2999-05-05&section=2',
+  '/calendar/groups',
   '/calendar?start=2999-04-29&end=2999-06-02&group=TSTRES',
   '/calendar?start=2999-06-01&end=3000-05-31&group=TSTRES',
   '/history',

@@ -8,9 +8,10 @@
         "code": "RAT",
         "display_title": "Championnat En Attente",
         "type": "CHPT",
-        "level": "NAT",
+        "section": 2,
         "group": "TSTRES"
       },
+      "label": "RAT J1 - Lacville (33)",
       "name": "RAT J1",
       "place": "Lacville",
       "department": "33",

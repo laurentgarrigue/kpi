@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { GroupSection, Seasons } from '#kpi-layer/utils/results/types'
+import type { GroupSection } from '#kpi-layer/utils/results/types'
 import {
   calendarApiPath, entriesByDate, gridRange, lookaheadRange, monthGrid, nextMonthWithEntries, parseFilters, parseMonth,
-  shiftMonth, type CalendarEntry,
+  reconcileFilters, shiftMonth, shiftYear, type CalendarEntry,
 } from '~/utils/calendar'
 import { todayInParis } from '~/utils/events'
 
@@ -15,8 +15,11 @@ const language = useLanguageTag()
 
 const today = todayInParis(new Date())
 const month = computed(() => parseMonth(route.query.month, today))
-const filters = computed(() => parseFilters(route.query))
 const monthLabel = computed(() => new Intl.DateTimeFormat(language.value, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month.value}-01`)))
+
+// Groups of every section: the group filter keeps only those of the chosen section (CAL-09).
+const { data: groups } = await useApiResource<{ sections: GroupSection[] }>('/calendar/groups', { notFoundIsError: false })
+const filters = computed(() => reconcileFilters(parseFilters(route.query), groups.value?.sections ?? []))
 
 // One request per page: the whole weeks of the grid, the agenda keeping the gamedays of the month (§ 3).
 const { data: entries, error } = await useApiResource<CalendarEntry[]>(() => calendarApiPath(gridRange(month.value), filters.value), { notFoundIsError: false })
@@ -29,12 +32,6 @@ const { data: ahead } = await useApiResource<CalendarEntry[]>(
   { notFoundIsError: false },
 )
 const nextMonth = computed(() => nextMonthWithEntries(ahead.value ?? [], month.value))
-
-const { data: seasons } = await useApiResource<Seasons>('/seasons', { notFoundIsError: false })
-const { data: groups } = await useApiResource<{ sections: GroupSection[] }>(
-  () => (seasons.value?.active ? `/groups/${seasons.value.active}` : null),
-  { notFoundIsError: false },
-)
 
 const monthLink = (target: string) => ({ path: localePath('/calendar'), query: { ...filters.value, month: target } })
 const nextMonthLabel = computed(() => (nextMonth.value
@@ -53,7 +50,7 @@ useHead(() => ({
         innerHTML: JSON.stringify(days.value.flatMap(day => day.entries).map(entry => ({
           '@context': 'https://schema.org',
           '@type': 'SportsEvent',
-          'name': `${entry.competition.display_title} — ${entry.name ?? ''}`.trim(),
+          'name': entry.label,
           'sport': 'Canoe polo',
           'startDate': entry.start,
           'endDate': entry.end,
@@ -68,10 +65,12 @@ useHead(() => ({
     <h1 class="text-5xl text-kpi-blue-600">{{ $t('calendar.title') }}</h1>
     <div class="flex flex-wrap items-center justify-between gap-4">
       <p class="font-display text-3xl capitalize" data-testid="calendar-month">{{ monthLabel }}</p>
-      <nav class="flex gap-2" :aria-label="$t('calendar.title')" data-testid="calendar-nav">
-        <NuxtLink :to="monthLink(shiftMonth(month, -1))" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="previous-month">{{ $t('calendar.previous') }}</NuxtLink>
+      <nav class="flex flex-wrap gap-2" :aria-label="$t('calendar.title')" data-testid="calendar-nav">
+        <NuxtLink :to="monthLink(shiftYear(month, -1))" :aria-label="$t('calendar.previousYear')" :title="$t('calendar.previousYear')" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="previous-year"><span aria-hidden="true">«</span><span class="sr-only">{{ $t('calendar.previousYear') }}</span></NuxtLink>
+        <NuxtLink :to="monthLink(shiftMonth(month, -1))" :aria-label="$t('calendar.previous')" :title="$t('calendar.previous')" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="previous-month"><span aria-hidden="true">‹</span><span class="sr-only">{{ $t('calendar.previous') }}</span></NuxtLink>
         <NuxtLink :to="monthLink(today.slice(0, 7))" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="current-month">{{ $t('calendar.today') }}</NuxtLink>
-        <NuxtLink :to="monthLink(shiftMonth(month, 1))" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="next-month">{{ $t('calendar.next') }}</NuxtLink>
+        <NuxtLink :to="monthLink(shiftMonth(month, 1))" :aria-label="$t('calendar.next')" :title="$t('calendar.next')" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="next-month"><span aria-hidden="true">›</span><span class="sr-only">{{ $t('calendar.next') }}</span></NuxtLink>
+        <NuxtLink :to="monthLink(shiftYear(month, 1))" :aria-label="$t('calendar.nextYear')" :title="$t('calendar.nextYear')" class="rounded border border-line px-2 py-1 hover:bg-kpi-blue-50" data-testid="next-year"><span aria-hidden="true">»</span><span class="sr-only">{{ $t('calendar.nextYear') }}</span></NuxtLink>
       </nav>
     </div>
     <CalendarFilters :month="month" :filters="filters" :sections="groups?.sections ?? []" />
