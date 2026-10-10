@@ -109,6 +109,7 @@ make feature ─► code/commit ─► make dev ─► pr_create ─► pr_check
 ```bash
 cd ~/Documents/dev/kpi
 make feature                 # demande le nom au prompt, ou : make feature name=scoring
+make feature from=current    # part de la branche courante (sinon, question posée si elle n'est pas main)
 ```
 
 Une seule commande qui remplace `git checkout main && git pull && git checkout -b …` :
@@ -576,7 +577,7 @@ Les `wt_*` ne servent qu'en mode worktree ; les `pr_*` dans les deux modes.
 
 | Cible | Effet |
 |---|---|
-| `make feature [name=<n>] [carry=1]` | remet `main` à jour et crée la branche feature (nom au prompt si omis) ; embarque les modifs en cours après confirmation |
+| `make feature [name=<n>] [carry=1] [from=main\|current]` | crée la branche feature depuis `main` à jour, ou depuis la branche courante (question posée si ce n'est pas `main`) ; nom au prompt si omis ; embarque les modifs en cours après confirmation |
 | `make version` | versions de chaque brique + dernier tag + **versions déployées** (préprod/prod) |
 | `make wt_new name=<n> [base=<b>]` | *(worktree)* crée `feature/<n>` + worktree + env |
 | `make wt_list` / `wt_sync name=<n>` / `wt_rm name=<n>` | *(worktree)* liste / re-copie env / supprime |

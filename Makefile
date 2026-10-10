@@ -1170,12 +1170,27 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
 
-feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring [carry=1])
+feature: ## Crée une branche feature depuis main à jour, ou depuis la branche courante (demandé au prompt, ou make feature name=scoring [carry=1] [from=main|current])
 	@# Modifications en cours : sur confirmation (ou carry=1), elles sont remisées (stash, non
 	@# suivis compris), main est mis à jour, puis elles sont réappliquées sur la nouvelle branche.
 	@# Sans confirmation : abandon, rien n'est touché. Le stash protège aussi les modifs du
 	@# `reset --hard origin/main` ci-dessous.
+	@# Branche de départ : main par défaut. Si la branche courante n'est pas main, on demande s'il faut
+	@# partir d'elle (sous-feature, correctif d'une PR en cours) ; from=current|main évite la question.
 	@carry=0; \
+	current="$$(git rev-parse --abbrev-ref HEAD)"; \
+	base=main; \
+	case "$(from)" in \
+		current) base="$$current" ;; \
+		main|"") ;; \
+		*) echo "⛔ from='$(from)' invalide (main ou current)."; exit 1 ;; \
+	esac; \
+	if [ -z "$(from)" ] && [ "$$current" != "main" ] && [ "$$current" != "HEAD" ] && [ -t 0 ]; then \
+		printf "Branche courante : '%s'. Créer la nouvelle branche depuis elle plutôt que depuis main ? [o/N] " "$$current"; \
+		read answer; \
+		case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) base="$$current" ;; esac; \
+	fi; \
+	[ "$$base" != "HEAD" ] || { echo "⛔ HEAD détachée : impossible de partir de la branche courante."; exit 1; }; \
 	if [ -n "$$(git status --porcelain)" ]; then \
 		echo "Modifications en cours :"; \
 		git status -sb; \
@@ -1219,13 +1234,20 @@ feature: ## Part d'un main à jour et crée une branche feature (nom demandé au
 			return 1; \
 		fi; \
 	}; \
-	echo "→ Mise à jour de main..."; \
-	{ git fetch origin main --quiet \
-		&& git checkout main --quiet \
-		&& git reset --hard origin/main --quiet \
-		&& git checkout -b "$$branch" --quiet; } || { \
-		echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
-	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	if [ "$$base" = "main" ]; then \
+		echo "→ Mise à jour de main..."; \
+		{ git fetch origin main --quiet \
+			&& git checkout main --quiet \
+			&& git reset --hard origin/main --quiet \
+			&& git checkout -b "$$branch" --quiet; } || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	else \
+		git checkout -b "$$branch" --quiet || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis '$$base' ($$(git rev-parse --short HEAD), non mise à jour depuis origin)."; \
+		echo "  La PR devra cibler '$$base' tant que celle-ci n'est pas fusionnée :  make pr_create base=$$base"; \
+	fi; \
 	restore || exit 1; \
 	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
 
