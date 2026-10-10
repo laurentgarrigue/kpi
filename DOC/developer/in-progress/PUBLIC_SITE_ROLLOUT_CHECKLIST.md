@@ -1,6 +1,7 @@
 # Site public (app3) — checklist de test et de déploiement par phase
 
 **Créée le** : 8 octobre 2026 — **À compléter à chaque phase** (une section par phase, cochée au fil de l'eau)
+**Validée** jusqu'au § 3.4 inclus le 10/10/2026 (phases 1 et 2 complètes, phase 3 jusqu'à la préprod ; reste la production de la phase 3, § 3.5).
 **Contexte** : [PUBLIC_SITE_REDESIGN_STRATEGY.md](plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) ·
 specs [DOC/specs/public/](../../specs/public/README.md) · socle [SITE_PLATFORM.md](../../specs/public/SITE_PLATFORM.md)
 
@@ -68,9 +69,9 @@ Revue : **valider les 4 specs** (statut « Proposée » → « Validée » dans 
 | # | Où | Action | Résultat attendu | ☑ |
 |---|---|---|---|---|
 | 1 | 🌍 DNS | Créer `beta.preprod.kayak-polo.info` et `beta.kayak-polo.info` → même cible que `preprod.kayak-polo.info` / `kayak-polo.info` (A/AAAA ou CNAME) | `dig +short beta.preprod.kayak-polo.info` et `dig +short beta.kayak-polo.info` renvoient l'IP du VPS | ☑ |
-| 2 | 📦 `vps-manager` / `deploy-wrapper.sh` | Dans le rebuild sélectif, quand le diff touche `sources/app3/` **ou** `sources/kpi-layer/` : appeler `make app3_generate_${ENV}` (comme `app2`/`app4`). Si la règle actuelle est un motif `sources/app*`, ajouter explicitement `sources/kpi-layer/` | Lecture du diff du wrapper : la nouvelle condition est présente |☐ |
-| 3 | 📦 `vps-manager` | Déployer la nouvelle version du wrapper sur le VPS (`git -C /data/vps-manager pull`) | `/home/deploy/deploy-wrapper.sh` (symlink) contient la nouvelle condition | ☐ |
-| 4 | 📦 `vps-manager` | **Ne pas** ajouter `beta.*` aux `SMOKE_URLS_*` avant la bascule (une panne du beta ne doit pas déclencher de rollback) | `SMOKE_URLS_PREPROD` / `_PRODUCTION` inchangés | ☐ |
+| 2 | 📦 `vps-manager` / `deploy-wrapper.sh` | Dans le rebuild sélectif, quand le diff touche `sources/app3/` **ou** `sources/kpi-layer/` : appeler `make app3_generate_${ENV}` (comme `app2`/`app4`). Si la règle actuelle est un motif `sources/app*`, ajouter explicitement `sources/kpi-layer/` | Lecture du diff du wrapper : la nouvelle condition est présente |☑ |
+| 3 | 📦 `vps-manager` | Déployer la nouvelle version du wrapper sur le VPS (`git -C /data/vps-manager pull`) | `/home/deploy/deploy-wrapper.sh` (symlink) contient la nouvelle condition | ☑ |
+| 4 | 📦 `vps-manager` | **Ne pas** ajouter `beta.*` aux `SMOKE_URLS_*` avant la bascule (une panne du beta ne doit pas déclencher de rollback) | `SMOKE_URLS_PREPROD` / `_PRODUCTION` inchangés | ☑ |
 
 > **Ligne 2** : version modifiée de `deploy-wrapper.sh` fournie le 09/10/2026 (brique `app3` déclenchée par
 > `sources/app3/` **ou** `sources/kpi-layer/`, **non bloquante**, reconstruite au rollback ; un changement d'app3
@@ -85,19 +86,19 @@ Le merge de la PR sur `main` déclenche « Deploy preprod ». Le diff touchant `
 `docker_preprod_rebuild` (down + build + up) : **courte coupure de toute la préprod**, comme pour tout changement
 de `docker/`.
 
-| # | Commande (🖥 dans `/data/kpi_preprod`) | Résultat attendu | ☐ |
+| # | Commande (🖥 dans `/data/kpi_preprod`) | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | 🌐 Actions → « Deploy preprod » | vert, smoke tests OK | ☐ |
-| 2 | `docker ps --filter name=kpi_preprod_app3` (nom = `${APPLICATION_NAME}_app3`) | conteneur `Up` (puis `healthy` après le build) | ☐ |
-| 3 | `make app3_generate_preprod` *(seulement si le wrapper ne l'a pas fait)* | `✨ Build complete!` puis `✅ kpi_preprod_app3 redémarré` | ☐ |
-| 4 | `make app3_logs lines=20` | `Listening on http://0.0.0.0:3000` ; pas de « app3 non construit » | ☐ |
-| 5 | `curl -s https://beta.preprod.kayak-polo.info/healthz` | `{"status":"ok"}` | ☐ |
-| 6 | `curl -sI https://beta.preprod.kayak-polo.info/ \| grep -iE "^HTTP\|x-robots"` | `HTTP/2 200`, `x-robots-tag: noindex, nofollow` | ☐ |
-| 7 | Navigateur `https://beta.preprod.kayak-polo.info` | Rendu identique au dev ; événements de la base de préprod ; liens de menu vers `https://preprod.kayak-polo.info/kp….php` | ☐ |
-| 8 | `docker inspect -f '{{.State.Health.Status}}' kpi_preprod_app3` | `healthy` | ☐ |
+| 1 | 🌐 Actions → « Deploy preprod » | vert, smoke tests OK | ☑ |
+| 2 | `docker ps --filter name=kpi_preprod_app3` (nom = `${APPLICATION_NAME}_app3`) | conteneur `Up` (puis `healthy` après le build) | ☑ |
+| 3 | `make app3_generate_preprod` *(seulement si le wrapper ne l'a pas fait)* | `✨ Build complete!` puis `✅ kpi_preprod_app3 redémarré` | ☑ |
+| 4 | `make app3_logs lines=20` | `Listening on http://0.0.0.0:3000` ; pas de « app3 non construit » | ☑ |
+| 5 | `curl -s https://beta.preprod.kayak-polo.info/healthz` | `{"status":"ok"}` | ☑ |
+| 6 | `curl -sI https://beta.preprod.kayak-polo.info/ \| grep -iE "^HTTP\|x-robots"` | `HTTP/2 200`, `x-robots-tag: noindex, nofollow` | ☑ |
+| 7 | Navigateur `https://beta.preprod.kayak-polo.info` | Rendu identique au dev ; événements de la base de préprod ; liens de menu vers `https://preprod.kayak-polo.info/kp….php` | ☑ |
+| 8 | `docker inspect -f '{{.State.Health.Status}}' kpi_preprod_app3` | `healthy` | ☑ |
 
 **Non-régression préprod** : `https://preprod.kayak-polo.info` (WordPress + `kp*.php`), `/admin2`,
-`app.preprod.kayak-polo.info`, `/api2/doc` répondent comme avant ; `make media_status` → 6/6. ☐
+`app.preprod.kayak-polo.info`, `/api2/doc` répondent comme avant ; `make media_status` → 6/6. ☑
 
 ### 1.5 ⌨️ 🌐 🖥 Production (`/data/kpi`)
 
@@ -108,16 +109,16 @@ make release_tag version=X.Y.Z      # tag de release contenant la phase 1
 
 🌐 Actions → « Deploy production » → `ref` = `vX.Y.Z` → approuver.
 
-| # | Commande (🖥 dans `/data/kpi`) | Résultat attendu | ☐ |
+| # | Commande (🖥 dans `/data/kpi`) | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Workflow « Deploy production » | vert | ☐ |
-| 2 | `docker ps --filter name=kpi_app3` | `Up … (healthy)` | ☐ |
-| 3 | `make app3_generate_production` *(si non fait par le wrapper)* | build OK + redémarrage | ☐ |
-| 4 | `curl -s https://beta.kayak-polo.info/healthz` | `{"status":"ok"}` | ☐ |
-| 5 | `curl -s https://beta.kayak-polo.info/robots.txt` | `Disallow: /` | ☐ |
-| 6 | Navigateur `https://beta.kayak-polo.info` | Événements réels ; menus vers `https://www.kayak-polo.info/kp….php` | ☐ |
+| 1 | Workflow « Deploy production » | vert | ☑ |
+| 2 | `docker ps --filter name=kpi_app3` | `Up … (healthy)` | ☑ |
+| 3 | `make app3_generate_production` *(si non fait par le wrapper)* | build OK + redémarrage | ☑ |
+| 4 | `curl -s https://beta.kayak-polo.info/healthz` | `{"status":"ok"}` | ☑ |
+| 5 | `curl -s https://beta.kayak-polo.info/robots.txt` | `Disallow: /` | ☑ |
+| 6 | Navigateur `https://beta.kayak-polo.info` | Événements réels ; menus vers `https://www.kayak-polo.info/kp….php` | ☑ |
 
-**Non-régression prod** : `www.kayak-polo.info`, `app.kayak-polo.info`, `/admin2`, `/api2/doc`. ☐
+**Non-régression prod** : `www.kayak-polo.info`, `app.kayak-polo.info`, `/admin2`, `/api2/doc`. ☑
 
 ### 1.6 Retours de recette du 08/10/2026 (PR suivante)
 
@@ -125,15 +126,15 @@ Specs mises à jour et **validées** : SITE_LAYOUT (lien admin2 dans l'en-tête,
 PAGE_HOME (titre « en France et à l'international », section « Prochains événements »), SITE_NAVIGATION (app2 en
 nouvel onglet). api2 : `/events/{mode}` expose en plus `start` / `end` (ajout seulement, app2 non concerné).
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make app3_test` | vert (60 tests) ; nouveaux critères `LAY-09`, `HOME-07`, `HOME-08` | ☐ |
-| 2 | `make api2_test` | vert ; `testEventsExposeStartAndEndDates` | ☐ |
-| 3 | `https://beta.kpi.localhost` | « Le kayak-polo, en France et à l'international » ; « Prochains événements » (le plus proche d'abord, badge « En cours ») puis « Événements récents » ; dates sur les cartes | ☐ |
-| 4 | En-tête | « ⚙ Administration » → `https://kpi.localhost/admin2/` (icône seule sous 640 px) | ☐ |
-| 5 | Clic « En direct », bouton « Suivre un événement en direct », pied de page, carte d'événement | app2 s'ouvre dans un **nouvel onglet** | ☐ |
-| 6 | app2 (`https://app.kpi.localhost`) : liste des événements | inchangée | ☐ |
-| 7 | Préprod / prod | comme § 1.4 / § 1.5 ; le diff touche `sources/api2/` → **`make api2_restart`** si le wrapper ne l'a pas fait | ☐ |
+| 1 | `make app3_test` | vert (60 tests) ; nouveaux critères `LAY-09`, `HOME-07`, `HOME-08` | ☑ |
+| 2 | `make api2_test` | vert ; `testEventsExposeStartAndEndDates` | ☑ |
+| 3 | `https://beta.kpi.localhost` | « Le kayak-polo, en France et à l'international » ; « Prochains événements » (le plus proche d'abord, badge « En cours ») puis « Événements récents » ; dates sur les cartes | ☑ |
+| 4 | En-tête | « ⚙ Administration » → `https://kpi.localhost/admin2/` (icône seule sous 640 px) | ☑ |
+| 5 | Clic « En direct », bouton « Suivre un événement en direct », pied de page, carte d'événement | app2 s'ouvre dans un **nouvel onglet** | ☑ |
+| 6 | app2 (`https://app.kpi.localhost`) : liste des événements | inchangée | ☑ |
+| 7 | Préprod / prod | comme § 1.4 / § 1.5 ; le diff touche `sources/api2/` → **`make api2_restart`** si le wrapper ne l'a pas fait | ☑ |
 
 ### 1.7 Retour arrière
 
@@ -184,49 +185,49 @@ make api2_test              # unit + integration (recharge SQL/fixtures/) = job 
 make app3_test              # unit + nuxt + e2e
 ```
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 48 + integration 50 tests verts (dont `PublicResultsCharacterizationTest`, `PublicCompetitionEndpointsTest`) | ☐ |
-| 2 | `git log -p -- sources/api2/tests/Integration/__snapshots__` | le commit refactor ne touche pas les snapshots ; le commit fix ne fait que des suppressions | ☐ |
-| 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☐ |
-| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/stats/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☐ |
-| 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☐ |
-| 6 | `https://kpi.localhost/api2/doc` | tag « 7. Site public » avec les nouveaux endpoints | ☐ |
-| 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☐ |
-| 8 | `make app3_test` | 144 tests verts (unit 69 dont kpi-layer, nuxt 61, e2e 14) ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☐ |
-| 9 | `https://beta.kpi.localhost/competitions` | redirige vers la saison active ; menu « Compétitions et résultats » sans icône externe | ☐ |
-| 10 | Une compétition CHPT, une CP, une MULTI : tous les onglets | contenu conforme ; onglets utilisables sans JavaScript (désactiver JS) | ☐ |
-| 11 | `https://beta.kpi.localhost/events/<id>` et `/groups/<saison>/<code>` | matchs de toutes les compétitions, puces vers chaque compétition | ☐ |
-| 12 | Clic sur une équipe / un match | équipe → `kpequipes.php` (legacy) ; match → app2 `/game/<id>` (nouvel onglet) | ☐ |
-| 13 | Liens PDF (classement, liste des matchs, feuille de marque) | le PDF s'ouvre, **sans session** legacy (navigation privée) | ☐ |
-| 14 | Accueil : carte d'un événement | ouvre `/events/<id>` (vue événement du site) | ☐ |
-| 15 | Compétition terminée du tour final (préprod) | médailles 1-2-3 dans la liste et l'onglet Classement | ☐ |
+| 1 | `make api2_test` | unit 48 + integration 50 tests verts (dont `PublicResultsCharacterizationTest`, `PublicCompetitionEndpointsTest`) | ☑ |
+| 2 | `git log -p -- sources/api2/tests/Integration/__snapshots__` | le commit refactor ne touche pas les snapshots ; le commit fix ne fait que des suppressions | ☑ |
+| 3 | `curl -sk https://kpi.localhost/api2/seasons` | `{"active":"…","seasons":[…]}` | ☑ |
+| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/stats/scorers?limit=5 \| grep -i matric` | aucune sortie (pas de licence) | ☑ |
+| 5 | `curl -sk -o /dev/null -w '%{http_code}' https://kpi.localhost/api2/competition/2026/INCONNU` | `404` ; `…/competition/abcd/X` → `400` | ☑ |
+| 6 | `https://kpi.localhost/api2/doc` | tag « 7. Site public » avec les nouveaux endpoints | ☑ |
+| 7 | app2 `https://app.kpi.localhost` : un événement et un groupe (matchs, tableaux) | inchangé | ☑ |
+| 8 | `make app3_test` | 144 tests verts (unit 69 dont kpi-layer, nuxt 61, e2e 14) ; tests nommés `CPL-*`, `CMP-*`, `EVT-*`, `GRP-*`, `AGG-*` | ☑ |
+| 9 | `https://beta.kpi.localhost/competitions` | redirige vers la saison active ; menu « Compétitions et résultats » sans icône externe | ☑ |
+| 10 | Une compétition CHPT, une CP, une MULTI : tous les onglets | contenu conforme ; onglets utilisables sans JavaScript (désactiver JS) | ☑ |
+| 11 | `https://beta.kpi.localhost/events/<id>` et `/groups/<saison>/<code>` | matchs de toutes les compétitions, puces vers chaque compétition | ☑ |
+| 12 | Clic sur une équipe / un match | équipe → `kpequipes.php` (legacy) ; match → app2 `/game/<id>` (nouvel onglet) | ☑ |
+| 13 | Liens PDF (classement, liste des matchs, feuille de marque) | le PDF s'ouvre, **sans session** legacy (navigation privée) | ☑ |
+| 14 | Accueil : carte d'un événement | ouvre `/events/<id>` (vue événement du site) | ☑ |
+| 15 | Compétition terminée du tour final (préprod) | médailles 1-2-3 dans la liste et l'onglet Classement | ☑ |
 
 ### 2.3 ⌨️ 🌐 PR et CI
 
 Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2`, `smoke-api2` ; `lint-nuxt`, `build-nuxt`,
-`tests-app3` ; `ci-summary` vert. ☐
+`tests-app3` ; `ci-summary` vert. ☑
 
 ### 2.4 🖥 Préprod (`/data/kpi_preprod`)
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | 🌐 « Deploy preprod » (PR touchant `sources/api2/`) | vert ; le wrapper fait composer/cache puis **`make api2_restart`** | ☐ |
-| 2 | `make api2_logs_errors lines=50` | aucune erreur nouvelle | ☐ |
-| 3 | `curl -s https://preprod.kayak-polo.info/api2/seasons` | JSON avec la saison active | ☐ |
-| 4 | app2 préprod : un événement en cours ou récent | matchs et tableaux identiques à avant | ☐ |
-| 5 | `make app3_generate_preprod` *(si non fait par le wrapper)* | build OK + redémarrage | ☐ |
-| 6 | **Grille de parité** ([PAGE_COMPETITION § 7](../../specs/public/PAGE_COMPETITION.md)) sur une CHPT, une CP, une MULTI + un événement et un groupe ([PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) AGG-03) | mêmes matchs, scores, classements, stats que `kp*.php` | ☐ |
-| 7 | Un jour de compétition : page Matchs ouverte | rafraîchissement toutes les 60 s (onglet réseau), arrêt quand l'onglet est masqué | ☐ |
+| 1 | 🌐 « Deploy preprod » (PR touchant `sources/api2/`) | vert ; le wrapper fait composer/cache puis **`make api2_restart`** | ☑ |
+| 2 | `make api2_logs_errors lines=50` | aucune erreur nouvelle | ☑ |
+| 3 | `curl -s https://preprod.kayak-polo.info/api2/seasons` | JSON avec la saison active | ☑ |
+| 4 | app2 préprod : un événement en cours ou récent | matchs et tableaux identiques à avant | ☑ |
+| 5 | `make app3_generate_preprod` *(si non fait par le wrapper)* | build OK + redémarrage | ☑ |
+| 6 | **Grille de parité** ([PAGE_COMPETITION § 7](../../specs/public/PAGE_COMPETITION.md)) sur une CHPT, une CP, une MULTI + un événement et un groupe ([PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) AGG-03) | mêmes matchs, scores, classements, stats que `kp*.php` | ☑ |
+| 7 | Un jour de compétition : page Matchs ouverte | rafraîchissement toutes les 60 s (onglet réseau), arrêt quand l'onglet est masqué | ☑ |
 
-**Non-régression préprod** : `kpclassements.php`, `kpmatchs.php` (legacy), app2, `/admin2`. ☐
+**Non-régression préprod** : `kpclassements.php`, `kpmatchs.php` (legacy), app2, `/admin2`. ☑
 
 ### 2.5 Production
 
 Comme le § 1.5 (`make release_tag`, « Deploy production »), puis :
-- 🖥 `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP : sinon l'ancien code reste en mémoire) ; ☐
-- `curl -s https://www.kayak-polo.info/api2/seasons` ; app2 prod sur un événement ; ☐
-- grille de parité réduite (une compétition) sur `beta.kayak-polo.info`. ☐
+- 🖥 `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP : sinon l'ancien code reste en mémoire) ; ☑
+- `curl -s https://www.kayak-polo.info/api2/seasons` ; app2 prod sur un événement ; ☑
+- grille de parité réduite (une compétition) sur `beta.kayak-polo.info`. ☑
 
 ### 2.6 Retour arrière
 
@@ -276,44 +277,44 @@ make app3_npm_ci            # nouvelle dépendance leaflet
 make app3_test && make app3_lint
 ```
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 66 + integration 74 (dont `PublicSiteEndpointsTest` 24, tests `API3-*`) | ☐ |
-| 2 | `make app3_test` | 190 tests verts (unit 87, nuxt 85, e2e 18) ; tests nommés `CAL-*`, `HIS-*`, `TEA-*`, `CLB-*`, `SRC-*` | ☐ |
-| 3 | `curl -sk 'https://kpi.localhost/api2/calendar?start=2026-06-01&end=2026-06-30' \| head -c 300` | JSON des journées publiées | ☐ |
-| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/calendar.ics` | `BEGIN:VCALENDAR`, un `VEVENT` par journée, aucune donnée personnelle | ☐ |
-| 5 | `curl -sk https://kpi.localhost/api2/team/<numéro>/roster/<saison>/<code> \| grep -iE "matric\|sexe\|naiss"` | aucune sortie | ☐ |
-| 6 | `curl -sk https://kpi.localhost/api2/club/<code d'un club sans équipe>` | `404` | ☐ |
-| 7 | `https://beta.kpi.localhost/calendar` | mois courant, navigation mois précédent / suivant, flèches mois et année, filtres section (couleur par section) et groupe filtré par section (désactiver JS : fonctionnent) ; grille du mois à partir de 1024 px | ☐ |
-| 8 | Une compétition → onglet Infos | « S'abonner au calendrier » (`webcal://`), « Télécharger (.ics) », « Ajouter à mon agenda » par journée | ☐ |
-| 9 | `https://beta.kpi.localhost/history` | redirige vers le 1er groupe national ; podiums avec médailles, classement complet repliable | ☐ |
-| 10 | `https://beta.kpi.localhost/teams?q=<nom>` puis une équipe | suggestions au clavier ; fiche : club, couleurs et photo d'équipe (si présentes), palmarès, composition (sélecteur) | ☐ |
-| 11 | Une page de résultats : clic sur une équipe | ouvre `/teams/{n}?season=…&competition=…` (plus de `kpequipes.php`) | ☐ |
-| 12 | `https://beta.kpi.localhost/clubs` puis « Carte » | aucune requête vers `tile.openstreetmap.org` avant le clic sur « Afficher la carte » (onglet réseau) | ☐ |
-| 13 | Champ de recherche de l'en-tête | suggestions groupées après 2 caractères, Échap ferme ; Entrée → `/search?q=…` | ☐ |
-| 14 | 31 recherches en moins d'une minute depuis une IP publique (préprod) | la 31e affiche « Trop de recherches… » ; en dev (IP privée) pas de limite | ☐ |
+| 1 | `make api2_test` | unit 66 + integration 74 (dont `PublicSiteEndpointsTest` 24, tests `API3-*`) | ☑ |
+| 2 | `make app3_test` | 190 tests verts (unit 87, nuxt 85, e2e 18) ; tests nommés `CAL-*`, `HIS-*`, `TEA-*`, `CLB-*`, `SRC-*` | ☑ |
+| 3 | `curl -sk 'https://kpi.localhost/api2/calendar?start=2026-06-01&end=2026-06-30' \| head -c 300` | JSON des journées publiées | ☑ |
+| 4 | `curl -sk https://kpi.localhost/api2/competition/<saison>/<code>/calendar.ics` | `BEGIN:VCALENDAR`, un `VEVENT` par journée, aucune donnée personnelle | ☑ |
+| 5 | `curl -sk https://kpi.localhost/api2/team/<numéro>/roster/<saison>/<code> \| grep -iE "matric\|sexe\|naiss"` | aucune sortie | ☑ |
+| 6 | `curl -sk https://kpi.localhost/api2/club/<code d'un club sans équipe>` | `404` | ☑ |
+| 7 | `https://beta.kpi.localhost/calendar` | mois courant, navigation mois précédent / suivant, flèches mois et année, filtres section (couleur par section) et groupe filtré par section (désactiver JS : fonctionnent) ; grille du mois à partir de 1024 px | ☑ |
+| 8 | Une compétition → onglet Infos | « S'abonner au calendrier » (`webcal://`), « Télécharger (.ics) », « Ajouter à mon agenda » par journée | ☑ |
+| 9 | `https://beta.kpi.localhost/history` | redirige vers le 1er groupe national ; podiums avec médailles, classement complet repliable | ☑ |
+| 10 | `https://beta.kpi.localhost/teams?q=<nom>` puis une équipe | suggestions au clavier ; fiche : club, couleurs et photo d'équipe (si présentes), palmarès, composition (sélecteur) | ☑ |
+| 11 | Une page de résultats : clic sur une équipe | ouvre `/teams/{n}?season=…&competition=…` (plus de `kpequipes.php`) | ☑ |
+| 12 | `https://beta.kpi.localhost/clubs` puis « Carte » | aucune requête vers `tile.openstreetmap.org` avant le clic sur « Afficher la carte » (onglet réseau) | ☑ |
+| 13 | Champ de recherche de l'en-tête | suggestions groupées après 2 caractères, Échap ferme ; Entrée → `/search?q=…` | ☑ |
+| 14 | 31 recherches en moins d'une minute depuis une IP publique (préprod) | la 31e affiche « Trop de recherches… » ; en dev (IP privée) pas de limite | ☑ |
 
-**Non-régression locale** : app2 (liste des groupes d'une saison, `/groups/{saison}`), `/admin2`, legacy. ☐
+**Non-régression locale** : app2 (liste des groupes d'une saison, `/groups/{saison}`), `/admin2`, legacy. ☑
 
 ### 3.3 ⌨️ 🌐 PR et CI
 
 Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2` ; `lint-nuxt`, `build-nuxt`, `audit-npm`, `tests-app3` ;
-`lint-docker`, `trivy-config` (compose modifiés) ; `ci-summary` vert. ☐
+`lint-docker`, `trivy-config` (compose modifiés) ; `ci-summary` vert. ☑
 
 ### 3.4 🖥 Préprod (`/data/kpi_preprod`)
 
-| # | Commande / action | Résultat attendu | ☐ |
+| # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | 🌐 « Deploy preprod » | vert. Le diff touche `docker/` (compose) → **`docker_preprod_rebuild`** : courte coupure de toute la préprod | ☐ |
-| 2 | `docker exec kpi_preprod_api2 printenv PUBLIC_SITE_URL` | `https://beta.preprod.kayak-polo.info` | ☐ |
-| 3 | `make app3_generate_preprod` *(si le wrapper 📦 n'est pas encore à jour, § 1.3)* | build OK + redémarrage | ☐ |
-| 4 | Abonnement ICS d'une compétition dans Google Agenda, Apple Calendrier, Thunderbird | journées en « toute la journée », lien vers la page de la compétition sur `beta.preprod…` | ☐ |
-| 4b | Onglet Infos : « Copier le lien d'abonnement » puis tutoriel « Comment s'abonner ? » | lien copié ; étapes Google / Outlook / Apple | ☐ |
-| 4c | `https://beta.kpi.localhost/events` puis un événement | menu « Événements » ; bandeau marine « Événement », panneau « n journées sur total », bouton rouge « Suivre en direct », onglet Infos en premier, vainqueurs en gras dans Matchs | ☐ |
-| 5 | Grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php` | mêmes journées, palmarès, compositions, clubs (aux écarts assumés du § 3.1 près) | ☐ |
-| 6 | Recherche depuis un poste extérieur : 31 requêtes / minute | 429 à la 31e (preuve que l'IP du visiteur traverse Traefik → app3 → api2) | ☐ |
+| 1 | 🌐 « Deploy preprod » | vert. Le diff touche `docker/` (compose) → **`docker_preprod_rebuild`** : courte coupure de toute la préprod | ☑ |
+| 2 | `docker exec kpi_preprod_api2 printenv PUBLIC_SITE_URL` | `https://beta.preprod.kayak-polo.info` | ☑ |
+| 3 | `make app3_generate_preprod` *(si le wrapper 📦 n'est pas encore à jour, § 1.3)* | build OK + redémarrage | ☑ |
+| 4 | Abonnement ICS d'une compétition dans Google Agenda, Apple Calendrier, Thunderbird | journées en « toute la journée », lien vers la page de la compétition sur `beta.preprod…` | ☑ |
+| 4b | Onglet Infos : « Copier le lien d'abonnement » puis tutoriel « Comment s'abonner ? » | lien copié ; étapes Google / Outlook / Apple | ☑ |
+| 4c | `https://beta.kpi.localhost/events` puis un événement | menu « Événements » ; bandeau marine « Événement », panneau « n journées sur total », bouton rouge « Suivre en direct », onglet Infos en premier, vainqueurs en gras dans Matchs | ☑ |
+| 5 | Grille de parité avec `kpcalendrier.php`, `kphistorique.php`, `kpequipes.php`, `kpclubs.php` | mêmes journées, palmarès, compositions, clubs (aux écarts assumés du § 3.1 près) | ☑ |
+| 6 | Recherche depuis un poste extérieur : 31 requêtes / minute | 429 à la 31e (preuve que l'IP du visiteur traverse Traefik → app3 → api2) | ☑ |
 
-**Non-régression préprod** : app2 (événements, groupes), `/admin2`, legacy `kp*.php`. ☐
+**Non-régression préprod** : app2 (événements, groupes), `/admin2`, legacy `kp*.php`. ☑
 
 ### 3.5 Production
 
@@ -331,12 +332,20 @@ Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild de la s
 
 ## Phase 4a — Éditorial (CMS natif, reprise WordPress)
 
-*À compléter.* Prévoir : migration Doctrine (nouvelles tables), import `app:import-wordpress` en préprod puis prod,
+Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](../../specs/public/PAGE_NEWS.md)
+(`NEWS-*`), [PAGE_CONTENT](../../specs/public/PAGE_CONTENT.md) (`CNT-*`). Statut : 📝 **brouillon** (10/10/2026), à
+valider (questions Q-P4-1 à Q-P4-5).
+
+*Sections de test à compléter à l'implémentation.* Prévoir : script `SQL/migrations/…_cms.sql`, GD `--with-webp`
+(`Dockerfile.api2` → rebuild), `symfony/html-sanitizer` 7.4, secret `APP3_PURGE_TOKEN`, import `app:import-wordpress` en préprod puis prod,
 médias dans `HOST_MEDIA_PATH/content`, droits « Rédacteur » (app4).
 
 ## Phase 4b — Formulaires
 
-*À compléter.* Prévoir : envoi d'e-mails (SMTP), anti-spam, export.
+Spec : [FEATURE_FORMS](../../specs/public/FEATURE_FORMS.md) (`FRM-*`). Statut : 📝 **brouillon** (10/10/2026), à
+valider (questions Q-P4-6 à Q-P4-9).
+
+*Sections de test à compléter à l'implémentation.* Prévoir : tâche planifiée `app:forms:purge`, envoi d'e-mails (SMTP), anti-spam, export.
 
 ## Phase 5 — Bascule de `www`
 
