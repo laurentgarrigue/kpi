@@ -15,7 +15,7 @@ function escapeXml(value: string): string {
 
 export function sitemapXml(siteUrl: string, content: readonly SitemapEntry[]): string {
   const base = siteUrl.replace(/\/+$/, '')
-  const entries = [...APPLICATION_PATHS.map(path => ({ path })), ...content]
+  const entries: SitemapEntry[] = [...APPLICATION_PATHS.map(path => ({ path })), ...content]
   const urls = entries.flatMap(entry => LANGUAGE_PREFIXES.map((prefix) => {
     const location = `${base}${prefix}${entry.path === '/' && prefix ? '' : entry.path}`
     const lastmod = entry.updated_at ? `<lastmod>${escapeXml(entry.updated_at)}</lastmod>` : ''

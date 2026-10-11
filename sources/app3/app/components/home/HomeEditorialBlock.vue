@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { NEW_TAB_ATTRS } from '~/utils/links'
-import type { HomeBlock } from '~/utils/home'
+import type { ContentBlock } from '~/utils/home'
 
 // One editorial block of the home page: featured articles, latest news or partners (PAGE_CONTENT.md § 4).
-defineProps<{ block: Exclude<HomeBlock, { kind: 'alert' }> }>()
+defineProps<{ block: ContentBlock }>()
 const localePath = useLocalePath()
 </script>
 

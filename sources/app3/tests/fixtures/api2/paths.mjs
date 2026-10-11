@@ -62,6 +62,7 @@ export const FIXTURE_PATHS = [
   '/sitemap/content.xml',
   '/forms/tournoi-test',
   '/forms/stage-paiement',
+  '/forms/stage-paiement?lang=en',
   '/forms/clos',
   '/forms/brouillon-form',
   '/forms/tournoi-test/entries',
