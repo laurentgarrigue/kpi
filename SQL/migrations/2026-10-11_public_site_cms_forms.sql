@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS `kp_form` (
   `purpose_fr` text NOT NULL,
   `purpose_en` text NOT NULL,
   `retention_days` smallint(6) NOT NULL DEFAULT 90,
+  `archived_entries` int(11) NOT NULL DEFAULT 0 COMMENT 'inscriptions purgées (RGPD) : effectif conservé',
   `event_id` int(11) DEFAULT NULL,
   `competition_season` char(4) DEFAULT NULL,
   `competition_code` varchar(12) DEFAULT NULL,

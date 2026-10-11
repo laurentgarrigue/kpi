@@ -20,8 +20,9 @@ final class PublicApiDocumentationTest extends ApiTestCase
             }
         }
 
-        self::assertSame([
-            // Phase 4 (FEATURE_CMS.md § 5.1)
+        // Same set, whatever the registration order (routes with a priority come first).
+        self::assertEqualsCanonicalizing([
+            // Phase 4 (FEATURE_CMS.md § 5.1, FEATURE_FORMS.md § 4)
             '/news/categories',
             '/news',
             '/news/{slug}',
@@ -32,6 +33,11 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/rss.xml',
             '/sitemap/content.xml',
             '/redirect',
+            '/forms',
+            '/forms/options/competitions',
+            '/forms/{slug}',
+            '/forms/{slug}/submissions',
+            '/forms/{slug}/entries',
             // Phase 2
             '/seasons',
             '/group/{season}/{code}/competitions',
