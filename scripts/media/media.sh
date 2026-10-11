@@ -223,7 +223,8 @@ cmd_restore() {
   [ -n "$snap" ] || die "Usage : media.sh restore <snapshot|latest> [img/logo/fichier.png]"
   ensure_repo
   local media target; media="$(resolve_media_path)"
-  target="${media}.restore-$(date +%Y%m%d-%H%M%S)"
+  # MEDIA_RESTORE_DIR : dossier de destination imposé (ex. test automatisé quand le parent du stockage n'est pas inscriptible)
+  target="${MEDIA_RESTORE_DIR:-${media}.restore-$(date +%Y%m%d-%H%M%S)}"
   mkdir -p "$target"
   log "Restauration de $snap${path:+ ($path)} dans $target"
   RESTIC_EXTRA_VOLUME="$target:/restore" restic_run restore "$snap" --target /restore \
