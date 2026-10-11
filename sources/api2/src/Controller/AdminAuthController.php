@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Cms\EditorialAccess;
 use App\Entity\User;
 use App\Security\PasswordPolicy;
 use App\Security\UserProvider;
@@ -27,7 +28,8 @@ class AdminAuthController extends AbstractController
         private readonly UserProvider $userProvider,
         private readonly JWTTokenManagerInterface $jwtManager,
         private readonly Connection $connection,
-        private readonly NotificationService $notificationService
+        private readonly NotificationService $notificationService,
+        private readonly EditorialAccess $editorialAccess,
     ) {
     }
 
@@ -88,6 +90,8 @@ class AdminAuthController extends AbstractController
         $token = $this->jwtManager->create($user);
 
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $userData['activeMandate'] = null;
         $userData['effectiveProfile'] = $user->getNiveau();
@@ -117,6 +121,8 @@ class AdminAuthController extends AbstractController
 
         $mandates = $this->loadMandates($user->getCode());
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
@@ -146,6 +152,8 @@ class AdminAuthController extends AbstractController
         $token = $this->jwtManager->create($user);
 
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 

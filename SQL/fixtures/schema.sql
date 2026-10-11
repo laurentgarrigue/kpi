@@ -321,6 +321,7 @@ CREATE TABLE `kp_licence` (
   `Origine` varchar(6) NOT NULL DEFAULT '',
   `Nom` varchar(30) DEFAULT NULL,
   `Prenom` varchar(30) DEFAULT NULL,
+  `Numero_club` varchar(6) DEFAULT NULL, -- lu par UserProvider (connexion d'app4, phase 4)
   PRIMARY KEY (`Matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
@@ -396,6 +397,21 @@ CREATE TABLE `kp_user` (
   `Date_debut` date DEFAULT NULL,
   `Date_fin` date DEFAULT NULL,
   PRIMARY KEY (`Code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_user_mandat`;
+CREATE TABLE `kp_user_mandat` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `libelle` varchar(100) NOT NULL,
+  `niveau` smallint(6) NOT NULL,
+  `filtre_saison` mediumtext NOT NULL DEFAULT '',
+  `filtre_competition` mediumtext NOT NULL DEFAULT '',
+  `limitation_equipe_club` varchar(50) DEFAULT NULL,
+  `filtre_journee` mediumtext NOT NULL DEFAULT '',
+  `id_evenement` varchar(20) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `fk_mandat_user` (`user_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 DROP TABLE IF EXISTS `kp_journal`;
