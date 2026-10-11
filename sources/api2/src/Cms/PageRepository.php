@@ -42,6 +42,13 @@ final class PageRepository
         );
     }
 
+    public function findIdByLegacyId(int $wordPressId): ?int
+    {
+        $id = $this->connection->fetchOne('SELECT id FROM kp_cms_page WHERE legacy_wp_id = ?', [$wordPressId]);
+
+        return $id === false ? null : (int) $id;
+    }
+
     public function slugExists(string $slug, ?int $exceptId): bool
     {
         return $this->connection->fetchOne('SELECT 1 FROM kp_cms_page WHERE slug = ? AND id <> ?', [$slug, $exceptId ?? 0]) !== false;

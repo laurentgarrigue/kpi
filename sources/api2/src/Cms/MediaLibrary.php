@@ -95,6 +95,25 @@ final class MediaLibrary
         return self::summary((array) $this->media->find($id));
     }
 
+    /**
+     * Ajoute un fichier local (reprise WordPress) ; réutilise le média déjà importé depuis la même URL.
+     *
+     * @param array<string, mixed> $meta
+     *
+     * @return array<string, mixed> fiche du média
+     */
+    public function importFile(string $localPath, string $originalName, string $legacyUrl, array $meta, string $userCode): array
+    {
+        $existing = $this->media->findByLegacyUrl($legacyUrl);
+        if ($existing !== null) {
+            return self::summary($existing);
+        }
+        $media = $this->upload(new UploadedFile($localPath, $originalName, null, null, true), $meta, $userCode);
+        $this->media->update((int) $media['id'], ['legacy_url' => $legacyUrl]);
+
+        return $media;
+    }
+
     /** Remplace le fichier en gardant l'URL (même chemin, même type). */
     public function replace(int $id, UploadedFile $file): ?array
     {

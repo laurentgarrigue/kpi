@@ -417,3 +417,34 @@ INSERT INTO `kp_form_entry` (`id`, `form_id`, `status`, `reason`, `answers`, `em
   (9953, 9902, 'waiting', 'manual', '{"email":"b@example.test","team":"Bravo"}', 'b@example.test', '2020-01-04 00:00:00', '2020-01-04 00:00:00'),
   -- formulaire clos depuis 2020 (rétention 30 jours) : purgeable
   (9954, 9903, 'confirmed', NULL, '{"email":"old@example.test"}', 'old@example.test', '2020-01-05 00:00:00', '2020-01-05 00:00:00');
+
+-- Reprise WordPress (CMS-09) : articles 101 (repris, image, liens), 102 (non repris → /news), 103 (brouillon WP),
+-- pièce jointe 201, pages 301 / 302 (enfant) / 313 (reprise en brouillon), formulaire Ninja Forms 19.
+DELETE FROM `wptest_posts`;
+DELETE FROM `wptest_postmeta`;
+DELETE FROM `wptest_options`;
+DELETE FROM `wptest_nf3_forms`;
+DELETE FROM `wptest_nf3_fields`;
+DELETE FROM `wptest_nf3_field_meta`;
+INSERT INTO `wptest_options` (`option_name`, `option_value`) VALUES ('permalink_structure', '/%year%/%monthnum%/%postname%/');
+INSERT INTO `wptest_posts` (`ID`, `post_date`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `post_name`, `post_modified`, `post_parent`, `post_type`) VALUES
+  (101, '2024-06-02 10:00:00', '[:fr]Premier paragraphe\n\n<img src="https://www.kayak-polo.info/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium"> <a href="https://www.kayak-polo.info/?p=102">ancien</a> [ninja_form id=19][:en]First paragraph[:]', '[:fr]Finale N1[:en]N1 final[:]', '[:fr]Le résumé[:]', 'publish', 'finale-n1', '2024-06-03 08:00:00', 0, 'post'),
+  (102, '2024-05-01 10:00:00', 'Ancien', 'Ancien article', '', 'publish', 'ancien', '2024-05-01 10:00:00', 0, 'post'),
+  (103, '2024-07-01 10:00:00', 'Brouillon', 'Brouillon WP', '', 'draft', 'brouillon-wp', '2024-07-01 10:00:00', 0, 'post'),
+  (201, '2024-06-02 09:00:00', '', 'photo', '', 'inherit', 'photo', '2024-06-02 09:00:00', 101, 'attachment'),
+  (301, '2020-01-01 10:00:00', '<h2>Règlement</h2>\nTexte du règlement', 'Règlement', '', 'publish', 'reglement', '2023-01-01 10:00:00', 0, 'page'),
+  (302, '2020-01-01 10:00:00', 'Les arbitres', 'Arbitres', '', 'publish', 'arbitres', '2023-01-01 10:00:00', 301, 'page'),
+  (313, '2015-01-01 10:00:00', 'Vieux texte', 'Historique', '', 'publish', 'historique', '2015-01-01 10:00:00', 0, 'page');
+INSERT INTO `wptest_postmeta` (`post_id`, `meta_key`, `meta_value`) VALUES
+  (101, '_thumbnail_id', '201'),
+  (101, 'rank_math_description', '[:fr]Description SEO[:]'),
+  (101, 'rank_math_title', '%title% %sep% %sitename%'),
+  (201, '_wp_attached_file', '2024/06/photo.jpg');
+INSERT INTO `wptest_nf3_forms` (`id`, `title`) VALUES (19, 'Inscription tournoi');
+INSERT INTO `wptest_nf3_fields` (`id`, `label`, `key`, `type`, `parent_id`, `required`, `order`) VALUES
+  (1, 'Nom de l''équipe', 'nom_equipe', 'textbox', 19, b'1', 1),
+  (2, 'Email', 'email', 'email', 19, b'1', 2),
+  (3, 'Catégorie', 'categorie', 'listselect', 19, b'0', 3),
+  (4, 'Envoyer', 'submit', 'submit', 19, b'0', 4);
+INSERT INTO `wptest_nf3_field_meta` (`parent_id`, `key`, `value`) VALUES
+  (3, 'options', 'a:2:{i:0;a:2:{s:5:"label";s:3:"U18";s:5:"value";s:3:"u18";}i:1;a:2:{s:5:"label";s:6:"Senior";s:5:"value";s:3:"sen";}}');

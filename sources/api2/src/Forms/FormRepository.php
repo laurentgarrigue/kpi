@@ -50,6 +50,13 @@ final class FormRepository
         );
     }
 
+    public function findIdByLegacyNinjaId(int $ninjaFormId): ?int
+    {
+        $id = $this->connection->fetchOne('SELECT id FROM kp_form WHERE legacy_nf_id = ?', [$ninjaFormId]);
+
+        return $id === false ? null : (int) $id;
+    }
+
     public function slugExists(string $slug, ?int $exceptId): bool
     {
         return $this->connection->fetchOne('SELECT 1 FROM kp_form WHERE slug = ? AND id <> ?', [$slug, $exceptId ?? 0]) !== false;

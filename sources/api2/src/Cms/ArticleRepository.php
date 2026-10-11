@@ -177,6 +177,13 @@ final class ArticleRepository
         return (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_cms_article a WHERE $where", $params);
     }
 
+    public function findIdByLegacyId(int $wordPressId): ?int
+    {
+        $id = $this->connection->fetchOne('SELECT id FROM kp_cms_article WHERE legacy_wp_id = ?', [$wordPressId]);
+
+        return $id === false ? null : (int) $id;
+    }
+
     public function slugExists(string $slug, ?int $exceptId): bool
     {
         return $this->connection->fetchOne('SELECT 1 FROM kp_cms_article WHERE slug = ? AND id <> ?', [$slug, $exceptId ?? 0]) !== false;

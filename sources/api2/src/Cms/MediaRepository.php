@@ -55,6 +55,22 @@ final class MediaRepository
         return (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_cms_media WHERE $where", $params);
     }
 
+    /** @return array<string, mixed>|null média déjà importé depuis cette URL WordPress */
+    public function findByLegacyUrl(string $url): ?array
+    {
+        $row = $this->connection->fetchAssociative('SELECT * FROM kp_cms_media WHERE legacy_url = ?', [$url]);
+
+        return $row === false ? null : $row;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findByPath(string $path): ?array
+    {
+        $row = $this->connection->fetchAssociative('SELECT * FROM kp_cms_media WHERE path = ?', [$path]);
+
+        return $row === false ? null : $row;
+    }
+
     public function pathExists(string $path): bool
     {
         return $this->connection->fetchOne('SELECT 1 FROM kp_cms_media WHERE path = ?', [$path]) !== false;
