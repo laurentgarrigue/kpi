@@ -52,5 +52,6 @@ const breadcrumb = computed(() => {
     <ResultsCompetitionChips v-if="siblings.length > 1" :items="siblings" />
     <ResultsTabs :tabs="tabs" :current="current ?? ''" />
     <NuxtPage :competition="competition" />
+    <ContentLinked kind="competition" :reference="`${season}/${code}`" />
   </div>
 </template>

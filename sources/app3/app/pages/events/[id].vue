@@ -80,5 +80,6 @@ useHead(() => ({
       :selected-code="needsCompetition ? undefined : selected?.code"
       :competition="competition ?? undefined"
     />
+    <ContentLinked kind="event" :reference="String(id)" />
   </div>
 </template>

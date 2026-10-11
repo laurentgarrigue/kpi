@@ -38,9 +38,40 @@ export const FIXTURE_PATHS = [
   '/search?q=resultats',
   '/search?q=alpha',
   '/search?q=zzz',
+  // Phase 4 (FEATURE_CMS.md § 5.1, FEATURE_FORMS.md § 4): news, pages, menu, home blocks, forms.
+  '/news',
+  '/news?page=2',
+  '/news?category=equipes-de-france',
+  '/news?lang=en',
+  '/news/categories',
+  '/news/categories?lang=en',
+  '/news/finale-resultats',
+  '/news/finale-resultats?lang=en',
+  '/news/nouveau-reglement',
+  '/news/brouillon',
+  '/news?competition=2999%2FRCH&limit=3',
+  '/news?event=77&limit=3',
+  '/news?event=78&limit=3',
+  '/news?club=C001&limit=3',
+  '/pages/le-kayak-polo',
+  '/pages/arbitrage',
+  '/pages/page-brouillon',
+  '/menu',
+  '/menu?lang=en',
+  '/home',
+  '/sitemap/content.xml',
+  '/forms/tournoi-test',
+  '/forms/stage-paiement',
+  '/forms/clos',
+  '/forms/brouillon-form',
+  '/forms/tournoi-test/entries',
+  '/forms/clos/entries',
+  '/forms?event=77',
+  '/forms?event=78',
+  '/forms?competition=2999%2FRCH',
 ]
 
 /** File name of a request: `/competition/2999/RCH/stats/scorers?limit=20` → `competition_2999_RCH_stats_scorers_limit=20.json`. */
 export function fixtureFile(path) {
-  return `${path.replace(/^\//, '').replace(/[/?&]/g, '_')}.json`
+  return `${path.replace(/^\//, '').replace(/[/?&%]/g, '_')}.json`
 }

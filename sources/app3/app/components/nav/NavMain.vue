@@ -2,7 +2,7 @@
 import { isMenuGroup } from '~/utils/navigation'
 
 // Main navigation: horizontal bar from lg, collapsible panel below (SITE_NAVIGATION.md § 4).
-const { items, isActive } = useMainMenu()
+const { items, isActive } = await useMainMenu()
 const route = useRoute()
 
 const mobileOpen = ref(false)

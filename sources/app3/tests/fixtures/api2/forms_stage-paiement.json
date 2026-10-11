@@ -1,0 +1,45 @@
+{
+  "status": 200,
+  "body": {
+    "slug": "stage-paiement",
+    "title": "Stage (paiement)",
+    "intro": "",
+    "state": "open",
+    "opens_at": "2020-01-01 00:00:00",
+    "closes_at": "9999-01-01 00:00:00",
+    "capacity": null,
+    "confirmed": 0,
+    "full": false,
+    "waiting_list": true,
+    "manual_confirmation": true,
+    "has_payment": true,
+    "public_list": true,
+    "purpose": "",
+    "retention_days": 90,
+    "event": null,
+    "competition": null,
+    "fields": [
+      {
+        "key": "email",
+        "type": "email",
+        "label": "E-mail",
+        "help": "",
+        "required": true,
+        "options": [],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "team",
+        "type": "text",
+        "label": "Équipe",
+        "help": "",
+        "required": true,
+        "options": [],
+        "min": null,
+        "max": null
+      }
+    ],
+    "token": "1791710193.716e9e393a31e28150057a73606f5d6c3154c9956ae08d7d890a8565d09b3eff"
+  }
+}

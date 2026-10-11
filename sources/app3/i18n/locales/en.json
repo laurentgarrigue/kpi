@@ -34,7 +34,8 @@
     "teams": "Teams",
     "clubs": "Clubs",
     "live": "Live",
-    "events": "Events"
+    "events": "Events",
+    "editorial": "Kayak polo"
   },
   "footer": {
     "kayakPolo": "Canoe polo",
@@ -61,7 +62,11 @@
     "ongoing": "Ongoing",
     "recentEvents": "Recent events",
     "noEvents": "No event published yet.",
-    "eventsUnavailable": "Events are temporarily unavailable."
+    "eventsUnavailable": "Events are temporarily unavailable.",
+    "featured": "Featured",
+    "latestNews": "Latest news",
+    "allNews": "All news",
+    "partners": "Partners"
   },
   "error": {
     "notFoundTitle": "Page not found",
@@ -384,7 +389,9 @@
       "competitions": "Competitions",
       "events": "Events",
       "teams": "Teams",
-      "clubs": "Clubs"
+      "clubs": "Clubs",
+      "news": "News",
+      "pages": "Pages"
     },
     "label": "Search the site"
   },
@@ -397,5 +404,106 @@
     "intro": "An event gathers one or several competitions in one place over a few days: open it to see all its games.",
     "previousYear": "Previous year",
     "nextYear": "Next year"
+  },
+  "news": {
+    "title": "News",
+    "description": "Kayak polo news: results, selections, announcements and federation life.",
+    "pageTitle": "News — page {page}",
+    "categories": "Categories",
+    "allCategories": "All",
+    "empty": "No news yet.",
+    "unavailable": "News is temporarily unavailable.",
+    "newer": "Newer",
+    "older": "Older",
+    "pagination": "News pages",
+    "rss": "Subscribe (RSS)",
+    "rssTitle": "kayak-polo.info news",
+    "publishedOn": "Published on {date}",
+    "updatedOn": "· updated on {date}",
+    "by": "By {signature}",
+    "related": "Related to this article",
+    "relatedKind": {
+      "competition": "Competition",
+      "event": "Event",
+      "club": "Club"
+    },
+    "previous": "Previous article",
+    "next": "Next article",
+    "siblings": "Other articles",
+    "share": "Share",
+    "shareOn": {
+      "facebook": "Facebook",
+      "x": "X",
+      "whatsapp": "WhatsApp",
+      "email": "Email"
+    },
+    "copyLink": "Copy link",
+    "copied": "Link copied",
+    "preview": "Preview: this article is not published.",
+    "video": "Play the video ({provider})",
+    "gallery": "Image viewer",
+    "galleryPosition": "Image {index} of {count}",
+    "galleryPrevious": "Previous image",
+    "galleryNext": "Next image",
+    "galleryClose": "Close the viewer",
+    "linkedNews": "News"
+  },
+  "content": {
+    "toc": "Contents",
+    "children": "In this section",
+    "preview": "Preview: this page is not published."
+  },
+  "forms": {
+    "state": {
+      "open": "Registration open until {date}.",
+      "openNoEnd": "Registration open.",
+      "full": "Full — new registrations go to the waiting list.",
+      "closed": "Registration is closed.",
+      "upcoming": "Registration opens on {date}."
+    },
+    "places": "{confirmed} / {capacity} places confirmed",
+    "manual": "Each registration is confirmed by the organiser (for instance once the payment is received).",
+    "required": "required",
+    "requiredHint": "Fields marked with an asterisk (*) are required.",
+    "choose": "Choose…",
+    "submit": "Send the registration",
+    "honeypot": "Leave this field empty",
+    "errorSummary": "The registration was not sent: {count} field to correct. | The registration was not sent: {count} fields to correct.",
+    "error": {
+      "required": "This field is required.",
+      "invalid": "This value is not valid.",
+      "too_long": "This text is too long.",
+      "min": "The value is below the minimum ({min}).",
+      "max": "The value is above the maximum ({max})."
+    },
+    "rejected": {
+      "closed": "Registration is closed.",
+      "full": "There are no places left.",
+      "too_fast": "Sent too quickly: check your answers and send again.",
+      "expired": "The form has expired: check your answers and send again.",
+      "invalid": "The form has expired: check your answers and send again.",
+      "rejected": "The registration was refused.",
+      "too_many_requests": "Too many submissions in a short time: please wait a few minutes.",
+      "unavailable": "The registration could not be saved: please try again in a moment."
+    },
+    "confirmedTitle": "Your registration is confirmed",
+    "waitingTitle": "Your registration is pending",
+    "waitingFull": "All places are taken: you are on the waiting list. The organiser will let you know if a place becomes available.",
+    "waitingManual": "The organiser will confirm your registration (for instance once the payment is received).",
+    "emailSent": "A summary email has been sent to you.",
+    "payment": "Pay the registration",
+    "paymentHint": "Payment is made on the provider's website.",
+    "backToForm": "Back to the form",
+    "privacy": "Personal data",
+    "privacyText": "Purpose: {purpose} Your answers are kept {days} days, then deleted. Only the organisers can see them.",
+    "entries": "Registered teams",
+    "entriesTitle": "Registrations — {title}",
+    "confirmedEntries": "Confirmed registrations",
+    "waitingEntries": "Pending",
+    "waitingEntriesHint": "Waiting list or payment not received yet.",
+    "noEntries": "No registration.",
+    "count": "{count} registration | {count} registrations",
+    "attached": "Registration",
+    "register": "Register"
   }
 }

@@ -2,9 +2,9 @@
 import { searchApiPath, searchSections, type SearchResults } from '~/utils/search'
 
 // Search field of the header, on every page (FEATURE_SEARCH.md § 2.1, SRC-01, SRC-02).
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const query = ref('')
-const { results } = useSuggestions<SearchResults>(query, searchApiPath)
+const { results } = useSuggestions<SearchResults>(query, value => searchApiPath(value, locale.value))
 const groups = computed(() => (results.value ? searchSections(results.value) : [])
   .map(section => ({ label: t(`search.category.${section.category}`), hits: section.hits })))
 </script>

@@ -321,9 +321,11 @@ describe('global search (FEATURE_SEARCH.md)', () => {
   it('SRC-03/SRC-04: one section per non-empty category, linking to site pages, no person', async () => {
     const wrapper = await mountRoute('/search?q=resultats')
     expect(wrapper.find('h1').text()).toBe('Résultats pour « resultats »')
-    expect(wrapper.findAll('[data-category]').map(section => section.attributes('data-category'))).toEqual(['competitions', 'events'])
+    expect(wrapper.findAll('[data-category]').map(section => section.attributes('data-category'))).toEqual(['competitions', 'events', 'news'])
     expect(wrapper.find('[data-category="competitions"] a').attributes('href')).toBe('/competitions/2999/RCH')
     expect(wrapper.find('[data-category="events"] a').attributes('href')).toBe('/events/77')
+    // CMS-11: published news (phase 4).
+    expect(wrapper.find('[data-category="news"] a').attributes('href')).toBe('/news/finale-resultats')
     expect((await mountRoute('/search?q=alpha')).text()).not.toContain('Ann')
   })
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  EDITORIAL_MENU_ID,
   MAIN_MENU,
   findMenuLink,
   isActiveLink,
@@ -7,6 +8,7 @@ import {
   resolveMenu,
   resolveMenuLink,
   stripLocalePrefix,
+  withEditorialMenu,
   type LinkContext,
   type MenuItem,
 } from '../../app/utils/navigation'
@@ -34,10 +36,10 @@ describe('MAIN_MENU', () => {
     ])
   })
 
-  it('NAV-10: only delivered pages are internal links (phase 3: CAL-07, HIS-05, TEA-05, CLB-05)', () => {
+  it('NAV-10: only delivered pages are internal links (phase 4: NEWS-08, every entry is delivered)', () => {
     const links = resolveMenu(MAIN_MENU, context('fr')).flatMap(item => (isMenuGroup(item) ? item.children : [item]))
-    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'calendar', 'events', 'competitions-list', 'history', 'teams', 'clubs'])
-    expect(links.filter(link => link.kind === 'legacy').map(link => link.id)).toEqual(['news'])
+    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'news', 'calendar', 'events', 'competitions-list', 'history', 'teams', 'clubs'])
+    expect(links.filter(link => link.kind === 'legacy').map(link => link.id)).toEqual([])
     expect(links.filter(link => link.kind === 'app2').map(link => link.id)).toEqual(['live'])
   })
 })
@@ -119,5 +121,28 @@ describe('findMenuLink', () => {
 
   it('returns undefined for an unknown id', () => {
     expect(findMenuLink(MAIN_MENU, 'unknown')).toBeUndefined()
+  })
+})
+
+describe('withEditorialMenu', () => {
+  const resolved = resolveMenu(MAIN_MENU, context('en'))
+  const entries = [
+    { label: 'The sport', path: '/le-kayak-polo', external: false, children: [{ label: 'Refereeing', path: '/le-kayak-polo/arbitrage', external: false, children: [] }] },
+    { label: 'FFCK', path: 'https://www.ffck.org', external: true, children: [] },
+  ]
+
+  it('CNT-04: inserts « Le kayak-polo » between teams-clubs and live, parents followed by their children', () => {
+    const menu = withEditorialMenu(resolved, entries, context('en').localePath)
+    expect(menu.map(item => item.id)).toEqual(['home', 'news', 'calendar', 'events', 'competitions', 'teams-clubs', EDITORIAL_MENU_ID, 'live'])
+    const group = menu.find(item => item.id === EDITORIAL_MENU_ID)
+    expect(group && isMenuGroup(group) ? group.children : []).toEqual([
+      { id: 'editorial-0', kind: 'internal', href: '/en/le-kayak-polo', to: '/le-kayak-polo', label: 'The sport' },
+      { id: 'editorial-1', kind: 'internal', href: '/en/le-kayak-polo/arbitrage', to: '/le-kayak-polo/arbitrage', label: 'Refereeing' },
+      { id: 'editorial-2', kind: 'external', href: 'https://www.ffck.org', label: 'FFCK' },
+    ])
+  })
+
+  it('CNT-04: no editorial entry → no group', () => {
+    expect(withEditorialMenu(resolved, [], context('en').localePath)).toEqual(resolved)
   })
 })

@@ -57,6 +57,8 @@ describe('global search (FEATURE_SEARCH.md)', () => {
     events: [{ id: 77, libelle: 'Tournoi Résultats', place: 'Rivecity', start: null, end: null }],
     teams: [],
     clubs: [{ code: 'C001', label: 'Club Alpha', department: { code: 'CD33', label: 'Gironde' }, logo: null, position: null }],
+    news: [{ slug: 'finale', title: 'Finale', lead: 'Le chapô.', cover: null, published_at: '2020-06-01T12:00:00+02:00', categories: [] }],
+    pages: [{ title: 'Arbitrage', path: '/le-kayak-polo/arbitrage' }],
   }
 
   it('SRC-05: queries shorter than 2 or longer than 50 characters are not sent', () => {
@@ -65,13 +67,17 @@ describe('global search (FEATURE_SEARCH.md)', () => {
     expect(searchQuery('x'.repeat(51))).toBeNull()
     expect(searchQuery(['ab'])).toBeNull()
     expect(searchApiPath('saint malo')).toBe('/search?q=saint+malo')
+    expect(searchApiPath('saint malo', 'en')).toBe('/search?q=saint+malo&lang=en')
   })
 
   it('SRC-03: one section per non-empty category, each hit linking to its site page', () => {
-    expect(searchSections(results).map(section => section.category)).toEqual(['competitions', 'events', 'clubs'])
+    expect(searchSections(results).map(section => section.category)).toEqual(['competitions', 'events', 'clubs', 'news', 'pages'])
     expect(searchHits(results, 'competitions')[0]).toEqual({ key: 'c-2999-RCH', label: 'Championnat Résultats', detail: 'Poule A · 2999', to: '/competitions/2999/RCH' })
     expect(searchHits(results, 'events')[0]!.to).toBe('/events/77')
     expect(searchHits(results, 'clubs')[0]!.to).toBe('/clubs/C001')
+    // CMS-11: news and editorial pages (phase 4).
+    expect(searchHits(results, 'news')[0]).toEqual({ key: 'n-finale', label: 'Finale', detail: 'Le chapô.', to: '/news/finale' })
+    expect(searchHits(results, 'pages')[0]!.to).toBe('/le-kayak-polo/arbitrage')
   })
 })
 

@@ -72,5 +72,6 @@ useHead(() => ({
         </li>
       </ul>
     </section>
+    <ContentLinked kind="club" :reference="club.code" />
   </div>
 </template>

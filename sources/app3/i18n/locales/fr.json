@@ -34,7 +34,8 @@
     "teams": "Équipes",
     "clubs": "Clubs",
     "live": "En direct",
-    "events": "Événements"
+    "events": "Événements",
+    "editorial": "Le kayak-polo"
   },
   "footer": {
     "kayakPolo": "Kayak-polo",
@@ -61,7 +62,11 @@
     "ongoing": "En cours",
     "recentEvents": "Événements récents",
     "noEvents": "Aucun événement publié pour le moment.",
-    "eventsUnavailable": "Les événements sont momentanément indisponibles."
+    "eventsUnavailable": "Les événements sont momentanément indisponibles.",
+    "featured": "À la une",
+    "latestNews": "Dernières actualités",
+    "allNews": "Toutes les actualités",
+    "partners": "Partenaires"
   },
   "error": {
     "notFoundTitle": "Page introuvable",
@@ -384,7 +389,9 @@
       "competitions": "Compétitions",
       "events": "Événements",
       "teams": "Équipes",
-      "clubs": "Clubs"
+      "clubs": "Clubs",
+      "news": "Actualités",
+      "pages": "Pages"
     },
     "label": "Rechercher sur le site"
   },
@@ -397,5 +404,106 @@
     "intro": "Un événement réunit sur un même lieu et un même week-end une ou plusieurs compétitions : ouvrez-le pour voir tous ses matchs.",
     "previousYear": "Année précédente",
     "nextYear": "Année suivante"
+  },
+  "news": {
+    "title": "Actualités",
+    "description": "Actualités du kayak-polo : résultats, sélections, annonces et vie fédérale.",
+    "pageTitle": "Actualités — page {page}",
+    "categories": "Catégories",
+    "allCategories": "Toutes",
+    "empty": "Aucune actualité pour le moment.",
+    "unavailable": "Les actualités sont momentanément indisponibles.",
+    "newer": "Plus récents",
+    "older": "Plus anciens",
+    "pagination": "Pages des actualités",
+    "rss": "S'abonner (RSS)",
+    "rssTitle": "Actualités de kayak-polo.info",
+    "publishedOn": "Publié le {date}",
+    "updatedOn": "· mis à jour le {date}",
+    "by": "Par {signature}",
+    "related": "En lien avec cet article",
+    "relatedKind": {
+      "competition": "Compétition",
+      "event": "Événement",
+      "club": "Club"
+    },
+    "previous": "Article précédent",
+    "next": "Article suivant",
+    "siblings": "Autres articles",
+    "share": "Partager",
+    "shareOn": {
+      "facebook": "Facebook",
+      "x": "X",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail"
+    },
+    "copyLink": "Copier le lien",
+    "copied": "Lien copié",
+    "preview": "Prévisualisation : cet article n'est pas publié.",
+    "video": "Lire la vidéo ({provider})",
+    "gallery": "Visionneuse d'images",
+    "galleryPosition": "Image {index} sur {count}",
+    "galleryPrevious": "Image précédente",
+    "galleryNext": "Image suivante",
+    "galleryClose": "Fermer la visionneuse",
+    "linkedNews": "Actualités"
+  },
+  "content": {
+    "toc": "Sommaire",
+    "children": "Dans cette rubrique",
+    "preview": "Prévisualisation : cette page n'est pas publiée."
+  },
+  "forms": {
+    "state": {
+      "open": "Inscriptions ouvertes jusqu'au {date}.",
+      "openNoEnd": "Inscriptions ouvertes.",
+      "full": "Complet — les nouvelles inscriptions vont en liste d'attente.",
+      "closed": "Les inscriptions sont closes.",
+      "upcoming": "Ouverture des inscriptions le {date}."
+    },
+    "places": "{confirmed} / {capacity} places confirmées",
+    "manual": "Chaque inscription est confirmée par l'organisateur (par exemple à réception du paiement).",
+    "required": "obligatoire",
+    "requiredHint": "Les champs marqués d'un astérisque (*) sont obligatoires.",
+    "choose": "Choisir…",
+    "submit": "Envoyer l'inscription",
+    "honeypot": "Ne pas remplir ce champ",
+    "errorSummary": "L'inscription n'a pas été envoyée : {count} champ à corriger. | L'inscription n'a pas été envoyée : {count} champs à corriger.",
+    "error": {
+      "required": "Ce champ est obligatoire.",
+      "invalid": "Cette valeur n'est pas valide.",
+      "too_long": "Ce texte est trop long.",
+      "min": "La valeur est inférieure au minimum ({min}).",
+      "max": "La valeur dépasse le maximum ({max})."
+    },
+    "rejected": {
+      "closed": "Les inscriptions sont closes.",
+      "full": "Il n'y a plus de place.",
+      "too_fast": "Envoi trop rapide : vérifiez vos réponses puis envoyez à nouveau.",
+      "expired": "Le formulaire a expiré : vérifiez vos réponses puis envoyez à nouveau.",
+      "invalid": "Le formulaire a expiré : vérifiez vos réponses puis envoyez à nouveau.",
+      "rejected": "L'inscription a été refusée.",
+      "too_many_requests": "Trop d'envois en peu de temps : merci de patienter quelques minutes.",
+      "unavailable": "L'inscription n'a pas pu être enregistrée : merci de réessayer dans quelques instants."
+    },
+    "confirmedTitle": "Votre inscription est confirmée",
+    "waitingTitle": "Votre inscription est en attente",
+    "waitingFull": "Toutes les places sont prises : vous êtes sur la liste d'attente. L'organisateur vous préviendra si une place se libère.",
+    "waitingManual": "L'organisateur confirmera votre inscription (par exemple à réception du paiement).",
+    "emailSent": "Un e-mail récapitulatif vous a été envoyé.",
+    "payment": "Payer l'inscription",
+    "paymentHint": "Le paiement se fait sur le site du prestataire.",
+    "backToForm": "Retour au formulaire",
+    "privacy": "Données personnelles",
+    "privacyText": "Finalité : {purpose} Vos réponses sont conservées {days} jours puis supprimées. Seuls les organisateurs y ont accès.",
+    "entries": "Liste des inscrits",
+    "entriesTitle": "Inscrits — {title}",
+    "confirmedEntries": "Inscriptions confirmées",
+    "waitingEntries": "En attente",
+    "waitingEntriesHint": "Liste d'attente ou paiement non encore reçu.",
+    "noEntries": "Aucune inscription.",
+    "count": "{count} inscription | {count} inscriptions",
+    "attached": "Inscriptions",
+    "register": "S'inscrire"
   }
 }

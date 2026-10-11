@@ -8,7 +8,7 @@ const NOT_FOUND = 404
  * (CMP-14, EVT-05, GRP-04) unless `notFoundIsError` is false; other errors are left to the page, which shows an
  * « unavailable » state.
  */
-export async function useApiResource<T>(path: MaybeRefOrGetter<string | null>, options: { notFoundIsError?: boolean } = {}) {
+export async function useApiResource<T>(path: MaybeRefOrGetter<string | null>, options: { notFoundIsError?: boolean, server?: boolean } = {}) {
   const api2 = useApi2()
   const result = await useAsyncData(
     () => `api2:${toValue(path) ?? 'none'}`,
@@ -16,6 +16,8 @@ export async function useApiResource<T>(path: MaybeRefOrGetter<string | null>, o
       const current = toValue(path)
       return current === null ? Promise.resolve(null) : api2<T>(current)
     },
+    // `server: false`: fetched by the browser only (previews, never in a cached server rendering, CMS-12).
+    { server: options.server ?? true },
   )
 
   if (options.notFoundIsError !== false) {

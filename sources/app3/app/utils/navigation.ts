@@ -25,7 +25,7 @@ export type MenuItem = MenuLink | MenuGroup
 
 export const MAIN_MENU: readonly MenuItem[] = [
   { id: 'home', to: '/', ready: true },
-  { id: 'news', to: '/news', legacyPath: '/', ready: false },
+  { id: 'news', to: '/news', legacyPath: '/', ready: true },
   { id: 'calendar', to: '/calendar', legacyPath: '/kpcalendrier.php', ready: true },
   { id: 'events', to: '/events', ready: true },
   {
@@ -53,9 +53,10 @@ export interface LinkContext {
   localePath: (path: string) => string
 }
 
+/** `label` replaces the translated `nav.<id>` for the entries written by the editors (PAGE_CONTENT.md § 3). */
 export type ResolvedLink =
-  | { id: string, kind: 'internal', href: string, to: string }
-  | { id: string, kind: 'legacy' | 'app2', href: string }
+  | { id: string, kind: 'internal', href: string, to: string, label?: string }
+  | { id: string, kind: 'legacy' | 'app2' | 'external', href: string, label?: string }
 
 export interface ResolvedGroup {
   id: string
@@ -100,6 +101,37 @@ export function resolveMenu(menu: readonly MenuItem[], context: LinkContext): Re
     const link = resolveMenuLink(item, context)
     return link ? [link] : []
   })
+}
+
+/** Editorial menu « Le kayak-polo », written by the editors (api2 `GET /menu`, PAGE_CONTENT.md § 3). */
+export interface EditorialMenuEntry {
+  label: string
+  path: string
+  external: boolean
+  children: EditorialMenuEntry[]
+}
+
+export const EDITORIAL_MENU_ID = 'editorial'
+/** The editorial entry is inserted after this one (between « Teams and clubs » and « Live »). */
+const EDITORIAL_MENU_AFTER = 'teams-clubs'
+
+/**
+ * Inserts the editorial group in the resolved menu. Its two levels are shown as one list (a parent followed by
+ * its children); no entry (empty menu, api2 unavailable) → no group (CNT-04).
+ */
+export function withEditorialMenu(
+  items: readonly ResolvedMenuItem[],
+  entries: readonly EditorialMenuEntry[],
+  localePath: LinkContext['localePath'],
+): ResolvedMenuItem[] {
+  const children = entries.flatMap(entry => [entry, ...entry.children]).map((entry, index): ResolvedLink => (entry.external
+    ? { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'external', href: entry.path, label: entry.label }
+    : { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'internal', href: localePath(entry.path), to: entry.path, label: entry.label }))
+  if (children.length === 0) {
+    return [...items]
+  }
+  const position = items.findIndex(item => item.id === EDITORIAL_MENU_AFTER) + 1
+  return [...items.slice(0, position), { id: EDITORIAL_MENU_ID, children }, ...items.slice(position)]
 }
 
 /** An internal route is active on its own path and its sub-paths; `/` only on itself. */

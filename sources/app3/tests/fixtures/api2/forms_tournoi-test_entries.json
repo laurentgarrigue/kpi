@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "body": {
+    "title": "Tournoi test",
+    "columns": [
+      "Club",
+      "Équipe"
+    ],
+    "confirmed": [
+      [
+        "Club Alpha Lacville",
+        "Alpha"
+      ]
+    ],
+    "waiting": [],
+    "capacity": 2
+  }
+}
