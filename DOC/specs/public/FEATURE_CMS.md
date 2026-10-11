@@ -1,6 +1,6 @@
 # Module éditorial (CMS natif) — api2 + app4
 
-**Phase** : 4a — **Statut** : 📝 Brouillon (10/10/2026) — **Remplace** : WordPress (articles, pages, menus,
+**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026, décisions Q-P4-1 à 5) — **Remplace** : WordPress (articles, pages, menus,
 médiathèque, Rank Math, WP Multilang, Sassy Social Share, Enable Media Replace, flux RSS)
 **Pages publiques associées** : [PAGE_NEWS.md](PAGE_NEWS.md) (actualités), [PAGE_CONTENT.md](PAGE_CONTENT.md)
 (pages éditoriales, menu, accueil) — **Stratégie** : § 5.1, 5.2, 5.4, 7 de
@@ -16,7 +16,7 @@ api2, affiché par app3. Les ~50 derniers articles et les pages utiles de WordPr
 
 | Élément | Inclus (MVP) | Exclu |
 |---|---|---|
-| Articles | titre, chapô, corps riche, image de une, date de publication programmable, brouillon / publié / archivé, auteur, liens vers compétitions / événements / clubs, catégories (tags simples), SEO | commentaires, révisions multiples (une seule version + journal) |
+| Articles | titre, chapô, corps riche, image de une, date de publication programmable, brouillon / publié / archivé, signature libre, liens vers compétitions / événements / clubs, **catégories** (une ou plusieurs, liste fixe § 3.1), SEO | commentaires, révisions multiples (une seule version + journal), mots clés libres (étiquettes) |
 | Pages | slug, titre, corps riche, page parente, SEO | modèles de page multiples |
 | Menu éditorial | entrées vers pages, articles, URL ; une entrée de premier niveau « Le kayak-polo » | édition des entrées « données » (Calendrier, Compétitions… restent dans `MAIN_MENU`) |
 | Médias | images (JPEG, PNG, WebP), PDF ; variantes redimensionnées ; texte alternatif FR/EN ; remplacement de fichier à URL constante ; albums (galeries) | vidéo hébergée (on intègre YouTube / Vimeo par lien, chargé au clic) |
@@ -31,9 +31,9 @@ InnoDB / `utf8mb4`. Pas de dépendance à la base WordPress après l'import.
 
 | Table | Colonnes principales |
 |---|---|
-| `kp_cms_article` | `id`, `slug` (unique), `title_fr`, `title_en`, `lead_fr`, `lead_en`, `body_fr`, `body_en` (HTML assaini), `cover_media_id`, `status` (`draft`\|`published`\|`archived`), `published_at` (programmable), `author_code` (→ `kp_user.Code`), `seo_title_*`, `seo_description_*`, `og_media_id`, `legacy_wp_id` (import), `created_at`, `updated_at`, `updated_by` |
+| `kp_cms_article` | `id`, `slug` (unique), `title_fr`, `title_en`, `lead_fr`, `lead_en`, `body_fr`, `body_en` (HTML assaini), `cover_media_id`, `status` (`draft`\|`published`\|`archived`), `published_at` (programmable), `signature` (texte libre affiché, Q-P4-3), `author_code` (→ `kp_user.Code`, interne : jamais exposé), `seo_title_*`, `seo_description_*`, `og_media_id`, `legacy_wp_id` (import), `created_at`, `updated_at`, `updated_by` |
 | `kp_cms_article_link` | `article_id`, `kind` (`competition`\|`event`\|`club`), `ref` (`{saison}/{code}`, id d'événement, code club) |
-| `kp_cms_tag`, `kp_cms_article_tag` | étiquettes simples (`slug`, `label_fr`, `label_en`) |
+| `kp_cms_category`, `kp_cms_article_category` | catégories (`slug`, `label_fr`, `label_en`, `position`) ; un article en a **une ou plusieurs** (§ 3.1) |
 | `kp_cms_page` | `id`, `slug` (unique, hors segments réservés § 6), `parent_id`, `title_*`, `body_*`, `status`, `seo_*`, `legacy_wp_id`, horodatages |
 | `kp_cms_menu_item` | `id`, `parent_id`, `position`, `label_fr`, `label_en`, `target_kind` (`page`\|`article`\|`url`), `target_ref` |
 | `kp_cms_media` | `id`, `path` (relatif à `HOST_MEDIA_PATH/content/`), `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `album_id`, `uploaded_by`, horodatages |
@@ -42,6 +42,22 @@ InnoDB / `utf8mb4`. Pas de dépendance à la base WordPress après l'import.
 | `kp_cms_redirect` | `from_path` (unique), `to_path`, `code` (301), `hits` — permaliens WordPress et articles non repris (§ 8) |
 | `kp_cms_log` | `id`, `entity`, `entity_id`, `action`, `user_code`, `at`, `diff` (résumé) — journal des modifications |
 
+### 3.1 Catégories
+
+Liste **fixe**, créée par le script SQL (modifiable seulement par script, pas d'écran) ; un article publié en
+a au moins une. Ce ne sont **pas** des mots clés libres (les « étiquettes » du brouillon sont abandonnées) :
+
+| `slug` | Libellé FR | Libellé EN |
+|---|---|---|
+| `equipes-de-france` | Équipes de France | French national teams |
+| `competitions-nationales` | Compétitions nationales | National competitions |
+| `competitions-regionales-open-internationales` | Compétitions régionales, open et internationales | Regional, open and international competitions |
+| `reglements-vie-federale` | Règlements et vie fédérale | Rules and federation life |
+
+Le visiteur filtre les actualités par catégorie (PAGE_NEWS.md § 2.1).
+
+### 3.2 Corps des contenus
+
 Le **corps** est stocké en HTML **assaini côté api2** (liste blanche : titres h2–h4, paragraphes, listes, liens,
 gras / italique, citations, tableaux simples, images `kp_cms_media`, intégrations vidéo YouTube / Vimeo
 normalisées) avec `symfony/html-sanitizer` **7.4.\*** (à ajouter ; ne doit pas tirer Symfony 8). Les liens internes au site sont stockés en
@@ -49,17 +65,20 @@ chemins relatifs (`/competitions/…`), jamais en URL absolues.
 
 ## 4. Droits
 
-- Nouvelle **capacité « Rédacteur »**, indépendante du niveau de profil (un rédacteur peut être niveau 8) :
-  table `kp_user_capability (user_code, capability)` avec `capability = 'editor'` (Q-P4-1).
+- Nouvelle **capacité « Rédacteur »** (✅ Q-P4-1), indépendante du niveau de profil (un rédacteur peut être niveau 8) :
+  table `kp_user_capability (user_code, capability)` avec `capability = 'editor'` ; exposée à app4 dans
+  `user.capabilities` (`/auth/login`, `/auth/me`, `/auth/refresh`).
 - Profils **1 et 2** : toutes les actions éditoriales sans capacité explicite (cohérent avec le bypass de
   DROITS_PAR_PROFIL.md).
-- Matrice ajoutée à [DROITS_PAR_PROFIL.md](../DROITS_PAR_PROFIL.md) dans la PR d'implémentation :
+- Matrice reportée dans [DROITS_PAR_PROFIL.md](../DROITS_PAR_PROFIL.md) § Éditorial :
 
 | Action | Rédacteur | Profils 1–2 | Autres |
 |---|---|---|---|
 | Créer / modifier articles, pages, médias, albums | ✅ | ✅ | ❌ |
 | Publier / dépublier, programmer | ✅ | ✅ | ❌ |
-| Supprimer (corbeille : statut `archived`, suppression définitive par profils 1–2) | ❌ | ✅ | ❌ |
+| Archiver (corbeille : statut `archived`) | ✅ | ✅ | ❌ |
+| Supprimer définitivement | ❌ | ✅ | ❌ |
+| Formulaires (FEATURE_FORMS.md) | ✅ | ✅ | ❌ |
 | Menu éditorial, blocs d'accueil, redirections | ❌ | ✅ | ❌ |
 | Attribuer la capacité Rédacteur (page Utilisateurs) | ❌ | ✅ | ❌ |
 
@@ -71,8 +90,9 @@ Toutes les écritures passent par l'authentification JWT d'app4 et sont journali
 
 | Endpoint | Réponse |
 |---|---|
-| `GET /news?page=&tag=&competition=&event=&club=` | articles **publiés** (`published_at` ≤ maintenant), 12 par page, du plus récent au plus ancien : `{ items: [{ slug, title, lead, cover, published_at, tags }], page, pages }` |
-| `GET /news/{slug}` | article publié complet : `{ slug, title, lead, body, cover, published_at, updated_at, author: { name }, tags, links: [{ kind, label, path }], seo }` ; brouillon, programmé ou inconnu → 404 |
+| `GET /news?page=&category=&competition=&event=&club=` | articles **publiés** (`published_at` ≤ maintenant), 12 par page, du plus récent au plus ancien : `{ items: [{ slug, title, lead, cover, published_at, categories }], page, pages }` |
+| `GET /news/categories` | les 4 catégories `{ slug, label }` dans l'ordre |
+| `GET /news/{slug}` | article publié complet : `{ slug, title, lead, body, cover, published_at, updated_at, signature, categories, links: [{ kind, label, path }], seo }` ; brouillon, programmé ou inconnu → 404 |
 | `GET /pages/{slug}` | page publiée : `{ slug, title, body, parent, children, seo }` |
 | `GET /menu` | arbre du menu éditorial (libellés, chemins) |
 | `GET /home` | blocs d'accueil actifs, dans l'ordre, avec leur contenu résolu (articles à la une, alerte en cours) |
@@ -81,15 +101,16 @@ Toutes les écritures passent par l'authentification JWT d'app4 et sont journali
 | `GET /sitemap/content.xml` | URL des articles et pages publiés (agrégé par le sitemap d'app3) |
 | `GET /redirect?path=` | redirection connue pour un chemin (`{ to, code }` ou 404), utilisée par le middleware d'app3 |
 
-Langue : paramètre `lang=fr|en` (défaut `fr`), champs EN vides → valeurs FR. **Aucune donnée personnelle** en
-dehors du nom d'auteur (prénom + nom du compte rédacteur, Q-P4-3). `Cache-Control: public, max-age=60`.
+Langue : paramètre `lang=fr|en` (défaut `fr`), champs EN vides → valeurs FR. **Aucune donnée personnelle** : l'article
+porte une **signature libre** saisie par le rédacteur (✅ Q-P4-3, ex. « La CNA Kayak-Polo »), le compte auteur n'est
+jamais exposé. `Cache-Control: public, max-age=60`.
 Recherche globale (FEATURE_SEARCH.md § 2.5) : nouvelles catégories `news` et `pages` (titre, chapô), 8 résultats.
 
 ### 5.2 Administration (app4, authentifié)
 
 CRUD `/admin/cms/articles`, `/admin/cms/pages`, `/admin/cms/menu`, `/admin/cms/media` (envoi multipart, 20 Mo
 max, remplacement `PUT …/file`), `/admin/cms/albums`, `/admin/cms/home-blocks`, `/admin/cms/redirects`,
-`/admin/cms/tags`, `GET /admin/cms/log`. Prévisualisation : `GET /admin/cms/articles/{id}/preview-token` →
+`GET /admin/cms/categories`, `GET /admin/cms/log`. Prévisualisation : `GET /admin/cms/articles/{id}/preview-token` →
 jeton signé à durée courte (15 min) accepté par `GET /news/{slug}?preview=…` (non mis en cache).
 
 ### 5.3 Médias
@@ -109,14 +130,14 @@ Sans réponse, le cache expire seul (`maxAge` 60 s) : la publication n'échoue j
 
 ## 6. app4 — écrans d'édition
 
-Nouvelle rubrique de menu **« Site public »** (visible avec la capacité Rédacteur ou profils 1–2) ; les specs
-d'écran détaillées seront ajoutées dans `DOC/specs/PAGE_CMS_*.md` (modèle des specs app4) dans la PR
-d'implémentation :
+Nouvelle rubrique **« Éditorial »** dans le menu **Admin** d'app4 (à côté de Référentiels, Opérations, Live, Droits),
+visible avec la capacité Rédacteur ou les profils 1–2 ; écrans détaillés dans
+[PAGE_CMS.md](../PAGE_CMS.md) (specs app4) :
 
-- **Articles** : liste filtrable (statut, auteur, étiquette), éditeur **TipTap** (Vue 3, sans service tiers) avec
+- **Articles** : liste filtrable (statut, catégorie), éditeur **TipTap** (✅ Q-P4-2) (Vue 3, sans service tiers) avec
   barre réduite (titres, gras, italique, listes, lien, citation, image depuis la médiathèque, tableau simple,
   vidéo par URL), onglets FR / EN, panneau latéral (statut, date, image de une, liens compétition / événement /
-  club par autocomplétion, étiquettes, SEO avec aperçu Google / Open Graph), bouton **Prévisualiser** (onglet
+  club par autocomplétion, catégories (cases à cocher, au moins une), signature, SEO avec aperçu Google / Open Graph), bouton **Prévisualiser** (onglet
   `beta.*` avec jeton) ; sauvegarde automatique du brouillon local (navigateur) toutes les 30 s.
 - **Pages** : idem sans date ni liens ; choix de la page parente ; slug vérifié (unique, non réservé :
   `news`, `competitions`, `calendar`, `events`, `groups`, `history`, `teams`, `clubs`, `search`, `forms`,
@@ -137,10 +158,13 @@ d'implémentation :
 Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-run]` lisant la base `dbwp`
 (connexion Doctrine dédiée, lecture seule) :
 
-1. articles `publish` les plus récents (`post_date` décroissant), pages listées (validées par les rédacteurs,
-   Q-P4-4) ; champs WP Multilang éclatés en FR / EN ; Rank Math → champs SEO ;
-2. HTML converti (blocs « classic » → liste blanche § 3), images et galeries rapatriées dans la médiathèque
-   (albums), liens internes réécrits vers les nouvelles URL ;
+1. articles `publish` les plus récents (`post_date` décroissant), sans catégorie à l'import (à classer par les
+   rédacteurs ; un article sans catégorie reste publiable mais n'apparaît dans aucun filtre) ; pages listées
+   (✅ Q-P4-4) : `2849, 2711, 2286, 2270, 2267, 1881, 1723, 1591, 1581, 1480, 1049, 987` importées **publiées**,
+   `313` (à rafraîchir, moderniser) et `1579` (à réactualiser) importées en **brouillon** avec une note dans le
+   rapport ; champs WP Multilang éclatés en FR / EN ; Rank Math → champs SEO ;
+2. HTML converti (blocs « classic » → liste blanche § 3.2), images et galeries **des contenus repris seulement**
+   rapatriées dans la médiathèque (albums) — Q-P4-5, sans réponse : valeur par défaut retenue, liens internes réécrits vers les nouvelles URL ;
 3. **idempotente** (`legacy_wp_id`) : relancée, elle met à jour sans dupliquer ;
 4. **rapport** (fichier + sortie) : shortcodes non convertis (`[ninja_form]`, `[table]`…), liens cassés, médias
    introuvables ;
@@ -163,18 +187,18 @@ Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-ru
 - **CMS-08** — `GET /rss.xml` est un RSS 2.0 valide des 20 derniers articles publiés.
 - **CMS-09** — `app:import-wordpress --dry-run` produit le rapport sans écrire ; l'import réel est idempotent et
   crée les redirections des permaliens.
-- **CMS-10** — Chaque DTO public a un test listant ses champs ; seuls le prénom et le nom de l'auteur sont exposés.
+- **CMS-10** — Chaque DTO public a un test listant ses champs ; aucun compte utilisateur n'est exposé (signature libre).
+- **CMS-13** — Un article a une ou plusieurs des 4 catégories ; `GET /news?category=` ne renvoie que les articles
+  de la catégorie ; catégorie inconnue → 400.
 - **CMS-11** — La recherche globale renvoie les articles et pages publiés (catégories `news`, `pages`).
 - **CMS-12** — Un jeton de prévisualisation expiré ou falsifié est refusé ; une prévisualisation n'est jamais mise
   en cache.
 
-## 10. Questions ouvertes (à trancher avant implémentation)
+## 10. Décisions (11/10/2026)
 
-- **Q-P4-1 — Droit Rédacteur.** Proposé : capacité séparée (`kp_user_capability`) plutôt qu'un nouveau niveau de
-  profil, car les rédacteurs ont déjà des niveaux variés. Alternative : un mandat « Rédacteur ».
-- **Q-P4-2 — Éditeur riche.** Proposé : TipTap (MIT, Vue 3, pas de service tiers). Alternative : Markdown
-  (plus simple, moins accessible aux rédacteurs).
-- **Q-P4-3 — Auteur affiché.** Proposé : « Prénom Nom » du compte, ou une signature libre par article
-  (« La CNA Kayak-Polo »). À confirmer avec les rédacteurs.
-- **Q-P4-4 — Pages à reprendre.** Liste des pages WordPress utiles (sur 43) à valider par les rédacteurs.
-- **Q-P4-5 — Galeries existantes.** Volume des albums WordPress à rapatrier (impact disque, sauvegarde restic).
+- **Q-P4-1 — Droit Rédacteur.** ✅ Capacité séparée `editor` (`kp_user_capability`), attribuée par les profils 1–2.
+- **Q-P4-2 — Éditeur riche.** ✅ TipTap.
+- **Q-P4-3 — Auteur affiché.** ✅ Signature libre par article.
+- **Q-P4-4 — Pages à reprendre.** ✅ 14 pages (§ 8), dont 313 et 1579 en brouillon à retravailler.
+- **Q-P4-5 — Galeries existantes.** Sans réponse : seuls les médias des contenus repris sont rapatriés (défaut).
+- Catégories : liste fixe de 4 (§ 3.1) à la place des étiquettes libres.

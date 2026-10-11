@@ -34,14 +34,14 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [PAGE_TEAM.md](PAGE_TEAM.md) | Recherche d'équipe et fiche équipe | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | [PAGE_CLUBS.md](PAGE_CLUBS.md) | Clubs : liste, carte, fiche (remplace aussi les logos) | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
 | [FEATURE_SEARCH.md](FEATURE_SEARCH.md) | Recherche globale | 3 | ✅ Validée — 🛠 Implémentée (à livrer) |
-| [FEATURE_CMS.md](FEATURE_CMS.md) | Module éditorial : modèle de contenu, droits Rédacteur, api2, écrans app4, médias, reprise WordPress | 4a | 📝 Brouillon (questions Q-P4-1 à 5) |
-| [PAGE_NEWS.md](PAGE_NEWS.md) | Actualités : liste, article, partage, RSS | 4a | 📝 Brouillon |
-| [PAGE_CONTENT.md](PAGE_CONTENT.md) | Pages éditoriales, menu « Le kayak-polo », accueil éditorial | 4a | 📝 Brouillon |
-| [FEATURE_FORMS.md](FEATURE_FORMS.md) | Formulaires d'inscription, liste publique, HelloAsso, anti-spam, RGPD | 4b | 📝 Brouillon (questions Q-P4-6 à 9) |
+| [FEATURE_CMS.md](FEATURE_CMS.md) | Module éditorial : modèle de contenu, droits Rédacteur, api2, écrans app4, médias, reprise WordPress | 4a | ✅ Validée (11/10/2026) |
+| [PAGE_NEWS.md](PAGE_NEWS.md) | Actualités : liste, article, catégories, partage, RSS | 4a | ✅ Validée (11/10/2026) |
+| [PAGE_CONTENT.md](PAGE_CONTENT.md) | Pages éditoriales, menu « Le kayak-polo », accueil éditorial | 4a | ✅ Validée (11/10/2026) |
+| [FEATURE_FORMS.md](FEATURE_FORMS.md) | Formulaires d'inscription, liste publique, HelloAsso, anti-spam, RGPD | 4b | ✅ Validée (11/10/2026) |
 | `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |
 
-> Les specs de l'**administration** (app4) restent dans [DOC/specs/](../) (`PAGE_*.md`). Les specs des
-> écrans d'édition du futur module éditorial y seront ajoutées en phase 4a.
+> Les specs de l'**administration** (app4) restent dans [DOC/specs/](../) (`PAGE_*.md`) ; les écrans du module
+> éditorial et des formulaires : [PAGE_CMS.md](../PAGE_CMS.md).
 
 ## Modèle de spec
 
