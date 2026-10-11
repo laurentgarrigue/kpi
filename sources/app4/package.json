@@ -9,7 +9,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
@@ -30,10 +31,13 @@
     "postcss": "^8.5.21",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
   "dependencies": {
+    "@tiptap/extension-table": "^3.31.3",
+    "@tiptap/extension-youtube": "^3.31.3",
     "driver.js": "^1.6.0",
     "easytimer.js": "^4.6.0",
     "leaflet": "^1.9.4"

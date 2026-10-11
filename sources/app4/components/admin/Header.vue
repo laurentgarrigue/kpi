@@ -246,6 +246,29 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.journal')
     })
   }
+  // Éditorial (site public): Editor capability or profile 1–2 (PAGE_CMS.md, ADM-CMS-01)
+  if (authStore.canEditContent) {
+    const editorial: MenuItem[] = [
+      { to: '/cms/articles', icon: 'heroicons:newspaper', label: t('menu.cms_articles') },
+      { to: '/cms/pages', icon: 'heroicons:document-duplicate', label: t('menu.cms_pages') },
+      { to: '/cms/media', icon: 'heroicons:photo', label: t('menu.cms_media') },
+      { to: '/cms/forms', icon: 'heroicons:clipboard-document-list', label: t('menu.cms_forms') },
+    ]
+    if (authStore.canAdministerContent) {
+      editorial.push(
+        { to: '/cms/menu', icon: 'heroicons:bars-3', label: t('menu.cms_menu') },
+        { to: '/cms/home', icon: 'heroicons:home', label: t('menu.cms_home') },
+        { to: '/cms/redirects', icon: 'heroicons:arrow-uturn-right', label: t('menu.cms_redirects') },
+      )
+    }
+    groups.push({
+      key: 'editorial',
+      label: t('menu.editorial'),
+      icon: 'heroicons:pencil-square',
+      items: editorial
+    })
+  }
+
   if (rights.length > 0) {
     groups.push({
       key: 'rights',

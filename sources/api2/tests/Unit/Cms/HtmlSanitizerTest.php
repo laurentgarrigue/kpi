@@ -52,6 +52,30 @@ final class HtmlSanitizerTest extends TestCase
         self::assertSame($once, $sanitizer->sanitize($once));
     }
 
+    public function testAdmCms03TipTapOutputIsKeptAndStableOnReload(): void
+    {
+        $tiptap = '<h2>Titre</h2><p>Texte <strong>gras</strong> <em>italique</em> <u>souligné</u> <s>barré</s> '
+            . '<a target="_blank" rel="noopener noreferrer nofollow" href="/competitions/2026/N1H">lien</a></p>'
+            . '<ul><li><p>a</p></li></ul><blockquote><p>citation</p></blockquote>'
+            . '<img src="/media/content/2026/10/photo.jpg" alt="Podium">'
+            . '<table style="min-width: 50px"><colgroup><col style="min-width: 25px"><col style="min-width: 25px"></colgroup>'
+            . '<tbody><tr><th colspan="1" rowspan="1"><p>A</p></th><th colspan="1" rowspan="1"><p>B</p></th></tr></tbody></table>'
+            . '<div data-youtube-video=""><iframe width="640" height="480" allowfullscreen="true" autoplay="false" '
+            . 'src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?controls=1" start="0"></iframe></div>';
+
+        $sanitized = (new HtmlSanitizer())->sanitize($tiptap);
+
+        self::assertSame(
+            '<h2>Titre</h2><p>Texte <strong>gras</strong> <em>italique</em> <u>souligné</u> <s>barré</s> '
+            . '<a target="_blank" href="/competitions/2026/N1H" rel="noopener noreferrer">lien</a></p>'
+            . '<ul><li><p>a</p></li></ul><blockquote><p>citation</p></blockquote>'
+            . '<img src="/media/content/2026/10/photo.jpg" alt="Podium">'
+            . '<table><tbody><tr><th colspan="1" rowspan="1"><p>A</p></th><th colspan="1" rowspan="1"><p>B</p></th></tr></tbody></table>'
+            . '<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" allowfullscreen=""></iframe>',
+            $sanitized,
+        );
+    }
+
     public function testCms02NormalisesVideoUrls(): void
     {
         self::assertSame('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ', HtmlSanitizer::videoEmbedUrl('https://youtu.be/dQw4w9WgXcQ'));

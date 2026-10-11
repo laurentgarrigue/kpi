@@ -7,6 +7,9 @@
 -- Aussi chargée par les fixtures de test d'api2 (CI et `make api2_test_fixtures`), entre schema.sql et data.sql.
 -- Les écritures sont journalisées dans kp_journal (existant), comme le reste de l'administration.
 
+-- Libellés accentués (catégories) : sans cela, un client en latin1 les enregistrerait en mojibake.
+SET NAMES utf8mb4;
+
 -- Capacités indépendantes du niveau de profil (Q-P4-1) : 'editor' = Rédacteur du site public.
 CREATE TABLE IF NOT EXISTS `kp_user_capability` (
   `user_code` varchar(8) NOT NULL,

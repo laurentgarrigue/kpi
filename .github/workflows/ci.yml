@@ -122,6 +122,12 @@ jobs:
         working-directory: sources/${{ matrix.app }}
         run: npx eslint .
 
+      # app4 : tests unitaires Vitest des utils purs (rubrique Éditorial, PAGE_CMS.md). app3 a son propre job.
+      - name: Tests unitaires (app4)
+        if: steps.relevant.outputs.changed == 'true' && matrix.app == 'app4'
+        working-directory: sources/app4
+        run: npm test
+
   # ---------------------------------------------------------------------------
   # 2bis. Build Nuxt effectif (Phase 3) — app2 / app3 / app4.
   #    Garantit que `main` reste buildable : un .vue/.ts cassé, un import

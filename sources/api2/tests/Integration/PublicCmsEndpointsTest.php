@@ -65,6 +65,7 @@ final class PublicCmsEndpointsTest extends ApiTestCase
     public function testCms13CategoriesFilterTheNews(): void
     {
         self::assertSame(['equipes-de-france', 'competitions-nationales', 'competitions-regionales-open-internationales', 'reglements-vie-federale'], self::column($this->getJson('/news/categories'), 'slug'));
+        self::assertSame('Règlements et vie fédérale', $this->getJson('/news/categories')[3]['label'], 'libellés accentués intacts (migration en utf8mb4)');
         self::assertSame(['nouveau-reglement'], self::column($this->getJson('/news?category=reglements-vie-federale')['items'], 'slug'));
         self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/news?category=inconnue', 400));
     }
