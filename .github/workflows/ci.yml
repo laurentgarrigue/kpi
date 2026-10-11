@@ -398,6 +398,8 @@ jobs:
       - name: Charger les fixtures dans la MariaDB éphémère
         run: |
           mysql -h 127.0.0.1 -P 3306 -uroot -pfixtures kpi_fixtures_test < SQL/fixtures/schema.sql
+          # Tables du site public (phase 4) : migration datée, rejouable, entre le schéma et les données.
+          for f in SQL/migrations/*_public_site_*.sql; do mysql -h 127.0.0.1 -P 3306 -uroot -pfixtures kpi_fixtures_test < "$f"; done
           mysql -h 127.0.0.1 -P 3306 -uroot -pfixtures kpi_fixtures_test < SQL/fixtures/data.sql
 
       - name: Tests d'intégration (endpoints publics sur fixtures)

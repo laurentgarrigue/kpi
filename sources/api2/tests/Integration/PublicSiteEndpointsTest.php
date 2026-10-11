@@ -267,7 +267,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
     {
         $results = $this->getJson('/search?q=RESULTATS');
 
-        self::assertSame(['competitions', 'events', 'teams', 'clubs'], array_keys($results));
+        self::assertSame(['competitions', 'events', 'teams', 'clubs', 'news', 'pages'], array_keys($results), 'catégories éditoriales ajoutées en fin (CMS-11)');
         self::assertSame(
             ['2999/RCH', '2999/RCP', '2999/RMU', '2998/RQL', '2998/RCP'],
             array_map(static fn (array $c): string => $c['season'] . '/' . $c['code'], $results['competitions']),

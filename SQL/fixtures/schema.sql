@@ -374,4 +374,48 @@ CREATE TABLE `kp_equipe` (
   KEY `fk_equipe_club` (`Code_club`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Site public, phase 4 (FEATURE_CMS.md, FEATURE_FORMS.md) : comptes d'administration (droits éditoriaux) et journal
+-- d'administration. Les tables kp_cms_*, kp_form*, kp_user_capability viennent de
+-- SQL/migrations/2026-10-11_public_site_cms_forms.sql, chargé après ce fichier.
+DROP TABLE IF EXISTS `kp_user`;
+CREATE TABLE `kp_user` (
+  `Code` varchar(8) NOT NULL DEFAULT '',
+  `Pwd` varchar(255) NOT NULL DEFAULT '',
+  `Identite` varchar(80) DEFAULT NULL,
+  `Mail` varchar(100) NOT NULL DEFAULT '',
+  `Tel` varchar(15) NOT NULL,
+  `Fonction` varchar(100) NOT NULL DEFAULT '',
+  `Niveau` smallint(6) NOT NULL DEFAULT 0,
+  `Type_filtre_competition` smallint(6) NOT NULL DEFAULT 0,
+  `Filtre_competition` mediumtext NOT NULL,
+  `Filtre_saison` mediumtext NOT NULL,
+  `Filtre_competition_sql` mediumtext NOT NULL,
+  `Filtre_journee` mediumtext NOT NULL,
+  `Limitation_equipe_club` varchar(50) DEFAULT NULL,
+  `Id_Evenement` varchar(20) NOT NULL DEFAULT '',
+  `Date_debut` date DEFAULT NULL,
+  `Date_fin` date DEFAULT NULL,
+  PRIMARY KEY (`Code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_journal`;
+CREATE TABLE `kp_journal` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Dates` timestamp NULL DEFAULT NULL,
+  `Users` varchar(8) NOT NULL DEFAULT 'INCONNU',
+  `Actions` varchar(40) NOT NULL DEFAULT 'IGNORE',
+  `Saisons` varchar(4) DEFAULT NULL,
+  `Competitions` varchar(8) DEFAULT NULL,
+  `Evenements` int(11) DEFAULT NULL,
+  `Journees` int(11) DEFAULT NULL,
+  `Matchs` text DEFAULT NULL,
+  `Journal` text DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Tables de la phase 4 recréées à chaque chargement (la migration les crée « IF NOT EXISTS »).
+DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_cms_category`, `kp_cms_article`,
+  `kp_cms_article_category`, `kp_cms_article_link`, `kp_cms_page`, `kp_cms_menu_item`, `kp_cms_home_block`,
+  `kp_cms_redirect`, `kp_form`, `kp_form_field`, `kp_form_entry`, `kp_mail_log`;
+
 SET FOREIGN_KEY_CHECKS = 1;

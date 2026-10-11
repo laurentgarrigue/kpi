@@ -26,12 +26,13 @@ api2, affiché par app3. Les ~50 derniers articles et les pages utiles de WordPr
 
 ## 3. Modèle de données (base KPI, MariaDB)
 
-Création par script daté `SQL/migrations/2026-xx-xx_cms.sql` (convention du dépôt), tables `kp_cms_*` en
+Création par le script daté `SQL/migrations/2026-10-11_public_site_cms_forms.sql` (convention du dépôt, appliqué par
+`make db_migrate file=…`), tables `kp_cms_*` en
 InnoDB / `utf8mb4`. Pas de dépendance à la base WordPress après l'import.
 
 | Table | Colonnes principales |
 |---|---|
-| `kp_cms_article` | `id`, `slug` (unique), `title_fr`, `title_en`, `lead_fr`, `lead_en`, `body_fr`, `body_en` (HTML assaini), `cover_media_id`, `status` (`draft`\|`published`\|`archived`), `published_at` (programmable), `signature` (texte libre affiché, Q-P4-3), `author_code` (→ `kp_user.Code`, interne : jamais exposé), `seo_title_*`, `seo_description_*`, `og_media_id`, `legacy_wp_id` (import), `created_at`, `updated_at`, `updated_by` |
+| `kp_cms_article` | `id`, `slug` (unique), `title_fr`, `title_en`, `lead_fr`, `lead_en`, `body_fr`, `body_en` (HTML assaini), `cover_media_id`, `status` (`draft`\|`published`\|`archived`), `published_at` (programmable), `signature` (texte libre affiché, Q-P4-3), `author_code` (→ `kp_user.Code`, interne : jamais exposé), `seo_title_*`, `seo_description_*` (l'image Open Graph est l'image de une), `legacy_wp_id` (import), `created_at`, `updated_at`, `updated_by` |
 | `kp_cms_article_link` | `article_id`, `kind` (`competition`\|`event`\|`club`), `ref` (`{saison}/{code}`, id d'événement, code club) |
 | `kp_cms_category`, `kp_cms_article_category` | catégories (`slug`, `label_fr`, `label_en`, `position`) ; un article en a **une ou plusieurs** (§ 3.1) |
 | `kp_cms_page` | `id`, `slug` (unique, hors segments réservés § 6), `parent_id`, `title_*`, `body_*`, `status`, `seo_*`, `legacy_wp_id`, horodatages |
@@ -40,7 +41,6 @@ InnoDB / `utf8mb4`. Pas de dépendance à la base WordPress après l'import.
 | `kp_cms_album` | `id`, `slug`, `title_*`, `cover_media_id` |
 | `kp_cms_home_block` | `id`, `kind` (`featured`\|`latest_news`\|`alert`\|`partners`), `position`, `enabled`, `config` (JSON : ids d'articles, texte d'alerte FR/EN, niveau, dates d'affichage, partenaires) |
 | `kp_cms_redirect` | `from_path` (unique), `to_path`, `code` (301), `hits` — permaliens WordPress et articles non repris (§ 8) |
-| `kp_cms_log` | `id`, `entity`, `entity_id`, `action`, `user_code`, `at`, `diff` (résumé) — journal des modifications |
 
 ### 3.1 Catégories
 
@@ -60,7 +60,8 @@ Le visiteur filtre les actualités par catégorie (PAGE_NEWS.md § 2.1).
 
 Le **corps** est stocké en HTML **assaini côté api2** (liste blanche : titres h2–h4, paragraphes, listes, liens,
 gras / italique, citations, tableaux simples, images `kp_cms_media`, intégrations vidéo YouTube / Vimeo
-normalisées) avec `symfony/html-sanitizer` **7.4.\*** (à ajouter ; ne doit pas tirer Symfony 8). Les liens internes au site sont stockés en
+normalisées) par un filtre **par liste blanche écrit sur `ext-dom`** (`App\Cms\HtmlSanitizer`) : aucune dépendance
+ajoutée (symfony/html-sanitizer tirait league/uri et n'apportait rien de plus ici). Les liens internes au site sont stockés en
 chemins relatifs (`/competitions/…`), jamais en URL absolues.
 
 ## 4. Droits
@@ -82,7 +83,8 @@ chemins relatifs (`/competitions/…`), jamais en URL absolues.
 | Menu éditorial, blocs d'accueil, redirections | ❌ | ✅ | ❌ |
 | Attribuer la capacité Rédacteur (page Utilisateurs) | ❌ | ✅ | ❌ |
 
-Toutes les écritures passent par l'authentification JWT d'app4 et sont journalisées (`kp_cms_log`).
+Toutes les écritures passent par l'authentification JWT d'app4 et sont journalisées dans le **journal
+d'administration existant** (`kp_journal`, page Journal d'app4), comme le reste de l'administration.
 
 ## 5. api2
 
@@ -110,7 +112,7 @@ Recherche globale (FEATURE_SEARCH.md § 2.5) : nouvelles catégories `news` et `
 
 CRUD `/admin/cms/articles`, `/admin/cms/pages`, `/admin/cms/menu`, `/admin/cms/media` (envoi multipart, 20 Mo
 max, remplacement `PUT …/file`), `/admin/cms/albums`, `/admin/cms/home-blocks`, `/admin/cms/redirects`,
-`GET /admin/cms/categories`, `GET /admin/cms/log`. Prévisualisation : `GET /admin/cms/articles/{id}/preview-token` →
+`GET /admin/cms/categories`, `GET|PUT /admin/cms/editors` (capacité Rédacteur). Prévisualisation : `GET /admin/cms/articles/{id}/preview-token` →
 jeton signé à durée courte (15 min) accepté par `GET /news/{slug}?preview=…` (non mis en cache).
 
 ### 5.3 Médias
@@ -178,7 +180,7 @@ Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-ru
 - **CMS-02** — Le HTML enregistré est assaini (script, `on*=`, `style`, iframe hors YouTube / Vimeo, `javascript:`
   supprimés) ; un test couvre chaque cas.
 - **CMS-03** — Sans capacité Rédacteur ni profil 1–2, toute écriture `/admin/cms/*` → 403 ; avec, elle est
-  journalisée dans `kp_cms_log`.
+  journalisée dans `kp_journal`.
 - **CMS-04** — Un média envoyé est vérifié (type réel, taille), privé de ses métadonnées EXIF, décliné en
   variantes WebP ; un SVG est refusé ; « Remplacer » garde l'URL.
 - **CMS-05** — Les champs EN vides sont remplacés par les champs FR dans les réponses `lang=en`.

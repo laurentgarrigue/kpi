@@ -21,6 +21,18 @@ final class PublicApiDocumentationTest extends ApiTestCase
         }
 
         self::assertSame([
+            // Phase 4 (FEATURE_CMS.md § 5.1)
+            '/news/categories',
+            '/news',
+            '/news/{slug}',
+            '/pages/{slug}',
+            '/menu',
+            '/home',
+            '/albums/{slug}',
+            '/rss.xml',
+            '/sitemap/content.xml',
+            '/redirect',
+            // Phase 2
             '/seasons',
             '/group/{season}/{code}/competitions',
             '/competition/{season}/{code}',

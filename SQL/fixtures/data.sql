@@ -339,3 +339,81 @@ INSERT INTO `kp_competition`
 INSERT INTO `kp_journee`
   (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
   (9261, 'RDV', '2999', '2999-07-10', '2999-07-11', 'Rencontre amicale', 'RDV J1', 'Lacville', NULL, 'O', 'C', 'Journée 1', 1, 1, 2, 'O');
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Site public, phase 4 (FEATURE_CMS.md, FEATURE_FORMS.md). Les catégories et les blocs d'accueil sont créés par la
+-- migration. Mots de passe : aucun (les tests signent un JWT directement).
+DELETE FROM `kp_user`;
+DELETE FROM `kp_user_capability`;
+DELETE FROM `kp_cms_media`;
+DELETE FROM `kp_cms_article`;
+DELETE FROM `kp_cms_article_category`;
+DELETE FROM `kp_cms_article_link`;
+DELETE FROM `kp_cms_page`;
+DELETE FROM `kp_cms_menu_item`;
+DELETE FROM `kp_cms_redirect`;
+DELETE FROM `kp_form`;
+DELETE FROM `kp_form_field`;
+DELETE FROM `kp_form_entry`;
+DELETE FROM `kp_mail_log`;
+DELETE FROM `kp_journal`;
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('TADMIN', '', 'Admin Test', 'admin@example.test', '', '', 2, '', '', '', ''),   -- profil 2 : tous droits éditoriaux
+  ('TEDIT', '', 'Rédacteur Test', 'edit@example.test', '', '', 8, '', '', '', ''),  -- profil 8 + capacité editor
+  ('TVIEW', '', 'Lecteur Test', 'view@example.test', '', '', 8, '', '', '', '');   -- profil 8 sans capacité : 403
+INSERT INTO `kp_user_capability` (`user_code`, `capability`) VALUES ('TEDIT', 'editor');
+
+INSERT INTO `kp_cms_media` (`id`, `path`, `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `created_at`, `updated_at`) VALUES
+  (9501, '2999/01/finale.jpg', 'image/jpeg', 1600, 900, 120000, 'La finale', 'The final', 'CNA', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
+  (9502, '2999/01/reglement.pdf', 'application/pdf', NULL, NULL, 250000, '', '', '', '2020-01-01 10:00:00', '2020-01-01 10:00:00');
+
+INSERT INTO `kp_cms_article` (`id`, `slug`, `title_fr`, `title_en`, `lead_fr`, `lead_en`, `body_fr`, `body_en`, `cover_media_id`, `status`, `published_at`, `signature`, `author_code`, `seo_description_fr`, `created_at`, `updated_at`) VALUES
+  -- publié, anglais renseigné, lié à une compétition, un événement et un club ; 2 catégories
+  (9601, 'finale-resultats', 'Finale des résultats', 'Results final', 'Le chapô.', 'The lead.', '<p>Corps <strong>gras</strong>.</p>', '<p>Body.</p>', 9501, 'published', '2020-06-01 12:00:00', 'La CNA Kayak-Polo', 'TEDIT', 'Description SEO', '2020-05-30 10:00:00', '2020-06-01 12:00:00'),
+  -- publié, sans anglais (repli FR), plus ancien, catégorie 4
+  (9602, 'nouveau-reglement', 'Nouveau règlement', '', 'Règlement 2999.', '', '<p>Texte.</p>', '', NULL, 'published', '2020-03-01 12:00:00', 'Commission sportive', 'TADMIN', '', '2020-03-01 10:00:00', '2020-03-01 12:00:00'),
+  -- brouillon : jamais public
+  (9603, 'brouillon', 'Brouillon', '', '', '', '<p>…</p>', '', NULL, 'draft', NULL, '', 'TEDIT', '', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
+  -- programmé dans le futur : pas encore public
+  (9604, 'programme', 'Programmé', '', '', '', '<p>…</p>', '', NULL, 'published', '9999-01-01 00:00:00', '', 'TEDIT', '', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
+  -- archivé : plus public
+  (9605, 'archive', 'Archivé', '', '', '', '<p>…</p>', '', NULL, 'archived', '2019-01-01 00:00:00', '', 'TEDIT', '', '2019-01-01 10:00:00', '2019-01-01 10:00:00');
+INSERT INTO `kp_cms_article_category` (`article_id`, `category_id`) VALUES (9601, 1), (9601, 2), (9602, 4), (9603, 2);
+INSERT INTO `kp_cms_article_link` (`article_id`, `kind`, `ref`) VALUES
+  (9601, 'competition', '2999/RCH'), (9601, 'event', '77'), (9601, 'club', 'C001'), (9603, 'competition', '2999/RCH');
+
+INSERT INTO `kp_cms_page` (`id`, `slug`, `parent_id`, `title_fr`, `title_en`, `body_fr`, `body_en`, `status`, `created_at`, `updated_at`) VALUES
+  (9701, 'le-kayak-polo', NULL, 'Le kayak-polo', 'Canoe polo', '<h2>Histoire</h2><p>a</p><h2>Règles</h2><p>b</p><h2>Pratiquer</h2><p>c</p>', '<p>EN</p>', 'published', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
+  (9702, 'arbitrage', 9701, 'Arbitrage', '', '<p>Arbitrer.</p>', '', 'published', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
+  (9703, 'page-brouillon', NULL, 'Page brouillon', '', '<p>…</p>', '', 'draft', '2020-01-01 10:00:00', '2020-01-01 10:00:00');
+INSERT INTO `kp_cms_menu_item` (`id`, `parent_id`, `position`, `label_fr`, `label_en`, `target_kind`, `target_ref`) VALUES
+  (9801, NULL, 1, 'Le kayak-polo', 'Canoe polo', 'page', '9701'),
+  (9802, NULL, 2, 'Arbitrage', '', 'page', '9702'),
+  (9803, NULL, 3, 'Page brouillon', '', 'page', '9703'),   -- cible non publiée : masquée
+  (9804, NULL, 4, 'FFCK', 'FFCK', 'url', 'https://www.ffck.org');
+UPDATE `kp_cms_home_block` SET `config` = '{"articles":[9601]}' WHERE `kind` = 'featured';
+INSERT INTO `kp_cms_redirect` (`from_path`, `to_path`, `code`) VALUES ('/2020/06/finale/', '/news/finale-resultats', 301);
+
+-- Formulaires : ouvert (capacité 2, liste d'attente), confirmation manuelle, clos, brouillon.
+INSERT INTO `kp_form` (`id`, `slug`, `title_fr`, `title_en`, `intro_fr`, `intro_en`, `status`, `opens_at`, `closes_at`, `capacity`, `waiting_list`, `confirmation_mode`, `payment_url`, `notify_emails`, `confirmation_text_fr`, `confirmation_text_en`, `public_list`, `public_columns`, `purpose_fr`, `purpose_en`, `retention_days`, `event_id`, `created_at`, `updated_at`) VALUES
+  (9901, 'tournoi-test', 'Tournoi test', 'Test tournament', '<p>Inscrivez votre équipe.</p>', '', 'published', '2020-01-01 00:00:00', '9999-01-01 00:00:00', 2, 1, 'auto', '', 'orga@example.test', 'Merci !', '', 1, '["club","team"]', 'Organisation du tournoi.', '', 90, 77, '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+  (9902, 'stage-paiement', 'Stage (paiement)', '', '', '', 'published', '2020-01-01 00:00:00', '9999-01-01 00:00:00', NULL, 1, 'manual', 'https://www.helloasso.com/test', '', '', '', 1, '["team"]', '', '', 90, NULL, '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+  (9903, 'clos', 'Formulaire clos', '', '', '', 'published', '2020-01-01 00:00:00', '2020-02-01 00:00:00', NULL, 0, 'auto', '', '', '', '', 0, '[]', '', '', 30, NULL, '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+  (9904, 'brouillon-form', 'Brouillon', '', '', '', 'draft', NULL, NULL, NULL, 0, 'auto', '', '', '', '', 0, '[]', '', '', 90, NULL, '2020-01-01 00:00:00', '2020-01-01 00:00:00');
+INSERT INTO `kp_form_field` (`form_id`, `field_key`, `type`, `label_fr`, `label_en`, `required`, `options`, `min_value`, `max_value`, `position`) VALUES
+  (9901, 'email', 'email', 'E-mail', 'E-mail', 1, '[]', NULL, NULL, 1),
+  (9901, 'phone', 'phone', 'Téléphone', 'Phone', 0, '[]', NULL, NULL, 2),
+  (9901, 'club', 'club', 'Club', 'Club', 1, '[]', NULL, NULL, 3),
+  (9901, 'team', 'text', 'Équipe', 'Team', 1, '[]', NULL, NULL, 4),
+  (9901, 'players', 'number', 'Joueurs', 'Players', 1, '[]', 5, 10, 5),
+  (9901, 'category', 'select', 'Catégorie', 'Category', 1, '[{"value":"U18","label_fr":"U18","label_en":"U18"},{"value":"SEN","label_fr":"Senior","label_en":"Senior"}]', NULL, NULL, 6),
+  (9901, 'competition', 'competition', 'Compétition visée', 'Competition', 0, '[]', NULL, NULL, 7),
+  (9902, 'email', 'email', 'E-mail', '', 1, '[]', NULL, NULL, 1),
+  (9902, 'team', 'text', 'Équipe', '', 1, '[]', NULL, NULL, 2),
+  (9903, 'email', 'email', 'E-mail', '', 1, '[]', NULL, NULL, 1);
+INSERT INTO `kp_form_entry` (`id`, `form_id`, `status`, `reason`, `answers`, `email`, `created_at`, `updated_at`) VALUES
+  (9951, 9901, 'confirmed', NULL, '{"email":"a@example.test","phone":"0600000000","club":"C001","team":"Alpha","players":6,"category":"SEN"}', 'a@example.test', '2020-01-02 00:00:00', '2020-01-02 00:00:00'),
+  (9952, 9901, 'cancelled', NULL, '{"email":"c@example.test","club":"C002","team":"Annulée","players":6,"category":"SEN"}', 'c@example.test', '2020-01-03 00:00:00', '2020-01-03 00:00:00'),
+  (9953, 9902, 'waiting', 'manual', '{"email":"b@example.test","team":"Bravo"}', 'b@example.test', '2020-01-04 00:00:00', '2020-01-04 00:00:00'),
+  -- formulaire clos depuis 2020 (rétention 30 jours) : purgeable
+  (9954, 9903, 'confirmed', NULL, '{"email":"old@example.test"}', 'old@example.test', '2020-01-05 00:00:00', '2020-01-05 00:00:00');

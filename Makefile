@@ -66,7 +66,7 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
@@ -996,6 +996,14 @@ api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base
 	@echo "Tests unitaires API2 (suite unit, sans DB)..."
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
 
+db_migrate: ## Applique un script SQL/migrations/*.sql à la base de l'environnement (make db_migrate file=SQL/migrations/<fichier>.sql)
+	@[ -n "$(file)" ] && [ -f "$(file)" ] || { echo "⛔ Usage : make db_migrate file=SQL/migrations/<fichier>.sql"; exit 1; }
+	@[ -n "$(DB_ROOT_PASSWORD)" ] && [ -n "$(DB_NAME)" ] || { \
+		echo "⛔ DB_ROOT_PASSWORD ou DB_NAME non défini. Vérifie docker/.env."; exit 1; }
+	@echo "Application de $(file) sur $(DB_NAME) ($(DB_CONTAINER_NAME))..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(DB_NAME) < "$(file)"
+	@echo "✔ $(file) appliqué"
+
 api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
 	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
 		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
@@ -1003,8 +1011,11 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
 		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
 		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
-	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
+	@echo "Chargement de SQL/fixtures/schema.sql, des migrations du site public puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
+	@for f in SQL/migrations/*_public_site_*.sql; do \
+		docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < "$$f" || exit 1; \
+	done
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
 	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
 

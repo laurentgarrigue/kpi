@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Cms\CmsRules;
+use App\Cms\NewsService;
+use App\Cms\PageService;
 use App\Http\UnicodeJsonResponse;
 use App\PublicResults\PublicCompetitionService;
 use App\PublicSite\PublicSiteRules;
@@ -43,6 +46,8 @@ class PublicSiteController extends AbstractController
         private readonly PublicSiteService $site,
         private readonly PublicCompetitionService $competitions,
         private readonly SearchThrottle $throttle,
+        private readonly NewsService $news,
+        private readonly PageService $pages,
     ) {
     }
 
@@ -189,9 +194,12 @@ class PublicSiteController extends AbstractController
     #[Route('/search', name: 'public_search', methods: ['GET'])]
     #[OA\Get(
         path: '/search',
-        summary: 'Global search: competitions, events, teams, clubs (8 each, no person); 30 requests per minute per IP',
+        summary: 'Global search: competitions, events, teams, clubs, news, pages (8 each, no person); 30 requests per minute per IP',
         tags: [self::DOC_TAG],
-        parameters: [new OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string', minLength: 2, maxLength: 50))],
+        parameters: [
+            new OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string', minLength: 2, maxLength: 50)),
+            new OA\Parameter(name: 'lang', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: CmsRules::LANGUAGES)),
+        ],
     )]
     public function search(Request $request): JsonResponse
     {
@@ -201,7 +209,17 @@ class PublicSiteController extends AbstractController
         }
         $term = PublicSiteRules::searchTerm($request->query->getString('q'));
 
-        return $term === null ? $this->invalidParameter() : $this->cached($this->site->search($term), self::SHORT_MAX_AGE);
+        if ($term === null) {
+            return $this->invalidParameter();
+        }
+        // Editorial contents are new categories, appended without changing the others (FEATURE_SEARCH.md § 2.5, CMS-11).
+        $language = CmsRules::language($request->query->getString('lang') ?: null);
+        [$contains] = PublicSiteRules::containsPatterns($term);
+
+        return $this->cached($this->site->search($term) + [
+            'news' => $this->news->search($contains, PublicSiteService::GLOBAL_SEARCH_LIMIT, $language),
+            'pages' => $this->pages->search($contains, PublicSiteService::GLOBAL_SEARCH_LIMIT, $language),
+        ], self::SHORT_MAX_AGE);
     }
 
     /** Section demandée : null si absente, false si invalide. */
