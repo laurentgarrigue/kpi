@@ -16,7 +16,8 @@ le gabarit du site, les rendre accessibles par un menu administrable, et rendre 
    segment, la hiérarchie parent / enfant doit correspondre au chemin, sinon 301 vers le bon chemin).
 2. Gabarit : fil d'Ariane (pages parentes), `<h1>`, corps (mêmes styles que les articles, PAGE_NEWS.md § 2.2.3),
    **sommaire** automatique si la page a au moins 3 titres `h2` (ancres), liste des sous-pages s'il y en a.
-3. Documents PDF de la médiathèque : lien avec type et taille (« Règlement 2026 (PDF, 1,2 Mo) »).
+3. Documents PDF de la médiathèque : lien suivi de leur type (« Règlement 2026 (PDF) ») ; la taille n'est pas connue
+   du corps HTML (évolution possible : l'ajouter à l'insertion depuis la médiathèque).
 4. Inconnue ou non publiée → 404 du site ; slug réservé : jamais servi par cette route (FEATURE_CMS.md § 6).
 
 ## 3. Menu éditorial
@@ -40,8 +41,11 @@ actualités** (3 cartes + lien « Toutes les actualités ») · prochains évén
 
 ## 5. Données et cache
 
-`GET /pages/{slug}`, `GET /menu`, `GET /home`. `routeRules` : pages `cache: { maxAge: 300, swr: true }`, accueil
-inchangé (300 s) ; tous purgés à la publication (FEATURE_CMS.md § 5.4). `sitemap.xml` d'app3 agrège
+`GET /pages/{slug}`, `GET /menu`, `GET /home`. Accueil inchangé (300 s), purgé à la publication (FEATURE_CMS.md
+§ 5.4). Les pages éditoriales ont des chemins libres (`/{slug}`) : une règle de cache sur `/**` mettrait aussi en
+cache les routes serveur (`/healthz`, `/_internal/purge`…), elles ne sont donc **pas mises en cache** par app3 et
+sont lues dans api2 à chaque rendu (deux petites tables). Le menu éditorial, présent sur toutes les pages, purge
+tout le cache quand il change (`/*`). `sitemap.xml` d'app3 agrège
 `GET /sitemap/content.xml`.
 
 ## 6. SEO et accessibilité

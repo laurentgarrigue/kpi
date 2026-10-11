@@ -78,8 +78,9 @@ les volumes restent faibles.
   (confirmation), le reste au choix de l'organisateur.
 - **Purge automatique** (commande planifiée quotidienne `app:forms:purge`) à l'échéance de conservation :
   inscriptions supprimées, statistiques agrégées conservées (nombre d'inscrits).
-- Liste publique : jamais de coordonnées ; un inscrit peut demander son retrait (lien dans l'e-mail de
-  confirmation → l'organisateur est notifié).
+- Liste publique : jamais de coordonnées ; un inscrit peut demander son retrait ou une modification en
+  **répondant à l'e-mail de confirmation** (réponse adressée aux organisateurs, `Reply-To`), qui changent le statut
+  dans app4.
 
 ## 7. Critères d'acceptation
 

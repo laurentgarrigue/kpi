@@ -330,22 +330,110 @@ Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild de la s
 | Limite de débit trop stricte / IP mal relayée | Retirer temporairement `trusted_proxies` n'est pas la solution (limite globale) : augmenter `SearchThrottle::LIMIT` |
 | Problème hors app3 lié à la release | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) |
 
-## Phase 4a — Éditorial (CMS natif, reprise WordPress)
+## Phase 4 — Éditorial (4a) et formulaires (4b)
 
 Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](../../specs/public/PAGE_NEWS.md)
-(`NEWS-*`), [PAGE_CONTENT](../../specs/public/PAGE_CONTENT.md) (`CNT-*`). Statut : 📝 **brouillon** (10/10/2026), à
-valider (questions Q-P4-1 à Q-P4-5).
+(`NEWS-*`), [PAGE_CONTENT](../../specs/public/PAGE_CONTENT.md) (`CNT-*`), [FEATURE_FORMS](../../specs/public/FEATURE_FORMS.md)
+(`FRM-*`), écrans app4 [PAGE_CMS](../../specs/PAGE_CMS.md) (`ADM-CMS-*`). Statut : ✅ specs **validées** le 11/10/2026,
+🛠 **implémentée** sur la branche, à livrer. 4a et 4b partent dans la même release (même schéma, même rubrique app4).
 
-*Sections de test à compléter à l'implémentation.* Prévoir : script `SQL/migrations/…_cms.sql`, GD `--with-webp`
-(`Dockerfile.api2` → rebuild), `symfony/html-sanitizer` 7.4, secret `APP3_PURGE_TOKEN`, import `app:import-wordpress` en préprod puis prod,
-médias dans `HOST_MEDIA_PATH/content`, droits « Rédacteur » (app4).
+### 4.0 Décisions (prises le 11/10/2026)
 
-## Phase 4b — Formulaires
+| # | Question | Retenu | ☑ |
+|---|---|---|---|
+| 1 | Q-P4-1 droit d'édition | capacité **Rédacteur** (case dans la fiche utilisateur d'app4) + profils 1–2 | ☑ |
+| 2 | Q-P4-2 éditeur | **TipTap** (`UEditor` de Nuxt UI) | ☑ |
+| 3 | Q-P4-3 auteur | **signature libre** par article (défaut « La CNA Kayak-Polo »), aucun compte exposé | ☑ |
+| 4 | Q-P4-4 pages reprises | 2849, 2711, 2286, 2270, 2267, 1881, 1723, 1591, 1581, 1480, 1049, 987 publiées ; 313 et 1579 en **brouillon** | ☑ |
+| 5 | Q-P4-5 médias repris | sans réponse → défaut : **seuls les médias des contenus repris** | ☐ à confirmer |
+| 6 | Catégories (à la place des étiquettes) | 4 catégories fixes, filtre `?category=` sur `/news` | ☑ |
+| 7 | Q-P4-6 à 9 formulaires | profils 1–2 + rédacteurs ; pas de captcha ; Ninja Forms **19** repris non publié ; HelloAsso = simple lien | ☑ |
 
-Spec : [FEATURE_FORMS](../../specs/public/FEATURE_FORMS.md) (`FRM-*`). Statut : 📝 **brouillon** (10/10/2026), à
-valider (questions Q-P4-6 à Q-P4-9).
+### 4.1 Contenu (branche `claude/public_site_redesign_strategy`, commits relisibles séparément)
 
-*Sections de test à compléter à l'implémentation.* Prévoir : tâche planifiée `app:forms:purge`, envoi d'e-mails (SMTP), anti-spam, export.
+| Commit | Contenu | Impact hors beta |
+|---|---|---|
+| docs | specs validées, `PAGE_CMS.md`, droits § Éditorial | aucun |
+| feat(api2) | CMS public et admin, médiathèque (WebP), formulaires, purge RGPD, import WordPress ; migration `SQL/migrations/2026-10-11_public_site_cms_forms.sql` | **schéma** : nouvelles tables `kp_cms_*`, `kp_form*`, `kp_mail_log`, `kp_user_capability` (aucune table existante modifiée) ; recherche globale : catégories `news` et `pages` |
+| feat(app4) | rubrique **Admin › Éditorial** (articles, pages, médias, menu, accueil, redirections, formulaires) ; case « Rédacteur du site public » | **app4** : nouvelle rubrique, fenêtre utilisateur ; dépendances `@tiptap/extension-table`, `@tiptap/extension-youtube` |
+| feat(app3) | `/news`, `/news/{slug}`, pages `/{slug}`, menu « Le kayak-polo », accueil éditorial, `/forms/{slug}` (+ liste publique), contenus liés, `/rss.xml`, `/sitemap.xml`, purge, anciens permaliens | aucun (beta) |
+| chore(docker) | GD `--with-webp` (`Dockerfile.api2`), montage `HOST_MEDIA_PATH/content` → `/var/www/html/media/content`, `APP3_PURGE_TOKEN`, `WORDPRESS_DATABASE_URL` | **rebuild** d'api2 et redémarrage de la stack |
+
+### 4.2 ⌨️ Tester en local
+
+```bash
+git fetch origin && git checkout claude/public_site_redesign_strategy && git pull
+# docker/.env : APP3_PURGE_TOKEN=$(openssl rand -hex 32) ; WORDPRESS_DATABASE_URL=mysql://…@kpi_dbwp:3306/<base wp>
+make docker_dev_rebuild     # Dockerfile.api2 (WebP) et compose ont changé
+make db_migrate file=SQL/migrations/2026-10-11_public_site_cms_forms.sql
+make api2_test              # recharge les fixtures (schéma + migration + données)
+make app4_npm_install && make app4_bash   # puis `npm test` (utils de la rubrique Éditorial)
+make app3_test && make app3_lint
+```
+
+| # | Commande / action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `make api2_test` | unit 124 + integration 126 (tests `CMS-*`, `FRM-*`) | ☐ |
+| 2 | `make app3_test` | 313 tests verts (unit 140, nuxt 144, e2e 29) ; tests nommés `NEWS-*`, `CNT-*`, `FRM-*`, `CMS-*` | ☐ |
+| 3 | `docker exec kpi_api2 php -r 'var_dump(gd_info()["WebP Support"]);'` | `bool(true)` | ☐ |
+| 4 | Admin › Utilisateurs : cocher « Rédacteur du site public » sur un profil 8 | l'utilisateur voit Admin › Éditorial (sans Menu / Accueil / Redirections) | ☐ |
+| 5 | Admin › Éditorial › Médias : envoyer une photo de téléphone | variantes WebP créées dans `HOST_MEDIA_PATH/content/AAAA/MM/` ; EXIF absent (`exiftool`) ; SVG refusé | ☐ |
+| 6 | Créer un article (catégorie, image, tableau, vidéo YouTube), « Prévisualiser » | ouvre `beta.kpi.localhost/news/{slug}?preview=…` ; publier sans catégorie → refusé | ☐ |
+| 7 | Publier, puis `https://beta.kpi.localhost/news` | l'article apparaît **tout de suite** (purge) ; filtre catégorie, pagination sans JS | ☐ |
+| 8 | L'article : vidéo, images, partage | aucune requête vers YouTube avant le clic ; visionneuse au clic (flèches, Échap) ; « Partager » | ☐ |
+| 9 | Créer une page « le-kayak-polo » + enfant, les mettre au menu (Admin › Éditorial › Menu) | entrée « Le kayak-polo » entre Équipes et clubs et En direct ; `/arbitrage` → 301 vers `/le-kayak-polo/arbitrage` | ☐ |
+| 10 | Admin › Éditorial › Accueil : bandeau « important », à la une, partenaires | ordre et bandeau sur `beta.kpi.localhost/` | ☐ |
+| 11 | `docker exec kpi_api2 php bin/console app:import-wordpress --dry-run --report=var/import.md` | rapport sans écriture : articles, 14 pages (313 et 1579 en brouillon), médias, shortcodes non convertis | ☐ |
+| 12 | Import réel (même commande sans `--dry-run` ; pages, brouillons et formulaire 19 par défaut ; `--uploads-dir` si `wp-content/uploads` est monté), relancé une 2e fois | contenus repris ; 2e passage sans doublon ; formulaire 19 en brouillon | ☐ |
+| 13 | Créer un formulaire rattaché à un événement, ouvert, capacité 1, liste d'attente, lien de paiement | proposé sur la page de l'événement ; 2e inscription → « en attente » ; e-mails dans Mailpit | ☐ |
+| 14 | Le formulaire **JavaScript désactivé** : envoi vide puis correct | erreurs rendues par le serveur avec récapitulatif ; confirmation + lien de paiement | ☐ |
+| 15 | Admin : confirmer l'inscription en attente, exporter CSV / Excel | e-mail « confirmée » ; une ligne par inscription | ☐ |
+| 16 | `docker exec kpi_api2 php bin/console app:forms:purge` | inscriptions échues supprimées, nombre d'inscrits conservé (`archived_entries`) | ☐ |
+
+**Non-régression locale** : app4 (utilisateurs, opérations images), app2, `/admin2`, legacy, recherche globale. ☐
+
+### 4.3 ⌨️ 🌐 PR et CI
+
+Jobs attendus : `tests-api2` (migration chargée entre `schema.sql` et `data.sql`), `phpstan-api2`, `lint-api2` ;
+`lint-nuxt`, `build-nuxt`, `audit-npm`, `tests-app3`, tests unitaires app4 ; `lint-docker`, `trivy-config` ; `ci-summary` vert. ☐
+
+### 4.4 📦 🌍 Prérequis serveur (préprod puis prod)
+
+| # | Action | ☑ |
+|---|---|---|
+| 1 | `docker/.env` : `APP3_PURGE_TOKEN` (`openssl rand -hex 32`, différent par environnement) et `WORDPRESS_DATABASE_URL` (base WordPress de l'environnement, lecture seule) | ☐ |
+| 2 | `mkdir -p "$HOST_MEDIA_PATH/content"` (créé aussi par `make media_init`), propriétaire = `USER_ID` du conteneur api2 | ☐ |
+| 3 | Cron quotidien de purge RGPD : `15 3 * * * docker exec <APPLICATION_NAME>_api2 php bin/console app:forms:purge >> /var/log/kpi/cron_forms_purge.log 2>&1` ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 3) | ☐ |
+| 4 | Envoi d'e-mails d'api2 opérationnel (`MAILER_DSN`, msmtp) : « mot de passe oublié » d'app4 reçu | ☐ |
+
+### 4.5 🖥 Préprod (`/data/kpi_preprod`)
+
+| # | Commande / action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | 🌐 « Deploy preprod » | vert ; `docker/` change → **`docker_preprod_rebuild`** (api2 reconstruit avec WebP) | ☐ |
+| 2 | `make db_migrate file=SQL/migrations/2026-10-11_public_site_cms_forms.sql` | tables créées, 4 catégories et 4 blocs d'accueil ; relançable sans erreur | ☐ |
+| 3 | `make app4_generate_preprod` puis `make app3_generate_preprod` | rubrique Éditorial visible ; `beta.preprod…/news` répond | ☐ |
+| 4 | `docker exec kpi_preprod_api2 printenv APP3_INTERNAL_URL APP3_PURGE_TOKEN` et `docker exec kpi_preprod_app3 printenv NUXT_APP3_PURGE_TOKEN` | même secret des deux côtés | ☐ |
+| 5 | Import WordPress `--dry-run` puis réel ; relire le rapport (shortcodes, liens cassés, médias introuvables) | contenus et médias repris ; redirections créées | ☐ |
+| 6 | Tests 4–10 et 13–15 du § 4.2 sur `beta.preprod.kayak-polo.info` | idem | ☐ |
+| 7 | Inscription depuis un poste extérieur : 6 envois en 10 min | 429 au 6e (IP relayée app3 → api2) | ☐ |
+
+**Non-régression préprod** : app4 (utilisateurs, images), app2, legacy, WordPress inchangé. ☐
+
+### 4.6 Production
+
+Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild car `docker/` change), puis § 4.4,
+`make db_migrate file=…`, `make app4_generate_prod`, `make app3_generate_production`, import WordPress (dry-run, puis
+réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire de test (puis le supprimer). ☐
+
+### 4.7 Retour arrière
+
+| Situation | Action |
+|---|---|
+| Une page éditoriale ou les actualités en erreur | Repasser `news` à `ready: false` dans `app/utils/navigation.ts` (repli legacy) ; vider le menu éditorial (entrée masquée) |
+| Purge sans effet | Vérifier les deux secrets (§ 4.5 n° 4) ; à défaut le cache expire seul en 60 s |
+| Import incorrect | Relancer l'import (idempotent) ; supprimer les contenus depuis l'app4 ; les tables sont indépendantes du legacy |
+| Problème hors app3 lié à la release | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) ; les nouvelles tables peuvent rester en place |
 
 ## Phase 5 — Bascule de `www`
 
