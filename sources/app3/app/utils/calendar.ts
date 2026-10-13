@@ -1,5 +1,5 @@
 import { withQuery } from 'ufo'
-import { competitionPath } from './competitions'
+import { competitionPath, eventTabPath } from './competitions'
 
 import type { GroupSection } from '#kpi-layer/utils/results/types'
 
@@ -40,7 +40,8 @@ export interface CalendarEntry {
   department: string | null
   start: string
   end: string
-  event: { id: number, libelle: string | null } | null
+  /** `single_group`: the event is the view of a single group (PAGE_EVENT_GROUP.md § 2.0). */
+  event: { id: number, libelle: string | null, single_group: boolean } | null
 }
 
 export interface CalendarFilters {
@@ -167,6 +168,10 @@ export function nextMonthWithEntries(entries: readonly CalendarEntry[], month: s
 
 /** Competition page of a gameday: its games, filtered on the gameday for a championship (CAL-03). */
 export function gamedayCompetitionPath(entry: CalendarEntry): string {
+  // A single-group event is the page of its competitions: stay in it (CAL-11).
+  if (entry.event?.single_group) {
+    return eventTabPath(entry.event.id, 'games', entry.competition.code)
+  }
   const path = competitionPath(entry.competition.season, entry.competition.code, 'games')
   return entry.competition.type === 'CHPT' ? withQuery(path, { gameday: entry.id }) : path
 }

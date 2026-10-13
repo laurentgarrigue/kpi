@@ -45,6 +45,16 @@
         "soustitre2": "Poule B"
       }
     ],
-    "events": []
+    "events": [
+      {
+        "id": 79,
+        "libelle": "Finales Multi-groupes",
+        "place": "Rivecity",
+        "start": "2999-06-01",
+        "end": "2999-07-10",
+        "logo": null,
+        "share": 1
+      }
+    ]
   }
 }

@@ -24,6 +24,7 @@ Mêmes règles que la phase 2 ([API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) §
 | `GET /calendar/groups` | groupes ayant une compétition publiée, par section (format de `/groups/{season}`, section 100 « Divers » incluse) | — *(nouveau)* |
 | `GET /competition/{s}/{c}/calendar.ics` | abonnement iCalendar de la compétition : un événement par journée publiée (§ 3.2) | — *(nouveau)* |
 | `GET /gameday/{id}.ics` | une journée publiée, en iCalendar | `upload_ics.php` |
+| `GET /event/{id}/calendar.ics` | abonnement iCalendar d'un événement publié : ses journées publiées, toutes compétitions (§ 3.2) | — *(nouveau, 13/10/2026)* |
 | `GET /history` | groupes ayant au moins une compétition terminée du tour final, par section (format de `/groups/{season}`) | sélecteur de `kphistorique.php` |
 | `GET /history/{group}` | palmarès multi-saisons du groupe (§ 3.3) | `kphistorique.php` |
 | `GET /teams?q=` | recherche d'équipes, `q` ≥ 2 caractères, 20 résultats au plus (§ 3.4) | `searchEquipes.php` |
@@ -48,7 +49,9 @@ Tri : `start`, `section`, `GroupOrder`, tour, nom. Filtres optionnels `section` 
 `text/calendar; charset=utf-8`, RFC 5545 : `VCALENDAR` avec `X-WR-CALNAME` (titre de la compétition et
 saison), un `VEVENT` par journée : `UID` stable (`gameday-{id}@kayak-polo.info`), `DTSTART;VALUE=DATE` /
 `DTEND;VALUE=DATE` (jour suivant la fin), `DTSTAMP`, `SUMMARY` (même libellé que le calendrier : « {nom} - {lieu} ({département}) » ; phases d'une coupe aux mêmes dates et lieu fusionnées), `LOCATION` (lieu,
-département), `URL` (page de la compétition sur le site, `PUBLIC_SITE_URL` ; `games?gameday=` pour un championnat).
+département), `URL` (page de la compétition sur le site, `PUBLIC_SITE_URL` ; `games?gameday=` pour un championnat ;
+**page de l'événement** `/events/{id}/games?competition={c}` quand la journée appartient à un événement d'un seul
+groupe, PAGE_EVENT_GROUP.md § 2.0). Le calendrier (`GET /calendar`) porte `event: { id, libelle, single_group }`.
 Pas de `LAST-MODIFIED` : `kp_journee` n'a pas de date de modification. Lignes repliées à 75 octets,
 caractères spéciaux échappés. Aucune donnée personnelle.
 

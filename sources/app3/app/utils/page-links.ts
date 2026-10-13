@@ -29,6 +29,11 @@ export function competitionIcsUrl(api2BaseUrl: string, season: string, competiti
   return joinURL(api2BaseUrl, 'competition', season, competition, 'calendar.ics')
 }
 
+/** Subscription of a single-group event (PAGE_EVENT_GROUP.md § 2.0, EVT-10). */
+export function eventIcsUrl(api2BaseUrl: string, event: number): string {
+  return joinURL(api2BaseUrl, 'event', String(event), 'calendar.ics')
+}
+
 export function gamedayIcsUrl(api2BaseUrl: string, gameday: number): string {
   return joinURL(api2BaseUrl, 'gameday', `${gameday}.ics`)
 }

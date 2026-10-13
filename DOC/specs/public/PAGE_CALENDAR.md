@@ -53,6 +53,8 @@ Les fichiers ICS sont servis par api2 (URL publique), pas par app3.
 - **CAL-06** — Onglet Infos d'une compétition : abonnement `webcal://` et téléchargement `.ics` ; chaque journée
   propose son `.ics`.
 - **CAL-08** — Des flèches mènent au mois et à l'année précédents / suivants en conservant les filtres.
+- **CAL-11** — Une journée d'un événement **d'un seul groupe** (PAGE_EVENT_GROUP.md § 2.0) mène à l'événement
+  (`/events/{id}/games?competition={c}`) au lieu de la compétition ; les autres journées ne changent pas.
 - **CAL-09** — Le filtre « section » remplace le niveau ; les groupes proposés sont ceux de la section choisie ; un groupe étranger à la section est ignoré.
 - **CAL-10** — L'abonnement propose de copier le lien et un tutoriel Google / Outlook / Apple.
 - **CAL-07** — L'entrée de menu « Calendrier » devient interne (`ready: true`).

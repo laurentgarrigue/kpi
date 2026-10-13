@@ -98,6 +98,11 @@ describe('calendar entries', () => {
   it('CAL-03: a gameday leads to its competition games, on the gameday for a championship', () => {
     expect(gamedayCompetitionPath(entries[1]!)).toBe('/competitions/2026/N1H/games?gameday=2')
     expect(gamedayCompetitionPath(entries[2]!)).toBe('/competitions/2026/N1H/games')
+    expect(gamedayCompetitionPath({ ...entries[1]!, event: { id: 9, libelle: 'Finales', single_group: false } })).toBe('/competitions/2026/N1H/games?gameday=2')
+  })
+
+  it('CAL-11: a gameday of a single-group event leads to the event, on its competition', () => {
+    expect(gamedayCompetitionPath({ ...entries[1]!, event: { id: 9, libelle: 'N1H J2', single_group: true } })).toBe('/events/9/games?competition=N1H')
   })
 
   it('CAL-05: the next month having gamedays', () => {

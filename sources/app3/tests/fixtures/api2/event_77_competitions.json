@@ -7,7 +7,8 @@
       "place": "Rivecity",
       "logo": "logo/resultats.png",
       "start": "2999-04-01",
-      "end": "2999-04-02"
+      "end": "2999-04-02",
+      "single_group": true
     },
     "competitions": [
       {
@@ -15,6 +16,7 @@
         "season": "2999",
         "display_title": "Championnat Résultats",
         "soustitre2": "Poule A",
+        "group": "TSTRES",
         "type": "CHPT",
         "gamedays": 1,
         "total_gamedays": 2
@@ -24,6 +26,7 @@
         "season": "2999",
         "display_title": "Phase finale",
         "soustitre2": "Finale",
+        "group": "TSTRES",
         "type": "CP",
         "gamedays": 3,
         "total_gamedays": 3

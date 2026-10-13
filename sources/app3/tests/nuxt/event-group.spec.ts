@@ -35,13 +35,25 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(competition.find('[data-testid="competition-kind"]').text()).toBe('Compétition')
   })
 
-  it('EVT-09: the competitions of the event are listed with their gamedays held at the event, and link to the whole competition', async () => {
-    const panel = (await mountRoute('/events/77/games')).find('[data-testid="event-competitions"]')
-    const [partial, whole] = panel.findAll('[data-competition]')
-    expect(partial!.find('[data-testid="event-gamedays"]').text()).toBe('1 journée sur 2 de la compétition')
-    expect(partial!.find('[data-testid="competition-full-link"]').attributes('href')).toBe('/competitions/2999/RCH?event=77')
-    expect(whole!.find('[data-testid="event-gamedays"]').text()).toBe('Toutes les journées de la compétition')
-    expect(partial!.find('a').attributes('href')).toBe('/events/77/games?competition=RCH')
+  it('EVT-09: the competitions of an event of several groups are listed with their gamedays held at the event, and link to the whole competition', async () => {
+    const panel = (await mountRoute('/events/79/games')).find('[data-testid="event-competitions"]')
+    const [other, rat] = panel.findAll('[data-competition]')
+    expect(other!.attributes('data-competition')).toBe('RDV')
+    expect(rat!.find('[data-testid="event-gamedays"]').text()).toBe('Toutes les journées de la compétition')
+    expect(rat!.find('[data-testid="competition-full-link"]').attributes('href')).toBe('/competitions/2999/RAT?event=79')
+    expect(rat!.find('a').attributes('href')).toBe('/events/79/games?competition=RAT')
+  })
+
+  it('EVT-09: an event of a single group has no competitions panel: its chips are enough', async () => {
+    const wrapper = await mountRoute('/events/77/games')
+    expect(wrapper.find('[data-testid="event-competitions"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="competition-chips"] a')).toHaveLength(3)
+  })
+
+  it('EVT-10: the info tab of a single-group event subscribes to the event calendar', async () => {
+    const wrapper = await mountRoute('/events/77/info')
+    expect(wrapper.find('[data-testid="ics-subscribe"]').attributes('href')).toBe('webcal://kpi.localhost/api2/event/77/calendar.ics')
+    expect(wrapper.find('[data-testid="ics-download"]').attributes('href')).toBe('https://kpi.localhost/api2/event/77/calendar.ics')
   })
 
   it('EVT-03: a chip per competition filters the event on the same tab, without leaving the event', async () => {

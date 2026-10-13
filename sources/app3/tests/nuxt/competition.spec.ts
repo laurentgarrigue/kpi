@@ -133,7 +133,11 @@ describe('pitch game layout (§ 3.2)', () => {
     const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
     const top = game.find('[data-testid="pitch-top"]')
     expect(top.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
-    expect(top.find('[data-status]').text()).toContain('En cours')
+    // CMP-17: the status is an icon whose label stays readable by screen readers and on hover.
+    const status = top.find('[data-status]')
+    expect(status.find('[data-testid="status-icon"]').exists()).toBe(true)
+    expect(status.attributes('title')).toBe('En cours · M1')
+    expect(status.find('.sr-only').text()).toBe('En cours')
     const [teamA, teamB] = game.findAll('[data-testid="pitch-team"]')
     expect(teamA!.text()).toContain('Equipe Alpha')
     expect(teamA!.find('[data-testid="side-score"]').text()).toContain('1')
@@ -141,6 +145,15 @@ describe('pitch game layout (§ 3.2)', () => {
     expect(teamB!.find('[data-testid="side-score"]').text()).toContain('0')
     // The score is provisional (game on): italic and announced.
     expect(teamA!.find('[data-testid="side-score"]').classes()).toContain('italic')
+  })
+
+  it('CMP-17: the category of a cup game is followed by its phase', async () => {
+    const cup = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
+    expect(cup.find('[data-testid="pitch-category"]').text()).toBe('Finale - Poule A')
+    const championship = (await mountRoute('/events/77/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
+    expect(championship.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
+    const cupInEvent = (await mountRoute('/events/77/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
+    expect(cupInEvent.find('[data-testid="pitch-category"]').text()).toBe('Finale - Poule A')
   })
 
   it('CMP-07: the winner of a finished game is in bold', async () => {

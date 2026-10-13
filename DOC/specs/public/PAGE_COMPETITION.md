@@ -111,7 +111,10 @@ scoring publiera les topics publics.
   matchs, sinon le dernier.
 - **Grille** : une colonne par terrain (ordre numérique), une ligne par horaire ; cellule = match compact
   (équipes, score, statut). Sur mobile (< `md`) : une section par terrain, matchs dans l'ordre horaire.
-  Dans la cellule : en haut, la **catégorie** (`soustitre2`) à gauche et le **statut** à droite sur la même ligne ;
+  Dans la cellule : en haut, la **catégorie** (`soustitre2`, « libellé 2 ») à gauche, suivie pour une **coupe**
+  (`CP`) de la **phase** de la journée (« PlayOff H. - Poule A ») ; le **statut** à droite sur la même ligne, sous
+  forme d'**icône** (à venir : horloge, en cours : lecture rouge avec la période, terminé : coche) dont le libellé
+  reste lu par les lecteurs d'écran et affiché au survol (13/10/2026) ;
   puis une ligne par équipe avec **son score aligné à droite** (provisoire en italique) ; dans un match
   **terminé**, l'équipe vainqueur (nom et score) est en **gras**.
 
@@ -192,6 +195,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-05** — Matchs groupés par date, triés par heure puis terrain ; statut et score provisoire affichés selon `g_status` / `g_validation`.
 - **CMP-06** — Les filtres `gameday`, `day` et `upcoming` se combinent ; `upcoming` applique « maintenant − 35 min » en heure de Paris (fonction pure testée avec une date injectée).
 - **CMP-07** — La grille des terrains a une colonne par terrain et une ligne par horaire ; le jour par défaut suit la règle § 3.2.
+- **CMP-17** — Dans la grille des terrains, le statut est une icône à libellé accessible ; la catégorie d'un match de coupe est suivie de sa phase (« PlayOff H. - Poule A »).
 - **CMP-08** — Infos : journées avec officiels ; équipes par poule seulement si `ON`/`END` ; schéma s'il existe.
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
 - **CMP-10** — Classement : colonnes selon le type, badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide.

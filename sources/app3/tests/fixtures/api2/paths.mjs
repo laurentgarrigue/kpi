@@ -12,6 +12,8 @@ export const FIXTURE_PATHS = [
   '/event/77/competitions',
   '/event/77/games',
   '/event/78/competitions',
+  '/event/79/competitions',
+  '/event/79/games',
   '/competition/2999/NOPE',
   ...COMPETITIONS.flatMap(code => [`/competition/2999/${code}`, ...TABS.map(tab => `/competition/2999/${code}/${tab}`)]),
   // Phase 3 (API_PUBLIC_TRANSVERSE.md): requests of the calendar, history, team, club and search pages tested.

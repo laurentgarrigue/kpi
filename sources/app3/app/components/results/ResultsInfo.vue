@@ -7,14 +7,15 @@ import { competitionIcsUrl, gamedayIcsUrl } from '~/utils/page-links'
 
 // « Info » tab: gamedays with place and officials, teams by pool, schema (CMP-08); calendar subscription and
 // .ics files, served by api2 (CAL-06).
-const props = defineProps<{ info: CompetitionInfo, competition: CompetitionHeader }>()
+// `subscriptionUrl` replaces the competition calendar, e.g. by the event's one (EVT-10).
+const props = defineProps<{ info: CompetitionInfo, competition: CompetitionHeader, subscriptionUrl?: string }>()
 const { legacyBaseUrl, api2BaseUrl } = useRuntimeConfig().public
 const language = useLanguageTag()
 const schema = computed(() => (props.info.schema ? joinURL(legacyBaseUrl, 'img', props.info.schema) : null))
 const OFFICIALS = ['rc', 'r1', 'delegate', 'chief_referee'] as const
 // Gamedays sharing every parameter (the phases of a cup) are one card, shown once (CMP-08).
 const groups = computed(() => groupGamedays(props.info.gamedays))
-const ics = computed(() => competitionIcsUrl(api2BaseUrl, props.competition.season, props.competition.code))
+const ics = computed(() => props.subscriptionUrl ?? competitionIcsUrl(api2BaseUrl, props.competition.season, props.competition.code))
 </script>
 
 <template>

@@ -66,6 +66,26 @@ Sous l'en-tête d'un événement, le panneau **« Compétitions de cet événeme
 un lien **« Voir la compétition entière »** (`/competitions/{s}/{c}?event={id}`), utile quand l'événement ne
 couvre que quelques journées.
 
+**Événement d'un seul groupe** (décision du 13/10/2026). Un événement sert à deux choses : réunir sur un même lieu et
+une même période des journées ou phases de compétitions de **groupes différents** (ex. finales des championnats de
+France : PlayOff Hommes, PlayOff Dames, finales U18, U15, N3), ou réunir **toutes les compétitions d'un même groupe**
+(même lieu, même période). Dans le second cas, l'événement est la meilleure vue du groupe : on y reste.
+api2 indique `single_group` (toutes les compétitions publiées de l'événement ont le même groupe) ; alors :
+
+- le panneau « Compétitions de cet événement » n'est **pas affiché** (les puces suffisent à naviguer) ;
+- l'onglet Infos propose l'abonnement et le lien du calendrier **de l'événement** (`/event/{id}/calendar.ics`) au
+  lieu de ceux de la compétition sélectionnée ;
+- le calendrier du site (PAGE_CALENDAR.md, CAL-11) et les fichiers ICS (`URL` des journées) mènent à l'événement.
+
+Analyse d'impact : règle **calculée** à partir des données existantes (`kp_evenement_journee` → compétitions publiées
+→ `Code_ref`), aucune colonne ni table ajoutée ; champs **ajoutés** aux réponses publiques (`group`, `single_group`)
+et un nouvel endpoint ICS : app2 (qui n'utilise ni `/event/{id}/competitions` ni le calendrier public) et le legacy
+(`kpmatchs.php`, `kpcalendrier.php`, inchangés) ne sont pas touchés. Les autres accès restent identiques : la page
+compétition garde son bandeau « fait partie de l'événement », la liste des compétitions et le palmarès mènent
+toujours aux compétitions. Cas limite assumé : un événement d'un seul groupe qui ne couvre qu'une partie d'une
+compétition (ex. une journée de championnat) n'affiche plus le lien « Voir la compétition entière » ; la compétition
+reste accessible depuis la liste des compétitions de la saison et la recherche.
+
 ### 2.2 Liste des événements `/events[?year=YYYY]`
 
 Entrée de menu « Événements ». Les événements publiés d'une année (`GET /events/all`, filtre côté app3 sur les
@@ -131,7 +151,8 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 - **EVT-04** — Les matchs de toutes les compétitions de l'événement sont listés, chacun avec sa compétition.
 - **EVT-05** — Événement inconnu ou sans compétition publiée → page 404 du site.
 - **EVT-08** — L'en-tête d'un événement porte le libellé « Événement » et `data-kind="event"` ; celui d'une compétition « Compétition » ; « Suivre en direct » est un bouton.
-- **EVT-09** — Le panneau des compétitions de l'événement indique « n journée(s) sur total » et lie la compétition entière.
+- **EVT-09** — Le panneau des compétitions de l'événement indique « n journée(s) sur total » et lie la compétition entière ; il n'est affiché que si les compétitions viennent de **groupes différents**.
+- **EVT-10** — Événement d'un seul groupe : l'onglet Infos propose l'abonnement, le lien à copier et le téléchargement du calendrier **de l'événement** (`/event/{id}/calendar.ics`) ; sinon ceux de la compétition sélectionnée.
 - **EVL-01** — `/events` liste les événements de l'année demandée, chacun menant à `/events/{id}`.
 - **EVL-02** — Les années proposées sont celles des événements datés ; un événement à cheval sur deux années figure dans les deux.
 - **GRP-01** — `/groups/{s}/{c}` redirige (302) vers `/groups/{s}/{c}/games`.

@@ -7,7 +7,7 @@ final class CalendarEntry implements \JsonSerializable
 {
     /**
      * @param array{season: string, code: string, display_title: string, type: string, section: int, group: ?string} $competition
-     * @param array{id: int, libelle: ?string}|null $event
+     * @param array{id: int, libelle: ?string, single_group: bool}|null $event
      */
     public function __construct(
         public readonly int $id,

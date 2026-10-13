@@ -42,6 +42,8 @@ const breadcrumb = computed(() => {
   const list = localePath(`/competitions/${season.value}`) + `?group=${competition.value?.group.code}`
   return [home, { label: t('results.listTitle', { season: season.value }), to: list }, { label: groupName.value, to: list }, here]
 })
+// Cup phases in the pitch grid (CMP-17).
+provideCupCompetitions(() => (competition.value ? [competition.value] : []))
 </script>
 
 <template>

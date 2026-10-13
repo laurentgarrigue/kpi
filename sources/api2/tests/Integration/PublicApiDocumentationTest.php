@@ -54,6 +54,7 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/calendar/groups',
             '/competition/{season}/{code}/calendar.ics',
             '/gameday/{id}.ics',
+            '/event/{id}/calendar.ics',
             '/history',
             '/history/{group}',
             '/teams',

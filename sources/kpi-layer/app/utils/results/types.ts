@@ -209,12 +209,15 @@ export interface Stat {
 
 /** Competition of an event, with the gamedays held at the event out of all its gamedays (PAGE_EVENT_GROUP.md § 2.2). */
 export interface EventCompetition extends Required<CompetitionSummary> {
+  /** Code of the competition group (kp_groupe). */
+  group: string
   type: string
   gamedays: number
   total_gamedays: number
 }
 
 export interface EventCompetitions {
-  event: { id: number, libelle: string, place: string | null, logo: string | null, start: string | null, end: string | null }
+  /** `single_group`: every competition is in the same group, the event is that group's view (PAGE_EVENT_GROUP.md § 2.0). */
+  event: { id: number, libelle: string, place: string | null, logo: string | null, start: string | null, end: string | null, single_group: boolean }
   competitions: EventCompetition[]
 }

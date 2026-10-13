@@ -160,14 +160,18 @@ INSERT INTO `kp_journee`
   (9231, 'RNP', '2999', '2999-06-01', '2999-06-01', 'RNP J1', 'J1', 'Lacville', '33',
    NULL, NULL, NULL, NULL, NULL, 'O', 'C', 'Journée 1', 1, 1, 2, 'O');
 
--- Événement 77 (publié, Id < 3000 = tournoi kp_evenement) : J2 (+ Pause) de RCH et toutes les journées de RCP.
+-- Événement 77 (publié, Id < 3000 = tournoi kp_evenement) : J2 (+ Pause) de RCH et toutes les journées de RCP,
+-- toutes du groupe TSTRES → événement « d'un seul groupe » (PAGE_EVENT_GROUP.md § 2.0).
 -- Événement 78 (NON publié) : J1 de RCH.
+-- Événement 79 (publié) : J1 de RAT (TSTRES) et J1 de RDV (TSTDIV) → groupes différents.
 INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `logo`, `app`) VALUES
   (77, 'Tournoi Résultats', 'Rivecity', '2999-04-01', '2999-04-02', 'O', 'logo/resultats.png', 'O'),
-  (78, 'Tournoi Résultats Masqué', 'Lacville', '2999-03-01', '2999-03-02', 'N', NULL, 'O');
+  (78, 'Tournoi Résultats Masqué', 'Lacville', '2999-03-01', '2999-03-02', 'N', NULL, 'O'),
+  (79, 'Finales Multi-groupes', 'Rivecity', '2999-06-01', '2999-07-10', 'O', NULL, 'O');
 INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES
   (77, 9202), (77, 9204), (77, 9211), (77, 9212), (77, 9213),
-  (78, 9201);
+  (78, 9201),
+  (79, 9221), (79, 9261);
 
 INSERT INTO `kp_competition_equipe`
   (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`,

@@ -58,7 +58,11 @@ final class PublicSiteService
             department: $row['Departement'],
             start: $row['Date_debut'],
             end: $row['Date_fin'],
-            event: $row['event_id'] === null ? null : ['id' => (int) $row['event_id'], 'libelle' => $row['event_libelle']],
+            event: $row['event_id'] === null ? null : [
+                'id' => (int) $row['event_id'],
+                'libelle' => $row['event_libelle'],
+                'single_group' => (bool) $row['event_single_group'],
+            ],
         ), $rows);
     }
 
@@ -78,6 +82,18 @@ final class PublicSiteService
         $events = array_map(fn (array $row): IcsEvent => $this->icsEvent($row), $rows);
 
         return IcsCalendar::render(sprintf('%s (%s)', $competitionTitle, $season), $events, $this->clock->now());
+    }
+
+    /** Abonnement iCalendar d'un événement publié : ses journées, toutes compétitions (EVT-10), ou null. */
+    public function eventIcs(int $eventId): ?string
+    {
+        $data = $this->repository->findEventIcs($eventId);
+        if ($data === null) {
+            return null;
+        }
+        $events = array_map(fn (array $row): IcsEvent => $this->icsEvent($row), PublicSiteRules::mergeGamedays($data['gamedays']));
+
+        return IcsCalendar::render((string) $data['event']['Libelle'], $events, $this->clock->now());
     }
 
     public function gamedayIcs(int $id): ?string
@@ -302,9 +318,15 @@ final class PublicSiteService
     {
         $place = PublicSiteRules::nullIfEmpty($row['Lieu']);
         $department = PublicSiteRules::nullIfEmpty($row['Departement']);
-        $url = sprintf('%s/competitions/%s/%s', rtrim($this->publicSiteUrl, '/'), rawurlencode($row['Code_saison']), rawurlencode($row['Code']));
-        if ($row['Code_typeclt'] === 'CHPT') {
-            $url .= '/games?gameday=' . (int) $row['Id'];
+        $site = rtrim($this->publicSiteUrl, '/');
+        if (($row['event_id'] ?? null) !== null && (bool) $row['event_single_group']) {
+            // Journée d'un événement d'un seul groupe : l'événement en est la page (CAL-11).
+            $url = sprintf('%s/events/%d/games?competition=%s', $site, (int) $row['event_id'], rawurlencode($row['Code']));
+        } else {
+            $url = sprintf('%s/competitions/%s/%s', $site, rawurlencode($row['Code_saison']), rawurlencode($row['Code']));
+            if ($row['Code_typeclt'] === 'CHPT') {
+                $url .= '/games?gameday=' . (int) $row['Id'];
+            }
         }
 
         return new IcsEvent(

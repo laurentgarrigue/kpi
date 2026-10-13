@@ -57,7 +57,7 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
     {
         $events = $this->getJson('/group/2999/TSTRES/competitions')['events'];
 
-        self::assertSame([77], self::column($events, 'id'), 'l\'événement 78 n\'est pas publié');
+        self::assertSame([77, 79], self::column($events, 'id'), 'l\'événement 78 n\'est pas publié');
         self::assertSame(['id', 'libelle', 'place', 'start', 'end', 'logo', 'share'], array_keys($events[0]));
         self::assertEqualsWithDelta(4 / 6, $events[0]['share'], 0.001, '4 des 6 journées publiées du groupe');
     }
@@ -230,14 +230,23 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
 
         self::assertSame([
             'id' => 77, 'libelle' => 'Tournoi Résultats', 'place' => 'Rivecity',
-            'logo' => 'logo/resultats.png', 'start' => '2999-04-01', 'end' => '2999-04-02',
+            'logo' => 'logo/resultats.png', 'start' => '2999-04-01', 'end' => '2999-04-02', 'single_group' => true,
         ], $body['event']);
         self::assertSame(['RCH', 'RCP'], self::column($body['competitions'], 'code'));
-        self::assertSame(['code', 'season', 'display_title', 'soustitre2', 'type', 'gamedays', 'total_gamedays'], array_keys($body['competitions'][0]));
+        self::assertSame(['code', 'season', 'display_title', 'soustitre2', 'group', 'type', 'gamedays', 'total_gamedays'], array_keys($body['competitions'][0]));
+        self::assertSame(['TSTRES', 'TSTRES'], self::column($body['competitions'], 'group'));
         // Journées de l'événement / journées publiées de la compétition (pauses exclues) : RCH n'en a qu'une sur deux
         // dans l'événement, la coupe RCP toutes les siennes.
         self::assertSame([[1, 2], [3, 3]], array_map(static fn (array $c): array => [$c['gamedays'], $c['total_gamedays']], $body['competitions']));
         self::assertSame(['CHPT', 'CP'], self::column($body['competitions'], 'type'));
+    }
+
+    public function testEvt09EventOfSeveralGroupsIsNotSingleGroup(): void
+    {
+        $body = $this->getJson('/event/79/competitions');
+
+        self::assertFalse($body['event']['single_group']);
+        self::assertSame(['TSTDIV', 'TSTRES'], self::column($body['competitions'], 'group'));
     }
 
     public function testUnpublishedEventIsNotFound(): void

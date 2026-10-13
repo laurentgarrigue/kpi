@@ -140,6 +140,8 @@ final class PublicCompetitionService
             return null;
         }
 
+        $competitions = $this->eventCompetitionList($eventId);
+
         return [
             'event' => [
                 'id' => (int) $event['Id'],
@@ -148,8 +150,10 @@ final class PublicCompetitionService
                 'logo' => $event['logo'],
                 'start' => $event['Date_debut'],
                 'end' => $event['Date_fin'],
+                // Toutes les compétitions dans le même groupe : l'événement est la vue du groupe (PAGE_EVENT_GROUP.md § 2.0).
+                'single_group' => count(array_unique(array_column($competitions, 'group'))) === 1,
             ],
-            'competitions' => $this->eventCompetitionList($eventId),
+            'competitions' => $competitions,
         ];
     }
 
@@ -170,7 +174,7 @@ final class PublicCompetitionService
             $header = $this->header($row);
             [$inEvent, $total] = $counts[$header->season . '|' . $header->code] ?? [0, 0];
 
-            return [...$header->summary()->withSeason(), 'type' => $header->type, 'gamedays' => $inEvent, 'total_gamedays' => $total];
+            return [...$header->summary()->withSeason(), 'group' => $header->group['code'], 'type' => $header->type, 'gamedays' => $inEvent, 'total_gamedays' => $total];
         }, $this->repository->findEventCompetitions($eventId));
     }
 

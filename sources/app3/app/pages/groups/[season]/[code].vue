@@ -36,6 +36,8 @@ useSeoMeta({
   title: () => t('results.scopeTitle', { tab: t(`results.tab.${current.value}`), scope: `${name.value} ${season.value}` }),
   description: () => t('results.scopeDescription', { scope: `${name.value} ${season.value}` }),
 })
+// Cup phases in the pitch grid (CMP-17).
+provideCupCompetitions(() => competitions.value)
 </script>
 
 <template>

@@ -103,6 +103,15 @@ class PublicSiteController extends AbstractController
         return $this->ics($this->site->competitionIcs($season, $code, $header->displayTitle), sprintf('%s-%s.ics', $code, $season));
     }
 
+    #[Route('/event/{id}/calendar.ics', name: 'public_event_ics', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[OA\Get(path: '/event/{id}/calendar.ics', summary: 'iCalendar subscription of a published event: its published gamedays, every competition', tags: [self::DOC_TAG])]
+    public function eventIcs(int $id): Response
+    {
+        $ics = $this->site->eventIcs($id);
+
+        return $ics === null ? $this->notFound() : $this->ics($ics, sprintf('event-%d.ics', $id));
+    }
+
     #[Route('/gameday/{id}.ics', name: 'public_gameday_ics', methods: ['GET'], requirements: ['id' => '\d+'])]
     #[OA\Get(path: '/gameday/{id}.ics', summary: 'One published gameday, in iCalendar', tags: [self::DOC_TAG])]
     public function gamedayIcs(int $id): Response

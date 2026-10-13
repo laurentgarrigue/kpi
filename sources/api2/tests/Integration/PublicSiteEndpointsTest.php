@@ -30,7 +30,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
         // Libellé du legacy : « nom de la journée - lieu (département) ».
         self::assertSame('RCH J2 - Rivecity (64)', $days[0]['label']);
         self::assertSame(['Rivecity', '64', '2999-04-01', '2999-04-02'], [$days[0]['place'], $days[0]['department'], $days[0]['start'], $days[0]['end']]);
-        self::assertSame(['id' => 77, 'libelle' => 'Tournoi Résultats'], $days[0]['event']);
+        self::assertSame(['id' => 77, 'libelle' => 'Tournoi Résultats', 'single_group' => true], $days[0]['event']);
     }
 
     public function testApi01CalendarKeepsGamedaysOverlappingThePeriodAndHidesUnpublishedEvents(): void
@@ -110,7 +110,22 @@ final class PublicSiteEndpointsTest extends ApiTestCase
 
         self::assertCount(1, $events);
         self::assertSame('gameday-9212@kayak-polo.info', $events[0]['UID']);
-        self::assertStringEndsWith('/competitions/2999/RCP', $events[0]['URL'], 'coupe : page de la compétition');
+        // CAL-11 : 9212 appartient à l'événement 77, d'un seul groupe → page de l'événement.
+        self::assertStringEndsWith('/events/77/games?competition=RCP', $events[0]['URL']);
+        self::assertStringEndsWith('/competitions/2999/RAT/games?gameday=9221', self::parseIcs($this->getIcs('/gameday/9221.ics'))[0]['URL'] ?? '', 'événement de plusieurs groupes : page de la compétition');
+    }
+
+    public function testEvt10EventCalendarHasEveryPublishedGamedayOfTheEvent(): void
+    {
+        $ics = $this->getIcs('/event/77/calendar.ics');
+
+        $events = self::parseIcs($ics);
+        // 9204 (pause) exclue ; poules A et B de RCP (même jour, même lieu) fusionnées.
+        self::assertSame(['gameday-9202@kayak-polo.info', 'gameday-9211@kayak-polo.info', 'gameday-9212@kayak-polo.info'], array_column($events, 'UID'));
+        self::assertStringContainsString("X-WR-CALNAME:Tournoi Résultats\r\n", $ics);
+        self::assertStringEndsWith('/events/77/games?competition=RCH', $events[0]['URL']);
+        $this->client->request('GET', '/event/78/calendar.ics');
+        self::assertSame(404, $this->client->getResponse()->getStatusCode(), 'événement non publié');
     }
 
     public function testApi02IcsContainsNoPersonalData(): void

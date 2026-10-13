@@ -39,9 +39,10 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     expect(section.text()).toBe('National')
   })
 
-  it('CAL-03: a gameday leads to its competition (on the gameday for a championship) and to its event', async () => {
+  it('CAL-03/CAL-11: a gameday leads to its event; in a single-group event, the competition link stays in the event', async () => {
     const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-agenda"] [data-gameday="9202"]')
-    expect(row.find('[data-testid="calendar-competition"]').attributes('href')).toBe('/competitions/2999/RCH/games?gameday=9202')
+    expect(row.find('[data-testid="calendar-competition"]').attributes('href')).toBe('/events/77/games?competition=RCH')
+    expect(row.find('[data-testid="calendar-label"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-event"]').attributes('href')).toBe('/events/77')
   })
 

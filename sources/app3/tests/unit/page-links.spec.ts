@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { competitionIcsUrl, gameLink, gamedayIcsUrl, legacyImageUrl, pdfUrl, teamLink, webcalUrl } from '../../app/utils/page-links'
+import { competitionIcsUrl, eventIcsUrl, gameLink, gamedayIcsUrl, legacyImageUrl, pdfUrl, teamLink, webcalUrl } from '../../app/utils/page-links'
 
 const context = { locale: 'fr', legacyBaseUrl: 'https://www.kayak-polo.info', app2BaseUrl: 'https://app.kayak-polo.info' }
 
@@ -43,6 +43,10 @@ describe('calendar files and images', () => {
     expect(ics).toBe('https://kayak-polo.info/api2/competition/2026/N1H/calendar.ics')
     expect(webcalUrl(ics)).toBe('webcal://kayak-polo.info/api2/competition/2026/N1H/calendar.ics')
     expect(gamedayIcsUrl('https://kayak-polo.info/api2/', 9201)).toBe('https://kayak-polo.info/api2/gameday/9201.ics')
+  })
+
+  it('EVT-10: the subscription of an event is served by api2', () => {
+    expect(eventIcsUrl('https://kayak-polo.info/api2', 77)).toBe('https://kayak-polo.info/api2/event/77/calendar.ics')
   })
 
   it('images of the legacy tree', () => {
