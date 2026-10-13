@@ -56,6 +56,14 @@ export function statusColor(status: DisplayStatus): 'neutral' | 'success' | 'inf
   return ({ draft: 'neutral', published: 'success', scheduled: 'info', archived: 'warning' } as const)[status]
 }
 
+/** Levels of the editorial menu: entry, sub-entry, sub-sub-entry (PAGE_CMS.md § 5, api2 CmsRules::MENU_MAX_DEPTH). */
+export const MENU_MAX_DEPTH = 3
+
+/** An entry at this depth (1 = top level) can receive sub-entries. */
+export function canHaveMenuChildren(depth: number): boolean {
+  return depth < MENU_MAX_DEPTH
+}
+
 /** Copy of a list with one item moved up (-1) or down (+1); unchanged at the ends. */
 export function moveItem<T>(items: readonly T[], index: number, delta: -1 | 1): T[] {
   const target = index + delta

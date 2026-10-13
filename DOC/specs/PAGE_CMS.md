@@ -59,8 +59,10 @@ une fenêtre modale.
 
 ## 5. Menu, accueil, redirections (profils ≤ 2)
 
-- **Menu** : arbre à deux niveaux, entrées (libellés FR / EN, cible : page, article ou URL), ordre par boutons
-  monter / descendre (accessibles au clavier).
+- **Menu** : arbre à **trois niveaux** (13/10/2026), chaque niveau distingué par un badge « Niveau n », un retrait
+  et une couleur de filet ; entrées (libellés FR / EN, type de cible : page, article ou adresse, et destination),
+  ordre par boutons monter / descendre (accessibles au clavier) ; « Ajouter une entrée de niveau n+1 » sous chaque
+  entrée des niveaux 1 et 2.
 - **Accueil** : blocs (à la une, dernières actualités, bandeau d'alerte, partenaires) : activer, ordonner,
   configurer (articles à la une, texte et niveau de l'alerte avec dates, partenaires : nom, logo, lien).
 - **Redirections** : liste (de → vers, compteur), ajout, suppression ; celles de l'import WordPress y figurent.
@@ -90,3 +92,5 @@ une fenêtre modale.
   (profils 1–2 seulement).
 - **ADM-CMS-06** — Confirmer une inscription en attente change son statut et envoie l'e-mail au déclarant.
 - **ADM-CMS-07** — L'export produit un fichier avec une ligne par inscription et une colonne par champ.
+- **ADM-CMS-08** — Le menu se construit sur trois niveaux au plus, chaque niveau visuellement distinct ; tous les
+  libellés de l'écran sont traduits (FR / EN).

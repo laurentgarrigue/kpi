@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   canAdministerContent, canEditContent, draftStorageKey, fieldKeyFromLabel, formatBytes, fromDateTimeLocal,
-  isReservedPageSlug, isValidSlug, mediaSrc, moveItem, previewUrl, slugify, statusColor, toDateTimeLocal, validationErrors,
+  canHaveMenuChildren, isReservedPageSlug, isValidSlug, mediaSrc, moveItem, previewUrl, slugify, statusColor, toDateTimeLocal, validationErrors,
 } from '../../utils/cms'
 
 describe('editorial rights', () => {
@@ -81,5 +81,11 @@ describe('preview and drafts', () => {
   it('badges and local draft keys', () => {
     expect(statusColor('scheduled')).toBe('info')
     expect(draftStorageKey('article', 'new')).toBe('kpi-cms-draft-article-new')
+  })
+})
+
+describe('editorial menu (PAGE_CMS.md § 5)', () => {
+  it('ADM-CMS-08: entries can be nested on three levels, not more', () => {
+    expect([1, 2, 3].map(canHaveMenuChildren)).toEqual([true, true, false])
   })
 })

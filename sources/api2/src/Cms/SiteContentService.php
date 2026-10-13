@@ -34,30 +34,19 @@ final class SiteContentService
     {
         $tree = $this->pages->tree();
         $now = $this->now();
-        $items = $this->site->menuItems();
-        $children = [];
-        foreach ($items as $item) {
-            if ($item['parent_id'] !== null) {
-                $children[(int) $item['parent_id']][] = $item;
-            }
+        $byParent = [];
+        foreach ($this->site->menuItems() as $item) {
+            $byParent[$item['parent_id'] === null ? 0 : (int) $item['parent_id']][] = $item;
         }
-
-        $entries = [];
-        foreach ($items as $item) {
-            if ($item['parent_id'] !== null) {
-                continue;
-            }
-            $childEntries = array_values(array_filter(array_map(
-                fn (array $child): ?MenuEntry => $this->menuEntry($child, [], $tree, $now, $language),
-                $children[(int) $item['id']] ?? [],
+        // Entrées publiées d'un niveau, avec leurs sous-entrées publiées (jusqu'à CmsRules::MENU_MAX_DEPTH niveaux).
+        $build = function (int $parent) use (&$build, $byParent, $tree, $now, $language): array {
+            return array_values(array_filter(array_map(
+                fn (array $item): ?MenuEntry => $this->menuEntry($item, $build((int) $item['id']), $tree, $now, $language),
+                $byParent[$parent] ?? [],
             )));
-            $entry = $this->menuEntry($item, $childEntries, $tree, $now, $language);
-            if ($entry !== null) {
-                $entries[] = $entry;
-            }
-        }
+        };
 
-        return $entries;
+        return $build(0);
     }
 
     /** @return list<HomeBlock> blocs actifs et non vides, dans l'ordre (PAGE_CONTENT.md § 4, CNT-05, CNT-06) */

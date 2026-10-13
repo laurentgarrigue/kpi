@@ -53,10 +53,13 @@ export interface LinkContext {
   localePath: (path: string) => string
 }
 
-/** `label` replaces the translated `nav.<id>` for the entries written by the editors (PAGE_CONTENT.md § 3). */
+/**
+ * `label` replaces the translated `nav.<id>` for the entries written by the editors, `level` (1–3) is their depth in
+ * the editorial menu (PAGE_CONTENT.md § 3).
+ */
 export type ResolvedLink =
-  | { id: string, kind: 'internal', href: string, to: string, label?: string }
-  | { id: string, kind: 'legacy' | 'app2' | 'external', href: string, label?: string }
+  | { id: string, kind: 'internal', href: string, to: string, label?: string, level?: number }
+  | { id: string, kind: 'legacy' | 'app2' | 'external', href: string, label?: string, level?: number }
 
 export interface ResolvedGroup {
   id: string
@@ -116,17 +119,19 @@ export const EDITORIAL_MENU_ID = 'editorial'
 const EDITORIAL_MENU_AFTER = 'teams-clubs'
 
 /**
- * Inserts the editorial group in the resolved menu. Its two levels are shown as one list (a parent followed by
- * its children); no entry (empty menu, api2 unavailable) → no group (CNT-04).
+ * Inserts the editorial group in the resolved menu. Its three levels are shown as one list (each entry followed by
+ * its sub-entries, with their level); no entry (empty menu, api2 unavailable) → no group (CNT-04).
  */
 export function withEditorialMenu(
   items: readonly ResolvedMenuItem[],
   entries: readonly EditorialMenuEntry[],
   localePath: LinkContext['localePath'],
 ): ResolvedMenuItem[] {
-  const children = entries.flatMap(entry => [entry, ...entry.children]).map((entry, index): ResolvedLink => (entry.external
-    ? { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'external', href: entry.path, label: entry.label }
-    : { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'internal', href: localePath(entry.path), to: entry.path, label: entry.label }))
+  const flatten = (list: readonly EditorialMenuEntry[], level: number): { entry: EditorialMenuEntry, level: number }[] =>
+    list.flatMap(entry => [{ entry, level }, ...flatten(entry.children, level + 1)])
+  const children = flatten(entries, 1).map(({ entry, level }, index): ResolvedLink => (entry.external
+    ? { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'external', href: entry.path, label: entry.label, level }
+    : { id: `${EDITORIAL_MENU_ID}-${index}`, kind: 'internal', href: localePath(entry.path), to: entry.path, label: entry.label, level }))
   if (children.length === 0) {
     return [...items]
   }

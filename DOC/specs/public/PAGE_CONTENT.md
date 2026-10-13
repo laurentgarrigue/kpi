@@ -24,7 +24,8 @@ le gabarit du site, les rendre accessibles par un menu administrable, et rendre 
 
 - `MAIN_MENU` reste la source des entrées « données » ; une entrée **« Le kayak-polo »** (`id: 'editorial'`) est
   insérée entre « Équipes et clubs » et « En direct » ; ses sous-entrées viennent de `GET /menu` (au rendu
-  serveur, mises en cache avec la page).
+  serveur, mises en cache avec la page), sur **trois niveaux** au plus (entrée, sous-entrée, sous-sous-entrée,
+  13/10/2026) : le sous-menu les liste dans l'ordre, chaque niveau en retrait du précédent.
 - Les règles de SITE_NAVIGATION.md s'appliquent (sous-menu au clic, Échap, mobile, entrée active).
 - Menu vide ou api2 indisponible → l'entrée « Le kayak-polo » est masquée (NAV-05), le reste du menu est intact.
 
@@ -59,7 +60,7 @@ d'Ariane `BreadcrumbList` ; sommaire dans un `<nav aria-label="Sommaire">`.
   applicative (`/calendar`…) n'est jamais masquée par une page.
 - **CNT-02** — Une page enfant n'est servie que sous le chemin de son parent ; un autre chemin redirige (301).
 - **CNT-03** — Le sommaire apparaît à partir de 3 titres `h2`, avec des ancres fonctionnelles.
-- **CNT-04** — L'entrée « Le kayak-polo » liste les entrées de `GET /menu` ; menu vide ou erreur → entrée masquée.
+- **CNT-04** — L'entrée « Le kayak-polo » liste les entrées de `GET /menu` (trois niveaux, en retrait) ; menu vide ou erreur → entrée masquée ; api2 refuse un quatrième niveau (`too_deep`).
 - **CNT-05** — L'accueil affiche les blocs actifs dans l'ordre configuré ; un bloc vide est masqué ; une erreur
   d'api2 laisse les blocs « événements ».
 - **CNT-06** — Le bandeau d'alerte n'apparaît qu'entre ses dates, avec le rôle ARIA de son niveau.

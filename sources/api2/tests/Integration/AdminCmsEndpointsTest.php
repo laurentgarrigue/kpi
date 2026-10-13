@@ -111,6 +111,26 @@ final class AdminCmsEndpointsTest extends ApiTestCase
         ]]], $this->getJson('/menu'));
     }
 
+    public function testCnt04MenuHasAtMostThreeLevels(): void
+    {
+        $level3 = ['label_fr' => 'FFCK', 'target_kind' => 'url', 'target_ref' => 'https://www.ffck.org'];
+        $tree = ['items' => [
+            ['label_fr' => 'Découvrir', 'target_kind' => 'page', 'target_ref' => '9701', 'children' => [
+                ['label_fr' => 'Arbitrage', 'target_kind' => 'page', 'target_ref' => '9702', 'children' => [$level3]],
+            ]],
+        ]];
+        $menu = $this->requestAs('TADMIN', 'PUT', '/admin/cms/menu', $tree);
+        self::assertSame('FFCK', $menu[0]['children'][0]['children'][0]['label_fr']);
+        self::assertSame(
+            [['label' => 'FFCK', 'path' => 'https://www.ffck.org', 'external' => true, 'children' => []]],
+            $this->getJson('/menu')[0]['children'][0]['children'],
+        );
+
+        $tree['items'][0]['children'][0]['children'][0]['children'] = [$level3];
+        $errors = $this->requestAs('TADMIN', 'PUT', '/admin/cms/menu', $tree, 400);
+        self::assertSame(['items.0.children.0.children.0.children' => 'too_deep'], $errors['errors']);
+    }
+
     public function testCnt06AlertIsShownBetweenItsDates(): void
     {
         $blocks = $this->requestAs('TADMIN', 'GET', '/admin/cms/home-blocks');

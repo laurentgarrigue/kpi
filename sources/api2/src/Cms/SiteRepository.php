@@ -21,11 +21,15 @@ final class SiteRepository
     public function replaceMenu(array $items): void
     {
         $this->connection->executeStatement('DELETE FROM kp_cms_menu_item');
+        $this->insertMenuItems($items, null);
+    }
+
+    /** @param list<array<string, mixed>> $items entrées d'un niveau, avec leurs `children` */
+    private function insertMenuItems(array $items, ?int $parentId): void
+    {
         foreach ($items as $position => $item) {
-            $parentId = $this->insertMenuItem($item, null, $position + 1);
-            foreach ($item['children'] as $childPosition => $child) {
-                $this->insertMenuItem($child, $parentId, $childPosition + 1);
-            }
+            $id = $this->insertMenuItem($item, $parentId, $position + 1);
+            $this->insertMenuItems($item['children'] ?? [], $id);
         }
     }
 

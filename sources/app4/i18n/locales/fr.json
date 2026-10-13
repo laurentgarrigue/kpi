@@ -2840,9 +2840,9 @@
     },
     "menu": {
       "title": "Menu « Le kayak-polo »",
-      "help": "Entrées du menu « Le kayak-polo » du site public, sur deux niveaux. Une entrée dont la cible n'est pas publiée est masquée.",
+      "help": "Entrées du menu « Le kayak-polo » du site public, sur trois niveaux au plus (entrée, sous-entrée, sous-sous-entrée). Une entrée dont la cible n'est pas publiée est masquée.",
       "add": "Ajouter une entrée",
-      "add_child": "Ajouter une sous-entrée",
+      "add_child": "Ajouter une entrée de niveau {level}",
       "label_fr": "Libellé (FR)",
       "label_en": "Libellé (EN)",
       "target_kind": "Cible",
@@ -2851,7 +2851,9 @@
         "article": "Article",
         "url": "Adresse"
       },
-      "article_id": "N° d'article"
+      "article_id": "N° d'article",
+      "destination": "Destination",
+      "level": "Niveau {level}"
     },
     "home": {
       "title": "Accueil du site",
@@ -3011,7 +3013,8 @@
       "file_too_large": "Fichier trop lourd (20 Mo au plus).",
       "file_type_mismatch": "Le remplaçant doit être du même type.",
       "file_required": "Choisissez un fichier.",
-      "in_use": "Média utilisé"
+      "in_use": "Média utilisé",
+      "too_deep": "Trois niveaux au plus."
     }
   }
 }

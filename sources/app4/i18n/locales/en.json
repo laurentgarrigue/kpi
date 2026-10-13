@@ -2828,9 +2828,9 @@
     },
     "menu": {
       "title": "Menu « Le kayak-polo »",
-      "help": "Entries of the « Le kayak-polo » menu of the public site, on two levels. An entry whose target is not published is hidden.",
+      "help": "Entries of the « Le kayak-polo » menu of the public site, on three levels at most (entry, sub-entry, sub-sub-entry). An entry whose target is not published is hidden.",
       "add": "Add an entry",
-      "add_child": "Add a sub-entry",
+      "add_child": "Add a level {level} entry",
       "label_fr": "Label (FR)",
       "label_en": "Label (EN)",
       "target_kind": "Target",
@@ -2839,7 +2839,9 @@
         "article": "Article",
         "url": "Address"
       },
-      "article_id": "Article number"
+      "article_id": "Article number",
+      "destination": "Destination",
+      "level": "Level {level}"
     },
     "home": {
       "title": "Site home page",
@@ -2999,7 +3001,8 @@
       "file_too_large": "File too large (20 MB at most).",
       "file_type_mismatch": "The replacement must have the same type.",
       "file_required": "Pick a file.",
-      "in_use": "Media in use"
+      "in_use": "Media in use",
+      "too_deep": "Three levels at most."
     }
   }
 }

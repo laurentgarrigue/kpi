@@ -5,6 +5,9 @@ namespace App\Cms;
 /** Règles communes du module éditorial (FEATURE_CMS.md) : statuts, langues, slugs, visibilité. */
 final class CmsRules
 {
+    /** Niveaux du menu « Le kayak-polo » : entrée, sous-entrée, sous-sous-entrée (PAGE_CONTENT.md § 3). */
+    public const MENU_MAX_DEPTH = 3;
+
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PUBLISHED = 'published';
     public const STATUS_ARCHIVED = 'archived';

@@ -20,43 +20,57 @@ final class SiteEditor
     ) {
     }
 
-    /** @return list<array<string, mixed>> arbre du menu à deux niveaux, tel qu'édité */
+    /** @return list<array<string, mixed>> arbre du menu (CmsRules::MENU_MAX_DEPTH niveaux), tel qu'édité */
     public function menu(): array
     {
-        $items = $this->site->menuItems();
-        $tree = [];
-        foreach ($items as $item) {
-            if ($item['parent_id'] === null) {
-                $tree[(int) $item['id']] = self::menuItem($item) + ['children' => []];
-            }
+        $byParent = [];
+        foreach ($this->site->menuItems() as $item) {
+            $byParent[$item['parent_id'] === null ? 0 : (int) $item['parent_id']][] = $item;
         }
-        foreach ($items as $item) {
-            if ($item['parent_id'] !== null && isset($tree[(int) $item['parent_id']])) {
-                $tree[(int) $item['parent_id']]['children'][] = self::menuItem($item);
-            }
-        }
+        $build = static function (int $parent) use (&$build, $byParent): array {
+            return array_map(
+                static fn (array $item): array => self::menuItem($item) + ['children' => $build((int) $item['id'])],
+                $byParent[$parent] ?? [],
+            );
+        };
 
-        return array_values($tree);
+        return $build(0);
     }
 
     /** @param mixed $input liste d'entrées `{ label_fr, label_en, target_kind, target_ref, children }` */
     public function saveMenu(mixed $input): void
     {
         $errors = new ValidationErrors();
-        $items = [];
-        foreach (is_array($input) ? $input : [] as $index => $item) {
-            $entry = $this->menuEntry($item, "items.$index", $errors);
-            $entry['children'] = [];
-            foreach (is_array($item['children'] ?? null) ? $item['children'] : [] as $childIndex => $child) {
-                $entry['children'][] = $this->menuEntry($child, "items.$index.children.$childIndex", $errors);
-            }
-            $items[] = $entry;
-        }
         if (!is_array($input)) {
             $errors->add('items', 'invalid');
         }
+        $items = $this->menuEntries(is_array($input) ? $input : [], 'items', 1, $errors);
         $errors->throwIfAny();
         $this->site->replaceMenu($items);
+    }
+
+    /**
+     * Entrées d'un niveau du menu et, récursivement, leurs sous-entrées ; au-delà de MENU_MAX_DEPTH : `too_deep`.
+     *
+     * @param array<mixed> $input
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function menuEntries(array $input, string $field, int $depth, ValidationErrors $errors): array
+    {
+        $entries = [];
+        foreach (array_values($input) as $index => $item) {
+            $entry = $this->menuEntry($item, "$field.$index", $errors);
+            $children = is_array($item) && is_array($item['children'] ?? null) ? $item['children'] : [];
+            if ($children !== [] && $depth >= CmsRules::MENU_MAX_DEPTH) {
+                $errors->add("$field.$index.children", 'too_deep');
+                $children = [];
+            }
+            $entry['children'] = $this->menuEntries($children, "$field.$index.children", $depth + 1, $errors);
+            $entries[] = $entry;
+        }
+
+        return $entries;
     }
 
     /** @return list<array<string, mixed>> */

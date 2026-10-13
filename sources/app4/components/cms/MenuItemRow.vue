@@ -30,7 +30,7 @@ const { t } = useI18n()
     <UFormField :label="t('cms.menu.target_kind')">
       <USelect v-model="item.target_kind" :items="targetItems" class="w-32" @update:model-value="item.target_ref = ''" />
     </UFormField>
-    <UFormField :label="t('cms.menu.target')" :error="errors[`${prefix}.target_ref`] ? t(`cms.errors.${errors[`${prefix}.target_ref`]}`) : undefined" class="min-w-56 flex-1">
+    <UFormField :label="t('cms.menu.destination')" :error="errors[`${prefix}.target_ref`] ? t(`cms.errors.${errors[`${prefix}.target_ref`]}`) : undefined" class="min-w-56 flex-1">
       <USelect v-if="item.target_kind === 'page'" v-model="item.target_ref" :items="pageItems" class="w-full" />
       <UInput v-else v-model="item.target_ref" class="w-full" :placeholder="item.target_kind === 'url' ? 'https://… ou /calendar' : t('cms.menu.article_id')" />
     </UFormField>

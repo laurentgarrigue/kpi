@@ -127,18 +127,21 @@ describe('findMenuLink', () => {
 describe('withEditorialMenu', () => {
   const resolved = resolveMenu(MAIN_MENU, context('en'))
   const entries = [
-    { label: 'The sport', path: '/le-kayak-polo', external: false, children: [{ label: 'Refereeing', path: '/le-kayak-polo/arbitrage', external: false, children: [] }] },
+    { label: 'The sport', path: '/le-kayak-polo', external: false, children: [{ label: 'Refereeing', path: '/le-kayak-polo/arbitrage', external: false, children: [
+      { label: 'Rules', path: '/le-kayak-polo/arbitrage/regles', external: false, children: [] },
+    ] }] },
     { label: 'FFCK', path: 'https://www.ffck.org', external: true, children: [] },
   ]
 
-  it('CNT-04: inserts « Le kayak-polo » between teams-clubs and live, parents followed by their children', () => {
+  it('CNT-04: inserts « Le kayak-polo » between teams-clubs and live, each entry followed by its sub-entries (3 levels)', () => {
     const menu = withEditorialMenu(resolved, entries, context('en').localePath)
     expect(menu.map(item => item.id)).toEqual(['home', 'news', 'calendar', 'events', 'competitions', 'teams-clubs', EDITORIAL_MENU_ID, 'live'])
     const group = menu.find(item => item.id === EDITORIAL_MENU_ID)
     expect(group && isMenuGroup(group) ? group.children : []).toEqual([
-      { id: 'editorial-0', kind: 'internal', href: '/en/le-kayak-polo', to: '/le-kayak-polo', label: 'The sport' },
-      { id: 'editorial-1', kind: 'internal', href: '/en/le-kayak-polo/arbitrage', to: '/le-kayak-polo/arbitrage', label: 'Refereeing' },
-      { id: 'editorial-2', kind: 'external', href: 'https://www.ffck.org', label: 'FFCK' },
+      { id: 'editorial-0', kind: 'internal', href: '/en/le-kayak-polo', to: '/le-kayak-polo', label: 'The sport', level: 1 },
+      { id: 'editorial-1', kind: 'internal', href: '/en/le-kayak-polo/arbitrage', to: '/le-kayak-polo/arbitrage', label: 'Refereeing', level: 2 },
+      { id: 'editorial-2', kind: 'internal', href: '/en/le-kayak-polo/arbitrage/regles', to: '/le-kayak-polo/arbitrage/regles', label: 'Rules', level: 3 },
+      { id: 'editorial-3', kind: 'external', href: 'https://www.ffck.org', label: 'FFCK', level: 1 },
     ])
   })
 
