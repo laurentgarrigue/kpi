@@ -431,7 +431,25 @@ CREATE TABLE `kp_journal` (
 
 -- Reprise WordPress (CMS-09) : sous-ensemble des tables WordPress et Ninja Forms, préfixe « wptest_ », lu par
 -- app:import-wordpress --same-database --prefix=wptest_ dans les tests.
-DROP TABLE IF EXISTS `wptest_posts`, `wptest_postmeta`, `wptest_options`, `wptest_nf3_forms`, `wptest_nf3_fields`, `wptest_nf3_field_meta`;
+DROP TABLE IF EXISTS `wptest_posts`, `wptest_postmeta`, `wptest_options`, `wptest_nf3_forms`, `wptest_nf3_fields`, `wptest_nf3_field_meta`,
+  `wptest_terms`, `wptest_term_taxonomy`, `wptest_term_relationships`;
+CREATE TABLE `wptest_terms` (
+  `term_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL DEFAULT '',
+  `slug` varchar(200) NOT NULL DEFAULT '',
+  PRIMARY KEY (`term_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `wptest_term_taxonomy` (
+  `term_taxonomy_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `term_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `taxonomy` varchar(32) NOT NULL DEFAULT '',
+  PRIMARY KEY (`term_taxonomy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `wptest_term_relationships` (
+  `object_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `term_taxonomy_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`object_id`, `term_taxonomy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE `wptest_posts` (
   `ID` bigint(20) UNSIGNED NOT NULL,
   `post_date` datetime NOT NULL,

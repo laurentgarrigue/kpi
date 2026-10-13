@@ -4,7 +4,9 @@ namespace App\Cms\Import;
 
 use App\Cms\ArticleEditor;
 use App\Cms\ArticleRepository;
+use App\Cms\CategoryRepository;
 use App\Cms\CmsRules;
+use App\Cms\ContentAlbums;
 use App\Cms\HtmlSanitizer;
 use App\Cms\MediaLibrary;
 use App\Cms\MediaRepository;
@@ -18,26 +20,33 @@ use Psr\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Reprise du contenu WordPress (FEATURE_CMS.md § 8, CMS-09) : derniers articles publiés, pages choisies, médias
- * des contenus repris, redirections des permaliens, formulaire Ninja Forms d'exemple. Idempotente : relancée, elle
- * met à jour ce qui a déjà été repris (`legacy_wp_id`, `legacy_url`, `legacy_nf_id`).
+ * Reprise du contenu WordPress (FEATURE_CMS.md § 8, CMS-09) : derniers articles publiés avec leurs catégories, pages
+ * choisies, médias des contenus repris (albums « Articles » et « Pages », CMS-14), redirections des permaliens,
+ * formulaire Ninja Forms d'exemple. Idempotente : relancée, elle met à jour ce qui a déjà été repris
+ * (`legacy_wp_id`, `legacy_url`, `legacy_nf_id`).
  */
 final class WordPressImporter
 {
     private const IMPORT_USER = 'wpimport';
-    private const UPLOADS_PATTERN = '~(?:https?:)?//(?:www\.)?kayak-polo\.info/wp-content/uploads/([^"\'\s?#<>]+)|(?<![\w/])/wp-content/uploads/([^"\'\s?#<>]+)~i';
     private const RESIZED_SUFFIX = '~-\d+x\d+(\.[a-z0-9]+)$~i';
     private const IMPORTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
 
     private ImportOptions $options;
     private ImportReport $report;
     private Connection $wordpress;
+    /** Adresse de wp-content/uploads, lue dans les réglages WordPress (installé sous /wordpress sur kayak-polo.info). */
+    private string $uploadsUrl;
+    private string $uploadsPattern;
+    /** @var list<array{slug: string, label_fr: string}> */
+    private array $siteCategories = [];
 
     /** @var array<int, string> chemin du site public de chaque contenu WordPress repris */
     private array $newPaths = [];
 
     public function __construct(
         private readonly ArticleRepository $articles,
+        private readonly CategoryRepository $categories,
+        private readonly ContentAlbums $albums,
         private readonly PageRepository $pages,
         private readonly MediaLibrary $media,
         private readonly MediaRepository $mediaRepository,
@@ -55,6 +64,12 @@ final class WordPressImporter
         $this->options = $options;
         $this->report = $report;
         $this->newPaths = [];
+        $this->uploadsUrl = $this->wordPressUploadsUrl();
+        $this->uploadsPattern = WordPressContent::uploadsPattern($options->siteUrl);
+        $this->siteCategories = array_map(
+            static fn (array $category): array => ['slug' => (string) $category['slug'], 'label_fr' => (string) $category['label_fr']],
+            $this->categories->all(),
+        );
 
         $posts = $this->wordpress->fetchAllAssociative(
             "SELECT * FROM {$this->table('posts')} WHERE post_type = 'post' AND post_status = 'publish' ORDER BY post_date DESC, ID DESC LIMIT " . $options->articleCount,
@@ -118,18 +133,52 @@ final class WordPressImporter
             'updated_by' => self::IMPORT_USER,
         ] + $seo;
         $this->newPaths[$wordPressId] = '/news/' . $values['slug'];
+        $categoryIds = $this->articleCategories($wordPressId, $label);
+        $this->report->count('articles');
         if ($this->options->dryRun) {
-            $this->report->count('articles');
-
             return;
         }
-        $existing = $this->articles->findIdByLegacyId($wordPressId);
-        if ($existing === null) {
-            $this->articles->insert($values + ['created_at' => (string) $post['post_date'], 'author_code' => self::IMPORT_USER]);
+        $id = $this->articles->findIdByLegacyId($wordPressId);
+        if ($id === null) {
+            $id = $this->articles->insert($values + ['created_at' => (string) $post['post_date'], 'author_code' => self::IMPORT_USER]);
         } else {
-            $this->articles->update($existing, $values);
+            $this->articles->update($id, $values);
         }
-        $this->report->count('articles');
+        $this->articles->replaceCategories($id, $categoryIds);
+        $this->albums->collect(ContentAlbums::ARTICLES, [$values['body_fr'], $values['body_en']], $values['cover_media_id']);
+    }
+
+    /**
+     * Catégories du site des catégories WordPress de l'article (« Non classé » et étiquettes ignorées) ; une catégorie
+     * sans équivalent est signalée (à classer, ou à faire correspondre avec `--category-map`).
+     *
+     * @return list<int>
+     */
+    private function articleCategories(int $wordPressId, string $label): array
+    {
+        $rows = $this->wordpress->fetchAllAssociative(
+            "SELECT t.name, t.slug FROM {$this->table('terms')} t
+            INNER JOIN {$this->table('term_taxonomy')} tt ON (tt.term_id = t.term_id AND tt.taxonomy = 'category')
+            INNER JOIN {$this->table('term_relationships')} tr ON (tr.term_taxonomy_id = tt.term_taxonomy_id)
+            WHERE tr.object_id = ?",
+            [$wordPressId],
+        );
+        $ids = [];
+        foreach ($rows as $row) {
+            $category = ['name' => (string) $row['name'], 'slug' => (string) $row['slug']];
+            if (WordPressContent::isDefaultCategory($category)) {
+                continue;
+            }
+            $slug = WordPressContent::categoryFor($category, $this->siteCategories, $this->options->categoryMap);
+            $id = $slug === null ? null : $this->categories->idOfSlug($slug);
+            if ($id === null) {
+                $this->report->warning(sprintf('%s : catégorie WordPress « %s » sans équivalent (--category-map=%s=<catégorie>)', $label, WordPressContent::splitLanguages($category['name'])['fr'], $category['slug']));
+                continue;
+            }
+            $ids[] = $id;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /** @param array<string, mixed> $page */
@@ -165,9 +214,11 @@ final class WordPressImporter
             return null;
         }
         if ($existing === null) {
-            return $this->pages->insert($values + ['created_at' => (string) $page['post_date']]);
+            $existing = $this->pages->insert($values + ['created_at' => (string) $page['post_date']]);
+        } else {
+            $this->pages->update($existing, $values);
         }
-        $this->pages->update($existing, $values);
+        $this->albums->collect(ContentAlbums::PAGES, [$values['body_fr'], $values['body_en']]);
 
         return $existing;
     }
@@ -208,7 +259,7 @@ final class WordPressImporter
         }
         $html = (string) preg_replace('~\[embed\](.*?)\[/embed\]~i', '<iframe src="$1"></iframe>', $html);
         $html = (string) preg_replace('~\[caption[^\]]*\](.*?)\[/caption\]~is', '<figure>$1</figure>', $html);
-        $html = (string) preg_replace_callback(self::UPLOADS_PATTERN, fn (array $match): string => $this->mediaUrl(($match[1] ?? '') !== '' ? $match[1] : $match[2], $label), $html);
+        $html = (string) preg_replace_callback($this->uploadsPattern, fn (array $match): string => $this->mediaUrl($match[1], $label), $html);
         $html = $this->rewriteInternalLinks($html, $label);
 
         return $this->sanitizer->sanitize(WordPressContent::autop($html));
@@ -234,7 +285,7 @@ final class WordPressImporter
     private function mediaUrl(string $relative, string $label): string
     {
         $relative = rawurldecode($relative);
-        $legacyUrl = $this->options->uploadsUrl() . $relative;
+        $legacyUrl = $this->uploadsUrl . $relative;
         $extension = strtolower(pathinfo($relative, PATHINFO_EXTENSION));
         if (!in_array($extension, self::IMPORTED_EXTENSIONS, true)) {
             $this->report->warning("$label : fichier $relative non repris (type $extension)");
@@ -254,7 +305,7 @@ final class WordPressImporter
                 continue;
             }
             try {
-                $media = $this->media->importFile($local, basename($candidate), $this->options->uploadsUrl() . $candidate, [], self::IMPORT_USER);
+                $media = $this->media->importFile($local, basename($candidate), $this->uploadsUrl . $candidate, [], self::IMPORT_USER);
                 $this->report->count('media');
 
                 return strtok((string) $media['url'], '?') ?: (string) $media['url'];
@@ -280,7 +331,7 @@ final class WordPressImporter
             return is_file($path) ? $path : null;
         }
         try {
-            $response = $this->httpClient->request('GET', $this->options->uploadsUrl() . str_replace('%2F', '/', rawurlencode($relative)), ['timeout' => 30]);
+            $response = $this->httpClient->request('GET', $this->uploadsUrl . str_replace('%2F', '/', rawurlencode($relative)), ['timeout' => 30]);
             if ($response->getStatusCode() !== 200) {
                 return null;
             }
@@ -325,6 +376,20 @@ final class WordPressImporter
         $url = $this->mediaUrl($file, $label);
 
         return str_starts_with($url, MediaUrls::PUBLIC_PREFIX) ? $this->mediaIdOf($url) : null;
+    }
+
+    /** wp-content/uploads d'après les réglages WordPress (`upload_url_path`, sinon `siteurl`), sinon d'après --site-url. */
+    private function wordPressUploadsUrl(): string
+    {
+        $settings = $this->wordpress->fetchAllKeyValue(
+            "SELECT option_name, option_value FROM {$this->table('options')} WHERE option_name IN ('siteurl', 'upload_url_path')",
+        );
+        if (trim((string) ($settings['upload_url_path'] ?? '')) !== '') {
+            return rtrim((string) $settings['upload_url_path'], '/') . '/';
+        }
+        $siteUrl = trim((string) ($settings['siteurl'] ?? '')) ?: $this->options->siteUrl;
+
+        return rtrim($siteUrl, '/') . '/wp-content/uploads/';
     }
 
     private function attachmentFile(int $attachmentId): ?string

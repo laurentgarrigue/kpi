@@ -162,6 +162,33 @@ final class MediaRepository
         $this->connection->update('kp_cms_album', $values, ['id' => $id]);
     }
 
+    /** @param list<string> $paths chemins relatifs à content/ @return list<int> */
+    public function idsOfPaths(array $paths): array
+    {
+        if ($paths === []) {
+            return [];
+        }
+
+        return array_map('intval', $this->connection->fetchFirstColumn(
+            'SELECT id FROM kp_cms_media WHERE path IN (?)',
+            [$paths],
+            [\Doctrine\DBAL\ArrayParameterType::STRING],
+        ));
+    }
+
+    /** Range dans l'album les médias qui n'en ont pas encore (un média déjà rangé ne bouge pas). @param list<int> $ids */
+    public function assignAlbumWhereNone(array $ids, int $albumId): void
+    {
+        if ($ids === []) {
+            return;
+        }
+        $this->connection->executeStatement(
+            'UPDATE kp_cms_media SET album_id = ? WHERE album_id IS NULL AND id IN (?)',
+            [$albumId, $ids],
+            [\Doctrine\DBAL\ParameterType::INTEGER, \Doctrine\DBAL\ArrayParameterType::INTEGER],
+        );
+    }
+
     public function deleteAlbum(int $id): void
     {
         $this->connection->update('kp_cms_media', ['album_id' => null], ['album_id' => $id]);

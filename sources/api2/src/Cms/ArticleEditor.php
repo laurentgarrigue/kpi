@@ -20,6 +20,7 @@ final class ArticleEditor
         private readonly CategoryRepository $categories,
         private readonly MediaRepository $media,
         private readonly HtmlSanitizer $sanitizer,
+        private readonly ContentAlbums $albums,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -119,6 +120,7 @@ final class ArticleEditor
         }
         $this->articles->replaceCategories((int) $id, $categories);
         $this->articles->replaceLinks((int) $id, $links);
+        $this->albums->collect(ContentAlbums::ARTICLES, [$values['body_fr'], $values['body_en']], $values['cover_media_id']);
 
         $paths = ['/', '/news', '/news/' . $values['slug']];
         if ($existing !== null && $existing['slug'] !== $values['slug']) {

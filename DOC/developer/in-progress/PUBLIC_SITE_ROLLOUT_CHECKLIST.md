@@ -357,7 +357,8 @@ Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](
 | feat(api2) | CMS public et admin, médiathèque (WebP), formulaires, purge RGPD, import WordPress ; migration `SQL/migrations/2026-10-11_public_site_cms_forms.sql` | **schéma** : nouvelles tables `kp_cms_*`, `kp_form*`, `kp_mail_log`, `kp_user_capability` (aucune table existante modifiée) ; recherche globale : catégories `news` et `pages` |
 | feat(app4) | rubrique **Admin › Éditorial** (articles, pages, médias, menu, accueil, redirections, formulaires) ; case « Rédacteur du site public » | **app4** : nouvelle rubrique, fenêtre utilisateur ; dépendances `@tiptap/extension-table`, `@tiptap/extension-youtube` |
 | feat(app3) | `/news`, `/news/{slug}`, pages `/{slug}`, menu « Le kayak-polo », accueil éditorial, `/forms/{slug}` (+ liste publique), contenus liés, `/rss.xml`, `/sitemap.xml`, purge, anciens permaliens | aucun (beta) |
-| chore(docker) | GD `--with-webp` (`Dockerfile.api2`), montage `HOST_MEDIA_PATH/content` → `/var/www/html/media/content`, `APP3_PURGE_TOKEN`, `WORDPRESS_DATABASE_URL` | **rebuild** d'api2 et redémarrage de la stack |
+| chore(docker) | GD `--with-webp` (`Dockerfile.api2`), montage `HOST_MEDIA_PATH/content` → `/var/www/html/media/content`, `APP3_PURGE_TOKEN`, `WORDPRESS_DATABASE_URL`, médias WordPress montés en lecture seule dans api2 (`WORDPRESS_UPLOADS_DIR`) | **rebuild** d'api2 et redémarrage de la stack |
+| retours du 13/10 | événement d'un seul groupe (panneau masqué, ICS `/event/{id}/calendar.ics`, calendrier → événement) ; terrains : icône de statut, phase des coupes ; menu éditorial sur 3 niveaux ; reprise : catégories, médias rangés dans les albums « Articles » / « Pages », WordPress sous `/wordpress` | api2 : champs **ajoutés** (`group`, `single_group`), nouvel endpoint ICS ; aucun changement legacy ni app2 |
 
 ### 4.2 ⌨️ Tester en local
 
@@ -383,8 +384,8 @@ make app3_test && make app3_lint
 | 8 | L'article : vidéo, images, partage | aucune requête vers YouTube avant le clic ; visionneuse au clic (flèches, Échap) ; « Partager » | ☐ |
 | 9 | Créer une page « le-kayak-polo » + enfant, les mettre au menu (Admin › Éditorial › Menu) | entrée « Le kayak-polo » entre Équipes et clubs et En direct ; `/arbitrage` → 301 vers `/le-kayak-polo/arbitrage` | ☐ |
 | 10 | Admin › Éditorial › Accueil : bandeau « important », à la une, partenaires | ordre et bandeau sur `beta.kpi.localhost/` | ☐ |
-| 11 | `docker exec kpi_api2 php bin/console app:import-wordpress --dry-run --report=var/import.md` | rapport sans écriture : articles, 14 pages (313 et 1579 en brouillon), médias, shortcodes non convertis | ☐ |
-| 12 | Import réel (même commande sans `--dry-run` ; pages, brouillons et formulaire 19 par défaut ; `--uploads-dir` si `wp-content/uploads` est monté), relancé une 2e fois | contenus repris ; 2e passage sans doublon ; formulaire 19 en brouillon | ☐ |
+| 11 | `docker exec kpi_api2 ls /var/wordpress-uploads` puis `docker exec kpi_api2 php bin/console app:import-wordpress --dry-run --report=var/import.md` | années des médias WordPress listées ; rapport sans écriture : articles, 14 pages (313 et 1579 en brouillon), médias, catégories WordPress sans équivalent, shortcodes non convertis | ☐ |
+| 12 | Import réel (même commande sans `--dry-run` ; pages, brouillons et formulaire 19 par défaut ; `--uploads-dir` si `wp-content/uploads` est monté), relancé une 2e fois | contenus repris avec leurs catégories ; aucun `wp-content` dans les corps ; médias dans les albums « Articles » et « Pages » de la médiathèque ; 2e passage sans doublon ; formulaire 19 en brouillon | ☐ |
 | 13 | Créer un formulaire rattaché à un événement, ouvert, capacité 1, liste d'attente, lien de paiement | proposé sur la page de l'événement ; 2e inscription → « en attente » ; e-mails dans Mailpit | ☐ |
 | 14 | Le formulaire **JavaScript désactivé** : envoi vide puis correct | erreurs rendues par le serveur avec récapitulatif ; confirmation + lien de paiement | ☐ |
 | 15 | Admin : confirmer l'inscription en attente, exporter CSV / Excel | e-mail « confirmée » ; une ligne par inscription | ☐ |

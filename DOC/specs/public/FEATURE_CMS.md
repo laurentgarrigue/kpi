@@ -122,6 +122,9 @@ jeton signé à durée courte (15 min) accepté par `GET /news/{slug}?preview=�
 - Variantes générées à l'envoi avec **GD** (déjà dans `Dockerfile.api2`, à compiler en plus `--with-webp` : seul
   changement Docker de la phase) : 320, 768, 1280, 1920 px de large en WebP + original ; métadonnées EXIF supprimées (vie privée : géolocalisation).
 - Types et taille vérifiés côté serveur (type MIME réel, pas l'extension) ; SVG refusé (risque XSS).
+- **Albums « Articles » et « Pages »** (13/10/2026) : les médias utilisés par un article (image de une, corps) ou une
+  page (corps) y sont rangés à l'enregistrement, qu'ils viennent de la reprise WordPress ou de l'éditeur d'app4 ; un
+  média déjà rangé dans un autre album (galerie) ne bouge pas. Les deux albums sont créés au premier besoin.
 - Remplacement : même `id`, même URL, nouvelles variantes ; cache-busting par `?v={updated_at}`.
 
 ### 5.4 Invalidation du cache d'app3
@@ -160,13 +163,20 @@ visible avec la capacité Rédacteur ou les profils 1–2 ; écrans détaillés 
 Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-run]` lisant la base `dbwp`
 (connexion Doctrine dédiée, lecture seule) :
 
-1. articles `publish` les plus récents (`post_date` décroissant), sans catégorie à l'import (à classer par les
-   rédacteurs ; un article sans catégorie reste publiable mais n'apparaît dans aucun filtre) ; pages listées
+1. articles `publish` les plus récents (`post_date` décroissant) **avec leurs catégories** (13/10/2026) : chaque
+   catégorie WordPress est rattachée à la catégorie du site de même nom ou de même slug (accents et casse ignorés),
+   ou à celle indiquée par `--category-map=slugwp=categorie,…` ; « Non classé » et les étiquettes sont ignorées ; une
+   catégorie sans équivalent est signalée dans le rapport (l'article reste à classer) ; pages listées
    (✅ Q-P4-4) : `2849, 2711, 2286, 2270, 2267, 1881, 1723, 1591, 1581, 1480, 1049, 987` importées **publiées**,
    `313` (à rafraîchir, moderniser) et `1579` (à réactualiser) importées en **brouillon** avec une note dans le
    rapport ; champs WP Multilang éclatés en FR / EN ; Rank Math → champs SEO ;
-2. HTML converti (blocs « classic » → liste blanche § 3.2), images et galeries **des contenus repris seulement**
-   rapatriées dans la médiathèque (albums) — Q-P4-5, sans réponse : valeur par défaut retenue, liens internes réécrits vers les nouvelles URL ;
+2. HTML converti (blocs « classic » → liste blanche § 3.2), images, documents et galeries **des contenus repris
+   seulement** rapatriés dans la médiathèque, albums **« Articles »** et **« Pages »** (§ 5.3) — Q-P4-5, sans réponse :
+   valeur par défaut retenue ; liens internes réécrits vers les nouvelles URL. L'adresse des médias vient des réglages
+   WordPress (`siteurl`, `upload_url_path`) : sur kayak-polo.info, WordPress est installé sous `/wordpress`, les
+   médias sont donc sous `/wordpress/wp-content/uploads/`. Les fichiers sont lus sur disque : `--uploads-dir`, sinon
+   `WORDPRESS_UPLOADS_DIR` (`HOST_WORDPRESS_PATH/wp-content/uploads` monté en lecture seule dans api2 par les compose),
+   sinon téléchargés ; un média introuvable garde son ancienne adresse et est signalé ;
 3. **idempotente** (`legacy_wp_id`) : relancée, elle met à jour sans dupliquer ;
 4. **rapport** (fichier + sortie) : shortcodes non convertis (`[ninja_form]`, `[table]`…), liens cassés, médias
    introuvables ;
@@ -193,6 +203,8 @@ Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-ru
 - **CMS-13** — Un article a une ou plusieurs des 4 catégories ; `GET /news?category=` ne renvoie que les articles
   de la catégorie ; catégorie inconnue → 400.
 - **CMS-11** — La recherche globale renvoie les articles et pages publiés (catégories `news`, `pages`).
+- **CMS-14** — Les médias d'un article ou d'une page (repris de WordPress ou insérés dans app4) sont rangés dans
+  l'album « Articles » ou « Pages » s'ils n'ont pas d'album ; la reprise conserve les catégories des articles.
 - **CMS-12** — Un jeton de prévisualisation expiré ou falsifié est refusé ; une prévisualisation n'est jamais mise
   en cache.
 

@@ -45,4 +45,31 @@ final class WordPressContentTest extends TestCase
         self::assertNull(WordPressContent::ninjaFieldType('submit'));
         self::assertNull(WordPressContent::ninjaFieldType('html'));
     }
+
+    public function testCms09UploadsAreFoundWhateverTheWordPressDirectory(): void
+    {
+        $pattern = WordPressContent::uploadsPattern('https://www.kayak-polo.info');
+        $html = '<img src="https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/a.jpg"> '
+            . '<img src="//kayak-polo.info/wp-content/uploads/2024/06/b.jpg"> <a href="/wordpress/wp-content/uploads/c.pdf">c</a> '
+            . '<img src="https://autre.example/wp-content/uploads/d.jpg"> <a href="/media/content/e.jpg">e</a>';
+        preg_match_all($pattern, $html, $matches);
+
+        self::assertSame(['2024/06/a.jpg', '2024/06/b.jpg', 'c.pdf'], $matches[1], 'autre site et médiathèque ignorés');
+    }
+
+    public function testCms09WordPressCategoriesAreMatchedByMapThenByName(): void
+    {
+        $ours = [
+            ['slug' => 'equipes-de-france', 'label_fr' => 'Équipes de France'],
+            ['slug' => 'competitions-nationales', 'label_fr' => 'Compétitions nationales'],
+            ['slug' => 'reglements-vie-federale', 'label_fr' => 'Règlements et vie fédérale'],
+        ];
+
+        self::assertSame('equipes-de-france', WordPressContent::categoryFor(['name' => 'Equipes de France', 'slug' => 'edf'], $ours, []));
+        self::assertSame('competitions-nationales', WordPressContent::categoryFor(['name' => '[:fr]Nationales[:en]National[:]', 'slug' => 'competitions-nationales'], $ours, []), 'par le slug WordPress');
+        self::assertSame('reglements-vie-federale', WordPressContent::categoryFor(['name' => 'Divers', 'slug' => 'divers'], $ours, ['divers' => 'reglements-vie-federale']));
+        self::assertNull(WordPressContent::categoryFor(['name' => 'Divers', 'slug' => 'divers'], $ours, []));
+        self::assertTrue(WordPressContent::isDefaultCategory(['name' => 'Non classé', 'slug' => 'non-classe']));
+        self::assertTrue(WordPressContent::isDefaultCategory(['name' => 'Uncategorized', 'slug' => 'uncategorized']));
+    }
 }

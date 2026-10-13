@@ -2,6 +2,8 @@
 
 namespace App\Cms\Import;
 
+use App\Cms\CmsRules;
+
 /**
  * Conversion du contenu WordPress (FEATURE_CMS.md § 8) : textes WP Multilang `[:fr]…[:en]…[:]`, paragraphes
  * automatiques de l'éditeur classique (wpautop), shortcodes, permaliens. Fonctions pures, testées seules.
@@ -120,5 +122,51 @@ final class WordPressContent
             'checkbox' => 'checkbox',
             default => null,
         };
+    }
+
+    /**
+     * Expression des fichiers de `wp-content/uploads` du site, quel que soit le répertoire d'installation de WordPress
+     * (`/wordpress/wp-content/…` sur kayak-polo.info) : URL absolue du site (avec ou sans `www`, schéma relatif) ou
+     * chemin relatif dans un attribut. Groupe 1 : chemin dans uploads.
+     */
+    public static function uploadsPattern(string $siteUrl): string
+    {
+        $host = preg_quote(preg_replace('~^www\.~', '', (string) parse_url($siteUrl, PHP_URL_HOST)) ?? '', '~');
+
+        return '~(?:(?:https?:)?//(?:www\.)?' . $host . '|(?<=["\'(=\s]))(?:/[\w.-]+)*?/wp-content/uploads/([^"\'\s?#<>]+)~i';
+    }
+
+    /**
+     * Catégorie du site d'une catégorie WordPress : correspondance explicite (`--category-map`, par slug WordPress),
+     * sinon même nom ou même slug (accents et casse ignorés), sinon null.
+     *
+     * @param array{name: string, slug: string}                 $wordpress
+     * @param list<array{slug: string, label_fr: string}>       $categories catégories du site
+     * @param array<string, string>                             $map        slug WordPress → slug du site
+     */
+    public static function categoryFor(array $wordpress, array $categories, array $map): ?string
+    {
+        $slugs = array_column($categories, 'slug');
+        if (isset($map[$wordpress['slug']]) && in_array($map[$wordpress['slug']], $slugs, true)) {
+            return $map[$wordpress['slug']];
+        }
+        $candidates = [CmsRules::slugify(self::splitLanguages($wordpress['name'])['fr']), $wordpress['slug']];
+        foreach ($categories as $category) {
+            if (array_intersect($candidates, [$category['slug'], CmsRules::slugify($category['label_fr'])]) !== []) {
+                return $category['slug'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Catégorie par défaut de WordPress (« Non classé ») : ignorée sans avertissement.
+     *
+     * @param array{name: string, slug: string} $wordpress
+     */
+    public static function isDefaultCategory(array $wordpress): bool
+    {
+        return in_array($wordpress['slug'], ['uncategorized', 'non-classe'], true);
     }
 }

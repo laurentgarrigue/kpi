@@ -430,13 +430,27 @@ DELETE FROM `wptest_options`;
 DELETE FROM `wptest_nf3_forms`;
 DELETE FROM `wptest_nf3_fields`;
 DELETE FROM `wptest_nf3_field_meta`;
-INSERT INTO `wptest_options` (`option_name`, `option_value`) VALUES ('permalink_structure', '/%year%/%monthnum%/%postname%/');
+DELETE FROM `wptest_terms`;
+DELETE FROM `wptest_term_taxonomy`;
+DELETE FROM `wptest_term_relationships`;
+-- WordPress installé sous /wordpress (comme kayak-polo.info) : les médias sont sous /wordpress/wp-content/uploads.
+INSERT INTO `wptest_options` (`option_name`, `option_value`) VALUES
+  ('permalink_structure', '/%year%/%monthnum%/%postname%/'),
+  ('siteurl', 'https://www.kayak-polo.info/wordpress');
+-- Catégories : 2 et 3 correspondent aux catégories du site, 1 (« Non classé ») est ignorée, 4 n'a pas d'équivalent.
+INSERT INTO `wptest_terms` (`term_id`, `name`, `slug`) VALUES
+  (1, 'Non classé', 'non-classe'), (2, 'Equipes de France', 'equipes-de-france'),
+  (3, 'Compétitions Nationales', 'nationales'), (4, 'Divers', 'divers');
+INSERT INTO `wptest_term_taxonomy` (`term_taxonomy_id`, `term_id`, `taxonomy`) VALUES
+  (11, 1, 'category'), (12, 2, 'category'), (13, 3, 'category'), (14, 4, 'category'), (15, 2, 'post_tag');
+INSERT INTO `wptest_term_relationships` (`object_id`, `term_taxonomy_id`) VALUES
+  (101, 11), (101, 12), (101, 13), (101, 14), (101, 15);
 INSERT INTO `wptest_posts` (`ID`, `post_date`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `post_name`, `post_modified`, `post_parent`, `post_type`) VALUES
-  (101, '2024-06-02 10:00:00', '[:fr]Premier paragraphe\n\n<img src="https://www.kayak-polo.info/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium"> <a href="https://www.kayak-polo.info/?p=102">ancien</a> [ninja_form id=19][:en]First paragraph[:]', '[:fr]Finale N1[:en]N1 final[:]', '[:fr]Le résumé[:]', 'publish', 'finale-n1', '2024-06-03 08:00:00', 0, 'post'),
+  (101, '2024-06-02 10:00:00', '[:fr]Premier paragraphe\n\n<img src="https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium"> <a href="https://www.kayak-polo.info/?p=102">ancien</a> [ninja_form id=19][:en]First paragraph[:]', '[:fr]Finale N1[:en]N1 final[:]', '[:fr]Le résumé[:]', 'publish', 'finale-n1', '2024-06-03 08:00:00', 0, 'post'),
   (102, '2024-05-01 10:00:00', 'Ancien', 'Ancien article', '', 'publish', 'ancien', '2024-05-01 10:00:00', 0, 'post'),
   (103, '2024-07-01 10:00:00', 'Brouillon', 'Brouillon WP', '', 'draft', 'brouillon-wp', '2024-07-01 10:00:00', 0, 'post'),
   (201, '2024-06-02 09:00:00', '', 'photo', '', 'inherit', 'photo', '2024-06-02 09:00:00', 101, 'attachment'),
-  (301, '2020-01-01 10:00:00', '<h2>Règlement</h2>\nTexte du règlement', 'Règlement', '', 'publish', 'reglement', '2023-01-01 10:00:00', 0, 'page'),
+  (301, '2020-01-01 10:00:00', '<h2>Règlement</h2>\nTexte du règlement <a href="/wordpress/wp-content/uploads/2024/06/reglement.pdf">PDF</a>', 'Règlement', '', 'publish', 'reglement', '2023-01-01 10:00:00', 0, 'page'),
   (302, '2020-01-01 10:00:00', 'Les arbitres', 'Arbitres', '', 'publish', 'arbitres', '2023-01-01 10:00:00', 301, 'page'),
   (313, '2015-01-01 10:00:00', 'Vieux texte', 'Historique', '', 'publish', 'historique', '2015-01-01 10:00:00', 0, 'page');
 INSERT INTO `wptest_postmeta` (`post_id`, `meta_key`, `meta_value`) VALUES

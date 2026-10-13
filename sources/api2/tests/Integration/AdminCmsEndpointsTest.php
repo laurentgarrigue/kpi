@@ -111,6 +111,24 @@ final class AdminCmsEndpointsTest extends ApiTestCase
         ]]], $this->getJson('/menu'));
     }
 
+    public function testCms14MediaOfArticlesAndPagesJoinTheirAlbum(): void
+    {
+        $connection = $this->beginWrites();
+        $this->requestAs('TEDIT', 'POST', '/admin/cms/articles', [
+            'title_fr' => 'Avec photo', 'cover_media_id' => 9501, 'body_fr' => '<p>Voir</p>',
+        ], 201);
+        $this->requestAs('TEDIT', 'POST', '/admin/cms/pages', [
+            'title_fr' => 'Documents', 'body_fr' => '<p><a href="/media/content/2999/01/reglement.pdf?v=1">Règlement</a></p>',
+        ], 201);
+
+        $albums = $connection->fetchAllKeyValue('SELECT m.id, a.slug FROM kp_cms_media m LEFT JOIN kp_cms_album a ON (a.id = m.album_id) WHERE m.id IN (9501, 9502)');
+        self::assertSame([9501 => 'articles', 9502 => 'pages'], $albums, 'image de une → Articles, document du corps → Pages');
+
+        // A media already in an album stays there.
+        $this->requestAs('TEDIT', 'POST', '/admin/cms/pages', ['title_fr' => 'Autre', 'body_fr' => '<p><img src="/media/content/2999/01/finale.jpg" alt="x"></p>'], 201);
+        self::assertSame('articles', $connection->fetchOne('SELECT a.slug FROM kp_cms_media m JOIN kp_cms_album a ON (a.id = m.album_id) WHERE m.id = 9501'));
+    }
+
     public function testCnt04MenuHasAtMostThreeLevels(): void
     {
         $level3 = ['label_fr' => 'FFCK', 'target_kind' => 'url', 'target_ref' => 'https://www.ffck.org'];

@@ -23,6 +23,7 @@ final class ImportWordPressTest extends ApiTestCase
         mkdir($this->uploads . '/2024/06', 0777, true);
         $image = imagecreatetruecolor(1000, 500);
         imagejpeg($image, $this->uploads . '/2024/06/photo.jpg');
+        file_put_contents($this->uploads . '/2024/06/reglement.pdf', "%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n");
         $_SERVER['CMS_MEDIA_ROOT'] = $_ENV['CMS_MEDIA_ROOT'] = $this->root . '/content';
         parent::setUp();
         $this->connection = $this->beginWrites();
@@ -59,12 +60,43 @@ final class ImportWordPressTest extends ApiTestCase
         self::assertSame('Description SEO', $article['seo_description_fr']);
         self::assertSame('', $article['seo_title_fr'], 'variables Rank Math ignorées');
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_cms_media WHERE legacy_url LIKE '%photo.jpg'"), 'un seul média pour la vignette et l\'image mise en avant');
+        self::assertStringNotContainsString('wp-content', $article['body_fr'], 'WordPress installé sous /wordpress : médias rapatriés quand même');
 
         $redirects = $this->connection->fetchAllKeyValue('SELECT from_path, to_path FROM kp_cms_redirect');
         self::assertSame('/news/finale-n1', $redirects['/2024/06/finale-n1/']);
         self::assertSame('/news/finale-n1', $redirects['/?p=101']);
         self::assertSame('/news', $redirects['/2024/05/ancien/'], 'article publié non repris → /news (301)');
         self::assertArrayNotHasKey('/2024/07/brouillon-wp/', $redirects);
+    }
+
+    public function testCms09ArticlesKeepTheirCategories(): void
+    {
+        $output = $this->import();
+
+        $categories = $this->connection->fetchFirstColumn(
+            'SELECT c.slug FROM kp_cms_article_category ac JOIN kp_cms_category c ON (c.id = ac.category_id)
+            JOIN kp_cms_article a ON (a.id = ac.article_id) WHERE a.legacy_wp_id = 101 ORDER BY c.position',
+        );
+        self::assertSame(['equipes-de-france', 'competitions-nationales'], $categories, 'par nom ; « Non classé » et les étiquettes ignorées');
+        self::assertStringContainsString('catégorie WordPress « Divers » sans équivalent', $output);
+
+        $this->import(['--category-map' => 'divers=reglements-vie-federale']);
+        self::assertContains('reglements-vie-federale', $this->connection->fetchFirstColumn(
+            'SELECT c.slug FROM kp_cms_article_category ac JOIN kp_cms_category c ON (c.id = ac.category_id)
+            JOIN kp_cms_article a ON (a.id = ac.article_id) WHERE a.legacy_wp_id = 101',
+        ));
+    }
+
+    public function testCms14ImportedMediaGoToTheArticlesAndPagesAlbums(): void
+    {
+        $this->import();
+
+        $albums = $this->connection->fetchAllKeyValue(
+            "SELECT SUBSTRING_INDEX(m.legacy_url, '/', -1), a.slug FROM kp_cms_media m JOIN kp_cms_album a ON (a.id = m.album_id) WHERE m.legacy_url IS NOT NULL",
+        );
+        self::assertSame(['photo.jpg' => 'articles', 'reglement.pdf' => 'pages'], $albums);
+        self::assertStringContainsString('https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/photo.jpg', (string) $this->connection->fetchOne("SELECT legacy_url FROM kp_cms_media WHERE legacy_url LIKE '%photo.jpg'"));
+        self::assertMatchesRegularExpression('~<a href="/media/content/\d{4}/\d{2}/reglement\.pdf">PDF</a>~', (string) $this->connection->fetchOne('SELECT body_fr FROM kp_cms_page WHERE legacy_wp_id = 301'));
     }
 
     public function testQP44ImportsChosenPagesWithParentsAndDraftsTheOnesToRework(): void

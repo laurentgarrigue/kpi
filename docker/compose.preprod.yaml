@@ -86,6 +86,7 @@ services:
             - APP3_PURGE_TOKEN=${APP3_PURGE_TOKEN:-}
             # Base WordPress lue par `app:import-wordpress` (lecture seule, FEATURE_CMS.md § 8).
             - WORDPRESS_DATABASE_URL=${WORDPRESS_DATABASE_URL:-}
+            - WORDPRESS_UPLOADS_DIR=/var/wordpress-uploads
             - APP_ENV=prod
             - APP_DEBUG=0
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json
@@ -121,6 +122,8 @@ services:
             - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
             # Médiathèque du site public (FEATURE_CMS.md § 5.3), servie sous /media/content/ par Apache.
             - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/content:/var/www/html/media/content
+            # Médias WordPress, lus par `app:import-wordpress` (lecture seule, FEATURE_CMS.md § 8).
+            - ${HOST_WORDPRESS_PATH}/wp-content/uploads:/var/wordpress-uploads:ro
             # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
             # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
             # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,

@@ -12,6 +12,7 @@ final class PageEditor
     public function __construct(
         private readonly PageRepository $pages,
         private readonly HtmlSanitizer $sanitizer,
+        private readonly ContentAlbums $albums,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -128,6 +129,7 @@ final class PageEditor
         } else {
             $this->pages->update((int) $id, $values);
         }
+        $this->albums->collect(ContentAlbums::PAGES, [$values['body_fr'], $values['body_en']]);
         $newTree = new PageTree($this->pages->all());
         $paths = array_values(array_filter(['/', $oldPath, $newTree->path((int) $id)]));
 

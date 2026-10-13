@@ -30,6 +30,9 @@ final class ImportWordPressCommand extends Command
         private readonly Connection $connection,
         #[Autowire('%env(default::WORDPRESS_DATABASE_URL)%')]
         private readonly ?string $wordpressDsn,
+        /** wp-content/uploads monté en lecture seule dans le conteneur (compose), utilisé sans --uploads-dir. */
+        #[Autowire('%env(default::WORDPRESS_UPLOADS_DIR)%')]
+        private readonly ?string $wordpressUploadsDir = null,
     ) {
         parent::__construct();
     }
@@ -44,9 +47,10 @@ final class ImportWordPressCommand extends Command
             ->addOption('pages', null, InputOption::VALUE_REQUIRED, 'Identifiants des pages (virgules)', implode(',', ImportOptions::PAGES))
             ->addOption('draft-pages', null, InputOption::VALUE_REQUIRED, 'Pages reprises en brouillon (virgules)', implode(',', ImportOptions::DRAFT_PAGES))
             ->addOption('ninja-form', null, InputOption::VALUE_REQUIRED, 'Formulaire Ninja Forms d\'exemple (0 : aucun)', (string) ImportOptions::NINJA_FORM)
-            ->addOption('uploads-dir', null, InputOption::VALUE_REQUIRED, 'Répertoire wp-content/uploads local (sinon téléchargement depuis --site-url)')
+            ->addOption('uploads-dir', null, InputOption::VALUE_REQUIRED, 'Répertoire wp-content/uploads local (défaut : WORDPRESS_UPLOADS_DIR s\'il existe, sinon téléchargement)')
             ->addOption('site-url', null, InputOption::VALUE_REQUIRED, 'Adresse du site WordPress', 'https://www.kayak-polo.info')
             ->addOption('report', null, InputOption::VALUE_REQUIRED, 'Fichier du rapport')
+            ->addOption('category-map', null, InputOption::VALUE_REQUIRED, 'Catégories WordPress sans équivalent par leur nom : slugwp=categorie,… (ex. divers=reglements-vie-federale)', '')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Analyse et rapport sans rien écrire');
     }
 
@@ -69,9 +73,10 @@ final class ImportWordPressCommand extends Command
             pageIds: $ids((string) $input->getOption('pages')),
             draftPageIds: $ids((string) $input->getOption('draft-pages')),
             ninjaFormId: $ninjaForm > 0 ? $ninjaForm : null,
-            uploadsDir: $input->getOption('uploads-dir'),
+            uploadsDir: $input->getOption('uploads-dir') ?? $this->defaultUploadsDir(),
             siteUrl: (string) $input->getOption('site-url'),
             dryRun: (bool) $input->getOption('dry-run'),
+            categoryMap: self::categoryMap((string) $input->getOption('category-map')),
         );
 
         $report = new ImportReport();
@@ -84,5 +89,24 @@ final class ImportWordPressCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function defaultUploadsDir(): ?string
+    {
+        return $this->wordpressUploadsDir !== null && $this->wordpressUploadsDir !== '' && is_dir($this->wordpressUploadsDir) ? $this->wordpressUploadsDir : null;
+    }
+
+    /** @return array<string, string> `a=b,c=d` → ['a' => 'b', 'c' => 'd'] */
+    private static function categoryMap(string $option): array
+    {
+        $map = [];
+        foreach (array_filter(array_map('trim', explode(',', $option))) as $pair) {
+            [$from, $to] = array_pad(array_map('trim', explode('=', $pair, 2)), 2, '');
+            if ($from !== '' && $to !== '') {
+                $map[$from] = $to;
+            }
+        }
+
+        return $map;
     }
 }

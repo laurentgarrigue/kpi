@@ -15,8 +15,9 @@ final class ImportOptions
     public const NINJA_FORM = 19;
 
     /**
-     * @param list<int> $pageIds
-     * @param list<int> $draftPageIds
+     * @param list<int>             $pageIds
+     * @param list<int>             $draftPageIds
+     * @param array<string, string> $categoryMap  slug de catégorie WordPress → slug de catégorie du site
      */
     public function __construct(
         public readonly string $prefix = 'wp_',
@@ -25,13 +26,10 @@ final class ImportOptions
         public readonly array $draftPageIds = self::DRAFT_PAGES,
         public readonly ?int $ninjaFormId = self::NINJA_FORM,
         public readonly ?string $uploadsDir = null,
+        /** Adresse publique du site WordPress (liens internes) ; ses médias sont cherchés d'après ses propres réglages. */
         public readonly string $siteUrl = 'https://www.kayak-polo.info',
         public readonly bool $dryRun = false,
+        public readonly array $categoryMap = [],
     ) {
-    }
-
-    public function uploadsUrl(): string
-    {
-        return rtrim($this->siteUrl, '/') . '/wp-content/uploads/';
     }
 }
