@@ -113,7 +113,8 @@
     "status": {
       "ATT": "À venir",
       "ON": "En cours",
-      "END": "Terminé"
+      "END": "Terminé",
+      "PROVISIONAL": "Provisoire"
     },
     "medal": {
       "1": "Médaille d'or",
@@ -230,7 +231,16 @@
     "eventCompetitions": "Compétitions de cet événement",
     "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
     "allGamedays": "Toutes les journées de la compétition",
-    "seeCompetition": "Voir la compétition entière"
+    "seeCompetition": "Voir la compétition entière",
+    "period": {
+      "regular": "période {n}",
+      "regularShort": "P{n}",
+      "overtime": "prolong. {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "tirs au but",
+      "shootoutShort": "TAB"
+    },
+    "gameNumber": "Match n° {number}"
   },
   "stats": {
     "scorers": {

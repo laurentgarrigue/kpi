@@ -58,7 +58,8 @@
     "cms_forms": "Formulaires",
     "cms_menu": "Menu du site",
     "cms_home": "Accueil du site",
-    "cms_redirects": "Redirections"
+    "cms_redirects": "Redirections",
+    "public_site_beta": "Nouveau site public (bêta)"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -1683,7 +1684,16 @@
     "bulk_cancel_assign_confirm": "Vider équipes et arbitres de {count} match(s) sélectionné(s) ?",
     "bulk_assign_cancelled": "Affectation annulée pour {count} match(s).",
     "bulk_duplicate_confirm": "Dupliquer les {count} match(s) sélectionné(s) ? Les copies seront non verrouillées, non publiées et sans score.",
-    "bulk_duplicated": "{count} match(s) dupliqué(s)."
+    "bulk_duplicated": "{count} match(s) dupliqué(s).",
+    "period_label": {
+      "regular": "Période {n}",
+      "regularShort": "P{n}",
+      "overtime": "Prolong. {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "Tirs au but",
+      "shootoutShort": "TAB"
+    },
+    "status_provisional": "Provisoire"
   },
   "clubs": {
     "title": "Gestion des Clubs",
@@ -2520,11 +2530,11 @@
       "END": "Terminé"
     },
     "period": {
-      "M1": "1ère mi-temps",
-      "M2": "2ème mi-temps",
-      "P1": "Prolongation 1",
-      "P2": "Prolongation 2",
-      "TB": "Tir au but"
+      "M1": "Période 1",
+      "M2": "Période 2",
+      "P1": "Prolong. 1",
+      "P2": "Prolong. 2",
+      "TB": "Tirs au but"
     },
     "event": {
       "goal": "But",

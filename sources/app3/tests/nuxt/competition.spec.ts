@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import type { ResultsGame } from '#kpi-layer/utils/results/types'
 import { fakeApi2 } from '../fixtures/api2'
 import { expectNotFound, mountRoute } from './results-setup'
 
@@ -133,11 +134,15 @@ describe('pitch game layout (§ 3.2)', () => {
     const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
     const top = game.find('[data-testid="pitch-top"]')
     expect(top.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
-    // CMP-17: the status is an icon whose label stays readable by screen readers and on hover.
+    // CMP-17: the status is a coloured icon whose label stays readable by screen readers and on hover, preceded by
+    // the game number; the period is abbreviated (M1 → P1).
     const status = top.find('[data-status]')
-    expect(status.find('[data-testid="status-icon"]').exists()).toBe(true)
-    expect(status.attributes('title')).toBe('En cours · M1')
+    expect(status.attributes('data-status')).toBe('ON')
+    expect(status.find('[data-testid="status-icon"]').classes()).toContain('text-kpi-blue-600')
+    expect(status.attributes('title')).toBe('En cours · période 1')
     expect(status.find('.sr-only').text()).toBe('En cours')
+    expect(status.find('[data-testid="status-period"]').text()).toBe('P1')
+    expect(top.find('[data-testid="pitch-number"]').text()).toBe('#4')
     const [teamA, teamB] = game.findAll('[data-testid="pitch-team"]')
     expect(teamA!.text()).toContain('Equipe Alpha')
     expect(teamA!.find('[data-testid="side-score"]').text()).toContain('1')
@@ -145,6 +150,20 @@ describe('pitch game layout (§ 3.2)', () => {
     expect(teamB!.find('[data-testid="side-score"]').text()).toContain('0')
     // The score is provisional (game on): italic and announced.
     expect(teamA!.find('[data-testid="side-score"]').classes()).toContain('italic')
+  })
+
+  it('CMP-17: finished games are green, provisional ones (not locked) orange with an ellipsis, pending ones grey', async () => {
+    api2.mockImplementation(async (path: string) => (path === '/competition/2999/RCP/games'
+      ? (await fakeApi2<ResultsGame[]>(path)).map(item => (item.g_id === 9413 ? { ...item, g_validation: '' } : item))
+      : fakeApi2(path)))
+    const grid = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"]')
+    const iconColour = (id: number) => grid.find(`[data-game="${id}"] [data-testid="status-icon"]`).classes().find(name => name.startsWith('text-'))
+    expect(grid.find('[data-game="9411"] [data-status]').attributes('data-status')).toBe('END')
+    expect(iconColour(9411)).toBe('text-kpi-green-600')
+    const provisional = grid.find('[data-game="9413"] [data-status]')
+    expect(provisional.attributes('data-status')).toBe('PROVISIONAL')
+    expect(provisional.attributes('title')).toBe('Provisoire')
+    expect(iconColour(9413)).toBe('text-orange-600')
   })
 
   it('CMP-17: the category of a cup game is followed by its phase', async () => {

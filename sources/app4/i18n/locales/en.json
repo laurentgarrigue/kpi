@@ -58,7 +58,8 @@
     "cms_forms": "Forms",
     "cms_menu": "Site menu",
     "cms_home": "Site home page",
-    "cms_redirects": "Redirections"
+    "cms_redirects": "Redirections",
+    "public_site_beta": "New public site (beta)"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -1671,7 +1672,16 @@
     "bulk_cancel_assign_confirm": "Clear teams and referees for {count} selected game(s)?",
     "bulk_assign_cancelled": "Assignment cancelled for {count} game(s).",
     "bulk_duplicate_confirm": "Duplicate {count} selected game(s)? Copies will be unlocked, unpublished and have no score.",
-    "bulk_duplicated": "{count} game(s) duplicated."
+    "bulk_duplicated": "{count} game(s) duplicated.",
+    "period_label": {
+      "regular": "Period {n}",
+      "regularShort": "P{n}",
+      "overtime": "Overtime {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "Shoot-out",
+      "shootoutShort": "SO"
+    },
+    "status_provisional": "Provisional"
   },
   "clubs": {
     "title": "Clubs Management",
@@ -2508,11 +2518,11 @@
       "END": "Finished"
     },
     "period": {
-      "M1": "1st half",
-      "M2": "2nd half",
+      "M1": "Period 1",
+      "M2": "Period 2",
       "P1": "Overtime 1",
       "P2": "Overtime 2",
-      "TB": "Penalty shootout"
+      "TB": "Shoot-out"
     },
     "event": {
       "goal": "Goal",
