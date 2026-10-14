@@ -23,7 +23,7 @@ const THEMES = [
         :data-theme="theme.value"
         @click="colorMode.preference = theme.value"
       >
-        <UIcon :name="theme.icon" class="block size-4" aria-hidden="true" />
+        <UIcon :name="theme.icon" class="block size-5" aria-hidden="true" />
         <span class="sr-only">{{ $t(`theme.${theme.value}`) }}</span>
       </button>
       <template #fallback>

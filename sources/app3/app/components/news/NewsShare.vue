@@ -34,7 +34,7 @@ async function copy() {
 <template>
   <details class="group relative" data-testid="news-share">
     <summary class="flex cursor-pointer list-none items-center gap-1 rounded border border-line px-3 py-1 hover:bg-kpi-blue-50" @click="onToggle">
-      <UIcon name="i-heroicons-share" class="size-4" aria-hidden="true" />
+      <UIcon name="i-heroicons-share" class="size-5" aria-hidden="true" />
       {{ $t('news.share') }}
     </summary>
     <ul class="absolute z-20 mt-1 min-w-48 rounded border border-line bg-surface py-1 shadow-lg">

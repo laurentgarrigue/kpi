@@ -31,7 +31,7 @@ const title = computed(() => [label.value, periodText(false)].filter(Boolean).jo
     :data-status="status"
     :title="title"
   >
-    <UIcon :name="STYLES[status].icon" class="size-4" :class="[STYLES[status].colour, { 'animate-pulse': status === 'ON' }]" aria-hidden="true" data-testid="status-icon" />
+    <UIcon :name="STYLES[status].icon" class="size-5" :class="[STYLES[status].colour, { 'animate-pulse': status === 'ON' }]" aria-hidden="true" data-testid="status-icon" />
     <span class="sr-only">{{ label }}</span>
     <span v-if="period" data-testid="status-period">{{ periodText(true) }}</span>
   </span>
