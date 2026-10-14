@@ -81,7 +81,7 @@ useHead(() => ({
             :to="chip.to"
             :aria-current="chip.current ? 'page' : undefined"
             class="block rounded-full border px-3 py-1 text-sm"
-            :class="chip.current ? 'border-kpi-blue-600 bg-kpi-blue-600 text-white' : 'border-line hover:bg-kpi-blue-50'"
+            :class="chip.current ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
           >
             {{ chip.label }}
           </NuxtLink>

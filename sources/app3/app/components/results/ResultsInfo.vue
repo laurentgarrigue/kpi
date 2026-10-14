@@ -64,7 +64,7 @@ const ics = computed(() => props.subscriptionUrl ?? competitionIcsUrl(api2BaseUr
 
     <section v-if="schema" aria-labelledby="schema-title">
       <h2 id="schema-title" class="mb-3 text-3xl text-kpi-blue-600">{{ $t('results.info.schema') }}</h2>
-      <img :src="schema" :alt="$t('results.info.schemaAlt', { competition: competition.display_title })" loading="lazy" class="max-w-full" data-testid="schema">
+      <img :src="schema" :alt="$t('results.info.schemaAlt', { competition: competition.display_title })" loading="lazy" class="kpi-logo max-w-full" data-testid="schema">
     </section>
   </div>
 </template>

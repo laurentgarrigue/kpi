@@ -18,7 +18,7 @@ const logo = computed(() => (props.main?.logo ? joinURL(legacyBaseUrl, 'img', pr
 <template>
   <div v-if="main || others.length" class="space-y-2">
     <aside v-if="main" class="flex flex-wrap items-center gap-4 rounded border-l-4 border-kpi-blue-500 bg-kpi-blue-50 p-4" data-testid="main-event">
-      <img v-if="logo" :src="logo" alt="" class="size-12 object-contain">
+      <img v-if="logo" :src="logo" alt="" class="kpi-logo size-12 object-contain">
       <p class="flex-1">
         {{ $t('results.partOfEvent', { scope }) }}
         <strong>{{ main.libelle }}</strong>

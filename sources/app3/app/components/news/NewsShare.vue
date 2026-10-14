@@ -37,7 +37,7 @@ async function copy() {
       <UIcon name="i-heroicons-share" class="size-4" aria-hidden="true" />
       {{ $t('news.share') }}
     </summary>
-    <ul class="absolute z-20 mt-1 min-w-48 rounded border border-line bg-white py-1 shadow-lg">
+    <ul class="absolute z-20 mt-1 min-w-48 rounded border border-line bg-surface py-1 shadow-lg">
       <li v-for="link in links" :key="link.id">
         <a :href="link.href" v-bind="link.id === 'email' ? {} : NEW_TAB_ATTRS" class="block px-3 py-1 hover:bg-kpi-blue-50" :data-share="link.id">
           {{ $t(`news.shareOn.${link.id}`) }}

@@ -7,7 +7,7 @@ defineProps<{ players: RosterPlayer[], caption: string }>()
 const CARDS = [
   { key: 'green', label: 'teams.col.green', class: 'bg-kpi-green-500' },
   { key: 'yellow', label: 'teams.col.yellow', class: 'bg-kpi-gold-400' },
-  { key: 'red', label: 'teams.col.red', class: 'bg-kpi-red-600' },
+  { key: 'red', label: 'teams.col.red', class: 'bg-kpi-red-600 dark:bg-kpi-red-500' },
   { key: 'red_final', label: 'teams.col.redFinal', class: 'bg-kpi-red-900' },
 ] as const
 </script>

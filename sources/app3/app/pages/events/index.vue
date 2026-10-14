@@ -38,7 +38,7 @@ useSeoMeta({
           :to="yearLink(item)"
           :aria-current="item === year ? 'page' : undefined"
           class="rounded-full border px-3 py-1 text-sm"
-          :class="item === year ? 'border-kpi-blue-600 bg-kpi-blue-600 text-white' : 'border-line hover:bg-kpi-blue-50'"
+          :class="item === year ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
         >
           {{ item }}
         </NuxtLink>

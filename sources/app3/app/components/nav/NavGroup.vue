@@ -38,7 +38,7 @@ onClickOutside(root, () => close())
     <ul
       v-show="open"
       :id="panelId"
-      class="absolute left-0 z-20 min-w-64 rounded-b bg-white py-2 text-ink shadow-lg"
+      class="absolute left-0 z-20 min-w-64 rounded-b bg-surface py-2 text-ink shadow-lg"
     >
       <li v-for="link in group.children" :key="link.id">
         <NavLink

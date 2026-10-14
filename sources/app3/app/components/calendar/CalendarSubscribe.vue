@@ -25,7 +25,7 @@ async function copyLink() {
 <template>
   <div class="mb-4 space-y-3 rounded border border-line p-4" data-testid="calendar-subscription">
     <div class="flex flex-wrap items-center gap-3">
-      <a :href="webcalUrl(url)" class="inline-flex items-center gap-1 rounded bg-kpi-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-kpi-blue-700" data-testid="ics-subscribe">
+      <a :href="webcalUrl(url)" class="inline-flex items-center gap-1 rounded bg-kpi-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-kpi-blue-700 dark:bg-kpi-blue-900 dark:hover:bg-kpi-blue-950" data-testid="ics-subscribe">
         <UIcon name="i-heroicons-calendar-days" class="size-5" aria-hidden="true" />{{ t('calendar.subscribe') }}
       </a>
       <a :href="url" class="text-sm underline" data-testid="ics-download">{{ t('calendar.download') }}</a>

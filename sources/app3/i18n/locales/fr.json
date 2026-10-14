@@ -515,5 +515,11 @@
     "count": "{count} inscription | {count} inscriptions",
     "attached": "Inscriptions",
     "register": "S'inscrire"
+  },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
   }
 }

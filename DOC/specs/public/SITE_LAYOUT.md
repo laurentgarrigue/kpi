@@ -96,7 +96,13 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 
 - **Typographie** : titres en **Agency FB** (licence FFCK, fichier d'app4 repris dans le layer), texte en
   **Raleway** auto-hébergée (aucun appel à un service tiers). Chiffres tabulaires pour scores et classements.
-- **Mode sombre** : hors phase 1 (le site est en thème clair). Les jetons sont nommés pour l'accueillir plus tard.
+- **Mode sombre** (14/10/2026, comme app4) : sélecteur **Clair / Sombre / Système** dans l'en-tête (boutons à
+  icône soleil / lune / écran, `aria-pressed`, libellés traduits), choix mémorisé dans le navigateur
+  (`@nuxtjs/color-mode`, classe `dark` posée avant l'affichage : aucun flash, compatible avec le cache des pages) ;
+  défaut : **Système**. Le thème sombre est porté par les jetons du layer : fond `surface`, texte `ink`, filets
+  `line`, et les teintes de chaque palette inversées (fonds clairs 50–200 → teintes sombres, textes 600–800 →
+  tons clairs) ; les aplats colorés portant un texte blanc passent sur le ton 900. Le logo FFCK reste sur un fond
+  clair (pastille blanche), conformément à la charte.
 - **Responsive** : mobile d'abord ; navigation repliée sous `lg` (1024 px).
 
 ## 4. Accessibilité
@@ -128,6 +134,8 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 - **LAY-07** — Une URL inconnue renvoie un statut 404 avec la page d'erreur dans l'enveloppe du site.
 - **LAY-10** — Les pages déclarent le favicon d'app4 (`<link rel="icon" href="/favicon.png">`), servi par app3.
 - **LAY-11** — Le layout affiche les flèches « Retour en haut » / « Aller en bas » selon la position de défilement ; elles font défiler la page.
+- **LAY-13** — Le sélecteur Clair / Sombre / Système applique le thème choisi (classe `dark` sur `<html>`), le
+  mémorise, et suit le système par défaut ; en sombre, textes et fonds gardent un contraste lisible.
 - **LAY-12** — Les en-têtes de colonnes des tableaux restent visibles au défilement ; aucun tableau n'est dans un conteneur à défilement horizontal sur grand écran.
 - **LAY-08** — Aucun composant d'app3 ne contient de couleur hexadécimale (contrôle en revue / lint).
 

@@ -13,7 +13,7 @@ const competitionLink = (item: EventCompetition) => localePath(competitionPath(i
 
 <template>
   <section aria-labelledby="event-competitions-title" class="space-y-2" data-testid="event-competitions">
-    <h2 id="event-competitions-title" class="text-2xl text-navy">{{ $t('results.eventCompetitions') }}</h2>
+    <h2 id="event-competitions-title" class="text-2xl text-navy dark:text-sky">{{ $t('results.eventCompetitions') }}</h2>
     <ul class="grid gap-2 md:grid-cols-2">
       <li v-for="item in competitions" :key="item.code" class="flex flex-wrap items-center justify-between gap-2 rounded border border-l-4 border-line border-l-kpi-blue-600 p-3" :data-competition="item.code">
         <span>

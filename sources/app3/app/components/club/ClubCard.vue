@@ -11,7 +11,7 @@ const logo = computed(() => legacyImageUrl(props.club.logo, legacyBaseUrl))
 
 <template>
   <NuxtLink :to="localePath(`/clubs/${club.code}`)" class="flex h-full items-center gap-3 rounded border border-line p-3 hover:border-kpi-blue-500 hover:bg-kpi-blue-50" :data-club="club.code">
-    <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: club.label })" loading="lazy" class="size-12 shrink-0 object-contain">
+    <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: club.label })" loading="lazy" class="kpi-logo size-12 shrink-0 object-contain">
     <span v-else class="size-12 shrink-0" aria-hidden="true" />
     <span class="flex flex-col">
       <span class="font-semibold text-kpi-blue-600">{{ club.label }}</span>

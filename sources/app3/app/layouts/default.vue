@@ -3,7 +3,7 @@
   <div class="flex min-h-screen flex-col">
     <a
       href="#content"
-      class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3 focus:text-kpi-blue-600"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-surface focus:p-3 focus:text-kpi-blue-600"
     >{{ $t('a11y.skipToContent') }}</a>
     <SiteBetaBanner />
     <SiteHeader />

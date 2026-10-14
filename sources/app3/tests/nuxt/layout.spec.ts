@@ -5,6 +5,7 @@ import SiteBetaBanner from '~/components/site/SiteBetaBanner.vue'
 import SiteFooter from '~/components/site/SiteFooter.vue'
 import SiteHeader from '~/components/site/SiteHeader.vue'
 import SiteScrollArrows from '~/components/site/SiteScrollArrows.vue'
+import SiteColorMode from '~/components/site/SiteColorMode.vue'
 
 describe('default layout (SITE_LAYOUT.md)', () => {
   it('LAY-01: renders skip link, beta banner, header, nav, main#content and footer in order', async () => {
@@ -84,5 +85,19 @@ describe('scroll arrows', () => {
     expect(scrollTo).toHaveBeenLastCalledWith(expect.objectContaining({ top: 0 }))
     expect(wrapper.find('[data-testid="scroll-top"]').attributes('aria-label')).toBe('Retour en haut')
     scrollTo.mockRestore()
+  })
+})
+
+describe('theme selector (SITE_LAYOUT.md § 3)', () => {
+  it('LAY-13: light / dark / system buttons set and mark the colour mode', async () => {
+    const wrapper = await mountSuspended(SiteColorMode)
+    const buttons = wrapper.findAll('[data-theme]')
+    expect(buttons.map(button => button.attributes('title'))).toEqual(['Clair', 'Sombre', 'Système'])
+    await buttons[1]!.trigger('click')
+    expect(useColorMode().preference).toBe('dark')
+    expect(wrapper.find('[data-theme="dark"]').attributes('aria-pressed')).toBe('true')
+    expect(wrapper.find('[data-theme="light"]').attributes('aria-pressed')).toBe('false')
+    await wrapper.find('[data-theme="system"]').trigger('click')
+    expect(useColorMode().preference).toBe('system')
   })
 })

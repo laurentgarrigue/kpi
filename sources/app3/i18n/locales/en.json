@@ -515,5 +515,11 @@
     "count": "{count} registration | {count} registrations",
     "attached": "Registration",
     "register": "Register"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

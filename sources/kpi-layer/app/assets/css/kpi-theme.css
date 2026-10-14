@@ -57,6 +57,8 @@
   --color-navy: #20265b;
   --color-ink: #1e1e1c;
   --color-line: #c6c7c7;
+  /* Page background: white in the light theme, dark in the dark theme (see the end of this file). */
+  --color-surface: #ffffff;
   --color-sky: #69b9e6;
 
   /* Generated palette — scripts/generate-palette.py (do not edit by hand) */
@@ -110,10 +112,48 @@
   --color-kpi-gold-950: oklch(0.257 0.105 83.54);
 }
 
+/* ------------------------------------------------------------ dark theme */
+/*
+ * Dark theme (SITE_LAYOUT.md § 3, LAY-13), applied by the `dark` class that @nuxtjs/color-mode sets on <html>.
+ * Same token names, other values: the page surface turns dark, text and lines light, and each palette swaps its
+ * light tints (50–200, backgrounds) with light tones (600–800, text). 300–500 and 900–950 keep their value, so that a
+ * solid background carrying white text uses the 900 tone in dark mode (`dark:bg-kpi-blue-900`). `white` and `navy`
+ * do not change: they are the colours of the FFCK logo plate and of the navigation bar.
+ */
+.dark {
+  --color-surface: oklch(0.19 0.02 262);
+  --color-ink: oklch(0.93 0.01 250);
+  --color-line: oklch(0.40 0.02 255);
+  --color-kpi-blue-50: oklch(0.24 0.035 231.75);
+  --color-kpi-blue-100: oklch(0.28 0.050 231.75);
+  --color-kpi-blue-200: oklch(0.34 0.060 231.75);
+  --color-kpi-blue-600: oklch(0.76 0.090 231.75);
+  --color-kpi-blue-700: oklch(0.82 0.080 231.75);
+  --color-kpi-blue-800: oklch(0.88 0.060 231.75);
+  --color-kpi-red-50: oklch(0.24 0.035 22.73);
+  --color-kpi-red-100: oklch(0.28 0.050 22.73);
+  --color-kpi-red-200: oklch(0.34 0.060 22.73);
+  --color-kpi-red-600: oklch(0.76 0.090 22.73);
+  --color-kpi-red-700: oklch(0.82 0.080 22.73);
+  --color-kpi-red-800: oklch(0.88 0.060 22.73);
+  --color-kpi-green-50: oklch(0.24 0.035 149.34);
+  --color-kpi-green-100: oklch(0.28 0.050 149.34);
+  --color-kpi-green-200: oklch(0.34 0.060 149.34);
+  --color-kpi-green-600: oklch(0.76 0.090 149.34);
+  --color-kpi-green-700: oklch(0.82 0.080 149.34);
+  --color-kpi-green-800: oklch(0.88 0.060 149.34);
+  --color-kpi-gold-50: oklch(0.24 0.035 83.54);
+  --color-kpi-gold-100: oklch(0.28 0.050 83.54);
+  --color-kpi-gold-200: oklch(0.34 0.060 83.54);
+  --color-kpi-gold-600: oklch(0.76 0.090 83.54);
+  --color-kpi-gold-700: oklch(0.82 0.080 83.54);
+  --color-kpi-gold-800: oklch(0.88 0.060 83.54);
+}
+
 /* ----------------------------------------------------------------- base */
 @layer base {
   body {
-    @apply font-sans text-ink bg-white antialiased;
+    @apply font-sans text-ink bg-surface antialiased;
   }
   h1, h2, h3 {
     @apply font-display;

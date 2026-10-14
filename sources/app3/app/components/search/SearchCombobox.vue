@@ -79,7 +79,7 @@ const announcement = computed(() => (open.value && query.value ? t('common.sugge
       >
       <UButton type="submit" variant="outline" icon="i-heroicons-magnifying-glass" :aria-label="label" />
     </div>
-    <div v-show="expanded" :id="listId" role="listbox" :aria-label="$t('common.suggestions')" class="absolute z-40 mt-1 w-full min-w-72 rounded border border-line bg-white p-2 shadow-lg" data-testid="suggestions">
+    <div v-show="expanded" :id="listId" role="listbox" :aria-label="$t('common.suggestions')" class="absolute z-40 mt-1 w-full min-w-72 rounded border border-line bg-surface p-2 shadow-lg" data-testid="suggestions">
       <template v-for="group in groups" :key="group.label">
         <p class="px-2 pt-2 text-xs font-semibold uppercase text-ink/70" aria-hidden="true">{{ group.label }}</p>
         <NuxtLink

@@ -39,7 +39,7 @@ onBeforeUnmount(() => {
     <button
       v-if="arrows.up"
       type="button"
-      class="rounded-full bg-kpi-blue-600 p-3 text-white shadow-lg hover:bg-kpi-blue-700"
+      class="rounded-full bg-kpi-blue-600 p-3 text-white shadow-lg hover:bg-kpi-blue-700 dark:bg-kpi-blue-900 dark:hover:bg-kpi-blue-950"
       :title="$t('a11y.scrollTop')"
       :aria-label="$t('a11y.scrollTop')"
       data-testid="scroll-top"
@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
     <button
       v-if="arrows.down"
       type="button"
-      class="rounded-full bg-kpi-blue-600 p-3 text-white shadow-lg hover:bg-kpi-blue-700"
+      class="rounded-full bg-kpi-blue-600 p-3 text-white shadow-lg hover:bg-kpi-blue-700 dark:bg-kpi-blue-900 dark:hover:bg-kpi-blue-950"
       :title="$t('a11y.scrollBottom')"
       :aria-label="$t('a11y.scrollBottom')"
       data-testid="scroll-bottom"

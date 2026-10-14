@@ -21,7 +21,7 @@ defineProps<{ items: { code: string, label: string, to: string, current: boolean
           :to="all.to"
           :aria-current="all.current ? 'page' : undefined"
           class="inline-block rounded-full border px-3 py-1 text-sm"
-          :class="all.current ? 'border-kpi-blue-600 bg-kpi-blue-600 text-white' : 'border-line hover:bg-kpi-blue-50'"
+          :class="all.current ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
           data-testid="chip-all"
         >
           {{ $t('results.allCompetitions') }}
@@ -32,7 +32,7 @@ defineProps<{ items: { code: string, label: string, to: string, current: boolean
           :to="item.to"
           :aria-current="item.current ? 'page' : undefined"
           class="inline-block rounded-full border px-3 py-1 text-sm"
-          :class="item.current ? 'border-kpi-blue-600 bg-kpi-blue-600 text-white' : 'border-line hover:bg-kpi-blue-50'"
+          :class="item.current ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
         >
           {{ item.label }}
         </NuxtLink>

@@ -20,6 +20,7 @@ const liveUrl = computed(() => joinURL(app2BaseUrl, 'group', props.competition.s
       v-if="visual"
       :src="visual"
       alt=""
+      class="kpi-logo"
       :class="competition.banner ? 'max-h-32 w-full object-contain' : 'size-20 object-contain'"
       data-testid="competition-visual"
     >

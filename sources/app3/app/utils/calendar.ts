@@ -14,11 +14,11 @@ export const MISC_SECTION: CalendarSection = 100
 
 /** Light background and edge of a gameday bar, and its badge, per section. */
 export const SECTION_STYLES: Record<CalendarSection, { bar: string, badge: string }> = {
-  1: { bar: 'bg-kpi-gold-100 border-kpi-gold-500', badge: 'bg-kpi-gold-100 text-kpi-gold-900' },
+  1: { bar: 'bg-kpi-gold-100 border-kpi-gold-500', badge: 'bg-kpi-gold-100 text-kpi-gold-900 dark:text-kpi-gold-800' },
   2: { bar: 'bg-kpi-blue-100 border-kpi-blue-500', badge: 'bg-kpi-blue-100 text-kpi-blue-800' },
   3: { bar: 'bg-kpi-green-100 border-kpi-green-600', badge: 'bg-kpi-green-100 text-kpi-green-800' },
   4: { bar: 'bg-kpi-red-100 border-kpi-red-500', badge: 'bg-kpi-red-100 text-kpi-red-800' },
-  5: { bar: 'bg-sky/25 border-sky', badge: 'bg-sky/25 text-navy' },
+  5: { bar: 'bg-sky/25 border-sky', badge: 'bg-sky/25 text-navy dark:text-ink' },
   100: { bar: 'bg-line/40 border-ink/50', badge: 'bg-line/60 text-ink' },
 }
 

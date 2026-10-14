@@ -13,7 +13,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background-color: var(--color-white);
+    background-color: var(--color-surface);
     box-shadow: inset 0 -1px 0 var(--color-line);
   }
 }
@@ -24,6 +24,15 @@
  * click (utils/content.ts).
  */
 @layer components {
+  /*
+   * Logos and visuals drawn for a light background (clubs, events, competitions): on a white plate in the dark
+   * theme, as the FFCK logo of the header (SITE_LAYOUT.md § 3).
+   */
+  .dark .kpi-logo {
+    border-radius: 0.25rem;
+    background-color: var(--color-white);
+    padding: 0.25rem;
+  }
   .kpi-prose {
     line-height: 1.7;
   }

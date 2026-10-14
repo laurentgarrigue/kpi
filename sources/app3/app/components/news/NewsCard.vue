@@ -8,7 +8,7 @@ const language = useLanguageTag()
 </script>
 
 <template>
-  <article class="flex flex-col overflow-hidden rounded border border-line bg-white" :class="{ 'md:flex-row': large }" data-testid="news-card">
+  <article class="flex flex-col overflow-hidden rounded border border-line bg-surface" :class="{ 'md:flex-row': large }" data-testid="news-card">
     <ContentImage
       v-if="article.cover"
       :media="article.cover"

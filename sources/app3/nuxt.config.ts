@@ -54,9 +54,9 @@ export default defineNuxtConfig({
     },
   },
 
-  // Light theme only in phase 1 (SITE_LAYOUT.md § 3).
+  // Light / dark / system theme, chosen in the header, following the system by default (SITE_LAYOUT.md § 3, LAY-13).
   colorMode: {
-    preference: 'light',
+    preference: 'system',
     fallback: 'light',
   },
 
