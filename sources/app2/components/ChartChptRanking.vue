@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg p-4 shadow-sm border">
+  <div class="bg-surface rounded-lg p-4 shadow-sm border">
     <h6 class="font-semibold text-gray-700 mb-3">{{ t('Charts.ChampionshipRanking') }}</h6>
     <div v-if="chartRanking && chartRanking.length > 0">
       <div class="overflow-x-auto">

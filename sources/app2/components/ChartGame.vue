@@ -142,7 +142,7 @@ const teamBlockClass = (game, team) => {
   return {
     // Background colors
     'bg-yellow-400': highlighted, // Yellow for all highlighted teams
-    'bg-gray-800': winner && !highlighted, // Dark gray for winners not highlighted
+    'bg-bar': winner && !highlighted, // Dark gray for winners not highlighted
     'bg-gray-200': !winner && !highlighted, // Light gray for others
     // Text colors
     'text-black': highlighted, // Black text for all highlighted teams

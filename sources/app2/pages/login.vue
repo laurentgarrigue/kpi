@@ -13,9 +13,9 @@
       </div>
     </div>
     <div v-else>
-      <form @submit.prevent="handleLogin" class="max-w-sm mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <form @submit.prevent="handleLogin" class="max-w-sm mx-auto bg-surface shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 class="text-2xl font-semibold mb-6 text-center">{{ t('Login.Authentication') }}</h2>
-        <div v-if="message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div v-if="message" class="bg-red-100 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4" role="alert">
           <span class="block sm:inline">{{ message }}</span>
         </div>
         <div class="mb-4">

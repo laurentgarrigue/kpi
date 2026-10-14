@@ -1,9 +1,9 @@
 <template>
   <div v-if="matchData" class="max-w-4xl mx-auto">
     <!-- Match Header -->
-    <div class="bg-gray-800 text-white rounded-t-lg p-4">
+    <div class="bg-bar text-white rounded-t-lg p-4">
       <div class="text-center">
-        <div class="text-sm text-gray-300">{{ matchData.game.c_label }} - {{ matchData.game.d_phase }}</div>
+        <div class="text-sm text-on-bar-muted">{{ matchData.game.c_label }} - {{ matchData.game.d_phase }}</div>
         <div class="text-xs text-gray-400 mt-1">
           {{ t('MatchSheet.Match') }} #{{ matchData.game.g_number }} |
           {{ matchData.game.d_place }} |
@@ -27,7 +27,7 @@
           <img v-if="matchData.team_a.logo" :src="getLogoUrl(matchData.team_a.logo)" class="h-16 w-16 mx-auto mb-2" alt="" />
           <NuxtLink
             :to="`/team/${matchData.team_a.id}`"
-            class="inline-block font-bold text-lg bg-gray-200 text-black px-3 py-1 rounded hover:opacity-80 cursor-pointer"
+            class="inline-block font-bold text-lg bg-gray-200 text-gray-900 px-3 py-1 rounded hover:opacity-80 cursor-pointer"
           >
             {{ matchData.team_a.label }}
           </NuxtLink>
@@ -36,9 +36,9 @@
         <!-- Score -->
         <div class="text-center">
           <div v-if="!isPending" class="flex items-center justify-center gap-2">
-            <span class="lcd text-4xl font-bold px-4 py-2 bg-gray-800 text-white rounded">{{ matchData.game.g_score_a ?? '-' }}</span>
+            <span class="lcd text-4xl font-bold px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_a ?? '-' }}</span>
             <span class="text-2xl text-gray-400">-</span>
-            <span class="lcd text-4xl font-bold px-4 py-2 bg-gray-800 text-white rounded">{{ matchData.game.g_score_b ?? '-' }}</span>
+            <span class="lcd text-4xl font-bold px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_b ?? '-' }}</span>
           </div>
           <!-- Halftime score -->
           <div v-if="!isPending && matchData.halftime_score" class="text-sm text-gray-500 mt-2">
@@ -55,7 +55,7 @@
           <img v-if="matchData.team_b.logo" :src="getLogoUrl(matchData.team_b.logo)" class="h-16 w-16 mx-auto mb-2" alt="" />
           <NuxtLink
             :to="`/team/${matchData.team_b.id}`"
-            class="inline-block font-bold text-lg bg-gray-200 text-black px-3 py-1 rounded hover:opacity-80 cursor-pointer"
+            class="inline-block font-bold text-lg bg-gray-200 text-gray-900 px-3 py-1 rounded hover:opacity-80 cursor-pointer"
           >
             {{ matchData.team_b.label }}
           </NuxtLink>
@@ -179,7 +179,7 @@
 
     <!-- Events Timeline -->
     <div v-if="!isPending && matchData.events && matchData.events.length > 0" class="mt-4 border border-gray-300 rounded-lg overflow-hidden">
-      <div class="bg-gray-800 text-white px-3 py-2 font-bold text-sm">
+      <div class="bg-bar text-white px-3 py-2 font-bold text-sm">
         {{ t('MatchSheet.Timeline') }}
       </div>
       <div class="divide-y divide-gray-200">
@@ -194,7 +194,7 @@
             <!-- Team A: icon + details on left -->
             <template v-if="event.e_team === 'A'">
               <!-- Event icon -->
-              <div v-if="event.e_type === 'B'" class="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+              <div v-if="event.e_type === 'B'" class="w-6 h-6 bg-bar rounded-full flex items-center justify-center">
                 <div class="w-4 h-4 border-2 border-white rounded-full"></div>
               </div>
               <div v-else-if="event.e_type === 'V'" class="w-5 h-7 bg-green-500 rounded-sm transform -rotate-12"></div>
@@ -207,7 +207,7 @@
               <div v-else class="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs">?</div>
               <!-- Event details -->
               <div class="flex-1 text-left">
-                <span class="text-blue-700 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
+                <span class="text-blue-700 dark:text-blue-300 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
                 <span class="text-gray-500 text-sm ml-2">#{{ event.e_number }}</span>
                 <span class="text-gray-400 text-xs ml-2">({{ matchData.team_a.label }})</span>
                 <span v-if="event.e_motif" class="text-gray-500 text-xs ml-2">- {{ event.e_motif }}</span>
@@ -221,10 +221,10 @@
                 <span v-if="event.e_motif" class="text-gray-500 text-xs mr-2">{{ event.e_motif }} -</span>
                 <span class="text-gray-400 text-xs mr-2">({{ matchData.team_b.label }})</span>
                 <span class="text-gray-500 text-sm mr-2">#{{ event.e_number }}</span>
-                <span class="text-red-700 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
+                <span class="text-red-700 dark:text-red-400 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
               </div>
               <!-- Event icon -->
-              <div v-if="event.e_type === 'B'" class="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+              <div v-if="event.e_type === 'B'" class="w-6 h-6 bg-bar rounded-full flex items-center justify-center">
                 <div class="w-4 h-4 border-2 border-white rounded-full"></div>
               </div>
               <div v-else-if="event.e_type === 'V'" class="w-5 h-7 bg-green-500 rounded-sm transform -rotate-12"></div>

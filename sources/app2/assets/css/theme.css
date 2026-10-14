@@ -1,0 +1,56 @@
+/*
+ * app2 colour tokens — light / dark theme, as in app3 (kpi-layer/app/assets/css/kpi-theme.css).
+ *
+ * The theme is chosen in the header (components/app/ColorMode.vue) and applied by @nuxtjs/color-mode, which sets the `dark` class
+ * on <html>. Every colour of the app goes through the tokens below, so that the dark theme is a matter of other values
+ * for the same names, not of `dark:` classes spread across the templates:
+ *  - `page` (body), `surface` (cards, panels, inputs): white-ish in the light theme, dark in the dark theme;
+ *  - `bar*`: solid dark bars carrying white text (header, table headers, buttons) — dark in both themes;
+ *  - gray scale: light tints (50–300, backgrounds and lines) and dark tones (600–900, text) are swapped in the dark
+ *    theme; 400–500 (secondary text) and 950 keep their value;
+ *  - other palettes: only the light tints (50–100, alert and hover backgrounds) turn dark; solid tones and the
+ *    yellow highlight (200, with black text) keep their value.
+ */
+
+/* `dark:` follows the class set by @nuxtjs/color-mode instead of the system preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-page: #d3d3d3;
+  --color-surface: #ffffff;
+  --color-bar: oklch(27.8% 0.033 256.848);
+  --color-bar-strong: oklch(21% 0.034 264.665);
+  --color-bar-hover: oklch(37.3% 0.034 259.733);
+  --color-bar-soft: oklch(44.6% 0.03 256.802);
+  --color-on-bar-muted: oklch(87.2% 0.01 258.338);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-page: oklch(0.16 0.02 262);
+  --color-surface: oklch(0.21 0.02 262);
+  --color-bar: oklch(0.30 0.033 257);
+  --color-bar-strong: oklch(0.12 0.02 265);
+  --color-bar-hover: oklch(0.38 0.034 260);
+  --color-bar-soft: oklch(0.40 0.03 257);
+
+  --color-gray-50: oklch(0.24 0.02 262);
+  --color-gray-100: oklch(0.27 0.022 262);
+  --color-gray-200: oklch(0.32 0.025 260);
+  --color-gray-300: oklch(0.40 0.025 258);
+  --color-gray-600: oklch(0.76 0.02 258);
+  --color-gray-700: oklch(0.83 0.015 258);
+  --color-gray-800: oklch(0.89 0.01 258);
+  --color-gray-900: oklch(0.94 0.008 258);
+
+  --color-blue-50: oklch(0.26 0.05 260);
+  --color-blue-100: oklch(0.30 0.07 260);
+  --color-indigo-50: oklch(0.26 0.05 277);
+  --color-red-50: oklch(0.26 0.05 25);
+  --color-red-100: oklch(0.30 0.07 25);
+  --color-amber-50: oklch(0.27 0.05 75);
+  --color-amber-100: oklch(0.31 0.07 75);
+  --color-yellow-50: oklch(0.27 0.05 95);
+  --color-yellow-100: oklch(0.31 0.07 95);
+}

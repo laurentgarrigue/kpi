@@ -1,5 +1,5 @@
 <template>
-  <div class="p-1 m-1 text-center bg-white rounded-lg shadow-lg">
+  <div class="p-1 m-1 text-center bg-surface rounded-lg shadow-lg">
     <div>
       <span class="p-0 m-0 mr-1" @mouseleave="hoveredStar = 0">
         <UIcon

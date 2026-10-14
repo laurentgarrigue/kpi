@@ -185,6 +185,14 @@ export default defineNuxtConfig({
       type: 'module'
     }
   },
+  // Light / dark / system theme, chosen in the header (components/app/ColorMode.vue), following the system by default.
+  // Colours are tokens in assets/css/theme.css, redefined under the `dark` class set by @nuxtjs/color-mode.
+  colorMode: {
+    preference: 'system',
+    fallback: 'light',
+    classSuffix: '',
+    storageKey: 'nuxt-color-mode-app2',
+  },
   i18n: {
     strategy: 'no_prefix',
     defaultLocale: 'fr',

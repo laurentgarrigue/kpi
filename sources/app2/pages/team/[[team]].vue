@@ -45,14 +45,14 @@
             <button
               v-if="fav_categories.length > 0"
               @click="resetCategories"
-              class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
+              class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 dark:hover:text-red-400 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
               :title="t('Games.Reset')"
             >
               <UIcon name="i-heroicons-x-mark" class="h-3 w-3 mr-1" />
               {{ t('Games.Reset') }}
             </button>
           </div>
-          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-white space-y-2">
+          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-surface space-y-2">
             <div v-for="category in categories" :key="category" class="flex items-center">
               <UCheckbox
                 :model-value="fav_categories.includes(category)"
@@ -111,7 +111,7 @@
         <div v-for="group in tournamentRoundsByCategory" :key="group.category" class="mb-4">
           <div :class="containerClasses" class="px-2">
             <div v-for="round in group.rounds" :key="round.id" class="w-80 border rounded-lg shadow-sm flex flex-col">
-              <div class="bg-gray-800 text-white px-3 py-2 rounded-t-lg text-sm">
+              <div class="bg-bar text-white px-3 py-2 rounded-t-lg text-sm">
                 {{ round.category }}<span v-if="round.phase"> - {{ round.phase }}</span>
               </div>
 
@@ -200,11 +200,11 @@
         <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Team.FinalRanking') }}</h3>
         <div v-for="ranking in finalRankings" :key="ranking.id" class="mb-4" :class="ranking.type === 'CP' ? 'flex justify-center' : ''">
           <div :class="ranking.type === 'CP' ? 'w-full max-w-2xl px-2' : 'px-2'">
-            <div class="bg-gray-800 text-white rounded-t-lg px-3 py-2">
+            <div class="bg-bar text-white rounded-t-lg px-3 py-2">
               {{ ranking.category }}
               <span v-if="ranking.phase" class="text-sm font-normal ml-2">- {{ ranking.phase }}</span>
             </div>
-            <div class="bg-white rounded-b-lg p-4 shadow-sm border">
+            <div class="bg-surface rounded-b-lg p-4 shadow-sm border">
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                 <thead class="bg-gray-50">
@@ -261,9 +261,9 @@
         <div class="w-full px-2">
           <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Stats.Title') }}</h3>
           <div class="flex justify-center">
-            <div class="overflow-x-auto bg-white rounded-lg shadow-sm border w-full max-w-3xl">
+            <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
             <table class="w-full">
-              <thead class="bg-gray-800 text-white">
+              <thead class="bg-bar text-white">
                 <tr>
                   <th class="py-2 px-3 border-b text-left">{{ t('Stats.Player') }}</th>
                   <th class="py-2 px-2 border-b text-center">{{ t('Stats.Goals') }}</th>
@@ -312,8 +312,8 @@
         <div class="w-full px-2">
           <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Stats.Title') }}</h3>
           <div v-for="compStats in groupStats" :key="compStats.competition_code" class="mb-6 flex justify-center">
-            <div class="overflow-x-auto bg-white rounded-lg shadow-sm border w-full max-w-3xl">
-              <div class="bg-gray-800 text-white px-3 py-2 rounded-t-lg text-sm font-medium">
+            <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
+              <div class="bg-bar text-white px-3 py-2 rounded-t-lg text-sm font-medium">
                 {{ compStats.competition_label || compStats.competition_code }}
               </div>
               <table class="w-full">
@@ -368,7 +368,7 @@
       </div>
     </div>
 
-    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-gray-800 hover:bg-gray-700 text-white font-bold p-3 rounded-full">
+    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-bar hover:bg-bar-hover text-white font-bold p-3 rounded-full">
       <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
     </button>
     <AppFooter />
@@ -999,7 +999,7 @@ const getGameTeamClass = (game, team) => {
 
   if (winner) {
     return {
-      'bg-gray-800': true,
+      'bg-bar': true,
       'text-white': true,
       'font-bold': highlighted // Keep font-bold for the selected team even if it wins
     }

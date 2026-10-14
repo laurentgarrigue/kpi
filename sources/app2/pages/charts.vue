@@ -30,14 +30,14 @@
             <button
               v-if="fav_categories.length > 0"
               @click="resetCategories"
-              class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
+              class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 dark:hover:text-red-400 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
               :title="t('Games.Reset')"
             >
               <UIcon name="i-heroicons-x-mark" class="h-3 w-3 mr-1" />
               {{ t('Games.Reset') }}
             </button>
           </div>
-          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-white space-y-2">
+          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-surface space-y-2">
             <div v-for="category in categories" :key="category" class="flex items-center">
               <UCheckbox
                 :model-value="fav_categories.includes(category)"
@@ -72,7 +72,7 @@
               <button
                 v-if="fav_teams.length > 0"
                 @click="resetTeams"
-                class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
+                class="flex items-center px-2 py-1 text-xs text-red-600 hover:text-red-800 dark:hover:text-red-400 hover:bg-red-50 rounded-md border border-red-200 hover:border-red-300 transition-colors cursor-pointer"
                 :title="t('Games.Reset')"
               >
                 <UIcon name="i-heroicons-x-mark" class="h-3 w-3 mr-1" />
@@ -80,7 +80,7 @@
               </button>
             </div>
           </div>
-          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-white space-y-2">
+          <div class="max-h-32 overflow-y-auto border rounded-md p-3 bg-surface space-y-2">
             <div v-for="team in filteredTeams" :key="team" class="flex items-center">
               <UCheckbox
                 :model-value="fav_teams.includes(team)"
@@ -98,7 +98,7 @@
 
     <Charts v-if="chartData" :key="chartIndex" :chart-data="chartData" :show-flags="showFlags" />
 
-    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-gray-800 hover:bg-gray-700 text-white font-bold p-3 rounded-full">
+    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-bar hover:bg-bar-hover text-white font-bold p-3 rounded-full">
       <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
     </button>
     <AppFooter />

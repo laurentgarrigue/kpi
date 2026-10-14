@@ -9,7 +9,7 @@
 
     <div class="max-w-3xl mx-auto px-4 py-6">
       <!-- Information Card -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-6 text-center">
+      <div class="bg-surface rounded-lg shadow-md p-6 mb-6 text-center">
         <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ t("About.Information") }}</h3>
         <p class="text-sm italic text-gray-600 mb-3">{{ t("About.ClickForDetails") }}</p>
         <p class="text-gray-700 mb-4">{{ t("About.ClickableElements") }}</p>
@@ -28,7 +28,7 @@
       </div>
 
       <!-- Introduction Card -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="bg-surface rounded-lg shadow-md p-6 mb-6">
         <div class="flex items-center gap-3 mb-4">
           <img src="/img/logo_kp.png" alt="KPI Logo" class="h-16 w-16" />
           <div>
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Support Card -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="bg-surface rounded-lg shadow-md p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">{{ t("About.SupportMeOnKofi") }}</h3>
         <div class="flex justify-center">
           <a
@@ -81,7 +81,7 @@
       </div>
 
       <!-- Contact Card -->
-      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="bg-surface rounded-lg shadow-md p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ t("About.OwnCompetition") }}</h3>
         <p class="text-gray-700 mb-3">
           {{ t("About.ContactMe") }}

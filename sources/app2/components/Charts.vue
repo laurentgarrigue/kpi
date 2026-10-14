@@ -1,7 +1,7 @@
 <template>
   <article class="mb-5">
     <div v-for="category in chartData" :key="category[0]">
-      <div class="bg-gray-800 text-white px-3 py-2">
+      <div class="bg-bar text-white px-3 py-2">
         {{ category.libelle || category.code }}
       </div>
       <div

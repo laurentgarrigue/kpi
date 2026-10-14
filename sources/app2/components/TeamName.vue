@@ -97,7 +97,7 @@ const teamBlockClass = computed(() => {
   // Winner team (not highlighted)
   if (props.isWinner) {
     return {
-      'bg-gray-800': true,
+      'bg-bar': true,
       'text-white': true,
       'font-bold': true
     }
@@ -106,7 +106,7 @@ const teamBlockClass = computed(() => {
   // Default (other cases)
   return {
     'bg-gray-200': true,
-    'text-black': true
+    'text-gray-900': true
   }
 })
 </script>

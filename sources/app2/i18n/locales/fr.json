@@ -34,6 +34,12 @@
     "ChangeEvent": "Changez d'événement SVP",
     "StaffJobs": "Missions organisation"
   },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
   "AddToHomeScreen": {
     "message": "Ajouter au bureau / à l'écran d'accueil.",
     "Dismiss": "Refuser",

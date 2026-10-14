@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg p-4 shadow-sm border">
+  <div class="bg-surface rounded-lg p-4 shadow-sm border">
     <h6 class="font-semibold text-gray-700 mb-3">
       {{ chartStatus === 'END' ? t('Charts.FinalRanking') : t('Charts.ProvisionalRanking') }}
     </h6>

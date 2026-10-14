@@ -454,7 +454,7 @@ export const useGames = () => {
         compEntry.locations.set(locationKey, {
           place: locationKey,
           dates: new Map(),
-          // Store the earliest date for this location (for CHPT sorting)
+          // Store the earliest date for this location (for CHPT chronological sorting)
           earliestDate: dateKey
         })
       }
@@ -489,8 +489,8 @@ export const useGames = () => {
         const sortedLocations = Array.from(comp.locations.values())
           .sort((a, b) => {
             if (isChampionship) {
-              // Sort by earliest date DESC, then by place name ASC
-              const dateCmp = b.earliestDate.localeCompare(a.earliestDate)
+              // Sort by earliest date ASC (chronological), then by place name ASC
+              const dateCmp = a.earliestDate.localeCompare(b.earliestDate)
               if (dateCmp !== 0) return dateCmp
               return a.place.localeCompare(b.place)
             } else {
@@ -501,7 +501,7 @@ export const useGames = () => {
           .map(loc => ({
             place: loc.place,
             dates: Array.from(loc.dates.values())
-              .sort((a, b) => b.goupDate.localeCompare(a.goupDate)) // DESC
+              .sort((a, b) => a.goupDate.localeCompare(b.goupDate)) // ASC (chronological)
           }))
 
         return {

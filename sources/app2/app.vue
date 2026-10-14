@@ -35,7 +35,7 @@ useSeoMeta({
   twitterDescription: 'Live scores, rankings, and statistics for kayak polo competitions',
   twitterImage: `${baseUrl}/img/logo_kp.png`,
   themeColor: '#1f2937',
-  colorScheme: 'light',
+  colorScheme: 'light dark',
   robots: 'index, follow'
 })
 
@@ -66,7 +66,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style>
-@import "tailwindcss";
-</style>

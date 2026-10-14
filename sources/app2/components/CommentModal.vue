@@ -1,6 +1,6 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="close">
-    <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+    <div class="bg-surface rounded-lg p-6 w-full max-w-lg mx-4">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
         <button @click="close" class="text-gray-400 hover:text-gray-600">
