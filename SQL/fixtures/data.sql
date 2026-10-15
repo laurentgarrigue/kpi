@@ -344,6 +344,19 @@ INSERT INTO `kp_journee`
   (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
   (9261, 'RDV', '2999', '2999-07-10', '2999-07-11', 'Rencontre amicale', 'RDV J1', 'Lacville', NULL, 'O', 'C', 'Journée 1', 1, 1, 2, 'O');
 
+-- Rendez-vous hors événement (GET /fixtures, PAGE_HOME.md HOME-09) : deux compétitions du groupe TSTDIV jouées aux
+-- mêmes dates et lieu, rattachées à aucun événement → UN seul rendez-vous « groupe », logo de RDX (seul logo actif).
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
+   `Titre_actif`, `Bandeau_actif`, `Logo_actif`, `Code_ref`, `GroupOrder`, `Code_typeclt`, `Code_tour`, `Nb_equipes`,
+   `Statut`, `Qualifies`, `Elimines`, `Publication`) VALUES
+  ('RDX', '2999', 'NAT', 'Rencontre Libre', NULL, NULL, NULL, '', 'logo-rdx.png', '',
+   'O', 'N', 'O', 'TSTDIV', 2, 'CHPT', 1, 2, 'ATT', 0, 0, 'O');
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
+  (9262, 'RDV', '2999', '2999-08-01', '2999-08-01', 'Rencontre estivale', 'RDV J2', 'Lacville', '33', 'O', 'C', 'Journée 2', 1, 1, 2, 'O'),
+  (9263, 'RDX', '2999', '2999-08-01', '2999-08-01', 'Rencontre libre', 'RDX J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 2, 'O');
+
 -- ---------------------------------------------------------------------------------------------------------------
 -- Site public, phase 4 (FEATURE_CMS.md, FEATURE_FORMS.md). Les catégories et les blocs d'accueil sont créés par la
 -- migration. Mots de passe : aucun (les tests signent un JWT directement).

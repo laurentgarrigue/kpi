@@ -33,6 +33,7 @@ Mêmes règles que la phase 2 ([API_PUBLIC_RESULTS.md](API_PUBLIC_RESULTS.md) §
 | `GET /clubs[?q=]` | clubs ayant au moins une équipe, avec logo et position (§ 3.5) | `json-clubs.php`, `searchClubs.php`, `kplogos.php` |
 | `GET /club/{code}` | fiche d'un club : comités, site, adresse, position, équipes (§ 3.5) | `kpclubs.php` |
 | `GET /search?q=` | recherche globale (§ 3.6) | — *(nouveau)* |
+| `GET /fixtures/{scope}` | rendez-vous à venir et récents, événements et journées hors événement (§ 3.7) ; `scope` ∈ `site` (app3), `app` (app2) | — *(nouveau, 15/10/2026)* |
 
 ## 3. Formats
 
@@ -98,6 +99,21 @@ classées (rang > 0) au rang propre au type, `medal` selon `CompetitionRules::me
 dépendance ajoutée). Les adresses **privées** (rendu serveur d'app3) ne sont pas limitées : app3 transmet l'adresse
 du visiteur dans `X-Forwarded-For`, lu par api2 (`trusted_proxies` = réseau privé, en-tête `X-Forwarded-For` seul).
 
+### 3.7 Rendez-vous (accueil d'app3 et d'app2)
+`{ today, upcoming: [Fixture], recent: [Fixture] }` ; `today` = date du jour (`YYYY-MM-DD`, Europe/Paris, horloge
+d'api2). `Fixture` est l'un de :
+- `{ kind: "event", id, libelle, place, logo, start, end }` : événement **publié** (`site`) ou **activé pour
+  app2** (`app = 'O'`, `app`), daté ;
+- `{ kind: "group", season, code, libelle, libelle_en, place, department, logo, start, end }` : journées publiées
+  (hors pauses) de compétitions publiées **rattachées à aucun événement retenu pour le scope**, fusionnées par
+  saison, groupe (`kp_groupe`, obligatoire), dates et lieu ; `logo` = `logo/{LogoLink}` d'une compétition du
+  groupe au logo actif, sinon `null`. En scope `app`, groupes des sections publiques seulement (hors « Divers »,
+  comme `/groups/{season}`).
+
+`upcoming` : fin ≥ `today`, début croissant (à égalité : événement d'abord) ; `recent` : fin < `today`, fin
+décroissante ; **9 au plus** chacune. Un rendez-vous sans fin prend son début pour fin. `scope` inconnu → 404.
+`Cache-Control: public`, 300 s.
+
 ## 4. Décisions (09/10/2026)
 
 - **Q-P3-1 — Recherche : moteur.** ✅ Retenu : SQL `LIKE` sur les libellés (volumes faibles : quelques milliers
@@ -121,5 +137,8 @@ du visiteur dans `X-Forwarded-For`, lu par api2 (`trusted_proxies` = réseau pri
 - **API3-07** — `/clubs` et `/club/{code}` exposent position et logo selon les règles § 3.5 ; club inconnu → 404.
 - **API3-08** — `/search` cherche sans tenir compte des accents ni de la casse, borne chaque catégorie à 8, ne
   renvoie aucune personne, refuse `q` < 2 ou > 50 caractères et limite le débit (429).
+- **API3-10** — `/fixtures/{scope}` mêle événements et groupes hors événement, 9 au plus par liste, triés et
+  répartis selon la date du jour ; une journée d'un événement retenu n'apparaît pas comme groupe ; `site` et
+  `app` diffèrent par le filtre d'événement (`Publication` / `app`) et par la section « Divers ».
 - **API3-09** — Chaque DTO a un test listant exactement ses champs ; chaque endpoint est documenté sous « 7. Site
   public » ; chaque réponse porte son `Cache-Control`.

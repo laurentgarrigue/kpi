@@ -3,6 +3,7 @@
 namespace App\Tests\Integration;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 
 /**
  * Endpoints publics transverses du site (DOC/specs/public/API_PUBLIC_TRANSVERSE.md), sur les fixtures « groupe
@@ -10,6 +11,8 @@ use Psr\Cache\CacheItemPoolInterface;
  */
 final class PublicSiteEndpointsTest extends ApiTestCase
 {
+    use ClockSensitiveTrait;
+
     /**
      * Adresse publique (DNS de Google) : soumise à la limite de débit, contrairement à 127.0.0.1. Pas de plage de
      * documentation RFC 5737 : depuis Symfony 7.4.21, `IpUtils::isPrivateIp()` les considère comme privées.
@@ -338,6 +341,59 @@ final class PublicSiteEndpointsTest extends ApiTestCase
 
     // ------------------------------------------------------------------ cache
 
+    // ------------------------------------------------------------------ /fixtures
+
+    public function testApi10SiteFixturesMixPublishedEventsAndGroupsOutsideEventsSplitOnToday(): void
+    {
+        self::mockTime('2999-04-02 08:00:00 Europe/Paris');
+        $fixtures = $this->getJson('/fixtures/site');
+
+        self::assertSame('2999-04-02', $fixtures['today']);
+        // Événements publiés (9002/9004 non publiés exclus) ; 9221 et 9261 n'apparaissent que par leur événement 79.
+        self::assertSame(['event:77', 'event:9003', 'event:79', 'event:9001', 'group:TSTDIV'], self::fixtureKeys($fixtures['upcoming']));
+        // RDV et RDX, mêmes dates et lieu : un seul rendez-vous, avec le seul logo actif.
+        self::assertSame(
+            ['kind' => 'group', 'season' => '2999', 'code' => 'TSTDIV', 'libelle' => 'Groupe Divers', 'libelle_en' => 'Misc group',
+                'place' => 'Lacville', 'department' => '33', 'logo' => 'logo/logo-rdx.png', 'start' => '2999-08-01', 'end' => '2999-08-01'],
+            $fixtures['upcoming'][4],
+        );
+        self::assertSame(
+            ['kind' => 'event', 'id' => 77, 'libelle' => 'Tournoi Résultats', 'place' => 'Rivecity', 'logo' => 'logo/resultats.png', 'start' => '2999-04-01', 'end' => '2999-04-02'],
+            $fixtures['upcoming'][0],
+        );
+        // 9201 appartient à l'événement 78, non publié : elle compte comme hors événement. Fin décroissante.
+        self::assertSame(['group:TSTRES', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+        self::assertSame(['2999', '2999-03-02', '2998', '2998-05-11'], [
+            $fixtures['recent'][0]['season'], $fixtures['recent'][0]['end'], $fixtures['recent'][2]['season'], $fixtures['recent'][2]['end'],
+        ]);
+    }
+
+    public function testApi10AppFixturesUseApp2EventsAndPublicSectionsOnly(): void
+    {
+        self::mockTime('2999-04-02 08:00:00 Europe/Paris');
+        $fixtures = $this->getJson('/fixtures/app');
+
+        // app = 'O' : 9002 (non publié) entre, 9003 sort ; groupe « Divers » (section 100) exclu.
+        self::assertSame(['event:77', 'event:9002', 'event:79', 'event:9001'], self::fixtureKeys($fixtures['upcoming']));
+        // 9201 appartient à l'événement 78, activé pour app2 : elle n'apparaît que par lui.
+        self::assertSame(['event:78', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+    }
+
+    public function testApi10UnknownFixtureScopeIsNotFound(): void
+    {
+        self::assertSame(['error' => 'not_found'], $this->getJson('/fixtures/other', 404));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixtures
+     *
+     * @return list<string> « event:{id} » ou « group:{code} »
+     */
+    private static function fixtureKeys(array $fixtures): array
+    {
+        return array_map(static fn (array $f): string => $f['kind'] . ':' . ($f['kind'] === 'event' ? $f['id'] : $f['code']), $fixtures);
+    }
+
     public function testApi09EveryResponseCarriesItsCacheControl(): void
     {
         foreach ([
@@ -346,6 +402,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
             '/team/101' => 300,
             '/team/101/roster/2999/RCH' => 300,
             '/search?q=alpha' => 300,
+            '/fixtures/site' => 300,
             '/history' => 3600,
             '/history/TSTRES' => 3600,
             '/clubs' => 3600,

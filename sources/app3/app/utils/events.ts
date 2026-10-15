@@ -10,38 +10,19 @@ export interface PublicEvent {
   end: string | null
 }
 
+/** Anything spanning calendar days `YYYY-MM-DD`: an event, a fixture of the home page. */
+export type Dated = Pick<PublicEvent, 'start' | 'end'>
+
 const PARIS_TIME_ZONE = 'Europe/Paris'
 
-/** Last day of an event: its end date, or its start date when the end is missing. */
-function lastDay(event: PublicEvent): string | null {
-  return event.end ?? event.start
+/** Last day: the end date, or the start date when the end is missing. */
+function lastDay(item: Dated): string | null {
+  return item.end ?? item.start
 }
 
-/** First day of an event: its start date, or its end date when the start is missing. */
-function firstDay(event: PublicEvent): string | null {
-  return event.start ?? event.end
-}
-
-/** Ongoing and future events, nearest first (`today` is `YYYY-MM-DD`; ISO dates compare as strings). */
-export function upcomingEvents(events: readonly PublicEvent[], today: string, limit: number): PublicEvent[] {
-  return events
-    .filter((event) => {
-      const last = lastDay(event)
-      return last !== null && last >= today
-    })
-    .sort((a, b) => (firstDay(a) ?? '').localeCompare(firstDay(b) ?? ''))
-    .slice(0, limit)
-}
-
-/** Finished events, most recent first. */
-export function recentEvents(events: readonly PublicEvent[], today: string, limit: number): PublicEvent[] {
-  return events
-    .filter((event) => {
-      const last = lastDay(event)
-      return last !== null && last < today
-    })
-    .sort((a, b) => (lastDay(b) ?? '').localeCompare(lastDay(a) ?? ''))
-    .slice(0, limit)
+/** First day: the start date, or the end date when the start is missing. */
+function firstDay(item: Dated): string | null {
+  return item.start ?? item.end
 }
 
 /** Years in which at least one dated event takes place, most recent first. */
@@ -63,10 +44,10 @@ export function eventsOfYear(events: readonly PublicEvent[], year: number): Publ
     .sort((a, b) => (firstDay(a) ?? '').localeCompare(firstDay(b) ?? ''))
 }
 
-/** The event takes place today (first and last days included). */
-export function isOngoing(event: PublicEvent, today: string): boolean {
-  const first = firstDay(event)
-  const last = lastDay(event)
+/** It takes place today (first and last days included). */
+export function isOngoing(item: Dated, today: string): boolean {
+  const first = firstDay(item)
+  const last = lastDay(item)
   return first !== null && last !== null && first <= today && today <= last
 }
 

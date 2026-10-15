@@ -5,9 +5,7 @@ import {
   eventYears,
   formatEventDates,
   isOngoing,
-  recentEvents,
   todayInParis,
-  upcomingEvents,
   type PublicEvent,
 } from '../../app/utils/events'
 
@@ -16,43 +14,6 @@ const event = (id: number, start: string | null, end: string | null = start, log
 })
 
 const TODAY = '2026-06-15'
-
-describe('upcomingEvents', () => {
-  it('HOME-07: keeps ongoing and future events, nearest first, at most the requested number', () => {
-    const events = [
-      event(1, '2026-09-01'),
-      event(2, '2026-06-14', '2026-06-16'), // ongoing
-      event(3, '2026-06-01', '2026-06-02'), // past
-      event(4, '2026-07-01'),
-      event(5, '2026-06-15'), // today
-    ]
-    expect(upcomingEvents(events, TODAY, 6).map(e => e.id)).toEqual([2, 5, 4, 1])
-    expect(upcomingEvents(events, TODAY, 2).map(e => e.id)).toEqual([2, 5])
-  })
-
-  it('HOME-06: uses the start date when the end date is missing, ignores undated events', () => {
-    const events = [event(1, '2026-07-01', null), event(2, null, null)]
-    expect(upcomingEvents(events, TODAY, 6).map(e => e.id)).toEqual([1])
-  })
-})
-
-describe('recentEvents', () => {
-  it('HOME-03: keeps finished events, most recent first, at most the requested number', () => {
-    const events = [
-      event(1, '2026-01-10'),
-      event(2, '2026-06-14', '2026-06-16'), // ongoing: not recent
-      event(3, '2026-06-01', '2026-06-02'),
-      event(4, '2026-03-01', '2026-03-03'),
-      event(5, '2026-07-01'),
-    ]
-    expect(recentEvents(events, TODAY, 6).map(e => e.id)).toEqual([3, 4, 1])
-    expect(recentEvents(events, TODAY, 1).map(e => e.id)).toEqual([3])
-  })
-
-  it('HOME-06: ignores undated events', () => {
-    expect(recentEvents([event(1, null, null)], TODAY, 6)).toEqual([])
-  })
-})
 
 describe('isOngoing', () => {
   it('HOME-07: is true from the start date to the end date included', () => {

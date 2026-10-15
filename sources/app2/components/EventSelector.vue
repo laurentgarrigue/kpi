@@ -5,33 +5,40 @@
     <p class="mt-2 text-gray-600">{{ t('Event.Loading') }}</p>
   </div>
 
-  <div v-else-if="preferenceStore.preferences" class="mt-3">
-    <!-- Display selected event or group -->
-    <div v-if="hasSelection && !showSelector" role="button" class="text-center" @click="loadEvents">
-      <!-- Event display -->
-      <template v-if="preferenceStore.preferences.lastEvent">
-        <img
-          v-if="preferenceStore.preferences.lastEvent.logo"
-          class="mb-2 mx-auto max-h-14"
-          :src="`/img/${preferenceStore.preferences.lastEvent.logo}`"
-          alt="Logo"
-        />
-        <br />
-        <span class="font-semibold text-md lg:text-xl">{{ preferenceStore.preferences.lastEvent.libelle }} - {{ preferenceStore.preferences.lastEvent.place }}</span>
-      </template>
-      <!-- Group display -->
-      <template v-else-if="preferenceStore.preferences.lastGroup">
-        <span class="font-semibold text-md lg:text-xl">{{ preferenceStore.preferences.lastGroup.code }} - {{ getGroupLabel(preferenceStore.preferences.lastGroup) }}</span>
-        <span class="font-semibold text-md text-gray-800 ml-2">({{ preferenceStore.preferences.lastSeason }})</span>
-      </template>
-      <br>
-      <button class="ml-2 px-2 py-1 bg-gray-500 text-white text-xs rounded cursor-pointer">
-        <UIcon name="i-heroicons-arrows-right-left" /> {{ t('Event.Change') }}
+  <div v-else-if="preferenceStore.preferences" class="rounded-lg border border-gray-200 bg-surface p-4 shadow-sm sm:p-6">
+    <!-- Followed event or group -->
+    <div v-if="hasSelection && !showSelector" class="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+      <img
+        v-if="followedEvent?.logo"
+        class="h-16 w-16 shrink-0 object-contain"
+        :src="`${backendBaseUrl}/img/${followedEvent.logo}`"
+        alt=""
+      >
+      <div class="min-w-0 flex-1">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">
+          {{ followedEvent ? t('Home.FollowedEvent') : t('Home.FollowedGroup') }}
+        </p>
+        <h2 class="text-xl font-bold text-gray-900 lg:text-2xl">
+          {{ followedEvent ? followedEvent.libelle : `${preferenceStore.preferences.lastGroup.code} - ${getGroupLabel(preferenceStore.preferences.lastGroup)}` }}
+        </h2>
+        <p class="text-gray-600">{{ followedEvent ? followedEvent.place : preferenceStore.preferences.lastSeason }}</p>
+      </div>
+      <button
+        type="button"
+        class="flex shrink-0 cursor-pointer items-center gap-1 rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+        @click="loadEvents"
+      >
+        <UIcon name="i-heroicons-arrows-right-left" class="h-4 w-4" />
+        {{ t('Event.Change') }}
       </button>
     </div>
-    <!-- Button to select event if none is selected -->
-    <div v-else-if="!showSelector" class="text-center">
-      <button class="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer" @click="loadEvents">
+
+    <!-- Nothing followed yet -->
+    <div v-else-if="!showSelector" class="space-y-3 text-center">
+      <h2 class="text-xl font-bold text-gray-900">{{ t('Home.ChooseTitle') }}</h2>
+      <p class="mx-auto max-w-xl text-gray-600">{{ t('Home.ChooseHint') }}</p>
+      <button type="button" class="inline-flex cursor-pointer items-center gap-2 rounded bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700" @click="loadEvents">
+        <UIcon name="i-heroicons-magnifying-glass" class="h-5 w-5" />
         {{ t('Event.SelectEvent') }}
       </button>
     </div>
@@ -135,6 +142,7 @@ import { useGames } from '~/composables/useGames';
 import db from '~/utils/db'
 const { t } = useI18n()
 const { getGroupLabel } = useGroupLabel()
+const { backendBaseUrl } = useRuntimeConfig().public
 
 // Stores & Composables
 const preferenceStore = usePreferenceStore()
@@ -191,6 +199,8 @@ const filteredEvents = computed(() => {
   }
   return filtered
 })
+
+const followedEvent = computed(() => preferenceStore.preferences?.lastEvent ?? null)
 
 const hasSelection = computed(() => {
   return (preferenceStore.preferences?.lastEvent !== undefined && preferenceStore.preferences?.lastEvent !== null) ||

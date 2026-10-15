@@ -91,6 +91,7 @@ Use `make help` to see all available commands.
 
 ### App2 - Nuxt (Scrutineering/Charts)
 - `make app2_dev` - Run Nuxt development server (port 3002)
+- `make app2_dev_restart` / `app3_dev_restart` / `app4_dev_restart` - Restart a Nuxt dev server (e.g. stuck in 500 after many hot reloads); `app3_restart` is the preprod/prod SSR server
 - `make app2_build` - Build Nuxt for production
 - `make app2_generate_dev` - Generate static Nuxt site for development (uses .env.development, requires Node container)
 - `make app2_generate_preprod` - Generate static Nuxt site for pre-production (uses .env.preprod, temporary container)

@@ -17,6 +17,8 @@
           </template>
         </ClientOnly>
       </NuxtLink>
+      <!-- No « Organisation » menu (login, scrutineering): it will be rebuilt in app4; /login and /scrutineering stay
+           reachable by URL. -->
       <nav class="hidden md:flex space-x-4">
         <NuxtLink to="/" :class="isActive('/') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-1">
           <UIcon name="i-heroicons-home" />
@@ -34,23 +36,6 @@
           <UIcon name="i-heroicons-users" />
           <span>{{ t('Teams.Team') }}</span>
         </NuxtLink>
-        <div v-if="hasEventSelected" class="relative group">
-          <button :class="[isActive('/login') || isActive('/scrutineering') ? 'text-green-400 font-bold' : '', 'flex items-center space-x-1 focus:outline-none']">
-            <UIcon name="i-heroicons-user-group" />
-            <span>{{ t('nav.Staff') }}</span>
-            <UIcon name="i-heroicons-chevron-down" />
-          </button>
-          <div class="absolute left-0 mt-2 w-40 bg-bar rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <NuxtLink to="/login" :class="isActive('/login') ? 'bg-bar-hover text-green-400' : ''" class="flex px-4 py-2 hover:bg-bar-hover items-center space-x-1">
-              <UIcon name="i-heroicons-user-circle" />
-              <span>{{ t('nav.Login') }}</span>
-            </NuxtLink>
-            <NuxtLink v-if="isAuthenticated" to="/scrutineering" :class="isActive('/scrutineering') ? 'bg-bar-hover text-green-400' : ''" class="flex px-4 py-2 hover:bg-bar-hover items-center space-x-1">
-              <UIcon name="i-heroicons-clipboard-document-check" />
-              <span>{{ t('nav.Scrutineering') }}</span>
-            </NuxtLink>
-          </div>
-        </div>
         <NuxtLink to="/about" :class="isActive('/about') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-1">
           <UIcon name="i-heroicons-information-circle" />
           <span>{{ t('nav.About') }}</span>
@@ -83,14 +68,6 @@
         <UIcon name="i-heroicons-users" />
         <span>{{ t('Teams.Team') }}</span>
       </NuxtLink>
-      <NuxtLink v-if="hasEventSelected" to="/login" :class="isActive('/login') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-2 py-2">
-        <UIcon name="i-heroicons-user-circle" />
-        <span>{{ t('nav.Login') }}</span>
-      </NuxtLink>
-      <NuxtLink v-if="isAuthenticated && hasEventSelected" to="/scrutineering" :class="isActive('/scrutineering') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-2 py-2">
-        <UIcon name="i-heroicons-clipboard-document-check" />
-        <span>{{ t('nav.Scrutineering') }}</span>
-      </NuxtLink>
       <NuxtLink to="/about" :class="isActive('/about') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-2 py-2">
         <UIcon name="i-heroicons-information-circle" />
         <span>{{ t('nav.About') }}</span>
@@ -100,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { usePreferenceStore } from '~/stores/preferenceStore'
 import { useOnlineStatus } from '~/composables/useOnlineStatus'
 import { useEventGuard } from '~/composables/useEventGuard'
@@ -111,11 +88,6 @@ const route = useRoute()
 const preferenceStore = usePreferenceStore()
 const { isOnline } = useOnlineStatus()
 const { hasEventSelected } = useEventGuard()
-
-// Check if user is authenticated
-const isAuthenticated = computed(() => {
-  return preferenceStore.preferences.user !== undefined && preferenceStore.preferences.user !== null
-})
 
 // Check if a link is active
 const isActive = (path) => {

@@ -72,6 +72,56 @@ final class PublicSiteRepository
         );
     }
 
+    // ------------------------------------------------------------------ rendez-vous de l'accueil
+
+    /**
+     * Événements datés retenus pour le scope, à venir (fin ≥ aujourd'hui, début croissant) ou récents (fin
+     * décroissante), `limit` au plus.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findFixtureEvents(FixtureScope $scope, string $today, bool $upcoming, int $limit): array
+    {
+        return $this->connection->fetchAllAssociative(
+            "SELECT 'event' kind, Id, Libelle, Lieu, logo, COALESCE(Date_debut, Date_fin) start, COALESCE(Date_fin, Date_debut) end
+            FROM kp_evenement
+            WHERE {$scope->eventFlagColumn()} = 'O' AND COALESCE(Date_fin, Date_debut) " . ($upcoming ? '>=' : '<') . ' ?
+            ORDER BY ' . ($upcoming ? 'start, Id' : 'end DESC, Id DESC') . '
+            LIMIT ' . $limit,
+            [$today],
+        );
+    }
+
+    /**
+     * Journées publiées (hors pauses) de compétitions publiées rattachées à aucun événement retenu pour le scope,
+     * fusionnées par saison, groupe, dates et lieu ; à venir ou récentes comme {@see findFixtureEvents()}.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findFixtureGroups(FixtureScope $scope, string $today, bool $upcoming, int $limit): array
+    {
+        $sectionFilter = $scope->maxSection() === null ? '' : 'AND g.section < ' . $scope->maxSection();
+
+        return $this->connection->fetchAllAssociative(
+            "SELECT 'group' kind, c.Code_saison, g.Groupe, g.Libelle, g.Libelle_en, j.Lieu, MIN(j.Departement) Departement,
+            MIN(CASE WHEN c.LogoLink != '' AND c.Logo_actif = 'O' THEN CONCAT('logo/', c.LogoLink) END) logo,
+            j.Date_debut start, COALESCE(j.Date_fin, j.Date_debut) end
+            FROM kp_journee j
+            INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            INNER JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
+            WHERE " . SqlFilters::PUBLISHED_GAMEDAYS . ' AND ' . SqlFilters::NO_BREAKS . " AND j.Date_debut IS NOT NULL {$sectionFilter}
+            AND NOT EXISTS (
+                SELECT 1 FROM kp_evenement_journee ej INNER JOIN kp_evenement fe ON (fe.Id = ej.Id_evenement)
+                WHERE ej.Id_journee = j.Id AND fe.{$scope->eventFlagColumn()} = 'O'
+            )
+            AND COALESCE(j.Date_fin, j.Date_debut) " . ($upcoming ? '>=' : '<') . ' ?
+            GROUP BY c.Code_saison, g.Groupe, g.Libelle, g.Libelle_en, g.section, g.ordre, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut), j.Lieu
+            ORDER BY ' . ($upcoming ? 'start' : 'end DESC') . ', g.section, g.ordre
+            LIMIT ' . $limit,
+            [$today],
+        );
+    }
+
     /**
      * Journées publiées (hors pauses) d'une compétition publiée, pour son abonnement ICS.
      *

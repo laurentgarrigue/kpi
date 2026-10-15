@@ -54,11 +54,11 @@ docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_l
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
 docker_production_restart docker_production_rebuild \
-app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
+app2_dev app2_dev_restart app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
+app3_dev app3_dev_restart app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
 app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
-app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
+app4_dev app4_dev_restart app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -414,11 +414,23 @@ docker_prod_status: ## Affiche le statut des containers de production
 
 
 ## APP2 - NUXT (Scrutineering/Charts)
+# Redémarre le conteneur d'un serveur Nuxt de dev ($(1) = conteneur, $(2) = app) : remède quand le serveur reste
+# en erreur après une série de rechargements à chaud (ex. 500 « Unexpected token '.' » sur toutes les routes).
+define node_dev_restart
+	@echo "Redémarrage du serveur de dev $(2) ($(1))..."
+	@docker restart $(1) >/dev/null 2>&1 \
+		|| { echo "⛔ Conteneur $(1) introuvable (lancer : make docker_dev_up)"; exit 1; }
+	@echo "✅ $(1) redémarré : Nuxt met ~15 s à répondre. Suivre le démarrage : make $(2)_dev"
+endef
+
 app2_dev: ## Suit les logs du serveur Nuxt (app2, port 3002) - démarré par docker_dev_up
 	@echo "ℹ️  Le serveur Nuxt (app2) démarre automatiquement avec les containers."
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app2_logs
+
+app2_dev_restart: ## Redémarre le serveur Nuxt de dev (app2), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE_CONTAINER_NAME),app2)
 
 app2_logs: ## Affiche les logs du serveur Nuxt (app2). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE_CONTAINER_NAME)
@@ -504,6 +516,9 @@ app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_
 app3_dev: ## Suit les logs du serveur Nuxt de dev (app3, https://beta.$(KPI_DOMAIN_NAME)) - démarré par docker_dev_up
 	@$(MAKE) --no-print-directory app3_logs
 
+app3_dev_restart: ## Redémarre le serveur Nuxt de dev (app3) ; en préprod/prod, c'est app3_restart
+	$(call node_dev_restart,$(NODE3_CONTAINER_NAME),app3)
+
 app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sinon serveur de dev. Options: lines=200
 	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
 		docker logs -f --tail $(or $(lines),50) $(APP3_CONTAINER_NAME); \
@@ -569,6 +584,9 @@ app4_dev: ## Suit les logs du serveur Nuxt (app4 admin, port 3004) - démarré p
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app4_logs
+
+app4_dev_restart: ## Redémarre le serveur Nuxt de dev (app4 admin), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE4_CONTAINER_NAME),app4)
 
 app4_logs: ## Affiche les logs du serveur Nuxt (app4 admin). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE4_CONTAINER_NAME)

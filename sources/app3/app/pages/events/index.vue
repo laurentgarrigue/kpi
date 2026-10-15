@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { eventsOfYear, eventYears, todayInParis, type PublicEvent } from '~/utils/events'
+import { eventFixture } from '~/utils/fixtures'
 
 // Events of a year (PAGE_EVENTS.md, EVL-*): the page behind the « Events » menu entry. An event is a place and a
 // weekend; its competitions are reached from the event page.
@@ -16,7 +17,7 @@ const year = computed(() => {
   const current = Number(today.slice(0, 4))
   return [requested, current].find(candidate => years.value.includes(candidate)) ?? years.value[0] ?? current
 })
-const list = computed(() => eventsOfYear(events.value ?? [], year.value))
+const list = computed(() => eventsOfYear(events.value ?? [], year.value).map(eventFixture))
 const yearLink = (target: number) => ({ path: localePath('/events'), query: { year: target } })
 
 useSeoMeta({
@@ -43,7 +44,7 @@ useSeoMeta({
           {{ item }}
         </NuxtLink>
       </nav>
-      <HomeEventList id="year-events" :title="String(year)" :empty="$t('events.empty', { year })" :events="list" :today="today" />
+      <HomeFixtureList id="year-events" :title="String(year)" :empty="$t('events.empty', { year })" :fixtures="list" :today="today" />
     </template>
   </div>
 </template>

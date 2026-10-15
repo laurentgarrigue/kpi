@@ -7,6 +7,7 @@ use App\Cms\NewsService;
 use App\Cms\PageService;
 use App\Http\UnicodeJsonResponse;
 use App\PublicResults\PublicCompetitionService;
+use App\PublicSite\FixtureScope;
 use App\PublicSite\PublicSiteRules;
 use App\PublicSite\PublicSiteService;
 use App\PublicSite\SearchThrottle;
@@ -86,6 +87,20 @@ class PublicSiteController extends AbstractController
     public function calendarGroups(): JsonResponse
     {
         return $this->cached($this->site->calendarGroups(), self::SHORT_MAX_AGE);
+    }
+
+    #[Route('/fixtures/{scope}', name: 'public_fixtures', methods: ['GET'])]
+    #[OA\Get(
+        path: '/fixtures/{scope}',
+        summary: 'Upcoming and recent fixtures (9 each): events and gamedays outside any event, merged by group, dates and place',
+        tags: [self::DOC_TAG],
+        parameters: [new OA\Parameter(name: 'scope', in: 'path', required: true, description: 'site (app3: published events) or app (app2: app events, public sections)', schema: new OA\Schema(type: 'string', enum: ['site', 'app']))],
+    )]
+    public function fixtures(string $scope): JsonResponse
+    {
+        $fixtureScope = FixtureScope::tryFrom($scope);
+
+        return $fixtureScope === null ? $this->notFound() : $this->cached($this->site->fixtures($fixtureScope), self::SHORT_MAX_AGE);
     }
 
     #[Route('/competition/{season}/{code}/calendar.ics', name: 'public_competition_ics', methods: ['GET'])]

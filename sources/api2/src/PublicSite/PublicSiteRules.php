@@ -28,12 +28,17 @@ final class PublicSiteRules
      */
     public static function gamedayLabel(?string $name, ?string $place, ?string $department, string $fallback): string
     {
-        $decode = static fn (?string $value): ?string => self::nullIfEmpty($value === null ? null : html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $label = $decode($name) ?? $fallback;
-        $place = $decode($place);
-        $department = $decode($department);
+        $label = self::decodedText($name) ?? $fallback;
+        $place = self::decodedText($place);
+        $department = self::decodedText($department);
 
         return $label . ($place === null ? '' : ' - ' . $place) . ($department === null ? '' : ' (' . $department . ')');
+    }
+
+    /** Texte saisi dans le legacy, entités HTML décodées (« d&#039;Europe » → « d'Europe ») ; null si vide. */
+    public static function decodedText(?string $value): ?string
+    {
+        return self::nullIfEmpty($value === null ? null : html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
     /**
@@ -119,5 +124,26 @@ final class PublicSiteRules
         }
 
         return array_values($merged);
+    }
+
+    /**
+     * Rendez-vous de l'accueil (API_PUBLIC_TRANSVERSE.md § 3.7) : événements et groupes mêlés, à venir par date de
+     * début croissante ou récents par date de fin décroissante ; à date égale, l'événement d'abord. Chaque liste
+     * d'entrée est déjà triée ; `limit` borne le résultat.
+     *
+     * @param list<array<string, mixed>> $events lignes avec kind, start, end
+     * @param list<array<string, mixed>> $groups lignes avec kind, start, end
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function mergeFixtures(array $events, array $groups, bool $upcoming, int $limit): array
+    {
+        $fixtures = [...$events, ...$groups];
+        usort($fixtures, static fn (array $a, array $b): int => ($upcoming
+            ? strcmp((string) $a['start'], (string) $b['start'])
+            : strcmp((string) $b['end'], (string) $a['end']))
+            ?: (int) ($b['kind'] === 'event') - (int) ($a['kind'] === 'event'));
+
+        return array_slice($fixtures, 0, $limit);
     }
 }

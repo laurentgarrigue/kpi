@@ -69,6 +69,35 @@ final class PublicSiteRulesTest extends TestCase
         self::assertSame('Fête & tournoi - Lacville', PublicSiteRules::gamedayLabel('Fête &amp; tournoi', 'Lacville', null, 'Fallback'));
     }
 
+    public function testApi10UpcomingFixturesMixEventsAndGroupsNearestFirstEventsFirstOnTies(): void
+    {
+        $events = [self::fixture('event', 'e1', '2999-06-10', '2999-06-11'), self::fixture('event', 'e2', '2999-06-20', '2999-06-20')];
+        $groups = [self::fixture('group', 'g1', '2999-06-10', '2999-06-10'), self::fixture('group', 'g2', '2999-06-01', '2999-06-02'), self::fixture('group', 'g3', '2999-06-30', '2999-06-30')];
+
+        self::assertSame(['g2', 'e1', 'g1', 'e2'], array_column(PublicSiteRules::mergeFixtures($events, $groups, upcoming: true, limit: 4), 'key'));
+    }
+
+    public function testApi10RecentFixturesAreMostRecentlyFinishedFirst(): void
+    {
+        $events = [self::fixture('event', 'e1', '2999-05-09', '2999-05-10'), self::fixture('event', 'e2', '2999-04-01', '2999-04-01')];
+        $groups = [self::fixture('group', 'g1', '2999-05-10', '2999-05-10'), self::fixture('group', 'g2', '2999-05-20', '2999-05-20')];
+
+        self::assertSame(['g2', 'e1', 'g1'], array_column(PublicSiteRules::mergeFixtures($events, $groups, upcoming: false, limit: 3), 'key'));
+    }
+
+    public function testApi10LegacyTextIsDecodedAndEmptyIsNull(): void
+    {
+        self::assertSame("Coupe d'Europe", PublicSiteRules::decodedText('Coupe d&#039;Europe'));
+        self::assertNull(PublicSiteRules::decodedText('  '));
+        self::assertNull(PublicSiteRules::decodedText(null));
+    }
+
+    /** @return array{kind: string, key: string, start: string, end: string} */
+    private static function fixture(string $kind, string $key, string $start, string $end): array
+    {
+        return ['kind' => $kind, 'key' => $key, 'start' => $start, 'end' => $end];
+    }
+
     public function testSectionsAreTheGroupSections(): void
     {
         self::assertSame([1, 2, 3, 4, 5, 100], PublicSiteRules::SECTIONS);
