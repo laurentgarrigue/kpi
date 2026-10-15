@@ -2,7 +2,7 @@
 import { isMenuGroup } from '~/utils/navigation'
 
 // Main navigation: horizontal bar from lg, collapsible panel below (SITE_NAVIGATION.md § 4).
-const { items, isActive } = useMainMenu()
+const { items, isActive } = await useMainMenu()
 const route = useRoute()
 
 const mobileOpen = ref(false)
@@ -47,7 +47,7 @@ watch(() => route.fullPath, () => {
           <details v-if="isMenuGroup(item)" class="group">
             <summary class="flex cursor-pointer items-center justify-between py-3 font-semibold">
               {{ $t(`nav.${item.id}`) }}
-              <UIcon name="i-heroicons-chevron-down" class="size-4 group-open:rotate-180" aria-hidden="true" />
+              <UIcon name="i-heroicons-chevron-down" class="size-5 group-open:rotate-180" aria-hidden="true" />
             </summary>
             <ul class="pb-2 pl-4">
               <li v-for="link in item.children" :key="link.id">

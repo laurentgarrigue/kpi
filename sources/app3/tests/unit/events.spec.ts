@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   eventLogoUrl,
+  eventsOfYear,
+  eventYears,
   formatEventDates,
   isOngoing,
   recentEvents,
@@ -87,5 +89,24 @@ describe('event links', () => {
     expect(eventLogoUrl('logo/cdf.png', 'https://www.kayak-polo.info')).toBe('https://www.kayak-polo.info/img/logo/cdf.png')
     expect(eventLogoUrl(null, 'https://www.kayak-polo.info')).toBeNull()
     expect(eventLogoUrl('', 'https://www.kayak-polo.info')).toBeNull()
+  })
+})
+
+describe('events by year', () => {
+  const events = [
+    event(1, '2025-12-30', '2026-01-02'), // straddles two years
+    event(2, '2026-06-01'),
+    event(3, '2026-03-01', '2026-03-03'),
+    event(4, null, null),
+  ]
+
+  it('EVL-02: lists the years having events, most recent first, ignoring undated events', () => {
+    expect(eventYears(events)).toEqual([2026, 2025])
+  })
+
+  it('EVL-02: lists the events of a year, earliest first, including those straddling the year change', () => {
+    expect(eventsOfYear(events, 2026).map(e => e.id)).toEqual([1, 3, 2])
+    expect(eventsOfYear(events, 2025).map(e => e.id)).toEqual([1])
+    expect(eventsOfYear(events, 2024)).toEqual([])
   })
 })

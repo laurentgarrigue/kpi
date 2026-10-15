@@ -16,17 +16,19 @@ ARG GROUP_ID=1000
 # « Attempted to call undefined function imagecreatefromjpeg » (500) à l'upload.
 # Elle sert aussi à mPDF (images non triviales) et lève la contrainte ext-gd de
 # mpdf/composer.json, cf. §8quinquies de DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md.
+# WebP (libwebp) : variantes 320 / 768 / 1280 / 1920 px de la médiathèque du site public (FEATURE_CMS.md § 5.3).
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libicu-dev \
         libzip-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
+        libwebp-dev \
         libcap2-bin \
         locales \
         unzip \
         git \
         msmtp \
-    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo pdo_mysql intl zip gd \
     && sed -i '/fr_FR.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \

@@ -79,3 +79,16 @@ regexes = [
   #   3. le fichier n'existe plus dans le working tree (finding historique).
   '''ABQIAAAA[0-9A-Za-z\-_]{20,80}''',
 ]
+
+# Jetons anti-robot des formulaires publics (`FormToken` d'api2, FEATURE_FORMS.md § 5) enregistrés
+# dans les fixtures de test d'app3 — vérifiés le 2026-10-15. Forme `{horodatage}.{hmac-sha256}` :
+# un HMAC ne révèle pas la clé qui l'a produit et le jeton expire au bout d'un jour.
+# Condition AND : seul ce format exact, et seulement dans ces fixtures, est ignoré.
+# Allowlist rattachée à la règle : gitleaks 8.24 ignore un `[[allowlists]]` de premier niveau.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Jetons anti-robot des formulaires dans les fixtures app3"
+condition = "AND"
+paths = ['''^sources/app3/tests/fixtures/api2/forms_[^/]*\.json$''']
+regexes = ['''^[0-9]{10}\.[0-9a-f]{64}$''']

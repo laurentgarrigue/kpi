@@ -66,7 +66,7 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
@@ -996,6 +996,14 @@ api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base
 	@echo "Tests unitaires API2 (suite unit, sans DB)..."
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
 
+db_migrate: ## Applique un script SQL/migrations/*.sql à la base de l'environnement (make db_migrate file=SQL/migrations/<fichier>.sql)
+	@[ -n "$(file)" ] && [ -f "$(file)" ] || { echo "⛔ Usage : make db_migrate file=SQL/migrations/<fichier>.sql"; exit 1; }
+	@[ -n "$(DB_ROOT_PASSWORD)" ] && [ -n "$(DB_NAME)" ] || { \
+		echo "⛔ DB_ROOT_PASSWORD ou DB_NAME non défini. Vérifie docker/.env."; exit 1; }
+	@echo "Application de $(file) sur $(DB_NAME) ($(DB_CONTAINER_NAME))..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(DB_NAME) < "$(file)"
+	@echo "✔ $(file) appliqué"
+
 api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
 	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
 		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
@@ -1003,8 +1011,11 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
 		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
 		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
-	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
+	@echo "Chargement de SQL/fixtures/schema.sql, des migrations du site public puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
+	@for f in SQL/migrations/*_public_site_*.sql; do \
+		docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < "$$f" || exit 1; \
+	done
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
 	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
 
@@ -1170,12 +1181,27 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
 
-feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring [carry=1])
+feature: ## Crée une branche feature depuis main à jour, ou depuis la branche courante (demandé au prompt, ou make feature name=scoring [carry=1] [from=main|current])
 	@# Modifications en cours : sur confirmation (ou carry=1), elles sont remisées (stash, non
 	@# suivis compris), main est mis à jour, puis elles sont réappliquées sur la nouvelle branche.
 	@# Sans confirmation : abandon, rien n'est touché. Le stash protège aussi les modifs du
 	@# `reset --hard origin/main` ci-dessous.
+	@# Branche de départ : main par défaut. Si la branche courante n'est pas main, on demande s'il faut
+	@# partir d'elle (sous-feature, correctif d'une PR en cours) ; from=current|main évite la question.
 	@carry=0; \
+	current="$$(git rev-parse --abbrev-ref HEAD)"; \
+	base=main; \
+	case "$(from)" in \
+		current) base="$$current" ;; \
+		main|"") ;; \
+		*) echo "⛔ from='$(from)' invalide (main ou current)."; exit 1 ;; \
+	esac; \
+	if [ -z "$(from)" ] && [ "$$current" != "main" ] && [ "$$current" != "HEAD" ] && [ -t 0 ]; then \
+		printf "Branche courante : '%s'. Créer la nouvelle branche depuis elle plutôt que depuis main ? [o/N] " "$$current"; \
+		read answer; \
+		case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) base="$$current" ;; esac; \
+	fi; \
+	[ "$$base" != "HEAD" ] || { echo "⛔ HEAD détachée : impossible de partir de la branche courante."; exit 1; }; \
 	if [ -n "$$(git status --porcelain)" ]; then \
 		echo "Modifications en cours :"; \
 		git status -sb; \
@@ -1219,13 +1245,20 @@ feature: ## Part d'un main à jour et crée une branche feature (nom demandé au
 			return 1; \
 		fi; \
 	}; \
-	echo "→ Mise à jour de main..."; \
-	{ git fetch origin main --quiet \
-		&& git checkout main --quiet \
-		&& git reset --hard origin/main --quiet \
-		&& git checkout -b "$$branch" --quiet; } || { \
-		echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
-	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	if [ "$$base" = "main" ]; then \
+		echo "→ Mise à jour de main..."; \
+		{ git fetch origin main --quiet \
+			&& git checkout main --quiet \
+			&& git reset --hard origin/main --quiet \
+			&& git checkout -b "$$branch" --quiet; } || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	else \
+		git checkout -b "$$branch" --quiet || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis '$$base' ($$(git rev-parse --short HEAD), non mise à jour depuis origin)."; \
+		echo "  La PR devra cibler '$$base' tant que celle-ci n'est pas fusionnée :  make pr_create base=$$base"; \
+	fi; \
 	restore || exit 1; \
 	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
 

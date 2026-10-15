@@ -18,6 +18,13 @@ final class PublicSiteRepository
 
     private const COMPETITION_TITLE_COLUMNS = 'c.Code, c.Code_saison, c.Libelle, c.Soustitre, c.Soustitre2, c.Titre_actif';
 
+    /** Premier événement publié de la journée `j` (alias `e`), s'il existe. */
+    private const GAMEDAY_EVENT_JOIN = "LEFT JOIN kp_evenement e ON (e.Id = (
+                SELECT MIN(pe.Id) FROM kp_evenement_journee ej
+                INNER JOIN kp_evenement pe ON (pe.Id = ej.Id_evenement)
+                WHERE ej.Id_journee = j.Id AND pe.Publication = 'O'
+            ))";
+
     public function __construct(private readonly Connection $connection)
     {
     }
@@ -33,17 +40,17 @@ final class PublicSiteRepository
 
     /**
      * Journées publiées (hors pauses) de compétitions publiées chevauchant la période, triées pour la fusion
-     * des phases d'une coupe : date, niveau (INT, NAT, REG), ordre dans le groupe, tour, nom.
+     * des phases d'une coupe : date, section du groupe, ordre dans le groupe, tour, nom.
      *
      * @return list<array<string, mixed>>
      */
-    public function findCalendarGamedays(string $start, string $end, ?string $level, ?string $group): array
+    public function findCalendarGamedays(string $start, string $end, ?int $section, ?string $group): array
     {
         $conditions = [SqlFilters::PUBLISHED_GAMEDAYS, SqlFilters::NO_BREAKS, 'j.Date_debut <= ?', 'COALESCE(j.Date_fin, j.Date_debut) >= ?'];
         $parameters = [$end, $start];
-        if ($level !== null) {
-            $conditions[] = 'c.Code_niveau = ?';
-            $parameters[] = $level;
+        if ($section !== null) {
+            $conditions[] = 'COALESCE(g.section, ' . PublicSiteRules::DEFAULT_SECTION . ') = ?';
+            $parameters[] = $section;
         }
         if ($group !== null) {
             $conditions[] = 'c.Code_ref = ?';
@@ -53,16 +60,14 @@ final class PublicSiteRepository
         return $this->connection->fetchAllAssociative(
             'SELECT j.Id, j.Code_competition, j.Code_saison, j.Nom, j.Lieu, j.Departement, j.Date_debut,
             COALESCE(j.Date_fin, j.Date_debut) Date_fin, ' . self::COMPETITION_TITLE_COLUMNS . ',
-            c.Code_typeclt, c.Code_niveau, c.Code_ref, e.Id event_id, e.Libelle event_libelle
+            c.Code_typeclt, c.Code_ref, COALESCE(g.section, ' . PublicSiteRules::DEFAULT_SECTION . ') section,
+            e.Id event_id, e.Libelle event_libelle, ' . self::eventSingleGroupColumn() . '
             FROM kp_journee j
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
-            LEFT JOIN kp_evenement e ON (e.Id = (
-                SELECT MIN(pe.Id) FROM kp_evenement_journee ej
-                INNER JOIN kp_evenement pe ON (pe.Id = ej.Id_evenement)
-                WHERE ej.Id_journee = j.Id AND pe.Publication = \'O\'
-            ))
+            LEFT JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
+            ' . self::GAMEDAY_EVENT_JOIN . '
             WHERE ' . implode(' AND ', $conditions) . "
-            ORDER BY j.Date_debut, FIELD(c.Code_niveau, 'INT', 'NAT', 'REG'), c.GroupOrder, c.Code_tour, j.Nom, j.Id",
+            ORDER BY j.Date_debut, COALESCE(g.section, " . PublicSiteRules::DEFAULT_SECTION . ") , c.GroupOrder, c.Code_tour, j.Nom, j.Id",
             $parameters,
         );
     }
@@ -75,10 +80,11 @@ final class PublicSiteRepository
     public function findIcsGamedays(string $season, string $code): array
     {
         return $this->connection->fetchAllAssociative(
-            'SELECT j.Id, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
-            ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt
+            'SELECT j.Id, j.Code_competition, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
+            ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt, e.Id event_id, ' . self::eventSingleGroupColumn() . '
             FROM kp_journee j
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            ' . self::GAMEDAY_EVENT_JOIN . '
             WHERE j.Code_saison = ? AND j.Code_competition = ? AND j.Date_debut IS NOT NULL
             AND ' . SqlFilters::PUBLISHED_GAMEDAYS . ' AND ' . SqlFilters::NO_BREAKS . '
             ORDER BY j.Date_debut, j.Niveau, j.Id',
@@ -86,20 +92,68 @@ final class PublicSiteRepository
         );
     }
 
+    /**
+     * Événement publié et ses journées publiées (hors pauses) de compétitions publiées, pour son abonnement ICS.
+     *
+     * @return array{event: array<string, mixed>, gamedays: list<array<string, mixed>>}|null
+     */
+    public function findEventIcs(int $eventId): ?array
+    {
+        $event = $this->connection->fetchAssociative("SELECT Id, Libelle FROM kp_evenement WHERE Id = ? AND Publication = 'O'", [$eventId]);
+        if ($event === false) {
+            return null;
+        }
+        $gamedays = $this->connection->fetchAllAssociative(
+            'SELECT j.Id, j.Code_competition, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
+            ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt, ej.Id_evenement event_id, ' . SqlFilters::singleGroupEvent('ej.Id_evenement') . ' event_single_group
+            FROM kp_evenement_journee ej
+            INNER JOIN kp_journee j ON (j.Id = ej.Id_journee)
+            INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            WHERE ej.Id_evenement = ? AND j.Date_debut IS NOT NULL
+            AND ' . SqlFilters::PUBLISHED_GAMEDAYS . ' AND ' . SqlFilters::NO_BREAKS . '
+            ORDER BY j.Date_debut, c.GroupOrder, c.Code_tour, j.Niveau, j.Id',
+            [$eventId],
+        );
+
+        return ['event' => $event, 'gamedays' => $gamedays];
+    }
+
+    private static function eventSingleGroupColumn(): string
+    {
+        return 'CASE WHEN e.Id IS NULL THEN 0 ELSE ' . SqlFilters::singleGroupEvent('e.Id') . ' END event_single_group';
+    }
+
     /** @return array<string, mixed>|null journée publiée (hors pause) d'une compétition publiée */
     public function findIcsGameday(int $id): ?array
     {
         $row = $this->connection->fetchAssociative(
             'SELECT j.Id, j.Nom, j.Lieu, j.Departement, j.Date_debut, COALESCE(j.Date_fin, j.Date_debut) Date_fin,
-            ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt
+            ' . self::COMPETITION_TITLE_COLUMNS . ', c.Code_typeclt, e.Id event_id, ' . self::eventSingleGroupColumn() . '
             FROM kp_journee j
             INNER JOIN kp_competition c ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            ' . self::GAMEDAY_EVENT_JOIN . '
             WHERE j.Id = ? AND j.Date_debut IS NOT NULL
             AND ' . SqlFilters::PUBLISHED_GAMEDAYS . ' AND ' . SqlFilters::NO_BREAKS,
             [$id],
         );
 
         return $row === false ? null : $row;
+    }
+
+    /**
+     * Groupes ayant au moins une compétition publiée (toutes saisons), « Divers » compris : filtre du calendrier.
+     *
+     * @return list<array{code: string, libelle: string, libelle_en: ?string, section: int|string}>
+     */
+    public function findCalendarGroups(): array
+    {
+        /** @var list<array{code: string, libelle: string, libelle_en: ?string, section: int|string}> */
+        return $this->connection->fetchAllAssociative(
+            'SELECT g.Groupe code, g.Libelle libelle, g.Libelle_en libelle_en, g.section
+            FROM kp_groupe g
+            WHERE EXISTS (SELECT 1 FROM kp_competition c WHERE c.Code_ref = g.Groupe AND c.Publication = \'O\')
+            ORDER BY g.section, g.ordre',
+        );
     }
 
     // ------------------------------------------------------------------ historique

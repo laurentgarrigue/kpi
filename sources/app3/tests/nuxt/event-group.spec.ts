@@ -20,6 +20,42 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(header.find('[data-testid="scope-live"]').attributes('href')).toBe('https://app.kpi.localhost/event/77')
   })
 
+  it('EVT-02: « Follow live » is a button, not a plain link', async () => {
+    const live = (await mountRoute('/events/77/games')).find('[data-testid="scope-live"]')
+    expect(live.attributes('data-live-button')).toBeDefined()
+    expect(live.attributes('target')).toBe('_blank')
+    expect(live.text()).toContain('Suivre en direct')
+  })
+
+  it('EVT-08: the header says it is an event; a competition says it is a competition', async () => {
+    const event = (await mountRoute('/events/77/games')).find('[data-testid="scope-header"]')
+    expect(event.attributes('data-kind')).toBe('event')
+    expect(event.find('[data-testid="scope-kind"]').text()).toBe('Événement')
+    const competition = (await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="competition-header"]')
+    expect(competition.find('[data-testid="competition-kind"]').text()).toBe('Compétition')
+  })
+
+  it('EVT-09: the competitions of an event of several groups are listed with their gamedays held at the event, and link to the whole competition', async () => {
+    const panel = (await mountRoute('/events/79/games')).find('[data-testid="event-competitions"]')
+    const [other, rat] = panel.findAll('[data-competition]')
+    expect(other!.attributes('data-competition')).toBe('RDV')
+    expect(rat!.find('[data-testid="event-gamedays"]').text()).toBe('Toutes les journées de la compétition')
+    expect(rat!.find('[data-testid="competition-full-link"]').attributes('href')).toBe('/competitions/2999/RAT?event=79')
+    expect(rat!.find('a').attributes('href')).toBe('/events/79/games?competition=RAT')
+  })
+
+  it('EVT-09: an event of a single group has no competitions panel: its chips are enough', async () => {
+    const wrapper = await mountRoute('/events/77/games')
+    expect(wrapper.find('[data-testid="event-competitions"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="competition-chips"] a')).toHaveLength(3)
+  })
+
+  it('EVT-10: the info tab of a single-group event subscribes to the event calendar', async () => {
+    const wrapper = await mountRoute('/events/77/info')
+    expect(wrapper.find('[data-testid="ics-subscribe"]').attributes('href')).toBe('webcal://kpi.localhost/api2/event/77/calendar.ics')
+    expect(wrapper.find('[data-testid="ics-download"]').attributes('href')).toBe('https://kpi.localhost/api2/event/77/calendar.ics')
+  })
+
   it('EVT-03: a chip per competition filters the event on the same tab, without leaving the event', async () => {
     const chips = (await mountRoute('/events/77/pitches')).findAll('[data-testid="competition-chips"] a')
     expect(chips.map(chip => chip.attributes('href'))).toEqual(['/events/77/pitches', '/events/77/pitches?competition=RCH', '/events/77/pitches?competition=RCP'])
@@ -38,9 +74,9 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
 
   it('EVT-07: the event offers the info, progress, ranking and stats tabs of a competition, kept in the event', async () => {
     const tabs = (await mountRoute('/events/77/ranking?competition=RCP')).findAll('[data-testid="results-tabs"] a')
-    expect(tabs.map(tab => tab.text())).toEqual(['Matchs', 'Terrains', 'Infos', 'Déroulement', 'Classement', 'Stats'])
+    expect(tabs.map(tab => tab.text())).toEqual(['Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
     expect(tabs.map(tab => tab.attributes('href'))).toEqual([
-      '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP', '/events/77/info?competition=RCP',
+      '/events/77/info?competition=RCP', '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP',
       '/events/77/progress?competition=RCP', '/events/77/ranking?competition=RCP', '/events/77/stats?competition=RCP',
     ])
     expect(tabs[4]!.attributes('aria-current')).toBe('page')

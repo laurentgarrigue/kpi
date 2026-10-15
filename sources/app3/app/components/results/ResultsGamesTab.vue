@@ -38,7 +38,7 @@ useAutoRefresh(() => isLive(props.games, now.value), () => emit('refresh'))
         :hidden-fields="hiddenFields"
       />
       <a :href="pdfHref" v-bind="NEW_TAB_ATTRS" class="flex items-center gap-1 text-sm underline" data-testid="games-pdf">
-        <UIcon name="i-heroicons-document-arrow-down" class="size-4" aria-hidden="true" />
+        <UIcon name="i-heroicons-document-arrow-down" class="size-5" aria-hidden="true" />
         {{ $t('results.gamesPdf') }}<span class="sr-only"> {{ $t('a11y.newTab') }}</span>
       </a>
     </div>

@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "body": {
+    "items": [],
+    "page": 2,
+    "pages": 1,
+    "total": 2
+  }
+}

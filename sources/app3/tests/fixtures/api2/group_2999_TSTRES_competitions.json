@@ -10,6 +10,15 @@
         "end": "2999-04-02",
         "logo": "logo/resultats.png",
         "share": 0.667
+      },
+      {
+        "id": 79,
+        "libelle": "Finales Multi-groupes",
+        "place": "Rivecity",
+        "start": "2999-06-01",
+        "end": "2999-07-10",
+        "logo": null,
+        "share": 0.167
       }
     ],
     "competitions": [

@@ -2,6 +2,9 @@
 
 namespace App\Tests\Integration;
 
+use App\Security\UserProvider;
+use Doctrine\DBAL\Connection;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -14,9 +17,9 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
  * de test, contributeur qui lance juste `composer test`), la suite se met en
  * SKIP explicite au lieu de partir en erreurs rouges : il faut `API2_TEST_DB=1`.
  *
- * ⚠️ Ces tests ne font que des SELECT. Si un jour l'un d'eux écrit, il DOIT le
- * faire dans une transaction rollbackée — jamais de mutation persistante, sinon
- * les tests deviennent dépendants de leur ordre d'exécution.
+ * ⚠️ Un test qui écrit appelle {@see beginWrites()} : le kernel n'est plus redémarré entre
+ * les requêtes et tout se passe dans une transaction annulée à la fin du test — jamais de
+ * mutation persistante, sinon les tests deviennent dépendants de leur ordre d'exécution.
  */
 abstract class ApiTestCase extends WebTestCase
 {
@@ -31,6 +34,58 @@ abstract class ApiTestCase extends WebTestCase
         }
 
         $this->client = static::createClient();
+    }
+
+    protected function tearDown(): void
+    {
+        if (isset($this->client) && static::$booted) {
+            $connection = static::getContainer()->get(Connection::class);
+            while ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+        }
+        parent::tearDown();
+    }
+
+    /** Les écritures du test sont annulées à la fin (transaction, kernel conservé entre les requêtes). */
+    protected function beginWrites(): Connection
+    {
+        $this->client->disableReboot();
+        $connection = static::getContainer()->get(Connection::class);
+        $connection->beginTransaction();
+
+        return $connection;
+    }
+
+    /** JWT d'un compte des fixtures (signé avec la clé de test, cf. lexik_jwt_authentication.yaml). */
+    protected function tokenFor(string $userCode): string
+    {
+        $user = static::getContainer()->get(UserProvider::class)->loadUserByIdentifier($userCode);
+
+        return static::getContainer()->get(JWTTokenManagerInterface::class)->create($user);
+    }
+
+    /**
+     * Requête JSON authentifiée ; renvoie le corps décodé après vérification du code HTTP.
+     *
+     * @param array<mixed>|null $body
+     *
+     * @return array<mixed>
+     */
+    protected function requestAs(string $userCode, string $method, string $uri, ?array $body = null, int $expectedStatus = 200): array
+    {
+        $this->client->request($method, $uri, server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor($userCode),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: $body === null ? null : json_encode($body, JSON_THROW_ON_ERROR));
+        $response = $this->client->getResponse();
+        self::assertSame(
+            $expectedStatus,
+            $response->getStatusCode(),
+            sprintf('%s %s : code HTTP inattendu. Corps : %s', $method, $uri, substr((string) $response->getContent(), 0, 500))
+        );
+
+        return json_decode((string) $response->getContent(), true) ?? [];
     }
 
     /**

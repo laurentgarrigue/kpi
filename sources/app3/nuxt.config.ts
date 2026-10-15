@@ -11,6 +11,8 @@ const RESULTS_CACHE = { cache: { maxAge: 60, swr: true } }
 const NO_CACHE = { cache: false as const }
 // Honours and clubs only change at the end of a competition (PAGE_HISTORY.md § 3, PAGE_CLUBS.md § 3).
 const LONG_CACHE = { cache: { maxAge: 3600, swr: true } }
+// News: 1 minute, purged by api2 at each publication (PAGE_NEWS.md § 3, FEATURE_CMS.md § 5.4).
+const NEWS_CACHE = { cache: { maxAge: 60, swr: true } }
 
 // NuxtLink prefetches the extracted payload of a cached page (`{page}/_payload.json`). That path has one more
 // segment than the page, so a rule written for the page does not cover it: without the second entry, every
@@ -27,6 +29,13 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // Same favicon as app4 (the KPI logo), served by app3 itself (SITE_LAYOUT.md § 2, LAY-10).
+  app: {
+    head: {
+      link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+    },
+  },
+
   // Fonts are self-hosted by kpi-layer: disable @nuxt/fonts, which would query third-party providers.
   ui: {
     fonts: false,
@@ -35,6 +44,8 @@ export default defineNuxtConfig({
   // Every value below is overridden at runtime by NUXT_* variables (SITE_PLATFORM.md § 3):
   // one build serves preprod and production.
   runtimeConfig: {
+    // Shared secret of the cache purge called by api2 (`APP3_PURGE_TOKEN`), empty = purge disabled (FEATURE_CMS.md § 5.4).
+    app3PurgeToken: '',
     public: {
       beta: true,
       legacyBaseUrl: 'https://kpi.localhost',
@@ -43,9 +54,9 @@ export default defineNuxtConfig({
     },
   },
 
-  // Light theme only in phase 1 (SITE_LAYOUT.md § 3).
+  // Light / dark / system theme, chosen in the header, following the system by default (SITE_LAYOUT.md § 3, LAY-13).
   colorMode: {
-    preference: 'light',
+    preference: 'system',
     fallback: 'light',
   },
 
@@ -57,6 +68,7 @@ export default defineNuxtConfig({
       ...cachedPage(`${prefix}/competitions/*`, SLOW_CACHE),
       [`${prefix}/competitions/*/*`, NO_CACHE],
       [`${prefix}/competitions/*/*/**`, RESULTS_CACHE],
+      ...cachedPage(`${prefix}/events`, SLOW_CACHE),
       [`${prefix}/events/*`, NO_CACHE],
       [`${prefix}/events/*/**`, RESULTS_CACHE],
       [`${prefix}/groups/*/*`, NO_CACHE],
@@ -71,6 +83,12 @@ export default defineNuxtConfig({
       ...cachedPage(`${prefix}/clubs/*`, LONG_CACHE),
       // Rate-limited per visitor by api2: a shared cache would serve one visitor's search to another.
       [`${prefix}/search`, NO_CACHE],
+      // Phase 4 (PAGE_NEWS.md § 3, FEATURE_FORMS.md § 3). Editorial pages (`/{slug}`) have free paths: they are not
+      // cached by app3 (a rule on `/**` would also cache the server routes); each rendering reads them from api2.
+      ...cachedPage(`${prefix}/news`, NEWS_CACHE),
+      ...cachedPage(`${prefix}/news/*`, NEWS_CACHE),
+      // A form carries an anti-bot token issued at display time, and receives the POST of its answers.
+      [`${prefix}/forms/**`, NO_CACHE],
     ])),
   },
 

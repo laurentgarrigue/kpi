@@ -1,5 +1,6 @@
 import { withQuery } from 'ufo'
 import type { ClubSummary } from './clubs'
+import { cmsLanguageQuery, type NewsSummary } from './news'
 import type { TeamSummary } from './teams'
 
 /** Global search (FEATURE_SEARCH.md, API_PUBLIC_TRANSVERSE.md § 3.6). */
@@ -14,9 +15,12 @@ export interface SearchResults {
   events: { id: number, libelle: string, place: string | null, start: string | null, end: string | null }[]
   teams: TeamSummary[]
   clubs: ClubSummary[]
+  /** Phase 4 (FEATURE_CMS.md § 5.1, CMS-11). */
+  news: NewsSummary[]
+  pages: { title: string, path: string }[]
 }
 
-export const SEARCH_CATEGORIES = ['competitions', 'events', 'teams', 'clubs'] as const
+export const SEARCH_CATEGORIES = ['competitions', 'events', 'teams', 'clubs', 'news', 'pages'] as const
 export type SearchCategory = typeof SEARCH_CATEGORIES[number]
 
 /** A search result as displayed: label, detail and app3 path (without language prefix). */
@@ -36,8 +40,9 @@ export function searchQuery(value: unknown): string | null {
   return query.length >= SEARCH_MIN_LENGTH && query.length <= SEARCH_MAX_LENGTH ? query : null
 }
 
-export function searchApiPath(query: string): string {
-  return withQuery('/search', { q: query })
+/** News and pages are searched in the visitor's language (FEATURE_CMS.md § 5.1). */
+export function searchApiPath(query: string, locale = 'fr'): string {
+  return withQuery('/search', { q: query, ...cmsLanguageQuery(locale) })
 }
 
 /** Results of one category, mapped to their page on the site (SRC-03). */
@@ -56,6 +61,10 @@ export function searchHits(results: SearchResults, category: SearchCategory): Se
       return results.teams.map(item => ({ key: `t-${item.number}`, label: item.label, detail: item.club.label, to: `/teams/${item.number}` }))
     case 'clubs':
       return results.clubs.map(item => ({ key: `k-${item.code}`, label: item.label, detail: item.department.label, to: `/clubs/${item.code}` }))
+    case 'news':
+      return results.news.map(item => ({ key: `n-${item.slug}`, label: item.title, detail: item.lead || null, to: `/news/${item.slug}` }))
+    case 'pages':
+      return results.pages.map(item => ({ key: `p-${item.path}`, label: item.title, detail: null, to: item.path }))
   }
 }
 

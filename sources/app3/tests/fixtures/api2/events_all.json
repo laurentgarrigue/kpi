@@ -11,6 +11,15 @@
       "end": "2999-06-02"
     },
     {
+      "id": 79,
+      "libelle": "Finales Multi-groupes",
+      "place": "Rivecity",
+      "logo": null,
+      "year": 2999,
+      "start": "2999-06-01",
+      "end": "2999-07-10"
+    },
+    {
       "id": 9003,
       "libelle": "Tournoi Test Gamma",
       "place": "Testville",

@@ -16,6 +16,23 @@ export interface TeamHonour {
   competition: { code: string, display_title: string, group: string | null }
   rank: number
   medal: 1 | 2 | 3 | null
+  /** Final round (`Code_tour` = 10); otherwise the rank of an intermediate round (qualification, pool…). */
+  final_round: boolean
+}
+
+/** Honours grouped by season, in api2 order (most recent season first): one season heading per group (TEA-07). */
+export function honoursBySeason(honours: readonly TeamHonour[]): { season: string, honours: TeamHonour[] }[] {
+  const groups: { season: string, honours: TeamHonour[] }[] = []
+  for (const honour of honours) {
+    const last = groups.at(-1)
+    if (last?.season === honour.season) {
+      last.honours.push(honour)
+    }
+    else {
+      groups.push({ season: honour.season, honours: [honour] })
+    }
+  }
+  return groups
 }
 
 export interface TeamSeason {

@@ -48,14 +48,14 @@ useHead(() => ({
   <div v-if="team" class="space-y-10">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('teams.title'), to: localePath('/teams') }, { label: team.label }]" />
     <header class="flex flex-wrap items-center gap-6" data-testid="team-header">
-      <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: team.club.label ?? team.label })" class="size-20 object-contain" data-testid="team-logo">
+      <TeamZoomImage v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: team.club.label ?? team.label })" origin="left" class="size-20 object-contain" data-testid="team-logo" />
       <div class="space-y-1">
         <h1 class="text-5xl text-kpi-blue-600">{{ team.label }}</h1>
         <NuxtLink v-if="team.club.code" :to="localePath(`/clubs/${team.club.code}`)" class="underline" data-testid="team-club">
           {{ team.club.label ?? team.club.code }}
         </NuxtLink>
       </div>
-      <img v-if="colors" :src="colors" :alt="$t('teams.colorsAlt', { team: team.label })" class="h-20 w-auto" data-testid="team-colors">
+      <TeamZoomImage v-if="colors" :src="colors" :alt="$t('teams.colorsAlt', { team: team.label })" origin="right" class="h-20 w-auto" data-testid="team-colors" />
     </header>
     <figure v-if="photo && team.photo" class="max-w-3xl" data-testid="team-photo">
       <img :src="photo" :alt="$t('teams.photoAlt', { team: team.label, season: team.photo.season })" loading="lazy" class="w-full rounded">

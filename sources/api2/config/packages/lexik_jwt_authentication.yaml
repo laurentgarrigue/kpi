@@ -14,3 +14,13 @@ lexik_jwt_authentication:
             enabled: false
         cookie:
             enabled: false
+
+# Tests : clé symétrique (HS256) au lieu de la paire RSA de config/jwt/ (absente en CI et dans les bases de test) ;
+# les tests d'intégration signent ainsi les JWT des comptes de SQL/fixtures sans fichier de clé.
+when@test:
+    lexik_jwt_authentication:
+        secret_key: 'test-only-jwt-secret-of-at-least-thirty-two-bytes'
+        public_key: null
+        pass_phrase: ''
+        encoder:
+            signature_algorithm: HS256

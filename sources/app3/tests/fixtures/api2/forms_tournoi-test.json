@@ -1,0 +1,182 @@
+{
+  "status": 200,
+  "body": {
+    "slug": "tournoi-test",
+    "title": "Tournoi test",
+    "intro": "<p>Inscrivez votre équipe.</p>",
+    "state": "open",
+    "opens_at": "2020-01-01 00:00:00",
+    "closes_at": "9999-01-01 00:00:00",
+    "capacity": 2,
+    "confirmed": 1,
+    "full": false,
+    "waiting_list": true,
+    "manual_confirmation": false,
+    "has_payment": false,
+    "public_list": true,
+    "purpose": "Organisation du tournoi.",
+    "retention_days": 90,
+    "event": 77,
+    "competition": null,
+    "fields": [
+      {
+        "key": "email",
+        "type": "email",
+        "label": "E-mail",
+        "help": "",
+        "required": true,
+        "options": [],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "phone",
+        "type": "phone",
+        "label": "Téléphone",
+        "help": "",
+        "required": false,
+        "options": [],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "club",
+        "type": "club",
+        "label": "Club",
+        "help": "",
+        "required": true,
+        "options": [
+          {
+            "value": "C001",
+            "label": "Club Alpha Lacville"
+          },
+          {
+            "value": "C002",
+            "label": "Club Bravo"
+          },
+          {
+            "value": "C003",
+            "label": "Club Charlie Saint-Malo"
+          },
+          {
+            "value": "C004",
+            "label": "Club Delta"
+          },
+          {
+            "value": "C005",
+            "label": "Club Echo"
+          },
+          {
+            "value": "C006",
+            "label": "Club Foxtrot"
+          },
+          {
+            "value": "C007",
+            "label": "Club Golf"
+          },
+          {
+            "value": "C008",
+            "label": "Club Hotel"
+          },
+          {
+            "value": "C009",
+            "label": "Club India"
+          },
+          {
+            "value": "C010",
+            "label": "Club Juliet"
+          },
+          {
+            "value": "C011",
+            "label": "Club Kilo"
+          },
+          {
+            "value": "C012",
+            "label": "Club Lima"
+          }
+        ],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "team",
+        "type": "text",
+        "label": "Équipe",
+        "help": "",
+        "required": true,
+        "options": [],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "players",
+        "type": "number",
+        "label": "Joueurs",
+        "help": "",
+        "required": true,
+        "options": [],
+        "min": 5,
+        "max": 10
+      },
+      {
+        "key": "category",
+        "type": "select",
+        "label": "Catégorie",
+        "help": "",
+        "required": true,
+        "options": [
+          {
+            "value": "U18",
+            "label": "U18"
+          },
+          {
+            "value": "SEN",
+            "label": "Senior"
+          }
+        ],
+        "min": null,
+        "max": null
+      },
+      {
+        "key": "competition",
+        "type": "competition",
+        "label": "Compétition visée",
+        "help": "",
+        "required": false,
+        "options": [
+          {
+            "value": "2999/TSTCH",
+            "label": "Championnat Test (2999)"
+          },
+          {
+            "value": "2999/TSTLG",
+            "label": "Championnat Logo (2999)"
+          },
+          {
+            "value": "2999/TSTNO",
+            "label": "Championnat Sans Logo (2999)"
+          },
+          {
+            "value": "2999/TSTTO",
+            "label": "Tournoi Non Chpt (2999)"
+          },
+          {
+            "value": "2999/RCH",
+            "label": "Championnat Résultats (2999)"
+          },
+          {
+            "value": "2999/RDV",
+            "label": "Rencontre Divers (2999)"
+          },
+          {
+            "value": "2999/RAT",
+            "label": "Championnat En Attente (2999)"
+          }
+        ],
+        "min": null,
+        "max": null
+      }
+    ],
+    "token": "1791924577.8e39f26bb060e545e34de7e7d1b029b605b97c08eae8568e4bb81a178b5d308d"
+  }
+}

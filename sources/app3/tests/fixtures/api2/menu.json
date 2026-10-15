@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "label": "Le kayak-polo",
+      "path": "/le-kayak-polo",
+      "external": false,
+      "children": []
+    },
+    {
+      "label": "Arbitrage",
+      "path": "/le-kayak-polo/arbitrage",
+      "external": false,
+      "children": []
+    },
+    {
+      "label": "FFCK",
+      "path": "https://www.ffck.org",
+      "external": true,
+      "children": []
+    }
+  ]
+}

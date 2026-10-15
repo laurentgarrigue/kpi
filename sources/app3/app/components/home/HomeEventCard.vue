@@ -18,7 +18,7 @@ const ongoing = computed(() => isOngoing(props.event, props.today))
     :to="href"
     class="flex h-full items-center gap-4 rounded border border-line p-4 hover:border-kpi-blue-500 hover:bg-kpi-blue-50"
   >
-    <img v-if="logo" :src="logo" :alt="event.libelle" loading="lazy" class="size-16 shrink-0 object-contain">
+    <img v-if="logo" :src="logo" :alt="event.libelle" loading="lazy" class="kpi-logo size-16 shrink-0 object-contain">
     <span class="flex flex-col gap-1">
       <span class="font-semibold text-kpi-blue-600">{{ event.libelle }}</span>
       <span class="text-sm">{{ event.place }} · <span class="tabular-nums">{{ dates }}</span></span>

@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Cms\CmsRules;
+use App\Cms\NewsService;
+use App\Cms\PageService;
 use App\Http\UnicodeJsonResponse;
 use App\PublicResults\PublicCompetitionService;
 use App\PublicSite\PublicSiteRules;
@@ -43,6 +46,8 @@ class PublicSiteController extends AbstractController
         private readonly PublicSiteService $site,
         private readonly PublicCompetitionService $competitions,
         private readonly SearchThrottle $throttle,
+        private readonly NewsService $news,
+        private readonly PageService $pages,
     ) {
     }
 
@@ -54,7 +59,7 @@ class PublicSiteController extends AbstractController
         parameters: [
             new OA\Parameter(name: 'start', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
             new OA\Parameter(name: 'end', in: 'query', required: true, schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'level', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: PublicSiteRules::LEVELS)),
+            new OA\Parameter(name: 'section', in: 'query', required: false, schema: new OA\Schema(type: 'integer', enum: PublicSiteRules::SECTIONS)),
             new OA\Parameter(name: 'group', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
         ],
     )]
@@ -62,18 +67,25 @@ class PublicSiteController extends AbstractController
     {
         $start = self::date($request->query->getString('start'));
         $end = self::date($request->query->getString('end'));
-        $level = PublicSiteRules::nullIfEmpty($request->query->getString('level'));
+        $section = self::section($request->query->getString('section'));
         $group = PublicSiteRules::nullIfEmpty($request->query->getString('group'));
         if (
             $start === null || $end === null || $end < $start
             || $start->diff($end)->days > self::MAX_CALENDAR_DAYS
-            || ($level !== null && !in_array($level, PublicSiteRules::LEVELS, true))
+            || $section === false
             || ($group !== null && preg_match(self::CODE_PATTERN, $group) !== 1)
         ) {
             return $this->invalidParameter();
         }
 
-        return $this->cached($this->site->calendar($start->format('Y-m-d'), $end->format('Y-m-d'), $level, $group), self::SHORT_MAX_AGE);
+        return $this->cached($this->site->calendar($start->format('Y-m-d'), $end->format('Y-m-d'), $section, $group), self::SHORT_MAX_AGE);
+    }
+
+    #[Route('/calendar/groups', name: 'public_calendar_groups', methods: ['GET'])]
+    #[OA\Get(path: '/calendar/groups', summary: 'Groups having published competitions, by section (Divers included): calendar filter', tags: [self::DOC_TAG])]
+    public function calendarGroups(): JsonResponse
+    {
+        return $this->cached($this->site->calendarGroups(), self::SHORT_MAX_AGE);
     }
 
     #[Route('/competition/{season}/{code}/calendar.ics', name: 'public_competition_ics', methods: ['GET'])]
@@ -89,6 +101,15 @@ class PublicSiteController extends AbstractController
         }
 
         return $this->ics($this->site->competitionIcs($season, $code, $header->displayTitle), sprintf('%s-%s.ics', $code, $season));
+    }
+
+    #[Route('/event/{id}/calendar.ics', name: 'public_event_ics', methods: ['GET'], requirements: ['id' => '\d+'])]
+    #[OA\Get(path: '/event/{id}/calendar.ics', summary: 'iCalendar subscription of a published event: its published gamedays, every competition', tags: [self::DOC_TAG])]
+    public function eventIcs(int $id): Response
+    {
+        $ics = $this->site->eventIcs($id);
+
+        return $ics === null ? $this->notFound() : $this->ics($ics, sprintf('event-%d.ics', $id));
     }
 
     #[Route('/gameday/{id}.ics', name: 'public_gameday_ics', methods: ['GET'], requirements: ['id' => '\d+'])]
@@ -182,9 +203,12 @@ class PublicSiteController extends AbstractController
     #[Route('/search', name: 'public_search', methods: ['GET'])]
     #[OA\Get(
         path: '/search',
-        summary: 'Global search: competitions, events, teams, clubs (8 each, no person); 30 requests per minute per IP',
+        summary: 'Global search: competitions, events, teams, clubs, news, pages (8 each, no person); 30 requests per minute per IP',
         tags: [self::DOC_TAG],
-        parameters: [new OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string', minLength: 2, maxLength: 50))],
+        parameters: [
+            new OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string', minLength: 2, maxLength: 50)),
+            new OA\Parameter(name: 'lang', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: CmsRules::LANGUAGES)),
+        ],
     )]
     public function search(Request $request): JsonResponse
     {
@@ -194,7 +218,28 @@ class PublicSiteController extends AbstractController
         }
         $term = PublicSiteRules::searchTerm($request->query->getString('q'));
 
-        return $term === null ? $this->invalidParameter() : $this->cached($this->site->search($term), self::SHORT_MAX_AGE);
+        if ($term === null) {
+            return $this->invalidParameter();
+        }
+        // Editorial contents are new categories, appended without changing the others (FEATURE_SEARCH.md § 2.5, CMS-11).
+        $language = CmsRules::language($request->query->getString('lang') ?: null);
+        [$contains] = PublicSiteRules::containsPatterns($term);
+
+        return $this->cached($this->site->search($term) + [
+            'news' => $this->news->search($contains, PublicSiteService::GLOBAL_SEARCH_LIMIT, $language),
+            'pages' => $this->pages->search($contains, PublicSiteService::GLOBAL_SEARCH_LIMIT, $language),
+        ], self::SHORT_MAX_AGE);
+    }
+
+    /** Section demandée : null si absente, false si invalide. */
+    private static function section(string $value): int|false|null
+    {
+        if ($value === '') {
+            return null;
+        }
+        $section = filter_var($value, FILTER_VALIDATE_INT);
+
+        return is_int($section) && in_array($section, PublicSiteRules::SECTIONS, true) ? $section : false;
     }
 
     private static function date(string $value): ?\DateTimeImmutable

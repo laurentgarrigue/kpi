@@ -3,13 +3,14 @@ import { joinURL } from 'ufo'
 import type { CompetitionDetails, EventCompetitions, ResultsGame } from '#kpi-layer/utils/results/types'
 import { AGGREGATE_TABS, COMPETITION_TABS, eventTabPath, selectedCompetition, type CompetitionTab } from '~/utils/competitions'
 import { formatEventDates } from '~/utils/events'
+import { eventIcsUrl } from '~/utils/page-links'
 
 // Event view: every game of an event's competitions, or one competition (chip) with all its tabs, without leaving
 // the event (PAGE_EVENT_GROUP.md, EVT-*).
 const route = useRoute()
 const { t } = useI18n()
 const localePath = useLocalePath()
-const { app2BaseUrl } = useRuntimeConfig().public
+const { app2BaseUrl, api2BaseUrl } = useRuntimeConfig().public
 const id = computed(() => Number(route.params.id))
 
 const { data } = await useApiResource<EventCompetitions>(() => `/event/${id.value}/competitions`)
@@ -44,6 +45,9 @@ const competitionHref = (game: ResultsGame) => localePath(eventTabPath(id.value,
 const pdfTarget = computed(() => (selected.value
   ? { kind: 'games' as const, season: selected.value.season, competitions: [selected.value.code] }
   : { kind: 'games' as const, event: id.value }))
+// A single-group event is the view of that group: no detour through its competitions, its own calendar (§ 2.0).
+const singleGroup = computed(() => event.value?.single_group ?? false)
+const subscriptionUrl = computed(() => (singleGroup.value ? eventIcsUrl(api2BaseUrl, id.value) : undefined))
 const subtitle = computed(() => (event.value ? [event.value.place, formatEventDates(event.value.start, event.value.end, language.value)].filter(Boolean).join(' · ') : ''))
 
 useSeoMeta({
@@ -64,12 +68,15 @@ useHead(() => ({
     }),
   }],
 }))
+// Cup phases in the pitch grid (CMP-17).
+provideCupCompetitions(() => competitions.value)
 </script>
 
 <template>
   <div v-if="event" class="space-y-6">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: event.libelle }]" />
-    <ResultsScopeHeader :title="event.libelle" :subtitle="subtitle" :logo="event.logo" :live-url="joinURL(app2BaseUrl, 'event', String(id))" />
+    <ResultsScopeHeader kind="event" :title="event.libelle" :subtitle="subtitle" :logo="event.logo" :live-url="joinURL(app2BaseUrl, 'event', String(id))" />
+    <ResultsEventCompetitions v-if="!singleGroup" :event-id="id" :competitions="competitions" />
     <ResultsCompetitionChips :items="chips" :all="all" />
     <ResultsTabs :tabs="tabs" :current="current" />
     <NuxtPage
@@ -78,6 +85,8 @@ useHead(() => ({
       :competition-href="competitionHref"
       :selected-code="needsCompetition ? undefined : selected?.code"
       :competition="competition ?? undefined"
+      :subscription-url="subscriptionUrl"
     />
+    <ContentLinked kind="event" :reference="String(id)" />
   </div>
 </template>

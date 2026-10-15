@@ -137,6 +137,33 @@ export function isProvisional(game: ResultsGame): boolean {
   return game.g_status !== 'ATT' && hasScore(game) && game.g_validation !== 'O'
 }
 
+/** Status as shown to visitors: a finished game whose score is not locked yet is « provisional » (CMP-17, as app2). */
+export type DisplayStatus = 'ATT' | 'ON' | 'PROVISIONAL' | 'END'
+
+export function displayStatus(game: Pick<ResultsGame, 'g_status' | 'g_validation'>): DisplayStatus {
+  if (game.g_status === 'END' && game.g_validation !== 'O') {
+    return 'PROVISIONAL'
+  }
+  return game.g_status
+}
+
+export interface GamePeriod {
+  kind: 'regular' | 'overtime' | 'shootout'
+  number: number | null
+}
+
+const PERIOD_PATTERN = /^([MP])(\d)$/
+const SHOOTOUT = 'TB'
+
+/** Period of a game in progress: `Mx` regular time, `Px` overtime, `TB` shoot-out; anything else is unknown. */
+export function gamePeriod(period: string | null): GamePeriod | null {
+  if (period === SHOOTOUT) {
+    return { kind: 'shootout', number: null }
+  }
+  const match = PERIOD_PATTERN.exec(period ?? '')
+  return match ? { kind: match[1] === 'M' ? 'regular' : 'overtime', number: Number(match[2]) } : null
+}
+
 /** Winner of a finished game (its score may still be provisional); a forfeit (« F ») loses. */
 export function winnerSide(game: ResultsGame): Side | null {
   if (game.g_status !== 'END' || !hasScore(game)) {

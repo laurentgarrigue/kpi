@@ -12,8 +12,29 @@ final class PublicSiteRules
 
     public const SEARCH_MAX_LENGTH = 50;
 
-    /** Niveaux filtrables du calendrier, dans l'ordre d'affichage. */
-    public const LEVELS = ['INT', 'NAT', 'REG'];
+    /**
+     * Sections filtrables du calendrier (kp_groupe.section), dans l'ordre d'affichage : internationales, nationales,
+     * régionales, tournois internationaux, continents, divers.
+     */
+    public const SECTIONS = [1, 2, 3, 4, 5, 100];
+
+    /** Section des compétitions dont le groupe n'a pas de section (calendrier : « Divers »). */
+    public const DEFAULT_SECTION = 100;
+
+    /**
+     * Libellé d'une journée dans le calendrier et l'abonnement, comme le legacy (json-events.php) :
+     * « nom de la journée - lieu (département) ». Sans nom, le titre de la compétition le remplace ; le lieu et
+     * le département absents sont omis.
+     */
+    public static function gamedayLabel(?string $name, ?string $place, ?string $department, string $fallback): string
+    {
+        $decode = static fn (?string $value): ?string => self::nullIfEmpty($value === null ? null : html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $label = $decode($name) ?? $fallback;
+        $place = $decode($place);
+        $department = $decode($department);
+
+        return $label . ($place === null ? '' : ' - ' . $place) . ($department === null ? '' : ' (' . $department . ')');
+    }
 
     /**
      * Position « lat, lng » de kp_club.Coord ; null si absente ou hors bornes.

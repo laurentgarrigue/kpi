@@ -58,6 +58,22 @@ final class PublicSiteRulesTest extends TestCase
         self::assertSame([1, 3, 4], array_column($merged, 'Id'));
     }
 
+    public function testGamedayLabelIsNameDashPlaceAndDepartmentLikeTheLegacyCalendar(): void
+    {
+        self::assertSame('Coupe de France - Saint-Omer (62)', PublicSiteRules::gamedayLabel('Coupe de France', 'Saint-Omer', '62', 'Fallback'));
+        self::assertSame('Worlds - Duisburg (GER)', PublicSiteRules::gamedayLabel('Worlds', 'Duisburg', 'GER', 'Fallback'));
+        self::assertSame('Worlds - Duisburg', PublicSiteRules::gamedayLabel('Worlds', 'Duisburg', null, 'Fallback'));
+        self::assertSame('Worlds (GER)', PublicSiteRules::gamedayLabel('Worlds', null, 'GER', 'Fallback'));
+        self::assertSame('Worlds', PublicSiteRules::gamedayLabel('Worlds', '', ' ', 'Fallback'));
+        self::assertSame('Fallback - Lacville (33)', PublicSiteRules::gamedayLabel(null, 'Lacville', '33', 'Fallback'));
+        self::assertSame('Fête & tournoi - Lacville', PublicSiteRules::gamedayLabel('Fête &amp; tournoi', 'Lacville', null, 'Fallback'));
+    }
+
+    public function testSectionsAreTheGroupSections(): void
+    {
+        self::assertSame([1, 2, 3, 4, 5, 100], PublicSiteRules::SECTIONS);
+    }
+
     public function testGroupsAreOrganizedBySection(): void
     {
         $sections = GroupSections::organize([

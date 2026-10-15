@@ -6,8 +6,12 @@ import type { ResolvedLink } from '~/utils/navigation'
 const props = defineProps<{ link: ResolvedLink, active?: boolean }>()
 
 const external = computed(() => props.link.kind !== 'internal')
-// app2 opens in a new tab (SITE_LAYOUT.md § 2.6); the legacy site in the same tab.
-const newTab = computed(() => props.link.kind === 'app2')
+// app2 and the external sites of the editorial menu open in a new tab (SITE_LAYOUT.md § 2.6); the legacy site in
+// the same tab.
+const newTab = computed(() => props.link.kind === 'app2' || props.link.kind === 'external')
+// Editorial sub-entries are indented by level (PAGE_CONTENT.md § 3); a margin, as the parent sets the padding.
+const LEVEL_CLASSES: Record<number, string> = { 2: 'ml-4 text-sm', 3: 'ml-8 text-sm' }
+const levelClass = computed(() => LEVEL_CLASSES[props.link.level ?? 1] ?? '')
 const hint = computed(() => (props.link.kind === 'legacy' ? 'a11y.legacyLink' : 'a11y.newTab'))
 </script>
 
@@ -18,11 +22,13 @@ const hint = computed(() => (props.link.kind === 'legacy' ? 'a11y.legacyLink' : 
     v-bind="newTab ? NEW_TAB_ATTRS : {}"
     :aria-current="active ? 'page' : undefined"
     :data-kind="link.kind"
+    :data-level="link.level"
     class="flex items-center gap-1"
+    :class="levelClass"
   >
-    {{ $t(`nav.${link.id}`) }}
+    {{ link.label ?? $t(`nav.${link.id}`) }}
     <template v-if="external">
-      <UIcon name="i-heroicons-arrow-top-right-on-square" class="size-4 opacity-70" aria-hidden="true" />
+      <UIcon name="i-heroicons-arrow-top-right-on-square" class="size-5 opacity-70" aria-hidden="true" />
       <span class="sr-only">{{ $t(hint) }}</span>
     </template>
   </NuxtLink>

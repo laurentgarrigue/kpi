@@ -8,9 +8,10 @@
         "code": "RCH",
         "display_title": "Championnat Résultats",
         "type": "CHPT",
-        "level": "NAT",
+        "section": 2,
         "group": "TSTRES"
       },
+      "label": "RCH J2 - Rivecity (64)",
       "name": "RCH J2",
       "place": "Rivecity",
       "department": "64",
@@ -18,7 +19,8 @@
       "end": "2999-04-02",
       "event": {
         "id": 77,
-        "libelle": "Tournoi Résultats"
+        "libelle": "Tournoi Résultats",
+        "single_group": true
       }
     },
     {
@@ -28,9 +30,10 @@
         "code": "RCP",
         "display_title": "Phase finale",
         "type": "CP",
-        "level": "NAT",
+        "section": 2,
         "group": "TSTRES"
       },
+      "label": "RCP Poule A - Rivecity (64)",
       "name": "RCP Poule A",
       "place": "Rivecity",
       "department": "64",
@@ -38,7 +41,8 @@
       "end": "2999-04-01",
       "event": {
         "id": 77,
-        "libelle": "Tournoi Résultats"
+        "libelle": "Tournoi Résultats",
+        "single_group": true
       }
     },
     {
@@ -48,9 +52,10 @@
         "code": "RCP",
         "display_title": "Phase finale",
         "type": "CP",
-        "level": "NAT",
+        "section": 2,
         "group": "TSTRES"
       },
+      "label": "RCP Finale - Rivecity (64)",
       "name": "RCP Finale",
       "place": "Rivecity",
       "department": "64",
@@ -58,7 +63,8 @@
       "end": "2999-04-02",
       "event": {
         "id": 77,
-        "libelle": "Tournoi Résultats"
+        "libelle": "Tournoi Résultats",
+        "single_group": true
       }
     }
   ]

@@ -20,7 +20,25 @@ final class PublicApiDocumentationTest extends ApiTestCase
             }
         }
 
-        self::assertSame([
+        // Same set, whatever the registration order (routes with a priority come first).
+        self::assertEqualsCanonicalizing([
+            // Phase 4 (FEATURE_CMS.md § 5.1, FEATURE_FORMS.md § 4)
+            '/news/categories',
+            '/news',
+            '/news/{slug}',
+            '/pages/{slug}',
+            '/menu',
+            '/home',
+            '/albums/{slug}',
+            '/rss.xml',
+            '/sitemap/content.xml',
+            '/redirect',
+            '/forms',
+            '/forms/options/competitions',
+            '/forms/{slug}',
+            '/forms/{slug}/submissions',
+            '/forms/{slug}/entries',
+            // Phase 2
             '/seasons',
             '/group/{season}/{code}/competitions',
             '/competition/{season}/{code}',
@@ -33,8 +51,10 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/event/{id}/competitions',
             // Phase 3 (API_PUBLIC_TRANSVERSE.md, API3-09)
             '/calendar',
+            '/calendar/groups',
             '/competition/{season}/{code}/calendar.ics',
             '/gameday/{id}.ics',
+            '/event/{id}/calendar.ics',
             '/history',
             '/history/{group}',
             '/teams',

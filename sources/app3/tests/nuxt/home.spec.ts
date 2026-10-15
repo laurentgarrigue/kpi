@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import IndexPage from '~/pages/index.vue'
 import type { PublicEvent } from '~/utils/events'
+import type { HomeBlock } from '~/utils/home'
+import { api2Fixture } from '../fixtures/api2'
 
 const { api2 } = vi.hoisted(() => ({ api2: vi.fn() }))
 mockNuxtImport('useApi2', () => () => api2)
@@ -27,10 +29,13 @@ const events: PublicEvent[] = [
   ...Array.from({ length: 7 }, (_, index) => event(10 + index, `2026-05-${String(20 - index).padStart(2, '0')}`)),
 ]
 
-async function mountHome(response: () => Promise<unknown>) {
+// Real `GET /home` captured on SQL/fixtures: « featured » then « latest news ».
+const fixtureBlocks = api2Fixture('/home').body as HomeBlock[]
+
+async function mountHome(response: () => Promise<unknown>, blocks: () => Promise<HomeBlock[]> = async () => fixtureBlocks) {
   api2.mockReset()
-  api2.mockImplementation(response)
-  clearNuxtData('home-events')
+  api2.mockImplementation((path: string) => (path === '/home' ? blocks() : response()))
+  clearNuxtData()
   return mountSuspended(IndexPage)
 }
 
@@ -52,7 +57,7 @@ describe('home page (PAGE_HOME.md)', () => {
 
   it('HOME-07: upcoming events come first, nearest first, ongoing ones flagged', async () => {
     const wrapper = await mountHome(async () => events)
-    const sections = wrapper.findAll('section[aria-labelledby]').map(section => section.find('h2').text())
+    const sections = wrapper.findAll('section[aria-labelledby$="events-title"]').map(section => section.find('h2').text())
     expect(sections).toEqual(['Prochains événements', 'Événements récents'])
 
     const upcoming = wrapper.find('[data-testid="upcoming-events"]')
@@ -97,5 +102,42 @@ describe('home page (PAGE_HOME.md)', () => {
     expect(live.attributes('target')).toBe('_blank')
     expect(live.attributes('rel')).toContain('noopener')
     expect(live.text()).toContain('(nouvel onglet)')
+  })
+})
+
+describe('editorial home (PAGE_CONTENT.md § 4)', () => {
+  const alert = (level: 'info' | 'important'): HomeBlock => ({ kind: 'alert', level, text: 'Bassin fermé' })
+  const partners: HomeBlock = { kind: 'partners', partners: [{ name: 'KIP Sport', url: 'https://kip.example', logo: null }] }
+  const sectionOrder = (wrapper: Awaited<ReturnType<typeof mountHome>>) =>
+    wrapper.findAll('section[aria-labelledby]').map(section => section.attributes('aria-labelledby') ?? section.attributes('data-testid'))
+
+  it('CNT-05: the active blocks in the configured order, events blocks before the partners', async () => {
+    const wrapper = await mountHome(async () => events, async () => [...fixtureBlocks, partners])
+    expect(sectionOrder(wrapper)).toEqual(['home-featured', 'home-latest-news', 'upcoming-events-title', 'recent-events-title', 'home-partners'])
+    expect(wrapper.find('[data-testid="home-featured"] a').attributes('href')).toBe('/news/finale-resultats')
+    expect(wrapper.findAll('[data-testid="home-latest-news"] [data-testid="news-card"]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="home-all-news"]').attributes('href')).toBe('/news')
+    const partner = wrapper.find('[data-testid="home-partners"] a')
+    expect(partner.attributes('href')).toBe('https://kip.example')
+    expect(partner.attributes('target')).toBe('_blank')
+  })
+
+  it('CNT-05: an api2 error keeps the events blocks', async () => {
+    const wrapper = await mountHome(async () => events, async () => {
+      throw new Error('api2 down')
+    })
+    expect(wrapper.find('[data-testid="home-featured"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="upcoming-events"]').exists()).toBe(true)
+  })
+
+  it('CNT-06: the alert banner comes first, with the ARIA role of its level', async () => {
+    const info = await mountHome(async () => events, async () => [...fixtureBlocks, alert('info')])
+    const banner = info.find('[data-testid="home-alert"]')
+    expect(banner.attributes('role')).toBe('status')
+    expect(banner.text()).toBe('Bassin fermé')
+    expect(info.element.firstElementChild?.getAttribute('data-testid')).toBe('home-alert')
+
+    const important = await mountHome(async () => events, async () => [alert('important')])
+    expect(important.find('[data-testid="home-alert"]').attributes('role')).toBe('alert')
   })
 })
