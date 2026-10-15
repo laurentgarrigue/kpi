@@ -36,12 +36,14 @@ useSeoMeta({
   title: () => t('results.scopeTitle', { tab: t(`results.tab.${current.value}`), scope: `${name.value} ${season.value}` }),
   description: () => t('results.scopeDescription', { scope: `${name.value} ${season.value}` }),
 })
+// Cup phases in the pitch grid (CMP-17).
+provideCupCompetitions(() => competitions.value)
 </script>
 
 <template>
   <div v-if="list" class="space-y-6">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('results.listTitle', { season }), to: listPath }, { label: name }]" />
-    <ResultsScopeHeader :title="name" :subtitle="season" :live-url="joinURL(app2BaseUrl, 'group', season, code)" />
+    <ResultsScopeHeader kind="group" :title="name" :subtitle="season" :live-url="joinURL(app2BaseUrl, 'group', season, code)" />
     <ResultsEventBanner :events="list.events" :main="main" :scope="name" />
     <ResultsCompetitionChips :items="chips" :all="{ to: localePath(`/groups/${season}/${code}/${current}`), current: true }" />
     <ResultsTabs :tabs="tabs" :current="current" />

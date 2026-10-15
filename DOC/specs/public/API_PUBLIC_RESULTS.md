@@ -71,7 +71,7 @@ En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons`, `/group/…/c
 | `GET /competition/{season}/{code}/stats` | statistiques disponibles : `{ kinds: ["scorers"] }` (§ 5.4) | — |
 | `GET /competition/{season}/{code}/stats/{kind}?limit=20` | une statistique (§ 5.4) ; `limit` entre 1 et 100 ; `kind` inconnu → 404 | `kpstats.php` |
 | `GET /competition/{season}/{code}/info` | journées, officiels, équipes engagées par poule, schéma (§ 5.5) | `kpdetails.php` |
-| `GET /event/{id}/competitions` | `{ event: { id, libelle, place, logo, start, end }, competitions: [{ code, season, display_title, soustitre2 }] }` : tournoi publié (`kp_evenement`) et ses compétitions publiées ayant une journée publiée dans l'événement | `GetOtherCompetitions` (mode événement) |
+| `GET /event/{id}/competitions` | `{ event: { id, libelle, place, logo, start, end, single_group }, competitions: [{ code, season, display_title, soustitre2, group, type, gamedays, total_gamedays }] }` (`single_group` : toutes les compétitions ont le même groupe, PAGE_EVENT_GROUP.md § 2.0) : tournoi publié (`kp_evenement`) et ses compétitions publiées ayant une journée publiée dans l'événement | `GetOtherCompetitions` (mode événement) |
 
 - Compétition, groupe ou événement **inconnu ou non publié** → `404 {"error": "not_found"}`.
 - `season` doit correspondre à `^\d{4}$`, `code` à `^[A-Za-z0-9_-]{1,12}$` ; sinon `400`.

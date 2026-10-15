@@ -246,6 +246,29 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.journal')
     })
   }
+  // Éditorial (site public): Editor capability or profile 1–2 (PAGE_CMS.md, ADM-CMS-01)
+  if (authStore.canEditContent) {
+    const editorial: MenuItem[] = [
+      { to: '/cms/articles', icon: 'heroicons:newspaper', label: t('menu.cms_articles') },
+      { to: '/cms/pages', icon: 'heroicons:document-duplicate', label: t('menu.cms_pages') },
+      { to: '/cms/media', icon: 'heroicons:photo', label: t('menu.cms_media') },
+      { to: '/cms/forms', icon: 'heroicons:clipboard-document-list', label: t('menu.cms_forms') },
+    ]
+    if (authStore.canAdministerContent) {
+      editorial.push(
+        { to: '/cms/menu', icon: 'heroicons:bars-3', label: t('menu.cms_menu') },
+        { to: '/cms/home', icon: 'heroicons:home', label: t('menu.cms_home') },
+        { to: '/cms/redirects', icon: 'heroicons:arrow-uturn-right', label: t('menu.cms_redirects') },
+      )
+    }
+    groups.push({
+      key: 'editorial',
+      label: t('menu.editorial'),
+      icon: 'heroicons:pencil-square',
+      items: editorial
+    })
+  }
+
   if (rights.length > 0) {
     groups.push({
       key: 'rights',
@@ -466,7 +489,7 @@ onMounted(() => {
             >
               <div
                 v-if="publicMenuOpen"
-                class="absolute right-0 mt-1 w-44 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
+                class="absolute right-0 mt-1 w-60 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
               >
                 <a
                   :href="runtimeConfig.public.legacyBaseUrl"
@@ -476,6 +499,16 @@ onMounted(() => {
                 >
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
                   <span>KPI Public</span>
+                </a>
+                <a
+                  :href="runtimeConfig.public.publicSiteUrl"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  data-testid="public-site-beta-link"
+                  @click="publicMenuOpen = false"
+                >
+                  <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+                  <span>{{ t('menu.public_site_beta') }}</span>
                 </a>
                 <div class="border-t border-header-700 my-1" />
                 <a
@@ -675,6 +708,14 @@ onMounted(() => {
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI Public</span>
+          </a>
+          <a
+            :href="runtimeConfig.public.publicSiteUrl"
+            target="_blank"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+          >
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
+            <span>{{ t('menu.public_site_beta') }}</span>
           </a>
           <a
             :href="runtimeConfig.public.app2BaseUrl"

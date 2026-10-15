@@ -85,6 +85,10 @@ function toggleNoLicence() {
 }
 
 const submitting = ref(false)
+// Editor capability of the public site (PAGE_CMS.md, ADM-CMS-05): granted by profiles 1–2 only
+const editor = ref(false)
+const editorBefore = ref(false)
+const cms = useCmsApi()
 const formError = ref('')
 
 // Autocomplete state
@@ -140,6 +144,15 @@ watch(() => props.open, async (isOpen) => {
 
   if (adminNiveau.value <= 2) {
     await loadEvents()
+  }
+
+  editor.value = false
+  editorBefore.value = false
+  if (props.user && authStore.canAdministerContent) {
+    const code = props.user.code
+    cms.editors().then((editors) => {
+      editor.value = editorBefore.value = editors.some(item => item.code === code)
+    }).catch(() => { /* editorial section unavailable: the checkbox stays off */ })
   }
 
   if (props.user) {
@@ -621,6 +634,9 @@ async function handleSubmit() {
       await api.post('/admin/users', payload)
       toast.add({ title: t('users.success_created'), color: 'success', duration: 3000 })
     }
+    if (authStore.canAdministerContent && editor.value !== editorBefore.value) {
+      await cms.setEditor(form.code.trim(), editor.value)
+    }
     emit('saved')
     emit('close')
   } catch (error: unknown) {
@@ -883,6 +899,11 @@ onBeforeUnmount(() => {
                 {{ opt.label }}
               </option>
             </select>
+          </div>
+
+          <!-- Editor capability of the public site (profiles 1–2 only, ADM-CMS-05) -->
+          <div v-if="authStore.canAdministerContent" class="sm:col-span-2">
+            <UCheckbox v-model="editor" :label="t('users.modal.editor')" :description="t('users.modal.editor_help')" data-testid="editor-capability" />
           </div>
 
           <!-- Forced password (profile 1 only) -->

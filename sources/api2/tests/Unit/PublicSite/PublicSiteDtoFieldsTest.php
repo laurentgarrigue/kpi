@@ -22,10 +22,10 @@ final class PublicSiteDtoFieldsTest extends TestCase
 {
     public function testCalendarEntryFields(): void
     {
-        $competition = ['season' => '2026', 'code' => 'N1H', 'display_title' => 'N1', 'type' => 'CHPT', 'level' => 'NAT', 'group' => 'N1H'];
-        $entry = new CalendarEntry(1, $competition, 'J1', 'Lieu', '33', '2026-01-01', '2026-01-02', null);
+        $competition = ['season' => '2026', 'code' => 'N1H', 'display_title' => 'N1', 'type' => 'CHPT', 'section' => 2, 'group' => 'N1H'];
+        $entry = new CalendarEntry(1, $competition, 'J1 - Lieu (33)', 'J1', 'Lieu', '33', '2026-01-01', '2026-01-02', null);
 
-        self::assertSame(['id', 'competition', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($entry->jsonSerialize()));
+        self::assertSame(['id', 'competition', 'label', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($entry->jsonSerialize()));
     }
 
     public function testTeamFields(): void
@@ -36,7 +36,7 @@ final class PublicSiteDtoFieldsTest extends TestCase
         $sheet = new TeamSheet($team, null, null, null, [], []);
         self::assertSame(['number', 'label', 'club', 'logo', 'colors', 'photo', 'honours', 'seasons'], array_keys($sheet->jsonSerialize()));
 
-        self::assertSame(['season', 'competition', 'rank', 'medal'], array_keys((new Honour('2026', 'N1H', 'N1', 'N1H', 1, 1))->jsonSerialize()));
+        self::assertSame(['season', 'competition', 'rank', 'medal', 'final_round'], array_keys((new Honour('2026', 'N1H', 'N1', 'N1H', 1, 1, true))->jsonSerialize()));
     }
 
     public function testRosterPlayerHasNoLicenceSexNorBirthDate(): void

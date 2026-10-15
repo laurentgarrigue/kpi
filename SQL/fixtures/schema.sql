@@ -321,6 +321,7 @@ CREATE TABLE `kp_licence` (
   `Origine` varchar(6) NOT NULL DEFAULT '',
   `Nom` varchar(30) DEFAULT NULL,
   `Prenom` varchar(30) DEFAULT NULL,
+  `Numero_club` varchar(6) DEFAULT NULL, -- lu par UserProvider (connexion d'app4, phase 4)
   PRIMARY KEY (`Matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
@@ -373,5 +374,134 @@ CREATE TABLE `kp_equipe` (
   PRIMARY KEY (`Numero`),
   KEY `fk_equipe_club` (`Code_club`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Site public, phase 4 (FEATURE_CMS.md, FEATURE_FORMS.md) : comptes d'administration (droits éditoriaux) et journal
+-- d'administration. Les tables kp_cms_*, kp_form*, kp_user_capability viennent de
+-- SQL/migrations/2026-10-11_public_site_cms_forms.sql, chargé après ce fichier.
+DROP TABLE IF EXISTS `kp_user`;
+CREATE TABLE `kp_user` (
+  `Code` varchar(8) NOT NULL DEFAULT '',
+  `Pwd` varchar(255) NOT NULL DEFAULT '',
+  `Identite` varchar(80) DEFAULT NULL,
+  `Mail` varchar(100) NOT NULL DEFAULT '',
+  `Tel` varchar(15) NOT NULL,
+  `Fonction` varchar(100) NOT NULL DEFAULT '',
+  `Niveau` smallint(6) NOT NULL DEFAULT 0,
+  `Type_filtre_competition` smallint(6) NOT NULL DEFAULT 0,
+  `Filtre_competition` mediumtext NOT NULL,
+  `Filtre_saison` mediumtext NOT NULL,
+  `Filtre_competition_sql` mediumtext NOT NULL,
+  `Filtre_journee` mediumtext NOT NULL,
+  `Limitation_equipe_club` varchar(50) DEFAULT NULL,
+  `Id_Evenement` varchar(20) NOT NULL DEFAULT '',
+  `Date_debut` date DEFAULT NULL,
+  `Date_fin` date DEFAULT NULL,
+  PRIMARY KEY (`Code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_user_mandat`;
+CREATE TABLE `kp_user_mandat` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `libelle` varchar(100) NOT NULL,
+  `niveau` smallint(6) NOT NULL,
+  `filtre_saison` mediumtext NOT NULL DEFAULT '',
+  `filtre_competition` mediumtext NOT NULL DEFAULT '',
+  `limitation_equipe_club` varchar(50) DEFAULT NULL,
+  `filtre_journee` mediumtext NOT NULL DEFAULT '',
+  `id_evenement` varchar(20) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `fk_mandat_user` (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_journal`;
+CREATE TABLE `kp_journal` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Dates` timestamp NULL DEFAULT NULL,
+  `Users` varchar(8) NOT NULL DEFAULT 'INCONNU',
+  `Actions` varchar(40) NOT NULL DEFAULT 'IGNORE',
+  `Saisons` varchar(4) DEFAULT NULL,
+  `Competitions` varchar(8) DEFAULT NULL,
+  `Evenements` int(11) DEFAULT NULL,
+  `Journees` int(11) DEFAULT NULL,
+  `Matchs` text DEFAULT NULL,
+  `Journal` text DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Reprise WordPress (CMS-09) : sous-ensemble des tables WordPress et Ninja Forms, préfixe « wptest_ », lu par
+-- app:import-wordpress --same-database --prefix=wptest_ dans les tests.
+DROP TABLE IF EXISTS `wptest_posts`, `wptest_postmeta`, `wptest_options`, `wptest_nf3_forms`, `wptest_nf3_fields`, `wptest_nf3_field_meta`,
+  `wptest_terms`, `wptest_term_taxonomy`, `wptest_term_relationships`;
+CREATE TABLE `wptest_terms` (
+  `term_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL DEFAULT '',
+  `slug` varchar(200) NOT NULL DEFAULT '',
+  PRIMARY KEY (`term_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `wptest_term_taxonomy` (
+  `term_taxonomy_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `term_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `taxonomy` varchar(32) NOT NULL DEFAULT '',
+  PRIMARY KEY (`term_taxonomy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `wptest_term_relationships` (
+  `object_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `term_taxonomy_id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`object_id`, `term_taxonomy_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `wptest_posts` (
+  `ID` bigint(20) UNSIGNED NOT NULL,
+  `post_date` datetime NOT NULL,
+  `post_content` longtext NOT NULL,
+  `post_title` text NOT NULL,
+  `post_excerpt` text NOT NULL,
+  `post_status` varchar(20) NOT NULL,
+  `post_name` varchar(200) NOT NULL,
+  `post_modified` datetime NOT NULL,
+  `post_parent` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `post_type` varchar(20) NOT NULL,
+  PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `wptest_postmeta` (
+  `meta_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `post_id` bigint(20) UNSIGNED NOT NULL,
+  `meta_key` varchar(255) DEFAULT NULL,
+  `meta_value` longtext DEFAULT NULL,
+  PRIMARY KEY (`meta_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `wptest_options` (
+  `option_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `option_name` varchar(191) NOT NULL,
+  `option_value` longtext NOT NULL,
+  PRIMARY KEY (`option_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `wptest_nf3_forms` (
+  `id` int(11) NOT NULL,
+  `title` longtext DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `wptest_nf3_fields` (
+  `id` int(11) NOT NULL,
+  `label` longtext DEFAULT NULL,
+  `key` longtext DEFAULT NULL,
+  `type` longtext DEFAULT NULL,
+  `parent_id` int(11) NOT NULL,
+  `required` bit(1) DEFAULT NULL,
+  `order` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `wptest_nf3_field_meta` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_id` int(11) NOT NULL,
+  `key` longtext NOT NULL,
+  `value` longtext DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tables de la phase 4 recréées à chaque chargement (la migration les crée « IF NOT EXISTS »).
+DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_cms_category`, `kp_cms_article`,
+  `kp_cms_article_category`, `kp_cms_article_link`, `kp_cms_page`, `kp_cms_menu_item`, `kp_cms_home_block`,
+  `kp_cms_redirect`, `kp_form`, `kp_form_field`, `kp_form_entry`, `kp_mail_log`;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import type { ResultsGame } from '#kpi-layer/utils/results/types'
 import { fakeApi2 } from '../fixtures/api2'
 import { expectNotFound, mountRoute } from './results-setup'
 
@@ -22,6 +23,7 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
     expect(header.find('[data-testid="competition-web"]').attributes('href')).toBe('https://example.test')
     expect(header.find('[data-testid="competition-live"]').attributes('href')).toBe('https://app.kpi.localhost/group/2999/TSTRES')
     expect(header.find('[data-testid="competition-live"]').attributes('target')).toBe('_blank')
+    expect(header.find('[data-testid="competition-live"]').attributes('data-live-button')).toBeDefined()
   })
 
   it('CMP-03: siblings of the group keep the current tab', async () => {
@@ -37,13 +39,13 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
     expect(wrapper.findAll('[data-testid="competition-chips"] a').map(chip => chip.attributes('href'))).toEqual([
       '/competitions/2999/RCH/games?event=77', '/competitions/2999/RCP/games?event=77',
     ])
-    expect(wrapper.find('[data-testid="results-tabs"] a').attributes('href')).toBe('/competitions/2999/RCP/games?event=77')
+    expect(wrapper.findAll('[data-testid="results-tabs"] a')[1]!.attributes('href')).toBe('/competitions/2999/RCP/games?event=77')
   })
 
   it('CMP-04: tabs are links, the current one marked', async () => {
     const tabs = (await mountRoute('/competitions/2999/RCH/info')).findAll('[data-testid="results-tabs"] a')
-    expect(tabs.map(tab => tab.text())).toEqual(['Matchs', 'Terrains', 'Infos', 'Déroulement', 'Classement', 'Stats'])
-    expect(tabs.map(tab => tab.attributes('aria-current'))).toEqual([undefined, undefined, 'page', undefined, undefined, undefined])
+    expect(tabs.map(tab => tab.text())).toEqual(['Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
+    expect(tabs.map(tab => tab.attributes('aria-current'))).toEqual(['page', undefined, undefined, undefined, undefined, undefined])
   })
 
   it('CMP-16: an event covering every gameday is put forward, with the breadcrumb through it', async () => {
@@ -74,6 +76,19 @@ describe('games tab (§ 3.1)', () => {
     expect(live.find('[data-status]').text()).toContain('En cours')
     expect(live.find('[data-testid="provisional"]').exists()).toBe(true)
     expect(wrapper.find('[data-game="9401"] [data-testid="provisional"]').exists()).toBe(false)
+  })
+
+  it('CMP-05: in the games list the winner of a finished game is in bold, the loser and a draw are not', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCH/games')
+    const won = wrapper.find('[data-game="9401"]')
+    const [winner, loser] = won.findAll('a[data-kind="team"]')
+    expect(winner!.classes()).toContain('font-semibold')
+    expect(loser!.classes()).not.toContain('font-semibold')
+    expect(won.find('[data-side="A"]').classes()).toContain('font-bold')
+    expect(won.find('[data-side="B"]').classes()).not.toContain('font-bold')
+    const draw = wrapper.find('[data-game="9402"]')
+    expect(draw.findAll('a[data-kind="team"].font-semibold, [data-side].font-bold')).toHaveLength(0)
+    expect(wrapper.find('[data-game="9404"]').findAll('a.font-semibold')).toHaveLength(0)
   })
 
   it('CMP-06: filters by gameday and day, GET form', async () => {
@@ -119,7 +134,15 @@ describe('pitch game layout (§ 3.2)', () => {
     const game = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
     const top = game.find('[data-testid="pitch-top"]')
     expect(top.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
-    expect(top.find('[data-status]').text()).toContain('En cours')
+    // CMP-17: the status is a coloured icon whose label stays readable by screen readers and on hover, preceded by
+    // the game number; the period is abbreviated (M1 → P1).
+    const status = top.find('[data-status]')
+    expect(status.attributes('data-status')).toBe('ON')
+    expect(status.find('[data-testid="status-icon"]').classes()).toContain('text-kpi-blue-600')
+    expect(status.attributes('title')).toBe('En cours · période 1')
+    expect(status.find('.sr-only').text()).toBe('En cours')
+    expect(status.find('[data-testid="status-period"]').text()).toBe('P1')
+    expect(top.find('[data-testid="pitch-number"]').text()).toBe('#4')
     const [teamA, teamB] = game.findAll('[data-testid="pitch-team"]')
     expect(teamA!.text()).toContain('Equipe Alpha')
     expect(teamA!.find('[data-testid="side-score"]').text()).toContain('1')
@@ -127,6 +150,29 @@ describe('pitch game layout (§ 3.2)', () => {
     expect(teamB!.find('[data-testid="side-score"]').text()).toContain('0')
     // The score is provisional (game on): italic and announced.
     expect(teamA!.find('[data-testid="side-score"]').classes()).toContain('italic')
+  })
+
+  it('CMP-17: finished games are green, provisional ones (not locked) orange with an ellipsis, pending ones grey', async () => {
+    api2.mockImplementation(async (path: string) => (path === '/competition/2999/RCP/games'
+      ? (await fakeApi2<ResultsGame[]>(path)).map(item => (item.g_id === 9413 ? { ...item, g_validation: '' } : item))
+      : fakeApi2(path)))
+    const grid = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"]')
+    const iconColour = (id: number) => grid.find(`[data-game="${id}"] [data-testid="status-icon"]`).classes().find(name => name.startsWith('text-'))
+    expect(grid.find('[data-game="9411"] [data-status]').attributes('data-status')).toBe('END')
+    expect(iconColour(9411)).toBe('text-kpi-green-600')
+    const provisional = grid.find('[data-game="9413"] [data-status]')
+    expect(provisional.attributes('data-status')).toBe('PROVISIONAL')
+    expect(provisional.attributes('title')).toBe('Provisoire')
+    expect(iconColour(9413)).toBe('text-orange-600')
+  })
+
+  it('CMP-17: the category of a cup game is followed by its phase', async () => {
+    const cup = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
+    expect(cup.find('[data-testid="pitch-category"]').text()).toBe('Finale - Poule A')
+    const championship = (await mountRoute('/events/77/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9404"]')
+    expect(championship.find('[data-testid="pitch-category"]').text()).toBe('Poule A')
+    const cupInEvent = (await mountRoute('/events/77/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
+    expect(cupInEvent.find('[data-testid="pitch-category"]').text()).toBe('Finale - Poule A')
   })
 
   it('CMP-07: the winner of a finished game is in bold', async () => {

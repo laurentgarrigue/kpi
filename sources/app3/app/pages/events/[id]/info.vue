@@ -3,9 +3,9 @@ import type { CompetitionDetails } from '#kpi-layer/utils/results/types'
 
 // Info tab of the selected competition, inside the event view (EVT-07); the other attributes of the parent page are for games and pitches.
 defineOptions({ inheritAttrs: false })
-defineProps<{ competition?: CompetitionDetails }>()
+defineProps<{ competition?: CompetitionDetails, subscriptionUrl?: string }>()
 </script>
 
 <template>
-  <ResultsTabInfo v-if="competition" :competition="competition" />
+  <ResultsTabInfo v-if="competition" :competition="competition" :subscription-url="subscriptionUrl" />
 </template>

@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": {
+    "slug": "arbitrage",
+    "path": "/le-kayak-polo/arbitrage",
+    "title": "Arbitrage",
+    "body": "<p>Arbitrer.</p>",
+    "parents": [
+      {
+        "title": "Le kayak-polo",
+        "path": "/le-kayak-polo"
+      }
+    ],
+    "children": [],
+    "seo": {
+      "title": "",
+      "description": ""
+    },
+    "preview": false
+  }
+}

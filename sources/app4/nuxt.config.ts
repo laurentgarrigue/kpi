@@ -6,6 +6,9 @@ const baseUrl = process.env.BASE_URL ?? '/admin2'
 const api2BaseUrl = process.env.API2_BASE_URL ?? 'https://kpi.localhost/api2'
 const legacyBaseUrl = process.env.LEGACY_BASE_URL ?? 'https://kpi.localhost'
 const app2BaseUrl = process.env.APP2_BASE_URL ?? 'https://app.kpi.localhost'
+// Public website (app3), for the editorial previews: beta.* of the legacy host until the switch-over
+// (https://kpi.localhost → https://beta.kpi.localhost, https://www.kayak-polo.info → https://beta.kayak-polo.info).
+const publicSiteUrl = process.env.PUBLIC_SITE_URL ?? legacyBaseUrl.replace('://www.', '://').replace('://', '://beta.')
 
 const matomoUrl = process.env.MATOMO_URL ?? ''
 const matomoSiteId = process.env.MATOMO_SITE_ID ?? ''
@@ -39,6 +42,7 @@ export default defineNuxtConfig({
       api2BaseUrl,
       legacyBaseUrl,
       app2BaseUrl,
+      publicSiteUrl,
       matomoUrl,
       matomoSiteId,
       matomoEnabled,

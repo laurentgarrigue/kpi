@@ -2,7 +2,7 @@
 import type { CompetitionDetails, CompetitionInfo } from '#kpi-layer/utils/results/types'
 
 // « Info » tab (PAGE_COMPETITION.md § 3.3, CMP-08), with SportsEvent structured data (§ 5).
-const props = defineProps<{ competition: CompetitionDetails }>()
+const props = defineProps<{ competition: CompetitionDetails, subscriptionUrl?: string }>()
 const { apiPath } = useCompetitionTab(() => props.competition, 'info')
 const { data: info, error } = await useApiResource<CompetitionInfo>(() => apiPath('info'))
 
@@ -26,5 +26,5 @@ useHead(() => {
 
 <template>
   <p v-if="error || !info" class="text-kpi-red-600" data-testid="results-unavailable">{{ $t('results.unavailable') }}</p>
-  <ResultsInfo v-else :info="info" :competition="competition" />
+  <ResultsInfo v-else :info="info" :competition="competition" :subscription-url="subscriptionUrl" />
 </template>

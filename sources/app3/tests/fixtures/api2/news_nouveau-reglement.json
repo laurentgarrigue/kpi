@@ -1,0 +1,30 @@
+{
+  "status": 200,
+  "body": {
+    "slug": "nouveau-reglement",
+    "title": "Nouveau règlement",
+    "lead": "Règlement 2999.",
+    "body": "<p>Texte.</p>",
+    "cover": null,
+    "published_at": "2020-03-01T12:00:00+01:00",
+    "updated_at": "2020-03-01T12:00:00+01:00",
+    "signature": "Commission sportive",
+    "categories": [
+      {
+        "slug": "reglements-vie-federale",
+        "label": "Règlements et vie fédérale"
+      }
+    ],
+    "links": [],
+    "seo": {
+      "title": "",
+      "description": ""
+    },
+    "previous": null,
+    "next": {
+      "slug": "finale-resultats",
+      "title": "Finale des résultats"
+    },
+    "preview": false
+  }
+}

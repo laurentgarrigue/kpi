@@ -7,14 +7,14 @@ defineProps<{ players: RosterPlayer[], caption: string }>()
 const CARDS = [
   { key: 'green', label: 'teams.col.green', class: 'bg-kpi-green-500' },
   { key: 'yellow', label: 'teams.col.yellow', class: 'bg-kpi-gold-400' },
-  { key: 'red', label: 'teams.col.red', class: 'bg-kpi-red-600' },
+  { key: 'red', label: 'teams.col.red', class: 'bg-kpi-red-600 dark:bg-kpi-red-500' },
   { key: 'red_final', label: 'teams.col.redFinal', class: 'bg-kpi-red-900' },
 ] as const
 </script>
 
 <template>
   <p v-if="players.length === 0" data-testid="no-roster">{{ $t('teams.noRoster') }}</p>
-  <div v-else class="overflow-x-auto">
+  <div v-else class="overflow-x-auto lg:overflow-visible">
     <table class="w-full text-left text-sm" data-testid="roster">
       <caption class="sr-only">{{ caption }}</caption>
       <thead>

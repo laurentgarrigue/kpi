@@ -8,6 +8,8 @@ import {
   hasScore,
   isLive,
   isProvisional,
+  displayStatus,
+  gamePeriod,
   isUpcoming,
   pitchGrid,
   sortGames,
@@ -112,6 +114,23 @@ describe('pitchGrid', () => {
       ['09:00', [null, null, 2]],
       ['10:00', [3, 1, null]],
     ])
+  })
+})
+
+describe('status and period', () => {
+  it('CMP-17: a finished game not locked yet is provisional', () => {
+    expect(displayStatus(game({ g_status: 'ATT' }))).toBe('ATT')
+    expect(displayStatus(game({ g_status: 'ON' }))).toBe('ON')
+    expect(displayStatus(game({ g_status: 'END', g_validation: 'O' }))).toBe('END')
+    expect(displayStatus(game({ g_status: 'END', g_validation: '' }))).toBe('PROVISIONAL')
+  })
+
+  it('CMP-17: periods are regular time (Mx), overtime (Px) or shoot-out (TB)', () => {
+    expect(gamePeriod('M2')).toEqual({ kind: 'regular', number: 2 })
+    expect(gamePeriod('P1')).toEqual({ kind: 'overtime', number: 1 })
+    expect(gamePeriod('TB')).toEqual({ kind: 'shootout', number: null })
+    expect(gamePeriod(null)).toBeNull()
+    expect(gamePeriod('X9')).toBeNull()
   })
 })
 

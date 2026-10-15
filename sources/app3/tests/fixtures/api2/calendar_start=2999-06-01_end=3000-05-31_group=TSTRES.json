@@ -8,15 +8,20 @@
         "code": "RAT",
         "display_title": "Championnat En Attente",
         "type": "CHPT",
-        "level": "NAT",
+        "section": 2,
         "group": "TSTRES"
       },
+      "label": "RAT J1 - Lacville (33)",
       "name": "RAT J1",
       "place": "Lacville",
       "department": "33",
       "start": "2999-06-01",
       "end": "2999-06-01",
-      "event": null
+      "event": {
+        "id": 79,
+        "libelle": "Finales Multi-groupes",
+        "single_group": false
+      }
     }
   ]
 }

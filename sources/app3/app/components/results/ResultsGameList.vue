@@ -16,7 +16,7 @@ function longDate(date: string): string {
   <div class="space-y-8">
     <section v-for="group in groups" :key="group.date" :aria-label="longDate(group.date)" data-testid="games-of-date">
       <h3 class="mb-2 text-2xl capitalize text-kpi-blue-600">{{ longDate(group.date) }}</h3>
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto lg:overflow-visible">
         <table class="w-full text-left">
           <caption class="sr-only">{{ $t('results.gamesOf', { date: longDate(group.date) }) }}</caption>
           <thead class="text-xs uppercase text-ink/70">

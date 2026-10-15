@@ -2,18 +2,26 @@
 import { winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
 
-// Compact game of the pitch grid: category and status on the top line, then each team with its score at the
-// right of its own line (CMP-07).
+// Compact game of the pitch grid: category (and phase for a cup), game number and status icon on the top line, then each team
+// with its score at the right of its own line (CMP-07, CMP-17).
 const props = defineProps<{ game: ResultsGame, showCompetition?: boolean }>()
 const winner = computed(() => winnerSide(props.game))
-const category = computed(() => (props.showCompetition ? props.game.c_label ?? props.game.c_code : props.game.c_label))
+const cups = useCupCompetitions()
+const category = computed(() => {
+  const label = props.showCompetition ? props.game.c_label ?? props.game.c_code : props.game.c_label
+  const phase = cups.value.has(props.game.c_code) ? props.game.d_phase : null
+  return [label, phase].filter(Boolean).join(' - ')
+})
 </script>
 
 <template>
   <div class="rounded border border-line p-2" :data-game="game.g_id">
     <p class="flex items-center justify-between gap-2" data-testid="pitch-top">
       <span class="text-xs font-semibold text-kpi-blue-600" data-testid="pitch-category">{{ category }}</span>
-      <ResultsGameStatus :game="game" />
+      <span class="flex shrink-0 items-center gap-1.5">
+        <span v-if="game.g_number" class="text-xs text-ink/70 tabular-nums" :title="$t('results.gameNumber', { number: game.g_number })" data-testid="pitch-number">#{{ game.g_number }}</span>
+        <ResultsGameStatus :game="game" icon />
+      </span>
     </p>
     <p class="flex items-baseline justify-between gap-2" data-testid="pitch-team">
       <ResultsTeamName :label="game.t_a_label" :number="game.t_a_number" :competition="game.c_code" :season="game.c_season" :strong="winner === 'A'" />

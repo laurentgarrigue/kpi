@@ -33,12 +33,12 @@ onClickOutside(root, () => close())
       @click="open = !open"
     >
       {{ $t(`nav.${group.id}`) }}
-      <UIcon name="i-heroicons-chevron-down" class="size-4" aria-hidden="true" />
+      <UIcon name="i-heroicons-chevron-down" class="size-5" aria-hidden="true" />
     </button>
     <ul
       v-show="open"
       :id="panelId"
-      class="absolute left-0 z-20 min-w-64 rounded-b bg-white py-2 text-ink shadow-lg"
+      class="absolute left-0 z-20 min-w-64 rounded-b bg-surface py-2 text-ink shadow-lg"
     >
       <li v-for="link in group.children" :key="link.id">
         <NavLink

@@ -26,9 +26,11 @@ Les images **uploadées** ne sont plus versionnées. Elles vivent dans un **stoc
 ${HOST_MEDIA_PATH}/
 ├── img/
 │   ├── logo/  KIP/  Nations/  presentations/  schemas/  referees/
-└── content/            (réservé : médias du futur module éditorial)
+└── content/            médiathèque du site public (phase 4) : AAAA/MM/fichier + variantes WebP
 ```
 
+- **Médiathèque** (`content/`, FEATURE_CMS.md § 5.3) : écrite par api2, montée en `/var/www/html/media/content` et
+  servie par Apache sous `https://<domaine>/media/content/…` ; incluse dans la sauvegarde restic comme le reste.
 - **Montages** : conteneurs `kpi` (Apache), `api2` (FrankenPHP) et `event-cache-worker`, dans
   `docker/compose.{dev,preprod,prod}.yaml` → `${HOST_MEDIA_PATH}/img/<dossier>:/var/www/html/img/<dossier>`.
   Si `HOST_MEDIA_PATH` manque dans `docker/.env`, `docker compose` **refuse de démarrer**. C'est

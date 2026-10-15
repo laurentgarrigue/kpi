@@ -44,6 +44,25 @@ export function recentEvents(events: readonly PublicEvent[], today: string, limi
     .slice(0, limit)
 }
 
+/** Years in which at least one dated event takes place, most recent first. */
+export function eventYears(events: readonly PublicEvent[]): number[] {
+  const years = events.flatMap(event => [firstDay(event), lastDay(event)])
+    .filter((day): day is string => day !== null)
+    .map(day => Number(day.slice(0, 4)))
+  return [...new Set(years)].sort((a, b) => b - a)
+}
+
+/** Events taking place, at least partly, in the year; the earliest first. */
+export function eventsOfYear(events: readonly PublicEvent[], year: number): PublicEvent[] {
+  const [from, to] = [`${year}-01-01`, `${year}-12-31`]
+  return events
+    .filter((event) => {
+      const [first, last] = [firstDay(event), lastDay(event)]
+      return first !== null && last !== null && first <= to && last >= from
+    })
+    .sort((a, b) => (firstDay(a) ?? '').localeCompare(firstDay(b) ?? ''))
+}
+
 /** The event takes place today (first and last days included). */
 export function isOngoing(event: PublicEvent, today: string): boolean {
   const first = firstDay(event)

@@ -19,7 +19,7 @@ const caption = computed(() => props.competition.display_title)
 
 <template>
   <article class="flex flex-col gap-3 rounded border border-line p-4" :data-competition="competition.code">
-    <img v-if="visual" :src="visual" alt="" loading="lazy" class="max-h-20 self-start object-contain">
+    <img v-if="visual" :src="visual" alt="" loading="lazy" class="kpi-logo max-h-20 self-start object-contain">
     <h2 class="text-2xl">
       <NuxtLink :to="localePath(competitionPath(competition.season, competition.code))" class="text-kpi-blue-600 hover:underline">
         {{ competition.display_title }}

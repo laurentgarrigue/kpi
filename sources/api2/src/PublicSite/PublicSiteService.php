@@ -38,9 +38,9 @@ final class PublicSiteService
     // ------------------------------------------------------------------ calendrier et ICS
 
     /** @return list<CalendarEntry> */
-    public function calendar(string $start, string $end, ?string $level, ?string $group): array
+    public function calendar(string $start, string $end, ?int $section, ?string $group): array
     {
-        $rows = PublicSiteRules::mergeGamedays($this->repository->findCalendarGamedays($start, $end, $level, $group));
+        $rows = PublicSiteRules::mergeGamedays($this->repository->findCalendarGamedays($start, $end, $section, $group));
 
         return array_map(static fn (array $row): CalendarEntry => new CalendarEntry(
             id: (int) $row['Id'],
@@ -49,24 +49,51 @@ final class PublicSiteService
                 'code' => $row['Code'],
                 'display_title' => self::displayTitle($row),
                 'type' => (string) $row['Code_typeclt'],
-                'level' => $row['Code_niveau'],
+                'section' => (int) $row['section'],
                 'group' => $row['Code_ref'],
             ],
+            label: self::gamedayLabel($row),
             name: $row['Nom'],
             place: $row['Lieu'],
             department: $row['Departement'],
             start: $row['Date_debut'],
             end: $row['Date_fin'],
-            event: $row['event_id'] === null ? null : ['id' => (int) $row['event_id'], 'libelle' => $row['event_libelle']],
+            event: $row['event_id'] === null ? null : [
+                'id' => (int) $row['event_id'],
+                'libelle' => $row['event_libelle'],
+                'single_group' => (bool) $row['event_single_group'],
+            ],
         ), $rows);
     }
 
-    /** Abonnement iCalendar d'une compétition (publiée : vérifié par l'appelant). */
+    /** @return array{sections: list<array<string, mixed>>} groupes filtrables du calendrier, par section */
+    public function calendarGroups(): array
+    {
+        return ['sections' => GroupSections::organize($this->repository->findCalendarGroups())];
+    }
+
+    /**
+     * Abonnement iCalendar d'une compétition (publiée : vérifié par l'appelant). Les phases d'une coupe aux mêmes
+     * dates et lieu ne forment qu'un événement, comme dans le calendrier.
+     */
     public function competitionIcs(string $season, string $code, string $competitionTitle): string
     {
-        $events = array_map(fn (array $row): IcsEvent => $this->icsEvent($row), $this->repository->findIcsGamedays($season, $code));
+        $rows = PublicSiteRules::mergeGamedays($this->repository->findIcsGamedays($season, $code));
+        $events = array_map(fn (array $row): IcsEvent => $this->icsEvent($row), $rows);
 
         return IcsCalendar::render(sprintf('%s (%s)', $competitionTitle, $season), $events, $this->clock->now());
+    }
+
+    /** Abonnement iCalendar d'un événement publié : ses journées, toutes compétitions (EVT-10), ou null. */
+    public function eventIcs(int $eventId): ?string
+    {
+        $data = $this->repository->findEventIcs($eventId);
+        if ($data === null) {
+            return null;
+        }
+        $events = array_map(fn (array $row): IcsEvent => $this->icsEvent($row), PublicSiteRules::mergeGamedays($data['gamedays']));
+
+        return IcsCalendar::render((string) $data['event']['Libelle'], $events, $this->clock->now());
     }
 
     public function gamedayIcs(int $id): ?string
@@ -155,6 +182,7 @@ final class PublicSiteService
                 group: $honour['Code_ref'],
                 rank: $rank,
                 medal: CompetitionRules::medal($honour['Statut'], $final, $rank),
+                finalRound: $final,
             );
         }
 
@@ -288,23 +316,37 @@ final class PublicSiteService
     /** @param array<string, mixed> $row */
     private function icsEvent(array $row): IcsEvent
     {
-        $title = self::displayTitle($row);
-        $name = PublicSiteRules::nullIfEmpty($row['Nom']);
         $place = PublicSiteRules::nullIfEmpty($row['Lieu']);
         $department = PublicSiteRules::nullIfEmpty($row['Departement']);
-        $url = sprintf('%s/competitions/%s/%s', rtrim($this->publicSiteUrl, '/'), rawurlencode($row['Code_saison']), rawurlencode($row['Code']));
-        if ($row['Code_typeclt'] === 'CHPT') {
-            $url .= '/games?gameday=' . (int) $row['Id'];
+        $site = rtrim($this->publicSiteUrl, '/');
+        if (($row['event_id'] ?? null) !== null && (bool) $row['event_single_group']) {
+            // Journée d'un événement d'un seul groupe : l'événement en est la page (CAL-11).
+            $url = sprintf('%s/events/%d/games?competition=%s', $site, (int) $row['event_id'], rawurlencode($row['Code']));
+        } else {
+            $url = sprintf('%s/competitions/%s/%s', $site, rawurlencode($row['Code_saison']), rawurlencode($row['Code']));
+            if ($row['Code_typeclt'] === 'CHPT') {
+                $url .= '/games?gameday=' . (int) $row['Id'];
+            }
         }
 
         return new IcsEvent(
             uid: IcsEvent::gamedayUid((int) $row['Id']),
             start: new \DateTimeImmutable($row['Date_debut']),
             end: new \DateTimeImmutable($row['Date_fin']),
-            summary: $name === null || $name === $title ? $title : $title . ' — ' . $name,
+            summary: self::gamedayLabel($row),
             location: $place === null ? null : ($department === null ? $place : sprintf('%s (%s)', $place, $department)),
             url: $url,
         );
+    }
+
+    /**
+     * « Nom - lieu (département) » d'une ligne de journée (calendrier et abonnement).
+     *
+     * @param array<string, mixed> $row
+     */
+    private static function gamedayLabel(array $row): string
+    {
+        return PublicSiteRules::gamedayLabel($row['Nom'], $row['Lieu'], $row['Departement'], self::displayTitle($row));
     }
 
     /** @param array<string, mixed> $row */

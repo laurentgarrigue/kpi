@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "slug": "finale-resultats",
+    "title": "Results final",
+    "lead": "The lead.",
+    "body": "<p>Body.</p>",
+    "cover": {
+      "url": "/media/content/2999/01/finale.jpg?v=afcd5ac1",
+      "mime": "image/jpeg",
+      "alt": "The final",
+      "width": 1600,
+      "height": 900,
+      "variants": [
+        {
+          "width": 320,
+          "url": "/media/content/2999/01/finale-320.webp?v=afcd5ac1"
+        },
+        {
+          "width": 768,
+          "url": "/media/content/2999/01/finale-768.webp?v=afcd5ac1"
+        },
+        {
+          "width": 1280,
+          "url": "/media/content/2999/01/finale-1280.webp?v=afcd5ac1"
+        }
+      ]
+    },
+    "published_at": "2020-06-01T12:00:00+02:00",
+    "updated_at": "2020-06-01T12:00:00+02:00",
+    "signature": "La CNA Kayak-Polo",
+    "categories": [
+      {
+        "slug": "equipes-de-france",
+        "label": "French national teams"
+      },
+      {
+        "slug": "competitions-nationales",
+        "label": "National competitions"
+      }
+    ],
+    "links": [
+      {
+        "kind": "competition",
+        "label": "Championnat Résultats 2999",
+        "path": "/competitions/2999/RCH"
+      },
+      {
+        "kind": "event",
+        "label": "Tournoi Résultats",
+        "path": "/events/77"
+      },
+      {
+        "kind": "club",
+        "label": "Club Alpha Lacville",
+        "path": "/clubs/C001"
+      }
+    ],
+    "seo": {
+      "title": "",
+      "description": "Description SEO"
+    },
+    "previous": {
+      "slug": "nouveau-reglement",
+      "title": "Nouveau règlement"
+    },
+    "next": null,
+    "preview": false
+  }
+}

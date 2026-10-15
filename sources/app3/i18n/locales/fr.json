@@ -13,7 +13,9 @@
     "legacyLink": "(site actuel)",
     "betaRegion": "Version bêta",
     "newTab": "(nouvel onglet)",
-    "breadcrumb": "Fil d'Ariane"
+    "breadcrumb": "Fil d'Ariane",
+    "scrollTop": "Retour en haut",
+    "scrollBottom": "Aller en bas"
   },
   "beta": {
     "message": "Version bêta du nouveau site kayak-polo.info.",
@@ -31,7 +33,9 @@
     "teams-clubs": "Équipes et clubs",
     "teams": "Équipes",
     "clubs": "Clubs",
-    "live": "En direct"
+    "live": "En direct",
+    "events": "Événements",
+    "editorial": "Le kayak-polo"
   },
   "footer": {
     "kayakPolo": "Kayak-polo",
@@ -58,7 +62,11 @@
     "ongoing": "En cours",
     "recentEvents": "Événements récents",
     "noEvents": "Aucun événement publié pour le moment.",
-    "eventsUnavailable": "Les événements sont momentanément indisponibles."
+    "eventsUnavailable": "Les événements sont momentanément indisponibles.",
+    "featured": "À la une",
+    "latestNews": "Dernières actualités",
+    "allNews": "Toutes les actualités",
+    "partners": "Partenaires"
   },
   "error": {
     "notFoundTitle": "Page introuvable",
@@ -105,7 +113,8 @@
     "status": {
       "ATT": "À venir",
       "ON": "En cours",
-      "END": "Terminé"
+      "END": "Terminé",
+      "PROVISIONAL": "Provisoire"
     },
     "medal": {
       "1": "Médaille d'or",
@@ -213,7 +222,25 @@
       "pool": "Poule {pool}",
       "schema": "Schéma de la compétition",
       "schemaAlt": "Schéma de déroulement de {competition}"
-    }
+    },
+    "kind": {
+      "event": "Événement",
+      "group": "Groupe de compétitions",
+      "competition": "Compétition"
+    },
+    "eventCompetitions": "Compétitions de cet événement",
+    "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
+    "allGamedays": "Toutes les journées de la compétition",
+    "seeCompetition": "Voir la compétition entière",
+    "period": {
+      "regular": "période {n}",
+      "regularShort": "P{n}",
+      "overtime": "prolong. {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "tirs au but",
+      "shootoutShort": "TAB"
+    },
+    "gameNumber": "Match n° {number}"
   },
   "stats": {
     "scorers": {
@@ -222,14 +249,7 @@
     }
   },
   "common": {
-    "level": {
-      "INT": "International",
-      "NAT": "National",
-      "REG": "Régional"
-    },
-    "allLevels": "Tous les niveaux",
     "allGroups": "Tous les groupes",
-    "level_label": "Niveau",
     "show": "Afficher",
     "unavailable": "Ces informations sont momentanément indisponibles.",
     "suggestions": "Suggestions",
@@ -253,7 +273,46 @@
     "subscribe": "S'abonner au calendrier",
     "download": "Télécharger (.ics)",
     "addGameday": "Ajouter à mon agenda",
-    "icsHelp": "L'abonnement met votre agenda à jour automatiquement (Google Agenda, Apple Calendrier, Outlook, Thunderbird…)."
+    "icsHelp": "L'abonnement met votre agenda à jour automatiquement (Google Agenda, Apple Calendrier, Outlook, Thunderbird…).",
+    "sections": {
+      "1": "International",
+      "2": "National",
+      "3": "Régional",
+      "4": "Tournoi",
+      "5": "Continental",
+      "100": "Divers"
+    },
+    "section": "Section",
+    "allSections": "Toutes les sections",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante",
+    "linkLabel": "Lien d'abonnement au calendrier",
+    "copy": "Copier le lien d'abonnement",
+    "copied": "Lien copié",
+    "tutorial": {
+      "title": "Comment s'abonner ?",
+      "google": {
+        "name": "Google Agenda",
+        "step1": "Copiez le lien d'abonnement ci-dessus.",
+        "step2": "Sur calendar.google.com, ouvrez « Autres agendas » (+) puis « À partir de l'URL ».",
+        "step3": "Collez le lien et validez avec « Ajouter l'agenda ».",
+        "step4": "Google actualise l'agenda automatiquement, sous quelques heures."
+      },
+      "outlook": {
+        "name": "Outlook",
+        "step1": "Copiez le lien d'abonnement ci-dessus.",
+        "step2": "Dans Outlook (web), ouvrez Calendrier puis « Ajouter un calendrier ».",
+        "step3": "Choisissez « S'abonner à partir du Web », collez le lien et importez.",
+        "step4": "Outlook actualise l'agenda automatiquement."
+      },
+      "apple": {
+        "name": "Apple Calendrier",
+        "step1": "Cliquez sur « S'abonner au calendrier » : l'application s'ouvre et propose l'abonnement.",
+        "step2": "Sinon sur Mac : menu Fichier › Nouvel abonnement à un calendrier, puis collez le lien.",
+        "step3": "Sur iPhone : Réglages › Calendrier › Comptes › Ajouter un compte › Autre › Ajouter un calendrier avec abonnement.",
+        "step4": "Choisissez la fréquence d'actualisation proposée."
+      }
+    }
   },
   "history": {
     "title": "Historique et palmarès",
@@ -301,7 +360,9 @@
       "coach": "Entraîneur"
     },
     "pageDescription": "Palmarès et composition de l'équipe de kayak-polo {team}.",
-    "honoursCaption": "Palmarès de {team}"
+    "honoursCaption": "Palmarès de {team}",
+    "intermediateRound": "tour intermédiaire",
+    "intermediateLegend": "En italique : classement d'un tour intermédiaire (qualification, poule…), pas un classement final."
   },
   "clubs": {
     "title": "Clubs",
@@ -338,8 +399,127 @@
       "competitions": "Compétitions",
       "events": "Événements",
       "teams": "Équipes",
-      "clubs": "Clubs"
+      "clubs": "Clubs",
+      "news": "Actualités",
+      "pages": "Pages"
     },
     "label": "Rechercher sur le site"
+  },
+  "events": {
+    "title": "Événements",
+    "pageTitle": "Événements {year}",
+    "description": "Tournois et événements de kayak-polo de {year}.",
+    "year": "Année",
+    "empty": "Aucun événement publié en {year}.",
+    "intro": "Un événement réunit sur un même lieu et un même week-end une ou plusieurs compétitions : ouvrez-le pour voir tous ses matchs.",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante"
+  },
+  "news": {
+    "title": "Actualités",
+    "description": "Actualités du kayak-polo : résultats, sélections, annonces et vie fédérale.",
+    "pageTitle": "Actualités — page {page}",
+    "categories": "Catégories",
+    "allCategories": "Toutes",
+    "empty": "Aucune actualité pour le moment.",
+    "unavailable": "Les actualités sont momentanément indisponibles.",
+    "newer": "Plus récents",
+    "older": "Plus anciens",
+    "pagination": "Pages des actualités",
+    "rss": "S'abonner (RSS)",
+    "rssTitle": "Actualités de kayak-polo.info",
+    "publishedOn": "Publié le {date}",
+    "updatedOn": "· mis à jour le {date}",
+    "by": "Par {signature}",
+    "related": "En lien avec cet article",
+    "relatedKind": {
+      "competition": "Compétition",
+      "event": "Événement",
+      "club": "Club"
+    },
+    "previous": "Article précédent",
+    "next": "Article suivant",
+    "siblings": "Autres articles",
+    "share": "Partager",
+    "shareOn": {
+      "facebook": "Facebook",
+      "x": "X",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail"
+    },
+    "copyLink": "Copier le lien",
+    "copied": "Lien copié",
+    "preview": "Prévisualisation : cet article n'est pas publié.",
+    "video": "Lire la vidéo ({provider})",
+    "gallery": "Visionneuse d'images",
+    "galleryPosition": "Image {index} sur {count}",
+    "galleryPrevious": "Image précédente",
+    "galleryNext": "Image suivante",
+    "galleryClose": "Fermer la visionneuse",
+    "linkedNews": "Actualités"
+  },
+  "content": {
+    "toc": "Sommaire",
+    "children": "Dans cette rubrique",
+    "preview": "Prévisualisation : cette page n'est pas publiée."
+  },
+  "forms": {
+    "state": {
+      "open": "Inscriptions ouvertes jusqu'au {date}.",
+      "openNoEnd": "Inscriptions ouvertes.",
+      "full": "Complet — les nouvelles inscriptions vont en liste d'attente.",
+      "closed": "Les inscriptions sont closes.",
+      "upcoming": "Ouverture des inscriptions le {date}."
+    },
+    "places": "{confirmed} / {capacity} places confirmées",
+    "manual": "Chaque inscription est confirmée par l'organisateur (par exemple à réception du paiement).",
+    "required": "obligatoire",
+    "requiredHint": "Les champs marqués d'un astérisque (*) sont obligatoires.",
+    "choose": "Choisir…",
+    "submit": "Envoyer l'inscription",
+    "honeypot": "Ne pas remplir ce champ",
+    "errorSummary": "L'inscription n'a pas été envoyée : {count} champ à corriger. | L'inscription n'a pas été envoyée : {count} champs à corriger.",
+    "error": {
+      "required": "Ce champ est obligatoire.",
+      "invalid": "Cette valeur n'est pas valide.",
+      "too_long": "Ce texte est trop long.",
+      "min": "La valeur est inférieure au minimum ({min}).",
+      "max": "La valeur dépasse le maximum ({max})."
+    },
+    "rejected": {
+      "closed": "Les inscriptions sont closes.",
+      "full": "Il n'y a plus de place.",
+      "too_fast": "Envoi trop rapide : vérifiez vos réponses puis envoyez à nouveau.",
+      "expired": "Le formulaire a expiré : vérifiez vos réponses puis envoyez à nouveau.",
+      "invalid": "Le formulaire a expiré : vérifiez vos réponses puis envoyez à nouveau.",
+      "rejected": "L'inscription a été refusée.",
+      "too_many_requests": "Trop d'envois en peu de temps : merci de patienter quelques minutes.",
+      "unavailable": "L'inscription n'a pas pu être enregistrée : merci de réessayer dans quelques instants."
+    },
+    "confirmedTitle": "Votre inscription est confirmée",
+    "waitingTitle": "Votre inscription est en attente",
+    "waitingFull": "Toutes les places sont prises : vous êtes sur la liste d'attente. L'organisateur vous préviendra si une place se libère.",
+    "waitingManual": "L'organisateur confirmera votre inscription (par exemple à réception du paiement).",
+    "emailSent": "Un e-mail récapitulatif vous a été envoyé.",
+    "payment": "Payer l'inscription",
+    "paymentHint": "Le paiement se fait sur le site du prestataire.",
+    "backToForm": "Retour au formulaire",
+    "privacy": "Données personnelles",
+    "privacyText": "Finalité : {purpose} Vos réponses sont conservées {days} jours puis supprimées. Seuls les organisateurs y ont accès.",
+    "entries": "Liste des inscrits",
+    "entriesTitle": "Inscrits — {title}",
+    "confirmedEntries": "Inscriptions confirmées",
+    "waitingEntries": "En attente",
+    "waitingEntriesHint": "Liste d'attente ou paiement non encore reçu.",
+    "noEntries": "Aucune inscription.",
+    "count": "{count} inscription | {count} inscriptions",
+    "attached": "Inscriptions",
+    "register": "S'inscrire"
+  },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
   }
 }

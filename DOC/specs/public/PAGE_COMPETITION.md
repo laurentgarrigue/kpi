@@ -2,7 +2,7 @@
 
 **Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
 **Routes** : `/competitions/{season}/{code}` → `/competitions/{season}/{code}/{tab}` (+ `/en/…`),
-`tab` ∈ `games` · `pitches` · `info` · `progress` · `ranking` · `stats`
+`tab` ∈ `info` · `games` · `pitches` · `progress` · `ranking` · `stats`
 **Remplace** : `kpmatchs.php`, `kpterrains.php`, `kpdetails.php`, `kpchart.php`, `kpphases.php`,
 `kpclassement.php`, `kpstats.php` et la barre `kpnavgroup.tpl`
 
@@ -23,7 +23,7 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 ├─────────────────────────────────────────────────────────────┤
 │ Sœurs : [Poule A] [Poule B] [Classement final] …             │  sélecteur de compétition
 ├─────────────────────────────────────────────────────────────┤
-│ Matchs | Terrains | Infos | Déroulement | Classement | Stats  │  onglets (ResultsTabs)
+│ Infos | Matchs | Terrains | Déroulement | Classement | Stats  │  onglets (ResultsTabs)
 ├─────────────────────────────────────────────────────────────┤
 │ contenu de l'onglet                                          │
 └─────────────────────────────────────────────────────────────┘
@@ -31,8 +31,13 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 
 - **`/competitions/{season}/{code}`** redirige (302) vers l'onglet par défaut : `ranking` si le statut est `END`,
   sinon `games`. Ainsi, chaque contenu a une seule URL.
-- **En-tête** : données de `GET /competition/{season}/{code}`. Le lien « Suivre en direct » mène à
-  `{app2}/group/{season}/{groupe}` (page groupe existante d'app2).
+- **En-tête** : données de `GET /competition/{season}/{code}`, repéré par le libellé « Compétition » et un filet bleu
+  (l'événement a un bandeau marine, cf. PAGE_EVENT_GROUP.md § 2). **« Suivre en direct »** est un **bouton** rouge à point
+  clignotant, en nouvel onglet, vers `{app2}/group/{season}/{groupe}` (page groupe existante d'app2).
+- **Ordre des onglets** : Infos en premier (présentation avant les matchs, utile à qui découvre la compétition) ; la
+  redirection par défaut est inchangée (`ranking` si `END`, sinon `games`).
+- **Matchs** : le vainqueur d'un match terminé a son nom et son score en **gras**, le perdant en graisse normale
+  (match nul ou en cours : aucun gras).
 - **Sélecteur de compétitions sœurs** : `siblings` de l'en-tête (libellé `soustitre2`, sinon `display_title`) ;
   conserve l'onglet courant. Il est masqué s'il n'y a qu'une compétition.
 - **Contexte événement** : avec `?event={id}`, le fil d'Ariane devient « Accueil › {événement} › {compétition} »,
@@ -106,7 +111,13 @@ scoring publiera les topics publics.
   matchs, sinon le dernier.
 - **Grille** : une colonne par terrain (ordre numérique), une ligne par horaire ; cellule = match compact
   (équipes, score, statut). Sur mobile (< `md`) : une section par terrain, matchs dans l'ordre horaire.
-  Dans la cellule : en haut, la **catégorie** (`soustitre2`) à gauche et le **statut** à droite sur la même ligne ;
+  Dans la cellule : en haut, la **catégorie** (`soustitre2`, « libellé 2 ») à gauche, suivie pour une **coupe**
+  (`CP`) de la **phase** de la journée (« PlayOff H. - Poule A ») ; à droite sur la même ligne, le **numéro du match**
+  (« #151 ») puis le **statut** sous forme d'**icône** colorée, comme dans app2 (14/10/2026) : à venir = horloge grise,
+  en cours = lecture **bleue** avec la période abrégée, **provisoire** (terminé, score non verrouillé) = points de
+  suspension **orange**, terminé = coche **verte** ; le libellé reste lu par les lecteurs d'écran et affiché au survol.
+  Périodes : `Mx` = « période x » / « period x » (abrégé `Px`), `Px` = « prolong. x » / « overtime x » (abrégé
+  `OVT x`), `TB` = « tirs au but » / « shoot-out » (abrégé `TAB` / `SO`) ;
   puis une ligne par équipe avec **son score aligné à droite** (provisoire en italique) ; dans un match
   **terminé**, l'équipe vainqueur (nom et score) est en **gras**.
 
@@ -187,6 +198,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-05** — Matchs groupés par date, triés par heure puis terrain ; statut et score provisoire affichés selon `g_status` / `g_validation`.
 - **CMP-06** — Les filtres `gameday`, `day` et `upcoming` se combinent ; `upcoming` applique « maintenant − 35 min » en heure de Paris (fonction pure testée avec une date injectée).
 - **CMP-07** — La grille des terrains a une colonne par terrain et une ligne par horaire ; le jour par défaut suit la règle § 3.2.
+- **CMP-17** — Dans la grille des terrains, le statut est une icône colorée à libellé accessible (gris à venir, bleu en cours avec la période abrégée, orange provisoire, vert terminé), précédée du numéro du match ; la catégorie d'un match de coupe est suivie de sa phase (« PlayOff H. - Poule A ») ; ailleurs, statut et période sont écrits en toutes lettres (« En cours · période 1 », « Provisoire »).
 - **CMP-08** — Infos : journées avec officiels ; équipes par poule seulement si `ON`/`END` ; schéma s'il existe.
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
 - **CMP-10** — Classement : colonnes selon le type, badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide.

@@ -91,6 +91,31 @@ final class PublicCompetitionRepository
         );
     }
 
+    /**
+     * Pour chaque compétition d'un événement : ses journées publiées (hors pauses) dans l'événement et au total.
+     *
+     * @return list<array{Code: string, Code_saison: string, in_event: int|string, total: int|string}>
+     */
+    public function countEventGamedays(int $eventId): array
+    {
+        /** @var list<array{Code: string, Code_saison: string, in_event: int|string, total: int|string}> */
+        return $this->connection->fetchAllAssociative(
+            'SELECT c.Code, c.Code_saison,
+                COUNT(DISTINCT CASE WHEN ej.Id_journee IS NOT NULL THEN j.Id END) in_event,
+                COUNT(DISTINCT j.Id) total
+            FROM kp_competition c
+            INNER JOIN kp_journee j ON (j.Code_competition = c.Code AND j.Code_saison = c.Code_saison)
+            LEFT JOIN kp_evenement_journee ej ON (ej.Id_journee = j.Id AND ej.Id_evenement = ?)
+            WHERE c.Publication = \'O\' AND ' . SqlFilters::PUBLISHED_GAMEDAYS . ' AND ' . SqlFilters::NO_BREAKS . '
+            AND EXISTS (
+                SELECT 1 FROM kp_journee ji INNER JOIN kp_evenement_journee eji ON (eji.Id_journee = ji.Id)
+                WHERE eji.Id_evenement = ? AND ji.Code_competition = c.Code AND ji.Code_saison = c.Code_saison
+            )
+            GROUP BY c.Code, c.Code_saison',
+            [$eventId, $eventId],
+        );
+    }
+
     /** @return array<string, mixed>|null événement (tournoi) publié */
     public function findEvent(int $eventId): ?array
     {

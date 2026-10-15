@@ -40,7 +40,7 @@ useHead(() => ({
   <div v-if="club" class="space-y-8">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('clubs.title'), to: localePath('/clubs') }, { label: club.label }]" />
     <header class="flex items-center gap-4">
-      <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: club.label })" class="size-20 object-contain" data-testid="club-logo">
+      <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: club.label })" class="kpi-logo size-20 object-contain" data-testid="club-logo">
       <h1 class="text-5xl text-kpi-blue-600">{{ club.label }}</h1>
     </header>
     <dl class="grid max-w-3xl grid-cols-[auto_1fr] gap-x-6 gap-y-2" data-testid="club-details">
@@ -72,5 +72,6 @@ useHead(() => ({
         </li>
       </ul>
     </section>
+    <ContentLinked kind="club" :reference="club.code" />
   </div>
 </template>

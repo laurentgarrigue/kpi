@@ -3,7 +3,7 @@ import { SEARCH_MIN_LENGTH, searchApiPath, searchQuery, searchSections, type Sea
 
 // Global search results (FEATURE_SEARCH.md, SRC-03 to SRC-05). Never indexed, even after the switch-over.
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const api2 = useApi2()
 // api2 limits the search per visitor: the server rendering relays the visitor address (API_PUBLIC_TRANSVERSE.md § 3.6).
@@ -18,8 +18,8 @@ watch(raw, (value) => {
 })
 
 const { data, error } = await useAsyncData(
-  () => `search:${query.value ?? ''}`,
-  () => (query.value === null ? Promise.resolve(null) : api2<SearchResults>(searchApiPath(query.value), { headers: forwarded })),
+  () => `search:${locale.value}:${query.value ?? ''}`,
+  () => (query.value === null ? Promise.resolve(null) : api2<SearchResults>(searchApiPath(query.value, locale.value), { headers: forwarded })),
 )
 const sections = computed(() => (data.value ? searchSections(data.value) : []))
 const tooMany = computed(() => error.value?.statusCode === TOO_MANY_REQUESTS)

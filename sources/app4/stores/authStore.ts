@@ -1,3 +1,4 @@
+import { canAdministerContent, canEditContent } from '~/utils/cms'
 import { defineStore } from 'pinia'
 import type { User, UserFilters } from '~/types'
 import type { MandateSummary, MandateFilters } from '~/types/users'
@@ -41,6 +42,16 @@ export const useAuthStore = defineStore('auth', {
     // Check if user is super admin (base profile 1, not mandate)
     isSuperAdmin: (state): boolean => {
       return state.user?.profile === 1
+    },
+
+    // Editorial section: Editor capability or profile 1–2 (PAGE_CMS.md, ADM-CMS-01)
+    canEditContent(): boolean {
+      return canEditContent(this.profile, this.user?.capabilities)
+    },
+
+    // Menu, home blocks, redirections, deletion: profile 1–2 only
+    canAdministerContent(): boolean {
+      return canAdministerContent(this.profile)
     },
 
     // Whether user has mandates available
