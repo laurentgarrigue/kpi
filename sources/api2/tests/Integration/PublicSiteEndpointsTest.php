@@ -10,8 +10,11 @@ use Psr\Cache\CacheItemPoolInterface;
  */
 final class PublicSiteEndpointsTest extends ApiTestCase
 {
-    /** Adresse publique de documentation (RFC 5737) : soumise à la limite de débit, contrairement à 127.0.0.1. */
-    private const PUBLIC_IP = '203.0.113.7';
+    /**
+     * Adresse publique (DNS de Google) : soumise à la limite de débit, contrairement à 127.0.0.1. Pas de plage de
+     * documentation RFC 5737 : depuis Symfony 7.4.21, `IpUtils::isPrivateIp()` les considère comme privées.
+     */
+    private const PUBLIC_IP = '8.8.8.8';
 
     // ------------------------------------------------------------------ /calendar
 
