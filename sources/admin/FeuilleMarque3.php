@@ -805,7 +805,7 @@ class GestionMatchDetail extends MyPageSecure
 				}
 
 				//paramètres ajustables
-				var duree_prolongations = '05'; // ICF:'05', FFCK:'03'
+				var duree_prolongations = '05'; // ICF et FFCK : 5 min
 				var arret_chrono_sur_but = false;
 				let mainTimerDefault = 10
 				const mainTimerStep = 10
