@@ -38,6 +38,11 @@ final class ChartsBuilder
             $charts[$code]['libelle'] = $row['c_category'];
             $charts[$code]['status'] = $row['c_status'];
             $charts[$code]['season'] = $row['c_season'];
+            // Marques du classement final (app2, comme app3) : qualifiés, éliminés, médailles du tour final.
+            $charts[$code]['qualified'] = (int) $row['c_qualified'];
+            $charts[$code]['eliminated'] = (int) $row['c_eliminated'];
+            $charts[$code]['final'] = CompetitionRules::isFinalRound((int) $row['c_tour']);
+            unset($row['c_qualified'], $row['c_eliminated']);
             if ($format === ResultsFormat::Group) {
                 $charts[$code]['order'] = (int) $row['c_order'];
                 $charts[$code]['tour'] = (int) $row['c_tour'];
@@ -69,11 +74,12 @@ final class ChartsBuilder
         }
 
         foreach ($rankedCompetitions as $competition) {
-            $charts[$competition['code']]['ranking'] = $rankingLoader(
-                $competition['season'],
-                $competition['code'],
-                $competition['type'],
+            $chart = &$charts[$competition['code']];
+            $chart['ranking'] = $this->withMedals(
+                $rankingLoader($competition['season'], $competition['code'], $competition['type']),
+                $chart,
             );
+            unset($chart);
         }
 
         if ($format === ResultsFormat::Group) {
@@ -84,6 +90,24 @@ final class ChartsBuilder
         }
 
         return array_values($charts);
+    }
+
+    /**
+     * Médaille (1, 2, 3) de chaque ligne du classement, ou null (CompetitionRules::medal).
+     *
+     * @param list<array<string, mixed>> $ranking
+     * @param array<string, mixed>       $chart
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function withMedals(array $ranking, array $chart): array
+    {
+        return array_map(static function (array $team) use ($chart): array {
+            $rank = CompetitionRules::rank($chart['type'], (int) ($team['t_clt'] ?? 0), (int) ($team['t_clt_cp'] ?? 0));
+            $team['t_medal'] = CompetitionRules::medal((string) $chart['status'], $chart['final'], $rank);
+
+            return $team;
+        }, $ranking);
     }
 
     /**

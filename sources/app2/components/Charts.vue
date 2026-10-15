@@ -12,6 +12,8 @@
           :chart-ranking="category.ranking"
           :chart-status="category.status"
           :show-flags="showFlags"
+          :qualified="category.qualified"
+          :eliminated="category.eliminated"
         />
       </div>
       <div v-else-if="category.status === 'ATT'" class="flex items-center justify-center py-8 text-gray-400 italic text-sm">
@@ -28,6 +30,8 @@
               :chart-ranking="category.ranking"
               :chart-status="category.status"
               :show-flags="showFlags"
+              :qualified="category.qualified"
+              :eliminated="category.eliminated"
               :competition-type="category.type"
             />
           </div>

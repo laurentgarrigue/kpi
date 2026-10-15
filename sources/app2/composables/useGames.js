@@ -475,10 +475,10 @@ export const useGames = () => {
       locEntry.dates.get(dateKey).filtered.push(game)
     })
 
-    // Convert maps to arrays and sort by tour DESC then order ASC
+    // Convert maps to arrays and sort chronologically: tour ASC then order ASC
     return Array.from(competitionMap.values())
       .sort((a, b) => {
-        const tourCmp = (b.competition.tour || 0) - (a.competition.tour || 0) // DESC
+        const tourCmp = (a.competition.tour || 0) - (b.competition.tour || 0) // ASC
         if (tourCmp !== 0) return tourCmp
         return (a.competition.order || 0) - (b.competition.order || 0) // ASC
       })

@@ -98,9 +98,7 @@
 
     <Charts v-if="chartData" :key="chartIndex" :chart-data="chartData" :show-flags="showFlags" />
 
-    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-bar hover:bg-bar-hover text-white font-bold p-3 rounded-full">
-      <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
-    </button>
+    <AppScrollButtons />
     <AppFooter />
   </div>
 </template>
@@ -142,13 +140,13 @@ const {
   changeFav
 } = useCharts()
 
-// Sort chart data by tour DESC, then order DESC for display
+// Sort chart data chronologically for display: tour ASC, then order ASC (as on the games page)
 const chartData = computed(() => {
   if (!rawChartData.value) return null
   return [...rawChartData.value].sort((a, b) => {
-    const tourCmp = (b.tour ?? 0) - (a.tour ?? 0)
+    const tourCmp = (a.tour ?? 0) - (b.tour ?? 0)
     if (tourCmp !== 0) return tourCmp
-    return (b.order ?? 0) - (a.order ?? 0)
+    return (a.order ?? 0) - (b.order ?? 0)
   })
 })
 
@@ -167,9 +165,6 @@ onMounted(async () => {
   await loadCharts()
 })
 
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 
 const hasActiveFilters = computed(() => {
   return fav_categories.value.length > 0 || fav_teams.value.length > 0

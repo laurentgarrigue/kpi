@@ -15,6 +15,19 @@
 /* `dark:` follows the class set by @nuxtjs/color-mode instead of the system preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * The `color-scheme: light dark` meta (app.vue) lets the browser follow the system when nothing else is said: with
+ * a dark system and the light theme chosen, uncoloured text, icons and native selects turned white on white.
+ * The scheme is therefore pinned to the chosen theme, and the default text colour comes from the tokens.
+ */
+:root {
+  color-scheme: light;
+}
+
+body {
+  color: var(--color-gray-900);
+}
+
 @theme {
   --color-page: #d3d3d3;
   --color-surface: #ffffff;

@@ -175,9 +175,7 @@
     </div>
     <GameList v-else :games="filteredGames" :show-refs="showRefs" :show-shotclock="showShotclock" :show-flags="showFlags" :games-count="gamesCount" :filtered-games-count="filteredGamesCount" :is-group-mode="isGroupMode" :key="locale" />
 
-    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-bar hover:bg-bar-hover text-white font-bold p-3 rounded-full">
-      <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
-    </button>
+    <AppScrollButtons />
     <AppFooter />
   </div>
 </template>
@@ -244,9 +242,6 @@ onMounted(async () => {
   await loadGames()
 })
 
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 
 const hasActiveFilters = computed(() => {
   return fav_categories.value.length > 0 ||

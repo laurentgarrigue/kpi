@@ -209,6 +209,7 @@
                 <table class="w-full text-sm">
                 <thead class="bg-gray-50">
                   <tr>
+                    <th class="w-8 px-1 py-3" />
                     <th class="px-2 md:px-6 py-3 text-center w-20">{{ t('Charts.Ranking') }}</th>
                     <th class="px-2 md:px-6 py-3 text-left">{{ t('Charts.Team') }}</th>
                     <template v-if="ranking.type !== 'CP'">
@@ -225,6 +226,9 @@
                 </thead>
                 <tbody>
                   <tr v-for="(team, index) in ranking.teams" :key="index" class="border-t">
+                    <td class="px-1 py-3 text-center">
+                      <RankingMark :team="team" :index="index" :total="ranking.teams.length" :qualified="ranking.qualified" :eliminated="ranking.eliminated" />
+                    </td>
                     <td class="px-2 md:px-6 py-3 text-center font-bold text-lg">{{ ranking.type === 'CP' ? team.t_clt_cp || (index + 1) : team.t_clt || '' }}</td>
                     <td class="px-2 md:px-6 py-3">
                       <div class="flex items-center">
@@ -315,6 +319,7 @@
             <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
               <div class="bg-bar text-white px-3 py-2 rounded-t-lg text-sm font-medium">
                 {{ compStats.competition_label || compStats.competition_code }}
+                <span v-if="selectedTeam" class="font-normal ml-2">- {{ selectedTeam }}</span>
               </div>
               <table class="w-full">
                 <thead class="bg-gray-100">
@@ -368,9 +373,7 @@
       </div>
     </div>
 
-    <button @click="scrollToTop" class="fixed bottom-8 right-4 bg-bar hover:bg-bar-hover text-white font-bold p-3 rounded-full">
-      <UIcon name="i-heroicons-arrow-up" class="h-6 w-6" />
-    </button>
+    <AppScrollButtons />
     <AppFooter />
   </div>
 </template>
@@ -386,6 +389,7 @@ import { usePreferenceStore } from '~/stores/preferenceStore'
 import { useApi } from '~/composables/useApi'
 import GameList from '~/components/GameList.vue'
 import TeamName from '~/components/TeamName.vue'
+import RankingMark from '~/components/RankingMark.vue'
 
 // Protect this page - require event selection
 definePageMeta({
@@ -445,10 +449,6 @@ useSeoMeta({
   ogDescription: pageDescription
 })
 
-// Scroll to top functionality
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 
 const sortPlayers = (players) =>
   [...players]
@@ -835,6 +835,8 @@ const finalRankings = computed(() => {
           phase: category.status === 'END' ? t('Charts.FinalRanking') : t('Charts.ProvisionalRanking'),
           teams: category.ranking,
           type: category.type,
+          qualified: category.qualified,
+          eliminated: category.eliminated,
           isFinal: category.status === 'END'
         })
       }

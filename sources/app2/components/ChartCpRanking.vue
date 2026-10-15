@@ -8,12 +8,16 @@
         <table class="w-full text-sm">
           <thead class="bg-gray-50">
             <tr>
+              <th class="w-8 px-1 py-3" />
               <th class="px-6 py-3 text-center w-20">{{ t('Charts.Ranking') }}</th>
               <th class="px-6 py-3 text-left">{{ t('Charts.Team') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(team, index) in chartRanking" :key="index" class="border-t">
+              <td class="px-1 py-3 text-center">
+                <RankingMark :team="team" :index="index" :total="chartRanking.length" :qualified="qualified" :eliminated="eliminated" />
+              </td>
               <td class="px-6 py-3 text-center font-bold text-lg">{{ team.t_clt_cp || 0 }}</td>
               <td class="px-6 py-3">
                 <div class="flex items-center">
@@ -39,6 +43,7 @@
 
 <script setup>
 import TeamName from '~/components/TeamName.vue'
+import RankingMark from '~/components/RankingMark.vue'
 
 const { t } = useI18n()
 
@@ -54,6 +59,14 @@ defineProps({
   showFlags: {
     type: Boolean,
     default: true
+  },
+  qualified: {
+    type: Number,
+    default: 0
+  },
+  eliminated: {
+    type: Number,
+    default: 0
   },
   competitionType: {
     type: String,

@@ -32,7 +32,9 @@
     "About": "A propos",
     "Filters": "Filtres",
     "ChangeEvent": "Changez d'événement SVP",
-    "StaffJobs": "Missions organisation"
+    "StaffJobs": "Missions organisation",
+    "ScrollTop": "Haut de page",
+    "ScrollBottom": "Bas de page"
   },
   "theme": {
     "label": "Thème",
@@ -193,7 +195,10 @@
     "FinalRanking": "Classement final",
     "ProvisionalRanking": "Classement provisoire",
     "ChampionshipRanking": "Classement du championnat",
-    "NoData": "Aucune donnée de classement disponible"
+    "NoData": "Aucune donnée de classement disponible",
+    "Qualified": "Qualifié",
+    "Eliminated": "Relégué ou éliminé",
+    "Medal": "Médaille {rank}"
   },
   "About": {
     "Information": "Informations",

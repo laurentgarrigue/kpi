@@ -5,6 +5,9 @@
         "libelle": "Poule A",
         "status": "ON",
         "season": "2999",
+        "qualified": 1,
+        "eliminated": 1,
+        "final": false,
         "rounds": {
             "1": {
                 "type": "C",
@@ -108,7 +111,8 @@
                 "t_minus": 4,
                 "t_diff": 5,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/alpha.png"
+                "t_logo": "KIP/logo/alpha.png",
+                "t_medal": null
             },
             {
                 "t_id": 9302,
@@ -126,7 +130,8 @@
                 "t_minus": 6,
                 "t_diff": 0,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/bravo.png"
+                "t_logo": "KIP/logo/bravo.png",
+                "t_medal": null
             },
             {
                 "t_id": 9303,
@@ -144,7 +149,8 @@
                 "t_minus": 4,
                 "t_diff": 0,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/charlie.png"
+                "t_logo": "KIP/logo/charlie.png",
+                "t_medal": null
             },
             {
                 "t_id": 9304,
@@ -162,7 +168,8 @@
                 "t_minus": 6,
                 "t_diff": -5,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": null
             }
         ]
     },
@@ -172,6 +179,9 @@
         "libelle": "Finale",
         "status": "END",
         "season": "2999",
+        "qualified": 0,
+        "eliminated": 0,
+        "final": true,
         "rounds": {
             "1": {
                 "type": "C",
@@ -183,6 +193,7 @@
                                 "c_code": "RCP",
                                 "c_type": "CP",
                                 "c_order": 2,
+                                "c_tour": 10,
                                 "c_category": "Finale",
                                 "c_status": "END",
                                 "d_id": 9211,
@@ -218,6 +229,7 @@
                                 "c_code": "RCP",
                                 "c_type": "CP",
                                 "c_order": 2,
+                                "c_tour": 10,
                                 "c_category": "Finale",
                                 "c_status": "END",
                                 "d_id": 9211,
@@ -456,7 +468,8 @@
                 "t_clt_cp": 1,
                 "t_group": "A",
                 "t_order": 1,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": 1
             },
             {
                 "t_id": 9313,
@@ -466,7 +479,8 @@
                 "t_clt_cp": 2,
                 "t_group": "B",
                 "t_order": 1,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": 2
             },
             {
                 "t_id": 9312,
@@ -476,7 +490,8 @@
                 "t_clt_cp": 3,
                 "t_group": "A",
                 "t_order": 2,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": 3
             },
             {
                 "t_id": 9314,
@@ -486,7 +501,8 @@
                 "t_clt_cp": 4,
                 "t_group": "B",
                 "t_order": 2,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": null
             }
         ]
     }
