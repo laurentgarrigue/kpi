@@ -28,7 +28,7 @@ const hint = computed(() => (props.link.kind === 'legacy' ? 'a11y.legacyLink' : 
   >
     {{ link.label ?? $t(`nav.${link.id}`) }}
     <template v-if="external">
-      <UIcon name="i-heroicons-arrow-top-right-on-square" class="size-4 opacity-70" aria-hidden="true" />
+      <UIcon name="i-heroicons-arrow-top-right-on-square" class="size-5 opacity-70" aria-hidden="true" />
       <span class="sr-only">{{ $t(hint) }}</span>
     </template>
   </NuxtLink>

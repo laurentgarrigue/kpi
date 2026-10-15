@@ -33,7 +33,7 @@ onClickOutside(root, () => close())
       @click="open = !open"
     >
       {{ $t(`nav.${group.id}`) }}
-      <UIcon name="i-heroicons-chevron-down" class="size-4" aria-hidden="true" />
+      <UIcon name="i-heroicons-chevron-down" class="size-5" aria-hidden="true" />
     </button>
     <ul
       v-show="open"

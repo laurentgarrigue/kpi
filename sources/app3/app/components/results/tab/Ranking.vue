@@ -27,7 +27,7 @@ const badge = computed(() => (ranking.value?.status === 'END' ? 'final' : rankin
         {{ $t(`results.ranking.${badge}`) }}
       </UBadge>
       <a :href="pdfHref" v-bind="NEW_TAB_ATTRS" class="flex items-center gap-1 text-sm underline" data-testid="ranking-pdf">
-        <UIcon name="i-heroicons-document-arrow-down" class="size-4" aria-hidden="true" />
+        <UIcon name="i-heroicons-document-arrow-down" class="size-5" aria-hidden="true" />
         {{ $t('results.rankingPdf') }}<span class="sr-only"> {{ $t('a11y.newTab') }}</span>
       </a>
     </div>

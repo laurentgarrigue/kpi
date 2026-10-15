@@ -13,6 +13,12 @@ final class FormsEndpointsTest extends ApiTestCase
 {
     use ClockSensitiveTrait;
 
+    /**
+     * Adresse publique (DNS de Google) : soumise à la limite de débit. Pas de plage de documentation RFC 5737 :
+     * depuis Symfony 7.4.21, `IpUtils::isPrivateIp()` les considère comme privées.
+     */
+    private const PUBLIC_IP = '8.8.4.4';
+
     private Connection $connection;
 
     protected function setUp(): void
@@ -112,7 +118,7 @@ final class FormsEndpointsTest extends ApiTestCase
     public function testFrm05SubmissionsAreRateLimitedPerPublicIp(): void
     {
         for ($attempt = 1; $attempt <= 6; ++$attempt) {
-            $this->client->request('POST', '/forms/tournoi-test/submissions', server: ['REMOTE_ADDR' => '203.0.113.9'], content: '{}');
+            $this->client->request('POST', '/forms/tournoi-test/submissions', server: ['REMOTE_ADDR' => self::PUBLIC_IP], content: '{}');
         }
 
         self::assertSame(429, $this->client->getResponse()->getStatusCode());

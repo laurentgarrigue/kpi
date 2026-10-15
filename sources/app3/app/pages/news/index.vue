@@ -69,7 +69,7 @@ useHead(() => ({
     <div class="flex flex-wrap items-end justify-between gap-4">
       <h1 class="text-5xl text-kpi-blue-600">{{ $t('news.title') }}</h1>
       <a :href="rssUrl" class="flex items-center gap-1 text-sm hover:underline" data-testid="news-rss">
-        <UIcon name="i-heroicons-rss" class="size-4" aria-hidden="true" />
+        <UIcon name="i-heroicons-rss" class="size-5" aria-hidden="true" />
         {{ $t('news.rss') }}
       </a>
     </div>
@@ -97,11 +97,11 @@ useHead(() => ({
       </div>
       <nav v-if="pager && (pager.newer || pager.older)" :aria-label="$t('news.pagination')" class="flex justify-between" data-testid="news-pager">
         <NuxtLink v-if="pager.newer" :to="pager.newer" rel="prev" class="flex items-center gap-1 hover:underline" data-testid="news-newer">
-          <UIcon name="i-heroicons-arrow-left" class="size-4" aria-hidden="true" />{{ $t('news.newer') }}
+          <UIcon name="i-heroicons-arrow-left" class="size-5" aria-hidden="true" />{{ $t('news.newer') }}
         </NuxtLink>
         <span v-else />
         <NuxtLink v-if="pager.older" :to="pager.older" rel="next" class="flex items-center gap-1 hover:underline" data-testid="news-older">
-          {{ $t('news.older') }}<UIcon name="i-heroicons-arrow-right" class="size-4" aria-hidden="true" />
+          {{ $t('news.older') }}<UIcon name="i-heroicons-arrow-right" class="size-5" aria-hidden="true" />
         </NuxtLink>
       </nav>
     </template>
