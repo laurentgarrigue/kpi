@@ -33,16 +33,7 @@ enum ResultsFormat
     {
         return match ($this) {
             self::Event => 'm.Date_match, m.Heure_match, m.Terrain',
-            self::Group => 'c.Code_tour DESC, c.GroupOrder, j.Lieu, m.Date_match DESC, m.Heure_match, m.Terrain',
-        };
-    }
-
-    /** Colonnes de compétition ajoutées aux lignes d'équipes des tableaux (juste après c_order). */
-    public function chartTeamsExtraColumns(): string
-    {
-        return match ($this) {
-            self::Event => '',
-            self::Group => 'c.Code_tour c_tour,',
+            self::Group => 'c.Code_tour, c.GroupOrder, j.Lieu, m.Date_match, m.Heure_match, m.Terrain',
         };
     }
 

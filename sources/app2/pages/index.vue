@@ -46,7 +46,7 @@
           <!-- Image avec opacité (2) + badge overlay (1) -->
           <div class="relative shadow-xl/30">
             <img src="/img/tuto_md.png" alt="Tutorial" class="w-full rounded opacity-70" />
-            <span class="absolute top-2 right-2 bg-gray-800/70 text-white text-xs font-medium px-2 py-0.5 rounded italic">
+            <span class="absolute top-2 right-2 bg-bar/70 text-white text-xs font-medium px-2 py-0.5 rounded italic">
               {{ t('Event.TutoExample') }}
             </span>
           </div>
@@ -65,7 +65,7 @@
           <!-- Image avec opacité (2) + badge overlay (1) -->
           <div class="relative w-full max-w-xs">
             <img src="/img/tuto_xs.png" alt="Tutorial" class="w-full rounded shadow-sm opacity-60" />
-            <span class="absolute top-2 right-2 bg-gray-800/70 text-white text-xs font-medium px-2 py-0.5 rounded italic">
+            <span class="absolute top-2 right-2 bg-bar/70 text-white text-xs font-medium px-2 py-0.5 rounded italic">
               {{ t('Event.TutoExample') }}
             </span>
           </div>

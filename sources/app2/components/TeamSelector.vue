@@ -8,7 +8,7 @@
         alt="Logo"
       />
       <span class="text-xl font-semibold">{{ prefs?.scr_team_label }}</span>
-      <button class="px-4 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center">
+      <button class="px-4 py-2 text-sm bg-bar-soft text-white rounded hover:bg-bar-hover flex items-center">
         <UIcon name="i-heroicons-arrow-path" class="h-4 w-4 mr-2" />
         {{ t('Teams.Change') }}
       </button>
@@ -48,7 +48,7 @@
         </select>
         <div class="flex gap-2">
           <button
-            class="px-4 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700"
+            class="px-4 py-2 text-sm bg-bar-soft text-white rounded hover:bg-bar-hover"
             @click.prevent="cancelTeam"
           >
             {{ t('Teams.Cancel') }}

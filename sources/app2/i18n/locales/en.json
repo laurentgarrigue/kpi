@@ -32,7 +32,15 @@
     "About": "About",
     "Filters": "Filters",
     "ChangeEvent": "Please change event",
-    "StaffJobs": "Organization task"
+    "StaffJobs": "Organization task",
+    "ScrollTop": "Back to top",
+    "ScrollBottom": "Go to bottom"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   },
   "AddToHomeScreen": {
     "message": "Add to desktop/home screen.",
@@ -187,7 +195,10 @@
     "FinalRanking": "Final ranking",
     "ProvisionalRanking": "Provisional ranking",
     "ChampionshipRanking": "Championship ranking",
-    "NoData": "No ranking data available"
+    "NoData": "No ranking data available",
+    "Qualified": "Qualified",
+    "Eliminated": "Relegated or eliminated",
+    "Medal": "Medal {rank}"
   },
   "About": {
     "Information": "Informations",

@@ -2,11 +2,11 @@
   <div class="mt-1">
     <!-- Desktop view -->
     <div class="hidden md:block">
-      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <caption v-if="showCount" class="p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+      <table class="w-full text-sm text-left text-gray-500">
+        <caption v-if="showCount" class="p-5 text-lg font-semibold text-left text-gray-900 bg-surface">
           {{ filteredGamesCount }}/{{ gamesCount }} {{ t('Games.games') }}
         </caption>
-        <thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-200">
           <tr>
             <th scope="col" class="px-2 py-3">#</th>
             <th scope="col" class="px-2 py-3">{{ t('Games.Cat') }} | {{ t('Games.Group') }}</th>
@@ -25,15 +25,15 @@
         <!-- Event mode: simple date grouping -->
         <template v-if="!hasGroupStructure">
           <tbody v-for="(game_group, group_index) in games" :key="game_group.goupDate">
-            <tr class="bg-gray-800 text-white">
+            <tr class="bg-bar text-white">
               <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
                 <NuxtTime :datetime="game_group.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
-                <span v-if="game_group.groupPlace" class="ml-2 text-gray-300">
+                <span v-if="game_group.groupPlace" class="ml-2 text-on-bar-muted">
                   <UIcon name="i-heroicons-map-pin" class="h-4 w-4 inline-block mr-1" />{{ game_group.groupPlace }}
                 </span>
               </th>
             </tr>
-            <tr v-for="(game, game_index) in game_group.filtered" :key="game.g_id" :class="(group_index + game_index) % 2 === 0 ? 'bg-gray-100' : 'bg-white'">
+            <tr v-for="(game, game_index) in game_group.filtered" :key="game.g_id" :class="(group_index + game_index) % 2 === 0 ? 'bg-gray-100' : 'bg-surface'">
               <td class="px-2 py-2 text-gray-900">
                 <NuxtLink v-if="isMatchSheetAvailable(game)" :to="getMatchSheetUrl(game)" class="hover:opacity-80 transition-opacity" :title="t('Games.MatchSheet')"><i>#{{ game.g_number }}</i></NuxtLink>
                 <i v-else>#{{ game.g_number }}</i>
@@ -124,14 +124,14 @@
 
               <template v-for="(dateGroup, dateIndex) in locGroup.dates" :key="`${compGroup.competition.code}-${locGroup.place}-${dateGroup.goupDate}`">
                 <!-- Date sub-header -->
-                <tr class="bg-gray-800 text-white">
+                <tr class="bg-bar text-white">
                   <th :colspan="(showRefs || showShotclock) ? 7 : 6" scope="row" class="px-2 py-2 font-medium whitespace-nowrap">
                     <NuxtTime :datetime="dateGroup.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
                   </th>
                 </tr>
 
                 <!-- Game rows -->
-                <tr v-for="(game, game_index) in dateGroup.filtered" :key="game.g_id" :class="(compIndex + locIndex + dateIndex + game_index) % 2 === 0 ? 'bg-gray-100' : 'bg-white'">
+                <tr v-for="(game, game_index) in dateGroup.filtered" :key="game.g_id" :class="(compIndex + locIndex + dateIndex + game_index) % 2 === 0 ? 'bg-gray-100' : 'bg-surface'">
                   <td class="px-2 py-2 text-gray-900">
                     <NuxtLink v-if="isMatchSheetAvailable(game)" :to="getMatchSheetUrl(game)" class="hover:opacity-80 transition-opacity" :title="t('Games.MatchSheet')"><i>#{{ game.g_number }}</i></NuxtLink>
                     <i v-else>#{{ game.g_number }}</i>
@@ -210,9 +210,9 @@
       <!-- Event mode: simple date grouping -->
       <template v-if="!hasGroupStructure">
         <div v-for="game_group in games" :key="game_group.goupDate">
-          <div class="bg-gray-800 text-white p-2">
+          <div class="bg-bar text-white p-2">
             <NuxtTime :datetime="game_group.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
-            <span v-if="game_group.groupPlace" class="ml-2 text-gray-300">
+            <span v-if="game_group.groupPlace" class="ml-2 text-on-bar-muted">
               <UIcon name="i-heroicons-map-pin" class="h-4 w-4 inline-block mr-1" />{{ game_group.groupPlace }}
             </span>
           </div>
@@ -298,7 +298,7 @@
 
             <template v-for="dateGroup in locGroup.dates" :key="`${compGroup.competition.code}-${locGroup.place}-${dateGroup.goupDate}`">
               <!-- Date sub-header -->
-              <div class="bg-gray-800 text-white p-2">
+              <div class="bg-bar text-white p-2">
                 <NuxtTime :datetime="dateGroup.goupDate" day="numeric" month="long" year="numeric" :locale="locale" />
               </div>
 
@@ -415,8 +415,8 @@ const isWinner = (game, team) => {
 const scoreClass = (game, team) => {
   return {
     'lcd text-lg px-2 py-1 border border-gray-400 rounded': true,
-    'bg-gray-800 text-white': isWinner(game, team),
-    'bg-gray-200 text-black': !isWinner(game, team),
+    'bg-bar text-white': isWinner(game, team),
+    'bg-gray-200 text-gray-900': !isWinner(game, team),
   }
 }
 

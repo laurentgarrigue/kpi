@@ -5,6 +5,9 @@
         "libelle": "Poule A",
         "status": "ON",
         "season": "2999",
+        "qualified": 1,
+        "eliminated": 1,
+        "final": false,
         "rounds": {
             "1": {
                 "type": "C",
@@ -16,6 +19,7 @@
                                 "c_code": "RCH",
                                 "c_type": "CHPT",
                                 "c_order": 1,
+                                "c_tour": 1,
                                 "c_category": "Poule A",
                                 "c_status": "ON",
                                 "d_id": 9201,
@@ -51,6 +55,7 @@
                                 "c_code": "RCH",
                                 "c_type": "CHPT",
                                 "c_order": 1,
+                                "c_tour": 1,
                                 "c_category": "Poule A",
                                 "c_status": "ON",
                                 "d_id": 9201,
@@ -86,6 +91,7 @@
                                 "c_code": "RCH",
                                 "c_type": "CHPT",
                                 "c_order": 1,
+                                "c_tour": 1,
                                 "c_category": "Poule A",
                                 "c_status": "ON",
                                 "d_id": 9201,
@@ -121,6 +127,7 @@
                                 "c_code": "RCH",
                                 "c_type": "CHPT",
                                 "c_order": 1,
+                                "c_tour": 1,
                                 "c_category": "Poule A",
                                 "c_status": "ON",
                                 "d_id": 9201,
@@ -250,7 +257,8 @@
                 "t_minus": 4,
                 "t_diff": 5,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/alpha.png"
+                "t_logo": "KIP/logo/alpha.png",
+                "t_medal": null
             },
             {
                 "t_id": 9302,
@@ -268,7 +276,8 @@
                 "t_minus": 6,
                 "t_diff": 0,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/bravo.png"
+                "t_logo": "KIP/logo/bravo.png",
+                "t_medal": null
             },
             {
                 "t_id": 9303,
@@ -286,7 +295,8 @@
                 "t_minus": 4,
                 "t_diff": 0,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/charlie.png"
+                "t_logo": "KIP/logo/charlie.png",
+                "t_medal": null
             },
             {
                 "t_id": 9304,
@@ -304,7 +314,8 @@
                 "t_minus": 6,
                 "t_diff": -5,
                 "t_clt_cp": 0,
-                "t_logo": "KIP/logo/empty-logo.png"
+                "t_logo": "KIP/logo/empty-logo.png",
+                "t_medal": null
             }
         ]
     }

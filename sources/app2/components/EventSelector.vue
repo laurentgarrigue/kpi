@@ -43,14 +43,14 @@
         <button
           type="button"
           @click="changeEventMode('group')"
-          :class="['px-4 py-1 text-sm font-medium rounded-l-lg border border-gray-200 cursor-pointer', eventMode === 'group' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100']"
+          :class="['px-4 py-1 text-sm font-medium rounded-l-lg border border-gray-200 cursor-pointer', eventMode === 'group' ? 'bg-blue-600 text-white' : 'bg-surface text-gray-900 hover:bg-gray-100']"
         >
           {{ t('Event.Competitions') }}
         </button>
         <button
           type="button"
           @click="changeEventMode('std')"
-          :class="['px-4 py-1 text-sm font-medium rounded-r-md border border-gray-200 cursor-pointer', eventMode === 'std' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 hover:bg-gray-100']"
+          :class="['px-4 py-1 text-sm font-medium rounded-r-md border border-gray-200 cursor-pointer', eventMode === 'std' ? 'bg-blue-600 text-white' : 'bg-surface text-gray-900 hover:bg-gray-100']"
         >
           {{ t('Event.StdEvents') }}
         </button>

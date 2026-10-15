@@ -107,7 +107,8 @@ final class PublicResultsRepository
         }
 
         $sql = "SELECT j.Code_saison c_season, j.Code_competition c_code, c.Code_typeclt c_type,
-            c.GroupOrder c_order, {$format->chartTeamsExtraColumns()} c.Soustitre2 c_category, c.Statut c_status,
+            c.GroupOrder c_order, c.Code_tour c_tour, c.Soustitre2 c_category, c.Statut c_status,
+            c.Qualifies c_qualified, c.Elimines c_eliminated,
             j.Id d_id, j.Phase d_phase, j.Etape d_round, j.Nbequipes t_count,
             j.Niveau d_level, j.Type d_type, j.Date_debut d_start, j.Date_fin d_end,
             j.Lieu d_place, j.Departement d_dpt,
