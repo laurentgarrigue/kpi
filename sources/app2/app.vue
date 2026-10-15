@@ -44,11 +44,7 @@ useHead({
   htmlAttrs: {
     lang: locale
   },
-  link: [
-    { rel: 'icon', type: 'image/x-icon', href: `${baseUrl}/favicon.ico` },
-    { rel: 'apple-touch-icon', href: `${baseUrl}/apple-touch-icon.png` }
-    // Note: manifest is automatically added by @vite-pwa/nuxt
-  ],
+  // Favicons and manifest are declared once, in nuxt.config.ts (app.head)
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes' },
     { name: 'format-detection', content: 'telephone=no' },

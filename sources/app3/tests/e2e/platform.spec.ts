@@ -103,7 +103,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await response.text()).toMatch(/<meta name="robots" content="noindex, nofollow">/)
   })
 
-  it('LAY-10: pages declare the app4 favicon, served by app3', async () => {
+  it('LAY-10: pages declare the public website favicon, served by app3', async () => {
     expect(await $fetch<string>('/')).toMatch(/<link[^>]*rel="icon"[^>]*href="\/favicon\.png"/)
     const icon = await fetch('/favicon.png')
     expect(icon.status).toBe(200)

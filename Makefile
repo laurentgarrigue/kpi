@@ -73,7 +73,7 @@ db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 media_init media_status media_sync_from media_backup media_backup_list media_backup_check media_restore \
-docker_networks_create docker_networks_list docker_networks_clean \
+docker_networks_create docker_networks_list docker_networks_clean favicons_generate \
 wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
 last_merge_sha preprod_rollback release release_tag feature version \
 hooks
@@ -1125,6 +1125,12 @@ wordpress_restore: ## Restaure WordPress depuis /tmp/wordpress_backup (usage int
 		echo "Erreur: /tmp/wordpress_backup n'existe pas"; \
 		exit 1; \
 	fi
+
+
+## FAVICONS - cf. DOC/developer/guides/FAVICONS.md
+favicons_generate: ## Régénère les favicons app2/app3/app4 (+ variantes de réserve) depuis scripts/favicons/logo-source.png
+	@docker run --rm -u $$(id -u):$$(id -g) -e HOME=/tmp -v $(PWD):/repo -w /repo python:3.12-slim \
+		sh -c "pip install --quiet --no-cache-dir --user --disable-pip-version-check pillow && python scripts/favicons/generate.py"
 
 
 ## GIT - PULL

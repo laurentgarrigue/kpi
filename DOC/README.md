@@ -67,6 +67,7 @@ Documentation technique pour le développement et la maintenance du projet.
 #### [Bonnes Pratiques](developer/guides/)
 - **[CLEAN_CODE.md](developer/guides/CLEAN_CODE.md)** - ⭐ Principes (DRY, KISS, SOLID, YAGNI, TDD) et *Definition of Done*, pour tout changement
 - **[BEST_PRACTICES_JAVASCRIPT_SMARTY.md](developer/guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md)** - Bonnes pratiques JavaScript & Smarty (traductions, JSON, constructeurs)
+- **[FAVICONS.md](developer/guides/FAVICONS.md)** - Favicons distincts app2 / app3 / app4 (déclinaisons, variantes de réserve, `make favicons_generate`)
 
 #### [Fonctionnalités](developer/guides/features/)
 - **[COMPETITION_TYPE_MULTI.md](developer/guides/features/COMPETITION_TYPE_MULTI.md)** - Documentation développeur type MULTI (héritée, voir version technique ci-dessous)
