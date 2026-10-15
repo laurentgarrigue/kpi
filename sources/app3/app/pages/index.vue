@@ -57,7 +57,7 @@ const competitionsLink = computed(() => competitionsEntry
       </div>
     </section>
     <HomeEditorialBlock v-for="block in layout.beforeEvents" :key="block.kind" :block="block" />
-    <HomeEvents />
+    <HomeFixtures />
     <HomeEditorialBlock v-for="block in layout.afterEvents" :key="block.kind" :block="block" />
   </div>
 </template>

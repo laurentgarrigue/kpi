@@ -5,6 +5,8 @@ namespace App\Tests\Unit\PublicSite;
 use App\PublicSite\Dto\CalendarEntry;
 use App\PublicSite\Dto\ClubSheet;
 use App\PublicSite\Dto\ClubSummary;
+use App\PublicSite\Dto\EventFixture;
+use App\PublicSite\Dto\GroupFixture;
 use App\PublicSite\Dto\Honour;
 use App\PublicSite\Dto\PodiumTeam;
 use App\PublicSite\Dto\RosterPlayer;
@@ -73,5 +75,17 @@ final class PublicSiteDtoFieldsTest extends TestCase
     {
         self::assertSame(['season', 'code', 'display_title', 'soustitre2', 'group'], array_keys((new SearchCompetition('2026', 'N1H', 'N1', null, 'N1H'))->jsonSerialize()));
         self::assertSame(['id', 'libelle', 'place', 'start', 'end'], array_keys((new SearchEvent(1, 'Tournoi', null, null, null))->jsonSerialize()));
+    }
+
+    public function testFixtureFields(): void
+    {
+        $event = new EventFixture(77, 'Tournoi', 'Lieu', null, '2026-01-01', '2026-01-02');
+        self::assertSame(['kind', 'id', 'libelle', 'place', 'logo', 'start', 'end'], array_keys($event->jsonSerialize()));
+
+        $group = new GroupFixture('2026', 'N1H', 'Nationale 1 Hommes', null, 'Lieu', '33', null, '2026-01-01', '2026-01-02');
+        self::assertSame(
+            ['kind', 'season', 'code', 'libelle', 'libelle_en', 'place', 'department', 'logo', 'start', 'end'],
+            array_keys($group->jsonSerialize()),
+        );
     }
 }

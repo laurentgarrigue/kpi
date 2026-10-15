@@ -63,6 +63,8 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/clubs',
             '/club/{code}',
             '/search',
+            // Accueil app3 / app2 (PAGE_HOME.md HOME-09, HOME-10)
+            '/fixtures/{scope}',
         ], $documented);
     }
 }

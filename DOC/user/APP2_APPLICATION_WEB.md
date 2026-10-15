@@ -11,7 +11,6 @@ L'**Application Web KPI** (App2) est une interface moderne pour consulter et gé
 
 - **Consulter** les résultats, classements et calendriers en temps réel
 - **Suivre** la progression des équipes tout au long d'une compétition
-- **Gérer** le contrôle du matériel des joueurs (scrutineering)
 - **Partager** facilement les informations de compétition
 
 **Accessible partout** : Sur votre téléphone, tablette ou ordinateur, avec ou sans connexion internet.
@@ -48,7 +47,18 @@ L'icône KPI apparaît sur votre écran comme une vraie application !
 
 ### 1. Accueil - Sélection d'Événement ou Compétition
 
-L'application propose deux modes de navigation :
+La page d'accueil est organisée en cartes, de haut en bas :
+
+1. **Événement ou compétition suivi(e)** : nom, logo, lieu (ou saison), et bouton **« Changer »**. Sans
+   sélection, la carte propose **« Que voulez-vous suivre ? »** et le bouton de sélection ; le formulaire de choix
+   s'ouvre dans cette même carte.
+2. **Accès rapide** (une fois une sélection faite) : trois tuiles **Matchs** (programme et résultats),
+   **Progression** (classements et tableaux) et **Équipe** (parcours d'une équipe).
+3. **À venir** : les prochains rendez-vous (en cours ou à venir, 9 au plus), qu'il s'agisse d'**événements** ou de
+   **journées de compétition** organisées hors événement. Un badge indique la catégorie (« Événement » ou
+   « Compétition ») et « En cours » le cas échéant ; un clic sélectionne directement l'événement ou la
+   compétition. Cette rubrique est visible même sans sélection : c'est le moyen le plus rapide d'en choisir une.
+4. **Partager l'événement** et **Comment naviguer** (une fois une sélection faite), côte à côte sur ordinateur.
 
 **Mode "Compétitions"** (par défaut) :
 - Navigation par catégorie/groupe (N1H, N1F, N2H, U20H, etc.)
@@ -73,8 +83,8 @@ L'application propose deux modes de navigation :
 
 **Guide de navigation illustré** :
 - Affiché sur la page d'accueil après sélection d'un événement ou d'une compétition
-- Deux captures d'écran annotées (version PC et smartphone) montrant les zones cliquables
-- Explications à gauche et à droite de l'image : accès à la fiche équipe, accès à la feuille de match
+- Une capture d'écran annotée (version PC ou smartphone selon l'écran) montrant les zones cliquables
+- Deux conseils sous l'image : accès à la fiche équipe, accès à la feuille de match
 
 **Exemple d'usage - Mode Compétitions** :
 ```
@@ -226,6 +236,10 @@ Cliquez sur n'importe quelle équipe (depuis un match, un classement ou la reche
 ---
 
 ### 5. Organisation - Gestion et Scrutineering
+
+> **Menu masqué (octobre 2026)** : le menu « Organisation » n'apparaît plus dans app2. Ces fonctions seront
+> redéveloppées dans l'application d'administration (app4) lors d'un prochain chantier. D'ici là, les pages
+> restent accessibles par leur adresse : `app.kayak-polo.info/login` puis `app.kayak-polo.info/scrutineering`.
 
 **Authentification et contrôle des droits** :
 
@@ -463,8 +477,8 @@ Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
 **Scénario** : Vous devez contrôler le matériel de toutes les équipes avant les matchs.
 
 **Solution** :
-1. Se connecter avec ses identifiants
-2. Aller dans "Organisation"
+1. Se connecter avec ses identifiants sur `app.kayak-polo.info/login` (menu « Organisation » masqué, voir § 5)
+2. Ouvrir `app.kayak-polo.info/scrutineering`
 3. Sélectionner chaque équipe
 4. Valider le matériel de chaque joueur
 5. Ajouter des commentaires si besoin
@@ -636,7 +650,6 @@ Si vous rencontrez un problème :
 
 ### Court terme
 - Notifications push pour vos équipes favorites
-- Mode sombre (thème sombre)
 - Export PDF des classements et statistiques
 
 ### Moyen terme
@@ -644,6 +657,7 @@ Si vous rencontrez un problème :
 - Historique sur plusieurs saisons
 - Statistiques avancées (heatmaps, possession)
 - Gestion complète des arbitres
+- Connexion et contrôle du matériel (scrutineering) refondus dans l'application d'administration (app4)
 
 ### Long terme
 - Application mobile native (iOS/Android)

@@ -5,9 +5,16 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 import { api2Fixture } from '../fixtures/api2'
 
-// Fake api2. /events/all is JSON with a wrong Content-Type, as a misconfigured proxy could send it; every other
+// Fake api2. /fixtures/site is JSON with a wrong Content-Type, as a misconfigured proxy could send it; every other
 // request is answered with the real api2 response captured on SQL/fixtures (tests/fixtures/api2).
-const EVENTS = [{ id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' }]
+const FIXTURES = {
+  today: '2026-04-20',
+  upcoming: [
+    { kind: 'event', id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' },
+    { kind: 'group', season: '2026', code: 'N1H', libelle: 'Nationale 1 Hommes', libelle_en: null, place: 'Lacville', department: '33', logo: null, start: '2026-05-09', end: '2026-05-10' },
+  ],
+  recent: [],
+}
 // X-Forwarded-For received by api2 on /search: the server rendering relays the visitor address (API3-08).
 const searchForwardedFor: (string | undefined)[] = []
 // Phase 4: form submissions received by api2, old paths known by api2 (FEATURE_FORMS.md § 4, FEATURE_CMS.md § 8).
@@ -52,9 +59,9 @@ const fakeApi2 = createServer((request, response) => {
   if (request.url?.startsWith('/search')) {
     searchForwardedFor.push(request.headers['x-forwarded-for'] as string | undefined)
   }
-  if (request.url === '/events/all') {
+  if (request.url === '/fixtures/site') {
     response.writeHead(200, { 'Content-Type': 'application/octet-stream' })
-    response.end(JSON.stringify(EVENTS))
+    response.end(JSON.stringify(FIXTURES))
     return
   }
   try {
@@ -103,7 +110,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await response.text()).toMatch(/<meta name="robots" content="noindex, nofollow">/)
   })
 
-  it('LAY-10: pages declare the app4 favicon, served by app3', async () => {
+  it('LAY-10: pages declare the public website favicon, served by app3', async () => {
     expect(await $fetch<string>('/')).toMatch(/<link[^>]*rel="icon"[^>]*href="\/favicon\.png"/)
     const icon = await fetch('/favicon.png')
     expect(icon.status).toBe(200)
@@ -119,10 +126,12 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(html).toContain('Page introuvable')
   })
 
-  it('HOME-03/PLT-04: the home page renders the api2 events server-side, whatever their Content-Type', async () => {
+  it('HOME-07/HOME-09/PLT-04: the home page renders the api2 fixtures server-side, whatever their Content-Type', async () => {
     const response = await fetch('/')
     expect(response.status).toBe(200)
-    expect(await response.text()).toContain('Coupe de France')
+    const html = await response.text()
+    expect(html).toContain('Coupe de France')
+    expect(html).toMatch(/href="\/groups\/2026\/N1H"/)
   })
 
   it('the client payload of the cached home page is serialisable', async () => {

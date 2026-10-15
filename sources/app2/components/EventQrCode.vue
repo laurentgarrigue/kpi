@@ -1,14 +1,16 @@
 <template>
-  <div v-if="hasSelection" class="event-qrcode-container text-center my-12">
-    <p class="mb-1 text-gray-700 font-medium font-semibold text-lg py-2 flex items-center justify-center gap-2">
-      <UIcon name="i-heroicons-share" class="h-6 w-6 flex-shrink-0" />
-      <span class="align-middle">{{ t('Event.ShareEvent') }}</span>
-    </p>
-    <div class="qrcode-wrapper inline-block cursor-pointer" @click="copyLinkToClipboard">
-      <canvas ref="qrcodeCanvas" class="mx-auto"></canvas>
-      <p class="text-sm text-gray-600 mt-2">{{ t('Event.ClickToCopy') }}</p>
-    </div>
-  </div>
+  <button
+    v-if="hasSelection"
+    type="button"
+    class="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-surface p-4 shadow-sm transition-colors hover:border-blue-500"
+    @click="copyLinkToClipboard"
+  >
+    <canvas ref="qrcodeCanvas" class="rounded" />
+    <span class="flex items-center gap-1 text-sm text-gray-600">
+      <UIcon name="i-heroicons-clipboard-document" class="h-4 w-4" />
+      {{ t('Event.ClickToCopy') }}
+    </span>
+  </button>
 </template>
 
 <script setup>
@@ -20,6 +22,10 @@ const preferenceStore = usePreferenceStore()
 const { hasEventSelected } = useEventGuard()
 const runtimeConfig = useRuntimeConfig()
 const toast = useToast()
+
+// Kept small so that the « Coming up » section below stays in view (PAGE_HOME.md § 7).
+const QR_SIZE = 180
+const QR_LOGO_SIZE = 40
 
 const qrcodeCanvas = ref(null)
 
@@ -71,7 +77,7 @@ const generateQRCode = async () => {
     await QRCode.toCanvas(canvas, shareUrl, {
       errorCorrectionLevel: 'H',
       margin: 2,
-      width: 280,
+      width: QR_SIZE,
       color: {
         dark: '#000000',
         light: '#FFFFFF'
@@ -84,7 +90,7 @@ const generateQRCode = async () => {
     logo.src = '/img/logo_kp.png'
 
     logo.onload = () => {
-      const logoSize = 60 // Size of the logo in the center
+      const logoSize = QR_LOGO_SIZE
       const x = (canvas.width - logoSize) / 2
       const y = (canvas.height - logoSize) / 2
 
@@ -167,24 +173,3 @@ onMounted(() => {
   generateQRCode()
 })
 </script>
-
-<style scoped>
-.event-qrcode-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.qrcode-wrapper {
-  padding: 1rem;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-canvas {
-  display: block;
-  border-radius: 0.25rem;
-}
-</style>

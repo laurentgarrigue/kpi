@@ -16,7 +16,6 @@
     "Home": "Home",
     "Login": "Login",
     "MyAccount": "My account",
-    "Staff": "Organization",
     "Games": "Games",
     "Ranking": "Ranking",
     "Charts": "Charts",
@@ -82,6 +81,22 @@
     "TutoExample": "Illustrative example",
     "TutoTeam": "Click on a team name to access its detail page: games played, results and tournament progression.",
     "TutoMatchSheet": "Click on a score or a game number to open the game sheet: team lineups, goals and events."
+  },
+  "Fixtures": {
+    "Upcoming": "Coming up",
+    "Competition": "Competition",
+    "Event": "Event",
+    "Ongoing": "Ongoing"
+  },
+  "Home": {
+    "FollowedEvent": "Followed event",
+    "FollowedGroup": "Followed competition",
+    "ChooseTitle": "What do you want to follow?",
+    "ChooseHint": "Choose an event or a competition to reach its games, its progress and its teams.",
+    "QuickAccess": "Quick access",
+    "GamesHint": "Schedule and results",
+    "ChartsHint": "Rankings and brackets",
+    "TeamHint": "A team's path"
   },
   "Section": {
     "Competitions_Internationales": "International Competitions",

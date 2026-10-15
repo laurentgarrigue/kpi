@@ -42,6 +42,8 @@ const activeMandateSummary = computed(() =>
 )
 const { isOnline } = useOnlineStatus()
 const runtimeConfig = useRuntimeConfig()
+// Same image as the admin favicon (white logo on a black tile), see DOC/developer/guides/FAVICONS.md
+const logoSrc = `${runtimeConfig.app.baseURL.replace(/\/$/, '')}/favicon.png`
 
 const languages = [
   { code: 'fr', label: 'FR', flag: '🇫🇷' },
@@ -350,7 +352,7 @@ onMounted(() => {
         <!-- Left: Logo -->
         <div class="flex items-center gap-4">
           <NuxtLink to="/" class="relative flex items-center gap-2 pb-4">
-            <img src="/img/logo_kp.png" width="30" height="30" alt="logo" class="inline-block align-middle" >
+            <img :src="logoSrc" width="30" height="30" alt="logo" class="inline-block align-middle" >
             <span class="text-xl font-bold text-primary-400">KPI</span>
             <span class="text-sm text-header-300">Admin</span>
             <!-- Environment badge (hidden in production) -->

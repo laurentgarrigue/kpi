@@ -52,6 +52,12 @@ déjà lancé. **Ctrl-C quitte les logs, le serveur continue de tourner.**
 > **Nuxt met ~15 s à démarrer.** Un 404 juste après `make dev` est normal : relancer
 > `make dev_status`.
 
+**Redémarrer un serveur de dev** : `make app2_dev_restart`, `make app3_dev_restart`, `make app4_dev_restart`.
+Remède quand un serveur reste en erreur après une série de rechargements à chaud (par exemple un 500
+« Unexpected token '.' » sur toutes les routes, sans fichier cité dans la trace) : le code n'est pas en cause,
+c'est l'état du serveur. À ne pas confondre avec `make app3_restart`, qui redémarre le serveur SSR de
+préprod/prod.
+
 ## Certificats : fin des exceptions Firefox
 
 ### Le problème

@@ -6,6 +6,8 @@ use App\PublicResults\CompetitionRules;
 use App\PublicSite\Dto\CalendarEntry;
 use App\PublicSite\Dto\ClubSheet;
 use App\PublicSite\Dto\ClubSummary;
+use App\PublicSite\Dto\EventFixture;
+use App\PublicSite\Dto\GroupFixture;
 use App\PublicSite\Dto\Honour;
 use App\PublicSite\Dto\PodiumTeam;
 use App\PublicSite\Dto\RosterPlayer;
@@ -27,12 +29,60 @@ final class PublicSiteService
 
     public const GLOBAL_SEARCH_LIMIT = 8;
 
+    /** Rendez-vous par liste (à venir, récents) de l'accueil. */
+    public const FIXTURES_LIMIT = 9;
+
+    private const PARIS_TIME_ZONE = 'Europe/Paris';
+
     public function __construct(
         private readonly PublicSiteRepository $repository,
         private readonly MediaFiles $media,
         private readonly ClockInterface $clock,
         private readonly string $publicSiteUrl,
     ) {
+    }
+
+    // ------------------------------------------------------------------ rendez-vous de l'accueil
+
+    /**
+     * Rendez-vous à venir et récents, répartis selon la date du jour à Paris (API_PUBLIC_TRANSVERSE.md § 3.7).
+     *
+     * @return array{today: string, upcoming: list<EventFixture|GroupFixture>, recent: list<EventFixture|GroupFixture>}
+     */
+    public function fixtures(FixtureScope $scope): array
+    {
+        $today = $this->clock->now()->setTimezone(new \DateTimeZone(self::PARIS_TIME_ZONE))->format('Y-m-d');
+
+        return [
+            'today' => $today,
+            'upcoming' => $this->fixtureList($scope, $today, upcoming: true),
+            'recent' => $this->fixtureList($scope, $today, upcoming: false),
+        ];
+    }
+
+    /** @return list<EventFixture|GroupFixture> */
+    private function fixtureList(FixtureScope $scope, string $today, bool $upcoming): array
+    {
+        $rows = PublicSiteRules::mergeFixtures(
+            $this->repository->findFixtureEvents($scope, $today, $upcoming, self::FIXTURES_LIMIT),
+            $this->repository->findFixtureGroups($scope, $today, $upcoming, self::FIXTURES_LIMIT),
+            $upcoming,
+            self::FIXTURES_LIMIT,
+        );
+
+        return array_map(static fn (array $row): EventFixture|GroupFixture => $row['kind'] === 'event'
+            ? new EventFixture((int) $row['Id'], PublicSiteRules::decodedText($row['Libelle']), PublicSiteRules::decodedText($row['Lieu']), $row['logo'], $row['start'], $row['end'])
+            : new GroupFixture(
+                (string) $row['Code_saison'],
+                (string) $row['Groupe'],
+                (string) PublicSiteRules::decodedText($row['Libelle']),
+                PublicSiteRules::decodedText($row['Libelle_en']),
+                PublicSiteRules::decodedText($row['Lieu']),
+                PublicSiteRules::decodedText($row['Departement']),
+                $row['logo'],
+                $row['start'],
+                $row['end'],
+            ), $rows);
     }
 
     // ------------------------------------------------------------------ calendrier et ICS
