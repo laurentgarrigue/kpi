@@ -35,7 +35,7 @@ useSeoMeta({
   twitterDescription: 'Live scores, rankings, and statistics for kayak polo competitions',
   twitterImage: `${baseUrl}/img/logo_kp.png`,
   themeColor: '#1f2937',
-  colorScheme: 'light',
+  colorScheme: 'light dark',
   robots: 'index, follow'
 })
 
@@ -44,11 +44,7 @@ useHead({
   htmlAttrs: {
     lang: locale
   },
-  link: [
-    { rel: 'icon', type: 'image/x-icon', href: `${baseUrl}/favicon.ico` },
-    { rel: 'apple-touch-icon', href: `${baseUrl}/apple-touch-icon.png` }
-    // Note: manifest is automatically added by @vite-pwa/nuxt
-  ],
+  // Favicons and manifest are declared once, in nuxt.config.ts (app.head)
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes' },
     { name: 'format-detection', content: 'telephone=no' },
@@ -66,7 +62,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style>
-@import "tailwindcss";
-</style>

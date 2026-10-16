@@ -23,8 +23,8 @@ import type {
 const DEFAULT_PERIOD_DURATIONS: PeriodDurations = {
   M1: 600,
   M2: 600,
-  P1: 180,
-  P2: 180,
+  P1: 300,
+  P2: 300,
   TB: 180
 }
 

@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "vue": "^3.0.0",
+    "vue": "^3.5.43",
     "vue-i18n": "^9.14.5",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
@@ -36,7 +36,7 @@
     "@vue/eslint-config-standard": "^5.1.2",
     "@vuex-orm/core": "^0.36.3",
     "animate.css": "^4.1.1",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "babel-eslint": "^10.1.0",
     "bootstrap": "^5.0.1",
     "bootstrap-icons": "^1.8.1",

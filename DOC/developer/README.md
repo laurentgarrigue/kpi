@@ -17,7 +17,7 @@ L'index complet, document par document, est dans [DOC/README.md](../README.md).
 
 1. **[reference/FRANKENPHP_MIGRATION_ANALYSIS.md](reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - Architecture web actuelle (api2 sur FrankenPHP, legacy sur Apache)
 2. **[guides/ENVIRONNEMENT_DEV.md](guides/ENVIRONNEMENT_DEV.md)** - Démarrer l'environnement et lire les logs
-3. **[guides/GIT_WORKFLOW.md](guides/GIT_WORKFLOW.md)** - Branches, PR, versions
+3. **[guides/GIT_WORKFLOW.md](guides/GIT_WORKFLOW.md)** - Branches, PR, versions — et **[guides/CLEAN_CODE.md](guides/CLEAN_CODE.md)** : principes et *Definition of Done*
 4. **[infrastructure/DEPLOYMENT_RUNBOOK.md](infrastructure/DEPLOYMENT_RUNBOOK.md)** - Déployer et revenir en arrière
 5. **[reference/API2_ENDPOINTS.md](reference/API2_ENDPOINTS.md)** et **[reference/APP4_STRUCTURE.md](reference/APP4_STRUCTURE.md)** - Développer sur api2 / app4
 6. **[reference/PROFILE_ROLES.md](reference/PROFILE_ROLES.md)** - Profils, rôles et mandats

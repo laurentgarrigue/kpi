@@ -50,7 +50,16 @@
     "documents_short": "Doc",
     "gamedays_short": "Phases",
     "statistics_short": "Stats",
-    "administration_short": "Admin"
+    "administration_short": "Admin",
+    "editorial": "Éditorial",
+    "cms_articles": "Articles",
+    "cms_pages": "Pages",
+    "cms_media": "Médiathèque",
+    "cms_forms": "Formulaires",
+    "cms_menu": "Menu du site",
+    "cms_home": "Accueil du site",
+    "cms_redirects": "Redirections",
+    "public_site_beta": "Nouveau site public (bêta)"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -269,7 +278,8 @@
     "more_actions": "Plus d'actions",
     "all": "Tous",
     "select": "Sélectionner",
-    "copy": "Copier"
+    "copy": "Copier",
+    "validate": "Valider"
   },
   "legacy_redirect": {
     "message": "Redirection vers l'interface classique en cours...",
@@ -1674,7 +1684,16 @@
     "bulk_cancel_assign_confirm": "Vider équipes et arbitres de {count} match(s) sélectionné(s) ?",
     "bulk_assign_cancelled": "Affectation annulée pour {count} match(s).",
     "bulk_duplicate_confirm": "Dupliquer les {count} match(s) sélectionné(s) ? Les copies seront non verrouillées, non publiées et sans score.",
-    "bulk_duplicated": "{count} match(s) dupliqué(s)."
+    "bulk_duplicated": "{count} match(s) dupliqué(s).",
+    "period_label": {
+      "regular": "Période {n}",
+      "regularShort": "P{n}",
+      "overtime": "Prolong. {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "Tirs au but",
+      "shootoutShort": "TAB"
+    },
+    "status_provisional": "Provisoire"
   },
   "clubs": {
     "title": "Gestion des Clubs",
@@ -1967,7 +1986,9 @@
       "mandate_confirm_delete": "Supprimer ce mandat ?",
       "mandate_move_to_season": "Déplacer le mandat sur la saison {season}",
       "mandate_confirm_move_season": "Remplacer la ou les saisons de ce mandat ({from}) par la saison en cours {season} ?\nLe mandat ne s'appliquera plus aux saisons précédentes.",
-      "no_competitions_for_seasons": "Aucune compétition pour les saisons sélectionnées"
+      "no_competitions_for_seasons": "Aucune compétition pour les saisons sélectionnées",
+      "editor": "Rédacteur du site public",
+      "editor_help": "Peut écrire articles, pages et formulaires, quel que soit son profil."
     },
     "mandates": {
       "table_mandates": "+{count} mandat|+{count} mandats",
@@ -2509,11 +2530,11 @@
       "END": "Terminé"
     },
     "period": {
-      "M1": "1ère mi-temps",
-      "M2": "2ème mi-temps",
-      "P1": "Prolongation 1",
-      "P2": "Prolongation 2",
-      "TB": "Tir au but"
+      "M1": "Période 1",
+      "M2": "Période 2",
+      "P1": "Prolong. 1",
+      "P2": "Prolong. 2",
+      "TB": "Tirs au but"
     },
     "event": {
       "goal": "But",
@@ -2693,5 +2714,317 @@
     "tours_title": "Tutoriels interactifs",
     "tours_subtitle": "Rejouez à tout moment un tutoriel guidé, directement sur les pages concernées.",
     "replay": "Rejouer"
+  },
+  "cms": {
+    "all_categories": "Toutes les catégories",
+    "all_statuses": "Tous les statuts",
+    "categories": "Catégories",
+    "imported": "Repris de WordPress",
+    "draft_found": "Un brouillon local du {date} a été trouvé.",
+    "draft_restore": "Restaurer",
+    "draft_ignore": "Ignorer",
+    "move_up": "Monter",
+    "move_down": "Descendre",
+    "next_page": "Page suivante",
+    "previous_page": "Page précédente",
+    "page_of": "Page {page} / {pages}",
+    "preview": "Prévisualiser",
+    "publish": "Publier",
+    "unpublish": "Dépublier",
+    "remove": "Retirer",
+    "saved": "Enregistré",
+    "status_label": "Statut",
+    "status": {
+      "draft": "Brouillon",
+      "published": "Publié",
+      "scheduled": "Programmé",
+      "archived": "Archivé"
+    },
+    "fields": {
+      "title": "Titre",
+      "slug": "Adresse (slug)",
+      "slug_help": "Adresse : /news/{slug}",
+      "lead": "Chapô",
+      "body": "Contenu",
+      "published_at": "Date de publication",
+      "published_at_help": "Une date future programme la publication.",
+      "signature": "Signature",
+      "signature_help": "Texte affiché sous l'article (ex. « La CNA Kayak-Polo »).",
+      "cover": "Image de une",
+      "cover_pick": "Choisir une image"
+    },
+    "seo": {
+      "title_section": "Référencement (SEO)",
+      "title": "Titre pour les moteurs de recherche",
+      "description": "Description",
+      "description_help": "300 caractères au plus, affichés sous le titre dans les résultats.",
+      "preview": "Aperçu dans un moteur de recherche"
+    },
+    "editor": {
+      "toolbar": "Mise en forme",
+      "h2": "Titre de section",
+      "h3": "Sous-titre",
+      "h4": "Petit titre",
+      "bold": "Gras",
+      "italic": "Italique",
+      "underline": "Souligné",
+      "strike": "Barré",
+      "bullet_list": "Liste à puces",
+      "ordered_list": "Liste numérotée",
+      "quote": "Citation",
+      "link": "Lien",
+      "link_help": "Adresse complète, ou chemin du site (/competitions/…). Vide : retire le lien.",
+      "url": "Adresse",
+      "image": "Image ou document de la médiathèque",
+      "table": "Tableau",
+      "video": "Vidéo YouTube",
+      "video_url": "Adresse de la vidéo",
+      "undo": "Annuler",
+      "redo": "Rétablir"
+    },
+    "articles": {
+      "title": "Articles",
+      "new": "Nouvel article",
+      "add": "Nouvel article",
+      "search": "Rechercher un titre",
+      "empty": "Aucun article.",
+      "total": "{count} article(s)",
+      "no_category": "Aucune catégorie",
+      "columns": {
+        "title": "Titre",
+        "published_at": "Publication"
+      },
+      "links": "En lien avec",
+      "links_help": "Compétition « saison/code » (2026/N1H), numéro d'événement ou code de club : l'article s'affiche aussi sur ces pages.",
+      "link_kind": {
+        "competition": "Compétition",
+        "event": "Événement",
+        "club": "Club"
+      },
+      "link_placeholder": {
+        "competition": "2026/N1H",
+        "event": "N° d'événement",
+        "club": "Code club"
+      },
+      "add_link": "Ajouter un lien",
+      "delete_confirm": "Supprimer définitivement l'article « {title} » ?"
+    },
+    "pages": {
+      "title": "Pages",
+      "new": "Nouvelle page",
+      "add": "Nouvelle page",
+      "empty": "Aucune page.",
+      "path": "Adresse",
+      "parent": "Page parente",
+      "no_parent": "Aucune (premier niveau)",
+      "slug_help": "Les noms des rubriques du site (calendar, news…) sont réservés.",
+      "parent_unpublished": "parent non publié : page invisible",
+      "delete_confirm": "Supprimer définitivement la page « {title} » ?"
+    },
+    "media": {
+      "title": "Médiathèque",
+      "pick": "Médiathèque",
+      "file": "Fichier",
+      "alt": "Texte alternatif",
+      "alt_fr": "Texte alternatif (FR)",
+      "alt_en": "Texte alternatif (EN)",
+      "credit": "Crédit",
+      "upload": "Envoyer",
+      "drop": "Déposez des fichiers ici ou cliquez pour choisir",
+      "limits": "JPEG, PNG, WebP ou PDF, 20 Mo au plus. Les métadonnées des photos (position GPS…) sont supprimées.",
+      "empty": "Aucun média.",
+      "type": "Type",
+      "all_types": "Tous les types",
+      "images": "Images",
+      "documents": "Documents",
+      "album": "Album",
+      "all_albums": "Tous les albums",
+      "no_album": "Aucun album",
+      "new_album": "Nouvel album",
+      "copy_url": "Copier l'adresse",
+      "url_copied": "Adresse copiée",
+      "replace": "Remplacer le fichier",
+      "replace_help": "Le nouveau fichier garde la même adresse (même type requis).",
+      "replaced": "Fichier remplacé",
+      "in_use": "Ce média est utilisé : retirez-le des contenus avant de le supprimer."
+    },
+    "menu": {
+      "title": "Menu « Le kayak-polo »",
+      "help": "Entrées du menu « Le kayak-polo » du site public, sur trois niveaux au plus (entrée, sous-entrée, sous-sous-entrée). Une entrée dont la cible n'est pas publiée est masquée.",
+      "add": "Ajouter une entrée",
+      "add_child": "Ajouter une entrée de niveau {level}",
+      "label_fr": "Libellé (FR)",
+      "label_en": "Libellé (EN)",
+      "target_kind": "Cible",
+      "target": {
+        "page": "Page",
+        "article": "Article",
+        "url": "Adresse"
+      },
+      "article_id": "N° d'article",
+      "destination": "Destination",
+      "level": "Niveau {level}"
+    },
+    "home": {
+      "title": "Accueil du site",
+      "help": "Blocs de la page d'accueil, dans l'ordre. Un bloc vide n'est pas affiché ; les événements restent toujours affichés.",
+      "enabled": "Affiché",
+      "kind": {
+        "alert": "Bandeau d'alerte",
+        "featured": "À la une",
+        "latest_news": "Dernières actualités",
+        "partners": "Partenaires"
+      },
+      "alert_level": "Niveau",
+      "level": {
+        "info": "Information",
+        "important": "Important"
+      },
+      "from": "Du",
+      "to": "Au",
+      "alert_text_fr": "Texte (FR)",
+      "alert_text_en": "Texte (EN)",
+      "featured_articles": "Articles à la une ({max} au plus)",
+      "pick_articles": "Choisir des articles publiés",
+      "latest_count": "Nombre d'actualités",
+      "partner_name": "Nom",
+      "partner_url": "Site",
+      "logo_pick": "Choisir le logo",
+      "logo_change": "Changer le logo",
+      "add_partner": "Ajouter un partenaire"
+    },
+    "redirects": {
+      "title": "Redirections",
+      "help": "Anciennes adresses (WordPress…) redirigées de façon permanente (301). Celles de la reprise WordPress sont créées automatiquement.",
+      "from": "Ancienne adresse",
+      "to": "Nouvelle adresse",
+      "hits": "Accès",
+      "add": "Ajouter"
+    },
+    "forms": {
+      "title": "Formulaires",
+      "new": "Nouveau formulaire",
+      "add": "Nouveau formulaire",
+      "empty": "Aucun formulaire.",
+      "view": "Voir le formulaire",
+      "state_label": "État",
+      "state": {
+        "draft": "Brouillon",
+        "upcoming": "Bientôt ouvert",
+        "open": "Ouvert",
+        "closed": "Clos"
+      },
+      "counts": "{confirmed} confirmée(s), {waiting} en attente / {capacity}",
+      "entries": "Inscriptions",
+      "archived": "{count} inscription(s) purgée(s) (RGPD)",
+      "intro": "Introduction",
+      "event_id": "Événement rattaché (n°)",
+      "competition": "Compétition rattachée",
+      "attach_help": "Le formulaire est proposé sur la page de l'événement ou de la compétition.",
+      "fields": "Champs",
+      "new_field": "Nouveau champ",
+      "field_label": "Libellé (FR)",
+      "field_label_en": "Libellé (EN)",
+      "field_type": "Type",
+      "field_key": "Clé",
+      "required": "Obligatoire",
+      "help": "Aide",
+      "min": "Minimum",
+      "max": "Maximum",
+      "options": "Choix proposés",
+      "option_label": "Libellé",
+      "option_value": "Valeur",
+      "add_option": "Ajouter un choix",
+      "add_field": "Ajouter un champ",
+      "type": {
+        "text": "Texte court",
+        "textarea": "Texte long",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "number": "Nombre",
+        "date": "Date",
+        "select": "Liste déroulante",
+        "radio": "Choix unique",
+        "checkbox": "Cases à cocher",
+        "club": "Club",
+        "competition": "Compétition"
+      },
+      "opening": "Ouverture",
+      "opens_at": "Ouverture le",
+      "closes_at": "Clôture le",
+      "capacity": "Places",
+      "capacity_help": "Inscriptions confirmées au plus ; vide : illimité.",
+      "waiting_list": "Liste d'attente au-delà",
+      "confirmation_mode": "Confirmation",
+      "confirmation_help": "Manuelle : chaque inscription attend votre confirmation (ex. paiement reçu).",
+      "mode": {
+        "auto": "Automatique",
+        "manual": "Manuelle"
+      },
+      "payment_url": "Lien de paiement",
+      "payment_help": "Affiché après l'inscription et dans l'e-mail (HelloAsso…).",
+      "mails": "E-mails",
+      "notify_emails": "Organisateurs à prévenir",
+      "notify_help": "Adresses séparées par des virgules.",
+      "confirmation_text": "Message de confirmation",
+      "public_list": "Liste publique des inscrits",
+      "public_list_enable": "Publier la liste des inscrits",
+      "public_columns": "Colonnes publiées",
+      "public_columns_help": "E-mail, téléphone, textes longs et dates ne sont jamais publiés.",
+      "gdpr": "Données personnelles (RGPD)",
+      "purpose": "Finalité",
+      "purpose_help": "Affichée sous le formulaire : à quoi servent les données.",
+      "retention_days": "Conservation (jours)",
+      "retention_help": "Après la clôture, les inscriptions sont supprimées ; leur nombre est conservé.",
+      "delete_confirm": "Supprimer le formulaire « {title} » et ses inscriptions ?",
+      "date": "Date",
+      "actions": "Actions",
+      "no_entries": "Aucune inscription.",
+      "confirm": "Confirmer",
+      "hold": "Mettre en attente",
+      "cancel": "Annuler",
+      "entry_status": {
+        "confirmed": "Confirmée",
+        "waiting": "En attente",
+        "cancelled": "Annulée"
+      },
+      "reason": {
+        "full": "liste d'attente",
+        "manual": "à confirmer"
+      },
+      "status_changed": {
+        "confirmed": "Inscription confirmée, e-mail envoyé",
+        "waiting": "Inscription mise en attente",
+        "cancelled": "Inscription annulée"
+      },
+      "mail_log": "E-mails envoyés",
+      "mail_status": {
+        "sent": "Envoyé",
+        "failed": "Échec"
+      },
+      "resend": "Renvoyer"
+    },
+    "errors": {
+      "required": "Champ obligatoire",
+      "invalid": "Valeur invalide",
+      "taken": "Déjà utilisé",
+      "reserved": "Nom réservé par le site",
+      "too_long": "Trop long",
+      "too_many": "Trop d'éléments",
+      "before_opening": "Avant l'ouverture",
+      "email_required": "Un formulaire publié doit avoir un champ e-mail obligatoire (confirmation au déclarant).",
+      "personal": "Une colonne publiée contient des données personnelles.",
+      "links_invalid": "Lien invalide : compétition « saison/code », numéro d'événement ou code de club.",
+      "categories_required": "Choisissez au moins une catégorie pour publier.",
+      "categories_invalid": "Catégorie inconnue",
+      "options_required": "Ajoutez au moins un choix.",
+      "options_invalid": "Choix vide ou en double",
+      "file_type": "Type de fichier refusé (JPEG, PNG, WebP ou PDF).",
+      "file_too_large": "Fichier trop lourd (20 Mo au plus).",
+      "file_type_mismatch": "Le remplaçant doit être du même type.",
+      "file_required": "Choisissez un fichier.",
+      "in_use": "Média utilisé",
+      "too_deep": "Trois niveaux au plus."
+    }
   }
 }

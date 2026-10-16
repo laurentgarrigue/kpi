@@ -102,6 +102,21 @@
 | **Journal** | C | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **TV (configuration scoreboard)** | C/M | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Opérations** | (saisonnières/import-export) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Utilisateurs — capacité Rédacteur** | Attribuer / retirer | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Éditorial (site public — [PAGE_CMS.md](PAGE_CMS.md))
+
+Droits **indépendants du niveau** : la capacité **Rédacteur** (`editor`, table `kp_user_capability`) s'ajoute au
+profil d'un utilisateur, quel que soit son niveau. Les profils 1–2 ont tous ces droits sans la capacité.
+
+| Fonctionnalité | Rédacteur | Profils 1–2 | Autres |
+|---|---|---|---|
+| Articles, pages, médiathèque, albums : consulter, créer, modifier | ✅ | ✅ | ❌ |
+| Publier / dépublier / programmer | ✅ | ✅ | ❌ |
+| Archiver (corbeille) | ✅ | ✅ | ❌ |
+| Supprimer définitivement | ❌ | ✅ | ❌ |
+| Menu éditorial, blocs d'accueil, redirections | ❌ | ✅ | ❌ |
+| Formulaires : créer, modifier, inscriptions, export | ✅ | ✅ | ❌ |
 
 ---
 

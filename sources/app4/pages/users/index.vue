@@ -562,7 +562,7 @@ const profileOptions = computed(() => {
     </div>
 
     <!-- Desktop Table — Mode Mandats -->
-    <div v-if="!loading && viewMode === 'mandates'" class="hidden lg:block overflow-x-auto">
+    <div v-if="!loading && viewMode === 'mandates'" class="hidden lg:block sticky-thead">
       <div v-if="!filterProfile && !filterSeason && filterCompetitions.length === 0" class="text-center py-12 text-header-600 dark:text-header-300">
         <UIcon name="i-heroicons-funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
         {{ t('users.mandate_scopes_no_filter') }}
@@ -651,7 +651,7 @@ const profileOptions = computed(() => {
     />
 
     <!-- Desktop Table — Mode Utilisateurs -->
-    <div v-if="!loading && viewMode === 'users'" class="hidden lg:block overflow-x-auto">
+    <div v-if="!loading && viewMode === 'users'" class="hidden lg:block sticky-thead">
       <table v-if="users.length > 0" class="min-w-full divide-y divide-header-200 dark:divide-header-700 bg-white dark:bg-header-900 rounded-lg shadow-sm">
         <thead class="bg-header-50 dark:bg-header-900">
           <tr>

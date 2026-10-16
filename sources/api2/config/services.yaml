@@ -16,6 +16,14 @@ parameters:
     # Une variable d'environnement est lue à l'exécution et n'est jamais figée dans le cache.
     legacy_document_root: '%env(LEGACY_DOCUMENT_ROOT)%'
     live_document_root: '%legacy_document_root%'
+    # Adresse du site public (app3), pour les liens des fichiers ICS. Définie par docker/compose.*.yaml
+    # (beta.* jusqu'à la bascule) ; repli si une instance ne la fournit pas encore.
+    public_site_url_default: 'https://beta.kayak-polo.info'
+    public_site_url: '%env(default:public_site_url_default:PUBLIC_SITE_URL)%'
+    # Médias du module éditorial (FEATURE_CMS.md § 5.3) : HOST_MEDIA_PATH/content monté sous {legacy}/media/content
+    # (servi par Apache sous /media/content/). CMS_MEDIA_ROOT ne sert qu'aux tests (répertoire temporaire).
+    cms_media_root_default: '%legacy_document_root%/media/content'
+    cms_media_root: '%env(default:cms_media_root_default:CMS_MEDIA_ROOT)%'
 
 services:
     # default configuration for services in *this* file
@@ -24,6 +32,7 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
             string $legacyDocumentRoot: '%legacy_document_root%'
+            string $publicSiteUrl: '%public_site_url%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

@@ -39,7 +39,7 @@ export const useStatsStore = defineStore('stats', {
     },
 
     setLimit(limit: number) {
-      this.limit = Math.max(1, Math.min(500, limit))
+      this.limit = Math.max(1, Math.min(5000, limit))
     },
 
     resetCompetitions() {

@@ -366,7 +366,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
     </AdminToolbar>
 
     <!-- Desktop Table -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
+    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
       <!-- Loading state -->
       <div v-if="loading && groups.length === 0" class="px-4 py-8 text-center text-header-600 dark:text-header-300">
         <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -380,7 +380,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
 
       <!-- Groups by section -->
       <div v-else>
-        <div v-for="section in groupsBySection" :key="section.section" class="border-b border-header-200 dark:border-header-700 last:border-b-0">
+        <div v-for="section in groupsBySection" :key="section.section" class="sticky-thead border-b border-header-200 dark:border-header-700 last:border-b-0">
           <!-- Section header (accordion toggle) -->
           <button
             class="w-full bg-header-200 dark:bg-header-700 hover:bg-header-200 dark:hover:bg-header-700 px-4 py-2 flex items-center gap-2 transition-colors cursor-pointer"

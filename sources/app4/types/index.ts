@@ -15,6 +15,8 @@ export interface User {
   profile: number
   token: string
   filters?: UserFilters
+  /** Rights independent of the profile level, e.g. 'editor' (DOC/specs/PAGE_CMS.md). */
+  capabilities?: string[]
 }
 
 // Season from filters API

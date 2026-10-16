@@ -28,6 +28,9 @@ API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
 # d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
 WORKER_CONTAINER_NAME = $(APPLICATION_NAME)_event_cache_worker
 NODE_CONTAINER_NAME = $(APPLICATION_NAME)_node_app2
+NODE3_CONTAINER_NAME = kpi_node_app3
+# Serveur SSR du site public en préprod/prod (beta.${KPI_DOMAIN_NAME}), cf. DOC/specs/public/SITE_PLATFORM.md
+APP3_CONTAINER_NAME = $(APPLICATION_NAME)_app3
 NODE4_CONTAINER_NAME = kpi_node_app4
 DB_CONTAINER_NAME = $(APPLICATION_NAME)_db
 
@@ -42,6 +45,8 @@ DOCKER_EXEC_NODE = docker exec -ti $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE_NON_INTERACTIVE = docker exec $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE4 = docker exec -ti $(NODE4_CONTAINER_NAME)
 DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
+DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
+DOCKER_EXEC_NODE3_NON_INTERACTIVE = docker exec $(NODE3_CONTAINER_NAME)
 .DEFAULT_GOAL = help
 
 .PHONY: help init init_env init_env_app2 init_env_app4 init_env_api2 init_networks \
@@ -49,9 +54,11 @@ docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_l
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
 docker_production_restart docker_production_rebuild \
-app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
+app2_dev app2_dev_restart app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
+app3_dev app3_dev_restart app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
+app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
+app4_dev app4_dev_restart app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -59,14 +66,14 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
 media_init media_status media_sync_from media_backup media_backup_list media_backup_check media_restore \
-docker_networks_create docker_networks_list docker_networks_clean \
+docker_networks_create docker_networks_list docker_networks_clean favicons_generate \
 wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
 last_merge_sha preprod_rollback release release_tag feature version \
 hooks
@@ -318,6 +325,8 @@ dev_status: ## Affiche l'état et les URLs de l'environnement de développement
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@printf '  %-22s %-34s ' "app4 admin (Nuxt)" "https://$(NODE4_DOMAIN_NAME)/admin2/"; \
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE4_DOMAIN_NAME)/admin2/" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "app3 site public (Nuxt)" "https://beta.$(KPI_DOMAIN_NAME)/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://beta.$(KPI_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@echo
 	@echo "  Logs : make api2_logs | make app2_logs | make app4_logs | make dev_logs"
 	@echo "  (200/401 = OK. Les serveurs Nuxt mettent ~15 s à démarrer.)"
@@ -405,11 +414,23 @@ docker_prod_status: ## Affiche le statut des containers de production
 
 
 ## APP2 - NUXT (Scrutineering/Charts)
+# Redémarre le conteneur d'un serveur Nuxt de dev ($(1) = conteneur, $(2) = app) : remède quand le serveur reste
+# en erreur après une série de rechargements à chaud (ex. 500 « Unexpected token '.' » sur toutes les routes).
+define node_dev_restart
+	@echo "Redémarrage du serveur de dev $(2) ($(1))..."
+	@docker restart $(1) >/dev/null 2>&1 \
+		|| { echo "⛔ Conteneur $(1) introuvable (lancer : make docker_dev_up)"; exit 1; }
+	@echo "✅ $(1) redémarré : Nuxt met ~15 s à répondre. Suivre le démarrage : make $(2)_dev"
+endef
+
 app2_dev: ## Suit les logs du serveur Nuxt (app2, port 3002) - démarré par docker_dev_up
 	@echo "ℹ️  Le serveur Nuxt (app2) démarre automatiquement avec les containers."
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app2_logs
+
+app2_dev_restart: ## Redémarre le serveur Nuxt de dev (app2), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE_CONTAINER_NAME),app2)
 
 app2_logs: ## Affiche les logs du serveur Nuxt (app2). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE_CONTAINER_NAME)
@@ -491,12 +512,81 @@ app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
 
 
+## APP3 - NUXT SSR (site public, beta) — cf. sources/app3/README.md
+app3_dev: ## Suit les logs du serveur Nuxt de dev (app3, https://beta.$(KPI_DOMAIN_NAME)) - démarré par docker_dev_up
+	@$(MAKE) --no-print-directory app3_logs
+
+app3_dev_restart: ## Redémarre le serveur Nuxt de dev (app3) ; en préprod/prod, c'est app3_restart
+	$(call node_dev_restart,$(NODE3_CONTAINER_NAME),app3)
+
+app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sinon serveur de dev. Options: lines=200
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker logs -f --tail $(or $(lines),50) $(APP3_CONTAINER_NAME); \
+	else \
+		docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME); \
+	fi
+
+app3_test: ## Tests du site public (Vitest : unit, composants, e2e) dans le conteneur de dev
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm test"
+
+app3_lint: ## ESLint + typecheck du site public (app3)
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run lint && npm run typecheck"
+
+app3_bash: ## Ouvre un shell dans le conteneur Node de dev (app3)
+	$(DOCKER_EXEC_NODE3) sh
+
+# Premier démarrage : node_app3 lance `npm run dev` au boot et redémarre en boucle sans node_modules,
+# donc `docker exec` y est impossible. Installation via un conteneur temporaire, avec l'UID de l'hôte.
+app3_npm_ci: ## Installe les dépendances d'app3 (lockfile) via un conteneur temporaire — 1er démarrage du dev
+	docker run --rm -u "$(USER_ID):$(GROUP_ID)" -e npm_config_cache=/tmp/.npm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine npm ci
+	@docker restart $(NODE3_CONTAINER_NAME) >/dev/null 2>&1 && echo "✅ $(NODE3_CONTAINER_NAME) redémarré" || true
+
+app3_npm_install: ## Installe les dépendances npm d'app3 (conteneur de dev)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install"
+
+app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=<nom>)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install $(package)"
+
+app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_add_dev package=<nom>)
+	$(DOCKER_EXEC_NODE3) sh -c "npm install -D $(package)"
+
+# Build SSR dans un conteneur Node temporaire (aucun Node requis sur le serveur), puis redémarrage
+# du conteneur app3. Monte sources/ entier : app3 étend ../kpi-layer. Un même build sert préprod et
+# prod (configuration runtime NUXT_* des compose). Appelé par deploy-wrapper.sh (vps-manager).
+# Un conteneur app3 absent n'est PAS une erreur : le beta ne doit jamais faire échouer un déploiement
+# (SITE_PLATFORM.md § 6) — il est créé par `make docker_<env>_up`.
+app3_generate_preprod: ## Construit le site public (SSR) et redémarre le conteneur app3 (préprod)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_production: ## Construit le site public (SSR) et redémarre le conteneur app3 (production)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_prod: app3_generate_production ## Alias pour app3_generate_production
+
+_app3_build_and_restart:
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app3/package-lock.json
+	@echo "Building app3 (SSR) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine sh -c "npm ci && npx nuxt build"
+	@$(MAKE) --no-print-directory app3_restart
+
+app3_restart: ## Redémarre le serveur SSR du site public (app3) pour charger le dernier build
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker restart $(APP3_CONTAINER_NAME) >/dev/null && echo "✅ $(APP3_CONTAINER_NAME) redémarré"; \
+	else \
+		echo "⚠️  $(APP3_CONTAINER_NAME) absent : le créer avec make docker_<env>_up (non bloquant)"; \
+	fi
+
+
 ## APP4 - NUXT (Admin)
 app4_dev: ## Suit les logs du serveur Nuxt (app4 admin, port 3004) - démarré par docker_dev_up
 	@echo "ℹ️  Le serveur Nuxt (app4) démarre automatiquement avec les containers."
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app4_logs
+
+app4_dev_restart: ## Redémarre le serveur Nuxt de dev (app4 admin), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE4_CONTAINER_NAME),app4)
 
 app4_logs: ## Affiche les logs du serveur Nuxt (app4 admin). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE4_CONTAINER_NAME)
@@ -924,6 +1014,14 @@ api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base
 	@echo "Tests unitaires API2 (suite unit, sans DB)..."
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
 
+db_migrate: ## Applique un script SQL/migrations/*.sql à la base de l'environnement (make db_migrate file=SQL/migrations/<fichier>.sql)
+	@[ -n "$(file)" ] && [ -f "$(file)" ] || { echo "⛔ Usage : make db_migrate file=SQL/migrations/<fichier>.sql"; exit 1; }
+	@[ -n "$(DB_ROOT_PASSWORD)" ] && [ -n "$(DB_NAME)" ] || { \
+		echo "⛔ DB_ROOT_PASSWORD ou DB_NAME non défini. Vérifie docker/.env."; exit 1; }
+	@echo "Application de $(file) sur $(DB_NAME) ($(DB_CONTAINER_NAME))..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(DB_NAME) < "$(file)"
+	@echo "✔ $(file) appliqué"
+
 api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
 	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
 		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
@@ -931,8 +1029,11 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
 		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
 		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
-	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
+	@echo "Chargement de SQL/fixtures/schema.sql, des migrations du site public puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
+	@for f in SQL/migrations/*_public_site_*.sql; do \
+		docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < "$$f" || exit 1; \
+	done
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
 	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
 
@@ -1044,6 +1145,12 @@ wordpress_restore: ## Restaure WordPress depuis /tmp/wordpress_backup (usage int
 	fi
 
 
+## FAVICONS - cf. DOC/developer/guides/FAVICONS.md
+favicons_generate: ## Régénère les favicons app2/app3/app4 (+ variantes de réserve) depuis scripts/favicons/logo-source.png
+	@docker run --rm -u $$(id -u):$$(id -g) -e HOME=/tmp -v $(PWD):/repo -w /repo python:3.12-slim \
+		sh -c "pip install --quiet --no-cache-dir --user --disable-pip-version-check pillow && python scripts/favicons/generate.py"
+
+
 ## GIT - PULL
 # Restaure les package-lock.json versionnés (annule toute dérive locale due à npm
 # install/ci lancé directement sur le checkout) avant de tirer les changements.
@@ -1098,12 +1205,27 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
 
-feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring [carry=1])
+feature: ## Crée une branche feature depuis main à jour, ou depuis la branche courante (demandé au prompt, ou make feature name=scoring [carry=1] [from=main|current])
 	@# Modifications en cours : sur confirmation (ou carry=1), elles sont remisées (stash, non
 	@# suivis compris), main est mis à jour, puis elles sont réappliquées sur la nouvelle branche.
 	@# Sans confirmation : abandon, rien n'est touché. Le stash protège aussi les modifs du
 	@# `reset --hard origin/main` ci-dessous.
+	@# Branche de départ : main par défaut. Si la branche courante n'est pas main, on demande s'il faut
+	@# partir d'elle (sous-feature, correctif d'une PR en cours) ; from=current|main évite la question.
 	@carry=0; \
+	current="$$(git rev-parse --abbrev-ref HEAD)"; \
+	base=main; \
+	case "$(from)" in \
+		current) base="$$current" ;; \
+		main|"") ;; \
+		*) echo "⛔ from='$(from)' invalide (main ou current)."; exit 1 ;; \
+	esac; \
+	if [ -z "$(from)" ] && [ "$$current" != "main" ] && [ "$$current" != "HEAD" ] && [ -t 0 ]; then \
+		printf "Branche courante : '%s'. Créer la nouvelle branche depuis elle plutôt que depuis main ? [o/N] " "$$current"; \
+		read answer; \
+		case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) base="$$current" ;; esac; \
+	fi; \
+	[ "$$base" != "HEAD" ] || { echo "⛔ HEAD détachée : impossible de partir de la branche courante."; exit 1; }; \
 	if [ -n "$$(git status --porcelain)" ]; then \
 		echo "Modifications en cours :"; \
 		git status -sb; \
@@ -1147,13 +1269,20 @@ feature: ## Part d'un main à jour et crée une branche feature (nom demandé au
 			return 1; \
 		fi; \
 	}; \
-	echo "→ Mise à jour de main..."; \
-	{ git fetch origin main --quiet \
-		&& git checkout main --quiet \
-		&& git reset --hard origin/main --quiet \
-		&& git checkout -b "$$branch" --quiet; } || { \
-		echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
-	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	if [ "$$base" = "main" ]; then \
+		echo "→ Mise à jour de main..."; \
+		{ git fetch origin main --quiet \
+			&& git checkout main --quiet \
+			&& git reset --hard origin/main --quiet \
+			&& git checkout -b "$$branch" --quiet; } || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	else \
+		git checkout -b "$$branch" --quiet || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis '$$base' ($$(git rev-parse --short HEAD), non mise à jour depuis origin)."; \
+		echo "  La PR devra cibler '$$base' tant que celle-ci n'est pas fusionnée :  make pr_create base=$$base"; \
+	fi; \
 	restore || exit 1; \
 	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
 

@@ -355,6 +355,18 @@ header.sticky {
   z-index: 30;
 }
 
+/* ===== Sticky table headers =====
+   Wrap a table in .sticky-thead to pin its <thead> under the sticky admin header
+   (h-16 + env border) while the page scrolls. Sticky needs every ancestor up to the
+   page to be overflow:visible -- no overflow-hidden / overflow-x-auto on the wrappers,
+   and none on <main> in layouts/admin.vue. One thead per table, so tables split in
+   sections (teams, competitions, groups) each pin their own header within their section. */
+.sticky-thead thead {
+  position: sticky;
+  top: 4.2rem;
+  z-index: 10;
+}
+
 /* ===== Browser Autofill Override ===== */
 /* Chromium repaints autofilled inputs with its own background and text color.
    The only way to override the background is an opaque inset box-shadow -- but

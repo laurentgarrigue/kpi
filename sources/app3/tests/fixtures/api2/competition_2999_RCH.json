@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "body": {
+    "code": "RCH",
+    "season": "2999",
+    "group": {
+      "code": "TSTRES",
+      "libelle": "Groupe Résultats",
+      "libelle_en": "Results group"
+    },
+    "libelle": "Championnat Résultats",
+    "soustitre": "Saison régulière",
+    "soustitre2": "Poule A",
+    "display_title": "Championnat Résultats",
+    "type": "CHPT",
+    "status": "ON",
+    "level": "NAT",
+    "banner": "logo/bandeau-rch.png",
+    "logo": null,
+    "web": "https://example.test",
+    "qualified": 1,
+    "eliminated": 1,
+    "has_games": true,
+    "round": 1,
+    "final": false,
+    "siblings": [
+      {
+        "code": "RCH",
+        "display_title": "Championnat Résultats",
+        "soustitre2": "Poule A"
+      },
+      {
+        "code": "RCP",
+        "display_title": "Phase finale",
+        "soustitre2": "Finale"
+      },
+      {
+        "code": "RMU",
+        "display_title": "Multi Résultats",
+        "soustitre2": "Général"
+      },
+      {
+        "code": "RAT",
+        "display_title": "Championnat En Attente",
+        "soustitre2": "Poule B"
+      }
+    ],
+    "events": [
+      {
+        "id": 77,
+        "libelle": "Tournoi Résultats",
+        "place": "Rivecity",
+        "start": "2999-04-01",
+        "end": "2999-04-02",
+        "logo": "logo/resultats.png",
+        "share": 0.5
+      }
+    ]
+  }
+}

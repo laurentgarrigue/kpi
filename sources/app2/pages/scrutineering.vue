@@ -87,7 +87,7 @@
         <!-- Equipment control mode -->
         <div v-if="prefs?.scr_team_id && mode === 'control'" class="p-2">
           <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-300">
+            <table class="min-w-full bg-surface border border-gray-300">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-1 py-2 text-left text-sm font-medium text-gray-700 border-b">
@@ -113,10 +113,10 @@
               <tbody>
                 <tr v-for="player in controlPlayers" :key="player.player_id" class="border-b hover:bg-gray-50">
                   <td class="px-2 py-2">
-                    <span v-if="player.cap !== 'E'" class="inline-block px-2 py-1 text-xs font-bold text-white bg-gray-800 rounded">
+                    <span v-if="player.cap !== 'E'" class="inline-block px-2 py-1 text-xs font-bold text-white bg-bar rounded">
                       {{ player.num }}
                     </span>
-                    <span v-if="player.cap === 'E'" class="inline-block px-2 py-1 text-xs font-bold text-white bg-gray-800 rounded">
+                    <span v-if="player.cap === 'E'" class="inline-block px-2 py-1 text-xs font-bold text-white bg-bar rounded">
                       {{ t('Scrutineering.Coach') }}
                     </span>
                     <span class="text-xs md:text-sm lg:text-base ml-1">{{ player.last_name }} {{ player.first_name }}</span>
@@ -259,14 +259,14 @@
         <div v-if="prefs?.scr_team_id && mode === 'composition'" class="p-2">
           <div
             v-if="compositionLocked"
-            class="mb-3 flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800"
+            class="mb-3 flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 dark:border-amber-700 rounded text-sm text-amber-800 dark:text-amber-200"
           >
             <UIcon name="i-heroicons-lock-closed" class="h-5 w-5 shrink-0" />
             {{ t('Scrutineering.Composition.Locked') }}
           </div>
 
           <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-300">
+            <table class="min-w-full bg-surface border border-gray-300">
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-2 py-2 text-center text-sm font-medium text-gray-700 border-b w-16">
@@ -310,7 +310,7 @@
                         <select
                           :value="player.cap || '-'"
                           :disabled="compositionLocked"
-                          class="w-28 px-1 py-1 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 cursor-pointer"
+                          class="w-28 px-1 py-1 text-sm border border-gray-300 rounded bg-surface focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 cursor-pointer"
                           @change="onStatusChange(player, $event)"
                         >
                           <option value="-">{{ t('Scrutineering.Composition.StatusPlayer') }}</option>
@@ -355,12 +355,12 @@
                 v-model="playerSearch"
                 type="text"
                 :placeholder="t('Scrutineering.Composition.SearchPlayer')"
-                class="w-full px-3 py-2 text-sm bg-white border-2 border-gray-400 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 text-sm bg-surface border-2 border-gray-400 rounded-md focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 @input="onSearchInput"
               >
               <div
                 v-if="searchResults.length > 0"
-                class="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
+                class="absolute z-20 mt-1 w-full bg-surface border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto"
               >
                 <button
                   v-for="result in searchResults"
@@ -376,7 +376,7 @@
               </div>
               <div
                 v-else-if="playerSearch.trim().length >= 2 && !searching"
-                class="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg px-3 py-2 text-sm text-gray-400 italic"
+                class="absolute z-20 mt-1 w-full bg-surface border border-gray-300 rounded-md shadow-lg px-3 py-2 text-sm text-gray-400 italic"
               >
                 {{ t('Scrutineering.Composition.NoResults') }}
               </div>
@@ -389,13 +389,13 @@
       <div v-else class="p-4">
         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4" role="alert">
           <div class="flex justify-between items-center">
-            <p class="font-bold text-yellow-800">
+            <p class="font-bold text-yellow-800 dark:text-yellow-200">
               {{ t('Scrutineering.ChangeEvent') }}
             </p>
             <div class="flex gap-2">
               <button
                 type="button"
-                class="px-4 py-2 text-sm bg-white text-yellow-900 border border-yellow-400 rounded hover:bg-yellow-100 flex items-center"
+                class="px-4 py-2 text-sm bg-surface text-yellow-900 dark:text-yellow-200 border border-yellow-400 rounded hover:bg-yellow-100 flex items-center"
                 :disabled="refreshingRights"
                 @click="refreshRights"
               >
@@ -429,7 +429,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
       @click.self="isResetModalOpen = false"
     >
-      <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+      <div class="bg-surface rounded-lg p-6 w-full max-w-md mx-4">
         <div class="flex items-center gap-2 mb-4">
           <UIcon name="i-heroicons-exclamation-triangle" class="h-6 w-6 text-red-600" />
           <h3 class="text-lg font-semibold text-gray-900">{{ t('Scrutineering.ResetTeamConfirmTitle') }}</h3>

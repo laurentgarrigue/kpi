@@ -7,6 +7,7 @@ DOC/
 ├── user/                    Guides utilisateurs (fonctionnels, concis)
 │   └── archive/             Synthèses passées
 ├── specs/                   Spécifications des pages app4 (admin2)
+│   └── public/              Specs du nouveau site public (app3), écrites avant le code
 └── developer/
     ├── reference/           Ce qui EXISTE : architecture, API, règles métier
     │   └── features/        Documentation technique d'une fonctionnalité
@@ -22,6 +23,7 @@ DOC/
 |---|---|
 | explique une fonctionnalité à un utilisateur | `user/` |
 | spécifie une page de l'admin app4 | `specs/` |
+| spécifie une page ou une fonctionnalité du site public (app3) | `specs/public/` |
 | décrit l'état actuel du système (architecture, API, règle métier) | `developer/reference/` |
 | décrit techniquement une fonctionnalité précise | `developer/reference/features/` |
 | explique comment travailler au quotidien | `developer/guides/` |
@@ -62,6 +64,12 @@ Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
 [PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
 
+## 🌐 [Specs du site public](specs/public/README.md)
+
+Specs écrites **avant** l'implémentation (socle, template, navigation, pages, API publiques, CMS, formulaires) du
+nouveau site public app3, avec leurs critères d'acceptation. Index et statut par phase :
+[specs/public/README.md](specs/public/README.md).
+
 ## 💻 [Documentation Développeur](developer/)
 
 ### [Référence](developer/reference/) — l'existant
@@ -81,6 +89,7 @@ Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
   [STAT_LICENCIES_CATEGORIE](developer/reference/features/STAT_LICENCIES_CATEGORIE.md)
 
 ### [Guides](developer/guides/) — le quotidien
+- **[CLEAN_CODE.md](developer/guides/CLEAN_CODE.md)** - ⭐ Principes (DRY, KISS, SOLID, YAGNI, TDD) et *Definition of Done*, pour tout changement
 - **[ENVIRONNEMENT_DEV.md](developer/guides/ENVIRONNEMENT_DEV.md)** - ⭐ `make dev`, où lire les logs de chaque service
 - **[GIT_WORKFLOW.md](developer/guides/GIT_WORKFLOW.md)** - ⭐ Branches, PR, worktrees, versions
 - **[MAKEFILE_MULTI_ENVIRONMENT.md](developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md)** - Plusieurs instances sur un même serveur
@@ -105,6 +114,7 @@ Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 
 ### [Travaux en cours](developer/in-progress/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
+- **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Plan de refonte du scoring live
 - **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
@@ -130,4 +140,4 @@ Index détaillé : [archive/README.md](developer/archive/README.md)
 - [GEMINI.md](../GEMINI.md) - Guide pour Gemini
 - [Makefile](../Makefile) - Commandes de développement
 
-**Dernière réorganisation** : 2026-10-07
+**Dernière réorganisation** : 2026-10-16 (documents de main intégrés)

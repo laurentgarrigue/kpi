@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "type": "CHPT",
+      "code": "RAT",
+      "libelle": "Poule B",
+      "status": "ATT",
+      "season": "2999",
+      "rounds": {
+        "1": {
+          "type": "C",
+          "phases": {
+            "99-Journée 1": {
+              "type": "C",
+              "libelle": "Journée 1",
+              "level": 1,
+              "t_count": 2,
+              "d_id": 9221,
+              "games": null
+            }
+          }
+        }
+      }
+    }
+  ]
+}

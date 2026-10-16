@@ -8,7 +8,7 @@
 ## En bref
 
 ```bash
-make dev          # lance TOUT en détaché (legacy + api2 + app2 + app4) + affiche l'état
+make dev          # lance TOUT en détaché (legacy + api2 + app2 + app3 + app4) + affiche l'état
 make dev_status   # état + URLs, à tout moment
 make dev_down     # tout arrêter
 ```
@@ -22,6 +22,7 @@ make api2_logs           # api2 (FrankenPHP) : erreurs PHP + Symfony
 make api2_logs_errors    # api2 : erreurs uniquement
 make app2_logs           # serveur Nuxt app2
 make app4_logs           # serveur Nuxt app4
+make app3_logs           # site public app3 (https://beta.kpi.localhost)
 make dev_logs            # tous les containers
 ```
 
@@ -50,6 +51,12 @@ déjà lancé. **Ctrl-C quitte les logs, le serveur continue de tourner.**
 
 > **Nuxt met ~15 s à démarrer.** Un 404 juste après `make dev` est normal : relancer
 > `make dev_status`.
+
+**Redémarrer un serveur de dev** : `make app2_dev_restart`, `make app3_dev_restart`, `make app4_dev_restart`.
+Remède quand un serveur reste en erreur après une série de rechargements à chaud (par exemple un 500
+« Unexpected token '.' » sur toutes les routes, sans fichier cité dans la trace) : le code n'est pas en cause,
+c'est l'état du serveur. À ne pas confondre avec `make app3_restart`, qui redémarre le serveur SSR de
+préprod/prod.
 
 ## Certificats : fin des exceptions Firefox
 

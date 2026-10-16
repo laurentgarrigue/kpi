@@ -1,5 +1,5 @@
 <template>
-  <div class="py-1 px-1 bg-white border-b border-gray-200">
+  <div class="py-1 px-1 bg-surface border-b border-gray-200">
     <div class="grid grid-cols-3 items-center">
       <div class="flex items-center justify-start">
         <button v-if="!hideLeft" @click="navigateTo(previousPage)" class="p-2 rounded-md hover:bg-gray-100 cursor-pointer">

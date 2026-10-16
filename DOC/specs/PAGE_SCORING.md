@@ -424,7 +424,7 @@ Contenu (à compléter à l'implémentation) :
 
 | Clé | Valeur(s) | Aujourd'hui | Cf. |
 |---|---|---|---|
-| `periodDurations` | durées par période (s) | `{ M1:600, M2:600, P1:180, P2:180, TB:180 }` | §6.4, §7.5 |
+| `periodDurations` | durées par période (s) | `{ M1:600, M2:600, P1:300, P2:300, TB:180 }` | §6.4, §7.5 |
 | `halftimeDuration` | chrono de mi-temps indicatif (s) | `180` (3 min) | §7.5 |
 | `shotclockDurations` | `{ full, offensiveRebound }` (s) | `{ full: 60, offensiveRebound: 40 }` | §6.5 |
 | `shotclockOffensiveReboundEnabled` | le reset 40 s est-il actif | `false` jusqu'à l'entrée en vigueur | §6.5 |
@@ -594,7 +594,7 @@ boutons **−10 / −1 / +1 / +10 s** sur le temps de jeu, plus **réglage de la
 et **ajustable manuellement à la volée** par période (réglage de la durée dans le dialog
 d'ajustement chrono). **Évolution prévue (hors MVP)** : ces durées (comme **toutes** les valeurs
 de `ScoringConfig`) deviennent **paramétrables au niveau de la compétition** (le legacy code en
-dur deux profils fédération — ICF prolongations 5 min, FFCK 3 min, via `duree_prolongations` —
+dur la durée des prolongations via `duree_prolongations` — 5 min, ICF **et** FFCK —
 qu'on remplacera par un réglage porté par la compétition, en **hydratant `store.config`**).
 
 ### 6.5 Temps réel & captation matériel
@@ -938,10 +938,9 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
   **indicatif** pour l'arbitre (repère pour reprendre), il ne bloque pas.
 - **Match éliminatoire (type E)** : en cas d'**égalité à la fin du temps réglementaire**,
   enchaîner **autant de prolongations que nécessaire** jusqu'au **premier but marqué (but en or)**
-  → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations dépendante de la
-  fédération** : ICF = 5 min, FFCK = 3 min (legacy `duree_prolongations`, override PHP forçant
-  3 min). Pour le MVP : durée par défaut + ajustable manuellement ; cible = réglage porté par la
-  compétition (cf. §6.4).
+  → fin immédiate (règlements FFCK **et** ICF). **Durée des prolongations : 5 min chacune**,
+  pour l'ICF **comme pour la FFCK** (legacy `duree_prolongations = '05'`). Pour le MVP : durée par
+  défaut + ajustable manuellement ; cible = réglage porté par la compétition (cf. §6.4).
 
   > **Écart vs legacy à corriger (important).** FMV3 ne propose que **deux** boutons de
   > prolongation figés (`P1`, `P2`) → **maximum 2 prolongations**, ce qui **viole le règlement**
@@ -1132,7 +1131,7 @@ Artefacts créés/modifiés dans `sources/app4` :
 | Fichier | Détail |
 |---|---|
 | `types/scoring.ts` | **Créé.** `Period`, `MatchStatus`, `MatchType`, `TeamSide`, `ScoringEventCode`, `ScoringMatch` (calé sur la réponse réelle de `AdminGamesController::get` — champs camelCase : id, validation, statut, type, periode, scoreA/B, scoreDetailA/B, idEquipeA/B, equipeA/B…), `ScoringPlayer`, `ScoringEvent`, `Penalty`, `PeriodDurations`. |
-| `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2/TB=180s. **Actions de chargement/mutation → Phase 1.** |
+| `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2=300s, TB=180s. **Actions de chargement/mutation → Phase 1.** |
 | `composables/useScoringPermissions.ts` | **Créé.** Signature `(isLocked)`. **Accès gaté profil ≤ 2** via constante `SCORING_ACCESS_MAX_PROFILE = 2`. Retourne `canView`, `canScore`, `canManagePlayers`, `canValidate`, `canLock`. Cible post-validation documentée en commentaire (relever la constante + le contrôle serveur). |
 | `i18n/locales/fr.json`, `en.json` | **Modifiés.** Namespace `scoring.*` ajouté (title, link, hardware, status ATT/ON/END, period M1/M2/P1/P2/TB, event goal/cards, timer, scoreboard, locked). |
 | `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version qu'app3/fm3). |

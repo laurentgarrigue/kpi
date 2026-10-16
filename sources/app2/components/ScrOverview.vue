@@ -5,7 +5,7 @@
     </div>
 
     <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4">
-      <p class="text-red-800 font-medium">{{ error }}</p>
+      <p class="text-red-800 dark:text-red-300 font-medium">{{ error }}</p>
     </div>
 
     <div v-else-if="categories.length === 0" class="text-center py-12 text-gray-400">
@@ -13,7 +13,7 @@
     </div>
 
     <div v-else class="overflow-x-auto">
-      <table class="min-w-full bg-white border border-gray-300 text-sm">
+      <table class="min-w-full bg-surface border border-gray-300 text-sm">
         <thead class="bg-gray-100">
           <tr>
             <th class="px-3 py-2 text-left font-semibold text-gray-700 border-b border-r border-gray-300 sticky left-0 bg-gray-100 z-10 min-w-40">
@@ -34,7 +34,7 @@
             :key="club.code"
             class="border-b hover:bg-gray-50"
           >
-            <td class="px-3 py-2 border-r border-gray-300 sticky left-0 bg-white z-10">
+            <td class="px-3 py-2 border-r border-gray-300 sticky left-0 bg-surface z-10">
               <span class="font-medium text-gray-800 leading-tight">{{ club.label }}</span>
             </td>
             <td

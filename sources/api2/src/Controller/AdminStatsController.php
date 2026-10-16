@@ -102,7 +102,7 @@ class AdminStatsController extends AbstractController
             $compets = $compets !== '' ? array_map('trim', explode(',', $compets)) : [];
         }
         $statType = $request->query->get('type', 'Buteurs');
-        $limit = min(500, max(1, (int) $request->query->get('limit', 30)));
+        $limit = min(5000, max(1, (int) $request->query->get('limit', 30)));
 
         // Get active season if not provided
         if (!$codeSaison) {
@@ -388,7 +388,7 @@ class AdminStatsController extends AbstractController
             $compets = $compets !== '' ? array_map('trim', explode(',', $compets)) : [];
         }
         $statType = $request->query->get('type', 'Buteurs');
-        $limit = min(500, max(1, (int) $request->query->get('limit', 30)));
+        $limit = min(5000, max(1, (int) $request->query->get('limit', 30)));
 
         // Get translated labels from frontend (if provided)
         $labelsJson = $request->query->get('labels', '');

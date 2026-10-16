@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "body": {
+    "event": {
+      "id": 79,
+      "libelle": "Finales Multi-groupes",
+      "place": "Rivecity",
+      "logo": null,
+      "start": "2999-06-01",
+      "end": "2999-07-10",
+      "single_group": false
+    },
+    "competitions": [
+      {
+        "code": "RDV",
+        "season": "2999",
+        "display_title": "Rencontre Divers",
+        "soustitre2": null,
+        "group": "TSTDIV",
+        "type": "CHPT",
+        "gamedays": 1,
+        "total_gamedays": 1
+      },
+      {
+        "code": "RAT",
+        "season": "2999",
+        "display_title": "Championnat En Attente",
+        "soustitre2": "Poule B",
+        "group": "TSTRES",
+        "type": "CHPT",
+        "gamedays": 1,
+        "total_gamedays": 1
+      }
+    ]
+  }
+}

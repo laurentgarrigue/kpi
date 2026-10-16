@@ -30,7 +30,7 @@ watch(() => route.path, () => {
     />
 
     <!-- Page content -->
-    <main class="flex-1 px-4 py-2 md:px-6 overflow-auto">
+    <main class="flex-1 px-4 py-2 md:px-6">
       <slot />
     </main>
 

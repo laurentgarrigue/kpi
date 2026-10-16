@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="showPrompt"
-    class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 animate-slide-up"
+    class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-surface rounded-lg shadow-2xl border border-gray-200 z-50 animate-slide-up"
   >
     <div class="p-4">
       <div class="flex items-start gap-3">

@@ -1,0 +1,33 @@
+{
+  "status": 200,
+  "body": {
+    "code": "C001",
+    "label": "Club Alpha Lacville",
+    "department": {
+      "code": "CDT33",
+      "label": "Comité Départemental Test 33"
+    },
+    "region": {
+      "code": "CRT",
+      "label": "Comité Régional Test"
+    },
+    "www": "https://alpha.example.test",
+    "email": "contact@alpha.example.test",
+    "postal": "1 quai du Lac 99001 Lacville",
+    "position": {
+      "lat": 44.84,
+      "lng": -0.58
+    },
+    "logo": null,
+    "teams": [
+      {
+        "number": 105,
+        "label": "Alpha Deux"
+      },
+      {
+        "number": 101,
+        "label": "Equipe Alpha"
+      }
+    ]
+  }
+}

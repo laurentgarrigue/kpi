@@ -1,7 +1,7 @@
 <template>
   <article class="mb-5">
     <div v-for="category in chartData" :key="category[0]">
-      <div class="bg-gray-800 text-white px-3 py-2">
+      <div class="bg-bar text-white px-3 py-2">
         {{ category.libelle || category.code }}
       </div>
       <div
@@ -12,6 +12,8 @@
           :chart-ranking="category.ranking"
           :chart-status="category.status"
           :show-flags="showFlags"
+          :qualified="category.qualified"
+          :eliminated="category.eliminated"
         />
       </div>
       <div v-else-if="category.status === 'ATT'" class="flex items-center justify-center py-8 text-gray-400 italic text-sm">
@@ -28,6 +30,8 @@
               :chart-ranking="category.ranking"
               :chart-status="category.status"
               :show-flags="showFlags"
+              :qualified="category.qualified"
+              :eliminated="category.eliminated"
               :competition-type="category.type"
             />
           </div>

@@ -1,0 +1,481 @@
+<?php
+
+namespace App\Tests\Integration;
+
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+
+/**
+ * Endpoints publics transverses du site (DOC/specs/public/API_PUBLIC_TRANSVERSE.md), sur les fixtures « groupe
+ * TSTRES » et « site public, phase 3 » (SQL/fixtures/README.md). Chaque test cite le critère qu'il couvre.
+ */
+final class PublicSiteEndpointsTest extends ApiTestCase
+{
+    use ClockSensitiveTrait;
+
+    /**
+     * Adresse publique (DNS de Google) : soumise à la limite de débit, contrairement à 127.0.0.1. Pas de plage de
+     * documentation RFC 5737 : depuis Symfony 7.4.21, `IpUtils::isPrivateIp()` les considère comme privées.
+     */
+    private const PUBLIC_IP = '8.8.8.8';
+
+    // ------------------------------------------------------------------ /calendar
+
+    public function testApi01CalendarListsPublishedGamedaysMergedByCompetitionDatesAndPlace(): void
+    {
+        $days = $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES');
+
+        // 9204 (Pause) exclue ; 9213 fusionnée dans 9211 (même coupe, mêmes dates, même lieu).
+        self::assertSame([9202, 9211, 9212], self::column($days, 'id'));
+        self::assertSame(['id', 'competition', 'label', 'name', 'place', 'department', 'start', 'end', 'event'], array_keys($days[0]));
+        // Section du groupe (kp_groupe.section : 2 = compétitions nationales), qui remplace le niveau.
+        self::assertSame(
+            ['season' => '2999', 'code' => 'RCH', 'display_title' => 'Championnat Résultats', 'type' => 'CHPT', 'section' => 2, 'group' => 'TSTRES'],
+            $days[0]['competition'],
+        );
+        // Libellé du legacy : « nom de la journée - lieu (département) ».
+        self::assertSame('RCH J2 - Rivecity (64)', $days[0]['label']);
+        self::assertSame(['Rivecity', '64', '2999-04-01', '2999-04-02'], [$days[0]['place'], $days[0]['department'], $days[0]['start'], $days[0]['end']]);
+        self::assertSame(['id' => 77, 'libelle' => 'Tournoi Résultats', 'single_group' => true], $days[0]['event']);
+    }
+
+    public function testApi01CalendarKeepsGamedaysOverlappingThePeriodAndHidesUnpublishedEvents(): void
+    {
+        // 9201 (1er-2 mars) chevauche le début de la période ; son événement 78 n'est pas publié.
+        $days = $this->getJson('/calendar?start=2999-03-02&end=2999-03-31&group=TSTRES');
+
+        self::assertSame([9201], self::column($days, 'id'));
+        self::assertNull($days[0]['event']);
+        self::assertSame([], $this->getJson('/calendar?start=2999-05-01&end=2999-05-31&group=TSTRES'), '9203 non publiée');
+    }
+
+    public function testApi01CalendarFiltersBySection(): void
+    {
+        self::assertSame([], $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&section=3'));
+        self::assertCount(3, $this->getJson('/calendar?start=2999-04-01&end=2999-04-30&group=TSTRES&section=2'));
+        // Divers (100) : un groupe hors des sections publiques reste visible dans le calendrier.
+        self::assertSame([9261], self::column($this->getJson('/calendar?start=2999-07-01&end=2999-07-31&section=100'), 'id'));
+    }
+
+    public function testApi01CalendarGroupsListEveryGroupWithPublishedCompetitionsBySection(): void
+    {
+        $sections = $this->getJson('/calendar/groups')['sections'];
+
+        self::assertSame([1, 2, 100], self::column($sections, 'section'));
+        self::assertSame(['TSTGRP'], array_column($sections[0]['groups'], 'code'));
+        self::assertSame(['TSTRES'], array_column($sections[1]['groups'], 'code'));
+        self::assertSame(['TSTDIV'], array_column($sections[2]['groups'], 'code'), 'Divers inclus, contrairement à /groups/{season}');
+        self::assertSame(['code', 'libelle', 'libelle_en'], array_keys($sections[1]['groups'][0]));
+    }
+
+    public function testApi01CalendarRejectsInvalidPeriodsAndFilters(): void
+    {
+        foreach ([
+            '/calendar',
+            '/calendar?start=2999-04-30&end=2999-04-01',
+            '/calendar?start=2999-02-30&end=2999-03-31',
+            '/calendar?start=2998-01-01&end=2999-03-01',
+            '/calendar?start=2999-04-01&end=2999-04-30&section=7',
+            '/calendar?start=2999-04-01&end=2999-04-30&section=abc',
+            '/calendar?start=2999-04-01&end=2999-04-30&group=bad%20group',
+        ] as $uri) {
+            self::assertSame(['error' => 'invalid_parameter'], $this->getJson($uri, 400), $uri);
+        }
+    }
+
+    // ------------------------------------------------------------------ ICS
+
+    public function testApi02CompetitionCalendarIsValidIcsWithOneEventPerPublishedGameday(): void
+    {
+        $ics = $this->getIcs('/competition/2999/RCH/calendar.ics');
+
+        $events = self::parseIcs($ics);
+        self::assertSame(['gameday-9201@kayak-polo.info', 'gameday-9202@kayak-polo.info'], array_column($events, 'UID'));
+        self::assertSame('29990301', $events[0]['DTSTART;VALUE=DATE']);
+        self::assertSame('29990303', $events[0]['DTEND;VALUE=DATE'], 'DTEND exclusif : lendemain du dernier jour');
+        // Même libellé que le calendrier (legacy) : « nom de la journée - lieu (département) ».
+        self::assertSame('RCH J1 - Lacville (33)', $events[0]['SUMMARY']);
+        self::assertSame('Lacville (33)', $events[0]['LOCATION']);
+        self::assertStringEndsWith('/competitions/2999/RCH/games?gameday=9201', $events[0]['URL']);
+        self::assertStringContainsString("X-WR-CALNAME:Championnat Résultats (2999)\r\n", $ics);
+    }
+
+    public function testApi02CupPhasesSharingDatesAndPlaceAreOneIcsEvent(): void
+    {
+        // 9211 et 9213 (poules A et B, même jour, même lieu) : un seul événement, comme dans le calendrier.
+        $events = self::parseIcs($this->getIcs('/competition/2999/RCP/calendar.ics'));
+
+        self::assertSame(['gameday-9211@kayak-polo.info', 'gameday-9212@kayak-polo.info'], array_column($events, 'UID'));
+        self::assertSame('RCP Poule A - Rivecity (64)', $events[0]['SUMMARY']);
+        self::assertSame(['29990401', '29990402'], [$events[0]['DTSTART;VALUE=DATE'], $events[0]['DTEND;VALUE=DATE']]);
+    }
+
+    public function testApi02GamedayIcsAndStableUid(): void
+    {
+        $events = self::parseIcs($this->getIcs('/gameday/9212.ics'));
+
+        self::assertCount(1, $events);
+        self::assertSame('gameday-9212@kayak-polo.info', $events[0]['UID']);
+        // CAL-11 : 9212 appartient à l'événement 77, d'un seul groupe → page de l'événement.
+        self::assertStringEndsWith('/events/77/games?competition=RCP', $events[0]['URL']);
+        self::assertStringEndsWith('/competitions/2999/RAT/games?gameday=9221', self::parseIcs($this->getIcs('/gameday/9221.ics'))[0]['URL'] ?? '', 'événement de plusieurs groupes : page de la compétition');
+    }
+
+    public function testEvt10EventCalendarHasEveryPublishedGamedayOfTheEvent(): void
+    {
+        $ics = $this->getIcs('/event/77/calendar.ics');
+
+        $events = self::parseIcs($ics);
+        // 9204 (pause) exclue ; poules A et B de RCP (même jour, même lieu) fusionnées.
+        self::assertSame(['gameday-9202@kayak-polo.info', 'gameday-9211@kayak-polo.info', 'gameday-9212@kayak-polo.info'], array_column($events, 'UID'));
+        self::assertStringContainsString("X-WR-CALNAME:Tournoi Résultats\r\n", $ics);
+        self::assertStringEndsWith('/events/77/games?competition=RCH', $events[0]['URL']);
+        $this->client->request('GET', '/event/78/calendar.ics');
+        self::assertSame(404, $this->client->getResponse()->getStatusCode(), 'événement non publié');
+    }
+
+    public function testApi02IcsContainsNoPersonalData(): void
+    {
+        $ics = $this->getIcs('/competition/2999/RCH/calendar.ics');
+
+        foreach (['RESP', 'DELEGUE', 'CHEF', 'ARBITRE', 'ALPHA'] as $person) {
+            self::assertStringNotContainsString($person, $ics);
+        }
+    }
+
+    public function testApi02UnpublishedGamedaysAndCompetitionsAreNotFound(): void
+    {
+        foreach (['/gameday/9203.ics', '/gameday/9204.ics', '/gameday/9231.ics', '/competition/2999/RNP/calendar.ics'] as $uri) {
+            $this->client->request('GET', $uri);
+            self::assertSame(404, $this->client->getResponse()->getStatusCode(), $uri);
+        }
+    }
+
+    // ------------------------------------------------------------------ historique
+
+    public function testApi03HistoryListsGroupsHavingFinishedFinalsBySection(): void
+    {
+        $body = $this->getJson('/history');
+
+        self::assertSame([['section' => 2, 'label' => 'Competitions_Nationales', 'groups' => [
+            ['code' => 'TSTRES', 'libelle' => 'Groupe Résultats', 'libelle_en' => 'Results group'],
+        ]]], $body['sections']);
+    }
+
+    public function testApi03HistoryOfAGroupShowsFinishedFinalsSeasonBySeasonWithMedals(): void
+    {
+        $body = $this->getJson('/history/TSTRES');
+
+        self::assertSame(['code' => 'TSTRES', 'libelle' => 'Groupe Résultats', 'libelle_en' => 'Results group'], $body['group']);
+        self::assertSame(['2999', '2998'], self::column($body['seasons'], 'season'));
+        self::assertSame(['RCP', 'RMU'], self::column($body['seasons'][0]['competitions'], 'code'), 'RCH en cours, RAT en attente : absentes');
+        self::assertSame(['RCP'], self::column($body['seasons'][1]['competitions'], 'code'), 'RQL n\'est pas du tour final');
+
+        $cup = $body['seasons'][0]['competitions'][0];
+        self::assertSame(['code', 'display_title', 'soustitre2', 'type', 'podium'], array_keys($cup));
+        self::assertSame([1, 2, 3, 4], self::column($cup['podium'], 'rank'));
+        self::assertSame([1, 2, 3, null], self::column($cup['podium'], 'medal'));
+        self::assertSame(['number' => 111, 'label' => 'Equipe Echo', 'logo' => null], $cup['podium'][0]['team']);
+    }
+
+    public function testApi03UnknownOrEmptyHistoryIsNotFound(): void
+    {
+        self::assertSame(['error' => 'not_found'], $this->getJson('/history/TSTGRP', 404), 'aucune finale terminée');
+        self::assertSame(['error' => 'not_found'], $this->getJson('/history/NOPE', 404));
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/history/bad%20code', 400));
+    }
+
+    // ------------------------------------------------------------------ équipes
+
+    public function testApi04TeamSearchNeedsTwoCharactersAndReturnsTwentyAtMost(): void
+    {
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/teams?q=a', 400));
+
+        $teams = $this->getJson('/teams?q=alpha');
+        self::assertSame([105, 101], self::column($teams, 'number'), 'tri par nom');
+        self::assertSame(['number' => 101, 'label' => 'Equipe Alpha', 'club' => ['code' => 'C001', 'label' => 'Club Alpha Lacville']], $teams[1]);
+
+        self::assertSame([105, 101], self::column($this->getJson('/teams?q=C001'), 'number'), 'code club');
+        self::assertLessThanOrEqual(20, count($this->getJson('/teams?q=equipe')));
+    }
+
+    public function testApi05TeamSheetGivesClubHonoursAndSeasons(): void
+    {
+        $team = $this->getJson('/team/101');
+
+        self::assertSame(['number', 'label', 'club', 'logo', 'colors', 'photo', 'honours', 'seasons'], array_keys($team));
+        self::assertSame(['code' => 'C001', 'label' => 'Club Alpha Lacville'], $team['club']);
+        self::assertNull($team['colors'], 'aucun fichier de couleurs dans l\'environnement de test');
+        self::assertSame([
+            ['season' => '2998', 'competition' => ['code' => 'RCP', 'display_title' => 'Coupe Résultats', 'group' => 'TSTRES'], 'rank' => 1, 'medal' => 1, 'final_round' => true],
+            ['season' => '2998', 'competition' => ['code' => 'RQL', 'display_title' => 'Qualification Résultats', 'group' => 'TSTRES'], 'rank' => 2, 'medal' => null, 'final_round' => false],
+        ], $team['honours'], 'RCH 2999 en cours : pas au palmarès ; RQL hors tour final : pas de médaille, classement intermédiaire');
+        self::assertSame(['2999', '2998'], self::column($team['seasons'], 'season'));
+        self::assertSame([['code' => 'RCH', 'display_title' => 'Championnat Résultats']], $team['seasons'][0]['competitions']);
+    }
+
+    public function testApi05UnknownTeamIsNotFound(): void
+    {
+        self::assertSame(['error' => 'not_found'], $this->getJson('/team/9999', 404));
+    }
+
+    public function testApi06RosterExposesNoPersonalDataAndCountsOnlyValidatedPublishedGames(): void
+    {
+        $players = $this->getJson('/team/101/roster/2999/RCH')['players'];
+
+        self::assertSame(['Ann', 'Bob', 'Coach'], self::column($players, 'first_name'), 'X exclu ; entraîneur après les joueurs');
+        self::assertSame(
+            ['first_name', 'last_name', 'number', 'category', 'role', 'goals', 'green', 'yellow', 'red', 'red_final'],
+            array_keys($players[0]),
+        );
+        self::assertSame(['captain', null, 'coach'], self::column($players, 'role'));
+        self::assertSame([2, 0, 0], self::column($players, 'goals'), 'buts de Bob : match non validé / non publié');
+        self::assertSame([0, 1, 0], self::column($players, 'green'));
+
+        $raw = (string) $this->client->getResponse()->getContent();
+        foreach (['9501', 'Matric', 'Sexe', '"F"', '"M"'] as $personal) {
+            self::assertStringNotContainsString($personal, $raw);
+        }
+    }
+
+    public function testApi06RosterOfATeamNotEngagedIsNotFound(): void
+    {
+        self::assertSame(['error' => 'not_found'], $this->getJson('/team/101/roster/2999/RCP', 404));
+        self::assertSame(['error' => 'not_found'], $this->getJson('/team/101/roster/2999/RNP', 404));
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/team/101/roster/29/RCH', 400));
+    }
+
+    // ------------------------------------------------------------------ clubs
+
+    public function testApi07ClubsListOnlyClubsHavingTeamsWithPositionAndLogo(): void
+    {
+        $clubs = $this->getJson('/clubs');
+
+        self::assertNotContains('C099', self::column($clubs, 'code'), 'club sans équipe');
+        $byCode = array_column($clubs, null, 'code');
+        self::assertSame(['code', 'label', 'department', 'logo', 'position'], array_keys($byCode['C001']));
+        self::assertSame(['lat' => 44.84, 'lng' => -0.58], $byCode['C001']['position']);
+        self::assertSame(['code' => 'CDT33', 'label' => 'Comité Départemental Test 33'], $byCode['C001']['department']);
+        self::assertNull($byCode['C002']['position']);
+        self::assertNull($byCode['C004']['position'], 'position illisible');
+    }
+
+    public function testApi07ClubSearchMatchesNameOrCode(): void
+    {
+        self::assertSame(['C001'], self::column($this->getJson('/clubs?q=lacville'), 'code'));
+        self::assertSame(['C003'], self::column($this->getJson('/clubs?q=saint%20malo'), 'code'), 'espaces → tirets');
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/clubs?q=x', 400));
+    }
+
+    public function testApi07ClubSheetAndNotFound(): void
+    {
+        $club = $this->getJson('/club/C001');
+
+        self::assertSame(['code', 'label', 'department', 'region', 'www', 'email', 'postal', 'position', 'logo', 'teams'], array_keys($club));
+        self::assertSame(['code' => 'CRT', 'label' => 'Comité Régional Test'], $club['region']);
+        self::assertSame('contact@alpha.example.test', $club['email']);
+        self::assertSame([['number' => 105, 'label' => 'Alpha Deux'], ['number' => 101, 'label' => 'Equipe Alpha']], $club['teams']);
+        self::assertNull($this->getJson('/club/C002')['www'], 'chaîne vide → null');
+
+        self::assertSame(['error' => 'not_found'], $this->getJson('/club/C099', 404), 'club sans équipe');
+        self::assertSame(['error' => 'not_found'], $this->getJson('/club/NOPE', 404));
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/club/TOOLONG1', 400));
+    }
+
+    // ------------------------------------------------------------------ recherche globale
+
+    public function testApi08SearchIgnoresAccentsAndCaseAndPutsActiveSeasonFirst(): void
+    {
+        $results = $this->getJson('/search?q=RESULTATS');
+
+        self::assertSame(['competitions', 'events', 'teams', 'clubs', 'news', 'pages'], array_keys($results), 'catégories éditoriales ajoutées en fin (CMS-11)');
+        self::assertSame(
+            ['2999/RCH', '2999/RCP', '2999/RMU', '2998/RQL', '2998/RCP'],
+            array_map(static fn (array $c): string => $c['season'] . '/' . $c['code'], $results['competitions']),
+            'RNP non publiée ; saison active d\'abord',
+        );
+        self::assertSame(['season', 'code', 'display_title', 'soustitre2', 'group'], array_keys($results['competitions'][0]));
+        self::assertSame([77], self::column($results['events'], 'id'), '78 non publié');
+        self::assertSame(['id', 'libelle', 'place', 'start', 'end'], array_keys($results['events'][0]));
+    }
+
+    public function testApi08SearchCapsEachCategoryAndNeverReturnsPeople(): void
+    {
+        self::assertCount(8, $this->getJson('/search?q=equipe')['teams']);
+
+        $this->getJson('/search?q=alpha');
+        $raw = (string) $this->client->getResponse()->getContent();
+        self::assertStringContainsString('Club Alpha Lacville', $raw);
+        self::assertStringNotContainsString('Ann', $raw, 'les joueurs ne sont pas indexés');
+        self::assertStringNotContainsString('Club Sans Equipe', $this->rawGet('/search?q=sans'));
+    }
+
+    public function testApi08SearchRejectsTooShortOrTooLongQueries(): void
+    {
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/search?q=a', 400));
+        self::assertSame(['error' => 'invalid_parameter'], $this->getJson('/search?q=' . str_repeat('x', 51), 400));
+    }
+
+    public function testApi08SearchIsRateLimitedPerPublicIp(): void
+    {
+        /** @var CacheItemPoolInterface $cache */
+        $cache = static::getContainer()->get('cache.app');
+        $cache->clear();
+
+        for ($i = 1; $i <= 30; ++$i) {
+            $this->client->request('GET', '/search?q=alpha', server: ['REMOTE_ADDR' => self::PUBLIC_IP]);
+            self::assertSame(200, $this->client->getResponse()->getStatusCode(), "requête $i");
+        }
+        $this->client->request('GET', '/search?q=alpha', server: ['REMOTE_ADDR' => self::PUBLIC_IP]);
+        $response = $this->client->getResponse();
+        self::assertSame(429, $response->getStatusCode());
+        self::assertSame(['error' => 'too_many_requests'], json_decode((string) $response->getContent(), true));
+        self::assertGreaterThan(0, (int) $response->headers->get('Retry-After'));
+
+        // L'adresse privée (rendu serveur d'app3) n'est pas limitée ; le visiteur qu'elle relaie l'est.
+        $this->client->request('GET', '/search?q=alpha');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/search?q=alpha', server: ['REMOTE_ADDR' => '172.18.0.5', 'HTTP_X_FORWARDED_FOR' => self::PUBLIC_IP]);
+        self::assertSame(429, $this->client->getResponse()->getStatusCode());
+    }
+
+    // ------------------------------------------------------------------ cache
+
+    // ------------------------------------------------------------------ /fixtures
+
+    public function testApi10SiteFixturesMixPublishedEventsAndGroupsOutsideEventsSplitOnToday(): void
+    {
+        self::mockTime('2999-04-02 08:00:00 Europe/Paris');
+        $fixtures = $this->getJson('/fixtures/site');
+
+        self::assertSame('2999-04-02', $fixtures['today']);
+        // Événements publiés (9002/9004 non publiés exclus) ; 9221 et 9261 n'apparaissent que par leur événement 79.
+        self::assertSame(['event:77', 'event:9003', 'event:79', 'event:9001', 'group:TSTDIV'], self::fixtureKeys($fixtures['upcoming']));
+        // RDV et RDX, mêmes dates et lieu : un seul rendez-vous, avec le seul logo actif.
+        self::assertSame(
+            ['kind' => 'group', 'season' => '2999', 'code' => 'TSTDIV', 'libelle' => 'Groupe Divers', 'libelle_en' => 'Misc group',
+                'place' => 'Lacville', 'department' => '33', 'logo' => 'logo/logo-rdx.png', 'start' => '2999-08-01', 'end' => '2999-08-01'],
+            $fixtures['upcoming'][4],
+        );
+        self::assertSame(
+            ['kind' => 'event', 'id' => 77, 'libelle' => 'Tournoi Résultats', 'place' => 'Rivecity', 'logo' => 'logo/resultats.png', 'start' => '2999-04-01', 'end' => '2999-04-02'],
+            $fixtures['upcoming'][0],
+        );
+        // 9201 appartient à l'événement 78, non publié : elle compte comme hors événement. Fin décroissante.
+        self::assertSame(['group:TSTRES', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+        self::assertSame(['2999', '2999-03-02', '2998', '2998-05-11'], [
+            $fixtures['recent'][0]['season'], $fixtures['recent'][0]['end'], $fixtures['recent'][2]['season'], $fixtures['recent'][2]['end'],
+        ]);
+    }
+
+    public function testApi10AppFixturesUseApp2EventsAndPublicSectionsOnly(): void
+    {
+        self::mockTime('2999-04-02 08:00:00 Europe/Paris');
+        $fixtures = $this->getJson('/fixtures/app');
+
+        // app = 'O' : 9002 (non publié) entre, 9003 sort ; groupe « Divers » (section 100) exclu.
+        self::assertSame(['event:77', 'event:9002', 'event:79', 'event:9001'], self::fixtureKeys($fixtures['upcoming']));
+        // 9201 appartient à l'événement 78, activé pour app2 : elle n'apparaît que par lui.
+        self::assertSame(['event:78', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+    }
+
+    public function testApi10UnknownFixtureScopeIsNotFound(): void
+    {
+        self::assertSame(['error' => 'not_found'], $this->getJson('/fixtures/other', 404));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixtures
+     *
+     * @return list<string> « event:{id} » ou « group:{code} »
+     */
+    private static function fixtureKeys(array $fixtures): array
+    {
+        return array_map(static fn (array $f): string => $f['kind'] . ':' . ($f['kind'] === 'event' ? $f['id'] : $f['code']), $fixtures);
+    }
+
+    public function testApi09EveryResponseCarriesItsCacheControl(): void
+    {
+        foreach ([
+            '/calendar?start=2999-04-01&end=2999-04-30' => 300,
+            '/teams?q=alpha' => 300,
+            '/team/101' => 300,
+            '/team/101/roster/2999/RCH' => 300,
+            '/search?q=alpha' => 300,
+            '/fixtures/site' => 300,
+            '/history' => 3600,
+            '/history/TSTRES' => 3600,
+            '/clubs' => 3600,
+            '/club/C001' => 3600,
+            '/competition/2999/RCH/calendar.ics' => 3600,
+            '/gameday/9201.ics' => 3600,
+        ] as $uri => $maxAge) {
+            $this->client->request('GET', $uri);
+            $cacheControl = (string) $this->client->getResponse()->headers->get('Cache-Control');
+            self::assertStringContainsString('public', $cacheControl, $uri);
+            self::assertStringContainsString('max-age=' . $maxAge, $cacheControl, $uri);
+        }
+    }
+
+    // ------------------------------------------------------------------ outils
+
+    private function getIcs(string $uri): string
+    {
+        $this->client->request('GET', $uri);
+        $response = $this->client->getResponse();
+        self::assertSame(200, $response->getStatusCode(), $uri);
+        self::assertSame('text/calendar; charset=utf-8', $response->headers->get('Content-Type'));
+
+        return (string) $response->getContent();
+    }
+
+    private function rawGet(string $uri): string
+    {
+        $this->client->request('GET', $uri);
+
+        return (string) $this->client->getResponse()->getContent();
+    }
+
+    /**
+     * Analyseur iCalendar minimal (RFC 5545) : vérifie les fins de ligne CRLF, le repli à 75 octets, l'équilibre
+     * BEGIN/END et les propriétés obligatoires, puis renvoie les propriétés de chaque VEVENT.
+     *
+     * @return list<array<string, string>>
+     */
+    private static function parseIcs(string $ics): array
+    {
+        self::assertStringEndsWith("\r\n", $ics);
+        self::assertDoesNotMatchRegularExpression('/(?<!\r)\n/', $ics, 'toutes les lignes en CRLF');
+        foreach (explode("\r\n", rtrim($ics, "\r\n")) as $physical) {
+            self::assertLessThanOrEqual(75, strlen($physical), 'ligne repliée à 75 octets : ' . $physical);
+        }
+
+        $lines = explode("\r\n", rtrim(preg_replace("/\r\n /", '', $ics) ?? '', "\r\n"));
+        self::assertSame('BEGIN:VCALENDAR', $lines[0]);
+        self::assertSame('END:VCALENDAR', end($lines));
+        self::assertContains('VERSION:2.0', $lines);
+        self::assertNotEmpty(array_filter($lines, static fn (string $line): bool => str_starts_with($line, 'PRODID:')));
+
+        $events = [];
+        $current = null;
+        foreach ($lines as $line) {
+            if ($line === 'BEGIN:VEVENT') {
+                self::assertNull($current, 'VEVENT imbriqué');
+                $current = [];
+            } elseif ($line === 'END:VEVENT') {
+                self::assertIsArray($current);
+                foreach (['UID', 'DTSTAMP', 'DTSTART;VALUE=DATE', 'SUMMARY'] as $required) {
+                    self::assertArrayHasKey($required, $current);
+                }
+                $events[] = $current;
+                $current = null;
+            } elseif ($current !== null) {
+                [$name, $value] = explode(':', $line, 2);
+                $current[$name] = $value;
+            }
+        }
+        self::assertNull($current, 'VEVENT non fermé');
+
+        return $events;
+    }
+}

@@ -1,0 +1,92 @@
+{
+  "status": 200,
+  "body": {
+    "gamedays": [
+      {
+        "id": 9211,
+        "name": "RCP Poule A",
+        "phase": "Poule A",
+        "start": "2999-04-01",
+        "end": "2999-04-01",
+        "place": "Rivecity",
+        "department": "64",
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      },
+      {
+        "id": 9213,
+        "name": "RCP Poule B",
+        "phase": "Poule B",
+        "start": "2999-04-01",
+        "end": "2999-04-01",
+        "place": "Rivecity",
+        "department": "64",
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      },
+      {
+        "id": 9212,
+        "name": "RCP Finale",
+        "phase": "Finale",
+        "start": "2999-04-02",
+        "end": "2999-04-02",
+        "place": "Rivecity",
+        "department": "64",
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      }
+    ],
+    "teams_by_pool": [
+      {
+        "pool": "A",
+        "teams": [
+          {
+            "id": 9311,
+            "number": 111,
+            "label": "Equipe Echo",
+            "logo": null
+          },
+          {
+            "id": 9312,
+            "number": 112,
+            "label": "Equipe Foxtrot",
+            "logo": null
+          }
+        ]
+      },
+      {
+        "pool": "B",
+        "teams": [
+          {
+            "id": 9313,
+            "number": 113,
+            "label": "Equipe Golf",
+            "logo": null
+          },
+          {
+            "id": 9314,
+            "number": 114,
+            "label": "Equipe Hotel",
+            "logo": null
+          }
+        ]
+      }
+    ],
+    "schema": null
+  }
+}

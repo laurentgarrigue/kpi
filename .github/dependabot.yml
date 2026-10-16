@@ -18,6 +18,7 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/sources/app2"
+      - "/sources/app3"
       - "/sources/app4"
       - "/sources"
       # `/sources/app_dev`, `/sources/app_live_dev`, `/sources/app_wsm_dev` sont

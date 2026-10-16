@@ -157,6 +157,8 @@ Ce document présente les prochains objectifs et travaux prévus pour le projet 
 - Interface administrative moderne et responsive
 - Meilleure expérience utilisateur
 - Composants réutilisables
+- **Connexion et contrôle du matériel (scrutineering)** repris d'App2 : le menu « Organisation » d'App2 est
+  masqué depuis octobre 2026 en attendant ce chantier (`/login` et `/scrutineering` restent accessibles par URL)
 
 **Bénéfices** :
 - Interface moderne et cohérente avec App2

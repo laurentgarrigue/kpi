@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "body": {
+    "status": "ATT",
+    "type": "CHPT",
+    "qualified": 0,
+    "eliminated": 0,
+    "rows": []
+  }
+}
