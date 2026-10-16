@@ -48,7 +48,7 @@ const features = [
       <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
         {{ t('help.title') }}
       </h1>
-      <p class="mt-1 text-sm text-header-600">{{ t('help.subtitle') }}</p>
+      <p class="mt-1 text-sm text-header-600 dark:text-header-300">{{ t('help.subtitle') }}</p>
     </div>
 
     <!-- Tutoriels interactifs (accueil + tours de page, filtrés par profil) -->
