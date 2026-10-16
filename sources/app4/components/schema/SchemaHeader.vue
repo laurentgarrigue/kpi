@@ -26,7 +26,7 @@ const hasLogo = computed(() => props.competition.logoActif && props.competition.
 </script>
 
 <template>
-  <div class="mb-4 bg-white rounded-lg shadow">
+  <div class="mb-4 bg-white dark:bg-header-900 rounded-lg shadow">
     <!-- Title and info -->
     <div class="flex flex-wrap items-center justify-between gap-3 p-4">
       <!-- Logo + Title -->
@@ -39,21 +39,21 @@ const hasLogo = computed(() => props.competition.logoActif && props.competition.
           @error="showLogo = false"
         >
         <div>
-          <h2 class="text-lg font-semibold text-header-900">
+          <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">
             {{ competition.libelle }}
             <!-- Season badge -->
-            <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 text-primary-700">
+            <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
               {{ competition.season }}
             </span>
           </h2>
-          <p v-if="competition.soustitre2" class="text-sm text-header-900">
+          <p v-if="competition.soustitre2" class="text-sm text-header-900 dark:text-header-100">
             {{ competition.soustitre2 }}
           </p>
         </div>
       </div>
 
       <!-- Game count badge (right side) -->
-      <span v-if="showMatchCount" class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900">
+      <span v-if="showMatchCount" class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
         {{ t('schema.games_count', { count: totalMatches }, totalMatches) }}
       </span>
     </div>

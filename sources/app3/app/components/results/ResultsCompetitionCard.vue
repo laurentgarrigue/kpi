@@ -27,7 +27,6 @@ const caption = computed(() => props.competition.display_title)
     </h2>
     <p v-if="competition.soustitre2" class="-mt-2 text-sm">{{ competition.soustitre2 }}</p>
     <p class="flex gap-2">
-      <UBadge variant="subtle" color="neutral">{{ $t(`results.type.${competition.type}`) }}</UBadge>
       <UBadge variant="subtle" :color="competition.status === 'ON' ? 'error' : 'primary'">{{ $t(`results.competitionStatus.${competition.status}`) }}</UBadge>
     </p>
     <p v-if="competition.ranking.length === 0" class="text-sm italic" data-testid="no-ranking">{{ $t('results.noRanking') }}</p>

@@ -24,18 +24,18 @@ onMounted(() => {
         <UIcon name="heroicons:arrow-path" class="w-16 h-16 text-primary-500 animate-spin mx-auto" />
       </div>
 
-      <h1 class="text-2xl font-bold text-header-900 mb-2">
+      <h1 class="text-2xl font-bold text-header-900 dark:text-header-50 mb-2">
         {{ title }}
       </h1>
 
-      <p class="text-header-900 mb-6">
+      <p class="text-header-900 dark:text-header-50 mb-6">
         {{ t('legacy_redirect.message') }}
       </p>
 
-      <div class="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6">
+      <div class="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded-lg p-4 mb-6">
         <div class="flex items-start gap-3">
-          <UIcon name="heroicons:information-circle" class="w-5 h-5 text-warning-600 mt-0.5 shrink-0" />
-          <p class="text-sm text-warning-800">
+          <UIcon name="heroicons:information-circle" class="w-5 h-5 text-warning-600 dark:text-warning-300 mt-0.5 shrink-0" />
+          <p class="text-sm text-warning-800 dark:text-warning-300">
             {{ t('legacy_redirect.info') }}
           </p>
         </div>

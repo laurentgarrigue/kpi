@@ -17,7 +17,7 @@ const { t } = useI18n()
 const LEVEL_STYLES = [
   'border-l-4 border-primary-500 bg-white dark:bg-header-900 shadow',
   'border-l-4 border-sky-400 bg-header-50 dark:bg-header-800',
-  'border-l-4 border-header-300 bg-header-100/60 dark:bg-header-700/60',
+  'border-l-4 border-header-300 dark:border-header-700 bg-header-100/60 dark:bg-header-700/60',
 ]
 const emptyItem = (): CmsMenuItem => ({ label_fr: '', label_en: '', target_kind: 'page', target_ref: '', children: [] })
 const move = (index: number, delta: -1 | 1) => {

@@ -203,7 +203,7 @@ const copyCompetitions = async () => {
           :key="tab.id"
           :class="[
             activeSubTab === tab.id
-              ? 'border-primary-500 text-primary-600 bg-primary-50'
+              ? 'border-primary-500 text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-950'
               : 'border-transparent text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 hover:border-header-300',
             'whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors rounded-t'
           ]"
