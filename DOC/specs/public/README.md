@@ -2,7 +2,7 @@
 
 Specs fonctionnelles et techniques du nouveau site public `kayak-polo.info` (app3, Nuxt 4 SSR), écrites
 **avant** l'implémentation. Stratégie d'ensemble :
-[PUBLIC_SITE_REDESIGN_STRATEGY.md](../../developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md).
+[PUBLIC_SITE_REDESIGN_STRATEGY.md](../../developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md).
 Principes de code et *Definition of Done* : [CLEAN_CODE.md](../../developer/guides/CLEAN_CODE.md).
 
 ## Processus

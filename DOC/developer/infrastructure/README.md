@@ -52,7 +52,7 @@ Documentation complète sur le déploiement des applications Nuxt (app2 & app4) 
 
 ---
 
-#### [../audits/FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+#### [../reference/FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 **Status**: ✅ Implémenté en dev (2026-07-16) — validation préprod/prod à faire
 
 **Le document de référence sur l'architecture web actuelle.** `/api2` a été extrait dans un
@@ -95,7 +95,7 @@ Configuration CORS globale via PHP auto-prepend pour les endpoints PHP **servis 
 
 ### Multi-Environnements
 
-#### [MAKEFILE_MULTI_ENVIRONMENT.md](../guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)
+#### [MAKEFILE_MULTI_ENVIRONMENT.md](../guides/MAKEFILE_MULTI_ENVIRONMENT.md)
 **Status**: ✅ Implémenté
 
 Support multi-environnements (dev, preprod, prod) sur le même serveur.
@@ -112,7 +112,7 @@ Support multi-environnements (dev, preprod, prod) sur le même serveur.
 
 ### Gestion des Dépendances
 
-#### [NPM_BACKEND_PRODUCTION_GUIDE.md](../guides/infrastructure/NPM_BACKEND_PRODUCTION_GUIDE.md)
+#### [NPM_BACKEND_PRODUCTION_GUIDE.md](../guides/NPM_BACKEND_PRODUCTION_GUIDE.md)
 **Status**: ✅ Implémenté
 
 Gestion des dépendances JavaScript (Flatpickr, Day.js, etc.) dans le backend PHP.
@@ -160,7 +160,7 @@ make docker_prod_rebuild
 - `sources/app2/.env.development` - Variables env pour build dev
 - `sources/app2/.env.production` - Variables env pour build prod
 
-**FrankenPHP (api2)** — cf. [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md) :
+**FrankenPHP (api2)** — cf. [FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md) :
 
 - `docker/config/Caddyfile.api2` - Caddy : mode worker, hub Mercure, trusted_proxies, logs
 - `docker/config/opcache-api2-dev.ini` - Opcache dev pour api2
@@ -185,8 +185,8 @@ make docker_prod_rebuild
 - [BEST_PRACTICES_JAVASCRIPT_SMARTY.md](../guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md) - Bonnes pratiques JS & Smarty
 
 ### Migrations JavaScript
-- [FLATPICKR_MIGRATION_GUIDE.md](../guides/migrations/FLATPICKR_MIGRATION_GUIDE.md) - Migration datepicker
-- [MIGRATION_AXIOS_FETCH_GUIDE.md](../guides/migrations/MIGRATION_AXIOS_FETCH_GUIDE.md) - Migration Axios → fetch()
+- [FLATPICKR_MIGRATION_GUIDE.md](../archive/legacy-frontend/FLATPICKR_MIGRATION_GUIDE.md) - Migration datepicker
+- [MIGRATION_AXIOS_FETCH_GUIDE.md](../archive/legacy-frontend/MIGRATION_AXIOS_FETCH_GUIDE.md) - Migration Axios → fetch()
 
 ## 🐛 Troubleshooting
 

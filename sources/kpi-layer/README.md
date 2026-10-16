@@ -4,7 +4,7 @@ Nuxt Layer partagé des applications KPI : charte FFCK (univers Compétition), p
 Specs : [SITE_PLATFORM.md](../../DOC/specs/public/SITE_PLATFORM.md), [SITE_LAYOUT.md](../../DOC/specs/public/SITE_LAYOUT.md).
 
 > **Consommé par app3 uniquement** jusqu'à la phase 6 de la refonte : app2 et app4 ne doivent pas être
-> impactés avant la bascule ([stratégie § 4.3](../../DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
+> impactés avant la bascule ([stratégie § 4.3](../../DOC/developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
 
 ## Contenu
 

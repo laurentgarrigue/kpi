@@ -2,7 +2,7 @@
 
 **Créée le** : 8 octobre 2026 — **À compléter à chaque phase** (une section par phase, cochée au fil de l'eau)
 **Validée** jusqu'au § 3.4 inclus le 10/10/2026 (phases 1 et 2 complètes, phase 3 jusqu'à la préprod ; reste la production de la phase 3, § 3.5).
-**Contexte** : [PUBLIC_SITE_REDESIGN_STRATEGY.md](plans/PUBLIC_SITE_REDESIGN_STRATEGY.md) ·
+**Contexte** : [PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md) ·
 specs [DOC/specs/public/](../../specs/public/README.md) · socle [SITE_PLATFORM.md](../../specs/public/SITE_PLATFORM.md)
 
 > **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev ·

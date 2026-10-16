@@ -2,11 +2,11 @@
 
 Procédures opérationnelles du CI/CD KPI : **comment déployer, comment constater
 un problème, comment revenir en arrière**. Phase 8.4 du plan
-[CI_CD_STRATEGY.md](../in-progress/plans/CI_CD_STRATEGY.md).
+[CI_CD_STRATEGY.md](../archive/ci-cd/CI_CD_STRATEGY.md).
 
 Ce document est fait pour être lu **en situation**, y compris un dimanche soir.
 Il ne réexplique pas la conception : pour le « pourquoi », voir le
-[journal d'exécution](../in-progress/plans/CI_CD_EXECUTION_NOTES.md).
+[journal d'exécution](../archive/ci-cd/CI_CD_EXECUTION_NOTES.md).
 
 > **Convention** : ⌨️ = à taper sur le **poste de dev**, 🖥 = **sur le VPS** (en
 > SSH), 🌐 = dans l'**interface GitHub**.

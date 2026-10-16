@@ -4,7 +4,7 @@
 médiathèque, Rank Math, WP Multilang, Sassy Social Share, Enable Media Replace, flux RSS)
 **Pages publiques associées** : [PAGE_NEWS.md](PAGE_NEWS.md) (actualités), [PAGE_CONTENT.md](PAGE_CONTENT.md)
 (pages éditoriales, menu, accueil) — **Stratégie** : § 5.1, 5.2, 5.4, 7 de
-[PUBLIC_SITE_REDESIGN_STRATEGY.md](../../developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)
+[PUBLIC_SITE_REDESIGN_STRATEGY.md](../../developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)
 
 ## 1. Objectif
 

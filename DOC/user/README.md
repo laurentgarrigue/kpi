@@ -86,8 +86,6 @@ Cette section contient la documentation orientée utilisateurs finaux du systèm
   - Disponible dans GestionStats
   - **Statut**: ✅ En production
 
-### Administration Système
-
 ### Outils et Guides
 
 - **[DOCVIEWER_GUIDE.md](DOCVIEWER_GUIDE.md)** - **Guide du visualiseur de documentation**
@@ -109,6 +107,10 @@ Cette section contient la documentation orientée utilisateurs finaux du systèm
    - **Organisateurs de tournois** : [Event Cache Manager](EVENT_CACHE_MANAGER.md), [Opérations de masse](MATCH_DAY_BULK_OPERATIONS.md)
    - **Gestionnaires d'équipes** : [Copie de composition](TEAM_COMPOSITION_COPY.md), [Upload d'images](IMAGE_UPLOAD_MANAGEMENT.md)
    - **Analystes** : [Statistiques de cohérence](MATCH_CONSISTENCY_STATS.md)
+
+### Archives
+
+- **[archive/SYNTHESE_TRAVAUX_OCT_DEC_2025.md](archive/SYNTHESE_TRAVAUX_OCT_DEC_2025.md)** - Synthèse des travaux d'octobre à décembre 2025
 
 ---
 

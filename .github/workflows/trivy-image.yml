@@ -1,6 +1,6 @@
 name: Trivy image
 
-# Phase 3bis du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Phase 3bis du plan CI/CD (DOC/developer/archive/ci-cd/CI_CD_STRATEGY.md).
 # Scan de vulnérabilités des IMAGES DE BASE du projet (php-apache, frankenphp,
 # mariadb) — celles dont héritent les Dockerfiles de docker/config/.
 #

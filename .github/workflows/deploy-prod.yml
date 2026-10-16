@@ -1,6 +1,6 @@
 name: Deploy production
 
-# Phase 6 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Phase 6 du plan CI/CD (DOC/developer/archive/ci-cd/CI_CD_STRATEGY.md).
 # Déploiement PRODUCTION, déclenché À LA MAIN + approbation obligatoire.
 #
 # Différences avec Deploy preprod (déclencheur `push main`, auto, sans clic) :

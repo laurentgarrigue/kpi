@@ -17,21 +17,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - [Consolidation Phases](DOC/user/CONSOLIDATION_PHASES_CLASSEMENT.md) - Lock ranking phases
 
 ### Developer Documentation
-- **[DOC/developer/](DOC/developer/)** - Technical documentation for developers
-  - **[Reference](DOC/developer/reference/)** - Complete reference documentation (KPI Functionality Inventory)
-  - **[Guides](DOC/developer/guides/)** - Migration guides and technical documentation
-  - **[In Progress](DOC/developer/in-progress/)** - Current migrations and ongoing work
-  - **[Archive](DOC/developer/archive/)** - Completed migrations (PHP 8.4, mPDF, etc.)
-  - **[Fixes](DOC/developer/fixes/)** - Bug fixes and corrections
-  - **[Audits](DOC/developer/audits/)** - Code audits and analyses
-  - **[Infrastructure](DOC/developer/infrastructure/)** - Docker, WordPress, configuration
+- **[DOC/developer/](DOC/developer/)** - Technical documentation for developers, classified by the *state* of the subject
+  - **[reference/](DOC/developer/reference/)** - What exists today: architecture, API2 endpoints, app4 structure, roles, business rules (`features/` for a single feature)
+  - **[guides/](DOC/developer/guides/)** - How to work: dev environment, git workflow, QA checklist, best practices
+  - **[infrastructure/](DOC/developer/infrastructure/)** - How it runs: deployment runbook, media storage, Nginx, CORS, cron
+  - **[in-progress/](DOC/developer/in-progress/)** - Unfinished plans, migrations and fixes
+  - **[archive/](DOC/developer/archive/)** - Finished subjects, by theme (php8, pdf-exports, legacy-frontend, ci-cd, infrastructure, features, audits)
+- **[DOC/specs/](DOC/specs/)** - One spec per app4 admin page; [DOC/specs/public/](DOC/specs/public/README.md) for the public website (app3)
+
+When a subject in `in-progress/` is finished, `git mv` it to `archive/<theme>/` and update every
+reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makefile) and
+[DOC/developer/archive/README.md](DOC/developer/archive/README.md). Keep `DOC/user/` and
+`DOC/developer/` as top-level folders: `sources/admin/DocViewer.php` only reads those two.
 
 **Key documents:**
-- **[FrankenPHP Migration Analysis](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
+- **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
-- **[Dev environment](DOC/developer/guides/infrastructure/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
-- **[Makefile Multi-Environment Support](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
-- **[PHP 8.4 Migration Complete](DOC/developer/archive/completed-migrations/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
+- **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
+- **[Makefile Multi-Environment Support](DOC/developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
+- **[PHP 8.4 Migration Complete](DOC/developer/archive/php8/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
 
 See [DOC/README.md](DOC/README.md) for the complete index.
 
@@ -196,7 +200,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - `docker/.env` - Main Docker environment configuration (not versioned, use docker/.env.dist as template)
   - **Important**: `APPLICATION_NAME` determines container names (e.g., `kpi`, `kpi_preprod`, `kpi_prod`)
   - Makefile automatically detects container names from this variable
-  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md))
+  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](DOC/developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md))
 - `sources/app2/.env.development` - Nuxt dev environment (API_BASE_URL, BACKEND_BASE_URL)
 - `sources/app2/.env.production` - Nuxt production environment
 - `sources/api2/.env` - Symfony/API Platform configuration (not versioned, use sources/api2/.env.dist as template)
@@ -238,7 +242,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 
 ### App3 (public website, beta) + kpi-layer
 - **What**: Nuxt 4 **SSR** public website replacing WordPress and the `kp*.php` pages, built phase by phase
-  ([PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/plans/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
+  ([PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
   **Spec first**: [DOC/specs/public/](DOC/specs/public/README.md). App README: [sources/app3/README.md](sources/app3/README.md).
 - **Served on `beta.${KPI_DOMAIN_NAME}` only** (dev `beta.kpi.localhost`, preprod `beta.preprod.kayak-polo.info`,
   prod `beta.kayak-polo.info`), not indexed while `NUXT_PUBLIC_BETA=true`. It must not impact legacy, app2, app4
@@ -299,7 +303,7 @@ legacy router, and **strips the `/api2` prefix** before forwarding. Consequences
 - **In prod, code changes need `make api2_restart`** - the worker holds the kernel in memory.
 
 Full rationale, pitfalls and validation plan:
-[DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+[DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 
 #### Mercure (SSE)
 
