@@ -16,7 +16,7 @@ compétitions sœurs (même groupe, ou même événement quand on vient d'un év
 ```
 Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition}
 ┌─────────────────────────────────────────────────────────────┐
-│ [bandeau ou logo]  {display_title}   {saison} [type] [statut] │  en-tête (CompetitionHeader)
+│ [bandeau ou logo]  {display_title}   {saison} [statut]        │  en-tête (CompetitionHeader)
 │ Site web ↗   Suivre en direct (app2) ↗                       │
 ├─────────────────────────────────────────────────────────────┤
 │ ★ Fait partie de {événement} — Voir l'événement →            │  encart événement (§ 2.3)
@@ -192,7 +192,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 ## 6. Critères d'acceptation
 
 - **CMP-01** — `/competitions/{s}/{c}` redirige vers `ranking` si le statut est `END`, sinon vers `games`.
-- **CMP-02** — L'en-tête affiche le bandeau (sinon le logo), le titre `display_title`, la saison, les badges type et statut, et les liens web / app2.
+- **CMP-02** — L'en-tête affiche le bandeau (sinon le logo), le titre `display_title`, la saison, le badge statut et les liens web / app2. Le type de compétition (Championnat / Coupe / Multi) n'est **pas** affiché : c'est une notion de gestion, sans intérêt pour le public.
 - **CMP-03** — Le sélecteur de sœurs liste les compétitions du groupe (ou de l'événement avec `?event=`), conserve l'onglet et le paramètre `event`, et est masqué s'il n'y a qu'une compétition.
 - **CMP-04** — Les onglets portent `aria-current` sur l'onglet actif et fonctionnent sans JavaScript.
 - **CMP-05** — Matchs groupés par date, triés par heure puis terrain ; statut et score provisoire affichés selon `g_status` / `g_validation`.

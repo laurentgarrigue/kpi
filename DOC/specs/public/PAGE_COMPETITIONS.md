@@ -28,8 +28,8 @@ compétition.
      (liens vers `/events/{id}`, 5 au plus, par `share` décroissant) ;
    - aucun événement lié : rien.
 5. **Liste des compétitions du groupe**, une carte par compétition :
-   - visuel (bandeau, sinon logo), titre (`display_title`), badges **type** (Championnat / Coupe / Multi) et
-     **statut** (À venir / En cours / Terminé) ;
+   - visuel (bandeau, sinon logo), titre (`display_title`), badge **statut** (À venir / En cours / Terminé) ;
+     le type (Championnat / Coupe / Multi) n'est pas affiché ;
    - **classement compact** : rang, logo et nom d'équipe, points, matchs joués. Au-delà de 8 équipes, les 8
      premières sont affichées et un bouton « Voir tout » déplie le reste ;
    - **médailles** : si la compétition est terminée et du tour final, les 3 premiers portent une médaille
@@ -66,7 +66,7 @@ PAGE_COMPETITION.md) — les classements changent au plus après chaque journée
 - **CPL-01** — `/competitions` redirige (302) vers la saison active, et `/en/competitions` vers `/en/competitions/{saison}`.
 - **CPL-02** — Sans paramètre `group`, le groupe par défaut est le premier de la section nationale (sinon le premier).
 - **CPL-03** — Les groupes sont regroupés par section, dans l'ordre d'api2, avec le libellé anglais sous `/en` s'il existe.
-- **CPL-04** — Une carte par compétition, dans l'ordre défini (`GroupOrder`) puis l'ordre du tour (`Code_tour`), avec titre, badges type/statut et lien vers sa page.
+- **CPL-04** — Une carte par compétition, dans l'ordre défini (`GroupOrder`) puis l'ordre du tour (`Code_tour`), avec titre, badge statut (pas de badge type) et lien vers sa page.
 - **CPL-05** — Le classement compact affiche au plus 8 équipes, puis « Voir tout » déplie le reste.
 - **CPL-06** — Les rangs qualifiés et éliminés sont marqués visuellement **et** textuellement.
 - **CPL-07** — Compétition sans classement → « Classement non disponible » ; groupe vide → message dédié.

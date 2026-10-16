@@ -13,11 +13,11 @@ beforeEach(() => {
 })
 
 describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
-  it('CMP-02: header with title, season, badges, website and live links', async () => {
+  it('CMP-02: header with title, season, status badge (no type badge), website and live links', async () => {
     const header = (await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="competition-header"]')
     expect(header.find('h1').text()).toBe('Championnat Résultats')
     expect(header.text()).toContain('2999')
-    expect(header.find('[data-testid="type-badge"]').text()).toBe('Championnat')
+    expect(header.find('[data-testid="type-badge"]').exists()).toBe(false)
     expect(header.find('[data-testid="status-badge"]').text()).toBe('En cours')
     expect(header.find('[data-testid="competition-visual"]').attributes('src')).toBe('https://kpi.localhost/img/logo/bandeau-rch.png')
     expect(header.find('[data-testid="competition-web"]').attributes('href')).toBe('https://example.test')

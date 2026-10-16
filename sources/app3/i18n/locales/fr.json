@@ -102,11 +102,6 @@
     "noRanking": "Classement non disponible",
     "seeAll": "Voir tout",
     "seeMore": "Voir plus",
-    "type": {
-      "CHPT": "Championnat",
-      "CP": "Coupe",
-      "MULTI": "Multi"
-    },
     "competitionStatus": {
       "ATT": "À venir",
       "ON": "En cours",
