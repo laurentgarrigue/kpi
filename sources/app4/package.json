@@ -28,10 +28,10 @@
     "eslint": "^9.36.0",
     "nuxt": "4.5.1",
     "pinia": "^3.0.3",
-    "postcss": "^8.5.21",
+    "postcss": "^8.5.30",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
+    "vitest": "^5.0.4",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
