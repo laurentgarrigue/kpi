@@ -42,21 +42,21 @@ const isHighlighted = (side: 'A' | 'B') => {
 
 const scoreBlockClass = (side: 'A' | 'B') => {
   if (isHighlighted(side)) return 'bg-warning-400 text-black font-bold'
-  if (isWinner(side)) return 'bg-header-800 text-white'
-  return 'bg-header-200 text-black'
+  if (isWinner(side)) return 'bg-header-800 text-white dark:bg-header-100 dark:text-header-950'
+  return 'bg-header-200 text-black dark:bg-header-700 dark:text-header-50'
 }
 
 const teamNameClass = (side: 'A' | 'B') => {
   if (isHighlighted(side)) return 'bg-warning-200 text-black'
-  if (isWinner(side)) return 'bg-header-800 text-white font-semibold'
-  return 'bg-header-200 text-black'
+  if (isWinner(side)) return 'bg-header-800 text-white dark:bg-header-100 dark:text-header-950 font-semibold'
+  return 'bg-header-200 text-black dark:bg-header-700 dark:text-header-50'
 }
 </script>
 
 <template>
   <div class="flex items-center space-x-2">
     <!-- Match number -->
-    <div v-if="match.numeroOrdre" class="text-xs text-header-600 italic font-medium shrink-0 w-8 text-right">
+    <div v-if="match.numeroOrdre" class="text-xs text-header-600 dark:text-header-300 italic font-medium shrink-0 w-8 text-right">
       #{{ match.numeroOrdre }}
     </div>
     <div v-else class="w-8 shrink-0" />

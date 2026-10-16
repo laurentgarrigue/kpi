@@ -43,7 +43,7 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
       <div class="flex items-center gap-3">
         <button
           :title="t('common.back')"
-          class="inline-flex items-center p-1.5 text-header-900 dark:text-header-200 hover:text-header-900 hover:bg-header-200 dark:hover:bg-header-800 rounded-lg transition-colors"
+          class="inline-flex items-center p-1.5 text-header-900 dark:text-header-200 hover:text-header-900 dark:hover:text-header-50 hover:bg-header-200 dark:hover:bg-header-800 rounded-lg transition-colors"
           @click="router.back()"
         >
           <UIcon name="heroicons:arrow-left" class="w-5 h-5" />
@@ -87,7 +87,7 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
     <div v-if="props.hasNotices && !noticesDismissed" class="mt-2 relative">
       <slot name="notices" />
       <button
-        class="absolute top-1 right-1 p-1 text-header-600 dark:text-header-600 hover:text-header-900 rounded transition-colors"
+        class="absolute top-1 right-1 p-1 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 rounded transition-colors"
         @click="noticesDismissed = true"
       >
         <UIcon name="heroicons:x-mark" class="w-4 h-4" />

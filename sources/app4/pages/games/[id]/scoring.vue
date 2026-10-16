@@ -218,7 +218,7 @@ const toggleLock = async () => {
 
 <template>
   <div class="p-4">
-    <div v-if="!canView" class="text-center text-header-900 py-12">
+    <div v-if="!canView" class="text-center text-header-900 dark:text-header-50 py-12">
       {{ t('scoring.no_access') }}
     </div>
 
@@ -241,7 +241,7 @@ const toggleLock = async () => {
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-xl font-bold">{{ t('scoring.title') }} — #{{ match.id }}</h1>
-          <p class="text-sm text-header-900">
+          <p class="text-sm text-header-900 dark:text-header-50">
             {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
           </p>
         </div>
@@ -273,7 +273,7 @@ const toggleLock = async () => {
       </div>
 
       <!-- Score -->
-      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 rounded-lg">
+      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 dark:bg-header-900 rounded-lg">
         <div class="text-right flex-1">
           <div class="font-semibold">{{ match.equipeA }}</div>
         </div>
@@ -289,7 +289,7 @@ const toggleLock = async () => {
       <div v-if="isLive" class="flex flex-col items-center gap-2">
         <div
           class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-          :class="isRunning ? 'text-success-600' : 'text-header-900'"
+          :class="isRunning ? 'text-success-600 dark:text-success-300' : 'text-header-900 dark:text-header-50'"
         >
           {{ clockDisplay }}
         </div>
@@ -331,8 +331,8 @@ const toggleLock = async () => {
               type="button"
               class="w-full flex items-center gap-2 px-2 py-1 rounded text-left text-sm border"
               :class="selected?.player.matric === p.matric
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-header-200 hover:bg-header-50'"
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
+                : 'border-header-200 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
               :disabled="!canScore"
               @click="selectPlayer(team as TeamSide, p)"
             >
@@ -347,7 +347,7 @@ const toggleLock = async () => {
 
       <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
       <div class="border-t pt-4 space-y-3">
-        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600">
+        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-300">
           <UIcon name="i-heroicons-pencil-square" />
           {{ t('scoring.edit.title') }}
           <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
@@ -356,12 +356,12 @@ const toggleLock = async () => {
         <div class="flex flex-wrap items-end gap-3 justify-center">
           <!-- Period -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.period') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
             <USelect v-model="eventPeriod" :items="periods" :disabled="!canScore" size="sm" class="w-28" />
           </div>
           <!-- Event time -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.time.label') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
             <div class="flex items-center gap-1">
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
               <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
@@ -374,7 +374,7 @@ const toggleLock = async () => {
           </div>
           <!-- Reason (cards) -->
           <div>
-            <label class="block text-xs text-header-600 mb-1">{{ t('scoring.reason.label') }}</label>
+            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
             <USelect
               v-model="eventReason"
               :items="reasonCodes.map(c => ({ label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c), value: c }))"
@@ -410,7 +410,7 @@ const toggleLock = async () => {
       />
     </div>
 
-    <div v-else class="text-center text-header-900 py-12">
+    <div v-else class="text-center text-header-900 dark:text-header-50 py-12">
       {{ t('scoring.not_found') }}
     </div>
   </div>

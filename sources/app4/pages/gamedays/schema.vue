@@ -82,10 +82,10 @@ const stageColumns = computed(() => {
 // Badge color by level
 function getLevelBadgeClass(level: string) {
   switch (level) {
-    case 'INT': return 'bg-purple-100 text-purple-800'
-    case 'NAT': return 'bg-primary-100 text-primary-800'
-    case 'REG': return 'bg-orange-100 text-orange-800'
-    default: return 'bg-header-200 text-header-900'
+    case 'INT': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+    case 'NAT': return 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200'
+    case 'REG': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+    default: return 'bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50'
   }
 }
 
@@ -128,8 +128,25 @@ const loadSchema = async () => {
   }
 }
 
+// Print always in light mode: drop the `dark` class for the duration of printing
+// (covers both the PDF button and the browser's Ctrl+P)
+let wasDark = false
+function forceLightForPrint() {
+  wasDark = document.documentElement.classList.contains('dark')
+  document.documentElement.classList.remove('dark')
+}
+function restoreThemeAfterPrint() {
+  if (wasDark) document.documentElement.classList.add('dark')
+}
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeprint', forceLightForPrint)
+  window.removeEventListener('afterprint', restoreThemeAfterPrint)
+})
+
 // Load on mount
 onMounted(async () => {
+  window.addEventListener('beforeprint', forceLightForPrint)
+  window.addEventListener('afterprint', restoreThemeAfterPrint)
   if (competitionCode.value && season.value) {
     await loadSchema()
   }
@@ -141,7 +158,7 @@ onMounted(async () => {
     <!-- Toolbar (non-printable) -->
     <div class="mb-2 flex flex-wrap items-center justify-between gap-2 print:hidden">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-header-900">{{ t('schema.title') }}</h1>
+        <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">{{ t('schema.title') }}</h1>
       </div>
 
       <!-- Right side: toggles + close -->
@@ -154,27 +171,27 @@ onMounted(async () => {
           >
             {{ data.competition.codeNiveau }}
           </span>
-          <span class="px-2 py-1 text-xs font-medium rounded uppercase bg-header-200 text-header-900">
+          <span class="px-2 py-1 text-xs font-medium rounded uppercase bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
             {{ data.competition.codeTypeclt }}
           </span>
         </template>
 
         <!-- Toggles (CP only) -->
         <template v-if="isCp">
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showMatchCount"
-              class="rounded border-header-300 text-primary-600 focus:ring-primary-500"
+              class="rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
               @change="showMatchCount = !showMatchCount"
             >
             {{ t('schema.show_game_count') }}
           </label>
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showTimeSlots"
-              class="rounded border-header-300 text-primary-600 focus:ring-primary-500"
+              class="rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
               @change="showTimeSlots = !showTimeSlots"
             >
             {{ t('schema.show_time_slots') }}
@@ -184,7 +201,7 @@ onMounted(async () => {
         <!-- PDF button -->
         <button
           v-if="data"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors"
           @click="printPdf"
         >
           <UIcon name="heroicons:arrow-down-tray" class="w-4 h-4" />
@@ -193,7 +210,7 @@ onMounted(async () => {
 
         <!-- Close button -->
         <button
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 bg-white border border-header-300 rounded-lg hover:bg-header-50 transition-colors"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors"
           @click="closeWindow"
         >
           <UIcon name="heroicons:x-mark" class="w-4 h-4" />
@@ -203,13 +220,13 @@ onMounted(async () => {
     </div>
 
     <!-- No params provided -->
-    <div v-if="!competitionCode || !season" class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+    <div v-if="!competitionCode || !season" class="bg-white dark:bg-header-900 rounded-lg shadow p-8 text-center text-header-600 dark:text-header-300">
       {{ t('schema.no_competition') }}
     </div>
 
     <!-- Loading -->
-    <div v-else-if="loading" class="bg-white rounded-lg shadow p-8 text-center">
-      <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-600 mx-auto" />
+    <div v-else-if="loading" class="bg-white dark:bg-header-900 rounded-lg shadow p-8 text-center">
+      <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-header-600 dark:text-header-300 mx-auto" />
     </div>
 
     <!-- Content -->
@@ -274,7 +291,7 @@ onMounted(async () => {
     </div>
 
     <!-- No data -->
-    <div v-else class="bg-white rounded-lg shadow p-8 text-center text-header-600">
+    <div v-else class="bg-white dark:bg-header-900 rounded-lg shadow p-8 text-center text-header-600 dark:text-header-300">
       {{ t('schema.no_data') }}
     </div>
   </div>

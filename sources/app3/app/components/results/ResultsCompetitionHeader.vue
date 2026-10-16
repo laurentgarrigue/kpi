@@ -28,7 +28,6 @@ const liveUrl = computed(() => joinURL(app2BaseUrl, 'group', props.competition.s
     <div class="flex flex-wrap items-baseline gap-3">
       <h1 class="text-4xl text-kpi-blue-600 sm:text-5xl">{{ competition.display_title }}</h1>
       <span class="text-xl tabular-nums">{{ competition.season }}</span>
-      <UBadge variant="subtle" color="neutral" data-testid="type-badge">{{ $t(`results.type.${competition.type}`) }}</UBadge>
       <UBadge variant="subtle" :color="competition.status === 'ON' ? 'error' : 'primary'" data-testid="status-badge">
         {{ $t(`results.competitionStatus.${competition.status}`) }}
       </UBadge>

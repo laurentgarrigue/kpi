@@ -84,18 +84,18 @@ async function handleSubmit() {
     <div class="w-full max-w-lg">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-900">{{ t('access_request.subtitle') }}</p>
+        <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-300">KPI Admin</h1>
+        <p class="mt-2 text-header-900 dark:text-header-50">{{ t('access_request.subtitle') }}</p>
       </div>
 
-      <div class="bg-white rounded-lg shadow-lg p-8">
-        <h2 class="text-xl font-semibold text-header-900 mb-6">
+      <div class="bg-white dark:bg-header-900 rounded-lg shadow-lg p-8">
+        <h2 class="text-xl font-semibold text-header-900 dark:text-header-50 mb-6">
           {{ t('access_request.title') }}
         </h2>
 
         <!-- Success -->
         <div v-if="success" class="space-y-4">
-          <div class="p-4 bg-success-50 border border-success-200 rounded-lg text-success-700 text-sm">
+          <div class="p-4 bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800 rounded-lg text-success-700 dark:text-success-300 text-sm">
             <p class="font-semibold mb-1">{{ t('access_request.success_title') }}</p>
             <p>{{ t('access_request.success_message') }}</p>
           </div>
@@ -109,19 +109,19 @@ async function handleSubmit() {
 
         <!-- Form -->
         <form v-else class="space-y-4" @submit.prevent="handleSubmit">
-          <p class="text-xs text-header-600">{{ t('access_request.required_fields') }}</p>
+          <p class="text-xs text-header-600 dark:text-header-300">{{ t('access_request.required_fields') }}</p>
 
           <!-- Error -->
           <div
             v-if="error"
-            class="p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm"
+            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
           >
             {{ error }}
           </div>
 
           <!-- Email * -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('access_request.email') }} *
             </label>
             <UInput
@@ -137,7 +137,7 @@ async function handleSubmit() {
           <!-- Nom * + Prénom * -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('access_request.prenom') }} *
               </label>
               <UInput
@@ -149,7 +149,7 @@ async function handleSubmit() {
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-header-900 mb-1">
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
                 {{ t('access_request.nom') }} *
               </label>
               <UInput
@@ -164,7 +164,7 @@ async function handleSubmit() {
 
           <!-- Licence (optionnel) -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('access_request.licence') }}
             </label>
             <UInput
@@ -177,7 +177,7 @@ async function handleSubmit() {
 
           <!-- Club (optionnel) -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('access_request.club') }}
             </label>
             <UInput
@@ -190,7 +190,7 @@ async function handleSubmit() {
 
           <!-- Responsabilités * -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('access_request.responsabilites') }} *
             </label>
             <UInput
@@ -204,7 +204,7 @@ async function handleSubmit() {
 
           <!-- Message * -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('access_request.message') }} *
             </label>
             <UTextarea
@@ -229,7 +229,7 @@ async function handleSubmit() {
             </UButton>
             <NuxtLink
               to="/login"
-              class="text-center text-sm text-header-600 hover:text-header-900"
+              class="text-center text-sm text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
             >
               {{ t('access_request.back_to_login') }}
             </NuxtLink>

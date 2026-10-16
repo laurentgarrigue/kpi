@@ -26,12 +26,12 @@ describe('competitions list (PAGE_COMPETITIONS.md)', () => {
     expect(wrapper.findAll('select[name="season"] option').map(option => option.text())).toEqual(['2999', '2998'])
   })
 
-  it('CPL-04: one card per competition, in the defined order then the round order, with title, badges and link', async () => {
+  it('CPL-04: one card per competition, in the defined order then the round order, with title, status badge (no type badge) and link', async () => {
     const list = await cards('/competitions/2999?group=TSTRES')
     expect(list.map(card => card.attributes('data-competition'))).toEqual(['RCH', 'RCP', 'RMU', 'RAT'])
     expect(list[1]!.find('h2 a').attributes('href')).toBe('/competitions/2999/RCP')
     expect(list[1]!.find('h2').text()).toBe('Phase finale')
-    expect(list[1]!.text()).toContain('Coupe')
+    expect(list[1]!.text()).not.toContain('Coupe')
     expect(list[1]!.text()).toContain('Terminé')
   })
 

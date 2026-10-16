@@ -71,9 +71,9 @@ const profileLabel = (niveau: number) => {
     <div class="w-full max-w-lg">
       <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-900">{{ t('users.select_mandate.title') }}</p>
-        <p class="mt-1 text-sm text-header-600">
+        <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-300">KPI Admin</h1>
+        <p class="mt-2 text-header-900 dark:text-header-50">{{ t('users.select_mandate.title') }}</p>
+        <p class="mt-1 text-sm text-header-600 dark:text-header-300">
           {{ t('users.select_mandate.subtitle', { name: authStore.user?.name }) }}
         </p>
       </div>
@@ -81,7 +81,7 @@ const profileLabel = (niveau: number) => {
       <!-- Error -->
       <div
         v-if="error"
-        class="mb-4 p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm"
+        class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
       >
         {{ error }}
       </div>
@@ -90,19 +90,19 @@ const profileLabel = (niveau: number) => {
         <!-- Base profile option -->
         <button
           :disabled="loading"
-          class="w-full text-left p-4 bg-white rounded-lg shadow hover:shadow-md border-2 border-transparent hover:border-primary-500 transition-all disabled:opacity-50"
+          class="w-full text-left p-4 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md border-2 border-transparent hover:border-primary-500 transition-all disabled:opacity-50"
           @click="selectBase"
         >
           <div class="flex items-center justify-between">
             <div>
-              <div class="font-semibold text-header-900">
+              <div class="font-semibold text-header-900 dark:text-header-50">
                 {{ t('users.select_mandate.base_profile') }}
               </div>
-              <div class="text-sm text-header-600 mt-0.5">
+              <div class="text-sm text-header-600 dark:text-header-300 mt-0.5">
                 {{ profileLabel(authStore.user?.profile ?? 99) }}
               </div>
             </div>
-            <UIcon name="i-heroicons-user-circle" class="w-8 h-8 text-header-600" />
+            <UIcon name="i-heroicons-user-circle" class="w-8 h-8 text-header-600 dark:text-header-300" />
           </div>
         </button>
 
@@ -111,16 +111,16 @@ const profileLabel = (niveau: number) => {
           v-for="mandate in authStore.mandates"
           :key="mandate.id"
           :disabled="loading"
-          class="w-full text-left p-4 bg-white rounded-lg shadow hover:shadow-md border-2 border-transparent hover:border-primary-500 transition-all disabled:opacity-50"
+          class="w-full text-left p-4 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md border-2 border-transparent hover:border-primary-500 transition-all disabled:opacity-50"
           @click="selectMandate(mandate.id)"
         >
           <div class="flex items-center justify-between">
             <div>
-              <div class="font-semibold text-header-900">{{ mandate.libelle }}</div>
-              <div class="text-sm text-header-600 mt-0.5">
+              <div class="font-semibold text-header-900 dark:text-header-50">{{ mandate.libelle }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300 mt-0.5">
                 {{ profileLabel(mandate.niveau) }}
               </div>
-              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-xs text-header-600 mt-1 space-y-0.5">
+              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-xs text-header-600 dark:text-header-300 mt-1 space-y-0.5">
                 <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length" class="flex flex-wrap gap-x-2">
                   <span v-if="mandate.filters.seasons?.length">
                     {{ t('users.select_mandate.seasons') }}: {{ mandate.filters.seasons.join(', ') }}
@@ -148,7 +148,7 @@ const profileLabel = (niveau: number) => {
       </div>
 
       <!-- Loading indicator -->
-      <div v-if="loading" class="mt-4 text-center text-sm text-header-600">
+      <div v-if="loading" class="mt-4 text-center text-sm text-header-600 dark:text-header-300">
         {{ t('users.select_mandate.loading') }}
       </div>
     </div>

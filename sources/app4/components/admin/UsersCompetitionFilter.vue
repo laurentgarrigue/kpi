@@ -104,7 +104,7 @@ watch(() => props.season, () => {
       <span
         v-for="code in modelValue"
         :key="code"
-        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 text-primary-800 text-xs rounded-full"
+        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 text-xs rounded-full"
       >
         {{ code }}
         <button type="button" class="hover:text-primary-600" @click="remove(code)">
@@ -127,7 +127,7 @@ watch(() => props.season, () => {
       <button
         v-if="modelValue.length > 0"
         type="button"
-        class="ml-auto text-header-600 dark:text-header-600 hover:text-header-900"
+        class="ml-auto text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
         @click="clear"
       >
         <UIcon name="i-heroicons-x-circle" class="w-4 h-4" />

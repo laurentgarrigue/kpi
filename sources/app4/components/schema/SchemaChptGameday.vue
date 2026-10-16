@@ -23,19 +23,19 @@ const formatDateRange = (start: string | null, end: string | null) => {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow overflow-hidden">
+  <div class="bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
     <!-- Gameday header -->
-    <div class="px-4 py-2 bg-header-50 border-b border-header-200">
+    <div class="px-4 py-2 bg-header-50 dark:bg-header-800 border-b border-header-200 dark:border-header-700">
       <div class="flex items-center gap-2">
-        <span class="font-semibold text-header-900">{{ phase.nom || phase.phase }}</span>
-        <span v-if="phase.nom && phase.phase" class="text-sm text-header-600">{{ phase.phase }}</span>
+        <span class="font-semibold text-header-900 dark:text-header-50">{{ phase.nom || phase.phase }}</span>
+        <span v-if="phase.nom && phase.phase" class="text-sm text-header-600 dark:text-header-300">{{ phase.phase }}</span>
         <template v-if="phase.lieu || phase.departement">
-          <span class="text-header-600">—</span>
-          <span class="text-sm text-header-900">
+          <span class="text-header-600 dark:text-header-300">—</span>
+          <span class="text-sm text-header-900 dark:text-header-100">
             {{ phase.lieu }}<span v-if="phase.departement"> ({{ phase.departement }})</span>
           </span>
         </template>
-        <span v-if="phase.dateDebut" class="text-sm text-header-600 ml-auto">
+        <span v-if="phase.dateDebut" class="text-sm text-header-600 dark:text-header-300 ml-auto">
           {{ formatDateRange(phase.dateDebut, phase.dateFin) }}
         </span>
       </div>

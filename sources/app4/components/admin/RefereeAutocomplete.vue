@@ -282,7 +282,7 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 hover:text-header-900"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           @mousedown.prevent="clearSelection"
         >
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
@@ -292,7 +292,7 @@ onUnmounted(() => {
       <button
         v-if="compact && searchQuery && !disabled"
         type="button"
-        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-600 hover:text-header-900"
+        class="absolute right-0.5 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
         @mousedown.prevent="clearSelection"
       >
         <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />

@@ -439,16 +439,19 @@ onMounted(() => {
                 class="absolute left-0 mt-1 w-56 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
               >
                 <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
-                  <div v-if="gIndex > 0" class="border-t border-header-700 my-1" />
-                  <div class="px-4 py-1.5 text-xs font-semibold text-header-900 uppercase italic tracking-wider flex items-center gap-1.5">
-                    <UIcon :name="group.icon" class="w-3.5 h-3.5" />
+                  <!-- Group title: non-clickable band, distinct from the links below -->
+                  <div
+                    class="px-3 py-1 bg-header-900 border-y border-header-800 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
+                    :class="gIndex > 0 ? 'mt-1' : '-mt-1 border-t-0 rounded-t-lg'"
+                  >
+                    <UIcon :name="group.icon" class="w-3 h-3" />
                     {{ group.label }}
                   </div>
                   <NuxtLink
                     v-for="item in group.items"
                     :key="item.to"
                     :to="item.to!"
-                    class="flex items-center gap-2 px-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
+                    class="flex items-center gap-2 pl-6 pr-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
                     @click="openDropdown = null"
                   >
                     <UIcon :name="item.icon" class="w-4 h-4" />
@@ -576,7 +579,7 @@ onMounted(() => {
               </span>
               <UIcon
                 name="heroicons:chevron-down"
-                class="w-4 h-4 text-header-600 transition-transform"
+                class="w-4 h-4 text-header-400 transition-transform"
                 :class="{ 'rotate-180': userMenuOpen }"
               />
             </button>
@@ -776,16 +779,19 @@ onMounted(() => {
             </button>
             <div v-if="mobileExpanded === 'admin'" class="ml-6 space-y-1 border-l border-header-700 pl-3">
               <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
-                <div v-if="gIndex > 0" class="border-t border-header-700 my-2" />
-                <div class="text-xs font-semibold text-header-600 uppercase tracking-wider flex items-center gap-1.5 py-1">
-                  <UIcon :name="group.icon" class="w-3.5 h-3.5" />
+                <!-- Group title: non-clickable band, distinct from the links below -->
+                <div
+                  class="px-2 py-1 rounded bg-header-900 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 select-none"
+                  :class="{ 'mt-3': gIndex > 0 }"
+                >
+                  <UIcon :name="group.icon" class="w-3 h-3" />
                   {{ group.label }}
                 </div>
                 <NuxtLink
                   v-for="item in group.items"
                   :key="item.to"
                   :to="item.to!"
-                  class="flex items-center gap-2 py-1.5 text-sm text-header-300 hover:text-white transition-colors"
+                  class="flex items-center gap-2 pl-3 py-1.5 text-sm text-header-300 hover:text-white transition-colors"
                 >
                   <UIcon :name="item.icon" class="w-4 h-4" />
                   {{ item.label }}
