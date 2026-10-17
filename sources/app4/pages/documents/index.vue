@@ -23,8 +23,8 @@ const selectedEventId = ref<number | null>(null)
 const matchIds = ref<number[]>([])
 const loadingMatchIds = ref(false)
 
-// Computed: user profile
-const profile = computed(() => authStore.user?.profile ?? 99)
+// Computed: effective profile (active mandate, else base profile)
+const profile = computed(() => authStore.profile)
 
 // Computed: competition type for ranking documents
 const competitionType = computed(() => workContext.pageCompetition?.codeTypeclt ?? null)

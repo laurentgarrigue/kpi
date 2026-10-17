@@ -19,7 +19,11 @@
   },
   "experimental": {
     "title": "PREPROD — Experimental feature:",
-    "expires_in": "back to develop in {hours} h"
+    "expires_in": "back to main in {hours} h"
+  },
+  "pwa": {
+    "update_available": "Update available",
+    "reload": "Reload"
   },
   "menu": {
     "competition": "Competitions",
@@ -50,7 +54,16 @@
     "documents_short": "Doc",
     "gamedays_short": "Phases",
     "statistics_short": "Stats",
-    "administration_short": "Admin"
+    "administration_short": "Admin",
+    "editorial": "Editorial",
+    "cms_articles": "Articles",
+    "cms_pages": "Pages",
+    "cms_media": "Media library",
+    "cms_forms": "Forms",
+    "cms_menu": "Site menu",
+    "cms_home": "Site home page",
+    "cms_redirects": "Redirections",
+    "public_site_beta": "New public site (beta)"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -269,7 +282,8 @@
     "more_actions": "More actions",
     "all": "All",
     "select": "Select",
-    "copy": "Copy"
+    "copy": "Copy",
+    "validate": "Confirm"
   },
   "legacy_redirect": {
     "message": "Redirecting to classic interface...",
@@ -905,7 +919,8 @@
       "success_upload": "Image uploaded: {filename}",
       "success_upload_resized": "Image uploaded and resized: {filename}",
       "success_import": "Image imported: {filename}",
-      "success_import_resized": "Image imported and resized: {filename}"
+      "success_import_resized": "Image imported and resized: {filename}",
+      "request_hint": "Image not listed? Ask for it to be added (file attached or link, {format}) by e-mail to"
     },
     "filters": {
       "season": "Season",
@@ -940,6 +955,7 @@
       "ffck_hint": "FFCK rule: 4 points for a win, 2 for a draw, 1 for a loss, 0 for a forfeit.",
       "icf_hint": "ICF rule: 3 points for a win, 1 for a draw, 0 for a loss, 0 for a forfeit."
     },
+    "goalaverage_short": "GA",
     "goalaverage_options": {
       "gen": "General",
       "part": "Head-to-head",
@@ -1660,7 +1676,16 @@
     "bulk_cancel_assign_confirm": "Clear teams and referees for {count} selected game(s)?",
     "bulk_assign_cancelled": "Assignment cancelled for {count} game(s).",
     "bulk_duplicate_confirm": "Duplicate {count} selected game(s)? Copies will be unlocked, unpublished and have no score.",
-    "bulk_duplicated": "{count} game(s) duplicated."
+    "bulk_duplicated": "{count} game(s) duplicated.",
+    "period_label": {
+      "regular": "Period {n}",
+      "regularShort": "P{n}",
+      "overtime": "Overtime {n}",
+      "overtimeShort": "OVT {n}",
+      "shootout": "Shoot-out",
+      "shootoutShort": "SO"
+    },
+    "status_provisional": "Provisional"
   },
   "clubs": {
     "title": "Clubs Management",
@@ -1943,6 +1968,7 @@
       "save": "Save",
       "cancel": "Cancel",
       "mandates_title": "Mandates",
+      "base_profile": "Main profile",
       "mandates_empty": "No mandates assigned",
       "mandate_add": "Add a mandate",
       "mandate_label": "Mandate label",
@@ -1950,7 +1976,11 @@
       "mandate_validate": "Validate mandate",
       "mandate_cancel": "Cancel",
       "mandate_confirm_delete": "Delete this mandate?",
-      "no_competitions_for_seasons": "No competitions for the selected seasons"
+      "mandate_move_to_season": "Move the mandate to season {season}",
+      "mandate_confirm_move_season": "Replace this mandate's season(s) ({from}) with the current season {season}?\nThe mandate will no longer apply to previous seasons.",
+      "no_competitions_for_seasons": "No competitions for the selected seasons",
+      "editor": "Public site editor",
+      "editor_help": "Can write articles, pages and forms, whatever the profile."
     },
     "mandates": {
       "table_mandates": "+{count} mandate|+{count} mandates",
@@ -1987,6 +2017,7 @@
     "error_club_required": "Club filter is required for profiles 7 and 8",
     "error_profile_restricted": "You cannot assign this profile",
     "validation_club_required": "For profile 7, select at least one club",
+    "validation_forced_password_weak": "The forced password does not meet the minimum security requirements",
     "validation_competition_required": "For profiles 3 and above, select at least one competition",
     "validation_gameday_required": "For profiles 5 and 6, select at least one gameday",
     "validation_season_required": "A mandate must have at least one season selected",
@@ -2528,8 +2559,8 @@
       "END": "Finished"
     },
     "period": {
-      "M1": "1st half",
-      "M2": "2nd half",
+      "M1": "Period 1",
+      "M2": "Period 2",
       "P1": "Overtime 1",
       "P2": "Overtime 2",
       "TB": "Penalty shootout",
@@ -2811,5 +2842,317 @@
     "tours_title": "Interactive tutorials",
     "tours_subtitle": "Replay a guided tutorial at any time, directly on the relevant pages.",
     "replay": "Replay"
+  },
+  "cms": {
+    "all_categories": "All categories",
+    "all_statuses": "All statuses",
+    "categories": "Categories",
+    "imported": "From WordPress",
+    "draft_found": "A local draft from {date} was found.",
+    "draft_restore": "Restore",
+    "draft_ignore": "Ignore",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "next_page": "Next page",
+    "previous_page": "Previous page",
+    "page_of": "Page {page} / {pages}",
+    "preview": "Preview",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "remove": "Remove",
+    "saved": "Saved",
+    "status_label": "Status",
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "scheduled": "Scheduled",
+      "archived": "Archived"
+    },
+    "fields": {
+      "title": "Title",
+      "slug": "Address (slug)",
+      "slug_help": "Address: /news/{slug}",
+      "lead": "Lead",
+      "body": "Content",
+      "published_at": "Publication date",
+      "published_at_help": "A future date schedules the publication.",
+      "signature": "Signature",
+      "signature_help": "Text shown below the article (e.g. « La CNA Kayak-Polo »).",
+      "cover": "Cover image",
+      "cover_pick": "Pick an image"
+    },
+    "seo": {
+      "title_section": "Search engines (SEO)",
+      "title": "Title for search engines",
+      "description": "Description",
+      "description_help": "300 characters at most, shown below the title in results.",
+      "preview": "Search result preview"
+    },
+    "editor": {
+      "toolbar": "Formatting",
+      "h2": "Section title",
+      "h3": "Subtitle",
+      "h4": "Small title",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strike": "Strikethrough",
+      "bullet_list": "Bulleted list",
+      "ordered_list": "Numbered list",
+      "quote": "Quote",
+      "link": "Link",
+      "link_help": "Full address, or a path of the site (/competitions/…). Empty: removes the link.",
+      "url": "Address",
+      "image": "Image or document from the library",
+      "table": "Table",
+      "video": "YouTube video",
+      "video_url": "Video address",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "articles": {
+      "title": "Articles",
+      "new": "New article",
+      "add": "New article",
+      "search": "Search a title",
+      "empty": "No article.",
+      "total": "{count} article(s)",
+      "no_category": "No category",
+      "columns": {
+        "title": "Title",
+        "published_at": "Publication"
+      },
+      "links": "Related to",
+      "links_help": "Competition « season/code » (2026/N1H), event number or club code: the article is also shown on these pages.",
+      "link_kind": {
+        "competition": "Competition",
+        "event": "Event",
+        "club": "Club"
+      },
+      "link_placeholder": {
+        "competition": "2026/N1H",
+        "event": "Event number",
+        "club": "Club code"
+      },
+      "add_link": "Add a link",
+      "delete_confirm": "Permanently delete the article « {title} »?"
+    },
+    "pages": {
+      "title": "Pages",
+      "new": "New page",
+      "add": "New page",
+      "empty": "No page.",
+      "path": "Address",
+      "parent": "Parent page",
+      "no_parent": "None (top level)",
+      "slug_help": "The names of the site sections (calendar, news…) are reserved.",
+      "parent_unpublished": "parent unpublished: page hidden",
+      "delete_confirm": "Permanently delete the page « {title} »?"
+    },
+    "media": {
+      "title": "Media library",
+      "pick": "Media library",
+      "file": "File",
+      "alt": "Alternative text",
+      "alt_fr": "Alternative text (FR)",
+      "alt_en": "Alternative text (EN)",
+      "credit": "Credit",
+      "upload": "Upload",
+      "drop": "Drop files here or click to choose",
+      "limits": "JPEG, PNG, WebP or PDF, 20 MB at most. Photo metadata (GPS position…) is removed.",
+      "empty": "No media.",
+      "type": "Type",
+      "all_types": "All types",
+      "images": "Images",
+      "documents": "Documents",
+      "album": "Album",
+      "all_albums": "All albums",
+      "no_album": "No album",
+      "new_album": "New album",
+      "copy_url": "Copy address",
+      "url_copied": "Address copied",
+      "replace": "Replace the file",
+      "replace_help": "The new file keeps the same address (same type required).",
+      "replaced": "File replaced",
+      "in_use": "This media is used: remove it from the contents before deleting it."
+    },
+    "menu": {
+      "title": "Menu « Le kayak-polo »",
+      "help": "Entries of the « Le kayak-polo » menu of the public site, on three levels at most (entry, sub-entry, sub-sub-entry). An entry whose target is not published is hidden.",
+      "add": "Add an entry",
+      "add_child": "Add a level {level} entry",
+      "label_fr": "Label (FR)",
+      "label_en": "Label (EN)",
+      "target_kind": "Target",
+      "target": {
+        "page": "Page",
+        "article": "Article",
+        "url": "Address"
+      },
+      "article_id": "Article number",
+      "destination": "Destination",
+      "level": "Level {level}"
+    },
+    "home": {
+      "title": "Site home page",
+      "help": "Blocks of the home page, in order. An empty block is not shown; events are always shown.",
+      "enabled": "Shown",
+      "kind": {
+        "alert": "Alert banner",
+        "featured": "Featured",
+        "latest_news": "Latest news",
+        "partners": "Partners"
+      },
+      "alert_level": "Level",
+      "level": {
+        "info": "Information",
+        "important": "Important"
+      },
+      "from": "From",
+      "to": "To",
+      "alert_text_fr": "Text (FR)",
+      "alert_text_en": "Text (EN)",
+      "featured_articles": "Featured articles ({max} at most)",
+      "pick_articles": "Pick published articles",
+      "latest_count": "Number of news",
+      "partner_name": "Name",
+      "partner_url": "Website",
+      "logo_pick": "Pick the logo",
+      "logo_change": "Change the logo",
+      "add_partner": "Add a partner"
+    },
+    "redirects": {
+      "title": "Redirections",
+      "help": "Old addresses (WordPress…) permanently redirected (301). Those of the WordPress import are created automatically.",
+      "from": "Old address",
+      "to": "New address",
+      "hits": "Hits",
+      "add": "Add"
+    },
+    "forms": {
+      "title": "Forms",
+      "new": "New form",
+      "add": "New form",
+      "empty": "No form.",
+      "view": "View the form",
+      "state_label": "State",
+      "state": {
+        "draft": "Draft",
+        "upcoming": "Opens soon",
+        "open": "Open",
+        "closed": "Closed"
+      },
+      "counts": "{confirmed} confirmed, {waiting} waiting / {capacity}",
+      "entries": "Registrations",
+      "archived": "{count} registration(s) purged (GDPR)",
+      "intro": "Introduction",
+      "event_id": "Attached event (number)",
+      "competition": "Attached competition",
+      "attach_help": "The form is offered on the event or competition page.",
+      "fields": "Fields",
+      "new_field": "New field",
+      "field_label": "Label (FR)",
+      "field_label_en": "Label (EN)",
+      "field_type": "Type",
+      "field_key": "Key",
+      "required": "Required",
+      "help": "Help",
+      "min": "Minimum",
+      "max": "Maximum",
+      "options": "Choices",
+      "option_label": "Label",
+      "option_value": "Value",
+      "add_option": "Add a choice",
+      "add_field": "Add a field",
+      "type": {
+        "text": "Short text",
+        "textarea": "Long text",
+        "email": "E-mail",
+        "phone": "Phone",
+        "number": "Number",
+        "date": "Date",
+        "select": "Drop-down list",
+        "radio": "Single choice",
+        "checkbox": "Checkboxes",
+        "club": "Club",
+        "competition": "Competition"
+      },
+      "opening": "Opening",
+      "opens_at": "Opens on",
+      "closes_at": "Closes on",
+      "capacity": "Places",
+      "capacity_help": "Confirmed registrations at most; empty: unlimited.",
+      "waiting_list": "Waiting list beyond",
+      "confirmation_mode": "Confirmation",
+      "confirmation_help": "Manual: each registration waits for your confirmation (e.g. payment received).",
+      "mode": {
+        "auto": "Automatic",
+        "manual": "Manual"
+      },
+      "payment_url": "Payment link",
+      "payment_help": "Shown after registering and in the e-mail (HelloAsso…).",
+      "mails": "E-mails",
+      "notify_emails": "Organisers to notify",
+      "notify_help": "Comma-separated addresses.",
+      "confirmation_text": "Confirmation message",
+      "public_list": "Public list of registrations",
+      "public_list_enable": "Publish the list of registrations",
+      "public_columns": "Published columns",
+      "public_columns_help": "E-mail, phone, long texts and dates are never published.",
+      "gdpr": "Personal data (GDPR)",
+      "purpose": "Purpose",
+      "purpose_help": "Shown below the form: what the data is used for.",
+      "retention_days": "Retention (days)",
+      "retention_help": "After closing, registrations are deleted; their number is kept.",
+      "delete_confirm": "Delete the form « {title} » and its registrations?",
+      "date": "Date",
+      "actions": "Actions",
+      "no_entries": "No registration.",
+      "confirm": "Confirm",
+      "hold": "Put on hold",
+      "cancel": "Cancel",
+      "entry_status": {
+        "confirmed": "Confirmed",
+        "waiting": "Waiting",
+        "cancelled": "Cancelled"
+      },
+      "reason": {
+        "full": "waiting list",
+        "manual": "to confirm"
+      },
+      "status_changed": {
+        "confirmed": "Registration confirmed, e-mail sent",
+        "waiting": "Registration put on hold",
+        "cancelled": "Registration cancelled"
+      },
+      "mail_log": "E-mails sent",
+      "mail_status": {
+        "sent": "Sent",
+        "failed": "Failed"
+      },
+      "resend": "Resend"
+    },
+    "errors": {
+      "required": "Required field",
+      "invalid": "Invalid value",
+      "taken": "Already used",
+      "reserved": "Name reserved by the site",
+      "too_long": "Too long",
+      "too_many": "Too many items",
+      "before_opening": "Before the opening",
+      "email_required": "A published form needs a required e-mail field (confirmation to the registrant).",
+      "personal": "A published column contains personal data.",
+      "links_invalid": "Invalid link: competition « season/code », event number or club code.",
+      "categories_required": "Pick at least one category to publish.",
+      "categories_invalid": "Unknown category",
+      "options_required": "Add at least one choice.",
+      "options_invalid": "Empty or duplicate choice",
+      "file_type": "File type refused (JPEG, PNG, WebP or PDF).",
+      "file_too_large": "File too large (20 MB at most).",
+      "file_type_mismatch": "The replacement must have the same type.",
+      "file_required": "Pick a file.",
+      "in_use": "Media in use",
+      "too_deep": "Three levels at most."
+    }
   }
 }

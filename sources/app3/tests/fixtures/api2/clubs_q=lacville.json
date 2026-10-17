@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "code": "C001",
+      "label": "Club Alpha Lacville",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": {
+        "lat": 44.84,
+        "lng": -0.58
+      }
+    }
+  ]
+}

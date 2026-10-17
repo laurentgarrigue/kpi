@@ -1,0 +1,326 @@
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
+import { fileURLToPath } from 'node:url'
+import { afterAll, describe, expect, it } from 'vitest'
+import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
+import { api2Fixture } from '../fixtures/api2'
+
+// Fake api2. /fixtures/site is JSON with a wrong Content-Type, as a misconfigured proxy could send it; every other
+// request is answered with the real api2 response captured on SQL/fixtures (tests/fixtures/api2).
+const FIXTURES = {
+  today: '2026-04-20',
+  upcoming: [
+    { kind: 'event', id: 7, libelle: 'Coupe de France', place: 'Saint-Omer', logo: null, start: '2026-05-01', end: '2026-05-03' },
+    { kind: 'group', season: '2026', code: 'N1H', libelle: 'Nationale 1 Hommes', libelle_en: null, place: 'Lacville', department: '33', logo: null, start: '2026-05-09', end: '2026-05-10' },
+  ],
+  recent: [],
+}
+// X-Forwarded-For received by api2 on /search: the server rendering relays the visitor address (API3-08).
+const searchForwardedFor: (string | undefined)[] = []
+// Phase 4: form submissions received by api2, old paths known by api2 (FEATURE_FORMS.md § 4, FEATURE_CMS.md § 8).
+const submissions: { body: Record<string, unknown>, forwardedFor: string | undefined }[] = []
+const OLD_PATHS: Record<string, string> = { '/2020/06/finale/': '/news/finale-resultats', '/?p=101': '/news/finale-resultats' }
+const RSS = '<?xml version="1.0"?><rss version="2.0"><channel><title>kayak-polo.info</title></channel></rss>'
+
+function answerSubmission(body: Record<string, unknown>): [number, unknown] {
+  if (!body.email) {
+    return [422, { error: 'validation_failed', errors: { email: 'required' } }]
+  }
+  return [201, { status: 'waiting', reason: 'manual', payment_url: 'https://www.helloasso.com/test' }]
+}
+
+const fakeApi2 = createServer((request, response) => {
+  if (request.method === 'POST' && /^\/forms\/[a-z0-9-]+\/submissions/.test(request.url ?? '')) {
+    let raw = ''
+    request.on('data', (chunk) => {
+      raw += chunk
+    })
+    request.on('end', () => {
+      const body = JSON.parse(raw || '{}') as Record<string, unknown>
+      submissions.push({ body, forwardedFor: request.headers['x-forwarded-for'] as string | undefined })
+      const [status, answer] = answerSubmission(body)
+      response.writeHead(status, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify(answer))
+    })
+    return
+  }
+  const url = new URL(request.url ?? '/', 'http://api2')
+  if (url.pathname === '/redirect') {
+    const to = OLD_PATHS[url.searchParams.get('path') ?? '']
+    response.writeHead(to ? 200 : 404, { 'Content-Type': 'application/json' })
+    response.end(JSON.stringify(to ? { to, code: 301 } : { error: 'not_found' }))
+    return
+  }
+  if (url.pathname === '/rss.xml') {
+    response.writeHead(200, { 'Content-Type': 'application/rss+xml' })
+    response.end(RSS)
+    return
+  }
+  if (request.url?.startsWith('/search')) {
+    searchForwardedFor.push(request.headers['x-forwarded-for'] as string | undefined)
+  }
+  if (request.url === '/fixtures/site') {
+    response.writeHead(200, { 'Content-Type': 'application/octet-stream' })
+    response.end(JSON.stringify(FIXTURES))
+    return
+  }
+  try {
+    const fixture = api2Fixture(request.url ?? '')
+    response.writeHead(fixture.status, { 'Content-Type': 'application/json' })
+    response.end(JSON.stringify(fixture.body))
+  } catch {
+    response.writeHead(404).end()
+  }
+})
+await new Promise<void>(resolve => fakeApi2.listen(0, '127.0.0.1', resolve))
+const api2Url = `http://127.0.0.1:${(fakeApi2.address() as AddressInfo).port}`
+const PURGE_TOKEN = 'e2e-purge-token'
+
+// Built and served once for the whole file.
+describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async () => {
+  await setup({
+    rootDir: fileURLToPath(new URL('../..', import.meta.url)),
+    server: true,
+    env: {
+      NUXT_API2_INTERNAL_URL: api2Url,
+      NUXT_PUBLIC_API2_BASE_URL: api2Url,
+      NUXT_APP3_PURGE_TOKEN: PURGE_TOKEN,
+    },
+  })
+
+  afterAll(() => {
+    fakeApi2.close()
+  })
+
+  it('PLT-01: /healthz answers 200 with {"status":"ok"}', async () => {
+    const response = await fetch('/healthz')
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ status: 'ok' })
+  })
+
+  it('PLT-02: /robots.txt disallows everything in beta', async () => {
+    const response = await fetch('/robots.txt')
+    expect(response.headers.get('content-type')).toContain('text/plain')
+    expect(await response.text()).toBe('User-agent: *\nDisallow: /\n')
+  })
+
+  it('PLT-03: HTML pages carry the X-Robots-Tag header and the robots meta tag in beta', async () => {
+    const response = await fetch('/')
+    expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow')
+    expect(await response.text()).toMatch(/<meta name="robots" content="noindex, nofollow">/)
+  })
+
+  it('LAY-10: pages declare the public website favicon, served by app3', async () => {
+    expect(await $fetch<string>('/')).toMatch(/<link[^>]*rel="icon"[^>]*href="\/favicon\.png"/)
+    const icon = await fetch('/favicon.png')
+    expect(icon.status).toBe(200)
+    expect(icon.headers.get('content-type')).toContain('image/png')
+  })
+
+  it('LAY-07: an unknown URL returns a 404 inside the site layout', async () => {
+    // A browser navigation asks for HTML (otherwise Nitro answers API-style JSON errors).
+    const response = await fetch('/this-page-does-not-exist', { headers: { Accept: 'text/html' } })
+    expect(response.status).toBe(404)
+    const html = await response.text()
+    expect(html).toContain('id="content"')
+    expect(html).toContain('Page introuvable')
+  })
+
+  it('HOME-07/HOME-09/PLT-04: the home page renders the api2 fixtures server-side, whatever their Content-Type', async () => {
+    const response = await fetch('/')
+    expect(response.status).toBe(200)
+    const html = await response.text()
+    expect(html).toContain('Coupe de France')
+    expect(html).toMatch(/href="\/groups\/2026\/N1H"/)
+  })
+
+  it('the client payload of the cached home page is serialisable', async () => {
+    const response = await fetch('/_payload.json')
+    expect(response.status).toBe(200)
+  })
+
+  it('LAY-06: /en is served in English with hreflang alternates and a canonical URL', async () => {
+    const html = await $fetch<string>('/en')
+    expect(html).toMatch(/<html[^>]*lang="en-GB"/)
+    expect(html).toMatch(/<link[^>]*rel="canonical"[^>]*href="https:\/\/beta\.kpi\.localhost\/en"/)
+    expect(html).toMatch(/hreflang="fr/)
+    expect(html).toMatch(/hreflang="x-default"/)
+  })
+
+  // ------------------------------------------------------------- phase 2: redirections, 404, server rendering
+
+  const location = async (path: string) => {
+    const response = await fetch(path, { redirect: 'manual', headers: { Accept: 'text/html' } })
+    return [response.status, response.headers.get('location')]
+  }
+
+  it('CPL-01: /competitions redirects (302) to the active season, keeping the language', async () => {
+    expect(await location('/competitions')).toEqual([302, '/competitions/2999'])
+    expect(await location('/en/competitions')).toEqual([302, '/en/competitions/2999'])
+  })
+
+  it('CPL-08: the selection form without JavaScript lands on the chosen season and group', async () => {
+    expect(await location('/competitions?season=2998&group=TSTRES')).toEqual([302, '/competitions/2998?group=TSTRES'])
+  })
+
+  it('CMP-01: a competition opens on its ranking when finished, on its games otherwise, keeping ?event=', async () => {
+    expect(await location('/competitions/2999/RCP')).toEqual([302, '/competitions/2999/RCP/ranking'])
+    expect(await location('/competitions/2999/RCH?event=77')).toEqual([302, '/competitions/2999/RCH/games?event=77'])
+  })
+
+  it('EVT-01/GRP-01: event and group views open on their games', async () => {
+    expect(await location('/events/77')).toEqual([302, '/events/77/games'])
+    expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])
+  })
+
+  it('CMP-14/EVT-05/GRP-04: unknown or unpublished results are a 404 page', async () => {
+    for (const path of ['/competitions/2999/NOPE/games', '/events/78/games', '/groups/2999/NOPE/games']) {
+      const response = await fetch(path, { headers: { Accept: 'text/html' } })
+      expect(response.status, path).toBe(404)
+      expect(await response.text(), path).toContain('Page introuvable')
+    }
+  })
+
+  it('CMP-04/CMP-10: results are rendered by the server (usable without JavaScript)', async () => {
+    const html = await $fetch<string>('/competitions/2999/RCP/ranking')
+    expect(html).toContain('Classement final')
+    expect(html).toContain('Equipe Echo')
+    expect(html).toMatch(/<a[^>]*aria-current="page"[^>]*>Classement<\/a>/)
+  })
+
+  it('CPL-05: the compact ranking and its « see all » work without JavaScript', async () => {
+    const html = await $fetch<string>('/competitions/2999?group=TSTRES')
+    expect(html).toContain('Equipe Alpha')
+    expect(html).toContain('<form')
+  })
+
+  // ------------------------------------------------------------- phase 3: calendar, history, teams, clubs, search
+
+  it('HIS-01: /history redirects (302) to the default group, or to the group chosen without JavaScript', async () => {
+    expect(await location('/history')).toEqual([302, '/history/TSTRES'])
+    expect(await location('/en/history?group=TSTRES')).toEqual([302, '/en/history/TSTRES'])
+  })
+
+  it('CAL-07/HIS-02/TEA-02/CLB-01: the phase 3 pages are rendered by the server', async () => {
+    expect(await $fetch<string>('/calendar?month=2999-04')).toContain('Championnat Résultats')
+    expect(await $fetch<string>('/history/TSTRES')).toContain('Equipe Echo')
+    expect(await $fetch<string>('/teams/101')).toContain('ALPHA Ann')
+    expect(await $fetch<string>('/clubs')).toContain('Club Alpha Lacville')
+  })
+
+  it('HIS-05/TEA-05/CLB-03: unknown history group, team or club is a 404 page', async () => {
+    for (const path of ['/history/NOPE', '/teams/9999', '/clubs/NOPE']) {
+      const response = await fetch(path, { headers: { Accept: 'text/html' } })
+      expect(response.status, path).toBe(404)
+    }
+  })
+
+  it('SRC-05: the search page is never indexed and relays the visitor address to api2', async () => {
+    const response = await fetch('/search?q=resultats', { headers: { 'Accept': 'text/html', 'X-Forwarded-For': '203.0.113.9' } })
+    expect(response.status).toBe(200)
+    const html = await response.text()
+    expect(html).toContain('Résultats pour « resultats »')
+    expect(html).toMatch(/<meta name="robots" content="noindex, nofollow">/)
+    expect(searchForwardedFor.at(-1)).toContain('203.0.113.9')
+  })
+
+  // NuxtLink prefetches `{page}/_payload.json` of cached pages; a route rule that does not cover that path makes
+  // every prefetch a 404 (and the cached payload useless).
+  it('PLT-07: the payload of every cached page is served (link prefetch does not end in 404)', async () => {
+    const pages = [
+      '/', '/calendar', '/history/TSTRES', '/teams', '/teams/101', '/clubs', '/clubs/C001',
+      '/competitions/2999', '/competitions/2999/RCH/games', '/events/77/games', '/events/77/ranking', '/groups/2999/TSTRES/games',
+    ]
+    for (const page of pages) {
+      const path = `${page === '/' ? '' : page}/_payload.json`
+      const response = await fetch(path, { headers: { Accept: '*/*' } })
+      expect(response.status, path).toBe(200)
+      expect(response.headers.get('content-type'), path).toContain('json')
+    }
+  })
+
+  // ------------------------------------------------------------- phase 4: news, pages, forms, purge
+
+  it('NEWS-03/NEWS-06: an article is rendered by the server with Open Graph and NewsArticle data', async () => {
+    const html = await $fetch<string>('/news/finale-resultats')
+    expect(html).toContain('Finale des résultats')
+    expect(html).toMatch(/<meta property="og:type" content="article">/)
+    expect(html).toMatch(/<meta property="og:image" content="https:\/\/kpi\.localhost\/media\/content\/2999\/01\/finale-1280\.webp\?v=afcd5ac1">/)
+    expect(html).toMatch(/<meta property="article:published_time" content="2020-06-01T12:00:00\+02:00">/)
+    expect(html).toMatch(/<meta name="description" content="Description SEO">/)
+    expect(html).toContain('"@type":"NewsArticle"')
+  })
+
+  it('NEWS-01/NEWS-03/CNT-01: out of range list page, draft article and unknown page are 404 pages', async () => {
+    for (const path of ['/news?page=2', '/news/brouillon', '/page-brouillon']) {
+      const response = await fetch(path, { headers: { Accept: 'text/html' } })
+      expect(response.status, path).toBe(404)
+    }
+  })
+
+  it('NEWS-08: the RSS feed is served by the site and announced by the news list', async () => {
+    const response = await fetch('/rss.xml')
+    expect(response.headers.get('content-type')).toContain('application/rss+xml')
+    expect(await response.text()).toBe(RSS)
+    expect(await $fetch<string>('/news')).toMatch(/<link[^>]*rel="alternate"[^>]*type="application\/rss\+xml"[^>]*href="\/rss\.xml"/)
+  })
+
+  it('CNT-02: a child page under another path redirects (301) to its path', async () => {
+    expect(await location('/arbitrage')).toEqual([301, '/le-kayak-polo/arbitrage'])
+    expect(await $fetch<string>('/le-kayak-polo')).toContain('Sommaire')
+  })
+
+  it('CMS-09: old WordPress permalinks redirect (301) to their new page', async () => {
+    expect(await location('/2020/06/finale/')).toEqual([301, '/news/finale-resultats'])
+    expect(await location('/?p=101')).toEqual([301, '/news/finale-resultats'])
+  })
+
+  it('CNT-07: sitemap.xml lists the application pages and the published content', async () => {
+    const response = await fetch('/sitemap.xml')
+    expect(response.headers.get('content-type')).toContain('application/xml')
+    const xml = await response.text()
+    expect(xml).toContain('<loc>https://beta.kpi.localhost/news/finale-resultats</loc>')
+    expect(xml).toContain('<loc>https://beta.kpi.localhost/le-kayak-polo/arbitrage</loc>')
+    expect(xml).not.toContain('brouillon')
+  })
+
+  const postForm = (path: string, fields: Record<string, string | string[]>) => {
+    const body = new URLSearchParams()
+    for (const [key, value] of Object.entries(fields)) {
+      for (const item of Array.isArray(value) ? value : [value]) {
+        body.append(key, item)
+      }
+    }
+    return fetch(path, { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'text/html', 'X-Forwarded-For': '198.51.100.7' } })
+  }
+
+  it('FRM-01/FRM-02: without JavaScript, a refused submission renders the errors with the answers kept', async () => {
+    const response = await postForm('/forms/tournoi-test', { _token: 't', website: '', team: 'Alpha' })
+    expect(response.status).toBe(200)
+    const html = await response.text()
+    expect(html).toContain('1 champ à corriger')
+    expect(html).toMatch(/id="field-team"[^>]*value="Alpha"|value="Alpha"[^>]*id="field-team"/)
+    expect(submissions.at(-1)?.body).toEqual({ _token: 't', team: 'Alpha' })
+  })
+
+  it('FRM-01/FRM-05/FRM-07: a submission is relayed with the visitor address, the confirmation rendered with the payment link', async () => {
+    const response = await postForm('/en/forms/stage-paiement', { _token: 't', email: 'a@example.org', days: ['sat', 'sun'] })
+    const html = await response.text()
+    expect(html).toContain('Your registration is pending')
+    expect(html).toContain('https://www.helloasso.com/test')
+    expect(submissions.at(-1)).toEqual({ body: { _token: 't', email: 'a@example.org', days: ['sat', 'sun'] }, forwardedFor: '198.51.100.7' })
+  })
+
+  it('CMS-07: the cache purge needs the shared secret and empties the cache of the paths', async () => {
+    await fetch('/news')
+    const purge = (token: string) => fetch('/_internal/purge', {
+      method: 'POST',
+      body: JSON.stringify({ paths: ['/news'] }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    })
+    expect((await purge('wrong')).status).toBe(401)
+    const response = await purge(PURGE_TOKEN)
+    expect(response.status).toBe(200)
+    expect((await response.json() as { purged: number }).purged).toBeGreaterThan(0)
+  })
+})

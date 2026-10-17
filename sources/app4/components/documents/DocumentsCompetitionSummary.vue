@@ -14,7 +14,7 @@ const config = useRuntimeConfig()
 const legacyBase = config.public.legacyBaseUrl as string
 
 // Only profiles <= 2 have ROLE_ADMIN and can access /admin/schema
-const canViewSchema = computed(() => (authStore.user?.profile ?? 99) <= 2)
+const canViewSchema = computed(() => authStore.profile <= 2)
 
 // State
 const competition = ref<AdminCompetition | null>(null)

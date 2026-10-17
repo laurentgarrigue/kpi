@@ -22,13 +22,15 @@ PHP_CONTAINER_NAME = $(APPLICATION_NAME)_php
 # Passer par le conteneur Apache relit sources/api2/.env et peut écrire un cache "dev" dans
 # le var/cache/ partagé, ce qui casse le worker au recyclage suivant.
 # Seule exception : composer (voir api2_composer_install — besoin d'ext-gd, absente ici).
-# cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md §8ter.b
+# cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md §8ter.b
 API2_CONTAINER_NAME = $(APPLICATION_NAME)_api2
 # Démon CLI régénérant les caches JSON du live. Sans rapport avec le worker FrankenPHP
 # d'api2 malgré le nom : celui-ci ne sert aucune requête HTTP.
 WORKER_CONTAINER_NAME = $(APPLICATION_NAME)_event_cache_worker
 NODE_CONTAINER_NAME = $(APPLICATION_NAME)_node_app2
-NODE3_CONTAINER_NAME = $(APPLICATION_NAME)_node_app3
+NODE3_CONTAINER_NAME = kpi_node_app3
+# Serveur SSR du site public en préprod/prod (beta.${KPI_DOMAIN_NAME}), cf. DOC/specs/public/SITE_PLATFORM.md
+APP3_CONTAINER_NAME = $(APPLICATION_NAME)_app3
 NODE4_CONTAINER_NAME = kpi_node_app4
 DB_CONTAINER_NAME = $(APPLICATION_NAME)_db
 
@@ -41,22 +43,22 @@ DOCKER_EXEC_API2 = docker exec -ti $(API2_CONTAINER_NAME)
 DOCKER_EXEC_API2_NON_INTERACTIVE = docker exec $(API2_CONTAINER_NAME)
 DOCKER_EXEC_NODE = docker exec -ti $(NODE_CONTAINER_NAME)
 DOCKER_EXEC_NODE_NON_INTERACTIVE = docker exec $(NODE_CONTAINER_NAME)
-DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
-DOCKER_EXEC_NODE3_NON_INTERACTIVE = docker exec $(NODE3_CONTAINER_NAME)
 DOCKER_EXEC_NODE4 = docker exec -ti $(NODE4_CONTAINER_NAME)
 DOCKER_EXEC_NODE4_NON_INTERACTIVE = docker exec $(NODE4_CONTAINER_NAME)
+DOCKER_EXEC_NODE3 = docker exec -ti $(NODE3_CONTAINER_NAME)
+DOCKER_EXEC_NODE3_NON_INTERACTIVE = docker exec $(NODE3_CONTAINER_NAME)
 .DEFAULT_GOAL = help
 
-.PHONY: help init init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks \
+.PHONY: help init init_env init_env_app2 init_env_app4 init_env_api2 init_networks \
 docker_dev_up docker_dev_down docker_dev_restart docker_dev_rebuild docker_dev_logs docker_dev_status \
 docker_preprod_up docker_preprod_down docker_preprod_restart docker_preprod_rebuild docker_preprod_logs docker_preprod_status \
 docker_prod_up docker_prod_down docker_prod_restart docker_prod_rebuild docker_prod_logs docker_prod_status \
 docker_production_restart docker_production_rebuild \
-app2_dev app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
+app2_dev app2_dev_restart app2_build app2_generate_dev app2_generate_preprod app2_generate_production app2_generate_prod app2_lint \
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
-app3_dev app3_build app3_generate_dev app3_lint \
-app3_npm_install app3_npm_ls app3_npm_clean app3_npm_update app3_npm_add app3_npm_add_dev app3_bash \
-app4_dev app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
+app3_dev app3_dev_restart app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
+app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
+app4_dev app4_dev_restart app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -64,13 +66,14 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures \
-dev dev_status dev_logs dev_down dev_certs app2_logs app3_logs app4_logs \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
+dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
-docker_networks_create docker_networks_list docker_networks_clean \
+media_init media_status media_sync_from media_backup media_backup_list media_backup_check media_restore \
+docker_networks_create docker_networks_list docker_networks_clean favicons_generate \
 wt_new wt_list wt_sync wt_rm pr_push pr_create pr_web pr_status pr_checks pr_close pr_merge \
 last_merge_sha preprod_rollback release release_tag feature version \
 hooks
@@ -94,7 +97,7 @@ help: ## Affiche cette aide
 
 
 ## INITIALISATION
-init: init_env init_env_app2 init_env_app3 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
+init: init_env init_env_app2 init_env_app4 init_env_api2 init_networks hooks ## Initialisation complète du projet (env, réseaux, hooks)
 	@echo ""
 	@echo "Initialisation complète terminée!"
 	@echo ""
@@ -154,16 +157,6 @@ init_env_app2: ## Initialise les fichiers .env.development, .env.preprod et .env
 	else \
 		echo "Le fichier .env.production existe déjà pour app2"; \
 	fi
-
-init_env_app3: ## Initialise les fichiers .env.development, .env.preprod et .env.production pour app3
-	@if [ ! -f sources/app3/.env.preprod ]; then \
-		cp sources/app3/.env.preprod.dist sources/app3/.env.preprod; \
-		echo "Fichier .env.preprod créé pour app3"; \
-		echo "N'oubliez pas de configurer le domaine de préproduction dans .env.preprod"; \
-	else \
-		echo "Le fichier .env.preprod existe déjà pour app3"; \
-	fi
-	@echo "Les autres fichiers .env pour app3 sont déjà créés dans sources/app3/"
 
 init_env_app4: ## Initialise le fichier .env pour app4 (admin) depuis .env.dist
 	@if [ ! -f sources/app4/.env ]; then \
@@ -332,6 +325,8 @@ dev_status: ## Affiche l'état et les URLs de l'environnement de développement
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@printf '  %-22s %-34s ' "app4 admin (Nuxt)" "https://$(NODE4_DOMAIN_NAME)/admin2/"; \
 		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://$(NODE4_DOMAIN_NAME)/admin2/" 2>/dev/null || echo "KO"
+	@printf '  %-22s %-34s ' "app3 site public (Nuxt)" "https://beta.$(KPI_DOMAIN_NAME)/"; \
+		curl -sk -o /dev/null -w '%{http_code}\n' --max-time 8 "https://beta.$(KPI_DOMAIN_NAME)/" 2>/dev/null || echo "KO"
 	@echo
 	@echo "  Logs : make api2_logs | make app2_logs | make app4_logs | make dev_logs"
 	@echo "  (200/401 = OK. Les serveurs Nuxt mettent ~15 s à démarrer.)"
@@ -419,11 +414,23 @@ docker_prod_status: ## Affiche le statut des containers de production
 
 
 ## APP2 - NUXT (Scrutineering/Charts)
+# Redémarre le conteneur d'un serveur Nuxt de dev ($(1) = conteneur, $(2) = app) : remède quand le serveur reste
+# en erreur après une série de rechargements à chaud (ex. 500 « Unexpected token '.' » sur toutes les routes).
+define node_dev_restart
+	@echo "Redémarrage du serveur de dev $(2) ($(1))..."
+	@docker restart $(1) >/dev/null 2>&1 \
+		|| { echo "⛔ Conteneur $(1) introuvable (lancer : make docker_dev_up)"; exit 1; }
+	@echo "✅ $(1) redémarré : Nuxt met ~15 s à répondre. Suivre le démarrage : make $(2)_dev"
+endef
+
 app2_dev: ## Suit les logs du serveur Nuxt (app2, port 3002) - démarré par docker_dev_up
 	@echo "ℹ️  Le serveur Nuxt (app2) démarre automatiquement avec les containers."
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app2_logs
+
+app2_dev_restart: ## Redémarre le serveur Nuxt de dev (app2), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE_CONTAINER_NAME),app2)
 
 app2_logs: ## Affiche les logs du serveur Nuxt (app2). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE_CONTAINER_NAME)
@@ -505,71 +512,70 @@ app2_npm_add_dev: ## Ajoute un package npm de dev à app2 (usage: make app2_npm_
 	$(DOCKER_EXEC_NODE) sh -c "npm install -D $(package)"
 
 
-## APP3 - NUXT (Match Sheet)
-app3_logs: ## Affiche les logs du container app3. Options: lines=200
-	docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME)
+## APP3 - NUXT SSR (site public, beta) — cf. sources/app3/README.md
+app3_dev: ## Suit les logs du serveur Nuxt de dev (app3, https://beta.$(KPI_DOMAIN_NAME)) - démarré par docker_dev_up
+	@$(MAKE) --no-print-directory app3_logs
 
-# app3 ne démarre PAS automatiquement : son `npm run dev` échoue sur "dotenv: not found"
-# (dotenv-cli absent des node_modules). Lancer `make app3_npm_install` avant.
-app3_dev: ## Lance le serveur Nuxt (app3) dans le terminal courant (port 3003)
-	$(DOCKER_EXEC_NODE3) sh -c "npm run dev"
+app3_dev_restart: ## Redémarre le serveur Nuxt de dev (app3) ; en préprod/prod, c'est app3_restart
+	$(call node_dev_restart,$(NODE3_CONTAINER_NAME),app3)
 
-app3_build: ## Build l'application Nuxt (app3) pour la production
-	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run build"
+app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sinon serveur de dev. Options: lines=200
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker logs -f --tail $(or $(lines),50) $(APP3_CONTAINER_NAME); \
+	else \
+		docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME); \
+	fi
 
-app3_generate_dev: ## Génère l'application Nuxt (app3) en mode statique pour développement
-	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npx dotenv-cli -e .env.development -- nuxt generate"
+app3_test: ## Tests du site public (Vitest : unit, composants, e2e) dans le conteneur de dev
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm test"
 
-# app3 (feuille de marque) n'est plus déployé : les cibles generate preprod/prod/
-# production ont été retirées. app3 ne subsiste que comme RÉFÉRENCE locale pour le
-# scoring d'app4 → seules restent les cibles dev/lint/npm ci-dessous.
+app3_lint: ## ESLint + typecheck du site public (app3)
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run lint && npm run typecheck"
 
-app3_lint: ## Exécute ESLint sur app3
-	$(DOCKER_EXEC_NODE3) sh -c "npm run lint"
-
-app3_bash: ## Ouvre un shell dans le container Node (app3)
+app3_bash: ## Ouvre un shell dans le conteneur Node de dev (app3)
 	$(DOCKER_EXEC_NODE3) sh
 
+# Premier démarrage : node_app3 lance `npm run dev` au boot et redémarre en boucle sans node_modules,
+# donc `docker exec` y est impossible. Installation via un conteneur temporaire, avec l'UID de l'hôte.
+app3_npm_ci: ## Installe les dépendances d'app3 (lockfile) via un conteneur temporaire — 1er démarrage du dev
+	docker run --rm -u "$(USER_ID):$(GROUP_ID)" -e npm_config_cache=/tmp/.npm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine npm ci
+	@docker restart $(NODE3_CONTAINER_NAME) >/dev/null 2>&1 && echo "✅ $(NODE3_CONTAINER_NAME) redémarré" || true
 
-## APP3 - NPM
-app3_npm_install: ## Installe toutes les dépendances npm pour app3
-	@echo "Installation des dépendances npm pour app3 (container: $(NODE3_CONTAINER_NAME))..."
+app3_npm_install: ## Installe les dépendances npm d'app3 (conteneur de dev)
 	$(DOCKER_EXEC_NODE3) sh -c "npm install"
 
-app3_npm_ls: ## Liste les modules npm installés dans app3
-	@echo "Modules npm dans app3 (container: $(NODE3_CONTAINER_NAME)):"
-	$(DOCKER_EXEC_NODE3) sh -c "ls -l node_modules/@nuxtjs"
-
-app3_npm_clean: ## Supprime node_modules et package-lock.json de app3
-	@echo "Nettoyage de node_modules pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "rm -rf node_modules package-lock.json"
-
-app3_npm_update: ## Met à jour toutes les dépendances npm de app3
-	@echo "Mise à jour des dépendances npm pour app3 (container: $(NODE3_CONTAINER_NAME))..."
-	$(DOCKER_EXEC_NODE3) sh -c "npm update"
-
-app3_npm_update_lock: ## Régénère le package-lock.json de app3 via container temporaire (Node 22)
-	@echo "Régénération du package-lock.json pour app3 (vrai npm install en dossier isolé)..."
-	@# NE PAS utiliser --package-lock-only : il ne résout pas les peer deps et produit
-	@# un lock désynchronisé (npm ci échoue ensuite). NE PAS installer sur sources/app3
-	@# monté : node_modules/.nuxt seraient écrits en root et casseraient le dev (EACCES).
-	@# On copie uniquement les manifests dans un dossier temporaire, on installe pour de
-	@# vrai, puis on récupère le seul package-lock.json régénéré.
-	@tmp=$$(mktemp -d) ; \
-		cp sources/app3/package.json sources/app3/package-lock.json "$$tmp/" ; \
-		docker run --rm -v "$$tmp:/app" -w /app node:22-alpine \
-			sh -c "npm install --ignore-scripts --no-audit --no-fund && rm -rf node_modules" ; \
-		cp "$$tmp/package-lock.json" sources/app3/package-lock.json ; \
-		rm -rf "$$tmp"
-	@echo "package-lock.json mis à jour. Pensez à le committer."
-
-app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=uuid)
-	@echo "Ajout du package $(package) pour app3 (container: $(NODE3_CONTAINER_NAME))..."
+app3_npm_add: ## Ajoute un package npm à app3 (usage: make app3_npm_add package=<nom>)
 	$(DOCKER_EXEC_NODE3) sh -c "npm install $(package)"
 
-app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_add_dev package=eslint)
-	@echo "Ajout du package de dev $(package) pour app3 (container: $(NODE3_CONTAINER_NAME))..."
+app3_npm_add_dev: ## Ajoute un package npm de dev à app3 (usage: make app3_npm_add_dev package=<nom>)
 	$(DOCKER_EXEC_NODE3) sh -c "npm install -D $(package)"
+
+# Build SSR dans un conteneur Node temporaire (aucun Node requis sur le serveur), puis redémarrage
+# du conteneur app3. Monte sources/ entier : app3 étend ../kpi-layer. Un même build sert préprod et
+# prod (configuration runtime NUXT_* des compose). Appelé par deploy-wrapper.sh (vps-manager).
+# Un conteneur app3 absent n'est PAS une erreur : le beta ne doit jamais faire échouer un déploiement
+# (SITE_PLATFORM.md § 6) — il est créé par `make docker_<env>_up`.
+app3_generate_preprod: ## Construit le site public (SSR) et redémarre le conteneur app3 (préprod)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_production: ## Construit le site public (SSR) et redémarre le conteneur app3 (production)
+	@$(MAKE) --no-print-directory _app3_build_and_restart
+
+app3_generate_prod: app3_generate_production ## Alias pour app3_generate_production
+
+_app3_build_and_restart:
+	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
+	git checkout -- sources/app3/package-lock.json
+	@echo "Building app3 (SSR) using temporary Node.js container..."
+	docker run --rm -v "$(CURDIR)/sources:/src" -w /src/app3 node:22-alpine sh -c "npm ci && npx nuxt build"
+	@$(MAKE) --no-print-directory app3_restart
+
+app3_restart: ## Redémarre le serveur SSR du site public (app3) pour charger le dernier build
+	@if docker inspect $(APP3_CONTAINER_NAME) >/dev/null 2>&1; then \
+		docker restart $(APP3_CONTAINER_NAME) >/dev/null && echo "✅ $(APP3_CONTAINER_NAME) redémarré"; \
+	else \
+		echo "⚠️  $(APP3_CONTAINER_NAME) absent : le créer avec make docker_<env>_up (non bloquant)"; \
+	fi
 
 
 ## APP4 - NUXT (Admin)
@@ -578,6 +584,9 @@ app4_dev: ## Suit les logs du serveur Nuxt (app4 admin, port 3004) - démarré p
 	@echo "   Affichage des logs (Ctrl-C pour quitter, le serveur continue de tourner)."
 	@echo
 	@$(MAKE) --no-print-directory app4_logs
+
+app4_dev_restart: ## Redémarre le serveur Nuxt de dev (app4 admin), par exemple s'il reste en erreur 500
+	$(call node_dev_restart,$(NODE4_CONTAINER_NAME),app4)
 
 app4_logs: ## Affiche les logs du serveur Nuxt (app4 admin). Options: lines=200
 	docker logs -f --tail $(or $(lines),50) $(NODE4_CONTAINER_NAME)
@@ -908,7 +917,7 @@ dev_certs: ## Régénère le certificat mkcert pour les domaines .localhost (sup
 	@echo "Génération du certificat (.localhost + .local existants)..."
 	@cd "$(TRAEFIK_CERTS_PATH)" && mkcert -cert-file local-cert.pem -key-file local-key.pem \
 		'$(KPI_DOMAIN_NAME)' '*.$(KPI_DOMAIN_NAME)' '$(NODE_DOMAIN_NAME)' '$(NODE4_DOMAIN_NAME)' \
-		'$(NODE_LIVE_DOMAIN_NAME)' '$(MYADMIN_DOMAIN_NAME)' '$(APP3_DOMAIN_NAME)' \
+		'$(NODE_LIVE_DOMAIN_NAME)' '$(MYADMIN_DOMAIN_NAME)' \
 		'localhost' '127.0.0.1' '::1' \
 		'kpi.local' 'kpi-node.local' 'kpi-8.local' 'kpi-myadmin.local' 'dashboard.local'
 	@echo
@@ -1006,6 +1015,14 @@ api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base
 	@$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit \
 		&& echo "✅ Suite unit passée"
 
+db_migrate: ## Applique un script SQL/migrations/*.sql à la base de l'environnement (make db_migrate file=SQL/migrations/<fichier>.sql)
+	@[ -n "$(file)" ] && [ -f "$(file)" ] || { echo "⛔ Usage : make db_migrate file=SQL/migrations/<fichier>.sql"; exit 1; }
+	@[ -n "$(DB_ROOT_PASSWORD)" ] && [ -n "$(DB_NAME)" ] || { \
+		echo "⛔ DB_ROOT_PASSWORD ou DB_NAME non défini. Vérifie docker/.env."; exit 1; }
+	@echo "Application de $(file) sur $(DB_NAME) ($(DB_CONTAINER_NAME))..."
+	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(DB_NAME) < "$(file)"
+	@echo "✔ $(file) appliqué"
+
 api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée (kpi_fixtures_test)
 	@[ -n "$(DB_ROOT_PASSWORD)" ] || { \
 		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
@@ -1013,8 +1030,11 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
 		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
 		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
-	@echo "Chargement de SQL/fixtures/schema.sql puis data.sql..."
+	@echo "Chargement de SQL/fixtures/schema.sql, des migrations du site public puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql
+	@for f in SQL/migrations/*_public_site_*.sql; do \
+		docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < "$$f" || exit 1; \
+	done
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
 	@echo "✅ Fixtures chargées dans $(API2_TEST_DB_NAME)"
 
@@ -1087,6 +1107,28 @@ docker_networks_clean: ## Supprime les réseaux Docker du projet (attention: seu
 
 
 ## WORDPRESS
+## MÉDIAS (hors Git) - cf. DOC/developer/infrastructure/MEDIA_STORAGE.md
+media_init: ## Migre sources/img/{logo,KIP,Nations,...} vers HOST_MEDIA_PATH (idempotent, ne supprime rien)
+	@scripts/media/media.sh init
+
+media_status: ## Affiche l'état du stockage médias et vérifie les montages dans les conteneurs
+	@scripts/media/media.sh status
+
+media_sync_from: ## Copie un autre stockage médias dans celui-ci (usage: make media_sync_from src=/data/media/kpi)
+	@scripts/media/media.sh sync-from "$(src)"
+
+media_backup: ## Sauvegarde restic des médias + rétention 7j/4s/12m (à lancer par cron après le dump SQL)
+	@scripts/media/media.sh backup
+
+media_backup_list: ## Liste les sauvegardes restic des médias
+	@scripts/media/media.sh snapshots
+
+media_backup_check: ## Vérifie l'intégrité du dépôt restic (lit 5% des données)
+	@scripts/media/media.sh check
+
+media_restore: ## Restaure À CÔTÉ du stockage (usage: make media_restore snapshot=latest [path=img/logo/x.png])
+	@scripts/media/media.sh restore "$(or $(snapshot),latest)" "$(path)"
+
 wordpress_backup: ## Crée une sauvegarde du dossier WordPress
 	@echo "Création d'une sauvegarde de WordPress..."
 	@tar -czf docker/wordpress_backup_$$(date +%Y%m%d_%H%M%S).tar.gz -C docker/wordpress . 2>/dev/null || \
@@ -1103,6 +1145,12 @@ wordpress_restore: ## Restaure WordPress depuis /tmp/wordpress_backup (usage int
 		echo "Erreur: /tmp/wordpress_backup n'existe pas"; \
 		exit 1; \
 	fi
+
+
+## FAVICONS - cf. DOC/developer/guides/FAVICONS.md
+favicons_generate: ## Régénère les favicons app2/app3/app4 (+ variantes de réserve) depuis scripts/favicons/logo-source.png
+	@docker run --rm -u $$(id -u):$$(id -g) -e HOME=/tmp -v $(PWD):/repo -w /repo python:3.12-slim \
+		sh -c "pip install --quiet --no-cache-dir --user --disable-pip-version-check pillow && python scripts/favicons/generate.py"
 
 
 ## GIT - PULL
@@ -1140,7 +1188,7 @@ git_images_list_protected: ## Liste les images actuellement protégées (skip-wo
 
 ## GIT - WORKTREES & PR (développement parallèle de features)
 # Développer plusieurs features en parallèle via git worktrees, puis ouvrir les PR.
-# Voir DOC/developer/guides/PARALLEL_FEATURES_WORKTREES.md.
+# Voir DOC/developer/guides/GIT_WORKFLOW.md (§2.2 Mode worktrees).
 # Rappel : UN SEUL stack Docker à la fois (ports fixes + ../sources monté en relatif).
 # Les commandes exécutées sont affichées (pas de @) pour rester transparentes.
 
@@ -1159,11 +1207,41 @@ wt_rm: ## Supprime un worktree (conserve la branche) (make wt_rm name=scoring)
 	@[ -n "$(name)" ] || { echo "Usage: make wt_rm name=<feature>"; exit 1; }
 	./scripts/git-wt.sh rm $(name)
 
-feature: ## Part d'un main à jour et crée une branche feature (nom demandé au prompt, ou make feature name=scoring)
-	@[ -z "$$(git status --porcelain)" ] || { \
-		echo "⛔ Working tree non propre — committe ou stashe avant de changer de branche."; \
-		git status -sb; exit 1; }
-	@name="$(name)"; \
+feature: ## Crée une branche feature depuis main à jour, ou depuis la branche courante (demandé au prompt, ou make feature name=scoring [carry=1] [from=main|current])
+	@# Modifications en cours : sur confirmation (ou carry=1), elles sont remisées (stash, non
+	@# suivis compris), main est mis à jour, puis elles sont réappliquées sur la nouvelle branche.
+	@# Sans confirmation : abandon, rien n'est touché. Le stash protège aussi les modifs du
+	@# `reset --hard origin/main` ci-dessous.
+	@# Branche de départ : main par défaut. Si la branche courante n'est pas main, on demande s'il faut
+	@# partir d'elle (sous-feature, correctif d'une PR en cours) ; from=current|main évite la question.
+	@carry=0; \
+	current="$$(git rev-parse --abbrev-ref HEAD)"; \
+	base=main; \
+	case "$(from)" in \
+		current) base="$$current" ;; \
+		main|"") ;; \
+		*) echo "⛔ from='$(from)' invalide (main ou current)."; exit 1 ;; \
+	esac; \
+	if [ -z "$(from)" ] && [ "$$current" != "main" ] && [ "$$current" != "HEAD" ] && [ -t 0 ]; then \
+		printf "Branche courante : '%s'. Créer la nouvelle branche depuis elle plutôt que depuis main ? [o/N] " "$$current"; \
+		read answer; \
+		case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) base="$$current" ;; esac; \
+	fi; \
+	[ "$$base" != "HEAD" ] || { echo "⛔ HEAD détachée : impossible de partir de la branche courante."; exit 1; }; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Modifications en cours :"; \
+		git status -sb; \
+		if [ "$(carry)" = "1" ]; then \
+			carry=1; \
+		elif [ -t 0 ]; then \
+			printf "Les embarquer dans la nouvelle branche ? [o/N] "; \
+			read answer; \
+			case "$$answer" in o|O|oui|Oui|OUI|y|Y|yes) carry=1 ;; esac; \
+		fi; \
+		[ "$$carry" = "1" ] || { \
+			echo "⛔ Abandon — committe ou stashe, ou relance avec carry=1 pour les embarquer."; exit 1; }; \
+	fi; \
+	name="$(name)"; \
 	if [ -z "$$name" ]; then \
 		printf "Nom de la feature (sans le préfixe 'feature/') : "; \
 		read name; \
@@ -1179,12 +1257,35 @@ feature: ## Part d'un main à jour et crée une branche feature (nom demandé au
 		echo "⛔ Nom de branche invalide : '$$branch'"; exit 1; }; \
 	git rev-parse --verify --quiet "$$branch" >/dev/null && { \
 		echo "⛔ La branche '$$branch' existe déjà en local."; exit 1; } || true; \
-	echo "→ Mise à jour de main..."; \
-	git fetch origin main --quiet || exit 1; \
-	git checkout main --quiet || exit 1; \
-	git reset --hard origin/main --quiet || exit 1; \
-	git checkout -b "$$branch" --quiet || exit 1; \
-	echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	if [ "$$carry" = "1" ]; then \
+		echo "→ Mise de côté des modifications (git stash -u)..."; \
+		git stash push -u --quiet -m "make feature → $$branch" || exit 1; \
+	fi; \
+	restore() { \
+		[ "$$carry" = "1" ] || return 0; \
+		if git stash pop --quiet; then \
+			echo "✔ Modifications réappliquées sur '$$(git rev-parse --abbrev-ref HEAD)'."; \
+		else \
+			echo "⚠️  Conflit en réappliquant les modifications : elles restent dans 'git stash list'"; \
+			echo "   (stash@{0}). Résous les conflits, puis 'git stash drop'."; \
+			return 1; \
+		fi; \
+	}; \
+	if [ "$$base" = "main" ]; then \
+		echo "→ Mise à jour de main..."; \
+		{ git fetch origin main --quiet \
+			&& git checkout main --quiet \
+			&& git reset --hard origin/main --quiet \
+			&& git checkout -b "$$branch" --quiet; } || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis origin/main ($$(git rev-parse --short HEAD))."; \
+	else \
+		git checkout -b "$$branch" --quiet || { \
+			echo "⛔ Échec de la création de la branche."; restore; exit 1; }; \
+		echo "✔ Branche '$$branch' créée depuis '$$base' ($$(git rev-parse --short HEAD), non mise à jour depuis origin)."; \
+		echo "  La PR devra cibler '$$base' tant que celle-ci n'est pas fusionnée :  make pr_create base=$$base"; \
+	fi; \
+	restore || exit 1; \
 	echo "  Ensuite :  git add -A && git commit -m '...'  puis  make pr_create"
 
 version: ## Affiche les versions actuelles de chaque brique + le dernier tag de release
@@ -1212,19 +1313,24 @@ version: ## Affiche les versions actuelles de chaque brique + le dernier tag de 
 	fi
 	@echo
 	@echo "Versions servies (ce que voient les utilisateurs) :"
-	@echo "  app2  → pied de page (AppFooter.vue)      app4 → pied de page (layouts/admin.vue)"
+	@echo "  app2  → pied de page de l'accueil       app4 → page de login + pied de page (layouts/admin.vue)"
 	@echo "  api2  → /api2/doc, champ info.version"
+	@echo "  (app2/app4 exposent aussi <meta name=\"app-version\"> dans leur index.html, lu ci-dessous)"
 	@echo
-	@echo "Versions DÉPLOYÉES (api2, lu en direct) :"
-	@for env in "préprod|https://preprod.kayak-polo.info" "prod   |https://kayak-polo.info"; do \
-		name="$${env%%|*}"; url="$${env#*|}"; \
-		printf "  %s  " "$$name"; \
-		v=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
-			| grep -oE '"version" *: *"[0-9]+\.[0-9]+\.[0-9]+"' | head -1 \
-			| grep -oE '[0-9]+\.[0-9]+\.[0-9]+'); \
-		[ -n "$$v" ] && echo "api2 $$v" || echo "(injoignable — vérifie sur $$url/api2/doc)"; \
+	@echo "Versions DÉPLOYÉES (lu en direct) :"
+	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info" \
+	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info"; do \
+		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; app2url="$${rest#*|}"; \
+		semver='[0-9]+\.[0-9]+\.[0-9]+'; \
+		api2=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
+			| grep -oE "\"version\" *: *\"$$semver\"" | head -1 | grep -oE "$$semver"); \
+		app2=$$(curl -fsS --max-time 8 "$$app2url/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		app4=$$(curl -fsS --max-time 8 "$$url/admin2/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		printf "  %s  api2 %-8s app2 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app4:-?}"; \
 	done
-	@echo "  (app2/app4 : leur version s'affiche en pied de page de l'app)"
+	@echo "  (? = injoignable, ou build antérieur à la balise app-version)"
 
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
@@ -1241,26 +1347,27 @@ pr_status: ## Affiche l'état de tes PR sur ce repo
 	gh pr status
 
 # Suit la CI de la PR courante jusqu'au bout, sans intervention : en-tête (n°, titre,
-# URL), approbation automatique du run « Action required » créé par le commit de bump
-# de la CI (github-actions[bot] — GitHub exige sinon un clic « Approve and run »),
-# suivi du nouveau HEAD, puis verdict et durée totale (wall-clock). Code de sortie =
-# celui de `gh pr checks`, pour que `make pr_checks && make pr_merge` garde son sens.
+# URL), progression job par job, approbation immédiate du run « Action required » créé
+# par le commit de bump de la CI (github-actions[bot] — GitHub exige sinon un clic
+# « Approve and run »), bascule sur le nouveau HEAD, relance d'un run bloqué (job sans
+# runner) ou annulé, puis verdict et durée totale. Code de sortie non-nul en cas
+# d'échec, pour que `make pr_checks && make pr_merge` garde son sens.
 # Détail : scripts/pr-checks.sh.
-pr_checks: ## Suit la CI de la PR courante jusqu'au bout (approuve le run du commit de bump) + durée totale
+pr_checks: ## Suit la CI de la PR courante jusqu'au bout, sans clic (approbation du bump, relance si bloqué) + durée
 	@bash scripts/pr-checks.sh
 
 pr_close: ## Ferme la PR courante SANS merger + supprime la branche (PR jetable : épreuve touche-à-tout)
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+	if [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_close depuis la branche de la PR jetable."; exit 1; \
 	fi; \
 	echo "Fermeture SANS merge de la PR de la branche '$$branch' + suppression de la branche..."; \
 	gh pr close --delete-branch || exit 1; \
-	echo "PR fermée. Pense à revenir sur develop : git checkout develop"
+	echo "PR fermée. Pense à revenir sur main : git checkout main && git pull"
 
 pr_merge: ## Merge la PR courante dans main (squash), bascule sur main à jour et nettoie la branche locale
 	@branch=$$(git rev-parse --abbrev-ref HEAD); \
-	if [ "$$branch" = "develop" ] || [ "$$branch" = "main" ]; then \
+	if [ "$$branch" = "main" ]; then \
 		echo "Refus : tu es sur '$$branch'. Lance pr_merge depuis la branche de la PR."; exit 1; \
 	fi; \
 	main_repo=$$(git rev-parse --path-format=absolute --git-common-dir); \

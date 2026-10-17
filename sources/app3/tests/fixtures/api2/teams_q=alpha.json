@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "number": 105,
+      "label": "Alpha Deux",
+      "club": {
+        "code": "C001",
+        "label": "Club Alpha Lacville"
+      }
+    },
+    {
+      "number": 101,
+      "label": "Equipe Alpha",
+      "club": {
+        "code": "C001",
+        "label": "Club Alpha Lacville"
+      }
+    }
+  ]
+}

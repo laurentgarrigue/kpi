@@ -1,0 +1,136 @@
+{
+  "status": 200,
+  "body": {
+    "group": {
+      "code": "TSTRES",
+      "libelle": "Groupe Résultats",
+      "libelle_en": "Results group"
+    },
+    "seasons": [
+      {
+        "season": "2999",
+        "competitions": [
+          {
+            "code": "RCP",
+            "display_title": "Phase finale",
+            "soustitre2": "Finale",
+            "type": "CP",
+            "podium": [
+              {
+                "rank": 1,
+                "team": {
+                  "number": 111,
+                  "label": "Equipe Echo",
+                  "logo": null
+                },
+                "medal": 1
+              },
+              {
+                "rank": 2,
+                "team": {
+                  "number": 113,
+                  "label": "Equipe Golf",
+                  "logo": null
+                },
+                "medal": 2
+              },
+              {
+                "rank": 3,
+                "team": {
+                  "number": 112,
+                  "label": "Equipe Foxtrot",
+                  "logo": null
+                },
+                "medal": 3
+              },
+              {
+                "rank": 4,
+                "team": {
+                  "number": 114,
+                  "label": "Equipe Hotel",
+                  "logo": null
+                },
+                "medal": null
+              }
+            ]
+          },
+          {
+            "code": "RMU",
+            "display_title": "Multi Résultats",
+            "soustitre2": "Général",
+            "type": "MULTI",
+            "podium": [
+              {
+                "rank": 1,
+                "team": {
+                  "number": 121,
+                  "label": "Equipe India",
+                  "logo": null
+                },
+                "medal": 1
+              },
+              {
+                "rank": 2,
+                "team": {
+                  "number": 122,
+                  "label": "Equipe Juliet",
+                  "logo": null
+                },
+                "medal": 2
+              },
+              {
+                "rank": 3,
+                "team": {
+                  "number": 123,
+                  "label": "Equipe Kilo",
+                  "logo": null
+                },
+                "medal": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "season": "2998",
+        "competitions": [
+          {
+            "code": "RCP",
+            "display_title": "Coupe Résultats",
+            "soustitre2": "Finale",
+            "type": "CP",
+            "podium": [
+              {
+                "rank": 1,
+                "team": {
+                  "number": 101,
+                  "label": "Equipe Alpha",
+                  "logo": null
+                },
+                "medal": 1
+              },
+              {
+                "rank": 2,
+                "team": {
+                  "number": 102,
+                  "label": "Equipe Bravo",
+                  "logo": null
+                },
+                "medal": 2
+              },
+              {
+                "rank": 3,
+                "team": {
+                  "number": 103,
+                  "label": "Equipe Charlie",
+                  "logo": null
+                },
+                "medal": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

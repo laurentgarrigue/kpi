@@ -1,0 +1,87 @@
+{
+  "status": 200,
+  "body": {
+    "status": "END",
+    "type": "CP",
+    "qualified": 0,
+    "eliminated": 0,
+    "rows": [
+      {
+        "rank": 1,
+        "team": {
+          "id": 9311,
+          "number": 111,
+          "label": "Equipe Echo",
+          "logo": null
+        },
+        "points": 0,
+        "played": 0,
+        "won": 0,
+        "drawn": 0,
+        "lost": 0,
+        "forfeits": 0,
+        "goals_for": 0,
+        "goals_against": 0,
+        "goal_diff": 0,
+        "medal": 1
+      },
+      {
+        "rank": 2,
+        "team": {
+          "id": 9313,
+          "number": 113,
+          "label": "Equipe Golf",
+          "logo": null
+        },
+        "points": 0,
+        "played": 0,
+        "won": 0,
+        "drawn": 0,
+        "lost": 0,
+        "forfeits": 0,
+        "goals_for": 0,
+        "goals_against": 0,
+        "goal_diff": 0,
+        "medal": 2
+      },
+      {
+        "rank": 3,
+        "team": {
+          "id": 9312,
+          "number": 112,
+          "label": "Equipe Foxtrot",
+          "logo": null
+        },
+        "points": 0,
+        "played": 0,
+        "won": 0,
+        "drawn": 0,
+        "lost": 0,
+        "forfeits": 0,
+        "goals_for": 0,
+        "goals_against": 0,
+        "goal_diff": 0,
+        "medal": 3
+      },
+      {
+        "rank": 4,
+        "team": {
+          "id": 9314,
+          "number": 114,
+          "label": "Equipe Hotel",
+          "logo": null
+        },
+        "points": 0,
+        "played": 0,
+        "won": 0,
+        "drawn": 0,
+        "lost": 0,
+        "forfeits": 0,
+        "goals_for": 0,
+        "goals_against": 0,
+        "goal_diff": 0,
+        "medal": null
+      }
+    ]
+  }
+}

@@ -21,7 +21,7 @@ onMounted(() => {
       {{ t('context.change') }}
     </NuxtLink>
   </div>
-  <div v-else class="flex items-center gap-2 text-sm text-warning-600 mb-4 bg-warning-50 p-2 rounded">
+  <div v-else class="flex items-center gap-2 text-sm text-warning-600 dark:text-warning-300 mb-4 bg-warning-50 dark:bg-warning-950 p-2 rounded">
     <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4" />
     <span>{{ t('context.no_context') }}</span>
     <NuxtLink to="/" class="text-primary-600 hover:underline text-xs ml-2">

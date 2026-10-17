@@ -1,6 +1,6 @@
 name: Deploy preprod (experimental)
 
-# Phase 7 du plan CI/CD (DOC/developer/in-progress/plans/CI_CD_STRATEGY.md).
+# Phase 7 du plan CI/CD (DOC/developer/archive/ci-cd/CI_CD_STRATEGY.md).
 #
 # Déploie TEMPORAIREMENT une branche `feature/*` (ou un TAG de release) en préprod,
 # pour la tester en conditions réelles avant de la merger dans `main`.

@@ -21,9 +21,12 @@ useHead({
     <!-- Injects <link rel="manifest"> (@vite-pwa/nuxt does not add it on its own). -->
     <NuxtPwaManifest />
     <!-- Bandeau « préprod expérimentale » (Phase 7 CI/CD) : ne s'affiche que si
-         une branche feature a été déployée en préprod à la place de develop.
+         une branche feature a été déployée en préprod à la place de main.
          Hors préprod, le composant ne fait aucune requête et ne rend rien. -->
     <ExperimentalBanner />
+    <!-- Bandeau « nouvelle version disponible » (DOC/specs/PWA_AUTO_UPDATE.md §5) :
+         pattern prompt-to-update, l'utilisateur garde la main sur le rechargement. -->
+    <PwaUpdatePrompt />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

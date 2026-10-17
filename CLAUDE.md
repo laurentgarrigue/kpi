@@ -17,23 +17,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - [Consolidation Phases](DOC/user/CONSOLIDATION_PHASES_CLASSEMENT.md) - Lock ranking phases
 
 ### Developer Documentation
-- **[DOC/developer/](DOC/developer/)** - Technical documentation for developers
-  - **[Reference](DOC/developer/reference/)** - Complete reference documentation (KPI Functionality Inventory)
-  - **[Guides](DOC/developer/guides/)** - Migration guides and technical documentation
-  - **[In Progress](DOC/developer/in-progress/)** - Current migrations and ongoing work
-  - **[Archive](DOC/developer/archive/)** - Completed migrations (PHP 8.4, mPDF, etc.)
-  - **[Fixes](DOC/developer/fixes/)** - Bug fixes and corrections
-  - **[Audits](DOC/developer/audits/)** - Code audits and analyses
-  - **[Infrastructure](DOC/developer/infrastructure/)** - Docker, WordPress, configuration
+- **[DOC/developer/](DOC/developer/)** - Technical documentation for developers, classified by the *state* of the subject
+  - **[reference/](DOC/developer/reference/)** - What exists today: architecture, API2 endpoints, app4 structure, roles, business rules (`features/` for a single feature)
+  - **[guides/](DOC/developer/guides/)** - How to work: dev environment, git workflow, QA checklist, best practices
+  - **[infrastructure/](DOC/developer/infrastructure/)** - How it runs: deployment runbook, media storage, Nginx, CORS, cron
+  - **[in-progress/](DOC/developer/in-progress/)** - Unfinished plans, migrations and fixes
+  - **[archive/](DOC/developer/archive/)** - Finished subjects, by theme (php8, pdf-exports, legacy-frontend, ci-cd, infrastructure, features, audits)
+- **[DOC/specs/](DOC/specs/)** - One spec per app4 admin page; [DOC/specs/public/](DOC/specs/public/README.md) for the public website (app3)
+
+When a subject in `in-progress/` is finished, `git mv` it to `archive/<theme>/` and update every
+reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makefile) and
+[DOC/developer/archive/README.md](DOC/developer/archive/README.md). Keep `DOC/user/` and
+`DOC/developer/` as top-level folders: `sources/admin/DocViewer.php` only reads those two.
 
 **Key documents:**
-- **[FrankenPHP Migration Analysis](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
+- **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
-- **[Dev environment](DOC/developer/guides/infrastructure/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
-- **[Makefile Multi-Environment Support](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
-- **[PHP 8.4 Migration Complete](DOC/developer/archive/completed-migrations/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
+- **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
+- **[Makefile Multi-Environment Support](DOC/developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md)** - Running multiple instances (dev, preprod, prod) on the same server
+- **[PHP 8.4 Migration Complete](DOC/developer/archive/php8/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
 
 See [DOC/README.md](DOC/README.md) for the complete index.
+
+## Engineering principles (apply to every change)
+
+- **Spec first**: every page or feature gets a spec with testable acceptance criteria before any code
+  (public website specs: [DOC/specs/public/](DOC/specs/public/README.md)).
+- **TDD**: write the failing test from the acceptance criteria, then the code, then refactor.
+- **Clean code**: DRY, KISS, SOLID, YAGNI, explicit naming, small functions, no magic values, no dead code.
+- **Definition of Done** and per-brick rules (Nuxt, api2, legacy): [DOC/developer/guides/CLEAN_CODE.md](DOC/developer/guides/CLEAN_CODE.md).
 
 ## Project Overview
 
@@ -48,15 +60,12 @@ Use `make help` to see all available commands.
 - `make docker_dev_up` - Start development environment
 - `make backend_composer_install` - Install PHP/Composer dependencies (mPDF, etc.)
 - `make app2_npm_install` - Install NPM dependencies for app2
-- `make app3_npm_install` - Install NPM dependencies for app3
 - `make app2_dev` - Run Nuxt development server for app2 (port 3002)
-- `make app3_dev` - Run Nuxt development server for app3 (port 3003)
 
 ### Initialization
 - `make init` - Complete initialization (env files + networks)
 - `make init_env` - Initialize docker/.env from docker/.env.dist
 - `make init_env_app2` - Initialize .env.development and .env.production for app2
-- `make init_env_app3` - Initialize .env files for app3
 - `make init_env_api2` - Initialize .env for API2 from .env.dist
 - `make init_networks` - Create required Docker networks
 
@@ -86,6 +95,7 @@ Use `make help` to see all available commands.
 
 ### App2 - Nuxt (Scrutineering/Charts)
 - `make app2_dev` - Run Nuxt development server (port 3002)
+- `make app2_dev_restart` / `app3_dev_restart` / `app4_dev_restart` - Restart a Nuxt dev server (e.g. stuck in 500 after many hot reloads); `app3_restart` is the preprod/prod SSR server
 - `make app2_build` - Build Nuxt for production
 - `make app2_generate_dev` - Generate static Nuxt site for development (uses .env.development, requires Node container)
 - `make app2_generate_preprod` - Generate static Nuxt site for pre-production (uses .env.preprod, temporary container)
@@ -95,16 +105,6 @@ Use `make help` to see all available commands.
 
 **Note**: `app2_generate_preprod` and `app2_generate_production` use a temporary Node.js container, so they work even without a permanent Node container (ideal for preprod/production servers).
 
-### App3 - Nuxt (Match Sheet)
-- `make app3_dev` - Run Nuxt development server (port 3003)
-- `make app3_build` - Build Nuxt for production
-- `make app3_generate_dev` - Generate static Nuxt site for development (uses .env.development, requires Node container)
-- `make app3_generate_preprod` - Generate static Nuxt site for pre-production (uses .env.preprod, temporary container)
-- `make app3_generate_prod` - Generate static Nuxt site for production (uses .env.production, temporary container)
-- `make app3_lint` - Run ESLint on app3
-
-**Note**: `app3_generate_preprod` and `app3_generate_prod` use a temporary Node.js container, so they work even without a permanent Node container (ideal for preprod/production servers).
-
 ### App2 - NPM
 - `make app2_npm_install` - Install all npm dependencies
 - `make app2_npm_clean` - Remove node_modules and package-lock.json
@@ -112,14 +112,6 @@ Use `make help` to see all available commands.
 - `make app2_npm_add package=<name>` - Add npm package
 - `make app2_npm_add_dev package=<name>` - Add npm dev package
 - `make app2_npm_ls` - List installed npm modules
-
-### App3 - NPM
-- `make app3_npm_install` - Install all npm dependencies
-- `make app3_npm_clean` - Remove node_modules and package-lock.json
-- `make app3_npm_update` - Update all npm dependencies
-- `make app3_npm_add package=<name>` - Add npm package
-- `make app3_npm_add_dev package=<name>` - Add npm dev package
-- `make app3_npm_ls` - List installed npm modules
 
 ### Backend - NPM (JavaScript Libraries)
 Manage JavaScript libraries (Flatpickr, Day.js, etc.) in the PHP backend via temporary Node.js container:
@@ -175,7 +167,6 @@ make backend_npm_add package=flatpickr
 ### Shell Access
 - `make backend_bash` - Open bash in PHP 8.4 container
 - `make app2_bash` - Open shell in Node container (app2)
-- `make app3_bash` - Open shell in Node container (app3)
 - `make app4_bash` - Open shell in Node container (app4)
 - `make db_bash` - Open shell in MySQL container
 
@@ -196,11 +187,20 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - WordPress content is stored in `docker/wordpress/` (excluded from Git)
 - WordPress path is configured via `HOST_WORDPRESS_PATH` in docker/.env
 
+### Media (uploaded images) - NOT in Git
+- Uploaded images (`sources/img/{logo,KIP,Nations,presentations,schemas,referees}/`) live **outside the repo**
+  in `HOST_MEDIA_PATH` (docker/.env) and are **bind-mounted back** at their historical paths in `kpi`, `api2`
+  and `event-cache-worker` (URLs `/img/...` unchanged). These dirs are git-ignored; do not commit images there.
+- api2 must reach the legacy tree through the `legacy_document_root` parameter (`/var/www/html`), never via
+  `$_SERVER['DOCUMENT_ROOT']` (= `/app/public` under FrankenPHP) or `__DIR__`.
+- `make media_init` / `media_status` / `media_backup` / `media_backup_list` / `media_restore snapshot=… [path=…]`
+- Full procedure (server migration order, restic backups, cron): [MEDIA_STORAGE.md](DOC/developer/infrastructure/MEDIA_STORAGE.md)
+
 ### Environment Files
 - `docker/.env` - Main Docker environment configuration (not versioned, use docker/.env.dist as template)
   - **Important**: `APPLICATION_NAME` determines container names (e.g., `kpi`, `kpi_preprod`, `kpi_prod`)
   - Makefile automatically detects container names from this variable
-  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](DOC/developer/guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md))
+  - Supports multiple instances on the same server (see [MAKEFILE_MULTI_ENVIRONMENT.md](DOC/developer/guides/MAKEFILE_MULTI_ENVIRONMENT.md))
 - `sources/app2/.env.development` - Nuxt dev environment (API_BASE_URL, BACKEND_BASE_URL)
 - `sources/app2/.env.production` - Nuxt production environment
 - `sources/api2/.env` - Symfony/API Platform configuration (not versioned, use sources/api2/.env.dist as template)
@@ -214,7 +214,8 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 ### Core Structure
 - `sources/` - Main application code
   - `app2/` - Nuxt 4 application (primary frontend - scrutineering/charts)
-  - `app3/` - Nuxt 4 application (match sheet management)
+  - `app3/` - Public website (Nuxt 4 SSR, beta) - see [DOC/specs/public/](DOC/specs/public/README.md)
+  - `kpi-layer/` - Shared Nuxt layer (charter, fonts, api2 client), used by app3
   - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
   - `commun/` - Shared PHP utilities and database classes
   - `api/` - Legacy PHP REST API endpoints
@@ -239,20 +240,20 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Prod: `make app2_generate_production` (uses temporary Docker container, works without permanent Node.js setup)
   - After build: `make docker_dev_restart`, `make docker_preprod_restart`, or `make docker_prod_restart` to restart Nginx
 
-### App3 (Nuxt Application - Match Sheet)
-- **Framework**: Nuxt 4 with Vue 3, TypeScript, Tailwind CSS
-- **Purpose**: Live match management with real-time scoring, timer, and broadcasting
-- **Modules**: Pinia, Dexie (IndexedDB), i18n, PWA, easytimer.js
-- **Domain**: `app3.localhost` (via Traefik)
-- **Development**: Runs on port 3003 inside container
-- **Features**:
-  - Create/load matches with teams and players
-  - Real-time match timer and shot clock
-  - Event tracking (goals, cards, penalties)
-  - BroadcastChannel API for scoreboard/shotclock synchronization
-  - WebSocket support (optional)
-  - Offline-first with IndexedDB storage
-  - Progressive Web App (PWA)
+### App3 (public website, beta) + kpi-layer
+- **What**: Nuxt 4 **SSR** public website replacing WordPress and the `kp*.php` pages, built phase by phase
+  ([PUBLIC_SITE_REDESIGN_STRATEGY.md](DOC/developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)).
+  **Spec first**: [DOC/specs/public/](DOC/specs/public/README.md). App README: [sources/app3/README.md](sources/app3/README.md).
+- **Served on `beta.${KPI_DOMAIN_NAME}` only** (dev `beta.kpi.localhost`, preprod `beta.preprod.kayak-polo.info`,
+  prod `beta.kayak-polo.info`), not indexed while `NUXT_PUBLIC_BETA=true`. It must not impact legacy, app2, app4
+  or api2 until the switch-over: dedicated Traefik router, read-only public api2 endpoints, menu entries fall
+  back to the legacy pages until their app3 page is delivered (`ready` flag in `app/utils/navigation.ts`).
+- **kpi-layer** (`sources/kpi-layer/`): shared Nuxt layer (FFCK charter tokens, fonts, `useApi2`). Consumed by
+  app3 only until phase 6 — do not wire app2/app4 to it before then.
+- **Commands**: `make app3_logs`, `make app3_test`, `make app3_lint`, `make app3_generate_preprod|production`
+  (SSR build in a temporary container + restart of `${APPLICATION_NAME}_app3`), `make app3_restart`.
+- **Tests**: Vitest projects `unit`, `nuxt`, `e2e` (`npm test` in `sources/app3`), named after the spec criteria.
+- The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**.
 
 ### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)
 - **Framework**: Symfony 7.4 LTS with API Platform 4.3
@@ -302,7 +303,7 @@ legacy router, and **strips the `/api2` prefix** before forwarding. Consequences
 - **In prod, code changes need `make api2_restart`** - the worker holds the kernel in memory.
 
 Full rationale, pitfalls and validation plan:
-[DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md](DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+[DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 
 #### Mercure (SSE)
 
@@ -348,7 +349,8 @@ Main services (dev):
 | `api2` | `${APPLICATION_NAME}_api2` | **FrankenPHP (Caddy) worker + Mercure hub** - Symfony 7.4 / API Platform 4.3 |
 | `event-cache-worker` | `${APPLICATION_NAME}_event_cache_worker` | CLI daemon regenerating live cache JSON |
 | `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
-| `node_app2` … `node_app4` | | Nuxt dev servers |
+| `node_app2` … `node_app4` | | Nuxt dev servers (`node_app3` = public website on `beta.kpi.localhost`) |
+| `app3` (preprod/prod) | `${APPLICATION_NAME}_app3` | Node SSR server of the public website, `beta.${KPI_DOMAIN_NAME}` |
 | `nginx_app2` / `nginx_app4` | | Static serving of generated Nuxt output |
 
 **Two web servers coexist**: Apache serves everything legacy, FrankenPHP serves `/api2` only.
@@ -375,11 +377,11 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   - Logs via `make api2_logs`, **not** `docker/apachelogs_8/`
   - See [sources/api2/README.md](sources/api2/README.md) for details
 - App2 is the primary modern frontend application being actively developed
-- App3 provides live match sheet management with real-time features
+- App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments
-- ESLint configuration is managed by Nuxt for app2 and app3
+- ESLint configuration is managed by Nuxt for app2 and app4
 
 ## File Patterns
 

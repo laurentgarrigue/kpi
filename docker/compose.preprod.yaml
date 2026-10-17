@@ -22,6 +22,16 @@ services:
             - "host.docker.internal:host-gateway"
         volumes:
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
+            # Médiathèque du site public (FEATURE_CMS.md § 5.3), servie sous /media/content/ par Apache.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/content:/var/www/html/media/content
             - ../DOC:/var/www/html/DOC
             - ${HOST_WORDPRESS_PATH}:/var/www/html/wordpress
             - ./config/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
@@ -51,7 +61,7 @@ services:
             - "traefik.http.routers.kpipreprod.tls=true"
             - "traefik.http.routers.kpipreprod.tls.certresolver=myresolver"
     # API2 - Symfony sous FrankenPHP (mode worker) + hub Mercure natif
-    # cf. DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md
+    # cf. DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md
     api2_preprod:
         container_name: ${APPLICATION_NAME}_api2
         build:
@@ -60,13 +70,23 @@ services:
             args:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
-                BASE_IMAGE_FRANKENPHP: ${BASE_IMAGE_FRANKENPHP}
         user: ${USER_ID}:${GROUP_ID}
         environment:
             - TZ=Europe/Paris
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
+            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
+            - LEGACY_DOCUMENT_ROOT=/var/www/html
+            # Adresse du site public (app3) pour les liens des fichiers ICS (API_PUBLIC_TRANSVERSE.md § 3.2).
+            - PUBLIC_SITE_URL=https://beta.${KPI_DOMAIN_NAME}
+            # Purge du cache d'app3 à chaque publication (FEATURE_CMS.md § 5.4) : même secret que NUXT_APP3_PURGE_TOKEN.
+            - APP3_INTERNAL_URL=http://${APPLICATION_NAME}_app3:3000
+            - APP3_PURGE_TOKEN=${APP3_PURGE_TOKEN:-}
+            # Base WordPress lue par `app:import-wordpress` (lecture seule, FEATURE_CMS.md § 8).
+            - WORDPRESS_DATABASE_URL=${WORDPRESS_DATABASE_URL:-}
+            - WORDPRESS_UPLOADS_DIR=/var/wordpress-uploads
             - APP_ENV=prod
             - APP_DEBUG=0
             # Mode worker : exige runtime/frankenphp-symfony dans composer.json
@@ -86,12 +106,24 @@ services:
             - MERCURE_PUBLISHER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_SUBSCRIBER_JWT_KEY=${MERCURE_JWT_SECRET}
             - MERCURE_CORS_ORIGINS=https://${KPI_DOMAIN_NAME}
-            - MERCURE_ANONYMOUS=0
+            # Pas de MERCURE_EXTRA_DIRECTIVES : abonnements anonymes refusés (cf. Caddyfile.api2)
         volumes:
             - ../sources/api2:/app
             # ⚠️ REQUIS : live_document_root='/var/www/html' → sources/live/cache/
             # partagé avec Apache et event-cache-worker (cf. §7.7 de l'analyse).
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
+            # Médiathèque du site public (FEATURE_CMS.md § 5.3), servie sous /media/content/ par Apache.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/content:/var/www/html/media/content
+            # Médias WordPress, lus par `app:import-wordpress` (lecture seule, FEATURE_CMS.md § 8).
+            - ${HOST_WORDPRESS_PATH}/wp-content/uploads:/var/wordpress-uploads:ro
             # Historique du hub Mercure (transport bolt, cf. Caddyfile.api2).
             # Persiste les updates pour que les abonnés rattrapent ce qu'ils ont
             # manqué après une coupure réseau. ⚠️ Le fichier survit à un restart,
@@ -101,6 +133,10 @@ services:
             # même VPS, un chemin partagé ferait écrire deux hubs dans le même
             # fichier bolt (verrou exclusif → l'un des deux ne démarre pas).
             - ./mercure_data:/data
+            # Relais SMTP (msmtp → Hostinger), comme le conteneur kpi : sans lui,
+            # MAILER_DSN=native://default n'envoie rien (cf. Dockerfile.api2).
+            - /etc/msmtprc:/etc/msmtprc:ro
+            - /var/log/msmtp:/var/log/msmtp
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         networks:
@@ -140,9 +176,12 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Racine legacy pour api2 (paramètre legacy_document_root) : variable
+            # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
+            - LEGACY_DOCUMENT_ROOT=/var/www/html
             # Drainage scoring_outbox → Mercure (refonte scoring, lot 2).
             # Le hub vit DANS le conteneur api2 : depuis ce conteneur-ci,
-            # "localhost" (valeur du .env, pensée pour api2) serait le worker
+            # "localhost" (valeur du .env, pensée pour api2) désignerait le worker
             # lui-même → on passe par le réseau docker (service api2, HTTP interne).
             # Les vraies variables d'env priment sur le .env chargé par Symfony.
             - MERCURE_URL=http://api2/.well-known/mercure
@@ -150,6 +189,16 @@ services:
         command: php /var/www/html/api2/bin/console app:event-cache-worker
         volumes:
             - ../sources:/var/www/html
+            # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
+            # Montés à leur emplacement historique : URL /img/... et chemins PHP inchangés.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/logo:/var/www/html/img/logo
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/KIP:/var/www/html/img/KIP
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/Nations:/var/www/html/img/Nations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/presentations:/var/www/html/img/presentations
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/schemas:/var/www/html/img/schemas
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/img/referees:/var/www/html/img/referees
+            # Médiathèque du site public (FEATURE_CMS.md § 5.3), servie sous /media/content/ par Apache.
+            - ${HOST_MEDIA_PATH:?HOST_MEDIA_PATH absent de docker/.env (cf. MEDIA_STORAGE.md)}/content:/var/www/html/media/content
         networks:
             - network_kpi
         depends_on:
@@ -281,6 +330,56 @@ services:
             - "traefik.http.services.nginx_app4_preprod.loadbalancer.server.port=80"
             # Higher priority than the main kpi router
             - "traefik.http.routers.nginx_app4_preprod.priority=100"
+
+
+    # Site public (app3, Nuxt SSR) servi sur beta.${KPI_DOMAIN_NAME} jusqu'à la bascule de www.
+    # Exécute la sortie de `make app3_generate_<env>` (montée en lecture seule). Routeur DÉDIÉ :
+    # aucun routeur existant n'est modifié (DOC/specs/public/SITE_PLATFORM.md § 5).
+    app3:
+        container_name: ${APPLICATION_NAME}_app3
+        image: node:22-alpine
+        working_dir: /app
+        user: "${USER_ID}:${GROUP_ID}"
+        # Sans build, le conteneur reste démarré et le signale (pas de boucle de redémarrage).
+        command: >-
+            sh -c 'if [ -f .output/server/index.mjs ]; then exec node .output/server/index.mjs;
+            else echo "app3 non construit : lancer make app3_generate_<env>"; exec sleep infinity; fi'
+        volumes:
+            - ../sources/app3/.output:/app/.output:ro
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - TZ=Europe/Paris
+            - NUXT_PUBLIC_I18N_BASE_URL=https://beta.${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_BETA=true
+            - NUXT_API2_INTERNAL_URL=http://${APPLICATION_NAME}_api2
+            - NUXT_PUBLIC_API2_BASE_URL=https://${KPI_DOMAIN_NAME}/api2
+            - NUXT_PUBLIC_LEGACY_BASE_URL=https://${KPI_DOMAIN_NAME}
+            - NUXT_PUBLIC_APP2_BASE_URL=https://app.${KPI_DOMAIN_NAME}
+            - NUXT_APP3_PURGE_TOKEN=${APP3_PURGE_TOKEN:-}
+        healthcheck:
+            test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthz || exit 1"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+        networks:
+            - network_kpi
+            - traefiknetwork
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app3_preprod.rule=Host(`beta.${KPI_DOMAIN_NAME}`)"
+            - "traefik.http.routers.app3_preprod.entrypoints=websecure"
+            - "traefik.http.routers.app3_preprod.tls=true"
+            - "traefik.http.routers.app3_preprod.tls.certresolver=myresolver"
+            - "traefik.http.services.app3_preprod.loadbalancer.server.port=3000"
 
 networks:
     network_kpi:

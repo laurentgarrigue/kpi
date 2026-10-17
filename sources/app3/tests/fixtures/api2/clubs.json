@@ -1,0 +1,128 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "code": "C001",
+      "label": "Club Alpha Lacville",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": {
+        "lat": 44.84,
+        "lng": -0.58
+      }
+    },
+    {
+      "code": "C002",
+      "label": "Club Bravo",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C003",
+      "label": "Club Charlie Saint-Malo",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C004",
+      "label": "Club Delta",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C005",
+      "label": "Club Echo",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C006",
+      "label": "Club Foxtrot",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C007",
+      "label": "Club Golf",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C008",
+      "label": "Club Hotel",
+      "department": {
+        "code": "CDT33",
+        "label": "Comité Départemental Test 33"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C009",
+      "label": "Club India",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C010",
+      "label": "Club Juliet",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C011",
+      "label": "Club Kilo",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    },
+    {
+      "code": "C012",
+      "label": "Club Lima",
+      "department": {
+        "code": "CDT64",
+        "label": "Comité Départemental Test 64"
+      },
+      "logo": null,
+      "position": null
+    }
+  ]
+}

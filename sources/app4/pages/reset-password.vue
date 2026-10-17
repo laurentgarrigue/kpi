@@ -14,15 +14,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const success = ref(false)
 
-const rules = computed(() => [
-  { key: 'length', label: t('users.reset_password.rule_length'), valid: password.value.length >= 10 },
-  { key: 'uppercase', label: t('users.reset_password.rule_uppercase'), valid: /[A-Z]/.test(password.value) },
-  { key: 'lowercase', label: t('users.reset_password.rule_lowercase'), valid: /[a-z]/.test(password.value) },
-  { key: 'digit', label: t('users.reset_password.rule_digit'), valid: /\d/.test(password.value) },
-  { key: 'special', label: t('users.reset_password.rule_special'), valid: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password.value) }
-])
-
-const allRulesValid = computed(() => rules.value.every(r => r.valid))
+const { rules, allRulesValid } = usePasswordRules(password)
 const passwordsMatch = computed(() => password.value === confirmPassword.value && confirmPassword.value.length > 0)
 const canSubmit = computed(() => allRulesValid.value && passwordsMatch.value && !loading.value && token.value)
 
@@ -65,22 +57,22 @@ async function handleSubmit() {
     <div class="w-full max-w-md">
       <!-- Header -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
+        <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-300">KPI Admin</h1>
       </div>
 
-      <div class="bg-white rounded-lg shadow-lg p-8">
-        <h2 class="text-xl font-semibold text-header-900 mb-6">
+      <div class="bg-white dark:bg-header-900 rounded-lg shadow-lg p-8">
+        <h2 class="text-xl font-semibold text-header-900 dark:text-header-50 mb-6">
           {{ t('users.reset_password.title') }}
         </h2>
 
         <!-- No token -->
-        <div v-if="!token" class="p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm">
+        <div v-if="!token" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm">
           {{ t('users.reset_password.error_token_invalid') }}
         </div>
 
         <!-- Success -->
         <div v-else-if="success" class="space-y-4">
-          <div class="p-3 bg-success-50 border border-success-200 rounded-lg text-success-700 text-sm">
+          <div class="p-3 bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800 rounded-lg text-success-700 dark:text-success-300 text-sm">
             {{ t('users.reset_password.success') }}
           </div>
           <NuxtLink
@@ -96,14 +88,14 @@ async function handleSubmit() {
           <!-- Error -->
           <div
             v-if="error"
-            class="p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm"
+            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
           >
             {{ error }}
           </div>
 
           <!-- New password -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('users.reset_password.new_password') }}
             </label>
             <UInput
@@ -114,7 +106,7 @@ async function handleSubmit() {
           </div>
 
           <!-- Rules checklist -->
-          <div class="text-xs text-header-900 space-y-0.5">
+          <div class="text-xs text-header-900 dark:text-header-50 space-y-0.5">
             <div class="font-medium mb-1">{{ t('users.reset_password.rules') }}</div>
             <div
               v-for="rule in rules"
@@ -123,16 +115,16 @@ async function handleSubmit() {
             >
               <UIcon
                 :name="rule.valid ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
-                :class="rule.valid ? 'text-success-500' : 'text-header-600'"
+                :class="rule.valid ? 'text-success-500' : 'text-header-600 dark:text-header-300'"
                 class="w-4 h-4"
               />
-              <span :class="rule.valid ? 'text-success-700' : 'text-header-600'">{{ rule.label }}</span>
+              <span :class="rule.valid ? 'text-success-700 dark:text-success-300' : 'text-header-600 dark:text-header-300'">{{ rule.label }}</span>
             </div>
           </div>
 
           <!-- Confirm password -->
           <div>
-            <label class="block text-sm font-medium text-header-900 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('users.reset_password.confirm_password') }}
             </label>
             <UInput

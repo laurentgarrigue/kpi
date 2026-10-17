@@ -133,10 +133,6 @@ const eventReasonSelect = computed({
 // When set, the event buttons commit an UPDATE of this existing event instead of a new one.
 const editingUid = ref<string | null>(null)
 
-// The console is a PWA installed on the scoring table's tablet and stays open for days:
-// make sure a new deployment is picked up immediately (spec §0.9).
-usePwaUpdate()
-
 /**
  * Tab title: the operator often has several consoles open at once (one per pitch), so the
  * tab must say WHICH match it is without switching to it. Match **number** (Numero_ordre,
@@ -802,7 +798,7 @@ const toggleLock = async () => {
 
 <template>
   <div class="p-4">
-    <div v-if="!canView" class="text-center text-header-900 dark:text-header-300 py-12">
+    <div v-if="!canView" class="text-center text-header-900 dark:text-header-50 py-12">
       {{ t('scoring.no_access') }}
     </div>
 
@@ -829,7 +825,7 @@ const toggleLock = async () => {
             <template v-if="match.numeroOrdre">{{ t('games.field.game_number') }}{{ match.numeroOrdre }}</template>
             <template v-else>#{{ match.id }}</template>
           </h1>
-          <p class="text-sm text-header-900 dark:text-header-300">
+          <p class="text-sm text-header-900 dark:text-header-50">
             {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
             <span class="text-header-600 dark:text-header-400">· ID#{{ match.id }}</span>
           </p>
@@ -937,7 +933,7 @@ const toggleLock = async () => {
       <!-- ══ Déroulement view ══ -->
       <template v-else>
       <!-- Score — in score-only mode, ±1 buttons make it the whole entry surface -->
-      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 dark:bg-header-800 rounded-lg">
+      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 dark:bg-header-900 rounded-lg">
         <div class="text-right flex-1">
           <div class="font-semibold text-header-900 dark:text-header-100">{{ match.equipeA }}</div>
           <div v-if="scoreOnly" class="flex gap-1 justify-end mt-1">
@@ -962,7 +958,7 @@ const toggleLock = async () => {
         <div class="flex flex-col items-center gap-2">
           <div
             class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-            :class="isRunning ? 'text-success-600 dark:text-success-400' : 'text-header-900 dark:text-header-100'"
+            :class="isRunning ? 'text-success-600 dark:text-success-300' : 'text-header-900 dark:text-header-50'"
           >
             {{ clockDisplay }}
           </div>
@@ -1058,7 +1054,7 @@ const toggleLock = async () => {
 
       <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
       <div v-if="!scoreOnly" class="border-t pt-4 space-y-3">
-        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400">
+        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-300">
           <UIcon name="i-heroicons-pencil-square" />
           {{ t('scoring.edit.title') }}
           <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
@@ -1195,7 +1191,7 @@ const toggleLock = async () => {
       </template>
     </div>
 
-    <div v-else class="text-center text-header-900 dark:text-header-300 py-12">
+    <div v-else class="text-center text-header-900 dark:text-header-50 py-12">
       {{ t('scoring.not_found') }}
     </div>
   </div>

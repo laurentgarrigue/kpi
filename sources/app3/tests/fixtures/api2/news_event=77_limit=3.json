@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "body": {
+    "items": [
+      {
+        "slug": "finale-resultats",
+        "title": "Finale des résultats",
+        "lead": "Le chapô.",
+        "cover": {
+          "url": "/media/content/2999/01/finale.jpg?v=afcd5ac1",
+          "mime": "image/jpeg",
+          "alt": "La finale",
+          "width": 1600,
+          "height": 900,
+          "variants": [
+            {
+              "width": 320,
+              "url": "/media/content/2999/01/finale-320.webp?v=afcd5ac1"
+            },
+            {
+              "width": 768,
+              "url": "/media/content/2999/01/finale-768.webp?v=afcd5ac1"
+            },
+            {
+              "width": 1280,
+              "url": "/media/content/2999/01/finale-1280.webp?v=afcd5ac1"
+            }
+          ]
+        },
+        "published_at": "2020-06-01T12:00:00+02:00",
+        "categories": [
+          {
+            "slug": "equipes-de-france",
+            "label": "Équipes de France"
+          },
+          {
+            "slug": "competitions-nationales",
+            "label": "Compétitions nationales"
+          }
+        ]
+      }
+    ],
+    "page": 1,
+    "pages": 1,
+    "total": 1
+  }
+}

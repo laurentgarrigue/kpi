@@ -1,8 +1,8 @@
 # Spécification — Dark mode dans app4 (admin2)
 
-> Statut : **en cours** — socle + toggle + page `games` + composants partagés faits ; ~23 pages
-> et ~26 composants restent à convertir (voir §7 Suivi).
-> Cible : **app4** uniquement (Nuxt 4 + Nuxt UI v3 + Tailwind v4). Ne concerne pas app2/app3.
+> Statut : **terminé** (2026-10-16) — toutes les pages et composants d'app4 ont leurs variantes
+> `dark:` ; il ne reste que des retouches facultatives (§7). Contrôle visuel à faire page par page.
+> Cible : **app4** uniquement (Nuxt 4 + Nuxt UI v3 + Tailwind v4). Ne concerne pas app2.
 > Branche de travail : `darktheme`.
 
 ## 1. Contexte et objectif
@@ -170,34 +170,48 @@ dropdowns, modale de formulaire, autocompletes.
 sectionnés/par poule, badges de niveau/statut, bannières verrou/erreur, modales de formulaire,
 dropdowns téléportés, recherches club/historique), puis `gamedays/index`, `rankings/index`,
 `stats/index` (édition inline, colonnes calendrier vert, en-têtes de poule/phase à couleur fixe,
-export XLSX/PDF, modales calendrier/officiels/transfert, autocompletes commune/athlète).
+export XLSX/PDF, modales calendrier/officiels/transfert, autocompletes commune/athlète), puis
+`gamedays/schema` + `schema/*` (vainqueur de tableau en bloc clair inversé ; impression/PDF
+forcée en clair via `beforeprint`/`afterprint` qui retirent puis remettent la classe `.dark`).
 
 ## 7. Suivi — reste à faire
 
-### 7.1 Pages non converties (contiennent des `bg-white` sans `dark:`)
-`users/index`, `presence/team/[teamId]`, `journal/index`, `index` (home),
-`athletes/index`, `presence/match/[matchId]/team/[teamCode]`, `referees-pool/index`, `rc/index`,
-`gamedays/schema`, `rankings/initial`, `live/cache-manager`, `groups/index`, `clubs/index`,
-`events/[id]/gamedays`, `clubs/team/[numero]`, `select-mandate`, `events/index`,
-`competitions/copy`, `reset-password`, `operations/index`, `login`, `forgot-password`,
-`access-request`.
+> Audit du **2026-10-16** : script qui repère, dans chaque chaîne de classes, une classe claire du
+> mapping §3.2 (ou un fond sémantique `bg-<c>-50…300`) sans variante `dark:` équivalente dans la
+> même chaîne. L'ancienne liste était très en retard : `users`, `athletes`, `presence/team`,
+> `journal`, `index`, `referees-pool`, `rc`, `rankings/initial`, `live/cache-manager`, `groups`,
+> `clubs`, `clubs/team`, `events`, `events/[id]/gamedays`, `competitions/copy`, `operations/index`,
+> `gamedays/schema`, ainsi que `tv/*`, `operations/*`, `UserMandateForm`, `UserEditModal`,
+> `PlayerAutocomplete`, `ClubAutocomplete`, `PointsGridEditor`, `schema/*` sont **convertis**.
 
-### 7.2 Composants non convertis
-`tv/*` (ConditionalParams, ScenarioEditor, GlobalBar, LabelsModal, PresentationSelector,
-PlayerNumberGrid, ChannelSelector, ChannelPanel), `UserMandateForm`, `UserEditModal`,
-`AthleteEditModal`, `operations/*` (TeamsTab, SeasonsTab, PlayersTab, ImagesTab, SystemTab,
-ImportExportTab), `PlayerAutocomplete`,
-`ClubAutocomplete`,
-`ActionButton`, `PointsGridEditor`, `schema/*`.
+### 7.1 Dernière passe (2026-10-16)
+Convertis lors de la dernière passe : pages hors connexion (`login`, `forgot-password`,
+`reset-password`, `access-request`, `select-mandate`) et leur layout `default.vue` (fond
+`dark:bg-header-950`), `presence/match/[matchId]/team/[teamCode]`, la console Scoring
+(`games/[id]/scoring`, `scoring/EventHistory`), `stats/[type]/[saison]/[competition]`,
+`AthleteEditModal` (champs sans fond → `bg-white dark:bg-header-900`), `ActionButton`,
+`LegacyRedirect`, `ClubMap`, plus les résidus : onglets actifs `operations/*`, survols de
+`PageHeader` / `UsersCompetitionFilter` / `RefereeAutocomplete`, `ContextBadge`, `Toolbar`,
+`cms/MenuTree`, `help`.
 
-**Convertis** : `documents/DocumentsCompetitionSummary`, `CompetitionAutocomplete`,
-`CompetitionImagePicker` (fait en même temps que les pages documents/competitions/teams),
-`TextAutocomplete`, `AthleteAutocomplete` (fait avec gamedays/rankings/stats — input + dropdown +
-bouton clear).
+🐞 Corrigé au passage (indépendant du thème) : dans `admin/Header.vue`, les titres de groupe du
+menu Admin étaient en `text-header-900` sur le fond `bg-header-950` du bandeau → illisibles dans
+les deux modes. Passés en `text-header-400` (desktop et mobile), ainsi que le chevron du menu
+utilisateur.
 
-> Priorité suggérée : les **autocompletes** (`*Autocomplete.vue`) et **modales de formulaire**
-> (`UserEditModal`, `AthleteEditModal`, `UserMandateForm`) d'abord — mêmes pièges blanc-sur-blanc
-> que RefereeAutocomplete, visibles sur beaucoup de pages.
+Les fonds sémantiques ont été traités avec un second script (même principe que §3.3, une chaîne
+de classes à la fois) : `bg-<c>-50/100/200` → `dark:bg-<c>-950/900/800`, `border-<c>-200/300` →
+`dark:border-<c>-800/700`, `text-<c>-600…800` → `dark:text-<c>-300` (`-400` pour danger),
+`hover:text-<c>-800` → `dark:hover:text-<c>-200`.
+
+### 7.2 Reste (facultatif)
+- `games/index.vue` l. ~2261-2442 : petites pastilles/légendes `bg-info-100`, `bg-danger-100/200`,
+  `bg-warning-200` — lisibles (texte foncé sur pastille claire), conversion facultative.
+- Sans `dark:` et sans besoin : `ScrollToTop`, `ExperimentalBanner`, `scoring/StatusBadge`
+  (fonds pleins + texte clair), `cms/Pager`, `cms/MenuItemRow`, `cms/StatusBadge`,
+  `scoring/PeriodSelector`, `schema/SchemaChptLayout` (pas de couleur propre).
+- Volontaire : surlignage de survol `bg-warning-200 text-black` dans `schema/*`.
+- **Contrôle visuel** en clair et en sombre des pages de la dernière passe (non fait).
 
 ### 7.3 Méthode par page (checklist)
 1. Appliquer le script §3.3 avec le mapping §3.2 sur la page.

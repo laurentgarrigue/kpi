@@ -1,4 +1,4 @@
-# Nginx Static App Deployment (App2 & App3)
+# Nginx Static App Deployment (App2)
 
 **Date**: 2025-12-21
 **Status**: ✅ Implemented
@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document describes the infrastructure for serving Nuxt applications (app2 and app3) as static files via Nginx, with environment-specific builds and CORS configuration.
+This document describes the infrastructure for serving Nuxt applications (app2, and app4 on the same model) as static files via Nginx, with environment-specific builds and CORS configuration.
 
 ## Architecture
 
@@ -17,7 +17,6 @@ This document describes the infrastructure for serving Nuxt applications (app2 a
 │                         Traefik (Reverse Proxy)                  │
 │  - app.kpi.localhost → nginx_app2 (dev)                         │
 │  - app.kayak-polo.info → nginx_app2 (prod)                      │
-│  - app3.localhost → node3 (dev server)                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
             ┌─────────────────┴───────────────────┐
@@ -429,6 +428,6 @@ pwa: {
 
 ## Related Documentation
 
-- [Makefile Multi-Environment Support](MAKEFILE_MULTI_ENVIRONMENT.md)
-- [Docker Infrastructure](DOCKER_INFRASTRUCTURE.md)
-- [API CORS Configuration](../reference/API_CORS_CONFIGURATION.md) (to be created)
+- [Makefile Multi-Environment Support](../guides/MAKEFILE_MULTI_ENVIRONMENT.md)
+- [Infrastructure (index)](README.md)
+- [CORS Configuration](CORS_CONFIGURATION.md)

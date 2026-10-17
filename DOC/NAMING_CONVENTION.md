@@ -45,110 +45,20 @@ UPPERCASE_WITH_UNDERSCORES.md
 
 ### Documentation Développeur (`DOC/developer/`)
 
-#### Référence (`reference/`)
+Le **dossier** dit l'état du sujet (existant, procédure, en cours, archivé) ; le **nom** dit sa
+nature. Voir l'arborescence et les règles de classement dans [README.md](README.md).
 
-**Format** : `PROJECT_REFERENCE_NAME.md`
+| Dossier | Formats usuels | Exemples |
+|---|---|---|
+| `reference/` | `SUJET_ARCHITECTURE.md`, `SUJET_RULES.md`, `SUJET_ENDPOINTS.md` | `API2_ENDPOINTS.md`, `PROFILE_ROLES.md` |
+| `reference/features/` | `NOM_FONCTIONNALITE.md` | `STAT_LICENCIES_CATEGORIE.md` |
+| `guides/` | `SUJET_GUIDE.md`, `SUJET_WORKFLOW.md` | `GIT_WORKFLOW.md`, `NPM_BACKEND_PRODUCTION_GUIDE.md` |
+| `infrastructure/` | `SUJET_DEPLOYMENT.md`, `SUJET_CONFIGURATION.md`, `SUJET_RUNBOOK.md` | `DEPLOYMENT_RUNBOOK.md`, `CORS_CONFIGURATION.md` |
+| `in-progress/` | `SUJET_PLAN.md`, `SUJET_STRATEGY.md`, `FIX_SUJET.md`, `SUJET_MIGRATION.md` | `PUBLIC_SITE_REDESIGN_STRATEGY.md` |
+| `archive/<thème>/` | nom d'origine conservé (on ne renomme pas en archivant) | `php8/PHP8_MIGRATION_COMPLETE.md` |
 
-**Exemples** :
-- ✅ `KPI_FUNCTIONALITY_INVENTORY.md`
-
-#### Guides (`guides/`)
-
-**Format** : Selon le sous-dossier
-
-**Migrations** (`guides/migrations/`) :
-- Format : `MIGRATION_FROM_TO.md` ou `FEATURE_MIGRATION_GUIDE.md`
-- Exemples :
-  - ✅ `MIGRATION_FPDF_TO_MPDF.md`
-  - ✅ `MIGRATION_OPENTBS_TO_OPENSPOUT.md`
-  - ✅ `FLATPICKR_MIGRATION_GUIDE.md`
-  - ✅ `AXIOS_TO_FETCH_MIGRATION.md`
-
-**Infrastructure** (`guides/infrastructure/`) :
-- Format : `FEATURE_DESCRIPTION.md` ou `FEATURE_GUIDE.md`
-- Exemples :
-  - ✅ `MAKEFILE_MULTI_ENVIRONMENT.md`
-  - ✅ `NPM_BACKEND_PRODUCTION_GUIDE.md`
-  - ✅ `TOOLTIP_TESTING_GUIDE.md`
-
-#### Travaux en cours (`in-progress/`)
-
-**Statuts** (`in-progress/status/`) :
-- Format : `FEATURE_MIGRATION_STATUS.md`
-- Exemples :
-  - ✅ `BOOTSTRAP_MIGRATION_STATUS.md`
-  - ✅ `FLATPICKR_MIGRATION_STATUS.md`
-  - ✅ `TOOLTIP_MIGRATION_STATUS.md`
-
-**Plans** (`in-progress/plans/`) :
-- Format : `FEATURE_PLAN.md` ou `FEATURE_STRATEGY.md`
-- Exemples :
-  - ✅ `JQUERY_ELIMINATION_STRATEGY.md`
-  - ✅ `JS_LIBRARIES_CLEANUP_PLAN.md`
-  - ✅ `PLAN_MIGRATION_BOOTSTRAP.md`
-
-#### Archives (`archive/`)
-
-**Migrations terminées** (`archive/completed-migrations/`) :
-- Format : `MIGRATION_SUMMARY.md` ou `FEATURE_MIGRATION_COMPLETE.md`
-- Exemples :
-  - ✅ `PHP8_MIGRATION_COMPLETE.md`
-  - ✅ `PHP8_MIGRATION_SUMMARY.md`
-  - ✅ `MIGRATION_FPDF_MYPDF_SUCCESS.md`
-
-**Phases terminées** (`archive/completed-phases/`) :
-- Format : `FEATURE_PHASE_NUMBER_COMPLETE.md`
-- Exemples :
-  - ✅ `BOOTSTRAP_PHASE1_COMPLETE.md`
-  - ✅ `BOOTSTRAP_PHASE2_COMPLETE.md`
-  - ✅ `JS_CLEANUP_PHASE1_COMPLETE.md`
-
-#### Corrections & Fixes (`fixes/`)
-
-**Bugs** (`fixes/bugs/`) :
-- Format : `BUG_SHORT_DESCRIPTION.md` ou `FIX_FEATURE_DESCRIPTION.md`
-- Exemples :
-  - ✅ `BUG_SQL_COMPET_ASTERISK.md`
-  - ✅ `FIX_CSV_EXPORT_OPENSPOUT.md`
-  - ✅ `FIX_MYPDF_OPEN_METHOD.md`
-
-**Fonctionnalités** (`fixes/features/`) :
-- Format : `FEATURE_NAME.md`
-- Exemples :
-  - ✅ `STAT_LICENCIES_CATEGORIE.md`
-  - ✅ `CONSOLIDATION_PHASES_CLASSEMENT.md`
-
-**PHP 8** (`fixes/php8/`) :
-- Format : `PHP8_DESCRIPTION_FIXES.md` ou `PHP84_DESCRIPTION.md`
-- Exemples :
-  - ✅ `PHP84_DEPRECATED_FIXES.md`
-  - ✅ `SMARTY_PHP8_FIXES.md`
-  - ✅ `WORDPRESS_PHP84_MIGRATION.md`
-
-**Docker** (`fixes/docker/`) :
-- Format : `DOCKER_ENV_FIXES.md`
-- Exemples :
-  - ✅ `DOCKER_PROD_FIXES.md`
-
-#### Audits (`audits/`)
-
-**Format** : `AUDIT_DESCRIPTION.md` ou `FEATURE_AUDIT.md`
-
-**Exemples** :
-- ✅ `AUDIT_PHASE_0.md`
-- ✅ `JS_LIBRARIES_AUDIT.md`
-- ✅ `JS_LIBRARIES_USAGE_ANALYSIS.md`
-- ✅ `BOOTSTRAP_PHASE3_INVENTORY.md`
-
-#### Infrastructure (`infrastructure/`)
-
-**Format** : Selon le sous-dossier et le type
-
-**Exemples** :
-- ✅ `DOCKERFILE_OPTIMIZATIONS.md`
-- ✅ `PHP8_DOCKER_SWITCH.md`
-- ✅ `WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md`
-- ✅ `MAKEFILE_COMPOSER_UPDATES.md`
+Thèmes d'archive existants : `php8/`, `pdf-exports/`, `legacy-frontend/`, `ci-cd/`,
+`infrastructure/`, `features/`, `audits/`.
 
 ---
 

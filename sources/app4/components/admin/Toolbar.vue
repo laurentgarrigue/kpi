@@ -31,7 +31,7 @@ const emit = defineEmits<{
     <div class="flex flex-wrap items-center gap-2">
       <button
         v-if="showBulkDelete && selectedCount > 0"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-danger-50 text-danger-700 rounded-lg font-medium text-sm hover:bg-danger-100 transition-colors"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-400 rounded-lg font-medium text-sm hover:bg-danger-100 dark:hover:bg-danger-900 transition-colors"
         @click="emit('bulk-delete')"
       >
         <UIcon name="heroicons:trash" class="w-5 h-5" />

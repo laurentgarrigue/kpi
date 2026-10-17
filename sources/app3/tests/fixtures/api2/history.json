@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "body": {
+    "sections": [
+      {
+        "section": 2,
+        "label": "Competitions_Nationales",
+        "groups": [
+          {
+            "code": "TSTRES",
+            "libelle": "Groupe Résultats",
+            "libelle_en": "Results group"
+          }
+        ]
+      }
+    ]
+  }
+}

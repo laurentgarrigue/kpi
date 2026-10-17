@@ -31,7 +31,7 @@ What this changes compared to the old Apache setup:
 | Mount | Needs `../sources:/var/www/html` too, for the shared live cache (`live_document_root`) |
 
 Rationale, pitfalls and validation plan:
-[FRANKENPHP_MIGRATION_ANALYSIS.md](../../DOC/developer/audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+[FRANKENPHP_MIGRATION_ANALYSIS.md](../../DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 
 ### Mercure
 
@@ -51,7 +51,7 @@ $hub->publish(new Update('test/ping', json_encode(['message' => 'hello'])));
 A test bench (profile 1 only) is available in app4 under **Operations → Mercure**.
 
 > ⚠️ `EventSource` cannot send an `Authorization` header. In dev, browser subscriptions rely on
-> `MERCURE_ANONYMOUS=1`. In preprod/prod (`MERCURE_ANONYMOUS=0`) a subscriber JWT will be needed —
+> `MERCURE_EXTRA_DIRECTIVES=anonymous`. In preprod/prod (variable unset) a subscriber JWT will be needed —
 > to be handled by the live scoring refactor.
 
 > ⚠️ Do **not** re-run the `symfony/mercure-bundle` Flex recipe: it injects a standalone

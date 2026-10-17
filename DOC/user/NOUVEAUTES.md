@@ -531,18 +531,18 @@ Détecte 4 types d'anomalies dans la planification :
 
 ## 🔗 Liens vers la documentation détaillée
 
-- **[Inventaire complet des fonctionnalités](KPI_FUNCTIONALITY_INVENTORY.md)** - Liste exhaustive de toutes les fonctionnalités KPI
+- **[Inventaire complet des fonctionnalités](../developer/reference/KPI_FUNCTIONALITY_INVENTORY.md)** - Liste exhaustive de toutes les fonctionnalités KPI
 - **[Statistiques de cohérence des matchs](MATCH_CONSISTENCY_STATS.md)** - Documentation détaillée de la fonctionnalité
 - **[Classement Multi-Compétitions](MULTI_COMPETITION_TYPE.md)** - Guide complet du type MULTI
 - **[Guide du visualiseur de documentation](DOCVIEWER_GUIDE.md)** - Comment utiliser et enrichir la documentation
 - **[Application Web KPI (App2)](APP2_APPLICATION_WEB.md)** - Guide complet de l'application web moderne
-- **[Roadmap KPI](../developer/guides/ROADMAP_KPI.md)** - Prochains objectifs et travaux planifiés (2026-2028)
+- **[Roadmap KPI](../developer/in-progress/ROADMAP_KPI.md)** - Prochains objectifs et travaux planifiés (2026-2028)
 
 ---
 
 ## 💡 Prochaines fonctionnalités
 
-Pour connaître les prochains objectifs et travaux planifiés, consultez la **[Roadmap KPI](../developer/guides/ROADMAP_KPI.md)**.
+Pour connaître les prochains objectifs et travaux planifiés, consultez la **[Roadmap KPI](../developer/in-progress/ROADMAP_KPI.md)**.
 
 **Court terme (2026)** :
 - Stabilisation et déploiement des nouvelles fonctionnalités

@@ -123,7 +123,7 @@ KPI est un **système complet de gestion sportive** pour le Kayak-Polo, comprena
   - Préserver les classements finalisés ou ajustés manuellement
   - Case à cocher par phase (administrateurs profile ≤ 4)
   - Champs de classement en lecture seule quand consolidé
-  - Voir [CONSOLIDATION_PHASES_CLASSEMENT.md](CONSOLIDATION_PHASES_CLASSEMENT.md)
+  - Voir [CONSOLIDATION_PHASES_CLASSEMENT.md](features/CONSOLIDATION_PHASES_CLASSEMENT.md)
 
 ---
 
@@ -1011,18 +1011,18 @@ KPI est un **système complet de gestion sportive** pour le Kayak-Polo, comprena
 ## 📚 Documentation Connexe
 
 ### Migrations Techniques
-- [PHP8_MIGRATION_SUMMARY.md](PHP8_MIGRATION_SUMMARY.md) - Migration PHP 8
-- [MIGRATION_FPDF_MYPDF_SUCCESS.md](MIGRATION_FPDF_MYPDF_SUCCESS.md) - Migration PDF
-- [MIGRATION_OPENTBS_TO_OPENSPOUT.md](MIGRATION_OPENTBS_TO_OPENSPOUT.md) - Migration Excel
-- [BOOTSTRAP_MIGRATION_STATUS.md](BOOTSTRAP_MIGRATION_STATUS.md) - Migration Bootstrap
+- [PHP8_MIGRATION_SUMMARY.md](../archive/php8/PHP8_MIGRATION_SUMMARY.md) - Migration PHP 8
+- [MIGRATION_FPDF_MYPDF_SUCCESS.md](../archive/pdf-exports/MIGRATION_FPDF_MYPDF_SUCCESS.md) - Migration PDF
+- [MIGRATION_OPENTBS_TO_OPENSPOUT.md](../archive/pdf-exports/MIGRATION_OPENTBS_TO_OPENSPOUT.md) - Migration Excel
+- [BOOTSTRAP_MIGRATION_STATUS.md](../archive/legacy-frontend/BOOTSTRAP_MIGRATION_STATUS.md) - Migration Bootstrap
 
 ### Architecture
-- [AUDIT_PHASE_0.md](AUDIT_PHASE_0.md) - Audit complet projet
-- [CRON_DOCUMENTATION.md](CRON_DOCUMENTATION.md) - Documentation CRON
+- [AUDIT_PHASE_0.md](../archive/audits/AUDIT_PHASE_0.md) - Audit complet projet
+- [CRON_DOCUMENTATION.md](../infrastructure/CRON_DOCUMENTATION.md) - Documentation CRON
 
 ### Configuration
-- [CLAUDE.md](../CLAUDE.md) - Guide développement
-- [Makefile](../Makefile) - Commandes projet
+- [CLAUDE.md](../../../CLAUDE.md) - Guide développement
+- [Makefile](../../../Makefile) - Commandes projet
 
 ---
 

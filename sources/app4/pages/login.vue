@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { version } from '~/package.json'
+
 definePageMeta({
   layout: 'default',
   middleware: 'auth'
@@ -72,20 +74,20 @@ const handleSubmit = async () => {
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary-600">KPI Admin</h1>
-        <p class="mt-2 text-header-900">{{ t('login.subtitle') }}</p>
+        <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-300">KPI Admin</h1>
+        <p class="mt-2 text-header-900 dark:text-header-50">{{ t('login.subtitle') }}</p>
       </div>
 
       <!-- Login form -->
-      <div class="bg-white rounded-lg shadow-lg p-8">
-        <h2 class="text-xl font-semibold text-header-900 mb-6">
+      <div class="bg-white dark:bg-header-900 rounded-lg shadow-lg p-8">
+        <h2 class="text-xl font-semibold text-header-900 dark:text-header-50 mb-6">
           {{ t('login.title') }}
         </h2>
 
         <!-- Error message -->
         <div
           v-if="error"
-          class="mb-4 p-3 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 text-sm"
+          class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
         >
           {{ error }}
         </div>
@@ -93,7 +95,7 @@ const handleSubmit = async () => {
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <!-- Username -->
           <div>
-            <label for="username" class="block text-sm font-medium text-header-900 mb-1">
+            <label for="username" class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('login.username') }}
             </label>
             <UInput
@@ -111,12 +113,12 @@ const handleSubmit = async () => {
           <!-- Password -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label for="password" class="block text-sm font-medium text-header-900">
+              <label for="password" class="block text-sm font-medium text-header-900 dark:text-header-50">
                 {{ t('login.password') }}
               </label>
               <NuxtLink
                 to="/forgot-password"
-                class="text-xs text-primary-600 hover:text-primary-800"
+                class="text-xs text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
               >
                 {{ t('login.forgot_password') }}
               </NuxtLink>
@@ -148,18 +150,21 @@ const handleSubmit = async () => {
         <div class="mt-4 text-center">
           <NuxtLink
             to="/access-request"
-            class="text-sm text-header-600 hover:text-header-900"
+            class="text-sm text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           >
             {{ t('login.request_access') }}
           </NuxtLink>
         </div>
 
         <!-- Beta notice -->
-        <div class="mt-6 p-3 bg-warning-50 border border-warning-200 rounded text-sm text-warning-700">
+        <div class="mt-6 p-3 bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded text-sm text-warning-700 dark:text-warning-300">
           <strong>{{ t('login.beta_title') }}</strong>
           {{ t('login.beta_message') }}
         </div>
       </div>
+
+      <!-- App version -->
+      <p class="mt-4 text-center text-xs text-header-500 dark:text-header-400 italic">v{{ version }}</p>
     </div>
   </div>
 </template>

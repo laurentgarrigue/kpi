@@ -15,7 +15,7 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 - Déclencher un déploiement préprod / production / **expérimental** (branche feature + TTL)
 - Où regarder pour constater un problème (Actions, log du wrapper, `make api2_logs`)
 - Table des échecs courants et de leur correctif (timeout SSH, ACL, remote git, politique de branche)
-- Rollback du **code** : automatique, réparation de `develop`, procédure manuelle
+- Rollback du **code** : automatique, réparation de `main`, procédure manuelle
 - Rollback de la **base de données** prod depuis `pre-migration/`
 - Ce qui n'est PAS en place (notifications, uptime externe)
 
@@ -24,10 +24,18 @@ Documentation technique sur l'infrastructure Docker, Nginx, CORS et déploiement
 
 ---
 
+#### [MEDIA_STORAGE.md](MEDIA_STORAGE.md)
+**Status**: ✅ Implémenté (2026-09-28) — migré en dev, préprod et prod, sauvegarde quotidienne active (2026-10-06)
+
+Images uploadées (logos, photos, visuels) stockées hors du dépôt dans `HOST_MEDIA_PATH`, montées à leur
+emplacement historique, sauvegardées par restic (`make media_*`). **Ordre de migration par environnement.**
+
+---
+
 #### [NGINX_STATIC_APP_DEPLOYMENT.md](NGINX_STATIC_APP_DEPLOYMENT.md)
 **Status**: ✅ Implémenté (2025-12-21)
 
-Documentation complète sur le déploiement des applications Nuxt (app2 & app3) via Nginx en mode SSG (Static Site Generation).
+Documentation complète sur le déploiement des applications Nuxt (app2 & app4) via Nginx en mode SSG (Static Site Generation).
 
 **Sujets couverts**:
 - Architecture Nginx + Nuxt SSG
@@ -44,7 +52,7 @@ Documentation complète sur le déploiement des applications Nuxt (app2 & app3) 
 
 ---
 
-#### [../audits/FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md)
+#### [../reference/FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md)
 **Status**: ✅ Implémenté en dev (2026-07-16) — validation préprod/prod à faire
 
 **Le document de référence sur l'architecture web actuelle.** `/api2` a été extrait dans un
@@ -87,7 +95,7 @@ Configuration CORS globale via PHP auto-prepend pour les endpoints PHP **servis 
 
 ### Multi-Environnements
 
-#### [MAKEFILE_MULTI_ENVIRONMENT.md](../guides/infrastructure/MAKEFILE_MULTI_ENVIRONMENT.md)
+#### [MAKEFILE_MULTI_ENVIRONMENT.md](../guides/MAKEFILE_MULTI_ENVIRONMENT.md)
 **Status**: ✅ Implémenté
 
 Support multi-environnements (dev, preprod, prod) sur le même serveur.
@@ -104,7 +112,7 @@ Support multi-environnements (dev, preprod, prod) sur le même serveur.
 
 ### Gestion des Dépendances
 
-#### [NPM_BACKEND_PRODUCTION_GUIDE.md](../guides/infrastructure/NPM_BACKEND_PRODUCTION_GUIDE.md)
+#### [NPM_BACKEND_PRODUCTION_GUIDE.md](../guides/NPM_BACKEND_PRODUCTION_GUIDE.md)
 **Status**: ✅ Implémenté
 
 Gestion des dépendances JavaScript (Flatpickr, Day.js, etc.) dans le backend PHP.
@@ -152,7 +160,7 @@ make docker_prod_rebuild
 - `sources/app2/.env.development` - Variables env pour build dev
 - `sources/app2/.env.production` - Variables env pour build prod
 
-**FrankenPHP (api2)** — cf. [FRANKENPHP_MIGRATION_ANALYSIS.md](../audits/FRANKENPHP_MIGRATION_ANALYSIS.md) :
+**FrankenPHP (api2)** — cf. [FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md) :
 
 - `docker/config/Caddyfile.api2` - Caddy : mode worker, hub Mercure, trusted_proxies, logs
 - `docker/config/opcache-api2-dev.ini` - Opcache dev pour api2
@@ -177,8 +185,8 @@ make docker_prod_rebuild
 - [BEST_PRACTICES_JAVASCRIPT_SMARTY.md](../guides/BEST_PRACTICES_JAVASCRIPT_SMARTY.md) - Bonnes pratiques JS & Smarty
 
 ### Migrations JavaScript
-- [FLATPICKR_MIGRATION_GUIDE.md](../guides/migrations/FLATPICKR_MIGRATION_GUIDE.md) - Migration datepicker
-- [MIGRATION_AXIOS_FETCH_GUIDE.md](../guides/migrations/MIGRATION_AXIOS_FETCH_GUIDE.md) - Migration Axios → fetch()
+- [FLATPICKR_MIGRATION_GUIDE.md](../archive/legacy-frontend/FLATPICKR_MIGRATION_GUIDE.md) - Migration datepicker
+- [MIGRATION_AXIOS_FETCH_GUIDE.md](../archive/legacy-frontend/MIGRATION_AXIOS_FETCH_GUIDE.md) - Migration Axios → fetch()
 
 ## 🐛 Troubleshooting
 
@@ -230,7 +238,7 @@ Pour toute question technique:
 
 | Date | Document | Changement |
 |------|----------|------------|
-| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2/app3 |
+| 2025-12-21 | NGINX_STATIC_APP_DEPLOYMENT.md | ✅ Création - Infrastructure Nginx pour app2 |
 | 2025-12-21 | CORS_CONFIGURATION.md | ✅ Création - CORS global via PHP auto-prepend |
 | 2024-xx-xx | MAKEFILE_MULTI_ENVIRONMENT.md | ✅ Support multi-environnements |
 | 2024-xx-xx | NPM_BACKEND_PRODUCTION_GUIDE.md | ✅ NPM pour backend PHP |

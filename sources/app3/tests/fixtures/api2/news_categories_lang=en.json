@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "slug": "equipes-de-france",
+      "label": "French national teams"
+    },
+    {
+      "slug": "competitions-nationales",
+      "label": "National competitions"
+    },
+    {
+      "slug": "competitions-regionales-open-internationales",
+      "label": "Regional, open and international competitions"
+    },
+    {
+      "slug": "reglements-vie-federale",
+      "label": "Rules and federation life"
+    }
+  ]
+}

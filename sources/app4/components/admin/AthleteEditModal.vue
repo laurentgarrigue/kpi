@@ -189,44 +189,44 @@ async function handleSubmit() {
   >
     <div class="space-y-4">
       <!-- Error message -->
-      <div v-if="formError" class="p-3 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">
+      <div v-if="formError" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-sm text-danger-700 dark:text-danger-400">
         {{ formError }}
       </div>
 
       <!-- Nom -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.nom') }} <span class="text-danger-500">*</span>
         </label>
         <input
           v-model="form.nom"
           type="text"
           maxlength="30"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase"
+          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
       </div>
 
       <!-- Prenom -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.prenom') }} <span class="text-danger-500">*</span>
         </label>
         <input
           v-model="form.prenom"
           type="text"
           maxlength="30"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase"
+          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
       </div>
 
       <!-- Sexe -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.sexe') }} <span class="text-danger-500">*</span>
         </label>
         <select
           v-model="form.sexe"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
           <option value="M">M</option>
           <option value="F">F</option>
@@ -235,50 +235,50 @@ async function handleSubmit() {
 
       <!-- Date de naissance -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.naissance') }} <span class="text-danger-500">*</span>
         </label>
         <input
           v-model="form.naissance"
           type="date"
-          class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
       </div>
 
       <!-- Derniere saison -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.derniere_saison') }}
         </label>
         <input
           v-model="form.origine"
           type="text"
           maxlength="4"
-          class="w-32 px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-32 px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
       </div>
 
       <!-- Numero ICF -->
       <div>
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.icf') }}
         </label>
         <input
           v-model="form.icf"
           type="number"
-          class="w-48 px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          class="w-48 px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
       </div>
 
       <!-- Arbitrage qualification -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('athletes.edit.arb_qualification') }}
           </label>
           <select
             v-model="form.arbQualification"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
           >
             <option v-for="opt in qualificationOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -287,12 +287,12 @@ async function handleSubmit() {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-header-900 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('athletes.edit.arb_niveau') }}
           </label>
           <select
             v-model="form.arbNiveau"
-            class="w-full px-3 py-2 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
           >
             <option v-for="opt in niveauOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -303,7 +303,7 @@ async function handleSubmit() {
 
       <!-- Club change autocomplete -->
       <div ref="clubSearchRef" class="relative">
-        <label class="block text-sm font-medium text-header-900 mb-1">
+        <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
           {{ t('athletes.edit.new_club') }}
         </label>
         <div class="relative">
@@ -311,25 +311,25 @@ async function handleSubmit() {
             v-model="clubSearch"
             type="text"
             :placeholder="t('athletes.edit.new_club_placeholder')"
-            class="w-full px-3 py-2 pl-9 border border-header-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 pl-9 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
             @input="onClubSearchInput"
             @focus="onClubSearchInput"
           >
-          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600" />
-          <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 animate-spin" />
+          <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
+          <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
         </div>
         <!-- Dropdown results -->
         <div
           v-if="clubSearchOpen && clubSearchResults.length > 0"
-          class="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-header-200 rounded-lg shadow-lg"
+          class="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg"
         >
           <button
             v-for="result in clubSearchResults"
             :key="result.code"
-            class="w-full px-3 py-2 text-left text-sm text-header-900 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
+            class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-900 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
             @click="selectClub(result)"
           >
-            <span class="font-mono text-xs text-header-900 bg-header-200 px-1.5 py-0.5 rounded">{{ result.code }}</span>
+            <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ result.code }}</span>
             <span>{{ result.libelle }}</span>
           </button>
         </div>
@@ -338,7 +338,7 @@ async function handleSubmit() {
 
     <template #footer>
       <button
-        class="px-4 py-2 text-sm text-header-900 bg-header-200 rounded-lg hover:bg-header-200"
+        class="px-4 py-2 text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200"
         @click="emit('close')"
       >
         {{ t('common.cancel') }}

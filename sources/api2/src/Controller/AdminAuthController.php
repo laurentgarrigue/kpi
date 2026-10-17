@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Cms\EditorialAccess;
 use App\Entity\User;
+use App\Security\PasswordPolicy;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
@@ -26,7 +28,8 @@ class AdminAuthController extends AbstractController
         private readonly UserProvider $userProvider,
         private readonly JWTTokenManagerInterface $jwtManager,
         private readonly Connection $connection,
-        private readonly NotificationService $notificationService
+        private readonly NotificationService $notificationService,
+        private readonly EditorialAccess $editorialAccess,
     ) {
     }
 
@@ -87,6 +90,8 @@ class AdminAuthController extends AbstractController
         $token = $this->jwtManager->create($user);
 
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $userData['activeMandate'] = null;
         $userData['effectiveProfile'] = $user->getNiveau();
@@ -116,6 +121,8 @@ class AdminAuthController extends AbstractController
 
         $mandates = $this->loadMandates($user->getCode());
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
@@ -145,6 +152,8 @@ class AdminAuthController extends AbstractController
         $token = $this->jwtManager->create($user);
 
         $userData = $user->toArray();
+        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
@@ -216,7 +225,7 @@ class AdminAuthController extends AbstractController
         }
 
         // Validate password complexity
-        $complexityError = $this->validatePasswordComplexity($password);
+        $complexityError = PasswordPolicy::validate($password);
         if ($complexityError) {
             return $this->json(['message' => $complexityError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
         }
@@ -276,6 +285,14 @@ class AdminAuthController extends AbstractController
             'SELECT Code, Mail FROM kp_user WHERE Code = ? OR LOWER(Mail) = LOWER(?)',
             [$identifier, $identifier]
         );
+
+        // Licence number typed with its leading zeros (see UserProvider::stripLicenceZeros)
+        if (!$row && ($stripped = UserProvider::stripLicenceZeros($identifier)) !== null) {
+            $row = $this->connection->fetchAssociative(
+                'SELECT Code, Mail FROM kp_user WHERE Code = ?',
+                [$stripped]
+            );
+        }
 
         // Always return 200 to avoid user enumeration
         if (!$row || empty($row['Mail'])) {
@@ -434,25 +451,5 @@ class AdminAuthController extends AbstractController
     {
         $values = self::parseCommaFilter($value);
         return $values !== null ? array_map('intval', $values) : null;
-    }
-
-    private function validatePasswordComplexity(string $password): ?string
-    {
-        if (mb_strlen($password) < 10) {
-            return 'Password must be at least 10 characters';
-        }
-        if (!preg_match('/[A-Z]/', $password)) {
-            return 'Password must contain at least 1 uppercase letter';
-        }
-        if (!preg_match('/[a-z]/', $password)) {
-            return 'Password must contain at least 1 lowercase letter';
-        }
-        if (!preg_match('/[0-9]/', $password)) {
-            return 'Password must contain at least 1 digit';
-        }
-        if (!preg_match('/[!@#$%^&*()\-_=+\[\]{}\\\\|;:\'",.<>?\/~`]/', $password)) {
-            return 'Password must contain at least 1 special character';
-        }
-        return null;
     }
 }

@@ -21,7 +21,7 @@
 
 > Cette section **prime sur le reste du document** partout où il y aurait contradiction. Elle a été
 > ajoutée pour réaligner la console Scoring sur la trajectoire globale définie dans
-> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 > Les sections §1 à §12 restent valables pour tout le **détail fonctionnel et l'UI** ; seuls trois
 > points d'architecture changent, listés ici.
 
@@ -151,7 +151,7 @@ refaire le modèle quand les stats avancées arriveront (cf. §0.5, colonne `kin
 
 > **À reporter dans les docs de refonte.** Cette distinction et l'extensibilité du fait de match
 > valent aussi pour
-> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
+> [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)
 > et [LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](../developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md),
 > qui emploient « événement » dans les deux sens.
 
@@ -219,7 +219,7 @@ d'horloge déjà validé (`init_ms`/`elapsed_ms`/`started_at`/`running`, cf. §6
 |---|---|---|
 | `id` | bigint (PK, auto) | ordre |
 | `id_match` | int | match |
-| `topic` | varchar | **URI Mercure de destination** événement/terrain/bloc, ex. `/scoring/event/236/pitch/2/score` (isole chaque flux — cf. [plan §3.3](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) |
+| `topic` | varchar | **URI Mercure de destination** événement/terrain/bloc, ex. `/scoring/event/236/pitch/2/score` (isole chaque flux — cf. [plan §3.3](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) |
 | `payload` | json | message `{ type, tick, … }` à pousser sur Mercure |
 | `tick` | bigint | version de l'état au moment de l'écriture |
 | `created_at` | datetime | |
@@ -267,7 +267,7 @@ Le découpage §8 reste, avec ces **substitutions** :
 ### 0.8 Décisions complémentaires (2026-07-23)
 
 Tranchées lors du passage du plan en **stratégie + plan d'action**
-([plan §4.7–§4.12](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)). Les
+([plan §4.7–§4.12](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)). Les
 sections concernées de cette spec ont été mises à jour ; ce tableau sert d'index :
 
 | Décision | Résumé | Sections mises à jour |
@@ -336,7 +336,7 @@ KPI est de **tendre vers le zéro papier** :
 > **Vers le zéro papier — étapes ultérieures « responsable d'équipe » (profil 7), décision §0.9.**
 > Au-delà de la console, l'objectif zéro papier passera par des fonctionnalités dédiées au
 > **responsable d'équipe** (profil 7), planifiées au
-> [plan, lot 9](../developer/reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) :
+> [plan, lot 9](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) :
 > - **Avant match** : valider/ajuster **sa composition d'équipe pour chaque match**, à partir de la
 >   feuille de présence, **dans un délai fixé réglementairement** (ex. jusqu'à 30 min avant le
 >   match) : possibilité de **supprimer** des joueurs absents pour ce match uniquement, et — selon
@@ -1351,7 +1351,7 @@ Artefacts créés/modifiés dans `sources/app4` :
 | Fichier | Détail |
 |---|---|
 | `types/scoring.ts` | **Créé.** `Period`, `MatchStatus`, `MatchType`, `TeamSide`, `ScoringEventCode`, `ScoringMatch` (calé sur la réponse réelle de `AdminGamesController::get` — champs camelCase : id, validation, statut, type, periode, scoreA/B, scoreDetailA/B, idEquipeA/B, equipeA/B…), `ScoringPlayer`, `ScoringEvent`, `Penalty`, `PeriodDurations`. |
-| `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2/TB=180s. **Actions de chargement/mutation → Phase 1.** |
+| `stores/scoringStore.ts` | **Créé** (coquille). Store options-API `defineStore('scoring', …)`. State (match, playersA/B, events, penalties, periodDurations, loading). Getters `hasMatch`, `isLocked` (`validation === 'O'`), `currentPeriodDuration`. Durées par défaut M1/M2=600s, P1/P2=300s, TB=180s. **Actions de chargement/mutation → Phase 1.** |
 | `composables/useScoringPermissions.ts` | **Créé.** Signature `(isLocked)`. **Accès gaté profil ≤ 2** via constante `SCORING_ACCESS_MAX_PROFILE = 2`. Retourne `canView`, `canScore`, `canManagePlayers`, `canValidate`, `canLock`. Cible post-validation documentée en commentaire (relever la constante + le contrôle serveur). |
 | `i18n/locales/fr.json`, `en.json` | **Modifiés.** Namespace `scoring.*` ajouté (title, link, hardware, status ATT/ON/END, period M1/M2/P1/P2/TB, event goal/cards, timer, scoreboard, locked). |
 | `package.json` + `package-lock.json` | **Modifiés.** `easytimer.js@^4.6.0` ajouté (même version que l'ancien app3 et fm3). ⚠️ **Obsolète depuis le 2026-08-02** : `useTimer` est passé en horodatage, la dépendance n'est plus utilisée par le Scoring (cf. §6.4). |

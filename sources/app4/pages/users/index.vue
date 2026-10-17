@@ -365,7 +365,7 @@ watch([scopesPage], () => { if (viewMode.value === 'mandates') loadScopes() })
 
 // Open edit modal focused on a mandate
 function openEditModalOnMandate(scope: MandateScope) {
-  const user = { code: scope.userCode, identite: scope.identite } as UserListItem
+  const user = { code: scope.userCode, identite: scope.identite, niveau: scope.userNiveau } as UserListItem
   editingUser.value = user
   editModalOpen.value = true
 }
@@ -521,7 +521,7 @@ const profileOptions = computed(() => {
           </button>
         </div>
       </template>
-      <template #before-search>
+      <template #after-search>
         <!-- Profile filter -->
         <select
           v-model="filterProfile"
@@ -562,7 +562,7 @@ const profileOptions = computed(() => {
     </div>
 
     <!-- Desktop Table — Mode Mandats -->
-    <div v-if="!loading && viewMode === 'mandates'" class="hidden lg:block overflow-x-auto">
+    <div v-if="!loading && viewMode === 'mandates'" class="hidden lg:block sticky-thead">
       <div v-if="!filterProfile && !filterSeason && filterCompetitions.length === 0" class="text-center py-12 text-header-600 dark:text-header-300">
         <UIcon name="i-heroicons-funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
         {{ t('users.mandate_scopes_no_filter') }}
@@ -614,7 +614,7 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2">
               <button
-                v-if="scope.scopeType === 'base' && canEdit"
+                v-if="scope.scopeType === 'base' && canEditUser(scope.userNiveau)"
                 class="p-1.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 rounded"
                 :title="t('common.edit')"
                 @click="openEditModalOnMandate(scope)"
@@ -622,7 +622,7 @@ const profileOptions = computed(() => {
                 <UIcon name="i-heroicons-pencil-square" class="w-5 h-5" />
               </button>
               <button
-                v-else-if="scope.scopeType === 'mandate' && canEdit"
+                v-else-if="canOpenMandatesModal(scope.userNiveau)"
                 class="p-1.5 text-primary-500 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 rounded"
                 :title="t('users.mandate_edit')"
                 @click="openEditModalOnMandate(scope)"
@@ -651,7 +651,7 @@ const profileOptions = computed(() => {
     />
 
     <!-- Desktop Table — Mode Utilisateurs -->
-    <div v-if="!loading && viewMode === 'users'" class="hidden lg:block overflow-x-auto">
+    <div v-if="!loading && viewMode === 'users'" class="hidden lg:block sticky-thead">
       <table v-if="users.length > 0" class="min-w-full divide-y divide-header-200 dark:divide-header-700 bg-white dark:bg-header-900 rounded-lg shadow-sm">
         <thead class="bg-header-50 dark:bg-header-900">
           <tr>

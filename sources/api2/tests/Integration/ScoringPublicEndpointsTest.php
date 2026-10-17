@@ -19,16 +19,18 @@ namespace App\Tests\Integration;
  * Voir DOC/specs/PAGE_INCRUSTATION.md §11bis pour l'analyse (et pourquoi un contrôle
  * same-origin ne peut pas tenir ce rôle).
  *
- * Données : SQL/fixtures/ — jetons `tsttok-*`, événement 9001, match 99001 sur le terrain 2.
+ * Données : SQL/fixtures/ — jetons `tsttok-*`, événement 77, match 9404 sur le terrain « 1 »
+ * (données du site public réutilisées : on ne duplique pas un jeu de matchs pour le scoring).
  */
 final class ScoringPublicEndpointsTest extends ApiTestCase
 {
-    private const EVENT = 9001;
-    private const PITCH = '2';
-    private const MATCH = 99001;
+    /** Événement 77, journée 9202, match 9404 (en cours, terrain « 1 ») — cf. SQL/fixtures/. */
+    private const EVENT = 77;
+    private const PITCH = '1';
+    private const MATCH = 9404;
 
-    private const TOKEN_VALID = 'tsttok-valid-event-9001';
-    private const TOKEN_PITCH2 = 'tsttok-valid-pitch2';
+    private const TOKEN_VALID = 'tsttok-valid-event-77';
+    private const TOKEN_PITCH1 = 'tsttok-valid-pitch1';
     private const TOKEN_EXPIRED = 'tsttok-expired';
     private const TOKEN_REVOKED = 'tsttok-revoked';
     private const TOKEN_OTHER_EVENT = 'tsttok-other-event';
@@ -84,8 +86,8 @@ final class ScoringPublicEndpointsTest extends ApiTestCase
     /** Un jeton restreint à un terrain ne doit pas ouvrir les autres terrains. */
     public function testPitchScopedTokenIsRefusedOnAnotherPitch(): void
     {
-        self::assertSame(200, $this->statusOf($this->programUri(self::TOKEN_PITCH2, '2')));
-        self::assertSame(401, $this->statusOf($this->programUri(self::TOKEN_PITCH2, '3')));
+        self::assertSame(200, $this->statusOf($this->programUri(self::TOKEN_PITCH1, '1')));
+        self::assertSame(401, $this->statusOf($this->programUri(self::TOKEN_PITCH1, '2')));
     }
 
     /**

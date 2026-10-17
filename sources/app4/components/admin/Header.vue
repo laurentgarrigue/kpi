@@ -42,6 +42,8 @@ const activeMandateSummary = computed(() =>
 )
 const { isOnline } = useOnlineStatus()
 const runtimeConfig = useRuntimeConfig()
+// Same image as the admin favicon (white logo on a black tile), see DOC/developer/guides/FAVICONS.md
+const logoSrc = `${runtimeConfig.app.baseURL.replace(/\/$/, '')}/favicon.png`
 
 const languages = [
   { code: 'fr', label: 'FR', flag: '🇫🇷' },
@@ -246,6 +248,29 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.journal')
     })
   }
+  // Éditorial (site public): Editor capability or profile 1–2 (PAGE_CMS.md, ADM-CMS-01)
+  if (authStore.canEditContent) {
+    const editorial: MenuItem[] = [
+      { to: '/cms/articles', icon: 'heroicons:newspaper', label: t('menu.cms_articles') },
+      { to: '/cms/pages', icon: 'heroicons:document-duplicate', label: t('menu.cms_pages') },
+      { to: '/cms/media', icon: 'heroicons:photo', label: t('menu.cms_media') },
+      { to: '/cms/forms', icon: 'heroicons:clipboard-document-list', label: t('menu.cms_forms') },
+    ]
+    if (authStore.canAdministerContent) {
+      editorial.push(
+        { to: '/cms/menu', icon: 'heroicons:bars-3', label: t('menu.cms_menu') },
+        { to: '/cms/home', icon: 'heroicons:home', label: t('menu.cms_home') },
+        { to: '/cms/redirects', icon: 'heroicons:arrow-uturn-right', label: t('menu.cms_redirects') },
+      )
+    }
+    groups.push({
+      key: 'editorial',
+      label: t('menu.editorial'),
+      icon: 'heroicons:pencil-square',
+      items: editorial
+    })
+  }
+
   if (rights.length > 0) {
     groups.push({
       key: 'rights',
@@ -327,7 +352,7 @@ onMounted(() => {
         <!-- Left: Logo -->
         <div class="flex items-center gap-4">
           <NuxtLink to="/" class="relative flex items-center gap-2 pb-4">
-            <img src="/img/logo_kp.png" width="30" height="30" alt="logo" class="inline-block align-middle" >
+            <img :src="logoSrc" width="30" height="30" alt="logo" class="inline-block align-middle" >
             <span class="text-xl font-bold text-primary-400">KPI</span>
             <span class="text-sm text-header-300">Admin</span>
             <!-- Environment badge (hidden in production) -->
@@ -414,16 +439,19 @@ onMounted(() => {
                 class="absolute left-0 mt-1 w-56 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
               >
                 <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
-                  <div v-if="gIndex > 0" class="border-t border-header-700 my-1" />
-                  <div class="px-4 py-1.5 text-xs font-semibold text-header-900 uppercase italic tracking-wider flex items-center gap-1.5">
-                    <UIcon :name="group.icon" class="w-3.5 h-3.5" />
+                  <!-- Group title: non-clickable band, distinct from the links below -->
+                  <div
+                    class="px-3 py-1 bg-header-900 border-y border-header-800 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
+                    :class="gIndex > 0 ? 'mt-1' : '-mt-1 border-t-0 rounded-t-lg'"
+                  >
+                    <UIcon :name="group.icon" class="w-3 h-3" />
                     {{ group.label }}
                   </div>
                   <NuxtLink
                     v-for="item in group.items"
                     :key="item.to"
                     :to="item.to!"
-                    class="flex items-center gap-2 px-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
+                    class="flex items-center gap-2 pl-6 pr-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
                     @click="openDropdown = null"
                   >
                     <UIcon :name="item.icon" class="w-4 h-4" />
@@ -466,7 +494,7 @@ onMounted(() => {
             >
               <div
                 v-if="publicMenuOpen"
-                class="absolute right-0 mt-1 w-44 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
+                class="absolute right-0 mt-1 w-60 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
               >
                 <a
                   :href="runtimeConfig.public.legacyBaseUrl"
@@ -476,6 +504,16 @@ onMounted(() => {
                 >
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
                   <span>KPI Public</span>
+                </a>
+                <a
+                  :href="runtimeConfig.public.publicSiteUrl"
+                  target="_blank"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  data-testid="public-site-beta-link"
+                  @click="publicMenuOpen = false"
+                >
+                  <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
+                  <span>{{ t('menu.public_site_beta') }}</span>
                 </a>
                 <div class="border-t border-header-700 my-1" />
                 <a
@@ -541,7 +579,7 @@ onMounted(() => {
               </span>
               <UIcon
                 name="heroicons:chevron-down"
-                class="w-4 h-4 text-header-600 transition-transform"
+                class="w-4 h-4 text-header-400 transition-transform"
                 :class="{ 'rotate-180': userMenuOpen }"
               />
             </button>
@@ -677,6 +715,14 @@ onMounted(() => {
             <span>KPI Public</span>
           </a>
           <a
+            :href="runtimeConfig.public.publicSiteUrl"
+            target="_blank"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+          >
+            <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
+            <span>{{ t('menu.public_site_beta') }}</span>
+          </a>
+          <a
             :href="runtimeConfig.public.app2BaseUrl"
             target="_blank"
             class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
@@ -733,16 +779,19 @@ onMounted(() => {
             </button>
             <div v-if="mobileExpanded === 'admin'" class="ml-6 space-y-1 border-l border-header-700 pl-3">
               <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
-                <div v-if="gIndex > 0" class="border-t border-header-700 my-2" />
-                <div class="text-xs font-semibold text-header-600 uppercase tracking-wider flex items-center gap-1.5 py-1">
-                  <UIcon :name="group.icon" class="w-3.5 h-3.5" />
+                <!-- Group title: non-clickable band, distinct from the links below -->
+                <div
+                  class="px-2 py-1 rounded bg-header-900 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 select-none"
+                  :class="{ 'mt-3': gIndex > 0 }"
+                >
+                  <UIcon :name="group.icon" class="w-3 h-3" />
                   {{ group.label }}
                 </div>
                 <NuxtLink
                   v-for="item in group.items"
                   :key="item.to"
                   :to="item.to!"
-                  class="flex items-center gap-2 py-1.5 text-sm text-header-300 hover:text-white transition-colors"
+                  class="flex items-center gap-2 pl-3 py-1.5 text-sm text-header-300 hover:text-white transition-colors"
                 >
                   <UIcon :name="item.icon" class="w-4 h-4" />
                   {{ item.label }}

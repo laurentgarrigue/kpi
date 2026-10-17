@@ -4,7 +4,7 @@
 > `claude/scoring-refactoring-strategy-3d43ac`). Il liste, lot par lot, **ce qu'il faut
 > exécuter en dev** (migrations, redémarrages) puis **ce qu'il faut vérifier
 > fonctionnellement** avant de considérer le lot validé.
-> Plan : [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](../reference/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) ·
+> Plan : [LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) ·
 > Spec console : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) ·
 > Spec incrustation : [PAGE_INCRUSTATION.md](../../specs/PAGE_INCRUSTATION.md)
 

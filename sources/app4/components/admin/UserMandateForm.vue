@@ -258,11 +258,6 @@ function handleSave() {
     </button>
 
     <div v-if="expanded" class="mt-3 p-3 border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-950/50 rounded-lg space-y-3">
-      <!-- Error message -->
-      <div v-if="saveError" class="p-2 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded text-xs text-danger-700 dark:text-danger-300">
-        {{ saveError }}
-      </div>
-
       <!-- Profile + Label -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -439,6 +434,11 @@ function handleSave() {
             {{ evt.id }} - {{ evt.libelle }}
           </label>
         </div>
+      </div>
+
+      <!-- Error message (just above the Validate button) -->
+      <div v-if="saveError" class="p-2 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded text-xs text-danger-700 dark:text-danger-300">
+        {{ saveError }}
       </div>
 
       <!-- Actions -->

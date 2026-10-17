@@ -1,7 +1,9 @@
+@import "tailwindcss";
+@import "./theme.css";
 @import "./toast.css";
 
 body {
-    background-color: lightgrey;
+  background-color: var(--color-page);
 }
 
 .page-enter-active,
@@ -41,7 +43,7 @@ body {
 }
 
 .bg-default {
-  background-color: #ffffff !important; /* bg-white */
+  background-color: var(--color-surface) !important;
 }
 
 /* Fix for missing Tailwind classes */

@@ -46,25 +46,55 @@ base, le chargement des deux fichiers et le `DATABASE_URL` de la suite.
 les tests supposent ces fixtures et n'ont aucune raison d'y trouver leurs ids.
 Ils ne font que des `SELECT` aujourd'hui, mais la garde reste la règle.
 
-## Jeu « scoring » (refonte live, lot 4)
+## Jeu « résultats publics » (groupe `TSTRES`)
+
+Consommé par les tests de caractérisation (`tests/Integration/PublicResultsCharacterizationTest.php`) et les
+endpoints du site public ([API_PUBLIC_RESULTS.md](../../DOC/specs/public/API_PUBLIC_RESULTS.md)) :
+
+| Élément | Cas couverts |
+|---|---|
+| `RCH` (CHPT, `ON`) | journées publiées / non publiée / `Pause`, matchs terminés, en cours, à venir, non publié, buteurs |
+| `RCP` (CP, `END`, tour final) | poule classée, poule sans classement (équipes déduites des matchs), finale, placeholders `[V11-P12]`, médailles |
+| `RMU` (MULTI, `END`, tour final) | classement sans match |
+| `RAT` (CHPT, `ATT`) / `RNP` (non publiée) | filtres de statut et de publication |
+| Événement `77` (publié) / `78` (non publié) | ids < 3000 = tournoi `kp_evenement` ; journées liées par `kp_evenement_journee` |
+
+## Jeu « site public, phase 3 » (transverse)
+
+Consommé par `tests/Integration/PublicSiteEndpointsTest.php`
+([API_PUBLIC_TRANSVERSE.md](../../DOC/specs/public/API_PUBLIC_TRANSVERSE.md)) :
+
+| Élément | Cas couverts |
+|---|---|
+| `kp_equipe` 101–131 | équipes engagées ci-dessus ; 105 « Alpha Deux » : deuxième équipe du club C001 |
+| `kp_club` C001–C012, C099 | position valide / absente / illisible, nom à tiret (« Saint-Malo »), club **sans équipe** (C099, jamais publié) |
+| `kp_cd` / `kp_cr` | comités départementaux et régional de la fiche club |
+| `RCP` 2998 (CP, `END`, finale) / `RQL` 2998 (CHPT `END`, tour 1) | historique sur deux saisons ; palmarès d'équipe avec et sans médaille |
+| Joueurs 9505 (`E`) et 9506 (`X`) de l'équipe 9301 | composition : entraîneur après les joueurs, joueur `X` exclu |
+
+Les fichiers de référence JSON sont dans `sources/api2/tests/Integration/__snapshots__/` ; un changement voulu
+se régénère avec `UPDATE_SNAPSHOTS=1` et se relit dans le diff.
+
+## Jeu « scoring » (refonte live, lots 1 à 4)
 
 Ces lignes servent `ScoringPublicEndpointsTest`, qui vérifie le **contrôle d'accès** du
-chemin de lecture public des incrustations. Chaque jeton couvre un motif de refus distinct :
+chemin de lecture public des incrustations. Elles réutilisent l'événement `77` (publié) et
+l'événement `78` (non publié) du jeu « résultats publics » ci-dessous : un seul jeu d'ids,
+pas de tournoi dédié au scoring.
 
 | Ligne | Cas couvert |
 |---|---|
-| `kp_evenement_journee` (9001 → 9101) | rattache la journée à l'événement : c'est ce qui donne sa portée à un jeton |
-| `kp_match` 99001 (journée 9101, terrain `2`) | match cible de `/scoring/state/{id}` ; **aucun** état live associé, pour vérifier le 404 explicite |
-| `kp_competition_equipe` 9201 / 9202 | les deux équipes du match : `/scoring/program` les joint pour les libellés — sans la table, l'endpoint répond 500 au lieu du code attendu |
-| `tsttok-valid-event-9001` | jeton valide, portée événement → accès accordé |
-| `tsttok-valid-pitch2` | valide mais restreint au terrain `2` → refusé sur un autre terrain |
+| `tsttok-valid-event-77` | jeton valide, portée événement → accès accordé sur tous les terrains de `77` |
+| `tsttok-valid-pitch1` | valide mais restreint au terrain `1` → refusé sur un autre terrain |
 | `tsttok-expired` | expiré → refusé |
 | `tsttok-revoked` | révoqué (expiration lointaine : c'est bien la révocation qui tranche) |
-| `tsttok-other-event` | valide pour l'événement 9002 → n'ouvre rien sur 9001 |
+| `tsttok-other-event` | valide pour l'événement `78` → n'ouvre rien sur `77` |
 
 Les tables `scoring_display_settings` et `scoring_live_state` sont créées mais **vides** :
-les tests d'accès doivent échouer **avant** toute lecture de données de match, et le
-programme doit savoir répondre avec les seuls réglages par défaut.
+les tests d'accès doivent échouer **avant** toute lecture de données de match, le programme
+doit savoir répondre avec les seuls réglages par défaut, et `/scoring/state/{id}` doit
+renvoyer un 404 explicite sur un match sans état live.
+
 
 ## Ajouter un cas
 

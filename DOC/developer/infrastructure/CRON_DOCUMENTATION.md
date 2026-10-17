@@ -144,6 +144,27 @@ Ou depuis app4 : **Opérations > Import/Export > Verrouillage compétitions**
 
 ---
 
+## 3. Purge RGPD des inscriptions (site public)
+
+### Description
+
+Supprime les inscriptions aux formulaires du site public arrivées à échéance de conservation (durée réglée par
+formulaire, défaut 3 mois après l'événement ou la clôture) et conserve le nombre d'inscrits (`kp_form.archived_entries`).
+Spec : [FEATURE_FORMS.md](../../specs/public/FEATURE_FORMS.md) § 6 (FRM-09).
+
+| Composant | Fichier |
+|-----------|---------|
+| Commande | `app:forms:purge` (`sources/api2/src/Command/FormsPurgeCommand.php`) |
+
+### Configuration CRON
+
+```cron
+# Purge RGPD des inscriptions - Tous les jours à 3h15
+15 3 * * * docker exec kpi_api2 php bin/console app:forms:purge >> /var/log/kpi/cron_forms_purge.log 2>&1
+```
+
+(remplacer `kpi_api2` par `${APPLICATION_NAME}_api2` de l'environnement, ex. `kpi_preprod_api2`.)
+
 ## Notification email
 
 Les deux tâches utilisent le `NotificationService` centralisé (`sources/api2/src/Service/NotificationService.php`).

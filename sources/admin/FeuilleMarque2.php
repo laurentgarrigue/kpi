@@ -753,7 +753,7 @@ stop_time: <span id="stop_time_display"></span><br />
 			<script type="text/javascript" src="v2/jquery.maskedinput.min.js"></script>
 			<script>
 				//paramètres ajustables
-				var duree_prolongations = '05'; // ICF:'05', FFCK:'03'
+				var duree_prolongations = '05'; // ICF et FFCK : 5 min
 				var arret_chrono_sur_but = false;
 
 				var ancienne_ligne = 0;

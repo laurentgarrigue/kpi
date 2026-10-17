@@ -30,12 +30,12 @@ watch(() => route.path, () => {
     />
 
     <!-- Page content -->
-    <main class="flex-1 px-4 py-2 md:px-6 overflow-auto">
+    <main class="flex-1 px-4 py-2 md:px-6">
       <slot />
     </main>
 
     <!-- Footer -->
-    <footer class="bg-header-200 dark:bg-header-900 border-t border-header-200 dark:border-header-800 py-3 px-4 text-center text-sm text-header-600 dark:text-header-600">
+    <footer class="bg-header-200 dark:bg-header-900 border-t border-header-200 dark:border-header-800 py-3 px-4 text-center text-sm text-header-600 dark:text-header-300">
       {{ t('app.title') }} - {{ t('footer.version') }} {{ version }}
     </footer>
   </div>

@@ -108,7 +108,7 @@ const onRowClick = (e: ScoringEvent) => {
           </td>
 
           <!-- CENTER: period + time -->
-          <td class="py-1 text-center whitespace-nowrap font-mono text-header-900 dark:text-header-300">
+          <td class="py-1 text-center whitespace-nowrap font-mono text-header-900 dark:text-header-50">
             {{ e.period }} {{ fmtTime(e.tpsJeu) }}
           </td>
 

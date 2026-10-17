@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "body": {
+    "players": [
+      {
+        "first_name": "Ann",
+        "last_name": "ALPHA",
+        "number": 7,
+        "category": "SEN",
+        "role": "captain",
+        "goals": 2,
+        "green": 0,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      },
+      {
+        "first_name": "Bob",
+        "last_name": "ALPHA",
+        "number": 8,
+        "category": "SEN",
+        "role": null,
+        "goals": 0,
+        "green": 1,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      },
+      {
+        "first_name": "Coach",
+        "last_name": "ALPHA",
+        "number": null,
+        "category": "SEN",
+        "role": "coach",
+        "goals": 0,
+        "green": 0,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      }
+    ]
+  }
+}

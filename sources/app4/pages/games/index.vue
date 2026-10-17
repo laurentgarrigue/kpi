@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { gameDisplayStatus, periodLabel, type GameDisplayStatus } from '~/utils/gameStatus'
 import type { Game, GamesListResponse, GameFormData, GameJournee, GameTeam } from '~/types/games'
 
 definePageMeta({
@@ -1775,22 +1776,29 @@ const journeeLabel = (j: GameJournee) => {
 }
 
 // ─── Status label ───
-const statusLabel = (game: Game) => {
-  switch (game.statut) {
-    case 'ON': return t('games.status_ongoing')
-    case 'END': return t('games.status_ended')
-    default: return t('games.status_waiting')
-  }
+// Status as in app2 and on the public site: a finished game not locked yet is « provisional » (orange).
+const STATUS_LABELS: Record<GameDisplayStatus, string> = {
+  ATT: 'games.status_waiting',
+  ON: 'games.status_ongoing',
+  PROVISIONAL: 'games.status_provisional',
+  END: 'games.status_ended',
+}
+const statusLabel = (game: Game) => t(STATUS_LABELS[gameDisplayStatus(game.statut, game.validation)])
+
+/** Abbreviated period of a game in progress (`P1`, `OVT 1`), with its full label as title. */
+const periodText = (game: Game, short: boolean) => {
+  const label = game.statut === 'ON' ? periodLabel(game.periode, short) : null
+  return label ? t(`games.period_label.${label.key}`, { n: label.n ?? '' }) : ''
 }
 
 
-const statusBtnClass = (game: Game) => {
-  switch (game.statut) {
-    case 'ON': return 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-100 border-primary-200 dark:border-primary-800'
-    case 'END': return 'bg-success-100 dark:bg-success-900 text-success-700 dark:text-success-100 border-success-200 dark:border-success-800'
-    default: return 'bg-header-200 dark:bg-header-800 text-header-900 dark:text-header-300 border-header-200 dark:border-header-700'
-  }
+const STATUS_CLASSES: Record<GameDisplayStatus, string> = {
+  ATT: 'bg-header-100 dark:bg-header-700 text-header-800 dark:text-header-50 border-header-300 dark:border-header-500',
+  ON: 'bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-50 border-primary-300 dark:border-primary-500',
+  PROVISIONAL: 'bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-50 border-orange-300 dark:border-orange-500',
+  END: 'bg-success-100 dark:bg-success-800 text-success-800 dark:text-success-50 border-success-300 dark:border-success-500',
 }
+const statusBtnClass = (game: Game) => STATUS_CLASSES[gameDisplayStatus(game.statut, game.validation)]
 
 // ─── Scoresheet windows (FMV2/FMV3) ───
 // Réutilise la fenêtre existante si elle est déjà ouverte pour ce match
@@ -2453,8 +2461,8 @@ const openScoring = (gameId: number) => {
     </div>
 
     <!-- ═══════ DESKTOP TABLE ═══════ -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
+    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
+      <div class="sticky-thead">
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700 text-xs">
           <thead class="bg-header-50 dark:bg-header-800">
             <tr>
@@ -2822,40 +2830,38 @@ const openScoring = (gameId: number) => {
                 </template>
               </td>
 
-              <!-- Lock/Validation + Statut -->
+              <!-- Lock / validation, then provisional score and period, then status: the score block (kept when empty)
+                   separates the two clickable controls, so that one is not clicked instead of the other. -->
               <td class="px-1 py-1 text-center">
-                <!-- Lock toggle -->
-                <AdminToggleButton
-                  v-if="canLock"
-                  :active="g.validation === 'O'"
-                  active-icon="heroicons:lock-closed-solid"
-                  inactive-icon="heroicons:lock-open"
-                  active-color="success"
-                  size="md"
-                  :active-title="t('games.locked')"
-                  :inactive-title="t('games.unlocked')"
-                  :disabled="!g.authorized"
-                  @toggle="toggleValidation(g)"
-                />
-                <UIcon v-else-if="g.validation === 'O'" name="heroicons:lock-closed-solid" class="w-6 h-6 text-primary-500" :title="t('games.locked')" />
-                <!-- Statut -->
-                <div class="mt-0.5">
+                <div class="flex flex-col items-center gap-1">
+                  <AdminToggleButton
+                    v-if="canLock"
+                    :active="g.validation === 'O'"
+                    active-icon="heroicons:lock-closed-solid"
+                    inactive-icon="heroicons:lock-open"
+                    active-color="success"
+                    size="md"
+                    :active-title="t('games.locked')"
+                    :inactive-title="t('games.unlocked')"
+                    :disabled="!g.authorized"
+                    @toggle="toggleValidation(g)"
+                  />
+                  <UIcon v-else-if="g.validation === 'O'" name="heroicons:lock-closed-solid" class="w-6 h-6 text-primary-500" :title="t('games.locked')" />
+                  <div class="min-h-4 text-[11px] font-semibold leading-4 text-nowrap tabular-nums text-header-900 dark:text-header-50">
+                    <template v-if="(g.statut === 'ON' || g.statut === 'END') && (g.scoreDetailA || g.scoreDetailB)">{{ g.scoreDetailA || '0' }}-{{ g.scoreDetailB || '0' }}</template>
+                    <span v-if="periodText(g, true)" class="ml-1 text-primary-700 dark:text-primary-200" :title="periodText(g, false)">{{ periodText(g, true) }}</span>
+                  </div>
                   <button
                     v-if="isStatutEditable(g)"
-                    class="px-1.5 py-1 text-[10px] font-medium rounded-full border leading-tight text-nowrap"
+                    class="px-1.5 py-1 text-[10px] font-semibold rounded-full border leading-tight text-nowrap"
                     :class="statusBtnClass(g)"
                     @click="openStatusConfirm(g)"
                   >{{ statusLabel(g) }}</button>
                   <span
                     v-else
-                    class="px-1.5 py-1 text-[10px] font-medium rounded-full border leading-tight inline-block text-nowrap"
+                    class="px-1.5 py-1 text-[10px] font-semibold rounded-full border leading-tight inline-block text-nowrap"
                     :class="statusBtnClass(g)"
                   >{{ statusLabel(g) }}</span>
-                </div>
-                <!-- Provisional score when ON or END -->
-                <div v-if="(g.statut === 'ON' || g.statut === 'END') && (g.scoreDetailA || g.scoreDetailB)" class="text-[9px] text-header-600 dark:text-header-600 leading-tight">
-                  {{ g.scoreDetailA || '0' }}-{{ g.scoreDetailB || '0' }}
-                  <span v-if="g.periode && g.statut === 'ON'">({{ g.periode }})</span>
                 </div>
               </td>
 

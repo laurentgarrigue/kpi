@@ -1,0 +1,87 @@
+{
+  "status": 200,
+  "body": {
+    "status": "ON",
+    "type": "CHPT",
+    "qualified": 1,
+    "eliminated": 1,
+    "rows": [
+      {
+        "rank": 1,
+        "team": {
+          "id": 9301,
+          "number": 101,
+          "label": "Equipe Alpha",
+          "logo": "KIP/logo/alpha.png"
+        },
+        "points": 7,
+        "played": 3,
+        "won": 2,
+        "drawn": 1,
+        "lost": 0,
+        "forfeits": 0,
+        "goals_for": 9,
+        "goals_against": 4,
+        "goal_diff": 5,
+        "medal": null
+      },
+      {
+        "rank": 2,
+        "team": {
+          "id": 9302,
+          "number": 102,
+          "label": "Equipe Bravo",
+          "logo": "KIP/logo/bravo.png"
+        },
+        "points": 5,
+        "played": 3,
+        "won": 1,
+        "drawn": 1,
+        "lost": 1,
+        "forfeits": 0,
+        "goals_for": 6,
+        "goals_against": 6,
+        "goal_diff": 0,
+        "medal": null
+      },
+      {
+        "rank": 3,
+        "team": {
+          "id": 9303,
+          "number": 103,
+          "label": "Equipe Charlie",
+          "logo": "KIP/logo/charlie.png"
+        },
+        "points": 4,
+        "played": 2,
+        "won": 1,
+        "drawn": 0,
+        "lost": 1,
+        "forfeits": 0,
+        "goals_for": 4,
+        "goals_against": 4,
+        "goal_diff": 0,
+        "medal": null
+      },
+      {
+        "rank": 4,
+        "team": {
+          "id": 9304,
+          "number": 104,
+          "label": "Equipe Delta",
+          "logo": null
+        },
+        "points": 1,
+        "played": 2,
+        "won": 0,
+        "drawn": 0,
+        "lost": 2,
+        "forfeits": 0,
+        "goals_for": 1,
+        "goals_against": 6,
+        "goal_diff": -5,
+        "medal": null
+      }
+    ]
+  }
+}

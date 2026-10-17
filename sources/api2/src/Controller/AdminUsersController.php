@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Security\PasswordPolicy;
 use App\Service\NotificationService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -323,6 +324,12 @@ class AdminUsersController extends AbstractController
             return $this->json(['error' => true, 'message' => $profileError, 'code' => 'PROFILE_RESTRICTED'], Response::HTTP_FORBIDDEN);
         }
 
+        // Forced password (super admin only) must meet the same complexity as a user reset
+        $forcedPasswordError = $this->validateForcedPassword($data, $currentUser->getEffectiveNiveau());
+        if ($forcedPasswordError) {
+            return $this->json(['error' => true, 'message' => $forcedPasswordError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
+        }
+
         // Filter requirements per profile
         $filterError = $this->validateProfileFilters($niveau, $filtreCompetition, $filtreSaison, $filtreJournee, $limitClubs);
         if ($filterError) {
@@ -429,7 +436,7 @@ class AdminUsersController extends AbstractController
         $targetNiveau = (int) $existing['Niveau'];
 
         // Cannot modify user with higher or equal privilege (except super admin)
-        if ($adminNiveau > 1 && $targetNiveau < $adminNiveau) {
+        if ($adminNiveau > 1 && $targetNiveau <= $adminNiveau) {
             return $this->json(['error' => true, 'message' => 'Cannot modify user with higher privilege', 'code' => 'ACCESS_DENIED'], Response::HTTP_FORBIDDEN);
         }
 
@@ -449,6 +456,12 @@ class AdminUsersController extends AbstractController
         $profileError = $this->validateProfileAssignment($adminNiveau, $niveau);
         if ($profileError) {
             return $this->json(['error' => true, 'message' => $profileError, 'code' => 'PROFILE_RESTRICTED'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Forced password (super admin only) must meet the same complexity as a user reset
+        $forcedPasswordError = $this->validateForcedPassword($data, $adminNiveau);
+        if ($forcedPasswordError) {
+            return $this->json(['error' => true, 'message' => $forcedPasswordError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
         }
 
         // Filter requirements per profile
@@ -756,6 +769,7 @@ class AdminUsersController extends AbstractController
                     'mandateId' => null,
                     'mandateLabel' => null,
                     'niveau' => (int) $u['Niveau'],
+                    'userNiveau' => (int) $u['Niveau'],
                     'filtreSaison' => $u['Filtre_saison'] ?? '',
                     'filtreCompetition' => $u['Filtre_competition'] ?? '',
                     'limitClubs' => $u['Limitation_equipe_club'] ?? '',
@@ -771,6 +785,7 @@ class AdminUsersController extends AbstractController
                     'mandateId' => (int) $m['id'],
                     'mandateLabel' => $m['libelle'],
                     'niveau' => (int) $m['niveau'],
+                    'userNiveau' => (int) $u['Niveau'],
                     'filtreSaison' => $m['filtre_saison'] ?? '',
                     'filtreCompetition' => $m['filtre_competition'] ?? '',
                     'limitClubs' => $m['limitation_equipe_club'] ?? '',
@@ -843,10 +858,15 @@ class AdminUsersController extends AbstractController
 
             if ($type === 'base') {
                 $row = $this->connection->fetchAssociative(
-                    'SELECT Filtre_saison, Identite FROM kp_user WHERE Code = ?',
+                    'SELECT Filtre_saison, Identite, Niveau FROM kp_user WHERE Code = ?',
                     [$userCode]
                 );
                 if (!$row) continue;
+
+                // Base profile of a user with equal or higher privilege is read-only (except super admin)
+                if ($currentUser->getEffectiveNiveau() > 1 && (int) $row['Niveau'] <= $currentUser->getEffectiveNiveau()) {
+                    continue;
+                }
 
                 $current = $row['Filtre_saison'] ?? '';
                 if (str_contains($current, "|$season|")) {
@@ -1431,6 +1451,15 @@ class AdminUsersController extends AbstractController
     }
 
     // ──────────────────────────────────────────────────────────────────────
+    private function validateForcedPassword(array $data, int $adminNiveau): ?string
+    {
+        $forcedPassword = trim($data['forcedPassword'] ?? '');
+        if ($forcedPassword === '' || $adminNiveau > 1) {
+            return null;
+        }
+        return PasswordPolicy::validate($forcedPassword);
+    }
+
     // Helper: validate profile assignment
     // ──────────────────────────────────────────────────────────────────────
 
