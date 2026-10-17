@@ -211,6 +211,11 @@ Ce document présente les prochains objectifs et travaux prévus pour le projet 
 
 **Durée estimée** : 4 à 6 mois
 
+**Avancement (17/10/2026)** : en cours — nouveau site **app3** (Nuxt 4 SSR) servi sur `beta.kayak-polo.info`, phases 1 à 4
+livrées en production (socle, résultats, transverse, éditorial et formulaires remplaçant WordPress) ; reste la
+bascule de `www` (phase 5) puis le décommissionnement du legacy public. Suivi :
+[PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md) · [checklist](PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
+
 ---
 
 ## 🚀 Long Terme (2027+)

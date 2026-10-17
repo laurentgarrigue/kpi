@@ -1,6 +1,6 @@
 # Page « Compétitions et résultats »
 
-**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **Routes** : `/competitions` → `/competitions/{season}?group={code}`
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta) — **Routes** : `/competitions` → `/competitions/{season}?group={code}`
 (+ `/en/…`) — **Remplace** : `kpclassements.php` — **Entrée de menu** : `competitions-list` (passe à `ready: true`)
 
 ## 1. Objectif

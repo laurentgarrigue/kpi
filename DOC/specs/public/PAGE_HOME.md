@@ -1,6 +1,6 @@
 # Page d'accueil
 
-**Phase** : 1 (version minimale) → 4a (version éditoriale) — **Statut** : ✅ Validée (08/10/2026, retours intégrés) ; rendez-vous élargis aux journées hors événement (15/10/2026)
+**Phase** : 1 (version minimale) → 4a (version éditoriale) — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta) ; rendez-vous élargis aux journées hors événement (15/10/2026)
 **Route** : `/` (FR), `/en` (EN) — **Remplace** : accueil WordPress (à la bascule)
 
 ## 1. Objectif

@@ -253,6 +253,10 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - **Commands**: `make app3_logs`, `make app3_test`, `make app3_lint`, `make app3_generate_preprod|production`
   (SSR build in a temporary container + restart of `${APPLICATION_NAME}_app3`), `make app3_restart`.
 - **Tests**: Vitest projects `unit`, `nuxt`, `e2e` (`npm test` in `sources/app3`), named after the spec criteria.
+- **Status**: phases 1–4 delivered in production on `beta.*` (results, calendar/ICS, history, teams, clubs, search,
+  news, editorial pages and menu, home blocks, registration forms). Content is edited in app4 **Admin › Éditorial**
+  (api2 `src/Cms/`, `src/Forms/`; user guide [PUBLIC_SITE_EDITORIAL.md](DOC/user/PUBLIC_SITE_EDITORIAL.md)). Next:
+  phase 5 (switch `www` to app3). Rollout checklist: [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](DOC/developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 - The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**.
 
 ### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)

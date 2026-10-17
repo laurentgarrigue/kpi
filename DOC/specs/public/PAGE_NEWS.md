@@ -1,6 +1,6 @@
 # Actualités : liste et article
 
-**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — **Routes** : `/news[?page=][&category=]`, `/news/{slug}`
+**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — 🚀 Livrée (beta) — **Routes** : `/news[?page=][&category=]`, `/news/{slug}`
 (+ `/en/…`) — **Remplace** : articles WordPress, `?feed=rss2` — **Entrée de menu** : `news` (« Actualités »)
 **Données** : [FEATURE_CMS.md](FEATURE_CMS.md) § 5.1
 

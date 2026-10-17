@@ -1,7 +1,8 @@
 # Site public (app3) — checklist de test et de déploiement par phase
 
 **Créée le** : 8 octobre 2026 — **À compléter à chaque phase** (une section par phase, cochée au fil de l'eau)
-**Validée** jusqu'au § 3.4 inclus le 10/10/2026 (phases 1 et 2 complètes, phase 3 jusqu'à la préprod ; reste la production de la phase 3, § 3.5).
+**Validée** jusqu'à la production de la phase 4 incluse le 17/10/2026 (phases 1 à 4 livrées sur `beta.kayak-polo.info`) ;
+prochaine étape : phase 5, bascule de `www`.
 **Contexte** : [PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md) ·
 specs [DOC/specs/public/](../../specs/public/README.md) · socle [SITE_PLATFORM.md](../../specs/public/SITE_PLATFORM.md)
 
@@ -152,7 +153,7 @@ Specs : [API_PUBLIC_RESULTS](../../specs/public/API_PUBLIC_RESULTS.md) (api2, cr
 [PAGE_COMPETITIONS](../../specs/public/PAGE_COMPETITIONS.md) (`CPL-*`),
 [PAGE_COMPETITION](../../specs/public/PAGE_COMPETITION.md) (`CMP-*`),
 [PAGE_EVENT_GROUP](../../specs/public/PAGE_EVENT_GROUP.md) (`EVT-*`, `GRP-*`, `AGG-*`).
-Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), 🛠 **implémentée** sur la branche, à livrer.
+Statut : ✅ specs **validées** le 08/10/2026 (retours intégrés), ✅ **livrée en production**.
 
 ### 2.0 Décisions (prises le 08/10/2026)
 
@@ -244,7 +245,7 @@ Specs : [API_PUBLIC_TRANSVERSE](../../specs/public/API_PUBLIC_TRANSVERSE.md) (`A
 [PAGE_CALENDAR](../../specs/public/PAGE_CALENDAR.md) (`CAL-*`), [PAGE_HISTORY](../../specs/public/PAGE_HISTORY.md) (`HIS-*`),
 [PAGE_TEAM](../../specs/public/PAGE_TEAM.md) (`TEA-*`), [PAGE_CLUBS](../../specs/public/PAGE_CLUBS.md) (`CLB-*`),
 [FEATURE_SEARCH](../../specs/public/FEATURE_SEARCH.md) (`SRC-*`).
-Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), 🛠 **implémentée** sur la branche, à livrer.
+Statut : ✅ specs **validées** le 09/10/2026 (décisions ci-dessous), ✅ **livrée en production**.
 
 ### 3.0 Décisions (prises le 09/10/2026)
 
@@ -320,7 +321,7 @@ Jobs attendus : `tests-api2`, `phpstan-api2`, `lint-api2` ; `lint-nuxt`, `build-
 
 Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild de la stack car `docker/` change), puis
 `docker exec kpi_api2 printenv PUBLIC_SITE_URL` → `https://beta.kayak-polo.info` ; parité réduite sur
-`beta.kayak-polo.info` (un mois du calendrier, un palmarès, une équipe, un club). ☐
+`beta.kayak-polo.info` (un mois du calendrier, un palmarès, une équipe, un club). ☑
 
 ### 3.6 Retour arrière
 
@@ -334,8 +335,9 @@ Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild de la s
 
 Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](../../specs/public/PAGE_NEWS.md)
 (`NEWS-*`), [PAGE_CONTENT](../../specs/public/PAGE_CONTENT.md) (`CNT-*`), [FEATURE_FORMS](../../specs/public/FEATURE_FORMS.md)
-(`FRM-*`), écrans app4 [PAGE_CMS](../../specs/PAGE_CMS.md) (`ADM-CMS-*`). Statut : ✅ specs **validées** le 11/10/2026,
-🛠 **implémentée** sur la branche, à livrer. 4a et 4b partent dans la même release (même schéma, même rubrique app4).
+(`FRM-*`), écrans app4 [PAGE_CMS](../../specs/PAGE_CMS.md) (`ADM-CMS-*`). Statut : ✅ specs **validées** le 11/10/2026
+(retours des 13 et 14/10 intégrés), ✅ **livrée en production** et validée le 17/10/2026 (PR #346). 4a et 4b sont
+parties dans la même release (même schéma, même rubrique app4).
 
 ### 4.0 Décisions (prises le 11/10/2026)
 
@@ -345,7 +347,7 @@ Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](
 | 2 | Q-P4-2 éditeur | **TipTap** (`UEditor` de Nuxt UI) | ☑ |
 | 3 | Q-P4-3 auteur | **signature libre** par article (défaut « La CNA Kayak-Polo »), aucun compte exposé | ☑ |
 | 4 | Q-P4-4 pages reprises | 2849, 2711, 2286, 2270, 2267, 1881, 1723, 1591, 1581, 1480, 1049, 987 publiées ; 313 et 1579 en **brouillon** | ☑ |
-| 5 | Q-P4-5 médias repris | sans réponse → défaut : **seuls les médias des contenus repris** | ☐ à confirmer |
+| 5 | Q-P4-5 médias repris | sans réponse → défaut retenu : **seuls les médias des contenus repris** (albums « Articles » / « Pages ») | ☑ |
 | 6 | Catégories (à la place des étiquettes) | 4 catégories fixes, filtre `?category=` sur `/news` | ☑ |
 | 7 | Q-P4-6 à 9 formulaires | profils 1–2 + rédacteurs ; pas de captcha ; Ninja Forms **19** repris non publié ; HelloAsso = simple lien | ☑ |
 
@@ -374,58 +376,58 @@ make app3_test && make app3_lint
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 124 + integration 126 (tests `CMS-*`, `FRM-*`) | ☐ |
-| 2 | `make app3_test` | 313 tests verts (unit 140, nuxt 144, e2e 29) ; tests nommés `NEWS-*`, `CNT-*`, `FRM-*`, `CMS-*` | ☐ |
-| 3 | `docker exec kpi_api2 php -r 'var_dump(gd_info()["WebP Support"]);'` | `bool(true)` | ☐ |
-| 4 | Admin › Utilisateurs : cocher « Rédacteur du site public » sur un profil 8 | l'utilisateur voit Admin › Éditorial (sans Menu / Accueil / Redirections) | ☐ |
-| 5 | Admin › Éditorial › Médias : envoyer une photo de téléphone | variantes WebP créées dans `HOST_MEDIA_PATH/content/AAAA/MM/` ; EXIF absent (`exiftool`) ; SVG refusé | ☐ |
-| 6 | Créer un article (catégorie, image, tableau, vidéo YouTube), « Prévisualiser » | ouvre `beta.kpi.localhost/news/{slug}?preview=…` ; publier sans catégorie → refusé | ☐ |
-| 7 | Publier, puis `https://beta.kpi.localhost/news` | l'article apparaît **tout de suite** (purge) ; filtre catégorie, pagination sans JS | ☐ |
-| 8 | L'article : vidéo, images, partage | aucune requête vers YouTube avant le clic ; visionneuse au clic (flèches, Échap) ; « Partager » | ☐ |
-| 9 | Créer une page « le-kayak-polo » + enfant, les mettre au menu (Admin › Éditorial › Menu) | entrée « Le kayak-polo » entre Équipes et clubs et En direct ; `/arbitrage` → 301 vers `/le-kayak-polo/arbitrage` | ☐ |
-| 10 | Admin › Éditorial › Accueil : bandeau « important », à la une, partenaires | ordre et bandeau sur `beta.kpi.localhost/` | ☐ |
-| 11 | `docker exec kpi_api2 ls /var/wordpress-uploads` puis `docker exec kpi_api2 php bin/console app:import-wordpress --dry-run --report=var/import.md` | années des médias WordPress listées ; rapport sans écriture : articles, 14 pages (313 et 1579 en brouillon), médias, catégories WordPress sans équivalent, shortcodes non convertis | ☐ |
-| 12 | Import réel (même commande sans `--dry-run` ; pages, brouillons et formulaire 19 par défaut ; `--uploads-dir` si `wp-content/uploads` est monté), relancé une 2e fois | contenus repris avec leurs catégories ; aucun `wp-content` dans les corps ; médias dans les albums « Articles » et « Pages » de la médiathèque ; 2e passage sans doublon ; formulaire 19 en brouillon | ☐ |
-| 13 | Créer un formulaire rattaché à un événement, ouvert, capacité 1, liste d'attente, lien de paiement | proposé sur la page de l'événement ; 2e inscription → « en attente » ; e-mails dans Mailpit | ☐ |
-| 14 | Le formulaire **JavaScript désactivé** : envoi vide puis correct | erreurs rendues par le serveur avec récapitulatif ; confirmation + lien de paiement | ☐ |
-| 15 | Admin : confirmer l'inscription en attente, exporter CSV / Excel | e-mail « confirmée » ; une ligne par inscription | ☐ |
-| 16 | `docker exec kpi_api2 php bin/console app:forms:purge` | inscriptions échues supprimées, nombre d'inscrits conservé (`archived_entries`) | ☐ |
+| 1 | `make api2_test` | unit 126 + integration 132 (tests `CMS-*`, `FRM-*`) | ☑ |
+| 2 | `make app3_test` | 322 tests verts (unit 144, nuxt 149, e2e 29) ; tests nommés `NEWS-*`, `CNT-*`, `FRM-*`, `CMS-*` | ☑ |
+| 3 | `docker exec kpi_api2 php -r 'var_dump(gd_info()["WebP Support"]);'` | `bool(true)` | ☑ |
+| 4 | Admin › Utilisateurs : cocher « Rédacteur du site public » sur un profil 8 | l'utilisateur voit Admin › Éditorial (sans Menu / Accueil / Redirections) | ☑ |
+| 5 | Admin › Éditorial › Médias : envoyer une photo de téléphone | variantes WebP créées dans `HOST_MEDIA_PATH/content/AAAA/MM/` ; EXIF absent (`exiftool`) ; SVG refusé | ☑ |
+| 6 | Créer un article (catégorie, image, tableau, vidéo YouTube), « Prévisualiser » | ouvre `beta.kpi.localhost/news/{slug}?preview=…` ; publier sans catégorie → refusé | ☑ |
+| 7 | Publier, puis `https://beta.kpi.localhost/news` | l'article apparaît **tout de suite** (purge) ; filtre catégorie, pagination sans JS | ☑ |
+| 8 | L'article : vidéo, images, partage | aucune requête vers YouTube avant le clic ; visionneuse au clic (flèches, Échap) ; « Partager » | ☑ |
+| 9 | Créer une page « le-kayak-polo » + enfant, les mettre au menu (Admin › Éditorial › Menu) | entrée « Le kayak-polo » entre Équipes et clubs et En direct ; `/arbitrage` → 301 vers `/le-kayak-polo/arbitrage` | ☑ |
+| 10 | Admin › Éditorial › Accueil : bandeau « important », à la une, partenaires | ordre et bandeau sur `beta.kpi.localhost/` | ☑ |
+| 11 | `docker exec kpi_api2 ls /var/wordpress-uploads` puis `docker exec kpi_api2 php bin/console app:import-wordpress --dry-run --report=var/import.md` | années des médias WordPress listées ; rapport sans écriture : articles, 14 pages (313 et 1579 en brouillon), médias, catégories WordPress sans équivalent, shortcodes non convertis | ☑ |
+| 12 | Import réel (même commande sans `--dry-run` ; pages, brouillons et formulaire 19 par défaut ; `--uploads-dir` si `wp-content/uploads` est monté), relancé une 2e fois | contenus repris avec leurs catégories ; aucun `wp-content` dans les corps ; médias dans les albums « Articles » et « Pages » de la médiathèque ; 2e passage sans doublon ; formulaire 19 en brouillon | ☑ |
+| 13 | Créer un formulaire rattaché à un événement, ouvert, capacité 1, liste d'attente, lien de paiement | proposé sur la page de l'événement ; 2e inscription → « en attente » ; e-mails dans Mailpit | ☑ |
+| 14 | Le formulaire **JavaScript désactivé** : envoi vide puis correct | erreurs rendues par le serveur avec récapitulatif ; confirmation + lien de paiement | ☑ |
+| 15 | Admin : confirmer l'inscription en attente, exporter CSV / Excel | e-mail « confirmée » ; une ligne par inscription | ☑ |
+| 16 | `docker exec kpi_api2 php bin/console app:forms:purge` | inscriptions échues supprimées, nombre d'inscrits conservé (`archived_entries`) | ☑ |
 
-**Non-régression locale** : app4 (utilisateurs, opérations images), app2, `/admin2`, legacy, recherche globale. ☐
+**Non-régression locale** : app4 (utilisateurs, opérations images), app2, `/admin2`, legacy, recherche globale. ☑
 
 ### 4.3 ⌨️ 🌐 PR et CI
 
 Jobs attendus : `tests-api2` (migration chargée entre `schema.sql` et `data.sql`), `phpstan-api2`, `lint-api2` ;
-`lint-nuxt`, `build-nuxt`, `audit-npm`, `tests-app3`, tests unitaires app4 ; `lint-docker`, `trivy-config` ; `ci-summary` vert. ☐
+`lint-nuxt`, `build-nuxt`, `audit-npm`, `tests-app3`, tests unitaires app4 ; `lint-docker`, `trivy-config` ; `ci-summary` vert. ☑
 
 ### 4.4 📦 🌍 Prérequis serveur (préprod puis prod)
 
 | # | Action | ☑ |
 |---|---|---|
-| 1 | `docker/.env` : `APP3_PURGE_TOKEN` (`openssl rand -hex 32`, différent par environnement) et `WORDPRESS_DATABASE_URL` (base WordPress de l'environnement, lecture seule) | ☐ |
-| 2 | `mkdir -p "$HOST_MEDIA_PATH/content"` (créé aussi par `make media_init`), propriétaire = `USER_ID` du conteneur api2 | ☐ |
-| 3 | Cron quotidien de purge RGPD : `15 3 * * * docker exec <APPLICATION_NAME>_api2 php bin/console app:forms:purge >> /var/log/kpi/cron_forms_purge.log 2>&1` ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 3) | ☐ |
-| 4 | Envoi d'e-mails d'api2 opérationnel (`MAILER_DSN`, msmtp) : « mot de passe oublié » d'app4 reçu | ☐ |
+| 1 | `docker/.env` : `APP3_PURGE_TOKEN` (`openssl rand -hex 32`, différent par environnement) et `WORDPRESS_DATABASE_URL` (base WordPress de l'environnement, lecture seule) | ☑ |
+| 2 | `mkdir -p "$HOST_MEDIA_PATH/content"` (créé aussi par `make media_init`), propriétaire = `USER_ID` du conteneur api2 | ☑ |
+| 3 | Cron quotidien de purge RGPD : `15 3 * * * docker exec <APPLICATION_NAME>_api2 php bin/console app:forms:purge >> /var/log/kpi/cron_forms_purge.log 2>&1` ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 3) | ☑ |
+| 4 | Envoi d'e-mails d'api2 opérationnel (`MAILER_DSN`, msmtp) : « mot de passe oublié » d'app4 reçu | ☑ |
 
 ### 4.5 🖥 Préprod (`/data/kpi_preprod`)
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | 🌐 « Deploy preprod » | vert ; `docker/` change → **`docker_preprod_rebuild`** (api2 reconstruit avec WebP) | ☐ |
-| 2 | `make db_migrate file=SQL/migrations/2026-10-11_public_site_cms_forms.sql` | tables créées, 4 catégories et 4 blocs d'accueil ; relançable sans erreur | ☐ |
-| 3 | `make app4_generate_preprod` puis `make app3_generate_preprod` | rubrique Éditorial visible ; `beta.preprod…/news` répond | ☐ |
-| 4 | `docker exec kpi_preprod_api2 printenv APP3_INTERNAL_URL APP3_PURGE_TOKEN` et `docker exec kpi_preprod_app3 printenv NUXT_APP3_PURGE_TOKEN` | même secret des deux côtés | ☐ |
-| 5 | Import WordPress `--dry-run` puis réel ; relire le rapport (shortcodes, liens cassés, médias introuvables) | contenus et médias repris ; redirections créées | ☐ |
-| 6 | Tests 4–10 et 13–15 du § 4.2 sur `beta.preprod.kayak-polo.info` | idem | ☐ |
-| 7 | Inscription depuis un poste extérieur : 6 envois en 10 min | 429 au 6e (IP relayée app3 → api2) | ☐ |
+| 1 | 🌐 « Deploy preprod » | vert ; `docker/` change → **`docker_preprod_rebuild`** (api2 reconstruit avec WebP) | ☑ |
+| 2 | `make db_migrate file=SQL/migrations/2026-10-11_public_site_cms_forms.sql` | tables créées, 4 catégories et 4 blocs d'accueil ; relançable sans erreur | ☑ |
+| 3 | `make app4_generate_preprod` puis `make app3_generate_preprod` | rubrique Éditorial visible ; `beta.preprod…/news` répond | ☑ |
+| 4 | `docker exec kpi_preprod_api2 printenv APP3_INTERNAL_URL APP3_PURGE_TOKEN` et `docker exec kpi_preprod_app3 printenv NUXT_APP3_PURGE_TOKEN` | même secret des deux côtés | ☑ |
+| 5 | Import WordPress `--dry-run` puis réel ; relire le rapport (shortcodes, liens cassés, médias introuvables) | contenus et médias repris ; redirections créées | ☑ |
+| 6 | Tests 4–10 et 13–15 du § 4.2 sur `beta.preprod.kayak-polo.info` | idem | ☑ |
+| 7 | Inscription depuis un poste extérieur : 6 envois en 10 min | 429 au 6e (IP relayée app3 → api2) | ☑ |
 
-**Non-régression préprod** : app4 (utilisateurs, images), app2, legacy, WordPress inchangé. ☐
+**Non-régression préprod** : app4 (utilisateurs, images), app2, legacy, WordPress inchangé. ☑
 
 ### 4.6 Production
 
 Comme le § 1.5 (`make release_tag`, « Deploy production » — rebuild car `docker/` change), puis § 4.4,
 `make db_migrate file=…`, `make app4_generate_prod`, `make app3_generate_production`, import WordPress (dry-run, puis
-réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire de test (puis le supprimer). ☐
+réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire de test (puis le supprimer). ☑
 
 ### 4.7 Retour arrière
 

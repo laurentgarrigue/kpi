@@ -1,6 +1,6 @@
 # Module éditorial (CMS natif) — api2 + app4
 
-**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026, décisions Q-P4-1 à 5) — **Remplace** : WordPress (articles, pages, menus,
+**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026, décisions Q-P4-1 à 5) — 🚀 Livrée (beta) — **Remplace** : WordPress (articles, pages, menus,
 médiathèque, Rank Math, WP Multilang, Sassy Social Share, Enable Media Replace, flux RSS)
 **Pages publiques associées** : [PAGE_NEWS.md](PAGE_NEWS.md) (actualités), [PAGE_CONTENT.md](PAGE_CONTENT.md)
 (pages éditoriales, menu, accueil) — **Stratégie** : § 5.1, 5.2, 5.4, 7 de

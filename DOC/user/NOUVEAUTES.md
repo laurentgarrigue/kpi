@@ -4,6 +4,33 @@ Ce document liste les dernières fonctionnalités et améliorations ajoutées au
 
 ---
 
+## 📅 Octobre 2026
+
+### 🌐 Nouveau site public — actualités, pages et formulaires (17/10/2026)
+
+**Le nouveau site kayak-polo.info (version bêta) remplace désormais WordPress pour le contenu éditorial**
+
+Sur `beta.kayak-polo.info` : actualités filtrables par catégorie (avec flux RSS), pages éditoriales, menu
+« Le kayak-polo », page d'accueil éditoriale (bandeau d'alerte, à la une, partenaires) et formulaires d'inscription
+aux tournois (liste d'attente, lien de paiement HelloAsso, liste publique des inscrits). Les actualités liées à une
+compétition, un événement ou un club apparaissent sur leur page. Le site propose aussi un thème clair, sombre ou
+système.
+
+Tout se gère dans l'Administration : **Admin › Éditorial** (droit « Rédacteur du site public »). Les articles et pages
+de l'ancien site WordPress ont été repris avec leurs catégories et leurs médias.
+
+**Guide** : [PUBLIC_SITE_EDITORIAL.md](PUBLIC_SITE_EDITORIAL.md)
+
+---
+
+### 🎨 Statuts de match harmonisés (App4, site public) (17/10/2026)
+
+Comme dans l'application web (app2) : match en attente (gris), en cours (bleu, avec la période : « période 1 »,
+« prolong. 1 »), **Provisoire** (orange : terminé mais score non verrouillé) et terminé (vert). Dans la liste des
+matchs de l'Administration, le score provisoire et la période s'affichent au-dessus du statut, à l'écart du verrou.
+
+---
+
 ## 📅 Mai 2026
 
 ### 📊 Statistiques de surclassements (App4) (16/05/2026)

@@ -1,6 +1,6 @@
 # Navigation : menus et sous-menus
 
-**Phase** : 1 (structure complète, entrées activées au fil des phases) — **Statut** : ✅ Validée (08/10/2026)
+**Phase** : 1 (structure complète, entrées activées au fil des phases) — **Statut** : ✅ Validée (08/10/2026) — 🚀 Livrée (beta)
 **Remplace** : menu public de `commun/MyPage.php` (`kpmain_menu.tpl`) et menu WordPress
 
 ## 1. Objectif

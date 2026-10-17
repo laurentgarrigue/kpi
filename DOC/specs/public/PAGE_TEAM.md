@@ -1,6 +1,6 @@
 # Équipes : recherche et fiche équipe
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Routes** : `/teams[?q=]`, `/teams/{number}[?season=&competition=]`
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🚀 Livrée (beta) — **Routes** : `/teams[?q=]`, `/teams/{number}[?season=&competition=]`
 (+ `/en`) — **Remplace** : `kpequipes.php`, `searchEquipes.php` — **Entrée de menu** : `teams`
 
 ## 1. Objectif
