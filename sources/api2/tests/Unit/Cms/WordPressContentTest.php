@@ -72,4 +72,29 @@ final class WordPressContentTest extends TestCase
         self::assertTrue(WordPressContent::isDefaultCategory(['name' => 'Non classé', 'slug' => 'non-classe']));
         self::assertTrue(WordPressContent::isDefaultCategory(['name' => 'Uncategorized', 'slug' => 'uncategorized']));
     }
+
+    public function testCms15TakesTheFirstImageOutOfTheBody(): void
+    {
+        self::assertSame(
+            ['/media/content/a.jpg', '<p>Texte <a href="/x">lien</a></p><p>Fin</p>'],
+            WordPressContent::extractImage('<p>Texte <img src="/media/content/a.jpg" alt="A"> <a href="/x">lien</a></p><p>Fin</p>'),
+            'le paragraphe garde son texte',
+        );
+        self::assertSame(
+            ['/media/content/a.jpg', '<h2>Titre</h2><p><img src="/media/content/b.jpg" alt=""></p>'],
+            WordPressContent::extractImage('<h2>Titre</h2><figure><a href="/media/content/a.jpg"><img src="/media/content/a.jpg" alt=""></a><figcaption>Légende</figcaption></figure><p><img src="/media/content/b.jpg" alt=""></p>'),
+            'lien et légende partent avec l\'image ; la seconde reste',
+        );
+        self::assertSame(['/media/content/a.jpg', '<p>Fin</p>'], WordPressContent::extractImage("<p>\n<img src=\"/media/content/a.jpg\"><br>\n</p><p>Fin</p>"), 'paragraphe vidé retiré');
+        self::assertSame([null, '<p>Sans image</p>'], WordPressContent::extractImage('<p>Sans image</p>'));
+    }
+
+    public function testCms15RemovesTheSameImageFromTheOtherLanguage(): void
+    {
+        self::assertSame(
+            ['/media/content/a.jpg', '<p><img src="/media/content/b.jpg"></p>'],
+            WordPressContent::extractImage('<p><img src="/media/content/b.jpg"></p><p><img src="/media/content/a.jpg"></p>', '/media/content/a.jpg'),
+        );
+        self::assertSame([null, '<p><img src="/media/content/b.jpg"></p>'], WordPressContent::extractImage('<p><img src="/media/content/b.jpg"></p>', '/media/content/a.jpg'));
+    }
 }

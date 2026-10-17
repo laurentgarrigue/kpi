@@ -359,6 +359,7 @@ Specs : [FEATURE_CMS](../../specs/public/FEATURE_CMS.md) (`CMS-*`), [PAGE_NEWS](
 | feat(app3) | `/news`, `/news/{slug}`, pages `/{slug}`, menu « Le kayak-polo », accueil éditorial, `/forms/{slug}` (+ liste publique), contenus liés, `/rss.xml`, `/sitemap.xml`, purge, anciens permaliens | aucun (beta) |
 | chore(docker) | GD `--with-webp` (`Dockerfile.api2`), montage `HOST_MEDIA_PATH/content` → `/var/www/html/media/content`, `APP3_PURGE_TOKEN`, `WORDPRESS_DATABASE_URL`, médias WordPress montés en lecture seule dans api2 (`WORDPRESS_UPLOADS_DIR`) | **rebuild** d'api2 et redémarrage de la stack |
 | retours du 13/10 | événement d'un seul groupe (panneau masqué, ICS `/event/{id}/calendar.ics`, calendrier → événement) ; terrains : icône de statut, phase des coupes ; menu éditorial sur 3 niveaux ; reprise : catégories, médias rangés dans les albums « Articles » / « Pages », WordPress sous `/wordpress` | api2 : champs **ajoutés** (`group`, `single_group`), nouvel endpoint ICS ; aucun changement legacy ni app2 |
+| retours du 17/10 | reprise : la 1re image du corps d'un article devient son image de une et sort du corps (FR et EN), repli sur l'image mise en avant WordPress (CMS-15) ; relancer l'import réel pour l'appliquer aux articles déjà repris | aucun (commande d'import seulement) |
 
 ### 4.2 ⌨️ Tester en local
 
