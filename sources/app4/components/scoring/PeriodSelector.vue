@@ -39,7 +39,7 @@ const currentLabel = computed(() => (props.period ? periodLabel(props.period) : 
 // The next period, from the shared pure rules (utils/scoringRules — mirror of api2).
 const nextP = computed<Period | null>(() => {
   if (!props.period) return 'M1'
-  return nextPeriodFor(props.type, props.period, props.scoreLevel ?? true, props.shootoutEnabled ?? false)
+  return nextPeriodFor(props.type, props.period, props.scoreLevel ?? true)
 })
 
 // Direct-access menu: M1/M2, every overtime up to the current one +1 (type E), TB when

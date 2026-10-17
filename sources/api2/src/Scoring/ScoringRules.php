@@ -12,7 +12,8 @@ namespace App\Scoring;
  *  - penalty slots (≤ 2 concurrent per team), early lift on conceded goal, who returns (§7.4);
  *  - shotclock 3-command state machine (§6.5: start/reset 60, start/reset 40, stop).
  *
- * Tests: sources/api2/tests/Scoring/scoring_rules_test.php (standalone, `php <file>`).
+ * Tests : tests/Unit/Scoring/ScoringRulesTest.php (suite `unit`, `make api2_test_unit`),
+ * doublé par le miroir TypeScript sources/app4/tests/unit/scoringRules.spec.ts.
  */
 final class ScoringRules
 {
@@ -48,11 +49,14 @@ final class ScoringRules
     /**
      * Next period for the "advance" button (§7.1):
      *  - type C (classement): M1 → M2 → null (a draw is allowed, no overtime);
-     *  - type E (élimination): M1 → M2 → P1 → P2 → … (unbounded while the score is level),
-     *    then TB only when the competition enables it (§7.5) — golden goal is the rule.
+     *  - type E (élimination): M1 → M2 → P1 → P2 → … (unbounded while the score is level).
      * Returns null when no further period is possible.
+     *
+     * The shoot-out is deliberately NOT part of this sequence: golden goal is the rule
+     * (§7.5), so TB stays an alternative exit the operator picks explicitly (console
+     * PeriodSelector, driven by the competition's `shootoutEnabled`).
      */
-    public static function nextPeriod(string $type, string $period, bool $scoreLevel, bool $shootoutEnabled = false): ?string
+    public static function nextPeriod(string $type, string $period, bool $scoreLevel): ?string
     {
         if ($period === 'M1') {
             return 'M2';
@@ -64,14 +68,10 @@ final class ScoringRules
             return 'P1';
         }
         if (self::isOvertime($period)) {
-            // Unbounded series; TB (when enabled) is an alternative exit, offered alongside.
-            return 'P' . (self::overtimeIndex($period) + 1);
-        }
-        if ($period === 'TB') {
-            return null;
+            return 'P' . (self::overtimeIndex($period) + 1); // unbounded series
         }
 
-        return $shootoutEnabled ? 'TB' : null;
+        return null; // TB: nothing follows the shoot-out
     }
 
     /**

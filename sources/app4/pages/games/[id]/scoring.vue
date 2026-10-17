@@ -164,7 +164,7 @@ const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, set
       void scoringStore.setTimer('stop', { startTime: elapsedPrecise.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
       const m = scoringStore.match
       if (m && isLive.value) {
-        const next = nextPeriodFor(m.type, (m.periode ?? 'M1') as Period, scoreLevel.value, scoringStore.config.shootoutEnabled)
+        const next = nextPeriodFor(m.type, (m.periode ?? 'M1') as Period, scoreLevel.value)
         const dur = next ? breakDurationBefore(next, scoringStore.config.breakDurations) : null
         if (dur) startBreak(dur)
       }

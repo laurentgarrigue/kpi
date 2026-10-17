@@ -60,24 +60,34 @@ final class ScoringRulesTest extends TestCase
         string $type,
         string $period,
         bool $scoreLevel,
-        bool $shootoutEnabled,
         ?string $expected
     ): void {
-        self::assertSame($expected, ScoringRules::nextPeriod($type, $period, $scoreLevel, $shootoutEnabled));
+        self::assertSame($expected, ScoringRules::nextPeriod($type, $period, $scoreLevel));
     }
 
-    /** @return iterable<string,array{string,string,bool,bool,?string}> */
+    /** @return iterable<string,array{string,string,bool,?string}> */
     public static function nextPeriodProvider(): iterable
     {
-        yield 'C : M1 → M2' => ['C', 'M1', true, false, 'M2'];
-        yield 'C : après M2, égalité admise' => ['C', 'M2', true, false, null];
-        yield 'E : M1 → M2' => ['E', 'M1', false, false, 'M2'];
-        yield 'E : M2 avec un vainqueur → fin' => ['E', 'M2', false, false, null];
-        yield 'E : M2 à égalité → P1' => ['E', 'M2', true, false, 'P1'];
-        yield 'E : P1 à égalité → P2' => ['E', 'P1', true, false, 'P2'];
-        yield 'E : P9 à égalité → P10 (pas de plafond)' => ['E', 'P9', true, false, 'P10'];
-        yield 'E : P1 avec un vainqueur (but en or) → fin' => ['E', 'P1', false, false, null];
-        yield 'E : après TB → fin' => ['E', 'TB', true, false, null];
+        yield 'C : M1 → M2' => ['C', 'M1', true, 'M2'];
+        yield 'C : après M2, égalité admise' => ['C', 'M2', true, null];
+        yield 'E : M1 → M2' => ['E', 'M1', false, 'M2'];
+        yield 'E : M2 avec un vainqueur → fin' => ['E', 'M2', false, null];
+        yield 'E : M2 à égalité → P1' => ['E', 'M2', true, 'P1'];
+        yield 'E : P1 à égalité → P2' => ['E', 'P1', true, 'P2'];
+        yield 'E : P9 à égalité → P10 (pas de plafond)' => ['E', 'P9', true, 'P10'];
+        yield 'E : P1 avec un vainqueur (but en or) → fin' => ['E', 'P1', false, null];
+        yield 'E : après TB → fin' => ['E', 'TB', true, null];
+    }
+
+    /**
+     * Les tirs au but ne sont **jamais** la suite calculée : le but en or est la règle
+     * (§7.5), et TB reste une sortie que l'opérateur choisit explicitement. Ce test
+     * verrouille le retrait du paramètre `$shootoutEnabled`, qui était inatteignable.
+     */
+    public function testShootoutIsNeverTheComputedNextPeriod(): void
+    {
+        self::assertSame('P1', ScoringRules::nextPeriod('E', 'M2', true));
+        self::assertSame('P4', ScoringRules::nextPeriod('E', 'P3', true));
     }
 
     /** But en or : en éliminatoire, un but marqué en prolongation met fin au match. */

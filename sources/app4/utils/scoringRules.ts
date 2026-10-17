@@ -2,8 +2,10 @@ import type { MatchType, Period, PeriodDurations, BreakDurations, ScoringEventCo
 
 /**
  * Pure scoring game rules — TypeScript mirror of api2 `src/Scoring/ScoringRules.php`
- * (plan lot 1.2 / lot 3). Keep the two files in sync: the PHP side is the reference and
- * is covered by `sources/api2/tests/Scoring/scoring_rules_test.php` (62 assertions).
+ * (plan lot 1.2 / lot 3). Keep the two files in sync: the PHP side is the reference.
+ * Both are covered by twin suites that must be extended together —
+ * `sources/api2/tests/Unit/Scoring/ScoringRulesTest.php` and
+ * `sources/app4/tests/unit/scoringRules.spec.ts`.
  *
  * Everything here is deterministic — no store, no network, no clock.
  */
@@ -21,22 +23,19 @@ export function overtimeIndex(period: string): number | null {
 /**
  * Next period for the "advance" button (spec §7.1):
  *  - type C (classement): M1 → M2 → null (draw allowed, no overtime);
- *  - type E (élimination): M1 → M2 → P1 → P2 → … unbounded while the score is level,
- *    TB only when the competition enables it — golden goal is the rule (spec §7.5).
+ *  - type E (élimination): M1 → M2 → P1 → P2 → … unbounded while the score is level.
  * Returns null when no further period is possible.
+ *
+ * The shoot-out is deliberately NOT part of this sequence: golden goal is the rule
+ * (spec §7.5), so TB stays an alternative exit the operator picks explicitly
+ * (`PeriodSelector`, driven by `config.shootoutEnabled`).
  */
-export function nextPeriodFor(
-  type: MatchType,
-  period: Period,
-  scoreLevel: boolean,
-  shootoutEnabled = false
-): Period | null {
+export function nextPeriodFor(type: MatchType, period: Period, scoreLevel: boolean): Period | null {
   if (period === 'M1') return 'M2'
   if (type !== 'E' || !scoreLevel) return null
   if (period === 'M2') return 'P1'
   if (isOvertime(period)) return `P${(overtimeIndex(period) ?? 0) + 1}`
-  if (period === 'TB') return null
-  return shootoutEnabled ? 'TB' : null
+  return null // TB: nothing follows the shoot-out
 }
 
 /** Golden goal (spec §7.5): in a type-E match, a goal during any overtime ends the match. */
@@ -176,5 +175,10 @@ export function shotclockTransition(state: ShotclockState, command: ShotclockCom
       return state === 'RUNNING' ? 'SUSPENDED' : state
     case 'gameClockStarted':
       return state === 'SUSPENDED' ? 'RUNNING' : state
+    default:
+      // Reached only when a command comes from outside TypeScript (a Mercure payload, a
+      // hardware relay): fail loudly instead of silently returning undefined, exactly as
+      // the PHP side does. In particular there is NO 'pause' command (decision 2026-07-27).
+      throw new Error(`Unknown shotclock command: ${command}`)
   }
 }
