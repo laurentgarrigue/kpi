@@ -378,6 +378,14 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   - See [sources/api2/README.md](sources/api2/README.md) for details
 - App2 is the primary modern frontend application being actively developed
 - App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
+- **Live scoring refactoring** (in progress): canonical match state in `scoring_live_*` + outbox →
+  Mercure, a single app4 Scoring console replacing FeuilleMarque V2/V3, and one parameterized
+  overlay page replacing the ~20 legacy ones.
+  Plan and situation report: [DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (§0).
+  Specs: [DOC/specs/PAGE_SCORING.md](DOC/specs/PAGE_SCORING.md), [DOC/specs/PAGE_INCRUSTATION.md](DOC/specs/PAGE_INCRUSTATION.md).
+  Commands and per-step validation: [DOC/developer/in-progress/SCORING_DEV_CHECKLIST.md](DOC/developer/in-progress/SCORING_DEV_CHECKLIST.md).
+  ⚠️ Lots 1–4 are written but **never executed against a real database or Mercure hub** — run the
+  validation gate at the end of the checklist before opening a new lot.
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments

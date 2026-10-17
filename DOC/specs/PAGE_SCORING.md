@@ -1,6 +1,8 @@
 # Spécification — Scoring (console de match en direct) dans app4
 
-> Statut : en cours — Phase 0 terminée, Phase 1 en cours (voir §12 Suivi)
+> Statut : **console écrite, jamais exécutée sur une base réelle** (2026-10-17) — Phase 0
+> terminée, Phase 1 largement avancée (détail en §12 Suivi). Point de situation du chantier et
+> dette de validation : [le plan, §0](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 > ⚠️ **Réaligné sur le plan de refonte live — lire §0 en premier** (l'état live migre vers
 > `scoring_live_*`, la diffusion passe à Mercure). §0 prime sur le reste en cas de contradiction.
 > **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
@@ -298,7 +300,7 @@ Deuxième passe de revue ; les sections concernées ont été mises à jour, ce 
 | **Buzzer** | Sonne aussi en **fin de pause inter-périodes** (en plus de la fin de période et du shotclock) | §7.5, §7.8 |
 | **Tirs / arrêts = stats du match** | C'est la même fonctionnalité ; **hors périmètre** pour l'instant (les deux lignes de §7.8 fusionnent) | §7.8 |
 | **Identifiants (uid)** | `kp_match.Id_match` (int) **conservé** — le remplacer casserait tout le legacy ; on ajoute un **`uid` public court additif** côté match pour les usages futurs (offline, import). `scoring_live_clock` passe en **PK UUID** (table neuve, zéro impact) | §0.5 ; plan §4.13 |
-| **PWA : mise à jour immédiate** | Le service worker doit garantir que l'utilisateur bénéficie **immédiatement de la dernière version** (détection + activation immédiate + rechargement) ; mécanisme à réutiliser sur **app2** | §3, §8 ; plan §4.9 |
+| **PWA : jamais d'app shell périmé** | L'utilisateur doit bénéficier de la dernière version déployée, sans écran blanc ni chunk manquant. **Révision du 2026-10-17** : par un **bandeau « Recharger » explicite** (*prompt-to-update*), **pas** par une activation immédiate — on n'interrompt pas une saisie en cours. Spec dédiée, commune à app2 et app4 : [PWA_AUTO_UPDATE.md](PWA_AUTO_UPDATE.md) | §3, §8 ; plan §4.9 |
 | **Zéro papier — responsable d'équipe (profil 7)** | Étapes ultérieures : validation/ajustement de la **compo d'équipe** avant match (délai réglementaire) et **consultation + réclamation** après match (délai réglementaire) | §1, plan lot 9 |
 
 ### 0.10 Correctif réglementaire — pénalités des cartons rouge et noir (2026-07-29)
@@ -408,7 +410,7 @@ KPI est de **tendre vers le zéro papier** :
 
 | Sujet | Décision |
 |---|---|
-| Mode | **Online-first** (api2 + Mercure), **PWA installable dès la livraison** (manifest + service worker + app shell, cf. §0.8) avec **mise à jour immédiate garantie** : détection de nouvelle version, activation immédiate (`skipWaiting`/`clients.claim`) et rechargement, pour que l'utilisateur soit toujours sur la dernière version (cf. §0.9 — mécanisme à réutiliser sur **app2**). La **file d'écritures offline** reste non bloquante → dernière phase. |
+| Mode | **Online-first** (api2 + Mercure), **PWA installable dès la livraison** (manifest + service worker + app shell, cf. §0.8). Fraîcheur de version garantie par un **bandeau « Recharger »** (*prompt-to-update*, `buildId` par build) — jamais par un rechargement automatique : cf. [PWA_AUTO_UPDATE.md](PWA_AUTO_UPDATE.md), mécanisme commun à **app2**. La **file d'écritures offline** reste non bloquante → dernière phase. |
 | Usages | Direct **et** post-match (saisie/correction + validation/verrouillage par profil). |
 | Captation matériel | Mode **Hardware Scoring** (panneau propriétaire via relais), **source de plus** écrivant le même `scoring_live_*` (cf. §0.2). Branché en Phase 3. |
 | Monétisation | À explorer plus tard. **Aucun Stripe/paywall maintenant.** Exigence unique : isolation **par mandat/organisation côté serveur** + gating par rôle via un composable unique. |
@@ -1332,8 +1334,9 @@ Références à porter : `sources/admin/v2/fm3_C.js` (chrono/shotclock/pénalit�
   masqué + accès refusé (UI + 403)** ; appel non authentifié à `PUT /api2/scoring/gameParam/{id}`
   → 401 ; vérifier que `app_wsm` legacy (`/api/wsm/`) fonctionne toujours.
 - **Phase 2** : ouvrir scoreboard + shotclock en 2ᵉ fenêtre → synchro live (BroadcastChannel) ;
-  vérifier le shotclock 3 commandes (60/40/arrêt), les pauses inter-périodes et la mise à jour
-  immédiate de la PWA (nouvelle version → rechargement).
+  vérifier le shotclock 3 commandes (60/40/arrêt), les pauses inter-périodes et la fraîcheur de
+  la PWA (nouvelle version déployée → **bandeau « Recharger »**, et la saisie en cours n'est
+  pas interrompue).
 - **Phase 3 (réaligné §0.3)** : saisir à la console → les messages apparaissent sur les topics
   Mercure `/scoring/event/{e}/pitch/{p}/…` (banc app4 Operations → Mercure), rejeu après coupure
   (`Last-Event-ID`) ; brancher un panneau propriétaire via le relais Stomp → l'état
@@ -1575,8 +1578,8 @@ modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), pers
 | `pages/games/[id]/shotclock.vue` | **Créée.** Chronomètre de tir plein écran (chiffre à la **taille maximale possible**, contraste maximal, chrono principal en option dessous). Remplace `admin/shotclock.php`. Options d'URL : `?theme=light`, `?clock=0`. |
 | `composables/useFitText.ts` | **Créé.** Ajustement automatique d'une ligne de texte à la plus grande taille tenable par le conteneur : mesure des **métriques d'encre** des glyphes (canvas `actualBoundingBox*` — la boîte de ligne CSS gaspillerait ~40 % de la hauteur), taille calculée sur un **jeu de chaînes candidates** (stabilité), recalcul par `ResizeObserver` (rotation, changement de résolution du mur LED) et après chargement des polices. |
 | `pages/games/[id]/scoring.vue` | Boutons **TV** / **horloge** dans l'entête (mode direct) ; `watch` sur chrono/shotclock/score/période/pénalités → diffusion à chaque changement ; instantané complet au chargement. |
-| `nuxt.config.ts` + `package.json` | **`@vite-pwa/nuxt`** ajouté : `registerType: 'autoUpdate'`, `skipWaiting` + `clientsClaim`, `cleanupOutdatedCaches`, manifest `standalone`/paysage scope `/admin2/`, `navigateFallbackDenylist` sur `/api2` et `/api` (le shell ne répond jamais à un appel API), **service worker désactivé en dev**. |
-| `composables/usePwaUpdate.ts` | **Créé.** Boucle de fraîcheur : vérification au chargement, au retour d'onglet et toutes les 5 min ; **rechargement automatique** quand le nouveau worker prend la main (sans reload au premier enregistrement). Sûr car online-first : tout est déjà persisté serveur. **À réutiliser tel quel sur app2** (§0.9). |
+| `nuxt.config.ts` + `package.json` | **`@vite-pwa/nuxt`** ajouté. ⚠️ **Révisé le 2026-10-17** : `registerType: 'prompt'` (et **non** `autoUpdate`, qui force `skipWaiting`/`clientsClaim`), `buildId` par build (`/_nuxt/v<ts>/`), `cacheId` indexé dessus, navigation et `/_nuxt/*.{js,css}` en **NetworkFirst**, manifest `standalone`/paysage scope `/admin2/`, `navigateFallbackDenylist` sur `/api2` et `/api` (le shell ne répond jamais à un appel API), **service worker désactivé en dev**. Contrat : [PWA_AUTO_UPDATE.md](PWA_AUTO_UPDATE.md) §5. |
+| `composables/usePwa.ts` + `components/PwaUpdatePrompt.vue` | **Créés le 2026-10-17, en remplacement de `usePwaUpdate.ts`.** Pattern ***prompt-to-update*** : re-vérification au chargement, au retour au premier plan, au retour en ligne et toutes les 60 min ; quand une nouvelle version attend, un **bandeau « Recharger »** s'affiche et **l'utilisateur** décide — un rechargement automatique en pleine saisie de match est pire que le mal qu'il évite. L'état online/offline n'est pas redéfini : il vient de `useOnlineStatus()`. Miroir du mécanisme d'app2. |
 
 **Console abonnée à Mercure ✅ (plan lot 3, 5ᵉ tranche — 2026-07-29) :**
 
@@ -1588,8 +1591,9 @@ modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), pers
 | `stores/scoringStore.ts` | `mercureUrl`/`topicBase`/`activeSource`/`lastMutationAt` en state (horodatage posé par **toutes** les actions mutantes) ; nouvelle action **`refreshLiveState()`** (état + faits). |
 | `pages/games/[id]/scoring.vue` | `applyServerClocks()` **factorisé** (chargement initial **et** changement distant) : chrono principal via `GET /gameTimer` (seul chemin qui compense la dérive exactement), shotclock/pause depuis l'état ; badge d'état de synchronisation dans l'entête + **signal visuel** quand l'état a bougé depuis un autre terminal (failover, source matérielle). |
 
-Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés (113 entrées de
-precache, `skipWaiting`/`clientsClaim` présents) ; ESLint OK. Tests :
+Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés, et
+`skipWaiting()` n'y apparaît plus que dans le gestionnaire du message `SKIP_WAITING`
+(révision du 2026-10-17) ; ESLint OK. Tests :
 [SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md)
 (2ᵉ tranche 3.11–3.21, 3ᵉ 3.22–3.31, 4ᵉ 3.32–3.39).
 

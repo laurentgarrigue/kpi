@@ -19,6 +19,116 @@
 
 ---
 
+## 0. Point de situation et analyse critique (2026-10-17)
+
+> **Note de numérotation** : les `§0.x`, `§4.x`… sans autre mention renvoient à **ce document** ;
+> un renvoi à la spec de la console est toujours écrit « spec §x » ou pointe explicitement
+> [PAGE_SCORING.md](../../specs/PAGE_SCORING.md).
+>
+> Relecture faite après l'intégration de `main` (réorganisation de /DOC, site public app3,
+> PHPUnit et Vitest configurés, [CLEAN_CODE.md](../guides/CLEAN_CODE.md) devenu la règle de
+> tout nouveau code). Cette section **remplace** les points de situation antérieurs ; les
+> suivis d'exécution détaillés restent au pied de chaque lot.
+
+### 0.1 Où on en est, lot par lot
+
+| Lot | État | Ce qui existe | Ce qui manque |
+|---|---|---|---|
+| **0** Fondations | 🟡 partiel | hub Mercure en dev (actions 0.1 et 0.2 du lot 0 ✅) | actions **0.3** validation preprod/prod, **0.5** captures de vraies sessions matériel, **0.6** garde-fou chiffré |
+| **1** État canonique | 🟢 écrit | 4 migrations `scoring_live_*`, `ScoringLiveService` (porte d'écriture unique, transaction + `tick` + outbox), `ScoringRules` (testé), `ScoringController` réaiguillé, `PUT /source`, `PUT /officials`, `GET /resolve/{id}/{n°}` | aucune exécution sur base réelle ; pas de test d'intégration sur les routes d'écriture |
+| **2** Diffusion Mercure | 🟢 écrit | `ScoringOutboxPublisher` (drainage ordonné, at-least-once, `Last-Event-ID`), drainage branché sur le worker existant, env Mercure des 3 compose | jamais exécuté contre un hub ; `MERCURE_ANONYMOUS=0` non validé hors dev |
+| **3** Console app4 | 🟢 écrit | console complète : prolongations non bornées, cartons 2027, shotclock 3 commandes, pénalités, pauses + buzzer, raccourcis paramétrables, scoreboard/shotclock plein écran (écrans non standards), abonnement Mercure, mode score seul, panneau Paramètres, PWA | tests de rendu des composants ; solde du 3.1 (statut joueur, recharge présents, n° court, durée non standard) ; **aucun événement réel tenu à la console** |
+| **4** Incrustation unique | 🟢 écrit | `PAGE_INCRUSTATION.md`, `pages/live/overlay.vue`, `ScoringProgramService` (défauts → événement → terrain), `ScoringLiveController` (lecture publique), jetons d'affichage + JWT abonné, vues de compatibilité legacy, onglet d'administration | validation OBS réelle ; bascule d'une incrustation sur un terrain |
+| **5** Relais matériel | 🔴 non commencé | — | bloqué par **0.5** (format STOMP fermé : sans captures, on code à l'aveugle) |
+| **6** Paramétrage compétition | 🔴 non commencé | — | dépend du lot 3 soldé |
+| **7** Offline complet | 🔴 non commencé | — | dépend du lot 3 ; la PWA livrée est *installable*, pas *offline* |
+| **8** Ménage | 🔴 non commencé | — | bloqué par le garde-fou (action **0.6** du lot 0), toujours non chiffré |
+| **9** Zéro papier (profil 7) | 🔴 non commencé | — | dépend des lots 3 et 6 |
+
+### 0.2 Ce qui n'a jamais été vérifié — à lire avant de continuer
+
+Les lots 1 à 4 ont été **écrits**, pas **validés**. Concrètement, à ce jour :
+
+- **aucune requête n'a tourné sur une base MariaDB** : les 4 migrations n'ont jamais été
+  appliquées, aucun `INSERT` de `scoring_live_*` n'a jamais eu lieu ;
+- **aucun message n'a transité par le hub Mercure** ;
+- **aucune incrustation n'a été affichée dans OBS** ;
+- ce qui est vérifié se limite à : `eslint`, `nuxt build`, `php -l`, les **suites unitaires**
+  (api2 `ScoringRulesTest` + miroir Vitest `scoringRules.spec.ts`) et un test d'intégration
+  d'accès (`ScoringPublicEndpointsTest`, jamais exécuté faute de base).
+
+C'est **le** risque principal du chantier, et il croît à chaque lot ajouté : plus on empile de
+code non exécuté, plus le premier passage en réel coûtera cher. La règle pour la suite est en
+§0.4.
+
+### 0.3 La stratégie est-elle toujours bonne ?
+
+**Oui sur le fond, et l'évolution de `main` l'a plutôt renforcée.** Les quatre paris
+structurants tiennent :
+
+1. **L'état canonique en base plutôt que dans un onglet** (§2, §3) : c'est la réponse directe
+   au problème d'origine et rien dans l'évolution du dépôt ne la remet en cause.
+2. **Outbox transactionnelle → Mercure** plutôt qu'un broker maison (§4.6) : renforcé — api2
+   est passé en FrankenPHP avec hub embarqué, et le site public app3 consomme déjà api2. Le
+   canal temps réel n'est plus une brique isolée du chantier scoring.
+3. **`kp_*` reste la vérité pour les résultats** (§4.3) : indispensable, puisque le site public
+   et les PDF legacy lisent `kp_*`. La consolidation en fin de match est le bon point de
+   couture.
+4. **Une seule page d'incrustation paramétrée** (§3.2) : le plus gros gisement de DRY du legacy
+   (~20 pages quasi dupliquées) ; inchangé.
+
+**Trois réserves, par ordre d'importance.**
+
+- **Réserve 1 — l'ordre « écriture d'abord » a été respecté, « valider au fur et à mesure » ne
+  l'a pas été.** Le plan est séquencé par flux, ce qui est juste, mais rien n'imposait de
+  *prouver* un lot avant d'écrire le suivant. Correctif en §0.4 : une porte de validation
+  obligatoire avant tout nouveau lot.
+- **Réserve 2 — le garde-fou du §6 (action 0.6 du lot 0) n'est toujours pas chiffré.** C'est la faille
+  stratégique la plus durable : sans critère écrit et daté, le lot 8 ne se fera jamais et on
+  gardera indéfiniment le double chemin (legacy + neuf), c'est-à-dire exactement la
+  duplication que le chantier prétend supprimer. Les **vues de compatibilité**
+  (`v_match_detail`, `v_match_live`) aggravent ce risque : elles sont conçues comme
+  transitoires mais rien ne les date.
+- **Réserve 3 — la duplication des règles PHP/TS est assumée mais coûteuse.** Elle est
+  justifiée (retour immédiat dans la console, y compris hors ligne), et désormais **tenue par
+  deux suites jumelles** (cf. §4.15) — qui ont immédiatement trouvé deux divergences réelles.
+  Il faut accepter le prix : toute règle modifiée se modifie **deux fois, tests compris**.
+
+**Points où la stratégie était incohérente et qui sont corrigés :**
+
+| Incohérence | Correction |
+|---|---|
+| Le §4.9 et l'étape 3.6 prescrivaient `skipWaiting`/`clients.claim` et un rechargement automatique, en contradiction avec [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md) §2 (bandeau explicite, pas de bascule en pleine saisie) | app4 réaligné sur la spec (*prompt-to-update*) ; §4.9 réécrit. Au passage : `registerType: 'autoUpdate'` **ne peut pas** donner ce comportement, le module force `skipWaiting` — c'est `'prompt'` qu'il faut |
+| `nextPeriod()` portait un paramètre `shootoutEnabled` inatteignable (branche morte) | paramètre retiré des deux implémentations ; la règle (but en or, TB = choix explicite) est nommée par un test |
+| `utils/scoringRules.ts` n'avait aucun test, contre [CLEAN_CODE.md](../guides/CLEAN_CODE.md) | `sources/app4/tests/unit/scoringRules.spec.ts`, 66 cas, miroir du test PHP |
+
+### 0.4 Règle pour la suite : une porte de validation par lot
+
+**Aucun nouveau lot ne démarre avant que le précédent ait tourné pour de vrai.** Chaque étape
+désormais livrée l'est avec, dans [SCORING_DEV_CHECKLIST.md](SCORING_DEV_CHECKLIST.md) :
+
+1. les **commandes exactes** à exécuter (migration, tests, redémarrage de service) ;
+2. les **tests automatisés** correspondants — écrits **avant** le code
+   ([CLEAN_CODE.md](../guides/CLEAN_CODE.md) : TDD) : Vitest pour `utils/` et les critères de
+   rendu des composants, PHPUnit `unit` pour les services purs, PHPUnit `integration` sur
+   fixtures pour les routes ;
+3. un **test fonctionnel numéroté**, avec le résultat attendu observable à l'écran ;
+4. la **trace de ce qui a réellement été exécuté**, et de ce qui ne l'a pas été, sans
+   arrondi.
+
+**Dette à solder en priorité, avant le lot 5 ou 6** (détail et commandes dans la checklist) :
+
+| # | À faire | Pourquoi maintenant |
+|---|---|---|
+| V1 | Appliquer les 4 migrations sur la base de dev, puis `make api2_test` | rien n'a jamais touché une base ; c'est le préalable de tout le reste |
+| V2 | Un match complet à la console sur dev (préparation → clôture → consolidation `kp_*`) | valide les lots 1 et 3 ensemble, et la couture avec `kp_*` |
+| V3 | Vérifier la diffusion : outbox drainée, SSE reçu par la console **et** par l'incrustation | valide le lot 2, dont dépend tout le lot 4 |
+| V4 | Tests d'intégration des routes d'**écriture** du scoring (source active, 409, `tick`) | la porte d'écriture unique est la pièce la plus critique et n'a aucun test |
+| V5 | Tests de rendu des composants de la console sur les critères de la spec | seule la logique pure est couverte |
+| V6 | **Chiffrer le garde-fou 0.6** et **dater** les vues de compatibilité | sans ça, le lot 8 n'arrivera pas |
+
+---
+
 ## 1. Le vocabulaire, d'abord
 
 Trois termes reviennent partout. Ils sont simples ; ils sont juste mal expliqués ailleurs.
@@ -405,12 +515,27 @@ même sans réseau). La **saisie reste online-first** dans un premier temps ; la
 offline** (IndexedDB + resynchronisation) est un lot dédié de fin de chantier (lot 7) — on ne
 complexifie pas le MVP avec de la synchro bidirectionnelle.
 
-**Exigence associée (2026-07-27) : mise à jour immédiate.** Le service worker doit garantir que
-l'utilisateur bénéficie **immédiatement de la dernière version** de l'application : détection de
-nouvelle version au chargement et en cours de session, activation immédiate
-(`skipWaiting`/`clients.claim`) et rechargement contrôlé — jamais d'app shell périmé silencieux.
-Ce mécanisme est à concevoir **réutilisable pour app2** (même besoin de fraîcheur côté affichage
-public), chantier connexe à mener avec le lot 3.
+**Exigence associée (2026-07-27, révisée le 2026-10-17) : jamais d'app shell périmé.**
+L'utilisateur doit bénéficier de la dernière version déployée sans écran blanc ni chunk
+manquant. Le **comment** n'appartient pas à ce plan : il est spécifié une fois pour app2 **et**
+app4 dans [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md), que ce lot applique.
+
+> ⚠️ **Correction d'une décision de ce document.** La rédaction du 2026-07-27 prescrivait une
+> activation immédiate (`skipWaiting`/`clients.claim`) et un rechargement automatique. C'est
+> **écarté** : sur une console de saisie, un rechargement surprise en plein fait de jeu est
+> pire que l'app shell périmé qu'il évite. Le pattern retenu est le ***prompt-to-update*** du
+> §2 de la spec — le nouveau service worker **attend** le clic sur « Recharger » (bandeau
+> `PwaUpdatePrompt`), avec re-vérification au chargement, au retour au premier plan, au retour
+> en ligne et toutes les 60 minutes.
+>
+> Piège technique à ne pas réintroduire : `registerType: 'autoUpdate'` **force**
+> `skipWaiting`/`clientsClaim` dans le `sw.js` généré dès que `client.registerPlugin` est actif,
+> quelles que soient les options `workbox`. C'est `registerType: 'prompt'` qu'il faut — vérifié
+> sur le worker généré.
+
+La fraîcheur des assets repose aussi sur un `buildId` par build (`/_nuxt/v<ts>/`), ce qui
+suppose un **déploiement non destructif** (cf. §6 de la spec) : un client encore sur l'ancien
+build ne doit pas voir ses chunks disparaître.
 
 ### 4.10 Horloges : pauses inter-périodes, pas de temps morts d'équipe
 
@@ -510,6 +635,30 @@ le premier carton, l'exclusion définitive est applicable à tout moment.
   jamais) ;
 - **`D` (noir)** : **aucune pénalité de 2 min** — exclusion immédiate et définitive, **aucun
   remplacement jusqu'à la fin du match** : l'équipe termine à effectif réduit.
+
+### 4.15 Les règles de jeu existent deux fois — et deux suites jumelles l'encadrent
+
+Les règles pures (périodes, prolongations, cartons, pénalités, chronomètre de tir) sont écrites
+**deux fois** :
+
+| Où | Rôle |
+|---|---|
+| `sources/api2/src/Scoring/ScoringRules.php` | **autorité** : c'est le serveur qui valide et persiste |
+| `sources/app4/utils/scoringRules.ts` | **retour immédiat** dans la console, sans aller-retour réseau — et plus tard hors ligne (lot 7) |
+
+C'est une entorse assumée au DRY : la seule alternative serait de faire valider chaque frappe
+par le serveur, ce qui est inacceptable à la table de marque. **Le prix est explicite** :
+
+- toute règle ajoutée ou modifiée se modifie **des deux côtés**, tests compris ;
+- les deux suites de tests portent les **mêmes cas métier** et sont tenues en miroir :
+  `sources/api2/tests/Unit/Scoring/ScoringRulesTest.php` ↔
+  `sources/app4/tests/unit/scoringRules.spec.ts` ;
+- en cas de désaccord entre les deux implémentations, **c'est PHP qui a raison** (c'est la base
+  qui tranche), et le front se réaligne.
+
+Ce dispositif n'est pas théorique : écrit le 2026-10-17, le miroir TypeScript a immédiatement
+révélé deux divergences réelles (commande de shotclock inconnue silencieusement ignorée côté TS,
+et un paramètre `shootoutEnabled` inatteignable des deux côtés).
 
 ---
 
@@ -668,7 +817,7 @@ Mercure, avec rejeu correct après coupure simulée de l'abonné et après coupu
 | 3.3 | **Chrono/shotclock/pénalités — nouveau modèle** : shotclock 3 commandes (départ/reset 60 s, départ/reset 40 s actif d'emblée, arrêt `--` — §4.11/§4.14), pénalités ≤ 2/équipe avec levée sur but encaissé et remplacement pour `R`/`D` (§4.14), cartons **noirs** d'exclusion définitive, **pauses inter-périodes** avec buzzer en fin de pause (§4.10) | spec §6.4–§6.5, §7.4–§7.5 |
 | 3.4 | **Raccourcis paramétrables** : défauts §4.11, écran de réglage, préférence par poste (localStorage), neutralisés dans les champs de saisie | spec §6.5 |
 | 3.5 | **Scoreboard + shotclock plein écran** (routes Nuxt) synchronisés par **BroadcastChannel** en local ; les écrans **distants** consomment Mercure (lot 4) — canal local sans réseau, canal distant par le hub | spec §6.5 |
-| 3.6 | **PWA installable** : manifest, service worker, cache app shell (saisie toujours online-first) + **mise à jour immédiate garantie** (détection de version, `skipWaiting`/`clients.claim`, rechargement contrôlé) — mécanisme conçu **réutilisable pour app2** | §4.9 |
+| 3.6 | **PWA installable** : manifest, service worker, `buildId` par build (saisie toujours online-first) + **bandeau « nouvelle version »** (*prompt-to-update*, pas de bascule automatique) — même mécanisme qu'app2 | §4.9, [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md) §5 |
 | 3.7 | **Console abonnée à Mercure** (topics de son terrain) pour la reprise multi-terminal et la cohérence multi-onglets | remplace le « rechargement pour resynchroniser » |
 | 3.8 | **Mode « score seul »** : saisie minimale (score/période/statut) comme source de plus, même porte d'entrée | §3, §4.1 |
 
@@ -703,7 +852,7 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   période (3'/3'/1' selon la période suivante), persistance kind `BREAK`, restauration,
 >   bouton « Terminer la pause » ;
 > - ✅ **Buzzer** (`useBuzzer`, Web Audio, zéro asset) : fin de période, expiration du
->   shotclock, **fin de pause** (§0.9) + bouton test son ;
+>   shotclock, **fin de pause** (spec §0.9) + bouton test son ;
 > - ✅ **Raccourcis paramétrables** (§4.11) : `useScoringShortcuts` (localStorage par
 >   poste, une touche = une action, neutralisés dans les champs) + modale de réglage ;
 >   défauts Espace / Entrée / `.` / `0` / `+` / `−` ;

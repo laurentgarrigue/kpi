@@ -8,6 +8,9 @@
 > délais, refonte des styles (§10). Tests :
 > [SCORING_DEV_CHECKLIST.md §lot 4](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
 >
+> ⚠️ **Jamais affichée dans OBS, et jamais alimentée par un hub Mercure réel** : ce code n'a
+> pas encore rencontré la production. Porte de validation V3 de la checklist.
+>
 > Cadrage initial (2026-07-27) — implémentation au **lot 4** du
 > [plan d'action](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
 > Cible : remplace les **~20 pages d'incrustation PHP** (`sources/live/*.php`) **et**

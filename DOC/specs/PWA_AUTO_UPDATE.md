@@ -1,6 +1,6 @@
 # Spec — Mise à jour automatique des apps (app2 & app4)
 
-**Statut** : à implémenter
+**Statut** : **app4 fait** (2026-10-17, §5) — **app2 et Nginx restent à faire** (§3, §4)
 **Périmètre** : `sources/app2`, `sources/app4`, `docker/config/nginx-*.conf`
 **Objectif** : garantir que tout utilisateur (PC, smartphone, PWA installée) tourne
 toujours sur la dernière version déployée, sans écran blanc ni chunk manquant.
@@ -42,6 +42,17 @@ en silence, risque de casse en pleine navigation) ; **app4 n'a aucun mécanisme*
   (pattern *prompt-to-update*). Le nouveau service worker attend l'action de
   l'utilisateur au lieu de prendre le contrôle en plein milieu d'une action.
   → `skipWaiting`/`clientsClaim` **retirés d'app2** et **non activés sur app4**.
+- ⚠️ **Comment l'obtenir réellement (constat 2026-10-17)** : c'est
+  **`registerType: 'prompt'`**, et non `'autoUpdate'`. Avec `'autoUpdate'`,
+  `@vite-pwa/nuxt` **force** `workbox.skipWaiting` et `workbox.clientsClaim` dès que
+  `client.registerPlugin` est actif (son `doSetup`), quelles que soient les options
+  `workbox` écrites dans `nuxt.config.ts` : le `sw.js` généré appelle alors
+  `self.skipWaiting()` + `clientsClaim()` à l'activation. Avec `'prompt'`,
+  `skipWaiting()` n'est appelé qu'en réponse au message `SKIP_WAITING` émis par le
+  bouton « Recharger » — ce qui est exactement le contrat voulu.
+  **Vérification** : après un build, `grep -o '.\{40\}skipWaiting.\{40\}'
+  .output/public/sw.js` doit montrer le `addEventListener("message", …)`, pas un appel
+  direct.
 - **Icônes PWA app4** : **copie des icônes app2** (`pwa-192x192.png`, `pwa-512x512.png`).
 
 ---
@@ -98,30 +109,35 @@ Le composable `sources/app2/composables/usePwa.ts` expose déjà
 
 ---
 
-## 5. Étape 3 — app4 : PWA complète (miroir app2)
+## 5. Étape 3 — app4 : PWA complète (miroir app2) — ✅ fait le 2026-10-17
 
-1. **Dépendance** : `make app4_npm_add_dev package=@vite-pwa/nuxt`
-   (⚠️ jamais un `npm install` sauvage — cf. règles de build app2/app4).
-2. **`sources/app4/nuxt.config.ts`** :
+1. ✅ **Dépendance** `@vite-pwa/nuxt` (déjà au `package.json` d'app4).
+2. ✅ **`sources/app4/nuxt.config.ts`** :
    - `const buildId = v${Date.now()}` + `app.buildAssetsDir = /_nuxt/${buildId}/`.
-   - Ajouter `@vite-pwa/nuxt` aux `modules`.
-   - Bloc `pwa` `registerType: 'autoUpdate'`, **sans `skipWaiting`/`clientsClaim`**,
-     avec `base`/`scope` = `/admin2/` (baseUrl app4),
-     `navigateFallback: '/admin2/index.html'`,
-     `cacheId: kpi-app4-${buildId}`,
-     `runtimeCaching` NetworkFirst sur la navigation,
-     `navigateFallbackDenylist` sur `/api2/` et `/api/`.
-   - Manifest : nom « KPI Admin », `theme_color: '#1e40af'`, icônes 192/512.
-3. **Icônes** : copier `pwa-192x192.png` + `pwa-512x512.png` d'app2 vers
+   - `@vite-pwa/nuxt` dans les `modules`.
+   - Bloc `pwa` **`registerType: 'prompt'`** (cf. §2 : `'autoUpdate'` forcerait
+     `skipWaiting`), `base`/`scope` = `/admin2/`,
+     `navigateFallback: '/admin2/index.html'`, `cacheId: kpi-app4-${buildId}`,
+     `runtimeCaching` NetworkFirst sur la navigation et sur `/_nuxt/*.{js,css}`,
+     CacheFirst sur images/polices, `navigateFallbackDenylist` sur `/api2/` et `/api/`,
+     `injectRegister: false` + `client.registerPlugin: false` (c'est `usePwa` qui
+     enregistre).
+   - Manifest : nom « KPI Admin », `theme_color: '#1e40af'`, icônes 192/512 (+ maskable).
+3. ✅ **Icônes** `pwa-192x192.png` + `pwa-512x512.png` reprises d'app2 dans
    `sources/app4/public/`.
-4. **Composable** `sources/app4/composables/usePwa.ts` : port de celui d'app2,
-   **fusionné proprement avec `useOnlineStatus()`** existant (pas de duplication de la
-   logique online/offline).
-5. **Bandeau** `sources/app4/components/PwaUpdatePrompt.vue` + montage dans `app.vue`,
-   i18n `fr`/`en`.
-6. **`<head>`** app4 : ajouter `manifest`, `apple-touch-icon`, meta
-   `mobile-web-app-capable` / `apple-mobile-web-app-capable` (theme-color `#1e40af`
-   déjà présent).
+4. ✅ **Composable** `sources/app4/composables/usePwa.ts` : port de celui d'app2 ; l'état
+   online/offline **n'est pas redéfini**, il est lu depuis `useOnlineStatus()` (seule
+   source de vérité), et `usePwa` n'ajoute que la re-vérification du worker.
+5. ✅ **Bandeau** `sources/app4/components/PwaUpdatePrompt.vue`, monté dans `app.vue`,
+   clés i18n `pwa.update_available` / `pwa.reload` (fr/en).
+6. ✅ **`<head>`** app4 : `apple-touch-icon`, `mobile-web-app-capable`,
+   `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`
+   (le `<link rel="manifest">` est injecté par `<NuxtPwaManifest />`, déjà dans `app.vue`).
+
+**Validation exécutée** : `npx eslint .` (0 erreur), `npm run build` (succès),
+`manifest.webmanifest` et `sw.js` relus dans `.output/public/`, `npm test` (81 tests).
+**Non vérifié** : le comportement en navigateur réel (installation, bandeau au
+`visibilitychange`) — cf. §8, à faire côté dev.
 
 ---
 
@@ -139,11 +155,15 @@ Aucune modif de code Makefile requise — note d'exploitation uniquement.
 
 ## 7. Ordre d'exécution & vérification
 
-1. Nginx (§3) → `make docker_*_restart`.
-2. app4 : config + composable + icônes + bandeau + i18n (§5).
-3. app2 : bandeau + retrait `skipWaiting` (§4).
-4. Lint : `make app2_lint`, `make app4_lint` ; build de contrôle app4.
-5. Note de déploiement (§6).
+1. ⬜ Nginx (§3) → `make docker_*_restart`.
+2. ✅ app4 : config + composable + icônes + bandeau + i18n (§5).
+3. ⬜ app2 : bandeau + retrait `skipWaiting` (§4).
+4. Lint : `make app2_lint`, `make app4_lint` ; build de contrôle app4 (fait pour app4).
+5. ⬜ Note de déploiement (§6).
+
+⚠️ **Tant que l'étape 1 n'est pas faite, l'étape 2 n'est qu'à moitié efficace** :
+`index.html` et `sw.js` d'app4 restent servis avec `max-age=300`, donc la détection
+d'une nouvelle version peut traîner jusqu'à 5 minutes.
 
 **Hors périmètre** : logique métier, Makefile (hors ajout de dépendance).
 **Dev servers non lancés par l'assistant** — démarrés par l'utilisateur via

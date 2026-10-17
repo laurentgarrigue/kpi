@@ -64,6 +64,10 @@ Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
 [PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
 
+Scoring live (chantier en cours, cf. [le plan](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) :
+[PAGE_SCORING.md](specs/PAGE_SCORING.md) (console de saisie) et
+[PAGE_INCRUSTATION.md](specs/PAGE_INCRUSTATION.md) (page d'incrustation unique).
+
 ## 🌐 [Specs du site public](specs/public/README.md)
 
 Specs écrites **avant** l'implémentation (socle, template, navigation, pages, API publiques, CMS, formulaires) du
@@ -115,7 +119,8 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 ### [Travaux en cours](developer/in-progress/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
-- **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Plan de refonte du scoring live
+- **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Refonte du scoring live : stratégie, décisions actées et plan en 9 lots (point de situation en §0)
+- **[SCORING_DEV_CHECKLIST.md](developer/in-progress/SCORING_DEV_CHECKLIST.md)** - Scoring live : commandes à exécuter et tests à valider, lot par lot
 - **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
 - **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes

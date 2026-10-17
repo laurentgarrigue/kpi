@@ -23,16 +23,47 @@ Rappels :
 
 ---
 
+## 0bis. Tests automatisés — à lancer avant tout test fonctionnel
+
+[CLEAN_CODE.md](../guides/CLEAN_CODE.md) : le test s'écrit **avant** le code, et la
+*Definition of Done* exige lint + tests verts. Dans l'ordre, du moins coûteux au plus coûteux :
+
+```bash
+# 1) app4 — règles pures et helpers (Vitest, aucune infra)
+make app4_lint
+make app4_test
+
+# 2) api2 — services purs (PHPUnit, suite `unit`, aucune base)
+make api2_test_unit
+
+# 3) api2 — endpoints sur fixtures (PHPUnit, suite `integration`, recrée kpi_fixtures_test)
+make api2_test_integration
+
+# 4) les deux suites api2 d'un coup, comme la CI
+make api2_test
+```
+
+**Où va un nouveau test** :
+
+| Ce qu'on ajoute | Où le test va | Commande |
+|---|---|---|
+| une règle de jeu (période, carton, pénalité, chronomètre de tir) | **les deux** : `sources/api2/tests/Unit/Scoring/ScoringRulesTest.php` **et** `sources/app4/tests/unit/scoringRules.spec.ts` — suites jumelles, cf. plan §4.15 | `make api2_test_unit` + `make app4_test` |
+| un helper pur d’app4 (`utils/`) | `sources/app4/tests/unit/<helper>.spec.ts` | `make app4_test` |
+| un service api2 sans base | `sources/api2/tests/Unit/<Domaine>/` | `make api2_test_unit` |
+| une route api2 | `sources/api2/tests/Integration/` + lignes dans `SQL/fixtures/` | `make api2_test_integration` |
+| un critère d'affichage d'un composant | test de rendu `@nuxt/test-utils` (⚠️ **pas encore en place sur app4** — cf. dette V5 du plan §0.4) | `make app4_test` |
+
+---
+
 ## Lot 1 — État canonique `scoring_live_*`
 
 ### Commandes
 
 ```bash
 # 1) Migration SQL (nouvelles tables + kp_match.uid additif) — idempotente (IF NOT EXISTS)
-#    ⚠️ le client s'appelle `mariadb` (pas `mysql`, absent de l'image MariaDB 11.5)
-docker exec -i ${DB_CONTAINER_NAME} sh -c \
-  'mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' \
-  < SQL/migrations/2026-07-27_scoring_live_tables.sql
+#    `make db_migrate` applique le script à la base de l'environnement courant ; il connaît
+#    le bon client (`mariadb`, et non `mysql`, absent de l'image MariaDB 11.5).
+make db_migrate file=SQL/migrations/2026-07-27_scoring_live_tables.sql
 
 # 2) Redémarrer api2 (nouveau code contrôleur/service)
 make api2_restart
@@ -207,8 +238,10 @@ partait avec le temps affiché avant, sans validation.
 | 3.34d | Ouvrir le scoreboard sur un écran **portrait** ou une fenêtre étroite | bascule en **disposition colonne** (équipe A / score / équipe B empilés) ; `?theme=light` et `?shotclock=0` fonctionnent |
 | 3.35 | Ouvrir **deux matchs différents** dans deux consoles + leurs affichages | chaque affichage ne reçoit que **son** match (filtrage `matchId`) |
 | 3.36 | Ouvrir la console **buildée** sur tablette → menu navigateur | l'application est **installable** (« Ajouter à l'écran d'accueil ») ; lancée depuis l'icône, elle s'ouvre en plein écran (standalone, paysage) |
-| 3.37 | Déployer une **nouvelle version** pendant que la console est ouverte | la page se **recharge d'elle-même** dans les 5 min (ou immédiatement au retour sur l'onglet) et sert la nouvelle version — jamais d'app shell périmé |
-| 3.38 | Couper le réseau puis **relancer** la PWA installée | l'application démarre (app shell en cache) ; les données du match nécessitent le réseau (file d'écritures offline = lot 7) |
+| 3.37 | Déployer une **nouvelle version** pendant que la console est ouverte, puis revenir sur l'onglet | un **bandeau « Une nouvelle version est disponible » + bouton Recharger** apparaît en bas ; **la page ne se recharge pas d'elle-même** (une saisie en cours n'est jamais interrompue) ; le clic recharge et sert la nouvelle version. Cf. [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md) §2 |
+| 3.37a | Pendant que le bandeau est affiché, **continuer à saisir** des faits de jeu | la saisie fonctionne normalement ; le bandeau reste affiché jusqu'au clic |
+| 3.37b | Après le build, `grep -o '.\{40\}skipWaiting.\{40\}' sources/app4/.output/public/sw.js` | `skipWaiting()` n'apparaît **que** dans un `addEventListener("message", …)` — jamais appelé directement à l'activation (sinon on est retombé sur `registerType: 'autoUpdate'`) |
+| 3.38 | Couper le réseau puis **relancer** la PWA installée | l'application démarre (navigation en cache NetworkFirst) ; les données du match nécessitent le réseau (file d'écritures offline = lot 7) |
 | 3.39 | En **dev** (`make app4_dev`) | **aucun** service worker enregistré (pas de cache des chunks Vite) |
 
 ### Tests fonctionnels — 5ᵉ tranche (console abonnée à Mercure)
@@ -256,14 +289,12 @@ Rien : le périmètre du lot est couvert. Les évolutions sont renvoyées aux lo
 ### Commandes
 
 ```bash
-DB="docker exec -i ${DB_CONTAINER_NAME} sh -c 'mysql -u\"\$MYSQL_USER\" -p\"\$MYSQL_PASSWORD\" \"\$MYSQL_DATABASE\"'"
-
 # 1) Réglages d'affichage (défauts → événement → terrain)
-eval $DB < SQL/migrations/2026-07-29_scoring_display_settings.sql
+make db_migrate file=SQL/migrations/2026-07-29_scoring_display_settings.sql
 # 2) Jetons d'affichage (accès des incrustations)
-eval $DB < SQL/migrations/2026-07-29_scoring_display_token.sql
+make db_migrate file=SQL/migrations/2026-07-29_scoring_display_token.sql
 # 3) Vues de compatibilité legacy ↔ live (FeuilleMatchMulti, app2, fiches publiques)
-eval $DB < SQL/migrations/2026-07-29_scoring_live_compat_views.sql
+make db_migrate file=SQL/migrations/2026-07-29_scoring_live_compat_views.sql
 
 make api2_restart          # contrôleur public + services programme/accès
 make docker_dev_up         # le worker publie désormais le programme des terrains
@@ -339,6 +370,63 @@ styles (spec §10, second temps).
 
 ---
 
+## Porte de validation — à faire AVANT d'ouvrir un nouveau lot
+
+Les lots 1 à 4 sont **écrits mais jamais exécutés** : aucune migration appliquée, aucun
+message passé par le hub, aucune incrustation affichée (plan §0.2). Cette séquence est la
+dette à solder en premier ; elle se joue **dans l'ordre**, chaque étape conditionnant la
+suivante.
+
+### V1 — La base existe vraiment
+
+```bash
+# Les 4 migrations, idempotentes, dans l'ordre chronologique
+for f in SQL/migrations/2026-07-27_scoring_live_tables.sql \
+         SQL/migrations/2026-07-29_scoring_display_settings.sql \
+         SQL/migrations/2026-07-29_scoring_display_token.sql \
+         SQL/migrations/2026-07-29_scoring_live_compat_views.sql; do
+  make db_migrate file=$f || break
+done
+make api2_restart
+make api2_test            # unit + integration, comme la CI
+```
+
+**Attendu** : les 4 scripts passent, `make api2_test` est vert. En base :
+`scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox`,
+`scoring_display_token`, `scoring_display_settings` existent, ainsi que les vues
+`v_match_detail` et `v_match_live`.
+**Si ça casse** : c'est le premier contact de ce code avec MariaDB — relire le message
+d'erreur plutôt que le contourner, et corriger la migration (pas la base à la main).
+
+### V2 — Un match complet, de bout en bout
+
+Rejouer, sur un match de test non verrouillé, les tests **1.1 → 1.6** puis **3.x** du lot 3,
+jusqu'à la **clôture**.
+**Attendu** : pendant le match, seules les tables `scoring_live_*` bougent ; à la clôture,
+`kp_match` / `kp_match_detail` / `kp_chrono` reçoivent la consolidation, et la feuille de match
+legacy (`FeuilleMatchMulti.php`) affiche le même déroulement que la console.
+
+### V3 — La diffusion marche
+
+Tests **2.1 → 2.8**, puis **4.1 → 4.6** avec une incrustation ouverte en parallèle.
+**Attendu** : `scoring_outbox` se vide dans l'ordre, la console d'un second terminal et la page
+d'incrustation reflètent la saisie sans rechargement.
+**Point de vigilance** : en preprod/prod `MERCURE_ANONYMOUS=0`, donc l'incrustation **doit**
+présenter un JWT d'abonné (jeton d'affichage) — c'est le cas du code, mais ça n'a jamais été
+vérifié hors dev (lot 0.3).
+
+### V4 → V6 — à écrire avant de coder quoi que ce soit d'autre
+
+| # | Dette | Ce qu'il faut produire |
+|---|---|---|
+| V4 | les routes d'**écriture** du scoring n'ont aucun test | tests d'intégration : source active, **409** sur source non active, incrément du `tick`, dépôt outbox dans la même transaction |
+| V5 | seuls les helpers purs d'app4 sont testés | mise en place de `@nuxt/test-utils` + tests de rendu sur les critères de la spec (chronomètre de tir, pénalités, sélecteur de période) |
+| V6 | le **garde-fou** du ménage (plan §6, action 0.6) n'est pas chiffré, et les vues de compatibilité ne sont pas datées | un critère écrit, chiffré et daté dans le plan — sans quoi le lot 8 n'aura jamais lieu |
+
+---
+
 ## Lots suivants (placeholders)
 - **Lot 5 — Relais matériel** : jeton machine, ingestion, terrain équipé en parallèle de WSM.
+  ⚠️ **Bloqué par l'action 0.5** (captures de vraies sessions STOMP) : sans fichiers de
+  référence, on code à l'aveugle sur un format fermé.
 - **Lot 0.3 (rappel)** : validation FrankenPHP + hub Mercure en **preprod puis prod** avant tout usage réel du lot 2 hors dev.
