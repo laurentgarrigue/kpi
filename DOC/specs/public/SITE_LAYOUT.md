@@ -16,10 +16,12 @@ contenu.
 ├──────────────────────────────────────────────────────────────┤
 │ Bandeau beta (si NUXT_PUBLIC_BETA)                            │  bleu clair #69b9e6, texte #1e1e1c
 ├──────────────────────────────────────────────────────────────┤
-│ EN-TÊTE  [logo FFCK] kayak-polo.info  [⚙ Administration] [FR | EN] │  fond blanc
+│ EN-TÊTE  [logo FFCK] kayak-polo.info  [🔍] [⚙ Administration] [FR | EN] │  fond blanc
 │          Commission Nationale d'Activité Kayak-Polo           │
 ├──────────────────────────────────────────────────────────────┤
 │ NAVIGATION PRINCIPALE (cf. SITE_NAVIGATION.md)        [☰]     │  fond marine #20265b, texte blanc
+├──────────────────────────────────────────────────────────────┤
+│ Bloc de recherche (ouvert par la loupe)   [champ…] [✕]        │  refermable (FEATURE_SEARCH.md)
 ├──────────────────────────────────────────────────────────────┤
 │ <main id="content">                                           │  fond blanc, largeur max 80rem
 │   contenu de la page                                          │
@@ -44,6 +46,8 @@ contenu.
   masqué sous 640 px, conservé pour les lecteurs d'écran), vers l'administration **`{legacy}/admin2/`** (app4).
   Style discret (texte secondaire) mais visible sans défiler. Jamais `AdminChoice.php`.
 - **Sélecteur de langue** FR / EN à droite (cf. SITE_NAVIGATION.md § 5).
+- **Recherche** : une icône loupe, sur tous les écrans, ouvre un bloc de recherche refermable sous la barre de
+  navigation, sans quitter la page (FEATURE_SEARCH.md § 2, SRC-06).
 - **Petits écrans** (18/10/2026) : sous 768 px, la largeur ne permet pas d'aligner toutes les actions. L'en-tête
   ne garde que le logo, le nom du site (sur une ligne, réduit sous 640 px), la loupe de recherche et un bouton
   **« Réglages »** (icône curseurs, `aria-expanded`). Ce bouton ouvre un panneau déroulant, aligné à droite sous

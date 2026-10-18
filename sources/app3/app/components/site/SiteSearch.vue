@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { searchApiPath, searchSections, type SearchResults } from '~/utils/search'
 
-// Search field of the header, on every page (FEATURE_SEARCH.md § 2.1, SRC-01, SRC-02).
+// Search field of the search block opened by the header magnifier, on every page (FEATURE_SEARCH.md § 2.1, SRC-01,
+// SRC-02, SRC-06).
 const { t, locale } = useI18n()
 const query = ref('')
 const { results } = useSuggestions<SearchResults>(query, value => searchApiPath(value, locale.value))
