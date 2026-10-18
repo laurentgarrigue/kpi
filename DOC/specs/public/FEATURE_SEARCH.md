@@ -10,8 +10,13 @@ cherchables (stratégie § 11).
 
 ## 2. Contenu et comportement
 
-1. **Champ de recherche dans l'en-tête** (SITE_LAYOUT.md § 2.2) : icône loupe + champ (replié en icône sous
-   `md`) ; formulaire GET vers `/search`.
+1. **Recherche depuis l'en-tête** (SITE_LAYOUT.md § 2.2), **sur tous les écrans** (18/10/2026) : l'en-tête
+   n'affiche qu'une **icône loupe** (bouton bascule, `aria-expanded`). Elle **ouvre un bloc de recherche** inséré
+   entre la barre de navigation et le contenu de la page courante, qui reste affiché dessous : on ne quitte pas la
+   page. Le bloc contient le champ (formulaire GET vers `/search`, suggestions, focus placé dans le champ à
+   l'ouverture) et un bouton **« Fermer la recherche »** (icône croix). Il se ferme par ce bouton, en cliquant de
+   nouveau sur la loupe, ou par une navigation (choix d'une suggestion, soumission). Sans JavaScript, la loupe
+   reste un lien vers la page `/search`, qui porte son propre champ.
 2. **Suggestions** (avec JavaScript, après 2 caractères et 300 ms) : panneau sous le champ, résultats groupés par
    catégorie, navigation clavier (motif « combobox » ARIA, Échap ferme) ; « Voir tous les résultats » → `/search`.
 3. **Page `/search?q=`** : `<h1>` « Résultats pour « q » » ; une section par catégorie non vide (compétitions,
@@ -35,7 +40,10 @@ suggestions annoncées par une région `aria-live`.
 
 ## 5. Critères d'acceptation
 
-- **SRC-01** — Le champ de l'en-tête est présent sur toutes les pages et soumet vers `/search` sans JavaScript.
+- **SRC-01** — La loupe de l'en-tête est présente sur toutes les pages et mène à `/search` sans JavaScript ; le champ
+  du bloc de recherche soumet vers `/search`.
+- **SRC-06** — Sur tous les écrans, la loupe ouvre un bloc de recherche entre la navigation et `main`, sans quitter la
+  page ; le bloc se ferme par son bouton « Fermer la recherche » ou par un nouveau clic sur la loupe.
 - **SRC-02** — Suggestions après 2 caractères, groupées par catégorie, utilisables au clavier ; Échap ferme.
 - **SRC-03** — La page affiche une section par catégorie non vide, 8 résultats au plus, liens vers les pages du
   site.

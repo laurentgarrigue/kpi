@@ -4,11 +4,13 @@ import { joinURL } from 'ufo'
 import { ADMIN_PATH } from '~/utils/links'
 
 // Site header: FFCK logo on a light background (charter), site name, search, administration, theme, language
-// (SITE_LAYOUT.md § 2.2). Below `md` the search field folds into an icon leading to the search page (FEATURE_SEARCH.md § 2),
-// and administration, theme and language fold into a « Réglages » drop-down panel (LAY-14).
+// (SITE_LAYOUT.md § 2.2). The magnifier toggles the search block shown under the navigation (FEATURE_SEARCH.md § 2,
+// SRC-06). Below `md`, administration, theme and language fold into a « Réglages » drop-down panel (LAY-14).
 const localePath = useLocalePath()
 const adminUrl = joinURL(useRuntimeConfig().public.legacyBaseUrl, ADMIN_PATH)
 const route = useRoute()
+// The magnifier is a link to the search page without JavaScript, the toggle of the search block with it (SRC-06).
+const { open: searchOpen, toggle: toggleSearch } = useSearchBlock()
 
 const toolsOpen = ref(false)
 const tools = useTemplateRef<HTMLElement>('tools')
@@ -36,12 +38,20 @@ watch(() => route.fullPath, () => closeTools())
         </span>
       </NuxtLink>
       <div ref="tools" class="relative flex shrink-0 items-center gap-1 md:gap-3" @keydown.esc="closeTools(true)">
-        <div class="hidden w-72 md:block" data-testid="header-search">
-          <SiteSearch />
-        </div>
-        <NuxtLink :to="localePath('/search')" class="rounded p-1 text-kpi-blue-600 hover:bg-kpi-blue-50 md:hidden" :aria-label="$t('header.search')" data-testid="header-search-icon">
+        <a
+          :id="SEARCH_BLOCK_TOGGLE_ID"
+          :href="localePath('/search')"
+          role="button"
+          class="rounded p-1 text-kpi-blue-600 hover:bg-kpi-blue-50"
+          :class="{ 'bg-kpi-blue-50': searchOpen }"
+          :aria-label="$t('header.search')"
+          :aria-expanded="searchOpen"
+          :aria-controls="SEARCH_BLOCK_ID"
+          data-testid="header-search-icon"
+          @click.prevent="toggleSearch"
+        >
           <UIcon name="i-heroicons-magnifying-glass" class="block size-6" aria-hidden="true" />
-        </NuxtLink>
+        </a>
         <button
           ref="toolsToggle"
           type="button"

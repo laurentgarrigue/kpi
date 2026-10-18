@@ -183,6 +183,8 @@ sources/img/Nations/
 sources/img/presentations/
 sources/img/schemas/
 sources/img/referees/
+# Médiathèque du site public (montage ${HOST_MEDIA_PATH}/content, créé en root par Docker)
+sources/media/content/
 # Stockage médias local par défaut (HOST_MEDIA_PATH=./media/) et restaurations
 docker/media/
 docker/media.restore-*/
