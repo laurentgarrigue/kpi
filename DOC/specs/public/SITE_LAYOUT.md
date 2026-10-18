@@ -44,6 +44,12 @@ contenu.
   masqué sous 640 px, conservé pour les lecteurs d'écran), vers l'administration **`{legacy}/admin2/`** (app4).
   Style discret (texte secondaire) mais visible sans défiler. Jamais `AdminChoice.php`.
 - **Sélecteur de langue** FR / EN à droite (cf. SITE_NAVIGATION.md § 5).
+- **Petits écrans** (18/10/2026) : sous 768 px, la largeur ne permet pas d'aligner toutes les actions. L'en-tête
+  ne garde que le logo, le nom du site (sur une ligne, réduit sous 640 px), la loupe de recherche et un bouton
+  **« Réglages »** (icône curseurs, `aria-expanded`). Ce bouton ouvre un panneau déroulant, aligné à droite sous
+  l'en-tête, qui regroupe le lien Administration (avec son libellé), le sélecteur de thème et le sélecteur de
+  langue. Le panneau se ferme par Échap (le focus revient au bouton), par un clic à l'extérieur ou par une
+  navigation. À partir de 768 px, ces actions restent alignées dans l'en-tête et le bouton est masqué.
 
 ### 2.3 Zone de contenu
 - `<main id="content">`, conteneur centré, largeur maximale 80 rem, marges latérales 1 rem (mobile) à 2 rem.
@@ -138,6 +144,8 @@ Jetons définis dans `kpi-layer` d'après la charte FFCK, univers Compétition
 - **LAY-11** — Le layout affiche les flèches « Retour en haut » / « Aller en bas » selon la position de défilement ; elles font défiler la page.
 - **LAY-13** — Le sélecteur Clair / Sombre / Système applique le thème choisi (classe `dark` sur `<html>`), le
   mémorise, et suit le système par défaut ; en sombre, textes et fonds gardent un contraste lisible.
+- **LAY-14** — Sous 768 px, l'administration, le thème et la langue sont regroupés dans un panneau ouvert par le
+  bouton « Réglages » (`aria-expanded`), fermé par Échap ; aucune action de l'en-tête ne déborde de l'écran.
 - **LAY-12** — Les en-têtes de colonnes des tableaux restent visibles au défilement ; aucun tableau n'est dans un conteneur à défilement horizontal sur grand écran.
 - **LAY-08** — Aucun composant d'app3 ne contient de couleur hexadécimale (contrôle en revue / lint).
 
