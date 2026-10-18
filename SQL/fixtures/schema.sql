@@ -314,6 +314,18 @@ CREATE TABLE `kp_match_detail` (
   KEY `Id_match` (`Id_match`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Feuille de match : purgée par l'affectation automatique quand une équipe change.
+DROP TABLE IF EXISTS `kp_match_joueur`;
+CREATE TABLE `kp_match_joueur` (
+  `Id_match` int(10) UNSIGNED NOT NULL,
+  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `Numero` smallint(6) DEFAULT NULL,
+  `Equipe` char(1) DEFAULT NULL,
+  `Capitaine` char(1) DEFAULT '-',
+  PRIMARY KEY (`Id_match`,`Matric`),
+  KEY `fk_matchs_matric` (`Matric`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 -- Sous-ensemble : seules les colonnes d'identité lues (noms des arbitres). Aucune vraie licence.
 DROP TABLE IF EXISTS `kp_licence`;
 CREATE TABLE `kp_licence` (

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { gameDisplayStatus, periodLabel, type GameDisplayStatus } from '~/utils/gameStatus'
+import { DEFAULT_PITCH_MIN_INTERVAL, pitchConflictIds } from '~/utils/pitchGrid'
 import type { Game, GamesListResponse, GameFormData, GameJournee, GameTeam } from '~/types/games'
 
 definePageMeta({
@@ -29,6 +30,7 @@ interface SavedFilters {
   unlockedOnly: boolean
   showShotclock: boolean
   showReferees: boolean
+  pitchView: boolean
 }
 
 function loadSavedFilters(): Partial<SavedFilters> {
@@ -51,6 +53,7 @@ function saveFilters() {
       unlockedOnly: unlockedOnly.value,
       showShotclock: showShotclock.value,
       showReferees: showReferees.value,
+      pitchView: pitchView.value,
     }
     localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(data))
   } catch { /* ignore */ }
@@ -79,6 +82,8 @@ const selectedSort = ref(saved.selectedSort ?? 'date_time_terrain')
 const unlockedOnly = ref(saved.unlockedOnly ?? false)
 const showShotclock = ref(saved.showShotclock ?? false)
 const showReferees = ref(saved.showReferees ?? true)
+// « Pitches » view (§ 2.7): time × pitch grid instead of the table, same filters.
+const pitchView = ref(saved.pitchView ?? false)
 
 // Filter data
 const journees = ref<GameJournee[]>([])
@@ -158,7 +163,7 @@ const teamSearchInput = ref('')
 const restMinutes = ref(60)
 // Minimum gap (minutes) between two consecutive games on the SAME pitch. Below this, the pitch
 // is considered double-booked (a same-timeslot clash is just the gap = 0 case).
-const terrainMinInterval = ref(30)
+const terrainMinInterval = ref(DEFAULT_PITCH_MIN_INTERVAL)
 
 // ─── Legacy base URL ───
 const legacyBase = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
@@ -432,32 +437,14 @@ const teamConflictGameIds = computed((): Set<number> => {
 // (a same-timeslot clash is just the gap = 0 case). A game only counts when it has a terrain
 // AND a date+time; unassigned slots are ignored. Only computed while the planning bar is open
 // (mirrors the team-conflict gating), so the highlight is opt-in and costs nothing otherwise.
-const terrainConflictGameIds = computed((): Set<number> => {
-  if (!conflictBarOpen.value) return new Set()
-  const MIN_GAP = terrainMinInterval.value
-  // group key "date|terrain" → games with parsed start minutes
-  const groups = new Map<string, { id: number; minutes: number }[]>()
-  for (const g of games.value) {
-    if (!g.terrain || !g.dateMatch || !g.heureMatch) continue
-    const [h, m] = g.heureMatch.split(':').map(Number)
-    if (Number.isNaN(h) || Number.isNaN(m)) continue
-    const key = `${g.dateMatch}|${g.terrain.trim().toLowerCase()}`
-    if (!groups.has(key)) groups.set(key, [])
-    groups.get(key)!.push({ id: g.id, minutes: h * 60 + m })
-  }
-  const conflicted = new Set<number>()
-  for (const list of groups.values()) {
-    if (list.length < 2) continue
-    list.sort((a, b) => a.minutes - b.minutes)
-    for (let i = 1; i < list.length; i++) {
-      if (list[i].minutes - list[i - 1].minutes < MIN_GAP) {
-        conflicted.add(list[i - 1].id)
-        conflicted.add(list[i].id)
-      }
-    }
-  }
-  return conflicted
-})
+const terrainConflictGameIds = computed((): Set<number> =>
+  conflictBarOpen.value ? pitchConflictIds(games.value, terrainMinInterval.value) : new Set(),
+)
+
+// Pitches view: always checked, on the games shown (the active filters apply).
+const pitchViewConflictIds = computed((): Set<number> =>
+  pitchView.value ? pitchConflictIds(filteredGames.value, terrainMinInterval.value) : new Set(),
+)
 
 // ─── Insufficient rest: games for selected team with < restMinutes between consecutive games ───
 // We use heureMatch as start time. Rest is the gap between consecutive game start times.
@@ -698,7 +685,7 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
 })
 
 // Persist filters to localStorage
-watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly, showShotclock, showReferees], () => {
+watch([selectedTour, selectedJournee, selectedDate, selectedTerrain, selectedSort, unlockedOnly, showShotclock, showReferees, pitchView], () => {
   saveFilters()
 })
 
@@ -1244,6 +1231,11 @@ const openAddModal = async () => {
   }
 
   formModalOpen.value = true
+}
+
+// Pitches view: a click on a game opens its edit form when the table would offer it.
+const openPitchGame = (game: Game) => {
+  if (canEdit.value && !isLocked(game) && game.authorized) openEditModal(game)
 }
 
 const openEditModal = async (game: Game) => {
@@ -2097,6 +2089,19 @@ const openScoring = (gameId: number) => {
           <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': conflictBarOpen }" />
         </button>
 
+        <!-- Pitches view toggle (§ 2.7) -->
+        <button
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+          :class="pitchView ? 'text-primary-700 bg-primary-50 border-primary-400 dark:text-primary-200 dark:bg-primary-950' : 'text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+          :title="t('games.pitch_view_title')"
+          :aria-pressed="pitchView"
+          data-testid="pitch-view-toggle"
+          @click="pitchView = !pitchView"
+        >
+          <UIcon name="heroicons:view-columns" class="w-5 h-5" :class="pitchView ? 'text-primary-500' : 'text-header-900 dark:text-header-300'" />
+          <span class="hidden sm:inline">{{ t('games.pitch_view') }}</span>
+        </button>
+
         <!-- Documents dropdown (all games with current filters) -->
         <div v-if="hasContextFilter" ref="documentsRef" class="relative">
           <button
@@ -2454,8 +2459,19 @@ const openScoring = (gameId: number) => {
       </button>
     </div>
 
+    <!-- ═══════ PITCHES VIEW ═══════ -->
+    <GamesPitchView
+      v-if="pitchView"
+      :games="filteredGames"
+      :conflict-ids="pitchViewConflictIds"
+      :min-interval="terrainMinInterval"
+      :show-referees="showReferees"
+      :show-shotclock="showShotclock"
+      @open="openPitchGame"
+    />
+
     <!-- ═══════ DESKTOP TABLE ═══════ -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
+    <div v-if="!pitchView" class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
       <div class="sticky-thead">
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700 text-xs">
           <thead class="bg-header-50 dark:bg-header-800">
@@ -3043,7 +3059,7 @@ const openScoring = (gameId: number) => {
     </div>
 
     <!-- ═══════ MOBILE CARDS ═══════ -->
-    <AdminCardList class="lg:hidden" :loading="loading && games.length === 0" :empty="filteredGames.length === 0" :empty-text="!hasContextFilter ? t('games.select_context') : t('games.no_results')">
+    <AdminCardList v-if="!pitchView" class="lg:hidden" :loading="loading && games.length === 0" :empty="filteredGames.length === 0" :empty-text="!hasContextFilter ? t('games.select_context') : t('games.no_results')">
       <div
         v-for="g in filteredGames"
         :key="g.id"

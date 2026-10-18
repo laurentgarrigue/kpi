@@ -39,6 +39,21 @@ describe('site header', () => {
     expect(admin.attributes('href')).toBe('https://kpi.localhost/admin2/')
     expect(admin.text()).toContain('Administration')
   })
+
+  it('LAY-14: on small screens, a « Réglages » button toggles the panel grouping administration, theme and language', async () => {
+    const wrapper = await mountSuspended(SiteHeader)
+    const toggle = wrapper.find('[data-testid="header-tools-toggle"]')
+    const panel = wrapper.find(`#${toggle.attributes('aria-controls')}`)
+    expect(toggle.attributes('aria-label')).toBe('Réglages')
+    expect(panel.find('[data-testid="admin-link"]').exists()).toBe(true)
+    expect(panel.find('[data-testid="color-mode"]').exists()).toBe(true)
+    expect(panel.find('nav[aria-label="Choix de la langue"]').exists()).toBe(true)
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    await toggle.trigger('click')
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    await panel.trigger('keydown', { key: 'Escape' })
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+  })
 })
 
 describe('site footer', () => {
