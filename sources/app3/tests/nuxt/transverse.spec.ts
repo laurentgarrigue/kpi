@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
+import DefaultLayout from '~/layouts/default.vue'
 import SiteHeader from '~/components/site/SiteHeader.vue'
 import SiteSearch from '~/components/site/SiteSearch.vue'
 import { fakeApi2 } from '../fixtures/api2'
@@ -290,13 +291,39 @@ describe('clubs (PAGE_CLUBS.md)', () => {
 })
 
 describe('global search (FEATURE_SEARCH.md)', () => {
-  it('SRC-01: the header search is a GET form to /search, on every page', async () => {
+  it('SRC-01: the header magnifier leads to /search without JavaScript; the search block is a GET form to /search', async () => {
     const header = await mountSuspended(SiteHeader)
-    const form = header.find('[data-testid="header-search"] form')
+    expect(header.find('[data-testid="header-search-icon"]').attributes('href')).toBe('/search')
+    expect(header.find('form').exists()).toBe(false)
+    const search = await mountSuspended(SiteSearch)
+    const form = search.find('form')
     expect(form.attributes('action')).toBe('/search')
     expect(form.attributes('method')).toBe('get')
     expect(form.find('input[name="q"]').exists()).toBe(true)
-    expect(header.find('[data-testid="header-search-icon"]').attributes('href')).toBe('/search')
+  })
+
+  it('SRC-06: on every screen the magnifier toggles a closable search block between the navigation and main', async () => {
+    const layout = await mountSuspended(DefaultLayout, { slots: { default: () => 'page' } })
+    const toggle = layout.find('[data-testid="header-search-icon"]')
+    const block = () => layout.find('[data-testid="search-block"]')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(block().exists()).toBe(false)
+
+    await toggle.trigger('click')
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(block().attributes('id')).toBe(toggle.attributes('aria-controls'))
+    expect(block().find('form[action="/search"] input[name="q"]').exists()).toBe(true)
+    expect(block().element.previousElementSibling?.tagName).toBe('NAV')
+    expect(block().element.nextElementSibling?.tagName).toBe('MAIN')
+    expect(layout.text()).toContain('page')
+
+    await block().find('[data-testid="search-block-close"]').trigger('click')
+    expect(block().exists()).toBe(false)
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+
+    await toggle.trigger('click')
+    await toggle.trigger('click')
+    expect(block().exists()).toBe(false)
   })
 
   it('SRC-02: suggestions after 2 characters, grouped, keyboard-accessible, Escape closes', async () => {

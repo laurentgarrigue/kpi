@@ -80,6 +80,8 @@
   },
   "header": {
     "admin": "Administration",
+    "closeSearch": "Fermer la recherche",
+    "settings": "Réglages",
     "search": "Rechercher",
     "searchPlaceholder": "Compétition, équipe, club…"
   },

@@ -116,15 +116,16 @@ final class WordPressImporter
         $excerpt = WordPressContent::splitLanguages((string) $post['post_excerpt']);
         $seo = $this->seo($wordPressId);
         $label = sprintf('Article %d « %s »', $wordPressId, $title['fr']);
+        [$coverId, $bodyFr, $bodyEn] = $this->coverAndBodies($wordPressId, $content, $label);
         $values = [
             'slug' => $this->uniqueSlug($this->slugOf($post), fn (string $slug): bool => $this->articles->slugExists($slug, $this->articles->findIdByLegacyId($wordPressId))),
             'title_fr' => mb_substr($title['fr'], 0, 255),
             'title_en' => mb_substr($title['en'], 0, 255),
             'lead_fr' => strip_tags($excerpt['fr']),
             'lead_en' => strip_tags($excerpt['en']),
-            'body_fr' => $this->convertBody($content['fr'], $label),
-            'body_en' => $this->convertBody($content['en'], $label),
-            'cover_media_id' => $this->featuredImage($wordPressId, $label),
+            'body_fr' => $bodyFr,
+            'body_en' => $bodyEn,
+            'cover_media_id' => $coverId,
             'status' => CmsRules::STATUS_PUBLISHED,
             'published_at' => (string) $post['post_date'],
             'signature' => ArticleEditor::DEFAULT_SIGNATURE,
@@ -146,6 +147,27 @@ final class WordPressImporter
         }
         $this->articles->replaceCategories($id, $categoryIds);
         $this->albums->collect(ContentAlbums::ARTICLES, [$values['body_fr'], $values['body_en']], $values['cover_media_id']);
+    }
+
+    /**
+     * Image de une : la première image du corps, retirée des deux langues ; à défaut (aucune image, ou image non
+     * rapatriée), l'image mise en avant de WordPress, corps intacts (CMS-15).
+     *
+     * @param array{fr: string, en: string} $content
+     *
+     * @return array{0: ?int, 1: string, 2: string} média de une, corps FR, corps EN
+     */
+    private function coverAndBodies(int $wordPressId, array $content, string $label): array
+    {
+        $bodyFr = $this->convertBody($content['fr'], $label);
+        $bodyEn = $this->convertBody($content['en'], $label);
+        [$src, $bodyFrWithoutImage] = WordPressContent::extractImage($bodyFr);
+        $coverId = $src !== null && str_starts_with($src, MediaUrls::PUBLIC_PREFIX) ? $this->mediaIdOf($src) : null;
+        if ($coverId === null) {
+            return [$this->featuredImage($wordPressId, $label), $bodyFr, $bodyEn];
+        }
+
+        return [$coverId, $bodyFrWithoutImage, WordPressContent::extractImage($bodyEn, $src)[1]];
     }
 
     /**

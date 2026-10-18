@@ -169,4 +169,62 @@ final class WordPressContent
     {
         return in_array($wordpress['slug'], ['uncategorized', 'non-classe'], true);
     }
+
+    /**
+     * Retire du HTML (déjà assaini) la première image, ou celle d'adresse `$src`, avec le lien, la légende et le
+     * paragraphe qui ne contenaient qu'elle (CMS-15).
+     *
+     * @return array{0: ?string, 1: string} adresse de l'image retirée (null si aucune) et HTML restant
+     */
+    public static function extractImage(string $html, ?string $src = null): array
+    {
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8"><body><div id="kpi-root">' . $html . '</div></body>', LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $root = $document->getElementById('kpi-root');
+        $image = null;
+        foreach ($root?->getElementsByTagName('img') ?? [] as $candidate) {
+            if ($src === null || $candidate->getAttribute('src') === $src) {
+                $image = $candidate;
+                break;
+            }
+        }
+        if ($root === null || $image === null) {
+            return [null, $html];
+        }
+
+        $removed = $image;
+        while ($removed->parentNode instanceof \DOMElement && $removed->parentNode !== $root && self::onlyHolds($removed->parentNode, $removed)) {
+            $removed = $removed->parentNode;
+        }
+        // « texte <img> texte » : a single space is kept between the remaining texts.
+        if ($removed->previousSibling instanceof \DOMText && $removed->nextSibling instanceof \DOMText && preg_match('/\s$/', $removed->previousSibling->data) === 1) {
+            $removed->nextSibling->data = ltrim($removed->nextSibling->data);
+        }
+        $removed->parentNode?->removeChild($removed);
+
+        $output = '';
+        foreach ($root->childNodes as $child) {
+            $output .= $document->saveHTML($child);
+        }
+
+        return [$image->getAttribute('src'), trim($output)];
+    }
+
+    /** L'élément ne contient rien d'autre que `$child`, des blancs, des sauts de ligne et une légende. */
+    private static function onlyHolds(\DOMElement $element, \DOMNode $child): bool
+    {
+        foreach ($element->childNodes as $node) {
+            $empty = $node === $child
+                || ($node instanceof \DOMText && trim($node->data) === '')
+                || ($node instanceof \DOMElement && in_array($node->tagName, ['br', 'figcaption'], true));
+            if (!$empty) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

@@ -20,14 +20,14 @@
     </div>
 
     <!-- Score Section -->
-    <div class="bg-gray-100 p-4 border-x border-gray-300">
-      <div class="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+    <div class="bg-gray-100 p-2 sm:p-4 border-x border-gray-300">
+      <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-4 items-center">
         <!-- Team A -->
         <div class="text-center">
-          <img v-if="matchData.team_a.logo" :src="getLogoUrl(matchData.team_a.logo)" class="h-16 w-16 mx-auto mb-2" alt="" />
+          <img v-if="matchData.team_a.logo" :src="getLogoUrl(matchData.team_a.logo)" class="h-12 w-12 sm:h-16 sm:w-16 object-contain mx-auto mb-2" alt="" />
           <NuxtLink
             :to="`/team/${matchData.team_a.id}`"
-            class="inline-block font-bold text-lg bg-gray-200 text-gray-900 px-3 py-1 rounded hover:opacity-80 cursor-pointer"
+            class="inline-block max-w-full break-words font-bold text-sm sm:text-lg bg-gray-200 text-gray-900 px-2 sm:px-3 py-1 rounded hover:opacity-80 cursor-pointer"
           >
             {{ matchData.team_a.label }}
           </NuxtLink>
@@ -35,10 +35,10 @@
 
         <!-- Score -->
         <div class="text-center">
-          <div v-if="!isPending" class="flex items-center justify-center gap-2">
-            <span class="lcd text-4xl font-bold px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_a ?? '-' }}</span>
-            <span class="text-2xl text-gray-400">-</span>
-            <span class="lcd text-4xl font-bold px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_b ?? '-' }}</span>
+          <div v-if="!isPending" class="flex items-center justify-center gap-1 sm:gap-2">
+            <span class="lcd text-3xl sm:text-4xl font-bold px-2 sm:px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_a ?? '-' }}</span>
+            <span class="text-xl sm:text-2xl text-gray-400">-</span>
+            <span class="lcd text-3xl sm:text-4xl font-bold px-2 sm:px-4 py-2 bg-bar text-white rounded">{{ matchData.game.g_score_b ?? '-' }}</span>
           </div>
           <!-- Halftime score -->
           <div v-if="!isPending && matchData.halftime_score" class="text-sm text-gray-500 mt-2">
@@ -52,10 +52,10 @@
 
         <!-- Team B -->
         <div class="text-center">
-          <img v-if="matchData.team_b.logo" :src="getLogoUrl(matchData.team_b.logo)" class="h-16 w-16 mx-auto mb-2" alt="" />
+          <img v-if="matchData.team_b.logo" :src="getLogoUrl(matchData.team_b.logo)" class="h-12 w-12 sm:h-16 sm:w-16 object-contain mx-auto mb-2" alt="" />
           <NuxtLink
             :to="`/team/${matchData.team_b.id}`"
-            class="inline-block font-bold text-lg bg-gray-200 text-gray-900 px-3 py-1 rounded hover:opacity-80 cursor-pointer"
+            class="inline-block max-w-full break-words font-bold text-sm sm:text-lg bg-gray-200 text-gray-900 px-2 sm:px-3 py-1 rounded hover:opacity-80 cursor-pointer"
           >
             {{ matchData.team_b.label }}
           </NuxtLink>

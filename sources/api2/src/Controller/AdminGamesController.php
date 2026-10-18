@@ -1530,6 +1530,8 @@ class AdminGamesController extends AbstractController
 
         $errors = [];
         $updated = 0;
+        /** @var array<string, array<string, true>> $teamNamesByCompetition */
+        $teamNamesByCompetition = [];
 
         $this->connection->beginTransaction();
         try {
@@ -1539,6 +1541,10 @@ class AdminGamesController extends AbstractController
                 if (in_array($row['Phase'], ['Break', 'Pause'])) {
                     continue;
                 }
+
+                $competitionKey = $row['Code_saison'] . '|' . $row['Code_competition'];
+                $teamNames = $teamNamesByCompetition[$competitionKey]
+                    ??= $this->loadCompetitionTeamNames($row['Code_competition'], $row['Code_saison']);
 
                 // Parse bracket notation: [PART1-PART2-PART3-PART4]
                 $libelle = preg_replace('/\s/', '', (string) $row['Libelle']);
@@ -1553,11 +1559,10 @@ class AdminGamesController extends AbstractController
                 $hasError = false;
 
                 for ($j = 0; $j < 4; $j++) {
-                    // Skip referee slots if already nominatively assigned or contain free text
-                    if ($j === 2 && ((int) $row['Matric_arbitre_principal'] !== 0 || trim((string) $row['Arbitre_principal']) !== '')) {
+                    if ($j === 2 && $this->isRefereeSlotKept($row['Matric_arbitre_principal'], $row['Arbitre_principal'], $teamNames)) {
                         continue;
                     }
-                    if ($j === 3 && ((int) $row['Matric_arbitre_secondaire'] !== 0 || trim((string) $row['Arbitre_secondaire']) !== '')) {
+                    if ($j === 3 && $this->isRefereeSlotKept($row['Matric_arbitre_secondaire'], $row['Arbitre_secondaire'], $teamNames)) {
                         continue;
                     }
 
@@ -1756,6 +1761,33 @@ class AdminGamesController extends AbstractController
         }
 
         return $this->json(['updated' => $updated, 'errors' => $errors]);
+    }
+
+    /**
+     * Auto-assign must not overwrite a referee chosen by hand: a nominative designation (licence
+     * number) or free text. A team name of the competition is treated as a previous auto-assignment
+     * and recomputed (PAGE_MATCHS.md § 2.3.1, "Relance d'une affectation").
+     *
+     * @param array<string, true> $teamNames
+     */
+    private function isRefereeSlotKept(mixed $matric, ?string $name, array $teamNames): bool
+    {
+        if ((int) $matric !== 0) {
+            return true;
+        }
+        $name = trim((string) $name);
+
+        return $name !== '' && !isset($teamNames[$name]);
+    }
+
+    /** @return array<string, true> team names of the competition, as keys */
+    private function loadCompetitionTeamNames(string $competition, string $season): array
+    {
+        $names = $this->connection->prepare(
+            'SELECT Libelle FROM kp_competition_equipe WHERE Code_compet = ? AND Code_saison = ?'
+        )->executeQuery([$competition, $season])->fetchFirstColumn();
+
+        return array_fill_keys(array_map(fn($name) => trim((string) $name), $names), true);
     }
 
     /**

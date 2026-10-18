@@ -177,10 +177,14 @@ Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-ru
    médias sont donc sous `/wordpress/wp-content/uploads/`. Les fichiers sont lus sur disque : `--uploads-dir`, sinon
    `WORDPRESS_UPLOADS_DIR` (`HOST_WORDPRESS_PATH/wp-content/uploads` monté en lecture seule dans api2 par les compose),
    sinon téléchargés ; un média introuvable garde son ancienne adresse et est signalé ;
-3. **idempotente** (`legacy_wp_id`) : relancée, elle met à jour sans dupliquer ;
-4. **rapport** (fichier + sortie) : shortcodes non convertis (`[ninja_form]`, `[table]`…), liens cassés, médias
+3. **image de une des articles** (17/10/2026) : la première image du corps devient l'image de une et en est retirée
+   (avec le lien, la légende et le paragraphe qui ne contenaient qu'elle ; la même image est retirée du corps
+   anglais) ; sans image dans le corps, ou si elle n'a pas pu être rapatriée, l'image mise en avant de WordPress
+   (`_thumbnail_id`) est reprise et le corps reste intact ;
+4. **idempotente** (`legacy_wp_id`) : relancée, elle met à jour sans dupliquer ;
+5. **rapport** (fichier + sortie) : shortcodes non convertis (`[ninja_form]`, `[table]`…), liens cassés, médias
    introuvables ;
-5. table `kp_cms_redirect` : permaliens repris (`/?p=123`, `/{année}/{mois}/{slug}/`) → `/news/{slug}` ;
+6. table `kp_cms_redirect` : permaliens repris (`/?p=123`, `/{année}/{mois}/{slug}/`) → `/news/{slug}` ;
    articles non repris → `/news` (301). Utilisée à la bascule (phase 5, `SITE_REDIRECTS.md`).
 
 ## 9. Critères d'acceptation
@@ -205,6 +209,8 @@ Commande `bin/console app:import-wordpress --articles=50 --pages=<ids> [--dry-ru
 - **CMS-11** — La recherche globale renvoie les articles et pages publiés (catégories `news`, `pages`).
 - **CMS-14** — Les médias d'un article ou d'une page (repris de WordPress ou insérés dans app4) sont rangés dans
   l'album « Articles » ou « Pages » s'ils n'ont pas d'album ; la reprise conserve les catégories des articles.
+- **CMS-15** — Un article repris a pour image de une la première image de son corps, qui n'y figure plus (ni en
+  français ni en anglais) ; sans image dans le corps, l'image mise en avant de WordPress est reprise.
 - **CMS-12** — Un jeton de prévisualisation expiré ou falsifié est refusé ; une prévisualisation n'est jamais mise
   en cache.
 

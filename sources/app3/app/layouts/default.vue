@@ -8,6 +8,7 @@
     <SiteBetaBanner />
     <SiteHeader />
     <NavMain />
+    <SiteSearchBlock />
     <main id="content" class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 lg:px-8">
       <slot />
     </main>

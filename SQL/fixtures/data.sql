@@ -459,7 +459,7 @@ INSERT INTO `wptest_term_taxonomy` (`term_taxonomy_id`, `term_id`, `taxonomy`) V
 INSERT INTO `wptest_term_relationships` (`object_id`, `term_taxonomy_id`) VALUES
   (101, 11), (101, 12), (101, 13), (101, 14), (101, 15);
 INSERT INTO `wptest_posts` (`ID`, `post_date`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `post_name`, `post_modified`, `post_parent`, `post_type`) VALUES
-  (101, '2024-06-02 10:00:00', '[:fr]Premier paragraphe\n\n<img src="https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium"> <a href="https://www.kayak-polo.info/?p=102">ancien</a> [ninja_form id=19][:en]First paragraph[:]', '[:fr]Finale N1[:en]N1 final[:]', '[:fr]Le résumé[:]', 'publish', 'finale-n1', '2024-06-03 08:00:00', 0, 'post'),
+  (101, '2024-06-02 10:00:00', '[:fr]Premier paragraphe\n\n<img src="https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium"> <a href="https://www.kayak-polo.info/?p=102">ancien</a> [ninja_form id=19][:en]First paragraph\n\n<img src="https://www.kayak-polo.info/wordpress/wp-content/uploads/2024/06/photo-300x200.jpg" alt="Podium">[:]', '[:fr]Finale N1[:en]N1 final[:]', '[:fr]Le résumé[:]', 'publish', 'finale-n1', '2024-06-03 08:00:00', 0, 'post'),
   (102, '2024-05-01 10:00:00', 'Ancien', 'Ancien article', '', 'publish', 'ancien', '2024-05-01 10:00:00', 0, 'post'),
   (103, '2024-07-01 10:00:00', 'Brouillon', 'Brouillon WP', '', 'draft', 'brouillon-wp', '2024-07-01 10:00:00', 0, 'post'),
   (201, '2024-06-02 09:00:00', '', 'photo', '', 'inherit', 'photo', '2024-06-02 09:00:00', 101, 'attachment'),
@@ -468,6 +468,7 @@ INSERT INTO `wptest_posts` (`ID`, `post_date`, `post_content`, `post_title`, `po
   (313, '2015-01-01 10:00:00', 'Vieux texte', 'Historique', '', 'publish', 'historique', '2015-01-01 10:00:00', 0, 'page');
 INSERT INTO `wptest_postmeta` (`post_id`, `meta_key`, `meta_value`) VALUES
   (101, '_thumbnail_id', '201'),
+  (102, '_thumbnail_id', '201'),
   (101, 'rank_math_description', '[:fr]Description SEO[:]'),
   (101, 'rank_math_title', '%title% %sep% %sitename%'),
   (201, '_wp_attached_file', '2024/06/photo.jpg');

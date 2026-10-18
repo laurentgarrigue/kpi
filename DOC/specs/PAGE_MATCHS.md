@@ -138,6 +138,29 @@ code est résolu de la façon suivante :
   Si la poule existe mais n'est pas consolidée → `pool_not_consolidated` ; si elle n'existe pas ou que
   le rang est introuvable → `pool_rank_not_found`. Dans les deux cas, l'emplacement reste vide.
 
+**Relance d'une affectation (arbitres) :** l'affectation peut être relancée après une modification
+des codes du libellé ; elle doit alors recalculer les arbitres posés par une affectation précédente,
+sans écraser une désignation faite à la main. Pour chaque emplacement arbitre (PART3, PART4) :
+
+| Contenu actuel de l'emplacement | Comportement |
+|---------------------------------|--------------|
+| Vide | Recalculé depuis le code |
+| Arbitre désigné nominativement (`Matric_arbitre_* ≠ 0`) | **Conservé** |
+| Texte libre égal au nom d'une équipe de la compétition/saison (`kp_competition_equipe.Libelle`), typiquement posé par une affectation auto précédente | **Recalculé** depuis le code |
+| Autre texte libre (saisi à la main, sans licence) | **Conservé** |
+
+Un emplacement recalculé dont le code ne se résout pas, ou absent du libellé, garde sa valeur
+actuelle (seuls les emplacements résolus sont écrits). Les équipes A/B suivent la même règle :
+elles sont réécrites dès que leur code se résout.
+
+Critères d'acceptation :
+
+- **AFF-01** : un match affecté auto `[V11-P12-V12-P11]`, dont on change le libellé en
+  `[V11-P12-P11-V12]`, voit ses deux arbitres permutés à la relance, sans « Annuler l'affectation ».
+- **AFF-02** : un arbitre désigné nominativement (matricule) n'est pas modifié par la relance.
+- **AFF-03** : un arbitre saisi en texte libre qui n'est pas un nom d'équipe de la compétition
+  n'est pas modifié par la relance.
+
 **Retour d'information utilisateur** : l'API renvoie `{ updated, errors: [{ id, reason }] }`. Le
 frontend affiche, en plus du nombre de matchs affectés, un **toast d'avertissement** quand des
 emplacements n'ont pas pu être résolus — avec un message spécifique « poule non consolidée »
@@ -217,6 +240,21 @@ Le seuil de repos est réglable dans la barre. Une légende rappelle les deux co
 - `gameInvolvesTeam(game, code)` résout l'appartenance ; les préfixes `REF:` / `REFTEAM:` aiguillent vers la correspondance par matricule ou par nom normalisé.
 - Les ensembles `teamConflictGameIds` et `teamRestWarningGameIds` (et le filtre `filteredGames`) reposent tous sur `gameInvolvesTeam`, donc le support arbitre est transverse sans logique dupliquée.
 - Couleur `info` (bleu) enregistrée dans `assets/css/admin.css` (`@theme`) pour distinguer visuellement les arbitres des équipes (primaire) et placeholders (orange).
+- La détection « terrain en double » est la fonction pure `pitchConflictIds` (`utils/pitchGrid.ts`), partagée avec la vue Terrains (§2.7).
+
+### 2.7 Vue « Terrains »
+
+Bouton **Terrains** (icône `view-columns`) à côté du bouton 🛡️ de contrôle de planification. Il bascule la liste (tableau desktop + cartes mobile) vers une grille **heure × terrain**, sur le modèle de l'onglet Terrains du site public (app3). L'état est mémorisé avec les autres filtres (localStorage). Calcul 100 % client, à partir des matchs déjà chargés.
+
+| ID | Critère d'acceptation |
+|----|-----------------------|
+| GAM-PIT-01 | Une grille par date (ordre chronologique), une **colonne par terrain** (numériques dans l'ordre numérique, puis nommés, puis « Sans terrain »), une ligne par heure. Les matchs sans date / sans heure sont regroupés en dernier. |
+| GAM-PIT-02 | La grille affiche exactement les matchs de la liste : **tous les filtres actifs** s'appliquent (contexte, tour, journée, date, terrain, tri, non verrouillés, entité sélectionnée dans la barre de planification). |
+| GAM-PIT-03 | Chaque match : compétition + phase, n°, verrou, équipes (placeholder bracket en orange italique), score s'il existe. **Si cochés dans « Affichage »**, les arbitres 1 et 2 puis le shotclock sont affichés sous les noms d'équipes. |
+| GAM-PIT-04 | Un créneau est **encadré en rouge** quand il pose problème : plusieurs matchs au même créneau sur le même terrain, ou deux matchs consécutifs du même terrain (même date) espacés de **moins de 30 min** (intervalle terrain réglable dans la barre de planification). La détection porte sur les matchs affichés et ne dépend pas de l'ouverture de la barre. |
+| GAM-PIT-05 | Un clic sur un match ouvre son formulaire d'édition quand le tableau le permettrait (profil ≤ 6, non verrouillé, autorisé) ; sinon rien. |
+
+Implémentation : `components/games/PitchView.vue` + `utils/pitchGrid.ts` (`pitchDays`, `pitchConflictIds`), tests `tests/unit/pitchGrid.spec.ts`.
 
 ---
 
@@ -764,7 +802,7 @@ Les actions en masse opèrent sur les matchs cochés. Elles sont regroupées dan
 | **P**, **L** | Perdant (Loser) | `P3` | Perdant du match n°3 (ScoreA < ScoreB) |
 | **Lettre seule** | Rang dans poule | `1A` | 1er du classement poule A (via `kp_competition_equipe_journee.Clt`) |
 
-**Gestion arbitres** : Si l'arbitre a déjà un matricule identifié (`Matric_arbitre_* != 0`), l'affectation est ignorée pour cet arbitre.
+**Gestion arbitres** : Si l'arbitre a déjà un matricule identifié (`Matric_arbitre_* != 0`) ou un texte libre qui n'est pas un nom d'équipe de la compétition, l'affectation est ignorée pour cet arbitre ; un nom d'équipe posé par une affectation précédente est recalculé (voir §2.3.1, « Relance d'une affectation »).
 
 ### 9.6 Annulation affectation automatique
 

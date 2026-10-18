@@ -54,9 +54,7 @@ final class ImportWordPressTest extends ApiTestCase
         self::assertSame(['finale-n1', 'Finale N1', 'N1 final', 'published', '2024-06-02 10:00:00'], [$article['slug'], $article['title_fr'], $article['title_en'], $article['status'], $article['published_at']]);
         self::assertSame('Le résumé', $article['lead_fr']);
         self::assertStringStartsWith('<p>Premier paragraphe</p>', $article['body_fr']);
-        self::assertMatchesRegularExpression('~<img src="/media/content/\d{4}/\d{2}/photo\.jpg" alt="Podium">~', $article['body_fr'], 'original rapatrié à la place de la vignette 300x200');
         self::assertStringContainsString('<a href="/news">ancien</a>', $article['body_fr'], 'article non repris → /news');
-        self::assertNotNull($article['cover_media_id'], 'image mise en avant');
         self::assertSame('Description SEO', $article['seo_description_fr']);
         self::assertSame('', $article['seo_title_fr'], 'variables Rank Math ignorées');
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_cms_media WHERE legacy_url LIKE '%photo.jpg'"), 'un seul média pour la vignette et l\'image mise en avant');
@@ -67,6 +65,23 @@ final class ImportWordPressTest extends ApiTestCase
         self::assertSame('/news/finale-n1', $redirects['/?p=101']);
         self::assertSame('/news', $redirects['/2024/05/ancien/'], 'article publié non repris → /news (301)');
         self::assertArrayNotHasKey('/2024/07/brouillon-wp/', $redirects);
+    }
+
+    public function testCms15TheFirstImageOfTheBodyBecomesTheCover(): void
+    {
+        $this->import(['--articles' => '2']);
+
+        $article = $this->connection->fetchAssociative('SELECT * FROM kp_cms_article WHERE legacy_wp_id = 101');
+        $cover = $this->connection->fetchOne('SELECT path FROM kp_cms_media WHERE id = ?', [$article['cover_media_id']]);
+        self::assertMatchesRegularExpression('~^\d{4}/\d{2}/photo\.jpg$~', (string) $cover, 'original rapatrié à la place de la vignette 300x200');
+        self::assertStringNotContainsString('<img', $article['body_fr']);
+        self::assertStringContainsString('<p>Premier paragraphe</p>', $article['body_fr']);
+        self::assertStringContainsString('<a href="/news/ancien">ancien</a>', $article['body_fr'], 'le reste du paragraphe est gardé');
+        self::assertSame('<p>First paragraph</p>', $article['body_en'], 'même image retirée du corps anglais, paragraphe vide supprimé');
+
+        $withoutImage = $this->connection->fetchAssociative('SELECT * FROM kp_cms_article WHERE legacy_wp_id = 102');
+        self::assertSame($article['cover_media_id'], $withoutImage['cover_media_id'], 'sans image dans le corps : image mise en avant de WordPress');
+        self::assertSame('<p>Ancien</p>', $withoutImage['body_fr']);
     }
 
     public function testCms09ArticlesKeepTheirCategories(): void
