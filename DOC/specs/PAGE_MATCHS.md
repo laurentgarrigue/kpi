@@ -240,6 +240,21 @@ Le seuil de repos est réglable dans la barre. Une légende rappelle les deux co
 - `gameInvolvesTeam(game, code)` résout l'appartenance ; les préfixes `REF:` / `REFTEAM:` aiguillent vers la correspondance par matricule ou par nom normalisé.
 - Les ensembles `teamConflictGameIds` et `teamRestWarningGameIds` (et le filtre `filteredGames`) reposent tous sur `gameInvolvesTeam`, donc le support arbitre est transverse sans logique dupliquée.
 - Couleur `info` (bleu) enregistrée dans `assets/css/admin.css` (`@theme`) pour distinguer visuellement les arbitres des équipes (primaire) et placeholders (orange).
+- La détection « terrain en double » est la fonction pure `pitchConflictIds` (`utils/pitchGrid.ts`), partagée avec la vue Terrains (§2.7).
+
+### 2.7 Vue « Terrains »
+
+Bouton **Terrains** (icône `view-columns`) à côté du bouton 🛡️ de contrôle de planification. Il bascule la liste (tableau desktop + cartes mobile) vers une grille **heure × terrain**, sur le modèle de l'onglet Terrains du site public (app3). L'état est mémorisé avec les autres filtres (localStorage). Calcul 100 % client, à partir des matchs déjà chargés.
+
+| ID | Critère d'acceptation |
+|----|-----------------------|
+| GAM-PIT-01 | Une grille par date (ordre chronologique), une **colonne par terrain** (numériques dans l'ordre numérique, puis nommés, puis « Sans terrain »), une ligne par heure. Les matchs sans date / sans heure sont regroupés en dernier. |
+| GAM-PIT-02 | La grille affiche exactement les matchs de la liste : **tous les filtres actifs** s'appliquent (contexte, tour, journée, date, terrain, tri, non verrouillés, entité sélectionnée dans la barre de planification). |
+| GAM-PIT-03 | Chaque match : compétition + phase, n°, verrou, équipes (placeholder bracket en orange italique), score s'il existe. **Si cochés dans « Affichage »**, les arbitres 1 et 2 puis le shotclock sont affichés sous les noms d'équipes. |
+| GAM-PIT-04 | Un créneau est **encadré en rouge** quand il pose problème : plusieurs matchs au même créneau sur le même terrain, ou deux matchs consécutifs du même terrain (même date) espacés de **moins de 30 min** (intervalle terrain réglable dans la barre de planification). La détection porte sur les matchs affichés et ne dépend pas de l'ouverture de la barre. |
+| GAM-PIT-05 | Un clic sur un match ouvre son formulaire d'édition quand le tableau le permettrait (profil ≤ 6, non verrouillé, autorisé) ; sinon rien. |
+
+Implémentation : `components/games/PitchView.vue` + `utils/pitchGrid.ts` (`pitchDays`, `pitchConflictIds`), tests `tests/unit/pitchGrid.spec.ts`.
 
 ---
 
