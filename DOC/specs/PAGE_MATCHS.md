@@ -138,6 +138,29 @@ code est résolu de la façon suivante :
   Si la poule existe mais n'est pas consolidée → `pool_not_consolidated` ; si elle n'existe pas ou que
   le rang est introuvable → `pool_rank_not_found`. Dans les deux cas, l'emplacement reste vide.
 
+**Relance d'une affectation (arbitres) :** l'affectation peut être relancée après une modification
+des codes du libellé ; elle doit alors recalculer les arbitres posés par une affectation précédente,
+sans écraser une désignation faite à la main. Pour chaque emplacement arbitre (PART3, PART4) :
+
+| Contenu actuel de l'emplacement | Comportement |
+|---------------------------------|--------------|
+| Vide | Recalculé depuis le code |
+| Arbitre désigné nominativement (`Matric_arbitre_* ≠ 0`) | **Conservé** |
+| Texte libre égal au nom d'une équipe de la compétition/saison (`kp_competition_equipe.Libelle`), typiquement posé par une affectation auto précédente | **Recalculé** depuis le code |
+| Autre texte libre (saisi à la main, sans licence) | **Conservé** |
+
+Un emplacement recalculé dont le code ne se résout pas, ou absent du libellé, garde sa valeur
+actuelle (seuls les emplacements résolus sont écrits). Les équipes A/B suivent la même règle :
+elles sont réécrites dès que leur code se résout.
+
+Critères d'acceptation :
+
+- **AFF-01** : un match affecté auto `[V11-P12-V12-P11]`, dont on change le libellé en
+  `[V11-P12-P11-V12]`, voit ses deux arbitres permutés à la relance, sans « Annuler l'affectation ».
+- **AFF-02** : un arbitre désigné nominativement (matricule) n'est pas modifié par la relance.
+- **AFF-03** : un arbitre saisi en texte libre qui n'est pas un nom d'équipe de la compétition
+  n'est pas modifié par la relance.
+
 **Retour d'information utilisateur** : l'API renvoie `{ updated, errors: [{ id, reason }] }`. Le
 frontend affiche, en plus du nombre de matchs affectés, un **toast d'avertissement** quand des
 emplacements n'ont pas pu être résolus — avec un message spécifique « poule non consolidée »
@@ -764,7 +787,7 @@ Les actions en masse opèrent sur les matchs cochés. Elles sont regroupées dan
 | **P**, **L** | Perdant (Loser) | `P3` | Perdant du match n°3 (ScoreA < ScoreB) |
 | **Lettre seule** | Rang dans poule | `1A` | 1er du classement poule A (via `kp_competition_equipe_journee.Clt`) |
 
-**Gestion arbitres** : Si l'arbitre a déjà un matricule identifié (`Matric_arbitre_* != 0`), l'affectation est ignorée pour cet arbitre.
+**Gestion arbitres** : Si l'arbitre a déjà un matricule identifié (`Matric_arbitre_* != 0`) ou un texte libre qui n'est pas un nom d'équipe de la compétition, l'affectation est ignorée pour cet arbitre ; un nom d'équipe posé par une affectation précédente est recalculé (voir §2.3.1, « Relance d'une affectation »).
 
 ### 9.6 Annulation affectation automatique
 
