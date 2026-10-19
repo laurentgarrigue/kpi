@@ -49,6 +49,12 @@ La page détecte automatiquement le mode en fonction des paramètres d'URL et ad
 
 **Bloqué si**: Competition verrouillée (`kp_competition.Verrou = 'O'`)
 
+**Profil 10 « Contrôle équipement »** ([PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2) : consultation, édition
+inline, ajout, suppression, copie, création de joueur et recherche par licence sur **toutes les équipes** de ses
+compétitions (`Limit_clubs` ignoré), compétition non verrouillée. Pour les profils 1, 2 et 10, un événement
+sélectionné ajoute la navigation entre les équipes de l'événement (même club, même nation, ← / →) et la bascule vers
+le scrutineering. Les écritures vérifient aussi, pour tous les profils, que la compétition est dans le périmètre.
+
 **Match Mode:**
 
 | Profil | Droits | Conditions |

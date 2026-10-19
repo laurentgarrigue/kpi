@@ -22,7 +22,7 @@
 | **7** | Resp. club/équipe |
 | **8** | Consultation simple |
 | **9** | Table de marque |
-| **10** | (Inutilisé) |
+| **10** | Contrôle équipement (scrutineering) |
 
 > Le **profil effectif** peut différer du profil de base si un mandat est sélectionné.
 
@@ -1230,6 +1230,31 @@
 
 ---
 
+## Profil 10 — Contrôle équipement
+
+Spec : [PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md) (critères ADM-SCR-*).
+
+### Menu et accueil
+- [ ] Menu : seulement « Scrutineering » (+ liens KPI) ; carte Scrutineering sur `/`
+- [ ] ❌ `/competitions`, `/teams`, `/games`, `/rankings`, `/stats`, `/users`… (403 de l'API ou redirection)
+- [ ] ❌ Connexion au back-office legacy (`/admin/Login.php`) : message renvoyant vers admin2
+
+### `/scrutineering` et `/scrutineering/team/[teamId]`
+- [ ] Choisir un événement ; vue d'ensemble Complet / Partiel / Non contrôlé
+- [ ] Kayak / Gilet / Casque (0→4→0), Pagaies (0→6→0), commentaire, total des pagaies, réinitialisation
+- [ ] Équipement modifiable compétition verrouillée
+- [ ] Navigation : sélecteur de l'événement, ← / →, même club, même nation, bascule vers la feuille de présence
+
+### `/presence/team/[teamId]`
+- [ ] Toute équipe d'une compétition autorisée, quel que soit le club : n°, statut, ajout, création, suppression, copie
+- [ ] Lecture seule si la compétition est verrouillée
+- [ ] ❌ Feuille de présence match
+
+### Mandats
+- [ ] Profil 10 sous mandat 5 : droits du 5, plus de scrutineering
+
+---
+
 ## Notes
 
 - Les cellules `?` indiquent qu'aucun guard explicite n'a été trouvé dans le code — comportement à confirmer en pratique.
@@ -1238,7 +1263,7 @@
 - Le **profil effectif** peut différer du profil de base si un mandat est sélectionné.
 - La **règle de hiérarchie** sur `/users` : un utilisateur ne peut gérer que des utilisateurs ayant un profil **strictement supérieur** au sien — sauf P1 (Super Admin).
 - **P3 et P4 en édition** : mode "mandats seuls" — ils ne peuvent pas modifier les champs de base (profil, saisons, compétitions, clubs) d'un utilisateur, uniquement ajouter ou supprimer des mandats.
-- **Création** : P3 peut créer des profils 4-10 ; P4 peut créer des profils 5-10.
+- **Création** : P3 peut créer des profils 4-9 ; P4 peut créer des profils 5-9 ; le profil 10 n'est attribué que par P1 et P2.
 
 ---
 

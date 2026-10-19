@@ -28,7 +28,7 @@ Le token JWT contient :
 | 7 | Resp. club/équipe | ROLE_TEAM | Gestion de son équipe |
 | 8 | Consultation simple | ROLE_VIEWER | Lecture seule |
 | 9 | Table de marque | ROLE_SCORER | Saisie matchs uniquement |
-| 10 | (Inutilisé) | ROLE_USER | Accès minimal |
+| 10 | Contrôle équipement | ROLE_SCRUTINEER | Scrutineering et feuilles de présence équipe ([PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md)) |
 
 #### Hiérarchie des rôles Symfony
 
@@ -36,12 +36,13 @@ Le token JWT contient :
 # security.yaml
 role_hierarchy:
     ROLE_SUPER_ADMIN: [ROLE_ADMIN]
-    ROLE_ADMIN: [ROLE_DIVISION, ROLE_DELEGATE]
+    ROLE_ADMIN: [ROLE_DIVISION, ROLE_DELEGATE, ROLE_SCRUTINEER]
+    ROLE_SCRUTINEER: [ROLE_PRESENCE_VIEWER, ROLE_USER]
     ROLE_DIVISION: [ROLE_COMPETITION]
     ROLE_COMPETITION: [ROLE_ORGANIZER]
     ROLE_ORGANIZER: [ROLE_TEAM]
     ROLE_TEAM: [ROLE_VIEWER]
-    ROLE_VIEWER: [ROLE_SCORER, ROLE_USER]
+    ROLE_VIEWER: [ROLE_SCORER, ROLE_PRESENCE_VIEWER, ROLE_USER]
     ROLE_SCORER: [ROLE_USER]
 ```
 
