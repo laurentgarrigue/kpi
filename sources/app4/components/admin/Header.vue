@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { User } from '~/types'
 import { useAuthStore } from '~/stores/authStore'
+import { canManageScrutineering } from '~/utils/scrutineering'
 
 interface MenuItem {
   to?: string
@@ -124,6 +125,15 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
       to: '/stats',
       icon: 'heroicons:chart-pie',
       label: t('menu.statistics_short')
+    })
+  }
+
+  // Scrutineering - profiles 1–2 and 10, the only entry of the profile 10 (PAGE_SCRUTINEERING.md, ADM-SCR-01)
+  if (canManageScrutineering(profile)) {
+    items.push({
+      to: '/scrutineering',
+      icon: 'heroicons:clipboard-document-check',
+      label: t('menu.scrutineering')
     })
   }
 

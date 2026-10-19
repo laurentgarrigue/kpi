@@ -59,7 +59,8 @@
     "cms_menu": "Site menu",
     "cms_home": "Site home page",
     "cms_redirects": "Redirections",
-    "public_site_beta": "New public site (beta)"
+    "public_site_beta": "New public site (beta)",
+    "scrutineering": "Scrutineering"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -93,7 +94,8 @@
     "view_statistics": "View statistics",
     "system_operations": "System operations",
     "beta_notice_title": "Beta Version",
-    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to"
+    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to",
+    "manage_scrutineering": "Check the teams' equipment"
   },
   "events": {
     "title": "Event Management",
@@ -2005,7 +2007,7 @@
       "7": "7 - Club/Team Manager",
       "8": "8 - Read Only",
       "9": "9 - Scoreboard",
-      "10": "10 - (Unused)"
+      "10": "10 - Scrutineering"
     },
     "confirm_delete": "Are you sure you want to delete this user?",
     "confirm_bulk_delete": "Are you sure you want to delete {count} user(s)?",
@@ -3018,6 +3020,55 @@
       "file_required": "Pick a file.",
       "in_use": "Media in use",
       "too_deep": "Three levels at most."
+    }
+  },
+  "scrutineering": {
+    "title": "Scrutineering",
+    "title_team": "Scrutineering - Equipment control",
+    "event": "Event",
+    "choose_event": "Choose an event to check its teams.",
+    "no_teams": "No team in this event for your competitions.",
+    "load_error": "Unable to load the scrutineering.",
+    "save_error": "Saving failed.",
+    "refresh": "Refresh",
+    "overview": "Overview",
+    "overview_club": "Club",
+    "status_complete": "Complete",
+    "status_partial": "Partial",
+    "status_none": "Not checked",
+    "player": "Player",
+    "coach": "Coach",
+    "kayak": "Kayak",
+    "vest": "Vest",
+    "helmet": "Helmet",
+    "paddles": "Paddles",
+    "comment": "Comment",
+    "add_comment": "Add a comment",
+    "comment_title": "Comment - {name}",
+    "comment_max": "{count} / 255 characters",
+    "total_paddles": "Total valid paddles",
+    "legend": "Legend",
+    "legend_0": "Not checked",
+    "legend_1": "Valid",
+    "legend_2": "Cosmetic defect",
+    "legend_3": "Safety defect",
+    "legend_4": "Technical defect",
+    "legend_paddles": "Valid paddles (0 to 6)",
+    "reset": "Reset team",
+    "reset_title": "Reset the team's scrutineering?",
+    "reset_message": "Every equipment check and comment of the team will be cleared.",
+    "reset_done": "Scrutineering reset",
+    "locked_notice": "Competition locked: the presence sheet is frozen, the equipment control remains possible.",
+    "pdf_control": "Control PDF",
+    "no_players": "No player in the composition.",
+    "nav": {
+      "previous": "Previous team (←)",
+      "next": "Next team (→)",
+      "select_team": "Team of the event",
+      "same_club": "Same club:",
+      "same_nation": "Same nation ({nation}):",
+      "open_presence": "Presence sheet",
+      "open_scrutineering": "Scrutineering"
     }
   }
 }

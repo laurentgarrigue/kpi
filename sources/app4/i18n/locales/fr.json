@@ -59,7 +59,8 @@
     "cms_menu": "Menu du site",
     "cms_home": "Accueil du site",
     "cms_redirects": "Redirections",
-    "public_site_beta": "Nouveau site public (bêta)"
+    "public_site_beta": "Nouveau site public (bêta)",
+    "scrutineering": "Scrutineering"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -93,7 +94,8 @@
     "view_statistics": "Voir les statistiques",
     "system_operations": "Opérations système",
     "beta_notice_title": "Version Beta",
-    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté à"
+    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté à",
+    "manage_scrutineering": "Contrôler les équipements des équipes"
   },
   "events": {
     "title": "Gestion des événements",
@@ -2017,7 +2019,7 @@
       "7": "7 - Resp. club/équipe",
       "8": "8 - Consultation simple",
       "9": "9 - Table de marque",
-      "10": "10 - (Inutilisé)"
+      "10": "10 - Contrôle équipement"
     },
     "confirm_delete": "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
     "confirm_bulk_delete": "Êtes-vous sûr de vouloir supprimer {count} utilisateur(s) ?",
@@ -3030,6 +3032,55 @@
       "file_required": "Choisissez un fichier.",
       "in_use": "Média utilisé",
       "too_deep": "Trois niveaux au plus."
+    }
+  },
+  "scrutineering": {
+    "title": "Scrutineering",
+    "title_team": "Scrutineering - Contrôle équipement",
+    "event": "Événement",
+    "choose_event": "Choisissez un événement pour contrôler ses équipes.",
+    "no_teams": "Aucune équipe dans cet événement pour vos compétitions.",
+    "load_error": "Impossible de charger le scrutineering.",
+    "save_error": "L'enregistrement a échoué.",
+    "refresh": "Rafraîchir",
+    "overview": "Vue d'ensemble",
+    "overview_club": "Club",
+    "status_complete": "Complet",
+    "status_partial": "Partiel",
+    "status_none": "Non contrôlé",
+    "player": "Joueur",
+    "coach": "Coach",
+    "kayak": "Kayak",
+    "vest": "Gilet",
+    "helmet": "Casque",
+    "paddles": "Pagaies",
+    "comment": "Commentaire",
+    "add_comment": "Ajouter un commentaire",
+    "comment_title": "Commentaire - {name}",
+    "comment_max": "{count} / 255 caractères",
+    "total_paddles": "Total des pagaies valides",
+    "legend": "Légende",
+    "legend_0": "Non contrôlé",
+    "legend_1": "Valide",
+    "legend_2": "Défaut esthétique",
+    "legend_3": "Défaut sécurité",
+    "legend_4": "Défaut technique",
+    "legend_paddles": "Pagaies valides (0 à 6)",
+    "reset": "Réinitialiser l'équipe",
+    "reset_title": "Réinitialiser le contrôle de l'équipe ?",
+    "reset_message": "Tous les contrôles d'équipement et commentaires de l'équipe seront effacés.",
+    "reset_done": "Contrôle réinitialisé",
+    "locked_notice": "Compétition verrouillée : la feuille de présence est figée, le contrôle équipement reste possible.",
+    "pdf_control": "PDF Contrôle",
+    "no_players": "Aucun joueur dans la composition.",
+    "nav": {
+      "previous": "Équipe précédente (←)",
+      "next": "Équipe suivante (→)",
+      "select_team": "Équipe de l'événement",
+      "same_club": "Même club :",
+      "same_nation": "Même nation ({nation}) :",
+      "open_presence": "Feuille de présence",
+      "open_scrutineering": "Scrutineering"
     }
   }
 }

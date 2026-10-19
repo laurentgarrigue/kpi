@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { canManageScrutineering } from '~/utils/scrutineering'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'auth'
@@ -6,6 +8,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const canScrutineer = computed(() => canManageScrutineering(authStore.profile))
 // Note: workContext is initialized by WorkContextSelector component
 
 // Tutoriel guidé — lance le tour à la 1re visite, ou propose les nouveautés au retour.
@@ -41,6 +44,23 @@ onMounted(() => {
 
     <!-- Quick stats / navigation cards -->
     <div data-tour="home-shortcuts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Scrutineering card (profiles 1–2 and 10) -->
+      <NuxtLink
+        v-if="canScrutineer"
+        to="/scrutineering"
+        class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center gap-4">
+          <div class="p-3 bg-primary-100 dark:bg-primary-950 rounded-lg">
+            <UIcon name="i-heroicons-clipboard-document-check" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
+          </div>
+          <div>
+            <h3 class="font-semibold text-header-900 dark:text-header-50">{{ t('menu.scrutineering') }}</h3>
+            <p class="text-sm text-header-600 dark:text-header-300">{{ t('dashboard.manage_scrutineering') }}</p>
+          </div>
+        </div>
+      </NuxtLink>
+
       <!-- Competitions card -->
       <NuxtLink
         v-if="authStore.hasProfile(8)"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UserListItem, UserDetail, Mandate, MandateForm } from '~/types/users'
+import { isScrutineerProfile } from '~/utils/scrutineering'
 
 interface Competition {
   code: string
@@ -510,6 +511,8 @@ const mandatesOnly = computed(() => {
 const profileOptions = computed(() => {
   const options = []
   for (let i = 1; i <= 10; i++) {
+    // Profile 10 "Contrôle équipement" is assigned by profiles 1–2 only (PAGE_SCRUTINEERING.md § 2.2)
+    if (isScrutineerProfile(i) && adminNiveau.value > 2) continue
     if (adminNiveau.value <= 1) {
       options.push({ value: i, label: t(`users.profiles.${i}`) })
     } else if (adminNiveau.value <= 2 && i >= 3) {

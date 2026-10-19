@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Player, AddPlayerFormData, CopyCompositionFormData, AvailableComposition } from '~/types/presence'
 import type { PlayerAutocomplete } from '~/types'
+import { isScrutineerProfile } from '~/utils/scrutineering'
 
 definePageMeta({
   layout: 'admin',
@@ -168,9 +169,12 @@ const isDeleting = ref(false)
 // Sibling teams (same competition/season) for quick navigation
 const siblingTeams = ref<{ id: number; libelle: string }[]>([])
 
+// The profile 10 has no access to the competition team list: it navigates through the teams of the event
+const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
+
 // Load sibling teams for dropdown
 const loadSiblingTeams = async () => {
-  if (!presenceStore.competition || !presenceStore.team) return
+  if (!presenceStore.competition || !presenceStore.team || isScrutineer.value) return
   try {
     const response = await api.get<{ teams: { id: number; libelle: string }[] }>('/admin/competition-teams', {
       season: presenceStore.team.codeSaison,
@@ -204,6 +208,15 @@ const syncCompetitionFilter = () => {
 const onCompetitionChange = async () => {
   const code = workContext.pageCompetitionCode
   if (!presenceStore.initialized || !code || code === presenceStore.competition?.code) return
+  if (isScrutineer.value) {
+    const firstEventTeam = navigation.teams.value.find(team => team.competition_code === code)
+    if (firstEventTeam) {
+      navigation.go(firstEventTeam.team_id)
+    } else {
+      toast.add({ title: t('common.error'), description: t('teams_page.empty'), color: 'error', duration: 3000 })
+    }
+    return
+  }
   try {
     const response = await api.get<{ teams: { id: number; libelle: string }[] }>('/admin/competition-teams', {
       season: workContext.season,
@@ -540,6 +553,11 @@ const copyComposition = async () => {
 // Delete
 const singleDeleteMatric = ref<number | null>(null)
 const singleDeleteModalOpen = ref(false)
+
+// Team navigation of the event for profiles 1–2 and 10 (PAGE_SCRUTINEERING.md § 1.2); ← / → paused while a modal is open
+const anyModalOpen = computed(() => addModalOpen.value || copyModalOpen.value || bulkDeleteModalOpen.value
+  || singleDeleteModalOpen.value || initStartersModalOpen.value || forceStatusTarget.value !== null)
+const navigation = useScrutineeringNavigation(teamId, 'presence', anyModalOpen)
 const isSingleDeleting = ref(false)
 
 const confirmBulkDelete = () => {
@@ -637,9 +655,9 @@ const pdfLinks = computed(() => {
         <div v-if="presenceStore.team" class="flex flex-wrap items-center gap-2 text-sm">
           <span class="text-header-600 dark:text-header-300">{{ presenceStore.competition?.code }} - {{ presenceStore.team.codeSaison }}</span>
           <span class="text-header-600 dark:text-header-300">&bull;</span>
-          <!-- Team dropdown selector -->
+          <!-- Team dropdown selector (replaced by the event team navigation when it is shown) -->
           <select
-            v-if="siblingTeams.length >= 2"
+            v-if="siblingTeams.length >= 2 && navigation.teams.value.length === 0"
             :value="teamId"
             class="font-semibold text-header-900 dark:text-header-50 border border-header-300 dark:border-header-700 rounded-md px-2 py-1 text-sm bg-white dark:bg-header-900 hover:border-primary-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 cursor-pointer max-w-xs"
             @change="navigateToTeam(Number(($event.target as HTMLSelectElement).value))"
@@ -711,6 +729,8 @@ const pdfLinks = computed(() => {
         </div>
       </template>
     </AdminPageHeader>
+
+    <AdminScrutineeringTeamNav v-if="navigation.enabled.value" :navigation="navigation" :team-id="teamId" view="presence" />
 
     <!-- Toolbar -->
     <AdminToolbar
