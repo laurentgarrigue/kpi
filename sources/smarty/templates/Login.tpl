@@ -6,6 +6,9 @@
     </div>
     <div class="row">
         <div class="col-sm-12 col-md-10 col-lg-4 mx-auto">
+            {if $loginRefused}
+                <div class="alert alert-warning" role="alert">{#Connexion_refusee_controle_equipement#} <a href="../admin2/">admin2</a></div>
+            {/if}
             <form class="form-signin2" method="POST" action="Login.php" name="formLogin" id="formLogin" enctype="multipart/form-data">
             <label for="User">{#Identifiant#}</label>
             <input type="tel" name="User" id="idUser" class="form-control" placeholder="{#Identifiant#}" required autofocus>
