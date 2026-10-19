@@ -10,6 +10,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    /** Profile 10 "Contrôle équipement": scrutineering and presence sheets of every team (PAGE_SCRUTINEERING.md § 2). */
+    public const SCRUTINEER_NIVEAU = 10;
+
     private string $code;
     private string $password;
     private int $niveau;
@@ -178,6 +181,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->mandateNiveau ?? $this->niveau;
     }
 
+    /** Effective profile 10: outside the linear hierarchy, see DOC/developer/reference/PROFILE_ROLES.md */
+    public function isScrutineer(): bool
+    {
+        return $this->getEffectiveNiveau() === self::SCRUTINEER_NIVEAU;
+    }
+
     // --- Filter parsing methods ---
 
     /**
@@ -245,7 +254,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /** @return string[]|null Allowed club codes, or null if unrestricted */
     public function getAllowedClubs(): ?array
     {
-        if ($this->getEffectiveNiveau() <= 2) return null;
+        // The scrutineer checks every team of its competitions: a club limitation makes no sense for it
+        if ($this->getEffectiveNiveau() <= 2 || $this->isScrutineer()) return null;
         if ($this->activeMandateId !== null) {
             return self::parseCommaFilter($this->mandateLimitClubs);
         }
@@ -275,6 +285,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             $this->getEffectiveNiveau() <= 7 => 'ROLE_TEAM',
             $this->getEffectiveNiveau() <= 8 => 'ROLE_VIEWER',
             $this->getEffectiveNiveau() <= 9 => 'ROLE_SCORER',
+            $this->isScrutineer() => 'ROLE_SCRUTINEER',
             default => 'ROLE_USER',
         };
 

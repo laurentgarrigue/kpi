@@ -326,15 +326,81 @@ CREATE TABLE `kp_match_joueur` (
   KEY `fk_matchs_matric` (`Matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
--- Sous-ensemble : seules les colonnes d'identité lues (noms des arbitres). Aucune vraie licence.
+-- Définition de production : identité des arbitres, connexion d'app4 (Numero_club, lu par UserProvider) et feuille
+-- de présence (pagaies, certificats, licence). Aucune vraie licence.
 DROP TABLE IF EXISTS `kp_licence`;
 CREATE TABLE `kp_licence` (
   `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
   `Origine` varchar(6) NOT NULL DEFAULT '',
   `Nom` varchar(30) DEFAULT NULL,
   `Prenom` varchar(30) DEFAULT NULL,
-  `Numero_club` varchar(6) DEFAULT NULL, -- lu par UserProvider (connexion d'app4, phase 4)
+  `Sexe` char(1) DEFAULT NULL,
+  `Naissance` date DEFAULT NULL,
+  `Club` varchar(100) DEFAULT NULL,
+  `Numero_club` varchar(6) DEFAULT NULL,
+  `Comite_dept` varchar(100) DEFAULT NULL,
+  `Numero_comite_dept` varchar(6) DEFAULT NULL,
+  `Comite_reg` varchar(100) DEFAULT NULL,
+  `Numero_comite_reg` varchar(6) DEFAULT NULL,
+  `Etat` varchar(20) DEFAULT NULL,
+  `Pagaie_EVI` varchar(10) DEFAULT NULL,
+  `Pagaie_MER` varchar(10) DEFAULT NULL,
+  `Pagaie_ECA` varchar(10) DEFAULT NULL,
+  `Date_certificat_CK` date DEFAULT NULL,
+  `Date_certificat_APS` date DEFAULT NULL,
+  `Reserve` int(11) DEFAULT NULL,
+  `Etat_certificat_APS` char(3) DEFAULT NULL,
+  `Etat_certificat_CK` char(3) DEFAULT NULL,
+  `Type_licence` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`Matric`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Feuille de présence (PAGE_PRESENCE.md) : arbitres, surclassements et catégories d'âge, lus avec la composition.
+DROP TABLE IF EXISTS `kp_arbitre`;
+CREATE TABLE `kp_arbitre` (
+  `Matric` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `regional` char(1) DEFAULT NULL,
+  `interregional` char(1) DEFAULT NULL,
+  `national` char(1) DEFAULT NULL,
+  `international` char(1) DEFAULT NULL,
+  `arbitre` char(3) DEFAULT NULL,
+  `livret` varchar(25) NOT NULL DEFAULT '',
+  `niveau` char(1) NOT NULL DEFAULT '',
+  `saison` varchar(4) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_surclassement`;
+CREATE TABLE `kp_surclassement` (
+  `Matric` int(11) NOT NULL,
+  `Saison` varchar(6) NOT NULL,
+  `Cat` varchar(5) NOT NULL,
+  `Date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_categorie`;
+CREATE TABLE `kp_categorie` (
+  `id` varchar(8) NOT NULL DEFAULT '',
+  `libelle` varchar(30) NOT NULL DEFAULT '',
+  `age_min` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `age_max` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `sexe` char(1) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Scrutineering (PAGE_SCRUTINEERING.md) : contrôle de l'équipement, une ligne par joueur d'une composition.
+DROP TABLE IF EXISTS `kp_scrutineering`;
+CREATE TABLE `kp_scrutineering` (
+  `id_equipe` int(10) UNSIGNED NOT NULL,
+  `matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `kayak_status` smallint(6) DEFAULT NULL,
+  `kayak_print` smallint(6) DEFAULT NULL,
+  `vest_status` smallint(6) DEFAULT NULL,
+  `vest_print` smallint(6) DEFAULT NULL,
+  `helmet_status` smallint(6) DEFAULT NULL,
+  `helmet_print` smallint(6) DEFAULT NULL,
+  `paddle_count` smallint(6) DEFAULT NULL,
+  `paddle_print` smallint(6) DEFAULT NULL,
+  `comment` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id_equipe`,`matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 -- Site public, phase 3 (API_PUBLIC_TRANSVERSE.md) : équipes, clubs et comités. Définitions de production.

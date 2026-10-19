@@ -125,4 +125,23 @@ trait AdminLoggableTrait
             // Log silently fails - don't break the main operation
         }
     }
+
+    /**
+     * Log an admin action with event, season and competition context.
+     * Used by StaffController (scrutineering of the teams of an event).
+     */
+    private function logActionForEventCompetition(string $action, int $eventId, string $season, string $competition, string $details): void
+    {
+        try {
+            $userId = $this->getUser()?->getUserIdentifier() ?? 'system';
+
+            $this->connection->executeStatement(
+                'INSERT INTO kp_journal (Dates, Users, Actions, Evenements, Saisons, Competitions, Journal)
+                    VALUES (NOW(), ?, ?, ?, ?, ?, ?)',
+                [$userId, $action, $eventId, $season, $competition, $details]
+            );
+        } catch (\Exception) {
+            // Log silently fails - don't break the main operation
+        }
+    }
 }
