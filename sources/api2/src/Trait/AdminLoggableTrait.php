@@ -128,9 +128,9 @@ trait AdminLoggableTrait
 
     /**
      * Log an admin action with event, season and competition context.
-     * Used by StaffController (scrutineering of the teams of an event).
+     * Used by StaffController (scrutineering): the event is null when the action is made outside an event.
      */
-    private function logActionForEventCompetition(string $action, int $eventId, string $season, string $competition, string $details): void
+    private function logActionForEventCompetition(string $action, ?int $eventId, string $season, string $competition, string $details): void
     {
         try {
             $userId = $this->getUser()?->getUserIdentifier() ?? 'system';

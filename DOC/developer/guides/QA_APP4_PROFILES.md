@@ -1235,15 +1235,19 @@
 Spec : [PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md) (critères ADM-SCR-*).
 
 ### Menu et accueil
-- [ ] Menu : seulement « Scrutineering » (+ liens KPI) ; carte Scrutineering sur `/`
-- [ ] ❌ `/competitions`, `/teams`, `/games`, `/rankings`, `/stats`, `/users`… (403 de l'API ou redirection)
+- [ ] Menu : seulement « Équipes » (+ liens KPI) ; carte Équipes sur `/` ; plus d'entrée ni de carte Scrutineering
+- [ ] `/teams` en lecture seule : bouton Scrutineering (vue d'ensemble), icône Scrutineering par équipe, pas de lien club
+  ni de PDF de compétition, Fiche contrôle dans le menu PDF de l'équipe
+- [ ] ❌ `/competitions`, `/clubs`, `/games`, `/rankings`, `/stats`, `/users`… (403 de l'API ou redirection)
 - [ ] ❌ Connexion au back-office legacy (`/admin/Login.php`) : message renvoyant vers admin2
 
 ### `/scrutineering` et `/scrutineering/team/[teamId]`
-- [ ] Choisir un événement ; vue d'ensemble Complet / Partiel / Non contrôlé
+- [ ] Filtres communs : un événement, ou une compétition sans événement ; vue d'ensemble Complet / Partiel / Non contrôlé
+- [ ] Compétition hors événement : contrôle possible (profil 10 sans limite d'événement) ; un profil 10 limité à des
+  événements ne voit pas ses équipes
 - [ ] Kayak / Gilet / Casque (0→4→0), Pagaies (0→6→0), commentaire, total des pagaies, réinitialisation
 - [ ] Équipement modifiable compétition verrouillée
-- [ ] Navigation : sélecteur de l'événement, ← / →, même club, même nation, bascule vers la feuille de présence
+- [ ] Navigation : sélecteur de l'événement, ← / →, même club / nation, bascule vers la feuille de présence
 
 ### `/presence/team/[teamId]`
 - [ ] Toute équipe d'une compétition autorisée, quel que soit le club : n°, statut, ajout, création, suppression, copie

@@ -50,7 +50,8 @@ security:
     # 5=Délégué fédéral, 6=Organisateur journée, 7=Resp. club/équipe,
     # 8=Consultation, 9=Table de marque, 10=Contrôle équipement (scrutineering)
     # ROLE_SCRUTINEER (10) sits outside the linear chain: no general consultation, but presence sheets
-    # of every team; ROLE_PRESENCE_VIEWER is the consultation of a team presence sheet shared by both.
+    # of every team; ROLE_PRESENCE_VIEWER is the consultation of the teams of a competition and of a
+    # team presence sheet, shared by both.
     role_hierarchy:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN]
         ROLE_ADMIN: [ROLE_DIVISION, ROLE_DELEGATE, ROLE_SCRUTINEER]

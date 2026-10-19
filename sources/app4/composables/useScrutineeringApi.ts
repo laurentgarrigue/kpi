@@ -1,18 +1,24 @@
-import type { EquipmentParameter, ScrutineeringOverview, ScrutineeringSheet, ScrutineeringTeam } from '~/types/scrutineering'
+import type { LastUpdateInfo } from '~/types/presence'
+import type { EquipmentParameter, ScrutineeringContext, ScrutineeringOverview, ScrutineeringSheet, ScrutineeringTeam } from '~/types/scrutineering'
+import { contextParams } from '~/utils/scrutineering'
 
-/** api2 /staff endpoints of the scrutineering (DOC/specs/PAGE_SCRUTINEERING.md § 5). */
+/**
+ * api2 /staff endpoints of the scrutineering (DOC/specs/PAGE_SCRUTINEERING.md § 5). A write made in the context of an
+ * event passes it (`eventId`) for the journal.
+ */
 export const useScrutineeringApi = () => {
   const api = useApi()
-  const base = (eventId: number) => `/staff/${eventId}`
+  const team = (teamId: number) => `/staff/team/${teamId}`
+  const withEvent = (endpoint: string, eventId: number | null) => (eventId === null ? endpoint : `${endpoint}?event=${eventId}`)
 
   return {
-    teams: (eventId: number) => api.get<ScrutineeringTeam[]>(`${base(eventId)}/teams`),
-    sheet: (eventId: number, teamId: number) => api.get<ScrutineeringSheet>(`${base(eventId)}/team/${teamId}/players`),
-    setEquipment: (eventId: number, teamId: number, playerId: number, parameter: EquipmentParameter, value: number) =>
-      api.put<{ value: number }>(`${base(eventId)}/team/${teamId}/player/${playerId}/${parameter}/${value}`),
-    setComment: (eventId: number, teamId: number, playerId: number, comment: string) =>
-      api.put<{ comment: string }>(`${base(eventId)}/team/${teamId}/player/${playerId}/comment`, { comment }),
-    reset: (eventId: number, teamId: number) => api.del<{ reset: boolean, deleted: number }>(`${base(eventId)}/team/${teamId}/reset`),
-    overview: (eventId: number) => api.get<ScrutineeringOverview>(`${base(eventId)}/overview`),
+    teams: (context: ScrutineeringContext) => api.get<ScrutineeringTeam[]>('/staff/teams', contextParams(context)),
+    overview: (context: ScrutineeringContext) => api.get<ScrutineeringOverview>('/staff/overview', contextParams(context)),
+    sheet: (teamId: number) => api.get<ScrutineeringSheet>(`${team(teamId)}/players`),
+    setEquipment: (teamId: number, playerId: number, parameter: EquipmentParameter, value: number, eventId: number | null) =>
+      api.put<{ value: number, lastUpdate: LastUpdateInfo | null }>(withEvent(`${team(teamId)}/player/${playerId}/${parameter}/${value}`, eventId)),
+    setComment: (teamId: number, playerId: number, comment: string, eventId: number | null) =>
+      api.put<{ comment: string, lastUpdate: LastUpdateInfo | null }>(withEvent(`${team(teamId)}/player/${playerId}/comment`, eventId), { comment }),
+    reset: (teamId: number, eventId: number | null) => api.del<{ reset: boolean, deleted: number }>(withEvent(`${team(teamId)}/reset`, eventId)),
   }
 }

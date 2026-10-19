@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import type { OverviewStatus, ScrutineeringOverview } from '~/types/scrutineering'
-import { resolveEventId } from '~/utils/scrutineering'
+import { resolveContext } from '~/utils/scrutineering'
 import { teamViewPath } from '~/composables/useScrutineeringNavigation'
 
-/** Scrutineering overview of the event: one cell per club and category (PAGE_SCRUTINEERING.md § 4). */
+/** Scrutineering overview of the context (event, else competition): one cell per club and category (PAGE_SCRUTINEERING.md § 4). */
 definePageMeta({ layout: 'admin', middleware: ['auth', 'scrutineering'] })
 
 const { t } = useI18n()
 const workContext = useWorkContextStore()
 const scrutineeringApi = useScrutineeringApi()
 
-const eventId = computed(() => resolveEventId(workContext.pageEventGroupSelection, workContext.selectionType, workContext.eventId))
+const context = computed(() => resolveContext(workContext.pageEventGroupSelection, workContext.season, workContext.pageCompetitionCode))
 const overview = ref<ScrutineeringOverview | null>(null)
 const loading = ref(false)
 const loadError = ref(false)
@@ -34,14 +34,14 @@ const cells = computed(() => {
 const teamsOf = (club: string, category: string) => cells.value.get(`${club}||${category}`) ?? []
 
 async function load() {
-  if (eventId.value === null) {
+  if (context.value === null) {
     overview.value = null
     return
   }
   loading.value = true
   loadError.value = false
   try {
-    overview.value = await scrutineeringApi.overview(eventId.value)
+    overview.value = await scrutineeringApi.overview(context.value)
   }
   catch {
     loadError.value = true
@@ -51,7 +51,8 @@ async function load() {
   }
 }
 
-watch(eventId, load)
+// Same context with a new value (another event or competition) reloads too
+watch(() => JSON.stringify(context.value), load)
 onMounted(async () => {
   await workContext.initContext()
   await load()
@@ -60,12 +61,11 @@ onMounted(async () => {
 
 <template>
   <div>
-    <AdminPageHeader :title="t('scrutineering.title')" :show-filters="false" />
+    <AdminPageHeader :title="t('scrutineering.title')" :competition-filtered-codes="workContext.pageFilteredCompetitionCodes" />
 
     <div class="mb-4 flex flex-wrap items-end gap-3">
-      <AdminScrutineeringEventSelect :event-id="eventId" />
       <button
-        v-if="eventId !== null"
+        v-if="context !== null"
         type="button"
         class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
         :disabled="loading"
@@ -76,8 +76,8 @@ onMounted(async () => {
       </button>
     </div>
 
-    <p v-if="eventId === null" class="p-4 rounded-lg bg-white dark:bg-header-900 text-header-600 dark:text-header-300">
-      {{ t('scrutineering.choose_event') }}
+    <p v-if="context === null" class="p-4 rounded-lg bg-white dark:bg-header-900 text-header-600 dark:text-header-300">
+      {{ t('scrutineering.choose_context') }}
     </p>
     <p v-else-if="loadError" class="p-4 rounded-lg bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-300">
       {{ t('scrutineering.load_error') }}

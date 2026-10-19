@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import type { User } from '~/types'
 import { useAuthStore } from '~/stores/authStore'
-import { canManageScrutineering } from '~/utils/scrutineering'
+import { canViewTeams } from '~/utils/scrutineering'
 
 interface MenuItem {
   to?: string
   icon: string
   label: string
   children?: MenuItem[]
+  /** Other route prefixes that also highlight the entry */
+  activePaths?: string[]
 }
 
 interface MenuGroup {
@@ -83,12 +85,14 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
     })
   }
 
-  // Équipes - profile <= 8 (hidden for profile 9)
-  if (profile <= 8) {
+  // Équipes - profile <= 8 and 10, the only entry of the profile 10 (hidden for profile 9)
+  if (canViewTeams(profile)) {
     items.push({
       to: '/teams',
       icon: 'heroicons:user-group',
-      label: t('menu.teams')
+      label: t('menu.teams'),
+      // The team presence sheet and the scrutineering are reached from the teams page
+      activePaths: ['/presence/team', '/scrutineering']
     })
   }
 
@@ -125,15 +129,6 @@ const competitionMenuItems = computed<MenuItem[]>(() => {
       to: '/stats',
       icon: 'heroicons:chart-pie',
       label: t('menu.statistics_short')
-    })
-  }
-
-  // Scrutineering - profiles 1–2 and 10, the only entry of the profile 10 (PAGE_SCRUTINEERING.md, ADM-SCR-01)
-  if (canManageScrutineering(profile)) {
-    items.push({
-      to: '/scrutineering',
-      icon: 'heroicons:clipboard-document-check',
-      label: t('menu.scrutineering')
     })
   }
 
@@ -303,7 +298,7 @@ const switchLanguage = (code: string) => {
   setLocale(code as 'en' | 'fr')
 }
 
-const isActive = (path: string) => route.path.startsWith(path)
+const isActive = (item: MenuItem) => [item.to!, ...(item.activePaths ?? [])].some(path => route.path.startsWith(path))
 
 // User dropdown
 const userMenuOpen = ref(false)
@@ -402,7 +397,7 @@ onMounted(() => {
               :to="item.to!"
               :class="[
                 'flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive(item.to!)
+                isActive(item)
                   ? 'text-light-50 bg-header-800'
                   : 'text-header-300 hover:text-light-50 hover:bg-header-800'
               ]"
@@ -754,7 +749,7 @@ onMounted(() => {
               :to="item.to!"
               :class="[
                 'flex items-center gap-2 py-2 text-sm font-medium transition-colors',
-                isActive(item.to!)
+                isActive(item)
                   ? 'text-primary-400'
                   : 'text-header-200 hover:text-white'
               ]"

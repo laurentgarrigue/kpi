@@ -28,8 +28,8 @@ Sources :
 
 **Profil 10, hors hiérarchie** ([PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md) § 2) : `ROLE_SCRUTINEER`
 n'hérite d'aucun rôle métier (ni `ROLE_VIEWER`, ni `ROLE_SCORER`) ; `ROLE_ADMIN` en hérite (profils 1–2 = mêmes
-droits). Le rôle technique `ROLE_PRESENCE_VIEWER` (consultation de la feuille de présence équipe et recherche de
-joueurs) est hérité par `ROLE_VIEWER` et par `ROLE_SCRUTINEER`. Les écritures de la feuille de présence équipe
+droits). Le rôle technique `ROLE_PRESENCE_VIEWER` (liste des équipes d'une compétition, consultation de la feuille de
+présence équipe et recherche de joueurs) est hérité par `ROLE_VIEWER` et par `ROLE_SCRUTINEER`. Les écritures de la feuille de présence équipe
 acceptent `getEffectiveNiveau() <= 7` **ou** `User::isScrutineer()` ; `User::getAllowedClubs()` renvoie `null` pour
 le profil 10.
 

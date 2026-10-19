@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
+use App\Service\TeamLastUpdateService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -36,7 +37,8 @@ class AdminPresenceController extends AbstractController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly PlayerEligibilityChecker $eligibility
+        private readonly PlayerEligibilityChecker $eligibility,
+        private readonly TeamLastUpdateService $teamLastUpdate
     ) {
     }
 
@@ -127,8 +129,7 @@ class AdminPresenceController extends AbstractController
             return $this->formatPlayer($row, $season, $competCode, $eligibilityLevel);
         }, $playerRows);
 
-        // Get last update from journal
-        $lastUpdate = $this->getLastUpdate('kp_competition_equipe_joueur', $teamId);
+        $lastUpdate = $this->teamLastUpdate->presence($teamId);
 
         return $this->json([
             'team' => [
@@ -1446,32 +1447,5 @@ class AdminPresenceController extends AbstractController
             'errors' => $errors,
             'canForce' => $decision['canForce'],
         ], Response::HTTP_BAD_REQUEST);
-    }
-
-    private function getLastUpdate(string $table, int $id): ?array
-    {
-        // Journal entries use two formats depending on origin:
-        // - api2: "Equipe {id} - ..."
-        // - legacy admin: "Equipe : {id} - ..."
-        // The scrutineering ("Scrut ...", same detail format) does not change the composition.
-        $sql = "SELECT Dates, Users, Actions
-                FROM kp_journal
-                WHERE (Journal LIKE ? OR Journal LIKE ?) AND Actions NOT LIKE 'Scrut %'
-                ORDER BY Dates DESC
-                LIMIT 1";
-
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery(["%Equipe {$id}%", "%Equipe : {$id}%"]);
-        $row = $result->fetchAssociative();
-
-        if (!$row) {
-            return null;
-        }
-
-        return [
-            'date' => $row['Dates'],
-            'user' => $row['Users'],
-            'action' => $row['Actions']
-        ];
     }
 }

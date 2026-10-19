@@ -1,11 +1,12 @@
 /**
  * Pure helpers of the scrutineering (DOC/specs/PAGE_SCRUTINEERING.md). No Nuxt import: unit-tested with Vitest.
  */
-import type { EquipmentParameter, ScrutineeringPlayer, ScrutineeringTeam } from '~/types/scrutineering'
+import type { EquipmentParameter, ScrutineeringContext, ScrutineeringPlayer, ScrutineeringTeam } from '~/types/scrutineering'
 
 /** Profile 10 "Contrôle équipement": scrutineering and presence sheets of every team of its competitions. */
 export const SCRUTINEER_PROFILE = 10
 const ADMIN_MAX_PROFILE = 2
+const TEAMS_VIEW_MAX_PROFILE = 8
 const TEAM_PRESENCE_WRITE_MAX_PROFILE = 7
 
 export const EQUIPMENT_PARAMETERS: readonly EquipmentParameter[] = ['kayak_status', 'vest_status', 'helmet_status', 'paddle_count']
@@ -21,6 +22,11 @@ export function isScrutineerProfile(profile: number): boolean {
 /** Scrutineering screens: profiles 1–2 and the profile 10 (ADM-SCR-02). */
 export function canManageScrutineering(profile: number): boolean {
   return profile <= ADMIN_MAX_PROFILE || isScrutineerProfile(profile)
+}
+
+/** Teams page (read only for the profile 10, its entry to the scrutineering) (ADM-SCR-01). */
+export function canViewTeams(profile: number): boolean {
+  return profile <= TEAMS_VIEW_MAX_PROFILE || isScrutineerProfile(profile)
 }
 
 /** Team presence sheet edition: profiles ≤ 7 and the profile 10 (ADM-SCR-05). */
@@ -47,18 +53,10 @@ export function totalValidPaddles(players: readonly ScrutineeringPlayer[]): numb
   return players.reduce((sum, player) => (isStaff(player) ? sum : sum + player.paddle_count), 0)
 }
 
-/** Other teams of the same club in the event, every competition (ADM-SCR-15). */
+/** Other teams of the same club (or national team code) in the event, every competition (ADM-SCR-15). */
 export function sameClubTeams(teams: readonly ScrutineeringTeam[], teamId: number): ScrutineeringTeam[] {
   const current = teams.find(team => team.team_id === teamId)
   return current ? teams.filter(team => team.team_id !== teamId && team.club === current.club) : []
-}
-
-/** Other teams of the same nation, those of the same club excepted (ADM-SCR-16). */
-export function sameNationTeams(teams: readonly ScrutineeringTeam[], teamId: number): ScrutineeringTeam[] {
-  const current = teams.find(team => team.team_id === teamId)
-  return current
-    ? teams.filter(team => team.team_id !== teamId && team.club !== current.club && team.nation === current.nation)
-    : []
 }
 
 /** Previous and next teams in the selector order (ADM-SCR-17). */
@@ -84,10 +82,24 @@ export function teamsByCompetition(teams: readonly ScrutineeringTeam[]): { code:
 
 const EVENT_SELECTION_PREFIX = 'event:'
 
-/** Event of the scrutineering: the page event filter (`event:{id}`), else the work context event. */
-export function resolveEventId(pageEventGroupSelection: string, selectionType: string | null, contextEventId: number | null): number | null {
+/**
+ * Context of the overview and of the team navigation (PAGE_SCRUTINEERING.md § 1.3): the event filter of the page
+ * (`event:{id}`), else the page competition of the season, else none.
+ */
+export function resolveContext(pageEventGroupSelection: string, season: string, pageCompetitionCode: string): ScrutineeringContext | null {
   if (pageEventGroupSelection.startsWith(EVENT_SELECTION_PREFIX)) {
-    return Number.parseInt(pageEventGroupSelection.slice(EVENT_SELECTION_PREFIX.length), 10) || null
+    const event = Number.parseInt(pageEventGroupSelection.slice(EVENT_SELECTION_PREFIX.length), 10)
+    return event ? { event } : null
   }
-  return selectionType === 'event' ? contextEventId : null
+  return season && pageCompetitionCode ? { season, competition: pageCompetitionCode } : null
+}
+
+/** Query of the context for /staff/teams and /staff/overview. */
+export function contextParams(context: ScrutineeringContext): Record<string, string | number> {
+  return 'event' in context ? { event: context.event } : { season: context.season, competition: context.competition }
+}
+
+/** Event of the journal: only in an event context (null outside an event). */
+export function contextEventId(context: ScrutineeringContext | null): number | null {
+  return context && 'event' in context ? context.event : null
 }

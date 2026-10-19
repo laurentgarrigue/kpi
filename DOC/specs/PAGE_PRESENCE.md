@@ -51,9 +51,9 @@ La page détecte automatiquement le mode en fonction des paramètres d'URL et ad
 
 **Profil 10 « Contrôle équipement »** ([PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2) : consultation, édition
 inline, ajout, suppression, copie, création de joueur et recherche par licence sur **toutes les équipes** de ses
-compétitions (`Limit_clubs` ignoré), compétition non verrouillée. Pour les profils 1, 2 et 10, un événement
-sélectionné ajoute la navigation entre les équipes de l'événement (même club, même nation, ← / →) et la bascule vers
-le scrutineering. Les écritures vérifient aussi, pour tous les profils, que la compétition est dans le périmètre.
+compétitions (`Limit_clubs` ignoré), compétition non verrouillée. Pour les profils 1, 2 et 10, la navigation entre
+les équipes du contexte (événement filtré, sinon compétition : [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 1.3 ;
+même club / nation, ← / →) remplace le sélecteur d'équipes et ajoute la bascule vers le scrutineering. Les écritures vérifient aussi, pour tous les profils, que la compétition est dans le périmètre.
 
 **Match Mode:**
 
@@ -147,7 +147,7 @@ interface PresencePageState {
 | 10 | Afficher surclassement (icône #S) | ≤ 10 | - | GestionEquipeJoueur.tpl:110-115 |
 | 11 | Validation compétitions nationales | ≤ 8 | ❌ | GestionEquipeJoueur.js:242-265 |
 | 12 | Séparateur visuel joueurs actifs/inactifs | ≤ 10 | - | GestionEquipeJoueur.tpl:148-150 |
-| 13 | Dernière modification | ≤ 10 | - | GestionEquipeJoueur.php:172-175 |
+| 13 | Dernière modification (date, « Prénom NOM » de l'utilisateur) | ≤ 10 | - | GestionEquipeJoueur.php:172-175 |
 | 14 | Liens PDF (FR/EN/Photo/Contrôle) | ≤ 10 | - | GestionEquipeJoueur.tpl:38-47 |
 | 15 | Détection doublons à la création (nom+prénom, cliquable) | ≤ 4 | ❌ | Frontend uniquement |
 

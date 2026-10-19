@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Player, AddPlayerFormData, CopyCompositionFormData, AvailableComposition } from '~/types/presence'
 import type { PlayerAutocomplete } from '~/types'
-import { isScrutineerProfile } from '~/utils/scrutineering'
 
 definePageMeta({
   layout: 'admin',
@@ -169,12 +168,9 @@ const isDeleting = ref(false)
 // Sibling teams (same competition/season) for quick navigation
 const siblingTeams = ref<{ id: number; libelle: string }[]>([])
 
-// The profile 10 has no access to the competition team list: it navigates through the teams of the event
-const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
-
 // Load sibling teams for dropdown
 const loadSiblingTeams = async () => {
-  if (!presenceStore.competition || !presenceStore.team || isScrutineer.value) return
+  if (!presenceStore.competition || !presenceStore.team) return
   try {
     const response = await api.get<{ teams: { id: number; libelle: string }[] }>('/admin/competition-teams', {
       season: presenceStore.team.codeSaison,
@@ -208,15 +204,6 @@ const syncCompetitionFilter = () => {
 const onCompetitionChange = async () => {
   const code = workContext.pageCompetitionCode
   if (!presenceStore.initialized || !code || code === presenceStore.competition?.code) return
-  if (isScrutineer.value) {
-    const firstEventTeam = navigation.teams.value.find(team => team.competition_code === code)
-    if (firstEventTeam) {
-      navigation.go(firstEventTeam.team_id)
-    } else {
-      toast.add({ title: t('common.error'), description: t('teams_page.empty'), color: 'error', duration: 3000 })
-    }
-    return
-  }
   try {
     const response = await api.get<{ teams: { id: number; libelle: string }[] }>('/admin/competition-teams', {
       season: workContext.season,
@@ -604,11 +591,6 @@ const confirmSingleDelete = async () => {
 }
 
 // Format date from "YYYY-MM-DD HH:mm:ss" to "DD/MM/YYYY HH:mm:ss"
-const formatLastUpdateDate = (date: string): string => {
-  const m = date.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/)
-  return m ? `${m[3]}/${m[2]}/${m[1]}${m[4]}` : date
-}
-
 // Status label mapping
 const statusLabel = (capitaine: string): string => {
   const map: Record<string, string> = {
@@ -1284,9 +1266,7 @@ const pdfLinks = computed(() => {
         <p>{{ t('presence.notice_inactive') }}</p>
         <p>{{ t('presence.notice_staff_referee') }}</p>
       </div>
-      <div v-if="presenceStore.lastUpdate" class="px-4 py-2 bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-xs text-header-600 dark:text-header-300 text-center">
-        {{ t('presence.last_update') }} {{ formatLastUpdateDate(presenceStore.lastUpdate.date) }} {{ t('presence.last_update_by') }} {{ presenceStore.lastUpdate.user }}
-      </div>
+      <AdminTeamLastUpdate v-if="presenceStore.lastUpdate" :last-update="presenceStore.lastUpdate" />
     </div>
 
     <!-- Mobile Cards (visible only on mobile) -->

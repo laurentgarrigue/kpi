@@ -40,7 +40,7 @@
 | | S (supprimer) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | Copier une compétition | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | Modifier le code (importé) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Équipes** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **Équipes** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | | C — colonnes Poule/Tirage masquées si compétition ATT | — | — | — | — | — | — | ✅ | — | — | — |
 | | M (modifier inline) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Formulaire couleurs / logo | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -86,7 +86,7 @@
 | | M/S (si non verrouillée) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | | Copier vers matchs de la journée | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Copier vers compétition | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Scrutineering** (contrôle équipement) | C/M, réinitialiser une équipe | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Scrutineering** (contrôle équipement, depuis la page Équipes) | C/M, réinitialiser une équipe | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | | Vue d'ensemble de l'événement | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Documents** | C (accès à la page) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
 | | C (section Contrôle) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -129,7 +129,7 @@ profil d'un utilisateur, quel que soit son niveau. Les profils 1–2 ont tous ce
 - Le système de **mandats** permet d'élever ou restreindre temporairement le profil effectif.
 - Les actions M/S sont bloquées si la ressource est **verrouillée**, indépendamment du profil.
 - Le profil **9 (Table de marque)** a un accès très ciblé : saisie des scores et feuilles de présence match uniquement.
-- Le profil **10 (Contrôle équipement)** est hors hiérarchie : aucune consultation générale, mais scrutineering et feuilles de présence équipe de **toutes** les équipes de ses compétitions (`Limit_clubs` ignoré). Il ne se connecte pas au back-office legacy. Voir [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2.
+- Le profil **10 (Contrôle équipement)** est hors hiérarchie : aucune consultation générale hormis la page Équipes (lecture seule, son entrée vers le scrutineering), mais scrutineering et feuilles de présence équipe de **toutes** les équipes de ses compétitions (`Limit_clubs` ignoré). Il ne se connecte pas au back-office legacy. Voir [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2.
 - **Bypass périmètre profils 1 et 2** (voir section suivante) : les filtres de périmètre sont ignorés pour les utilisateurs dont le niveau effectif est ≤ 2.
 
 ---

@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import type { TeamView, useScrutineeringNavigation } from '~/composables/useScrutineeringNavigation'
 
-/** Team navigation of the event (PAGE_SCRUTINEERING.md § 1.2): selector, previous / next, same club / nation, view switch. */
+/**
+ * Team navigation of the context (PAGE_SCRUTINEERING.md § 1.2): selector, previous / next, same club / nation, view
+ * switch. The `actions` and `actions-end` (right-aligned, before the switch) slots put the buttons of the screen on
+ * the first row, which stays shown without navigation.
+ */
 const props = defineProps<{
   navigation: ReturnType<typeof useScrutineeringNavigation>
   teamId: number
   view: TeamView
 }>()
 
+const slots = useSlots()
 const { t } = useI18n()
+const hasTeams = computed(() => props.navigation.teams.value.length > 0)
 const otherView = computed<TeamView>(() => (props.view === 'presence' ? 'scrutineering' : 'presence'))
 const chipClass = 'px-2 py-1 text-xs rounded-full border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950'
 const arrowClass = 'p-2 rounded-lg border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-40 disabled:cursor-not-allowed'
 </script>
 
 <template>
-  <div v-if="navigation.teams.value.length > 0" class="mb-3 flex flex-col gap-2" data-testid="scrutineering-team-nav">
+  <div v-if="hasTeams || slots.actions" class="mb-3 flex flex-col gap-2" data-testid="scrutineering-team-nav">
     <div class="flex flex-wrap items-center gap-2">
+      <template v-if="hasTeams">
       <button
         type="button"
         :class="arrowClass"
@@ -47,26 +54,27 @@ const arrowClass = 'p-2 rounded-lg border border-header-300 dark:border-header-7
       >
         <UIcon name="heroicons:chevron-right" class="w-5 h-5" />
       </button>
+      </template>
+      <slot name="actions" />
+      <!-- Right-aligned: the `actions-end` slot, then the view switch -->
+      <div class="ml-auto flex flex-wrap items-center gap-2">
+      <slot name="actions-end" />
       <button
+        v-if="hasTeams"
         type="button"
-        class="ml-auto flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+        class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
         data-testid="switch-view"
         @click="navigation.go(teamId, otherView)"
       >
         <UIcon :name="otherView === 'scrutineering' ? 'heroicons:clipboard-document-check' : 'heroicons:user-group'" class="w-5 h-5" />
         {{ t(`scrutineering.nav.open_${otherView}`) }}
       </button>
+      </div>
     </div>
 
     <div v-if="navigation.sameClub.value.length > 0" class="flex flex-wrap items-center gap-1.5">
       <span class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('scrutineering.nav.same_club') }}</span>
       <button v-for="team in navigation.sameClub.value" :key="team.team_id" type="button" :class="chipClass" @click="navigation.go(team.team_id)">
-        {{ team.label }} <span class="text-header-500">· {{ team.competition_code }}</span>
-      </button>
-    </div>
-    <div v-if="navigation.sameNation.value.length > 0" class="flex flex-wrap items-center gap-1.5">
-      <span class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('scrutineering.nav.same_nation', { nation: navigation.current.value?.nation }) }}</span>
-      <button v-for="team in navigation.sameNation.value" :key="team.team_id" type="button" :class="chipClass" @click="navigation.go(team.team_id)">
         {{ team.label }} <span class="text-header-500">· {{ team.competition_code }}</span>
       </button>
     </div>

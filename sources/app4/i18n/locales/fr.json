@@ -94,8 +94,7 @@
     "view_statistics": "Voir les statistiques",
     "system_operations": "Opérations système",
     "beta_notice_title": "Version Beta",
-    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté à",
-    "manage_scrutineering": "Contrôler les équipements des équipes"
+    "beta_notice_message": "Cette nouvelle interface d'administration est en cours de développement. Merci de signaler toute difficulté à"
   },
   "events": {
     "title": "Gestion des événements",
@@ -3037,8 +3036,7 @@
   "scrutineering": {
     "title": "Scrutineering",
     "title_team": "Scrutineering - Contrôle équipement",
-    "event": "Événement",
-    "choose_event": "Choisissez un événement pour contrôler ses équipes.",
+    "choose_context": "Choisissez un événement ou une compétition pour contrôler ses équipes.",
     "no_teams": "Aucune équipe dans cet événement pour vos compétitions.",
     "load_error": "Impossible de charger le scrutineering.",
     "save_error": "L'enregistrement a échoué.",
@@ -3077,8 +3075,7 @@
       "previous": "Équipe précédente (←)",
       "next": "Équipe suivante (→)",
       "select_team": "Équipe de l'événement",
-      "same_club": "Même club :",
-      "same_nation": "Même nation ({nation}) :",
+      "same_club": "Même club / nation :",
       "open_presence": "Feuille de présence",
       "open_scrutineering": "Scrutineering"
     }

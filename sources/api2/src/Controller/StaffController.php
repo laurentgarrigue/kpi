@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Scrutineering\EquipmentRules;
-use App\Scrutineering\TeamNation;
+use App\Service\TeamLastUpdateService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -18,11 +18,13 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Scrutineering (equipment control) of the teams of an event, used by app4 (DOC/specs/PAGE_SCRUTINEERING.md § 5).
+ * Scrutineering (equipment control) of the teams, used by app4 (DOC/specs/PAGE_SCRUTINEERING.md § 5).
  *
  * JWT only (firewall api_staff), for profiles 1–2 and the profile 10 "Contrôle équipement" (ROLE_SCRUTINEER).
- * Every query is scoped to the event (getAllowedEvents) and to the allowed seasons and competitions; a team outside
- * that scope answers 404 (IDOR protection). The equipment stays editable when the competition is locked.
+ * The control belongs to a team, whether its competition is part of an event or not. A team is reachable within the
+ * allowed seasons and competitions and, for an account limited to events, within those events; outside that
+ * perimeter it answers 404 (IDOR protection). The team list and the overview take a context: an event, or a season
+ * and a competition. The equipment stays editable when the competition is locked.
  */
 #[Route('/staff', name: 'staff_')]
 #[IsGranted('ROLE_SCRUTINEER')]
@@ -33,30 +35,34 @@ class StaffController extends AbstractController
 
     private const COMMENT_MAX_LENGTH = 255;
 
-    public function __construct(private readonly Connection $connection)
-    {
+    /** The competition of the team ce has a gameday in one of the events bound to the placeholder. */
+    private const IN_EVENTS_SQL = 'EXISTS (SELECT 1 FROM kp_journee j INNER JOIN kp_evenement_journee ej ON j.Id = ej.Id_journee
+        WHERE j.Code_competition = ce.Code_compet AND j.Code_saison = ce.Code_saison AND ej.Id_evenement IN (?))';
+
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly TeamLastUpdateService $teamLastUpdate,
+    ) {
     }
 
-    #[Route('/{eventId}/teams', name: 'teams', methods: ['GET'], requirements: ['eventId' => '\d+'])]
-    #[OA\Get(summary: 'Teams of the event within the allowed competitions (team navigation)')]
-    public function getTeams(int $eventId): JsonResponse
+    #[Route('/teams', name: 'teams', methods: ['GET'])]
+    #[OA\Get(summary: 'Teams of the context (?event= or ?season=&competition=) within the perimeter (team navigation)')]
+    public function getTeams(Request $request): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
+        $scope = $this->contextScope($request);
+        if ($scope instanceof JsonResponse) {
+            return $scope;
         }
 
-        [$scopeSql, $params, $types] = $this->perimeter($eventId);
+        [$scopeSql, $params, $types] = $scope;
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT DISTINCT ce.Id, ce.Libelle, ce.Code_club, ce.logo, ce.Code_compet, ce.Code_saison,
-                    comp.Libelle AS comp_libelle, comp.Verrou, comp.GroupOrder, cl.Libelle AS club_libelle,
-                    COALESCE(cl.Libelle, ce.Code_club) AS club_sort
+            "SELECT ce.Id, ce.Libelle, ce.Code_club, ce.logo, ce.Code_compet, ce.Code_saison,
+                    comp.Libelle AS comp_libelle, comp.Verrou, cl.Libelle AS club_libelle
              FROM kp_competition_equipe ce
              INNER JOIN kp_competition comp ON (ce.Code_compet = comp.Code AND ce.Code_saison = comp.Code_saison)
-             INNER JOIN kp_journee j ON (ce.Code_compet = j.Code_competition AND ce.Code_saison = j.Code_saison)
-             INNER JOIN kp_evenement_journee ej ON (j.Id = ej.Id_journee)
              LEFT JOIN kp_club cl ON ce.Code_club = cl.Code
              WHERE $scopeSql
-             ORDER BY comp.GroupOrder, ce.Code_compet, club_sort, ce.Libelle",
+             ORDER BY comp.GroupOrder, ce.Code_compet, COALESCE(cl.Libelle, ce.Code_club), ce.Libelle",
             $params,
             $types,
         );
@@ -64,14 +70,11 @@ class StaffController extends AbstractController
         return $this->jsonUnicode(array_map(fn (array $row): array => $this->formatTeam($row), $rows));
     }
 
-    #[Route('/{eventId}/team/{teamId}/players', name: 'team_players', methods: ['GET'], requirements: ['eventId' => '\d+', 'teamId' => '\d+'])]
+    #[Route('/team/{teamId}/players', name: 'team_players', methods: ['GET'], requirements: ['teamId' => '\d+'])]
     #[OA\Get(summary: 'Team context and players with their scrutineering data (referees and inactive players excluded)')]
-    public function getPlayers(int $eventId, int $teamId): JsonResponse
+    public function getPlayers(int $teamId): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
-        }
-        $team = $this->findTeam($eventId, $teamId);
+        $team = $this->findTeam($teamId);
         if (!$team) {
             return $this->teamNotFound();
         }
@@ -101,6 +104,7 @@ class StaffController extends AbstractController
                 // Comments written by app2 were HTML-escaped before being stored
                 'comment' => html_entity_decode((string) $row['comment'], ENT_QUOTES, 'UTF-8'),
             ], $players),
+            'lastUpdate' => $this->teamLastUpdate->scrutineering($teamId),
         ]);
         $response->headers->set('Cache-Control', 'no-store');
 
@@ -108,27 +112,22 @@ class StaffController extends AbstractController
     }
 
     #[Route(
-        '/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}',
+        '/team/{teamId}/player/{playerId}/{parameter}/{value}',
         name: 'update_player',
         methods: ['PUT'],
-        requirements: ['eventId' => '\d+', 'teamId' => '\d+', 'playerId' => '\d+', 'parameter' => EquipmentRules::PARAMETER_REQUIREMENT, 'value' => '\d+'],
+        requirements: ['teamId' => '\d+', 'playerId' => '\d+', 'parameter' => EquipmentRules::PARAMETER_REQUIREMENT, 'value' => '\d+'],
     )]
-    #[OA\Put(summary: 'Set an equipment status (0–4) or the valid paddle count (0–6) of a player')]
-    public function updateEquipment(int $eventId, int $teamId, int $playerId, string $parameter, int $value): JsonResponse
+    #[OA\Put(summary: 'Set an equipment status (0–4) or the valid paddle count (0–6) of a player (optional ?event= for the journal)')]
+    public function updateEquipment(Request $request, int $teamId, int $playerId, string $parameter, int $value): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
-        }
         if (!EquipmentRules::isValid($parameter, $value)) {
             return $this->json(['error' => 'Invalid value'], Response::HTTP_BAD_REQUEST);
         }
-        $team = $this->findTeam($eventId, $teamId);
-        if (!$team) {
-            return $this->teamNotFound();
+        $target = $this->writeTarget($request, $teamId, $playerId);
+        if ($target instanceof JsonResponse) {
+            return $target;
         }
-        if (!$this->isInComposition($teamId, $playerId)) {
-            return $this->json(['error' => 'Player not in composition'], Response::HTTP_NOT_FOUND);
-        }
+        [$team, $eventId] = $target;
 
         // $parameter is restricted to the EquipmentRules columns by the route requirement
         $this->connection->executeStatement(
@@ -138,23 +137,18 @@ class StaffController extends AbstractController
         );
         $this->logScrutineering('Scrut équipement', $eventId, $team, "Equipe $teamId - Joueur $playerId - " . EquipmentRules::journalLabel($parameter) . "=$value");
 
-        return $this->json(['value' => $value]);
+        return $this->jsonUnicode(['value' => $value, 'lastUpdate' => $this->teamLastUpdate->scrutineering($teamId)]);
     }
 
-    #[Route('/{eventId}/team/{teamId}/player/{playerId}/comment', name: 'update_player_comment', methods: ['PUT'], requirements: ['eventId' => '\d+', 'teamId' => '\d+', 'playerId' => '\d+'])]
-    #[OA\Put(summary: 'Set the scrutineering comment of a player (255 characters max)')]
-    public function updateComment(Request $request, int $eventId, int $teamId, int $playerId): JsonResponse
+    #[Route('/team/{teamId}/player/{playerId}/comment', name: 'update_player_comment', methods: ['PUT'], requirements: ['teamId' => '\d+', 'playerId' => '\d+'])]
+    #[OA\Put(summary: 'Set the scrutineering comment of a player, 255 characters max (optional ?event= for the journal)')]
+    public function updateComment(Request $request, int $teamId, int $playerId): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
+        $target = $this->writeTarget($request, $teamId, $playerId);
+        if ($target instanceof JsonResponse) {
+            return $target;
         }
-        $team = $this->findTeam($eventId, $teamId);
-        if (!$team) {
-            return $this->teamNotFound();
-        }
-        if (!$this->isInComposition($teamId, $playerId)) {
-            return $this->json(['error' => 'Player not in composition'], Response::HTTP_NOT_FOUND);
-        }
+        [$team, $eventId] = $target;
 
         $input = json_decode($request->getContent(), true);
         $comment = mb_substr(trim((string) ($input['comment'] ?? '')), 0, self::COMMENT_MAX_LENGTH);
@@ -165,20 +159,18 @@ class StaffController extends AbstractController
         );
         $this->logScrutineering('Scrut commentaire', $eventId, $team, "Equipe $teamId - Joueur $playerId");
 
-        return $this->jsonUnicode(['comment' => $comment]);
+        return $this->jsonUnicode(['comment' => $comment, 'lastUpdate' => $this->teamLastUpdate->scrutineering($teamId)]);
     }
 
-    #[Route('/{eventId}/team/{teamId}/reset', name: 'reset_team', methods: ['DELETE'], requirements: ['eventId' => '\d+', 'teamId' => '\d+'])]
-    #[OA\Delete(summary: 'Reset every scrutineering check of a team')]
-    public function resetTeam(int $eventId, int $teamId): JsonResponse
+    #[Route('/team/{teamId}/reset', name: 'reset_team', methods: ['DELETE'], requirements: ['teamId' => '\d+'])]
+    #[OA\Delete(summary: 'Reset every scrutineering check of a team (optional ?event= for the journal)')]
+    public function resetTeam(Request $request, int $teamId): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
+        $target = $this->writeTarget($request, $teamId);
+        if ($target instanceof JsonResponse) {
+            return $target;
         }
-        $team = $this->findTeam($eventId, $teamId);
-        if (!$team) {
-            return $this->teamNotFound();
-        }
+        [$team, $eventId] = $target;
 
         $deleted = $this->connection->executeStatement('DELETE FROM kp_scrutineering WHERE id_equipe = ?', [$teamId]);
         $this->logScrutineering('Scrut réinitialisation', $eventId, $team, "Equipe $teamId - réinitialisation complète");
@@ -186,17 +178,18 @@ class StaffController extends AbstractController
         return $this->json(['reset' => true, 'deleted' => $deleted]);
     }
 
-    #[Route('/{eventId}/overview', name: 'overview', methods: ['GET'], requirements: ['eventId' => '\d+'])]
-    #[OA\Get(summary: 'Scrutineering status (complete / partial / none) of the teams of the event, by club and category')]
-    public function getOverview(int $eventId): JsonResponse
+    #[Route('/overview', name: 'overview', methods: ['GET'])]
+    #[OA\Get(summary: 'Scrutineering status (complete / partial / none) of the teams of the context, by club and category')]
+    public function getOverview(Request $request): JsonResponse
     {
-        if ($denied = $this->denyEventAccess($eventId)) {
-            return $denied;
+        $scope = $this->contextScope($request);
+        if ($scope instanceof JsonResponse) {
+            return $scope;
         }
 
         // A player is "checked" when at least one equipment is > 0 (a row reset to 0 does not count) and "complete"
         // when kayak, vest and helmet are valid and at least one paddle is. Staff, referees and inactive are ignored.
-        [$scopeSql, $params, $types] = $this->perimeter($eventId);
+        [$scopeSql, $params, $types] = $scope;
         $rows = $this->connection->fetchAllAssociative(
             "SELECT ce.Id AS team_id, ce.Libelle AS label, ce.Code_club AS club_code,
                     COALESCE(cl.Libelle, ce.Code_club, '') AS club_label, ce.logo AS logo,
@@ -208,8 +201,6 @@ class StaffController extends AbstractController
                         AND sc.paddle_count > 0 THEN sc.matric END) AS complete_players
              FROM kp_competition_equipe ce
              INNER JOIN kp_competition comp ON (ce.Code_compet = comp.Code AND ce.Code_saison = comp.Code_saison)
-             INNER JOIN kp_journee j ON (ce.Code_compet = j.Code_competition AND ce.Code_saison = j.Code_saison)
-             INNER JOIN kp_evenement_journee ej ON (j.Id = ej.Id_journee)
              LEFT JOIN kp_club cl ON ce.Code_club = cl.Code
              LEFT JOIN kp_competition_equipe_joueur cej ON (cej.Id_equipe = ce.Id AND cej.Capitaine NOT IN ('E', 'A', 'X'))
              LEFT JOIN kp_scrutineering sc ON (sc.id_equipe = ce.Id AND sc.matric = cej.Matric)
@@ -271,17 +262,17 @@ class StaffController extends AbstractController
     }
 
     /**
-     * WHERE clause (and its parameters) restricting kp_competition_equipe ce to the event and to the allowed seasons
-     * and competitions of the current user.
+     * WHERE clause (and its parameters) restricting kp_competition_equipe ce to the perimeter of the current user:
+     * allowed seasons and competitions and, for an account limited to events, the competitions of those events.
      *
      * @return array{0: string, 1: list<mixed>, 2: list<mixed>}
      */
-    private function perimeter(int $eventId): array
+    private function perimeter(): array
     {
         $user = $this->currentUser();
-        $sql = ['ej.Id_evenement = ?'];
-        $params = [$eventId];
-        $types = [ParameterType::INTEGER];
+        $sql = ['1 = 1'];
+        $params = [];
+        $types = [];
         foreach (['ce.Code_saison' => $user->getAllowedSeasons(), 'ce.Code_compet' => $user->getAllowedCompetitions()] as $column => $allowed) {
             if ($allowed !== null) {
                 $sql[] = "$column IN (?)";
@@ -289,33 +280,116 @@ class StaffController extends AbstractController
                 $types[] = ArrayParameterType::STRING;
             }
         }
+        $allowedEvents = $user->getAllowedEvents();
+        if ($allowedEvents !== null) {
+            $sql[] = self::IN_EVENTS_SQL;
+            $params[] = $allowedEvents;
+            $types[] = ArrayParameterType::INTEGER;
+        }
 
         return [implode(' AND ', $sql), $params, $types];
     }
 
     /**
-     * Team context when the team belongs to the event and to the user's perimeter, null otherwise.
+     * Perimeter narrowed to the context of the request: ?event={id}, or ?season={s}&competition={c}.
+     * 400 without a context or with both, 403 on an event, season or competition outside the perimeter.
+     *
+     * @return array{0: string, 1: list<mixed>, 2: list<mixed>}|JsonResponse
+     */
+    private function contextScope(Request $request): array|JsonResponse
+    {
+        $event = $request->query->get('event');
+        $season = (string) $request->query->get('season', '');
+        $competition = (string) $request->query->get('competition', '');
+        $byEvent = $event !== null;
+        $byCompetition = $season !== '' && $competition !== '';
+        if ($byEvent === $byCompetition || ($byEvent && !ctype_digit((string) $event))) {
+            return $this->json(['error' => 'A context is required: event, or season and competition'], Response::HTTP_BAD_REQUEST);
+        }
+
+        [$sql, $params, $types] = $this->perimeter();
+        if ($byEvent) {
+            if ($denied = $this->denyEventAccess((int) $event)) {
+                return $denied;
+            }
+
+            return ["$sql AND " . self::IN_EVENTS_SQL, [...$params, [(int) $event]], [...$types, ArrayParameterType::INTEGER]];
+        }
+
+        $user = $this->currentUser();
+        foreach ([[$season, $user->getAllowedSeasons()], [$competition, $user->getAllowedCompetitions()]] as [$value, $allowed]) {
+            if ($allowed !== null && !in_array($value, $allowed, true)) {
+                return $this->json(['error' => 'Forbidden - Access denied to this competition'], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        return [
+            "$sql AND ce.Code_saison = ? AND ce.Code_compet = ?",
+            [...$params, $season, $competition],
+            [...$types, ParameterType::STRING, ParameterType::STRING],
+        ];
+    }
+
+    /**
+     * Team context when the team belongs to the perimeter of the user, null otherwise.
      *
      * @return array<string, mixed>|null
      */
-    private function findTeam(int $eventId, int $teamId): ?array
+    private function findTeam(int $teamId): ?array
     {
-        [$scopeSql, $params, $types] = $this->perimeter($eventId);
+        [$scopeSql, $params, $types] = $this->perimeter();
         $row = $this->connection->fetchAssociative(
             "SELECT ce.Id, ce.Libelle, ce.Code_club, ce.logo, ce.Code_compet, ce.Code_saison,
                     comp.Libelle AS comp_libelle, comp.Verrou, cl.Libelle AS club_libelle
              FROM kp_competition_equipe ce
              INNER JOIN kp_competition comp ON (ce.Code_compet = comp.Code AND ce.Code_saison = comp.Code_saison)
-             INNER JOIN kp_journee j ON (ce.Code_compet = j.Code_competition AND ce.Code_saison = j.Code_saison)
-             INNER JOIN kp_evenement_journee ej ON (j.Id = ej.Id_journee)
              LEFT JOIN kp_club cl ON ce.Code_club = cl.Code
-             WHERE ce.Id = ? AND $scopeSql
-             LIMIT 1",
+             WHERE ce.Id = ? AND $scopeSql",
             [$teamId, ...$params],
             [ParameterType::INTEGER, ...$types],
         );
 
         return $row ? $this->formatTeam($row) : null;
+    }
+
+    /**
+     * Team (and optional player) of a write, with the event of the journal (?event=, null outside an event).
+     * 404 outside the perimeter or the composition, 403 on an event outside the perimeter, 400 on an event that does
+     * not contain the team.
+     *
+     * @return array{0: array<string, mixed>, 1: int|null}|JsonResponse
+     */
+    private function writeTarget(Request $request, int $teamId, ?int $playerId = null): array|JsonResponse
+    {
+        $event = $request->query->get('event');
+        $eventId = $event !== null && ctype_digit((string) $event) ? (int) $event : null;
+        if ($event !== null && $eventId === null) {
+            return $this->json(['error' => 'Invalid event'], Response::HTTP_BAD_REQUEST);
+        }
+        if ($eventId !== null && ($denied = $this->denyEventAccess($eventId))) {
+            return $denied;
+        }
+        $team = $this->findTeam($teamId);
+        if (!$team) {
+            return $this->teamNotFound();
+        }
+        if ($playerId !== null && !$this->isInComposition($teamId, $playerId)) {
+            return $this->json(['error' => 'Player not in composition'], Response::HTTP_NOT_FOUND);
+        }
+        if ($eventId !== null && !$this->isTeamInEvent($teamId, $eventId)) {
+            return $this->json(['error' => 'The team is not part of this event'], Response::HTTP_BAD_REQUEST);
+        }
+
+        return [$team, $eventId];
+    }
+
+    private function isTeamInEvent(int $teamId, int $eventId): bool
+    {
+        return $this->connection->fetchOne(
+            'SELECT 1 FROM kp_competition_equipe ce WHERE ce.Id = ? AND ' . self::IN_EVENTS_SQL,
+            [$teamId, [$eventId]],
+            [ParameterType::INTEGER, ArrayParameterType::INTEGER],
+        ) !== false;
     }
 
     /**
@@ -332,7 +406,6 @@ class StaffController extends AbstractController
             'label' => $row['Libelle'],
             'club' => $club,
             'club_label' => $row['club_libelle'] ?? $club,
-            'nation' => TeamNation::of($club),
             'logo' => $row['logo'] ?: null,
             'competition_code' => $row['Code_compet'],
             'competition_label' => $row['comp_libelle'] ?? '',
@@ -350,7 +423,7 @@ class StaffController extends AbstractController
     }
 
     /** @param array<string, mixed> $team */
-    private function logScrutineering(string $action, int $eventId, array $team, string $details): void
+    private function logScrutineering(string $action, ?int $eventId, array $team, string $details): void
     {
         $this->logActionForEventCompetition($action, $eventId, $team['season'], $team['competition_code'], $details);
     }

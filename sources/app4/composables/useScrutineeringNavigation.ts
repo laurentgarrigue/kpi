@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import type { ScrutineeringTeam } from '~/types/scrutineering'
-import { adjacentTeams, canManageScrutineering, resolveEventId, sameClubTeams, sameNationTeams, teamsByCompetition } from '~/utils/scrutineering'
+import { adjacentTeams, canManageScrutineering, resolveContext, sameClubTeams, teamsByCompetition } from '~/utils/scrutineering'
 
 export type TeamView = 'presence' | 'scrutineering'
 
@@ -11,8 +11,8 @@ export function teamViewPath(view: TeamView, teamId: number): string {
 }
 
 /**
- * Navigation between the teams of the event of the work context (PAGE_SCRUTINEERING.md § 1.2): selector, previous /
- * next (also with ← / →), same club, same nation, and the presence ⇄ scrutineering switch. Profiles 1–2 and 10 only.
+ * Navigation between the teams of the context (PAGE_SCRUTINEERING.md § 1.2 and 1.3: event of the page filter, else page
+ * competition): selector, previous / next (also with ← / →), same club / nation, and the presence ⇄ scrutineering switch. Profiles 1–2 and 10 only.
  */
 /** `keyboardPaused` is true while a modal of the page is open, so ← / → do not leave the page. */
 export function useScrutineeringNavigation(teamId: Ref<number>, view: TeamView, keyboardPaused: Ref<boolean> = ref(false)) {
@@ -21,23 +21,22 @@ export function useScrutineeringNavigation(teamId: Ref<number>, view: TeamView, 
   const scrutineeringApi = useScrutineeringApi()
   const router = useRouter()
 
-  const eventId = computed(() => resolveEventId(workContext.pageEventGroupSelection, workContext.selectionType, workContext.eventId))
-  const enabled = computed(() => canManageScrutineering(authStore.profile) && eventId.value !== null)
+  const context = computed(() => resolveContext(workContext.pageEventGroupSelection, workContext.season, workContext.pageCompetitionCode))
+  const enabled = computed(() => canManageScrutineering(authStore.profile) && context.value !== null)
   const teams = ref<ScrutineeringTeam[]>([])
 
   const current = computed(() => teams.value.find(team => team.team_id === teamId.value) ?? null)
   const groups = computed(() => teamsByCompetition(teams.value))
   const adjacent = computed(() => adjacentTeams(teams.value, teamId.value))
   const sameClub = computed(() => sameClubTeams(teams.value, teamId.value))
-  const sameNation = computed(() => sameNationTeams(teams.value, teamId.value))
 
   async function load() {
-    if (!enabled.value || eventId.value === null) {
+    if (!enabled.value || context.value === null) {
       teams.value = []
       return
     }
     try {
-      teams.value = await scrutineeringApi.teams(eventId.value)
+      teams.value = await scrutineeringApi.teams(context.value)
     }
     catch {
       teams.value = [] // the navigation is a convenience: the page stays usable without it
@@ -48,6 +47,15 @@ export function useScrutineeringNavigation(teamId: Ref<number>, view: TeamView, 
     if (targetTeamId !== teamId.value || targetView !== view) {
       router.push(teamViewPath(targetView, targetTeamId))
     }
+  }
+
+  /** First team of a competition of the season (competition filter of the page changed); false when it has none. */
+  async function goToCompetition(competition: string): Promise<boolean> {
+    const first = (await scrutineeringApi.teams({ season: workContext.season, competition }))[0]
+    if (first) {
+      go(first.team_id)
+    }
+    return first !== undefined
   }
 
   function onKeydown(event: KeyboardEvent) {
@@ -62,12 +70,13 @@ export function useScrutineeringNavigation(teamId: Ref<number>, view: TeamView, 
     }
   }
 
-  watch(eventId, load)
+  // Same context with a new value (another event or competition) reloads too
+  watch(() => JSON.stringify(context.value), load)
   onMounted(() => {
     load()
     window.addEventListener('keydown', onKeydown)
   })
   onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
-  return { eventId, enabled, teams, current, groups, adjacent, sameClub, sameNation, go, load }
+  return { context, enabled, teams, current, groups, adjacent, sameClub, go, goToCompetition, load }
 }

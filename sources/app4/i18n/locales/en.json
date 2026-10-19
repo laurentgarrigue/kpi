@@ -94,8 +94,7 @@
     "view_statistics": "View statistics",
     "system_operations": "System operations",
     "beta_notice_title": "Beta Version",
-    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to",
-    "manage_scrutineering": "Check the teams' equipment"
+    "beta_notice_message": "This new administration interface is under development. Thanks for reporting any issue to"
   },
   "events": {
     "title": "Event Management",
@@ -3025,8 +3024,7 @@
   "scrutineering": {
     "title": "Scrutineering",
     "title_team": "Scrutineering - Equipment control",
-    "event": "Event",
-    "choose_event": "Choose an event to check its teams.",
+    "choose_context": "Choose an event or a competition to check its teams.",
     "no_teams": "No team in this event for your competitions.",
     "load_error": "Unable to load the scrutineering.",
     "save_error": "Saving failed.",
@@ -3065,8 +3063,7 @@
       "previous": "Previous team (←)",
       "next": "Next team (→)",
       "select_team": "Team of the event",
-      "same_club": "Same club:",
-      "same_nation": "Same nation ({nation}):",
+      "same_club": "Same club / nation:",
       "open_presence": "Presence sheet",
       "open_scrutineering": "Scrutineering"
     }

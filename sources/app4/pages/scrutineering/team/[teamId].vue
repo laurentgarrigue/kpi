@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { LastUpdateInfo } from '~/types/presence'
 import type { EquipmentParameter, ScrutineeringPlayer, ScrutineeringSheet } from '~/types/scrutineering'
-import { controlPlayers, isStaff, nextEquipmentValue, totalValidPaddles } from '~/utils/scrutineering'
+import { contextEventId, controlPlayers, isStaff, nextEquipmentValue, totalValidPaddles } from '~/utils/scrutineering'
 
 /** Equipment control of a team (PAGE_SCRUTINEERING.md § 3): kayak, vest, helmet, paddles and comment per player. */
 definePageMeta({ layout: 'admin', middleware: ['auth', 'scrutineering'] })
@@ -25,6 +26,7 @@ const scrutineeringApi = useScrutineeringApi()
 const teamId = computed(() => Number.parseInt(route.params.teamId as string, 10))
 const commentPlayer = ref<ScrutineeringPlayer | null>(null)
 const commentText = ref('')
+const commentInput = ref<HTMLTextAreaElement | null>(null)
 const resetModalOpen = ref(false)
 const modalOpen = computed(() => commentPlayer.value !== null || resetModalOpen.value)
 const navigation = useScrutineeringNavigation(teamId, 'scrutineering', modalOpen)
@@ -46,16 +48,15 @@ const controlPdfUrl = computed(() => {
   return `${config.public.legacyBaseUrl}/admin/FeuilleControle.php?${params}`
 })
 
+// Event of the journal: the event of the context, when the team is one of its teams (§ 5)
+const journalEventId = computed(() => (navigation.current.value ? contextEventId(navigation.context.value) : null))
+
 async function load() {
-  const eventId = navigation.eventId.value
-  if (eventId === null) {
-    sheet.value = null
-    return
-  }
   loading.value = true
   loadError.value = false
   try {
-    sheet.value = await scrutineeringApi.sheet(eventId, teamId.value)
+    sheet.value = await scrutineeringApi.sheet(teamId.value)
+    syncCompetitionFilter()
   }
   catch {
     sheet.value = null
@@ -66,6 +67,28 @@ async function load() {
   }
 }
 
+// The competition filter follows the team displayed, so that without an event the navigation covers its competition
+function syncCompetitionFilter() {
+  const code = sheet.value?.team.competition_code
+  if (code && workContext.pageCompetitionCode !== code) {
+    workContext.setPageCompetition(code)
+  }
+}
+
+// Competition filter changed: open the first team of the newly selected competition
+async function onCompetitionChange() {
+  const code = workContext.pageCompetitionCode
+  if (!sheet.value || !code || code === sheet.value.team.competition_code) return
+  try {
+    if (!(await navigation.goToCompetition(code))) {
+      toast.add({ title: t('common.error'), description: t('scrutineering.no_teams'), color: 'error', duration: 3000 })
+    }
+  }
+  catch {
+    toast.add({ title: t('scrutineering.load_error'), color: 'error', duration: 3000 })
+  }
+}
+
 function refresh() {
   refreshCoolingDown.value = true
   load()
@@ -73,31 +96,32 @@ function refresh() {
 }
 
 async function cycle(player: ScrutineeringPlayer, parameter: EquipmentParameter) {
-  const eventId = navigation.eventId.value
-  if (eventId === null) return
   const value = nextEquipmentValue(parameter, player[parameter])
   try {
-    await scrutineeringApi.setEquipment(eventId, teamId.value, player.player_id, parameter, value)
+    const { lastUpdate } = await scrutineeringApi.setEquipment(teamId.value, player.player_id, parameter, value, journalEventId.value)
     player[parameter] = value
+    setLastUpdate(lastUpdate)
   }
   catch {
     toast.add({ title: t('scrutineering.save_error'), color: 'error', duration: 3000 })
   }
 }
 
-function openComment(player: ScrutineeringPlayer) {
+async function openComment(player: ScrutineeringPlayer) {
   commentPlayer.value = player
   commentText.value = player.comment
+  await nextTick()
+  commentInput.value?.focus()
 }
 
 async function saveComment() {
-  const eventId = navigation.eventId.value
   const player = commentPlayer.value
-  if (eventId === null || !player) return
+  if (!player) return
   savingComment.value = true
   try {
-    const { comment } = await scrutineeringApi.setComment(eventId, teamId.value, player.player_id, commentText.value)
+    const { comment, lastUpdate } = await scrutineeringApi.setComment(teamId.value, player.player_id, commentText.value, journalEventId.value)
     player.comment = comment
+    setLastUpdate(lastUpdate)
     commentPlayer.value = null
   }
   catch {
@@ -108,12 +132,14 @@ async function saveComment() {
   }
 }
 
+function setLastUpdate(lastUpdate: LastUpdateInfo | null) {
+  if (sheet.value) sheet.value.lastUpdate = lastUpdate
+}
+
 async function confirmReset() {
-  const eventId = navigation.eventId.value
-  if (eventId === null) return
   resetting.value = true
   try {
-    await scrutineeringApi.reset(eventId, teamId.value)
+    await scrutineeringApi.reset(teamId.value, journalEventId.value)
     resetModalOpen.value = false
     toast.add({ title: t('scrutineering.reset_done'), color: 'success', duration: 2000 })
     await load()
@@ -132,7 +158,6 @@ const commentPreview = (comment: string) =>
 const playerName = (player: ScrutineeringPlayer) => `${player.last_name} ${player.first_name}`
 
 watch(teamId, load)
-watch(navigation.eventId, load)
 onMounted(async () => {
   await workContext.initContext()
   await load()
@@ -141,7 +166,12 @@ onMounted(async () => {
 
 <template>
   <div>
-    <AdminPageHeader :title="t('scrutineering.title_team')" :show-filters="false" :has-notices="!!sheet?.team.locked">
+    <AdminPageHeader
+      :title="t('scrutineering.title_team')"
+      :competition-filtered-codes="workContext.pageFilteredCompetitionCodes"
+      :has-notices="!!sheet?.team.locked"
+      @competition-change="onCompetitionChange"
+    >
       <template #notices>
         <div
           v-if="sheet?.team.locked"
@@ -153,46 +183,45 @@ onMounted(async () => {
       </template>
     </AdminPageHeader>
 
-    <div class="mb-3 flex flex-wrap items-end gap-3">
-      <AdminScrutineeringEventSelect :event-id="navigation.eventId.value" />
-      <NuxtLink
-        to="/scrutineering"
-        class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
-      >
-        <UIcon name="heroicons:table-cells" class="w-5 h-5" />
-        {{ t('scrutineering.overview') }}
-      </NuxtLink>
-      <button
-        type="button"
-        class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-50"
-        :disabled="refreshCoolingDown || loading"
-        @click="refresh"
-      >
-        <UIcon name="heroicons:arrow-path" :class="['w-5 h-5', loading && 'animate-spin']" />
-        {{ t('scrutineering.refresh') }}
-      </button>
-      <a
-        v-if="controlPdfUrl"
-        :href="controlPdfUrl"
-        target="_blank"
-        rel="noopener"
-        class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
-      >
-        <UIcon name="heroicons:document-text" class="w-5 h-5" />
-        {{ t('scrutineering.pdf_control') }}
-      </a>
-    </div>
+    <!-- Team navigation, with the actions of the screen on the same row -->
+    <AdminScrutineeringTeamNav :navigation="navigation" :team-id="teamId" view="scrutineering">
+      <template #actions>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-50"
+          :disabled="refreshCoolingDown || loading"
+          @click="refresh"
+        >
+          <UIcon name="heroicons:arrow-path" :class="['w-5 h-5', loading && 'animate-spin']" />
+          {{ t('scrutineering.refresh') }}
+        </button>
+        <a
+          v-if="controlPdfUrl"
+          :href="controlPdfUrl"
+          target="_blank"
+          rel="noopener"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
+        >
+          <UIcon name="heroicons:document-text" class="w-5 h-5" />
+          {{ t('scrutineering.pdf_control') }}
+        </a>
+      </template>
+      <template #actions-end>
+        <NuxtLink
+          to="/scrutineering"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
+        >
+          <UIcon name="heroicons:table-cells" class="w-5 h-5" />
+          {{ t('scrutineering.overview') }}
+        </NuxtLink>
+      </template>
+    </AdminScrutineeringTeamNav>
 
-    <p v-if="navigation.eventId.value === null" class="p-4 rounded-lg bg-white dark:bg-header-900 text-header-600 dark:text-header-300">
-      {{ t('scrutineering.choose_event') }}
-    </p>
-    <p v-else-if="loadError" class="p-4 rounded-lg bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-300">
+    <p v-if="loadError" class="p-4 rounded-lg bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-300">
       {{ t('scrutineering.load_error') }}
     </p>
 
     <template v-else-if="sheet">
-      <AdminScrutineeringTeamNav :navigation="navigation" :team-id="teamId" view="scrutineering" />
-
       <div class="mb-3 flex items-center gap-3">
         <img v-if="logoUrl" :src="logoUrl" alt="" class="h-12 w-12 object-contain">
         <div>
@@ -301,6 +330,7 @@ onMounted(async () => {
           {{ t('scrutineering.reset') }}
         </button>
       </div>
+      <AdminTeamLastUpdate v-if="sheet?.lastUpdate" :last-update="sheet.lastUpdate" class="mt-4" />
     </template>
 
     <AdminModal
@@ -309,6 +339,7 @@ onMounted(async () => {
       @close="commentPlayer = null"
     >
       <textarea
+        ref="commentInput"
         v-model="commentText"
         rows="4"
         :maxlength="COMMENT_MAX_LENGTH"

@@ -20,9 +20,18 @@ final class PresenceScrutineerTest extends ApiTestCase
         $this->connection = $this->beginWrites();
     }
 
-    public function testAdmScr01TheScrutineerHasNoGeneralConsultation(): void
+    public function testAdmScr01TheScrutineerReadsTheTeamsOfItsCompetitionsOnly(): void
     {
-        $this->requestAs('TSCRUT', 'GET', '/admin/competition-teams?season=2997', expectedStatus: 403);
+        $teams = self::column($this->requestAs('TSCRUT', 'GET', '/admin/competition-teams?season=2997&competition=SCA')['teams'], 'id');
+        sort($teams);
+        self::assertSame([9381, 9382, 9383], $teams);
+        $this->requestAs('TSCRUTA', 'GET', '/admin/competition-teams?season=2997&competition=SCB', expectedStatus: 403);
+        $this->requestAs('TSCRUT', 'POST', '/admin/competition-teams', ['season' => '2997', 'competition' => 'SCA'], 403);
+    }
+
+    public function testAdmScr01TheScrutineerHasNoOtherGeneralConsultation(): void
+    {
+        $this->requestAs('TSCRUT', 'GET', '/admin/clubs', expectedStatus: 403);
         $this->requestAs('TSCRUT', 'GET', '/admin/competitions?season=2997', expectedStatus: 403);
         $this->requestAs('TSCRUT', 'GET', '/admin/matches/9401/players?teamCode=A', expectedStatus: 403);
     }
@@ -63,9 +72,25 @@ final class PresenceScrutineerTest extends ApiTestCase
 
     public function testTheLastUpdateOfThePresenceSheetIgnoresTheScrutineering(): void
     {
-        $this->requestAs('TSCRUT', 'PUT', '/staff/80/team/9381/player/9512/kayak_status/1');
+        $this->requestAs('TSCRUT', 'PUT', '/staff/team/9381/player/9512/kayak_status/1');
 
         self::assertNull($this->requestAs('TSCRUT', 'GET', '/admin/teams/9381/players')['lastUpdate']);
+    }
+
+    public function testTheLastUpdateOfThePresenceSheetNamesTheUserFirstNameLastName(): void
+    {
+        $this->connection->insert('kp_journal', [
+            'Dates' => '2037-01-02 10:00:00', 'Users' => '9512', 'Actions' => 'Ajout titulaire', 'Journal' => 'Equipe 9381 - Joueur 9513',
+        ]);
+        // another team whose id starts with the same digits
+        $this->connection->insert('kp_journal', [
+            'Dates' => '2037-01-03 10:00:00', 'Users' => 'TSCRUT', 'Actions' => 'Ajout titulaire', 'Journal' => 'Equipe 93810 - Joueur 9513',
+        ]);
+
+        self::assertSame(
+            ['date' => '2037-01-02 10:00:00', 'user' => 'Joueur SCRUT', 'action' => 'Ajout titulaire'],
+            $this->requestAs('TSCRUT', 'GET', '/admin/teams/9381/players')['lastUpdate'],
+        );
     }
 
     public function testAdmScr06ALockedCompetitionKeepsThePresenceSheetReadOnly(): void
