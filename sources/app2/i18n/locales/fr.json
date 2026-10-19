@@ -14,16 +14,12 @@
   },
   "nav": {
     "Home": "Accueil",
-    "Login": "Connexion",
-    "MyAccount": "Mon compte",
     "Games": "Matchs",
     "Ranking": "Classement",
     "Charts": "Progression",
     "GameReports": "Feuilles de marque",
     "Stats": "Stats",
     "StatReport": "Stats du match",
-    "Scrutineering": "Vérifications",
-    "ScrutReport": "Vérifications techniques des équipements",
     "Lang": "Langue",
     "Back": "Retour",
     "CommingSoon": "Prochainement...",
@@ -31,7 +27,6 @@
     "About": "A propos",
     "Filters": "Filtres",
     "ChangeEvent": "Changez d'événement SVP",
-    "StaffJobs": "Missions organisation",
     "ScrollTop": "Haut de page",
     "ScrollBottom": "Bas de page"
   },
@@ -45,18 +40,6 @@
     "message": "Ajouter au bureau / à l'écran d'accueil.",
     "Dismiss": "Refuser",
     "Install": "Installer"
-  },
-  "Login": {
-    "Authentication": "Authentification",
-    "Login": "Identifiant",
-    "LoginHelp": "Entrez votre numéro de licence",
-    "Password": "Mot de passe",
-    "Submit": "Connexion",
-    "EmptyMsg": "Identifiant et mot de passe sont requis !",
-    "UnauthorizedMsg": "Connexion refusée !",
-    "ErrorMsg": "Erreur durant l'authentification !",
-    "Welcome": "Bienvenue",
-    "Logout": "Déconnexion"
   },
   "Event": {
     "SelectEvent": "Sélectionnez un événement",
@@ -111,7 +94,6 @@
     "Change": "Changer de saison"
   },
   "Teams": {
-    "SelectTeam": "Equipe",
     "PleaseSelectOne": "Sélectionner une équipe",
     "Team": "Equipe",
     "Change": "Changer",
@@ -239,76 +221,6 @@
     "Button": "Appliquer maintenant !",
     "Later": "Plus tard"
   },
-  "Scrutineering": {
-    "ChangeEvent": "Vous n'avez pas les droits suffisants pour cet événement ! ",
-    "Scrutineering": "Vérifications équipement",
-    "Player": "Joueur",
-    "Helmet": "Casque",
-    "Vest": "Gilet",
-    "Kayak": "Kayak",
-    "Paddles": "Pagaies",
-    "Coach": "Staff",
-    "PrintAll": "Imprimer tout",
-    "Print": "Imprimer",
-    "Cosmetic": "Cosmétique",
-    "Safety": "Sécurité",
-    "Technical": "Techn.",
-    "NotChecked": "Non contrôlé",
-    "Valid": "Valide",
-    "ValidPaddles": "Pagaies valides",
-    "Legend": "Légende",
-    "Issues": "Problèmes",
-    "Comments": "Commentaires",
-    "Comment": "Commentaire",
-    "EnterComment": "Saisissez un commentaire...",
-    "AddComment": "Ajouter un commentaire",
-    "Clear": "Effacer",
-    "Cancel": "Annuler",
-    "Save": "Enregistrer",
-    "RefreshRights": "Rafraîchir mes droits",
-    "TotalValidPaddles": "Total pagaies valides",
-    "ResetTeam": "Réinitialiser le contrôle",
-    "ResetTeamConfirmTitle": "Réinitialiser le contrôle",
-    "ResetTeamConfirm": "Cette action supprimera tous les contrôles d'équipement, les décomptes de pagaies et les commentaires de cette équipe. Cette action est irréversible. Continuer ?",
-    "Confirm": "Confirmer",
-    "Composition": {
-      "ControlMode": "Contrôle équipement",
-      "CompositionMode": "Composition",
-      "SwitchToComposition": "Passer en composition",
-      "SwitchToControl": "Passer au contrôle équipement",
-      "Number": "N°",
-      "Status": "Statut",
-      "Club": "Club",
-      "StatusPlayer": "Joueur",
-      "StatusCaptain": "Capitaine",
-      "StatusCoach": "Entraîneur",
-      "StatusReferee": "Arbitre",
-      "StatusInactive": "Inactif",
-      "SectionPlayers": "Joueurs & capitaines",
-      "SectionStaff": "Staff",
-      "SectionOthers": "Arbitres & inactifs",
-      "Deactivate": "Passer le joueur en inactif",
-      "AddPlayer": "Ajouter un joueur",
-      "SearchPlayer": "Rechercher un joueur (nom ou licence)...",
-      "NoResults": "Aucun joueur trouvé",
-      "Add": "Ajouter",
-      "Locked": "Composition verrouillée (compétition clôturée)",
-      "Saved": "Enregistré",
-      "AddError": "Impossible d'ajouter le joueur",
-      "AlreadyPresent": "Joueur déjà présent dans la composition",
-      "SaveError": "Échec de l'enregistrement"
-    },
-    "Overview": {
-      "Title": "Vue synthétique",
-      "Club": "Club / Nation",
-      "Complete": "Complet",
-      "Partial": "Partiel",
-      "None": "Non contrôlé",
-      "Refresh": "Rafraîchir",
-      "NoTeams": "Aucune équipe trouvée pour cet événement.",
-      "LoadError": "Erreur lors du chargement de la vue synthétique."
-    }
-  },
   "GameReports": {
     "NewGame": "Nouveau match (hors ligne)",
     "LoadGames": "Charger des matchs",
@@ -358,14 +270,6 @@
       "400": {
         "title": "Requête Invalide",
         "description": "La requête n'a pas pu être traitée"
-      },
-      "401": {
-        "title": "Authentification Requise",
-        "description": "Votre session a expiré. Redirection vers la connexion..."
-      },
-      "403": {
-        "title": "Accès Refusé",
-        "description": "Vous n'avez pas la permission d'accéder à cette ressource"
       },
       "404": {
         "title": "Non Trouvé",
@@ -419,18 +323,6 @@
       "loadCharts": {
         "title": "Échec du Chargement des Classements",
         "description": "Impossible de charger les données de classement"
-      },
-      "loadPlayers": {
-        "title": "Échec du Chargement des Joueurs",
-        "description": "Impossible de charger les informations des joueurs"
-      },
-      "savePlayer": {
-        "title": "Échec de l'Enregistrement",
-        "description": "Impossible d'enregistrer les modifications"
-      },
-      "login": {
-        "title": "Échec de la Connexion",
-        "description": "L'authentification a échoué. Vérifiez vos identifiants."
       }
     },
     "cache": {

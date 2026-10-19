@@ -17,8 +17,7 @@
           </template>
         </ClientOnly>
       </NuxtLink>
-      <!-- No « Organisation » menu (login, scrutineering): it will be rebuilt in app4; /login and /scrutineering stay
-           reachable by URL. -->
+      <!-- No authentication in app2: the scrutineering moved to app4 (DOC/specs/PAGE_SCRUTINEERING.md). -->
       <nav class="hidden md:flex space-x-4">
         <NuxtLink to="/" :class="isActive('/') ? 'text-green-400 font-bold' : 'hover:text-green-400'" class="flex items-center space-x-1">
           <UIcon name="i-heroicons-home" />

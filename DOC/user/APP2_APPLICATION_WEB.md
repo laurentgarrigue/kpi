@@ -235,54 +235,11 @@ Cliquez sur n'importe quelle équipe (depuis un match, un classement ou la reche
 
 ---
 
-### 5. Organisation - Gestion et Scrutineering
+### 5. Scrutineering (contrôle du matériel) — déplacé dans admin2
 
-> **Menu masqué (octobre 2026)** : le menu « Organisation » n'apparaît plus dans app2. Ces fonctions seront
-> redéveloppées dans l'application d'administration (app4) lors d'un prochain chantier. D'ici là, les pages
-> restent accessibles par leur adresse : `app.kayak-polo.info/login` puis `app.kayak-polo.info/scrutineering`.
-
-**Authentification et contrôle des droits** :
-
-- **Connexion sécurisée** :
-  - Authentification par nom d'utilisateur et mot de passe
-  - Token de session valide 10 jours
-  - Droits d'accès différenciés par événement
-
-**Contrôle du matériel (Scrutineering)** :
-
-Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
-
-- **Sélection de l'équipe** :
-  - Liste de toutes les équipes de l'événement
-  - Filtrage par catégorie
-
-- **Vérification du matériel** :
-  - **Kayak** : Statut de contrôle = Non contrôlé, Validé, Non conforme (cosmétique, sécurité, technique)
-  - **Gilet** : Statut de contrôle = Non contrôlé, Validé, Non conforme (cosmétique, sécurité, technique)
-  - **Casque** : Statut de contrôle = Non contrôlé, Validé, Non conforme (cosmétique, sécurité, technique)
-  - **Pagaies** : Nombre de pagaies contrôlées (0-6)
-  - **Commentaires** : Zone de texte libre pour remarques (255 caractères max)
-
-- **Interface de contrôle** :
-  - Liste de tous les joueurs de l'équipe avec numéros
-  - Boutons tactiles pour chaque élément de matériel
-  - Code couleur : Gris (non contrôlé), Vert (validé), Rouge (non conforme)
-  - Sauvegarde automatique à chaque modification
-  - Mise à jour en temps réel sans rechargement de page
-
-- **Actions rapides** :
-  - Rafraîchissement des données sans cache
-
-**Exemple d'usage** :
-```
-1. Se connecter avec ses identifiants
-2. Sélectionner l'événement "Championnat N1 2025"
-3. Choisir l'équipe
-4. Contrôler le matériel de chaque joueur
-5. Valider ou marquer non conforme
-6. Ajouter un commentaire si besoin
-→ Données sauvegardées automatiquement
-```
+Depuis octobre 2026, app2 ne demande plus aucune connexion : la page de connexion et le scrutineering ont été
+retirés. Le contrôle du matériel des équipes se fait dans l'administration (admin2), menu **Scrutineering**, avec un
+compte de profil 1, 2 ou 10 « Contrôle équipement » ([PAGE_SCRUTINEERING.md](../specs/PAGE_SCRUTINEERING.md)).
 
 ---
 
@@ -383,7 +340,6 @@ Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
 
 **Limitations du mode hors ligne** :
 - Les données en temps réel ne sont pas disponibles
-- Le scrutineering nécessite une connexion pour la sauvegarde
 - Les mises à jour de scores nécessitent une connexion
 
 ### Notifications Automatiques
@@ -412,11 +368,6 @@ Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
   - Connexion internet rétablie automatiquement
   - Sauvegarde réussie
   - **Action** : L'application fonctionne normalement et se synchronise
-
-**Session expirée (401)** :
-- Si votre session expire (après 10 jours d'inactivité), une notification rouge apparaît automatiquement
-- Vous serez redirigé vers la page de connexion après 1,5 seconde
-- Reconnectez-vous pour continuer à utiliser l'application
 
 **Messages multilingues** :
 - Toutes les notifications s'affichent dans votre langue (français ou anglais)
@@ -474,16 +425,7 @@ Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
 
 ### Organisateur/Arbitre : Gérer le contrôle matériel
 
-**Scénario** : Vous devez contrôler le matériel de toutes les équipes avant les matchs.
-
-**Solution** :
-1. Se connecter avec ses identifiants sur `app.kayak-polo.info/login` (menu « Organisation » masqué, voir § 5)
-2. Ouvrir `app.kayak-polo.info/scrutineering`
-3. Sélectionner chaque équipe
-4. Valider le matériel de chaque joueur
-5. Ajouter des commentaires si besoin
-
-**Gain** : Sauvegarde automatique, pas de papier, accès hors ligne
+Le contrôle du matériel se fait désormais dans admin2 (menu **Scrutineering**), voir § 5.
 
 ### Spectateur : Suivre la compétition en direct
 
@@ -564,28 +506,6 @@ Fonctionnalité dédiée au contrôle du matériel des joueurs avant les matchs.
 - **"Connexion Rétablie"** : Vous êtes de nouveau en ligne
   - **Solution** : L'application se synchronise automatiquement
 
-**Si vous voyez "Authentification Requise"** :
-- Votre session a expiré après 10 jours
-- Vous serez redirigé automatiquement vers la page de connexion
-- Reconnectez-vous avec vos identifiants
-
-### Le scrutineering ne sauvegarde pas
-
-**Causes possibles** :
-- Pas de connexion internet
-- Session expirée
-- Droits d'accès insuffisants
-
-**Solutions** :
-1. Vérifier votre connexion internet
-2. Se reconnecter si nécessaire
-3. Vérifier que vous avez les droits d'accès à cet événement
-4. Rafraîchir la page et réessayer
-
----
-
-## 💡 Conseils d'Utilisation
-
 ### Optimiser votre expérience
 
 **Mobile** :
@@ -657,7 +577,6 @@ Si vous rencontrez un problème :
 - Historique sur plusieurs saisons
 - Statistiques avancées (heatmaps, possession)
 - Gestion complète des arbitres
-- Connexion et contrôle du matériel (scrutineering) refondus dans l'application d'administration (app4)
 
 ### Long terme
 - Application mobile native (iOS/Android)
@@ -686,8 +605,7 @@ Si vous rencontrez un problème :
 **Confidentialité** :
 - Aucune donnée personnelle collectée sans consentement
 - Aucun tracking publicitaire
-- Utilisation anonyme pour les consultations publiques
-- Authentification sécurisée pour les organisateurs (token HTTPS)
+- Utilisation anonyme, sans compte ni connexion
 
 **Technologies** :
 - Frontend : Nuxt 4, Vue 3, TypeScript, Tailwind CSS
@@ -704,7 +622,6 @@ Si vous rencontrez un problème :
 
 - ✅ **Consulter** résultats, classements, calendriers en temps réel
 - ✅ **Suivre** vos équipes en détail (matchs, progression, statistiques)
-- ✅ **Gérer** le contrôle du matériel des joueurs (scrutineering)
 - ✅ **Partager** facilement les informations de compétition (QR code)
 - ✅ **Accéder** aux données partout, sur tous vos appareils, même hors ligne
 - ✅ **Profiter** d'une interface moderne, rapide et intuitive
