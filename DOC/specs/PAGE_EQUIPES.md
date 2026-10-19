@@ -7,7 +7,10 @@ La page Équipes permet de gérer les équipes inscrites à une compétition : a
 **Route** : `/teams`
 
 **Accès** :
-- Profil ≤ 10 : Lecture seule
+- Profil ≤ 8 et profil 10 : Lecture seule (profil 10 : sans lien club ni PDF de compétition, c'est son unique
+  entrée vers le scrutineering)
+- Profils 1–2 et 10 : bouton **Scrutineering** (vue d'ensemble) et icône Scrutineering par équipe, voir
+  [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md)
 - Profil ≤ 6 : Édition inline (poule/tirage)
 - Profil ≤ 4 : Tirage au sort, initialisation titulaires, verrouillage
 - Profil ≤ 3 : Ajout/Suppression/Duplication (sauf si compétition verrouillée)
@@ -193,6 +196,8 @@ Boutons conditionnels selon profil ET état de verrouillage :
 - **[Dupliquer]** (profil ≤ 3) → ouvre modal de duplication
 - **[Init titulaires]** (profil ≤ 4) → confirmation puis action
 - **[MAJ logos]** (profil ≤ 2) → confirmation puis action
+- **[Scrutineering]** (profils 1–2 et 10) → vue d'ensemble `/scrutineering` du contexte affiché (événement filtré, sinon la compétition)
+- **[PDF compétition]** (masqué pour le profil 10)
 - **[☑ Tout / ☐ Rien]** (profil ≤ 3 ET non verrouillé) → sélection/désélection
 - **[🗑️ Supprimer sélection (N)]** (profil ≤ 3 ET non verrouillé) → suppression en masse
 - **Total : N équipes** (lecture seule)
@@ -206,7 +211,7 @@ Boutons conditionnels selon profil ET état de verrouillage :
 | # Tirage | Numéro d'ordre (0-99) | Inline | ≤ 6 |
 | Logo/Couleurs | Logo (25px) + aperçu couleurs côte à côte, cliquable | Clic → modal | ≤ 2 |
 | Équipe | Libellé de l'équipe | - | - |
-| Club | Code club | - | - |
+| Club | Code club, lien vers la fiche club (texte seul pour le profil 10) | - | - |
 | Matchs | Nombre de matchs joués (`Validation = 'O'`) | - | - |
 | Actions | Boutons d'action | - | Variable |
 
@@ -215,6 +220,7 @@ Boutons conditionnels selon profil ET état de verrouillage :
 | Action | Icône | Description | Profil |
 |--------|-------|-------------|--------|
 | Voir joueurs | 👥 | Navigue vers page gestion joueurs (legacy) | ≤ 10 |
+| Scrutineering | 📋 | Contrôle équipement de l'équipe (`/scrutineering/team/:id`) | 1–2, 10 |
 | Feuille de présence | 📄 | Dropdown click-toggle (Teleport to body) avec liens PDF | ≤ 10 |
 | Supprimer | 🗑️ | Supprime l'équipe (confirmation requise), masqué si verrouillé ou matchs > 0 | ≤ 3 |
 
@@ -228,7 +234,7 @@ Le dropdown de la feuille de présence utilise un pattern **click-toggle avec Te
 2. Le dropdown est téléporté dans `<body>` avec `position: fixed`
 3. La position est calculée dynamiquement via `getBoundingClientRect()` du bouton
 4. Fermeture : clic en dehors (event listener global) ou clic sur un lien
-5. Contenu : Présence FR, Présence EN, Présence photo, Fiche contrôle (profil ≤ 2)
+5. Contenu : Présence FR, Présence EN, Présence photo, Fiche contrôle (profils 1–2 et 10)
 
 ### 3.8 Groupement par poule
 

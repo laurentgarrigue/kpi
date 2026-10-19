@@ -371,14 +371,6 @@ const changeEvent = async () => {
   await preferenceStore.putItem('eventMode', eventMode.value)
   await preferenceStore.putItem('last_team', null)
 
-  // Reset scrutineering team data when changing event
-  await Promise.all([
-    preferenceStore.putItem('scr_team_id', null),
-    preferenceStore.putItem('scr_team_label', null),
-    preferenceStore.putItem('scr_team_club', null),
-    preferenceStore.putItem('scr_team_logo', null)
-  ])
-
   // Reset all game filters when changing event
   await resetGameFilters()
 
@@ -409,14 +401,6 @@ const changeGroup = async () => {
   await preferenceStore.putItem('lastEvent', null)
   await preferenceStore.putItem('eventMode', 'group')
   await preferenceStore.putItem('last_team', null)
-
-  // Reset scrutineering team data when changing group
-  await Promise.all([
-    preferenceStore.putItem('scr_team_id', null),
-    preferenceStore.putItem('scr_team_label', null),
-    preferenceStore.putItem('scr_team_club', null),
-    preferenceStore.putItem('scr_team_logo', null)
-  ])
 
   // Reset all game filters when changing group
   await resetGameFilters()

@@ -93,28 +93,9 @@ CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1|.*\.localhost)(:[0-9]+)?$'
 
 ### Authentication
 
-#### Login
-- `POST /login` - User authentication
-  - **Authentication:** HTTP Basic Auth (Authorization header)
-  - **Request:** `Authorization: Basic base64(username:password)`
-  - **Response:**
-    ```json
-    {
-      "user": {
-        "id": "123456",
-        "name": "Dupont",
-        "firstname": "Jean",
-        "profile": "O",
-        "events": "123|456|789",
-        "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
-      }
-    }
-    ```
-  - **Token Usage:** The returned `token` should be used in Staff and Report endpoints
-  - **Token Validity:** 10 days from generation
-  - **Token Transmission:**
-    - **Recommended:** Via header `X-Auth-Token: {token}` (used by app2)
-    - Alternative: Via cookie `kpi_app={token}`
+All authenticated endpoints use the app4 **JWT** (`POST /auth/login`, header `Authorization: Bearer …`).
+The former app2 token (`POST /login`, `X-Auth-Token` header, `kpi_app` cookie) was removed with the app2
+scrutineering ([PAGE_SCRUTINEERING.md](../../DOC/specs/PAGE_SCRUTINEERING.md)).
 
 ### Public Endpoints (No Authentication)
 
@@ -142,30 +123,18 @@ CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1|.*\.localhost)(:[0-9]+)?$'
   }
   ```
 
-### Staff Endpoints (Token Authentication Required)
+### Scrutineering Endpoints (JWT, profiles 1–2 and 10)
 
-**Authentication:** All staff endpoints require a valid token obtained from `/login`
+Used by app4 (`/scrutineering`), see [PAGE_SCRUTINEERING.md](../../DOC/specs/PAGE_SCRUTINEERING.md) § 5. Scoped to the
+event (`getAllowedEvents`) and to the allowed seasons and competitions; a team outside that scope answers 404.
 
-**Token transmission:** Use `X-Auth-Token` header or `kpi_app` cookie
-
-- `GET /staff/{eventId}/teams` - Get teams for scrutineering
-- `GET /staff/{eventId}/team/{teamId}/players` - Get players for a team (returns fresh data with no-cache headers)
-- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}` - Update player scrutineering data
-  - `parameter`: `kayak_status`, `vest_status`, `helmet_status`, `paddle_count`
-- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/comment` - Update player comment
-  ```json
-  {
-    "comment": "Comment text"
-  }
-  ```
-
-### Report Endpoints (Token Authentication Required)
-
-**Authentication:** All report endpoints require a valid token obtained from `/login`
-
-**Token transmission:** Use `X-Auth-Token` header or `kpi_app` cookie
-
-- `GET /report/game/{gameId}` - Get game details with events and players
+- `GET /staff/{eventId}/teams` - Teams of the event (club, nation, competition) for the team navigation
+- `GET /staff/{eventId}/team/{teamId}/players` - Team context and players with their scrutineering data
+- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}` - Equipment status
+  - `parameter`: `kayak_status`, `vest_status`, `helmet_status` (0–4), `paddle_count` (0–6)
+- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/comment` - Comment (`{"comment": "…"}`, 255 characters max)
+- `DELETE /staff/{eventId}/team/{teamId}/reset` - Reset every check of the team
+- `GET /staff/{eventId}/overview` - Status (complete / partial / none) of every team, by club and category
 
 ### WSM (Web Score Management) Endpoints
 

@@ -93,7 +93,7 @@ Use `make help` to see all available commands.
 - `make docker_prod_logs` - Show production logs
 - `make docker_prod_status` - Show production status
 
-### App2 - Nuxt (Scrutineering/Charts)
+### App2 - Nuxt (public results/charts)
 - `make app2_dev` - Run Nuxt development server (port 3002)
 - `make app2_dev_restart` / `app3_dev_restart` / `app4_dev_restart` - Restart a Nuxt dev server (e.g. stuck in 500 after many hot reloads); `app3_restart` is the preprod/prod SSR server
 - `make app2_build` - Build Nuxt for production
@@ -213,7 +213,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 
 ### Core Structure
 - `sources/` - Main application code
-  - `app2/` - Nuxt 4 application (primary frontend - scrutineering/charts)
+  - `app2/` - Nuxt 4 application (public results/charts PWA, no authentication)
   - `app3/` - Public website (Nuxt 4 SSR, beta) - see [DOC/specs/public/](DOC/specs/public/README.md)
   - `kpi-layer/` - Shared Nuxt layer (charter, fonts, api2 client), used by app3
   - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
@@ -224,7 +224,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - `docker/` - Docker configuration and compose files
 - `SQL/` - Database scripts
 
-### App2 (Nuxt Application - Scrutineering/Charts)
+### App2 (Nuxt Application - public results/charts)
 - **Framework**: Nuxt 4 with Vue 3, TypeScript, Tailwind CSS
 - **Modules**: Pinia for state management, i18n for internationalization, Nuxt UI components
 - **Domain**:
@@ -271,7 +271,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - All endpoints from legacy API (`/api/`) replicated
 - **Endpoints**:
   - Public: events, games, charts, team stats, ratings
-  - Staff: teams, players, scrutineering management
+  - Scrutineering (`/staff/{eventId}/...`, JWT, profiles 1–2 and 10): equipment control used by app4
   - Report: game details with events and players
   - WSM: live score management, game events, timer, statistics
 - **Documentation**: See [sources/api2/README.md](sources/api2/README.md)
@@ -376,7 +376,10 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   - Replicates all functionalities from legacy API (`sources/api/`)
   - Logs via `make api2_logs`, **not** `docker/apachelogs_8/`
   - See [sources/api2/README.md](sources/api2/README.md) for details
-- App2 is the primary modern frontend application being actively developed
+- App2 is the public results/charts PWA; it has **no authentication** (login and scrutineering moved to app4,
+  see [PAGE_SCRUTINEERING.md](DOC/specs/PAGE_SCRUTINEERING.md))
+- **Profile 10 "Contrôle équipement"** is a specialised profile outside the linear hierarchy (`ROLE_SCRUTINEER`):
+  scrutineering + team presence sheets of every team, nothing else; assigned by profiles 1–2 only
 - App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
 - **Live scoring refactoring** (in progress): canonical match state in `scoring_live_*` + outbox →
   Mercure, a single app4 Scoring console replacing FeuilleMarque V2/V3, and one parameterized

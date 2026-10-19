@@ -15,6 +15,7 @@ import type {
   RankingSourceResponse
 } from '~/types/teams'
 import type { IneligibleSummary } from '~/types/presence'
+import { canManageScrutineering, isScrutineerProfile } from '~/utils/scrutineering'
 
 definePageMeta({
   layout: 'admin',
@@ -200,6 +201,9 @@ const canEditInline = computed(() => authStore.profile <= 6 && !isReadOnly.value
 const canManageSpecialOps = computed(() => authStore.profile <= 4 && !isReadOnly.value)
 const canAddDelete = computed(() => authStore.profile <= 3 && !isReadOnly.value)
 const canEditProperties = computed(() => authStore.profile <= 2 && !isReadOnly.value)
+// Profiles 1–2 and 10 (PAGE_SCRUTINEERING.md § 1.1); the profile 10 only reads the teams (no club, no competition PDF)
+const canScrutineer = computed(() => canManageScrutineering(authStore.profile))
+const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
 const showPoolDrawColumns = computed(() => !(authStore.profile === 7 && competitionInfo.value?.statut === 'ATT'))
 
 // Computed: teams grouped by pool
@@ -1111,9 +1115,20 @@ const getLogoUrl = (team: CompetitionTeam) => {
             {{ t('teams_page.update_logos') }}
           </button>
 
+          <!-- Scrutineering overview of the event -->
+          <NuxtLink
+            v-if="canScrutineer"
+            to="/scrutineering"
+            class="px-3 py-2 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm flex items-center gap-1"
+            data-testid="teams-scrutineering"
+          >
+            <UIcon name="heroicons:clipboard-document-check" class="w-6 h-6 text-primary-600 dark:text-primary-300" />
+            {{ t('menu.scrutineering') }}
+          </NuxtLink>
+
           <!-- Global PDF dropdown -->
           <button
-            v-if="teams.length > 0"
+            v-if="teams.length > 0 && !isScrutineer"
             class="global-pdf-trigger px-3 py-2 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm flex items-center gap-1"
             @click="toggleGlobalPdf($event)"
           >
@@ -1302,7 +1317,9 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
                   <!-- Club -->
                   <td class="px-3 py-2 text-sm text-header-600 dark:text-header-300 text-center">
+                    <span v-if="isScrutineer">{{ team.codeClub }}</span>
                     <NuxtLink
+                      v-else
                       :to="`/clubs?code=${team.codeClub}`"
                       class="link-value"
                       :title="t('teams_page.columns.club')"
@@ -1321,6 +1338,14 @@ const getLogoUrl = (team: CompetitionTeam) => {
                         :title="t('teams_page.presence_sheet')"
                       >
                         <UIcon name="heroicons:user-group" class="w-6 h-6" />
+                      </NuxtLink>
+                      <NuxtLink
+                        v-if="canScrutineer"
+                        :to="`/scrutineering/team/${team.id}`"
+                        class="p-1 text-primary-600 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950 rounded"
+                        :title="t('menu.scrutineering')"
+                      >
+                        <UIcon name="heroicons:clipboard-document-check" class="w-6 h-6" />
                       </NuxtLink>
                     </div>
                   </td>
@@ -1464,6 +1489,14 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   >
                     <UIcon name="heroicons:user-group" class="w-6 h-6" />
                   </NuxtLink>
+                  <NuxtLink
+                    v-if="canScrutineer"
+                    :to="`/scrutineering/team/${team.id}`"
+                    class="p-1 text-primary-600 dark:text-primary-300"
+                    :title="t('menu.scrutineering')"
+                  >
+                    <UIcon name="heroicons:clipboard-document-check" class="w-6 h-6" />
+                  </NuxtLink>
                   <button
                     class="presence-dropdown-trigger p-1 text-header-900 dark:text-header-50"
                     :title="t('teams_page.presence_sheet')"
@@ -1507,7 +1540,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <a :href="getPresencePhotoUrl({ id: openDropdownId } as CompetitionTeam)" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="closePresenceDropdown">
           {{ t('teams_page.presence_sheet_photo') }}
         </a>
-        <div v-if="canEditProperties" class="border-t border-header-100 dark:border-header-800" />
+        <div v-if="canEditProperties || canScrutineer" class="border-t border-header-100 dark:border-header-800" />
         <a
           v-if="canEditProperties"
           :href="getVisaUrl({ id: openDropdownId } as CompetitionTeam)"
@@ -1518,7 +1551,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           {{ t('teams_page.visa_sheet') }}
         </a>
         <a
-          v-if="canEditProperties"
+          v-if="canScrutineer"
           :href="getControlUrl({ id: openDropdownId } as CompetitionTeam)"
           target="_blank"
           class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 rounded-b-lg"

@@ -1509,7 +1509,7 @@ export interface AuthUser {
       "7": "7 - Resp. club/equipe",
       "8": "8 - Consultation simple",
       "9": "9 - Table de marque",
-      "10": "10 - (Inutilise)"
+      "10": "10 - Controle equipement"
     },
     "confirm_delete": "Etes-vous sur de vouloir supprimer cet utilisateur ?",
     "confirm_bulk_delete": "Etes-vous sur de vouloir supprimer {count} utilisateur(s) ?",
@@ -1648,7 +1648,7 @@ export interface AuthUser {
       "7": "7 - Club/Team Manager",
       "8": "8 - Read Only",
       "9": "9 - Scoreboard",
-      "10": "10 - (Unused)"
+      "10": "10 - Scrutineering"
     },
     "confirm_delete": "Are you sure you want to delete this user?",
     "confirm_bulk_delete": "Are you sure you want to delete {count} user(s)?",

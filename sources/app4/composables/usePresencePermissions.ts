@@ -1,5 +1,6 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { PresenceMode } from '~/types/presence'
+import { canWriteTeamPresence, isScrutineerProfile } from '~/utils/scrutineering'
 
 /**
  * Permission management for Presence Sheet
@@ -12,6 +13,9 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   // View permission (all modes)
   const canView = computed(() => authStore.profile <= 10)
 
+  // Profile 10 "Contrôle équipement" manages the team presence sheets of every team (PAGE_SCRUTINEERING.md § 2.1)
+  const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
+
   // Edit permission (inline edit, add, delete)
   // Niveau 8 "Consultation" is read-only in both modes; editing starts at niveau 7 (club/team manager).
   const canEdit = computed(() => {
@@ -19,7 +23,7 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
     if (mode === 'team') {
       // Also enforce server-side club access check returned in the response
       if (!presenceStore.canEdit) return false
-      return authStore.profile <= 7
+      return canWriteTeamPresence(authStore.profile)
     }
     if (mode === 'match') return authStore.profile <= 7
     return false
@@ -31,7 +35,7 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   // Copy permission
   const canCopy = computed(() => {
     if (isLocked.value) return false
-    if (mode === 'team') return authStore.profile <= 4 // Copy from other competition
+    if (mode === 'team') return authStore.profile <= 4 || isScrutineer.value // Copy from other competition
     if (mode === 'match') return authStore.profile <= 6 // Copy to same day matches
     return false
   })
@@ -43,17 +47,17 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
     return false
   })
 
-  // Create player (Team Mode only, requires profile ≤ 4)
+  // Create player (Team Mode only, requires profile ≤ 4 or the scrutineer)
   const canCreatePlayer = computed(() => {
     if (mode !== 'team') return false
     if (isLocked.value) return false
-    return authStore.profile <= 4
+    return authStore.profile <= 4 || isScrutineer.value
   })
 
-  // Search license (Team Mode only, requires profile ≤ 2)
+  // Search license (Team Mode only, requires profile ≤ 2 or the scrutineer)
   const canSearchLicense = computed(() => {
     if (mode !== 'team') return false
-    return authStore.profile <= 2
+    return authStore.profile <= 2 || isScrutineer.value
   })
 
   // Initialize from team (Match Mode only)

@@ -493,10 +493,11 @@ class AdminOperationsController extends AbstractController
      * Used by team presence sheets, RC (competition delegate) assignment, and the
      * super-admin player merge tool. Overrides the controller-wide ROLE_SUPER_ADMIN
      * guard down to ROLE_VIEWER (niveau <= 8) to match the legacy behaviour, where
-     * this search ("Find") was open to profiles up to 8. See DOC/developer/reference/PROFILE_ROLES.md.
+     * this search ("Find") was open to profiles up to 8, and to the scrutineer (profile 10) through
+     * ROLE_PRESENCE_VIEWER. See DOC/developer/reference/PROFILE_ROLES.md.
      */
     #[Route('/autocomplete/players', name: 'admin_operations_autocomplete_players', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_PRESENCE_VIEWER')]
     public function searchPlayers(Request $request): JsonResponse
     {
         $query = $request->query->get('q', '');

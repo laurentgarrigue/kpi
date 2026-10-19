@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { canViewTeams } from '~/utils/scrutineering'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'auth'
@@ -6,6 +8,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const canSeeTeams = computed(() => canViewTeams(authStore.profile))
 // Note: workContext is initialized by WorkContextSelector component
 
 // Tutoriel guidé — lance le tour à la 1re visite, ou propose les nouveautés au retour.
@@ -60,7 +63,7 @@ onMounted(() => {
 
       <!-- Teams card -->
       <NuxtLink
-        v-if="authStore.hasProfile(8)"
+        v-if="canSeeTeams"
         to="/teams"
         class="block p-6 bg-white dark:bg-header-900 rounded-lg shadow hover:shadow-md transition-shadow"
       >

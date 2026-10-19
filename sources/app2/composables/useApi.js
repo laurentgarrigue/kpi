@@ -3,15 +3,10 @@ const ErrorType = {
   NETWORK: 'network',
   HTTP_4XX: 'http_4xx',
   HTTP_5XX: 'http_5xx',
-  HTTP_401: 'http_401',
   HTTP_404: 'http_404',
   TIMEOUT: 'timeout',
   OFFLINE: 'offline'
 }
-
-// Throttle 401 errors to prevent spam
-let last401Time = 0
-const THROTTLE_401_MS = 5000
 
 // Throttle cache toast to prevent duplicates
 let lastCacheToastTime = 0
@@ -22,8 +17,6 @@ export const useApi = () => {
   const apiBaseUrl = runtimeConfig.public.apiBaseUrl
   const toast = useToast()
   const { t } = useI18n()
-  const router = useRouter()
-  const { logout } = useAuth()
 
   /**
    * Show cache toast with deduplication
@@ -45,18 +38,6 @@ export const useApi = () => {
     })
   }
 
-  const getCookie = (name) => {
-    const value = `; ${document.cookie}`
-    const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop().split(';').shift()
-    return null
-  }
-
-  const getAuthHeaders = () => {
-    const token = getCookie('kpi_app')
-    return token ? { 'X-Auth-Token': token } : {}
-  }
-
   /**
    * Detect error type based on error and response
    */
@@ -76,7 +57,6 @@ export const useApi = () => {
 
     // HTTP status code errors
     if (response && !response.ok) {
-      if (response.status === 401) return ErrorType.HTTP_401
       if (response.status === 404) return ErrorType.HTTP_404
       if (response.status >= 400 && response.status < 500) return ErrorType.HTTP_4XX
       if (response.status >= 500) return ErrorType.HTTP_5XX
@@ -190,38 +170,6 @@ export const useApi = () => {
       if (!response.ok) {
         const errorType = detectErrorType(null, response)
 
-        // Special handling for 401 - token invalid/expired → logout and redirect
-        if (errorType === ErrorType.HTTP_401) {
-          const now = Date.now()
-
-          // Only show toast if enough time has passed (throttling)
-          if (!silentErrors && (now - last401Time > THROTTLE_401_MS)) {
-            last401Time = now
-
-            toast.add({
-              id: 'http-error-401',
-              title: t('errors.http.401.title'),
-              description: t('errors.http.401.description'),
-              icon: 'i-heroicons-shield-exclamation',
-              color: 'error',
-              duration: 3000
-            })
-
-            // Logout user and redirect to login after short delay
-            setTimeout(async () => {
-              await logout()
-              router.push('/login')
-            }, 1500)
-          }
-
-          throw new Error('Unauthorized')
-        }
-
-        // 403 - valid token but no access to this resource, do NOT logout
-        if (response.status === 403) {
-          throw new Error('Forbidden')
-        }
-
         // Handle other HTTP errors
         if (!silentErrors) {
           showHttpErrorToast(errorType, response.status)
@@ -236,7 +184,7 @@ export const useApi = () => {
       const errorType = detectErrorType(error, response)
 
       // Show appropriate error toast (if not HTTP error already handled)
-      if (!silentErrors && errorType !== ErrorType.HTTP_401) {
+      if (!silentErrors) {
         if (errorType === ErrorType.NETWORK || errorType === ErrorType.OFFLINE || errorType === ErrorType.TIMEOUT) {
           showNetworkErrorToast(errorType)
         }
@@ -254,41 +202,12 @@ export const useApi = () => {
       headers: {
         'Cache-Control': 'no-cache',
         Pragma: 'no-cache',
-        Expires: '0',
-        ...getAuthHeaders()
+        Expires: '0'
       }
     })
 
     return handleApiResponse(responsePromise, options)
   }
 
-  /**
-   * POST/PUT/DELETE request with automatic error handling
-   */
-  const postApi = (url, data, method = 'POST', options = {}) => {
-    const responsePromise = fetch(`${apiBaseUrl}${url}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify(data)
-    })
-
-    return handleApiResponse(responsePromise, options)
-  }
-
-  /**
-   * Get authentication token
-   */
-  const getToken = (authToken) => {
-    return fetch(`${apiBaseUrl}/login`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${authToken}`
-      }
-    })
-  }
-
-  return { getApi, postApi, getToken, getCookie, getAuthHeaders, showCacheToast }
+  return { getApi, showCacheToast }
 }

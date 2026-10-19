@@ -17,13 +17,21 @@ contrôles d'accès (`#[IsGranted(...)]`).
 | 7 | Resp. club/équipe | `ROLE_TEAM` | ROLE_VIEWER, ROLE_SCORER, ROLE_USER |
 | 8 | Consultation | `ROLE_VIEWER` | ROLE_SCORER, ROLE_USER |
 | 9 | Table de marque | `ROLE_SCORER` | ROLE_USER |
-| ≥ 10 (défaut) | Inutilisé | `ROLE_USER` | — |
+| 10 | Contrôle équipement | `ROLE_SCRUTINEER` | ROLE_PRESENCE_VIEWER, ROLE_USER |
+| > 10 (défaut) | — | `ROLE_USER` | — |
 
 Sources :
 - `sources/api2/src/Entity/User.php::getRoles()` — calcule le rôle propre à partir de
   `getEffectiveNiveau()`.
 - `sources/api2/config/packages/security.yaml::role_hierarchy` — définit l'héritage (un rôle
   donné satisfait aussi tous les rôles listés à sa droite, en cascade).
+
+**Profil 10, hors hiérarchie** ([PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md) § 2) : `ROLE_SCRUTINEER`
+n'hérite d'aucun rôle métier (ni `ROLE_VIEWER`, ni `ROLE_SCORER`) ; `ROLE_ADMIN` en hérite (profils 1–2 = mêmes
+droits). Le rôle technique `ROLE_PRESENCE_VIEWER` (liste des équipes d'une compétition, consultation de la feuille de
+présence équipe et recherche de joueurs) est hérité par `ROLE_VIEWER` et par `ROLE_SCRUTINEER`. Les écritures de la feuille de présence équipe
+acceptent `getEffectiveNiveau() <= 7` **ou** `User::isScrutineer()` ; `User::getAllowedClubs()` renvoie `null` pour
+le profil 10.
 
 **Attention à la hiérarchie** : `ROLE_DIVISION` (niveau 3) et `ROLE_DELEGATE` (niveau 5) sont deux
 branches distinctes sous `ROLE_ADMIN`, mutuellement exclusives — un niveau 3 n'a pas `ROLE_DELEGATE`
