@@ -111,40 +111,8 @@ Only available for games with status `ON` or `END` and published competition/gam
 
 ## Authentication
 
-### Login (Token-based, for App2)
-```
-POST /login
-```
-
-**Authentication:** HTTP Basic Auth (use Authorization header)
-
-**Request:**
-```bash
-# Example with curl
-curl -X POST https://kpi.localhost/api2/login \
-  -H "Authorization: Basic $(echo -n 'user:password' | base64)"
-```
-
-**Response:**
-```json
-{
-  "user": {
-    "id": "123456",
-    "name": "Dupont",
-    "firstname": "Jean",
-    "profile": "O",
-    "events": "123|456|789",
-    "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
-  }
-}
-```
-
-**Token Usage:**
-- The returned `token` should be used in Staff and Report endpoints
-- Token is valid for 10 days from generation
-- **Recommended:** Pass token via header `X-Auth-Token: {token}` (used by app2)
-- Alternative: Pass via cookie `kpi_app={token}`
-- Alternative: Legacy API accepts token in URL (deprecated in API2)
+The former app2 token (`POST /login`, `X-Auth-Token` header, `kpi_app` cookie, `GET /me`) was removed with the app2
+scrutineering ([PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md)); authenticated endpoints use the JWT below.
 
 ### JWT Authentication (for App4 Admin)
 ```
@@ -176,69 +144,24 @@ POST /auth/refresh           Refresh JWT token
 
 **Token transmission:** Use `Authorization: Bearer {token}` header for all admin endpoints.
 
-## Staff Endpoints (Require Token)
+## Scrutineering Endpoints (JWT, profiles 1–2 and 10)
 
-**Authentication:** All staff endpoints require a valid token obtained from `/login`
+Used by app4 (`/scrutineering`), spec [PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md) § 5.
+`Authorization: Bearer {jwt}`; the event must be allowed (403) and the team must belong to the event and to the
+allowed competitions (404).
 
-**Token transmission:** Use `X-Auth-Token` header or `kpi_app` cookie
-
-### Scrutineering API
 ```
-GET  /staff/{eventId}/teams                                           Get teams for event
-GET  /staff/{eventId}/team/{teamId}/players                          Get players for team
-PUT  /staff/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}   Update player data
-PUT  /staff/{eventId}/team/{teamId}/player/{playerId}/comment        Update player comment
-```
-
-**Available Parameters:**
-- `kayak_status` - Kayak inspection status (0-2)
-- `vest_status` - Life vest inspection status (0-2)
-- `helmet_status` - Helmet inspection status (0-2)
-- `paddle_count` - Number of paddles (0-5)
-
-**Example with curl:**
-```bash
-# Get teams for event 222
-curl -X GET https://kpi.localhost/api2/staff/222/teams \
-  -H "X-Auth-Token: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
-
-# Get players for team 789 (with no-cache headers)
-curl -X GET https://kpi.localhost/api2/staff/222/team/789/players \
-  -H "X-Auth-Token: your-token-here"
-
-# Update kayak status to 1 (validated)
-curl -X PUT https://kpi.localhost/api2/staff/222/team/789/player/123456/kayak_status/1 \
-  -H "X-Auth-Token: your-token-here"
+GET    /staff/{eventId}/teams                                               Teams of the event (club, nation, competition)
+GET    /staff/{eventId}/team/{teamId}/players                               { team, players } (no referees / inactive)
+PUT    /staff/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}  Equipment status
+PUT    /staff/{eventId}/team/{teamId}/player/{playerId}/comment             { "comment": "…" } (255 characters)
+DELETE /staff/{eventId}/team/{teamId}/reset                                 Reset every check of the team
+GET    /staff/{eventId}/overview                                            Status by club and category
 ```
 
-**Comment Request:**
-```json
-{
-  "comment": "Equipment OK"
-}
-```
-
-## Report Endpoints (Require Token)
-
-**Authentication:** All report endpoints require a valid token obtained from `/login`
-
-**Token transmission:** Use `X-Auth-Token` header or `kpi_app` cookie
-
-### Match Report API
-```
-GET  /report/game/{gameId}    Get full game report with events and players
-```
-
-**Example with curl:**
-```bash
-curl -X GET https://kpi.localhost/api2/report/game/456 \
-  -H "X-Auth-Token: your-token-here"
-```
-
-**Response includes:**
-- Game information
-- Teams and players
-- Match events (goals, cards, etc.)
+**Parameters:** `kayak_status`, `vest_status`, `helmet_status` (0 not checked, 1 valid, 2 cosmetic, 3 safety,
+4 technical defect), `paddle_count` (0–6). Out-of-range values answer 400. Every write is journalised
+(`Scrut équipement`, `Scrut commentaire`, `Scrut réinitialisation`).
 
 ## WSM Endpoints (Web Score Management)
 
@@ -1219,7 +1142,7 @@ The `/_error/` routes are internal Symfony routes used for error handling:
 
 | Legacy Endpoint | New Endpoint |
 |----------------|--------------|
-| `/api/login` | `/api2/login` |
+| `/api/login` | `/api2/auth/login` (JWT, app4) |
 | `/api/events/{mode}` | `/api2/events/{mode}` |
 | `/api/event/{id}` | `/api2/event/{id}` |
 | `/api/games/{eventId}` | `/api2/event/{eventId}/games` |
@@ -1227,11 +1150,11 @@ The `/_error/` routes are internal Symfony routes used for error handling:
 | `/api/team-stats/{teamId}/{eventId}` | `/api2/event/{eventId}/team/{teamId}/stats` |
 | `/api/stars` | `/api2/stars` |
 | `/api/rating` | `/api2/rating` |
-| `/api/staff/{token}/teams/{eventId}` | `/api2/staff/{eventId}/teams` + `X-Auth-Token` header |
-| `/api/staff/{token}/players/{teamId}` | `/api2/staff/{eventId}/team/{teamId}/players` + `X-Auth-Token` header |
-| `/api/staff/{token}/player/{playerId}/team/{teamId}/{param}/{value}` | `/api2/staff/{eventId}/team/{teamId}/player/{playerId}/{param}/{value}` + `X-Auth-Token` header |
-| `/api/staff/{token}/player/{playerId}/team/{teamId}/comment` | `/api2/staff/{eventId}/team/{teamId}/player/{playerId}/comment` + `X-Auth-Token` header |
-| `/api/report/{token}/game/{gameId}` | `/api2/report/game/{gameId}` + `X-Auth-Token` header |
+| `/api/staff/{token}/teams/{eventId}` | `/api2/staff/{eventId}/teams` (JWT) |
+| `/api/staff/{token}/players/{teamId}` | `/api2/staff/{eventId}/team/{teamId}/players` (JWT) |
+| `/api/staff/{token}/player/{playerId}/team/{teamId}/{param}/{value}` | `/api2/staff/{eventId}/team/{teamId}/player/{playerId}/{param}/{value}` (JWT) |
+| `/api/staff/{token}/player/{playerId}/team/{teamId}/comment` | `/api2/staff/{eventId}/team/{teamId}/player/{playerId}/comment` (JWT) |
+| `/api/report/{token}/game/{gameId}` | — (removed, no consumer) |
 | `/api/wsm/*` | `/api2/wsm/*` |
 | `GestionCompetition.php` | `/api2/admin/competitions/*` |
 | `GestionJournee.php` | `/api2/admin/gamedays/*` |
@@ -1251,8 +1174,7 @@ The `/_error/` routes are internal Symfony routes used for error handling:
 | TV Control (legacy) | `/api2/admin/tv/*` |
 
 **Important differences:**
-- **Authentication:** API2 uses `X-Auth-Token` header instead of token in URL for Staff/Report endpoints
-- **JWT for Admin:** App4 admin uses JWT tokens via `Authorization: Bearer` header
+- **Authentication:** JWT via `Authorization: Bearer` header (app4) for admin and scrutineering endpoints; no token in URL
 - **URL Structure:** Staff routes now include `eventId` at the beginning and follow RESTful patterns (`/staff/{eventId}/team/{teamId}/...`)
 - **URL Changes:** Games/Charts/Team-stats routes now use `/event/{eventId}/` prefix pattern
 - **Groups API:** New season-based group endpoints (`/groups/{season}`, `/group/{season}/{groupCode}/...`)

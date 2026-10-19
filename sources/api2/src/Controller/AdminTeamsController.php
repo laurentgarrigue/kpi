@@ -44,8 +44,9 @@ class AdminTeamsController extends AbstractController
     /**
      * List teams for a competition
      */
+    // Also read by the profile 10 (ROLE_SCRUTINEER), whose entry to the scrutineering is the teams page
     #[Route('/admin/competition-teams', name: 'admin_competition_teams_list', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_PRESENCE_VIEWER')]
     public function list(Request $request): JsonResponse
     {
         $season = $request->query->get('season', '');

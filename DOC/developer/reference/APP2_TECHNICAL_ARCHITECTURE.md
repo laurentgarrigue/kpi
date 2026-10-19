@@ -42,7 +42,7 @@ App2 est une Progressive Web Application (PWA) construite avec Nuxt 4, Vue 3 et 
 - **API2**: `/api2` (Symfony 7.3 + API Platform 4.2)
 - **Base URL Dev**: `https://kpi.localhost/api2`
 - **Base URL Prod**: `https://kayak-polo.info/api2`
-- **Authentification**: Token Bearer (10 jours de validité)
+- **Authentification**: aucune (endpoints publics uniquement)
 - **Documentation**: Voir [API2_ENDPOINTS.md](API2_ENDPOINTS.md)
 
 ---
@@ -54,16 +54,14 @@ App2 est une Progressive Web Application (PWA) construite avec Nuxt 4, Vue 3 et 
 **Localisation**: [sources/app2/composables/useApi.js](../../../sources/app2/composables/useApi.js)
 
 **Responsabilités**:
-1. Appels HTTP (GET, POST, PUT, DELETE)
-2. Gestion des headers (auth, cache-control)
+1. Appels HTTP (GET, lecture seule : app2 n'a plus d'authentification)
+2. Gestion des headers (cache-control)
 3. **Interception automatique des erreurs**
 4. **Affichage des toasts d'erreur localisés**
 5. Timeout de requête (10s)
-6. Gestion spéciale 401 (redirection auto)
 
 **Fonctionnalités clés**:
 - Détection erreur réseau vs HTTP
-- Throttling des 401 (1 toast par 5s max)
 - Options: `silentErrors` pour désactiver les toasts
 
 **Exemple d'utilisation**:
@@ -147,7 +145,6 @@ const initializePwa = () => {
 | Réseau | - | Oui | Rouge | - |
 | Offline | - | Oui | Orange | - |
 | Timeout | - | Oui | Rouge | - |
-| 401 | 401 | Oui | Rouge | Redirect /login |
 | 404 | 404 | Oui | Orange | - |
 | 4xx | 400-499 | Oui | Orange | - |
 | 5xx | 500-599 | Oui | Rouge | - |
@@ -166,8 +163,6 @@ Response OK ?
   │         ↓
   │      showHttpErrorToast() ou showNetworkErrorToast()
   │         ↓
-  │      Si 401 → logout() + redirect (après 1.5s)
-  │         ↓
   │      throw Error
   │
   └─ Oui → return response
@@ -181,8 +176,6 @@ errors.
   ├─ generic.*
   ├─ http.
   │   ├─ 400.* (Bad Request)
-  │   ├─ 401.* (Authentication Required)
-  │   ├─ 403.* (Access Denied)
   │   ├─ 404.* (Not Found)
   │   ├─ 4xx.* (Request Error)
   │   ├─ 500.* (Server Error)
@@ -196,10 +189,7 @@ errors.
   │   └─ cors.* (Connection Blocked)
   ├─ operations.
   │   ├─ loadGames.*
-  │   ├─ loadCharts.*
-  │   ├─ loadPlayers.*
-  │   ├─ savePlayer.*
-  │   └─ login.*
+  │   └─ loadCharts.*
   └─ cache.
       └─ usingOfflineData.* (Using Cached Data)
 ```
@@ -284,10 +274,7 @@ usePwa().checkForUpdates() // Vérifie nouvelle version
 | Opération | Délai | Comportement |
 |-----------|-------|--------------|
 | Requête API | 10s timeout | Toast erreur + throw |
-| Token validité | 10 jours | Auto-logout si expiré |
 | Toast (tous types) | 3s affichage | Dismiss auto ou manuel |
-| 401 redirect | 1.5s après toast | Navigation /login |
-| 401 throttle | 5s minimum | Max 1 toast par 5s |
 | Cache toast throttle | 3s minimum | Évite doublons |
 | SW update check | 60 minutes | Vérification périodique |
 
@@ -305,8 +292,6 @@ usePwa().checkForUpdates() // Vérifie nouvelle version
 - `/api2/events/{mode}` - Liste événements
 - `/api2/games/{eventId}` - Matchs d'un événement
 - `/api2/charts/{eventId}` - Classements
-- `/api2/staff/{eventId}/team/{teamId}/players` - Joueurs d'une équipe
-- `/api2/staff/scrutineering` - Sauvegarde contrôle matériel
 
 **Documentation complète**: [API2_ENDPOINTS.md](API2_ENDPOINTS.md)
 
@@ -314,30 +299,8 @@ usePwa().checkForUpdates() // Vérifie nouvelle version
 
 ## Authentification
 
-### Mécanisme
-
-1. **Login**: POST `/api2/login` → token
-2. **Stockage**: Cookie `kpi_app` (10 jours)
-3. **Transmission**: Header `X-Auth-Token: {token}`
-4. **Expiration**: 10 jours
-5. **Renouvellement**: Manuel (re-login)
-
-### Gestion 401
-
-**Flow automatique**:
-```
-API retourne 401
-  ↓
-handleApiResponse() détecte
-  ↓
-Toast rouge "Session expirée"
-  ↓
-setTimeout(1.5s)
-  ↓
-router.push('/login')
-```
-
-**Throttling**: Max 1 toast 401 par 5 secondes (évite le spam)
+Aucune depuis octobre 2026 : app2 ne consomme que les endpoints publics d'api2. La connexion et le scrutineering
+sont passés dans app4 ([PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md)).
 
 ---
 

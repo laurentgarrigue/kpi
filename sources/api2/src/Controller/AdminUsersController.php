@@ -1469,6 +1469,11 @@ class AdminUsersController extends AbstractController
             return 'Profile must be between 1 and 10';
         }
 
+        // Profile 10 "Contrôle équipement" grants a right (scrutineering) profiles 3 and 4 do not have
+        if ($targetNiveau === User::SCRUTINEER_NIVEAU && $adminNiveau > 2) {
+            return 'Only profiles 1 and 2 can assign profile 10';
+        }
+
         // Profile 1 can assign any profile
         if ($adminNiveau <= 1) {
             return null;

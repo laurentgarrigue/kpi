@@ -17,6 +17,7 @@ class Login extends MyPage
 		$myBdd = new MyBdd();
 
 		$target = ''; // Initialize default value
+		$loginRefused = false;
 		if (utyGetGet('Src', false)) {
 			$loginTarget = utyGetGet('Src', false);
 			$_SESSION['loginTarget'] = $loginTarget;
@@ -104,7 +105,10 @@ class Login extends MyPage
 					$stmtUpgrade->execute(array($bcryptHash, $user));
 				}
 
-				if ($passwordValid) {
+				// Profile 10 "Contrôle équipement" only works in app4 (DOC/specs/PAGE_SCRUTINEERING.md § 2.2)
+				if ($passwordValid && (int) $row['Niveau'] === 10) {
+					$loginRefused = true;
+				} elseif ($passwordValid) {
 					$_SESSION['User'] = $user;
 					$_SESSION['Profile'] = $row["Niveau"];
 					$_SESSION['ProfileOrigine'] = $row["Niveau"];
@@ -168,6 +172,7 @@ class Login extends MyPage
 
 		$this->SetTemplate("Connexion", "Accueil", false);
 		$this->m_tpl->assign('target', $target);
+		$this->m_tpl->assign('loginRefused', $loginRefused);
 
 		if (isset($_SESSION['User']))
 			$this->m_tpl->assign('User', $_SESSION['User']);

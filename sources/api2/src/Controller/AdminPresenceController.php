@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
+use App\Service\TeamLastUpdateService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -21,8 +22,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * (kp_competition_equipe_joueur, kp_match_joueur tables)
  * Migrated from GestionEquipeJoueur.php and GestionMatchEquipeJoueur.php
  *
- * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), write routes are guarded by
- * manual getEffectiveNiveau() checks in each method body. There is intentionally NO class-level
+ * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), the team ones also to ROLE_SCRUTINEER (profile
+ * 10) through ROLE_PRESENCE_VIEWER; write routes are guarded by manual getEffectiveNiveau() checks in each method
+ * body (denyTeamCompositionWrite() for the team mode). There is intentionally NO class-level
  * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
  * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
  * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
@@ -35,7 +37,8 @@ class AdminPresenceController extends AbstractController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly PlayerEligibilityChecker $eligibility
+        private readonly PlayerEligibilityChecker $eligibility,
+        private readonly TeamLastUpdateService $teamLastUpdate
     ) {
     }
 
@@ -47,7 +50,7 @@ class AdminPresenceController extends AbstractController
      * Get team players composition
      */
     #[Route('/admin/teams/{teamId}/players', name: 'admin_team_players_list', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_PRESENCE_VIEWER')]
     #[OA\Parameter(name: 'teamId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     public function getTeamPlayers(int $teamId): JsonResponse
     {
@@ -80,9 +83,9 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
         }
 
-        // Compute canEdit: not locked + profile <= 7 (niveau 8 "Consultation" is read-only) + club not restricted
+        // Compute canEdit: not locked + profile <= 7 (niveau 8 "Consultation" is read-only) or the scrutineer + club not restricted
         $isLocked = $teamRow['Verrou'] === 'O';
-        $hasProfileAccess = $user && $user->getEffectiveNiveau() <= 7;
+        $hasProfileAccess = $user && self::canWriteTeamCompositions($user);
         $allowedClubs = $user?->getAllowedClubs();
         $hasClubAccess = $allowedClubs === null || in_array($teamRow['Code_club'], $allowedClubs);
         $canEdit = !$isLocked && $hasProfileAccess && $hasClubAccess;
@@ -126,8 +129,7 @@ class AdminPresenceController extends AbstractController
             return $this->formatPlayer($row, $season, $competCode, $eligibilityLevel);
         }, $playerRows);
 
-        // Get last update from journal
-        $lastUpdate = $this->getLastUpdate('kp_competition_equipe_joueur', $teamId);
+        $lastUpdate = $this->teamLastUpdate->presence($teamId);
 
         return $this->json([
             'team' => [
@@ -178,13 +180,8 @@ class AdminPresenceController extends AbstractController
         // Check user profile
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
-            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
-        }
-
-        $allowedClubs = $user->getAllowedClubs();
-        if ($allowedClubs !== null && !in_array($teamInfo['code_club'], $allowedClubs)) {
-            return $this->json(['message' => 'Access denied to this team'], Response::HTTP_FORBIDDEN);
+        if ($denied = $this->denyTeamCompositionWrite($user, $teamInfo)) {
+            return $denied;
         }
 
         $mode = $data['mode'] ?? 'existing';
@@ -194,8 +191,8 @@ class AdminPresenceController extends AbstractController
         $warnings = [];
 
         if ($mode === 'create') {
-            // Create new non-licensed player (profile <= 4 required)
-            if ($user->getEffectiveNiveau() > 4) {
+            // Create new non-licensed player (profile <= 4 or the scrutineer)
+            if ($user->getEffectiveNiveau() > 4 && !$user->isScrutineer()) {
                 return $this->json(['message' => 'Profile <= 4 required to create players'], Response::HTTP_FORBIDDEN);
             }
 
@@ -331,13 +328,8 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
-            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
-        }
-
-        $allowedClubs = $user->getAllowedClubs();
-        if ($allowedClubs !== null && !in_array($teamInfo['code_club'], $allowedClubs)) {
-            return $this->json(['message' => 'Access denied to this team'], Response::HTTP_FORBIDDEN);
+        if ($denied = $this->denyTeamCompositionWrite($user, $teamInfo)) {
+            return $denied;
         }
 
         $updateData = [];
@@ -411,13 +403,8 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
-            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
-        }
-
-        $allowedClubs = $user->getAllowedClubs();
-        if ($allowedClubs !== null && !in_array($teamInfo['code_club'], $allowedClubs)) {
-            return $this->json(['message' => 'Access denied to this team'], Response::HTTP_FORBIDDEN);
+        if ($denied = $this->denyTeamCompositionWrite($user, $teamInfo)) {
+            return $denied;
         }
 
         $placeholders = implode(',', array_fill(0, count($matricIds), '?'));
@@ -445,7 +432,7 @@ class AdminPresenceController extends AbstractController
      * Search players by name or matric (for adding to team composition)
      */
     #[Route('/admin/players/search', name: 'admin_players_search', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_PRESENCE_VIEWER')]
     #[OA\Parameter(name: 'q', in: 'query', required: true, schema: new OA\Schema(type: 'string'))]
     public function searchPlayers(Request $request): JsonResponse
     {
@@ -519,7 +506,7 @@ class AdminPresenceController extends AbstractController
     // Under /admin/competition-teams (competition team Id): /admin/teams/{numero}/compositions belongs to
     // AdminTeamsController (kp_equipe Numero) and the two routes used to shadow each other.
     #[Route('/admin/competition-teams/{teamId}/compositions', name: 'admin_team_compositions', methods: ['GET'], requirements: ['teamId' => '\d+'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_PRESENCE_VIEWER')]
     public function getAvailableCompositions(int $teamId, Request $request): JsonResponse
     {
         $teamInfo = $this->getTeamInfo($teamId);
@@ -574,8 +561,8 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
-            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        if ($denied = $this->denyTeamCompositionWrite($user, $teamInfo)) {
+            return $denied;
         }
 
         $sourceCompetition = $data['sourceCompetition'] ?? '';
@@ -1379,6 +1366,37 @@ class AdminPresenceController extends AbstractController
         return $labels[$code] ?? $code;
     }
 
+    /** Team compositions are written by profiles <= 7 and by the scrutineer (PAGE_SCRUTINEERING.md § 2.1). */
+    private static function canWriteTeamCompositions(User $user): bool
+    {
+        return $user->getEffectiveNiveau() <= 7 || $user->isScrutineer();
+    }
+
+    /**
+     * Guard of the team composition writes: profile, competition perimeter and club limitation (ignored for the
+     * scrutineer, see User::getAllowedClubs()). Null when the write may proceed.
+     *
+     * @param array<string, mixed> $teamInfo
+     */
+    private function denyTeamCompositionWrite(?User $user, array $teamInfo): ?JsonResponse
+    {
+        if (!$user || !self::canWriteTeamCompositions($user)) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
+        $allowedCompetitions = $user->getAllowedCompetitions();
+        if ($allowedCompetitions !== null && !in_array($teamInfo['code_compet'], $allowedCompetitions, true)) {
+            return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
+        }
+
+        $allowedClubs = $user->getAllowedClubs();
+        if ($allowedClubs !== null && !in_array($teamInfo['code_club'], $allowedClubs)) {
+            return $this->json(['message' => 'Access denied to this team'], Response::HTTP_FORBIDDEN);
+        }
+
+        return null;
+    }
+
     private function getTeamInfo(int $teamId): ?array
     {
         $sql = "SELECT ce.Code_compet, ce.Code_saison, ce.Code_club, ce.Numero,
@@ -1429,31 +1447,5 @@ class AdminPresenceController extends AbstractController
             'errors' => $errors,
             'canForce' => $decision['canForce'],
         ], Response::HTTP_BAD_REQUEST);
-    }
-
-    private function getLastUpdate(string $table, int $id): ?array
-    {
-        // Journal entries use two formats depending on origin:
-        // - api2: "Equipe {id} - ..."
-        // - legacy admin: "Equipe : {id} - ..."
-        $sql = "SELECT Dates, Users, Actions
-                FROM kp_journal
-                WHERE Journal LIKE ? OR Journal LIKE ?
-                ORDER BY Dates DESC
-                LIMIT 1";
-
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery(["%Equipe {$id}%", "%Equipe : {$id}%"]);
-        $row = $result->fetchAssociative();
-
-        if (!$row) {
-            return null;
-        }
-
-        return [
-            'date' => $row['Dates'],
-            'user' => $row['Users'],
-            'action' => $row['Actions']
-        ];
     }
 }

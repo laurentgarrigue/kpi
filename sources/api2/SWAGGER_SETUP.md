@@ -47,7 +47,6 @@ Ces ressources apparaissent automatiquement dans Swagger via API Platform :
 - `src/Controller/ChartsController.php`
 - `src/Controller/PublicController.php`
 - `src/Controller/StaffController.php`
-- `src/Controller/ReportController.php`
 - `src/Controller/WsmController.php`
 
 Ces contrôleurs utilisent les **annotations OpenAPI (OA\)** de NelmioApiDocBundle pour documenter chaque endpoint.
@@ -73,15 +72,13 @@ Une fois NelmioApiDocBundle installé, **tous les endpoints suivants** seront vi
 - `GET /api/stars` - Statistiques d'évaluation
 - `POST /api/rating` - Soumettre une évaluation
 
-#### Staff - Scrutineering (Contrôle technique)
-- `GET /api/staff/{token}/test` - Test authentification
-- `GET /api/staff/{token}/teams/{eventId}` - Équipes pour contrôle
-- `GET /api/staff/{token}/players/{teamId}` - Joueurs d'une équipe
-- `PUT /api/staff/{token}/player/{playerId}/team/{teamId}/{parameter}/{value}` - MAJ données contrôle
-- `PUT /api/staff/{token}/player/{playerId}/team/{teamId}/comment` - MAJ commentaire
-
-#### Report (Rapports de match)
-- `GET /api/report/{token}/game/{gameId}` - Rapport complet de match
+#### Staff - Scrutineering (Contrôle équipement, app4, JWT)
+- `GET /staff/{eventId}/teams` - Équipes de l'événement
+- `GET /staff/{eventId}/team/{teamId}/players` - Joueurs d'une équipe
+- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/{parameter}/{value}` - MAJ données contrôle
+- `PUT /staff/{eventId}/team/{teamId}/player/{playerId}/comment` - MAJ commentaire
+- `DELETE /staff/{eventId}/team/{teamId}/reset` - Réinitialisation d'une équipe
+- `GET /staff/{eventId}/overview` - Vue d'ensemble
 
 #### WSM - Web Score Management (Gestion scores en direct)
 - `PUT /api/wsm/eventNetwork/{eventId}` - Configuration réseau
@@ -99,15 +96,13 @@ Les endpoints sont organisés par tags :
 - **Charts & Rankings** - Classements et tableaux
 - **Statistics** - Statistiques d'équipe
 - **App Ratings** - Évaluations de l'application
-- **Staff - Scrutineering** - Contrôle technique
-- **Report** - Rapports de match
+- **Staff - Scrutineering** - Contrôle équipement (app4)
 - **WSM - Web Score Management** - Gestion scores en direct
 
 ### Sécurité
 
-Les endpoints protégés (Staff, Report) utilisent un **TokenAuth** (token dans le path) :
-- Configuration : `config/packages/nelmio_api_doc.yaml`
-- Schéma de sécurité : `apiKey` in `path`
+Les endpoints protégés (`/admin`, `/auth`, `/staff`) utilisent le **JWT** d'app4 (`Authorization: Bearer …`).
+L'ancien jeton d'app2 (`X-Auth-Token`) a été supprimé avec le scrutineering d'app2.
 
 ### Fichiers de configuration créés
 

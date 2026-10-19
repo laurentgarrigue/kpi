@@ -19,6 +19,7 @@ DELETE FROM `kp_competition_equipe_journee`;
 DELETE FROM `kp_competition_equipe`;
 DELETE FROM `kp_evenement_journee`;
 DELETE FROM `kp_licence`;
+DELETE FROM `kp_scrutineering`;
 DELETE FROM `kp_journee`;
 DELETE FROM `kp_competition`;
 DELETE FROM `kp_groupe`;
@@ -480,3 +481,59 @@ INSERT INTO `wptest_nf3_fields` (`id`, `label`, `key`, `type`, `parent_id`, `req
   (4, 'Envoyer', 'submit', 'submit', 19, b'0', 4);
 INSERT INTO `wptest_nf3_field_meta` (`parent_id`, `key`, `value`) VALUES
   (3, 'options', 'a:2:{i:0;a:2:{s:5:"label";s:3:"U18";s:5:"value";s:3:"u18";}i:1;a:2:{s:5:"label";s:6:"Senior";s:5:"value";s:3:"sen";}}');
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Scrutineering et profil 10 (PAGE_SCRUTINEERING.md, tests/Integration/StaffScrutineeringTest.php). Saison 2997 et
+-- événement 80 NON publiés et hors app2 : invisibles du site public.
+--   SCA (non verrouillée) : 9381 Alpha (C001), 9382 Bravo (C002), 9383 Germany (GER) ; SCB (verrouillée) : 9384
+--   Alpha Deux (C001, même club que 9381), 9385 Germany Women (GER-W, même nation que 9383) ; SCC (hors événement) :
+--   9386 Charlie (C001).
+INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `logo`, `app`) VALUES
+  (80, 'Tournoi Scrutineering', 'Lacville', '2997-05-01', '2997-05-02', 'N', NULL, 'N');
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
+   `Titre_actif`, `Bandeau_actif`, `Logo_actif`, `Code_ref`, `GroupOrder`, `Code_typeclt`, `Code_tour`, `Nb_equipes`,
+   `Statut`, `Qualifies`, `Elimines`, `Publication`, `Verrou`) VALUES
+  ('SCA', '2997', 'INT', 'Scrutineering Hommes', NULL, 'U21 H', NULL, '', '', '',
+   'O', 'N', 'N', 'TSTSCR', 1, 'CHPT', 1, 3, 'ON', 0, 0, 'N', 'N'),
+  ('SCB', '2997', 'INT', 'Scrutineering Dames', NULL, 'U21 F', NULL, '', '', '',
+   'O', 'N', 'N', 'TSTSCR', 2, 'CHPT', 1, 2, 'ON', 0, 0, 'N', 'O'),
+  ('SCC', '2997', 'REG', 'Scrutineering Régional', NULL, 'U18 H', NULL, '', '', '',
+   'O', 'N', 'N', 'TSTSCR', 3, 'CHPT', 1, 1, 'ON', 0, 0, 'N', 'N');
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
+  (9271, 'SCA', '2997', '2997-05-01', '2997-05-01', 'Scrutineering', 'SCA J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 3, 'N'),
+  (9272, 'SCB', '2997', '2997-05-02', '2997-05-02', 'Scrutineering', 'SCB J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 2, 'N'),
+  (9273, 'SCC', '2997', '2997-06-01', '2997-06-01', 'Scrutineering', 'SCC J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 1, 'N');
+-- 9273 (SCC) n'est rattachée à aucun événement
+INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES (80, 9271), (80, 9272);
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9381, 'SCA', '2997', 'Scrut Alpha', 'C001', NULL, 101, '', 0),
+  (9382, 'SCA', '2997', 'Scrut Bravo', 'C002', NULL, 102, '', 0),
+  (9383, 'SCA', '2997', 'Germany Men', 'GER', NULL, 141, '', 0),
+  (9384, 'SCB', '2997', 'Scrut Alpha Deux', 'C001', NULL, 101, '', 0),  -- même équipe de club que 9381 (copie)
+  (9385, 'SCB', '2997', 'Germany Women', 'GER-W', NULL, 142, '', 0),
+  (9386, 'SCC', '2997', 'Scrut Charlie', 'C001', NULL, 103, '', 0);
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9511, '2997', 'SCRUT', 'Capitaine', 'M', 'C001', 'Actif'), (9512, '2997', 'SCRUT', 'Joueur', 'M', 'C001', 'Actif'),
+  (9513, '2997', 'SCRUT', 'Coach', 'M', 'C001', 'Actif'), (9514, '2997', 'SCRUT', 'Arbitre', 'M', 'C001', 'Actif'),
+  (9515, '2997', 'SCRUT', 'Dame', 'F', 'C001', 'Actif'), (9516, '2997', 'SCRUT', 'Remplaçant', 'M', 'C002', 'Actif'),
+  (9517, '2997', 'SCRUT', 'Régional', 'M', 'C001', 'Actif');
+-- 9381 : capitaine et joueur contrôlés, entraîneur (E, sans contrôle) et arbitre (A, masqué)
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9381, 9511, 'SCRUT', 'Capitaine', 'M', 'U21', 1, 'C'),
+  (9381, 9512, 'SCRUT', 'Joueur', 'M', 'U21', 2, '-'),
+  (9381, 9513, 'SCRUT', 'Coach', 'M', 'SEN', NULL, 'E'),
+  (9381, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A'),
+  (9384, 9515, 'SCRUT', 'Dame', 'F', 'U21', 3, '-'),
+  (9386, 9517, 'SCRUT', 'Régional', 'M', 'U18', 4, '-');
+-- 9381 : capitaine complet, joueur partiel → équipe « partielle » ; 9382 : ligne remise à 0 → « aucun »
+INSERT INTO `kp_scrutineering` (`id_equipe`, `matric`, `kayak_status`, `vest_status`, `helmet_status`, `paddle_count`, `comment`) VALUES
+  (9381, 9511, 1, 1, 1, 2, 'RAS'),
+  (9381, 9512, 3, NULL, NULL, NULL, NULL),
+  (9382, 9599, 0, 0, 0, 0, NULL);
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TSCRUT', '', 'Contrôleur Test', 'scrut@example.test', '', '', 10, '|SCA|SCB|SCC|', '|2997|', '', '', 'C002', '|80|'),  -- profil 10 limité à l'événement 80 (pas SCC), club ignoré
+  ('TSCRUTA', '', 'Contrôleur SCA', 'scruta@example.test', '', '', 10, '|SCA|SCC|', '|2997|', '', '', NULL, ''),    -- profil 10, SCA + SCC, sans limite d'événement
+  ('TDIV', '', 'Division Test', 'div@example.test', '', '', 3, '|SCA|SCB|', '|2997|', '', '', NULL, ''),            -- profil 3 : pas de scrutineering
+  ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', '');            -- profil 7 limité au club C002

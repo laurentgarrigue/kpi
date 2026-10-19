@@ -7,8 +7,8 @@ import { usePreferenceStore } from '~/stores/preferenceStore'
 export default defineNuxtRouteMiddleware((to, _from) => {
   const preferenceStore = usePreferenceStore()
 
-  // Allow access to home, about, login and any other public pages
-  const publicRoutes = ['/', '/about', '/login']
+  // Allow access to home, about and any other public pages
+  const publicRoutes = ['/', '/about']
 
   // Always allow access to public routes to prevent redirect loops
   if (publicRoutes.includes(to.path)) {

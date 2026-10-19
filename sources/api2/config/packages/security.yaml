@@ -26,6 +26,13 @@ security:
             provider: app_user_provider
             jwt: ~
 
+        # Scrutineering endpoints (app4, PAGE_SCRUTINEERING.md § 5) require JWT
+        api_staff:
+            pattern: ^/staff
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
         # Auth endpoints (me, refresh) require JWT
         api_auth:
             pattern: ^/auth
@@ -41,22 +48,28 @@ security:
     # Role hierarchy matching legacy profile levels
     # 1=Super Admin, 2=Bureau CNAKP, 3=Resp. Division, 4=Resp. Compétition,
     # 5=Délégué fédéral, 6=Organisateur journée, 7=Resp. club/équipe,
-    # 8=Consultation, 9=Table de marque, 10=Inutilisé
+    # 8=Consultation, 9=Table de marque, 10=Contrôle équipement (scrutineering)
+    # ROLE_SCRUTINEER (10) sits outside the linear chain: no general consultation, but presence sheets
+    # of every team; ROLE_PRESENCE_VIEWER is the consultation of the teams of a competition and of a
+    # team presence sheet, shared by both.
     role_hierarchy:
         ROLE_SUPER_ADMIN: [ROLE_ADMIN]
-        ROLE_ADMIN: [ROLE_DIVISION, ROLE_DELEGATE]
+        ROLE_ADMIN: [ROLE_DIVISION, ROLE_DELEGATE, ROLE_SCRUTINEER]
+        ROLE_SCRUTINEER: [ROLE_PRESENCE_VIEWER, ROLE_USER]
         ROLE_DIVISION: [ROLE_COMPETITION]
         ROLE_COMPETITION: [ROLE_ORGANIZER]
         ROLE_DELEGATE: [ROLE_ORGANIZER]
         ROLE_ORGANIZER: [ROLE_TEAM]
         ROLE_TEAM: [ROLE_VIEWER]
-        ROLE_VIEWER: [ROLE_SCORER, ROLE_USER]
+        ROLE_VIEWER: [ROLE_SCORER, ROLE_PRESENCE_VIEWER, ROLE_USER]
         ROLE_SCORER: [ROLE_USER]
 
     # Access control rules
     access_control:
         # Admin endpoints require at least ROLE_USER (all authenticated profiles)
         - { path: ^/admin, roles: ROLE_USER }
+        # Scrutineering: ROLE_SCRUTINEER is checked by StaffController (mandate-aware #[IsGranted])
+        - { path: ^/staff, roles: ROLE_USER }
         # Auth me/refresh require authenticated user
         - { path: ^/auth/me, roles: ROLE_USER }
         - { path: ^/auth/refresh, roles: ROLE_USER }
