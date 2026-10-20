@@ -142,15 +142,7 @@ class ScoringLiveService
             );
 
             $tick = $this->bumpTick($matchId);
-            $state = $this->fetchState($matchId);
-            $this->deposit($matchId, 'score', [
-                'type' => 'state',
-                'tick' => $tick,
-                'statut' => $state['statut'],
-                'periode' => $state['periode'],
-                'scoreA' => (int) $state['score_a'],
-                'scoreB' => (int) $state['score_b'],
-            ]);
+            $this->depositScoreState($matchId, $tick);
 
             if ($param === 'Statut' && $value === 'END') {
                 $this->consolidateToKp($matchId);
@@ -241,7 +233,12 @@ class ScoringLiveService
                 throw new \InvalidArgumentException("Unknown event action: $action");
             }
 
+            $scoreChanged = $this->recountScore($matchId);
+
             $tick = $this->bumpTick($matchId);
+            if ($scoreChanged) {
+                $this->depositScoreState($matchId, $tick);
+            }
             $this->deposit($matchId, 'fact', [
                 'type' => 'fact',
                 'tick' => $tick,
@@ -439,6 +436,39 @@ class ScoringLiveService
     // ------------------------------------------------------------------
 
     /** @return array<string,mixed>|null */
+    /**
+     * The live score is derived from the goal facts, never kept as a separate counter: a
+     * goal added, removed or moved to the other team (post-match correction) is reflected
+     * in the same transaction. Returns true when the score actually changed.
+     */
+    private function recountScore(int $matchId): bool
+    {
+        $goals = $this->connection->fetchAssociative(
+            "SELECT COALESCE(SUM(team = 'A'), 0) AS a, COALESCE(SUM(team = 'B'), 0) AS b
+             FROM scoring_live_event WHERE id_match = ? AND kind = 'GOAL'",
+            [$matchId]
+        ) ?: ['a' => 0, 'b' => 0];
+
+        return $this->connection->executeStatement(
+            'UPDATE scoring_live_state SET score_a = ?, score_b = ? WHERE id_match = ?',
+            [(int) $goals['a'], (int) $goals['b'], $matchId]
+        ) > 0;
+    }
+
+    /** Publish the score block (status, period, score) at the given tick. */
+    private function depositScoreState(int $matchId, int $tick): void
+    {
+        $state = $this->fetchState($matchId);
+        $this->deposit($matchId, 'score', [
+            'type' => 'state',
+            'tick' => $tick,
+            'statut' => $state['statut'],
+            'periode' => $state['periode'],
+            'scoreA' => (int) $state['score_a'],
+            'scoreB' => (int) $state['score_b'],
+        ]);
+    }
+
     private function fetchState(int $matchId): ?array
     {
         $row = $this->connection->fetchAssociative(

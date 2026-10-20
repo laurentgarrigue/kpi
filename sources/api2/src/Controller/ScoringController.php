@@ -39,6 +39,9 @@ class ScoringController extends AbstractController
 {
     use AdminLoggableTrait;
 
+    /** Licence holders suggested outside the referee team (the operator keeps typing). */
+    private const OFFICIAL_SUGGESTIONS_LIMIT = 20;
+
     /** DBAL connection — also required by AdminLoggableTrait (expects $this->connection). */
     private Connection $connection;
 
@@ -674,6 +677,138 @@ class ScoringController extends AbstractController
         }
 
         return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
+    }
+
+    #[Route('/next/{matchId}', name: 'next_on_pitch', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/next/{matchId}',
+        summary: 'Next match on the same pitch, same day (whole KPI event, else same gameday)',
+        description: 'The scoring table chains the matches of its pitch: within a tournament (KPI event) they may belong to different competitions. Publication is ignored — an unpublished match is still played and scored.',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: '{id}: next match id, or null when this is the last match of the pitch (a normal answer, not an error)')
+        ]
+    )]
+    public function nextOnPitch(int $matchId): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        // Same date + pitch, after the current one by (time, number). Scope: the KPI event
+        // when the gameday belongs to one, else the gameday itself.
+        $id = $this->connection->fetchOne(
+            "SELECT m1.Id
+             FROM kp_match m2
+             LEFT JOIN kp_evenement_journee ej2 ON ej2.Id_journee = m2.Id_journee
+             JOIN kp_match m1 ON m1.Date_match = m2.Date_match AND m1.Terrain = m2.Terrain
+             LEFT JOIN kp_evenement_journee ej1 ON ej1.Id_journee = m1.Id_journee
+             WHERE m2.Id = ? AND m1.Id <> m2.Id AND m2.Terrain <> ''
+               AND (ej2.Id_evenement IS NOT NULL AND ej1.Id_evenement = ej2.Id_evenement
+                    OR ej2.Id_evenement IS NULL AND m1.Id_journee = m2.Id_journee)
+               AND (m1.Heure_match > m2.Heure_match
+                    OR m1.Heure_match = m2.Heure_match AND m1.Numero_ordre > m2.Numero_ordre)
+             ORDER BY m1.Heure_match, m1.Numero_ordre
+             LIMIT 1",
+            [$matchId]
+        );
+
+        return new JsonResponse(['id' => $id === false ? null : (int) $id]);
+    }
+
+    #[Route('/officials/{matchId}/suggest', name: 'officials_suggest', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/officials/{matchId}/suggest',
+        summary: 'Suggest licence holders for the scoring-table officials and line judges',
+        description: 'role=table (secretary, timekeepers) favours the players of the first referee team, role=line (line judges) those of the second. The team is the referee field itself, or the part in parentheses of a nominative designation. Values use the legacy format "NOM Prénom (matric)".',
+        tags: ['6. Scoring'],
+        parameters: [
+            new OA\Parameter(name: 'role', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['table', 'line'])),
+            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [new OA\Response(response: 200, description: '{team, items: [{group: team|other, value, label}]}')]
+    )]
+    public function suggestOfficials(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $refereeColumn = match ($request->query->get('role')) {
+            'table' => 'Arbitre_principal',
+            'line' => 'Arbitre_secondaire',
+            default => null,
+        };
+        if ($refereeColumn === null) {
+            return new JsonResponse(['error' => 'role must be table or line'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $q = trim((string) $request->query->get('q', ''));
+        $like = '%' . $q . '%';
+        $nameFilter = "(Matric LIKE ? OR CONCAT_WS(' ', Nom, Prenom) LIKE ? OR CONCAT_WS(' ', Prenom, Nom) LIKE ?)";
+
+        $designation = (string) $this->connection->fetchOne(
+            "SELECT COALESCE($refereeColumn, '') FROM kp_match WHERE Id = ?",
+            [$matchId]
+        );
+        $teamName = self::refereeTeamName($designation);
+
+        // The referee team: same season, its own competition first (a tournament often
+        // takes its referees from another category).
+        $teamId = $teamName === '' ? false : $this->connection->fetchOne(
+            'SELECT Id FROM kp_competition_equipe
+             WHERE Libelle = ? AND Code_saison = ?
+             ORDER BY Code_compet = ? DESC LIMIT 1',
+            [$teamName, $this->matchContext['Code_saison'], $this->matchContext['Code_competition']]
+        );
+
+        $items = [];
+        $teamMatrics = [];
+        if ($teamId !== false) {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT Matric, Nom, Prenom FROM kp_competition_equipe_joueur
+                 WHERE Id_equipe = ? AND Capitaine <> 'X' AND $nameFilter
+                 ORDER BY Nom, Prenom",
+                [$teamId, $like, $like, $like]
+            );
+            foreach ($rows as $row) {
+                $teamMatrics[] = (int) $row['Matric'];
+                $items[] = self::officialItem('team', $row);
+            }
+        }
+
+        // Anyone else holding a licence, once the operator has typed enough to narrow it.
+        if (mb_strlen($q) >= 2) {
+            $exclude = $teamMatrics === [] ? '' : ' AND Matric NOT IN (' . implode(',', $teamMatrics) . ')';
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT Matric, Nom, Prenom FROM kp_licence
+                 WHERE $nameFilter$exclude
+                 ORDER BY Nom, Prenom LIMIT " . self::OFFICIAL_SUGGESTIONS_LIMIT,
+                [$like, $like, $like]
+            );
+            foreach ($rows as $row) {
+                $items[] = self::officialItem('other', $row);
+            }
+        }
+
+        return new JsonResponse(['team' => $teamId === false ? null : $teamName, 'items' => $items]);
+    }
+
+    /**
+     * Team named by a referee field: "Equipe X" (team designated) or "NOM Prénom (Equipe X)"
+     * (nominative designation, team in the last parentheses).
+     */
+    private static function refereeTeamName(string $designation): string
+    {
+        if (preg_match('/\(([^()]+)\)[^()]*$/', $designation, $m) === 1) {
+            return trim($m[1]);
+        }
+
+        return trim($designation);
+    }
+
+    /** @param array{Matric: int|string, Nom: ?string, Prenom: ?string} $row */
+    private static function officialItem(string $group, array $row): array
+    {
+        $name = trim(mb_strtoupper((string) $row['Nom']) . ' ' . (string) $row['Prenom']);
+
+        return ['group' => $group, 'value' => "$name ({$row['Matric']})", 'label' => $name];
     }
 
     #[Route('/officials/{matchId}', name: 'officials_put', methods: ['PUT'])]

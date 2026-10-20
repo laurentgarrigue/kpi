@@ -8,7 +8,9 @@ import type {
   MatchStatus,
   TeamSide,
   ScoringConfig,
-  LiveClock
+  LiveClock,
+  OfficialRole,
+  OfficialSuggestionsResponse
 } from '~/types/scoring'
 
 /**
@@ -556,6 +558,21 @@ export const useScoringStore = defineStore('scoring', {
       } catch {
         return null
       }
+    },
+
+    /** Next match on the same pitch (same day, whole event) — null when this is the last. */
+    async nextOnPitch(apiInstance?: ReturnType<typeof useApi>): Promise<number | null> {
+      if (!this.match) return null
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const res = await api.get<{ id: number | null }>(`/admin/scoring/next/${this.match.id}`)
+      return res.id
+    },
+
+    /** Officials suggestions: players of the designated referee team first, then others. */
+    async suggestOfficials(role: OfficialRole, q: string, apiInstance?: ReturnType<typeof useApi>): Promise<OfficialSuggestionsResponse> {
+      if (!this.match) return { team: null, items: [] }
+      const api = apiInstance ?? sharedApi ?? useApi()
+      return api.get<OfficialSuggestionsResponse>(`/admin/scoring/officials/${this.match.id}/suggest`, { role, q })
     },
 
     /** Read the persisted timer state (for clock restore on reload) */

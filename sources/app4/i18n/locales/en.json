@@ -2577,20 +2577,23 @@
       "card_green": "Green card",
       "card_yellow": "Yellow card",
       "card_red": "Red card",
-      "card_black": "Black card (ejection)"
+      "card_black": "Black card"
     },
     "timer": {
       "start": "Start",
       "pause": "Pause",
       "reset": "Reset",
-      "shotclock": "Shot clock"
+      "shotclock": "Shot clock",
+      "group": "Game clock"
     },
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
     "field": "Field",
-    "history": "Game action history",
+    "history": "Timeline",
     "not_found": "Match not found",
     "select_player_first": "Select a player first",
+    "roster_empty": "No player on the game sheet",
+    "team_fact": "Team fact (no player)",
     "no_access": "Restricted access (experimentation phase)",
     "mode": {
       "label": "Mode",
@@ -2601,15 +2604,14 @@
       "title": "Edit game action",
       "save": "Save",
       "cancel": "Cancel",
-      "delete": "Delete",
-      "edit_hint": "Click a game action to edit it"
+      "delete": "Delete"
     },
     "pending": {
-      "hint": "{event} — adjust the time, then validate (Enter)",
-      "validate": "Validate"
+      "validate_event": "Record: {event}"
     },
     "time": {
       "label": "Game action time",
+      "short": "Time",
       "period": "Period"
     },
     "adjust": {
@@ -2648,7 +2650,8 @@
     },
     "shotclock": {
       "title": "Shot clock",
-      "stop": "Stop"
+      "stop": "Stop",
+      "short": "Shot"
     },
     "break": {
       "title": "Break",
@@ -2691,7 +2694,6 @@
       "remote_change": "Change received from another terminal"
     },
     "settings": {
-      "title": "Match settings…",
       "type": "Match type",
       "type_ranking": "Ranking",
       "type_elimination": "Elimination",
@@ -2710,10 +2712,13 @@
       "number": "No.",
       "player": "Player",
       "captain": "Captain",
-      "remove_player": "Remove player"
-    },
-    "run": {
-      "title": "Match run…"
+      "remove_player": "Remove player",
+      "officials_table": "Scoring table",
+      "officials_referees": "Referees",
+      "match": "Game",
+      "load_next": "Next game on this pitch",
+      "no_next_game": "No later game on this pitch",
+      "other_licensees": "Other licence holders"
     },
     "score_only": {
       "label": "Score only",
@@ -2727,6 +2732,23 @@
       "arbitreSecondaire": "Second referee",
       "ligne1": "Line judge 1",
       "ligne2": "Line judge 2"
+    },
+    "view": {
+      "settings": "Settings",
+      "run": "Game flow"
+    },
+    "tools": "Shortcuts",
+    "lock_toggle": "Lock or unlock the game",
+    "entry": {
+      "title": "Game action entry",
+      "clear": "Clear selection"
+    },
+    "event_short": {
+      "goal": "Goal",
+      "card_green": "Green",
+      "card_yellow": "Yellow",
+      "card_red": "Red",
+      "card_black": "Black"
     }
   },
   "competition": {

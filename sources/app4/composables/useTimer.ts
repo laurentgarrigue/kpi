@@ -1,4 +1,5 @@
 import { ref, computed, onUnmounted, type Ref } from 'vue'
+import { formatGameClock } from '~/utils/scoringDisplay'
 
 /**
  * Match countdown timer (game clock) — timestamp-based, like useShotclock/usePenalties.
@@ -53,17 +54,8 @@ export function useTimer(options: TimerOptions = {}) {
     }
   }
 
-  /** Remaining tenths, for display and for the value we persist. */
-  const remainingTenths = computed(() => Math.round(remainingMs.value / 100))
-
-  /** "MM:SS.d" display string */
-  const display = computed(() => {
-    const totalTenths = remainingTenths.value
-    const minutes = Math.floor(totalTenths / 600)
-    const seconds = Math.floor((totalTenths % 600) / 10)
-    const tenths = totalTenths % 10
-    return `${pad(minutes)}:${pad(seconds)}.${tenths}`
-  })
+  /** Clock as shown to people: "9:52", tenths under 10 s ("9.9") — see formatGameClock */
+  const display = computed(() => formatGameClock(remainingMs.value))
 
   /** "MM:SS" — used to timestamp events */
   const gameTime = computed(() => {

@@ -226,6 +226,20 @@ h1, h2 {
   font-family: 'Agency FB', 'Arial Narrow', Arial, sans-serif;
 }
 
+/**
+ * Scoring digits (console, scoreboard, shot clock): a heavy neo-grotesque with lining,
+ * **tabular figures**, so every digit keeps the same advance width and a countdown never
+ * wobbles — Raleway's old-style figures and the monospace fallback both read poorly at a
+ * glance. No web font on purpose: the displays must start instantly and work offline (PWA).
+ */
+.scoring-digits {
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  letter-spacing: 0;
+}
+
 /* ===== Color scheme ===== */
 :root {
   color-scheme: light;

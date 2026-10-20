@@ -2589,20 +2589,23 @@
       "card_green": "Carton vert",
       "card_yellow": "Carton jaune",
       "card_red": "Carton rouge",
-      "card_black": "Carton noir (exclusion définitive)"
+      "card_black": "Carton noir"
     },
     "timer": {
       "start": "Démarrer",
       "pause": "Pause",
       "reset": "Réinitialiser",
-      "shotclock": "Time-shoot"
+      "shotclock": "Time-shoot",
+      "group": "Chronomètre de jeu"
     },
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
     "field": "Terrain",
-    "history": "Historique des faits de jeu",
+    "history": "Chronologie",
     "not_found": "Match introuvable",
     "select_player_first": "Sélectionnez d'abord un joueur",
+    "roster_empty": "Aucun joueur sur la feuille de match",
+    "team_fact": "Fait d'équipe (sans joueur)",
     "no_access": "Accès réservé (phase d'expérimentation)",
     "mode": {
       "label": "Mode",
@@ -2613,15 +2616,14 @@
       "title": "Modifier le fait de jeu",
       "save": "Enregistrer",
       "cancel": "Annuler",
-      "delete": "Supprimer",
-      "edit_hint": "Cliquez sur un fait de jeu pour le modifier"
+      "delete": "Supprimer"
     },
     "pending": {
-      "hint": "{event} — ajustez le temps puis validez (Entrée)",
-      "validate": "Valider"
+      "validate_event": "Enregistrer : {event}"
     },
     "time": {
       "label": "Temps du fait de jeu",
+      "short": "Temps",
       "period": "Période"
     },
     "adjust": {
@@ -2660,7 +2662,8 @@
     },
     "shotclock": {
       "title": "Chronomètre de tir",
-      "stop": "Arrêt"
+      "stop": "Arrêt",
+      "short": "Tir"
     },
     "break": {
       "title": "Pause",
@@ -2703,7 +2706,6 @@
       "remote_change": "Modification reçue d’un autre terminal"
     },
     "settings": {
-      "title": "Paramètres du match…",
       "type": "Type de match",
       "type_ranking": "Classement",
       "type_elimination": "Élimination",
@@ -2722,10 +2724,13 @@
       "number": "N°",
       "player": "Joueur",
       "captain": "Capitaine",
-      "remove_player": "Retirer le joueur"
-    },
-    "run": {
-      "title": "Déroulement du match…"
+      "remove_player": "Retirer le joueur",
+      "officials_table": "Table de marque",
+      "officials_referees": "Arbitres",
+      "match": "Match",
+      "load_next": "Match suivant du terrain",
+      "no_next_game": "Aucun match après celui-ci sur ce terrain",
+      "other_licensees": "Autres licenciés"
     },
     "score_only": {
       "label": "Score seul",
@@ -2739,6 +2744,23 @@
       "arbitreSecondaire": "Arbitre secondaire",
       "ligne1": "Juge de ligne 1",
       "ligne2": "Juge de ligne 2"
+    },
+    "view": {
+      "settings": "Paramètres",
+      "run": "Déroulement"
+    },
+    "tools": "Raccourcis",
+    "lock_toggle": "Verrouiller ou déverrouiller le match",
+    "entry": {
+      "title": "Saisie d'un fait de jeu",
+      "clear": "Désélectionner"
+    },
+    "event_short": {
+      "goal": "But",
+      "card_green": "Vert",
+      "card_yellow": "Jaune",
+      "card_red": "Rouge",
+      "card_black": "Noir"
     }
   },
   "competition": {

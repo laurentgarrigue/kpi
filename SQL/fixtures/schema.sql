@@ -638,4 +638,52 @@ CREATE TABLE `scoring_live_state` (
   PRIMARY KEY (`id_match`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+DROP TABLE IF EXISTS `scoring_live_event`;
+CREATE TABLE `scoring_live_event` (
+  `uid` varchar(32) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `kind` varchar(10) NOT NULL,
+  `code` varchar(2) DEFAULT NULL,
+  `periode` varchar(4) DEFAULT NULL,
+  `temps` time DEFAULT NULL,
+  `team` char(1) NOT NULL,
+  `id_player` varchar(25) DEFAULT NULL,
+  `numero` varchar(4) DEFAULT NULL,
+  `motif` varchar(10) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  PRIMARY KEY (`uid`),
+  KEY `idx_scoring_event_match` (`id_match`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_live_clock`;
+CREATE TABLE `scoring_live_clock` (
+  `id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `kind` enum('GAME','SHOTCLOCK','PENALTY','BREAK') NOT NULL,
+  `team` char(1) NOT NULL DEFAULT '',
+  `slot` tinyint(4) NOT NULL DEFAULT 0,
+  `id_player` varchar(25) DEFAULT NULL,
+  `card_code` char(1) DEFAULT NULL,
+  `init_ms` int(11) NOT NULL,
+  `elapsed_ms` int(11) NOT NULL DEFAULT 0,
+  `started_at` datetime(3) DEFAULT NULL,
+  `running` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_scoring_clock` (`id_match`,`kind`,`team`,`slot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_outbox`;
+CREATE TABLE `scoring_outbox` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `topic` varchar(190) NOT NULL,
+  `payload` longtext NOT NULL CHECK (json_valid(`payload`)),
+  `tick` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `published_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_scoring_outbox_unpublished` (`published_at`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

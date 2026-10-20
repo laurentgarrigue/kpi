@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ScoringEvent, ScoringEventCode } from '~/types/scoring'
+import type { ScoringEvent } from '~/types/scoring'
 
 /**
  * Event history (spec §7.1). Two presentations of the same data:
@@ -14,8 +14,6 @@ import type { ScoringEvent, ScoringEventCode } from '~/types/scoring'
  */
 const props = defineProps<{
   events: ScoringEvent[]
-  teamAName?: string | null
-  teamBName?: string | null
   editingUid?: string | null
   canScore?: boolean
 }>()
@@ -48,14 +46,6 @@ const sorted = computed(() =>
   })
 )
 
-const codeLabel = (code: ScoringEventCode): string =>
-  t('scoring.event.' + ({ B: 'goal', V: 'card_green', J: 'card_yellow', R: 'card_red', D: 'card_black' }[code]))
-
-// Visual token for an event (emoji avoids shipping the legacy PNGs).
-const tokenFor = (code: ScoringEventCode): string =>
-  // D = black ejection card (2027 rules, spec §0.9)
-  ({ B: '🥅', V: '🟢', J: '🟡', R: '🔴', D: '⬛' }[code])
-
 const playerLabel = (e: ScoringEvent): string => {
   if (e.player === '0' || !e.nom) return t('scoring.team') + ' ' + e.team
   return `${e.nom.toUpperCase()} ${e.prenom ?? ''}`.trim()
@@ -69,15 +59,15 @@ const onRowClick = (e: ScoringEvent) => {
 <template>
   <div>
     <h3 class="font-semibold mb-2">{{ t('scoring.history') }}</h3>
-    <p class="text-xs text-header-600 dark:text-header-300 mb-2">{{ t('scoring.edit.edit_hint') }}</p>
 
     <!-- Symmetric table (PC / large tablet) -->
     <table class="hidden md:table w-full text-sm border-collapse">
       <thead>
         <tr class="text-xs text-header-600 dark:text-header-300 border-b border-header-200 dark:border-header-700">
-          <th class="py-1 text-left w-[42%]">{{ teamAName }}</th>
-          <th class="py-1 text-center w-[16%]">{{ t('scoring.time.label') }}</th>
-          <th class="py-1 text-right w-[42%]">{{ teamBName }}</th>
+          <!-- Columns mirror the score banner (A left, B right): no team names repeated -->
+          <th class="py-1 w-[42%]" />
+          <th class="py-1 text-center w-[16%]">{{ t('scoring.time.short') }}</th>
+          <th class="py-1 w-[42%]" />
         </tr>
       </thead>
       <tbody>
@@ -100,7 +90,7 @@ const onRowClick = (e: ScoringEvent) => {
                 class="opacity-0 group-hover:opacity-100"
                 :disabled="!canScore" @click.stop="emit('remove', e)"
               />
-              <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
+              <ScoringEventIcon :code="e.code" />
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
               <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
@@ -108,7 +98,7 @@ const onRowClick = (e: ScoringEvent) => {
           </td>
 
           <!-- CENTER: period + time -->
-          <td class="py-1 text-center whitespace-nowrap font-mono text-header-900 dark:text-header-50">
+          <td class="py-1 text-center whitespace-nowrap scoring-digits text-header-900 dark:text-header-50">
             {{ e.period }} {{ fmtTime(e.tpsJeu) }}
           </td>
 
@@ -118,7 +108,7 @@ const onRowClick = (e: ScoringEvent) => {
               <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
-              <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
+              <ScoringEventIcon :code="e.code" />
               <UButton
                 size="2xs" variant="ghost" color="error" icon="i-heroicons-trash"
                 class="opacity-0 group-hover:opacity-100"
@@ -137,13 +127,16 @@ const onRowClick = (e: ScoringEvent) => {
         class="flex items-center gap-2 py-1"
         :class="editingUid === e.uid ? 'bg-primary-100 dark:bg-primary-900/40 ring-2 ring-inset ring-primary-500' : ''"
       >
-        <span class="text-base leading-none">{{ tokenFor(e.code) }}</span>
-        <span class="font-mono w-20">{{ e.period }} {{ fmtTime(e.tpsJeu) }}</span>
-        <UBadge size="xs" :color="e.team === 'A' ? 'primary' : 'neutral'">{{ e.team }}</UBadge>
-        <span class="font-mono w-8 text-center">#{{ e.number }}</span>
+        <!-- Team letter pushed to its side (A far left, B far right, as on the board); the
+             empty slot on the other side keeps every row aligned. -->
+        <span class="w-6 shrink-0">
+          <UBadge v-if="e.team === 'A'" size="xs" color="primary">A</UBadge>
+        </span>
+        <ScoringEventIcon :code="e.code" />
+        <span class="scoring-digits w-20">{{ e.period }} {{ fmtTime(e.tpsJeu) }}</span>
+        <span class="scoring-digits w-8 text-center">#{{ e.number }}</span>
         <span class="flex-1 truncate">
           {{ playerLabel(e) }}
-          <span class="text-header-600 dark:text-header-300">· {{ codeLabel(e.code) }}</span>
           <span v-if="e.reason" class="text-header-600 dark:text-header-300">({{ t('scoring.reason.' + e.reason) }})</span>
         </span>
         <UButton
@@ -154,6 +147,9 @@ const onRowClick = (e: ScoringEvent) => {
           size="xs" variant="ghost" color="error" icon="i-heroicons-trash"
           :disabled="!canScore" @click="emit('remove', e)"
         />
+        <span class="w-6 shrink-0 text-right">
+          <UBadge v-if="e.team === 'B'" size="xs" color="neutral">B</UBadge>
+        </span>
       </li>
     </ul>
 

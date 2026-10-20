@@ -144,15 +144,3 @@ const fmtPenalty = (ms: number): string => {
     </div>
   </div>
 </template>
-
-<style>
-/* Shared with the shot-clock page: heavy neo-grotesque with tabular figures so digits
-   never wobble; no web font loaded (instant start, works offline). */
-.scoring-digits {
-  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1, 'lnum' 1;
-  letter-spacing: 0;
-}
-</style>

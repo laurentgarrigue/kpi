@@ -39,7 +39,7 @@ const cycle = () => {
 
 <template>
   <span
-    class="px-2 py-1 text-xs font-medium rounded uppercase select-none"
+    class="px-2.5 py-1 text-sm font-medium rounded-md select-none"
     :class="[colorClass, canCycle ? 'cursor-pointer' : '']"
     :title="canCycle ? t('scoring.status_cycle_hint') : ''"
     :role="canCycle ? 'button' : undefined"

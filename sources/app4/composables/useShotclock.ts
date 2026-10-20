@@ -1,4 +1,5 @@
 import type { ShotclockState } from '~/utils/scoringRules'
+import { snapShotclockAdjust } from '~/utils/scoringDisplay'
 
 /**
  * Shotclock (chronomètre de tir) — the 3-command model of spec §6.5 (decision 2026-07-27):
@@ -111,10 +112,8 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
   /** ±1 s fine adjust (spec §6.5: only while the game clock is stopped → never RUNNING). */
   const adjust = (deltaSeconds: number) => {
     if (state.value !== 'SUSPENDED') return
-    remainingMs.value = Math.min(
-      initSeconds.value * 1000,
-      Math.max(0, remainingMs.value + deltaSeconds * 1000)
-    )
+    // Lands on a whole second (the one the operator reads), within [0, loaded duration].
+    remainingMs.value = snapShotclockAdjust(remainingMs.value, deltaSeconds, initSeconds.value * 1000)
   }
 
   /** Rebuild from the persisted live clock (GET /state → kind SHOTCLOCK). */

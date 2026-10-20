@@ -60,20 +60,3 @@ const dimmed = computed(() => state.shotclockState === 'IDLE' || state.shotclock
     </div>
   </div>
 </template>
-
-<style>
-/**
- * Digit legibility at distance (spec: "police adaptée pour une excellente lisibilité des
- * chiffres"): a heavy neo-grotesque with **tabular figures**, so every digit keeps the
- * same advance width and the number never wobbles as it counts down. No web font is
- * loaded on purpose — the display must start instantly and work offline (PWA); an
- * embedded font can be swapped in here later without touching the layout.
- */
-.scoring-digits {
-  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1, 'lnum' 1;
-  letter-spacing: 0;
-}
-</style>

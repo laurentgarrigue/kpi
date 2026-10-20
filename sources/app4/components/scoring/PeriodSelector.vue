@@ -34,8 +34,6 @@ const periodLabel = (p: Period): string => {
   return n !== null ? t('scoring.period.overtime', { n }) : t('scoring.period.' + p)
 }
 
-const currentLabel = computed(() => (props.period ? periodLabel(props.period) : '—'))
-
 // The next period, from the shared pure rules (utils/scoringRules — mirror of api2).
 const nextP = computed<Period | null>(() => {
   if (!props.period) return 'M1'
@@ -52,7 +50,11 @@ const directItems = computed(() => {
   }
   if (props.shootoutEnabled || props.period === 'TB') list.push('TB')
   if (props.period && !list.includes(props.period)) list.push(props.period)
-  return list.map(p => ({ label: periodLabel(p), value: p }))
+  return list.map(p => ({
+    label: periodLabel(p),
+    icon: p === props.period ? 'i-heroicons-check' : undefined,
+    onSelect: () => requestChange(p)
+  }))
 })
 
 // Confirmation modal state — holds the period we are about to switch to.
@@ -72,31 +74,28 @@ const cancel = () => { pending.value = null }
 </script>
 
 <template>
-  <div class="flex items-center gap-2">
-    <!-- Current period badge -->
-    <UBadge color="neutral" variant="soft" class="uppercase">{{ currentLabel }}</UBadge>
+  <div class="flex items-center gap-1">
+    <!-- Current period = the button itself; clicking it opens the direct access (escape
+         hatch to any period of the sequence). -->
+    <UDropdownMenu :items="directItems" :disabled="!canChange">
+      <UButton
+        size="sm"
+        variant="soft"
+        trailing-icon="i-heroicons-chevron-down"
+        :disabled="!canChange"
+        :title="t('scoring.period_direct')"
+      >{{ period ? periodLabel(period) : t('scoring.period_direct') }}</UButton>
+    </UDropdownMenu>
 
     <!-- Advance to next period (unbounded overtimes for type E while level) -->
     <UButton
       v-if="nextP"
-      size="xs"
+      size="sm"
       icon="i-heroicons-forward"
       :disabled="!canChange"
+      :aria-label="`${t('scoring.period_next')} — ${periodLabel(nextP)}`"
+      :title="`${t('scoring.period_next')} — ${periodLabel(nextP)}`"
       @click="requestChange(nextP)"
-    >
-      {{ t('scoring.period_next') }} — {{ periodLabel(nextP) }}
-    </UButton>
-
-    <!-- Direct access (escape hatch) — pick any period of the sequence -->
-    <USelect
-      :model-value="period ?? undefined"
-      :items="directItems"
-      value-key="value"
-      :disabled="!canChange"
-      size="xs"
-      :placeholder="t('scoring.period_direct')"
-      class="w-40"
-      @update:model-value="requestChange($event as Period)"
     />
 
     <!-- Confirmation: changing period resets the clock -->

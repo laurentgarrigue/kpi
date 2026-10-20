@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Period, MatchStatus, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
+import type { OfficialRole, Period, MatchStatus, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
 
 definePageMeta({
@@ -25,12 +25,13 @@ const { canView, canScore: canScoreBase, canValidate } = useScoringPermissions(
 const canScore = computed(() => canScoreBase.value && !scoringStore.isCompetitionEnded)
 
 // D = black ejection card under the 2027 rules (spec §0.9) — code kept for storage compat.
-const eventCodes: { code: ScoringEventCode; labelKey: string; color: string }[] = [
-  { code: 'B', labelKey: 'scoring.event.goal', color: 'primary' },
-  { code: 'V', labelKey: 'scoring.event.card_green', color: 'success' },
-  { code: 'J', labelKey: 'scoring.event.card_yellow', color: 'warning' },
-  { code: 'R', labelKey: 'scoring.event.card_red', color: 'error' },
-  { code: 'D', labelKey: 'scoring.event.card_black', color: 'neutral' }
+// shortKey: one-word label for the narrow fact keys (mobile bottom bar, validate button).
+const eventCodes: { code: ScoringEventCode; labelKey: string; shortKey: string; color: string }[] = [
+  { code: 'B', labelKey: 'scoring.event.goal', shortKey: 'scoring.event_short.goal', color: 'primary' },
+  { code: 'V', labelKey: 'scoring.event.card_green', shortKey: 'scoring.event_short.card_green', color: 'success' },
+  { code: 'J', labelKey: 'scoring.event.card_yellow', shortKey: 'scoring.event_short.card_yellow', color: 'warning' },
+  { code: 'R', labelKey: 'scoring.event.card_red', shortKey: 'scoring.event_short.card_red', color: 'error' },
+  { code: 'D', labelKey: 'scoring.event.card_black', shortKey: 'scoring.event_short.card_black', color: 'neutral' }
 ]
 // Card reasons (motifs) reused from FMV3 — '' = none, 'unknown' pre-selected (spec §0.9)
 const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
@@ -93,9 +94,33 @@ watch(scoreOnly, (on) => {
   void scoringStore.setSource(on ? 'SCORE_ONLY' : 'MANUAL')
 })
 
+// ─── Console mode menu: live / post-match / score-only in a single dropdown ───
+// Score-only is a live capture (spec §3), so picking it also switches to live.
+type ConsoleMode = 'live' | 'post' | 'scoreOnly'
+const MODE_ICON: Record<ConsoleMode, string> = {
+  live: 'i-heroicons-signal',
+  post: 'i-heroicons-clipboard-document-check',
+  scoreOnly: 'i-heroicons-hashtag'
+}
+const consoleMode = computed<ConsoleMode>(() => (scoreOnly.value ? 'scoreOnly' : mode.value))
+const modeLabel = (m: ConsoleMode): string =>
+  m === 'scoreOnly' ? t('scoring.score_only.label') : t('scoring.mode.' + m)
+const setConsoleMode = (m: ConsoleMode) => {
+  scoreOnly.value = m === 'scoreOnly'
+  mode.value = m === 'post' ? 'post' : 'live'
+}
+const modeItems = computed(() => (['live', 'post', 'scoreOnly'] as ConsoleMode[]).map(m => ({
+  type: 'checkbox' as const,
+  label: modeLabel(m),
+  icon: MODE_ICON[m],
+  checked: m === consoleMode.value,
+  disabled: m === 'scoreOnly' && !canScore.value,
+  onSelect: () => setConsoleMode(m)
+})))
+
 /** Score-only goal: +1/−1 for a team, recorded as a team-level fact (player '0'). */
 const bumpScore = async (team: TeamSide, delta: 1 | -1) => {
-  if (!canScore.value || !match.value) return
+  if (!canScore.value || !match.value || !acceptClick(`score${team}${delta}`)) return
   if (delta === 1) {
     try {
       await scoringStore.addEvent({
@@ -171,6 +196,30 @@ const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, set
     }
   })
 
+// ─── Click debounce: a press held too long or too hard counts once ───
+const CLICK_DEBOUNCE_MS = 250
+const acceptClick = createClickGuard(CLICK_DEBOUNCE_MS)
+
+// ─── Adjustment keys (±1/±10 s): persisted once per burst ───
+// Operators click them in bursts (+1 +1 +1). Each click applies locally at once, but only
+// the final value is written, a moment after the last click: one write per burst means no
+// out-of-order writes, and no echo of an intermediate value bouncing the display back.
+const ADJUST_PERSIST_DELAY_MS = 500
+const adjustTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const persistAfterBurst = (key: string, persist: () => void) => {
+  // Mark the local change now: remote-change echoes are ignored while the burst lasts.
+  scoringStore.lastMutationAt = Date.now()
+  const pending = adjustTimers.get(key)
+  if (pending) clearTimeout(pending)
+  adjustTimers.set(key, setTimeout(() => {
+    adjustTimers.delete(key)
+    persist()
+  }, ADJUST_PERSIST_DELAY_MS))
+}
+onUnmounted(() => {
+  for (const pending of adjustTimers.values()) clearTimeout(pending)
+})
+
 // ─── Shotclock (chronomètre de tir) — 3 commands, auto-follows the game clock (§6.5) ───
 const shotclock = useShotclock({ onExpired: () => buzzer.beep() })
 
@@ -202,9 +251,13 @@ const shotclockStop = () => {
   persistShotclock('RAZ')
 }
 const shotclockAdjust = (delta: number) => {
-  if (!canScore.value || shotclock.state.value !== 'SUSPENDED') return
+  if (!canScore.value || shotclock.state.value !== 'SUSPENDED' || !acceptClick(`shotclock${delta}`)) return
   shotclock.adjust(delta)
-  persistShotclock('stop')
+  // Written with the state at the end of the burst (60/40 may have been pressed meanwhile).
+  persistAfterBurst('shotclock', () => {
+    const st = shotclock.state.value
+    persistShotclock(st === 'RUNNING' ? 'run' : st === 'IDLE' ? 'RAZ' : 'stop')
+  })
 }
 // ─── Penalties (spec §7.4 — rules corrected 2026-07-29) ───
 // V/J/R start a 2-min clock; D is a dry definitive exclusion (no clock, no replacement).
@@ -257,13 +310,13 @@ const confirmLift = () => {
   void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
 }
 
-// Excluded-player markers in the rosters (R = 🔴 replacement at penalty end, D = ⬛ out
-// for the whole match, team short-handed to the end).
-const excludedToken = computed(() => {
-  const m = new Map<string, string>()
+// Excluded-player markers in the rosters (R = replacement at penalty end, D = out for the
+// whole match, team short-handed to the end) — drawn as their card.
+const excludedCard = computed(() => {
+  const m = new Map<string, 'R' | 'D'>()
   for (const e of scoringStore.events) {
-    if (e.code === 'D') m.set(e.player, '⬛')
-    else if (e.code === 'R' && m.get(e.player) !== '⬛') m.set(e.player, '🔴')
+    if (e.code === 'D') m.set(e.player, 'D')
+    else if (e.code === 'R' && m.get(e.player) !== 'D') m.set(e.player, 'R')
   }
   return m
 })
@@ -330,7 +383,7 @@ const broadcast = useScoringBroadcast(() => ({
   scoreA: scoringStore.scoreA,
   scoreB: scoringStore.scoreB,
   period: match.value?.periode ?? null,
-  timer: gameTime.value,
+  timer: clockDisplay.value, // same format as the console ("9:52", tenths under 10 s)
   timerRunning: isRunning.value,
   shotclock: shotclockMasked.value ? '--' : shotclock.display.value,
   shotclockState: shotclock.state.value,
@@ -338,7 +391,7 @@ const broadcast = useScoringBroadcast(() => ({
 }))
 
 // Push each change as it happens (cheap: BroadcastChannel is in-process messaging).
-watch(gameTime, () => broadcast.timer())
+watch(clockDisplay, () => broadcast.timer())
 watch(isRunning, () => broadcast.timerStatus())
 watch(() => shotclock.display.value, () => broadcast.shotclock())
 watch(() => shotclock.state.value, () => broadcast.shotclock())
@@ -349,9 +402,21 @@ watch(() => penalties.penalties.value.map(p => `${p.slot}${p.team}${Math.ceil(p.
 
 // ─── Configurable keyboard shortcuts (spec §6.5, decision §0.9) ───
 const shortcutsOpen = ref(false)
+
+// Occasional tools, grouped in the header's ⋯ menu: full-screen displays (live only — same
+// origin, BroadcastChannel keeps them in sync) and the keyboard shortcuts.
+const toolItems = computed(() => [
+  ...(isLive.value
+    ? [
+        { label: t('scoring.display.scoreboard'), icon: 'i-heroicons-tv', onSelect: () => broadcast.openScoreboard(matchId.value) },
+        { label: t('scoring.display.shotclock'), icon: 'i-heroicons-clock', onSelect: () => broadcast.openShotclock(matchId.value) }
+      ]
+    : []),
+  { label: t('scoring.shortcuts.title'), icon: 'i-heroicons-command-line', onSelect: () => { shortcutsOpen.value = true } }
+])
 const shortcutsEnabled = computed(() => isLive.value && canScore.value && !shortcutsOpen.value)
 const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
-  gameClockToggle: () => timer(isRunning.value ? 'stop' : 'run'),
+  gameClockToggle: () => toggleClock(),
   shotclockStart60: () => shotclockStart(scoringStore.config.shotclockDurations.full),
   shotclockStart40: () => {
     if (scoringStore.config.shotclockOffensiveReboundEnabled) {
@@ -485,6 +550,34 @@ const selectPlayer = (team: TeamSide, player: ScoringPlayer) => {
   selected.value = { team, player }
 }
 
+// Mobile: both rosters side by side, names truncated; tapping a team name widens that side
+// for a few seconds, then both columns share the width again.
+const WIDE_TEAM_MS = 5000
+const wideTeam = ref<TeamSide | null>(null)
+let wideTeamTimer: ReturnType<typeof setTimeout> | null = null
+const widenTeam = (team: TeamSide) => {
+  wideTeam.value = team
+  if (wideTeamTimer) clearTimeout(wideTeamTimer)
+  wideTeamTimer = setTimeout(() => { wideTeam.value = null }, WIDE_TEAM_MS)
+}
+onUnmounted(() => { if (wideTeamTimer) clearTimeout(wideTeamTimer) })
+
+/** Who the next fact goes to, as shown in the entry panel. */
+const selectedLabel = computed(() => {
+  const p = selected.value?.player
+  if (!p) return ''
+  if (isTeamFact(p)) return t('scoring.team_fact')
+  return `${p.capitaine === 'E' ? 'Coach' : '#' + p.numero} ${p.nom.toUpperCase()} ${p.prenom}`
+})
+
+// Team-level fact (player '0', as in score-only mode): the only way to record anything
+// when a team has no player on the game sheet — otherwise every fact button stays disabled.
+const TEAM_FACT_MATRIC = 0
+const isTeamFact = (player: ScoringPlayer) => player.matric === TEAM_FACT_MATRIC
+const selectTeamFact = (team: TeamSide) => selectPlayer(team, {
+  matric: TEAM_FACT_MATRIC, nom: '', prenom: '', numero: 0, capitaine: '-', team
+})
+
 // Card-progression warning modal (spec §7.4: alert, the operator stays sovereign) and
 // golden-goal closing proposal (spec §7.5).
 const cardWarning = ref<{ code: ScoringEventCode; violation: string } | null>(null)
@@ -500,6 +593,8 @@ const goldenGoalOpen = ref(false)
  * Aiming for "one gesture" cost the operator the time correction — that trade was wrong.
  */
 const pendingCode = ref<ScoringEventCode | null>(null)
+// The reason only applies to cards: its select appears once a card is staged.
+const pendingIsCard = computed(() => pendingCode.value !== null && pendingCode.value !== 'B')
 const timeInput = ref<{ $el?: HTMLElement } | HTMLElement | null>(null)
 
 /** Focus + select the time field so typing overwrites it right away. */
@@ -563,7 +658,7 @@ const commitEvent = async (code: ScoringEventCode) => {
   // Card progression rule (spec §7.4, 2027): warn when the new card is identical/lower
   // than the player's previous one, or when the player is already out (R/D). The modal
   // lets the operator record it anyway (paper sheet stays the referee's authority).
-  if (code !== 'B') {
+  if (code !== 'B' && !isTeamFact(selected.value.player)) {
     const previous = scoringStore.events
       .filter(e => e.code !== 'B' && e.player === String(selected.value?.player.matric))
       .map(e => e.code)
@@ -587,7 +682,7 @@ const pushEvent = async (code: ScoringEventCode) => {
     tpsJeu: eventTime.value,
     team,
     player: String(player.matric),
-    number: player.numero,
+    number: isTeamFact(player) ? null : player.numero,
     reason: code === 'B' ? '' : eventReason.value,
     nom: player.nom,
     prenom: player.prenom
@@ -614,7 +709,7 @@ const pushEvent = async (code: ScoringEventCode) => {
         const clock = penalties.add({
           team,
           playerId: String(player.matric),
-          playerNumber: player.numero,
+          playerNumber: isTeamFact(player) ? null : player.numero,
           cardCode: code,
           durationSec: scoringStore.config.penaltyDuration,
           running: isRunning.value
@@ -670,6 +765,7 @@ const removeEvent = async (e: ScoringEvent) => {
 
 // ─── Event time fine-adjust (±60/±10/±1 s) — works in live and post-match ───
 const adjustEventTime = (deltaSec: number) => {
+  if (!acceptClick(`eventTime${deltaSec}`)) return
   const [m, s] = eventTime.value.split(':').map(Number)
   const total = Math.max(0, (m || 0) * 60 + (s || 0) + deltaSec)
   eventTime.value = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
@@ -707,7 +803,19 @@ const setPeriod = (p: Period) => {
   // Reconfigure the clock to the new period duration (fresh countdown)
   if (isLive.value) timerSetPeriod(periodDurationOf(p, scoringStore.config.periodDurations))
 }
-const setStatus = (s: MatchStatus) => { if (canScore.value) scoringStore.setStatus(s) }
+const setStatus = (s: MatchStatus) => {
+  if (!canScore.value) return
+  scoringStore.setStatus(s)
+  // Kick-off with no period chosen yet: the match starts on the first period. No
+  // confirmation here — there is no clock to reset yet.
+  if (s === 'ON' && !match.value?.periode) setPeriod('M1')
+}
+
+// In live mode the entry period follows the match period (local change, remote terminal or
+// kick-off): the entry zone then needs no period select of its own outside edits.
+watch(() => match.value?.periode, (p) => {
+  if (p && isLive.value && !editingUid.value) eventPeriod.value = p as Period
+})
 
 // ─── Timer controls (UI + server persistence to scoring_live_clock) ───
 const timer = (action: 'run' | 'stop' | 'RAZ') => {
@@ -731,12 +839,18 @@ const timer = (action: 'run' | 'stop' | 'RAZ') => {
   })
 }
 
+/** Start/pause toggle — debounced: a double contact must not start then stop the clock. */
+const toggleClock = () => {
+  if (!acceptClick('clockToggle')) return
+  timer(isRunning.value ? 'stop' : 'run')
+}
+
 // Fine-adjust the live clock (±1/±10 s). Only meaningful in live mode.
 // `deltaSec` is expressed on the DISPLAYED time (a countdown): +1 adds a second to the time
 // left, so it SUBTRACTS a second from the elapsed time. Getting this backwards inverted the
 // buttons (fixed 2026-08-02).
 const adjustClock = (deltaSec: number) => {
-  if (!canScore.value) return
+  if (!canScore.value || !acceptClick(`clock${deltaSec}`)) return
   const wasRunning = isRunning.value
   // Clamped at both ends: never below 0, never past the period duration (which would show
   // a negative remaining time).
@@ -746,10 +860,13 @@ const adjustClock = (deltaSec: number) => {
   )
   timerSetPeriod(scoringStore.currentPeriodDuration, next) // re-primes the clock (paused)
   if (wasRunning) timerStart() // keep it running if it was
-  void scoringStore.setTimer(wasRunning ? 'run' : 'stop', {
-    startTime: next,
-    runTime: 0,
-    maxTime: scoringStore.currentPeriodDuration
+  // Persisted when the burst ends, with the elapsed time AT THAT MOMENT (it may be running).
+  persistAfterBurst('clock', () => {
+    void scoringStore.setTimer(isRunning.value ? 'run' : 'stop', {
+      startTime: elapsedPrecise.value,
+      runTime: 0,
+      maxTime: scoringStore.currentPeriodDuration
+    })
   })
 }
 
@@ -788,6 +905,17 @@ const loadOtherMatch = async (input: string) => {
   await navigateTo(`/games/${target}/scoring`)
 }
 
+/** Chain the pitch: open the next match on the same pitch (same day, whole event). */
+const loadNextOnPitch = async () => {
+  try {
+    const next = await scoringStore.nextOnPitch()
+    if (next) await navigateTo(`/games/${next}/scoring`)
+    else toast.add({ title: t('scoring.settings.no_next_game'), color: 'info' })
+  } catch { /* useApi already toasts */ }
+}
+
+const suggestOfficials = (role: OfficialRole, q: string) => scoringStore.suggestOfficials(role, q)
+
 const toggleLock = async () => {
   if (!canValidate.value) return
   try {
@@ -817,103 +945,80 @@ const toggleLock = async () => {
         :description="t('competition.ended_description')"
       />
 
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-bold">
+      <!-- Header: which match, then the console switches (view, mode, tools, lock) -->
+      <header class="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <!-- Full width on mobile, so the switches wrap under it instead of squeezing it -->
+        <div class="min-w-0 w-full md:w-auto md:flex-1">
+          <h1 class="text-2xl leading-tight">
             {{ t('scoring.title') }} —
             <template v-if="match.numeroOrdre">{{ t('games.field.game_number') }}{{ match.numeroOrdre }}</template>
             <template v-else>#{{ match.id }}</template>
           </h1>
-          <p class="text-sm text-header-900 dark:text-header-50">
+          <p class="text-sm text-header-700 dark:text-header-200 truncate">
             {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
-            <span class="text-header-600 dark:text-header-400">· ID#{{ match.id }}</span>
           </p>
         </div>
-        <div class="flex items-center gap-2">
-          <!-- Settings / run views (spec §7.1) -->
-          <UButton
-            size="xs"
-            variant="outline"
-            :icon="view === 'run' ? 'i-heroicons-adjustments-horizontal' : 'i-heroicons-play'"
-            @click="view = view === 'run' ? 'settings' : 'run'"
-          >{{ view === 'run' ? t('scoring.settings.title') : t('scoring.run.title') }}</UButton>
 
-          <!-- Direct / post-match mode -->
-          <div class="flex gap-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Two views of the same match (spec §7.1): before kick-off / during the match -->
+          <div class="inline-flex rounded-lg border border-header-200 dark:border-header-700 p-0.5" role="tablist">
             <UButton
-              size="xs"
-              :variant="mode === 'live' ? 'solid' : 'outline'"
-              @click="mode = 'live'"
-            >{{ t('scoring.mode.live') }}</UButton>
-            <UButton
-              size="xs"
-              :variant="mode === 'post' ? 'solid' : 'outline'"
-              @click="mode = 'post'"
-            >{{ t('scoring.mode.post') }}</UButton>
+              v-for="v in (['settings', 'run'] as const)" :key="v"
+              size="sm"
+              role="tab"
+              :aria-selected="view === v"
+              :variant="view === v ? 'solid' : 'ghost'"
+              :color="view === v ? 'primary' : 'neutral'"
+              :icon="v === 'settings' ? 'i-heroicons-adjustments-horizontal' : 'i-heroicons-play-circle'"
+              @click="view = v"
+            >{{ t('scoring.view.' + v) }}</UButton>
           </div>
 
-          <!-- Score-only: minimal capture, no player attribution (spec §3) -->
-          <UButton
-            size="xs"
-            :variant="scoreOnly ? 'solid' : 'outline'"
-            :color="scoreOnly ? 'warning' : 'neutral'"
-            :disabled="!canScore"
-            :title="t('scoring.score_only.hint')"
-            @click="scoreOnly = !scoreOnly"
-          >{{ t('scoring.score_only.label') }}</UButton>
+          <!-- Console mode: live / post-match / score only — one button, the menu changes it -->
+          <UDropdownMenu :items="modeItems">
+            <UButton
+              size="sm"
+              variant="outline"
+              :color="scoreOnly ? 'warning' : 'neutral'"
+              :icon="MODE_ICON[consoleMode]"
+              trailing-icon="i-heroicons-chevron-down"
+              :title="t('scoring.mode.label')"
+            >{{ modeLabel(consoleMode) }}</UButton>
+          </UDropdownMenu>
+
           <!-- Live sync indicator: the console follows this match's Mercure topics, so a
                change made on another terminal (or by the hardware relay) lands here. -->
           <UBadge
             v-if="isLive"
-            size="xs"
             variant="soft"
             :color="liveSync.status.value === 'connected' ? 'success' : liveSync.status.value === 'error' ? 'warning' : 'neutral'"
             :title="remoteSynced ? t('scoring.sync.remote_change') : t('scoring.sync.' + liveSync.status.value)"
             :class="remoteSynced ? 'animate-pulse ring-2 ring-primary-500' : ''"
           >
-            <UIcon :name="liveSync.status.value === 'connected' ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'" />
+            <UIcon :name="liveSync.status.value === 'connected' ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'" class="size-4" />
           </UBadge>
 
-          <!-- Full-screen displays (same origin → BroadcastChannel keeps them in sync) -->
-          <UButton
-            v-if="isLive"
-            size="xs"
-            variant="ghost"
-            icon="i-heroicons-tv"
-            :aria-label="t('scoring.display.scoreboard')"
-            @click="broadcast.openScoreboard(matchId)"
-          />
-          <UButton
-            v-if="isLive"
-            size="xs"
-            variant="ghost"
-            icon="i-heroicons-clock"
-            :aria-label="t('scoring.display.shotclock')"
-            @click="broadcast.openShotclock(matchId)"
-          />
-          <UButton
-            size="xs"
-            variant="ghost"
-            icon="i-heroicons-cog-6-tooth"
-            :aria-label="t('scoring.shortcuts.title')"
-            @click="shortcutsOpen = true"
-          />
-          <!-- Lock state only: the match status has its own (clickable) badge in the run
-               view. Showing it twice was redundant, and diverged once locked — the header
-               said "Verrouillé" while the other still showed the status. -->
+          <!-- Occasional tools: full-screen displays + keyboard shortcuts -->
+          <UDropdownMenu :items="toolItems">
+            <UButton size="sm" variant="ghost" color="neutral" icon="i-heroicons-ellipsis-horizontal" :aria-label="t('scoring.tools')" :title="t('scoring.tools')" />
+          </UDropdownMenu>
+
+          <!-- Lock state only: the match status has its own (clickable) control on the board. -->
           <UBadge v-if="scoringStore.isLocked" color="error">
             {{ t('scoring.locked') }}
           </UBadge>
           <UButton
             v-if="canValidate"
+            size="sm"
             :icon="scoringStore.isLocked ? 'i-heroicons-lock-closed' : 'i-heroicons-lock-open'"
             :color="scoringStore.isLocked ? 'error' : 'neutral'"
             variant="soft"
+            :aria-label="t('scoring.lock_toggle')"
+            :title="t('scoring.lock_toggle')"
             @click="toggleLock"
           />
         </div>
-      </div>
+      </header>
 
       <!-- ══ Paramètres view (before kick-off / control) ══ -->
       <ScoringSettingsPanel
@@ -923,211 +1028,239 @@ const toggleLock = async () => {
         :players-b="scoringStore.playersB"
         :can-score="canScore"
         :can-manage-players="canScore"
+        :suggest-officials="suggestOfficials"
         @update-player="updatePlayer"
         @remove-player="removePlayer"
         @reload-players="reloadPlayers"
         @save-officials="saveOfficials"
         @load-match="loadOtherMatch"
+        @load-next="loadNextOnPitch"
       />
 
       <!-- ══ Déroulement view ══ -->
       <template v-else>
-      <!-- Score — in score-only mode, ±1 buttons make it the whole entry surface -->
-      <div class="flex items-center justify-center gap-6 py-4 bg-header-50 dark:bg-header-900 rounded-lg">
-        <div class="text-right flex-1">
-          <div class="font-semibold text-header-900 dark:text-header-100">{{ match.equipeA }}</div>
-          <div v-if="scoreOnly" class="flex gap-1 justify-end mt-1">
-            <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('A', -1)">−1</UButton>
-            <UButton size="xs" :disabled="!canScore" @click="bumpScore('A', 1)">+1</UButton>
-          </div>
-        </div>
-        <div class="text-4xl font-mono font-bold tabular-nums text-header-900 dark:text-header-100">
-          {{ scoringStore.scoreA }} - {{ scoringStore.scoreB }}
-        </div>
-        <div class="text-left flex-1">
-          <div class="font-semibold text-header-900 dark:text-header-100">{{ match.equipeB }}</div>
-          <div v-if="scoreOnly" class="flex gap-1 mt-1">
-            <UButton size="xs" :disabled="!canScore" @click="bumpScore('B', 1)">+1</UButton>
-            <UButton size="xs" variant="outline" :disabled="!canScore" @click="bumpScore('B', -1)">−1</UButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- Game clock + shotclock + break (live mode only) -->
-      <div v-if="isLive" class="flex flex-wrap items-start justify-center gap-10">
-        <div class="flex flex-col items-center gap-2">
-          <div
-            class="text-5xl font-mono font-bold tabular-nums px-6 py-2 rounded-lg"
-            :class="isRunning ? 'text-success-600 dark:text-success-300' : 'text-header-900 dark:text-header-50'"
-          >
-            {{ clockDisplay }}
-          </div>
-          <div class="flex gap-1">
-            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
-            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
-            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
-            <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
-          </div>
-        </div>
-
-        <!-- Shotclock (chronomètre de tir): 3 commands — 60 s / 40 s / arrêt (spec §6.5) -->
-        <ScoringShotclock
-          :display="shotclock.display.value"
-          :state="shotclock.state.value"
-          :durations="scoringStore.config.shotclockDurations"
-          :offensive-rebound-enabled="scoringStore.config.shotclockOffensiveReboundEnabled"
-          :masked="shotclockMasked"
+      <!-- The console: the board (what the public sees) with the deck of clock keys under it -->
+      <div>
+        <ScoringBoard
+          :class="isLive ? '' : 'rounded-b-xl'"
+          :team-a="match.equipeA ?? 'A'"
+          :team-b="match.equipeB ?? 'B'"
+          :score-a="scoringStore.scoreA"
+          :score-b="scoringStore.scoreB"
+          :clock="isLive ? clockDisplay : null"
+          :clock-running="isRunning"
+          :shotclock="isLive ? (shotclockMasked ? '--' : shotclock.display.value) : null"
+          :shotclock-state="shotclock.state.value"
+          :break-display="breakRemaining !== null ? breakDisplay : null"
+          :score-only="scoreOnly"
           :can-score="canScore"
-          @start="shotclockStart"
-          @stop="shotclockStop"
-          @adjust="shotclockAdjust"
-          @test-sound="buzzer.test()"
-        />
+          @bump="bumpScore"
+        >
+          <template #state>
+            <ScoringPeriodSelector
+              :period="match.periode"
+              :type="match.type"
+              :can-change="canScore"
+              :score-level="scoreLevel"
+              :shootout-enabled="scoringStore.config.shootoutEnabled"
+              @change="setPeriod"
+            />
+            <ScoringStatusBadge
+              :status="match.statut"
+              :can-cycle="canScore"
+              @change="setStatus"
+            />
+          </template>
+        </ScoringBoard>
 
-        <!-- Inter-period break — indicative countdown (spec §7.5) -->
-        <div v-if="breakRemaining !== null" class="flex flex-col items-center gap-1">
-          <div class="text-xs uppercase tracking-wide text-header-600 dark:text-header-300">{{ t('scoring.break.title') }}</div>
-          <div class="text-4xl font-mono font-bold tabular-nums text-amber-600 dark:text-amber-400">{{ breakDisplay }}</div>
-          <UButton size="xs" variant="ghost" :disabled="!canScore" @click="stopBreak()">
+        <!-- Deck (live only): game clock keys | shot clock keys, under the digits they drive -->
+        <div
+          v-if="isLive"
+          class="rounded-b-xl border border-t-0 border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 px-3 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
+        >
+          <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.timer.group')">
+            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
+            <!-- One start/pause toggle: only one of the two actions is ever meaningful -->
+            <UButton
+              class="min-w-32 justify-center"
+              :color="isRunning ? 'warning' : 'success'"
+              :icon="isRunning ? 'i-heroicons-pause' : 'i-heroicons-play'"
+              :disabled="!canScore"
+              @click="toggleClock"
+            >{{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
+            <UButton
+              size="sm"
+              icon="i-heroicons-arrow-uturn-left"
+              variant="ghost"
+              color="neutral"
+              :disabled="!canScore || isRunning"
+              :aria-label="t('scoring.timer.reset')"
+              :title="t('scoring.timer.reset')"
+              @click="timer('RAZ')"
+            />
+          </div>
+
+          <!-- Shotclock (chronomètre de tir): 3 commands — 60 s / 40 s / arrêt (spec §6.5) -->
+          <ScoringShotclock
+            :state="shotclock.state.value"
+            :durations="scoringStore.config.shotclockDurations"
+            :offensive-rebound-enabled="scoringStore.config.shotclockOffensiveReboundEnabled"
+            :can-score="canScore"
+            @start="shotclockStart"
+            @stop="shotclockStop"
+            @adjust="shotclockAdjust"
+            @test-sound="buzzer.test()"
+          />
+
+          <UButton v-if="breakRemaining !== null" size="sm" variant="ghost" :disabled="!canScore" @click="stopBreak()">
             {{ t('scoring.break.skip') }}
           </UButton>
         </div>
       </div>
 
-      <!-- Active penalties A/B (spec §7.4) — live mode, shown when at least one runs -->
-      <ScoringPenalties
-        v-if="isLive && penalties.penalties.value.length"
-        :penalties="penalties.penalties.value"
-        :team-a-name="match.equipeA"
-        :team-b-name="match.equipeB"
-        :can-score="canScore"
-        @remove="removePenalty"
-      />
-
-      <!-- Status (cyclic badge) + Period (advance/direct) + Timer -->
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <ScoringStatusBadge
-          :status="match.statut"
-          :can-cycle="canScore"
-          @change="setStatus"
+      <!-- Score-only: no rosters, but running penalties stay visible -->
+      <div
+        v-if="scoreOnly && isLive && penalties.penalties.value.length"
+        class="grid grid-cols-2 gap-4"
+      >
+        <ScoringPenalties
+          v-for="side in (['A', 'B'] as TeamSide[])" :key="side"
+          :class="side === 'B' ? 'justify-end' : ''"
+          :penalties="penalties.penalties.value.filter(p => p.team === side)"
+          :can-score="canScore"
+          @remove="removePenalty"
         />
-        <ScoringPeriodSelector
-          :period="match.periode"
-          :type="match.type"
-          :can-change="canScore"
-          :score-level="scoreLevel"
-          :shootout-enabled="scoringStore.config.shootoutEnabled"
-          @change="setPeriod"
-        />
-        <div v-if="isLive" class="flex gap-1">
-          <UButton size="xs" icon="i-heroicons-play" :disabled="!canScore" @click="timer('run')">{{ t('scoring.timer.start') }}</UButton>
-          <UButton size="xs" icon="i-heroicons-pause" :disabled="!canScore" @click="timer('stop')">{{ t('scoring.timer.pause') }}</UButton>
-          <UButton size="xs" icon="i-heroicons-arrow-uturn-left" variant="outline" :disabled="!canScore" @click="timer('RAZ')">{{ t('scoring.timer.reset') }}</UButton>
-        </div>
       </div>
 
-      <!-- Teams + events — hidden in score-only mode (no player attribution, spec §3) -->
-      <div v-if="!scoreOnly" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div v-for="(players, team) in { A: scoringStore.playersA, B: scoringStore.playersB }" :key="team">
-          <h2 class="font-semibold mb-2">{{ team === 'A' ? match.equipeA : match.equipeB }}</h2>
-          <div class="space-y-1">
-            <button
-              v-for="p in players" :key="p.matric"
-              type="button"
-              class="w-full flex items-center gap-2 px-2 py-1 rounded text-left text-sm border"
-              :class="selected?.player.matric === p.matric
-                ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/40 ring-2 ring-inset ring-primary-500'
-                : 'border-header-200 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
-              :disabled="!canScore"
-              @click="selectPlayer(team as TeamSide, p)"
+      <!-- Work area: roster A | entry panel | roster B (lg) — rosters side by side with the
+           entry below (md and mobile, where rosters show numbers only and the entry bar is
+           pinned at the bottom, within thumb reach). Pick the player, then the fact. -->
+      <div
+        v-else-if="!scoreOnly"
+        class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-[minmax(0,1fr)_21rem_minmax(0,1fr)] lg:items-start
+               transition-[grid-template-columns] duration-300 motion-reduce:transition-none"
+        :class="wideTeam === 'A' ? 'max-md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
+          : wideTeam === 'B' ? 'max-md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)]' : ''"
+      >
+        <ScoringTeamColumn
+          v-for="side in (['A', 'B'] as TeamSide[])" :key="side"
+          :class="side === 'A' ? 'lg:order-1' : 'lg:order-3'"
+          :team="side"
+          :team-name="(side === 'A' ? match.equipeA : match.equipeB) ?? side"
+          :players="side === 'A' ? scoringStore.playersA : scoringStore.playersB"
+          :penalties="isLive ? penalties.penalties.value.filter(p => p.team === side) : []"
+          :selected-matric="selected?.team === side ? selected.player.matric : null"
+          :excluded-card="excludedCard"
+          :expanded="wideTeam === side"
+          :show-roster="true"
+          :can-score="canScore"
+          @select="selectPlayer(side, $event)"
+          @select-team-fact="selectTeamFact(side)"
+          @reload="reloadPlayers(side)"
+          @remove-penalty="removePenalty"
+          @expand="widenTeam(side)"
+        />
+
+        <!-- Entry panel (live AND post-match): the fact is picked first, then its time (and,
+             for a card, its reason) is confirmed — the controls follow that order. -->
+        <section
+          class="entry-panel order-last col-span-2 lg:col-span-1 lg:order-2 lg:sticky lg:top-24
+                 space-y-3 rounded-xl border border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 p-3
+                 max-md:sticky max-md:bottom-0 max-md:z-20 max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-4px_12px_rgb(0_0_0/0.15)]"
+          :aria-label="t('scoring.entry.title')"
+        >
+          <!-- Who the next fact goes to -->
+          <div class="flex items-center gap-2 min-h-7 text-sm">
+            <template v-if="editingUid">
+              <UIcon name="i-heroicons-pencil-square" class="size-4 text-primary-600 dark:text-primary-300" />
+              <span class="flex-1 text-primary-700 dark:text-primary-200">{{ t('scoring.edit.title') }}</span>
+              <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
+            </template>
+            <template v-else-if="selected">
+              <span class="flex-1 min-w-0 truncate">
+                <span class="text-header-500 dark:text-header-400">{{ selected.team === 'A' ? match.equipeA : match.equipeB }}</span>
+                <strong class="ml-1">{{ selectedLabel }}</strong>
+              </span>
+              <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-x-mark" :aria-label="t('scoring.entry.clear')" @click="selected = null; cancelPending()" />
+            </template>
+            <span v-else-if="canScore" class="text-header-500 dark:text-header-400">{{ t('scoring.select_player_first') }}</span>
+          </div>
+
+          <!-- Fact buttons, all the same size: they STAGE the fact, they do not record it -->
+          <div class="grid grid-cols-5 lg:grid-cols-1 gap-2">
+            <UButton
+              v-for="evt in eventCodes" :key="evt.code"
+              block
+              class="fact-key max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:text-xs lg:justify-start"
+              :color="evt.color as any"
+              :variant="pendingCode === evt.code ? 'solid' : 'outline'"
+              :disabled="!canScore || (!selected && !editingUid)"
+              @click="stageEvent(evt.code)"
             >
-              <span class="font-mono w-6 text-center">{{ p.numero }}</span>
-              <span class="flex-1">{{ p.nom.toUpperCase() }} {{ p.prenom }}</span>
-              <!-- Exclusion markers: 🔴 = replacement at penalty end, ⬛ = out to the end -->
-              <span v-if="excludedToken.get(String(p.matric))">{{ excludedToken.get(String(p.matric)) }}</span>
-              <UBadge v-if="p.capitaine === 'C'" size="xs" variant="soft">Cap.</UBadge>
-              <UBadge v-else-if="p.capitaine === 'E'" size="xs" variant="soft" color="neutral">Coach</UBadge>
-            </button>
+              <template #leading><ScoringEventIcon :code="evt.code" /></template>
+              <span class="sm:hidden">{{ t(evt.shortKey) }}</span>
+              <span class="max-sm:hidden">{{ t(evt.labelKey) }}</span>
+            </UButton>
           </div>
-        </div>
-      </div>
 
-      <!-- Event entry zone: time/period/reason + buttons (present in live AND post-match) -->
-      <div v-if="!scoreOnly" class="border-t pt-4 space-y-3">
-        <div v-if="editingUid" class="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-300">
-          <UIcon name="i-heroicons-pencil-square" />
-          {{ t('scoring.edit.title') }}
-          <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
-        </div>
-
-        <div class="flex flex-wrap items-end gap-3 justify-center">
-          <!-- Period -->
-          <div>
-            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
-            <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-36" />
-          </div>
-          <!-- Event time -->
-          <div>
-            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
-            <div class="flex items-center gap-1">
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-1)">−1</UButton>
-              <UInput
-                ref="timeInput"
-                v-model="eventTime"
+          <!-- Time (+ period in post-match/edit, + reason for a card). On mobile it only
+               opens once a fact is staged, to keep the bottom bar short. -->
+          <div class="space-y-3" :class="pendingCode || editingUid ? '' : 'max-md:hidden'">
+            <div v-if="!isLive || editingUid">
+              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
+              <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-full" />
+            </div>
+            <div>
+              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
+              <div class="flex items-center justify-center gap-0.5">
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-1)">−1</UButton>
+                <UInput
+                  ref="timeInput"
+                  v-model="eventTime"
+                  :disabled="!canScore"
+                  size="md"
+                  class="w-20 scoring-digits"
+                  :ui="{ base: 'text-center' }"
+                  :class="pendingCode ? 'ring-2 ring-primary-500 rounded-md' : ''"
+                  inputmode="numeric"
+                  maxlength="5"
+                  @focus="selectEventTime"
+                  @blur="normalizeEventTime"
+                  @keydown.enter.prevent="validatePending"
+                  @keydown.esc.prevent="pendingCode ? cancelPending() : cancelEdit()"
+                />
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(1)">+1</UButton>
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
+                <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
+              </div>
+            </div>
+            <div v-if="pendingIsCard">
+              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
+              <USelect
+                v-model="eventReasonSelect"
+                :items="reasonItems"
                 :disabled="!canScore"
                 size="sm"
-                class="w-20 font-mono text-center"
-                :class="pendingCode ? 'ring-2 ring-primary-500 rounded' : ''"
-                inputmode="numeric"
-                maxlength="5"
-                @focus="selectEventTime"
-                @blur="normalizeEventTime"
-                @keydown.enter.prevent="validatePending"
-                @keydown.esc.prevent="pendingCode ? cancelPending() : cancelEdit()"
+                class="w-full"
               />
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(1)">+1</UButton>
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
-              <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
+            </div>
+
+            <!-- Explicit validation of the staged fact (spec §7.2: focus the time, then Entrée) -->
+            <div v-if="pendingCode" class="flex items-center gap-2">
+              <UButton block color="primary" icon="i-heroicons-check" :disabled="!canScore" @click="validatePending">
+                {{ editingUid ? t('scoring.edit.save') : t('scoring.pending.validate_event', { event: t(eventCodes.find(e => e.code === pendingCode)!.shortKey) }) }}
+              </UButton>
+              <UButton variant="ghost" :disabled="!canScore" @click="editingUid ? cancelEdit() : cancelPending()">
+                {{ t('scoring.edit.cancel') }}
+              </UButton>
             </div>
           </div>
-          <!-- Reason (cards) -->
-          <div>
-            <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
-            <USelect
-              v-model="eventReasonSelect"
-              :items="reasonItems"
-              :disabled="!canScore"
-              size="sm"
-              class="w-48"
-            />
-          </div>
-        </div>
-
-        <!-- Event buttons: they STAGE the fact (the time is set next), they do not record it -->
-        <div class="flex flex-wrap gap-2 justify-center">
-          <UButton
-            v-for="evt in eventCodes" :key="evt.code"
-            :color="evt.color as any"
-            :variant="pendingCode === evt.code ? 'solid' : 'outline'"
-            :disabled="!canScore || (!selected && !editingUid)"
-            @click="stageEvent(evt.code)"
-          >{{ t(evt.labelKey) }}</UButton>
-        </div>
-
-        <!-- Explicit validation of the staged fact (spec §7.2: focus the time, then Entrée) -->
-        <div v-if="pendingCode" class="flex flex-wrap items-center gap-2 justify-center">
-          <span class="text-sm text-header-600 dark:text-header-300">
-            {{ t('scoring.pending.hint', { event: t(eventCodes.find(e => e.code === pendingCode)!.labelKey) }) }}
-          </span>
-          <UButton color="primary" icon="i-heroicons-check" :disabled="!canScore" @click="validatePending">
-            {{ editingUid ? t('scoring.edit.save') : t('scoring.pending.validate') }}
-          </UButton>
-          <UButton variant="ghost" :disabled="!canScore" @click="editingUid ? cancelEdit() : cancelPending()">
-            {{ t('scoring.edit.cancel') }}
-          </UButton>
-        </div>
+        </section>
       </div>
 
       <!-- Card progression alert (spec §7.4) — the operator can record anyway -->
@@ -1167,6 +1300,18 @@ const toggleLock = async () => {
         @close="liftPending = null"
       />
 
+      <!-- Events history (editable) — symmetric A | time | B on wide screens, list on mobile -->
+      <ScoringEventHistory
+        v-if="scoringStore.events.length"
+        class="border-t pt-4"
+        :events="scoringStore.events"
+        :editing-uid="editingUid"
+        :can-score="canScore"
+        @edit="startEdit"
+        @remove="removeEvent"
+      />
+      </template>
+
       <!-- Keyboard shortcuts settings (per-device preference) -->
       <ScoringShortcutsModal
         :open="shortcutsOpen"
@@ -1175,20 +1320,6 @@ const toggleLock = async () => {
         @set="setBinding"
         @reset="resetDefaults"
       />
-
-      <!-- Events history (editable) — symmetric A | time | B on wide screens, list on mobile -->
-      <ScoringEventHistory
-        v-if="scoringStore.events.length"
-        class="border-t pt-4"
-        :events="scoringStore.events"
-        :team-a-name="match.equipeA"
-        :team-b-name="match.equipeB"
-        :editing-uid="editingUid"
-        :can-score="canScore"
-        @edit="startEdit"
-        @remove="removeEvent"
-      />
-      </template>
     </div>
 
     <div v-else class="text-center text-header-900 dark:text-header-50 py-12">

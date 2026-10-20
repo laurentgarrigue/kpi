@@ -186,3 +186,19 @@ export interface ScoringConfig {
   /** Pre-selected card reason for fast entry (spec §0.9 — 'unknown' = Autre/Non précisé) */
   defaultCardReason: string
 }
+
+/** Role of an official field — which referee team's players are suggested first. */
+export type OfficialRole = 'table' | 'line'
+
+/** GET /admin/scoring/officials/{id}/suggest — referee-team players first, then others. */
+export interface OfficialSuggestion {
+  group: 'team' | 'other'
+  /** Stored value, legacy format "NOM Prénom (matric)". */
+  value: string
+  label: string
+}
+export interface OfficialSuggestionsResponse {
+  /** Referee team the first group comes from, null when none could be identified. */
+  team: string | null
+  items: OfficialSuggestion[]
+}
