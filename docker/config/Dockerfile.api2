@@ -4,7 +4,7 @@
 # Caddyfile (cf. Caddyfile.api2) → api2 en boucle de redémarrage, sans aucun log.
 # Monter de version = une PR : changer ce tag, rebuilder en dev, puis valider :
 #   docker exec <app>_api2 frankenphp validate --config /etc/frankenphp/Caddyfile
-FROM dunglas/frankenphp:1.13.0-php8.4
+FROM dunglas/frankenphp:1.13.2-php8.4
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -57,7 +57,10 @@ RUN { \
 # PHP dans le worker ne serait loggée nulle part.
 COPY php-error-logging-api2.ini /usr/local/etc/php/conf.d/
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Durcissement PHP commun avec le conteneur Apache (PHP2Shell, cf. php-security.ini).
+COPY php-security.ini /usr/local/etc/php/conf.d/
+
+COPY --from=composer:2.10 /usr/bin/composer /usr/bin/composer
 
 # ⚠️ L'image dunglas/frankenphp lit /etc/frankenphp/Caddyfile, PAS /etc/caddy/Caddyfile.
 # Copier au mauvais endroit ne produit AUCUNE erreur : le Caddyfile par défaut de

@@ -8,7 +8,6 @@ services:
             args:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
-                BASE_IMAGE_PHP: ${BASE_IMAGE_PHP}
         user: ${USER_ID}:${GROUP_ID}
         environment:
             - SMTP_HOST=host.docker.internal
@@ -169,7 +168,6 @@ services:
             args:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
-                BASE_IMAGE_PHP: ${BASE_IMAGE_PHP}
         user: ${USER_ID}:${GROUP_ID}
         environment:
             - TZ=Europe/Paris
@@ -207,8 +205,6 @@ services:
         build:
             context: ./config
             dockerfile: Dockerfile.db
-            args:
-                BASE_IMAGE_DB: ${BASE_IMAGE_DB}
         command: mariadbd --sql_mode=""
         volumes:
             - ${HOST_DB_PATH}:/var/lib/mysql/
@@ -237,8 +233,6 @@ services:
         build:
             context: ./config
             dockerfile: Dockerfile.db
-            args:
-                BASE_IMAGE_DB: ${BASE_IMAGE_DB}
         volumes:
             - ${HOST_DBWP_PATH}:/var/lib/mysql/
             - /etc/timezone:/etc/timezone:ro
@@ -264,7 +258,7 @@ services:
 
     nginx_app2:
         container_name: ${APPLICATION_NAME}_nginx_app2
-        image: nginx:alpine
+        image: nginx:1.31-alpine
         volumes:
             - ../sources/app2/.output/public:/usr/share/nginx/html:ro
             - ./config/nginx-app2-prod.conf:/etc/nginx/conf.d/default.conf:ro
@@ -292,7 +286,7 @@ services:
 
     nginx_app4:
         container_name: ${APPLICATION_NAME}_nginx_app4
-        image: nginx:alpine
+        image: nginx:1.31-alpine
         volumes:
             - ../sources/app4/.output/public:/usr/share/nginx/html:ro
             - ./config/nginx-app4-prod.conf:/etc/nginx/conf.d/default.conf:ro
