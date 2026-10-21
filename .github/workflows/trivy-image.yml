@@ -15,7 +15,7 @@ name: Trivy image
 #    une veille — pas comme un gate. Même politique que trivy-config/hadolint sur la
 #    dette Dockerfile.
 #  - Cron hebdo + manuel uniquement (pas de per-PR) : les images de base changent
-#    rarement (bump explicite dans docker/.env.dist), et c'est de la veille.
+#    rarement (bump explicite d'un FROM dans docker/config/), et c'est de la veille.
 #
 # Les CVE des DÉPENDANCES applicatives (composer/npm) sont déjà couvertes par
 # audit-composer / audit-npm dans ci.yml. Ici c'est la couche OS/runtime.
@@ -30,8 +30,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docker/.env.dist'
+      - 'docker/config/Dockerfile.prod.web'
       - 'docker/config/Dockerfile.api2'
+      - 'docker/config/Dockerfile.db'
       - '.github/workflows/trivy-image.yml'
 
 # Trivy écrit ses findings dans l'onglet Security via SARIF.
@@ -44,21 +45,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Lit les images de base depuis docker/.env.dist (source versionnée) et les
-  # expose en matrice JSON, pour scanner chacune avec sa propre catégorie SARIF.
+  # Lit les images de base dans le FROM des Dockerfiles (où elles sont épinglées) et
+  # les expose en matrice JSON, pour scanner chacune avec sa propre catégorie SARIF.
   resolve-images:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.read.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
-      - name: Lire les BASE_IMAGE_* de docker/.env.dist
+      - name: Lire les FROM des Dockerfiles
         id: read
         run: |
-          php_img="$(grep -E '^BASE_IMAGE_PHP=' docker/.env.dist | cut -d= -f2-)"
-          # FrankenPHP : épinglée dans le Dockerfile (et non dans .env.dist), cf. son en-tête
-          frankenphp_img="$(grep -m1 -E '^FROM ' docker/config/Dockerfile.api2 | awk '{print $2}')"
-          db_img="$(grep -E '^BASE_IMAGE_DB=' docker/.env.dist | cut -d= -f2-)"
+          from_of() { grep -m1 -E '^FROM ' "docker/config/$1" | awk '{print $2}'; }
+          php_img="$(from_of Dockerfile.prod.web)"
+          frankenphp_img="$(from_of Dockerfile.api2)"
+          db_img="$(from_of Dockerfile.db)"
           # slug = catégorie SARIF stable et sûre (pas de : ou /)
           matrix="$(jq -c -n \
             --arg php "$php_img" \

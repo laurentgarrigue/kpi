@@ -1,8 +1,11 @@
-ARG BASE_IMAGE_PHP
 ARG USER_ID
 ARG GROUP_ID
 
-FROM ${BASE_IMAGE_PHP}
+# Version ÉPINGLÉE ici, dans le dépôt, et non via BASE_IMAGE_PHP dans docker/.env (non
+# versionné) : une montée de version passe par une PR, est identique sur tous les
+# environnements et part avec le déploiement (cf. PHP2Shell, CVE-2026-109618/109619,
+# corrigée en 8.4.27). Garder le même tag dans Dockerfile.dev.web et Dockerfile.prod.web.
+FROM php:8.4.27-apache-trixie
 
 # Install required packages and PHP extensions for production
 # Includes mPDF dependencies: gd (image processing), zip (file compression)
@@ -69,4 +72,4 @@ ARG USER_ID
 RUN useradd -u ${USER_ID:-1000} -m dockeruser || true
 
 # Install Composer (multi-stage copy for minimal footprint)
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.10 /usr/bin/composer /usr/bin/composer

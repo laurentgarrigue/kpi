@@ -37,7 +37,7 @@ gain nul sur le legacy (qui ne peut pas tourner en mode worker de toute façon).
 
 | Élément | Valeur |
 |---|---|
-| Image de base | `php:8.4.13-apache-trixie` |
+| Image de base | `php:8.4.27-apache-trixie` (épinglée dans `Dockerfile.dev.web` / `Dockerfile.prod.web`) |
 | Serveur | Apache 2 + mod_php |
 | Reverse proxy | Traefik (termine le TLS) |
 | Modules Apache activés | `headers`, `expires`, `rewrite`, `remoteip` |
@@ -1024,9 +1024,10 @@ MERCURE_JWT_SECRET=<secret propre à CET environnement>
 ```
 
 > `BASE_IMAGE_FRANKENPHP` n'est plus lue depuis le 2026-10-05 : la version est épinglée dans
-> `docker/config/Dockerfile.api2` (`FROM dunglas/frankenphp:1.13.0-php8.4`). Le tag flottant
+> `docker/config/Dockerfile.api2` (`FROM dunglas/frankenphp:1.13.2-php8.4`). Le tag flottant
 > `php8.4` avait fait passer la préprod en 1.13 au détour d'un rebuild, avec deux changements
-> cassants de Mercure (cf. commentaires de `Caddyfile.api2`).
+> cassants de Mercure (cf. commentaires de `Caddyfile.api2`). Même règle depuis le 2026-10-22 pour
+> `BASE_IMAGE_PHP` et `BASE_IMAGE_DB` (épinglées dans `Dockerfile.*.web` et `Dockerfile.db`).
 
 ```bash
 make mercure_generate_secret   # affiche la ligne à copier — n'écrit PAS dans .env
