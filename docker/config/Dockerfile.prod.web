@@ -46,6 +46,9 @@ COPY php-auto-prepend.ini /usr/local/etc/php/conf.d/
 # Copy PHP upload size configuration
 COPY php-uploads.ini /usr/local/etc/php/conf.d/
 
+# PHP hardening (PHP2Shell CVE-2026-109618/109619 defence in depth)
+COPY php-security.ini /usr/local/etc/php/conf.d/
+
 # Copy Apache vhost configuration with CORS and .htaccess support
 COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
 RUN chmod 644 /etc/apache2/sites-enabled/000-default.conf
