@@ -452,11 +452,13 @@
     "title": "Événements",
     "pageTitle": "Événements {year}",
     "description": "Tournois et événements de kayak-polo de {year}.",
-    "year": "Année",
-    "empty": "Aucun événement publié en {year}.",
-    "intro": "Un événement réunit sur un même lieu et un même week-end une ou plusieurs compétitions : ouvrez-le pour voir tous ses matchs.",
-    "previousYear": "Année précédente",
-    "nextYear": "Année suivante"
+    "intro": "Un événement réunit plusieurs compétitions ou catégories sur un même lieu, le même week-end ou la même semaine.",
+    "season": "Saison",
+    "search": "Nom ou lieu",
+    "searchLabel": "Chercher un événement par nom ou lieu",
+    "next": "Prochain",
+    "past": "Déjà joués",
+    "noMatch": "Aucun événement ne correspond. Essayez un autre nom ou une autre saison."
   },
   "news": {
     "title": "Actualités",

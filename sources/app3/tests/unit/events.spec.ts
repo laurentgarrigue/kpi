@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   eventLogoUrl,
+  eventsByMonth,
   eventsOfYear,
   eventYears,
   dateTile,
   formatEventDates,
   isOngoing,
+  matchesEventQuery,
+  shortEventDates,
+  splitByToday,
   todayInParis,
   type PublicEvent,
 } from '../../app/utils/events'
@@ -80,5 +84,41 @@ describe('dateTile', () => {
     expect(dateTile('2026-06-30', null, 'en')).toEqual({ days: '30', month: 'Jun' })
     expect(dateTile('2026-06-30', '2026-07-02', 'en')).toEqual({ days: '30–2', month: 'Jul' })
     expect(dateTile(null, null, 'fr')).toBeNull()
+  })
+})
+
+describe('events list (PAGE_EVENT_GROUP.md § 2.2)', () => {
+  const list = [
+    event(1, '2026-07-03', '2026-07-05'),
+    event(2, '2026-03-14', '2026-03-15'),
+    event(3, '2026-11-07', '2026-11-08'),
+    event(4, '2026-10-21', '2026-10-23'),
+    event(5, '2026-03-28', '2026-03-29'),
+  ]
+
+  it('EVL-03: upcoming events first in order (the next one first), then the past ones, the latest first', () => {
+    const { upcoming, past } = splitByToday(list, '2026-10-22')
+    expect(upcoming.map(item => item.id)).toEqual([4, 3])
+    expect(past.map(item => item.id)).toEqual([1, 5, 2])
+  })
+
+  it('EVL-03: events grouped by the month of their first day, in the given order', () => {
+    expect(eventsByMonth(splitByToday(list, '2026-10-22').past).map(group => [group.month, group.events.map(item => item.id)]))
+      .toEqual([['2026-07', [1]], ['2026-03', [5, 2]]])
+  })
+
+  it('EVL-04: a query matches the name or the place, whatever the accents and the case', () => {
+    const finals = { ...event(9, '2026-07-03'), libelle: 'Finales championnats de France', place: 'Combourg' }
+    expect(matchesEventQuery(finals, 'CHAMPIONNAT')).toBe(true)
+    expect(matchesEventQuery(finals, 'combourg')).toBe(true)
+    expect(matchesEventQuery({ ...finals, place: 'Saint-Grégoire' }, 'gregoire')).toBe(true)
+    expect(matchesEventQuery(finals, 'acigne')).toBe(false)
+    expect(matchesEventQuery(finals, '  ')).toBe(true)
+  })
+
+  it('EVL-03: short dates « 3–5 juil. », across months « 30 juin – 2 juil. »', () => {
+    expect(shortEventDates('2026-07-03', '2026-07-05', 'fr')).toBe('3–5 juil.')
+    expect(shortEventDates('2026-07-04', '2026-07-04', 'fr')).toBe('4 juil.')
+    expect(shortEventDates('2026-06-30', '2026-07-02', 'fr').replace(/\s/g, ' ')).toBe('30 juin – 2 juil.')
   })
 })

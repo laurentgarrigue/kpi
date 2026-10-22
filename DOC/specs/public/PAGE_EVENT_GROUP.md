@@ -107,8 +107,16 @@ Un classement indisponible n'empêche pas l'affichage de la ligne (état « publ
 ### 2.2 Liste des événements `/events[?year=YYYY]`
 
 Entrée de menu « Événements ». Les événements publiés d'une année (`GET /events/all`, filtre côté app3 sur les
-dates), du plus ancien au plus récent, sous forme de cartes (comme l'accueil) ; puces des années disposant
-d'événements ; année par défaut = l'année courante, sinon la plus récente. Chaque carte mène à `/events/{id}`.
+dates) ; année par défaut = l'année courante, sinon la plus récente. Chaque événement mène à `/events/{id}`.
+
+**Maquettes du 22/10/2026** : texte d'introduction « Un événement réunit plusieurs compétitions ou catégories sur
+un même lieu, le même week-end ou la même semaine. » ; outils : **liste déroulante de l'année** (`year=`) et
+**recherche par nom ou lieu** (`q=`, sans accents ni casse), dans un formulaire GET (appliqué au changement, et à la
+saisie avec JavaScript). **Liste par mois** (mois du premier jour, titre en Agency FB, collant sur grand écran), une
+ligne par événement : dates courtes (« 3–5 juil. ») en Agency FB, nom, lieu. Les événements **à venir** (dernier jour
+≥ aujourd'hui) d'abord, dans l'ordre chronologique, le premier marqué **« Prochain »** (fond pâle et étiquette) ; puis
+**« Déjà joués »**, du plus récent au plus ancien. Aucun résultat : « Aucun événement ne correspond. Essayez un autre
+nom ou une autre saison. »
 
 ### 2.1 Accès à ces pages
 
@@ -174,6 +182,8 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 - **EVT-10** — Événement d'un seul groupe : l'onglet Infos propose l'abonnement, le lien à copier et le téléchargement du calendrier **de l'événement** (`/event/{id}/calendar.ics`) ; sinon ceux de la compétition sélectionnée.
 - **EVL-01** — `/events` liste les événements de l'année demandée, chacun menant à `/events/{id}`.
 - **EVL-02** — Les années proposées sont celles des événements datés ; un événement à cheval sur deux années figure dans les deux.
+- **EVL-03** — Les événements sont groupés par mois : à venir d'abord (chronologique, le premier étiqueté « Prochain »), puis « Déjà joués » (du plus récent au plus ancien).
+- **EVL-04** — `q=` filtre par nom ou lieu, sans tenir compte des accents ni de la casse ; l'année est une liste déroulante d'un formulaire GET.
 - **GRP-01** — `/groups/{s}/{c}` redirige (302) vers `/groups/{s}/{c}/games`.
 - **GRP-02** — L'en-tête affiche le libellé du groupe (anglais sous `/en` s'il existe), la saison et le lien app2 `{app2}/group/{s}/{c}`.
 - **GRP-03** — Une puce par compétition du groupe, menant à `/competitions/{s}/{c}/{onglet}` (sans paramètre `event`).

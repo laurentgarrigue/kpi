@@ -452,11 +452,13 @@
     "title": "Events",
     "pageTitle": "Events {year}",
     "description": "Canoe polo tournaments and events in {year}.",
-    "year": "Year",
-    "empty": "No event published in {year}.",
-    "intro": "An event gathers one or several competitions in one place over a few days: open it to see all its games.",
-    "previousYear": "Previous year",
-    "nextYear": "Next year"
+    "intro": "An event brings several competitions or categories together in one place, on the same weekend or in the same week.",
+    "season": "Season",
+    "search": "Name or place",
+    "searchLabel": "Search an event by name or place",
+    "next": "Next",
+    "past": "Already played",
+    "noMatch": "No event matches. Try another name or season."
   },
   "news": {
     "title": "News",

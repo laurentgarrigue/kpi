@@ -139,14 +139,30 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
 })
 
 describe('events page (PAGE_EVENTS.md)', () => {
-  it('EVL-01/EVL-02: lists the events of the requested year, with the years to switch to', async () => {
+  it('EVL-01/EVL-02/EVL-04: lists the events of the requested year, the year chosen in a GET form', async () => {
     const wrapper = await mountRoute('/events?year=2999')
     expect(api2).toHaveBeenCalledWith('/events/all')
     expect(wrapper.find('h1').text()).toBe('Événements')
-    const years = wrapper.findAll('[data-testid="events-years"] a')
-    expect(years.length).toBeGreaterThan(0)
-    expect(wrapper.find('[data-testid="events-years"] [aria-current="page"]').text()).toBe('2999')
-    expect(wrapper.find('[data-testid="year-events"] a[href="/events/77"]').exists()).toBe(true)
+    const form = wrapper.find('[data-testid="events-tools"]')
+    expect(form.attributes('method')).toBe('get')
+    expect(form.find('select[name="year"] option[selected]').text()).toBe('2999')
+    expect(wrapper.find('[data-testid="events-list"] a[href="/events/77"]').exists()).toBe(true)
+  })
+
+  it('EVL-03: by month, the upcoming ones first, the next one tagged', async () => {
+    const wrapper = await mountRoute('/events?year=2999')
+    expect(wrapper.findAll('[data-testid="events-month"] h2').map(title => title.text())).toEqual(['février', 'avril', 'juin'])
+    const next = wrapper.find('[data-next]')
+    expect(next.find('a').attributes('href')).toBe('/events/42')
+    expect(next.text()).toContain('Prochain')
+    expect(wrapper.findAll('[data-next]')).toHaveLength(1)
+  })
+
+  it('EVL-04: q filters by name or place; nothing found says so', async () => {
+    const wrapper = await mountRoute('/events?year=2999&q=rivecity')
+    expect(wrapper.findAll('[data-testid="events-list"] li a').map(link => link.attributes('href'))).toEqual(['/events/77', '/events/79'])
+    const none = await mountRoute('/events?year=2999&q=nowhere')
+    expect(none.find('[data-testid="events-empty"]').exists()).toBe(true)
   })
 })
 
