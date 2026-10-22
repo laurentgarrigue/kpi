@@ -27,8 +27,8 @@ useAutoRefresh(() => isLive(props.games, now.value), () => emit('refresh'))
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex flex-wrap items-end justify-between gap-4">
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-4">
       <ResultsGameFilters
         :gamedays="withGamedays ? gamedayOptions(games) : undefined"
         :dates="gameDates(games)"

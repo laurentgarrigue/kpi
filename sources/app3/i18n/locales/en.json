@@ -239,7 +239,24 @@
       "shootout": "shoot-out",
       "shootoutShort": "SO"
     },
-    "gameNumber": "Game #{number}"
+    "gameNumber": "Game #{number}",
+    "gamesCount": "{n} game | {n} games",
+    "draw": {
+      "pool": "{rank} in pool {pool}",
+      "winner": "Winner of game {number}",
+      "loser": "Loser of game {number}",
+      "team": "Team {number}",
+      "text": "{text}",
+      "unknown": "To be decided"
+    },
+    "days": "Day",
+    "allDaysShort": "All",
+    "upcomingOnly": "Upcoming games only",
+    "provisionalShort": "Prov.",
+    "pitchShort": "P. {pitch}",
+    "finalMark": "Final",
+    "scoreLabel": "Score {score}",
+    "notPlayed": "not played yet"
   },
   "stats": {
     "scorers": {

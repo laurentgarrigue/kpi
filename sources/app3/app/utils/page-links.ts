@@ -48,6 +48,14 @@ export function legacyImageUrl(path: string | null, legacyBaseUrl: string): stri
   return path ? joinURL(legacyBaseUrl, 'img', path) : null
 }
 
+/** Placeholder logo of a team without one: shown as nothing. */
+const EMPTY_TEAM_LOGO = /(^|\/)empty-logo\.\w+$/
+
+/** Logo of a team (club logo), or `null` when it has none (CMP-19). */
+export function teamLogoUrl(path: string | null, legacyBaseUrl: string): string | null {
+  return path && !EMPTY_TEAM_LOGO.test(path) ? legacyImageUrl(path, legacyBaseUrl) : null
+}
+
 /** Game sheet: stays in app2. */
 export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }

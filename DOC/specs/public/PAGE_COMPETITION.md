@@ -31,9 +31,10 @@ Fil d'Ariane : Accueil › Compétitions {saison} › {groupe} › {compétition
 
 - **`/competitions/{season}/{code}`** redirige (302) vers l'onglet par défaut : `ranking` si le statut est `END`,
   sinon `games`. Ainsi, chaque contenu a une seule URL.
-- **En-tête** : données de `GET /competition/{season}/{code}`, repéré par le libellé « Compétition » et un filet bleu
-  (l'événement a un bandeau marine, cf. PAGE_EVENT_GROUP.md § 2). **« Suivre en direct »** est un **bouton** rouge à point
-  clignotant, en nouvel onglet, vers `{app2}/group/{season}/{groupe}` (page groupe existante d'app2).
+- **En-tête** : données de `GET /competition/{season}/{code}`, **compact** (maquettes du 22/10/2026, § 2.5) : titre,
+  saison, statut écrit, bouton **« Suivre en direct »** (rouge à point clignotant, en nouvel onglet, vers
+  `{app2}/group/{season}/{groupe}`, page groupe existante d'app2). Pas de libellé « Compétition » en capitales ;
+  le sous-titre identique au titre n'est pas répété.
 - **Ordre des onglets** : Infos en premier (présentation avant les matchs, utile à qui découvre la compétition) ; la
   redirection par défaut est inchangée (`ranking` si `END`, sinon `games`).
 - **Matchs** : le vainqueur d'un match terminé a son nom et son score en **gras**, le perdant en graisse normale
@@ -76,6 +77,13 @@ D'après `events` de l'en-tête (API_PUBLIC_RESULTS.md § 5.6) :
 
 Le seuil est une constante nommée (`MAIN_EVENT_MIN_SHARE = 0.75`) d'une fonction pure (`mainEvent`).
 
+### 2.3 bis Encart événement (maquettes du 22/10/2026)
+
+L'événement principal est présenté comme une **carte cliquable** entière vers `/events/{id}` : vignette marine des
+dates (« 3–5 » sur « juil. »), nom de l'événement, « {lieu}, {dates}. Les {N} compétitions, tous les matchs par
+terrain et le direct. » (« Tous les matchs par terrain et le direct. » quand l'événement n'a qu'une compétition),
+bouton « Voir l'événement → ». N vient de `GET /event/{id}/competitions`.
+
 ### 2.4 Rafraîchissement
 
 Si au moins un match du jour est en cours (`ON`) ou à venir dans l'heure, les onglets **Matchs**, **Terrains**
@@ -83,23 +91,41 @@ et **Classement** se rafraîchissent côté navigateur toutes les **60 s** (sans
 quand l'onglet du navigateur est masqué). L'abonnement Mercure remplacera ce mécanisme quand le chantier
 scoring publiera les topics publics.
 
+### 2.5 Présentation (maquettes du 22/10/2026)
+
+Référence visuelle : [maquettes/](maquettes/README.md) (`matchs`, `infos`, `deroulement`, `classement`, `stats`).
+
+- **Colonne des scores** : scores en Agency FB, blanc sur marine ; le score perdant est atténué ; la colonne est
+  rouge pendant un match en direct. Une couleur n'est jamais seule à porter une information.
+- **Or** réservé à la finale et aux médailles d'or ; **rouge** réservé au direct.
+- **Statut** affiché seulement s'il informe : « en cours » (avec la période) et « provisoire » ; un score validé
+  suffit à dire qu'un match est terminé.
+- Mobile d'abord : aucun défilement horizontal de page à 390 px ; les tableaux larges défilent dans leur conteneur.
+
 ## 3. Onglets
 
 ### 3.1 Matchs (`games`) — remplace `kpmatchs.php`
 
 - Données : `GET /competition/{season}/{code}/games`.
 - Matchs **groupés par date** (titre de groupe : date longue localisée), puis triés par heure et terrain.
-- Une ligne par match : numéro, heure, terrain, phase / libellé (`d_phase`, `g_code`), équipe A (logo + nom),
-  **score** (`g_score_a – g_score_b`, coefficients s'ils diffèrent de 1), équipe B, arbitres (`r_1`, `r_2`,
-  affichés à partir de `lg`), statut. Un arbitre valant « -1 » (pas d'arbitre à ce poste) n'est pas affiché.
-- **Statut** : `ATT` « À venir » ; `ON` « En cours » (+ période `g_period`) en rouge accent ; `END` « Terminé » ;
-  score **provisoire** (italique + mention « provisoire ») tant que `g_validation ≠ 'O'`.
+- Une ligne par match : heure, terrain (toujours visible), phase (`d_phase`), équipe A (nom + logo), **score**
+  (`g_score_a – g_score_b`, coefficients s'ils diffèrent de 1), équipe B (logo + nom), arbitres (`r_1`, `r_2`,
+  affichés à partir de `lg`), icône de la feuille de marque. Un arbitre valant « -1 » n'est pas affiché.
+- Les scores d'une journée forment une **colonne continue** (§ 2.5) ; titre de journée en Agency FB avec le nombre
+  de matchs. Sur mobile, les deux équipes et les deux scores sont **empilés** (scores dans la colonne, à droite).
+- **Statut** : seuls `ON` (« 2e période », colonne rouge) et le score **provisoire** (`END`, `g_validation ≠ 'O'`)
+  sont signalés, par une étiquette au-dessus du score ; un match à venir montre « – – ».
+- **Codes de tirage** : pour un match à venir, une équipe non encore attribuée est lue d'après `g_code`
+  avec la même lecture que `MatchLabelParser` d'api2 (un code par côté, A d'abord : `[1E-1F]` → « 1er poule E »,
+  « 1er poule F » ; `[V11-P12]` → « Vainqueur n° 11 », « Perdant n° 12 » ; `T7` → « Équipe n° 7 ») ou d'après son
+  libellé d'attente (« (Winner game #236) » → « Vainqueur n° 236 ») ; le code brut est affiché sous la phase. Une fois le match joué, le code n'est plus affiché.
+- La **finale** (`d_phase` « Finale » / « Final ») est marquée en or (pastille + texte), seule touche dorée.
 - Un match `ON` ou `END` mène à sa feuille de match (§ 2.1) ; un match validé propose en plus la feuille de
   marque PDF.
 - Lien « Liste des matchs (PDF) » en tête d'onglet (§ 2.1).
 - **Filtres** (paramètres d'URL, combinables) :
   - `gameday={id}` pour un championnat (CHPT) : sélecteur des journées (libellé, lieu, dates) ;
-  - `day=YYYY-MM-DD` : sélecteur des dates présentes ;
+  - `day=YYYY-MM-DD` : **liens de jour** (« Tous », « sam. 4 »…, `aria-current`), sans JavaScript ;
   - `upcoming=1` : « Prochains matchs » = matchs dont la date/heure (Europe/Paris) est postérieure à
     **maintenant − 35 min** (règle legacy), calcul par une fonction pure.
 - Aucun match : « Aucun match publié. » ; aucun match après filtrage : « Aucun match pour ces critères. »
@@ -207,6 +233,9 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-13** — Rafraîchissement toutes les 60 s seulement si un match est en cours ou commence dans l'heure, suspendu quand l'onglet est masqué.
 - **CMP-14** — Compétition inconnue ou non publiée → page 404 du site.
 - **CMP-15** — Grille de parité (§ 7) validée sur trois compétitions réelles en préprod.
+- **CMP-18** — En-tête compact : titre, saison, statut en texte, « Suivre en direct » ; pas de libellé « Compétition » ; `soustitre2` masqué s'il est égal au titre. Encart événement = carte cliquable (vignette des dates, nom, « Les N compétitions… », « Voir l'événement »).
+- **CMP-19** — Matchs : colonne des scores par journée, score perdant atténué, colonne rouge et période pour un match en cours, étiquette « Provisoire » ; logos des équipes ; jours en liens avec `aria-current` ; finale marquée en or (texte « Finale » conservé).
+- **CMP-20** — Codes de tirage traduits pour les équipes non attribuées d'un match à venir (« 1er poule B », « Vainqueur n° 222 »), code brut masqué une fois le match joué (fonction pure testée).
 - **CMP-16** — Un événement couvrant au moins 75 % des journées (ou celui du paramètre `event`) est mis en avant avec un lien vers `/events/{id}` ; les autres sont listés discrètement.
 
 ## 7. Grille de parité legacy ↔ app3 (recette)

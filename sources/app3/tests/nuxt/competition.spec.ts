@@ -67,36 +67,67 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
 })
 
 describe('games tab (§ 3.1)', () => {
-  it('CMP-05: games grouped by date, status and provisional score', async () => {
+  it('CMP-05: games grouped by date, the in-progress game flagged with its period', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games')
     const dates = wrapper.findAll('[data-testid="games-of-date"]')
     expect(dates).toHaveLength(2)
+    expect(dates[0]!.find('h2').text()).toContain('2 matchs')
     expect(dates[0]!.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9401', '9402'])
     const live = wrapper.find('[data-game="9404"]')
-    expect(live.find('[data-status]').text()).toContain('En cours')
-    expect(live.find('[data-testid="provisional"]').exists()).toBe(true)
-    expect(wrapper.find('[data-game="9401"] [data-testid="provisional"]').exists()).toBe(false)
+    expect(live.attributes('data-status')).toBe('ON')
+    expect(live.find('[data-testid="game-flag"]').text()).toContain('En cours')
+    expect(live.find('[data-testid="game-flag"]').text()).toContain('période 1')
+    expect(live.find('[data-testid="score-cell"]').classes()).toContain('bg-live')
+    expect(wrapper.find('[data-game="9401"] [data-testid="game-flag"]').exists()).toBe(false)
   })
 
-  it('CMP-05: in the games list the winner of a finished game is in bold, the loser and a draw are not', async () => {
+  it('CMP-19: scores sit in the score column, the losing one dimmed; the winner name is in bold', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games')
     const won = wrapper.find('[data-game="9401"]')
+    expect(won.find('[data-testid="score-cell"]').classes()).toContain('bg-spine')
     const [winner, loser] = won.findAll('a[data-kind="team"]')
-    expect(winner!.classes()).toContain('font-semibold')
-    expect(loser!.classes()).not.toContain('font-semibold')
-    expect(won.find('[data-side="A"]').classes()).toContain('font-bold')
-    expect(won.find('[data-side="B"]').classes()).not.toContain('font-bold')
+    expect(winner!.classes()).toContain('font-bold')
+    expect(loser!.classes()).not.toContain('font-bold')
+    expect(won.find('[data-side="A"]').classes()).not.toContain('opacity-50')
+    expect(won.find('[data-side="B"]').classes()).toContain('opacity-50')
     const draw = wrapper.find('[data-game="9402"]')
-    expect(draw.findAll('a[data-kind="team"].font-semibold, [data-side].font-bold')).toHaveLength(0)
-    expect(wrapper.find('[data-game="9404"]').findAll('a.font-semibold')).toHaveLength(0)
+    expect(draw.findAll('a[data-kind="team"].font-bold, [data-side].opacity-50')).toHaveLength(0)
+    expect(wrapper.find('[data-game="9404"]').findAll('a.font-bold')).toHaveLength(0)
+    expect(wrapper.find('[data-game="9405"] [data-testid="score-cell"]').text()).toContain('–')
   })
 
-  it('CMP-06: filters by gameday and day, GET form', async () => {
+  it('CMP-19: team logos, the pitch always shown', async () => {
+    const row = (await mountRoute('/competitions/2999/RCH/games')).find('[data-game="9401"]')
+    expect(row.findAll('img[data-testid="team-logo"]').map(img => img.attributes('src'))).toContain('https://kpi.localhost/img/KIP/logo/alpha.png')
+    expect(row.find('[data-testid="game-pitch"]').text()).toBe('Terrain 1')
+  })
+
+  it('CMP-19 / CMP-20: the final is marked in gold; teams to come are read from the draw, its code shown until played', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCP/games')
+    const final = wrapper.find('[data-game="9412"]')
+    expect(final.attributes('data-final')).toBeDefined()
+    expect(final.text()).toContain('Finale')
+    expect(final.text()).not.toContain('F1')
+    const toCome = wrapper.find('[data-game="9414"]')
+    expect(toCome.findAll('[data-testid="draw-slot"]').map(slot => slot.text())).toEqual(['Vainqueur n° 11', 'Perdant n° 12'])
+    expect(toCome.find('[data-testid="draw-code"]').text()).toBe('V11-P12')
+    expect(wrapper.find('[data-game="9411"]').attributes('data-final')).toBeUndefined()
+  })
+
+  it('CMP-06 / CMP-19: days are links keeping the other filters; gameday and upcoming in a GET form', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games?gameday=9202')
     expect(wrapper.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9404', '9405'])
     expect(wrapper.find('[data-testid="games-filters"]').attributes('method')).toBe('get')
+    const days = wrapper.findAll('[data-testid="games-days"] a')
+    expect(days.map(day => day.attributes('href'))).toEqual([
+      '/competitions/2999/RCH/games?gameday=9202',
+      '/competitions/2999/RCH/games?gameday=9202&day=2999-03-01',
+      '/competitions/2999/RCH/games?gameday=9202&day=2999-04-01',
+    ])
+    expect(days[0]!.attributes('aria-current')).toBe('true')
     const day = await mountRoute('/competitions/2999/RCH/games?day=2999-03-01')
     expect(day.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9401', '9402'])
+    expect(day.findAll('[data-testid="games-days"] a')[1]!.attributes('aria-current')).toBe('true')
   })
 
   it('CMP-06: no game for the criteria', async () => {
@@ -178,10 +209,10 @@ describe('pitch game layout (§ 3.2)', () => {
   it('CMP-07: the winner of a finished game is in bold', async () => {
     const game = (await mountRoute('/competitions/2999/RCP/pitches?day=2999-04-01')).find('[data-testid="pitch-grid"] [data-game="9411"]')
     const [winner, loser] = game.findAll('[data-testid="pitch-team"]')
-    expect(winner!.find('a').classes()).toContain('font-semibold')
-    expect(loser!.find('a').classes()).not.toContain('font-semibold')
+    expect(winner!.find('a').classes()).toContain('font-bold')
+    expect(loser!.find('a').classes()).not.toContain('font-bold')
     const onGame = (await mountRoute('/competitions/2999/RCH/pitches?day=2999-04-01')).find('[data-game="9404"]')
-    expect(onGame.findAll('a.font-semibold')).toHaveLength(0)
+    expect(onGame.findAll('a.font-bold')).toHaveLength(0)
   })
 
   it('CMP-07: a game to come shows no score', async () => {

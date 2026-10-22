@@ -239,7 +239,24 @@
       "shootout": "tirs au but",
       "shootoutShort": "TAB"
     },
-    "gameNumber": "Match n° {number}"
+    "gameNumber": "Match n° {number}",
+    "gamesCount": "{n} match | {n} matchs",
+    "draw": {
+      "pool": "{rank} poule {pool}",
+      "winner": "Vainqueur n° {number}",
+      "loser": "Perdant n° {number}",
+      "team": "Équipe n° {number}",
+      "text": "{text}",
+      "unknown": "À définir"
+    },
+    "days": "Jour",
+    "allDaysShort": "Tous",
+    "upcomingOnly": "Matchs à venir seulement",
+    "provisionalShort": "Prov.",
+    "pitchShort": "T. {pitch}",
+    "finalMark": "Finale",
+    "scoreLabel": "Score {score}",
+    "notPlayed": "pas encore joué"
   },
   "stats": {
     "scorers": {
