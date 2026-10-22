@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   AGGREGATE_TABS,
   COMPETITION_TABS,
+  EVENT_TABS,
   competitionPath,
   eventTabPath,
   selectedCompetition,
@@ -42,6 +43,7 @@ describe('tabs', () => {
   it('CMP-04: competition tabs, the phases tab merged into progress', () => {
     expect(COMPETITION_TABS).toEqual(['info', 'games', 'pitches', 'progress', 'ranking', 'stats'])
     expect(AGGREGATE_TABS).toEqual(['games', 'pitches'])
+    expect(EVENT_TABS).toEqual(['competitions', 'info', 'games', 'pitches', 'progress', 'ranking', 'stats'])
   })
 
   it('CMP-01: ranking for a finished competition, games otherwise', () => {
@@ -70,6 +72,7 @@ describe('event view', () => {
 
   it('EVT-03/EVT-07: an event tab, restricted to a competition when given', () => {
     expect(eventTabPath(77, 'games')).toBe('/events/77/games')
+    expect(eventTabPath(77, 'competitions')).toBe('/events/77/competitions')
     expect(eventTabPath(77, 'ranking', 'RCP')).toBe('/events/77/ranking?competition=RCP')
   })
 

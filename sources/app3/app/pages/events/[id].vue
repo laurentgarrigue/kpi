@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { joinURL } from 'ufo'
 import type { CompetitionDetails, EventCompetitions, ResultsGame } from '#kpi-layer/utils/results/types'
-import { AGGREGATE_TABS, COMPETITION_TABS, eventTabPath, selectedCompetition, type CompetitionTab } from '~/utils/competitions'
+import { AGGREGATE_TABS, EVENT_TABS, eventTabPath, selectedCompetition, type EventTab } from '~/utils/competitions'
 import { formatEventDates } from '~/utils/events'
 import { eventIcsUrl } from '~/utils/page-links'
 
@@ -20,9 +20,11 @@ if (data.value && data.value.competitions.length === 0) {
 // `data` can be momentarily empty while another event loads: every reader goes through `event`.
 const event = computed(() => data.value?.event)
 const language = useLanguageTag()
-const current = computed<CompetitionTab>(() => COMPETITION_TABS.find(tab => route.path.endsWith(`/${tab}`)) ?? 'games')
-// Games and pitches can cover the whole event; the other tabs need one competition (the first by default, EVT-07).
-const needsCompetition = computed(() => !(AGGREGATE_TABS as readonly string[]).includes(current.value))
+const current = computed<EventTab>(() => EVENT_TABS.find(tab => route.path.endsWith(`/${tab}`)) ?? 'competitions')
+// Competitions, games and pitches can cover the whole event; the other tabs need one competition (the first by
+// default, EVT-07).
+const wholeEvent = computed(() => current.value === 'competitions' || (AGGREGATE_TABS as readonly string[]).includes(current.value))
+const needsCompetition = computed(() => !wholeEvent.value)
 const competitions = computed(() => data.value?.competitions ?? [])
 const selected = computed(() => selectedCompetition(competitions.value, route.query.competition, needsCompetition.value))
 
@@ -40,7 +42,7 @@ const chips = computed(() => competitions.value.map(item => ({
 const all = computed(() => ({ to: localePath(eventTabPath(id.value, current.value)), current: !selected.value, disabled: needsCompetition.value }))
 // Tabs keep the competition explicitly asked for (when the event has it), not the default one.
 const asked = computed(() => selectedCompetition(competitions.value, route.query.competition, false))
-const tabs = computed(() => COMPETITION_TABS.map(tab => ({ id: tab, to: localePath(eventTabPath(id.value, tab, asked.value?.code)) })))
+const tabs = computed(() => EVENT_TABS.map(tab => ({ id: tab, to: localePath(eventTabPath(id.value, tab, tab === 'competitions' ? undefined : asked.value?.code)) })))
 const competitionHref = (game: ResultsGame) => localePath(eventTabPath(id.value, 'games', game.c_code))
 const pdfTarget = computed(() => (selected.value
   ? { kind: 'games' as const, season: selected.value.season, competitions: [selected.value.code] }
@@ -83,8 +85,7 @@ provideCupCompetitions(() => competitions.value)
       :live-url="joinURL(app2BaseUrl, 'event', String(id))"
       :competition-count="competitions.length"
     />
-    <ResultsEventCompetitions v-if="!singleGroup" :event-id="id" :competitions="competitions" />
-    <ResultsCompetitionChips :items="chips" :all="all" />
+    <ResultsCompetitionChips v-if="current !== 'competitions'" :items="chips" :all="all" />
     <ResultsTabs :tabs="tabs" :current="current" />
     <NuxtPage
       :games-path="`/event/${id}/games`"
@@ -93,6 +94,9 @@ provideCupCompetitions(() => competitions.value)
       :selected-code="needsCompetition ? undefined : selected?.code"
       :competition="competition ?? undefined"
       :subscription-url="subscriptionUrl"
+      :event-id="id"
+      :competitions="competitions"
+      :single-group="singleGroup"
     />
     <ContentLinked kind="event" :reference="String(id)" />
   </div>

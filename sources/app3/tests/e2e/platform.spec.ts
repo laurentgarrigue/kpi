@@ -168,8 +168,8 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await location('/competitions/2999/RCH?event=77')).toEqual([302, '/competitions/2999/RCH/games?event=77'])
   })
 
-  it('EVT-01/GRP-01: event and group views open on their games', async () => {
-    expect(await location('/events/77')).toEqual([302, '/events/77/games'])
+  it('EVT-01/GRP-01: an event opens on its competitions, a group on its games', async () => {
+    expect(await location('/events/77')).toEqual([302, '/events/77/competitions'])
     expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])
   })
 

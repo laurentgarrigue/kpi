@@ -35,19 +35,36 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(competition.find('[data-testid="competition-kind"]').exists()).toBe(false)
   })
 
-  it('EVT-09: the competitions of an event of several groups are listed with their gamedays held at the event, and link to the whole competition', async () => {
-    const panel = (await mountRoute('/events/79/games')).find('[data-testid="event-competitions"]')
-    const [other, rat] = panel.findAll('[data-competition]')
+  it('EVT-09: an event of several groups shows the gamedays held at the event and links to the whole competition', async () => {
+    const rows = (await mountRoute('/events/79/competitions')).findAll('[data-testid="event-competitions"] [data-competition]')
+    const [other, rat] = rows
     expect(other!.attributes('data-competition')).toBe('RDV')
     expect(rat!.find('[data-testid="event-gamedays"]').text()).toBe('Toutes les journées de la compétition')
     expect(rat!.find('[data-testid="competition-full-link"]').attributes('href')).toBe('/competitions/2999/RAT?event=79')
-    expect(rat!.find('a').attributes('href')).toBe('/events/79/games?competition=RAT')
+    expect(rat!.find('h2 a').attributes('href')).toBe('/events/79/info?competition=RAT')
   })
 
-  it('EVT-09: an event of a single group has no competitions panel: its chips are enough', async () => {
-    const wrapper = await mountRoute('/events/77/games')
-    expect(wrapper.find('[data-testid="event-competitions"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="competition-chips"] a')).toHaveLength(3)
+  it('EVT-09: an event of a single group lists its competitions without gamedays nor whole-competition links', async () => {
+    const wrapper = await mountRoute('/events/77/competitions')
+    expect(wrapper.findAll('[data-testid="event-competitions"] [data-competition]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="event-gamedays"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="competition-full-link"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="competition-chips"]').exists()).toBe(false)
+  })
+
+  it('EVT-11: one row per competition with its podium, or « published at the end », and links kept in the event', async () => {
+    const wrapper = await mountRoute('/events/77/competitions')
+    expect(wrapper.find('[data-testid="scope-count"]').text()).toContain('2')
+    expect(wrapper.findAll('[data-testid="results-tabs"] a').map(tab => tab.text())[0]).toBe('Compétitions')
+    const rcp = wrapper.find('[data-competition="RCP"]')
+    expect(rcp.findAll('[data-testid="event-podium"] li [data-kind="team"]').map(team => team.text())).toEqual(['Equipe Echo', 'Equipe Golf', 'Equipe Foxtrot'])
+    expect(rcp.findAll('[data-testid="competition-links"] a').map(link => link.attributes('href'))).toEqual([
+      '/events/77/games?competition=RCP', '/events/77/progress?competition=RCP', '/events/77/ranking?competition=RCP',
+    ])
+    expect(wrapper.find('[data-competition="RCH"] [data-testid="podium-later"]').exists()).toBe(true)
+    // A ranking that cannot be read does not hide the competition.
+    const other = (await mountRoute('/events/79/competitions')).find('[data-competition="RDV"]')
+    expect(other.find('[data-testid="podium-later"]').exists()).toBe(true)
   })
 
   it('EVT-10: the info tab of a single-group event subscribes to the event calendar', async () => {
@@ -69,17 +86,17 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(chips.map(chip => chip.attributes('aria-current'))).toEqual([undefined, undefined, 'page'])
     expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCP')
     const pitches = await mountRoute('/events/77/pitches?competition=RCP&day=2999-04-02')
-    expect(pitches.findAll('[data-testid="pitch-grid"] [data-game]').map(game => game.attributes('data-game'))).toEqual(['9412', '9414'])
+    expect(pitches.findAll('[data-testid="pitch-board"] [data-game]').map(game => game.attributes('data-game'))).toEqual(['9412', '9414'])
   })
 
   it('EVT-07: the event offers the info, progress, ranking and stats tabs of a competition, kept in the event', async () => {
     const tabs = (await mountRoute('/events/77/ranking?competition=RCP')).findAll('[data-testid="results-tabs"] a')
-    expect(tabs.map(tab => tab.text())).toEqual(['Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
+    expect(tabs.map(tab => tab.text())).toEqual(['Compétitions', 'Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
     expect(tabs.map(tab => tab.attributes('href'))).toEqual([
-      '/events/77/info?competition=RCP', '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP',
+      '/events/77/competitions', '/events/77/info?competition=RCP', '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP',
       '/events/77/progress?competition=RCP', '/events/77/ranking?competition=RCP', '/events/77/stats?competition=RCP',
     ])
-    expect(tabs[4]!.attributes('aria-current')).toBe('page')
+    expect(tabs[5]!.attributes('aria-current')).toBe('page')
   })
 
   it('EVT-07: ranking, info, progress and stats show the selected competition; « All » is greyed out (not applicable)', async () => {

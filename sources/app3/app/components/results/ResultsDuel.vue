@@ -5,9 +5,10 @@ import { gameLink } from '~/utils/page-links'
 
 /**
  * A game as two stacked teams with their scores on a narrow score column (PAGE_COMPETITION.md § 2.5): progress
- * (CMP-24) and pitches. `when`: day, time and pitch above it. `followed` / `follow`: highlight of a team's path.
+ * (CMP-24) and pitches. `followed` / `follow`: highlight of a team's path.
+ * `untagged`: no `data-game`, when the duel sits in a card that carries it (pitches).
  */
-const props = defineProps<{ game: ResultsGame, when?: string, followed?: number | null }>()
+const props = defineProps<{ game: ResultsGame, followed?: number | null, untagged?: boolean }>()
 const emit = defineEmits<{ follow: [number] }>()
 const context = usePageLinkContext()
 const winner = computed(() => winnerSide(props.game))
@@ -18,8 +19,7 @@ const isFollowed = computed(() => props.followed !== null && props.followed !== 
 </script>
 
 <template>
-  <div class="grid grid-cols-[minmax(0,1fr)_2.5rem]" :data-game="game.g_id" :data-followed="isFollowed ? '' : undefined">
-    <span v-if="when" class="col-span-2 pt-1.5 text-xs text-muted">{{ when }}</span>
+  <div class="grid grid-cols-[minmax(0,1fr)_2.5rem]" :data-game="untagged ? undefined : game.g_id" :data-followed="isFollowed ? '' : undefined">
     <div class="grid min-w-0 gap-1 py-1 pr-2 text-sm">
       <ResultsDuelTeam
         v-for="side in (['A', 'B'] as const)"

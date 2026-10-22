@@ -4,6 +4,10 @@ import type { CompetitionStatus, CompetitionGroup, GroupSection } from '#kpi-lay
 export const COMPETITION_TABS = ['info', 'games', 'pitches', 'progress', 'ranking', 'stats'] as const
 export type CompetitionTab = typeof COMPETITION_TABS[number]
 
+/** Tabs of the event view: its competitions first, then those of a competition (PAGE_EVENT_GROUP.md § 2.3). */
+export const EVENT_TABS = ['competitions', ...COMPETITION_TABS] as const
+export type EventTab = typeof EVENT_TABS[number]
+
 /** Tabs of the event and group views (PAGE_EVENT_GROUP.md). */
 export const AGGREGATE_TABS = ['games', 'pitches'] as const satisfies readonly CompetitionTab[]
 export type AggregateTab = typeof AGGREGATE_TABS[number]
@@ -44,7 +48,7 @@ export function competitionPath(season: string, code: string, tab?: CompetitionT
 }
 
 /** Path of an event view tab (without language prefix), optionally restricted to one competition (EVT-03, EVT-07). */
-export function eventTabPath(event: number, tab: CompetitionTab, competition?: string): string {
+export function eventTabPath(event: number, tab: EventTab, competition?: string): string {
   const path = `/events/${event}/${tab}`
   return competition ? `${path}?competition=${encodeURIComponent(competition)}` : path
 }

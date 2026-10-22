@@ -136,7 +136,8 @@
       "info": "Infos",
       "progress": "Déroulement",
       "ranking": "Classement",
-      "stats": "Stats"
+      "stats": "Stats",
+      "competitions": "Compétitions"
     },
     "tabTitle": "{tab} — {competition} {season}",
     "tabDescription": {
@@ -276,7 +277,11 @@
     "follow": {
       "hint": "Touchez une équipe pour suivre son parcours.",
       "stop": "Ne plus suivre {team}"
-    }
+    },
+    "numberShort": "n° {number}",
+    "allPitches": "Tous les terrains",
+    "pitches": "Terrains",
+    "podiumLater": "Le classement sera publié à la fin de la compétition."
   },
   "stats": {
     "scorers": {
