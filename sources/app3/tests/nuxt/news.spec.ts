@@ -15,18 +15,22 @@ beforeEach(() => {
 })
 
 describe('news list (PAGE_NEWS.md § 2.1)', () => {
-  it('NEWS-01: lists the published news, newest first, as cards linking to the article', async () => {
+  it('NEWS-01 / NEWS-10: lists the published news, newest first, the first one put forward, the others as editorial rows', async () => {
     const wrapper = await mountRoute('/news')
     expect(wrapper.find('h1').text()).toBe('Actualités')
     const cards = wrapper.findAll('[data-testid="news-card"]')
     expect(cards.map(card => card.find('h2 a').attributes('href'))).toEqual(['/news/finale-resultats', '/news/nouveau-reglement'])
-    const first = cards[0]!
+    const first = wrapper.find('[data-testid="news-featured"] [data-testid="news-card"]')
+    expect(first.find('h2 a').attributes('href')).toBe('/news/finale-resultats')
     expect(first.find('time').attributes('datetime')).toBe('2020-06-01T12:00:00+02:00')
     expect(first.find('time').text()).toBe('1 juin 2020')
-    expect(first.find('img').attributes('src')).toBe('https://kpi.localhost/media/content/2999/01/finale-768.webp?v=afcd5ac1')
+    expect(first.find('img').attributes('src')).toBe('https://kpi.localhost/media/content/2999/01/finale-1280.webp?v=afcd5ac1')
     expect(first.find('img').attributes('alt')).toBe('La finale')
-    expect(first.find('img').attributes('loading')).toBe('lazy')
+    expect(first.find('img').attributes('loading')).toBeUndefined()
     expect(first.text()).toContain('Compétitions nationales')
+    const row = wrapper.find('[data-testid="news-list"] [data-testid="news-card"]')
+    expect(row.find('h2 a').attributes('href')).toBe('/news/nouveau-reglement')
+    expect(row.text()).toContain('Règlements et vie fédérale')
     // A single page: no pagination.
     expect(wrapper.find('[data-testid="news-pager"]').exists()).toBe(false)
   })
