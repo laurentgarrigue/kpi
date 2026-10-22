@@ -120,7 +120,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
 - **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
-- **[PLAN_COMMUNICATION_SAISON_2027.md](developer/in-progress/PLAN_COMMUNICATION_SAISON_2027.md)** - Plan de communication Facebook / Instagram des nouveautés app2, app3, app4 avant la saison 2027
+- **[PLAN_COMMUNICATION_SAISON_2027.md](developer/in-progress/PLAN_COMMUNICATION_SAISON_2027.md)** - Plan de communication Facebook / Instagram des nouveautés app2, app3, app4 et du règlement 2027-2030 avant la saison, avec les chantiers et leurs échéances
 
 ### [Archives](developer/archive/) — sujets traités
 Index détaillé : [archive/README.md](developer/archive/README.md)
