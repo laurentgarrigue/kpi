@@ -54,21 +54,27 @@
   },
   "home": {
     "title": "Le kayak-polo, en France et à l'international",
-    "intro": "Résultats, classements et calendriers des compétitions de kayak-polo — championnats et coupes de France, tournois, compétitions européennes, mondiales et continentales — publiés par la Commission Nationale d'Activité Kayak-Polo de la FFCK.",
-    "competitionsCta": "Compétitions et résultats",
-    "liveCta": "Suivre un événement en direct",
-    "upcomingFixtures": "À venir",
     "noUpcomingFixtures": "Aucun rendez-vous à venir pour le moment.",
-    "ongoing": "En cours",
-    "recentFixtures": "Récemment",
     "noRecentFixtures": "Aucun rendez-vous publié pour le moment.",
-    "groupFixture": "Compétition",
-    "eventFixture": "Événement",
     "fixturesUnavailable": "Les rendez-vous sont momentanément indisponibles.",
-    "featured": "À la une",
-    "latestNews": "Dernières actualités",
     "allNews": "Toutes les actualités",
-    "partners": "Partenaires"
+    "partners": "Partenaires",
+    "when": {
+      "now": "En ce moment",
+      "tomorrow": "Demain",
+      "weekend": "Ce week-end",
+      "days": "Dans {n} jours"
+    },
+    "programme": "Au programme :",
+    "seeProgramme": "Voir le programme",
+    "addToCalendar": "Ajouter à mon agenda",
+    "gamesAndResults": "Matchs et résultats",
+    "news": "Actualités",
+    "agenda": "Agenda",
+    "after": "Ensuite",
+    "latestResults": "Derniers résultats",
+    "fullCalendar": "Calendrier complet",
+    "next": "Prochain rendez-vous"
   },
   "error": {
     "notFoundTitle": "Page introuvable",

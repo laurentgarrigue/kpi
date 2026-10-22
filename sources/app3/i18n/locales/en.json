@@ -54,21 +54,27 @@
   },
   "home": {
     "title": "Canoe polo, in France and worldwide",
-    "intro": "Results, rankings and schedules of canoe polo competitions — French championships and cups, tournaments, European, world and continental competitions — published by the French Canoe Kayak Federation (FFCK) canoe polo commission.",
-    "competitionsCta": "Competitions and results",
-    "liveCta": "Follow an event live",
-    "upcomingFixtures": "Coming up",
     "noUpcomingFixtures": "Nothing coming up for now.",
-    "ongoing": "Ongoing",
-    "recentFixtures": "Recently",
     "noRecentFixtures": "Nothing published yet.",
-    "groupFixture": "Competition",
-    "eventFixture": "Event",
     "fixturesUnavailable": "Fixtures are temporarily unavailable.",
-    "featured": "Featured",
-    "latestNews": "Latest news",
     "allNews": "All news",
-    "partners": "Partners"
+    "partners": "Partners",
+    "when": {
+      "now": "Happening now",
+      "tomorrow": "Tomorrow",
+      "weekend": "This weekend",
+      "days": "In {n} days"
+    },
+    "programme": "On the programme:",
+    "seeProgramme": "See the programme",
+    "addToCalendar": "Add to my calendar",
+    "gamesAndResults": "Games and results",
+    "news": "News",
+    "agenda": "Agenda",
+    "after": "Next",
+    "latestResults": "Latest results",
+    "fullCalendar": "Full calendar",
+    "next": "Next meeting"
   },
   "error": {
     "notFoundTitle": "Page not found",
