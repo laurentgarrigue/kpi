@@ -208,3 +208,6 @@ sources/app4/tests/playwright/screenshots/*
 #   .experimental-deploy.json → déploiement expérimental actif (branche/tag + TTL)
 .last-deploy-sha
 .experimental-deploy.json
+
+# app3 design mockups: generated preview (DOC/specs/public/maquettes/src/build.py), never deployed
+sources/app3/public/maquettes/

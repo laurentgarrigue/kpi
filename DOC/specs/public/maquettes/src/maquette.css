@@ -1,0 +1,162 @@
+@font-face { font-family: 'Raleway'; font-weight: 100 900; font-display: swap; src: url('/fonts/raleway/raleway-latin-wght-normal.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Agency FB'; font-display: swap; src: url('/fonts/agency-fb/agencyfb.ttf') format('truetype'); }
+
+:root {
+  --navy: #20265b;
+  --blue: #357b9c;
+  --blue-deep: #2a5f78;
+  --sky: #69b9e6;
+  --wash: #eef5f9;
+  --ink: #1e1e1c;
+  --muted: #5d5f63;
+  --line: #dcdddd;
+  --surface: #ffffff;
+  --gold: #9a7208;
+  --silver: #6b7280;
+  --bronze: #9a5a2c;
+  --live: #c94a4c;
+  --spine: var(--navy);
+  --title: var(--navy);
+  --display: 'Agency FB', 'Arial Narrow', Arial, sans-serif;
+  --text: 'Raleway', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --blue: #7fb6d1; --blue-deep: #9cc8de; --wash: #1b2347; --ink: #eceef2; --muted: #a9adb8;
+    --line: #2e3560; --surface: #11163a; --gold: #d9b24a; --silver: #b8bcc6; --bronze: #d49a6a; --live: #b5393b; --spine: #2b3375; --title: #eceef2;
+  }
+}
+:root[data-theme="dark"] {
+  --blue: #7fb6d1; --blue-deep: #9cc8de; --wash: #1b2347; --ink: #eceef2; --muted: #a9adb8;
+  --line: #2e3560; --surface: #11163a; --gold: #d9b24a; --silver: #b8bcc6; --bronze: #d49a6a; --live: #b5393b; --spine: #2b3375; --title: #eceef2;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--ink); font: 400 15px/1.5 var(--text); }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 2px; }
+img { max-width: 100%; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+.logo { width: 26px; height: 26px; object-fit: contain; flex: none; }
+
+/* ---- site chrome (unchanged from the beta, simplified) */
+.beta { background: var(--sky); color: #10173d; font-size: 13px; padding: 6px 0; }
+.beta a { font-weight: 700; }
+.masthead { display: flex; align-items: center; gap: 14px; padding: 12px 0; }
+.masthead img { height: 42px; }
+.masthead b { font: 400 28px/1 var(--display); color: var(--blue); display: block; }
+.masthead small { font-size: 13px; color: var(--muted); }
+.mainnav { background: var(--navy); }
+.mainnav .wrap { display: flex; gap: 26px; overflow-x: auto; scrollbar-width: none; }
+.mainnav a { color: #fff; text-decoration: none; padding: 12px 0; font-size: 15px; white-space: nowrap; border-bottom: 2px solid transparent; }
+.mainnav a[aria-current] { border-color: #fff; }
+
+/* ---- competition header + tabs (same as the games mockup) */
+.crumbs { font-size: 13px; color: var(--muted); padding: 20px 0 8px; }
+.crumbs a { text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.title-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+h1 { font: 400 52px/1 var(--display); color: var(--title); margin: 0; }
+.season { font: 400 30px/1 var(--display); color: var(--blue); }
+.state { font-size: 13px; font-weight: 600; color: var(--muted); }
+.live-btn { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 6px; background: var(--live); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none; }
+.live-btn::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+.event-line { margin: 10px 0 0; font-size: 15px; color: var(--muted); }
+.event-line a { color: var(--ink); font-weight: 600; text-decoration-color: var(--blue); text-underline-offset: 3px; }
+.siblings { display: flex; gap: 8px; margin: 18px 0 0; }
+.siblings a { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; text-decoration: none; }
+.siblings a[aria-current] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.bar { position: sticky; top: 0; z-index: 5; background: var(--surface); margin-top: 20px; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs a { flex: none; padding: 12px 14px; font-weight: 600; font-size: 15px; text-decoration: none; color: var(--muted); border-bottom: 3px solid transparent; }
+.tabs a[aria-current] { color: var(--ink); border-color: var(--title); }
+
+/* ---- score chip: the spine of the games page, in miniature */
+.chip { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 64px; padding: 4px 8px; border-radius: 5px;
+  background: var(--spine); color: #fff; font: 400 22px/1 var(--display); font-variant-numeric: tabular-nums; text-decoration: none; }
+.chip .lose { opacity: .5; }
+.chip .sep { opacity: .4; font-size: 16px; }
+
+.medal { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.medal.m1 { background: var(--gold); }
+.medal.m2 { background: var(--silver); }
+.medal.m3 { background: var(--bronze); }
+
+/* demo control, outside the design */
+.demo { position: fixed; left: 12px; bottom: 12px; z-index: 20; background: #fff; color: #222; border: 1px dashed #999; padding: 8px 10px; font-size: 12px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.demo button, .demo a { font: inherit; color: #222; }
+
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
+  .masthead img { height: 34px; }
+  .masthead b { font-size: 24px; }
+  .masthead small { display: none; }
+  h1 { font-size: 40px; }
+  .season { font-size: 24px; }
+  .live-btn { margin-left: 0; padding: 6px 12px; font-size: 13px; }
+  .event-line { font-size: 14px; }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---- event call-to-action, under the competition title */
+.event-cta { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 18px; align-items: center; margin: 18px 0 0; padding: 14px 16px; border-radius: 8px;
+  background: var(--wash); border: 1px solid color-mix(in srgb, var(--navy) 18%, transparent); text-decoration: none; color: var(--ink); }
+.event-cta:hover .go { background: var(--blue-deep); }
+.event-cta .tile { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 6px; background: var(--navy); color: #fff; text-align: center;
+  font: 400 22px/0.95 var(--display); }
+.event-cta .tile small { display: block; font-size: 14px; color: var(--sky); }
+.event-cta b { display: block; font-size: 17px; }
+.event-cta span.sub { font-size: 14px; color: var(--muted); }
+.event-cta .go { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 6px; background: var(--navy); color: #fff; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.event-cta .go svg { width: 18px; height: 18px; }
+@media (max-width: 700px) {
+  .event-cta { grid-template-columns: auto minmax(0, 1fr); }
+  .event-cta .go { grid-column: 1 / -1; justify-content: center; }
+}
+
+/* ---- event header: the gathering, on a navy band */
+.event-band { background: var(--navy); color: #fff; }
+.event-band .wrap { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 28px; padding-top: 22px; padding-bottom: 26px; }
+.event-band .crumbs { color: #c9cde6; padding: 0 0 10px; width: 100%; }
+.event-band h1 { color: #fff; font-size: 56px; }
+.event-band .where { font-size: 17px; color: #dfe3f5; margin: 8px 0 0; }
+.event-band .live-btn { margin-left: auto; }
+.event-band .grow { flex: 1 1 420px; }
+.event-band .count { margin: 0; font: 400 64px/0.85 var(--display); color: var(--sky); text-align: right; }
+.event-band .count small { display: block; font: 600 13px/1.3 var(--text); color: #dfe3f5; }
+
+/* ---- generic page heading */
+.page-head { padding: 26px 0 8px; }
+.page-head h1 { font-size: 56px; }
+.page-head p { margin: 8px 0 0; color: var(--muted); max-width: 65ch; }
+h2.section { font: 400 30px/1.1 var(--display); color: var(--blue-deep); margin: 0 0 12px; }
+
+/* ---- a game, teams stacked with the scores on a narrow spine (pitches, progress) */
+.duel { display: grid; grid-template-columns: minmax(0, 1fr) 40px; }
+.duel .when { grid-column: 1 / -1; font-size: 12px; color: var(--muted); padding-top: 6px; }
+.duel .teams { display: grid; gap: 4px; padding: 4px 8px 8px 0; font-size: 14px; min-width: 0; }
+.duel .t { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.duel .t .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.duel .t.win .name { font-weight: 700; }
+.duel .t.tbd .name { font-style: italic; color: var(--muted); }
+.duel .scores { grid-row: 2; grid-column: 2; display: grid; align-content: center; background: var(--spine); color: #fff; border-radius: 5px; margin-bottom: 6px;
+  font: 400 22px/1.15 var(--display); text-align: center; font-variant-numeric: tabular-nums; text-decoration: none; }
+.duel .scores .lose { opacity: .5; }
+.duel.no-when .scores { grid-row: 1; }
+.duel .scores.pending { font-size: 16px; opacity: .6; }
+.duel .scores.live { background: var(--live); }
+.duel .logo { width: 20px; height: 20px; }
+
+/* ---- ranking table */
+.rank { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.rank th { font-size: 12px; font-weight: 600; color: var(--muted); text-align: right; padding: 0 8px 6px; white-space: nowrap; }
+.rank th.l, .rank td.l { text-align: left; }
+.rank td { border-top: 1px solid var(--line); padding: 9px 8px; text-align: right; }
+.rank td.rk { width: 40px; font: 400 22px/1 var(--display); color: var(--muted); text-align: left; }
+.rank td.pts { font-weight: 700; }
+.rank .tm { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.rank .tm:hover span { text-decoration: underline; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips a, .chips button { font: inherit; font-size: 14px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--ink); text-decoration: none; cursor: pointer; }
+.chips [aria-current], .chips [aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }

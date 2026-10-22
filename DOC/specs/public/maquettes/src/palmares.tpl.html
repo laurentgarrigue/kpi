@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palmarès Nationale 1 Hommes</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.pick { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; margin: 4px 0 26px; font-size: 14px; color: var(--muted); }
+.pick label { max-width: 100%; }
+.pick select { max-width: 100%; font: inherit; font-size: 15px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); margin-left: 6px; }
+
+/* The title holder: who is champion now, and since when. */
+.holder { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 28px; align-items: center; padding: 22px 26px; border-radius: 10px; background: var(--navy); color: #fff; }
+.holder img, .holder .logo { width: 110px; height: 110px; object-fit: contain; background: #fff; border-radius: 10px; padding: 8px; }
+.holder small { color: #c9cde6; font-size: 14px; }
+.holder b { display: block; font: 400 54px/1 var(--display); margin: 4px 0 6px; }
+.holder .streak { font-size: 16px; color: #e9c766; font-weight: 600; }
+.holder .rest { font-size: 14px; color: #dfe3f5; text-align: right; line-height: 1.8; }
+.holder .rest .medal { margin-right: 6px; }
+
+/* The last ten seasons, newest first. */
+.strip { list-style: none; margin: 26px 0 40px; padding: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 8px; }
+.strip li { display: grid; justify-items: center; gap: 6px; padding: 10px 4px; border-radius: 8px; border: 1px solid var(--line); text-align: center; min-width: 0; }
+.strip .y { font: 400 22px/1 var(--display); color: var(--blue-deep); }
+.strip img, .strip .logo { width: 44px; height: 44px; object-fit: contain; }
+.strip .n { font-size: 12px; font-weight: 600; line-height: 1.2; }
+.strip li.hl { border-color: var(--navy); background: color-mix(in srgb, var(--sky) 18%, transparent); }
+
+.decades { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin: 0 0 12px; }
+.decades h2 { margin: 0 12px 0 0; }
+.decades a { font-size: 14px; }
+.hint { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
+.hint button { font: inherit; background: none; border: 0; padding: 0; color: var(--blue-deep); text-decoration: underline; cursor: pointer; }
+.table-wrap { overflow-x: auto; min-width: 0; padding-bottom: 56px; }
+.seasons { width: 100%; border-collapse: collapse; }
+.seasons th { font-size: 12px; font-weight: 600; color: var(--muted); text-align: left; padding: 0 10px 6px 0; }
+.seasons td { border-top: 1px solid var(--line); padding: 9px 10px 9px 0; vertical-align: top; font-size: 15px; }
+.seasons td.y { font: 400 24px/1 var(--display); color: var(--blue-deep); width: 64px; scroll-margin-top: 12px; }
+.seasons td.c { color: var(--muted); font-size: 13px; width: 140px; }
+.seasons .m { display: flex; align-items: center; gap: 8px; }
+.seasons button.t { all: unset; cursor: pointer; }
+.seasons button.t:hover { text-decoration: underline; }
+.seasons button.t:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.seasons .on button.t { font-weight: 700; color: var(--blue-deep); }
+.seasons .on { background: color-mix(in srgb, var(--sky) 18%, transparent); border-radius: 4px; }
+@media (max-width: 900px) {
+  .holder { grid-template-columns: 72px minmax(0, 1fr); padding: 18px; }
+  .holder img, .holder .logo { width: 72px; height: 72px; }
+  .holder b { font-size: 38px; }
+  .holder .rest { grid-column: 1 / -1; text-align: left; }
+  .strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
+  .strip li { flex: 0 0 92px; scroll-snap-align: start; }
+  .seasons td.c, .seasons thead th:nth-child(2) { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <div class="page-head"><h1 id="title"></h1></div>
+  <div class="pick"><label>Compétition <select id="group"></select></label></div>
+  <section class="holder" id="holder" aria-label="Tenant du titre"></section>
+  <ol class="strip" id="strip" aria-label="Champions des dix dernières saisons"></ol>
+  <div class="decades" id="decades"></div>
+  <p class="hint" id="hint">Touchez une équipe pour surligner ses podiums.</p>
+  <div class="table-wrap" id="seasons"></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const H = __HISTORY__;
+const GROUPS = __HISTORY_GROUPS__;
+const LOGOS = __HISTORY_LOGOS__;
+let team = null;
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+document.getElementById('title').textContent = `Palmarès ${decode(H.group.libelle)}`;
+document.getElementById('group').innerHTML = GROUPS.sections.map(s => `<optgroup label="${esc(s.label.replace(/_/g, ' '))}">${s.groups.map(g => `<option${g.code === H.group.code ? ' selected' : ''}>${esc(decode(g.libelle))}</option>`).join('')}</optgroup>`).join('');
+
+// The final competition of each season: the one that awards medals.
+const finals = H.seasons.map(s => ({ season: s.season, comp: s.competitions.find(c => c.podium.some(p => p.medal)) })).filter(x => x.comp);
+const medal = (x, m) => x.comp.podium.find(p => p.medal === m);
+const logo = n => logoImg(LOGOS[n]);
+
+const [now] = finals;
+const champ = medal(now, 1);
+let streak = 0;
+while (finals[streak] && medal(finals[streak], 1)?.team.number === champ.team.number) streak++;
+const titles = finals.filter(x => medal(x, 1)?.team.number === champ.team.number).length;
+document.getElementById('holder').innerHTML = `${logo(champ.team.number)}
+  <div><small>Champion ${now.season}</small><b>${esc(champ.team.label)}</b>
+    <span class="streak">${streak > 1 ? `${streak}e titre d'affilée, depuis ${finals[streak - 1].season}` : `${titles}e titre`}</span></div>
+  <div class="rest">${[2, 3].map(m => medal(now, m)).filter(Boolean).map(p => `<div><span class="medal m${p.medal}"></span>${p.rank}e ${esc(p.team.label)}</div>`).join('')}</div>`;
+
+const decades = [...new Set(finals.map(x => x.season.slice(0, 3)))];
+document.getElementById('decades').innerHTML = `<h2 class="section">Toutes les saisons</h2>${decades.map(d => `<a href="#y-${finals.find(x => x.season.startsWith(d)).season}">Années ${d}0</a>`).join('')}`;
+
+function render() {
+  document.getElementById('strip').innerHTML = finals.slice(0, 10).map(x => { const p = medal(x, 1); return `<li class="${team === p.team.label ? 'hl' : ''}"><span class="y">${x.season}</span>${logo(p.team.number)}<span class="n">${esc(p.team.label)}</span></li>`; }).join('');
+  document.getElementById('hint').innerHTML = team ? `Podiums de <b>${esc(team)}</b> surlignés. <button type="button" id="clear">Tout afficher normalement</button>` : 'Touchez une équipe pour surligner ses podiums.';
+  document.getElementById('seasons').innerHTML = `<table class="seasons"><thead><tr><th>Saison</th><th>Compétition</th><th>Champion</th><th>2e</th><th>3e</th></tr></thead><tbody>
+    ${H.seasons.flatMap(s => s.competitions.map((c, i) => {
+      const cell = m => { const x = c.podium.find(p => p.medal === m); return x ? `<td><span class="m${team === x.team.label ? ' on' : ''}"><span class="medal m${m}"></span><button type="button" class="t" data-t="${esc(x.team.label)}">${esc(x.team.label)}</button></span></td>` : '<td></td>'; };
+      return `<tr>${i === 0 ? `<td class="y" id="y-${s.season}" rowspan="${s.competitions.length}">${s.season}</td>` : ''}<td class="c">${esc(c.soustitre2 || c.display_title)}</td>${cell(1)}${cell(2)}${cell(3)}</tr>`;
+    })).join('')}</tbody></table>`;
+}
+document.querySelector('main').addEventListener('click', e => {
+  const b = e.target.closest('[data-t]');
+  if (b) { team = team === b.dataset.t ? null : b.dataset.t; render(); }
+  if (e.target.id === 'clear') { team = null; render(); }
+});
+render();
+demoBar();
+</script>
+</body>
+</html>
