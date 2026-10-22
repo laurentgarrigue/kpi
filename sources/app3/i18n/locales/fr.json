@@ -220,7 +220,12 @@
       "teams": "Équipes engagées",
       "pool": "Poule {pool}",
       "schema": "Schéma de la compétition",
-      "schemaAlt": "Schéma de déroulement de {competition}"
+      "schemaAlt": "Schéma de déroulement de {competition}",
+      "officials": "Officiels",
+      "teamsSummary": "{teams} équipes | {teams} équipes",
+      "poolsSummary": "{pools} poule | {pools} poules",
+      "organizedBy": "organisé par {organizer}",
+      "when": "Dates et lieu"
     },
     "eventCompetitions": "Compétitions de cet événement",
     "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
@@ -256,7 +261,22 @@
       "many": "Les {n} compétitions, tous les matchs par terrain et le direct.",
       "one": "Tous les matchs par terrain et le direct."
     },
-    "competitionCount": "compétition | compétitions"
+    "competitionCount": "compétition | compétitions",
+    "podium": "Podium",
+    "fullRanking": "Classement complet",
+    "podiumPoints": "{points} pts",
+    "podiumWins": "{n} victoire | {n} victoires",
+    "place": "{rank} place",
+    "stats": {
+      "filterByTeam": "Filtrer par équipe",
+      "allTeams": "Toutes",
+      "goalsShort": "but | buts",
+      "playerNumber": "n° {number}"
+    },
+    "follow": {
+      "hint": "Touchez une équipe pour suivre son parcours.",
+      "stop": "Ne plus suivre {team}"
+    }
   },
   "stats": {
     "scorers": {
@@ -328,7 +348,9 @@
         "step3": "Sur iPhone : Réglages › Calendrier › Comptes › Ajouter un compte › Autre › Ajouter un calendrier avec abonnement.",
         "step4": "Choisissez la fréquence d'actualisation proposée."
       }
-    }
+    },
+    "agenda": "Dans votre agenda",
+    "agendaIntro": "Les matchs s'ajoutent à votre agenda et se mettent à jour tout seuls si les horaires changent."
   },
   "history": {
     "title": "Historique et palmarès",

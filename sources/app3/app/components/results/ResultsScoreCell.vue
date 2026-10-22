@@ -61,7 +61,7 @@ const dim = (side: 'A' | 'B') => (winner.value && winner.value !== side ? 'opaci
       :href="href ?? undefined"
       v-bind="href ? NEW_TAB_ATTRS : {}"
       class="group/score flex flex-1 items-center justify-center font-display tabular-nums leading-none"
-      :class="[stacked ? 'flex-col py-1.5 text-[26px]' : 'flex-col py-1.5 text-[26px] md:flex-row md:gap-2.5 md:py-0 md:text-3xl', { 'opacity-90': !played }]"
+      :class="[stacked ? 'flex-col py-1 text-[22px]' : 'flex-col py-1.5 text-[26px] md:flex-row md:gap-2.5 md:py-0 md:text-3xl', { 'opacity-90': !played }]"
       :data-testid="href ? 'game-sheet' : undefined"
     >
       <span class="sr-only">{{ a11y }}<template v-if="href">, {{ $t('results.gameSheet') }} {{ $t('a11y.newTab') }}</template></span>

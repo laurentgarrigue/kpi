@@ -20,7 +20,7 @@ const view = computed(() => progressView(route.query.view))
         :to="{ path: route.path, query: { ...route.query, view: option } }"
         :aria-pressed="option === view"
         class="rounded border px-3 py-1 text-sm"
-        :class="option === view ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
+        :class="option === view ? 'border-navy bg-navy text-white' : 'border-line hover:bg-wash'"
       >
         {{ $t(`results.view.${option}`) }}
       </NuxtLink>

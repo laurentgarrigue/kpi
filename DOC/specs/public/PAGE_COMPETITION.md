@@ -158,6 +158,11 @@ Référence visuelle : [maquettes/](maquettes/README.md) (`matchs`, `infos`, `de
 - **Équipes engagées** par poule (logo, nom), seulement si la compétition est `ON` ou `END` (règle legacy).
 - **Schéma** de la compétition (image) s'il existe, avec un texte alternatif.
 - Lien vers le site web de la compétition s'il est renseigné. L'abonnement ICS arrive en phase 3.
+- **Présentation (maquettes du 22/10/2026)** : dates en très grand (Agency FB) et lieu en tête quand toutes les
+  journées partagent les mêmes paramètres ; officiels **en grille** (libellé au-dessus du nom) ; équipes par poule
+  **avec logos** ; à côté (dessous sur mobile, au-dessus des équipes) : **podium** si la compétition est terminée
+  (`GET …/ranking`, médailles, lien « Classement complet ») et bloc **« Dans votre agenda »** (bouton d'abonnement,
+  copier le lien, .ics, aide repliée).
 
 ### 3.4 Déroulement (`progress`) — remplace `kpchart.php` **et** `kpphases.php`
 
@@ -178,6 +183,11 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
   - **élimination** (`type` = `E`) : la liste des matchs avec vainqueur mis en évidence.
 - Les deux vues partagent les mêmes sous-composants (carte d'équipe, ligne de match) ; seule la disposition
   change.
+- **Présentation horizontale (maquettes du 22/10/2026)** : une colonne par tour défini par l'organisateur (2 à 5),
+  **sans titre visible** (« Tour n » reste pour les lecteurs d'écran), contenu **centré verticalement** dans chaque
+  colonne ; poules en tableaux (Pts, J, +/−), phases éliminatoires en matchs au bloc de scores étroit (§ 2.5) ; la
+  finale est titrée en or. **Toucher une équipe surligne tout son parcours** (JavaScript ; sans lui, le nom reste un
+  lien vers l'équipe) ; « Ne plus suivre {équipe} » l'annule. Sur mobile (< 600 px), les tours s'empilent.
 
 ### 3.6 Classement (`ranking`) — remplace `kpclassement.php`
 
@@ -190,6 +200,10 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - Sinon, les `qualified` premiers et `eliminated` derniers sont marqués (couleur **et** texte).
 - Lien « Classement (PDF) » (§ 2.1).
 - Pas de classement disponible → « Le classement sera publié après les premiers matchs. »
+- **Présentation (maquettes du 22/10/2026)** : « Classement final » / « Classement provisoire » écrit (sans badge
+  coloré) ; quand les trois médailles sont attribuées, **podium en marches** (2–1–3, marche la plus haute au
+  centre) avec logo, nom, points et victoires ; puis le tableau complet avec logos, différence signée (« +5 ») ;
+  colonnes secondaires (N, F, +, −) masquées sur mobile.
 
 ### 3.7 Stats (`stats`) — remplace `kpstats.php`
 
@@ -201,6 +215,10 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - Phase 2 : **meilleurs buteurs** (`scorers`, par défaut) : rang (égalités partagées), « NOM Prénom #numéro »,
   équipe (lien § 2.1), buts. Bouton « Voir plus » → `limit=100`.
 - Aucune donnée → « Aucune statistique disponible. »
+- **Présentation des buteurs (maquettes du 22/10/2026)** : le **meilleur buteur** mis en avant (bloc marine, buts
+  en très grand) ; puis une ligne par joueur avec une **barre** de buts sur une échelle commune (le maximum de la
+  liste) ; **filtre par équipe** (liens `team={numéro}`, sans JavaScript, « Toutes ») parmi les équipes de la liste ;
+  « Voir plus » inchangé. Une statistique sans joueurs garde le tableau générique.
 
 ## 4. Données et cache
 
@@ -236,6 +254,10 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-18** — En-tête compact : titre, saison, statut en texte, « Suivre en direct » ; pas de libellé « Compétition » ; `soustitre2` masqué s'il est égal au titre. Encart événement = carte cliquable (vignette des dates, nom, « Les N compétitions… », « Voir l'événement »).
 - **CMP-19** — Matchs : colonne des scores par journée, score perdant atténué, colonne rouge et période pour un match en cours, étiquette « Provisoire » ; logos des équipes ; jours en liens avec `aria-current` ; finale marquée en or (texte « Finale » conservé).
 - **CMP-20** — Codes de tirage traduits pour les équipes non attribuées d'un match à venir (« 1er poule B », « Vainqueur n° 222 »), code brut masqué une fois le match joué (fonction pure testée).
+- **CMP-21** — Classement : statut écrit ; podium 2–1–3 (logos, points, victoires) quand les rangs 1 à 3 ont une médaille ; tableau avec logos et différence signée ; colonnes secondaires masquées sur mobile.
+- **CMP-22** — Stats (buteurs) : meilleur buteur mis en avant, barres sur une échelle commune, filtre par équipe en liens (`team=`), sans le bloc mis en avant quand une équipe est choisie.
+- **CMP-23** — Infos : dates et lieu en tête, officiels en grille, équipes avec logos, podium (lien « Classement complet ») si `END`, bloc « Dans votre agenda ».
+- **CMP-24** — Déroulement horizontal : une colonne par tour sans titre visible (titre pour lecteurs d'écran), contenu centré ; toucher une équipe surligne ses apparitions (`data-followed`) et propose « Ne plus suivre ».
 - **CMP-16** — Un événement couvrant au moins 75 % des journées (ou celui du paramètre `event`) est mis en avant avec un lien vers `/events/{id}` ; les autres sont listés discrètement.
 
 ## 7. Grille de parité legacy ↔ app3 (recette)

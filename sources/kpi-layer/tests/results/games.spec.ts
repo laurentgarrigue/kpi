@@ -17,6 +17,7 @@ import {
   gamesOfCompetition,
   drawCode,
   drawSlot,
+  slotFromLabel,
   isFinal,
 } from '../../app/utils/results/games'
 import { game } from './fixtures'
@@ -197,6 +198,11 @@ describe('drawSlot / isFinal', () => {
 
   it('CMP-20: keeps an unknown waiting label as text, without its brackets', () => {
     expect(drawSlot(game({ g_status: 'ATT', t_a_label: '(2ème poule haute)' }), 'A')).toEqual({ kind: 'text', text: '2ème poule haute' })
+  })
+
+  it('CMP-20: reads a waiting label on its own (pool placeholders of the progress tab)', () => {
+    expect(slotFromLabel('(1st Group A)')).toEqual({ kind: 'pool', rank: 1, pool: 'A' })
+    expect(slotFromLabel('Équipe 3')).toEqual({ kind: 'text', text: 'Équipe 3' })
   })
 
   it('CMP-20: no slot for an assigned team, or once the game is played', () => {

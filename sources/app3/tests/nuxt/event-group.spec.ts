@@ -93,7 +93,7 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(wrapper.find('[data-testid="competition-chips"] a[aria-current="page"]').text()).toBe('Finale')
     expect((await mountRoute('/events/77/info?competition=RCH')).findAll('[data-testid="gameday"]').length).toBeGreaterThan(0)
     expect((await mountRoute('/events/77/progress?competition=RCP')).find('[data-testid="progress-horizontal"]').exists()).toBe(true)
-    expect((await mountRoute('/events/77/stats?competition=RCH')).find('[data-testid="stat-table"]').exists()).toBe(true)
+    expect((await mountRoute('/events/77/stats?competition=RCH')).find('[data-testid="stat-row"]').exists()).toBe(true)
   })
 
   it('EVT-07: without competition on such a tab, the first competition of the event is shown', async () => {

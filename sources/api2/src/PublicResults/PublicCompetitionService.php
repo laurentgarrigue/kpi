@@ -23,6 +23,7 @@ final class PublicCompetitionService
 
     public function __construct(
         private readonly PublicCompetitionRepository $repository,
+        private readonly TeamLogos $teamLogos,
         private readonly string $legacyDocumentRoot,
     ) {
     }
@@ -217,7 +218,7 @@ final class PublicCompetitionService
         }
 
         $rows = [];
-        foreach ($teams ?? $this->repository->findRankedTeams($header->season, $header->code, $header->type) as $team) {
+        foreach ($this->withLogos($teams ?? $this->repository->findRankedTeams($header->season, $header->code, $header->type)) as $team) {
             $rank = $this->teamRank($header, $team);
             if ($rank === 0) {
                 continue;
@@ -242,6 +243,21 @@ final class PublicCompetitionService
         }
 
         return $rows;
+    }
+
+    /**
+     * Logo of each team, the club's when the team has none (as in the games); `null` rather than the empty logo.
+     *
+     * @param list<array<string, mixed>> $teams
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function withLogos(array $teams): array
+    {
+        return array_map(
+            static fn (array $team): array => [...$team, 'logo' => $team['logo'] === TeamLogos::EMPTY_LOGO ? null : $team['logo']],
+            $this->teamLogos->fill($teams, ''),
+        );
     }
 
     /** @param array<string, mixed> $team */
@@ -277,7 +293,7 @@ final class PublicCompetitionService
     private function teamsByPool(string $season, string $code): array
     {
         $pools = [];
-        foreach ($this->repository->findTeamsByPool($season, $code) as $team) {
+        foreach ($this->withLogos($this->repository->findTeamsByPool($season, $code)) as $team) {
             $pools[$team['Poule']][] = new TeamRef(
                 (int) $team['Id'],
                 $team['Numero'] === null ? null : (int) $team['Numero'],

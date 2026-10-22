@@ -220,7 +220,12 @@
       "teams": "Teams",
       "pool": "Pool {pool}",
       "schema": "Competition format",
-      "schemaAlt": "Format of {competition}"
+      "schemaAlt": "Format of {competition}",
+      "officials": "Officials",
+      "teamsSummary": "{teams} team | {teams} teams",
+      "poolsSummary": "{pools} pool | {pools} pools",
+      "organizedBy": "organised by {organizer}",
+      "when": "Dates and venue"
     },
     "eventCompetitions": "Competitions of this event",
     "gamedaysOf": "{count} gameday out of {total} of the competition | {count} gamedays out of {total} of the competition",
@@ -256,7 +261,22 @@
       "many": "The {n} competitions, every game by pitch and the live.",
       "one": "Every game by pitch and the live."
     },
-    "competitionCount": "competition | competitions"
+    "competitionCount": "competition | competitions",
+    "podium": "Podium",
+    "fullRanking": "Full ranking",
+    "podiumPoints": "{points} pts",
+    "podiumWins": "{n} win | {n} wins",
+    "place": "{rank} place",
+    "stats": {
+      "filterByTeam": "Filter by team",
+      "allTeams": "All",
+      "goalsShort": "goal | goals",
+      "playerNumber": "no. {number}"
+    },
+    "follow": {
+      "hint": "Tap a team to follow its path.",
+      "stop": "Stop following {team}"
+    }
   },
   "stats": {
     "scorers": {
@@ -328,7 +348,9 @@
         "step3": "On iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar.",
         "step4": "Pick the refresh frequency offered."
       }
-    }
+    },
+    "agenda": "In your calendar",
+    "agendaIntro": "The games are added to your calendar and update themselves if the times change."
   },
   "history": {
     "title": "History and honours",

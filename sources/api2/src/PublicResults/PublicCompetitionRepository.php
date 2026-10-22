@@ -137,7 +137,7 @@ final class PublicCompetitionRepository
         $orderBy = $type === 'CP' ? 'ce.CltNiveau_publi ASC, ce.Diff_publi DESC' : 'ce.Clt_publi ASC, ce.Diff_publi DESC';
 
         return $this->connection->fetchAllAssociative(
-            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Clt_publi, ce.CltNiveau_publi, ce.Pts_publi,
+            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Code_club club, ce.Clt_publi, ce.CltNiveau_publi, ce.Pts_publi,
             ce.J_publi, ce.G_publi, ce.N_publi, ce.P_publi, ce.F_publi, ce.Plus_publi, ce.Moins_publi, ce.Diff_publi
             FROM kp_competition_equipe ce
             WHERE ce.Code_saison = ? AND ce.Code_compet = ?
@@ -154,7 +154,7 @@ final class PublicCompetitionRepository
     public function findTeamsByPool(string $season, string $code): array
     {
         return $this->connection->fetchAllAssociative(
-            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Poule
+            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Code_club club, ce.Poule
             FROM kp_competition_equipe ce
             WHERE ce.Code_saison = ? AND ce.Code_compet = ?
             ORDER BY ce.Poule, ce.Tirage, ce.Libelle",

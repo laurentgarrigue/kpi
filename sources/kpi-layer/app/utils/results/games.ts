@@ -233,7 +233,8 @@ function slotFromCode(code: string): DrawSlot | null {
   return code ? { kind: 'text', text: code } : null
 }
 
-function slotFromLabel(label: string): DrawSlot {
+/** Slot of a waiting label written by api2 (« (Winner game #11) », « (2nd Group B) », pool placeholders, CMP-20). */
+export function slotFromLabel(label: string): DrawSlot {
   const game = WAITING_GAME.exec(label)
   if (game) {
     return { kind: WINNER_WORDS.has(game[1]!.toLowerCase()) ? 'winner' : 'loser', game: Number(game[2]) }
@@ -243,7 +244,7 @@ function slotFromLabel(label: string): DrawSlot {
     return { kind: 'pool', rank: Number(pool[1]), pool: pool[2]!.toUpperCase() }
   }
   const team = WAITING_TEAM.exec(label)
-  return team ? { kind: 'team', game: Number(team[1]) } : { kind: 'text', text: BRACKETED_LABEL.exec(label)![1]! }
+  return team ? { kind: 'team', game: Number(team[1]) } : { kind: 'text', text: BRACKETED_LABEL.exec(label)?.[1] ?? label }
 }
 
 /** The team of one side of a game to play, when it is not assigned yet: from its waiting label, else the draw code. */
