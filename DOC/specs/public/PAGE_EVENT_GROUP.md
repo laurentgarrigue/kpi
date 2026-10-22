@@ -150,7 +150,7 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 - **EVT-07** — La vue événement propose les onglets Infos, Déroulement, Classement et Stats d'une compétition (la première par défaut), « Toutes » grisée sur ces onglets.
 - **EVT-04** — Les matchs de toutes les compétitions de l'événement sont listés, chacun avec sa compétition.
 - **EVT-05** — Événement inconnu ou sans compétition publiée → page 404 du site.
-- **EVT-08** — L'en-tête d'un événement porte le libellé « Événement » et `data-kind="event"` ; celui d'une compétition « Compétition » ; « Suivre en direct » est un bouton.
+- **EVT-08** — L'en-tête d'un événement est un bandeau marine (`data-kind="event"`) ; celui d'une compétition est compact ; ni l'un ni l'autre ne porte de libellé en capitales (« Événement », « Compétition »), cf. maquettes du 22/10/2026 ; « Suivre en direct » est un bouton.
 - **EVT-09** — Le panneau des compétitions de l'événement indique « n journée(s) sur total » et lie la compétition entière ; il n'est affiché que si les compétitions viennent de **groupes différents**.
 - **EVT-10** — Événement d'un seul groupe : l'onglet Infos propose l'abonnement, le lien à copier et le téléchargement du calendrier **de l'événement** (`/event/{id}/calendar.ics`) ; sinon ceux de la compétition sélectionnée.
 - **EVL-01** — `/events` liste les événements de l'année demandée, chacun menant à `/events/{id}`.

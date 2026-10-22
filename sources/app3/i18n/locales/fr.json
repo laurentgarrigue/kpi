@@ -222,11 +222,6 @@
       "schema": "Schéma de la compétition",
       "schemaAlt": "Schéma de déroulement de {competition}"
     },
-    "kind": {
-      "event": "Événement",
-      "group": "Groupe de compétitions",
-      "competition": "Compétition"
-    },
     "eventCompetitions": "Compétitions de cet événement",
     "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
     "allGamedays": "Toutes les journées de la compétition",
@@ -256,7 +251,12 @@
     "pitchShort": "T. {pitch}",
     "finalMark": "Finale",
     "scoreLabel": "Score {score}",
-    "notPlayed": "pas encore joué"
+    "notPlayed": "pas encore joué",
+    "eventCta": {
+      "many": "Les {n} compétitions, tous les matchs par terrain et le direct.",
+      "one": "Tous les matchs par terrain et le direct."
+    },
+    "competitionCount": "compétition | compétitions"
   },
   "stats": {
     "scorers": {

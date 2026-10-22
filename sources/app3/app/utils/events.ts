@@ -68,6 +68,18 @@ export function formatEventDates(start: string | null, end: string | null, local
   return format.formatRange(new Date(first), new Date(last))
 }
 
+/** Date tile of an event card: « 3–5 » over « juil. » (CMP-18); `null` without any date. */
+export function dateTile(start: string | null, end: string | null, locale: string): { days: string, month: string } | null {
+  const first = start ?? end
+  if (!first) {
+    return null
+  }
+  const last = end ?? first
+  const day = (date: string) => String(Number(date.slice(8, 10)))
+  const month = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(new Date(last))
+  return { days: first === last ? day(first) : `${day(first)}–${day(last)}`, month }
+}
+
 /** Absolute URL of an event logo stored under the legacy `/img/` tree, or `null` without logo. */
 export function eventLogoUrl(logo: string | null, legacyBaseUrl: string): string | null {
   return legacyImageUrl(logo, legacyBaseUrl)

@@ -3,6 +3,7 @@ import {
   eventLogoUrl,
   eventsOfYear,
   eventYears,
+  dateTile,
   formatEventDates,
   isOngoing,
   todayInParis,
@@ -69,5 +70,15 @@ describe('events by year', () => {
     expect(eventsOfYear(events, 2026).map(e => e.id)).toEqual([1, 3, 2])
     expect(eventsOfYear(events, 2025).map(e => e.id)).toEqual([1])
     expect(eventsOfYear(events, 2024)).toEqual([])
+  })
+})
+
+describe('dateTile', () => {
+  it('CMP-18: days over the short month of the last day', () => {
+    expect(dateTile('2026-07-03', '2026-07-05', 'fr')).toEqual({ days: '3–5', month: 'juil.' })
+    expect(dateTile('2026-07-04', '2026-07-04', 'fr')).toEqual({ days: '4', month: 'juil.' })
+    expect(dateTile('2026-06-30', null, 'en')).toEqual({ days: '30', month: 'Jun' })
+    expect(dateTile('2026-06-30', '2026-07-02', 'en')).toEqual({ days: '30–2', month: 'Jul' })
+    expect(dateTile(null, null, 'fr')).toBeNull()
   })
 })

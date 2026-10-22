@@ -13,17 +13,29 @@ beforeEach(() => {
 })
 
 describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
-  it('CMP-02: header with title, season, status badge (no type badge), website and live links', async () => {
+  it('CMP-02 / CMP-18: compact header with title, season, written status, website and live links; no eyebrow', async () => {
     const header = (await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="competition-header"]')
     expect(header.find('h1').text()).toBe('Championnat Résultats')
     expect(header.text()).toContain('2999')
+    expect(header.find('[data-testid="competition-kind"]').exists()).toBe(false)
     expect(header.find('[data-testid="type-badge"]').exists()).toBe(false)
     expect(header.find('[data-testid="status-badge"]').text()).toBe('En cours')
+    expect(header.find('[data-testid="competition-subtitle"]').text()).toBe('Poule A')
     expect(header.find('[data-testid="competition-visual"]').attributes('src')).toBe('https://kpi.localhost/img/logo/bandeau-rch.png')
     expect(header.find('[data-testid="competition-web"]').attributes('href')).toBe('https://example.test')
     expect(header.find('[data-testid="competition-live"]').attributes('href')).toBe('https://app.kpi.localhost/group/2999/TSTRES')
     expect(header.find('[data-testid="competition-live"]').attributes('target')).toBe('_blank')
     expect(header.find('[data-testid="competition-live"]').attributes('data-live-button')).toBeDefined()
+  })
+
+  it('CMP-18: the event of the competition is one clickable card, with its date tile and its number of competitions', async () => {
+    const card = (await mountRoute('/competitions/2999/RCP/ranking')).find('[data-testid="main-event"]')
+    expect(card.element.tagName).toBe('A')
+    expect(card.attributes('href')).toBe('/events/77')
+    expect(card.find('[data-testid="event-tile"]').text()).toBe('1–2avr.')
+    expect(card.text()).toContain('Tournoi Résultats')
+    expect(card.text()).toContain('Les 2 compétitions, tous les matchs par terrain et le direct.')
+    expect(card.text()).toContain("Voir l'événement")
   })
 
   it('CMP-03: siblings of the group keep the current tab', async () => {
@@ -50,7 +62,7 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
 
   it('CMP-16: an event covering every gameday is put forward, with the breadcrumb through it', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
-    expect(wrapper.find('[data-testid="main-event-link"]').attributes('href')).toBe('/events/77')
+    expect(wrapper.find('[data-testid="main-event"]').attributes('href')).toBe('/events/77')
     expect(wrapper.findAll('[data-testid="breadcrumb"] li').map(item => item.text())).toEqual(['Accueil', 'Tournoi Résultats', 'Phase finale'])
   })
 

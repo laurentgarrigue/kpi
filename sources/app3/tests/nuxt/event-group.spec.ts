@@ -27,12 +27,12 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(live.text()).toContain('Suivre en direct')
   })
 
-  it('EVT-08: the header says it is an event; a competition says it is a competition', async () => {
+  it('EVT-08: the event header is a navy band; neither header carries a capitalised « Event » / « Competition » label', async () => {
     const event = (await mountRoute('/events/77/games')).find('[data-testid="scope-header"]')
     expect(event.attributes('data-kind')).toBe('event')
-    expect(event.find('[data-testid="scope-kind"]').text()).toBe('Événement')
+    expect(event.find('[data-testid="scope-kind"]').exists()).toBe(false)
     const competition = (await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="competition-header"]')
-    expect(competition.find('[data-testid="competition-kind"]').text()).toBe('Compétition')
+    expect(competition.find('[data-testid="competition-kind"]').exists()).toBe(false)
   })
 
   it('EVT-09: the competitions of an event of several groups are listed with their gamedays held at the event, and link to the whole competition', async () => {

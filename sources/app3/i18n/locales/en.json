@@ -222,11 +222,6 @@
       "schema": "Competition format",
       "schemaAlt": "Format of {competition}"
     },
-    "kind": {
-      "event": "Event",
-      "group": "Competition group",
-      "competition": "Competition"
-    },
     "eventCompetitions": "Competitions of this event",
     "gamedaysOf": "{count} gameday out of {total} of the competition | {count} gamedays out of {total} of the competition",
     "allGamedays": "All the gamedays of the competition",
@@ -256,7 +251,12 @@
     "pitchShort": "P. {pitch}",
     "finalMark": "Final",
     "scoreLabel": "Score {score}",
-    "notPlayed": "not played yet"
+    "notPlayed": "not played yet",
+    "eventCta": {
+      "many": "The {n} competitions, every game by pitch and the live.",
+      "one": "Every game by pitch and the live."
+    },
+    "competitionCount": "competition | competitions"
   },
   "stats": {
     "scorers": {

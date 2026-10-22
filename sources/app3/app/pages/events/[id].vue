@@ -48,7 +48,7 @@ const pdfTarget = computed(() => (selected.value
 // A single-group event is the view of that group: no detour through its competitions, its own calendar (§ 2.0).
 const singleGroup = computed(() => event.value?.single_group ?? false)
 const subscriptionUrl = computed(() => (singleGroup.value ? eventIcsUrl(api2BaseUrl, id.value) : undefined))
-const subtitle = computed(() => (event.value ? [event.value.place, formatEventDates(event.value.start, event.value.end, language.value)].filter(Boolean).join(' · ') : ''))
+const subtitle = computed(() => (event.value ? [event.value.place, formatEventDates(event.value.start, event.value.end, language.value)].filter(Boolean).join(', ') : ''))
 
 useSeoMeta({
   title: () => t('results.scopeTitle', { tab: t(`results.tab.${current.value}`), scope: event.value?.libelle ?? '' }),
@@ -75,7 +75,14 @@ provideCupCompetitions(() => competitions.value)
 <template>
   <div v-if="event" class="space-y-6">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: event.libelle }]" />
-    <ResultsScopeHeader kind="event" :title="event.libelle" :subtitle="subtitle" :logo="event.logo" :live-url="joinURL(app2BaseUrl, 'event', String(id))" />
+    <ResultsScopeHeader
+      kind="event"
+      :title="event.libelle"
+      :subtitle="subtitle"
+      :logo="event.logo"
+      :live-url="joinURL(app2BaseUrl, 'event', String(id))"
+      :competition-count="competitions.length"
+    />
     <ResultsEventCompetitions v-if="!singleGroup" :event-id="id" :competitions="competitions" />
     <ResultsCompetitionChips :items="chips" :all="all" />
     <ResultsTabs :tabs="tabs" :current="current" />
