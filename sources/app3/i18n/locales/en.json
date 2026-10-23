@@ -377,9 +377,23 @@
     "pageTitle": "Honours — {group}",
     "description": "Canoe polo honours of {group}, season by season.",
     "group": "Competition",
-    "seasons": "Seasons",
-    "fullRanking": "See the full ranking",
-    "ranking": "Competition ranking"
+    "champion": "{season} champion",
+    "streak": "{n}th title in a row, since {since}",
+    "titles": "{rank} title",
+    "lastSeasons": "Champions of the last ten seasons",
+    "allSeasons": "Every season",
+    "decade": "{decade}s",
+    "hint": "Tap a team to highlight its podiums.",
+    "highlighted": "Podiums of {team} highlighted.",
+    "unhighlight": "Show everything normally",
+    "col": {
+      "season": "Season",
+      "competition": "Competition",
+      "champion": "Champion",
+      "second": "2nd",
+      "third": "3rd"
+    },
+    "holder": "Title holder"
   },
   "teams": {
     "title": "Teams",

@@ -377,9 +377,23 @@
     "pageTitle": "Palmarès — {group}",
     "description": "Palmarès du kayak-polo {group}, saison par saison.",
     "group": "Compétition",
-    "seasons": "Saisons",
-    "fullRanking": "Voir le classement complet",
-    "ranking": "Classement de la compétition"
+    "champion": "Champion {season}",
+    "streak": "{n}e titre d'affilée, depuis {since}",
+    "titles": "{rank} titre",
+    "lastSeasons": "Champions des dix dernières saisons",
+    "allSeasons": "Toutes les saisons",
+    "decade": "Années {decade}",
+    "hint": "Touchez une équipe pour surligner ses podiums.",
+    "highlighted": "Podiums de {team} surlignés.",
+    "unhighlight": "Tout afficher normalement",
+    "col": {
+      "season": "Saison",
+      "competition": "Compétition",
+      "champion": "Champion",
+      "second": "2e",
+      "third": "3e"
+    },
+    "holder": "Tenant du titre"
   },
   "teams": {
     "title": "Équipes",

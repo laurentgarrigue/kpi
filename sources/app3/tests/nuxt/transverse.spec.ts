@@ -189,31 +189,48 @@ describe('events page (PAGE_EVENTS.md)', () => {
   })
 })
 
-describe('history (PAGE_HISTORY.md)', () => {
-  it('HIS-02/HIS-03: seasons in decreasing order, finished final competitions with their podium and medals', async () => {
+describe('history (PAGE_HISTORY.md § 2 bis)', () => {
+  it('HIS-06: the title holder opens the page, with its streak and the 2nd and 3rd', async () => {
     const wrapper = await mountRoute('/history/TSTRES')
     expect(wrapper.find('h1').text()).toBe('Palmarès — Groupe Résultats')
-    expect(wrapper.findAll('[data-testid="history-season"] h2').map(title => title.text())).toEqual(['2999', '2998'])
-    const cup = wrapper.find('[data-testid="history-season"] [data-competition="RCP"]')
-    expect(cup.findAll('[data-testid="podium"] [data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
-    expect(cup.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
-    // The medal replaces the rank number: three medals, then the rank of the fourth team only.
-    expect(cup.findAll('[data-testid="podium"] li').map(item => item.find('[data-testid="podium-rank"]').exists())).toEqual([false, false, false])
-    expect(cup.findAll('[data-testid="other-ranks"] li').map(item => item.find('span').text())).toEqual(['4'])
-    expect(cup.find('details summary').text()).toBe('Voir le classement complet')
-    expect(cup.findAll('[data-testid="other-ranks"] li')).toHaveLength(1)
+    const holder = wrapper.find('[data-testid="title-holder"]')
+    expect(holder.text()).toContain('Champion 2999')
+    expect(holder.find('a[data-kind="team"]').text()).toBe('Equipe Echo')
+    expect(holder.find('a[data-kind="team"]').attributes('href')).toBe('/teams/111?season=2999&competition=RCP')
+    expect(holder.find('[data-testid="holder-titles"]').text()).toBe('1er titre')
+    expect(holder.findAll('[data-testid="holder-others"] li').map(item => item.text())).toEqual(['2e Equipe Golf', '3e Equipe Foxtrot'])
   })
 
-  it('HIS-04: links to the ranking of each competition and to each team page', async () => {
-    const cup = (await mountRoute('/history/TSTRES')).find('[data-competition="RCP"]')
-    expect(cup.find('[data-testid="history-ranking-link"]').attributes('href')).toBe('/competitions/2999/RCP/ranking')
-    expect(cup.find('[data-testid="podium"] a[data-kind="team"]').attributes('href')).toBe('/teams/111?season=2999&competition=RCP')
+  it('HIS-07: the champions of the last seasons, newest first', async () => {
+    const strip = (await mountRoute('/history/TSTRES')).findAll('[data-testid="champions-strip"] li')
+    expect(strip.map(item => [item.find('[data-testid="strip-season"]').text(), item.find('a').text()])).toEqual([['2999', 'Equipe Echo'], ['2998', 'Equipe Alpha']])
   })
 
-  it('HIS-01: the group selector is a GET form to /history; season anchors', async () => {
+  it('HIS-02 / HIS-03 / HIS-04: every season and finished final competition, with its medals and a link to its ranking', async () => {
+    const wrapper = await mountRoute('/history/TSTRES')
+    const rows = wrapper.findAll('[data-testid="history-table"] tbody tr')
+    expect(rows.map(row => row.attributes('data-competition'))).toEqual(['RCP', 'RMU', 'RCP'])
+    expect(rows[0]!.find('[data-testid="history-season"]').text()).toBe('2999')
+    expect(rows[0]!.find('[data-testid="history-season"]').attributes('rowspan')).toBe('2')
+    expect(rows[0]!.find('[data-testid="history-ranking-link"]').attributes('href')).toBe('/competitions/2999/RCP/ranking')
+    expect(rows[0]!.findAll('[data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
+    expect(rows[0]!.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
+    expect(rows[0]!.text()).not.toContain('Equipe Hotel')
+  })
+
+  it('HIS-07: touching a team highlights its podiums, and can be undone', async () => {
+    const wrapper = await mountRoute('/history/TSTRES')
+    await wrapper.find('[data-testid="history-table"] button[data-team="111"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="history-table"] [data-highlighted]')).toHaveLength(1)
+    expect(wrapper.find('[data-testid="champions-strip"] li[data-highlighted]').text()).toContain('2999')
+    await wrapper.find('[data-testid="history-unfollow"]').trigger('click')
+    expect(wrapper.findAll('[data-highlighted]')).toHaveLength(0)
+  })
+
+  it('HIS-01: the group selector is a GET form to /history; one anchor per decade', async () => {
     const wrapper = await mountRoute('/history/TSTRES')
     expect(wrapper.find('[data-testid="history-selector"]').attributes('action')).toBe('/history')
-    expect(wrapper.findAll('[data-testid="season-anchors"] a').map(link => link.attributes('href'))).toEqual(['#saison-2999', '#saison-2998'])
+    expect(wrapper.findAll('[data-testid="decade-anchors"] a').map(link => [link.text(), link.attributes('href')])).toEqual([['Années 2990', '#saison-2999']])
   })
 
   it('HIS-05: an unknown group or a group without honours is the site 404', async () => {

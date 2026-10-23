@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { clubMarkers, clubView, clubWebsite, type ClubSummary } from '../../app/utils/clubs'
-import { seasonAnchor, splitPodium, type PodiumEntry } from '../../app/utils/history'
+import { decadeAnchors, medalist, seasonAnchor, seasonFinals, teamKey, titleHolder, type History, type HistoryCompetition, type PodiumEntry } from '../../app/utils/history'
 import { searchApiPath, searchHits, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
 import { honoursBySeason, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
 
@@ -24,13 +24,51 @@ describe('team page (PAGE_TEAM.md)', () => {
   })
 })
 
-describe('history (PAGE_HISTORY.md)', () => {
-  const entry = (rank: number): PodiumEntry => ({ rank, team: { number: rank, label: `T${rank}`, logo: null }, medal: rank <= 3 ? rank as 1 | 2 | 3 : null })
+describe('history (PAGE_HISTORY.md § 2 bis)', () => {
+  const team = (label: string, number: number | null = null) => ({ number, label, logo: null })
+  const podium = (gold: string, silver = 'S', bronze = 'B'): PodiumEntry[] => [
+    { rank: 1, team: team(gold, gold.length), medal: 1 },
+    { rank: 2, team: team(silver), medal: 2 },
+    { rank: 3, team: team(bronze), medal: 3 },
+    { rank: 4, team: team('Fourth'), medal: null },
+  ]
+  const competition = (code: string, entries: PodiumEntry[]): HistoryCompetition => ({ code, display_title: code, soustitre2: null, type: 'CP', podium: entries })
+  const history = (...seasons: [string, string][]): History => ({
+    group: { code: 'N1H', libelle: 'Nationale 1', libelle_en: null },
+    seasons: seasons.map(([season, gold]) => ({
+      season,
+      competitions: [competition('QUALIF', podium('Q').map(item => ({ ...item, medal: null }))), competition('FINAL', podium(gold))],
+    })),
+  })
 
-  it('HIS-03: podium first, other ranked teams folded', () => {
-    const { top, others } = splitPodium([1, 2, 2, 4, 5].map(entry))
-    expect(top.map(item => item.rank)).toEqual([1, 2, 2])
-    expect(others.map(item => item.rank)).toEqual([4, 5])
+  it('HIS-06: the final of each season is its first competition awarding a gold medal', () => {
+    const finals = seasonFinals(history(['2026', 'Avranches'], ['2025', 'Acigné']))
+    expect(finals.map(item => [item.season, item.competition.code, medalist(item.competition, 1)?.team.label])).toEqual([
+      ['2026', 'FINAL', 'Avranches'],
+      ['2025', 'FINAL', 'Acigné'],
+    ])
+  })
+
+  it('HIS-06: the title holder, its current streak and since when, or its number of titles', () => {
+    const streak = titleHolder(seasonFinals(history(['2026', 'Avranches'], ['2025', 'Avranches'], ['2024', 'Avranches'], ['2023', 'Acigné'], ['2019', 'Avranches'])))
+    expect(streak).toMatchObject({ season: '2026', streak: 3, since: '2024', titles: 4 })
+    expect(streak?.champion.team.label).toBe('Avranches')
+    expect(streak?.others.map(item => item.rank)).toEqual([2, 3])
+    expect(titleHolder(seasonFinals(history(['2026', 'Acigné'], ['2025', 'Avranches'], ['2019', 'Acigné'])))).toMatchObject({ streak: 1, titles: 2 })
+    expect(titleHolder([])).toBeNull()
+  })
+
+  it('HIS-07: a team is the same across seasons by its number, else its name', () => {
+    expect(teamKey(team('Avranches I', 67))).toBe('67')
+    expect(teamKey(team('Avranches I'))).toBe('Avranches I')
+  })
+
+  it('HIS-01 / HIS-07: one anchor per decade, on its most recent season', () => {
+    expect(decadeAnchors(['2026', '2021', '2020', '2019', '2011', '1999'])).toEqual([
+      { decade: '2020', season: '2026' },
+      { decade: '2010', season: '2019' },
+      { decade: '1990', season: '1999' },
+    ])
     expect(seasonAnchor('2019')).toBe('saison-2019')
   })
 })
