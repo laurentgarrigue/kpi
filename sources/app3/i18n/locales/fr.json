@@ -305,7 +305,7 @@
     "noSuggestion": "Aucune suggestion"
   },
   "calendar": {
-    "title": "Calendrier des compétitions",
+    "title": "Calendrier",
     "pageTitle": "Calendrier {month}",
     "description": "Calendrier des compétitions de kayak-polo, {month}.",
     "previous": "Mois précédent",
@@ -314,7 +314,6 @@
     "filters": "Filtrer le calendrier",
     "empty": "Aucune compétition publiée ce mois-ci.",
     "nextWithEntries": "Prochain mois avec des compétitions : {month}",
-    "list": "Liste des journées",
     "grid": "Vue du mois",
     "event": "Événement : {event}",
     "subscribe": "S'abonner au calendrier",
@@ -361,7 +360,17 @@
       }
     },
     "agenda": "Dans votre agenda",
-    "agendaIntro": "Les matchs s'ajoutent à votre agenda et se mettent à jour tout seuls si les horaires changent."
+    "agendaIntro": "Les matchs s'ajoutent à votre agenda et se mettent à jour tout seuls si les horaires changent.",
+    "byWeek": "Par semaine",
+    "monthView": "Mois",
+    "views": "Affichage",
+    "weekend": "Week-end",
+    "week": "Semaine",
+    "thisWeekend": "Ce week-end",
+    "thisWeek": "Cette semaine",
+    "days": "{n} jours",
+    "placeLater": "Lieu à venir",
+    "legend": "Sections"
   },
   "history": {
     "title": "Historique et palmarès",

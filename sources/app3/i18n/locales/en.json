@@ -305,7 +305,7 @@
     "noSuggestion": "No suggestion"
   },
   "calendar": {
-    "title": "Competition calendar",
+    "title": "Calendar",
     "pageTitle": "Calendar {month}",
     "description": "Canoe polo competition calendar, {month}.",
     "previous": "Previous month",
@@ -314,7 +314,6 @@
     "filters": "Filter the calendar",
     "empty": "No published competition this month.",
     "nextWithEntries": "Next month with competitions: {month}",
-    "list": "Gamedays",
     "grid": "Month view",
     "event": "Event: {event}",
     "subscribe": "Subscribe to the calendar",
@@ -361,7 +360,17 @@
       }
     },
     "agenda": "In your calendar",
-    "agendaIntro": "The games are added to your calendar and update themselves if the times change."
+    "agendaIntro": "The games are added to your calendar and update themselves if the times change.",
+    "byWeek": "By week",
+    "monthView": "Month",
+    "views": "View",
+    "weekend": "Weekend",
+    "week": "Week",
+    "thisWeekend": "This weekend",
+    "thisWeek": "This week",
+    "days": "{n} days",
+    "placeLater": "Venue to be announced",
+    "legend": "Sections"
   },
   "history": {
     "title": "History and honours",

@@ -28,9 +28,17 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     const wrapper = await mountRoute('/calendar?month=2999-04')
     expect(api2).toHaveBeenCalledWith('/calendar?start=2999-04-01&end=2999-05-05')
     expect(wrapper.find('[data-testid="calendar-month"]').text()).toBe('avril 2999')
-    const agenda = wrapper.find('[data-testid="calendar-agenda"]')
-    expect(agenda.findAll('[data-testid="calendar-day"] time[datetime]').map(time => time.attributes('datetime'))).toEqual(['2999-04-01', '2999-04-01', '2999-04-01', '2999-04-02', '2999-04-02'])
+    const agenda = wrapper.find('[data-testid="calendar-weeks"]')
+    // CAL-12: 2999-04-01 is a Monday; the three gamedays start that week, sorted by section then start.
+    const weeks = agenda.findAll('[data-testid="calendar-week-block"]')
+    expect(weeks).toHaveLength(1)
+    expect(weeks[0]!.find('[data-testid="week-dates"]').text()).toMatch(/^1\s?–\s?2 avr\./)
+    expect(weeks[0]!.find('[data-testid="week-kind"]').text()).toBe('Semaine')
     expect(agenda.findAll('[data-gameday]').map(row => row.attributes('data-gameday'))).toEqual(['9202', '9211', '9212'])
+    // Dates differing from the block are written; none lasts three days.
+    expect(agenda.find('[data-gameday="9211"] [data-testid="entry-dates"]').text()).toBe('1 avr.')
+    expect(agenda.find('[data-gameday="9202"] [data-testid="entry-dates"]').exists()).toBe(false)
+    expect(agenda.find('[data-testid="entry-length"]').exists()).toBe(false)
     const row = agenda.find('[data-gameday="9202"]')
     // « nom de la journée - lieu (département) » is the label of the item; the competition comes after.
     expect(row.find('[data-testid="calendar-label"]').text()).toBe('RCH J2 - Rivecity (64)')
@@ -41,7 +49,7 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-03/CAL-11: a gameday leads to its event; in a single-group event, the competition link stays in the event', async () => {
-    const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-agenda"] [data-gameday="9202"]')
+    const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-weeks"] [data-gameday="9202"]')
     expect(row.find('[data-testid="calendar-competition"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-label"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-event"]').attributes('href')).toBe('/events/77')
@@ -86,7 +94,10 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-02: the month grid shows each gameday as one coloured bar spread over all its days', async () => {
-    const grid = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-grid"]')
+    const page = await mountRoute('/calendar?month=2999-04&view=month')
+    expect(page.find('[data-testid="calendar-weeks"]').exists()).toBe(false)
+    expect(page.findAll('[data-testid="calendar-legend"] [data-section]').map(item => item.text())).toEqual(['National'])
+    const grid = page.find('[data-testid="calendar-grid"]')
     // The bar carries the label of the gameday (not the competition title) and the colours of its section.
     expect(grid.find('[data-gameday="9202"]').text()).toContain('RCH J2 - Rivecity (64)')
     expect(grid.find('[data-gameday="9202"]').classes().join(' ')).toContain('bg-kpi-blue-100')
@@ -101,6 +112,18 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     // Overlapping bars never share a row; the second day of the cup reuses the free one.
     expect(bars.map(bar => bar.attributes('style')!.match(/grid-row: (\d+)/)![1])).toEqual(['2', '3', '3'])
     expect(grid.find('[data-testid="calendar-bar"]').attributes('data-section')).toBe('2')
+  })
+
+  it('CAL-13: the views are links keeping the month and the filters; the month view is kept by the navigation', async () => {
+    const wrapper = await mountRoute('/calendar?month=2999-04&section=2')
+    const views = wrapper.findAll('[data-testid="calendar-views"] a')
+    expect(views.map(view => [view.text(), view.attributes('href'), view.attributes('aria-current')])).toEqual([
+      ['Par semaine', '/calendar?section=2&month=2999-04', 'page'],
+      ['Mois', '/calendar?section=2&month=2999-04&view=month', undefined],
+    ])
+    const month = await mountRoute('/calendar?month=2999-04&view=month')
+    expect(month.find('[data-testid="next-month"]').attributes('href')).toBe('/calendar?month=2999-05&view=month')
+    expect(month.find('[data-testid="calendar-filters"] input[name="view"]').attributes('value')).toBe('month')
   })
 
   it('CAL-05: an empty month says so and links to the next month having gamedays', async () => {

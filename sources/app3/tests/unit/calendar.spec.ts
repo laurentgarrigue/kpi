@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   calendarApiPath, entriesByDate, gamedayCompetitionPath, gridRange, lookaheadRange, monthGrid, monthRange,
   nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, shiftYear, weekSegments, type CalendarEntry,
-  CALENDAR_SECTIONS, SECTION_STYLES, entrySection, groupsOfSection, reconcileFilters,
+  CALENDAR_SECTIONS, SECTION_STYLES, entrySection, groupsOfSection, reconcileFilters, calendarWeeks, parseView,
 } from '../../app/utils/calendar'
 
 function entry(id: number, start: string, end: string, type = 'CHPT'): CalendarEntry {
@@ -145,5 +145,47 @@ describe('weekSegments', () => {
 
   it('a week without gameday has no bar', () => {
     expect(weekSegments(weeks[3]!)).toEqual([])
+  })
+})
+
+describe('calendarWeeks (PAGE_CALENDAR.md § 2 bis)', () => {
+  const withSection = (item: CalendarEntry, section: number) => ({ ...item, competition: { ...item.competition, section } })
+  // October 2026: the 1st is a Thursday.
+  const entries = [
+    entry(1, '2026-09-30', '2026-10-02'),
+    withSection(entry(2, '2026-10-24', '2026-10-25'), 3),
+    withSection(entry(3, '2026-10-24', '2026-10-25'), 1),
+    entry(4, '2026-10-27', '2026-11-01'),
+    entry(5, '2026-11-07', '2026-11-08'),
+  ]
+
+  it('CAL-12: one block per week (Monday → Sunday) where a gameday starts, an earlier one in the first week', () => {
+    expect(calendarWeeks(entries, '2026-10', '2026-10-23').map(week => [week.monday, week.entries.map(item => item.entry.id)])).toEqual([
+      ['2026-09-28', [1]],
+      ['2026-10-19', [3, 2]],
+      ['2026-10-26', [4]],
+    ])
+  })
+
+  it('CAL-12: real dates of the block, weekend or week, the current one flagged', () => {
+    const [first, weekend, long] = calendarWeeks(entries, '2026-10', '2026-10-23')
+    expect(first).toMatchObject({ start: '2026-09-30', end: '2026-10-02', weekend: false, current: false })
+    expect(weekend).toMatchObject({ start: '2026-10-24', end: '2026-10-25', weekend: true, current: true })
+    expect(long).toMatchObject({ start: '2026-10-27', end: '2026-11-01', weekend: false })
+  })
+
+  it('CAL-12: a gameday of 3 days or more shows its length and dates; one whose dates differ from its block shows them', () => {
+    const [first, weekend] = calendarWeeks(entries, '2026-10', '2026-10-23')
+    expect(first!.entries[0]).toMatchObject({ days: 3, ownDates: true })
+    expect(weekend!.entries[0]).toMatchObject({ days: 2, ownDates: false })
+    const mixed = calendarWeeks([entry(6, '2026-10-24', '2026-10-25'), entry(7, '2026-10-25', '2026-10-25')], '2026-10', '2026-10-01')[0]!
+    expect(mixed.entries.map(item => item.ownDates)).toEqual([false, true])
+  })
+
+  it('CAL-13: the view of the query, the week view by default', () => {
+    expect(parseView('month')).toBe('month')
+    expect(parseView('week')).toBe('week')
+    expect(parseView(undefined)).toBe('week')
+    expect(parseView('grid')).toBe('week')
   })
 })

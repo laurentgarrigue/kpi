@@ -29,6 +29,23 @@ résultats, et ajouter une compétition à son agenda personnel.
    Outlook et Apple Calendrier (les mises à jour des journées arrivent ensuite automatiquement). Chaque événement ICS porte le même libellé que le calendrier ;
    sur chaque journée de l'onglet Infos, lien « Ajouter à mon agenda » (`/gameday/{id}.ics`).
 
+### 2 bis. Présentation (maquettes du 22/10/2026)
+
+- `<h1>` « Calendrier » (grand titre de page) ; mois en Agency FB entre les flèches ; **deux vues** en liens
+  (`view=week`, défaut, « Par semaine » / `view=month`, « Mois »), filtres conservés.
+- **Par semaine** (remplace l'agenda par date) : un bloc par semaine **lundi → dimanche** où commence au moins une
+  journée du mois (une journée commencée le mois précédent compte dans la première semaine) ; à gauche les **dates
+  réelles du bloc** (« 24–25 oct. », du premier début au dernier jour) et « Week-end » (toutes les journées commencent
+  du vendredi au dimanche et finissent dans la semaine) ou « Semaine » — « Ce week-end » / « Cette semaine » pour la
+  semaine en cours ; à droite une ligne par journée, triées par section puis début : filet coloré de la section, nom,
+  lieu, **section écrite** à droite ; une journée de **3 jours ou plus** affiche ses dates et sa durée (« 6 jours »),
+  une journée dont les dates diffèrent du bloc affiche les siennes. Liens inchangés (CAL-03, CAL-11).
+- **Mois** : grille complète **sur tous les écrans** (texte réduit sur mobile), une barre par journée sur ses jours,
+  **pointillé** à gauche quand elle continue la semaine précédente, libellé complet ; aujourd'hui en pastille rouge ;
+  jours hors du mois atténués ; **légende** des sections présentes.
+- Le bouton « S'abonner au calendrier » de la maquette attend un fichier ICS de tout le calendrier, absent d'api2 :
+  hors périmètre de cette livraison (l'abonnement reste proposé par compétition et par événement).
+
 ## 3. Données et cache
 
 `GET /calendar?start&end[&section][&group]` et `GET /calendar/groups` (groupes à proposer, toutes sections) (API_PUBLIC_TRANSVERSE.md § 3.1), une période = le mois affiché
@@ -57,6 +74,8 @@ Les fichiers ICS sont servis par api2 (URL publique), pas par app3.
   (`/events/{id}/games?competition={c}`) au lieu de la compétition ; les autres journées ne changent pas.
 - **CAL-09** — Le filtre « section » remplace le niveau ; les groupes proposés sont ceux de la section choisie ; un groupe étranger à la section est ignoré.
 - **CAL-10** — L'abonnement propose de copier le lien et un tutoriel Google / Outlook / Apple.
+- **CAL-12** — Vue par semaine (défaut) : un bloc par semaine lundi → dimanche, dates réelles et « Week-end » / « Semaine » (« Ce week-end » / « Cette semaine » en cours) ; lignes triées par section, section écrite ; durée affichée à partir de 3 jours.
+- **CAL-13** — `view=month` : grille du mois sur tous les écrans, barres continues marquées, aujourd'hui marqué, légende des sections ; les liens de vue conservent mois et filtres.
 - **CAL-07** — L'entrée de menu « Calendrier » devient interne (`ready: true`).
 
 ## 6. Décisions (09/10/2026)
