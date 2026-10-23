@@ -126,20 +126,28 @@ describe('games tab (§ 3.1)', () => {
     expect(wrapper.find('[data-game="9411"]').attributes('data-final')).toBeUndefined()
   })
 
-  it('CMP-06 / CMP-19: days are links keeping the other filters; gameday and upcoming in a GET form', async () => {
+  it('CMP-06 / CMP-19: a championship filters by gameday in a GET form, without day shortcuts', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games?gameday=9202')
     expect(wrapper.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9404', '9405'])
     expect(wrapper.find('[data-testid="games-filters"]').attributes('method')).toBe('get')
-    const days = wrapper.findAll('[data-testid="games-days"] a')
-    expect(days.map(day => day.attributes('href'))).toEqual([
-      '/competitions/2999/RCH/games?gameday=9202',
-      '/competitions/2999/RCH/games?gameday=9202&day=2999-03-01',
-      '/competitions/2999/RCH/games?gameday=9202&day=2999-04-01',
-    ])
-    expect(days[0]!.attributes('aria-current')).toBe('true')
+    expect(wrapper.find('[data-testid="games-filters"] select[name="gameday"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="games-days"]').exists()).toBe(false)
     const day = await mountRoute('/competitions/2999/RCH/games?day=2999-03-01')
     expect(day.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9401', '9402'])
-    expect(day.findAll('[data-testid="games-days"] a')[1]!.attributes('aria-current')).toBe('true')
+  })
+
+  it('CMP-06 / CMP-19: in a cup, days are links keeping the other filters', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCP/games?upcoming=1')
+    const days = wrapper.findAll('[data-testid="games-days"] a')
+    expect(days.map(day => day.attributes('href'))).toEqual([
+      '/competitions/2999/RCP/games?upcoming=1',
+      '/competitions/2999/RCP/games?upcoming=1&day=2999-04-01',
+      '/competitions/2999/RCP/games?upcoming=1&day=2999-04-02',
+    ])
+    expect(days[0]!.attributes('aria-current')).toBe('true')
+    const day = await mountRoute('/competitions/2999/RCP/games?day=2999-04-02')
+    expect(day.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9412', '9414'])
+    expect(day.findAll('[data-testid="games-days"] a')[2]!.attributes('aria-current')).toBe('true')
   })
 
   it('CMP-06: no game for the criteria', async () => {

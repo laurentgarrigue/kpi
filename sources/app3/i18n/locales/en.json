@@ -194,6 +194,11 @@
       "vertical": "Vertical"
     },
     "noProgress": "The progress will be published when the competition starts.",
+    "progressGameday": {
+      "title": "Gameday {n}",
+      "pending": "Standings to come",
+      "games": "Games of the gameday"
+    },
     "round": "Round {round}",
     "statsKinds": "Available statistics",
     "noStats": "No statistics available.",

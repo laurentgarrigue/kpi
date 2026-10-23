@@ -24,6 +24,7 @@ const followedLabel = computed(() => {
   return team?.label ?? ''
 })
 const final = (phase: ChartPhase) => isFinal({ d_phase: phase.libelle })
+const pool = (phase: ChartPhase) => phase.type === 'C' && !!phase.teams?.length
 </script>
 
 <template>
@@ -66,12 +67,17 @@ const final = (phase: ChartPhase) => isFinal({ d_phase: phase.libelle })
       </div>
     </div>
   </div>
-  <div v-else class="space-y-8" data-testid="progress-vertical">
+  <div v-else class="space-y-10" data-testid="progress-vertical">
+    <!-- CMP-26: a pool table of bounded width beside its games, laid out in bounded columns filling the row. -->
     <section v-for="phase in phases" :key="phase.d_id" class="space-y-3" data-testid="phase">
       <h3 class="text-2xl" :class="final(phase) ? 'text-medal-gold' : 'text-kpi-blue-700'">{{ phase.libelle }}</h3>
-      <ResultsPoolTable v-if="phase.type === 'C'" :phase="phase" :competition="chart.code" />
-      <div class="grid gap-x-6 sm:grid-cols-2">
-        <ResultsDuel v-for="game in phase.games ?? []" :key="game.g_id" :game="game" class="border-b border-line" />
+      <div class="grid items-start gap-x-10 gap-y-4" :class="{ 'lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]': pool(phase) }">
+        <div v-if="pool(phase)" data-testid="phase-standing">
+          <ResultsPoolTable :phase="phase" :competition="chart.code" />
+        </div>
+        <div v-if="phase.games?.length" class="grid gap-x-8 sm:grid-cols-[repeat(auto-fill,minmax(15rem,1fr))]" data-testid="phase-games">
+          <ResultsDuel v-for="game in phase.games" :key="game.g_id" :game="game" class="border-b border-line" />
+        </div>
       </div>
     </section>
   </div>

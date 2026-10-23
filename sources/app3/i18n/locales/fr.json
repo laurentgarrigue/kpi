@@ -194,6 +194,11 @@
       "vertical": "Vertical"
     },
     "noProgress": "Le déroulement sera publié au début de la compétition.",
+    "progressGameday": {
+      "title": "Journée {n}",
+      "pending": "Classement à venir",
+      "games": "Matchs de la journée"
+    },
     "round": "Tour {round}",
     "statsKinds": "Statistiques disponibles",
     "noStats": "Aucune statistique disponible.",

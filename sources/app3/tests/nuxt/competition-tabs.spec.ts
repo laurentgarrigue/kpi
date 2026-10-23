@@ -97,6 +97,13 @@ describe('progress tab (§ 3.4)', () => {
     expect(wrapper.find('[data-game="9414"]').text()).toContain('Vainqueur n° 11')
   })
 
+  it('CMP-26: in the vertical view a pool sits beside its games, laid out in a grid', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCP/progress?view=vertical')
+    const pool = wrapper.findAll('[data-testid="progress-vertical"] [data-testid="phase"]').find(phase => phase.find('[data-testid="pool-table"]').exists())!
+    expect(pool.find('[data-testid="phase-standing"]').exists()).toBe(true)
+    expect(pool.find('[data-testid="phase-games"]').exists()).toBe(true)
+  })
+
   it('CMP-24: one column per round, titled for screen readers only; the final titled in gold', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/progress')
     const rounds = wrapper.findAll('[data-testid="progress-horizontal"] > section')
@@ -116,6 +123,20 @@ describe('progress tab (§ 3.4)', () => {
     expect(wrapper.find('[data-testid="unfollow"]').text()).toBe('Ne plus suivre Equipe Echo')
     await wrapper.find('[data-testid="unfollow"]').trigger('click')
     expect(wrapper.findAll('[data-testid="progress-horizontal"] [data-followed]')).toHaveLength(0)
+  })
+})
+
+describe('championship progress (§ 3.4)', () => {
+  it('CMP-25: no view switch, one card per gameday with its dates, place, standing and games link', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCH/progress?view=vertical')
+    expect(wrapper.find('[data-testid="progress-switch"]').exists()).toBe(false)
+    const gamedays = wrapper.findAll('[data-testid="progress-gameday"]')
+    expect(gamedays.map(gameday => gameday.find('h3').text())).toEqual(['Journée 1', 'Journée 2'])
+    expect(gamedays[0]!.text()).toContain('Lacville')
+    expect(gamedays[0]!.findAll('[data-testid="pool-table"] tbody tr')).toHaveLength(4)
+    expect(gamedays[1]!.find('[data-testid="pool-table"]').exists()).toBe(false)
+    expect(gamedays[1]!.text()).toContain('Classement à venir')
+    expect(gamedays[1]!.find('a[data-testid="gameday-games"]').attributes('href')).toBe('/competitions/2999/RCH/games?gameday=9202')
   })
 })
 

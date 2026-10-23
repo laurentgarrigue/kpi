@@ -125,7 +125,8 @@ Référence visuelle : [maquettes/](maquettes/README.md) (`matchs`, `infos`, `de
 - Lien « Liste des matchs (PDF) » en tête d'onglet (§ 2.1).
 - **Filtres** (paramètres d'URL, combinables) :
   - `gameday={id}` pour un championnat (CHPT) : sélecteur des journées (libellé, lieu, dates) ;
-  - `day=YYYY-MM-DD` : **liens de jour** (« Tous », « sam. 4 »…, `aria-current`), sans JavaScript ;
+  - `day=YYYY-MM-DD` : **liens de jour** (« Tous », « sam. 4 »…, `aria-current`), sans JavaScript ; **pas pour un
+    championnat** (jours sans mois, nombreux sur la saison) : le choix de la journée suffit, `day=` reste accepté ;
   - `upcoming=1` : « Prochains matchs » = matchs dont la date/heure (Europe/Paris) est postérieure à
     **maintenant − 35 min** (règle legacy), calcul par une fonction pure.
 - Aucun match : « Aucun match publié. » ; aucun match après filtrage : « Aucun match pour ces critères. »
@@ -187,6 +188,15 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
   colonne ; poules en tableaux (Pts, J, +/−), phases éliminatoires en matchs au bloc de scores étroit (§ 2.5) ; la
   finale est titrée en or. **Toucher une équipe surligne tout son parcours** (JavaScript ; sans lui, le nom reste un
   lien vers l'équipe) ; « Ne plus suivre {équipe} » l'annule. Sur mobile (< 600 px), les tours s'empilent.
+- **Présentation verticale d'une coupe** : chaque phase de poule place son tableau (largeur bornée, colonnes
+  Pts, J, +/− espacées) **à côté** de ses matchs, disposés en grille de colonnes de largeur bornée qui occupe le
+  reste de la ligne ; une phase éliminatoire étale ses matchs sur toute la largeur. Sur mobile, tout s'empile.
+- **Championnat (`CHPT`)** : pas de bascule horizontal / vertical — les journées d'un championnat portent souvent
+  la même phase, que les deux vues fusionnaient en un seul tableau. Une seule présentation **par journée**
+  (`GET …/info` pour la liste, les dates et le lieu ; `GET …/charts` pour le classement de chaque journée, lignes
+  rattachées par `d_id`) : titre « Journée n », dates et lieu, tableau de classement de la journée (ou « Classement
+  à venir »), lien « Matchs de la journée » vers l'onglet Matchs filtré (`games?gameday={id}`). Les journées sont
+  disposées en grille de colonnes de largeur bornée.
 
 ### 3.6 Classement (`ranking`) — remplace `kpclassement.php`
 
@@ -251,12 +261,14 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-14** — Compétition inconnue ou non publiée → page 404 du site.
 - **CMP-15** — Grille de parité (§ 7) validée sur trois compétitions réelles en préprod.
 - **CMP-18** — En-tête compact : titre, saison, statut en texte, « Suivre en direct » ; pas de libellé « Compétition » ; `soustitre2` masqué s'il est égal au titre. Encart événement = carte cliquable (vignette des dates, nom, « Les N compétitions… », « Voir l'événement »).
-- **CMP-19** — Matchs : colonne des scores par journée, score perdant atténué, colonne rouge et période pour un match en cours, étiquette « Provisoire » ; logos des équipes ; jours en liens avec `aria-current` ; finale marquée en or (texte « Finale » conservé).
+- **CMP-19** — Matchs : colonne des scores par journée, score perdant atténué, colonne rouge et période pour un match en cours, étiquette « Provisoire » ; logos des équipes ; jours en liens avec `aria-current`, sauf pour un championnat qui ne propose que le choix de la journée (ses jours, sans mois et nombreux sur la saison, ne sont pas des raccourcis utiles) ; finale marquée en or (texte « Finale » conservé).
 - **CMP-20** — Codes de tirage traduits pour les équipes non attribuées d'un match à venir (« 1er poule B », « Vainqueur n° 222 »), code brut masqué une fois le match joué (fonction pure testée).
 - **CMP-21** — Classement : statut écrit ; podium 2–1–3 (logos, points, victoires) quand les rangs 1 à 3 ont une médaille ; tableau avec logos et différence signée ; colonnes secondaires masquées sur mobile.
 - **CMP-22** — Stats (buteurs) : meilleur buteur mis en avant, barres sur une échelle commune, filtre par équipe en liens (`team=`), sans le bloc mis en avant quand une équipe est choisie.
 - **CMP-23** — Infos : dates et lieu en tête, officiels en grille, équipes avec logos, podium (lien « Classement complet ») si `END`, bloc « Dans votre agenda ».
 - **CMP-24** — Déroulement horizontal : une colonne par tour sans titre visible (titre pour lecteurs d'écran), contenu centré ; toucher une équipe surligne ses apparitions (`data-followed`) et propose « Ne plus suivre ».
+- **CMP-25** — Déroulement d'un championnat : aucune bascule de vue ; une carte par journée (dans l'ordre d'api2) avec « Journée n », dates, lieu, classement de cette journée seule (rangs non répétés d'une journée à l'autre) ou « Classement à venir », et lien vers `games?gameday={id}`.
+- **CMP-26** — Déroulement vertical d'une coupe : tableau de poule et matchs côte à côte (empilés sur mobile), matchs en grille de colonnes bornées.
 - **CMP-16** — Un événement couvrant au moins 75 % des journées (ou celui du paramètre `event`) est mis en avant avec un lien vers `/events/{id}` ; les autres sont listés discrètement.
 
 ## 7. Grille de parité legacy ↔ app3 (recette)
