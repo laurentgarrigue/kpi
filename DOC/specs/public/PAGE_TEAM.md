@@ -52,7 +52,8 @@ Titre « {équipe} — kayak-polo.info » ; données structurées `SportsTeam` (
   statistiques de match ; la plus récente est sélectionnée par défaut.
 - **TEA-04** — `PAGE_LINKS.team` passe à `/teams/{number}` : tous les liens d'équipe du site sont internes.
 - **TEA-06** — Le logo du club et les couleurs s'agrandissent au survol et au focus clavier.
-- **TEA-07** — Palmarès : saisons regroupées (une cellule par saison), médaille à la place du rang, tours intermédiaires en italique avec légende.
+- **TEA-07** — Palmarès (maquettes du 22/10/2026) : une colonne saison (« Palmarès depuis {première saison} »), une ligne par compétition ; rang écrit (« 1er ») précédé de la médaille (couleur et texte) pour les podiums des tours finaux, en gras ; tours intermédiaires atténués avec la mention « phase de qualification ».
+- **TEA-08** — En-tête : logo, nom en grand, « Équipe du {club} » (lien), tenue ; décompte des médailles des tours finaux (titres, 2es places, 3es places), chiffres en Agency FB aux couleurs des médailles, toujours accompagnés de leur libellé.
 - **TEA-05** — Équipe inconnue → 404 ; l'entrée de menu « Équipes » devient interne.
 
 ## 6. Décisions (09/10/2026)

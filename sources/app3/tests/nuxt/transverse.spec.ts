@@ -252,27 +252,28 @@ describe('teams (PAGE_TEAM.md)', () => {
     expect(api2.mock.calls.map(call => call[0]).filter(path => String(path).startsWith('/teams'))).toEqual([])
   })
 
-  it('TEA-02: the team page shows its club and honours with medals and links to the rankings', async () => {
+  it('TEA-02 / TEA-08: the team page shows its club, its medals and honours with links to the rankings', async () => {
     const wrapper = await mountRoute('/teams/101')
     expect(wrapper.find('h1').text()).toBe('Equipe Alpha')
     expect(wrapper.find('[data-testid="team-club"]').attributes('href')).toBe('/clubs/C001')
-    const honours = wrapper.findAll('[data-testid="honours"] tbody tr')
+    expect(wrapper.find('[data-testid="team-club-line"]').text()).toBe('Équipe du Club Alpha Lacville')
+    expect(wrapper.findAll('[data-testid="medal-tally"] [data-tally]').map(item => [item.attributes('data-tally'), item.find('[data-testid="tally-count"]').text()])).toEqual([['1', '1'], ['2', '0'], ['3', '0']])
+    const honours = wrapper.findAll('[data-testid="honour"]')
     expect(honours.map(row => row.find('a').attributes('href'))).toEqual(['/competitions/2998/RCP/ranking', '/competitions/2998/RQL/ranking'])
     expect(honours[0]!.find('[data-medal="1"]').exists()).toBe(true)
     expect(honours[1]!.find('[data-medal]').exists()).toBe(false)
   })
 
-  it('TEA-07: the medal replaces the rank, intermediate rounds are in italic, a season is shown once', async () => {
+  it('TEA-07: medals with the rank written, intermediate rounds muted and named, a season shown once', async () => {
     const wrapper = await mountRoute('/teams/101')
+    expect(wrapper.find('#honours-title').text()).toBe('Palmarès depuis 2998')
     const [medalled, intermediate] = wrapper.findAll('[data-testid="honour"]')
-    expect(medalled!.find('[data-testid="honour-rank"]').exists()).toBe(false)
-    expect(medalled!.classes()).not.toContain('italic')
-    expect(intermediate!.classes()).toContain('italic')
-    expect(intermediate!.find('[data-testid="honour-rank"]').text()).toBe('2')
-    expect(wrapper.find('[data-testid="honours-legend"]').exists()).toBe(true)
-    const seasons = wrapper.findAll('[data-testid="honours"] tbody[data-season]')
-    expect(seasons.map(body => body.attributes('data-season'))).toEqual(['2998'])
-    expect(seasons[0]!.find('th[scope="rowgroup"]').attributes('rowspan')).toBe('2')
+    expect(medalled!.find('[data-testid="honour-rank"]').text()).toBe('1er')
+    expect(medalled!.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
+    expect(intermediate!.attributes('data-final')).toBe('false')
+    expect(intermediate!.text()).toContain('phase de qualification')
+    expect(intermediate!.find('[data-testid="honour-rank"]').text()).toBe('2e')
+    expect(wrapper.findAll('[data-testid="honours"] [data-season]').map(item => item.attributes('data-season'))).toEqual(['2998'])
   })
 
   it('TEA-06: the club logo and the colours zoom on hover and keyboard focus', async () => {

@@ -410,9 +410,6 @@
     "honours": "Honours",
     "noHonours": "No ranking in a finished competition.",
     "col": {
-      "season": "Season",
-      "competition": "Competition",
-      "rank": "Rank",
       "number": "No.",
       "player": "Player",
       "category": "Category",
@@ -432,9 +429,24 @@
       "coach": "Coach"
     },
     "pageDescription": "Honours and roster of the canoe polo team {team}.",
-    "honoursCaption": "Honours of {team}",
-    "intermediateRound": "intermediate round",
-    "intermediateLegend": "In italics: ranking of an intermediate round (qualification, pool…), not a final ranking."
+    "clubLine": "Team of {club}",
+    "honoursSince": "Honours since {season}",
+    "tally": {
+      "1": {
+        "label": "titles",
+        "detail": "1st places"
+      },
+      "2": {
+        "label": "second places",
+        "detail": "silver medals"
+      },
+      "3": {
+        "label": "third places",
+        "detail": "bronze medals"
+      }
+    },
+    "qualification": "qualification round",
+    "medals": "Medals"
   },
   "clubs": {
     "title": "Clubs",

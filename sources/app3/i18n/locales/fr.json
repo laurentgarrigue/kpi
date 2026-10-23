@@ -410,9 +410,6 @@
     "honours": "Palmarès",
     "noHonours": "Aucun classement dans une compétition terminée.",
     "col": {
-      "season": "Saison",
-      "competition": "Compétition",
-      "rank": "Rang",
       "number": "N°",
       "player": "Joueur",
       "category": "Catégorie",
@@ -432,9 +429,24 @@
       "coach": "Entraîneur"
     },
     "pageDescription": "Palmarès et composition de l'équipe de kayak-polo {team}.",
-    "honoursCaption": "Palmarès de {team}",
-    "intermediateRound": "tour intermédiaire",
-    "intermediateLegend": "En italique : classement d'un tour intermédiaire (qualification, poule…), pas un classement final."
+    "clubLine": "Équipe du {club}",
+    "honoursSince": "Palmarès depuis {season}",
+    "tally": {
+      "1": {
+        "label": "titres",
+        "detail": "1res places"
+      },
+      "2": {
+        "label": "deuxièmes places",
+        "detail": "médailles d'argent"
+      },
+      "3": {
+        "label": "troisièmes places",
+        "detail": "médailles de bronze"
+      }
+    },
+    "qualification": "phase de qualification",
+    "medals": "Médailles"
   },
   "clubs": {
     "title": "Clubs",

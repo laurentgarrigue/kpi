@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { clubMarkers, clubView, clubWebsite, type ClubSummary } from '../../app/utils/clubs'
 import { decadeAnchors, medalist, seasonAnchor, seasonFinals, teamKey, titleHolder, type History, type HistoryCompetition, type PodiumEntry } from '../../app/utils/history'
 import { searchApiPath, searchHits, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
-import { honoursBySeason, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
+import { honoursBySeason, medalTally, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
 
 describe('team page (PAGE_TEAM.md)', () => {
   const seasons = [
@@ -16,6 +16,11 @@ describe('team page (PAGE_TEAM.md)', () => {
     expect(selectedRoster(seasons, { season: '2998', competition: 'RCH' })).toEqual({ season: '2999', competition: 'RCH' })
     expect(selectedRoster(seasons, {})).toEqual({ season: '2999', competition: 'RCH' })
     expect(selectedRoster([], { season: '2999', competition: 'RCH' })).toBeNull()
+  })
+
+  it('TEA-08: medals of final rounds only, by colour', () => {
+    const honour = (medal: 1 | 2 | 3 | null, final: boolean): TeamHonour => ({ season: '2999', competition: { code: 'X', display_title: 'X', group: null }, rank: medal ?? 5, medal, final_round: final })
+    expect(medalTally([honour(1, true), honour(1, true), honour(2, true), honour(1, false), honour(null, true)])).toEqual({ 1: 2, 2: 1, 3: 0 })
   })
 
   it('players are written « NOM Prénom »', () => {
