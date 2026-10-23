@@ -108,7 +108,6 @@
     "noCompetition": "Aucune compétition publiée pour ce groupe.",
     "allGroupGames": "Tous les matchs du groupe",
     "noRanking": "Classement non disponible",
-    "seeAll": "Voir tout",
     "seeMore": "Voir plus",
     "competitionStatus": {
       "ATT": "À venir",
@@ -132,7 +131,7 @@
     "partOfEvent": "{scope} fait partie de l'événement",
     "seeEvent": "Voir l'événement",
     "alsoInEvents": "Également dans :",
-    "events": "Événements :",
+    "events": "Joué pendant :",
     "competitions": "Compétitions",
     "allCompetitions": "Toutes",
     "tabs": "Onglets",
@@ -287,7 +286,8 @@
     "numberShort": "n° {number}",
     "allPitches": "Tous les terrains",
     "pitches": "Terrains",
-    "podiumLater": "Le classement sera publié à la fin de la compétition."
+    "podiumLater": "Le classement sera publié à la fin de la compétition.",
+    "fullRankingCount": "Classement complet ({n} équipes)"
   },
   "stats": {
     "scorers": {

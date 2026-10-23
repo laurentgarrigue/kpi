@@ -67,12 +67,13 @@ PAGE_COMPETITION.md) — les classements changent au plus après chaque journée
 - **CPL-02** — Sans paramètre `group`, le groupe par défaut est le premier de la section nationale (sinon le premier).
 - **CPL-03** — Les groupes sont regroupés par section, dans l'ordre d'api2, avec le libellé anglais sous `/en` s'il existe.
 - **CPL-04** — Une carte par compétition, dans l'ordre défini (`GroupOrder`) puis l'ordre du tour (`Code_tour`), avec titre, badge statut (pas de badge type) et lien vers sa page.
-- **CPL-05** — Le classement compact affiche au plus 8 équipes, puis « Voir tout » déplie le reste.
+- **CPL-05** — Le classement résumé affiche les 5 premières équipes (logo, points), puis le lien « Classement complet ({n} équipes) » vers l'onglet Classement (maquettes du 22/10/2026).
 - **CPL-06** — Les rangs qualifiés et éliminés sont marqués visuellement **et** textuellement.
 - **CPL-07** — Compétition sans classement → « Classement non disponible » ; groupe vide → message dédié.
 - **CPL-08** — Le formulaire de sélection fonctionne sans JavaScript (requête GET).
-- **CPL-09** — L'entrée de menu « Compétitions et résultats » et le bouton de l'accueil pointent vers `/competitions`.
+- **CPL-09** — L'entrée de menu « Compétitions et résultats » pointe vers `/competitions` (le bouton de l'accueil est retiré, HOME-02).
 - **CPL-10** — Compétition terminée du tour final : les rangs 1 à 3 portent une médaille (visuelle **et** textuelle) au lieu de la marque « qualifié ».
+- **CPL-12** — Grand écran : index des groupes par section à gauche (liens `?group=`, groupe courant marqué, saison au-dessus) ; mobile : saison et groupe en listes déroulantes. À droite : nom du groupe en grand, « Tous les matchs du groupe », événements, cartes (filet marine, titre, statut écrit — rouge en cours).
 - **CPL-11** — Un événement couvrant tout le groupe est mis en avant avec un bouton vers `/events/{id}` ; sinon les événements liés sont listés discrètement ; aucun → rien.
 
 ## 6. Hors périmètre

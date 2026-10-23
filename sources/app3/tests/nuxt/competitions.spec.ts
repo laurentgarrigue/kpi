@@ -30,7 +30,7 @@ describe('competitions list (PAGE_COMPETITIONS.md)', () => {
     const list = await cards('/competitions/2999?group=TSTRES')
     expect(list.map(card => card.attributes('data-competition'))).toEqual(['RCH', 'RCP', 'RMU', 'RAT'])
     expect(list[1]!.find('h2 a').attributes('href')).toBe('/competitions/2999/RCP')
-    expect(list[1]!.find('h2').text()).toBe('Phase finale')
+    expect(list[1]!.find('h2 a').text()).toBe('Phase finale')
     expect(list[1]!.text()).not.toContain('Coupe')
     expect(list[1]!.text()).toContain('Terminé')
   })
@@ -44,6 +44,22 @@ describe('competitions list (PAGE_COMPETITIONS.md)', () => {
     expect(championship.findAll('[data-mark="qualified"]')).toHaveLength(1)
     expect(championship.findAll('[data-mark="eliminated"]')).toHaveLength(1)
     expect(championship.find('[data-mark="qualified"]').text()).toBe('Qualifié')
+  })
+
+  it('CPL-05: the five first teams, then a link to the full ranking', async () => {
+    const championship = (await cards('/competitions/2999?group=TSTRES'))[0]!
+    expect(championship.findAll('[data-testid="ranking-row"]').length).toBeLessThanOrEqual(5)
+    const all = championship.find('[data-testid="full-ranking"]')
+    expect(all.attributes('href')).toBe('/competitions/2999/RCH/ranking')
+    expect(all.text()).toBe('Classement complet (4 équipes)')
+  })
+
+  it('CPL-12: an index of the groups by section, as links, the current one marked', async () => {
+    const index = (await mountRoute('/competitions/2999?group=TSTRES')).find('[data-testid="group-index"]')
+    expect(index.findAll('h2').map(title => title.text())).toEqual(['Compétitions internationales', 'Compétitions nationales'])
+    const current = index.find('a[aria-current="page"]')
+    expect(current.attributes('href')).toBe('/competitions/2999?group=TSTRES')
+    expect((await mountRoute('/competitions/2999?group=TSTRES')).find('[data-testid="group-title"]').text()).toBe('Groupe Résultats')
   })
 
   it('CPL-07: a competition without ranking says so', async () => {

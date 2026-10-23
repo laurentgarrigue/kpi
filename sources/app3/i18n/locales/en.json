@@ -108,7 +108,6 @@
     "noCompetition": "No competition published for this group.",
     "allGroupGames": "All games of the group",
     "noRanking": "Ranking not available",
-    "seeAll": "See all",
     "seeMore": "See more",
     "competitionStatus": {
       "ATT": "Upcoming",
@@ -132,7 +131,7 @@
     "partOfEvent": "{scope} is part of the event",
     "seeEvent": "See the event",
     "alsoInEvents": "Also in:",
-    "events": "Events:",
+    "events": "Played during:",
     "competitions": "Competitions",
     "allCompetitions": "All",
     "tabs": "Tabs",
@@ -287,7 +286,8 @@
     "numberShort": "no. {number}",
     "allPitches": "All pitches",
     "pitches": "Pitches",
-    "podiumLater": "The ranking will be published at the end of the competition."
+    "podiumLater": "The ranking will be published at the end of the competition.",
+    "fullRankingCount": "Full ranking ({n} teams)"
   },
   "stats": {
     "scorers": {
