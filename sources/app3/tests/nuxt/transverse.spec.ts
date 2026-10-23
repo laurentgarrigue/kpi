@@ -414,6 +414,24 @@ describe('global search (FEATURE_SEARCH.md)', () => {
     expect((await mountRoute('/search?q=alpha')).text()).not.toContain('Ann')
   })
 
+  it('SRC-07: filters by kind with their count; the first club is the best match, shown on the map', async () => {
+    const wrapper = await mountRoute('/search?q=alpha')
+    const kinds = wrapper.findAll('[data-testid="search-kinds"] a')
+    expect(kinds.map(kind => [kind.text().replace(/\s+/g, ' '), kind.attributes('href'), kind.attributes('aria-current')])).toEqual([
+      ['Tout 4', '/search?q=alpha', 'page'],
+      ['Événements 1', '/search?q=alpha&kind=events', undefined],
+      ['Équipes 2', '/search?q=alpha&kind=teams', undefined],
+      ['Clubs 1', '/search?q=alpha&kind=clubs', undefined],
+    ])
+    const best = wrapper.find('[data-testid="search-best"]')
+    expect(best.text()).toContain('Club Alpha Lacville')
+    expect(best.find('a').attributes('href')).toBe('/clubs?club=C001')
+    expect(wrapper.find('[data-category="clubs"]').exists()).toBe(false)
+    const teams = await mountRoute('/search?q=alpha&kind=teams')
+    expect(teams.findAll('[data-category]').map(section => section.attributes('data-category'))).toEqual(['teams'])
+    expect(teams.find('[data-testid="search-best"]').exists()).toBe(false)
+  })
+
   it('SRC-05: too short, no result and too many requests each have their message', async () => {
     expect((await mountRoute('/search?q=a')).find('[data-testid="search-min-length"]').exists()).toBe(true)
     expect((await mountRoute('/search?q=zzz')).find('[data-testid="search-no-result"]').text()).toContain('Aucun résultat pour « zzz »')

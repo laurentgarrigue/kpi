@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { clubMarkers, clubView, clubWebsite, type ClubSummary } from '../../app/utils/clubs'
 import { decadeAnchors, medalist, seasonAnchor, seasonFinals, teamKey, titleHolder, type History, type HistoryCompetition, type PodiumEntry } from '../../app/utils/history'
-import { searchApiPath, searchHits, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
+import { searchApiPath, searchHits, searchKinds, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
 import { honoursBySeason, medalTally, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
 
 describe('team page (PAGE_TEAM.md)', () => {
@@ -115,12 +115,25 @@ describe('global search (FEATURE_SEARCH.md)', () => {
 
   it('SRC-03: one section per non-empty category, each hit linking to its site page', () => {
     expect(searchSections(results).map(section => section.category)).toEqual(['competitions', 'events', 'clubs', 'news', 'pages'])
-    expect(searchHits(results, 'competitions')[0]).toEqual({ key: 'c-2999-RCH', label: 'Championnat Résultats', detail: 'Poule A · 2999', to: '/competitions/2999/RCH' })
+    expect(searchHits(results, 'competitions')[0]).toEqual({ key: 'c-2999-RCH', label: 'Championnat Résultats', detail: 'Poule A', aside: '2999', to: '/competitions/2999/RCH' })
     expect(searchHits(results, 'events')[0]!.to).toBe('/events/77')
     expect(searchHits(results, 'clubs')[0]!.to).toBe('/clubs/C001')
     // CMS-11: news and editorial pages (phase 4).
-    expect(searchHits(results, 'news')[0]).toEqual({ key: 'n-finale', label: 'Finale', detail: 'Le chapô.', to: '/news/finale' })
+    expect(searchHits(results, 'news')[0]).toEqual({ key: 'n-finale', label: 'Finale', detail: 'Le chapô.', aside: 'juin 2020', to: '/news/finale' })
+    expect(searchHits(results, 'clubs')[0]!.aside).toBe('C001')
     expect(searchHits(results, 'pages')[0]!.to).toBe('/le-kayak-polo/arbitrage')
+  })
+
+  it('SRC-07: one filter per non-empty category with its count; the first club is the best match, not repeated below', () => {
+    const all = searchKinds(results, null)
+    expect(all.counts).toEqual([['competitions', 1], ['events', 1], ['clubs', 1], ['news', 1], ['pages', 1]])
+    expect(all.total).toBe(5)
+    expect(all.best?.code).toBe('C001')
+    expect(all.sections.map(section => section.category)).toEqual(['competitions', 'events', 'news', 'pages'])
+    const clubs = searchKinds(results, 'clubs')
+    expect(clubs.best).toBeNull()
+    expect(clubs.sections.map(section => section.category)).toEqual(['clubs'])
+    expect(searchKinds(results, 'teams').sections).toEqual([])
   })
 })
 

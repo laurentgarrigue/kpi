@@ -35,7 +35,11 @@ describe('form page (FEATURE_FORMS.md § 3)', () => {
     expect(form.find('#field-email').attributes()).toMatchObject({ type: 'email', name: 'email', autocomplete: 'email' })
     expect(form.find('#field-phone').attributes('type')).toBe('tel')
     expect(form.find('#field-players').attributes()).toMatchObject({ type: 'number', min: '5', max: '10' })
-    expect(form.find('label[for="field-email"]').text()).toBe('E-mail *')
+    // FRM-12: optional fields say so; required ones carry nothing more than their label.
+    expect(form.find('label[for="field-email"]').text()).toBe('E-mail')
+    expect(form.find('label[for="field-phone"]').text()).toBe('Téléphone facultatif')
+    expect(form.find('#field-email').attributes('required')).toBeDefined()
+    expect(form.find('[data-field="players"] [data-step="1"]').exists()).toBe(true)
     expect(form.findAll('#field-club option').map(option => option.attributes('value'))).toContain('C001')
     expect(form.find('[data-testid="form-privacy"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="form-privacy"]').text()).toContain('90 jours')

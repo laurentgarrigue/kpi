@@ -48,4 +48,5 @@ suggestions annoncées par une région `aria-live`.
 - **SRC-03** — La page affiche une section par catégorie non vide, 8 résultats au plus, liens vers les pages du
   site.
 - **SRC-04** — Aucune personne n'apparaît dans les résultats.
+- **SRC-07** — Page de résultats (maquettes du 22/10/2026) : grand champ de recherche ; filtres par type en liens (`kind=`) avec leur nombre, « Tout » d'abord ; sans filtre, le **premier club** est le meilleur résultat, en tête (logo, « Club, {code} », nom, département, « Voir sur la carte » → `/clubs?club={code}`) et n'est pas répété ; une ligne par résultat avec une information à droite (saison, dates, code, mois de publication).
 - **SRC-05** — `q` trop court, aucun résultat et 429 ont chacun leur message ; la page n'est jamais indexée.

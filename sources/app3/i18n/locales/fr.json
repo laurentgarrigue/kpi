@@ -487,7 +487,12 @@
       "news": "Actualités",
       "pages": "Pages"
     },
-    "label": "Rechercher sur le site"
+    "label": "Rechercher sur le site",
+    "all": "Tout",
+    "kinds": "Type de résultat",
+    "best": "Meilleur résultat",
+    "clubCode": "Club, {code}",
+    "showOnMap": "Voir sur la carte"
   },
   "events": {
     "title": "Événements",
@@ -545,7 +550,7 @@
     "linkedNews": "Actualités"
   },
   "content": {
-    "toc": "Sommaire",
+    "toc": "Sur cette page",
     "children": "Dans cette rubrique",
     "preview": "Prévisualisation : cette page n'est pas publiée."
   },
@@ -559,8 +564,7 @@
     },
     "places": "{confirmed} / {capacity} places confirmées",
     "manual": "Chaque inscription est confirmée par l'organisateur (par exemple à réception du paiement).",
-    "required": "obligatoire",
-    "requiredHint": "Les champs marqués d'un astérisque (*) sont obligatoires.",
+    "requiredHint": "Les champs sont obligatoires sauf mention « facultatif ».",
     "choose": "Choisir…",
     "submit": "Envoyer l'inscription",
     "honeypot": "Ne pas remplir ce champ",
@@ -600,7 +604,10 @@
     "noEntries": "Aucune inscription.",
     "count": "{count} inscription | {count} inscriptions",
     "attached": "Inscriptions",
-    "register": "S'inscrire"
+    "register": "S'inscrire",
+    "optional": "facultatif",
+    "less": "Moins",
+    "more": "Plus"
   },
   "theme": {
     "label": "Thème",

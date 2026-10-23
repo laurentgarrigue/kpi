@@ -487,7 +487,12 @@
       "news": "News",
       "pages": "Pages"
     },
-    "label": "Search the site"
+    "label": "Search the site",
+    "all": "All",
+    "kinds": "Kind of result",
+    "best": "Best match",
+    "clubCode": "Club, {code}",
+    "showOnMap": "Show on the map"
   },
   "events": {
     "title": "Events",
@@ -545,7 +550,7 @@
     "linkedNews": "News"
   },
   "content": {
-    "toc": "Contents",
+    "toc": "On this page",
     "children": "In this section",
     "preview": "Preview: this page is not published."
   },
@@ -559,8 +564,7 @@
     },
     "places": "{confirmed} / {capacity} places confirmed",
     "manual": "Each registration is confirmed by the organiser (for instance once the payment is received).",
-    "required": "required",
-    "requiredHint": "Fields marked with an asterisk (*) are required.",
+    "requiredHint": "Every field is required unless marked « optional ».",
     "choose": "Choose…",
     "submit": "Send the registration",
     "honeypot": "Leave this field empty",
@@ -600,7 +604,10 @@
     "noEntries": "No registration.",
     "count": "{count} registration | {count} registrations",
     "attached": "Registration",
-    "register": "Register"
+    "register": "Register",
+    "optional": "optional",
+    "less": "Less",
+    "more": "More"
   },
   "theme": {
     "label": "Theme",
