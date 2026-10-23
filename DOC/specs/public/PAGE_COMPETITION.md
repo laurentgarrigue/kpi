@@ -188,15 +188,17 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
   colonne ; poules en tableaux (Pts, J, +/−), phases éliminatoires en matchs au bloc de scores étroit (§ 2.5) ; la
   finale est titrée en or. **Toucher une équipe surligne tout son parcours** (JavaScript ; sans lui, le nom reste un
   lien vers l'équipe) ; « Ne plus suivre {équipe} » l'annule. Sur mobile (< 600 px), les tours s'empilent.
-- **Présentation verticale d'une coupe** : chaque phase de poule place son tableau (largeur bornée, colonnes
-  Pts, J, +/− espacées) **à côté** de ses matchs, disposés en grille de colonnes de largeur bornée qui occupe le
-  reste de la ligne ; une phase éliminatoire étale ses matchs sur toute la largeur. Sur mobile, tout s'empile.
+- **Présentation verticale d'une coupe** : par phase, tableau de classement **au-dessus** de ses matchs (deux
+  colonnes de matchs à partir de `sm`). Le tableau occupe toute la largeur et **répartit** ses colonnes : rang et
+  logo étroits, équipe extensible, Pts, J et +/− en colonnes de largeur proportionnelle, centrées. Toucher une
+  équipe surligne son parcours, comme dans la vue horizontale.
 - **Championnat (`CHPT`)** : pas de bascule horizontal / vertical — les journées d'un championnat portent souvent
   la même phase, que les deux vues fusionnaient en un seul tableau. Une seule présentation **par journée**
   (`GET …/info` pour la liste, les dates et le lieu ; `GET …/charts` pour le classement de chaque journée, lignes
   rattachées par `d_id`) : titre « Journée n », dates et lieu, tableau de classement de la journée (ou « Classement
   à venir »), lien « Matchs de la journée » vers l'onglet Matchs filtré (`games?gameday={id}`). Les journées sont
-  disposées en grille de colonnes de largeur bornée.
+  disposées en grille de colonnes de largeur bornée. Toucher une équipe surligne sa **progression au fil des
+  journées** (sa ligne dans chaque classement), « Ne plus suivre {équipe} » l'annule.
 
 ### 3.6 Classement (`ranking`) — remplace `kpclassement.php`
 
@@ -267,8 +269,8 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-22** — Stats (buteurs) : meilleur buteur mis en avant, barres sur une échelle commune, filtre par équipe en liens (`team=`), sans le bloc mis en avant quand une équipe est choisie.
 - **CMP-23** — Infos : dates et lieu en tête, officiels en grille, équipes avec logos, podium (lien « Classement complet ») si `END`, bloc « Dans votre agenda ».
 - **CMP-24** — Déroulement horizontal : une colonne par tour sans titre visible (titre pour lecteurs d'écran), contenu centré ; toucher une équipe surligne ses apparitions (`data-followed`) et propose « Ne plus suivre ».
-- **CMP-25** — Déroulement d'un championnat : aucune bascule de vue ; une carte par journée (dans l'ordre d'api2) avec « Journée n », dates, lieu, classement de cette journée seule (rangs non répétés d'une journée à l'autre) ou « Classement à venir », et lien vers `games?gameday={id}`.
-- **CMP-26** — Déroulement vertical d'une coupe : tableau de poule et matchs côte à côte (empilés sur mobile), matchs en grille de colonnes bornées.
+- **CMP-25** — Déroulement d'un championnat : aucune bascule de vue ; une carte par journée (dans l'ordre d'api2) avec « Journée n », dates, lieu, classement de cette journée seule (rangs non répétés d'une journée à l'autre) ou « Classement à venir », et lien vers `games?gameday={id}` ; toucher une équipe surligne sa ligne dans chaque journée (`data-followed`) et propose « Ne plus suivre ».
+- **CMP-26** — Déroulement vertical d'une coupe : tableau de poule au-dessus de ses matchs, colonnes Pts, J, +/− réparties sur la largeur (`data-spread`) ; toucher une équipe surligne son parcours (tableaux et matchs) et propose « Ne plus suivre ».
 - **CMP-16** — Un événement couvrant au moins 75 % des journées (ou celui du paramètre `event`) est mis en avant avec un lien vers `/events/{id}` ; les autres sont listés discrètement.
 
 ## 7. Grille de parité legacy ↔ app3 (recette)

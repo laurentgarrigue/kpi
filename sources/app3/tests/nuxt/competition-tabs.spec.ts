@@ -97,11 +97,17 @@ describe('progress tab (§ 3.4)', () => {
     expect(wrapper.find('[data-game="9414"]').text()).toContain('Vainqueur n° 11')
   })
 
-  it('CMP-26: in the vertical view a pool sits beside its games, laid out in a grid', async () => {
+  it('CMP-26: in the vertical view a pool table spreads its columns above its games, and a touched team is followed', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/progress?view=vertical')
-    const pool = wrapper.findAll('[data-testid="progress-vertical"] [data-testid="phase"]').find(phase => phase.find('[data-testid="pool-table"]').exists())!
-    expect(pool.find('[data-testid="phase-standing"]').exists()).toBe(true)
-    expect(pool.find('[data-testid="phase-games"]').exists()).toBe(true)
+    const vertical = wrapper.find('[data-testid="progress-vertical"]')
+    expect(vertical.find('[data-testid="pool-table"]').attributes('data-spread')).toBeDefined()
+    await vertical.find('button[data-team="111"]').trigger('click')
+    // Its pool row, its pool game and the final (the vertical view also lists the games of the pools).
+    expect(wrapper.findAll('[data-testid="progress-vertical"] [data-followed]').length).toBe(3)
+    expect(wrapper.find('[data-testid="progress-vertical"]').attributes('data-following')).toBeDefined()
+    expect(wrapper.find('[data-testid="unfollow"]').text()).toBe('Ne plus suivre Equipe Echo')
+    await wrapper.find('[data-testid="unfollow"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="progress-vertical"] [data-followed]')).toHaveLength(0)
   })
 
   it('CMP-24: one column per round, titled for screen readers only; the final titled in gold', async () => {
@@ -137,6 +143,18 @@ describe('championship progress (§ 3.4)', () => {
     expect(gamedays[1]!.find('[data-testid="pool-table"]').exists()).toBe(false)
     expect(gamedays[1]!.text()).toContain('Classement à venir')
     expect(gamedays[1]!.find('a[data-testid="gameday-games"]').attributes('href')).toBe('/competitions/2999/RCH/games?gameday=9202')
+  })
+
+  it('CMP-25: touching a team highlights its row in every gameday, and can be undone', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCH/progress')
+    const button = wrapper.find('[data-testid="progress-gameday"] button[data-team]')
+    const label = button.text()
+    await button.trigger('click')
+    expect(wrapper.find('[data-testid="progress-gamedays"]').attributes('data-following')).toBeDefined()
+    expect(wrapper.findAll('[data-testid="progress-gamedays"] [data-followed]').map(row => row.text())).toEqual([expect.stringContaining(label)])
+    expect(wrapper.find('[data-testid="unfollow"]').text()).toBe(`Ne plus suivre ${label}`)
+    await wrapper.find('[data-testid="unfollow"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="progress-gamedays"] [data-followed]')).toHaveLength(0)
   })
 })
 
