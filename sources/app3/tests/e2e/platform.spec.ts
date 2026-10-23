@@ -210,7 +210,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await $fetch<string>('/calendar?month=2999-04')).toContain('Championnat Résultats')
     expect(await $fetch<string>('/history/TSTRES')).toContain('Equipe Echo')
     expect(await $fetch<string>('/teams/101')).toContain('ALPHA Ann')
-    expect(await $fetch<string>('/clubs')).toContain('Club Alpha Lacville')
+    expect(await $fetch<string>('/clubs?club=C001')).toContain('Club Alpha Lacville')
   })
 
   it('HIS-05/TEA-05/CLB-03: unknown history group, team or club is a 404 page', async () => {
@@ -233,7 +233,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
   // every prefetch a 404 (and the cached payload useless).
   it('PLT-07: the payload of every cached page is served (link prefetch does not end in 404)', async () => {
     const pages = [
-      '/', '/calendar', '/history/TSTRES', '/teams', '/teams/101', '/clubs', '/clubs/C001',
+      '/', '/calendar', '/history/TSTRES', '/teams/101', '/clubs', '/clubs/C001',
       '/competitions/2999', '/competitions/2999/RCH/games', '/events/77/games', '/events/77/ranking', '/groups/2999/TSTRES/games',
     ]
     for (const page of pages) {
@@ -272,7 +272,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
 
   it('CNT-02: a child page under another path redirects (301) to its path', async () => {
     expect(await location('/arbitrage')).toEqual([301, '/le-kayak-polo/arbitrage'])
-    expect(await $fetch<string>('/le-kayak-polo')).toContain('Sommaire')
+    expect(await $fetch<string>('/le-kayak-polo')).toContain('Sur cette page')
   })
 
   it('CMS-09: old WordPress permalinks redirect (301) to their new page', async () => {

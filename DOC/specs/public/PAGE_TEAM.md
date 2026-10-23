@@ -37,7 +37,8 @@ Les noms d'équipes des pages de résultats (PAGE_COMPETITION.md § 2.1, `PAGE_L
 ## 3. Données et cache
 
 `GET /teams?q=`, `GET /team/{number}`, `GET /team/{number}/roster/{season}/{code}` (API_PUBLIC_TRANSVERSE.md
-§ 3.4). Cache `maxAge: 300, swr: true`.
+§ 3.4). Cache `maxAge: 300, swr: true` sur `/teams/{number}` ; `/teams` (redirection vers `/clubs`) n'est pas mis
+en cache.
 
 ## 4. SEO et accessibilité
 

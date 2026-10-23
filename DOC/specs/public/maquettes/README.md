@@ -70,17 +70,32 @@ design.
 | `contenu` | `/{slug}` | [PAGE_CONTENT](../PAGE_CONTENT.md) | Colonne de lecture, sommaire « Sur cette page » qui suit la lecture (au-dessus du texte sur mobile). |
 | `formulaire` | `/forms/{slug}` | [FEATURE_FORMS](../FEATURE_FORMS.md) | Champs groupés en sections, quantités avec boutons − / +, récapitulatif et total en direct (barre collante en bas sur mobile). |
 
+## Implémentation (branche `app3_design`, 23/10/2026)
+
+Toutes les pages du tableau sont implémentées dans app3, spec d'abord (critères ajoutés ou révisés dans chaque
+`PAGE_*.md`, repérés « maquettes du 22/10/2026 »), tests nommés d'après ces critères. Écarts assumés :
+
+- **Codes de tirage** : la maquette lit `[1E-1F/2B-2C]` en coupant sur `/` ; l'implémentation suit
+  `MatchLabelParser` d'api2, la référence (un code par côté, A d'abord : `[1E-1F]` → « 1er poule E », « 1er poule F »).
+- **Carte des clubs** : la décision Q-P3-5 (tuiles chargées après un clic) est conservée tant que le point RGPD
+  ci-dessous n'est pas tranché.
+- **Formulaire** : sections et récapitulatif avec total non implémentés (données absentes, cf. ci-dessous) ; champs
+  sur deux colonnes, « facultatif », choix en cartes et quantités − / + le sont.
+- **Calendrier** : pas de bouton « S'abonner au calendrier » global (api2 n'a pas d'ICS de tout le calendrier).
+- **Palmarès** : les noms d'équipes du tableau surlignent les podiums ; les liens vers les fiches d'équipe sont dans
+  le bandeau du tenant du titre et la frise.
+
 ## Points à traiter côté données et API
 
 Relevés en construisant les maquettes ; les maquettes les contournent, l'implémentation doit les régler à la source.
 
-- **Logos absents** de `ranking`, `info` et `history` (`logo: null`) : les maquettes les reprennent des matchs
-  ou de `/team/{n}`.
-- **Équipes fictives dans les clubs** : les tournois créent des équipes « (1er Poule A) », « 2ème poule haute »…
-  que `/club/{code}` renvoie avec les vraies.
-- **Noms en capitales** (clubs, comités) : reformatés pour l'affichage (« Canoe Club d'Avranches »,
-  `titleCase` dans `maquette.js`).
-- **Entités HTML** dans certains libellés (« Coupe d&#039;Europe »).
+- ✅ **Logos absents** de `ranking`, `info` et `history` : api2 prend désormais le logo du club quand l'équipe n'en a
+  pas, comme pour les matchs (`TeamLogos`).
+- **Équipes fictives dans les clubs** : les tournois créent des équipes « (1er Poule A) », « Vainqueur match 21 »…
+  que `/club/{code}` renvoie avec les vraies. app3 les masque (`isPlaceholderTeam`) ; à régler dans api2.
+- ✅ **Noms en capitales** (clubs, comités) : reformatés pour l'affichage par app3 (`titleCase`, `committeeName`).
+- **Entités HTML** dans certains libellés (« Coupe d&#039;Europe ») : décodées par app3 pour les noms de personnes
+  (`personName`) ; les autres libellés restent à corriger à la source.
 - **Officiels répétés** dans chaque journée de `info`, casse des noms variable.
 - **Lien événement ↔ compétitions** : l'accueil rattache les compétitions à l'événement par leurs dates ; un
   vrai lien côté API serait plus sûr.

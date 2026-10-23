@@ -78,7 +78,8 @@ export default defineNuxtConfig({
       ...cachedPage(`${prefix}/calendar`, SLOW_CACHE),
       [`${prefix}/history`, NO_CACHE],
       ...cachedPage(`${prefix}/history/*`, LONG_CACHE),
-      ...cachedPage(`${prefix}/teams`, SLOW_CACHE),
+      // `/teams` redirects to the clubs and teams page with its query (PAGE_TEAM.md § 2.1).
+      [`${prefix}/teams`, NO_CACHE],
       ...cachedPage(`${prefix}/teams/*`, SLOW_CACHE),
       ...cachedPage(`${prefix}/clubs`, LONG_CACHE),
       ...cachedPage(`${prefix}/clubs/*`, LONG_CACHE),
