@@ -168,6 +168,11 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await location('/competitions/2999/RCH?event=77')).toEqual([302, '/competitions/2999/RCH/games?event=77'])
   })
 
+  it('CLB-01: the team search is on the clubs and teams page', async () => {
+    expect(await location('/teams?q=alpha')).toEqual([301, '/clubs?q=alpha'])
+    expect(await location('/en/teams')).toEqual([301, '/en/clubs'])
+  })
+
   it('EVT-01/GRP-01: an event opens on its competitions, a group on its games', async () => {
     expect(await location('/events/77')).toEqual([302, '/events/77/competitions'])
     expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])

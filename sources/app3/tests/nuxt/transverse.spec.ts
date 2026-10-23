@@ -239,19 +239,6 @@ describe('history (PAGE_HISTORY.md § 2 bis)', () => {
 })
 
 describe('teams (PAGE_TEAM.md)', () => {
-  it('TEA-01: the search works without JavaScript (GET form) and lists the teams found', async () => {
-    const wrapper = await mountRoute('/teams?q=alpha')
-    expect(wrapper.find('form[role="search"]').attributes('action')).toBe('/teams')
-    expect(wrapper.findAll('[data-testid="teams-results"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
-    expect((await mountRoute('/teams?q=zzz')).find('[data-testid="teams-no-result"]').exists()).toBe(true)
-  })
-
-  it('TEA-01: less than 2 characters sends no request', async () => {
-    const wrapper = await mountRoute('/teams?q=a')
-    expect(wrapper.find('[data-testid="teams-min-length"]').text()).toBe('Saisissez au moins 2 caractères.')
-    expect(api2.mock.calls.map(call => call[0]).filter(path => String(path).startsWith('/teams'))).toEqual([])
-  })
-
   it('TEA-02 / TEA-08: the team page shows its club, its medals and honours with links to the rankings', async () => {
     const wrapper = await mountRoute('/teams/101')
     expect(wrapper.find('h1').text()).toBe('Equipe Alpha')
@@ -311,20 +298,41 @@ describe('teams (PAGE_TEAM.md)', () => {
   })
 })
 
-describe('clubs (PAGE_CLUBS.md)', () => {
-  it('CLB-01/CLB-04: the list shows every club with its department; the search is a GET form', async () => {
-    const wrapper = await mountRoute('/clubs')
-    expect(wrapper.find('[data-testid="club-search"]').attributes('method')).toBe('get')
-    const cards = wrapper.findAll('[data-testid="club-list"] [data-club]')
-    expect(cards).toHaveLength(12)
-    expect(cards[0]!.attributes('href')).toBe('/clubs/C001')
-    expect(cards[0]!.text()).toContain('Comité Départemental Test 33')
-    expect((await mountRoute('/clubs?q=lacville')).findAll('[data-club]').map(card => card.attributes('data-club'))).toEqual(['C001'])
+describe('clubs and teams (PAGE_CLUBS.md § 2.1)', () => {
+  it('CLB-01: clubs and teams searched with a GET form, grouped; a club opens its sheet, a team its page', async () => {
+    const wrapper = await mountRoute('/clubs?q=lacville')
+    const form = wrapper.find('[data-testid="club-search"]')
+    expect(form.attributes('method')).toBe('get')
+    expect(form.attributes('action')).toBe('/clubs')
+    expect(wrapper.findAll('[data-testid="club-results"] [data-club]').map(link => link.attributes('href'))).toEqual(['/clubs?club=C001'])
+    const teams = await mountRoute('/clubs?q=alpha')
+    expect(teams.findAll('[data-testid="team-results"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
+    expect((await mountRoute('/clubs?q=zzz')).find('[data-testid="clubs-no-result"]').exists()).toBe(true)
   })
 
-  it('CLB-02: the map view loads nothing before the click (no tile, no Leaflet)', async () => {
-    const wrapper = await mountRoute('/clubs?view=map')
-    expect(wrapper.find('[data-testid="club-list"]').exists()).toBe(false)
+  it('CLB-01: less than 2 characters sends no search', async () => {
+    const wrapper = await mountRoute('/clubs?q=a')
+    expect(wrapper.find('[data-testid="clubs-min-length"]').text()).toBe('Saisissez au moins 2 caractères.')
+    expect(api2.mock.calls.map(call => String(call[0])).filter(path => path.includes('q='))).toEqual([])
+  })
+
+  it('CLB-04 / CLB-06: without a club, the number of clubs on the map; with ?club=, its sheet beside the map', async () => {
+    expect((await mountRoute('/clubs')).find('[data-testid="club-hint"]').text()).toContain('1 club est placé sur la carte.')
+    const sheet = (await mountRoute('/clubs?club=C001')).find('[data-testid="club-sheet"]')
+    expect(sheet.find('h2').text()).toBe('Club Alpha Lacville')
+    expect(sheet.find('[data-testid="club-city"]').text()).toBe('Lacville')
+    const actions = sheet.findAll('[data-testid="club-actions"] a')
+    expect(actions.map(link => link.attributes('href'))).toEqual(['/clubs/C001', 'https://alpha.example.test', 'https://www.openstreetmap.org/directions?to=44.84%2C-0.58'])
+    expect(actions[1]!.attributes('target')).toBe('_blank')
+    expect(actions[1]!.text()).toContain('(nouvel onglet)')
+    expect(sheet.text()).toContain('contact@alpha.example.test')
+    expect(sheet.find('a[href^="mailto:"]').exists()).toBe(false)
+    expect(sheet.findAll('[data-testid="club-teams"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
+    expect((await mountRoute('/clubs?club=NOPE')).find('[data-testid="club-hint"]').exists()).toBe(true)
+  })
+
+  it('CLB-02: the map loads nothing before the click (no tile, no Leaflet)', async () => {
+    const wrapper = await mountRoute('/clubs')
     expect(wrapper.find('[data-testid="show-map"]').exists()).toBe(true)
     expect(wrapper.html()).not.toContain('tile.openstreetmap.org')
     expect(wrapper.find('.leaflet-container').exists()).toBe(false)
@@ -333,7 +341,8 @@ describe('clubs (PAGE_CLUBS.md)', () => {
   it('CLB-03: the club page shows committees, website, e-mail as text, address and teams', async () => {
     const wrapper = await mountRoute('/clubs/C001')
     const details = wrapper.find('[data-testid="club-details"]')
-    expect(details.text()).toContain('Comité Régional Test')
+    expect(details.text()).toContain('Région')
+    expect(details.text()).toContain('Test 33')
     expect(details.find('[data-testid="club-website"]').attributes('href')).toBe('https://alpha.example.test')
     expect(details.find('[data-testid="club-website"]').attributes('target')).toBe('_blank')
     expect(details.find('[data-testid="club-email"]').text()).toBe('contact@alpha.example.test')

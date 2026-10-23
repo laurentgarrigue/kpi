@@ -10,6 +10,8 @@ Retrouver une équipe, son palmarès et sa composition dans chaque compétition.
 ## 2. Contenu et comportement
 
 ### 2.1 `/teams`
+*Maquettes du 22/10/2026* : la recherche d'équipes rejoint la page « Clubs et équipes » (PAGE_CLUBS.md § 2.1) ;
+`/teams[?q=]` redirige (301) vers `/clubs[?q=]`. Règles conservées pour cette recherche :
 - Champ de recherche (formulaire GET `q`, 2 caractères minimum ; avec JavaScript, suggestions au fil de la frappe
   après 300 ms, accessibles au clavier — motif « combobox » ARIA).
 - Résultats : nom de l'équipe et club, lien vers la fiche. Aucun résultat → message.

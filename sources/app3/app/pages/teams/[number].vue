@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { titleCase } from '~/utils/clubs'
 import { legacyImageUrl } from '~/utils/page-links'
 import { selectedRoster, type Roster, type TeamSheet } from '~/utils/teams'
 
@@ -46,14 +47,14 @@ useHead(() => ({
 
 <template>
   <div v-if="team" class="space-y-8 pb-10">
-    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('teams.title'), to: localePath('/teams') }, { label: team.label }]" />
+    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('clubs.title'), to: localePath('/clubs') }, { label: team.label }]" />
     <header class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-6 border-b border-line pb-7 md:grid-cols-[auto_minmax(0,1fr)_auto]" data-testid="team-header">
       <TeamZoomImage v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: team.club.label ?? team.label })" origin="left" class="size-18 object-contain md:size-30" data-testid="team-logo" />
       <div :class="{ 'col-span-2 md:col-span-1': !logo }">
         <h1 class="text-[2.625rem] leading-none text-navy md:text-[4rem] dark:text-ink">{{ team.label }}</h1>
         <i18n-t v-if="team.club.code" keypath="teams.clubLine" tag="p" scope="global" class="mt-1.5" data-testid="team-club-line">
           <template #club>
-            <NuxtLink :to="localePath(`/clubs/${team.club.code}`)" class="font-semibold underline decoration-kpi-blue-500 underline-offset-3" data-testid="team-club">{{ team.club.label ?? team.club.code }}</NuxtLink>
+            <NuxtLink :to="localePath(`/clubs/${team.club.code}`)" class="font-semibold underline decoration-kpi-blue-500 underline-offset-3" data-testid="team-club">{{ team.club.label ? titleCase(team.club.label) : team.club.code }}</NuxtLink>
           </template>
         </i18n-t>
       </div>

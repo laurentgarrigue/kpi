@@ -30,9 +30,7 @@
     "competitions": "Compétitions",
     "competitions-list": "Compétitions et résultats",
     "history": "Historique et palmarès",
-    "teams-clubs": "Équipes et clubs",
-    "teams": "Équipes",
-    "clubs": "Clubs",
+    "teams-clubs": "Clubs et équipes",
     "live": "En direct",
     "events": "Événements",
     "editorial": "Le kayak-polo"
@@ -73,8 +71,7 @@
     "agenda": "Agenda",
     "after": "Ensuite",
     "latestResults": "Derniers résultats",
-    "fullCalendar": "Calendrier complet",
-    "next": "Prochain rendez-vous"
+    "fullCalendar": "Calendrier complet"
   },
   "error": {
     "notFoundTitle": "Page introuvable",
@@ -127,7 +124,6 @@
     },
     "qualified": "Qualifié",
     "eliminated": "Relégué ou éliminé",
-    "winner": "(vainqueur)",
     "partOfEvent": "{scope} fait partie de l'événement",
     "seeEvent": "Voir l'événement",
     "alsoInEvents": "Également dans :",
@@ -158,16 +154,7 @@
     "website": "Site web de la compétition",
     "followLive": "Suivre en direct",
     "col": {
-      "number": "N°",
-      "time": "Heure",
       "pitch": "Terrain",
-      "competition": "Compétition",
-      "phase": "Phase",
-      "teamA": "Équipe A",
-      "score": "Score",
-      "teamB": "Équipe B",
-      "referees": "Arbitres",
-      "status": "Statut",
       "mark": "Qualification ou médaille",
       "rank": "Clt",
       "team": "Équipe",
@@ -182,11 +169,8 @@
       "goals_against": "−",
       "goal_diff": "Diff"
     },
-    "gamesOf": "Matchs du {date}",
-    "pitchesOf": "Terrains du {date}",
     "pitch": "Terrain {pitch}",
     "scoreA11y": "{a} à {b}",
-    "provisional": "provisoire",
     "gameSheet": "Feuille de match",
     "scoreSheetPdf": "Feuille de marque (PDF)",
     "gamesPdf": "Liste des matchs (PDF)",
@@ -197,8 +181,6 @@
       "gameday": "Journée",
       "all": "Toutes",
       "day": "Jour",
-      "allDays": "Tous les jours",
-      "upcoming": "Prochains matchs",
       "apply": "Filtrer"
     },
     "ranking": {
@@ -218,7 +200,6 @@
     "info": {
       "gamedays": "Journées",
       "noGamedays": "Aucune journée publiée.",
-      "organizer": "Organisateur",
       "rc": "Responsable de compétition",
       "r1": "Responsable R1",
       "delegate": "Délégué",
@@ -233,7 +214,6 @@
       "organizedBy": "organisé par {organizer}",
       "when": "Dates et lieu"
     },
-    "eventCompetitions": "Compétitions de cet événement",
     "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
     "allGamedays": "Toutes les journées de la compétition",
     "seeCompetition": "Voir la compétition entière",
@@ -245,7 +225,6 @@
       "shootout": "tirs au but",
       "shootoutShort": "TAB"
     },
-    "gameNumber": "Match n° {number}",
     "gamesCount": "{n} match | {n} matchs",
     "draw": {
       "pool": "{rank} poule {pool}",
@@ -259,8 +238,6 @@
     "allDaysShort": "Tous",
     "upcomingOnly": "Matchs à venir seulement",
     "provisionalShort": "Prov.",
-    "pitchShort": "T. {pitch}",
-    "finalMark": "Finale",
     "scoreLabel": "Score {score}",
     "notPlayed": "pas encore joué",
     "eventCta": {
@@ -369,7 +346,6 @@
     "thisWeekend": "Ce week-end",
     "thisWeek": "Cette semaine",
     "days": "{n} jours",
-    "placeLater": "Lieu à venir",
     "legend": "Sections"
   },
   "history": {
@@ -396,12 +372,7 @@
     "holder": "Tenant du titre"
   },
   "teams": {
-    "title": "Équipes",
-    "description": "Rechercher une équipe de kayak-polo, son palmarès et sa composition.",
-    "search": "Nom de l'équipe ou code du club",
     "minLength": "Saisissez au moins {min} caractères.",
-    "noResult": "Aucune équipe ne correspond à « {query} ».",
-    "results": "Équipes trouvées",
     "club": "Club",
     "clubPage": "Fiche du club {club}",
     "colors": "Couleurs de l'équipe",
@@ -449,21 +420,17 @@
     "medals": "Médailles"
   },
   "clubs": {
-    "title": "Clubs",
-    "description": "Les clubs de kayak-polo : coordonnées, équipes et carte.",
-    "search": "Nom ou code du club",
-    "view": {
-      "list": "Liste",
-      "map": "Carte"
-    },
+    "title": "Clubs et équipes",
+    "description": "Les clubs et les équipes de kayak-polo : carte, coordonnées et équipes.",
+    "search": "Club, code ou équipe",
     "noResult": "Aucun club ne correspond à « {query} ».",
     "showMap": "Afficher la carte",
     "mapNotice": "La carte utilise les fonds OpenStreetMap : ils ne sont chargés qu'après un clic.",
     "mapAttribution": "© contributeurs OpenStreetMap",
     "mapLabel": "Carte des clubs",
     "mapLoading": "Chargement de la carte…",
-    "department": "Comité départemental",
-    "region": "Comité régional",
+    "department": "Département",
+    "region": "Région",
     "website": "Site web",
     "email": "E-mail",
     "address": "Adresse",
@@ -471,7 +438,17 @@
     "noTeam": "Aucune équipe.",
     "logoAlt": "Logo de {club}",
     "pageDescription": "Coordonnées et équipes du club de kayak-polo {club}.",
-    "count": "{count} club | {count} clubs"
+    "searchLabel": "Chercher un club ou une équipe",
+    "sheet": "Fiche du club",
+    "directions": "Itinéraire",
+    "code": "Code",
+    "teamCount": "{n} équipe | {n} équipes",
+    "resultsClubs": "Clubs",
+    "resultsTeams": "Équipes",
+    "hint": "{count} club est placé sur la carte. | {count} clubs sont placés sur la carte.",
+    "hintHow": "Touchez un point pour voir le club, son logo, ses coordonnées et ses équipes, ou cherchez-le par son nom ou son code.",
+    "nearMe": "Clubs près de moi",
+    "nearUnavailable": "Position indisponible : cherchez votre ville."
   },
   "search": {
     "title": "Recherche",

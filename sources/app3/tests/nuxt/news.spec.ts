@@ -177,7 +177,8 @@ describe('menu (PAGE_NEWS.md § 5, PAGE_CONTENT.md § 3)', () => {
   it('CNT-04: « Le kayak-polo » lists the editorial menu after « Teams and clubs »', async () => {
     const wrapper = await mountSuspended(NavMain, { route: '/' })
     const buttons = wrapper.findAll('[data-testid="main-nav-desktop"] button').map(button => button.text())
-    expect(buttons).toEqual(['Compétitions', 'Équipes et clubs', 'Le kayak-polo'])
+    expect(buttons).toEqual(['Compétitions', 'Le kayak-polo'])
+    expect(wrapper.find('[data-testid="main-nav-desktop"] a[href="/clubs"]').text()).toBe('Clubs et équipes')
     const links = wrapper.findAll('#nav-group-editorial a')
     expect(links.map(link => [link.text().replace(/\(nouvel onglet\)/, '').trim(), link.attributes('href'), link.attributes('target')])).toEqual([
       ['Le kayak-polo', '/le-kayak-polo', undefined],
@@ -190,6 +191,6 @@ describe('menu (PAGE_NEWS.md § 5, PAGE_CONTENT.md § 3)', () => {
     api2.mockImplementation(async (path: string) => (path === '/menu' ? Promise.reject(new Error('down')) : fakeApi2(path)))
     const wrapper = await mountSuspended(NavMain, { route: '/' })
     expect(wrapper.find('#nav-group-editorial').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="main-nav-desktop"] button')).toHaveLength(2)
+    expect(wrapper.findAll('[data-testid="main-nav-desktop"] button')).toHaveLength(1)
   })
 })

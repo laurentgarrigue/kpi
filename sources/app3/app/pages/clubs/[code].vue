@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { clubWebsite, type ClubSheet } from '~/utils/clubs'
+import { clubWebsite, committeeName, titleCase, type ClubSheet } from '~/utils/clubs'
 import { NEW_TAB_ATTRS } from '~/utils/links'
 import { legacyImageUrl } from '~/utils/page-links'
 
@@ -38,17 +38,17 @@ useHead(() => ({
 
 <template>
   <div v-if="club" class="space-y-8">
-    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('clubs.title'), to: localePath('/clubs') }, { label: club.label }]" />
+    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('clubs.title'), to: localePath('/clubs') }, { label: titleCase(club.label) }]" />
     <header class="flex items-center gap-4">
       <img v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: club.label })" class="kpi-logo size-20 object-contain" data-testid="club-logo">
-      <h1 class="text-5xl text-kpi-blue-600">{{ club.label }}</h1>
+      <h1 class="text-[2.625rem] leading-none text-navy md:text-[3.5rem] dark:text-ink">{{ titleCase(club.label) }}</h1>
     </header>
     <dl class="grid max-w-3xl grid-cols-[auto_1fr] gap-x-6 gap-y-2" data-testid="club-details">
       <template v-if="club.department.label">
-        <dt class="text-ink/70">{{ $t('clubs.department') }}</dt><dd>{{ club.department.label }}</dd>
+        <dt class="text-ink/70">{{ $t('clubs.department') }}</dt><dd>{{ committeeName(club.department.label) }}</dd>
       </template>
       <template v-if="club.region.label">
-        <dt class="text-ink/70">{{ $t('clubs.region') }}</dt><dd>{{ club.region.label }}</dd>
+        <dt class="text-ink/70">{{ $t('clubs.region') }}</dt><dd>{{ committeeName(club.region.label) }}</dd>
       </template>
       <template v-if="website">
         <dt class="text-ink/70">{{ $t('clubs.website') }}</dt>
@@ -64,7 +64,7 @@ useHead(() => ({
     </dl>
     <ClubMap v-if="club.position" :markers="[{ code: club.code, label: club.label, position: club.position }]" :zoom="MAP_ZOOM" class="max-w-3xl" />
     <section aria-labelledby="club-teams">
-      <h2 id="club-teams" class="mb-3 text-3xl text-kpi-blue-600">{{ $t('clubs.teams') }}</h2>
+      <h2 id="club-teams" class="mb-3 text-[1.875rem] leading-none text-kpi-blue-700">{{ $t('clubs.teams') }}</h2>
       <p v-if="club.teams.length === 0">{{ $t('clubs.noTeam') }}</p>
       <ul v-else class="space-y-1" data-testid="club-teams">
         <li v-for="team in club.teams" :key="team.number">

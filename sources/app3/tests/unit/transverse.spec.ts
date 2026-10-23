@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clubMarkers, clubView, clubWebsite, type ClubSummary } from '../../app/utils/clubs'
+import { clubCity, clubMarkers, clubWebsite, committeeName, directionsUrl, isPlaceholderTeam, titleCase, type ClubSummary } from '../../app/utils/clubs'
 import { decadeAnchors, medalist, seasonAnchor, seasonFinals, teamKey, titleHolder, type History, type HistoryCompetition, type PodiumEntry } from '../../app/utils/history'
 import { searchApiPath, searchHits, searchKinds, searchQuery, searchSections, type SearchResults } from '../../app/utils/search'
 import { honoursBySeason, medalTally, playerName, selectedRoster, type TeamHonour } from '../../app/utils/teams'
@@ -81,10 +81,33 @@ describe('history (PAGE_HISTORY.md § 2 bis)', () => {
 describe('clubs (PAGE_CLUBS.md)', () => {
   const club = (code: string, position: ClubSummary['position']): ClubSummary => ({ code, label: code, department: { code: null, label: null }, logo: null, position })
 
-  it('CLB-02: the map only shows clubs having a position; the list is the default view', () => {
+  it('CLB-02: the map only shows clubs having a position', () => {
     expect(clubMarkers([club('A', { lat: 44.8, lng: -0.5 }), club('B', null)]).map(item => item.code)).toEqual(['A'])
-    expect(clubView('map')).toBe('map')
-    expect(clubView('grid')).toBe('list')
+  })
+
+  it('CLB-07: names stored in capitals read in title case', () => {
+    expect(titleCase("CANOE CLUB D'AVRANCHES")).toBe("Canoe Club d'Avranches")
+    expect(titleCase('KAYAK CLUB DE LA VALLEE DU LOT')).toBe('Kayak Club de la Vallee du Lot')
+    expect(titleCase('CK SAINT-GREGOIRE')).toBe('CK Saint-Gregoire')
+    expect(titleCase('Acigné')).toBe('Acigné')
+    expect(titleCase(null)).toBe('')
+  })
+
+  it('CLB-07: committees without their « Comité départemental / régional » prefix', () => {
+    expect(committeeName('COMITE DEPARTEMENTAL CK DE LA MANCHE')).toBe('Manche')
+    expect(committeeName("COMITE DEPARTEMENTAL DE L'AIN")).toBe('Ain')
+    expect(committeeName('COMITE REGIONAL NORMANDIE CK')).toBe('Normandie')
+    expect(committeeName(null)).toBe('')
+  })
+
+  it('CLB-06: placeholder teams of tournaments are not the club teams', () => {
+    expect(['(1er Poule A)', '2ème poule haute', '1er perdant', 'Vainqueur match 21', 'Perdant match 21', 'Avranches I', 'Poulets II'].map(isPlaceholderTeam)).toEqual([true, true, true, true, true, false, false])
+  })
+
+  it('CLB-06: the city of a postal address, and the directions to a club', () => {
+    expect(clubCity('Base nautique, 50300 AVRANCHES')).toBe('Avranches')
+    expect(clubCity(null)).toBe('')
+    expect(directionsUrl({ lat: 48.68, lng: -1.35 })).toBe('https://www.openstreetmap.org/directions?to=48.68%2C-1.35')
   })
 
   it('CLB-03: websites stored without scheme become absolute', () => {

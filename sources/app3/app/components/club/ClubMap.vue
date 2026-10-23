@@ -1,18 +1,52 @@
 <script setup lang="ts">
 import type { ClubPosition } from '~/utils/clubs'
 
-// Map of clubs (Q-P3-5): Leaflet is bundled with the site, but nothing is loaded — no script, no
-// OpenStreetMap tile — until the visitor clicks « Show the map » (CLB-02). The list stays available.
-const props = defineProps<{ markers: { code: string, label: string, position: ClubPosition }[], zoom?: number }>()
+/**
+ * Map of clubs (Q-P3-5, CLB-02): Leaflet is bundled with the site, but nothing is loaded — no script, no OpenStreetMap
+ * tile — until the visitor clicks « Show the map ». `selectable`: touching a dot selects its club (`select`), the
+ * `selected` one stands out and the map flies to it, « Clubs near me » centres it on the visitor; otherwise a dot opens
+ * a bubble linking to the club page.
+ */
+const props = defineProps<{
+  markers: { code: string, label: string, position: ClubPosition }[]
+  zoom?: number
+  selectable?: boolean
+  selected?: string | null
+}>()
+const emit = defineEmits<{ select: [string] }>()
 const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 const DEFAULT_ZOOM = 6
+const CLUB_ZOOM = 11
+const NEAR_ZOOM = 10
+const FLIGHT_SECONDS = 0.6
 const FRANCE = { lat: 46.6, lng: 2.4 }
 
 const localePath = useLocalePath()
 const { t } = useI18n()
 const container = useTemplateRef<HTMLDivElement>('container')
 const state = ref<'idle' | 'loading' | 'shown'>('idle')
+const nearUnavailable = ref(false)
 let map: import('leaflet').Map | null = null
+const dots = new Map<string, import('leaflet').CircleMarker>()
+
+/** Colours of the dots, from the charter tokens (no colour in the code). */
+function dotStyle(on: boolean) {
+  const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return on
+    ? { radius: 10, weight: 2, color: token('--color-live'), fillColor: token('--color-live'), fillOpacity: 1 }
+    : { radius: 6, weight: 2, color: token('--color-navy'), fillColor: token('--color-sky'), fillOpacity: 0.85 }
+}
+
+function highlight(code: string | null | undefined, fly: boolean) {
+  for (const [key, dot] of dots) {
+    dot.setStyle(dotStyle(key === code))
+  }
+  const dot = code ? dots.get(code) : undefined
+  dot?.bringToFront()
+  if (fly && dot && map) {
+    map.flyTo(dot.getLatLng(), CLUB_ZOOM, { duration: FLIGHT_SECONDS })
+  }
+}
 
 async function show() {
   state.value = 'loading'
@@ -26,23 +60,44 @@ async function show() {
   map = L.map(container.value).setView([center.lat, center.lng], props.zoom ?? DEFAULT_ZOOM)
   L.tileLayer(TILES, { attribution: t('clubs.mapAttribution'), maxZoom: 18 }).addTo(map)
   for (const marker of props.markers) {
-    const link = document.createElement('a')
-    link.href = localePath(`/clubs/${marker.code}`)
-    link.textContent = marker.label
     // Circle markers: no marker image to host or to fetch.
-    L.circleMarker([marker.position.lat, marker.position.lng], { radius: 7, weight: 2 }).bindPopup(link).addTo(map)
+    const dot = L.circleMarker([marker.position.lat, marker.position.lng], props.selectable ? dotStyle(false) : { radius: 7, weight: 2 }).addTo(map)
+    if (props.selectable) {
+      dot.bindTooltip(marker.label, { direction: 'top' }).on('click', () => emit('select', marker.code))
+    } else {
+      const link = document.createElement('a')
+      link.href = localePath(`/clubs/${marker.code}`)
+      link.textContent = marker.label
+      dot.bindPopup(link)
+    }
+    dots.set(marker.code, dot)
+  }
+  if (props.selectable) {
+    highlight(props.selected, true)
   }
 }
 
+function nearMe() {
+  navigator.geolocation?.getCurrentPosition(
+    position => map?.flyTo([position.coords.latitude, position.coords.longitude], NEAR_ZOOM, { duration: FLIGHT_SECONDS }),
+    () => { nearUnavailable.value = true },
+  )
+}
+
+watch(() => props.selected, code => props.selectable && highlight(code, true))
 onBeforeUnmount(() => map?.remove())
 </script>
 
 <template>
-  <div data-testid="club-map">
-    <div v-if="state !== 'shown'" class="space-y-2 rounded border border-line p-4">
-      <p class="text-sm">{{ $t('clubs.mapNotice') }}</p>
-      <UButton :loading="state === 'loading'" icon="i-heroicons-map" data-testid="show-map" @click="show">{{ $t('clubs.showMap') }}</UButton>
+  <div class="relative h-full" data-testid="club-map">
+    <div v-if="state !== 'shown'" class="grid h-full place-content-center gap-3 rounded-lg border border-line bg-wash p-6 text-center">
+      <p class="max-w-[40ch] text-sm">{{ $t('clubs.mapNotice') }}</p>
+      <UButton :loading="state === 'loading'" icon="i-heroicons-map" class="justify-self-center" data-testid="show-map" @click="show">{{ $t('clubs.showMap') }}</UButton>
     </div>
-    <div v-show="state === 'shown'" ref="container" role="region" :aria-label="$t('clubs.mapLabel')" class="h-[28rem] w-full rounded border border-line" />
+    <div v-show="state === 'shown'" ref="container" role="region" :aria-label="$t('clubs.mapLabel')" class="z-0 h-full min-h-[28rem] w-full rounded-lg border border-line" />
+    <p v-if="selectable && state === 'shown'" class="absolute top-3 right-3 z-10 rounded-md bg-surface px-3 py-1.5 text-sm shadow">
+      <button v-if="!nearUnavailable" type="button" class="text-kpi-blue-700 underline" @click="nearMe">{{ $t('clubs.nearMe') }}</button>
+      <span v-else>{{ $t('clubs.nearUnavailable') }}</span>
+    </p>
   </div>
 </template>
