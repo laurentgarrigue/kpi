@@ -54,7 +54,13 @@ useHead(() => ({
         <h1 class="text-[2.625rem] leading-none text-navy md:text-[4rem] dark:text-ink">{{ team.label }}</h1>
         <i18n-t v-if="team.club.code" keypath="teams.clubLine" tag="p" scope="global" class="mt-1.5" data-testid="team-club-line">
           <template #club>
-            <NuxtLink :to="localePath(`/clubs/${team.club.code}`)" class="font-semibold underline decoration-kpi-blue-500 underline-offset-3" data-testid="team-club">{{ team.club.label ? titleCase(team.club.label) : team.club.code }}</NuxtLink>
+            <!-- TEA-08 / CLB-08: the club on the map of the clubs page, the map icon in the same link. -->
+            <NuxtLink :to="{ path: localePath('/clubs'), query: { club: team.club.code } }" class="group inline-flex items-baseline gap-1.5 font-semibold" data-testid="team-club">
+              <span class="underline decoration-kpi-blue-500 underline-offset-3">{{ team.club.label ? titleCase(team.club.label) : team.club.code }}</span>
+              <span :title="$t('teams.showOnMap')" class="self-center text-kpi-blue-700 group-hover:text-navy dark:group-hover:text-ink" data-testid="team-club-map">
+                <UIcon name="i-heroicons-map-pin" class="size-5 align-middle" aria-hidden="true" /><span class="sr-only">{{ ` (${$t('teams.showOnMap')})` }}</span>
+              </span>
+            </NuxtLink>
           </template>
         </i18n-t>
       </div>

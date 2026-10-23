@@ -103,7 +103,7 @@ describe('article (PAGE_NEWS.md § 2.2)', () => {
     expect(links.map(link => [link.text(), link.attributes('href')])).toEqual([
       ['Championnat Résultats 2999', '/competitions/2999/RCH'],
       ['Tournoi Résultats', '/events/77'],
-      ['Club Alpha Lacville', '/clubs/C001'],
+      ['Club Alpha Lacville', '/clubs?club=C001'],
     ])
   })
 

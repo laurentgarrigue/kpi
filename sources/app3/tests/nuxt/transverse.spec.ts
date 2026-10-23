@@ -242,8 +242,10 @@ describe('teams (PAGE_TEAM.md)', () => {
   it('TEA-02 / TEA-08: the team page shows its club, its medals and honours with links to the rankings', async () => {
     const wrapper = await mountRoute('/teams/101')
     expect(wrapper.find('h1').text()).toBe('Equipe Alpha')
-    expect(wrapper.find('[data-testid="team-club"]').attributes('href')).toBe('/clubs/C001')
-    expect(wrapper.find('[data-testid="team-club-line"]').text()).toBe('Équipe du Club Alpha Lacville')
+    // TEA-08 / CLB-08: the club on the map, a map icon saying so in the same link.
+    expect(wrapper.find('[data-testid="team-club"]').attributes('href')).toBe('/clubs?club=C001')
+    expect(wrapper.find('[data-testid="team-club"] [data-testid="team-club-map"]').attributes('title')).toBe('Voir sur la carte')
+    expect(wrapper.find('[data-testid="team-club-line"]').text()).toBe('Équipe du Club Alpha Lacville (Voir sur la carte)')
     expect(wrapper.findAll('[data-testid="medal-tally"] [data-tally]').map(item => [item.attributes('data-tally'), item.find('[data-testid="tally-count"]').text()])).toEqual([['1', '1'], ['2', '0'], ['3', '0']])
     const honours = wrapper.findAll('[data-testid="honour"]')
     expect(honours.map(row => row.find('a').attributes('href'))).toEqual(['/competitions/2998/RCP/ranking', '/competitions/2998/RQL/ranking'])
@@ -322,9 +324,9 @@ describe('clubs and teams (PAGE_CLUBS.md § 2.1)', () => {
     expect(sheet.find('h2').text()).toBe('Club Alpha Lacville')
     expect(sheet.find('[data-testid="club-city"]').text()).toBe('Lacville')
     const actions = sheet.findAll('[data-testid="club-actions"] a')
-    expect(actions.map(link => link.attributes('href'))).toEqual(['/clubs/C001', 'https://alpha.example.test', 'https://www.openstreetmap.org/directions?to=44.84%2C-0.58'])
-    expect(actions[1]!.attributes('target')).toBe('_blank')
-    expect(actions[1]!.text()).toContain('(nouvel onglet)')
+    expect(actions.map(link => link.attributes('href'))).toEqual(['https://alpha.example.test', 'https://www.openstreetmap.org/directions?to=44.84%2C-0.58'])
+    expect(actions[0]!.attributes('target')).toBe('_blank')
+    expect(actions[0]!.text()).toContain('(nouvel onglet)')
     expect(sheet.text()).toContain('contact@alpha.example.test')
     expect(sheet.find('a[href^="mailto:"]').exists()).toBe(false)
     expect(sheet.findAll('[data-testid="club-teams"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
@@ -338,21 +340,12 @@ describe('clubs and teams (PAGE_CLUBS.md § 2.1)', () => {
     expect(wrapper.find('.leaflet-container').exists()).toBe(false)
   })
 
-  it('CLB-03: the club page shows committees, website, e-mail as text, address and teams', async () => {
-    const wrapper = await mountRoute('/clubs/C001')
-    const details = wrapper.find('[data-testid="club-details"]')
-    expect(details.text()).toContain('Région')
-    expect(details.text()).toContain('Test 33')
-    expect(details.find('[data-testid="club-website"]').attributes('href')).toBe('https://alpha.example.test')
-    expect(details.find('[data-testid="club-website"]').attributes('target')).toBe('_blank')
-    expect(details.find('[data-testid="club-email"]').text()).toBe('contact@alpha.example.test')
-    expect(details.find('a[href^="mailto:"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="club-teams"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
-    expect(wrapper.find('[data-testid="club-map"]').exists()).toBe(true)
-  })
-
-  it('CLB-03: an unknown club is the site 404', async () => {
-    expect(await expectNotFound('/clubs/NOPE')).toBe(404)
+  it('CLB-03 / CLB-08: the sheet shows committees and the club news', async () => {
+    const wrapper = await mountRoute('/clubs?club=C001')
+    const sheet = wrapper.find('[data-testid="club-sheet"]')
+    expect(sheet.text()).toContain('Région')
+    expect(sheet.text()).toContain('Test 33')
+    expect(sheet.find('[data-testid="linked-news"]').exists()).toBe(true)
   })
 })
 

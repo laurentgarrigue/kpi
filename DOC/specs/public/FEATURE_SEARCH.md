@@ -22,7 +22,7 @@ cherchables (stratégie § 11).
 3. **Page `/search?q=`** : `<h1>` « Résultats pour « q » » ; une section par catégorie non vide (compétitions,
    événements, équipes, clubs), 8 résultats au plus chacune ; chaque résultat mène à sa page :
    compétition → `/competitions/{s}/{c}`, événement → `/events/{id}`, équipe → `/teams/{number}`,
-   club → `/clubs/{code}`.
+   club → `/clubs?club={code}`.
 4. `q` absent ou < 2 caractères : page avec le champ seul et un rappel du minimum. Aucun résultat : message et
    suggestions (« Vérifiez l'orthographe… »). Trop de requêtes (429) : message dédié.
 5. En phase 4a, les articles et pages éditoriales s'ajoutent comme nouvelles catégories (sans modifier les

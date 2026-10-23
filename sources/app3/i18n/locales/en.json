@@ -377,6 +377,7 @@
     "holder": "Title holder"
   },
   "teams": {
+    "showOnMap": "Show on the map",
     "minLength": "Type at least {min} characters.",
     "club": "Club",
     "clubPage": "Club page of {club}",
@@ -439,10 +440,8 @@
     "website": "Website",
     "email": "E-mail",
     "address": "Address",
-    "teams": "Teams of the club",
     "noTeam": "No team.",
     "logoAlt": "Logo of {club}",
-    "pageDescription": "Contact details and teams of the canoe polo club {club}.",
     "searchLabel": "Search a club or a team",
     "sheet": "Club page",
     "directions": "Directions",

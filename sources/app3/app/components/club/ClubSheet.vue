@@ -3,8 +3,9 @@ import { clubCity, clubWebsite, committeeName, directionsUrl, isPlaceholderTeam,
 import { NEW_TAB_ATTRS } from '~/utils/links'
 import { legacyImageUrl } from '~/utils/page-links'
 
-// Sheet of the club chosen on the map or in the search (CLB-06): identity, its page, website and directions (outgoing
-// links said as such), contact details as text (Q-P3-2), committees, teams without the placeholders of tournaments.
+// Sheet of the club chosen on the map or in the search, the only presentation of a club (CLB-06, CLB-08): identity,
+// website and directions (outgoing links said as such), contact details as text (Q-P3-2), committees, teams without
+// the placeholders of tournaments, news linked to the club.
 const props = defineProps<{ club: ClubSheet }>()
 const localePath = useLocalePath()
 const { legacyBaseUrl } = useRuntimeConfig().public
@@ -25,7 +26,6 @@ const where = computed(() => clubCity(props.club.postal) || committeeName(props.
       </div>
     </div>
     <p class="mb-5 flex flex-wrap gap-2" data-testid="club-actions">
-      <NuxtLink :to="localePath(`/clubs/${club.code}`)" class="rounded-md border border-navy bg-navy px-3 py-1.5 text-sm font-semibold text-white">{{ $t('clubs.sheet') }}</NuxtLink>
       <a v-if="website" :href="website" v-bind="NEW_TAB_ATTRS" class="inline-flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm font-semibold hover:bg-wash">
         {{ $t('clubs.website') }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3.5" aria-hidden="true" /><span class="sr-only">{{ $t('a11y.newTab') }}</span>
       </a>
@@ -50,5 +50,6 @@ const where = computed(() => clubCity(props.club.postal) || committeeName(props.
       </ul>
     </template>
     <p v-else class="text-muted">{{ $t('clubs.noTeam') }}</p>
+    <ContentLinked kind="club" :reference="club.code" class="mt-6" />
   </section>
 </template>

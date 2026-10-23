@@ -71,7 +71,7 @@ export function searchHits(results: SearchResults, category: SearchCategory, lan
     case 'teams':
       return results.teams.map(item => ({ key: `t-${item.number}`, label: item.label, detail: item.club.label, to: `/teams/${item.number}` }))
     case 'clubs':
-      return results.clubs.map(item => ({ key: `k-${item.code}`, label: item.label, detail: item.department.label, aside: item.code, to: `/clubs/${item.code}` }))
+      return results.clubs.map(item => ({ key: `k-${item.code}`, label: item.label, detail: item.department.label, aside: item.code, to: `/clubs?club=${item.code}` }))
     case 'news':
       return results.news.map(item => ({
         key: `n-${item.slug}`,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { withQuery } from 'ufo'
-import { clubMarkers, committeeName, titleCase, type ClubSheet, type ClubSummary } from '~/utils/clubs'
+import { clubMarkers, clubWebsite, committeeName, titleCase, type ClubSheet, type ClubSummary } from '~/utils/clubs'
 import { SEARCH_MIN_LENGTH, searchQuery } from '~/utils/search'
 import type { TeamSummary } from '~/utils/teams'
 
@@ -29,6 +29,22 @@ const select = (target: string) => navigateTo(clubLink(target))
 useSeoMeta({
   title: () => (club.value ? titleCase(club.value.label) : t('clubs.title')),
   description: () => t('clubs.description'),
+})
+// The chosen club as structured data (PAGE_CLUBS.md § 4).
+useHead(() => {
+  if (!club.value) {
+    return {}
+  }
+  const website = clubWebsite(club.value.www)
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsOrganization',
+    'name': titleCase(club.value.label),
+    'sport': 'Canoe polo',
+    ...(club.value.postal ? { address: club.value.postal } : {}),
+    ...(website ? { url: website } : {}),
+  }
+  return { script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(organization) }] }
 })
 </script>
 
@@ -77,7 +93,7 @@ useSeoMeta({
         </section>
       </template>
     </div>
-    <ClubMap :markers="markers" selectable :selected="club?.code ?? null" class="h-[52vh] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-full" @select="select" />
+    <ClubMap :markers="markers" :selected="club?.code ?? null" class="h-[52vh] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:h-full" @select="select" />
     <section :aria-label="$t('clubs.sheet')" class="min-h-0 lg:col-start-1 lg:row-start-2 lg:overflow-auto lg:pr-2">
       <ClubSheet v-if="club" :club="club" class="border-t border-line pt-4" />
       <div v-else class="space-y-2.5 border-t border-line pt-4 text-muted" data-testid="club-hint">

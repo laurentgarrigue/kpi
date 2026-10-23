@@ -377,6 +377,7 @@
     "holder": "Tenant du titre"
   },
   "teams": {
+    "showOnMap": "Voir sur la carte",
     "minLength": "Saisissez au moins {min} caractères.",
     "club": "Club",
     "clubPage": "Fiche du club {club}",
@@ -439,10 +440,8 @@
     "website": "Site web",
     "email": "E-mail",
     "address": "Adresse",
-    "teams": "Équipes du club",
     "noTeam": "Aucune équipe.",
     "logoAlt": "Logo de {club}",
-    "pageDescription": "Coordonnées et équipes du club de kayak-polo {club}.",
     "searchLabel": "Chercher un club ou une équipe",
     "sheet": "Fiche du club",
     "directions": "Itinéraire",

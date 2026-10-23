@@ -124,7 +124,7 @@ describe('linked content (NEWS-09, FRM-10)', () => {
 
   it('NEWS-09: the competition and club pages show their latest news; nothing when there is none', async () => {
     expect((await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="linked-news"]').exists()).toBe(true)
-    expect((await mountRoute('/clubs/C001')).find('[data-testid="linked-news"] h2').text()).toBe('Actualités')
+    expect((await mountRoute('/clubs?club=C001')).find('[data-testid="linked-news"] h2').text()).toBe('Actualités')
     expect((await mountRoute('/competitions/2999/RCP/games')).find('[data-testid="linked-news"]').exists()).toBe(false)
   })
 })

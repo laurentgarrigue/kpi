@@ -36,7 +36,7 @@ suivante » en deux cartes.
 4. **Galeries** du corps : vignettes, visionneuse au clic (clavier : flèches, Échap ; focus piégé), sans
    bibliothèque tierce si possible.
 5. **Liens vers les résultats** : encart « En lien avec cet article » → compétitions (`/competitions/{s}/{c}`),
-   événements (`/events/{id}`), clubs (`/clubs/{code}`). Réciproquement, les pages de ces compétitions /
+   événements (`/events/{id}`), clubs (`/clubs?club={code}`). Réciproquement, les pages de ces compétitions /
    événements / clubs affichent un bloc « Actualités » (3 derniers articles liés, NEWS-09).
 6. **Partage** : bouton « Partager » → Web Share API si disponible (mobile), sinon liens Facebook, X, WhatsApp,
    e-mail et « Copier le lien » (aucun script tiers chargé, simples URL de partage).

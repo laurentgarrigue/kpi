@@ -173,6 +173,14 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await location('/en/teams')).toEqual([301, '/en/clubs'])
   })
 
+  it('CLB-08: the former club page shows the club on the map', async () => {
+    expect(await location('/clubs/C001')).toEqual([301, '/clubs?club=C001'])
+    expect(await location('/en/clubs/C001')).toEqual([301, '/en/clubs?club=C001'])
+    const html = await $fetch<string>('/clubs?club=C001')
+    expect(html).toMatch(/<title>Club Alpha Lacville/)
+    expect(html).toContain('"@type":"SportsOrganization"')
+  })
+
   it('EVT-01/GRP-01: an event opens on its competitions, a group on its games', async () => {
     expect(await location('/events/77')).toEqual([302, '/events/77/competitions'])
     expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])
@@ -213,8 +221,8 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await $fetch<string>('/clubs?club=C001')).toContain('Club Alpha Lacville')
   })
 
-  it('HIS-05/TEA-05/CLB-03: unknown history group, team or club is a 404 page', async () => {
-    for (const path of ['/history/NOPE', '/teams/9999', '/clubs/NOPE']) {
+  it('HIS-05/TEA-05: unknown history group or team is a 404 page', async () => {
+    for (const path of ['/history/NOPE', '/teams/9999']) {
       const response = await fetch(path, { headers: { Accept: 'text/html' } })
       expect(response.status, path).toBe(404)
     }
@@ -233,7 +241,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
   // every prefetch a 404 (and the cached payload useless).
   it('PLT-07: the payload of every cached page is served (link prefetch does not end in 404)', async () => {
     const pages = [
-      '/', '/calendar', '/history/TSTRES', '/teams/101', '/clubs', '/clubs/C001',
+      '/', '/calendar', '/history/TSTRES', '/teams/101', '/clubs',
       '/competitions/2999', '/competitions/2999/RCH/games', '/events/77/games', '/events/77/ranking', '/groups/2999/TSTRES/games',
     ]
     for (const page of pages) {

@@ -17,7 +17,7 @@ Retrouver une équipe, son palmarès et sa composition dans chaque compétition.
 - Résultats : nom de l'équipe et club, lien vers la fiche. Aucun résultat → message.
 
 ### 2.2 `/teams/{number}`
-- En-tête : nom de l'équipe, logo du club (règle § 3.5 de l'API), lien vers la fiche du club (`/clubs/{code}`),
+- En-tête : nom de l'équipe, logo du club (règle § 3.5 de l'API), lien vers la fiche du club (`/clubs?club={code}`, le club sur la carte) suivi d'une icône de carte « Voir sur la carte »,
   couleurs de l'équipe et photo d'équipe s'il y en a (avec la saison, texte alternatif « Photo de l'équipe {nom}
   ({saison}) », Q-P3-3). Le logo du club et les couleurs **s'agrandissent au survol** et au focus clavier
   (×3, comme la photo d'équipe affichée en grand), sans animation si `prefers-reduced-motion`.
@@ -56,7 +56,7 @@ Titre « {équipe} — kayak-polo.info » ; données structurées `SportsTeam` (
 - **TEA-04** — `PAGE_LINKS.team` passe à `/teams/{number}` : tous les liens d'équipe du site sont internes.
 - **TEA-06** — Le logo du club et les couleurs s'agrandissent au survol et au focus clavier.
 - **TEA-07** — Palmarès (maquettes du 22/10/2026) : une colonne saison (« Palmarès depuis {première saison} »), une ligne par compétition ; rang écrit (« 1er ») précédé de la médaille (couleur et texte) pour les podiums des tours finaux, en gras ; tours intermédiaires atténués avec la mention « phase de qualification ».
-- **TEA-08** — En-tête : logo, nom en grand, « Équipe du {club} » (lien), tenue ; décompte des médailles des tours finaux (titres, 2es places, 3es places), chiffres en Agency FB aux couleurs des médailles, toujours accompagnés de leur libellé.
+- **TEA-08** — En-tête : logo, nom en grand, « Équipe du {club} » (lien vers `/clubs?club={code}`, avec l'icône de carte « Voir sur la carte » dans le même lien), tenue ; décompte des médailles des tours finaux (titres, 2es places, 3es places), chiffres en Agency FB aux couleurs des médailles, toujours accompagnés de leur libellé.
 - **TEA-05** — Équipe inconnue → 404 ; l'entrée de menu « Équipes » devient interne.
 
 ## 6. Décisions (09/10/2026)
