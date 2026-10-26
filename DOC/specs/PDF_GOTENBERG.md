@@ -56,8 +56,9 @@ qui justifie de traiter en priorité les documents à données personnelles (§1
 ### Objectifs
 
 1. **Un seul producteur de PDF** : api2. Plus aucun PDF généré par le PHP legacy après la migration finale.
-2. **Design moderne** : HTML/CSS (flex, grid, polices web, SVG), charte FFCK partagée avec app3/kpi-layer,
-   lisible à l'impression noir & blanc.
+2. **Design moderne et fidèle aux chartes existantes** : HTML/CSS (flex, grid, polices web, SVG) ; les PDF admin
+   respectent la charte d'app4, les PDF publics celle d'app3 (kpi-layer), à partir des mêmes jetons (§8) ;
+   lisibles à l'impression noir & blanc.
 3. **Sans session** : tout le contexte est dans la requête (paramètres explicites, validés). Une même URL
    (+ même identité) produit toujours le même document.
 4. **Sécurité** : PDF admin protégés par **profil + mandat actif** (rôle *et* périmètre : saisons, compétitions,
@@ -294,17 +295,84 @@ Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un
 
 ---
 
-## 8. Design
+## 8. Design : respect des chartes app4 et app3
 
-- **Charte** : tokens de couleur et typographie de `kpi-layer` (FFCK), déclinés en CSS d'impression dans
-  `api2/templates/pdf/_base.css.twig`. Polices embarquées en WOFF2, pas de Google Fonts.
-- **Gabarit commun** : en-tête (logo KPI, logo compétition/sponsor via `utyGetVisuels` équivalent, titre, saison),
-  pied (date/heure de génération en `tz`, « page X / Y », URL publique ou mention « Document interne »).
-- **Impression** : contraste suffisant en noir & blanc (pas d'information portée par la seule couleur),
-  marges ≥ 10 mm, tableaux zébrés légers, `break-inside: avoid` sur les blocs équipe/match.
-- **Accessibilité** : PDF balisé (Chromium produit des PDF taggés), langue du document renseignée, titre PDF (`<title>`) significatif.
-- Maquettes HTML validées (navigateur, mode impression) **avant** câblage : un gabarit est un fichier Twig qu'on peut
-  prévisualiser en HTML via une route dev-only `?format=html` (désactivée hors `dev`).
+Un PDF doit être reconnaissable comme sortant de l'application qui l'ouvre : un PDF admin ressemble à app4,
+un PDF public ressemble au site public app3. Les deux chartes partagent la même base FFCK. Les PDF en reprennent
+**les jetons, pas des copies approximatives**.
+
+### 8.1 Sources de vérité
+
+| Charte | Fichier de référence | Spec |
+|---|---|---|
+| **Admin (app4)** | `sources/app4/assets/css/admin.css` (variables `--color-*` et `@theme`) | [COMMON_ADMIN_SPECS.md](COMMON_ADMIN_SPECS.md), [DARK_MODE.md](DARK_MODE.md) |
+| **Public (app3)** | `sources/kpi-layer/app/assets/css/kpi-theme.css` (`@theme static`, palettes générées par `scripts/generate-palette.py`) | [SITE_LAYOUT.md §3](public/SITE_LAYOUT.md) |
+
+Règle (même règle que SITE_LAYOUT §3) : **aucune couleur hexadécimale dans les gabarits PDF**, uniquement des
+variables CSS. Ces variables sont **extraites** des deux fichiers ci-dessus par un script
+(`make pdf_tokens_sync`) vers `sources/api2/templates/pdf/tokens/{admin,public}.css`, fichiers générés et commités.
+Un test unitaire api2 relit les deux sources et échoue si les fichiers générés ont dérivé (critère PDF-DESIGN-05).
+Quand une charte change dans app3 ou app4, la PR relance le script ; les PDF suivent sans retouche des gabarits.
+
+### 8.2 Socle commun aux deux chartes
+
+| Élément | Valeur (jeton) | Usage PDF |
+|---|---|---|
+| Texte courant | **Raleway** (auto-hébergée, `kpi-layer/public/fonts/raleway/`) | corps, tableaux |
+| Titres | **Agency FB** (`agencyfb.ttf`, licence FFCK) | titre du document, titres de section, noms de compétition |
+| Chiffres | `font-variant-numeric: tabular-nums` | scores, points, classements, horaires |
+| Encre | `ink` / `dark` `#1e1e1c` | texte |
+| Filets | `line` / `light` `#c6c7c7` | bordures, séparateurs, zébrage très clair (teinte 50) |
+| Bleu nuit | `navy` / `header` `#20265b` | bandeau de titre, pied de page |
+| Bleu ciel | `sky` / `secondary` `#69b9e6` | filet d'accent, aplats légers (texte noir uniquement, comme le bandeau beta app3) |
+
+Les polices sont **jointes à la requête Gotenberg** (aucun appel réseau, cf. §9), copiées depuis `kpi-layer/public/fonts`
+par le même script que les jetons.
+
+### 8.3 Thème admin (route `/admin/pdf`) - charte app4
+
+- Couleur d'action/titres de section : `primary` `#1e4385` ; bandeau : `header` `#20265b`.
+- États : `success` `#209452` (qualifié, présent, contrôle OK), `warning` `#e9b410` (à vérifier, provisoire),
+  `danger` `#c94a4c` (non conforme, carton rouge, certificat manquant) — **toujours doublés d'un libellé ou d'une
+  icône** (lisible en noir & blanc).
+- Logo : `logo_kp.png` (KPI) dans le bandeau ; logos compétition/sponsor issus des visuels de la compétition.
+- Pied : « Document interne - ne pas diffuser » pour les documents à données personnelles, nom du profil générateur
+  et date/heure de génération.
+- Filigrane « Provisoire - non publié » (`warning`, opacité faible) sur les classements calculés (§7.3).
+
+### 8.4 Thème public (route `/pdf`) - charte app3
+
+- Couleur primaire `primary`/`kpi-blue-500` `#357b9c` (titres de section, filets) ; `accent`/`kpi-red-500`
+  `#c94a4c` réservé aux mises en avant (vainqueur de match, alerte) ; `gold`/`green` pour médailles et qualifiés,
+  comme sur le site.
+- En-tête : logo **FFCK sur pastille blanche** (règle de la charte : jamais sur fond coloré) + logo CNA Kayak-Polo
+  (`kpi-layer/public/img/brand/`), puis logos de la compétition.
+- Pied en bandeau `navy` fin, rappelant le pied du site : URL publique de la page équivalente sur app3 (et QR code
+  vers celle-ci pour les classements et listes de matchs), date de génération.
+- Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
+  colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
+  de matchs reprend la présentation du calendrier / des résultats.
+
+### 8.5 Contraintes propres au papier
+
+- **Thème clair uniquement** : le mode sombre des deux applis ne s'applique pas aux PDF (jetons de `:root`, jamais
+  ceux de `.dark`).
+- **Économie d'encre** : pas de grands aplats ; le bandeau `navy` est limité à une bande fine d'en-tête et de pied.
+  Un aplat portant du texte blanc utilise le ton 900 de sa palette (règle app3).
+- **Noir & blanc** : aucune information portée par la seule couleur ; contraste AA vérifié sur les jetons utilisés.
+- Marges ≥ 10 mm, tableaux zébrés légers (teinte 50), `break-inside: avoid` sur les blocs équipe/match,
+  `thead` répété à chaque page.
+- **Documents officiels** (feuille de marque, feuille de présence) : la charte habille l'en-tête et le pied, mais la
+  grille et les zones d'écriture restent sobres (encre, filets `line`), dimensionnées pour l'écriture manuscrite.
+- **Accessibilité** : PDF balisé (Chromium produit des PDF taggés), langue renseignée, `<title>` significatif.
+
+### 8.6 Validation du design
+
+- Un gabarit est un fichier Twig prévisualisable en HTML via une route **dev-only** `?format=html` (désactivée hors
+  `dev`) : on le compare côte à côte avec la page app4/app3 équivalente.
+- Phase 1 : **deux maquettes de référence** validées avant tout autre document — `teams-groups` en thème admin et
+  `ranking` en thème public. Les documents suivants réutilisent leurs *partials* (en-tête, pied, tableau, ligne de
+  match) sans redéfinir de style.
 
 ---
 
@@ -340,6 +408,8 @@ Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un
 | R10 | Coût de migration sous-estimé (≈45 fichiers, logique métier enfouie dans du code FPDF) | élevée | moyen | Consolidation du catalogue (≈18 docs au lieu de 45), migration par famille, chaque doc = 1 PR avec tests |
 | R11 | Mise en page Chromium différente de l'existant (sauts de page, fusion de cellules) | moyenne | faible | Prévisualisation HTML, tests de non-régression sur le texte extrait |
 | R12 | Admin legacy (Smarty) encore utilisé pendant la transition | certaine | faible | Les `Feuille*.php` restent jusqu'au retrait de l'admin legacy, mais **protégés** (phase 0) |
+| R13 | Dérive entre la charte des applis et celle des PDF (couleurs recopiées à la main) | élevée sans outillage | moyen | Jetons extraits par script + test de dérive (§8.1, PDF-DESIGN-05) |
+| R14 | Licence **Agency FB** : police commerciale, son incorporation dans un PDF diffusé publiquement doit être couverte par la licence FFCK | moyenne | moyen | Vérifier la licence avant la phase 1 ; repli `'Arial Narrow', Arial` déjà prévu par les deux chartes, ou équivalent libre (ex. *Oswald*) validé par la FFCK |
 
 ---
 
@@ -377,6 +447,15 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DOC-03** : feuille de marque et feuille de présence validées par écrit par la commission concernée avant bascule.
 - **PDF-DOC-04** : aucune ressource externe dans le PDF (polices et images embarquées).
 
+**Design**
+- **PDF-DESIGN-01** : un PDF servi par `/admin/pdf` utilise les jetons du thème admin (app4) ; servi par `/pdf`, ceux du thème public (app3). Un même `doc` disponible sur les deux routes change de thème sans changer de gabarit.
+- **PDF-DESIGN-02** : aucun gabarit ni partial PDF ne contient de couleur hexadécimale, `rgb()` ou `oklch()` littérale (test qui parcourt `templates/pdf/`, hors `tokens/`).
+- **PDF-DESIGN-03** : les polices du document sont Raleway (texte) et Agency FB ou son repli validé (titres), embarquées dans le PDF (`pdffonts` les liste toutes comme *embedded*).
+- **PDF-DESIGN-04** : le logo FFCK n'apparaît que sur fond blanc ; les PDF publics portent les logos FFCK et CNA, les PDF admin le logo KPI.
+- **PDF-DESIGN-05** : modifier une couleur dans `admin.css` ou `kpi-theme.css` sans relancer `make pdf_tokens_sync` fait échouer la suite de tests api2.
+- **PDF-DESIGN-06** : les maquettes de référence (`teams-groups` admin, `ranking` public) sont validées côte à côte avec les pages app4/app3 correspondantes avant la migration des autres documents.
+- **PDF-DESIGN-07** : imprimé en noir & blanc, chaque état (qualifié, provisoire, non conforme…) reste identifiable par un libellé ou une icône.
+
 **Robustesse**
 - **PDF-PERF-01** : `scoresheet` de 100 matchs généré en < 30 s en préprod ; `ranking` en < 3 s.
 - **PDF-PERF-02** : au-delà de la limite de matchs → 400 explicite ; au-delà du rate limit public → 429.
@@ -398,7 +477,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 | Phase | Contenu | Sortie |
 |---|---|---|
 | **0 - Colmatage (immédiat, sans Gotenberg)** | Protéger les `admin/Feuille*.php` qui exposent des données personnelles. Option recommandée : app4 obtient un **lien signé court** depuis api2 (même mécanisme que §6.3-2, vérifié côté legacy par un helper partageant le secret HMAC) ; l'admin legacy continue avec sa session (`MyPageSecure`). À défaut, désactiver ces liens dans app4 jusqu'à leur migration. | Plus aucun document à données personnelles accessible anonymement |
-| **1 - Socle** | Service `gotenberg` (3 compose), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, gabarit de base, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, un document pilote : `teams-groups` |
+| **1 - Socle** | Service `gotenberg` (3 compose), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
 | **2 - Données personnelles** | `presence` (9 variantes), `scrutineering-control`, `referees-pool`, `instances` | R1 clos ; liens app4 basculés |
 | **3 - Classements** | famille `ranking*`, puis migration de `ranking-tiebreak` hors mPDF | app3 + app4 basculés pour les classements |
 | **4 - Matchs** | `games-list`, `games-grid`, `scoresheet` (validation commission) | app2/app3/app4 basculés |
@@ -431,3 +510,5 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 4. Feuille de marque publique : doit-elle rester publique (aujourd'hui `PdfMatchMulti.php` l'est) ou devenir admin-only ?
 5. Durée de conservation des redirections 301 des anciennes URL publiques (QR codes imprimés) : 2 saisons proposées.
 6. RAM disponible sur le VPS : mesure à faire avant phase 1 pour confirmer l'option A (§4).
+7. La licence FFCK d'Agency FB autorise-t-elle son incorporation dans des PDF publics (R14) ? Sinon, quel repli ?
+8. Les PDF publics doivent-ils porter un QR code vers la page app3 équivalente (§8.4) dès la beta, ou seulement après la bascule du site public ?
