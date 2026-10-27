@@ -188,6 +188,11 @@
       "final": "Classement final"
     },
     "rankingLater": "Le classement sera publié après les premiers matchs.",
+    "cupRankingLater": {
+      "title": "Le classement général sera publié à l'issue de la compétition.",
+      "reason": "En cours de compétition à élimination, un classement provisoire serait trompeur : les équipes encore qualifiées, finalistes compris, ont encore des matchs à jouer.",
+      "progress": "Suivre le déroulement de la compétition"
+    },
     "progressView": "Présentation du déroulement",
     "view": {
       "horizontal": "Horizontal",

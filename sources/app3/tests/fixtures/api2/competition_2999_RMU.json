@@ -30,6 +30,11 @@
         "soustitre2": "Poule A"
       },
       {
+        "code": "RAT",
+        "display_title": "Championnat En Attente",
+        "soustitre2": "Poule B"
+      },
+      {
         "code": "RCP",
         "display_title": "Phase finale",
         "soustitre2": "Finale"
@@ -38,11 +43,6 @@
         "code": "RMU",
         "display_title": "Multi Résultats",
         "soustitre2": "Général"
-      },
-      {
-        "code": "RAT",
-        "display_title": "Championnat En Attente",
-        "soustitre2": "Poule B"
       }
     ],
     "events": []

@@ -41,7 +41,7 @@ describe('competition page frame (PAGE_COMPETITION.md § 2)', () => {
   it('CMP-03: siblings of the group keep the current tab', async () => {
     const chips = (await mountRoute('/competitions/2999/RCH/ranking')).findAll('[data-testid="competition-chips"] a')
     expect(chips.map(chip => chip.attributes('href'))).toEqual([
-      '/competitions/2999/RCH/ranking', '/competitions/2999/RCP/ranking', '/competitions/2999/RMU/ranking', '/competitions/2999/RAT/ranking',
+      '/competitions/2999/RCH/ranking', '/competitions/2999/RAT/ranking', '/competitions/2999/RCP/ranking', '/competitions/2999/RMU/ranking',
     ])
     expect(chips[0]!.attributes('aria-current')).toBe('page')
   })

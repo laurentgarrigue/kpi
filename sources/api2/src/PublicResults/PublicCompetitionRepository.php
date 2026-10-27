@@ -24,8 +24,8 @@ final class PublicCompetitionRepository
         LEFT JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
         WHERE c.Publication = 'O'";
 
-    /** Ordre défini puis ordre du tour : liste des compétitions, pastilles et sœurs (retour de recette 09/10/2026). */
-    private const GROUP_ORDER = 'c.GroupOrder, c.Code_tour, c.Code';
+    /** Étape puis ordre défini : les zones d'une étape se suivent, avant les finales (retour du 27/10/2026). */
+    private const GROUP_ORDER = 'c.Code_tour, c.GroupOrder, c.Code';
 
     public function __construct(private readonly Connection $connection)
     {
@@ -61,7 +61,7 @@ final class PublicCompetitionRepository
     }
 
     /**
-     * Compétitions publiées d'un groupe, dans l'ordre défini (GroupOrder) puis dans l'ordre du tour (Code_tour).
+     * Compétitions publiées d'un groupe, par étape (Code_tour) puis dans l'ordre défini (GroupOrder).
      *
      * @return list<array<string, mixed>>
      */

@@ -32,6 +32,21 @@ export function groupLabel(group: CompetitionGroup, locale: string): string {
   return locale === 'en' && group.libelle_en ? group.libelle_en : group.libelle
 }
 
+/** Consecutive competitions of the same round (api2 sorts by round): one row of cards per stage (CPL-04). */
+export function competitionsByRound<T extends { round: number | null }>(competitions: readonly T[]): T[][] {
+  const rows: T[][] = []
+  for (const competition of competitions) {
+    const last = rows.at(-1)
+    if (last && last[0]!.round === competition.round) {
+      last.push(competition)
+    }
+    else {
+      rows.push([competition])
+    }
+  }
+  return rows
+}
+
 /** A finished competition opens on its ranking, the others on their games. */
 export function defaultTab(status: CompetitionStatus): CompetitionTab {
   return status === 'END' ? 'ranking' : 'games'

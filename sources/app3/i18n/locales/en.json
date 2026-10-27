@@ -188,6 +188,11 @@
       "final": "Final ranking"
     },
     "rankingLater": "The ranking will be published after the first games.",
+    "cupRankingLater": {
+      "title": "The final ranking will be published once competition is over.",
+      "reason": "During a knockout competition, a provisional ranking would be misleading: the teams still in, finalists included, have games left to play.",
+      "progress": "Follow the progress of the competition"
+    },
     "progressView": "Progress layout",
     "view": {
       "horizontal": "Horizontal",

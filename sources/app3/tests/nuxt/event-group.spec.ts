@@ -156,13 +156,13 @@ describe('group view (PAGE_EVENT_GROUP.md)', () => {
   it('GRP-03: one chip per competition, without event parameter', async () => {
     const chips = (await mountRoute('/groups/2999/TSTRES/games')).findAll('[data-testid="competition-chips"] a')
     expect(chips.slice(1).map(chip => chip.attributes('href'))).toEqual([
-      '/competitions/2999/RCH/games', '/competitions/2999/RCP/games', '/competitions/2999/RMU/games', '/competitions/2999/RAT/games',
+      '/competitions/2999/RCH/games', '/competitions/2999/RAT/games', '/competitions/2999/RCP/games', '/competitions/2999/RMU/games',
     ])
   })
 
   it('AGG-04: games list PDF by the competitions of the group', async () => {
     const wrapper = await mountRoute('/groups/2999/TSTRES/games')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCH,RCP,RMU,RAT')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCH,RAT,RCP,RMU')
   })
 
   it('GRP-04: an unknown group is the site 404', async () => {

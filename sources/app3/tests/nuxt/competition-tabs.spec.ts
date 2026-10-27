@@ -196,6 +196,20 @@ describe('ranking tab (§ 3.6)', () => {
     const wrapper = await mountRoute('/competitions/2999/RAT/ranking')
     expect(wrapper.find('[data-testid="no-ranking"]').text()).toBe('Le classement sera publié après les premiers matchs.')
   })
+
+  it('CMP-10: a cup type competition in progress explains why its ranking waits for the end and links to its progress', async () => {
+    const { api2Fixture } = await import('../fixtures/api2')
+    const ranking = api2Fixture('/competition/2999/RCP/ranking').body as object
+    api2.mockImplementation(async (path: string) => (path === '/competition/2999/RCP/ranking'
+      ? { ...ranking, status: 'ON', rows: [] }
+      : fakeApi2(path)))
+    const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
+    const message = wrapper.find('[data-testid="no-ranking"]')
+    expect(message.text()).toContain('Le classement général sera publié à l\'issue de la compétition.')
+    expect(message.text()).toContain('finalistes compris, ont encore des matchs à jouer')
+    expect(message.find('a').attributes('href')).toBe('/competitions/2999/RCP/progress')
+    expect(wrapper.find('[data-testid="ranking-badge"]').exists()).toBe(false)
+  })
 })
 
 describe('stats tab (§ 3.7)', () => {

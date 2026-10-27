@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { GROUP_EVENT_MIN_SHARE, mainEvent } from '#kpi-layer/utils/results/events'
 import type { GroupCompetitions, GroupSection, Seasons } from '#kpi-layer/utils/results/types'
-import { defaultGroup, groupLabel } from '~/utils/competitions'
+import { competitionsByRound, defaultGroup, groupLabel } from '~/utils/competitions'
 
 // « Competitions and results » of a season and a group (PAGE_COMPETITIONS.md, CPL-*).
 const route = useRoute()
@@ -26,6 +26,7 @@ const { data: list, error } = await useApiResource<GroupCompetitions>(
   { notFoundIsError: false },
 )
 const competitions = computed(() => list.value?.competitions ?? [])
+const rounds = computed(() => competitionsByRound(competitions.value))
 const main = computed(() => mainEvent(list.value?.events ?? [], GROUP_EVENT_MIN_SHARE))
 
 useSeoMeta({
@@ -53,8 +54,15 @@ useSeoMeta({
         <p v-else-if="competitions.length === 0" data-testid="no-competition">{{ $t('results.noCompetition') }}</p>
         <template v-else>
           <ResultsEventBanner :events="list?.events ?? []" :main="main" :scope="groupName" />
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-6 pt-2" data-testid="competition-cards">
-            <ResultsCompetitionCard v-for="competition in competitions" :key="competition.code" :competition="competition" />
+          <div class="space-y-6 pt-2" data-testid="competition-cards">
+            <div
+              v-for="row in rounds"
+              :key="row[0]!.code"
+              class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-6"
+              data-testid="competition-round"
+            >
+              <ResultsCompetitionCard v-for="competition in row" :key="competition.code" :competition="competition" />
+            </div>
           </div>
         </template>
       </section>
