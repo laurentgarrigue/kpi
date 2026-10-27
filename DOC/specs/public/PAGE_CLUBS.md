@@ -26,6 +26,8 @@ clubs : la carte et la recherche en tiennent lieu.
   évidence. Décision Q-P3-5 maintenue : les tuiles ne sont chargées **qu'après le clic** « Afficher la carte » (la
   maquette les charge directement : à valider au regard du consentement, cf. maquettes/README.md). Une fois la carte
   affichée, « Clubs près de moi » la centre sur la position du visiteur (géolocalisation du navigateur).
+  Le choix est **retenu** sur l'appareil (`localStorage`, aucun cookie) : aux visites suivantes la carte s'affiche
+  sans nouveau clic. « Masquer la carte » la retire et oublie ce choix (retrait aussi simple que l'accord).
 - Les noms de clubs et de comités stockés en capitales sont affichés en casse de titre (« Canoe Club d'Avranches »).
 
 ### 2.2 `/clubs/{code}` — redirection
@@ -49,6 +51,9 @@ n'est jamais le seul accès à l'information : la liste reste disponible.
 - **CLB-01** — `/clubs` : recherche de clubs et d'équipes (GET `q`, sans JavaScript, 2 caractères minimum), résultats groupés (club → `?club={code}`, équipe → `/teams/{number}`) ; `/teams` redirige vers `/clubs`.
 - **CLB-02** — La carte affiche un marqueur par club positionné, qui ouvre sa fiche (`?club={code}`) ; aucune requête vers
   un service de cartographie tant que la carte n'est pas demandée.
+- **CLB-09** — Après le clic « Afficher la carte », le choix est mémorisé (`localStorage`, clé `kpi.clubs.map`) et
+  la carte s'affiche d'elle-même aux visites suivantes ; « Masquer la carte » la retire et efface ce choix. Sans
+  choix mémorisé (ou stockage indisponible), CLB-02 s'applique.
 - **CLB-03** — La fiche affiche comités, site, e-mail, adresse, position et équipes (liens vers les fiches
   équipe) ; club inconnu → 404.
 - **CLB-04** — `kplogos.php` n'a plus d'équivalent séparé : la carte et la recherche en tiennent lieu.

@@ -17,6 +17,32 @@ const CLUB_ZOOM = 11
 const NEAR_ZOOM = 10
 const FLIGHT_SECONDS = 0.6
 const FRANCE = { lat: 46.6, lng: 2.4 }
+// The visitor's choice to load the third-party tiles, kept on the device (CLB-09); storage may be unavailable.
+const CHOICE_KEY = 'kpi.clubs.map'
+const CHOICE_SHOWN = 'shown'
+
+function rememberChoice(shown: boolean) {
+  try {
+    if (shown) {
+      localStorage.setItem(CHOICE_KEY, CHOICE_SHOWN)
+    }
+    else {
+      localStorage.removeItem(CHOICE_KEY)
+    }
+  }
+  catch {
+    // Not remembered: the map is asked for again next time (CLB-02).
+  }
+}
+
+function choiceRemembered(): boolean {
+  try {
+    return localStorage.getItem(CHOICE_KEY) === CHOICE_SHOWN
+  }
+  catch {
+    return false
+  }
+}
 
 const { t } = useI18n()
 const container = useTemplateRef<HTMLDivElement>('container')
@@ -45,6 +71,7 @@ function highlight(code: string | null | undefined, fly: boolean) {
 }
 
 async function show() {
+  rememberChoice(true)
   state.value = 'loading'
   const [{ default: L }] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')])
   state.value = 'shown'
@@ -70,7 +97,21 @@ function nearMe() {
   )
 }
 
+function hide() {
+  rememberChoice(false)
+  map?.remove()
+  map = null
+  dots.clear()
+  nearUnavailable.value = false
+  state.value = 'idle'
+}
+
 watch(() => props.selected, code => highlight(code, true))
+onMounted(() => {
+  if (choiceRemembered()) {
+    show()
+  }
+})
 onBeforeUnmount(() => map?.remove())
 </script>
 
@@ -81,9 +122,10 @@ onBeforeUnmount(() => map?.remove())
       <UButton :loading="state === 'loading'" icon="i-heroicons-map" class="justify-self-center" data-testid="show-map" @click="show">{{ $t('clubs.showMap') }}</UButton>
     </div>
     <div v-show="state === 'shown'" ref="container" role="region" :aria-label="$t('clubs.mapLabel')" class="z-0 h-full min-h-[28rem] w-full rounded-lg border border-line" />
-    <p v-if="state === 'shown'" class="absolute top-3 right-3 z-10 rounded-md bg-surface px-3 py-1.5 text-sm shadow">
+    <p v-if="state === 'shown'" class="absolute top-3 right-3 z-10 flex gap-3 rounded-md bg-surface px-3 py-1.5 text-sm shadow">
       <button v-if="!nearUnavailable" type="button" class="text-kpi-blue-700 underline" @click="nearMe">{{ $t('clubs.nearMe') }}</button>
       <span v-else>{{ $t('clubs.nearUnavailable') }}</span>
+      <button type="button" class="text-kpi-blue-700 underline" data-testid="hide-map" @click="hide">{{ $t('clubs.hideMap') }}</button>
     </p>
   </div>
 </template>

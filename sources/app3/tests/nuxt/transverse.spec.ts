@@ -18,6 +18,7 @@ beforeEach(() => {
 })
 
 const SUGGESTION_WAIT_MS = 400
+const MAP_CHOICE_KEY = 'kpi.clubs.map'
 const waitForSuggestions = async () => {
   await new Promise(resolve => setTimeout(resolve, SUGGESTION_WAIT_MS))
   await flushPromises()
@@ -338,6 +339,22 @@ describe('clubs and teams (PAGE_CLUBS.md § 2.1)', () => {
     expect(wrapper.find('[data-testid="show-map"]').exists()).toBe(true)
     expect(wrapper.html()).not.toContain('tile.openstreetmap.org')
     expect(wrapper.find('.leaflet-container').exists()).toBe(false)
+  })
+
+  it('CLB-09: the click on « Afficher la carte » is remembered; « Masquer la carte » forgets it', async () => {
+    localStorage.removeItem(MAP_CHOICE_KEY)
+    const wrapper = await mountRoute('/clubs')
+    await wrapper.find('[data-testid="show-map"]').trigger('click')
+    await vi.waitFor(() => expect(wrapper.find('[data-testid="hide-map"]').exists()).toBe(true))
+    expect(localStorage.getItem(MAP_CHOICE_KEY)).toBe('shown')
+
+    const again = await mountRoute('/clubs')
+    await vi.waitFor(() => expect(again.find('[data-testid="hide-map"]').exists()).toBe(true))
+    expect(again.find('[data-testid="show-map"]').exists()).toBe(false)
+
+    await again.find('[data-testid="hide-map"]').trigger('click')
+    expect(again.find('[data-testid="show-map"]').exists()).toBe(true)
+    expect(localStorage.getItem(MAP_CHOICE_KEY)).toBeNull()
   })
 
   it('CLB-03 / CLB-08: the sheet shows committees and the club news', async () => {
