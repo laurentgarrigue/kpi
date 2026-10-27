@@ -442,6 +442,9 @@ réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire
 *À compléter.* Prévoir : 🌍 aucun changement DNS (même VPS) ; Traefik : app3 devient le routeur par défaut de
 `kayak-polo.info`/`www`, Apache sur liste explicite ; `NUXT_PUBLIC_BETA=false` ; redirections 301 ; ajout de
 `/healthz` aux `SMOKE_URLS_*` (📦 `vps-manager`) ; Search Console ; suivi des 404.
+**Redirection 301 `beta.*` → domaine principal pendant au moins 1 saison** (chemin conservé) : des PDF publics
+imprimés portent des QR codes vers `beta.*` ([PDF_GOTENBERG.md §8.4](../../specs/PDF_GOTENBERG.md)) ; basculer en même
+temps `APP3_PUBLIC_URL` d'api2 vers le domaine principal.
 
 ## Phase 6 — Décommissionnement
 

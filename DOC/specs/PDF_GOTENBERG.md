@@ -30,6 +30,8 @@ Points saillants :
   ([archive/pdf-exports](../developer/archive/pdf-exports/)). Mais le code reste écrit **en coordonnées FPDF**
   (cellules positionnées au millimètre) : aucun design possible, chaque variante est un copier-coller
   (`PdfListeMatchs4TerrainsEn`, `…En2`, `…En3`, `…En4`, `5TerrainsEn`, `5TerrainsEnTeams` ; 9 variantes de feuille de présence).
+  Pour la grille terrains, il n'existe en réalité que **2 vues** (Équipes, Phases) : les autres variantes
+  (terrains 1 à 4, 1 à 5, 5 à 8) ne compensaient que l'incapacité de FPDF/mPDF à s'adapter au nombre de colonnes.
 - **Dépendance aux sessions** : les pages lisent `$_SESSION['codeCompet']`, `listMatch`, la saison active…
   App4 n'a pas de session PHP ; chaque page a reçu des alias GET (`Compet`/`compet`/`codeCompet`, `S`/`season`,
   `equipe`/`team`) au fil de l'eau. Ce n'est ni homogène ni testable.
@@ -100,6 +102,16 @@ classes `pageNumber`/`totalPages`) ; `thead` répété par Chromium sur chaque p
 Contexte : préprod et prod tournent **sur le même VPS**, en deux stacks Compose distinctes
 (`APPLICATION_NAME` différent, réseaux `network_${APPLICATION_NAME}` séparés).
 
+**Mesures du VPS (2026-10-27)** : x86_64, **2 cœurs**, 7,8 Gio de RAM dont 3,6 utilisés et **4,2 disponibles**,
+disque 56 Go libres sur 99 ; 14 conteneurs actifs (préprod + prod : php, api2, event-cache-worker, app3, nginx, bases).
+Charge au repos ~0,1, mais une moyenne sur 15 min de 1,83 relevée peu après un déploiement préprod : les builds
+saturent déjà presque les 2 cœurs.
+
+**Conclusion** : la RAM n'est pas la contrainte (deux instances plafonnées tiennent dans 1,5 Gio, soit ~35 % de la
+marge disponible). **Le CPU l'est** : un rendu Chromium occupe un cœur pendant quelques secondes, et le VPS n'en a
+que deux, partagés avec tout le reste. D'où des plafonds CPU stricts, une concurrence de rendu à 1 par instance et
+une instance préprod bridée, pour qu'elle ne puisse jamais prendre plus d'un demi-cœur à la prod.
+
 ### Options
 
 | | A. Une instance **par environnement** (service `gotenberg` dans chaque compose) | B. Une instance **partagée** sur le VPS (stack infra à part, réseau `gotenberg_network`) | C. Une instance sur un **autre serveur** |
@@ -117,9 +129,19 @@ Le gain mémoire de B (~200 Mo au repos) ne compense pas la perte des deux garan
 **isolation de charge** et **validation des montées de version**. Gotenberg étant sans état, le dupliquer ne coûte
 qu'un peu de RAM. C n'apporte que de la surface d'attaque.
 
-B ne devient défendable que si la RAM du VPS est réellement contrainte (à mesurer : `docker stats` sur une semaine) ;
-il faudrait alors au minimum des limites `cpus`/`mem_limit`, une file bornée et la même version épinglée testée
-ailleurs (dev). À réévaluer si un troisième environnement apparaît, pas avant.
+Les mesures ci-dessus confirment A : avec 4,2 Gio disponibles, la mutualisation (B) ne résoudrait aucun problème
+réel, alors que le seul goulot (le CPU) est mieux maîtrisé par des plafonds **par environnement**. Mutualiser ferait
+au contraire partager la même file entre préprod et prod. À réévaluer seulement si un troisième environnement apparaît
+ou si la RAM disponible passe sous ~2 Gio.
+
+| Environnement | `mem_limit` | `cpus` | Concurrence Chromium | File max |
+|---|---|---|---|---|
+| prod | 1 Gio | 1.0 | 1 | 10 |
+| préprod | 512 Mio | 0.5 | 1 | 5 |
+| dev | libre | libre | 1 | 10 |
+
+À surveiller après mise en service (`docker stats`, `health-check.sh`) : si la prod sature régulièrement sa file,
+on passe d'abord la concurrence à 2 avant de toucher aux `cpus`.
 
 En dev, le service est ajouté à `compose.dev.yaml` de la même manière.
 
@@ -131,14 +153,15 @@ gotenberg:
     container_name: ${APPLICATION_NAME}_gotenberg
     restart: unless-stopped
     networks: [network_${APPLICATION_NAME}]   # jamais traefiknetwork, aucun port publié
-    mem_limit: 1g
-    cpus: 1.5
+    mem_limit: ${GOTENBERG_MEM_LIMIT}          # 1g prod, 512m préprod (cf. tableau)
+    cpus: ${GOTENBERG_CPUS}                    # 1.0 prod, 0.5 préprod
     command:
         - gotenberg
         - --api-timeout=60s
         - --api-enable-basic-auth            # défense en profondeur (identifiants dans docker/.env)
         - --chromium-auto-start=false        # Chromium lancé à la première requête
-        - --chromium-max-queue-size=10       # au-delà : 429 immédiat plutôt qu'une file infinie
+        - --chromium-max-queue-size=${GOTENBERG_QUEUE}  # au-delà : refus immédiat plutôt qu'une file infinie
+        # + option de concurrence Chromium de la version épinglée réglée à 1 (2 cœurs seulement sur le VPS)
         - --chromium-deny-list=^.*$          # aucun accès réseau depuis le HTML (anti-SSRF)
         - --chromium-allow-list=^file:///tmp/.*  # seulement les fichiers joints à la requête
         - --libreoffice-disable-routes=true  # module inutilisé
@@ -221,12 +244,12 @@ Un lien `<a target="_blank">` ne peut pas porter l'en-tête `Authorization`. Deu
 1. **Par défaut : fetch + blob** (pattern déjà utilisé par `stats/index.vue`) : composable `usePdf().open(doc, params)`
    qui ouvre l'onglet **avant** l'`await` (contourne les bloqueurs de pop-up, y compris Safari iOS), récupère le PDF
    via `useApi().getBlob()`, puis y charge l'URL objet ; `download()` pour le téléchargement direct.
-2. **Lien signé court** (cas où une vraie URL est indispensable : impression depuis une tablette de table de marque,
-   partage à un autre poste) : `POST /api2/admin/pdf/{doc}/link` → URL `GET /api2/pdf-signed/{doc}?…&exp=…&sig=…`
+2. **Lien signé court** (livré dès la phase 1 ; cas où une vraie URL est indispensable : impression depuis une
+   tablette de table de marque, partage à un autre poste, et colmatage des pages legacy en phase 0) : `POST /api2/admin/pdf/{doc}/link` → URL `GET /api2/pdf-signed/{doc}?…&exp=…&sig=…`
    signée par `UriSigner` (HMAC, secret api2), **TTL 5 min**, liée au code utilisateur et au mandat ; les droits sont
    **re-vérifiés** au moment du téléchargement (révocation ou changement de mandat pris en compte). Pas de JWT dans l'URL.
 
-Le mécanisme 2 est optionnel pour la première livraison (phase 1) ; à trancher en §12.
+Les deux mécanismes sont livrés en phase 1 ; le lien signé sert aussi au colmatage de la phase 0 (§12).
 
 ### 6.4 Contrôle d'accès admin
 
@@ -264,8 +287,39 @@ lors de la validation. « Public » = route `/pdf`, « Admin » = route `/admin/
 | `doc` | Remplace | Public | Admin | Options |
 |---|---|---|---|---|
 | `games-list` | FeuilleListeMatchs[EN], PdfListeMatchs[EN] | ✅ matchs publiés | ✅ tous les matchs du périmètre | `lang`, `tz`, `gameday`, `event` |
-| `games-grid` | PdfListeMatchs4Terrains[En,En2,En3,En4], 5TerrainsEn[Teams] | ✅ | ✅ | `pitches=1..n` (auto par défaut), `layout=…`, `teams=1` — les 6 variantes deviennent des options, à valider écran par écran |
-| `scoresheet` | FeuilleMatchMulti, PdfMatchMulti | ✅ (matchs publiés, sans données réservées) | ✅ (`ROLE_SCORER` + périmètre) | `games`, `lang`, `tz` |
+| `games-grid` | PdfListeMatchs4Terrains, …4TerrainsEn, …En2, …En3, …En4, …5TerrainsEn, …5TerrainsEnTeams | ✅ | ✅ | `view=teams\|phases`, `lang`, `tz`, `event`/`competition`, `gameday` |
+| `scoresheet` | FeuilleMatchMulti, PdfMatchMulti | ⚠️ à trancher (§7.2.2) | ✅ (`ROLE_SCORER` + périmètre) | `games`, `lang`, `tz` |
+
+#### 7.2.1 Grille terrains : 2 vues, colonnes dynamiques
+
+Les 7 fichiers legacy se réduisent à **un document, deux vues** :
+
+- `view=teams` : chaque case montre les deux équipes du match (ex-`5TerrainsEnTeams`) ;
+- `view=phases` : chaque case montre la phase / poule / libellé du match (ex-`4Terrains…`, `5TerrainsEn`).
+
+Lignes = créneaux (date, heure) ; colonnes = terrains. **Les colonnes sont calculées à partir des matchs réellement
+sélectionnés** : l'ensemble distinct des valeurs `Terrain`, triées dans l'ordre naturel (2 avant 10). Un événement
+qui n'utilise que les terrains 5 à 8 donne 4 colonnes « 5, 6, 7, 8 », sans colonnes vides ; une journée sur 3 terrains
+donne 3 colonnes. Plus de paramètre `pitches` ni de variante par plage de terrains.
+
+Mise en page : A4 paysage ; au-delà de **6 terrains** par page (largeur lisible minimale d'une case), les terrains sont
+répartis en groupes équilibrés (8 → 4 + 4, 9 → 5 + 4) imprimés en sections successives, chaque section répétant
+l'en-tête des créneaux. Un jour = une section ; une date ou un lieu différent fait sauter une page.
+
+#### 7.2.2 Feuille de marque publique : décision reportée (avant la phase 4)
+
+Aujourd'hui `PdfMatchMulti.php` est public (lié depuis app2 `game/[id].vue` et app3 `page-links.ts`). Or app2 offre
+déjà une vue du match plus lisible pour le public, et app3 une fiche match. Le PDF formel sert surtout aux officiels.
+
+| Option | Conséquence |
+|---|---|
+| **a. Admin uniquement** (pressentie) | `scoresheet` uniquement sur `/admin/pdf` ; les liens publics (app2, app3) pointent vers la vue match d'app2 / app3 ; `PdfMatchMulti.php` redirige (301) vers cette vue. Un document de moins à exposer et à protéger contre l'abus. |
+| b. Public conservé | `scoresheet` public, limité aux matchs validés, sans données réservées ; soumis au rate limit et au plafond de matchs. |
+
+Critère de décision : consulter les journaux d'accès Apache de `PdfMatchMulti.php` (volume, provenance : app2, app3,
+QR codes, liens externes) sur une saison. À trancher avant le démarrage de la phase 4.
+
+#### 7.2.3 Documents officiels
 
 La **feuille de marque** est un document officiel rempli à la main : format A4, zones d'écriture et rubriques
 inchangées, validées par la commission arbitrage avant mise en service (critère PDF-DOC-03).
@@ -319,7 +373,7 @@ Quand une charte change dans app3 ou app4, la PR relance le script ; les PDF sui
 | Élément | Valeur (jeton) | Usage PDF |
 |---|---|---|
 | Texte courant | **Raleway** (auto-hébergée, `kpi-layer/public/fonts/raleway/`) | corps, tableaux |
-| Titres | **Agency FB** (`agencyfb.ttf`, licence FFCK) | titre du document, titres de section, noms de compétition |
+| Titres | **Agency FB** (`agencyfb.ttf`, licence FFCK : incorporation dans les PDF publics admise, cf. R14) | titre du document, titres de section, noms de compétition |
 | Chiffres | `font-variant-numeric: tabular-nums` | scores, points, classements, horaires |
 | Encre | `ink` / `dark` `#1e1e1c` | texte |
 | Filets | `line` / `light` `#c6c7c7` | bordures, séparateurs, zébrage très clair (teinte 50) |
@@ -347,8 +401,13 @@ par le même script que les jetons.
   comme sur le site.
 - En-tête : logo **FFCK sur pastille blanche** (règle de la charte : jamais sur fond coloré) + logo CNA Kayak-Polo
   (`kpi-layer/public/img/brand/`), puis logos de la compétition.
-- Pied en bandeau `navy` fin, rappelant le pied du site : URL publique de la page équivalente sur app3 (et QR code
-  vers celle-ci pour les classements et listes de matchs), date de génération.
+- Pied en bandeau `navy` fin, rappelant le pied du site : URL et **QR code vers la page équivalente sur app3**
+  (classements → page compétition, listes et grilles de matchs → calendrier / résultats), date de génération.
+  **Dès la beta** : l'URL est construite à partir d'un paramètre api2 `APP3_PUBLIC_URL` (aujourd'hui
+  `https://beta.${KPI_DOMAIN_NAME}`, domaine principal après la bascule), jamais codée en dur. Si la page app3
+  équivalente n'est pas encore livrée (`ready: false` dans `app/utils/navigation.ts`), le PDF ne porte pas de QR code.
+  Comme ces QR codes seront imprimés, **`beta.*` devra rediriger (301) vers le domaine principal pendant au moins
+  1 saison après la bascule** : exigence reportée dans [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
   colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
   de matchs reprend la présentation du calendrier / des résultats.
@@ -397,9 +456,9 @@ par le même script que les jetons.
 | # | Risque | Prob. | Impact | Mitigation |
 |---|---|---|---|---|
 | R1 | **Fuite de données personnelles actuelle** (§1.2) persistant pendant toute la migration | **avérée** | **élevé** (RGPD) | Phase 0 immédiate ; migrer d'abord les documents à données personnelles |
-| R2 | Liens existants cassés (QR codes imprimés, WordPress, sites de clubs, `live/`, kptv) | élevée | moyen | Redirections 301 des `Pdf*.php` publics vers `/api2/pdf/*` (traduction des paramètres) conservées ≥ 2 saisons ; inventaire des appelants (§1.1) |
+| R2 | Liens existants cassés (QR codes imprimés, WordPress, sites de clubs, `live/`, kptv) | élevée | moyen | Redirections 301 des `Pdf*.php` publics vers `/api2/pdf/*` (traduction des paramètres) conservées **1 saison** après la phase 6 ; inventaire des appelants (§1.1) |
 | R3 | Rejet des nouveaux documents officiels (feuille de marque, présence) par arbitres / organisateurs | moyenne | élevé | Rubriques inchangées, validation par la commission avant bascule, période de double lien « ancien / nouveau » |
-| R4 | Saturation mémoire du VPS (Chromium) en pic de compétition | moyenne | élevé (touche la prod) | `mem_limit`, file bornée (429/503), instances séparées préprod/prod, mesure `docker stats` en préprod sur un lot réel |
+| R4 | **Saturation CPU** du VPS (2 cœurs) par Chromium en pic de compétition ou pendant un déploiement préprod ; la RAM (4,2 Gio disponibles) n'est pas le goulot | moyenne | élevé (touche la prod) | Plafonds `cpus` (prod 1.0, préprod 0.5), concurrence 1, file bornée (503), lots rendus en **un seul** document HTML, cache public, mesure `docker stats` en préprod sur un lot réel |
 | R5 | SSRF / injection via des données saisies | faible | élevé | §9 (deny-list réseau, autoescape, réseau interne) |
 | R6 | Abus du endpoint public (rendu coûteux) | moyenne | moyen | Rate limit + cache + plafonds |
 | R7 | Régression de droits (un profil voit hors de son périmètre, ou perd l'accès) | moyenne | élevé | `PdfAccessChecker` unique, tests d'intégration par profil × document (matrice §11) |
@@ -409,7 +468,8 @@ par le même script que les jetons.
 | R11 | Mise en page Chromium différente de l'existant (sauts de page, fusion de cellules) | moyenne | faible | Prévisualisation HTML, tests de non-régression sur le texte extrait |
 | R12 | Admin legacy (Smarty) encore utilisé pendant la transition | certaine | faible | Les `Feuille*.php` restent jusqu'au retrait de l'admin legacy, mais **protégés** (phase 0) |
 | R13 | Dérive entre la charte des applis et celle des PDF (couleurs recopiées à la main) | élevée sans outillage | moyen | Jetons extraits par script + test de dérive (§8.1, PDF-DESIGN-05) |
-| R14 | Licence **Agency FB** : police commerciale, son incorporation dans un PDF diffusé publiquement doit être couverte par la licence FFCK | moyenne | moyen | Vérifier la licence avant la phase 1 ; repli `'Arial Narrow', Arial` déjà prévu par les deux chartes, ou équivalent libre (ex. *Oswald*) validé par la FFCK |
+| R14 | Licence **Agency FB** : police commerciale | faible | moyen | **Hypothèse retenue** : la licence FFCK couvre l'incorporation dans les PDF publics. Repli `'Arial Narrow', Arial` conservé dans la pile CSS si elle était remise en cause |
+| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | moyen | URL issue de `APP3_PUBLIC_URL` ; redirection 301 `beta.*` → domaine principal pendant 1 saison après la bascule (§8.4, PDF-DESIGN-08) |
 
 ---
 
@@ -433,13 +493,16 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-AUTH-04** : profil limité à un club demande `presence` sans `team` → seules les équipes de son club figurent ; avec `team` d'un autre club → 403.
 - **PDF-AUTH-05** : profil 10 obtient `presence` et `scrutineering-control` de toute équipe, et 403 sur tout autre document admin.
 - **PDF-AUTH-06** : `GET /api2/pdf/*` (public) fonctionne sans authentification et n'expose ni date de naissance, ni licence, ni certificat, ni photo.
-- **PDF-AUTH-07** (si lien signé retenu) : lien expiré, signature altérée, ou droits retirés entre émission et usage → 403.
+- **PDF-AUTH-07** : lien expiré, signature altérée, ou droits retirés entre émission et usage → 403.
 
 **Données**
 - **PDF-DATA-01** : `ranking` public n'affiche que le classement publié ; une compétition non publiée → 404.
 - **PDF-DATA-02** : `ranking` admin affiche le classement calculé avec la mention « Provisoire ».
 - **PDF-DATA-03** : `games-list` public n'inclut que les matchs publiés ; l'admin inclut ceux du périmètre.
 - **PDF-DATA-04** : `lang=en` traduit tous les libellés fixes ; les horaires respectent `tz`.
+- **PDF-DATA-05** : `games-grid` a exactement une colonne par terrain utilisé par les matchs sélectionnés, dans l'ordre naturel (matchs sur les terrains 5 à 8 → colonnes 5, 6, 7, 8 ; aucune colonne vide).
+- **PDF-DATA-06** : `games-grid` avec plus de 6 terrains répartit les colonnes en groupes équilibrés (8 → 4 + 4) et répète l'en-tête des créneaux dans chaque section.
+- **PDF-DATA-07** : `view=teams` affiche les équipes de chaque match, `view=phases` sa phase / poule ; toute autre valeur → 400.
 
 **Documents**
 - **PDF-DOC-01** : chaque document de §7 a un équivalent fonctionnel de chaque fichier legacy qu'il remplace (mêmes informations, vérifiées sur un jeu de données de référence).
@@ -455,9 +518,11 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DESIGN-05** : modifier une couleur dans `admin.css` ou `kpi-theme.css` sans relancer `make pdf_tokens_sync` fait échouer la suite de tests api2.
 - **PDF-DESIGN-06** : les maquettes de référence (`teams-groups` admin, `ranking` public) sont validées côte à côte avec les pages app4/app3 correspondantes avant la migration des autres documents.
 - **PDF-DESIGN-07** : imprimé en noir & blanc, chaque état (qualifié, provisoire, non conforme…) reste identifiable par un libellé ou une icône.
+- **PDF-DESIGN-08** : un PDF public dont la page app3 équivalente est livrée porte un QR code vers `APP3_PUBLIC_URL` + chemin de cette page ; si elle n'est pas livrée, aucun QR code.
 
 **Robustesse**
-- **PDF-PERF-01** : `scoresheet` de 100 matchs généré en < 30 s en préprod ; `ranking` en < 3 s.
+- **PDF-PERF-01** : sur le VPS de prod (2 cœurs, `cpus: 1.0`), `scoresheet` de 100 matchs généré en < 30 s et `ranking` en < 3 s ; mesuré d'abord en préprod (`cpus: 0.5`, cibles × 2).
+- **PDF-PERF-04** : pendant un rendu préprod au plafond, le temps de rendu d'un `ranking` en prod n'augmente pas de plus de 20 %.
 - **PDF-PERF-02** : au-delà de la limite de matchs → 400 explicite ; au-delà du rate limit public → 429.
 - **PDF-PERF-03** : deux requêtes publiques identiques successives → la seconde est servie par le cache (304 ou cache disque).
 
@@ -468,7 +533,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 
 **Décommissionnement**
 - **PDF-END-01** : après la migration finale, `grep -rn "MyPDF\|Mpdf" sources --include=*.php` (hors `vendor`) ne renvoie rien, `mpdf/mpdf` est retiré des deux `composer.json`.
-- **PDF-END-02** : les anciennes URL publiques `Pdf*.php` redirigent (301) vers l'équivalent `/api2/pdf/*` ; les anciennes URL admin renvoient 410.
+- **PDF-END-02** : les anciennes URL publiques `Pdf*.php` redirigent (301) vers l'équivalent `/api2/pdf/*` (ou vers la vue match d'app2/app3 pour `PdfMatchMulti.php` si l'option 7.2.2-a est retenue), pendant **1 saison** ; les anciennes URL admin renvoient 410.
 
 ---
 
@@ -477,12 +542,12 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 | Phase | Contenu | Sortie |
 |---|---|---|
 | **0 - Colmatage (immédiat, sans Gotenberg)** | Protéger les `admin/Feuille*.php` qui exposent des données personnelles. Option recommandée : app4 obtient un **lien signé court** depuis api2 (même mécanisme que §6.3-2, vérifié côté legacy par un helper partageant le secret HMAC) ; l'admin legacy continue avec sa session (`MyPageSecure`). À défaut, désactiver ces liens dans app4 jusqu'à leur migration. | Plus aucun document à données personnelles accessible anonymement |
-| **1 - Socle** | Service `gotenberg` (3 compose), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
+| **1 - Socle** | Service `gotenberg` (3 compose, plafonds §4), lien signé (§6.3-2), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
 | **2 - Données personnelles** | `presence` (9 variantes), `scrutineering-control`, `referees-pool`, `instances` | R1 clos ; liens app4 basculés |
 | **3 - Classements** | famille `ranking*`, puis migration de `ranking-tiebreak` hors mPDF | app3 + app4 basculés pour les classements |
-| **4 - Matchs** | `games-list`, `games-grid`, `scoresheet` (validation commission) | app2/app3/app4 basculés |
+| **4 - Matchs** | Décision 7.2.2 (feuille de marque publique ou non), `games-list`, `games-grid` (2 vues, colonnes dynamiques), `scoresheet` (validation commission) | app2/app3/app4 basculés |
 | **5 - Stats & QR** | `stats` (remplace aussi l'export mPDF api2), `cards`, `qrcodes`, `qrcode-app` | `mpdf/mpdf` retiré d'api2 |
-| **6 - Migration finale** | À la bascule du site public (app3) et au retrait de l'admin legacy : suppression des `Feuille*.php`/`Pdf*.php`/`MyPDF`, redirections 301/410, retrait de `mpdf/mpdf` de `sources/composer.json`, archivage de ce document | PDF-END-* |
+| **6 - Migration finale** | À la bascule du site public (app3) et au retrait de l'admin legacy : suppression des `Feuille*.php`/`Pdf*.php`/`MyPDF`, redirections 301 (1 saison) / 410, retrait de `mpdf/mpdf` de `sources/composer.json`, archivage de ce document | PDF-END-* |
 
 Chaque document migré : 1 PR = provider + gabarit + tests (critères ci-dessus) + bascule des liens appelants.
 Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin legacy.
@@ -502,13 +567,20 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 
 ---
 
-## 14. Questions ouvertes
+## 14. Décisions et questions ouvertes
 
-1. Lien signé (§6.3-2) : livré dès la phase 1 (nécessaire pour la phase 0) ou plus tard ? *Recommandation : phase 0/1, il sert aux deux.*
-2. Rôles minimum exacts par document (§7) à valider avec la matrice [DROITS_PAR_PROFIL.md](DROITS_PAR_PROFIL.md).
-3. Les 6 variantes « grille terrains » ont-elles toutes un usage réel ? (stats d'accès Apache à consulter avant de les re-coder.)
-4. Feuille de marque publique : doit-elle rester publique (aujourd'hui `PdfMatchMulti.php` l'est) ou devenir admin-only ?
-5. Durée de conservation des redirections 301 des anciennes URL publiques (QR codes imprimés) : 2 saisons proposées.
-6. RAM disponible sur le VPS : mesure à faire avant phase 1 pour confirmer l'option A (§4).
-7. La licence FFCK d'Agency FB autorise-t-elle son incorporation dans des PDF publics (R14) ? Sinon, quel repli ?
-8. Les PDF publics doivent-ils porter un QR code vers la page app3 équivalente (§8.4) dès la beta, ou seulement après la bascule du site public ?
+### Décisions (2026-10-27)
+
+| Sujet | Décision |
+|---|---|
+| Lien signé (§6.3-2) | Livré dès la phase 1 (sert aussi au colmatage de la phase 0). |
+| Grille terrains (§7.2.1) | 2 vues seulement (Équipes, Phases) ; colonnes = terrains réellement utilisés. |
+| Redirections des anciennes URL publiques | Conservées **1 saison** après la phase 6. |
+| Topologie Gotenberg (§4) | Une instance par environnement, confirmée par les mesures du VPS ; contrainte = CPU (2 cœurs), plafonds par environnement. |
+| Licence Agency FB (R14) | On considère que la licence FFCK couvre les PDF publics. |
+| QR code vers app3 (§8.4) | Oui, dès la beta, via `APP3_PUBLIC_URL`, avec redirection `beta.*` → domaine principal après la bascule. |
+
+### Questions ouvertes
+
+1. Rôles minimum exacts par document (§7) à valider avec la matrice [DROITS_PAR_PROFIL.md](DROITS_PAR_PROFIL.md).
+2. Feuille de marque publique (§7.2.2) : option a (admin uniquement, pressentie) ou b ? À trancher avant la phase 4, au vu des journaux d'accès de `PdfMatchMulti.php`.
