@@ -120,6 +120,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
 - **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes
+- **[REALIGNEMENT_STRUCTURES_FFCK.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)** - Réalignement CR/CD/Clubs et codes régionaux sur le PCE (import corrigé + remise à plat ponctuelle)
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
 
 ### [Archives](developer/archive/) — sujets traités

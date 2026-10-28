@@ -398,3 +398,16 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
 - Vue/Nuxt components use PascalCase naming
 - PHP files follow legacy naming conventions
 - Database configuration is environment-specific and mounted via Docker volumes
+## Agent skills
+
+### Issue tracker
+
+Tickets en Markdown local sous `.scratch/<feature>/issues/` ; les specs restent dans `DOC/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Les cinq rôles par défaut (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), portés par la ligne `Status:`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context : `GLOSSARY.md` à la racine, ADR dans `DOC/developer/reference/adr/`. See `docs/agents/domain.md`.
