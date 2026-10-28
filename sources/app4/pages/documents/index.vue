@@ -130,22 +130,6 @@ const openTeamsGroups = () => {
   })
 }
 
-// General ranking, published: public PDF of api2, reference document of the public charter (PDF_GOTENBERG.md § 8.6)
-const publicRankingUrl = computed(() => pdf.publicUrl('ranking', {
-  season: workContext.season,
-  competition: workContext.pageCompetitionCode,
-  lang: locale.value === 'en' ? 'en' : 'fr',
-}))
-
-// Registered teams by pool: admin PDF of api2, signed link
-const openTeamsGroups = () => {
-  void pdf.openDocument('teams-groups', {
-    season: workContext.season,
-    competition: workContext.pageCompetitionCode,
-    lang: locale.value === 'en' ? 'en' : 'fr',
-  })
-}
-
 // Build event PDF URL
 const eventPdfUrl = (file: string, paramName: string): string => {
   if (!selectedEventId.value) return '#'
