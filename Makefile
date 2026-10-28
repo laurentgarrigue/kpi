@@ -65,7 +65,7 @@ app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
 backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_npm_clean backend_npm_init \
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
-api2_restart api2_logs api2_logs_errors mercure_generate_secret \
+api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys \
@@ -852,6 +852,14 @@ api2_composer_require: ## Ajoute un package Composer à API2 (usage: make api2_c
 # ⚠️ La console DOIT tourner dans le conteneur api2 (FrankenPHP), pas dans le conteneur
 # Apache : celui-ci n'a pas APP_ENV=prod, il écrivait donc un cache "dev" dans le volume
 # partagé var/cache/ d'un api2 tournant en prod → 404 au redémarrage du worker.
+pdf_tokens_sync: ## Recopie dans api2 les jetons de charte, polices et logos d'app4 et app3 utilisés par les PDF (PDF_GOTENBERG.md § 8.1)
+	@docker exec $(APPLICATION_NAME)_api2 php bin/console app:pdf:sync-assets --sources=/var/www/html \
+		|| { echo "Échec : conteneur $(APPLICATION_NAME)_api2 introuvable ou console en erreur"; exit 1; }
+	@echo "Relire puis commiter sources/api2/assets/pdf/ (le test ChartTokensTest échoue tant qu'ils diffèrent)."
+
+gotenberg_logs: ## Logs du conteneur Gotenberg (rendu PDF). Options: lines=200
+	docker logs -f --tail $(or $(lines),50) $(APPLICATION_NAME)_gotenberg
+
 api2_cache_clear: ## Vide le cache Symfony de API2 (+ préchauffe, puis recycle le worker)
 	@echo "Vidage du cache Symfony pour API2 (container: $(APPLICATION_NAME)_api2)..."
 	@docker exec $(APPLICATION_NAME)_api2 php bin/console cache:clear \

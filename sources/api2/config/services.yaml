@@ -75,3 +75,10 @@ services:
         class: App\Security\MandateAwareRoleHierarchyVoter
         arguments:
             $roleHierarchy: '@security.role_hierarchy'
+
+when@test:
+    services:
+        # Integration tests never reach a Gotenberg: the fake keeps the HTML sent to it (PDF_GOTENBERG.md § 13).
+        App\Tests\Support\FakeGotenbergClient:
+            public: true
+        App\Pdf\GotenbergClient: '@App\Tests\Support\FakeGotenbergClient'

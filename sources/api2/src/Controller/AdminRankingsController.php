@@ -857,7 +857,8 @@ class AdminRankingsController extends AbstractController
     // ─────────────────────────────────────────────
 
     #[Route('/justification', name: 'admin_rankings_justification', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    // Built on the computed ranking: profiles 1–6, as the computed ranking itself (PDF_GOTENBERG.md § 7.6, I5)
+    #[IsGranted('ROLE_ORGANIZER')]
     public function justification(Request $request): Response
     {
         /** @var User|null $user */

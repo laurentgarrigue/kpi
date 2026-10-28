@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Player, AddPlayerFormData, CopyCompositionFormData, AvailableComposition } from '~/types/presence'
 import type { PlayerAutocomplete } from '~/types'
+import { canGetAdminPdf } from '~/utils/pdf'
 
 definePageMeta({
   layout: 'admin',
@@ -614,13 +615,19 @@ const pdfLinks = computed(() => {
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone
   })
 
-  return {
+  const links: Record<string, string> = {
     fr: `${config.public.legacyBaseUrl}/admin/FeuillePresence.php?${params}`,
     en: `${config.public.legacyBaseUrl}/admin/FeuillePresenceEN.php?${params}`,
     photo: `${config.public.legacyBaseUrl}/admin/FeuillePresencePhoto.php?${params}`,
-    visa: `${config.public.legacyBaseUrl}/admin/FeuillePresenceVisa.php?${params}`,
-    controle: `${config.public.legacyBaseUrl}/admin/FeuilleControle.php?${params}`
   }
+  // Only the documents api2 allows to the profile (PDF_GOTENBERG.md § 7.6, I1 and I2)
+  if (canGetAdminPdf(authStore.profile, 'presence', 'visa')) {
+    links.visa = `${config.public.legacyBaseUrl}/admin/FeuillePresenceVisa.php?${params}`
+  }
+  if (canGetAdminPdf(authStore.profile, 'scrutineering-control')) {
+    links.controle = `${config.public.legacyBaseUrl}/admin/FeuilleControle.php?${params}`
+  }
+  return links
 })
 </script>
 

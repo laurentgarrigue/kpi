@@ -1,0 +1,50 @@
+{% extends 'pdf/layout.html.twig' %}
+
+{% block content %}
+    <table class="pdf-table">
+        <thead>
+            <tr>
+                <th class="num">{{ labels['ranking.rank'] }}</th>
+                <th>{{ labels['ranking.team'] }}</th>
+                <th class="num">{{ labels['ranking.points'] }}</th>
+                <th class="num">{{ labels['ranking.played'] }}</th>
+                {% if with_details %}
+                    <th class="num">{{ labels['ranking.won'] }}</th>
+                    <th class="num">{{ labels['ranking.drawn'] }}</th>
+                    <th class="num">{{ labels['ranking.lost'] }}</th>
+                    <th class="num">{{ labels['ranking.forfeits'] }}</th>
+                    <th class="num">{{ labels['ranking.goals_for'] }}</th>
+                    <th class="num">{{ labels['ranking.goals_against'] }}</th>
+                    <th class="num">{{ labels['ranking.goal_diff'] }}</th>
+                {% endif %}
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td class="num">{{ row.rank }}</td>
+                    <td>
+                        {{ row.team }}
+                        {% if row.medal %}<span class="pdf-medal pdf-medal--{{ row.medal }}">· {{ labels['ranking.medal_' ~ row.medal] }}</span>{% endif %}
+                    </td>
+                    <td class="num">{{ row.points }}</td>
+                    <td class="num">{{ row.played }}</td>
+                    {% if with_details %}
+                        <td class="num">{{ row.details.won }}</td>
+                        <td class="num">{{ row.details.drawn }}</td>
+                        <td class="num">{{ row.details.lost }}</td>
+                        <td class="num">{{ row.details.forfeits }}</td>
+                        <td class="num">{{ row.details.goals_for }}</td>
+                        <td class="num">{{ row.details.goals_against }}</td>
+                        <td class="num">{{ row.details.goal_diff }}</td>
+                    {% endif %}
+                    <td>
+                        {% if row.qualified %}<span class="pdf-badge pdf-badge--success">{{ labels['ranking.qualified'] }}</span>{% endif %}
+                        {% if row.eliminated %}<span class="pdf-badge pdf-badge--danger">{{ labels['ranking.eliminated'] }}</span>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
