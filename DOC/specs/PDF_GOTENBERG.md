@@ -299,7 +299,7 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 | `presence` + `category=<catégorie>` | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
 | `presence` + `category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
 | `presence` + `birthdate=1` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
-| `presence` + `visa=1` | FeuillePresenceVisa | Équipes (1–2) ; Documents, section Équipes (1–6, 8) ; Présence équipe (tous) | `ROLE_ORGANIZER` + périmètre (cf. I2) |
+| `presence` + `visa=1` | FeuillePresenceVisa | Équipes (1–2) ; Documents, section Équipes (1–6, 8) ; Présence équipe (tous) | `ROLE_ORGANIZER` + périmètre (I2) |
 | `scrutineering-control` | FeuilleControle, …EN | Équipes, menu global (1–2) et par équipe (1, 2, 10) ; Scrutineering (1, 2, 10) ; Présence équipe (tous) | `ROLE_SCRUTINEER` (+ périmètre pour le profil 10) (cf. I1) |
 | `referees-pool` | FeuillePoolArbitres | Pool arbitres (menu 1–2, API `ROLE_ADMIN`) | `ROLE_ADMIN` |
 | `instances` | FeuilleInstances (feuille jury) | Journées, fenêtre « Officiels » (1–8) | `ROLE_VIEWER` + périmètre (journée) |
@@ -313,7 +313,7 @@ option demandée sans le rôle correspondant → 403 (pas de document dégradé 
 |---|---|---|---|---|
 | `games-list` | FeuilleListeMatchs[EN], PdfListeMatchs[EN] | ✅ matchs publiés | Documents, section Matchs (1–6, 8) et Événement (1–2) ; Matchs, menu Documents (1–9) ; Classements, mode calculé (1–6) | `ROLE_SCORER` + périmètre, **avec la règle de visibilité de la page Matchs** : profil 7 → matchs et journées publiés uniquement, compétitions ATT masquées |
 | `games-grid` | PdfListeMatchs4Terrains, …4TerrainsEn, …En2, …En3, …En4, …5TerrainsEn, …5TerrainsEnTeams | ✅ | Matchs, menu Documents, liens **publics** (1–9) | **pas de version admin** : app4 ouvre la version publique |
-| `scoresheet` | FeuilleMatchMulti | ❌ (§7.3.2) | Matchs, ligne de match et action groupée (1–6) ; Documents (1–6, 8) ; Matchs, menu Documents (1–9) | `ROLE_ORGANIZER` + périmètre (journées) (cf. I4) |
+| `scoresheet` | FeuilleMatchMulti | ❌ (§7.3.2) | Matchs, ligne de match et action groupée (1–6) ; Documents (1–6, 8) ; Matchs, menu Documents (1–9) | `ROLE_SCORER` + périmètre (journées), visibilité de la page Matchs (I4) |
 
 #### 7.3.1 Grille terrains : 2 vues, colonnes dynamiques
 
@@ -375,21 +375,22 @@ Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un
 Non migrés (aucun appel depuis app4, app3 ou app2, doublons d'une option) : FeuillePresencePhoto2,
 FeuilleControleEN (→ `lang=en`), FeuilleStats[EN] (→ `stats`), FeuilleCltNiveauNiveau / PdfCltNiveauNiveau (I6).
 
-### 7.6 Incohérences relevées dans app4, à arbitrer
+### 7.6 Incohérences relevées dans app4 et arbitrages (2026-10-28)
 
-| # | Constat | Proposition |
+Toutes les propositions sont validées, avec deux ajustements : **I2 → `ROLE_ORGANIZER`**, **I4 → `ROLE_SCORER`**.
+
+| # | Constat | Décision |
 |---|---|---|
 | I1 | **Feuille de contrôle** : réservée aux profils 1, 2, 10 sur Équipes et Scrutineering, mais proposée **à tout le monde** sur Présence équipe (`pages/presence/team/[teamId].vue`, `pdfLinks` sans condition). | `ROLE_SCRUTINEER`, conforme à la matrice (Scrutineering : 1, 2, 10) ; masquer le lien sur Présence équipe pour les autres profils. |
-| I2 | **Feuille visa** : profils 1–2 sur Équipes, 1–6 et 8 sur Documents (section Équipes), tout le monde sur Présence équipe. | `ROLE_ORGANIZER` (1–6) : document de la table d'accueil des organisateurs. Alternative : `ROLE_ADMIN` si le visa est un acte fédéral. **À trancher.** |
+| I2 | **Feuille visa** : profils 1–2 sur Équipes, 1–6 et 8 sur Documents (section Équipes), tout le monde sur Présence équipe. ✅ `ROLE_ORGANIZER` (1–6) ; lien masqué ailleurs. |
 | I3 | **Présence par catégorie** : 1–8 sur Équipes, mais rangée dans la section Contrôle (1–6) de Documents. | `ROLE_VIEWER` (pas plus de données que la feuille de base) ; la déplacer dans la section Équipes de Documents. |
-| I4 | **Feuille de marque** : 1–6 sur la page Matchs (ligne de match, action groupée) et dans la matrice (« Feuille de marque standard » 1–6), mais 1–6 et 8 sur Documents et **1–9** via le menu Documents de la page Matchs. | `ROLE_ORGANIZER` (matrice). Conséquence : les profils 7, 8 et 9 ne l'obtiennent plus. **À confirmer pour le profil 9** (table de marque) : s'il imprime les feuilles avant le match, passer à `ROLE_SCORER` et mettre la matrice à jour. |
+| I4 | **Feuille de marque** : 1–6 sur la page Matchs (ligne de match, action groupée) et dans la matrice (« Feuille de marque standard » 1–6), mais 1–6 et 8 sur Documents et **1–9** via le menu Documents de la page Matchs. ✅ `ROLE_SCORER` (1–9) : la table de marque imprime les feuilles. Le PDF suit la règle de visibilité de la page Matchs (profil 7 : matchs publiés). Matrice mise à jour. |
 | I5 | **Classement calculé** : 1–6 sur Classements et dans la matrice, mais le profil 8 l'obtient via Documents (qui pointe vers les `Feuille*` calculées) ; la justification de départage est en `ROLE_VIEWER` (1–8) alors qu'elle repose sur le calcul. | `ROLE_ORGANIZER` pour tout le calculé ; Documents propose au profil 8 les classements publiés (route publique). |
 | I6 | `ranking-levels` (CltNiveauNiveau) n'est appelé que par l'admin legacy (GestionClassement, GestionDoc). | Ne pas le migrer ; le supprimer en phase 6 sauf demande d'un utilisateur. |
 | I7 | **Profil 10** : la page Documents lui est masquée dans le menu mais pas protégée (middleware `auth` seul). | Sans effet une fois les droits contrôlés par api2 ; ajouter une garde de route par cohérence (hors périmètre PDF). |
 | I8 | Profil 9 : la matrice lui donne la consultation des feuilles de présence équipe, mais `ROLE_SCORER` n'hérite pas de `ROLE_PRESENCE_VIEWER` et il n'a pas accès à la page Équipes. | Aucun PDF de présence pour le profil 9 (comportement actuel) ; corriger la matrice ou le rôle, hors périmètre PDF. |
 
-Ces arbitrages se reportent dans [DROITS_PAR_PROFIL.md](DROITS_PAR_PROFIL.md) (nouvelle ligne « Documents PDF »)
-avant la phase 2.
+Ces décisions sont reportées dans [DROITS_PAR_PROFIL.md](DROITS_PAR_PROFIL.md) (section « Documents PDF »).
 
 ---
 
@@ -591,7 +592,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 |---|---|---|
 | **0 - Colmatage (immédiat, sans Gotenberg)** | Protéger les `admin/Feuille*.php` qui exposent des données personnelles. Option recommandée : app4 obtient un **lien signé court** depuis api2 (même mécanisme que §6.3-2, vérifié côté legacy par un helper partageant le secret HMAC) ; l'admin legacy continue avec sa session (`MyPageSecure`). À défaut, désactiver ces liens dans app4 jusqu'à leur migration. | Plus aucun document à données personnelles accessible anonymement |
 | **1 - Socle** | Service `gotenberg` (3 compose, plafonds §4), lien signé (§6.3-2), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
-| **2 - Données personnelles** | Arbitrages I1 à I8 reportés dans DROITS_PAR_PROFIL.md, puis `presence` (9 variantes), `scrutineering-control`, `referees-pool`, `instances` | R1 clos ; liens app4 basculés |
+| **2 - Données personnelles** | `presence` (9 variantes), `scrutineering-control`, `referees-pool`, `instances` | R1 clos ; liens app4 basculés |
 | **3 - Classements** | famille `ranking*`, puis migration de `ranking-tiebreak` hors mPDF | app3 + app4 basculés pour les classements |
 | **4 - Matchs** | `games-list`, `games-grid` (2 vues, colonnes dynamiques, public seulement), `scoresheet` admin (validation commission) ; retrait du lien PDF de la vue match app2, redirection de `PdfMatchMulti.php` | app2/app3/app4 basculés |
 | **5 - Stats & QR** | `stats` (remplace aussi l'export mPDF api2), `cards`, `qrcodes`, `qrcode-app` | `mpdf/mpdf` retiré d'api2 |
@@ -628,8 +629,8 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | Licence Agency FB (R14) | On considère que la licence FFCK couvre les PDF publics. |
 | QR code vers app3 (§8.4) | Oui, dès la beta, via `APP3_PUBLIC_URL`, avec redirection `beta.*` → domaine principal après la bascule. |
 | Feuille de marque publique (§7.3.2, 2026-10-28) | Non développée : le public utilise la vue match d'app2 ; `PdfMatchMulti.php` y redirige. |
-| Rôles minimum (§7, 2026-10-28) | Déduits des pages d'appel app4 et de la matrice ; propositions à valider, incohérences listées en §7.6. |
+| Rôles minimum (§7, 2026-10-28) | Validés ; arbitrages I1 à I8 en §7.6 (visa : `ROLE_ORGANIZER`, feuille de marque : `ROLE_SCORER`, classement calculé : profils 1–6). |
 
 ### Questions ouvertes
 
-1. Arbitrer les incohérences I1 à I8 (§7.6), en particulier la feuille visa (I2) et l'accès du profil 9 à la feuille de marque (I4).
+Aucune à ce stade.
