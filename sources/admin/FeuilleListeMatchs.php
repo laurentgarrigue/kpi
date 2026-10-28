@@ -3,6 +3,9 @@ include_once('../commun/MyPage.php');
 include_once('../commun/MyBdd.php');
 include_once('../commun/MyTools.php');
 require_once('../commun/MyPDF.php');
+require_once('../commun/MySignedLink.php');
+// PDF admin : session de l'admin legacy ou lien signé par api2 (DOC/specs/PDF_GOTENBERG.md, phase 0)
+MySignedLink::requirePdfAccess();
 
 // Liste des Matchs d'une Journee ou d'un Evenement - Migration mPDF
 
