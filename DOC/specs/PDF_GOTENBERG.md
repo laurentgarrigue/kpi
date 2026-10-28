@@ -1,6 +1,7 @@
 # Spécification - Génération PDF modernisée (Gotenberg)
 
-> **Statut** : 📝 Spec - à valider avant tout code (spec first).
+> **Statut** : 🚧 En cours — spec validée (2026-10-28) ; **phase 0** (colmatage des PDF legacy) et **phase 1** (socle
+> api2 + Gotenberg, documents de référence `teams-groups` et `ranking`) implémentées, cf. § 15.
 > **Périmètre** : tous les PDF produits par KPI, appelés depuis app4 (admin2), app3 (site public beta)
 > et app2 (résultats). Remplace à terme `commun/MyPDF.php`, les `admin/Feuille*.php`, les `Pdf*.php`
 > de la racine et les rendus mPDF de api2.
@@ -86,7 +87,7 @@ qui justifie de traiter en priorité les documents à données personnelles (§1
 | **mPDF / Dompdf** (HTML → PDF en PHP) | CSS 2.1 partiel : pas de flex/grid, pas de variables CSS fiables. On garde la dette de mise en page. ❌ |
 | **Chromium headless dans le conteneur api2** (Browsershot, chrome-php) | Alourdit l'image FrankenPHP (~+500 Mo), Chromium dans le même processus que le worker HTTP : une fuite mémoire ou un crash touche l'API. ❌ |
 | **WeasyPrint** | Excellent support CSS Paged Media, mais pas d'API HTTP officielle, service Python à maintenir. 〰️ |
-| **Gotenberg 8** (conteneur Docker, API HTTP, Chromium + LibreOffice) | Rendu Chromium moderne, **isolé** dans son propre conteneur, sans état, API simple (`POST /forms/chromium/convert/html`), en-têtes/pieds de page avec numéros de page, bundle Symfony officiel (`sensiolabs/gotenberg-bundle`) avec intégration Twig. ✅ |
+| **Gotenberg 8** (conteneur Docker, API HTTP, Chromium + LibreOffice) | Rendu Chromium moderne, **isolé** dans son propre conteneur, sans état, API simple (`POST /forms/chromium/convert/html`), en-têtes/pieds de page avec numéros de page. Appelé par un petit client Symfony HttpClient (`App\Pdf\GotenbergClient`), sans bundle tiers. ✅ |
 
 **Conclusion : Gotenberg est pertinent.** Il sépare proprement « préparer les données » (api2, testable en PHPUnit)
 de « rendre » (Chromium, isolé), et permet des gabarits HTML/CSS que n'importe quel développeur front sait maintenir.
@@ -148,31 +149,36 @@ En dev, le service est ajouté à `compose.dev.yaml` de la même manière.
 
 ### Configuration de référence (à confirmer sur la version épinglée)
 
+Configuration retenue (`docker/compose.*.yaml`, Gotenberg **8.39.0**, options vérifiées sur cette version) :
+
 ```yaml
 gotenberg:
-    image: gotenberg/gotenberg:8.x.y          # version exacte épinglée, montée via PR
+    image: gotenberg/gotenberg:8.39.0           # version exacte épinglée, montée via PR
     container_name: ${APPLICATION_NAME}_gotenberg
-    restart: unless-stopped
-    networks: [network_${APPLICATION_NAME}]   # jamais traefiknetwork, aucun port publié
-    mem_limit: ${GOTENBERG_MEM_LIMIT}          # 1g prod, 512m préprod (cf. tableau)
-    cpus: ${GOTENBERG_CPUS}                    # 1.0 prod, 0.5 préprod
     command:
         - gotenberg
         - --api-timeout=60s
-        - --api-enable-basic-auth            # défense en profondeur (identifiants dans docker/.env)
-        - --chromium-auto-start=false        # Chromium lancé à la première requête
-        - --chromium-max-queue-size=${GOTENBERG_QUEUE}  # au-delà : refus immédiat plutôt qu'une file infinie
-        # + option de concurrence Chromium de la version épinglée réglée à 1 (2 cœurs seulement sur le VPS)
-        - --chromium-deny-list=^.*$          # aucun accès réseau depuis le HTML (anti-SSRF)
-        - --chromium-allow-list=^file:///tmp/.*  # seulement les fichiers joints à la requête
-        - --libreoffice-disable-routes=true  # module inutilisé
-        - --webhook-disable=true
-        - --prometheus-disable=true
-    healthcheck:
-        test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+        - --api-enable-basic-auth               # GOTENBERG_PASSWORD obligatoire (refus explicite de compose sinon)
+        - --chromium-max-concurrency=1          # 2 cœurs seulement sur le VPS
+        - --chromium-max-queue-size=10          # 5 en préprod ; au-delà : refus immédiat (503 côté api2)
+        - --chromium-deny-list=^(?!file:///tmp/).*   # seuls les fichiers joints à la requête sont lisibles
+        - --chromium-deny-private-ips           # et aucune adresse réseau, privée…
+        - --chromium-deny-public-ips            # …ni publique (anti-SSRF, PDF-INFRA-02)
+        - --libreoffice-disable-routes
+        - --webhook-disable
+    environment: [GOTENBERG_API_BASIC_AUTH_USERNAME, GOTENBERG_API_BASIC_AUTH_PASSWORD]
+    mem_limit: 1g                               # 512m en préprod, libre en dev
+    cpus: 1.0                                   # 0.5 en préprod
+    networks: [network_kpi]                     # jamais traefiknetwork, aucun port publié
+    healthcheck: curl -fsS http://localhost:3000/health   # route non soumise à l'authentification
 ```
 
-Côté api2 : `GOTENBERG_DSN=http://gotenberg:3000` (+ identifiants basic auth) dans `sources/api2/.env`.
+Chromium démarre de lui-même à la première conversion (comportement par défaut de cette version). Vérifié sur
+8.39.0 : une page qui référence `http://169.254.169.254/…`, `http://kpi_db:3306/`, `https://example.com/…` ou
+`file:///etc/passwd` est convertie **sans** qu'aucune de ces ressources ne soit chargée (refus journalisés).
+
+Côté api2 : `GOTENBERG_URL=http://${APPLICATION_NAME}_gotenberg:3000`, `GOTENBERG_USER`, `GOTENBERG_PASSWORD` et
+`PDF_LINK_SECRET`, injectés par compose depuis `docker/.env` (cf. `docker/.env.dist`).
 
 ---
 
@@ -188,7 +194,7 @@ app3 / app2 / QR ──(lien GET)─▶ api2 /pdf/{doc}       ─┤
                                                        ▼
                     Gabarit Twig (templates/pdf/…) + CSS commun + polices et logos joints
                                                        ▼
-                    GotenbergPdf (sensiolabs/gotenberg-bundle) ──HTTP interne──▶ gotenberg:3000
+                    GotenbergClient (Symfony HttpClient, multipart) ──HTTP interne──▶ gotenberg:3000
                                                        ▼
                     Réponse application/pdf (inline), cache HTTP pour le public
 ```
@@ -240,17 +246,21 @@ Aucune donnée vide → **404** (pas un PDF blanc).
 
 ### 6.3 Ouverture depuis app4 (admin, sans session)
 
-Un lien `<a target="_blank">` ne peut pas porter l'en-tête `Authorization`. Deux mécanismes :
+Un lien `<a target="_blank">` ne peut pas porter l'en-tête `Authorization`. app4 ouvre donc les PDF admin par un
+**lien signé court** (composable `usePdf()`) :
 
-1. **Par défaut : fetch + blob** (pattern déjà utilisé par `stats/index.vue`) : composable `usePdf().open(doc, params)`
-   qui ouvre l'onglet **avant** l'`await` (contourne les bloqueurs de pop-up, y compris Safari iOS), récupère le PDF
-   via `useApi().getBlob()`, puis y charge l'URL objet ; `download()` pour le téléchargement direct.
-2. **Lien signé court** (livré dès la phase 1 ; cas où une vraie URL est indispensable : impression depuis une
-   tablette de table de marque, partage à un autre poste, et colmatage des pages legacy en phase 0) : `POST /api2/admin/pdf/{doc}/link` → URL `GET /api2/pdf-signed/{doc}?…&exp=…&sig=…`
-   signée par `UriSigner` (HMAC, secret api2), **TTL 5 min**, liée au code utilisateur et au mandat ; les droits sont
-   **re-vérifiés** au moment du téléchargement (révocation ou changement de mandat pris en compte). Pas de JWT dans l'URL.
+- `POST /api2/admin/pdf/{doc}/link` (JWT) vérifie le rôle et le périmètre, puis renvoie
+  `GET /api2/pdf-signed/{doc}?…&user=…&mandate=…&expires=…&signature=…` : HMAC-SHA256 du chemin et de **tous** les
+  paramètres (`App\Pdf\PdfLinkSigner`, secret `PDF_LINK_SECRET`), **TTL 5 min**, lié au code utilisateur et au mandat
+  actif. Les droits sont **re-vérifiés** au téléchargement (révocation ou changement de mandat pris en compte). Pas de
+  JWT dans l'URL. L'URL est bâtie sur `DEFAULT_URI` (préfixe `/api2` compris, que Traefik retire de la requête).
+- L'onglet est ouvert **pendant** le clic, avant l'appel à l'API, puis redirigé : aucun bloqueur de pop-up (Safari iOS
+  compris) ne l'arrête, et le visualiseur PDF reçoit une vraie URL (impression, partage à un autre poste).
+- Le même schéma de signature protège les pages legacy en phase 0 (`POST /api2/admin/pdf/legacy-link`, vérifié par
+  `sources/commun/MySignedLink.php`) ; un vecteur de test commun fige ce schéma des deux côtés.
 
-Les deux mécanismes sont livrés en phase 1 ; le lien signé sert aussi au colmatage de la phase 0 (§12).
+`GET /api2/admin/pdf/{doc}` (JWT, réponse binaire) reste disponible pour un téléchargement par `fetch` + blob,
+comme l'export des statistiques.
 
 ### 6.4 Contrôle d'accès admin
 
@@ -448,9 +458,9 @@ par le même script que les jetons.
   (`kpi-layer/public/img/brand/`), puis logos de la compétition.
 - Pied en bandeau `navy` fin, rappelant le pied du site : URL et **QR code vers la page équivalente sur app3**
   (classements → page compétition, listes et grilles de matchs → calendrier / résultats), date de génération.
-  **Dès la beta** : l'URL est construite à partir d'un paramètre api2 `APP3_PUBLIC_URL` (aujourd'hui
-  `https://beta.${KPI_DOMAIN_NAME}`, domaine principal après la bascule), jamais codée en dur. Si la page app3
-  équivalente n'est pas encore livrée (`ready: false` dans `app/utils/navigation.ts`), le PDF ne porte pas de QR code.
+  **Dès la beta** : l'URL est construite à partir du paramètre api2 existant `PUBLIC_SITE_URL` (aujourd'hui
+  `https://beta.${KPI_DOMAIN_NAME}`, domaine principal après la bascule), jamais codée en dur. Chaque document déclare
+  le chemin de sa page app3 (`PdfContent::$publicPath`) une fois celle-ci livrée ; sans chemin, pas de QR code.
   Comme ces QR codes seront imprimés, **`beta.*` devra rediriger (301) vers le domaine principal pendant au moins
   1 saison après la bascule** : exigence reportée dans [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
@@ -514,7 +524,7 @@ par le même script que les jetons.
 | R12 | Admin legacy (Smarty) encore utilisé pendant la transition | certaine | faible | Les `Feuille*.php` restent jusqu'au retrait de l'admin legacy, mais **protégés** (phase 0) |
 | R13 | Dérive entre la charte des applis et celle des PDF (couleurs recopiées à la main) | élevée sans outillage | moyen | Jetons extraits par script + test de dérive (§8.1, PDF-DESIGN-05) |
 | R14 | Licence **Agency FB** : police commerciale | faible | moyen | **Hypothèse retenue** : la licence FFCK couvre l'incorporation dans les PDF publics. Repli `'Arial Narrow', Arial` conservé dans la pile CSS si elle était remise en cause |
-| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | moyen | URL issue de `APP3_PUBLIC_URL` ; redirection 301 `beta.*` → domaine principal pendant 1 saison après la bascule (§8.4, PDF-DESIGN-08) |
+| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | moyen | URL issue de `PUBLIC_SITE_URL` ; redirection 301 `beta.*` → domaine principal pendant 1 saison après la bascule (§8.4, PDF-DESIGN-08) |
 
 ---
 
@@ -566,7 +576,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DESIGN-05** : modifier une couleur dans `admin.css` ou `kpi-theme.css` sans relancer `make pdf_tokens_sync` fait échouer la suite de tests api2.
 - **PDF-DESIGN-06** : les maquettes de référence (`teams-groups` admin, `ranking` public) sont validées côte à côte avec les pages app4/app3 correspondantes avant la migration des autres documents.
 - **PDF-DESIGN-07** : imprimé en noir & blanc, chaque état (qualifié, provisoire, non conforme…) reste identifiable par un libellé ou une icône.
-- **PDF-DESIGN-08** : un PDF public dont la page app3 équivalente est livrée porte un QR code vers `APP3_PUBLIC_URL` + chemin de cette page ; si elle n'est pas livrée, aucun QR code.
+- **PDF-DESIGN-08** : un PDF public dont la page app3 équivalente est livrée porte un QR code vers `PUBLIC_SITE_URL` + chemin de cette page ; si elle n'est pas livrée, aucun QR code.
 
 **Robustesse**
 - **PDF-PERF-01** : sur le VPS de prod (2 cœurs, `cpus: 1.0`), `scoresheet` de 100 matchs généré en < 30 s et `ranking` en < 3 s ; mesuré d'abord en préprod (`cpus: 0.5`, cibles × 2).
@@ -591,7 +601,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 | Phase | Contenu | Sortie |
 |---|---|---|
 | **0 - Colmatage (immédiat, sans Gotenberg)** | Protéger les `admin/Feuille*.php` qui exposent des données personnelles. Option recommandée : app4 obtient un **lien signé court** depuis api2 (même mécanisme que §6.3-2, vérifié côté legacy par un helper partageant le secret HMAC) ; l'admin legacy continue avec sa session (`MyPageSecure`). À défaut, désactiver ces liens dans app4 jusqu'à leur migration. | Plus aucun document à données personnelles accessible anonymement |
-| **1 - Socle** | Service `gotenberg` (3 compose, plafonds §4), lien signé (§6.3-2), `sensiolabs/gotenberg-bundle`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
+| **1 - Socle** | Service `gotenberg` (3 compose, plafonds §4), lien signé (§6.3-2), client `GotenbergClient`, `PdfAccessChecker`, `make pdf_tokens_sync` + thèmes admin/public, partials communs, `usePdf()` app4, rate limiter, CI avec Gotenberg en service | PDF-INFRA-*, PDF-AUTH-01/02, PDF-DESIGN-*, deux maquettes de référence : `teams-groups` (admin) et `ranking` (public) |
 | **2 - Données personnelles** | `presence` (9 variantes), `scrutineering-control`, `referees-pool`, `instances` | R1 clos ; liens app4 basculés |
 | **3 - Classements** | famille `ranking*`, puis migration de `ranking-tiebreak` hors mPDF | app3 + app4 basculés pour les classements |
 | **4 - Matchs** | `games-list`, `games-grid` (2 vues, colonnes dynamiques, public seulement), `scoresheet` admin (validation commission) ; retrait du lien PDF de la vue match app2, redirection de `PdfMatchMulti.php` | app2/app3/app4 basculés |
@@ -627,10 +637,47 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | Redirections des anciennes URL publiques | Conservées **1 saison** après la phase 6. |
 | Topologie Gotenberg (§4) | Une instance par environnement, confirmée par les mesures du VPS ; contrainte = CPU (2 cœurs), plafonds par environnement. |
 | Licence Agency FB (R14) | On considère que la licence FFCK couvre les PDF publics. |
-| QR code vers app3 (§8.4) | Oui, dès la beta, via `APP3_PUBLIC_URL`, avec redirection `beta.*` → domaine principal après la bascule. |
+| QR code vers app3 (§8.4) | Oui, dès la beta, via `PUBLIC_SITE_URL`, avec redirection `beta.*` → domaine principal après la bascule. |
 | Feuille de marque publique (§7.3.2, 2026-10-28) | Non développée : le public utilise la vue match d'app2 ; `PdfMatchMulti.php` y redirige. |
 | Rôles minimum (§7, 2026-10-28) | Validés ; arbitrages I1 à I8 en §7.6 (visa : `ROLE_ORGANIZER`, feuille de marque : `ROLE_SCORER`, classement calculé : profils 1–6). |
 
 ### Questions ouvertes
 
 Aucune à ce stade.
+
+---
+
+## 15. État d'avancement
+
+### Phase 0 — colmatage (livrée)
+
+- Les 28 `admin/Feuille*.php` qui produisent un PDF appellent `MySignedLink::requirePdfAccess()` : session de l'admin
+  legacy **ou** lien signé par api2, sinon 403. Les pages publiques `Pdf*.php` et les feuilles de marque en ligne
+  (`FeuilleMarque*`) ne changent pas.
+- api2 : `POST /admin/pdf/legacy-link` (`App\Pdf\LegacyPdfLinks`) applique le rôle du document équivalent (§ 7, I1 à
+  I5) et le périmètre (saison, compétition, équipe et club de l'équipe).
+- app4 : tout clic sur un lien vers une `admin/Feuille*.php` passe par ce lien signé (`useLegacyPdfLinks()` dans le
+  layout `admin`, `usePdf().openLegacy()` pour les ouvertures par script) ; liens visa et contrôle masqués aux profils
+  non autorisés (I1, I2), présence par catégorie rangée dans « Équipes » (I3), classement calculé réservé aux profils
+  1–6 sur la page Documents et justification de départage en `ROLE_ORGANIZER` (I5).
+
+### Phase 1 — socle (livrée)
+
+- Service `gotenberg` dans les trois compose (§ 4) ; variables `GOTENBERG_PASSWORD` et `PDF_LINK_SECRET` **obligatoires**
+  dans `docker/.env` (compose refuse de démarrer sans elles).
+- api2 (`src/Pdf/`, `src/Controller/PdfController.php`) : routes `/pdf/{doc}`, `/admin/pdf/{doc}`,
+  `/admin/pdf/{doc}/link`, `/pdf-signed/{doc}` ; catalogue des droits ; rendu Twig + Gotenberg ; cache HTTP et ETag
+  des PDF publics ; limite de 30 PDF publics par minute et par IP ; aperçu HTML `?format=html` en dev.
+- Charte : `make pdf_tokens_sync` (commande `app:pdf:sync-assets`) copie jetons, polices et logos d'app4 et app3 dans
+  `sources/api2/assets/pdf/` ; `ChartTokensTest` échoue en cas de dérive.
+- Documents de référence : `teams-groups` (admin, app4 Équipes et Documents) et `ranking` (public, app4 Classements et
+  Documents, app3 onglet Classement pour CHPT et MULTI).
+- Tests : `tests/Unit/Pdf/*`, `tests/Integration/PdfEndpointsTest.php` (Gotenberg remplacé par
+  `FakeGotenbergClient`), `app4/tests/unit/pdf.spec.ts`, `app3/tests/unit/page-links.spec.ts`.
+
+### Reste à faire
+
+- Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique
+  (§ 7.3.2) arrivent avec la phase 4.
+- Valider les deux maquettes de référence côte à côte avec app4 et app3 (PDF-DESIGN-06), puis mesurer PDF-PERF-01 /
+  PDF-PERF-04 en préprod.

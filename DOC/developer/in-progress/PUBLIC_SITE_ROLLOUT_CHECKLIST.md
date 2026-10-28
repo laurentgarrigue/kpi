@@ -444,7 +444,7 @@ réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire
 `/healthz` aux `SMOKE_URLS_*` (📦 `vps-manager`) ; Search Console ; suivi des 404.
 **Redirection 301 `beta.*` → domaine principal pendant au moins 1 saison** (chemin conservé) : des PDF publics
 imprimés portent des QR codes vers `beta.*` ([PDF_GOTENBERG.md §8.4](../../specs/PDF_GOTENBERG.md)) ; basculer en même
-temps `APP3_PUBLIC_URL` d'api2 vers le domaine principal.
+temps `PUBLIC_SITE_URL` d'api2 (docker/compose.*.yaml) vers le domaine principal.
 
 ## Phase 6 — Décommissionnement
 
