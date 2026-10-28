@@ -9,7 +9,6 @@ definePageMeta({
 })
 
 const { t, locale } = useI18n()
-const pdf = usePdf()
 const route = useRoute()
 const api = useApi()
 const toast = useToast()
@@ -1700,11 +1699,9 @@ const confirmBulkDuplicate = async () => {
 // ─── Bulk Match Sheets (PDF) ───
 const openBulkMatchSheets = () => {
   bulkActionsOpen.value = false
-  // Signed link: the legacy PDF pages need it (PDF_GOTENBERG.md, phase 0)
-  void pdf.openLegacy('FeuilleMatchMulti.php', {
-    listMatch: selectedIds.value.join(','),
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  })
+  const ids = selectedIds.value.join(',')
+  const tz = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
+  window.open(`${legacyBase.value}/admin/FeuilleMatchMulti.php?listMatch=${ids}&tz=${tz}`, '_blank')
 }
 
 // ─── Document export URLs (all games with current filters) ───

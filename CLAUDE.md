@@ -153,12 +153,6 @@ make backend_npm_add package=flatpickr
 - `make api2_restart` - **Restart the FrankenPHP container** (required in prod after deploying code)
 - `make api2_logs` / `make api2_logs_errors` - **API2 logs** (accept `lines=200`)
 - `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
-- `make pdf_tokens_sync` - Copy the app4/app3 charter (colour tokens, fonts, logos) used by the PDFs into `sources/api2/assets/pdf/`, then commit
-- `make gotenberg_logs` - Logs of the Gotenberg (PDF rendering) container
-
-**PDF documents** ([PDF_GOTENBERG.md](DOC/specs/PDF_GOTENBERG.md)): rendered by api2 with Gotenberg (`/api2/pdf/*` public,
-`/api2/admin/pdf/*` profile + mandate). The legacy `admin/Feuille*.php` PDFs only answer to a legacy session or to a
-signed link issued by api2. `GOTENBERG_PASSWORD` and `PDF_LINK_SECRET` are **required** in `docker/.env`.
 
 **Location**: `sources/api2/` - Modern REST API with Symfony 7.4 LTS and API Platform 4.3
 **Server**: FrankenPHP (Caddy) worker mode, container `${APPLICATION_NAME}_api2` - **not Apache**
@@ -354,7 +348,6 @@ Main services (dev):
 | `kpi` | `${APPLICATION_NAME}_php` | **Apache + PHP 8.4** - legacy PHP, `sources/api/`, WordPress |
 | `api2` | `${APPLICATION_NAME}_api2` | **FrankenPHP (Caddy) worker + Mercure hub** - Symfony 7.4 / API Platform 4.3 |
 | `event-cache-worker` | `${APPLICATION_NAME}_event_cache_worker` | CLI daemon regenerating live cache JSON |
-| `gotenberg` | `${APPLICATION_NAME}_gotenberg` | HTML → PDF rendering for api2 (Chromium, no network), internal only - see [PDF_GOTENBERG.md](DOC/specs/PDF_GOTENBERG.md) |
 | `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
 | `node_app2` … `node_app4` | | Nuxt dev servers (`node_app3` = public website on `beta.kpi.localhost`) |
 | `app3` (preprod/prod) | `${APPLICATION_NAME}_app3` | Node SSR server of the public website, `beta.${KPI_DOMAIN_NAME}` |

@@ -537,11 +537,3 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCRUTA', '', 'Contrôleur SCA', 'scruta@example.test', '', '', 10, '|SCA|SCC|', '|2997|', '', '', NULL, ''),    -- profil 10, SCA + SCC, sans limite d'événement
   ('TDIV', '', 'Division Test', 'div@example.test', '', '', 3, '|SCA|SCB|', '|2997|', '', '', NULL, ''),            -- profil 3 : pas de scrutineering
   ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', '');            -- profil 7 limité au club C002
-
--- ---------------------------------------------------------------- documents PDF (PDF_GOTENBERG.md)
--- Consommé par tests/Integration/PdfEndpointsTest.php : rôle minimum (§ 7), périmètre du mandat (PDF-AUTH-03).
-INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
-  ('TSCORE', '', 'Table de marque Test', 'score@example.test', '', '', 9, '', '', '', '', NULL, '');      -- profil 9 : feuille de marque, pas les équipes
--- Mandat de TDIV limité à SCC : avec l'en-tête X-Active-Mandate, SCC est permis et SCA ne l'est plus
-INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
-  (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');

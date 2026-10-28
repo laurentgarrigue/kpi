@@ -5,9 +5,6 @@ include_once('../commun/MyBdd.php');
 include_once('../commun/MyTools.php');
 
 require_once('../commun/MyPDF.php');
-require_once('../commun/MySignedLink.php');
-// PDF admin : session de l'admin legacy ou lien signé par api2 (DOC/specs/PDF_GOTENBERG.md, phase 0)
-MySignedLink::requirePdfAccess();
 
 // Liste des présents par année de naissance (saut de page par année, tri par mois)
 class FeuillePresenceNaissance extends MyPage

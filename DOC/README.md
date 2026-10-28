@@ -62,8 +62,7 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [COMMON_ADMIN_SPECS.md](specs/COMMON_ADMIN_SPECS.md), [DROITS_PAR_PROFIL.md](specs/DROITS_PAR_PROFIL.md),
 [MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
-[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md),
-[PDF_GOTENBERG.md](specs/PDF_GOTENBERG.md) (génération PDF modernisée, api2 + Gotenberg).
+[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
 
 ## 🌐 [Specs du site public](specs/public/README.md)
 

@@ -11,7 +11,6 @@ export interface PageLinkContext {
   locale: string
   legacyBaseUrl: string
   app2BaseUrl: string
-  api2BaseUrl: string
 }
 
 export interface PageLink {
@@ -54,8 +53,11 @@ export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
 }
 
-/** Legacy PDF of the progress of a cup, until `ranking-phases` is served by api2 (PDF_GOTENBERG.md § 12). */
-const CUP_PROGRESS_PDF = 'PdfCltNiveauPhase.php'
+const RANKING_PDF: Record<CompetitionType, string> = {
+  CHPT: 'PdfCltChpt.php',
+  CP: 'PdfCltNiveauPhase.php',
+  MULTI: 'PdfCltMulti.php',
+}
 
 export type PdfTarget =
   | { kind: 'ranking', type: CompetitionType, season: string, competition: string }
@@ -63,10 +65,7 @@ export type PdfTarget =
   | { kind: 'games', event: number }
   | { kind: 'gameSheet', game: number }
 
-/**
- * Public PDF: from the public route of api2 once the document is migrated (PDF_GOTENBERG.md § 7), else the legacy
- * PDF, always called with explicit GET parameters (API_PUBLIC_RESULTS.md D-P2-2).
- */
+/** Legacy public PDF, always called with explicit GET parameters (API_PUBLIC_RESULTS.md D-P2-2). */
 export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
   const url = (file: string, query: Record<string, string | number>) =>
     // Commas are kept readable: the legacy PDF splits `Compet` on them.
@@ -74,9 +73,7 @@ export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
 
   switch (target.kind) {
     case 'ranking':
-      return target.type === 'CP'
-        ? url(CUP_PROGRESS_PDF, { S: target.season, Compet: target.competition, lang: context.locale })
-        : withQuery(joinURL(context.api2BaseUrl, 'pdf', 'ranking'), { season: target.season, competition: target.competition, lang: context.locale })
+      return url(RANKING_PDF[target.type], { S: target.season, Compet: target.competition, lang: context.locale })
     case 'gameSheet':
       return url('PdfMatchMulti.php', { listMatch: target.game, lang: context.locale })
     case 'games': {

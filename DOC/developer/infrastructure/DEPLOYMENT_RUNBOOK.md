@@ -28,7 +28,6 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 | **Restaurer la base** de prod | 🖥 | [§5](#5-rollback-de-la-base-de-données-prod) |
 | **Site public beta** (app3) : reconstruire, redémarrer, logs | 🖥 | `make app3_generate_<env>` / `app3_restart` / `app3_logs` — [SITE_PLATFORM.md](../../specs/public/SITE_PLATFORM.md) |
 | **Médias** (logos, photos) : état, sauvegarde, restauration | 🖥 | `make media_status` / `media_backup` / `media_restore` — [MEDIA_STORAGE.md](MEDIA_STORAGE.md) |
-| **PDF** (Gotenberg) : logs, charte des PDF | 🖥 / ⌨️ | `make gotenberg_logs` ; `make pdf_tokens_sync` puis commit — [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md). ⚠️ `GOTENBERG_PASSWORD` et `PDF_LINK_SECRET` doivent exister dans `docker/.env` de chaque environnement **avant** le déploiement qui les introduit (`openssl rand -hex 32`, une valeur par environnement) : sans elles, compose refuse de démarrer |
 | Savoir **quelle version** tourne | 🖥 | `cat /data/kpi/.last-deploy-sha` (et `git -C /data/kpi rev-parse HEAD`) |
 
 **Accès VPS** : `ssh -i ~/.ssh/kpi-deploy/kpi_deploy_ed25519 -p 22 deploy@<host>`

@@ -1,9 +1,5 @@
 # Migration des Documents PDF vers App4
 
-> **Mise à jour 2026-10-26** : le choix de librairie de la phase 1 ci-dessous (TCPDF/Dompdf) est remplacé par
-> **Gotenberg**, et le catalogue est consolidé : voir [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md).
-> L'inventaire ci-dessous reste la référence des fichiers legacy à remplacer.
-
 ## Inventaire Complet des Documents
 
 ### 1. ÉQUIPES (Team Documents)

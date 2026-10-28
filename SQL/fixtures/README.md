@@ -102,13 +102,3 @@ Consommé par `tests/Integration/StaffScrutineeringTest.php`, `PresenceScrutinee
 
 `kp_licence` reprend la définition de production (colonnes lues par la feuille de présence), avec `kp_arbitre`,
 `kp_surclassement` et `kp_categorie` (vides).
-
-## Jeu « documents PDF »
-
-Consommé par `tests/Integration/PdfEndpointsTest.php` ([PDF_GOTENBERG.md](../../DOC/specs/PDF_GOTENBERG.md)), en plus des
-comptes du jeu scrutineering (`TADMIN`, `TVIEW`, `TDIV`, `TCLUB`, `TSCRUT`) et des compétitions `SCA`/`SCC` (2997) et `RCH`/`RNP` (2999) :
-
-| Élément | Cas couverts |
-|---|---|
-| `TSCORE` (profil 9) | feuille de marque permise, équipes engagées refusées (`ROLE_SCORER` sans `ROLE_VIEWER`) |
-| Mandat `9701` de `TDIV` (profil 3, `SCC`) | périmètre du mandat actif : `SCC` permis, `SCA` refusé (PDF-AUTH-03) |

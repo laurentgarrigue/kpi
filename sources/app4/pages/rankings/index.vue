@@ -18,7 +18,6 @@ definePageMeta({
 })
 
 const { t, locale } = useI18n()
-const pdf = usePdf()
 const api = useApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
@@ -654,22 +653,20 @@ const pdfUrls = computed(() => {
   const base = legacyBase.value
   const type = effectiveType.value
   const qs = `Compet=${code}&S=${saison}`
-  // Published general ranking: public PDF of api2 (PDF_GOTENBERG.md § 7.4)
-  const publicRanking = pdf.publicUrl('ranking', { season: saison, competition: code, lang: locale.value === 'en' ? 'en' : 'fr' })
 
   const urls: Record<string, { admin?: string; public?: string }> = {}
 
   if (type === 'CHPT') {
-    urls.general = { admin: `${base}/admin/FeuilleCltChpt.php?${qs}`, public: publicRanking }
+    urls.general = { admin: `${base}/admin/FeuilleCltChpt.php?${qs}`, public: `${base}/PdfCltChpt.php?${qs}` }
     urls.detail = { admin: `${base}/admin/FeuilleCltChptDetail.php?${qs}`, public: `${base}/PdfCltChptDetail.php?${qs}` }
     urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
   } else if (type === 'CP') {
-    urls.general = { admin: `${base}/admin/FeuilleCltNiveau.php?${qs}`, public: publicRanking }
+    urls.general = { admin: `${base}/admin/FeuilleCltNiveau.php?${qs}`, public: `${base}/PdfCltNiveau.php?${qs}` }
     urls.progress = { admin: `${base}/admin/FeuilleCltNiveauPhase.php?${qs}`, public: `${base}/PdfCltNiveauPhase.php?${qs}` }
     urls.detail = { admin: `${base}/admin/FeuilleCltNiveauDetail.php?${qs}`, public: `${base}/PdfCltNiveauDetail.php?${qs}` }
     urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
   } else if (type === 'MULTI') {
-    urls.general = { admin: `${base}/admin/FeuilleCltMulti.php?${qs}`, public: publicRanking }
+    urls.general = { admin: `${base}/admin/FeuilleCltMulti.php?${qs}`, public: `${base}/PdfCltMulti.php?${qs}` }
   }
 
   return urls

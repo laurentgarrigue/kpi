@@ -268,7 +268,7 @@ describe('ranking tab (§ 3.6)', () => {
     expect(wrapper.findAll('[data-testid="ranking-row"]')).toHaveLength(4)
     expect(wrapper.find('thead').text()).toContain('Diff')
     expect(wrapper.find('[data-mark="eliminated"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/ranking?season=2999&competition=RCH&lang=fr')
+    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfCltChpt.php?S=2999&Compet=RCH&lang=fr')
   })
 
   it('CMP-10: medals and final badge for a finished final round', async () => {

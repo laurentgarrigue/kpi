@@ -78,6 +78,9 @@ const officialsFormData = ref({
   arbNj5: '',
 })
 
+// Legacy base URL for PDF
+const legacyBaseUrl = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
+
 // Bulk actions dropdown
 const bulkActionsOpen = ref(false)
 const bulkActionsRef = ref<HTMLDivElement | null>(null)
@@ -693,10 +696,8 @@ const saveOfficials = async () => {
   }
 }
 
-// Signed link: the legacy PDF pages need it (PDF_GOTENBERG.md, phase 0)
-const { openLegacy } = usePdf()
 const printJurySheet = (gamedayId: number) => {
-  void openLegacy('FeuilleInstances.php', { idJournee: gamedayId })
+  window.open(`${legacyBaseUrl.value}/admin/FeuilleInstances.php?idJournee=${gamedayId}`, '_blank')
 }
 
 </script>

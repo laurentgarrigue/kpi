@@ -1,8 +1,5 @@
 # Spec : Rendre les pages PDF legacy autonomes pour admin2
 
-> **Mise à jour 2026-10-26** : rustine transitoire. Ouvrir ces pages sans session les a rendues **accessibles sans
-> authentification** (données personnelles). Cible et colmatage : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) §1.2 et phase 0.
-
 ## Contexte
 
 App4 (admin2) ouvre les PDFs legacy via des liens HTML `target="_blank"` avec des paramètres GET.
