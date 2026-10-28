@@ -50,17 +50,7 @@ final class RankingDocument implements PdfDocumentProvider
             return null;
         }
 
-        $count = count($ranking['rows']);
-        $rows = array_map(fn (RankingRow $row): array => [
-            'rank' => $row->rank,
-            'team' => $row->team->label,
-            'points' => $row->points,
-            'played' => $row->played,
-            'details' => $row->details,
-            'medal' => $row->medal,
-            'qualified' => $row->rank <= $ranking['qualified'],
-            'eliminated' => $ranking['eliminated'] > 0 && $row->rank > $count - $ranking['eliminated'],
-        ], $ranking['rows']);
+        $rows = self::rows($ranking['rows'], $ranking['qualified'], $ranking['eliminated']);
 
         $logo = $this->assets->legacyImage($header->logo);
 
@@ -82,5 +72,30 @@ final class RankingDocument implements PdfDocumentProvider
             publicPath: sprintf('/competitions/%s/%s/ranking', rawurlencode($request->season), rawurlencode($code)),
             images: $logo === null ? [] : [$logo['name'] => $logo['content']],
         );
+    }
+
+    /**
+     * Rows of the PDF with their marks. Medals replace the « qualified » marks: a final ranking with medals has no
+     * qualification left to show (validated on the reference mock-up, PDF_GOTENBERG.md § 7.4).
+     *
+     * @param list<RankingRow> $ranking
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function rows(array $ranking, int $qualified, int $eliminated): array
+    {
+        $count = count($ranking);
+        $hasMedals = array_filter($ranking, static fn (RankingRow $row): bool => $row->medal !== null) !== [];
+
+        return array_map(static fn (RankingRow $row): array => [
+            'rank' => $row->rank,
+            'team' => $row->team->label,
+            'points' => $row->points,
+            'played' => $row->played,
+            'details' => $row->details,
+            'medal' => $row->medal,
+            'qualified' => !$hasMedals && $row->rank <= $qualified,
+            'eliminated' => $eliminated > 0 && $row->rank > $count - $eliminated,
+        ], $ranking);
     }
 }

@@ -370,7 +370,8 @@ inchangées, validées par la commission arbitrage avant mise en service (critè
 | `ranking-tiebreak` | justification départage (api2, mPDF) | — | Classements, si égalités (API `ROLE_VIEWER`) | `ROLE_ORGANIZER` + périmètre (repose sur le calcul, cf. I5) |
 
 Dans app4, les entrées « Classement publié » de la page Classements (profils 1–8) ouvrent la **version publique**.
-Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
+Quand le classement porte des médailles, elles **remplacent** les mentions « Qualifié » (validé sur la maquette de référence,
+2026-10-28). Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
 « Provisoire - non publié » en filigrane.
 
 ### 7.5 Statistiques, contrôle, QR codes
