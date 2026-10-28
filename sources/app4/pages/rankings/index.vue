@@ -662,12 +662,12 @@ const pdfUrls = computed(() => {
   if (type === 'CHPT') {
     urls.general = { admin: `${base}/admin/FeuilleCltChpt.php?${qs}`, public: publicRanking }
     urls.detail = { admin: `${base}/admin/FeuilleCltChptDetail.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltChptDetail.php?${qs}`) }
-    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
+    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: pdf.publicHref(`${base}/PdfListeMatchs.php?${qs}`) }
   } else if (type === 'CP') {
     urls.general = { admin: `${base}/admin/FeuilleCltNiveau.php?${qs}`, public: publicRanking }
     urls.progress = { admin: `${base}/admin/FeuilleCltNiveauPhase.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltNiveauPhase.php?${qs}`) }
     urls.detail = { admin: `${base}/admin/FeuilleCltNiveauDetail.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltNiveauDetail.php?${qs}`) }
-    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
+    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: pdf.publicHref(`${base}/PdfListeMatchs.php?${qs}`) }
   } else if (type === 'MULTI') {
     urls.general = { admin: `${base}/admin/FeuilleCltMulti.php?${qs}`, public: publicRanking }
   }

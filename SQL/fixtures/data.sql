@@ -569,3 +569,6 @@ UPDATE `kp_competition_equipe` SET `Clt` = 1, `Pts` = 900, `J` = 3, `G` = 3, `Pl
 UPDATE `kp_competition_equipe` SET `Clt` = 2, `Pts` = 600, `J` = 3, `G` = 2, `P` = 1, `Plus` = 5, `Moins` = 3, `Diff` = 2 WHERE `Id` = 9301;
 UPDATE `kp_competition_equipe` SET `Clt` = 3, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 4, `Moins` = 3, `Diff` = 1 WHERE `Id` = 9302;
 UPDATE `kp_competition_equipe` SET `Clt` = 4, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 2, `Moins` = 3, `Diff` = -1 WHERE `Id` = 9303;
+-- Profil 7 limité à RCH (PDF_GOTENBERG.md PDF-AUTH-10) : liste des matchs = matchs publiés seulement, comme sa page Matchs.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TTEAM', '', 'Equipe Test', 'team@example.test', '', '', 7, '|RCH|', '|2999|', '', '', NULL, '');

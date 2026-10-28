@@ -104,14 +104,14 @@ describe('games tab (§ 3.1)', () => {
     expect(wrapper.find('[data-testid="no-filtered-games"]').exists()).toBe(true)
   })
 
-  it('CMP-12 / TEA-04: team links to its site page, game sheets to app2 in a new tab, PDF links with explicit parameters', async () => {
+  it('CMP-12 / TEA-04: team links to its site page, game sheets to app2 in a new tab, PDF links of api2 with explicit parameters', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCH/games')
     const row = wrapper.find('[data-game="9401"]')
     expect(row.find('a[data-kind="team"]').attributes('href')).toBe('/teams/101?season=2999&competition=RCH')
     expect(row.find('[data-testid="game-sheet"]').attributes('href')).toBe('https://app.kpi.localhost/game/9401')
     expect(row.find('[data-testid="game-sheet"]').attributes('target')).toBe('_blank')
-    expect(row.find('[data-testid="score-sheet-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfMatchMulti.php?listMatch=9401&lang=fr')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCH')
+    expect(row.find('[data-testid="score-sheet-pdf"]').exists(), 'no public scoresheet PDF (PDF_GOTENBERG.md § 7.3.2)').toBe(false)
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH&lang=fr')
   })
 
   it('referees are shown without what api2 stores between parentheses', async () => {
@@ -275,7 +275,7 @@ describe('ranking tab (§ 3.6)', () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
     expect(wrapper.find('[data-testid="ranking-badge"]').text()).toBe('Classement final')
     expect(wrapper.findAll('[data-medal]')).toHaveLength(3)
-    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('PdfCltNiveauPhase.php')
+    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('/api2/pdf/ranking-phases?')
   })
 
   it('CMP-10: MULTI shows rank, team, points and played only', async () => {

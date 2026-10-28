@@ -9,6 +9,7 @@
 </head>
 <body class="theme-{{ theme }}">
     {% block watermark %}{% endblock %}
+    {% block header %}
     <header class="pdf-header">
         <div class="pdf-header__logos">
             {% for logo in logos %}<img src="{{ logo }}" alt="">{% endfor %}
@@ -17,7 +18,7 @@
             <h1 class="pdf-header__document">{{ title }}</h1>
             {% if competition is defined %}
                 <div class="pdf-header__competition">{{ competition.title }}{% if competition.subtitle %} · {{ competition.subtitle }}{% endif %}</div>
-                <div class="pdf-header__meta">{{ labels.season }} {{ season }} · {{ competition.code }}</div>
+                <div class="pdf-header__meta">{{ labels.season }} {{ season }}{% if competition.code|default('') %} · {{ competition.code }}{% endif %}</div>
             {% endif %}
         </div>
         {% if competition is defined and competition.logo %}
@@ -30,6 +31,7 @@
             </div>
         {% endif %}
     </header>
+    {% endblock %}
     <main>
         {% block content %}{% endblock %}
     </main>

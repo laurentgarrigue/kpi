@@ -30,6 +30,17 @@ final class PdfRequestTest extends TestCase
         );
     }
 
+    public function testSeveralCompetitionsAsTheLegacyCompetList(): void
+    {
+        $request = PdfRequest::fromQuery(['season' => '2026', 'competition' => 'N1H,N2H,N1H']);
+
+        self::assertSame(['N1H', 'N2H'], $request->competitions);
+        self::assertNull($request->competition, 'not one competition');
+        self::assertSame('N1H,N2H', $request->toQuery()['competition']);
+        $this->expectException(InvalidPdfRequest::class);
+        $request->requireCompetition();
+    }
+
     public function testDefaultsAreFrenchAndParis(): void
     {
         $request = PdfRequest::fromQuery(['season' => '2026']);

@@ -59,8 +59,15 @@ describe('migratedLegacyPdf (legacy links opening the documents of api2)', () =>
     expect(migratedLegacyPdf('FeuillePresenceNaissance.php', { S: '2026', Compet: 'N1H' })?.query.view).toBe('birthyear')
   })
 
+  it('maps the game documents of the Documents page', () => {
+    expect(migratedLegacyPdf('FeuilleMatchMulti.php', { S: '2026', listMatch: '1,2' }))
+      .toEqual({ document: 'scoresheet', query: { season: '2026', games: '1,2' } })
+    expect(migratedLegacyPdf('FeuilleListeMatchsEN.php', { S: '2026', idEvenement: '77' }))
+      .toEqual({ document: 'games-list', query: { season: '2026', event: '77', lang: 'en' } })
+  })
+
   it('leaves the pages not migrated yet to the signed legacy link', () => {
-    expect(migratedLegacyPdf('FeuilleMatchMulti.php', { listMatch: '1,2' })).toBeNull()
+    expect(migratedLegacyPdf('FeuilleCltNiveauNiveau.php', { S: '2026' })).toBeNull()
   })
 })
 

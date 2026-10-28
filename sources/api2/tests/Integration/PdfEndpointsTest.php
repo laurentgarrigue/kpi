@@ -345,6 +345,80 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringContainsString('Equipe Bravo', $html, 'Bravo and Charlie are level on points');
     }
 
+    // ------------------------------------------------------------------ games (phase 4, § 7.3)
+
+    public function testPdfData03PublicGameListOnlyHasPublishedGames(): void
+    {
+        $this->client->request('GET', '/pdf/games-list?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringContainsString('ARBITRE Un', $html);
+        self::assertStringNotContainsString('(C001)', $html, 'what is stored between parentheses is not published');
+
+        $this->client->request('GET', '/pdf/games-list?season=2999&competition=RCH,RCP');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Equipe Echo', (string) $this->gotenberg()->html, 'several competitions');
+
+        $this->client->request('GET', '/pdf/games-list?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/pdf/games-list?season=2999&event=78');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'event not published');
+        $this->client->request('GET', '/pdf/games-list?season=2999');
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode(), 'a scope is required');
+    }
+
+    public function testPdfAuth10AdminGameListFollowsTheVisibilityOfTheGamesPage(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
+        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published included');
+
+        $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'profile 7: published games only');
+
+        $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH,RCP', Response::HTTP_FORBIDDEN, 'RCP out of the perimeter');
+    }
+
+    public function testPdfData05PitchGridHasOneColumnPerPitchUsed(): void
+    {
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Terrain 1</th>', $html);
+        self::assertStringContainsString('Terrain 2</th>', $html);
+        self::assertStringNotContainsString('Terrain 3</th>', $html);
+        self::assertStringContainsString('Equipe Alpha - Equipe Bravo', $html, 'view teams by default');
+
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH&view=phases');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Journée 1', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH&view=pitches');
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode(), 'PDF-DATA-07');
+
+        $this->pdfAs('TADMIN', '/admin/pdf/games-grid?season=2999&competition=RCH', Response::HTTP_NOT_FOUND, 'public version only');
+    }
+
+    public function testScoresheetForTheScoringTable(): void
+    {
+        $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999&games=9401', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Feuille de marque', $html);
+        self::assertStringContainsString('ALPHA (Cap)', $html, 'team roster when the game has none');
+        self::assertStringContainsString('ALPHA (Entraîneur)', $html);
+        self::assertStringNotContainsString('Inactif', $html, 'inactive players are not on the sheet');
+        self::assertStringContainsString('ID #9401', $html);
+
+        $this->pdfAs('TCLUB', '/admin/pdf/scoresheet?season=2999&games=9401', Response::HTTP_FORBIDDEN, 'game out of the perimeter');
+        $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999', Response::HTTP_BAD_REQUEST, 'a scope is required');
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private function pdfAs(string $userCode, string $uri, int $expectedStatus, string $message = '', ?int $mandate = null): Response

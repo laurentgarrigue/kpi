@@ -12,7 +12,7 @@
 {% block content %}
     {% for section in sections %}
         {% set section_columns = section.columns ?? columns %}
-        <section class="pdf-section{% if page_per_section|default(false) and not loop.first %} pdf-page-break{% endif %}">
+        <section class="pdf-section{% if (page_per_section|default(false) and not loop.first) or section.new_page|default(false) %} pdf-page-break{% endif %}">
             {% if section.title|default(null) %}<h2 class="pdf-section__title">{{ section.title }}</h2>{% endif %}
             {% if section.subtitle|default(null) %}<p class="pdf-section__subtitle">{{ section.subtitle }}</p>{% endif %}
             {% if section.pairs|default([]) is not empty %}
@@ -23,7 +23,7 @@
                 </table>
             {% endif %}
             {% if section.rows|default([]) is not empty %}
-                <table class="pdf-table{% if dense|default(false) %} pdf-table--dense{% endif %}">
+                <table class="pdf-table{% if dense|default(false) %} pdf-table--dense{% endif %}{% if grid|default(false) %} pdf-grid{% endif %}">
                     <thead>
                         <tr>{% for column in section_columns %}<th class="{{ column.class|default('') }}">{{ column.label }}</th>{% endfor %}</tr>
                     </thead>

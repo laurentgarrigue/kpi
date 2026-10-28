@@ -700,6 +700,24 @@ Aucune à ce stade.
 - app3 : le PDF d'une coupe (CP) est `ranking-phases` d'api2. app4 : les liens legacy des classements (admin et
   publics, `publicPdfHref`) ouvrent les documents api2 ; `ranking-levels` (CltNiveauNiveau) n'est pas migré (I6).
 
+### Phase 4 — matchs (livrée)
+
+- `competition` accepte une liste (`competition=N1H,N2H`, comme `Compet` du legacy) ; le périmètre est vérifié pour
+  chaque code.
+- `games-list` (public : matchs et journées publiés de compétitions publiées ; admin : périmètre, profil 7 comme sa
+  page Matchs), portée `competition`, `event`, `gameday` ou `games`, filtres de la page Matchs en options (`date`,
+  `pitch`, `round`, `unlocked=1`, `sort=date|competition|phase|pitch|number`).
+- `games-grid` (public seulement) : `view=teams|phases`, une colonne par terrain utilisé, au-delà de 6 terrains des
+  groupes équilibrés (`App\Pdf\Games\GamesGrid`).
+- `scoresheet` (admin, `ROLE_SCORER`) : une page A4 paysage par match, rubriques de FeuilleMatchMulti.php ; la
+  composition du match, sinon celle de l'équipe (lue, plus copiée en base à l'impression comme le faisait le legacy).
+  **Validation de la commission arbitrage requise avant mise en service (PDF-DOC-03).**
+- Feuille de marque publique retirée (app2 vue match, app3 liste des matchs) ; `PdfMatchMulti.php` redirige (301)
+  vers la vue match d'app2 (`URL_APP/game/{id}`), y compris depuis les pages publiques legacy (`kpmatchs`,
+  `frame_terrains`).
+- app4 : menu Documents de la page Matchs, PDF par match et action groupée sur api2 ; app3 : liste des matchs sur
+  api2.
+
 ### Reste à faire
 
 - Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique

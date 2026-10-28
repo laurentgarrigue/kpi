@@ -60,9 +60,10 @@ match. Tant que ces pages ne sont pas livrées, on utilise la **même mécanique
 | Feuille de match | — (reste dans app2) | `{app2}/game/{id}` (nouvel onglet) |
 
 **PDF** (API_PUBLIC_RESULTS.md D-P2-2) : liens « PDF » (icône + texte, nouvel onglet) construits par une fonction
-pure `pdfUrl(kind, params)` vers `{legacy}/Pdf….php` avec `S`, `Compet` et `lang` explicites :
-classement (onglet Classement, fichier selon le type), liste des matchs (onglet Matchs), feuille de marque
-(`PdfMatchMulti.php?listMatch={id}`) sur chaque match validé (`g_validation = 'O'`), comme le legacy.
+pure `pdfUrl(kind, params)` vers les PDF publics d'api2 (`/api2/pdf/*`, PDF_GOTENBERG.md) avec `season`,
+`competition` (ou `event`) et `lang` explicites : classement (onglet Classement : `ranking`, `ranking-phases` pour
+une coupe), liste des matchs (onglet Matchs : `games-list`). Pas de feuille de marque PDF publique
+(PDF_GOTENBERG.md § 7.3.2) : le score d'un match mène à sa feuille de match d'app2.
 
 ### 2.3 Accès à l'événement
 
@@ -94,8 +95,7 @@ scoring publiera les topics publics.
   affichés à partir de `lg`), statut. Un arbitre valant « -1 » (pas d'arbitre à ce poste) n'est pas affiché.
 - **Statut** : `ATT` « À venir » ; `ON` « En cours » (+ période `g_period`) en rouge accent ; `END` « Terminé » ;
   score **provisoire** (italique + mention « provisoire ») tant que `g_validation ≠ 'O'`.
-- Un match `ON` ou `END` mène à sa feuille de match (§ 2.1) ; un match validé propose en plus la feuille de
-  marque PDF.
+- Un match `ON` ou `END` mène à sa feuille de match (§ 2.1).
 - Lien « Liste des matchs (PDF) » en tête d'onglet (§ 2.1).
 - **Filtres** (paramètres d'URL, combinables) :
   - `gameday={id}` pour un championnat (CHPT) : sélecteur des journées (libellé, lieu, dates) ;

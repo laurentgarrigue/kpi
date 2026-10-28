@@ -168,7 +168,6 @@ const terrainMinInterval = ref(DEFAULT_PITCH_MIN_INTERVAL)
 
 // ─── Legacy base URL ───
 const legacyBase = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
-const tzParam = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)
 
 // ─── Permissions ───
 const canEdit = computed(() => authStore.profile <= 6)
@@ -1700,10 +1699,62 @@ const confirmBulkDuplicate = async () => {
 // ─── Bulk Match Sheets (PDF) ───
 const openBulkMatchSheets = () => {
   bulkActionsOpen.value = false
-  // Signed link: the legacy PDF pages need it (PDF_GOTENBERG.md, phase 0)
-  void pdf.openLegacy('FeuilleMatchMulti.php', {
-    listMatch: selectedIds.value.join(','),
+  openScoresheets(selectedIds.value)
+}
+
+// ─── Game documents of api2 (PDF_GOTENBERG.md § 7.3): the games of the page, with its filters ───
+const GAMES_PDF_SORT: Record<string, string> = {
+  date_time_terrain: 'date',
+  competition_date: 'competition',
+  competition_phase: 'phase',
+  terrain_date: 'pitch',
+  number: 'number',
+}
+const gamesPdfQuery = computed(() => {
+  const query: Record<string, string> = {
+    season: workContext.season || '',
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  }
+  if (workContext.pageCompetitionCodeAll) {
+    query.competition = workContext.pageCompetitionCodeAll
+  }
+  else if (workContext.pageEventGroupType === 'event') {
+    query.event = String(workContext.pageEventGroupValue)
+  }
+  else if (workContext.pageEventGroupType === 'group') {
+    const group = workContext.uniqueGroups.find(g => g.code === workContext.pageEventGroupValue)
+    const contextCodes = new Set(workContext.competitionCodes)
+    const codes = (group?.competitions ?? []).filter(c => contextCodes.has(c))
+    if (codes.length > 0) query.competition = codes.join(',')
+  }
+  else if (workContext.selectionType === 'event' && workContext.eventId) {
+    query.event = String(workContext.eventId)
+  }
+  if (selectedTour.value) query.round = String(selectedTour.value)
+  if (selectedJournee.value && selectedJournee.value !== '*') query.gameday = String(selectedJournee.value)
+  if (selectedDate.value) query.date = selectedDate.value
+  if (selectedTerrain.value) query.pitch = String(selectedTerrain.value)
+  if (unlockedOnly.value) query.unlocked = '1'
+  const sort = GAMES_PDF_SORT[selectedSort.value]
+  if (sort && sort !== 'date') query.sort = sort
+  return query
+})
+const openGamesDocument = (document: 'games-list' | 'scoresheet', lang?: 'fr' | 'en') => {
+  documentsOpen.value = false
+  void pdf.openDocument(document, { ...gamesPdfQuery.value, lang: lang ?? (locale.value === 'en' ? 'en' : 'fr') })
+}
+// Public documents of api2: plain links. The pitch grid is always by day, it takes no `sort`.
+const publicGamesUrl = (document: 'games-list' | 'games-grid', extra: Record<string, string>) => {
+  const { sort, ...query } = gamesPdfQuery.value
+  const order = document === 'games-list' && sort ? { sort } : {}
+  return pdf.publicUrl(document, { lang: locale.value === 'en' ? 'en' : 'fr', ...query, ...order, ...extra })
+}
+const openScoresheets = (ids: number[]) => {
+  void pdf.openDocument('scoresheet', {
+    season: workContext.season || '',
+    games: ids.join(','),
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
 
@@ -1756,11 +1807,8 @@ const docBaseParams = computed(() => {
   return params.toString()
 })
 
-const docUrl = (file: string, isPublic = false) => {
-  const folder = isPublic ? '' : 'admin/'
-  const href = `${legacyBase.value}/${folder}${file}?${docBaseParams.value}`
-  return isPublic ? pdf.publicHref(href) : href
-}
+// Spreadsheet export (legacy, not a PDF)
+const docUrl = (file: string) => `${legacyBase.value}/admin/${file}?${docBaseParams.value}`
 
 // ─── Journee label for dropdown ───
 const journeeLabel = (j: GameJournee) => {
@@ -2118,33 +2166,30 @@ const openScoring = (gameId: number) => {
           </button>
           <div v-show="documentsOpen" class="absolute z-20 mt-1 w-64 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
             <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
-            <a
-              :href="docUrl('FeuilleListeMatchs.php')"
-              target="_blank"
+            <button
+              type="button"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
+              @click="openGamesDocument('games-list', 'fr')"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
               {{ t('games.documents.game_list_fr') }}
-            </a>
-            <a
-              :href="docUrl('FeuilleListeMatchsEN.php')"
-              target="_blank"
+            </button>
+            <button
+              type="button"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
+              @click="openGamesDocument('games-list', 'en')"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
               {{ t('games.documents.game_list_en') }}
-            </a>
-            <a
-              :href="docUrl('FeuilleMatchMulti.php')"
-              target="_blank"
+            </button>
+            <button
+              type="button"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
+              @click="openGamesDocument('scoresheet')"
             >
               <UIcon name="heroicons:document-duplicate" class="w-5 h-5 text-danger-600" />
               {{ t('games.documents.scoresheets_all') }}
-            </a>
+            </button>
             <a
               :href="docUrl('tableau_openspout.php')"
               target="_blank"
@@ -2157,7 +2202,7 @@ const openScoring = (gameId: number) => {
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
             <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
             <a
-              :href="docUrl('PdfListeMatchs.php', true)"
+              :href="publicGamesUrl('games-list', { lang: 'fr' })"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
@@ -2166,7 +2211,7 @@ const openScoring = (gameId: number) => {
               {{ t('games.documents.public_list_fr') }}
             </a>
             <a
-              :href="docUrl('PdfListeMatchsEN.php', true)"
+              :href="publicGamesUrl('games-list', { lang: 'en' })"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
@@ -2177,58 +2222,22 @@ const openScoring = (gameId: number) => {
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
             <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
             <a
-              :href="docUrl('PdfListeMatchs4TerrainsEn.php', true)"
+              :href="publicGamesUrl('games-grid', { view: 'teams' })"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_1_4_teams') }}
+              {{ t('games.documents.pitches_teams') }}
             </a>
             <a
-              :href="docUrl('PdfListeMatchs4TerrainsEn3.php', true)"
+              :href="publicGamesUrl('games-grid', { view: 'phases' })"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_5_8_teams') }}
-            </a>
-            <a
-              :href="docUrl('PdfListeMatchs4TerrainsEn2.php', true)"
-              target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
-            >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_1_4_phases') }}
-            </a>
-            <a
-              :href="docUrl('PdfListeMatchs4TerrainsEn4.php', true)"
-              target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
-            >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_5_8_phases') }}
-            </a>
-            <a
-              :href="docUrl('PdfListeMatchs5TerrainsEn.php', true)"
-              target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
-            >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_1_5_phases') }}
-            </a>
-            <a
-              :href="docUrl('PdfListeMatchs5TerrainsEnTeams.php', true)"
-              target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
-            >
-              <UIcon name="heroicons:table-cells" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.pitches_1_5_teams') }}
+              {{ t('games.documents.pitches_phases') }}
             </a>
           </div>
         </div>
@@ -2625,11 +2634,11 @@ const openScoring = (gameId: number) => {
               </td>
               <td v-if="canEdit || canEditScores" class="px-1 py-1 text-center" @click.stop>
                 <div class="flex items-center text-center gap-0.5">
-                  <a v-if="canEdit && g.authorized" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800">
+                  <button v-if="canEdit && g.authorized" type="button" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
                     <UIcon name="heroicons:document-text" class="w-6 h-6" />
                     <br>
                     <span class="text-xs text-header-900 dark:text-header-50">PDF</span>
-                  </a>
+                  </button>
                   <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
@@ -3342,10 +3351,10 @@ const openScoring = (gameId: number) => {
           <AdminActionButton v-if="canEdit && !isLocked(g) && g.authorized" icon="heroicons:pencil" @click="openEditModal(g)">
             {{ t('common.edit') }}
           </AdminActionButton>
-          <a v-if="canEdit && g.authorized" :href="`${legacyBase}/admin/FeuilleMatchMulti.php?listMatch=${g.id}&tz=${tzParam}`" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-danger-600 hover:text-danger-800">
+          <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
             <UIcon name="heroicons:document-text" class="w-4 h-4" />
             {{ t('games.scoresheet_pdf') }}
-          </a>
+          </button>
           <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
             <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
             v2

@@ -12,13 +12,21 @@ use Symfony\Bundle\SecurityBundle\Security;
  */
 class PdfAccessChecker
 {
+    private const TEAM_PROFILE = 7;
+
     public function __construct(private readonly Security $security)
     {
     }
 
     public function canGet(string $document, PdfRequest $request): bool
     {
-        return $this->isAllowed($document, $request->options, $request->season, $request->competition);
+        foreach ($request->competitions ?: [null] as $competition) {
+            if (!$this->isAllowed($document, $request->options, $request->season, $competition)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** @param array<string, string> $options */
@@ -61,6 +69,21 @@ class PdfAccessChecker
     public function allowedGamedays(): ?array
     {
         return $this->user()?->getAllowedJournees();
+    }
+
+    /** Competitions the user may see, or null when not limited. @return string[]|null */
+    public function allowedCompetitions(): ?array
+    {
+        return $this->user()?->getAllowedCompetitions();
+    }
+
+    /**
+     * Profile 7 sees the games as the Games page shows them (PDF-AUTH-10): published games of published gamedays,
+     * competitions waiting to start (ATT) left out.
+     */
+    public function publishedGamesOnly(): bool
+    {
+        return $this->user()?->getEffectiveNiveau() === self::TEAM_PROFILE;
     }
 
     /** @param string[]|null $allowed */

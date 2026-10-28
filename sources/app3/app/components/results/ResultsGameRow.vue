@@ -2,7 +2,7 @@
 import { normalizeTime, winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
 import { NEW_TAB_ATTRS } from '~/utils/links'
-import { gameLink, pdfUrl } from '~/utils/page-links'
+import { gameLink } from '~/utils/page-links'
 import { personName } from '~/utils/people'
 
 // One game of a games list (PAGE_COMPETITION.md § 3.1); the competition is shown in event / group views.
@@ -11,7 +11,6 @@ const context = usePageLinkContext()
 
 const winner = computed(() => winnerSide(props.game))
 const sheet = computed(() => (props.game.g_status === 'ATT' ? null : gameLink(props.game.g_id, context.value)))
-const scoreSheet = computed(() => (props.game.g_validation === 'O' ? pdfUrl({ kind: 'gameSheet', game: props.game.g_id }, context.value) : null))
 const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName).filter(Boolean).join(', '))
 </script>
 
@@ -41,9 +40,6 @@ const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName)
     <td class="hidden px-2 py-2 text-sm lg:table-cell">{{ referees }}</td>
     <td class="px-2 py-2">
       <ResultsGameStatus :game="game" />
-      <a v-if="scoreSheet" :href="scoreSheet" v-bind="NEW_TAB_ATTRS" class="ml-2 text-xs underline" data-testid="score-sheet-pdf">
-        PDF<span class="sr-only"> {{ $t('results.scoreSheetPdf') }} {{ $t('a11y.newTab') }}</span>
-      </a>
     </td>
   </tr>
 </template>

@@ -81,7 +81,10 @@ const LEGACY_PARAMETERS: Record<string, string> = {
   season: 'season', S: 'season',
   compet: 'competition', Compet: 'competition', codeCompet: 'competition',
   team: 'team', equipe: 'team',
-  idJournee: 'gameday',
+  idJournee: 'gameday', idSelJournee: 'gameday',
+  idEvenement: 'event',
+  listMatch: 'games',
+  filtreJour: 'date', filtreTerrain: 'pitch', filtreTour: 'round',
   lang: 'lang', tz: 'tz',
 }
 
@@ -107,6 +110,9 @@ const MIGRATED_LEGACY_PAGES: Record<string, { document: AdminPdfDocument, option
   'FeuilleCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
   'FeuilleCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
   'FeuilleCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
+  'FeuilleListeMatchs.php': { document: 'games-list', options: {} },
+  'FeuilleListeMatchsEN.php': { document: 'games-list', options: { lang: 'en' } },
+  'FeuilleMatchMulti.php': { document: 'scoresheet', options: {} },
 }
 
 /** Public legacy pages (PdfXxx.php at the root) already replaced by a public document of api2. */
@@ -118,6 +124,15 @@ const MIGRATED_PUBLIC_PAGES: Record<string, { document: string, options: LegacyQ
   'PdfCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
   'PdfCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
   'PdfCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
+  'PdfListeMatchs.php': { document: 'games-list', options: {} },
+  'PdfListeMatchsEN.php': { document: 'games-list', options: { lang: 'en' } },
+  'PdfListeMatchs4TerrainsEn.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs4TerrainsEn3.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs5TerrainsEnTeams.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs4Terrains.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs4TerrainsEn2.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs4TerrainsEn4.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs5TerrainsEn.php': { document: 'games-grid', options: { view: 'phases' } },
 }
 
 const LEGACY_PUBLIC_PDF = /^\/(Pdf[A-Za-z0-9]+\.php)$/

@@ -221,3 +221,31 @@ table.pdf-table {
 .pdf-step { margin: 2mm 0 2mm 3mm; break-inside: avoid; }
 .pdf-step__values { margin: 1mm 0 0 4mm; padding: 0; list-style: none; font-size: 8.5pt; }
 .pdf-step__games-title { margin: 1mm 0 0 4mm; font-size: 8.5pt; font-style: italic; color: var(--pdf-muted); }
+
+/* Pitch grid (games-grid): equal columns, games on several lines. */
+.pdf-grid { table-layout: fixed; }
+.pdf-grid .pdf-grid__time { width: 14mm; font-weight: 700; }
+.pdf-grid .pdf-grid__cell { white-space: pre-line; font-size: 8.5pt; border-left: 0.2mm solid var(--pdf-line); }
+
+/* Scoresheet: official sheet, two columns on A4 landscape, written by hand (scoresheet.html.twig). */
+.pdf-sheet { break-inside: avoid; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; font-size: 7.5pt; }
+.pdf-sheet__column > table { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
+.pdf-sheet__box td, .pdf-sheet__box th, .pdf-sheet__table td, .pdf-sheet__table th, .pdf-sheet__signatures td,
+.pdf-sheet__signatures th { border: 0.2mm solid var(--pdf-ink); padding: 0.3mm 1mm; }
+.pdf-sheet__box th, .pdf-sheet__table th { color: var(--pdf-title); text-align: center; }
+.pdf-sheet__highlight td { background: var(--pdf-zebra); }
+.pdf-sheet__right { text-align: right; }
+.pdf-sheet__team { text-align: left !important; font-size: 9pt; }
+.pdf-sheet__table td { height: 3.4mm; line-height: 1.1; }
+.pdf-sheet__events td { height: 3.7mm; }
+.pdf-sheet__card { width: 4.5mm; text-align: center; }
+.pdf-sheet__time { width: 17mm; text-align: center; }
+.pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
+.pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }
+.pdf-sheet__score td { text-align: center; padding: 0.5mm; }
+.pdf-sheet__score-box { width: 14mm; height: 7mm; border: 0.3mm solid var(--pdf-ink); font-size: 11pt; font-weight: 700; }
+.pdf-sheet__score-box--final { height: 9mm; }
+.pdf-sheet__write { width: 20mm; }
+.pdf-sheet__comments { height: 8mm; vertical-align: top; }
+.pdf-sheet__signatures td { height: 9mm; width: 25%; text-align: center; vertical-align: bottom; }
+.pdf-sheet__signatures th { width: 18mm; }
