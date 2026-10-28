@@ -1,0 +1,14 @@
+{# QR codes of an event to display on site (`qrcodes`, `qrcode-app`, PDF_GOTENBERG.md § 7.5): one card per link. #}
+{% extends 'pdf/layout.html.twig' %}
+
+{% block content %}
+    <div class="pdf-qr-cards">
+        {% for card in cards %}
+            <figure class="pdf-qr-card">
+                <figcaption class="pdf-qr-card__label">{{ card.label }}</figcaption>
+                <img class="pdf-qr-card__code" src="{{ card.file }}" alt="">
+                <div class="pdf-qr-card__url">{{ card.url }}</div>
+            </figure>
+        {% endfor %}
+    </div>
+{% endblock %}

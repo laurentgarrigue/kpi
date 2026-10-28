@@ -135,6 +135,7 @@ const eventPdfUrl = (file: string, paramName: string): string => {
   if (!selectedEventId.value) return '#'
   const params = new URLSearchParams()
   params.set(paramName, String(selectedEventId.value))
+  params.set('S', workContext.season)
   params.set('tz', browserTimezone)
   // Public PDFs (PdfXxx.php) are at root, admin PDFs at /admin/
   if (file.startsWith('Pdf')) {

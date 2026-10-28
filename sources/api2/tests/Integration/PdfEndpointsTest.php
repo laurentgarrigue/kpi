@@ -419,6 +419,45 @@ final class PdfEndpointsTest extends ApiTestCase
         $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999', Response::HTTP_BAD_REQUEST, 'a scope is required');
     }
 
+    // ------------------------------------------------------------------ stats, cards, QR codes (phase 5, § 7.5)
+
+    public function testCardFollowUpCountsTheCardsOfTheSeason(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/cards?season=2999&competition=RCH', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Suivi des cartons', $html);
+        self::assertStringContainsString('8 - ALPHA Bob', $html);
+        $this->pdfAs('TCLUB', '/admin/pdf/cards?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'ROLE_ORGANIZER');
+    }
+
+    public function testQrCodesOfAPublishedEvent(): void
+    {
+        $this->client->request('GET', '/pdf/qrcodes?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('/events/77/games', (string) $this->gotenberg()->html);
+        self::assertArrayHasKey('qrcode-2.svg', $this->gotenberg()->files, 'games and progress');
+
+        $this->client->request('GET', '/pdf/qrcode-app?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('/event/77', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/qrcodes?season=2999&event=78');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'event not published');
+    }
+
+    public function testStatsExportIsRenderedByGotenberg(): void
+    {
+        $this->client->request('GET', '/admin/stats/export/pdf?season=2999&type=Buteurs&competitions[]=RCH&title=Scorers&locale=en', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN'),
+        ]);
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame('application/pdf', $response->headers->get('Content-Type'));
+        self::assertStringContainsString('class="theme-admin"', (string) $this->gotenberg()->html);
+        self::assertStringContainsString('Scorers', (string) $this->gotenberg()->html);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private function pdfAs(string $userCode, string $uri, int $expectedStatus, string $message = '', ?int $mandate = null): Response

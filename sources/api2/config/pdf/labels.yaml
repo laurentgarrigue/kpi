@@ -150,3 +150,20 @@ scoresheet.reason_r_p: { fr: 'Possession', en: 'Possession' }
 scoresheet.reason_r_o: { fr: 'Obstruction', en: 'Obstruction' }
 scoresheet.reason_r_un: { fr: 'Antisportif', en: 'Unsporting' }
 scoresheet.reason_r_rep: { fr: 'Remplacement', en: 'Replacement' }
+# Statistics export
+stats.results: { fr: 'résultat(s)', en: 'result(s)' }
+# QR codes of an event
+qrcodes.title: { fr: 'Liens - Links', en: 'Links' }
+qrcodes.application_title: { fr: 'Application', en: 'Application' }
+qrcodes.games: { fr: 'Matchs - Games', en: 'Games' }
+qrcodes.progress: { fr: 'Progression - Progress', en: 'Progress' }
+qrcodes.application: { fr: 'Résultats en direct', en: 'Live results' }
+# Card follow-up
+cards.title: { fr: 'Suivi des cartons', en: 'Card follow-up' }
+cards.player: { fr: 'Joueur', en: 'Player' }
+cards.green: { fr: 'V', en: 'G' }
+cards.yellow: { fr: 'J', en: 'Y' }
+cards.red: { fr: 'R', en: 'R' }
+cards.definitive: { fr: 'RD', en: 'RE' }
+cards.notes: { fr: 'Notes', en: 'Notes' }
+cards.legend: { fr: 'Colonnes de gauche : cumul de la saison. Colonnes de droite : cartons de la journée, à compter sur place (I I I).', en: 'Left columns: season total. Right columns: cards of the gameday, to tally on site (I I I).' }

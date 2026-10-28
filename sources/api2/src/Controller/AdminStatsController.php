@@ -2,9 +2,16 @@
 
 namespace App\Controller;
 
+use App\Pdf\InvalidPdfRequest;
+use App\Pdf\PdfCatalog;
+use App\Pdf\PdfContent;
+use App\Pdf\PdfLabels;
+use App\Pdf\PdfRenderer;
+use App\Pdf\PdfRenderingFailed;
+use App\Pdf\PdfRequest;
+use App\Pdf\PdfTheme;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
-use Mpdf\Mpdf;
 use OpenApi\Attributes as OA;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -26,8 +33,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[OA\Tag(name: '23. App4 - Statistics')]
 class AdminStatsController extends AbstractController
 {
+    /** Columns right-aligned in the PDF export. */
+    private const NUMERIC_COLUMNS = ['buts', 'vert', 'jaune', 'rouge', 'rougeDefinitif', 'fairplay',
+        'principal', 'secondaire', 'total', 'nbMatchs', 'matchs', 'numero', 'numeroOrdre', 'id'];
+
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly PdfRenderer $pdfRenderer,
+        private readonly PdfLabels $pdfLabels,
     ) {
     }
 
@@ -258,123 +271,63 @@ class AdminStatsController extends AbstractController
         }
 
         [$title, $columns, $data, $columnLabels, $showRanking] = $exportData;
-        $statType = $request->query->get('type', 'Buteurs');
-
-        // Get user timezone and locale for footer date
-        $timezone = $request->query->get('timezone', 'Europe/Paris');
-        $locale = $request->query->get('locale', 'fr');
+        $statType = (string) $request->query->get('type', 'Buteurs');
+        $timezone = (string) $request->query->get('timezone', PdfRequest::DEFAULT_TIMEZONE);
         try {
-            $tz = new \DateTimeZone($timezone);
-        } catch (\Exception) {
-            $tz = new \DateTimeZone('Europe/Paris');
-        }
-        $dateTime = new \DateTime('now', $tz);
-
-        // Format date based on locale
-        if ($locale === 'en') {
-            $exportDate = $dateTime->format('m/d/Y h:i A'); // US format with AM/PM
-            $exportedLabel = 'Exported on';
-            $resultsLabel = 'result(s)';
-        } else {
-            $exportDate = $dateTime->format('d/m/Y H:i'); // French format 24h
-            $exportedLabel = 'Édité le';
-            $resultsLabel = 'résultat(s)';
+            $pdfRequest = PdfRequest::fromQuery([
+                'season' => (string) ($request->query->get('season') ?: date('Y')),
+                'lang' => $request->query->get('locale') === 'en' ? 'en' : 'fr',
+                'tz' => in_array($timezone, \DateTimeZone::listIdentifiers(), true) ? $timezone : PdfRequest::DEFAULT_TIMEZONE,
+            ]);
+        } catch (InvalidPdfRequest $e) {
+            return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
 
-        // Logo path
-        $logoPath = $this->getParameter('legacy_document_root') . '/img/logoKPI-medium.png';
-        $logoBase64 = '';
-        if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-        }
-
-        // Build HTML table
-        $html = '<style>
-            body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; }
-            h1 { font-size: 14pt; margin-bottom: 10px; }
-            table { width: 100%; border-collapse: collapse; }
-            th { background-color: #f0f0f0; font-weight: bold; text-align: left; padding: 5px; border: 1px solid #ccc; }
-            td { padding: 4px; border: 1px solid #ccc; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .numeric { text-align: right; }
-        </style>';
-
-        $html .= sprintf('<h1>%s</h1>', htmlspecialchars($title));
-        $html .= sprintf('<p style="color: #666; margin-bottom: 15px;">%d %s</p>', count($data), $resultsLabel);
-
-        $html .= '<table><thead><tr>';
+        // PDF document `stats` (PDF_GOTENBERG.md § 7.5): admin charter, rendered by Gotenberg.
+        $tableColumns = array_map(static fn (string $column): array => [
+            'key' => $column,
+            'label' => $columnLabels[$column] ?? $column,
+            'class' => in_array($column, self::NUMERIC_COLUMNS, true) ? 'num' : '',
+        ], $columns);
         if ($showRanking) {
-            $html .= '<th style="text-align: center; width: 30px;">#</th>';
+            array_unshift($tableColumns, ['key' => '_rank', 'label' => '#', 'class' => 'num']);
         }
-        foreach ($columns as $column) {
-            $html .= sprintf('<th>%s</th>', htmlspecialchars($columnLabels[$column] ?? $column));
-        }
-        $html .= '</tr></thead><tbody>';
-
-        $numericColumns = ['buts', 'vert', 'jaune', 'rouge', 'rougeDefinitif', 'fairplay',
-            'principal', 'secondaire', 'total', 'nbMatchs', 'matchs', 'numero', 'numeroOrdre', 'id'];
-
-        $rank = 1;
-        foreach ($data as $item) {
-            $html .= '<tr>';
-            if ($showRanking) {
-                $html .= sprintf('<td style="text-align: center; font-weight: bold; color: #666;">%d</td>', $rank);
-                $rank++;
-            }
+        $rows = [];
+        foreach (array_values($data) as $index => $item) {
+            $row = ['_rank' => $index + 1];
             foreach ($columns as $column) {
-                $value = $item[$column] ?? '';
-                $class = in_array($column, $numericColumns) ? ' class="numeric"' : '';
-                $html .= sprintf('<td%s>%s</td>', $class, htmlspecialchars((string)$value));
+                $row[$column] = (string) ($item[$column] ?? '');
             }
-            $html .= '</tr>';
+            $rows[] = $row;
         }
-        $html .= '</tbody></table>';
+        $competitions = $request->query->all('competitions') ?: array_filter(explode(',', (string) $request->query->get('competitions', '')));
 
-        // Create PDF with header/footer margins
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4-L', // Landscape for wide tables
-            'margin_left' => 10,
-            'margin_right' => 10,
-            'margin_top' => 25,    // Space for header
-            'margin_bottom' => 15, // Space for footer
-            'margin_header' => 5,
-            'margin_footer' => 5,
-        ]);
-
-        // Header with logo
-        $header = '<table width="100%" style="border-bottom: 1px solid #ccc; margin-bottom: 10px;">
-            <tr>
-                <td width="20%">' . ($logoBase64 ? '<img src="' . $logoBase64 . '" height="30" />' : 'KPI') . '</td>
-                <td width="60%" style="text-align: center; font-size: 12pt; font-weight: bold;">' . htmlspecialchars($title) . '</td>
-                <td width="20%" style="text-align: right; font-size: 8pt; color: #666;">kayak-polo.info</td>
-            </tr>
-        </table>';
-
-        // Footer with date and page number
-        $footer = '<table width="100%" style="border-top: 1px solid #ccc; font-size: 8pt; color: #666;">
-            <tr>
-                <td width="33%">' . $exportedLabel . ' ' . $exportDate . '</td>
-                <td width="34%" style="text-align: center;"></td>
-                <td width="33%" style="text-align: right;">Page {PAGENO}/{nbpg}</td>
-            </tr>
-        </table>';
-
-        $mpdf->SetHTMLHeader($header);
-        $mpdf->SetHTMLFooter($footer);
-        $mpdf->SetTitle($title);
-        $mpdf->WriteHTML($html);
-
-        $filename = sprintf('stats_%s_%s.pdf', $statType, date('Y-m-d_His'));
-
-        return new Response(
-            $mpdf->Output($filename, 'S'),
-            200,
-            [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
-            ]
+        $content = new PdfContent(
+            template: 'sections.html.twig',
+            title: (string) $title,
+            filename: sprintf('%s_%s_%s.pdf', PdfCatalog::STATS, $statType, $pdfRequest->season),
+            variables: [
+                'competition' => ['code' => '', 'title' => implode(', ', $competitions), 'subtitle' => null, 'logo' => null],
+                'columns' => $tableColumns,
+                'sections' => [['rows' => $rows, 'subtitle' => sprintf('%d %s', count($rows), $this->pdfLabels->forLanguage($pdfRequest->lang)['stats.results'])]],
+                'dense' => true,
+                'internal' => true,
+            ],
+            landscape: true,
         );
+        try {
+            $pdf = $this->pdfRenderer->render($content, PdfTheme::Admin, $pdfRequest);
+        } catch (PdfRenderingFailed $e) {
+            return $this->json(['message' => $e->getMessage()], $e->getCode(), $e->getCode() === Response::HTTP_SERVICE_UNAVAILABLE
+                ? ['Retry-After' => (string) PdfRenderingFailed::RETRY_AFTER_SECONDS]
+                : []);
+        }
+
+        return new Response($pdf, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $content->filename),
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**

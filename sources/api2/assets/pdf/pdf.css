@@ -249,3 +249,17 @@ table.pdf-table {
 .pdf-sheet__comments { height: 8mm; vertical-align: top; }
 .pdf-sheet__signatures td { height: 9mm; width: 25%; text-align: center; vertical-align: bottom; }
 .pdf-sheet__signatures th { width: 18mm; }
+
+/* QR codes of an event (qrcodes.html.twig): large enough to be scanned from a few metres. */
+.pdf-qr-cards { display: flex; justify-content: center; gap: 25mm; margin-top: 12mm; }
+.pdf-qr-card { margin: 0; text-align: center; }
+.pdf-qr-card__label { font-family: 'Agency FB', 'Arial Narrow', Arial, sans-serif; font-size: 22pt; color: var(--pdf-title); margin-bottom: 5mm; }
+.pdf-qr-card__code { width: 85mm; height: 85mm; }
+.pdf-qr-card__url { margin-top: 4mm; font-size: 9pt; color: var(--pdf-muted); }
+
+/* Card follow-up (cards): season totals, then columns to tally the cards of the gameday by hand. */
+.pdf-table .pdf-col--notes { width: 30mm; }
+.pdf-table .pdf-col--tally { width: 11mm; border-left: 0.2mm solid var(--pdf-line); }
+.pdf-table th.pdf-card--green { color: var(--pdf-success); }
+.pdf-table th.pdf-card--yellow { color: var(--pdf-warning); }
+.pdf-table th.pdf-card--red, .pdf-table th.pdf-card--definitive { color: var(--pdf-danger); }

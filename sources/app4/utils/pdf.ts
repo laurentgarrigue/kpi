@@ -82,7 +82,7 @@ const LEGACY_PARAMETERS: Record<string, string> = {
   compet: 'competition', Compet: 'competition', codeCompet: 'competition',
   team: 'team', equipe: 'team',
   idJournee: 'gameday', idSelJournee: 'gameday',
-  idEvenement: 'event',
+  idEvenement: 'event', Evt: 'event',
   listMatch: 'games',
   filtreJour: 'date', filtreTerrain: 'pitch', filtreTour: 'round',
   lang: 'lang', tz: 'tz',
@@ -113,6 +113,7 @@ const MIGRATED_LEGACY_PAGES: Record<string, { document: AdminPdfDocument, option
   'FeuilleListeMatchs.php': { document: 'games-list', options: {} },
   'FeuilleListeMatchsEN.php': { document: 'games-list', options: { lang: 'en' } },
   'FeuilleMatchMulti.php': { document: 'scoresheet', options: {} },
+  'FeuilleCards.php': { document: 'cards', options: {} },
 }
 
 /** Public legacy pages (PdfXxx.php at the root) already replaced by a public document of api2. */
@@ -133,6 +134,8 @@ const MIGRATED_PUBLIC_PAGES: Record<string, { document: string, options: LegacyQ
   'PdfListeMatchs4TerrainsEn2.php': { document: 'games-grid', options: { view: 'phases' } },
   'PdfListeMatchs4TerrainsEn4.php': { document: 'games-grid', options: { view: 'phases' } },
   'PdfListeMatchs5TerrainsEn.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfQrCodes.php': { document: 'qrcodes', options: {} },
+  'PdfQrCodeApp.php': { document: 'qrcode-app', options: {} },
 }
 
 const LEGACY_PUBLIC_PDF = /^\/(Pdf[A-Za-z0-9]+\.php)$/

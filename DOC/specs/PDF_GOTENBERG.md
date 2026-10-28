@@ -718,6 +718,17 @@ Aucune à ce stade.
 - app4 : menu Documents de la page Matchs, PDF par match et action groupée sur api2 ; app3 : liste des matchs sur
   api2.
 
+### Phase 5 — statistiques, cartons, QR codes (livrée)
+
+- `stats` : l'export PDF de la page Statistiques (`GET /admin/stats/export/pdf`, mêmes données et mêmes règles
+  d'accès qu'avant) passe de mPDF à Gotenberg, charte admin.
+- `cards` (admin, `ROLE_ORGANIZER`) : cumul des cartons de la saison par équipe et colonnes à remplir sur place.
+- `qrcodes` (public) : liens de l'événement sur le site public (app3, `PUBLIC_SITE_URL/events/{id}/games` et
+  `/progress`, au lieu des pages legacy `kpmatchs.php` / `kpchart.php`) ; `qrcode-app` (public) : l'événement dans
+  app2 (`APP2_URL/event/{id}`, nouvelle variable d'api2 fournie par les compose). Un événement non publié → 404.
+- **`mpdf/mpdf` retiré d'api2** (composer.json et lock) ; il reste dans `sources/composer.json` pour le legacy
+  jusqu'à la phase 6. `symfony/mime` passe en 7.4.22 (CVE-2026-45070, même lock).
+
 ### Reste à faire
 
 - Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique
