@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canGetAdminPdf, legacyAdminPdf, migratedLegacyPdf, publicPdfUrl } from '../../utils/pdf'
+import { canGetAdminPdf, legacyAdminPdf, migratedLegacyPdf, publicPdfHref, publicPdfUrl } from '../../utils/pdf'
 
 const LEGACY = 'https://kpi.localhost'
 
@@ -61,5 +61,21 @@ describe('migratedLegacyPdf (legacy links opening the documents of api2)', () =>
 
   it('leaves the pages not migrated yet to the signed legacy link', () => {
     expect(migratedLegacyPdf('FeuilleMatchMulti.php', { listMatch: '1,2' })).toBeNull()
+  })
+})
+
+describe('publicPdfHref (public legacy PDF replaced by api2)', () => {
+  const API2 = 'https://kpi.localhost/api2'
+
+  it('points a migrated public page to the public route of api2', () => {
+    expect(publicPdfHref(`${LEGACY}/PdfCltNiveauPhase.php?Compet=CF&S=2026&tz=Europe%2FParis`, LEGACY, API2))
+      .toBe(`${API2}/pdf/ranking-phases?competition=CF&season=2026&tz=Europe%2FParis`)
+    expect(publicPdfHref(`${LEGACY}/PdfCltChptDetail.php?Compet=N1H&S=2026`, LEGACY, API2))
+      .toBe(`${API2}/pdf/ranking-team-detail?competition=N1H&season=2026`)
+  })
+
+  it('keeps the other URLs unchanged', () => {
+    expect(publicPdfHref(`${LEGACY}/PdfCltNiveauNiveau.php?S=2026`, LEGACY, API2)).toBe(`${LEGACY}/PdfCltNiveauNiveau.php?S=2026`)
+    expect(publicPdfHref('https://evil.example/PdfCltChpt.php?S=2026', LEGACY, API2)).toBe('https://evil.example/PdfCltChpt.php?S=2026')
   })
 })

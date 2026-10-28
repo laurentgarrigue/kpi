@@ -563,3 +563,9 @@ UPDATE `kp_journee` SET `Responsable_insc` = 'RESPONSABLE Test (9513)', `Respons
   `Delegue` = 'DELEGUE Test (9514)', `ChefArbitre` = 'CHEF Arbitre' WHERE `Id` = 9271;
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9702, 'TDIV', 'Mandat journée SCB', 3, '|2997|', '|SCA|SCB|', NULL, '9272', '');
+-- Classement CALCULÉ de RCH (PDF admin « Provisoire », PDF_GOTENBERG.md § 7.4), différent du publié : Delta en tête,
+-- Bravo et Charlie à égalité de points (justification du départage).
+UPDATE `kp_competition_equipe` SET `Clt` = 1, `Pts` = 900, `J` = 3, `G` = 3, `Plus` = 6, `Moins` = 1, `Diff` = 5 WHERE `Id` = 9304;
+UPDATE `kp_competition_equipe` SET `Clt` = 2, `Pts` = 600, `J` = 3, `G` = 2, `P` = 1, `Plus` = 5, `Moins` = 3, `Diff` = 2 WHERE `Id` = 9301;
+UPDATE `kp_competition_equipe` SET `Clt` = 3, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 4, `Moins` = 3, `Diff` = 1 WHERE `Id` = 9302;
+UPDATE `kp_competition_equipe` SET `Clt` = 4, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 2, `Moins` = 3, `Diff` = -1 WHERE `Id` = 9303;

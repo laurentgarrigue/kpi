@@ -1,6 +1,7 @@
 {#
  # Generic document (PDF_GOTENBERG.md § 8): sections, each with a title and either a table (rows × columns), pairs of
- # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box}.
+ # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box}; a row may carry `_class`
+ # (whole row), `_cells` (class by column) or be a separator `_group`.
  #}
 {% extends 'pdf/layout.html.twig' %}
 
@@ -34,7 +35,7 @@
                                 <tr class="{{ row._class|default('') }}">
                                     {% for column in section_columns %}
                                         {% set value = row[column.key]|default(null) %}
-                                        <td class="{{ column.class|default('') }}">
+                                        <td class="{{ column.class|default('') }} {{ row._cells[column.key]|default('') }}">
                                             {%- if column.kind|default('text') == 'image' -%}
                                                 {% if value %}<img class="pdf-photo" src="{{ value }}" alt="">{% endif %}
                                             {%- elseif column.kind|default('text') == 'box' -%}

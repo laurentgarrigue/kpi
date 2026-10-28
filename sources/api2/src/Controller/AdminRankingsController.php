@@ -4,9 +4,17 @@ namespace App\Controller;
 
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
+use App\Pdf\InvalidPdfRequest;
+use App\Pdf\PdfCatalog;
+use App\Pdf\PdfCompetitions;
+use App\Pdf\PdfContent;
+use App\Pdf\PdfLabels;
+use App\Pdf\PdfRenderer;
+use App\Pdf\PdfRenderingFailed;
+use App\Pdf\PdfRequest;
+use App\Pdf\PdfTheme;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
-use Mpdf\Mpdf;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,7 +44,10 @@ class AdminRankingsController extends AbstractController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly PlayerEligibilityChecker $eligibility
+        private readonly PlayerEligibilityChecker $eligibility,
+        private readonly PdfRenderer $pdfRenderer,
+        private readonly PdfCompetitions $pdfCompetitions,
+        private readonly PdfLabels $pdfLabels,
     ) {
     }
 
@@ -1144,195 +1155,53 @@ class AdminRankingsController extends AbstractController
     }
 
     /**
-     * Render the justification payload as a PDF (mPDF), mirroring the AdminStats
-     * export style. Documents only genuinely-tied groups.
+     * Render the justification payload as a PDF in the admin charter (Gotenberg, PDF_GOTENBERG.md § 7.4,
+     * `ranking-tiebreak`). Documents only genuinely-tied groups.
      */
     private function renderJustificationPdf(array $payload, Request $request): Response
     {
-        $locale = $this->normalizeLocale($request->query->get('locale', 'fr'));
-        $en = $locale === 'en';
-
-        // Localised strings used in the PDF chrome.
-        $L = $en ? [
-            'title'        => 'Tie-break justification — %s',
-            'ga_part'      => 'Particular goal-average (FFCK RP KAP 2023-2026 art. 65)',
-            'ga_gen'       => 'General goal-average (ICF 2025)',
-            'empty'        => 'No group of teams level on points: nothing to justify.',
-            'poule_pts'    => '%s — %d points',
-            'general_pts'  => 'Overall ranking — %d points',
-            'col_clt'      => 'Rank',
-            'col_team'     => 'Team',
-            'verdict_ok'   => 'separated',
-            'verdict_tie'  => 'still level',
-            'edited_on'    => 'Edited on',
-            'page'         => 'Page',
-            'matches'      => 'Games counted',
-        ] : [
-            'title'        => 'Justification du départage — %s',
-            'ga_part'      => 'Goal-average particulier (FFCK RP KAP 2023-2026 art. 65)',
-            'ga_gen'       => 'Goal-average général (ICF 2025)',
-            'empty'        => 'Aucun groupe d\'équipes à égalité de points : aucun départage à justifier.',
-            'poule_pts'    => '%s — %d points',
-            'general_pts'  => 'Classement général — %d points',
-            'col_clt'      => 'Clt',
-            'col_team'     => 'Équipe',
-            'verdict_ok'   => 'départage',
-            'verdict_tie'  => 'toujours à égalité',
-            'edited_on'    => 'Édité le',
-            'page'         => 'Page',
-            'matches'      => 'Matchs pris en compte',
-        ];
-
-        $timezone = $request->query->get('timezone', 'Europe/Paris');
+        $code = (string) $payload['competition']['code'];
+        $timezone = (string) $request->query->get('timezone', PdfRequest::DEFAULT_TIMEZONE);
         try {
-            $tz = new \DateTimeZone($timezone);
-        } catch (\Exception) {
-            $tz = new \DateTimeZone('Europe/Paris');
+            $pdfRequest = PdfRequest::fromQuery([
+                'season' => (string) $request->query->get('season', ''),
+                'competition' => $code,
+                'lang' => $this->normalizeLocale($request->query->get('locale', 'fr')),
+                'tz' => in_array($timezone, \DateTimeZone::listIdentifiers(), true) ? $timezone : PdfRequest::DEFAULT_TIMEZONE,
+            ]);
+        } catch (InvalidPdfRequest $e) {
+            return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-        $dt = new \DateTime('now', $tz);
-        $exportDate = $en ? $dt->format('m/d/Y h:i A') : $dt->format('d/m/Y H:i');
-
-        $comp = $payload['competition'];
-        $gaLabel = $comp['goalaverage'] === 'part' ? $L['ga_part'] : $L['ga_gen'];
-        $title = sprintf($L['title'], $comp['libelle']);
-
-        $logoPath = $this->getParameter('legacy_document_root') . '/img/logoKPI-medium.png';
-        $logoBase64 = file_exists($logoPath)
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
-            : '';
-
-        $html = '<style>
-            body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; }
-            h2 { font-size: 12pt; margin: 14px 0 4px 0; }
-            .meta { color:#666; font-size:8pt; margin-bottom:6px; }
-            table { width:100%; border-collapse:collapse; margin-bottom:4px; }
-            th { background:#f0f0f0; text-align:left; padding:4px; border:1px solid #ccc; }
-            td { padding:4px; border:1px solid #ccc; }
-            .step { margin:6px 0 2px 0; padding-left:8px; }
-            .values { margin:0 0 2px 18px; font-size:8pt; }
-            .values div { line-height:1.4; }
-            .values .v { font-weight:bold; }
-            .matches { margin:2px 0 8px 18px; color:#444; font-size:8pt; }
-            .matches .lbl { color:#888; font-style:italic; }
-            .matches div { line-height:1.4; }
-            .matches .num { color:#888; }
-            .matches .sc { font-weight:bold; }
-            .ok { color:#137333; }
-            .tie { color:#a50e0e; }
-        </style>';
-
-        $html .= sprintf('<p style="font-size:11pt;font-weight:bold;">%s</p>', htmlspecialchars($gaLabel));
-
-        if (empty($payload['groupes'])) {
-            $html .= sprintf('<p>%s</p>', htmlspecialchars($L['empty']));
+        $header = $this->pdfCompetitions->header($pdfRequest->season, $code);
+        if ($header === null) {
+            return $this->json(['message' => 'Competition not found'], Response::HTTP_NOT_FOUND);
         }
 
-        foreach ($payload['groupes'] as $g) {
-            $heading = $g['perimetre'] === 'POULE'
-                ? sprintf($L['poule_pts'], htmlspecialchars((string) $g['pouleLabel']), $g['points'])
-                : sprintf($L['general_pts'], $g['points']);
-            $html .= sprintf('<h2>%s</h2>', $heading);
-
-            // Final order of the group.
-            $html .= sprintf(
-                '<table><thead><tr><th style="width:40px;text-align:center;">%s</th><th>%s</th></tr></thead><tbody>',
-                htmlspecialchars($L['col_clt']),
-                htmlspecialchars($L['col_team'])
-            );
-            foreach ($g['equipes'] as $e) {
-                $html .= sprintf(
-                    '<tr><td style="text-align:center;font-weight:bold;">%d</td><td>%s</td></tr>',
-                    $e['cltFinal'],
-                    htmlspecialchars($e['libelle'])
-                );
-            }
-            $html .= '</tbody></table>';
-
-            // Build a name lookup for this group.
-            $names = [];
-            foreach ($g['equipes'] as $e) {
-                $names[$e['id']] = $e['libelle'];
-            }
-
-            // Cascade steps.
-            foreach ($g['etapes'] as $etape) {
-                $cls = $etape['resultat'] === 'departage' ? 'ok' : 'tie';
-                $verdict = $etape['resultat'] === 'departage' ? $L['verdict_ok'] : $L['verdict_tie'];
-                $html .= sprintf(
-                    '<div class="step"><span class="%s">▸ %s</span> — <em>%s</em></div>',
-                    $cls,
-                    htmlspecialchars($etape['critereLabel']),
-                    $verdict
-                );
-
-                // Per-team value, one team per line.
-                $html .= '<div class="values">';
-                foreach ($etape['valeurs'] as $id => $v) {
-                    $name = $names[(int) $id] ?? ('#' . $id);
-                    $html .= sprintf(
-                        '<div>%s : <span class="v">%s</span></div>',
-                        htmlspecialchars($name),
-                        $v === null ? '—' : htmlspecialchars((string) $v)
-                    );
-                }
-                $html .= '</div>';
-
-                // Detail of the head-to-head games actually counted, one game per line.
-                if (!empty($etape['matchs'])) {
-                    $html .= sprintf('<div class="matches"><span class="lbl">%s :</span>', htmlspecialchars($L['matches']));
-                    foreach ($etape['matchs'] as $m) {
-                        $html .= sprintf(
-                            '<div><span class="num">#%d</span> %s <span class="sc">%d–%d</span> %s</div>',
-                            $m['numero'],
-                            htmlspecialchars($m['equipeA']),
-                            $m['scoreA'],
-                            $m['scoreB'],
-                            htmlspecialchars($m['equipeB'])
-                        );
-                    }
-                    $html .= '</div>';
-                }
-            }
-        }
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_left' => 12,
-            'margin_right' => 12,
-            'margin_top' => 25,
-            'margin_bottom' => 15,
-            'margin_header' => 5,
-            'margin_footer' => 5,
-        ]);
-
-        $header = '<table width="100%" style="border-bottom:1px solid #ccc;">
-            <tr>
-                <td width="20%">' . ($logoBase64 ? '<img src="' . $logoBase64 . '" height="28" />' : 'KPI') . '</td>
-                <td width="60%" style="text-align:center;font-size:11pt;font-weight:bold;">' . htmlspecialchars($title) . '</td>
-                <td width="20%" style="text-align:right;font-size:8pt;color:#666;">kayak-polo.info</td>
-            </tr></table>';
-        $footer = '<table width="100%" style="border-top:1px solid #ccc;font-size:8pt;color:#666;">
-            <tr>
-                <td width="50%">' . htmlspecialchars($L['edited_on']) . ' ' . $exportDate . '</td>
-                <td width="50%" style="text-align:right;">' . htmlspecialchars($L['page']) . ' {PAGENO}/{nbpg}</td>
-            </tr></table>';
-
-        $mpdf->SetHTMLHeader($header);
-        $mpdf->SetHTMLFooter($footer);
-        $mpdf->SetTitle($title);
-        $mpdf->WriteHTML($html);
-
-        $filename = sprintf('justification_departage_%s_%s.pdf', $comp['code'], date('Y-m-d_His'));
-
-        return new Response(
-            $mpdf->Output($filename, 'S'),
-            200,
-            [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
-            ]
+        $content = new PdfContent(
+            template: 'ranking_tiebreak.html.twig',
+            title: $this->pdfLabels->forLanguage($pdfRequest->lang)['tiebreak.title'],
+            filename: sprintf('%s_%s_%s.pdf', PdfCatalog::RANKING_TIEBREAK, $code, $pdfRequest->season),
+            variables: [
+                'competition' => $header['competition'],
+                'goalaverage' => $payload['competition']['goalaverage'],
+                'groups' => $payload['groupes'],
+                'internal' => true,
+            ],
+            images: $header['images'],
         );
+        try {
+            $pdf = $this->pdfRenderer->render($content, PdfTheme::Admin, $pdfRequest);
+        } catch (PdfRenderingFailed $e) {
+            return $this->json(['message' => $e->getMessage()], $e->getCode(), $e->getCode() === Response::HTTP_SERVICE_UNAVAILABLE
+                ? ['Retry-After' => (string) PdfRenderingFailed::RETRY_AFTER_SECONDS]
+                : []);
+        }
+
+        return new Response($pdf, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $content->filename),
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     // ═══════════════════════════════════════════════

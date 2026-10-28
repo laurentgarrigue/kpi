@@ -1758,7 +1758,8 @@ const docBaseParams = computed(() => {
 
 const docUrl = (file: string, isPublic = false) => {
   const folder = isPublic ? '' : 'admin/'
-  return `${legacyBase.value}/${folder}${file}?${docBaseParams.value}`
+  const href = `${legacyBase.value}/${folder}${file}?${docBaseParams.value}`
+  return isPublic ? pdf.publicHref(href) : href
 }
 
 // ─── Journee label for dropdown ───

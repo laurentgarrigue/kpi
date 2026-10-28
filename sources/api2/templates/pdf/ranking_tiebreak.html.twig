@@ -1,0 +1,48 @@
+{# Justification of the tie-breaks of a computed ranking (`ranking-tiebreak`, PDF_GOTENBERG.md § 7.4): one section per group of teams level on points, its final order, then each criterion of the cascade. #}
+{% extends 'pdf/layout.html.twig' %}
+
+{% block watermark %}<div class="pdf-watermark">{{ labels.provisional }}</div>{% endblock %}
+
+{% block content %}
+    <p class="pdf-lead">{{ goalaverage == 'part' ? labels['tiebreak.goalaverage_particular'] : labels['tiebreak.goalaverage_general'] }}</p>
+    {% for group in groups %}
+        {% set names = {} %}
+        {% for team in group.equipes %}{% set names = names|merge({('#' ~ team.id): team.libelle}) %}{% endfor %}
+        <section class="pdf-section">
+            <h2 class="pdf-section__title">
+                {{ group.perimetre == 'POULE' ? group.pouleLabel : labels['tiebreak.general'] }} · {{ group.points }} {{ labels['ranking.points'] }}
+            </h2>
+            <table class="pdf-table pdf-table--dense">
+                <thead><tr><th class="num">{{ labels['ranking.rank'] }}</th><th>{{ labels['ranking.team'] }}</th></tr></thead>
+                <tbody>
+                    {% for team in group.equipes %}<tr><td class="num">{{ team.cltFinal }}</td><td>{{ team.libelle }}</td></tr>{% endfor %}
+                </tbody>
+            </table>
+            {% for step in group.etapes %}
+                <div class="pdf-step">
+                    <strong>{{ step.critereLabel }}</strong>
+                    {% if step.resultat == 'departage' %}
+                        <span class="pdf-badge pdf-badge--success">{{ labels['tiebreak.separated'] }}</span>
+                    {% else %}
+                        <span class="pdf-badge pdf-badge--danger">{{ labels['tiebreak.still_level'] }}</span>
+                    {% endif %}
+                    <ul class="pdf-step__values">
+                        {% for id, value in step.valeurs %}
+                            <li>{{ names['#' ~ id]|default('#' ~ id) }} : <strong>{{ value ?? '—' }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    {% if step.matchs|default([]) is not empty %}
+                        <p class="pdf-step__games-title">{{ labels['tiebreak.games'] }}</p>
+                        <ul class="pdf-step__values">
+                            {% for game in step.matchs %}
+                                <li>#{{ game.numero }} {{ game.equipeA }} <strong>{{ game.scoreA }} - {{ game.scoreB }}</strong> {{ game.equipeB }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </section>
+    {% else %}
+        <p class="pdf-note">{{ labels['tiebreak.none'] }}</p>
+    {% endfor %}
+{% endblock %}

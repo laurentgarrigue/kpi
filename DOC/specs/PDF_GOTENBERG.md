@@ -689,6 +689,17 @@ Aucune à ce stade.
 - app4 : les liens legacy des pages déjà migrées (`utils/pdf.ts`, `migratedLegacyPdf`) ouvrent le document api2
   équivalent ; Pool arbitres et Journées (« Officiels ») appellent directement `usePdf().openDocument()`.
 
+### Phase 3 — classements (livrée)
+
+- api2 : `ranking` admin (classement calculé, filigrane « Provisoire - non publié »), `ranking-team-detail`,
+  `ranking-gameday-detail`, `ranking-phases` sur les deux routes (public : classement publié d'une compétition publiée,
+  journées et matchs publiés ; admin : calculé, tous les matchs). Source unique `App\Pdf\Ranking\RankingRepository`
+  (colonnes `*_publi` ou calculées selon `RankingSource`).
+- `ranking-tiebreak` : la justification reste calculée par `GET /admin/rankings/justification` (moteur de départage
+  inchangé) ; seul son rendu PDF (`format=pdf`) passe de mPDF à Gotenberg, charte admin.
+- app3 : le PDF d'une coupe (CP) est `ranking-phases` d'api2. app4 : les liens legacy des classements (admin et
+  publics, `publicPdfHref`) ouvrent les documents api2 ; `ranking-levels` (CltNiveauNiveau) n'est pas migré (I6).
+
 ### Reste à faire
 
 - Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique

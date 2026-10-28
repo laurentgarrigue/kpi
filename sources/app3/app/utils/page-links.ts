@@ -54,8 +54,9 @@ export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
 }
 
-/** Legacy PDF of the progress of a cup, until `ranking-phases` is served by api2 (PDF_GOTENBERG.md § 12). */
-const CUP_PROGRESS_PDF = 'PdfCltNiveauPhase.php'
+/** A cup is ranked phase by phase: its PDF is the ranking by phase (PDF_GOTENBERG.md § 7.4). */
+const CUP_RANKING_PDF = 'ranking-phases'
+const RANKING_PDF = 'ranking'
 
 export type PdfTarget =
   | { kind: 'ranking', type: CompetitionType, season: string, competition: string }
@@ -74,9 +75,10 @@ export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
 
   switch (target.kind) {
     case 'ranking':
-      return target.type === 'CP'
-        ? url(CUP_PROGRESS_PDF, { S: target.season, Compet: target.competition, lang: context.locale })
-        : withQuery(joinURL(context.api2BaseUrl, 'pdf', 'ranking'), { season: target.season, competition: target.competition, lang: context.locale })
+      return withQuery(
+        joinURL(context.api2BaseUrl, 'pdf', target.type === 'CP' ? CUP_RANKING_PDF : RANKING_PDF),
+        { season: target.season, competition: target.competition, lang: context.locale },
+      )
     case 'gameSheet':
       return url('PdfMatchMulti.php', { listMatch: target.game, lang: context.locale })
     case 'games': {

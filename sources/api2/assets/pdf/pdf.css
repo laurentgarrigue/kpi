@@ -214,3 +214,10 @@ table.pdf-table {
 .pdf-line { margin: 1mm 0; }
 .pdf-signature { display: inline-block; min-width: 40mm; border-bottom: 0.2mm solid var(--pdf-line); }
 .pdf-col--signature { width: 35mm; }
+.pdf-strong { font-weight: 700; }
+.pdf-table .pdf-col--home { text-align: right; width: 42%; }
+.pdf-table .pdf-col--score { text-align: center; width: 16%; white-space: nowrap; }
+.pdf-lead { font-weight: 600; margin: 0 0 4mm; }
+.pdf-step { margin: 2mm 0 2mm 3mm; break-inside: avoid; }
+.pdf-step__values { margin: 1mm 0 0 4mm; padding: 0; list-style: none; font-size: 8.5pt; }
+.pdf-step__games-title { margin: 1mm 0 0 4mm; font-size: 8.5pt; font-style: italic; color: var(--pdf-muted); }

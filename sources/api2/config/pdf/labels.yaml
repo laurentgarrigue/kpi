@@ -29,6 +29,13 @@ ranking.eliminated: { fr: 'Éliminé', en: 'Eliminated' }
 ranking.medal_1: { fr: 'Or', en: 'Gold' }
 ranking.medal_2: { fr: 'Argent', en: 'Silver' }
 ranking.medal_3: { fr: 'Bronze', en: 'Bronze' }
+ranking.team_detail_title: { fr: 'Classement - détail par équipe', en: 'Ranking - detail by team' }
+ranking.gameday_detail_title: { fr: 'Classement par journée', en: 'Ranking by gameday' }
+ranking.phases_title: { fr: 'Classement par phase', en: 'Ranking by phase' }
+ranking.no_game: { fr: 'Aucun match joué', en: 'No game played' }
+games.home: { fr: 'Équipe A', en: 'Team A' }
+games.score: { fr: 'Score', en: 'Score' }
+games.away: { fr: 'Équipe B', en: 'Team B' }
 # Players (presence and control sheets)
 player.number: { fr: 'N°', en: '#' }
 player.role: { fr: 'Statut', en: 'Status' }
@@ -81,3 +88,12 @@ instances.delegate: { fr: "Délégué Commission Nationale d'Activité", en: 'Na
 instances.chief_referee: { fr: 'Chef des arbitres', en: 'Chief referee' }
 instances.jury_president: { fr: 'Délégué CNA (président du jury)', en: 'Delegate (jury president)' }
 instances.athletes_representative: { fr: 'Représentant des compétiteurs', en: "Athletes' representative" }
+# Tie-break justification (computed ranking)
+tiebreak.title: { fr: 'Justification du départage', en: 'Tie-break justification' }
+tiebreak.goalaverage_particular: { fr: 'Goal-average particulier (FFCK RP KAP 2023-2026 art. 65)', en: 'Particular goal-average (FFCK RP KAP 2023-2026 art. 65)' }
+tiebreak.goalaverage_general: { fr: 'Goal-average général (ICF 2025)', en: 'General goal-average (ICF 2025)' }
+tiebreak.general: { fr: 'Classement général', en: 'Overall ranking' }
+tiebreak.separated: { fr: 'départagé', en: 'separated' }
+tiebreak.still_level: { fr: 'toujours à égalité', en: 'still level' }
+tiebreak.games: { fr: 'Matchs pris en compte', en: 'Games counted' }
+tiebreak.none: { fr: "Aucun groupe d'équipes à égalité de points : aucun départage à justifier.", en: 'No group of teams level on points: nothing to justify.' }

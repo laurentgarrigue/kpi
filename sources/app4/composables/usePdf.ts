@@ -1,4 +1,4 @@
-import { legacyAdminPdf, migratedLegacyPdf, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
+import { legacyAdminPdf, migratedLegacyPdf, publicPdfHref, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
 
 interface SignedLink { url: string }
 interface LegacySignedLink { path: string, query: Record<string, string> }
@@ -76,5 +76,8 @@ export const usePdf = () => {
 
   const publicUrl = (document: string, query: PdfQuery) => publicPdfUrl(api2BaseUrl, document, query)
 
-  return { openDocument, openLegacy, openLegacyUrl, publicUrl }
+  /** Public PDF from the URL of a legacy `PdfXxx.php` page: the api2 document once migrated. */
+  const publicHref = (legacyHref: string) => publicPdfHref(legacyHref, legacyBaseUrl, api2BaseUrl)
+
+  return { openDocument, openLegacy, openLegacyUrl, publicUrl, publicHref }
 }

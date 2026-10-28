@@ -281,6 +281,70 @@ final class PdfEndpointsTest extends ApiTestCase
         $this->pdfAs('TCLUB', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9271', Response::HTTP_OK, 'ROLE_VIEWER');
     }
 
+    // ------------------------------------------------------------------ rankings (phase 3, § 7.4)
+
+    public function testPublicRankingTeamDetailShowsThePublishedGamesOfEachTeam(): void
+    {
+        $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('class="theme-public"', $html);
+        self::assertStringContainsString('1. Equipe Alpha', $html, 'published ranking');
+        self::assertStringContainsString('01/03/2999 - Lacville', $html);
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringNotContainsString('pdf-watermark', $html);
+    }
+
+    public function testPublicRankingByGamedayAndByPhase(): void
+    {
+        $this->client->request('GET', '/pdf/ranking-gameday-detail?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Journée 1', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/ranking-phases?season=2999&competition=RCP&lang=en');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Poule A</h2>', $html, 'pool: its ranking');
+        self::assertStringNotContainsString('Poule B</h2>', $html, 'pool without ranking');
+        self::assertStringContainsString('2 - 1', $html, 'elimination phase: its games');
+        self::assertLessThan(strpos($html, 'Finale</h2>'), strpos($html, 'Poule A</h2>'), 'pools first');
+
+        $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RNP');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'competition not published');
+    }
+
+    public function testPdfData02AdminRankingIsTheComputedOneMarkedProvisional(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/ranking?season=2999&competition=RCH', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('class="theme-admin"', $html);
+        self::assertStringContainsString('Provisoire', $html);
+        self::assertLessThan(strpos($html, 'Equipe Alpha'), strpos($html, 'Equipe Delta'), 'computed: Delta first');
+
+        $this->pdfAs('TADMIN', '/admin/pdf/ranking-team-detail?season=2999&competition=RCH', Response::HTTP_OK);
+        self::assertStringContainsString('1. Equipe Delta', (string) $this->gotenberg()->html);
+        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published yet included');
+
+        $this->pdfAs('TCLUB', '/admin/pdf/ranking?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'I5: computed ranking for profiles 1–6');
+    }
+
+    public function testTiebreakJustificationIsRenderedByGotenberg(): void
+    {
+        $this->client->request('GET', '/admin/rankings/justification?season=2999&competition=RCH&format=pdf&locale=en', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN'),
+        ]);
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame('application/pdf', $response->headers->get('Content-Type'));
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Tie-break justification', $html);
+        self::assertStringContainsString('Equipe Bravo', $html, 'Bravo and Charlie are level on points');
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private function pdfAs(string $userCode, string $uri, int $expectedStatus, string $message = '', ?int $mandate = null): Response

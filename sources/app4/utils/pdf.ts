@@ -100,17 +100,29 @@ const MIGRATED_LEGACY_PAGES: Record<string, { document: AdminPdfDocument, option
   'FeuilleControle.php': { document: 'scrutineering-control', options: {} },
   'FeuilleControleEN.php': { document: 'scrutineering-control', options: { lang: 'en' } },
   'FeuilleInstances.php': { document: 'instances', options: {} },
+  'FeuilleCltChpt.php': { document: 'ranking', options: {} },
+  'FeuilleCltNiveau.php': { document: 'ranking', options: {} },
+  'FeuilleCltMulti.php': { document: 'ranking', options: {} },
+  'FeuilleCltChptDetail.php': { document: 'ranking-team-detail', options: {} },
+  'FeuilleCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
+  'FeuilleCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
+  'FeuilleCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
 }
 
-/**
- * Document of api2 replacing a legacy admin page, with its query, or null while the page is not migrated. Links
- * still written as legacy URLs open the new document; unknown legacy parameters are dropped.
- */
-export function migratedLegacyPdf(page: string, query: LegacyQuery): { document: AdminPdfDocument, query: LegacyQuery } | null {
-  const migrated = MIGRATED_LEGACY_PAGES[page]
-  if (!migrated) {
-    return null
-  }
+/** Public legacy pages (PdfXxx.php at the root) already replaced by a public document of api2. */
+const MIGRATED_PUBLIC_PAGES: Record<string, { document: string, options: LegacyQuery }> = {
+  'PdfCltChpt.php': { document: 'ranking', options: {} },
+  'PdfCltNiveau.php': { document: 'ranking', options: {} },
+  'PdfCltMulti.php': { document: 'ranking', options: {} },
+  'PdfCltChptDetail.php': { document: 'ranking-team-detail', options: {} },
+  'PdfCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
+  'PdfCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
+  'PdfCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
+}
+
+const LEGACY_PUBLIC_PDF = /^\/(Pdf[A-Za-z0-9]+\.php)$/
+
+function apiQuery(query: LegacyQuery, options: LegacyQuery): LegacyQuery {
   const parameters: LegacyQuery = {}
   for (const [name, value] of Object.entries(query)) {
     const target = LEGACY_PARAMETERS[name]
@@ -119,7 +131,44 @@ export function migratedLegacyPdf(page: string, query: LegacyQuery): { document:
     }
   }
 
-  return { document: migrated.document, query: { ...parameters, ...migrated.options } }
+  return { ...parameters, ...options }
+}
+
+/**
+ * Document of api2 replacing a legacy admin page, with its query, or null while the page is not migrated. Links
+ * still written as legacy URLs open the new document; unknown legacy parameters are dropped.
+ */
+export function migratedLegacyPdf(page: string, query: LegacyQuery): { document: AdminPdfDocument, query: LegacyQuery } | null {
+  const migrated = MIGRATED_LEGACY_PAGES[page]
+
+  return migrated ? { document: migrated.document, query: apiQuery(query, migrated.options) } : null
+}
+
+/**
+ * URL of a public PDF: the public document of api2 replacing a legacy `PdfXxx.php` page once migrated, else the
+ * legacy URL unchanged.
+ *
+ * @param href absolute URL of the legacy public PDF
+ */
+export function publicPdfHref(href: string, legacyBaseUrl: string, api2BaseUrl: string): string {
+  let url: URL
+  try {
+    url = new URL(href)
+  }
+  catch {
+    return href
+  }
+  const base = new URL(legacyBaseUrl)
+  const prefix = base.pathname.replace(/\/$/, '')
+  const page = url.origin === base.origin && url.pathname.startsWith(prefix)
+    ? LEGACY_PUBLIC_PDF.exec(url.pathname.slice(prefix.length))?.[1]
+    : undefined
+  const migrated = page ? MIGRATED_PUBLIC_PAGES[page] : undefined
+  if (!migrated) {
+    return href
+  }
+
+  return publicPdfUrl(api2BaseUrl, migrated.document, apiQuery(Object.fromEntries(url.searchParams.entries()), migrated.options))
 }
 
 /** Public PDF of api2 (published data, no authentication): plain link, cacheable (§ 6.1). */
