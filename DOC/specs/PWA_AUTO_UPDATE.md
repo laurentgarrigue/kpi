@@ -48,8 +48,8 @@ en silence, risque de casse en pleine navigation) ; **app4 n'a aucun mécanisme*
 
 ## 3. Étape 1 — Nginx : revalidation de `index.html` et du SW
 
-Fichiers : `docker/config/nginx-app2-prod.conf`, `nginx-app2.conf`,
-`nginx-app4-prod.conf`, `nginx-app4.conf`.
+Fichiers : `docker/config/nginx-static-prod.conf` et `nginx-static.conf` (un bloc `server`
+par app depuis la fusion des conteneurs nginx).
 
 Principe : `index.html` et les fichiers du service worker sont **toujours revalidés**
 (`no-cache` = le navigateur peut stocker mais **doit** revalider ; réponse `304`
