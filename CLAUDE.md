@@ -351,7 +351,7 @@ Main services (dev):
 | `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
 | `node_app2` … `node_app4` | | Nuxt dev servers (`node_app3` = public website on `beta.kpi.localhost`) |
 | `app3` (preprod/prod) | `${APPLICATION_NAME}_app3` | Node SSR server of the public website, `beta.${KPI_DOMAIN_NAME}` |
-| `nginx_app2` / `nginx_app4` | | Static serving of generated Nuxt output |
+| `nginx_static` | `${APPLICATION_NAME}_nginx_static` | Static serving of the generated Nuxt output of app2 (`app.*`) and app4 (`/admin2`), no restart needed after a build |
 
 **Two web servers coexist**: Apache serves everything legacy, FrankenPHP serves `/api2` only.
 Traefik terminates TLS and routes between them. See the API2 section above for what that implies.

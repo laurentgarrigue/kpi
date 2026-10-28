@@ -138,8 +138,7 @@ make app2_generate_dev
 # Build app2 pour production (sans container Node.js permanent)
 make app2_generate_prod
 
-# Redémarrer nginx
-docker restart kpi_nginx_app2
+# (plus de redémarrage nginx : nginx_static sert le nouveau build aussitôt)
 
 # Vérifier headers CORS
 curl -k -I -H "Origin: https://app.kpi.localhost" https://kpi.localhost/api/test
@@ -153,7 +152,7 @@ make docker_prod_rebuild
 
 **Apache (legacy, WordPress)** :
 
-- `docker/config/nginx-app2.conf` - Configuration Nginx pour app2
+- `docker/config/nginx-static.conf` / `nginx-static-prod.conf` - Nginx unique pour app2 et app4 ([NGINX_STATIC_APP_DEPLOYMENT.md](NGINX_STATIC_APP_DEPLOYMENT.md))
 - `docker/config/auto-prepend-cors.php` - Logique CORS globale (legacy uniquement)
 - `docker/config/php-auto-prepend.ini` - Configuration PHP auto-prepend
 - `docker/config/000-default.conf` - Configuration Apache (sans headers CORS statiques)
@@ -176,8 +175,8 @@ make docker_prod_rebuild
 
 ### Docker Compose
 
-- `docker/compose.dev.yaml` - Services `nginx_app2`, `api2` (FrankenPHP) dev
-- `docker/compose.prod.yaml` - Services `nginx_app2`, `api2` (FrankenPHP) prod
+- `docker/compose.dev.yaml` - Services `nginx_static` (app2 + app4), `api2` (FrankenPHP) dev
+- `docker/compose.prod.yaml` - Services `nginx_static` (app2 + app4), `api2` (FrankenPHP) prod
 
 ## 📖 Guides Associés
 
