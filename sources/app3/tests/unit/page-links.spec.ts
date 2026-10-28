@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { competitionIcsUrl, eventIcsUrl, gameLink, gamedayIcsUrl, legacyImageUrl, pdfUrl, teamLink, webcalUrl } from '../../app/utils/page-links'
 
-const context = { locale: 'fr', legacyBaseUrl: 'https://www.kayak-polo.info', app2BaseUrl: 'https://app.kayak-polo.info' }
+const context = { locale: 'fr', legacyBaseUrl: 'https://www.kayak-polo.info', app2BaseUrl: 'https://app.kayak-polo.info', api2BaseUrl: 'https://www.kayak-polo.info/api2' }
 
 describe('PAGE_LINKS fallbacks', () => {
   it('TEA-04: a team links to its app3 page, on the roster of the competition when known', () => {
@@ -15,13 +15,16 @@ describe('PAGE_LINKS fallbacks', () => {
 })
 
 describe('pdfUrl (D-P2-2)', () => {
-  it('CMP-12: ranking PDF by competition type, with S, Compet and lang', () => {
+  it('CMP-12 / PDF-FRONT-02: general ranking PDF from the public route of api2 (PDF_GOTENBERG.md § 7.4)', () => {
     expect(pdfUrl({ kind: 'ranking', type: 'CHPT', season: '2026', competition: 'N1H' }, context))
-      .toBe('https://www.kayak-polo.info/PdfCltChpt.php?S=2026&Compet=N1H&lang=fr')
+      .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=N1H&lang=fr')
+    expect(pdfUrl({ kind: 'ranking', type: 'MULTI', season: '2026', competition: 'CMU' }, { ...context, locale: 'en' }))
+      .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=CMU&lang=en')
+  })
+
+  it('CMP-12: the progress of a cup stays on the legacy PDF until ranking-phases is migrated', () => {
     expect(pdfUrl({ kind: 'ranking', type: 'CP', season: '2026', competition: 'CF' }, { ...context, locale: 'en' }))
       .toBe('https://www.kayak-polo.info/PdfCltNiveauPhase.php?S=2026&Compet=CF&lang=en')
-    expect(pdfUrl({ kind: 'ranking', type: 'MULTI', season: '2026', competition: 'CMU' }, context))
-      .toBe('https://www.kayak-polo.info/PdfCltMulti.php?S=2026&Compet=CMU&lang=fr')
   })
 
   it('AGG-04: game list PDF for competitions or for an event, English file under /en', () => {
