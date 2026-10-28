@@ -337,20 +337,20 @@ dev_logs: ## Affiche les logs de tous les containers de dev (Ctrl-C pour quitter
 dev_down: docker_dev_down ## Arrête tout l'environnement de développement
 
 docker_dev_up: ## Lance les containers Docker en mode développement
-	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml up -d --remove-orphans
 	@docker network connect network_${APPLICATION_NAME} mailpit 2>/dev/null || true
 
 docker_dev_down: ## Arrête les containers Docker de développement
-	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml down --remove-orphans
 
 docker_dev_restart: ## Redémarre les containers Docker de développement
 	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml restart
 
 docker_dev_rebuild: ## Reconstruit et relance les containers de développement (après modif Dockerfile)
 	@echo "Reconstruction des images Docker (développement)..."
-	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml down --remove-orphans
 	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml build --no-cache
-	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.dev.yaml up -d --remove-orphans
 	@echo "Containers reconstruits et relancés"
 
 docker_dev_logs: ## Affiche les logs des containers de développement
@@ -362,19 +362,19 @@ docker_dev_status: ## Affiche le statut des containers de développement
 
 ## DOCKER - PRÉ-PRODUCTION
 docker_preprod_up: ## Lance les containers Docker en mode pré-production
-	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml up -d --remove-orphans
 
 docker_preprod_down: ## Arrête les containers Docker de pré-production
-	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml down --remove-orphans
 
 docker_preprod_restart: ## Redémarre les containers Docker de pré-production
 	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml restart
 
 docker_preprod_rebuild: ## Reconstruit et relance les containers de pré-production (après modif Dockerfile)
 	@echo "Reconstruction des images Docker (pré-production)..."
-	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml down --remove-orphans
 	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml build --no-cache
-	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.preprod.yaml up -d --remove-orphans
 	@echo "Containers reconstruits et relancés"
 
 docker_preprod_logs: ## Affiche les logs des containers de pré-production
@@ -386,19 +386,19 @@ docker_preprod_status: ## Affiche le statut des containers de pré-production
 
 ## DOCKER - PRODUCTION
 docker_prod_up: ## Lance les containers Docker en mode production
-	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d --remove-orphans
 
 docker_prod_down: ## Arrête les containers Docker de production
-	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml down --remove-orphans
 
 docker_prod_restart: ## Redémarre les containers Docker de production
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml restart
 
 docker_prod_rebuild: ## Reconstruit et relance les containers de production (après modif Dockerfile)
 	@echo "Reconstruction des images Docker (production)..."
-	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml down
+	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml down --remove-orphans
 	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml build --no-cache
-	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d
+	$(DOCKER_COMPOSE) -f docker/compose.prod.yaml up -d --remove-orphans
 	@echo "Containers reconstruits et relancés"
 
 # Alias `production` (nom long) pour que deploy-wrapper.sh puisse cibler les mêmes
@@ -440,9 +440,7 @@ app2_build: ## Build l'application Nuxt (app2) pour la production
 
 app2_generate_dev: ## Génère l'application Nuxt (app2) en mode statique pour développement
 	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npx dotenv-cli -e .env.development -- nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
-	@echo "App2 generated and nginx restarted!"
+	@echo "App2 generated (nginx_static serves it without restart)."
 
 app2_generate_preprod: ## Génère l'application Nuxt (app2) en mode statique pour pré-production (utilise container temporaire)
 	@echo "Building app2 for pre-production using temporary Node.js container..."
@@ -450,17 +448,13 @@ app2_generate_preprod: ## Génère l'application Nuxt (app2) en mode statique po
 # GITIGNORÉS : une variable qui n'y vit que localement n'atteindrait jamais le VPS.
 # Ici c'est versionné. Active le bandeau « préprod expérimentale » (Phase 7 CI/CD).
 	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.preprod -- nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
-	@echo "App2 generated and nginx restarted!"
+	@echo "App2 generated (nginx_static serves it without restart)."
 
 app2_generate_production: ## Génère l'application Nuxt (app2) en mode statique pour production (utilise container temporaire)
 	@echo "Building app2 for production using temporary Node.js container..."
 # APP_ENV=production : bandeau expérimental inconditionnellement désactivé en prod.
 	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app2:/app" -w /app node:22-alpine sh -c "npm ci && npx dotenv-cli -e .env.production -- nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app2 > /dev/null
-	@echo "App2 generated and nginx restarted!"
+	@echo "App2 generated (nginx_static serves it without restart)."
 
 app2_generate_prod: app2_generate_production ## Alias pour app2_generate_production
 
@@ -596,15 +590,11 @@ app4_build: ## Build l'application Nuxt (app4 admin) pour la production
 
 app4_generate: ## Génère l'application Nuxt (app4 admin) en mode statique (utilise .env)
 	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npx nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
-	@echo "App4 generated and nginx restarted!"
+	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_dev: ## Génère l'application Nuxt (app4 admin) en mode statique pour développement
 	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npx nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
-	@echo "App4 generated and nginx restarted!"
+	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_preprod: ## Génère l'application Nuxt (app4 admin) en mode statique pour pré-production (utilise container temporaire)
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
@@ -614,9 +604,7 @@ app4_generate_preprod: ## Génère l'application Nuxt (app4 admin) en mode stati
 # qui active le bandeau « préprod expérimentale » (Phase 7 CI/CD) — sans lui,
 # appEnv retomberait sur 'development' et le bandeau ne s'afficherait JAMAIS.
 	docker run --rm -e APP_ENV=preprod -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
-	@echo "App4 generated and nginx restarted!"
+	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_prod: ## Génère l'application Nuxt (app4 admin) en mode statique pour production (utilise container temporaire)
 	@echo "Restauration du package-lock.json versionné (annule toute dérive locale)..."
@@ -625,9 +613,7 @@ app4_generate_prod: ## Génère l'application Nuxt (app4 admin) en mode statique
 # APP_ENV=production : en prod le bandeau expérimental est inconditionnellement
 # désactivé (aucune requête sur experimental-flag.json).
 	docker run --rm -e APP_ENV=production -v "$(CURDIR)/sources/app4:/app" -w /app node:22-alpine sh -c "npm ci && npx nuxt generate"
-	@echo "Restarting nginx to remount volume..."
-	docker restart $(APPLICATION_NAME)_nginx_app4 > /dev/null
-	@echo "App4 generated and nginx restarted!"
+	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_production: app4_generate_prod ## Alias production de app4_generate_prod (deploy-wrapper.sh)
 

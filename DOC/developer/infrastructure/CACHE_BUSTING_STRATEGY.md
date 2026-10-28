@@ -158,7 +158,6 @@ make run_generate_dev
 ### Pre-production
 ```bash
 make run_generate_preprod
-docker restart kpi_preprod_nginx_app2
 # Assets: /_nuxt/v1766334567890/
 # Config: preprod.kayak-polo.info/api
 ```
@@ -166,7 +165,6 @@ docker restart kpi_preprod_nginx_app2
 ### Production
 ```bash
 make run_generate_prod
-docker restart kpi_nginx_app2
 # Assets: /_nuxt/v1766335678901/
 # Config: kayak-polo.info/api
 ```
@@ -178,7 +176,6 @@ After deployment, verify the update mechanism works:
 1. **Deploy new build**:
    ```bash
    make run_generate_preprod
-   docker restart kpi_preprod_nginx_app2
    ```
 
 2. **Simple refresh test** (F5 or Cmd+R):
@@ -251,7 +248,7 @@ find . -type d -name "v*" ! -name "$(ls -t | head -1)" -exec rm -rf {} +
 **Solution**:
 - Clear browser cache: Ctrl+Shift+Delete
 - Hard reload: Ctrl+Shift+R
-- Restart nginx: `docker restart kpi_nginx_app2`
+- nginx needs no restart since `nginx_static` (it serves a new build immediately)
 
 ### Issue: Service Worker caching old files
 
