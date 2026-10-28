@@ -18,7 +18,7 @@ class GamesRepository
         $where = ['j.Code_saison = ?'];
         $parameters = [$query->season];
         $types = [];
-        $in = function (string $condition, array $values, ArrayParameterType $type) use (&$where, &$parameters, &$types): void {
+        $in = function (string $condition, array $values, int $type) use (&$where, &$parameters, &$types): void {
             $where[] = $condition;
             $parameters[] = $values;
             $types[count($parameters) - 1] = $type;

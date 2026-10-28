@@ -41,7 +41,7 @@ final class ScoresheetSheet
      * @param list<array<string, mixed>> $players
      * @param array<string, string>      $labels
      *
-     * @return list<array<string, string>>
+     * @return list<array{number: string, last_name: string, first_name: string, licence: string, category: string, coach: bool}>
      */
     public static function roster(array $players, string $season, bool $international, array $labels): array
     {
