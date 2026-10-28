@@ -1,0 +1,59 @@
+{#
+ # Generic document (PDF_GOTENBERG.md § 8): sections, each with a title and either a table (rows × columns), pairs of
+ # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box}.
+ #}
+{% extends 'pdf/layout.html.twig' %}
+
+{% block watermark %}
+    {% if provisional|default(false) %}<div class="pdf-watermark">{{ labels.provisional }}</div>{% endif %}
+{% endblock %}
+
+{% block content %}
+    {% for section in sections %}
+        {% set section_columns = section.columns ?? columns %}
+        <section class="pdf-section{% if page_per_section|default(false) and not loop.first %} pdf-page-break{% endif %}">
+            {% if section.title|default(null) %}<h2 class="pdf-section__title">{{ section.title }}</h2>{% endif %}
+            {% if section.subtitle|default(null) %}<p class="pdf-section__subtitle">{{ section.subtitle }}</p>{% endif %}
+            {% if section.pairs|default([]) is not empty %}
+                <table class="pdf-pairs">
+                    {% for pair in section.pairs %}
+                        <tr><th>{{ pair[0] }}</th><td>{{ pair[1] }}</td></tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+            {% if section.rows|default([]) is not empty %}
+                <table class="pdf-table{% if dense|default(false) %} pdf-table--dense{% endif %}">
+                    <thead>
+                        <tr>{% for column in section_columns %}<th class="{{ column.class|default('') }}">{{ column.label }}</th>{% endfor %}</tr>
+                    </thead>
+                    <tbody>
+                        {% for row in section.rows %}
+                            {% if row._group|default(null) %}
+                                <tr class="pdf-row--group"><td colspan="{{ section_columns|length }}">{{ row._group }}</td></tr>
+                            {% else %}
+                                <tr class="{{ row._class|default('') }}">
+                                    {% for column in section_columns %}
+                                        {% set value = row[column.key]|default(null) %}
+                                        <td class="{{ column.class|default('') }}">
+                                            {%- if column.kind|default('text') == 'image' -%}
+                                                {% if value %}<img class="pdf-photo" src="{{ value }}" alt="">{% endif %}
+                                            {%- elseif column.kind|default('text') == 'box' -%}
+                                                <span class="pdf-box"></span>
+                                            {%- else -%}
+                                                {{ value }}
+                                            {%- endif -%}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% elseif section.empty|default(null) %}
+                <p class="pdf-note">{{ section.empty }}</p>
+            {% endif %}
+            {% for line in section.lines|default([]) %}<p class="pdf-line">{{ line }}</p>{% endfor %}
+        </section>
+    {% endfor %}
+    {% if note|default(null) %}<p class="pdf-note">{{ note }}</p>{% endif %}
+{% endblock %}

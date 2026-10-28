@@ -1,4 +1,4 @@
-import { legacyAdminPdf, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
+import { legacyAdminPdf, migratedLegacyPdf, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
 
 interface SignedLink { url: string }
 interface LegacySignedLink { path: string, query: Record<string, string> }
@@ -50,8 +50,16 @@ export const usePdf = () => {
     return link.url
   })
 
-  /** Legacy admin PDF page (`FeuillePresence.php`…) through a signed link, in a new tab. */
-  const openLegacy = (page: string, query: PdfQuery) => openWith(async () => {
+  /**
+   * Legacy admin PDF page (`FeuillePresence.php`…) through a signed link, in a new tab; the document of api2
+   * replacing it once migrated.
+   */
+  const openLegacy = (page: string, query: PdfQuery) => {
+    const migrated = migratedLegacyPdf(page, stringify(query))
+    return migrated ? openDocument(migrated.document, migrated.query) : openSignedLegacy(page, query)
+  }
+
+  const openSignedLegacy = (page: string, query: PdfQuery) => openWith(async () => {
     const link = await api.post<LegacySignedLink>('/admin/pdf/legacy-link', { page, query: stringify(query) })
     return `${legacyBaseUrl}${link.path}?${new URLSearchParams(link.query).toString()}`
   })

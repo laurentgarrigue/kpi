@@ -29,3 +29,55 @@ ranking.eliminated: { fr: 'Éliminé', en: 'Eliminated' }
 ranking.medal_1: { fr: 'Or', en: 'Gold' }
 ranking.medal_2: { fr: 'Argent', en: 'Silver' }
 ranking.medal_3: { fr: 'Bronze', en: 'Bronze' }
+# Players (presence and control sheets)
+player.number: { fr: 'N°', en: '#' }
+player.role: { fr: 'Statut', en: 'Status' }
+player.licence: { fr: 'Licence', en: 'Licence' }
+player.last_name: { fr: 'Nom', en: 'Family name' }
+player.first_name: { fr: 'Prénom', en: 'Given name' }
+player.category: { fr: 'Catég.', en: 'Cat.' }
+player.paddle: { fr: 'Pagaie', en: 'Paddle' }
+player.certificate: { fr: 'Certif. comp.', en: 'Med. cert.' }
+player.club: { fr: 'Club', en: 'Club' }
+player.referee: { fr: 'Arb.', en: 'Ref.' }
+player.team: { fr: 'Équipe', en: 'Team' }
+player.birthdate: { fr: 'Naissance', en: 'Birthdate' }
+player.birth_month: { fr: 'Mois', en: 'Month' }
+player.photo: { fr: 'Photo', en: 'Photo' }
+player.check: { fr: 'Vérif.', en: 'Check' }
+player.visa: { fr: 'Visa', en: 'Signature' }
+player.staff: { fr: 'Encadrement', en: 'Staff' }
+presence.title: { fr: 'Feuille de présence', en: 'Presence sheet' }
+presence.photos_title: { fr: 'Feuille de présence avec photos', en: 'Team roster' }
+presence.category_title: { fr: 'Présences par catégorie', en: 'Presence by category' }
+presence.u21_title: { fr: 'Présences U21', en: 'U21 presence' }
+presence.birthyear_title: { fr: 'Présences par année de naissance', en: 'Presence by year of birth' }
+presence.referees: { fr: 'Arbitres', en: 'Referees' }
+presence.no_player: { fr: 'Aucun joueur', en: 'No player' }
+# Equipment control
+control.title: { fr: 'Feuille de contrôle', en: 'Control sheet' }
+control.kayak: { fr: 'Kayak', en: 'Kayak' }
+control.vest: { fr: 'Gilet', en: 'Vest' }
+control.helmet: { fr: 'Casque', en: 'Helmet' }
+control.paddles: { fr: 'Nb pagaies', en: 'Paddles' }
+control.status_ok: { fr: 'OK', en: 'OK' }
+control.status_cosmetic: { fr: 'Cosmétique', en: 'Cosmetic' }
+control.status_safety: { fr: 'Sécurité', en: 'Safety' }
+control.status_technical: { fr: 'Technique', en: 'Technical' }
+# Referees pool
+referees_pool.title: { fr: 'Pool arbitres', en: 'Referees pool' }
+referees_pool.gender: { fr: 'Sexe', en: 'Gender' }
+referees_pool.qualification: { fr: 'Arbitrage', en: 'Refereeing' }
+referees_pool.none: { fr: 'Aucun arbitre actif', en: 'No active referee' }
+# Officials of a gameday (instances)
+instances.title: { fr: 'Instances', en: 'Officials' }
+instances.competition_officials: { fr: 'Comité de compétition', en: 'Competition committee' }
+instances.appeal_jury: { fr: "Jury d'appel", en: 'Appeal jury' }
+instances.dates: { fr: 'Dates', en: 'Dates' }
+instances.place: { fr: 'Lieu', en: 'Venue' }
+instances.competition_manager: { fr: 'Responsable de compétition', en: 'Competition manager' }
+instances.r1: { fr: "Responsable de l'organisation (R1)", en: 'Organisation manager (R1)' }
+instances.delegate: { fr: "Délégué Commission Nationale d'Activité", en: 'National commission delegate' }
+instances.chief_referee: { fr: 'Chef des arbitres', en: 'Chief referee' }
+instances.jury_president: { fr: 'Délégué CNA (président du jury)', en: 'Delegate (jury president)' }
+instances.athletes_representative: { fr: 'Représentant des compétiteurs', en: "Athletes' representative" }

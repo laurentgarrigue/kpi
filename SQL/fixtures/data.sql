@@ -545,3 +545,21 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 -- Mandat de TDIV limité à SCC : avec l'en-tête X-Active-Mandate, SCC est permis et SCA ne l'est plus
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');
+
+-- Feuilles de présence, contrôle, pool arbitres (PDF_GOTENBERG.md § 7.2, phase 2) : un joueur né en 2980 (U21 en
+-- 2997) dans 9382 (C002, club de TCLUB), un pool d'arbitres permanent (POOL, saison technique 1000).
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`, `Naissance`) VALUES
+  (9518, '2997', 'SCRUT', 'Bravo', 'M', 'C002', 'Actif', '2980-03-15');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9382, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 7, '-');
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9391, 'POOL', '1000', 'France', 'FRA', NULL, 0, '', 0);
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9391, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A');
+DELETE FROM `kp_arbitre` WHERE `Matric` BETWEEN 9500 AND 9599;
+INSERT INTO `kp_arbitre` (`Matric`, `arbitre`, `niveau`, `saison`, `livret`) VALUES (9514, 'Nat', 'B', '2997', '');
+-- Instances (officiels) de la journée 9271 ; mandat 9702 de TDIV limité à la journée 9272 : 9271 lui est refusée.
+UPDATE `kp_journee` SET `Responsable_insc` = 'RESPONSABLE Test (9513)', `Responsable_R1` = 'ORGA Test',
+  `Delegue` = 'DELEGUE Test (9514)', `ChefArbitre` = 'CHEF Arbitre' WHERE `Id` = 9271;
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9702, 'TDIV', 'Mandat journée SCB', 3, '|2997|', '|SCA|SCB|', NULL, '9272', '');

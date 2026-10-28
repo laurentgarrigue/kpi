@@ -74,6 +74,54 @@ export function legacyAdminPdf(href: string, legacyBaseUrl: string): { page: str
   return { page: match[1]!, query: Object.fromEntries(url.searchParams.entries()) }
 }
 
+type LegacyQuery = Record<string, string>
+
+/** Names of the parameters across the legacy pages, mapped to the parameters of api2 (§ 6.1). */
+const LEGACY_PARAMETERS: Record<string, string> = {
+  season: 'season', S: 'season',
+  compet: 'competition', Compet: 'competition', codeCompet: 'competition',
+  team: 'team', equipe: 'team',
+  idJournee: 'gameday',
+  lang: 'lang', tz: 'tz',
+}
+
+/** Legacy admin pages already replaced by a document of api2: document and options (§ 7). */
+const MIGRATED_LEGACY_PAGES: Record<string, { document: AdminPdfDocument, options: LegacyQuery }> = {
+  'FeuilleGroups.php': { document: 'teams-groups', options: {} },
+  'FeuillePresence.php': { document: 'presence', options: {} },
+  'FeuillePresenceEN.php': { document: 'presence', options: { lang: 'en' } },
+  'FeuillePresencePhoto.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresencePhoto2.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresencePhotoRef.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresenceCat.php': { document: 'presence', options: { view: 'category' } },
+  'FeuillePresenceU21.php': { document: 'presence', options: { view: 'category', category: 'U21' } },
+  'FeuillePresenceNaissance.php': { document: 'presence', options: { view: 'birthyear' } },
+  'FeuillePresenceVisa.php': { document: 'presence', options: { visa: '1' } },
+  'FeuilleControle.php': { document: 'scrutineering-control', options: {} },
+  'FeuilleControleEN.php': { document: 'scrutineering-control', options: { lang: 'en' } },
+  'FeuilleInstances.php': { document: 'instances', options: {} },
+}
+
+/**
+ * Document of api2 replacing a legacy admin page, with its query, or null while the page is not migrated. Links
+ * still written as legacy URLs open the new document; unknown legacy parameters are dropped.
+ */
+export function migratedLegacyPdf(page: string, query: LegacyQuery): { document: AdminPdfDocument, query: LegacyQuery } | null {
+  const migrated = MIGRATED_LEGACY_PAGES[page]
+  if (!migrated) {
+    return null
+  }
+  const parameters: LegacyQuery = {}
+  for (const [name, value] of Object.entries(query)) {
+    const target = LEGACY_PARAMETERS[name]
+    if (target && value !== '' && value !== '%') {
+      parameters[target] = value
+    }
+  }
+
+  return { document: migrated.document, query: { ...parameters, ...migrated.options } }
+}
+
 /** Public PDF of api2 (published data, no authentication): plain link, cacheable (§ 6.1). */
 export function publicPdfUrl(api2BaseUrl: string, document: string, query: Record<string, string | number>): string {
   const params = new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)]))

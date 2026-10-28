@@ -53,6 +53,16 @@ class PdfAccessChecker
         return $this->user()?->getAllowedClubs();
     }
 
+    /**
+     * Gamedays the user may see, or null when not limited (filter of the mandate).
+     *
+     * @return int[]|null
+     */
+    public function allowedGamedays(): ?array
+    {
+        return $this->user()?->getAllowedJournees();
+    }
+
     /** @param string[]|null $allowed */
     private static function allows(?array $allowed, string $value): bool
     {

@@ -305,10 +305,10 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 | `doc` | Remplace | Appelé aujourd'hui depuis (profils qui voient le lien) | Rôle proposé |
 |---|---|---|---|
 | `teams-groups` | FeuilleGroups | Documents (1–6, 8) ; Équipes, menu PDF global (1–8) | `ROLE_VIEWER` + périmètre |
-| `presence` (base : FR/EN, `photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
-| `presence` + `category=<catégorie>` | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
-| `presence` + `category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
-| `presence` + `birthdate=1` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
+| `presence` (base : FR/EN, `view=photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
+| `presence` + `view=category` (`category=<catégorie>` pour en garder une) | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
+| `presence` + `view=category&category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
+| `presence` + `view=birthyear` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
 | `presence` + `visa=1` | FeuillePresenceVisa | Équipes (1–2) ; Documents, section Équipes (1–6, 8) ; Présence équipe (tous) | `ROLE_ORGANIZER` + périmètre (I2) |
 | `scrutineering-control` | FeuilleControle, …EN | Équipes, menu global (1–2) et par équipe (1, 2, 10) ; Scrutineering (1, 2, 10) ; Présence équipe (tous) | `ROLE_SCRUTINEER` (+ périmètre pour le profil 10) (cf. I1) |
 | `referees-pool` | FeuillePoolArbitres | Pool arbitres (menu 1–2, API `ROLE_ADMIN`) | `ROLE_ADMIN` |
@@ -316,6 +316,11 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 
 Règle : chaque **option** qui ajoute des données (date de naissance, visa, catégorie U21) a son propre rôle ; une
 option demandée sans le rôle correspondant → 403 (pas de document dégradé silencieusement).
+
+Le pool d'arbitres est permanent : `referees-pool` et `presence?competition=POOL` lisent la saison technique `1000`,
+quel que soit `season`. `instances` exige `competition` et `gameday` (la journée doit appartenir à la compétition et
+à la saison demandées, sinon 404) ; une journée hors du filtre de journées du mandat → 403. Le numéro de licence des
+officiels n'est jamais imprimé.
 
 ### 7.3 Matchs
 
@@ -549,7 +554,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-AUTH-04** : profil limité à un club demande `presence` sans `team` → seules les équipes de son club figurent ; avec `team` d'un autre club → 403.
 - **PDF-AUTH-05** : profil 10 obtient `presence` et `scrutineering-control` de toute équipe de ses compétitions, et 403 sur tout autre document admin.
 - **PDF-AUTH-08** : chaque document admin respecte le rôle minimum de §7, vérifié par un test paramétré profil (1 à 10) × document, attendu 200 ou 403.
-- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`birthdate`, `visa`, `category=U21`) demandée sans ce rôle → 403.
+- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`view=birthyear`, `visa=1`, `category=U21`) demandée sans ce rôle → 403.
 - **PDF-AUTH-10** : `games-list` admin demandé par un profil 7 ne contient que les matchs et journées publiés, hors compétitions ATT.
 - **PDF-AUTH-06** : `GET /api2/pdf/*` (public) fonctionne sans authentification et n'expose ni date de naissance, ni licence, ni certificat, ni photo.
 - **PDF-AUTH-07** : lien expiré, signature altérée, ou droits retirés entre émission et usage → 403.
@@ -675,6 +680,14 @@ Aucune à ce stade.
   Documents, app3 onglet Classement pour CHPT et MULTI).
 - Tests : `tests/Unit/Pdf/*`, `tests/Integration/PdfEndpointsTest.php` (Gotenberg remplacé par
   `FakeGotenbergClient`), `app4/tests/unit/pdf.spec.ts`, `app3/tests/unit/page-links.spec.ts`.
+
+### Phase 2 — données personnelles (livrée)
+
+- api2 : `presence` (vues `team`, `photos`, `category`, `birthyear` ; options `visa`, `category`),
+  `scrutineering-control`, `referees-pool`, `instances` ; gabarit générique `sections.html.twig`.
+- Profil limité à des clubs : seules les équipes de ses clubs, une équipe d'un autre club → 403 (PDF-AUTH-04).
+- app4 : les liens legacy des pages déjà migrées (`utils/pdf.ts`, `migratedLegacyPdf`) ouvrent le document api2
+  équivalent ; Pool arbitres et Journées (« Officiels ») appellent directement `usePdf().openDocument()`.
 
 ### Reste à faire
 

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Pdf\InvalidPdfRequest;
+use App\Pdf\PdfAccessDenied;
 use App\Pdf\LegacyPdfLinks;
 use App\Pdf\PdfAccessChecker;
 use App\Pdf\PdfCatalog;
@@ -190,6 +191,8 @@ class PdfController extends AbstractController
             $content = $provider->content($pdfRequest, $theme, $theme === PdfTheme::Admin ? $this->access->allowedClubs() : null);
         } catch (InvalidPdfRequest $e) {
             return $this->error($e->getMessage(), Response::HTTP_BAD_REQUEST);
+        } catch (PdfAccessDenied) {
+            return $this->error('Access denied.', Response::HTTP_FORBIDDEN);
         }
         if ($content === null) {
             return $this->error('Nothing to print.', Response::HTTP_NOT_FOUND);

@@ -192,3 +192,25 @@ table.pdf-table {
 }
 
 .pdf-note { font-size: 8.5pt; color: var(--pdf-muted); margin-top: 3mm; }
+
+/* ---------------------------------------------------- generic documents */
+.pdf-page-break { break-before: page; }
+.pdf-section__subtitle { font-size: 9pt; color: var(--pdf-muted); margin: -1mm 0 2mm; }
+.pdf-table--dense td, .pdf-table--dense th { padding: 1mm 1.5mm; font-size: 9pt; }
+.pdf-row--group td {
+  font-weight: 700;
+  color: var(--pdf-title);
+  border-bottom: 0.4mm solid var(--pdf-title);
+  padding-top: 3mm;
+}
+.pdf-row--muted td { color: var(--pdf-muted); font-style: italic; }
+.pdf-photo { height: 18mm; width: auto; display: block; }
+.pdf-box { display: inline-block; width: 5mm; height: 5mm; border: 0.3mm solid var(--pdf-ink); }
+.pdf-pairs { border-collapse: collapse; margin-bottom: 4mm; }
+.pdf-pairs th { width: 80mm; text-align: left; font-weight: 600; padding: 1.5mm 6mm 1.5mm 0; color: var(--pdf-muted); }
+.pdf-pairs td { padding: 1.5mm 0; }
+/* Left blank: written by hand on site. */
+.pdf-pairs td:empty { width: 70mm; border-bottom: 0.2mm solid var(--pdf-line); }
+.pdf-line { margin: 1mm 0; }
+.pdf-signature { display: inline-block; min-width: 40mm; border-bottom: 0.2mm solid var(--pdf-line); }
+.pdf-col--signature { width: 35mm; }
