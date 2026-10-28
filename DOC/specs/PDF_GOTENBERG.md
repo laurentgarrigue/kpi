@@ -731,7 +731,9 @@ Aucune à ce stade.
 
 ### Reste à faire
 
-- Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique
-  (§ 7.3.2) arrivent avec la phase 4.
+Validation et déploiement phase par phase : [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md).
+
+- Validations des commissions (PDF-DOC-03) : feuille de présence, feuille de marque.
+- Phase 6 (§ 12) : suppression des pages legacy, redirections 301 / 410, retrait de `mpdf/mpdf` du legacy.
 - Valider les deux maquettes de référence côte à côte avec app4 et app3 (PDF-DESIGN-06), puis mesurer PDF-PERF-01 /
   PDF-PERF-04 en préprod.
