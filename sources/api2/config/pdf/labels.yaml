@@ -1,0 +1,31 @@
+# Fixed texts of the PDF documents (PDF_GOTENBERG.md § 5, `lang` parameter). One entry per text: fr and en.
+season: { fr: 'Saison', en: 'Season' }
+page: { fr: 'Page', en: 'Page' }
+generated_on: { fr: 'Édité le', en: 'Printed on' }
+internal_document: { fr: 'Document interne - ne pas diffuser', en: 'Internal document - do not distribute' }
+provisional: { fr: 'Provisoire - non publié', en: 'Provisional - not published' }
+scan_for_live: { fr: 'Résultats à jour', en: 'Live results' }
+teams_groups.title: { fr: 'Équipes engagées', en: 'Teams' }
+teams_groups.pool: { fr: 'Poule', en: 'Group' }
+teams_groups.no_pool: { fr: 'Sans poule', en: 'No group' }
+teams_groups.draw: { fr: 'Tirage', en: 'Draw' }
+teams_groups.team: { fr: 'Équipe', en: 'Team' }
+teams_groups.club: { fr: 'Club', en: 'Club' }
+teams_groups.count: { fr: 'équipes', en: 'teams' }
+ranking.title: { fr: 'Classement', en: 'Ranking' }
+ranking.rank: { fr: 'Clt', en: 'Rk' }
+ranking.team: { fr: 'Équipe', en: 'Team' }
+ranking.points: { fr: 'Pts', en: 'Pts' }
+ranking.played: { fr: 'J', en: 'P' }
+ranking.won: { fr: 'G', en: 'W' }
+ranking.drawn: { fr: 'N', en: 'D' }
+ranking.lost: { fr: 'P', en: 'L' }
+ranking.forfeits: { fr: 'F', en: 'F' }
+ranking.goals_for: { fr: 'Bp', en: 'GF' }
+ranking.goals_against: { fr: 'Bc', en: 'GA' }
+ranking.goal_diff: { fr: 'Diff', en: 'GD' }
+ranking.qualified: { fr: 'Qualifié', en: 'Qualified' }
+ranking.eliminated: { fr: 'Éliminé', en: 'Eliminated' }
+ranking.medal_1: { fr: 'Or', en: 'Gold' }
+ranking.medal_2: { fr: 'Argent', en: 'Silver' }
+ranking.medal_3: { fr: 'Bronze', en: 'Bronze' }

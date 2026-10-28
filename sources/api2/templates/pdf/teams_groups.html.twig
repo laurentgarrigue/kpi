@@ -1,0 +1,30 @@
+{% extends 'pdf/layout.html.twig' %}
+
+{% block content %}
+    <div class="pdf-columns">
+        {% for pool, teams in pools %}
+            <section class="pdf-section">
+                <h2 class="pdf-section__title">{{ pool is same as('') ? labels['teams_groups.no_pool'] : labels['teams_groups.pool'] ~ ' ' ~ pool }}</h2>
+                <table class="pdf-table">
+                    <thead>
+                        <tr>
+                            <th class="num">{{ labels['teams_groups.draw'] }}</th>
+                            <th>{{ labels['teams_groups.team'] }}</th>
+                            <th>{{ labels['teams_groups.club'] }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in teams %}
+                            <tr>
+                                <td class="num">{{ team.draw }}</td>
+                                <td>{{ team.name }}</td>
+                                <td>{{ team.club }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        {% endfor %}
+    </div>
+    <p class="pdf-note">{{ team_count }} {{ labels['teams_groups.count'] }}</p>
+{% endblock %}

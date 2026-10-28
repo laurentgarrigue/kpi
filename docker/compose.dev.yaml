@@ -14,6 +14,8 @@ services:
             - LANG=fr_FR.UTF-8
             - LANGUAGE=fr_FR:fr
             - LC_ALL=fr_FR.UTF-8
+            # Vérification des liens signés des PDF admin legacy (PDF_GOTENBERG.md phase 0), même secret qu'api2.
+            - PDF_LINK_SECRET=${PDF_LINK_SECRET:?PDF_LINK_SECRET absent de docker/.env (cf. PDF_GOTENBERG.md § 6.3)}
         ports:
             - 80${DOCKER_SUFFIXE_PORT}:80
         volumes:
@@ -77,6 +79,11 @@ services:
             - LEGACY_DOCUMENT_ROOT=/var/www/html
             # Adresse du site public (app3) pour les liens des fichiers ICS (API_PUBLIC_TRANSVERSE.md § 3.2).
             - PUBLIC_SITE_URL=https://beta.${KPI_DOMAIN_NAME}
+            # Rendu PDF (DOC/specs/PDF_GOTENBERG.md) : Gotenberg de la stack, liens signés partagés avec le legacy.
+            - GOTENBERG_URL=http://${APPLICATION_NAME}_gotenberg:3000
+            - GOTENBERG_USER=${GOTENBERG_USER:-gotenberg}
+            - GOTENBERG_PASSWORD=${GOTENBERG_PASSWORD:?GOTENBERG_PASSWORD absent de docker/.env (cf. PDF_GOTENBERG.md § 4)}
+            - PDF_LINK_SECRET=${PDF_LINK_SECRET:?PDF_LINK_SECRET absent de docker/.env (cf. PDF_GOTENBERG.md § 6.3)}
             # Purge du cache d'app3 à chaque publication (FEATURE_CMS.md § 5.4) : même secret que NUXT_APP3_PURGE_TOKEN.
             - APP3_INTERNAL_URL=http://kpi_node_app3:3003
             - APP3_PURGE_TOKEN=${APP3_PURGE_TOKEN:-}
@@ -347,6 +354,41 @@ services:
             - "traefik.http.routers.wsm.entrypoints=websecure"
             - "traefik.http.routers.wsm.tls=true"
             - "traefik.http.services.wsm.loadbalancer.server.port=8080"
+
+    # Rendu HTML → PDF des documents (DOC/specs/PDF_GOTENBERG.md § 4) : une instance PAR environnement,
+    # réseau interne de la stack uniquement (aucun port publié, jamais routée par Traefik). Chromium n'a
+    # aucun accès réseau (anti-SSRF, § 9) : seuls les fichiers joints à la requête (/tmp) sont lisibles.
+    # Le VPS n'a que 2 cœurs : un rendu à la fois, file bornée, plafonds CPU / mémoire.
+    gotenberg:
+        container_name: ${APPLICATION_NAME}_gotenberg
+        image: gotenberg/gotenberg:8.39.0
+        command:
+            - gotenberg
+            - --api-timeout=60s
+            - --api-enable-basic-auth
+            - --chromium-max-concurrency=1
+            - --chromium-max-queue-size=10
+            - --chromium-deny-list=^(?!file:///tmp/).*
+            - --chromium-deny-private-ips
+            - --chromium-deny-public-ips
+            - --libreoffice-disable-routes
+            - --webhook-disable
+        environment:
+            - GOTENBERG_API_BASIC_AUTH_USERNAME=${GOTENBERG_USER:-gotenberg}
+            - GOTENBERG_API_BASIC_AUTH_PASSWORD=${GOTENBERG_PASSWORD:?GOTENBERG_PASSWORD absent de docker/.env (cf. PDF_GOTENBERG.md § 4)}
+        networks:
+            - network_kpi
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
 
     nginx_app2:
         container_name: ${APPLICATION_NAME}_nginx_app2
