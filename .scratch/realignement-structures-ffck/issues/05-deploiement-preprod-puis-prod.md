@@ -1,6 +1,6 @@
 # 05: Déploiement préprod puis prod
 
-**What to build:** l'import corrigé, l'opération complète et la remise à plat sont en production, en déroulant la rollout checklist livrée par le ticket 04 étape par étape, chaque étape cochée avant la suivante.
+**What to build:** l'import corrigé, l'opération complète et la remise à plat sont en production, en déroulant la rollout checklist [REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md](../../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md) (livrée par le ticket 04) étape par étape, chaque étape cochée avant la suivante.
 
 **Blocked by:** 03 (Opération « changer un code compétition » complète), 04 (Script de remise à plat, requête de contrôle et rollout checklist)
 
