@@ -35,6 +35,16 @@ final class ImportPceTest extends ApiTestCase
         self::assertSame('3301', $this->connection->fetchOne('SELECT Numero_club FROM kp_licence WHERE Matric = 8801'));
     }
 
+    public function testCreatesEveryPceClubMissingFromKpiInTheSameImportEachUnderASingleCd(): void
+    {
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame(
+            ['3301' => '3300', '3302' => '3300', '6401' => '6400'],
+            $this->connection->fetchAllKeyValue("SELECT Code, Code_comite_dep FROM kp_club WHERE Code IN ('3301', '3302', '6401') ORDER BY Code"),
+        );
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');

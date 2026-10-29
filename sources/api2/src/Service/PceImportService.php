@@ -534,14 +534,15 @@ class PceImportService
     {
         $this->messages[] = "Mise à jour des Clubs ...";
         $sql = "INSERT IGNORE INTO kp_club (Code, Libelle, Officiel, Reserve, Code_comite_dep)
-            SELECT DISTINCT lc.Numero_club,
-                lc.Club,
+            SELECT lc.Numero_club,
+                MIN(lc.Club),
                 'O', '', MIN(lc.Numero_comite_dept)
             FROM kp_licence lc
             WHERE lc.Numero_club NOT IN ('0', '0000')
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
-            AND lc.Club != ''";
+            AND lc.Club != ''
+            GROUP BY lc.Numero_club";
         $this->connection->executeStatement($sql, [$season]);
     }
 
