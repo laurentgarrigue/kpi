@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Exception\FileExistsException;
+use App\Service\CompetitionCodeRenameService;
 use App\Service\CompetitionLockService;
 use App\Service\EventExportImportService;
 use App\Service\ImageOperationsService;
@@ -53,7 +54,8 @@ class AdminOperationsController extends AbstractController
         private readonly EventExportImportService $eventService,
         private readonly PceImportService $pceImportService,
         private readonly CompetitionLockService $competitionLockService,
-        private readonly NotificationService $notificationService
+        private readonly NotificationService $notificationService,
+        private readonly CompetitionCodeRenameService $competitionCodeRenameService
     ) {
     }
 
@@ -839,7 +841,7 @@ class AdminOperationsController extends AbstractController
         }
 
         try {
-            $this->changeCodeInternal($sourceCode, $targetCode, $allSeasons, $targetExists);
+            $this->competitionCodeRenameService->rename($sourceCode, $targetCode, $allSeasons, $targetExists);
             $mode = $allSeasons ? 'All seasons' : 'Current season';
             $this->logActionForEvent('Change code', null, "$mode: $sourceCode => $targetCode");
             return $this->json(['message' => 'Code changed successfully']);
@@ -1041,168 +1043,5 @@ class AdminOperationsController extends AbstractController
             'matchFilesDeleted' => $deletedMatchFiles,
             'eventFilesDeleted' => $deletedEventFiles
         ]);
-    }
-
-    // ==================== PRIVATE METHODS ====================
-
-    /**
-     * Change competition code internally
-     */
-    private function changeCodeInternal(string $sourceCode, string $targetCode, bool $allSeasons, bool $targetExists): void
-    {
-        // Get active season
-        $sql = "SELECT Code FROM kp_saison WHERE Etat = 'A' LIMIT 1";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery();
-        $activeSeason = $result->fetchOne();
-
-        if ($allSeasons) {
-            // Check source exists
-            $sql = "SELECT COUNT(*) FROM kp_competition WHERE Code = ?";
-            $stmt = $this->connection->prepare($sql);
-            $result = $stmt->executeQuery([$sourceCode]);
-            if ((int) $result->fetchOne() < 1) {
-                throw new \Exception('Source code not found');
-            }
-
-            // Check target doesn't exist (unless targetExists is true)
-            if (!$targetExists) {
-                $sql = "SELECT COUNT(*) FROM kp_competition WHERE Code = ?";
-                $stmt = $this->connection->prepare($sql);
-                $result = $stmt->executeQuery([$targetCode]);
-                if ((int) $result->fetchOne() >= 1) {
-                    throw new \Exception('Target code already exists');
-                }
-            }
-
-            $this->connection->beginTransaction();
-
-            try {
-                $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=0");
-
-                // Update kp_competition
-                $sql = "UPDATE kp_competition SET Code = ? WHERE Code = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode]);
-
-                // Update kp_competition_equipe
-                $sql = "UPDATE kp_competition_equipe SET Code_compet = ? WHERE Code_compet = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode]);
-
-                // Update kp_journee
-                $sql = "UPDATE kp_journee SET Code_competition = ? WHERE Code_competition = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode]);
-
-                // Update kp_user filters
-                $sql = "UPDATE kp_user
-                        SET Filtre_competition = REPLACE(Filtre_competition, ?, ?),
-                            Filtre_competition_sql = REPLACE(Filtre_competition_sql, ?, ?)
-                        WHERE Filtre_competition LIKE ?";
-                $this->connection->executeStatement($sql, [
-                    "|$sourceCode|", "|$targetCode|",
-                    "'$sourceCode'", "'$targetCode'",
-                    "%|$sourceCode|%"
-                ]);
-
-                $this->renameCompetitionReferences($sourceCode, $targetCode, null);
-
-                $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=1");
-                $this->connection->commit();
-            } catch (\Exception $e) {
-                $this->connection->rollBack();
-                throw $e;
-            }
-        } else {
-            // Single season update
-            $sql = "SELECT COUNT(*) FROM kp_competition WHERE Code = ? AND Code_saison = ?";
-            $stmt = $this->connection->prepare($sql);
-            $result = $stmt->executeQuery([$sourceCode, $activeSeason]);
-            if ((int) $result->fetchOne() !== 1) {
-                throw new \Exception('Source code not found in current season');
-            }
-
-            $sql = "SELECT COUNT(*) FROM kp_competition WHERE Code = ? AND Code_saison = ?";
-            $stmt = $this->connection->prepare($sql);
-            $result = $stmt->executeQuery([$targetCode, $activeSeason]);
-            if ((int) $result->fetchOne() >= 1) {
-                throw new \Exception('Target code already exists in current season');
-            }
-
-            $this->connection->beginTransaction();
-
-            try {
-                $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=0");
-
-                // Update kp_competition
-                $sql = "UPDATE kp_competition SET Code = ? WHERE Code = ? AND Code_saison = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode, $activeSeason]);
-
-                // Update kp_competition_equipe
-                $sql = "UPDATE kp_competition_equipe SET Code_compet = ? WHERE Code_compet = ? AND Code_saison = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode, $activeSeason]);
-
-                // Update kp_journee
-                $sql = "UPDATE kp_journee SET Code_competition = ? WHERE Code_competition = ? AND Code_saison = ?";
-                $this->connection->executeStatement($sql, [$targetCode, $sourceCode, $activeSeason]);
-
-                // Update kp_user filters (only for users with this season filter)
-                $sql = "UPDATE kp_user
-                        SET Filtre_competition = REPLACE(Filtre_competition, ?, ?),
-                            Filtre_competition_sql = REPLACE(Filtre_competition_sql, ?, ?)
-                        WHERE Filtre_competition LIKE ?
-                        AND (Filtre_saison LIKE ? OR Filtre_saison = '')";
-                $this->connection->executeStatement($sql, [
-                    "|$sourceCode|", "|$targetCode|",
-                    "'$sourceCode'", "'$targetCode'",
-                    "%|$sourceCode|%",
-                    "%|$activeSeason|%"
-                ]);
-
-                $this->renameCompetitionReferences($sourceCode, $targetCode, $activeSeason);
-
-                $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=1");
-                $this->connection->commit();
-            } catch (\Exception $e) {
-                $this->connection->rollBack();
-                throw $e;
-            }
-        }
-    }
-
-    /**
-     * Rename the competition code in the references that hold it besides competitions, teams, game days
-     * and user filters. A null season renames them in every season.
-     */
-    private function renameCompetitionReferences(string $sourceCode, string $targetCode, ?string $season): void
-    {
-        $seasonCondition = $season === null ? '' : ' AND Code_saison = ?';
-        $seasonParams = $season === null ? [] : [$season];
-
-        // Competition managers (RC)
-        $this->connection->executeStatement(
-            "UPDATE kp_rc SET Code_competition = ? WHERE Code_competition = ?$seasonCondition",
-            [$targetCode, $sourceCode, ...$seasonParams]
-        );
-
-        // Reference (grouping) code of the competitions grouped under the old code
-        $this->connection->executeStatement(
-            "UPDATE kp_competition SET Code_ref = ? WHERE Code_ref = ?$seasonCondition",
-            [$targetCode, $sourceCode, ...$seasonParams]
-        );
-
-        // Aggregated competitions of multi-competitions (JSON array of codes)
-        $this->connection->executeStatement(
-            "UPDATE kp_competition SET multi_competitions = REPLACE(multi_competitions, ?, ?)
-             WHERE multi_competitions LIKE ?$seasonCondition",
-            ["\"$sourceCode\"", "\"$targetCode\"", "%\"$sourceCode\"%", ...$seasonParams]
-        );
-
-        // Competition filter of user mandates (same pipe format and season rule as the user filters)
-        $mandateSeasonCondition = $season === null ? '' : " AND (filtre_saison LIKE ? OR filtre_saison = '')";
-        $mandateSeasonParams = $season === null ? [] : ["%|$season|%"];
-        $this->connection->executeStatement(
-            "UPDATE kp_user_mandat SET filtre_competition = REPLACE(filtre_competition, ?, ?)
-             WHERE filtre_competition LIKE ?$mandateSeasonCondition",
-            ["|$sourceCode|", "|$targetCode|", "%|$sourceCode|%", ...$mandateSeasonParams]
-        );
     }
 }

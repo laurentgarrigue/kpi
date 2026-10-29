@@ -76,6 +76,40 @@ final class AdminChangeCompetitionCodeTest extends ApiTestCase
         );
     }
 
+    public function testTheGroupOfTheOldReferenceCodeIsRenamedInAllSeasons(): void
+    {
+        $this->rename(true);
+
+        self::assertSame(
+            [['TSTRX', 'Groupe régional à renommer']],
+            $this->connection->fetchAllNumeric("SELECT Groupe, Libelle FROM kp_groupe WHERE Groupe IN ('TSTRN', 'TSTRX')")
+        );
+    }
+
+    public function testRegistrationFormsFollowTheRenameInAllSeasons(): void
+    {
+        $this->rename(true);
+
+        self::assertSame(
+            ['2998' => 'TSTRX', '2999' => 'TSTRX'],
+            $this->bySeason('SELECT competition_season, competition_code FROM kp_form WHERE id IN (9801, 9802) ORDER BY competition_season')
+        );
+    }
+
+    public function testUserFiltersFollowTheRenameInAllSeasonsEvenWhenOnlyTheSqlListHoldsTheCode(): void
+    {
+        $this->rename(true);
+
+        self::assertSame(
+            [
+                ['TRSFA', '|TSTRX|TSTRB|', "'TSTRX','TSTRB'"],
+                ['TRSFP', '|TSTRX|TSTRB|', "'TSTRX','TSTRB'"],
+                ['TRSFS', '', "'TSTRX'"],
+            ],
+            $this->userFilters()
+        );
+    }
+
     public function testInActiveSeasonModeOnlyTheActiveSeasonReferencesAreRenamed(): void
     {
         $this->rename(false);
@@ -102,9 +136,45 @@ final class AdminChangeCompetitionCodeTest extends ApiTestCase
             $this->bySeason('SELECT filtre_saison, filtre_competition FROM kp_user_mandat WHERE id IN (9801, 9802) ORDER BY filtre_saison'),
             'filtres de mandat'
         );
+        self::assertSame(
+            [['TSTRN', 'Groupe régional à renommer'], ['TSTRX', 'Groupe régional à renommer']],
+            $this->connection->fetchAllNumeric("SELECT Groupe, Libelle FROM kp_groupe WHERE Groupe IN ('TSTRN', 'TSTRX') ORDER BY Groupe"),
+            'groupe : l\'ancien reste (saisons passées), le nouveau est créé à son image (saison active)'
+        );
+        self::assertSame(
+            ['2998' => 'TSTRN', '2999' => 'TSTRX'],
+            $this->bySeason('SELECT competition_season, competition_code FROM kp_form WHERE id IN (9801, 9802) ORDER BY competition_season'),
+            'formulaires d\'inscription'
+        );
+        self::assertSame(
+            [
+                ['TRSFA', '|TSTRX|TSTRB|', "'TSTRX','TSTRB'"],
+                ['TRSFP', '|TSTRN|TSTRB|', "'TSTRN','TSTRB'"],
+                ['TRSFS', '', "'TSTRX'"],
+            ],
+            $this->userFilters(),
+            'filtres utilisateur'
+        );
     }
 
-    /** Le schéma de fixtures fait échouer le dernier UPDATE (filtres de mandat) quand le code cible vaut TSTFAIL. */
+    public function testInActiveSeasonModeAnExistingGroupOfTheNewCodeIsKept(): void
+    {
+        $this->connection->executeStatement(
+            "INSERT INTO kp_groupe (section, ordre, Code_niveau, Groupe, Libelle) VALUES (3, 2, 'REG', 'TSTRX', 'Groupe existant')"
+        );
+
+        $this->rename(false);
+
+        self::assertSame(
+            [['TSTRN', 'Groupe régional à renommer'], ['TSTRX', 'Groupe existant']],
+            $this->connection->fetchAllNumeric("SELECT Groupe, Libelle FROM kp_groupe WHERE Groupe IN ('TSTRN', 'TSTRX') ORDER BY Groupe")
+        );
+    }
+
+    /**
+     * Le schéma de fixtures fait échouer le dernier UPDATE (filtres de mandat) quand le code cible vaut TSTFAIL
+     * (contrainte chk_fixture_rename_failure, SQL/fixtures/README.md) : toutes les autres références sont déjà écrites.
+     */
     public function testAFailedRenameLeavesNoReferenceHalfRenamed(): void
     {
         $this->rename(true, 'TSTFAIL', 400);
@@ -117,5 +187,23 @@ final class AdminChangeCompetitionCodeTest extends ApiTestCase
             )
         );
         self::assertSame(2, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_competition WHERE Code = 'TSTRN'"));
+        self::assertSame(['TSTRN'], $this->connection->fetchFirstColumn("SELECT Groupe FROM kp_groupe WHERE Groupe IN ('TSTRN', 'TSTFAIL')"));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_user WHERE Filtre_competition_sql LIKE '%TSTFAIL%'"));
+    }
+
+    /** La connexion du worker FrankenPHP est persistante : un échec ne doit pas la laisser sans contrôle des clés étrangères. */
+    public function testAFailedRenameRestoresForeignKeyChecks(): void
+    {
+        $this->rename(true, 'TSTFAIL', 400);
+
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT @@FOREIGN_KEY_CHECKS'));
+    }
+
+    /** @return list<list<string>> user code, competition filter, SQL competition filter */
+    private function userFilters(): array
+    {
+        return $this->connection->fetchAllNumeric(
+            "SELECT Code, Filtre_competition, Filtre_competition_sql FROM kp_user WHERE Code LIKE 'TRSF%' ORDER BY Code"
+        );
     }
 }
