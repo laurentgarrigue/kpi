@@ -90,6 +90,15 @@ final class ImportPceTest extends ApiTestCase
         );
     }
 
+    public function testUpdatesTheLabelOfAnExistingCr(): void
+    {
+        $this->connection->insert('kp_cr', ['Code' => 'CRP1', 'Libelle' => 'ANCIEN NOM']);
+
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame('CR CK PCE NORD', $this->connection->fetchOne("SELECT Libelle FROM kp_cr WHERE Code = 'CRP1'"));
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');

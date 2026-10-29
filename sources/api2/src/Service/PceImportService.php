@@ -503,15 +503,17 @@ class PceImportService
     private function updateComiteReg(string $season): void
     {
         $this->messages[] = "Mise à jour des Comités Régionaux ...";
-        $sql = "INSERT IGNORE INTO kp_cr (Code, Libelle, Officiel, Reserve)
-            SELECT DISTINCT lc.Numero_comite_reg,
-                REPLACE(REPLACE(lc.Comite_reg, 'COMITE REGIONAL', 'CR'), 'CANOE KAYAK', 'CK'),
+        $sql = "INSERT INTO kp_cr (Code, Libelle, Officiel, Reserve)
+            SELECT lc.Numero_comite_reg,
+                MIN(REPLACE(REPLACE(lc.Comite_reg, 'COMITE REGIONAL', 'CR'), 'CANOE KAYAK', 'CK')),
                 'O', ''
             FROM kp_licence lc
             WHERE lc.Numero_club NOT IN ('0', '0000')
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
-            AND lc.Comite_reg <> ''";
+            AND lc.Comite_reg <> ''
+            GROUP BY lc.Numero_comite_reg
+            ON DUPLICATE KEY UPDATE Libelle = VALUES(Libelle)";
         $this->connection->executeStatement($sql, [$season]);
     }
 
