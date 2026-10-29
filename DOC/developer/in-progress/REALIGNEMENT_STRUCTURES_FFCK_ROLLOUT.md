@@ -14,7 +14,7 @@ vocabulaire [GLOSSARY.md](../../../GLOSSARY.md) · tickets [.scratch/realignemen
 
 | Fichier | Rôle |
 |---|---|
-| `2026-10-29_realignement_structures_ffck_controle.sql` | Requête de contrôle, **lecture seule**. Une ligne par indicateur, colonne `ecarts` |
+| `2026-10-29_realignement_structures_ffck_controle.sql` | Requête de contrôle, **lecture seule**. Une ligne par indicateur, colonne `gaps` ; tant que le script n'est pas passé, liste des codes compétition à renommer |
 | `2026-10-29_realignement_structures_ffck.sql` | Script de remise à plat. **Une transaction**, **garde-fou** avant toute écriture, **rejouable** sans effet |
 
 **Règles** :
@@ -23,9 +23,15 @@ vocabulaire [GLOSSARY.md](../../../GLOSSARY.md) · tickets [.scratch/realignemen
   recalculer les libellés : l'import vide les noms de structures de `kp_licence` à la fin de chaque exécution.
 - **Toujours un dump juste avant le script.** C'est le seul retour arrière (§ 6).
 - Si le garde-fou arrête le script (`ERROR 1644 (45000) … Garde-fou`), **rien n'a été modifié** : noter la liste
-  affichée (`garde_fou | code`), **ne pas forcer**, compléter la table de correspondance dans un correctif, puis reprendre.
+  affichée (`blocker | code`), **ne pas forcer**, compléter la table de correspondance dans un correctif, puis reprendre.
 - Le renommage des codes compétition ne s'applique qu'une fois par base. Repère : ligne
   `Remise à plat structures FFCK` dans `kp_journal` (indicateur « Remise à plat appliquée »).
+- **Codes à renommer** : le script renumérote tout code `REGnn…`/`T-Rnn…`/`CRnn` dont `nn` est un numéro
+  d'Ancienne ligue, **quelle que soit sa date de création**. Un code créé après 2016 avec le numéro d'une CR
+  actuelle (ex. un `REG03…` breton) serait renuméroté à tort (`REG09…`). Avant chaque (S), relire la dernière liste
+  de (C) « avant » (`renamed_prefix | code | new_code | seasons | latest_label`) : chaque libellé doit nommer la
+  région de l'**Ancienne ligue** (`REG07…` = Bretagne, `REG14…` = Île-de-France…). Un libellé d'une autre région
+  → **ne pas lancer**, ajouter le code aux exceptions de l'ADR 0001 dans un correctif, puis reprendre.
 - **Logos** : les engagements des Anciennes ligues pointent désormais vers `KIP/logo/CRnn-logo.png` (code de la
   Sélection régionale). Les fichiers d'images sont hors base (`HOST_MEDIA_PATH`) : il faut les réaffecter (étape
   « logos » de chaque environnement), sinon les équipes bretonnes affichent l'ancien `CR03-logo.png` (Aquitaine).
@@ -77,10 +83,10 @@ Base `my_database` de `kpi_db`, code api2 de la branche d'intégration `feature/
 | 1 | (D) vers un dossier local, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` (≈ 24 Mo gz) | ☑ |
 | 2 | `docker exec kpi_api2 php bin/console app:import-pce` | `[OK] Import terminé`, `Saison: 2026` ; CD 269 → 270, Clubs 1 410 → 1 437 | ☑ |
 | 3 | (C) avant | Repères dev du tableau ci-dessous, colonne « avant » | ☑ |
-| 4 | (S) | `Remise à plat terminée`, `saison_pce 2026`, `selections_regionales 14`, `codes_renommes 57`, `✔ … appliqué` (< 1 s) | ☑ |
+| 4 | (S) | `Remise à plat terminée`, `pce_season 2026`, `regional_selections 14`, `renamed_codes 57`, `✔ … appliqué` (< 1 s) | ☑ |
 | 5 | (C) après | Colonne « après » : tout à 0 sauf la ligne expliquée sous le tableau, « Remise à plat appliquée » = 1 | ☑ |
-| 6 | (S) une 2ᵉ fois, avec `CHECKSUM TABLE` des tables touchées avant/après | `codes_renommes 0`, checksums identiques (aucune modification) | ☑ |
-| 7 | Garde-fou (sur une copie de la base) : ajouter un pseudo-CD/pseudo-club `CR30` et une compétition `REG31X`, puis (S) | Tableau `garde_fou` listant `REG31X` et `CR30`, `ERROR 1644 (45000) … Garde-fou`, checksums inchangés | ☑ |
+| 6 | (S) une 2ᵉ fois, avec `CHECKSUM TABLE` des tables touchées avant/après | `renamed_codes 0`, checksums identiques (aucune modification) | ☑ |
+| 7 | Garde-fou (sur une copie de la base) : ajouter un pseudo-CD/pseudo-club `CR30` et une compétition `REG31X`, puis (S) | Tableau `blocker` listant `REG31X` et `CR30`, `ERROR 1644 (45000) … Garde-fou`, checksums inchangés | ☑ |
 | 8 | Transaction (sur une copie) : trigger qui fait échouer l'insertion finale dans `kp_journal`, puis (S) | `ERROR 1644 … panne simulee`, checksums inchangés, `@@foreign_key_checks = 1` | ☑ |
 | 9 | (L) | Copie des logos ; affiche « pas de logo » pour CR01, CR02, CR04, CR10, CR12, CR24 (fichiers source absents en dev) | ☑ |
 | 10 | app4 `https://kpi.localhost/admin2` → Compétitions | `REG03` = « Championnat Régional Bretagne », code de référence `REG03` ; plus de `REG14`/`REG17`/`T-R18` | ☑ |
@@ -151,15 +157,16 @@ cd /data/kpi_preprod
 | 3 | `docker exec kpi_preprod_api2 php bin/console app:import-pce` | `[OK] Import terminé`, `Saison: <année>` | ☐ |
 | 4 | (D) avec `<dossier>` = `/data/backups/kpi_preprod/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; noter le nom du fichier : ______ | ☐ |
 | 5 | (C) avant | Proche des repères dev (§ 1) ; « Remise à plat appliquée » = 0 | ☐ |
-| 6 | (S) | `Remise à plat terminée` … `✔ … appliqué`. **Si garde-fou** : rien n'est modifié, voir « Règles » | ☐ |
-| 7 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 | ☐ |
-| 8 | (S) une 2ᵉ fois | `codes_renommes 0` ; (C) identique à l'étape 7 | ☐ |
-| 9 | (L) | Copie faite ; noter les Sélections sans logo : ______ | ☐ |
-| 10 | 🌐 `https://preprod.kayak-polo.info/admin2` → Compétitions | `REG03` « Championnat Régional Bretagne », `REG07` « … Île-de-France » ; plus de `REG14`, `REG17`, `REG18` | ☐ |
-| 11 | 🌐 app4 → Équipes → une compétition nationale jeunes (`N15`, `CF15`…) | Les équipes de sélection portent un club `CRnn` au libellé de la CR actuelle et le bon logo | ☐ |
-| 12 | 🌐 Site public / app2 : une page de compétition `REG03` | Classement et matchs affichés, logos corrects | ☐ |
-| 13 | 🌐 app4 → Opérations → « changer un code compétition » sur une compétition de test, puis retour au code d'origine | OK, responsables et filtres suivent (ticket 03) | ☐ |
-| 14 | Le lendemain, après l'import PCE nocturne : (C) | Toujours à 0 écart (l'import corrigé ne recrée ni pseudo-club ni écart) | ☐ |
+| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») | Chaque `latest_label` nomme la région de l'Ancienne ligue de son `renamed_prefix` (repère dev : 55 codes, aucun hors région) | ☐ |
+| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué`. **Si garde-fou** : rien n'est modifié, voir « Règles » | ☐ |
+| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☐ |
+| 9 | (S) une 2ᵉ fois | `renamed_codes 0` ; (C) identique à l'étape 8 | ☐ |
+| 10 | (L) | Copie faite ; noter les Sélections sans logo : ______ | ☐ |
+| 11 | 🌐 `https://preprod.kayak-polo.info/admin2` → Compétitions | `REG03` « Championnat Régional Bretagne », `REG07` « … Île-de-France » ; plus de `REG14`, `REG17`, `REG18` | ☐ |
+| 12 | 🌐 app4 → Équipes → une compétition nationale jeunes (`N15`, `CF15`…) | Les équipes de sélection portent un club `CRnn` au libellé de la CR actuelle et le bon logo | ☐ |
+| 13 | 🌐 Site public / app2 : une page de compétition `REG03` | Classement et matchs affichés, logos corrects | ☐ |
+| 14 | 🌐 app4 → Opérations → « changer un code compétition » sur une compétition de test, puis retour au code d'origine | OK, responsables, groupe et filtres suivent (ticket 03) | ☐ |
+| 15 | Le lendemain, après l'import PCE nocturne : (C) | Toujours à 0 écart (l'import corrigé ne recrée ni pseudo-club ni écart) | ☐ |
 
 ---
 
@@ -210,13 +217,14 @@ Même déroulé qu'en préprod. Le code api2 doit déjà être en prod :
 | 3 | `docker exec kpi_api2 php bin/console app:import-pce` | `[OK] Import terminé` | ☐ |
 | 4 | (D) avec `<dossier>` = `/data/backups/kpi/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; fichier : ______ | ☐ |
 | 5 | (C) avant | Proche des chiffres de préprod (§ 3.5) | ☐ |
-| 6 | (S) | `Remise à plat terminée` … `✔ … appliqué` | ☐ |
-| 7 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 | ☐ |
-| 8 | (S) une 2ᵉ fois | `codes_renommes 0`, (C) inchangé | ☐ |
-| 9 | (L) | Copie faite ; Sélections sans logo : ______ ; téléverser leur logo dans app4 | ☐ |
-| 10 | 🌐 `https://kayak-polo.info/admin2` : mêmes vérifications que § 3.10 à 3.12 | OK | ☐ |
-| 11 | 🌐 `https://kayak-polo.info/api2/doc` et une page publique de compétition régionale | Réponses 200, données affichées | ☐ |
-| 12 | Le lendemain : (C) après l'import nocturne | toujours à 0 écart | ☐ |
+| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») ; comparer à celle de la préprod | Chaque `latest_label` nomme la région de l'Ancienne ligue ; tout code absent de la liste préprod (créé depuis) vérifié | ☐ |
+| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué` | ☐ |
+| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☐ |
+| 9 | (S) une 2ᵉ fois | `renamed_codes 0`, (C) inchangé | ☐ |
+| 10 | (L) | Copie faite ; Sélections sans logo : ______ ; téléverser leur logo dans app4 | ☐ |
+| 11 | 🌐 `https://kayak-polo.info/admin2` : mêmes vérifications que § 3.11 à 3.13 | OK | ☐ |
+| 12 | 🌐 `https://kayak-polo.info/api2/doc` et une page publique de compétition régionale | Réponses 200, données affichées | ☐ |
+| 13 | Le lendemain : (C) après l'import nocturne | toujours à 0 écart | ☐ |
 
 ---
 
