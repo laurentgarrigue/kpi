@@ -120,6 +120,32 @@ final class ImportPceTest extends ApiTestCase
         );
     }
 
+    public function testIgnoresTheNoClubAndInternationalLicenseesAndThoseOfOtherSeasons(): void
+    {
+        $this->seedLicensee(8821, '2999', '0000', '0000', 'CRP1');
+        $this->seedLicensee(8822, '2999', '0', '0000', 'CRP1');
+        $this->seedLicensee(8823, '2998', '3399', '3300', 'CRP1');
+
+        $this->importLicensees($this->licenseeLine(8824, '098001', 'CD098', 'CRP9', '98'));
+
+        self::assertSame([], $this->connection->fetchFirstColumn("SELECT Code FROM kp_club WHERE Code IN ('0', '0000', '3399', '9801')"));
+        self::assertSame([], $this->connection->fetchFirstColumn("SELECT Code FROM kp_cd WHERE Code IN ('0000', '9800')"));
+        self::assertSame([], $this->connection->fetchFirstColumn("SELECT Code FROM kp_cr WHERE Code IN ('CRP9', '98')"));
+    }
+
+    public function testLeavesTheStructuresAbsentFromThePceUntouched(): void
+    {
+        $this->connection->insert('kp_cr', ['Code' => 'CRP8', 'Libelle' => 'CR HORS PCE']);
+        $this->connection->insert('kp_cd', ['Code' => '3500', 'Libelle' => 'CD HORS PCE', 'Code_comite_reg' => 'CRP1']);
+        $this->connection->insert('kp_club', ['Code' => '3501', 'Libelle' => 'CLUB HORS PCE', 'Code_comite_dep' => '3300']);
+
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame('CR HORS PCE', $this->connection->fetchOne("SELECT Libelle FROM kp_cr WHERE Code = 'CRP8'"));
+        self::assertSame(['CD HORS PCE', 'CRP1'], array_values((array) $this->connection->fetchAssociative("SELECT Libelle, Code_comite_reg FROM kp_cd WHERE Code = '3500'")));
+        self::assertSame(['CLUB HORS PCE', '3300'], array_values((array) $this->connection->fetchAssociative("SELECT Libelle, Code_comite_dep FROM kp_club WHERE Code = '3501'")));
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');
@@ -149,12 +175,23 @@ final class ImportPceTest extends ApiTestCase
         self::assertFalse($this->connection->fetchOne("SELECT 1 FROM kp_cr WHERE Code IN ('CRP1', 'CRP2')"));
     }
 
-    private function licenseeLine(int $matric, string $clubNumber, string $cdNumber): string
+    private function licenseeLine(int $matric, string $clubNumber, string $cdNumber, string $crLabel = 'OUTRE-MER', string $crNumber = 'CRP3'): string
     {
         $department = substr($cdNumber, 2);
 
         return "$matric;OUTREMER;Test;D;2000-01-01;CLUB OUTRE-MER $department;$clubNumber;COMITE DEPARTEMENTAL OUTRE-MER $department;$cdNumber;"
-            . 'COMITE REGIONAL OUTRE-MER;CRP3;ACTIF;;;;OUI;OUI;Canoë Plus';
+            . "COMITE REGIONAL $crLabel;$crNumber;ACTIF;;;;OUI;OUI;Canoë Plus";
+    }
+
+    /** Licensee already in kp_licence, with its structure labels still filled in. */
+    private function seedLicensee(int $matric, string $season, string $clubNumber, string $cdNumber, string $crNumber): void
+    {
+        $this->connection->insert('kp_licence', [
+            'Matric' => $matric, 'Origine' => $season, 'Nom' => 'SEED', 'Prenom' => 'Test',
+            'Club' => 'CLUB SEED', 'Numero_club' => $clubNumber,
+            'Comite_dept' => 'CD SEED', 'Numero_comite_dept' => $cdNumber,
+            'Comite_reg' => 'CR SEED', 'Numero_comite_reg' => $crNumber,
+        ]);
     }
 
     private function importLicensees(string ...$lines): CommandTester
