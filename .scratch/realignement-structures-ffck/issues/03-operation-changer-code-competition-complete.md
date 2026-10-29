@@ -6,11 +6,11 @@
 
 **Status:** ready-for-agent
 
-- [ ] Les responsables de compétition (RC) suivent le renommage
-- [ ] Le code de référence des compétitions qui valait l'ancien code prend le nouveau
-- [ ] La liste des compétitions agrégées des compétitions multi-compétitions est mise à jour
-- [ ] Le filtre de compétitions des mandats utilisateur est mis à jour
-- [ ] En saison active, seules les références de la saison active changent (RC, compétitions agrégées) ; en toutes saisons, toutes
-- [ ] Le renommage reste atomique : un échec ne laisse aucune référence à moitié renommée
-- [ ] Test d'intégration de l'endpoint (requête authentifiée profil 1, comptes des fixtures) couvrant ces critères dans les deux modes
-- [ ] La suite de tests api2 et PHPStan passent
+- [x] Les responsables de compétition (RC) suivent le renommage
+- [x] Le code de référence des compétitions qui valait l'ancien code prend le nouveau
+- [x] La liste des compétitions agrégées des compétitions multi-compétitions est mise à jour
+- [x] Le filtre de compétitions des mandats utilisateur est mis à jour
+- [x] En saison active, seules les références de la saison active changent (RC, compétitions agrégées) ; en toutes saisons, toutes
+- [x] Le renommage reste atomique : un échec ne laisse aucune référence à moitié renommée
+- [x] Test d'intégration de l'endpoint (requête authentifiée profil 1, comptes des fixtures) couvrant ces critères dans les deux modes
+- [x] La suite de tests api2 et PHPStan passent

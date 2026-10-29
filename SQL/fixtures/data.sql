@@ -545,3 +545,24 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 -- Mandat de TDIV limité à SCC : avec l'en-tête X-Active-Mandate, SCC est permis et SCA ne l'est plus
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');
+
+-- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
+-- Consommé par tests/Integration/AdminChangeCompetitionCodeTest.php : le code TSTRN (saisons 2999 active et
+-- 2998 passée) est renommé ; chaque référence au code existe dans les deux saisons pour distinguer les deux modes.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('TSUPER', '', 'Super Admin Test', 'super@example.test', '', '', 1, '', '', '', '');   -- profil 1 : opérations d'administration
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`, `Statut`, `multi_competitions`) VALUES
+  ('TSTRN', '2999', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),  -- code de référence = son propre code
+  ('TSTRN', '2998', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTRB', '2999', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),           -- regroupée sous TSTRN
+  ('TSTRB', '2998', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTMU', '2999', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'ATT', '["TSTRN","TSTRB"]'),
+  ('TSTMU', '2998', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'END', '["TSTRN","TSTRB"]');
+INSERT INTO `kp_rc` (`Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric`) VALUES
+  (9801, 'TSTRN', '2999', 1, 9511),
+  (9802, 'TSTRN', '2998', 1, 9511);
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9801, 'TDIV', 'Mandat régional actif', 4, '|2999|', '|TSTRN|TSTRB|', NULL, '', ''),
+  (9802, 'TDIV', 'Mandat régional passé', 4, '|2998|', '|TSTRN|TSTRB|', NULL, '', '');
+-- ---------------------------------------------------------------- fin ticket RSF-03
