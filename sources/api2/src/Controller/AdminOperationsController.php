@@ -1103,6 +1103,8 @@ class AdminOperationsController extends AbstractController
                     "%|$sourceCode|%"
                 ]);
 
+                $this->renameCompetitionReferences($sourceCode, $targetCode, null);
+
                 $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=1");
                 $this->connection->commit();
             } catch (\Exception $e) {
@@ -1155,6 +1157,8 @@ class AdminOperationsController extends AbstractController
                     "%|$activeSeason|%"
                 ]);
 
+                $this->renameCompetitionReferences($sourceCode, $targetCode, $activeSeason);
+
                 $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS=1");
                 $this->connection->commit();
             } catch (\Exception $e) {
@@ -1164,4 +1168,41 @@ class AdminOperationsController extends AbstractController
         }
     }
 
+    /**
+     * Rename the competition code in the references that hold it besides competitions, teams, game days
+     * and user filters. A null season renames them in every season.
+     */
+    private function renameCompetitionReferences(string $sourceCode, string $targetCode, ?string $season): void
+    {
+        $seasonCondition = $season === null ? '' : ' AND Code_saison = ?';
+        $seasonParams = $season === null ? [] : [$season];
+
+        // Competition managers (RC)
+        $this->connection->executeStatement(
+            "UPDATE kp_rc SET Code_competition = ? WHERE Code_competition = ?$seasonCondition",
+            [$targetCode, $sourceCode, ...$seasonParams]
+        );
+
+        // Reference (grouping) code of the competitions grouped under the old code
+        $this->connection->executeStatement(
+            "UPDATE kp_competition SET Code_ref = ? WHERE Code_ref = ?$seasonCondition",
+            [$targetCode, $sourceCode, ...$seasonParams]
+        );
+
+        // Aggregated competitions of multi-competitions (JSON array of codes)
+        $this->connection->executeStatement(
+            "UPDATE kp_competition SET multi_competitions = REPLACE(multi_competitions, ?, ?)
+             WHERE multi_competitions LIKE ?$seasonCondition",
+            ["\"$sourceCode\"", "\"$targetCode\"", "%\"$sourceCode\"%", ...$seasonParams]
+        );
+
+        // Competition filter of user mandates (same pipe format and season rule as the user filters)
+        $mandateSeasonCondition = $season === null ? '' : " AND (filtre_saison LIKE ? OR filtre_saison = '')";
+        $mandateSeasonParams = $season === null ? [] : ["%|$season|%"];
+        $this->connection->executeStatement(
+            "UPDATE kp_user_mandat SET filtre_competition = REPLACE(filtre_competition, ?, ?)
+             WHERE filtre_competition LIKE ?$mandateSeasonCondition",
+            ["|$sourceCode|", "|$targetCode|", "%|$sourceCode|%", ...$mandateSeasonParams]
+        );
+    }
 }

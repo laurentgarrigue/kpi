@@ -583,3 +583,21 @@ DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_c
   `kp_cms_redirect`, `kp_form`, `kp_form_field`, `kp_form_entry`, `kp_mail_log`;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
+-- Responsables de compétition (RC), suivis par le renommage d'un code compétition.
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `kp_rc`;
+CREATE TABLE `kp_rc` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Code_competition` varchar(10) DEFAULT NULL,
+  `Code_saison` varchar(8) NOT NULL,
+  `Ordre` int(11) NOT NULL,
+  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+-- Échec provoqué (test d'atomicité) : renommer en TSTFAIL viole cette contrainte au DERNIER UPDATE du renommage
+-- (filtres de mandat), après les compétitions, engagements, journées et RC. Absente de la prod.
+ALTER TABLE `kp_user_mandat` ADD CONSTRAINT `chk_fixture_rename_failure` CHECK (`filtre_competition` NOT LIKE '%|TSTFAIL|%');
+SET FOREIGN_KEY_CHECKS = 1;
+-- ---------------------------------------------------------------- fin ticket RSF-03
