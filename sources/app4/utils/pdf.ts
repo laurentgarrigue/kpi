@@ -74,6 +74,121 @@ export function legacyAdminPdf(href: string, legacyBaseUrl: string): { page: str
   return { page: match[1]!, query: Object.fromEntries(url.searchParams.entries()) }
 }
 
+type LegacyQuery = Record<string, string>
+
+/** Names of the parameters across the legacy pages, mapped to the parameters of api2 (§ 6.1). */
+const LEGACY_PARAMETERS: Record<string, string> = {
+  season: 'season', S: 'season',
+  compet: 'competition', Compet: 'competition', codeCompet: 'competition',
+  team: 'team', equipe: 'team',
+  idJournee: 'gameday', idSelJournee: 'gameday',
+  idEvenement: 'event', Evt: 'event',
+  listMatch: 'games',
+  filtreJour: 'date', filtreTerrain: 'pitch', filtreTour: 'round',
+  lang: 'lang', tz: 'tz',
+}
+
+/** Legacy admin pages already replaced by a document of api2: document and options (§ 7). */
+const MIGRATED_LEGACY_PAGES: Record<string, { document: AdminPdfDocument, options: LegacyQuery }> = {
+  'FeuilleGroups.php': { document: 'teams-groups', options: {} },
+  'FeuillePresence.php': { document: 'presence', options: {} },
+  'FeuillePresenceEN.php': { document: 'presence', options: { lang: 'en' } },
+  'FeuillePresencePhoto.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresencePhoto2.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresencePhotoRef.php': { document: 'presence', options: { view: 'photos' } },
+  'FeuillePresenceCat.php': { document: 'presence', options: { view: 'category' } },
+  'FeuillePresenceU21.php': { document: 'presence', options: { view: 'category', category: 'U21' } },
+  'FeuillePresenceNaissance.php': { document: 'presence', options: { view: 'birthyear' } },
+  'FeuillePresenceVisa.php': { document: 'presence', options: { visa: '1' } },
+  'FeuilleControle.php': { document: 'scrutineering-control', options: {} },
+  'FeuilleControleEN.php': { document: 'scrutineering-control', options: { lang: 'en' } },
+  'FeuilleInstances.php': { document: 'instances', options: {} },
+  'FeuilleCltChpt.php': { document: 'ranking', options: {} },
+  'FeuilleCltNiveau.php': { document: 'ranking', options: {} },
+  'FeuilleCltMulti.php': { document: 'ranking', options: {} },
+  'FeuilleCltChptDetail.php': { document: 'ranking-team-detail', options: {} },
+  'FeuilleCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
+  'FeuilleCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
+  'FeuilleCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
+  'FeuilleListeMatchs.php': { document: 'games-list', options: {} },
+  'FeuilleListeMatchsEN.php': { document: 'games-list', options: { lang: 'en' } },
+  'FeuilleMatchMulti.php': { document: 'scoresheet', options: {} },
+  'FeuilleCards.php': { document: 'cards', options: {} },
+}
+
+/** Public legacy pages (PdfXxx.php at the root) already replaced by a public document of api2. */
+const MIGRATED_PUBLIC_PAGES: Record<string, { document: string, options: LegacyQuery }> = {
+  'PdfCltChpt.php': { document: 'ranking', options: {} },
+  'PdfCltNiveau.php': { document: 'ranking', options: {} },
+  'PdfCltMulti.php': { document: 'ranking', options: {} },
+  'PdfCltChptDetail.php': { document: 'ranking-team-detail', options: {} },
+  'PdfCltNiveauDetail.php': { document: 'ranking-team-detail', options: {} },
+  'PdfCltNiveauJournee.php': { document: 'ranking-gameday-detail', options: {} },
+  'PdfCltNiveauPhase.php': { document: 'ranking-phases', options: {} },
+  'PdfListeMatchs.php': { document: 'games-list', options: {} },
+  'PdfListeMatchsEN.php': { document: 'games-list', options: { lang: 'en' } },
+  'PdfListeMatchs4TerrainsEn.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs4TerrainsEn3.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs5TerrainsEnTeams.php': { document: 'games-grid', options: { view: 'teams' } },
+  'PdfListeMatchs4Terrains.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs4TerrainsEn2.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs4TerrainsEn4.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfListeMatchs5TerrainsEn.php': { document: 'games-grid', options: { view: 'phases' } },
+  'PdfQrCodes.php': { document: 'qrcodes', options: {} },
+  'PdfQrCodeApp.php': { document: 'qrcode-app', options: {} },
+}
+
+const LEGACY_PUBLIC_PDF = /^\/(Pdf[A-Za-z0-9]+\.php)$/
+
+function apiQuery(query: LegacyQuery, options: LegacyQuery): LegacyQuery {
+  const parameters: LegacyQuery = {}
+  for (const [name, value] of Object.entries(query)) {
+    const target = LEGACY_PARAMETERS[name]
+    if (target && value !== '' && value !== '%') {
+      parameters[target] = value
+    }
+  }
+
+  return { ...parameters, ...options }
+}
+
+/**
+ * Document of api2 replacing a legacy admin page, with its query, or null while the page is not migrated. Links
+ * still written as legacy URLs open the new document; unknown legacy parameters are dropped.
+ */
+export function migratedLegacyPdf(page: string, query: LegacyQuery): { document: AdminPdfDocument, query: LegacyQuery } | null {
+  const migrated = MIGRATED_LEGACY_PAGES[page]
+
+  return migrated ? { document: migrated.document, query: apiQuery(query, migrated.options) } : null
+}
+
+/**
+ * URL of a public PDF: the public document of api2 replacing a legacy `PdfXxx.php` page once migrated, else the
+ * legacy URL unchanged.
+ *
+ * @param href absolute URL of the legacy public PDF
+ */
+export function publicPdfHref(href: string, legacyBaseUrl: string, api2BaseUrl: string): string {
+  let url: URL
+  try {
+    url = new URL(href)
+  }
+  catch {
+    return href
+  }
+  const base = new URL(legacyBaseUrl)
+  const prefix = base.pathname.replace(/\/$/, '')
+  const page = url.origin === base.origin && url.pathname.startsWith(prefix)
+    ? LEGACY_PUBLIC_PDF.exec(url.pathname.slice(prefix.length))?.[1]
+    : undefined
+  const migrated = page ? MIGRATED_PUBLIC_PAGES[page] : undefined
+  if (!migrated) {
+    return href
+  }
+
+  return publicPdfUrl(api2BaseUrl, migrated.document, apiQuery(Object.fromEntries(url.searchParams.entries()), migrated.options))
+}
+
 /** Public PDF of api2 (published data, no authentication): plain link, cacheable (§ 6.1). */
 export function publicPdfUrl(api2BaseUrl: string, document: string, query: Record<string, string | number>): string {
   const params = new URLSearchParams(Object.entries(query).map(([key, value]) => [key, String(value)]))

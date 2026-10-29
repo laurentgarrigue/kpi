@@ -50,7 +50,7 @@ final class PdfCatalog
     private const OPTION_ROLES = [
         self::PRESENCE => [
             'visa' => 'ROLE_ORGANIZER',
-            'birthdate' => 'ROLE_ADMIN',
+            'view=birthyear' => 'ROLE_ADMIN',
             'category=U21' => 'ROLE_ORGANIZER',
         ],
     ];

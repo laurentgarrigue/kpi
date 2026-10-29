@@ -22,21 +22,16 @@ describe('pdfUrl (D-P2-2)', () => {
       .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=CMU&lang=en')
   })
 
-  it('CMP-12: the progress of a cup stays on the legacy PDF until ranking-phases is migrated', () => {
+  it('CMP-12: the PDF of a cup is its ranking by phase, from api2', () => {
     expect(pdfUrl({ kind: 'ranking', type: 'CP', season: '2026', competition: 'CF' }, { ...context, locale: 'en' }))
-      .toBe('https://www.kayak-polo.info/PdfCltNiveauPhase.php?S=2026&Compet=CF&lang=en')
+      .toBe('https://www.kayak-polo.info/api2/pdf/ranking-phases?season=2026&competition=CF&lang=en')
   })
 
-  it('AGG-04: game list PDF for competitions or for an event, English file under /en', () => {
+  it('AGG-04: game list PDF of api2 for competitions or for an event, in the language of the page', () => {
     expect(pdfUrl({ kind: 'games', season: '2026', competitions: ['N1H', 'N2H'] }, context))
-      .toBe('https://www.kayak-polo.info/PdfListeMatchs.php?S=2026&Compet=N1H,N2H')
-    expect(pdfUrl({ kind: 'games', event: 77 }, { ...context, locale: 'en' }))
-      .toBe('https://www.kayak-polo.info/PdfListeMatchsEN.php?idEvenement=77')
-  })
-
-  it('CMP-12: score sheet of a game', () => {
-    expect(pdfUrl({ kind: 'gameSheet', game: 9401 }, context))
-      .toBe('https://www.kayak-polo.info/PdfMatchMulti.php?listMatch=9401&lang=fr')
+      .toBe('https://www.kayak-polo.info/api2/pdf/games-list?season=2026&competition=N1H,N2H&lang=fr')
+    expect(pdfUrl({ kind: 'games', season: '2026', event: 77 }, { ...context, locale: 'en' }))
+      .toBe('https://www.kayak-polo.info/api2/pdf/games-list?season=2026&event=77&lang=en')
   })
 })
 

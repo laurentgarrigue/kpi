@@ -195,6 +195,269 @@ final class PdfEndpointsTest extends ApiTestCase
         $this->requestAs('TSCRUTA', 'POST', '/admin/pdf/legacy-link', ['page' => 'FeuilleCards.php', 'query' => ['Compet' => 'SCA', 'S' => '2997']], Response::HTTP_FORBIDDEN);
     }
 
+    // ------------------------------------------------------------------ personal data (phase 2, § 7.2)
+
+    public function testPresenceSheetOfEveryTeamWithPlayersInTheirOrder(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/presence?season=2997&competition=SCA', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        foreach (['Scrut Alpha', 'Scrut Bravo', 'Capitaine', 'Coach', 'Bravo', 'Document interne'] as $text) {
+            self::assertStringContainsString($text, $html . $this->gotenberg()->footer);
+        }
+        self::assertLessThan(strpos($html, 'Coach'), strpos($html, 'Joueur'), 'players before the staff');
+        self::assertStringNotContainsString('Germany Men', $html, 'a team without players has no page');
+    }
+
+    public function testPdfAuth04PresenceIsLimitedToTheClubsOfTheUser(): void
+    {
+        // TCLUB: profile 7 limited to the club C002 — 9382 is C002, 9381 is C001.
+        $this->pdfAs('TCLUB', '/admin/pdf/presence?season=2997&competition=SCA', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Scrut Bravo', $html);
+        self::assertStringNotContainsString('Scrut Alpha', $html);
+
+        $this->pdfAs('TCLUB', '/admin/pdf/presence?season=2997&competition=SCA&team=9382', Response::HTTP_OK);
+        $this->pdfAs('TCLUB', '/admin/pdf/presence?season=2997&competition=SCA&team=9381', Response::HTTP_FORBIDDEN);
+    }
+
+    public function testPdfAuth09PresenceOptionsHaveTheirOwnRole(): void
+    {
+        $this->pdfAs('TCLUB', '/admin/pdf/presence?season=2997&competition=SCA&visa=1', Response::HTTP_FORBIDDEN, 'I2');
+        $this->pdfAs('TDIV', '/admin/pdf/presence?season=2997&competition=SCA&visa=1', Response::HTTP_OK);
+        self::assertStringContainsString('Visa', (string) $this->gotenberg()->html);
+
+        $this->pdfAs('TDIV', '/admin/pdf/presence?season=2997&competition=SCA&view=birthyear', Response::HTTP_FORBIDDEN);
+        $this->pdfAs('TADMIN', '/admin/pdf/presence?season=2997&competition=SCA&view=birthyear', Response::HTTP_OK);
+        self::assertStringContainsString('2980', (string) $this->gotenberg()->html);
+
+        $this->pdfAs('TCLUB', '/admin/pdf/presence?season=2997&competition=SCA&view=category&category=U21', Response::HTTP_FORBIDDEN);
+        $this->pdfAs('TDIV', '/admin/pdf/presence?season=2997&competition=SCA&view=category&category=U21', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('15/03/2980', $html, 'born in 2980: under 21 in 2997, with the birth date');
+        self::assertStringNotContainsString('Capitaine', $html, 'no birth date: not listed');
+
+        $this->pdfAs('TADMIN', '/admin/pdf/presence?season=2997&competition=SCA&view=unknown', Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testPdfAuth05ScrutineerGetsTheControlSheetOfItsCompetitions(): void
+    {
+        $this->pdfAs('TSCRUTA', '/admin/pdf/scrutineering-control?season=2997&competition=SCA', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Feuille de contrôle', $html);
+        self::assertStringContainsString('Sécurité', $html, 'status 3 of the player 9512');
+        self::assertStringContainsString('Encadrement', $html, 'staff after the players');
+        self::assertStringContainsString('Scrut Bravo', $html, 'every team, whatever the club');
+
+        $this->pdfAs('TSCRUTA', '/admin/pdf/presence?season=2997&competition=SCA&team=9381', Response::HTTP_OK);
+        $this->pdfAs('TSCRUTA', '/admin/pdf/scrutineering-control?season=2997&competition=SCB', Response::HTTP_FORBIDDEN, 'out of its competitions');
+        $this->pdfAs('TDIV', '/admin/pdf/scrutineering-control?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'I1');
+        $this->pdfAs('TSCRUTA', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9271', Response::HTTP_FORBIDDEN);
+    }
+
+    public function testRefereesPoolIsForAdministratorsOnly(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/referees-pool?season=2997&lang=en', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Referees pool', $html);
+        self::assertStringContainsString('France', $html);
+        self::assertStringContainsString('NAT-B', $html);
+
+        $this->pdfAs('TDIV', '/admin/pdf/referees-pool?season=2997', Response::HTTP_FORBIDDEN);
+    }
+
+    public function testInstancesOfAGamedayInThePerimeterOfTheMandate(): void
+    {
+        $this->pdfAs('TDIV', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9271', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('DELEGUE Test', $html);
+        self::assertStringNotContainsString('9514', $html, 'licence numbers are never printed');
+        self::assertStringContainsString('01/05/2997', $html);
+
+        $this->pdfAs('TDIV', '/admin/pdf/instances?season=2997&competition=SCA', Response::HTTP_BAD_REQUEST, 'gameday required');
+        $this->pdfAs('TDIV', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9272', Response::HTTP_NOT_FOUND, 'gameday of another competition');
+        // Mandate 9702 of TDIV: gameday 9272 only.
+        $this->pdfAs('TDIV', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9271', Response::HTTP_FORBIDDEN, mandate: 9702);
+        $this->pdfAs('TCLUB', '/admin/pdf/instances?season=2997&competition=SCA&gameday=9271', Response::HTTP_OK, 'ROLE_VIEWER');
+    }
+
+    // ------------------------------------------------------------------ rankings (phase 3, § 7.4)
+
+    public function testPublicRankingTeamDetailShowsThePublishedGamesOfEachTeam(): void
+    {
+        $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('class="theme-public"', $html);
+        self::assertStringContainsString('1. Equipe Alpha', $html, 'published ranking');
+        self::assertStringContainsString('01/03/2999 - Lacville', $html);
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringNotContainsString('pdf-watermark', $html);
+    }
+
+    public function testPublicRankingByGamedayAndByPhase(): void
+    {
+        $this->client->request('GET', '/pdf/ranking-gameday-detail?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Journée 1', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/ranking-phases?season=2999&competition=RCP&lang=en');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Poule A</h2>', $html, 'pool: its ranking');
+        self::assertStringNotContainsString('Poule B</h2>', $html, 'pool without ranking');
+        self::assertStringContainsString('2 - 1', $html, 'elimination phase: its games');
+        self::assertLessThan(strpos($html, 'Finale</h2>'), strpos($html, 'Poule A</h2>'), 'pools first');
+
+        $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RNP');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'competition not published');
+    }
+
+    public function testPdfData02AdminRankingIsTheComputedOneMarkedProvisional(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/ranking?season=2999&competition=RCH', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('class="theme-admin"', $html);
+        self::assertStringContainsString('Provisoire', $html);
+        self::assertLessThan(strpos($html, 'Equipe Alpha'), strpos($html, 'Equipe Delta'), 'computed: Delta first');
+
+        $this->pdfAs('TADMIN', '/admin/pdf/ranking-team-detail?season=2999&competition=RCH', Response::HTTP_OK);
+        self::assertStringContainsString('1. Equipe Delta', (string) $this->gotenberg()->html);
+        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published yet included');
+
+        $this->pdfAs('TCLUB', '/admin/pdf/ranking?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'I5: computed ranking for profiles 1–6');
+    }
+
+    public function testTiebreakJustificationIsRenderedByGotenberg(): void
+    {
+        $this->client->request('GET', '/admin/rankings/justification?season=2999&competition=RCH&format=pdf&locale=en', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN'),
+        ]);
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame('application/pdf', $response->headers->get('Content-Type'));
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Tie-break justification', $html);
+        self::assertStringContainsString('Equipe Bravo', $html, 'Bravo and Charlie are level on points');
+    }
+
+    // ------------------------------------------------------------------ games (phase 4, § 7.3)
+
+    public function testPdfData03PublicGameListOnlyHasPublishedGames(): void
+    {
+        $this->client->request('GET', '/pdf/games-list?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringContainsString('ARBITRE Un', $html);
+        self::assertStringNotContainsString('(C001)', $html, 'what is stored between parentheses is not published');
+
+        $this->client->request('GET', '/pdf/games-list?season=2999&competition=RCH,RCP');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Equipe Echo', (string) $this->gotenberg()->html, 'several competitions');
+
+        $this->client->request('GET', '/pdf/games-list?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $this->client->request('GET', '/pdf/games-list?season=2999&event=78');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'event not published');
+        $this->client->request('GET', '/pdf/games-list?season=2999');
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode(), 'a scope is required');
+    }
+
+    public function testPdfAuth10AdminGameListFollowsTheVisibilityOfTheGamesPage(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
+        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published included');
+
+        $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('3 - 1', $html);
+        self::assertStringNotContainsString('5 - 0', $html, 'profile 7: published games only');
+
+        $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH,RCP', Response::HTTP_FORBIDDEN, 'RCP out of the perimeter');
+    }
+
+    public function testPdfData05PitchGridHasOneColumnPerPitchUsed(): void
+    {
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Terrain 1</th>', $html);
+        self::assertStringContainsString('Terrain 2</th>', $html);
+        self::assertStringNotContainsString('Terrain 3</th>', $html);
+        self::assertStringContainsString('Equipe Alpha - Equipe Bravo', $html, 'view teams by default');
+
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH&view=phases');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Journée 1', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/games-grid?season=2999&competition=RCH&view=pitches');
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode(), 'PDF-DATA-07');
+
+        $this->pdfAs('TADMIN', '/admin/pdf/games-grid?season=2999&competition=RCH', Response::HTTP_NOT_FOUND, 'public version only');
+    }
+
+    public function testScoresheetForTheScoringTable(): void
+    {
+        $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999&games=9401', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Feuille de marque', $html);
+        self::assertStringContainsString('ALPHA (Cap)', $html, 'team roster when the game has none');
+        self::assertStringContainsString('ALPHA (Entraîneur)', $html);
+        self::assertStringNotContainsString('Inactif', $html, 'inactive players are not on the sheet');
+        self::assertStringContainsString('ID #9401', $html);
+
+        $this->pdfAs('TCLUB', '/admin/pdf/scoresheet?season=2999&games=9401', Response::HTTP_FORBIDDEN, 'game out of the perimeter');
+        $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999', Response::HTTP_BAD_REQUEST, 'a scope is required');
+    }
+
+    // ------------------------------------------------------------------ stats, cards, QR codes (phase 5, § 7.5)
+
+    public function testCardFollowUpCountsTheCardsOfTheSeason(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/cards?season=2999&competition=RCH', Response::HTTP_OK);
+
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Suivi des cartons', $html);
+        self::assertStringContainsString('8 - ALPHA Bob', $html);
+        $this->pdfAs('TCLUB', '/admin/pdf/cards?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'ROLE_ORGANIZER');
+    }
+
+    public function testQrCodesOfAPublishedEvent(): void
+    {
+        $this->client->request('GET', '/pdf/qrcodes?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('/events/77/games', (string) $this->gotenberg()->html);
+        self::assertArrayHasKey('qrcode-2.svg', $this->gotenberg()->files, 'games and progress');
+
+        $this->client->request('GET', '/pdf/qrcode-app?season=2999&event=77');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('/event/77', (string) $this->gotenberg()->html);
+
+        $this->client->request('GET', '/pdf/qrcodes?season=2999&event=78');
+        self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'event not published');
+    }
+
+    public function testStatsExportIsRenderedByGotenberg(): void
+    {
+        $this->client->request('GET', '/admin/stats/export/pdf?season=2999&type=Buteurs&competitions[]=RCH&title=Scorers&locale=en', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN'),
+        ]);
+        $response = $this->client->getResponse();
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode(), (string) $response->getContent());
+        self::assertSame('application/pdf', $response->headers->get('Content-Type'));
+        self::assertStringContainsString('class="theme-admin"', (string) $this->gotenberg()->html);
+        self::assertStringContainsString('Scorers', (string) $this->gotenberg()->html);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private function pdfAs(string $userCode, string $uri, int $expectedStatus, string $message = '', ?int $mandate = null): Response

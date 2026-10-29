@@ -82,6 +82,7 @@ services:
             - LEGACY_DOCUMENT_ROOT=/var/www/html
             # Adresse du site public (app3) pour les liens des fichiers ICS (API_PUBLIC_TRANSVERSE.md § 3.2).
             - PUBLIC_SITE_URL=https://beta.${KPI_DOMAIN_NAME}
+            - APP2_URL=https://app.${KPI_DOMAIN_NAME}
             # Rendu PDF (DOC/specs/PDF_GOTENBERG.md) : Gotenberg de la stack, liens signés partagés avec le legacy.
             - GOTENBERG_URL=http://${APPLICATION_NAME}_gotenberg:3000
             - GOTENBERG_USER=${GOTENBERG_USER:-gotenberg}

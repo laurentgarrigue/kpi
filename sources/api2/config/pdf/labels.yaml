@@ -29,3 +29,141 @@ ranking.eliminated: { fr: 'Éliminé', en: 'Eliminated' }
 ranking.medal_1: { fr: 'Or', en: 'Gold' }
 ranking.medal_2: { fr: 'Argent', en: 'Silver' }
 ranking.medal_3: { fr: 'Bronze', en: 'Bronze' }
+ranking.team_detail_title: { fr: 'Classement - détail par équipe', en: 'Ranking - detail by team' }
+ranking.gameday_detail_title: { fr: 'Classement par journée', en: 'Ranking by gameday' }
+ranking.phases_title: { fr: 'Classement par phase', en: 'Ranking by phase' }
+ranking.no_game: { fr: 'Aucun match joué', en: 'No game played' }
+games.home: { fr: 'Équipe A', en: 'Team A' }
+games.score: { fr: 'Score', en: 'Score' }
+games.away: { fr: 'Équipe B', en: 'Team B' }
+games.list_title: { fr: 'Liste des matchs', en: 'Game list' }
+games.grid_title: { fr: 'Grille des terrains', en: 'Pitch schedule' }
+games.date: { fr: 'Date', en: 'Date' }
+games.time: { fr: 'Heure', en: 'Time' }
+games.competition: { fr: 'Compét.', en: 'Comp.' }
+games.phase: { fr: 'Phase | Match', en: 'Phase | Game' }
+games.pitch: { fr: 'Terrain', en: 'Pitch' }
+games.referee_1: { fr: 'Arbitre principal', en: 'First referee' }
+games.referee_2: { fr: 'Arbitre secondaire', en: 'Second referee' }
+# Players (presence and control sheets)
+player.number: { fr: 'N°', en: '#' }
+player.role: { fr: 'Statut', en: 'Status' }
+player.licence: { fr: 'Licence', en: 'Licence' }
+player.last_name: { fr: 'Nom', en: 'Family name' }
+player.first_name: { fr: 'Prénom', en: 'Given name' }
+player.category: { fr: 'Catég.', en: 'Cat.' }
+player.paddle: { fr: 'Pagaie', en: 'Paddle' }
+player.certificate: { fr: 'Certif. comp.', en: 'Med. cert.' }
+player.club: { fr: 'Club', en: 'Club' }
+player.referee: { fr: 'Arb.', en: 'Ref.' }
+player.team: { fr: 'Équipe', en: 'Team' }
+player.birthdate: { fr: 'Naissance', en: 'Birthdate' }
+player.birth_month: { fr: 'Mois', en: 'Month' }
+player.photo: { fr: 'Photo', en: 'Photo' }
+player.check: { fr: 'Vérif.', en: 'Check' }
+player.visa: { fr: 'Visa', en: 'Signature' }
+player.staff: { fr: 'Encadrement', en: 'Staff' }
+presence.title: { fr: 'Feuille de présence', en: 'Presence sheet' }
+presence.photos_title: { fr: 'Feuille de présence avec photos', en: 'Team roster' }
+presence.category_title: { fr: 'Présences par catégorie', en: 'Presence by category' }
+presence.u21_title: { fr: 'Présences U21', en: 'U21 presence' }
+presence.birthyear_title: { fr: 'Présences par année de naissance', en: 'Presence by year of birth' }
+presence.referees: { fr: 'Arbitres', en: 'Referees' }
+presence.no_player: { fr: 'Aucun joueur', en: 'No player' }
+# Equipment control
+control.title: { fr: 'Feuille de contrôle', en: 'Control sheet' }
+control.kayak: { fr: 'Kayak', en: 'Kayak' }
+control.vest: { fr: 'Gilet', en: 'Vest' }
+control.helmet: { fr: 'Casque', en: 'Helmet' }
+control.paddles: { fr: 'Nb pagaies', en: 'Paddles' }
+control.status_ok: { fr: 'OK', en: 'OK' }
+control.status_cosmetic: { fr: 'Cosmétique', en: 'Cosmetic' }
+control.status_safety: { fr: 'Sécurité', en: 'Safety' }
+control.status_technical: { fr: 'Technique', en: 'Technical' }
+# Referees pool
+referees_pool.title: { fr: 'Pool arbitres', en: 'Referees pool' }
+referees_pool.gender: { fr: 'Sexe', en: 'Gender' }
+referees_pool.qualification: { fr: 'Arbitrage', en: 'Refereeing' }
+referees_pool.none: { fr: 'Aucun arbitre actif', en: 'No active referee' }
+# Officials of a gameday (instances)
+instances.title: { fr: 'Instances', en: 'Officials' }
+instances.competition_officials: { fr: 'Comité de compétition', en: 'Competition committee' }
+instances.appeal_jury: { fr: "Jury d'appel", en: 'Appeal jury' }
+instances.dates: { fr: 'Dates', en: 'Dates' }
+instances.place: { fr: 'Lieu', en: 'Venue' }
+instances.competition_manager: { fr: 'Responsable de compétition', en: 'Competition manager' }
+instances.r1: { fr: "Responsable de l'organisation (R1)", en: 'Organisation manager (R1)' }
+instances.delegate: { fr: "Délégué Commission Nationale d'Activité", en: 'National commission delegate' }
+instances.chief_referee: { fr: 'Chef des arbitres', en: 'Chief referee' }
+instances.jury_president: { fr: 'Délégué CNA (président du jury)', en: 'Delegate (jury president)' }
+instances.athletes_representative: { fr: 'Représentant des compétiteurs', en: "Athletes' representative" }
+# Tie-break justification (computed ranking)
+tiebreak.title: { fr: 'Justification du départage', en: 'Tie-break justification' }
+tiebreak.goalaverage_particular: { fr: 'Goal-average particulier (FFCK RP KAP 2023-2026 art. 65)', en: 'Particular goal-average (FFCK RP KAP 2023-2026 art. 65)' }
+tiebreak.goalaverage_general: { fr: 'Goal-average général (ICF 2025)', en: 'General goal-average (ICF 2025)' }
+tiebreak.general: { fr: 'Classement général', en: 'Overall ranking' }
+tiebreak.separated: { fr: 'départagé', en: 'separated' }
+tiebreak.still_level: { fr: 'toujours à égalité', en: 'still level' }
+tiebreak.games: { fr: 'Matchs pris en compte', en: 'Games counted' }
+tiebreak.none: { fr: "Aucun groupe d'équipes à égalité de points : aucun départage à justifier.", en: 'No group of teams level on points: nothing to justify.' }
+# Scoresheet (official sheet, rubrics of FeuilleMatchMulti.php)
+scoresheet.title: { fr: 'Feuille de marque', en: 'Game report' }
+scoresheet.number: { fr: 'N°', en: '#' }
+scoresheet.coach: { fr: 'Entraîneur', en: 'Coach' }
+scoresheet.team: { fr: 'Équipe', en: 'Team' }
+scoresheet.organiser: { fr: 'Organisateur', en: 'Organiser' }
+scoresheet.manager: { fr: 'Resp. organisation', en: 'Techn. organiser' }
+scoresheet.delegate: { fr: 'Délégué', en: 'Technical delegate' }
+scoresheet.place: { fr: 'Lieu', en: 'Venue' }
+scoresheet.phase: { fr: 'Phase', en: 'Phase' }
+scoresheet.game_number: { fr: 'Match n°', en: 'Game #' }
+scoresheet.secretary: { fr: 'Secrétaire', en: 'Secretary' }
+scoresheet.timekeeper: { fr: 'Chronométreur', en: 'Timekeeper' }
+scoresheet.shot_clock: { fr: 'Shotclock', en: 'Shot clock' }
+scoresheet.line_judges: { fr: 'Juges de ligne', en: 'Line judges' }
+scoresheet.signatures: { fr: 'Signatures', en: 'Signatures' }
+scoresheet.before_game: { fr: 'avant match', en: 'before game' }
+scoresheet.after_game: { fr: 'après match', en: 'after game' }
+scoresheet.captain: { fr: 'Capitaine', en: 'Captain' }
+scoresheet.winner_required: { fr: 'Vainqueur obligatoire', en: 'Winner required' }
+scoresheet.no_overtime: { fr: '(Pas de prolongation)', en: '(No overtime)' }
+scoresheet.period: { fr: 'Période', en: 'Period' }
+scoresheet.time: { fr: 'Temps', en: 'Time' }
+scoresheet.goal: { fr: 'But', en: 'Goal' }
+scoresheet.card_green: { fr: 'V', en: 'G' }
+scoresheet.card_yellow: { fr: 'J', en: 'Y' }
+scoresheet.card_red: { fr: 'R', en: 'R' }
+scoresheet.card_reason: { fr: 'Motif carton', en: 'Offence' }
+scoresheet.definitive: { fr: 'D', en: 'E' }
+scoresheet.half_time: { fr: 'mi-temps', en: 'half time' }
+scoresheet.provisional: { fr: 'Provisoire', en: 'Provisional' }
+scoresheet.final: { fr: 'Final', en: 'Final' }
+scoresheet.remarks: { fr: 'Remarques', en: 'Remarks' }
+scoresheet.start_time: { fr: 'Heure début', en: 'Start time' }
+scoresheet.end_time: { fr: 'Heure fin', en: 'End time' }
+scoresheet.report_if_needed: { fr: 'Rapport au dos si besoin*. A défaut, rayer la case et porter la mention R.A.S.', en: 'Report back if necessary*. Otherwise, scratch the box and indicate NTR' }
+scoresheet.signatures_required: { fr: "*signature du capitaine et de l'arbitre requise", en: '*Team-leader and referee signature needed' }
+scoresheet.reason_r_pad: { fr: 'Pagaie', en: 'Paddle' }
+scoresheet.reason_r_kt: { fr: 'Eperonnage', en: 'Kayak tackle' }
+scoresheet.reason_r_ht: { fr: 'Poussée', en: 'Hand tackle' }
+scoresheet.reason_r_p: { fr: 'Possession', en: 'Possession' }
+scoresheet.reason_r_o: { fr: 'Obstruction', en: 'Obstruction' }
+scoresheet.reason_r_un: { fr: 'Antisportif', en: 'Unsporting' }
+scoresheet.reason_r_rep: { fr: 'Remplacement', en: 'Replacement' }
+# Statistics export
+stats.results: { fr: 'résultat(s)', en: 'result(s)' }
+# QR codes of an event
+qrcodes.title: { fr: 'Liens - Links', en: 'Links' }
+qrcodes.application_title: { fr: 'Application', en: 'Application' }
+qrcodes.games: { fr: 'Matchs - Games', en: 'Games' }
+qrcodes.progress: { fr: 'Progression - Progress', en: 'Progress' }
+qrcodes.application: { fr: 'Résultats en direct', en: 'Live results' }
+# Card follow-up
+cards.title: { fr: 'Suivi des cartons', en: 'Card follow-up' }
+cards.player: { fr: 'Joueur', en: 'Player' }
+cards.green: { fr: 'V', en: 'G' }
+cards.yellow: { fr: 'J', en: 'Y' }
+cards.red: { fr: 'R', en: 'R' }
+cards.definitive: { fr: 'RD', en: 'RE' }
+cards.notes: { fr: 'Notes', en: 'Notes' }
+cards.legend: { fr: 'Colonnes de gauche : cumul de la saison. Colonnes de droite : cartons de la journée, à compter sur place (I I I).', en: 'Left columns: season total. Right columns: cards of the gameday, to tally on site (I I I).' }

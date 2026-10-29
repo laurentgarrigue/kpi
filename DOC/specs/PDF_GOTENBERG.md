@@ -305,10 +305,10 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 | `doc` | Remplace | Appelé aujourd'hui depuis (profils qui voient le lien) | Rôle proposé |
 |---|---|---|---|
 | `teams-groups` | FeuilleGroups | Documents (1–6, 8) ; Équipes, menu PDF global (1–8) | `ROLE_VIEWER` + périmètre |
-| `presence` (base : FR/EN, `photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
-| `presence` + `category=<catégorie>` | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
-| `presence` + `category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
-| `presence` + `birthdate=1` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
+| `presence` (base : FR/EN, `view=photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
+| `presence` + `view=category` (`category=<catégorie>` pour en garder une) | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
+| `presence` + `view=category&category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
+| `presence` + `view=birthyear` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
 | `presence` + `visa=1` | FeuillePresenceVisa | Équipes (1–2) ; Documents, section Équipes (1–6, 8) ; Présence équipe (tous) | `ROLE_ORGANIZER` + périmètre (I2) |
 | `scrutineering-control` | FeuilleControle, …EN | Équipes, menu global (1–2) et par équipe (1, 2, 10) ; Scrutineering (1, 2, 10) ; Présence équipe (tous) | `ROLE_SCRUTINEER` (+ périmètre pour le profil 10) (cf. I1) |
 | `referees-pool` | FeuillePoolArbitres | Pool arbitres (menu 1–2, API `ROLE_ADMIN`) | `ROLE_ADMIN` |
@@ -316,6 +316,11 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 
 Règle : chaque **option** qui ajoute des données (date de naissance, visa, catégorie U21) a son propre rôle ; une
 option demandée sans le rôle correspondant → 403 (pas de document dégradé silencieusement).
+
+Le pool d'arbitres est permanent : `referees-pool` et `presence?competition=POOL` lisent la saison technique `1000`,
+quel que soit `season`. `instances` exige `competition` et `gameday` (la journée doit appartenir à la compétition et
+à la saison demandées, sinon 404) ; une journée hors du filtre de journées du mandat → 403. Le numéro de licence des
+officiels n'est jamais imprimé.
 
 ### 7.3 Matchs
 
@@ -370,7 +375,8 @@ inchangées, validées par la commission arbitrage avant mise en service (critè
 | `ranking-tiebreak` | justification départage (api2, mPDF) | — | Classements, si égalités (API `ROLE_VIEWER`) | `ROLE_ORGANIZER` + périmètre (repose sur le calcul, cf. I5) |
 
 Dans app4, les entrées « Classement publié » de la page Classements (profils 1–8) ouvrent la **version publique**.
-Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
+Quand le classement porte des médailles, elles **remplacent** les mentions « Qualifié » (validé sur la maquette de référence,
+2026-10-28). Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
 « Provisoire - non publié » en filigrane.
 
 ### 7.5 Statistiques, contrôle, QR codes
@@ -548,7 +554,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-AUTH-04** : profil limité à un club demande `presence` sans `team` → seules les équipes de son club figurent ; avec `team` d'un autre club → 403.
 - **PDF-AUTH-05** : profil 10 obtient `presence` et `scrutineering-control` de toute équipe de ses compétitions, et 403 sur tout autre document admin.
 - **PDF-AUTH-08** : chaque document admin respecte le rôle minimum de §7, vérifié par un test paramétré profil (1 à 10) × document, attendu 200 ou 403.
-- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`birthdate`, `visa`, `category=U21`) demandée sans ce rôle → 403.
+- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`view=birthyear`, `visa=1`, `category=U21`) demandée sans ce rôle → 403.
 - **PDF-AUTH-10** : `games-list` admin demandé par un profil 7 ne contient que les matchs et journées publiés, hors compétitions ATT.
 - **PDF-AUTH-06** : `GET /api2/pdf/*` (public) fonctionne sans authentification et n'expose ni date de naissance, ni licence, ni certificat, ni photo.
 - **PDF-AUTH-07** : lien expiré, signature altérée, ou droits retirés entre émission et usage → 403.
@@ -675,9 +681,59 @@ Aucune à ce stade.
 - Tests : `tests/Unit/Pdf/*`, `tests/Integration/PdfEndpointsTest.php` (Gotenberg remplacé par
   `FakeGotenbergClient`), `app4/tests/unit/pdf.spec.ts`, `app3/tests/unit/page-links.spec.ts`.
 
+### Phase 2 — données personnelles (livrée)
+
+- api2 : `presence` (vues `team`, `photos`, `category`, `birthyear` ; options `visa`, `category`),
+  `scrutineering-control`, `referees-pool`, `instances` ; gabarit générique `sections.html.twig`.
+- Profil limité à des clubs : seules les équipes de ses clubs, une équipe d'un autre club → 403 (PDF-AUTH-04).
+- app4 : les liens legacy des pages déjà migrées (`utils/pdf.ts`, `migratedLegacyPdf`) ouvrent le document api2
+  équivalent ; Pool arbitres et Journées (« Officiels ») appellent directement `usePdf().openDocument()`.
+
+### Phase 3 — classements (livrée)
+
+- api2 : `ranking` admin (classement calculé, filigrane « Provisoire - non publié »), `ranking-team-detail`,
+  `ranking-gameday-detail`, `ranking-phases` sur les deux routes (public : classement publié d'une compétition publiée,
+  journées et matchs publiés ; admin : calculé, tous les matchs). Source unique `App\Pdf\Ranking\RankingRepository`
+  (colonnes `*_publi` ou calculées selon `RankingSource`).
+- `ranking-tiebreak` : la justification reste calculée par `GET /admin/rankings/justification` (moteur de départage
+  inchangé) ; seul son rendu PDF (`format=pdf`) passe de mPDF à Gotenberg, charte admin.
+- app3 : le PDF d'une coupe (CP) est `ranking-phases` d'api2. app4 : les liens legacy des classements (admin et
+  publics, `publicPdfHref`) ouvrent les documents api2 ; `ranking-levels` (CltNiveauNiveau) n'est pas migré (I6).
+
+### Phase 4 — matchs (livrée)
+
+- `competition` accepte une liste (`competition=N1H,N2H`, comme `Compet` du legacy) ; le périmètre est vérifié pour
+  chaque code.
+- `games-list` (public : matchs et journées publiés de compétitions publiées ; admin : périmètre, profil 7 comme sa
+  page Matchs), portée `competition`, `event`, `gameday` ou `games`, filtres de la page Matchs en options (`date`,
+  `pitch`, `round`, `unlocked=1`, `sort=date|competition|phase|pitch|number`).
+- `games-grid` (public seulement) : `view=teams|phases`, une colonne par terrain utilisé, au-delà de 6 terrains des
+  groupes équilibrés (`App\Pdf\Games\GamesGrid`).
+- `scoresheet` (admin, `ROLE_SCORER`) : une page A4 paysage par match, rubriques de FeuilleMatchMulti.php ; la
+  composition du match, sinon celle de l'équipe (lue, plus copiée en base à l'impression comme le faisait le legacy).
+  **Validation de la commission arbitrage requise avant mise en service (PDF-DOC-03).**
+- Feuille de marque publique retirée (app2 vue match, app3 liste des matchs) ; `PdfMatchMulti.php` redirige (301)
+  vers la vue match d'app2 (`URL_APP/game/{id}`), y compris depuis les pages publiques legacy (`kpmatchs`,
+  `frame_terrains`).
+- app4 : menu Documents de la page Matchs, PDF par match et action groupée sur api2 ; app3 : liste des matchs sur
+  api2.
+
+### Phase 5 — statistiques, cartons, QR codes (livrée)
+
+- `stats` : l'export PDF de la page Statistiques (`GET /admin/stats/export/pdf`, mêmes données et mêmes règles
+  d'accès qu'avant) passe de mPDF à Gotenberg, charte admin.
+- `cards` (admin, `ROLE_ORGANIZER`) : cumul des cartons de la saison par équipe et colonnes à remplir sur place.
+- `qrcodes` (public) : liens de l'événement sur le site public (app3, `PUBLIC_SITE_URL/events/{id}/games` et
+  `/progress`, au lieu des pages legacy `kpmatchs.php` / `kpchart.php`) ; `qrcode-app` (public) : l'événement dans
+  app2 (`APP2_URL/event/{id}`, nouvelle variable d'api2 fournie par les compose). Un événement non publié → 404.
+- **`mpdf/mpdf` retiré d'api2** (composer.json et lock) ; il reste dans `sources/composer.json` pour le legacy
+  jusqu'à la phase 6. `symfony/mime` passe en 7.4.22 (CVE-2026-45070, même lock).
+
 ### Reste à faire
 
-- Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique
-  (§ 7.3.2) arrivent avec la phase 4.
+Validation et déploiement phase par phase : [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md).
+
+- Validations des commissions (PDF-DOC-03) : feuille de présence, feuille de marque.
+- Phase 6 (§ 12) : suppression des pages legacy, redirections 301 / 410, retrait de `mpdf/mpdf` du legacy.
 - Valider les deux maquettes de référence côte à côte avec app4 et app3 (PDF-DESIGN-06), puis mesurer PDF-PERF-01 /
   PDF-PERF-04 en préprod.

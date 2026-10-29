@@ -693,10 +693,16 @@ const saveOfficials = async () => {
   }
 }
 
-// Signed link: the legacy PDF pages need it (PDF_GOTENBERG.md, phase 0)
-const { openLegacy } = usePdf()
-const printJurySheet = (gamedayId: number) => {
-  void openLegacy('FeuilleInstances.php', { idJournee: gamedayId })
+// Officials of the gameday: api2 `instances` (PDF_GOTENBERG.md § 7.2)
+const { openDocument } = usePdf()
+const printJurySheet = (gameday: Gameday | null) => {
+  if (!gameday) return
+  void openDocument('instances', {
+    season: gameday.codeSaison,
+    competition: gameday.codeCompetition,
+    gameday: gameday.id,
+    lang: locale.value === 'en' ? 'en' : 'fr',
+  })
 }
 
 </script>
@@ -1824,7 +1830,7 @@ const printJurySheet = (gamedayId: number) => {
           <button
             type="button"
             class="px-4 py-2 text-sm font-medium text-danger-700 bg-white dark:bg-header-900 border border-danger-300 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
-            @click="printJurySheet(officialsGameday.id)"
+            @click="printJurySheet(officialsGameday)"
           >
             <UIcon name="heroicons:document-text" class="w-5 h-5 inline mr-1" />
             {{ t('gamedays.officials_print') }}

@@ -1,5 +1,9 @@
 {% extends 'pdf/layout.html.twig' %}
 
+{% block watermark %}
+    {% if provisional|default(false) %}<div class="pdf-watermark">{{ labels.provisional }}</div>{% endif %}
+{% endblock %}
+
 {% block content %}
     <table class="pdf-table">
         <thead>

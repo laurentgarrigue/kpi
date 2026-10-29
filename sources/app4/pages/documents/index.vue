@@ -111,7 +111,7 @@ const publicPdfUrl = (file: string): string => {
   params.set('S', workContext.season)
   params.set('Compet', workContext.pageCompetitionCode)
   params.set('tz', browserTimezone)
-  return `${legacyBase}/${file}?${params.toString()}`
+  return pdf.publicHref(`${legacyBase}/${file}?${params.toString()}`)
 }
 
 // General ranking, published: public PDF of api2, reference document of the public charter (PDF_GOTENBERG.md § 8.6)
@@ -135,10 +135,11 @@ const eventPdfUrl = (file: string, paramName: string): string => {
   if (!selectedEventId.value) return '#'
   const params = new URLSearchParams()
   params.set(paramName, String(selectedEventId.value))
+  params.set('S', workContext.season)
   params.set('tz', browserTimezone)
   // Public PDFs (PdfXxx.php) are at root, admin PDFs at /admin/
   if (file.startsWith('Pdf')) {
-    return `${legacyBase}/${file}?${params.toString()}`
+    return pdf.publicHref(`${legacyBase}/${file}?${params.toString()}`)
   }
   return `${legacyBase}/admin/${file}?${params.toString()}`
 }
