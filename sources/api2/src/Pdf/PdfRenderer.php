@@ -41,6 +41,7 @@ class PdfRenderer
             $this->twig->render(self::FOOTER_TEMPLATE, $context),
             $files,
             $content->landscape,
+            $context['sponsor'] !== null,
         );
     }
 
@@ -53,6 +54,7 @@ class PdfRenderer
     /** @return array<string, mixed> */
     private function context(PdfContent $content, PdfTheme $theme, PdfRequest $request): array
     {
+        $competition = is_array($content->variables['competition'] ?? null) ? $content->variables['competition'] : null;
         $qrUrl = $theme === PdfTheme::Public && $content->publicPath !== null
             ? rtrim($this->publicSiteUrl, '/') . $content->publicPath
             : null;
@@ -66,7 +68,11 @@ class PdfRenderer
             'labels' => $this->labels->forLanguage($request->lang),
             'tokens_file' => PdfAssets::tokensFile($theme),
             'stylesheet' => PdfAssets::STYLESHEET,
-            'logos' => PdfAssets::LOGOS[$theme->value],
+            // Visuals of the competition first, logos of the charter otherwise (§ 8.4.1).
+            'logos' => PdfHeader::charterLogos($theme, $competition),
+            'competition_logo' => PdfHeader::competitionLogo($competition),
+            'banner' => $competition['banner'] ?? null,
+            'sponsor' => PdfHeader::sponsorDataUri($competition, $content->images),
             'generated_at' => $this->clock->now()->setTimezone(new \DateTimeZone($request->timezone)),
             'qr_url' => $qrUrl,
             'qr_file' => $qrUrl === null ? null : PdfQrCode::FILE,

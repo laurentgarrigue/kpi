@@ -4,13 +4,20 @@
 <head>
     <style>
         body { margin: 0 10mm; width: 100%; font-family: Arial, sans-serif; font-size: 7pt; }
+        /* Chromium lays the footer template out in a row: one block holds the sponsor above the line. */
+        .footer { display: block; width: 100%; }
         .row { display: flex; justify-content: space-between; width: calc(100% - 20mm); }
+        .sponsor { width: calc(100% - 20mm); text-align: center; margin-bottom: 1.5mm; }
+        .sponsor img { max-height: 13mm; max-width: 100%; }
     </style>
 </head>
 <body>
+<div class="footer">
+    {% if sponsor %}<div class="sponsor"><img src="{{ sponsor }}" alt=""></div>{% endif %}
     <div class="row">
         <span>{{ title }}{% if competition is defined %} - {{ competition.title }}{% endif %}{% if theme == 'admin' and internal|default(false) %} · {{ labels.internal_document }}{% endif %}</span>
         <span>{{ labels.generated_on }} {{ generated_at|date(lang == 'en' ? 'Y-m-d H:i' : 'd/m/Y H:i', false) }} · {{ labels.page }} <span class="pageNumber"></span> / <span class="totalPages"></span>{% if qr_url %} · {{ qr_url }}{% endif %}</span>
     </div>
+</div>
 </body>
 </html>

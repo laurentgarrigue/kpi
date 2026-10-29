@@ -215,6 +215,40 @@ garde le noyau en mémoire).
 
 ---
 
+## Visuels de la compétition et langue (décisions du 2026-10-29, PR suivante)
+
+Spec : [PDF_GOTENBERG.md § 8.4.1](../../specs/PDF_GOTENBERG.md) et § 14. Choisir dans app4 (Compétitions → Visuels)
+une compétition **A** avec bandeau coché, une **B** avec logo coché sans bandeau, une **C** sans visuel, et cocher le
+sponsor de **A**.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | `pdf "$B/pdf/ranking?season=$S&competition=<A>"` | bandeau en tête **à la place** des logos FFCK/CNA, titre dessous ; sponsor au-dessus du pied de chaque page | ☐ |
+| 2 | même document pour **B** | logos FFCK + CNA à gauche (si « KPI/FFCK » coché, sinon aucun), logo de B à droite | ☐ |
+| 3 | même document pour **C** | FFCK + CNA, même si « KPI/FFCK » est décoché (PDF-DESIGN-04) | ☐ |
+| 4 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/teams-groups?season=$S&competition=<C>"` après avoir décoché « KPI/FFCK » | titre seul, sans logo KPI | ☐ |
+| 5 | `pdf "$B/pdf/games-list?season=$S&event=$E"` | visuels de la **première** compétition de l'événement | ☐ |
+| 6 | Feuille de marque d'un match de **A** | bandeau réduit en haut à gauche, sponsor en bas à droite, **une page par match** | ☐ |
+| 7 | app4 en anglais : Équipes → feuille de présence ; Matchs → liste des matchs | un seul lien par document, PDF en anglais ; en français : PDF en français | ☐ |
+| 8 | Feuille de marque d'une compétition internationale, app4 en français | en français (plus d'anglais forcé) | ☐ |
+
+**Compétitions dont un visuel coché est une URL externe** (ignoré dans les PDF, à téléverser dans app4 en attendant
+l'import automatique, § 8.4.1) — 🖥 sur chaque environnement :
+
+```bash
+. docker/.env && docker exec -i ${APPLICATION_NAME}_db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "
+SELECT Code_saison, Code, Libelle,
+       IF(Bandeau_actif = 'O' AND BandeauLink LIKE 'http%', BandeauLink, '') AS bandeau,
+       IF(Logo_actif = 'O' AND LogoLink LIKE 'http%', LogoLink, '') AS logo,
+       IF(Sponsor_actif = 'O' AND SponsorLink LIKE 'http%', SponsorLink, '') AS sponsor
+FROM kp_competition
+WHERE (Bandeau_actif = 'O' AND BandeauLink LIKE 'http%') OR (Logo_actif = 'O' AND LogoLink LIKE 'http%')
+   OR (Sponsor_actif = 'O' AND SponsorLink LIKE 'http%')
+ORDER BY Code_saison DESC, Code;"
+```
+
+---
+
 ## Non-régression (à chaque phase, chaque environnement)
 
 | # | Vérification | Attendu | ☐ |

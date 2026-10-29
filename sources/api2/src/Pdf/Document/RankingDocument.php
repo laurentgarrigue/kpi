@@ -2,7 +2,6 @@
 
 namespace App\Pdf\Document;
 
-use App\Pdf\PdfAssets;
 use App\Pdf\PdfCatalog;
 use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
@@ -28,7 +27,6 @@ final class RankingDocument implements PdfDocumentProvider
         private readonly PublicCompetitionService $competitions,
         private readonly PdfCompetitions $headers,
         private readonly RankingRepository $rankings,
-        private readonly PdfAssets $assets,
         private readonly PdfLabels $labels,
     ) {
     }
@@ -62,27 +60,23 @@ final class RankingDocument implements PdfDocumentProvider
             return null;
         }
 
-        $rows = self::rows($ranking['rows'], $ranking['qualified'], $ranking['eliminated']);
-
-        $logo = $this->assets->legacyImage($header->logo);
+        // Visuals of the competition (§ 8.4.1); the ranking itself is the one of the public website.
+        $visuals = $this->headers->publishedHeader($request->season, $code);
+        if ($visuals === null) {
+            return null;
+        }
 
         return new PdfContent(
             template: 'ranking.html.twig',
             title: $this->labels->forLanguage($request->lang)['ranking.title'],
             filename: sprintf('%s_%s_%s_%s.pdf', $this->document(), $code, $request->season, $request->lang),
             variables: [
-                'competition' => [
-                    'code' => $code,
-                    'title' => $header->displayTitle,
-                    'subtitle' => $header->soustitre2,
-                    'type' => $header->type,
-                    'logo' => $logo['name'] ?? null,
-                ],
-                'rows' => $rows,
+                'competition' => [...$visuals['competition'], 'title' => $header->displayTitle, 'subtitle' => $header->soustitre2],
+                'rows' => self::rows($ranking['rows'], $ranking['qualified'], $ranking['eliminated']),
                 'with_details' => $header->type !== 'MULTI',
             ],
             publicPath: sprintf('/competitions/%s/%s/ranking', rawurlencode($request->season), rawurlencode($code)),
-            images: $logo === null ? [] : [$logo['name'] => $logo['content']],
+            images: $visuals['images'],
         );
     }
 

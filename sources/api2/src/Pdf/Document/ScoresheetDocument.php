@@ -7,6 +7,7 @@ use App\Pdf\Games\GamesSort;
 use App\Pdf\InvalidPdfRequest;
 use App\Pdf\PdfAccessDenied;
 use App\Pdf\PdfCatalog;
+use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfLabels;
@@ -35,6 +36,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
         private readonly GamesScope $scope,
         private readonly ScoresheetRepository $sheets,
         private readonly MatchLabelParser $labelParser,
+        private readonly PdfCompetitions $competitions,
         private readonly PdfLabels $labels,
     ) {
     }
@@ -70,28 +72,37 @@ final class ScoresheetDocument implements PdfDocumentProvider
             return null;
         }
 
+        $images = [];
+        $sheets = [];
+        foreach ($games as $game) {
+            $sheets[] = $this->sheet($game, $request->lang, $images);
+        }
+
         return new PdfContent(
             template: 'scoresheet.html.twig',
             title: $this->labels->forLanguage($request->lang)['scoresheet.title'],
             filename: sprintf('%s_%s_%s.pdf', $this->document(), count($ids) === 1 ? $ids[0] : count($ids) . '-games', $request->season),
             variables: [
-                'sheets' => array_map(fn (array $game): array => $this->sheet($game, $request->lang), $games),
+                'sheets' => $sheets,
                 'internal' => true,
             ],
             landscape: true,
+            images: $images,
         );
     }
 
     /**
-     * @param array<string, mixed> $game
+     * @param array<string, mixed>  $game
+     * @param array<string, string> $images images of the document, completed with the visuals of the competition
      *
      * @return array<string, mixed>
      */
-    private function sheet(array $game, string $requestedLang): array
+    private function sheet(array $game, string $lang, array &$images): array
     {
-        // An international competition prints in English (En_actif), as the legacy sheet.
-        $lang = $game['En_actif'] === 'O' ? 'en' : $requestedLang;
         $labels = $this->labels->forLanguage($lang);
+        // Visuals of the competition of the game, inside the sheet: one PDF may hold several competitions (§ 8.4.1).
+        $visuals = $this->competitions->header((string) $game['Code_saison'], (string) $game['Code_competition']);
+        $images += $visuals['images'] ?? [];
         $international = $game['Code_niveau'] === self::INTERNATIONAL;
         $season = (string) $game['Code_saison'];
         $placeholders = $this->labelParser->parse((string) $game['Libelle']);
@@ -106,6 +117,8 @@ final class ScoresheetDocument implements PdfDocumentProvider
 
         return [
             'labels' => $labels,
+            'banner' => $visuals['competition']['banner'] ?? null,
+            'sponsor' => $visuals['competition']['sponsor'] ?? null,
             'id' => (int) $game['Id'],
             'competition' => $titleActive === 'O' ? (string) $game['Competition'] : (string) $game['Soustitre'],
             'category' => (string) ($game['Soustitre2'] ?: $game['Code_competition']),

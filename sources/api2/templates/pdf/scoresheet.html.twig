@@ -1,7 +1,8 @@
 {#
  # Scoresheet (`scoresheet`, PDF_GOTENBERG.md § 7.3.3): official sheet filled in by hand at the table, one A4
  # landscape page per game. Left: game, officials, rosters, signatures before the game. Right: event grid, score,
- # remarks, signatures after the game. Rubrics of the legacy FeuilleMatchMulti.php.
+ # remarks, signatures after the game. Rubrics of the legacy FeuilleMatchMulti.php. Visuals of the competition of
+ # the game inside the sheet: banner on top of the left column, sponsor under the right one (§ 8.4.1).
  #}
 {% extends 'pdf/layout.html.twig' %}
 
@@ -32,8 +33,9 @@
 {% block content %}
     {% for sheet in sheets %}
         {% set l = sheet.labels %}
-        <div class="pdf-sheet{% if not loop.first %} pdf-page-break{% endif %}">
+        <div class="pdf-sheet{% if not loop.first %} pdf-page-break{% endif %}{% if sheet.sponsor %} pdf-sheet--sponsor{% endif %}">
             <div class="pdf-sheet__column">
+                {% if sheet.banner %}<div class="pdf-sheet__banner"><img src="{{ sheet.banner }}" alt=""></div>{% endif %}
                 <table class="pdf-sheet__box">
                     <tr><td colspan="2"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right">{{ sheet.category }}</td></tr>
                     <tr><td colspan="2">{{ l['scoresheet.organiser'] }} : {{ sheet.organiser }}</td><td class="pdf-sheet__right">{{ l.season }} : {{ sheet.season }}</td></tr>
@@ -112,6 +114,7 @@
                     <tr><td>{{ l['scoresheet.captain'] }} A</td><td>{{ l['scoresheet.captain'] }} B</td><td>{{ l['games.referee_1'] }}</td></tr>
                 </table>
                 <p class="pdf-note">{{ l['scoresheet.signatures_required'] }}</p>
+                {% if sheet.sponsor %}<div class="pdf-sheet__sponsor"><img src="{{ sheet.sponsor }}" alt=""></div>{% endif %}
             </div>
         </div>
     {% endfor %}

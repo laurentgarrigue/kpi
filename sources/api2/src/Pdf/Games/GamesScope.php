@@ -68,7 +68,8 @@ class GamesScope
     }
 
     /**
-     * Header of the document: the competition when there is only one, else the event, else the season.
+     * Header of the document: the event, else the competition when there is only one, else the list of codes; an
+     * event or a list carries the visuals of its first competition (§ 8.4.1).
      *
      * @param list<array<string, mixed>> $games
      *
@@ -77,14 +78,21 @@ class GamesScope
      */
     public function header(PdfRequest $request, PdfTheme $theme, array $games): ?array
     {
+        $public = $theme === PdfTheme::Public;
         $codes = array_values(array_unique(array_column($games, 'Code_competition')));
         if ($request->event !== null) {
             $event = $this->games->event($request->event);
-            if ($event === null || ($theme === PdfTheme::Public && !$event['published'])) {
+            if ($event === null || ($public && !$event['published'])) {
                 return null;
             }
+            $first = $this->competitions->firstOfEvent($request->event, $public);
 
-            return ['competition' => ['code' => '', 'title' => $event['title'], 'subtitle' => $event['place'] ?: null, 'logo' => null], 'images' => []];
+            return $this->competitions->withVisualsOf(
+                ['code' => '', 'title' => $event['title'], 'subtitle' => $event['place'] ?: null],
+                $first['season'] ?? null,
+                $first['code'] ?? null,
+                $public,
+            );
         }
         if (count($codes) === 1) {
             $header = $theme === PdfTheme::Public
@@ -94,6 +102,11 @@ class GamesScope
             return $header === null ? null : ['competition' => $header['competition'], 'images' => $header['images']];
         }
 
-        return ['competition' => ['code' => '', 'title' => implode(', ', $codes), 'subtitle' => null, 'logo' => null], 'images' => []];
+        return $this->competitions->withVisualsOf(
+            ['code' => '', 'title' => implode(', ', $codes), 'subtitle' => null],
+            $request->season,
+            ($request->competitions ?: $codes)[0] ?? null,
+            $public,
+        );
     }
 }

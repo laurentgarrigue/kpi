@@ -450,7 +450,7 @@ par le même script que les jetons.
 - États : `success` `#209452` (qualifié, présent, contrôle OK), `warning` `#e9b410` (à vérifier, provisoire),
   `danger` `#c94a4c` (non conforme, carton rouge, certificat manquant) — **toujours doublés d'un libellé ou d'une
   icône** (lisible en noir & blanc).
-- Logo : `logo_kp.png` (KPI) dans le bandeau ; logos compétition/sponsor issus des visuels de la compétition.
+- Logo : `logo_kp.png` (KPI) dans le bandeau, sauf quand les visuels de la compétition le remplacent (§ 8.4.1).
 - Pied : « Document interne - ne pas diffuser » pour les documents à données personnelles, nom du profil générateur
   et date/heure de génération.
 - Filigrane « Provisoire - non publié » (`warning`, opacité faible) sur les classements calculés (§7.4).
@@ -461,7 +461,8 @@ par le même script que les jetons.
   `#c94a4c` réservé aux mises en avant (vainqueur de match, alerte) ; `gold`/`green` pour médailles et qualifiés,
   comme sur le site.
 - En-tête : logo **FFCK sur pastille blanche** (règle de la charte : jamais sur fond coloré) + logo CNA Kayak-Polo
-  (`kpi-layer/public/img/brand/`), puis logos de la compétition.
+  (`kpi-layer/public/img/brand/`), puis logo de la compétition ; bandeau de la compétition à leur place quand il est
+  coché (§ 8.4.1).
 - Pied en bandeau `navy` fin, rappelant le pied du site : URL et **QR code vers la page équivalente sur app3**
   (classements → page compétition, listes et grilles de matchs → calendrier / résultats), date de génération.
   **Dès la beta** : l'URL est construite à partir du paramètre api2 existant `PUBLIC_SITE_URL` (aujourd'hui
@@ -472,6 +473,32 @@ par le même script que les jetons.
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
   colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
   de matchs reprend la présentation du calendrier / des résultats.
+
+### 8.4.1 Visuels de la compétition (décision du 2026-10-29)
+
+Les visuels de la compétition (cases « actif » et fichiers de `kp_competition`) priment sur les logos de la charte,
+sur les PDF admin comme publics :
+
+| Cas | En-tête | Pied de page |
+|---|---|---|
+| Bandeau coché et fichier présent | **bandeau** en pleine largeur, à la place des logos ; titre du document, compétition et saison en dessous | — |
+| Sinon, logo coché et fichier présent | logo de la compétition à droite ; logos de la charte à gauche si « KPI/FFCK » (`Kpi_ffck_actif`) est coché | — |
+| Ni bandeau ni logo | public : **toujours** FFCK + CNA ; admin : KPI si `Kpi_ffck_actif` est coché, sinon le titre seul | — |
+| Sponsor coché et fichier présent | — | **sponsor** au-dessus de la ligne « Édité le… · Page x/y », sur chaque page |
+
+- Document d'un **événement** ou d'une **liste de compétitions** : visuels de la **première** compétition (ordre
+  d'affichage de l'événement : `GroupOrder`, `Code_tour`, `Code` ; ordre de la liste pour `competition=A,B`), titre de
+  l'événement ou liste des codes. Le logo de l'événement (`kp_evenement.logo`) n'est pas utilisé.
+- Document sans compétition (pool arbitres, statistiques sans compétition) : logos de la charte.
+- **Feuille de marque** : chaque match prend les visuels de sa compétition, dans la feuille (bandeau réduit à 12 mm en
+  haut de la colonne de gauche, sponsor en bas de la colonne de droite), car un même PDF peut réunir plusieurs
+  compétitions.
+- Seuls les **fichiers téléversés** (`img/logo/…`) sont utilisés : une URL externe (`http…`) est ignorée, Chromium
+  n'ayant aucun accès réseau (§ 9). **Chantier ultérieur** : quand un utilisateur autorisé choisit une URL externe pour
+  le logo, le bandeau ou le sponsor d'une compétition, l'image est importée dans KPI (contrôles de sécurité,
+  redimensionnement éventuel) puis servie localement. En attendant, les compétitions concernées se listent avec la
+  requête de [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md) (section « Visuels de la
+  compétition et langue »).
 
 ### 8.5 Contraintes propres au papier
 
@@ -578,7 +605,8 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DESIGN-01** : un PDF servi par `/admin/pdf` utilise les jetons du thème admin (app4) ; servi par `/pdf`, ceux du thème public (app3). Un même `doc` disponible sur les deux routes change de thème sans changer de gabarit.
 - **PDF-DESIGN-02** : aucun gabarit ni partial PDF ne contient de couleur hexadécimale, `rgb()` ou `oklch()` littérale (test qui parcourt `templates/pdf/`, hors `tokens/`).
 - **PDF-DESIGN-03** : les polices du document sont Raleway (texte) et Agency FB ou son repli validé (titres), embarquées dans le PDF (`pdffonts` les liste toutes comme *embedded*).
-- **PDF-DESIGN-04** : le logo FFCK n'apparaît que sur fond blanc ; les PDF publics portent les logos FFCK et CNA, les PDF admin le logo KPI.
+- **PDF-DESIGN-04** : le logo FFCK n'apparaît que sur fond blanc ; sans bandeau ni logo de compétition, les PDF publics portent les logos FFCK et CNA, les PDF admin le logo KPI (si `Kpi_ffck_actif`).
+- **PDF-DESIGN-09** : bandeau coché et présent → bandeau à la place des logos ; sinon logo coché et présent → logo de la compétition ; sponsor coché et présent → sponsor en pied de chaque page (§ 8.4.1). Document d'un événement ou d'une liste de compétitions : visuels de la première compétition.
 - **PDF-DESIGN-05** : modifier une couleur dans `admin.css` ou `kpi-theme.css` sans relancer `make pdf_tokens_sync` fait échouer la suite de tests api2.
 - **PDF-DESIGN-06** : les maquettes de référence (`teams-groups` admin, `ranking` public) sont validées côte à côte avec les pages app4/app3 correspondantes avant la migration des autres documents.
 - **PDF-DESIGN-07** : imprimé en noir & blanc, chaque état (qualifié, provisoire, non conforme…) reste identifiable par un libellé ou une icône.
@@ -646,6 +674,15 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | QR code vers app3 (§8.4) | Oui, dès la beta, via `PUBLIC_SITE_URL`, avec redirection `beta.*` → domaine principal après la bascule. |
 | Feuille de marque publique (§7.3.2, 2026-10-28) | Non développée : le public utilise la vue match d'app2 ; `PdfMatchMulti.php` y redirige. |
 | Rôles minimum (§7, 2026-10-28) | Validés ; arbitrages I1 à I8 en §7.6 (visa : `ROLE_ORGANIZER`, feuille de marque : `ROLE_SCORER`, classement calculé : profils 1–6). |
+
+### Décisions (2026-10-29)
+
+| Sujet | Décision |
+|---|---|
+| Langue des PDF | Celle de l'utilisateur (paramètre `lang`, langue d'app4 ou d'app3), y compris pour la feuille de marque, qui ne force plus l'anglais des compétitions internationales. |
+| Liens FR / EN dans app4 | Un seul lien par document, dans la langue de l'utilisateur. |
+| Visuels de la compétition | Bandeau, sinon logo, en en-tête ; sponsor en pied (§ 8.4.1). PDF publics sans bandeau ni logo : FFCK + CNA. |
+| Images par URL externe | Ignorées ; import local sécurisé lors d'un chantier ultérieur (§ 8.4.1). |
 
 ### Questions ouvertes
 
@@ -728,6 +765,15 @@ Aucune à ce stade.
   app2 (`APP2_URL/event/{id}`, nouvelle variable d'api2 fournie par les compose). Un événement non publié → 404.
 - **`mpdf/mpdf` retiré d'api2** (composer.json et lock) ; il reste dans `sources/composer.json` pour le legacy
   jusqu'à la phase 6. `symfony/mime` passe en 7.4.22 (CVE-2026-45070, même lock).
+
+### Visuels et liens uniques (2026-10-29)
+
+- En-tête et pied de page selon les visuels de la compétition (§ 8.4.1) : bandeau, sinon logo (+ logos de la charte
+  si « KPI/FFCK »), FFCK + CNA toujours sur un PDF public sans visuel ; sponsor en pied de chaque page.
+  `App\Pdf\PdfHeader` (règles, testées) ; événement et liste : première compétition.
+- Feuille de marque : visuels de chaque match dans sa feuille ; langue de l'utilisateur.
+- app4 : un seul lien par document (plus de doublons FR / EN), la langue de l'utilisateur étant passée par
+  `usePdf()`.
 
 ### Reste à faire
 

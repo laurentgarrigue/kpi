@@ -118,6 +118,11 @@ h1, h2, h3 {
 
 .pdf-header__competition-logo { height: 16mm; width: auto; }
 
+/* Banner of the competition, in place of the logos (§ 8.4.1). */
+.pdf-banner { text-align: center; margin-bottom: 2mm; }
+.pdf-banner img { max-width: 100%; max-height: 24mm; }
+.pdf-header--below-banner { padding-top: 2mm; }
+
 /* ---------------------------------------------------------------- tables */
 table.pdf-table {
   width: 100%;
@@ -263,3 +268,10 @@ table.pdf-table {
 .pdf-table th.pdf-card--green { color: var(--pdf-success); }
 .pdf-table th.pdf-card--yellow { color: var(--pdf-warning); }
 .pdf-table th.pdf-card--red, .pdf-table th.pdf-card--definitive { color: var(--pdf-danger); }
+.pdf-sheet__banner, .pdf-sheet__sponsor { text-align: center; }
+.pdf-sheet__banner { margin-bottom: 1mm; }
+.pdf-sheet__banner img { max-height: 12mm; max-width: 100%; }
+.pdf-sheet__sponsor img { max-height: 10mm; max-width: 100%; }
+/* Room for the sponsor under the right column: a tighter event grid, still 26 lines. */
+.pdf-sheet--sponsor .pdf-sheet__events td { height: 3.2mm; }
+.pdf-sheet--sponsor .pdf-sheet__column > table { margin-bottom: 1.2mm; }

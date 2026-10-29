@@ -616,8 +616,7 @@ const pdfLinks = computed(() => {
   })
 
   const links: Record<string, string> = {
-    fr: `${config.public.legacyBaseUrl}/admin/FeuillePresence.php?${params}`,
-    en: `${config.public.legacyBaseUrl}/admin/FeuillePresenceEN.php?${params}`,
+    sheet: `${config.public.legacyBaseUrl}/admin/FeuillePresence.php?${params}`,
     photo: `${config.public.legacyBaseUrl}/admin/FeuillePresencePhoto.php?${params}`,
   }
   // Only the documents api2 allows to the profile (PDF_GOTENBERG.md § 7.6, I1 and I2)
