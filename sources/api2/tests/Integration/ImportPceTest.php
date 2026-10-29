@@ -57,6 +57,27 @@ final class ImportPceTest extends ApiTestCase
         );
     }
 
+    public function testNeverChangesTheKpiOwnFieldsOfAClub(): void
+    {
+        $kpiFields = [
+            'Officiel' => 'N',
+            'Reserve' => 'interne',
+            'Coord' => '44.8,-0.5',
+            'Postal' => '1 quai des Chartrons 33000 Bordeaux',
+            'Coord2' => '44.9,-0.6',
+            'www' => 'https://alpha.example',
+            'email' => 'contact@alpha.example',
+        ];
+        $this->connection->insert('kp_club', ['Code' => '3301', 'Libelle' => 'ANCIEN NOM', 'Code_comite_dep' => '3300'] + $kpiFields);
+
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame(
+            $kpiFields,
+            $this->connection->fetchAssociative("SELECT Officiel, Reserve, Coord, Postal, Coord2, www, email FROM kp_club WHERE Code = '3301'"),
+        );
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');
