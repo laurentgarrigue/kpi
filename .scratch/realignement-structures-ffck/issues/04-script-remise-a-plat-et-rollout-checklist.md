@@ -17,8 +17,8 @@ Script :
 - [x] Codes de référence des autres compétitions régionales alignés sur la table
 
 Contrôle et exécution en dev :
-- [x] Requête de contrôle livrée : écarts CR/CD/Clubs vs PCE, Clubs du PCE absents, pseudo-clubs d'Anciennes ligues restants, codes `REGxx`/`T-Rxx` hors CR actuelles
-- [x] Exécuté en dev (après un import PCE corrigé) : contrôle avant → script → contrôle après à zéro écart ; seconde exécution sans effet
+- [x] Requête de contrôle livrée : écarts CR/CD/Clubs vs PCE, Clubs du PCE absents, pseudo-clubs d'Anciennes ligues restants, codes `REGxx`/`T-Rxx` hors CR actuelles ; avant le script, liste des codes compétition à renommer (saisons, libellé) pour repérer un code déjà au numéro d'une CR actuelle
+- [x] Exécuté en dev (après un import PCE corrigé) : contrôle avant → script → contrôle après sans écart à corriger : toutes les lignes à 0 sauf « Clubs du PCE absents de KPI » = 1 (`CD077`, licencié rattaché directement au CD, ni l'import ni le script ne peuvent le créer — expliqué dans la rollout checklist § 1) ; seconde exécution sans effet
 - [x] Vérification visuelle en dev d'une Compétition régionale renommée et d'une Sélection régionale (app4)
 
 Rollout checklist :
