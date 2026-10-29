@@ -12,6 +12,18 @@ class PceImportService
     private const BATCH_SIZE_ARBITRES = 300;
     private const BATCH_SIZE_SURCLASSEMENTS = 100;
 
+    /** Overseas department number (PCE) → two-character KPI prefix, shared by CD and Club codes. */
+    private const OVERSEAS_PREFIXES = [
+        '971' => '9A',
+        '972' => '9B',
+        '973' => '9C',
+        '974' => '9D',
+        '975' => '9E',
+        '976' => '9F',
+        '988' => '9G',
+        '986' => '9I',
+    ];
+
     private string $season = '';
     private array $messages = [];
 
@@ -567,18 +579,8 @@ class PceImportService
         $dept = substr($code, 0, 3);
         $club = substr($code, 3);
 
-        // DOM-TOM
-        $domTom = [
-            '971' => '9A',
-            '972' => '9B',
-            '973' => '9C',
-            '974' => '9D',
-            '976' => '9F',
-            '988' => '9G',
-        ];
-
-        if (array_key_exists($dept, $domTom)) {
-            return $domTom[$dept] . str_pad(ltrim($club, '0'), 2, '0', STR_PAD_LEFT);
+        if (array_key_exists($dept, self::OVERSEAS_PREFIXES)) {
+            return self::OVERSEAS_PREFIXES[$dept] . str_pad(ltrim($club, '0'), 2, '0', STR_PAD_LEFT);
         }
 
         // Corse
@@ -599,16 +601,8 @@ class PceImportService
     {
         $code = substr($code, 2); // Remove first two chars (CD)
 
-        $conversions = [
-            '971' => '9A00',
-            '972' => '9B00',
-            '973' => '9C00',
-            '974' => '9D00',
-            '988' => '9G00',
-        ];
-
-        if (array_key_exists($code, $conversions)) {
-            return $conversions[$code];
+        if (array_key_exists($code, self::OVERSEAS_PREFIXES)) {
+            return self::OVERSEAS_PREFIXES[$code] . '00';
         }
 
         $code = substr($code, 1); // Remove leading digit

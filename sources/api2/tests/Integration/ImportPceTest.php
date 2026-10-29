@@ -99,6 +99,27 @@ final class ImportPceTest extends ApiTestCase
         self::assertSame('CR CK PCE NORD', $this->connection->fetchOne("SELECT Libelle FROM kp_cr WHERE Code = 'CRP1'"));
     }
 
+    public function testConvertsTheOverseasCdAndClubCodes(): void
+    {
+        $this->importLicensees(
+            $this->licenseeLine(8811, '971001', 'CD971'),
+            $this->licenseeLine(8812, '974001', 'CD974'),
+            $this->licenseeLine(8813, '975001', 'CD975'),
+            $this->licenseeLine(8814, '976001', 'CD976'),
+            $this->licenseeLine(8815, '986001', 'CD986'),
+            $this->licenseeLine(8816, '988001', 'CD988'),
+        );
+
+        self::assertSame(
+            ['9A01' => '9A00', '9D01' => '9D00', '9E01' => '9E00', '9F01' => '9F00', '9G01' => '9G00', '9I01' => '9I00'],
+            $this->connection->fetchAllKeyValue("SELECT Code, Code_comite_dep FROM kp_club WHERE Libelle LIKE 'CLUB OUTRE-MER %' ORDER BY Code"),
+        );
+        self::assertSame(
+            ['9A00', '9D00', '9E00', '9F00', '9G00', '9I00'],
+            $this->connection->fetchFirstColumn("SELECT Code FROM kp_cd WHERE Libelle LIKE 'CD OUTRE-MER %' ORDER BY Code"),
+        );
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');
@@ -126,6 +147,25 @@ final class ImportPceTest extends ApiTestCase
     {
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM kp_licence WHERE Origine = ?', ['2999']));
         self::assertFalse($this->connection->fetchOne("SELECT 1 FROM kp_cr WHERE Code IN ('CRP1', 'CRP2')"));
+    }
+
+    private function licenseeLine(int $matric, string $clubNumber, string $cdNumber): string
+    {
+        $department = substr($cdNumber, 2);
+
+        return "$matric;OUTREMER;Test;D;2000-01-01;CLUB OUTRE-MER $department;$clubNumber;COMITE DEPARTEMENTAL OUTRE-MER $department;$cdNumber;"
+            . 'COMITE REGIONAL OUTRE-MER;CRP3;ACTIF;;;;OUI;OUI;Canoë Plus';
+    }
+
+    private function importLicensees(string ...$lines): CommandTester
+    {
+        $file = (string) tempnam(sys_get_temp_dir(), 'pce-');
+        file_put_contents($file, "[date_valeur]\n2999-01-15\n[licencies]\n" . implode("\n", $lines) . "\n");
+        try {
+            return $this->import($file);
+        } finally {
+            unlink($file);
+        }
     }
 
     private function import(string $file): CommandTester
