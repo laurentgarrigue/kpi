@@ -45,6 +45,18 @@ final class ImportPceTest extends ApiTestCase
         );
     }
 
+    public function testUpdatesTheLabelAndTheCdOfAnExistingClub(): void
+    {
+        $this->connection->insert('kp_club', ['Code' => '3301', 'Libelle' => 'ANCIEN NOM', 'Code_comite_dep' => '6400']);
+
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame(
+            ['Libelle' => 'CK CLUB PCE ALPHA', 'Code_comite_dep' => '3300'],
+            $this->connection->fetchAssociative("SELECT Libelle, Code_comite_dep FROM kp_club WHERE Code = '3301'"),
+        );
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');

@@ -533,7 +533,7 @@ class PceImportService
     private function updateClub(string $season): void
     {
         $this->messages[] = "Mise à jour des Clubs ...";
-        $sql = "INSERT IGNORE INTO kp_club (Code, Libelle, Officiel, Reserve, Code_comite_dep)
+        $sql = "INSERT INTO kp_club (Code, Libelle, Officiel, Reserve, Code_comite_dep)
             SELECT lc.Numero_club,
                 MIN(lc.Club),
                 'O', '', MIN(lc.Numero_comite_dept)
@@ -542,7 +542,8 @@ class PceImportService
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
             AND lc.Club != ''
-            GROUP BY lc.Numero_club";
+            GROUP BY lc.Numero_club
+            ON DUPLICATE KEY UPDATE Libelle = VALUES(Libelle), Code_comite_dep = VALUES(Code_comite_dep)";
         $this->connection->executeStatement($sql, [$season]);
     }
 
