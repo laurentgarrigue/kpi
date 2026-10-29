@@ -7,12 +7,13 @@ use App\Service\PceImportService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:import-pce',
-    description: 'Import PCE license file from FFCK extranet'
+    description: 'Import PCE license file from FFCK extranet (or from a local file with --file)'
 )]
 class ImportPceCommand extends Command
 {
@@ -23,13 +24,19 @@ class ImportPceCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this->addOption('file', null, InputOption::VALUE_REQUIRED, 'Local PCE file to import instead of downloading it from the FFCK extranet');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Import PCE FFCK');
 
         try {
-            $result = $this->pceImportService->importPce();
+            $localFile = $input->getOption('file');
+            $result = $this->pceImportService->importPce(is_string($localFile) ? $localFile : null);
 
             $io->success(sprintf(
                 "Import terminé en %ds (dl=%ds)\n- %d licenciés (%d req.)\n- %d arbitres (%d req.)\n- %d surclassements (%d req.)\n- Saison: %s",
