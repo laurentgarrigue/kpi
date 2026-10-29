@@ -78,6 +78,18 @@ final class ImportPceTest extends ApiTestCase
         );
     }
 
+    public function testUpdatesTheLabelAndTheCrOfAnExistingCd(): void
+    {
+        $this->connection->insert('kp_cd', ['Code' => '3300', 'Libelle' => 'ANCIEN NOM', 'Code_comite_reg' => 'CRP2']);
+
+        $this->import(self::FIXTURE_FILE);
+
+        self::assertSame(
+            ['Libelle' => 'CD CK PCE 33', 'Code_comite_reg' => 'CRP1'],
+            $this->connection->fetchAssociative("SELECT Libelle, Code_comite_reg FROM kp_cd WHERE Code = '3300'"),
+        );
+    }
+
     public function testAMissingFileFailsWithAnExplicitMessageAndWritesNothing(): void
     {
         $tester = $this->import(__DIR__ . '/../Fixtures/pce/absent.txt');
