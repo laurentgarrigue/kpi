@@ -112,3 +112,17 @@ comptes du jeu scrutineering (`TADMIN`, `TVIEW`, `TDIV`, `TCLUB`, `TSCRUT`) et d
 |---|---|
 | `TSCORE` (profil 9) | feuille de marque permise, équipes engagées refusées (`ROLE_SCORER` sans `ROLE_VIEWER`) |
 | Mandat `9701` de `TDIV` (profil 3, `SCC`) | périmètre du mandat actif : `SCC` permis, `SCA` refusé (PDF-AUTH-03) |
+
+## Fichier PCE de fixture (import PCE)
+
+Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)),
+qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais dans
+`sources/api2/tests/Fixtures/pce/pce-2999.txt` (seul `sources/` est monté dans le conteneur api2).
+
+| Élément | Cas couverts |
+|---|---|
+| `[date_valeur]` `2999-01-15` | saison du fichier résolue sur `kp_saison` → `2999` |
+| Licenciés `8801`–`8804` | CR `CRP1`/`CRP2`, CD `CD033`→`3300` et `CD064`→`6400`, Clubs `033001`→`3301`, `033002`→`3302`, `064001`→`6401` |
+
+Aucune de ces structures n'existe dans `data.sql` : l'import les crée. Pour un cas de mise à jour, insérer la
+structure dans `data.sql` avec un libellé ou un rattachement différent de celui du fichier.

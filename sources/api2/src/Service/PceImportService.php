@@ -26,7 +26,7 @@ class PceImportService
     }
 
     /**
-     * Execute the full PCE import process.
+     * Execute the full PCE import process, from the FFCK extranet or from a local PCE file.
      *
      * @return array{
      *   season: string,
@@ -41,13 +41,12 @@ class PceImportService
      *   messages: string[]
      * }
      */
-    public function importPce(): array
+    public function importPce(?string $localFile = null): array
     {
         $this->messages = [];
         $startTime = time();
 
-        // Download PCE file
-        $content = $this->downloadPceFile();
+        $content = $localFile === null ? $this->downloadPceFile() : $this->readLocalPceFile($localFile);
         $downloadTime = time() - $startTime;
 
         // Parse and import
@@ -102,6 +101,23 @@ class PceImportService
         }
 
         $this->messages[] = "Importation du fichier PCE";
+
+        return $content;
+    }
+
+    private function readLocalPceFile(string $path): string
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new \RuntimeException(sprintf('Le fichier PCE local "%s" est introuvable ou illisible', $path));
+        }
+
+        $content = (string) file_get_contents($path);
+
+        if (trim($content) === '') {
+            throw new \RuntimeException(sprintf('Le fichier PCE local "%s" est vide', $path));
+        }
+
+        $this->messages[] = "Importation du fichier PCE local " . $path;
 
         return $content;
     }

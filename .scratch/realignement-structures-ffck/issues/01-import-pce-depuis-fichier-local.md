@@ -6,8 +6,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] La commande d'import accepte une option de fichier local ; sans l'option, elle télécharge le PCE comme aujourd'hui
-- [ ] Un fichier inexistant ou vide fait échouer la commande avec un message explicite, sans rien écrire en base
-- [ ] Un fichier PCE de fixture (quelques licenciés, Clubs, CD et CR) est ajouté aux fixtures de test
-- [ ] Un test d'intégration importe ce fichier et vérifie que ses licenciés sont présents en base pour la saison du fichier
-- [ ] La suite de tests api2 et PHPStan passent
+- [x] La commande d'import accepte une option de fichier local ; sans l'option, elle télécharge le PCE comme aujourd'hui
+- [x] Un fichier inexistant ou vide fait échouer la commande avec un message explicite, sans rien écrire en base
+- [x] Un fichier PCE de fixture (quelques licenciés, Clubs, CD et CR) est ajouté aux fixtures de test
+- [x] Un test d'intégration importe ce fichier et vérifie que ses licenciés sont présents en base pour la saison du fichier
+- [x] La suite de tests api2 et PHPStan passent

@@ -83,7 +83,11 @@ Depuis le conteneur PHP :
 ```bash
 cd /var/www/html/api2
 php bin/console app:import-pce
+# rejouer un import sans le serveur fédéral, à partir d'un fichier PCE local :
+php bin/console app:import-pce --file=/chemin/vers/pce.txt
 ```
+
+Un fichier introuvable ou vide fait échouer la commande sans rien écrire en base.
 
 Ou depuis app4 : **Opérations > Import/Export > Import licences PCE**
 
