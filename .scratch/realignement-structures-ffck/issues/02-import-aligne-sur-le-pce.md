@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (Import PCE depuis un fichier local)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Tous les Clubs du PCE absents de KPI sont créés au même import (plus un seul par exécution), chacun rattaché à un seul CD
 - [x] Un Club dont le libellé ou le CD change dans le PCE est mis à jour à l'import

@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Import aligné sur le PCE)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Script :
 - [x] Il tient en une seule transaction ; un échec laisse la base intacte

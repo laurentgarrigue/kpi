@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] La commande d'import accepte une option de fichier local ; sans l'option, elle télécharge le PCE comme aujourd'hui
 - [x] Un fichier inexistant ou vide fait échouer la commande avec un message explicite, sans rien écrire en base

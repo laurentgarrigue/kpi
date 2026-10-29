@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Les responsables de compétition (RC) suivent le renommage
 - [x] Le code de référence des compétitions qui valait l'ancien code prend le nouveau
