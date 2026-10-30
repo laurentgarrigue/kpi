@@ -3,7 +3,9 @@
 namespace App\Pdf;
 
 use App\PublicResults\CompetitionRules;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 
 /**
  * Header of the documents of a competition (§ 8.3, § 8.4.1): display title, subtitle and visuals of the competition
@@ -35,15 +37,17 @@ class PdfCompetitions
      * @return array{
      *     competition: array{code: string, title: string, subtitle: ?string, type: string, banner: ?string, logo: ?string, sponsor: ?string, charter: bool},
      *     images: array<string, string>,
-     *     rules: array{status: string, final: bool, qualified: int, eliminated: int, published: bool, forfeits: bool}
+     *     rules: array{status: string, final: bool, qualified: int, eliminated: int, published: bool, forfeits: bool, section: ?int}
      * }|null
      */
     public function header(string $season, string $code): ?array
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT Code, Libelle, Soustitre, Soustitre2, Titre_actif, Code_typeclt, Statut, Code_tour, Qualifies,
-                    Elimines, Publication, Points, ' . self::VISUAL_COLUMNS . '
-             FROM kp_competition WHERE Code = ? AND Code_saison = ?',
+            'SELECT c.Code, c.Libelle, c.Soustitre, c.Soustitre2, c.Titre_actif, c.Code_typeclt, c.Statut, c.Code_tour,
+                    c.Qualifies, c.Elimines, c.Publication, c.Points, g.section, ' . self::VISUAL_COLUMNS . '
+             FROM kp_competition c
+             LEFT JOIN kp_groupe g ON g.Groupe = c.Code_ref
+             WHERE c.Code = ? AND c.Code_saison = ?',
             [$code, $season],
         );
         if ($row === false) {
@@ -68,6 +72,8 @@ class PdfCompetitions
                 'published' => $row['Publication'] === 'O',
                 // Forfeits only count, and are only shown, with the 4-2-1-0 scale (PdfCltNiveauPhase.php).
                 'forfeits' => ($row['Points'] ?? '') === '4-2-1-0',
+                // Section of the group of competitions (kp_groupe.section): 2 national, 3 regional…
+                'section' => $row['section'] === null ? null : (int) $row['section'],
             ],
         ];
     }
@@ -132,6 +138,27 @@ class PdfCompetitions
         }
 
         return [$visuals, $images];
+    }
+
+    /**
+     * Labels of competitions, never their codes (the labels suffice): short label (Soustitre2), else the title.
+     *
+     * @param list<string> $codes
+     *
+     * @return array<string, string> label by code, in the order of the codes; an unknown code keeps its code
+     */
+    public function labels(string $season, array $codes): array
+    {
+        if ($codes === []) {
+            return [];
+        }
+        $labels = $this->connection->fetchAllKeyValue(
+            "SELECT Code, COALESCE(NULLIF(Soustitre2, ''), Libelle) FROM kp_competition WHERE Code_saison = ? AND Code IN (?)",
+            [$season, $codes],
+            [ParameterType::STRING, ArrayParameterType::STRING],
+        );
+
+        return array_combine($codes, array_map(static fn (string $code): string => (string) ($labels[$code] ?? $code), $codes));
     }
 
     /** Header of a published competition (public documents), or null. */

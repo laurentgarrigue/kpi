@@ -57,4 +57,26 @@ final class PdfHeader
 
         return 'data:' . $mime . ';base64,' . base64_encode($images[$sponsor]);
     }
+
+    /**
+     * Visuals heading a scoresheet (§ 8.4.1): the banner, else the competition logo, else FFCK + KPI.
+     *
+     * @param array<string, mixed>|null $competition
+     *
+     * @return array{banner: ?string, logos: list<string>}
+     */
+    public static function scoresheetVisuals(?array $competition): array
+    {
+        $banner = $competition['banner'] ?? null;
+        $logo = $competition['logo'] ?? null;
+
+        return [
+            'banner' => $banner,
+            'logos' => match (true) {
+                $banner !== null => [],
+                $logo !== null => [$logo],
+                default => PdfAssets::SCORESHEET_LOGOS,
+            },
+        ];
+    }
 }

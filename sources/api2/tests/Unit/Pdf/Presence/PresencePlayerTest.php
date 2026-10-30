@@ -37,8 +37,13 @@ final class PresencePlayerTest extends TestCase
     {
         self::assertSame('DUPONT-ÉLIE', PresencePlayer::lastName('Dupont-élie'));
         self::assertSame('Jean-Marc', PresencePlayer::firstName('JEAN-MARC'));
-        self::assertSame('-', PresencePlayer::role(''));
-        self::assertSame('C', PresencePlayer::role('C'));
+        $labels = ['role.C' => 'Captain', 'role.E' => 'Staff'];
+        self::assertSame('', PresencePlayer::role('', $labels));
+        self::assertSame('', PresencePlayer::role('-', $labels));
+        self::assertSame('', PresencePlayer::role(null, $labels));
+        self::assertSame('Captain', PresencePlayer::role('C', $labels));
+        self::assertSame('Staff', PresencePlayer::role('E', $labels));
+        self::assertSame('Z', PresencePlayer::role('Z', $labels), 'an unknown code stays as it is');
         self::assertSame('Nat-B', PresencePlayer::referee('Nat', 'B'));
         self::assertSame('Reg', PresencePlayer::referee('Reg', ''));
         self::assertSame('', PresencePlayer::referee(null, null));

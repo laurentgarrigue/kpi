@@ -15,6 +15,9 @@ final class RankingTable
     /** A score that is not a number yet: the game is not played (legacy « ? »). */
     private const UNPLAYED_SCORES = ['', '?'];
 
+    /** Type of a cup: its points come from the phases, it only shows its final ranking. */
+    public const CUP = 'CP';
+
     /**
      * @param array<string, string> $labels
      *

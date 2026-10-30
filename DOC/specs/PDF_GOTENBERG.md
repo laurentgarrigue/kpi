@@ -274,7 +274,10 @@ Pour chaque document, la spec définit (§7) :
   rien d'autre (cf. CLAUDE.md, PAGE_SCRUTINEERING).
 
 Refus → **403** (rôle insuffisant ou hors périmètre), sans révéler l'existence de la ressource hors périmètre.
-Chaque génération admin d'un document à données personnelles est journalisée (`AdminLoggableTrait`, sans les données).
+Chaque génération d'un PDF admin (route `/admin/pdf` ou lien signé) est journalisée dans `kp_journal`, comme les autres
+actions admin et sans les données : action « PDF `<document>` », utilisateur, saison, compétition (une seule, sinon la
+liste dans le détail), événement, journée, matchs, et les autres paramètres (langue, options) dans le détail
+(`App\Pdf\PdfJournal`). Les PDF publics ne sont pas journalisés ; un échec d'écriture n'empêche pas de servir le PDF.
 
 ---
 
@@ -317,6 +320,11 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 Règle : chaque **option** qui ajoute des données (date de naissance, visa, catégorie U21) a son propre rôle ; une
 option demandée sans le rôle correspondant → 403 (pas de document dégradé silencieusement).
 
+Contenu de la feuille de présence (décision du 2026-10-30) : le statut est écrit en toutes lettres (Capitaine, Staff,
+Arbitre, Inactif ; rien pour un joueur) — de même sur la feuille de contrôle et le suivi des cartons ; les colonnes
+**Pagaie** et **Certif.** ne figurent que pour les compétitions des sections **Nationale (2) et Régionale (3)**
+(`kp_groupe.section` du groupe de la compétition).
+
 Le pool d'arbitres est permanent : `referees-pool` et `presence?competition=POOL` lisent la saison technique `1000`,
 quel que soit `season`. `instances` exige `competition` et `gameday` (la journée doit appartenir à la compétition et
 à la saison demandées, sinon 404) ; une journée hors du filtre de journées du mandat → 403. Le numéro de licence des
@@ -354,6 +362,10 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 - app2 `pages/game/[id].vue` : le lien vers `PdfMatchMulti.php` est retiré.
 - app3 `app/utils/page-links.ts` : la cible « feuille de match » pointe vers la fiche match app3 si elle existe,
   sinon vers la vue match d'app2.
+- `games-list` (décision du 2026-10-30) : colonnes N°, date, heure, **compétition (seulement quand la liste en réunit
+  plusieurs, par son libellé)**, Phase | Match (2 lignes), terrain, équipe A, score, équipe B (centrés, nom d'équipe sur
+  une ligne), **une colonne Arbitres** (principal au-dessus du secondaire). La liste commence sous l'en-tête de la
+  première page : une section plus longue qu'une page s'écoule sur les suivantes.
 - `PdfMatchMulti.php?listMatch=<id>` redirige (301) vers la vue match d'app2 de ce match ; avec plusieurs ids, vers
   la vue du premier match. Une feuille publique pourra être ajoutée plus tard comme option `scoresheet` sur `/pdf`
   sans changer le reste du contrat.
@@ -375,6 +387,10 @@ inchangées, validées par la commission arbitrage avant mise en service (critè
 | `ranking-tiebreak` | justification départage (api2, mPDF) | — | Classements, si égalités (API `ROLE_VIEWER`) | `ROLE_ORGANIZER` + périmètre (repose sur le calcul, cf. I5) |
 
 Dans app4, les entrées « Classement publié » de la page Classements (profils 1–8) ouvrent la **version publique**.
+
+Coupe (`CP`, décision du 2026-10-30) : `ranking` ne montre que le **classement final** (rang, équipe, médaille), sans
+tableau de points, comme l'onglet Classement d'app3 ; `ranking-team-detail` regroupe les matchs de chaque équipe par
+**nom de phase** (« Poule A », « Finale ») au lieu de la date et du lieu, sans les points de l'équipe.
 Quand le classement porte des médailles, elles **remplacent** les mentions « Qualifié » (validé sur la maquette de référence,
 2026-10-28). Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
 « Provisoire - non publié » en filigrane.
@@ -490,9 +506,13 @@ sur les PDF admin comme publics :
   d'affichage de l'événement : `GroupOrder`, `Code_tour`, `Code` ; ordre de la liste pour `competition=A,B`), titre de
   l'événement ou liste des codes. Le logo de l'événement (`kp_evenement.logo`) n'est pas utilisé.
 - Document sans compétition (pool arbitres, statistiques sans compétition) : logos de la charte.
+- **Titres (décision du 2026-10-30)** : le type de document (« Équipes », « Classement - détail par équipe »…) avec la
+  **saison à droite, à la même hauteur**, sans le mot « Saison » ; en dessous le titre de la compétition et son
+  sous-titre. Le **code** d'une compétition n'est jamais affiché : partout (en-tête, colonne « Compét. » de la liste des
+  matchs, catégorie de la feuille de marque, statistiques), son libellé court (`Soustitre2`), sinon son libellé.
 - **Feuille de marque** : chaque match prend les visuels de sa compétition, dans la feuille (bandeau réduit à 12 mm en
-  haut de la colonne de gauche, sponsor en bas de la colonne de droite), car un même PDF peut réunir plusieurs
-  compétitions.
+  haut de la colonne de gauche, sinon logo de la compétition, sinon logos **FFCK + KPI** ; sponsor en bas de la colonne
+  de droite), car un même PDF peut réunir plusieurs compétitions.
 - Seuls les **fichiers téléversés** (`img/logo/…`) sont utilisés : une URL externe (`http…`) est ignorée, Chromium
   n'ayant aucun accès réseau (§ 9). **Chantier ultérieur** : quand un utilisateur autorisé choisit une URL externe pour
   le logo, le bandeau ou le sponsor d'une compétition, l'image est importée dans KPI (contrôles de sécurité,
@@ -684,6 +704,17 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | Visuels de la compétition | Bandeau, sinon logo, en en-tête ; sponsor en pied (§ 8.4.1). PDF publics sans bandeau ni logo : FFCK + CNA. |
 | Images par URL externe | Ignorées ; import local sécurisé lors d'un chantier ultérieur (§ 8.4.1). |
 
+### Décisions (2026-10-30)
+
+| Sujet | Décision |
+|---|---|
+| Journal | Chaque PDF admin est tracé dans `kp_journal` (« PDF `<document>` », § 6.4). |
+| Codes et saison | Plus de code de compétition sur les PDF, les libellés suffisent ; saison à droite du type de document, sans « Saison » (§ 8.4.1). |
+| Présence | Statut en toutes lettres ; Pagaie et Certif. pour les sections Nationale et Régionale seulement (§ 7.2). |
+| Liste des matchs | Commence en page 1 ; Phase \| Match sur 2 lignes, équipes et score centrés, une colonne Arbitres (§ 7.3). |
+| Feuille de marque | Bandeau, sinon logo, sinon FFCK + KPI (§ 8.4.1). |
+| Coupe (CP) | Classement final seul, sans points (PDF et app3) ; détail par équipe groupé par phase (§ 7.4). |
+
 ### Questions ouvertes
 
 Aucune à ce stade.
@@ -774,6 +805,13 @@ Aucune à ce stade.
 - Feuille de marque : visuels de chaque match dans sa feuille ; langue de l'utilisateur.
 - app4 : un seul lien par document (plus de doublons FR / EN), la langue de l'utilisateur étant passée par
   `usePdf()`.
+
+### Ajustements (2026-10-30)
+
+- Journal des PDF admin (`App\Pdf\PdfJournal`) ; en-tête : saison à droite, aucun code de compétition.
+- Présence : statuts en toutes lettres, Pagaie / Certif. selon la section ; `games-list` : mise en page fixe, colonne
+  Arbitres, plus de page blanche avant une longue liste ; feuille de marque : FFCK + KPI à défaut de visuel ; coupe :
+  classement final seul (PDF et onglet Classement d'app3), détail par équipe par phase.
 
 ### Reste à faire
 

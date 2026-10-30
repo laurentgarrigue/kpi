@@ -294,18 +294,23 @@ class AdminStatsController extends AbstractController
         if ($showRanking) {
             array_unshift($tableColumns, ['key' => '_rank', 'label' => '#', 'class' => 'num']);
         }
+        $competitions = array_values($request->query->all('competitions') ?: array_filter(explode(',', (string) $request->query->get('competitions', ''))));
+        // Competitions by their label, never their code (PDF_GOTENBERG.md § 8.4).
+        $competitionLabels = $this->pdfCompetitions->labels($pdfRequest->season, $competitions);
         $rows = [];
         foreach (array_values($data) as $index => $item) {
             $row = ['_rank' => $index + 1];
             foreach ($columns as $column) {
                 $row[$column] = (string) ($item[$column] ?? '');
             }
+            if (isset($row['competition'])) {
+                $row['competition'] = $competitionLabels[$row['competition']] ?? $row['competition'];
+            }
             $rows[] = $row;
         }
-        $competitions = array_values($request->query->all('competitions') ?: array_filter(explode(',', (string) $request->query->get('competitions', ''))));
         // Visuals of the first competition selected (PDF_GOTENBERG.md § 8.4.1).
         $header = $this->pdfCompetitions->withVisualsOf(
-            ['code' => '', 'title' => implode(', ', $competitions), 'subtitle' => null],
+            ['code' => '', 'title' => implode(', ', $competitionLabels), 'subtitle' => null],
             $pdfRequest->season,
             $competitions[0] ?? null,
             false,

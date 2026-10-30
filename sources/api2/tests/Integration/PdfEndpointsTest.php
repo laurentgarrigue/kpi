@@ -3,6 +3,7 @@
 namespace App\Tests\Integration;
 
 use App\Tests\Support\FakeGotenbergClient;
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -13,6 +14,15 @@ final class PdfEndpointsTest extends ApiTestCase
 {
     private const TEAMS_GROUPS_SCA = '/admin/pdf/teams-groups?season=2997&competition=SCA';
     private const RANKING_RCH = '/pdf/ranking?season=2999&competition=RCH';
+
+    private Connection $connection;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // The admin PDFs write the journal (§ 6.4): rolled back at the end of each test.
+        $this->connection = $this->beginWrites();
+    }
 
     // ------------------------------------------------------------------ access (§ 6.4)
 
@@ -54,6 +64,8 @@ final class PdfEndpointsTest extends ApiTestCase
         $html = (string) $this->gotenberg()->html;
         self::assertStringContainsString('class="theme-admin"', $html, 'PDF-DESIGN-01');
         self::assertStringContainsString('tokens-admin.css', $html);
+        self::assertStringContainsString('<span class="pdf-header__season">2997</span>', $html, 'the season at the right of the title');
+        self::assertStringNotContainsString('Saison', $html, 'no « Season » word, no competition code');
         foreach (['Scrut Alpha', 'Scrut Bravo', 'Germany Men'] as $team) {
             self::assertStringContainsString($team, $html);
         }
@@ -62,6 +74,23 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertArrayHasKey('raleway-latin.woff2', $this->gotenberg()->files, 'PDF-DOC-04: fonts sent with the page');
         self::assertStringNotContainsString('http://', $html, 'PDF-DOC-04: nothing to fetch');
         self::assertStringNotContainsString('https://', $html);
+    }
+
+    public function testAdminPdfIsRecordedInTheJournal(): void
+    {
+        $this->pdfAs('TADMIN', self::TEAMS_GROUPS_SCA . '&lang=en', Response::HTTP_OK);
+
+        self::assertSame(
+            ['Users' => 'TADMIN', 'Saisons' => '2997', 'Competitions' => 'SCA', 'Journal' => 'lang=en'],
+            $this->connection->fetchAssociative("SELECT Users, Saisons, Competitions, Journal FROM kp_journal WHERE Actions = 'PDF teams-groups'"),
+        );
+    }
+
+    public function testPublicPdfIsNotRecordedInTheJournal(): void
+    {
+        $this->client->request('GET', self::RANKING_RCH);
+
+        self::assertFalse($this->connection->fetchOne("SELECT Id FROM kp_journal WHERE Actions LIKE 'PDF %'"));
     }
 
     public function testPdfDataLanguage(): void
@@ -206,6 +235,8 @@ final class PdfEndpointsTest extends ApiTestCase
             self::assertStringContainsString($text, $html . $this->gotenberg()->footer);
         }
         self::assertLessThan(strpos($html, 'Coach'), strpos($html, 'Joueur'), 'players before the staff');
+        self::assertStringContainsString('Staff</td>', $html, 'the role by its label');
+        self::assertStringContainsString('Pagaie', $html, 'national competition: paddle and certificate checked');
         self::assertStringNotContainsString('Germany Men', $html, 'a team without players has no page');
     }
 
@@ -311,6 +342,16 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringContainsString('2 - 1', $html, 'elimination phase: its games');
         self::assertLessThan(strpos($html, 'Finale</h2>'), strpos($html, 'Poule A</h2>'), 'pools first');
 
+        $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RCP');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('<td colspan="3">Finale</td>', $html, 'a cup: games by phase');
+        self::assertStringNotContainsString('Rivecity', $html, 'not by date and place');
+
+        $this->client->request('GET', '/pdf/ranking?season=2999&competition=RCP');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        self::assertStringNotContainsString('Pts</th>', (string) $this->gotenberg()->html, 'a cup: final ranking only, no points');
+
         $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RNP');
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode(), 'competition not published');
     }
@@ -357,10 +398,15 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
         self::assertStringContainsString('ARBITRE Un', $html);
         self::assertStringNotContainsString('(C001)', $html, 'what is stored between parentheses is not published');
+        self::assertStringContainsString('Arbitres</th>', $html, 'one column for both referees');
+        self::assertStringNotContainsString('Compét.', $html, 'one competition: no competition column');
 
         $this->client->request('GET', '/pdf/games-list?season=2999&competition=RCH,RCP');
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        self::assertStringContainsString('Equipe Echo', (string) $this->gotenberg()->html, 'several competitions');
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Equipe Echo', $html, 'several competitions');
+        self::assertStringContainsString('Compét.', $html);
+        self::assertStringContainsString('Poule A, Finale', $html, 'header: the labels of the competitions, not their codes');
 
         $this->client->request('GET', '/pdf/games-list?season=2999&event=77');
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
@@ -414,6 +460,8 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringContainsString('ALPHA (Entraîneur)', $html);
         self::assertStringNotContainsString('Inactif', $html, 'inactive players are not on the sheet');
         self::assertStringContainsString('ID #9401', $html);
+        self::assertStringContainsString('pdf-sheet__logos', $html, 'no visual of the competition: FFCK + KPI');
+        self::assertArrayHasKey('logo-ffck.png', $this->gotenberg()->files);
 
         $this->pdfAs('TCLUB', '/admin/pdf/scoresheet?season=2999&games=9401', Response::HTTP_FORBIDDEN, 'game out of the perimeter');
         $this->pdfAs('TSCORE', '/admin/pdf/scoresheet?season=2999', Response::HTTP_BAD_REQUEST, 'a scope is required');
@@ -456,6 +504,8 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertSame('application/pdf', $response->headers->get('Content-Type'));
         self::assertStringContainsString('class="theme-admin"', (string) $this->gotenberg()->html);
         self::assertStringContainsString('Scorers', (string) $this->gotenberg()->html);
+        self::assertStringContainsString('Poule A', (string) $this->gotenberg()->html, 'the competition by its label');
+        self::assertStringNotContainsString('>RCH</td>', (string) $this->gotenberg()->html, 'never by its code');
     }
 
     // ------------------------------------------------------------------ helpers

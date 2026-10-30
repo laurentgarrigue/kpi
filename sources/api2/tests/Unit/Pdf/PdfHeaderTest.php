@@ -45,6 +45,14 @@ final class PdfHeaderTest extends TestCase
         self::assertNull(PdfHeader::sponsorDataUri(self::competition(sponsor: 'sponsor.png'), []));
     }
 
+    public function testScoresheetCarriesTheBannerElseTheLogoElseFfckAndKpi(): void
+    {
+        self::assertSame(['banner' => 'banner.png', 'logos' => []], PdfHeader::scoresheetVisuals(self::competition(banner: 'banner.png', logo: 'logo.png')));
+        self::assertSame(['banner' => null, 'logos' => ['logo.png']], PdfHeader::scoresheetVisuals(self::competition(logo: 'logo.png')));
+        self::assertSame(['banner' => null, 'logos' => ['logo-ffck.png', 'logo-kpi.png']], PdfHeader::scoresheetVisuals(self::competition(charter: false)));
+        self::assertSame(['banner' => null, 'logos' => ['logo-ffck.png', 'logo-kpi.png']], PdfHeader::scoresheetVisuals(null));
+    }
+
     /** @return array<string, mixed> */
     private static function competition(?string $banner = null, ?string $logo = null, ?string $sponsor = null, bool $charter = true): array
     {

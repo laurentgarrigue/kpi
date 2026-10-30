@@ -19,10 +19,13 @@
             </div>
         {% endif %}
         <div class="pdf-header__titles">
-            <h1 class="pdf-header__document">{{ title }}</h1>
+            {# The season at the right of the document title; no competition code, the labels suffice. #}
+            <div class="pdf-header__line">
+                <h1 class="pdf-header__document">{{ title }}</h1>
+                {% if season %}<span class="pdf-header__season">{{ season }}</span>{% endif %}
+            </div>
             {% if competition is defined %}
                 <div class="pdf-header__competition">{{ competition.title }}{% if competition.subtitle %} · {{ competition.subtitle }}{% endif %}</div>
-                <div class="pdf-header__meta">{{ labels.season }} {{ season }}{% if competition.code|default('') %} · {{ competition.code }}{% endif %}</div>
             {% endif %}
         </div>
         {% if competition_logo %}

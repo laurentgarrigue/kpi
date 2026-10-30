@@ -157,8 +157,9 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 
 - Données : `GET /competition/{season}/{code}/ranking`.
 - Badge **« Classement provisoire »** si le statut est `ON`, **« Classement final »** si `END`.
-- Colonnes selon le type (API_PUBLIC_RESULTS.md § 5.3) : CHPT et CP → rang, équipe, Pts, J, G, N, P, F, +, −,
-  Diff ; MULTI → rang, équipe, Pts, J. Sur mobile, colonnes réduites à rang, équipe, Pts, J, Diff.
+- Colonnes selon le type (API_PUBLIC_RESULTS.md § 5.3) : CHPT → rang, équipe, Pts, J, G, N, P, F, +, −, Diff ;
+  MULTI → rang, équipe, Pts, J ; CP → rang et équipe seulement : une coupe n'a pas de tableau de points, seulement son
+  classement final (de même pour son PDF). Sur mobile, colonnes réduites à rang, équipe, Pts, J, Diff.
 - **Médailles** : compétition terminée du tour final → médaille or / argent / bronze (visuelle et textuelle)
   pour les rangs 1 à 3 (`medal` d'api2), à la place de la marque « qualifié ».
 - Sinon, les `qualified` premiers et `eliminated` derniers sont marqués (couleur **et** texte).
@@ -201,7 +202,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-17** — Dans la grille des terrains, le statut est une icône colorée à libellé accessible (gris à venir, bleu en cours avec la période abrégée, orange provisoire, vert terminé), précédée du numéro du match ; la catégorie d'un match de coupe est suivie de sa phase (« PlayOff H. - Poule A ») ; ailleurs, statut et période sont écrits en toutes lettres (« En cours · période 1 », « Provisoire »).
 - **CMP-08** — Infos : journées avec officiels ; équipes par poule seulement si `ON`/`END` ; schéma s'il existe.
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
-- **CMP-10** — Classement : colonnes selon le type, badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide.
+- **CMP-10** — Classement : colonnes selon le type (CP : rang et équipe, sans points), badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide.
 - **CMP-11** — Stats : sélecteur des statistiques disponibles (masqué s'il n'y en a qu'une), tableau générique ; buteurs : 20 puis « Voir plus » (100), égalités partagées, état vide.
 - **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement servi par api2 (`/api2/pdf/ranking`, `ranking-phases` pour une coupe), autres PDF legacy avec `S`, `Compet`, `lang`.
 - **CMP-13** — Rafraîchissement toutes les 60 s seulement si un match est en cours ou commence dans l'heure, suspendu quand l'onglet est masqué.

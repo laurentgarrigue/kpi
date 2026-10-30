@@ -278,6 +278,11 @@ describe('ranking tab (§ 3.6)', () => {
     expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('/api2/pdf/ranking-phases?')
   })
 
+  it('CMP-10: a cup (CP) shows its final ranking only, no points table', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
+    expect(wrapper.findAll('thead th').map(cell => cell.text()).filter(Boolean)).toEqual(['Qualification ou médaille', 'Clt', 'Équipe'])
+  })
+
   it('CMP-10: MULTI shows rank, team, points and played only', async () => {
     const wrapper = await mountRoute('/competitions/2999/RMU/ranking')
     expect(wrapper.findAll('thead th').map(cell => cell.text()).filter(Boolean)).toEqual(['Qualification ou médaille', 'Clt', 'Équipe', 'Pts', 'J'])

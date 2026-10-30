@@ -6,10 +6,12 @@ use App\Pdf\Games\GamesScope;
 use App\Pdf\Games\GamesSort;
 use App\Pdf\InvalidPdfRequest;
 use App\Pdf\PdfAccessDenied;
+use App\Pdf\PdfAssets;
 use App\Pdf\PdfCatalog;
 use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfDocumentProvider;
+use App\Pdf\PdfHeader;
 use App\Pdf\PdfLabels;
 use App\Pdf\PdfRequest;
 use App\Pdf\PdfTheme;
@@ -37,6 +39,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
         private readonly ScoresheetRepository $sheets,
         private readonly MatchLabelParser $labelParser,
         private readonly PdfCompetitions $competitions,
+        private readonly PdfAssets $assets,
         private readonly PdfLabels $labels,
     ) {
     }
@@ -103,6 +106,10 @@ final class ScoresheetDocument implements PdfDocumentProvider
         // Visuals of the competition of the game, inside the sheet: one PDF may hold several competitions (§ 8.4.1).
         $visuals = $this->competitions->header((string) $game['Code_saison'], (string) $game['Code_competition']);
         $images += $visuals['images'] ?? [];
+        $heading = PdfHeader::scoresheetVisuals($visuals['competition'] ?? null);
+        foreach (array_intersect($heading['logos'], PdfAssets::SCORESHEET_LOGOS) as $logo) {
+            $images[$logo] ??= $this->assets->charterLogo($logo)['content'];
+        }
         $international = $game['Code_niveau'] === self::INTERNATIONAL;
         $season = (string) $game['Code_saison'];
         $placeholders = $this->labelParser->parse((string) $game['Libelle']);
@@ -117,11 +124,12 @@ final class ScoresheetDocument implements PdfDocumentProvider
 
         return [
             'labels' => $labels,
-            'banner' => $visuals['competition']['banner'] ?? null,
+            'banner' => $heading['banner'],
+            'logos' => $heading['logos'],
             'sponsor' => $visuals['competition']['sponsor'] ?? null,
             'id' => (int) $game['Id'],
             'competition' => $titleActive === 'O' ? (string) $game['Competition'] : (string) $game['Soustitre'],
-            'category' => (string) ($game['Soustitre2'] ?: $game['Code_competition']),
+            'category' => (string) $game['Soustitre2'],
             'season' => $season,
             'organiser' => (string) $game['Organisateur'],
             'manager' => ScoresheetSheet::person($game['Responsable_R1'] ?: $game['Responsable_insc']),

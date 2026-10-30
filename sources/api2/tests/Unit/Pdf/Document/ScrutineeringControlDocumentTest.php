@@ -10,6 +10,8 @@ final class ScrutineeringControlDocumentTest extends TestCase
 {
     private const LABELS = [
         'player.staff' => 'Encadrement',
+        'role.C' => 'Capitaine',
+        'role.E' => 'Staff',
         'control.status_ok' => 'OK',
         'control.status_cosmetic' => 'Cosmétique',
         'control.status_safety' => 'Sécurité',
@@ -29,7 +31,7 @@ final class ScrutineeringControlDocumentTest extends TestCase
         self::assertSame(['OK', 'Cosmétique', 'Technique', '2'], [$rows[0]['kayak'], $rows[0]['vest'], $rows[0]['helmet'], $rows[0]['paddles']]);
         self::assertSame(['Sécurité', '', '', ''], [$rows[1]['kayak'], $rows[1]['vest'], $rows[1]['helmet'], $rows[1]['paddles']]);
         self::assertSame(['_group' => 'Encadrement'], $rows[2]);
-        self::assertSame('E', $rows[3]['role']);
+        self::assertSame(['Capitaine', '', 'Staff'], [$rows[0]['role'], $rows[1]['role'], $rows[3]['role']], 'roles by their label');
     }
 
     public function testAResetStatusIsBlank(): void

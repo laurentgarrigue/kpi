@@ -51,6 +51,7 @@ final class GamesListDocument implements PdfDocumentProvider
         $public = $theme === PdfTheme::Public;
         $byDay = ($request->option('sort') ?? GamesSort::Date->value) === GamesSort::Date->value;
 
+        $severalCompetitions = count(GamesScope::competitionLabels($games)) > 1;
         $sections = [];
         foreach ($games as $game) {
             $key = $byDay ? $game['Date_match'] . '|' . $game['Lieu'] : '';
@@ -64,26 +65,40 @@ final class GamesListDocument implements PdfDocumentProvider
             filename: sprintf('%s_%s_%s_%s.pdf', $this->document(), self::scopeName($request), $request->season, $request->lang),
             variables: [
                 'competition' => $header['competition'],
-                'columns' => [
-                    ['key' => 'number', 'label' => $labels['player.number'], 'class' => 'num'],
-                    ['key' => 'date', 'label' => $labels['games.date']],
-                    ['key' => 'time', 'label' => $labels['games.time']],
-                    ['key' => 'competition', 'label' => $labels['games.competition']],
-                    ['key' => 'phase', 'label' => $labels['games.phase']],
-                    ['key' => 'pitch', 'label' => $labels['games.pitch'], 'class' => 'num'],
-                    ['key' => 'home', 'label' => $labels['games.home'], 'class' => 'pdf-col--home'],
-                    ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-col--score'],
-                    ['key' => 'away', 'label' => $labels['games.away']],
-                    ['key' => 'referee_1', 'label' => $labels['games.referee_1']],
-                    ['key' => 'referee_2', 'label' => $labels['games.referee_2']],
-                ],
+                'columns' => self::columns($labels, $severalCompetitions),
                 'sections' => array_values($sections),
                 'dense' => true,
+                'table_class' => 'pdf-games',
                 'internal' => !$public,
             ],
             landscape: true,
             images: $header['images'],
         );
+    }
+
+    /**
+     * Columns of the list: the competition only when the games belong to several; one column for both referees.
+     *
+     * @param array<string, string> $labels
+     *
+     * @return list<array{key: string, label: string, class: string}>
+     */
+    public static function columns(array $labels, bool $severalCompetitions): array
+    {
+        $columns = [
+            ['key' => 'number', 'label' => $labels['player.number'], 'class' => 'num pdf-games__number'],
+            ['key' => 'date', 'label' => $labels['games.date'], 'class' => 'pdf-games__date'],
+            ['key' => 'time', 'label' => $labels['games.time'], 'class' => 'pdf-games__time'],
+            ['key' => 'competition', 'label' => $labels['games.competition'], 'class' => 'pdf-games__competition'],
+            ['key' => 'phase', 'label' => $labels['games.phase'], 'class' => 'pdf-games__phase'],
+            ['key' => 'pitch', 'label' => $labels['games.pitch'], 'class' => 'pdf-games__pitch'],
+            ['key' => 'home', 'label' => $labels['games.home'], 'class' => 'pdf-games__team'],
+            ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-games__score'],
+            ['key' => 'away', 'label' => $labels['games.away'], 'class' => 'pdf-games__team'],
+            ['key' => 'referees', 'label' => $labels['games.referees'], 'class' => 'pdf-games__referees'],
+        ];
+
+        return array_values(array_filter($columns, static fn (array $column): bool => $severalCompetitions || $column['key'] !== 'competition'));
     }
 
     /**
@@ -101,14 +116,14 @@ final class GamesListDocument implements PdfDocumentProvider
             'number' => (string) $game['Numero_ordre'],
             'date' => $date === false ? '' : $date->format('d/m'),
             'time' => substr((string) $game['Heure_match'], 0, 5),
-            'competition' => (string) $game['Code_competition'],
+            'competition' => GamesScope::competitionLabel($game),
             'phase' => trim(implode(' | ', array_filter([(string) $game['Phase'], (string) $game['Libelle']], 'strlen'))),
             'pitch' => (string) $game['Terrain'],
             'home' => $game['LibelleA'] ?? '',
             'score' => RankingTable::isPlayed($game) ? sprintf('%s - %s', $game['ScoreA'], $game['ScoreB']) : '',
             'away' => $game['LibelleB'] ?? '',
-            'referee_1' => $referee($game['Arbitre_principal']),
-            'referee_2' => $referee($game['Arbitre_secondaire']),
+            // First referee above the second one.
+            'referees' => implode("\n", array_filter([$referee($game['Arbitre_principal']), $referee($game['Arbitre_secondaire'])], 'strlen')),
             '_cells' => $result['_cells'],
         ];
     }

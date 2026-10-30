@@ -73,6 +73,7 @@ final class RankingDocument implements PdfDocumentProvider
             variables: [
                 'competition' => [...$visuals['competition'], 'title' => $header->displayTitle, 'subtitle' => $header->soustitre2],
                 'rows' => self::rows($ranking['rows'], $ranking['qualified'], $ranking['eliminated']),
+                'with_points' => $header->type !== RankingTable::CUP,
                 'with_details' => $header->type !== 'MULTI',
             ],
             publicPath: sprintf('/competitions/%s/%s/ranking', rawurlencode($request->season), rawurlencode($code)),
@@ -103,6 +104,7 @@ final class RankingDocument implements PdfDocumentProvider
             variables: [
                 'competition' => $header['competition'],
                 'rows' => self::rows($ranking, $unranked ? 0 : $rules['qualified'], $unranked ? 0 : $rules['eliminated']),
+                'with_points' => $type !== RankingTable::CUP,
                 'with_details' => $type !== 'MULTI',
                 'provisional' => true,
                 'internal' => true,

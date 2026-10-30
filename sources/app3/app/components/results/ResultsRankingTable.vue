@@ -20,7 +20,9 @@ const shown = computed(() => props.rows
   .map((row, index) => ({ row, mark: rankingMark(row, index, props.rows.length, props.qualified, props.eliminated) }))
   .slice(props.from ?? 0, props.to))
 
-const detailed = computed(() => !props.compact && props.type !== 'MULTI')
+// A cup only shows its final ranking: its points come from the phases, not from a league table.
+const withPoints = computed(() => props.type !== 'CP')
+const detailed = computed(() => withPoints.value && !props.compact && props.type !== 'MULTI')
 const DETAIL_COLUMNS = ['won', 'drawn', 'lost', 'forfeits', 'goals_for', 'goals_against'] as const
 </script>
 
@@ -32,8 +34,10 @@ const DETAIL_COLUMNS = ['won', 'drawn', 'lost', 'forfeits', 'goals_for', 'goals_
         <th scope="col" class="w-8 px-1 py-1"><span class="sr-only">{{ $t('results.col.mark') }}</span></th>
         <th scope="col" class="px-1 py-1 text-left">{{ $t('results.col.rank') }}</th>
         <th scope="col" class="px-1 py-1 text-left">{{ $t('results.col.team') }}</th>
-        <th scope="col" class="px-1 py-1 text-right">{{ $t('results.col.points') }}</th>
-        <th scope="col" class="px-1 py-1 text-right">{{ $t('results.col.played') }}</th>
+        <template v-if="withPoints">
+          <th scope="col" class="px-1 py-1 text-right">{{ $t('results.col.points') }}</th>
+          <th scope="col" class="px-1 py-1 text-right">{{ $t('results.col.played') }}</th>
+        </template>
         <template v-if="detailed">
           <th v-for="column in DETAIL_COLUMNS" :key="column" scope="col" class="hidden px-1 py-1 text-right sm:table-cell">{{ $t(`results.col.${column}`) }}</th>
           <th scope="col" class="px-1 py-1 text-right">{{ $t('results.col.goal_diff') }}</th>
@@ -45,8 +49,10 @@ const DETAIL_COLUMNS = ['won', 'drawn', 'lost', 'forfeits', 'goals_for', 'goals_
         <td class="px-1 py-1 text-center"><ResultsRankingMark :mark="mark" /></td>
         <td class="px-1 py-1 tabular-nums">{{ row.rank }}</td>
         <td class="px-1 py-1"><ResultsTeamName :label="row.team.label" :number="row.team.number" :competition="competition" /></td>
-        <td class="px-1 py-1 text-right font-semibold tabular-nums">{{ row.points }}</td>
-        <td class="px-1 py-1 text-right tabular-nums">{{ row.played }}</td>
+        <template v-if="withPoints">
+          <td class="px-1 py-1 text-right font-semibold tabular-nums">{{ row.points }}</td>
+          <td class="px-1 py-1 text-right tabular-nums">{{ row.played }}</td>
+        </template>
         <template v-if="detailed">
           <td v-for="column in DETAIL_COLUMNS" :key="column" class="hidden px-1 py-1 text-right tabular-nums sm:table-cell">{{ row[column] }}</td>
           <td class="px-1 py-1 text-right tabular-nums">{{ row.goal_diff }}</td>

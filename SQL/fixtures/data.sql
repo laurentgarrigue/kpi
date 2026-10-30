@@ -488,6 +488,9 @@ INSERT INTO `wptest_nf3_field_meta` (`parent_id`, `key`, `value`) VALUES
 --   SCA (non verrouillée) : 9381 Alpha (C001), 9382 Bravo (C002), 9383 Germany (GER) ; SCB (verrouillée) : 9384
 --   Alpha Deux (C001, même club que 9381), 9385 Germany Women (GER-W, même nation que 9383) ; SCC (hors événement) :
 --   9386 Charlie (C001).
+-- Groupe national : la feuille de présence y montre pagaies et certificats (PDF_GOTENBERG.md § 7.2).
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (2, 2, 'NAT', 'TSTSCR', 'Groupe Scrutineering', 'Scrutineering group');
 INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `logo`, `app`) VALUES
   (80, 'Tournoi Scrutineering', 'Lacville', '2997-05-01', '2997-05-02', 'N', NULL, 'N');
 INSERT INTO `kp_competition`

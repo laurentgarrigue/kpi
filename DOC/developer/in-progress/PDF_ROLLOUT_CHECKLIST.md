@@ -249,6 +249,27 @@ ORDER BY Code_saison DESC, Code;"
 
 ---
 
+## Ajustements du 2026-10-30 (même PR)
+
+Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 6.4, § 7.2 à § 7.4, § 8.4.1 et § 14. Choisir une compétition
+**N** d'une section Nationale ou Régionale, une **I** d'une autre section (internationale, tournoi…) et une coupe
+**K** (type CP) ; `$E` un événement à plusieurs compétitions.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/teams-groups?season=$S&competition=<N>"` | saison en haut à droite, à la hauteur de « Équipes » ; ni « Saison » ni code de compétition | ☐ |
+| 2 | Journal : 🖥 `. docker/.env && docker exec -i ${APPLICATION_NAME}_db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "SELECT Dates, Users, Actions, Saisons, Competitions, Journal FROM kp_journal WHERE Actions LIKE 'PDF %' ORDER BY Id DESC LIMIT 5"` | une ligne « PDF teams-groups » de l'utilisateur pour la ligne 1 ; aucune ligne pour un PDF public ; app4 Journal les affiche | ☐ |
+| 3 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/presence?season=$S&competition=<N>"` | colonnes Pagaie et Certif. ; statuts « Capitaine », « Staff »… en toutes lettres | ☐ |
+| 4 | même document pour **I** | sans Pagaie ni Certif. | ☐ |
+| 5 | `pdf "$B/pdf/games-list?season=$S&event=$E"` (au moins 30 matchs) | la liste commence en **page 1** ; colonne Compét. avec les libellés ; Phase \| Match sur 2 lignes ; noms d'équipes sur une ligne, centrés ; une colonne Arbitres (principal au-dessus) | ☐ |
+| 6 | `pdf "$B/pdf/games-list?season=$S&competition=<N>"` | pas de colonne Compét. | ☐ |
+| 7 | Feuille de marque d'un match d'une compétition sans bandeau ni logo | logos FFCK et KPI en haut à gauche, une page par match | ☐ |
+| 8 | `pdf "$B/pdf/ranking?season=$S&competition=<K>"` et app3 `/competitions/$S/<K>/ranking` | classement final seul (rang, équipe, médailles), sans Pts ni J | ☐ |
+| 9 | `pdf "$B/pdf/ranking-team-detail?season=$S&competition=<K>"` | matchs de chaque équipe sous le **nom de la phase**, pas sous la date et le lieu | ☐ |
+| 10 | app4 Statistiques → export PDF de plusieurs compétitions | titre et colonne Compétition en libellés, pas en codes | ☐ |
+
+---
+
 ## Non-régression (à chaque phase, chaque environnement)
 
 | # | Vérification | Attendu | ☐ |

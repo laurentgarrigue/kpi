@@ -36,10 +36,17 @@ final class PresencePlayer
         return isset($equivalent) ? '(' . $equivalent . ')' : (self::PADDLE_BELOW_GREEN[(string) $polo] ?? '');
     }
 
-    /** Role on the sheet: C (captain), - (player), E (staff), A (referee), X (inactive). */
-    public static function role(?string $captain): string
+    /**
+     * Label of the role (kp_competition_equipe_joueur.Capitaine): C captain, E staff, A referee, X inactive; empty for
+     * a player (- or nothing).
+     *
+     * @param array<string, string> $labels labels of the language (`role.C`, …)
+     */
+    public static function role(?string $captain, array $labels): string
     {
-        return $captain === null || $captain === '' ? '-' : $captain;
+        $code = (string) $captain;
+
+        return $code === '' || $code === '-' ? '' : ($labels['role.' . $code] ?? $code);
     }
 
     /** Licence number shown: the ICF number for a provisional licence, with the season of origin when it is not the current one. */

@@ -111,7 +111,8 @@ h1, h2, h3 {
 .pdf-header__document { font-size: 22pt; }
 .theme-public .pdf-header__document { color: var(--pdf-title); }
 .pdf-header__competition { font-size: 13pt; font-weight: 600; margin-top: 1mm; }
-.pdf-header__meta { font-size: 9pt; opacity: 0.9; }
+.pdf-header__line { display: flex; align-items: baseline; justify-content: space-between; gap: 4mm; }
+.pdf-header__season { font-size: 16pt; font-weight: 700; white-space: nowrap; }
 
 .pdf-header__qr { text-align: center; font-size: 7pt; color: var(--pdf-muted); }
 .pdf-header__qr img { width: 20mm; height: 20mm; display: block; margin: 0 auto 1mm; }
@@ -155,6 +156,8 @@ table.pdf-table {
 
 /* --------------------------------------------------------------- blocks */
 .pdf-section { break-inside: avoid; margin-bottom: 6mm; }
+.pdf-section--long { break-inside: auto; }
+.pdf-section__title, .pdf-section__subtitle { break-after: avoid; }
 .pdf-section__title {
   font-size: 15pt;
   color: var(--pdf-title);
@@ -227,6 +230,22 @@ table.pdf-table {
 .pdf-step__values { margin: 1mm 0 0 4mm; padding: 0; list-style: none; font-size: 8.5pt; }
 .pdf-step__games-title { margin: 1mm 0 0 4mm; font-size: 8.5pt; font-style: italic; color: var(--pdf-muted); }
 
+/* Game list (games-list): fixed widths, phase and referees on 2 lines, team names on one centred line. */
+.pdf-games { table-layout: fixed; }
+.pdf-games th { font-size: 7.5pt; letter-spacing: 0; }
+.pdf-games .pdf-games__number { width: 3%; }
+.pdf-games .pdf-games__date, .pdf-games .pdf-games__time { width: 4.5%; }
+.pdf-games .pdf-games__competition { width: 9%; font-size: 8pt; }
+.pdf-games .pdf-games__phase { width: 15%; font-size: 8pt; }
+.pdf-games .pdf-games__pitch { width: 4%; text-align: center; }
+.pdf-games .pdf-games__team { width: 19%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8.5pt; }
+.pdf-games .pdf-games__score { width: 5%; text-align: center; white-space: nowrap; }
+.pdf-games .pdf-games__referees { width: 26%; white-space: pre-line; font-size: 7.5pt; }
+/* With the competition column, the phase, the teams and the referees give it room. */
+.pdf-games:has(.pdf-games__competition) .pdf-games__phase { width: 12%; }
+.pdf-games:has(.pdf-games__competition) .pdf-games__team { width: 18%; }
+.pdf-games:has(.pdf-games__competition) .pdf-games__referees { width: 22%; }
+
 /* Pitch grid (games-grid): equal columns, games on several lines. */
 .pdf-grid { table-layout: fixed; }
 .pdf-grid .pdf-grid__time { width: 14mm; font-weight: 700; }
@@ -271,6 +290,8 @@ table.pdf-table {
 .pdf-sheet__banner, .pdf-sheet__sponsor { text-align: center; }
 .pdf-sheet__banner { margin-bottom: 1mm; }
 .pdf-sheet__banner img { max-height: 12mm; max-width: 100%; }
+.pdf-sheet__logos { display: flex; justify-content: center; align-items: center; gap: 4mm; }
+.pdf-sheet__logos img { max-height: 10mm; }
 .pdf-sheet__sponsor img { max-height: 10mm; max-width: 100%; }
 /* Room for the sponsor under the right column: a tighter event grid, still 26 lines. */
 .pdf-sheet--sponsor .pdf-sheet__events td { height: 3.2mm; }

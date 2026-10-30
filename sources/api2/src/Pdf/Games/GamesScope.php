@@ -68,7 +68,7 @@ class GamesScope
     }
 
     /**
-     * Header of the document: the event, else the competition when there is only one, else the list of codes; an
+     * Header of the document: the event, else the competition when there is only one, else the list of competition labels; an
      * event or a list carries the visuals of its first competition (§ 8.4.1).
      *
      * @param list<array<string, mixed>> $games
@@ -103,10 +103,31 @@ class GamesScope
         }
 
         return $this->competitions->withVisualsOf(
-            ['code' => '', 'title' => implode(', ', $codes), 'subtitle' => null],
+            ['code' => '', 'title' => implode(', ', self::competitionLabels($games)), 'subtitle' => null],
             $request->season,
             ($request->competitions ?: $codes)[0] ?? null,
             $public,
         );
+    }
+
+    /**
+     * Label of the competition of a game, never its code (the labels suffice): short label (« U18 Hommes »), else the
+     * title.
+     *
+     * @param array<string, mixed> $game
+     */
+    public static function competitionLabel(array $game): string
+    {
+        return (string) ($game['Soustitre2'] ?: $game['Competition']);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $games
+     *
+     * @return list<string> labels of the competitions of the games, in their order of appearance
+     */
+    public static function competitionLabels(array $games): array
+    {
+        return array_values(array_unique(array_map(self::competitionLabel(...), $games)));
     }
 }
