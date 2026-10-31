@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AthleteDetail, AthleteUpdatePayload } from '~/types/athletes'
 import type { ClubSearchResult } from '~/types/clubs'
+import { MAX_PLAUSIBLE_AGE, MIN_PLAUSIBLE_AGE, athleteUpdateErrorKey, birthDateField, submittedBirthDate } from '~/utils/athleteBirthDate'
 
 interface Props {
   open: boolean
@@ -24,6 +25,7 @@ const form = reactive({
   prenom: '',
   sexe: 'M',
   naissance: '',
+  naissanceInconnue: false,
   origine: '',
   icf: '' as string | number,
   arbQualification: '',
@@ -66,7 +68,9 @@ watch(() => props.athlete, (athlete) => {
     form.nom = athlete.nom
     form.prenom = athlete.prenom
     form.sexe = athlete.sexe
-    form.naissance = athlete.naissance || ''
+    const birthDate = birthDateField(athlete.naissance)
+    form.naissance = birthDate.date
+    form.naissanceInconnue = birthDate.unknown
     form.origine = athlete.origine || ''
     form.icf = athlete.icf ?? ''
     form.arbQualification = athlete.arbitrage.qualification || ''
@@ -139,6 +143,11 @@ async function handleSubmit() {
     return
   }
 
+  const naissance = submittedBirthDate({ unknown: form.naissanceInconnue, date: form.naissance })
+  if (naissance === undefined) {
+    formError.value = t('athletes.edit.naissance_required')
+    return
+  }
 
   submitting.value = true
   try {
@@ -146,7 +155,7 @@ async function handleSubmit() {
       nom: form.nom.trim().toUpperCase(),
       prenom: form.prenom.trim().toUpperCase(),
       sexe: form.sexe,
-      naissance: form.naissance || null,
+      naissance,
       origine: form.origine.trim(),
       icf: form.icf !== '' ? Number(form.icf) : null,
       arbitrage: {
@@ -168,12 +177,7 @@ async function handleSubmit() {
     emit('saved')
     emit('close')
   } catch (error: unknown) {
-    const err = error as { status?: number; data?: { code?: string } }
-    if (err?.status === 403) {
-      formError.value = t('athletes.edit.forbidden')
-    } else {
-      formError.value = t('athletes.edit.error')
-    }
+    formError.value = t(athleteUpdateErrorKey(error), { min: MIN_PLAUSIBLE_AGE, max: MAX_PLAUSIBLE_AGE })
   } finally {
     submitting.value = false
   }
@@ -236,13 +240,22 @@ async function handleSubmit() {
       <!-- Date de naissance -->
       <div>
         <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-          {{ t('athletes.edit.naissance') }} <span class="text-danger-500">*</span>
+          {{ t('athletes.edit.naissance') }}
         </label>
         <input
           v-model="form.naissance"
           type="date"
-          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
+          :disabled="form.naissanceInconnue"
+          class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 disabled:opacity-50"
         >
+        <label class="mt-2 inline-flex items-center gap-2 text-sm text-header-700 dark:text-header-300">
+          <input
+            v-model="form.naissanceInconnue"
+            type="checkbox"
+            class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
+          >
+          {{ t('athletes.edit.naissance_inconnue') }}
+        </label>
       </div>
 
       <!-- Derniere saison -->
