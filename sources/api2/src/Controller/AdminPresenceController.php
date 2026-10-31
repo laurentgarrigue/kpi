@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\CompositionAgeCategories;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Service\TeamLastUpdateService;
@@ -41,6 +42,7 @@ class AdminPresenceController extends AbstractController
         private readonly PlayerEligibilityChecker $eligibility,
         private readonly TeamLastUpdateService $teamLastUpdate,
         private readonly AgeCategoryRule $ageCategories,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -591,7 +593,7 @@ class AdminPresenceController extends AbstractController
         $sourceTeamId = (int) $sourceRow['Id'];
 
         // Get source players
-        $sql = "SELECT Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine
+        $sql = "SELECT Matric, Nom, Prenom, Sexe, Numero, Capitaine
                 FROM kp_competition_equipe_joueur
                 WHERE Id_equipe = ?";
         $stmt = $this->connection->prepare($sql);
@@ -617,12 +619,14 @@ class AdminPresenceController extends AbstractController
                 'Nom' => $player['Nom'],
                 'Prenom' => $player['Prenom'],
                 'Sexe' => $player['Sexe'],
-                'Categ' => $player['Categ'],
                 'Numero' => $player['Numero'],
                 'Capitaine' => $player['Capitaine'],
             ]);
             $copied++;
         }
+
+        // The source may be another season: the age category is the one of the destination season (ADR 0001)
+        $this->compositionAgeCategories->refreshTeam($teamId);
 
         // Non-compliant players are made inactive (national) or reported (regional)
         $ineligible = $this->eligibility->enforceOnCopiedRoster($teamId);

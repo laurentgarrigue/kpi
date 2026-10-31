@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\CompositionAgeCategories;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
@@ -37,7 +38,8 @@ class AdminTeamsController extends AbstractController
 
     public function __construct(
         private readonly Connection $connection,
-        private readonly PlayerEligibilityChecker $eligibility
+        private readonly PlayerEligibilityChecker $eligibility,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -584,7 +586,7 @@ class AdminTeamsController extends AbstractController
 
                     // Copy composition if requested
                     if ($copyComposition && !empty($copyComposition['season']) && !empty($copyComposition['competition'])) {
-                        $this->copyComposition($numero, $copyComposition['season'], $copyComposition['competition'], $newTeamId, $season);
+                        $this->copyComposition($numero, $copyComposition['season'], $copyComposition['competition'], $newTeamId);
                         $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
                     }
 
@@ -994,13 +996,7 @@ class AdminTeamsController extends AbstractController
 
                 // Copy players if requested
                 if ($copyPlayers) {
-                    $sourceTeamId = (int) $sourceTeam['Id'];
-                    $sql = "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
-                            SELECT ?, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine
-                            FROM kp_competition_equipe_joueur
-                            WHERE Id_equipe = ?";
-                    $stmt = $this->connection->prepare($sql);
-                    $stmt->executeStatement([$newTeamId, $sourceTeamId]);
+                    $this->copyPlayers((int) $sourceTeam['Id'], $newTeamId);
 
                     // Non-compliant players are made inactive (national) or reported (regional)
                     $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newTeamId);
@@ -1245,7 +1241,7 @@ class AdminTeamsController extends AbstractController
     /**
      * Copy player composition from a source team/competition to a new team
      */
-    private function copyComposition(int $teamNumero, string $sourceSeason, string $sourceCompetition, int $targetTeamId, string $targetSeason): void
+    private function copyComposition(int $teamNumero, string $sourceSeason, string $sourceCompetition, int $targetTeamId): void
     {
         // Find source team entry
         $sql = "SELECT Id FROM kp_competition_equipe
@@ -1258,13 +1254,20 @@ class AdminTeamsController extends AbstractController
             return;
         }
 
-        // Copy players (recalculate categories if needed)
-        $sql = "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
-                SELECT ?, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine
-                FROM kp_competition_equipe_joueur
-                WHERE Id_equipe = ?";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->executeStatement([$targetTeamId, $sourceTeamId]);
+        $this->copyPlayers((int) $sourceTeamId, $targetTeamId);
+    }
+
+    /** Copy a roster; the source may be another season, so the age category is the destination one (ADR 0001). */
+    private function copyPlayers(int $sourceTeamId, int $targetTeamId): void
+    {
+        $this->connection->executeStatement(
+            "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Numero, Capitaine)
+             SELECT ?, Matric, Nom, Prenom, Sexe, Numero, Capitaine
+             FROM kp_competition_equipe_joueur
+             WHERE Id_equipe = ?",
+            [$targetTeamId, $sourceTeamId]
+        );
+        $this->compositionAgeCategories->refreshTeam($targetTeamId);
     }
 
 }

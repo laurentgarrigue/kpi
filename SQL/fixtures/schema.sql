@@ -172,7 +172,7 @@ CREATE TABLE `kp_evenement_journee` (
 
 DROP TABLE IF EXISTS `kp_competition_equipe`;
 CREATE TABLE `kp_competition_equipe` (
-  `Id` int(10) UNSIGNED NOT NULL,
+  `Id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,  -- comme la prod (kpi_structure.sql)
   `Code_compet` varchar(12) NOT NULL DEFAULT '',
   `Code_saison` char(4) NOT NULL DEFAULT '',
   `Libelle` varchar(40) DEFAULT NULL,

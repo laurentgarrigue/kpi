@@ -128,14 +128,18 @@ class GestionEquipeJoueur extends MyPageSecure
 
 			// Intégrer les coureurs de la recherche Licence ...
 			if (isset($_SESSION['Signature'])) {
+				// Catégorie d'âge de la saison de l'équipe (CATEGORIE_AGE.md story 17, ADR 0001), saison active pour le
+				// pool arbitres (pseudo saison) ; aucune catégorie si la date est inconnue (NULL, 01/01/1901, 00/00/0000)
 				$sql = "REPLACE INTO kp_competition_equipe_joueur 
 					(Id_equipe, Matric, Nom, Prenom, Sexe, Categ) 
-					SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe, c.id 
-					FROM kp_recherche_licence b, kp_licence a 
+					SELECT ce.Id, a.Matric, a.Nom, a.Prenom, a.Sexe, c.id 
+					FROM kp_recherche_licence b 
+					INNER JOIN kp_licence a ON a.Matric = b.Matric 
+					INNER JOIN kp_competition_equipe ce ON ce.Id = ? 
 					LEFT OUTER JOIN kp_categorie c 
-						ON (? - Year(a.Naissance) BETWEEN c.age_min AND c.age_max) 
-					WHERE a.Matric = b.Matric 
-					AND b.Signature = ? 
+						ON a.Naissance > '1901-01-01' 
+						AND IF(ce.Code_compet = 'POOL', ?, ce.Code_saison) - YEAR(a.Naissance) BETWEEN c.age_min AND c.age_max 
+					WHERE b.Signature = ? 
 					AND b.Validation = 'O' ";
 				$result = $myBdd->pdo->prepare($sql);
 				$result->execute(array($idEquipe, $codeSaison, $_SESSION['Signature']));
