@@ -162,7 +162,7 @@ describe('group view (PAGE_EVENT_GROUP.md)', () => {
 
   it('AGG-04: games list PDF by the competitions of the group', async () => {
     const wrapper = await mountRoute('/groups/2999/TSTRES/games')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH,RCP,RMU,RAT&lang=fr')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH,RAT,RCP,RMU&lang=fr')
   })
 
   it('GRP-04: an unknown group is the site 404', async () => {

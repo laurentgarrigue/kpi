@@ -111,7 +111,7 @@ Référence visuelle : [maquettes/](maquettes/README.md) (`matchs`, `infos`, `de
 - Matchs **groupés par date** (titre de groupe : date longue localisée), puis triés par heure et terrain.
 - Une ligne par match : heure, terrain (toujours visible), phase (`d_phase`), équipe A (nom + logo), **score**
   (`g_score_a – g_score_b`, coefficients s'ils diffèrent de 1), équipe B (logo + nom), arbitres (`r_1`, `r_2`,
-  affichés à partir de `lg`), icône de la feuille de marque. Un arbitre valant « -1 » n'est pas affiché.
+  affichés à partir de `lg`). Un arbitre valant « -1 » n'est pas affiché.
 - Les scores d'une journée forment une **colonne continue** (§ 2.5) ; titre de journée en Agency FB avec le nombre
   de matchs. Sur mobile, les deux équipes et les deux scores sont **empilés** (scores dans la colonne, à droite).
 - **Statut** : seuls `ON` (« 2e période », colonne rouge) et le score **provisoire** (`END`, `g_validation ≠ 'O'`)
@@ -121,8 +121,8 @@ Référence visuelle : [maquettes/](maquettes/README.md) (`matchs`, `infos`, `de
   « 1er poule F » ; `[V11-P12]` → « Vainqueur n° 11 », « Perdant n° 12 » ; `T7` → « Équipe n° 7 ») ou d'après son
   libellé d'attente (« (Winner game #236) » → « Vainqueur n° 236 ») ; le code brut est affiché sous la phase. Une fois le match joué, le code n'est plus affiché.
 - La **finale** (`d_phase` « Finale » / « Final ») est marquée en or (pastille + texte), seule touche dorée.
-- Un match `ON` ou `END` mène à sa feuille de match (§ 2.1) ; un match validé propose en plus la feuille de
-  marque PDF.
+- Un match `ON` ou `END` mène à sa feuille de match (§ 2.1) ; pas de feuille de marque PDF publique
+  (PDF_GOTENBERG.md § 7.3.2).
 - Lien « Liste des matchs (PDF) » en tête d'onglet (§ 2.1).
 - **Filtres** (paramètres d'URL, combinables) :
   - `gameday={id}` pour un championnat (CHPT) : sélecteur des journées (libellé, lieu, dates) ;
@@ -267,7 +267,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
 - **CMP-10** — Classement : colonnes selon le type, badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide ; coupe en cours : classement publié à son issue, raison et lien vers le déroulement, sans badge.
 - **CMP-11** — Stats : sélecteur des statistiques disponibles (masqué s'il n'y en a qu'une), tableau générique ; buteurs : 20 puis « Voir plus » (100), égalités partagées, état vide.
-- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement servi par api2 (`/api2/pdf/ranking`, `ranking-phases` pour une coupe), autres PDF legacy avec `S`, `Compet`, `lang`.
+- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement (`/api2/pdf/ranking`, `ranking-phases` pour une coupe) et liste des matchs (`/api2/pdf/games-list`) servis par api2 avec `season`, `competition` (ou `event`), `lang`.
 - **CMP-13** — Rafraîchissement toutes les 60 s seulement si un match est en cours ou commence dans l'heure, suspendu quand l'onglet est masqué.
 - **CMP-14** — Compétition inconnue ou non publiée → page 404 du site.
 - **CMP-15** — Grille de parité (§ 7) validée sur trois compétitions réelles en préprod.

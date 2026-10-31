@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { displayStatus, drawCode, isFinal, normalizeTime, winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
-import { NEW_TAB_ATTRS } from '~/utils/links'
 import { gameLink } from '~/utils/page-links'
 import { personName } from '~/utils/people'
 
@@ -15,9 +14,6 @@ const context = usePageLinkContext()
 
 const winner = computed(() => winnerSide(props.game))
 const sheet = computed(() => (props.game.g_status === 'ATT' ? null : gameLink(props.game.g_id, context.value).href))
-const scoreSheet = computed(() => (props.game.g_validation === 'O' && props.game.g_status === 'END'
-  ? pdfUrl({ kind: 'gameSheet', game: props.game.g_id }, context.value)
-  : null))
 const referees = computed(() => [props.game.r_1, props.game.r_2].map(personName).filter(Boolean).join(', '))
 const final = computed(() => isFinal(props.game))
 const code = computed(() => drawCode(props.game))
@@ -28,7 +24,7 @@ const phaseClass = computed(() => (final.value
 
 <template>
   <li
-    class="grid grid-cols-[3.75rem_minmax(0,1fr)_3.5rem] border-b border-line last:border-b-0 md:min-h-13 md:grid-cols-[3.25rem_4.5rem_minmax(7rem,9.5rem)_minmax(0,1fr)_6.75rem_minmax(0,1fr)_2.25rem] md:items-center lg:grid-cols-[3.25rem_4.5rem_minmax(7rem,9.5rem)_minmax(0,1fr)_6.75rem_minmax(0,1fr)_minmax(10rem,14rem)_2.25rem]"
+    class="grid grid-cols-[3.75rem_minmax(0,1fr)_3.5rem] border-b border-line last:border-b-0 md:min-h-13 md:grid-cols-[3.25rem_4.5rem_minmax(7rem,9.5rem)_minmax(0,1fr)_6.75rem_minmax(0,1fr)] md:items-center lg:grid-cols-[3.25rem_4.5rem_minmax(7rem,9.5rem)_minmax(0,1fr)_6.75rem_minmax(0,1fr)_minmax(10rem,14rem)]"
     :data-game="game.g_id"
     :data-status="displayStatus(game)"
     :data-final="final ? '' : undefined"
@@ -60,19 +56,6 @@ const phaseClass = computed(() => (final.value
       class="col-start-2 row-start-2 pr-2.5 pb-2.5 md:col-start-6 md:row-start-1 md:px-4 md:pb-0"
     />
     <span class="hidden text-sm leading-snug text-muted lg:col-start-7 lg:row-start-1 lg:block lg:pl-4">{{ referees }}</span>
-    <span class="hidden justify-self-end md:col-start-7 md:row-start-1 md:block lg:col-start-8">
-      <a
-        v-if="scoreSheet"
-        :href="scoreSheet"
-        v-bind="NEW_TAB_ATTRS"
-        class="grid size-7.5 place-items-center rounded-md text-muted hover:bg-wash hover:text-ink"
-        :title="$t('results.scoreSheetPdf')"
-        data-testid="score-sheet-pdf"
-      >
-        <UIcon name="i-heroicons-document-text" class="size-4.5" aria-hidden="true" />
-        <span class="sr-only">{{ $t('results.scoreSheetPdf') }} {{ $t('a11y.newTab') }}</span>
-      </a>
-    </span>
     <span class="col-start-2 row-start-3 -mt-1.5 pb-2.5 text-xs leading-tight md:hidden">
       <NuxtLink v-if="competitionHref" :to="competitionHref" class="font-semibold hover:underline">{{ game.c_label ?? game.c_code }}</NuxtLink>
       <template v-if="competitionHref"> · </template>

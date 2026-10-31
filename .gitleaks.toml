@@ -92,3 +92,12 @@ description = "Jetons anti-robot des formulaires dans les fixtures app3"
 condition = "AND"
 paths = ['''^sources/app3/tests/fixtures/api2/forms_[^/]*\.json$''']
 regexes = ['''^[0-9]{10}\.[0-9a-f]{64}$''']
+
+# Clés des champs de formulaire dans les données des maquettes app3 — vérifiées le 2026-10-31. Le
+# constructeur de formulaires suffixe le libellé d'un horodatage en millisecondes
+# (`possible_remarks_1576673342925`) : un identifiant de champ, pas un secret.
+[[rules.allowlists]]
+description = "Clés de champs de formulaire dans les maquettes app3"
+condition = "AND"
+paths = ['''^DOC/specs/public/maquettes/data/[^/]*\.json$''']
+regexes = ['''^[a-z0-9_]+_[0-9]{10,13}$''']

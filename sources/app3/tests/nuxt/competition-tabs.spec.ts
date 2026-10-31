@@ -165,14 +165,14 @@ describe('ranking tab (§ 3.6)', () => {
     expect(wrapper.findAll('[data-testid="ranking-row"]')).toHaveLength(4)
     expect(wrapper.find('thead').text()).toContain('Diff')
     expect(wrapper.find('[data-mark="eliminated"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfCltChpt.php?S=2999&Compet=RCH&lang=fr')
+    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/ranking?season=2999&competition=RCH&lang=fr')
   })
 
   it('CMP-10: medals and final badge for a finished final round', async () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
     expect(wrapper.find('[data-testid="ranking-badge"]').text()).toBe('Classement final')
     expect(wrapper.findAll('[data-medal]')).toHaveLength(3)
-    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('PdfCltNiveauPhase.php')
+    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('/api2/pdf/ranking-phases?')
   })
 
   it('CMP-21: a stepped podium 2–1–3 when the three medals are given, then the full table with a signed difference', async () => {
