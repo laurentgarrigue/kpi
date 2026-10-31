@@ -9,6 +9,7 @@ use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfLabels;
 use App\Pdf\PdfRequest;
 use App\Pdf\PdfTheme;
+use App\Pdf\Ranking\RankingTable;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -59,9 +60,12 @@ final class TeamsGroupsDocument implements PdfDocumentProvider
             return null;
         }
 
+        // Only a cup is drawn into pools: a league (CHPT) or a multi-competition (MULTI) is one list of teams.
+        $withPools = $header['competition']['type'] === RankingTable::CUP
+            && array_filter($teams, static fn (array $team): bool => trim((string) $team['Poule']) !== '') !== [];
         $pools = [];
         foreach ($teams as $team) {
-            $pools[trim((string) $team['Poule'])][] = [
+            $pools[$withPools ? trim((string) $team['Poule']) : ''][] = [
                 'name' => $team['Libelle'],
                 'club' => $team['club'] ?? $team['Code_club'],
                 'draw' => (int) $team['Tirage'] > 0 ? (int) $team['Tirage'] : null,
@@ -77,6 +81,7 @@ final class TeamsGroupsDocument implements PdfDocumentProvider
             variables: [
                 'competition' => $header['competition'],
                 'pools' => $pools,
+                'with_pools' => $withPools,
                 'team_count' => count($teams),
                 'internal' => false,
             ],

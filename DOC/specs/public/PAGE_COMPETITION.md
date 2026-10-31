@@ -61,8 +61,8 @@ match. Tant que ces pages ne sont pas livrées, on utilise la **même mécanique
 
 **PDF** (API_PUBLIC_RESULTS.md D-P2-2) : liens « PDF » (icône + texte, nouvel onglet) construits par une fonction
 pure `pdfUrl(kind, params)` vers les PDF publics d'api2 (`/api2/pdf/*`, PDF_GOTENBERG.md) avec `season`,
-`competition` (ou `event`) et `lang` explicites : classement (onglet Classement : `ranking`, `ranking-phases` pour
-une coupe), liste des matchs (onglet Matchs : `games-list`). Pas de feuille de marque PDF publique
+`competition` (ou `event`) et `lang` explicites : classement (onglet Classement : `ranking`, y compris pour une
+coupe, dont il montre le classement final), liste des matchs (onglet Matchs : `games-list`). Pas de feuille de marque PDF publique
 (PDF_GOTENBERG.md § 7.3.2) : le score d'un match mène à sa feuille de match d'app2.
 
 ### 2.3 Accès à l'événement
@@ -204,7 +204,7 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
 - **CMP-10** — Classement : colonnes selon le type (CP : rang et équipe, sans points), badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide.
 - **CMP-11** — Stats : sélecteur des statistiques disponibles (masqué s'il n'y en a qu'une), tableau générique ; buteurs : 20 puis « Voir plus » (100), égalités partagées, état vide.
-- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement servi par api2 (`/api2/pdf/ranking`, `ranking-phases` pour une coupe), autres PDF legacy avec `S`, `Compet`, `lang`.
+- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement servi par api2 (`/api2/pdf/ranking`, y compris pour une coupe), autres PDF legacy avec `S`, `Compet`, `lang`.
 - **CMP-13** — Rafraîchissement toutes les 60 s seulement si un match est en cours ou commence dans l'heure, suspendu quand l'onglet est masqué.
 - **CMP-14** — Compétition inconnue ou non publiée → page 404 du site.
 - **CMP-15** — Grille de parité (§ 7) validée sur trois compétitions réelles en préprod.

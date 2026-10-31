@@ -9,7 +9,7 @@ import { isScrutineerProfile } from './scrutineering'
 export type AdminPdfDocument =
   | 'teams-groups' | 'presence' | 'scrutineering-control' | 'referees-pool' | 'instances'
   | 'games-list' | 'scoresheet' | 'ranking' | 'ranking-team-detail' | 'ranking-gameday-detail'
-  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards'
+  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards' | 'schema'
 
 export type PdfOption = 'visa' | 'birthdate' | 'u21'
 
@@ -29,6 +29,7 @@ const ADMIN_PDF_MAX_PROFILE: Record<AdminPdfDocument, number> = {
   'ranking-tiebreak': 6,
   'stats': 8,
   'cards': 6,
+  'schema': 8,
 }
 
 /** Options adding data to the presence sheet, with their own highest profile (§ 7.2, I2). */

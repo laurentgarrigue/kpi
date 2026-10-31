@@ -66,6 +66,8 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringContainsString('tokens-admin.css', $html);
         self::assertStringContainsString('<span class="pdf-header__season">2997</span>', $html, 'the season at the right of the title');
         self::assertStringNotContainsString('Saison', $html, 'no « Season » word, no competition code');
+        self::assertStringNotContainsString('pdf-columns', $html, 'a league: one list, not pools side by side');
+        self::assertStringNotContainsString('pdf-section__title', $html, 'no « No pool » title');
         foreach (['Scrut Alpha', 'Scrut Bravo', 'Germany Men'] as $team) {
             self::assertStringContainsString($team, $html);
         }
@@ -236,6 +238,7 @@ final class PdfEndpointsTest extends ApiTestCase
         }
         self::assertLessThan(strpos($html, 'Coach'), strpos($html, 'Joueur'), 'players before the staff');
         self::assertStringContainsString('Staff</td>', $html, 'the role by its label');
+        self::assertLessThan(strpos($html, '>Arbitre</td>'), strpos($html, 'Non joueurs'), 'referees and inactive members apart');
         self::assertStringContainsString('Pagaie', $html, 'national competition: paddle and certificate checked');
         self::assertStringNotContainsString('Germany Men', $html, 'a team without players has no page');
     }
@@ -468,6 +471,23 @@ final class PdfEndpointsTest extends ApiTestCase
     }
 
     // ------------------------------------------------------------------ stats, cards, QR codes (phase 5, § 7.5)
+
+    public function testSchemaOfACupAndOfALeague(): void
+    {
+        $this->pdfAs('TADMIN', '/admin/pdf/schema?season=2999&competition=RCP', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('Schéma de compétition', $html);
+        self::assertStringContainsString('pdf-schema__stages', $html, 'a cup: stage columns');
+        self::assertStringContainsString('pdf-schema__bracket-team--winner', $html, 'elimination phase: the winner first');
+        self::assertStringContainsString('Poule A', $html);
+
+        $this->pdfAs('TADMIN', '/admin/pdf/schema?season=2999&competition=RCH&count=0', Response::HTTP_OK);
+        $html = (string) $this->gotenberg()->html;
+        self::assertStringContainsString('pdf-schema__gameday', $html, 'a league: its gamedays');
+        self::assertStringNotContainsString('pdf-schema__total', $html, 'count=0 hides the number of games');
+
+        $this->pdfAs('TSCORE', '/admin/pdf/schema?season=2999&competition=RCH', Response::HTTP_FORBIDDEN, 'ROLE_VIEWER, as the Schema page');
+    }
 
     public function testCardFollowUpCountsTheCardsOfTheSeason(): void
     {

@@ -10,7 +10,7 @@ final class GamesListDocumentTest extends TestCase
 {
     private const LABELS = [
         'player.number' => '#', 'games.date' => 'Date', 'games.time' => 'Time', 'games.competition' => 'Comp.',
-        'games.phase' => 'Phase | Game', 'games.pitch' => 'Pitch', 'games.home' => 'Team A', 'games.score' => 'Score',
+        'games.phase' => 'Phase / Game', 'games.pitch' => 'Pitch', 'games.home' => 'Team A', 'games.score' => 'Score',
         'games.away' => 'Team B', 'games.referees' => 'Referees',
     ];
 
@@ -36,6 +36,18 @@ final class GamesListDocumentTest extends TestCase
         $row = GamesListDocument::row([...self::game(), 'Soustitre2' => '', 'Arbitre_secondaire' => ''], false);
         self::assertSame('Championnat U18', $row['competition'], 'the title without a short label');
         self::assertSame('Ref One', $row['referees']);
+    }
+
+    public function testTeamsAndRefereesNotDesignatedShowTheirPlaceholder(): void
+    {
+        $game = [...self::game(), 'Libelle' => '[T2-T7/T1-T8]', 'LibelleA' => null, 'LibelleB' => null, 'Arbitre_principal' => '', 'Arbitre_secondaire' => '', 'ScoreA' => '', 'ScoreB' => ''];
+
+        $row = GamesListDocument::row($game, true, ['(Equipe 2)', '(Equipe 7)', '(Equipe 1)', '(Equipe 8)']);
+
+        self::assertSame(['(Equipe 2)', '(Equipe 7)'], [$row['home'], $row['away']]);
+        self::assertSame("(Equipe 1)\n(Equipe 8)", $row['referees']);
+        self::assertSame('Poule A', $row['phase'], 'no assignment code, no « | » to mistake for it');
+        self::assertSame("Poule A\nM3", GamesListDocument::row(self::game(), true)['phase'], 'the game label on a second line');
     }
 
     /** @return array<string, mixed> */

@@ -26,4 +26,18 @@ final class MatchLabelParserTest extends TestCase
     {
         self::assertSame($expected, (new MatchLabelParser())->parse($label));
     }
+
+    public function testParsesPlaceholderLabelsInFrench(): void
+    {
+        self::assertSame([0 => '(Vainqueur match 11)', 1 => '(Perdant match 12)'], (new MatchLabelParser())->parse('[V11-P12]', 'fr'));
+        self::assertSame([0 => '(1er Poule A)', 1 => '(3e Poule B)'], (new MatchLabelParser())->parse('[1A-3B]', 'fr'));
+        self::assertSame(['(Equipe 2)', '(Equipe 7)', '(Equipe 1)', '(Equipe 8)'], (new MatchLabelParser())->parse('[T2-T7/T1-T8]', 'fr'), 'teams, then referees');
+    }
+
+    public function testGameLabelWithoutItsAssignmentCode(): void
+    {
+        self::assertSame('M12', MatchLabelParser::gameLabel('M12 [V1-V2]'));
+        self::assertSame('', MatchLabelParser::gameLabel('[T2-T7/T1-T8]'));
+        self::assertSame('Finale', MatchLabelParser::gameLabel('Finale'));
+    }
 }

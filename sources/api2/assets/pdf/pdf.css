@@ -157,6 +157,8 @@ table.pdf-table {
 /* --------------------------------------------------------------- blocks */
 .pdf-section { break-inside: avoid; margin-bottom: 6mm; }
 .pdf-section--long { break-inside: auto; }
+/* A game list always flows: its rows are tall (2 lines), a section kept whole would leave the first page empty. */
+.pdf-section:has(.pdf-games) { break-inside: auto; }
 .pdf-section__title, .pdf-section__subtitle { break-after: avoid; }
 .pdf-section__title {
   font-size: 15pt;
@@ -236,7 +238,7 @@ table.pdf-table {
 .pdf-games .pdf-games__number { width: 3%; }
 .pdf-games .pdf-games__date, .pdf-games .pdf-games__time { width: 4.5%; }
 .pdf-games .pdf-games__competition { width: 9%; font-size: 8pt; }
-.pdf-games .pdf-games__phase { width: 15%; font-size: 8pt; }
+.pdf-games .pdf-games__phase { width: 15%; font-size: 8pt; white-space: pre-line; }
 .pdf-games .pdf-games__pitch { width: 4%; text-align: center; }
 .pdf-games .pdf-games__team { width: 19%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8.5pt; }
 .pdf-games .pdf-games__score { width: 5%; text-align: center; white-space: nowrap; }
@@ -296,3 +298,38 @@ table.pdf-table {
 /* Room for the sponsor under the right column: a tighter event grid, still 26 lines. */
 .pdf-sheet--sponsor .pdf-sheet__events td { height: 3.2mm; }
 .pdf-sheet--sponsor .pdf-sheet__column > table { margin-bottom: 1.2mm; }
+
+/* ---------------------------------------------------- schema (app4 Schema page) */
+.pdf-schema__total { text-align: right; font-size: 8.5pt; color: var(--pdf-muted); margin: -3mm 0 2mm; }
+.pdf-schema__meta, .pdf-schema__dates { font-weight: 400; font-size: 8pt; color: var(--pdf-muted); }
+.pdf-schema__dates { float: right; }
+/* Cup: one column per stage, centred vertically like the page. */
+.pdf-schema__stages { display: flex; justify-content: center; gap: 4mm; }
+.pdf-schema__stage { flex: 1; max-width: 90mm; display: flex; flex-direction: column; justify-content: center; gap: 4mm;
+  border: 0.2mm solid var(--pdf-line); border-radius: 1.5mm; padding: 2mm; }
+.pdf-schema__phase { break-inside: avoid; }
+.pdf-schema__phase-title { text-align: center; font-size: 9.5pt; color: var(--pdf-title); margin-bottom: 1mm; }
+.pdf-schema__pool { width: 100%; border-collapse: collapse; font-size: 8pt; }
+.pdf-schema__pool th { font-size: 7.5pt; color: var(--pdf-title); border-bottom: 0.3mm solid var(--pdf-title); padding: 0.6mm 1mm; text-align: left; }
+.pdf-schema__pool td { padding: 0.6mm 1mm; border-bottom: 0.2mm solid var(--pdf-line); }
+.pdf-schema__pool .num { text-align: center; }
+.pdf-schema__teams { list-style: none; margin: 0; padding: 0; font-size: 8pt; }
+.pdf-schema__teams li { padding: 0.5mm 1mm; border-bottom: 0.2mm solid var(--pdf-line); }
+.pdf-schema__bracket { display: flex; align-items: center; gap: 1.5mm; margin-bottom: 2mm; font-size: 8pt; break-inside: avoid; }
+.pdf-schema__number { width: 8mm; text-align: right; font-style: italic; color: var(--pdf-muted); }
+.pdf-schema__bracket-teams { flex: 1; display: flex; flex-direction: column; gap: 0.5mm; }
+/* Winner on ink, loser on a light tint: still readable in black and white. */
+.pdf-schema__bracket-team { display: flex; gap: 1mm; }
+.pdf-schema__team { flex: 1; text-align: right; padding: 0.4mm 1.5mm; background: var(--pdf-zebra); border-radius: 0.8mm;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdf-schema__score { min-width: 6mm; text-align: center; padding: 0.4mm 1mm; background: var(--pdf-zebra); border-radius: 0.8mm; }
+.pdf-schema__bracket-team--winner .pdf-schema__team,
+.pdf-schema__bracket-team--winner .pdf-schema__score { background: var(--pdf-band); color: var(--pdf-on-band); font-weight: 700; }
+/* League: gamedays, games on three columns. */
+.pdf-schema__gameday { break-inside: avoid; margin-bottom: 4mm; border: 0.2mm solid var(--pdf-line); border-radius: 1.5mm; }
+.pdf-schema__gameday-title { font-size: 9.5pt; padding: 1.2mm 2mm; background: var(--pdf-zebra); border-bottom: 0.2mm solid var(--pdf-line); }
+.pdf-schema__games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm; padding: 2mm; }
+.pdf-schema__game { display: flex; align-items: center; font-size: 8pt; border: 0.2mm solid var(--pdf-line); border-radius: 0.8mm; padding: 0.6mm 1.5mm; }
+.pdf-schema__home, .pdf-schema__away { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdf-schema__home { text-align: right; }
+.pdf-schema__result { min-width: 12mm; text-align: center; margin: 0 1.5mm; white-space: nowrap; }

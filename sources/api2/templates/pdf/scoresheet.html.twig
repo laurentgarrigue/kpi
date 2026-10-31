@@ -69,26 +69,26 @@
                 <table class="pdf-sheet__table pdf-sheet__events">
                     <thead>
                         <tr>
-                            <th colspan="5">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
+                            <th colspan="6">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
                             <th>{{ l['scoresheet.period'] }}</th>
-                            <th colspan="5">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
+                            <th colspan="6">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
                         </tr>
                         <tr>
-                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th>
+                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th><th>{{ l['scoresheet.definitive'] }}</th>
                             <th>{{ l['scoresheet.number'] }} ({{ l['scoresheet.card_reason'] }})</th><th>{{ l['scoresheet.goal'] }}</th>
                             <th>+ {{ l['scoresheet.time'] }}</th>
                             <th>{{ l['scoresheet.goal'] }}</th><th>{{ l['scoresheet.number'] }} ({{ l['scoresheet.card_reason'] }})</th>
-                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th>
+                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th><th>{{ l['scoresheet.definitive'] }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for event in sheet.events %}
                             <tr>
-                                <td class="pdf-sheet__card">{{ event.a_green|default('') }}</td><td class="pdf-sheet__card">{{ event.a_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.a_red|default('') }}</td>
+                                <td class="pdf-sheet__card">{{ event.a_green|default('') }}</td><td class="pdf-sheet__card">{{ event.a_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.a_red|default('') }}</td><td class="pdf-sheet__card">{{ event.a_definitive|default('') }}</td>
                                 <td>{{ event.a_player|default('') }}</td><td class="pdf-sheet__card">{{ event.a_goal|default('') }}</td>
                                 <td class="pdf-sheet__time">{{ event.time|default('') }}</td>
                                 <td class="pdf-sheet__card">{{ event.b_goal|default('') }}</td><td>{{ event.b_player|default('') }}</td>
-                                <td class="pdf-sheet__card">{{ event.b_green|default('') }}</td><td class="pdf-sheet__card">{{ event.b_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.b_red|default('') }}</td>
+                                <td class="pdf-sheet__card">{{ event.b_green|default('') }}</td><td class="pdf-sheet__card">{{ event.b_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.b_red|default('') }}</td><td class="pdf-sheet__card">{{ event.b_definitive|default('') }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

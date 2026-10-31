@@ -32,6 +32,9 @@ final class PresenceDocument implements PdfDocumentProvider
     public const VIEWS = ['team', 'photos', 'category', 'birthyear'];
     public const UNDER_21 = 'U21';
 
+    /** Roles listed apart, after the rest of the team: A (referee), X (inactive). */
+    private const NON_PLAYER_ROLES = ['A', 'X'];
+
     /** Sections (kp_groupe.section) whose sheets check the paddle level and the medical certificate: national, regional. */
     private const LICENCE_CHECK_SECTIONS = [2, 3];
 
@@ -149,7 +152,7 @@ final class PresenceDocument implements PdfDocumentProvider
         foreach ($this->groupByTeam($players) as $teamId => $teamPlayers) {
             $sections[] = [
                 'title' => $teamNames[$teamId] ?? '',
-                'rows' => array_map(fn (array $player): array => $this->row($player, $request->season, $labels), $teamPlayers),
+                'rows' => self::teamRows($teamPlayers, fn (array $player): array => $this->row($player, $request->season, $labels), $labels['presence.non_players']),
             ];
         }
 
@@ -181,14 +184,14 @@ final class PresenceDocument implements PdfDocumentProvider
 
         $sections = [];
         foreach ($this->groupByTeam($players) as $teamId => $teamPlayers) {
-            $rows = [];
-            foreach ($teamPlayers as $player) {
+            $rows = self::teamRows($teamPlayers, function (array $player) use ($request, $labels, &$images): array {
                 $photo = $this->assets->legacyImage(sprintf('KIP/players/%d.png', (int) $player['Matric']));
                 if ($photo !== null) {
                     $images[$photo['name']] = $photo['content'];
                 }
-                $rows[] = [...$this->row($player, $request->season, $labels), 'photo' => $photo['name'] ?? null];
-            }
+
+                return [...$this->row($player, $request->season, $labels), 'photo' => $photo['name'] ?? null];
+            }, $labels['presence.non_players']);
             $sections[] = ['title' => $teamNames[$teamId] ?? '', 'rows' => $rows];
         }
 
@@ -275,6 +278,30 @@ final class PresenceDocument implements PdfDocumentProvider
         }
 
         return [$labels['presence.birthyear_title'], $columns, $sections];
+    }
+
+    /**
+     * Rows of a team: the referees and the inactive members apart, under a separator, after the players and the staff
+     * (the players come in that order from PresenceRepository).
+     *
+     * @param list<array<string, mixed>>                       $players
+     * @param callable(array<string, mixed>): array<string, mixed> $row
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function teamRows(array $players, callable $row, string $nonPlayersLabel): array
+    {
+        $rows = [];
+        $apart = false;
+        foreach ($players as $player) {
+            if (!$apart && in_array($player['Capitaine'], self::NON_PLAYER_ROLES, true)) {
+                $apart = true;
+                $rows[] = ['_group' => $nonPlayersLabel];
+            }
+            $rows[] = $row($player);
+        }
+
+        return $rows;
     }
 
     /** Paddle level and medical certificate are only checked for the national and regional competitions. */

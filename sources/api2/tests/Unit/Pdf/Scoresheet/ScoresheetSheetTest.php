@@ -43,6 +43,7 @@ final class ScoresheetSheetTest extends TestCase
             self::event('M1', '00:07:30', 'B', 'A', 'MARTIN', 'Jean-Paul'),
             self::event('M1', '00:04:10', 'J', 'B', 'DURAND', 'Luc', 'r_o'),
             self::event('M2', '00:00:00', 'B', 'B', null, null),
+            self::event('M2', '00:02:00', 'D', 'A', 'MARTIN', 'Jean-Paul'),
         ], self::LABELS);
 
         self::assertCount(ScoresheetSheet::EVENT_LINES, $grid['lines']);
@@ -50,6 +51,8 @@ final class ScoresheetSheetTest extends TestCase
         self::assertSame('7 - DUR. L. (Obstruction)', $grid['lines'][1]['b_player']);
         self::assertSame('X', $grid['lines'][1]['b_yellow']);
         self::assertSame(['time' => 'M2 - ', 'b_player' => 'Équipe B', 'b_goal' => 'X'], $grid['lines'][2]);
+        self::assertSame('X', $grid['lines'][3]['a_definitive'], 'the definitive red card has its own column');
+        self::assertArrayNotHasKey('a_red', $grid['lines'][3]);
         self::assertSame(['A' => 1, 'B' => 1], $grid['goals']);
         self::assertSame(['A' => 1, 'B' => 0], $grid['half_time']);
         self::assertTrue(ScoresheetSheet::isProvisional($grid['goals'], '2', '1'));

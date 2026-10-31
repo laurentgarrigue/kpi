@@ -323,7 +323,11 @@ option demandée sans le rôle correspondant → 403 (pas de document dégradé 
 Contenu de la feuille de présence (décision du 2026-10-30) : le statut est écrit en toutes lettres (Capitaine, Staff,
 Arbitre, Inactif ; rien pour un joueur) — de même sur la feuille de contrôle et le suivi des cartons ; les colonnes
 **Pagaie** et **Certif.** ne figurent que pour les compétitions des sections **Nationale (2) et Régionale (3)**
-(`kp_groupe.section` du groupe de la compétition).
+(`kp_groupe.section` du groupe de la compétition). Sur chaque feuille d'équipe, les **non-joueurs** (arbitres et
+inactifs) sont séparés du reste de la liste par un intertitre « Non joueurs » (2026-10-31).
+
+`teams-groups` (2026-10-31) : seule une coupe (CP) est répartie en poules, côte à côte ; un championnat (CHPT) ou une
+compétition MULTI est une liste unique, sans intertitre « Sans poule » ni colonnes.
 
 Le pool d'arbitres est permanent : `referees-pool` et `presence?competition=POOL` lisent la saison technique `1000`,
 quel que soit `season`. `instances` exige `competition` et `gameday` (la journée doit appartenir à la compétition et
@@ -362,10 +366,21 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 - app2 `pages/game/[id].vue` : le lien vers `PdfMatchMulti.php` est retiré.
 - app3 `app/utils/page-links.ts` : la cible « feuille de match » pointe vers la fiche match app3 si elle existe,
   sinon vers la vue match d'app2.
-- `games-list` (décision du 2026-10-30) : colonnes N°, date, heure, **compétition (seulement quand la liste en réunit
-  plusieurs, par son libellé)**, Phase | Match (2 lignes), terrain, équipe A, score, équipe B (centrés, nom d'équipe sur
-  une ligne), **une colonne Arbitres** (principal au-dessus du secondaire). La liste commence sous l'en-tête de la
-  première page : une section plus longue qu'une page s'écoule sur les suivantes.
+- `games-list` (décisions des 2026-10-30 et 31) : colonnes N°, date, heure, **compétition (seulement quand la liste en
+  réunit plusieurs, par son libellé)**, Phase / Match (la phase, puis le libellé du match sur une 2e ligne, sans son code
+  d'attribution `[…]`), terrain, équipe A, score, équipe B (centrés, nom d'équipe sur une ligne), **une colonne
+  Arbitres** (principal au-dessus du secondaire). Équipes et arbitres non encore désignés : leur **libellé d'attente**
+  (« (1er Poule A) », « (Vainqueur match 12) », dans la langue du PDF). La liste commence toujours sous l'en-tête de la
+  première page : ses sections s'écoulent sur les pages suivantes.
+- Tous les documents qui affichent des matchs (`games-list`, `ranking-team-detail`, `ranking-phases`) : l'équipe
+  vainqueur **et le score** en gras (2026-10-31).
+- `scoresheet` : une colonne **RD** (carton rouge définitif, futur carton noir) après V, J, R de chaque équipe
+  (2026-10-31).
+- `schema` (admin, `ROLE_VIEWER` + périmètre, comme la page Schéma d'app4, 2026-10-31) : remplace l'impression du
+  navigateur de la page `gamedays/schema`. Une coupe en colonnes par étape (classement publié des poules, sinon leurs
+  équipes ; tableaux d'élimination, vainqueur en premier), un championnat par journée. Options de la page : `count=0`
+  masque le nombre de matchs, `times=0` les horaires. Données : `App\Service\CompetitionSchemaService`, partagé avec
+  `GET /admin/schema`.
 - `PdfMatchMulti.php?listMatch=<id>` redirige (301) vers la vue match d'app2 de ce match ; avec plusieurs ids, vers
   la vue du premier match. Une feuille publique pourra être ajoutée plus tard comme option `scoresheet` sur `/pdf`
   sans changer le reste du contrat.
@@ -715,6 +730,17 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | Feuille de marque | Bandeau, sinon logo, sinon FFCK + KPI (§ 8.4.1). |
 | Coupe (CP) | Classement final seul, sans points (PDF et app3) ; détail par équipe groupé par phase (§ 7.4). |
 
+### Décisions (2026-10-31)
+
+| Sujet | Décision |
+|---|---|
+| Équipes et poules | Poules seulement pour une coupe ; liste unique pour CHPT et MULTI (§ 7.2). |
+| Présence | Non-joueurs (arbitres, inactifs) séparés du reste de la liste (§ 7.2). |
+| Matchs | Score en gras avec l'équipe vainqueur ; libellés d'attente des équipes et arbitres non désignés ; plus de code `[…]` dans Phase / Match ; une liste commence toujours en page 1 (§ 7.3). |
+| Feuille de marque | Colonne RD (carton rouge définitif, futur carton noir) (§ 7.3). |
+| Schéma | PDF `schema` par Gotenberg à la place de l'impression du navigateur (§ 7.3). |
+| app3, coupe | Le lien « Classement (PDF) » ouvre `ranking` (classement final), plus `ranking-phases`. |
+
 ### Questions ouvertes
 
 Aucune à ce stade.
@@ -765,7 +791,7 @@ Aucune à ce stade.
   (colonnes `*_publi` ou calculées selon `RankingSource`).
 - `ranking-tiebreak` : la justification reste calculée par `GET /admin/rankings/justification` (moteur de départage
   inchangé) ; seul son rendu PDF (`format=pdf`) passe de mPDF à Gotenberg, charte admin.
-- app3 : le PDF d'une coupe (CP) est `ranking-phases` d'api2. app4 : les liens legacy des classements (admin et
+- app3 : le PDF d'une coupe (CP) était `ranking-phases` d'api2 ; depuis le 2026-10-31, `ranking` (classement final). app4 : les liens legacy des classements (admin et
   publics, `publicPdfHref`) ouvrent les documents api2 ; `ranking-levels` (CltNiveauNiveau) n'est pas migré (I6).
 
 ### Phase 4 — matchs (livrée)
@@ -812,6 +838,14 @@ Aucune à ce stade.
 - Présence : statuts en toutes lettres, Pagaie / Certif. selon la section ; `games-list` : mise en page fixe, colonne
   Arbitres, plus de page blanche avant une longue liste ; feuille de marque : FFCK + KPI à défaut de visuel ; coupe :
   classement final seul (PDF et onglet Classement d'app3), détail par équipe par phase.
+
+### Ajustements (2026-10-31)
+
+- `teams-groups` sans poules hors coupe ; présence : non-joueurs à part ; score du vainqueur en gras ; `games-list` :
+  libellés d'attente, phase et libellé du match sur 2 lignes, plus de section repoussée en page 2 ; feuille de marque :
+  colonne RD ; nouveau document `schema` (page Schéma d'app4) ; app3 : PDF `ranking` pour une coupe.
+- Lieu des journées (« Lacville (33) ») : la parenthèse fermante n'est plus perdue (feuille de marque, instances,
+  schéma ; `App\Pdf\PdfPlace`).
 
 ### Reste à faire
 

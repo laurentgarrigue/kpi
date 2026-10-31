@@ -157,8 +157,10 @@ final class RankingTable
             'home' => (string) $game['LibelleA'],
             'score' => $validated ? sprintf('%s - %s', $game['ScoreA'], $game['ScoreB']) : '-',
             'away' => (string) $game['LibelleB'],
+            // The winner and the score in bold.
             '_cells' => [
                 'home' => $validated && $scoreA > $scoreB ? 'pdf-strong' : '',
+                'score' => $validated && $scoreA !== $scoreB ? 'pdf-strong' : '',
                 'away' => $validated && $scoreB > $scoreA ? 'pdf-strong' : '',
             ],
         ];

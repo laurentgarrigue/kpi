@@ -13,6 +13,7 @@ use App\Pdf\PdfContent;
 use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfHeader;
 use App\Pdf\PdfLabels;
+use App\Pdf\PdfPlace;
 use App\Pdf\PdfRequest;
 use App\Pdf\PdfTheme;
 use App\Pdf\Scoresheet\ScoresheetRepository;
@@ -134,7 +135,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'organiser' => (string) $game['Organisateur'],
             'manager' => ScoresheetSheet::person($game['Responsable_R1'] ?: $game['Responsable_insc']),
             'delegate' => ScoresheetSheet::person($game['Delegue'] ?: $game['ChefArbitre']),
-            'place' => trim(sprintf('%s (%s)', $game['Lieu'], $game['Departement']), ' ()'),
+            'place' => PdfPlace::label($game['Lieu'], $game['Departement']),
             'date' => self::date((string) $game['Date_match'], $lang),
             'time' => substr((string) $game['Heure_match'], 0, 5),
             'end_time' => in_array(substr((string) $game['Heure_fin'], 0, 5), ['', '00:00'], true) ? '' : substr((string) $game['Heure_fin'], 0, 5),

@@ -15,7 +15,7 @@ const { data: ranking, error, refresh } = await useApiResource<Ranking>(() => ap
 const { data: games } = useLazyAsyncData(() => `api2:${apiPath('games')}:live`, () => useApi2()<ResultsGame[]>(apiPath('games')), { server: false })
 useAutoRefresh(() => isLive(games.value ?? [], now.value), refresh)
 
-const pdfHref = computed(() => pdfUrl({ kind: 'ranking', type: props.competition.type, season: props.competition.season, competition: props.competition.code }, context.value))
+const pdfHref = computed(() => pdfUrl({ kind: 'ranking', season: props.competition.season, competition: props.competition.code }, context.value))
 const badge = computed(() => (ranking.value?.status === 'END' ? 'final' : ranking.value?.status === 'ON' ? 'provisional' : null))
 </script>
 
