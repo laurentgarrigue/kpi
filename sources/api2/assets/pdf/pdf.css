@@ -263,8 +263,14 @@ table.pdf-table {
 .pdf-sheet__right { text-align: right; }
 .pdf-sheet__team { text-align: left !important; font-size: 9pt; }
 .pdf-sheet__table td { height: 3.4mm; line-height: 1.1; }
-.pdf-sheet__events td { height: 3.7mm; }
+/* Fixed height: a filled line must not be taller than an empty one, or a full sheet spills onto a 2nd page. */
+.pdf-sheet__events td { height: 3.7mm; line-height: 1; padding-top: 0; padding-bottom: 0; }
 .pdf-sheet__card { width: 4.5mm; text-align: center; }
+/* Card columns on a pastel background of their colour (the letter still says which card it is). */
+.pdf-sheet__card--green { background: #dcf1e2; }
+.pdf-sheet__card--yellow { background: #fdf3c4; }
+.pdf-sheet__card--red { background: #f8dcdc; }
+.pdf-sheet__card--definitive { background: #eebcbc; }
 .pdf-sheet__time { width: 17mm; text-align: center; }
 .pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
 .pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }

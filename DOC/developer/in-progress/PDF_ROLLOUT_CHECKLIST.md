@@ -283,7 +283,7 @@ Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14.
 | 4 | `pdf "$B/pdf/games-list?season=$S&competition=N3"` et l'admin équivalent (lien app4) | les matchs commencent en **page 1** | ☐ |
 | 5 | `games-list` d'une compétition dont des matchs ne sont pas encore attribués | « (1er Poule A) », « (Vainqueur match 12) »… à la place des équipes et arbitres ; Phase / Match sans `[…]` | ☐ |
 | 6 | `games-list`, `ranking-team-detail`, `ranking-phases`, justification de départage | équipe vainqueur en gras et **son score seul** (« **3** - 1 »), pas celui du perdant | ☐ |
-| 7 | Feuille de marque | colonne RD après V, J, R de chaque équipe ; un carton rouge définitif saisi y est coché ; une page par match | ☐ |
+| 7 | Feuille de marque | colonne RD après V, J, R de chaque équipe ; un carton rouge définitif saisi y est coché ; colonnes des cartons sur fond pastel ; « (Capitaine) » après le nom du capitaine, « Staff » à la place du numéro ; une page par match, même avec une grille d'événements pleine | ☐ |
 | 8 | app4 Journées → Schéma de **K** → bouton PDF (cases Matchs / Horaires cochées puis décochées) | PDF Gotenberg en colonnes par étape, vainqueur en premier ; nombre de matchs et horaires selon les cases | ☐ |
 | 9 | même chose pour **N** | une carte par journée, matchs sur 3 colonnes | ☐ |
 | 9b | `pdf "$B/pdf/ranking-phases?season=$S&competition=<K>"` | chaque phase sous son seul titre, sans date ni lieu | ☐ |

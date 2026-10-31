@@ -461,8 +461,9 @@ final class PdfEndpointsTest extends ApiTestCase
 
         $html = (string) $this->gotenberg()->html;
         self::assertStringContainsString('Feuille de marque', $html);
-        self::assertStringContainsString('ALPHA (Cap)', $html, 'team roster when the game has none');
-        self::assertStringContainsString('ALPHA (Entraîneur)', $html);
+        self::assertStringContainsString('ALPHA (Capitaine)', $html, 'team roster when the game has none; roles by their label');
+        self::assertStringContainsString('>Staff</td>', $html, '« Staff » in place of the number');
+        self::assertStringContainsString('pdf-sheet__card--yellow', $html, 'card columns on a pastel background');
         self::assertStringNotContainsString('Inactif', $html, 'inactive players are not on the sheet');
         self::assertStringContainsString('ID #9401', $html);
         self::assertStringContainsString('pdf-sheet__logos', $html, 'no visual of the competition: FFCK + KPI');

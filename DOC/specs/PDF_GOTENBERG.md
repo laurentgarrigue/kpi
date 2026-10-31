@@ -376,7 +376,10 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
   de départage) : l'équipe vainqueur en gras, ainsi que **son score seulement**, pas celui de l'équipe perdante
   (2026-10-31, précisé le 2026-11-01).
 - `scoresheet` : une colonne **RD** (carton rouge définitif, futur carton noir) après V, J, R de chaque équipe
-  (2026-10-31).
+  (2026-10-31). Depuis le 2026-11-01 : colonnes des cartons sur fond pastel de leur couleur (vert, jaune, rouge, rouge
+  soutenu pour RD) ; statuts par leur libellé, comme sur la feuille de présence (« (Capitaine) » après le nom,
+  « Staff » à la place du numéro, au lieu de « Entraîneur ») ; une ligne d'événement remplie a la même hauteur qu'une
+  vide, pour qu'une feuille complète tienne sur une page.
 - `schema` (admin, `ROLE_VIEWER` + périmètre, comme la page Schéma d'app4, 2026-10-31) : remplace l'impression du
   navigateur de la page `gamedays/schema`. Une coupe en colonnes par étape (classement publié des poules, sinon leurs
   équipes ; tableaux d'élimination, vainqueur en premier), un championnat par journée. Options de la page : `count=0`

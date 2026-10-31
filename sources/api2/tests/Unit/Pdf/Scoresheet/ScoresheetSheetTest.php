@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 final class ScoresheetSheetTest extends TestCase
 {
     private const LABELS = [
-        'scoresheet.coach' => 'Entraîneur', 'scoresheet.team' => 'Équipe', 'scoresheet.definitive' => 'D',
+        'role.C' => 'Capitaine', 'role.E' => 'Staff', 'scoresheet.team' => 'Équipe', 'scoresheet.definitive' => 'D',
         'scoresheet.reason_r_o' => 'Obstruction',
     ];
 
@@ -22,9 +22,9 @@ final class ScoresheetSheetTest extends TestCase
         ], '2026', false, self::LABELS);
 
         self::assertCount(ScoresheetSheet::ROSTER_LINES, $roster);
-        self::assertSame(['7', 'DUPONT (Cap)', '123456 (2025)', 'SEN'], [$roster[0]['number'], $roster[0]['last_name'], $roster[0]['licence'], $roster[0]['category']]);
+        self::assertSame(['7', 'DUPONT (Capitaine)', '123456 (2025)', 'SEN'], [$roster[0]['number'], $roster[0]['last_name'], $roster[0]['licence'], $roster[0]['category']], 'the captain by the label of its role');
         self::assertSame('SEN(sup)', $roster[1]['category'], 'not in the team roster');
-        self::assertSame(['C', 'DUPONT (Entraîneur)', ''], [$roster[2]['number'], $roster[2]['last_name'], $roster[2]['licence']]);
+        self::assertSame(['Staff', 'DUPONT', ''], [$roster[2]['number'], $roster[2]['last_name'], $roster[2]['licence']], '« Staff » in place of the number');
         self::assertCount(ScoresheetSheet::INTERNATIONAL_ROSTER_LINES, ScoresheetSheet::roster([], '2026', true, self::LABELS));
     }
 

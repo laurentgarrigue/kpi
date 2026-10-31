@@ -115,7 +115,6 @@ tiebreak.none: { fr: "Aucun groupe d'équipes à égalité de points : aucun dé
 # Scoresheet (official sheet, rubrics of FeuilleMatchMulti.php)
 scoresheet.title: { fr: 'Feuille de marque', en: 'Game report' }
 scoresheet.number: { fr: 'N°', en: '#' }
-scoresheet.coach: { fr: 'Entraîneur', en: 'Coach' }
 scoresheet.team: { fr: 'Équipe', en: 'Team' }
 scoresheet.organiser: { fr: 'Organisateur', en: 'Organiser' }
 scoresheet.manager: { fr: 'Resp. organisation', en: 'Techn. organiser' }

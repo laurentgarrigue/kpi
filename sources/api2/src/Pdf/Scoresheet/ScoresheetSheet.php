@@ -50,10 +50,11 @@ final class ScoresheetSheet
         foreach ($players as $player) {
             $name = PresencePlayer::lastName($player['Nom']);
             $number = (string) $player['Numero'];
+            // Labels of the roles, as on the presence sheet: « (Capitaine) » after the name, « Staff » as number.
             if ($player['Capitaine'] === 'E') {
-                [$name, $number] = [$name . ' (' . $labels['scoresheet.coach'] . ')', 'C'];
+                $number = PresencePlayer::role('E', $labels);
             } elseif ($player['Capitaine'] === 'C') {
-                $name .= ' (Cap)';
+                $name .= ' (' . PresencePlayer::role('C', $labels) . ')';
             }
             $matric = (int) $player['Matric'];
             $licence = match (true) {
