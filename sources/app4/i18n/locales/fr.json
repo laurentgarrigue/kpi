@@ -1772,6 +1772,33 @@
       "back_to_club": "Retour au club"
     }
   },
+  "athletes_list": {
+    "title": "Liste des athlètes",
+    "open_list": "Liste des athlètes",
+    "back_to_search": "Recherche d'un athlète",
+    "search_placeholder": "Filtrer par nom, prénom ou licence...",
+    "filters": {
+      "unknown_birthdate": "Date de naissance inconnue",
+      "international": "Joueur international",
+      "engaged_this_season": "Engagé cette saison"
+    },
+    "total": "{count} athlète(s)",
+    "empty": "Aucun athlète ne correspond aux filtres",
+    "columns": {
+      "licence": "Licence",
+      "nom": "Nom",
+      "sexe": "Sexe",
+      "naissance": "Naissance",
+      "club": "Club"
+    },
+    "unknown_birthdate": "Inconnue",
+    "international_badge": "International",
+    "open_sheet": "Ouvrir la fiche",
+    "pagination": {
+      "showing": "Affichage de {from} à {to} sur {total} athlètes",
+      "items_per_page": "Éléments par page"
+    }
+  },
   "athletes": {
     "title": "Gestion des Athlètes",
     "search_placeholder": "Rechercher un athlète (nom, prénom, licence)...",

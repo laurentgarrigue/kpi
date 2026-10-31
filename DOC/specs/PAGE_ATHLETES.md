@@ -143,6 +143,31 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 | 7 | Onglets pour les participations | Organisation en tabs (Feuilles de presence, Officiels, Matchs) au lieu de tableaux cote a cote |
 | 8 | Fusion arbitrage + table de marque | Un seul tableau "Officiels" au lieu de 2 tableaux separes dans le legacy |
 
+### 2.6 Liste des athletes : retrouver les joueurs a completer
+
+Route `/athletes/list` (lien « Liste des athlètes » dans l'en-tête de `/athletes`). Repond aux user stories 28-30 de
+[CATEGORIE_AGE.md](CATEGORIE_AGE.md) : retrouver les joueurs dont la date de naissance reste a completer.
+
+| # | Fonctionnalite | Profil | Decision |
+|---|----------------|--------|----------|
+| 1 | Filtre « Date de naissance inconnue » (coche par defaut) | <= 10 | `Naissance` NULL, ou date conventionnelle `1901-01-01` / `0000-00-00` tant que la migration (#369) n'est pas passee partout |
+| 2 | Filtre « Joueur international » | <= 10 | `Matric >= 2000000` (voir Q7) |
+| 3 | Filtre « Engage cette saison » | <= 10 | Present dans une composition (`kp_competition_equipe_joueur`) d'une equipe de la saison active (`kp_saison.Etat = 'A'`) |
+| 4 | Combinaison des filtres | <= 10 | ET logique ; aucun filtre = tous les athletes |
+| 5 | Recherche nom/prenom/licence | <= 10 | Memes regles que l'autocomplete (§ 6.3), a partir de 2 caracteres |
+| 6 | Nombre de resultats | <= 10 | Total de tous les athletes correspondants (pas seulement la page affichee) |
+| 7 | Pagination | <= 10 | 25/50/100/200 par page (defaut 50), tri Nom, Prenom, Matric |
+| 8 | Acces a la fiche | <= 10 | Clic sur une ligne → `/athletes?matric=<matric>` ; la correction de la date (profil <= 2, § 2.3) fait sortir le joueur du filtre « date inconnue » |
+
+Colonnes : Licence (+ badge « International »), Nom Prenom, Sexe, Naissance (« Inconnue » si absente), Club. En mobile :
+une carte par athlete.
+
+**Criteres d'acceptation** (tests `tests/Integration/AthletesListTest.php`, `app4/tests/unit/athletesList.spec.ts`) :
+- chaque filtre seul, puis les trois combines, renvoient les bons athletes et le bon total ;
+- le total couvre toutes les pages ;
+- une date conventionnelle est filtree et affichee comme inconnue (`naissance: null`) ;
+- apres correction de la date par PUT `/admin/athletes/{matric}`, le joueur sort du filtre « date inconnue ».
+
 ---
 
 ## 3. Decisions de conception
@@ -155,6 +180,8 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 | Q4 | Arbitrage + Table de marque (OTM) | **Fusionnes en un seul tableau "Officiels"**. Le legacy les separait car les requetes SQL etaient distinctes (colonnes numeriques pour arbitrage vs LIKE texte pour OTM). L'API2 unifie les deux sources et retourne un tableau unique avec toutes les fonctions officielles par match. |
 | Q5 | Layout des participations | **3 onglets/tabs** (Presence, Officiels, Matchs) au lieu du layout legacy (2 colonnes : gauche = presence+arbitrage+OTM, droite = matchs). Plus lisible et mieux adapte au mobile. |
 | Q6 | Lien feuille de match | Les numeros de match (Numero_ordre) sont des liens cliquables. Pour les profils <= 3, un lien vers la feuille de match est affiche (futur : route app4 ou ouverture legacy). |
+| Q7 | Definition de « joueur international » (liste, § 2.6) | Aucune colonne ne le porte. **`Matric >= 2000000`** (plage des licences non federales, attribuee a partir de 2000000 par la saisie manuelle et les imports ; les licencies FFCK sont sous 600000). C'est le seul indicateur present sur toutes les fiches : `Origine = 'ETRG'` ne marque que les fiches creees par l'import d'evenement (0 en base de dev) et `Numero_comite_reg = '98'` que les imports ICF (3 778 fiches). Verifie en base de dev : 3 986 fiches `Matric >= 2000000`, le chiffre de CATEGORIE_AGE.md. NB : la modification (Q2) reste reservee a `Matric > 2000000`, la fiche 2000000 elle-meme n'est donc pas modifiable (ecart historique, hors perimetre). |
+| Q8 | Liste vs autocomplete | **Endpoint distinct** `GET /admin/athletes` (§ 6.8, pagine avec total) : l'autocomplete `GET /admin/athletes/search` garde sa reponse en tableau nu (limite 50, sans total) utilisee par `AthleteAutocomplete`. |
 
 ---
 
@@ -301,6 +328,7 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 | GET | `/admin/athletes/{matric}` | Fiche complete d'un athlete (infos generales) | <= 10 |
 | GET | `/admin/athletes/{matric}/participations` | Participations d'un athlete pour une saison | <= 10 |
 | PUT | `/admin/athletes/{matric}` | Modifier un athlete (identite + arbitrage) | <= 2 |
+| GET | `/admin/athletes` | Liste paginee filtrable avec total (§ 6.8) | <= 10 |
 
 ### 6.3 GET /admin/athletes/search
 
@@ -478,6 +506,40 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 | 403 | Profil insuffisant ou Matric <= 2000000 |
 | 404 | Athlete non trouve |
 
+### 6.8 GET /admin/athletes
+
+Controleur `AdminAthletesListController` (separe de `AdminAthletesController`).
+
+**Query Parameters** (tous optionnels, combinables en ET) :
+- `q` : nom, prenom ou numero de licence (ignore sous 2 caracteres)
+- `unknown_birthdate=1` : `Naissance IS NULL` ou date conventionnelle (`1901-01-01`, `0000-00-00`)
+- `international=1` : `Matric >= 2000000`
+- `engaged_this_season=1` : `EXISTS` une ligne `kp_competition_equipe_joueur` d'une equipe dont `Code_saison` est la saison `Etat = 'A'`
+- `page` (defaut 1), `limit` (defaut 50, max 200)
+
+**Reponse** :
+```json
+{
+  "items": [
+    {
+      "matric": 2100001,
+      "nom": "DOE",
+      "prenom": "John",
+      "sexe": "M",
+      "naissance": null,
+      "international": true,
+      "club": "CK LE HAVRE",
+      "codeClub": "7603"
+    }
+  ],
+  "total": 81,
+  "page": 1,
+  "limit": 50
+}
+```
+
+`naissance` vaut `null` pour une date inconnue, y compris une date conventionnelle. Tri : Nom, Prenom, Matric.
+
 ---
 
 ## 7. Schema de donnees
@@ -546,7 +608,11 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 
 ```
 sources/app4/pages/athletes/
-└── index.vue              # Page principale
+├── index.vue              # Page principale
+└── list.vue               # Liste filtrable des athletes (§ 2.6)
+
+sources/app4/utils/athletesList.ts   # Parametres de GET /admin/athletes, nombre de pages
+sources/app4/types/athletes-list.ts  # Types de la liste
 
 sources/app4/components/admin/
 └── AthleteEditModal.vue   # Modal modification athlete (optionnel, peut etre inline)

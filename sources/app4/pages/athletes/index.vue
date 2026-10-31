@@ -330,9 +330,18 @@ onBeforeUnmount(() => {
 <template>
   <div>
     <!-- Page Title -->
-    <h1 class="text-2xl font-bold text-header-900 dark:text-header-50 mb-6">
-      {{ t('athletes.title') }}
-    </h1>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
+        {{ t('athletes.title') }}
+      </h1>
+      <NuxtLink
+        to="/athletes/list"
+        class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
+      >
+        <UIcon name="i-heroicons-list-bullet" class="w-4 h-4" />
+        {{ t('athletes_list.open_list') }}
+      </NuxtLink>
+    </div>
 
     <!-- ═══ Filter Panel ═══ -->
     <div v-if="canFilter" class="mb-4">
