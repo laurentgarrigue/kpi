@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Service\TeamLastUpdateService;
@@ -38,7 +39,8 @@ class AdminPresenceController extends AbstractController
     public function __construct(
         private readonly Connection $connection,
         private readonly PlayerEligibilityChecker $eligibility,
-        private readonly TeamLastUpdateService $teamLastUpdate
+        private readonly TeamLastUpdateService $teamLastUpdate,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -203,7 +205,7 @@ class AdminPresenceController extends AbstractController
                     $eligibilityLevel,
                     $teamInfo['code_saison'],
                     $teamInfo['code_compet'],
-                    $this->eligibility->calculateCategory($data['naissance'] ?? null, $teamInfo['code_saison'])
+                    $this->ageCategories->categoryFor($data['naissance'] ?? null, $teamInfo['code_saison'])?->code
                 );
                 $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings);
                 if ($rejection) {
@@ -276,8 +278,7 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => 'Player not found in license database'], Response::HTTP_NOT_FOUND);
         }
 
-        // Calculate category
-        $categ = $this->eligibility->calculateCategory($licenceRow['Naissance'], $teamInfo['code_saison']);
+        $categ = $this->ageCategories->categoryFor($licenceRow['Naissance'], $teamInfo['code_saison'])?->code;
 
         // Insert into kp_competition_equipe_joueur
         try {
@@ -469,7 +470,8 @@ class AdminPresenceController extends AbstractController
         $result = $stmt->executeQuery($params);
         $rows = $result->fetchAllAssociative();
 
-        $players = array_map(function ($row) {
+        $season = $this->activeSeason();
+        $players = array_map(function ($row) use ($season) {
             $pagaieLabel = '';
             $pagaieValide = 0;
             if (!empty($row['Pagaie_ECA']) && !in_array($row['Pagaie_ECA'], ['', 'PAGJ', 'PAGB'])) {
@@ -488,7 +490,7 @@ class AdminPresenceController extends AbstractController
                 'nom' => $row['Nom'] ?? '',
                 'prenom' => $row['Prenom'] ?? '',
                 'sexe' => $row['Sexe'] ?? 'M',
-                'categ' => $row['Naissance'] ? $this->eligibility->calculateCategory($row['Naissance'], date('Y')) : '',
+                'categ' => $this->ageCategories->categoryFor($row['Naissance'], $season)?->code,
                 'numeroClub' => $row['Numero_club'] ?? '',
                 'clubLibelle' => $row['Club'] ?? '',
                 'pagaieLabel' => $pagaieLabel,
@@ -729,9 +731,8 @@ class AdminPresenceController extends AbstractController
         ]);
         $playerRows = $result->fetchAllAssociative();
 
-        $players = array_map(function ($row) {
-            return $this->formatMatchPlayer($row);
-        }, $playerRows);
+        $season = (string) $teamRow['Code_saison'];
+        $players = array_map(fn (array $row): array => $this->formatMatchPlayer($row, $season), $playerRows);
 
         return $this->json([
             'match' => [
@@ -1213,6 +1214,11 @@ class AdminPresenceController extends AbstractController
     // HELPER METHODS
     // ============================================
 
+    private function activeSeason(): string
+    {
+        return (string) $this->connection->fetchOne("SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1");
+    }
+
     private function getMatchInfo(int $matchId): ?array
     {
         $sql = "SELECT m.Id, m.Id_journee, m.Id_equipeA, m.Id_equipeB, m.`Validation`,
@@ -1239,7 +1245,7 @@ class AdminPresenceController extends AbstractController
         ];
     }
 
-    private function formatMatchPlayer(array $row): array
+    private function formatMatchPlayer(array $row, string $season): array
     {
         $pagaieValide = 0;
         $pagaieLabel = '';
@@ -1265,7 +1271,7 @@ class AdminPresenceController extends AbstractController
             'nom' => $row['Nom'] ?? '',
             'prenom' => $row['Prenom'] ?? '',
             'sexe' => $row['Sexe'] ?? 'M',
-            'categ' => $row['Naissance'] ? $this->eligibility->calculateCategory($row['Naissance'], date('Y')) : '',
+            'categ' => $this->ageCategories->categoryFor($row['Naissance'], $season)?->code,
             'naissance' => $row['Naissance'] ?? null,
             'numero' => (int) ($row['Numero'] ?? 0),
             'capitaine' => $capitaine,
@@ -1305,10 +1311,8 @@ class AdminPresenceController extends AbstractController
             $pagaieLabel = $this->getPagaieLabel($row['Pagaie_MER']);
         }
 
-        // Recompute category from birth date + season (ignores stale stored Categ)
-        $categ = !empty($row['Naissance'])
-            ? $this->eligibility->calculateCategory($row['Naissance'], $season)
-            : ($row['Categ'] ?? '');
+        // Derived from birth date + season, never the stored Categ cache (ADR 0001)
+        $categ = $this->ageCategories->categoryFor($row['Naissance'], $season)?->code;
 
         // Indicate whether surclassement is required (only where the rule set checks it) and whether it's present
         $eligibility = $this->eligibility->describe($eligibilityLevel);

@@ -2,6 +2,7 @@
 
 namespace App\Pdf\Document;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\Games\GamesScope;
 use App\Pdf\Games\GamesSort;
 use App\Pdf\InvalidPdfRequest;
@@ -36,6 +37,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
         private readonly ScoresheetRepository $sheets,
         private readonly MatchLabelParser $labelParser,
         private readonly PdfLabels $labels,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -129,8 +131,8 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'line_judges' => trim(implode(' / ', array_filter([(string) $game['Ligne1'], (string) $game['Ligne2']], 'strlen'))),
             'elimination' => $game['Type'] === self::ELIMINATION,
             'international' => $international,
-            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels)],
-            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels)],
+            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels, $this->ageCategories)],
+            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels, $this->ageCategories)],
             'events' => $events['lines'],
             'half_time' => $status === self::HALF_TIME_PASSED_STATUS || ($status === self::PLAYING_STATUS && $period !== self::FIRST_PERIOD && $period !== '')
                 ? $events['half_time']

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\InvalidPdfRequest;
 use App\Pdf\PdfCatalog;
 use App\Pdf\PdfContent;
@@ -41,6 +42,7 @@ class AdminStatsController extends AbstractController
         private readonly Connection $connection,
         private readonly PdfRenderer $pdfRenderer,
         private readonly PdfLabels $pdfLabels,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -1279,18 +1281,16 @@ class AdminStatsController extends AbstractController
     {
         $sql = "SELECT lc.Matric AS licence, lc.Nom AS nom, lc.Prenom AS prenom, lc.Sexe AS sexe,
                 c.Code AS codeClub, c.Libelle AS club,
-                cat.id AS categorieSaison,
+                lc.Naissance AS naissance,
                 s.Cat AS categorieSurclassement, s.Saison AS saisonSurclassement, s.Date AS dateSurclassement
                 FROM kp_surclassement s
                 INNER JOIN kp_licence lc ON s.Matric = lc.Matric
                 LEFT JOIN kp_club c ON c.Code = lc.Numero_club
-                LEFT JOIN kp_categorie cat ON cat.sexe = 'T'
-                    AND :saisonAge - YEAR(lc.Naissance) BETWEEN cat.age_min AND cat.age_max
                 WHERE s.Saison >= :saison
                 ORDER BY s.Saison DESC, s.Date DESC, lc.Nom, lc.Prenom
                 LIMIT $limit";
 
-        $result = $this->connection->executeQuery($sql, ['saison' => $codeSaison, 'saisonAge' => $codeSaison]);
+        $result = $this->connection->executeQuery($sql, ['saison' => $codeSaison]);
 
         return array_map(fn($row) => [
             'licence' => $row['licence'],
@@ -1299,7 +1299,7 @@ class AdminStatsController extends AbstractController
             'sexe' => $row['sexe'],
             'codeClub' => $row['codeClub'],
             'club' => $row['club'],
-            'categorieSaison' => $row['categorieSaison'],
+            'categorieSaison' => $this->ageCategories->categoryFor($row['naissance'], $codeSaison)?->code,
             'categorieSurclassement' => $row['categorieSurclassement'],
             'saisonSurclassement' => $row['saisonSurclassement'],
             'dateSurclassement' => $row['dateSurclassement'],

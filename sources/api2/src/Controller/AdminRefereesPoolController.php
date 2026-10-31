@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -63,7 +64,8 @@ class AdminRefereesPoolController extends AbstractController
     ];
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -572,24 +574,10 @@ class AdminRefereesPoolController extends AbstractController
         ) ?: '');
     }
 
+    /** Age category of the active season: the pool belongs to the pseudo season POOL_SAISON. */
     private function computeCategory(?string $naissance): ?string
     {
-        if (!$naissance) {
-            return null;
-        }
-        $season = $this->getActiveSeason();
-        if ($season === '') {
-            return null;
-        }
-        $year = (int) substr($naissance, 0, 4);
-        if ($year <= 0) {
-            return null;
-        }
-        $age = (int) $season - $year;
-        return $this->connection->fetchOne(
-            "SELECT id FROM kp_categorie WHERE age_min <= ? AND age_max >= ?",
-            [$age, $age]
-        ) ?: null;
+        return $this->ageCategories->categoryFor($naissance, $this->getActiveSeason())?->code;
     }
 
     /**

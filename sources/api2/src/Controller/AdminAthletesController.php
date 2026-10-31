@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -36,7 +37,8 @@ class AdminAthletesController extends AbstractController
     ];
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -210,21 +212,9 @@ class AdminAthletesController extends AbstractController
             }
         }
 
-        // Compute age category: use athlete's Origine season for consistency
-        // sexe in kp_categorie is 'T' (Tous/all) — no gender split at this level
-        $categorieAge = null;
-        $seasonForAge = $athleteSeason ?: $activeSeason;
-        if ($seasonForAge && $row['Naissance']) {
-            $anneeNaissance = (int) substr($row['Naissance'], 0, 4);
-            $age = (int) $seasonForAge - $anneeNaissance;
-            $cat = $this->connection->fetchAssociative(
-                "SELECT id, libelle FROM kp_categorie WHERE age_min <= ? AND age_max >= ?",
-                [$age, $age]
-            );
-            if ($cat) {
-                $categorieAge = ['code' => $cat['id'], 'libelle' => $cat['libelle']];
-            }
-        }
+        // Age category of the active season, never the licence's season of origin (CATEGORIE_AGE.md story 4)
+        $category = $this->ageCategories->categoryFor($row['Naissance'], (string) $activeSeason);
+        $categorieAge = $category ? ['code' => $category->code, 'libelle' => $category->label] : null;
 
         // Build qualification label from arbitre record
         $qualification = '';

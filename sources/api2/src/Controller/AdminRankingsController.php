@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Pdf\InvalidPdfRequest;
@@ -48,6 +49,7 @@ class AdminRankingsController extends AbstractController
         private readonly PdfRenderer $pdfRenderer,
         private readonly PdfCompetitions $pdfCompetitions,
         private readonly PdfLabels $pdfLabels,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -574,9 +576,6 @@ class AdminRankingsController extends AbstractController
             $skipped = 0;
             $eligibilityResults = [];
 
-            // Get target season year for age category calculation
-            $targetYear = (int) $targetSeason;
-
             foreach ($teamIds as $teamId) {
                 $teamId = (int) $teamId;
 
@@ -622,17 +621,7 @@ class AdminRankingsController extends AbstractController
                 $newId = (int) $this->connection->lastInsertId();
 
                 if ($includePlayers) {
-                    // Copy players with age recalculation
-                    $sql = "INSERT INTO kp_competition_equipe_joueur
-                                (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine)
-                            SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe,
-                                   COALESCE(d.id, a.Categ), a.Numero, a.Capitaine
-                            FROM kp_competition_equipe_joueur a
-                            LEFT JOIN kp_licence e ON a.Matric = e.Matric
-                            LEFT JOIN kp_categorie d ON (? - YEAR(e.Naissance)) BETWEEN d.age_min AND d.age_max
-                                                        AND (d.sexe = '' OR d.sexe = a.Sexe)
-                            WHERE a.Id_equipe = ?";
-                    $this->connection->prepare($sql)->executeStatement([$newId, $targetYear, $teamId]);
+                    $this->copyPlayersForSeason($teamId, $newId, (string) $targetSeason);
 
                     // Non-compliant players are made inactive (national) or reported (regional)
                     $eligibilityResults[] = $this->eligibility->enforceOnCopiedRoster($newId);
@@ -662,6 +651,30 @@ class AdminRankingsController extends AbstractController
         } catch (\Throwable $e) {
             $this->connection->rollBack();
             return $this->json(['message' => 'Transfer error: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /** Copy a roster into a team of another season: the age category is the one of the destination season. */
+    private function copyPlayersForSeason(int $sourceTeamId, int $targetTeamId, string $targetSeason): void
+    {
+        $players = $this->connection->fetchAllAssociative(
+            "SELECT a.Matric, a.Nom, a.Prenom, a.Sexe, a.Numero, a.Capitaine, e.Naissance
+             FROM kp_competition_equipe_joueur a
+             LEFT JOIN kp_licence e ON a.Matric = e.Matric
+             WHERE a.Id_equipe = ?",
+            [$sourceTeamId]
+        );
+        foreach ($players as $player) {
+            $this->connection->insert('kp_competition_equipe_joueur', [
+                'Id_equipe' => $targetTeamId,
+                'Matric' => $player['Matric'],
+                'Nom' => $player['Nom'],
+                'Prenom' => $player['Prenom'],
+                'Sexe' => $player['Sexe'],
+                'Categ' => $this->ageCategories->categoryFor($player['Naissance'], $targetSeason)?->code,
+                'Numero' => $player['Numero'],
+                'Capitaine' => $player['Capitaine'],
+            ]);
         }
     }
 

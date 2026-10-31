@@ -2,7 +2,9 @@
 
 namespace App\Tests\Unit\Pdf\Scoresheet;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\Scoresheet\ScoresheetSheet;
+use App\Tests\Support\FfckAgeCategoryTable;
 use PHPUnit\Framework\TestCase;
 
 /** Scoresheet (PDF_GOTENBERG.md § 7.3.3): same rules as the legacy FeuilleMatchMulti.php. */
@@ -19,22 +21,23 @@ final class ScoresheetSheetTest extends TestCase
             self::player(7, 'C', 123456, '2025', 123456),
             self::player(8, '-', 123457, '2026', null),
             self::player(null, 'E', 2000001, '2026', 2000001),
-        ], '2026', false, self::LABELS);
+        ], '2026', false, self::LABELS, self::ageCategories());
 
         self::assertCount(ScoresheetSheet::ROSTER_LINES, $roster);
         self::assertSame(['7', 'DUPONT (Cap)', '123456 (2025)', 'SEN'], [$roster[0]['number'], $roster[0]['last_name'], $roster[0]['licence'], $roster[0]['category']]);
         self::assertSame('SEN(sup)', $roster[1]['category'], 'not in the team roster');
         self::assertSame(['C', 'DUPONT (Entraîneur)', ''], [$roster[2]['number'], $roster[2]['last_name'], $roster[2]['licence']]);
-        self::assertCount(ScoresheetSheet::INTERNATIONAL_ROSTER_LINES, ScoresheetSheet::roster([], '2026', true, self::LABELS));
+        self::assertCount(ScoresheetSheet::INTERNATIONAL_ROSTER_LINES, ScoresheetSheet::roster([], '2026', true, self::LABELS, self::ageCategories()));
     }
 
-    public function testCategoryByAgeInTheSeason(): void
+    public function testRosterCategoryIsTheAgeCategoryOfTheSeasonAndEmptyWhenTheBirthDateIsUnknown(): void
     {
-        self::assertSame('MIN', ScoresheetSheet::category('2012-06-01', '2026'));
-        self::assertSame('SEN', ScoresheetSheet::category('2000-01-01', '2026'));
-        self::assertSame('V2', ScoresheetSheet::category('1984-01-01', '2026'));
-        self::assertSame('', ScoresheetSheet::category(null, '2026'));
-        self::assertSame('', ScoresheetSheet::category('2020-01-01', '2026'), 'too young');
+        $roster = ScoresheetSheet::roster([
+            ['Naissance' => '1972-05-03'] + self::player(4, '-', 123458, '2020', 123458),
+            ['Naissance' => '1901-01-01'] + self::player(5, '-', 123459, '2020', 123459),
+        ], '2020', false, self::LABELS, self::ageCategories());
+
+        self::assertSame(['V3', ''], [$roster[0]['category'], $roster[1]['category']]);
     }
 
     public function testEventGridCountsTheGoalsAndTheHalfTime(): void
@@ -62,6 +65,11 @@ final class ScoresheetSheetTest extends TestCase
         self::assertSame('', ScoresheetSheet::referee('-1'));
         self::assertSame('', ScoresheetSheet::score('?'));
         self::assertSame('3', ScoresheetSheet::score('3'));
+    }
+
+    private static function ageCategories(): AgeCategoryRule
+    {
+        return new AgeCategoryRule(new FfckAgeCategoryTable());
     }
 
     /** @return array<string, mixed> */

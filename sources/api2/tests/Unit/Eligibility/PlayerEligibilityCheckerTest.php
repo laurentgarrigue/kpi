@@ -2,8 +2,10 @@
 
 namespace App\Tests\Unit\Eligibility;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Eligibility\PlayerEligibilityRules as Rules;
+use App\Tests\Support\FfckAgeCategoryTable;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +22,7 @@ final class PlayerEligibilityCheckerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->checker = new PlayerEligibilityChecker($this->createStub(Connection::class));
+        $this->checker = new PlayerEligibilityChecker($this->createStub(Connection::class), new AgeCategoryRule(new FfckAgeCategoryTable()));
     }
 
     private const COMPLIANT = [
