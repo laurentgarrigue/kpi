@@ -2,7 +2,7 @@
 import { displayStatus, drawCode, isFinal, normalizeTime, winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
 import { NEW_TAB_ATTRS } from '~/utils/links'
-import { gameLink, pdfUrl } from '~/utils/page-links'
+import { gameLink } from '~/utils/page-links'
 import { personName } from '~/utils/people'
 
 /**

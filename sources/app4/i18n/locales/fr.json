@@ -276,6 +276,7 @@
     "club": "Club",
     "exports": "Exports PDF",
     "pdf_editions": "Éditions PDF",
+    "pdf_open_error": "Impossible d'ouvrir le document PDF",
     "more_actions": "Plus d'actions",
     "all": "Tous",
     "select": "Sélectionner",
@@ -1653,12 +1654,8 @@
       "public_list_fr": "Liste publique (FR)",
       "public_list_en": "Public list (EN)",
       "pitches_section": "Terrains (tableaux)",
-      "pitches_1_4_teams": "Terrains 1-4 (Équipes)",
-      "pitches_5_8_teams": "Terrains 5-8 (Équipes)",
-      "pitches_1_4_phases": "Terrains 1-4 (Phases)",
-      "pitches_5_8_phases": "Terrains 5-8 (Phases)",
-      "pitches_1_5_phases": "Terrains 1-5 (Phases)",
-      "pitches_1_5_teams": "Terrains 1-5 (Équipes)"
+      "pitches_teams": "Terrains (grille, équipes)",
+      "pitches_phases": "Terrains (grille, phases)"
     },
     "added": "Match créé.",
     "save_and_add": "Enregistrer et ajouter",

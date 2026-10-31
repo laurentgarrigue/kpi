@@ -16,13 +16,15 @@ import type {
 } from '~/types/teams'
 import type { IneligibleSummary } from '~/types/presence'
 import { canManageScrutineering, isScrutineerProfile } from '~/utils/scrutineering'
+import { canGetAdminPdf } from '~/utils/pdf'
 
 definePageMeta({
   layout: 'admin',
   middleware: 'auth'
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const pdf = usePdf()
 const api = useApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
@@ -203,6 +205,9 @@ const canAddDelete = computed(() => authStore.profile <= 3 && !isReadOnly.value)
 const canEditProperties = computed(() => authStore.profile <= 2 && !isReadOnly.value)
 // Profiles 1–2 and 10 (PAGE_SCRUTINEERING.md § 1.1); the profile 10 only reads the teams (no club, no competition PDF)
 const canScrutineer = computed(() => canManageScrutineering(authStore.profile))
+// PDF links shown to the profiles api2 allows (PDF_GOTENBERG.md § 7, I1, I2)
+const canPrintVisa = computed(() => canGetAdminPdf(authStore.profile, 'presence', 'visa'))
+const canPrintControl = computed(() => canGetAdminPdf(authStore.profile, 'scrutineering-control'))
 const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
 const showPoolDrawColumns = computed(() => !(authStore.profile === 7 && competitionInfo.value?.statut === 'ATT'))
 
@@ -909,7 +914,15 @@ const globalPdfParams = computed(() => {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
   return `compet=${encodeURIComponent(compet)}&season=${encodeURIComponent(season)}&tz=${encodeURIComponent(tz)}`
 })
-const globalPdfPoolsUrl = computed(() => `${legacyBase.value}/admin/FeuilleGroups.php?${globalPdfParams.value}`)
+// Teams by pool: PDF of api2 (teams-groups), reference document of the admin charter (PDF_GOTENBERG.md § 8.6)
+const openPoolsPdf = () => {
+  globalPdfOpen.value = false
+  void pdf.openDocument('teams-groups', {
+    season: workContext.season || '',
+    competition: workContext.pageCompetitionCode || '',
+    lang: locale.value === 'en' ? 'en' : 'fr',
+  })
+}
 const globalPdfPresenceFrUrl = computed(() => `${legacyBase.value}/admin/FeuillePresence.php?${globalPdfParams.value}`)
 const globalPdfPresenceEnUrl = computed(() => `${legacyBase.value}/admin/FeuillePresenceEN.php?${globalPdfParams.value}`)
 const globalPdfPresenceCatUrl = computed(() => `${legacyBase.value}/admin/FeuillePresenceCat.php?${globalPdfParams.value}`)
@@ -1540,9 +1553,9 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <a :href="getPresencePhotoUrl({ id: openDropdownId } as CompetitionTeam)" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="closePresenceDropdown">
           {{ t('teams_page.presence_sheet_photo') }}
         </a>
-        <div v-if="canEditProperties || canScrutineer" class="border-t border-header-100 dark:border-header-800" />
+        <div v-if="canPrintVisa || canScrutineer" class="border-t border-header-100 dark:border-header-800" />
         <a
-          v-if="canEditProperties"
+          v-if="canPrintVisa"
           :href="getVisaUrl({ id: openDropdownId } as CompetitionTeam)"
           target="_blank"
           class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
@@ -1569,7 +1582,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         class="global-pdf-menu fixed w-52 bg-white dark:bg-header-900 rounded-lg shadow-lg border border-header-200 dark:border-header-700 z-50"
         :style="globalPdfStyle"
       >
-        <a :href="globalPdfPoolsUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 rounded-t-lg" @click="globalPdfOpen = false">
+        <a href="#" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 rounded-t-lg" @click.prevent="openPoolsPdf">
           {{ t('teams_page.pdf_pools') }}
         </a>
         <a :href="globalPdfPresenceFrUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
@@ -1584,9 +1597,9 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <a :href="globalPdfPresencePhotoUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
           {{ t('teams_page.presence_sheet_photo') }}
         </a>
-        <div v-if="canEditProperties" class="border-t border-header-100 dark:border-header-800" />
+        <div v-if="canPrintVisa || canPrintControl" class="border-t border-header-100 dark:border-header-800" />
         <a
-          v-if="canEditProperties"
+          v-if="canPrintVisa"
           :href="globalPdfVisaUrl"
           target="_blank"
           class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
@@ -1595,7 +1608,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           {{ t('teams_page.visa_sheet') }}
         </a>
         <a
-          v-if="canEditProperties"
+          v-if="canPrintControl"
           :href="globalPdfControlUrl"
           target="_blank"
           class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 rounded-b-lg"

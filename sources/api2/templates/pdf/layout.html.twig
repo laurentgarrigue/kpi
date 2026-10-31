@@ -1,0 +1,39 @@
+{# Layout of every PDF page (PDF_GOTENBERG.md § 8): charter of the audience, header band, content. Files are sent with the page, never fetched. #}
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}{% if competition is defined %} - {{ competition.title }}{% endif %}</title>
+    <link rel="stylesheet" href="{{ tokens_file }}">
+    <link rel="stylesheet" href="{{ stylesheet }}">
+</head>
+<body class="theme-{{ theme }}">
+    {% block watermark %}{% endblock %}
+    {% block header %}
+    <header class="pdf-header">
+        <div class="pdf-header__logos">
+            {% for logo in logos %}<img src="{{ logo }}" alt="">{% endfor %}
+        </div>
+        <div class="pdf-header__titles">
+            <h1 class="pdf-header__document">{{ title }}</h1>
+            {% if competition is defined %}
+                <div class="pdf-header__competition">{{ competition.title }}{% if competition.subtitle %} · {{ competition.subtitle }}{% endif %}</div>
+                <div class="pdf-header__meta">{{ labels.season }} {{ season }}{% if competition.code|default('') %} · {{ competition.code }}{% endif %}</div>
+            {% endif %}
+        </div>
+        {% if competition is defined and competition.logo %}
+            <img class="pdf-header__competition-logo" src="{{ competition.logo }}" alt="">
+        {% endif %}
+        {% if qr_file %}
+            <div class="pdf-header__qr">
+                <img src="{{ qr_file }}" alt="">
+                {{ labels.scan_for_live }}
+            </div>
+        {% endif %}
+    </header>
+    {% endblock %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -62,7 +62,8 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [COMMON_ADMIN_SPECS.md](specs/COMMON_ADMIN_SPECS.md), [DROITS_PAR_PROFIL.md](specs/DROITS_PAR_PROFIL.md),
 [MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
-[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
+[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md),
+[PDF_GOTENBERG.md](specs/PDF_GOTENBERG.md) (génération PDF modernisée, api2 + Gotenberg).
 
 ## 🌐 [Specs du site public](specs/public/README.md)
 
@@ -115,6 +116,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 ### [Travaux en cours](developer/in-progress/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
+- **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Plan de refonte du scoring live
 - **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2

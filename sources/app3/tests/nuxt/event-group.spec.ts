@@ -84,7 +84,7 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(wrapper.findAll('[data-game]').map(row => row.attributes('data-game'))).toEqual(['9411', '9413', '9412', '9414'])
     const chips = wrapper.findAll('[data-testid="competition-chips"] a')
     expect(chips.map(chip => chip.attributes('aria-current'))).toEqual([undefined, undefined, 'page'])
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCP')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCP&lang=fr')
     const pitches = await mountRoute('/events/77/pitches?competition=RCP&day=2999-04-02')
     expect(pitches.findAll('[data-testid="pitch-board"] [data-game]').map(game => game.attributes('data-game'))).toEqual(['9412', '9414'])
   })
@@ -137,7 +137,7 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
 
   it('AGG-04: games list PDF by event', async () => {
     const wrapper = await mountRoute('/events/77/games')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?idEvenement=77')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&event=77&lang=fr')
   })
 
   it('EVT-05: an unpublished event is the site 404', async () => {
@@ -162,7 +162,7 @@ describe('group view (PAGE_EVENT_GROUP.md)', () => {
 
   it('AGG-04: games list PDF by the competitions of the group', async () => {
     const wrapper = await mountRoute('/groups/2999/TSTRES/games')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/PdfListeMatchs.php?S=2999&Compet=RCH,RAT,RCP,RMU')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH,RCP,RMU,RAT&lang=fr')
   })
 
   it('GRP-04: an unknown group is the site 404', async () => {

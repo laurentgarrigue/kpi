@@ -20,6 +20,9 @@ parameters:
     # (beta.* jusqu'à la bascule) ; repli si une instance ne la fournit pas encore.
     public_site_url_default: 'https://beta.kayak-polo.info'
     public_site_url: '%env(default:public_site_url_default:PUBLIC_SITE_URL)%'
+    # Adresse d'app2 (résultats, vue match) : QR code « application » d'un événement (PDF_GOTENBERG.md § 7.5).
+    app2_url_default: 'https://app.kayak-polo.info'
+    app2_url: '%env(default:app2_url_default:APP2_URL)%'
     # Médias du module éditorial (FEATURE_CMS.md § 5.3) : HOST_MEDIA_PATH/content monté sous {legacy}/media/content
     # (servi par Apache sous /media/content/). CMS_MEDIA_ROOT ne sert qu'aux tests (répertoire temporaire).
     cms_media_root_default: '%legacy_document_root%/media/content'
@@ -33,6 +36,7 @@ services:
         bind:
             string $legacyDocumentRoot: '%legacy_document_root%'
             string $publicSiteUrl: '%public_site_url%'
+            string $app2Url: '%app2_url%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -75,3 +79,10 @@ services:
         class: App\Security\MandateAwareRoleHierarchyVoter
         arguments:
             $roleHierarchy: '@security.role_hierarchy'
+
+when@test:
+    services:
+        # Integration tests never reach a Gotenberg: the fake keeps the HTML sent to it (PDF_GOTENBERG.md § 13).
+        App\Tests\Support\FakeGotenbergClient:
+            public: true
+        App\Pdf\GotenbergClient: '@App\Tests\Support\FakeGotenbergClient'

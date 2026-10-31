@@ -46,7 +46,7 @@ const tabs = computed(() => EVENT_TABS.map(tab => ({ id: tab, to: localePath(eve
 const competitionHref = (game: ResultsGame) => localePath(eventTabPath(id.value, 'games', game.c_code))
 const pdfTarget = computed(() => (selected.value
   ? { kind: 'games' as const, season: selected.value.season, competitions: [selected.value.code] }
-  : { kind: 'games' as const, event: id.value }))
+  : { kind: 'games' as const, season: competitions.value[0]?.season ?? '', event: id.value }))
 // A single-group event is the view of that group: no detour through its competitions, its own calendar (§ 2.0).
 const singleGroup = computed(() => event.value?.single_group ?? false)
 const subscriptionUrl = computed(() => (singleGroup.value ? eventIcsUrl(api2BaseUrl, id.value) : undefined))

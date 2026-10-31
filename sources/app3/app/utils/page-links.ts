@@ -11,6 +11,7 @@ export interface PageLinkContext {
   locale: string
   legacyBaseUrl: string
   app2BaseUrl: string
+  api2BaseUrl: string
 }
 
 export interface PageLink {
@@ -61,34 +62,31 @@ export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
 }
 
-const RANKING_PDF: Record<CompetitionType, string> = {
-  CHPT: 'PdfCltChpt.php',
-  CP: 'PdfCltNiveauPhase.php',
-  MULTI: 'PdfCltMulti.php',
-}
+/** A cup is ranked phase by phase: its PDF is the ranking by phase (PDF_GOTENBERG.md § 7.4). */
+const CUP_RANKING_PDF = 'ranking-phases'
+const RANKING_PDF = 'ranking'
+const GAMES_PDF = 'games-list'
 
 export type PdfTarget =
   | { kind: 'ranking', type: CompetitionType, season: string, competition: string }
   | { kind: 'games', season: string, competitions: string[] }
-  | { kind: 'games', event: number }
-  | { kind: 'gameSheet', game: number }
+  | { kind: 'games', season: string, event: number }
 
-/** Legacy public PDF, always called with explicit GET parameters (API_PUBLIC_RESULTS.md D-P2-2). */
+/**
+ * Public PDF of api2 (PDF_GOTENBERG.md § 7), always called with explicit GET parameters (API_PUBLIC_RESULTS.md
+ * D-P2-2). There is no public scoresheet PDF: a game links to its sheet in app2 (PDF_GOTENBERG.md § 7.3.2).
+ */
 export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
-  const url = (file: string, query: Record<string, string | number>) =>
-    // Commas are kept readable: the legacy PDF splits `Compet` on them.
-    withQuery(joinURL(context.legacyBaseUrl, file), query).replaceAll('%2C', ',')
+  const api2Pdf = (document: string, query: Record<string, string | number>) =>
+    // Commas are kept readable: `competition` lists several codes.
+    withQuery(joinURL(context.api2BaseUrl, 'pdf', document), { ...query, lang: context.locale }).replaceAll('%2C', ',')
 
   switch (target.kind) {
     case 'ranking':
-      return url(RANKING_PDF[target.type], { S: target.season, Compet: target.competition, lang: context.locale })
-    case 'gameSheet':
-      return url('PdfMatchMulti.php', { listMatch: target.game, lang: context.locale })
-    case 'games': {
-      const file = context.locale === 'en' ? 'PdfListeMatchsEN.php' : 'PdfListeMatchs.php'
+      return api2Pdf(target.type === 'CP' ? CUP_RANKING_PDF : RANKING_PDF, { season: target.season, competition: target.competition })
+    case 'games':
       return 'event' in target
-        ? url(file, { idEvenement: target.event })
-        : url(file, { S: target.season, Compet: target.competitions.join(',') })
-    }
+        ? api2Pdf(GAMES_PDF, { season: target.season, event: target.event })
+        : api2Pdf(GAMES_PDF, { season: target.season, competition: target.competitions.join(',') })
   }
 }

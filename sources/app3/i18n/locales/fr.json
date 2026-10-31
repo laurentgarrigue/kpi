@@ -172,7 +172,6 @@
     "pitch": "Terrain {pitch}",
     "scoreA11y": "{a} à {b}",
     "gameSheet": "Feuille de match",
-    "scoreSheetPdf": "Feuille de marque (PDF)",
     "gamesPdf": "Liste des matchs (PDF)",
     "rankingPdf": "Classement (PDF)",
     "noGames": "Aucun match publié.",

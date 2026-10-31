@@ -1297,7 +1297,7 @@ Effet quand api2 est absent :
 | `/admin2` | nginx | nginx (inchangé) |
 
 L'erreur ne ment plus : Traefik dit « aucune route ne matche » au lieu de laisser Apache se faire
-passer pour api2. `/admin2` (nginx_app4) bénéficie de la même protection — il avait le même défaut.
+passer pour api2. `/admin2` (nginx_app4, aujourd'hui `nginx_static`) bénéficie de la même protection — il avait le même défaut.
 
 > **Ce n'est pas un 503.** Un vrai 503 exigerait un routeur de repli déclaré dans la configuration
 > **statique** de Traefik (priorité intermédiaire, service sans backend) — impossible depuis ce
@@ -1343,7 +1343,7 @@ bootstrap complet aux premières requêtes en production.
 
 | Lib | Usage réel dans api2 |
 |---|---|
-| `mpdf/mpdf` | `AdminRankingsController:1260`, `AdminStatsController:334` |
+| `mpdf/mpdf` | ~~`AdminRankingsController`, `AdminStatsController`~~ — **retiré d'api2** (PDF_GOTENBERG.md phase 5) : ces PDF sont rendus par Gotenberg |
 | `phpoffice/phpspreadsheet` | `AdminStatsController:190` |
 
 Routes concernées, servies par FrankenPHP : `/api2/admin/stats/export/pdf`,

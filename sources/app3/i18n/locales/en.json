@@ -172,7 +172,6 @@
     "pitch": "Pitch {pitch}",
     "scoreA11y": "{a} to {b}",
     "gameSheet": "Game sheet",
-    "scoreSheetPdf": "Score sheet (PDF)",
     "gamesPdf": "Games list (PDF)",
     "rankingPdf": "Ranking (PDF)",
     "noGames": "No game published.",

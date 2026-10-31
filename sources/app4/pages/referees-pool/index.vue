@@ -23,9 +23,15 @@ const config = useRuntimeConfig()
 
 const legacyBase = computed(() => config.public.legacyBaseUrl)
 
-// Server-side PDF of active referees, grouped by group (nation) then alphabetical.
-// Pass the active locale so the legacy script localises the PDF via MyLang.ini.
-const pdfUrl = computed(() => `${legacyBase.value}/admin/FeuillePoolArbitres.php?lang=${locale.value}`)
+// PDF of the active referees by group (nation) then alphabetical (api2 `referees-pool`, PDF_GOTENBERG.md § 7.2)
+const workContext = useWorkContextStore()
+const pdf = usePdf()
+const openPoolPdf = () => {
+  void pdf.openDocument('referees-pool', {
+    season: workContext.season || String(new Date().getFullYear()),
+    lang: locale.value === 'en' ? 'en' : 'fr',
+  })
+}
 
 function groupLogoUrl(group: PoolGroup): string | null {
   if (group.logo) return `${legacyBase.value}/img/${group.logo}`
@@ -338,15 +344,15 @@ onMounted(loadPool)
         </p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
-        <a
+        <button
           v-if="groups.length > 0"
-          :href="pdfUrl"
-          target="_blank"
+          type="button"
           class="px-3 py-2 text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 flex items-center gap-1.5"
+          @click="openPoolPdf"
         >
           <UIcon name="i-heroicons-document-arrow-down" class="w-4 h-4" />
           {{ t('referees_pool_page.export_pdf') }}
-        </a>
+        </button>
         <button
           v-if="canManage"
           class="px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 flex items-center gap-1.5"

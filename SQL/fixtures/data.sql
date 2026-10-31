@@ -537,3 +537,38 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCRUTA', '', 'Contrôleur SCA', 'scruta@example.test', '', '', 10, '|SCA|SCC|', '|2997|', '', '', NULL, ''),    -- profil 10, SCA + SCC, sans limite d'événement
   ('TDIV', '', 'Division Test', 'div@example.test', '', '', 3, '|SCA|SCB|', '|2997|', '', '', NULL, ''),            -- profil 3 : pas de scrutineering
   ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', '');            -- profil 7 limité au club C002
+
+-- ---------------------------------------------------------------- documents PDF (PDF_GOTENBERG.md)
+-- Consommé par tests/Integration/PdfEndpointsTest.php : rôle minimum (§ 7), périmètre du mandat (PDF-AUTH-03).
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TSCORE', '', 'Table de marque Test', 'score@example.test', '', '', 9, '', '', '', '', NULL, '');      -- profil 9 : feuille de marque, pas les équipes
+-- Mandat de TDIV limité à SCC : avec l'en-tête X-Active-Mandate, SCC est permis et SCA ne l'est plus
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');
+
+-- Feuilles de présence, contrôle, pool arbitres (PDF_GOTENBERG.md § 7.2, phase 2) : un joueur né en 2980 (U21 en
+-- 2997) dans 9382 (C002, club de TCLUB), un pool d'arbitres permanent (POOL, saison technique 1000).
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`, `Naissance`) VALUES
+  (9518, '2997', 'SCRUT', 'Bravo', 'M', 'C002', 'Actif', '2980-03-15');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9382, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 7, '-');
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9391, 'POOL', '1000', 'France', 'FRA', NULL, 0, '', 0);
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9391, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A');
+DELETE FROM `kp_arbitre` WHERE `Matric` BETWEEN 9500 AND 9599;
+INSERT INTO `kp_arbitre` (`Matric`, `arbitre`, `niveau`, `saison`, `livret`) VALUES (9514, 'Nat', 'B', '2997', '');
+-- Instances (officiels) de la journée 9271 ; mandat 9702 de TDIV limité à la journée 9272 : 9271 lui est refusée.
+UPDATE `kp_journee` SET `Responsable_insc` = 'RESPONSABLE Test (9513)', `Responsable_R1` = 'ORGA Test',
+  `Delegue` = 'DELEGUE Test (9514)', `ChefArbitre` = 'CHEF Arbitre' WHERE `Id` = 9271;
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9702, 'TDIV', 'Mandat journée SCB', 3, '|2997|', '|SCA|SCB|', NULL, '9272', '');
+-- Classement CALCULÉ de RCH (PDF admin « Provisoire », PDF_GOTENBERG.md § 7.4), différent du publié : Delta en tête,
+-- Bravo et Charlie à égalité de points (justification du départage).
+UPDATE `kp_competition_equipe` SET `Clt` = 1, `Pts` = 900, `J` = 3, `G` = 3, `Plus` = 6, `Moins` = 1, `Diff` = 5 WHERE `Id` = 9304;
+UPDATE `kp_competition_equipe` SET `Clt` = 2, `Pts` = 600, `J` = 3, `G` = 2, `P` = 1, `Plus` = 5, `Moins` = 3, `Diff` = 2 WHERE `Id` = 9301;
+UPDATE `kp_competition_equipe` SET `Clt` = 3, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 4, `Moins` = 3, `Diff` = 1 WHERE `Id` = 9302;
+UPDATE `kp_competition_equipe` SET `Clt` = 4, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 2, `Moins` = 3, `Diff` = -1 WHERE `Id` = 9303;
+-- Profil 7 limité à RCH (PDF_GOTENBERG.md PDF-AUTH-10) : liste des matchs = matchs publiés seulement, comme sa page Matchs.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TTEAM', '', 'Equipe Test', 'team@example.test', '', '', 7, '|RCH|', '|2999|', '', '', NULL, '');

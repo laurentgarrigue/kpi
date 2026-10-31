@@ -164,6 +164,11 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
   LEGACY_PDF_STANDALONE_ACCESS.md § B (`utyGetGet` après la valeur de session), sans changer le comportement
   de l'administration legacy. Les liens sont construits par **une** fonction pure d'app3 (`pdfUrl`).
 
+  **Mise à jour (PDF_GOTENBERG.md, phases 3 et 4)** : ces PDF sont désormais servis par api2
+  (`/api2/pdf/ranking`, `ranking-phases`, `games-list`, paramètres `season`, `competition` — liste séparée par des
+  virgules possible —, `event`, `lang`). La feuille de marque PDF publique n'existe plus (§ 7.3.2) :
+  `PdfMatchMulti.php` redirige vers la feuille de match d'app2.
+
 ## 7. Critères d'acceptation
 
 - **API-01** — Les réponses de `/group/{s}/{c}/games|charts` et `/event/{id}/games|charts` sur les fixtures sont

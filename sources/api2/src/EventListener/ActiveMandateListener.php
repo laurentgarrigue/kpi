@@ -3,7 +3,7 @@
 namespace App\EventListener;
 
 use App\Entity\User;
-use Doctrine\DBAL\Connection;
+use App\Security\MandateApplier;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -21,7 +21,7 @@ class ActiveMandateListener
 {
     public function __construct(
         private readonly TokenStorageInterface $tokenStorage,
-        private readonly Connection $connection
+        private readonly MandateApplier $mandates,
     ) {
     }
 
@@ -39,9 +39,6 @@ class ActiveMandateListener
         }
 
         $mandateId = (int) $mandateId;
-        if ($mandateId <= 0) {
-            return;
-        }
 
         $token = $this->tokenStorage->getToken();
         if (!$token) {
@@ -53,25 +50,6 @@ class ActiveMandateListener
             return;
         }
 
-        // Load the mandate and verify it belongs to this user
-        $row = $this->connection->fetchAssociative(
-            'SELECT id, niveau, filtre_saison, filtre_competition, limitation_equipe_club, filtre_journee, id_evenement
-             FROM kp_user_mandat WHERE id = ? AND user_code = ?',
-            [$mandateId, $user->getCode()]
-        );
-
-        if (!$row) {
-            return;
-        }
-
-        $user->applyMandate(
-            (int) $row['id'],
-            (int) $row['niveau'],
-            $row['filtre_saison'],
-            $row['filtre_competition'],
-            $row['limitation_equipe_club'],
-            $row['filtre_journee'],
-            $row['id_evenement']
-        );
+        $this->mandates->apply($user, $mandateId);
     }
 }
