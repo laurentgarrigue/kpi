@@ -326,8 +326,9 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertStringContainsString('class="theme-public"', $html);
         self::assertStringContainsString('1. Equipe Alpha', $html, 'published ranking');
         self::assertStringContainsString('01/03/2999 - Lacville', $html);
-        self::assertStringContainsString('3 - 1', $html);
-        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringContainsString('3 - 1', strip_tags($html));
+        self::assertStringContainsString('<span class="pdf-strong">3</span> - <span class="">1</span>', $html, 'only the score of the winner in bold');
+        self::assertStringNotContainsString('5 - 0', strip_tags($html), 'game 9403 is not published');
         self::assertStringNotContainsString('pdf-watermark', $html);
     }
 
@@ -342,8 +343,9 @@ final class PdfEndpointsTest extends ApiTestCase
         $html = (string) $this->gotenberg()->html;
         self::assertStringContainsString('Poule A</h2>', $html, 'pool: its ranking');
         self::assertStringNotContainsString('Poule B</h2>', $html, 'pool without ranking');
-        self::assertStringContainsString('2 - 1', $html, 'elimination phase: its games');
+        self::assertStringContainsString('2 - 1', strip_tags($html), 'elimination phase: its games');
         self::assertLessThan(strpos($html, 'Finale</h2>'), strpos($html, 'Poule A</h2>'), 'pools first');
+        self::assertStringNotContainsString('Rivecity', $html, 'a cup: no date nor place for each phase');
 
         $this->client->request('GET', '/pdf/ranking-team-detail?season=2999&competition=RCP');
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
@@ -370,7 +372,7 @@ final class PdfEndpointsTest extends ApiTestCase
 
         $this->pdfAs('TADMIN', '/admin/pdf/ranking-team-detail?season=2999&competition=RCH', Response::HTTP_OK);
         self::assertStringContainsString('1. Equipe Delta', (string) $this->gotenberg()->html);
-        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published yet included');
+        self::assertStringContainsString('5 - 0', strip_tags((string) $this->gotenberg()->html), 'admin: games not published yet included');
 
         $this->pdfAs('TCLUB', '/admin/pdf/ranking?season=2997&competition=SCA', Response::HTTP_FORBIDDEN, 'I5: computed ranking for profiles 1–6');
     }
@@ -397,8 +399,8 @@ final class PdfEndpointsTest extends ApiTestCase
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode(), (string) $this->client->getResponse()->getContent());
 
         $html = (string) $this->gotenberg()->html;
-        self::assertStringContainsString('3 - 1', $html);
-        self::assertStringNotContainsString('5 - 0', $html, 'game 9403 is not published');
+        self::assertStringContainsString('3 - 1', strip_tags($html));
+        self::assertStringNotContainsString('5 - 0', strip_tags($html), 'game 9403 is not published');
         self::assertStringContainsString('ARBITRE Un', $html);
         self::assertStringNotContainsString('(C001)', $html, 'what is stored between parentheses is not published');
         self::assertStringContainsString('Arbitres</th>', $html, 'one column for both referees');
@@ -422,12 +424,12 @@ final class PdfEndpointsTest extends ApiTestCase
     public function testPdfAuth10AdminGameListFollowsTheVisibilityOfTheGamesPage(): void
     {
         $this->pdfAs('TADMIN', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
-        self::assertStringContainsString('5 - 0', (string) $this->gotenberg()->html, 'admin: games not published included');
+        self::assertStringContainsString('5 - 0', strip_tags((string) $this->gotenberg()->html), 'admin: games not published included');
 
         $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH', Response::HTTP_OK);
         $html = (string) $this->gotenberg()->html;
-        self::assertStringContainsString('3 - 1', $html);
-        self::assertStringNotContainsString('5 - 0', $html, 'profile 7: published games only');
+        self::assertStringContainsString('3 - 1', strip_tags($html));
+        self::assertStringNotContainsString('5 - 0', strip_tags($html), 'profile 7: published games only');
 
         $this->pdfAs('TTEAM', '/admin/pdf/games-list?season=2999&competition=RCH,RCP', Response::HTTP_FORBIDDEN, 'RCP out of the perimeter');
     }

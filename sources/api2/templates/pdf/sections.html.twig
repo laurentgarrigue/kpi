@@ -1,6 +1,6 @@
 {#
  # Generic document (PDF_GOTENBERG.md § 8): sections, each with a title and either a table (rows × columns), pairs of
- # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box}; a row may carry `_class`
+ # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box | score, empty?}; a row may carry `_class`
  # (whole row), `_cells` (class by column) or be a separator `_group`. `table_class` styles the tables of a document.
  #}
 {% extends 'pdf/layout.html.twig' %}
@@ -40,6 +40,13 @@
                                         <td class="{{ column.class|default('') }} {{ row._cells[column.key]|default('') }}">
                                             {%- if column.kind|default('text') == 'image' -%}
                                                 {% if value %}<img class="pdf-photo" src="{{ value }}" alt="">{% endif %}
+                                            {%- elseif column.kind|default('text') == 'score' -%}
+                                                {#- Only the score of the winner in bold. -#}
+                                                {%- if value -%}
+                                                    <span class="{{ value.winner == 'A' ? 'pdf-strong' : '' }}">{{ value.home }}</span> - <span class="{{ value.winner == 'B' ? 'pdf-strong' : '' }}">{{ value.away }}</span>
+                                                {%- else -%}
+                                                    {{ column.empty|default('') }}
+                                                {%- endif -%}
                                             {%- elseif column.kind|default('text') == 'box' -%}
                                                 <span class="pdf-box"></span>
                                             {%- else -%}

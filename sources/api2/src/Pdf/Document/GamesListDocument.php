@@ -95,7 +95,7 @@ final class GamesListDocument implements PdfDocumentProvider
             ['key' => 'phase', 'label' => $labels['games.phase'], 'class' => 'pdf-games__phase'],
             ['key' => 'pitch', 'label' => $labels['games.pitch'], 'class' => 'pdf-games__pitch'],
             ['key' => 'home', 'label' => $labels['games.home'], 'class' => 'pdf-games__team'],
-            ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-games__score'],
+            ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-games__score', 'kind' => 'score'],
             ['key' => 'away', 'label' => $labels['games.away'], 'class' => 'pdf-games__team'],
             ['key' => 'referees', 'label' => $labels['games.referees'], 'class' => 'pdf-games__referees'],
         ];
@@ -126,7 +126,7 @@ final class GamesListDocument implements PdfDocumentProvider
             'phase' => implode("\n", array_filter([(string) $game['Phase'], MatchLabelParser::gameLabel((string) $game['Libelle'])], 'strlen')),
             'pitch' => (string) $game['Terrain'],
             'home' => $game['LibelleA'] ?? ($placeholders[0] ?? ''),
-            'score' => RankingTable::isPlayed($game) ? sprintf('%s - %s', $game['ScoreA'], $game['ScoreB']) : '',
+            'score' => RankingTable::score($game, false),
             'away' => $game['LibelleB'] ?? ($placeholders[1] ?? ''),
             // First referee above the second one.
             'referees' => implode("\n", array_filter([
