@@ -73,9 +73,12 @@ La fonctionnalité de **copie de composition** permet de **dupliquer la liste co
 - Matricule du joueur
 - Nom et prénom
 - Sexe
-- Catégorie d'âge
 - Numéro de maillot
 - Statut capitaine
+
+🔄 **Recalculé** : la **catégorie d'âge** n'est pas recopiée, elle est recalculée pour la saison de la composition de
+destination à partir de la date de naissance (aucune catégorie si la date est inconnue). Voir
+[CATEGORIE_AGE.md](../specs/CATEGORIE_AGE.md).
 
 ### Ce qui n'est PAS copié
 
@@ -184,7 +187,7 @@ Le système vérifie :
 
 - ✅ Toujours **vérifier après la copie**
 - ✅ **Ajuster les numéros** si nécessaire (doublons possibles)
-- ✅ **Vérifier les catégories** (U21, U23, etc.)
+- ✅ **Vérifier les catégories d'âge** (recalculées pour la saison de destination ; « ? » = date de naissance inconnue)
 - ❌ Ne pas copier si les règlements sont différents (nombre de joueurs, etc.)
 
 ---
