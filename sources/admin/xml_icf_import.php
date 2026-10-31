@@ -168,6 +168,8 @@ if ($xmlDocumentType == 'DT_PARTIC') {
     }
 
 
+    // Date de naissance (CATEGORIE_AGE.md stories 23-26) : absente ou invraisemblable dans le fichier = inconnue (NULL),
+    // une date connue en base n'est jamais remplacée par une date absente, une vraie date du fichier est prise.
     $sql_insert = "INSERT INTO kp_licence (Matric, Origine, Nom, Prenom, 
         Sexe, Naissance, Numero_club, Numero_comite_dept, Numero_comite_reg, Reserve)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, '98', ?) ";
@@ -175,7 +177,8 @@ if ($xmlDocumentType == 'DT_PARTIC') {
 
     $sql_update = "UPDATE kp_licence 
         SET Origine = ?, Nom = ?, Prenom = ?, 
-        Sexe = ?, Naissance = ?, Numero_club = ?, Numero_comite_dept = ?, Numero_comite_reg = '98'
+        Sexe = ?, Naissance = COALESCE(?, IF(Naissance IN ('1901-01-01', '0000-00-00'), NULL, Naissance)),
+        Numero_club = ?, Numero_comite_dept = ?, Numero_comite_reg = '98'
         WHERE Reserve = ? 
         AND Matric > 2000000 ";
     $stmt_update = $myBdd->pdo->prepare($sql_update);
@@ -225,7 +228,7 @@ if ($xmlDocumentType == 'DT_PARTIC') {
             $prenom = (string) $participant['GivenName'];
             $sexe = ((string) $participant['Gender'] === 'W') ? 'F' : 'M';
             $birthdate = (string) $participant['BirthDate'];
-            $naissance = substr($birthdate, 0, 4) . '-' . substr($birthdate, 4, 2) . '-' . substr($birthdate, 6, 2);
+            $naissance = utyImportBirthDate(substr($birthdate, 0, 4) . '-' . substr($birthdate, 4, 2) . '-' . substr($birthdate, 6, 2), SAISON);
             $taille = (int) $participant['Height'];
             $poids = (int) $participant['Weight'];
             $num = (int) $participant->Discipline->RegisteredEvent->EventEntry['Pos'];
@@ -280,6 +283,7 @@ if ($xmlDocumentType == 'DT_PARTIC') {
         'KPIRosterDB',
         'Fonction'
     ), ';');
+    $importedMatrics = [];
     foreach ($resultArray as $cat => $arrayCat) {
         foreach ($arrayCat as $team => $arrayTeam) {
             foreach ($arrayTeam as $key3 => $arrayPlayer) {
@@ -289,14 +293,14 @@ if ($xmlDocumentType == 'DT_PARTIC') {
                             SAISON, $arrayPlayer['nom'], $arrayPlayer['prenom'], $arrayPlayer['sexe'],
                             $arrayPlayer['naissance'], $team . '00', $team, $arrayPlayer['icf']
                         ]);
+                        $importedMatrics[] = $arrayPlayer['matric'];
                         $thisUpdated = 'Updated';
                         $updated++;
                         if ($arrayPlayer['teamId'] > 0) {
-                            $categorie = utyCodeCategorie2($arrayPlayer['naissance'], SAISON);
                             $stmt_update_team->execute([
                                 $arrayPlayer['teamId'], $arrayPlayer['matric'],
                                 $arrayPlayer['nom'], $arrayPlayer['prenom'],
-                                $arrayPlayer['sexe'], $categorie,
+                                $arrayPlayer['sexe'], null,
                                 $arrayPlayer['num']
                             ]);
                             $thisTeamUpdated = 'Updated';
@@ -316,14 +320,14 @@ if ($xmlDocumentType == 'DT_PARTIC') {
                             $nextMatric, SAISON, $arrayPlayer['nom'], $arrayPlayer['prenom'], $arrayPlayer['sexe'],
                             $arrayPlayer['naissance'], $team . '00', $team, $arrayPlayer['icf']
                         ]);
+                        $importedMatrics[] = $nextMatric;
                         $thisUpdated = 'Inserted';
                         $inserted++;
                         if ($arrayPlayer['teamId'] > 0) {
-                            $categorie = utyCodeCategorie2($arrayPlayer['naissance'], SAISON);
                             $stmt_insert_team->execute([
                                 $arrayPlayer['teamId'], $nextMatric,
                                 $arrayPlayer['nom'], $arrayPlayer['prenom'],
-                                $arrayPlayer['sexe'], $categorie,
+                                $arrayPlayer['sexe'], null,
                                 $arrayPlayer['num']
                             ]);
                             $thisTeamUpdated = 'Inserted';
@@ -359,6 +363,9 @@ if ($xmlDocumentType == 'DT_PARTIC') {
             }
         }
     }
+    // Catégories d'âge des joueurs importés, toutes compositions (NULL = date inconnue)
+    $myBdd->RefreshCategoriesJoueurs($importedMatrics);
+
     echo 'Fichier csv : ';
     echo '<a href="./uploads/import_' . date('Ymd_His') . '.csv">Import</a>';
     echo '<br><br>';

@@ -626,7 +626,7 @@ class AdminRefereesPoolController extends AbstractController
             'nom' => mb_strtoupper((string) ($row['Nom'] ?? '')),
             'prenom' => mb_convert_case(mb_strtolower((string) ($row['Prenom'] ?? '')), MB_CASE_TITLE, 'UTF-8'),
             'sexe' => $row['Sexe'] ?? '',
-            'categ' => $row['Categ'] ?? '',
+            'categ' => ($row['Categ'] ?? '') ?: null,
             'licensed' => $matric < self::NON_LICENSED_THRESHOLD,
             'status' => $status,
             'arbitre' => $arbitre ? strtoupper($arbitre) : '',

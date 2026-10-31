@@ -264,6 +264,7 @@
     "license": "Licence",
     "number": "Numéro",
     "category": "Catégorie",
+    "birth_date_unknown": "Date de naissance inconnue",
     "paddle": "Pagaie",
     "certificate": "Certificat",
     "saved": "Enregistré",
@@ -1356,6 +1357,7 @@
     "error_Certif": "Certificat médical manquant",
     "error_Pagaie_couleur": "Pagaie couleur eau calme insuffisante ({min} minimum)",
     "error_Surclassement": "Surclassement manquant",
+    "error_Naissance_inconnue": "Date de naissance inconnue, catégorie d'âge non vérifiable",
     "override_allowed_title": "Ajout malgré la non-validation",
     "override_allowed_notice": "En tant qu'administrateur, vous pouvez ajouter ce joueur uniquement en tant qu'arbitre non-joueur (A) ou staff (E).",
     "override_status_label": "Statut imposé",
@@ -1855,7 +1857,10 @@
       "submit": "Modifier",
       "success": "Modification effectuée.",
       "error": "Erreur lors de la modification.",
-      "forbidden": "Modification interdite pour cet athlète."
+      "forbidden": "Modification interdite pour cet athlète.",
+      "naissance_inconnue": "Date de naissance inconnue",
+      "naissance_required": "Saisissez la date de naissance ou cochez « Date de naissance inconnue ».",
+      "implausible_birthdate": "Date de naissance invraisemblable : l'athlète doit avoir entre {min} et {max} ans pour la saison en cours."
     },
     "participations": {
       "season": "Saison",

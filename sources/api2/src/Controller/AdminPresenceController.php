@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\CompositionAgeCategories;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Service\TeamLastUpdateService;
@@ -41,6 +42,7 @@ class AdminPresenceController extends AbstractController
         private readonly PlayerEligibilityChecker $eligibility,
         private readonly TeamLastUpdateService $teamLastUpdate,
         private readonly AgeCategoryRule $ageCategories,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -61,7 +63,7 @@ class AdminPresenceController extends AbstractController
                        ce.Code_club, ce.Poule, ce.Tirage, ce.logo,
                        c.Libelle AS club_libelle,
                        comp.Code, comp.Libelle AS comp_libelle, comp.Verrou,
-                       comp.Code_niveau, comp.Statut
+                       comp.Code_niveau, comp.Statut, comp.Age_min, comp.Age_max
                 FROM kp_competition_equipe ce
                 LEFT JOIN kp_club c ON ce.Code_club = c.Code
                 LEFT JOIN kp_competition comp ON ce.Code_compet = comp.Code
@@ -127,8 +129,9 @@ class AdminPresenceController extends AbstractController
         $season = $teamRow['Code_saison'];
         $competCode = $teamRow['Code_compet'];
         $eligibilityLevel = $this->eligibility->levelFor($competCode, $teamRow['Code_niveau']);
-        $players = array_map(function ($row) use ($season, $competCode, $eligibilityLevel) {
-            return $this->formatPlayer($row, $season, $competCode, $eligibilityLevel);
+        $ageBounds = self::ageBounds($teamRow);
+        $players = array_map(function ($row) use ($season, $competCode, $eligibilityLevel, $ageBounds) {
+            return $this->formatPlayer($row, $season, $competCode, $eligibilityLevel, $ageBounds);
         }, $playerRows);
 
         $lastUpdate = $this->teamLastUpdate->presence($teamId);
@@ -279,6 +282,7 @@ class AdminPresenceController extends AbstractController
         }
 
         $categ = $this->ageCategories->categoryFor($licenceRow['Naissance'], $teamInfo['code_saison'])?->code;
+        array_push($warnings, ...$this->eligibility->ageWarnings($licenceRow['Naissance'], ...$teamInfo['age_bounds']));
 
         // Insert into kp_competition_equipe_joueur
         try {
@@ -589,7 +593,7 @@ class AdminPresenceController extends AbstractController
         $sourceTeamId = (int) $sourceRow['Id'];
 
         // Get source players
-        $sql = "SELECT Matric, Nom, Prenom, Sexe, Categ, Numero, Capitaine
+        $sql = "SELECT Matric, Nom, Prenom, Sexe, Numero, Capitaine
                 FROM kp_competition_equipe_joueur
                 WHERE Id_equipe = ?";
         $stmt = $this->connection->prepare($sql);
@@ -615,12 +619,14 @@ class AdminPresenceController extends AbstractController
                 'Nom' => $player['Nom'],
                 'Prenom' => $player['Prenom'],
                 'Sexe' => $player['Sexe'],
-                'Categ' => $player['Categ'],
                 'Numero' => $player['Numero'],
                 'Capitaine' => $player['Capitaine'],
             ]);
             $copied++;
         }
+
+        // The source may be another season: the age category is the one of the destination season (ADR 0001)
+        $this->compositionAgeCategories->refreshTeam($teamId);
 
         // Non-compliant players are made inactive (national) or reported (regional)
         $ineligible = $this->eligibility->enforceOnCopiedRoster($teamId);
@@ -1294,7 +1300,10 @@ class AdminPresenceController extends AbstractController
         ];
     }
 
-    private function formatPlayer(array $row, string $season, string $competCode, ?string $eligibilityLevel): array
+    /**
+     * @param array{0: ?int, 1: ?int} $ageBounds Age_min and Age_max of the competition, see self::ageBounds()
+     */
+    private function formatPlayer(array $row, string $season, string $competCode, ?string $eligibilityLevel, array $ageBounds): array
     {
         // Determine pagaie validity and label
         $pagaieValide = 0;
@@ -1352,6 +1361,8 @@ class AdminPresenceController extends AbstractController
             'surclassementOk' => $surclassementOk,
             'typeLicence' => $row['Type_licence'] ?? null,
             'eligibilityErrors' => $eligibilityErrors,
+            // Never blocking nor non-compliant, whatever the rule set (CATEGORIE_AGE.md story 21)
+            'eligibilityWarnings' => $this->eligibility->ageWarnings($row['Naissance'], ...$ageBounds),
             'icf' => $row['icf'] ? (int) $row['icf'] : null
         ];
     }
@@ -1405,7 +1416,7 @@ class AdminPresenceController extends AbstractController
     {
         $sql = "SELECT ce.Code_compet, ce.Code_saison, ce.Code_club, ce.Numero,
                        c.Libelle AS club_libelle,
-                       comp.Verrou, comp.Code_niveau
+                       comp.Verrou, comp.Code_niveau, comp.Age_min, comp.Age_max
                 FROM kp_competition_equipe ce
                 LEFT JOIN kp_club c ON ce.Code_club = c.Code
                 LEFT JOIN kp_competition comp ON ce.Code_compet = comp.Code
@@ -1427,7 +1438,23 @@ class AdminPresenceController extends AbstractController
             'numero' => (int) $row['Numero'],
             'club_libelle' => $row['club_libelle'] ?? '',
             'verrou' => $row['Verrou'] === 'O',
-            'code_niveau' => $row['Code_niveau'] ?? null
+            'code_niveau' => $row['Code_niveau'] ?? null,
+            'age_bounds' => self::ageBounds($row),
+        ];
+    }
+
+    /**
+     * Age_min and Age_max of the competition of a team row (null when unset).
+     *
+     * @param array<string, mixed> $row
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private static function ageBounds(array $row): array
+    {
+        return [
+            $row['Age_min'] !== null ? (int) $row['Age_min'] : null,
+            $row['Age_max'] !== null ? (int) $row['Age_max'] : null,
         ];
     }
 

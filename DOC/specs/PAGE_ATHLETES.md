@@ -50,7 +50,7 @@ Page de consultation et gestion des athletes (joueurs, arbitres, officiels). Per
 | 1 | Modifier nom | <= 2 | Input text | ✅ Conserver |
 | 2 | Modifier prenom | <= 2 | Input text | ✅ Conserver |
 | 3 | Modifier sexe (M/F) | <= 2 | Select | ✅ Conserver |
-| 4 | Modifier date de naissance | <= 2 | Input text + calendrier | ✅ Conserver (datepicker) |
+| 4 | Modifier date de naissance | <= 2 | Input text + calendrier | ✅ Conserver (datepicker) + case « Date de naissance inconnue », date invraisemblable refusee, recalcul des categories d'age ([CATEGORIE_AGE.md](CATEGORIE_AGE.md) stories 11-16) |
 | 5 | Modifier derniere saison | <= 2 | Input tel (4 chars) | ✅ Conserver |
 | 6 | Modifier numero ICF | <= 2 | Input tel | ✅ Conserver |
 | 7 | Modifier qualification arbitrage (Reg/Nat/Int/OTM/JO/-) | <= 2 | Select | ✅ Conserver |
@@ -279,7 +279,7 @@ une carte par athlete.
 | Nom | Text | Oui | Non vide, converti en majuscules | kp_licence.Nom |
 | Prenom | Text | Oui | Non vide, converti en majuscules | kp_licence.Prenom |
 | Sexe | Select (M/F) | Oui | M ou F | kp_licence.Sexe |
-| Date de naissance | Date | Oui | Format date valide | kp_licence.Naissance |
+| Date de naissance | Date + case « Date de naissance inconnue » | Oui, sauf si « inconnue » cochee | Date valide donnant entre 5 et 100 ans pour la saison active ; « inconnue » = NULL (une date conventionnelle 1901-01-01 / 0000-00-00 ouvre la fiche case cochee) | kp_licence.Naissance |
 | Derniere saison | Text | Oui | 4 caracteres numeriques | kp_licence.Origine |
 | Numero ICF | Number | Non | Entier positif ou vide | kp_licence.Reserve |
 | Qualification arbitrage | Select | Non | Valeurs: -, Reg, IR, Nat, Int, OTM, JO | kp_arbitre.arbitre |
@@ -291,7 +291,8 @@ une carte par athlete.
 - Accessible uniquement si profil <= 2 ET Matric > 2000000
 - Le champ "Nouveau club" est un autocomplete sur `/admin/clubs/search` ; a la selection, les champs CD et CR sont automatiquement remplis
 - A la soumission : PUT `/admin/athletes/{matric}`
-- Transaction : mise a jour kp_licence + kp_competition_equipe_joueur (Nom, Prenom, Sexe) + REPLACE INTO kp_arbitre
+- Transaction : mise a jour kp_licence + kp_competition_equipe_joueur (Nom, Prenom, Sexe) + recalcul de la categorie d'age de toutes ses compositions + REPLACE INTO kp_arbitre
+- Une date refusee par api2 (`IMPLAUSIBLE_BIRTHDATE`) affiche le message explicite dans la modale (fr/en)
 - Confirmation toast en cas de succes
 - Si qualification arbitrage = '-' : les champs niveau et saison arbitrage sont vides
 
@@ -489,20 +490,24 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 
 **Logique backend** :
 1. Verifier Matric > 2000000 (sinon 403 "Modification interdite")
-2. Transaction :
+2. `naissance` null ou vide = date inconnue ; sinon date `YYYY-MM-DD` valide donnant entre 5 et 100 ans pour la saison active
+   (`kp_saison.Etat = 'A'`, `AgeCategoryRule::isPlausibleBirthDate`), sinon 400 `IMPLAUSIBLE_BIRTHDATE` et rien n'est modifie
+3. Transaction :
    a. UPDATE kp_licence (Origine, Nom, Prenom, Sexe, Naissance, Reserve)
    b. Si codeClub fourni : UPDATE kp_licence (Numero_club, Numero_comite_dept, Numero_comite_reg) en cherchant le CD et CR du club
    c. UPDATE kp_competition_equipe_joueur (Nom, Prenom, Sexe) WHERE Matric = ?
-   d. REPLACE INTO kp_arbitre selon la qualification
-3. Commit
-4. Logger dans kp_journal
+   d. Recalcul du cache Categ de toutes ses compositions, toutes saisons, competitions verrouillees comprises, NULL si
+      date inconnue (`CompositionAgeCategories::refreshPlayer`, ADR 0001)
+   e. REPLACE INTO kp_arbitre selon la qualification
+4. Commit
+5. Logger dans kp_journal
 
 ### 6.7 Codes de retour
 
 | Code | Cas |
 |------|-----|
 | 200 | Succes (GET, PUT) |
-| 400 | Donnees invalides |
+| 400 | Donnees invalides (`VALIDATION_ERROR`, `CLUB_NOT_FOUND`, `IMPLAUSIBLE_BIRTHDATE`) |
 | 403 | Profil insuffisant ou Matric <= 2000000 |
 | 404 | Athlete non trouve |
 

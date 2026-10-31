@@ -631,6 +631,11 @@ onBeforeUnmount(() => {
                 {{ athlete.categorieAge.code }}
                 <span class="text-header-900 dark:text-header-50 text-xs">({{ athlete.categorieAge.libelle }})</span>
               </div>
+              <div v-else>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.categorie') }} :</span>
+                <AdminAgeCategory :code="null" />
+                <span class="text-header-900 dark:text-header-50 text-xs">({{ t('common.birth_date_unknown') }})</span>
+              </div>
               <div v-if="athlete.surclassement" class="mt-1 pt-1 border-t border-header-200 dark:border-header-700">
                 <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.surclassement') }} :</span>
                 <span class="font-medium">{{ athlete.surclassement.cat }}</span>
@@ -747,7 +752,7 @@ onBeforeUnmount(() => {
                   <td class="px-3 py-2">{{ p.equipe }}</td>
                   <td class="px-3 py-2 text-center">{{ p.numero ?? '' }}</td>
                   <td class="px-3 py-2 text-center">{{ t(`athletes.roles.${p.capitaine}`, p.capitaine) }}</td>
-                  <td class="px-3 py-2 text-header-900 dark:text-header-50">{{ p.categorie }}</td>
+                  <td class="px-3 py-2 text-header-900 dark:text-header-50"><AdminAgeCategory :code="p.categorie" /></td>
                 </tr>
               </tbody>
             </table>

@@ -172,7 +172,7 @@ CREATE TABLE `kp_evenement_journee` (
 
 DROP TABLE IF EXISTS `kp_competition_equipe`;
 CREATE TABLE `kp_competition_equipe` (
-  `Id` int(10) UNSIGNED NOT NULL,
+  `Id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,  -- comme la prod (kpi_structure.sql)
   `Code_compet` varchar(12) NOT NULL DEFAULT '',
   `Code_saison` char(4) NOT NULL DEFAULT '',
   `Libelle` varchar(40) DEFAULT NULL,
@@ -576,6 +576,78 @@ CREATE TABLE `wptest_nf3_field_meta` (
   `value` longtext DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Event export/import (EventExportImportService, tests/Integration/EventImportAgeCategoriesTest.php).
+DROP TABLE IF EXISTS `kp_competition_equipe_init`;
+CREATE TABLE `kp_competition_equipe_init` (
+  `Id` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `Pts` smallint(6) DEFAULT NULL,
+  `Clt` smallint(6) DEFAULT NULL,
+  `J` smallint(6) DEFAULT NULL,
+  `G` smallint(6) DEFAULT NULL,
+  `N` smallint(6) DEFAULT NULL,
+  `P` smallint(6) DEFAULT NULL,
+  `F` smallint(6) DEFAULT NULL,
+  `Plus` smallint(6) DEFAULT NULL,
+  `Moins` smallint(6) DEFAULT NULL,
+  `Diff` smallint(6) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_competition_equipe_niveau`;
+CREATE TABLE `kp_competition_equipe_niveau` (
+  `Id` int(10) UNSIGNED NOT NULL,
+  `Niveau` smallint(6) NOT NULL DEFAULT 0,
+  `Pts` smallint(6) DEFAULT NULL,
+  `Clt` smallint(6) DEFAULT NULL,
+  `J` smallint(6) DEFAULT NULL,
+  `G` smallint(6) DEFAULT NULL,
+  `N` smallint(6) DEFAULT NULL,
+  `P` smallint(6) DEFAULT NULL,
+  `F` smallint(6) DEFAULT NULL,
+  `Plus` smallint(6) DEFAULT NULL,
+  `Moins` smallint(6) DEFAULT NULL,
+  `Diff` smallint(6) DEFAULT NULL,
+  `PtsNiveau` double UNSIGNED DEFAULT NULL,
+  `CltNiveau` smallint(6) DEFAULT NULL,
+  `Pts_publi` smallint(6) DEFAULT NULL,
+  `Clt_publi` smallint(6) DEFAULT NULL,
+  `J_publi` smallint(6) DEFAULT NULL,
+  `G_publi` smallint(6) DEFAULT NULL,
+  `N_publi` smallint(6) DEFAULT NULL,
+  `P_publi` smallint(6) DEFAULT NULL,
+  `F_publi` smallint(6) DEFAULT NULL,
+  `Plus_publi` smallint(6) DEFAULT NULL,
+  `Moins_publi` smallint(6) DEFAULT NULL,
+  `Diff_publi` smallint(6) DEFAULT NULL,
+  `PtsNiveau_publi` double DEFAULT NULL,
+  `CltNiveau_publi` smallint(6) DEFAULT NULL,
+  PRIMARY KEY (`Id`,`Niveau`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_chrono`;
+CREATE TABLE `kp_chrono` (
+  `IdMatch` int(10) UNSIGNED NOT NULL,
+  `action` varchar(5) NOT NULL,
+  `start_time` varchar(20) NOT NULL,
+  `start_time_server` int(11) DEFAULT NULL,
+  `run_time` varchar(20) NOT NULL,
+  `max_time` varchar(5) NOT NULL,
+  `shotclock` text DEFAULT NULL,
+  `penalties` text DEFAULT NULL,
+  PRIMARY KEY (`IdMatch`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Player merge (PlayerMergeService, tests/Integration/PlayerMergeAgeCategoriesTest.php).
+DROP TABLE IF EXISTS `kp_recherche_licence`;
+CREATE TABLE `kp_recherche_licence` (
+  `Signature` varchar(20) NOT NULL DEFAULT '',
+  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `Horaire` timestamp NOT NULL DEFAULT current_timestamp(),
+  `Validation` char(1) DEFAULT NULL,
+  PRIMARY KEY (`Signature`,`Matric`),
+  KEY `fk_recherche_matric` (`Matric`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 -- Tables de la phase 4 recréées à chaque chargement (la migration les crée « IF NOT EXISTS »).
 DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_cms_category`, `kp_cms_article`,

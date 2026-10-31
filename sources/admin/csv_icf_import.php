@@ -190,6 +190,8 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
     }
 
 
+    // Date de naissance (CATEGORIE_AGE.md stories 23-26) : absente ou invraisemblable dans le fichier = inconnue (NULL),
+    // une date connue en base n'est jamais remplacée par une date absente, une vraie date du fichier est prise.
     $sql_insert = "INSERT INTO kp_licence (Matric, Origine, Nom, Prenom, 
         Sexe, Naissance, Numero_club, Numero_comite_dept, Numero_comite_reg, Reserve)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, '98', ?) ";
@@ -197,7 +199,8 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
 
     $sql_update = "UPDATE kp_licence 
         SET Origine = ?, Nom = ?, Prenom = ?, 
-        Sexe = ?, Naissance = ?, Numero_club = ?, Numero_comite_dept = ?, Numero_comite_reg = '98'
+        Sexe = ?, Naissance = COALESCE(?, IF(Naissance IN ('1901-01-01', '0000-00-00'), NULL, Naissance)),
+        Numero_club = ?, Numero_comite_dept = ?, Numero_comite_reg = '98'
         WHERE Reserve = ? 
         AND Matric > 2000000 ";
     $stmt_update = $myBdd->pdo->prepare($sql_update);
@@ -229,13 +232,16 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
 
     /*****************************************************************/
     // var_dump($listIcf);
+    $importedMatrics = [];
     foreach ($csv as $staffMember) {
+        $naissance = utyImportBirthDate(utyDateFrToUs($staffMember[9]), SAISON);
         if (in_array($staffMember[5], $listIcf)) {
             if ($updateDB) {
                 $stmt_update->execute([
                     SAISON, $staffMember[6], $staffMember[7], $staffMember[8],
-                    utyDateFrToUs($staffMember[9]), $staffMember[0] . '00', $staffMember[0], $staffMember[5]
+                    $naissance, $staffMember[0] . '00', $staffMember[0], $staffMember[5]
                 ]);
+                $importedMatrics[] = $matric[$staffMember[5]];
 
                 if (!in_array($staffMember[5], $listIcfTeam)) {
                     $stmt_select_teams->execute([SAISON, $staffMember[0] . '00']);
@@ -243,11 +249,10 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
                         $stmt_select_player_num->execute([$row['Id']]);
                         $row2 = $stmt_select_player_num->fetch();
                         $numero = $row2['num'] > 10 ? $row2['num'] + 1 : 11;
-                        $categorie = utyCodeCategorie2(utyDateFrToUs($staffMember[9]), SAISON);
                         $stmt_insert_team->execute([
                             $row['Id'], $matric[$staffMember[5]],
                             $staffMember[6], $staffMember[7], $staffMember[8],
-                            $categorie, $numero, 'E'
+                            null, $numero, 'E'
                         ]);
                     }
                     $teamInserted++;
@@ -259,8 +264,9 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
                 $nextMatric = $myBdd->GetNextMatricLicence();
                 $stmt_insert->execute([
                     $nextMatric, SAISON, $staffMember[6], $staffMember[7], $staffMember[8],
-                    utyDateFrToUs($staffMember[9]), $staffMember[0] . '00', $staffMember[0], $staffMember[5]
+                    $naissance, $staffMember[0] . '00', $staffMember[0], $staffMember[5]
                 ]);
+                $importedMatrics[] = $nextMatric;
                 $inserted++;
 
                 $stmt_select_teams->execute([SAISON, $staffMember[0] . '00']);
@@ -268,17 +274,19 @@ if (substr($_FILES['userfile']['name'], 0, 18) === FILE_NAME) {
                     $stmt_select_player_num->execute([$row['Id']]);
                     $row2 = $stmt_select_player_num->fetch();
                     $numero = $row2['num'] > 10 ? $row2['num'] + 1 : 11;
-                    $categorie = utyCodeCategorie2(utyDateFrToUs($staffMember[9]), SAISON);
                     $stmt_insert_team->execute([
                         $row['Id'], $nextMatric,
                         $staffMember[6], $staffMember[7], $staffMember[8],
-                        $categorie, $numero, 'E'
+                        null, $numero, 'E'
                     ]);
                 }
                 $teamInserted++;
             }
         }
     }
+
+    // Catégories d'âge des joueurs importés, toutes compositions (NULL = date inconnue)
+    $myBdd->RefreshCategoriesJoueurs($importedMatrics);
 
     echo '<hr>';
     echo 'Staff members ajoutés : ' . $inserted . '<br>';

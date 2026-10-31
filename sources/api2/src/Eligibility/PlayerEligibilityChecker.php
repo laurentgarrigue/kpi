@@ -94,6 +94,20 @@ class PlayerEligibilityChecker
     }
 
     /**
+     * Non-blocking warnings of a player, independent of the rule set (CATEGORIE_AGE.md story 20). Pure function.
+     *
+     * @return string[] Warning codes (Rules::WARNING_*), empty when there is nothing to report
+     */
+    public function ageWarnings(?string $birthDate, ?int $competitionAgeMin, ?int $competitionAgeMax): array
+    {
+        if (Rules::hasAgeBounds($competitionAgeMin, $competitionAgeMax) && AgeCategoryRule::isUnknownBirthDate($birthDate)) {
+            return [Rules::WARNING_BIRTH_DATE_UNKNOWN];
+        }
+
+        return [];
+    }
+
+    /**
      * Decide whether a non-compliant player may take a status. Pure function.
      *
      * - ENFORCEMENT_WARN: always allowed, errors become warnings.
