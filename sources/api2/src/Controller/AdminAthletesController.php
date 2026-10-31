@@ -195,7 +195,7 @@ class AdminAthletesController extends AbstractController
 
         // Fetch surclassement for current active season
         $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
+            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
         );
 
         // Surclassement: use athlete's own Origine season (not active season)
@@ -650,7 +650,7 @@ class AdminAthletesController extends AbstractController
 
         // Get active season for the saison field
         $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
+            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
         ) ?: '';
 
         // Get existing livret to preserve it
