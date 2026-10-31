@@ -1816,7 +1816,10 @@
       "submit": "Update",
       "success": "Update successful.",
       "error": "Error updating athlete.",
-      "forbidden": "Modification forbidden for this athlete."
+      "forbidden": "Modification forbidden for this athlete.",
+      "naissance_inconnue": "Unknown date of birth",
+      "naissance_required": "Enter the date of birth or tick \"Unknown date of birth\".",
+      "implausible_birthdate": "Implausible date of birth: the athlete must be between {min} and {max} years old in the current season."
     },
     "participations": {
       "season": "Season",

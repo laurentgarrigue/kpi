@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\CompositionAgeCategories;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
+use App\Trait\DateValidationTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +27,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminAthletesController extends AbstractController
 {
     use AdminLoggableTrait;
+    use DateValidationTrait;
 
     /** Paddle color code to label mapping */
     private const PADDLE_COLORS = [
@@ -39,6 +42,7 @@ class AdminAthletesController extends AbstractController
     public function __construct(
         private readonly Connection $connection,
         private readonly AgeCategoryRule $ageCategories,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -372,6 +376,19 @@ class AdminAthletesController extends AbstractController
             return $this->json(['error' => true, 'message' => 'Sexe invalide (M ou F)', 'code' => 'VALIDATION_ERROR'], Response::HTTP_BAD_REQUEST);
         }
 
+        // A null birth date is « unknown » (CATEGORIE_AGE.md story 13); a known one must be plausible (story 14)
+        if ($naissance !== null && !$this->isPlausibleBirthDate($naissance)) {
+            return $this->json([
+                'error' => true,
+                'message' => sprintf(
+                    "Date de naissance invraisemblable : l'athlète doit avoir entre %d et %d ans pour la saison en cours",
+                    AgeCategoryRule::MIN_PLAUSIBLE_AGE,
+                    AgeCategoryRule::MAX_PLAUSIBLE_AGE
+                ),
+                'code' => 'IMPLAUSIBLE_BIRTHDATE',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
 
         // Arbitrage
         $arbQualification = trim($data['arbitrage']['qualification'] ?? '');
@@ -430,7 +447,10 @@ class AdminAthletesController extends AbstractController
                 [$nom, $prenom, $sexe, $matric]
             );
 
-            // c. REPLACE INTO kp_arbitre
+            // c. Age category cache of every composition, all seasons, locked included (stories 11, 12, 16)
+            $this->compositionAgeCategories->refreshPlayer($matric);
+
+            // d. REPLACE INTO kp_arbitre
             $this->updateArbitrage($matric, $arbQualification, $arbNiveau);
 
             $this->connection->commit();
@@ -450,6 +470,16 @@ class AdminAthletesController extends AbstractController
     // ══════════════════════════════════════════════════════════════════════
     // Private helpers
     // ══════════════════════════════════════════════════════════════════════
+
+    /** A real YYYY-MM-DD date giving an age between 5 and 100 in the active season. */
+    private function isPlausibleBirthDate(string $birthDate): bool
+    {
+        $activeSeason = (string) $this->connection->fetchOne(
+            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
+        );
+
+        return $this->isValidDate($birthDate) && AgeCategoryRule::isPlausibleBirthDate($birthDate, $activeSeason);
+    }
 
     /**
      * Fetch presence sheets for an athlete in a given season.
