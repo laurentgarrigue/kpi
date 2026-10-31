@@ -14,4 +14,9 @@ describe('personName', () => {
     expect(personName(' -1 ')).toBeNull()
     expect(personName('Acigné II')).toBe('Acigné II')
   })
+
+  it('decodes the HTML entities stored by the legacy (« FLOC&#039;H »)', () => {
+    expect(personName('FLOC&#039;H Titouan (Acigné) INT')).toBe("FLOC'H Titouan")
+    expect(personName('A &amp; B')).toBe('A & B')
+  })
 })

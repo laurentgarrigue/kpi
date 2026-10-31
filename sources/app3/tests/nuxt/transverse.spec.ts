@@ -18,6 +18,7 @@ beforeEach(() => {
 })
 
 const SUGGESTION_WAIT_MS = 400
+const MAP_CHOICE_KEY = 'kpi.clubs.map'
 const waitForSuggestions = async () => {
   await new Promise(resolve => setTimeout(resolve, SUGGESTION_WAIT_MS))
   await flushPromises()
@@ -28,9 +29,17 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     const wrapper = await mountRoute('/calendar?month=2999-04')
     expect(api2).toHaveBeenCalledWith('/calendar?start=2999-04-01&end=2999-05-05')
     expect(wrapper.find('[data-testid="calendar-month"]').text()).toBe('avril 2999')
-    const agenda = wrapper.find('[data-testid="calendar-agenda"]')
-    expect(agenda.findAll('[data-testid="calendar-day"] time[datetime]').map(time => time.attributes('datetime'))).toEqual(['2999-04-01', '2999-04-01', '2999-04-01', '2999-04-02', '2999-04-02'])
+    const agenda = wrapper.find('[data-testid="calendar-weeks"]')
+    // CAL-12: 2999-04-01 is a Monday; the three gamedays start that week, sorted by section then start.
+    const weeks = agenda.findAll('[data-testid="calendar-week-block"]')
+    expect(weeks).toHaveLength(1)
+    expect(weeks[0]!.find('[data-testid="week-dates"]').text()).toMatch(/^1\s?–\s?2 avr\./)
+    expect(weeks[0]!.find('[data-testid="week-kind"]').text()).toBe('Semaine')
     expect(agenda.findAll('[data-gameday]').map(row => row.attributes('data-gameday'))).toEqual(['9202', '9211', '9212'])
+    // Dates differing from the block are written; none lasts three days.
+    expect(agenda.find('[data-gameday="9211"] [data-testid="entry-dates"]').text()).toBe('1 avr.')
+    expect(agenda.find('[data-gameday="9202"] [data-testid="entry-dates"]').exists()).toBe(false)
+    expect(agenda.find('[data-testid="entry-length"]').exists()).toBe(false)
     const row = agenda.find('[data-gameday="9202"]')
     // « nom de la journée - lieu (département) » is the label of the item; the competition comes after.
     expect(row.find('[data-testid="calendar-label"]').text()).toBe('RCH J2 - Rivecity (64)')
@@ -41,7 +50,7 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-03/CAL-11: a gameday leads to its event; in a single-group event, the competition link stays in the event', async () => {
-    const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-agenda"] [data-gameday="9202"]')
+    const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-weeks"] [data-gameday="9202"]')
     expect(row.find('[data-testid="calendar-competition"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-label"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-event"]').attributes('href')).toBe('/events/77')
@@ -86,7 +95,10 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-02: the month grid shows each gameday as one coloured bar spread over all its days', async () => {
-    const grid = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-grid"]')
+    const page = await mountRoute('/calendar?month=2999-04&view=month')
+    expect(page.find('[data-testid="calendar-weeks"]').exists()).toBe(false)
+    expect(page.findAll('[data-testid="calendar-legend"] [data-section]').map(item => item.text())).toEqual(['National'])
+    const grid = page.find('[data-testid="calendar-grid"]')
     // The bar carries the label of the gameday (not the competition title) and the colours of its section.
     expect(grid.find('[data-gameday="9202"]').text()).toContain('RCH J2 - Rivecity (64)')
     expect(grid.find('[data-gameday="9202"]').classes().join(' ')).toContain('bg-kpi-blue-100')
@@ -101,6 +113,18 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     // Overlapping bars never share a row; the second day of the cup reuses the free one.
     expect(bars.map(bar => bar.attributes('style')!.match(/grid-row: (\d+)/)![1])).toEqual(['2', '3', '3'])
     expect(grid.find('[data-testid="calendar-bar"]').attributes('data-section')).toBe('2')
+  })
+
+  it('CAL-13: the views are links keeping the month and the filters; the month view is kept by the navigation', async () => {
+    const wrapper = await mountRoute('/calendar?month=2999-04&section=2')
+    const views = wrapper.findAll('[data-testid="calendar-views"] a')
+    expect(views.map(view => [view.text(), view.attributes('href'), view.attributes('aria-current')])).toEqual([
+      ['Par semaine', '/calendar?section=2&month=2999-04', 'page'],
+      ['Mois', '/calendar?section=2&month=2999-04&view=month', undefined],
+    ])
+    const month = await mountRoute('/calendar?month=2999-04&view=month')
+    expect(month.find('[data-testid="next-month"]').attributes('href')).toBe('/calendar?month=2999-05&view=month')
+    expect(month.find('[data-testid="calendar-filters"] input[name="view"]').attributes('value')).toBe('month')
   })
 
   it('CAL-05: an empty month says so and links to the next month having gamedays', async () => {
@@ -139,42 +163,75 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
 })
 
 describe('events page (PAGE_EVENTS.md)', () => {
-  it('EVL-01/EVL-02: lists the events of the requested year, with the years to switch to', async () => {
+  it('EVL-01/EVL-02/EVL-04: lists the events of the requested year, the year chosen in a GET form', async () => {
     const wrapper = await mountRoute('/events?year=2999')
     expect(api2).toHaveBeenCalledWith('/events/all')
     expect(wrapper.find('h1').text()).toBe('Événements')
-    const years = wrapper.findAll('[data-testid="events-years"] a')
-    expect(years.length).toBeGreaterThan(0)
-    expect(wrapper.find('[data-testid="events-years"] [aria-current="page"]').text()).toBe('2999')
-    expect(wrapper.find('[data-testid="year-events"] a[href="/events/77"]').exists()).toBe(true)
+    const form = wrapper.find('[data-testid="events-tools"]')
+    expect(form.attributes('method')).toBe('get')
+    expect(form.find('select[name="year"] option[selected]').text()).toBe('2999')
+    expect(wrapper.find('[data-testid="events-list"] a[href="/events/77"]').exists()).toBe(true)
+  })
+
+  it('EVL-03: by month, the upcoming ones first, the next one tagged', async () => {
+    const wrapper = await mountRoute('/events?year=2999')
+    expect(wrapper.findAll('[data-testid="events-month"] h2').map(title => title.text())).toEqual(['février', 'avril', 'juin'])
+    const next = wrapper.find('[data-next]')
+    expect(next.find('a').attributes('href')).toBe('/events/42')
+    expect(next.text()).toContain('Prochain')
+    expect(wrapper.findAll('[data-next]')).toHaveLength(1)
+  })
+
+  it('EVL-04: q filters by name or place; nothing found says so', async () => {
+    const wrapper = await mountRoute('/events?year=2999&q=rivecity')
+    expect(wrapper.findAll('[data-testid="events-list"] li a').map(link => link.attributes('href'))).toEqual(['/events/77', '/events/79'])
+    const none = await mountRoute('/events?year=2999&q=nowhere')
+    expect(none.find('[data-testid="events-empty"]').exists()).toBe(true)
   })
 })
 
-describe('history (PAGE_HISTORY.md)', () => {
-  it('HIS-02/HIS-03: seasons in decreasing order, finished final competitions with their podium and medals', async () => {
+describe('history (PAGE_HISTORY.md § 2 bis)', () => {
+  it('HIS-06: the title holder opens the page, with its streak and the 2nd and 3rd', async () => {
     const wrapper = await mountRoute('/history/TSTRES')
     expect(wrapper.find('h1').text()).toBe('Palmarès — Groupe Résultats')
-    expect(wrapper.findAll('[data-testid="history-season"] h2').map(title => title.text())).toEqual(['2999', '2998'])
-    const cup = wrapper.find('[data-testid="history-season"] [data-competition="RCP"]')
-    expect(cup.findAll('[data-testid="podium"] [data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
-    expect(cup.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
-    // The medal replaces the rank number: three medals, then the rank of the fourth team only.
-    expect(cup.findAll('[data-testid="podium"] li').map(item => item.find('[data-testid="podium-rank"]').exists())).toEqual([false, false, false])
-    expect(cup.findAll('[data-testid="other-ranks"] li').map(item => item.find('span').text())).toEqual(['4'])
-    expect(cup.find('details summary').text()).toBe('Voir le classement complet')
-    expect(cup.findAll('[data-testid="other-ranks"] li')).toHaveLength(1)
+    const holder = wrapper.find('[data-testid="title-holder"]')
+    expect(holder.text()).toContain('Champion 2999')
+    expect(holder.find('a[data-kind="team"]').text()).toBe('Equipe Echo')
+    expect(holder.find('a[data-kind="team"]').attributes('href')).toBe('/teams/111?season=2999&competition=RCP')
+    expect(holder.find('[data-testid="holder-titles"]').text()).toBe('1er titre')
+    expect(holder.findAll('[data-testid="holder-others"] li').map(item => item.text())).toEqual(['2e Equipe Golf', '3e Equipe Foxtrot'])
   })
 
-  it('HIS-04: links to the ranking of each competition and to each team page', async () => {
-    const cup = (await mountRoute('/history/TSTRES')).find('[data-competition="RCP"]')
-    expect(cup.find('[data-testid="history-ranking-link"]').attributes('href')).toBe('/competitions/2999/RCP/ranking')
-    expect(cup.find('[data-testid="podium"] a[data-kind="team"]').attributes('href')).toBe('/teams/111?season=2999&competition=RCP')
+  it('HIS-07: the champions of the last seasons, newest first', async () => {
+    const strip = (await mountRoute('/history/TSTRES')).findAll('[data-testid="champions-strip"] li')
+    expect(strip.map(item => [item.find('[data-testid="strip-season"]').text(), item.find('a').text()])).toEqual([['2999', 'Equipe Echo'], ['2998', 'Equipe Alpha']])
   })
 
-  it('HIS-01: the group selector is a GET form to /history; season anchors', async () => {
+  it('HIS-02 / HIS-03 / HIS-04: every season and finished final competition, with its medals and a link to its ranking', async () => {
+    const wrapper = await mountRoute('/history/TSTRES')
+    const rows = wrapper.findAll('[data-testid="history-table"] tbody tr')
+    expect(rows.map(row => row.attributes('data-competition'))).toEqual(['RCP', 'RMU', 'RCP'])
+    expect(rows[0]!.find('[data-testid="history-season"]').text()).toBe('2999')
+    expect(rows[0]!.find('[data-testid="history-season"]').attributes('rowspan')).toBe('2')
+    expect(rows[0]!.find('[data-testid="history-ranking-link"]').attributes('href')).toBe('/competitions/2999/RCP/ranking')
+    expect(rows[0]!.findAll('[data-medal]').map(medal => medal.attributes('data-medal'))).toEqual(['1', '2', '3'])
+    expect(rows[0]!.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
+    expect(rows[0]!.text()).not.toContain('Equipe Hotel')
+  })
+
+  it('HIS-07: touching a team highlights its podiums, and can be undone', async () => {
+    const wrapper = await mountRoute('/history/TSTRES')
+    await wrapper.find('[data-testid="history-table"] button[data-team="111"]').trigger('click')
+    expect(wrapper.findAll('[data-testid="history-table"] [data-highlighted]')).toHaveLength(1)
+    expect(wrapper.find('[data-testid="champions-strip"] li[data-highlighted]').text()).toContain('2999')
+    await wrapper.find('[data-testid="history-unfollow"]').trigger('click')
+    expect(wrapper.findAll('[data-highlighted]')).toHaveLength(0)
+  })
+
+  it('HIS-01: the group selector is a GET form to /history; one anchor per decade', async () => {
     const wrapper = await mountRoute('/history/TSTRES')
     expect(wrapper.find('[data-testid="history-selector"]').attributes('action')).toBe('/history')
-    expect(wrapper.findAll('[data-testid="season-anchors"] a').map(link => link.attributes('href'))).toEqual(['#saison-2999', '#saison-2998'])
+    expect(wrapper.findAll('[data-testid="decade-anchors"] a').map(link => [link.text(), link.attributes('href')])).toEqual([['Années 2990', '#saison-2999']])
   })
 
   it('HIS-05: an unknown group or a group without honours is the site 404', async () => {
@@ -183,40 +240,30 @@ describe('history (PAGE_HISTORY.md)', () => {
 })
 
 describe('teams (PAGE_TEAM.md)', () => {
-  it('TEA-01: the search works without JavaScript (GET form) and lists the teams found', async () => {
-    const wrapper = await mountRoute('/teams?q=alpha')
-    expect(wrapper.find('form[role="search"]').attributes('action')).toBe('/teams')
-    expect(wrapper.findAll('[data-testid="teams-results"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
-    expect((await mountRoute('/teams?q=zzz')).find('[data-testid="teams-no-result"]').exists()).toBe(true)
-  })
-
-  it('TEA-01: less than 2 characters sends no request', async () => {
-    const wrapper = await mountRoute('/teams?q=a')
-    expect(wrapper.find('[data-testid="teams-min-length"]').text()).toBe('Saisissez au moins 2 caractères.')
-    expect(api2.mock.calls.map(call => call[0]).filter(path => String(path).startsWith('/teams'))).toEqual([])
-  })
-
-  it('TEA-02: the team page shows its club and honours with medals and links to the rankings', async () => {
+  it('TEA-02 / TEA-08: the team page shows its club, its medals and honours with links to the rankings', async () => {
     const wrapper = await mountRoute('/teams/101')
     expect(wrapper.find('h1').text()).toBe('Equipe Alpha')
-    expect(wrapper.find('[data-testid="team-club"]').attributes('href')).toBe('/clubs/C001')
-    const honours = wrapper.findAll('[data-testid="honours"] tbody tr')
+    // TEA-08 / CLB-08: the club on the map, a map icon saying so in the same link.
+    expect(wrapper.find('[data-testid="team-club"]').attributes('href')).toBe('/clubs?club=C001')
+    expect(wrapper.find('[data-testid="team-club"] [data-testid="team-club-map"]').attributes('title')).toBe('Voir sur la carte')
+    expect(wrapper.find('[data-testid="team-club-line"]').text()).toBe('Équipe du Club Alpha Lacville (Voir sur la carte)')
+    expect(wrapper.findAll('[data-testid="medal-tally"] [data-tally]').map(item => [item.attributes('data-tally'), item.find('[data-testid="tally-count"]').text()])).toEqual([['1', '1'], ['2', '0'], ['3', '0']])
+    const honours = wrapper.findAll('[data-testid="honour"]')
     expect(honours.map(row => row.find('a').attributes('href'))).toEqual(['/competitions/2998/RCP/ranking', '/competitions/2998/RQL/ranking'])
     expect(honours[0]!.find('[data-medal="1"]').exists()).toBe(true)
     expect(honours[1]!.find('[data-medal]').exists()).toBe(false)
   })
 
-  it('TEA-07: the medal replaces the rank, intermediate rounds are in italic, a season is shown once', async () => {
+  it('TEA-07: medals with the rank written, intermediate rounds muted and named, a season shown once', async () => {
     const wrapper = await mountRoute('/teams/101')
+    expect(wrapper.find('#honours-title').text()).toBe('Palmarès depuis 2998')
     const [medalled, intermediate] = wrapper.findAll('[data-testid="honour"]')
-    expect(medalled!.find('[data-testid="honour-rank"]').exists()).toBe(false)
-    expect(medalled!.classes()).not.toContain('italic')
-    expect(intermediate!.classes()).toContain('italic')
-    expect(intermediate!.find('[data-testid="honour-rank"]').text()).toBe('2')
-    expect(wrapper.find('[data-testid="honours-legend"]').exists()).toBe(true)
-    const seasons = wrapper.findAll('[data-testid="honours"] tbody[data-season]')
-    expect(seasons.map(body => body.attributes('data-season'))).toEqual(['2998'])
-    expect(seasons[0]!.find('th[scope="rowgroup"]').attributes('rowspan')).toBe('2')
+    expect(medalled!.find('[data-testid="honour-rank"]').text()).toBe('1er')
+    expect(medalled!.find('[data-medal="1"]').text()).toContain('Médaille d\'or')
+    expect(intermediate!.attributes('data-final')).toBe('false')
+    expect(intermediate!.text()).toContain('phase de qualification')
+    expect(intermediate!.find('[data-testid="honour-rank"]').text()).toBe('2e')
+    expect(wrapper.findAll('[data-testid="honours"] [data-season]').map(item => item.attributes('data-season'))).toEqual(['2998'])
   })
 
   it('TEA-06: the club logo and the colours zoom on hover and keyboard focus', async () => {
@@ -254,39 +301,68 @@ describe('teams (PAGE_TEAM.md)', () => {
   })
 })
 
-describe('clubs (PAGE_CLUBS.md)', () => {
-  it('CLB-01/CLB-04: the list shows every club with its department; the search is a GET form', async () => {
-    const wrapper = await mountRoute('/clubs')
-    expect(wrapper.find('[data-testid="club-search"]').attributes('method')).toBe('get')
-    const cards = wrapper.findAll('[data-testid="club-list"] [data-club]')
-    expect(cards).toHaveLength(12)
-    expect(cards[0]!.attributes('href')).toBe('/clubs/C001')
-    expect(cards[0]!.text()).toContain('Comité Départemental Test 33')
-    expect((await mountRoute('/clubs?q=lacville')).findAll('[data-club]').map(card => card.attributes('data-club'))).toEqual(['C001'])
+describe('clubs and teams (PAGE_CLUBS.md § 2.1)', () => {
+  it('CLB-01: clubs and teams searched with a GET form, grouped; a club opens its sheet, a team its page', async () => {
+    const wrapper = await mountRoute('/clubs?q=lacville')
+    const form = wrapper.find('[data-testid="club-search"]')
+    expect(form.attributes('method')).toBe('get')
+    expect(form.attributes('action')).toBe('/clubs')
+    expect(wrapper.findAll('[data-testid="club-results"] [data-club]').map(link => link.attributes('href'))).toEqual(['/clubs?club=C001'])
+    const teams = await mountRoute('/clubs?q=alpha')
+    expect(teams.findAll('[data-testid="team-results"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
+    expect((await mountRoute('/clubs?q=zzz')).find('[data-testid="clubs-no-result"]').exists()).toBe(true)
   })
 
-  it('CLB-02: the map view loads nothing before the click (no tile, no Leaflet)', async () => {
-    const wrapper = await mountRoute('/clubs?view=map')
-    expect(wrapper.find('[data-testid="club-list"]').exists()).toBe(false)
+  it('CLB-01: less than 2 characters sends no search', async () => {
+    const wrapper = await mountRoute('/clubs?q=a')
+    expect(wrapper.find('[data-testid="clubs-min-length"]').text()).toBe('Saisissez au moins 2 caractères.')
+    expect(api2.mock.calls.map(call => String(call[0])).filter(path => path.includes('q='))).toEqual([])
+  })
+
+  it('CLB-04 / CLB-06: without a club, the number of clubs on the map; with ?club=, its sheet beside the map', async () => {
+    expect((await mountRoute('/clubs')).find('[data-testid="club-hint"]').text()).toContain('1 club est placé sur la carte.')
+    const sheet = (await mountRoute('/clubs?club=C001')).find('[data-testid="club-sheet"]')
+    expect(sheet.find('h2').text()).toBe('Club Alpha Lacville')
+    expect(sheet.find('[data-testid="club-city"]').text()).toBe('Lacville')
+    const actions = sheet.findAll('[data-testid="club-actions"] a')
+    expect(actions.map(link => link.attributes('href'))).toEqual(['https://alpha.example.test', 'https://www.openstreetmap.org/directions?to=44.84%2C-0.58'])
+    expect(actions[0]!.attributes('target')).toBe('_blank')
+    expect(actions[0]!.text()).toContain('(nouvel onglet)')
+    expect(sheet.text()).toContain('contact@alpha.example.test')
+    expect(sheet.find('a[href^="mailto:"]').exists()).toBe(false)
+    expect(sheet.findAll('[data-testid="club-teams"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
+    expect((await mountRoute('/clubs?club=NOPE')).find('[data-testid="club-hint"]').exists()).toBe(true)
+  })
+
+  it('CLB-02: the map loads nothing before the click (no tile, no Leaflet)', async () => {
+    const wrapper = await mountRoute('/clubs')
     expect(wrapper.find('[data-testid="show-map"]').exists()).toBe(true)
     expect(wrapper.html()).not.toContain('tile.openstreetmap.org')
     expect(wrapper.find('.leaflet-container').exists()).toBe(false)
   })
 
-  it('CLB-03: the club page shows committees, website, e-mail as text, address and teams', async () => {
-    const wrapper = await mountRoute('/clubs/C001')
-    const details = wrapper.find('[data-testid="club-details"]')
-    expect(details.text()).toContain('Comité Régional Test')
-    expect(details.find('[data-testid="club-website"]').attributes('href')).toBe('https://alpha.example.test')
-    expect(details.find('[data-testid="club-website"]').attributes('target')).toBe('_blank')
-    expect(details.find('[data-testid="club-email"]').text()).toBe('contact@alpha.example.test')
-    expect(details.find('a[href^="mailto:"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="club-teams"] a').map(link => link.attributes('href'))).toEqual(['/teams/105', '/teams/101'])
-    expect(wrapper.find('[data-testid="club-map"]').exists()).toBe(true)
+  it('CLB-09: the click on « Afficher la carte » is remembered; « Masquer la carte » forgets it', async () => {
+    localStorage.removeItem(MAP_CHOICE_KEY)
+    const wrapper = await mountRoute('/clubs')
+    await wrapper.find('[data-testid="show-map"]').trigger('click')
+    await vi.waitFor(() => expect(wrapper.find('[data-testid="hide-map"]').exists()).toBe(true))
+    expect(localStorage.getItem(MAP_CHOICE_KEY)).toBe('shown')
+
+    const again = await mountRoute('/clubs')
+    await vi.waitFor(() => expect(again.find('[data-testid="hide-map"]').exists()).toBe(true))
+    expect(again.find('[data-testid="show-map"]').exists()).toBe(false)
+
+    await again.find('[data-testid="hide-map"]').trigger('click')
+    expect(again.find('[data-testid="show-map"]').exists()).toBe(true)
+    expect(localStorage.getItem(MAP_CHOICE_KEY)).toBeNull()
   })
 
-  it('CLB-03: an unknown club is the site 404', async () => {
-    expect(await expectNotFound('/clubs/NOPE')).toBe(404)
+  it('CLB-03 / CLB-08: the sheet shows committees and the club news', async () => {
+    const wrapper = await mountRoute('/clubs?club=C001')
+    const sheet = wrapper.find('[data-testid="club-sheet"]')
+    expect(sheet.text()).toContain('Région')
+    expect(sheet.text()).toContain('Test 33')
+    expect(sheet.find('[data-testid="linked-news"]').exists()).toBe(true)
   })
 })
 
@@ -355,6 +431,24 @@ describe('global search (FEATURE_SEARCH.md)', () => {
     // CMS-11: published news (phase 4).
     expect(wrapper.find('[data-category="news"] a').attributes('href')).toBe('/news/finale-resultats')
     expect((await mountRoute('/search?q=alpha')).text()).not.toContain('Ann')
+  })
+
+  it('SRC-07: filters by kind with their count; the first club is the best match, shown on the map', async () => {
+    const wrapper = await mountRoute('/search?q=alpha')
+    const kinds = wrapper.findAll('[data-testid="search-kinds"] a')
+    expect(kinds.map(kind => [kind.text().replace(/\s+/g, ' '), kind.attributes('href'), kind.attributes('aria-current')])).toEqual([
+      ['Tout 4', '/search?q=alpha', 'page'],
+      ['Événements 1', '/search?q=alpha&kind=events', undefined],
+      ['Équipes 2', '/search?q=alpha&kind=teams', undefined],
+      ['Clubs 1', '/search?q=alpha&kind=clubs', undefined],
+    ])
+    const best = wrapper.find('[data-testid="search-best"]')
+    expect(best.text()).toContain('Club Alpha Lacville')
+    expect(best.find('a').attributes('href')).toBe('/clubs?club=C001')
+    expect(wrapper.find('[data-category="clubs"]').exists()).toBe(false)
+    const teams = await mountRoute('/search?q=alpha&kind=teams')
+    expect(teams.findAll('[data-category]').map(section => section.attributes('data-category'))).toEqual(['teams'])
+    expect(teams.find('[data-testid="search-best"]').exists()).toBe(false)
   })
 
   it('SRC-05: too short, no result and too many requests each have their message', async () => {

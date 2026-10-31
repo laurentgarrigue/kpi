@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { GROUP_EVENT_MIN_SHARE, mainEvent } from '#kpi-layer/utils/results/events'
 import type { GroupCompetitions, GroupSection, Seasons } from '#kpi-layer/utils/results/types'
-import { defaultGroup, groupLabel } from '~/utils/competitions'
+import { competitionsByRound, defaultGroup, groupLabel } from '~/utils/competitions'
 
 // « Competitions and results » of a season and a group (PAGE_COMPETITIONS.md, CPL-*).
 const route = useRoute()
@@ -26,6 +26,7 @@ const { data: list, error } = await useApiResource<GroupCompetitions>(
   { notFoundIsError: false },
 )
 const competitions = computed(() => list.value?.competitions ?? [])
+const rounds = computed(() => competitionsByRound(competitions.value))
 const main = computed(() => mainEvent(list.value?.events ?? [], GROUP_EVENT_MIN_SHARE))
 
 useSeoMeta({
@@ -35,22 +36,36 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="space-y-8">
-    <h1 class="text-5xl text-kpi-blue-600">{{ $t('results.listTitle', { season }) }}</h1>
-    <ResultsCompetitionSelector :seasons="seasons?.seasons ?? [season]" :season="season" :sections="sections" :group="group" />
-
-    <p v-if="error && error.statusCode !== 404" class="text-kpi-red-600" data-testid="results-unavailable">{{ $t('results.unavailable') }}</p>
-    <p v-else-if="competitions.length === 0" data-testid="no-competition">{{ $t('results.noCompetition') }}</p>
-    <template v-else>
-      <ResultsEventBanner :events="list?.events ?? []" :main="main" :scope="groupName" />
-      <p>
-        <NuxtLink :to="localePath(`/groups/${season}/${group}/games`)" class="font-semibold underline" data-testid="group-games-link">
-          {{ $t('results.allGroupGames') }}
-        </NuxtLink>
-      </p>
-      <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="competition-cards">
-        <ResultsCompetitionCard v-for="competition in competitions" :key="competition.code" :competition="competition" />
+  <div class="space-y-2">
+    <SitePageHeading :title="$t('results.listTitle', { season })" />
+    <div class="grid gap-5 pb-10 lg:grid-cols-[16.25rem_minmax(0,1fr)] lg:gap-10">
+      <div class="self-start lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-auto lg:pr-1.5">
+        <ResultsCompetitionSelector :seasons="seasons?.seasons ?? [season]" :season="season" :sections="sections" :group="group" />
+        <ResultsGroupIndex :season="season" :sections="sections" :group="group" class="hidden lg:block" />
       </div>
-    </template>
+      <section aria-labelledby="group-title" class="space-y-4">
+        <div class="flex flex-wrap items-baseline gap-x-4.5 gap-y-2">
+          <h2 id="group-title" class="text-[2.375rem] leading-none text-navy md:text-[2.875rem] dark:text-ink" data-testid="group-title">{{ groupName }}</h2>
+          <NuxtLink v-if="group" :to="localePath(`/groups/${season}/${group}/games`)" class="text-sm underline" data-testid="group-games-link">
+            {{ $t('results.allGroupGames') }}
+          </NuxtLink>
+        </div>
+        <p v-if="error && error.statusCode !== 404" class="text-kpi-red-600" data-testid="results-unavailable">{{ $t('results.unavailable') }}</p>
+        <p v-else-if="competitions.length === 0" data-testid="no-competition">{{ $t('results.noCompetition') }}</p>
+        <template v-else>
+          <ResultsEventBanner :events="list?.events ?? []" :main="main" :scope="groupName" />
+          <div class="space-y-6 pt-2" data-testid="competition-cards">
+            <div
+              v-for="row in rounds"
+              :key="row[0]!.code"
+              class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-6"
+              data-testid="competition-round"
+            >
+              <ResultsCompetitionCard v-for="competition in row" :key="competition.code" :competition="competition" />
+            </div>
+          </div>
+        </template>
+      </section>
+    </div>
   </div>
 </template>

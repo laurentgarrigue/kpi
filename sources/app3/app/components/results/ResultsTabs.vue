@@ -4,14 +4,14 @@ defineProps<{ tabs: { id: string, to: string }[], current: string }>()
 </script>
 
 <template>
-  <nav :aria-label="$t('results.tabs')" class="overflow-x-auto border-b border-line" data-testid="results-tabs">
-    <ul class="flex min-w-max">
+  <nav :aria-label="$t('results.tabs')" class="overflow-x-auto border-b border-line [scrollbar-width:none]" data-testid="results-tabs">
+    <ul class="flex min-w-max gap-1">
       <li v-for="tab in tabs" :key="tab.id">
         <NuxtLink
           :to="tab.to"
           :aria-current="tab.id === current ? 'page' : undefined"
-          class="block border-b-2 px-4 py-2 font-semibold"
-          :class="tab.id === current ? 'border-kpi-blue-600 text-kpi-blue-600' : 'border-transparent hover:border-line'"
+          class="block border-b-3 px-3.5 py-3 font-semibold"
+          :class="tab.id === current ? 'border-navy text-ink dark:border-kpi-blue-500' : 'border-transparent text-muted hover:text-ink'"
         >
           {{ $t(`results.tab.${tab.id}`) }}
         </NuxtLink>

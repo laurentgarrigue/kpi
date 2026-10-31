@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clubs et équipes</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+.finder { display: grid; grid-template-columns: 400px minmax(0, 1fr); height: calc(100vh - 150px); min-height: 560px; border-bottom: 1px solid var(--line); }
+.panel { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--surface); }
+.panel .top { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); position: relative; }
+.panel h1 { font-size: 40px; margin: 0 0 12px; }
+.search { position: relative; }
+.search input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px 10px 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.search input:focus { outline: 3px solid var(--blue); outline-offset: 0; border-color: transparent; }
+.search svg { position: absolute; left: 11px; top: 50%; translate: 0 -50%; width: 18px; height: 18px; color: var(--muted); }
+.results { position: absolute; left: 20px; right: 20px; top: calc(100% - 8px); z-index: 1000; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(20, 24, 60, .18); max-height: 360px; overflow: auto; }
+.results[hidden] { display: none; }
+.results h2 { font-size: 12px; font-weight: 700; color: var(--muted); margin: 0; padding: 10px 12px 4px; }
+.results button, .results a { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; cursor: pointer; font-size: 15px; }
+.results button:hover, .results a:hover, .results .active { background: var(--wash); }
+.results small { display: block; font-size: 12px; color: var(--muted); }
+.results .none { padding: 12px; font-size: 14px; color: var(--muted); }
+.near { margin-top: 10px; font: inherit; font-size: 14px; background: none; border: 0; padding: 0; color: var(--blue-deep); text-decoration: underline; cursor: pointer; }
+
+.club { overflow: auto; padding: 20px; flex: 1; }
+.club .id { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: center; margin-bottom: 16px; }
+.club .id img, .club .id .ph { width: 96px; height: 96px; object-fit: contain; border-radius: 8px; background: var(--wash); display: grid; place-items: center; font: 400 30px var(--display); color: var(--blue); }
+.club h2 { font: 400 30px/1 var(--display); color: var(--title); margin: 0; }
+.club .where { font-size: 14px; color: var(--muted); margin: 4px 0 0; }
+.club dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 12px; margin: 0 0 18px; font-size: 14px; }
+.club dt { color: var(--muted); }
+.club dd { margin: 0; overflow-wrap: anywhere; }
+.club .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.club .actions a { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); text-decoration: none; font-size: 14px; font-weight: 600; }
+.club .actions a { display: inline-flex; align-items: center; gap: 6px; }
+.club .actions .ext { width: 14px; height: 14px; }
+.club .actions a.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+.club h3 { font-size: 15px; margin: 0 0 6px; }
+.club ul { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 16px; font-size: 14px; }
+.club li { break-inside: avoid; padding: 4px 0; border-top: 1px solid var(--line); }
+.club li a { text-decoration: none; }
+.club li a:hover { text-decoration: underline; }
+.hint { color: var(--muted); }
+.hint b { color: var(--ink); }
+.hint p { margin: 0 0 10px; }
+
+#map { width: 100%; height: 100%; z-index: 0; }
+.leaflet-container { font: inherit; background: var(--wash); }
+:root[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) brightness(.9) contrast(.9); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .leaflet-tile-pane { filter: invert(1) hue-rotate(190deg) brightness(.9) contrast(.9); } }
+
+@media (max-width: 860px) {
+  .finder { grid-template-columns: 1fr; grid-template-rows: auto 52vh auto; height: auto; }
+  .panel { display: contents; }
+  .panel .top { order: 1; }
+  #map-wrap { order: 2; }
+  .club { order: 3; overflow: visible; }
+  .club ul { columns: 1; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div class="finder">
+  <section class="panel">
+    <div class="top">
+      <h1>Clubs et équipes</h1>
+      <div class="search" role="combobox" aria-expanded="false" aria-owns="results" aria-haspopup="listbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input type="search" id="q" placeholder="Club, ville, code ou équipe" aria-label="Chercher un club ou une équipe" autocomplete="off">
+      </div>
+      <div class="results" id="results" hidden></div>
+      <button class="near" type="button" id="near">Clubs près de moi</button>
+    </div>
+    <div class="club" id="club" aria-live="polite"></div>
+  </section>
+  <div id="map-wrap"><div id="map" role="application" aria-label="Carte des clubs"></div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="maquette.js"></script>
+<script>
+const CLUBS = __CLUBS__;
+// Outgoing links: an arrow out of the box, and the new tab said to screen readers.
+const EXT = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="sr-only"> (nouvel onglet)</span>';
+document.getElementById('chrome').innerHTML = siteChrome('Clubs et équipes');
+
+// Teams worth showing: not the placeholders that tournaments create in clubs (« (1er Poule A) », « 2ème poule haute »).
+const realTeams = c => c.teams.filter(t => !/^\(|poule|^\d+(er|e|ème)\b/i.test(t.label.trim()));
+const norm = s => (s ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const title = titleCase;
+const city = c => c.postal?.match(/\d{5}\s+(.+)$/)?.[1] ?? '';
+
+const map = L.map('map', { zoomControl: true }).setView([46.6, 2.4], 6);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+const markers = {};
+const style = on => ({ radius: on ? 10 : 6, weight: 2, color: on ? '#c94a4c' : '#20265b', fillColor: on ? '#c94a4c' : '#69b9e6', fillOpacity: on ? 1 : .85 });
+for (const c of CLUBS) {
+  markers[c.code] = L.circleMarker([c.position.lat, c.position.lng], style(false)).addTo(map)
+    .bindTooltip(title(c.label), { direction: 'top', offset: [0, -6] })
+    .on('click', () => select(c.code, false));
+}
+let selected = null;
+
+function emptyState() {
+  document.getElementById('club').innerHTML = `<div class="hint"><p><b>${CLUBS.length} clubs</b> sont placés sur la carte.</p>
+    <p>Touchez un point pour voir le club, son logo, ses coordonnées et ses équipes, ou cherchez-le par son nom, sa ville ou son code.</p></div>`;
+}
+
+function select(code, fly = true) {
+  const c = CLUBS.find(x => x.code === code);
+  if (selected) markers[selected]?.setStyle(style(false));
+  selected = code;
+  markers[code]?.setStyle(style(true)).bringToFront();
+  if (fly && c.position) map.flyTo([c.position.lat, c.position.lng], 11, { duration: .6 });
+  const teams = realTeams(c);
+  const logo = c.logo ? `<img src="${KPI_IMG}${c.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ph',textContent:'${c.code}'}))">` : `<span class="ph" aria-hidden="true">${c.code}</span>`;
+  document.getElementById('club').innerHTML = `
+    <div class="id">${logo}<div><h2>${esc(title(c.label))}</h2><p class="where">${esc(city(c) || deptName(c.department.label))}</p></div></div>
+    <div class="actions"><a class="primary" href="#">Fiche du club</a>${c.www ? `<a href="${esc(c.www)}" target="_blank" rel="noopener">Site web${EXT}</a>` : ''}${c.position ? `<a href="https://www.openstreetmap.org/directions?to=${c.position.lat},${c.position.lng}" target="_blank" rel="noopener">Itinéraire${EXT}</a>` : ''}</div>
+    <dl>${c.postal ? `<dt>Adresse</dt><dd>${esc(c.postal)}</dd>` : ''}${c.email ? `<dt>E-mail</dt><dd><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></dd>` : ''}
+      <dt>Département</dt><dd>${esc(deptName(c.department.label))}</dd>
+      ${c.region ? `<dt>Région</dt><dd>${esc(regionName(c.region.label))}</dd>` : ''}<dt>Code</dt><dd>${c.code}</dd></dl>
+    ${teams.length ? `<h3>${teams.length} équipe${teams.length > 1 ? 's' : ''}</h3><ul>${teams.map(t => `<li><a href="equipe.html">${esc(t.label.trim())}</a></li>`).join('')}</ul>` : '<p class="hint">Aucune équipe engagée en compétition.</p>'}`;
+  history.replaceState(null, '', `?club=${code}`);
+}
+
+// Search: clubs by name, city, code or department; teams by name. Results open the club on the map.
+const input = document.getElementById('q'), results = document.getElementById('results');
+function search(q) {
+  const n = norm(q.trim());
+  if (n.length < 2) { results.hidden = true; return; }
+  const clubs = CLUBS.filter(c => norm(`${c.label} ${c.code} ${city(c)} ${c.department.label}`).includes(n)).slice(0, 6);
+  const teams = CLUBS.flatMap(c => realTeams(c).map(t => ({ ...t, club: c }))).filter(t => norm(t.label).includes(n)).slice(0, 6);
+  results.innerHTML = (clubs.length ? `<h2>Clubs</h2>${clubs.map(c => `<button type="button" data-club="${c.code}">${logoImg(c.logo)}<span>${esc(title(c.label))}<small>${esc(city(c))} ${c.code}</small></span></button>`).join('')}` : '')
+    + (teams.length ? `<h2>Équipes</h2>${teams.map(t => `<button type="button" data-club="${t.club.code}">${logoImg(t.club.logo)}<span>${esc(t.label.trim())}<small>${esc(title(t.club.label))}</small></span></button>`).join('')}` : '')
+    || `<p class="none">Aucun club ni aucune équipe ne correspond à « ${esc(q)} ».</p>`;
+  results.hidden = false;
+}
+input.addEventListener('input', () => search(input.value));
+input.addEventListener('keydown', e => { if (e.key === 'Escape') results.hidden = true; if (e.key === 'Enter') results.querySelector('[data-club]')?.click(); });
+results.addEventListener('click', e => { const b = e.target.closest('[data-club]'); if (b) { select(b.dataset.club); results.hidden = true; input.value = ''; } });
+document.addEventListener('click', e => { if (!e.target.closest('.top')) results.hidden = true; });
+document.getElementById('near').addEventListener('click', () => navigator.geolocation?.getCurrentPosition(
+  p => map.flyTo([p.coords.latitude, p.coords.longitude], 10), () => { document.getElementById('near').textContent = 'Position indisponible : cherchez votre ville'; }));
+
+const initial = new URLSearchParams(location.search).get('club');
+if (initial && CLUBS.some(c => c.code === initial)) select(initial); else emptyState();
+demoBar('<button type="button" onclick="select(\'5006\')">Exemple : Avranches</button>');
+</script>
+</body>
+</html>

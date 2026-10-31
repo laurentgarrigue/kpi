@@ -54,9 +54,9 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="form" class="mx-auto max-w-3xl space-y-6">
+  <div v-if="form" class="mx-auto max-w-[42.5rem] space-y-5 pb-10">
     <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: form.title }]" />
-    <h1 class="text-5xl leading-tight text-kpi-blue-600">{{ form.title }}</h1>
+    <h1 class="text-[2.375rem] leading-none text-navy md:text-[2.875rem] dark:text-ink">{{ form.title }}</h1>
 
     <!-- Confirmation (FEATURE_FORMS.md § 3.3) -->
     <section v-if="success" class="space-y-4 rounded border border-line p-6" aria-labelledby="form-outcome" data-testid="form-success" :data-status="success.status">
@@ -92,8 +92,8 @@ useSeoMeta({
         </ul>
       </div>
 
-      <form v-if="form.state === 'open'" method="post" :action="localePath(`/forms/${form.slug}`)" class="space-y-4" novalidate data-testid="form">
-        <p class="text-sm text-ink/70">{{ $t('forms.requiredHint') }}</p>
+      <form v-if="form.state === 'open'" method="post" :action="localePath(`/forms/${form.slug}`)" class="grid gap-x-4 gap-y-3.5 md:grid-cols-2" novalidate data-testid="form">
+        <p class="text-sm text-muted md:col-span-2">{{ $t('forms.requiredHint') }}</p>
         <input type="hidden" :name="TOKEN_FIELD" :value="form.token">
         <!-- Honeypot: invisible to people, filled by robots (FRM-05) -->
         <div class="absolute -left-[9999px]" aria-hidden="true">
@@ -107,7 +107,9 @@ useSeoMeta({
           :values="postedValue(values, field.key)"
           :error="errors[field.key] ?? null"
         />
-        <UButton type="submit" size="lg" data-testid="form-submit">{{ $t('forms.submit') }}</UButton>
+        <div class="md:col-span-2">
+          <button type="submit" class="mt-2 rounded-md bg-navy px-5 py-3 font-bold text-white hover:bg-kpi-blue-700" data-testid="form-submit">{{ $t('forms.submit') }}</button>
+        </div>
       </form>
 
       <section aria-labelledby="form-privacy" class="border-t border-line pt-4 text-sm text-ink/70" data-testid="form-privacy">

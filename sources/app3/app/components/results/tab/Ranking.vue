@@ -16,30 +16,45 @@ const { data: games } = useLazyAsyncData(() => `api2:${apiPath('games')}:live`, 
 useAutoRefresh(() => isLive(games.value ?? [], now.value), refresh)
 
 const pdfHref = computed(() => pdfUrl({ kind: 'ranking', type: props.competition.type, season: props.competition.season, competition: props.competition.code }, context.value))
-const badge = computed(() => (ranking.value?.status === 'END' ? 'final' : ranking.value?.status === 'ON' ? 'provisional' : null))
+const hasRows = computed(() => (ranking.value?.rows.length ?? 0) > 0)
+const badge = computed(() => (!hasRows.value ? null : ranking.value?.status === 'END' ? 'final' : ranking.value?.status === 'ON' ? 'provisional' : null))
+// A cup type competition's provisional ranking misleads (teams still in, finalists included, have games left): api2 holds it back until the end.
+const cupInProgress = computed(() => ranking.value?.type === 'CP' && ranking.value.status === 'ON')
+const route = useRoute()
+const progressHref = computed(() => ({ path: route.path.replace(/\/ranking$/, '/progress'), query: route.query }))
 </script>
 
 <template>
   <p v-if="error || !ranking" class="text-kpi-red-600" data-testid="results-unavailable">{{ $t('results.unavailable') }}</p>
   <div v-else class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <UBadge v-if="badge" :color="badge === 'final' ? 'success' : 'warning'" variant="subtle" size="lg" data-testid="ranking-badge">
-        {{ $t(`results.ranking.${badge}`) }}
-      </UBadge>
+      <p v-if="badge" class="font-semibold" data-testid="ranking-badge">{{ $t(`results.ranking.${badge}`) }}</p>
       <a :href="pdfHref" v-bind="NEW_TAB_ATTRS" class="flex items-center gap-1 text-sm underline" data-testid="ranking-pdf">
         <UIcon name="i-heroicons-document-arrow-down" class="size-5" aria-hidden="true" />
         {{ $t('results.rankingPdf') }}<span class="sr-only"> {{ $t('a11y.newTab') }}</span>
       </a>
     </div>
-    <p v-if="ranking.rows.length === 0" data-testid="no-ranking">{{ $t('results.rankingLater') }}</p>
-    <ResultsRankingTable
-      v-else
-      :rows="ranking.rows"
-      :type="ranking.type"
-      :competition="competition.code"
-      :qualified="ranking.qualified"
-      :eliminated="ranking.eliminated"
-      :caption="t('results.tab.ranking')"
-    />
+    <div v-if="!hasRows && cupInProgress" class="space-y-2" data-testid="no-ranking">
+      <p class="font-semibold">{{ $t('results.cupRankingLater.title') }}</p>
+      <p>{{ $t('results.cupRankingLater.reason') }}</p>
+      <NuxtLink :to="progressHref" class="inline-flex items-center gap-1 underline">
+        {{ $t('results.cupRankingLater.progress') }}
+        <UIcon name="i-heroicons-arrow-right" class="size-4" aria-hidden="true" />
+      </NuxtLink>
+    </div>
+    <p v-else-if="!hasRows" data-testid="no-ranking">{{ $t('results.rankingLater') }}</p>
+    <template v-else>
+      <ResultsPodium :rows="ranking.rows" :competition="competition.code" :season="competition.season" />
+      <div class="overflow-x-auto lg:overflow-visible">
+        <ResultsRankingTable
+          :rows="ranking.rows"
+          :type="ranking.type"
+          :competition="competition.code"
+          :qualified="ranking.qualified"
+          :eliminated="ranking.eliminated"
+          :caption="t('results.tab.ranking')"
+        />
+      </div>
+    </template>
   </div>
 </template>

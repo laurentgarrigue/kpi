@@ -97,6 +97,31 @@
         ]
       },
       {
+        "code": "RAT",
+        "season": "2999",
+        "group": {
+          "code": "TSTRES",
+          "libelle": "Groupe Résultats",
+          "libelle_en": "Results group"
+        },
+        "libelle": "Championnat En Attente",
+        "soustitre": null,
+        "soustitre2": "Poule B",
+        "display_title": "Championnat En Attente",
+        "type": "CHPT",
+        "status": "ATT",
+        "level": "NAT",
+        "banner": null,
+        "logo": null,
+        "web": null,
+        "qualified": 0,
+        "eliminated": 0,
+        "has_games": true,
+        "round": 1,
+        "final": false,
+        "ranking": []
+      },
+      {
         "code": "RCP",
         "season": "2999",
         "group": {
@@ -231,31 +256,6 @@
             "medal": 3
           }
         ]
-      },
-      {
-        "code": "RAT",
-        "season": "2999",
-        "group": {
-          "code": "TSTRES",
-          "libelle": "Groupe Résultats",
-          "libelle_en": "Results group"
-        },
-        "libelle": "Championnat En Attente",
-        "soustitre": null,
-        "soustitre2": "Poule B",
-        "display_title": "Championnat En Attente",
-        "type": "CHPT",
-        "status": "ATT",
-        "level": "NAT",
-        "banner": null,
-        "logo": null,
-        "web": null,
-        "qualified": 0,
-        "eliminated": 0,
-        "has_games": true,
-        "round": 1,
-        "final": false,
-        "ranking": []
       }
     ]
   }

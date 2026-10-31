@@ -2,7 +2,7 @@
 
 **Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
 **Routes** : `/events` (liste, § 2.2) ;
-- `/events/{id}` → `/events/{id}/{tab}`, `tab` ∈ `games` · `pitches` (+ `/en/…`)
+- `/events/{id}` → `/events/{id}/{tab}`, `tab` ∈ `competitions` · `info` · `games` · `pitches` · `progress` · `ranking` · `stats` (+ `/en/…`)
 - `/groups/{season}/{code}` → `/groups/{season}/{code}/{tab}`, mêmes onglets (+ `/en/…`)
 
 **Remplace** : `kpmatchs.php` / `kpterrains.php` en mode `event=E` ou `Compet=*&Group=G` (choix « Tous »)
@@ -31,7 +31,8 @@ Fil d'Ariane : Accueil › {événement}            (vue événement)
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **`/events/{id}`** et **`/groups/{season}/{code}`** redirigent (302) vers l'onglet `games`.
+- **`/events/{id}`** redirige (302) vers l'onglet **`competitions`** (maquettes du 22/10/2026, § 2.3) ;
+  **`/groups/{season}/{code}`** vers l'onglet `games`.
 - **En-tête** :
   - événement : `libelle`, `place`, `logo`, dates de `GET /event/{id}/competitions` ;
     « Suivre en direct » → `{app2}/event/{id}` ;
@@ -61,7 +62,8 @@ distinguent par un libellé (« Événement », « Groupe de compétitions », �
 marine plein pour l'événement et le groupe (`data-kind`), filet bleu sur fond blanc pour la compétition. « Suivre en
 direct » est un bouton rouge (point clignotant, nouvel onglet) dans les trois en-têtes.
 
-Sous l'en-tête d'un événement, le panneau **« Compétitions de cet événement »** liste chaque compétition avec
+*Remplacé par l'onglet Compétitions (§ 2.3, maquettes du 22/10/2026) ; règles conservées :* l'onglet
+**Compétitions** liste chaque compétition avec
 « {n} journée(s) sur {total} de la compétition » (ou « Toutes les journées »), un lien vers sa vue dans l'événement et
 un lien **« Voir la compétition entière »** (`/competitions/{s}/{c}?event={id}`), utile quand l'événement ne
 couvre que quelques journées.
@@ -72,7 +74,7 @@ France : PlayOff Hommes, PlayOff Dames, finales U18, U15, N3), ou réunir **tout
 (même lieu, même période). Dans le second cas, l'événement est la meilleure vue du groupe : on y reste.
 api2 indique `single_group` (toutes les compétitions publiées de l'événement ont le même groupe) ; alors :
 
-- le panneau « Compétitions de cet événement » n'est **pas affiché** (les puces suffisent à naviguer) ;
+- l'onglet Compétitions n'affiche **pas** « {n} journée(s) sur {total} » ni « Voir la compétition entière » ;
 - l'onglet Infos propose l'abonnement et le lien du calendrier **de l'événement** (`/event/{id}/calendar.ics`) au
   lieu de ceux de la compétition sélectionnée ;
 - le calendrier du site (PAGE_CALENDAR.md, CAL-11) et les fichiers ICS (`URL` des journées) mènent à l'événement.
@@ -86,11 +88,35 @@ toujours aux compétitions. Cas limite assumé : un événement d'un seul groupe
 compétition (ex. une journée de championnat) n'affiche plus le lien « Voir la compétition entière » ; la compétition
 reste accessible depuis la liste des compétitions de la saison et la recherche.
 
+### 2.3 Onglet Compétitions de l'événement (maquettes du 22/10/2026)
+
+Premier onglet de la vue événement (`/events/{id}/competitions`), page d'arrivée de `/events/{id}`. En-tête : bandeau
+marine (nom, lieu et dates, **nombre de compétitions** en grand, « Suivre en direct »). Onglets : **Compétitions**,
+Infos, Matchs, Terrains, Déroulement, Classement, Stats ; pas de puces sur cet onglet.
+
+Une ligne par compétition, dans l'ordre d'api2 :
+- nom (`soustitre2`, sinon `display_title`) en Agency FB, lien vers son onglet Infos dans l'événement ; dessous
+  `display_title` et, pour un événement de plusieurs groupes, « {n} journée(s) sur {total} » et « Voir la
+  compétition entière » (§ 2.0) ;
+- **podium** (médailles 1 à 3, logo, nom, lien vers l'équipe) d'après `GET /competition/{s}/{c}/ranking`, ou « Le
+  classement sera publié à la fin de la compétition. » ;
+- liens **Matchs** (principal), **Déroulement**, **Classement**, restant dans l'événement (`?competition=`).
+
+Un classement indisponible n'empêche pas l'affichage de la ligne (état « publié à la fin »).
+
 ### 2.2 Liste des événements `/events[?year=YYYY]`
 
 Entrée de menu « Événements ». Les événements publiés d'une année (`GET /events/all`, filtre côté app3 sur les
-dates), du plus ancien au plus récent, sous forme de cartes (comme l'accueil) ; puces des années disposant
-d'événements ; année par défaut = l'année courante, sinon la plus récente. Chaque carte mène à `/events/{id}`.
+dates) ; année par défaut = l'année courante, sinon la plus récente. Chaque événement mène à `/events/{id}`.
+
+**Maquettes du 22/10/2026** : texte d'introduction « Un événement réunit plusieurs compétitions ou catégories sur
+un même lieu, le même week-end ou la même semaine. » ; outils : **liste déroulante de l'année** (`year=`) et
+**recherche par nom ou lieu** (`q=`, sans accents ni casse), dans un formulaire GET (appliqué au changement, et à la
+saisie avec JavaScript). **Liste par mois** (mois du premier jour, titre en Agency FB, collant sur grand écran), une
+ligne par événement : dates courtes (« 3–5 juil. ») en Agency FB, nom, lieu. Les événements **à venir** (dernier jour
+≥ aujourd'hui) d'abord, dans l'ordre chronologique, le premier marqué **« Prochain »** (fond pâle et étiquette) ; puis
+**« Déjà joués »**, du plus récent au plus ancien. Aucun résultat : « Aucun événement ne correspond. Essayez un autre
+nom ou une autre saison. »
 
 ### 2.1 Accès à ces pages
 
@@ -143,18 +169,21 @@ Cache : `routeRules` `cache: { maxAge: 60, swr: true }` sur `/events/**` et `/gr
 
 ## 6. Critères d'acceptation
 
-- **EVT-01** — `/events/{id}` redirige (302) vers `/events/{id}/games` (préfixe `/en` conservé).
+- **EVT-01** — `/events/{id}` redirige (302) vers `/events/{id}/competitions` (préfixe `/en` conservé).
 - **EVT-02** — L'en-tête affiche libellé, lieu, dates, logo s'il existe, et le lien app2 `{app2}/event/{id}`.
 - **EVT-03** — Une puce par compétition de l'événement, menant à `/events/{id}/{onglet}?competition={c}` (sans quitter l'événement).
 - **EVT-06** — Avec `?competition=`, seuls les matchs de cette compétition sont listés (Matchs et Terrains), sa puce est courante, le PDF des matchs est celui de cette compétition ; un code inconnu est ignoré.
 - **EVT-07** — La vue événement propose les onglets Infos, Déroulement, Classement et Stats d'une compétition (la première par défaut), « Toutes » grisée sur ces onglets.
 - **EVT-04** — Les matchs de toutes les compétitions de l'événement sont listés, chacun avec sa compétition.
 - **EVT-05** — Événement inconnu ou sans compétition publiée → page 404 du site.
-- **EVT-08** — L'en-tête d'un événement porte le libellé « Événement » et `data-kind="event"` ; celui d'une compétition « Compétition » ; « Suivre en direct » est un bouton.
-- **EVT-09** — Le panneau des compétitions de l'événement indique « n journée(s) sur total » et lie la compétition entière ; il n'est affiché que si les compétitions viennent de **groupes différents**.
+- **EVT-08** — L'en-tête d'un événement est un bandeau marine (`data-kind="event"`) ; celui d'une compétition est compact ; ni l'un ni l'autre ne porte de libellé en capitales (« Événement », « Compétition »), cf. maquettes du 22/10/2026 ; « Suivre en direct » est un bouton.
+- **EVT-09** — L'onglet Compétitions indique « n journée(s) sur total » et lie la compétition entière, seulement si les compétitions viennent de **groupes différents**.
+- **EVT-11** — Onglet Compétitions : une ligne par compétition avec son podium (médailles, logos, liens équipe) ou « publié à la fin », et les liens Matchs / Déroulement / Classement restant dans l'événement ; le bandeau affiche le nombre de compétitions.
 - **EVT-10** — Événement d'un seul groupe : l'onglet Infos propose l'abonnement, le lien à copier et le téléchargement du calendrier **de l'événement** (`/event/{id}/calendar.ics`) ; sinon ceux de la compétition sélectionnée.
 - **EVL-01** — `/events` liste les événements de l'année demandée, chacun menant à `/events/{id}`.
 - **EVL-02** — Les années proposées sont celles des événements datés ; un événement à cheval sur deux années figure dans les deux.
+- **EVL-03** — Les événements sont groupés par mois : à venir d'abord (chronologique, le premier étiqueté « Prochain »), puis « Déjà joués » (du plus récent au plus ancien).
+- **EVL-04** — `q=` filtre par nom ou lieu, sans tenir compte des accents ni de la casse ; l'année est une liste déroulante d'un formulaire GET.
 - **GRP-01** — `/groups/{s}/{c}` redirige (302) vers `/groups/{s}/{c}/games`.
 - **GRP-02** — L'en-tête affiche le libellé du groupe (anglais sous `/en` s'il existe), la saison et le lien app2 `{app2}/group/{s}/{c}`.
 - **GRP-03** — Une puce par compétition du groupe, menant à `/competitions/{s}/{c}/{onglet}` (sans paramètre `event`).

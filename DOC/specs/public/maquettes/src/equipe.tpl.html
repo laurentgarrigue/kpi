@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avranches I</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.team-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 24px; align-items: center; padding: 10px 0 28px; border-bottom: 1px solid var(--line); }
+.team-head > img { width: 120px; height: 120px; object-fit: contain; }
+.team-head h1 { font-size: 64px; }
+.team-head .club { margin: 6px 0 0; font-size: 16px; }
+.team-head .club a { font-weight: 600; text-decoration-color: var(--blue); text-underline-offset: 3px; }
+.team-head .colors { width: 70px; height: 120px; object-fit: contain; }
+
+/* The medal count, the team's story in three numbers. */
+.tally { display: flex; flex-wrap: wrap; gap: 14px 40px; padding: 26px 0; }
+.tally div { display: grid; grid-template-columns: auto auto; gap: 0 12px; align-items: center; }
+.tally .n { font: 400 72px/0.85 var(--display); font-variant-numeric: tabular-nums; grid-row: span 2; }
+.tally b { font-size: 15px; }
+.tally small { color: var(--muted); font-size: 13px; }
+.tally .g .n { color: var(--gold); } .tally .s .n { color: var(--silver); } .tally .b .n { color: var(--bronze); }
+
+.honours { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 0 24px; padding-bottom: 56px; }
+.honours h2 { grid-column: 1 / -1; }
+.honours .y { margin: 0; font: 400 28px/1 var(--display); color: var(--blue-deep); padding: 12px 0; border-top: 2px solid var(--navy); }
+.honours ul { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--navy); }
+.honours li { display: grid; grid-template-columns: minmax(0, 1fr) 60px; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.honours li:first-child { border-top: 0; }
+.honours li a { text-decoration: none; }
+.honours li a:hover { text-decoration: underline; }
+.honours li.phase a { color: var(--muted); }
+.honours li.phase small { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.honours .rk { justify-self: end; display: inline-flex; align-items: center; gap: 6px; font: 400 22px/1 var(--display); font-variant-numeric: tabular-nums; }
+.honours li.medal1 a, .honours li.medal2 a, .honours li.medal3 a { font-weight: 700; }
+@media (max-width: 700px) {
+  .team-head { grid-template-columns: 72px minmax(0, 1fr); }
+  .team-head > img { width: 72px; height: 72px; }
+  .team-head h1 { font-size: 42px; }
+  .team-head .colors { display: none; }
+  .tally .n { font-size: 54px; }
+  .honours { grid-template-columns: 1fr; }
+  .honours .y { border-top: 0; padding-bottom: 4px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap" id="main"></main>
+<script src="maquette.js"></script>
+<script>
+const T = __TEAM__;
+document.getElementById('chrome').innerHTML = siteChrome('Clubs et équipes');
+const won = m => T.honours.filter(h => h.medal === m && h.final_round).length;
+const seasons = Object.entries(T.honours.reduce((m, h) => ((m[h.season] ??= []).push(h), m), {})).sort(([a], [b]) => b - a);
+const first = seasons[seasons.length - 1]?.[0];
+document.getElementById('main').innerHTML = `
+  <nav class="crumbs" aria-label="Fil d'Ariane"><a href="accueil.html">Accueil</a> › <a href="clubs.html">Clubs et équipes</a> › ${esc(T.label)}</nav>
+  <header class="team-head">
+    ${T.logo ? `<img src="${KPI_IMG}${T.logo}" alt="">` : ''}
+    <div><h1>${esc(T.label)}</h1><p class="club">Équipe du <a href="clubs.html?club=${T.club.code}">${esc(titleCase(T.club.label))}</a></p></div>
+    ${T.colors?.image ? `<img class="colors" src="${KPI_IMG}${T.colors.image}" alt="Tenue de l'équipe">` : ''}
+  </header>
+  <section class="tally" aria-label="Médailles">
+    <div class="g"><span class="n">${won(1)}</span><b>titres</b><small>1res places</small></div>
+    <div class="s"><span class="n">${won(2)}</span><b>deuxièmes places</b><small>médailles d'argent</small></div>
+    <div class="b"><span class="n">${won(3)}</span><b>troisièmes places</b><small>médailles de bronze</small></div>
+  </section>
+  <section class="honours" aria-labelledby="h"><h2 class="section" id="h">Palmarès depuis ${first}</h2>
+    ${seasons.map(([y, list]) => `<p class="y">${y}</p><ul>${list.map(h => `<li class="${h.final_round ? '' : 'phase'} ${h.medal ? `medal${h.medal}` : ''}">
+      <span><a href="${h.competition.code === 'NPOH' ? 'classement.html' : '#'}">${esc(h.competition.display_title)}</a>${h.final_round ? '' : '<small>phase de qualification</small>'}</span>
+      <span class="rk">${h.medal ? `<span class="medal m${h.medal}"></span>` : ''}${h.rank}${h.rank === 1 ? 'er' : 'e'}</span></li>`).join('')}</ul>`).join('')}
+  </section>`;
+demoBar();
+</script>
+</body>
+</html>

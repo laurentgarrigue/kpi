@@ -20,6 +20,17 @@ export interface TeamHonour {
   final_round: boolean
 }
 
+/** Titles, second and third places of final rounds (TEA-08): what a team won, not its qualifications. */
+export function medalTally(honours: readonly TeamHonour[]): Record<1 | 2 | 3, number> {
+  const tally = { 1: 0, 2: 0, 3: 0 }
+  for (const honour of honours) {
+    if (honour.final_round && honour.medal) {
+      tally[honour.medal] += 1
+    }
+  }
+  return tally
+}
+
 /** Honours grouped by season, in api2 order (most recent season first): one season heading per group (TEA-07). */
 export function honoursBySeason(honours: readonly TeamHonour[]): { season: string, honours: TeamHonour[] }[] {
   const groups: { season: string, honours: TeamHonour[] }[] = []

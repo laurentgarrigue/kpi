@@ -102,6 +102,7 @@ les volumes restent faibles.
   attente (app4) envoie l'e-mail de confirmation.
 - **FRM-08** — L'export CSV / Excel contient toutes les inscriptions du formulaire (app4, droits vérifiés).
 - **FRM-09** — `app:forms:purge` supprime les inscriptions échues et conserve le nombre d'inscrits.
+- **FRM-12** — (maquettes du 22/10/2026) Champs sur deux colonnes (une sur mobile ; zones de texte et choix sur toute la largeur), « facultatif » écrit à côté des champs optionnels au lieu de l'astérisque des obligatoires ; choix (boutons radio, cases) en cartes ; nombres avec boutons − / + (JavaScript, le champ reste saisissable). Les **sections** et le **récapitulatif avec total** de la maquette attendent des données absentes (section d'un champ, prix d'une option ou d'une quantité) : hors périmètre tant qu'api2 ne les fournit pas.
 - **FRM-10** — Le formulaire rattaché à un événement ou une compétition est proposé sur leur page.
 
 ## 8. Décisions (11/10/2026)

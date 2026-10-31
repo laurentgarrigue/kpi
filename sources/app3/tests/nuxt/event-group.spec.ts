@@ -27,27 +27,44 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(live.text()).toContain('Suivre en direct')
   })
 
-  it('EVT-08: the header says it is an event; a competition says it is a competition', async () => {
+  it('EVT-08: the event header is a navy band; neither header carries a capitalised « Event » / « Competition » label', async () => {
     const event = (await mountRoute('/events/77/games')).find('[data-testid="scope-header"]')
     expect(event.attributes('data-kind')).toBe('event')
-    expect(event.find('[data-testid="scope-kind"]').text()).toBe('Événement')
+    expect(event.find('[data-testid="scope-kind"]').exists()).toBe(false)
     const competition = (await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="competition-header"]')
-    expect(competition.find('[data-testid="competition-kind"]').text()).toBe('Compétition')
+    expect(competition.find('[data-testid="competition-kind"]').exists()).toBe(false)
   })
 
-  it('EVT-09: the competitions of an event of several groups are listed with their gamedays held at the event, and link to the whole competition', async () => {
-    const panel = (await mountRoute('/events/79/games')).find('[data-testid="event-competitions"]')
-    const [other, rat] = panel.findAll('[data-competition]')
+  it('EVT-09: an event of several groups shows the gamedays held at the event and links to the whole competition', async () => {
+    const rows = (await mountRoute('/events/79/competitions')).findAll('[data-testid="event-competitions"] [data-competition]')
+    const [other, rat] = rows
     expect(other!.attributes('data-competition')).toBe('RDV')
     expect(rat!.find('[data-testid="event-gamedays"]').text()).toBe('Toutes les journées de la compétition')
     expect(rat!.find('[data-testid="competition-full-link"]').attributes('href')).toBe('/competitions/2999/RAT?event=79')
-    expect(rat!.find('a').attributes('href')).toBe('/events/79/games?competition=RAT')
+    expect(rat!.find('h2 a').attributes('href')).toBe('/events/79/info?competition=RAT')
   })
 
-  it('EVT-09: an event of a single group has no competitions panel: its chips are enough', async () => {
-    const wrapper = await mountRoute('/events/77/games')
-    expect(wrapper.find('[data-testid="event-competitions"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="competition-chips"] a')).toHaveLength(3)
+  it('EVT-09: an event of a single group lists its competitions without gamedays nor whole-competition links', async () => {
+    const wrapper = await mountRoute('/events/77/competitions')
+    expect(wrapper.findAll('[data-testid="event-competitions"] [data-competition]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="event-gamedays"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="competition-full-link"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="competition-chips"]').exists()).toBe(false)
+  })
+
+  it('EVT-11: one row per competition with its podium, or « published at the end », and links kept in the event', async () => {
+    const wrapper = await mountRoute('/events/77/competitions')
+    expect(wrapper.find('[data-testid="scope-count"]').text()).toContain('2')
+    expect(wrapper.findAll('[data-testid="results-tabs"] a').map(tab => tab.text())[0]).toBe('Compétitions')
+    const rcp = wrapper.find('[data-competition="RCP"]')
+    expect(rcp.findAll('[data-testid="event-podium"] li [data-kind="team"]').map(team => team.text())).toEqual(['Equipe Echo', 'Equipe Golf', 'Equipe Foxtrot'])
+    expect(rcp.findAll('[data-testid="competition-links"] a').map(link => link.attributes('href'))).toEqual([
+      '/events/77/games?competition=RCP', '/events/77/progress?competition=RCP', '/events/77/ranking?competition=RCP',
+    ])
+    expect(wrapper.find('[data-competition="RCH"] [data-testid="podium-later"]').exists()).toBe(true)
+    // A ranking that cannot be read does not hide the competition.
+    const other = (await mountRoute('/events/79/competitions')).find('[data-competition="RDV"]')
+    expect(other.find('[data-testid="podium-later"]').exists()).toBe(true)
   })
 
   it('EVT-10: the info tab of a single-group event subscribes to the event calendar', async () => {
@@ -69,17 +86,17 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(chips.map(chip => chip.attributes('aria-current'))).toEqual([undefined, undefined, 'page'])
     expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCP&lang=fr')
     const pitches = await mountRoute('/events/77/pitches?competition=RCP&day=2999-04-02')
-    expect(pitches.findAll('[data-testid="pitch-grid"] [data-game]').map(game => game.attributes('data-game'))).toEqual(['9412', '9414'])
+    expect(pitches.findAll('[data-testid="pitch-board"] [data-game]').map(game => game.attributes('data-game'))).toEqual(['9412', '9414'])
   })
 
   it('EVT-07: the event offers the info, progress, ranking and stats tabs of a competition, kept in the event', async () => {
     const tabs = (await mountRoute('/events/77/ranking?competition=RCP')).findAll('[data-testid="results-tabs"] a')
-    expect(tabs.map(tab => tab.text())).toEqual(['Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
+    expect(tabs.map(tab => tab.text())).toEqual(['Compétitions', 'Infos', 'Matchs', 'Terrains', 'Déroulement', 'Classement', 'Stats'])
     expect(tabs.map(tab => tab.attributes('href'))).toEqual([
-      '/events/77/info?competition=RCP', '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP',
+      '/events/77/competitions', '/events/77/info?competition=RCP', '/events/77/games?competition=RCP', '/events/77/pitches?competition=RCP',
       '/events/77/progress?competition=RCP', '/events/77/ranking?competition=RCP', '/events/77/stats?competition=RCP',
     ])
-    expect(tabs[4]!.attributes('aria-current')).toBe('page')
+    expect(tabs[5]!.attributes('aria-current')).toBe('page')
   })
 
   it('EVT-07: ranking, info, progress and stats show the selected competition; « All » is greyed out (not applicable)', async () => {
@@ -93,7 +110,7 @@ describe('event view (PAGE_EVENT_GROUP.md)', () => {
     expect(wrapper.find('[data-testid="competition-chips"] a[aria-current="page"]').text()).toBe('Finale')
     expect((await mountRoute('/events/77/info?competition=RCH')).findAll('[data-testid="gameday"]').length).toBeGreaterThan(0)
     expect((await mountRoute('/events/77/progress?competition=RCP')).find('[data-testid="progress-horizontal"]').exists()).toBe(true)
-    expect((await mountRoute('/events/77/stats?competition=RCH')).find('[data-testid="stat-table"]').exists()).toBe(true)
+    expect((await mountRoute('/events/77/stats?competition=RCH')).find('[data-testid="stat-row"]').exists()).toBe(true)
   })
 
   it('EVT-07: without competition on such a tab, the first competition of the event is shown', async () => {
@@ -139,13 +156,13 @@ describe('group view (PAGE_EVENT_GROUP.md)', () => {
   it('GRP-03: one chip per competition, without event parameter', async () => {
     const chips = (await mountRoute('/groups/2999/TSTRES/games')).findAll('[data-testid="competition-chips"] a')
     expect(chips.slice(1).map(chip => chip.attributes('href'))).toEqual([
-      '/competitions/2999/RCH/games', '/competitions/2999/RCP/games', '/competitions/2999/RMU/games', '/competitions/2999/RAT/games',
+      '/competitions/2999/RCH/games', '/competitions/2999/RAT/games', '/competitions/2999/RCP/games', '/competitions/2999/RMU/games',
     ])
   })
 
   it('AGG-04: games list PDF by the competitions of the group', async () => {
     const wrapper = await mountRoute('/groups/2999/TSTRES/games')
-    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH,RCP,RMU,RAT&lang=fr')
+    expect(wrapper.find('[data-testid="games-pdf"]').attributes('href')).toBe('https://kpi.localhost/api2/pdf/games-list?season=2999&competition=RCH,RAT,RCP,RMU&lang=fr')
   })
 
   it('GRP-04: an unknown group is the site 404', async () => {

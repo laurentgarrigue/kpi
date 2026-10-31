@@ -12,13 +12,20 @@ const code = computed(() => String(route.params.code))
 const eventId = computed(() => (route.query.event ? Number(route.query.event) : undefined))
 
 const { data: competition } = await useApiResource<CompetitionDetails>(() => `/competition/${season.value}/${code.value}`)
-const { data: eventCompetitions } = await useApiResource<EventCompetitions>(
-  () => (eventId.value ? `/event/${eventId.value}/competitions` : null),
-  { notFoundIsError: false },
-)
-
 const current = computed(() => COMPETITION_TABS.find(tab => route.path.endsWith(`/${tab}`)) ?? null)
 const main = computed(() => mainEvent(competition.value?.events ?? [], MAIN_EVENT_MIN_SHARE, eventId.value))
+// Competitions of the event: siblings with `?event=` (CMP-03), number of competitions of the event card (CMP-18).
+const { data: linkedEventCompetitions } = await useApiResource<EventCompetitions>(
+  () => {
+    const id = eventId.value ?? main.value?.id
+    return id ? `/event/${id}/competitions` : null
+  },
+  { notFoundIsError: false },
+)
+const eventCompetitions = computed(() => (eventId.value ? linkedEventCompetitions.value : null))
+const mainEventCompetitionCount = computed(() => (main.value && linkedEventCompetitions.value?.event.id === main.value.id
+  ? linkedEventCompetitions.value.competitions.length
+  : undefined))
 const pathTo = (target: string, tab: CompetitionTab | null) => localePath(competitionPath(season.value, target, tab ?? undefined, eventId.value))
 
 const siblings = computed(() => (eventCompetitions.value?.competitions ?? competition.value?.siblings ?? []).map(sibling => ({
@@ -50,7 +57,12 @@ provideCupCompetitions(() => (competition.value ? [competition.value] : []))
   <div v-if="competition" class="space-y-6">
     <SiteBreadcrumb :items="breadcrumb" />
     <ResultsCompetitionHeader :competition="competition" />
-    <ResultsEventBanner :events="competition.events" :main="main" :scope="competition.display_title" />
+    <ResultsEventBanner
+      :events="competition.events"
+      :main="main"
+      :scope="competition.display_title"
+      :competition-count="mainEventCompetitionCount"
+    />
     <ResultsCompetitionChips v-if="siblings.length > 1" :items="siblings" />
     <ResultsTabs :tabs="tabs" :current="current ?? ''" />
     <NuxtPage :competition="competition" />

@@ -47,9 +47,32 @@ describe('editorial pages (PAGE_CONTENT.md § 2)', () => {
     const links = wrapper.findAll('[data-testid="page-toc"] a')
     expect(links.map(link => [link.text(), link.attributes('href')])).toEqual([['Histoire', '#histoire'], ['Règles', '#regles'], ['Pratiquer', '#pratiquer']])
     expect(wrapper.find('[data-testid="content-body"] h2#regles').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="page-toc"]').attributes('aria-label')).toBe('Sommaire')
+    expect(wrapper.find('[data-testid="page-toc"]').attributes('aria-label')).toBe('Sur cette page')
+
+    // CNT-08: the summary follows the reading.
+    expect(wrapper.find('[data-testid="page-toc"] a[aria-current]').exists()).toBe(false)
 
     const child = await mountRoute('/le-kayak-polo/arbitrage')
     expect(child.find('[data-testid="page-toc"]').exists()).toBe(false)
+  })
+})
+
+describe('reading (PAGE_CONTENT.md § 2 bis)', () => {
+  it('CNT-08: « On this page » marks the heading being read', async () => {
+    const callbacks: IntersectionObserverCallback[] = []
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: IntersectionObserverCallback) {
+        callbacks.push(callback)
+      }
+
+      observe() {}
+      disconnect() {}
+    })
+    const wrapper = await mountRoute('/le-kayak-polo')
+    const heading = wrapper.find('[data-testid="content-body"] h2#regles').element
+    callbacks.at(-1)!([{ isIntersecting: true, target: heading } as unknown as IntersectionObserverEntry], {} as IntersectionObserver)
+    await nextTick()
+    expect(wrapper.find('[data-testid="page-toc"] a[aria-current="location"]').attributes('href')).toBe('#regles')
+    vi.unstubAllGlobals()
   })
 })

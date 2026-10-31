@@ -35,7 +35,11 @@ describe('form page (FEATURE_FORMS.md § 3)', () => {
     expect(form.find('#field-email').attributes()).toMatchObject({ type: 'email', name: 'email', autocomplete: 'email' })
     expect(form.find('#field-phone').attributes('type')).toBe('tel')
     expect(form.find('#field-players').attributes()).toMatchObject({ type: 'number', min: '5', max: '10' })
-    expect(form.find('label[for="field-email"]').text()).toBe('E-mail *')
+    // FRM-12: optional fields say so; required ones carry nothing more than their label.
+    expect(form.find('label[for="field-email"]').text()).toBe('E-mail')
+    expect(form.find('label[for="field-phone"]').text()).toBe('Téléphone facultatif')
+    expect(form.find('#field-email').attributes('required')).toBeDefined()
+    expect(form.find('[data-field="players"] [data-step="1"]').exists()).toBe(true)
     expect(form.findAll('#field-club option').map(option => option.attributes('value'))).toContain('C001')
     expect(form.find('[data-testid="form-privacy"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="form-privacy"]').text()).toContain('90 jours')
@@ -120,7 +124,7 @@ describe('linked content (NEWS-09, FRM-10)', () => {
 
   it('NEWS-09: the competition and club pages show their latest news; nothing when there is none', async () => {
     expect((await mountRoute('/competitions/2999/RCH/games')).find('[data-testid="linked-news"]').exists()).toBe(true)
-    expect((await mountRoute('/clubs/C001')).find('[data-testid="linked-news"] h2').text()).toBe('Actualités')
+    expect((await mountRoute('/clubs?club=C001')).find('[data-testid="linked-news"] h2').text()).toBe('Actualités')
     expect((await mountRoute('/competitions/2999/RCP/games')).find('[data-testid="linked-news"]').exists()).toBe(false)
   })
 })

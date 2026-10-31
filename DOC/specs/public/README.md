@@ -39,6 +39,7 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [PAGE_CONTENT.md](PAGE_CONTENT.md) | Pages éditoriales, menu « Le kayak-polo », accueil éditorial | 4a | ✅ Validée (11/10/2026) — 🛠 Implémentée (à livrer) |
 | [FEATURE_FORMS.md](FEATURE_FORMS.md) | Formulaires d'inscription, liste publique, HelloAsso, anti-spam, RGPD | 4b | ✅ Validée (11/10/2026) — 🛠 Implémentée (à livrer) |
 | `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |
+| [maquettes/](maquettes/README.md) | Modernisation de l'interface : maquettes HTML de toutes les pages, décisions de design | — | ✅ Validées (22/10/2026) — specs à mettre à jour page par page |
 
 > Les specs de l'**administration** (app4) restent dans [DOC/specs/](../) (`PAGE_*.md`) ; les écrans du module
 > éditorial et des formulaires : [PAGE_CMS.md](../PAGE_CMS.md).

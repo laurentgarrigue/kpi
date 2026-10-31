@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Déroulement PlayOff Hommes</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.intro { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin: 22px 0 18px; }
+.intro p { margin: 0; color: var(--muted); font-size: 14px; }
+.intro button { font: inherit; font-size: 14px; background: none; border: 0; padding: 0; color: var(--blue-deep); text-decoration: underline; cursor: pointer; }
+.intro button[hidden] { display: none; }
+
+/* One column per round, as designed by the organiser (2 to 5). Wider than the page: it scrolls sideways. */
+.flow-scroll { overflow-x: auto; margin-bottom: 48px; padding-bottom: 6px; }
+.flow { display: grid; grid-template-columns: repeat(var(--rounds), minmax(230px, 1fr)); min-width: calc(var(--rounds) * 230px); }
+/* Each round centred on the height of the tallest one, so the flow reads from pools to final. */
+.round { display: flex; flex-direction: column; justify-content: center; padding: 0 18px; border-left: 1px solid var(--line); min-width: 0; }
+.round > .phase:last-child { margin-bottom: 0; }
+.round:first-child { padding-left: 0; border-left: 0; }
+.round > h2 { display: flex; align-items: baseline; gap: 10px; font: 400 24px/1.1 var(--display); color: var(--blue-deep); margin: 0 0 14px; }
+.round > h2 small { font: 400 13px var(--text); color: var(--muted); }
+.phase { margin: 0 0 22px; }
+.phase h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; font-weight: 700; }
+.phase.final h3 { color: var(--gold); }
+.phase .duel + .duel { border-top: 1px solid var(--line); }
+
+.pool { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.pool th { white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--muted); text-align: right; padding: 0 0 3px 6px; }
+.pool th:first-child, .pool th:nth-child(2) { text-align: left; padding-left: 0; }
+.pool td { border-top: 1px solid var(--line); padding: 5px 0 5px 6px; text-align: right; }
+.pool td.rk { width: 18px; padding-left: 0; text-align: left; color: var(--muted); }
+.pool td.tm { text-align: left; max-width: 0; width: 100%; }
+.pool td.pts { font-weight: 700; }
+.pool .t { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pool .t.tbd .name { font-style: italic; color: var(--muted); }
+.pool .t .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo { width: 20px; height: 20px; }
+
+/* Following a team: every appearance lights up, the rest steps back. */
+.flow [data-team] { cursor: pointer; }
+.flow [data-team]:hover .name { text-decoration: underline; }
+.following .flow .duel, .following .flow tr { opacity: .4; }
+.following .flow .duel.hl, .following .flow tr.hl { opacity: 1; }
+.flow .t.hl .name, .flow tr.hl .name { color: var(--blue-deep); font-weight: 700; }
+.flow tr.hl td, .flow .t.hl { background: color-mix(in srgb, var(--sky) 22%, transparent); border-radius: 3px; }
+
+@media (max-width: 600px) {
+  .flow-scroll { overflow: visible; }
+  .flow { grid-template-columns: 1fr; min-width: 0; row-gap: 26px; }
+  .round { padding: 0; border-left: 0; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap">
+  <div class="intro">
+    <p>Touchez une équipe pour suivre son parcours.</p>
+    <button type="button" id="clear" hidden>Ne plus suivre <span id="who"></span></button>
+  </div>
+  <div class="flow-scroll"><div class="flow" id="flow"></div></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const DATASETS = {
+  npoh: { comp: __COMP__, chart: __CHART__[0], event: __EVENT__ },
+  cfh: { comp: __CFH_COMP__, chart: __CFH_CHART__[0], event: { competitions: [1, 2, 3] } },
+};
+let current = 'npoh';
+let followed = null;
+
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+
+function teamCell(n, label, logo) {
+  return `<span class="t"${n ? ` data-team="${n}"` : ''}>${logoImg(logo)}<span class="name">${esc(label)}</span></span>`;
+}
+
+function poolHtml(phase) {
+  // Teams not drawn yet (« (Team 1) ») have no figures: dashes, not « null ».
+  const num = v => v ?? '–';
+  const rows = [...phase.teams].sort((x, y) => (x.t_clt ?? 99) - (y.t_clt ?? 99)).map(t => {
+    const drawn = t.t_pld !== null;
+    return `<tr data-row="${t.t_number}"><td class="rk">${num(t.t_clt)}</td><td class="tm">${drawn ? teamCell(t.t_number, t.t_label, t.t_logo) : `<span class="t tbd"><span class="logo"></span><span class="name">${esc(slotLabel(t.t_label))}</span></span>`}</td><td class="pts">${drawn ? t.t_pts / 100 : '–'}</td><td>${num(t.t_pld)}</td><td>${drawn ? `${t.t_diff > 0 ? '+' : ''}${t.t_diff}` : '–'}</td></tr>`;
+  }).join('');
+  return `<table class="pool"><thead><tr><th scope="col"><span class="sr-only">Rang</span></th><th scope="col">Équipe</th><th scope="col" title="Points">Pts</th><th scope="col" title="Matchs joués">J</th><th scope="col" title="Différence de buts">+/−</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function render() {
+  const { comp, chart, event } = DATASETS[current];
+  document.getElementById('head').innerHTML = competitionHeader(comp, 'Déroulement', event.competitions.length);
+  const rounds = Object.entries(chart.rounds).sort(([a], [b]) => a - b);
+  const flow = document.getElementById('flow');
+  flow.style.setProperty('--rounds', rounds.length);
+  flow.innerHTML = rounds.map(([n, round], i) => {
+    // Phases keep the organiser's order (the numeric prefix of their key).
+    const phases = Object.entries(round.phases).sort(([a], [b]) => a.localeCompare(b)).map(([, p]) => p);
+    return `<section class="round" aria-labelledby="r${n}"><h2 class="sr-only" id="r${n}">Tour ${i + 1}</h2>
+      ${phases.map(p => `<div class="phase${/^finale$/i.test(p.libelle) ? ' final' : ''}"><h3>${/^finale$/i.test(p.libelle) ? '<span class="medal m1"></span>' : ''}${esc(p.libelle)}</h3>
+        ${p.type === 'C' && p.teams?.length ? poolHtml(p) : (p.games ?? []).map(g => duelHtml(g, { teamAttr: true })).join('')}</div>`).join('')}
+    </section>`;
+  }).join('');
+  followed = null;
+  follow(null);
+}
+
+function follow(n) {
+  followed = n === followed ? null : n;
+  document.body.classList.toggle('following', followed !== null);
+  document.querySelectorAll('#flow [data-team]').forEach(el => el.classList.toggle('hl', el.dataset.team === followed));
+  document.querySelectorAll('#flow .duel').forEach(d => d.classList.toggle('hl', !!d.querySelector('.t.hl')));
+  document.querySelectorAll('#flow tr[data-row]').forEach(r => r.classList.toggle('hl', r.dataset.row === followed));
+  document.getElementById('clear').hidden = followed === null;
+  document.getElementById('who').textContent = followed ? document.querySelector(`#flow [data-team="${followed}"] .name`)?.textContent ?? '' : '';
+}
+document.getElementById('flow').addEventListener('click', e => { const t = e.target.closest('[data-team]'); if (t) follow(t.dataset.team); });
+document.getElementById('clear').addEventListener('click', () => follow(followed));
+
+render();
+const bar = demoBar('<button type="button" id="ds">Voir un tableau à 4 tours</button>');
+bar.querySelector('#ds').addEventListener('click', e => {
+  current = current === 'npoh' ? 'cfh' : 'npoh';
+  e.target.textContent = current === 'npoh' ? 'Voir un tableau à 4 tours' : 'Revenir au tableau à 3 tours';
+  render();
+});
+</script>
+</body>
+</html>
