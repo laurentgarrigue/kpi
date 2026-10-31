@@ -532,7 +532,7 @@ const formatDate = (dateStr: string) => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-            <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300">{{ player.categ }}-{{ player.sexe }}</td>
+            <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" /></td>
 
             <!-- Pagaie -->
             <td class="px-3 py-1 text-sm">
@@ -584,7 +584,7 @@ const formatDate = (dateStr: string) => {
                 </NuxtLink>
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300">{{ player.numeroClub }}</td>
-              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm">
                 <span :class="player.certifCK === 'OUI' ? 'text-success-500' : 'text-danger-600 dark:text-danger-400'">
@@ -654,7 +654,7 @@ const formatDate = (dateStr: string) => {
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.category') }}:</span>
-            <span>{{ player.categ }}-{{ player.sexe }}</span>
+            <span><AdminAgeCategory :code="player.categ" :sexe="player.sexe" /></span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.paddle') }}:</span>

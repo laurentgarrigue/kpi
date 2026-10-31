@@ -14,7 +14,7 @@ export interface PoolReferee {
   nom: string
   prenom: string
   sexe: string
-  categ: string
+  categ: string | null
   /** true when matric < 2_000_000 (federation licence) → read-only here. */
   licensed: boolean
   /** 'A' = active referee, 'X' = inactive. */

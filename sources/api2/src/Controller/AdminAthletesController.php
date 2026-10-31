@@ -457,9 +457,10 @@ class AdminAthletesController extends AbstractController
     private function fetchPresences(int $matric, string $season): array
     {
         $sql = "SELECT ce.Code_compet, ce.Libelle AS equipe,
-                       cej.Numero, cej.Capitaine, cej.Categ
+                       cej.Numero, cej.Capitaine, lc.Naissance
                 FROM kp_competition_equipe_joueur cej
                 JOIN kp_competition_equipe ce ON ce.Id = cej.Id_equipe
+                LEFT JOIN kp_licence lc ON lc.Matric = cej.Matric
                 WHERE cej.Matric = ?
                   AND ce.Code_saison = ?
                   AND ce.Code_compet != 'POOL'
@@ -472,7 +473,8 @@ class AdminAthletesController extends AbstractController
             'equipe' => $row['equipe'],
             'numero' => $row['Numero'] !== null ? (int) $row['Numero'] : null,
             'capitaine' => $row['Capitaine'] ?? '-',
-            'categorie' => $row['Categ'] ?? '',
+            // Derived from birth date + season, never the stored Categ cache (ADR 0001); null when unknown
+            'categorie' => $this->ageCategories->categoryFor($row['Naissance'], $season)?->code,
         ], $rows);
     }
 

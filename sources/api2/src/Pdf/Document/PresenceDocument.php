@@ -2,6 +2,7 @@
 
 namespace App\Pdf\Document;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\InvalidPdfRequest;
 use App\Pdf\PdfAccessDenied;
 use App\Pdf\PdfAssets;
@@ -42,6 +43,7 @@ final class PresenceDocument implements PdfDocumentProvider
         private readonly PdfCompetitions $competitions,
         private readonly PdfAssets $assets,
         private readonly PdfLabels $labels,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -218,7 +220,7 @@ final class PresenceDocument implements PdfDocumentProvider
             if ($under21 && !PresencePlayer::isUnder21($player['Naissance'], $request->season)) {
                 continue;
             }
-            $category = (string) $player['Categ'];
+            $category = $this->category($player, $request->season);
             if ($filter !== null && !$under21 && strcasecmp($category, $filter) !== 0) {
                 continue;
             }
@@ -231,7 +233,8 @@ final class PresenceDocument implements PdfDocumentProvider
 
         $sections = [];
         foreach ($groups as $category => $rows) {
-            $sections[] = ['title' => (string) $category, 'rows' => $rows];
+            $title = $category === PresencePlayer::UNKNOWN_CATEGORY ? $category . ' - ' . $labels['player.birthdate_unknown'] : (string) $category;
+            $sections[] = ['title' => $title, 'rows' => $rows];
         }
 
         return [$under21 ? $labels['presence.u21_title'] : $labels['presence.category_title'], $columns, $sections];
@@ -304,7 +307,7 @@ final class PresenceDocument implements PdfDocumentProvider
             'licence' => PresencePlayer::licence((int) $player['Matric'], $player['Reserve'], $player['Origine'], $season),
             'last_name' => PresencePlayer::lastName($player['Nom']),
             'first_name' => PresencePlayer::firstName($player['Prenom']),
-            'category' => (string) $player['Categ'],
+            'category' => $this->category($player, $season),
             'paddle' => PresencePlayer::paddle($player['Pagaie_ECA'], $player['Pagaie_EVI'], $player['Pagaie_MER']),
             'certificate' => (string) $player['Etat_certificat_CK'],
             'club' => (string) $player['Numero_club'],
@@ -312,6 +315,16 @@ final class PresenceDocument implements PdfDocumentProvider
             'birthdate' => self::date($player['Naissance']),
             '_class' => in_array($player['Capitaine'], ['E', 'A', 'X'], true) ? 'pdf-row--muted' : '',
         ];
+    }
+
+    /**
+     * Derived from birth date + season, never the stored Categ cache (ADR 0001); « ? » when unknown.
+     *
+     * @param array<string, mixed> $player
+     */
+    private function category(array $player, string $season): string
+    {
+        return PresencePlayer::category($this->ageCategories->categoryFor($player['Naissance'], $season)?->code);
     }
 
     /**

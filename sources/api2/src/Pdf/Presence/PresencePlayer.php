@@ -36,6 +36,15 @@ final class PresencePlayer
         return isset($equivalent) ? '(' . $equivalent . ')' : (self::PADDLE_BELOW_GREEN[(string) $polo] ?? '');
     }
 
+    /** Printed instead of the age category of a player whose birth date is unknown (CATEGORIE_AGE.md story 9). */
+    public const UNKNOWN_CATEGORY = '?';
+
+    /** Age category shown: « ? » when there is none (unknown birth date). */
+    public static function category(?string $code): string
+    {
+        return $code ?? self::UNKNOWN_CATEGORY;
+    }
+
     /** Role on the sheet: C (captain), - (player), E (staff), A (referee), X (inactive). */
     public static function role(?string $captain): string
     {
