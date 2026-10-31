@@ -92,7 +92,7 @@ class RankingRepository
     public function games(string $season, string $code, RankingSource $source, ?int $team = null): array
     {
         $sql = "SELECT m.Id, m.Id_journee, m.Id_equipeA, m.Id_equipeB, a.Libelle AS LibelleA, b.Libelle AS LibelleB,
-                       m.ScoreA, m.ScoreB, m.Validation, j.Date_debut, j.Lieu
+                       m.ScoreA, m.ScoreB, m.Validation, j.Date_debut, j.Lieu, j.Phase
                 FROM kp_match m
                 JOIN kp_journee j ON j.Id = m.Id_journee
                 LEFT JOIN kp_competition_equipe a ON a.Id = m.Id_equipeA

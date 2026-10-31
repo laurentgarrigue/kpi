@@ -20,7 +20,9 @@ const shown = computed(() => props.rows
   .map((row, index) => ({ row, mark: rankingMark(row, index, props.rows.length, props.qualified, props.eliminated) }))
   .slice(props.from ?? 0, props.to))
 
-const detailed = computed(() => !props.compact && props.type !== 'MULTI')
+// A cup only shows its final ranking: its points come from the phases, not from a league table.
+const withPoints = computed(() => props.type !== 'CP')
+const detailed = computed(() => withPoints.value && !props.compact && props.type !== 'MULTI')
 // Secondary columns are hidden on phones (CMP-21).
 const DETAIL_COLUMNS = [
   { key: 'won', secondary: false },
@@ -41,8 +43,10 @@ const signed = (value: number | undefined) => (value && value > 0 ? `+${value}` 
         <th scope="col" class="w-8 px-1 pb-1.5"><span class="sr-only">{{ $t('results.col.mark') }}</span></th>
         <th scope="col" class="px-1 pb-1.5 text-left">{{ $t('results.col.rank') }}</th>
         <th scope="col" class="px-1 pb-1.5 text-left">{{ $t('results.col.team') }}</th>
-        <th scope="col" class="px-2 pb-1.5 text-right">{{ $t('results.col.points') }}</th>
-        <th scope="col" class="px-2 pb-1.5 text-right">{{ $t('results.col.played') }}</th>
+        <template v-if="withPoints">
+          <th scope="col" class="px-2 pb-1.5 text-right">{{ $t('results.col.points') }}</th>
+          <th scope="col" class="px-2 pb-1.5 text-right">{{ $t('results.col.played') }}</th>
+        </template>
         <template v-if="detailed">
           <th
             v-for="column in DETAIL_COLUMNS"
@@ -67,8 +71,10 @@ const signed = (value: number | undefined) => (value && value > 0 ? `+${value}` 
             <ResultsTeamName :label="row.team.label" :number="row.team.number" :competition="competition" />
           </span>
         </td>
-        <td class="px-2 text-right font-bold">{{ row.points }}</td>
-        <td class="px-2 text-right">{{ row.played }}</td>
+        <template v-if="withPoints">
+          <td class="px-2 text-right font-bold">{{ row.points }}</td>
+          <td class="px-2 text-right">{{ row.played }}</td>
+        </template>
         <template v-if="detailed">
           <td v-for="column in DETAIL_COLUMNS" :key="column.key" class="px-2 text-right" :class="{ 'hidden sm:table-cell': column.secondary }">{{ row[column.key] }}</td>
           <td class="px-2 text-right">{{ signed(row.goal_diff) }}</td>

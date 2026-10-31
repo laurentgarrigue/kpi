@@ -215,6 +215,82 @@ garde le noyau en mémoire).
 
 ---
 
+## Visuels de la compétition et langue (décisions du 2026-10-29, PR suivante)
+
+Spec : [PDF_GOTENBERG.md § 8.4.1](../../specs/PDF_GOTENBERG.md) et § 14. Choisir dans app4 (Compétitions → Visuels)
+une compétition **A** avec bandeau coché, une **B** avec logo coché sans bandeau, une **C** sans visuel, et cocher le
+sponsor de **A**.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | `pdf "$B/pdf/ranking?season=$S&competition=<A>"` | bandeau en tête **à la place** des logos FFCK/CNA, titre dessous ; sponsor au-dessus du pied de chaque page | ☐ |
+| 2 | même document pour **B** | logos FFCK + CNA à gauche (si « KPI/FFCK » coché, sinon aucun), logo de B à droite | ☐ |
+| 3 | même document pour **C** | FFCK + CNA, même si « KPI/FFCK » est décoché (PDF-DESIGN-04) | ☐ |
+| 4 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/teams-groups?season=$S&competition=<C>"` après avoir décoché « KPI/FFCK » | titre seul, sans logo KPI | ☐ |
+| 5 | `pdf "$B/pdf/games-list?season=$S&event=$E"` | visuels de la **première** compétition de l'événement | ☐ |
+| 6 | Feuille de marque d'un match de **A** | bandeau réduit en haut à gauche, sponsor en bas à droite, **une page par match** | ☐ |
+| 7 | app4 en anglais : Équipes → feuille de présence ; Matchs → liste des matchs | un seul lien par document, PDF en anglais ; en français : PDF en français | ☐ |
+| 8 | Feuille de marque d'une compétition internationale, app4 en français | en français (plus d'anglais forcé) | ☐ |
+
+**Compétitions dont un visuel coché est une URL externe** (ignoré dans les PDF, à téléverser dans app4 en attendant
+l'import automatique, § 8.4.1) — 🖥 sur chaque environnement :
+
+```bash
+. docker/.env && docker exec -i ${APPLICATION_NAME}_db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "
+SELECT Code_saison, Code, Libelle,
+       IF(Bandeau_actif = 'O' AND BandeauLink LIKE 'http%', BandeauLink, '') AS bandeau,
+       IF(Logo_actif = 'O' AND LogoLink LIKE 'http%', LogoLink, '') AS logo,
+       IF(Sponsor_actif = 'O' AND SponsorLink LIKE 'http%', SponsorLink, '') AS sponsor
+FROM kp_competition
+WHERE (Bandeau_actif = 'O' AND BandeauLink LIKE 'http%') OR (Logo_actif = 'O' AND LogoLink LIKE 'http%')
+   OR (Sponsor_actif = 'O' AND SponsorLink LIKE 'http%')
+ORDER BY Code_saison DESC, Code;"
+```
+
+---
+
+## Ajustements du 2026-10-30 (même PR)
+
+Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 6.4, § 7.2 à § 7.4, § 8.4.1 et § 14. Choisir une compétition
+**N** d'une section Nationale ou Régionale, une **I** d'une autre section (internationale, tournoi…) et une coupe
+**K** (type CP) ; `$E` un événement à plusieurs compétitions.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/teams-groups?season=$S&competition=<N>"` | saison en haut à droite, à la hauteur de « Équipes » ; ni « Saison » ni code de compétition | ☐ |
+| 2 | Journal : 🖥 `. docker/.env && docker exec -i ${APPLICATION_NAME}_db mariadb -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" -e "SELECT Dates, Users, Actions, Saisons, Competitions, Journal FROM kp_journal WHERE Actions LIKE 'PDF %' ORDER BY Id DESC LIMIT 5"` | une ligne « PDF teams-groups » de l'utilisateur pour la ligne 1 ; aucune ligne pour un PDF public ; app4 Journal les affiche | ☐ |
+| 3 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/presence?season=$S&competition=<N>"` | colonnes Pagaie et Certif. ; statuts « Capitaine », « Staff »… en toutes lettres | ☐ |
+| 4 | même document pour **I** | sans Pagaie ni Certif. | ☐ |
+| 5 | `pdf "$B/pdf/games-list?season=$S&event=$E"` (au moins 30 matchs) | la liste commence en **page 1** ; colonne Compét. avec les libellés ; Phase \| Match sur 2 lignes ; noms d'équipes sur une ligne, centrés ; une colonne Arbitres (principal au-dessus) | ☐ |
+| 6 | `pdf "$B/pdf/games-list?season=$S&competition=<N>"` | pas de colonne Compét. | ☐ |
+| 7 | Feuille de marque d'un match d'une compétition sans bandeau ni logo | logos FFCK et KPI en haut à gauche, une page par match | ☐ |
+| 8 | `pdf "$B/pdf/ranking?season=$S&competition=<K>"` et app3 `/competitions/$S/<K>/ranking` | classement final seul (rang, équipe, médailles), sans Pts ni J | ☐ |
+| 9 | `pdf "$B/pdf/ranking-team-detail?season=$S&competition=<K>"` | matchs de chaque équipe sous le **nom de la phase**, pas sous la date et le lieu | ☐ |
+| 10 | app4 Statistiques → export PDF de plusieurs compétitions | titre et colonne Compétition en libellés, pas en codes | ☐ |
+
+---
+
+## Ajustements du 2026-10-31 (même PR)
+
+Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14. Mêmes compétitions **N** (championnat),
+**K** (coupe) qu'à la section précédente, et une compétition **M** de type MULTI.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/teams-groups?season=$S&competition=<N>"`, puis **M** | une seule liste, pleine largeur, sans « Sans poule » | ☐ |
+| 2 | même document pour **K** | poules côte à côte | ☐ |
+| 3 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/presence?season=$S&competition=<N>"` | arbitres et inactifs sous l'intertitre « Non joueurs », après joueurs et staff | ☐ |
+| 4 | `pdf "$B/pdf/games-list?season=$S&competition=N3"` et l'admin équivalent (lien app4) | les matchs commencent en **page 1** | ☐ |
+| 5 | `games-list` d'une compétition dont des matchs ne sont pas encore attribués | « (1er Poule A) », « (Vainqueur match 12) »… à la place des équipes et arbitres ; Phase / Match sans `[…]` | ☐ |
+| 6 | `games-list`, `ranking-team-detail`, `ranking-phases` | score en gras avec l'équipe vainqueur | ☐ |
+| 7 | Feuille de marque | colonne RD après V, J, R de chaque équipe ; un carton rouge définitif saisi y est coché ; une page par match | ☐ |
+| 8 | app4 Journées → Schéma de **K** → bouton PDF (cases Matchs / Horaires cochées puis décochées) | PDF Gotenberg en colonnes par étape, vainqueur en premier ; nombre de matchs et horaires selon les cases | ☐ |
+| 9 | même chose pour **N** | une carte par journée, matchs sur 3 colonnes | ☐ |
+| 10 | app3 `/competitions/$S/<K>/ranking` → « Classement (PDF) » | `…/api2/pdf/ranking?season=$S&competition=<K>&lang=fr` | ☐ |
+| 11 | Feuille de marque ou instances d'une journée avec département | lieu « Lacville (33) », parenthèse fermante comprise | ☐ |
+
+---
+
 ## Non-régression (à chaque phase, chaque environnement)
 
 | # | Vérification | Attendu | ☐ |

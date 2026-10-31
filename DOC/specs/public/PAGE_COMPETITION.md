@@ -62,8 +62,8 @@ match. Tant que ces pages ne sont pas livrées, on utilise la **même mécanique
 
 **PDF** (API_PUBLIC_RESULTS.md D-P2-2) : liens « PDF » (icône + texte, nouvel onglet) construits par une fonction
 pure `pdfUrl(kind, params)` vers les PDF publics d'api2 (`/api2/pdf/*`, PDF_GOTENBERG.md) avec `season`,
-`competition` (ou `event`) et `lang` explicites : classement (onglet Classement : `ranking`, `ranking-phases` pour
-une coupe), liste des matchs (onglet Matchs : `games-list`). Pas de feuille de marque PDF publique
+`competition` (ou `event`) et `lang` explicites : classement (onglet Classement : `ranking`, y compris pour une
+coupe, dont il montre le classement final), liste des matchs (onglet Matchs : `games-list`). Pas de feuille de marque PDF publique
 (PDF_GOTENBERG.md § 7.3.2) : le score d'un match mène à sa feuille de match d'app2.
 
 ### 2.3 Accès à l'événement
@@ -206,8 +206,9 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - Données : `GET /competition/{season}/{code}/ranking`.
 - Badge **« Classement provisoire »** si le statut est `ON`, **« Classement final »** si `END` ; pas de badge
   sans classement à afficher.
-- Colonnes selon le type (API_PUBLIC_RESULTS.md § 5.3) : CHPT et CP → rang, équipe, Pts, J, G, N, P, F, +, −,
-  Diff ; MULTI → rang, équipe, Pts, J. Sur mobile, colonnes réduites à rang, équipe, Pts, J, Diff.
+- Colonnes selon le type (API_PUBLIC_RESULTS.md § 5.3) : CHPT → rang, équipe, Pts, J, G, N, P, F, +, −, Diff ;
+  MULTI → rang, équipe, Pts, J ; CP → rang et équipe seulement : une coupe n'a pas de tableau de points, seulement son
+  classement final (de même pour son PDF). Sur mobile, colonnes réduites à rang, équipe, Pts, J, Diff.
 - **Médailles** : compétition terminée du tour final → médaille or / argent / bronze (visuelle et textuelle)
   pour les rangs 1 à 3 (`medal` d'api2), à la place de la marque « qualifié ».
 - Sinon, les `qualified` premiers et `eliminated` derniers sont marqués (couleur **et** texte).
@@ -222,7 +223,8 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
   vers l'onglet Déroulement (même contexte : compétition ou événement).
 - **Présentation (maquettes du 22/10/2026)** : « Classement final » / « Classement provisoire » écrit (sans badge
   coloré) ; quand les trois médailles sont attribuées, **podium en marches** (2–1–3, marche la plus haute au
-  centre) avec logo, nom, points et victoires ; puis le tableau complet avec logos, différence signée (« +5 ») ;
+  centre) avec logo, nom, points et victoires (sans points ni victoires pour une coupe, qui n'a que son classement
+  final) ; puis le tableau complet avec logos, différence signée (« +5 ») ;
   colonnes secondaires (N, F, +, −) masquées sur mobile.
 
 ### 3.7 Stats (`stats`) — remplace `kpstats.php`
@@ -265,9 +267,9 @@ et matchs), l'une par étape en colonnes, l'autre par niveau en liste : un seul 
 - **CMP-17** — Carte de terrain : catégorie (suivie de la phase pour une coupe, « PlayOff H. Poule A »), « n° {numéro} », équipes et bloc de scores (statut « en cours » / « provisoire » porté par ce bloc, CMP-19) ; la finale est bordée d'or.
 - **CMP-08** — Infos : journées avec officiels ; équipes par poule seulement si `ON`/`END` ; schéma s'il existe.
 - **CMP-09** — Déroulement : vue horizontale (par tour) par défaut, vue verticale (par phase, niveau décroissant) avec `view=vertical`, bascule sans JavaScript ; poules avec tableau, éliminations avec vainqueur.
-- **CMP-10** — Classement : colonnes selon le type, badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide ; coupe en cours : classement publié à son issue, raison et lien vers le déroulement, sans badge.
+- **CMP-10** — Classement : colonnes selon le type (CP : rang et équipe, sans points), badge provisoire/final, médailles (END + tour final, rangs 1 à 3) sinon qualifiés/éliminés marqués, état vide ; coupe en cours : classement publié à son issue, raison et lien vers le déroulement, sans badge.
 - **CMP-11** — Stats : sélecteur des statistiques disponibles (masqué s'il n'y en a qu'une), tableau générique ; buteurs : 20 puis « Voir plus » (100), égalités partagées, état vide.
-- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement (`/api2/pdf/ranking`, `ranking-phases` pour une coupe) et liste des matchs (`/api2/pdf/games-list`) servis par api2 avec `season`, `competition` (ou `event`), `lang`.
+- **CMP-12** — Liens équipe et match résolus par `PAGE_LINKS` (repli legacy / app2 tant que non livrés) ; liens PDF construits par `pdfUrl` : classement (`/api2/pdf/ranking`, y compris pour une coupe) et liste des matchs (`/api2/pdf/games-list`) servis par api2 avec `season`, `competition` (ou `event`), `lang`.
 - **CMP-13** — Rafraîchissement toutes les 60 s seulement si un match est en cours ou commence dans l'heure, suspendu quand l'onglet est masqué.
 - **CMP-14** — Compétition inconnue ou non publiée → page 404 du site.
 - **CMP-15** — Grille de parité (§ 7) validée sur trois compétitions réelles en préprod.

@@ -32,6 +32,12 @@ final class PresenceDocument implements PdfDocumentProvider
     public const VIEWS = ['team', 'photos', 'category', 'birthyear'];
     public const UNDER_21 = 'U21';
 
+    /** Roles listed apart, after the rest of the team: A (referee), X (inactive). */
+    private const NON_PLAYER_ROLES = ['A', 'X'];
+
+    /** Sections (kp_groupe.section) whose sheets check the paddle level and the medical certificate: national, regional. */
+    private const LICENCE_CHECK_SECTIONS = [2, 3];
+
     private const MONTHS = [
         'fr' => ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
         'en' => ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -94,10 +100,11 @@ final class PresenceDocument implements PdfDocumentProvider
         }
 
         $images = $header['images'];
+        $licenceChecks = self::licenceChecks($header['rules']['section'] ?? null);
         [$title, $columns, $sections] = match ($view) {
-            'team' => $this->byTeam($players, $teamNames, $request, $labels),
+            'team' => $this->byTeam($players, $teamNames, $request, $labels, $licenceChecks),
             'photos' => $this->withPhotos($players, $teamNames, $request, $labels, $refereesPool, $images),
-            'category' => $this->byCategory($players, $teamNames, $request, $labels),
+            'category' => $this->byCategory($players, $teamNames, $request, $labels, $licenceChecks),
             'birthyear' => $this->byBirthYear($players, $teamNames, $request, $labels),
         };
         if ($sections === []) {
@@ -128,13 +135,12 @@ final class PresenceDocument implements PdfDocumentProvider
      *
      * @return array{string, list<array<string, string>>, list<array<string, mixed>>}
      */
-    private function byTeam(array $players, array $teamNames, PdfRequest $request, array $labels): array
+    private function byTeam(array $players, array $teamNames, PdfRequest $request, array $labels, bool $licenceChecks): array
     {
         $columns = [
             ...$this->identityColumns($labels),
             ['key' => 'category', 'label' => $labels['player.category']],
-            ['key' => 'paddle', 'label' => $labels['player.paddle']],
-            ['key' => 'certificate', 'label' => $labels['player.certificate']],
+            ...($licenceChecks ? $this->licenceCheckColumns($labels) : []),
             ['key' => 'club', 'label' => $labels['player.club']],
             ['key' => 'referee', 'label' => $labels['player.referee']],
         ];
@@ -146,7 +152,7 @@ final class PresenceDocument implements PdfDocumentProvider
         foreach ($this->groupByTeam($players) as $teamId => $teamPlayers) {
             $sections[] = [
                 'title' => $teamNames[$teamId] ?? '',
-                'rows' => array_map(fn (array $player): array => $this->row($player, $request->season), $teamPlayers),
+                'rows' => self::teamRows($teamPlayers, fn (array $player): array => $this->row($player, $request->season, $labels), $labels['presence.non_players']),
             ];
         }
 
@@ -178,14 +184,14 @@ final class PresenceDocument implements PdfDocumentProvider
 
         $sections = [];
         foreach ($this->groupByTeam($players) as $teamId => $teamPlayers) {
-            $rows = [];
-            foreach ($teamPlayers as $player) {
+            $rows = self::teamRows($teamPlayers, function (array $player) use ($request, $labels, &$images): array {
                 $photo = $this->assets->legacyImage(sprintf('KIP/players/%d.png', (int) $player['Matric']));
                 if ($photo !== null) {
                     $images[$photo['name']] = $photo['content'];
                 }
-                $rows[] = [...$this->row($player, $request->season), 'photo' => $photo['name'] ?? null];
-            }
+
+                return [...$this->row($player, $request->season, $labels), 'photo' => $photo['name'] ?? null];
+            }, $labels['presence.non_players']);
             $sections[] = ['title' => $teamNames[$teamId] ?? '', 'rows' => $rows];
         }
 
@@ -199,7 +205,7 @@ final class PresenceDocument implements PdfDocumentProvider
      *
      * @return array{string, list<array<string, string>>, list<array<string, mixed>>}
      */
-    private function byCategory(array $players, array $teamNames, PdfRequest $request, array $labels): array
+    private function byCategory(array $players, array $teamNames, PdfRequest $request, array $labels, bool $licenceChecks): array
     {
         $filter = $request->option('category');
         $under21 = $filter !== null && strcasecmp($filter, self::UNDER_21) === 0;
@@ -207,8 +213,7 @@ final class PresenceDocument implements PdfDocumentProvider
             ...$this->identityColumns($labels),
             ['key' => 'team', 'label' => $labels['player.team']],
             ...($under21 ? [['key' => 'birthdate', 'label' => $labels['player.birthdate']]] : []),
-            ['key' => 'paddle', 'label' => $labels['player.paddle']],
-            ['key' => 'certificate', 'label' => $labels['player.certificate']],
+            ...($licenceChecks ? $this->licenceCheckColumns($labels) : []),
             ['key' => 'club', 'label' => $labels['player.club']],
             ['key' => 'referee', 'label' => $labels['player.referee']],
         ];
@@ -223,7 +228,7 @@ final class PresenceDocument implements PdfDocumentProvider
                 continue;
             }
             $groups[$under21 ? self::UNDER_21 : $category][] = [
-                ...$this->row($player, $request->season),
+                ...$this->row($player, $request->season, $labels),
                 'team' => $teamNames[(int) $player['Id_equipe']] ?? '',
             ];
         }
@@ -258,7 +263,7 @@ final class PresenceDocument implements PdfDocumentProvider
             $birthDate = (string) $player['Naissance'];
             $month = (int) substr($birthDate, 5, 2);
             $groups[substr($birthDate, 0, 4) ?: '—'][] = [
-                ...$this->row($player, $request->season),
+                ...$this->row($player, $request->season, $labels),
                 'team' => $teamNames[(int) $player['Id_equipe']] ?? '',
                 'month' => self::MONTHS[$request->lang][$month] ?? '',
                 '_sort' => sprintf('%02d %s %s', $month, $player['Nom'], $player['Prenom']),
@@ -273,6 +278,49 @@ final class PresenceDocument implements PdfDocumentProvider
         }
 
         return [$labels['presence.birthyear_title'], $columns, $sections];
+    }
+
+    /**
+     * Rows of a team: the referees and the inactive members apart, under a separator, after the players and the staff
+     * (the players come in that order from PresenceRepository).
+     *
+     * @param list<array<string, mixed>>                       $players
+     * @param callable(array<string, mixed>): array<string, mixed> $row
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function teamRows(array $players, callable $row, string $nonPlayersLabel): array
+    {
+        $rows = [];
+        $apart = false;
+        foreach ($players as $player) {
+            if (!$apart && in_array($player['Capitaine'], self::NON_PLAYER_ROLES, true)) {
+                $apart = true;
+                $rows[] = ['_group' => $nonPlayersLabel];
+            }
+            $rows[] = $row($player);
+        }
+
+        return $rows;
+    }
+
+    /** Paddle level and medical certificate are only checked for the national and regional competitions. */
+    public static function licenceChecks(?int $section): bool
+    {
+        return in_array($section, self::LICENCE_CHECK_SECTIONS, true);
+    }
+
+    /**
+     * @param array<string, string> $labels
+     *
+     * @return list<array<string, string>>
+     */
+    private function licenceCheckColumns(array $labels): array
+    {
+        return [
+            ['key' => 'paddle', 'label' => $labels['player.paddle']],
+            ['key' => 'certificate', 'label' => $labels['player.certificate']],
+        ];
     }
 
     /**
@@ -292,15 +340,16 @@ final class PresenceDocument implements PdfDocumentProvider
     }
 
     /**
-     * @param array<string, mixed> $player
+     * @param array<string, mixed>  $player
+     * @param array<string, string> $labels
      *
      * @return array<string, string|null>
      */
-    private function row(array $player, string $season): array
+    private function row(array $player, string $season, array $labels): array
     {
         return [
             'number' => $player['Numero'] === null ? '' : (string) $player['Numero'],
-            'role' => PresencePlayer::role($player['Capitaine']),
+            'role' => PresencePlayer::role($player['Capitaine'], $labels),
             'licence' => PresencePlayer::licence((int) $player['Matric'], $player['Reserve'], $player['Origine'], $season),
             'last_name' => PresencePlayer::lastName($player['Nom']),
             'first_name' => PresencePlayer::firstName($player['Prenom']),

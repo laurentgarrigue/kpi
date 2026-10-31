@@ -172,7 +172,13 @@ describe('ranking tab (§ 3.6)', () => {
     const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
     expect(wrapper.find('[data-testid="ranking-badge"]').text()).toBe('Classement final')
     expect(wrapper.findAll('[data-medal]')).toHaveLength(3)
-    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('/api2/pdf/ranking-phases?')
+    expect(wrapper.find('[data-testid="ranking-pdf"]').attributes('href')).toContain('/api2/pdf/ranking?season=2999&competition=RCP')
+  })
+
+  it('CMP-10: a cup (CP) shows its final ranking only, no points table nor points on its podium', async () => {
+    const wrapper = await mountRoute('/competitions/2999/RCP/ranking')
+    expect(wrapper.findAll('thead th').map(cell => cell.text()).filter(Boolean)).toEqual(['Qualification ou médaille', 'Clt', 'Équipe'])
+    expect(wrapper.find('[data-testid="podium"] small').exists()).toBe(false)
   })
 
   it('CMP-21: a stepped podium 2–1–3 when the three medals are given, then the full table with a signed difference', async () => {

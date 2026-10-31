@@ -1,10 +1,13 @@
 {% extends 'pdf/layout.html.twig' %}
 
 {% block content %}
-    <div class="pdf-columns">
+    {# Pools side by side for a cup; one list of teams, without title, otherwise. #}
+    <div class="{{ with_pools ? 'pdf-columns' : '' }}">
         {% for pool, teams in pools %}
             <section class="pdf-section">
-                <h2 class="pdf-section__title">{{ pool is same as('') ? labels['teams_groups.no_pool'] : labels['teams_groups.pool'] ~ ' ' ~ pool }}</h2>
+                {% if with_pools %}
+                    <h2 class="pdf-section__title">{{ pool is same as('') ? labels['teams_groups.no_pool'] : labels['teams_groups.pool'] ~ ' ' ~ pool }}</h2>
+                {% endif %}
                 <table class="pdf-table">
                     <thead>
                         <tr>

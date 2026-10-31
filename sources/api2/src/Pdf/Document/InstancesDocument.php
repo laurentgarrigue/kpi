@@ -10,6 +10,7 @@ use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfLabels;
+use App\Pdf\PdfPlace;
 use App\Pdf\PdfRequest;
 use App\Pdf\PdfTheme;
 use App\PublicResults\CompetitionRules;
@@ -78,7 +79,7 @@ final class InstancesDocument implements PdfDocumentProvider
                         'title' => (string) $gameday['Nom'],
                         'pairs' => [
                             [$labels['instances.dates'], self::period($gameday['Date_debut'], $gameday['Date_fin'])],
-                            [$labels['instances.place'], trim(sprintf('%s (%s)', $gameday['Lieu'], $gameday['Departement']), ' ()')],
+                            [$labels['instances.place'], PdfPlace::label($gameday['Lieu'], $gameday['Departement'])],
                             [$labels['instances.competition_manager'], $person('Responsable_insc')],
                         ],
                     ],

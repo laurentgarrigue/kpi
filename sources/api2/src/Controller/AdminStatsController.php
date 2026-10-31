@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Pdf\InvalidPdfRequest;
 use App\Pdf\PdfCatalog;
+use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfLabels;
 use App\Pdf\PdfRenderer;
@@ -41,6 +42,7 @@ class AdminStatsController extends AbstractController
         private readonly Connection $connection,
         private readonly PdfRenderer $pdfRenderer,
         private readonly PdfLabels $pdfLabels,
+        private readonly PdfCompetitions $pdfCompetitions,
     ) {
     }
 
@@ -292,28 +294,41 @@ class AdminStatsController extends AbstractController
         if ($showRanking) {
             array_unshift($tableColumns, ['key' => '_rank', 'label' => '#', 'class' => 'num']);
         }
+        $competitions = array_values($request->query->all('competitions') ?: array_filter(explode(',', (string) $request->query->get('competitions', ''))));
+        // Competitions by their label, never their code (PDF_GOTENBERG.md § 8.4).
+        $competitionLabels = $this->pdfCompetitions->labels($pdfRequest->season, $competitions);
         $rows = [];
         foreach (array_values($data) as $index => $item) {
             $row = ['_rank' => $index + 1];
             foreach ($columns as $column) {
                 $row[$column] = (string) ($item[$column] ?? '');
             }
+            if (isset($row['competition'])) {
+                $row['competition'] = $competitionLabels[$row['competition']] ?? $row['competition'];
+            }
             $rows[] = $row;
         }
-        $competitions = $request->query->all('competitions') ?: array_filter(explode(',', (string) $request->query->get('competitions', '')));
+        // Visuals of the first competition selected (PDF_GOTENBERG.md § 8.4.1).
+        $header = $this->pdfCompetitions->withVisualsOf(
+            ['code' => '', 'title' => implode(', ', $competitionLabels), 'subtitle' => null],
+            $pdfRequest->season,
+            $competitions[0] ?? null,
+            false,
+        );
 
         $content = new PdfContent(
             template: 'sections.html.twig',
             title: (string) $title,
             filename: sprintf('%s_%s_%s.pdf', PdfCatalog::STATS, $statType, $pdfRequest->season),
             variables: [
-                'competition' => ['code' => '', 'title' => implode(', ', $competitions), 'subtitle' => null, 'logo' => null],
+                'competition' => $header['competition'],
                 'columns' => $tableColumns,
                 'sections' => [['rows' => $rows, 'subtitle' => sprintf('%d %s', count($rows), $this->pdfLabels->forLanguage($pdfRequest->lang)['stats.results'])]],
                 'dense' => true,
                 'internal' => true,
             ],
             landscape: true,
+            images: $header['images'],
         );
         try {
             $pdf = $this->pdfRenderer->render($content, PdfTheme::Admin, $pdfRequest);

@@ -7,7 +7,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const pdf = usePdf()
 const config = useRuntimeConfig()
 const api = useApi()
@@ -118,7 +118,6 @@ const publicPdfUrl = (file: string): string => {
 const publicRankingUrl = computed(() => pdf.publicUrl('ranking', {
   season: workContext.season,
   competition: workContext.pageCompetitionCode,
-  lang: locale.value === 'en' ? 'en' : 'fr',
 }))
 
 // Registered teams by pool: admin PDF of api2, signed link
@@ -126,7 +125,6 @@ const openTeamsGroups = () => {
   void pdf.openDocument('teams-groups', {
     season: workContext.season,
     competition: workContext.pageCompetitionCode,
-    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
 
@@ -248,16 +246,7 @@ onMounted(async () => {
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.teams.presence_fr') }}
-          </a>
-          <a
-            :href="pdfUrl('FeuillePresenceEN.php')"
-            target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
-          >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.teams.presence_en') }}
+            {{ t('documents.teams.presence') }}
           </a>
           <a
             v-if="canGetAdminPdf(profile, 'presence', 'visa')"
@@ -304,16 +293,7 @@ onMounted(async () => {
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.matches.list_fr') }}
-          </a>
-          <a
-            :href="pdfUrl('FeuilleListeMatchsEN.php')"
-            target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
-          >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.matches.list_en') }}
+            {{ t('documents.matches.list') }}
           </a>
           <a
             :href="pdfUrl('tableau_openspout.php')"
@@ -592,16 +572,7 @@ onMounted(async () => {
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
               <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-              {{ t('documents.event.matches_fr') }}
-            </a>
-            <a
-              :href="eventPdfUrl('FeuilleListeMatchsEN.php', 'idEvenement')"
-              target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-              :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
-            >
-              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-              {{ t('documents.event.matches_en') }}
+              {{ t('documents.event.matches') }}
             </a>
             <a
               :href="eventPdfUrl('PdfQrCodes.php', 'Evt')"

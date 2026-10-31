@@ -28,7 +28,8 @@ final class ScoresheetSheet
     private const CATEGORIES = [[9, 'POU'], [11, 'BEN'], [13, 'MIN'], [15, 'CAD'], [17, 'JUN'], [19, 'SEN'], [35, 'V1'], [40, 'V2'], [45, 'V3'], [50, 'V4'], [55, 'V5'], [60, 'V6'], [65, 'V7'], [70, 'V8'], [75, 'V9']];
 
     /** Columns of an event of team A / team B in the grid. */
-    private const CARD_COLUMNS = ['V' => 'green', 'J' => 'yellow', 'R' => 'red', 'D' => 'red'];
+    /** Card columns of the event grid; D (definitive red, future black card) has its own. */
+    private const CARD_COLUMNS = ['V' => 'green', 'J' => 'yellow', 'R' => 'red', 'D' => 'definitive'];
 
     private const GOAL = 'B';
     private const FIRST_PERIOD = 'M1';
@@ -127,7 +128,7 @@ final class ScoresheetSheet
                     ++$halfTime[$side];
                 }
             } elseif (isset(self::CARD_COLUMNS[$type])) {
-                $line[$prefix . self::CARD_COLUMNS[$type]] = $type === 'D' ? $labels['scoresheet.definitive'] : 'X';
+                $line[$prefix . self::CARD_COLUMNS[$type]] = 'X';
             }
             $lines[] = $line;
         }

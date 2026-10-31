@@ -1,7 +1,9 @@
 {#
  # Scoresheet (`scoresheet`, PDF_GOTENBERG.md § 7.3.3): official sheet filled in by hand at the table, one A4
  # landscape page per game. Left: game, officials, rosters, signatures before the game. Right: event grid, score,
- # remarks, signatures after the game. Rubrics of the legacy FeuilleMatchMulti.php.
+ # remarks, signatures after the game. Rubrics of the legacy FeuilleMatchMulti.php. Visuals of the competition of
+ # the game inside the sheet: banner (else logo, else FFCK + KPI) on top of the left column, sponsor under the right
+ # one (§ 8.4.1).
  #}
 {% extends 'pdf/layout.html.twig' %}
 
@@ -32,8 +34,13 @@
 {% block content %}
     {% for sheet in sheets %}
         {% set l = sheet.labels %}
-        <div class="pdf-sheet{% if not loop.first %} pdf-page-break{% endif %}">
+        <div class="pdf-sheet{% if not loop.first %} pdf-page-break{% endif %}{% if sheet.sponsor %} pdf-sheet--sponsor{% endif %}">
             <div class="pdf-sheet__column">
+                {% if sheet.banner %}
+                    <div class="pdf-sheet__banner"><img src="{{ sheet.banner }}" alt=""></div>
+                {% elseif sheet.logos is not empty %}
+                    <div class="pdf-sheet__banner pdf-sheet__logos">{% for logo in sheet.logos %}<img src="{{ logo }}" alt="">{% endfor %}</div>
+                {% endif %}
                 <table class="pdf-sheet__box">
                     <tr><td colspan="2"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right">{{ sheet.category }}</td></tr>
                     <tr><td colspan="2">{{ l['scoresheet.organiser'] }} : {{ sheet.organiser }}</td><td class="pdf-sheet__right">{{ l.season }} : {{ sheet.season }}</td></tr>
@@ -62,26 +69,26 @@
                 <table class="pdf-sheet__table pdf-sheet__events">
                     <thead>
                         <tr>
-                            <th colspan="5">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
+                            <th colspan="6">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
                             <th>{{ l['scoresheet.period'] }}</th>
-                            <th colspan="5">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
+                            <th colspan="6">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
                         </tr>
                         <tr>
-                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th>
+                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th><th>{{ l['scoresheet.definitive'] }}</th>
                             <th>{{ l['scoresheet.number'] }} ({{ l['scoresheet.card_reason'] }})</th><th>{{ l['scoresheet.goal'] }}</th>
                             <th>+ {{ l['scoresheet.time'] }}</th>
                             <th>{{ l['scoresheet.goal'] }}</th><th>{{ l['scoresheet.number'] }} ({{ l['scoresheet.card_reason'] }})</th>
-                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th>
+                            <th>{{ l['scoresheet.card_green'] }}</th><th>{{ l['scoresheet.card_yellow'] }}</th><th>{{ l['scoresheet.card_red'] }}</th><th>{{ l['scoresheet.definitive'] }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for event in sheet.events %}
                             <tr>
-                                <td class="pdf-sheet__card">{{ event.a_green|default('') }}</td><td class="pdf-sheet__card">{{ event.a_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.a_red|default('') }}</td>
+                                <td class="pdf-sheet__card">{{ event.a_green|default('') }}</td><td class="pdf-sheet__card">{{ event.a_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.a_red|default('') }}</td><td class="pdf-sheet__card">{{ event.a_definitive|default('') }}</td>
                                 <td>{{ event.a_player|default('') }}</td><td class="pdf-sheet__card">{{ event.a_goal|default('') }}</td>
                                 <td class="pdf-sheet__time">{{ event.time|default('') }}</td>
                                 <td class="pdf-sheet__card">{{ event.b_goal|default('') }}</td><td>{{ event.b_player|default('') }}</td>
-                                <td class="pdf-sheet__card">{{ event.b_green|default('') }}</td><td class="pdf-sheet__card">{{ event.b_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.b_red|default('') }}</td>
+                                <td class="pdf-sheet__card">{{ event.b_green|default('') }}</td><td class="pdf-sheet__card">{{ event.b_yellow|default('') }}</td><td class="pdf-sheet__card">{{ event.b_red|default('') }}</td><td class="pdf-sheet__card">{{ event.b_definitive|default('') }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -112,6 +119,7 @@
                     <tr><td>{{ l['scoresheet.captain'] }} A</td><td>{{ l['scoresheet.captain'] }} B</td><td>{{ l['games.referee_1'] }}</td></tr>
                 </table>
                 <p class="pdf-note">{{ l['scoresheet.signatures_required'] }}</p>
+                {% if sheet.sponsor %}<div class="pdf-sheet__sponsor"><img src="{{ sheet.sponsor }}" alt=""></div>{% endif %}
             </div>
         </div>
     {% endfor %}

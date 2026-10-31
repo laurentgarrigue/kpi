@@ -10,6 +10,7 @@ use App\Pdf\PdfAccessChecker;
 use App\Pdf\PdfCatalog;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfDocuments;
+use App\Pdf\PdfJournal;
 use App\Pdf\PdfLinkSigner;
 use App\Pdf\PdfRenderer;
 use App\Pdf\PdfRenderingFailed;
@@ -55,6 +56,7 @@ class PdfController extends AbstractController
         private readonly UserProvider $users,
         private readonly MandateApplier $mandates,
         private readonly TokenStorageInterface $tokenStorage,
+        private readonly PdfJournal $journal,
         #[Autowire('%kernel.environment%')]
         private readonly string $environment,
         // Public base URL of api2, /api2 included: Traefik strips that prefix, the request does not know it.
@@ -223,6 +225,11 @@ class PdfController extends AbstractController
             return $this->publicCache($response, $etag);
         }
         $response->headers->set('Cache-Control', 'private, no-store');
+        // Who printed which admin document, in the journal of the admin actions (§ 6.4).
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $this->journal->record($user->getCode(), $document, $pdfRequest);
+        }
 
         return $response;
     }

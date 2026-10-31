@@ -41,8 +41,9 @@ games.grid_title: { fr: 'Grille des terrains', en: 'Pitch schedule' }
 games.date: { fr: 'Date', en: 'Date' }
 games.time: { fr: 'Heure', en: 'Time' }
 games.competition: { fr: 'Compét.', en: 'Comp.' }
-games.phase: { fr: 'Phase | Match', en: 'Phase | Game' }
+games.phase: { fr: 'Phase / Match', en: 'Phase / Game' }
 games.pitch: { fr: 'Terrain', en: 'Pitch' }
+games.referees: { fr: 'Arbitres', en: 'Referees' }
 games.referee_1: { fr: 'Arbitre principal', en: 'First referee' }
 games.referee_2: { fr: 'Arbitre secondaire', en: 'Second referee' }
 # Players (presence and control sheets)
@@ -63,6 +64,11 @@ player.photo: { fr: 'Photo', en: 'Photo' }
 player.check: { fr: 'Vérif.', en: 'Check' }
 player.visa: { fr: 'Visa', en: 'Signature' }
 player.staff: { fr: 'Encadrement', en: 'Staff' }
+presence.non_players: { fr: 'Non joueurs', en: 'Non-players' }
+role.C: { fr: 'Capitaine', en: 'Captain' }
+role.E: { fr: 'Staff', en: 'Staff' }
+role.A: { fr: 'Arbitre', en: 'Referee' }
+role.X: { fr: 'Inactif', en: 'Inactive' }
 presence.title: { fr: 'Feuille de présence', en: 'Presence sheet' }
 presence.photos_title: { fr: 'Feuille de présence avec photos', en: 'Team roster' }
 presence.category_title: { fr: 'Présences par catégorie', en: 'Presence by category' }
@@ -134,7 +140,7 @@ scoresheet.card_green: { fr: 'V', en: 'G' }
 scoresheet.card_yellow: { fr: 'J', en: 'Y' }
 scoresheet.card_red: { fr: 'R', en: 'R' }
 scoresheet.card_reason: { fr: 'Motif carton', en: 'Offence' }
-scoresheet.definitive: { fr: 'D', en: 'E' }
+scoresheet.definitive: { fr: 'RD', en: 'RE' }
 scoresheet.half_time: { fr: 'mi-temps', en: 'half time' }
 scoresheet.provisional: { fr: 'Provisoire', en: 'Provisional' }
 scoresheet.final: { fr: 'Final', en: 'Final' }
@@ -167,3 +173,8 @@ cards.red: { fr: 'R', en: 'R' }
 cards.definitive: { fr: 'RD', en: 'RE' }
 cards.notes: { fr: 'Notes', en: 'Notes' }
 cards.legend: { fr: 'Colonnes de gauche : cumul de la saison. Colonnes de droite : cartons de la journée, à compter sur place (I I I).', en: 'Left columns: season total. Right columns: cards of the gameday, to tally on site (I I I).' }
+schema.title: { fr: 'Schéma de compétition', en: 'Draw progression' }
+schema.game: { fr: 'match', en: 'game' }
+schema.games: { fr: 'matchs', en: 'games' }
+schema.teams: { fr: 'Équipes', en: 'Teams' }
+schema.diff: { fr: '+/-', en: '+/-' }

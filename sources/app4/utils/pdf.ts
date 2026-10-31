@@ -9,7 +9,7 @@ import { isScrutineerProfile } from './scrutineering'
 export type AdminPdfDocument =
   | 'teams-groups' | 'presence' | 'scrutineering-control' | 'referees-pool' | 'instances'
   | 'games-list' | 'scoresheet' | 'ranking' | 'ranking-team-detail' | 'ranking-gameday-detail'
-  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards'
+  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards' | 'schema'
 
 export type PdfOption = 'visa' | 'birthdate' | 'u21'
 
@@ -29,6 +29,7 @@ const ADMIN_PDF_MAX_PROFILE: Record<AdminPdfDocument, number> = {
   'ranking-tiebreak': 6,
   'stats': 8,
   'cards': 6,
+  'schema': 8,
 }
 
 /** Options adding data to the presence sheet, with their own highest profile (§ 7.2, I2). */
@@ -167,8 +168,9 @@ export function migratedLegacyPdf(page: string, query: LegacyQuery): { document:
  * legacy URL unchanged.
  *
  * @param href absolute URL of the legacy public PDF
+ * @param lang language of the user, when the legacy URL does not give one
  */
-export function publicPdfHref(href: string, legacyBaseUrl: string, api2BaseUrl: string): string {
+export function publicPdfHref(href: string, legacyBaseUrl: string, api2BaseUrl: string, lang?: 'fr' | 'en'): string {
   let url: URL
   try {
     url = new URL(href)
@@ -186,7 +188,9 @@ export function publicPdfHref(href: string, legacyBaseUrl: string, api2BaseUrl: 
     return href
   }
 
-  return publicPdfUrl(api2BaseUrl, migrated.document, apiQuery(Object.fromEntries(url.searchParams.entries()), migrated.options))
+  const query = apiQuery(Object.fromEntries(url.searchParams.entries()), migrated.options)
+
+  return publicPdfUrl(api2BaseUrl, migrated.document, lang && !query.lang ? { ...query, lang } : query)
 }
 
 /** Public PDF of api2 (published data, no authentication): plain link, cacheable (§ 6.1). */
