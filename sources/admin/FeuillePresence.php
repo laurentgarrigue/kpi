@@ -228,7 +228,7 @@ class FeuillePresence extends MyPage
                     $pdf->Cell(25, 9, $arrayJoueur[$idEquipe][$j]['Matric'] . $arrayJoueur[$idEquipe][$j]['Saison'], 'B', 0, 'C');
                     $pdf->Cell(45, 9, $arrayJoueur[$idEquipe][$j]['Nom'], 'B', 0, 'C');
                     $pdf->Cell(45, 9, $arrayJoueur[$idEquipe][$j]['Prenom'], 'B', 0, 'C');
-                    $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Categ'], 'B', 0, 'C');
+                    $pdf->Cell(16, 9, ($arrayJoueur[$idEquipe][$j]['Categ'] ?: '?'), 'B', 0, 'C');
                     $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Pagaie'], 'B', 0, 'C');
                     $pdf->Cell(23, 9, $arrayJoueur[$idEquipe][$j]['CertifCK'], 'B', 0, 'C');
                     $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Numero_club'], 'B', 0, 'C');
