@@ -1354,6 +1354,31 @@ class MyBdd
 		}
 	}
 
+	// RefreshCategoriesJoueurs : recalcule kp_competition_equipe_joueur.Categ de toutes les compositions des joueurs
+	// donnés, toutes saisons, verrouillées comprises, à partir de leur date de naissance et de la saison de l'équipe ;
+	// NULL si la date est inconnue (NULL, 1901-01-01, 0000-00-00). Le pool arbitres (POOL) n'est pas une composition.
+	// Même règle que App\AgeCategory\CompositionAgeCategories::refreshPlayer (api2, ADR 0001).
+	function RefreshCategoriesJoueurs(array $matrics)
+	{
+		$matrics = array_values(array_unique(array_map('intval', $matrics)));
+		if (count($matrics) === 0) {
+			return 0;
+		}
+		$in = implode(',', array_fill(0, count($matrics), '?'));
+		$sql = "UPDATE kp_competition_equipe_joueur cej 
+			INNER JOIN kp_competition_equipe ce ON ce.Id = cej.Id_equipe 
+			LEFT OUTER JOIN kp_licence l ON l.Matric = cej.Matric 
+			SET cej.Categ = IF(l.Naissance IS NULL OR l.Naissance IN ('1901-01-01', '0000-00-00'), NULL, (
+				SELECT c.id FROM kp_categorie c 
+				WHERE ce.Code_saison - YEAR(l.Naissance) BETWEEN c.age_min AND c.age_max 
+				ORDER BY c.age_min, c.id LIMIT 1)) 
+			WHERE ce.Code_compet <> 'POOL' 
+			AND cej.Matric IN ($in) ";
+		$result = $this->pdo->prepare($sql);
+		$result->execute($matrics);
+		return $result->rowCount();
+	}
+
 	// GetCategorie
 	function GetCategorie($age, &$code, &$libelle)
 	{
