@@ -1218,7 +1218,7 @@ class AdminPresenceController extends AbstractController
 
     private function activeSeason(): string
     {
-        return (string) $this->connection->fetchOne("SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1");
+        return (string) $this->connection->fetchOne("SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1");
     }
 
     private function getMatchInfo(int $matchId): ?array

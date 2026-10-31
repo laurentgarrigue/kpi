@@ -86,3 +86,7 @@ when@test:
         App\Tests\Support\FakeGotenbergClient:
             public: true
         App\Pdf\GotenbergClient: '@App\Tests\Support\FakeGotenbergClient'
+        # Reached directly by the integration tests of the Categ cache (CompositionAgeCategoriesTest).
+        App\AgeCategory\CompositionAgeCategories:
+            autowire: true
+            public: true

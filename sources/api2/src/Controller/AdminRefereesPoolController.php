@@ -570,7 +570,7 @@ class AdminRefereesPoolController extends AbstractController
     private function getActiveSeason(): string
     {
         return (string) ($this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
+            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
         ) ?: '');
     }
 

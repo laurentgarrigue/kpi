@@ -11,7 +11,7 @@ namespace App\AgeCategory;
 final class AgeCategoryRule
 {
     /** Dates written by the old code for « unknown »: they are not birth dates (GLOSSARY.md). */
-    private const CONVENTIONAL_BIRTH_DATES = ['1901-01-01', '0000-00-00'];
+    public const CONVENTIONAL_BIRTH_DATES = ['1901-01-01', '0000-00-00'];
 
     /** A birth date giving an age outside these bounds for the season is implausible (story 14). */
     public const MIN_PLAUSIBLE_AGE = 5;
