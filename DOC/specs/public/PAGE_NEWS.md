@@ -14,13 +14,19 @@ aux pages de résultats, pour que les visiteurs passent naturellement de l'actua
 ### 2.1 `/news`
 1. `<h1>` « Actualités » ; **filtre par catégorie** (FEATURE_CMS.md § 3.1) : puces « Toutes » + les 4 catégories,
    liens GET `?category=`, puce courante marquée (`aria-current`).
-2. **Cartes** (grille 1 / 2 / 3 colonnes) : image de une (variante 768 px, `loading="lazy"`, texte alternatif du
-   média), titre (lien), date localisée, chapô (3 lignes max), catégories.
+2. **Liste éditoriale (maquettes du 22/10/2026)** : en page 1, la plus récente est **à la une** (image 3:2 à gauche,
+   variante 1280 px chargée tout de suite, titre en Agency FB, chapô, date et catégories) ; les autres sont des
+   **lignes** (vignette 3:2 de 200 px, carrée de 96 px sur mobile, `loading="lazy"`, décorative ; titre en Agency FB
+   en lien ; chapô — masqué sur mobile ou s'il répète le titre ; date localisée et catégories). Sans image : un
+   carré « KPI ».
 3. **Pagination** par liens (`?page=`, 12 par page) « Plus récents » / « Plus anciens », sans JavaScript.
 4. Aucun article → message « Aucune actualité pour le moment. ». Page hors bornes → 404.
 5. Lien « S'abonner (RSS) » vers `/rss.xml` (+ `<link rel="alternate" type="application/rss+xml">`).
 
 ### 2.2 `/news/{slug}`
+*Maquettes du 22/10/2026* : colonne de lecture de **720 px**, image de une plus large que le texte (débord de 60 px de
+chaque côté sur grand écran), chapô en gras, partage sous le texte, « Actualité précédente » / « Actualité
+suivante » en deux cartes.
 1. Fil d'Ariane « Accueil › Actualités › {titre} ».
 2. `<h1>` titre, date de publication (et « mis à jour le … » si modifié plus d'un jour après), **signature**, catégories (liens
    vers `/news?category=`).
@@ -30,7 +36,7 @@ aux pages de résultats, pour que les visiteurs passent naturellement de l'actua
 4. **Galeries** du corps : vignettes, visionneuse au clic (clavier : flèches, Échap ; focus piégé), sans
    bibliothèque tierce si possible.
 5. **Liens vers les résultats** : encart « En lien avec cet article » → compétitions (`/competitions/{s}/{c}`),
-   événements (`/events/{id}`), clubs (`/clubs/{code}`). Réciproquement, les pages de ces compétitions /
+   événements (`/events/{id}`), clubs (`/clubs?club={code}`). Réciproquement, les pages de ces compétitions /
    événements / clubs affichent un bloc « Actualités » (3 derniers articles liés, NEWS-09).
 6. **Partage** : bouton « Partager » → Web Share API si disponible (mobile), sinon liens Facebook, X, WhatsApp,
    e-mail et « Copier le lien » (aucun script tiers chargé, simples URL de partage).
@@ -62,6 +68,8 @@ aux pages de résultats, pour que les visiteurs passent naturellement de l'actua
 - **NEWS-06** — Les balises Open Graph et `NewsArticle` sont présentes et cohérentes avec l'article.
 - **NEWS-07** — La galerie s'ouvre au clic, se parcourt au clavier et se ferme avec Échap.
 - **NEWS-08** — L'entrée de menu « Actualités » devient interne (`ready: true`) ; `/rss.xml` est annoncé.
+- **NEWS-10** — `/news` page 1 : le plus récent à la une (grande image, titre, chapô, date et catégories), les autres en lignes éditoriales (vignette, titre, chapô, date, catégories) ; pages suivantes : lignes seulement.
+- **NEWS-11** — Article : colonne de lecture de 720 px, image plus large que le texte, chapô en gras, ligne « date, par {signature} » et catégories en liens, partage, précédente / suivante en deux cartes.
 - **NEWS-09** — Les pages compétition, événement et club affichent les 3 derniers articles liés, s'il y en a.
 
 ## 6. Hors périmètre

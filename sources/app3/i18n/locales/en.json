@@ -30,9 +30,7 @@
     "competitions": "Competitions",
     "competitions-list": "Competitions and results",
     "history": "History and honours",
-    "teams-clubs": "Teams and clubs",
-    "teams": "Teams",
-    "clubs": "Clubs",
+    "teams-clubs": "Clubs and teams",
     "live": "Live",
     "events": "Events",
     "editorial": "Kayak polo"
@@ -54,21 +52,26 @@
   },
   "home": {
     "title": "Canoe polo, in France and worldwide",
-    "intro": "Results, rankings and schedules of canoe polo competitions — French championships and cups, tournaments, European, world and continental competitions — published by the French Canoe Kayak Federation (FFCK) canoe polo commission.",
-    "competitionsCta": "Competitions and results",
-    "liveCta": "Follow an event live",
-    "upcomingFixtures": "Coming up",
     "noUpcomingFixtures": "Nothing coming up for now.",
-    "ongoing": "Ongoing",
-    "recentFixtures": "Recently",
     "noRecentFixtures": "Nothing published yet.",
-    "groupFixture": "Competition",
-    "eventFixture": "Event",
     "fixturesUnavailable": "Fixtures are temporarily unavailable.",
-    "featured": "Featured",
-    "latestNews": "Latest news",
     "allNews": "All news",
-    "partners": "Partners"
+    "partners": "Partners",
+    "when": {
+      "now": "Happening now",
+      "tomorrow": "Tomorrow",
+      "weekend": "This weekend",
+      "days": "In {n} days"
+    },
+    "programme": "On the programme:",
+    "seeProgramme": "See the programme",
+    "addToCalendar": "Add to my calendar",
+    "gamesAndResults": "Games and results",
+    "news": "News",
+    "agenda": "Agenda",
+    "after": "Next",
+    "latestResults": "Latest results",
+    "fullCalendar": "Full calendar"
   },
   "error": {
     "notFoundTitle": "Page not found",
@@ -102,7 +105,6 @@
     "noCompetition": "No competition published for this group.",
     "allGroupGames": "All games of the group",
     "noRanking": "Ranking not available",
-    "seeAll": "See all",
     "seeMore": "See more",
     "competitionStatus": {
       "ATT": "Upcoming",
@@ -122,11 +124,10 @@
     },
     "qualified": "Qualified",
     "eliminated": "Relegated or eliminated",
-    "winner": "(winner)",
     "partOfEvent": "{scope} is part of the event",
     "seeEvent": "See the event",
     "alsoInEvents": "Also in:",
-    "events": "Events:",
+    "events": "Played during:",
     "competitions": "Competitions",
     "allCompetitions": "All",
     "tabs": "Tabs",
@@ -136,7 +137,8 @@
       "info": "Info",
       "progress": "Progress",
       "ranking": "Ranking",
-      "stats": "Stats"
+      "stats": "Stats",
+      "competitions": "Competitions"
     },
     "tabTitle": "{tab} — {competition} {season}",
     "tabDescription": {
@@ -152,16 +154,7 @@
     "website": "Competition website",
     "followLive": "Follow live",
     "col": {
-      "number": "No.",
-      "time": "Time",
       "pitch": "Pitch",
-      "competition": "Competition",
-      "phase": "Phase",
-      "teamA": "Team A",
-      "score": "Score",
-      "teamB": "Team B",
-      "referees": "Referees",
-      "status": "Status",
       "mark": "Qualification or medal",
       "rank": "Rk",
       "team": "Team",
@@ -176,11 +169,8 @@
       "goals_against": "−",
       "goal_diff": "Diff"
     },
-    "gamesOf": "Games of {date}",
-    "pitchesOf": "Pitches of {date}",
     "pitch": "Pitch {pitch}",
     "scoreA11y": "{a} to {b}",
-    "provisional": "provisional",
     "gameSheet": "Game sheet",
     "gamesPdf": "Games list (PDF)",
     "rankingPdf": "Ranking (PDF)",
@@ -190,8 +180,6 @@
       "gameday": "Gameday",
       "all": "All",
       "day": "Day",
-      "allDays": "All days",
-      "upcoming": "Upcoming games",
       "apply": "Filter"
     },
     "ranking": {
@@ -199,19 +187,28 @@
       "final": "Final ranking"
     },
     "rankingLater": "The ranking will be published after the first games.",
+    "cupRankingLater": {
+      "title": "The final ranking will be published once competition is over.",
+      "reason": "During a knockout competition, a provisional ranking would be misleading: the teams still in, finalists included, have games left to play.",
+      "progress": "Follow the progress of the competition"
+    },
     "progressView": "Progress layout",
     "view": {
       "horizontal": "Horizontal",
       "vertical": "Vertical"
     },
     "noProgress": "The progress will be published when the competition starts.",
+    "progressGameday": {
+      "title": "Gameday {n}",
+      "pending": "Standings to come",
+      "games": "Games of the gameday"
+    },
     "round": "Round {round}",
     "statsKinds": "Available statistics",
     "noStats": "No statistics available.",
     "info": {
       "gamedays": "Gamedays",
       "noGamedays": "No gameday published.",
-      "organizer": "Organiser",
       "rc": "Competition manager",
       "r1": "R1 manager",
       "delegate": "Delegate",
@@ -219,14 +216,13 @@
       "teams": "Teams",
       "pool": "Pool {pool}",
       "schema": "Competition format",
-      "schemaAlt": "Format of {competition}"
+      "schemaAlt": "Format of {competition}",
+      "officials": "Officials",
+      "teamsSummary": "{teams} team | {teams} teams",
+      "poolsSummary": "{pools} pool | {pools} pools",
+      "organizedBy": "organised by {organizer}",
+      "when": "Dates and venue"
     },
-    "kind": {
-      "event": "Event",
-      "group": "Competition group",
-      "competition": "Competition"
-    },
-    "eventCompetitions": "Competitions of this event",
     "gamedaysOf": "{count} gameday out of {total} of the competition | {count} gamedays out of {total} of the competition",
     "allGamedays": "All the gamedays of the competition",
     "seeCompetition": "See the whole competition",
@@ -238,7 +234,46 @@
       "shootout": "shoot-out",
       "shootoutShort": "SO"
     },
-    "gameNumber": "Game #{number}"
+    "gamesCount": "{n} game | {n} games",
+    "draw": {
+      "pool": "{rank} in pool {pool}",
+      "winner": "Winner of game {number}",
+      "loser": "Loser of game {number}",
+      "team": "Team {number}",
+      "text": "{text}",
+      "unknown": "To be decided"
+    },
+    "days": "Day",
+    "allDaysShort": "All",
+    "upcomingOnly": "Upcoming games only",
+    "provisionalShort": "Prov.",
+    "scoreLabel": "Score {score}",
+    "notPlayed": "not played yet",
+    "eventCta": {
+      "many": "The {n} competitions, every game by pitch and the live.",
+      "one": "Every game by pitch and the live."
+    },
+    "competitionCount": "competition | competitions",
+    "podium": "Podium",
+    "fullRanking": "Full ranking",
+    "podiumPoints": "{points} pts",
+    "podiumWins": "{n} win | {n} wins",
+    "place": "{rank} place",
+    "stats": {
+      "filterByTeam": "Filter by team",
+      "allTeams": "All",
+      "goalsShort": "goal | goals",
+      "playerNumber": "no. {number}"
+    },
+    "follow": {
+      "hint": "Tap a team to follow its path.",
+      "stop": "Stop following {team}"
+    },
+    "numberShort": "no. {number}",
+    "allPitches": "All pitches",
+    "pitches": "Pitches",
+    "podiumLater": "The ranking will be published at the end of the competition.",
+    "fullRankingCount": "Full ranking ({n} teams)"
   },
   "stats": {
     "scorers": {
@@ -256,7 +291,7 @@
     "noSuggestion": "No suggestion"
   },
   "calendar": {
-    "title": "Competition calendar",
+    "title": "Calendar",
     "pageTitle": "Calendar {month}",
     "description": "Canoe polo competition calendar, {month}.",
     "previous": "Previous month",
@@ -265,7 +300,6 @@
     "filters": "Filter the calendar",
     "empty": "No published competition this month.",
     "nextWithEntries": "Next month with competitions: {month}",
-    "list": "Gamedays",
     "grid": "Month view",
     "event": "Event: {event}",
     "subscribe": "Subscribe to the calendar",
@@ -310,24 +344,45 @@
         "step3": "On iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar.",
         "step4": "Pick the refresh frequency offered."
       }
-    }
+    },
+    "agenda": "In your calendar",
+    "agendaIntro": "The games are added to your calendar and update themselves if the times change.",
+    "byWeek": "By week",
+    "monthView": "Month",
+    "views": "View",
+    "weekend": "Weekend",
+    "week": "Week",
+    "thisWeekend": "This weekend",
+    "thisWeek": "This week",
+    "days": "{n} days",
+    "legend": "Sections"
   },
   "history": {
     "title": "History and honours",
     "pageTitle": "Honours — {group}",
     "description": "Canoe polo honours of {group}, season by season.",
     "group": "Competition",
-    "seasons": "Seasons",
-    "fullRanking": "See the full ranking",
-    "ranking": "Competition ranking"
+    "champion": "{season} champion",
+    "streak": "{n}th title in a row, since {since}",
+    "titles": "{rank} title",
+    "lastSeasons": "Champions of the last ten seasons",
+    "allSeasons": "Every season",
+    "decade": "{decade}s",
+    "hint": "Tap a team to highlight its podiums.",
+    "highlighted": "Podiums of {team} highlighted.",
+    "unhighlight": "Show everything normally",
+    "col": {
+      "season": "Season",
+      "competition": "Competition",
+      "champion": "Champion",
+      "second": "2nd",
+      "third": "3rd"
+    },
+    "holder": "Title holder"
   },
   "teams": {
-    "title": "Teams",
-    "description": "Find a canoe polo team, its honours and its roster.",
-    "search": "Team name or club code",
+    "showOnMap": "Show on the map",
     "minLength": "Type at least {min} characters.",
-    "noResult": "No team matches “{query}”.",
-    "results": "Teams found",
     "club": "Club",
     "clubPage": "Club page of {club}",
     "colors": "Team colours",
@@ -336,9 +391,6 @@
     "honours": "Honours",
     "noHonours": "No ranking in a finished competition.",
     "col": {
-      "season": "Season",
-      "competition": "Competition",
-      "rank": "Rank",
       "number": "No.",
       "player": "Player",
       "category": "Category",
@@ -358,34 +410,54 @@
       "coach": "Coach"
     },
     "pageDescription": "Honours and roster of the canoe polo team {team}.",
-    "honoursCaption": "Honours of {team}",
-    "intermediateRound": "intermediate round",
-    "intermediateLegend": "In italics: ranking of an intermediate round (qualification, pool…), not a final ranking."
+    "clubLine": "Team of {club}",
+    "honoursSince": "Honours since {season}",
+    "tally": {
+      "1": {
+        "label": "titles",
+        "detail": "1st places"
+      },
+      "2": {
+        "label": "second places",
+        "detail": "silver medals"
+      },
+      "3": {
+        "label": "third places",
+        "detail": "bronze medals"
+      }
+    },
+    "qualification": "qualification round",
+    "medals": "Medals"
   },
   "clubs": {
-    "title": "Clubs",
-    "description": "Canoe polo clubs: contact details, teams and map.",
-    "search": "Club name or code",
-    "view": {
-      "list": "List",
-      "map": "Map"
-    },
+    "title": "Clubs and teams",
+    "description": "Canoe polo clubs and teams: map, contact details and teams.",
+    "search": "Club, code or team",
     "noResult": "No club matches “{query}”.",
     "showMap": "Show the map",
-    "mapNotice": "The map uses OpenStreetMap tiles: they are only loaded after a click.",
+    "hideMap": "Hide the map",
+    "mapNotice": "The map uses OpenStreetMap tiles: they are only loaded after a click, remembered on this device.",
     "mapAttribution": "© OpenStreetMap contributors",
     "mapLabel": "Map of the clubs",
     "mapLoading": "Loading the map…",
-    "department": "Departmental committee",
-    "region": "Regional committee",
+    "department": "Department",
+    "region": "Region",
     "website": "Website",
     "email": "E-mail",
     "address": "Address",
-    "teams": "Teams of the club",
     "noTeam": "No team.",
     "logoAlt": "Logo of {club}",
-    "pageDescription": "Contact details and teams of the canoe polo club {club}.",
-    "count": "{count} club | {count} clubs"
+    "searchLabel": "Search a club or a team",
+    "sheet": "Club page",
+    "directions": "Directions",
+    "code": "Code",
+    "teamCount": "{n} team | {n} teams",
+    "resultsClubs": "Clubs",
+    "resultsTeams": "Teams",
+    "hint": "{count} club is on the map. | {count} clubs are on the map.",
+    "hintHow": "Tap a dot to see the club, its logo, contact details and teams, or search it by name or code.",
+    "nearMe": "Clubs near me",
+    "nearUnavailable": "Position unavailable: search your town."
   },
   "search": {
     "title": "Search",
@@ -401,17 +473,24 @@
       "news": "News",
       "pages": "Pages"
     },
-    "label": "Search the site"
+    "label": "Search the site",
+    "all": "All",
+    "kinds": "Kind of result",
+    "best": "Best match",
+    "clubCode": "Club, {code}",
+    "showOnMap": "Show on the map"
   },
   "events": {
     "title": "Events",
     "pageTitle": "Events {year}",
     "description": "Canoe polo tournaments and events in {year}.",
-    "year": "Year",
-    "empty": "No event published in {year}.",
-    "intro": "An event gathers one or several competitions in one place over a few days: open it to see all its games.",
-    "previousYear": "Previous year",
-    "nextYear": "Next year"
+    "intro": "An event brings several competitions or categories together in one place, on the same weekend or in the same week.",
+    "season": "Season",
+    "search": "Name or place",
+    "searchLabel": "Search an event by name or place",
+    "next": "Next",
+    "past": "Already played",
+    "noMatch": "No event matches. Try another name or season."
   },
   "news": {
     "title": "News",
@@ -457,7 +536,7 @@
     "linkedNews": "News"
   },
   "content": {
-    "toc": "Contents",
+    "toc": "On this page",
     "children": "In this section",
     "preview": "Preview: this page is not published."
   },
@@ -471,8 +550,7 @@
     },
     "places": "{confirmed} / {capacity} places confirmed",
     "manual": "Each registration is confirmed by the organiser (for instance once the payment is received).",
-    "required": "required",
-    "requiredHint": "Fields marked with an asterisk (*) are required.",
+    "requiredHint": "Every field is required unless marked « optional ».",
     "choose": "Choose…",
     "submit": "Send the registration",
     "honeypot": "Leave this field empty",
@@ -512,7 +590,10 @@
     "noEntries": "No registration.",
     "count": "{count} registration | {count} registrations",
     "attached": "Registration",
-    "register": "Register"
+    "register": "Register",
+    "optional": "optional",
+    "less": "Less",
+    "more": "More"
   },
   "theme": {
     "label": "Theme",

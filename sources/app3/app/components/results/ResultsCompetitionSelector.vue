@@ -21,16 +21,16 @@ function apply() {
 </script>
 
 <template>
-  <form ref="form" method="get" :action="localePath('/competitions')" class="flex flex-wrap items-end gap-4" data-testid="competition-selector" @change="apply" @submit.prevent="apply">
-    <label class="flex flex-col text-sm">
+  <form ref="form" method="get" :action="localePath('/competitions')" class="flex flex-wrap items-end gap-x-4 gap-y-2 lg:block" data-testid="competition-selector" @change="apply" @submit.prevent="apply">
+    <label class="flex flex-col text-sm text-muted lg:flex-row lg:items-center lg:gap-1.5">
       {{ $t('results.season') }}
-      <select name="season" class="rounded border border-line px-2 py-1">
+      <select name="season" class="rounded-md border border-line bg-surface px-2 py-1.5 text-ink">
         <option v-for="item in props.seasons" :key="item" :value="item" :selected="item === season">{{ item }}</option>
       </select>
     </label>
-    <label class="flex flex-col text-sm">
+    <label class="flex flex-col text-sm text-muted lg:sr-only">
       {{ $t('results.group') }}
-      <select name="group" class="rounded border border-line px-2 py-1">
+      <select name="group" class="rounded-md border border-line bg-surface px-2 py-1.5 text-ink">
         <optgroup v-for="section in sections" :key="section.section" :label="$t(`results.section.${section.section}`)">
           <option v-for="item in section.groups" :key="item.code" :value="item.code" :selected="item.code === group">
             {{ groupLabel(item, locale) }}
@@ -38,6 +38,6 @@ function apply() {
         </optgroup>
       </select>
     </label>
-    <UButton type="submit" variant="outline">{{ $t('results.show') }}</UButton>
+    <UButton type="submit" variant="outline" class="lg:sr-only">{{ $t('results.show') }}</UButton>
   </form>
 </template>

@@ -44,7 +44,7 @@ final class ArticleLinks
         $path = match ($kind) {
             'competition' => '/competitions/' . $ref,
             'event' => '/events/' . $ref,
-            default => '/clubs/' . $ref,
+            default => '/clubs?club=' . $ref,
         };
 
         return ['kind' => $kind, 'label' => $label, 'path' => $path];

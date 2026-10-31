@@ -52,6 +52,27 @@ en France ou à l'étranger. Les textes de l'accueil le reflètent.
 La date du jour (Europe/Paris) et la répartition « à venir » / « récemment » sont calculées **par api2**
 (`GET /fixtures/site`) et transmises avec les données : le navigateur ne recalcule rien à l'hydratation.
 
+## 2 bis. Présentation (maquettes du 22/10/2026)
+
+Remplace la disposition en cartes du § 2 ; les données et les règles (répartition par api2, 9 au plus, messages vides
+ou d'indisponibilité, cartes événement / groupe) sont inchangées.
+
+1. **Phrase de présentation** : reste l'unique `<h1>`, **en petit** (texte gris, graisse 600) ; plus de paragraphe ni
+   de bouton « Compétitions et résultats » (l'entrée de menu suffit).
+2. **Le prochain rendez-vous ouvre la page** (premier de « À venir ») : mention relative (« En ce moment » en rouge
+   avec point clignotant, « Demain », « Ce week-end » si le rendez-vous commence un samedi ou un dimanche dans les 6
+   jours, « Dans {n} jours »), nom en très grand (Agency FB), lieu et dates ; **dates en très grand** à droite
+   (« 24–25 » sur « octobre », au-dessus du nom sur mobile). Les **journées de groupe aux mêmes dates** qu'un événement
+   sont listées dessous (« Au programme : … », liens vers le groupe) et ne sont pas répétées dans l'agenda. Actions :
+   en cours → « Suivre en direct » (app2, nouvel onglet) et « Matchs et résultats » ; sinon « Voir le programme » et,
+   pour un événement, « Ajouter à mon agenda » (`/event/{id}/calendar.ics`).
+3. **Deux colonnes** (une sur mobile) : à gauche **Actualités** — une à la une (image 2:1, titre, chapeau, date et
+   catégorie) puis deux en vignettes — lien « Toutes les actualités » ; l'article à la une est le premier du bloc
+   « à la une », sinon la dernière actualité. À droite **Agenda** : « Ensuite » (les autres rendez-vous à venir) et
+   « Derniers résultats » (7 au plus), une ligne par rendez-vous (dates courtes en Agency FB, nom, lieu), lien
+   « Calendrier complet ».
+4. Les partenaires ferment la page ; l'alerte reste en tête.
+
 ## 3. Données
 
 | Besoin | Endpoint | Champs utilisés |
@@ -75,7 +96,7 @@ La date du jour (Europe/Paris) et la répartition « à venir » / « récemment
 ## 5. Critères d'acceptation
 
 - **HOME-01** — La page affiche un unique `<h1>` traduit selon la langue.
-- **HOME-02** — Le bouton « Compétitions et résultats » a la même cible que l'entrée de menu correspondante.
+- **HOME-02** — *Retiré le 22/10/2026 (maquettes) : « Compétitions et résultats » reste dans le menu.*
 - **HOME-03** — « Récemment » : au plus 9 rendez-vous terminés, du plus récent au plus ancien.
 - **HOME-04** — Une carte d'événement mène à `/events/{id}` (phase 2), affiche les dates et le logo seulement
   s'il est renseigné.
@@ -90,6 +111,10 @@ La date du jour (Europe/Paris) et la répartition « à venir » / « récemment
   mène à `/groups/{saison}/{code}`. Une journée d'un événement publié n'apparaît que par son événement.
 - **HOME-10** — app2 : sous un QR code réduit, la rubrique « À venir » (`GET /fixtures/app`) mène à
   `/event/{id}` ou `/group/{saison}/{code}` d'app2 (§ 7).
+
+- **HOME-11** — Le prochain rendez-vous ouvre la page : mention relative (en cours, demain, ce week-end, dans n jours), nom, lieu, dates en grand ; en cours → « Suivre en direct » (app2, nouvel onglet).
+- **HOME-12** — Les journées de groupe aux mêmes dates que le prochain événement sont listées sous lui (« Au programme ») et absentes de « Ensuite ».
+- **HOME-13** — Actualités à gauche (une à la une puis deux), agenda à droite (« Ensuite », « Derniers résultats » 7 au plus, « Calendrier complet ») ; partenaires en dernier.
 
 ## 6. Évolutions prévues
 

@@ -21,8 +21,7 @@ Navigation principale (ordre d'affichage) :
 | 3 | **Calendrier** | — | `/calendar` | `/kpcalendrier.php` | phase 3 |
 | 4 | **Compétitions** | Compétitions et résultats | `/competitions` | `/kpclassements.php` | phase 2 |
 | | | Historique et palmarès | `/history` | `/kphistorique.php` | phase 3 |
-| 5 | **Équipes et clubs** | Équipes | `/teams` | `/kpequipes.php` | phase 3 |
-| | | Clubs | `/clubs` | `/kpclubs.php` | phase 3 |
+| 5 | **Clubs et équipes** | — (une seule entrée, maquettes du 22/10/2026) | `/clubs` (`/teams` y redirige) | `/kpclubs.php` | phase 3 |
 | 6 | **En direct** | — | app2 (`NUXT_PUBLIC_APP2_BASE_URL`) | — | phase 1 (lien externe) |
 
 Choix assumés par rapport au menu actuel :
@@ -96,7 +95,7 @@ Un groupe dont toutes les entrées sont masquées est masqué.
 
 ## 6. Critères d'acceptation
 
-- **NAV-01** — `MAIN_MENU` contient, dans l'ordre : home, news, calendar, events, competitions (competitions-list, history), teams-clubs (teams, clubs), live ; à partir de la phase 4, l'entrée éditoriale « Le kayak-polo » (`editorial`, sous-entrées de `GET /menu`, PAGE_CONTENT.md § 3) est insérée entre teams-clubs et live, masquée si le menu est vide ou api2 indisponible.
+- **NAV-01** — `MAIN_MENU` contient, dans l'ordre : home, news, calendar, events, competitions (competitions-list, history), teams-clubs (une seule entrée « Clubs et équipes » vers `/clubs`, maquettes du 22/10/2026), live ; à partir de la phase 4, l'entrée éditoriale « Le kayak-polo » (`editorial`, sous-entrées de `GET /menu`, PAGE_CONTENT.md § 3) est insérée entre teams-clubs et live, masquée si le menu est vide ou api2 indisponible.
 - **NAV-02** — `resolveMenuLink` renvoie un lien interne localisé pour une entrée `ready` (`/news` en FR, `/en/news` en EN).
 - **NAV-03** — `resolveMenuLink` renvoie l'URL legacy absolue avec `?lang=fr|en` pour une entrée non livrée ayant un `legacyPath`.
 - **NAV-04** — `resolveMenuLink` renvoie l'URL d'app2 pour l'entrée « En direct », rendue dans un nouvel onglet.

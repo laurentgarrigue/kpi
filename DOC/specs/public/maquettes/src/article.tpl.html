@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Article</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+article { max-width: 720px; margin: 0 auto; padding-bottom: 40px; }
+.crumbs { padding-top: 22px; }
+article h1 { font-size: 54px; line-height: 1; margin: 6px 0 14px; }
+.byline { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); margin-bottom: 22px; }
+.byline a { color: var(--blue-deep); font-weight: 600; text-decoration: none; }
+figure { margin: 0 -60px 26px; }
+figure img { width: 100%; border-radius: 8px; display: block; max-height: 520px; object-fit: cover; }
+.lede { font-size: 20px; line-height: 1.5; font-weight: 600; margin: 0 0 22px; }
+.body { font-size: 17px; line-height: 1.7; }
+.body h2 { font: 400 30px/1.1 var(--display); color: var(--blue-deep); margin: 34px 0 10px; text-transform: none; }
+.body ul { padding-left: 22px; }
+.share { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 34px 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; }
+.share a, .share button { font: inherit; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: none; color: var(--ink); text-decoration: none; cursor: pointer; }
+.siblings-nav { max-width: 720px; margin: 0 auto 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.siblings-nav a { display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }
+.siblings-nav a:hover b { text-decoration: underline; }
+.siblings-nav small { display: block; color: var(--muted); font-size: 13px; }
+.siblings-nav .next { text-align: right; grid-column: 2; }
+@media (max-width: 800px) {
+  figure { margin: 0 0 22px; }
+  article h1 { font-size: 40px; }
+  .siblings-nav { grid-template-columns: 1fr; }
+  .siblings-nav .next { grid-column: auto; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <article id="article"></article>
+  <nav class="siblings-nav" aria-label="Autres actualités" id="sib"></nav>
+</main>
+<script src="maquette.js"></script>
+<script>
+const A = __ARTICLE__;
+document.getElementById('chrome').innerHTML = siteChrome('Actualités');
+const cover = A.cover ? KPI_MEDIA + (A.cover.variants.find(v => v.width >= 1280) ?? A.cover).url : null;
+// The body comes from the CMS: in the real page it is sanitised server-side (as today).
+document.getElementById('article').innerHTML = `
+  <nav class="crumbs" aria-label="Fil d'Ariane"><a href="accueil.html">Accueil</a> › <a href="actualites.html">Actualités</a></nav>
+  <h1>${esc(A.title)}</h1>
+  <p class="byline"><span>${fmt(A.published_at.slice(0, 10), { day: 'numeric', month: 'long', year: 'numeric' })}, par ${esc(A.signature)}</span>${A.categories.map(c => `<a href="actualites.html">${esc(c.label)}</a>`).join('')}</p>
+  ${cover ? `<figure><img src="${cover}" alt="${esc(A.cover.alt)}"></figure>` : ''}
+  ${A.lead ? `<p class="lede">${esc(A.lead)}</p>` : ''}
+  <div class="body">${A.body}</div>
+  <div class="share"><span>Partager</span><a href="#">Facebook</a><button type="button" onclick="navigator.clipboard?.writeText(location.href); this.textContent='Lien copié'">Copier le lien</button></div>`;
+document.getElementById('sib').innerHTML = `${A.previous ? `<a href="article.html"><small>Actualité précédente</small><b>${esc(A.previous.title)}</b></a>` : ''}${A.next ? `<a class="next" href="article.html"><small>Actualité suivante</small><b>${esc(A.next.title)}</b></a>` : ''}`;
+demoBar();
+</script>
+</body>
+</html>

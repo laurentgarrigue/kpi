@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   AGGREGATE_TABS,
   COMPETITION_TABS,
+  EVENT_TABS,
   competitionPath,
+  competitionsByRound,
   eventTabPath,
   selectedCompetition,
   defaultGroup,
@@ -42,6 +44,7 @@ describe('tabs', () => {
   it('CMP-04: competition tabs, the phases tab merged into progress', () => {
     expect(COMPETITION_TABS).toEqual(['info', 'games', 'pitches', 'progress', 'ranking', 'stats'])
     expect(AGGREGATE_TABS).toEqual(['games', 'pitches'])
+    expect(EVENT_TABS).toEqual(['competitions', 'info', 'games', 'pitches', 'progress', 'ranking', 'stats'])
   })
 
   it('CMP-01: ranking for a finished competition, games otherwise', () => {
@@ -70,6 +73,7 @@ describe('event view', () => {
 
   it('EVT-03/EVT-07: an event tab, restricted to a competition when given', () => {
     expect(eventTabPath(77, 'games')).toBe('/events/77/games')
+    expect(eventTabPath(77, 'competitions')).toBe('/events/77/competitions')
     expect(eventTabPath(77, 'ranking', 'RCP')).toBe('/events/77/ranking?competition=RCP')
   })
 
@@ -80,5 +84,16 @@ describe('event view', () => {
     expect(selectedCompetition(competitions, undefined, true)).toEqual({ code: 'RCH' })
     expect(selectedCompetition(competitions, 'NOPE', true)).toEqual({ code: 'RCH' })
     expect(selectedCompetition([], undefined, true)).toBeUndefined()
+  })
+})
+
+describe('competitionsByRound', () => {
+  it('CPL-04: one row per round, in the order received', () => {
+    const competitions = [
+      { code: 'N3A', round: 1 }, { code: 'N3C', round: 1 }, { code: 'N3E', round: 2 }, { code: 'N3O', round: 2 }, { code: 'N3', round: 10 },
+    ]
+    expect(competitionsByRound(competitions).map(row => row.map(competition => competition.code))).toEqual([['N3A', 'N3C'], ['N3E', 'N3O'], ['N3']])
+    expect(competitionsByRound([{ code: 'X', round: null }, { code: 'Y', round: null }])).toHaveLength(1)
+    expect(competitionsByRound([])).toEqual([])
   })
 })

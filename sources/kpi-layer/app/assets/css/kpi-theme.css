@@ -60,6 +60,15 @@
   /* Page background: white in the light theme, dark in the dark theme (see the end of this file). */
   --color-surface: #ffffff;
   --color-sky: #69b9e6;
+  /* Redesign tokens (DOC/specs/public/maquettes/README.md): pale background of cards and selections, secondary
+     text, score column (« spine »), live and medal colours. Gold is for finals and gold medals only, red for live. */
+  --color-wash: #eef5f9;
+  --color-muted: #5d5f63;
+  --color-spine: #20265b;
+  --color-live: #c94a4c;
+  --color-medal-gold: #9a7208;
+  --color-medal-silver: #6b7280;
+  --color-medal-bronze: #9a5a2c;
 
   /* Generated palette — scripts/generate-palette.py (do not edit by hand) */
   /* kpi-blue: 500 = #357b9c */
@@ -122,6 +131,13 @@
  */
 .dark {
   --color-surface: oklch(0.19 0.02 262);
+  --color-wash: oklch(0.25 0.04 262);
+  --color-muted: oklch(0.76 0.015 255);
+  --color-spine: oklch(0.33 0.09 272);
+  --color-live: #b5393b;
+  --color-medal-gold: #d9b24a;
+  --color-medal-silver: #b8bcc6;
+  --color-medal-bronze: #d49a6a;
   --color-ink: oklch(0.93 0.01 250);
   --color-line: oklch(0.40 0.02 255);
   --color-kpi-blue-50: oklch(0.24 0.035 231.75);

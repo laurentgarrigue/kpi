@@ -30,9 +30,7 @@
     "competitions": "Compétitions",
     "competitions-list": "Compétitions et résultats",
     "history": "Historique et palmarès",
-    "teams-clubs": "Équipes et clubs",
-    "teams": "Équipes",
-    "clubs": "Clubs",
+    "teams-clubs": "Clubs et équipes",
     "live": "En direct",
     "events": "Événements",
     "editorial": "Le kayak-polo"
@@ -54,21 +52,26 @@
   },
   "home": {
     "title": "Le kayak-polo, en France et à l'international",
-    "intro": "Résultats, classements et calendriers des compétitions de kayak-polo — championnats et coupes de France, tournois, compétitions européennes, mondiales et continentales — publiés par la Commission Nationale d'Activité Kayak-Polo de la FFCK.",
-    "competitionsCta": "Compétitions et résultats",
-    "liveCta": "Suivre un événement en direct",
-    "upcomingFixtures": "À venir",
     "noUpcomingFixtures": "Aucun rendez-vous à venir pour le moment.",
-    "ongoing": "En cours",
-    "recentFixtures": "Récemment",
     "noRecentFixtures": "Aucun rendez-vous publié pour le moment.",
-    "groupFixture": "Compétition",
-    "eventFixture": "Événement",
     "fixturesUnavailable": "Les rendez-vous sont momentanément indisponibles.",
-    "featured": "À la une",
-    "latestNews": "Dernières actualités",
     "allNews": "Toutes les actualités",
-    "partners": "Partenaires"
+    "partners": "Partenaires",
+    "when": {
+      "now": "En ce moment",
+      "tomorrow": "Demain",
+      "weekend": "Ce week-end",
+      "days": "Dans {n} jours"
+    },
+    "programme": "Au programme :",
+    "seeProgramme": "Voir le programme",
+    "addToCalendar": "Ajouter à mon agenda",
+    "gamesAndResults": "Matchs et résultats",
+    "news": "Actualités",
+    "agenda": "Agenda",
+    "after": "Ensuite",
+    "latestResults": "Derniers résultats",
+    "fullCalendar": "Calendrier complet"
   },
   "error": {
     "notFoundTitle": "Page introuvable",
@@ -102,7 +105,6 @@
     "noCompetition": "Aucune compétition publiée pour ce groupe.",
     "allGroupGames": "Tous les matchs du groupe",
     "noRanking": "Classement non disponible",
-    "seeAll": "Voir tout",
     "seeMore": "Voir plus",
     "competitionStatus": {
       "ATT": "À venir",
@@ -122,11 +124,10 @@
     },
     "qualified": "Qualifié",
     "eliminated": "Relégué ou éliminé",
-    "winner": "(vainqueur)",
     "partOfEvent": "{scope} fait partie de l'événement",
     "seeEvent": "Voir l'événement",
     "alsoInEvents": "Également dans :",
-    "events": "Événements :",
+    "events": "Joué pendant :",
     "competitions": "Compétitions",
     "allCompetitions": "Toutes",
     "tabs": "Onglets",
@@ -136,7 +137,8 @@
       "info": "Infos",
       "progress": "Déroulement",
       "ranking": "Classement",
-      "stats": "Stats"
+      "stats": "Stats",
+      "competitions": "Compétitions"
     },
     "tabTitle": "{tab} — {competition} {season}",
     "tabDescription": {
@@ -152,16 +154,7 @@
     "website": "Site web de la compétition",
     "followLive": "Suivre en direct",
     "col": {
-      "number": "N°",
-      "time": "Heure",
       "pitch": "Terrain",
-      "competition": "Compétition",
-      "phase": "Phase",
-      "teamA": "Équipe A",
-      "score": "Score",
-      "teamB": "Équipe B",
-      "referees": "Arbitres",
-      "status": "Statut",
       "mark": "Qualification ou médaille",
       "rank": "Clt",
       "team": "Équipe",
@@ -176,11 +169,8 @@
       "goals_against": "−",
       "goal_diff": "Diff"
     },
-    "gamesOf": "Matchs du {date}",
-    "pitchesOf": "Terrains du {date}",
     "pitch": "Terrain {pitch}",
     "scoreA11y": "{a} à {b}",
-    "provisional": "provisoire",
     "gameSheet": "Feuille de match",
     "gamesPdf": "Liste des matchs (PDF)",
     "rankingPdf": "Classement (PDF)",
@@ -190,8 +180,6 @@
       "gameday": "Journée",
       "all": "Toutes",
       "day": "Jour",
-      "allDays": "Tous les jours",
-      "upcoming": "Prochains matchs",
       "apply": "Filtrer"
     },
     "ranking": {
@@ -199,19 +187,28 @@
       "final": "Classement final"
     },
     "rankingLater": "Le classement sera publié après les premiers matchs.",
+    "cupRankingLater": {
+      "title": "Le classement général sera publié à l'issue de la compétition.",
+      "reason": "En cours de compétition à élimination, un classement provisoire serait trompeur : les équipes encore qualifiées, finalistes compris, ont encore des matchs à jouer.",
+      "progress": "Suivre le déroulement de la compétition"
+    },
     "progressView": "Présentation du déroulement",
     "view": {
       "horizontal": "Horizontal",
       "vertical": "Vertical"
     },
     "noProgress": "Le déroulement sera publié au début de la compétition.",
+    "progressGameday": {
+      "title": "Journée {n}",
+      "pending": "Classement à venir",
+      "games": "Matchs de la journée"
+    },
     "round": "Tour {round}",
     "statsKinds": "Statistiques disponibles",
     "noStats": "Aucune statistique disponible.",
     "info": {
       "gamedays": "Journées",
       "noGamedays": "Aucune journée publiée.",
-      "organizer": "Organisateur",
       "rc": "Responsable de compétition",
       "r1": "Responsable R1",
       "delegate": "Délégué",
@@ -219,14 +216,13 @@
       "teams": "Équipes engagées",
       "pool": "Poule {pool}",
       "schema": "Schéma de la compétition",
-      "schemaAlt": "Schéma de déroulement de {competition}"
+      "schemaAlt": "Schéma de déroulement de {competition}",
+      "officials": "Officiels",
+      "teamsSummary": "{teams} équipes | {teams} équipes",
+      "poolsSummary": "{pools} poule | {pools} poules",
+      "organizedBy": "organisé par {organizer}",
+      "when": "Dates et lieu"
     },
-    "kind": {
-      "event": "Événement",
-      "group": "Groupe de compétitions",
-      "competition": "Compétition"
-    },
-    "eventCompetitions": "Compétitions de cet événement",
     "gamedaysOf": "{count} journée sur {total} de la compétition | {count} journées sur {total} de la compétition",
     "allGamedays": "Toutes les journées de la compétition",
     "seeCompetition": "Voir la compétition entière",
@@ -238,7 +234,46 @@
       "shootout": "tirs au but",
       "shootoutShort": "TAB"
     },
-    "gameNumber": "Match n° {number}"
+    "gamesCount": "{n} match | {n} matchs",
+    "draw": {
+      "pool": "{rank} poule {pool}",
+      "winner": "Vainqueur n° {number}",
+      "loser": "Perdant n° {number}",
+      "team": "Équipe n° {number}",
+      "text": "{text}",
+      "unknown": "À définir"
+    },
+    "days": "Jour",
+    "allDaysShort": "Tous",
+    "upcomingOnly": "Matchs à venir seulement",
+    "provisionalShort": "Prov.",
+    "scoreLabel": "Score {score}",
+    "notPlayed": "pas encore joué",
+    "eventCta": {
+      "many": "Les {n} compétitions, tous les matchs par terrain et le direct.",
+      "one": "Tous les matchs par terrain et le direct."
+    },
+    "competitionCount": "compétition | compétitions",
+    "podium": "Podium",
+    "fullRanking": "Classement complet",
+    "podiumPoints": "{points} pts",
+    "podiumWins": "{n} victoire | {n} victoires",
+    "place": "{rank} place",
+    "stats": {
+      "filterByTeam": "Filtrer par équipe",
+      "allTeams": "Toutes",
+      "goalsShort": "but | buts",
+      "playerNumber": "n° {number}"
+    },
+    "follow": {
+      "hint": "Touchez une équipe pour suivre son parcours.",
+      "stop": "Ne plus suivre {team}"
+    },
+    "numberShort": "n° {number}",
+    "allPitches": "Tous les terrains",
+    "pitches": "Terrains",
+    "podiumLater": "Le classement sera publié à la fin de la compétition.",
+    "fullRankingCount": "Classement complet ({n} équipes)"
   },
   "stats": {
     "scorers": {
@@ -256,7 +291,7 @@
     "noSuggestion": "Aucune suggestion"
   },
   "calendar": {
-    "title": "Calendrier des compétitions",
+    "title": "Calendrier",
     "pageTitle": "Calendrier {month}",
     "description": "Calendrier des compétitions de kayak-polo, {month}.",
     "previous": "Mois précédent",
@@ -265,7 +300,6 @@
     "filters": "Filtrer le calendrier",
     "empty": "Aucune compétition publiée ce mois-ci.",
     "nextWithEntries": "Prochain mois avec des compétitions : {month}",
-    "list": "Liste des journées",
     "grid": "Vue du mois",
     "event": "Événement : {event}",
     "subscribe": "S'abonner au calendrier",
@@ -310,24 +344,45 @@
         "step3": "Sur iPhone : Réglages › Calendrier › Comptes › Ajouter un compte › Autre › Ajouter un calendrier avec abonnement.",
         "step4": "Choisissez la fréquence d'actualisation proposée."
       }
-    }
+    },
+    "agenda": "Dans votre agenda",
+    "agendaIntro": "Les matchs s'ajoutent à votre agenda et se mettent à jour tout seuls si les horaires changent.",
+    "byWeek": "Par semaine",
+    "monthView": "Mois",
+    "views": "Affichage",
+    "weekend": "Week-end",
+    "week": "Semaine",
+    "thisWeekend": "Ce week-end",
+    "thisWeek": "Cette semaine",
+    "days": "{n} jours",
+    "legend": "Sections"
   },
   "history": {
     "title": "Historique et palmarès",
     "pageTitle": "Palmarès — {group}",
     "description": "Palmarès du kayak-polo {group}, saison par saison.",
     "group": "Compétition",
-    "seasons": "Saisons",
-    "fullRanking": "Voir le classement complet",
-    "ranking": "Classement de la compétition"
+    "champion": "Champion {season}",
+    "streak": "{n}e titre d'affilée, depuis {since}",
+    "titles": "{rank} titre",
+    "lastSeasons": "Champions des dix dernières saisons",
+    "allSeasons": "Toutes les saisons",
+    "decade": "Années {decade}",
+    "hint": "Touchez une équipe pour surligner ses podiums.",
+    "highlighted": "Podiums de {team} surlignés.",
+    "unhighlight": "Tout afficher normalement",
+    "col": {
+      "season": "Saison",
+      "competition": "Compétition",
+      "champion": "Champion",
+      "second": "2e",
+      "third": "3e"
+    },
+    "holder": "Tenant du titre"
   },
   "teams": {
-    "title": "Équipes",
-    "description": "Rechercher une équipe de kayak-polo, son palmarès et sa composition.",
-    "search": "Nom de l'équipe ou code du club",
+    "showOnMap": "Voir sur la carte",
     "minLength": "Saisissez au moins {min} caractères.",
-    "noResult": "Aucune équipe ne correspond à « {query} ».",
-    "results": "Équipes trouvées",
     "club": "Club",
     "clubPage": "Fiche du club {club}",
     "colors": "Couleurs de l'équipe",
@@ -336,9 +391,6 @@
     "honours": "Palmarès",
     "noHonours": "Aucun classement dans une compétition terminée.",
     "col": {
-      "season": "Saison",
-      "competition": "Compétition",
-      "rank": "Rang",
       "number": "N°",
       "player": "Joueur",
       "category": "Catégorie",
@@ -358,34 +410,54 @@
       "coach": "Entraîneur"
     },
     "pageDescription": "Palmarès et composition de l'équipe de kayak-polo {team}.",
-    "honoursCaption": "Palmarès de {team}",
-    "intermediateRound": "tour intermédiaire",
-    "intermediateLegend": "En italique : classement d'un tour intermédiaire (qualification, poule…), pas un classement final."
+    "clubLine": "Équipe du {club}",
+    "honoursSince": "Palmarès depuis {season}",
+    "tally": {
+      "1": {
+        "label": "titres",
+        "detail": "1res places"
+      },
+      "2": {
+        "label": "deuxièmes places",
+        "detail": "médailles d'argent"
+      },
+      "3": {
+        "label": "troisièmes places",
+        "detail": "médailles de bronze"
+      }
+    },
+    "qualification": "phase de qualification",
+    "medals": "Médailles"
   },
   "clubs": {
-    "title": "Clubs",
-    "description": "Les clubs de kayak-polo : coordonnées, équipes et carte.",
-    "search": "Nom ou code du club",
-    "view": {
-      "list": "Liste",
-      "map": "Carte"
-    },
+    "title": "Clubs et équipes",
+    "description": "Les clubs et les équipes de kayak-polo : carte, coordonnées et équipes.",
+    "search": "Club, code ou équipe",
     "noResult": "Aucun club ne correspond à « {query} ».",
     "showMap": "Afficher la carte",
-    "mapNotice": "La carte utilise les fonds OpenStreetMap : ils ne sont chargés qu'après un clic.",
+    "hideMap": "Masquer la carte",
+    "mapNotice": "La carte utilise les fonds OpenStreetMap : ils ne sont chargés qu'après un clic, retenu sur cet appareil.",
     "mapAttribution": "© contributeurs OpenStreetMap",
     "mapLabel": "Carte des clubs",
     "mapLoading": "Chargement de la carte…",
-    "department": "Comité départemental",
-    "region": "Comité régional",
+    "department": "Département",
+    "region": "Région",
     "website": "Site web",
     "email": "E-mail",
     "address": "Adresse",
-    "teams": "Équipes du club",
     "noTeam": "Aucune équipe.",
     "logoAlt": "Logo de {club}",
-    "pageDescription": "Coordonnées et équipes du club de kayak-polo {club}.",
-    "count": "{count} club | {count} clubs"
+    "searchLabel": "Chercher un club ou une équipe",
+    "sheet": "Fiche du club",
+    "directions": "Itinéraire",
+    "code": "Code",
+    "teamCount": "{n} équipe | {n} équipes",
+    "resultsClubs": "Clubs",
+    "resultsTeams": "Équipes",
+    "hint": "{count} club est placé sur la carte. | {count} clubs sont placés sur la carte.",
+    "hintHow": "Touchez un point pour voir le club, son logo, ses coordonnées et ses équipes, ou cherchez-le par son nom ou son code.",
+    "nearMe": "Clubs près de moi",
+    "nearUnavailable": "Position indisponible : cherchez votre ville."
   },
   "search": {
     "title": "Recherche",
@@ -401,17 +473,24 @@
       "news": "Actualités",
       "pages": "Pages"
     },
-    "label": "Rechercher sur le site"
+    "label": "Rechercher sur le site",
+    "all": "Tout",
+    "kinds": "Type de résultat",
+    "best": "Meilleur résultat",
+    "clubCode": "Club, {code}",
+    "showOnMap": "Voir sur la carte"
   },
   "events": {
     "title": "Événements",
     "pageTitle": "Événements {year}",
     "description": "Tournois et événements de kayak-polo de {year}.",
-    "year": "Année",
-    "empty": "Aucun événement publié en {year}.",
-    "intro": "Un événement réunit sur un même lieu et un même week-end une ou plusieurs compétitions : ouvrez-le pour voir tous ses matchs.",
-    "previousYear": "Année précédente",
-    "nextYear": "Année suivante"
+    "intro": "Un événement réunit plusieurs compétitions ou catégories sur un même lieu, le même week-end ou la même semaine.",
+    "season": "Saison",
+    "search": "Nom ou lieu",
+    "searchLabel": "Chercher un événement par nom ou lieu",
+    "next": "Prochain",
+    "past": "Déjà joués",
+    "noMatch": "Aucun événement ne correspond. Essayez un autre nom ou une autre saison."
   },
   "news": {
     "title": "Actualités",
@@ -457,7 +536,7 @@
     "linkedNews": "Actualités"
   },
   "content": {
-    "toc": "Sommaire",
+    "toc": "Sur cette page",
     "children": "Dans cette rubrique",
     "preview": "Prévisualisation : cette page n'est pas publiée."
   },
@@ -471,8 +550,7 @@
     },
     "places": "{confirmed} / {capacity} places confirmées",
     "manual": "Chaque inscription est confirmée par l'organisateur (par exemple à réception du paiement).",
-    "required": "obligatoire",
-    "requiredHint": "Les champs marqués d'un astérisque (*) sont obligatoires.",
+    "requiredHint": "Les champs sont obligatoires sauf mention « facultatif ».",
     "choose": "Choisir…",
     "submit": "Envoyer l'inscription",
     "honeypot": "Ne pas remplir ce champ",
@@ -512,7 +590,10 @@
     "noEntries": "Aucune inscription.",
     "count": "{count} inscription | {count} inscriptions",
     "attached": "Inscriptions",
-    "register": "S'inscrire"
+    "register": "S'inscrire",
+    "optional": "facultatif",
+    "less": "Moins",
+    "more": "Plus"
   },
   "theme": {
     "label": "Thème",

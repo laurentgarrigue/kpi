@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actualités</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 10px; }
+.head-row a { font-size: 14px; }
+.chips { margin: 14px 0 26px; }
+
+.lead { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px; align-items: center; text-decoration: none; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.lead img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px; display: block; background: var(--wash); }
+.lead h2 { font: 400 40px/1.02 var(--display); color: var(--title); margin: 0 0 10px; }
+.lead:hover h2 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.lead p { margin: 0 0 10px; font-size: 17px; }
+.meta { font-size: 13px; color: var(--muted); }
+.meta b { font-weight: 600; color: var(--blue-deep); }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list a { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 22px; padding: 22px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.list img { width: 200px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 6px; background: var(--wash); display: block; }
+.list .noimg { width: 200px; aspect-ratio: 3 / 2; border-radius: 6px; background: var(--wash); display: grid; place-items: center; font: 400 26px var(--display); color: var(--blue); }
+.list h3 { font: 400 26px/1.05 var(--display); color: var(--title); margin: 0 0 6px; }
+.list a:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; }
+.list p { margin: 0 0 6px; max-width: 70ch; }
+.pager { display: flex; align-items: center; justify-content: space-between; padding: 22px 0 56px; }
+.pager a { font-weight: 600; }
+@media (max-width: 760px) {
+  .lead { grid-template-columns: 1fr; gap: 14px; }
+  .lead h2 { font-size: 32px; }
+  .list a { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .list img, .list .noimg { width: 96px; aspect-ratio: 1; }
+  .list h3 { font-size: 21px; }
+  .list p { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <div class="page-head head-row"><h1>Actualités</h1><a href="#">S'abonner au flux RSS</a></div>
+  <nav class="chips" aria-label="Catégories" id="cats"></nav>
+  <div id="news"></div>
+  <nav class="pager" aria-label="Pages"><span class="meta">Page 1 sur 5</span><a href="#">Actualités plus anciennes</a></nav>
+</main>
+<script src="maquette.js"></script>
+<script>
+const NEWS = __NEWS__.items;
+const CATS = __NEWS_CATS__;
+let cat = null;
+document.getElementById('chrome').innerHTML = siteChrome('Actualités');
+const img = (a, w) => a.cover ? `<img src="${KPI_MEDIA}${(a.cover.variants.find(v => v.width >= w) ?? a.cover).url}" alt="">` : '<span class="noimg" aria-hidden="true">KPI</span>';
+const meta = a => `<span class="meta">${fmt(a.published_at.slice(0, 10), { day: 'numeric', month: 'long', year: 'numeric' })}${a.categories.length ? `, <b>${a.categories.map(c => esc(c.label)).join(', ')}</b>` : ''}</span>`;
+const clean = s => s.replace(/\s+/g, ' ').trim();
+
+function render() {
+  document.getElementById('cats').innerHTML = `<button type="button" data-c="" aria-pressed="${cat === null}">Toutes</button>${CATS.map(c => `<button type="button" data-c="${c.slug}" aria-pressed="${cat === c.slug}">${esc(c.label)}</button>`).join('')}`;
+  const list = NEWS.filter(a => cat === null || a.categories.some(c => c.slug === cat));
+  const [first, ...rest] = list;
+  document.getElementById('news').innerHTML = !first ? '<p class="meta">Aucune actualité dans cette catégorie pour le moment.</p>' : `
+    <a class="lead" href="article.html">${img(first, 1280)}<div><h2>${esc(clean(first.title))}</h2>${first.lead ? `<p>${esc(first.lead)}</p>` : ''}${meta(first)}</div></a>
+    <ul class="list">${rest.map(a => `<li><a href="article.html">${img(a, 320)}<div><h3>${esc(clean(a.title))}</h3>${a.lead && clean(a.lead) !== clean(a.title) ? `<p>${esc(a.lead)}</p>` : ''}${meta(a)}</div></a></li>`).join('')}</ul>`;
+}
+document.getElementById('cats').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { cat = b.dataset.c || null; render(); } });
+render();
+demoBar();
+</script>
+</body>
+</html>

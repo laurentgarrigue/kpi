@@ -78,10 +78,12 @@ export default defineNuxtConfig({
       ...cachedPage(`${prefix}/calendar`, SLOW_CACHE),
       [`${prefix}/history`, NO_CACHE],
       ...cachedPage(`${prefix}/history/*`, LONG_CACHE),
-      ...cachedPage(`${prefix}/teams`, SLOW_CACHE),
+      // `/teams` redirects to the clubs and teams page with its query (PAGE_TEAM.md § 2.1).
+      [`${prefix}/teams`, NO_CACHE],
       ...cachedPage(`${prefix}/teams/*`, SLOW_CACHE),
       ...cachedPage(`${prefix}/clubs`, LONG_CACHE),
-      ...cachedPage(`${prefix}/clubs/*`, LONG_CACHE),
+      // `/clubs/{code}` redirects to the club on the map (PAGE_CLUBS.md § 2.2).
+      [`${prefix}/clubs/*`, NO_CACHE],
       // Rate-limited per visitor by api2: a shared cache would serve one visitor's search to another.
       [`${prefix}/search`, NO_CACHE],
       // Phase 4 (PAGE_NEWS.md § 3, FEATURE_FORMS.md § 3). Editorial pages (`/{slug}`) have free paths: they are not

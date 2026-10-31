@@ -3,6 +3,7 @@
 namespace App\PublicSite;
 
 use App\PublicResults\CompetitionRules;
+use App\PublicResults\TeamLogos;
 use App\PublicSite\Dto\CalendarEntry;
 use App\PublicSite\Dto\ClubSheet;
 use App\PublicSite\Dto\ClubSummary;
@@ -354,13 +355,29 @@ final class PublicSiteService
         }
         usort($ranked, static fn (array $a, array $b): int => [$a['rank'], $b['diff'], $a['team']['Libelle']] <=> [$b['rank'], $a['diff'], $b['team']['Libelle']]);
 
-        return array_map(static fn (array $entry): PodiumTeam => new PodiumTeam(
+        return array_map(fn (array $entry): PodiumTeam => new PodiumTeam(
             rank: $entry['rank'],
             number: $entry['team']['Numero'] === null ? null : (int) $entry['team']['Numero'],
             label: $entry['team']['Libelle'],
-            logo: $entry['team']['logo'],
+            logo: $this->podiumLogo($entry['team']),
             medal: CompetitionRules::medal($status, $final, $entry['rank']),
         ), $ranked);
+    }
+
+    /**
+     * Logo d'une équipe du palmarès : le sien, sinon celui de son club (comme dans les matchs, TeamLogos).
+     *
+     * @param array<string, mixed> $team
+     */
+    private function podiumLogo(array $team): ?string
+    {
+        $logo = PublicSiteRules::nullIfEmpty($team['logo']);
+        if ($logo !== null && $logo !== TeamLogos::EMPTY_LOGO) {
+            return $logo;
+        }
+        $club = PublicSiteRules::nullIfEmpty($team['Code_club'] ?? null);
+
+        return $club === null ? null : $this->media->clubLogo($club);
     }
 
     /** @param array<string, mixed> $row */

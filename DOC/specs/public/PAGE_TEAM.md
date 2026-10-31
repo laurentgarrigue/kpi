@@ -10,12 +10,14 @@ Retrouver une équipe, son palmarès et sa composition dans chaque compétition.
 ## 2. Contenu et comportement
 
 ### 2.1 `/teams`
+*Maquettes du 22/10/2026* : la recherche d'équipes rejoint la page « Clubs et équipes » (PAGE_CLUBS.md § 2.1) ;
+`/teams[?q=]` redirige (301) vers `/clubs[?q=]`. Règles conservées pour cette recherche :
 - Champ de recherche (formulaire GET `q`, 2 caractères minimum ; avec JavaScript, suggestions au fil de la frappe
   après 300 ms, accessibles au clavier — motif « combobox » ARIA).
 - Résultats : nom de l'équipe et club, lien vers la fiche. Aucun résultat → message.
 
 ### 2.2 `/teams/{number}`
-- En-tête : nom de l'équipe, logo du club (règle § 3.5 de l'API), lien vers la fiche du club (`/clubs/{code}`),
+- En-tête : nom de l'équipe, logo du club (règle § 3.5 de l'API), lien vers la fiche du club (`/clubs?club={code}`, le club sur la carte) suivi d'une icône de carte « Voir sur la carte »,
   couleurs de l'équipe et photo d'équipe s'il y en a (avec la saison, texte alternatif « Photo de l'équipe {nom}
   ({saison}) », Q-P3-3). Le logo du club et les couleurs **s'agrandissent au survol** et au focus clavier
   (×3, comme la photo d'équipe affichée en grand), sans animation si `prefers-reduced-motion`.
@@ -35,7 +37,8 @@ Les noms d'équipes des pages de résultats (PAGE_COMPETITION.md § 2.1, `PAGE_L
 ## 3. Données et cache
 
 `GET /teams?q=`, `GET /team/{number}`, `GET /team/{number}/roster/{season}/{code}` (API_PUBLIC_TRANSVERSE.md
-§ 3.4). Cache `maxAge: 300, swr: true`.
+§ 3.4). Cache `maxAge: 300, swr: true` sur `/teams/{number}` ; `/teams` (redirection vers `/clubs`) n'est pas mis
+en cache.
 
 ## 4. SEO et accessibilité
 
@@ -52,7 +55,8 @@ Titre « {équipe} — kayak-polo.info » ; données structurées `SportsTeam` (
   statistiques de match ; la plus récente est sélectionnée par défaut.
 - **TEA-04** — `PAGE_LINKS.team` passe à `/teams/{number}` : tous les liens d'équipe du site sont internes.
 - **TEA-06** — Le logo du club et les couleurs s'agrandissent au survol et au focus clavier.
-- **TEA-07** — Palmarès : saisons regroupées (une cellule par saison), médaille à la place du rang, tours intermédiaires en italique avec légende.
+- **TEA-07** — Palmarès (maquettes du 22/10/2026) : une colonne saison (« Palmarès depuis {première saison} »), une ligne par compétition ; rang écrit (« 1er ») précédé de la médaille (couleur et texte) pour les podiums des tours finaux, en gras ; tours intermédiaires atténués avec la mention « phase de qualification ».
+- **TEA-08** — En-tête : logo, nom en grand, « Équipe du {club} » (lien vers `/clubs?club={code}`, avec l'icône de carte « Voir sur la carte » dans le même lien), tenue ; décompte des médailles des tours finaux (titres, 2es places, 3es places), chiffres en Agency FB aux couleurs des médailles, toujours accompagnés de leur libellé.
 - **TEA-05** — Équipe inconnue → 404 ; l'entrée de menu « Équipes » devient interne.
 
 ## 6. Décisions (09/10/2026)

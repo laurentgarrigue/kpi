@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { chartRounds, knockoutSides, phasesByLevel, poolStandings } from '../../app/utils/results/charts'
-import type { ChartPhase, ChartTeam, CompetitionChart } from '../../app/utils/results/types'
+import { chartRounds, knockoutSides, phasesByLevel, poolStandings, standingsByGameday } from '../../app/utils/results/charts'
+import type { ChartPhase, ChartTeam, CompetitionChart, Gameday } from '../../app/utils/results/types'
 import { game } from './fixtures'
 
 const team = (overrides: Partial<ChartTeam>): ChartTeam => ({
@@ -34,6 +34,43 @@ describe('chartRounds / phasesByLevel', () => {
 
   it('CMP-09: vertical view, phases by decreasing level', () => {
     expect(phasesByLevel(chart).map(p => p.libelle)).toEqual(['Finale', 'Poule A', 'Poule B'])
+  })
+})
+
+describe('standingsByGameday', () => {
+  const gameday = (id: number): Gameday => ({
+    id, name: null, phase: 'Championnat', start: null, end: null, place: null, department: null, organizer: null,
+    officials: { rc: null, r1: null, delegate: null, chief_referee: null },
+  })
+  // The gamedays of a championship often share their phase: api2 merges their rows in one phase.
+  const championship: CompetitionChart = {
+    ...chart,
+    type: 'CHPT',
+    rounds: {
+      1: {
+        type: 'C',
+        phases: {
+          '99-Championnat': phase({
+            libelle: 'Championnat',
+            t_count: 2,
+            teams: [
+              team({ d_id: 11, t_number: 1, t_label: 'A', t_clt: 2, t_pld: 1 }),
+              team({ d_id: 11, t_number: 2, t_label: 'B', t_clt: 1, t_pld: 1 }),
+              team({ d_id: 12, t_number: 1, t_label: 'A', t_clt: 1, t_pld: 1 }),
+            ],
+          }),
+        },
+      },
+    },
+  }
+
+  it('CMP-25: one standing per gameday, its own rows only, gamedays without rows kept', () => {
+    const standings = standingsByGameday(championship, [gameday(11), gameday(12), gameday(13)])
+    expect(standings.map(item => [item.gameday.id, item.phase.d_id, poolStandings(item.phase).map(row => ('empty' in row ? null : row.t_label))])).toEqual([
+      [11, 11, ['B', 'A']],
+      [12, 12, ['A']],
+      [13, 13, []],
+    ])
   })
 })
 
