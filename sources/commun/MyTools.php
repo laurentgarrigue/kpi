@@ -323,6 +323,25 @@ function utyYearOfDate($dateUs)
 	return 0;	// Error
 }
 
+// utyImportBirthDate : date de naissance lue dans un fichier importé (YYYY-MM-DD), ou null si absente, mal formée,
+// conventionnelle (1901-01-01, 0000-00-00) ou invraisemblable (moins de 5 ans ou plus de 100 ans pour la saison).
+// Règle de AgeCategoryRule::isPlausibleBirthDate (api2), CATEGORIE_AGE.md stories 23 et 26.
+function utyImportBirthDate($dateUs, $saison)
+{
+	$dateUs = trim((string) $dateUs);
+	if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $dateUs, $parts)
+		|| !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
+		|| $dateUs === '1901-01-01') {
+		return null;
+	}
+	$age = (int) $saison - (int) $parts[1];
+	if ($age < 5 || $age > 100) {
+		return null;
+	}
+
+	return $dateUs;
+}
+
 /**
  * Comparaison de dates
  *
