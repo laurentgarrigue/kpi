@@ -264,6 +264,7 @@
     "license": "License",
     "number": "Number",
     "category": "Category",
+    "birth_date_unknown": "Unknown birth date",
     "paddle": "Paddle",
     "certificate": "Certificate",
     "saved": "Saved",
@@ -1339,6 +1340,7 @@
     "error_Certif": "Medical certificate missing",
     "error_Pagaie_couleur": "Still-water paddle level too low ({min} minimum)",
     "error_Surclassement": "Age overclassing missing",
+    "error_Naissance_inconnue": "Unknown birth date, age category cannot be checked",
     "override_allowed_title": "Add despite failed validation",
     "override_allowed_notice": "As an administrator, you may add this player only as a non-playing referee (A) or staff (E).",
     "override_status_label": "Forced status",
@@ -1753,6 +1755,33 @@
       "back_to_club": "Back to club"
     }
   },
+  "athletes_list": {
+    "title": "Athletes list",
+    "open_list": "Athletes list",
+    "back_to_search": "Athlete search",
+    "search_placeholder": "Filter by name, first name or licence...",
+    "filters": {
+      "unknown_birthdate": "Unknown birth date",
+      "international": "International player",
+      "engaged_this_season": "Engaged this season"
+    },
+    "total": "{count} athlete(s)",
+    "empty": "No athlete matches the filters",
+    "columns": {
+      "licence": "Licence",
+      "nom": "Name",
+      "sexe": "Sex",
+      "naissance": "Birth date",
+      "club": "Club"
+    },
+    "unknown_birthdate": "Unknown",
+    "international_badge": "International",
+    "open_sheet": "Open the sheet",
+    "pagination": {
+      "showing": "Showing {from} to {to} of {total} athletes",
+      "items_per_page": "Items per page"
+    }
+  },
   "athletes": {
     "title": "Athletes Management",
     "search_placeholder": "Search athlete (name, first name, licence)...",
@@ -1809,7 +1838,10 @@
       "submit": "Update",
       "success": "Update successful.",
       "error": "Error updating athlete.",
-      "forbidden": "Modification forbidden for this athlete."
+      "forbidden": "Modification forbidden for this athlete.",
+      "naissance_inconnue": "Unknown date of birth",
+      "naissance_required": "Enter the date of birth or tick \"Unknown date of birth\".",
+      "implausible_birthdate": "Implausible date of birth: the athlete must be between {min} and {max} years old in the current season."
     },
     "participations": {
       "season": "Season",

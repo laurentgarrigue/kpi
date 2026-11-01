@@ -55,7 +55,7 @@ export interface AthletePresence {
   equipe: string
   numero: number | null
   capitaine: string
-  categorie: string
+  categorie: string | null
 }
 
 export interface AthleteOfficiel {

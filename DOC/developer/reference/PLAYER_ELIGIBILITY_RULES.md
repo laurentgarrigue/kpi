@@ -65,7 +65,20 @@ Mêmes contrôles, mais aucune action n'est refusée ni aucun statut modifié :
 - changement vers Joueur/Capitaine : effectué, avec `warnings` ;
 - copie : statuts conservés, le nombre de joueurs non en règle est signalé.
 
-### 4.3 Copies de feuilles de présence concernées
+### 4.3 Avertissement « date de naissance inconnue » (toujours non bloquant)
+
+Dans une **compétition à bornes d'âge** (`kp_competition.Age_min` ou `Age_max` renseigné et non nul,
+`PlayerEligibilityRules::hasAgeBounds()`), un joueur dont la date de naissance est inconnue reçoit l'avertissement
+`Naissance_inconnue` (« date de naissance inconnue, catégorie d'âge non vérifiable », `WARNING_BIRTH_DATE_UNKNOWN`),
+quel que soit le jeu de règles (national, régional ou aucun) : [CATEGORIE_AGE.md](../../specs/CATEGORIE_AGE.md) stories 20-21.
+
+Ce n'est **pas** un code d'erreur de `evaluate()` : il ne bloque jamais un ajout (même en national), ne fait jamais
+passer un joueur copié en Inactif et ne rend pas le joueur « non en règle » (pas de triangle rouge).
+`PlayerEligibilityChecker::ageWarnings()` le calcule ; il est renvoyé dans `warnings` de l'ajout
+(`POST /admin/teams/{id}/players/add`) et dans `players[].eligibilityWarnings` de la feuille de présence.
+app4 l'affiche par un « ? » orange dans la colonne Catégorie (`components/admin/AgeCategory.vue`).
+
+### 4.4 Copies de feuilles de présence concernées
 
 | Écran | Action | Endpoint |
 |---|---|---|
@@ -88,8 +101,8 @@ Le contrôle est évalué pour la **compétition et la saison cibles**.
   Composant : `components/admin/PresenceComplianceCell.vue`.
 - Menus de statut : en national, Joueur/Capitaine sont désactivés pour un joueur non en règle,
   sauf pour les profils ≤ 2 qui obtiennent une confirmation de forçage.
-- Réponse API de la feuille : `competition.eligibility` (jeu de règles actif ou `null`) et
-  `players[].eligibilityErrors`.
+- Réponse API de la feuille : `competition.eligibility` (jeu de règles actif ou `null`),
+  `players[].eligibilityErrors` et `players[].eligibilityWarnings` (§ 4.3).
 
 ## 6. Faire évoluer le règlement
 

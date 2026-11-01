@@ -2,6 +2,7 @@
 
 namespace App\Pdf\Scoresheet;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\Presence\PresencePlayer;
 use App\PublicResults\CompetitionRules;
 
@@ -24,9 +25,6 @@ final class ScoresheetSheet
     /** Not appointed yet. */
     private const NO_REFEREE = '-1';
 
-    /** Categories by age in the season (utyCodeCategorie2). */
-    private const CATEGORIES = [[9, 'POU'], [11, 'BEN'], [13, 'MIN'], [15, 'CAD'], [17, 'JUN'], [19, 'SEN'], [35, 'V1'], [40, 'V2'], [45, 'V3'], [50, 'V4'], [55, 'V5'], [60, 'V6'], [65, 'V7'], [70, 'V8'], [75, 'V9']];
-
     /** Columns of an event of team A / team B in the grid. */
     /** Card columns of the event grid; D (definitive red, future black card) has its own. */
     private const CARD_COLUMNS = ['V' => 'green', 'J' => 'yellow', 'R' => 'red', 'D' => 'definitive'];
@@ -44,7 +42,7 @@ final class ScoresheetSheet
      *
      * @return list<array{number: string, last_name: string, first_name: string, licence: string, category: string, coach: bool}>
      */
-    public static function roster(array $players, string $season, bool $international, array $labels): array
+    public static function roster(array $players, string $season, bool $international, array $labels, AgeCategoryRule $ageCategories): array
     {
         $lines = [];
         foreach ($players as $player) {
@@ -65,7 +63,7 @@ final class ScoresheetSheet
             if ($matric < PresencePlayer::PROVISIONAL_LICENCE_FROM && $origin !== '' && $origin < $season) {
                 $licence .= ' (' . $origin . ')';
             }
-            $category = self::category($player['Naissance'], $season);
+            $category = $ageCategories->categoryFor($player['Naissance'], $season)?->code ?? '';
             $lines[] = [
                 'number' => $number,
                 'last_name' => $name,
@@ -78,24 +76,6 @@ final class ScoresheetSheet
         $size = max(count($lines), $international ? self::INTERNATIONAL_ROSTER_LINES : self::ROSTER_LINES);
 
         return array_pad($lines, $size, ['number' => '', 'last_name' => '', 'first_name' => '', 'licence' => '', 'category' => '', 'coach' => false]);
-    }
-
-    /** Category of a player by age in the season, '' when unknown. */
-    public static function category(?string $birthDate, string $season): string
-    {
-        $year = (int) substr((string) $birthDate, 0, 4);
-        if ($year === 0) {
-            return '';
-        }
-        $age = (int) $season - $year;
-        $category = '';
-        foreach (self::CATEGORIES as [$from, $code]) {
-            if ($age >= $from) {
-                $category = $code;
-            }
-        }
-
-        return $category;
     }
 
     /**

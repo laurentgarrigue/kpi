@@ -2,8 +2,10 @@
 
 namespace App\Tests\Unit\Eligibility;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Eligibility\PlayerEligibilityRules as Rules;
+use App\Tests\Support\FfckAgeCategoryTable;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +22,7 @@ final class PlayerEligibilityCheckerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->checker = new PlayerEligibilityChecker($this->createStub(Connection::class));
+        $this->checker = new PlayerEligibilityChecker($this->createStub(Connection::class), new AgeCategoryRule(new FfckAgeCategoryTable()));
     }
 
     private const COMPLIANT = [
@@ -147,5 +149,21 @@ final class PlayerEligibilityCheckerTest extends TestCase
         // Passage vers un statut non joueur : rien à signaler
         $d = $this->checker->decide(Rules::LEVEL_REGIONAL, $errors, PlayerEligibilityChecker::OPERATION_STATUS_CHANGE, 'X', false, 7);
         self::assertSame([], $d['warnings']);
+    }
+
+    /** CATEGORIE_AGE.md story 20: warning only, in a competition with age bounds (Age_min or Age_max set, non-zero). */
+    public function testUnknownBirthDateInACompetitionWithAgeBoundsGivesTheUnverifiableCategoryWarning(): void
+    {
+        foreach ([null, '', '1901-01-01', '0000-00-00'] as $unknown) {
+            self::assertSame([Rules::WARNING_BIRTH_DATE_UNKNOWN], $this->checker->ageWarnings($unknown, 18, null), (string) $unknown);
+        }
+        self::assertSame([Rules::WARNING_BIRTH_DATE_UNKNOWN], $this->checker->ageWarnings(null, null, 35));
+    }
+
+    public function testNoUnknownBirthDateWarningWithAKnownDateOrWithoutAgeBounds(): void
+    {
+        self::assertSame([], $this->checker->ageWarnings('2980-03-01', 18, 35));
+        self::assertSame([], $this->checker->ageWarnings(null, null, null));
+        self::assertSame([], $this->checker->ageWarnings(null, 0, 0));
     }
 }

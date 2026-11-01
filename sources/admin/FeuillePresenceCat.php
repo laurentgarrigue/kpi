@@ -183,7 +183,7 @@ class FeuillePresenceCat extends MyPage
                 $pdf->Cell(137, 8, $titreCompet, 0, 0, 'L');
                 $pdf->Cell(136, 8, 'Saison ' . $codeSaison, 0, 1, 'R');
                 $pdf->SetFont('Arial', 'B', 14);
-                $pdf->Cell(273, 8, "Feuille de présence - " . $arrayJoueur[$i]['Categ'], 0, 1, 'C');
+                $pdf->Cell(273, 8, "Feuille de présence - " . ($arrayJoueur[$i]['Categ'] ?: '? - Date de naissance inconnue'), 0, 1, 'C');
                 $pdf->Ln(10);
 
                 $lastCat = $arrayJoueur[$i]['Categ'];
