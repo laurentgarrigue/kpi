@@ -109,6 +109,8 @@ docker/db/mysql/*
 !docker/db/mysql/.gitkeep
 docker/db/mysqlwp/*
 !docker/db/mysqlwp/.gitkeep
+# Dumps manuels pris avant une migration de données en local (cf. CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)
+docker/backups/
 docker/.env
 docker/.env*
 !docker/.env*.dist

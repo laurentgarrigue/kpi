@@ -4,6 +4,7 @@
 
 Vocabulaire : [GLOSSARY.md](../../GLOSSARY.md) (joueur international, date de naissance inconnue, catégorie d'âge).
 Décision d'architecture : [ADR 0001 - catégorie d'âge dérivée](../../docs/adr/0001-categorie-age-derivee.md).
+Déploiement et recette : [CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](../developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md).
 
 ## Problem Statement
 
