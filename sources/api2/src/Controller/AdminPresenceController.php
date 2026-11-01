@@ -6,6 +6,7 @@ use App\AgeCategory\AgeCategoryRule;
 use App\AgeCategory\CompositionAgeCategories;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
+use App\Service\ActiveSeason;
 use App\Service\TeamLastUpdateService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -43,6 +44,7 @@ class AdminPresenceController extends AbstractController
         private readonly TeamLastUpdateService $teamLastUpdate,
         private readonly AgeCategoryRule $ageCategories,
         private readonly CompositionAgeCategories $compositionAgeCategories,
+        private readonly ActiveSeason $activeSeason,
     ) {
     }
 
@@ -474,7 +476,7 @@ class AdminPresenceController extends AbstractController
         $result = $stmt->executeQuery($params);
         $rows = $result->fetchAllAssociative();
 
-        $season = $this->activeSeason();
+        $season = $this->activeSeason->code();
         $players = array_map(function ($row) use ($season) {
             $pagaieLabel = '';
             $pagaieValide = 0;
@@ -1219,11 +1221,6 @@ class AdminPresenceController extends AbstractController
     // ============================================
     // HELPER METHODS
     // ============================================
-
-    private function activeSeason(): string
-    {
-        return (string) $this->connection->fetchOne("SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1");
-    }
 
     private function getMatchInfo(int $matchId): ?array
     {

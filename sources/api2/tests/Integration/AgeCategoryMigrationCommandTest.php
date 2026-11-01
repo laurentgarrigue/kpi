@@ -15,6 +15,9 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class AgeCategoryMigrationCommandTest extends ApiTestCase
 {
+    /** Referees pool group « France » (POOL, pseudo season 1000). */
+    private const REFEREES_POOL_TEAM = 9391;
+
     private const SURCLASSEMENT = ['Matric' => 9515, 'Saison' => '2997', 'Cat' => 'SEN', 'Date' => '2996-10-01'];
 
     private Connection $connection;
@@ -72,6 +75,15 @@ final class AgeCategoryMigrationCommandTest extends ApiTestCase
         self::assertMatchesRegularExpression('/Dates de naissance conventionnelles .*: 0$/m', $output);
         self::assertMatchesRegularExpression('/Catégories d\'âge à changer : 0$/m', $output);
         self::assertSame($after, $this->snapshot());
+    }
+
+    public function testRefereesPoolCategoryOfAConventionalDateIsClearedLikeInTheCompositions(): void
+    {
+        $this->connection->insert('kp_competition_equipe_joueur', ['Id_equipe' => self::REFEREES_POOL_TEAM, 'Matric' => 9511, 'Nom' => 'SCRUT', 'Prenom' => 'Capitaine', 'Sexe' => 'M', 'Categ' => 'V9', 'Numero' => 0, 'Capitaine' => 'A']);
+
+        $this->migrate();
+
+        self::assertNull($this->connection->fetchOne('SELECT Categ FROM kp_competition_equipe_joueur WHERE Id_equipe = ? AND Matric = 9511', [self::REFEREES_POOL_TEAM]));
     }
 
     public function testStory22SurclassementsAreLeftUntouched(): void

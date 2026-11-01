@@ -13,6 +13,9 @@ use Doctrine\DBAL\Connection;
  */
 final class CompositionAgeCategoriesTest extends ApiTestCase
 {
+    /** Referees pool group « France » (POOL, pseudo season 1000). */
+    private const REFEREES_POOL_TEAM = 9391;
+
     private Connection $connection;
     private CompositionAgeCategories $compositions;
 
@@ -63,6 +66,25 @@ final class CompositionAgeCategoriesTest extends ApiTestCase
 
         self::assertSame(['9301' => 'SEN', '9381' => 'JUN', '9384' => 'JUN'], $this->categoriesOf(9511));
         self::assertSame(0, $this->compositions->planAll()->count());
+    }
+
+    public function testRefereesPoolIsComputedOnTheActiveSeasonNotOnItsPseudoSeason(): void
+    {
+        $this->compose(self::REFEREES_POOL_TEAM, 9511, 'V9');
+
+        $this->compositions->refreshPlayer(9511);
+
+        self::assertSame('SEN', $this->categoriesOf(9511)[(string) self::REFEREES_POOL_TEAM], 'active season 2999 - 2980 = 19');
+    }
+
+    public function testRefereesPoolFollowsTheActiveSeason(): void
+    {
+        $this->connection->executeStatement("UPDATE kp_saison SET Etat = IF(Code = '2998', 'A', 'I')");
+        $this->compose(self::REFEREES_POOL_TEAM, 9511, 'V9');
+
+        $this->compositions->refreshTeam(self::REFEREES_POOL_TEAM);
+
+        self::assertSame('JUN', $this->categoriesOf(9511)[(string) self::REFEREES_POOL_TEAM], 'active season 2998 - 2980 = 18');
     }
 
     private function compose(int $teamId, int $matric, string $categ): void

@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\BirthDatePlausibility;
 use App\AgeCategory\CompositionAgeCategories;
+use App\Athlete\InternationalPlayer;
 use App\Entity\User;
+use App\Service\ActiveSeason;
 use App\Trait\AdminLoggableTrait;
-use App\Trait\DateValidationTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,7 +29,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminAthletesController extends AbstractController
 {
     use AdminLoggableTrait;
-    use DateValidationTrait;
 
     /** Paddle color code to label mapping */
     private const PADDLE_COLORS = [
@@ -43,6 +44,8 @@ class AdminAthletesController extends AbstractController
         private readonly Connection $connection,
         private readonly AgeCategoryRule $ageCategories,
         private readonly CompositionAgeCategories $compositionAgeCategories,
+        private readonly ActiveSeason $activeSeason,
+        private readonly BirthDatePlausibility $birthDatePlausibility,
     ) {
     }
 
@@ -198,9 +201,7 @@ class AdminAthletesController extends AbstractController
         );
 
         // Fetch surclassement for current active season
-        $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
-        );
+        $activeSeason = $this->activeSeason->code();
 
         // Surclassement: use athlete's own Origine season (not active season)
         // An athlete can have a surclassement for a season different from the current active one
@@ -217,7 +218,7 @@ class AdminAthletesController extends AbstractController
         }
 
         // Age category of the active season, never the licence's season of origin (CATEGORIE_AGE.md story 4)
-        $category = $this->ageCategories->categoryFor($row['Naissance'], (string) $activeSeason);
+        $category = $this->ageCategories->categoryFor($row['Naissance'], $activeSeason);
         $categorieAge = $category ? ['code' => $category->code, 'libelle' => $category->label] : null;
 
         // Build qualification label from arbitre record
@@ -274,7 +275,7 @@ class AdminAthletesController extends AbstractController
             'typeLicence' => $row['Type_licence'] ?? null,
             'categorieAge' => $categorieAge,
             'surclassement' => $surclassement,
-            'editable' => (int) $row['Matric'] > 2000000,
+            'editable' => InternationalPlayer::is((int) $row['Matric']),
         ]);
     }
 
@@ -330,7 +331,7 @@ class AdminAthletesController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     #[OA\Put(
         path: '/admin/athletes/{matric}',
-        summary: 'Update athlete (identity, club, refereeing). Only non-federal athletes (Matric > 2000000)',
+        summary: 'Update athlete (identity, club, refereeing). Only international athletes (Matric >= 2000000)',
         tags: ['28. App4 - Athletes']
     )]
     #[OA\Parameter(name: 'matric', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
@@ -350,7 +351,7 @@ class AdminAthletesController extends AbstractController
         }
 
         // Only non-federal athletes can be modified
-        if ($matric <= 2000000) {
+        if (!InternationalPlayer::is($matric)) {
             return $this->json([
                 'error' => true,
                 'message' => 'Modification interdite pour cet athlète (licencié fédéral)',
@@ -377,14 +378,10 @@ class AdminAthletesController extends AbstractController
         }
 
         // A null birth date is « unknown » (CATEGORIE_AGE.md story 13); a known one must be plausible (story 14)
-        if ($naissance !== null && !$this->isPlausibleBirthDate($naissance)) {
+        if ($naissance !== null && !$this->birthDatePlausibility->isPlausible($naissance)) {
             return $this->json([
                 'error' => true,
-                'message' => sprintf(
-                    "Date de naissance invraisemblable : l'athlète doit avoir entre %d et %d ans pour la saison en cours",
-                    AgeCategoryRule::MIN_PLAUSIBLE_AGE,
-                    AgeCategoryRule::MAX_PLAUSIBLE_AGE
-                ),
+                'message' => BirthDatePlausibility::refusalMessage(),
                 'code' => 'IMPLAUSIBLE_BIRTHDATE',
             ], Response::HTTP_BAD_REQUEST);
         }
@@ -470,16 +467,6 @@ class AdminAthletesController extends AbstractController
     // ══════════════════════════════════════════════════════════════════════
     // Private helpers
     // ══════════════════════════════════════════════════════════════════════
-
-    /** A real YYYY-MM-DD date giving an age between 5 and 100 in the active season. */
-    private function isPlausibleBirthDate(string $birthDate): bool
-    {
-        $activeSeason = (string) $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
-        );
-
-        return $this->isValidDate($birthDate) && AgeCategoryRule::isPlausibleBirthDate($birthDate, $activeSeason);
-    }
 
     /**
      * Fetch presence sheets for an athlete in a given season.
@@ -681,9 +668,7 @@ class AdminAthletesController extends AbstractController
         }
 
         // Get active season for the saison field
-        $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1"
-        ) ?: '';
+        $activeSeason = $this->activeSeason->code();
 
         // Get existing livret to preserve it
         $existingLivret = $this->connection->fetchOne(

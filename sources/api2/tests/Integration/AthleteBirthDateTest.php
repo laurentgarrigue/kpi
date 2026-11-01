@@ -66,6 +66,26 @@ final class AthleteBirthDateTest extends ApiTestCase
         self::assertSame(['9301' => 'V9', '9384' => 'V9'], $this->categories());
     }
 
+    public function testWithoutAnActiveSeasonAPlausibleBirthDateIsCheckedAgainstTheMostRecentSeason(): void
+    {
+        $this->connection->executeStatement("UPDATE kp_saison SET Etat = 'I'");
+
+        $this->requestAs('TADMIN', 'PUT', self::ENDPOINT, $this->sheet('2980-03-01'));
+
+        self::assertSame('2980-03-01', $this->connection->fetchOne('SELECT Naissance FROM kp_licence WHERE Matric = ?', [self::INTERNATIONAL]));
+    }
+
+    public function testTheFirstInternationalLicenceNumberIsEditableLikeTheListShowsIt(): void
+    {
+        $this->connection->insert('kp_licence', ['Matric' => 2000000, 'Origine' => '2999', 'Nom' => 'PREMIER', 'Prenom' => 'INTER', 'Sexe' => 'F', 'Naissance' => null]);
+
+        $detail = $this->requestAs('TADMIN', 'GET', '/admin/athletes/2000000');
+        $this->requestAs('TADMIN', 'PUT', '/admin/athletes/2000000', ['nom' => 'PREMIER', 'prenom' => 'INTER', 'sexe' => 'F', 'naissance' => '2980-03-01', 'origine' => '2999']);
+
+        self::assertTrue($detail['editable']);
+        self::assertSame('2980-03-01', $this->connection->fetchOne('SELECT Naissance FROM kp_licence WHERE Matric = 2000000'));
+    }
+
     /** @return array<string, mixed> */
     private function sheet(?string $birthDate): array
     {
