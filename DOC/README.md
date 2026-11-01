@@ -47,6 +47,7 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 - **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Visualiseur de documentation
 - **[APP2_APPLICATION_WEB.md](user/APP2_APPLICATION_WEB.md)** - Application web (app2)
 - **[ADMIN_STATISTICS.md](user/ADMIN_STATISTICS.md)** - Statistiques - nouvelle interface (app4)
+- **[PUBLIC_SITE_EDITORIAL.md](user/PUBLIC_SITE_EDITORIAL.md)** - Rubrique Éditorial du site public : articles, pages, médias, menu, accueil, formulaires (app4)
 - **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Worker de cache pour incrustations vidéo
 - **[IMAGE_UPLOAD_MANAGEMENT.md](user/IMAGE_UPLOAD_MANAGEMENT.md)** - Upload et gestion d'images
 - **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe
@@ -114,7 +115,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - Index détaillé : [infrastructure/README.md](developer/infrastructure/README.md)
 
 ### [Travaux en cours](developer/in-progress/)
-- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
+- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3) : phases 1 à 4 livrées sur `beta.*` (17/10/2026), prochaine étape la bascule de `www`
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
 - **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
 - **[CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)** - Catégorie d'âge : tests, migration des données et déploiement dev → préprod → prod (commandes, résultats attendus)

@@ -1,6 +1,6 @@
 # Pages éditoriales, menu éditorial et accueil éditorial
 
-**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — **Routes** : `/{slug}`, `/{parent}/{slug}` (+ `/en/…`)
+**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — 🚀 Livrée (beta) — **Routes** : `/{slug}`, `/{parent}/{slug}` (+ `/en/…`)
 — **Remplace** : pages WordPress, widgets d'accueil (Feature a Page Widget, Classic Widgets)
 **Données** : [FEATURE_CMS.md](FEATURE_CMS.md) § 5.1 — **Fait évoluer** : [PAGE_HOME.md](PAGE_HOME.md),
 [SITE_NAVIGATION.md](SITE_NAVIGATION.md)

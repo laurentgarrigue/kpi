@@ -58,6 +58,13 @@ Cette section contient la documentation orientée utilisateurs finaux du systèm
 
 ### Nouvelle Interface Administration (app4)
 
+- **[PUBLIC_SITE_EDITORIAL.md](PUBLIC_SITE_EDITORIAL.md)** - **Rubrique Éditorial du nouveau site public**
+  - Articles (catégories, signature, programmation, prévisualisation), pages, médiathèque et albums
+  - Menu « Le kayak-polo » (3 niveaux), blocs d'accueil, redirections
+  - Formulaires d'inscription, liste publique, export, purge RGPD
+  - Droit « Rédacteur du site public »
+  - **Statut**: ✅ En production (site public sur `beta.kayak-polo.info`)
+
 - **[ADMIN_STATISTICS.md](ADMIN_STATISTICS.md)** - **Statistiques - Nouvelle Interface**
   - 22 types de statistiques disponibles
   - Export Excel et PDF avec traductions
