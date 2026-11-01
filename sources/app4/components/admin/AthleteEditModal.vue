@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { AthleteDetail, AthleteUpdatePayload } from '~/types/athletes'
 import type { ClubSearchResult } from '~/types/clubs'
-import { MAX_PLAUSIBLE_AGE, MIN_PLAUSIBLE_AGE, athleteUpdateErrorKey, birthDateField, submittedBirthDate } from '~/utils/athleteBirthDate'
+import { MAX_PLAUSIBLE_AGE, MIN_PLAUSIBLE_AGE } from '~/utils/ageCategory'
+import { athleteUpdateErrorKey, birthDateField, submittedBirthDate } from '~/utils/athleteBirthDate'
 
 interface Props {
   open: boolean

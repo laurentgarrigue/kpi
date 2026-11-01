@@ -1,11 +1,6 @@
-// Birth date field of the athlete sheet (CATEGORIE_AGE.md stories 13-15, GLOSSARY.md « date de naissance inconnue »).
-
-/** Dates written by the old code for « unknown »: they are not birth dates. */
-const CONVENTIONAL_BIRTH_DATES = ['1901-01-01', '0000-00-00']
-
-/** Plausible age bounds in the active season, enforced by api2 (AgeCategoryRule, story 14). */
-export const MIN_PLAUSIBLE_AGE = 5
-export const MAX_PLAUSIBLE_AGE = 100
+// Birth date field of the athlete sheet (CATEGORIE_AGE.md stories 13-15). The unknown dates and the plausibility
+// bounds live in utils/ageCategory.ts (mirror of api2 AgeCategoryRule).
+import { isUnknownBirthDate } from './ageCategory'
 
 const IMPLAUSIBLE_BIRTHDATE = 'IMPLAUSIBLE_BIRTHDATE'
 const HTTP_FORBIDDEN = 403
@@ -17,10 +12,10 @@ export interface BirthDateField {
 
 /** Initial state of the field: an absent or conventional date is « date inconnue ». */
 export function birthDateField(naissance: string | null | undefined): BirthDateField {
-  if (!naissance || CONVENTIONAL_BIRTH_DATES.includes(naissance)) {
+  if (isUnknownBirthDate(naissance)) {
     return { unknown: true, date: '' }
   }
-  return { unknown: false, date: naissance }
+  return { unknown: false, date: naissance ?? '' }
 }
 
 /** Birth date to send: null for « date inconnue », undefined when a known date is missing (not submittable). */
