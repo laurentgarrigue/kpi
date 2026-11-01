@@ -492,6 +492,24 @@ CREATE TABLE `kp_user_mandat` (
   KEY `fk_mandat_user` (`user_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
+-- utilisé par les tests de rate-limit, verrouillage et audit.
+DROP TABLE IF EXISTS `kp_user_login_history`;
+CREATE TABLE `kp_user_login_history` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) DEFAULT NULL,
+  `success` tinyint(1) NOT NULL,
+  `method` varchar(32) NOT NULL,
+  `failure_reason` varchar(32) DEFAULT NULL,
+  `legacy_hash` tinyint(1) NOT NULL DEFAULT 0,
+  `ip` varchar(45) NOT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `attempted_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_time` (`user_code`, `attempted_at`),
+  KEY `idx_ip_time` (`ip`, `attempted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `kp_journal`;
 CREATE TABLE `kp_journal` (
   `Id` int(11) NOT NULL AUTO_INCREMENT,

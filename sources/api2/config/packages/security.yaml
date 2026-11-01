@@ -75,6 +75,7 @@ security:
         - { path: ^/auth/refresh, roles: ROLE_USER }
         - { path: ^/auth/mandates, roles: ROLE_USER }
         - { path: ^/auth/switch-mandate, roles: ROLE_USER }
+        - { path: ^/auth/login-history, roles: ROLE_USER }
 
 when@test:
     security:

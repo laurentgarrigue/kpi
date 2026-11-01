@@ -70,6 +70,14 @@ services:
         arguments:
             $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
 
+    # Les deux limiteurs sont créés par framework.rate_limiter.{login_ip,login_user} (rate_limiter.yaml).
+    # Symfony en fait des services `limiter.login_ip` / `limiter.login_user` qui ne sont pas autowirables
+    # par type (RateLimiterFactory) sans ce bind explicite.
+    App\Security\LoginRateLimiter:
+        arguments:
+            $loginIpLimiter: '@limiter.login_ip'
+            $loginUserLimiter: '@limiter.login_user'
+
     # Replaces Symfony's default role_hierarchy_voter: it reads roles from the security
     # token's cached getRoleNames() (frozen at the first access_control check, before the
     # active mandate is applied), which makes every #[IsGranted(...)] blind to mandates.
