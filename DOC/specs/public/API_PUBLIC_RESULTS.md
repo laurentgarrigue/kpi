@@ -1,6 +1,6 @@
 # api2 — endpoints publics des résultats (phase 2)
 
-**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **Consommé par** : app3 (pages compétitions, compétition,
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta) — **Consommé par** : app3 (pages compétitions, compétition,
 événement, groupe) ; endpoints existants également consommés par **app2**
 **Remplace** : les requêtes SQL embarquées dans `kpclassements.php`, `kpmatchs.php`, `kpterrains.php`,
 `kpdetails.php`, `kpchart.php`, `kpphases.php`, `kpclassement.php`, `kpstats.php`

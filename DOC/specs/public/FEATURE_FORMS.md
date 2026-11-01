@@ -1,6 +1,6 @@
 # Formulaires d'inscription
 
-**Phase** : 4b — **Statut** : ✅ Validée (11/10/2026, décisions Q-P4-6 à 9) — **Routes** : `/forms/{slug}`,
+**Phase** : 4b — **Statut** : ✅ Validée (11/10/2026, décisions Q-P4-6 à 9) — 🚀 Livrée (beta) — **Routes** : `/forms/{slug}`,
 `/forms/{slug}/entries` (+ `/en/…`) — **Remplace** : Ninja Forms (formulaires), TablePress (listes publiques),
 Email Log, Akismet — **Écrans app4** : [PAGE_CMS.md](../PAGE_CMS.md) § Formulaires — **Stratégie** : § 5.3 de
 [PUBLIC_SITE_REDESIGN_STRATEGY.md](../../developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)
