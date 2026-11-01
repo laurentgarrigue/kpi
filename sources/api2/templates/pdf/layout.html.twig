@@ -10,19 +10,26 @@
 <body class="theme-{{ theme }}">
     {% block watermark %}{% endblock %}
     {% block header %}
-    <header class="pdf-header">
-        <div class="pdf-header__logos">
-            {% for logo in logos %}<img src="{{ logo }}" alt="">{% endfor %}
-        </div>
+    {# Visuals of the competition first (banner, else logo), logos of the charter otherwise (§ 8.4.1). #}
+    {% if banner %}<div class="pdf-banner"><img src="{{ banner }}" alt=""></div>{% endif %}
+    <header class="pdf-header{% if banner %} pdf-header--below-banner{% endif %}">
+        {% if logos is not empty %}
+            <div class="pdf-header__logos">
+                {% for logo in logos %}<img src="{{ logo }}" alt="">{% endfor %}
+            </div>
+        {% endif %}
         <div class="pdf-header__titles">
-            <h1 class="pdf-header__document">{{ title }}</h1>
+            {# The season at the right of the document title; no competition code, the labels suffice. #}
+            <div class="pdf-header__line">
+                <h1 class="pdf-header__document">{{ title }}</h1>
+                {% if season %}<span class="pdf-header__season">{{ season }}</span>{% endif %}
+            </div>
             {% if competition is defined %}
                 <div class="pdf-header__competition">{{ competition.title }}{% if competition.subtitle %} · {{ competition.subtitle }}{% endif %}</div>
-                <div class="pdf-header__meta">{{ labels.season }} {{ season }}{% if competition.code|default('') %} · {{ competition.code }}{% endif %}</div>
             {% endif %}
         </div>
-        {% if competition is defined and competition.logo %}
-            <img class="pdf-header__competition-logo" src="{{ competition.logo }}" alt="">
+        {% if competition_logo %}
+            <img class="pdf-header__competition-logo" src="{{ competition_logo }}" alt="">
         {% endif %}
         {% if qr_file %}
             <div class="pdf-header__qr">

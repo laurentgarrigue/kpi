@@ -123,7 +123,7 @@ final class ScrutineeringControlDocument implements PdfDocumentProvider
             }
             $rows[] = [
                 'number' => $player['Numero'] === null ? '' : (string) $player['Numero'],
-                'role' => PresencePlayer::role($player['Capitaine']),
+                'role' => PresencePlayer::role($player['Capitaine'], $labels),
                 'licence' => PresencePlayer::licence((int) $player['Matric'], $player['Reserve'], $player['Origine'], $season),
                 'last_name' => PresencePlayer::lastName($player['Nom']),
                 'first_name' => PresencePlayer::firstName($player['Prenom']),

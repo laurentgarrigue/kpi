@@ -3,8 +3,9 @@ import type { RankingRow } from '#kpi-layer/utils/results/types'
 import { teamLink } from '~/utils/page-links'
 import { ordinal } from '~/utils/games'
 
-// Podium on steps of their height, second – first – third (CMP-21): logo, name, points and wins.
-const props = defineProps<{ rows: RankingRow[], competition: string, season: string }>()
+// Podium on steps of their height, second – first – third (CMP-21): logo, name, points and wins (not for a cup,
+// which only shows its final ranking, CMP-10).
+const props = withDefaults(defineProps<{ rows: RankingRow[], competition: string, season: string, withPoints?: boolean }>(), { withPoints: true })
 const localePath = useLocalePath()
 const language = useLanguageTag()
 const PODIUM_ORDER = [2, 1, 3] as const
@@ -32,7 +33,7 @@ const href = (row: RankingRow) => (row.team.number === null
       <NuxtLink :to="href(row)" class="group grid justify-items-center gap-2 px-1.5 pb-3">
         <ResultsTeamLogo :path="row.team.logo" :size="STEPS[row.medal!].logo" />
         <b class="leading-tight group-hover:underline" :class="STEPS[row.medal!].name">{{ row.team.label }}</b>
-        <small class="text-muted tabular-nums">
+        <small v-if="withPoints" class="text-muted tabular-nums">
           {{ $t('results.podiumPoints', { points: row.points }) }}<template v-if="row.won !== undefined">, {{ $t('results.podiumWins', { n: row.won }, row.won) }}</template>
         </small>
       </NuxtLink>

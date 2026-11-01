@@ -655,7 +655,7 @@ const pdfUrls = computed(() => {
   const type = effectiveType.value
   const qs = `Compet=${code}&S=${saison}`
   // Published general ranking: public PDF of api2 (PDF_GOTENBERG.md § 7.4)
-  const publicRanking = pdf.publicUrl('ranking', { season: saison, competition: code, lang: locale.value === 'en' ? 'en' : 'fr' })
+  const publicRanking = pdf.publicUrl('ranking', { season: saison, competition: code })
 
   const urls: Record<string, { admin?: string; public?: string }> = {}
 

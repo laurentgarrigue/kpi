@@ -16,15 +16,15 @@ describe('PAGE_LINKS fallbacks', () => {
 
 describe('pdfUrl (D-P2-2)', () => {
   it('CMP-12 / PDF-FRONT-02: general ranking PDF from the public route of api2 (PDF_GOTENBERG.md § 7.4)', () => {
-    expect(pdfUrl({ kind: 'ranking', type: 'CHPT', season: '2026', competition: 'N1H' }, context))
+    expect(pdfUrl({ kind: 'ranking', season: '2026', competition: 'N1H' }, context))
       .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=N1H&lang=fr')
-    expect(pdfUrl({ kind: 'ranking', type: 'MULTI', season: '2026', competition: 'CMU' }, { ...context, locale: 'en' }))
+    expect(pdfUrl({ kind: 'ranking', season: '2026', competition: 'CMU' }, { ...context, locale: 'en' }))
       .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=CMU&lang=en')
   })
 
-  it('CMP-12: the PDF of a cup is its ranking by phase, from api2', () => {
-    expect(pdfUrl({ kind: 'ranking', type: 'CP', season: '2026', competition: 'CF' }, { ...context, locale: 'en' }))
-      .toBe('https://www.kayak-polo.info/api2/pdf/ranking-phases?season=2026&competition=CF&lang=en')
+  it('CMP-12: the PDF of a cup is its final ranking too, from api2', () => {
+    expect(pdfUrl({ kind: 'ranking', season: '2026', competition: 'CF' }, { ...context, locale: 'en' }))
+      .toBe('https://www.kayak-polo.info/api2/pdf/ranking?season=2026&competition=CF&lang=en')
   })
 
   it('AGG-04: game list PDF of api2 for competitions or for an event, in the language of the page', () => {

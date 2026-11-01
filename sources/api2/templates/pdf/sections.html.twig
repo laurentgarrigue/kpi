@@ -1,7 +1,7 @@
 {#
  # Generic document (PDF_GOTENBERG.md § 8): sections, each with a title and either a table (rows × columns), pairs of
  # label / value, or free lines. Columns: {key, label, class?, kind?: text | image | box}; a row may carry `_class`
- # (whole row), `_cells` (class by column) or be a separator `_group`.
+ # (whole row), `_cells` (class by column) or be a separator `_group`. `table_class` styles the tables of a document.
  #}
 {% extends 'pdf/layout.html.twig' %}
 
@@ -10,9 +10,11 @@
 {% endblock %}
 
 {% block content %}
+    {% set long_section_rows = 20 %}
     {% for section in sections %}
         {% set section_columns = section.columns ?? columns %}
-        <section class="pdf-section{% if (page_per_section|default(false) and not loop.first) or section.new_page|default(false) %} pdf-page-break{% endif %}">
+        {# A long table flows over the pages (kept whole, it would leave the first page empty); a short one stays whole. #}
+        <section class="pdf-section{% if section.rows|default([])|length > long_section_rows %} pdf-section--long{% endif %}{% if (page_per_section|default(false) and not loop.first) or section.new_page|default(false) %} pdf-page-break{% endif %}">
             {% if section.title|default(null) %}<h2 class="pdf-section__title">{{ section.title }}</h2>{% endif %}
             {% if section.subtitle|default(null) %}<p class="pdf-section__subtitle">{{ section.subtitle }}</p>{% endif %}
             {% if section.pairs|default([]) is not empty %}
@@ -23,7 +25,7 @@
                 </table>
             {% endif %}
             {% if section.rows|default([]) is not empty %}
-                <table class="pdf-table{% if dense|default(false) %} pdf-table--dense{% endif %}{% if grid|default(false) %} pdf-grid{% endif %}">
+                <table class="pdf-table {{ table_class|default('') }}{% if dense|default(false) %} pdf-table--dense{% endif %}{% if grid|default(false) %} pdf-grid{% endif %}">
                     <thead>
                         <tr>{% for column in section_columns %}<th class="{{ column.class|default('') }}">{{ column.label }}</th>{% endfor %}</tr>
                     </thead>

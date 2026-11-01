@@ -4,6 +4,7 @@ namespace App\Pdf\Event;
 
 use App\Pdf\Games\GamesRepository;
 use App\Pdf\InvalidPdfRequest;
+use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfContent;
 use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfLabels;
@@ -19,6 +20,7 @@ abstract class EventQrCodesDocument implements PdfDocumentProvider
 {
     public function __construct(
         private readonly GamesRepository $games,
+        private readonly PdfCompetitions $competitions,
         private readonly PdfLabels $labels,
     ) {
     }
@@ -42,7 +44,15 @@ abstract class EventQrCodesDocument implements PdfDocumentProvider
         }
         $labels = $this->labels->forLanguage($request->lang);
 
-        $images = [];
+        // Visuals of the first competition of the event (§ 8.4.1).
+        $first = $this->competitions->firstOfEvent($id, true);
+        $header = $this->competitions->withVisualsOf(
+            ['code' => '', 'title' => $event['title'], 'subtitle' => $event['place'] ?: null],
+            $first['season'] ?? null,
+            $first['code'] ?? null,
+            true,
+        );
+        $images = $header['images'];
         $cards = [];
         foreach ($this->links($id) as $index => [$labelKey, $url]) {
             $file = sprintf('qrcode-%d.svg', $index + 1);
@@ -55,7 +65,7 @@ abstract class EventQrCodesDocument implements PdfDocumentProvider
             title: $labels[$this->titleLabel()],
             filename: sprintf('%s_event-%d_%s.pdf', $this->document(), $id, $request->lang),
             variables: [
-                'competition' => ['code' => '', 'title' => $event['title'], 'subtitle' => $event['place'] ?: null, 'logo' => null],
+                'competition' => $header['competition'],
                 'cards' => $cards,
             ],
             landscape: true,

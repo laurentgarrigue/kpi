@@ -701,7 +701,6 @@ const printJurySheet = (gameday: Gameday | null) => {
     season: gameday.codeSaison,
     competition: gameday.codeCompetition,
     gameday: gameday.id,
-    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
 

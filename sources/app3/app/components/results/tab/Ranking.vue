@@ -15,7 +15,7 @@ const { data: ranking, error, refresh } = await useApiResource<Ranking>(() => ap
 const { data: games } = useLazyAsyncData(() => `api2:${apiPath('games')}:live`, () => useApi2()<ResultsGame[]>(apiPath('games')), { server: false })
 useAutoRefresh(() => isLive(games.value ?? [], now.value), refresh)
 
-const pdfHref = computed(() => pdfUrl({ kind: 'ranking', type: props.competition.type, season: props.competition.season, competition: props.competition.code }, context.value))
+const pdfHref = computed(() => pdfUrl({ kind: 'ranking', season: props.competition.season, competition: props.competition.code }, context.value))
 const hasRows = computed(() => (ranking.value?.rows.length ?? 0) > 0)
 const badge = computed(() => (!hasRows.value ? null : ranking.value?.status === 'END' ? 'final' : ranking.value?.status === 'ON' ? 'provisional' : null))
 // A cup type competition's provisional ranking misleads (teams still in, finalists included, have games left): api2 holds it back until the end.
@@ -44,7 +44,7 @@ const progressHref = computed(() => ({ path: route.path.replace(/\/ranking$/, '/
     </div>
     <p v-else-if="!hasRows" data-testid="no-ranking">{{ $t('results.rankingLater') }}</p>
     <template v-else>
-      <ResultsPodium :rows="ranking.rows" :competition="competition.code" :season="competition.season" />
+      <ResultsPodium :rows="ranking.rows" :competition="competition.code" :season="competition.season" :with-points="ranking.type !== 'CP'" />
       <div class="overflow-x-auto lg:overflow-visible">
         <ResultsRankingTable
           :rows="ranking.rows"

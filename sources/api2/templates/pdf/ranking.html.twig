@@ -1,3 +1,4 @@
+{# Ranking of a competition; a cup (CP) only shows its final ranking, no points table. #}
 {% extends 'pdf/layout.html.twig' %}
 
 {% block watermark %}
@@ -10,9 +11,11 @@
             <tr>
                 <th class="num">{{ labels['ranking.rank'] }}</th>
                 <th>{{ labels['ranking.team'] }}</th>
+                {% if with_points %}
                 <th class="num">{{ labels['ranking.points'] }}</th>
                 <th class="num">{{ labels['ranking.played'] }}</th>
-                {% if with_details %}
+                {% endif %}
+                {% if with_points and with_details %}
                     <th class="num">{{ labels['ranking.won'] }}</th>
                     <th class="num">{{ labels['ranking.drawn'] }}</th>
                     <th class="num">{{ labels['ranking.lost'] }}</th>
@@ -32,9 +35,11 @@
                         {{ row.team }}
                         {% if row.medal %}<span class="pdf-medal pdf-medal--{{ row.medal }}">· {{ labels['ranking.medal_' ~ row.medal] }}</span>{% endif %}
                     </td>
+                    {% if with_points %}
                     <td class="num">{{ row.points }}</td>
                     <td class="num">{{ row.played }}</td>
-                    {% if with_details %}
+                    {% endif %}
+                    {% if with_points and with_details %}
                         <td class="num">{{ row.details.won }}</td>
                         <td class="num">{{ row.details.drawn }}</td>
                         <td class="num">{{ row.details.lost }}</td>

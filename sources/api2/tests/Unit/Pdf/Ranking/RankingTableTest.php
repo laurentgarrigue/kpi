@@ -45,10 +45,10 @@ final class RankingTableTest extends TestCase
     {
         $row = RankingTable::gameRow(self::game('3', '1', 'O'));
         self::assertSame('3 - 1', $row['score']);
-        self::assertSame(['home' => 'pdf-strong', 'away' => ''], $row['_cells']);
+        self::assertSame(['home' => 'pdf-strong', 'score' => 'pdf-strong', 'away' => ''], $row['_cells'], 'the winner and the score in bold');
 
         self::assertSame('-', RankingTable::gameRow(self::game('3', '1', ''))['score'], 'not validated');
-        self::assertSame(['home' => '', 'away' => ''], RankingTable::gameRow(self::game('2', '2', 'O'))['_cells'], 'draw');
+        self::assertSame(['home' => '', 'score' => '', 'away' => ''], RankingTable::gameRow(self::game('2', '2', 'O'))['_cells'], 'draw');
         self::assertFalse(RankingTable::isPlayed(self::game('?', '1', 'O')));
         self::assertFalse(RankingTable::isPlayed(self::game(null, null, '')));
         self::assertSame('01/03/2026 - Lacville', RankingTable::gamedayLabel('2026-03-01', 'Lacville'));

@@ -56,7 +56,7 @@ final class CardsDocument implements PdfDocumentProvider
         foreach ($this->players($request->season, $code, $allowedClubs) as $player) {
             $sections[$player['Libelle']] ??= ['title' => (string) $player['Libelle'], 'rows' => []];
             $row = [
-                'role' => PresencePlayer::role($player['Capitaine']),
+                'role' => PresencePlayer::role($player['Capitaine'], $labels),
                 'player' => trim(sprintf('%s - %s %s', $player['Numero'], PresencePlayer::lastName($player['Nom']), PresencePlayer::firstName($player['Prenom'])), ' -'),
             ];
             foreach (array_keys(self::CARDS) as $card) {

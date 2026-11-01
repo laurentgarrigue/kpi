@@ -1739,22 +1739,22 @@ const gamesPdfQuery = computed(() => {
   if (sort && sort !== 'date') query.sort = sort
   return query
 })
-const openGamesDocument = (document: 'games-list' | 'scoresheet', lang?: 'fr' | 'en') => {
+// One link per document, in the language of the user (PDF_GOTENBERG.md § 14, 2026-10-29)
+const openGamesDocument = (document: 'games-list' | 'scoresheet') => {
   documentsOpen.value = false
-  void pdf.openDocument(document, { ...gamesPdfQuery.value, lang: lang ?? (locale.value === 'en' ? 'en' : 'fr') })
+  void pdf.openDocument(document, gamesPdfQuery.value)
 }
 // Public documents of api2: plain links. The pitch grid is always by day, it takes no `sort`.
 const publicGamesUrl = (document: 'games-list' | 'games-grid', extra: Record<string, string>) => {
   const { sort, ...query } = gamesPdfQuery.value
   const order = document === 'games-list' && sort ? { sort } : {}
-  return pdf.publicUrl(document, { lang: locale.value === 'en' ? 'en' : 'fr', ...query, ...order, ...extra })
+  return pdf.publicUrl(document, { ...query, ...order, ...extra })
 }
 const openScoresheets = (ids: number[]) => {
   void pdf.openDocument('scoresheet', {
     season: workContext.season || '',
     games: ids.join(','),
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
 
@@ -2169,18 +2169,10 @@ const openScoring = (gameId: number) => {
             <button
               type="button"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="openGamesDocument('games-list', 'fr')"
+              @click="openGamesDocument('games-list')"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
-              {{ t('games.documents.game_list_fr') }}
-            </button>
-            <button
-              type="button"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="openGamesDocument('games-list', 'en')"
-            >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-primary-600" />
-              {{ t('games.documents.game_list_en') }}
+              {{ t('games.documents.game_list') }}
             </button>
             <button
               type="button"
@@ -2202,22 +2194,13 @@ const openScoring = (gameId: number) => {
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
             <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
             <a
-              :href="publicGamesUrl('games-list', { lang: 'fr' })"
+              :href="publicGamesUrl('games-list', {})"
               target="_blank"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="documentsOpen = false"
             >
               <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.public_list_fr') }}
-            </a>
-            <a
-              :href="publicGamesUrl('games-list', { lang: 'en' })"
-              target="_blank"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="documentsOpen = false"
-            >
-              <UIcon name="heroicons:document-text" class="w-5 h-5 text-header-900 dark:text-header-300" />
-              {{ t('games.documents.public_list_en') }}
+              {{ t('games.documents.public_list') }}
             </a>
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
             <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>

@@ -65,7 +65,7 @@ class GamesRepository
                     m.Statut, m.Validation, m.ScoreA, m.ScoreB, m.Arbitre_principal, m.Arbitre_secondaire,
                     m.Id_equipeA, m.Id_equipeB, a.Libelle AS LibelleA, b.Libelle AS LibelleB,
                     j.Code_competition, j.Code_saison, j.Phase, j.Niveau, j.Lieu, j.Departement, j.Nom AS Journee,
-                    c.Code_typeclt, c.Soustitre2
+                    c.Code_typeclt, c.Soustitre2, c.Libelle AS Competition
              FROM kp_match m
              JOIN kp_journee j ON j.Id = m.Id_journee
              JOIN kp_competition c ON c.Code = j.Code_competition AND c.Code_saison = j.Code_saison

@@ -15,7 +15,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const api = useApi()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -29,7 +29,6 @@ const pdf = usePdf()
 const openPoolPdf = () => {
   void pdf.openDocument('referees-pool', {
     season: workContext.season || String(new Date().getFullYear()),
-    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
 

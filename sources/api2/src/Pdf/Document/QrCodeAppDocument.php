@@ -5,14 +5,15 @@ namespace App\Pdf\Document;
 use App\Pdf\Event\EventQrCodesDocument;
 use App\Pdf\Games\GamesRepository;
 use App\Pdf\PdfCatalog;
+use App\Pdf\PdfCompetitions;
 use App\Pdf\PdfLabels;
 
 /** The event in the results application, app2 (`qrcode-app`, ex-PdfQrCodeApp). */
 final class QrCodeAppDocument extends EventQrCodesDocument
 {
-    public function __construct(GamesRepository $games, PdfLabels $labels, private readonly string $app2Url)
+    public function __construct(GamesRepository $games, PdfCompetitions $competitions, PdfLabels $labels, private readonly string $app2Url)
     {
-        parent::__construct($games, $labels);
+        parent::__construct($games, $competitions, $labels);
     }
 
     public function document(): string

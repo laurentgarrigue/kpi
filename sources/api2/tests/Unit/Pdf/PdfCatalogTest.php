@@ -28,6 +28,7 @@ final class PdfCatalogTest extends TestCase
             PdfCatalog::RANKING_TIEBREAK => 'ROLE_ORGANIZER',            // I5
             PdfCatalog::STATS => 'ROLE_VIEWER',
             PdfCatalog::CARDS => 'ROLE_ORGANIZER',
+            PdfCatalog::SCHEMA => 'ROLE_VIEWER',                         // as the Schema page
         ];
 
         foreach ($expected as $document => $role) {

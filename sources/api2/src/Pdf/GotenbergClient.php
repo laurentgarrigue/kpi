@@ -23,6 +23,8 @@ class GotenbergClient
     private const MARGIN_SIDE = '0.39';
     private const MARGIN_TOP = '0.39';
     private const MARGIN_BOTTOM = '0.6';
+    /** Room for the sponsor of the competition above the footer line (§ 8.4.1). */
+    private const MARGIN_BOTTOM_WITH_SPONSOR = '1.05';
 
     /** Below Gotenberg's own --api-timeout, so that api2 answers 504 itself instead of a dangling worker (§ 9). */
     private const TIMEOUT_SECONDS = 55;
@@ -39,11 +41,12 @@ class GotenbergClient
     }
 
     /**
-     * @param array<string, string> $files other files of the page (fonts, images, stylesheets), by name
+     * @param array<string, string> $files       other files of the page (fonts, images, stylesheets), by name
+     * @param bool                  $withSponsor the footer carries the sponsor of the competition
      *
      * @throws PdfRenderingFailed
      */
-    public function render(string $html, string $footer, array $files, bool $landscape): string
+    public function render(string $html, string $footer, array $files, bool $landscape, bool $withSponsor = false): string
     {
         $fields = [
             ['files' => new DataPart($html, 'index.html', 'text/html')],
@@ -56,7 +59,7 @@ class GotenbergClient
             'paperWidth' => $landscape ? self::A4_LONG_SIDE : self::A4_SHORT_SIDE,
             'paperHeight' => $landscape ? self::A4_SHORT_SIDE : self::A4_LONG_SIDE,
             'marginTop' => self::MARGIN_TOP,
-            'marginBottom' => self::MARGIN_BOTTOM,
+            'marginBottom' => $withSponsor ? self::MARGIN_BOTTOM_WITH_SPONSOR : self::MARGIN_BOTTOM,
             'marginLeft' => self::MARGIN_SIDE,
             'marginRight' => self::MARGIN_SIDE,
             'printBackground' => 'true',

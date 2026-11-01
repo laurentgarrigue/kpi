@@ -15,6 +15,9 @@ final class RankingTable
     /** A score that is not a number yet: the game is not played (legacy « ? »). */
     private const UNPLAYED_SCORES = ['', '?'];
 
+    /** Type of a cup: its points come from the phases, it only shows its final ranking. */
+    public const CUP = 'CP';
+
     /**
      * @param array<string, string> $labels
      *
@@ -154,8 +157,10 @@ final class RankingTable
             'home' => (string) $game['LibelleA'],
             'score' => $validated ? sprintf('%s - %s', $game['ScoreA'], $game['ScoreB']) : '-',
             'away' => (string) $game['LibelleB'],
+            // The winner and the score in bold.
             '_cells' => [
                 'home' => $validated && $scoreA > $scoreB ? 'pdf-strong' : '',
+                'score' => $validated && $scoreA !== $scoreB ? 'pdf-strong' : '',
                 'away' => $validated && $scoreB > $scoreA ? 'pdf-strong' : '',
             ],
         ];

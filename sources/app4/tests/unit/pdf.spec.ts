@@ -86,6 +86,11 @@ describe('publicPdfHref (public legacy PDF replaced by api2)', () => {
       .toBe(`${API2}/pdf/qrcode-app?event=77&season=2026`)
   })
 
+  it('adds the language of the user when the legacy URL has none', () => {
+    expect(publicPdfHref(`${LEGACY}/PdfListeMatchs.php?S=2026&Compet=N1H`, LEGACY, API2, 'en'))
+      .toBe(`${API2}/pdf/games-list?season=2026&competition=N1H&lang=en`)
+  })
+
   it('keeps the other URLs unchanged', () => {
     expect(publicPdfHref(`${LEGACY}/PdfCltNiveauNiveau.php?S=2026`, LEGACY, API2)).toBe(`${LEGACY}/PdfCltNiveauNiveau.php?S=2026`)
     expect(publicPdfHref('https://evil.example/PdfCltChpt.php?S=2026', LEGACY, API2)).toBe('https://evil.example/PdfCltChpt.php?S=2026')

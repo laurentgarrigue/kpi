@@ -9,7 +9,7 @@ use App\Pdf\Ranking\RankingTable;
 
 /**
  * Ranking with the games of each team (`ranking-team-detail`, ex-…CltChptDetail / …CltNiveauDetail): one section per
- * ranked team, its played games by gameday.
+ * ranked team, its played games by gameday (by phase for a cup, without the points of the team).
  */
 final class RankingTeamDetailDocument extends RankingDetailDocument
 {
@@ -36,14 +36,14 @@ final class RankingTeamDetailDocument extends RankingDetailDocument
                 }
                 if ($game['Id_journee'] !== $gameday) {
                     $gameday = $game['Id_journee'];
-                    $rows[] = ['_group' => RankingTable::gamedayLabel($game['Date_debut'], $game['Lieu'])];
+                    $rows[] = ['_group' => self::gamedayGroup($game, $type)];
                 }
                 $rows[] = RankingTable::gameRow($game);
             }
             $medal = $row->medal === null ? '' : ' · ' . $labels['ranking.medal_' . $row->medal];
             $sections[] = [
                 'title' => sprintf('%d. %s%s', $row->rank, $row->team->label, $medal),
-                'subtitle' => sprintf('%s %s · %s %d', $row->points, $labels['ranking.points'], $labels['ranking.played'], $row->played),
+                'subtitle' => $type === RankingTable::CUP ? null : sprintf('%s %s · %s %d', $row->points, $labels['ranking.points'], $labels['ranking.played'], $row->played),
                 'columns' => RankingTable::gameColumns($labels),
                 'rows' => $rows,
                 'empty' => $labels['ranking.no_game'],
@@ -51,5 +51,17 @@ final class RankingTeamDetailDocument extends RankingDetailDocument
         }
 
         return $sections;
+    }
+
+    /**
+     * Separator of the games of a gameday: the phase for a cup (« Poule A », « Finale »), else its date and place.
+     *
+     * @param array<string, mixed> $game
+     */
+    public static function gamedayGroup(array $game, string $type): string
+    {
+        return $type === RankingTable::CUP && (string) $game['Phase'] !== ''
+            ? (string) $game['Phase']
+            : RankingTable::gamedayLabel($game['Date_debut'], $game['Lieu']);
     }
 }

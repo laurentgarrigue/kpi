@@ -17,13 +17,14 @@ final class FakeGotenbergClient extends GotenbergClient
     public array $files = [];
 
     public bool $landscape = false;
+    public bool $withSponsor = false;
     public bool $unavailable = false;
 
     public function __construct()
     {
     }
 
-    public function render(string $html, string $footer, array $files, bool $landscape): string
+    public function render(string $html, string $footer, array $files, bool $landscape, bool $withSponsor = false): string
     {
         if ($this->unavailable) {
             throw PdfRenderingFailed::unavailable();
@@ -32,6 +33,7 @@ final class FakeGotenbergClient extends GotenbergClient
         $this->footer = $footer;
         $this->files = $files;
         $this->landscape = $landscape;
+        $this->withSponsor = $withSponsor;
 
         return self::PDF;
     }

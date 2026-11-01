@@ -1,5 +1,4 @@
 import { joinURL, withQuery } from 'ufo'
-import type { CompetitionType } from '#kpi-layer/utils/results/types'
 
 /**
  * Links from results pages to other pages (PAGE_COMPETITION.md § 2.1), with the same fallback mechanism as the
@@ -62,13 +61,12 @@ export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
 }
 
-/** A cup is ranked phase by phase: its PDF is the ranking by phase (PDF_GOTENBERG.md § 7.4). */
-const CUP_RANKING_PDF = 'ranking-phases'
+/** Every type, a cup included (its final ranking only), links to the ranking PDF (PDF_GOTENBERG.md § 7.4). */
 const RANKING_PDF = 'ranking'
 const GAMES_PDF = 'games-list'
 
 export type PdfTarget =
-  | { kind: 'ranking', type: CompetitionType, season: string, competition: string }
+  | { kind: 'ranking', season: string, competition: string }
   | { kind: 'games', season: string, competitions: string[] }
   | { kind: 'games', season: string, event: number }
 
@@ -83,7 +81,7 @@ export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
 
   switch (target.kind) {
     case 'ranking':
-      return api2Pdf(target.type === 'CP' ? CUP_RANKING_PDF : RANKING_PDF, { season: target.season, competition: target.competition })
+      return api2Pdf(RANKING_PDF, { season: target.season, competition: target.competition })
     case 'games':
       return 'event' in target
         ? api2Pdf(GAMES_PDF, { season: target.season, event: target.event })

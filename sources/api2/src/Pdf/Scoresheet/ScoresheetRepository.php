@@ -34,7 +34,7 @@ class ScoresheetRepository
                     m.Arbitre_principal, m.Arbitre_secondaire, a.Libelle AS LibelleA, b.Libelle AS LibelleB,
                     j.Phase, j.Lieu, j.Departement, j.Organisateur, j.Responsable_R1, j.Responsable_insc, j.Delegue,
                     j.ChefArbitre, j.Code_competition, j.Code_saison,
-                    c.Libelle AS Competition, c.Soustitre, c.Soustitre2, c.Titre_actif, c.Code_niveau, c.En_actif
+                    c.Libelle AS Competition, c.Soustitre, c.Soustitre2, c.Titre_actif, c.Code_niveau
              FROM kp_match m
              JOIN kp_journee j ON j.Id = m.Id_journee
              JOIN kp_competition c ON c.Code = j.Code_competition AND c.Code_saison = j.Code_saison

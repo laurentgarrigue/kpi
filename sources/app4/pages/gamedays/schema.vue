@@ -94,16 +94,15 @@ function closeWindow() {
   window.close()
 }
 
-// PDF export: set title for filename then print
+// PDF export: rendered by api2 (Gotenberg, PDF_GOTENBERG.md § 7.3) with the display toggles of the page
+const { openDocument } = usePdf()
 function printPdf() {
-  const competition = data.value?.competition
-  const group = competition?.codeRef?.trim().replace(/\s+/g, '_') || ''
-  const category = competition?.soustitre2?.trim().replace(/\s+/g, '_') || ''
-  const parts = [group, 'Draw_progression', category].filter(Boolean)
-  const prevTitle = document.title
-  document.title = parts.join('_')
-  window.print()
-  document.title = prevTitle
+  void openDocument('schema', {
+    season: season.value,
+    competition: competitionCode.value,
+    count: showMatchCount.value ? 1 : 0,
+    times: showTimeSlots.value ? 1 : 0,
+  })
 }
 
 // Load data
