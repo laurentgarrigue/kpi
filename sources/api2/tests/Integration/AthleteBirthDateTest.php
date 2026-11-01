@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
  * Athlete sheet birth date (CATEGORIE_AGE.md stories 11-16): correcting or clearing it recomputes the age category of
  * every composition of the player, all seasons and locked competitions included; an implausible date is refused.
  * Fixtures: active season 2999; team 9301 (RCH 2999), team 9384 (SCB 2997, locked). The international player
- * 2000001 (only Matric > 2000000 is editable) is created here, composed in both teams with stale categories.
+ * 2000001 (only Matric >= 2000000 is editable) is created here, composed in both teams with stale categories.
  */
 final class AthleteBirthDateTest extends ApiTestCase
 {

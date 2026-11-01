@@ -6,7 +6,7 @@ use Doctrine\DBAL\Connection;
 
 /**
  * Retrouver les joueurs à compléter (CATEGORIE_AGE.md stories 28-30, PAGE_ATHLETES.md § 2.6): GET /admin/athletes
- * filters « date de naissance inconnue », « joueur international » (Matric > 2000000) and « engagé cette saison »
+ * filters « date de naissance inconnue », « joueur international » (Matric >= 2000000) and « engagé cette saison »
  * (composition of a team of the active season, 2999 in the fixtures), combinable, with the total.
  * Every athlete below is named LISTE; the tests narrow the list with q=LISTE to ignore the other fixtures.
  */

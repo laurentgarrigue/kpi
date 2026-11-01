@@ -323,19 +323,39 @@ function utyYearOfDate($dateUs)
 	return 0;	// Error
 }
 
+// Date de naissance inconnue et plausibilité (CATEGORIE_AGE.md, GLOSSARY.md « date de naissance inconnue ») :
+// source unique du legacy, miroir de App\AgeCategory\AgeCategoryRule (api2, source de vérité).
+const BIRTH_DATES_CONVENTIONAL = ['1901-01-01', '0000-00-00'];	// écrites par l'ancien code pour « inconnue »
+const BIRTH_DATE_MIN_PLAUSIBLE_AGE = 5;
+const BIRTH_DATE_MAX_PLAUSIBLE_AGE = 100;
+// Pool arbitres : pseudo compétition (saison technique 1000), sa catégorie d'âge est celle de la saison active
+const REFEREES_POOL_COMPET = 'POOL';
+
+// utyIsUnknownBirthDate : date absente, vide ou conventionnelle (1901-01-01, 0000-00-00)
+function utyIsUnknownBirthDate($dateUs)
+{
+	return $dateUs === null || $dateUs === '' || in_array($dateUs, BIRTH_DATES_CONVENTIONAL, true);
+}
+
+// utySqlUnknownBirthDate : condition SQL « date de naissance inconnue » sur une colonne DATE (pas de '' possible)
+function utySqlUnknownBirthDate($column)
+{
+	return "($column IS NULL OR $column IN ('" . implode("', '", BIRTH_DATES_CONVENTIONAL) . "'))";
+}
+
 // utyImportBirthDate : date de naissance lue dans un fichier importé (YYYY-MM-DD), ou null si absente, mal formée,
-// conventionnelle (1901-01-01, 0000-00-00) ou invraisemblable (moins de 5 ans ou plus de 100 ans pour la saison).
+// conventionnelle ou invraisemblable (âge hors BIRTH_DATE_MIN/MAX_PLAUSIBLE_AGE pour la saison).
 // Règle de AgeCategoryRule::isPlausibleBirthDate (api2), CATEGORIE_AGE.md stories 23 et 26.
 function utyImportBirthDate($dateUs, $saison)
 {
 	$dateUs = trim((string) $dateUs);
-	if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $dateUs, $parts)
-		|| !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])
-		|| $dateUs === '1901-01-01') {
+	if (utyIsUnknownBirthDate($dateUs)
+		|| !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $dateUs, $parts)
+		|| !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
 		return null;
 	}
 	$age = (int) $saison - (int) $parts[1];
-	if ($age < 5 || $age > 100) {
+	if ($age < BIRTH_DATE_MIN_PLAUSIBLE_AGE || $age > BIRTH_DATE_MAX_PLAUSIBLE_AGE) {
 		return null;
 	}
 

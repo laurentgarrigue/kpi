@@ -113,6 +113,17 @@ La catégorie d'âge devient une valeur toujours déduite de l'année de naissan
 - La suppression de la colonne `Categ` (rejetée par l'ADR 0001).
 - L'ancienne interface au-delà des trois écritures legacy citées.
 
+## Décisions de revue et écarts acceptés
+
+- **Décision utilisateur** : date inconnue dans une compétition à surclassement (`SURCLASSEMENT_COMPETITIONS`) : l'erreur Surclassement reste bloquante (seul l'avertissement « date de naissance inconnue » est non bloquant).
+- **Pool arbitres** (`Code_compet = 'POOL'`, pseudo saison 1000) : son `Categ` est celui de la saison active, comme à l'ajout d'un arbitre ; `CompositionAgeCategories` (recalcul d'un joueur, d'une équipe, migration) et `MyBdd::RefreshCategoriesJoueurs` le recalculent donc aussi, sur la saison active.
+- **Saison active** : `kp_saison.Etat = 'A'` (service api2 `ActiveSeason`) ; entre deux saisons, aucune n'est active : la saison la plus récente est alors utilisée, pour que la plausibilité ne refuse pas toutes les dates.
+- **Suivi legacy** : `MyBdd::RefreshCategoriesJoueurs` est un ajout legacy délibéré (les imports ICF et l'ajout depuis la recherche de licence doivent recalculer les catégories, stories 19 et 25), à supprimer quand ces écritures passeront par api2.
+- **Écarts acceptés** (hors stories, livrés avec la fonctionnalité) :
+  - correction de la saison active `Etat = 'A'` (et non `'O'`) dans la fiche athlète et le pool arbitres ;
+  - « ? » dans les feuilles de présence PDF legacy (`FeuillePresence*.php`) pour un joueur sans catégorie ;
+  - `refreshPlayer` après une fusion de joueurs, pour recalculer les compositions reprises par la fiche cible.
+
 ## Further Notes
 
 - Ordre de déploiement en production : livrer le code, lancer la migration en `--dry-run`, relire le rapport, puis exécuter.

@@ -177,7 +177,7 @@ if ($xmlDocumentType == 'DT_PARTIC') {
 
     $sql_update = "UPDATE kp_licence 
         SET Origine = ?, Nom = ?, Prenom = ?, 
-        Sexe = ?, Naissance = COALESCE(?, IF(Naissance IN ('1901-01-01', '0000-00-00'), NULL, Naissance)),
+        Sexe = ?, Naissance = COALESCE(?, IF(" . utySqlUnknownBirthDate('Naissance') . ", NULL, Naissance)),
         Numero_club = ?, Numero_comite_dept = ?, Numero_comite_reg = '98'
         WHERE Reserve = ? 
         AND Matric > 2000000 ";
