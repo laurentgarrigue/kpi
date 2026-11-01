@@ -26,6 +26,7 @@ final class CompositionPlayerAgeCategoryTest extends ApiTestCase
         $this->connection->insert('kp_competition', [
             'Code' => 'SCA', 'Code_saison' => '2998', 'Code_niveau' => 'INT', 'Libelle' => 'Scrutineering Hommes',
             'Code_ref' => 'TSTSCR', 'Code_typeclt' => 'CHPT', 'Statut' => 'ON', 'Publication' => 'N', 'Verrou' => 'N',
+            'BandeauLink' => '', 'LogoLink' => '', 'SponsorLink' => '', 'Bandeau_actif' => 'N',
         ]);
     }
 
