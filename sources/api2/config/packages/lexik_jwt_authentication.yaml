@@ -12,8 +12,11 @@ lexik_jwt_authentication:
             name: Authorization
         query_parameter:
             enabled: false
+        # Phase 1b (AUTH_HARDENING.md § 3) : app4 bascule progressivement vers un cookie HttpOnly ;
+        # on accepte l'un ou l'autre pendant la transition. L'en-tête Authorization reste prioritaire.
         cookie:
-            enabled: false
+            enabled: true
+            name: kpi_access
 
 # Tests : clé symétrique (HS256) au lieu de la paire RSA de config/jwt/ (absente en CI et dans les bases de test) ;
 # les tests d'intégration signent ainsi les JWT des comptes de SQL/fixtures sans fichier de clé.

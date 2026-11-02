@@ -78,7 +78,26 @@
     "beta_title": "Beta Version",
     "beta_message": "Please report any difficulties to the developer.",
     "forgot_password": "Forgot password?",
-    "request_access": "Request access"
+    "request_access": "Request access",
+    "or": "or",
+    "continue_with_google": "Continue with Google",
+    "oauth_error": {
+      "oauth_state_mismatch": "OAuth session is invalid, please restart Google sign-in.",
+      "oauth_missing_code": "Google did not return any code, please try again.",
+      "oauth_exchange_failed": "Could not validate Google's response, please retry.",
+      "oauth_email_not_verified": "Your Google email must be verified to sign in.",
+      "oauth_no_account": "No KPI account matches this Google address. Contact your administrator.",
+      "oauth_email_ambiguous": "Several KPI accounts share this address. Sign in with your identifier then link Google from your profile.",
+      "oauth_generic": "Google sign-in error."
+    },
+    "oauth_link": {
+      "title": "Link your Google account",
+      "explain": "You are about to link your Google account to the KPI account « {code} ». To confirm it's yours, enter the current password.",
+      "submit": "Confirm link",
+      "cancel": "Cancel",
+      "bad_password": "Wrong password.",
+      "expired": "The link request has expired, please restart Google sign-in."
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -2249,6 +2268,7 @@
     "empty_filtered": "No entries match the filters.",
     "loading": "Loading activity log...",
     "error": "Error loading activity log.",
+    "deleted_account": "deleted account",
     "total_entries": "{count} entry | {count} entries",
     "pagination": {
       "showing": "Showing {from} to {to} of {total}",

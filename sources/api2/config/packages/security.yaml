@@ -13,9 +13,14 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Public auth endpoints - no authentication required
+        # Public auth endpoints - no authentication required.
+        # refresh-session / logout / device/revoke sont publics : ils tiennent leur preuve d'identité
+        # du cookie refresh (AUTH_HARDENING § 3) ou du token signé dans l'URL (lien email), pas du JWT.
+        # /auth/google /callback /link : flow OAuth 2.0 (phase 2) — public, le state cookie fait office
+        # d'anti-CSRF, le mot de passe sert de preuve de propriété au moment du link.
+        # Motif ancré par `$` : sans lui, `login` capturait aussi /auth/login-history (JWT jamais lu → 401).
         login:
-            pattern: ^/auth/(login|reset-password|forgot-password|access-request)$
+            pattern: ^/auth/(login|reset-password|forgot-password|access-request|refresh-session|logout|device/revoke/[^/]+|google/?|google/callback|google/link)$
             stateless: true
             security: false
 
@@ -75,6 +80,8 @@ security:
         - { path: ^/auth/refresh, roles: ROLE_USER }
         - { path: ^/auth/mandates, roles: ROLE_USER }
         - { path: ^/auth/switch-mandate, roles: ROLE_USER }
+        - { path: ^/auth/login-history, roles: ROLE_USER }
+        - { path: ^/auth/google/unlink, roles: ROLE_USER }
 
 when@test:
     security:
