@@ -492,6 +492,22 @@ CREATE TABLE `kp_user_mandat` (
   KEY `fk_mandat_user` (`user_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Durcissement authentification (AUTH_HARDENING.md § 4) : lien compte KPI ↔ identifiant OAuth
+-- (phase 2 : Google ; extensible à d'autres providers).
+DROP TABLE IF EXISTS `kp_user_oauth`;
+CREATE TABLE `kp_user_oauth` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `provider` varchar(20) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `email_at_link` varchar(100) NOT NULL,
+  `linked_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_provider_subject` (`provider`, `subject`),
+  UNIQUE KEY `uq_user_provider` (`user_code`, `provider`),
+  KEY `fk_user` (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 3) : refresh tokens et appareils connus,
 -- utilisés par les tests de rotation JWT et d'alerte « nouvel appareil ».
 DROP TABLE IF EXISTS `kp_user_refresh_token`;

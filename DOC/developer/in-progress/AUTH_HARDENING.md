@@ -292,9 +292,9 @@ CREATE TABLE kp_user_trusted_device (
 
 Quand une phase est livrée en production, cocher ici et déplacer les éléments livrés en § 1.3 (« ce qui existe déjà »).
 
-- [ ] Phase 1a — rate-limit, verrouillage, journal
-- [ ] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil
-- [ ] Phase 2 — OAuth Google en option
+- [x] Phase 1a — rate-limit, verrouillage, journal (livrée 01/11/2026)
+- [x] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil (livrée 02/11/2026, hybride cookie+body)
+- [x] Phase 2 — OAuth Google en option (livrée 02/11/2026)
 - [ ] Phase 3 — TOTP pour profils ≤ 3
 
 Lorsque les 4 phases seront cochées, déplacer ce document en `DOC/developer/archive/features/AUTH_HARDENING.md` et mettre à jour `DOC/developer/archive/README.md` (cf. CLAUDE.md).

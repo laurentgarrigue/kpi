@@ -78,7 +78,26 @@
     "beta_title": "Version Beta",
     "beta_message": "Merci d'indiquer au développeur toute difficulté rencontrée.",
     "forgot_password": "Mot de passe oublié ?",
-    "request_access": "Demander un accès"
+    "request_access": "Demander un accès",
+    "or": "ou",
+    "continue_with_google": "Continuer avec Google",
+    "oauth_error": {
+      "oauth_state_mismatch": "Session OAuth invalide, relancez la connexion Google.",
+      "oauth_missing_code": "Google n'a renvoyé aucun code, relancez la connexion.",
+      "oauth_exchange_failed": "Impossible de valider la réponse de Google, réessayez.",
+      "oauth_email_not_verified": "Votre adresse Google doit être vérifiée pour vous connecter.",
+      "oauth_no_account": "Aucun compte KPI ne correspond à cette adresse Google. Contactez votre administrateur.",
+      "oauth_email_ambiguous": "Plusieurs comptes KPI partagent cette adresse. Connectez-vous avec votre identifiant puis liez Google depuis votre profil.",
+      "oauth_generic": "Erreur lors de la connexion Google."
+    },
+    "oauth_link": {
+      "title": "Lier votre compte Google",
+      "explain": "Vous êtes sur le point de lier votre compte Google au compte KPI « {code} ». Pour confirmer qu'il s'agit bien de votre compte, saisissez son mot de passe actuel.",
+      "submit": "Confirmer le lien",
+      "cancel": "Annuler",
+      "bad_password": "Mot de passe incorrect.",
+      "expired": "La demande de lien a expiré, relancez la connexion Google."
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",

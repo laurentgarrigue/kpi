@@ -180,13 +180,81 @@ Si un incident survient (email d'alerte en boucle, cookie non envoyé, 401 massi
 
 ---
 
-## Phase 2 — OAuth Google (à venir)
+## Phase 2 — OAuth Google
 
-Statut : 📋 spécifiée. Pré-requis :
+Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 4](AUTH_HARDENING.md).
 
-1. Projet Google Cloud Console créé, OAuth consent screen validé (interne ou externe selon public visé).
-2. `GOOGLE_OAUTH_CLIENT_ID` et `GOOGLE_OAUTH_CLIENT_SECRET` provisionnés dans Symfony Secrets.
-3. URL de callback whitelistée dans Google Cloud : `https://kayak-polo.info/api2/auth/google/callback` (+ preprod).
+**Flow** : app4 appelle `/auth/google` → redirection Google (consent screen) → callback `/auth/google/callback` → trois cas : (1) lien existant → login direct, (2) email vérifié matche un `kp_user` sans lien → page de confirmation du mot de passe, (3) rien ne matche → retour `/login?oauth_error=…`.
+
+### 2.1 🌐 Pré-requis Google Cloud Console
+
+| # | Action | ☑ |
+|---|---|---|
+| 1 | Créer un projet (ou en réutiliser un) dans [Google Cloud Console](https://console.cloud.google.com/) | ☐ |
+| 2 | APIs & Services → OAuth consent screen : type **External**, nom « KPI », support email, scopes `openid email profile` | ☐ |
+| 3 | APIs & Services → Credentials → Create → OAuth 2.0 Client ID → Web application | ☐ |
+| 4 | Authorized redirect URIs : `https://kayak-polo.info/api2/auth/google/callback` **et** `https://preprod.kayak-polo.info/api2/auth/google/callback` **et** `https://kpi.localhost/api2/auth/google/callback` (dev) | ☐ |
+| 5 | Noter le Client ID et le Client Secret | ☐ |
+
+### 2.2 ⌨️ Configuration locale
+
+```bash
+# dans sources/api2/.env.local (NON versionné)
+GOOGLE_OAUTH_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=xxxxxxxx
+GOOGLE_OAUTH_REDIRECT_URI=https://kpi.localhost/api2/auth/google/callback
+```
+
+```bash
+make api2_migrations_migrate    # crée kp_user_oauth
+make api2_restart
+make app4_dev_restart
+```
+
+### 2.3 ⌨️ Tests automatisés
+
+```bash
+API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthOAuthGoogle
+```
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `testCallbackWithUnknownEmailRedirectsToLoginWithError` | 302 vers `/login?oauth_error=oauth_no_account` | ☐ |
+| 2 | `testCallbackWithMatchingEmailRedirectsToLinkPage` | 302 vers `/auth/google/link?code=TADMIN&sub=…` + cookie `kpi_oauth_pending` | ☐ |
+| 3 | `testCallbackWithMismatchedStateIsRejected` | Anti-CSRF OK | ☐ |
+| 4 | `testCallbackRejectsUnverifiedEmail` | Erreur `oauth_email_not_verified` | ☐ |
+| 5 | `testCallbackWithExistingOauthLinkLogsInDirectly` | cookies `kpi_access` + `kpi_refresh` posés, journal `oauth_google` | ☐ |
+| 6 | `testUnlinkRefusesIfUserHasNoPassword` | 409 CONFLICT | ☐ |
+| 7 | `testUnlinkSucceedsWhenPasswordIsSet` | 200 + ligne supprimée | ☐ |
+
+### 2.4 ⌨️ Tests manuels
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `/login` : bouton « Continuer avec Google » visible | OK (le bouton n'apparaît pas si GOOGLE_OAUTH_CLIENT_ID est vide) | ☐ |
+| 2 | Clic sur le bouton | Redirection Google, consent screen | ☐ |
+| 3 | Autoriser avec un compte Google dont l'email ne correspond à aucun `kp_user` | Retour `/login` avec message « Aucun compte KPI… » | ☐ |
+| 4 | Autoriser avec un compte dont l'email matche TADMIN | Redirection vers `/auth/google/link?code=TADMIN&sub=…` ; demande du mot de passe KPI | ☐ |
+| 5 | Saisir le bon mot de passe | Redirection `/?oauth=ok`, cookies kpi_access/kpi_refresh posés, connexion effective | ☐ |
+| 6 | Rejouer le flow Google → login direct (plus de page de link) | OK | ☐ |
+| 7 | Depuis `/profile/security` (si livrée), POST `/auth/google/unlink` avec un compte sans mot de passe | 409 (prévenir avant de délier) | ☐ |
+
+### 2.5 🖥 Déploiement
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Provisionner `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` en preprod puis prod (Symfony Secrets ou `.env.local`) | ☐ |
+| 2 | `make api2_migrations_migrate` sur chaque env | migration appliquée | ☐ |
+| 3 | `make api2_restart` | ☐ |
+| 4 | Smoke-test depuis l'env public : clic bouton → consent screen Google → retour | ☐ |
+
+### 2.6 Rollback
+
+Si le flow casse (consent screen rejette l'URI, 500 au callback) :
+
+1. Vider `GOOGLE_OAUTH_CLIENT_ID` dans `.env.local` → le bouton disparaît, flow désactivé.
+2. `make api2_restart`.
+3. La table `kp_user_oauth` reste (pas de donnée perdue).
 
 ---
 

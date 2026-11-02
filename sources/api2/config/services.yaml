@@ -66,6 +66,18 @@ services:
         arguments:
             $app4Url: '%env(APP4_URL)%'
 
+    # AUTH_HARDENING § 4 : OAuth Google. isConfigured() renvoie false si les 3 variables sont vides,
+    # et le controller cache alors le flow — ni redirection, ni bouton visible côté app4.
+    App\Security\GoogleOAuthClient:
+        arguments:
+            $clientId: '%env(default::GOOGLE_OAUTH_CLIENT_ID)%'
+            $clientSecret: '%env(default::GOOGLE_OAUTH_CLIENT_SECRET)%'
+            $redirectUri: '%env(default::GOOGLE_OAUTH_REDIRECT_URI)%'
+
+    App\Controller\OAuthController:
+        arguments:
+            $app4Url: '%env(APP4_URL)%'
+
     App\Service\PceImportService:
         arguments:
             $ffckPceUrl: '%env(FFCK_PCE_URL)%'
