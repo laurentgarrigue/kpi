@@ -589,11 +589,13 @@ app4_build: ## Build l'application Nuxt (app4 admin) pour la production
 	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm run build"
 
 app4_generate: ## Génère l'application Nuxt (app4 admin) en mode statique (utilise .env)
-	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npx nuxt generate"
+	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "APP_ENV=$${APP_ENV:-development} npx nuxt generate"
 	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_dev: ## Génère l'application Nuxt (app4 admin) en mode statique pour développement
-	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npx nuxt generate"
+# APP_ENV=development : `nuxt generate` force NODE_ENV=production, donc sans cela appEnv
+# vaudrait 'production' et le bandeau jaune + badge DEV n'apparaîtraient pas sur /admin2.
+	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "APP_ENV=development npx nuxt generate"
 	@echo "App4 generated (nginx_static serves it without restart)."
 
 app4_generate_preprod: ## Génère l'application Nuxt (app4 admin) en mode statique pour pré-production (utilise container temporaire)
