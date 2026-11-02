@@ -47,9 +47,9 @@ make api2_restart            # worker FrankenPHP recharge le kernel
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_logs lines=50` | Pas d'erreur de boot ; `rate_limiter` chargé | ☐ |
-| 2 | 🗄 SQL : `DESCRIBE kp_user_login_history;` (ou en une ligne : `docker exec kpi_db sh -c 'mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "DESCRIBE kp_user_login_history"'`) | Table présente : `user_code`, `success`, `failure_reason`, `legacy_hash`, `attempted_at`… | ☐ |
-| 3 | Dans Swagger `https://kpi.localhost/api2/doc` | Endpoint `GET /auth/login-history` visible dans le tag « 20. App4 - Authentication » | ☐ |
+| 1 | `make api2_logs lines=50` | Pas d'erreur de boot ; `rate_limiter` chargé | ☑ |
+| 2 | 🗄 SQL : `DESCRIBE kp_user_login_history;` (ou en une ligne : `docker exec kpi_db sh -c 'mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "DESCRIBE kp_user_login_history"'`) | Table présente : `user_code`, `success`, `failure_reason`, `legacy_hash`, `attempted_at`… | ☑ |
+| 3 | Dans Swagger `https://kpi.localhost/api2/doc` | Endpoint `GET /auth/login-history` visible dans le tag « 20. App4 - Authentication » | ☑ |
 
 ### 1a.2 ⌨️ Tests automatisés
 
@@ -63,18 +63,16 @@ et la bonne `DATABASE_URL`, ce qu'un `phpunit --filter` lancé à la main ne fai
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `LoginAttemptLoggerTest` (8 tests) | PASS — 4 reasons acceptées, `legacy_hash` positionné, UA tronqué à 255, seuil de verrouillage | ☐ |
-| 2 | `AuthLoginHardeningTest::testEveryLoginAttemptWritesToHistory` | PASS — chaque appel insère une ligne | ☐ |
-| 3 | `AuthLoginHardeningTest::testFiveFailuresFromSameIpTriggerIpRateLimit` | PASS — 6ᵉ appel = 429 avec `Retry-After` | ☐ |
-| 4 | `AuthLoginHardeningTest::testTenFailuresOnSameUserFromDistinctIpsTriggerUserRateLimit` | PASS — 11ᵉ appel = 429 | ☐ |
-| 5 | `AuthLoginHardeningTest::testFiveFailuresFromDistinctIpsLockTheAccount` | PASS — bon mot de passe refusé avec 423, reason `account_locked` | ☐ |
-| 6 | `AuthLoginHardeningTest::testSuccessResetsFailureCounter` | PASS | ☐ |
-| 7 | `AuthLoginHardeningTest::testLoginHistoryEndpointIsReservedToSelfAndSuperAdmin` | PASS | ☐ |
+| 1 | `LoginAttemptLoggerTest` (8 tests) | PASS — 4 reasons acceptées, `legacy_hash` positionné, UA tronqué à 255, seuil de verrouillage | ☑ |
+| 2 | `AuthLoginHardeningTest::testEveryLoginAttemptWritesToHistory` | PASS — chaque appel insère une ligne | ☑ |
+| 3 | `AuthLoginHardeningTest::testFiveFailuresFromSameIpTriggerIpRateLimit` | PASS — 6ᵉ appel = 429 avec `Retry-After` | ☑ |
+| 4 | `AuthLoginHardeningTest::testTenFailuresOnSameUserFromDistinctIpsTriggerUserRateLimit` | PASS — 11ᵉ appel = 429 | ☑ |
+| 5 | `AuthLoginHardeningTest::testFiveFailuresFromDistinctIpsLockTheAccount` | PASS — bon mot de passe refusé avec 423, reason `account_locked` | ☑ |
+| 6 | `AuthLoginHardeningTest::testSuccessResetsFailureCounter` | PASS | ☑ |
+| 7 | `AuthLoginHardeningTest::testLoginHistoryEndpointIsReservedToSelfAndSuperAdmin` | PASS | ☑ |
 
 ### 1a.3 ⌨️ Tests manuels
 
-| # | Action | Résultat attendu | ☑ |
-|---|---|---|---|
 Depuis le poste de dev, tous les appels partent de la **même IP** : le quota IP (5 / 15 min) se déclenche
 avant le verrouillage de compte. On remet donc le limiteur à zéro entre les étapes avec
 `docker exec kpi_api2 php bin/console cache:pool:clear cache.rate_limiter` (le verrouillage, lui, est calculé
@@ -82,22 +80,22 @@ depuis `kp_user_login_history` et n'est pas effacé par cette commande).
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `curl -sk -o /dev/null -w '%{http_code}\n' -X POST https://kpi.localhost/api2/auth/login -H 'Content-Type: application/json' -d '{"username":"TADMIN","password":"wrong"}'` répété 6 fois | 1ᵉʳ → 5ᵉ : 401 ; 6ᵉ : **429** (avec `-D -` : en-tête `Retry-After`) | ☐ |
-| 2 | Vider le limiteur (commande ci-dessus), puis appel avec le **bon** mot de passe | **423 Locked** (5 échecs < 15 min dans l'historique), pas de JWT | ☐ |
-| 3 | Attendre 15 min après le dernier échec, retenter avec le bon mot de passe | 200 — JWT émis | ☐ |
-| 4 | Login OK en profil 1 puis `GET /api2/auth/login-history?code=TADMIN` | Liste des tentatives récentes, 200 | ☐ |
-| 5 | Login OK en profil 8, puis `GET /api2/auth/login-history?code=TADMIN` | **403** (pas son propre compte) | ☐ |
-| 6 | Login OK en profil 8, puis `GET /api2/auth/login-history?code=<son code>` | 200 — n'a que son propre historique | ☐ |
+| 1 | `curl -sk -o /dev/null -w '%{http_code}\n' -X POST https://kpi.localhost/api2/auth/login -H 'Content-Type: application/json' -d '{"username":"TADMIN","password":"wrong"}'` répété 6 fois | 1ᵉʳ → 5ᵉ : 401 ; 6ᵉ : **429** (avec `-D -` : en-tête `Retry-After`) | ☑ |
+| 2 | Vider le limiteur (commande ci-dessus), puis appel avec le **bon** mot de passe | **423 Locked** (5 échecs < 15 min dans l'historique), pas de JWT | ☑ |
+| 3 | Attendre 15 min après le dernier échec, retenter avec le bon mot de passe | 200 — JWT émis | ☑ |
+| 4 | Login OK en profil 1 puis `GET /api2/auth/login-history?code=TADMIN` | Liste des tentatives récentes, 200 | ☑ |
+| 5 | Login OK en profil 8, puis `GET /api2/auth/login-history?code=TADMIN` | **403** (pas son propre compte) | ☑ |
+| 6 | Login OK en profil 8, puis `GET /api2/auth/login-history?code=<son code>` | 200 — n'a que son propre historique | ☑ |
 
 ### 1a.4 ⌨️ Non-régression
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Login app4 standard depuis un navigateur frais | OK, flux `/select-mandate` ou `/` inchangé | ☐ |
-| 2 | Reset de mot de passe (POST `/auth/reset-password`) depuis un email valide | OK, politique de complexité toujours appliquée | ☐ |
-| 3 | app2 `https://app.kpi.localhost` | Chargement OK (pas d'auth, pas d'impact) | ☐ |
-| 4 | Scrutineering `/staff/{id}` (profil 10) | Login OK, pages accessibles | ☐ |
-| 5 | `kp_journal` : vérifier qu'une ligne « Connexion Admin » est toujours écrite à chaque login réussi (conservation du journal métier legacy) | OK | ☐ |
+| 1 | Login app4 standard depuis un navigateur frais | OK, flux `/select-mandate` ou `/` inchangé | ☑ |
+| 2 | Reset de mot de passe (POST `/auth/reset-password`) depuis un email valide | OK, politique de complexité toujours appliquée | ☑ |
+| 3 | app2 `https://app.kpi.localhost` | Chargement OK (pas d'auth, pas d'impact) | ☑ |
+| 4 | Scrutineering `/staff/{id}` (profil 10) | Login OK, pages accessibles | ☑ |
+| 5 | `kp_journal` : vérifier qu'une ligne « Connexion Admin » est toujours écrite à chaque login réussi (conservation du journal métier legacy) | OK | ☑ |
 
 ### 1a.5 🌐 Pré-production (merge sur `main` → déploiement automatique)
 
