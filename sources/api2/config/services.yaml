@@ -60,6 +60,12 @@ services:
             $mailAdminTo: '%env(MAILER_ADMIN_TO)%'
             $app4Url: '%env(APP4_URL)%'
 
+    # AUTH_HARDENING § 3 : lien « révoquer cet appareil » dans l'email → pointe sur app4,
+    # qui enchaîne vers l'endpoint api2 /auth/device/revoke/{token}.
+    App\Security\KnownDeviceService:
+        arguments:
+            $app4Url: '%env(APP4_URL)%'
+
     App\Service\PceImportService:
         arguments:
             $ffckPceUrl: '%env(FFCK_PCE_URL)%'

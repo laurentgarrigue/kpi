@@ -1,7 +1,7 @@
 # Durcissement de l'authentification app4 / api2
 
-**Date** : 1 novembre 2026 — plan initial
-**Statut** : 🚧 En cours — Phase 1a implémentée (rate-limit + journal + verrouillage) ; phases 1b, 2, 3 à venir
+**Date** : 1 novembre 2026 — plan initial ; 2 novembre 2026 — phases 1b et 2 livrées
+**Statut** : 🚧 En cours — Phases 1a, 1b et 2 implémentées (rate-limit + journal + verrouillage + cookies HttpOnly + refresh token + email nouvel appareil + OAuth Google en option) ; phase 3 (TOTP ciblé) à venir
 **Périmètre** : authentification des utilisateurs d'**app4** uniquement (le legacy admin disparaît au profit d'app4, cf. [ROADMAP_KPI.md](ROADMAP_KPI.md)). Toute la logique est centralisée dans **api2** (`AdminAuthController`, `UserProvider`, nouveau `src/Security/`).
 **Hors périmètre** : app2 (publique, sans auth), app3 (publique, sans auth), legacy `admin/` et `Login.php` (voués à disparaître — pas de rétrofit sécurité).
 
@@ -11,9 +11,9 @@
 
 | Phase | Contenu | Friction utilisateur | Statut |
 |---|---|---|---|
-| **1a** | Rate-limit login, verrouillage progressif sur échec, journal `kp_user_login_history`, suppression différée du fallback MD5 | Nulle en nominal | 🚧 Spec + implémentation en cours |
-| **1b** | JWT en cookie `HttpOnly` + refresh token glissant, suppression de `localStorage` pour le token, notification email sur nouvel appareil | Nulle (invisible) | 📋 Spécifiée, non implémentée |
-| **2** | OAuth Google en **option** sur la page `/login` (bouton « Continuer avec Google »), lien/déliement depuis `/profile/security` | **Négative** (facilite) | 📋 Spécifiée, non implémentée |
+| **1a** | Rate-limit login, verrouillage progressif sur échec, journal `kp_user_login_history`, suppression différée du fallback MD5 | Nulle en nominal | ✅ Implémentée (01/11/2026) |
+| **1b** | JWT en cookie `HttpOnly` + refresh token glissant (rotation + détection de rejeu), `/auth/logout`, notification email sur nouvel appareil + lien de révocation | Nulle (invisible) | ✅ Implémentée (02/11/2026) — transition hybride : app4 continue d'utiliser le JWT en body **ET** reçoit les cookies, migration pure cookie en v+1 |
+| **2** | OAuth Google en **option** sur la page `/login` (bouton « Continuer avec Google »), lien/déliement depuis `/profile/security` | **Négative** (facilite) | ✅ Implémentée (02/11/2026) |
 | **3** | TOTP (Google Authenticator / Authy / 1Password) **obligatoire** pour les profils `≤ 3`, **optionnel** pour les autres ; appareil de confiance 30 jours ; 10 codes de récupération | Faible, ciblée | 📋 Spécifiée, non implémentée |
 
 > **Principe directeur** : la vraie faille aujourd'hui n'est pas l'absence de 2FA — c'est le JWT en `localStorage` (volé par un XSS), l'absence totale de rate-limit (bruteforce libre) et l'absence de signal utilisateur sur les connexions suspectes. On corrige d'abord les fondations invisibles, puis on ajoute du 2FA là où il protège vraiment (profils admin).

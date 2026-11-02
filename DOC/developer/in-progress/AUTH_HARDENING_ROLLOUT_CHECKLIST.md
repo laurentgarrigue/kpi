@@ -123,17 +123,60 @@ ORDER BY 1 DESC;
 
 ---
 
-## Phase 1b — Cookies HttpOnly, refresh token, email nouvel appareil (à venir)
+## Phase 1b — Cookies HttpOnly, refresh token, email nouvel appareil
 
-Statut : 📋 spécifiée, non implémentée. Pré-requis : phase 1a validée en prod depuis au moins 30 jours.
+Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 3](AUTH_HARDENING.md).
 
-### Spécificités à anticiper
+**Approche hybride** retenue : app4 continue de recevoir le JWT dans le JSON du login (compatibilité) **et** reçoit les cookies `kpi_access` + `kpi_refresh`. L'extracteur `cookie` de lexik_jwt est activé en parallèle du header `Authorization: Bearer`. Les navigateurs ne subissent aucune reconnexion forcée.
 
-- **Flag CORS** : NelmioCorsBundle doit autoriser `credentials: true` et préciser l'origine exacte d'app4 (pas de `*`).
-- **Domaine cookie** : attention `kpi.localhost` ≠ `app.kpi.localhost`. Le cookie est posé sur **le domaine qui sert `/api2`**, donc `kpi.localhost` en dev, `kayak-polo.info` en prod. L'app4 doit faire ses requêtes vers ce domaine, pas vers un sous-domaine différent, sinon le navigateur ne renvoie pas le cookie.
-- **Bannière utilisateur** 2 semaines avant la bascule : « À partir du JJ/MM, une reconnexion vous sera demandée pour renforcer la sécurité. »
+### 1b.1 ⌨️ Préparation locale
 
-Le détail des étapes sera écrit au moment de l'implémentation de la phase 1b.
+```bash
+git fetch origin && git checkout claude/enhance-user-authentication-33dZW && git pull
+make docker_dev_up
+make api2_migrations_migrate   # crée kp_user_refresh_token + kp_user_known_device
+make api2_restart
+```
+
+### 1b.2 ⌨️ Tests automatisés
+
+```bash
+make api2_bash
+API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthRefreshSession
+```
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `testLoginSetsBothCookies` | kpi_access + kpi_refresh HttpOnly, Secure, SameSite=Lax | ☐ |
+| 2 | `testRefreshSessionRotatesRefreshToken` | nouveau token émis, ancien révoqué, `replaced_by` positionné | ☐ |
+| 3 | `testReusingRevokedRefreshTokenRevokesAllActiveTokens` | 401 + révocation chaîne complète (détection rejeu) | ☐ |
+| 4 | `testLogoutRevokesRefreshTokenAndClearsCookies` | revoked_at non nul + cookies effacés | ☐ |
+| 5 | `testFirstLoginRegistersDeviceAndSecondFromSameFingerprintDoesNotCreateDuplicate` | pas de duplicata (IP /24 + UA famille) | ☐ |
+| 6 | `testDeviceRevokeTokenRevokesDeviceAndAllRefreshTokens` | appareil + sessions révoqués ; 2ᵉ appel = 404 | ☐ |
+
+### 1b.3 ⌨️ Tests manuels
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Login app4 depuis un navigateur frais | OK, DevTools → onglet Application → Cookies : `kpi_access` et `kpi_refresh` visibles (HttpOnly ✓) | ☐ |
+| 2 | Effacer `localStorage.kpi_admin_token` manuellement, recharger | App4 reste connectée (le cookie `kpi_access` suffit à api2) | ☐ |
+| 3 | Attendre > JWT_TTL, naviguer, puis déclencher un refresh (via refreshToken() de useAuth) | Nouveau JWT en cookie, pas de 401 utilisateur | ☐ |
+| 4 | Click « Déconnexion » | `/auth/logout` → cookies effacés, redirection login | ☐ |
+| 5 | Login depuis un nouveau navigateur / appareil | Email d'alerte reçu avec lien de révocation | ☐ |
+| 6 | Cliquer le lien de révocation de l'email | Appareil révoqué, toutes sessions actives terminées (le navigateur d'origine est déconnecté au prochain refresh) | ☐ |
+
+### 1b.4 CORS et domaines (préprod/prod)
+
+- `CORS_ALLOW_ORIGIN` dans `sources/api2/.env` doit couvrir l'origine exacte d'app4 (jamais `*` — bloqué par `allow_credentials: true`). Vérifier qu'en préprod/prod les deux sites (api2 et app4) partagent le même domaine racine (`kayak-polo.info`) pour que SameSite=Lax envoie le cookie en navigation.
+- `make api2_logs` après le premier login : chercher `Set-Cookie` dans la réponse, pas d'erreur CORS côté app4 (DevTools Console).
+
+### 1b.5 Rollback
+
+Si un incident survient (email d'alerte en boucle, cookie non envoyé, 401 massif) :
+
+1. `git revert <sha>` ciblé sur `sources/api2/src/Controller/AdminAuthController.php` et `sources/api2/config/packages/lexik_jwt_authentication.yaml` (retour à l'extraction Authorization-only).
+2. `make api2_restart`.
+3. Les tables `kp_user_refresh_token` et `kp_user_known_device` restent — pas de perte de données, pas de replay dangereux (plus personne ne lit la table).
 
 ---
 

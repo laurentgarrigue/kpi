@@ -4,15 +4,18 @@ namespace App\Controller;
 
 use App\Cms\EditorialAccess;
 use App\Entity\User;
+use App\Security\KnownDeviceService;
 use App\Security\LoginAttemptLogger;
 use App\Security\LoginRateLimiter;
 use App\Security\PasswordPolicy;
+use App\Security\RefreshTokenService;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +37,8 @@ class AdminAuthController extends AbstractController
         private readonly EditorialAccess $editorialAccess,
         private readonly LoginAttemptLogger $loginLogger,
         private readonly LoginRateLimiter $loginRateLimiter,
+        private readonly RefreshTokenService $refreshTokenService,
+        private readonly KnownDeviceService $knownDeviceService,
     ) {
     }
 
@@ -125,6 +130,14 @@ class AdminAuthController extends AbstractController
         // Generate JWT token
         $token = $this->jwtManager->create($user);
 
+        // Phase 1b : refresh token opaque posé en cookie HttpOnly ; access JWT posé aussi en cookie
+        // pour que l'extracteur `cookie` de lexik_jwt le trouve sur les appels suivants d'app4.
+        $refreshToken = $this->refreshTokenService->issue($user);
+
+        // Nouvelle connexion depuis un appareil inconnu → email d'alerte avec lien de révocation.
+        $email = $this->fetchUserEmail($user->getCode());
+        $this->knownDeviceService->recognizeAndNotify($user, $email, $request);
+
         $userData = $user->toArray();
         // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
         $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
@@ -133,11 +146,14 @@ class AdminAuthController extends AbstractController
         $userData['effectiveProfile'] = $user->getNiveau();
         $userData['effectiveFilters'] = $userData['filters'];
 
-        return $this->json([
-            'token' => $token,
+        $response = $this->json([
+            'token' => $token, // conservé en body pendant la transition d'app4 vers le cookie (AUTH-CK-02)
             'user' => $userData,
             'hasMandates' => count($mandates) > 0,
         ]);
+        $response->headers->setCookie($this->buildAccessCookie($token));
+        $response->headers->setCookie($this->buildRefreshCookie($refreshToken));
+        return $response;
     }
 
     /**
@@ -165,6 +181,94 @@ class AdminAuthController extends AbstractController
         return $this->json([
             'user' => $userData
         ]);
+    }
+
+    /**
+     * Rotate refresh cookie: validate the opaque refresh token read from the kpi_refresh cookie,
+     * issue a new access JWT + a new refresh token, set both cookies back.
+     *
+     * Returns 401 on invalid/revoked token (replay triggers full chain revocation).
+     */
+    #[Route('/refresh-session', name: 'api_auth_refresh_session', methods: ['POST'])]
+    #[OA\Post(
+        path: '/auth/refresh-session',
+        summary: 'Rotate the refresh cookie and emit a new access JWT',
+        tags: ['20. App4 - Authentication']
+    )]
+    #[OA\Response(response: 200, description: 'New cookies set')]
+    #[OA\Response(response: 401, description: 'Missing, invalid or revoked refresh token')]
+    public function refreshSession(Request $request): JsonResponse
+    {
+        $presented = (string) $request->cookies->get('kpi_refresh', '');
+        if ($presented === '') {
+            return $this->json(['message' => 'Missing refresh token'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $result = $this->refreshTokenService->rotate($presented);
+        if (!$result) {
+            // Même en cas de rejeu détecté (toute la chaîne révoquée), on répond 401 — pas d'indication à l'attaquant.
+            $response = $this->json(['message' => 'Invalid refresh token'], Response::HTTP_UNAUTHORIZED);
+            $response->headers->clearCookie('kpi_refresh', '/', null, true, true, 'lax');
+            $response->headers->clearCookie('kpi_access', '/', null, true, true, 'lax');
+            return $response;
+        }
+
+        /** @var User $user */
+        $user = $this->userProvider->loadUserByIdentifier($result['userCode']);
+        $accessToken = $this->jwtManager->create($user);
+
+        $response = $this->json(['refreshed' => true]);
+        $response->headers->setCookie($this->buildAccessCookie($accessToken));
+        $response->headers->setCookie($this->buildRefreshCookie($result['token']));
+        return $response;
+    }
+
+    /**
+     * Logout: revoke the refresh token and clear both cookies. Idempotent.
+     */
+    #[Route('/logout', name: 'api_auth_logout', methods: ['POST'])]
+    #[OA\Post(path: '/auth/logout', summary: 'Revoke the refresh cookie and clear auth cookies', tags: ['20. App4 - Authentication'])]
+    #[OA\Response(response: 200, description: 'Session ended')]
+    public function logout(Request $request): JsonResponse
+    {
+        $presented = (string) $request->cookies->get('kpi_refresh', '');
+        if ($presented !== '') {
+            $this->refreshTokenService->revoke($presented);
+        }
+
+        $response = $this->json(['message' => 'Logged out']);
+        $response->headers->clearCookie('kpi_refresh', '/', null, true, true, 'lax');
+        $response->headers->clearCookie('kpi_access', '/', null, true, true, 'lax');
+        return $response;
+    }
+
+    /**
+     * Public endpoint hit by the « revoke this device » link in the alert email.
+     * Revokes the device fingerprint and every active refresh token of the user. No JWT required
+     * — the signed token in the URL IS the proof of ownership (sent to the account's email).
+     */
+    #[Route('/device/revoke/{token}', name: 'api_auth_device_revoke', methods: ['GET', 'POST'])]
+    #[OA\Get(path: '/auth/device/revoke/{token}', summary: 'Revoke a device via the signed link in the alert email', tags: ['20. App4 - Authentication'])]
+    #[OA\Response(response: 200, description: 'Device revoked')]
+    #[OA\Response(response: 404, description: 'Unknown or already-used token')]
+    public function revokeDevice(string $token): JsonResponse
+    {
+        $userCode = $this->knownDeviceService->revokeByToken($token, $this->refreshTokenService);
+        if ($userCode === null) {
+            return $this->json(['message' => 'Unknown or already-used revocation token'], Response::HTTP_NOT_FOUND);
+        }
+
+        try {
+            $this->connection->prepare(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Révocation appareil', ?)"
+            )->executeStatement([$userCode, 'Révocation déclenchée depuis l\'email d\'alerte']);
+        } catch (\Exception) {
+        }
+
+        $response = $this->json(['message' => 'Device revoked, all sessions ended']);
+        $response->headers->clearCookie('kpi_refresh', '/', null, true, true, 'lax');
+        $response->headers->clearCookie('kpi_access', '/', null, true, true, 'lax');
+        return $response;
     }
 
     /**
@@ -463,6 +567,41 @@ class AdminAuthController extends AbstractController
     // ──────────────────────────────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * JWT en cookie HttpOnly ; même TTL court que le token Bearer (15 min typique via JWT_TTL).
+     * Secure + SameSite=Lax : envoyé sur une navigation normale cross-site (le login est en POST
+     * depuis app4, qui est sur un sous-domaine du api2) mais pas sur une requête de 3ᵉ partie.
+     */
+    private function buildAccessCookie(string $jwt): Cookie
+    {
+        $ttl = (int) ($_ENV['JWT_TTL'] ?? getenv('JWT_TTL') ?: 900);
+        return Cookie::create('kpi_access')
+            ->withValue($jwt)
+            ->withExpires(time() + $ttl)
+            ->withPath('/')
+            ->withSecure(true)
+            ->withHttpOnly(true)
+            ->withSameSite('lax');
+    }
+
+    private function buildRefreshCookie(string $token): Cookie
+    {
+        return Cookie::create('kpi_refresh')
+            ->withValue($token)
+            ->withExpires(time() + RefreshTokenService::TTL_SECONDS)
+            ->withPath('/')
+            ->withSecure(true)
+            ->withHttpOnly(true)
+            ->withSameSite('lax');
+    }
+
+    /** Récupère l'email du compte (string vide si absent) — pour l'alerte « nouvel appareil ». */
+    private function fetchUserEmail(string $userCode): string
+    {
+        $mail = $this->connection->fetchOne('SELECT Mail FROM kp_user WHERE Code = ?', [$userCode]);
+        return is_string($mail) ? trim($mail) : '';
+    }
 
     /**
      * Verify password: try bcrypt first, then MD5 fallback.
