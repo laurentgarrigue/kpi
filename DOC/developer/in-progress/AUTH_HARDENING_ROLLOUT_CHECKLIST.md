@@ -207,6 +207,51 @@ Si un incident survient (email d'alerte en boucle, cookie non envoyé, 401 massi
 
 ---
 
+## Phase 1b-bis — Gestion appareils + /profile/security
+
+Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 3bis](AUTH_HARDENING.md).
+
+**Pré-requis** : phase 1b en prod. L'utilisateur doit retrouver dans `/profile/security` la liste de ses appareils actifs, un bouton « Révoquer » par ligne (sauf l'appareil courant) et une action « Déconnecter toutes les autres sessions ». Le bouton de déliement Google y vit aussi.
+
+### 1b-bis.1 ⌨️ Tests automatisés
+
+```bash
+API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthDevices
+```
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `testEndpointsRequireAuthentication` | 401 sans JWT sur les trois endpoints | ☐ |
+| 2 | `testListReturnsActiveDevicesWithCurrentFlag` | Trois lignes, une seule `isCurrent=true`, label du courant construit sur IP /24 | ☐ |
+| 3 | `testListExcludesRevokedDevices` | Les devices révoqués n'apparaissent pas | ☐ |
+| 4 | `testRevokeByIdOnlyKillsItsOwnSessions` | Device A révoqué + ses refresh tokens tués ; device B intact | ☐ |
+| 5 | `testRevokeIdOfAnotherUserReturns404` | 404 anti-énumération, pas 403 | ☐ |
+| 6 | `testRevokeIdIsIdempotent` | 2ᵉ révocation = 200 (pas d'erreur) | ☐ |
+| 7 | `testRevokeOthersKeepsCurrentDevice` | Seul le device courant reste actif, refresh tokens des autres tués | ☐ |
+| 8 | `testRevocationIsJournaled` | Ligne `Révocation appareil` dans `kp_journal` avec texte « /profile/security » | ☐ |
+
+### 1b-bis.2 ⌨️ Tests manuels
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Depuis l'avatar en haut à droite, cliquer « Sécurité du compte » | Page `/profile/security` chargée, section « Appareils actifs » renseignée | ☐ |
+| 2 | Dans la liste, l'appareil marqué « Cet appareil » ne peut pas être révoqué (bouton grisé) | OK | ☐ |
+| 3 | Ouvrir le site dans un deuxième navigateur, se connecter | Un deuxième appareil apparaît dans `/profile/security` du 1er navigateur | ☐ |
+| 4 | Révoquer ce deuxième appareil → recharger le 2ᵉ navigateur | 2ᵉ navigateur déconnecté (401 au prochain appel métier) ; 1er navigateur toujours connecté | ☐ |
+| 5 | Cliquer « Déconnecter toutes les autres sessions » | Notice « X autre(s) appareil(s) déconnecté(s) », la liste ne contient plus que l'appareil courant | ☐ |
+| 6 | Si Google est lié, cliquer « Délier mon compte Google » | Notice « Compte Google délié », l'encart devient « Aucun compte Google lié » | ☐ |
+| 7 | Si l'utilisateur n'a pas de mot de passe (`Pwd=''`), bouton délier → 409 affiché proprement | « Définissez d'abord un mot de passe… » | ☐ |
+
+### 1b-bis.3 Rollback
+
+Si un incident survient (révocation de masse accidentelle, 500) :
+
+1. `git revert <sha>` sur `sources/api2/src/Controller/DeviceController.php` → les 3 endpoints disparaissent (404). `/profile/security` affiche l'erreur de chargement en bannière, l'utilisateur peut quand même se déconnecter.
+2. `make api2_restart`.
+3. Pas de perte de données : les lignes `kp_user_known_device.revoked_at` qui auraient été posées à tort peuvent être annulées en SQL (`UPDATE … SET revoked_at = NULL`). Les refresh tokens révoqués, eux, restent révoqués (sécurité préférable au confort).
+
+---
+
 ## Phase 2 — OAuth Google
 
 Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 4](AUTH_HARDENING.md).

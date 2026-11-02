@@ -275,7 +275,8 @@ class OAuthController extends AbstractController
         $this->knownDeviceService->recognizeAndNotify($user, $email, $request);
 
         $accessToken = $this->jwtManager->create($user);
-        $refreshToken = $this->refreshTokenService->issue($user);
+        // Fingerprint attaché pour que la révocation ciblée d'un appareil (AUTH-DV-04) coupe ses sessions.
+        $refreshToken = $this->refreshTokenService->issue($user, $this->knownDeviceService->currentFingerprint($request));
 
         // Journal fonctionnel historique (comme pour un login classique).
         try {

@@ -64,6 +64,38 @@
   },
   "profile": "Profil",
   "logout": "Déconnexion",
+  "security": {
+    "title": "Sécurité du compte",
+    "subtitle": "Gérez les appareils connectés à votre compte et vos moyens d'authentification.",
+    "load_failed": "Impossible de charger les informations de sécurité.",
+    "sign_out": "Se déconnecter de cet appareil",
+    "devices": {
+      "title": "Appareils actifs",
+      "help": "Un appareil est reconnu par son navigateur et sa plage d'adresse IP. « Révoquer » déconnecte toutes les sessions ouvertes depuis cet appareil.",
+      "current": "Cet appareil",
+      "created": "ajouté le {date}",
+      "last_seen": "vu la dernière fois le {date}",
+      "revoke": "Révoquer",
+      "revoke_others": "Déconnecter toutes les autres sessions",
+      "revoke_done": "Appareil révoqué.",
+      "revoke_others_done": "{count} autre(s) appareil(s) déconnecté(s).",
+      "revoke_failed": "La révocation a échoué, réessayez.",
+      "empty": "Aucun appareil actif."
+    },
+    "google": {
+      "title": "Compte Google",
+      "linked": "Votre compte Google est lié : vous pouvez vous connecter en un clic depuis la page de connexion.",
+      "not_linked": "Aucun compte Google lié.",
+      "unlink": "Délier mon compte Google",
+      "unlink_done": "Compte Google délié.",
+      "unlink_failed": "Impossible de délier le compte Google.",
+      "password_required": "Définissez d'abord un mot de passe avant de délier votre compte Google."
+    },
+    "totp": {
+      "title": "Double authentification (2FA)",
+      "coming_soon": "La double authentification par application (Google Authenticator, Authy…) arrive bientôt."
+    }
+  },
   "login": {
     "title": "Connexion",
     "subtitle": "Panneau d'administration",

@@ -133,7 +133,10 @@ class AdminAuthController extends AbstractController
 
         // Phase 1b : refresh token opaque posé en cookie HttpOnly ; access JWT posé aussi en cookie
         // pour que l'extracteur `cookie` de lexik_jwt le trouve sur les appels suivants d'app4.
-        $refreshToken = $this->refreshTokenService->issue($user);
+        // Phase 1b-bis : on attache l'empreinte au refresh token pour que la révocation ciblée
+        // d'un appareil depuis /profile/security puisse ne tuer que ses sessions (AUTH-DV-04).
+        $fingerprint = $this->knownDeviceService->currentFingerprint($request);
+        $refreshToken = $this->refreshTokenService->issue($user, $fingerprint);
 
         // Nouvelle connexion depuis un appareil inconnu → email d'alerte avec lien de révocation.
         $email = $this->fetchUserEmail($user->getCode());
@@ -177,11 +180,31 @@ class AdminAuthController extends AbstractController
         // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
         $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
+        $userData['oauthProviders'] = $this->oauthProvidersFor($user->getCode());
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
         return $this->json([
             'user' => $userData
         ]);
+    }
+
+    /**
+     * Liste des liens OAuth actifs du compte (ex. `['google' => true]`) — exposée dans /auth/me
+     * pour que /profile/security sache si le bouton « Délier Google » doit s'afficher (AUTH-PS-02).
+     *
+     * @return array<string, bool>
+     */
+    private function oauthProvidersFor(string $userCode): array
+    {
+        $rows = $this->connection->fetchFirstColumn(
+            'SELECT provider FROM kp_user_oauth WHERE user_code = ?',
+            [$userCode],
+        );
+        $result = [];
+        foreach ($rows as $provider) {
+            $result[(string) $provider] = true;
+        }
+        return $result;
     }
 
     /**

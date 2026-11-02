@@ -1,7 +1,7 @@
 # Durcissement de l'authentification app4 / api2
 
-**Date** : 1 novembre 2026 — plan initial ; 2 novembre 2026 — phases 1b et 2 livrées
-**Statut** : 🚧 En cours — Phases 1a, 1b et 2 implémentées (rate-limit + journal + verrouillage + cookies HttpOnly + refresh token + email nouvel appareil + OAuth Google en option) ; phase 3 (TOTP ciblé) à venir
+**Date** : 1 novembre 2026 — plan initial ; 2 novembre 2026 — phases 1b et 2 livrées ; **compléments post-review 2b (gestion appareils + /profile/security) à livrer**
+**Statut** : 🚧 En cours — Phases 1a, 1b et 2 livrées sur `main` ; **compléments 1b-bis** (listing appareils, révocation sans email, page `/profile/security`) en cours ; phase 3 (TOTP ciblé) à venir
 **Périmètre** : authentification des utilisateurs d'**app4** uniquement (le legacy admin disparaît au profit d'app4, cf. [ROADMAP_KPI.md](ROADMAP_KPI.md)). Toute la logique est centralisée dans **api2** (`AdminAuthController`, `UserProvider`, nouveau `src/Security/`).
 **Hors périmètre** : app2 (publique, sans auth), app3 (publique, sans auth), legacy `admin/` et `Login.php` (voués à disparaître — pas de rétrofit sécurité).
 
@@ -13,6 +13,7 @@
 |---|---|---|---|
 | **1a** | Rate-limit login, verrouillage progressif sur échec, journal `kp_user_login_history`, suppression différée du fallback MD5 | Nulle en nominal | ✅ Implémentée (01/11/2026) |
 | **1b** | JWT en cookie `HttpOnly` + refresh token glissant (rotation + détection de rejeu), `/auth/logout`, notification email sur nouvel appareil + lien de révocation | Nulle (invisible) | ✅ Implémentée (02/11/2026) — transition hybride : app4 continue d'utiliser le JWT en body **ET** reçoit les cookies, migration pure cookie en v+1 |
+| **1b-bis** | **Gestion utilisateur de ses appareils et sessions** : lister ses appareils, en révoquer un sans dépendre de l'email d'alerte, « déconnecter toutes les autres sessions », page `/profile/security` qui concentre déliement Google et (à venir) TOTP | Positive (autonomie) | 🚧 En cours (02/11/2026) |
 | **2** | OAuth Google en **option** sur la page `/login` (bouton « Continuer avec Google »), lien/déliement depuis `/profile/security` | **Négative** (facilite) | ✅ Implémentée (02/11/2026) |
 | **3** | TOTP (Google Authenticator / Authy / 1Password) **obligatoire** pour les profils `≤ 3`, **optionnel** pour les autres ; appareil de confiance 30 jours ; 10 codes de récupération | Faible, ciblée | 📋 Spécifiée, non implémentée |
 
@@ -157,6 +158,75 @@ Rendre le vol de JWT inutile et notifier l'utilisateur de toute connexion depuis
 
 ---
 
+## 3bis. Phase 1b-bis — Gestion utilisateur des appareils et sessions
+
+### 3bis.1 Problème constaté
+
+Après la phase 1b, le seul moyen de révoquer un appareil est de cliquer le lien reçu dans l'email d'alerte « nouvelle connexion ». Trois trous fonctionnels :
+
+1. Si l'utilisateur **perd l'email** (supprimé, filtré en spam, boîte purgée), il n'a plus aucun recours autonome.
+2. Si l'appareil était **déjà connu** (ex. retour sur un ordinateur partagé où l'utilisateur ne veut plus apparaître), aucun email n'est émis, donc aucun lien de révocation n'existe.
+3. Il n'existe aucun endroit où l'utilisateur peut **voir la liste de ses sessions actives** et vérifier qu'il n'y a pas d'accès indésirable.
+
+Seul workaround actuel : un super-admin édite `kp_user_known_device` et `kp_user_refresh_token` en SQL. Ce n'est pas une solution opérationnelle.
+
+### 3bis.2 Critères d'acceptation
+
+| ID | Critère | Validation |
+|---|---|---|
+| AUTH-DV-03 | `GET /auth/devices` retourne la liste des appareils actifs du compte authentifié (`id`, `label`, `created_at`, `last_seen_at`, `isCurrent: boolean`), triée par `last_seen_at` DESC. Les appareils déjà révoqués ne sont pas inclus. | Test : liste contient tous les enregistrés, pas les révoqués, et `isCurrent=true` pour celui qui correspond à l'empreinte de la requête. |
+| AUTH-DV-04 | `POST /auth/devices/{id}/revoke` révoque l'appareil `{id}` **s'il appartient à l'utilisateur courant** et invalide **tous les refresh tokens associés à cet appareil** (via `device_fingerprint`). Les autres appareils du même compte restent intacts. 404 si l'`id` n'appartient pas à l'utilisateur, 200 si déjà révoqué (idempotent). | Test : révocation d'un autre device du MÊME user tue ses refresh tokens, pas ceux du device courant ; 404 pour un device d'un autre user ; 2ᵉ appel = 200 sans effet. |
+| AUTH-DV-05 | `POST /auth/devices/revoke-others` révoque tous les appareils du compte **sauf celui qui porte la requête** ; invalide tous les refresh tokens associés à ces appareils ; conserve la session courante active. | Test : après l'appel, un appel suivant à `GET /auth/devices` ne renvoie plus que le device courant ; le refresh token courant reste valide pour un `POST /auth/refresh-session`. |
+| AUTH-DV-06 | Les trois endpoints exigent un JWT valide (401 sans). Un utilisateur ne peut jamais voir ni toucher les devices d'un autre utilisateur. | Test : appel sans token → 401 ; `POST /auth/devices/{id}/revoke` avec l'id d'un autre compte → 404 (pas 403 pour éviter l'énumération). |
+| AUTH-DV-07 | La révocation d'un appareil est journalisée dans `kp_journal` (action `Révocation appareil`, texte « Révocation depuis /profile/security » ou « Révocation depuis email d'alerte » selon la source), au même titre que la révocation par lien email. | Vérification sur `kp_journal`. |
+| AUTH-PS-01 | app4 expose la page `/profile/security` (JWT requis) qui affiche : la liste des appareils actifs (avec « Cet appareil » marqué), un bouton « Révoquer » par ligne (sauf la ligne courante où le bouton est désactivé), un bouton « Déconnecter toutes les autres sessions », et — si l'utilisateur a un lien Google — un bouton « Délier mon compte Google ». | Smoke-test manuel. |
+| AUTH-PS-02 | Si l'utilisateur délie Google alors qu'il n'a pas de mot de passe actif (`Pwd = ''`), le bouton est désactivé et un message indique de définir d'abord un mot de passe (cf. AUTH-OA-06 déjà implémenté côté api2). | Smoke-test manuel + réponse `409 PASSWORD_REQUIRED` déjà couverte par `AuthOAuthGoogleTest`. |
+
+### 3bis.3 Choix techniques
+
+**Service `KnownDeviceService`** — nouvelles méthodes publiques :
+- `listActiveFor(string $userCode): array` — retourne les lignes `kp_user_known_device` non révoquées, enrichies au besoin.
+- `currentFingerprint(Request $request): string` — expose l'empreinte calculée pour la requête courante (déjà interne, à rendre accessible).
+- `revokeById(int $deviceId, string $userCode, RefreshTokenService $refreshTokens, string $journalText): bool` — révoque un appareil appartenant à `$userCode`, retourne `true` si ligne touchée, `false` si inexistant / étranger / déjà révoqué.
+- `revokeAllOthersFor(string $userCode, string $currentFingerprint, RefreshTokenService $refreshTokens): int` — révoque tous sauf celui qui correspond à `$currentFingerprint`.
+
+**Service `RefreshTokenService`** — nouvelle méthode :
+- `revokeByDeviceFingerprint(string $userCode, string $fingerprint): void` — toutes les sessions d'un device.
+
+**Contrôleur** — nouveau `DeviceController` dédié (sépare la préoccupation « gestion appareils » de l'auth brute, et aligne avec `OAuthController`). Routes :
+- `GET /auth/devices` (JWT)
+- `POST /auth/devices/{id}/revoke` (JWT)
+- `POST /auth/devices/revoke-others` (JWT)
+
+**Pourquoi ne pas étendre `GET /auth/device/revoke/{token}` ?** Deux surfaces d'autorisation différentes :
+- Lien email : **pas de JWT**, preuve = token signé, protège contre un attaquant sans session.
+- Endpoints utilisateur : **JWT exigé**, protège l'énumération et l'IDOR.
+
+Les mélanger brouillerait la lecture et la revue sécurité.
+
+**Détection de l'appareil courant** : l'empreinte est recalculée à partir de la requête ; on compare l'id de la ligne retournée par la query de l'utilisateur. Pas de nouvelle colonne.
+
+### 3bis.4 Fichiers touchés
+
+- **Nouveaux**
+  - `sources/api2/src/Controller/DeviceController.php`
+  - `sources/api2/tests/Integration/AuthDevicesTest.php`
+  - `sources/app4/pages/profile/security.vue`
+- **Modifiés**
+  - `sources/api2/src/Security/KnownDeviceService.php` — 4 nouvelles méthodes publiques
+  - `sources/api2/src/Security/RefreshTokenService.php` — `revokeByDeviceFingerprint`
+  - `sources/api2/config/packages/security.yaml` — ouvrir `^/auth/devices` à `ROLE_USER`
+  - `sources/app4/i18n/locales/{fr,en}.json` — section `profile.security.*`
+  - app4 : lien vers `/profile/security` dans le menu utilisateur (layout admin)
+
+### 3bis.5 Non-objectifs (déjà prévus plus tard)
+
+- Pas de « renommer un appareil » : le label est auto (famille UA + IP) et n'ajoute rien de métier. V+1 si demandé.
+- Pas de « notifier par email la révocation depuis /profile/security » : l'utilisateur est l'auteur, l'alerte serait du bruit.
+- Pas de limite anti-brute sur ces endpoints : JWT valide requis, et une révocation d'appareil n'ouvre aucun accès (elle en ferme).
+
+---
+
 ## 4. Phase 2 — OAuth Google (option utilisateur)
 
 ### 4.1 Objectif
@@ -294,6 +364,7 @@ Quand une phase est livrée en production, cocher ici et déplacer les élément
 
 - [x] Phase 1a — rate-limit, verrouillage, journal (livrée 01/11/2026)
 - [x] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil (livrée 02/11/2026, hybride cookie+body)
+- [ ] Phase 1b-bis — gestion appareils + `/profile/security` (02/11/2026)
 - [x] Phase 2 — OAuth Google en option (livrée 02/11/2026)
 - [ ] Phase 3 — TOTP pour profils ≤ 3
 

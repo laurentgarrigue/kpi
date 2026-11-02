@@ -64,6 +64,38 @@
   },
   "profile": "Profile",
   "logout": "Logout",
+  "security": {
+    "title": "Account security",
+    "subtitle": "Manage the devices connected to your account and your authentication methods.",
+    "load_failed": "Failed to load security information.",
+    "sign_out": "Sign out of this device",
+    "devices": {
+      "title": "Active devices",
+      "help": "A device is identified by its browser and IP range. « Revoke » signs out every session opened from that device.",
+      "current": "This device",
+      "created": "added on {date}",
+      "last_seen": "last seen on {date}",
+      "revoke": "Revoke",
+      "revoke_others": "Sign out of all other sessions",
+      "revoke_done": "Device revoked.",
+      "revoke_others_done": "{count} other device(s) signed out.",
+      "revoke_failed": "Revocation failed, please retry.",
+      "empty": "No active device."
+    },
+    "google": {
+      "title": "Google account",
+      "linked": "Your Google account is linked: you can sign in with one click from the login page.",
+      "not_linked": "No Google account linked.",
+      "unlink": "Unlink my Google account",
+      "unlink_done": "Google account unlinked.",
+      "unlink_failed": "Could not unlink the Google account.",
+      "password_required": "Please set a password before unlinking your Google account."
+    },
+    "totp": {
+      "title": "Two-factor authentication (2FA)",
+      "coming_soon": "Authenticator-app two-factor (Google Authenticator, Authy…) is coming soon."
+    }
+  },
   "login": {
     "title": "Login",
     "subtitle": "Administration Panel",
