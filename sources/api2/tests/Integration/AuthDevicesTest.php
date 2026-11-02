@@ -110,6 +110,26 @@ final class AuthDevicesTest extends ApiTestCase
         self::assertSame(1, $activeB);
     }
 
+    public function testRevokedDeviceAccessTokenIsRejectedBeforeItsExpiry(): void
+    {
+        // Le navigateur B se connecte et reçoit un JWT d'accès encore valide (JWT_TTL).
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.7', userAgent: 'Mozilla/5.0 Firefox/130');
+        $token = json_decode((string) $this->client->getResponse()->getContent(), true)['token'];
+        $deviceId = (int) $this->connection->fetchOne(
+            'SELECT id FROM kp_user_known_device WHERE user_code = ? AND label LIKE ?',
+            ['TADMIN', 'Firefox%'],
+        );
+
+        $this->client->request('GET', '/auth/devices', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode(), 'avant révocation, le JWT est accepté');
+
+        // Depuis le navigateur A (autre empreinte), on révoque l'appareil B.
+        $this->requestAsWithServer('TADMIN', 'POST', '/auth/devices/' . $deviceId . '/revoke', ip: '203.0.113.9', userAgent: 'Mozilla/5.0 Chrome/120');
+
+        $this->client->request('GET', '/auth/devices', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+        self::assertSame(401, $this->client->getResponse()->getStatusCode(), 'après révocation, le JWT de B est refusé');
+    }
+
     public function testRevokeIdOfAnotherUserReturns404(): void
     {
         // Device appartenant à TEDIT, pas à TADMIN qui va tenter.

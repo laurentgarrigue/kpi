@@ -198,6 +198,15 @@ final class KnownDeviceService
         return count($rows);
     }
 
+    /** Vrai si l'appareil existe et est révoqué ; un appareil inconnu n'est pas bloqué (pas de ligne = pas de révocation). */
+    public function isRevoked(string $userCode, string $fingerprint): bool
+    {
+        return $this->connection->fetchOne(
+            'SELECT revoked_at IS NOT NULL FROM kp_user_known_device WHERE user_code = ? AND fingerprint = ?',
+            [$userCode, $fingerprint],
+        ) == 1;
+    }
+
     /** Combien de lignes `kp_user_known_device` existent pour (user, id), révoquées ou non — utilisé pour distinguer 404 et « déjà révoqué ». */
     public function countAnyFor(string $userCode, int $deviceId): int
     {
