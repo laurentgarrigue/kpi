@@ -2261,6 +2261,7 @@
     "empty_filtered": "Aucune entrée ne correspond aux filtres.",
     "loading": "Chargement du journal...",
     "error": "Erreur lors du chargement du journal.",
+    "deleted_account": "compte supprimé",
     "total_entries": "{count} entrée | {count} entrées",
     "pagination": {
       "showing": "Affichage de {from} à {to} sur {total}",

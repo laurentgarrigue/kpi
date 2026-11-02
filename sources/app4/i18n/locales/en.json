@@ -2249,6 +2249,7 @@
     "empty_filtered": "No entries match the filters.",
     "loading": "Loading activity log...",
     "error": "Error loading activity log.",
+    "deleted_account": "deleted account",
     "total_entries": "{count} entry | {count} entries",
     "pagination": {
       "showing": "Showing {from} to {to} of {total}",
