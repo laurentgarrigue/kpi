@@ -18,8 +18,9 @@ security:
         # du cookie refresh (AUTH_HARDENING § 3) ou du token signé dans l'URL (lien email), pas du JWT.
         # /auth/google /callback /link : flow OAuth 2.0 (phase 2) — public, le state cookie fait office
         # d'anti-CSRF, le mot de passe sert de preuve de propriété au moment du link.
+        # Motif ancré par `$` : sans lui, `login` capturait aussi /auth/login-history (JWT jamais lu → 401).
         login:
-            pattern: ^/auth/(login|reset-password|forgot-password|access-request|refresh-session|logout|device/revoke|google/?$|google/callback|google/link)
+            pattern: ^/auth/(login|reset-password|forgot-password|access-request|refresh-session|logout|device/revoke/[^/]+|google/?|google/callback|google/link)$
             stateless: true
             security: false
 

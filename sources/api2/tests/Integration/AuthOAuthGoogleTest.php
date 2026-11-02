@@ -19,11 +19,22 @@ final class AuthOAuthGoogleTest extends ApiTestCase
 {
     private Connection $connection;
 
+    /** @var array{sub: string, email: string, email_verified: bool, name: string} claims du prochain id_token */
+    private array $googleClaims;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->connection = $this->beginWrites();
         $this->setGoogleHttpWith(sub: 'g-ADMIN-123', email: 'admin@example.test', verified: true);
+        // Installé une seule fois : le conteneur refuse de remplacer un service déjà initialisé,
+        // les tests ne changent donc que les claims renvoyés par le mock.
+        static::getContainer()->set(GoogleOAuthClient::class, new GoogleOAuthClient(
+            $this->mockGoogleHttp(),
+            clientId: 'fake-client',
+            clientSecret: 'fake-secret',
+            redirectUri: 'https://kpi.localhost/api2/auth/google/callback',
+        ));
     }
 
     // ------------------------------------------------------- AUTH-OA-05 : aucun compte
@@ -31,7 +42,8 @@ final class AuthOAuthGoogleTest extends ApiTestCase
     public function testCallbackWithUnknownEmailRedirectsToLoginWithError(): void
     {
         $this->setGoogleHttpWith(sub: 'g-GHOST', email: 'ghost@nowhere.test', verified: true);
-        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S', server: ['HTTP_COOKIE' => 'kpi_oauth_state=S']);
+        $this->sendCookies(['kpi_oauth_state' => 'S']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S');
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString('oauth_error=oauth_no_account', (string) $this->client->getResponse()->headers->get('Location'));
     }
@@ -41,7 +53,8 @@ final class AuthOAuthGoogleTest extends ApiTestCase
     public function testCallbackWithMatchingEmailRedirectsToLinkPage(): void
     {
         // Email de TADMIN (admin@example.test, cf. fixtures) → correspond à exactement un compte.
-        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S', server: ['HTTP_COOKIE' => 'kpi_oauth_state=S']);
+        $this->sendCookies(['kpi_oauth_state' => 'S']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S');
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
         $location = (string) $this->client->getResponse()->headers->get('Location');
         self::assertStringContainsString('/auth/google/link', $location);
@@ -56,7 +69,8 @@ final class AuthOAuthGoogleTest extends ApiTestCase
 
     public function testCallbackWithMismatchedStateIsRejected(): void
     {
-        $this->client->request('GET', '/auth/google/callback?code=xyz&state=FAKE', server: ['HTTP_COOKIE' => 'kpi_oauth_state=REAL']);
+        $this->sendCookies(['kpi_oauth_state' => 'REAL']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=FAKE');
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString('oauth_error=oauth_state_mismatch', (string) $this->client->getResponse()->headers->get('Location'));
     }
@@ -66,7 +80,8 @@ final class AuthOAuthGoogleTest extends ApiTestCase
     public function testCallbackRejectsUnverifiedEmail(): void
     {
         $this->setGoogleHttpWith(sub: 'g-ADMIN-123', email: 'admin@example.test', verified: false);
-        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S', server: ['HTTP_COOKIE' => 'kpi_oauth_state=S']);
+        $this->sendCookies(['kpi_oauth_state' => 'S']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S');
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
         self::assertStringContainsString('oauth_error=oauth_email_not_verified', (string) $this->client->getResponse()->headers->get('Location'));
     }
@@ -84,7 +99,8 @@ final class AuthOAuthGoogleTest extends ApiTestCase
             'linked_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ]);
 
-        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S', server: ['HTTP_COOKIE' => 'kpi_oauth_state=S']);
+        $this->sendCookies(['kpi_oauth_state' => 'S']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S');
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
 
         $cookieNames = array_map(fn($c) => $c->getName(), $this->client->getResponse()->headers->getCookies());
@@ -127,20 +143,14 @@ final class AuthOAuthGoogleTest extends ApiTestCase
 
     private function setGoogleHttpWith(string $sub, string $email, bool $verified): void
     {
-        // test.service_container autorise .set() même sur des services privés — Symfony 5.3+.
-        static::getContainer()->set(GoogleOAuthClient::class, new GoogleOAuthClient(
-            $this->mockGoogleHttp($sub, $email, $verified),
-            clientId: 'fake-client',
-            clientSecret: 'fake-secret',
-            redirectUri: 'https://kpi.localhost/api2/auth/google/callback',
-        ));
+        $this->googleClaims = ['sub' => $sub, 'email' => $email, 'email_verified' => $verified, 'name' => 'Test User'];
     }
 
-    private function mockGoogleHttp(string $sub, string $email, bool $verified): HttpClientInterface
+    private function mockGoogleHttp(): HttpClientInterface
     {
-        return new MockHttpClient(function (string $method, string $url) use ($sub, $email, $verified): MockResponse {
-            $claims = ['sub' => $sub, 'email' => $email, 'email_verified' => $verified, 'name' => 'Test User'];
-            $idToken = $this->fakeIdToken($claims);
+        // Les claims sont lus à chaque appel, pas capturés : setGoogleHttpWith() reste effectif après setUp.
+        return new MockHttpClient(function (string $method, string $url): MockResponse {
+            $idToken = $this->fakeIdToken($this->googleClaims);
             return new MockResponse(json_encode([
                 'access_token' => 'at-xxx',
                 'id_token' => $idToken,

@@ -5,6 +5,7 @@ namespace App\Tests\Integration;
 use App\Security\UserProvider;
 use Doctrine\DBAL\Connection;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -55,6 +56,21 @@ abstract class ApiTestCase extends WebTestCase
         $connection->beginTransaction();
 
         return $connection;
+    }
+
+    /**
+     * Remplace les cookies envoyés aux requêtes suivantes. Un `HTTP_COOKIE` passé dans `server` est
+     * ignoré : Request::create() ne remplit `$request->cookies` que depuis le cookie jar du client.
+     *
+     * @param array<string, string> $cookies
+     */
+    protected function sendCookies(array $cookies): void
+    {
+        $jar = $this->client->getCookieJar();
+        $jar->clear();
+        foreach ($cookies as $name => $value) {
+            $jar->set(new Cookie($name, $value));
+        }
     }
 
     /** JWT d'un compte des fixtures (signé avec la clé de test, cf. lexik_jwt_authentication.yaml). */

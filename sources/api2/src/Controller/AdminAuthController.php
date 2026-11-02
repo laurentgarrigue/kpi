@@ -112,6 +112,7 @@ class AdminAuthController extends AbstractController
 
         // Succès : alimente le journal de sécurité (AUTH-JL-01) avant toute suite.
         $this->loginLogger->logSuccess($user->getCode(), LoginAttemptLogger::METHOD_PASSWORD, $usedLegacyHash, $request);
+        $this->loginRateLimiter->resetUser($username);
 
         // Load mandates for the user
         $mandates = $this->loadMandates($user->getCode());

@@ -56,6 +56,11 @@ final class LoginAttemptLogger
      *
      * Mécanique utile : un succès « reset » le compteur sans table d'état ni job de déblocage
      * (AUTH-LK-02).
+     *
+     * Le début de la fenêtre est calculé par PHP, comme `attempted_at` à l'écriture : comparer à
+     * NOW() mélangerait le fuseau de PHP (UTC) et celui de MariaDB (CET), et la fenêtre ne
+     * contiendrait jamais aucun échec. « Après le dernier succès » se lit sur `id` (auto-increment,
+     * monotone) et non sur `attempted_at`, précis à la seconde seulement.
      */
     public function isAccountLocked(string $userCode): bool
     {
@@ -64,17 +69,18 @@ SELECT COUNT(*)
 FROM kp_user_login_history
 WHERE user_code = ?
   AND success = 0
-  AND attempted_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
-  AND attempted_at > COALESCE(
-      (SELECT MAX(attempted_at) FROM kp_user_login_history
+  AND attempted_at >= ?
+  AND id > COALESCE(
+      (SELECT MAX(id) FROM kp_user_login_history
        WHERE user_code = ? AND success = 1),
-      '1970-01-01'
+      0
   )
 SQL;
 
+        $windowStart = (new \DateTimeImmutable(sprintf('-%d minutes', self::WINDOW_MINUTES)))->format('Y-m-d H:i:s');
         $failures = (int) $this->connection->executeQuery($sql, [
             $userCode,
-            self::WINDOW_MINUTES,
+            $windowStart,
             $userCode,
         ])->fetchOne();
 

@@ -27,14 +27,29 @@ final class LoginRateLimiter
     public function consume(Request $request, string $username): RateLimit
     {
         $byIp = $this->loginIpLimiter->create('ip:' . ($request->getClientIp() ?? 'unknown'))->consume();
-        // Normalisation : insensible à la casse, trim. Évite qu'un attaquant contourne le quota
-        // par compte en jouant sur les majuscules ou les espaces (le UserProvider les gère pareil).
-        $byUser = $this->loginUserLimiter->create('user:' . strtolower(trim($username)))->consume();
+        $byUser = $this->userLimiter($username)->consume();
 
         // On renvoie le plus restrictif des deux : si l'un refuse, c'est lui qui porte le Retry-After.
         if (!$byIp->isAccepted()) {
             return $byIp;
         }
         return $byUser;
+    }
+
+    /**
+     * Login réussi : le quota par compte ne compte que les échecs (AUTH-RL-02). Le quota par IP,
+     * lui, n'est pas remis à zéro : un compte valide servirait sinon à vider le quota de son IP
+     * entre deux salves contre d'autres comptes.
+     */
+    public function resetUser(string $username): void
+    {
+        $this->userLimiter($username)->reset();
+    }
+
+    private function userLimiter(string $username): LimiterInterface
+    {
+        // Normalisation : insensible à la casse, trim. Évite qu'un attaquant contourne le quota
+        // par compte en jouant sur les majuscules ou les espaces (le UserProvider les gère pareil).
+        return $this->loginUserLimiter->create('user:' . strtolower(trim($username)));
     }
 }

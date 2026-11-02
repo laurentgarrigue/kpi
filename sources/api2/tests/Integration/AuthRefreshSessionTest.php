@@ -50,9 +50,8 @@ final class AuthRefreshSessionTest extends ApiTestCase
         $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.2');
         $refresh1 = $this->refreshCookieValue();
 
-        $this->client->request('POST', '/auth/refresh-session', server: [
-            'HTTP_COOKIE' => 'kpi_refresh=' . $refresh1,
-        ]);
+        $this->sendCookies(['kpi_refresh' => $refresh1]);
+        $this->client->request('POST', '/auth/refresh-session');
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $refresh2 = $this->refreshCookieValue();
@@ -75,15 +74,13 @@ final class AuthRefreshSessionTest extends ApiTestCase
         $firstRefresh = $this->refreshCookieValue();
 
         // 1re rotation OK.
-        $this->client->request('POST', '/auth/refresh-session', server: [
-            'HTTP_COOKIE' => 'kpi_refresh=' . $firstRefresh,
-        ]);
+        $this->sendCookies(['kpi_refresh' => $firstRefresh]);
+        $this->client->request('POST', '/auth/refresh-session');
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         // Replay du vieux token → 401 ET toute la chaîne active du compte est révoquée.
-        $this->client->request('POST', '/auth/refresh-session', server: [
-            'HTTP_COOKIE' => 'kpi_refresh=' . $firstRefresh,
-        ]);
+        $this->sendCookies(['kpi_refresh' => $firstRefresh]);
+        $this->client->request('POST', '/auth/refresh-session');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
 
         $activeCount = (int) $this->connection->fetchOne(
@@ -99,7 +96,8 @@ final class AuthRefreshSessionTest extends ApiTestCase
         $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.4');
         $refresh = $this->refreshCookieValue();
 
-        $this->client->request('POST', '/auth/logout', server: ['HTTP_COOKIE' => 'kpi_refresh=' . $refresh]);
+        $this->sendCookies(['kpi_refresh' => $refresh]);
+        $this->client->request('POST', '/auth/logout');
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
         $row = $this->connection->fetchAssociative(

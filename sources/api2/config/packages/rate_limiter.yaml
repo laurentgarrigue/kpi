@@ -6,7 +6,7 @@
 #
 # Policy sliding_window : évite le pic en début de fenêtre d'une fixed_window.
 # Pool dédié `cache.rate_limiter` : facilite une purge ciblée (déblocage opérationnel) sans vider
-# le cache applicatif, et permet d'utiliser un adapter array en test (voir when@test ci-dessous).
+# le cache applicatif ; en test, stockage mémoire (voir when@test ci-dessous).
 framework:
     cache:
         pools:
@@ -26,11 +26,16 @@ framework:
             cache_pool: cache.rate_limiter
 
 when@test:
+    # Stockage mémoire : un kernel neuf (createClient() dans setUp) = compteurs à zéro, et au sein d'un
+    # même test disableReboot() les conserve pour empiler les tentatives. Pas un pool `cache.adapter.array` :
+    # les pools sont tagués kernel.reset, donc vidés après CHAQUE requête — le quota ne se cumulerait jamais.
+    services:
+        test.rate_limiter.storage:
+            class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+
     framework:
-        cache:
-            pools:
-                # Adapter mémoire : un kernel neuf (createClient() dans setUp) = compteurs à zéro.
-                # Au sein d'un même test, disableReboot() les conserve, ce qui permet d'empiler
-                # plusieurs tentatives et de vérifier le quota.
-                cache.rate_limiter:
-                    adapter: cache.adapter.array
+        rate_limiter:
+            login_ip:
+                storage_service: test.rate_limiter.storage
+            login_user:
+                storage_service: test.rate_limiter.storage
