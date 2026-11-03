@@ -33,7 +33,7 @@
   --pdf-on-band: var(--color-header-50);
   --pdf-accent: var(--color-secondary);
   --pdf-title: var(--color-primary);
-  --pdf-zebra: var(--color-light-50);
+  --pdf-zebra: var(--color-light-100);
   --pdf-muted: var(--color-dark-700);
   --pdf-success: var(--color-success);
   --pdf-warning: var(--color-warning);
@@ -51,7 +51,7 @@
   --pdf-on-band: var(--color-surface);
   --pdf-accent: var(--color-sky);
   --pdf-title: var(--color-kpi-blue-500);
-  --pdf-zebra: var(--color-kpi-blue-50);
+  --pdf-zebra: var(--color-kpi-blue-100);
   --pdf-muted: var(--color-kpi-blue-900);
   --pdf-success: var(--color-kpi-green-500);
   --pdf-warning: var(--color-kpi-gold-500);
@@ -265,12 +265,14 @@ table.pdf-table {
 /* Fixed columns, one line per cell: a long name is cut, it never pushes the sheet onto a second page. */
 .pdf-sheet__info, .pdf-sheet__table { table-layout: fixed; }
 .pdf-sheet__info td, .pdf-sheet__table td, .pdf-sheet__table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pdf-sheet__highlight td { background: var(--pdf-zebra); }
+.pdf-sheet__highlight th, .pdf-sheet__highlight td { background: var(--pdf-zebra); }
+th.pdf-sheet__no-highlight { background: none; }
 /* Date, time, game number and pitch: what the table looks for first. */
 .pdf-sheet__info .pdf-sheet__key { font-size: 10pt; font-weight: 700; }
 .pdf-sheet__right { text-align: right; }
 .pdf-sheet__team { text-align: left !important; font-size: 9pt; }
 .pdf-sheet__team-head { text-align: left !important; }
+.pdf-sheet__badge { float: right; width: 5mm; height: 5mm; line-height: 4.4mm; margin-left: 2mm; text-align: center; font-weight: 700; border: 0.6mm solid var(--pdf-ink); box-sizing: border-box; }
 .pdf-sheet__table td { height: 3.4mm; line-height: 1.1; }
 /* Rosters: the names take the room; the licence may carry its season of origin. */
 .pdf-sheet__roster-number { width: 8%; }
@@ -294,8 +296,10 @@ table.pdf-table {
 .pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
 .pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }
 .pdf-sheet__continued { font-size: 10pt; font-weight: 400; }
+.pdf-sheet__score { width: 100%; table-layout: fixed; }
 .pdf-sheet__score td { text-align: center; padding: 0.5mm; }
-.pdf-sheet__score-box { width: 14mm; height: 7mm; border: 0.3mm solid var(--pdf-ink); font-size: 11pt; font-weight: 700; }
+.pdf-sheet__score-label { width: 24mm; }
+.pdf-sheet__score-box { width: 16mm; height: 7mm; border: 0.3mm solid var(--pdf-ink); font-size: 11pt; font-weight: 700; }
 .pdf-sheet__score-box--final { height: 9mm; }
 .pdf-sheet__write { width: 20mm; }
 .pdf-sheet__comments { height: 8mm; vertical-align: top; }

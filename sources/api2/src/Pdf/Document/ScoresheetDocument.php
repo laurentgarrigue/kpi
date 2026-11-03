@@ -157,8 +157,8 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'line_judge_2' => (string) $game['Ligne2'],
             'elimination' => $game['Type'] === self::ELIMINATION,
             'international' => $international,
-            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels)],
-            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels)],
+            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'badge' => self::badgeStyle($game['Color1A'], $game['Color2A'], $game['ColorTextA']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels)],
+            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'badge' => self::badgeStyle($game['Color1B'], $game['Color2B'], $game['ColorTextB']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels)],
             'events' => $events['pages'][0],
             // More events than lines: they go on, page after page, beside a recap of the game.
             'continuation' => array_slice($events['pages'], 1),
@@ -171,6 +171,23 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'provisional' => ScoresheetSheet::isProvisional($events['goals'], $scoreA, $scoreB),
             'comments' => (string) $game['Commentaires_officiels'],
         ];
+    }
+
+    /**
+     * Inline style of the team badge (background, border, text) from the team colours; null when the team has none.
+     * Only #rgb / #rrggbb values reach the CSS.
+     */
+    private static function badgeStyle(mixed $background, mixed $border, mixed $text): ?string
+    {
+        $hex = static fn (mixed $colour): ?string => is_string($colour) && preg_match('/^#(?:[0-9a-f]{3}){1,2}$/i', $colour) === 1 ? $colour : null;
+        $background = $hex($background);
+        $border = $hex($border);
+        $text = $hex($text);
+        if ($background === null && $border === null) {
+            return null;
+        }
+
+        return sprintf('background:%s;border-color:%s;color:%s', $background ?? '#fff', $border ?? $background, $text ?? '#fff');
     }
 
     private static function team(mixed $id): ?int

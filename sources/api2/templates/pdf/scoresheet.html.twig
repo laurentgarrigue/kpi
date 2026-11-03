@@ -17,7 +17,7 @@
             {% if not international %}<col class="pdf-sheet__roster-licence"><col class="pdf-sheet__roster-category">{% endif %}
         </colgroup>
         <thead>
-            <tr><th colspan="{{ international ? 3 : 5 }}" class="pdf-sheet__team">{{ team.name }}</th></tr>
+            <tr class="pdf-sheet__highlight"><th colspan="{{ international ? 3 : 5 }}" class="pdf-sheet__team">{{ team.name }}</th></tr>
             <tr>
                 <th>{{ l['scoresheet.number'] }}</th>
                 <th>{{ l['player.last_name'] }}</th>
@@ -65,10 +65,10 @@
             <col class="pdf-sheet__goal-col"><col><col class="pdf-sheet__card-col" span="4">
         </colgroup>
         <thead>
-            <tr>
-                <th colspan="6" class="pdf-sheet__team-head">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
-                <th>{{ l['scoresheet.period'] }}</th>
-                <th colspan="6" class="pdf-sheet__team-head">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
+            <tr class="pdf-sheet__highlight">
+                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_a.badge %} style="{{ sheet.team_a.badge }}"{% endif %}>X</span>{{ l['scoresheet.team'] }} A: {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
+                <th class="pdf-sheet__no-highlight">{{ l['scoresheet.period'] }}</th>
+                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_b.badge %} style="{{ sheet.team_b.badge }}"{% endif %}>X</span>{{ l['scoresheet.team'] }} B: {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
             </tr>
             <tr>
                 <th class="pdf-sheet__card--green">{{ l['scoresheet.card_green'] }}</th><th class="pdf-sheet__card--yellow">{{ l['scoresheet.card_yellow'] }}</th><th class="pdf-sheet__card--red">{{ l['scoresheet.card_red'] }}</th><th class="pdf-sheet__card--definitive">{{ l['scoresheet.definitive'] }}</th>
@@ -101,13 +101,13 @@
                 {# Four equal columns: every name field takes at least half the width. #}
                 <table class="pdf-sheet__box pdf-sheet__info">
                     <tr><td colspan="3"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right">{{ sheet.category }}</td></tr>
-                    <tr><td colspan="2">{{ l['scoresheet.organiser'] }} : {{ sheet.organiser }}</td><td colspan="2" class="pdf-sheet__right">{{ l.season }} : {{ sheet.season }}</td></tr>
-                    <tr><td colspan="2">{{ l['scoresheet.manager'] }} : {{ sheet.manager }}</td><td colspan="2">{{ l['scoresheet.delegate'] }} : {{ sheet.delegate }}</td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.organiser'] }}: {{ sheet.organiser }}</td><td colspan="2" class="pdf-sheet__right">{{ l.season }} : {{ sheet.season }}</td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.manager'] }}: {{ sheet.manager }}</td><td colspan="2">{{ l['scoresheet.delegate'] }}: {{ sheet.delegate }}</td></tr>
                     {{ _self.key_facts(sheet, l) }}
-                    <tr><td colspan="2">{{ l['scoresheet.referee_1'] }} : {{ sheet.referee_1 }}</td><td colspan="2">{{ l['scoresheet.referee_2'] }} : {{ sheet.referee_2 }}</td></tr>
-                    <tr><td colspan="2">{{ l['scoresheet.secretary'] }} : {{ sheet.secretary }}</td><td colspan="2">{{ l['scoresheet.timekeeper'] }} : {{ sheet.timekeeper }}</td></tr>
-                    <tr><td colspan="2">{{ l['scoresheet.shot_clock'] }} : {{ sheet.shot_clock }}</td><td colspan="2">{{ l['scoresheet.line_judge_1'] }} : {{ sheet.line_judge_1 }}</td></tr>
-                    <tr><td colspan="2"></td><td colspan="2">{{ l['scoresheet.line_judge_2'] }} : {{ sheet.line_judge_2 }}</td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.referee_1'] }}: {{ sheet.referee_1 }}</td><td colspan="2">{{ l['scoresheet.referee_2'] }}: {{ sheet.referee_2 }}</td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.secretary'] }}: {{ sheet.secretary }}</td><td colspan="2"></td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.timekeeper'] }}: {{ sheet.timekeeper }}</td><td colspan="2">{{ l['scoresheet.line_judge_1'] }}: {{ sheet.line_judge_1 }}</td></tr>
+                    <tr><td colspan="2">{{ l['scoresheet.shot_clock'] }}: {{ sheet.shot_clock }}</td><td colspan="2">{{ l['scoresheet.line_judge_2'] }}: {{ sheet.line_judge_2 }}</td></tr>
                 </table>
                 {{ _self.roster(sheet.team_a, l, sheet.international) }}
                 {{ _self.roster(sheet.team_b, l, sheet.international) }}
@@ -125,6 +125,8 @@
                 </div>
                 {{ _self.events(sheet, sheet.events, l) }}
                 <table class="pdf-sheet__score">
+                    {# Equal name columns, fixed centre: the block stays centred whatever the team names. #}
+                    <colgroup><col><col class="pdf-sheet__score-box"><col class="pdf-sheet__score-label"><col class="pdf-sheet__score-box"><col></colgroup>
                     <tr>
                         <td>{{ sheet.team_a.name }}</td>
                         <td class="pdf-sheet__score-box">{{ sheet.half_time ? sheet.half_time.A : '' }}</td>

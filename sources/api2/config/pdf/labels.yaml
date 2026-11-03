@@ -135,7 +135,7 @@ scoresheet.before_game: { fr: 'avant match', en: 'before game' }
 scoresheet.after_game: { fr: 'après match', en: 'after game' }
 scoresheet.captain: { fr: 'Capitaine', en: 'Captain' }
 scoresheet.winner_required: { fr: 'Vainqueur obligatoire', en: 'Winner required' }
-scoresheet.no_overtime: { fr: '(Pas de prolongation)', en: '(No overtime)' }
+scoresheet.no_overtime: { fr: 'Pas de prolongation', en: 'No overtime' }
 scoresheet.period: { fr: 'Période', en: 'Period' }
 scoresheet.time: { fr: 'Temps', en: 'Time' }
 scoresheet.goal: { fr: 'But', en: 'Goal' }
