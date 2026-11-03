@@ -243,6 +243,10 @@ Permettre à tout utilisateur de se connecter via son compte Google **sans suppr
 | AUTH-OA-04 | Si `email` correspond à **un seul** `kp_user` avec `email_verified=true` **sans** lien OAuth, la page `/auth/google/link` demande le mot de passe actuel ; sur succès, insertion dans `kp_user_oauth` et connexion |
 | AUTH-OA-05 | Si aucun `kp_user` ne correspond, retour `/login` avec message : « Aucun compte KPI ne correspond à cette adresse Google. Contactez votre administrateur. » **Aucune création automatique.** |
 | AUTH-OA-06 | Depuis `/profile/security`, l'utilisateur peut délier son compte Google (POST `/auth/google/unlink`) ; si c'est sa seule méthode d'authentification, il doit d'abord définir un mot de passe |
+| AUTH-OA-07 | Un utilisateur **déjà authentifié** peut lancer le lien Google depuis `/profile/security` : `GET /auth/google/connect` (JWT exigé) pose un cookie signé `kpi_oauth_link` qui mémorise son `user_code`, puis redirige vers Google. **Cette route couvre explicitement le cas « plusieurs comptes KPI partagent cette adresse Google » (AUTH-OA-04 ambigu) ainsi que le cas « email Google ≠ email KPI »**, tous deux impossibles à résoudre côté callback non authentifié. |
+| AUTH-OA-08 | Au `/auth/google/callback`, si le cookie `kpi_oauth_link` est présent et signé valide : pas de résolution par email ni demande de mot de passe. Le lien est écrit **directement** dans `kp_user_oauth` pour le `user_code` du cookie. La session JWT prouve déjà la propriété du compte. Retour `/profile/security?link=ok`. |
+| AUTH-OA-09 | Si le `sub` Google issu du callback est déjà lié à **un autre** `kp_user` (`uq_provider_subject`), le flux « lier depuis le profil » retourne `/profile/security?link=error&code=already_linked`. Aucune écriture, aucune erreur silencieuse — l'utilisateur reçoit un message clair qui lui dit de délier d'abord l'autre compte ou de choisir un autre compte Google. |
+| AUTH-OA-10 | Côté `/login`, le message « Plusieurs comptes KPI partagent cette adresse. » redirige explicitement l'utilisateur vers la voie AUTH-OA-07 (« Connectez-vous avec votre identifiant puis liez Google depuis votre profil ») — plus de promesse sans implémentation. |
 
 ### 4.3 Nouvelle table
 
@@ -265,6 +269,40 @@ CREATE TABLE kp_user_oauth (
 
 - `knpuniversity/oauth2-client-bundle` + `league/oauth2-google` (composer).
 - Variables d'environnement `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` (secrets Symfony) — à créer dans Google Cloud Console.
+
+### 4.5 Phase 2-bis — Flux « lier Google depuis le profil » (post-revue)
+
+**Problème constaté.** Le callback OAuth non authentifié ne peut pas rattacher une identité Google à un compte KPI dans deux cas pourtant courants :
+
+- **E-mail KPI partagé** par plusieurs comptes (`kp_user.Mail` n'est pas unique — on renvoie `oauth_email_ambiguous` et on promet « liez Google depuis votre profil »).
+- **E-mail Google ≠ e-mail KPI** (l'utilisateur a un Gmail personnel mais une adresse pro dans `kp_user`) — la résolution par e-mail échoue et renvoie `oauth_no_account`.
+
+Dans les deux cas, la session authentifiée est la **meilleure preuve** de la propriété du compte. On s'en sert pour lier sans ressaisie de mot de passe et sans comparaison d'e-mail.
+
+**Nouvelle route.** `GET /auth/google/connect` (JWT exigé) :
+
+1. Génère un `state` anti-CSRF (comme `/auth/google`).
+2. Pose un cookie **signé HMAC** `kpi_oauth_link` contenant `{user_code, state, exp = now + 10 min}`. Le `user_code` est lu depuis la session JWT en cours. La signature empêche un attaquant de forger un cookie qui ferait lier son Google à un autre compte.
+3. Redirige vers Google avec le même `state` que le cookie standard `kpi_oauth_state`.
+
+**Nouveau branchement du callback.** Avant la logique « résolution par e-mail » existante, le callback :
+
+1. Si `kpi_oauth_link` présent et signé valide (match `state` et `user_code` courant) → branche « lien authentifié » :
+    - Vérifie que le `sub` Google **n'est pas déjà lié à un autre `kp_user`** → sinon `/profile/security?link=error&code=already_linked`, pas d'écriture.
+    - `INSERT IGNORE INTO kp_user_oauth` pour `(user_code_du_cookie, 'google', sub, email, NOW())`.
+    - Journal `kp_journal` action `Lien Google ajouté`.
+    - Redirection `/profile/security?link=ok`.
+    - Les cookies `kpi_oauth_link` et `kpi_oauth_state` sont effacés.
+2. Sinon → comportement actuel (3 cas : login existant, confirmation par mot de passe, erreur).
+
+**Sécurité du cookie.** `HttpOnly; Secure; SameSite=Lax; Path=/`; TTL 10 min. HMAC avec `kernel.secret`. Jamais lu par JS. Le `state` sert de double preuve : un attaquant qui aurait forgé un cookie ne connaîtrait pas le `state` renvoyé par Google.
+
+**Fichiers touchés :**
+- `sources/api2/src/Controller/OAuthController.php` — route `connect`, branche `link` dans `callback`, helpers `buildLinkCookie` / `readLinkCookie`.
+- `sources/api2/config/packages/security.yaml` — ouvrir `^/auth/google/connect` à `ROLE_USER`, l'exclure du pattern `login`.
+- `sources/app4/pages/profile/security.vue` — bouton « Lier mon compte Google » quand `!googleLinked`, bannière de succès/erreur selon `?link=ok|error`.
+- `sources/app4/i18n/locales/{fr,en}.json` — libellés.
+- `sources/api2/tests/Integration/AuthOAuthGoogleTest.php` — trois nouveaux cas : lien OK, refus si sub déjà pris, JWT requis sur `connect`.
 
 ---
 
@@ -366,6 +404,7 @@ Quand une phase est livrée en production, cocher ici et déplacer les élément
 - [x] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil (livrée 02/11/2026, hybride cookie+body)
 - [ ] Phase 1b-bis — gestion appareils + `/profile/security` (02/11/2026)
 - [x] Phase 2 — OAuth Google en option (livrée 02/11/2026)
+- [ ] Phase 2-bis — Lier Google depuis le profil (AUTH-OA-07/08/09/10, 03/11/2026)
 - [ ] Phase 3 — TOTP pour profils ≤ 3
 
 Lorsque les 4 phases seront cochées, déplacer ce document en `DOC/developer/archive/features/AUTH_HARDENING.md` et mettre à jour `DOC/developer/archive/README.md` (cf. CLAUDE.md).

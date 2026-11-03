@@ -330,6 +330,51 @@ Si le flow casse (consent screen rejette l'URI, 500 au callback) :
 
 ---
 
+## Phase 2-bis — Lier Google depuis le profil (post-revue)
+
+Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 4.5](AUTH_HARDENING.md).
+
+**Pourquoi** : le message « Plusieurs comptes KPI partagent cette adresse. Connectez-vous avec votre identifiant puis liez Google depuis votre profil. » promettait une voie qui n'existait pas. Elle existe maintenant : `/profile/security` → bouton « Lier mon compte Google » → `GET /auth/google/connect` (JWT exigé) → consent Google → callback détecte le cookie signé `kpi_oauth_link` → écrit directement dans `kp_user_oauth` pour le user_code courant. Le même flux débloque aussi « l'e-mail Google diffère de l'e-mail KPI ».
+
+### 2b.1 ⌨️ Tests automatisés
+
+```bash
+API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthOAuthGoogle
+```
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `testConnectRequiresAuthentication` | 401 sans JWT sur `/auth/google/connect` | ☐ |
+| 2 | `testCallbackWithValidLinkCookieWritesTheLinkWithoutEmailMatch` | 302 vers `/profile/security?link=ok`, ligne `kp_user_oauth` écrite, pas de résolution par e-mail | ☐ |
+| 3 | `testCallbackLinkModeDoesNotRequireMatchingEmail` | Même e-mail partagé par un autre compte : lie bien le compte du cookie, pas l'autre | ☐ |
+| 4 | `testCallbackLinkRefusesWhenSubjectAlreadyLinkedToAnotherUser` | 302 vers `?link=error&code=already_linked`, aucune écriture | ☐ |
+| 5 | `testCallbackIgnoresLinkCookieWithWrongSignature` | Cookie forgé ignoré, retombe sur `oauth_no_account` | ☐ |
+| 6 | `testCallbackIgnoresLinkCookieWhoseStateDoesNotMatch` | Cookie signé mais state obsolète : refusé, retombe sur `oauth_no_account` | ☐ |
+
+### 2b.2 ⌨️ Tests manuels
+
+Pré-requis : OAuth Google configuré (cf. 2.1), deux comptes KPI partagent un même mail (ex. `admin@example.test`), et un Gmail de test est prêt.
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Se connecter sur app4 avec l'identifiant (voie mot de passe) | Dashboard | ☐ |
+| 2 | Menu utilisateur → « Sécurité du compte » | `/profile/security` chargée, bloc Google affiche « Liez votre compte Google… » + bouton « Lier mon compte Google » | ☐ |
+| 3 | Cliquer le bouton | Redirection Google, consent screen | ☐ |
+| 4 | Accepter avec un compte Google dont l'e-mail diffère de celui de KPI | Retour `/profile/security?link=ok` (URL nettoyée par le front), bannière « Compte Google lié avec succès », le bloc Google bascule en « lié » | ☐ |
+| 5 | Se déconnecter, cliquer « Continuer avec Google » sur `/login` avec le même compte Google | Login direct (AUTH-OA-03) — c'est la promesse de la phase 2 enfin tenue | ☐ |
+| 6 | Reconnexion mot de passe de l'AUTRE compte KPI (celui avec le même e-mail), `/profile/security` → clic « Lier mon compte Google » → autoriser avec le MÊME compte Google qu'avant | Retour `/profile/security?link=error&code=already_linked`, bannière « Ce compte Google est déjà associé à un autre utilisateur KPI… » | ☐ |
+
+### 2b.3 Rollback
+
+Si le flow /connect casse (500, redirections infinies) :
+
+1. `git revert <sha>` sur `sources/api2/src/Controller/OAuthController.php` et `sources/api2/config/packages/security.yaml` (perte de la route `/connect` + ACL).
+2. `make api2_restart`.
+3. Les lignes `kp_user_oauth` déjà écrites via cette voie restent valides — c'est bien, l'utilisateur garde son lien.
+4. Côté app4, le bouton « Lier mon compte Google » reste visible mais mène à une 404 : afficher un message temporaire dans `/profile/security` ou retirer le bouton en même temps.
+
+---
+
 ## Phase 3 — TOTP profils ≤ 3 (à venir)
 
 Statut : 📋 spécifiée. Pré-requis :

@@ -86,6 +86,13 @@
       "title": "Google account",
       "linked": "Your Google account is linked: you can sign in with one click from the login page.",
       "not_linked": "No Google account linked.",
+      "link": "Link my Google account",
+      "link_cta": "Link your Google account to sign in with one click. You can use a Google address different from your KPI email.",
+      "link_done": "Google account linked successfully.",
+      "link_error": {
+        "already_linked": "This Google account is already linked to another KPI user. Unlink it first, or use a different Google account.",
+        "generic": "The Google link could not be completed, please retry."
+      },
       "unlink": "Unlink my Google account",
       "unlink_done": "Google account unlinked.",
       "unlink_failed": "Could not unlink the Google account.",

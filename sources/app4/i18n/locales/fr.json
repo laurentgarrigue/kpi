@@ -86,6 +86,13 @@
       "title": "Compte Google",
       "linked": "Votre compte Google est lié : vous pouvez vous connecter en un clic depuis la page de connexion.",
       "not_linked": "Aucun compte Google lié.",
+      "link": "Lier mon compte Google",
+      "link_cta": "Liez votre compte Google pour vous connecter en un clic. Vous pouvez utiliser une adresse Google différente de votre e-mail KPI.",
+      "link_done": "Compte Google lié avec succès.",
+      "link_error": {
+        "already_linked": "Ce compte Google est déjà associé à un autre utilisateur KPI. Déliez-le d'abord ou utilisez un autre compte Google.",
+        "generic": "Le lien Google n'a pas pu être finalisé, réessayez."
+      },
       "unlink": "Délier mon compte Google",
       "unlink_done": "Compte Google délié.",
       "unlink_failed": "Impossible de délier le compte Google.",

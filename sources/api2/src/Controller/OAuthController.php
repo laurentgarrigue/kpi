@@ -24,11 +24,18 @@ use Symfony\Component\Routing\Attribute\Route;
  * OAuth 2.0 — flow « Continuer avec Google » (AUTH_HARDENING.md § 4).
  *
  * Jamais de création automatique de compte : l'identité Google doit se lier à un `kp_user`
- * existant. Trois cas sur /auth/google/callback :
- *   1. (provider, subject) déjà connu dans kp_user_oauth → login direct.
- *   2. L'email vérifié correspond à exactement un `kp_user` sans lien OAuth → redirection
- *      vers app4 /auth/google/link (demande du mot de passe actuel pour prouver la propriété).
- *   3. Rien ne correspond → retour /login avec un message explicite.
+ * existant. Le callback distingue DEUX modes à partir du cookie `kpi_oauth_link` :
+ *
+ *   A. Mode « lien depuis le profil » (AUTH-OA-07/08/09) — déclenché par /auth/google/connect
+ *      avec un JWT : la session prouve la propriété, le callback écrit directement dans
+ *      kp_user_oauth sans comparaison d'e-mail. Couvre les cas « e-mail KPI partagé » et
+ *      « e-mail Google différent de l'e-mail KPI ».
+ *
+ *   B. Mode « login » (AUTH-OA-02 à 05) — pas de cookie link. Trois cas :
+ *      1. (provider, subject) déjà connu → login direct.
+ *      2. E-mail vérifié correspond à exactement un `kp_user` sans lien → redirection vers
+ *         app4 /auth/google/link (demande du mot de passe actuel).
+ *      3. Rien ne correspond, ou ambigu → retour /login avec un message explicite.
  */
 #[Route('/auth/google')]
 #[OA\Tag(name: '20. App4 - Authentication')]
@@ -73,6 +80,46 @@ class OAuthController extends AbstractController
     }
 
     /**
+     * Entrée du flux « lier Google depuis le profil » (AUTH-OA-07) — JWT exigé.
+     *
+     * Mémorise le code utilisateur courant dans un cookie SIGNÉ, puis redirige vers Google.
+     * Au callback, la présence du cookie bascule la logique de résolution par e-mail (login)
+     * vers l'écriture directe dans kp_user_oauth (lien), parce que la session JWT prouve déjà
+     * la propriété du compte — plus besoin d'e-mail commun entre Google et KPI.
+     */
+    #[Route('/connect', name: 'api_auth_google_connect', methods: ['GET'])]
+    public function connect(): Response
+    {
+        if (!$this->googleClient->isConfigured()) {
+            return new JsonResponse(['message' => 'OAuth Google not configured'], Response::HTTP_NOT_FOUND);
+        }
+
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            // Normalement couvert par access_control, garde-fou pour qu'aucun code en dessous
+            // ne tourne sans utilisateur résolu.
+            return new JsonResponse(['message' => 'Not authenticated'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $state = rtrim(strtr(base64_encode(random_bytes(24)), '+/', '-_'), '=');
+        $redirect = new RedirectResponse($this->googleClient->buildAuthorizationUrl($state));
+        $redirect->headers->setCookie(
+            Cookie::create('kpi_oauth_state')
+                ->withValue($state)
+                ->withExpires(time() + 600)
+                ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('lax'),
+        );
+        $redirect->headers->setCookie(
+            Cookie::create('kpi_oauth_link')
+                ->withValue($this->buildLinkCookieValue($user->getCode(), $state))
+                ->withExpires(time() + 600)
+                ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('lax'),
+        );
+        return $redirect;
+    }
+
+    /**
      * Callback de Google : récupère le code, vérifie le state, échange, résout le compte.
      */
     #[Route('/callback', name: 'api_auth_google_callback', methods: ['GET'])]
@@ -102,7 +149,15 @@ class OAuthController extends AbstractController
             return $this->redirectLogin('oauth_email_not_verified');
         }
 
-        // Cas 1 : identité OAuth déjà liée → login direct.
+        // Mode A — Lien depuis le profil (AUTH-OA-08) : cookie signé valide avec le user_code
+        // d'une session authentifiée côté app4, et le state du cookie matche celui de Google.
+        // Court-circuite toute la logique de résolution par e-mail (AUTH-OA-04/05).
+        $link = $this->readLinkCookie($request, $state);
+        if ($link !== null) {
+            return $this->finaliseAuthenticatedLink($link['userCode'], $claims['sub'], $claims['email']);
+        }
+
+        // Mode B — Login OAuth. Cas 1 : identité OAuth déjà liée → login direct.
         $existing = $this->connection->fetchAssociative(
             "SELECT user_code FROM kp_user_oauth WHERE provider = 'google' AND subject = ?",
             [$claims['sub']],
@@ -232,6 +287,98 @@ class OAuthController extends AbstractController
         $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/login?oauth_error=' . $errorCode);
         $redirect->headers->clearCookie('kpi_oauth_state', '/', null, true, true, 'lax');
         return $redirect;
+    }
+
+    private function redirectSecurity(string $query): RedirectResponse
+    {
+        $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/profile/security?' . $query);
+        $redirect->headers->clearCookie('kpi_oauth_state', '/', null, true, true, 'lax');
+        $redirect->headers->clearCookie('kpi_oauth_link', '/', null, true, true, 'lax');
+        return $redirect;
+    }
+
+    /**
+     * Écrit le lien kp_user_oauth pour le user_code mémorisé dans le cookie signé.
+     * Refuse (AUTH-OA-09) si le sub Google est déjà pris par un autre compte KPI.
+     */
+    private function finaliseAuthenticatedLink(string $userCode, string $sub, string $email): Response
+    {
+        // Vérifie que ce sub Google n'est pas déjà attribué à un AUTRE compte KPI.
+        $owner = $this->connection->fetchOne(
+            "SELECT user_code FROM kp_user_oauth WHERE provider = 'google' AND subject = ?",
+            [$sub],
+        );
+        if (is_string($owner) && $owner !== '' && $owner !== $userCode) {
+            return $this->redirectSecurity('link=error&code=already_linked');
+        }
+
+        // INSERT IGNORE : couvre le double-clic et le cas où (user_code, 'google') existe déjà
+        // (uq_user_provider) avec le MÊME sub — relier le même Google deux fois n'est pas une erreur.
+        $this->connection->executeStatement(
+            "INSERT IGNORE INTO kp_user_oauth (user_code, provider, subject, email_at_link, linked_at)
+             VALUES (?, 'google', ?, ?, NOW())",
+            [$userCode, $sub, $email],
+        );
+
+        try {
+            $this->connection->prepare(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Lien Google ajouté', ?)"
+            )->executeStatement([$userCode, 'Lien ajouté depuis /profile/security (email Google : ' . $email . ')']);
+        } catch (\Exception) {
+        }
+
+        return $this->redirectSecurity('link=ok');
+    }
+
+    /**
+     * Cookie signé HMAC : {user_code, state, exp}. La signature empêche un attaquant de poser
+     * un cookie qui ferait lier son Google à un autre compte ; le state est vérifié en plus
+     * pour qu'un cookie volé d'une autre tentative ne puisse être rejoué avec un code Google
+     * frais.
+     */
+    private function buildLinkCookieValue(string $userCode, string $state): string
+    {
+        $payload = ['user_code' => $userCode, 'state' => $state, 'exp' => time() + 600];
+        $payload['sig'] = hash_hmac('sha256', $payload['user_code'] . '|' . $payload['state'] . '|' . $payload['exp'], $this->getParameter('kernel.secret'));
+        return base64_encode(json_encode($payload));
+    }
+
+    /**
+     * Lit et valide le cookie `kpi_oauth_link`. Retourne le user_code ou null si absent / falsifié /
+     * expiré / state qui ne matche pas celui de la requête courante.
+     *
+     * @return array{userCode: string}|null
+     */
+    private function readLinkCookie(Request $request, string $googleState): ?array
+    {
+        $raw = (string) $request->cookies->get('kpi_oauth_link', '');
+        if ($raw === '') {
+            return null;
+        }
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false) {
+            return null;
+        }
+        $data = json_decode($decoded, true);
+        if (!is_array($data)) {
+            return null;
+        }
+        if (!is_int($data['exp'] ?? null) || $data['exp'] < time()) {
+            return null;
+        }
+        if (!is_string($data['user_code'] ?? null) || !is_string($data['state'] ?? null) || !is_string($data['sig'] ?? null)) {
+            return null;
+        }
+        $expected = hash_hmac('sha256', $data['user_code'] . '|' . $data['state'] . '|' . $data['exp'], $this->getParameter('kernel.secret'));
+        if (!hash_equals($expected, $data['sig'])) {
+            return null;
+        }
+        // Le state du cookie DOIT matcher celui renvoyé par Google : empêche de rejouer un cookie
+        // vieux (10 min) sur un nouvel échange OAuth non prévu par le propriétaire du compte.
+        if (!hash_equals($data['state'], $googleState)) {
+            return null;
+        }
+        return ['userCode' => $data['user_code']];
     }
 
     /**

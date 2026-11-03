@@ -26,6 +26,7 @@ const { t } = useI18n()
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
 const { logout } = useAuth()
+const route = useRoute()
 
 const devices = ref<Device[]>([])
 const googleLinked = ref<boolean>(false)
@@ -120,6 +121,34 @@ function formatDate(iso: string): string {
   return d.toLocaleString()
 }
 
+// Lancement du flux « lier Google depuis le profil » (AUTH-OA-07).
+// Le cookie kpi_access (HttpOnly) porte le JWT ; la redirection complète (window.location) suffit,
+// pas besoin de transporter l'en-tête Authorization. api2 lira le JWT via l'extracteur `cookie`.
+function startGoogleLink() {
+  window.location.href = `${config.public.api2BaseUrl}/auth/google/connect`
+}
+
+// Au retour du callback api2, l'URL porte `?link=ok` ou `?link=error&code=…` :
+// on affiche la bannière puis on nettoie l'URL pour éviter de ré-afficher au rafraîchissement.
+function handleLinkQuery() {
+  const status = String(route.query.link ?? '')
+  if (status === 'ok') {
+    actionNotice.value = t('security.google.link_done')
+    googleLinked.value = true
+  } else if (status === 'error') {
+    const code = String(route.query.code ?? '')
+    const key = `security.google.link_error.${code}`
+    const translated = t(key)
+    actionError.value = translated === key ? t('security.google.link_error.generic') : translated
+  } else {
+    return
+  }
+  // Nettoie l'URL sans provoquer de reroutage Nuxt.
+  if (typeof window !== 'undefined') {
+    window.history.replaceState({}, '', '/profile/security')
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   try {
@@ -129,6 +158,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  handleLinkQuery()
 })
 </script>
 
@@ -207,11 +237,28 @@ onMounted(async () => {
       <p v-if="googleLinked" class="text-sm text-header-700 dark:text-header-200">
         {{ t('security.google.linked') }}
       </p>
-      <p v-else class="text-sm text-header-500 dark:text-header-400 italic">
-        {{ t('security.google.not_linked') }}
+      <p v-else class="text-sm text-header-700 dark:text-header-200">
+        {{ t('security.google.link_cta') }}
       </p>
-      <div v-if="googleLinked" class="mt-3">
-        <UButton color="neutral" variant="outline" size="sm" :disabled="loading" @click="unlinkGoogle">
+      <div class="mt-3">
+        <UButton
+          v-if="!googleLinked"
+          color="primary"
+          variant="outline"
+          size="sm"
+          :disabled="loading"
+          @click="startGoogleLink"
+        >
+          {{ t('security.google.link') }}
+        </UButton>
+        <UButton
+          v-else
+          color="neutral"
+          variant="outline"
+          size="sm"
+          :disabled="loading"
+          @click="unlinkGoogle"
+        >
           {{ t('security.google.unlink') }}
         </UButton>
       </div>
