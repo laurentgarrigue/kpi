@@ -394,6 +394,22 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 La **feuille de marque** est un document officiel rempli à la main : format A4, zones d'écriture et rubriques
 inchangées, validées par la commission arbitrage avant mise en service (critère PDF-DOC-03).
 
+Mise en page (2026-11-03, sur le modèle de l'ancienne feuille de production) :
+
+- **une page par match**, jamais de page blanche : chaque page est une boîte de la hauteur de la page, colonnes à
+  largeur fixe, une ligne par case (un nom trop long est tronqué, il ne pousse pas la feuille sur une 2e page) ;
+- au-delà de 26 faits de match, la grille **continue sur des pages suivantes** (40 lignes chacune, « Feuille de
+  marque (suite 2/3) ») ; la colonne de gauche y rappelle le match : compétition, lieu, date, heure, numéro, terrain,
+  phase, équipes, arbitres et identifiant ;
+- **date, heure, numéro de match et terrain en grand** ; champs nominatifs (organisateur, responsable
+  d'organisation, délégué, arbitres, secrétaire, chrono, shotclock, lignes) et lieu sur une demi-largeur au moins ;
+  libellés courts : « Arbitre 1 », « Arbitre 2 », « Chrono », « Ligne 1 », « Ligne 2 » (un champ par juge de ligne) ;
+- compositions à colonnes fixes, Nom et Prénom les plus larges ; la licence porte sa saison d'origine si elle diffère
+  de la saison du match ;
+- grille des faits : « Équipe A » et « Équipe B » alignées à gauche ;
+- **QR code** au-dessus de l'identifiant du match, vers sa page de saisie en ligne dans app4
+  (`APP4_URL/games/{id}/scoring`, comme l'ancienne feuille vers `FeuilleMarque2.php`).
+
 ### 7.4 Classements
 
 | `doc` | Remplace (admin / public) | Public | Appelé aujourd'hui depuis (admin) | Rôle admin proposé |

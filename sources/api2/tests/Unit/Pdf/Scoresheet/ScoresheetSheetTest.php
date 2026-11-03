@@ -28,6 +28,26 @@ final class ScoresheetSheetTest extends TestCase
         self::assertCount(ScoresheetSheet::INTERNATIONAL_ROSTER_LINES, ScoresheetSheet::roster([], '2026', true, self::LABELS));
     }
 
+    public function testEventsBeyondTheSheetContinueOnTheNextPages(): void
+    {
+        $line = static fn (int $i): array => ['time' => 'M1 - ' . $i];
+
+        $pages = ScoresheetSheet::eventPages(array_map($line, range(1, ScoresheetSheet::EVENT_LINES + 3)));
+
+        self::assertCount(2, $pages);
+        self::assertCount(ScoresheetSheet::EVENT_LINES, $pages[0]);
+        self::assertSame(['time' => 'M1 - 27'], $pages[1][0], 'the 27th event opens the continuation page');
+        self::assertCount(ScoresheetSheet::CONTINUATION_EVENT_LINES, $pages[1], 'padded to be filled in by hand');
+        self::assertSame([], $pages[1][3]);
+        self::assertCount(1, ScoresheetSheet::eventPages(array_map($line, range(1, ScoresheetSheet::EVENT_LINES))), 'a full sheet, no continuation');
+        self::assertCount(3, ScoresheetSheet::eventPages(array_map($line, range(1, ScoresheetSheet::EVENT_LINES + ScoresheetSheet::CONTINUATION_EVENT_LINES + 1))));
+    }
+
+    public function testTheQrCodeLeadsToTheScoringPageOfTheGameInApp4(): void
+    {
+        self::assertSame('https://kayak-polo.info/admin2/games/9401/scoring', ScoresheetSheet::scoringUrl('https://kayak-polo.info/admin2/', 9401));
+    }
+
     public function testCategoryByAgeInTheSeason(): void
     {
         self::assertSame('MIN', ScoresheetSheet::category('2012-06-01', '2026'));
@@ -46,7 +66,9 @@ final class ScoresheetSheetTest extends TestCase
             self::event('M2', '00:02:00', 'D', 'A', 'MARTIN', 'Jean-Paul'),
         ], self::LABELS);
 
-        self::assertCount(ScoresheetSheet::EVENT_LINES, $grid['lines']);
+        self::assertCount(1, $grid['pages'], 'one page when the events fit');
+        self::assertCount(ScoresheetSheet::EVENT_LINES, $grid['pages'][0]);
+        $grid['lines'] = $grid['pages'][0];
         self::assertSame(['time' => 'M1 - 07:30', 'a_player' => '7 - MAR. J-P.', 'a_goal' => 'X'], $grid['lines'][0]);
         self::assertSame('7 - DUR. L. (Obstruction)', $grid['lines'][1]['b_player']);
         self::assertSame('X', $grid['lines'][1]['b_yellow']);

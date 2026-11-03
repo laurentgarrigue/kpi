@@ -14,6 +14,7 @@ use App\Pdf\PdfDocumentProvider;
 use App\Pdf\PdfHeader;
 use App\Pdf\PdfLabels;
 use App\Pdf\PdfPlace;
+use App\Pdf\PdfQrCode;
 use App\Pdf\PdfRequest;
 use App\Pdf\PdfTheme;
 use App\Pdf\Scoresheet\ScoresheetRepository;
@@ -42,6 +43,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
         private readonly PdfCompetitions $competitions,
         private readonly PdfAssets $assets,
         private readonly PdfLabels $labels,
+        private readonly string $app4Url,
     ) {
     }
 
@@ -117,6 +119,9 @@ final class ScoresheetDocument implements PdfDocumentProvider
         $teamA = $game['LibelleA'] ?? ($placeholders[0] ?? '');
         $teamB = $game['LibelleB'] ?? ($placeholders[1] ?? '');
         $events = ScoresheetSheet::events($this->sheets->events((int) $game['Id']), $labels);
+        // QR code above the ID: the scoring page of the game in app4, as the legacy sheet did (FeuilleMarque2.php).
+        $qrFile = sprintf('scoresheet-qr-%d.svg', $game['Id']);
+        $images[$qrFile] = PdfQrCode::svg(ScoresheetSheet::scoringUrl($this->app4Url, (int) $game['Id']));
         $scoreA = ScoresheetSheet::score($game['ScoreA']);
         $scoreB = ScoresheetSheet::score($game['ScoreB']);
         $status = (string) $game['Statut'];
@@ -148,12 +153,16 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'secretary' => (string) $game['Secretaire'],
             'timekeeper' => (string) $game['Chronometre'],
             'shot_clock' => (string) $game['Timeshoot'],
-            'line_judges' => trim(implode(' / ', array_filter([(string) $game['Ligne1'], (string) $game['Ligne2']], 'strlen'))),
+            'line_judge_1' => (string) $game['Ligne1'],
+            'line_judge_2' => (string) $game['Ligne2'],
             'elimination' => $game['Type'] === self::ELIMINATION,
             'international' => $international,
             'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels)],
             'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels)],
-            'events' => $events['lines'],
+            'events' => $events['pages'][0],
+            // More events than lines: they go on, page after page, beside a recap of the game.
+            'continuation' => array_slice($events['pages'], 1),
+            'qr' => $qrFile,
             'half_time' => $status === self::HALF_TIME_PASSED_STATUS || ($status === self::PLAYING_STATUS && $period !== self::FIRST_PERIOD && $period !== '')
                 ? $events['half_time']
                 : null,

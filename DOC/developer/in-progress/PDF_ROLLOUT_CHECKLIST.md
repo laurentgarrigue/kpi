@@ -292,6 +292,22 @@ Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14.
 
 ---
 
+## Feuille de marque, nouvelle mise en page (2026-11-03)
+
+Spec : [PDF_GOTENBERG.md § 7.3.3](../../specs/PDF_GOTENBERG.md). Prérequis : `APP4_URL` dans `sources/api2/.env` est
+l'adresse publique d'app4 de l'environnement (🖥 `grep APP4_URL sources/api2/.env`, attendu par exemple
+`https://kayak-polo.info/admin2`), puis `make api2_restart`.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | app4 Matchs → feuille de marque d'un match aux noms d'officiels longs (comme le N1H J1A du 07/03/2026) | **une seule page** ; date, heure, n° de match et terrain en grand ; Arbitre 1 / Arbitre 2, Secrétaire / Chrono, Shotclock / Ligne 1, Ligne 2 sur une demi-largeur chacun | ☐ |
+| 2 | même feuille | compositions : Nom et Prénom larges, licence avec sa saison d'origine si besoin ; « Équipe A » / « Équipe B » de la grille alignées à gauche | ☐ |
+| 3 | scanner le QR code au-dessus de l'ID | ouvre app4 `/games/{id}/scoring` de ce match | ☐ |
+| 4 | feuille d'un match de plus de 26 faits (saisir des faits de test dans app4 si besoin) | page 2 « Feuille de marque (suite 2/2) » : rappel du match à gauche, grille qui continue à droite | ☐ |
+| 5 | action groupée sur plusieurs matchs | une page par match (plus les pages de suite éventuelles), aucune page blanche | ☐ |
+
+---
+
 ## Non-régression (à chaque phase, chaque environnement)
 
 | # | Vérification | Attendu | ☐ |
