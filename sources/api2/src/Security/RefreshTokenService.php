@@ -111,6 +111,20 @@ final class RefreshTokenService
         );
     }
 
+    /**
+     * Révoque les refresh tokens actifs d'un (user_code, device_fingerprint). Utilisé par la
+     * révocation ciblée d'un appareil depuis /profile/security (AUTH-DV-04/05) : ne touche
+     * qu'aux sessions de cet appareil, les autres restent valides.
+     */
+    public function revokeByDeviceFingerprint(string $userCode, string $fingerprint): void
+    {
+        $this->connection->executeStatement(
+            'UPDATE kp_user_refresh_token SET revoked_at = NOW()
+             WHERE user_code = ? AND device_fingerprint = ? AND revoked_at IS NULL',
+            [$userCode, $fingerprint],
+        );
+    }
+
     private function hash(string $token): string
     {
         return hash('sha256', $token);

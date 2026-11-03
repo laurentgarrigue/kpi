@@ -109,6 +109,135 @@ final class KnownDeviceService
     }
 
     /**
+     * Expose l'empreinte de la requête courante pour que les appelants puissent la poser sur
+     * les refresh tokens et comparer « cet appareil » dans la liste (AUTH-DV-03).
+     */
+    public function currentFingerprint(Request $request): string
+    {
+        return $this->fingerprint($request);
+    }
+
+    /**
+     * Liste les appareils actifs du compte, les plus récemment vus en premier (AUTH-DV-03).
+     *
+     * @return list<array{id:int, label:string, fingerprint:string, created_at:string, last_seen_at:string}>
+     */
+    public function listActiveFor(string $userCode): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT id, label, fingerprint, created_at, last_seen_at
+             FROM kp_user_known_device
+             WHERE user_code = ? AND revoked_at IS NULL
+             ORDER BY last_seen_at DESC, id DESC',
+            [$userCode],
+        );
+
+        return array_map(fn(array $r) => [
+            'id' => (int) $r['id'],
+            'label' => $r['label'],
+            'fingerprint' => $r['fingerprint'],
+            'created_at' => $r['created_at'],
+            'last_seen_at' => $r['last_seen_at'],
+        ], $rows);
+    }
+
+    /**
+     * Révoque un appareil par id, et uniquement s'il appartient à l'utilisateur fourni (AUTH-DV-04).
+     * Idempotent : la 2ᵉ invocation sur un device déjà révoqué retourne false mais ne lève pas.
+     * Journalise dans kp_journal.
+     *
+     * @return bool true si une ligne active a été révoquée, false sinon (id inconnu, autre user, déjà révoqué).
+     */
+    public function revokeById(int $deviceId, string $userCode, RefreshTokenService $refreshTokens, string $journalReason): bool
+    {
+        $row = $this->connection->fetchAssociative(
+            'SELECT id, fingerprint FROM kp_user_known_device
+             WHERE id = ? AND user_code = ? AND revoked_at IS NULL',
+            [$deviceId, $userCode],
+        );
+        if (!$row) {
+            return false;
+        }
+
+        $this->connection->update('kp_user_known_device', [
+            'revoked_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'revoke_token_hash' => null,
+        ], ['id' => $row['id']]);
+
+        $refreshTokens->revokeByDeviceFingerprint($userCode, $row['fingerprint']);
+        $this->logRevocation($userCode, $journalReason);
+
+        return true;
+    }
+
+    /**
+     * Révoque tous les appareils actifs du compte sauf celui qui correspond à $currentFingerprint (AUTH-DV-05).
+     * Retourne le nombre d'appareils révoqués (hors courant).
+     */
+    public function revokeAllOthersFor(string $userCode, string $currentFingerprint, RefreshTokenService $refreshTokens): int
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT id, fingerprint FROM kp_user_known_device
+             WHERE user_code = ? AND revoked_at IS NULL AND fingerprint <> ?',
+            [$userCode, $currentFingerprint],
+        );
+        if (count($rows) === 0) {
+            return 0;
+        }
+
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        foreach ($rows as $r) {
+            $this->connection->update('kp_user_known_device', [
+                'revoked_at' => $now,
+                'revoke_token_hash' => null,
+            ], ['id' => $r['id']]);
+            $refreshTokens->revokeByDeviceFingerprint($userCode, $r['fingerprint']);
+        }
+        $this->logRevocation($userCode, 'Révocation « déconnecter toutes les autres sessions » depuis /profile/security');
+
+        return count($rows);
+    }
+
+    /** Vrai si l'appareil existe et est révoqué ; un appareil inconnu n'est pas bloqué (pas de ligne = pas de révocation). */
+    public function isRevoked(string $userCode, string $fingerprint): bool
+    {
+        return $this->connection->fetchOne(
+            'SELECT revoked_at IS NOT NULL FROM kp_user_known_device WHERE user_code = ? AND fingerprint = ?',
+            [$userCode, $fingerprint],
+        ) == 1;
+    }
+
+    /** Combien de lignes `kp_user_known_device` existent pour (user, id), révoquées ou non — utilisé pour distinguer 404 et « déjà révoqué ». */
+    public function countAnyFor(string $userCode, int $deviceId): int
+    {
+        return (int) $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM kp_user_known_device WHERE id = ? AND user_code = ?',
+            [$deviceId, $userCode],
+        );
+    }
+
+    /** Empreinte stockée d'un appareil (quel que soit son état). Null si inexistant ou appartenant à un autre user. */
+    public function fingerprintOf(string $userCode, int $deviceId): ?string
+    {
+        $fp = $this->connection->fetchOne(
+            'SELECT fingerprint FROM kp_user_known_device WHERE id = ? AND user_code = ?',
+            [$deviceId, $userCode],
+        );
+        return is_string($fp) ? $fp : null;
+    }
+
+    private function logRevocation(string $userCode, string $journalText): void
+    {
+        try {
+            $this->connection->prepare(
+                "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Révocation appareil', ?)"
+            )->executeStatement([$userCode, $journalText]);
+        } catch (\Exception) {
+            // Le journal fonctionnel est best-effort : son indisponibilité ne doit pas faire échouer la révocation.
+        }
+    }
+
+    /**
      * Empreinte : IP masquée en /24 (IPv4) ou /48 (IPv6) + famille de user-agent. Suffisant
      * pour reconnaître « le même ordinateur à la maison » sans emprisonner l'utilisateur dans
      * une IP exacte qui change tous les jours.

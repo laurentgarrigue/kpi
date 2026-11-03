@@ -82,6 +82,8 @@ security:
         - { path: ^/auth/switch-mandate, roles: ROLE_USER }
         - { path: ^/auth/login-history, roles: ROLE_USER }
         - { path: ^/auth/google/unlink, roles: ROLE_USER }
+        - { path: ^/auth/google/connect, roles: ROLE_USER }
+        - { path: ^/auth/devices, roles: ROLE_USER }
 
 when@test:
     security:
