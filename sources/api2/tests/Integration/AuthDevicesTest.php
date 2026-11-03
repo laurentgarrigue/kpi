@@ -66,7 +66,9 @@ final class AuthDevicesTest extends ApiTestCase
 
         $currents = array_values(array_filter($body['devices'], fn($d) => $d['isCurrent']));
         self::assertCount(1, $currents, 'exactement un appareil doit être marqué comme courant');
-        self::assertSame('Chrome / 203.0.113.0', $currents[0]['label'], 'label du device courant construit sur IP /24');
+        // Le LABEL garde l'IP complète (c'est l'EMPREINTE qui est masquée en /24 pour reconnaître
+        // l'appareil malgré un changement de dernier octet). Le label est une info utilisateur.
+        self::assertSame('Chrome / 203.0.113.5', $currents[0]['label']);
     }
 
     public function testListExcludesRevokedDevices(): void
@@ -164,12 +166,13 @@ final class AuthDevicesTest extends ApiTestCase
         $body = $this->requestAsWithServer('TADMIN', 'POST', '/auth/devices/revoke-others', ip: '203.0.113.7', userAgent: 'Mozilla/5.0 Chrome/120');
         self::assertSame(1, $body['revoked'], 'un seul autre device devait être révoqué');
 
-        // Le device courant est toujours actif, l'autre est révoqué.
+        // Le device courant est toujours actif, l'autre est révoqué. Le label du device courant porte
+        // l'IP complète de la requête (cf. KnownDeviceService::label — l'empreinte est masquée, pas le label).
         $actives = $this->connection->fetchAllAssociative(
             "SELECT label FROM kp_user_known_device WHERE user_code = 'TADMIN' AND revoked_at IS NULL",
         );
         self::assertCount(1, $actives);
-        self::assertStringContainsString('203.0.113.0', $actives[0]['label']);
+        self::assertStringContainsString('203.0.113.7', $actives[0]['label']);
 
         // Le refresh token de l'autre appareil est tué.
         $otherActive = (int) $this->connection->fetchOne(
