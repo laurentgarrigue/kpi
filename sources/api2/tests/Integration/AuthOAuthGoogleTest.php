@@ -106,6 +106,12 @@ final class AuthOAuthGoogleTest extends ApiTestCase
         $cookieNames = array_map(fn($c) => $c->getName(), $this->client->getResponse()->headers->getCookies());
         self::assertContains('kpi_access', $cookieNames);
         self::assertContains('kpi_refresh', $cookieNames);
+        // Redirection vers /auth/oauth-complete (pas /?oauth=ok) pour qu'app4 puisse amorcer
+        // son authStore depuis les cookies via /auth/refresh-session.
+        self::assertStringContainsString(
+            '/auth/oauth-complete',
+            (string) $this->client->getResponse()->headers->get('Location'),
+        );
         // Une ligne de journal de sécurité `oauth_google` est écrite.
         $method = $this->connection->fetchOne(
             "SELECT method FROM kp_user_login_history WHERE user_code = 'TADMIN' ORDER BY id DESC LIMIT 1",

@@ -216,10 +216,10 @@ class AdminAuthController extends AbstractController
     #[Route('/refresh-session', name: 'api_auth_refresh_session', methods: ['POST'])]
     #[OA\Post(
         path: '/auth/refresh-session',
-        summary: 'Rotate the refresh cookie and emit a new access JWT',
+        summary: 'Rotate the refresh cookie and emit a new access JWT. Also returns {token,user,hasMandates} so app4 can bootstrap its store from cookies (used by the OAuth completion page).',
         tags: ['20. App4 - Authentication']
     )]
-    #[OA\Response(response: 200, description: 'New cookies set')]
+    #[OA\Response(response: 200, description: 'New cookies set + login payload in body')]
     #[OA\Response(response: 401, description: 'Missing, invalid or revoked refresh token')]
     public function refreshSession(Request $request): JsonResponse
     {
@@ -240,8 +240,25 @@ class AdminAuthController extends AbstractController
         /** @var User $user */
         $user = $this->userProvider->loadUserByIdentifier($result['userCode']);
         $accessToken = $this->jwtManager->create($user);
+        $mandates = $this->loadMandates($user->getCode());
 
-        $response = $this->json(['refreshed' => true]);
+        // Shape alignée sur /auth/login : app4 peut remplir son authStore à partir du body
+        // sans passer par /auth/me puis un endpoint séparé. C'est ce dont /auth/oauth-complete
+        // a besoin pour amorcer la session après un login via Google.
+        $userData = $user->toArray();
+        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
+        $userData['mandates'] = $mandates;
+        $userData['oauthProviders'] = $this->oauthProvidersFor($user->getCode());
+        $userData['activeMandate'] = null;
+        $userData['effectiveProfile'] = $user->getNiveau();
+        $userData['effectiveFilters'] = $userData['filters'];
+
+        $response = $this->json([
+            'token' => $accessToken,
+            'user' => $userData,
+            'hasMandates' => count($mandates) > 0,
+            'refreshed' => true, // conservé pour compat avec un éventuel appelant qui n'attend que ça
+        ]);
         $response->headers->setCookie($this->buildAccessCookie($accessToken));
         $response->headers->setCookie($this->buildRefreshCookie($result['token']));
         return $response;
