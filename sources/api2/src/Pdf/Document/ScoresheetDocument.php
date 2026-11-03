@@ -2,6 +2,7 @@
 
 namespace App\Pdf\Document;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\Games\GamesScope;
 use App\Pdf\Games\GamesSort;
 use App\Pdf\InvalidPdfRequest;
@@ -44,6 +45,7 @@ final class ScoresheetDocument implements PdfDocumentProvider
         private readonly PdfAssets $assets,
         private readonly PdfLabels $labels,
         private readonly string $app4Url,
+        private readonly AgeCategoryRule $ageCategories,
     ) {
     }
 
@@ -157,8 +159,8 @@ final class ScoresheetDocument implements PdfDocumentProvider
             'line_judge_2' => (string) $game['Ligne2'],
             'elimination' => $game['Type'] === self::ELIMINATION,
             'international' => $international,
-            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'badge' => self::badgeStyle($game['Color1A'], $game['Color2A'], $game['ColorTextA']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels)],
-            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'badge' => self::badgeStyle($game['Color1B'], $game['Color2B'], $game['ColorTextB']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels)],
+            'team_a' => ['name' => $teamA, 'colour' => (string) $game['ColorA'], 'badge' => self::badgeStyle($game['Color1A'], $game['Color2A'], $game['ColorTextA']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeA']), 'A'), $season, $international, $labels, $this->ageCategories)],
+            'team_b' => ['name' => $teamB, 'colour' => (string) $game['ColorB'], 'badge' => self::badgeStyle($game['Color1B'], $game['Color2B'], $game['ColorTextB']), 'roster' => ScoresheetSheet::roster($this->sheets->players((int) $game['Id'], self::team($game['Id_equipeB']), 'B'), $season, $international, $labels, $this->ageCategories)],
             'events' => $events['pages'][0],
             // More events than lines: they go on, page after page, beside a recap of the game.
             'continuation' => array_slice($events['pages'], 1),

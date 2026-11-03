@@ -24,6 +24,7 @@ DELETE FROM `kp_journee`;
 DELETE FROM `kp_competition`;
 DELETE FROM `kp_groupe`;
 DELETE FROM `kp_saison`;
+DELETE FROM `kp_categorie`;
 DELETE FROM `kp_evenement`;
 DELETE FROM `kp_equipe`;
 DELETE FROM `kp_club`;
@@ -36,6 +37,15 @@ DELETE FROM `kp_cr`;
 INSERT INTO `kp_saison` (`Code`, `Etat`, `Nat_debut`, `Nat_fin`, `Inter_debut`, `Inter_fin`) VALUES
   ('2999', 'A', '2998-09-01', '2999-08-31', '2998-09-01', '2999-08-31'),  -- saison ACTIVE
   ('2998', 'I', '2997-09-01', '2998-08-31', '2997-09-01', '2998-08-31');  -- saison passée (inactive)
+
+-- ---------------------------------------------------------------- catégories d'âge
+-- La table réelle (CATEGORIE_AGE.md story 6) : lue par AgeCategoryRule via DbalAgeCategoryTable.
+INSERT INTO `kp_categorie` (`id`, `libelle`, `age_min`, `age_max`, `sexe`) VALUES
+  ('POU', 'Poussin', 9, 10, 'T'), ('BEN', 'Benjamin', 11, 12, 'T'), ('MIN', 'Minime', 13, 14, 'T'),
+  ('CAD', 'Cadet', 15, 16, 'T'), ('JUN', 'Junior', 17, 18, 'T'), ('SEN', 'Senior', 19, 34, 'T'),
+  ('V1', 'Vétéran 1', 35, 39, 'T'), ('V2', 'Vétéran 2', 40, 44, 'T'), ('V3', 'Vétéran 3', 45, 49, 'T'),
+  ('V4', 'Vétéran 4', 50, 54, 'T'), ('V5', 'Vétéran 5', 55, 59, 'T'), ('V6', 'Vétéran 6', 60, 64, 'T'),
+  ('V7', 'Vétéran 7', 65, 69, 'T'), ('V8', 'Vétéran 8', 70, 74, 'T'), ('V9', 'Vétéran 9', 75, 120, 'T');
 
 -- ---------------------------------------------------------------- groupes
 -- Le mode 'champ' JOIN kp_groupe sur c.Code_ref = g.Groupe : sans la ligne
@@ -380,6 +390,12 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TEDIT', '', 'Rédacteur Test', 'edit@example.test', '', '', 8, '', '', '', ''),  -- profil 8 + capacité editor
   ('TVIEW', '', 'Lecteur Test', 'view@example.test', '', '', 8, '', '', '', '');   -- profil 8 sans capacité : 403
 INSERT INTO `kp_user_capability` (`user_code`, `capability`) VALUES ('TEDIT', 'editor');
+
+-- Entrées de journal utilisées par AdminJournalTest : la 1re pointe sur TADMIN (existe) et la 2e sur
+-- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal).
+INSERT INTO `kp_journal` (`Dates`, `Users`, `Actions`, `Journal`) VALUES
+  ('2026-10-01 10:00:00', 'TADMIN', 'Connexion Admin', 'Admin Test'),
+  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean');
 
 INSERT INTO `kp_cms_media` (`id`, `path`, `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `created_at`, `updated_at`) VALUES
   (9501, '2999/01/finale.jpg', 'image/jpeg', 1600, 900, 120000, 'La finale', 'The final', 'CNA', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),

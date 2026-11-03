@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\CompositionAgeCategories;
+use App\Service\ActiveSeason;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -63,7 +65,9 @@ class AdminRefereesPoolController extends AbstractController
     ];
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
+        private readonly ActiveSeason $activeSeason,
     ) {
     }
 
@@ -463,13 +467,13 @@ class AdminRefereesPoolController extends AbstractController
             return $this->json(['message' => 'Referee already in this group'], Response::HTTP_CONFLICT);
         }
 
-        $categ = $this->computeCategory($licence['Naissance'] ?? null);
-
         $this->connection->executeStatement(
-            "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Capitaine)
-             VALUES (?, ?, ?, ?, ?, ?, 'A')",
-            [$groupId, $matric, $licence['Nom'], $licence['Prenom'], $licence['Sexe'], $categ]
+            "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Capitaine)
+             VALUES (?, ?, ?, ?, ?, 'A')",
+            [$groupId, $matric, $licence['Nom'], $licence['Prenom'], $licence['Sexe']]
         );
+        // Age category of the active season: the pool belongs to the pseudo season POOL_SAISON
+        $this->compositionAgeCategories->refreshTeam($groupId);
 
         return $this->json(['message' => 'Referee added', 'matric' => $matric], Response::HTTP_CREATED);
     }
@@ -494,8 +498,7 @@ class AdminRefereesPoolController extends AbstractController
         }
 
         $codeClub = $this->getPoolGroup($groupId)['Code_club'] ?? '';
-        $categ = $this->computeCategory($naissance);
-        $saison = $this->getActiveSeason();
+        $saison = $this->activeSeason->code();
 
         $this->connection->beginTransaction();
         try {
@@ -510,10 +513,11 @@ class AdminRefereesPoolController extends AbstractController
             );
 
             $this->connection->executeStatement(
-                "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Categ, Capitaine)
-                 VALUES (?, ?, ?, ?, ?, ?, 'A')",
-                [$groupId, $matric, $nom, $prenom, $sexe, $categ]
+                "INSERT INTO kp_competition_equipe_joueur (Id_equipe, Matric, Nom, Prenom, Sexe, Capitaine)
+                 VALUES (?, ?, ?, ?, ?, 'A')",
+                [$groupId, $matric, $nom, $prenom, $sexe]
             );
+            $this->compositionAgeCategories->refreshTeam($groupId);
 
             $this->applyArbitrationStatus($matric, $arbitre, $niveau);
 
@@ -543,7 +547,7 @@ class AdminRefereesPoolController extends AbstractController
 
         [$reg, $ir, $nat, $int] = self::ARBITRE_FLAGS[$arbitre];
         $label = self::ARBITRE_LABEL[$arbitre];
-        $saison = $this->getActiveSeason();
+        $saison = $this->activeSeason->code();
 
         // niveau is char(1) NOT NULL.
         $niveau = mb_substr($niveau, 0, 1);
@@ -563,33 +567,6 @@ class AdminRefereesPoolController extends AbstractController
             [self::NON_LICENSED_THRESHOLD]
         );
         return $max > 0 ? $max + 1 : self::NON_LICENSED_THRESHOLD;
-    }
-
-    private function getActiveSeason(): string
-    {
-        return (string) ($this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
-        ) ?: '');
-    }
-
-    private function computeCategory(?string $naissance): ?string
-    {
-        if (!$naissance) {
-            return null;
-        }
-        $season = $this->getActiveSeason();
-        if ($season === '') {
-            return null;
-        }
-        $year = (int) substr($naissance, 0, 4);
-        if ($year <= 0) {
-            return null;
-        }
-        $age = (int) $season - $year;
-        return $this->connection->fetchOne(
-            "SELECT id FROM kp_categorie WHERE age_min <= ? AND age_max >= ?",
-            [$age, $age]
-        ) ?: null;
     }
 
     /**
@@ -638,7 +615,7 @@ class AdminRefereesPoolController extends AbstractController
             'nom' => mb_strtoupper((string) ($row['Nom'] ?? '')),
             'prenom' => mb_convert_case(mb_strtolower((string) ($row['Prenom'] ?? '')), MB_CASE_TITLE, 'UTF-8'),
             'sexe' => $row['Sexe'] ?? '',
-            'categ' => $row['Categ'] ?? '',
+            'categ' => ($row['Categ'] ?? '') ?: null,
             'licensed' => $matric < self::NON_LICENSED_THRESHOLD,
             'status' => $status,
             'arbitre' => $arbitre ? strtoupper($arbitre) : '',

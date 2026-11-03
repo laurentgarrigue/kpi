@@ -42,7 +42,7 @@ class GestionEquipeJoueur extends MyPageSecure
 		$arrayEquipe = array();
 
 		if (strlen($codeCompet) > 0) {
-			if ($codeCompet != 'POOL') {
+			if ($codeCompet != REFEREES_POOL_COMPET) {
 				$sql = "SELECT ce.Id, ce.Libelle, ce.Code_club, ce.Numero, ce.Poule, 
 					ce.Tirage, c.Code_comite_dep  
 					FROM kp_competition_equipe ce, kp_club c 
@@ -128,17 +128,26 @@ class GestionEquipeJoueur extends MyPageSecure
 
 			// Intégrer les coureurs de la recherche Licence ...
 			if (isset($_SESSION['Signature'])) {
-				$sql = "REPLACE INTO kp_competition_equipe_joueur 
-					(Id_equipe, Matric, Nom, Prenom, Sexe, Categ) 
-					SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe, c.id 
-					FROM kp_recherche_licence b, kp_licence a 
-					LEFT OUTER JOIN kp_categorie c 
-						ON (? - Year(a.Naissance) BETWEEN c.age_min AND c.age_max) 
-					WHERE a.Matric = b.Matric 
-					AND b.Signature = ? 
+				// Catégorie d'âge calculée par la règle unique (CATEGORIE_AGE.md story 19, ADR 0001) : insérée vide, puis
+				// recalculée par RefreshCategoriesJoueurs (saison de l'équipe, saison active pour le pool arbitres)
+				$sql = "SELECT b.Matric 
+					FROM kp_recherche_licence b 
+					WHERE b.Signature = ? 
 					AND b.Validation = 'O' ";
 				$result = $myBdd->pdo->prepare($sql);
-				$result->execute(array($idEquipe, $codeSaison, $_SESSION['Signature']));
+				$result->execute(array($_SESSION['Signature']));
+				$matrics = $result->fetchAll(PDO::FETCH_COLUMN);
+
+				$sql = "REPLACE INTO kp_competition_equipe_joueur 
+					(Id_equipe, Matric, Nom, Prenom, Sexe, Categ) 
+					SELECT ?, a.Matric, a.Nom, a.Prenom, a.Sexe, NULL 
+					FROM kp_recherche_licence b 
+					INNER JOIN kp_licence a ON a.Matric = b.Matric 
+					WHERE b.Signature = ? 
+					AND b.Validation = 'O' ";
+				$result = $myBdd->pdo->prepare($sql);
+				$result->execute(array($idEquipe, $_SESSION['Signature']));
+				$myBdd->RefreshCategoriesJoueurs($matrics);
 
 				// TODO : Journal d'insertion ! 
 				// $myBdd->utyJournal($action, $saison='', $competition='', $evenement=null, $journee=null, $match=null, $journal='', $user='')

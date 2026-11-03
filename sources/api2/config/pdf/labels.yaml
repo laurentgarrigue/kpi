@@ -59,6 +59,7 @@ player.club: { fr: 'Club', en: 'Club' }
 player.referee: { fr: 'Arb.', en: 'Ref.' }
 player.team: { fr: 'Équipe', en: 'Team' }
 player.birthdate: { fr: 'Naissance', en: 'Birthdate' }
+player.birthdate_unknown: { fr: 'Date de naissance inconnue', en: 'Unknown birth date' }
 player.birth_month: { fr: 'Mois', en: 'Month' }
 player.photo: { fr: 'Photo', en: 'Photo' }
 player.check: { fr: 'Vérif.', en: 'Check' }

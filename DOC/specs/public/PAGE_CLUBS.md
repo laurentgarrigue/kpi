@@ -1,6 +1,6 @@
 # Clubs : liste, carte et fiche club
 
-**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🛠 Implémentée (à livrer) — **Routes** : `/clubs[?q=][&club=]` (+ `/en`) ; `/clubs/{code}` redirige (301) vers `/clubs?club={code}`
+**Phase** : 3 — **Statut** : ✅ Validée (09/10/2026) — 🚀 Livrée (beta) — **Routes** : `/clubs[?q=][&club=]` (+ `/en`) ; `/clubs/{code}` redirige (301) vers `/clubs?club={code}`
 — **Remplace** : `kpclubs.php`, `kplogos.php`, `json-clubs.php`, `searchClubs.php` — **Entrée de menu** : `clubs`
 
 ## 1. Objectif

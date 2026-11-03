@@ -1,6 +1,6 @@
 # Vues agrégées « événement » et « groupe »
 
-**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta)
 **Routes** : `/events` (liste, § 2.2) ;
 - `/events/{id}` → `/events/{id}/{tab}`, `tab` ∈ `competitions` · `info` · `games` · `pitches` · `progress` · `ranking` · `stats` (+ `/en/…`)
 - `/groups/{season}/{code}` → `/groups/{season}/{code}/{tab}`, mêmes onglets (+ `/en/…`)

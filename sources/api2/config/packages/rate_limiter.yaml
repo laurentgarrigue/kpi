@@ -1,0 +1,41 @@
+# Rate-limiting /auth/login — AUTH_HARDENING.md § 2.3 (AUTH-RL-01, AUTH-RL-02).
+#
+# Deux limiteurs appliqués simultanément à chaque appel POST /auth/login :
+#   - par IP (5 / 15 min) → bloque un attaquant qui balaie des mots de passe
+#   - par code utilisateur (10 / 15 min) → bloque un attaquant distribué (plusieurs IP ciblant un même compte)
+#
+# Policy sliding_window : évite le pic en début de fenêtre d'une fixed_window.
+# Pool dédié `cache.rate_limiter` : facilite une purge ciblée (déblocage opérationnel) sans vider
+# le cache applicatif ; en test, stockage mémoire (voir when@test ci-dessous).
+framework:
+    cache:
+        pools:
+            cache.rate_limiter:
+                adapter: cache.adapter.filesystem
+
+    rate_limiter:
+        login_ip:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter
+        login_user:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter
+
+when@test:
+    # Stockage mémoire : un kernel neuf (createClient() dans setUp) = compteurs à zéro, et au sein d'un
+    # même test disableReboot() les conserve pour empiler les tentatives. Pas un pool `cache.adapter.array` :
+    # les pools sont tagués kernel.reset, donc vidés après CHAQUE requête — le quota ne se cumulerait jamais.
+    services:
+        test.rate_limiter.storage:
+            class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+
+    framework:
+        rate_limiter:
+            login_ip:
+                storage_service: test.rate_limiter.storage
+            login_user:
+                storage_service: test.rate_limiter.storage

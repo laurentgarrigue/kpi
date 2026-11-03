@@ -56,4 +56,11 @@ final class PresencePlayerTest extends TestCase
         self::assertFalse(PresencePlayer::isUnder21(null, '2026'));
         self::assertFalse(PresencePlayer::isUnder21('0000-00-00', '2026'));
     }
+
+    /** CATEGORIE_AGE.md story 9: « ? » for an unknown birth date. */
+    public function testCategoryShowsAQuestionMarkWhenTheBirthDateIsUnknown(): void
+    {
+        self::assertSame('JUN', PresencePlayer::category('JUN'));
+        self::assertSame('?', PresencePlayer::category(null));
+    }
 }

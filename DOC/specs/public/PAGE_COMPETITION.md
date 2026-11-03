@@ -1,6 +1,6 @@
 # Page compétition et ses onglets
 
-**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés)
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta)
 **Routes** : `/competitions/{season}/{code}` → `/competitions/{season}/{code}/{tab}` (+ `/en/…`),
 `tab` ∈ `info` · `games` · `pitches` · `progress` · `ranking` · `stats`
 **Remplace** : `kpmatchs.php`, `kpterrains.php`, `kpdetails.php`, `kpchart.php`, `kpphases.php`,

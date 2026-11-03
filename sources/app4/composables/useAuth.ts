@@ -46,6 +46,7 @@ export const useAuth = () => {
     try {
       const response = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
+        credentials: 'include', // phase 1b : récupérer les cookies kpi_access/kpi_refresh
         headers: {
           'Content-Type': 'application/json'
         },
@@ -77,18 +78,41 @@ export const useAuth = () => {
     }
   }
 
-  // Logout
+  // Logout: révoque le refresh token côté api2 (AUTH_HARDENING § 3) puis nettoie l'état local.
+  // L'appel passe le cookie kpi_refresh via credentials: 'include'. Les erreurs réseau sont
+  // tolérées : la déconnexion locale ne doit jamais être bloquée par un backend injoignable.
   const logout = async (): Promise<void> => {
+    try {
+      await fetch(`${baseUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      })
+    } catch {
+      // ignore — on nettoie quand même l'état local
+    }
     authStore.clearAuth()
   }
 
-  // Refresh the JWT token silently using the existing valid token
+  // Refresh the JWT token silently using the existing valid token.
+  // Phase 1b : si le JWT en localStorage est perdu/expiré mais que le cookie refresh existe,
+  // on bascule sur /auth/refresh-session qui ne lit QUE le cookie — pas d'en-tête Authorization.
   const refreshToken = async (): Promise<boolean> => {
-    if (!authStore.token) return false
+    if (!authStore.token) {
+      try {
+        const sessionResp = await fetch(`${baseUrl}/auth/refresh-session`, {
+          method: 'POST',
+          credentials: 'include'
+        })
+        return sessionResp.ok
+      } catch {
+        return false
+      }
+    }
 
     try {
       const response = await fetch(`${baseUrl}/auth/refresh`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${authStore.token}`,
           ...(authStore.activeMandate ? { 'X-Active-Mandate': String(authStore.activeMandate.id) } : {})
@@ -120,6 +144,7 @@ export const useAuth = () => {
 
     try {
       const response = await fetch(`${baseUrl}/auth/me`, {
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${authStore.token}`,
           ...(authStore.activeMandate ? { 'X-Active-Mandate': String(authStore.activeMandate.id) } : {})
@@ -142,6 +167,7 @@ export const useAuth = () => {
   const switchMandate = async (mandateId: number | null): Promise<void> => {
     const response = await fetch(`${baseUrl}/auth/switch-mandate`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authStore.token}`

@@ -2,7 +2,12 @@
 
 namespace App\Controller;
 
+use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\BirthDatePlausibility;
+use App\AgeCategory\CompositionAgeCategories;
+use App\Athlete\InternationalPlayer;
 use App\Entity\User;
+use App\Service\ActiveSeason;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -36,7 +41,11 @@ class AdminAthletesController extends AbstractController
     ];
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly AgeCategoryRule $ageCategories,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
+        private readonly ActiveSeason $activeSeason,
+        private readonly BirthDatePlausibility $birthDatePlausibility,
     ) {
     }
 
@@ -192,9 +201,7 @@ class AdminAthletesController extends AbstractController
         );
 
         // Fetch surclassement for current active season
-        $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
-        );
+        $activeSeason = $this->activeSeason->code();
 
         // Surclassement: use athlete's own Origine season (not active season)
         // An athlete can have a surclassement for a season different from the current active one
@@ -210,21 +217,9 @@ class AdminAthletesController extends AbstractController
             }
         }
 
-        // Compute age category: use athlete's Origine season for consistency
-        // sexe in kp_categorie is 'T' (Tous/all) — no gender split at this level
-        $categorieAge = null;
-        $seasonForAge = $athleteSeason ?: $activeSeason;
-        if ($seasonForAge && $row['Naissance']) {
-            $anneeNaissance = (int) substr($row['Naissance'], 0, 4);
-            $age = (int) $seasonForAge - $anneeNaissance;
-            $cat = $this->connection->fetchAssociative(
-                "SELECT id, libelle FROM kp_categorie WHERE age_min <= ? AND age_max >= ?",
-                [$age, $age]
-            );
-            if ($cat) {
-                $categorieAge = ['code' => $cat['id'], 'libelle' => $cat['libelle']];
-            }
-        }
+        // Age category of the active season, never the licence's season of origin (CATEGORIE_AGE.md story 4)
+        $category = $this->ageCategories->categoryFor($row['Naissance'], $activeSeason);
+        $categorieAge = $category ? ['code' => $category->code, 'libelle' => $category->label] : null;
 
         // Build qualification label from arbitre record
         $qualification = '';
@@ -280,7 +275,7 @@ class AdminAthletesController extends AbstractController
             'typeLicence' => $row['Type_licence'] ?? null,
             'categorieAge' => $categorieAge,
             'surclassement' => $surclassement,
-            'editable' => (int) $row['Matric'] > 2000000,
+            'editable' => InternationalPlayer::is((int) $row['Matric']),
         ]);
     }
 
@@ -336,7 +331,7 @@ class AdminAthletesController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     #[OA\Put(
         path: '/admin/athletes/{matric}',
-        summary: 'Update athlete (identity, club, refereeing). Only non-federal athletes (Matric > 2000000)',
+        summary: 'Update athlete (identity, club, refereeing). Only international athletes (Matric >= 2000000)',
         tags: ['28. App4 - Athletes']
     )]
     #[OA\Parameter(name: 'matric', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
@@ -356,7 +351,7 @@ class AdminAthletesController extends AbstractController
         }
 
         // Only non-federal athletes can be modified
-        if ($matric <= 2000000) {
+        if (!InternationalPlayer::is($matric)) {
             return $this->json([
                 'error' => true,
                 'message' => 'Modification interdite pour cet athlète (licencié fédéral)',
@@ -380,6 +375,15 @@ class AdminAthletesController extends AbstractController
 
         if (!in_array($sexe, ['M', 'F'], true)) {
             return $this->json(['error' => true, 'message' => 'Sexe invalide (M ou F)', 'code' => 'VALIDATION_ERROR'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // A null birth date is « unknown » (CATEGORIE_AGE.md story 13); a known one must be plausible (story 14)
+        if ($naissance !== null && !$this->birthDatePlausibility->isPlausible($naissance)) {
+            return $this->json([
+                'error' => true,
+                'message' => BirthDatePlausibility::refusalMessage(),
+                'code' => 'IMPLAUSIBLE_BIRTHDATE',
+            ], Response::HTTP_BAD_REQUEST);
         }
 
 
@@ -440,7 +444,10 @@ class AdminAthletesController extends AbstractController
                 [$nom, $prenom, $sexe, $matric]
             );
 
-            // c. REPLACE INTO kp_arbitre
+            // c. Age category cache of every composition, all seasons, locked included (stories 11, 12, 16)
+            $this->compositionAgeCategories->refreshPlayer($matric);
+
+            // d. REPLACE INTO kp_arbitre
             $this->updateArbitrage($matric, $arbQualification, $arbNiveau);
 
             $this->connection->commit();
@@ -467,9 +474,10 @@ class AdminAthletesController extends AbstractController
     private function fetchPresences(int $matric, string $season): array
     {
         $sql = "SELECT ce.Code_compet, ce.Libelle AS equipe,
-                       cej.Numero, cej.Capitaine, cej.Categ
+                       cej.Numero, cej.Capitaine, lc.Naissance
                 FROM kp_competition_equipe_joueur cej
                 JOIN kp_competition_equipe ce ON ce.Id = cej.Id_equipe
+                LEFT JOIN kp_licence lc ON lc.Matric = cej.Matric
                 WHERE cej.Matric = ?
                   AND ce.Code_saison = ?
                   AND ce.Code_compet != 'POOL'
@@ -482,7 +490,8 @@ class AdminAthletesController extends AbstractController
             'equipe' => $row['equipe'],
             'numero' => $row['Numero'] !== null ? (int) $row['Numero'] : null,
             'capitaine' => $row['Capitaine'] ?? '-',
-            'categorie' => $row['Categ'] ?? '',
+            // Derived from birth date + season, never the stored Categ cache (ADR 0001); null when unknown
+            'categorie' => $this->ageCategories->categoryFor($row['Naissance'], $season)?->code,
         ], $rows);
     }
 
@@ -659,9 +668,7 @@ class AdminAthletesController extends AbstractController
         }
 
         // Get active season for the saison field
-        $activeSeason = $this->connection->fetchOne(
-            "SELECT Code FROM kp_saison WHERE Etat = 'O' ORDER BY Code DESC LIMIT 1"
-        ) ?: '';
+        $activeSeason = $this->activeSeason->code();
 
         // Get existing livret to preserve it
         $existingLivret = $this->connection->fetchOne(
