@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Security\GoogleOAuthClient;
 use App\Security\KnownDeviceService;
 use App\Security\LoginAttemptLogger;
+use App\Security\LoginRateLimiter;
 use App\Security\RefreshTokenService;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
@@ -49,6 +50,7 @@ class OAuthController extends AbstractController
         private readonly RefreshTokenService $refreshTokenService,
         private readonly KnownDeviceService $knownDeviceService,
         private readonly LoginAttemptLogger $loginLogger,
+        private readonly LoginRateLimiter $loginRateLimiter,
         private readonly NotificationService $notificationService,
         private readonly string $app4Url,
     ) {
@@ -179,12 +181,14 @@ class OAuthController extends AbstractController
             );
             // Un cookie signé transporte temporairement la paire sub+email pour que /link puisse écrire sans
             // refaire un échange avec Google (le code est à usage unique). TTL court.
+            $exp = time() + 600;
             $pending = base64_encode(json_encode([
                 'provider' => 'google',
+                'code' => $matches[0]['Code'],
                 'sub' => $claims['sub'],
                 'email' => $claims['email'],
-                'exp' => time() + 600,
-                'sig' => hash_hmac('sha256', $claims['sub'] . '|' . $claims['email'], $this->getParameter('kernel.secret')),
+                'exp' => $exp,
+                'sig' => $this->signPending($matches[0]['Code'], $claims['sub'], $claims['email'], $exp),
             ]));
             $redirect->headers->setCookie(
                 Cookie::create('kpi_oauth_pending')
@@ -233,10 +237,35 @@ class OAuthController extends AbstractController
         // Récupérer le hash du mot de passe en base — on autorise bcrypt uniquement (pas de MD5),
         // puisque le lien OAuth marque le compte comme « sécurisé » et qu'on refuse à partir de là
         // d'ouvrir une nouvelle voie à un hash faible.
-        $row = $this->connection->fetchAssociative('SELECT Pwd FROM kp_user WHERE Code = ?', [$userCode]);
-        if (!$row || !password_verify($password, $row['Pwd'])) {
+        // Le cookie est lié au compte trouvé par e-mail : on refuse tout autre code (sinon le mot de
+        // passe d'un compte quelconque suffirait à y rattacher cette identité Google).
+        if (!hash_equals($pending['code'], $userCode)) {
             return $this->json(['message' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
         }
+
+        // Mêmes protections que le login par mot de passe : rate-limit, verrouillage, journal.
+        $limit = $this->loginRateLimiter->consume($request, $userCode);
+        if (!$limit->isAccepted()) {
+            $this->loginLogger->logFailure($userCode, LoginAttemptLogger::REASON_RATE_LIMITED, $request, LoginAttemptLogger::METHOD_PASSWORD);
+            $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
+            return $this->json(['message' => 'Too many attempts, please retry later'], Response::HTTP_TOO_MANY_REQUESTS, [
+                'Retry-After' => (string) $retryAfter,
+            ]);
+        }
+        if ($this->loginLogger->isAccountLocked($userCode)) {
+            $this->loginLogger->logFailure($userCode, LoginAttemptLogger::REASON_ACCOUNT_LOCKED, $request);
+            return $this->json([
+                'message' => 'Account temporarily locked after too many failed attempts',
+                'code' => 'ACCOUNT_LOCKED',
+            ], Response::HTTP_LOCKED);
+        }
+
+        $row = $this->connection->fetchAssociative('SELECT Pwd FROM kp_user WHERE Code = ?', [$userCode]);
+        if (!$row || !password_verify($password, $row['Pwd'])) {
+            $this->loginLogger->logFailure($userCode, LoginAttemptLogger::REASON_BAD_PASSWORD, $request);
+            return $this->json(['message' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
+        }
+        $this->loginRateLimiter->resetUser($userCode);
 
         // Lien effectif. INSERT IGNORE pour tolérer un double-clic (unicité par provider+sub).
         $this->connection->executeStatement(
@@ -382,7 +411,7 @@ class OAuthController extends AbstractController
     }
 
     /**
-     * @return array{provider: string, sub: string, email: string}|null
+     * @return array{provider: string, code: string, sub: string, email: string}|null
      */
     private function readPendingCookie(Request $request): ?array
     {
@@ -401,11 +430,21 @@ class OAuthController extends AbstractController
         if (($data['exp'] ?? 0) < time()) {
             return null;
         }
-        $expectedSig = hash_hmac('sha256', ($data['sub'] ?? '') . '|' . ($data['email'] ?? ''), $this->getParameter('kernel.secret'));
-        if (!is_string($data['sig'] ?? null) || !hash_equals($expectedSig, $data['sig'])) {
+        foreach (['code', 'sub', 'email', 'sig'] as $key) {
+            if (!is_string($data[$key] ?? null)) {
+                return null;
+            }
+        }
+        $expectedSig = $this->signPending($data['code'], $data['sub'], $data['email'], (int) $data['exp']);
+        if (!hash_equals($expectedSig, $data['sig'])) {
             return null;
         }
-        return ['provider' => $data['provider'], 'sub' => $data['sub'], 'email' => $data['email']];
+        return ['provider' => $data['provider'], 'code' => $data['code'], 'sub' => $data['sub'], 'email' => $data['email']];
+    }
+
+    private function signPending(string $code, string $sub, string $email, int $exp): string
+    {
+        return hash_hmac('sha256', $code . '|' . $sub . '|' . $email . '|' . $exp, $this->getParameter('kernel.secret'));
     }
 
     /**

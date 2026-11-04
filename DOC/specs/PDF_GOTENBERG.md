@@ -372,10 +372,14 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
   Arbitres** (principal au-dessus du secondaire). Équipes et arbitres non encore désignés : leur **libellé d'attente**
   (« (1er Poule A) », « (Vainqueur match 12) », dans la langue du PDF). La liste commence toujours sous l'en-tête de la
   première page : ses sections s'écoulent sur les pages suivantes.
-- Tous les documents qui affichent des matchs (`games-list`, `ranking-team-detail`, `ranking-phases`) : l'équipe
-  vainqueur **et le score** en gras (2026-10-31).
+- Tous les documents qui affichent des matchs (`games-list`, `ranking-team-detail`, `ranking-phases`, justification
+  de départage) : l'équipe vainqueur en gras, ainsi que **son score seulement**, pas celui de l'équipe perdante
+  (2026-10-31, précisé le 2026-11-01).
 - `scoresheet` : une colonne **RD** (carton rouge définitif, futur carton noir) après V, J, R de chaque équipe
-  (2026-10-31).
+  (2026-10-31). Depuis le 2026-11-01 : colonnes des cartons sur fond pastel de leur couleur (vert, jaune, rouge, rouge
+  soutenu pour RD) ; statuts par leur libellé, comme sur la feuille de présence (« (Capitaine) » après le nom,
+  « Staff » à la place du numéro, au lieu de « Entraîneur ») ; une ligne d'événement remplie a la même hauteur qu'une
+  vide, pour qu'une feuille complète tienne sur une page.
 - `schema` (admin, `ROLE_VIEWER` + périmètre, comme la page Schéma d'app4, 2026-10-31) : remplace l'impression du
   navigateur de la page `gamedays/schema`. Une coupe en colonnes par étape (classement publié des poules, sinon leurs
   équipes ; tableaux d'élimination, vainqueur en premier), un championnat par journée. Options de la page : `count=0`
@@ -389,6 +393,22 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 
 La **feuille de marque** est un document officiel rempli à la main : format A4, zones d'écriture et rubriques
 inchangées, validées par la commission arbitrage avant mise en service (critère PDF-DOC-03).
+
+Mise en page (2026-11-03, sur le modèle de l'ancienne feuille de production) :
+
+- **une page par match**, jamais de page blanche : chaque page est une boîte de la hauteur de la page, colonnes à
+  largeur fixe, une ligne par case (un nom trop long est tronqué, il ne pousse pas la feuille sur une 2e page) ;
+- au-delà de 26 faits de match, la grille **continue sur des pages suivantes** (40 lignes chacune, « Feuille de
+  marque (suite 2/3) ») ; la colonne de gauche y rappelle le match : compétition, lieu, date, heure, numéro, terrain,
+  phase, équipes, arbitres et identifiant ;
+- **date, heure, numéro de match et terrain en grand** ; champs nominatifs (organisateur, responsable
+  d'organisation, délégué, arbitres, secrétaire, chrono, shotclock, lignes) et lieu sur une demi-largeur au moins ;
+  libellés courts : « Arbitre 1 », « Arbitre 2 », « Chrono », « Ligne 1 », « Ligne 2 » (un champ par juge de ligne) ;
+- compositions à colonnes fixes, Nom et Prénom les plus larges ; la licence porte sa saison d'origine si elle diffère
+  de la saison du match ;
+- grille des faits : « Équipe A » et « Équipe B » alignées à gauche ;
+- **QR code** au-dessus de l'identifiant du match, vers sa page de saisie en ligne dans app4
+  (`APP4_URL/games/{id}/scoring`, comme l'ancienne feuille vers `FeuilleMarque2.php`).
 
 ### 7.4 Classements
 
@@ -406,6 +426,7 @@ Dans app4, les entrées « Classement publié » de la page Classements (profils
 Coupe (`CP`, décision du 2026-10-30) : `ranking` ne montre que le **classement final** (rang, équipe, médaille), sans
 tableau de points, comme l'onglet Classement d'app3 ; `ranking-team-detail` regroupe les matchs de chaque équipe par
 **nom de phase** (« Poule A », « Finale ») au lieu de la date et du lieu, sans les points de l'équipe.
+`ranking-phases` d'une coupe : le titre de chaque phase seul, sans sa date ni son lieu (2026-11-01).
 Quand le classement porte des médailles, elles **remplacent** les mentions « Qualifié » (validé sur la maquette de référence,
 2026-10-28). Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
 « Provisoire - non publié » en filigrane.
@@ -736,7 +757,7 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 |---|---|
 | Équipes et poules | Poules seulement pour une coupe ; liste unique pour CHPT et MULTI (§ 7.2). |
 | Présence | Non-joueurs (arbitres, inactifs) séparés du reste de la liste (§ 7.2). |
-| Matchs | Score en gras avec l'équipe vainqueur ; libellés d'attente des équipes et arbitres non désignés ; plus de code `[…]` dans Phase / Match ; une liste commence toujours en page 1 (§ 7.3). |
+| Matchs | Équipe vainqueur et son score (seul) en gras ; libellés d'attente des équipes et arbitres non désignés ; plus de code `[…]` dans Phase / Match ; une liste commence toujours en page 1 (§ 7.3). |
 | Feuille de marque | Colonne RD (carton rouge définitif, futur carton noir) (§ 7.3). |
 | Schéma | PDF `schema` par Gotenberg à la place de l'impression du navigateur (§ 7.3). |
 | app3, coupe | Le lien « Classement (PDF) » ouvre `ranking` (classement final), plus `ranking-phases`. |

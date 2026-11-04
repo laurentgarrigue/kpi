@@ -16,8 +16,9 @@ final class ScoresheetSheet
     public const ROSTER_LINES = 10;
     public const INTERNATIONAL_ROSTER_LINES = 12;
 
-    /** Lines of the event grid on the first page. */
+    /** Lines of the event grid on the sheet, then on each continuation page (no score nor signatures there). */
     public const EVENT_LINES = 26;
+    public const CONTINUATION_EVENT_LINES = 40;
 
     /** Level of the referees, left out of their names (utyArbSansNiveau). */
     private const REFEREE_LEVELS = [' (Pool Arbitres 1)', ' (Pool Arbitres 2)', ' INT-A', ' INT-B', ' INT-C', ' INT-S', ' INT', ' NAT-A', ' NAT-B', ' NAT-C', ' NAT-S', ' NAT', ' REG-S', 'REG', ' OTM', ' JO'];
@@ -25,7 +26,6 @@ final class ScoresheetSheet
     /** Not appointed yet. */
     private const NO_REFEREE = '-1';
 
-    /** Columns of an event of team A / team B in the grid. */
     /** Card columns of the event grid; D (definitive red, future black card) has its own. */
     private const CARD_COLUMNS = ['V' => 'green', 'J' => 'yellow', 'R' => 'red', 'D' => 'definitive'];
 
@@ -34,7 +34,7 @@ final class ScoresheetSheet
     private const UNPLAYED_SCORE = '?';
 
     /**
-     * Roster of one team, padded with empty lines: coach marked « C », captain « (Cap) », licence with its season
+     * Roster of one team, padded with empty lines: staff « Staff » as number, captain « (Capitaine) », licence with its season
      * of origin, category with « (sup) » for a player who is not in the team roster.
      *
      * @param list<array<string, mixed>> $players
@@ -48,10 +48,11 @@ final class ScoresheetSheet
         foreach ($players as $player) {
             $name = PresencePlayer::lastName($player['Nom']);
             $number = (string) $player['Numero'];
+            // Labels of the roles, as on the presence sheet: « (Capitaine) » after the name, « Staff » as number.
             if ($player['Capitaine'] === 'E') {
-                [$name, $number] = [$name . ' (' . $labels['scoresheet.coach'] . ')', 'C'];
+                $number = PresencePlayer::role('E', $labels);
             } elseif ($player['Capitaine'] === 'C') {
-                $name .= ' (Cap)';
+                $name .= ' (' . PresencePlayer::role('C', $labels) . ')';
             }
             $matric = (int) $player['Matric'];
             $licence = match (true) {
@@ -79,12 +80,13 @@ final class ScoresheetSheet
     }
 
     /**
-     * Event grid: one line per event, padded to EVENT_LINES; goals counted by team and at half time.
+     * Event grid: one line per event, on the sheet then on continuation pages when there are more events than lines
+     * (eventPages); goals counted by team and at half time.
      *
      * @param list<array<string, mixed>> $events
      * @param array<string, string>      $labels
      *
-     * @return array{lines: list<array<string, string>>, goals: array{A: int, B: int}, half_time: array{A: int, B: int}}
+     * @return array{pages: list<list<array<string, string>>>, goals: array{A: int, B: int}, half_time: array{A: int, B: int}}
      */
     public static function events(array $events, array $labels): array
     {
@@ -114,10 +116,36 @@ final class ScoresheetSheet
         }
 
         return [
-            'lines' => array_pad($lines, max(count($lines), self::EVENT_LINES), []),
+            'pages' => self::eventPages($lines),
             'goals' => $goals,
             'half_time' => $halfTime,
         ];
+    }
+
+    /**
+     * Lines of each page: EVENT_LINES on the sheet, then CONTINUATION_EVENT_LINES per continuation page, the last page
+     * padded with empty lines to be filled in by hand.
+     *
+     * @param list<array<string, string>> $lines
+     *
+     * @return list<list<array<string, string>>>
+     */
+    public static function eventPages(array $lines): array
+    {
+        $pages = [array_slice($lines, 0, self::EVENT_LINES)];
+        foreach (array_chunk(array_slice($lines, self::EVENT_LINES), self::CONTINUATION_EVENT_LINES) as $page) {
+            $pages[] = $page;
+        }
+        $last = count($pages) - 1;
+        $pages[$last] = array_pad($pages[$last], $last === 0 ? self::EVENT_LINES : self::CONTINUATION_EVENT_LINES, []);
+
+        return $pages;
+    }
+
+    /** Scoring page of the game in app4, behind the QR code of the sheet. */
+    public static function scoringUrl(string $app4Url, int $gameId): string
+    {
+        return sprintf('%s/games/%d/scoring', rtrim($app4Url, '/'), $gameId);
     }
 
     /** « DUP. J-M. » (utyNomPrenomCourt). */

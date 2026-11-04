@@ -35,7 +35,8 @@
                         <p class="pdf-step__games-title">{{ labels['tiebreak.games'] }}</p>
                         <ul class="pdf-step__values">
                             {% for game in step.matchs %}
-                                <li>#{{ game.numero }} {{ game.equipeA }} <strong>{{ game.scoreA }} - {{ game.scoreB }}</strong> {{ game.equipeB }}</li>
+                                {# Only the score of the winner in bold. #}
+                                <li>#{{ game.numero }} {{ game.equipeA }} <span class="{{ game.scoreA > game.scoreB ? 'pdf-strong' : '' }}">{{ game.scoreA }}</span> - <span class="{{ game.scoreB > game.scoreA ? 'pdf-strong' : '' }}">{{ game.scoreB }}</span> {{ game.equipeB }}</li>
                             {% endfor %}
                         </ul>
                     {% endif %}
