@@ -655,19 +655,19 @@ const pdfUrls = computed(() => {
   const type = effectiveType.value
   const qs = `Compet=${code}&S=${saison}`
   // Published general ranking: public PDF of api2 (PDF_GOTENBERG.md § 7.4)
-  const publicRanking = pdf.publicUrl('ranking', { season: saison, competition: code, lang: locale.value === 'en' ? 'en' : 'fr' })
+  const publicRanking = pdf.publicUrl('ranking', { season: saison, competition: code })
 
   const urls: Record<string, { admin?: string; public?: string }> = {}
 
   if (type === 'CHPT') {
     urls.general = { admin: `${base}/admin/FeuilleCltChpt.php?${qs}`, public: publicRanking }
-    urls.detail = { admin: `${base}/admin/FeuilleCltChptDetail.php?${qs}`, public: `${base}/PdfCltChptDetail.php?${qs}` }
-    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
+    urls.detail = { admin: `${base}/admin/FeuilleCltChptDetail.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltChptDetail.php?${qs}`) }
+    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: pdf.publicHref(`${base}/PdfListeMatchs.php?${qs}`) }
   } else if (type === 'CP') {
     urls.general = { admin: `${base}/admin/FeuilleCltNiveau.php?${qs}`, public: publicRanking }
-    urls.progress = { admin: `${base}/admin/FeuilleCltNiveauPhase.php?${qs}`, public: `${base}/PdfCltNiveauPhase.php?${qs}` }
-    urls.detail = { admin: `${base}/admin/FeuilleCltNiveauDetail.php?${qs}`, public: `${base}/PdfCltNiveauDetail.php?${qs}` }
-    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: `${base}/PdfListeMatchs.php?${qs}` }
+    urls.progress = { admin: `${base}/admin/FeuilleCltNiveauPhase.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltNiveauPhase.php?${qs}`) }
+    urls.detail = { admin: `${base}/admin/FeuilleCltNiveauDetail.php?${qs}`, public: pdf.publicHref(`${base}/PdfCltNiveauDetail.php?${qs}`) }
+    urls.matches = { admin: `${base}/admin/FeuilleListeMatchs.php?${qs}`, public: pdf.publicHref(`${base}/PdfListeMatchs.php?${qs}`) }
   } else if (type === 'MULTI') {
     urls.general = { admin: `${base}/admin/FeuilleCltMulti.php?${qs}`, public: publicRanking }
   }

@@ -1354,6 +1354,42 @@ class MyBdd
 		}
 	}
 
+	// RefreshCategoriesJoueurs : recalcule kp_competition_equipe_joueur.Categ de toutes les compositions des joueurs
+	// donnés, toutes saisons, verrouillées comprises, à partir de leur date de naissance et de la saison de l'équipe
+	// (saison active pour le pool arbitres, pseudo saison) ; NULL si la date est inconnue (utySqlUnknownBirthDate).
+	// Même règle que App\AgeCategory\CompositionAgeCategories::refreshPlayer (api2, ADR 0001). Ajout legacy délibéré
+	// (CATEGORIE_AGE.md, Further Notes), à supprimer quand les imports et l'ajout de licences passeront par api2.
+	// Requiert MyTools.php (constantes et helpers de date de naissance).
+	function RefreshCategoriesJoueurs(array $matrics)
+	{
+		$matrics = array_values(array_unique(array_map('intval', $matrics)));
+		if (count($matrics) === 0) {
+			return 0;
+		}
+		$in = implode(',', array_fill(0, count($matrics), '?'));
+		$sql = "UPDATE kp_competition_equipe_joueur cej 
+			INNER JOIN kp_competition_equipe ce ON ce.Id = cej.Id_equipe 
+			LEFT OUTER JOIN kp_licence l ON l.Matric = cej.Matric 
+			SET cej.Categ = IF(" . utySqlUnknownBirthDate('l.Naissance') . ", NULL, (
+				SELECT c.id FROM kp_categorie c 
+				WHERE IF(ce.Code_compet = ?, ?, ce.Code_saison) - YEAR(l.Naissance) BETWEEN c.age_min AND c.age_max 
+				ORDER BY c.age_min, c.id LIMIT 1)) 
+			WHERE cej.Matric IN ($in) ";
+		$result = $this->pdo->prepare($sql);
+		$result->execute(array_merge([REFEREES_POOL_COMPET, $this->GetSaisonEtatActif()], $matrics));
+		return $result->rowCount();
+	}
+
+	// GetSaisonEtatActif : saison active en base (Etat 'A'), la plus récente si aucune ne l'est ; indépendante de la
+	// saison de travail en session (GetActiveSaison). Même règle que App\Service\ActiveSeason (api2).
+	function GetSaisonEtatActif()
+	{
+		$sql = "SELECT COALESCE(
+				(SELECT Code FROM kp_saison WHERE Etat = 'A' ORDER BY Code DESC LIMIT 1),
+				(SELECT MAX(Code) FROM kp_saison)) ";
+		return (string) $this->pdo->query($sql)->fetchColumn();
+	}
+
 	// GetCategorie
 	function GetCategorie($age, &$code, &$libelle)
 	{

@@ -428,13 +428,14 @@ const addWithOverride = async () => {
   addFormError.value = ''
 
   try {
-    await presenceStore.addPlayer({
+    const warnings = await presenceStore.addPlayer({
       mode: 'existing',
       matric: selectedPlayer.value.matric,
       numero: addFormData.value.numero,
       capitaine: overrideStatus.value,
       forceAdd: true
     }, api)
+    notifyWarnings(warnings, minPagaie.value)
 
     toast.add({ title: t('presence.player_added'), color: 'success' })
     addModalOpen.value = false
@@ -616,8 +617,7 @@ const pdfLinks = computed(() => {
   })
 
   const links: Record<string, string> = {
-    fr: `${config.public.legacyBaseUrl}/admin/FeuillePresence.php?${params}`,
-    en: `${config.public.legacyBaseUrl}/admin/FeuillePresenceEN.php?${params}`,
+    sheet: `${config.public.legacyBaseUrl}/admin/FeuillePresence.php?${params}`,
     photo: `${config.public.legacyBaseUrl}/admin/FeuillePresencePhoto.php?${params}`,
   }
   // Only the documents api2 allows to the profile (PDF_GOTENBERG.md § 7.6, I1 and I2)
@@ -915,7 +915,7 @@ const pdfLinks = computed(() => {
                 {{ player.numeroClub }}
               </NuxtLink>
             </td>
-            <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+            <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" :warnings="player.eligibilityWarnings" /></td>
 
             <!-- Surclassement (national competitions only) -->
             <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
@@ -1027,7 +1027,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" :warnings="player.eligibilityWarnings" /></td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1127,7 +1127,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" :warnings="player.eligibilityWarnings" /></td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1227,7 +1227,7 @@ const pdfLinks = computed(() => {
                   {{ player.numeroClub }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">{{ player.categ }}-{{ player.sexe }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" :warnings="player.eligibilityWarnings" /></td>
               <td v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-sm text-center">
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
@@ -1356,7 +1356,7 @@ const pdfLinks = computed(() => {
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.category') }}:</span>
-            <span>{{ player.categ }}-{{ player.sexe }}</span>
+            <span><AdminAgeCategory :code="player.categ" :sexe="player.sexe" :warnings="player.eligibilityWarnings" /></span>
           </div>
           <div v-if="presenceStore.isNationalCompetition && player.surclassementNeeded" class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('presence.surclassement') }}:</span>

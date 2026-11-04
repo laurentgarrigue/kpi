@@ -14,18 +14,25 @@ final class PdfRequest
     /** Cap on the games of one document (§ 9). */
     public const MAX_GAMES = 200;
 
+    /** Cap on the competitions of one document (a group of competitions, as the legacy `Compet=N1H,N2H`). */
+    public const MAX_COMPETITIONS = 30;
+
     private const SEASON = '/^\d{4}$/';
     private const CODE = '/^[A-Za-z0-9_-]{1,12}$/';
     private const OPTION_VALUE = '/^[A-Za-z0-9_-]{1,20}$/';
     private const COMMON = ['season', 'competition', 'event', 'team', 'gameday', 'games', 'lang', 'tz'];
 
+    /** The competition when the request names exactly one (`competition=N1H`), else null. */
+    public readonly ?string $competition;
+
     /**
+     * @param list<string>          $competitions `competition=N1H,N2H`
      * @param list<int>             $games
-     * @param array<string, string> $options document options (`view`, `visa`…)
+     * @param array<string, string> $options      document options (`view`, `visa`…)
      */
     private function __construct(
         public readonly string $season,
-        public readonly ?string $competition,
+        public readonly array $competitions,
         public readonly ?int $event,
         public readonly ?int $team,
         public readonly ?int $gameday,
@@ -34,6 +41,7 @@ final class PdfRequest
         public readonly string $timezone,
         public readonly array $options,
     ) {
+        $this->competition = count($competitions) === 1 ? $competitions[0] : null;
     }
 
     /**
@@ -77,7 +85,7 @@ final class PdfRequest
 
         return new self(
             $season,
-            isset($query['competition']) ? self::matching($query, 'competition', self::CODE) : null,
+            self::competitions($query['competition'] ?? null),
             self::positiveInt($query, 'event'),
             self::positiveInt($query, 'team'),
             self::positiveInt($query, 'gameday'),
@@ -90,7 +98,7 @@ final class PdfRequest
 
     public function requireCompetition(): string
     {
-        return $this->competition ?? throw new InvalidPdfRequest('Parameter "competition" is required.');
+        return $this->competition ?? throw new InvalidPdfRequest('Parameter "competition" (one code) is required.');
     }
 
     public function option(string $name): ?string
@@ -103,7 +111,7 @@ final class PdfRequest
     {
         return array_filter([
             'season' => $this->season,
-            'competition' => $this->competition,
+            'competition' => $this->competitions === [] ? null : implode(',', $this->competitions),
             'event' => $this->event,
             'team' => $this->team,
             'gameday' => $this->gameday,
@@ -136,6 +144,25 @@ final class PdfRequest
         }
 
         return $value;
+    }
+
+    /** @return list<string> */
+    private static function competitions(?string $list): array
+    {
+        if ($list === null) {
+            return [];
+        }
+        $codes = array_values(array_unique(explode(',', $list)));
+        foreach ($codes as $code) {
+            if (!preg_match(self::CODE, $code)) {
+                throw new InvalidPdfRequest('Parameter "competition" is malformed.');
+            }
+        }
+        if (count($codes) > self::MAX_COMPETITIONS) {
+            throw new InvalidPdfRequest(sprintf('At most %d competitions per document.', self::MAX_COMPETITIONS));
+        }
+
+        return $codes;
     }
 
     /** @return list<int> */

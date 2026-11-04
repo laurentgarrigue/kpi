@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendrier</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.tools { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 18px 0 14px; }
+.month-nav { display: flex; align-items: center; gap: 10px; }
+.month-nav h2 { font: 400 34px/1 var(--display); color: var(--title); margin: 0 6px; min-width: 7.5ch; text-align: center; }
+.month-nav button { font: inherit; width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.views { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.views button { font: inherit; font-size: 14px; padding: 7px 14px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.views button + button { border-left: 1px solid var(--line); }
+.views [aria-pressed="true"] { background: var(--navy); color: #fff; }
+.subscribe { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line); text-decoration: none; font-weight: 600; font-size: 14px; }
+.subscribe svg { width: 18px; height: 18px; }
+
+/* Level colours, always with the level written beside: never colour alone. */
+.l1 { --lvl: var(--gold); } .l2 { --lvl: var(--navy); } .l3 { --lvl: #2f7d4a; } .l4, .l5, .l100 { --lvl: var(--blue); }
+:root[data-theme="dark"] .l2 { --lvl: var(--blue); }
+
+/* List: one block per week, Monday to Sunday; long competitions show their own dates and length. */
+.week { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0 24px; padding: 18px 0; border-top: 1px solid var(--line); }
+.week .when { font: 400 30px/1 var(--display); color: var(--blue-deep); margin: 0; }
+.week .when small { display: block; font: 600 13px var(--text); color: var(--muted); margin-top: 4px; }
+.week.now .when small { color: var(--live); }
+.week ul { list-style: none; margin: 0; padding: 0; }
+.week li a { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 14px; padding: 8px 0; text-decoration: none; }
+.week li a:hover b { text-decoration: underline; }
+.week li i { border-radius: 2px; background: var(--lvl); }
+.week b { display: block; font-weight: 600; }
+.week small { color: var(--muted); font-size: 13px; }
+.week .span { display: inline-block; margin-left: 6px; font-size: 12px; font-weight: 700; color: var(--blue-deep); }
+.week .lvl { font-size: 12px; font-weight: 700; color: var(--lvl); align-self: start; padding-top: 3px; white-space: nowrap; }
+
+/* Month: the full grid, competitions as bars across their days. */
+.month { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 56px; }
+.month .dow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--wash); font-size: 13px; font-weight: 600; color: var(--muted); }
+.month .dow span { padding: 6px 8px; }
+.wk { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: min-content; border-top: 1px solid var(--line); min-height: 96px; }
+.wk .bg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.wk .bg span { border-left: 1px solid var(--line); }
+.wk .bg span:first-child { border-left: 0; }
+.wk .bg .out { background: color-mix(in srgb, var(--wash) 70%, transparent); }
+.wk .bg .we { background: color-mix(in srgb, var(--wash) 40%, transparent); }
+.wk .num { position: relative; grid-row: 1; padding: 4px 6px 2px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wk .num.out { opacity: .5; }
+.wk .num.today b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--live); color: #fff; }
+.bar-ev { position: relative; z-index: 1; margin: 1px 3px; padding: 3px 7px; border-radius: 4px; font-size: 12.5px; line-height: 1.3; text-decoration: none; overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--lvl) 14%, var(--surface)); border-left: 3px solid var(--lvl); color: var(--ink); }
+.bar-ev:hover { background: color-mix(in srgb, var(--lvl) 24%, var(--surface)); }
+.bar-ev.cont-l { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-style: dashed; }
+.bar-ev.cont-r { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); margin: -4px 0 12px; }
+.legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--lvl); margin-right: 6px; vertical-align: -1px; }
+.empty { color: var(--muted); padding: 24px 0; }
+main { padding-bottom: 56px; }
+@media (max-width: 700px) {
+  .week { grid-template-columns: 1fr; gap: 8px; }
+  .week .when small { display: inline; margin-left: 8px; }
+  .subscribe { margin-left: 0; }
+  .wk { min-height: 64px; }
+  .bar-ev { font-size: 11px; padding: 2px 4px; margin: 1px; }
+  .month .dow span { padding: 4px; text-align: center; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <div class="page-head"><h1>Calendrier</h1></div>
+  <div class="tools">
+    <div class="month-nav"><button type="button" id="prev" aria-label="Mois précédent">‹</button><h2 id="month" aria-live="polite"></h2><button type="button" id="next" aria-label="Mois suivant">›</button></div>
+    <div class="views" role="group" aria-label="Affichage"><button type="button" data-v="list">Par semaine</button><button type="button" data-v="grid">Mois</button></div>
+    <div class="chips" id="levels" role="group" aria-label="Niveau"></div>
+    <a class="subscribe" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>S'abonner au calendrier</a>
+  </div>
+  <div id="list"></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const ENTRIES = __CALENDAR__;
+const TODAY = '2026-10-22';
+const LEVELS = { 1: 'International', 2: 'National', 3: 'Régional', 4: 'Tournoi international', 5: 'Continental', 100: 'Divers' };
+let month = TODAY.slice(0, 7), level = null, view = 'list';
+document.getElementById('chrome').innerHTML = siteChrome('Calendrier');
+
+const addDays = (d, n) => { const x = utc(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+const monday = d => addDays(d, -((utc(d).getUTCDay() + 6) % 7));
+const days = (a, b) => Math.round((utc(b) - utc(a)) / 864e5) + 1;
+const visible = () => ENTRIES.filter(e => level === null || e.competition.section === level);
+
+function listView() {
+  // An entry belongs to the week (Monday to Sunday) it starts in.
+  const list = visible().filter(e => e.start.slice(0, 7) === month || (e.start < month + '-01' && e.end >= month + '-01'));
+  const weeks = Object.entries(list.reduce((m, e) => ((m[monday(e.start)] ??= []).push(e), m), {})).sort(([a], [b]) => a.localeCompare(b));
+  if (!weeks.length) return '<p class="empty">Aucune compétition ce mois-ci avec ce filtre. Changez de mois ou affichez tous les niveaux.</p>';
+  return weeks.map(([mon, items]) => {
+    const start = items.reduce((m, e) => (e.start < m ? e.start : m), items[0].start);
+    const end = items.reduce((m, e) => (e.end > m ? e.end : m), items[0].end);
+    const weekend = items.every(e => (utc(e.start).getUTCDay() + 6) % 7 >= 4 && e.end <= addDays(mon, 6));
+    const now = TODAY >= mon && TODAY <= addDays(mon, 6);
+    return `<section class="week${now ? ' now' : ''}" aria-label="${weekend ? 'Week-end' : 'Semaine'} du ${fmt(start, { day: 'numeric', month: 'long' })}">
+      <p class="when">${shortRange(start, end)}<small>${now ? (weekend ? 'Ce week-end' : 'Cette semaine') : weekend ? 'Week-end' : 'Semaine'}</small></p>
+      <ul>${items.sort((a, b) => a.competition.section - b.competition.section || a.start.localeCompare(b.start)).map(e => {
+        const n = days(e.start, e.end);
+        const own = e.start !== start || e.end !== end || n >= 3;
+        return `<li class="l${e.competition.section}"><a href="infos.html"><i aria-hidden="true"></i>
+          <span><b>${esc(decode(e.name))}${n >= 3 ? `<span class="span">${n} jours</span>` : ''}</b><small>${esc(place(e) || 'Lieu à venir')}${own ? `, ${shortRange(e.start, e.end)}` : ''}</small></span>
+          <span class="lvl">${LEVELS[e.competition.section]}</span></a></li>`;
+      }).join('')}</ul></section>`;
+  }).join('');
+}
+
+function gridView() {
+  const first = month + '-01';
+  const lastDay = new Date(Date.UTC(+month.slice(0, 4), +month.slice(5, 7), 0)).toISOString().slice(0, 10);
+  const weeks = [];
+  for (let w = monday(first); w <= lastDay; w = addDays(w, 7)) weeks.push(w);
+  const list = visible();
+  const rows = weeks.map(w => {
+    const end = addDays(w, 6);
+    // Bars of the week, stacked on the first free lane.
+    const lanes = [];
+    const bars = list.filter(e => e.start <= end && e.end >= w).sort((a, b) => a.start.localeCompare(b.start) || days(b.start, b.end) - days(a.start, a.end)).map(e => {
+      const s = e.start < w ? w : e.start, f = e.end > end ? end : e.end;
+      const c0 = days(w, s), c1 = days(w, f);
+      let lane = lanes.findIndex(l => l < c0);
+      if (lane === -1) { lane = lanes.length; lanes.push(0); }
+      lanes[lane] = c1;
+      return `<a class="bar-ev l${e.competition.section}${e.start < w ? ' cont-l' : ''}${e.end > end ? ' cont-r' : ''}" href="infos.html" style="grid-column:${c0}/${c1 + 1};grid-row:${lane + 2}"
+        title="${esc(decode(e.label))}, ${shortRange(e.start, e.end)}, ${LEVELS[e.competition.section]}">${esc(decode(e.label))}</a>`;
+    });
+    const dates = Array.from({ length: 7 }, (_, i) => addDays(w, i));
+    const out = d => d.slice(0, 7) !== month;
+    const bg = `<div class="bg" aria-hidden="true">${dates.map((d, i) => `<span class="${out(d) ? 'out' : i >= 5 ? 'we' : ''}"></span>`).join('')}</div>`;
+    const cells = bg + dates.map((d, i) => `<span class="num${out(d) ? ' out' : ''}${d === TODAY ? ' today' : ''}" style="grid-column:${i + 1}"><b>${+d.slice(8)}</b></span>`).join('');
+    return `<div class="wk">${cells}${bars.join('')}</div>`;
+  }).join('');
+  const present = [...new Set(list.map(e => e.competition.section))].sort((a, b) => a - b);
+  return `<p class="legend">${present.map(l => `<span class="l${l}">${LEVELS[l]}</span>`).join('')}</p>
+    <div class="month" role="grid" aria-label="Mois de ${fmt(first, { month: 'long', year: 'numeric' })}"><div class="dow">${['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'].map(d => `<span>${d}</span>`).join('')}</div>${rows}</div>`;
+}
+
+function render() {
+  document.getElementById('month').textContent = cap(fmt(month + '-01', { month: 'long', year: 'numeric' }));
+  document.querySelectorAll('.views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === view)));
+  const present = [...new Set(ENTRIES.map(e => e.competition.section))].sort((a, b) => a - b);
+  document.getElementById('levels').innerHTML = `<button type="button" data-l="" aria-pressed="${level === null}">Tous</button>${present.map(l => `<button type="button" data-l="${l}" aria-pressed="${level === l}">${LEVELS[l]}</button>`).join('')}`;
+  document.getElementById('list').innerHTML = view === 'list' ? listView() : gridView();
+}
+const shift = n => { const d = utc(month + '-01'); d.setUTCMonth(d.getUTCMonth() + n); month = d.toISOString().slice(0, 7); render(); };
+document.getElementById('prev').addEventListener('click', () => shift(-1));
+document.getElementById('next').addEventListener('click', () => shift(1));
+document.querySelector('.views').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { view = b.dataset.v; render(); } });
+document.getElementById('levels').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { level = b.dataset.l ? +b.dataset.l : null; render(); } });
+render();
+const bar = demoBar('<button type="button" id="sept">Septembre 2026 (Mondiaux sur 6 jours)</button>');
+bar.querySelector('#sept').addEventListener('click', () => { month = '2026-09'; render(); });
+</script>
+</body>
+</html>

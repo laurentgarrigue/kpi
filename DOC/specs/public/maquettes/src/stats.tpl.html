@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stats PlayOff Hommes</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.stats { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; margin: 26px auto 56px; }
+.lead-scorer { display: grid; grid-template-columns: auto 1fr; gap: 4px 18px; align-items: center; padding: 18px 20px; border-radius: 8px; background: var(--navy); color: #fff; margin-bottom: 22px; }
+.lead-scorer .goals { grid-row: 1 / span 3; font: 400 88px/0.85 var(--display); color: #e9c766; font-variant-numeric: tabular-nums; }
+.lead-scorer .goals small { display: block; font: 600 13px var(--text); color: #dfe3f5; text-align: center; margin-top: 4px; }
+.lead-scorer b { font: 400 34px/1 var(--display); }
+.lead-scorer span { color: #dfe3f5; }
+
+/* Each scorer: name, team, and the goals as a bar on a common scale. */
+.scorers { list-style: none; margin: 0; padding: 0; }
+.scorers li { display: grid; grid-template-columns: 34px minmax(0, 1fr) minmax(90px, 38%) 28px; gap: 10px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+.scorers .rk { font: 400 20px/1 var(--display); color: var(--muted); }
+.scorers .who b { font-weight: 600; }
+.scorers .who small { display: block; font-size: 13px; color: var(--muted); }
+.scorers .bar { height: 10px; border-radius: 5px; background: var(--wash); overflow: hidden; }
+.scorers .bar i { display: block; height: 100%; background: var(--blue); border-radius: 5px; }
+.scorers .n { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.scorers li[hidden] { display: none; }
+.more { margin-top: 12px; font: inherit; background: none; border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; cursor: pointer; color: var(--ink); }
+
+aside h2 { font-size: 15px; margin: 0 0 8px; }
+aside .chips { margin-bottom: 22px; }
+@media (max-width: 860px) {
+  .stats { grid-template-columns: 1fr; }
+  aside { order: -1; }
+  .scorers li { grid-template-columns: 30px minmax(0, 1fr) 70px 24px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap stats" id="main"></main>
+<script src="maquette.js"></script>
+<script>
+const COMP = __COMP__;
+const EVENT = __EVENT__;
+const STATS = __SCORERS__;
+const LOGOS = logosByTeam(__GAMES__);
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+document.getElementById('head').innerHTML = competitionHeader(COMP, 'Stats', EVENT.competitions.length);
+
+const rows = STATS.rows;
+const max = Math.max(...rows.map(r => r.goals));
+const teams = [...new Map(rows.map(r => [r.team.number, r.team])).values()];
+const name = r => `${r.first_name} ${r.last_name}`;
+const [leader] = rows;
+let team = null, expanded = false;
+const VISIBLE = 10;
+
+function render() {
+  const list = rows.filter(r => team === null || r.team.number === team);
+  document.getElementById('main').innerHTML = `
+    <section aria-labelledby="scorers">
+      <h2 class="section" id="scorers">Meilleurs buteurs</h2>
+      ${team === null ? `<div class="lead-scorer"><span class="goals">${leader.goals}<small>buts</small></span><b>${esc(name(leader))}</b><span>${esc(leader.team.label)}, n° ${leader.number}</span></div>` : ''}
+      <ol class="scorers">${list.map((r, i) => `<li${!expanded && team === null && i >= VISIBLE ? ' hidden' : ''}>
+        <span class="rk">${r.rank}</span>
+        <span class="who"><b>${esc(name(r))}</b><small>${esc(r.team.label)}, n° ${r.number}</small></span>
+        <span class="bar" aria-hidden="true"><i style="width:${(r.goals / max) * 100}%"></i></span>
+        <span class="n" aria-label="${r.goals} buts">${r.goals}</span></li>`).join('')}</ol>
+      ${!expanded && team === null && list.length > VISIBLE ? `<button class="more" type="button" id="more">Voir les ${list.length - VISIBLE} suivants</button>` : ''}
+    </section>
+    <aside>
+      <h2>Filtrer par équipe</h2>
+      <div class="chips"><button type="button" data-team="" aria-pressed="${team === null}">Toutes</button>${teams.map(t => `<button type="button" data-team="${t.number}" aria-pressed="${team === t.number}">${esc(t.label)}</button>`).join('')}</div>
+    </aside>`;
+  document.getElementById('more')?.addEventListener('click', () => { expanded = true; render(); });
+}
+document.getElementById('main').addEventListener('click', e => {
+  const b = e.target.closest('[data-team]');
+  if (b) { team = b.dataset.team ? +b.dataset.team : null; render(); }
+});
+render();
+demoBar();
+</script>
+</body>
+</html>

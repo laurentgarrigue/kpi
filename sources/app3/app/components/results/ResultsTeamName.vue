@@ -11,7 +11,7 @@ const link = computed(() => (props.number === null ? null : teamLink({ number: p
 </script>
 
 <template>
-  <NuxtLink v-if="link && label" :to="localePath(link.href)" class="hover:underline" :class="{ 'font-semibold': strong }" data-kind="team">
+  <NuxtLink v-if="link && label" :to="localePath(link.href)" class="hover:underline" :class="{ 'font-bold': strong }" data-kind="team">
     {{ label }}
   </NuxtLink>
   <span v-else class="italic text-ink/70">{{ label ?? '—' }}</span>

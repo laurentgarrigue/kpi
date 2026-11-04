@@ -15,6 +15,10 @@ import {
   sortGames,
   winnerSide,
   gamesOfCompetition,
+  drawCode,
+  drawSlot,
+  slotFromLabel,
+  isFinal,
 } from '../../app/utils/results/games'
 import { game } from './fixtures'
 
@@ -172,5 +176,49 @@ describe('gamesOfCompetition', () => {
     const games = [game({ g_id: 1, c_code: 'N1H' }), game({ g_id: 2, c_code: 'N1F' })]
     expect(gamesOfCompetition(games, 'N1F').map(g => g.g_id)).toEqual([2])
     expect(gamesOfCompetition(games, undefined)).toEqual(games)
+  })
+})
+
+describe('drawSlot / isFinal', () => {
+  it('CMP-20: one code per side, A first, as api2 reads them (« 1er poule E », « 1er poule F »)', () => {
+    const upcoming = game({ g_status: 'ATT', g_code: '[1E-1F]', t_a_label: null, t_b_label: null })
+    expect(drawSlot(upcoming, 'A')).toEqual({ kind: 'pool', rank: 1, pool: 'E' })
+    expect(drawSlot(upcoming, 'B')).toEqual({ kind: 'pool', rank: 1, pool: 'F' })
+  })
+
+  it('CMP-20: winners, losers and teams of the draw, from the code or a waiting label', () => {
+    const coded = game({ g_status: 'ATT', g_code: '[V11-P12]', t_a_label: null, t_b_label: null })
+    expect(drawSlot(coded, 'A')).toEqual({ kind: 'winner', game: 11 })
+    expect(drawSlot(coded, 'B')).toEqual({ kind: 'loser', game: 12 })
+    expect(drawSlot(game({ g_status: 'ATT', g_code: '[T7/T2]', t_a_label: null }), 'A')).toEqual({ kind: 'team', game: 7 })
+    expect(drawSlot(game({ g_status: 'ATT', t_a_label: '(Winner game #236)' }), 'A')).toEqual({ kind: 'winner', game: 236 })
+    expect(drawSlot(game({ g_status: 'ATT', t_b_label: '(Loser game #12)' }), 'B')).toEqual({ kind: 'loser', game: 12 })
+    expect(drawSlot(game({ g_status: 'ATT', t_b_label: '(2nd Group B)' }), 'B')).toEqual({ kind: 'pool', rank: 2, pool: 'B' })
+  })
+
+  it('CMP-20: keeps an unknown waiting label as text, without its brackets', () => {
+    expect(drawSlot(game({ g_status: 'ATT', t_a_label: '(2ème poule haute)' }), 'A')).toEqual({ kind: 'text', text: '2ème poule haute' })
+  })
+
+  it('CMP-20: reads a waiting label on its own (pool placeholders of the progress tab)', () => {
+    expect(slotFromLabel('(1st Group A)')).toEqual({ kind: 'pool', rank: 1, pool: 'A' })
+    expect(slotFromLabel('Équipe 3')).toEqual({ kind: 'text', text: 'Équipe 3' })
+  })
+
+  it('CMP-20: no slot for an assigned team, or once the game is played', () => {
+    expect(drawSlot(game({ g_status: 'ATT', g_code: '[1A-2B]', t_a_label: 'Avranches I', t_a_number: 67 }), 'A')).toBeNull()
+    expect(drawSlot(game({ g_status: 'END', g_code: '[1A-2B]', t_a_label: null }), 'A')).toBeNull()
+  })
+
+  it('CMP-20: the draw code is shown only for a game still to play', () => {
+    expect(drawCode(game({ g_status: 'ATT', g_code: '[1A-1C]' }))).toBe('1A-1C')
+    expect(drawCode(game({ g_status: 'END', g_code: '[1A-1C]' }))).toBeNull()
+  })
+
+  it('CMP-19: a final is recognised from its phase, in French or English', () => {
+    expect(isFinal(game({ d_phase: 'Finale' }))).toBe(true)
+    expect(isFinal(game({ d_phase: 'final' }))).toBe(true)
+    expect(isFinal(game({ d_phase: 'Petite finale' }))).toBe(false)
+    expect(isFinal(game({ d_phase: '3ème place' }))).toBe(false)
   })
 })

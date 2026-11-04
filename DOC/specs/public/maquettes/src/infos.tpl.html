@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infos PlayOff Hommes</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.info { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; margin: 30px auto 56px; }
+h2 { font: 400 28px/1.1 var(--display); color: var(--blue-deep); margin: 0 0 12px; }
+
+.when { grid-column: 1 / -1; margin: 0 0 -8px; }
+.when .dates { font: 400 46px/1 var(--display); color: var(--title); margin: 0; }
+.when .place { font-size: 17px; margin: 6px 0 0; }
+.when .place span { color: var(--muted); }
+
+.officials { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px 24px; margin: 0 0 36px; }
+.officials div { border-top: 2px solid var(--line); padding-top: 8px; }
+.officials dt { font-size: 13px; color: var(--muted); }
+.officials dd { margin: 2px 0 0; font-weight: 600; }
+
+.teams-head { display: flex; align-items: baseline; gap: 14px; }
+.teams-head span { font-size: 13px; color: var(--muted); }
+.pools { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px 24px; }
+.pools h3 { font-size: 14px; margin: 0 0 6px; }
+.pools ul { list-style: none; margin: 0; padding: 0; }
+.pools li a { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.pools li a:hover span { text-decoration: underline; }
+
+aside { display: grid; gap: 22px; align-content: start; }
+.result { background: var(--wash); border-radius: 8px; padding: 18px; }
+.result ol { list-style: none; margin: 0 0 10px; padding: 0; }
+.result li { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.result li:first-child { font-size: 18px; font-weight: 700; }
+.result li:first-child .logo { width: 32px; height: 32px; }
+.result .rk { font: 400 22px/1 var(--display); width: 18px; color: var(--muted); }
+.result li:first-child .rk { color: var(--gold); font-size: 30px; }
+.result a.more { font-size: 14px; }
+.result li a { text-decoration: none; }
+.result li a:hover { text-decoration: underline; }
+
+.agenda { border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+.agenda p { margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 14px; border-radius: 6px; font: 600 15px var(--text); text-decoration: none; cursor: pointer; border: 1px solid var(--navy); }
+.btn.primary { background: var(--navy); color: #fff; }
+.btn.secondary { background: transparent; color: var(--ink); border-color: var(--line); margin-top: 8px; }
+.btn svg { width: 18px; height: 18px; }
+.agenda .alt { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 14px; }
+.agenda details { margin-top: 14px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.agenda summary { cursor: pointer; font-weight: 600; }
+.agenda ol { padding-left: 18px; margin: 8px 0 0; color: var(--muted); }
+.copied { font-size: 13px; color: var(--blue-deep); min-height: 1.2em; margin: 6px 0 0; }
+
+@media (max-width: 900px) {
+  .info { grid-template-columns: 1fr; gap: 28px; }
+  aside { order: -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .when { order: -2; }
+  .when .dates { font-size: 38px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap info" id="main"></main>
+<script src="maquette.js"></script>
+<script>
+const COMP = __COMP__;
+const EVENT = __EVENT__;
+const INFO = __INFO__;
+const GAMES = __GAMES__;
+const RANKING = __RANKING__;
+const LOGOS = logosByTeam(GAMES);
+const ICS = 'https://kpi.localhost/api2/competition/2026/NPOH/calendar.ics';
+const calIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+document.getElementById('head').innerHTML = competitionHeader(COMP, 'Infos', EVENT.competitions.length);
+
+const first = INFO.gamedays[0];
+// The officials are the same for every gameday here: show them once (a list per phase only when they differ).
+const OFFICIALS = [['rc', 'Responsable de compétition'], ['r1', 'Responsable R1'], ['delegate', 'Délégué'], ['chief_referee', 'Chef des arbitres']];
+const teamCount = INFO.teams_by_pool.reduce((n, p) => n + p.teams.length, 0);
+
+document.getElementById('main').innerHTML = `
+  <section class="when" aria-label="Dates et lieu">
+      <p class="dates">${dateRange(first.start, first.end)} ${first.start.slice(0, 4)}</p>
+      <p class="place">${esc(first.place)} (${esc(first.department)})${first.organizer.toLowerCase() !== first.place.toLowerCase() ? ` <span>organisé par ${esc(first.organizer)}</span>` : ''}</p>
+    </section>
+  <div>
+    <section aria-labelledby="officials"><h2 id="officials">Officiels</h2>
+      <dl class="officials">${OFFICIALS.filter(([k]) => first.officials[k]).map(([k, l]) => `<div><dt>${l}</dt><dd>${esc(first.officials[k])}</dd></div>`).join('')}</dl>
+    </section>
+    <section aria-labelledby="teams">
+      <div class="teams-head"><h2 id="teams">Équipes engagées</h2><span>${teamCount} équipes, ${INFO.teams_by_pool.length} poules</span></div>
+      <div class="pools">${INFO.teams_by_pool.map(p => `<div><h3>Poule ${esc(p.pool)}</h3><ul>${p.teams.map(t => `<li><a href="#">${logoImg(LOGOS[t.number])}<span>${esc(t.label)}</span></a></li>`).join('')}</ul></div>`).join('')}</div>
+    </section>
+  </div>
+  <aside>
+    ${COMP.status === 'END' ? `<section class="result" aria-labelledby="result"><h2 id="result">Podium</h2>
+      <ol>${RANKING.rows.filter(r => r.medal).map(r => `<li><span class="rk">${r.rank}</span>${logoImg(LOGOS[r.team.number])}<a href="#">${esc(r.team.label)}</a></li>`).join('')}</ol>
+      <a class="more" href="#">Classement complet</a></section>` : ''}
+    <section class="agenda" aria-labelledby="agenda"><h2 id="agenda">Dans votre agenda</h2>
+      <p>Les matchs s'ajoutent à votre agenda et se mettent à jour tout seuls si les horaires changent.</p>
+      <a class="btn primary" href="${ICS.replace(/^https/, 'webcal')}">${calIcon} S'abonner au calendrier</a>
+      <button class="btn secondary" type="button" id="copy">Copier le lien d'abonnement</button>
+      <p class="copied" id="copied" role="status"></p>
+      <div class="alt"><a href="${ICS}">Télécharger le fichier .ics</a></div>
+      <details><summary>Comment s'abonner ?</summary>
+        <ol><li>Copiez le lien d'abonnement.</li><li>Dans Google Agenda, Apple Calendrier ou Outlook, choisissez « Ajouter un agenda à partir d'une URL ».</li><li>Collez le lien et validez.</li></ol>
+      </details>
+    </section>
+  </aside>`;
+
+document.getElementById('copy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(ICS); document.getElementById('copied').textContent = 'Lien copié.'; }
+  catch { document.getElementById('copied').textContent = `Copiez ce lien : ${ICS}`; }
+});
+demoBar();
+</script>
+</body>
+</html>

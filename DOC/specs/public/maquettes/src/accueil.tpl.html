@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accueil kayak-polo.info</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.statement { font: 600 16px/1.4 var(--text); color: var(--muted); margin: 26px 0 0; max-width: 60ch; }
+
+/* The next meeting is the hero: its dates are the visual. */
+.next { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 40px; align-items: end; padding: 26px 0 34px; border-bottom: 1px solid var(--line); }
+.next .when-rel { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--blue-deep); margin: 0 0 6px; }
+.next.live .when-rel { color: var(--live); }
+.next.live .when-rel::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--live); animation: blink 1.4s infinite; }
+.next h2 { font: 400 72px/0.95 var(--display); color: var(--title); margin: 0; }
+.next .place { font-size: 18px; margin: 10px 0 0; }
+.next .programme { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+.next .programme a { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+.next .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 6px; font: 600 15px var(--text); text-decoration: none; }
+.btn.primary { background: var(--navy); color: #fff; }
+.btn.live { background: var(--live); color: #fff; }
+.btn.live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+.btn.quiet { border: 1px solid var(--line); color: var(--ink); }
+.bigdate { text-align: right; font-family: var(--display); color: var(--navy); line-height: .85; }
+:root[data-theme="dark"] .bigdate { color: var(--blue); }
+.bigdate .d { display: block; font-size: 150px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.bigdate .m { display: block; font-size: 34px; color: var(--blue); }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .next.live .when-rel::before { animation: none; } }
+
+/* News on the left, agenda on the right. */
+.columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 48px; padding: 34px 0 60px; }
+.col-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.col-head h2 { font: 400 30px/1 var(--display); color: var(--blue-deep); margin: 0; }
+.col-head a { font-size: 14px; }
+
+.lead { display: block; text-decoration: none; }
+.lead img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: 8px; display: block; background: var(--wash); }
+.lead h3 { font: 400 32px/1.05 var(--display); color: var(--title); margin: 14px 0 6px; }
+.lead:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.lead p { margin: 0; max-width: 65ch; }
+.meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.more-news { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.more-news a { display: grid; grid-template-columns: 88px 1fr; gap: 12px; text-decoration: none; align-items: start; }
+.more-news img { width: 88px; height: 88px; object-fit: cover; border-radius: 6px; background: var(--wash); }
+.more-news h3 { font-size: 15px; font-weight: 700; margin: 0; line-height: 1.3; }
+.more-news a:hover h3 { text-decoration: underline; }
+
+.agenda h3 { font-size: 14px; font-weight: 700; color: var(--muted); margin: 0 0 4px; }
+.agenda h3 + ul { margin-bottom: 24px; }
+.agenda ul { list-style: none; margin: 0; padding: 0; }
+.agenda li a { display: grid; grid-template-columns: 82px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.agenda li a:hover b { text-decoration: underline; }
+.agenda .date { font: 400 20px/1.1 var(--display); color: var(--blue-deep); font-variant-numeric: tabular-nums; }
+.agenda b { font-weight: 600; display: block; }
+.agenda small { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .columns { grid-template-columns: 1fr; gap: 36px; }
+  .next { grid-template-columns: 1fr; }
+  .bigdate { order: -1; text-align: left; display: flex; align-items: baseline; gap: 10px; }
+  .bigdate .d { font-size: 64px; display: inline; }
+  .bigdate .m { display: inline; font-size: 26px; }
+  .next h2 { font-size: 52px; }
+}
+@media (max-width: 560px) {
+  .more-news { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap" id="main"></main>
+<script src="maquette.js"></script>
+<script>
+const FIX = __FIXTURES__;
+const HOME = __HOME__;
+const news = HOME.find(b => b.kind === 'latest_news')?.articles ?? [];
+let today = FIX.today;
+
+document.getElementById('chrome').innerHTML = siteChrome('Accueil');
+
+const days = (a, b) => Math.round((utc(b) - utc(a)) / 864e5);
+
+function relative(start, end) {
+  const d = days(today, start);
+  if (today >= start && today <= end) return { text: 'En ce moment', live: true };
+  if (d === 1) return { text: 'Demain' };
+  const dow = utc(start).getUTCDay();
+  if (d <= 6 && (dow === 6 || dow === 0)) return { text: 'Ce week-end' };
+  return { text: `Dans ${d} jours` };
+}
+
+function render() {
+  const [next, ...rest] = FIX.upcoming;
+  // Competitions held on the same dates as the next event belong to it: list them there, not again in the agenda.
+  const sameDates = rest.filter(x => x.kind === 'group' && x.start === next.start && x.end === next.end);
+  const upcoming = rest.filter(x => !sameDates.includes(x));
+  const rel = relative(next.start, next.end);
+  const cover = a => a.cover ? KPI_MEDIA + (a.cover.variants.find(v => v.width >= 768)?.url ?? a.cover.url) : '';
+  const pubDate = a => fmt(a.published_at.slice(0, 10), { day: 'numeric', month: 'long', year: 'numeric' });
+  const [lead, ...others] = news;
+  const s = utc(next.start), e = utc(next.end);
+
+  document.getElementById('main').innerHTML = `
+    <h1 class="statement">Résultats, classements et calendriers du kayak-polo, en France et à l'international</h1>
+    <section class="next${rel.live ? ' live' : ''}" aria-labelledby="next">
+      <div>
+        <p class="when-rel">${rel.text}</p>
+        <h2 id="next">${esc(next.libelle)}</h2>
+        <p class="place">${esc(place(next))}, ${fmt(next.start, { weekday: 'long', day: 'numeric' })} et ${fmt(next.end, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+        ${sameDates.length ? `<p class="programme">Au programme : ${sameDates.map(g => `<a href="#">${esc(g.libelle)}</a>`).join('')}</p>` : ''}
+        <div class="actions">
+          ${rel.live ? '<a class="btn live" href="#">Suivre en direct</a><a class="btn quiet" href="#">Matchs et résultats</a>' : '<a class="btn primary" href="#">Voir le programme</a><a class="btn quiet" href="#">Ajouter à mon agenda</a>'}
+        </div>
+      </div>
+      <p class="bigdate" aria-hidden="true"><span class="d">${s.getUTCDate()}${next.end !== next.start ? `–${e.getUTCDate()}` : ''}</span><span class="m">${fmt(next.end, { month: 'long' })}</span></p>
+    </section>
+    <div class="columns">
+      <section aria-labelledby="news">
+        <div class="col-head"><h2 id="news">Actualités</h2><a href="#">Toutes les actualités</a></div>
+        ${lead ? `<a class="lead" href="#"><img src="${cover(lead)}" alt="">
+          <h3>${esc(lead.title)}</h3>${lead.lead ? `<p>${esc(lead.lead)}</p>` : ''}<p class="meta">${pubDate(lead)}${lead.categories[0] ? `, ${esc(lead.categories[0].label)}` : ''}</p></a>` : ''}
+        <ul class="more-news">${others.map(a => `<li><a href="#"><img src="${cover(a)}" alt=""><div><h3>${esc(a.title.replace(/\s+/g, ' '))}</h3><p class="meta">${pubDate(a)}</p></div></a></li>`).join('')}</ul>
+      </section>
+      <section class="agenda" aria-labelledby="agenda">
+        <div class="col-head"><h2 id="agenda">Agenda</h2><a href="#">Calendrier complet</a></div>
+        ${upcoming.length ? `<h3>Ensuite</h3><ul>${upcoming.map(x => `<li><a href="#"><span class="date">${shortRange(x.start, x.end)}</span><span><b>${esc(x.libelle)}</b><small>${esc(place(x))}</small></span></a></li>`).join('')}</ul>` : ''}
+        <h3>Derniers résultats</h3>
+        <ul>${FIX.recent.slice(0, 7).map(x => `<li><a href="#"><span class="date">${shortRange(x.start, x.end)}</span><span><b>${esc(x.libelle)}</b><small>${esc(place(x))}</small></span></a></li>`).join('')}</ul>
+      </section>
+    </div>`;
+}
+render();
+
+const bar = demoBar('<button type="button" id="sim">Simuler samedi 24 octobre</button>');
+bar.querySelector('#sim').addEventListener('click', e => {
+  today = today === FIX.today ? '2026-10-24' : FIX.today;
+  e.target.textContent = today === FIX.today ? 'Simuler samedi 24 octobre' : 'Revenir au jeudi 22 octobre';
+  render();
+});
+</script>
+</body>
+</html>

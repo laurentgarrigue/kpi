@@ -1,0 +1,87 @@
+{#
+ # Schema of a competition (`schema`, PDF_GOTENBERG.md § 7.3), as the app4 Schema page draws it: a cup in stage
+ # columns (pool rankings, elimination brackets with the winner first), a league by gameday.
+ #}
+{% extends 'pdf/layout.html.twig' %}
+
+{% macro games_count(count, labels) %}{{ count }} {{ count > 1 ? labels['schema.games'] : labels['schema.game'] }}{% endmacro %}
+
+{% block content %}
+    {% if show_count %}<p class="pdf-schema__total">{{ _self.games_count(total_games, labels) }}</p>{% endif %}
+    {% if cup %}
+        <div class="pdf-schema__stages">
+            {% for stage in stages %}
+                <div class="pdf-schema__stage">
+                    {% for phase in stage %}
+                        <div class="pdf-schema__phase">
+                            <h3 class="pdf-schema__phase-title">
+                                {{ phase.title }}
+                                {% set meta = [] %}
+                                {% if show_count and phase.games_count %}{% set meta = meta|merge([_self.games_count(phase.games_count, labels)]) %}{% endif %}
+                                {% if show_times and phase.times %}{% set meta = meta|merge([phase.times]) %}{% endif %}
+                                {% if meta is not empty %}<span class="pdf-schema__meta">· {{ meta|join(' · ') }}</span>{% endif %}
+                            </h3>
+                            {% if phase.elimination %}
+                                {% for game in phase.brackets %}
+                                    <div class="pdf-schema__bracket">
+                                        <span class="pdf-schema__number">{% if game.number %}#{{ game.number }}{% endif %}</span>
+                                        <div class="pdf-schema__bracket-teams">
+                                            {% for team in game.teams %}
+                                                <div class="pdf-schema__bracket-team{% if team.winner %} pdf-schema__bracket-team--winner{% endif %}">
+                                                    <span class="pdf-schema__team">{{ team.name }}</span>
+                                                    {% if team.score is not null %}<span class="pdf-schema__score">{{ team.score }}</span>{% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% elseif phase.ranking is not empty %}
+                                <table class="pdf-schema__pool">
+                                    <thead>
+                                        <tr>
+                                            <th class="num">{{ labels['ranking.rank'] }}</th><th>{{ labels['schema.teams'] }}</th>
+                                            <th class="num">{{ labels['ranking.points'] }}</th><th class="num">{{ labels['ranking.played'] }}</th><th class="num">{{ labels['schema.diff'] }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for team in phase.ranking %}
+                                            <tr><td class="num">{{ team.clt }}</td><td>{{ team.libelle }}</td><td class="num pdf-strong">{{ team.pts }}</td><td class="num">{{ team.j }}</td><td class="num">{{ team.diff }}</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <ul class="pdf-schema__teams">
+                                    {% for team in phase.teams %}<li>{{ team }}</li>{% endfor %}
+                                    {% if phase.blank_lines > 0 %}{% for line in 1..phase.blank_lines %}<li>—</li>{% endfor %}{% endif %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% for gameday in gamedays %}
+            <section class="pdf-schema__gameday">
+                <h3 class="pdf-schema__gameday-title">
+                    {{ gameday.title }}{% if gameday.phase %} <span class="pdf-schema__meta">{{ gameday.phase }}</span>{% endif %}
+                    {% if gameday.place %} — {{ gameday.place }}{% endif %}
+                    {% if gameday.dates %}<span class="pdf-schema__dates">{{ gameday.dates }}</span>{% endif %}
+                </h3>
+                <div class="pdf-schema__games">
+                    {% for game in gameday.games %}
+                        <div class="pdf-schema__game">
+                            <span class="pdf-schema__home{% if game.winner == 'A' %} pdf-strong{% endif %}">{{ game.home }}</span>
+                            <span class="pdf-schema__result">
+                                {%- if game.home_score is not null -%}
+                                    <span class="{{ game.winner == 'A' ? 'pdf-strong' : '' }}">{{ game.home_score }}</span> - <span class="{{ game.winner == 'B' ? 'pdf-strong' : '' }}">{{ game.away_score }}</span>
+                                {%- else -%}vs{%- endif -%}
+                            </span>
+                            <span class="pdf-schema__away{% if game.winner == 'B' %} pdf-strong{% endif %}">{{ game.away }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

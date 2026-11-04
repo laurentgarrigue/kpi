@@ -48,6 +48,9 @@ const pager = computed(() => {
 })
 
 const rssUrl = computed(() => rssPath(locale.value))
+// The newest news of the first page is put forward, the others are editorial rows (NEWS-10).
+const featured = computed(() => (list.value?.page === 1 ? list.value.items[0] ?? null : null))
+const rows = computed(() => (featured.value ? list.value!.items.slice(1) : list.value?.items ?? []))
 
 // NEWS-01: an invalid page number or a page after the last one does not exist (raised once the page state is set,
 // so that the error page never renders a half-initialised list).
@@ -65,10 +68,10 @@ useHead(() => ({
 </script>
 
 <template>
-  <div v-if="page" class="space-y-8">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="text-5xl text-kpi-blue-600">{{ $t('news.title') }}</h1>
-      <a :href="rssUrl" class="flex items-center gap-1 text-sm hover:underline" data-testid="news-rss">
+  <div v-if="page" class="space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-2.5">
+      <SitePageHeading :title="$t('news.title')" />
+      <a :href="rssUrl" class="mb-2 flex items-center gap-1 text-sm underline" data-testid="news-rss">
         <UIcon name="i-heroicons-rss" class="size-5" aria-hidden="true" />
         {{ $t('news.rss') }}
       </a>
@@ -81,7 +84,7 @@ useHead(() => ({
             :to="chip.to"
             :aria-current="chip.current ? 'page' : undefined"
             class="block rounded-full border px-3 py-1 text-sm"
-            :class="chip.current ? 'border-kpi-blue-600 bg-kpi-blue-600 dark:bg-kpi-blue-900 text-white' : 'border-line hover:bg-kpi-blue-50'"
+            :class="chip.current ? 'border-navy bg-navy text-white' : 'border-line hover:bg-wash'"
           >
             {{ chip.label }}
           </NuxtLink>
@@ -92,10 +95,13 @@ useHead(() => ({
     <p v-if="error || !list" class="text-kpi-red-600" data-testid="news-unavailable">{{ $t('news.unavailable') }}</p>
     <p v-else-if="list.items.length === 0" data-testid="news-empty">{{ $t('news.empty') }}</p>
     <template v-else>
-      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="news-list">
-        <NewsCard v-for="article in list.items" :key="article.slug" :article="article" />
+      <div v-if="featured" data-testid="news-featured">
+        <NewsLead :article="featured" />
       </div>
-      <nav v-if="pager && (pager.newer || pager.older)" :aria-label="$t('news.pagination')" class="flex justify-between" data-testid="news-pager">
+      <ul data-testid="news-list">
+        <li v-for="article in rows" :key="article.slug"><NewsRow :article="article" heading-level="h2" /></li>
+      </ul>
+      <nav v-if="pager && (pager.newer || pager.older)" :aria-label="$t('news.pagination')" class="flex justify-between pb-8 font-semibold" data-testid="news-pager">
         <NuxtLink v-if="pager.newer" :to="pager.newer" rel="prev" class="flex items-center gap-1 hover:underline" data-testid="news-newer">
           <UIcon name="i-heroicons-arrow-left" class="size-5" aria-hidden="true" />{{ $t('news.newer') }}
         </NuxtLink>

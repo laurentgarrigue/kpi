@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compétitions</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; margin: 10px 0 56px; }
+.index { position: sticky; top: 12px; align-self: start; max-height: calc(100vh - 24px); overflow: auto; padding-right: 6px; }
+.index label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+.index select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); margin-left: 6px; }
+.index h2 { font-size: 13px; font-weight: 700; color: var(--muted); margin: 16px 0 4px; }
+.index ul { list-style: none; margin: 0; padding: 0; }
+.index .group-select { display: none; margin-bottom: 4px; }
+.index .group-select select { margin: 0; width: 100%; }
+.index a { display: block; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-size: 15px; }
+.index a:hover { background: var(--wash); }
+.index a[aria-current] { background: var(--navy); color: #fff; font-weight: 600; }
+
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; }
+.group-head h2 { font: 400 46px/1 var(--display); color: var(--title); margin: 0; }
+.group-head a { font-size: 14px; }
+.events-line { margin: 10px 0 24px; font-size: 14px; color: var(--muted); }
+.events-line a { color: var(--ink); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+.card { border-top: 4px solid var(--navy); padding-top: 12px; }
+.card h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0; font: 400 28px/1.05 var(--display); }
+.card h3 a { text-decoration: none; color: var(--title); }
+.card h3 a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+.card h3 small { font: 600 13px var(--text); color: var(--muted); white-space: nowrap; }
+.card h3 small.on { color: var(--live); }
+.card .rank { margin-top: 8px; font-size: 14px; }
+.card .rank td { padding: 6px 6px; }
+.card .rank td.rk { font-size: 18px; width: 28px; }
+.card .rank .logo { width: 20px; height: 20px; }
+.card .all { display: inline-block; margin-top: 8px; font-size: 14px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 20px; }
+  .index { position: static; max-height: none; }
+  .index h2, .index ul { display: none; }
+  .index .group-select { display: block; }
+  .group-head h2 { font-size: 38px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <div class="page-head"><h1>Compétitions et résultats</h1></div>
+  <div class="layout">
+    <nav class="index" aria-label="Groupes de compétitions" id="index"></nav>
+    <section id="group" aria-live="polite"></section>
+  </div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const GROUPS = __GROUPS__;
+const SEASONS = __SEASONS__;
+const N1H = __N1H__;
+const DATA = { N1H: [{ comp: N1H, ranking: __N1H_RANKING__ }, { comp: __COMP__, ranking: __RANKING__ }] };
+const LOGOS = logosByTeam(__GAMES__);
+const SECTION = { Competitions_Internationales: 'Internationales', Competitions_Nationales: 'Nationales', Competitions_Regionales: 'Régionales',
+  Tournois_Internationaux: 'Tournois internationaux', Continents: 'Continentales', Divers: 'Divers' };
+let group = 'N1H';
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+
+function renderIndex() {
+  document.getElementById('index').innerHTML = `<label>Saison<select>${SEASONS.seasons.slice(0, 12).map(s => `<option${s === SEASONS.active ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
+    <label class="group-select">Groupe<select id="gsel">${GROUPS.sections.map(s => `<optgroup label="${SECTION[s.label] ?? s.label}">${s.groups.map(g => `<option value="${g.code}"${g.code === group ? ' selected' : ''}>${esc(decode(g.libelle))}</option>`).join('')}</optgroup>`).join('')}</select></label>
+    ${GROUPS.sections.map(s => `<h2>${SECTION[s.label] ?? s.label}</h2><ul>${s.groups.map(g => `<li><a href="#" data-g="${g.code}"${g.code === group ? ' aria-current="page"' : ''}>${esc(decode(g.libelle))}</a></li>`).join('')}</ul>`).join('')}`;
+}
+
+function card({ comp, ranking }) {
+  const status = { END: ['Terminé', ''], ON: ['En cours', 'on'], ATT: ['À venir', ''] }[comp.status];
+  const rows = ranking.rows.slice(0, 5);
+  return `<article class="card"><h3><a href="${comp.code === 'NPOH' ? 'infos.html' : '#'}">${esc(comp.display_title)}</a><small class="${status[1]}">${status[0]}</small></h3>
+    <table class="rank"><caption class="sr-only">Classement ${esc(comp.display_title)}</caption><tbody>${rows.map(r => `<tr><td class="rk">${r.rank}</td>
+      <td class="l"><a class="tm" href="equipe.html">${logoImg(LOGOS[r.team.number])}<span>${esc(r.team.label)}</span></a></td><td class="pts">${r.points} pts</td></tr>`).join('')}</tbody></table>
+    <a class="all" href="${comp.code === 'NPOH' ? 'classement.html' : '#'}">Classement complet (${ranking.rows.length} équipes)</a></article>`;
+}
+
+function renderGroup() {
+  const g = GROUPS.sections.flatMap(s => s.groups).find(x => x.code === group);
+  const data = DATA[group];
+  document.getElementById('group').innerHTML = `<div class="group-head"><h2>${esc(decode(g.libelle))}</h2><a href="matchs.html">Tous les matchs du groupe</a></div>
+    ${data ? `<p class="events-line">Joué pendant : <a href="evenement.html">Finales championnats de France 2026</a>, <a href="#">N1H J1A 2026</a>, <a href="#">N1H J1B 2026</a></p>
+      <div class="cards">${data.map(card).join('')}</div>`
+    : '<p class="events-line">Maquette : seules les données de Nationale 1 Hommes sont chargées.</p>'}`;
+}
+document.getElementById('index').addEventListener('click', e => { const a = e.target.closest('a[data-g]'); if (!a) return; e.preventDefault(); group = a.dataset.g; renderIndex(); renderGroup(); });
+renderIndex(); renderGroup();
+document.getElementById('index').addEventListener('change', e => { if (e.target.id === 'gsel') { group = e.target.value; renderIndex(); renderGroup(); } });
+demoBar();
+</script>
+</body>
+</html>

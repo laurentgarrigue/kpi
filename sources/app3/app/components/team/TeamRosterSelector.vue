@@ -12,9 +12,9 @@ function apply(event: Event) {
 
 <template>
   <form method="get" :action="localePath(path)" class="flex flex-wrap items-end gap-4" data-testid="roster-selector">
-    <label class="flex flex-col text-sm">
+    <label class="flex w-full flex-col text-sm text-muted sm:w-auto">
       {{ $t('teams.rosterSelect') }}
-      <select name="roster" class="rounded border border-line px-2 py-1" @change="apply">
+      <select name="roster" class="w-full max-w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-ink sm:w-auto" @change="apply">
         <optgroup v-for="item in seasons" :key="item.season" :label="item.season">
           <option v-for="option in item.competitions" :key="option.code" :value="rosterKey(item.season, option.code)" :selected="item.season === season && option.code === competition">
             {{ option.display_title }}

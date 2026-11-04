@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\AgeCategory\CompositionAgeCategories;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -16,13 +17,16 @@ use Doctrine\DBAL\Connection;
  * (team compositions, match rosters, match officials) who do not exist in kp_licence on the
  * source system — typically foreign/international players created manually.
  * On import these rows are upserted into kp_licence so FK constraints on kp_match_joueur are satisfied.
+ * The age categories of the imported compositions are recomputed for the season of each team (CATEGORIE_AGE.md
+ * story 27): the Categ of the file is ignored.
  *
  * Migrated from GestionOperations.php ExportEvt and ImportEvt.
  */
 class EventExportImportService
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -361,6 +365,9 @@ class EventExportImportService
 
             // Upsert foreign licences before match players (FK constraint on kp_match_joueur)
             $this->importForeignLicences($data['kp_licence_foreign'] ?? []);
+
+            // Age categories need the licences (birth dates) of every imported player
+            $this->refreshAgeCategories($teamIds);
 
             // Import match players
             $this->importMatchPlayers($data['kp_match_joueur'], $matchIds);
@@ -824,10 +831,18 @@ class EventExportImportService
                 'Nom' => $p['Nom'],
                 'Prenom' => $p['Prenom'],
                 'Sexe' => $p['Sexe'],
-                'Categ' => $p['Categ'],
+                'Categ' => null, // recomputed by refreshAgeCategories()
                 'Numero' => $p['Numero'],
                 'Capitaine' => $p['Capitaine'],
             ]);
+        }
+    }
+
+    /** @param list<int|string> $teamIds */
+    private function refreshAgeCategories(array $teamIds): void
+    {
+        foreach ($teamIds as $teamId) {
+            $this->compositionAgeCategories->refreshTeam((int) $teamId);
         }
     }
 

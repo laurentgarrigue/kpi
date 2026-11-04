@@ -26,6 +26,7 @@ Il ne réexplique pas la conception : pour le « pourquoi », voir le
 | Voir **pourquoi ça a échoué** | 🌐 | Actions → le run → étape « Déployer via SSH » |
 | **Annuler** un déploiement préprod cassé | ⌨️ | `make last_merge_sha` puis `make preprod_rollback sha=…` |
 | **Restaurer la base** de prod | 🖥 | [§5](#5-rollback-de-la-base-de-données-prod) |
+| Lancer une **commande ponctuelle** après déploiement (migration de données) | 🖥 | dump → `--dry-run` → relire → exécuter ([§1.4](#14-commandes-ponctuelles-post-déploiement)) |
 | **Site public beta** (app3) : reconstruire, redémarrer, logs | 🖥 | `make app3_generate_<env>` / `app3_restart` / `app3_logs` — [SITE_PLATFORM.md](../../specs/public/SITE_PLATFORM.md) |
 | **Médias** (logos, photos) : état, sauvegarde, restauration | 🖥 | `make media_status` / `media_backup` / `media_restore` — [MEDIA_STORAGE.md](MEDIA_STORAGE.md) |
 | **PDF** (Gotenberg) : logs, charte des PDF | 🖥 / ⌨️ | `make gotenberg_logs` ; `make pdf_tokens_sync` puis commit — [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md). ⚠️ `GOTENBERG_PASSWORD` et `PDF_LINK_SECRET` doivent exister dans `docker/.env` de chaque environnement **avant** le déploiement qui les introduit (`openssl rand -hex 32`, une valeur par environnement) : sans elles, compose refuse de démarrer |
@@ -160,6 +161,57 @@ Ce que ça implique, à savoir **avant** de cliquer :
 
 Revenir à `main` **immédiatement**, sans attendre le TTL :
 🌐 Actions → « Deploy preprod » → Run workflow depuis `main`.
+
+### 1.4 Commandes ponctuelles post-déploiement
+
+Certaines évolutions livrent une **commande console de migration de données** à
+lancer une fois, à la main, après le déploiement (le wrapper ne les lance pas : il
+ne joue que les migrations Doctrine, et le dump automatique de §1.2 ne les couvre
+donc pas). Toujours le même déroulé : **déployer → dump → dry-run → relire →
+exécuter → vérifier**.
+
+#### 1.4.1 Catégorie d'âge : `app:age-category:migrate`
+
+Spec [CATEGORIE_AGE.md](../../specs/CATEGORIE_AGE.md) (stories 31-34), ADR
+[0001](../../../docs/adr/0001-categorie-age-derivee.md). La commande convertit les
+dates de naissance conventionnelles `1901-01-01` et `0000-00-00` en date inconnue
+(`NULL`), puis recalcule `kp_competition_equipe_joueur.Categ` de **toutes** les
+compositions, **compétitions verrouillées comprises**. Elle ne touche pas aux
+surclassements. Elle est idempotente : relançable sans effet de bord, elle sert aussi
+de filet après une saisie par l'ancienne interface.
+
+1. ☐ **Déployer** la version qui contient la commande (§1.2). Vérifier qu'elle est
+   là : 🖥 `docker exec kpi_api2 php bin/console list app:age-category` doit lister
+   `app:age-category:migrate`.
+2. ☐ **Dump** de la base, la commande réécrit l'historique :
+   ```bash
+   docker exec kpi_db sh -c 'mariadb-dump -u<user> -p<pass> kpi' \
+     | gzip > /data/backups/kpi/pre-migration/kpi_avant-categorie-age_$(date +%F_%H%M%S).sql.gz
+   ```
+   Attendu : un fichier de taille comparable aux dumps voisins (`ls -lh`).
+3. ☐ **Rapport à blanc** (rien n'est écrit) :
+   ```bash
+   docker exec kpi_api2 php bin/console app:age-category:migrate --dry-run | tee /tmp/categorie-age-dry-run.txt
+   ```
+   Attendu : `Simulation (rien n'est écrit)`, puis le nombre de dates
+   conventionnelles qui deviendront inconnues, le nombre de catégories d'âge qui
+   changeront, et le détail par saison et par couple `avant → après` (`∅` = pas de
+   catégorie). Les changements tiennent déjà compte de la conversion des dates.
+4. ☐ **Relire** le rapport. Plausible : beaucoup de `SEN → ∅` / `V9 → ∅` (dates
+   conventionnelles), des glissements d'une catégorie voisine (calcul fait sur la
+   saison de la compétition au lieu de l'année civile). Suspect : des changements
+   massifs entre catégories éloignées sur une saison récente. En cas de doute, ne pas
+   exécuter et analyser d'abord.
+5. ☐ **Exécuter** :
+   ```bash
+   docker exec kpi_api2 php bin/console app:age-category:migrate | tee /tmp/categorie-age-run.txt
+   ```
+   Attendu : `Migration exécutée` et les **mêmes comptes** que le dry-run (à des
+   saisies faites entre-temps près). Tout est fait dans une seule transaction.
+6. ☐ **Vérifier l'idempotence** : relancer `--dry-run`. Attendu : `… → inconnue : 0`
+   et `Catégories d'âge à changer : 0`.
+
+Retour arrière : restaurer le dump de l'étape 2 (§5.2).
 
 ---
 

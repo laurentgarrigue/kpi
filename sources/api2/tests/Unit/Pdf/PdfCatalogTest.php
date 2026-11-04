@@ -28,6 +28,7 @@ final class PdfCatalogTest extends TestCase
             PdfCatalog::RANKING_TIEBREAK => 'ROLE_ORGANIZER',            // I5
             PdfCatalog::STATS => 'ROLE_VIEWER',
             PdfCatalog::CARDS => 'ROLE_ORGANIZER',
+            PdfCatalog::SCHEMA => 'ROLE_VIEWER',                         // as the Schema page
         ];
 
         foreach ($expected as $document => $role) {
@@ -42,7 +43,7 @@ final class PdfCatalogTest extends TestCase
         self::assertSame([], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['photos' => '1', 'category' => 'U18']));
         self::assertSame(['ROLE_ORGANIZER'], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['visa' => '1']), 'I2');
         self::assertSame(['ROLE_ORGANIZER'], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['category' => 'u21']));
-        self::assertSame(['ROLE_ADMIN'], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['birthdate' => '1']));
+        self::assertSame(['ROLE_ADMIN'], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['view' => 'birthyear']));
         self::assertSame([], PdfCatalog::optionRoles(PdfCatalog::PRESENCE, ['visa' => '0']));
     }
 

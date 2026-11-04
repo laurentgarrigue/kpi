@@ -35,13 +35,8 @@ export const MAIN_MENU: readonly MenuItem[] = [
       { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: true },
     ],
   },
-  {
-    id: 'teams-clubs',
-    children: [
-      { id: 'teams', to: '/teams', legacyPath: '/kpequipes.php', ready: true },
-      { id: 'clubs', to: '/clubs', legacyPath: '/kpclubs.php', ready: true },
-    ],
-  },
+  // One « Clubs and teams » page: the map, the clubs and the teams (PAGE_CLUBS.md § 2.1).
+  { id: 'teams-clubs', to: '/clubs', legacyPath: '/kpclubs.php', ready: true },
   { id: 'live', app2: true, ready: true },
 ]
 

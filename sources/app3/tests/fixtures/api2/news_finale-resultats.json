@@ -53,7 +53,7 @@
       {
         "kind": "club",
         "label": "Club Alpha Lacville",
-        "path": "/clubs/C001"
+        "path": "/clubs?club=C001"
       }
     ],
     "seo": {

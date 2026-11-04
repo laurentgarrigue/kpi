@@ -12,14 +12,14 @@ export type CalendarSection = typeof CALENDAR_SECTIONS[number]
 /** Section of a competition whose group has none, or an unknown one. */
 export const MISC_SECTION: CalendarSection = 100
 
-/** Light background and edge of a gameday bar, and its badge, per section. */
-export const SECTION_STYLES: Record<CalendarSection, { bar: string, badge: string }> = {
-  1: { bar: 'bg-kpi-gold-100 border-kpi-gold-500', badge: 'bg-kpi-gold-100 text-kpi-gold-900 dark:text-kpi-gold-800' },
-  2: { bar: 'bg-kpi-blue-100 border-kpi-blue-500', badge: 'bg-kpi-blue-100 text-kpi-blue-800' },
-  3: { bar: 'bg-kpi-green-100 border-kpi-green-600', badge: 'bg-kpi-green-100 text-kpi-green-800' },
-  4: { bar: 'bg-kpi-red-100 border-kpi-red-500', badge: 'bg-kpi-red-100 text-kpi-red-800' },
-  5: { bar: 'bg-sky/25 border-sky', badge: 'bg-sky/25 text-navy dark:text-ink' },
-  100: { bar: 'bg-line/40 border-ink/50', badge: 'bg-line/60 text-ink' },
+/** Light background and edge of a gameday bar, its badge, and the rule of a week row, per section. */
+export const SECTION_STYLES: Record<CalendarSection, { bar: string, badge: string, rule: string }> = {
+  1: { bar: 'bg-kpi-gold-100 border-kpi-gold-500', badge: 'bg-kpi-gold-100 text-kpi-gold-900 dark:text-kpi-gold-800', rule: 'bg-kpi-gold-500' },
+  2: { bar: 'bg-kpi-blue-100 border-kpi-blue-500', badge: 'bg-kpi-blue-100 text-kpi-blue-800', rule: 'bg-navy dark:bg-kpi-blue-500' },
+  3: { bar: 'bg-kpi-green-100 border-kpi-green-600', badge: 'bg-kpi-green-100 text-kpi-green-800', rule: 'bg-kpi-green-600' },
+  4: { bar: 'bg-kpi-red-100 border-kpi-red-500', badge: 'bg-kpi-red-100 text-kpi-red-800', rule: 'bg-kpi-red-500' },
+  5: { bar: 'bg-sky/25 border-sky', badge: 'bg-sky/25 text-navy dark:text-ink', rule: 'bg-sky' },
+  100: { bar: 'bg-line/40 border-ink/50', badge: 'bg-line/60 text-ink', rule: 'bg-ink/50' },
 }
 
 /** Gameday of `GET /calendar` (API_PUBLIC_TRANSVERSE.md § 3.1). Dates are `YYYY-MM-DD`. */
@@ -61,6 +61,7 @@ const GROUP_PATTERN = /^[\w-]{1,12}$/
 /** How far ahead an empty month looks for the next month having gamedays (CAL-05). */
 export const NEXT_MONTH_LOOKAHEAD = 12
 const DAYS_PER_WEEK = 7
+const DAY_MS = 86_400_000
 const MONTHS_PER_YEAR = 12
 
 /** `?month=YYYY-MM` if valid, otherwise the month of `today` (CAL-01). */
@@ -236,4 +237,72 @@ export function weekSegments(week: readonly CalendarDay[]): WeekSegment[] {
     laneEnds[segment.lane] = segment.column + segment.span - 1
   }
   return segments
+}
+
+/** Views of the calendar page (PAGE_CALENDAR.md § 2 bis): by week (default) or the month grid. */
+export const CALENDAR_VIEWS = ['week', 'month'] as const
+export type CalendarView = typeof CALENDAR_VIEWS[number]
+
+export function parseView(value: unknown): CalendarView {
+  return (CALENDAR_VIEWS as readonly unknown[]).includes(value) ? value as CalendarView : 'week'
+}
+
+/** A gameday of a week block: its length in days; `ownDates` when they must be written (CAL-12). */
+export interface WeekEntry {
+  entry: CalendarEntry
+  days: number
+  ownDates: boolean
+}
+
+/** Week block of the calendar (CAL-12): Monday, real first and last days, weekend or week, current week. */
+export interface CalendarWeek {
+  monday: string
+  start: string
+  end: string
+  weekend: boolean
+  current: boolean
+  entries: WeekEntry[]
+}
+
+/** A gameday this long shows its own dates and length. */
+const LONG_GAMEDAY_DAYS = 3
+/** Friday, Saturday and Sunday, counted from Monday = 0. */
+const WEEKEND_FIRST_DAY = 4
+
+function mondayOf(date: string): string {
+  return addDays(date, -((new Date(date).getUTCDay() + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK))
+}
+
+function dayCount(start: string, end: string): number {
+  return Math.round((Date.parse(end) - Date.parse(start)) / DAY_MS) + 1
+}
+
+/**
+ * Week blocks of a month (CAL-12): a gameday belongs to the week (Monday → Sunday) it starts in; one started before the
+ * month but still running in it is kept. Gamedays sorted by section, then start.
+ */
+export function calendarWeeks(entries: readonly CalendarEntry[], month: string, today: string): CalendarWeek[] {
+  const { start: first, end: last } = monthRange(month)
+  const weeks = new Map<string, CalendarEntry[]>()
+  for (const entry of entries.filter(item => item.start.slice(0, 7) === month || (item.start < first && item.end >= first))) {
+    const monday = mondayOf(entry.start)
+    weeks.set(monday, [...(weeks.get(monday) ?? []), entry])
+  }
+  return [...weeks].sort(([a], [b]) => a.localeCompare(b)).map(([monday, items]) => {
+    const sunday = addDays(monday, DAYS_PER_WEEK - 1)
+    const start = items.map(item => item.start).sort()[0]!
+    const end = items.map(item => item.end).sort().at(-1)!
+    const sorted = [...items].sort((a, b) => entrySection(a) - entrySection(b) || a.start.localeCompare(b.start) || a.id - b.id)
+    return {
+      monday,
+      start,
+      end,
+      weekend: items.every(item => dayCount(monday, item.start) - 1 >= WEEKEND_FIRST_DAY && item.end <= sunday),
+      current: monday <= today && today <= sunday,
+      entries: sorted.map((entry) => {
+        const days = dayCount(entry.start, entry.end)
+        return { entry, days, ownDates: days >= LONG_GAMEDAY_DAYS || entry.start !== start || entry.end !== end }
+      }),
+    }
+  }).filter(week => week.monday <= last)
 }

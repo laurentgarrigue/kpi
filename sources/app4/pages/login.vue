@@ -8,6 +8,32 @@ definePageMeta({
 
 const { t, locale, setLocale } = useI18n()
 const { login } = useAuth()
+const route = useRoute()
+const config = useRuntimeConfig()
+
+const googleEnabled = ref(false)
+const oauthError = computed<string>(() => {
+  const err = (route.query.oauth_error ?? '') as string
+  if (!err) return ''
+  const key = `login.oauth_error.${err}`
+  const translated = t(key)
+  return translated === key ? t('login.oauth_error.oauth_generic') : translated
+})
+
+// Vérifie que l'OAuth Google est configuré côté api2 (sinon le bouton reste caché).
+// Le endpoint renvoie 404 si GOOGLE_OAUTH_CLIENT_ID est absent.
+onMounted(async () => {
+  try {
+    const resp = await fetch(`${config.public.api2BaseUrl}/auth/google`, { method: 'HEAD', redirect: 'manual' })
+    googleEnabled.value = resp.status !== 404
+  } catch {
+    googleEnabled.value = false
+  }
+})
+
+const goToGoogle = () => {
+  window.location.href = `${config.public.api2BaseUrl}/auth/google`
+}
 
 const languages = [
   { code: 'fr', label: 'FR', flag: '🇫🇷' },
@@ -86,10 +112,10 @@ const handleSubmit = async () => {
 
         <!-- Error message -->
         <div
-          v-if="error"
+          v-if="error || oauthError"
           class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
         >
-          {{ error }}
+          {{ error || oauthError }}
         </div>
 
         <form class="space-y-4" @submit.prevent="handleSubmit">
@@ -145,6 +171,18 @@ const handleSubmit = async () => {
             {{ t('login.submit') }}
           </UButton>
         </form>
+
+        <!-- OAuth Google (AUTH_HARDENING § 4) : visible seulement si configuré côté api2 -->
+        <div v-if="googleEnabled" class="mt-4">
+          <div class="flex items-center my-3">
+            <div class="flex-grow border-t border-header-300 dark:border-header-700" />
+            <span class="px-2 text-xs text-header-500 dark:text-header-400 uppercase">{{ t('login.or') }}</span>
+            <div class="flex-grow border-t border-header-300 dark:border-header-700" />
+          </div>
+          <UButton color="neutral" variant="outline" block @click="goToGoogle">
+            {{ t('login.continue_with_google') }}
+          </UButton>
+        </div>
 
         <!-- Request access link -->
         <div class="mt-4 text-center">

@@ -1,4 +1,4 @@
-import { legacyAdminPdf, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
+import { legacyAdminPdf, migratedLegacyPdf, publicPdfHref, publicPdfUrl, type AdminPdfDocument } from '~/utils/pdf'
 
 interface SignedLink { url: string }
 interface LegacySignedLink { path: string, query: Record<string, string> }
@@ -18,7 +18,7 @@ export const usePdf = () => {
   const api = useApi()
   const config = useRuntimeConfig()
   const toast = useToast()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   const legacyBaseUrl = config.public.legacyBaseUrl as string
   const api2BaseUrl = config.public.api2BaseUrl as string
@@ -44,14 +44,25 @@ export const usePdf = () => {
   const stringify = (query: PdfQuery): Record<string, string> =>
     Object.fromEntries(Object.entries(query).map(([key, value]) => [key, String(value)]))
 
+  /** A PDF is in the language of the user unless the caller says otherwise (PDF_GOTENBERG.md § 14, 2026-10-29). */
+  const withLang = (query: PdfQuery): PdfQuery => ({ lang: locale.value === 'en' ? 'en' : 'fr', ...query })
+
   /** Admin document of api2 (`teams-groups`…), in a new tab. */
   const openDocument = (document: AdminPdfDocument, query: PdfQuery) => openWith(async () => {
-    const link = await api.post<SignedLink>(`/admin/pdf/${document}/link`, stringify(query))
+    const link = await api.post<SignedLink>(`/admin/pdf/${document}/link`, stringify(withLang(query)))
     return link.url
   })
 
-  /** Legacy admin PDF page (`FeuillePresence.php`…) through a signed link, in a new tab. */
-  const openLegacy = (page: string, query: PdfQuery) => openWith(async () => {
+  /**
+   * Legacy admin PDF page (`FeuillePresence.php`…) through a signed link, in a new tab; the document of api2
+   * replacing it once migrated.
+   */
+  const openLegacy = (page: string, query: PdfQuery) => {
+    const migrated = migratedLegacyPdf(page, stringify(query))
+    return migrated ? openDocument(migrated.document, migrated.query) : openSignedLegacy(page, query)
+  }
+
+  const openSignedLegacy = (page: string, query: PdfQuery) => openWith(async () => {
     const link = await api.post<LegacySignedLink>('/admin/pdf/legacy-link', { page, query: stringify(query) })
     return `${legacyBaseUrl}${link.path}?${new URLSearchParams(link.query).toString()}`
   })
@@ -66,7 +77,10 @@ export const usePdf = () => {
     return true
   }
 
-  const publicUrl = (document: string, query: PdfQuery) => publicPdfUrl(api2BaseUrl, document, query)
+  const publicUrl = (document: string, query: PdfQuery) => publicPdfUrl(api2BaseUrl, document, withLang(query))
 
-  return { openDocument, openLegacy, openLegacyUrl, publicUrl }
+  /** Public PDF from the URL of a legacy `PdfXxx.php` page: the api2 document once migrated. */
+  const publicHref = (legacyHref: string) => publicPdfHref(legacyHref, legacyBaseUrl, api2BaseUrl, locale.value === 'en' ? 'en' : 'fr')
+
+  return { openDocument, openLegacy, openLegacyUrl, publicUrl, publicHref }
 }

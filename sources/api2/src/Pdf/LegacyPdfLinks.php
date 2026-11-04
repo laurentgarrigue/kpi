@@ -22,7 +22,7 @@ class LegacyPdfLinks
         'FeuillePresencePhotoRef.php' => [PdfCatalog::PRESENCE, []],
         'FeuillePresenceCat.php' => [PdfCatalog::PRESENCE, []],
         'FeuillePresenceU21.php' => [PdfCatalog::PRESENCE, ['category' => 'U21']],
-        'FeuillePresenceNaissance.php' => [PdfCatalog::PRESENCE, ['birthdate' => '1']],
+        'FeuillePresenceNaissance.php' => [PdfCatalog::PRESENCE, ['view' => 'birthyear']],
         'FeuillePresenceVisa.php' => [PdfCatalog::PRESENCE, ['visa' => '1']],
         'FeuilleControle.php' => [PdfCatalog::SCRUTINEERING_CONTROL, []],
         'FeuilleControleEN.php' => [PdfCatalog::SCRUTINEERING_CONTROL, []],

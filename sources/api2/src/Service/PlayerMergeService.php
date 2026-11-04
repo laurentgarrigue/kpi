@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\AgeCategory\AgeCategoryRule;
+use App\AgeCategory\CompositionAgeCategories;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -9,11 +11,14 @@ use Doctrine\DBAL\Connection;
  *
  * Handles player merge operations including manual merge and auto-merge of non-federal players.
  * Migrated from GestionOperations.php FusionJoueurs and FusionAutomatiqueLicenciesNonFederaux.
+ * A conventional birth date (1901-01-01, 0000-00-00) counts as absent (CATEGORIE_AGE.md story 35), and the age
+ * categories of the target are recomputed once the compositions of the source are moved to it.
  */
 class PlayerMergeService
 {
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly CompositionAgeCategories $compositionAgeCategories,
     ) {
     }
 
@@ -92,6 +97,9 @@ class PlayerMergeService
             // 7. Delete source license
             $sql = "DELETE FROM kp_licence WHERE Matric = ?";
             $this->connection->executeStatement($sql, [$sourceMatric]);
+
+            // 8. Compositions moved from the source carry its categories: derive them from the target birth date
+            $this->compositionAgeCategories->refreshPlayer($targetMatric);
 
             $this->connection->commit();
         } catch (\Exception $e) {
@@ -301,7 +309,7 @@ class PlayerMergeService
     /**
      * Find the best player to use as merge target based on:
      * 1. Has ICF number
-     * 2. Has valid birth date
+     * 2. Has a real birth date (1901-01-01 and 0000-00-00 count as absent)
      * 3. Has referee qualification
      * 4. Most recent season
      * 5. Lowest matric number
@@ -318,20 +326,33 @@ class PlayerMergeService
                     a.arbitre
                 FROM kp_licence l
                 LEFT JOIN kp_arbitre a ON l.Matric = a.Matric
-                WHERE l.Matric IN ($placeholders)
-                ORDER BY
-                    CASE WHEN l.Reserve IS NOT NULL AND l.Reserve != '' THEN 0 ELSE 1 END,
-                    CASE WHEN l.Naissance IS NOT NULL AND l.Naissance != '0000-00-00' AND l.Naissance != '' THEN 0 ELSE 1 END,
-                    CASE WHEN a.arbitre IS NOT NULL AND a.arbitre != '' THEN 0 ELSE 1 END,
-                    l.Origine DESC,
-                    l.Matric ASC
-                LIMIT 1";
+                WHERE l.Matric IN ($placeholders)";
 
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery($matricules);
-        $row = $result->fetchAssociative();
+        $candidates = $this->connection->fetchAllAssociative($sql, $matricules);
+        if ($candidates === []) {
+            return null;
+        }
 
-        return $row ? (int)$row['Matric'] : null;
+        usort($candidates, fn (array $a, array $b): int => $this->targetPriority($a) <=> $this->targetPriority($b)
+            ?: strcmp((string) $b['Saison'], (string) $a['Saison'])
+            ?: (int) $a['Matric'] <=> (int) $b['Matric']);
+
+        return (int) $candidates[0]['Matric'];
+    }
+
+    /**
+     * Has ICF number, has a real birth date, is a referee: 0 when it has it, lowest first.
+     *
+     * @param array<string, mixed> $candidate
+     * @return array{int, int, int}
+     */
+    private function targetPriority(array $candidate): array
+    {
+        return [
+            empty($candidate['Numero_ICF']) ? 1 : 0,
+            AgeCategoryRule::isUnknownBirthDate($candidate['Naissance']) ? 1 : 0,
+            empty($candidate['arbitre']) ? 1 : 0,
+        ];
     }
 
     /**
@@ -370,8 +391,8 @@ class PlayerMergeService
             }
 
             // Copy birth date if target is missing
-            if ((empty($target['Naissance']) || $target['Naissance'] === '0000-00-00') &&
-                !empty($source['Naissance']) && $source['Naissance'] !== '0000-00-00') {
+            if (AgeCategoryRule::isUnknownBirthDate($target['Naissance'])
+                && !AgeCategoryRule::isUnknownBirthDate($source['Naissance'])) {
                 $updateFields[] = 'Naissance = ?';
                 $updateParams[] = $source['Naissance'];
                 $target['Naissance'] = $source['Naissance'];

@@ -23,7 +23,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const pdf = usePdf()
 const api = useApi()
 const authStore = useAuthStore()
@@ -920,11 +920,9 @@ const openPoolsPdf = () => {
   void pdf.openDocument('teams-groups', {
     season: workContext.season || '',
     competition: workContext.pageCompetitionCode || '',
-    lang: locale.value === 'en' ? 'en' : 'fr',
   })
 }
-const globalPdfPresenceFrUrl = computed(() => `${legacyBase.value}/admin/FeuillePresence.php?${globalPdfParams.value}`)
-const globalPdfPresenceEnUrl = computed(() => `${legacyBase.value}/admin/FeuillePresenceEN.php?${globalPdfParams.value}`)
+const globalPdfPresenceUrl = computed(() => `${legacyBase.value}/admin/FeuillePresence.php?${globalPdfParams.value}`)
 const globalPdfPresenceCatUrl = computed(() => `${legacyBase.value}/admin/FeuillePresenceCat.php?${globalPdfParams.value}`)
 const globalPdfPresencePhotoUrl = computed(() => {
   const base = competitionInfo.value?.code === 'POOL' ? 'FeuillePresencePhotoRef' : 'FeuillePresencePhoto'
@@ -955,9 +953,6 @@ const getLevelColor = (level: string) => {
 // Legacy PDF links
 const getPresenceUrl = (team: CompetitionTeam) =>
   `${legacyBase.value}/admin/FeuillePresence.php?equipe=${team.id}&${globalPdfParams.value}`
-
-const getPresenceEnUrl = (team: CompetitionTeam) =>
-  `${legacyBase.value}/admin/FeuillePresenceEN.php?equipe=${team.id}&${globalPdfParams.value}`
 
 const getPresencePhotoUrl = (team: CompetitionTeam) =>
   `${legacyBase.value}/admin/FeuillePresencePhoto.php?equipe=${team.id}&${globalPdfParams.value}`
@@ -1545,10 +1540,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
         :style="dropdownStyle"
       >
         <a :href="getPresenceUrl({ id: openDropdownId } as CompetitionTeam)" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="closePresenceDropdown">
-          {{ t('teams_page.presence_sheet') }} (FR)
-        </a>
-        <a :href="getPresenceEnUrl({ id: openDropdownId } as CompetitionTeam)" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="closePresenceDropdown">
-          {{ t('teams_page.presence_sheet_en') }}
+          {{ t('teams_page.presence_sheet') }}
         </a>
         <a :href="getPresencePhotoUrl({ id: openDropdownId } as CompetitionTeam)" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="closePresenceDropdown">
           {{ t('teams_page.presence_sheet_photo') }}
@@ -1585,11 +1577,8 @@ const getLogoUrl = (team: CompetitionTeam) => {
         <a href="#" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 rounded-t-lg" @click.prevent="openPoolsPdf">
           {{ t('teams_page.pdf_pools') }}
         </a>
-        <a :href="globalPdfPresenceFrUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
-          {{ t('teams_page.presence_sheet') }} (FR)
-        </a>
-        <a :href="globalPdfPresenceEnUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
-          {{ t('teams_page.presence_sheet_en') }}
+        <a :href="globalPdfPresenceUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
+          {{ t('teams_page.presence_sheet') }}
         </a>
         <a :href="globalPdfPresenceCatUrl" target="_blank" class="block px-3 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800" @click="globalPdfOpen = false">
           {{ t('teams_page.presence_sheet_cat') }}

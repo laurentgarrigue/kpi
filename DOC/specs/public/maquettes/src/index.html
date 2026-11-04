@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquettes app3</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+main { padding: 30px 0 60px; }
+.groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 28px 40px; margin-top: 26px; }
+.groups h2 { font: 400 26px/1 var(--display); color: var(--blue-deep); margin: 0 0 8px; }
+.groups ul { list-style: none; margin: 0; padding: 0; }
+.groups li a { display: block; padding: 8px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.groups li a:hover b { text-decoration: underline; }
+.groups b { font-weight: 600; }
+.groups small { display: block; color: var(--muted); font-size: 13px; }
+.groups .ok { color: #2f7d4a; font-weight: 700; font-size: 12px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Maquettes app3</h1>
+  <p style="color:var(--muted);max-width:65ch">Données réelles d'api2 (base de dev). Les liens entre maquettes fonctionnent ; le reste pointe vers « # ». Toutes les pages sont validées : voir DOC/specs/public/maquettes/README.md.</p>
+  <div class="groups">
+    <section><h2>Site</h2><ul>
+      <li><a href="accueil.html"><b>Accueil</b><span class="ok">validée</span><small>Prochain rendez-vous, actualités, agenda</small></a></li>
+      <li><a href="actualites.html"><b>Actualités</b><span class="ok">validée</span><small>Une à la une, puis liste éditoriale</small></a></li>
+      <li><a href="article.html"><b>Article</b><span class="ok">validée</span><small>Colonne de lecture, précédent et suivant</small></a></li>
+      <li><a href="calendrier.html"><b>Calendrier</b><span class="ok">validée</span><small>Par semaine ou mois complet, par niveau</small></a></li>
+      <li><a href="recherche.html"><b>Recherche</b><span class="ok">validée</span><small>Meilleur résultat, filtres par type</small></a></li>
+      <li><a href="contenu.html"><b>Page de contenu</b><span class="ok">validée</span><small>Sommaire qui suit la lecture</small></a></li>
+      <li><a href="formulaire.html"><b>Formulaire d'inscription</b><span class="ok">validée</span><small>Sections, quantités et total en direct</small></a></li>
+    </ul></section>
+    <section><h2>Compétitions</h2><ul>
+      <li><a href="competitions.html"><b>Compétitions et résultats</b><span class="ok">validée</span><small>Index des groupes, classements résumés</small></a></li>
+      <li><a href="infos.html"><b>Infos</b><span class="ok">validée</span><small>Encart événement plus incitatif</small></a></li>
+      <li><a href="matchs.html"><b>Matchs</b><span class="ok">validée</span><small>Colonne des scores</small></a></li>
+      <li><a href="deroulement.html"><b>Déroulement</b><span class="ok">validée</span><small>Une colonne par tour (2 à 5), centrée</small></a></li>
+      <li><a href="classement.html"><b>Classement</b><span class="ok">validée</span><small>Podium, tableau complet</small></a></li>
+      <li><a href="stats.html"><b>Stats</b><span class="ok">validée</span><small>Buteurs, filtre par équipe</small></a></li>
+      <li><a href="palmares.html"><b>Palmarès</b><span class="ok">validée</span><small>Tenant du titre, dix dernières saisons</small></a></li>
+    </ul></section>
+    <section><h2>Événements</h2><ul>
+      <li><a href="evenements.html"><b>Événements</b><span class="ok">validée</span><small>Par mois, à venir puis passés</small></a></li>
+      <li><a href="evenement.html"><b>Événement</b><span class="ok">validée</span><small>Compétitions et podiums</small></a></li>
+      <li><a href="terrains.html"><b>Terrains</b><span class="ok">validée</span><small>Lignes horaires, une carte par match</small></a></li>
+    </ul></section>
+    <section><h2>Clubs et équipes</h2><ul>
+      <li><a href="clubs.html"><b>Clubs et équipes</b><span class="ok">validée</span><small>Carte, recherche et fiche du club sur une page</small></a></li>
+      <li><a href="equipe.html"><b>Équipe</b><span class="ok">validée</span><small>Médailles et palmarès</small></a></li>
+    </ul></section>
+  </div>
+</main>
+</body>
+</html>

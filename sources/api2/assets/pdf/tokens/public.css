@@ -7,6 +7,13 @@
   --color-line: #c6c7c7;
   --color-surface: #ffffff;
   --color-sky: #69b9e6;
+  --color-wash: #eef5f9;
+  --color-muted: #5d5f63;
+  --color-spine: #20265b;
+  --color-live: #c94a4c;
+  --color-medal-gold: #9a7208;
+  --color-medal-silver: #6b7280;
+  --color-medal-bronze: #9a5a2c;
   --color-kpi-blue-50: oklch(0.975 0.010 231.75);
   --color-kpi-blue-100: oklch(0.945 0.022 231.75);
   --color-kpi-blue-200: oklch(0.890 0.039 231.75);

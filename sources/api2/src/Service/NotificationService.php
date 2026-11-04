@@ -97,4 +97,41 @@ class NotificationService
             ]);
         }
     }
+
+    /**
+     * Alerte « nouvelle connexion depuis un appareil inconnu » (AUTH_HARDENING.md AUTH-DV-01).
+     * Le lien de révocation invalide l'appareil ET tous les refresh tokens actifs du compte.
+     */
+    public function sendNewDeviceAlert(string $toEmail, string $userCode, string $deviceLabel, string $revokeToken): void
+    {
+        $revokeUrl = rtrim($this->app4Url, '/') . '/auth/device/revoke/' . $revokeToken;
+        $subject = 'KPI — Nouvelle connexion à votre compte';
+        $when = (new \DateTimeImmutable())->format('d/m/Y H:i');
+
+        $body  = "Bonjour,\n\n";
+        $body .= "Une nouvelle connexion vient d'avoir lieu sur votre compte KPI :\n\n";
+        $body .= "  Compte     : {$userCode}\n";
+        $body .= "  Appareil   : {$deviceLabel}\n";
+        $body .= "  Date       : {$when}\n\n";
+        $body .= "Si vous êtes à l'origine de cette connexion, aucune action n'est nécessaire.\n\n";
+        $body .= "Dans le cas contraire, cliquez sur le lien ci-dessous pour révoquer cet appareil\n";
+        $body .= "et déconnecter immédiatement toutes vos sessions :\n\n";
+        $body .= "  {$revokeUrl}\n\n";
+        $body .= "Pensez ensuite à changer votre mot de passe.\n\n";
+        $body .= "Cordialement,\nL'équipe KPI";
+
+        try {
+            $email = (new Email())
+                ->from($this->mailFrom)
+                ->to($toEmail)
+                ->subject($subject)
+                ->text($body);
+            $this->mailer->send($email);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send new device alert', [
+                'to' => $toEmail,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }

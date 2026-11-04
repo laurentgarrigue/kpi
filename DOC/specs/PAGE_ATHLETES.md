@@ -50,13 +50,13 @@ Page de consultation et gestion des athletes (joueurs, arbitres, officiels). Per
 | 1 | Modifier nom | <= 2 | Input text | ✅ Conserver |
 | 2 | Modifier prenom | <= 2 | Input text | ✅ Conserver |
 | 3 | Modifier sexe (M/F) | <= 2 | Select | ✅ Conserver |
-| 4 | Modifier date de naissance | <= 2 | Input text + calendrier | ✅ Conserver (datepicker) |
+| 4 | Modifier date de naissance | <= 2 | Input text + calendrier | ✅ Conserver (datepicker) + case « Date de naissance inconnue », date invraisemblable refusee, recalcul des categories d'age ([CATEGORIE_AGE.md](CATEGORIE_AGE.md) stories 11-16) |
 | 5 | Modifier derniere saison | <= 2 | Input tel (4 chars) | ✅ Conserver |
 | 6 | Modifier numero ICF | <= 2 | Input tel | ✅ Conserver |
 | 7 | Modifier qualification arbitrage (Reg/Nat/Int/OTM/JO/-) | <= 2 | Select | ✅ Conserver |
 | 8 | Modifier niveau arbitrage (A/B/C/S/-) | <= 2 | Select | ✅ Conserver |
 | 9 | Changer de club (autocomplete) | <= 2 | Autocomplete club → remplit aussi CD et CR | ✅ Conserver |
-| 10 | Restriction : Matric > 2000000 uniquement | <= 2 | Condition PHP | ✅ Conserver (seuls les athletes non-federaux sont modifiables) |
+| 10 | Restriction : Matric >= 2000000 uniquement | <= 2 | Condition PHP | ✅ Conserver (seuls les athletes non-federaux sont modifiables) |
 
 ### 2.4 Participations par saison
 
@@ -143,6 +143,31 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 | 7 | Onglets pour les participations | Organisation en tabs (Feuilles de presence, Officiels, Matchs) au lieu de tableaux cote a cote |
 | 8 | Fusion arbitrage + table de marque | Un seul tableau "Officiels" au lieu de 2 tableaux separes dans le legacy |
 
+### 2.6 Liste des athletes : retrouver les joueurs a completer
+
+Route `/athletes/list` (lien « Liste des athlètes » dans l'en-tête de `/athletes`). Repond aux user stories 28-30 de
+[CATEGORIE_AGE.md](CATEGORIE_AGE.md) : retrouver les joueurs dont la date de naissance reste a completer.
+
+| # | Fonctionnalite | Profil | Decision |
+|---|----------------|--------|----------|
+| 1 | Filtre « Date de naissance inconnue » (coche par defaut) | <= 10 | `Naissance` NULL, ou date conventionnelle `1901-01-01` / `0000-00-00` tant que la migration (#369) n'est pas passee partout |
+| 2 | Filtre « Joueur international » | <= 10 | `Matric >= 2000000` (voir Q7) |
+| 3 | Filtre « Engage cette saison » | <= 10 | Present dans une composition (`kp_competition_equipe_joueur`) d'une equipe de la saison active (`kp_saison.Etat = 'A'`) |
+| 4 | Combinaison des filtres | <= 10 | ET logique ; aucun filtre = tous les athletes |
+| 5 | Recherche nom/prenom/licence | <= 10 | Memes regles que l'autocomplete (§ 6.3), a partir de 2 caracteres |
+| 6 | Nombre de resultats | <= 10 | Total de tous les athletes correspondants (pas seulement la page affichee) |
+| 7 | Pagination | <= 10 | 25/50/100/200 par page (defaut 50), tri Nom, Prenom, Matric |
+| 8 | Acces a la fiche | <= 10 | Clic sur une ligne → `/athletes?matric=<matric>` ; la correction de la date (profil <= 2, § 2.3) fait sortir le joueur du filtre « date inconnue » |
+
+Colonnes : Licence (+ badge « International »), Nom Prenom, Sexe, Naissance (« Inconnue » si absente), Club. En mobile :
+une carte par athlete.
+
+**Criteres d'acceptation** (tests `tests/Integration/AthletesListTest.php`, `app4/tests/unit/athletesList.spec.ts`) :
+- chaque filtre seul, puis les trois combines, renvoient les bons athletes et le bon total ;
+- le total couvre toutes les pages ;
+- une date conventionnelle est filtree et affichee comme inconnue (`naissance: null`) ;
+- apres correction de la date par PUT `/admin/athletes/{matric}`, le joueur sort du filtre « date inconnue ».
+
 ---
 
 ## 3. Decisions de conception
@@ -150,11 +175,13 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 | # | Question | Decision |
 |---|----------|----------|
 | Q1 | Recherche avancee (iframe legacy) | **Supprimee**. L'autocomplete API2 suffit pour rechercher par nom/prenom/licence. Un endpoint de recherche enrichi avec filtres optionnels (club, sexe) peut etre ajoute si necessaire. |
-| Q2 | Restriction modification Matric > 2000000 | **Conservee**. Les athletes avec Matric <= 2000000 sont des licencies federaux dont les donnees viennent du fichier PCE ; ils ne doivent pas etre modifies manuellement. |
+| Q2 | Restriction modification Matric >= 2000000 | **Conservee**. Les athletes avec Matric < 2000000 sont des licencies federaux dont les donnees viennent du fichier PCE ; ils ne doivent pas etre modifies manuellement. |
 | Q3 | Champ Capitaine dans les matchs | Les valeurs sont : C (Capitaine), E (Entraineur), A (Arbitre), X (Exclu/Inactif), - (Joueur). La valeur X exclut le joueur des matchs joues. |
 | Q4 | Arbitrage + Table de marque (OTM) | **Fusionnes en un seul tableau "Officiels"**. Le legacy les separait car les requetes SQL etaient distinctes (colonnes numeriques pour arbitrage vs LIKE texte pour OTM). L'API2 unifie les deux sources et retourne un tableau unique avec toutes les fonctions officielles par match. |
 | Q5 | Layout des participations | **3 onglets/tabs** (Presence, Officiels, Matchs) au lieu du layout legacy (2 colonnes : gauche = presence+arbitrage+OTM, droite = matchs). Plus lisible et mieux adapte au mobile. |
 | Q6 | Lien feuille de match | Les numeros de match (Numero_ordre) sont des liens cliquables. Pour les profils <= 3, un lien vers la feuille de match est affiche (futur : route app4 ou ouverture legacy). |
+| Q7 | Definition de « joueur international » (liste, § 2.6) | Aucune colonne ne le porte. **`Matric >= 2000000`** (plage des licences non federales, attribuee a partir de 2000000 par la saisie manuelle et les imports ; les licencies FFCK sont sous 600000). C'est le seul indicateur present sur toutes les fiches : `Origine = 'ETRG'` ne marque que les fiches creees par l'import d'evenement (0 en base de dev) et `Numero_comite_reg = '98'` que les imports ICF (3 778 fiches). Verifie en base de dev : 3 986 fiches `Matric >= 2000000`, le chiffre de CATEGORIE_AGE.md. La modification (Q2) utilise le meme seuil (`Matric >= 2000000`, `App\Athlete\InternationalPlayer`). |
+| Q8 | Liste vs autocomplete | **Endpoint distinct** `GET /admin/athletes` (§ 6.8, pagine avec total) : l'autocomplete `GET /admin/athletes/search` garde sa reponse en tableau nu (limite 50, sans total) utilisee par `AthleteAutocomplete`. |
 
 ---
 
@@ -185,7 +212,7 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 |  |  |   2026          |                |             |  2024-NATC |   |    |
 |  |  +------------------------------------------------------------+   |    |
 |  |                                                                    |    |
-|  |  [Modifier] (profil <= 2, Matric > 2000000)                       |    |
+|  |  [Modifier] (profil <= 2, Matric >= 2000000)                      |    |
 |  +--------------------------------------------------------------------+    |
 |                                                                            |
 |  +--- Participations ------------------------------------------------+    |
@@ -252,7 +279,7 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 | Nom | Text | Oui | Non vide, converti en majuscules | kp_licence.Nom |
 | Prenom | Text | Oui | Non vide, converti en majuscules | kp_licence.Prenom |
 | Sexe | Select (M/F) | Oui | M ou F | kp_licence.Sexe |
-| Date de naissance | Date | Oui | Format date valide | kp_licence.Naissance |
+| Date de naissance | Date + case « Date de naissance inconnue » | Oui, sauf si « inconnue » cochee | Date valide donnant entre 5 et 100 ans pour la saison active ; « inconnue » = NULL (une date conventionnelle 1901-01-01 / 0000-00-00 ouvre la fiche case cochee) | kp_licence.Naissance |
 | Derniere saison | Text | Oui | 4 caracteres numeriques | kp_licence.Origine |
 | Numero ICF | Number | Non | Entier positif ou vide | kp_licence.Reserve |
 | Qualification arbitrage | Select | Non | Valeurs: -, Reg, IR, Nat, Int, OTM, JO | kp_arbitre.arbitre |
@@ -261,10 +288,11 @@ Matchs ou l'athlete a participe comme joueur (present dans kp_match_joueur, Capi
 
 ### 5.2 Comportement
 
-- Accessible uniquement si profil <= 2 ET Matric > 2000000
+- Accessible uniquement si profil <= 2 ET Matric >= 2000000
 - Le champ "Nouveau club" est un autocomplete sur `/admin/clubs/search` ; a la selection, les champs CD et CR sont automatiquement remplis
 - A la soumission : PUT `/admin/athletes/{matric}`
-- Transaction : mise a jour kp_licence + kp_competition_equipe_joueur (Nom, Prenom, Sexe) + REPLACE INTO kp_arbitre
+- Transaction : mise a jour kp_licence + kp_competition_equipe_joueur (Nom, Prenom, Sexe) + recalcul de la categorie d'age de toutes ses compositions + REPLACE INTO kp_arbitre
+- Une date refusee par api2 (`IMPLAUSIBLE_BIRTHDATE`) affiche le message explicite dans la modale (fr/en)
 - Confirmation toast en cas de succes
 - Si qualification arbitrage = '-' : les champs niveau et saison arbitrage sont vides
 
@@ -301,6 +329,7 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 | GET | `/admin/athletes/{matric}` | Fiche complete d'un athlete (infos generales) | <= 10 |
 | GET | `/admin/athletes/{matric}/participations` | Participations d'un athlete pour une saison | <= 10 |
 | PUT | `/admin/athletes/{matric}` | Modifier un athlete (identite + arbitrage) | <= 2 |
+| GET | `/admin/athletes` | Liste paginee filtrable avec total (§ 6.8) | <= 10 |
 
 ### 6.3 GET /admin/athletes/search
 
@@ -374,7 +403,7 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 - `pagaie` : Les valeurs viennent de kp_licence.Pagaie_EVI, Pagaie_MER, Pagaie_ECA. Ce sont des codes (ex: "NO", "RO", "BL") traduits en labels cote API.
 - `certificats.aps` = kp_licence.Etat_certificat_APS, `certificats.ck` = kp_licence.Etat_certificat_CK
 - `surclassement` : jointure kp_surclassement pour la saison en cours (ou null)
-- `editable` : true si Matric > 2000000
+- `editable` : true si Matric >= 2000000
 
 ### 6.5 GET /admin/athletes/{matric}/participations
 
@@ -440,7 +469,7 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 
 **Profil requis** : <= 2
 
-**Restriction** : Matric > 2000000 (sinon 403)
+**Restriction** : Matric >= 2000000 (sinon 403)
 
 **Body** :
 ```json
@@ -460,23 +489,65 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 ```
 
 **Logique backend** :
-1. Verifier Matric > 2000000 (sinon 403 "Modification interdite")
-2. Transaction :
+1. Verifier Matric >= 2000000 (sinon 403 "Modification interdite")
+2. `naissance` null ou vide = date inconnue ; sinon date `YYYY-MM-DD` valide donnant entre 5 et 100 ans pour la saison active
+   (`kp_saison.Etat = 'A'`, `AgeCategoryRule::isPlausibleBirthDate`), sinon 400 `IMPLAUSIBLE_BIRTHDATE` et rien n'est modifie
+3. Transaction :
    a. UPDATE kp_licence (Origine, Nom, Prenom, Sexe, Naissance, Reserve)
    b. Si codeClub fourni : UPDATE kp_licence (Numero_club, Numero_comite_dept, Numero_comite_reg) en cherchant le CD et CR du club
    c. UPDATE kp_competition_equipe_joueur (Nom, Prenom, Sexe) WHERE Matric = ?
-   d. REPLACE INTO kp_arbitre selon la qualification
-3. Commit
-4. Logger dans kp_journal
+   d. Recalcul du cache Categ de toutes ses compositions, toutes saisons, competitions verrouillees comprises, NULL si
+      date inconnue (`CompositionAgeCategories::refreshPlayer`, ADR 0001)
+   e. REPLACE INTO kp_arbitre selon la qualification
+4. Commit
+5. Logger dans kp_journal
 
 ### 6.7 Codes de retour
 
 | Code | Cas |
 |------|-----|
 | 200 | Succes (GET, PUT) |
-| 400 | Donnees invalides |
-| 403 | Profil insuffisant ou Matric <= 2000000 |
+| 400 | Donnees invalides (`VALIDATION_ERROR`, `CLUB_NOT_FOUND`, `IMPLAUSIBLE_BIRTHDATE`) |
+| 403 | Profil insuffisant ou Matric < 2000000 |
 | 404 | Athlete non trouve |
+
+### 6.8 GET /admin/athletes
+
+Controleur `AdminAthletesListController` (separe de `AdminAthletesController`), requete et filtres dans
+`App\Athlete\AthletesListRepository`.
+
+**Acces** : profil <= 10 (`ROLE_USER`), comme la consultation de la fiche et l'autocomplete `GET /admin/athletes/search`
+(§ 2.6, § 11.1) : choix delibere, la liste n'expose que des donnees deja visibles sur la fiche (identite, naissance, club).
+
+**Query Parameters** (tous optionnels, combinables en ET) :
+- `q` : nom, prenom ou numero de licence (ignore sous 2 caracteres)
+- `unknown_birthdate=1` : `Naissance IS NULL` ou date conventionnelle (`1901-01-01`, `0000-00-00`)
+- `international=1` : `Matric >= 2000000`
+- `engaged_this_season=1` : `EXISTS` une ligne `kp_competition_equipe_joueur` d'une equipe dont `Code_saison` est la saison `Etat = 'A'` (la plus recente si aucune n'est active)
+- `page` (defaut 1), `limit` (defaut 50, max 200)
+
+**Reponse** :
+```json
+{
+  "items": [
+    {
+      "matric": 2100001,
+      "nom": "DOE",
+      "prenom": "John",
+      "sexe": "M",
+      "naissance": null,
+      "international": true,
+      "club": "CK LE HAVRE",
+      "codeClub": "7603"
+    }
+  ],
+  "total": 81,
+  "page": 1,
+  "limit": 50
+}
+```
+
+`naissance` vaut `null` pour une date inconnue, y compris une date conventionnelle. Tri : Nom, Prenom, Matric.
 
 ---
 
@@ -546,7 +617,11 @@ La mise a jour de la table `kp_arbitre` utilise `REPLACE INTO` (upsert) :
 
 ```
 sources/app4/pages/athletes/
-└── index.vue              # Page principale
+├── index.vue              # Page principale
+└── list.vue               # Liste filtrable des athletes (§ 2.6)
+
+sources/app4/utils/athletesList.ts   # Parametres de GET /admin/athletes, nombre de pages
+sources/app4/types/athletes-list.ts  # Types de la liste
 
 sources/app4/components/admin/
 └── AthleteEditModal.vue   # Modal modification athlete (optionnel, peut etre inline)
@@ -821,7 +896,7 @@ La page Athletes est dans le menu sous "Athletes" dans la section Administration
 
 ### 11.2 Validation backend
 
-- Matric > 2000000 pour les modifications (athletes non-federaux uniquement)
+- Matric >= 2000000 pour les modifications (athletes non-federaux uniquement)
 - Code club existant dans kp_club si changement de club
 - Qualification arbitrage : valeur parmi Reg, IR, Nat, Int, OTM, JO, vide
 - Niveau arbitrage : valeur parmi A, B, C, S, vide

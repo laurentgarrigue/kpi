@@ -27,6 +27,7 @@ final class PdfCatalog
     public const CARDS = 'cards';
     public const QRCODES = 'qrcodes';
     public const QRCODE_APP = 'qrcode-app';
+    public const SCHEMA = 'schema';
 
     /** Minimum role of each admin document (§ 7.2 to § 7.5). */
     private const ADMIN_ROLES = [
@@ -44,13 +45,14 @@ final class PdfCatalog
         self::RANKING_TIEBREAK => 'ROLE_ORGANIZER',
         self::STATS => 'ROLE_VIEWER',
         self::CARDS => 'ROLE_ORGANIZER',
+        self::SCHEMA => 'ROLE_VIEWER',
     ];
 
     /** Options that add data, with their own role (§ 7.2): `option` or `option=value`. */
     private const OPTION_ROLES = [
         self::PRESENCE => [
             'visa' => 'ROLE_ORGANIZER',
-            'birthdate' => 'ROLE_ADMIN',
+            'view=birthyear' => 'ROLE_ADMIN',
             'category=U21' => 'ROLE_ORGANIZER',
         ],
     ];

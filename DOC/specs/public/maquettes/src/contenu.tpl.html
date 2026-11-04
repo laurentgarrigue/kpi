@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page de contenu</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.layout { display: grid; grid-template-columns: minmax(0, 720px) 240px; gap: 56px; justify-content: center; padding-bottom: 56px; }
+article h1 { font-size: 54px; line-height: 1; margin: 6px 0 22px; }
+.body { font-size: 17px; line-height: 1.7; }
+.body h2 { font: 400 30px/1.1 var(--display); color: var(--blue-deep); margin: 36px 0 10px; scroll-margin-top: 16px; }
+.body ul { padding-left: 22px; }
+.body li { margin: 3px 0; }
+.body code, .body strong { font-weight: 700; }
+
+/* « On this page »: follows the reading. */
+.toc { position: sticky; top: 16px; align-self: start; margin-top: 70px; font-size: 14px; }
+.toc h2 { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 0 8px; }
+.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+.toc a { display: block; padding: 5px 0 5px 14px; margin-left: -2px; border-left: 2px solid transparent; text-decoration: none; color: var(--muted); }
+.toc a:hover { color: var(--ink); }
+.toc a[aria-current] { border-color: var(--navy); color: var(--ink); font-weight: 600; }
+.toc .updated { margin-top: 18px; color: var(--muted); font-size: 13px; }
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .toc { position: static; margin: 0 0 8px; order: -1; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .toc .updated { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap"><div class="layout"><article id="article"></article><nav class="toc" aria-labelledby="toc-h" id="toc"></nav></div></main>
+<script src="maquette.js"></script>
+<script>
+const P = __PAGE__;
+document.getElementById('chrome').innerHTML = siteChrome('Le kayak-polo');
+// The body comes from the CMS: in the real page it is sanitised server-side (as today).
+document.getElementById('article').innerHTML = `<nav class="crumbs" aria-label="Fil d'Ariane"><a href="accueil.html">Accueil</a> › Le kayak-polo</nav>
+  <h1>${esc(P.title)}</h1><div class="body">${P.body}</div>`;
+const heads = [...document.querySelectorAll('.body h2')];
+heads.forEach((h, i) => { h.id ||= `s${i + 1}`; });
+document.getElementById('toc').innerHTML = `<h2 id="toc-h">Sur cette page</h2><ol>${heads.map(h => `<li><a href="#${h.id}">${esc(h.textContent)}</a></li>`).join('')}</ol>`;
+const links = [...document.querySelectorAll('.toc a')];
+const io = new IntersectionObserver(entries => {
+  for (const e of entries) if (e.isIntersecting) links.forEach(a => a.toggleAttribute('aria-current', a.hash === `#${e.target.id}`));
+}, { rootMargin: '0px 0px -70% 0px' });
+heads.forEach(h => io.observe(h));
+demoBar();
+</script>
+</body>
+</html>

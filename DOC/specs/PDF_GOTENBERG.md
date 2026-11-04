@@ -274,7 +274,10 @@ Pour chaque document, la spec définit (§7) :
   rien d'autre (cf. CLAUDE.md, PAGE_SCRUTINEERING).
 
 Refus → **403** (rôle insuffisant ou hors périmètre), sans révéler l'existence de la ressource hors périmètre.
-Chaque génération admin d'un document à données personnelles est journalisée (`AdminLoggableTrait`, sans les données).
+Chaque génération d'un PDF admin (route `/admin/pdf` ou lien signé) est journalisée dans `kp_journal`, comme les autres
+actions admin et sans les données : action « PDF `<document>` », utilisateur, saison, compétition (une seule, sinon la
+liste dans le détail), événement, journée, matchs, et les autres paramètres (langue, options) dans le détail
+(`App\Pdf\PdfJournal`). Les PDF publics ne sont pas journalisés ; un échec d'écriture n'empêche pas de servir le PDF.
 
 ---
 
@@ -305,10 +308,10 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 | `doc` | Remplace | Appelé aujourd'hui depuis (profils qui voient le lien) | Rôle proposé |
 |---|---|---|---|
 | `teams-groups` | FeuilleGroups | Documents (1–6, 8) ; Équipes, menu PDF global (1–8) | `ROLE_VIEWER` + périmètre |
-| `presence` (base : FR/EN, `photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
-| `presence` + `category=<catégorie>` | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
-| `presence` + `category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
-| `presence` + `birthdate=1` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
+| `presence` (base : FR/EN, `view=photos`) | FeuillePresence, …EN, …Photo, …PhotoRef (POOL), …Photo2 | Documents (1–6, 8) ; Équipes, menu global (1–8) et menu par équipe (1–8, 10) ; Présence équipe (tous ceux qui l'ouvrent) | `ROLE_PRESENCE_VIEWER` + périmètre ; profil 7 : équipes de ses clubs ; profil 10 : toutes les équipes de ses compétitions |
+| `presence` + `view=category` (`category=<catégorie>` pour en garder une) | FeuillePresenceCat | Équipes, menu global (1–8) ; Documents, section Contrôle (1–6) | `ROLE_VIEWER` + périmètre (cf. I3) |
+| `presence` + `view=category&category=U21` | FeuillePresenceU21 | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
+| `presence` + `view=birthyear` | FeuillePresenceNaissance | Documents, section Contrôle (1–2) | `ROLE_ADMIN` |
 | `presence` + `visa=1` | FeuillePresenceVisa | Équipes (1–2) ; Documents, section Équipes (1–6, 8) ; Présence équipe (tous) | `ROLE_ORGANIZER` + périmètre (I2) |
 | `scrutineering-control` | FeuilleControle, …EN | Équipes, menu global (1–2) et par équipe (1, 2, 10) ; Scrutineering (1, 2, 10) ; Présence équipe (tous) | `ROLE_SCRUTINEER` (+ périmètre pour le profil 10) (cf. I1) |
 | `referees-pool` | FeuillePoolArbitres | Pool arbitres (menu 1–2, API `ROLE_ADMIN`) | `ROLE_ADMIN` |
@@ -316,6 +319,20 @@ référence : **le contrôle se fait dans api2**, l'affichage des liens dans app
 
 Règle : chaque **option** qui ajoute des données (date de naissance, visa, catégorie U21) a son propre rôle ; une
 option demandée sans le rôle correspondant → 403 (pas de document dégradé silencieusement).
+
+Contenu de la feuille de présence (décision du 2026-10-30) : le statut est écrit en toutes lettres (Capitaine, Staff,
+Arbitre, Inactif ; rien pour un joueur) — de même sur la feuille de contrôle et le suivi des cartons ; les colonnes
+**Pagaie** et **Certif.** ne figurent que pour les compétitions des sections **Nationale (2) et Régionale (3)**
+(`kp_groupe.section` du groupe de la compétition). Sur chaque feuille d'équipe, les **non-joueurs** (arbitres et
+inactifs) sont séparés du reste de la liste par un intertitre « Non joueurs » (2026-10-31).
+
+`teams-groups` (2026-10-31) : seule une coupe (CP) est répartie en poules, côte à côte ; un championnat (CHPT) ou une
+compétition MULTI est une liste unique, sans intertitre « Sans poule » ni colonnes.
+
+Le pool d'arbitres est permanent : `referees-pool` et `presence?competition=POOL` lisent la saison technique `1000`,
+quel que soit `season`. `instances` exige `competition` et `gameday` (la journée doit appartenir à la compétition et
+à la saison demandées, sinon 404) ; une journée hors du filtre de journées du mandat → 403. Le numéro de licence des
+officiels n'est jamais imprimé.
 
 ### 7.3 Matchs
 
@@ -349,6 +366,25 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 - app2 `pages/game/[id].vue` : le lien vers `PdfMatchMulti.php` est retiré.
 - app3 `app/utils/page-links.ts` : la cible « feuille de match » pointe vers la fiche match app3 si elle existe,
   sinon vers la vue match d'app2.
+- `games-list` (décisions des 2026-10-30 et 31) : colonnes N°, date, heure, **compétition (seulement quand la liste en
+  réunit plusieurs, par son libellé)**, Phase / Match (la phase, puis le libellé du match sur une 2e ligne, sans son code
+  d'attribution `[…]`), terrain, équipe A, score, équipe B (centrés, nom d'équipe sur une ligne), **une colonne
+  Arbitres** (principal au-dessus du secondaire). Équipes et arbitres non encore désignés : leur **libellé d'attente**
+  (« (1er Poule A) », « (Vainqueur match 12) », dans la langue du PDF). La liste commence toujours sous l'en-tête de la
+  première page : ses sections s'écoulent sur les pages suivantes.
+- Tous les documents qui affichent des matchs (`games-list`, `ranking-team-detail`, `ranking-phases`, justification
+  de départage) : l'équipe vainqueur en gras, ainsi que **son score seulement**, pas celui de l'équipe perdante
+  (2026-10-31, précisé le 2026-11-01).
+- `scoresheet` : une colonne **RD** (carton rouge définitif, futur carton noir) après V, J, R de chaque équipe
+  (2026-10-31). Depuis le 2026-11-01 : colonnes des cartons sur fond pastel de leur couleur (vert, jaune, rouge, rouge
+  soutenu pour RD) ; statuts par leur libellé, comme sur la feuille de présence (« (Capitaine) » après le nom,
+  « Staff » à la place du numéro, au lieu de « Entraîneur ») ; une ligne d'événement remplie a la même hauteur qu'une
+  vide, pour qu'une feuille complète tienne sur une page.
+- `schema` (admin, `ROLE_VIEWER` + périmètre, comme la page Schéma d'app4, 2026-10-31) : remplace l'impression du
+  navigateur de la page `gamedays/schema`. Une coupe en colonnes par étape (classement publié des poules, sinon leurs
+  équipes ; tableaux d'élimination, vainqueur en premier), un championnat par journée. Options de la page : `count=0`
+  masque le nombre de matchs, `times=0` les horaires. Données : `App\Service\CompetitionSchemaService`, partagé avec
+  `GET /admin/schema`.
 - `PdfMatchMulti.php?listMatch=<id>` redirige (301) vers la vue match d'app2 de ce match ; avec plusieurs ids, vers
   la vue du premier match. Une feuille publique pourra être ajoutée plus tard comme option `scoresheet` sur `/pdf`
   sans changer le reste du contrat.
@@ -357,6 +393,22 @@ d'app2 (`/game/{id}`), plus lisible ; le PDF formel reste un document d'officiel
 
 La **feuille de marque** est un document officiel rempli à la main : format A4, zones d'écriture et rubriques
 inchangées, validées par la commission arbitrage avant mise en service (critère PDF-DOC-03).
+
+Mise en page (2026-11-03, sur le modèle de l'ancienne feuille de production) :
+
+- **une page par match**, jamais de page blanche : chaque page est une boîte de la hauteur de la page, colonnes à
+  largeur fixe, une ligne par case (un nom trop long est tronqué, il ne pousse pas la feuille sur une 2e page) ;
+- au-delà de 26 faits de match, la grille **continue sur des pages suivantes** (40 lignes chacune, « Feuille de
+  marque (suite 2/3) ») ; la colonne de gauche y rappelle le match : compétition, lieu, date, heure, numéro, terrain,
+  phase, équipes, arbitres et identifiant ;
+- **date, heure, numéro de match et terrain en grand** ; champs nominatifs (organisateur, responsable
+  d'organisation, délégué, arbitres, secrétaire, chrono, shotclock, lignes) et lieu sur une demi-largeur au moins ;
+  libellés courts : « Arbitre 1 », « Arbitre 2 », « Chrono », « Ligne 1 », « Ligne 2 » (un champ par juge de ligne) ;
+- compositions à colonnes fixes, Nom et Prénom les plus larges ; la licence porte sa saison d'origine si elle diffère
+  de la saison du match ;
+- grille des faits : « Équipe A » et « Équipe B » alignées à gauche ;
+- **QR code** au-dessus de l'identifiant du match, vers sa page de saisie en ligne dans app4
+  (`APP4_URL/games/{id}/scoring`, comme l'ancienne feuille vers `FeuilleMarque2.php`).
 
 ### 7.4 Classements
 
@@ -370,7 +422,13 @@ inchangées, validées par la commission arbitrage avant mise en service (critè
 | `ranking-tiebreak` | justification départage (api2, mPDF) | — | Classements, si égalités (API `ROLE_VIEWER`) | `ROLE_ORGANIZER` + périmètre (repose sur le calcul, cf. I5) |
 
 Dans app4, les entrées « Classement publié » de la page Classements (profils 1–8) ouvrent la **version publique**.
-Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
+
+Coupe (`CP`, décision du 2026-10-30) : `ranking` ne montre que le **classement final** (rang, équipe, médaille), sans
+tableau de points, comme l'onglet Classement d'app3 ; `ranking-team-detail` regroupe les matchs de chaque équipe par
+**nom de phase** (« Poule A », « Finale ») au lieu de la date et du lieu, sans les points de l'équipe.
+`ranking-phases` d'une coupe : le titre de chaque phase seul, sans sa date ni son lieu (2026-11-01).
+Quand le classement porte des médailles, elles **remplacent** les mentions « Qualifié » (validé sur la maquette de référence,
+2026-10-28). Règle invariante : **un PDF public ne lit jamais les colonnes calculées** ; un PDF admin calculé porte la mention
 « Provisoire - non publié » en filigrane.
 
 ### 7.5 Statistiques, contrôle, QR codes
@@ -444,7 +502,7 @@ par le même script que les jetons.
 - États : `success` `#209452` (qualifié, présent, contrôle OK), `warning` `#e9b410` (à vérifier, provisoire),
   `danger` `#c94a4c` (non conforme, carton rouge, certificat manquant) — **toujours doublés d'un libellé ou d'une
   icône** (lisible en noir & blanc).
-- Logo : `logo_kp.png` (KPI) dans le bandeau ; logos compétition/sponsor issus des visuels de la compétition.
+- Logo : `logo_kp.png` (KPI) dans le bandeau, sauf quand les visuels de la compétition le remplacent (§ 8.4.1).
 - Pied : « Document interne - ne pas diffuser » pour les documents à données personnelles, nom du profil générateur
   et date/heure de génération.
 - Filigrane « Provisoire - non publié » (`warning`, opacité faible) sur les classements calculés (§7.4).
@@ -455,7 +513,8 @@ par le même script que les jetons.
   `#c94a4c` réservé aux mises en avant (vainqueur de match, alerte) ; `gold`/`green` pour médailles et qualifiés,
   comme sur le site.
 - En-tête : logo **FFCK sur pastille blanche** (règle de la charte : jamais sur fond coloré) + logo CNA Kayak-Polo
-  (`kpi-layer/public/img/brand/`), puis logos de la compétition.
+  (`kpi-layer/public/img/brand/`), puis logo de la compétition ; bandeau de la compétition à leur place quand il est
+  coché (§ 8.4.1).
 - Pied en bandeau `navy` fin, rappelant le pied du site : URL et **QR code vers la page équivalente sur app3**
   (classements → page compétition, listes et grilles de matchs → calendrier / résultats), date de génération.
   **Dès la beta** : l'URL est construite à partir du paramètre api2 existant `PUBLIC_SITE_URL` (aujourd'hui
@@ -466,6 +525,36 @@ par le même script que les jetons.
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
   colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
   de matchs reprend la présentation du calendrier / des résultats.
+
+### 8.4.1 Visuels de la compétition (décision du 2026-10-29)
+
+Les visuels de la compétition (cases « actif » et fichiers de `kp_competition`) priment sur les logos de la charte,
+sur les PDF admin comme publics :
+
+| Cas | En-tête | Pied de page |
+|---|---|---|
+| Bandeau coché et fichier présent | **bandeau** en pleine largeur, à la place des logos ; titre du document, compétition et saison en dessous | — |
+| Sinon, logo coché et fichier présent | logo de la compétition à droite ; logos de la charte à gauche si « KPI/FFCK » (`Kpi_ffck_actif`) est coché | — |
+| Ni bandeau ni logo | public : **toujours** FFCK + CNA ; admin : KPI si `Kpi_ffck_actif` est coché, sinon le titre seul | — |
+| Sponsor coché et fichier présent | — | **sponsor** au-dessus de la ligne « Édité le… · Page x/y », sur chaque page |
+
+- Document d'un **événement** ou d'une **liste de compétitions** : visuels de la **première** compétition (ordre
+  d'affichage de l'événement : `GroupOrder`, `Code_tour`, `Code` ; ordre de la liste pour `competition=A,B`), titre de
+  l'événement ou liste des codes. Le logo de l'événement (`kp_evenement.logo`) n'est pas utilisé.
+- Document sans compétition (pool arbitres, statistiques sans compétition) : logos de la charte.
+- **Titres (décision du 2026-10-30)** : le type de document (« Équipes », « Classement - détail par équipe »…) avec la
+  **saison à droite, à la même hauteur**, sans le mot « Saison » ; en dessous le titre de la compétition et son
+  sous-titre. Le **code** d'une compétition n'est jamais affiché : partout (en-tête, colonne « Compét. » de la liste des
+  matchs, catégorie de la feuille de marque, statistiques), son libellé court (`Soustitre2`), sinon son libellé.
+- **Feuille de marque** : chaque match prend les visuels de sa compétition, dans la feuille (bandeau réduit à 12 mm en
+  haut de la colonne de gauche, sinon logo de la compétition, sinon logos **FFCK + KPI** ; sponsor en bas de la colonne
+  de droite), car un même PDF peut réunir plusieurs compétitions.
+- Seuls les **fichiers téléversés** (`img/logo/…`) sont utilisés : une URL externe (`http…`) est ignorée, Chromium
+  n'ayant aucun accès réseau (§ 9). **Chantier ultérieur** : quand un utilisateur autorisé choisit une URL externe pour
+  le logo, le bandeau ou le sponsor d'une compétition, l'image est importée dans KPI (contrôles de sécurité,
+  redimensionnement éventuel) puis servie localement. En attendant, les compétitions concernées se listent avec la
+  requête de [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md) (section « Visuels de la
+  compétition et langue »).
 
 ### 8.5 Contraintes propres au papier
 
@@ -548,7 +637,7 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-AUTH-04** : profil limité à un club demande `presence` sans `team` → seules les équipes de son club figurent ; avec `team` d'un autre club → 403.
 - **PDF-AUTH-05** : profil 10 obtient `presence` et `scrutineering-control` de toute équipe de ses compétitions, et 403 sur tout autre document admin.
 - **PDF-AUTH-08** : chaque document admin respecte le rôle minimum de §7, vérifié par un test paramétré profil (1 à 10) × document, attendu 200 ou 403.
-- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`birthdate`, `visa`, `category=U21`) demandée sans ce rôle → 403.
+- **PDF-AUTH-09** : une option soumise à un rôle plus élevé que le document (`view=birthyear`, `visa=1`, `category=U21`) demandée sans ce rôle → 403.
 - **PDF-AUTH-10** : `games-list` admin demandé par un profil 7 ne contient que les matchs et journées publiés, hors compétitions ATT.
 - **PDF-AUTH-06** : `GET /api2/pdf/*` (public) fonctionne sans authentification et n'expose ni date de naissance, ni licence, ni certificat, ni photo.
 - **PDF-AUTH-07** : lien expiré, signature altérée, ou droits retirés entre émission et usage → 403.
@@ -572,7 +661,8 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DESIGN-01** : un PDF servi par `/admin/pdf` utilise les jetons du thème admin (app4) ; servi par `/pdf`, ceux du thème public (app3). Un même `doc` disponible sur les deux routes change de thème sans changer de gabarit.
 - **PDF-DESIGN-02** : aucun gabarit ni partial PDF ne contient de couleur hexadécimale, `rgb()` ou `oklch()` littérale (test qui parcourt `templates/pdf/`, hors `tokens/`).
 - **PDF-DESIGN-03** : les polices du document sont Raleway (texte) et Agency FB ou son repli validé (titres), embarquées dans le PDF (`pdffonts` les liste toutes comme *embedded*).
-- **PDF-DESIGN-04** : le logo FFCK n'apparaît que sur fond blanc ; les PDF publics portent les logos FFCK et CNA, les PDF admin le logo KPI.
+- **PDF-DESIGN-04** : le logo FFCK n'apparaît que sur fond blanc ; sans bandeau ni logo de compétition, les PDF publics portent les logos FFCK et CNA, les PDF admin le logo KPI (si `Kpi_ffck_actif`).
+- **PDF-DESIGN-09** : bandeau coché et présent → bandeau à la place des logos ; sinon logo coché et présent → logo de la compétition ; sponsor coché et présent → sponsor en pied de chaque page (§ 8.4.1). Document d'un événement ou d'une liste de compétitions : visuels de la première compétition.
 - **PDF-DESIGN-05** : modifier une couleur dans `admin.css` ou `kpi-theme.css` sans relancer `make pdf_tokens_sync` fait échouer la suite de tests api2.
 - **PDF-DESIGN-06** : les maquettes de référence (`teams-groups` admin, `ranking` public) sont validées côte à côte avec les pages app4/app3 correspondantes avant la migration des autres documents.
 - **PDF-DESIGN-07** : imprimé en noir & blanc, chaque état (qualifié, provisoire, non conforme…) reste identifiable par un libellé ou une icône.
@@ -641,6 +731,37 @@ Le fichier legacy reste en place (protégé) jusqu'à la phase 6 pour l'admin le
 | Feuille de marque publique (§7.3.2, 2026-10-28) | Non développée : le public utilise la vue match d'app2 ; `PdfMatchMulti.php` y redirige. |
 | Rôles minimum (§7, 2026-10-28) | Validés ; arbitrages I1 à I8 en §7.6 (visa : `ROLE_ORGANIZER`, feuille de marque : `ROLE_SCORER`, classement calculé : profils 1–6). |
 
+### Décisions (2026-10-29)
+
+| Sujet | Décision |
+|---|---|
+| Langue des PDF | Celle de l'utilisateur (paramètre `lang`, langue d'app4 ou d'app3), y compris pour la feuille de marque, qui ne force plus l'anglais des compétitions internationales. |
+| Liens FR / EN dans app4 | Un seul lien par document, dans la langue de l'utilisateur. |
+| Visuels de la compétition | Bandeau, sinon logo, en en-tête ; sponsor en pied (§ 8.4.1). PDF publics sans bandeau ni logo : FFCK + CNA. |
+| Images par URL externe | Ignorées ; import local sécurisé lors d'un chantier ultérieur (§ 8.4.1). |
+
+### Décisions (2026-10-30)
+
+| Sujet | Décision |
+|---|---|
+| Journal | Chaque PDF admin est tracé dans `kp_journal` (« PDF `<document>` », § 6.4). |
+| Codes et saison | Plus de code de compétition sur les PDF, les libellés suffisent ; saison à droite du type de document, sans « Saison » (§ 8.4.1). |
+| Présence | Statut en toutes lettres ; Pagaie et Certif. pour les sections Nationale et Régionale seulement (§ 7.2). |
+| Liste des matchs | Commence en page 1 ; Phase \| Match sur 2 lignes, équipes et score centrés, une colonne Arbitres (§ 7.3). |
+| Feuille de marque | Bandeau, sinon logo, sinon FFCK + KPI (§ 8.4.1). |
+| Coupe (CP) | Classement final seul, sans points (PDF et app3) ; détail par équipe groupé par phase (§ 7.4). |
+
+### Décisions (2026-10-31)
+
+| Sujet | Décision |
+|---|---|
+| Équipes et poules | Poules seulement pour une coupe ; liste unique pour CHPT et MULTI (§ 7.2). |
+| Présence | Non-joueurs (arbitres, inactifs) séparés du reste de la liste (§ 7.2). |
+| Matchs | Équipe vainqueur et son score (seul) en gras ; libellés d'attente des équipes et arbitres non désignés ; plus de code `[…]` dans Phase / Match ; une liste commence toujours en page 1 (§ 7.3). |
+| Feuille de marque | Colonne RD (carton rouge définitif, futur carton noir) (§ 7.3). |
+| Schéma | PDF `schema` par Gotenberg à la place de l'impression du navigateur (§ 7.3). |
+| app3, coupe | Le lien « Classement (PDF) » ouvre `ranking` (classement final), plus `ranking-phases`. |
+
 ### Questions ouvertes
 
 Aucune à ce stade.
@@ -675,9 +796,83 @@ Aucune à ce stade.
 - Tests : `tests/Unit/Pdf/*`, `tests/Integration/PdfEndpointsTest.php` (Gotenberg remplacé par
   `FakeGotenbergClient`), `app4/tests/unit/pdf.spec.ts`, `app3/tests/unit/page-links.spec.ts`.
 
+### Phase 2 — données personnelles (livrée)
+
+- api2 : `presence` (vues `team`, `photos`, `category`, `birthyear` ; options `visa`, `category`),
+  `scrutineering-control`, `referees-pool`, `instances` ; gabarit générique `sections.html.twig`.
+- Profil limité à des clubs : seules les équipes de ses clubs, une équipe d'un autre club → 403 (PDF-AUTH-04).
+- app4 : les liens legacy des pages déjà migrées (`utils/pdf.ts`, `migratedLegacyPdf`) ouvrent le document api2
+  équivalent ; Pool arbitres et Journées (« Officiels ») appellent directement `usePdf().openDocument()`.
+
+### Phase 3 — classements (livrée)
+
+- api2 : `ranking` admin (classement calculé, filigrane « Provisoire - non publié »), `ranking-team-detail`,
+  `ranking-gameday-detail`, `ranking-phases` sur les deux routes (public : classement publié d'une compétition publiée,
+  journées et matchs publiés ; admin : calculé, tous les matchs). Source unique `App\Pdf\Ranking\RankingRepository`
+  (colonnes `*_publi` ou calculées selon `RankingSource`).
+- `ranking-tiebreak` : la justification reste calculée par `GET /admin/rankings/justification` (moteur de départage
+  inchangé) ; seul son rendu PDF (`format=pdf`) passe de mPDF à Gotenberg, charte admin.
+- app3 : le PDF d'une coupe (CP) était `ranking-phases` d'api2 ; depuis le 2026-10-31, `ranking` (classement final). app4 : les liens legacy des classements (admin et
+  publics, `publicPdfHref`) ouvrent les documents api2 ; `ranking-levels` (CltNiveauNiveau) n'est pas migré (I6).
+
+### Phase 4 — matchs (livrée)
+
+- `competition` accepte une liste (`competition=N1H,N2H`, comme `Compet` du legacy) ; le périmètre est vérifié pour
+  chaque code.
+- `games-list` (public : matchs et journées publiés de compétitions publiées ; admin : périmètre, profil 7 comme sa
+  page Matchs), portée `competition`, `event`, `gameday` ou `games`, filtres de la page Matchs en options (`date`,
+  `pitch`, `round`, `unlocked=1`, `sort=date|competition|phase|pitch|number`).
+- `games-grid` (public seulement) : `view=teams|phases`, une colonne par terrain utilisé, au-delà de 6 terrains des
+  groupes équilibrés (`App\Pdf\Games\GamesGrid`).
+- `scoresheet` (admin, `ROLE_SCORER`) : une page A4 paysage par match, rubriques de FeuilleMatchMulti.php ; la
+  composition du match, sinon celle de l'équipe (lue, plus copiée en base à l'impression comme le faisait le legacy).
+  **Validation de la commission arbitrage requise avant mise en service (PDF-DOC-03).**
+- Feuille de marque publique retirée (app2 vue match, app3 liste des matchs) ; `PdfMatchMulti.php` redirige (301)
+  vers la vue match d'app2 (`URL_APP/game/{id}`), y compris depuis les pages publiques legacy (`kpmatchs`,
+  `frame_terrains`).
+- app4 : menu Documents de la page Matchs, PDF par match et action groupée sur api2 ; app3 : liste des matchs sur
+  api2.
+
+### Phase 5 — statistiques, cartons, QR codes (livrée)
+
+- `stats` : l'export PDF de la page Statistiques (`GET /admin/stats/export/pdf`, mêmes données et mêmes règles
+  d'accès qu'avant) passe de mPDF à Gotenberg, charte admin.
+- `cards` (admin, `ROLE_ORGANIZER`) : cumul des cartons de la saison par équipe et colonnes à remplir sur place.
+- `qrcodes` (public) : liens de l'événement sur le site public (app3, `PUBLIC_SITE_URL/events/{id}/games` et
+  `/progress`, au lieu des pages legacy `kpmatchs.php` / `kpchart.php`) ; `qrcode-app` (public) : l'événement dans
+  app2 (`APP2_URL/event/{id}`, nouvelle variable d'api2 fournie par les compose). Un événement non publié → 404.
+- **`mpdf/mpdf` retiré d'api2** (composer.json et lock) ; il reste dans `sources/composer.json` pour le legacy
+  jusqu'à la phase 6. `symfony/mime` passe en 7.4.22 (CVE-2026-45070, même lock).
+
+### Visuels et liens uniques (2026-10-29)
+
+- En-tête et pied de page selon les visuels de la compétition (§ 8.4.1) : bandeau, sinon logo (+ logos de la charte
+  si « KPI/FFCK »), FFCK + CNA toujours sur un PDF public sans visuel ; sponsor en pied de chaque page.
+  `App\Pdf\PdfHeader` (règles, testées) ; événement et liste : première compétition.
+- Feuille de marque : visuels de chaque match dans sa feuille ; langue de l'utilisateur.
+- app4 : un seul lien par document (plus de doublons FR / EN), la langue de l'utilisateur étant passée par
+  `usePdf()`.
+
+### Ajustements (2026-10-30)
+
+- Journal des PDF admin (`App\Pdf\PdfJournal`) ; en-tête : saison à droite, aucun code de compétition.
+- Présence : statuts en toutes lettres, Pagaie / Certif. selon la section ; `games-list` : mise en page fixe, colonne
+  Arbitres, plus de page blanche avant une longue liste ; feuille de marque : FFCK + KPI à défaut de visuel ; coupe :
+  classement final seul (PDF et onglet Classement d'app3), détail par équipe par phase.
+
+### Ajustements (2026-10-31)
+
+- `teams-groups` sans poules hors coupe ; présence : non-joueurs à part ; score du vainqueur en gras ; `games-list` :
+  libellés d'attente, phase et libellé du match sur 2 lignes, plus de section repoussée en page 2 ; feuille de marque :
+  colonne RD ; nouveau document `schema` (page Schéma d'app4) ; app3 : PDF `ranking` pour une coupe.
+- Lieu des journées (« Lacville (33) ») : la parenthèse fermante n'est plus perdue (feuille de marque, instances,
+  schéma ; `App\Pdf\PdfPlace`).
+
 ### Reste à faire
 
-- Phases 2 à 6 (§ 12). La redirection des `Pdf*.php` et le retrait du lien PDF de la feuille de marque publique
-  (§ 7.3.2) arrivent avec la phase 4.
+Validation et déploiement phase par phase : [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md).
+
+- Validations des commissions (PDF-DOC-03) : feuille de présence, feuille de marque.
+- Phase 6 (§ 12) : suppression des pages legacy, redirections 301 / 410, retrait de `mpdf/mpdf` du legacy.
 - Valider les deux maquettes de référence côte à côte avec app4 et app3 (PDF-DESIGN-06), puis mesurer PDF-PERF-01 /
   PDF-PERF-04 en préprod.

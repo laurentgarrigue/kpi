@@ -109,6 +109,8 @@ docker/db/mysql/*
 !docker/db/mysql/.gitkeep
 docker/db/mysqlwp/*
 !docker/db/mysqlwp/.gitkeep
+# Dumps manuels pris avant une migration de données en local (cf. CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)
+docker/backups/
 docker/.env
 docker/.env*
 !docker/.env*.dist
@@ -208,3 +210,6 @@ sources/app4/tests/playwright/screenshots/*
 #   .experimental-deploy.json → déploiement expérimental actif (branche/tag + TTL)
 .last-deploy-sha
 .experimental-deploy.json
+
+# app3 design mockups: generated preview (DOC/specs/public/maquettes/src/build.py), never deployed
+sources/app3/public/maquettes/

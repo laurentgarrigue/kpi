@@ -59,8 +59,6 @@ export interface NewsArticle extends Omit<NewsSummary, 'published_at'> {
 export const NEWS_PAGE_SIZE = 12
 /** Related news shown on competition, event and club pages (NEWS-09). */
 export const RELATED_NEWS_LIMIT = 3
-/** Width of the card images (PAGE_NEWS.md § 2.1). */
-export const CARD_IMAGE_WIDTH = 768
 /** Width of the Open Graph image (PAGE_NEWS.md § 4). */
 export const SHARE_IMAGE_WIDTH = 1280
 const ONE_DAY_MS = 86_400_000

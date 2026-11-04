@@ -29,6 +29,9 @@ class PdfAssets
         PdfTheme::Public->value => ['logo-ffck.png', 'logo-cna.png'],
     ];
 
+    /** Logos of a scoresheet without banner nor logo of its competition (§ 8.4.1). */
+    public const SCORESHEET_LOGOS = ['logo-ffck.png', 'logo-kpi.png'];
+
     private const FONTS = ['raleway-latin.woff2', 'raleway-latin-ext.woff2', 'agencyfb.ttf'];
 
     public function __construct(
@@ -63,6 +66,16 @@ class PdfAssets
         }
 
         return $files;
+    }
+
+    /**
+     * Logo of a charter (`logo-ffck.png`…), to send with a page of the other charter.
+     *
+     * @return array{name: string, content: string}
+     */
+    public function charterLogo(string $name): array
+    {
+        return ['name' => $name, 'content' => $this->read('img/' . $name)];
     }
 
     /**

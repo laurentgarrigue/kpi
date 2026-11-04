@@ -27,7 +27,7 @@ const { data } = await useAsyncData(
 <template>
   <div v-if="data && (data.forms.length > 0 || data.news.length > 0)" class="space-y-8">
     <section v-if="data.forms.length > 0" aria-labelledby="linked-forms" class="rounded border border-kpi-blue-600 p-4" data-testid="linked-forms">
-      <h2 id="linked-forms" class="mb-2 text-3xl text-kpi-blue-600">{{ $t('forms.attached') }}</h2>
+      <h2 id="linked-forms" class="mb-2 text-[1.875rem] leading-none text-kpi-blue-700">{{ $t('forms.attached') }}</h2>
       <ul class="space-y-2">
         <li v-for="form in data.forms" :key="form.slug" class="flex flex-wrap items-center gap-3">
           <span class="font-semibold">{{ form.title }}</span>
@@ -36,10 +36,10 @@ const { data } = await useAsyncData(
       </ul>
     </section>
     <section v-if="data.news.length > 0" aria-labelledby="linked-news" class="space-y-4" data-testid="linked-news">
-      <h2 id="linked-news" class="text-3xl text-kpi-blue-600">{{ $t('news.linkedNews') }}</h2>
-      <div class="grid gap-6 md:grid-cols-3">
-        <NewsCard v-for="article in data.news" :key="article.slug" :article="article" heading-level="h3" />
-      </div>
+      <h2 id="linked-news" class="text-[1.875rem] leading-none text-kpi-blue-700">{{ $t('news.linkedNews') }}</h2>
+      <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <li v-for="article in data.news" :key="article.slug"><NewsRow :article="article" compact /></li>
+      </ul>
     </section>
   </div>
 </template>

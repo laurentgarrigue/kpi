@@ -1343,7 +1343,7 @@ bootstrap complet aux premières requêtes en production.
 
 | Lib | Usage réel dans api2 |
 |---|---|
-| `mpdf/mpdf` | `AdminRankingsController:1260`, `AdminStatsController:334` |
+| `mpdf/mpdf` | ~~`AdminRankingsController`, `AdminStatsController`~~ — **retiré d'api2** (PDF_GOTENBERG.md phase 5) : ces PDF sont rendus par Gotenberg |
 | `phpoffice/phpspreadsheet` | `AdminStatsController:190` |
 
 Routes concernées, servies par FrankenPHP : `/api2/admin/stats/export/pdf`,
