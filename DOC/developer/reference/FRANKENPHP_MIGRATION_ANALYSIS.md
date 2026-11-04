@@ -3,7 +3,8 @@
 **Date** : 2026-07-14
 **Mise à jour** : 2026-07-17 — ajout §7.7ter (persistance Mercure + reprise) et §7.7quater (FRANKENPHP_WATCH)
 **Mise à jour** : 2026-07-16 — corrections §1/§7, ajout §7.8 (Mercure) et §7.9 (préprod)
-**Statut** : Validé — implémentation en cours (déclencheur : refonte scoring Mercure)
+**Mise à jour** : 2026-11-04 — validation marquée résolue jusqu'en production (voir §9)
+**Statut** : ✅ Validé et déployé en dev, préprod et production (déclencheur : refonte scoring Mercure)
 **Périmètre** : conteneur `kpi` (PHP 8.4 + Apache), API2 (Symfony 7.4 LTS / API Platform 4.3), WordPress, legacy PHP
 
 ---
@@ -1448,9 +1449,13 @@ correctifs — chacun documenté en §8ter :
 | Assets Swagger | ⚠️ → ✅ `asset.base_path` (§8ter.c) |
 | Coupure au redémarrage | ⚠️ ~25 s → ✅ 0 s, recyclage à chaud (§8quater) |
 
-**Reste à faire** :
+### Résultat en production (2026-11-04)
 
-- **Vérifications §8 non encore effectuées en préprod** : mémoire du worker sous charge
-  (`docker stats`), contrôleurs TV/Games touchant le cache live, vraie IP client dans les logs.
-- **Déploiement en production** — procédure §8bis, en tenant compte des correctifs ci-dessus (le
-  chemin est désormais balisé : les quatre pièges sont connus et corrigés dans le dépôt).
+Marqué **résolu jusqu'en production** le 2026-11-04, à la demande de Laurent, après le déploiement de la v2.10.0
+(`575b4a07`, run « Deploy production » n° 28, vert). Les vérifications du §8 qui restaient à faire après la préprod
+(mémoire du worker sous charge, contrôleurs TV/Games touchant le cache live, vraie IP client dans les logs) et le
+déploiement en production selon le §8bis sont ainsi considérés comme faits. Aucune mesure nouvelle n'est consignée ici :
+les chiffres ci-dessus restent ceux du dev et de la préprod.
+
+**Reste à faire** : rien pour la validation. Le chantier suivant qui s'appuie sur ce socle est le lot 2 du scoring
+(diffusion de l'état par Mercure), dont ce document était le prérequis.
