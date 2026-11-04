@@ -285,7 +285,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Report: game details with events and players
   - WSM: live score management, game events, timer, statistics
 - **Documentation**: See [sources/api2/README.md](sources/api2/README.md)
-- **Status**: ✅ Implemented - FrankenPHP validated in dev; **preprod/prod validation pending**
+- **Status**: ✅ Implemented - FrankenPHP validated in dev, preprod and production (marked resolved on 2026-11-04, v2.10.0)
 
 **⚠️ Symfony version is pinned to 7.4 (LTS). Symfony 8 is not wanted.** The `composer.lock` had
 silently drifted to 8.x while `composer.json` declared `7.4.*`; this was corrected. Preprod and prod
