@@ -66,6 +66,33 @@ final class AuthRefreshSessionTest extends ApiTestCase
         self::assertNotNull($oldRow['replaced_by']);
     }
 
+    /**
+     * Le body de /auth/refresh-session porte la même shape que /auth/login
+     * ({token, user, hasMandates}). C'est ce qui permet à /auth/oauth-complete d'app4 d'amorcer
+     * son authStore à partir des cookies posés par le callback OAuth, sans endpoint supplémentaire.
+     */
+    public function testRefreshSessionReturnsLoginPayloadInBody(): void
+    {
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.20');
+        $refresh = $this->refreshCookieValue();
+
+        $this->sendCookies(['kpi_refresh' => $refresh]);
+        $this->client->request('POST', '/auth/refresh-session');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        $body = json_decode((string) $this->client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertArrayHasKey('token', $body);
+        self::assertIsString($body['token']);
+        self::assertArrayHasKey('user', $body);
+        self::assertSame('TADMIN', $body['user']['id']);
+        self::assertSame(2, $body['user']['profile'], 'profil renvoyé depuis la fixture TADMIN');
+        self::assertArrayHasKey('hasMandates', $body);
+        self::assertIsBool($body['hasMandates']);
+        self::assertArrayHasKey('mandates', $body['user']);
+        self::assertArrayHasKey('effectiveProfile', $body['user']);
+    }
+
     // ------------------------------------------------------- AUTH-RT-03 : rejeu
 
     public function testReusingRevokedRefreshTokenRevokesAllActiveTokens(): void

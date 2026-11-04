@@ -120,6 +120,7 @@
     "request_access": "Request access",
     "or": "or",
     "continue_with_google": "Continue with Google",
+    "oauth_completing": "Completing your sign-in…",
     "oauth_error": {
       "oauth_state_mismatch": "OAuth session is invalid, please restart Google sign-in.",
       "oauth_missing_code": "Google did not return any code, please try again.",

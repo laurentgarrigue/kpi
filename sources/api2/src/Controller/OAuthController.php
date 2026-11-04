@@ -473,7 +473,12 @@ class OAuthController extends AbstractController
         } catch (\Exception) {
         }
 
-        $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/?oauth=ok');
+        // Redirection vers une page dédiée qui appelle POST /auth/refresh-session pour amorcer
+        // l'authStore à partir des cookies (token + user + mandates), puis route vers /select-mandate
+        // ou /. Sans cette étape, app4 reste collée sur localStorage.kpi_admin_token = null et son
+        // middleware auth renvoie l'utilisateur sur /login (la cause du bug « Google OK mais renvoyé
+        // vers login »).
+        $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/auth/oauth-complete');
         $redirect->headers->setCookie($this->buildAccessCookie($accessToken));
         $redirect->headers->setCookie($this->buildRefreshCookie($refreshToken));
         $redirect->headers->clearCookie('kpi_oauth_state', '/', null, true, true, 'lax');

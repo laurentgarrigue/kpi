@@ -307,8 +307,9 @@ make api2_test_integration   # inclut AuthOAuthGoogleTest
 | 2 | Clic sur le bouton | Redirection Google, consent screen | ☐ |
 | 3 | Autoriser avec un compte Google dont l'email ne correspond à aucun `kp_user` | Retour `/login` avec message « Aucun compte KPI… » | ☐ |
 | 4 | Autoriser avec un compte dont l'email matche TADMIN | Redirection vers `/auth/google/link?code=TADMIN&sub=…` ; demande du mot de passe KPI | ☐ |
-| 5 | Saisir le bon mot de passe | Redirection `/?oauth=ok`, cookies kpi_access/kpi_refresh posés, connexion effective | ☐ |
-| 6 | Rejouer le flow Google → login direct (plus de page de link) | OK | ☐ |
+| 5 | Saisir le bon mot de passe | Redirection vers `/auth/oauth-complete` (spinner « Finalisation de votre connexion… »), cookies posés, puis atterrissage sur `/select-mandate` ou `/` selon les mandats | ☐ |
+| 6 | Rejouer le flow Google → login direct via `/auth/oauth-complete` (plus de page de link) | OK | ☐ |
+| 6b | ⚠️ **Non-régression du bug « Google OK mais renvoyé sur /login »** : après le callback, l'utilisateur doit bien se retrouver connecté dans app4 (dashboard visible). Si `/auth/oauth-complete` manque, `authStore` reste vide et le middleware auth renvoie sur `/login` — c'est exactement le symptôme corrigé. | ☐ |
 | 7 | Depuis `/profile/security` (si livrée), POST `/auth/google/unlink` avec un compte sans mot de passe | 409 (prévenir avant de délier) | ☐ |
 
 ### 2.5 🖥 Déploiement

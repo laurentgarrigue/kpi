@@ -239,7 +239,7 @@ Permettre à tout utilisateur de se connecter via son compte Google **sans suppr
 |---|---|
 | AUTH-OA-01 | `GET /auth/google` redirige vers Google avec un `state` signé et un `nonce` |
 | AUTH-OA-02 | `GET /auth/google/callback` vérifie `state`, échange le code, lit `sub` et `email` de l'id_token |
-| AUTH-OA-03 | Si `(oauth_provider='google', oauth_subject=<sub>)` est connu dans `kp_user_oauth` → connexion directe (comme un login mot de passe) |
+| AUTH-OA-03 | Si `(oauth_provider='google', oauth_subject=<sub>)` est connu dans `kp_user_oauth` → connexion directe. Le callback pose les cookies `kpi_access` et `kpi_refresh`, puis redirige vers `/auth/oauth-complete` (app4). Cette page appelle `POST /auth/refresh-session` (qui renvoie `{token, user, hasMandates}` à partir du cookie) pour amorcer `authStore`, puis route vers `/select-mandate` ou `/`. **Sans cette étape, app4 — qui lit encore `localStorage.kpi_admin_token` (transition hybride AUTH-CK-02)  — verrait `isAuthenticated = false` et renverrait l'utilisateur sur `/login` sans message, alors que la session serveur existe.** |
 | AUTH-OA-04 | Si `email` correspond à **un seul** `kp_user` avec `email_verified=true` **sans** lien OAuth, la page `/auth/google/link` demande le mot de passe actuel ; sur succès, insertion dans `kp_user_oauth` et connexion |
 | AUTH-OA-05 | Si aucun `kp_user` ne correspond, retour `/login` avec message : « Aucun compte KPI ne correspond à cette adresse Google. Contactez votre administrateur. » **Aucune création automatique.** |
 | AUTH-OA-06 | Depuis `/profile/security`, l'utilisateur peut délier son compte Google (POST `/auth/google/unlink`) ; si c'est sa seule méthode d'authentification, il doit d'abord définir un mot de passe |

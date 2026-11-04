@@ -120,6 +120,7 @@
     "request_access": "Demander un accès",
     "or": "ou",
     "continue_with_google": "Continuer avec Google",
+    "oauth_completing": "Finalisation de votre connexion…",
     "oauth_error": {
       "oauth_state_mismatch": "Session OAuth invalide, relancez la connexion Google.",
       "oauth_missing_code": "Google n'a renvoyé aucun code, relancez la connexion.",
