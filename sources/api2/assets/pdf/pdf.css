@@ -33,7 +33,7 @@
   --pdf-on-band: var(--color-header-50);
   --pdf-accent: var(--color-secondary);
   --pdf-title: var(--color-primary);
-  --pdf-zebra: var(--color-light-50);
+  --pdf-zebra: var(--color-light-100);
   --pdf-muted: var(--color-dark-700);
   --pdf-success: var(--color-success);
   --pdf-warning: var(--color-warning);
@@ -41,6 +41,11 @@
   --pdf-medal-gold: var(--color-warning);
   --pdf-medal-silver: var(--color-dark-500);
   --pdf-medal-bronze: var(--color-danger);
+  /* Pastel backgrounds of the card columns of the scoresheet; app4 has no 100 shade for green and yellow. */
+  --pdf-card-green: color-mix(in srgb, var(--color-success) 20%, var(--color-light-50));
+  --pdf-card-yellow: color-mix(in srgb, var(--color-warning) 25%, var(--color-light-50));
+  --pdf-card-red: var(--color-danger-100);
+  --pdf-card-definitive: var(--color-danger-200);
 }
 
 .theme-public {
@@ -51,7 +56,7 @@
   --pdf-on-band: var(--color-surface);
   --pdf-accent: var(--color-sky);
   --pdf-title: var(--color-kpi-blue-500);
-  --pdf-zebra: var(--color-kpi-blue-50);
+  --pdf-zebra: var(--color-kpi-blue-100);
   --pdf-muted: var(--color-kpi-blue-900);
   --pdf-success: var(--color-kpi-green-500);
   --pdf-warning: var(--color-kpi-gold-500);
@@ -59,6 +64,10 @@
   --pdf-medal-gold: var(--color-kpi-gold-500);
   --pdf-medal-silver: var(--color-kpi-blue-700);
   --pdf-medal-bronze: var(--color-kpi-red-700);
+  --pdf-card-green: var(--color-kpi-green-100);
+  --pdf-card-yellow: var(--color-kpi-gold-100);
+  --pdf-card-red: var(--color-kpi-red-100);
+  --pdf-card-definitive: var(--color-kpi-red-200);
 }
 
 /* -------------------------------------------------------------------- base */
@@ -253,28 +262,61 @@ table.pdf-table {
 .pdf-grid .pdf-grid__time { width: 14mm; font-weight: 700; }
 .pdf-grid .pdf-grid__cell { white-space: pre-line; font-size: 8.5pt; border-left: 0.2mm solid var(--pdf-line); }
 
-/* Scoresheet: official sheet, two columns on A4 landscape, written by hand (scoresheet.html.twig). */
-.pdf-sheet { break-inside: avoid; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; font-size: 7.5pt; }
+/* Scoresheet: official sheet, two columns on A4 landscape, written by hand (scoresheet.html.twig). Each page is a box
+   of the height of the page (A4 landscape less the margins of GotenbergClient: 184.9 mm): it never spills onto an
+   empty page; more events than lines go on continuation pages (ScoresheetSheet::eventPages). */
+.pdf-sheet { break-inside: avoid; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; font-size: 7.5pt; height: 184mm; overflow: hidden; }
+.pdf-sheet__column { min-width: 0; }
 .pdf-sheet__column > table { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
 .pdf-sheet__box td, .pdf-sheet__box th, .pdf-sheet__table td, .pdf-sheet__table th, .pdf-sheet__signatures td,
 .pdf-sheet__signatures th { border: 0.2mm solid var(--pdf-ink); padding: 0.3mm 1mm; }
 .pdf-sheet__box th, .pdf-sheet__table th { color: var(--pdf-title); text-align: center; }
-.pdf-sheet__highlight td { background: var(--pdf-zebra); }
+/* Fixed columns, one line per cell: a long name is cut, it never pushes the sheet onto a second page. */
+.pdf-sheet__info, .pdf-sheet__table { table-layout: fixed; }
+.pdf-sheet__info td, .pdf-sheet__table td, .pdf-sheet__table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdf-sheet__highlight th, .pdf-sheet__highlight td { background: var(--pdf-zebra); }
+th.pdf-sheet__no-highlight { background: none; }
+/* Date, time, game number and pitch: what the table looks for first. */
+.pdf-sheet__info .pdf-sheet__key { font-size: 10pt; font-weight: 700; }
 .pdf-sheet__right { text-align: right; }
 .pdf-sheet__team { text-align: left !important; font-size: 9pt; }
+.pdf-sheet__team-head { text-align: left !important; }
+.pdf-sheet__badge { float: right; width: 5mm; height: 5mm; line-height: 4.4mm; margin-left: 2mm; text-align: center; font-weight: 700; border: 0.6mm solid var(--pdf-ink); box-sizing: border-box; }
 .pdf-sheet__table td { height: 3.4mm; line-height: 1.1; }
-.pdf-sheet__events td { height: 3.7mm; }
-.pdf-sheet__card { width: 4.5mm; text-align: center; }
+/* Rosters: the names take the room; the licence may carry its season of origin. */
+.pdf-sheet__roster-number { width: 8%; }
+.pdf-sheet__roster-name { width: 31%; }
+.pdf-sheet__roster-licence { width: 18%; }
+.pdf-sheet__roster-category { width: 12%; }
+.pdf-sheet__roster--international .pdf-sheet__roster-number { width: 10%; }
+.pdf-sheet__roster--international .pdf-sheet__roster-name { width: 45%; }
+/* Fixed height: a filled line must not be taller than an empty one, or a full sheet spills onto a 2nd page. */
+.pdf-sheet__events td { height: 3.7mm; line-height: 1; padding-top: 0; padding-bottom: 0; }
+.pdf-sheet__card-col { width: 5.5mm; }
+.pdf-sheet__goal-col { width: 7mm; }
+.pdf-sheet__events th { padding-left: 0.3mm; padding-right: 0.3mm; text-overflow: clip; }
+.pdf-sheet__card { text-align: center; }
+/* Card columns on a pastel background of their colour (the letter still says which card it is). */
+.pdf-sheet__card--green { background: var(--pdf-card-green); }
+.pdf-sheet__card--yellow { background: var(--pdf-card-yellow); }
+.pdf-sheet__card--red { background: var(--pdf-card-red); }
+.pdf-sheet__card--definitive { background: var(--pdf-card-definitive); }
 .pdf-sheet__time { width: 17mm; text-align: center; }
 .pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
 .pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }
+.pdf-sheet__continued { font-size: 10pt; font-weight: 400; }
+.pdf-sheet__score { width: 100%; table-layout: fixed; }
 .pdf-sheet__score td { text-align: center; padding: 0.5mm; }
-.pdf-sheet__score-box { width: 14mm; height: 7mm; border: 0.3mm solid var(--pdf-ink); font-size: 11pt; font-weight: 700; }
+.pdf-sheet__score-label { width: 24mm; }
+.pdf-sheet__score-box { width: 16mm; height: 7mm; border: 0.3mm solid var(--pdf-ink); font-size: 11pt; font-weight: 700; }
 .pdf-sheet__score-box--final { height: 9mm; }
 .pdf-sheet__write { width: 20mm; }
 .pdf-sheet__comments { height: 8mm; vertical-align: top; }
 .pdf-sheet__signatures td { height: 9mm; width: 25%; text-align: center; vertical-align: bottom; }
 .pdf-sheet__signatures th { width: 18mm; }
+/* QR code of the scoring page of the game, above its ID. */
+.pdf-sheet__signatures .pdf-sheet__id { width: 18mm; font-size: 6.5pt; padding: 0.5mm; }
+.pdf-sheet__qr { display: block; width: 13mm; height: 13mm; margin: 0 auto 0.5mm; }
 
 /* QR codes of an event (qrcodes.html.twig): large enough to be scanned from a few metres. */
 .pdf-qr-cards { display: flex; justify-content: center; gap: 25mm; margin-top: 12mm; }

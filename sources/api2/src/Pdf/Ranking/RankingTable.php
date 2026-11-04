@@ -129,7 +129,7 @@ final class RankingTable
     {
         return [
             ['key' => 'home', 'label' => $labels['games.home'], 'class' => 'pdf-col--home'],
-            ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-col--score'],
+            ['key' => 'score', 'label' => $labels['games.score'], 'class' => 'pdf-col--score', 'kind' => 'score', 'empty' => '-'],
             ['key' => 'away', 'label' => $labels['games.away']],
         ];
     }
@@ -141,7 +141,31 @@ final class RankingTable
     }
 
     /**
-     * Row of a game: the score of a validated game only, the winner in bold.
+     * Score of a game for a `score` column: both scores and the winner, whose score alone is in bold (the winner of a
+     * validated game only). Null when the game is not played, or not validated when `$validatedOnly`.
+     *
+     * @param array<string, mixed> $game
+     *
+     * @return array{home: string, away: string, winner: ?string}|null
+     */
+    public static function score(array $game, bool $validatedOnly): ?array
+    {
+        $validated = $game['Validation'] === 'O' && self::isPlayed($game);
+        if (!self::isPlayed($game) || ($validatedOnly && !$validated)) {
+            return null;
+        }
+        $scoreA = (int) $game['ScoreA'];
+        $scoreB = (int) $game['ScoreB'];
+
+        return [
+            'home' => (string) $game['ScoreA'],
+            'away' => (string) $game['ScoreB'],
+            'winner' => !$validated || $scoreA === $scoreB ? null : ($scoreA > $scoreB ? 'A' : 'B'),
+        ];
+    }
+
+    /**
+     * Row of a game: the score of a validated game only; the winner and its score in bold.
      *
      * @param array<string, mixed> $game
      *
@@ -149,19 +173,15 @@ final class RankingTable
      */
     public static function gameRow(array $game): array
     {
-        $validated = $game['Validation'] === 'O' && self::isPlayed($game);
-        $scoreA = (int) $game['ScoreA'];
-        $scoreB = (int) $game['ScoreB'];
+        $score = self::score($game, true);
 
         return [
             'home' => (string) $game['LibelleA'],
-            'score' => $validated ? sprintf('%s - %s', $game['ScoreA'], $game['ScoreB']) : '-',
+            'score' => $score,
             'away' => (string) $game['LibelleB'],
-            // The winner and the score in bold.
             '_cells' => [
-                'home' => $validated && $scoreA > $scoreB ? 'pdf-strong' : '',
-                'score' => $validated && $scoreA !== $scoreB ? 'pdf-strong' : '',
-                'away' => $validated && $scoreB > $scoreA ? 'pdf-strong' : '',
+                'home' => ($score['winner'] ?? null) === 'A' ? 'pdf-strong' : '',
+                'away' => ($score['winner'] ?? null) === 'B' ? 'pdf-strong' : '',
             ],
         ];
     }

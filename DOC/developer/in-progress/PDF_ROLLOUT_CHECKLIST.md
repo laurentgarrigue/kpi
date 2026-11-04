@@ -282,12 +282,29 @@ Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14.
 | 3 | `pdf -H "Authorization: Bearer $ADMIN" "$B/admin/pdf/presence?season=$S&competition=<N>"` | arbitres et inactifs sous l'intertitre « Non joueurs », après joueurs et staff | ☐ |
 | 4 | `pdf "$B/pdf/games-list?season=$S&competition=N3"` et l'admin équivalent (lien app4) | les matchs commencent en **page 1** | ☐ |
 | 5 | `games-list` d'une compétition dont des matchs ne sont pas encore attribués | « (1er Poule A) », « (Vainqueur match 12) »… à la place des équipes et arbitres ; Phase / Match sans `[…]` | ☐ |
-| 6 | `games-list`, `ranking-team-detail`, `ranking-phases` | score en gras avec l'équipe vainqueur | ☐ |
-| 7 | Feuille de marque | colonne RD après V, J, R de chaque équipe ; un carton rouge définitif saisi y est coché ; une page par match | ☐ |
+| 6 | `games-list`, `ranking-team-detail`, `ranking-phases`, justification de départage | équipe vainqueur en gras et **son score seul** (« **3** - 1 »), pas celui du perdant | ☐ |
+| 7 | Feuille de marque | colonne RD après V, J, R de chaque équipe ; un carton rouge définitif saisi y est coché ; colonnes des cartons sur fond pastel ; « (Capitaine) » après le nom du capitaine, « Staff » à la place du numéro ; une page par match, même avec une grille d'événements pleine | ☐ |
 | 8 | app4 Journées → Schéma de **K** → bouton PDF (cases Matchs / Horaires cochées puis décochées) | PDF Gotenberg en colonnes par étape, vainqueur en premier ; nombre de matchs et horaires selon les cases | ☐ |
 | 9 | même chose pour **N** | une carte par journée, matchs sur 3 colonnes | ☐ |
+| 9b | `pdf "$B/pdf/ranking-phases?season=$S&competition=<K>"` | chaque phase sous son seul titre, sans date ni lieu | ☐ |
 | 10 | app3 `/competitions/$S/<K>/ranking` → « Classement (PDF) » | `…/api2/pdf/ranking?season=$S&competition=<K>&lang=fr` | ☐ |
 | 11 | Feuille de marque ou instances d'une journée avec département | lieu « Lacville (33) », parenthèse fermante comprise | ☐ |
+
+---
+
+## Feuille de marque, nouvelle mise en page (2026-11-03)
+
+Spec : [PDF_GOTENBERG.md § 7.3.3](../../specs/PDF_GOTENBERG.md). Prérequis : `APP4_URL` dans `sources/api2/.env` est
+l'adresse publique d'app4 de l'environnement (🖥 `grep APP4_URL sources/api2/.env`, attendu par exemple
+`https://kayak-polo.info/admin2`), puis `make api2_restart`.
+
+| # | Commande / action | Attendu | ☐ |
+|---|---|---|---|
+| 1 | app4 Matchs → feuille de marque d'un match aux noms d'officiels longs (comme le N1H J1A du 07/03/2026) | **une seule page** ; date, heure, n° de match et terrain en grand ; Arbitre 1 / Arbitre 2, Secrétaire / Chrono, Shotclock / Ligne 1, Ligne 2 sur une demi-largeur chacun | ☐ |
+| 2 | même feuille | compositions : Nom et Prénom larges, licence avec sa saison d'origine si besoin ; « Équipe A » / « Équipe B » de la grille alignées à gauche | ☐ |
+| 3 | scanner le QR code au-dessus de l'ID | ouvre app4 `/games/{id}/scoring` de ce match | ☐ |
+| 4 | feuille d'un match de plus de 26 faits (saisir des faits de test dans app4 si besoin) | page 2 « Feuille de marque (suite 2/2) » : rappel du match à gauche, grille qui continue à droite | ☐ |
+| 5 | action groupée sur plusieurs matchs | une page par match (plus les pages de suite éventuelles), aucune page blanche | ☐ |
 
 ---
 

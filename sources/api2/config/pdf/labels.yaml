@@ -116,7 +116,6 @@ tiebreak.none: { fr: "Aucun groupe d'équipes à égalité de points : aucun dé
 # Scoresheet (official sheet, rubrics of FeuilleMatchMulti.php)
 scoresheet.title: { fr: 'Feuille de marque', en: 'Game report' }
 scoresheet.number: { fr: 'N°', en: '#' }
-scoresheet.coach: { fr: 'Entraîneur', en: 'Coach' }
 scoresheet.team: { fr: 'Équipe', en: 'Team' }
 scoresheet.organiser: { fr: 'Organisateur', en: 'Organiser' }
 scoresheet.manager: { fr: 'Resp. organisation', en: 'Techn. organiser' }
@@ -125,15 +124,19 @@ scoresheet.place: { fr: 'Lieu', en: 'Venue' }
 scoresheet.phase: { fr: 'Phase', en: 'Phase' }
 scoresheet.game_number: { fr: 'Match n°', en: 'Game #' }
 scoresheet.secretary: { fr: 'Secrétaire', en: 'Secretary' }
-scoresheet.timekeeper: { fr: 'Chronométreur', en: 'Timekeeper' }
+scoresheet.timekeeper: { fr: 'Chrono', en: 'Timekeeper' }
 scoresheet.shot_clock: { fr: 'Shotclock', en: 'Shot clock' }
-scoresheet.line_judges: { fr: 'Juges de ligne', en: 'Line judges' }
+scoresheet.line_judge_1: { fr: 'Ligne 1', en: 'Line 1' }
+scoresheet.line_judge_2: { fr: 'Ligne 2', en: 'Line 2' }
+scoresheet.referee_1: { fr: 'Arbitre 1', en: 'Referee 1' }
+scoresheet.referee_2: { fr: 'Arbitre 2', en: 'Referee 2' }
+scoresheet.continued: { fr: 'suite', en: 'continued' }
 scoresheet.signatures: { fr: 'Signatures', en: 'Signatures' }
 scoresheet.before_game: { fr: 'avant match', en: 'before game' }
 scoresheet.after_game: { fr: 'après match', en: 'after game' }
 scoresheet.captain: { fr: 'Capitaine', en: 'Captain' }
 scoresheet.winner_required: { fr: 'Vainqueur obligatoire', en: 'Winner required' }
-scoresheet.no_overtime: { fr: '(Pas de prolongation)', en: '(No overtime)' }
+scoresheet.no_overtime: { fr: 'Pas de prolongation', en: 'No overtime' }
 scoresheet.period: { fr: 'Période', en: 'Period' }
 scoresheet.time: { fr: 'Temps', en: 'Time' }
 scoresheet.goal: { fr: 'But', en: 'Goal' }

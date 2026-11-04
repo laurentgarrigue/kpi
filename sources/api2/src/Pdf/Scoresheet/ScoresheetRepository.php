@@ -32,6 +32,8 @@ class ScoresheetRepository
                     m.Statut, m.Periode, m.Secretaire, m.Chronometre, m.Timeshoot, m.Ligne1, m.Ligne2,
                     m.Id_equipeA, m.Id_equipeB, m.ScoreA, m.ScoreB, m.ColorA, m.ColorB, m.Commentaires_officiels,
                     m.Arbitre_principal, m.Arbitre_secondaire, a.Libelle AS LibelleA, b.Libelle AS LibelleB,
+                    a.color1 AS Color1A, a.color2 AS Color2A, a.colortext AS ColorTextA,
+                    b.color1 AS Color1B, b.color2 AS Color2B, b.colortext AS ColorTextB,
                     j.Phase, j.Lieu, j.Departement, j.Organisateur, j.Responsable_R1, j.Responsable_insc, j.Delegue,
                     j.ChefArbitre, j.Code_competition, j.Code_saison,
                     c.Libelle AS Competition, c.Soustitre, c.Soustitre2, c.Titre_actif, c.Code_niveau

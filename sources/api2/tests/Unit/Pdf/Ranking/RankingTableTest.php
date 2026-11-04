@@ -44,14 +44,23 @@ final class RankingTableTest extends TestCase
     public function testGameRowShowsTheScoreOfAValidatedGameOnlyWithTheWinnerInBold(): void
     {
         $row = RankingTable::gameRow(self::game('3', '1', 'O'));
-        self::assertSame('3 - 1', $row['score']);
-        self::assertSame(['home' => 'pdf-strong', 'score' => 'pdf-strong', 'away' => ''], $row['_cells'], 'the winner and the score in bold');
+        self::assertSame(['home' => '3', 'away' => '1', 'winner' => 'A'], $row['score'], 'only the score of the winner in bold');
+        self::assertSame(['home' => 'pdf-strong', 'away' => ''], $row['_cells'], 'the winner in bold');
+        self::assertSame('B', RankingTable::gameRow(self::game('0', '2', 'O'))['score']['winner']);
 
-        self::assertSame('-', RankingTable::gameRow(self::game('3', '1', ''))['score'], 'not validated');
-        self::assertSame(['home' => '', 'score' => '', 'away' => ''], RankingTable::gameRow(self::game('2', '2', 'O'))['_cells'], 'draw');
+        self::assertNull(RankingTable::gameRow(self::game('3', '1', ''))['score'], 'not validated');
+        self::assertNull(RankingTable::gameRow(self::game('2', '2', 'O'))['score']['winner'], 'draw');
+        self::assertSame(['home' => '', 'away' => ''], RankingTable::gameRow(self::game('2', '2', 'O'))['_cells'], 'draw');
         self::assertFalse(RankingTable::isPlayed(self::game('?', '1', 'O')));
         self::assertFalse(RankingTable::isPlayed(self::game(null, null, '')));
         self::assertSame('01/03/2026 - Lacville', RankingTable::gamedayLabel('2026-03-01', 'Lacville'));
+    }
+
+    public function testAPlayedGameNotValidatedYetHasItsScoreWithoutWinner(): void
+    {
+        self::assertSame(['home' => '3', 'away' => '1', 'winner' => null], RankingTable::score(self::game('3', '1', ''), false));
+        self::assertNull(RankingTable::score(self::game('3', '1', ''), true));
+        self::assertNull(RankingTable::score(self::game('', '', ''), false), 'not played');
     }
 
     /** @return array<string, mixed> */

@@ -9,7 +9,7 @@ use App\Pdf\Ranking\RankingTable;
 
 /**
  * Ranking by phase of a cup (`ranking-phases`, ex-…CltNiveauPhase): pools first, then the phases by level; a pool
- * (type C) shows its ranking, an elimination phase (type E) its games.
+ * (type C) shows its ranking, an elimination phase (type E) its games; for a cup, without the date and place of each phase.
  */
 final class RankingPhasesDocument extends RankingDetailDocument
 {
@@ -42,7 +42,11 @@ final class RankingPhasesDocument extends RankingDetailDocument
         $sections = [];
         foreach ($this->rankings->gamedays($season, $code, $source) as $gameday) {
             $id = (int) $gameday['Id'];
-            $section = ['title' => (string) $gameday['Phase'], 'subtitle' => RankingTable::gamedayLabel($gameday['Date_debut'], $gameday['Lieu'])];
+            // A cup is read phase by phase: the date and place of each phase add nothing (2026-11-01).
+            $section = [
+                'title' => (string) $gameday['Phase'],
+                'subtitle' => $type === RankingTable::CUP ? null : RankingTable::gamedayLabel($gameday['Date_debut'], $gameday['Lieu']),
+            ];
             if ($gameday['Type'] === self::ELIMINATION && isset($games[$id])) {
                 $sections[] = [...$section, 'columns' => RankingTable::gameColumns($labels), 'rows' => $games[$id]];
             } elseif ($gameday['Type'] !== self::ELIMINATION && isset($rankings[$id])) {
