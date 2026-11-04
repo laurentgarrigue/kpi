@@ -41,6 +41,11 @@
   --pdf-medal-gold: var(--color-warning);
   --pdf-medal-silver: var(--color-dark-500);
   --pdf-medal-bronze: var(--color-danger);
+  /* Pastel backgrounds of the card columns of the scoresheet; app4 has no 100 shade for green and yellow. */
+  --pdf-card-green: color-mix(in srgb, var(--color-success) 20%, var(--color-light-50));
+  --pdf-card-yellow: color-mix(in srgb, var(--color-warning) 25%, var(--color-light-50));
+  --pdf-card-red: var(--color-danger-100);
+  --pdf-card-definitive: var(--color-danger-200);
 }
 
 .theme-public {
@@ -59,6 +64,10 @@
   --pdf-medal-gold: var(--color-kpi-gold-500);
   --pdf-medal-silver: var(--color-kpi-blue-700);
   --pdf-medal-bronze: var(--color-kpi-red-700);
+  --pdf-card-green: var(--color-kpi-green-100);
+  --pdf-card-yellow: var(--color-kpi-gold-100);
+  --pdf-card-red: var(--color-kpi-red-100);
+  --pdf-card-definitive: var(--color-kpi-red-200);
 }
 
 /* -------------------------------------------------------------------- base */
@@ -288,10 +297,10 @@ th.pdf-sheet__no-highlight { background: none; }
 .pdf-sheet__events th { padding-left: 0.3mm; padding-right: 0.3mm; text-overflow: clip; }
 .pdf-sheet__card { text-align: center; }
 /* Card columns on a pastel background of their colour (the letter still says which card it is). */
-.pdf-sheet__card--green { background: #dcf1e2; }
-.pdf-sheet__card--yellow { background: #fdf3c4; }
-.pdf-sheet__card--red { background: #f8dcdc; }
-.pdf-sheet__card--definitive { background: #eebcbc; }
+.pdf-sheet__card--green { background: var(--pdf-card-green); }
+.pdf-sheet__card--yellow { background: var(--pdf-card-yellow); }
+.pdf-sheet__card--red { background: var(--pdf-card-red); }
+.pdf-sheet__card--definitive { background: var(--pdf-card-definitive); }
 .pdf-sheet__time { width: 17mm; text-align: center; }
 .pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
 .pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }
