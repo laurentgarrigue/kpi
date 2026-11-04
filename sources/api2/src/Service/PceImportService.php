@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Doctrine\DBAL\Connection;
+use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -33,7 +34,9 @@ class PceImportService
         private readonly LoggerInterface $logger,
         private readonly string $ffckPceUrl,
         private readonly string $ffckPceUser,
-        private readonly string $ffckPcePwd
+        private readonly string $ffckPcePwd,
+        /** Dev-only query log; null in prod. Reset after each batch, otherwise it keeps every INSERT in memory. */
+        private readonly ?DebugDataHolder $debugDataHolder = null
     ) {
     }
 
@@ -338,6 +341,7 @@ class PceImportService
                 Type_licence = VALUES(Type_licence)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     /**
@@ -472,6 +476,7 @@ class PceImportService
                 livret = VALUES(livret), niveau = VALUES(niveau), saison = VALUES(saison)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     /**
@@ -510,6 +515,7 @@ class PceImportService
                 `Date` = VALUES(`Date`)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     private function updateComiteReg(string $season): void
