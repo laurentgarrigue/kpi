@@ -90,6 +90,7 @@ services:
             $ffckPceUrl: '%env(FFCK_PCE_URL)%'
             $ffckPceUser: '%env(FFCK_PCE_USER)%'
             $ffckPcePwd: '%env(FFCK_PCE_PWD)%'
+            $debugDataHolder: '@?doctrine.debug_data_holder'
 
     App\Controller\AdminMercureController:
         arguments:

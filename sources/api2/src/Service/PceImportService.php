@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use Doctrine\DBAL\Connection;
+use Symfony\Bridge\Doctrine\Middleware\Debug\DebugDataHolder;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -11,6 +12,18 @@ class PceImportService
     private const BATCH_SIZE_LICENCIES = 300;
     private const BATCH_SIZE_ARBITRES = 300;
     private const BATCH_SIZE_SURCLASSEMENTS = 100;
+
+    /** Overseas department number (PCE) → two-character KPI prefix, shared by CD and Club codes. */
+    private const OVERSEAS_PREFIXES = [
+        '971' => '9A',
+        '972' => '9B',
+        '973' => '9C',
+        '974' => '9D',
+        '975' => '9E',
+        '976' => '9F',
+        '988' => '9G',
+        '986' => '9I',
+    ];
 
     private string $season = '';
     private array $messages = [];
@@ -21,12 +34,14 @@ class PceImportService
         private readonly LoggerInterface $logger,
         private readonly string $ffckPceUrl,
         private readonly string $ffckPceUser,
-        private readonly string $ffckPcePwd
+        private readonly string $ffckPcePwd,
+        /** Dev-only query log; null in prod. Reset after each batch, otherwise it keeps every INSERT in memory. */
+        private readonly ?DebugDataHolder $debugDataHolder = null
     ) {
     }
 
     /**
-     * Execute the full PCE import process.
+     * Execute the full PCE import process, from the FFCK extranet or from a local PCE file.
      *
      * @return array{
      *   season: string,
@@ -41,13 +56,12 @@ class PceImportService
      *   messages: string[]
      * }
      */
-    public function importPce(): array
+    public function importPce(?string $localFile = null): array
     {
         $this->messages = [];
         $startTime = time();
 
-        // Download PCE file
-        $content = $this->downloadPceFile();
+        $content = $localFile === null ? $this->downloadPceFile() : $this->readLocalPceFile($localFile);
         $downloadTime = time() - $startTime;
 
         // Parse and import
@@ -102,6 +116,23 @@ class PceImportService
         }
 
         $this->messages[] = "Importation du fichier PCE";
+
+        return $content;
+    }
+
+    private function readLocalPceFile(string $path): string
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new \RuntimeException(sprintf('Le fichier PCE local "%s" est introuvable ou illisible', $path));
+        }
+
+        $content = (string) file_get_contents($path);
+
+        if (trim($content) === '') {
+            throw new \RuntimeException(sprintf('Le fichier PCE local "%s" est vide', $path));
+        }
+
+        $this->messages[] = "Importation du fichier PCE local " . $path;
 
         return $content;
     }
@@ -310,6 +341,7 @@ class PceImportService
                 Type_licence = VALUES(Type_licence)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     /**
@@ -444,6 +476,7 @@ class PceImportService
                 livret = VALUES(livret), niveau = VALUES(niveau), saison = VALUES(saison)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     /**
@@ -482,50 +515,57 @@ class PceImportService
                 `Date` = VALUES(`Date`)";
 
         $this->connection->executeStatement($sql, $params);
+        $this->debugDataHolder?->reset();
     }
 
     private function updateComiteReg(string $season): void
     {
         $this->messages[] = "Mise à jour des Comités Régionaux ...";
-        $sql = "INSERT IGNORE INTO kp_cr (Code, Libelle, Officiel, Reserve)
-            SELECT DISTINCT lc.Numero_comite_reg,
-                REPLACE(REPLACE(lc.Comite_reg, 'COMITE REGIONAL', 'CR'), 'CANOE KAYAK', 'CK'),
+        $sql = "INSERT INTO kp_cr (Code, Libelle, Officiel, Reserve)
+            SELECT lc.Numero_comite_reg,
+                MIN(REPLACE(REPLACE(lc.Comite_reg, 'COMITE REGIONAL', 'CR'), 'CANOE KAYAK', 'CK')),
                 'O', ''
             FROM kp_licence lc
             WHERE lc.Numero_club NOT IN ('0', '0000')
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
-            AND lc.Comite_reg <> ''";
+            AND lc.Comite_reg <> ''
+            GROUP BY lc.Numero_comite_reg
+            ON DUPLICATE KEY UPDATE Libelle = VALUES(Libelle)";
         $this->connection->executeStatement($sql, [$season]);
     }
 
     private function updateComiteDept(string $season): void
     {
         $this->messages[] = "Mise à jour des Comités Départementaux ...";
-        $sql = "INSERT IGNORE INTO kp_cd (Code, Libelle, Officiel, Reserve, Code_comite_reg)
-            SELECT DISTINCT lc.Numero_comite_dept,
-                REPLACE(REPLACE(lc.Comite_dept, 'COMITE DEPARTEMENTAL', 'CD'), 'CANOE KAYAK', 'CK'),
-                'O', '', lc.Numero_comite_reg
+        $sql = "INSERT INTO kp_cd (Code, Libelle, Officiel, Reserve, Code_comite_reg)
+            SELECT lc.Numero_comite_dept,
+                MIN(REPLACE(REPLACE(lc.Comite_dept, 'COMITE DEPARTEMENTAL', 'CD'), 'CANOE KAYAK', 'CK')),
+                'O', '', MIN(lc.Numero_comite_reg)
             FROM kp_licence lc
             WHERE lc.Numero_club NOT IN ('0', '0000')
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
-            AND lc.Comite_dept <> ''";
+            AND lc.Comite_dept <> ''
+            GROUP BY lc.Numero_comite_dept
+            ON DUPLICATE KEY UPDATE Libelle = VALUES(Libelle), Code_comite_reg = VALUES(Code_comite_reg)";
         $this->connection->executeStatement($sql, [$season]);
     }
 
     private function updateClub(string $season): void
     {
         $this->messages[] = "Mise à jour des Clubs ...";
-        $sql = "INSERT IGNORE INTO kp_club (Code, Libelle, Officiel, Reserve, Code_comite_dep)
-            SELECT DISTINCT lc.Numero_club,
-                lc.Club,
+        $sql = "INSERT INTO kp_club (Code, Libelle, Officiel, Reserve, Code_comite_dep)
+            SELECT lc.Numero_club,
+                MIN(lc.Club),
                 'O', '', MIN(lc.Numero_comite_dept)
             FROM kp_licence lc
             WHERE lc.Numero_club NOT IN ('0', '0000')
             AND lc.Numero_comite_reg <> '98'
             AND lc.Origine = ?
-            AND lc.Club != ''";
+            AND lc.Club != ''
+            GROUP BY lc.Numero_club
+            ON DUPLICATE KEY UPDATE Libelle = VALUES(Libelle), Code_comite_dep = VALUES(Code_comite_dep)";
         $this->connection->executeStatement($sql, [$season]);
     }
 
@@ -545,18 +585,8 @@ class PceImportService
         $dept = substr($code, 0, 3);
         $club = substr($code, 3);
 
-        // DOM-TOM
-        $domTom = [
-            '971' => '9A',
-            '972' => '9B',
-            '973' => '9C',
-            '974' => '9D',
-            '976' => '9F',
-            '988' => '9G',
-        ];
-
-        if (array_key_exists($dept, $domTom)) {
-            return $domTom[$dept] . str_pad(ltrim($club, '0'), 2, '0', STR_PAD_LEFT);
+        if (array_key_exists($dept, self::OVERSEAS_PREFIXES)) {
+            return self::OVERSEAS_PREFIXES[$dept] . str_pad(ltrim($club, '0'), 2, '0', STR_PAD_LEFT);
         }
 
         // Corse
@@ -577,16 +607,8 @@ class PceImportService
     {
         $code = substr($code, 2); // Remove first two chars (CD)
 
-        $conversions = [
-            '971' => '9A00',
-            '972' => '9B00',
-            '973' => '9C00',
-            '974' => '9D00',
-            '988' => '9G00',
-        ];
-
-        if (array_key_exists($code, $conversions)) {
-            return $conversions[$code];
+        if (array_key_exists($code, self::OVERSEAS_PREFIXES)) {
+            return self::OVERSEAS_PREFIXES[$code] . '00';
         }
 
         $code = substr($code, 1); // Remove leading digit

@@ -112,3 +112,45 @@ comptes du jeu scrutineering (`TADMIN`, `TVIEW`, `TDIV`, `TCLUB`, `TSCRUT`) et d
 |---|---|
 | `TSCORE` (profil 9) | feuille de marque permise, équipes engagées refusées (`ROLE_SCORER` sans `ROLE_VIEWER`) |
 | Mandat `9701` de `TDIV` (profil 3, `SCC`) | périmètre du mandat actif : `SCC` permis, `SCA` refusé (PDF-AUTH-03) |
+
+## Jeu « changer un code compétition » (RSF-03)
+
+Consommé par `tests/Integration/AdminChangeCompetitionCodeTest.php`
+([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)), qui renomme
+`TSTRN` en `TSTRX` (ou `TSTFAIL`). Chaque référence existe en `2999` (saison active) et en `2998` (passée), pour
+distinguer le mode « toutes saisons » du mode « saison active ».
+
+| Élément | Cas couverts |
+|---|---|
+| `TSUPER` (profil 1) | appelant de l'opération (super administrateur) |
+| `TSTRN` (2999, 2998) | code renommé ; son `Code_ref` est son propre code |
+| `TSTRB` (2999, 2998) | `Code_ref` = `TSTRN` : suit le renommage du code de référence |
+| `TSTMU` (2999, 2998) | multi-compétition `["TSTRN","TSTRB"]` |
+| Groupe `TSTRN` (`kp_groupe`) | cible de la clé étrangère de `Code_ref` : renommé (toutes saisons) ou copié sous le nouveau code (saison active) |
+| `kp_rc` `9801` (2999), `9802` (2998) | responsables de compétition |
+| Mandats `9801` (2999), `9802` (2998) de `TDIV` | filtre `\|TSTRN\|TSTRB\|` |
+| `TRSFA` (2999), `TRSFP` (2998) | filtres utilisateur complets (liste `\|…\|` et liste SQL) |
+| `TRSFS` (2999) | filtre utilisateur dont seule la liste SQL porte le code |
+| `kp_form` `9801` (2999), `9802` (2998) | formulaires d'inscription liés à la compétition |
+
+**Échec provoqué (test d'atomicité)** : `schema.sql` ajoute à `kp_user_mandat` la contrainte
+`chk_fixture_rename_failure` (absente de la prod), qui refuse un filtre contenant `|TSTFAIL|`. Renommer en
+`TSTFAIL` échoue donc au **dernier** UPDATE du renommage (filtres de mandat), une fois toutes les autres références
+écrites : le test vérifie que rien n'est resté à moitié renommé et que `FOREIGN_KEY_CHECKS` est rétabli. Une
+contrainte de base de données reste le moyen le plus simple de faire échouer une requête réelle au milieu du
+renommage sans doubler la connexion ni exposer une étape interne du service ; si l'ordre des UPDATE change,
+garder les filtres de mandat en dernier.
+
+## Fichier PCE de fixture (import PCE)
+
+Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)),
+qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais dans
+`sources/api2/tests/Fixtures/pce/pce-2999.txt` (seul `sources/` est monté dans le conteneur api2).
+
+| Élément | Cas couverts |
+|---|---|
+| `[date_valeur]` `2999-01-15` | saison du fichier résolue sur `kp_saison` → `2999` |
+| Licenciés `8801`–`8804` | CR `CRP1`/`CRP2`, CD `CD033`→`3300` et `CD064`→`6400`, Clubs `033001`→`3301`, `033002`→`3302`, `064001`→`6401` |
+
+Aucune de ces structures n'existe dans `data.sql` : l'import les crée. Pour un cas de mise à jour, insérer la
+structure dans `data.sql` avec un libellé ou un rattachement différent de celui du fichier.

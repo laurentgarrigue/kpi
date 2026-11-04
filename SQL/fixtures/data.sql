@@ -565,6 +565,34 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');
 
+-- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
+-- Consommé par tests/Integration/AdminChangeCompetitionCodeTest.php : le code TSTRN (saisons 2999 active et
+-- 2998 passée) est renommé ; chaque référence au code existe dans les deux saisons pour distinguer les deux modes.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('TSUPER', '', 'Super Admin Test', 'super@example.test', '', '', 1, '', '', '', ''),   -- profil 1 : opérations d'administration
+  ('TRSFA', '', 'Filtre complet actif', 'rsfa@example.test', '', '', 4, '|TSTRN|TSTRB|', '|2999|', '\'TSTRN\',\'TSTRB\'', ''),
+  ('TRSFP', '', 'Filtre complet passé', 'rsfp@example.test', '', '', 4, '|TSTRN|TSTRB|', '|2998|', '\'TSTRN\',\'TSTRB\'', ''),
+  ('TRSFS', '', 'Filtre SQL seul', 'rsfs@example.test', '', '', 4, '', '|2999|', '\'TSTRN\'', '');   -- liste « | » vide
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (3, 1, 'REG', 'TSTRN', 'Groupe régional à renommer', 'Regional group to rename');  -- cible de Code_ref (clé étrangère)
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`, `Statut`, `multi_competitions`) VALUES
+  ('TSTRN', '2999', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),  -- code de référence = son propre code
+  ('TSTRN', '2998', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTRB', '2999', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),           -- regroupée sous TSTRN
+  ('TSTRB', '2998', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTMU', '2999', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'ATT', '["TSTRN","TSTRB"]'),
+  ('TSTMU', '2998', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'END', '["TSTRN","TSTRB"]');
+INSERT INTO `kp_rc` (`Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric`) VALUES
+  (9801, 'TSTRN', '2999', 1, 9511),
+  (9802, 'TSTRN', '2998', 1, 9511);
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9801, 'TDIV', 'Mandat régional actif', 4, '|2999|', '|TSTRN|TSTRB|', NULL, '', ''),
+  (9802, 'TDIV', 'Mandat régional passé', 4, '|2998|', '|TSTRN|TSTRB|', NULL, '', '');
+INSERT INTO `kp_form` (`id`, `slug`, `title_fr`, `intro_fr`, `intro_en`, `confirmation_text_fr`, `confirmation_text_en`, `purpose_fr`, `purpose_en`, `competition_season`, `competition_code`, `created_at`, `updated_at`) VALUES
+  (9801, 'rsf-actif', 'Inscription régionale active', '', '', '', '', '', '', '2999', 'TSTRN', '2999-01-01 00:00:00', '2999-01-01 00:00:00'),
+  (9802, 'rsf-passe', 'Inscription régionale passée', '', '', '', '', '', '', '2998', 'TSTRN', '2998-01-01 00:00:00', '2998-01-01 00:00:00');
+-- ---------------------------------------------------------------- fin ticket RSF-03
 -- Feuilles de présence, contrôle, pool arbitres (PDF_GOTENBERG.md § 7.2, phase 2) : un joueur né en 2980 (U21 en
 -- 2997) dans 9382 (C002, club de TCLUB), un pool d'arbitres permanent (POOL, saison technique 1000).
 INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`, `Naissance`) VALUES
