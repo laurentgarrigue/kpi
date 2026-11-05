@@ -17,6 +17,12 @@ final class GamesGrid
     /** Column of the games without a pitch. */
     public const NO_PITCH = '-';
 
+    /** Virtual phases: their games only keep an empty slot visible in the grid (no teams, referees nor number). */
+    public const BREAK_PHASES = ['Pause', 'Break'];
+
+    /** Cell class of a slot holding only breaks, styled neutral in pdf.css. */
+    public const BREAK_CELL_CLASS = 'pdf-grid__break';
+
     /**
      * Pitches used by the games, in natural order (2 before 10), the games without pitch last.
      *
@@ -68,15 +74,16 @@ final class GamesGrid
     {
         $days = [];
         foreach ($games as $game) {
-            $days[$game['Date_match'] . '|' . $game['Lieu']][] = $game;
+            $days[(string) $game['Date_match']][] = $game;
         }
 
         $sections = [];
         foreach ($days as $dayGames) {
             $first = $dayGames[0];
+            $places = array_values(array_unique(array_filter(array_map(static fn (array $game): string => trim((string) $game['Lieu']), $dayGames))));
             foreach (self::groups(self::pitches($dayGames)) as $index => $pitches) {
                 $sections[] = [
-                    'title' => $dayLabel($first['Date_match'], $first['Lieu']),
+                    'title' => $dayLabel($first['Date_match'], implode(' / ', $places)),
                     'new_page' => $index === 0 && $sections !== [],
                     'columns' => [
                         ['key' => 'time', 'label' => $labels['games.time'], 'class' => 'pdf-grid__time'],
@@ -100,11 +107,12 @@ final class GamesGrid
      * @param list<array<string, mixed>> $games
      * @param list<string>               $pitches
      *
-     * @return list<array<string, string>>
+     * @return list<array<string, mixed>>
      */
     private static function rows(array $games, array $pitches, string $view): array
     {
         $slots = [];
+        $onlyBreaks = [];
         foreach ($games as $game) {
             $pitch = self::pitch($game);
             if (!in_array($pitch, $pitches, true)) {
@@ -115,15 +123,31 @@ final class GamesGrid
             $cell = self::cell($game, $view);
             $key = 'pitch_' . $pitch;
             $slots[$time][$key] = isset($slots[$time][$key]) ? $slots[$time][$key] . "\n" . $cell : $cell;
+            $onlyBreaks[$time][$key] = ($onlyBreaks[$time][$key] ?? true) && self::isBreak($game);
         }
         ksort($slots, SORT_NATURAL);
+        foreach ($slots as $time => &$slot) {
+            $breakCells = array_filter($onlyBreaks[$time]);
+            if ($breakCells !== []) {
+                $slot['_cells'] = array_map(static fn (): string => self::BREAK_CELL_CLASS, $breakCells);
+            }
+        }
+        unset($slot);
 
         return array_values($slots);
     }
 
-    /** Text of a game: its number, then its teams or its phase. */
+    public static function isBreak(array $game): bool
+    {
+        return in_array($game['Phase'] ?? null, self::BREAK_PHASES, true);
+    }
+
+    /** Text of a game: its number, then its teams or its phase; a break is only its name. */
     public static function cell(array $game, string $view): string
     {
+        if (self::isBreak($game)) {
+            return (string) $game['Phase'];
+        }
         $number = $game['Numero_ordre'] === null ? '' : '#' . $game['Numero_ordre'] . ' ';
         if ($view === 'phases') {
             return trim($number . trim((string) $game['Phase'] . ' ' . self::label($game)));
