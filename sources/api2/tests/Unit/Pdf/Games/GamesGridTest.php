@@ -49,6 +49,27 @@ final class GamesGridTest extends TestCase
         self::assertSame('#3 [V1-V2]', GamesGrid::cell(['LibelleA' => null, 'LibelleB' => null, 'Libelle' => '[V1-V2]'] + self::game('1', '10:00', 3), 'teams'), 'teams not drawn yet');
     }
 
+    public function testPdfData08OneSectionPerDayWhateverTheGamedayPlaces(): void
+    {
+        $games = [self::game('1'), ['Lieu' => 'Autre'] + self::game('2')];
+        $sections = GamesGrid::sections($games, 'teams', ['games.time' => 'Heure', 'games.pitch' => 'Terrain'], static fn (string $date, string $place): string => $date . ' ' . $place);
+
+        self::assertCount(1, $sections);
+        self::assertSame('2026-05-01 Lacville / Autre', $sections[0]['title']);
+    }
+
+    public function testPdfData09BreakIsOnlyItsNameAndStyledNeutral(): void
+    {
+        $break = ['Phase' => 'Pause', 'Libelle' => 'M9', 'LibelleA' => null, 'LibelleB' => null] + self::game('2', '10:00', 9);
+        self::assertSame('Pause', GamesGrid::cell($break, 'teams'));
+        self::assertSame('Pause', GamesGrid::cell($break, 'phases'));
+        self::assertSame('Break', GamesGrid::cell(['Phase' => 'Break'] + $break, 'teams'));
+
+        $sections = GamesGrid::sections([self::game('1'), $break], 'teams', ['games.time' => 'Heure', 'games.pitch' => 'Terrain'], static fn (string $date, string $place): string => $date);
+        $row = $sections[0]['rows'][0];
+        self::assertSame(['pitch_2' => GamesGrid::BREAK_CELL_CLASS], $row['_cells']);
+    }
+
     /** @return array<string, mixed> */
     private static function game(string $pitch, string $time = '10:00', int $number = 1): array
     {

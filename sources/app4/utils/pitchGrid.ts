@@ -4,6 +4,12 @@
 /** Minimum gap (minutes) between the start times of two games on the same pitch, by default. */
 export const DEFAULT_PITCH_MIN_INTERVAL = 30
 
+/** Virtual phases: their games are placeholders showing an empty slot (no teams, referees nor number). */
+const BREAK_PHASES = ['Pause', 'Break']
+
+export const isBreakGame = (game: { phase?: string | null }): boolean =>
+  !!game.phase && BREAK_PHASES.includes(game.phase)
+
 /** Fields of a game this module reads (structurally compatible with `Game`). */
 export interface PitchGame {
   id: number
