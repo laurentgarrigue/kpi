@@ -452,6 +452,39 @@ export const useWorkContextStore = defineStore('workContext', {
       }
     },
 
+    // Reload the season's competitions after new ones were created (create, copy...) and
+    // integrate them into the active context according to its scope:
+    // - 'selection': explicitly add the new codes to the selected competitions
+    // - 'group'/'section'/'all': recompute — new codes are included only if they belong
+    //   to the active group/section (or always, for 'all')
+    // - 'event': unchanged (an event's competitions are defined by the event itself)
+    async integrateNewCompetitions(
+      codes: string[],
+      season: string,
+      apiInstance?: ReturnType<typeof useApi>,
+    ) {
+      // The reloaded season must be the one the context is working on
+      if (season !== this.season) return
+
+      await this.loadSeasonData(apiInstance)
+
+      if (this.selectionType === 'selection') {
+        const missing = codes.filter(code => !this.selectedCompetitionCodes.includes(code))
+        if (missing.length > 0) {
+          this.selectedCompetitionCodes = [...this.selectedCompetitionCodes, ...missing]
+          this.saveToStorage()
+        }
+        this.computeCompetitionCodes()
+      }
+      else if (
+        this.selectionType === 'group'
+        || this.selectionType === 'section'
+        || this.selectionType === 'all'
+      ) {
+        this.computeCompetitionCodes()
+      }
+    },
+
     // Load events (filtered by season)
     async loadEvents(apiInstance?: ReturnType<typeof useApi>) {
       const api = apiInstance ?? useApi()

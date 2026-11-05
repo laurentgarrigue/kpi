@@ -487,26 +487,8 @@ const saveCompetition = async () => {
       const createdCode = formData.value.code
       await api.post('/admin/competitions', { ...formData.value, season: workContext.season })
 
-      // Reload work context so the new competition is known
-      await workContext.loadSeasonData(api)
-
-      // Integrate the new competition into the active context, according to scope:
-      // - 'selection': explicitly add the new code to the selected competitions
-      // - 'group'/'section'/'all': recompute — the new competition is auto-included
-      //   only if it belongs to the active group/section (or always, for 'all')
-      if (workContext.selectionType === 'selection') {
-        if (!workContext.selectedCompetitionCodes.includes(createdCode)) {
-          workContext.selectedCompetitionCodes.push(createdCode)
-          workContext.saveToStorage()
-        }
-        workContext.computeCompetitionCodes()
-      } else if (
-        workContext.selectionType === 'group'
-        || workContext.selectionType === 'section'
-        || workContext.selectionType === 'all'
-      ) {
-        workContext.computeCompetitionCodes()
-      }
+      // Reload work context and integrate the new competition into it
+      await workContext.integrateNewCompetitions([createdCode], workContext.season, api)
 
       toast.add({
         title: t('common.success'),

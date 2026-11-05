@@ -211,10 +211,11 @@ class SeasonOperationsService
      */
     public function getCompetitions(string $seasonCode): array
     {
-        $sql = "SELECT Code, Libelle, Code_typeclt, Statut
-                FROM kp_competition
-                WHERE Code_saison = ?
-                ORDER BY Libelle";
+        $sql = "SELECT c.Code, c.Libelle, c.Code_typeclt, c.Statut, g.section
+                FROM kp_competition c
+                LEFT JOIN kp_groupe g ON c.Code_ref = g.Groupe
+                WHERE c.Code_saison = ?
+                ORDER BY COALESCE(g.section, 100), COALESCE(g.ordre, 999), c.Code_tour, c.GroupOrder, c.Code";
 
         $stmt = $this->connection->prepare($sql);
         $result = $stmt->executeQuery([$seasonCode]);
@@ -225,6 +226,7 @@ class SeasonOperationsService
                 'libelle' => $row['Libelle'],
                 'typeClassement' => $row['Code_typeclt'],
                 'statut' => $row['Statut'],
+                'section' => (int) ($row['section'] ?? 100),
             ];
         }, $result->fetchAllAssociative());
     }
