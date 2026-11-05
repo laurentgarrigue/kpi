@@ -56,6 +56,8 @@ export interface OperationsCompetition {
   libelle: string
   typeClassement: string | null
   statut: string
+  /** Section id (1..5, 100 = Divers), as in groups.sections.* */
+  section: number
 }
 
 // Player autocomplete result

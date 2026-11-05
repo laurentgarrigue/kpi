@@ -4,6 +4,7 @@ import type { OperationsSeason, OperationsCompetition, CopyRcResult, CopyCompeti
 const { t } = useI18n()
 const api = useApi()
 const toast = useToast()
+const workContext = useWorkContextStore()
 
 // Internal tab navigation
 const activeSubTab = ref('change_code')
@@ -67,6 +68,31 @@ watch(copyCompSource, () => {
   selectedCompetitions.value = []
   loadCompetitions()
 })
+
+// Competitions grouped by section (order given by the API is kept)
+const competitionsBySection = computed(() => {
+  const sections: { section: number; competitions: OperationsCompetition[] }[] = []
+  for (const comp of competitions.value) {
+    let entry = sections.find(s => s.section === comp.section)
+    if (!entry) {
+      entry = { section: comp.section, competitions: [] }
+      sections.push(entry)
+    }
+    entry.competitions.push(comp)
+  }
+  return sections
+})
+
+const isSectionFullySelected = (codes: string[]) =>
+  codes.every(code => selectedCompetitions.value.includes(code))
+
+const toggleSection = (codes: string[]) => {
+  if (isSectionFullySelected(codes)) {
+    selectedCompetitions.value = selectedCompetitions.value.filter(c => !codes.includes(c))
+  } else {
+    selectedCompetitions.value = [...new Set([...selectedCompetitions.value, ...codes])]
+  }
+}
 
 const selectAllCompetitions = () => {
   selectedCompetitions.value = competitions.value.map(c => c.code)
@@ -159,12 +185,16 @@ const copyCompetitions = async () => {
 
   loading.value = true
   try {
+    const targetSeason = copyCompTarget.value
+    const copiedCodes = [...selectedCompetitions.value]
     const result = await api.post<CopyCompetitionsResult>('/admin/operations/seasons/copy-competitions', {
       sourceCode: copyCompSource.value,
-      targetCode: copyCompTarget.value,
-      competitionCodes: selectedCompetitions.value,
+      targetCode: targetSeason,
+      competitionCodes: copiedCodes,
       copyMatches: copyMatches.value
     })
+    // Make the copied competitions known to the work context (if it works on the target season)
+    await workContext.integrateNewCompetitions(copiedCodes, targetSeason, api)
     toast.add({
       title: t('common.success'),
       description: t('operations.seasons.success_copy_competitions', { copied: result.copied }),
@@ -385,20 +415,33 @@ const copyCompetitions = async () => {
               </button>
             </div>
           </div>
-          <div class="max-h-48 overflow-y-auto border border-header-200 dark:border-header-700 rounded-lg p-2 space-y-1">
-            <label
-              v-for="comp in competitions"
-              :key="comp.code"
-              class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 rounded cursor-pointer"
-            >
-              <input
-                v-model="selectedCompetitions"
-                type="checkbox"
-                :value="comp.code"
-                class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
+          <div class="max-h-64 overflow-y-auto border border-header-200 dark:border-header-700 rounded-lg p-2 space-y-2">
+            <div v-for="group in competitionsBySection" :key="group.section">
+              <label class="flex items-center gap-2 px-2 py-1 bg-header-100 dark:bg-header-800 rounded cursor-pointer sticky top-0">
+                <input
+                  type="checkbox"
+                  :checked="isSectionFullySelected(group.competitions.map(c => c.code))"
+                  class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
+                  @change="toggleSection(group.competitions.map(c => c.code))"
+                >
+                <span class="text-xs font-semibold uppercase text-header-900 dark:text-header-50">
+                  {{ t(`groups.sections.${group.section}`) }}
+                </span>
+              </label>
+              <label
+                v-for="comp in group.competitions"
+                :key="comp.code"
+                class="flex items-center gap-2 p-2 pl-6 hover:bg-header-50 dark:hover:bg-header-800 rounded cursor-pointer"
               >
-              <span class="text-sm">{{ comp.code }} - {{ comp.libelle }}</span>
-            </label>
+                <input
+                  v-model="selectedCompetitions"
+                  type="checkbox"
+                  :value="comp.code"
+                  class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
+                >
+                <span class="text-sm">{{ comp.code }} - {{ comp.libelle }}</span>
+              </label>
+            </div>
           </div>
         </div>
 
