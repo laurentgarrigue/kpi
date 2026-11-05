@@ -1430,6 +1430,10 @@
     "paddle_none": "none"
   },
   "gamedays": {
+    "view_list": "Phase list",
+    "view_schema": "Draw",
+    "view_schema_title": "Show the draw progression of the selected competition",
+    "view_schema_needs_competition": "Select a competition to show its draw progression",
     "title": "Gamedays / Phases",
     "add": "Add a gameday",
     "edit": "Edit gameday",
