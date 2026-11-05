@@ -159,8 +159,10 @@ watch([competitionCode, season], loadSchema, { immediate: true })
         </slot>
       </div>
 
-      <!-- Right side: badges, toggles, PDF -->
-      <div class="flex items-center gap-3">
+      <!-- Right side: actions of the host page, badges, toggles, PDF -->
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <slot name="toolbar-actions" />
+
         <!-- Level + type badges -->
         <template v-if="data">
           <span

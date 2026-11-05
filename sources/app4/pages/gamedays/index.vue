@@ -1267,7 +1267,8 @@ const printJurySheet = (gameday: Gameday | null) => {
 
     <!-- Schema view (§ 5.3): the header competition selector picks the competition -->
     <SchemaView v-if="view === 'schema'" :competition="workContext.pageCompetitionCodeAll" :season="workContext.season || ''">
-      <template #toolbar-start>
+      <!-- Same place as in the list view: on the right, next to the level / type badges -->
+      <template #toolbar-actions>
         <GamedaysViewSwitch v-model="view" :schema-available="schemaAvailable" />
       </template>
     </SchemaView>
