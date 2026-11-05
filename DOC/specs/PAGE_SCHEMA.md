@@ -13,7 +13,7 @@ La page Schéma de compétition affiche une visualisation en lecture seule de l'
 
 **Page PHP Legacy** : `GestionSchema.php` + `GestionSchema.tpl` + `GestionSchema.js`
 
-**Implémentation Nuxt** : `sources/app4/pages/gamedays/schema.vue`
+**Implémentation Nuxt** : `sources/app4/components/schema/SchemaView.vue`, affiché par la vue « Schéma » de `pages/gamedays/index.vue` et par la page autonome `pages/gamedays/schema.vue`
 
 **Contexte de travail** : Utilise le `workContextStore` global (saison) + sélection de compétition unique (`pageCompetitionCode`, même pattern que Rankings et Teams)
 
@@ -263,9 +263,11 @@ Affiche des badges à droite :
 
 ```
 sources/app4/pages/gamedays/
-  schema.vue                        # Page principale
+  index.vue                         # Vue « Schéma » de la page Phases (?view=schema)
+  schema.vue                        # Page autonome (nouvel onglet, bouton Fermer)
 
 sources/app4/components/schema/
+  SchemaView.vue                    # Contenu complet (toggles, PDF, bandeau, sponsor, impression)
   SchemaHeader.vue                  # Titre compétition, badges, toggles
   SchemaCpLayout.vue                # Layout CP en colonnes par étape
   SchemaCpPoolTable.vue             # Tableau de classement d'une poule (Type C)
@@ -636,9 +638,13 @@ L'endpoint agrège 5 requêtes SQL en une seule réponse (basées sur les requê
 
 ### 12.2 Accès depuis la page Journées/Phases
 
-La page `gamedays/index.vue` doit ajouter un lien/bouton vers `/gamedays/schema`. Ce lien est visible quand au moins une compétition est sélectionnée.
+Le schéma est une **vue secondaire** de la page `gamedays/index.vue` (`/gamedays?view=schema`), au même titre que
+la vue « Terrains » de la page Matchs : un sélecteur Liste / Schéma bascule entre les deux dans le même onglet, et le
+sélecteur de compétition de l'en-tête choisit le schéma affiché. Critères d'acceptation :
+[PAGE_JOURNEES_PHASES.md § 5.3](PAGE_JOURNEES_PHASES.md) (GDY-SCH-01 à 05).
 
-**Emplacement** : Dans la barre d'outils, à côté des autres liens (Matchs, etc.).
+La route autonome `/gamedays/schema` reste disponible (avec bouton Fermer) pour les liens ouverts dans un nouvel
+onglet hors contexte de travail (page Copie de compétition).
 
 ### 12.3 Lien avec les specs existantes
 

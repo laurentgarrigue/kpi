@@ -63,8 +63,8 @@ app4/
 | `/operations` | Opérations système | = 1 |
 | `/groups` | Gestion groupes | ≤ 2 |
 | `/games` | Gestion matchs | ≤ 4 |
-| `/gamedays` | Journées/Phases | ≤ 4 |
-| `/gamedays/schema` | Visualisation schéma compétition | ≤ 4 |
+| `/gamedays` | Journées/Phases (vues Liste / Schéma, `?view=schema`) | ≤ 4 |
+| `/gamedays/schema` | Schéma compétition autonome (nouvel onglet, liens hors contexte) | ≤ 4 |
 | `/teams` | Gestion équipes | ≤ 3 |
 | `/rankings` | Classements (calcul, publication, CP) | ≤ 4 |
 | `/rankings/initial` | Classement initial | ≤ 6 |

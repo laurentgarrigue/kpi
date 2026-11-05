@@ -1442,6 +1442,10 @@
     "paddle_none": "aucune"
   },
   "gamedays": {
+    "view_list": "Liste des phases",
+    "view_schema": "Schéma",
+    "view_schema_title": "Afficher le schéma de la compétition sélectionnée",
+    "view_schema_needs_competition": "Sélectionnez une compétition pour afficher son schéma",
     "title": "Journées / Phases",
     "add": "Ajouter une journée",
     "edit": "Modifier la journée",
