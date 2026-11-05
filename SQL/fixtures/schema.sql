@@ -172,7 +172,7 @@ CREATE TABLE `kp_evenement_journee` (
 
 DROP TABLE IF EXISTS `kp_competition_equipe`;
 CREATE TABLE `kp_competition_equipe` (
-  `Id` int(10) UNSIGNED NOT NULL,
+  `Id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,  -- comme la prod (kpi_structure.sql)
   `Code_compet` varchar(12) NOT NULL DEFAULT '',
   `Code_saison` char(4) NOT NULL DEFAULT '',
   `Libelle` varchar(40) DEFAULT NULL,
@@ -492,6 +492,72 @@ CREATE TABLE `kp_user_mandat` (
   KEY `fk_mandat_user` (`user_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
+-- Durcissement authentification (AUTH_HARDENING.md § 4) : lien compte KPI ↔ identifiant OAuth
+-- (phase 2 : Google ; extensible à d'autres providers).
+DROP TABLE IF EXISTS `kp_user_oauth`;
+CREATE TABLE `kp_user_oauth` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `provider` varchar(20) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `email_at_link` varchar(100) NOT NULL,
+  `linked_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_provider_subject` (`provider`, `subject`),
+  UNIQUE KEY `uq_user_provider` (`user_code`, `provider`),
+  KEY `fk_user` (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Durcissement authentification (AUTH_HARDENING.md § 3) : refresh tokens et appareils connus,
+-- utilisés par les tests de rotation JWT et d'alerte « nouvel appareil ».
+DROP TABLE IF EXISTS `kp_user_refresh_token`;
+CREATE TABLE `kp_user_refresh_token` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `device_fingerprint` varchar(64) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `replaced_by` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_token_hash` (`token_hash`),
+  KEY `idx_user_active` (`user_code`, `revoked_at`, `expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `kp_user_known_device`;
+CREATE TABLE `kp_user_known_device` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) NOT NULL,
+  `fingerprint` char(64) NOT NULL,
+  `label` varchar(100) NOT NULL,
+  `revoke_token_hash` char(64) DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `last_seen_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_fingerprint` (`user_code`, `fingerprint`),
+  KEY `idx_revoke_token` (`revoke_token_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
+-- utilisé par les tests de rate-limit, verrouillage et audit.
+DROP TABLE IF EXISTS `kp_user_login_history`;
+CREATE TABLE `kp_user_login_history` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_code` varchar(8) DEFAULT NULL,
+  `success` tinyint(1) NOT NULL,
+  `method` varchar(32) NOT NULL,
+  `failure_reason` varchar(32) DEFAULT NULL,
+  `legacy_hash` tinyint(1) NOT NULL DEFAULT 0,
+  `ip` varchar(45) NOT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `attempted_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_time` (`user_code`, `attempted_at`),
+  KEY `idx_ip_time` (`ip`, `attempted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `kp_journal`;
 CREATE TABLE `kp_journal` (
   `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -576,6 +642,78 @@ CREATE TABLE `wptest_nf3_field_meta` (
   `value` longtext DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Event export/import (EventExportImportService, tests/Integration/EventImportAgeCategoriesTest.php).
+DROP TABLE IF EXISTS `kp_competition_equipe_init`;
+CREATE TABLE `kp_competition_equipe_init` (
+  `Id` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `Pts` smallint(6) DEFAULT NULL,
+  `Clt` smallint(6) DEFAULT NULL,
+  `J` smallint(6) DEFAULT NULL,
+  `G` smallint(6) DEFAULT NULL,
+  `N` smallint(6) DEFAULT NULL,
+  `P` smallint(6) DEFAULT NULL,
+  `F` smallint(6) DEFAULT NULL,
+  `Plus` smallint(6) DEFAULT NULL,
+  `Moins` smallint(6) DEFAULT NULL,
+  `Diff` smallint(6) DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_competition_equipe_niveau`;
+CREATE TABLE `kp_competition_equipe_niveau` (
+  `Id` int(10) UNSIGNED NOT NULL,
+  `Niveau` smallint(6) NOT NULL DEFAULT 0,
+  `Pts` smallint(6) DEFAULT NULL,
+  `Clt` smallint(6) DEFAULT NULL,
+  `J` smallint(6) DEFAULT NULL,
+  `G` smallint(6) DEFAULT NULL,
+  `N` smallint(6) DEFAULT NULL,
+  `P` smallint(6) DEFAULT NULL,
+  `F` smallint(6) DEFAULT NULL,
+  `Plus` smallint(6) DEFAULT NULL,
+  `Moins` smallint(6) DEFAULT NULL,
+  `Diff` smallint(6) DEFAULT NULL,
+  `PtsNiveau` double UNSIGNED DEFAULT NULL,
+  `CltNiveau` smallint(6) DEFAULT NULL,
+  `Pts_publi` smallint(6) DEFAULT NULL,
+  `Clt_publi` smallint(6) DEFAULT NULL,
+  `J_publi` smallint(6) DEFAULT NULL,
+  `G_publi` smallint(6) DEFAULT NULL,
+  `N_publi` smallint(6) DEFAULT NULL,
+  `P_publi` smallint(6) DEFAULT NULL,
+  `F_publi` smallint(6) DEFAULT NULL,
+  `Plus_publi` smallint(6) DEFAULT NULL,
+  `Moins_publi` smallint(6) DEFAULT NULL,
+  `Diff_publi` smallint(6) DEFAULT NULL,
+  `PtsNiveau_publi` double DEFAULT NULL,
+  `CltNiveau_publi` smallint(6) DEFAULT NULL,
+  PRIMARY KEY (`Id`,`Niveau`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+DROP TABLE IF EXISTS `kp_chrono`;
+CREATE TABLE `kp_chrono` (
+  `IdMatch` int(10) UNSIGNED NOT NULL,
+  `action` varchar(5) NOT NULL,
+  `start_time` varchar(20) NOT NULL,
+  `start_time_server` int(11) DEFAULT NULL,
+  `run_time` varchar(20) NOT NULL,
+  `max_time` varchar(5) NOT NULL,
+  `shotclock` text DEFAULT NULL,
+  `penalties` text DEFAULT NULL,
+  PRIMARY KEY (`IdMatch`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Player merge (PlayerMergeService, tests/Integration/PlayerMergeAgeCategoriesTest.php).
+DROP TABLE IF EXISTS `kp_recherche_licence`;
+CREATE TABLE `kp_recherche_licence` (
+  `Signature` varchar(20) NOT NULL DEFAULT '',
+  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  `Horaire` timestamp NOT NULL DEFAULT current_timestamp(),
+  `Validation` char(1) DEFAULT NULL,
+  PRIMARY KEY (`Signature`,`Matric`),
+  KEY `fk_recherche_matric` (`Matric`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 -- Tables de la phase 4 recréées à chaque chargement (la migration les crée « IF NOT EXISTS »).
 DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_cms_category`, `kp_cms_article`,
@@ -687,3 +825,21 @@ CREATE TABLE `scoring_outbox` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
+-- Responsables de compétition (RC), suivis par le renommage d'un code compétition.
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `kp_rc`;
+CREATE TABLE `kp_rc` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Code_competition` varchar(10) DEFAULT NULL,
+  `Code_saison` varchar(8) NOT NULL,
+  `Ordre` int(11) NOT NULL,
+  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+-- Échec provoqué (test d'atomicité) : renommer en TSTFAIL viole cette contrainte au DERNIER UPDATE du renommage
+-- (filtres de mandat), après les compétitions, engagements, journées et RC. Absente de la prod.
+ALTER TABLE `kp_user_mandat` ADD CONSTRAINT `chk_fixture_rename_failure` CHECK (`filtre_competition` NOT LIKE '%|TSTFAIL|%');
+SET FOREIGN_KEY_CHECKS = 1;
+-- ---------------------------------------------------------------- fin ticket RSF-03

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terrains Finales championnats de France</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 16px 0 8px; }
+/* Pitches stay on the right, also when they wrap below the days. */
+#pitches { margin-left: auto; justify-content: flex-end; }
+/* Phone: two drop-down lists instead of rows of buttons, however many days and pitches. */
+.selects { display: none; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.selects label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.selects select { font: inherit; font-size: 15px; color: var(--ink); background: var(--surface); padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; }
+@media (max-width: 600px) {
+  .tools .chips { display: none; }
+  .selects { display: grid; }
+}
+
+/* One row per start time; each game is a card in its pitch's column. */
+.heads, .slot { display: grid; grid-template-columns: 64px repeat(var(--cols), minmax(0, 1fr)); gap: 12px; }
+.heads { position: sticky; top: 0; z-index: 2; background: var(--surface); padding: 10px 0 8px; border-bottom: 2px solid var(--navy); }
+.heads span { font: 400 22px/1 var(--display); color: var(--blue-deep); }
+.slot { padding: 12px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.slot .time { font-weight: 700; font-variant-numeric: tabular-nums; padding-top: 8px; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 2px; background: var(--surface); min-width: 0; }
+.card .top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.card .comp { font-weight: 700; color: var(--blue-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .comp span { font-weight: 400; color: var(--muted); }
+.card .no { color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .pitch-tag { display: none; font-weight: 700; color: var(--ink); }
+.card.final { border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+.card.final .comp { color: var(--gold); }
+.card .duel { grid-template-columns: minmax(0, 1fr) 38px; }
+main { padding-bottom: 56px; }
+
+/* Phone, or one pitch chosen: a single column, the pitch written on each card. */
+.single .heads { display: none; }
+.single .slot { grid-template-columns: 56px minmax(0, 1fr); }
+.single .card { grid-column: 2 !important; }
+.single .card .pitch-tag { display: inline; }
+@media (max-width: 820px) {
+  .heads { display: none; }
+  .slot { grid-template-columns: 52px minmax(0, 1fr); gap: 8px; }
+  .card { grid-column: 2 !important; }
+  .card .pitch-tag { display: inline; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap">
+  <div class="tools">
+    <nav class="chips" aria-label="Jour" id="days"></nav>
+    <div class="chips" id="pitches" role="group" aria-label="Terrain"></div>
+    <div class="selects"><label>Jour<select id="day-select"></select></label><label>Terrain<select id="pitch-select"></select></label></div>
+  </div>
+  <div id="board"></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const EVENT = __EVENT__;
+const GAMES = __EVENT_GAMES__;
+const short = Object.fromEntries(EVENT.competitions.map(c => [c.code, c.soustitre2 || c.display_title]));
+const days = [...new Set(GAMES.map(g => g.g_date))].sort();
+const pitches = [...new Set(GAMES.map(g => g.g_pitch))].sort((a, b) => a - b);
+let day = days[days.length - 1], pitch = null;
+
+document.getElementById('chrome').innerHTML = siteChrome('Événements');
+document.getElementById('head').innerHTML = eventHeader(EVENT.event, EVENT.competitions.length, 'Terrains');
+
+function card(g) {
+  const col = pitches.indexOf(g.g_pitch) + 2;
+  return `<article class="card${/^finale$/i.test(g.d_phase) ? ' final' : ''}" style="grid-column:${pitch ? 2 : col}">
+    <p class="top" style="margin:0"><span class="comp"><span class="pitch-tag">Terrain ${esc(g.g_pitch)} </span>${esc(short[g.c_code] ?? g.c_code)} <span>${esc(g.d_phase)}</span></span><span class="no">n° ${g.g_number}</span></p>
+    ${duelHtml(g, { when: false })}</article>`;
+}
+
+function render() {
+  document.getElementById('days').innerHTML = days.map(d => `<a href="#" data-day="${d}"${d === day ? ' aria-current="true"' : ''}>${cap(fmt(d, { weekday: 'long', day: 'numeric' }))}</a>`).join('');
+  document.getElementById('pitches').innerHTML = `<button type="button" data-p="" aria-pressed="${pitch === null}">Tous les terrains</button>${pitches.map(p => `<button type="button" data-p="${p}" aria-pressed="${p === pitch}">Terrain ${p}</button>`).join('')}`;
+  document.getElementById('day-select').innerHTML = days.map(d => `<option value="${d}"${d === day ? ' selected' : ''}>${cap(fmt(d, { weekday: 'long', day: 'numeric', month: 'long' }))}</option>`).join('');
+  document.getElementById('pitch-select').innerHTML = `<option value="">Tous les terrains</option>${pitches.map(p => `<option value="${p}"${p === pitch ? ' selected' : ''}>Terrain ${p}</option>`).join('')}`;
+  const games = GAMES.filter(g => g.g_date === day && (pitch === null || g.g_pitch === pitch));
+  const times = [...new Set(games.map(g => g.g_time))].sort();
+  const board = document.getElementById('board');
+  board.className = pitch ? 'single' : '';
+  board.style.setProperty('--cols', pitch ? 1 : pitches.length);
+  board.innerHTML = `<div class="heads" aria-hidden="true"><span></span>${pitches.map(p => `<span>Terrain ${p}</span>`).join('')}</div>
+    ${times.map(t => `<section class="slot" aria-label="${t}"><span class="time">${t}</span>${games.filter(g => g.g_time === t).sort((a, b) => a.g_pitch - b.g_pitch).map(card).join('')}</section>`).join('')}`;
+}
+document.getElementById('days').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); day = a.dataset.day; render(); });
+document.getElementById('pitches').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { pitch = b.dataset.p || null; render(); } });
+document.getElementById('day-select').addEventListener('change', e => { day = e.target.value; render(); });
+document.getElementById('pitch-select').addEventListener('change', e => { pitch = e.target.value || null; render(); });
+render();
+demoBar();
+</script>
+</body>
+</html>

@@ -11,7 +11,7 @@ export interface Player {
   nom: string
   prenom: string
   sexe: 'M' | 'F'
-  categ: string
+  categ: string | null  // null when the birth date is unknown (shown « ? »)
   naissance: string | null
 
   // Team/Match composition
@@ -49,6 +49,8 @@ export interface Player {
   // Eligibility ("joueur en règle") error codes for this competition, empty when compliant
   // or when the competition has no control (team mode only)
   eligibilityErrors?: string[]
+  // Non-blocking warnings, never a non-compliance (e.g. Naissance_inconnue in a competition with age bounds)
+  eligibilityWarnings?: string[]
 
   // ICF number (international)
   icf: number | null

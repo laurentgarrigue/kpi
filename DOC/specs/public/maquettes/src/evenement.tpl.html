@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finales championnats de France 2026</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.comps { list-style: none; margin: 26px 0 56px; padding: 0; }
+.comp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 14px 32px; align-items: center; padding: 18px 0; border-top: 1px solid var(--line); }
+.comp:last-child { border-bottom: 1px solid var(--line); }
+.comp h2 { font: 400 32px/1 var(--display); color: var(--title); margin: 0; }
+.comp h2 a { text-decoration: none; }
+.comp h2 a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.comp .sub { font-size: 14px; color: var(--muted); margin: 4px 0 0; }
+.podium-line { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.podium-line li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.podium-line li:first-child { font-weight: 700; }
+.podium-line a { text-decoration: none; }
+.podium-line a:hover { text-decoration: underline; }
+.podium-line .medal { width: 12px; height: 12px; }
+.podium-line .logo { width: 24px; height: 24px; }
+.pending { color: var(--muted); font-size: 14px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.links a { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); text-decoration: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.links a.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+@media (max-width: 860px) {
+  .comp { grid-template-columns: 1fr; gap: 10px; }
+  .links { justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap"><ol class="comps" id="comps"></ol></main>
+<script src="maquette.js"></script>
+<script>
+const EVENT = __EVENT__;
+const RANKINGS = __EVENT_RANKINGS__;
+const LOGOS = logosByTeam(__EVENT_GAMES__);
+document.getElementById('chrome').innerHTML = siteChrome('Événements');
+document.getElementById('head').innerHTML = eventHeader(EVENT.event, EVENT.competitions.length, 'Compétitions');
+
+document.getElementById('comps').innerHTML = EVENT.competitions.map(c => {
+  const podium = (RANKINGS[c.code]?.rows ?? []).filter(r => r.medal).sort((a, b) => a.medal - b.medal);
+  return `<li class="comp">
+    <div><h2><a href="infos.html">${esc(c.soustitre2 || c.display_title)}</a></h2><p class="sub">${esc(c.display_title)}, ${c.gamedays} journées</p></div>
+    ${podium.length ? `<ol class="podium-line" aria-label="Podium">${podium.map(r => `<li><span class="medal m${r.medal}" aria-label="${r.rank}e"></span>${logoImg(LOGOS[r.team.number])}<a href="equipe.html">${esc(r.team.label)}</a></li>`).join('')}</ol>`
+      : '<p class="pending">Le classement sera publié à la fin de la compétition.</p>'}
+    <div class="links"><a class="primary" href="matchs.html">Matchs</a><a href="deroulement.html">Déroulement</a><a href="classement.html">Classement</a></div>
+  </li>`;
+}).join('');
+demoBar();
+</script>
+</body>
+</html>

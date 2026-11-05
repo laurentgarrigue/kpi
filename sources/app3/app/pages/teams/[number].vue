@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { titleCase } from '~/utils/clubs'
 import { legacyImageUrl } from '~/utils/page-links'
 import { selectedRoster, type Roster, type TeamSheet } from '~/utils/teams'
 
@@ -45,29 +46,40 @@ useHead(() => ({
 </script>
 
 <template>
-  <div v-if="team" class="space-y-10">
-    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('teams.title'), to: localePath('/teams') }, { label: team.label }]" />
-    <header class="flex flex-wrap items-center gap-6" data-testid="team-header">
-      <TeamZoomImage v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: team.club.label ?? team.label })" origin="left" class="size-20 object-contain" data-testid="team-logo" />
-      <div class="space-y-1">
-        <h1 class="text-5xl text-kpi-blue-600">{{ team.label }}</h1>
-        <NuxtLink v-if="team.club.code" :to="localePath(`/clubs/${team.club.code}`)" class="underline" data-testid="team-club">
-          {{ team.club.label ?? team.club.code }}
-        </NuxtLink>
+  <div v-if="team" class="space-y-8 pb-10">
+    <SiteBreadcrumb :items="[{ label: $t('nav.home'), to: localePath('/') }, { label: $t('clubs.title'), to: localePath('/clubs') }, { label: team.label }]" />
+    <header class="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-6 border-b border-line pb-7 md:grid-cols-[auto_minmax(0,1fr)_auto]" data-testid="team-header">
+      <TeamZoomImage v-if="logo" :src="logo" :alt="$t('clubs.logoAlt', { club: team.club.label ?? team.label })" origin="left" class="size-18 object-contain md:size-30" data-testid="team-logo" />
+      <div :class="{ 'col-span-2 md:col-span-1': !logo }">
+        <h1 class="text-[2.625rem] leading-none text-navy md:text-[4rem] dark:text-ink">{{ team.label }}</h1>
+        <i18n-t v-if="team.club.code" keypath="teams.clubLine" tag="p" scope="global" class="mt-1.5" data-testid="team-club-line">
+          <template #club>
+            <!-- TEA-08 / CLB-08: the club on the map of the clubs page, the map icon in the same link. -->
+            <NuxtLink :to="{ path: localePath('/clubs'), query: { club: team.club.code } }" class="group inline-flex items-baseline gap-1.5 font-semibold" data-testid="team-club">
+              <span class="underline decoration-kpi-blue-500 underline-offset-3">{{ team.club.label ? titleCase(team.club.label) : team.club.code }}</span>
+              <span :title="$t('teams.showOnMap')" class="self-center text-kpi-blue-700 group-hover:text-navy dark:group-hover:text-ink" data-testid="team-club-map">
+                <UIcon name="i-heroicons-map-pin" class="size-5 align-middle" aria-hidden="true" /><span class="sr-only">{{ ` (${$t('teams.showOnMap')})` }}</span>
+              </span>
+            </NuxtLink>
+          </template>
+        </i18n-t>
       </div>
-      <TeamZoomImage v-if="colors" :src="colors" :alt="$t('teams.colorsAlt', { team: team.label })" origin="right" class="h-20 w-auto" data-testid="team-colors" />
+      <TeamZoomImage v-if="colors" :src="colors" :alt="$t('teams.colorsAlt', { team: team.label })" origin="right" class="hidden h-30 w-auto md:block" data-testid="team-colors" />
     </header>
+    <TeamMedalTally :honours="team.honours" />
     <figure v-if="photo && team.photo" class="max-w-3xl" data-testid="team-photo">
       <img :src="photo" :alt="$t('teams.photoAlt', { team: team.label, season: team.photo.season })" loading="lazy" class="w-full rounded">
     </figure>
 
     <section aria-labelledby="honours-title">
-      <h2 id="honours-title" class="mb-3 text-3xl text-kpi-blue-600">{{ $t('teams.honours') }}</h2>
-      <TeamHonours :honours="team.honours" :team="team.label" />
+      <h2 id="honours-title" class="mb-3 text-[1.875rem] leading-none text-kpi-blue-700">
+        {{ team.honours.length ? $t('teams.honoursSince', { season: team.honours.at(-1)!.season }) : $t('teams.honours') }}
+      </h2>
+      <TeamHonours :honours="team.honours" />
     </section>
 
     <section v-if="roster" aria-labelledby="roster-title" class="space-y-4">
-      <h2 id="roster-title" class="text-3xl text-kpi-blue-600">{{ $t('teams.roster') }}</h2>
+      <h2 id="roster-title" class="text-[1.875rem] leading-none text-kpi-blue-700">{{ $t('teams.roster') }}</h2>
       <TeamRosterSelector :seasons="team.seasons" :season="roster.season" :competition="roster.competition" :path="`/teams/${team.number}`" />
       <p v-if="rosterError" class="text-kpi-red-600" data-testid="roster-unavailable">{{ $t('common.unavailable') }}</p>
       <TeamRoster v-else-if="players" :players="players.players" :caption="$t('teams.rosterCaption', { team: team.label, competition: competitionTitle, season: roster.season })" />

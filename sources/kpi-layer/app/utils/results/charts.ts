@@ -1,5 +1,5 @@
 import { winnerSide } from './games'
-import type { ChartPhase, ChartTeam, CompetitionChart, ResultsGame, Side } from './types'
+import type { ChartPhase, ChartTeam, CompetitionChart, Gameday, ResultsGame, Side } from './types'
 
 export interface RoundView {
   round: number
@@ -16,6 +16,27 @@ export function chartRounds(chart: CompetitionChart): RoundView[] {
 /** Every phase by decreasing level (vertical view, kpphases.php). */
 export function phasesByLevel(chart: CompetitionChart): ChartPhase[] {
   return chartRounds(chart).flatMap(round => round.phases).sort((a, b) => b.level - a.level)
+}
+
+export interface GamedayStanding {
+  gameday: Gameday
+  /** The gameday as a pool phase holding its own rows only, for `poolStandings`. */
+  phase: ChartPhase
+}
+
+/**
+ * Standings of each gameday of a championship (CMP-25), in the given order. api2 merges the rows of the gamedays
+ * sharing a phase name; they are split back by their `d_id`. A gameday without rows has an empty standing.
+ */
+export function standingsByGameday(chart: CompetitionChart, gamedays: readonly Gameday[]): GamedayStanding[] {
+  const rows = chartRounds(chart).flatMap(round => round.phases).flatMap(phase => phase.teams ?? [])
+  return gamedays.map((gameday) => {
+    const teams = rows.filter(row => row.d_id === gameday.id)
+    return {
+      gameday,
+      phase: { type: 'C', libelle: gameday.phase ?? gameday.name ?? '', level: 0, t_count: teams.length, d_id: gameday.id, teams, games: null },
+    }
+  })
 }
 
 export type PoolRow = (ChartTeam & { placeholder?: true }) | { empty: true }

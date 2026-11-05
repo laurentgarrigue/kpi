@@ -4,6 +4,8 @@ import { version } from '~/package.json'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+// Legacy admin PDF pages need a signed link (PDF_GOTENBERG.md, phase 0)
+useLegacyPdfLinks()
 const mobileMenuOpen = ref(false)
 
 // Close mobile menu on route change

@@ -68,6 +68,55 @@ export function formatEventDates(start: string | null, end: string | null, local
   return format.formatRange(new Date(first), new Date(last))
 }
 
+/** Date tile of an event card: « 3–5 » over « juil. » (CMP-18); `null` without any date. */
+export function dateTile(start: string | null, end: string | null, locale: string): { days: string, month: string } | null {
+  const first = start ?? end
+  if (!first) {
+    return null
+  }
+  const last = end ?? first
+  const day = (date: string) => String(Number(date.slice(8, 10)))
+  const month = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(new Date(last))
+  return { days: first === last ? day(first) : `${day(first)}–${day(last)}`, month }
+}
+
+/** Short localised date or range, for lists: « 3–5 juil. », « 30 juin – 2 juil. » (EVL-03); empty without a date. */
+export function shortEventDates(start: string | null, end: string | null, locale: string): string {
+  const first = start ?? end
+  if (!first) {
+    return ''
+  }
+  const format = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  return format.formatRange(new Date(first), new Date(end ?? first))
+}
+
+/** Upcoming events (last day today or later) in order, then past ones, the latest first (EVL-03). */
+export function splitByToday<T extends Dated>(events: readonly T[], today: string): { upcoming: T[], past: T[] } {
+  const sorted = [...events].sort((a, b) => (firstDay(a) ?? '').localeCompare(firstDay(b) ?? ''))
+  return {
+    upcoming: sorted.filter(item => (lastDay(item) ?? '') >= today),
+    past: sorted.filter(item => (lastDay(item) ?? '') < today).reverse(),
+  }
+}
+
+/** Events grouped by the month (`YYYY-MM`) of their first day, keeping their order (EVL-03). */
+export function eventsByMonth<T extends Dated>(events: readonly T[]): { month: string, events: T[] }[] {
+  const months = new Map<string, T[]>()
+  for (const item of events) {
+    const month = (firstDay(item) ?? '').slice(0, 7)
+    months.set(month, [...(months.get(month) ?? []), item])
+  }
+  return [...months].map(([month, items]) => ({ month, events: items }))
+}
+
+const COMBINING_MARKS = /\p{M}/gu
+const fold = (text: string) => text.normalize('NFD').replace(COMBINING_MARKS, '').toLowerCase().trim()
+
+/** The name or the place contains the query, whatever the accents and the case (EVL-04). */
+export function matchesEventQuery(event: Pick<PublicEvent, 'libelle' | 'place'>, query: string): boolean {
+  return fold(`${event.libelle} ${event.place ?? ''}`).includes(fold(query))
+}
+
 /** Absolute URL of an event logo stored under the legacy `/img/` tree, or `null` without logo. */
 export function eventLogoUrl(logo: string | null, legacyBaseUrl: string): string | null {
   return legacyImageUrl(logo, legacyBaseUrl)

@@ -2,6 +2,7 @@
 
 namespace App\Eligibility;
 
+use App\AgeCategory\AgeCategoryRule;
 use App\Eligibility\PlayerEligibilityRules as Rules;
 use Doctrine\DBAL\Connection;
 
@@ -14,8 +15,10 @@ class PlayerEligibilityChecker
     public const OPERATION_ADD = 'add';
     public const OPERATION_STATUS_CHANGE = 'status';
 
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly AgeCategoryRule $ageCategories,
+    ) {
     }
 
     public function levelFor(string $competitionCode, ?string $codeNiveau): ?string
@@ -52,11 +55,11 @@ class PlayerEligibilityChecker
      *
      * @param array{Origine?: ?string, Type_licence?: ?string, Etat_certificat_CK?: ?string, Pagaie_ECA?: ?string, date_surclassement?: ?string} $row
      *        Missing/null values count as not satisfied.
-     * @param string $categ Age category for the competition season (for the overclassing check)
+     * @param ?string $categ Age category for the competition season (for the overclassing check), null when unknown
      *
      * @return string[] Error codes (Rules::ERROR_*), empty when the player is compliant
      */
-    public function evaluate(array $row, string $level, string $season, string $competitionCode, string $categ): array
+    public function evaluate(array $row, string $level, string $season, string $competitionCode, ?string $categ): array
     {
         $rules = Rules::RULES[$level];
         $errors = [];
@@ -88,6 +91,20 @@ class PlayerEligibilityChecker
         }
 
         return $errors;
+    }
+
+    /**
+     * Non-blocking warnings of a player, independent of the rule set (CATEGORIE_AGE.md story 20). Pure function.
+     *
+     * @return string[] Warning codes (Rules::WARNING_*), empty when there is nothing to report
+     */
+    public function ageWarnings(?string $birthDate, ?int $competitionAgeMin, ?int $competitionAgeMax): array
+    {
+        if (Rules::hasAgeBounds($competitionAgeMin, $competitionAgeMax) && AgeCategoryRule::isUnknownBirthDate($birthDate)) {
+            return [Rules::WARNING_BIRTH_DATE_UNKNOWN];
+        }
+
+        return [];
     }
 
     /**
@@ -155,7 +172,7 @@ class PlayerEligibilityChecker
             $level,
             $season,
             $competitionCode,
-            $this->calculateCategory($row['Naissance'] ?? null, $season)
+            $this->ageCategories->categoryFor($row['Naissance'] ?? null, $season)?->code
         );
     }
 
@@ -197,13 +214,10 @@ class PlayerEligibilityChecker
             array_merge([$season, $teamId], Rules::PLAYING_STATUSES)
         );
 
-        $categories = [];
         $ineligible = [];
         foreach ($rows as $row) {
-            $birthYear = $row['Naissance'] ? substr($row['Naissance'], 0, 4) : '';
-            $categories[$birthYear] ??= $this->calculateCategory($row['Naissance'], $season);
-
-            $errors = $this->evaluate($row, $level, $season, $competitionCode, $categories[$birthYear]);
+            $categ = $this->ageCategories->categoryFor($row['Naissance'], $season)?->code;
+            $errors = $this->evaluate($row, $level, $season, $competitionCode, $categ);
             if ($errors === []) {
                 continue;
             }
@@ -251,27 +265,12 @@ class PlayerEligibilityChecker
         return ['enforcement' => $enforcement, 'count' => $count];
     }
 
-    public function requiresSurclassement(string $competitionCode, string $categ): bool
+    public function requiresSurclassement(string $competitionCode, ?string $categ): bool
     {
         if (in_array($categ, Rules::SURCLASSEMENT_EXEMPT_CATEGORIES, true)) {
             return false;
         }
 
         return in_array($competitionCode, Rules::SURCLASSEMENT_COMPETITIONS, true);
-    }
-
-    public function calculateCategory(?string $birthDate, string $season): string
-    {
-        if (!$birthDate) {
-            return '';
-        }
-
-        $age = (int) $season - (int) substr($birthDate, 0, 4);
-        $row = $this->connection->fetchAssociative(
-            "SELECT id FROM kp_categorie WHERE age_min <= ? AND age_max >= ? LIMIT 1",
-            [$age, $age]
-        );
-
-        return $row ? $row['id'] : '';
     }
 }

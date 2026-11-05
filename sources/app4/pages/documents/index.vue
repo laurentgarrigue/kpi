@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FilterEvent } from '~/types'
+import { canGetAdminPdf } from '~/utils/pdf'
 
 definePageMeta({
   layout: 'admin',
@@ -7,6 +8,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const pdf = usePdf()
 const config = useRuntimeConfig()
 const api = useApi()
 const authStore = useAuthStore()
@@ -109,7 +111,21 @@ const publicPdfUrl = (file: string): string => {
   params.set('S', workContext.season)
   params.set('Compet', workContext.pageCompetitionCode)
   params.set('tz', browserTimezone)
-  return `${legacyBase}/${file}?${params.toString()}`
+  return pdf.publicHref(`${legacyBase}/${file}?${params.toString()}`)
+}
+
+// General ranking, published: public PDF of api2, reference document of the public charter (PDF_GOTENBERG.md § 8.6)
+const publicRankingUrl = computed(() => pdf.publicUrl('ranking', {
+  season: workContext.season,
+  competition: workContext.pageCompetitionCode,
+}))
+
+// Registered teams by pool: admin PDF of api2, signed link
+const openTeamsGroups = () => {
+  void pdf.openDocument('teams-groups', {
+    season: workContext.season,
+    competition: workContext.pageCompetitionCode,
+  })
 }
 
 // Build event PDF URL
@@ -117,10 +133,11 @@ const eventPdfUrl = (file: string, paramName: string): string => {
   if (!selectedEventId.value) return '#'
   const params = new URLSearchParams()
   params.set(paramName, String(selectedEventId.value))
+  params.set('S', workContext.season)
   params.set('tz', browserTimezone)
   // Public PDFs (PdfXxx.php) are at root, admin PDFs at /admin/
   if (file.startsWith('Pdf')) {
-    return `${legacyBase}/${file}?${params.toString()}`
+    return pdf.publicHref(`${legacyBase}/${file}?${params.toString()}`)
   }
   return `${legacyBase}/admin/${file}?${params.toString()}`
 }
@@ -214,10 +231,10 @@ onMounted(async () => {
         </div>
         <div class="p-4 space-y-2">
           <a
-            :href="pdfUrl('FeuilleGroups.php')"
-            target="_blank"
+            href="#"
             class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
+            @click.prevent="openTeamsGroups"
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
             {{ t('documents.teams.registered') }}
@@ -229,18 +246,10 @@ onMounted(async () => {
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.teams.presence_fr') }}
+            {{ t('documents.teams.presence') }}
           </a>
           <a
-            :href="pdfUrl('FeuillePresenceEN.php')"
-            target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
-          >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.teams.presence_en') }}
-          </a>
-          <a
+            v-if="canGetAdminPdf(profile, 'presence', 'visa')"
             :href="pdfUrl('FeuillePresenceVisa.php')"
             target="_blank"
             class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
@@ -257,6 +266,15 @@ onMounted(async () => {
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
             {{ t('documents.teams.presence_photo') }}
+          </a>
+          <a
+            :href="pdfUrl('FeuillePresenceCat.php')"
+            target="_blank"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
+            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
+          >
+            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
+            {{ t('documents.control.presence_category') }}
           </a>
         </div>
       </div>
@@ -275,16 +293,7 @@ onMounted(async () => {
             :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
           >
             <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.matches.list_fr') }}
-          </a>
-          <a
-            :href="pdfUrl('FeuilleListeMatchsEN.php')"
-            target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
-          >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.matches.list_en') }}
+            {{ t('documents.matches.list') }}
           </a>
           <a
             :href="pdfUrl('tableau_openspout.php')"
@@ -338,8 +347,8 @@ onMounted(async () => {
           </template>
 
           <template v-else>
-            <!-- Sub-section: Classement calculé -->
-            <div>
+            <!-- Sub-section: Classement calculé (profiles 1–6, PDF_GOTENBERG.md I5) -->
+            <div v-if="canGetAdminPdf(profile, 'ranking')">
               <p class="px-3 text-xs font-semibold text-header-900 dark:text-header-50 uppercase tracking-wide mb-1">
                 {{ t('documents.rankings.computed') }}
               </p>
@@ -428,7 +437,7 @@ onMounted(async () => {
                 <!-- CHPT -->
                 <template v-if="competitionType === 'CHPT'">
                   <a
-                    :href="publicPdfUrl('PdfCltChpt.php')"
+                    :href="publicRankingUrl"
                     target="_blank"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
@@ -458,7 +467,7 @@ onMounted(async () => {
                 <!-- CP -->
                 <template v-else-if="competitionType === 'CP'">
                   <a
-                    :href="publicPdfUrl('PdfCltNiveau.php')"
+                    :href="publicRankingUrl"
                     target="_blank"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
@@ -488,7 +497,7 @@ onMounted(async () => {
                 <!-- MULTI -->
                 <template v-else-if="competitionType === 'MULTI'">
                   <a
-                    :href="publicPdfUrl('PdfCltMulti.php')"
+                    :href="publicRankingUrl"
                     target="_blank"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
                     :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
@@ -563,16 +572,7 @@ onMounted(async () => {
               :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
             >
               <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-              {{ t('documents.event.matches_fr') }}
-            </a>
-            <a
-              :href="eventPdfUrl('FeuilleListeMatchsEN.php', 'idEvenement')"
-              target="_blank"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-              :class="{ 'opacity-40 pointer-events-none': !hasEvent }"
-            >
-              <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-              {{ t('documents.event.matches_en') }}
+              {{ t('documents.event.matches') }}
             </a>
             <a
               :href="eventPdfUrl('PdfQrCodes.php', 'Evt')"
@@ -619,15 +619,6 @@ onMounted(async () => {
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-6 h-6 text-danger-900 dark:text-danger-400" />
             {{ t('documents.control.irregularities') }}
           </NuxtLink>
-          <a
-            :href="pdfUrl('FeuillePresenceCat.php')"
-            target="_blank"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-50 transition-colors"
-            :class="{ 'opacity-40 pointer-events-none': !hasCompetition }"
-          >
-            <UIcon name="heroicons:document-text" class="w-6 h-6 text-header-900 dark:text-header-50" />
-            {{ t('documents.control.presence_category') }}
-          </a>
           <a
             :href="pdfUrl('FeuillePresenceU21.php')"
             target="_blank"

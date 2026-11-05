@@ -678,6 +678,14 @@ onMounted(() => {
                 </ClientOnly>
 
                 <!-- Menu items -->
+                <NuxtLink
+                  to="/profile/security"
+                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-700 dark:text-header-200 hover:bg-header-100 dark:hover:bg-header-800 transition-colors"
+                  @click="userMenuOpen = false"
+                >
+                  <UIcon name="heroicons:shield-check" class="w-5 h-5" />
+                  <span>{{ t('security.title') }}</span>
+                </NuxtLink>
                 <button
                   class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
                   @click="handleLogout"
@@ -836,6 +844,15 @@ onMounted(() => {
                 @click="emit('toggle-mobile-menu')"
               >
                 <UIcon name="heroicons:arrows-right-left" class="w-5 h-5" />
+              </NuxtLink>
+              <!-- Security / profile (mobile) -->
+              <NuxtLink
+                to="/profile/security"
+                class="p-2 text-header-300 hover:text-white hover:bg-header-700 rounded-lg transition-colors"
+                :title="t('security.title')"
+                @click="emit('toggle-mobile-menu')"
+              >
+                <UIcon name="heroicons:shield-check" class="w-5 h-5" />
               </NuxtLink>
               <UButton
                 icon="heroicons:arrow-right-on-rectangle"

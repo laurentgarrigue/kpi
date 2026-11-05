@@ -47,6 +47,7 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 - **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Visualiseur de documentation
 - **[APP2_APPLICATION_WEB.md](user/APP2_APPLICATION_WEB.md)** - Application web (app2)
 - **[ADMIN_STATISTICS.md](user/ADMIN_STATISTICS.md)** - Statistiques - nouvelle interface (app4)
+- **[PUBLIC_SITE_EDITORIAL.md](user/PUBLIC_SITE_EDITORIAL.md)** - Rubrique Éditorial du site public : articles, pages, médias, menu, accueil, formulaires (app4)
 - **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Worker de cache pour incrustations vidéo
 - **[IMAGE_UPLOAD_MANAGEMENT.md](user/IMAGE_UPLOAD_MANAGEMENT.md)** - Upload et gestion d'images
 - **[TEAM_COMPOSITION_COPY.md](user/TEAM_COMPOSITION_COPY.md)** - Copie de composition d'équipe
@@ -62,7 +63,8 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [COMMON_ADMIN_SPECS.md](specs/COMMON_ADMIN_SPECS.md), [DROITS_PAR_PROFIL.md](specs/DROITS_PAR_PROFIL.md),
 [MENU_REORGANIZATION.md](specs/MENU_REORGANIZATION.md), [DARK_MODE.md](specs/DARK_MODE.md),
-[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md).
+[PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md),
+[PDF_GOTENBERG.md](specs/PDF_GOTENBERG.md) (génération PDF modernisée, api2 + Gotenberg).
 
 Scoring live (chantier en cours, cf. [le plan](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) :
 [PAGE_SCORING.md](specs/PAGE_SCORING.md) (console de saisie) et
@@ -117,13 +119,17 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - Index détaillé : [infrastructure/README.md](developer/infrastructure/README.md)
 
 ### [Travaux en cours](developer/in-progress/)
-- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3)
+- **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3) : phases 1 à 4 livrées sur `beta.*` (17/10/2026), prochaine étape la bascule de `www`
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
+- **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
+- **[CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)** - Catégorie d'âge : tests, migration des données et déploiement dev → préprod → prod (commandes, résultats attendus)
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Refonte du scoring live : stratégie, décisions actées et plan en 9 lots (point de situation en §0)
 - **[SCORING_DEV_CHECKLIST.md](developer/in-progress/SCORING_DEV_CHECKLIST.md)** - Scoring live : commandes à exécuter et tests à valider, lot par lot
 - **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
 - **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
 - **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes
+- **[REALIGNEMENT_STRUCTURES_FFCK.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)** - Réalignement CR/CD/Clubs et codes régionaux sur le PCE (import corrigé + remise à plat ponctuelle)
+- **[REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md)** - Réalignement des structures FFCK : rollout checklist dev → préprod → prod (script de remise à plat, contrôle, rollback)
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
 
 ### [Archives](developer/archive/) — sujets traités

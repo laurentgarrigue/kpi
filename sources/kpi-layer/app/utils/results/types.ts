@@ -53,6 +53,8 @@ export interface ChartTeam {
   t_pts: number | null
   t_pld: number | null
   t_diff: number | null
+  /** Gameday of the row (Event format): a championship merges the rows of gamedays sharing a phase. */
+  d_id?: number
 }
 
 export interface ChartPhase {

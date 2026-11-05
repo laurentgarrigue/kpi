@@ -330,9 +330,18 @@ onBeforeUnmount(() => {
 <template>
   <div>
     <!-- Page Title -->
-    <h1 class="text-2xl font-bold text-header-900 dark:text-header-50 mb-6">
-      {{ t('athletes.title') }}
-    </h1>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">
+        {{ t('athletes.title') }}
+      </h1>
+      <NuxtLink
+        to="/athletes/list"
+        class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
+      >
+        <UIcon name="i-heroicons-list-bullet" class="w-4 h-4" />
+        {{ t('athletes_list.open_list') }}
+      </NuxtLink>
+    </div>
 
     <!-- ═══ Filter Panel ═══ -->
     <div v-if="canFilter" class="mb-4">
@@ -622,6 +631,11 @@ onBeforeUnmount(() => {
                 {{ athlete.categorieAge.code }}
                 <span class="text-header-900 dark:text-header-50 text-xs">({{ athlete.categorieAge.libelle }})</span>
               </div>
+              <div v-else>
+                <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.categorie') }} :</span>
+                <AdminAgeCategory :code="null" />
+                <span class="text-header-900 dark:text-header-50 text-xs">({{ t('common.birth_date_unknown') }})</span>
+              </div>
               <div v-if="athlete.surclassement" class="mt-1 pt-1 border-t border-header-200 dark:border-header-700">
                 <span class="text-header-900 dark:text-header-50">{{ t('athletes.licence_bloc.surclassement') }} :</span>
                 <span class="font-medium">{{ athlete.surclassement.cat }}</span>
@@ -738,7 +752,7 @@ onBeforeUnmount(() => {
                   <td class="px-3 py-2">{{ p.equipe }}</td>
                   <td class="px-3 py-2 text-center">{{ p.numero ?? '' }}</td>
                   <td class="px-3 py-2 text-center">{{ t(`athletes.roles.${p.capitaine}`, p.capitaine) }}</td>
-                  <td class="px-3 py-2 text-header-900 dark:text-header-50">{{ p.categorie }}</td>
+                  <td class="px-3 py-2 text-header-900 dark:text-header-50"><AdminAgeCategory :code="p.categorie" /></td>
                 </tr>
               </tbody>
             </table>

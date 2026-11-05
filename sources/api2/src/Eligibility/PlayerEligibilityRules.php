@@ -46,6 +46,12 @@ final class PlayerEligibilityRules
     public const ERROR_SURCLASSEMENT = 'Surclassement';
 
     /**
+     * Warning codes (same `presence.error_<code>` translation). Unlike the errors they never block, whatever the
+     * enforcement, never deactivate a copied player and never make a player non-compliant (CATEGORIE_AGE.md story 20).
+     */
+    public const WARNING_BIRTH_DATE_UNKNOWN = 'Naissance_inconnue';
+
+    /**
      * Criteria per competition level. A criterion set to false/null is not checked.
      *
      * - enforcement    ENFORCEMENT_BLOCK or ENFORCEMENT_WARN
@@ -121,6 +127,12 @@ final class PlayerEligibilityRules
      * from V5 upwards are NOT listed: both need an overclassing to play these competitions.
      */
     public const SURCLASSEMENT_EXEMPT_CATEGORIES = ['JUN', 'SEN', 'V1', 'V2', 'V3', 'V4'];
+
+    /** A competition has age bounds when its Age_min or Age_max is set and non-zero. */
+    public static function hasAgeBounds(?int $ageMin, ?int $ageMax): bool
+    {
+        return (bool) $ageMin || (bool) $ageMax;
+    }
 
     /**
      * Which rule set applies to a competition (null = no eligibility control).

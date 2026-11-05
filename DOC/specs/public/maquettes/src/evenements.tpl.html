@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Événements</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.tools { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 18px 0 8px; }
+.tools select, .tools input { font: inherit; font-size: 15px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.tools input { min-width: min(320px, 100%); }
+.month { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 0 24px; padding: 18px 0; border-top: 1px solid var(--line); }
+.month h2 { font: 400 28px/1 var(--display); color: var(--blue-deep); margin: 6px 0 0; position: sticky; top: 8px; align-self: start; }
+.month ul { list-style: none; margin: 0; padding: 0; }
+.month li a { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; padding: 9px 0; text-decoration: none; }
+.month li + li a { border-top: 1px solid var(--line); }
+.month li a:hover b { text-decoration: underline; }
+.month .date { font: 400 22px/1.1 var(--display); color: var(--title); font-variant-numeric: tabular-nums; }
+.month b { display: block; font-weight: 600; }
+.month small { color: var(--muted); }
+.month li.next a { background: var(--wash); border-radius: 6px; padding-left: 10px; margin-left: -10px; }
+.month .tag { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 700; color: #fff; background: var(--blue-deep); border-radius: 4px; padding: 1px 6px; vertical-align: 2px; }
+.past-head { font: 400 26px/1 var(--display); color: var(--muted); margin: 36px 0 0; }
+.empty { color: var(--muted); padding: 20px 0; }
+main { padding-bottom: 56px; }
+@media (max-width: 700px) {
+  .month { grid-template-columns: 1fr; }
+  .month h2 { position: static; margin-bottom: 6px; }
+  .month li a { grid-template-columns: 78px minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <div class="page-head"><h1>Événements</h1><p>Un événement réunit plusieurs compétitions ou catégories sur un même lieu, le même week-end ou la même semaine.</p></div>
+  <div class="tools">
+    <label>Saison <select id="year"></select></label>
+    <input type="search" id="q" placeholder="Nom ou lieu" aria-label="Chercher un événement par nom ou lieu">
+  </div>
+  <div id="list"></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const EVENTS = __EVENTS__;
+const TODAY = '2026-10-22';
+const years = [...new Set(EVENTS.map(e => e.year))].filter(y => y > 1900).sort((a, b) => b - a);
+let year = years[0], q = '';
+document.getElementById('chrome').innerHTML = siteChrome('Événements');
+document.getElementById('year').innerHTML = years.map(y => `<option>${y}</option>`).join('');
+
+const byMonth = list => Object.entries(list.reduce((m, e) => ((m[e.start.slice(0, 7)] ??= []).push(e), m), {}));
+const monthBlock = ([ym, list], next) => `<section class="month"><h2>${cap(fmt(ym + '-01', { month: 'long' }))}</h2><ul>${list.map(e => `<li class="${e === next ? 'next' : ''}"><a href="evenement.html">
+  <span class="date">${shortRange(e.start, e.end)}</span><span><b>${esc(e.libelle)}${e === next ? '<span class="tag">Prochain</span>' : ''}</b><small>${esc(e.place)}</small></span></a></li>`).join('')}</ul></section>`;
+
+function render() {
+  const norm = s => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  const list = EVENTS.filter(e => e.year === year && (!q || norm(`${e.libelle} ${e.place}`).includes(norm(q)))).sort((a, b) => a.start.localeCompare(b.start));
+  const upcoming = list.filter(e => e.end >= TODAY), past = list.filter(e => e.end < TODAY).reverse();
+  const next = upcoming[0];
+  document.getElementById('list').innerHTML = !list.length ? '<p class="empty">Aucun événement ne correspond. Essayez un autre nom ou une autre saison.</p>'
+    : byMonth(upcoming).map(m => monthBlock(m, next)).join('') + (past.length ? `${upcoming.length ? '<h2 class="past-head">Déjà joués</h2>' : ''}${byMonth(past).map(m => monthBlock(m)).join('')}` : '');
+}
+document.getElementById('year').addEventListener('change', e => { year = +e.target.value; render(); });
+document.getElementById('q').addEventListener('input', e => { q = e.target.value; render(); });
+render();
+demoBar();
+</script>
+</body>
+</html>

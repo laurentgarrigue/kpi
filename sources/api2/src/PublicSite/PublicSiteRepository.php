@@ -249,7 +249,7 @@ final class PublicSiteRepository
     public function findHistoryTeams(string $group): array
     {
         return $this->connection->fetchAllAssociative(
-            'SELECT ce.Code_compet, ce.Code_saison, ce.Numero, ce.Libelle, ce.logo, ce.Clt_publi, ce.CltNiveau_publi, ce.Diff_publi
+            'SELECT ce.Code_compet, ce.Code_saison, ce.Numero, ce.Libelle, ce.logo, ce.Code_club, ce.Clt_publi, ce.CltNiveau_publi, ce.Diff_publi
             FROM kp_competition_equipe ce
             INNER JOIN kp_competition c ON (c.Code = ce.Code_compet AND c.Code_saison = ce.Code_saison)
             WHERE c.Code_ref = ? AND ' . self::FINISHED_FINALS,

@@ -1,6 +1,6 @@
 # Spécification - Rubrique Éditorial (site public)
 
-## Statut : ✅ Validée (11/10/2026) — phase 4 du site public
+## Statut : ✅ Validée (11/10/2026) — 🚀 Livrée (beta) — phase 4 du site public
 
 ## 1. Vue d'ensemble
 

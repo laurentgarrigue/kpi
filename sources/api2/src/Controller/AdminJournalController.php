@@ -100,12 +100,15 @@ class AdminJournalController extends AbstractController
         $stmt = $this->connection->prepare($countSql);
         $total = (int) $stmt->executeQuery($params)->fetchOne();
 
-        // Get journal entries (LIMIT interpolated for MariaDB compatibility)
+        // Get journal entries (LIMIT interpolated for MariaDB compatibility).
+        // LEFT JOIN : les anciennes activités d'un `kp_user` supprimé restent dans le journal
+        // (AUTH_HARDENING.md : prérequis du nettoyage MD5). Le flag `isDeleted` signale au front
+        // qu'il faut afficher le code brut suivi de « (compte supprimé) ».
         $sql = "SELECT j.Id, j.Dates, j.Users, j.Actions, j.Saisons, j.Competitions,
                        j.Evenements, j.Journees, j.Matchs, j.Journal,
                        u.Identite, u.Fonction
                 FROM kp_journal j
-                INNER JOIN kp_user u ON u.Code = j.Users
+                LEFT JOIN kp_user u ON u.Code = j.Users
                 $whereClause
                 ORDER BY j.Dates DESC
                 LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
@@ -121,6 +124,7 @@ class AdminJournalController extends AbstractController
                 'userCode' => $entry['Users'],
                 'userIdentite' => $entry['Identite'],
                 'userFonction' => $entry['Fonction'],
+                'isDeleted' => $entry['Identite'] === null,
                 'action' => $entry['Actions'],
                 'journal' => $entry['Journal'],
                 'saison' => $entry['Saisons'],
@@ -146,10 +150,12 @@ class AdminJournalController extends AbstractController
     #[Route('/users', name: 'admin_journal_users', methods: ['GET'])]
     public function users(): JsonResponse
     {
+        // LEFT JOIN pour que les comptes supprimés restent proposés comme filtre : sans ça,
+        // on ne peut plus retrouver leur historique via le select du front.
         $sql = "SELECT DISTINCT j.Users AS code, u.Identite AS identite, u.Fonction AS fonction
                 FROM kp_journal j
-                INNER JOIN kp_user u ON u.Code = j.Users
-                ORDER BY u.Identite";
+                LEFT JOIN kp_user u ON u.Code = j.Users
+                ORDER BY (u.Identite IS NULL), u.Identite, j.Users";
 
         $stmt = $this->connection->prepare($sql);
         $result = $stmt->executeQuery();
@@ -160,6 +166,7 @@ class AdminJournalController extends AbstractController
                 'code' => $user['code'],
                 'identite' => $user['identite'],
                 'fonction' => $user['fonction'],
+                'isDeleted' => $user['identite'] === null,
             ];
         }, $users);
 

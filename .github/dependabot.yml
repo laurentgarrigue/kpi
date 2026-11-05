@@ -48,6 +48,27 @@ updates:
         patterns:
           - "*"
 
+  # ---- Images Docker (FROM des Dockerfiles) ----
+  # Les versions sont épinglées dans les Dockerfiles (et non dans docker/.env, non
+  # versionné) précisément pour que Dependabot puisse les proposer en PR.
+  # PAS de groupe : une PR par image, car leurs risques diffèrent — en particulier
+  # mariadb (Dockerfile.db), dont un bump migre les fichiers de données et exige
+  # dump + validation préprod avant merge (cf. en-tête de Dockerfile.db).
+  - package-ecosystem: "docker"
+    directories:
+      - "/docker/config"
+      - "/docker/node"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # ---- Images Docker des compose (image: nginx, node) ----
+  - package-ecosystem: "docker-compose"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
   # ---- GitHub Actions (au cas où des workflows seraient ajoutés) ----
   - package-ecosystem: "github-actions"
     directory: "/"

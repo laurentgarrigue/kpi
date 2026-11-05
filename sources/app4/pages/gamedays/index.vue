@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Gameday, GamedayFormData, GamedayBulkCalendarData } from '~/types/gamedays'
 import type { PaginatedResponse } from '~/types'
+import { canShowSchemaView, gamedaysViewQuery, parseGamedaysView, type GamedaysView } from '~/utils/gamedaysView'
 
 definePageMeta({
   layout: 'admin',
@@ -78,9 +79,6 @@ const officialsFormData = ref({
   arbNj5: '',
 })
 
-// Legacy base URL for PDF
-const legacyBaseUrl = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'https://kpi.localhost')
-
 // Bulk actions dropdown
 const bulkActionsOpen = ref(false)
 const bulkActionsRef = ref<HTMLDivElement | null>(null)
@@ -98,12 +96,19 @@ const canSelect = computed(() => authStore.profile <= 3)
 // locks the competition. The list can mix competitions, so this is per-row.
 const canEditGameday = (g: Gameday) => canEdit.value && g.competitionStatut !== 'END'
 
-// Open schema page in a new tab with competition and season params
+// ─── Views (§ 5.3): gameday list, or schema of the competition selected in the header ───
+const route = useRoute()
 const router = useRouter()
+const view = computed<GamedaysView>({
+  get: () => parseGamedaysView(route.query.view),
+  set: (value) => { void router.replace({ query: gamedaysViewQuery(route.query, value) }) },
+})
+const schemaAvailable = computed(() => canShowSchemaView(workContext.pageCompetitionCodeAll))
+
+// Row « Schéma » button: select the row's competition, then show its schema in this tab
 function goToSchema(competitionCode: string) {
-  const season = workContext.season || ''
-  const resolved = router.resolve({ path: '/gamedays/schema', query: { competition: competitionCode, season } })
-  window.open(resolved.href, '_blank')
+  workContext.setPageCompetitionAll(competitionCode)
+  view.value = 'schema'
 }
 
 // ─── Computed ───
@@ -696,8 +701,15 @@ const saveOfficials = async () => {
   }
 }
 
-const printJurySheet = (gamedayId: number) => {
-  window.open(`${legacyBaseUrl.value}/admin/FeuilleInstances.php?idJournee=${gamedayId}`, '_blank')
+// Officials of the gameday: api2 `instances` (PDF_GOTENBERG.md § 7.2)
+const { openDocument } = usePdf()
+const printJurySheet = (gameday: Gameday | null) => {
+  if (!gameday) return
+  void openDocument('instances', {
+    season: gameday.codeSaison,
+    competition: gameday.codeCompetition,
+    gameday: gameday.id,
+  })
 }
 
 </script>
@@ -712,7 +724,7 @@ const printJurySheet = (gamedayId: number) => {
       @event-group-change="() => { page = 1 }"
       @competition-change="() => { page = 1 }"
     >
-      <template #filters>
+      <template v-if="view === 'list'" #filters>
         <!-- Month filter -->
         <div class="min-w-36">
           <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('gamedays.field.date_debut') }}</label>
@@ -740,6 +752,7 @@ const printJurySheet = (gamedayId: number) => {
 
     <!-- Toolbar (search + add) -->
     <AdminToolbar
+      v-if="view === 'list'"
       v-model:search="searchQuery"
       :search-placeholder="t('gamedays.search_placeholder')"
       :add-label="t('gamedays.add')"
@@ -813,20 +826,13 @@ const printJurySheet = (gamedayId: number) => {
           <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-header-600 dark:text-header-300" />
         </button>
 
-        <!-- Schema link (only when a CP competition is selected) -->
-        <button
-          v-if="showCPColumns"
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
-          @click="goToSchema(workContext.pageCompetitionCodeAll)"
-        >
-          <UIcon name="heroicons:rectangle-group" class="w-5 h-5 text-header-600 dark:text-header-300" />
-          {{ t('schema.title') }}
-        </button>
+        <!-- Liste / Schéma views -->
+        <GamedaysViewSwitch v-model="view" :schema-available="schemaAvailable" />
       </template>
     </AdminToolbar>
 
     <!-- Desktop Table -->
-    <div class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
+    <div v-if="view === 'list'" class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
       <div class="sticky-thead">
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
           <thead class="bg-header-50 dark:bg-header-900">
@@ -1185,7 +1191,7 @@ const printJurySheet = (gamedayId: number) => {
     </div>
 
     <!-- Mobile Cards -->
-    <AdminCardList class="lg:hidden" :loading="loading && gamedays.length === 0" :empty="gamedays.length === 0" :empty-text="hasContextFilter ? t('gamedays.no_results') : t('gamedays.select_context')">
+    <AdminCardList v-if="view === 'list'" class="lg:hidden" :loading="loading && gamedays.length === 0" :empty="gamedays.length === 0" :empty-text="hasContextFilter ? t('gamedays.no_results') : t('gamedays.select_context')">
       <AdminCard
         v-for="g in gamedays"
         :key="g.id"
@@ -1258,6 +1264,14 @@ const printJurySheet = (gamedayId: number) => {
         class="mt-4 rounded-lg shadow"
       />
     </AdminCardList>
+
+    <!-- Schema view (§ 5.3): the header competition selector picks the competition -->
+    <SchemaView v-if="view === 'schema'" :competition="workContext.pageCompetitionCodeAll" :season="workContext.season || ''">
+      <!-- Same place as in the list view: on the right, next to the level / type badges -->
+      <template #toolbar-actions>
+        <GamedaysViewSwitch v-model="view" :schema-available="schemaAvailable" />
+      </template>
+    </SchemaView>
 
     <!-- ═══════ ADD/EDIT MODAL ═══════ -->
     <AdminModal
@@ -1825,7 +1839,7 @@ const printJurySheet = (gamedayId: number) => {
           <button
             type="button"
             class="px-4 py-2 text-sm font-medium text-danger-700 bg-white dark:bg-header-900 border border-danger-300 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
-            @click="printJurySheet(officialsGameday.id)"
+            @click="printJurySheet(officialsGameday)"
           >
             <UIcon name="heroicons:document-text" class="w-5 h-5 inline mr-1" />
             {{ t('gamedays.officials_print') }}

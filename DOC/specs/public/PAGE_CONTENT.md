@@ -1,6 +1,6 @@
 # Pages éditoriales, menu éditorial et accueil éditorial
 
-**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — **Routes** : `/{slug}`, `/{parent}/{slug}` (+ `/en/…`)
+**Phase** : 4a — **Statut** : ✅ Validée (11/10/2026) — 🚀 Livrée (beta) — **Routes** : `/{slug}`, `/{parent}/{slug}` (+ `/en/…`)
 — **Remplace** : pages WordPress, widgets d'accueil (Feature a Page Widget, Classic Widgets)
 **Données** : [FEATURE_CMS.md](FEATURE_CMS.md) § 5.1 — **Fait évoluer** : [PAGE_HOME.md](PAGE_HOME.md),
 [SITE_NAVIGATION.md](SITE_NAVIGATION.md)
@@ -60,6 +60,7 @@ d'Ariane `BreadcrumbList` ; sommaire dans un `<nav aria-label="Sommaire">`.
   applicative (`/calendar`…) n'est jamais masquée par une page.
 - **CNT-02** — Une page enfant n'est servie que sous le chemin de son parent ; un autre chemin redirige (301).
 - **CNT-03** — Le sommaire apparaît à partir de 3 titres `h2`, avec des ancres fonctionnelles.
+- **CNT-08** — (maquettes du 22/10/2026) Colonne de lecture de 720 px ; le sommaire « Sur cette page » est à droite et **suit la lecture** (titre en cours marqué `aria-current="location"`, JavaScript) ; sur mobile il est au-dessus du texte.
 - **CNT-04** — L'entrée « Le kayak-polo » liste les entrées de `GET /menu` (trois niveaux, en retrait) ; menu vide ou erreur → entrée masquée ; api2 refuse un quatrième niveau (`too_deep`).
 - **CNT-05** — L'accueil affiche les blocs actifs dans l'ordre configuré ; un bloc vide est masqué ; une erreur
   d'api2 laisse les blocs « événements ».

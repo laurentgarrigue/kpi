@@ -153,6 +153,12 @@ make backend_npm_add package=flatpickr
 - `make api2_restart` - **Restart the FrankenPHP container** (required in prod after deploying code)
 - `make api2_logs` / `make api2_logs_errors` - **API2 logs** (accept `lines=200`)
 - `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
+- `make pdf_tokens_sync` - Copy the app4/app3 charter (colour tokens, fonts, logos) used by the PDFs into `sources/api2/assets/pdf/`, then commit
+- `make gotenberg_logs` - Logs of the Gotenberg (PDF rendering) container
+
+**PDF documents** ([PDF_GOTENBERG.md](DOC/specs/PDF_GOTENBERG.md)): rendered by api2 with Gotenberg (`/api2/pdf/*` public,
+`/api2/admin/pdf/*` profile + mandate). The legacy `admin/Feuille*.php` PDFs only answer to a legacy session or to a
+signed link issued by api2. `GOTENBERG_PASSWORD` and `PDF_LINK_SECRET` are **required** in `docker/.env`.
 
 **Location**: `sources/api2/` - Modern REST API with Symfony 7.4 LTS and API Platform 4.3
 **Server**: FrankenPHP (Caddy) worker mode, container `${APPLICATION_NAME}_api2` - **not Apache**
@@ -253,6 +259,10 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
 - **Commands**: `make app3_logs`, `make app3_test`, `make app3_lint`, `make app3_generate_preprod|production`
   (SSR build in a temporary container + restart of `${APPLICATION_NAME}_app3`), `make app3_restart`.
 - **Tests**: Vitest projects `unit`, `nuxt`, `e2e` (`npm test` in `sources/app3`), named after the spec criteria.
+- **Status**: phases 1–4 delivered in production on `beta.*` (results, calendar/ICS, history, teams, clubs, search,
+  news, editorial pages and menu, home blocks, registration forms). Content is edited in app4 **Admin › Éditorial**
+  (api2 `src/Cms/`, `src/Forms/`; user guide [PUBLIC_SITE_EDITORIAL.md](DOC/user/PUBLIC_SITE_EDITORIAL.md)). Next:
+  phase 5 (switch `www` to app3). Rollout checklist: [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](DOC/developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 - The former `app3` match-sheet prototype was removed; its code is kept at git tag **`archive/app3-matchsheet`**.
 
 ### API2 (Modern REST API - Symfony 7.4 LTS + API Platform 4.3)
@@ -348,10 +358,11 @@ Main services (dev):
 | `kpi` | `${APPLICATION_NAME}_php` | **Apache + PHP 8.4** - legacy PHP, `sources/api/`, WordPress |
 | `api2` | `${APPLICATION_NAME}_api2` | **FrankenPHP (Caddy) worker + Mercure hub** - Symfony 7.4 / API Platform 4.3 |
 | `event-cache-worker` | `${APPLICATION_NAME}_event_cache_worker` | CLI daemon regenerating live cache JSON |
+| `gotenberg` | `${APPLICATION_NAME}_gotenberg` | HTML → PDF rendering for api2 (Chromium, no network), internal only - see [PDF_GOTENBERG.md](DOC/specs/PDF_GOTENBERG.md) |
 | `db` / `dbwp` | | MariaDB 11.5 (main + WordPress) |
 | `node_app2` … `node_app4` | | Nuxt dev servers (`node_app3` = public website on `beta.kpi.localhost`) |
 | `app3` (preprod/prod) | `${APPLICATION_NAME}_app3` | Node SSR server of the public website, `beta.${KPI_DOMAIN_NAME}` |
-| `nginx_app2` / `nginx_app4` | | Static serving of generated Nuxt output |
+| `nginx_static` | `${APPLICATION_NAME}_nginx_static` | Static serving of the generated Nuxt output of app2 (`app.*`) and app4 (`/admin2`), no restart needed after a build |
 
 **Two web servers coexist**: Apache serves everything legacy, FrankenPHP serves `/api2` only.
 Traefik terminates TLS and routes between them. See the API2 section above for what that implies.
@@ -399,3 +410,16 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
 - Vue/Nuxt components use PascalCase naming
 - PHP files follow legacy naming conventions
 - Database configuration is environment-specific and mounted via Docker volumes
+## Agent skills
+
+### Issue tracker
+
+Tickets en Markdown local sous `.scratch/<feature>/issues/` ; les specs restent dans `DOC/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Les cinq rôles par défaut (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), portés par la ligne `Status:`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context : `GLOSSARY.md` à la racine, ADR dans `DOC/developer/reference/adr/`. See `docs/agents/domain.md`.

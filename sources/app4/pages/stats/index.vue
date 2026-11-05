@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isAgeCategoryStatColumn } from '~/utils/ageCategory'
+
 definePageMeta({
   layout: 'admin',
   middleware: 'auth'
@@ -649,8 +651,9 @@ const exportPdf = async () => {
                   ? 'text-right font-mono font-semibold text-header-900 dark:text-header-50 tabular-nums'
                   : 'text-header-900 dark:text-header-50'"
               >
+                <AdminAgeCategory v-if="isAgeCategoryStatColumn(column)" :code="row[column] ? String(row[column]) : null" />
                 <NuxtLink
-                  v-if="getCellLink(row, column)"
+                  v-else-if="getCellLink(row, column)"
                   :to="getCellLink(row, column)!"
                   class="link-value"
                 >{{ formatCellValue(row[column], column) }}</NuxtLink>
@@ -693,8 +696,9 @@ const exportPdf = async () => {
             class="flex justify-between"
           >
             <span class="text-header-900 dark:text-header-50">{{ getColumnLabel(column) }}:</span>
+            <AdminAgeCategory v-if="isAgeCategoryStatColumn(column)" :code="row[column] ? String(row[column]) : null" class="text-header-900 dark:text-header-50" />
             <NuxtLink
-              v-if="getCellLink(row, column)"
+              v-else-if="getCellLink(row, column)"
               :to="getCellLink(row, column)!"
               class="link-value"
             >{{ formatCellValue(row[column], column) }}</NuxtLink>

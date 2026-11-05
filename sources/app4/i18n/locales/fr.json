@@ -68,6 +68,45 @@
   },
   "profile": "Profil",
   "logout": "Déconnexion",
+  "security": {
+    "title": "Sécurité du compte",
+    "subtitle": "Gérez les appareils connectés à votre compte et vos moyens d'authentification.",
+    "load_failed": "Impossible de charger les informations de sécurité.",
+    "sign_out": "Se déconnecter de cet appareil",
+    "devices": {
+      "title": "Appareils actifs",
+      "help": "Un appareil est reconnu par son navigateur et sa plage d'adresse IP. « Révoquer » déconnecte toutes les sessions ouvertes depuis cet appareil.",
+      "current": "Cet appareil",
+      "created": "ajouté le {date}",
+      "last_seen": "vu la dernière fois le {date}",
+      "revoke": "Révoquer",
+      "revoke_others": "Déconnecter toutes les autres sessions",
+      "revoke_done": "Appareil révoqué.",
+      "revoke_others_done": "{count} autre(s) appareil(s) déconnecté(s).",
+      "revoke_failed": "La révocation a échoué, réessayez.",
+      "empty": "Aucun appareil actif."
+    },
+    "google": {
+      "title": "Compte Google",
+      "linked": "Votre compte Google est lié : vous pouvez vous connecter en un clic depuis la page de connexion.",
+      "not_linked": "Aucun compte Google lié.",
+      "link": "Lier mon compte Google",
+      "link_cta": "Liez votre compte Google pour vous connecter en un clic. Vous pouvez utiliser une adresse Google différente de votre e-mail KPI.",
+      "link_done": "Compte Google lié avec succès.",
+      "link_error": {
+        "already_linked": "Ce compte Google est déjà associé à un autre utilisateur KPI. Déliez-le d'abord ou utilisez un autre compte Google.",
+        "generic": "Le lien Google n'a pas pu être finalisé, réessayez."
+      },
+      "unlink": "Délier mon compte Google",
+      "unlink_done": "Compte Google délié.",
+      "unlink_failed": "Impossible de délier le compte Google.",
+      "password_required": "Définissez d'abord un mot de passe avant de délier votre compte Google."
+    },
+    "totp": {
+      "title": "Double authentification (2FA)",
+      "coming_soon": "La double authentification par application (Google Authenticator, Authy…) arrive bientôt."
+    }
+  },
   "login": {
     "title": "Connexion",
     "subtitle": "Panneau d'administration",
@@ -82,7 +121,27 @@
     "beta_title": "Version Beta",
     "beta_message": "Merci d'indiquer au développeur toute difficulté rencontrée.",
     "forgot_password": "Mot de passe oublié ?",
-    "request_access": "Demander un accès"
+    "request_access": "Demander un accès",
+    "or": "ou",
+    "continue_with_google": "Continuer avec Google",
+    "oauth_completing": "Finalisation de votre connexion…",
+    "oauth_error": {
+      "oauth_state_mismatch": "Session OAuth invalide, relancez la connexion Google.",
+      "oauth_missing_code": "Google n'a renvoyé aucun code, relancez la connexion.",
+      "oauth_exchange_failed": "Impossible de valider la réponse de Google, réessayez.",
+      "oauth_email_not_verified": "Votre adresse Google doit être vérifiée pour vous connecter.",
+      "oauth_no_account": "Aucun compte KPI ne correspond à cette adresse Google. Contactez votre administrateur.",
+      "oauth_email_ambiguous": "Plusieurs comptes KPI partagent cette adresse. Connectez-vous avec votre identifiant puis liez Google depuis votre profil.",
+      "oauth_generic": "Erreur lors de la connexion Google."
+    },
+    "oauth_link": {
+      "title": "Lier votre compte Google",
+      "explain": "Vous êtes sur le point de lier votre compte Google au compte KPI « {code} ». Pour confirmer qu'il s'agit bien de votre compte, saisissez son mot de passe actuel.",
+      "submit": "Confirmer le lien",
+      "cancel": "Annuler",
+      "bad_password": "Mot de passe incorrect.",
+      "expired": "La demande de lien a expiré, relancez la connexion Google."
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -268,6 +327,7 @@
     "license": "Licence",
     "number": "Numéro",
     "category": "Catégorie",
+    "birth_date_unknown": "Date de naissance inconnue",
     "paddle": "Pagaie",
     "certificate": "Certificat",
     "saved": "Enregistré",
@@ -280,6 +340,7 @@
     "club": "Club",
     "exports": "Exports PDF",
     "pdf_editions": "Éditions PDF",
+    "pdf_open_error": "Impossible d'ouvrir le document PDF",
     "more_actions": "Plus d'actions",
     "all": "Tous",
     "select": "Sélectionner",
@@ -494,14 +555,12 @@
     },
     "teams": {
       "registered": "Équipes engagées",
-      "presence_fr": "Feuilles de présence (FR)",
-      "presence_en": "Feuilles de présence (EN)",
+      "presence": "Feuilles de présence",
       "presence_visa": "Présence avec visa",
       "presence_photo": "Présence avec photo"
     },
     "matches": {
-      "list_fr": "Liste des matchs (FR)",
-      "list_en": "Liste des matchs (EN)",
+      "list": "Liste des matchs",
       "export_spreadsheet": "Export tableur",
       "match_sheets": "Feuilles de marque",
       "matches_count": "matchs",
@@ -531,8 +590,7 @@
     },
     "event": {
       "select": "Événement",
-      "matches_fr": "Matchs événement (FR)",
-      "matches_en": "Matchs événement (EN)",
+      "matches": "Matchs événement",
       "qr_codes": "QR Codes",
       "qr_code_app": "QR Code App"
     },
@@ -1174,7 +1232,6 @@
     "global_pdf": "Éditions PDF",
     "pdf_pools": "Poules",
     "presence_sheet": "Feuille de présence",
-    "presence_sheet_en": "Feuille de présence (EN)",
     "presence_sheet_cat": "Présence par catégorie",
     "presence_sheet_photo": "Présence avec photo",
     "visa_sheet": "Présence avec visa",
@@ -1320,8 +1377,7 @@
     "scope_day": "Même journée",
     "scope_competition": "Toute la compétition",
     "copy_to_count": "Copier vers {count} match(s) sélectionné(s)",
-    "pdf_fr": "PDF FR",
-    "pdf_en": "PDF EN",
+    "pdf_sheet": "PDF Feuille de présence",
     "pdf_photo": "PDF Photo",
     "pdf_visa": "PDF Visa",
     "pdf_controle": "PDF Contrôle",
@@ -1359,6 +1415,7 @@
     "error_Certif": "Certificat médical manquant",
     "error_Pagaie_couleur": "Pagaie couleur eau calme insuffisante ({min} minimum)",
     "error_Surclassement": "Surclassement manquant",
+    "error_Naissance_inconnue": "Date de naissance inconnue, catégorie d'âge non vérifiable",
     "override_allowed_title": "Ajout malgré la non-validation",
     "override_allowed_notice": "En tant qu'administrateur, vous pouvez ajouter ce joueur uniquement en tant qu'arbitre non-joueur (A) ou staff (E).",
     "override_status_label": "Statut imposé",
@@ -1389,6 +1446,10 @@
     "paddle_none": "aucune"
   },
   "gamedays": {
+    "view_list": "Liste des phases",
+    "view_schema": "Schéma",
+    "view_schema_title": "Afficher le schéma de la compétition sélectionnée",
+    "view_schema_needs_competition": "Sélectionnez une compétition pour afficher son schéma",
     "title": "Journées / Phases",
     "add": "Ajouter une journée",
     "edit": "Modifier la journée",
@@ -1650,19 +1711,13 @@
       "title": "Documents",
       "admin_section": "Administration",
       "public_section": "Public",
-      "game_list_fr": "Liste matchs (FR)",
-      "game_list_en": "Game list (EN)",
+      "game_list": "Liste des matchs",
       "scoresheets_all": "Feuilles de marque",
       "export_ods": "Export (ODS)",
-      "public_list_fr": "Liste publique (FR)",
-      "public_list_en": "Public list (EN)",
+      "public_list": "Liste publique",
       "pitches_section": "Terrains (tableaux)",
-      "pitches_1_4_teams": "Terrains 1-4 (Équipes)",
-      "pitches_5_8_teams": "Terrains 5-8 (Équipes)",
-      "pitches_1_4_phases": "Terrains 1-4 (Phases)",
-      "pitches_5_8_phases": "Terrains 5-8 (Phases)",
-      "pitches_1_5_phases": "Terrains 1-5 (Phases)",
-      "pitches_1_5_teams": "Terrains 1-5 (Équipes)"
+      "pitches_teams": "Terrains (grille, équipes)",
+      "pitches_phases": "Terrains (grille, phases)"
     },
     "added": "Match créé.",
     "save_and_add": "Enregistrer et ajouter",
@@ -1779,6 +1834,33 @@
       "back_to_club": "Retour au club"
     }
   },
+  "athletes_list": {
+    "title": "Liste des athlètes",
+    "open_list": "Liste des athlètes",
+    "back_to_search": "Recherche d'un athlète",
+    "search_placeholder": "Filtrer par nom, prénom ou licence...",
+    "filters": {
+      "unknown_birthdate": "Date de naissance inconnue",
+      "international": "Joueur international",
+      "engaged_this_season": "Engagé cette saison"
+    },
+    "total": "{count} athlète(s)",
+    "empty": "Aucun athlète ne correspond aux filtres",
+    "columns": {
+      "licence": "Licence",
+      "nom": "Nom",
+      "sexe": "Sexe",
+      "naissance": "Naissance",
+      "club": "Club"
+    },
+    "unknown_birthdate": "Inconnue",
+    "international_badge": "International",
+    "open_sheet": "Ouvrir la fiche",
+    "pagination": {
+      "showing": "Affichage de {from} à {to} sur {total} athlètes",
+      "items_per_page": "Éléments par page"
+    }
+  },
   "athletes": {
     "title": "Gestion des Athlètes",
     "search_placeholder": "Rechercher un athlète (nom, prénom, licence)...",
@@ -1835,7 +1917,10 @@
       "submit": "Modifier",
       "success": "Modification effectuée.",
       "error": "Erreur lors de la modification.",
-      "forbidden": "Modification interdite pour cet athlète."
+      "forbidden": "Modification interdite pour cet athlète.",
+      "naissance_inconnue": "Date de naissance inconnue",
+      "naissance_required": "Saisissez la date de naissance ou cochez « Date de naissance inconnue ».",
+      "implausible_birthdate": "Date de naissance invraisemblable : l'athlète doit avoir entre {min} et {max} ans pour la saison en cours."
     },
     "participations": {
       "season": "Saison",
@@ -2243,6 +2328,7 @@
     "empty_filtered": "Aucune entrée ne correspond aux filtres.",
     "loading": "Chargement du journal...",
     "error": "Erreur lors du chargement du journal.",
+    "deleted_account": "compte supprimé",
     "total_entries": "{count} entrée | {count} entrées",
     "pagination": {
       "showing": "Affichage de {from} à {to} sur {total}",

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recherche</title>
+<link rel="stylesheet" href="maquette.css">
+<style>
+.searchbar { display: flex; gap: 8px; max-width: 720px; margin: 26px 0 16px; }
+.searchbar input { flex: 1; min-width: 0; font: inherit; font-size: 20px; padding: 12px 14px; border: 2px solid var(--navy); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.searchbar button { font: 600 16px var(--text); padding: 0 20px; border-radius: 8px; border: 0; background: var(--navy); color: #fff; cursor: pointer; }
+.chips { margin-bottom: 26px; }
+.chips button span { color: var(--muted); margin-left: 4px; }
+.chips [aria-pressed="true"] span { color: #c9cde6; }
+
+/* The best match first: here, the club whose name contains the query. */
+.top-hit { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px; border-radius: 10px; background: var(--wash); margin-bottom: 30px; max-width: 900px; }
+.top-hit img { width: 80px; height: 80px; object-fit: contain; }
+.top-hit small { font-size: 13px; color: var(--muted); }
+.top-hit b { display: block; font: 400 32px/1 var(--display); color: var(--title); margin: 2px 0; }
+.top-hit a.go { padding: 9px 14px; border-radius: 6px; background: var(--navy); color: #fff; text-decoration: none; font-weight: 600; white-space: nowrap; }
+
+.group { max-width: 900px; margin-bottom: 30px; }
+.group ul { list-style: none; margin: 0; padding: 0; }
+.group li a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.group li a:hover b { text-decoration: underline; }
+.group b { font-weight: 600; }
+.group small { display: block; font-size: 13px; color: var(--muted); }
+.group .aside { font-size: 13px; color: var(--muted); white-space: nowrap; align-self: center; }
+main { padding-bottom: 56px; }
+@media (max-width: 640px) {
+  .top-hit { grid-template-columns: 56px minmax(0, 1fr); }
+  .top-hit img { width: 56px; height: 56px; }
+  .top-hit a.go { grid-column: 1 / -1; text-align: center; }
+  .searchbar input { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap">
+  <form class="searchbar" role="search" onsubmit="return false"><input type="search" value="avranches" aria-label="Rechercher sur le site"><button>Rechercher</button></form>
+  <div class="chips" id="kinds" role="group" aria-label="Type de résultat"></div>
+  <div id="results"></div>
+</main>
+<script src="maquette.js"></script>
+<script>
+const R = __SEARCH__;
+const Q = 'avranches';
+const KINDS = [['clubs', 'Clubs'], ['teams', 'Équipes'], ['competitions', 'Compétitions'], ['events', 'Événements'], ['news', 'Actualités'], ['pages', 'Pages']].filter(([k]) => R[k]?.length);
+let kind = null;
+document.getElementById('chrome').innerHTML = siteChrome('');
+
+const ITEM = {
+  clubs: c => [titleCase(c.label), deptName(c.department.label), c.code, `clubs.html?club=${c.code}`],
+  teams: t => [t.label.replace(/^\d+ - /, ''), titleCase(t.club.label), '', 'equipe.html'],
+  competitions: c => [c.display_title, c.soustitre2, c.season, 'infos.html'],
+  events: e => [e.libelle, e.place, shortRange(e.start, e.end) + ' ' + e.start.slice(0, 4), 'evenement.html'],
+  news: n => [n.title, n.lead && n.lead !== n.title ? n.lead : '', n.published_at ? fmt(n.published_at.slice(0, 10), { month: 'short', year: 'numeric' }) : '', 'article.html'],
+  pages: p => [p.title, '', '', 'contenu.html'],
+};
+
+function render() {
+  const total = KINDS.reduce((n, [k]) => n + R[k].length, 0);
+  document.getElementById('kinds').innerHTML = `<button type="button" data-k="" aria-pressed="${kind === null}">Tout<span>${total}</span></button>${KINDS.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${kind === k}">${l}<span>${R[k].length}</span></button>`).join('')}`;
+  const club = R.clubs?.[0];
+  const top = kind === null && club ? `<section class="top-hit" aria-label="Meilleur résultat">${club.logo ? `<img src="${KPI_IMG}${club.logo}" alt="">` : '<span></span>'}
+    <div><small>Club, ${esc(club.code)}</small><b>${esc(titleCase(club.label))}</b><small>${esc(deptName(club.department.label))}</small></div>
+    <a class="go" href="clubs.html?club=${club.code}">Voir sur la carte</a></section>` : '';
+  const groups = KINDS.filter(([k]) => kind === null || kind === k)
+    .map(([k, l]) => [k, l, R[k].filter(x => !(kind === null && k === 'clubs' && x === club))]).filter(([, , items]) => items.length);
+  document.getElementById('results').innerHTML = top + groups.map(([k, l, items]) => `<section class="group" aria-labelledby="g-${k}">
+    <h2 class="section" id="g-${k}">${l}</h2><ul>${items.map(x => { const [a, b, c, href] = ITEM[k](x); return `<li><a href="${href}"><span><b>${esc(a)}</b>${b ? `<small>${esc(b)}</small>` : ''}</span><span class="aside">${esc(c)}</span></a></li>`; }).join('')}</ul></section>`).join('');
+}
+document.getElementById('kinds').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { kind = b.dataset.k || null; render(); } });
+render();
+demoBar();
+</script>
+</body>
+</html>

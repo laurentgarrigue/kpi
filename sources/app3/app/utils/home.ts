@@ -8,22 +8,24 @@ export type HomeBlock =
   | { kind: 'partners', partners: { name: string, url: string, logo: MediaView | null }[] }
 
 export type AlertBlock = Extract<HomeBlock, { kind: 'alert' }>
-export type ContentBlock = Exclude<HomeBlock, { kind: 'alert' }>
 
-/** The partners block always closes the page: it comes after the events blocks. */
-const BLOCKS_AFTER_EVENTS: readonly HomeBlock['kind'][] = ['partners']
+export type PartnersBlock = Extract<HomeBlock, { kind: 'partners' }>
+
+/** News of the home page: one put forward, then two (HOME-13). */
+export const HOME_NEWS_COUNT = 3
 
 /**
- * Blocks above and below the events blocks, each in the configured order (CNT-05). The alert comes first whatever
- * its position, above the page title.
+ * Blocks of the home page (CNT-05, HOME-13): the alert first, whatever its position; the news column (the first
+ * featured article, then the latest news, without duplicates); the partners closing the page.
  */
-export function homeLayout(blocks: readonly HomeBlock[]): { alert: AlertBlock | null, beforeEvents: ContentBlock[], afterEvents: ContentBlock[] } {
-  const alert = blocks.find((block): block is AlertBlock => block.kind === 'alert') ?? null
-  const others = blocks.filter((block): block is ContentBlock => block.kind !== 'alert')
+export function homeLayout(blocks: readonly HomeBlock[]): { alert: AlertBlock | null, news: NewsSummary[], partners: PartnersBlock | null } {
+  const articles = (kind: 'featured' | 'latest_news') => blocks.flatMap(block => (block.kind === kind ? block.articles : []))
+  const unique = [...articles('featured').slice(0, 1), ...articles('latest_news')]
+    .filter((article, index, list) => list.findIndex(other => other.slug === article.slug) === index)
   return {
-    alert,
-    beforeEvents: others.filter(block => !BLOCKS_AFTER_EVENTS.includes(block.kind)),
-    afterEvents: others.filter(block => BLOCKS_AFTER_EVENTS.includes(block.kind)),
+    alert: blocks.find((block): block is AlertBlock => block.kind === 'alert') ?? null,
+    news: unique.slice(0, HOME_NEWS_COUNT),
+    partners: blocks.find((block): block is PartnersBlock => block.kind === 'partners') ?? null,
   }
 }
 

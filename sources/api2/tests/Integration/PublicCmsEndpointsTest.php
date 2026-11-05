@@ -49,7 +49,7 @@ final class PublicCmsEndpointsTest extends ApiTestCase
         self::assertSame([
             ['kind' => 'competition', 'label' => 'Championnat Résultats 2999', 'path' => '/competitions/2999/RCH'],
             ['kind' => 'event', 'label' => 'Tournoi Résultats', 'path' => '/events/77'],
-            ['kind' => 'club', 'label' => 'Club Alpha Lacville', 'path' => '/clubs/C001'],
+            ['kind' => 'club', 'label' => 'Club Alpha Lacville', 'path' => '/clubs?club=C001'],
         ], $this->getJson('/news/finale-resultats')['links']);
     }
 

@@ -1,6 +1,6 @@
 # Template général du site public
 
-**Phase** : 1 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **S'applique à** : toutes les pages d'app3 (layout `default` et page d'erreur)
+**Phase** : 1 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta) — **S'applique à** : toutes les pages d'app3 (layout `default` et page d'erreur)
 
 ## 1. Objectif
 

@@ -168,8 +168,21 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await location('/competitions/2999/RCH?event=77')).toEqual([302, '/competitions/2999/RCH/games?event=77'])
   })
 
-  it('EVT-01/GRP-01: event and group views open on their games', async () => {
-    expect(await location('/events/77')).toEqual([302, '/events/77/games'])
+  it('CLB-01: the team search is on the clubs and teams page', async () => {
+    expect(await location('/teams?q=alpha')).toEqual([301, '/clubs?q=alpha'])
+    expect(await location('/en/teams')).toEqual([301, '/en/clubs'])
+  })
+
+  it('CLB-08: the former club page shows the club on the map', async () => {
+    expect(await location('/clubs/C001')).toEqual([301, '/clubs?club=C001'])
+    expect(await location('/en/clubs/C001')).toEqual([301, '/en/clubs?club=C001'])
+    const html = await $fetch<string>('/clubs?club=C001')
+    expect(html).toMatch(/<title>Club Alpha Lacville/)
+    expect(html).toContain('"@type":"SportsOrganization"')
+  })
+
+  it('EVT-01/GRP-01: an event opens on its competitions, a group on its games', async () => {
+    expect(await location('/events/77')).toEqual([302, '/events/77/competitions'])
     expect(await location('/en/groups/2999/TSTRES')).toEqual([302, '/en/groups/2999/TSTRES/games'])
   })
 
@@ -205,11 +218,11 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
     expect(await $fetch<string>('/calendar?month=2999-04')).toContain('Championnat Résultats')
     expect(await $fetch<string>('/history/TSTRES')).toContain('Equipe Echo')
     expect(await $fetch<string>('/teams/101')).toContain('ALPHA Ann')
-    expect(await $fetch<string>('/clubs')).toContain('Club Alpha Lacville')
+    expect(await $fetch<string>('/clubs?club=C001')).toContain('Club Alpha Lacville')
   })
 
-  it('HIS-05/TEA-05/CLB-03: unknown history group, team or club is a 404 page', async () => {
-    for (const path of ['/history/NOPE', '/teams/9999', '/clubs/NOPE']) {
+  it('HIS-05/TEA-05: unknown history group or team is a 404 page', async () => {
+    for (const path of ['/history/NOPE', '/teams/9999']) {
       const response = await fetch(path, { headers: { Accept: 'text/html' } })
       expect(response.status, path).toBe(404)
     }
@@ -228,7 +241,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
   // every prefetch a 404 (and the cached payload useless).
   it('PLT-07: the payload of every cached page is served (link prefetch does not end in 404)', async () => {
     const pages = [
-      '/', '/calendar', '/history/TSTRES', '/teams', '/teams/101', '/clubs', '/clubs/C001',
+      '/', '/calendar', '/history/TSTRES', '/teams/101', '/clubs',
       '/competitions/2999', '/competitions/2999/RCH/games', '/events/77/games', '/events/77/ranking', '/groups/2999/TSTRES/games',
     ]
     for (const page of pages) {
@@ -267,7 +280,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
 
   it('CNT-02: a child page under another path redirects (301) to its path', async () => {
     expect(await location('/arbitrage')).toEqual([301, '/le-kayak-polo/arbitrage'])
-    expect(await $fetch<string>('/le-kayak-polo')).toContain('Sommaire')
+    expect(await $fetch<string>('/le-kayak-polo')).toContain('Sur cette page')
   })
 
   it('CMS-09: old WordPress permalinks redirect (301) to their new page', async () => {

@@ -20,12 +20,12 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
 
     // ---------------------------------------------------- /group/{s}/{c}/competitions
 
-    /** Ordre défini (GroupOrder), puis ordre du tour (Code_tour croissant) : le même pour la liste et les pastilles. */
-    public function testApi06GroupCompetitionsFollowGroupOrderThenRoundAndHideUnpublished(): void
+    /** Étape (Code_tour croissant), puis ordre défini (GroupOrder) : le même pour la liste et les pastilles. */
+    public function testApi06GroupCompetitionsFollowRoundThenGroupOrderAndHideUnpublished(): void
     {
         $body = $this->getJson('/group/2999/TSTRES/competitions');
 
-        self::assertSame(['RCH', 'RCP', 'RMU', 'RAT'], self::column($body['competitions'], 'code'));
+        self::assertSame(['RCH', 'RAT', 'RCP', 'RMU'], self::column($body['competitions'], 'code'));
     }
 
     public function testApi06CompactRankingUsesLevelRankForCupsAndHidesUnrankedTeams(): void
@@ -92,11 +92,11 @@ final class PublicCompetitionEndpointsTest extends ApiTestCase
         self::assertFalse($championship['final']);
     }
 
-    public function testSiblingsArePublishedCompetitionsOfTheGroupByGroupOrder(): void
+    public function testSiblingsArePublishedCompetitionsOfTheGroupByRoundThenGroupOrder(): void
     {
         $siblings = $this->getJson('/competition/2999/RCP')['siblings'];
 
-        self::assertSame(['RCH', 'RCP', 'RMU', 'RAT'], self::column($siblings, 'code'));
+        self::assertSame(['RCH', 'RAT', 'RCP', 'RMU'], self::column($siblings, 'code'));
         self::assertSame(['code', 'display_title', 'soustitre2'], array_keys($siblings[0]));
     }
 

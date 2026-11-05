@@ -1,6 +1,8 @@
-ARG BASE_IMAGE_DB
-
-FROM ${BASE_IMAGE_DB}
+# Version ÉPINGLÉE ici, dans le dépôt, et non via BASE_IMAGE_DB dans docker/.env.
+# ⚠️ Changer ce tag modifie les fichiers de données (mariadb-upgrade) : un revert git ne
+# les ramène PAS en arrière. Toute montée de version = dump SQL des deux bases,
+# validation en préprod, puis prod (cf. DEPLOYMENT_RUNBOOK.md). Pas de bump Dependabot sans ça.
+FROM mariadb:11.5.2
 
 # Install and configure French locale
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales \

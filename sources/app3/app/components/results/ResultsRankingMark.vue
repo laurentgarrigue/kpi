@@ -3,8 +3,8 @@ import type { RankingMark } from '#kpi-layer/utils/results/ranking'
 
 // Medal, qualified or eliminated mark: colour AND text (CPL-06, CPL-10, CMP-10).
 defineProps<{ mark: RankingMark }>()
-// Medal colours are fixed: in the dark theme, gold keeps a dark digit and bronze its dark tone (SITE_LAYOUT.md § 3).
-const MEDAL_CLASSES = { 1: 'bg-kpi-gold-400 text-ink dark:text-navy', 2: 'bg-line text-ink', 3: 'bg-kpi-gold-800 text-white dark:bg-kpi-gold-900' } as const
+// Medal colours: gold only for the gold medal (DOC/specs/public/maquettes/README.md), each with its digit.
+const MEDAL_CLASSES = { 1: 'bg-medal-gold text-white dark:text-navy', 2: 'bg-medal-silver text-white dark:text-navy', 3: 'bg-medal-bronze text-white dark:text-navy' } as const
 </script>
 
 <template>

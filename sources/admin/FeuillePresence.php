@@ -3,6 +3,9 @@ include_once('../commun/MyPage.php');
 include_once('../commun/MyBdd.php');
 include_once('../commun/MyTools.php');
 require_once('../commun/MyPDF.php');
+require_once('../commun/MySignedLink.php');
+// PDF admin : session de l'admin legacy ou lien signé par api2 (DOC/specs/PDF_GOTENBERG.md, phase 0)
+MySignedLink::requirePdfAccess();
 
 // liste des présents par équipe
 class FeuillePresence extends MyPage
@@ -225,7 +228,7 @@ class FeuillePresence extends MyPage
                     $pdf->Cell(25, 9, $arrayJoueur[$idEquipe][$j]['Matric'] . $arrayJoueur[$idEquipe][$j]['Saison'], 'B', 0, 'C');
                     $pdf->Cell(45, 9, $arrayJoueur[$idEquipe][$j]['Nom'], 'B', 0, 'C');
                     $pdf->Cell(45, 9, $arrayJoueur[$idEquipe][$j]['Prenom'], 'B', 0, 'C');
-                    $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Categ'], 'B', 0, 'C');
+                    $pdf->Cell(16, 9, ($arrayJoueur[$idEquipe][$j]['Categ'] ?: '?'), 'B', 0, 'C');
                     $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Pagaie'], 'B', 0, 'C');
                     $pdf->Cell(23, 9, $arrayJoueur[$idEquipe][$j]['CertifCK'], 'B', 0, 'C');
                     $pdf->Cell(16, 9, $arrayJoueur[$idEquipe][$j]['Numero_club'], 'B', 0, 'C');

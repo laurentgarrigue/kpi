@@ -24,8 +24,8 @@ final class PublicCompetitionRepository
         LEFT JOIN kp_groupe g ON (g.Groupe = c.Code_ref)
         WHERE c.Publication = 'O'";
 
-    /** Ordre défini puis ordre du tour : liste des compétitions, pastilles et sœurs (retour de recette 09/10/2026). */
-    private const GROUP_ORDER = 'c.GroupOrder, c.Code_tour, c.Code';
+    /** Étape puis ordre défini : les zones d'une étape se suivent, avant les finales (retour du 27/10/2026). */
+    private const GROUP_ORDER = 'c.Code_tour, c.GroupOrder, c.Code';
 
     public function __construct(private readonly Connection $connection)
     {
@@ -61,7 +61,7 @@ final class PublicCompetitionRepository
     }
 
     /**
-     * Compétitions publiées d'un groupe, dans l'ordre défini (GroupOrder) puis dans l'ordre du tour (Code_tour).
+     * Compétitions publiées d'un groupe, par étape (Code_tour) puis dans l'ordre défini (GroupOrder).
      *
      * @return list<array<string, mixed>>
      */
@@ -137,7 +137,7 @@ final class PublicCompetitionRepository
         $orderBy = $type === 'CP' ? 'ce.CltNiveau_publi ASC, ce.Diff_publi DESC' : 'ce.Clt_publi ASC, ce.Diff_publi DESC';
 
         return $this->connection->fetchAllAssociative(
-            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Clt_publi, ce.CltNiveau_publi, ce.Pts_publi,
+            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Code_club club, ce.Clt_publi, ce.CltNiveau_publi, ce.Pts_publi,
             ce.J_publi, ce.G_publi, ce.N_publi, ce.P_publi, ce.F_publi, ce.Plus_publi, ce.Moins_publi, ce.Diff_publi
             FROM kp_competition_equipe ce
             WHERE ce.Code_saison = ? AND ce.Code_compet = ?
@@ -154,7 +154,7 @@ final class PublicCompetitionRepository
     public function findTeamsByPool(string $season, string $code): array
     {
         return $this->connection->fetchAllAssociative(
-            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Poule
+            "SELECT ce.Id, ce.Numero, ce.Libelle, ce.logo, ce.Code_club club, ce.Poule
             FROM kp_competition_equipe ce
             WHERE ce.Code_saison = ? AND ce.Code_compet = ?
             ORDER BY ce.Poule, ce.Tirage, ce.Libelle",

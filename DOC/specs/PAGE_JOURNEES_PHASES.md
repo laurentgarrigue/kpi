@@ -270,6 +270,24 @@ Le mode d'association des journées à un événement n'est plus accessible depu
 
 Voir la spec dédiée pour le détail.
 
+### 5.3 Vue « Schéma » (secondaire, issue #375)
+
+La page a deux vues, comme la page Matchs a la vue « Terrains » ([PAGE_MATCHS.md](PAGE_MATCHS.md) § 2.7) :
+la **liste des phases** (par défaut) et le **schéma de compétition** ([PAGE_SCHEMA.md](PAGE_SCHEMA.md)).
+On bascule de l'une à l'autre sans quitter la page (plus de nouvel onglet). La vue active est portée
+par l'URL (`/gamedays?view=schema`), elle survit donc à un rechargement.
+
+| ID | Critère d'acceptation |
+|----|-----------------------|
+| GDY-SCH-01 | Un sélecteur **Liste / Schéma** est affiché dans la barre d'outils de la liste et au-dessus du schéma. « Schéma » n'est actif que si **une** compétition est sélectionnée dans l'en-tête. |
+| GDY-SCH-02 | Le bouton « Schéma » d'une ligne (desktop et mobile) sélectionne la compétition de la ligne dans l'en-tête puis affiche la vue Schéma, **dans le même onglet**. |
+| GDY-SCH-03 | En vue Schéma, le sélecteur de compétition de l'en-tête (filtré par le contexte de travail) change le schéma affiché ; « Toutes » affiche le message « Sélectionnez une compétition… ». Les filtres Mois / Tri, la recherche, l'ajout et les actions en masse sont masqués. |
+| GDY-SCH-04 | La vue Schéma conserve toutes les fonctions de la page Schéma : cases à cocher Matchs / Horaires (CP), export PDF, bandeau, sponsor, logo, badges niveau / type, surbrillance d'équipe, impression. Elle n'a **pas** de bouton Fermer. |
+| GDY-SCH-05 | « Liste » revient à la liste des phases, filtrée sur la compétition sélectionnée. Une valeur `view` inconnue dans l'URL affiche la liste. |
+
+La route autonome `/gamedays/schema?competition=X&season=Y` (avec bouton Fermer) est conservée pour les liens
+ouverts hors contexte de travail, notamment depuis la page Copie de compétition (schémas d'autres saisons).
+
 ---
 
 ## 6. Édition inline
@@ -709,7 +727,8 @@ ALTER TABLE kp_evenement_journee
 
 ```
 sources/app4/pages/gamedays/
-└── index.vue              # Page principale (liste + modals)
+├── index.vue              # Page principale (vues Liste / Schéma + modals)
+└── schema.vue             # Schéma autonome (nouvel onglet, liens hors contexte)
 ```
 
 ### 11.2 Composants réutilisés
@@ -943,7 +962,7 @@ Toutes les opérations sont loguées dans `kp_journal` :
 | Date picker | Flatpickr | Composant Nuxt UI |
 | Autocomplete | jQuery autocomplete maison | Composant combobox Nuxt UI |
 | Notifications | alert() / confirm() | Toast Nuxt UI |
-| Schéma compétition | Page séparée GestionSchema.php | ⏳ Lien legacy redirect (différé) |
+| Schéma compétition | Page séparée GestionSchema.php | ✅ Vue secondaire « Schéma » de la page (§ 5.3) |
 | Officiels | Page séparée GestionInstances.php | ✅ Intégré dans la modal de journée |
 | Mode association | Radio button global basculant la page | ✅ Extrait sur une page dédiée `/events/{id}/gamedays` (voir [PAGE_ASSOCIATION_JOURNEES_EVENEMENTS.md](PAGE_ASSOCIATION_JOURNEES_EVENEMENTS.md)) |
 
@@ -952,7 +971,7 @@ Toutes les opérations sont loguées dans `kp_journal` :
 | Page | Fichier PHP | Description | Impact |
 |------|-------------|-------------|--------|
 | Matchs d'une journée | GestionJournee.php | Liste des matchs | Route `/games` (lien) |
-| Schéma de compétition | GestionSchema.php | Organigramme des phases | ❓ À discuter |
+| Schéma de compétition | GestionSchema.php | Organigramme des phases | ✅ Vue « Schéma » (§ 5.3) |
 | Officiels d'une journée | GestionInstances.php | Gestion détaillée des officiels | ❓ Intégré ou lien |
 | Import ICS | upload_ics.php | Import calendrier iCalendar | Profil 1 uniquement |
 

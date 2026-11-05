@@ -107,6 +107,27 @@
 | **Opérations** | (saisonnières/import-export) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Utilisateurs — capacité Rédacteur** | Attribuer / retirer | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
+### Documents PDF ([PDF_GOTENBERG.md §7](PDF_GOTENBERG.md))
+
+Contrôlés par api2 (`/admin/pdf/*`), dans le périmètre du mandat actif. Les PDF publics (`/pdf/*` : classements
+publiés, listes et grilles de matchs publiés, QR codes) sont accessibles sans authentification.
+
+| Document PDF | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Équipes engagées, feuille jury (instances) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Feuille de présence (FR/EN, photos, par catégorie) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ ¹ | ✅ | ❌ | ✅ ² |
+| Feuille de présence U21, feuille visa | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Feuille de présence avec dates de naissance | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Feuille de contrôle (scrutineering) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ ² |
+| Pool arbitres | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Liste des matchs (admin) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ ³ | ✅ | ✅ | ❌ |
+| Feuille de marque PDF | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ ³ | ✅ | ✅ | ❌ |
+| Classements calculés (provisoires), justification de départage | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Statistiques (types standard) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Statistiques (types restreints), cartons cumulés | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+¹ équipes de ses clubs uniquement. ² toutes les équipes de ses compétitions. ³ matchs et journées publiés uniquement.
+
 ### Éditorial (site public — [PAGE_CMS.md](PAGE_CMS.md))
 
 Droits **indépendants du niveau** : la capacité **Rédacteur** (`editor`, table `kp_user_capability`) s'ajoute au

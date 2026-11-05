@@ -24,6 +24,7 @@ DELETE FROM `kp_journee`;
 DELETE FROM `kp_competition`;
 DELETE FROM `kp_groupe`;
 DELETE FROM `kp_saison`;
+DELETE FROM `kp_categorie`;
 DELETE FROM `kp_evenement`;
 DELETE FROM `kp_equipe`;
 DELETE FROM `kp_club`;
@@ -36,6 +37,15 @@ DELETE FROM `kp_cr`;
 INSERT INTO `kp_saison` (`Code`, `Etat`, `Nat_debut`, `Nat_fin`, `Inter_debut`, `Inter_fin`) VALUES
   ('2999', 'A', '2998-09-01', '2999-08-31', '2998-09-01', '2999-08-31'),  -- saison ACTIVE
   ('2998', 'I', '2997-09-01', '2998-08-31', '2997-09-01', '2998-08-31');  -- saison passée (inactive)
+
+-- ---------------------------------------------------------------- catégories d'âge
+-- La table réelle (CATEGORIE_AGE.md story 6) : lue par AgeCategoryRule via DbalAgeCategoryTable.
+INSERT INTO `kp_categorie` (`id`, `libelle`, `age_min`, `age_max`, `sexe`) VALUES
+  ('POU', 'Poussin', 9, 10, 'T'), ('BEN', 'Benjamin', 11, 12, 'T'), ('MIN', 'Minime', 13, 14, 'T'),
+  ('CAD', 'Cadet', 15, 16, 'T'), ('JUN', 'Junior', 17, 18, 'T'), ('SEN', 'Senior', 19, 34, 'T'),
+  ('V1', 'Vétéran 1', 35, 39, 'T'), ('V2', 'Vétéran 2', 40, 44, 'T'), ('V3', 'Vétéran 3', 45, 49, 'T'),
+  ('V4', 'Vétéran 4', 50, 54, 'T'), ('V5', 'Vétéran 5', 55, 59, 'T'), ('V6', 'Vétéran 6', 60, 64, 'T'),
+  ('V7', 'Vétéran 7', 65, 69, 'T'), ('V8', 'Vétéran 8', 70, 74, 'T'), ('V9', 'Vétéran 9', 75, 120, 'T');
 
 -- ---------------------------------------------------------------- groupes
 -- Le mode 'champ' JOIN kp_groupe sur c.Code_ref = g.Groupe : sans la ligne
@@ -381,6 +391,12 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TVIEW', '', 'Lecteur Test', 'view@example.test', '', '', 8, '', '', '', '');   -- profil 8 sans capacité : 403
 INSERT INTO `kp_user_capability` (`user_code`, `capability`) VALUES ('TEDIT', 'editor');
 
+-- Entrées de journal utilisées par AdminJournalTest : la 1re pointe sur TADMIN (existe) et la 2e sur
+-- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal).
+INSERT INTO `kp_journal` (`Dates`, `Users`, `Actions`, `Journal`) VALUES
+  ('2026-10-01 10:00:00', 'TADMIN', 'Connexion Admin', 'Admin Test'),
+  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean');
+
 INSERT INTO `kp_cms_media` (`id`, `path`, `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `created_at`, `updated_at`) VALUES
   (9501, '2999/01/finale.jpg', 'image/jpeg', 1600, 900, 120000, 'La finale', 'The final', 'CNA', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
   (9502, '2999/01/reglement.pdf', 'application/pdf', NULL, NULL, 250000, '', '', '', '2020-01-01 10:00:00', '2020-01-01 10:00:00');
@@ -512,6 +528,9 @@ INSERT INTO `scoring_display_token`
 --   SCA (non verrouillée) : 9381 Alpha (C001), 9382 Bravo (C002), 9383 Germany (GER) ; SCB (verrouillée) : 9384
 --   Alpha Deux (C001, même club que 9381), 9385 Germany Women (GER-W, même nation que 9383) ; SCC (hors événement) :
 --   9386 Charlie (C001).
+-- Groupe national : la feuille de présence y montre pagaies et certificats (PDF_GOTENBERG.md § 7.2).
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (2, 2, 'NAT', 'TSTSCR', 'Groupe Scrutineering', 'Scrutineering group');
 INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `logo`, `app`) VALUES
   (80, 'Tournoi Scrutineering', 'Lacville', '2997-05-01', '2997-05-02', 'N', NULL, 'N');
 INSERT INTO `kp_competition`
@@ -561,3 +580,66 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCRUTA', '', 'Contrôleur SCA', 'scruta@example.test', '', '', 10, '|SCA|SCC|', '|2997|', '', '', NULL, ''),    -- profil 10, SCA + SCC, sans limite d'événement
   ('TDIV', '', 'Division Test', 'div@example.test', '', '', 3, '|SCA|SCB|', '|2997|', '', '', NULL, ''),            -- profil 3 : pas de scrutineering
   ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', '');            -- profil 7 limité au club C002
+
+-- ---------------------------------------------------------------- documents PDF (PDF_GOTENBERG.md)
+-- Consommé par tests/Integration/PdfEndpointsTest.php : rôle minimum (§ 7), périmètre du mandat (PDF-AUTH-03).
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TSCORE', '', 'Table de marque Test', 'score@example.test', '', '', 9, '', '', '', '', NULL, '');      -- profil 9 : feuille de marque, pas les équipes
+-- Mandat de TDIV limité à SCC : avec l'en-tête X-Active-Mandate, SCC est permis et SCA ne l'est plus
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9701, 'TDIV', 'Mandat SCC', 3, '|2997|', '|SCC|', NULL, '', '');
+
+-- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
+-- Consommé par tests/Integration/AdminChangeCompetitionCodeTest.php : le code TSTRN (saisons 2999 active et
+-- 2998 passée) est renommé ; chaque référence au code existe dans les deux saisons pour distinguer les deux modes.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('TSUPER', '', 'Super Admin Test', 'super@example.test', '', '', 1, '', '', '', ''),   -- profil 1 : opérations d'administration
+  ('TRSFA', '', 'Filtre complet actif', 'rsfa@example.test', '', '', 4, '|TSTRN|TSTRB|', '|2999|', '\'TSTRN\',\'TSTRB\'', ''),
+  ('TRSFP', '', 'Filtre complet passé', 'rsfp@example.test', '', '', 4, '|TSTRN|TSTRB|', '|2998|', '\'TSTRN\',\'TSTRB\'', ''),
+  ('TRSFS', '', 'Filtre SQL seul', 'rsfs@example.test', '', '', 4, '', '|2999|', '\'TSTRN\'', '');   -- liste « | » vide
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (3, 1, 'REG', 'TSTRN', 'Groupe régional à renommer', 'Regional group to rename');  -- cible de Code_ref (clé étrangère)
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`, `Statut`, `multi_competitions`) VALUES
+  ('TSTRN', '2999', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),  -- code de référence = son propre code
+  ('TSTRN', '2998', 'Régionale à renommer', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTRB', '2999', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'ATT', NULL),           -- regroupée sous TSTRN
+  ('TSTRB', '2998', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
+  ('TSTMU', '2999', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'ATT', '["TSTRN","TSTRB"]'),
+  ('TSTMU', '2998', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'END', '["TSTRN","TSTRB"]');
+INSERT INTO `kp_rc` (`Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric`) VALUES
+  (9801, 'TSTRN', '2999', 1, 9511),
+  (9802, 'TSTRN', '2998', 1, 9511);
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9801, 'TDIV', 'Mandat régional actif', 4, '|2999|', '|TSTRN|TSTRB|', NULL, '', ''),
+  (9802, 'TDIV', 'Mandat régional passé', 4, '|2998|', '|TSTRN|TSTRB|', NULL, '', '');
+INSERT INTO `kp_form` (`id`, `slug`, `title_fr`, `intro_fr`, `intro_en`, `confirmation_text_fr`, `confirmation_text_en`, `purpose_fr`, `purpose_en`, `competition_season`, `competition_code`, `created_at`, `updated_at`) VALUES
+  (9801, 'rsf-actif', 'Inscription régionale active', '', '', '', '', '', '', '2999', 'TSTRN', '2999-01-01 00:00:00', '2999-01-01 00:00:00'),
+  (9802, 'rsf-passe', 'Inscription régionale passée', '', '', '', '', '', '', '2998', 'TSTRN', '2998-01-01 00:00:00', '2998-01-01 00:00:00');
+-- ---------------------------------------------------------------- fin ticket RSF-03
+-- Feuilles de présence, contrôle, pool arbitres (PDF_GOTENBERG.md § 7.2, phase 2) : un joueur né en 2980 (U21 en
+-- 2997) dans 9382 (C002, club de TCLUB), un pool d'arbitres permanent (POOL, saison technique 1000).
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`, `Naissance`) VALUES
+  (9518, '2997', 'SCRUT', 'Bravo', 'M', 'C002', 'Actif', '2980-03-15');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9382, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 7, '-');
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9391, 'POOL', '1000', 'France', 'FRA', NULL, 0, '', 0);
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9391, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A');
+DELETE FROM `kp_arbitre` WHERE `Matric` BETWEEN 9500 AND 9599;
+INSERT INTO `kp_arbitre` (`Matric`, `arbitre`, `niveau`, `saison`, `livret`) VALUES (9514, 'Nat', 'B', '2997', '');
+-- Instances (officiels) de la journée 9271 ; mandat 9702 de TDIV limité à la journée 9272 : 9271 lui est refusée.
+UPDATE `kp_journee` SET `Responsable_insc` = 'RESPONSABLE Test (9513)', `Responsable_R1` = 'ORGA Test',
+  `Delegue` = 'DELEGUE Test (9514)', `ChefArbitre` = 'CHEF Arbitre' WHERE `Id` = 9271;
+INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
+  (9702, 'TDIV', 'Mandat journée SCB', 3, '|2997|', '|SCA|SCB|', NULL, '9272', '');
+-- Classement CALCULÉ de RCH (PDF admin « Provisoire », PDF_GOTENBERG.md § 7.4), différent du publié : Delta en tête,
+-- Bravo et Charlie à égalité de points (justification du départage).
+UPDATE `kp_competition_equipe` SET `Clt` = 1, `Pts` = 900, `J` = 3, `G` = 3, `Plus` = 6, `Moins` = 1, `Diff` = 5 WHERE `Id` = 9304;
+UPDATE `kp_competition_equipe` SET `Clt` = 2, `Pts` = 600, `J` = 3, `G` = 2, `P` = 1, `Plus` = 5, `Moins` = 3, `Diff` = 2 WHERE `Id` = 9301;
+UPDATE `kp_competition_equipe` SET `Clt` = 3, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 4, `Moins` = 3, `Diff` = 1 WHERE `Id` = 9302;
+UPDATE `kp_competition_equipe` SET `Clt` = 4, `Pts` = 300, `J` = 3, `G` = 1, `P` = 2, `Plus` = 2, `Moins` = 3, `Diff` = -1 WHERE `Id` = 9303;
+-- Profil 7 limité à RCH (PDF_GOTENBERG.md PDF-AUTH-10) : liste des matchs = matchs publiés seulement, comme sa page Matchs.
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TTEAM', '', 'Equipe Test', 'team@example.test', '', '', 7, '|RCH|', '|2999|', '', '', NULL, '');

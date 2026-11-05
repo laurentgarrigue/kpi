@@ -21,16 +21,6 @@
             <UIcon name="i-heroicons-arrow-path" class="h-6 w-6" />
             <span class="hidden sm:inline text-sm">{{ t('MatchSheet.Refresh') }}</span>
           </button>
-          <a
-            v-if="matchData"
-            :href="getPdfUrl()"
-            target="_blank"
-            class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 cursor-pointer"
-            :title="t('MatchSheet.DownloadPdf')"
-          >
-            <UIcon name="i-heroicons-document-arrow-down" class="h-6 w-6" />
-            <span class="hidden sm:inline text-sm">{{ t('MatchSheet.DownloadPdf') }}</span>
-          </a>
         </div>
       </template>
     </AppSecondaryNav>
@@ -60,9 +50,6 @@ const route = useRoute()
 const router = useRouter()
 const { getApi } = useApi()
 
-const runtimeConfig = useRuntimeConfig()
-const baseUrl = runtimeConfig.public.backendBaseUrl
-
 const gameId = computed(() => route.params.id)
 const matchData = ref(null)
 const loading = ref(true)
@@ -82,10 +69,6 @@ useSeoMeta({
   ogTitle: pageTitle,
   ogDescription: 'Match sheet with complete game details'
 })
-
-const getPdfUrl = () => {
-  return `${baseUrl}/PdfMatchMulti.php?listMatch=${gameId.value}`
-}
 
 const goBack = () => {
   // Use browser history if available, otherwise go to games page

@@ -3,8 +3,9 @@ interface JournalEntry {
   id: number
   date: string
   userCode: string
-  userIdentite: string
-  userFonction: string
+  userIdentite: string | null
+  userFonction: string | null
+  isDeleted: boolean
   action: string
   journal: string | null
   saison: string | null
@@ -24,8 +25,9 @@ interface JournalResponse {
 
 interface JournalUser {
   code: string
-  identite: string
-  fonction: string
+  identite: string | null
+  fonction: string | null
+  isDeleted: boolean
 }
 
 definePageMeta({
@@ -219,7 +221,7 @@ onMounted(() => {
           >
             <option value="">{{ t('journal.filters.user_all') }}</option>
             <option v-for="u in journalUsers" :key="u.code" :value="u.code">
-              {{ u.identite }}
+              {{ u.isDeleted ? `${u.code} (${t('journal.deleted_account')})` : u.identite }}
             </option>
           </select>
         </div>
@@ -318,8 +320,12 @@ onMounted(() => {
               {{ formatDate(entry.date) }}
             </td>
             <td class="px-3 py-2">
-              <div class="text-sm font-medium text-header-900 dark:text-header-50" :title="entry.userFonction">
-                {{ entry.userIdentite }}
+              <div class="text-sm font-medium text-header-900 dark:text-header-50" :title="entry.userFonction ?? ''">
+                <template v-if="entry.isDeleted">
+                  <span class="italic text-header-500 dark:text-header-400">{{ entry.userCode }}</span>
+                  <span class="ml-1 text-xs text-header-500 dark:text-header-400">({{ t('journal.deleted_account') }})</span>
+                </template>
+                <template v-else>{{ entry.userIdentite }}</template>
               </div>
             </td>
             <td class="px-3 py-2 text-sm text-header-900 dark:text-header-50">
@@ -367,8 +373,12 @@ onMounted(() => {
           </span>
         </template>
         <div class="space-y-1 text-sm">
-          <div class="font-medium text-header-900 dark:text-header-50" :title="entry.userFonction">
-            {{ entry.userIdentite }}
+          <div class="font-medium text-header-900 dark:text-header-50" :title="entry.userFonction ?? ''">
+            <template v-if="entry.isDeleted">
+              <span class="italic text-header-500 dark:text-header-400">{{ entry.userCode }}</span>
+              <span class="ml-1 text-xs text-header-500 dark:text-header-400">({{ t('journal.deleted_account') }})</span>
+            </template>
+            <template v-else>{{ entry.userIdentite }}</template>
           </div>
           <div class="text-header-900 dark:text-header-50">{{ entry.action }}</div>
           <div v-if="entry.journal" class="text-header-600 dark:text-header-300">{{ entry.journal }}</div>

@@ -31,14 +31,14 @@ describe('MAIN_MENU', () => {
       'calendar',
       'events',
       'competitions(competitions-list,history)',
-      'teams-clubs(teams,clubs)',
+      'teams-clubs',
       'live',
     ])
   })
 
   it('NAV-10: only delivered pages are internal links (phase 4: NEWS-08, every entry is delivered)', () => {
     const links = resolveMenu(MAIN_MENU, context('fr')).flatMap(item => (isMenuGroup(item) ? item.children : [item]))
-    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'news', 'calendar', 'events', 'competitions-list', 'history', 'teams', 'clubs'])
+    expect(links.filter(link => link.kind === 'internal').map(link => link.id)).toEqual(['home', 'news', 'calendar', 'events', 'competitions-list', 'history', 'teams-clubs'])
     expect(links.filter(link => link.kind === 'legacy').map(link => link.id)).toEqual([])
     expect(links.filter(link => link.kind === 'app2').map(link => link.id)).toEqual(['live'])
   })

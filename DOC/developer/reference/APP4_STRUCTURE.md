@@ -115,8 +115,8 @@ sources/app4/
 │   ├── documents/index.vue            # Documents (/documents)
 │   ├── events/index.vue               # Événements (/events)
 │   ├── gamedays/
-│   │   ├── index.vue                  # Journées/Phases (/gamedays)
-│   │   └── schema.vue                 # Schéma compétition (/gamedays/schema)
+│   │   ├── index.vue                  # Journées/Phases (/gamedays, vues Liste / Schéma)
+│   │   └── schema.vue                 # Schéma autonome (/gamedays/schema, nouvel onglet)
 │   ├── games/index.vue                # Matchs (/games)
 │   ├── groups/index.vue               # Groupes (/groups)
 │   ├── journal/index.vue              # Journal des actions (/journal)
@@ -555,7 +555,7 @@ Pour les menus déroulants à l'intérieur de conteneurs `overflow-hidden` (tabl
 | Groupes | `/groups` | Implémentée |
 | Matchs | `/games` | Implémentée (contexte, CRUD, bulk actions, arbitres) |
 | Journées | `/gamedays` | Implémentée (contexte, CRUD, bulk, schéma, officiels) |
-| Schéma compétition | `/gamedays/schema` | Implémentée (visualisation CHPT/CP) |
+| Schéma compétition | `/gamedays?view=schema` | Implémentée (vue secondaire de Journées, visualisation CHPT/CP ; page autonome `/gamedays/schema`) |
 | Équipes | `/teams` | Implémentée (contexte, CRUD, couleurs, logos) |
 | Classements | `/rankings` | Implémentée (contexte, calcul, publication, phases CP, transfert) |
 | Classement initial | `/rankings/initial` | Implémentée (CHPT uniquement, édition inline, RAZ) |

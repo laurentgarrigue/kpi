@@ -1,6 +1,6 @@
 {
   "name": "kpi-admin",
-  "version": "1.35.0",
+  "version": "1.36.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -27,9 +27,9 @@
     "@vite-pwa/nuxt": "^1.1.1",
     "dayjs": "^1.11.18",
     "eslint": "^9.36.0",
-    "nuxt": "4.5.1",
+    "nuxt": "4.6.3",
     "pinia": "^3.0.3",
-    "postcss": "^8.5.30",
+    "postcss": "^8.5.32",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.8.3",
     "vitest": "^5.0.4",

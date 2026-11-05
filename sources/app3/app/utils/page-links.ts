@@ -1,5 +1,4 @@
 import { joinURL, withQuery } from 'ufo'
-import type { CompetitionType } from '#kpi-layer/utils/results/types'
 
 /**
  * Links from results pages to other pages (PAGE_COMPETITION.md § 2.1), with the same fallback mechanism as the
@@ -11,6 +10,7 @@ export interface PageLinkContext {
   locale: string
   legacyBaseUrl: string
   app2BaseUrl: string
+  api2BaseUrl: string
 }
 
 export interface PageLink {
@@ -48,39 +48,43 @@ export function legacyImageUrl(path: string | null, legacyBaseUrl: string): stri
   return path ? joinURL(legacyBaseUrl, 'img', path) : null
 }
 
+/** Placeholder logo of a team without one: shown as nothing. */
+const EMPTY_TEAM_LOGO = /(^|\/)empty-logo\.\w+$/
+
+/** Logo of a team (club logo), or `null` when it has none (CMP-19). */
+export function teamLogoUrl(path: string | null, legacyBaseUrl: string): string | null {
+  return path && !EMPTY_TEAM_LOGO.test(path) ? legacyImageUrl(path, legacyBaseUrl) : null
+}
+
 /** Game sheet: stays in app2. */
 export function gameLink(gameId: number, context: PageLinkContext): PageLink {
   return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
 }
 
-const RANKING_PDF: Record<CompetitionType, string> = {
-  CHPT: 'PdfCltChpt.php',
-  CP: 'PdfCltNiveauPhase.php',
-  MULTI: 'PdfCltMulti.php',
-}
+/** Every type, a cup included (its final ranking only), links to the ranking PDF (PDF_GOTENBERG.md § 7.4). */
+const RANKING_PDF = 'ranking'
+const GAMES_PDF = 'games-list'
 
 export type PdfTarget =
-  | { kind: 'ranking', type: CompetitionType, season: string, competition: string }
+  | { kind: 'ranking', season: string, competition: string }
   | { kind: 'games', season: string, competitions: string[] }
-  | { kind: 'games', event: number }
-  | { kind: 'gameSheet', game: number }
+  | { kind: 'games', season: string, event: number }
 
-/** Legacy public PDF, always called with explicit GET parameters (API_PUBLIC_RESULTS.md D-P2-2). */
+/**
+ * Public PDF of api2 (PDF_GOTENBERG.md § 7), always called with explicit GET parameters (API_PUBLIC_RESULTS.md
+ * D-P2-2). There is no public scoresheet PDF: a game links to its sheet in app2 (PDF_GOTENBERG.md § 7.3.2).
+ */
 export function pdfUrl(target: PdfTarget, context: PageLinkContext): string {
-  const url = (file: string, query: Record<string, string | number>) =>
-    // Commas are kept readable: the legacy PDF splits `Compet` on them.
-    withQuery(joinURL(context.legacyBaseUrl, file), query).replaceAll('%2C', ',')
+  const api2Pdf = (document: string, query: Record<string, string | number>) =>
+    // Commas are kept readable: `competition` lists several codes.
+    withQuery(joinURL(context.api2BaseUrl, 'pdf', document), { ...query, lang: context.locale }).replaceAll('%2C', ',')
 
   switch (target.kind) {
     case 'ranking':
-      return url(RANKING_PDF[target.type], { S: target.season, Compet: target.competition, lang: context.locale })
-    case 'gameSheet':
-      return url('PdfMatchMulti.php', { listMatch: target.game, lang: context.locale })
-    case 'games': {
-      const file = context.locale === 'en' ? 'PdfListeMatchsEN.php' : 'PdfListeMatchs.php'
+      return api2Pdf(RANKING_PDF, { season: target.season, competition: target.competition })
+    case 'games':
       return 'event' in target
-        ? url(file, { idEvenement: target.event })
-        : url(file, { S: target.season, Compet: target.competitions.join(',') })
-    }
+        ? api2Pdf(GAMES_PDF, { season: target.season, event: target.event })
+        : api2Pdf(GAMES_PDF, { season: target.season, competition: target.competitions.join(',') })
   }
 }

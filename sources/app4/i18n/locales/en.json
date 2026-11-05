@@ -68,6 +68,45 @@
   },
   "profile": "Profile",
   "logout": "Logout",
+  "security": {
+    "title": "Account security",
+    "subtitle": "Manage the devices connected to your account and your authentication methods.",
+    "load_failed": "Failed to load security information.",
+    "sign_out": "Sign out of this device",
+    "devices": {
+      "title": "Active devices",
+      "help": "A device is identified by its browser and IP range. « Revoke » signs out every session opened from that device.",
+      "current": "This device",
+      "created": "added on {date}",
+      "last_seen": "last seen on {date}",
+      "revoke": "Revoke",
+      "revoke_others": "Sign out of all other sessions",
+      "revoke_done": "Device revoked.",
+      "revoke_others_done": "{count} other device(s) signed out.",
+      "revoke_failed": "Revocation failed, please retry.",
+      "empty": "No active device."
+    },
+    "google": {
+      "title": "Google account",
+      "linked": "Your Google account is linked: you can sign in with one click from the login page.",
+      "not_linked": "No Google account linked.",
+      "link": "Link my Google account",
+      "link_cta": "Link your Google account to sign in with one click. You can use a Google address different from your KPI email.",
+      "link_done": "Google account linked successfully.",
+      "link_error": {
+        "already_linked": "This Google account is already linked to another KPI user. Unlink it first, or use a different Google account.",
+        "generic": "The Google link could not be completed, please retry."
+      },
+      "unlink": "Unlink my Google account",
+      "unlink_done": "Google account unlinked.",
+      "unlink_failed": "Could not unlink the Google account.",
+      "password_required": "Please set a password before unlinking your Google account."
+    },
+    "totp": {
+      "title": "Two-factor authentication (2FA)",
+      "coming_soon": "Authenticator-app two-factor (Google Authenticator, Authy…) is coming soon."
+    }
+  },
   "login": {
     "title": "Login",
     "subtitle": "Administration Panel",
@@ -82,7 +121,27 @@
     "beta_title": "Beta Version",
     "beta_message": "Please report any difficulties to the developer.",
     "forgot_password": "Forgot password?",
-    "request_access": "Request access"
+    "request_access": "Request access",
+    "or": "or",
+    "continue_with_google": "Continue with Google",
+    "oauth_completing": "Completing your sign-in…",
+    "oauth_error": {
+      "oauth_state_mismatch": "OAuth session is invalid, please restart Google sign-in.",
+      "oauth_missing_code": "Google did not return any code, please try again.",
+      "oauth_exchange_failed": "Could not validate Google's response, please retry.",
+      "oauth_email_not_verified": "Your Google email must be verified to sign in.",
+      "oauth_no_account": "No KPI account matches this Google address. Contact your administrator.",
+      "oauth_email_ambiguous": "Several KPI accounts share this address. Sign in with your identifier then link Google from your profile.",
+      "oauth_generic": "Google sign-in error."
+    },
+    "oauth_link": {
+      "title": "Link your Google account",
+      "explain": "You are about to link your Google account to the KPI account « {code} ». To confirm it's yours, enter the current password.",
+      "submit": "Confirm link",
+      "cancel": "Cancel",
+      "bad_password": "Wrong password.",
+      "expired": "The link request has expired, please restart Google sign-in."
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -268,6 +327,7 @@
     "license": "License",
     "number": "Number",
     "category": "Category",
+    "birth_date_unknown": "Unknown birth date",
     "paddle": "Paddle",
     "certificate": "Certificate",
     "saved": "Saved",
@@ -280,6 +340,7 @@
     "club": "Club",
     "exports": "PDF Exports",
     "pdf_editions": "PDF Editions",
+    "pdf_open_error": "Unable to open the PDF document",
     "more_actions": "More actions",
     "all": "All",
     "select": "Select",
@@ -493,14 +554,12 @@
     },
     "teams": {
       "registered": "Registered teams",
-      "presence_fr": "Team roster (FR)",
-      "presence_en": "Team roster (EN)",
+      "presence": "Team roster",
       "presence_visa": "Presence with visa",
       "presence_photo": "Presence with photo"
     },
     "matches": {
-      "list_fr": "Game list (FR)",
-      "list_en": "Game list (EN)",
+      "list": "Game list",
       "export_spreadsheet": "Spreadsheet export",
       "match_sheets": "Game sheets",
       "matches_count": "games",
@@ -530,8 +589,7 @@
     },
     "event": {
       "select": "Event",
-      "matches_fr": "Event games (FR)",
-      "matches_en": "Event games (EN)",
+      "matches": "Event games",
       "qr_codes": "QR Codes",
       "qr_code_app": "QR Code App"
     },
@@ -1162,7 +1220,6 @@
     "global_pdf": "PDF Exports",
     "pdf_pools": "Groups",
     "presence_sheet": "Roster sheet",
-    "presence_sheet_en": "Roster sheet (EN)",
     "presence_sheet_cat": "Roster by category",
     "presence_sheet_photo": "Roster with photos",
     "visa_sheet": "Presence with visa",
@@ -1308,8 +1365,7 @@
     "scope_day": "Same day",
     "scope_competition": "Entire competition",
     "copy_to_count": "Copy to {count} selected game(s)",
-    "pdf_fr": "PDF FR",
-    "pdf_en": "PDF EN",
+    "pdf_sheet": "PDF Roster sheet",
     "pdf_photo": "PDF Photo",
     "pdf_visa": "PDF Visa",
     "pdf_controle": "PDF Control",
@@ -1347,6 +1403,7 @@
     "error_Certif": "Medical certificate missing",
     "error_Pagaie_couleur": "Still-water paddle level too low ({min} minimum)",
     "error_Surclassement": "Age overclassing missing",
+    "error_Naissance_inconnue": "Unknown birth date, age category cannot be checked",
     "override_allowed_title": "Add despite failed validation",
     "override_allowed_notice": "As an administrator, you may add this player only as a non-playing referee (A) or staff (E).",
     "override_status_label": "Forced status",
@@ -1377,6 +1434,10 @@
     "paddle_none": "none"
   },
   "gamedays": {
+    "view_list": "Phase list",
+    "view_schema": "Draw",
+    "view_schema_title": "Show the draw progression of the selected competition",
+    "view_schema_needs_competition": "Select a competition to show its draw progression",
     "title": "Gamedays / Phases",
     "add": "Add a gameday",
     "edit": "Edit gameday",
@@ -1638,19 +1699,13 @@
       "title": "Documents",
       "admin_section": "Administration",
       "public_section": "Public",
-      "game_list_fr": "Game list (FR)",
-      "game_list_en": "Game list (EN)",
+      "game_list": "Game list",
       "scoresheets_all": "Score sheets",
       "export_ods": "Export (ODS)",
-      "public_list_fr": "Public list (FR)",
-      "public_list_en": "Public list (EN)",
+      "public_list": "Public list",
       "pitches_section": "Pitches (tables)",
-      "pitches_1_4_teams": "Pitches 1-4 (Teams)",
-      "pitches_5_8_teams": "Pitches 5-8 (Teams)",
-      "pitches_1_4_phases": "Pitches 1-4 (Phases)",
-      "pitches_5_8_phases": "Pitches 5-8 (Phases)",
-      "pitches_1_5_phases": "Pitches 1-5 (Phases)",
-      "pitches_1_5_teams": "Pitches 1-5 (Teams)"
+      "pitches_teams": "Pitches (grid, teams)",
+      "pitches_phases": "Pitches (grid, phases)"
     },
     "added": "Game created.",
     "save_and_add": "Save and add",
@@ -1767,6 +1822,33 @@
       "back_to_club": "Back to club"
     }
   },
+  "athletes_list": {
+    "title": "Athletes list",
+    "open_list": "Athletes list",
+    "back_to_search": "Athlete search",
+    "search_placeholder": "Filter by name, first name or licence...",
+    "filters": {
+      "unknown_birthdate": "Unknown birth date",
+      "international": "International player",
+      "engaged_this_season": "Engaged this season"
+    },
+    "total": "{count} athlete(s)",
+    "empty": "No athlete matches the filters",
+    "columns": {
+      "licence": "Licence",
+      "nom": "Name",
+      "sexe": "Sex",
+      "naissance": "Birth date",
+      "club": "Club"
+    },
+    "unknown_birthdate": "Unknown",
+    "international_badge": "International",
+    "open_sheet": "Open the sheet",
+    "pagination": {
+      "showing": "Showing {from} to {to} of {total} athletes",
+      "items_per_page": "Items per page"
+    }
+  },
   "athletes": {
     "title": "Athletes Management",
     "search_placeholder": "Search athlete (name, first name, licence)...",
@@ -1823,7 +1905,10 @@
       "submit": "Update",
       "success": "Update successful.",
       "error": "Error updating athlete.",
-      "forbidden": "Modification forbidden for this athlete."
+      "forbidden": "Modification forbidden for this athlete.",
+      "naissance_inconnue": "Unknown date of birth",
+      "naissance_required": "Enter the date of birth or tick \"Unknown date of birth\".",
+      "implausible_birthdate": "Implausible date of birth: the athlete must be between {min} and {max} years old in the current season."
     },
     "participations": {
       "season": "Season",
@@ -2231,6 +2316,7 @@
     "empty_filtered": "No entries match the filters.",
     "loading": "Loading activity log...",
     "error": "Error loading activity log.",
+    "deleted_account": "deleted account",
     "total_entries": "{count} entry | {count} entries",
     "pagination": {
       "showing": "Showing {from} to {to} of {total}",

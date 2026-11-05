@@ -1,6 +1,6 @@
 # api2 — endpoints publics des résultats (phase 2)
 
-**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — **Consommé par** : app3 (pages compétitions, compétition,
+**Phase** : 2 — **Statut** : ✅ Validée (08/10/2026, retours intégrés) — 🚀 Livrée (beta) — **Consommé par** : app3 (pages compétitions, compétition,
 événement, groupe) ; endpoints existants également consommés par **app2**
 **Remplace** : les requêtes SQL embarquées dans `kpclassements.php`, `kpmatchs.php`, `kpterrains.php`,
 `kpdetails.php`, `kpchart.php`, `kpphases.php`, `kpclassement.php`, `kpstats.php`
@@ -63,8 +63,8 @@ En-tête `Cache-Control: public, max-age=60` (300 pour `/seasons`, `/group/…/c
 | Endpoint | Réponse | Remplace |
 |---|---|---|
 | `GET /seasons` | `{ active: "2026", seasons: ["2026", "2025", …] }` (saisons > 1900 ayant au moins une compétition publiée, décroissantes ; `active` = `kp_saison.Etat = 'A'`) | combos saison |
-| `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées dans l'**ordre défini** puis l'**ordre du tour** (`GroupOrder, Code_tour, Code`, retour de recette du 09/10/2026 ; même ordre pour `siblings`), chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
-| `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, triées `GroupOrder`) + `events` (§ 5.6) | en-têtes `kpnavgroup.tpl` |
+| `GET /group/{season}/{code}/competitions` | `{ events, competitions }` : compétitions publiées du groupe, triées par **étape** (`Code_tour`) puis dans l'**ordre défini** (`Code_tour, GroupOrder, Code` : les zones d'une même étape restent ensemble, avant les demi-finales et les finales ; retour du 27/10/2026, qui remplace l'ordre `GroupOrder` d'abord du 09/10/2026 ; même ordre pour `siblings`), chacune avec son en-tête (§ 5.1) et son **classement compact** (§ 5.2) ; `events` = événements liés au groupe (§ 5.6) | `kpclassements.php` |
+| `GET /competition/{season}/{code}` | en-tête de la compétition (§ 5.1) + `siblings` (compétitions publiées du même groupe, même ordre que `/group/…/competitions`) + `events` (§ 5.6) | en-têtes `kpnavgroup.tpl` |
 | `GET /competition/{season}/{code}/games` | matchs publiés de la compétition : **même format** que `/group/…/games` | `kpmatchs.php`, `kpterrains.php` |
 | `GET /competition/{season}/{code}/charts` | tours / phases : **même format** qu'un élément de `/event/{id}/charts` (le plus riche : libellés d'attente résolus, `d_id` par phase, équipes des poules de CP déduites des matchs) | `kpchart.php`, `kpphases.php` |
 | `GET /competition/{season}/{code}/ranking` | classement général (§ 5.3) | `kpclassement.php` |
@@ -163,6 +163,11 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
   Tout PDF public qui ne lirait pas l'un de ces paramètres en GET est corrigé selon le motif de
   LEGACY_PDF_STANDALONE_ACCESS.md § B (`utyGetGet` après la valeur de session), sans changer le comportement
   de l'administration legacy. Les liens sont construits par **une** fonction pure d'app3 (`pdfUrl`).
+
+  **Mise à jour (PDF_GOTENBERG.md, phases 3 et 4)** : ces PDF sont désormais servis par api2
+  (`/api2/pdf/ranking`, `ranking-phases`, `games-list`, paramètres `season`, `competition` — liste séparée par des
+  virgules possible —, `event`, `lang`). La feuille de marque PDF publique n'existe plus (§ 7.3.2) :
+  `PdfMatchMulti.php` redirige vers la feuille de match d'app2.
 
 ## 7. Critères d'acceptation
 
