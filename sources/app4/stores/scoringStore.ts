@@ -95,6 +95,19 @@ interface ScoringLiveStateResponse {
   topicBase?: string
 }
 
+/**
+ * PUT /gameParam parameter (kp column name, the endpoint vocabulary) → ScoringMatch field,
+ * for the optimistic update and its rollback.
+ */
+const PARAM_FIELD: Record<string, keyof ScoringMatch> = {
+  ScoreA: 'scoreA',
+  ScoreB: 'scoreB',
+  Statut: 'statut',
+  Periode: 'periode',
+  Heure_fin: 'heureFin',
+  Commentaires_officiels: 'commentairesOfficiels'
+}
+
 /** Generate a uid in the same shape the backend produces (uniqid without dashes). */
 function genUid(): string {
   return (Date.now().toString(16) + Math.random().toString(16).slice(2, 10)).replace(/-/g, '')
@@ -245,34 +258,29 @@ export const useScoringStore = defineStore('scoring', {
       }
     },
 
-    /** Update a match parameter (score/status/period) via api2, optimistic + rollback */
+    /** Update a match parameter (score/status/period/closure) via api2, optimistic + rollback */
     async setParam(param: string, value: string, apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       this.lastMutationAt = Date.now()
       const api = apiInstance ?? sharedApi ?? useApi()
-      const previous = (this.match as Record<string, unknown>)[
-        param.charAt(0).toLowerCase() + param.slice(1)
-      ]
+      const field = PARAM_FIELD[param]
+      const previous = field ? this.match[field] : undefined
       // Optimistic local update for the mapped field
       this.applyParamLocally(param, value)
       try {
         await api.put(`/admin/scoring/gameParam/${this.match.id}`, { param, value })
       } catch (error) {
         // rollback
-        if (previous !== undefined) this.applyParamLocally(param, String(previous))
+        if (field) (this.match as unknown as Record<string, unknown>)[field] = previous
         throw error
       }
     },
 
-    /** Maps a backend param name to the local ScoringMatch field and assigns it */
+    /** Maps a backend param name (kp column) to the local ScoringMatch field and assigns it */
     applyParamLocally(param: string, value: string) {
-      if (!this.match) return
-      switch (param) {
-        case 'ScoreA': this.match.scoreA = value; break
-        case 'ScoreB': this.match.scoreB = value; break
-        case 'Statut': this.match.statut = value as MatchStatus; break
-        case 'Periode': this.match.periode = value as Period; break
-      }
+      const field = PARAM_FIELD[param]
+      if (!this.match || !field) return
+      ;(this.match as unknown as Record<string, unknown>)[field] = value
     },
 
     setStatus(status: MatchStatus, api?: ReturnType<typeof useApi>) {
@@ -402,15 +410,9 @@ export const useScoringStore = defineStore('scoring', {
     /** Recompute scoreA/scoreB from the current goal events (code 'B'). */
     recomputeScoresFromEvents() {
       if (!this.match) return
-      let a = 0
-      let b = 0
-      for (const e of this.events) {
-        if (e.code !== 'B') continue
-        if (e.team === 'A') a++
-        else if (e.team === 'B') b++
-      }
-      this.match.scoreA = String(a)
-      this.match.scoreB = String(b)
+      const goals = goalCounts(this.events)
+      this.match.scoreA = String(goals.A)
+      this.match.scoreB = String(goals.B)
     },
 
     /**
@@ -613,6 +615,36 @@ export const useScoringStore = defineStore('scoring', {
       this.lastMutationAt = Date.now()
       const api = apiInstance ?? sharedApi ?? useApi()
       await api.put(`/admin/scoring/gameTimer/${this.match.id}`, { params: { action, ...params } })
+    },
+
+    /**
+     * Close the match (spec §7.6), in the order the server needs: end time and comments
+     * first — Statut → END consolidates the live state into kp_* and reads them — then the
+     * lock, which forbids any later write.
+     */
+    async closeMatch(closure: { endTime: string, comments: string, lock: boolean }, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      const api = apiInstance ?? sharedApi ?? useApi()
+      await this.setParam('Heure_fin', closure.endTime, api)
+      if (closure.comments !== (this.match.commentairesOfficiels ?? '')) {
+        await this.setParam('Commentaires_officiels', closure.comments, api)
+      }
+      await this.setParam('Statut', 'END', api)
+      if (closure.lock && !this.isLocked) await this.toggleValidation(api)
+    },
+
+    /** Reopen a closed (unlocked) match for corrections: back to "En cours". */
+    reopenMatch(api?: ReturnType<typeof useApi>) {
+      return this.setStatus('ON', api)
+    },
+
+    /** Align the displayed score on the recorded goals (closure check, spec §7.6). */
+    async alignScoreOnGoals(apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const goals = goalCounts(this.events)
+      await this.setParam('ScoreA', String(goals.A), api)
+      await this.setParam('ScoreB', String(goals.B), api)
     },
 
     /** Validate / lock toggle (reuses AdminGames endpoint) */

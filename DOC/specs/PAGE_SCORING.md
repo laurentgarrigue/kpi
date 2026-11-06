@@ -1,13 +1,15 @@
 # Spécification — Scoring (console de match en direct) dans app4
 
-> Statut : **console écrite, jamais exécutée sur une base réelle** (2026-10-17) — Phase 0
-> terminée, Phase 1 largement avancée (détail en §12 Suivi). Point de situation du chantier et
-> dette de validation : [le plan, §0](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md).
+> Statut : **console écrite, essayée en dev sur des matchs de test** (traces en base en août et
+> octobre 2026), **validation complète à dérouler** (2026-11-05) — Phase 0 terminée, Phase 1
+> largement avancée (détail en §12 Suivi). Point de situation du chantier et dette de
+> validation : [le plan, §0](../developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) ;
+> marche à suivre : [SCORING_ROLLOUT_CHECKLIST.md](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 > ⚠️ **Réaligné sur le plan de refonte live — lire §0 en premier** (l'état live migre vers
 > `scoring_live_*`, la diffusion passe à Mercure). §0 prime sur le reste en cas de contradiction.
 > **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
-> raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9** et **correctif
-> réglementaire pénalités du 2026-07-29 en §0.10**.
+> raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9**, **correctif
+> réglementaire pénalités du 2026-07-29 en §0.10** et **revue UX du 2026-11-05 en §0.11**.
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et l'ancien prototype standalone app3 (feuille de marque Nuxt)
@@ -319,6 +321,42 @@ encaissé cible la **plus ancienne pénalité levable** (`V`/`J`) ; règles port
 `ScoringRules::cardCreatesPenaltyClock()` / `penaltyLiftableOnGoal()` (PHP + miroir TS, testées).
 
 ---
+
+### 0.11 Revue UX de la console (2026-11-05)
+
+Revue faite du point de vue de l'opérateur de table de marque — sur tablette au bord du bassin, les
+yeux sur le jeu, qui suit l'arbitre. Priorité : **ne jamais rater un fait, ne jamais se tromper,
+corriger vite**. Ces décisions **remplacent** les passages contraires de §7.
+
+**Sûreté de saisie (P0)**
+
+| Décision | Remplace | Pourquoi |
+|---|---|---|
+| Le badge de statut ne donne plus que le **coup d'envoi** (`ATT → ON`). **Clore** passe par un bouton « Clore le match… » et un panneau dédié (§7.6) ; **rouvrir** (`END → ON`) par « Rouvrir le match… » avec confirmation | le badge cyclique `ATT → ON → END → ATT` (§7.1) | un tap de trop sur le badge clôturait le match **et consolidait `kp_*`** sans rien demander ; le tap suivant le repassait « En attente » |
+| Le panneau de clôture réunit : **score affiché / buts saisis** (écart signalé, alignement en un clic), **heure de fin** pré-remplie à l'heure courante, **commentaires des officiels**, **verrouillage** (profils autorisés). Il arrête chrono, shotclock et pause | rien — §7.6 n'était pas implémenté | parité avec la clôture FMV3 et le PDF (heure de fin, commentaires) |
+| Le **but en or** ouvre ce panneau au lieu de clôturer directement | §7.5, modale « Clore le match ? » → `END` | même raison : heure de fin et commentaires |
+| Les réglages **±1/±10 s du chrono principal** sont **inactifs chrono en marche** (sauf `config.allowTimerAdjustWhileRunning`) | réglages actifs en permanence | collés au bouton Démarrer/Pause, une erreur de doigt décalait le chrono en plein jeu |
+| Après chaque fait enregistré, un message « Fait de jeu enregistré » (fait · joueur · temps) propose **Annuler** pendant 6 s ; l'annulation retire aussi la pénalité créée et ferme les modales de suite d'un but (levée, but en or) | — | plus rapide que retrouver la ligne dans l'historique |
+
+**Vitesse (P1)**
+
+| Décision | Pourquoi |
+|---|---|
+| Les **pénalités en cours** s'affichent **sur le tableau de score, sous le score** de chaque équipe (comme le scoreboard public), y compris en mode score seul ; elles quittent les colonnes d'équipe | un seul endroit à regarder pour tous les décomptes |
+| Chaque ligne d'effectif porte les **buts** du joueur (⚽, ×n) et son **dernier carton** V/J (R/D gardent leur marqueur d'exclusion) | l'opérateur voit qui est déjà averti avant que l'alerte de progression ne s'ouvre |
+| **Saisie au clavier par numéro** (touche **`N`**, réassignable) : fenêtre en deux temps — numéro (`7`, `A7`, `7B` ; un numéro présent des deux côtés demande la lettre d'équipe), puis **lettre du fait** (`B`/`V`/`J`/`R`/`D`). Le fait est alors **armé** et le temps a le focus : `Entrée` enregistre. Flux complet : `N 7 ↵ B ↵`. Fonctionne aussi en post-match. Les combinaisons `Ctrl`/`Cmd`/`Alt` ne sont jamais interceptées | §7.1 demandait la sélection du joueur par numéro tapé. Une lettre, et non un chiffre, pour ne pas entrer en conflit avec les raccourcis du chronomètre de tir (`0`, `.`, `+`, `−`, `Entrée`). Deux temps plutôt que « focus sur les boutons de faits » : `Entrée`/`Espace` y déclencheraient les raccourcis chrono |
+
+**Clarté (P2)**
+
+| Décision | Pourquoi |
+|---|---|
+| **Bandeau « Connexion perdue »** quand le navigateur est hors ligne ou que l'abonnement temps réel est en erreur (mode direct) | la couleur du badge de synchronisation passait inaperçue |
+| **Historique** : en direct, les **3 derniers faits** + « Tout voir » ; en post-match, tout. Tri des prolongations au-delà de P2 corrigé | l'historique complet repoussait la zone de saisie hors de l'écran d'une tablette (§7.1, historique à la demande) |
+| **Contrôles avant coup d'envoi** (vue Paramètres, et bandeau compact dans Déroulement tant que le match est « En attente ») : **moins de 5 ou plus de 8 joueurs**, **plus de 3 membres d'encadrement** (statut `E`), **numéros en double**, **pas de capitaine**, **officiels obligatoires manquants** (arbitres principal et secondaire, secrétaire, chronométreur). **Avertissements seulement** : rien ne bloque le coup d'envoi | §7.2 — la table de marque vérifie la feuille avant le match ; l'arbitre reste l'autorité |
+| Libellés d'action explicites : « Passer en {période} », « Enregistrer quand même » | « Enregistrer » ne disait pas ce qui allait se passer |
+
+Les règles d'effectif (5 / 8 / 3) vivent dans `utils/scoringReadiness.ts` (`ROSTER_LIMITS`) : ce sont
+des avertissements d'interface, pas des règles de jeu appliquées par le serveur — pas de miroir api2.
 
 ## 1. Contexte et objectif
 
@@ -991,8 +1029,11 @@ ces états **se succèdent**. On réutilise le **pattern « badge cyclique »** 
 `pages/competitions/index.vue` (`cycleStatus` : `statusMap { ATT→ON, ON→END, END→ATT }`, badge
 coloré cliquable + libellé i18n + couleur par statut).
 
-- **Statut du match** (`ScoringStatusBadge`) : **un seul badge** affichant le statut courant,
-  **clic / touche = passe au suivant** (`ATT → ON → END`, puis retour possible `END → ATT` pour
+- **Statut du match** (`ScoringStatusBadge`) : **un seul badge** affichant le statut courant.
+  > **Révisé le 2026-11-05 (§0.11)** : le clic ne fait plus que le **coup d'envoi** (`ATT → ON`).
+  > La clôture et la réouverture passent par leurs propres boutons et dialogues.
+
+  *Version initiale* : **clic / touche = passe au suivant** (`ATT → ON → END`, puis retour possible `END → ATT` pour
   corriger). Couleurs et libellés calqués sur le badge statut compétition. Gain : un seul élément
   au lieu de trois, lisible et tappable au doigt.
 
@@ -1173,6 +1214,11 @@ ligne, ajout du nouveau) et **met à jour les marqueurs visuels** du joueur (but
 > écrit qu'à la **consolidation fin de match** (cf. §0.2) et accepte déjà `P{n}` (varchar).
 
 ### 7.6 Clôture du match
+
+> **Implémenté le 2026-11-05 (§0.11)** : bouton « Clore le match… » → panneau (score affiché /
+> buts saisis, heure de fin, commentaires, verrouillage). Ordre des écritures, imposé par le
+> serveur : `Heure_fin` puis `Commentaires_officiels` (écrit directement dans `kp_match`, donnée de
+> résultat comme le score officiel), puis `Statut = END` (consolidation `kp_*`), puis verrouillage.
 
 À la fin du match, la table de marque :
 
@@ -1530,7 +1576,7 @@ le flat-config actuel, `Object.groupBy` absent < Node 21) ; `php -l ScoringContr
 
 Reste sur ce lot : fichiers de référence matériel (1.8, dépend de l'action 0.5), recharge
 présents/n° court (1.5), et l'exécution de la migration + test de bout en bout en dev
-(cf. [SCORING_DEV_CHECKLIST.md](../developer/in-progress/SCORING_DEV_CHECKLIST.md)).
+(cf. [SCORING_ROLLOUT_CHECKLIST.md](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md)).
 
 **Prolongations non bornées + cartons 2027 côté console ✅ (plan lot 3, 1ʳᵉ tranche — 2026-07-27) :**
 
@@ -1546,7 +1592,7 @@ présents/n° court (1.5), et l'exécution de la migration + test de bout en bou
 
 Vérifié : ESLint OK sur tous les fichiers modifiés (node 22) ; les 62 assertions PHP des
 règles restent la référence. Tests fonctionnels à dérouler :
-[SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
+[SCORING_ROLLOUT_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 
 **Shotclock 3 commandes + pauses + buzzer + raccourcis ✅ (plan lot 3, 2ᵉ tranche — 2026-07-27) :**
 
@@ -1594,7 +1640,7 @@ modale de levée sur but encaissé, marqueurs 🔴/⬛ dans les effectifs), pers
 Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés, et
 `skipWaiting()` n'y apparaît plus que dans le gestionnaire du message `SKIP_WAITING`
 (révision du 2026-10-17) ; ESLint OK. Tests :
-[SCORING_DEV_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_DEV_CHECKLIST.md)
+[SCORING_ROLLOUT_CHECKLIST.md §lot 3](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md)
 (2ᵉ tranche 3.11–3.21, 3ᵉ 3.22–3.31, 4ᵉ 3.32–3.39).
 
 **Mode score seul + vue Paramètres ✅ (plan lot 3, 6ᵉ tranche — 2026-07-29) :**
@@ -1607,6 +1653,26 @@ Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés, et
 | `src/Controller/ScoringController.php` | **`GET /admin/scoring/resolve/{matchId}/{number}`** : portage de `getShortGame.php` — même journée → même compétition → même événement ; un scope **ambigu n'élargit pas** silencieusement (404 explicite). Garde de source élargi : la console écrit en `MANUAL` **ou** `SCORE_ONLY` (même opérateur) ; seule une source externe bloque. |
 | `src/Controller/AdminGamesController.php` | `GET /admin/games/{id}` expose enfin `secretaire`, `chronometre`, `timeshoot`, `ligne1/2`, `commentairesOfficiels`, `heureFin` (colonnes déjà lues par `m.*`). |
 | `types/scoring.ts` | `ScoringMatch` complété (publication + officiels + clôture). |
+
+**Revue UX ✅ (plan lot 3, 7ᵉ tranche — 2026-11-05, décisions §0.11) :**
+
+| Fichier | Détail |
+|---|---|
+| `utils/scoringRoster.ts` + `tests/unit/scoringRoster.spec.ts` | **Créés (test-first).** `playerTallies` (buts et cartons par joueur), `goalCounts` (score calculé), `findPlayersByNumber` (`7`, `a7`, `7B` ; jamais un entraîneur). |
+| `utils/scoringReadiness.ts` + `tests/unit/scoringReadiness.spec.ts` | **Créés (test-first).** `matchReadiness` : effectif 5–8, encadrement ≤ 3, doublons de numéros, capitaine, officiels obligatoires. |
+| `components/scoring/CloseMatchModal.vue` | **Créé.** Panneau de clôture (§7.6). |
+| `components/scoring/NumberPicker.vue` | **Créé.** Saisie au clavier en deux temps (numéro puis lettre du fait). |
+| `components/scoring/Readiness.vue` | **Créé.** Contrôles avant coup d'envoi, complet (Paramètres) ou compact (Déroulement). |
+| `components/scoring/StatusBadge.vue` | Coup d'envoi seulement (`can-kickoff` / `kickoff`). |
+| `components/scoring/Board.vue` · `TeamColumn.vue` · `EventHistory.vue` · `PeriodSelector.vue` | Pénalités sous le score ; marqueurs buts/carton ; 3 derniers faits + tri `P{n}` non borné ; libellé « Passer en … ». |
+| `composables/useScoringShortcuts.ts` | Action `playerByNumber` (`n`) ; lettres insensibles à la casse ; `Ctrl`/`Cmd`/`Alt` jamais interceptés. |
+| `stores/scoringStore.ts` | Table `PARAM_FIELD` (rollback correct de tous les paramètres), actions `closeMatch`, `reopenMatch`, `alignScoreOnGoals`. |
+| `src/Controller/ScoringController.php` + `tests/Integration/ScoringClosureTest.php` | **`Commentaires_officiels`** accepté par `PUT /gameParam` (écrit dans `kp_match`, journal « Scoring commentaires ») ; test de la clôture et de la consolidation. |
+
+Vérifié : `make app4_test` 169/169, `make api2_test_unit` 335, `make api2_test_integration` 336,
+ESLint OK, compilation des SFC OK. **Non vérifié à l'écran** (base de dev sans tables scoring au
+moment de l'écriture) : tests 3.59 → 3.73 de la
+[checklist](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 
 **Reste à faire en Phase 1** (avant de clore le MVP) :
 - Test fonctionnel complet **authentifié** (profil ≤ 2) via l'UI : saisie réelle + vérification

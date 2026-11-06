@@ -10,20 +10,31 @@ import type { ScoringEvent } from '~/types/scoring'
  *      B row = (blank) | time | [goal][name][V][J][R]. Sorted period ↓ then time ↑.
  *  - **Vertical list** (mobile) — compact single column.
  *
+ * During play only the most recent facts are shown (`recentCount`), the rest one click
+ * away: the full timeline pushed the entry zone off a tablet screen (spec §7.1 — history
+ * on demand). Post-match, where the timeline IS the work, everything is shown.
+ *
  * Props down / events up: emits `edit`/`remove`; the page mutates the store.
  */
 const props = defineProps<{
   events: ScoringEvent[]
   editingUid?: string | null
   canScore?: boolean
+  /** Show only the N most recent facts until "Tout voir"; 0 = always everything. */
+  recentCount?: number
 }>()
 
 const emit = defineEmits<{ edit: [e: ScoringEvent]; remove: [e: ScoringEvent] }>()
 
 const { t } = useI18n()
 
-// Period order for sorting (most recent period first), matching the legacy ORDER BY.
-const PERIOD_ORDER: Record<string, number> = { TB: 5, P2: 4, P1: 3, M2: 2, M1: 1 }
+// Chronological rank of a period: M1 < M2 < P1 < P2 < … (unbounded, spec §0.6) < TB.
+const SHOOTOUT_RANK = Number.MAX_SAFE_INTEGER
+const periodRank = (p: string): number => {
+  if (p === 'TB') return SHOOTOUT_RANK
+  const overtime = overtimeIndex(p)
+  return overtime !== null ? 2 + overtime : p === 'M2' ? 2 : 1
+}
 
 /** Display a game time as MM:SS (drop a leading 00: hours segment if present). */
 const fmtTime = (t: string): string => {
@@ -37,13 +48,21 @@ const timeToSeconds = (t: string): number => {
   return (m || 0) * 60 + (s || 0)
 }
 
+const showAll = ref(false)
+const limited = computed(() => !!props.recentCount && !showAll.value && props.events.length > props.recentCount)
+
+// The N latest facts in game order (period, then time) — what "recent" means at the table.
+const visible = computed(() => {
+  if (!limited.value) return props.events
+  const chronological = [...props.events].sort((a, b) =>
+    periodRank(a.period) - periodRank(b.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
+  return chronological.slice(-props.recentCount!)
+})
+
 // period DESC, time ASC (as in ReportController / fm3 query)
 const sorted = computed(() =>
-  [...props.events].sort((a, b) => {
-    const pd = (PERIOD_ORDER[b.period] ?? 0) - (PERIOD_ORDER[a.period] ?? 0)
-    if (pd !== 0) return pd
-    return timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu)
-  })
+  [...visible.value].sort((a, b) =>
+    periodRank(b.period) - periodRank(a.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
 )
 
 const playerLabel = (e: ScoringEvent): string => {
@@ -58,7 +77,16 @@ const onRowClick = (e: ScoringEvent) => {
 
 <template>
   <div>
-    <h3 class="font-semibold mb-2">{{ t('scoring.history') }}</h3>
+    <div class="flex items-center gap-2 mb-2">
+      <h3 class="font-semibold flex-1">{{ t('scoring.history') }}</h3>
+      <UButton
+        v-if="recentCount && events.length > recentCount"
+        size="xs"
+        variant="ghost"
+        :icon="showAll ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+        @click="showAll = !showAll"
+      >{{ showAll ? t('scoring.history_recent', { n: recentCount }) : t('scoring.history_all', { count: events.length }) }}</UButton>
+    </div>
 
     <!-- Symmetric table (PC / large tablet) -->
     <table class="hidden md:table w-full text-sm border-collapse">

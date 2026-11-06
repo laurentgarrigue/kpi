@@ -6,7 +6,7 @@
 > `GET /scoring/state/{matchId}`), table `scoring_display_settings`. Restent : évolution des
 > consommateurs `kp_*` en cours de match, validation terrain par terrain, UI de réglage des
 > délais, refonte des styles (§10). Tests :
-> [SCORING_DEV_CHECKLIST.md §lot 4](../developer/in-progress/SCORING_DEV_CHECKLIST.md).
+> [SCORING_ROLLOUT_CHECKLIST.md §lot 4](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 >
 > ⚠️ **Jamais affichée dans OBS, et jamais alimentée par un hub Mercure réel** : ce code n'a
 > pas encore rencontré la production. Porte de validation V3 de la checklist.

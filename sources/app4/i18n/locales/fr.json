@@ -2682,7 +2682,8 @@
       "pause": "Pause",
       "reset": "Réinitialiser",
       "shotclock": "Time-shoot",
-      "group": "Chronomètre de jeu"
+      "group": "Chronomètre de jeu",
+      "adjust_locked": "Arrêtez le chrono pour le corriger"
     },
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
@@ -2727,7 +2728,6 @@
       "r_rep": "Remplacement",
       "unknown": "Autre / Non précisé"
     },
-    "status_cycle_hint": "Cliquer pour changer de statut",
     "period_next": "Période suivante",
     "period_direct": "Aller à…",
     "period_confirm_title": "Changer de période ?",
@@ -2739,7 +2739,8 @@
       "card_not_higher": "Ce joueur a déjà reçu un carton de couleur égale ou supérieure : le carton suivant doit être strictement supérieur (vert → jaune → rouge).",
       "player_already_out": "Ce joueur est déjà exclu pour ce match (carton rouge ou noir) : aucun carton supplémentaire n'est possible.",
       "unknown_card": "Code de carton inconnu.",
-      "confirm": "Enregistrer quand même ?"
+      "confirm": "Enregistrer quand même ?",
+      "record_anyway": "Enregistrer quand même"
     },
     "golden_goal": {
       "title": "But en or",
@@ -2766,7 +2767,8 @@
       "shotclockStart40": "Chrono de tir : départ/reset 40 s",
       "shotclockStop": "Chrono de tir : arrêt (--)",
       "shotclockPlus": "Chrono de tir : +1 s",
-      "shotclockMinus": "Chrono de tir : −1 s"
+      "shotclockMinus": "Chrono de tir : −1 s",
+      "playerByNumber": "Choisir un joueur par son numéro"
     },
     "sound_test": "Tester le son",
     "penalty": {
@@ -2847,6 +2849,65 @@
       "card_yellow": "Jaune",
       "card_red": "Rouge",
       "card_black": "Noir"
+    },
+    "status_kickoff_hint": "Cliquer pour donner le coup d'envoi",
+    "period_confirm_action": "Passer en {period}",
+    "roster_goals": "{n} but(s)",
+    "history_all": "Tout voir ({count})",
+    "history_recent": "Les {n} derniers seulement",
+    "close": {
+      "action": "Clore le match…",
+      "title": "Clore le match",
+      "score": "Score affiché",
+      "goals": "Buts saisis",
+      "mismatch": "Le score affiché ne correspond pas aux buts saisis.",
+      "align": "Aligner le score sur les buts",
+      "end_time": "Heure de fin",
+      "comments": "Commentaires des officiels",
+      "comments_placeholder": "Réserves des capitaines, rapport de l'arbitre…",
+      "lock": "Verrouiller le match après la clôture",
+      "lock_hint": "Plus aucune modification possible ensuite, sauf déverrouillage.",
+      "confirm": "Clore le match",
+      "done": "Match clos",
+      "done_description": "Le résultat est enregistré sur la feuille de match officielle."
+    },
+    "reopen": {
+      "action": "Rouvrir le match…",
+      "title": "Rouvrir le match ?",
+      "message": "Le match repasse « En cours » pour corriger la saisie. Il faudra le clore à nouveau pour enregistrer le résultat corrigé.",
+      "confirm": "Rouvrir le match",
+      "done": "Match rouvert"
+    },
+    "picker": {
+      "title": "Joueur par numéro",
+      "placeholder": "N° (ex. 7, A7, 7B)",
+      "hint": "Entrée pour choisir · Échap pour fermer",
+      "ambiguous": "Le n°{number} existe dans les deux équipes : ajoutez A ou B, ou cliquez le joueur.",
+      "none": "Aucun joueur avec ce numéro.",
+      "open": "Choisir un joueur par son numéro",
+      "fact_hint": "Tapez la lettre du fait : il s'arme et le temps prend le focus (Entrée pour enregistrer). Échap pour fermer."
+    },
+    "undo": {
+      "recorded": "Fait de jeu enregistré",
+      "action": "Annuler",
+      "done": "Saisie annulée"
+    },
+    "offline": {
+      "title": "Connexion perdue",
+      "message": "Les saisies risquent de ne pas être enregistrées. Gardez la page ouverte : la synchronisation reprend au retour du réseau. Vérifiez ensuite la chronologie."
+    },
+    "readiness": {
+      "title": "À vérifier avant le coup d'envoi",
+      "ok": "Feuille de match prête : effectifs, numéros, capitaines et officiels vérifiés",
+      "hint": "Ces contrôles n'empêchent pas le coup d'envoi : l'arbitre décide.",
+      "summary": "{count} point(s) à vérifier sur la feuille de match avant le coup d'envoi",
+      "open": "Voir la feuille",
+      "too_few_players": "{team} : {count} joueur(s) sur la feuille, il en faut au moins {min}",
+      "too_many_players": "{team} : {count} joueurs sur la feuille, {max} au maximum",
+      "too_many_staff": "{team} : {count} membres d'encadrement, {max} au maximum",
+      "duplicate_numbers": "{team} : numéros de maillot en double ({numbers})",
+      "no_captain": "{team} : aucun capitaine désigné",
+      "missing_officials": "Officiels à renseigner : {roles}"
     }
   },
   "competition": {

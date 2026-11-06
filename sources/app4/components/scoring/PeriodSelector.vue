@@ -104,7 +104,7 @@ const cancel = () => { pending.value = null }
       variant="warning"
       :title="t('scoring.period_confirm_title')"
       :message="t('scoring.period_confirm_message', { period: pending ? periodLabel(pending) : '' })"
-      :confirm-text="t('scoring.edit.save')"
+      :confirm-text="t('scoring.period_confirm_action', { period: pending ? periodLabel(pending) : '' })"
       :cancel-text="t('scoring.edit.cancel')"
       @confirm="confirm"
       @close="cancel"

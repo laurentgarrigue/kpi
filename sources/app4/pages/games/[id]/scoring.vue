@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { OfficialRole, Period, MatchStatus, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
+import type { MatchClosure, OfficialRole, Period, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
+import { shortcutKeyLabel } from '~/composables/useScoringShortcuts'
 
 definePageMeta({
   layout: 'admin',
@@ -403,6 +404,79 @@ watch(() => penalties.penalties.value.map(p => `${p.slot}${p.team}${Math.ceil(p.
 // ─── Configurable keyboard shortcuts (spec §6.5, decision §0.9) ───
 const shortcutsOpen = ref(false)
 
+// ─── Pick the player by jersey number, keyboard only (`N` — spec §7.1) ───
+const pickerOpen = ref(false)
+const pickerFacts = computed(() => eventCodes.map(e => ({ code: e.code, label: t(e.labelKey) })))
+const openPicker = () => {
+  if (view.value === 'run' && !scoreOnly.value && !editingUid.value) pickerOpen.value = true
+}
+/** Number + fact letter typed: same state as two clicks — the time field now has the focus. */
+const pickFromNumber = async (team: TeamSide, player: ScoringPlayer, code: ScoringEventCode) => {
+  pickerOpen.value = false
+  selectPlayer(team, player)
+  await stageEvent(code)
+}
+
+// ─── Closure (spec §7.6) and reopening — never a single tap: both go through a dialog ───
+const closeOpen = ref(false)
+const closing = ref(false)
+const reopenOpen = ref(false)
+const goals = computed(() => goalCounts(scoringStore.events))
+const openClose = () => {
+  if (canScore.value) closeOpen.value = true
+}
+const confirmClose = async (closure: MatchClosure) => {
+  if (!canScore.value || closing.value) return
+  closing.value = true
+  try {
+    // Freeze every live clock first: the match is over, nothing may keep counting.
+    if (isLive.value && isRunning.value) timer('stop')
+    if (shotclock.state.value !== 'IDLE') shotclockStop()
+    stopBreak()
+    await scoringStore.closeMatch(closure)
+    closeOpen.value = false
+    mode.value = 'post'
+    toast.add({ title: t('scoring.close.done'), description: t('scoring.close.done_description'), color: 'success' })
+  } catch { /* useApi already toasts */ } finally {
+    closing.value = false
+  }
+}
+const alignScore = async () => {
+  try { await scoringStore.alignScoreOnGoals() } catch { /* useApi already toasts */ }
+}
+const confirmReopen = async () => {
+  reopenOpen.value = false
+  try {
+    await scoringStore.reopenMatch()
+    toast.add({ title: t('scoring.reopen.done'), color: 'info' })
+  } catch { /* useApi already toasts */ }
+}
+
+// ─── Pre-kick-off checks of the game sheet (spec §7.2) — warnings, never a block ───
+const readiness = computed(() => match.value
+  ? matchReadiness({ playersA: scoringStore.playersA, playersB: scoringStore.playersB, officials: match.value })
+  : [])
+
+// ─── Roster markers: goals and current card of each player (spec §7.3) ───
+const tallies = computed(() => playerTallies(scoringStore.events))
+
+// ─── History: the latest facts during play, everything post-match (spec §7.1) ───
+const HISTORY_RECENT_COUNT = 3
+
+// ─── Connection loss: say it in words, not only with the sync badge colour ───
+const online = ref(true)
+const updateOnline = () => { online.value = navigator.onLine }
+onMounted(() => {
+  updateOnline()
+  window.addEventListener('online', updateOnline)
+  window.addEventListener('offline', updateOnline)
+})
+onUnmounted(() => {
+  window.removeEventListener('online', updateOnline)
+  window.removeEventListener('offline', updateOnline)
+})
+const connectionLost = computed(() => isLive.value && (!online.value || liveSync.status.value === 'error'))
+
 // Occasional tools, grouped in the header's ⋯ menu: full-screen displays (live only — same
 // origin, BroadcastChannel keeps them in sync) and the keyboard shortcuts.
 const toolItems = computed(() => [
@@ -414,18 +488,23 @@ const toolItems = computed(() => [
     : []),
   { label: t('scoring.shortcuts.title'), icon: 'i-heroicons-command-line', onSelect: () => { shortcutsOpen.value = true } }
 ])
-const shortcutsEnabled = computed(() => isLive.value && canScore.value && !shortcutsOpen.value)
+// Off while a dialog owns the keyboard; the clock keys only mean something in live mode,
+// picking a player by number works in post-match too.
+const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value && !pickerOpen.value
+  && !closeOpen.value && !reopenOpen.value)
+const liveOnly = (handler: () => void) => () => { if (isLive.value) handler() }
 const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
-  gameClockToggle: () => toggleClock(),
-  shotclockStart60: () => shotclockStart(scoringStore.config.shotclockDurations.full),
-  shotclockStart40: () => {
+  gameClockToggle: liveOnly(() => toggleClock()),
+  shotclockStart60: liveOnly(() => shotclockStart(scoringStore.config.shotclockDurations.full)),
+  shotclockStart40: liveOnly(() => {
     if (scoringStore.config.shotclockOffensiveReboundEnabled) {
       shotclockStart(scoringStore.config.shotclockDurations.offensiveRebound)
     }
-  },
-  shotclockStop,
-  shotclockPlus: () => shotclockAdjust(1),
-  shotclockMinus: () => shotclockAdjust(-1)
+  }),
+  shotclockStop: liveOnly(shotclockStop),
+  shotclockPlus: liveOnly(() => shotclockAdjust(1)),
+  shotclockMinus: liveOnly(() => shotclockAdjust(-1)),
+  playerByNumber: () => openPicker()
 }, { enabled: shortcutsEnabled })
 
 // In live mode keep the event-time field tracking the clock (unless editing a row).
@@ -687,6 +766,9 @@ const pushEvent = async (code: ScoringEventCode) => {
     nom: player.nom,
     prenom: player.prenom
   }
+  // Captured before the selection is cleared: the undo toast names who and when.
+  const recordedLabel = `${t(eventCodes.find(e => e.code === code)!.shortKey)} · ${selectedLabel.value} · ${event.period} ${event.tpsJeu}`
+  let createdPenaltyId: string | null = null
   try {
     await scoringStore.addEvent(event)
     selected.value = null
@@ -714,13 +796,50 @@ const pushEvent = async (code: ScoringEventCode) => {
           durationSec: scoringStore.config.penaltyDuration,
           running: isRunning.value
         })
-        if (clock) persistPenalty(clock, clock.running ? 'run' : 'stop')
-        else toast.add({ title: t('scoring.penalty.title'), description: t('scoring.penalty.full_slots'), color: 'warning' })
+        if (clock) {
+          createdPenaltyId = clock.id
+          persistPenalty(clock, clock.running ? 'run' : 'stop')
+        } else toast.add({ title: t('scoring.penalty.title'), description: t('scoring.penalty.full_slots'), color: 'warning' })
       }
     } else if (code === 'D') {
       // Black card: definitive exclusion, NO penalty clock, no replacement to the end.
       toast.add({ title: t('scoring.event.card_black'), description: t('scoring.penalty.black_no_penalty'), color: 'info' })
     }
+    offerUndo(event, recordedLabel, createdPenaltyId)
+  } catch { /* toast handled */ }
+}
+
+/**
+ * Undo of the fact just recorded, offered for a few seconds (cheaper than finding the row
+ * in the history). Removes what the fact created along with it: its penalty clock, and the
+ * goal's follow-up dialogs (early lift, golden goal).
+ */
+const UNDO_TOAST_MS = 6000
+const offerUndo = (event: ScoringEvent, label: string, penaltyId: string | null) => {
+  toast.add({
+    title: t('scoring.undo.recorded'),
+    description: label,
+    color: 'success',
+    duration: UNDO_TOAST_MS,
+    actions: [{
+      label: t('scoring.undo.action'),
+      icon: 'i-heroicons-arrow-uturn-left',
+      color: 'neutral',
+      variant: 'outline',
+      onClick: () => { void undoEvent(event, penaltyId) }
+    }]
+  })
+}
+const undoEvent = async (event: ScoringEvent, penaltyId: string | null) => {
+  if (!canScore.value || !scoringStore.events.some(e => e.uid === event.uid)) return
+  try {
+    await scoringStore.removeEvent(event)
+    if (penaltyId) removePenalty(penaltyId)
+    if (event.code === 'B') {
+      liftPending.value = null
+      goldenGoalOpen.value = false
+    }
+    toast.add({ title: t('scoring.undo.done'), color: 'info' })
   } catch { /* toast handled */ }
 }
 
@@ -803,12 +922,15 @@ const setPeriod = (p: Period) => {
   // Reconfigure the clock to the new period duration (fresh countdown)
   if (isLive.value) timerSetPeriod(periodDurationOf(p, scoringStore.config.periodDurations))
 }
-const setStatus = (s: MatchStatus) => {
+/**
+ * Kick-off (ATT → ON), the only one-tap status change. With no period chosen yet the match
+ * starts on the first period — no confirmation, there is no clock to reset yet. Closing
+ * and reopening have their own dialogs (see confirmClose / confirmReopen).
+ */
+const kickoff = () => {
   if (!canScore.value) return
-  scoringStore.setStatus(s)
-  // Kick-off with no period chosen yet: the match starts on the first period. No
-  // confirmation here — there is no clock to reset yet.
-  if (s === 'ON' && !match.value?.periode) setPeriod('M1')
+  void scoringStore.setStatus('ON').catch(() => { /* useApi already toasts */ })
+  if (!match.value?.periode) setPeriod('M1')
 }
 
 // In live mode the entry period follows the match period (local change, remote terminal or
@@ -849,8 +971,11 @@ const toggleClock = () => {
 // `deltaSec` is expressed on the DISPLAYED time (a countdown): +1 adds a second to the time
 // left, so it SUBTRACTS a second from the elapsed time. Getting this backwards inverted the
 // buttons (fixed 2026-08-02).
+// A mis-tap next to Start/Pause must not shift a running clock: the fine adjust is a
+// correction made clock stopped (spec §6.4), unless the competition allows it (hardware sync).
+const clockAdjustable = computed(() => !isRunning.value || scoringStore.config.allowTimerAdjustWhileRunning)
 const adjustClock = (deltaSec: number) => {
-  if (!canScore.value || !acceptClick(`clock${deltaSec}`)) return
+  if (!canScore.value || !clockAdjustable.value || !acceptClick(`clock${deltaSec}`)) return
   const wasRunning = isRunning.value
   // Clamped at both ends: never below 0, never past the period duration (which would show
   // a negative remaining time).
@@ -945,6 +1070,16 @@ const toggleLock = async () => {
         :description="t('competition.ended_description')"
       />
 
+      <!-- Connection lost: the sync badge colour alone went unnoticed during play -->
+      <UAlert
+        v-if="connectionLost"
+        icon="i-heroicons-signal-slash"
+        color="error"
+        variant="soft"
+        :title="t('scoring.offline.title')"
+        :description="t('scoring.offline.message')"
+      />
+
       <!-- Header: which match, then the console switches (view, mode, tools, lock) -->
       <header class="flex flex-wrap items-center gap-x-6 gap-y-3">
         <!-- Full width on mobile, so the switches wrap under it instead of squeezing it -->
@@ -1021,6 +1156,12 @@ const toggleLock = async () => {
       </header>
 
       <!-- ══ Paramètres view (before kick-off / control) ══ -->
+      <ScoringReadiness
+        v-if="view === 'settings'"
+        :issues="readiness"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
+      />
       <ScoringSettingsPanel
         v-if="view === 'settings'"
         :match="match"
@@ -1039,6 +1180,16 @@ const toggleLock = async () => {
 
       <!-- ══ Déroulement view ══ -->
       <template v-else>
+      <!-- Before kick-off: what still needs checking on the game sheet, one tap away -->
+      <ScoringReadiness
+        v-if="match.statut === 'ATT' && canScore"
+        compact
+        :issues="readiness"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
+        @open="view = 'settings'"
+      />
+
       <!-- The console: the board (what the public sees) with the deck of clock keys under it -->
       <div>
         <ScoringBoard
@@ -1052,9 +1203,12 @@ const toggleLock = async () => {
           :shotclock="isLive ? (shotclockMasked ? '--' : shotclock.display.value) : null"
           :shotclock-state="shotclock.state.value"
           :break-display="breakRemaining !== null ? breakDisplay : null"
+          :penalties-a="isLive ? penalties.penalties.value.filter(p => p.team === 'A') : []"
+          :penalties-b="isLive ? penalties.penalties.value.filter(p => p.team === 'B') : []"
           :score-only="scoreOnly"
           :can-score="canScore"
           @bump="bumpScore"
+          @remove-penalty="removePenalty"
         >
           <template #state>
             <ScoringPeriodSelector
@@ -1067,9 +1221,26 @@ const toggleLock = async () => {
             />
             <ScoringStatusBadge
               :status="match.statut"
-              :can-cycle="canScore"
-              @change="setStatus"
+              :can-kickoff="canScore"
+              @kickoff="kickoff"
             />
+            <!-- Closing and reopening: deliberate, through their own dialog (spec §7.6) -->
+            <UButton
+              v-if="match.statut !== 'END' && canScore"
+              size="xs"
+              variant="outline"
+              color="neutral"
+              icon="i-heroicons-flag"
+              @click="openClose"
+            >{{ t('scoring.close.action') }}</UButton>
+            <UButton
+              v-else-if="match.statut === 'END' && canScore"
+              size="xs"
+              variant="ghost"
+              color="neutral"
+              icon="i-heroicons-arrow-uturn-left"
+              @click="reopenOpen = true"
+            >{{ t('scoring.reopen.action') }}</UButton>
           </template>
         </ScoringBoard>
 
@@ -1079,8 +1250,8 @@ const toggleLock = async () => {
           class="rounded-b-xl border border-t-0 border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 px-3 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
         >
           <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.timer.group')">
-            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(-10)">−10</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(-1)">−1</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(-10)">−10</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(-1)">−1</UButton>
             <!-- One start/pause toggle: only one of the two actions is ever meaningful -->
             <UButton
               class="min-w-32 justify-center"
@@ -1089,8 +1260,8 @@ const toggleLock = async () => {
               :disabled="!canScore"
               @click="toggleClock"
             >{{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(1)">+1</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore" @click="adjustClock(10)">+10</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(1)">+1</UButton>
+            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(10)">+10</UButton>
             <UButton
               size="sm"
               icon="i-heroicons-arrow-uturn-left"
@@ -1121,25 +1292,11 @@ const toggleLock = async () => {
         </div>
       </div>
 
-      <!-- Score-only: no rosters, but running penalties stay visible -->
-      <div
-        v-if="scoreOnly && isLive && penalties.penalties.value.length"
-        class="grid grid-cols-2 gap-4"
-      >
-        <ScoringPenalties
-          v-for="side in (['A', 'B'] as TeamSide[])" :key="side"
-          :class="side === 'B' ? 'justify-end' : ''"
-          :penalties="penalties.penalties.value.filter(p => p.team === side)"
-          :can-score="canScore"
-          @remove="removePenalty"
-        />
-      </div>
-
       <!-- Work area: roster A | entry panel | roster B (lg) — rosters side by side with the
            entry below (md and mobile, where rosters show numbers only and the entry bar is
            pinned at the bottom, within thumb reach). Pick the player, then the fact. -->
       <div
-        v-else-if="!scoreOnly"
+        v-if="!scoreOnly"
         class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-[minmax(0,1fr)_21rem_minmax(0,1fr)] lg:items-start
                transition-[grid-template-columns] duration-300 motion-reduce:transition-none"
         :class="wideTeam === 'A' ? 'max-md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
@@ -1151,7 +1308,7 @@ const toggleLock = async () => {
           :team="side"
           :team-name="(side === 'A' ? match.equipeA : match.equipeB) ?? side"
           :players="side === 'A' ? scoringStore.playersA : scoringStore.playersB"
-          :penalties="isLive ? penalties.penalties.value.filter(p => p.team === side) : []"
+          :tallies="tallies"
           :selected-matric="selected?.team === side ? selected.player.matric : null"
           :excluded-card="excludedCard"
           :expanded="wideTeam === side"
@@ -1160,7 +1317,6 @@ const toggleLock = async () => {
           @select="selectPlayer(side, $event)"
           @select-team-fact="selectTeamFact(side)"
           @reload="reloadPlayers(side)"
-          @remove-penalty="removePenalty"
           @expand="widenTeam(side)"
         />
 
@@ -1186,7 +1342,18 @@ const toggleLock = async () => {
               </span>
               <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-x-mark" :aria-label="t('scoring.entry.clear')" @click="selected = null; cancelPending()" />
             </template>
-            <span v-else-if="canScore" class="text-header-500 dark:text-header-400">{{ t('scoring.select_player_first') }}</span>
+            <template v-else-if="canScore">
+              <span class="flex-1 text-header-500 dark:text-header-400">{{ t('scoring.select_player_first') }}</span>
+              <UButton
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                icon="i-heroicons-hashtag"
+                class="max-md:hidden"
+                :title="t('scoring.picker.open')"
+                @click="openPicker"
+              >{{ shortcutKeyLabel(bindings.playerByNumber) }}</UButton>
+            </template>
           </div>
 
           <!-- Fact buttons, all the same size: they STAGE the fact, they do not record it -->
@@ -1270,7 +1437,7 @@ const toggleLock = async () => {
         :title="t('scoring.card_progression.title')"
         :message="t('scoring.card_progression.' + (cardWarning?.violation ?? 'card_not_higher'))
           + ' ' + t('scoring.card_progression.confirm')"
-        :confirm-text="t('scoring.edit.save')"
+        :confirm-text="t('scoring.card_progression.record_anyway')"
         :cancel-text="t('scoring.edit.cancel')"
         @confirm="confirmCardWarning"
         @close="cardWarning = null"
@@ -1284,7 +1451,7 @@ const toggleLock = async () => {
         :message="t('scoring.golden_goal.message', { period: periodLabel(eventPeriod) })"
         :confirm-text="t('scoring.golden_goal.close_match')"
         :cancel-text="t('scoring.edit.cancel')"
-        @confirm="() => { goldenGoalOpen = false; setStatus('END') }"
+        @confirm="() => { goldenGoalOpen = false; openClose() }"
         @close="goldenGoalOpen = false"
       />
 
@@ -1307,10 +1474,48 @@ const toggleLock = async () => {
         :events="scoringStore.events"
         :editing-uid="editingUid"
         :can-score="canScore"
+        :recent-count="isLive ? HISTORY_RECENT_COUNT : 0"
         @edit="startEdit"
         @remove="removeEvent"
       />
       </template>
+
+      <!-- Closure (spec §7.6): score check, end time, comments, lock -->
+      <ScoringCloseMatchModal
+        :open="closeOpen"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
+        :score="{ A: scoringStore.scoreA, B: scoringStore.scoreB }"
+        :goals="goals"
+        :comments="match.commentairesOfficiels ?? ''"
+        :can-lock="canValidate"
+        :loading="closing"
+        @confirm="confirmClose"
+        @align="alignScore"
+        @close="closeOpen = false"
+      />
+      <AdminConfirmModal
+        :open="reopenOpen"
+        variant="warning"
+        :title="t('scoring.reopen.title')"
+        :message="t('scoring.reopen.message')"
+        :confirm-text="t('scoring.reopen.confirm')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="confirmReopen"
+        @close="reopenOpen = false"
+      />
+
+      <!-- Player of the next fact by jersey number (keyboard `N`) -->
+      <ScoringNumberPicker
+        :open="pickerOpen"
+        :players-a="scoringStore.playersA"
+        :players-b="scoringStore.playersB"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
+        :facts="pickerFacts"
+        @select="pickFromNumber"
+        @close="pickerOpen = false"
+      />
 
       <!-- Keyboard shortcuts settings (per-device preference) -->
       <ScoringShortcutsModal

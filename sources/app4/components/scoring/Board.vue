@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { PenaltyClock } from '~/composables/usePenalties'
 import type { TeamSide } from '~/types/scoring'
 
 /**
@@ -7,6 +8,8 @@ import type { TeamSide } from '~/types/scoring'
  * public sees. Presentational only — the controls live in the deck right under it.
  *
  * `clock` is null in post-match (no live clock): the centre then only carries the state line.
+ * Running penalties sit under each team's score, as on the pitch scoreboard: the operator
+ * watches one place for every countdown (game clock, shot clock, exclusions).
  */
 defineProps<{
   teamA: string
@@ -18,12 +21,18 @@ defineProps<{
   shotclock?: string | null
   shotclockState?: 'IDLE' | 'RUNNING' | 'SUSPENDED'
   breakDisplay?: string | null
+  /** Running penalties of each team (live mode only). */
+  penaltiesA?: PenaltyClock[]
+  penaltiesB?: PenaltyClock[]
   /** Score-only mode: ±1 under each score, the board becomes the whole entry surface. */
   scoreOnly?: boolean
   canScore?: boolean
 }>()
 
-const emit = defineEmits<{ bump: [team: TeamSide, delta: 1 | -1] }>()
+const emit = defineEmits<{
+  bump: [team: TeamSide, delta: 1 | -1]
+  'remove-penalty': [id: string]
+}>()
 
 const { t } = useI18n()
 </script>
@@ -37,11 +46,18 @@ const { t } = useI18n()
       <slot name="state" />
     </div>
 
-    <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-end gap-3 sm:gap-10">
+    <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-start gap-3 sm:gap-10">
       <!-- Team A: name over score, pushed towards the centre -->
       <div class="min-w-0 text-right">
         <div class="board-team line-clamp-2 break-words">{{ teamA }}</div>
         <div class="scoring-digits board-score">{{ scoreA }}</div>
+        <ScoringPenalties
+          v-if="penaltiesA?.length"
+          class="mt-1 justify-end"
+          :penalties="penaltiesA"
+          :can-score="canScore"
+          @remove="emit('remove-penalty', $event)"
+        />
         <div v-if="scoreOnly" class="mt-1 flex justify-end gap-1">
           <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', 'A', -1)">−1</button>
           <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', 'A', 1)">+1</button>
@@ -75,6 +91,13 @@ const { t } = useI18n()
       <div class="min-w-0 text-left">
         <div class="board-team line-clamp-2 break-words">{{ teamB }}</div>
         <div class="scoring-digits board-score">{{ scoreB }}</div>
+        <ScoringPenalties
+          v-if="penaltiesB?.length"
+          class="mt-1"
+          :penalties="penaltiesB"
+          :can-score="canScore"
+          @remove="emit('remove-penalty', $event)"
+        />
         <div v-if="scoreOnly" class="mt-1 flex gap-1">
           <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', 'B', 1)">+1</button>
           <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', 'B', -1)">−1</button>

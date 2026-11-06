@@ -10,7 +10,7 @@
 > [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) — ce plan dit *quand* et *dans quel ordre*,
 > la spec dit *quoi* et *comment*. Les **commandes à exécuter en dev et les tests
 > fonctionnels par lot** sont dans
-> [SCORING_DEV_CHECKLIST.md](SCORING_DEV_CHECKLIST.md).
+> [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md).
 >
 > **Principe directeur : on ne touche à rien tant que le neuf ne marche pas.** Le nouveau système se
 > construit **à côté** de l'ancien — nouvelles tables, nouveau canal de diffusion. La production
@@ -19,7 +19,14 @@
 
 ---
 
-## 0. Point de situation et analyse critique (2026-10-17)
+## 0. Point de situation et analyse critique (2026-10-17, mis à jour le 2026-11-05)
+
+> **Mise à jour du 2026-11-05.** Le constat « jamais exécuté » du §0.2 était **faux** : les
+> sauvegardes de la base de dev montrent les migrations appliquées et des matchs réellement saisis
+> (juillet–août puis 19 octobre), et une outbox drainée. La base de dev **courante**, rechargée
+> depuis, n'a en revanche plus les tables. La revue UX de la console est livrée (spec §0.11). La
+> marche à suivre pour revenir à niveau, valider puis déployer est désormais une checklist de
+> déploiement : [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) (étapes R0 → R5).
 
 > **Note de numérotation** : les `§0.x`, `§4.x`… sans autre mention renvoient à **ce document** ;
 > un renvoi à la spec de la console est toujours écrit « spec §x » ou pointe explicitement
@@ -35,9 +42,9 @@
 | Lot | État | Ce qui existe | Ce qui manque |
 |---|---|---|---|
 | **0** Fondations | 🟡 partiel | hub Mercure en dev (actions 0.1 et 0.2 du lot 0 ✅) | actions **0.3** validation preprod/prod, **0.5** captures de vraies sessions matériel, **0.6** garde-fou chiffré |
-| **1** État canonique | 🟢 écrit | 4 migrations `scoring_live_*`, `ScoringLiveService` (porte d'écriture unique, transaction + `tick` + outbox), `ScoringRules` (testé), `ScoringController` réaiguillé, `PUT /source`, `PUT /officials`, `GET /resolve/{id}/{n°}` | aucune exécution sur base réelle ; pas de test d'intégration sur les routes d'écriture |
-| **2** Diffusion Mercure | 🟢 écrit | `ScoringOutboxPublisher` (drainage ordonné, at-least-once, `Last-Event-ID`), drainage branché sur le worker existant, env Mercure des 3 compose | jamais exécuté contre un hub ; `MERCURE_ANONYMOUS=0` non validé hors dev |
-| **3** Console app4 | 🟢 écrit | console complète : prolongations non bornées, cartons 2027, shotclock 3 commandes, pénalités, pauses + buzzer, raccourcis paramétrables, scoreboard/shotclock plein écran (écrans non standards), abonnement Mercure, mode score seul, panneau Paramètres, PWA | tests de rendu des composants ; solde du 3.1 (statut joueur, recharge présents, n° court, durée non standard) ; **aucun événement réel tenu à la console** |
+| **1** État canonique | 🟡 essayé en dev | 4 migrations `scoring_live_*`, `ScoringLiveService` (porte d'écriture unique, transaction + `tick` + outbox), `ScoringRules` (testé), `ScoringController` réaiguillé, `PUT /source`, `PUT /officials`, `GET /resolve/{id}/{n°}` ; tests d'intégration du score live et de la clôture | clôture/consolidation et 409 jamais vérifiés à l'écran ; tests d'intégration source active / `tick` / outbox |
+| **2** Diffusion Mercure | 🟡 probable en dev | `ScoringOutboxPublisher` (drainage ordonné, at-least-once, `Last-Event-ID`), drainage branché sur le worker existant, env Mercure des 3 compose | outbox trouvée vidée (drainée puis purgée) mais tests 2.x non tracés ; `MERCURE_ANONYMOUS=0` non validé hors dev |
+| **3** Console app4 | 🟡 essayée en dev | console complète : prolongations non bornées, cartons 2027, shotclock 3 commandes, pénalités, pauses + buzzer, raccourcis paramétrables, scoreboard/shotclock plein écran, abonnement Mercure, mode score seul, panneau Paramètres, PWA ; **revue UX du 2026-11-05** (clôture §7.6, annulation, saisie par numéro, contrôles avant coup d'envoi — spec §0.11) | tests de rendu des composants ; durée de période non standard ; **aucun événement réel tenu à la console** |
 | **4** Incrustation unique | 🟢 écrit | `PAGE_INCRUSTATION.md`, `pages/live/overlay.vue`, `ScoringProgramService` (défauts → événement → terrain), `ScoringLiveController` (lecture publique), jetons d'affichage + JWT abonné, vues de compatibilité legacy, onglet d'administration | validation OBS réelle ; bascule d'une incrustation sur un terrain |
 | **5** Relais matériel | 🔴 non commencé | — | bloqué par **0.5** (format STOMP fermé : sans captures, on code à l'aveugle) |
 | **6** Paramétrage compétition | 🔴 non commencé | — | dépend du lot 3 soldé |
@@ -47,7 +54,11 @@
 
 ### 0.2 Ce qui n'a jamais été vérifié — à lire avant de continuer
 
-Les lots 1 à 4 ont été **écrits**, pas **validés**. Concrètement, à ce jour :
+> **Corrigé le 2026-11-05** : la liste ci-dessous était fausse pour les lots 1 à 3 (voir l'encart
+> en tête de §0 et le relevé de [la checklist](SCORING_ROLLOUT_CHECKLIST.md)). Elle reste vraie
+> pour le **lot 4** (aucune incrustation dans OBS) et pour **tout ce qui est hors dev**.
+
+Les lots 1 à 4 ont été **écrits**, pas **validés**. Concrètement, au 2026-10-17 :
 
 - **aucune requête n'a tourné sur une base MariaDB** : les 4 migrations n'ont jamais été
   appliquées, aucun `INSERT` de `scoring_live_*` n'a jamais eu lieu ;
@@ -105,7 +116,7 @@ structurants tiennent :
 ### 0.4 Règle pour la suite : une porte de validation par lot
 
 **Aucun nouveau lot ne démarre avant que le précédent ait tourné pour de vrai.** Chaque étape
-désormais livrée l'est avec, dans [SCORING_DEV_CHECKLIST.md](SCORING_DEV_CHECKLIST.md) :
+désormais livrée l'est avec, dans [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) :
 
 1. les **commandes exactes** à exécuter (migration, tests, redémarrage de service) ;
 2. les **tests automatisés** correspondants — écrits **avant** le code
@@ -839,7 +850,7 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   couleur neutre) — « rouge définitif » a disparu du nouveau système ;
 > - ✅ miroir TS des règles pures : `app4/utils/scoringRules.ts` (aligné sur
 >   `api2/src/Scoring/ScoringRules.php`, réutilisé par la Phase 2 shotclock/pénalités).
-> - Commandes dev + tests fonctionnels : [SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md).
+> - Commandes dev + tests fonctionnels : [SCORING_ROLLOUT_CHECKLIST.md](../in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 >
 > **Suivi d'exécution (2026-07-27) — deuxième tranche (étape 3.3/3.4 partiel) :**
 > - ✅ **Shotclock 3 commandes** (§4.11) : `useShotclock` (états IDLE `--` / RUNNING /
@@ -917,7 +928,7 @@ tablette ; reprise sur un second terminal validée en cours de match.
 >   commentaires, heure de fin) — colonnes déjà lues par `m.*`, simplement non exposées.
 >
 > **Le lot 3 est ainsi couvert** ; restent les vérifications en dev
-> ([SCORING_DEV_CHECKLIST.md](../in-progress/SCORING_DEV_CHECKLIST.md)) et les évolutions
+> ([SCORING_ROLLOUT_CHECKLIST.md](../in-progress/SCORING_ROLLOUT_CHECKLIST.md)) et les évolutions
 > renvoyées aux lots suivants (paramétrage par compétition = lot 6, offline = lot 7).
 
 ---

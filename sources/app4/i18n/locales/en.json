@@ -2670,7 +2670,8 @@
       "pause": "Pause",
       "reset": "Reset",
       "shotclock": "Shot clock",
-      "group": "Game clock"
+      "group": "Game clock",
+      "adjust_locked": "Stop the clock to correct it"
     },
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
@@ -2715,7 +2716,6 @@
       "r_rep": "Substitution",
       "unknown": "Other / Unspecified"
     },
-    "status_cycle_hint": "Click to change status",
     "period_next": "Next period",
     "period_direct": "Go to…",
     "period_confirm_title": "Change period?",
@@ -2727,7 +2727,8 @@
       "card_not_higher": "This player already received a card of equal or higher color: the next card must be strictly higher (green → yellow → red).",
       "player_already_out": "This player is already out for this match (red or black card): no further card is possible.",
       "unknown_card": "Unknown card code.",
-      "confirm": "Record anyway?"
+      "confirm": "Record anyway?",
+      "record_anyway": "Record anyway"
     },
     "golden_goal": {
       "title": "Golden goal",
@@ -2754,7 +2755,8 @@
       "shotclockStart40": "Shot clock: start/reset 40 s",
       "shotclockStop": "Shot clock: stop (--)",
       "shotclockPlus": "Shot clock: +1 s",
-      "shotclockMinus": "Shot clock: −1 s"
+      "shotclockMinus": "Shot clock: −1 s",
+      "playerByNumber": "Pick a player by number"
     },
     "sound_test": "Test sound",
     "penalty": {
@@ -2835,6 +2837,65 @@
       "card_yellow": "Yellow",
       "card_red": "Red",
       "card_black": "Black"
+    },
+    "status_kickoff_hint": "Click to start the game",
+    "period_confirm_action": "Go to {period}",
+    "roster_goals": "{n} goal(s)",
+    "history_all": "Show all ({count})",
+    "history_recent": "Only the last {n}",
+    "close": {
+      "action": "Close the game…",
+      "title": "Close the game",
+      "score": "Displayed score",
+      "goals": "Goals recorded",
+      "mismatch": "The displayed score does not match the recorded goals.",
+      "align": "Align the score on the goals",
+      "end_time": "End time",
+      "comments": "Officials' comments",
+      "comments_placeholder": "Captains' reservations, referee report…",
+      "lock": "Lock the game after closing it",
+      "lock_hint": "No further change is possible unless it is unlocked.",
+      "confirm": "Close the game",
+      "done": "Game closed",
+      "done_description": "The result is recorded on the official game sheet."
+    },
+    "reopen": {
+      "action": "Reopen the game…",
+      "title": "Reopen the game?",
+      "message": "The game goes back to \"In progress\" so the entries can be corrected. Close it again to record the corrected result.",
+      "confirm": "Reopen the game",
+      "done": "Game reopened"
+    },
+    "picker": {
+      "title": "Player by number",
+      "placeholder": "No. (e.g. 7, A7, 7B)",
+      "hint": "Enter to pick · Esc to close",
+      "ambiguous": "Number {number} exists in both teams: add A or B, or click the player.",
+      "none": "No player with this number.",
+      "open": "Pick a player by number",
+      "fact_hint": "Type the fact's letter: it is staged and the time gets the focus (Enter to record). Esc to close."
+    },
+    "undo": {
+      "recorded": "Game fact recorded",
+      "action": "Undo",
+      "done": "Entry undone"
+    },
+    "offline": {
+      "title": "Connection lost",
+      "message": "Entries may not be saved. Keep the page open: syncing resumes when the network is back. Then check the timeline."
+    },
+    "readiness": {
+      "title": "To check before kick-off",
+      "ok": "Game sheet ready: rosters, numbers, captains and officials checked",
+      "hint": "These checks do not prevent the kick-off: the referee decides.",
+      "summary": "{count} point(s) to check on the game sheet before kick-off",
+      "open": "Open the sheet",
+      "too_few_players": "{team}: {count} player(s) on the sheet, at least {min} needed",
+      "too_many_players": "{team}: {count} players on the sheet, {max} at most",
+      "too_many_staff": "{team}: {count} team officials, {max} at most",
+      "duplicate_numbers": "{team}: duplicate jersey numbers ({numbers})",
+      "no_captain": "{team}: no captain designated",
+      "missing_officials": "Officials to fill in: {roles}"
     }
   },
   "competition": {

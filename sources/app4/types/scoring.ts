@@ -75,6 +75,16 @@ export interface ScoringMatch {
   heureFin?: string | null
 }
 
+/** What the scoring table enters when closing a match (spec §7.6). */
+export interface MatchClosure {
+  /** End time "HH:MM" — pre-filled with the current time, editable. */
+  endTime: string
+  /** Officials' comments (kp_match.Commentaires_officiels), '' when none. */
+  comments: string
+  /** Lock the match right after the closure (profiles allowed to validate only). */
+  lock: boolean
+}
+
 /**
  * Player in the match composition.
  * Sourced from GET /admin/matches/{id}/players?teamCode=A|B (same endpoint as presence).

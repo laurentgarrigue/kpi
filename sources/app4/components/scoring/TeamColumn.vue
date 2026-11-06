@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import type { PenaltyClock } from '~/composables/usePenalties'
 import type { ScoringPlayer, TeamSide } from '~/types/scoring'
+import type { PlayerTally } from '~/utils/scoringRoster'
 
 /**
- * One team's side of the "Déroulement" view: its running penalties, then its roster to pick
- * the player of the next fact. Left/right of the entry panel on wide screens (no team name:
- * the board above already says which side is which).
+ * One team's side of the "Déroulement" view: its roster, to pick the player of the next
+ * fact. Each row carries the player's goals and current card, so the operator sees who is
+ * already carded before the progression alert ever opens (spec §7.3). Running penalties
+ * live on the board, next to the clocks they follow. Left/right of the entry panel on wide
+ * screens (no team name: the board above already says which side is which).
  *
  * On mobile both teams sit side by side with truncated names; tapping the team name above
  * the column asks the page to widen this side for a few seconds (`expand`).
@@ -14,7 +16,8 @@ const props = defineProps<{
   team: TeamSide
   teamName: string
   players: ScoringPlayer[]
-  penalties: PenaltyClock[]
+  /** Goals and cards per player matric (utils/scoringRoster). */
+  tallies: Map<string, PlayerTally>
   /** matric of the selected player on THIS team (0 = team-level fact), null if none. */
   selectedMatric: number | null
   /** Exclusion marker per player matric: R = replaced at penalty end, D = out to the end. */
@@ -29,7 +32,6 @@ const emit = defineEmits<{
   select: [player: ScoringPlayer]
   'select-team-fact': []
   reload: []
-  'remove-penalty': [id: string]
   expand: []
 }>()
 
@@ -37,6 +39,9 @@ const { t } = useI18n()
 
 const TEAM_FACT_MATRIC = 0
 const exclusionOf = (p: ScoringPlayer) => props.excludedCard.get(String(p.matric))
+const tallyOf = (p: ScoringPlayer) => props.tallies.get(String(p.matric))
+/** Last card shown on the row — unless the exclusion marker (R/D) already says it. */
+const lastCardOf = (p: ScoringPlayer) => (exclusionOf(p) ? null : tallyOf(p)?.cards.at(-1) ?? null)
 </script>
 
 <template>
@@ -51,8 +56,6 @@ const exclusionOf = (p: ScoringPlayer) => props.excludedCard.get(String(p.matric
       <span class="flex-1 min-w-0 truncate">{{ teamName }}</span>
       <UIcon name="i-heroicons-arrows-pointing-out" class="size-4 shrink-0 opacity-60" />
     </button>
-
-    <ScoringPenalties :penalties="penalties" :can-score="canScore" @remove="emit('remove-penalty', $event)" />
 
     <template v-if="showRoster">
       <!-- Empty game sheet: say so, offer to reload the present players, and keep a
@@ -98,6 +101,11 @@ const exclusionOf = (p: ScoringPlayer) => props.excludedCard.get(String(p.matric
               {{ p.nom.toUpperCase() }} {{ p.prenom }}
               <UBadge v-if="p.capitaine === 'C'" size="xs" variant="soft" class="ml-1 max-md:ml-0 align-middle">Cap.</UBadge>
             </span>
+            <span v-if="tallyOf(p)?.goals" class="inline-flex items-center gap-0.5 shrink-0" :title="t('scoring.roster_goals', { n: tallyOf(p)!.goals })">
+              <ScoringEventIcon code="B" />
+              <span v-if="tallyOf(p)!.goals > 1" class="scoring-digits text-xs">×{{ tallyOf(p)!.goals }}</span>
+            </span>
+            <ScoringEventIcon v-if="lastCardOf(p)" :code="lastCardOf(p)!" />
             <ScoringEventIcon v-if="exclusionOf(p)" :code="exclusionOf(p)!" />
           </button>
         </li>

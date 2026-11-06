@@ -42,6 +42,14 @@ class ScoringController extends AbstractController
     /** Licence holders suggested outside the referee team (the operator keeps typing). */
     private const OFFICIAL_SUGGESTIONS_LIMIT = 20;
 
+    /** Parameters accepted by PUT /gameParam (kp column names — the console vocabulary). */
+    private const GAME_PARAMS = [
+        'Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin', 'Commentaires_officiels',
+    ];
+
+    /** Result data written straight to kp_match; every other parameter is live state. */
+    private const RESULT_PARAMS = ['ScoreA', 'ScoreB', 'Commentaires_officiels'];
+
     /** DBAL connection — also required by AdminLoggableTrait (expects $this->connection). */
     private Connection $connection;
 
@@ -189,7 +197,7 @@ class ScoringController extends AbstractController
                     new OA\Property(
                         property: 'param',
                         type: 'string',
-                        enum: ['Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin']
+                        enum: self::GAME_PARAMS
                     ),
                     new OA\Property(property: 'value', type: 'string', example: '5')
                 ]
@@ -207,7 +215,7 @@ class ScoringController extends AbstractController
 
         $data = json_decode($request->getContent());
 
-        if (!in_array($data->param ?? '', ['Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin'])) {
+        if (!in_array($data->param ?? '', self::GAME_PARAMS, true)) {
             return new JsonResponse(['error' => 'Invalid parameter'], 401);
         }
 
@@ -220,9 +228,9 @@ class ScoringController extends AbstractController
         }
 
         try {
-            if (in_array($data->param, ['ScoreA', 'ScoreB'], true)) {
-                // Official score validation is a result concern, not live state: it keeps
-                // writing kp_match directly (spec §7.6 — "Valider ce score").
+            if (in_array($data->param, self::RESULT_PARAMS, true)) {
+                // Official score and officials' comments are result concerns, not live
+                // state: they keep writing kp_match directly (spec §7.6 — closure).
                 $this->connection->executeStatement(
                     "UPDATE kp_match SET {$data->param} = ? WHERE Id = ? AND Validation != 'O'",
                     [$data->value, $matchId]
@@ -238,6 +246,7 @@ class ScoringController extends AbstractController
             $label = match ($data->param) {
                 'Statut' => 'Scoring statut',
                 'Periode' => 'Scoring période',
+                'Commentaires_officiels' => 'Scoring commentaires',
                 default => 'Scoring score',
             };
             $this->logScoring($label, $matchId, "{$data->param} = {$data->value}");

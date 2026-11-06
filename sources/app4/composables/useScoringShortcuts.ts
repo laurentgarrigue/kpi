@@ -3,7 +3,9 @@
  *
  * The bindings are a per-device/user preference, persisted in localStorage. Defaults:
  * Espace = game clock start/stop · Entrée = shotclock start/reset 60 s · `.` = start/reset
- * 40 s · `0` = shotclock stop (back to "--") · `+`/`−` = shotclock ±1 s.
+ * 40 s · `0` = shotclock stop (back to "--") · `+`/`−` = shotclock ±1 s · `n` = pick the
+ * player of the next fact by jersey number (a letter, so it never collides with the
+ * digit keys of the shot clock).
  *
  * Shortcuts are neutralized while the focus is in an editable field, and can be globally
  * disabled through the `enabled` ref (post-match mode, capture modal open…).
@@ -16,6 +18,7 @@ export type ShortcutAction =
   | 'shotclockStop'
   | 'shotclockPlus'
   | 'shotclockMinus'
+  | 'playerByNumber'
 
 export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'gameClockToggle',
@@ -23,7 +26,8 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'shotclockStart40',
   'shotclockStop',
   'shotclockPlus',
-  'shotclockMinus'
+  'shotclockMinus',
+  'playerByNumber'
 ]
 
 /** Default bindings (KeyboardEvent.key values — ' ' is the space bar). */
@@ -33,7 +37,8 @@ export const SHORTCUT_DEFAULTS: Record<ShortcutAction, string> = {
   shotclockStart40: '.',
   shotclockStop: '0',
   shotclockPlus: '+',
-  shotclockMinus: '-'
+  shotclockMinus: '-',
+  playerByNumber: 'n'
 }
 
 const STORAGE_KEY = 'kpi.scoring.shortcuts'
@@ -87,7 +92,14 @@ export function useScoringShortcuts(
   const onKeydown = (event: KeyboardEvent) => {
     if (options.enabled && !options.enabled.value) return
     if (event.repeat || isEditableTarget(event.target)) return
-    const action = SHORTCUT_ACTIONS.find(a => bindings.value[a] !== '' && bindings.value[a] === event.key)
+    // Browser/OS combinations (Ctrl+N, Cmd+…) keep their meaning.
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+    // A letter works whatever the case (Caps Lock, Shift).
+    const pressed = event.key.length === 1 ? event.key.toLowerCase() : event.key
+    const action = SHORTCUT_ACTIONS.find(a => {
+      const bound = bindings.value[a]
+      return bound !== '' && (bound.length === 1 ? bound.toLowerCase() : bound) === pressed
+    })
     if (!action) return
     const handler = handlers[action]
     if (!handler) return

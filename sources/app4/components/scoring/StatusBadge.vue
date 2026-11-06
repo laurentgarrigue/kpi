@@ -2,51 +2,50 @@
 import type { MatchStatus } from '~/types/scoring'
 
 /**
- * Cyclic match-status badge (spec §7.1): a single badge showing the current status,
- * click/Enter advances to the next (ATT → ON → END → ATT). Calqué sur le badge statut
- * de competitions/index.vue (cycleStatus + getStatusColor).
+ * Match-status badge (spec §7.1). It shows the current status and gives the kick-off
+ * (ATT → ON) in one click — the only status change cheap enough for a single tap.
  *
- * Props down / events up: emits `change` with the next status; the page mutates the store.
+ * Closing (ON → END) and reopening (END → ON) are deliberately NOT here: closing
+ * consolidates the result into kp_* and asks for the end time and comments (spec §7.6),
+ * reopening undoes a closure. Both go through their own confirmed dialog, owned by the
+ * page. (The former ATT → ON → END → ATT cycle closed a match on a stray tap.)
+ *
+ * Props down / events up: emits `kickoff`; the page mutates the store.
  */
 const props = defineProps<{
   status: MatchStatus
-  /** When false, the badge is read-only (no cycling). */
-  canCycle?: boolean
+  /** When false, the badge is read-only. */
+  canKickoff?: boolean
 }>()
 
-const emit = defineEmits<{ change: [next: MatchStatus] }>()
+const emit = defineEmits<{ kickoff: [] }>()
 
 const { t } = useI18n()
 
-// ATT -> ON -> END -> ATT
-const NEXT: Record<MatchStatus, MatchStatus> = { ATT: 'ON', ON: 'END', END: 'ATT' }
-
 // Colors matching the competition status badge (legacy GestionStyle.css equivalents).
-const colorClass = computed(() => {
-  switch (props.status) {
-    case 'ATT': return 'bg-header-600 text-header-50'
-    case 'ON': return 'bg-success-500 text-success-50'
-    case 'END': return 'bg-primary-800 text-primary-50'
-    default: return 'bg-header-600 text-header-50'
-  }
-})
+const COLOR_CLASS: Record<MatchStatus, string> = {
+  ATT: 'bg-header-600 text-header-50',
+  ON: 'bg-success-500 text-success-50',
+  END: 'bg-primary-800 text-primary-50'
+}
 
-const cycle = () => {
-  if (!props.canCycle) return
-  emit('change', NEXT[props.status])
+const clickable = computed(() => props.canKickoff && props.status === 'ATT')
+
+const kickoff = () => {
+  if (clickable.value) emit('kickoff')
 }
 </script>
 
 <template>
   <span
     class="px-2.5 py-1 text-sm font-medium rounded-md select-none"
-    :class="[colorClass, canCycle ? 'cursor-pointer' : '']"
-    :title="canCycle ? t('scoring.status_cycle_hint') : ''"
-    :role="canCycle ? 'button' : undefined"
-    :tabindex="canCycle ? 0 : undefined"
-    @click="cycle"
-    @keydown.enter.prevent="cycle"
-    @keydown.space.prevent="cycle"
+    :class="[COLOR_CLASS[status], clickable ? 'cursor-pointer ring-1 ring-white/40' : '']"
+    :title="clickable ? t('scoring.status_kickoff_hint') : ''"
+    :role="clickable ? 'button' : undefined"
+    :tabindex="clickable ? 0 : undefined"
+    @click="kickoff"
+    @keydown.enter.prevent="kickoff"
+    @keydown.space.prevent="kickoff"
   >
     {{ t('scoring.status.' + status) }}
   </span>
