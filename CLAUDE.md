@@ -31,6 +31,7 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 `DOC/developer/` as top-level folders: `sources/admin/DocViewer.php` only reads those two.
 
 **Key documents:**
+- **[Target Architecture](DOC/developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ **Target of all ongoing projects** (app2, app3, app4, scoring, overlays, PDF, auth, infra): architecture and functional diagrams, legacy greyed out
 - **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
 - **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs

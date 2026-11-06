@@ -119,6 +119,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - Index détaillé : [infrastructure/README.md](developer/infrastructure/README.md)
 
 ### [Travaux en cours](developer/in-progress/)
+- **[TARGET_ARCHITECTURE.md](developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ Architecture cible et schéma fonctionnel de tous les chantiers (app2, app3, app4, scoring, incrustations, PDF, auth, infra) sur une page
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3) : phases 1 à 4 livrées sur `beta.*` (17/10/2026), prochaine étape la bascule de `www`
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
 - **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
