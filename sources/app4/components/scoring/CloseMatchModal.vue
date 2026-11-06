@@ -18,6 +18,8 @@ const props = defineProps<{
   score: Record<TeamSide, number>
   goals: Record<TeamSide, number>
   comments: string
+  /** End time already recorded ("HH:MM[:SS]") — a reopened match keeps it. */
+  recordedEndTime?: string | null
   canLock?: boolean
   loading?: boolean
 }>()
@@ -39,10 +41,18 @@ const nowHHMM = (): string => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// Re-prime the form each time the dialog opens: the end time is "now", not when the page loaded.
+/** "HH:MM" of a recorded end time, or null when none (empty, or the legacy 00:00 blank). */
+const asEndTime = (value?: string | null): string | null => {
+  const hhmm = (value ?? '').slice(0, 5)
+  return /^\d{2}:\d{2}$/.test(hhmm) && hhmm !== '00:00' ? hhmm : null
+}
+
+// Re-prime the form each time the dialog opens. End time: the one already recorded when the
+// match was closed before and reopened (a correction does not move the end of the match),
+// otherwise "now" — not when the page loaded.
 watch(() => props.open, (open) => {
   if (!open) return
-  endTime.value = nowHHMM()
+  endTime.value = asEndTime(props.recordedEndTime) ?? nowHHMM()
   commentsDraft.value = props.comments
   lock.value = false
 })

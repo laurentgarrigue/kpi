@@ -23,7 +23,7 @@ branche `claude/scoring-refactoring-strategy-3d43ac`.
 | Des matchs ont **réellement été saisis** à la console | `my_database_20260831` : 26 faits sur 2 matchs, horloges GAME / SHOTCLOCK / PENALTY ; `my_database_20261029` : 6 faits le 19/10 | les tests 1.1–1.2e, 3.1–3.30 ont des traces ; les correctifs du 31/07 au 02/08 en sont issus |
 | `scoring_outbox` est **vide** dans les deux sauvegardes | 0 ligne, alors que des faits ont été écrits | la file a très probablement été drainée puis purgée par le worker → diffusion du lot 2 probablement fonctionnelle en dev, **à reconfirmer** (2.1) |
 | La base courante **`my_database` n'a plus aucune table scoring** | rechargée depuis une sauvegarde plus récente | **la console répond 500 en dev tant que R0 n'est pas fait** |
-| Tests automatisés **verts** | `make app4_test` 169/169 · `make api2_test_unit` 335 · `make api2_test_integration` 336 (dont `ScoringClosureTest`) | socle sain pour reprendre |
+| Tests automatisés **verts** | `make app4_test` 186/186 · `make api2_test_unit` 335 · `make api2_test_integration` 340 (dont `ScoringClosureTest`, `ScoringStatusSyncTest`) — relevé du 2026-11-06 | socle sain pour reprendre |
 | Jamais vérifié | clôture et consolidation `kp_*` (1.6), source active / 409 (1.7), coupures Mercure (2.4–2.6), écrans plein écran (3.32+), PWA buildée (3.36+), multi-terminal (3.40+), score seul & Paramètres (3.47+), **tout le lot 4** (incrustation, OBS), preprod/prod | c'est l'objet de R1 |
 
 ---
@@ -78,10 +78,10 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
-| 7 | lint app4 | aucune erreur | ☐ |
-| 8 | `make app4_test` | `Test Files 14 passed`, `Tests 169 passed` (dont `scoringRules`, `scoringRoster`, `scoringReadiness`) | ☐ |
-| 9 | `make api2_test_unit` | `OK (335 tests …)` | ☐ |
-| 10 | `make api2_test_integration` | `Tests: 336`, aucune *failure* (2 *deprecations* connues, hors scoring) | ☐ |
+| 7 | lint app4 | aucune erreur | ☑ |
+| 8 | `make app4_test` | `Test Files 16 passed`, `Tests 186 passed` (dont `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`) — *ré-exécuter : chiffres revus le 2026-11-06* | ☐ |
+| 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
+| 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
 
 ### R0.4 🌐 Premier contact
 
@@ -90,8 +90,8 @@ Connexion app4 avec un **profil ≤ 2** (login dev `42054`), puis `https://kpi.l
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 11 | Ouvrir la console | la page s'affiche (pas de 500) ; `make api2_logs lines=50` sans `TableNotFoundException` | ☐ |
-| 12 | Console du navigateur | aucune erreur rouge | ☐ |
+| 11 | Ouvrir la console | la page s'affiche (pas de 500) ; `make api2_logs lines=50` sans `TableNotFoundException` | ☑ |
+| 12 | Console du navigateur | aucune erreur rouge | ☑ |
 
 ---
 
@@ -117,7 +117,7 @@ Couverte par R0.2 et R0.3. ☐
 
 ### V2 — Un match complet, de bout en bout
 
-Jouer sur **un même match de test** les tests du lot 1 (1.1 → 1.11) puis ceux du lot 3, **jusqu'à la
+Jouer sur **un même match de test** les tests du lot 1 (1.1 → 1.11) puis ceux du lot 3 (dont 3.74 → 3.86), **jusqu'à la
 clôture** (3.59 → 3.66).
 **Attendu** : pendant le match, seules les tables `scoring_live_*` bougent ; à la clôture, `kp_match` /
 `kp_match_detail` reçoivent la consolidation, et la feuille de match PDF affiche le même déroulement que
@@ -205,10 +205,10 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
-| 3.10a | Joueur → **But** | rien n'est enregistré ; bouton plein, focus sur le temps, **Valider** / **Annuler** | | ☐ |
+| 3.10a | **But** puis joueur, **ou** joueur puis **But** (ordre libre à la souris) | rien n'est enregistré ; le fait armé et le joueur s'affichent en tête du panneau, le focus va sur le temps quand les deux sont choisis, bouton **Enregistrer : But** | | ☐ |
 | 3.10b | Corriger le temps puis **`Entrée`** | fait enregistré **avec le temps corrigé** | | ☐ |
 | 3.10c | Joueur → **Carton** → changer le **motif** → `Entrée` | le motif choisi est enregistré | | ☐ |
-| 3.10d | **`Échap`** sur un fait armé | rien n'est enregistré | | ☐ |
+| 3.10d | **`Échap`** (ou **Désélectionner**) pendant une saisie | rien n'est enregistré ; fait, joueur et motif sont levés | | ☐ |
 | 3.10e | `Entrée` dans le champ temps | valide le fait — **ne déclenche pas** le shotclock 60 s | | ☐ |
 | 3.10f | Clic sur un fait de l'historique | ligne surlignée, joueur re-sélectionné, focus sur le temps, bouton **Enregistrer** | | ☐ |
 | 3.10g | Modifier le temps puis **Enregistrer** | mise à jour **sur place** (pas de doublon) | | ☐ |
@@ -230,9 +230,9 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 | 3.18 | Chrono principal à **0** en fin de M1 | buzzer + pause **3 min** (1 min entre prolongations) ; buzzer en fin de pause ; « Terminer la pause » l'interrompt | | ☐ |
 | 3.18a | Pendant la pause, **changer de période** | le décompte de pause **continue** ; le shotclock repasse à `--` | | ☐ |
 | 3.18b | Pendant la pause, **lancer le chrono** | la pause disparaît ; ligne `BREAK` supprimée | | ☐ |
-| 3.18c | **−10 / −1 / +1 / +10** du chrono principal, **chrono arrêté** | dans le sens de l'**affichage** : `+1` ajoute une seconde au temps restant ; bornés à `00:00.0` et à la durée de la période | | ☐ |
+| 3.18c | **−10 / −1 / +1 / +10** du chrono principal, **chrono arrêté**, match **En cours** | dans le sens de l'**affichage** : `+1` ajoute une seconde au temps restant ; bornés à `00:00.0` et à la durée de la période ; une **rafale** de clics rapides compte chaque clic | | ☐ |
 | 3.19 | **Raccourcis** : `Espace`, `Entrée` / `.` / `0` / `+` / `−` | agissent partout **sauf** dans un champ de saisie ; inactifs en post-match | | ☐ |
-| 3.20 | Modale **Raccourcis clavier** : réassigner une touche déjà utilisée | l'autre action perd sa touche ; persiste au rechargement ; « Valeurs par défaut » restaure. La liste contient « Choisir un joueur par son numéro » (`N`) | | ☐ |
+| 3.20 | Modale **Raccourcis clavier** : réassigner une touche déjà utilisée | l'autre action perd sa touche ; persiste au rechargement ; « Valeurs par défaut » restaure. La liste contient les **5 faits de jeu** (FR `B V J R N`, EN `G E Y R K`) | | ☐ |
 | 3.21 | Temps de jeu restant **inférieur** au shotclock | le shotclock affiche `--` | | ☐ |
 
 #### Pénalités
@@ -294,7 +294,7 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 | 3.50 | Onglet **Paramètres** | bascule vers la vue Paramètres | | ☐ |
 | 3.51 | Type de match et publication | en **lecture seule** + « modifiable depuis la gestion du match » | | ☐ |
 | 3.52 | Modifier un **officiel** puis **Enregistrer** | `kp_match` mis à jour, `kp_journal` « Scoring officiels », message de confirmation | | ☐ |
-| 3.53 | Modifier un **n° de maillot** et un **statut capitaine** | `kp_match_joueur` mis à jour | | ☐ |
+| 3.53 | Modifier un **n° de maillot** et un **statut** (liste « — / Capitaine / Staff », colonne « Statut ») | `kp_match_joueur` mis à jour | | ☐ |
 | 3.54 | **Supprimer** un joueur puis **« Recharger les présents »** | composition réinitialisée depuis la feuille de présence | | ☐ |
 | 3.55 | Charger par **n° court** | résolution serveur et navigation | | ☐ |
 | 3.56 | Charger par **ID#** | navigation directe | | ☐ |
@@ -320,20 +320,51 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §7.1, §7.2, §7.3, §7.6
 | 3.68a | Enregistrer un carton jaune puis **Annuler** | le fait **et** sa pénalité disparaissent ; 🗄 ligne `PENALTY` remise à zéro | | ☐ |
 | 3.68b | But encaissé qui ouvre la modale de levée (3.25), puis **Annuler** depuis le message | le but est retiré **et** la modale se ferme | | ☐ |
 | 3.69 | Effectifs après quelques faits | à côté du joueur : ⚽ (et **×2** au 2ᵉ but), dernier carton V/J ; pour R/D seul le marqueur d'exclusion | | ☐ |
-| 3.70 | Focus hors champ de saisie, touche **`N`** (ou bouton **#N** de la zone de saisie) | fenêtre « Joueur par numéro », focus dans le champ | | ☐ |
-| 3.70a | Taper un numéro présent **dans une seule équipe**, `Entrée`, puis **`B`** | le but est **armé** pour ce joueur et le **temps a le focus** ; `Entrée` l'enregistre (flux 100 % clavier : `N` `7` `Entrée` `B` `Entrée`) | | ☐ |
-| 3.70b | Numéro présent **dans les deux équipes** | les deux joueurs listés + « ajoutez A ou B » ; `a7` / `7b` départage | | ☐ |
-| 3.70c | Numéro absent ; numéro d'un entraîneur | « Aucun joueur avec ce numéro » ; un entraîneur n'est jamais proposé | | ☐ |
-| 3.70d | `Échap` à chaque étape ; `Ctrl+N` dans la console | fermeture sans rien enregistrer ; `Ctrl+N` ouvre toujours une fenêtre du navigateur | | ☐ |
-| 3.70e | **Post-match** : `N` | fonctionne aussi (les raccourcis chrono, eux, restent inactifs) | | ☐ |
-| 3.71 | Historique en **direct** avec plus de 3 faits | seuls les **3 derniers** sont affichés + « Tout voir (n) » ; en **post-match** tout est affiché | | ☐ |
+| 3.70 | *(retiré le 2026-11-06 : la touche `N` « joueur par numéro » est remplacée par la saisie clavier 3.80 → 3.84)* | — | | — |
+| 3.71 | Historique en **direct** avec plus de 3 faits | seuls les **3 plus récents** (le temps est un **compte à rebours** : plus petit temps restant = plus récent) + « Tout voir (n) » ; en **post-match** tout est affiché | | ☐ |
 | 3.71a | Faits en **P3** et au-delà | triés après P2 (la table de tri s'arrêtait à P2) | | ☐ |
 | 3.72 | Vue **Paramètres** | encadré « **À vérifier avant le coup d'envoi** » (ou « Feuille de match prête ») | | ☐ |
-| 3.72a | Équipe à **4 joueurs** ; à **9 joueurs** ; avec **4 entraîneurs** (statut E) | « au moins 5 » ; « 8 au maximum » ; « 3 au maximum » — les entraîneurs ne comptent pas comme joueurs | | ☐ |
+| 3.72a | Équipe à **4 joueurs** ; à **9 joueurs** ; avec **4 membres du staff** (statut Staff) | « au moins 5 » ; « 8 au maximum » ; « 3 au maximum » — le **staff ne compte pas** comme joueur (mention « staff non compté ») | | ☐ |
 | 3.72b | Deux joueurs au **même numéro** ; aucun **capitaine** | « numéros en double (n) » ; « aucun capitaine désigné » | | ☐ |
 | 3.72c | Arbitre secondaire ou chronométreur vides | « Officiels à renseigner : … » (juges de ligne et chronométreur de tir facultatifs) | | ☐ |
-| 3.72d | Vue **Déroulement**, match **En attente** avec des points à vérifier | bandeau ambre « n point(s) à vérifier… » + « Voir la feuille » ; disparaît au coup d'envoi ; le coup d'envoi n'est **jamais** bloqué | | ☐ |
+| 3.72d | Vue **Déroulement**, match **En attente** avec des points à vérifier | bandeau ambre « n point(s) à vérifier sur les paramètres du match avant le coup d'envoi » + « Voir les paramètres » ; disparaît au coup d'envoi ; le coup d'envoi n'est **jamais** bloqué | | ☐ |
 | 3.73 | Mode avion (ou `docker stop kpi_api2`) en direct | bandeau rouge « **Connexion perdue** » sous l'entête ; disparaît au retour | | ☐ |
+
+#### Révision du 2026-11-06 — ordre de saisie, statut du match, Paramètres
+
+Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.12.
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.74 | Ouvrir un match dont une composition est **vide** (feuille de présence remplie) | la composition se charge **toute seule** depuis la feuille de présence + message « Composition de … chargée » ; match verrouillé : rien n'est chargé | | ☐ |
+| 3.75 | Vue Paramètres, compositions | colonne **« Statut »**, valeurs **« Capitaine » / « Staff »** en toutes lettres ; le **staff est listé à part**, sous un intertitre « Staff » ; son **numéro reste modifiable** et fixe l'ordre du staff (la ligne se déplace aussitôt) ; passer un joueur en Staff le déplace dans ce groupe. Dans Déroulement, un membre du staff porte le badge **Staff** | | ☐ |
+| 3.76 | Champ d'un **officiel** rempli : croix à droite | le champ se vide, le **focus** y revient et la liste des suggestions (équipe d'arbitrage) s'ouvre ; champ vide ou match verrouillé : pas de croix | | ☐ |
+| 3.77 | Match **En attente** avec des points à vérifier : flèche **Réduire** du bandeau | il devient une petite pastille ambre avec le nombre ; un clic dessus le **ré-affiche** (le bandeau n'existe que pour un match En attente) | | ☐ |
+| 3.78 | Tableau de score : ordre de la ligne d'état | **statut + Clore/Rouvrir** d'abord, **période** ensuite | | ☐ |
+| 3.79 | Match **En attente** (ou **Terminé**) en direct | **Démarrer**, ±1/±10, remise à zéro, **60 s / 40 s / Arrêt** et sélecteur de **période** sont **masqués** (les chiffres du chrono restent sur le tableau de score) ; raccourcis `Espace`, `Entrée`, `.`… sans effet ; tout réapparaît au coup d'envoi | | ☐ |
+| 3.79a | ⚠️ après `make api2_restart` : match **En cours** à la console, puis **Matchs** → passer son statut à **En attente** ; revenir à la console | la console affiche **En attente** (en direct si l'abonnement Mercure est actif, sinon au rechargement) ; 🗄 `scoring_live_state.statut = 'ATT'` ; le bandeau « points à vérifier » réapparaît s'il y en a | | ☐ |
+| 3.79b | Depuis **Matchs**, passer à **Terminé** un match saisi à la console | `kp_match_detail` reconstruit depuis la console (consolidation), comme une clôture à la console | | ☐ |
+| 3.79c | Chrono principal **arrêté** ou **à zéro** | chiffres **rouges** ; **verts** quand il tourne (les affichages plein écran ne changent pas) | | ☐ |
+| 3.80 | Clavier, focus hors champ : **`B`** (EN `G`) | le but est armé, le focus va dans **« N° du joueur »** | | ☐ |
+| 3.80a | Taper un numéro présent **dans une seule équipe** | le joueur est surligné (ambre) dans l'effectif ; **`Entrée`** le choisit et donne le focus au **temps** ; **`Entrée`** enregistre (flux complet : `B 7 ↵ ↵`) | | ☐ |
+| 3.80b | Numéro présent **dans les deux équipes** | les deux surlignés + « ← équipe A, → équipe B » ; **`←`** ou **`→`** garde le bon, puis `Entrée` | | ☐ |
+| 3.80c | Numéro absent ; numéro `0` d'un membre du staff | « Aucun joueur avec ce numéro » ; le staff n'est jamais proposé | | ☐ |
+| 3.81 | Clavier : **`J`** (carton jaune) | la **liste des motifs s'ouvre** ; choisir un motif (ou `Échap` pour garder « Autre / Non précisé ») → focus sur « N° du joueur » | | ☐ |
+| 3.81a | Souris : clic sur un **carton** | la liste des motifs s'ouvre aussi ; elle reste facultative | | ☐ |
+| 3.82 | Chrono **en marche**, choisir un fait **ou** un joueur | le **temps du fait se fige** à cet instant (mention « Temps figé… ») alors que le chrono continue ; **Désélectionner** le resynchronise sur le chrono | | ☐ |
+| 3.83 | Bouton **Désélectionner** (en tête du panneau, dès qu'un fait ou un joueur est choisi) | tout est levé (fait, joueur, motif, édition) ; le temps suit de nouveau le chrono ; en direct, la période repasse sur celle du match | | ☐ |
+| 3.84 | Interface en **anglais**, raccourcis jamais modifiés sur le poste | faits sur `G E Y R K` ; en français `B V J R N` ; `Ctrl+B`/`Cmd+…` gardent leur sens | | ☐ |
+| 3.84a | Boutons de fait de jeu | chacun affiche **sa touche** à droite (sous le libellé sur smartphone) ; après réassignation dans Raccourcis clavier, la nouvelle touche s'affiche | | ☐ |
+| 3.85 | Chrono **arrêté** : clic sur une pastille de **pénalité** (hors croix) | panneau −10/−1/+1/+10 ; le décompte change, 🗄 ligne `PENALTY` mise à jour ; chrono **en marche** : boutons désactivés + « Arrêtez le chrono pour le corriger » | | ☐ |
+| 3.86 | Libellés de période | « **1ère période** » / « **2ème période** » (EN « 1st / 2nd period ») au lieu de « mi-temps » | | ☐ |
+| 3.87 | Match **En attente**, puis **Terminé** | panneau de saisie remplacé par « Donnez le coup d'envoi… » / « Match terminé : rouvrez-le… » ; boutons de faits, effectifs, lignes et corbeilles de la chronologie inactifs ; touches `B V J R N` sans effet ; ±1 du mode score seul inactifs | | ☐ |
+| 3.87a | Saisie armée (fait + joueur), puis clôture du match (ou passage En attente depuis Matchs) | la saisie est levée, rien n'est enregistré | | ☐ |
+| 3.87b | Match terminé → **Rouvrir** → corriger un fait → **Clore** | la correction est enregistrée et `kp_match_detail` reconsolidé | | ☐ |
+| 3.88 | Clic sur un fait de la **chronologie** | sous **Enregistrer** : **Supprimer** et **Annuler** ; Supprimer → confirmation → fait retiré (score recalculé pour un but) ; Annuler → rien ne change, le panneau se vide | | ☐ |
+| 3.88a | Nouvelle saisie armée | bouton **Annuler** sous « Enregistrer : … » (même effet que Désélectionner) | | ☐ |
+| 3.89 | Match **En attente** | pas de bouton « Clore le match… » (seulement pour un match En cours) | | ☐ |
+| 3.89a | Clore un match à 16:42, le **rouvrir** vers 17:05, corriger, **clore** à nouveau | le panneau propose **16:42** (heure déjà enregistrée), pas l'heure courante ; 🗄 `kp_match.Heure_fin` reste `16:42:00` | | ☐ |
+| 3.90 | Chronologie de la console (match E avec prolongations) puis **feuille de match PDF** (api2), en **français** puis en **anglais** | périodes **P1**, **P2**, puis **PRL1**, **PRL2**… en français, **OVT1**, **OVT2**… en anglais ; dans le PDF, « PRL2 - 00:53 » tient en entier dans la colonne Période ; 🗄 les codes stockés restent `M1`/`M2`/`P1`… | | ☐ |
 
 ### Lot 4 — Page d'incrustation unique
 
@@ -407,7 +438,7 @@ URL type (source navigateur OBS, 1920×1080) :
 
 | # | Dette | Ce qu'il faut produire | Où en est-on | ☑ |
 |---|---|---|---|---|
-| V4 | Routes d'**écriture** du scoring peu testées | tests d'intégration : source active, **409** sur source non active, incrément du `tick`, dépôt outbox dans la même transaction | **commencé** : `ScoringLiveScoreTest` (score live), `ScoringClosureTest` (commentaires, clôture + consolidation, match verrouillé) | ☐ |
+| V4 | Routes d'**écriture** du scoring peu testées | tests d'intégration : source active, **409** sur source non active, incrément du `tick`, dépôt outbox dans la même transaction | **commencé** : `ScoringLiveScoreTest` (score live), `ScoringClosureTest` (commentaires, clôture + consolidation, match verrouillé), `ScoringStatusSyncTest` (statut posé depuis Matchs) | ☐ |
 | V5 | Seuls les helpers purs d'app4 sont testés | `@nuxt/test-utils` + tests de rendu sur les critères de la spec (shotclock, pénalités, sélecteur de période, clôture, sélecteur par numéro) | la logique de la revue UX est extraite en helpers testés (`scoringRoster`, `scoringReadiness`) ; rendu non couvert | ☐ |
 | V6 | Garde-fou du ménage (action 0.6) non chiffré ; vues de compatibilité non datées | critère écrit, chiffré et daté dans le plan | à faire | ☐ |
 

@@ -1,54 +1,18 @@
 /**
  * Configurable keyboard shortcuts of the scoring console (spec §6.5, decisions §0.8/§0.9).
  *
- * The bindings are a per-device/user preference, persisted in localStorage. Defaults:
- * Espace = game clock start/stop · Entrée = shotclock start/reset 60 s · `.` = start/reset
- * 40 s · `0` = shotclock stop (back to "--") · `+`/`−` = shotclock ±1 s · `n` = pick the
- * player of the next fact by jersey number (a letter, so it never collides with the
- * digit keys of the shot clock).
+ * The bindings are a per-device/user preference, persisted in localStorage. Defaults
+ * (utils/scoringShortcuts): Espace = game clock start/stop · Entrée = shotclock start/reset
+ * 60 s · `.` = start/reset 40 s · `0` = shotclock stop (back to "--") · `+`/`−` = shotclock
+ * ±1 s · one letter per fact, after the interface language (FR B V J R N, EN G E Y R K).
  *
  * Shortcuts are neutralized while the focus is in an editable field, and can be globally
  * disabled through the `enabled` ref (post-match mode, capture modal open…).
  */
 
-export type ShortcutAction =
-  | 'gameClockToggle'
-  | 'shotclockStart60'
-  | 'shotclockStart40'
-  | 'shotclockStop'
-  | 'shotclockPlus'
-  | 'shotclockMinus'
-  | 'playerByNumber'
-
-export const SHORTCUT_ACTIONS: ShortcutAction[] = [
-  'gameClockToggle',
-  'shotclockStart60',
-  'shotclockStart40',
-  'shotclockStop',
-  'shotclockPlus',
-  'shotclockMinus',
-  'playerByNumber'
-]
-
-/** Default bindings (KeyboardEvent.key values — ' ' is the space bar). */
-export const SHORTCUT_DEFAULTS: Record<ShortcutAction, string> = {
-  gameClockToggle: ' ',
-  shotclockStart60: 'Enter',
-  shotclockStart40: '.',
-  shotclockStop: '0',
-  shotclockPlus: '+',
-  shotclockMinus: '-',
-  playerByNumber: 'n'
-}
+import { SHORTCUT_ACTIONS, mergeStoredBindings, shortcutDefaults, type ShortcutAction } from '~/utils/scoringShortcuts'
 
 const STORAGE_KEY = 'kpi.scoring.shortcuts'
-
-/** Human label of a key for the settings UI. */
-export function shortcutKeyLabel(key: string): string {
-  if (key === ' ') return 'Espace'
-  if (key === '') return '—'
-  return key.length === 1 ? key.toUpperCase() : key
-}
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false
@@ -58,15 +22,16 @@ const isEditableTarget = (target: EventTarget | null): boolean => {
 
 export function useScoringShortcuts(
   handlers: Partial<Record<ShortcutAction, () => void>>,
-  options: { enabled?: Ref<boolean> } = {}
+  options: { enabled?: Ref<boolean>, locale?: Ref<string> } = {}
 ) {
-  const bindings = ref<Record<ShortcutAction, string>>({ ...SHORTCUT_DEFAULTS })
+  const locale = () => options.locale?.value ?? 'fr'
+  const bindings = ref<Record<ShortcutAction, string>>(shortcutDefaults(locale()))
 
   const load = () => {
     if (typeof window === 'undefined') return
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY)
-      if (raw) bindings.value = { ...SHORTCUT_DEFAULTS, ...JSON.parse(raw) }
+      bindings.value = mergeStoredBindings(raw ? JSON.parse(raw) : {}, locale())
     } catch { /* corrupted storage → defaults */ }
   }
 
@@ -85,7 +50,7 @@ export function useScoringShortcuts(
   }
 
   const resetDefaults = () => {
-    bindings.value = { ...SHORTCUT_DEFAULTS }
+    bindings.value = shortcutDefaults(locale())
     persist()
   }
 

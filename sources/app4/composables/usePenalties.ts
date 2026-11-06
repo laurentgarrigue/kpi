@@ -105,6 +105,19 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
     const [clock] = penalties.value.splice(idx, 1)
     endAt.delete(id)
     clearTickIfIdle()
+    return clock ?? null
+  }
+
+  /**
+   * Correct a penalty's remaining time (operator correction, game clock stopped — spec
+   * §7.4). Bounded to [0, maxMs]; a running clock keeps running from the new value.
+   * Returns the updated clock, or null when unknown.
+   */
+  const adjust = (id: string, deltaMs: number, maxMs: number): PenaltyClock | null => {
+    const clock = penalties.value.find(p => p.id === id)
+    if (!clock) return null
+    clock.remainingMs = Math.min(maxMs, Math.max(0, clock.remainingMs + deltaMs))
+    if (clock.running) endAt.set(clock.id, Date.now() + clock.remainingMs)
     return clock
   }
 
@@ -142,7 +155,7 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
     )
     if (candidates.length === 0) return null
     // Slot order follows creation order here (clocks are pushed sequentially).
-    return [...candidates].sort((a, b) => a.slot - b.slot)[0]
+    return [...candidates].sort((a, b) => a.slot - b.slot)[0] ?? null
   }
 
   /** Rebuild from the persisted live clocks (GET /state → kind PENALTY). */
@@ -180,5 +193,5 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
     if (intervalId !== null) clearInterval(intervalId)
   })
 
-  return { penalties, add, remove, suspendAll, resumeAll, liftCandidate, restore }
+  return { penalties, add, remove, adjust, suspendAll, resumeAll, liftCandidate, restore }
 }

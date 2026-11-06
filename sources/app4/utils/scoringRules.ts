@@ -20,6 +20,25 @@ export function overtimeIndex(period: string): number | null {
   return isOvertime(period) ? Number(period.slice(1)) : null
 }
 
+/** Displayed codes of the two regulation periods (stored M1/M2 — spec §0.12). */
+const REGULATION_DISPLAY: Record<string, string> = { M1: 'P1', M2: 'P2' }
+
+/** Default displayed prefix of an overtime (stored P{n} → OVT{n}); French shows PRL{n}. */
+const OVERTIME_DISPLAY_PREFIX = 'OVT'
+
+/**
+ * Period code as SHOWN to people (timeline, scoresheet PDF): M1/M2 → P1/P2, P{n} → OVT{n}
+ * (the prefix follows the language: PRL in French — i18n `scoring.period.overtime_short`);
+ * anything else (TB, unknown) unchanged. Storage codes never change — display only.
+ * Mirror of ScoringRules::periodDisplayCode (api2).
+ */
+export function periodDisplayCode(period: string, overtimePrefix = OVERTIME_DISPLAY_PREFIX): string {
+  const regulation = REGULATION_DISPLAY[period]
+  if (regulation) return regulation
+  const overtime = overtimeIndex(period)
+  return overtime !== null ? `${overtimePrefix}${overtime}` : period
+}
+
 /**
  * Next period for the "advance" button (spec §7.1):
  *  - type C (classement): M1 → M2 → null (draw allowed, no overtime);
@@ -83,7 +102,7 @@ export function validateCardProgression(
   if (newCard === 'D') return true
 
   const maxPrevious = previousCards.reduce((max, c) => Math.max(max, CARD_RANK[c] ?? 0), 0)
-  return CARD_RANK[newCard] > maxPrevious ? true : 'card_not_higher'
+  return (CARD_RANK[newCard] ?? 0) > maxPrevious ? true : 'card_not_higher'
 }
 
 /** Whether the sanctioned player himself returns at the end of the penalty (spec §0.9). */
@@ -126,7 +145,7 @@ export function penaltySlotToLift(
 ): number | null {
   const liftable = penalties.filter(p => penaltyLiftableOnGoal(p.cardCode))
   if (liftable.length === 0) return null
-  return [...liftable].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0].slot
+  return [...liftable].sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0]?.slot ?? null
 }
 
 // ─── Event time (MM:SS) — the operator types digits only, the ':' is added for them ───

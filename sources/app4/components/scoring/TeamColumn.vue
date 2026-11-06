@@ -20,6 +20,8 @@ const props = defineProps<{
   tallies: Map<string, PlayerTally>
   /** matric of the selected player on THIS team (0 = team-level fact), null if none. */
   selectedMatric: number | null
+  /** Players matching the number being typed in the entry panel (both teams). */
+  candidateMatrics?: Set<number>
   /** Exclusion marker per player matric: R = replaced at penalty end, D = out to the end. */
   excludedCard: Map<string, 'R' | 'D'>
   showRoster?: boolean
@@ -87,14 +89,16 @@ const lastCardOf = (p: ScoringPlayer) => (exclusionOf(p) ? null : tallyOf(p)?.ca
             class="roster-row w-full flex items-center gap-3 max-md:gap-1 px-2 py-2 rounded-lg text-left text-sm border transition-colors"
             :class="selectedMatric === p.matric
               ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/50 ring-2 ring-inset ring-primary-500'
-              : 'border-header-200 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+              : candidateMatrics?.has(p.matric)
+                ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 ring-1 ring-inset ring-amber-400'
+                : 'border-header-200 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
             :aria-pressed="selectedMatric === p.matric"
             :disabled="!canScore"
             @click="emit('select', p)"
           >
-            <!-- A coach has no meaningful number (0): the status takes its place -->
+            <!-- Staff have no meaningful number (0): the status takes its place -->
             <span class="w-12 max-md:w-9 shrink-0 text-center">
-              <UBadge v-if="p.capitaine === 'E'" size="xs" variant="soft" color="neutral">Coach</UBadge>
+              <UBadge v-if="p.capitaine === 'E'" size="xs" variant="soft" color="neutral">{{ t('scoring.settings.status_E') }}</UBadge>
               <span v-else class="scoring-digits text-base">{{ p.numero }}</span>
             </span>
             <span class="flex-1 min-w-0 truncate" :class="exclusionOf(p) ? 'opacity-60' : ''">

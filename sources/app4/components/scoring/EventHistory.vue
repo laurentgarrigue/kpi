@@ -28,42 +28,18 @@ const emit = defineEmits<{ edit: [e: ScoringEvent]; remove: [e: ScoringEvent] }>
 
 const { t } = useI18n()
 
-// Chronological rank of a period: M1 < M2 < P1 < P2 < … (unbounded, spec §0.6) < TB.
-const SHOOTOUT_RANK = Number.MAX_SAFE_INTEGER
-const periodRank = (p: string): number => {
-  if (p === 'TB') return SHOOTOUT_RANK
-  const overtime = overtimeIndex(p)
-  return overtime !== null ? 2 + overtime : p === 'M2' ? 2 : 1
-}
-
-/** Display a game time as MM:SS (drop a leading 00: hours segment if present). */
 const fmtTime = (t: string): string => {
   const parts = (t || '').split(':')
   return parts.length >= 3 ? parts.slice(1).join(':') : t
 }
 
-const timeToSeconds = (t: string): number => {
-  const parts = fmtTime(t || '0:0').split(':').map(Number)
-  const [m, s] = parts
-  return (m || 0) * 60 + (s || 0)
-}
+// Most recent first (utils/scoringTimeline — the fact time is the time LEFT, the clock
+// counts down), which is also the legacy order: period ↓, then time ↑.
+const ordered = computed(() => timelineOrder(props.events))
 
 const showAll = ref(false)
 const limited = computed(() => !!props.recentCount && !showAll.value && props.events.length > props.recentCount)
-
-// The N latest facts in game order (period, then time) — what "recent" means at the table.
-const visible = computed(() => {
-  if (!limited.value) return props.events
-  const chronological = [...props.events].sort((a, b) =>
-    periodRank(a.period) - periodRank(b.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
-  return chronological.slice(-props.recentCount!)
-})
-
-// period DESC, time ASC (as in ReportController / fm3 query)
-const sorted = computed(() =>
-  [...visible.value].sort((a, b) =>
-    periodRank(b.period) - periodRank(a.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
-)
+const sorted = computed(() => (limited.value ? ordered.value.slice(0, props.recentCount) : ordered.value))
 
 const playerLabel = (e: ScoringEvent): string => {
   if (e.player === '0' || !e.nom) return t('scoring.team') + ' ' + e.team
@@ -127,7 +103,7 @@ const onRowClick = (e: ScoringEvent) => {
 
           <!-- CENTER: period + time -->
           <td class="py-1 text-center whitespace-nowrap scoring-digits text-header-900 dark:text-header-50">
-            {{ e.period }} {{ fmtTime(e.tpsJeu) }}
+            {{ periodDisplayCode(e.period, t('scoring.period.overtime_short')) }} {{ fmtTime(e.tpsJeu) }}
           </td>
 
           <!-- RIGHT: team B (mirrored) -->
@@ -161,7 +137,7 @@ const onRowClick = (e: ScoringEvent) => {
           <UBadge v-if="e.team === 'A'" size="xs" color="primary">A</UBadge>
         </span>
         <ScoringEventIcon :code="e.code" />
-        <span class="scoring-digits w-20">{{ e.period }} {{ fmtTime(e.tpsJeu) }}</span>
+        <span class="scoring-digits w-20">{{ periodDisplayCode(e.period, t('scoring.period.overtime_short')) }} {{ fmtTime(e.tpsJeu) }}</span>
         <span class="scoring-digits w-8 text-center">#{{ e.number }}</span>
         <span class="flex-1 truncate">
           {{ playerLabel(e) }}

@@ -7,6 +7,9 @@ import type { TeamSide } from '~/types/scoring'
  * away score, shot clock under the clock), black in both themes because that is what the
  * public sees. Presentational only — the controls live in the deck right under it.
  *
+ * The game clock is green while it runs, red when it is stopped or at zero (the operator
+ * sees at a glance that time is not running).
+ *
  * `clock` is null in post-match (no live clock): the centre then only carries the state line.
  * Running penalties sit under each team's score, as on the pitch scoreboard: the operator
  * watches one place for every countdown (game clock, shot clock, exclusions).
@@ -24,6 +27,8 @@ defineProps<{
   /** Running penalties of each team (live mode only). */
   penaltiesA?: PenaltyClock[]
   penaltiesB?: PenaltyClock[]
+  /** Penalty countdowns can be corrected (game clock stopped). */
+  canAdjustPenalties?: boolean
   /** Score-only mode: ±1 under each score, the board becomes the whole entry surface. */
   scoreOnly?: boolean
   canScore?: boolean
@@ -32,6 +37,7 @@ defineProps<{
 const emit = defineEmits<{
   bump: [team: TeamSide, delta: 1 | -1]
   'remove-penalty': [id: string]
+  'adjust-penalty': [id: string, deltaSec: number]
 }>()
 
 const { t } = useI18n()
@@ -56,7 +62,9 @@ const { t } = useI18n()
           class="mt-1 justify-end"
           :penalties="penaltiesA"
           :can-score="canScore"
+          :can-adjust="canAdjustPenalties"
           @remove="emit('remove-penalty', $event)"
+          @adjust="(id, d) => emit('adjust-penalty', id, d)"
         />
         <div v-if="scoreOnly" class="mt-1 flex justify-end gap-1">
           <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', 'A', -1)">−1</button>
@@ -69,7 +77,7 @@ const { t } = useI18n()
         <div
           v-if="clock !== null"
           class="scoring-digits board-clock"
-          :class="clockRunning ? 'text-green-400' : 'text-white'"
+          :class="clockRunning ? 'text-green-400' : 'text-red-500'"
         >{{ clock }}</div>
         <!-- Post-match: no clock, the scores still need their separator -->
         <div v-else class="scoring-digits board-score text-white/40" aria-hidden="true">–</div>
@@ -96,7 +104,9 @@ const { t } = useI18n()
           class="mt-1"
           :penalties="penaltiesB"
           :can-score="canScore"
+          :can-adjust="canAdjustPenalties"
           @remove="emit('remove-penalty', $event)"
+          @adjust="(id, d) => emit('adjust-penalty', id, d)"
         />
         <div v-if="scoreOnly" class="mt-1 flex gap-1">
           <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', 'B', 1)">+1</button>

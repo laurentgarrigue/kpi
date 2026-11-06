@@ -7,6 +7,9 @@ import type { OfficialRole, OfficialSuggestion, OfficialSuggestionsResponse } fr
  * typed, any other licence holder. Free text stays allowed: the field stores what the
  * operator typed or picked (legacy format "NOM Prénom (matric)" for a pick).
  *
+ * A cross on the right empties the field and puts the focus back in it, which lists the
+ * referee team again: replacing an official is "clear, then pick" (spec §7.2).
+ *
  * The page owns the API: suggestions come through the `suggest` prop.
  */
 const props = defineProps<{
@@ -56,6 +59,15 @@ const close = () => {
   open.value = false
   active.value = -1
 }
+const root = ref<HTMLElement | null>(null)
+/** Empty the field and focus it: the focus lists the suggestions for a new pick. */
+const clear = async () => {
+  emit('update:modelValue', '')
+  await nextTick()
+  root.value?.querySelector('input')?.focus()
+  // Already focused (no new focus event): list the suggestions anyway.
+  void search('')
+}
 const pick = (item: OfficialSuggestion) => {
   emit('update:modelValue', item.value)
   close()
@@ -84,7 +96,7 @@ const groupLabel = (g: OfficialSuggestion['group']) =>
 </script>
 
 <template>
-  <div class="relative">
+  <div ref="root" class="relative">
     <UInput
       :id="inputId"
       :model-value="modelValue"
@@ -101,7 +113,20 @@ const groupLabel = (g: OfficialSuggestion['group']) =>
       @focus="onFocus"
       @blur="close"
       @keydown="onKeydown"
-    />
+    >
+      <template v-if="modelValue && !disabled" #trailing>
+        <UButton
+          size="xs"
+          variant="link"
+          color="neutral"
+          icon="i-heroicons-x-mark"
+          :aria-label="t('scoring.settings.clear_official')"
+          :title="t('scoring.settings.clear_official')"
+          @mousedown.prevent
+          @click="clear"
+        />
+      </template>
+    </UInput>
     <ul
       v-if="open"
       :id="listId"

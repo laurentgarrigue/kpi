@@ -2651,12 +2651,13 @@
       "END": "Finished"
     },
     "period": {
-      "M1": "Period 1",
-      "M2": "Period 2",
+      "M1": "1st period",
+      "M2": "2nd period",
       "P1": "Overtime 1",
       "P2": "Overtime 2",
       "TB": "Penalty shootout",
-      "overtime": "Overtime {n}"
+      "overtime": "Overtime {n}",
+      "overtime_short": "OVT"
     },
     "event": {
       "goal": "Goal",
@@ -2678,7 +2679,6 @@
     "field": "Field",
     "history": "Timeline",
     "not_found": "Match not found",
-    "select_player_first": "Select a player first",
     "roster_empty": "No player on the game sheet",
     "team_fact": "Team fact (no player)",
     "no_access": "Restricted access (experimentation phase)",
@@ -2691,7 +2691,9 @@
       "title": "Edit game action",
       "save": "Save",
       "cancel": "Cancel",
-      "delete": "Delete"
+      "delete": "Delete",
+      "delete_title": "Delete this game fact?",
+      "delete_message": "The fact is removed from the timeline; removing a goal lowers the score."
     },
     "pending": {
       "validate_event": "Record: {event}"
@@ -2756,7 +2758,11 @@
       "shotclockStop": "Shot clock: stop (--)",
       "shotclockPlus": "Shot clock: +1 s",
       "shotclockMinus": "Shot clock: −1 s",
-      "playerByNumber": "Pick a player by number"
+      "factGoal": "Game fact: goal",
+      "factGreen": "Game fact: green card",
+      "factYellow": "Game fact: yellow card",
+      "factRed": "Game fact: red card",
+      "factBlack": "Game fact: black card"
     },
     "sound_test": "Test sound",
     "penalty": {
@@ -2769,7 +2775,8 @@
       "expired_replace": "Penalty of #{number} (red card) is over: replacement allowed — the sanctioned player does not return.",
       "lift_title": "Goal conceded — penalty lift",
       "lift_message": "The short-handed team just conceded a goal: lift the oldest penalty (#{number})? The player returns. (A red-card penalty is never lifted: its 2 minutes run to the end.)",
-      "lift_confirm": "Lift the penalty"
+      "lift_confirm": "Lift the penalty",
+      "adjust": "Adjust the countdown"
     },
     "display": {
       "scoreboard": "Open the scoreboard",
@@ -2799,14 +2806,18 @@
       "no_player": "No player",
       "number": "No.",
       "player": "Player",
-      "captain": "Captain",
       "remove_player": "Remove player",
       "officials_table": "Scoring table",
       "officials_referees": "Referees",
       "match": "Game",
       "load_next": "Next game on this pitch",
       "no_next_game": "No later game on this pitch",
-      "other_licensees": "Other licence holders"
+      "other_licensees": "Other licence holders",
+      "status": "Status",
+      "status_C": "Captain",
+      "status_E": "Staff",
+      "compo_loaded": "{team} roster loaded from the presence sheet",
+      "clear_official": "Clear the field"
     },
     "score_only": {
       "label": "Score only",
@@ -2829,7 +2840,19 @@
     "lock_toggle": "Lock or unlock the game",
     "entry": {
       "title": "Game action entry",
-      "clear": "Clear selection"
+      "clear": "Deselect",
+      "start_hint": "Pick a game fact or a player",
+      "keys_hint": "Keyboard key (set it in Keyboard shortcuts)",
+      "player_number": "Player number",
+      "player_number_placeholder": "No.",
+      "player_ambiguous": "Number found in both teams: ← team A, → team B",
+      "player_enter": "Enter to pick",
+      "player_none": "No player with this number",
+      "player_hint": "Type the number, or click the player",
+      "player_missing": "Pick the player of the game fact",
+      "time_frozen": "Time frozen when the entry started — Deselect resyncs it",
+      "locked_pending": "Start the game (\"Pending\" badge) to enter game facts.",
+      "locked_end": "Game closed: reopen it (\"Reopen the game…\") to correct the game facts, then close it again."
     },
     "event_short": {
       "goal": "Goal",
@@ -2866,15 +2889,6 @@
       "confirm": "Reopen the game",
       "done": "Game reopened"
     },
-    "picker": {
-      "title": "Player by number",
-      "placeholder": "No. (e.g. 7, A7, 7B)",
-      "hint": "Enter to pick · Esc to close",
-      "ambiguous": "Number {number} exists in both teams: add A or B, or click the player.",
-      "none": "No player with this number.",
-      "open": "Pick a player by number",
-      "fact_hint": "Type the fact's letter: it is staged and the time gets the focus (Enter to record). Esc to close."
-    },
     "undo": {
       "recorded": "Game fact recorded",
       "action": "Undo",
@@ -2887,15 +2901,17 @@
     "readiness": {
       "title": "To check before kick-off",
       "ok": "Game sheet ready: rosters, numbers, captains and officials checked",
-      "hint": "These checks do not prevent the kick-off: the referee decides.",
-      "summary": "{count} point(s) to check on the game sheet before kick-off",
-      "open": "Open the sheet",
-      "too_few_players": "{team}: {count} player(s) on the sheet, at least {min} needed",
-      "too_many_players": "{team}: {count} players on the sheet, {max} at most",
-      "too_many_staff": "{team}: {count} team officials, {max} at most",
+      "hint": "These checks do not prevent the kick-off.",
+      "summary": "{count} point(s) to check in the game settings before kick-off",
+      "open": "Open the settings",
+      "too_few_players": "{team}: {count} player(s) on the sheet (staff not counted), at least {min} needed",
+      "too_many_players": "{team}: {count} players on the sheet (staff not counted), {max} at most",
+      "too_many_staff": "{team}: {count} staff members, {max} at most",
       "duplicate_numbers": "{team}: duplicate jersey numbers ({numbers})",
       "no_captain": "{team}: no captain designated",
-      "missing_officials": "Officials to fill in: {roles}"
+      "missing_officials": "Officials to fill in: {roles}",
+      "expand": "Show the points to check",
+      "collapse": "Collapse"
     }
   },
   "competition": {

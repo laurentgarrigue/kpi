@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MatchClosure, OfficialRole, Period, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
-import { shortcutKeyLabel } from '~/composables/useScoringShortcuts'
+import { shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
 
 definePageMeta({
   layout: 'admin',
@@ -9,7 +9,7 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 const scoringStore = useScoringStore()
 // Build the api client here (setup context) and hand it to the store: most scoring
@@ -27,12 +27,13 @@ const canScore = computed(() => canScoreBase.value && !scoringStore.isCompetitio
 
 // D = black ejection card under the 2027 rules (spec §0.9) — code kept for storage compat.
 // shortKey: one-word label for the narrow fact keys (mobile bottom bar, validate button).
-const eventCodes: { code: ScoringEventCode; labelKey: string; shortKey: string; color: string }[] = [
-  { code: 'B', labelKey: 'scoring.event.goal', shortKey: 'scoring.event_short.goal', color: 'primary' },
-  { code: 'V', labelKey: 'scoring.event.card_green', shortKey: 'scoring.event_short.card_green', color: 'success' },
-  { code: 'J', labelKey: 'scoring.event.card_yellow', shortKey: 'scoring.event_short.card_yellow', color: 'warning' },
-  { code: 'R', labelKey: 'scoring.event.card_red', shortKey: 'scoring.event_short.card_red', color: 'error' },
-  { code: 'D', labelKey: 'scoring.event.card_black', shortKey: 'scoring.event_short.card_black', color: 'neutral' }
+// shortcut: the keyboard action arming the fact (its key is shown on the button).
+const eventCodes: { code: ScoringEventCode; labelKey: string; shortKey: string; color: string; shortcut: ShortcutAction }[] = [
+  { code: 'B', labelKey: 'scoring.event.goal', shortKey: 'scoring.event_short.goal', color: 'primary', shortcut: 'factGoal' },
+  { code: 'V', labelKey: 'scoring.event.card_green', shortKey: 'scoring.event_short.card_green', color: 'success', shortcut: 'factGreen' },
+  { code: 'J', labelKey: 'scoring.event.card_yellow', shortKey: 'scoring.event_short.card_yellow', color: 'warning', shortcut: 'factYellow' },
+  { code: 'R', labelKey: 'scoring.event.card_red', shortKey: 'scoring.event_short.card_red', color: 'error', shortcut: 'factRed' },
+  { code: 'D', labelKey: 'scoring.event.card_black', shortKey: 'scoring.event_short.card_black', color: 'neutral', shortcut: 'factBlack' }
 ]
 // Card reasons (motifs) reused from FMV3 — '' = none, 'unknown' pre-selected (spec §0.9)
 const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
@@ -80,6 +81,12 @@ const periodItems = computed(() => {
 type ScoringMode = 'live' | 'post'
 const mode = ref<ScoringMode>('live')
 const isLive = computed(() => mode.value === 'live')
+// Clocks and periods only move once the match is under way (kick-off given, not closed).
+const matchOn = computed(() => match.value?.statut === 'ON')
+// Game facts are created, edited and deleted only while the match is in progress: before
+// kick-off nothing has happened yet, and a closed match is corrected by reopening it
+// (« Rouvrir le match… » → correct → « Clore le match… »), which re-consolidates kp_*.
+const canEditFacts = computed(() => canScore.value && matchOn.value)
 
 // ─── Two views: "Paramètres" (before kick-off) / "Déroulement" (spec §7.1) ───
 const view = ref<'run' | 'settings'>('run')
@@ -121,7 +128,7 @@ const modeItems = computed(() => (['live', 'post', 'scoreOnly'] as ConsoleMode[]
 
 /** Score-only goal: +1/−1 for a team, recorded as a team-level fact (player '0'). */
 const bumpScore = async (team: TeamSide, delta: 1 | -1) => {
-  if (!canScore.value || !match.value || !acceptClick(`score${team}${delta}`)) return
+  if (!canEditFacts.value || !match.value || !acceptClick(`score${team}${delta}`)) return
   if (delta === 1) {
     try {
       await scoringStore.addEvent({
@@ -198,8 +205,12 @@ const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, set
   })
 
 // ─── Click debounce: a press held too long or too hard counts once ───
-const CLICK_DEBOUNCE_MS = 250
-const acceptClick = createClickGuard(CLICK_DEBOUNCE_MS)
+// Two tolerances: a start/stop toggle or a score key must count once per press (a double
+// trigger would undo it), whereas ±1/±10 keys are meant to be clicked in quick bursts.
+const TOGGLE_DEBOUNCE_MS = 250
+const ADJUST_DEBOUNCE_MS = 40
+const acceptClick = createClickGuard(TOGGLE_DEBOUNCE_MS)
+const acceptAdjust = createClickGuard(ADJUST_DEBOUNCE_MS)
 
 // ─── Adjustment keys (±1/±10 s): persisted once per burst ───
 // Operators click them in bursts (+1 +1 +1). Each click applies locally at once, but only
@@ -233,7 +244,7 @@ const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
   })
 }
 const shotclockStart = (seconds: number) => {
-  if (!canScore.value || !isLive.value) return
+  if (!canScore.value || !isLive.value || !matchOn.value) return
   shotclock.start(seconds)
   // The shotclock follows the game clock (§6.5): loading 60/40 while the game clock is
   // stopped must NOT make it count down — it waits, suspended, until the game restarts.
@@ -252,7 +263,7 @@ const shotclockStop = () => {
   persistShotclock('RAZ')
 }
 const shotclockAdjust = (delta: number) => {
-  if (!canScore.value || shotclock.state.value !== 'SUSPENDED' || !acceptClick(`shotclock${delta}`)) return
+  if (!canScore.value || shotclock.state.value !== 'SUSPENDED' || !matchOn.value || !acceptAdjust(`shotclock${delta}`)) return
   shotclock.adjust(delta)
   // Written with the state at the end of the burst (60/40 may have been pressed meanwhile).
   persistAfterBurst('shotclock', () => {
@@ -293,6 +304,16 @@ const persistPenalty = (p: PenaltyClock, action: 'run' | 'stop') => {
 }
 const persistAllPenalties = () => {
   for (const p of penalties.penalties.value) persistPenalty(p, p.running ? 'run' : 'stop')
+}
+
+/**
+ * Correct a running penalty's countdown (click on its chip — spec §7.4). Game clock stopped
+ * only, like the main clock's fine adjust; persisted once per burst of clicks.
+ */
+const adjustPenalty = (id: string, deltaSec: number) => {
+  if (!canScore.value || isRunning.value || !acceptAdjust(`penalty${id}${deltaSec}`)) return
+  const clock = penalties.adjust(id, deltaSec * 1000, scoringStore.config.penaltyDuration * 1000)
+  if (clock) persistAfterBurst(`penalty${id}`, () => persistPenalty(clock, clock.running ? 'run' : 'stop'))
 }
 
 const removePenalty = (id: string) => {
@@ -404,26 +425,14 @@ watch(() => penalties.penalties.value.map(p => `${p.slot}${p.team}${Math.ceil(p.
 // ─── Configurable keyboard shortcuts (spec §6.5, decision §0.9) ───
 const shortcutsOpen = ref(false)
 
-// ─── Pick the player by jersey number, keyboard only (`N` — spec §7.1) ───
-const pickerOpen = ref(false)
-const pickerFacts = computed(() => eventCodes.map(e => ({ code: e.code, label: t(e.labelKey) })))
-const openPicker = () => {
-  if (view.value === 'run' && !scoreOnly.value && !editingUid.value) pickerOpen.value = true
-}
-/** Number + fact letter typed: same state as two clicks — the time field now has the focus. */
-const pickFromNumber = async (team: TeamSide, player: ScoringPlayer, code: ScoringEventCode) => {
-  pickerOpen.value = false
-  selectPlayer(team, player)
-  await stageEvent(code)
-}
-
 // ─── Closure (spec §7.6) and reopening — never a single tap: both go through a dialog ───
 const closeOpen = ref(false)
 const closing = ref(false)
 const reopenOpen = ref(false)
 const goals = computed(() => goalCounts(scoringStore.events))
+// Only a match in progress can be closed (a pending one has not been played).
 const openClose = () => {
-  if (canScore.value) closeOpen.value = true
+  if (canScore.value && matchOn.value) closeOpen.value = true
 }
 const confirmClose = async (closure: MatchClosure) => {
   if (!canScore.value || closing.value) return
@@ -488,28 +497,38 @@ const toolItems = computed(() => [
     : []),
   { label: t('scoring.shortcuts.title'), icon: 'i-heroicons-command-line', onSelect: () => { shortcutsOpen.value = true } }
 ])
-// Off while a dialog owns the keyboard; the clock keys only mean something in live mode,
-// picking a player by number works in post-match too.
-const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value && !pickerOpen.value
-  && !closeOpen.value && !reopenOpen.value)
-const liveOnly = (handler: () => void) => () => { if (isLive.value) handler() }
+// Off while a dialog or the card-reason list owns the keyboard (`Entrée` there picks a
+// reason — it must not also start the shot clock). Clock keys: live mode, match in
+// progress only. Fact keys: Déroulement view with the detailed entry (live and post-match).
+const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value
+  && !closeOpen.value && !reopenOpen.value && !reasonOpen.value)
+const clockKey = (handler: () => void) => () => { if (isLive.value && matchOn.value) handler() }
+const factKey = (code: ScoringEventCode) => () => {
+  if (view.value === 'run' && !scoreOnly.value) void stageEvent(code)
+}
 const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
-  gameClockToggle: liveOnly(() => toggleClock()),
-  shotclockStart60: liveOnly(() => shotclockStart(scoringStore.config.shotclockDurations.full)),
-  shotclockStart40: liveOnly(() => {
+  gameClockToggle: clockKey(() => toggleClock()),
+  shotclockStart60: clockKey(() => shotclockStart(scoringStore.config.shotclockDurations.full)),
+  shotclockStart40: clockKey(() => {
     if (scoringStore.config.shotclockOffensiveReboundEnabled) {
       shotclockStart(scoringStore.config.shotclockDurations.offensiveRebound)
     }
   }),
-  shotclockStop: liveOnly(shotclockStop),
-  shotclockPlus: liveOnly(() => shotclockAdjust(1)),
-  shotclockMinus: liveOnly(() => shotclockAdjust(-1)),
-  playerByNumber: () => openPicker()
-}, { enabled: shortcutsEnabled })
+  shotclockStop: clockKey(shotclockStop),
+  shotclockPlus: clockKey(() => shotclockAdjust(1)),
+  shotclockMinus: clockKey(() => shotclockAdjust(-1)),
+  factGoal: factKey('B'),
+  factGreen: factKey('V'),
+  factYellow: factKey('J'),
+  factRed: factKey('R'),
+  factBlack: factKey('D')
+}, { enabled: shortcutsEnabled, locale })
 
-// In live mode keep the event-time field tracking the clock (unless editing a row).
+// The fact time follows the clock until an entry starts: the moment a fact or a player is
+// picked, it freezes — on some matches the clock keeps running after a goal, and the time
+// to record is the moment of the fact, not of the click on "Valider". Deselecting resumes.
 watch(gameTime, (v) => {
-  if (isLive.value && !editingUid.value) eventTime.value = v
+  if (isLive.value && !entryActive.value) eventTime.value = v
 })
 
 // ─── Live coherence between terminals (Mercure/SSE — plan lot 3) ───
@@ -582,6 +601,7 @@ onMounted(async () => {
   if (!canView.value) return
   try {
     await scoringStore.load(matchId.value)
+    await loadEmptyCompositions()
     // Default mode from status, period field from the match's current period.
     mode.value = scoringStore.match?.statut === 'END' ? 'post' : 'live'
     eventPeriod.value = (scoringStore.match?.periode ?? 'M1') as Period
@@ -624,9 +644,36 @@ onMounted(async () => {
   }
 })
 
+/**
+ * An empty composition is filled from the presence sheet straight away (spec §7.2): an
+ * empty game sheet is never what the scoring table wants, and reloading by hand was the
+ * first gesture of every match. Unlocked match only; a team without presence stays empty.
+ */
+const loadEmptyCompositions = async () => {
+  if (!canScore.value || scoringStore.isLocked) return
+  for (const team of ['A', 'B'] as TeamSide[]) {
+    const roster = team === 'A' ? scoringStore.playersA : scoringStore.playersB
+    if (roster.length) continue
+    try {
+      await scoringStore.reloadPresentPlayers(team)
+      const loaded = team === 'A' ? scoringStore.playersA : scoringStore.playersB
+      if (loaded.length) {
+        toast.add({
+          title: t('scoring.settings.compo_loaded', { team: (team === 'A' ? match.value?.equipeA : match.value?.equipeB) ?? team }),
+          color: 'info'
+        })
+      }
+    } catch { /* useApi already toasts */ }
+  }
+}
+
+/** Pick the player of the entry; once the fact is known too, the time gets the focus. */
 const selectPlayer = (team: TeamSide, player: ScoringPlayer) => {
-  if (!canScore.value) return
+  if (!canEditFacts.value) return
   selected.value = { team, player }
+  playerQuery.value = ''
+  playerQueryTeam.value = null
+  if (pendingCode.value) void focusTimeField()
 }
 
 // Mobile: both rosters side by side, names truncated; tapping a team name widens that side
@@ -646,7 +693,7 @@ const selectedLabel = computed(() => {
   const p = selected.value?.player
   if (!p) return ''
   if (isTeamFact(p)) return t('scoring.team_fact')
-  return `${p.capitaine === 'E' ? 'Coach' : '#' + p.numero} ${p.nom.toUpperCase()} ${p.prenom}`
+  return `${p.capitaine === 'E' ? t('scoring.settings.status_E') : '#' + p.numero} ${p.nom.toUpperCase()} ${p.prenom}`
 })
 
 // Team-level fact (player '0', as in score-only mode): the only way to record anything
@@ -663,55 +710,133 @@ const cardWarning = ref<{ code: ScoringEventCode; violation: string } | null>(nu
 const goldenGoalOpen = ref(false)
 
 /**
- * Staged fact awaiting its time (legacy workflow, restored 2026-07-31).
+ * Fact entry (spec §7.3, order revised 2026-11-06 — §0.12). The fact and the player are
+ * picked in ANY order with the mouse; on the keyboard the fact comes first (its letter),
+ * then the player's number, since digits are also shot-clock shortcuts outside a field.
+ * Nothing is recorded before an explicit validation of the time (`Entrée` or the button):
+ * the fact almost always happened a few seconds before it is entered (legacy workflow,
+ * restored 2026-07-31). `Échap` or "Désélectionner" drops the whole entry.
  *
- * Clicking a fact button does NOT record straight away: the operator still has to set the
- * time — in live mode the clock pre-fills it, but the fact almost always happened a few
- * seconds earlier, so it must stay adjustable. We stage the code, focus the time field and
- * wait for an explicit validation (`Entrée`, or the confirm button). `Échap` cancels.
- * Aiming for "one gesture" cost the operator the time correction — that trade was wrong.
+ *   fact key ──► (card: reason list opens) ──► player (click, or number + ←/→ + Entrée)
+ *       └─────────── or the player first ──────────┘ ──► time (focused) ──► Entrée
  */
 const pendingCode = ref<ScoringEventCode | null>(null)
-// The reason only applies to cards: its select appears once a card is staged.
+// The reason only applies to cards: its list opens as soon as a card is armed.
 const pendingIsCard = computed(() => pendingCode.value !== null && pendingCode.value !== 'B')
+const reasonOpen = ref(false)
 const timeInput = ref<{ $el?: HTMLElement } | HTMLElement | null>(null)
+const playerInput = ref<{ $el?: HTMLElement } | null>(null)
+
+/** An entry is in progress: the fact time stops following the clock (see watch(gameTime)). */
+const entryActive = computed(() => pendingCode.value !== null || selected.value !== null || editingUid.value !== null)
+
+// ─── Player by number (keyboard): digits, ←/→ to choose the team when both have it ───
+const playerQuery = ref('')
+const playerQueryTeam = ref<TeamSide | null>(null)
+const playerCandidates = computed(() => playerQuery.value.trim()
+  ? findPlayersByNumber(`${playerQueryTeam.value ?? ''}${playerQuery.value}`, scoringStore.playersA, scoringStore.playersB)
+  : [])
+/** Matrics to highlight in each roster while a number is being typed. */
+const candidateMatrics = computed(() => new Set(playerCandidates.value.map(p => p.matric)))
+const onPlayerQueryKey = (event: KeyboardEvent) => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault()
+    playerQueryTeam.value = event.key === 'ArrowLeft' ? 'A' : 'B'
+  } else if (event.key === 'Enter') {
+    event.preventDefault()
+    const only = playerCandidates.value.length === 1 ? playerCandidates.value[0] : null
+    if (only) selectPlayer(only.team, only)
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    clearEntry()
+  }
+}
+watch(playerQuery, () => { playerQueryTeam.value = null })
+
+const inputOf = (el: { $el?: HTMLElement } | HTMLElement | null): HTMLInputElement | null => {
+  const root = (el as { $el?: HTMLElement })?.$el ?? (el as HTMLElement | null)
+  return root?.tagName === 'INPUT' ? root as HTMLInputElement : root?.querySelector('input') ?? null
+}
 
 /** Focus + select the time field so typing overwrites it right away. */
 const focusTimeField = async () => {
   await nextTick()
-  const root = (timeInput.value as { $el?: HTMLElement })?.$el ?? (timeInput.value as HTMLElement | null)
-  const input = root?.tagName === 'INPUT' ? root as HTMLInputElement : root?.querySelector('input')
+  const input = inputOf(timeInput.value)
   input?.focus()
   input?.select()
 }
 
-/** Stage a fact (or an edit) and hand the focus to the time field. */
+/**
+ * Focus the player-number field — only with a fine pointer (keyboard + mouse): on a tablet,
+ * focusing it would pop the on-screen keyboard over the rosters the operator taps.
+ */
+const focusPlayerField = async () => {
+  if (!window.matchMedia('(pointer: fine)').matches) return
+  await nextTick()
+  inputOf(playerInput.value)?.focus()
+}
+
+/** Next step of the entry once the fact (and its reason, for a card) is set. */
+const advanceEntry = () => {
+  if (selected.value || editingUid.value) void focusTimeField()
+  else void focusPlayerField()
+}
+
+/** Arm a fact (button or letter key). A card opens its reason list first. */
 const stageEvent = async (code: ScoringEventCode) => {
-  if (!canScore.value || !match.value) return
-  if (!selected.value && !editingUid.value) {
-    toast.add({ title: t('common.error'), description: t('scoring.select_player_first'), color: 'warning' })
-    return
-  }
+  if (!canEditFacts.value || !match.value) return
   pendingCode.value = code
-  await focusTimeField()
+  if (code !== 'B') reasonOpen.value = true
+  else advanceEntry()
 }
 
-/** Drop the staged fact without recording it (`Échap`). */
-const cancelPending = () => {
+/** The reason list closed (picked, or Échap to keep the default): carry on with the entry. */
+const onReasonOpen = (open: boolean) => {
+  reasonOpen.value = open
+  // After the list has handed the focus back to its trigger.
+  if (!open && pendingCode.value) setTimeout(advanceEntry, 0)
+}
+
+/** Drop the whole entry (button "Désélectionner", `Échap`): the time follows the clock again. */
+const clearEntry = () => {
   pendingCode.value = null
+  selected.value = null
+  editingUid.value = null
+  reasonOpen.value = false
+  playerQuery.value = ''
+  eventReason.value = scoringStore.config.defaultCardReason
+  if (isLive.value) {
+    eventTime.value = gameTime.value
+    eventPeriod.value = (match.value?.periode ?? eventPeriod.value) as Period
+  }
 }
 
-/** Validate the staged fact (`Entrée` in the time field, or the confirm button). */
+watch(matchOn, (on) => { if (!on) clearEntry() })
+
+// Deleting the fact being edited (entry panel): confirmed, a goal changes the score.
+const deleteEditedOpen = ref(false)
+const confirmDeleteEdited = async () => {
+  deleteEditedOpen.value = false
+  const edited = scoringStore.events.find(e => e.uid === editingUid.value)
+  if (edited) await removeEvent(edited)
+}
+
+/** Validate the entry (`Entrée` in the time field, or the confirm button). */
 const validatePending = async () => {
   const code = pendingCode.value
   if (!code) return
+  if (!selected.value && !editingUid.value) {
+    toast.add({ title: t('scoring.entry.player_missing'), color: 'warning' })
+    await focusPlayerField()
+    return
+  }
   pendingCode.value = null
   await commitEvent(code)
 }
 
 /** Commit the event buttons: add a new event, or update the one being edited. */
 const commitEvent = async (code: ScoringEventCode) => {
-  if (!canScore.value || !match.value) return
+  if (!canEditFacts.value || !match.value) return
   // `Entrée` validates without blurring: format the digits typed by the operator here too.
   normalizeEventTime()
 
@@ -724,13 +849,13 @@ const commitEvent = async (code: ScoringEventCode) => {
         tpsJeu: eventTime.value,
         reason: code === 'B' ? '' : eventReason.value
       })
-      cancelEdit()
+      clearEntry()
     } catch { /* toast handled */ }
     return
   }
 
   if (!selected.value) {
-    toast.add({ title: t('common.error'), description: t('scoring.select_player_first'), color: 'warning' })
+    toast.add({ title: t('scoring.entry.player_missing'), color: 'warning' })
     return
   }
 
@@ -767,12 +892,11 @@ const pushEvent = async (code: ScoringEventCode) => {
     prenom: player.prenom
   }
   // Captured before the selection is cleared: the undo toast names who and when.
-  const recordedLabel = `${t(eventCodes.find(e => e.code === code)!.shortKey)} · ${selectedLabel.value} · ${event.period} ${event.tpsJeu}`
+  const recordedLabel = `${t(eventCodes.find(e => e.code === code)!.shortKey)} · ${selectedLabel.value} · ${periodDisplayCode(event.period, t('scoring.period.overtime_short'))} ${event.tpsJeu}`
   let createdPenaltyId: string | null = null
   try {
     await scoringStore.addEvent(event)
-    selected.value = null
-    eventReason.value = scoringStore.config.defaultCardReason
+    clearEntry()
 
     if (code === 'B') {
       // Conceded goal: propose the early lift of the conceding team's oldest liftable
@@ -831,7 +955,7 @@ const offerUndo = (event: ScoringEvent, label: string, penaltyId: string | null)
   })
 }
 const undoEvent = async (event: ScoringEvent, penaltyId: string | null) => {
-  if (!canScore.value || !scoringStore.events.some(e => e.uid === event.uid)) return
+  if (!canEditFacts.value || !scoringStore.events.some(e => e.uid === event.uid)) return
   try {
     await scoringStore.removeEvent(event)
     if (penaltyId) removePenalty(penaltyId)
@@ -855,7 +979,7 @@ const confirmCardWarning = async () => {
  * change) and focus the time field — same gestures as a fresh entry.
  */
 const startEdit = async (e: ScoringEvent) => {
-  if (!canScore.value || !e.uid) return
+  if (!canEditFacts.value || !e.uid) return
   editingUid.value = e.uid
   eventPeriod.value = e.period
   eventTime.value = e.tpsJeu
@@ -867,24 +991,17 @@ const startEdit = async (e: ScoringEvent) => {
   selected.value = player ? { team: e.team, player } : null
   await focusTimeField()
 }
-const cancelEdit = () => {
-  editingUid.value = null
-  pendingCode.value = null
-  selected.value = null
-  eventReason.value = scoringStore.config.defaultCardReason
-  if (isLive.value) eventTime.value = gameTime.value
-}
 const removeEvent = async (e: ScoringEvent) => {
-  if (!canScore.value) return
+  if (!canEditFacts.value) return
   try {
     await scoringStore.removeEvent(e)
-    if (editingUid.value === e.uid) cancelEdit()
+    if (editingUid.value === e.uid) clearEntry()
   } catch { /* toast handled */ }
 }
 
 // ─── Event time fine-adjust (±60/±10/±1 s) — works in live and post-match ───
 const adjustEventTime = (deltaSec: number) => {
-  if (!acceptClick(`eventTime${deltaSec}`)) return
+  if (!acceptAdjust(`eventTime${deltaSec}`)) return
   const [m, s] = eventTime.value.split(':').map(Number)
   const total = Math.max(0, (m || 0) * 60 + (s || 0) + deltaSec)
   eventTime.value = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
@@ -963,7 +1080,7 @@ const timer = (action: 'run' | 'stop' | 'RAZ') => {
 
 /** Start/pause toggle — debounced: a double contact must not start then stop the clock. */
 const toggleClock = () => {
-  if (!acceptClick('clockToggle')) return
+  if (!matchOn.value || !acceptClick('clockToggle')) return
   timer(isRunning.value ? 'stop' : 'run')
 }
 
@@ -975,7 +1092,7 @@ const toggleClock = () => {
 // correction made clock stopped (spec §6.4), unless the competition allows it (hardware sync).
 const clockAdjustable = computed(() => !isRunning.value || scoringStore.config.allowTimerAdjustWhileRunning)
 const adjustClock = (deltaSec: number) => {
-  if (!canScore.value || !clockAdjustable.value || !acceptClick(`clock${deltaSec}`)) return
+  if (!canScore.value || !clockAdjustable.value || !matchOn.value || !acceptAdjust(`clock${deltaSec}`)) return
   const wasRunning = isRunning.value
   // Clamped at both ends: never below 0, never past the period duration (which would show
   // a negative remaining time).
@@ -1193,7 +1310,7 @@ const toggleLock = async () => {
       <!-- The console: the board (what the public sees) with the deck of clock keys under it -->
       <div>
         <ScoringBoard
-          :class="isLive ? '' : 'rounded-b-xl'"
+          :class="isLive && matchOn ? '' : 'rounded-b-xl'"
           :team-a="match.equipeA ?? 'A'"
           :team-b="match.equipeB ?? 'B'"
           :score-a="scoringStore.scoreA"
@@ -1206,19 +1323,13 @@ const toggleLock = async () => {
           :penalties-a="isLive ? penalties.penalties.value.filter(p => p.team === 'A') : []"
           :penalties-b="isLive ? penalties.penalties.value.filter(p => p.team === 'B') : []"
           :score-only="scoreOnly"
-          :can-score="canScore"
+          :can-score="canEditFacts"
+          :can-adjust-penalties="canScore && !isRunning"
           @bump="bumpScore"
           @remove-penalty="removePenalty"
+          @adjust-penalty="adjustPenalty"
         >
           <template #state>
-            <ScoringPeriodSelector
-              :period="match.periode"
-              :type="match.type"
-              :can-change="canScore"
-              :score-level="scoreLevel"
-              :shootout-enabled="scoringStore.config.shootoutEnabled"
-              @change="setPeriod"
-            />
             <ScoringStatusBadge
               :status="match.statut"
               :can-kickoff="canScore"
@@ -1226,7 +1337,7 @@ const toggleLock = async () => {
             />
             <!-- Closing and reopening: deliberate, through their own dialog (spec §7.6) -->
             <UButton
-              v-if="match.statut !== 'END' && canScore"
+              v-if="match.statut === 'ON' && canScore"
               size="xs"
               variant="outline"
               color="neutral"
@@ -1241,12 +1352,22 @@ const toggleLock = async () => {
               icon="i-heroicons-arrow-uturn-left"
               @click="reopenOpen = true"
             >{{ t('scoring.reopen.action') }}</UButton>
+            <ScoringPeriodSelector
+              v-if="matchOn"
+              :period="match.periode"
+              :type="match.type"
+              :can-change="canScore"
+              :score-level="scoreLevel"
+              :shootout-enabled="scoringStore.config.shootoutEnabled"
+              @change="setPeriod"
+            />
           </template>
         </ScoringBoard>
 
-        <!-- Deck (live only): game clock keys | shot clock keys, under the digits they drive -->
+        <!-- Deck (live, match in progress only): game clock keys | shot clock keys, under the
+             digits they drive. Before kick-off and after the closure there is nothing to run. -->
         <div
-          v-if="isLive"
+          v-if="isLive && matchOn"
           class="rounded-b-xl border border-t-0 border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 px-3 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
         >
           <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.timer.group')">
@@ -1310,53 +1431,54 @@ const toggleLock = async () => {
           :players="side === 'A' ? scoringStore.playersA : scoringStore.playersB"
           :tallies="tallies"
           :selected-matric="selected?.team === side ? selected.player.matric : null"
+          :candidate-matrics="candidateMatrics"
           :excluded-card="excludedCard"
           :expanded="wideTeam === side"
           :show-roster="true"
-          :can-score="canScore"
+          :can-score="canEditFacts"
           @select="selectPlayer(side, $event)"
           @select-team-fact="selectTeamFact(side)"
           @reload="reloadPlayers(side)"
           @expand="widenTeam(side)"
         />
 
-        <!-- Entry panel (live AND post-match): the fact is picked first, then its time (and,
-             for a card, its reason) is confirmed — the controls follow that order. -->
+        <!-- Entry panel (live AND post-match), in the order of the entry: fact → (reason) →
+             player (or the player first, with the mouse) → time → validation. -->
         <section
           class="entry-panel order-last col-span-2 lg:col-span-1 lg:order-2 lg:sticky lg:top-24
                  space-y-3 rounded-xl border border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 p-3
                  max-md:sticky max-md:bottom-0 max-md:z-20 max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:shadow-[0_-4px_12px_rgb(0_0_0/0.15)]"
           :aria-label="t('scoring.entry.title')"
         >
-          <!-- Who the next fact goes to -->
+          <!-- Not in progress: nothing to enter — say why and what to do -->
+          <p v-if="!matchOn" class="flex items-start gap-2 text-sm text-header-600 dark:text-header-300">
+            <UIcon name="i-heroicons-lock-closed" class="size-4 mt-0.5 shrink-0" />
+            {{ match.statut === 'END' ? t('scoring.entry.locked_end') : t('scoring.entry.locked_pending') }}
+          </p>
+          <template v-else>
+          <!-- What is armed so far, and the way out -->
           <div class="flex items-center gap-2 min-h-7 text-sm">
-            <template v-if="editingUid">
-              <UIcon name="i-heroicons-pencil-square" class="size-4 text-primary-600 dark:text-primary-300" />
-              <span class="flex-1 text-primary-700 dark:text-primary-200">{{ t('scoring.edit.title') }}</span>
-              <UButton size="xs" variant="ghost" @click="cancelEdit">{{ t('scoring.edit.cancel') }}</UButton>
-            </template>
-            <template v-else-if="selected">
+            <template v-if="entryActive">
+              <UIcon v-if="editingUid" name="i-heroicons-pencil-square" class="size-4 shrink-0 text-primary-600 dark:text-primary-300" />
               <span class="flex-1 min-w-0 truncate">
-                <span class="text-header-500 dark:text-header-400">{{ selected.team === 'A' ? match.equipeA : match.equipeB }}</span>
-                <strong class="ml-1">{{ selectedLabel }}</strong>
+                <template v-if="editingUid"><span class="text-primary-700 dark:text-primary-200">{{ t('scoring.edit.title') }}</span> · </template>
+                <strong v-if="pendingCode">{{ t(eventCodes.find(e => e.code === pendingCode)!.shortKey) }}</strong>
+                <template v-if="pendingCode && selected"> · </template>
+                <template v-if="selected">
+                  <span class="text-header-500 dark:text-header-400">{{ selected.team === 'A' ? match.equipeA : match.equipeB }}</span>
+                  <strong class="ml-1">{{ selectedLabel }}</strong>
+                </template>
               </span>
-              <UButton size="xs" variant="ghost" color="neutral" icon="i-heroicons-x-mark" :aria-label="t('scoring.entry.clear')" @click="selected = null; cancelPending()" />
+              <UButton size="xs" variant="soft" color="neutral" icon="i-heroicons-x-mark" @click="clearEntry">
+                {{ t('scoring.entry.clear') }}
+              </UButton>
             </template>
             <template v-else-if="canScore">
-              <span class="flex-1 text-header-500 dark:text-header-400">{{ t('scoring.select_player_first') }}</span>
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-heroicons-hashtag"
-                class="max-md:hidden"
-                :title="t('scoring.picker.open')"
-                @click="openPicker"
-              >{{ shortcutKeyLabel(bindings.playerByNumber) }}</UButton>
+              <span class="flex-1 text-header-500 dark:text-header-400">{{ t('scoring.entry.start_hint') }}</span>
             </template>
           </div>
 
-          <!-- Fact buttons, all the same size: they STAGE the fact, they do not record it -->
+          <!-- 1. The fact: arms it, records nothing -->
           <div class="grid grid-cols-5 lg:grid-cols-1 gap-2">
             <UButton
               v-for="evt in eventCodes" :key="evt.code"
@@ -1364,18 +1486,64 @@ const toggleLock = async () => {
               class="fact-key max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:text-xs lg:justify-start"
               :color="evt.color as any"
               :variant="pendingCode === evt.code ? 'solid' : 'outline'"
-              :disabled="!canScore || (!selected && !editingUid)"
+              :disabled="!canEditFacts"
+              :aria-keyshortcuts="bindings[evt.shortcut] || undefined"
               @click="stageEvent(evt.code)"
             >
               <template #leading><ScoringEventIcon :code="evt.code" /></template>
               <span class="sm:hidden">{{ t(evt.shortKey) }}</span>
-              <span class="max-sm:hidden">{{ t(evt.labelKey) }}</span>
+              <span class="max-sm:hidden flex-1 text-left">{{ t(evt.labelKey) }}</span>
+              <!-- Its keyboard key: on the right, under the label on a phone -->
+              <kbd
+                v-if="bindings[evt.shortcut]"
+                class="fact-kbd shrink-0 rounded border border-current/40 px-1.5 text-xs font-mono leading-5 opacity-80"
+                :title="t('scoring.entry.keys_hint')"
+              >{{ shortcutKeyLabel(bindings[evt.shortcut]) }}</kbd>
             </UButton>
           </div>
 
-          <!-- Time (+ period in post-match/edit, + reason for a card). On mobile it only
-               opens once a fact is staged, to keep the bottom bar short. -->
-          <div class="space-y-3" :class="pendingCode || editingUid ? '' : 'max-md:hidden'">
+          <!-- 2. A card's reason: the list opens by itself (optional — default "Autre") -->
+          <div v-if="pendingIsCard">
+            <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
+            <USelect
+              v-model="eventReasonSelect"
+              :open="reasonOpen"
+              :items="reasonItems"
+              :disabled="!canScore"
+              size="sm"
+              class="w-full"
+              @update:open="onReasonOpen"
+            />
+          </div>
+
+          <!-- 3. The player by number (keyboard): ←/→ when both teams have it, then Entrée -->
+          <div v-if="pendingCode && !selected && !editingUid" class="max-md:hidden">
+            <label for="scoring-player-number" class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.entry.player_number') }}</label>
+            <UInput
+              id="scoring-player-number"
+              ref="playerInput"
+              v-model="playerQuery"
+              size="md"
+              class="w-full scoring-digits"
+              :ui="{ base: 'text-center' }"
+              inputmode="numeric"
+              autocomplete="off"
+              :placeholder="t('scoring.entry.player_number_placeholder')"
+              @keydown="onPlayerQueryKey"
+            />
+            <p class="mt-1 text-center text-xs text-header-600 dark:text-header-300">
+              <template v-if="playerCandidates.length > 1">{{ t('scoring.entry.player_ambiguous') }}</template>
+              <template v-else-if="playerCandidates.length === 1">
+                {{ playerCandidates[0]!.team }} · {{ playerCandidates[0]!.nom.toUpperCase() }} — {{ t('scoring.entry.player_enter') }}
+              </template>
+              <template v-else-if="playerQuery.trim()">{{ t('scoring.entry.player_none') }}</template>
+              <template v-else>{{ t('scoring.entry.player_hint') }}</template>
+            </p>
+          </div>
+
+          <!-- 4. Time (+ period in post-match/edit), frozen since the entry started.
+               On mobile it only opens once something is armed, to keep the bottom bar short. -->
+          <div class="space-y-3" :class="entryActive ? '' : 'max-md:hidden'">
             <div v-if="!isLive || editingUid">
               <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
               <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-full" />
@@ -1393,42 +1561,66 @@ const toggleLock = async () => {
                   size="md"
                   class="w-20 scoring-digits"
                   :ui="{ base: 'text-center' }"
-                  :class="pendingCode ? 'ring-2 ring-primary-500 rounded-md' : ''"
+                  :class="pendingCode && (selected || editingUid) ? 'ring-2 ring-primary-500 rounded-md' : ''"
                   inputmode="numeric"
                   maxlength="5"
                   @focus="selectEventTime"
                   @blur="normalizeEventTime"
                   @keydown.enter.prevent="validatePending"
-                  @keydown.esc.prevent="pendingCode ? cancelPending() : cancelEdit()"
+                  @keydown.esc.prevent="clearEntry"
                 />
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(1)">+1</UButton>
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
               </div>
-            </div>
-            <div v-if="pendingIsCard">
-              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
-              <USelect
-                v-model="eventReasonSelect"
-                :items="reasonItems"
-                :disabled="!canScore"
-                size="sm"
-                class="w-full"
-              />
+              <p v-if="isLive && entryActive && !editingUid" class="mt-1 text-center text-xs text-header-500 dark:text-header-400">
+                {{ t('scoring.entry.time_frozen') }}
+              </p>
             </div>
 
-            <!-- Explicit validation of the staged fact (spec §7.2: focus the time, then Entrée) -->
-            <div v-if="pendingCode" class="flex items-center gap-2">
-              <UButton block color="primary" icon="i-heroicons-check" :disabled="!canScore" @click="validatePending">
+            <!-- 5. Explicit validation (spec §7.3: focus the time, then Entrée); an edited fact
+                 can also be deleted; « Annuler » drops the entry like « Désélectionner ». -->
+            <div v-if="pendingCode" class="space-y-2">
+              <UButton
+                block
+                color="primary"
+                icon="i-heroicons-check"
+                :disabled="!canEditFacts || (!selected && !editingUid)"
+                @click="validatePending"
+              >
                 {{ editingUid ? t('scoring.edit.save') : t('scoring.pending.validate_event', { event: t(eventCodes.find(e => e.code === pendingCode)!.shortKey) }) }}
               </UButton>
-              <UButton variant="ghost" :disabled="!canScore" @click="editingUid ? cancelEdit() : cancelPending()">
-                {{ t('scoring.edit.cancel') }}
-              </UButton>
+              <div class="flex gap-2">
+                <UButton
+                  v-if="editingUid"
+                  class="flex-1 justify-center"
+                  color="error"
+                  variant="soft"
+                  icon="i-heroicons-trash"
+                  :disabled="!canEditFacts"
+                  @click="deleteEditedOpen = true"
+                >{{ t('scoring.edit.delete') }}</UButton>
+                <UButton class="flex-1 justify-center" color="neutral" variant="outline" @click="clearEntry">
+                  {{ t('scoring.edit.cancel') }}
+                </UButton>
+              </div>
             </div>
           </div>
+          </template>
         </section>
       </div>
+
+      <!-- Delete the fact being edited (entry panel) -->
+      <AdminConfirmModal
+        :open="deleteEditedOpen"
+        variant="danger"
+        :title="t('scoring.edit.delete_title')"
+        :message="t('scoring.edit.delete_message')"
+        :confirm-text="t('scoring.edit.delete')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="confirmDeleteEdited"
+        @close="deleteEditedOpen = false"
+      />
 
       <!-- Card progression alert (spec §7.4) — the operator can record anyway -->
       <AdminConfirmModal
@@ -1473,7 +1665,7 @@ const toggleLock = async () => {
         class="border-t pt-4"
         :events="scoringStore.events"
         :editing-uid="editingUid"
-        :can-score="canScore"
+        :can-score="canEditFacts"
         :recent-count="isLive ? HISTORY_RECENT_COUNT : 0"
         @edit="startEdit"
         @remove="removeEvent"
@@ -1488,6 +1680,7 @@ const toggleLock = async () => {
         :score="{ A: scoringStore.scoreA, B: scoringStore.scoreB }"
         :goals="goals"
         :comments="match.commentairesOfficiels ?? ''"
+        :recorded-end-time="match.heureFin"
         :can-lock="canValidate"
         :loading="closing"
         @confirm="confirmClose"
@@ -1503,18 +1696,6 @@ const toggleLock = async () => {
         :cancel-text="t('scoring.edit.cancel')"
         @confirm="confirmReopen"
         @close="reopenOpen = false"
-      />
-
-      <!-- Player of the next fact by jersey number (keyboard `N`) -->
-      <ScoringNumberPicker
-        :open="pickerOpen"
-        :players-a="scoringStore.playersA"
-        :players-b="scoringStore.playersB"
-        :team-a="match.equipeA ?? 'A'"
-        :team-b="match.equipeB ?? 'B'"
-        :facts="pickerFacts"
-        @select="pickFromNumber"
-        @close="pickerOpen = false"
       />
 
       <!-- Keyboard shortcuts settings (per-device preference) -->

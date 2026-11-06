@@ -378,8 +378,9 @@ export const useScoringStore = defineStore('scoring', {
       this.lastMutationAt = Date.now()
       const api = apiInstance ?? sharedApi ?? useApi()
       const idx = this.events.findIndex(e => e.uid === uid)
-      if (idx < 0) return
-      const previous = { ...this.events[idx] }
+      const current = this.events[idx]
+      if (!current) return
+      const previous: ScoringEvent = { ...current }
       const updated: ScoringEvent = { ...previous, ...patch, uid }
       this.events[idx] = updated
       this.recomputeScoresFromEvents()
@@ -474,9 +475,10 @@ export const useScoringStore = defineStore('scoring', {
       const api = apiInstance ?? sharedApi ?? useApi()
       const list = team === 'A' ? this.playersA : this.playersB
       const idx = list.findIndex(p => p.matric === matric)
-      if (idx === -1) return
-      const previous = { ...list[idx] }
-      list[idx] = { ...list[idx], ...patch }
+      const current = list[idx]
+      if (!current) return
+      const previous: ScoringPlayer = { ...current }
+      list[idx] = { ...current, ...patch }
       try {
         await api.patch(`/admin/matches/${this.match.id}/players/${matric}`, { teamCode: team, ...patch })
       } catch (error) {
@@ -500,7 +502,7 @@ export const useScoringStore = defineStore('scoring', {
           matricIds: [matric]
         })
       } catch (error) {
-        list.splice(idx, 0, removed)
+        if (removed) list.splice(idx, 0, removed)
         throw error
       }
     },

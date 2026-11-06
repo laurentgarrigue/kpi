@@ -46,6 +46,27 @@ final class ScoringRules
         return self::isOvertime($period) ? (int) substr($period, 1) : null;
     }
 
+    /** Displayed codes of the two regulation periods (stored M1/M2 — PAGE_SCORING.md §0.12). */
+    private const REGULATION_DISPLAY = ['M1' => 'P1', 'M2' => 'P2'];
+
+    /** Default displayed prefix of an overtime (stored P{n} → OVT{n}); French shows PRL{n}. */
+    public const OVERTIME_DISPLAY_PREFIX = 'OVT';
+
+    /**
+     * Period code as SHOWN to people (timeline, scoresheet PDF): M1/M2 → P1/P2, P{n} → OVT{n}
+     * (the prefix follows the language: PRL in French); anything else (TB, unknown) unchanged.
+     * Storage codes never change — display only.
+     */
+    public static function periodDisplayCode(string $period, string $overtimePrefix = self::OVERTIME_DISPLAY_PREFIX): string
+    {
+        if (isset(self::REGULATION_DISPLAY[$period])) {
+            return self::REGULATION_DISPLAY[$period];
+        }
+        $overtime = self::overtimeIndex($period);
+
+        return $overtime !== null ? $overtimePrefix . $overtime : $period;
+    }
+
     /**
      * Next period for the "advance" button (§7.1):
      *  - type C (classement): M1 → M2 → null (a draw is allowed, no overtime);

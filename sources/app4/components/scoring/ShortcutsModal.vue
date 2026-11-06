@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SHORTCUT_ACTIONS, shortcutKeyLabel, type ShortcutAction } from '~/composables/useScoringShortcuts'
+import { SHORTCUT_ACTIONS, shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
 
 /**
  * Keyboard shortcuts settings (spec §6.5 — per-device preference, decision §0.9).

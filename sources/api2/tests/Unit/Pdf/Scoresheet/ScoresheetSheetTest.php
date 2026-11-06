@@ -12,7 +12,7 @@ final class ScoresheetSheetTest extends TestCase
 {
     private const LABELS = [
         'role.C' => 'Capitaine', 'role.E' => 'Staff', 'scoresheet.team' => 'Équipe', 'scoresheet.definitive' => 'D',
-        'scoresheet.reason_r_o' => 'Obstruction',
+        'scoresheet.reason_r_o' => 'Obstruction', 'scoresheet.overtime_short' => 'PRL',
     ];
 
     public function testRosterMarksCoachCaptainLicenceAndPaddedLines(): void
@@ -60,6 +60,13 @@ final class ScoresheetSheetTest extends TestCase
         self::assertSame(['V3', ''], [$roster[0]['category'], $roster[1]['category']]);
     }
 
+    public function testOvertimesAreShownWithTheLanguagePrefix(): void
+    {
+        $grid = ScoresheetSheet::events([self::event('P2', '00:00:53', 'B', 'A', 'MARTIN', 'Jean-Paul')], self::LABELS);
+
+        self::assertSame('PRL2 - 00:53', $grid['pages'][0][0]['time']);
+    }
+
     public function testEventGridCountsTheGoalsAndTheHalfTime(): void
     {
         $grid = ScoresheetSheet::events([
@@ -72,10 +79,11 @@ final class ScoresheetSheetTest extends TestCase
         self::assertCount(1, $grid['pages'], 'one page when the events fit');
         self::assertCount(ScoresheetSheet::EVENT_LINES, $grid['pages'][0]);
         $grid['lines'] = $grid['pages'][0];
-        self::assertSame(['time' => 'M1 - 07:30', 'a_player' => '7 - MAR. J-P.', 'a_goal' => 'X'], $grid['lines'][0]);
+        self::assertSame(['time' => 'P1 - 07:30', 'a_player' => '7 - MAR. J-P.', 'a_goal' => 'X'], $grid['lines'][0], 'M1 is shown as P1');
         self::assertSame('7 - DUR. L. (Obstruction)', $grid['lines'][1]['b_player']);
         self::assertSame('X', $grid['lines'][1]['b_yellow']);
-        self::assertSame(['time' => 'M2 - ', 'b_player' => 'Équipe B', 'b_goal' => 'X'], $grid['lines'][2]);
+        self::assertSame(['time' => 'P2 - ', 'b_player' => 'Équipe B', 'period_start' => true, 'b_goal' => 'X'], $grid['lines'][2], 'first event of a period: separator above');
+        self::assertArrayNotHasKey('period_start', $grid['lines'][3]);
         self::assertSame('X', $grid['lines'][3]['a_definitive'], 'the definitive red card has its own column');
         self::assertArrayNotHasKey('a_red', $grid['lines'][3]);
         self::assertSame(['A' => 1, 'B' => 1], $grid['goals']);

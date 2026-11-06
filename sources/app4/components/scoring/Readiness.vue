@@ -5,7 +5,8 @@ import { ROSTER_LIMITS, type ReadinessIssue } from '~/utils/scoringReadiness'
  * Pre-kick-off checks of the game sheet (spec §7.2), from utils/scoringReadiness.
  * Two presentations:
  *  - full (Paramètres view): every point to check, or a "ready" line;
- *  - compact (Déroulement view, before kick-off): one line and a way to the sheet.
+ *  - compact (Déroulement view, before kick-off): one line and a way to the sheet; it can
+ *    be folded into a small chip, which unfolds it again.
  * Warnings only: nothing here blocks the kick-off.
  */
 const props = defineProps<{
@@ -18,6 +19,8 @@ const props = defineProps<{
 const emit = defineEmits<{ open: [] }>()
 
 const { t } = useI18n()
+
+const collapsed = ref(false)
 
 const message = (issue: ReadinessIssue): string => {
   const team = issue.team === 'A' ? props.teamA : issue.team === 'B' ? props.teamB : ''
@@ -33,13 +36,32 @@ const message = (issue: ReadinessIssue): string => {
 </script>
 
 <template>
+  <UButton
+    v-if="compact && issues.length && collapsed"
+    size="xs"
+    color="warning"
+    variant="soft"
+    icon="i-heroicons-clipboard-document-list"
+    :title="t('scoring.readiness.expand')"
+    @click="collapsed = false"
+  >{{ issues.length }}</UButton>
+
   <div
-    v-if="compact && issues.length"
+    v-else-if="compact && issues.length"
     class="flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-sm text-amber-900 dark:text-amber-100"
   >
     <UIcon name="i-heroicons-clipboard-document-list" class="size-5 shrink-0" />
     <span class="flex-1">{{ t('scoring.readiness.summary', { count: issues.length }) }}</span>
     <UButton size="xs" color="warning" variant="soft" @click="emit('open')">{{ t('scoring.readiness.open') }}</UButton>
+    <UButton
+      size="xs"
+      color="warning"
+      variant="ghost"
+      icon="i-heroicons-chevron-up"
+      :aria-label="t('scoring.readiness.collapse')"
+      :title="t('scoring.readiness.collapse')"
+      @click="collapsed = true"
+    />
   </div>
 
   <section

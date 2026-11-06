@@ -153,6 +153,31 @@ class ScoringLiveService
     }
 
     /**
+     * Mirror a status set OUTSIDE the console (games list, PATCH /admin/games/{id}/statut) onto
+     * the live state, so the console — which reads the live state first — never shows a stale
+     * status. Only for a match already scored at the console: no live state is created here.
+     * Same guarantees as any live write (transaction, tick, outbox); END consolidates kp_*.
+     */
+    public function syncStatusFromAdmin(int $matchId, string $statut, ?string $periode = null): void
+    {
+        $this->connection->transactional(function () use ($matchId, $statut, $periode): void {
+            if ($this->fetchState($matchId) === null) {
+                return;
+            }
+
+            $this->connection->executeStatement(
+                'UPDATE scoring_live_state SET statut = ?, periode = COALESCE(?, periode) WHERE id_match = ?',
+                [$statut, $periode, $matchId]
+            );
+            $this->depositScoreState($matchId, $this->bumpTick($matchId));
+
+            if ($statut === 'END') {
+                $this->consolidateToKp($matchId);
+            }
+        });
+    }
+
+    /**
      * Promote the active source of the match (plan §4.1). Timestamped; the existing state
      * is kept as-is. Returns the new tick.
      */

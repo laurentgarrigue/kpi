@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Service\EventCacheService;
+use App\Service\ScoringLiveService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -29,6 +30,7 @@ class AdminGamesController extends AbstractController
     public function __construct(
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
+        private readonly ScoringLiveService $scoringLive,
     ) {
     }
 
@@ -852,6 +854,8 @@ class AdminGamesController extends AbstractController
         }
 
         $this->connection->update('kp_match', $update, ['Id' => $id]);
+        // A match scored at the console reads its status from the live state: keep it in step.
+        $this->scoringLive->syncStatusFromAdmin($id, $newValue, $update['Periode'] ?? null);
 
         $this->logActionForMatch('Statut match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
 

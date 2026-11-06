@@ -292,6 +292,7 @@ th.pdf-sheet__no-highlight { background: none; }
 .pdf-sheet__roster--international .pdf-sheet__roster-name { width: 45%; }
 /* Fixed height: a filled line must not be taller than an empty one, or a full sheet spills onto a 2nd page. */
 .pdf-sheet__events td { height: 3.7mm; line-height: 1; padding-top: 0; padding-bottom: 0; }
+.pdf-sheet__events tr.pdf-sheet__period-start td { border-top: 0.6mm solid var(--pdf-ink); }
 .pdf-sheet__card-col { width: 5.5mm; }
 .pdf-sheet__goal-col { width: 7mm; }
 .pdf-sheet__events th { padding-left: 0.3mm; padding-right: 0.3mm; text-overflow: clip; }
@@ -301,7 +302,8 @@ th.pdf-sheet__no-highlight { background: none; }
 .pdf-sheet__card--yellow { background: var(--pdf-card-yellow); }
 .pdf-sheet__card--red { background: var(--pdf-card-red); }
 .pdf-sheet__card--definitive { background: var(--pdf-card-definitive); }
-.pdf-sheet__time { width: 17mm; text-align: center; }
+/* Wide enough for an overtime with its time ("PRL12 - 00:53"). */
+.pdf-sheet__time { width: 21mm; text-align: center; }
 .pdf-sheet__title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5mm; }
 .pdf-sheet__title h1 { font-size: 16pt; color: var(--pdf-title); }
 .pdf-sheet__continued { font-size: 10pt; font-weight: 400; }

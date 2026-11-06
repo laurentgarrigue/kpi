@@ -9,7 +9,8 @@
 > `scoring_live_*`, la diffusion passe à Mercure). §0 prime sur le reste en cas de contradiction.
 > **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
 > raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9**, **correctif
-> réglementaire pénalités du 2026-07-29 en §0.10** et **revue UX du 2026-11-05 en §0.11**.
+> réglementaire pénalités du 2026-07-29 en §0.10**, **revue UX du 2026-11-05 en §0.11** et
+> **révision de la saisie du 2026-11-06 en §0.12** (§0.12 prime sur §0.11).
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et l'ancien prototype standalone app3 (feuille de marque Nuxt)
@@ -344,7 +345,7 @@ corriger vite**. Ces décisions **remplacent** les passages contraires de §7.
 |---|---|
 | Les **pénalités en cours** s'affichent **sur le tableau de score, sous le score** de chaque équipe (comme le scoreboard public), y compris en mode score seul ; elles quittent les colonnes d'équipe | un seul endroit à regarder pour tous les décomptes |
 | Chaque ligne d'effectif porte les **buts** du joueur (⚽, ×n) et son **dernier carton** V/J (R/D gardent leur marqueur d'exclusion) | l'opérateur voit qui est déjà averti avant que l'alerte de progression ne s'ouvre |
-| **Saisie au clavier par numéro** (touche **`N`**, réassignable) : fenêtre en deux temps — numéro (`7`, `A7`, `7B` ; un numéro présent des deux côtés demande la lettre d'équipe), puis **lettre du fait** (`B`/`V`/`J`/`R`/`D`). Le fait est alors **armé** et le temps a le focus : `Entrée` enregistre. Flux complet : `N 7 ↵ B ↵`. Fonctionne aussi en post-match. Les combinaisons `Ctrl`/`Cmd`/`Alt` ne sont jamais interceptées | §7.1 demandait la sélection du joueur par numéro tapé. Une lettre, et non un chiffre, pour ne pas entrer en conflit avec les raccourcis du chronomètre de tir (`0`, `.`, `+`, `−`, `Entrée`). Deux temps plutôt que « focus sur les boutons de faits » : `Entrée`/`Espace` y déclencheraient les raccourcis chrono |
+| ~~**Saisie au clavier par numéro** (touche **`N`**)~~ — **remplacé le 2026-11-06 par §0.12** (fait d'abord au clavier). Texte d'origine : (touche **`N`**, réassignable) : fenêtre en deux temps — numéro (`7`, `A7`, `7B` ; un numéro présent des deux côtés demande la lettre d'équipe), puis **lettre du fait** (`B`/`V`/`J`/`R`/`D`). Le fait est alors **armé** et le temps a le focus : `Entrée` enregistre. Flux complet : `N 7 ↵ B ↵`. Fonctionne aussi en post-match. Les combinaisons `Ctrl`/`Cmd`/`Alt` ne sont jamais interceptées | §7.1 demandait la sélection du joueur par numéro tapé. Une lettre, et non un chiffre, pour ne pas entrer en conflit avec les raccourcis du chronomètre de tir (`0`, `.`, `+`, `−`, `Entrée`). Deux temps plutôt que « focus sur les boutons de faits » : `Entrée`/`Espace` y déclencheraient les raccourcis chrono |
 
 **Clarté (P2)**
 
@@ -357,6 +358,49 @@ corriger vite**. Ces décisions **remplacent** les passages contraires de §7.
 
 Les règles d'effectif (5 / 8 / 3) vivent dans `utils/scoringReadiness.ts` (`ROSTER_LIMITS`) : ce sont
 des avertissements d'interface, pas des règles de jeu appliquées par le serveur — pas de miroir api2.
+
+### 0.12 Révision de la saisie et de la console (2026-11-06)
+
+Retours de l'opérateur après essai de §0.11. Ces décisions **remplacent** les passages contraires
+de §0.11 et §7.
+
+**Ordre de saisie d'un fait de jeu**
+
+| Décision | Pourquoi |
+|---|---|
+| **Ordre libre à la souris** : on clique le **fait** ou le **joueur** en premier, la console attend l'autre puis donne le focus au **temps** ; `Entrée` (ou le bouton) enregistre. Pas de réglage par utilisateur : les deux ordres marchent toujours | la table suit l'arbitre, qui annonce selon les cas « but du 7 » ou « le 7, carton jaune » |
+| **Au clavier, fait d'abord** : lettre du fait → (carton : la **liste des motifs s'ouvre**, `Entrée` ou `Échap`) → **n° du joueur** dans le champ « N° du joueur » (surlignage des candidats dans les effectifs ; `←` / `→` choisit l'équipe quand le numéro existe des deux côtés) → `Entrée` → **temps** → `Entrée`. Flux d'un but : `B 7 ↵ ↵` | les chiffres sont aussi des raccourcis du chronomètre de tir (`0`, `.`) : ils ne peuvent servir au n° qu'une fois le focus dans un champ — donc après la lettre du fait. La touche `N` « joueur par numéro » de §0.11 disparaît |
+| Chaque **bouton de fait affiche sa touche** (à droite ; sous le libellé sur smartphone) | la touche se découvre sur le bouton, sans ouvrir la modale des raccourcis |
+| **Touches des faits selon la langue de l'interface**, réassignables : FR **`B V J R N`** (But, Vert, Jaune, Rouge, Noir), EN **`G E Y R K`** (Goal, grEen, Yellow, Red, blacK). Une frappe par fait | une double frappe (« GG » pour green) retarderait chaque but du délai d'attente de la 2ᵉ frappe |
+| La **sélection d'un carton ouvre la liste des motifs** (souris comme clavier) ; le motif reste facultatif (défaut « Autre / Non précisé ») | le motif passait inaperçu |
+| Dès qu'un fait **ou** un joueur est choisi, le **temps du fait se fige** (le chrono, lui, continue) ; **Désélectionner** — bouton en tête du panneau dès qu'une saisie est commencée — lève tout et **resynchronise** le temps sur le chrono | sur certains matchs le chrono n'est pas arrêté à chaque but : le temps à enregistrer est celui du fait, pas celui du clic sur « Enregistrer » |
+
+**Statut, chronos, périodes**
+
+| Décision | Pourquoi |
+|---|---|
+| Chrono principal, chronomètre de tir et **sélecteur de période** sont **masqués tant que le match n'est pas « En cours »** (et leurs raccourcis inactifs) ; l'affichage du chrono reste sur le tableau de score | rien ne doit courir avant le coup d'envoi ni après la clôture — des commandes grisées encombraient l'écran sans rien dire de plus (révisé le 2026-11-06 : « désactivés » → « masqués ») |
+| Ligne d'état du tableau de score : **statut + Clore/Rouvrir**, puis **période** | le statut conditionne le reste |
+| **Faits de jeu (création, modification, suppression, annulation, ±1 du mode score seul) seulement match « En cours »**. En attente : le panneau de saisie invite à donner le coup d'envoi ; Terminé : à **rouvrir** le match. Les effectifs et la chronologie restent consultables, non cliquables. Une saisie en cours est levée si le match quitte « En cours » | rien ne s'est passé avant le coup d'envoi ; un match clos se corrige en le **rouvrant**, puis en le **clôturant à nouveau** — seule façon de reconsolider `kp_*` avec la correction. ⚠️ Remplace la correction post-match « directe » de §1.1/§7.3 : le mode post-match sert désormais à saisir après coup un match **rouvert** ou **en cours**. Contrôle côté interface seulement — l'API n'impose pas encore le statut |
+| **« Clore le match… » seulement pour un match « En cours »** (pas En attente). À la clôture d'un match **rouvert**, l'**heure de fin déjà enregistrée est conservée** (pré-remplie telle quelle, modifiable à la main) ; l'heure courante ne sert qu'à une première clôture | un match en attente n'a pas été joué ; corriger un fait ne déplace pas la fin du match |
+| Fait de jeu **ouvert depuis la chronologie** : boutons **Enregistrer**, **Supprimer** (avec confirmation) et **Annuler** ; « Annuler » apparaît aussi pour une nouvelle saisie | la suppression n'était possible que par la corbeille de la chronologie (au survol), et l'annulation seulement par « Désélectionner » |
+| Chrono principal **rouge** à l'arrêt ou à zéro, **vert** en marche — console seulement (les affichages plein écran gardent leur charte) | l'arrêt du temps se voit d'un coup d'œil |
+| ⚠️ Comme tout changement d'api2, ce correctif n'agit qu'après **`make api2_restart`** (FrankenPHP garde le code en mémoire). | constaté le 2026-11-06 : testé avant redémarrage, le bug paraissait toujours là |
+| Le **statut posé depuis la liste des matchs** (Matchs → badge statut) est **répercuté dans l'état live** d'un match déjà saisi à la console (`ScoringLiveService::syncStatusFromAdmin` : tick + outbox, **consolidation `kp_*` au passage à Terminé**) ; un match jamais saisi à la console n'a pas d'état live et n'en reçoit pas | bug : remis « En attente » depuis Matchs, il restait « En cours » dans la console, qui lit l'état live en premier |
+| Anti-double-clic en deux tolérances : **250 ms** pour une bascule (Démarrer/Pause, ±1 du mode score seul), **40 ms** pour les réglages ±1/±10 (chronos, temps du fait, pénalités) | les rafales de clics de réglage étaient avalées |
+| Une **pénalité en cours** se règle d'un clic sur sa pastille (−10/−1/+1/+10 s), **chrono de jeu arrêté seulement** — même règle que le chrono principal | corriger une pénalité créée en retard |
+| **Codes de période affichés** dans la **chronologie** de la console (et le message d'annulation) et dans la **feuille de match PDF** (api2, grille des faits) : **`P1` / `P2`** pour les deux périodes, **`PRL{n}`** (français) / **`OVT{n}`** (anglais) pour les prolongations — préfixe pris dans les traductions (`scoring.period.overtime_short` app4, `scoresheet.overtime_short` PDF) ; `TB` inchangé ; colonne Période du PDF élargie à 21 mm pour « PRL12 - 00:53 ». **Affichage seulement** : les codes stockés restent `M1`/`M2`/`P{n}` (`ScoringRules::periodDisplayCode`, miroir TS `periodDisplayCode`, suites jumelles). La feuille legacy `FeuilleMatchMulti.php` n'est pas modifiée | « M1 » et « P1 » (prolongation) se confondaient à la lecture |
+| Libellés « **1ère période** / **2ème période** » (EN « 1st / 2nd period ») au lieu de « mi-temps » ; les codes `M1`/`M2` ne changent pas | vocabulaire de la table de marque |
+| Historique « 3 derniers » = les **3 plus récents** : le temps d'un fait est le temps **restant** (compte à rebours), le plus récent d'une période est donc celui au **plus petit** temps (`utils/scoringTimeline.ts`, testé) | la 1ʳᵉ version prenait les 3 plus anciens |
+
+**Vue Paramètres**
+
+| Décision | Pourquoi |
+|---|---|
+| Une **composition vide** est chargée **automatiquement** depuis la feuille de présence à l'ouverture de la console (match non verrouillé) | c'était le premier geste de chaque match |
+| Colonne **« Statut »**, valeurs **« Capitaine » / « Staff »** en toutes lettres (au lieu de `C` / `E`) ; le **staff est listé à part**, sous les joueurs ; son numéro reste modifiable et sert à **ordonner le staff** (chaque groupe est trié par numéro, comme le renvoie le serveur) ; le badge « Coach » des effectifs devient « Staff » | lisibilité ; le staff ne compte pas comme joueur |
+| Croix à droite des champs **Officiels** : vide le champ, y remet le focus et rouvre les suggestions | remplacer un officiel = vider puis choisir |
+| Le bandeau « points à vérifier » de la vue Déroulement se **réduit** en pastille, qui le ré-affiche ; « l'arbitre décide » retiré du message ; les messages d'effectif précisent « **staff non compté** » (le staff — statut `E` — n'a jamais compté comme joueur) | moins de bruit pendant la préparation |
 
 ## 1. Contexte et objectif
 
@@ -1672,6 +1716,21 @@ Vérifié : `nuxt build` OK — `sw.js` + `manifest.webmanifest` générés, et
 Vérifié : `make app4_test` 169/169, `make api2_test_unit` 335, `make api2_test_integration` 336,
 ESLint OK, compilation des SFC OK. **Non vérifié à l'écran** (base de dev sans tables scoring au
 moment de l'écriture) : tests 3.59 → 3.73 de la
+[checklist](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
+
+**Révision de la saisie ✅ (plan lot 3, 8ᵉ tranche — 2026-11-06, décisions §0.12) :**
+
+| Fichier | Détail |
+|---|---|
+| `utils/scoringShortcuts.ts` + `tests/unit/scoringShortcuts.spec.ts` | **Créés (test-first).** Actions, touches par défaut selon la langue, fusion avec les préférences du poste (actions disparues ignorées), action → code du fait. Le composable `useScoringShortcuts` ne garde que le câblage clavier. |
+| `utils/scoringTimeline.ts` + `tests/unit/scoringTimeline.spec.ts` | **Créés (test-first).** Ordre de la chronologie, plus récent en premier (temps restant). |
+| `pages/games/[id]/scoring.vue` | Saisie en ordre libre, champ « N° du joueur », temps figé, Désélectionner, liste des motifs ouverte sur un carton, chronos/période liés au statut `ON`, chargement auto des présents, réglage des pénalités, deux tolérances anti-double-clic. `components/scoring/NumberPicker.vue` **supprimé**. |
+| `components/scoring/Board.vue` · `Penalties.vue` · `TeamColumn.vue` · `Readiness.vue` · `SettingsPanel.vue` · `OfficialInput.vue` · `EventHistory.vue` | Chrono rouge à l'arrêt ; pastilles de pénalité réglables ; surlignage des candidats au numéro, badge Staff ; bandeau réductible ; statuts en toutes lettres ; croix de vidage ; 3 plus récents. |
+| `stores/scoringStore.ts` · `composables/usePenalties.ts` · `utils/scoringRules.ts` | Erreurs de types corrigées (accès indexés) ; `usePenalties.adjust`. |
+| `src/Service/ScoringLiveService.php` · `src/Controller/AdminGamesController.php` + `tests/Integration/ScoringStatusSyncTest.php` | Statut posé depuis Matchs répercuté dans l'état live (+ consolidation à Terminé). |
+
+Vérifié : `make app4_test` 186/186, `make api2_test_integration` 340, ESLint, compilation des SFC,
+`tsc` sans erreur sur les fichiers scoring. Tests à l'écran : 3.74 → 3.86 de la
 [checklist](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
 
 **Reste à faire en Phase 1** (avant de clore le MVP) :

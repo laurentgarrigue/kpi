@@ -51,6 +51,35 @@ final class ScoringRulesTest extends TestCase
     }
 
     /**
+     * Code de période AFFICHÉ (chronologie, feuille de match PDF) : P1/P2 pour les deux
+     * périodes du temps réglementaire, OVT{n} pour les prolongations. Les codes STOCKÉS
+     * (`M1`, `M2`, `P{n}`, `TB`) ne changent pas (PAGE_SCORING.md §0.12).
+     */
+    #[DataProvider('periodDisplayProvider')]
+    public function testPeriodDisplayCode(string $period, string $expected): void
+    {
+        self::assertSame($expected, ScoringRules::periodDisplayCode($period));
+    }
+
+    /** Le préfixe des prolongations suit la langue (FR « PRL », EN « OVT » par défaut). */
+    public function testOvertimeDisplayPrefixFollowsTheLanguage(): void
+    {
+        self::assertSame('PRL2', ScoringRules::periodDisplayCode('P2', 'PRL'));
+        self::assertSame('P1', ScoringRules::periodDisplayCode('M1', 'PRL'), 'regulation periods are not prefixed');
+    }
+
+    /** @return iterable<string,array{string,string}> */
+    public static function periodDisplayProvider(): iterable
+    {
+        yield '1re période' => ['M1', 'P1'];
+        yield '2e période' => ['M2', 'P2'];
+        yield '1re prolongation' => ['P1', 'OVT1'];
+        yield 'prolongation non bornée' => ['P12', 'OVT12'];
+        yield 'tirs au but inchangés' => ['TB', 'TB'];
+        yield 'code inconnu inchangé' => ['', ''];
+    }
+
+    /**
      * Enchaînement des périodes selon le type de match. Un match de classement (C) peut
      * se terminer sur une égalité ; un match éliminatoire (E) enchaîne les prolongations
      * tant que le score est à égalité.

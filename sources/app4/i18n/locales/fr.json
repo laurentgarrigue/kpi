@@ -2663,12 +2663,13 @@
       "END": "Terminé"
     },
     "period": {
-      "M1": "1ère mi-temps",
-      "M2": "2ème mi-temps",
+      "M1": "1ère période",
+      "M2": "2ème période",
       "P1": "Prolongation 1",
       "P2": "Prolongation 2",
       "TB": "Tirs au but",
-      "overtime": "Prolongation {n}"
+      "overtime": "Prolongation {n}",
+      "overtime_short": "PRL"
     },
     "event": {
       "goal": "But",
@@ -2690,7 +2691,6 @@
     "field": "Terrain",
     "history": "Chronologie",
     "not_found": "Match introuvable",
-    "select_player_first": "Sélectionnez d'abord un joueur",
     "roster_empty": "Aucun joueur sur la feuille de match",
     "team_fact": "Fait d'équipe (sans joueur)",
     "no_access": "Accès réservé (phase d'expérimentation)",
@@ -2703,7 +2703,9 @@
       "title": "Modifier le fait de jeu",
       "save": "Enregistrer",
       "cancel": "Annuler",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "delete_title": "Supprimer ce fait de jeu ?",
+      "delete_message": "Le fait de jeu est retiré de la chronologie ; un but retiré fait baisser le score."
     },
     "pending": {
       "validate_event": "Enregistrer : {event}"
@@ -2768,7 +2770,11 @@
       "shotclockStop": "Chrono de tir : arrêt (--)",
       "shotclockPlus": "Chrono de tir : +1 s",
       "shotclockMinus": "Chrono de tir : −1 s",
-      "playerByNumber": "Choisir un joueur par son numéro"
+      "factGoal": "Fait de jeu : but",
+      "factGreen": "Fait de jeu : carton vert",
+      "factYellow": "Fait de jeu : carton jaune",
+      "factRed": "Fait de jeu : carton rouge",
+      "factBlack": "Fait de jeu : carton noir"
     },
     "sound_test": "Tester le son",
     "penalty": {
@@ -2781,7 +2787,8 @@
       "expired_replace": "Pénalité du n°{number} (carton rouge) terminée : remplacement autorisé — le joueur sanctionné ne revient pas.",
       "lift_title": "But encaissé — levée de pénalité",
       "lift_message": "L'équipe en infériorité vient d'encaisser un but : lever la pénalité la plus ancienne (n°{number}) ? Le joueur revient en jeu. (Un carton rouge n'est jamais levé : ses 2 minutes vont à leur terme.)",
-      "lift_confirm": "Lever la pénalité"
+      "lift_confirm": "Lever la pénalité",
+      "adjust": "Ajuster le décompte"
     },
     "display": {
       "scoreboard": "Ouvrir le tableau de score",
@@ -2811,14 +2818,18 @@
       "no_player": "Aucun joueur",
       "number": "N°",
       "player": "Joueur",
-      "captain": "Capitaine",
       "remove_player": "Retirer le joueur",
       "officials_table": "Table de marque",
       "officials_referees": "Arbitres",
       "match": "Match",
       "load_next": "Match suivant du terrain",
       "no_next_game": "Aucun match après celui-ci sur ce terrain",
-      "other_licensees": "Autres licenciés"
+      "other_licensees": "Autres licenciés",
+      "status": "Statut",
+      "status_C": "Capitaine",
+      "status_E": "Staff",
+      "compo_loaded": "Composition de {team} chargée depuis la feuille de présence",
+      "clear_official": "Vider le champ"
     },
     "score_only": {
       "label": "Score seul",
@@ -2841,7 +2852,19 @@
     "lock_toggle": "Verrouiller ou déverrouiller le match",
     "entry": {
       "title": "Saisie d'un fait de jeu",
-      "clear": "Désélectionner"
+      "clear": "Désélectionner",
+      "start_hint": "Choisissez un fait de jeu ou un joueur",
+      "keys_hint": "Touche du clavier (réglable dans Raccourcis clavier)",
+      "player_number": "N° du joueur",
+      "player_number_placeholder": "N°",
+      "player_ambiguous": "Numéro présent dans les deux équipes : ← équipe A, → équipe B",
+      "player_enter": "Entrée pour choisir",
+      "player_none": "Aucun joueur avec ce numéro",
+      "player_hint": "Tapez le numéro, ou cliquez le joueur",
+      "player_missing": "Choisissez le joueur du fait de jeu",
+      "time_frozen": "Temps figé au début de la saisie — Désélectionner le resynchronise",
+      "locked_pending": "Donnez le coup d'envoi (badge « En attente ») pour saisir les faits de jeu.",
+      "locked_end": "Match terminé : rouvrez-le (« Rouvrir le match… ») pour corriger les faits de jeu, puis clôturez-le à nouveau."
     },
     "event_short": {
       "goal": "But",
@@ -2878,15 +2901,6 @@
       "confirm": "Rouvrir le match",
       "done": "Match rouvert"
     },
-    "picker": {
-      "title": "Joueur par numéro",
-      "placeholder": "N° (ex. 7, A7, 7B)",
-      "hint": "Entrée pour choisir · Échap pour fermer",
-      "ambiguous": "Le n°{number} existe dans les deux équipes : ajoutez A ou B, ou cliquez le joueur.",
-      "none": "Aucun joueur avec ce numéro.",
-      "open": "Choisir un joueur par son numéro",
-      "fact_hint": "Tapez la lettre du fait : il s'arme et le temps prend le focus (Entrée pour enregistrer). Échap pour fermer."
-    },
     "undo": {
       "recorded": "Fait de jeu enregistré",
       "action": "Annuler",
@@ -2899,15 +2913,17 @@
     "readiness": {
       "title": "À vérifier avant le coup d'envoi",
       "ok": "Feuille de match prête : effectifs, numéros, capitaines et officiels vérifiés",
-      "hint": "Ces contrôles n'empêchent pas le coup d'envoi : l'arbitre décide.",
-      "summary": "{count} point(s) à vérifier sur la feuille de match avant le coup d'envoi",
-      "open": "Voir la feuille",
-      "too_few_players": "{team} : {count} joueur(s) sur la feuille, il en faut au moins {min}",
-      "too_many_players": "{team} : {count} joueurs sur la feuille, {max} au maximum",
-      "too_many_staff": "{team} : {count} membres d'encadrement, {max} au maximum",
+      "hint": "Ces contrôles n'empêchent pas le coup d'envoi.",
+      "summary": "{count} point(s) à vérifier sur les paramètres du match avant le coup d'envoi",
+      "open": "Voir les paramètres",
+      "too_few_players": "{team} : {count} joueur(s) sur la feuille (staff non compté), il en faut au moins {min}",
+      "too_many_players": "{team} : {count} joueurs sur la feuille (staff non compté), {max} au maximum",
+      "too_many_staff": "{team} : {count} membres du staff, {max} au maximum",
       "duplicate_numbers": "{team} : numéros de maillot en double ({numbers})",
       "no_captain": "{team} : aucun capitaine désigné",
-      "missing_officials": "Officiels à renseigner : {roles}"
+      "missing_officials": "Officiels à renseigner : {roles}",
+      "expand": "Afficher les points à vérifier",
+      "collapse": "Réduire"
     }
   },
   "competition": {

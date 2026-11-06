@@ -79,11 +79,22 @@ const teams = computed(() => [
 // Mobile: one composition at a time behind A/B tabs.
 const activeTeam = ref<TeamSide>('A')
 
-const CAPTAIN_OPTIONS = [
-  { label: '—', value: '-' },
-  { label: 'C', value: 'C' },
-  { label: 'E', value: 'E' }
-]
+// Players first, then the staff (status E) under their own heading: the staff never counts
+// as a player (spec §0.12). Its number stays editable — it sets the staff's listing order.
+const STAFF = 'E'
+// Each group in number order (then name), as the server lists them: a number edited here
+// moves the row at once.
+const byNumber = (a: ScoringPlayer, b: ScoringPlayer) => a.numero - b.numero || a.nom.localeCompare(b.nom)
+const groupsOf = (players: ScoringPlayer[]) => [
+  { key: 'players', staff: false, list: players.filter(p => p.capitaine !== STAFF).sort(byNumber) },
+  { key: 'staff', staff: true, list: players.filter(p => p.capitaine === STAFF).sort(byNumber) }
+].filter(g => g.list.length)
+
+// Player status on the game sheet, spelled out (kp_match_joueur.Capitaine: - / C / E).
+const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
+  label: value === '-' ? '—' : t('scoring.settings.status_' + value),
+  value
+})))
 </script>
 
 <template>
@@ -218,12 +229,17 @@ const CAPTAIN_OPTIONS = [
               <tr>
                 <th class="text-left font-normal w-16 pb-1">{{ t('scoring.settings.number') }}</th>
                 <th class="text-left font-normal pb-1">{{ t('scoring.settings.player') }}</th>
-                <th class="text-left font-normal w-20 pb-1">{{ t('scoring.settings.captain') }}</th>
+                <th class="text-left font-normal w-28 pb-1">{{ t('scoring.settings.status') }}</th>
                 <th class="w-8" />
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="p in team.players" :key="p.matric" class="border-t border-header-100 dark:border-header-800">
+            <tbody v-for="group in groupsOf(team.players)" :key="group.key">
+              <tr v-if="group.staff">
+                <th colspan="4" class="pt-4 pb-1 text-left text-xs font-semibold text-header-600 dark:text-header-300">
+                  {{ t('scoring.settings.status_E') }}
+                </th>
+              </tr>
+              <tr v-for="p in group.list" :key="p.matric" class="border-t border-header-100 dark:border-header-800">
                 <td class="py-1.5">
                   <UInput
                     :model-value="p.numero"
@@ -238,10 +254,10 @@ const CAPTAIN_OPTIONS = [
                 <td class="py-1.5">
                   <USelect
                     :model-value="p.capitaine"
-                    :items="CAPTAIN_OPTIONS"
+                    :items="STATUS_OPTIONS"
                     value-key="value"
                     size="xs"
-                    class="w-16"
+                    class="w-28"
                     :disabled="!canManagePlayers"
                     @update:model-value="emit('update-player', team.code, p.matric, { capitaine: $event as '-' | 'C' | 'E' })"
                   />

@@ -10,6 +10,7 @@ import {
   overtimeIndex,
   penaltyLiftableOnGoal,
   penaltySlotToLift,
+  periodDisplayCode,
   periodDurationOf,
   playerReturnsAfterPenalty,
   shotclockTransition,
@@ -40,6 +41,23 @@ describe('périodes et prolongations non bornées (§0.6)', () => {
   ])('%s : prolongation = %s, index = %s', (period, expected, index) => {
     expect(isOvertime(period)).toBe(expected)
     expect(overtimeIndex(period)).toBe(index)
+  })
+
+  // Code AFFICHÉ (chronologie, PDF) — les codes stockés ne changent pas (§0.12).
+  it.each([
+    ['M1', 'P1'],
+    ['M2', 'P2'],
+    ['P1', 'OVT1'],
+    ['P12', 'OVT12'],
+    ['TB', 'TB'],
+    ['', '']
+  ])('affiche %s comme « %s »', (period, expected) => {
+    expect(periodDisplayCode(period)).toBe(expected)
+  })
+
+  it('préfixe les prolongations selon la langue (FR « PRL », EN « OVT » par défaut)', () => {
+    expect(periodDisplayCode('P2', 'PRL')).toBe('PRL2')
+    expect(periodDisplayCode('M1', 'PRL')).toBe('P1')
   })
 
   it.each([
