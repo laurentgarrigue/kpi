@@ -22,6 +22,12 @@
 export function useScoringLiveSync(options: {
   /** Called when a remote change was detected — the page refetches and re-primes clocks. */
   onRemoteChange: () => void | Promise<void>
+  /**
+   * Called when the subscription comes back after a cut (hub recycling, network outage).
+   * The hub normally replays what was missed, but not after a hub restart: re-reading the
+   * state (304 when unchanged) is the only guarantee.
+   */
+  onReconnect: () => void | Promise<void>
   /** Epoch ms of the last local write (store.lastMutationAt) — echo suppression. */
   lastLocalWrite: () => number
   /** Milliseconds during which our own echo is ignored after a local write. */
@@ -33,6 +39,13 @@ export function useScoringLiveSync(options: {
 
   /** 'idle' | 'connected' | 'error' — surfaced in the UI as a small indicator. */
   const status = ref<'idle' | 'connected' | 'error'>('idle')
+  /**
+   * True only when the subscription stays in error beyond LIVE_RECONNECT_GRACE_MS: drives the
+   * « Connexion perdue » banner, so the hub's periodic recycling (~5 s gap) never raises it.
+   */
+  const lost = ref(false)
+
+  let activeWatch: ReturnType<typeof createLiveConnectionWatch> | null = null
 
   let source: EventSource | null = null
   let debounce: ReturnType<typeof setTimeout> | null = null
@@ -44,6 +57,9 @@ export function useScoringLiveSync(options: {
       clearTimeout(debounce)
       debounce = null
     }
+    activeWatch?.dispose()
+    activeWatch = null
+    lost.value = false
     status.value = 'idle'
   }
 
@@ -66,7 +82,13 @@ export function useScoringLiveSync(options: {
       return
     }
 
-    source.onopen = () => { status.value = 'connected' }
+    const connectionWatch = createLiveConnectionWatch((isLost) => { lost.value = isLost })
+    activeWatch = connectionWatch
+
+    source.onopen = () => {
+      status.value = 'connected'
+      if (connectionWatch.open().reconnected) void options.onReconnect()
+    }
 
     source.onmessage = () => {
       // Our own echo: nothing to do, the local state is already the freshest.
@@ -78,12 +100,15 @@ export function useScoringLiveSync(options: {
       }, debounceMs)
     }
 
-    // EventSource reconnects on its own (and replays from Last-Event-ID); we only
-    // reflect the state so the operator sees the console is momentarily blind.
-    source.onerror = () => { status.value = 'error' }
+    // EventSource reconnects on its own (and replays from Last-Event-ID); the badge shows
+    // the gap at once, the banner only if it outlasts the grace delay.
+    source.onerror = () => {
+      status.value = 'error'
+      connectionWatch.error()
+    }
   }
 
   onUnmounted(disconnect)
 
-  return { status, connect, disconnect }
+  return { status, lost, connect, disconnect }
 }

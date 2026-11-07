@@ -186,7 +186,10 @@ services:
             # Les vraies variables d'env priment sur le .env chargé par Symfony.
             - MERCURE_URL=http://api2/.well-known/mercure
             - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
-        command: php /var/www/html/api2/bin/console app:event-cache-worker
+        # --no-debug : daemon longue durée. En mode debug, le profilage Doctrine garde
+        # chaque requête SQL (avec backtrace) en mémoire ; le sondage de scoring_outbox
+        # chaque seconde épuise alors les 128 Mo en quelques heures (OutOfMemoryError).
+        command: php /var/www/html/api2/bin/console app:event-cache-worker --no-debug
         volumes:
             - ../sources:/var/www/html
             # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).

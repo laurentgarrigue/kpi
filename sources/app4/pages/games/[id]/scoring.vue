@@ -519,7 +519,7 @@ onUnmounted(() => {
   window.removeEventListener('online', updateOnline)
   window.removeEventListener('offline', updateOnline)
 })
-const connectionLost = computed(() => isLive.value && (!online.value || liveSync.status.value === 'error'))
+const connectionLost = computed(() => isLive.value && (!online.value || liveSync.lost.value))
 
 // Occasional tools, grouped in the header's ⋯ menu: full-screen displays (live only — same
 // origin, BroadcastChannel keeps them in sync) and the keyboard shortcuts.
@@ -569,16 +569,21 @@ watch(gameTime, (v) => {
 // ─── Live coherence between terminals (Mercure/SSE — plan lot 3) ───
 // A change made on another terminal (or by the hardware relay) is signalled on the
 // match's topics; the console refetches the canonical state instead of merging a diff.
+const resyncFromServer = async (): Promise<boolean> => {
+  try {
+    await scoringStore.refreshLiveState()
+    await applyServerClocks()
+    broadcast.broadcastAll()
+    return true
+  } catch { /* useApi already toasts */ return false }
+}
 const liveSync = useScoringLiveSync({
   lastLocalWrite: () => scoringStore.lastMutationAt,
   onRemoteChange: async () => {
-    try {
-      await scoringStore.refreshLiveState()
-      await applyServerClocks()
-      flashRemoteSync()
-      broadcast.broadcastAll()
-    } catch { /* useApi already toasts */ }
-  }
+    if (await resyncFromServer()) flashRemoteSync()
+  },
+  // Back after a cut: re-read silently (nothing tells us something changed elsewhere).
+  onReconnect: async () => { await resyncFromServer() },
 })
 // Brief visual feedback when the state was changed elsewhere: the operator must notice
 // that the score/clock moved without them touching anything (failover, hardware source).

@@ -79,7 +79,7 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
-| 8 | `make app4_test` | `Test Files 16 passed`, `Tests 186 passed` (dont `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`) — *ré-exécuter : chiffres revus le 2026-11-06* | ☐ |
+| 8 | `make app4_test` | `Test Files 17 passed`, `Tests 203 passed` (dont `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-07* | ☐ |
 | 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
 | 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
 
@@ -139,22 +139,22 @@ d'incrustation reflètent la saisie sans rechargement. ☐
 | 1.1 | Saisir un but, un carton, lancer/arrêter le chrono, changer de période, donner le coup d'envoi | chaque action répond `success` ; l'UI se met à jour | | ☑ |
 | 1.1a | Console du navigateur ouverte pendant toute la saisie | **aucune erreur** ; en particulier pas de `<SelectItem /> must have a value prop that is not an empty string` ni de `Must be called at the top of a \`setup\` function` | | ☑ |
 | 1.1b | Badge de statut | affiché **une seule fois** (sur le tableau de score) ; **cliquable uniquement « En attente »** (coup d'envoi) ; « En cours » et « Terminé » ne réagissent pas au clic. L'entête n'affiche plus qu'un badge **Verrouillé**, et seulement si le match l'est | | ☑ |
-| 1.1c | **Titre de l'onglet** du navigateur | « Scoring — Match N°{numéro} · Terrain {n} · {équipe A} - {équipe B} » : le **numéro de match**, pas l'id interne | | ☐ |
-| 1.1d | Depuis **Matchs**, cliquer « Scoring » sur un match, puis sur **un autre** | **un seul onglet** de console, réutilisé | | ☐ |
-| 1.1e | **Mode sombre** sur toute la page | aucun texte délavé (entête, score, effectifs, historique, chronos, pénalités, panneau de clôture, sélecteur par numéro) | | ☐ |
-| 1.2 | 🗄 `scoring_live_state`, `scoring_live_clock` (kind `GAME`), `scoring_live_event` | les lignes reflètent la saisie ; **`kp_match` / `kp_match_detail` / `kp_chrono` ne bougent PAS** pendant le match | | ☐ |
-| 1.2a | 🗄 `scoring_live_clock` : arrêter le chrono sur un dixième non nul (ex. `07:42.3`) | `elapsed_ms` enregistré **au dixième** (`…300`) ; idem `SHOTCLOCK` et `PENALTY` | | ☐ |
-| 1.2b | Recharger la page chrono en marche | le temps restauré conserve le dixième | | ☐ |
-| 1.2c | Arrêter sur `09:06.5`, **rouvrir dans un 2ᵉ onglet**, **relancer** depuis cet onglet | repart **exactement de 09:06.5** | | ☐ |
-| 1.2d | **5 arrêts/relances** en notant `elapsed_ms` | partie décimale **stable** ; idem pénalités | | ☐ |
-| 1.2e | Pause inter-période (`kind='BREAK'`) | décompte à la seconde, indicatif — pas de dixième attendu (spec §6.4) | | ☐ |
-| 1.3 | 🗄 `scoring_outbox` | une ligne par écriture, `topic` = `/scoring/event/{e}/pitch/{p}/…` (ou `/scoring/match/{id}/…`) | | ☐ |
-| 1.4 | `GET /api2/admin/scoring/state/{id}` (avec JWT) | état complet + `ETag` ; re-GET avec `If-None-Match` → **304** | | ☐ |
-| 1.5 | Recharger la page en cours de match ; ouvrir le même match dans un 2ᵉ onglet | statut/période/score et chrono restaurés depuis l'état live | | ☐ |
-| 1.6 | **Clore le match** (bouton « Clore le match… », cf. 3.59+) | **consolidation** : `kp_match` (Statut/Periode/ScoreDetail/Heure_fin/Commentaires_officiels) et `kp_match_detail` reconstruits depuis le live ; fiche/PDF/classements corrects | | ☐ |
+| 1.1c | **Titre de l'onglet** du navigateur | « Scoring — Match N°{numéro} · Terrain {n} · {équipe A} - {équipe B} » : le **numéro de match**, pas l'id interne | | ☑ |
+| 1.1d | Depuis **Matchs**, cliquer « Scoring » sur un match, puis sur **un autre** | **un seul onglet** de console, réutilisé | | ☑ |
+| 1.1e | **Mode sombre** sur toute la page | aucun texte délavé (entête, score, effectifs, historique, chronos, pénalités, panneau de clôture, sélecteur par numéro) | | ☑ |
+| 1.2 | 🗄 `scoring_live_state`, `scoring_live_clock` (kind `GAME`), `scoring_live_event` | les lignes reflètent la saisie ; **`kp_match` / `kp_match_detail` / `kp_chrono` ne bougent PAS** pendant le match | | ☑ |
+| 1.2a | 🗄 `scoring_live_clock` : arrêter le chrono sur un dixième non nul (ex. `07:42.3`) | `elapsed_ms` enregistré **au dixième** (`…300`) ; idem `SHOTCLOCK` et `PENALTY` | | ☑ |
+| 1.2b | Recharger la page chrono en marche | le temps restauré conserve le dixième | | ☑ |
+| 1.2c | Arrêter sur `09:06.5`, **rouvrir dans un 2ᵉ onglet**, **relancer** depuis cet onglet | repart **exactement de 09:06.5** | | ☑ |
+| 1.2d | **5 arrêts/relances** en notant `elapsed_ms` | partie décimale **stable** ; idem pénalités | | ☑ |
+| 1.2e | Pause inter-période (`kind='BREAK'`) | décompte à la seconde, indicatif — pas de dixième attendu (spec §6.4) | | ☑ |
+| 1.3 | 🗄 `scoring_outbox` | une ligne par écriture, `topic` = `/scoring/event/{e}/pitch/{p}/…` (ou `/scoring/match/{id}/…`) | | ☑ |
+| 1.4 | `GET /api2/admin/scoring/state/{id}` (avec JWT) | état complet + `ETag` ; re-GET avec `If-None-Match` → **304** | | ☑ |
+| 1.5 | Recharger la page en cours de match ; ouvrir le même match dans un 2ᵉ onglet | statut/période/score et chrono restaurés depuis l'état live | | ☑ |
+| 1.6 | **Clore le match** (bouton « Clore le match… », cf. 3.59+) | **consolidation** : `kp_match` (Statut/Periode/ScoreDetail/Heure_fin/Commentaires_officiels) et `kp_match_detail` reconstruits depuis le live ; fiche/PDF/classements corrects | | ☑ |
 | 1.7 | `PUT /api2/admin/scoring/source/{id}` avec `{"source":"HARDWARE"}` puis re-saisir | **409** « Another source is active » + `kp_journal` « Scoring rejeté (source) » ; re-promouvoir `MANUAL` → la saisie repasse | | ☐ |
-| 1.8 | 🗄 `kp_journal` | une ligne par action mutante (statut, période, score, événement, chrono, joueur, officiels, commentaires, source, consolidation) | | ☐ |
-| 1.9 | Ouvrir un **match saisi autrefois en legacy** | l'historique s'affiche ; à la première modification, les faits sont importés dans `scoring_live_event` | | ☐ |
+| 1.8 | 🗄 `kp_journal` | une ligne par action mutante (statut, période, score, événement, chrono, joueur, officiels, commentaires, source, consolidation) | | ☑ |
+| 1.9 | Ouvrir un **match saisi autrefois en legacy** | l'historique s'affiche ; à la première modification, les faits sont importés dans `scoring_live_event` | | ☑ |
 | 1.10 | Match **verrouillé** et appel **non authentifié** | 400 « Game locked » / 401 | | ☐ |
 | 1.11 | Legacy intact : FMV3 et `app_wsm` (`/api/wsm/*`) sur un autre match | fonctionnent comme avant | | ☐ |
 
@@ -167,7 +167,8 @@ docker logs -f ${APPLICATION_NAME}_event_cache_worker    # surveiller le drainag
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
-| 2.1 | Saisir, puis 🗄 `SELECT * FROM scoring_outbox ORDER BY id DESC LIMIT 5` | `published_at` renseigné en ~1 s | | ☐ |
+| 2.0 | `docker inspect kpi_event_cache_worker --format '{{.Config.Cmd}}'` puis `docker stats --no-stream kpi_event_cache_worker` à quelques minutes d'écart | commande avec **`--no-debug`** ; mémoire stable (~70 Mo). Sans ce drapeau, le profilage Doctrine du mode debug accumule chaque requête et le worker meurt en `Allowed memory size … exhausted` (corrigé le 2026-11-07) | 2026-11-07 | ☑ |
+| 2.1 | Saisir, puis 🗄 `SELECT * FROM scoring_outbox ORDER BY id DESC LIMIT 5` | `published_at` renseigné en ~1 s | | ☑ |
 | 2.2 | Banc **app4 → Opérations → Mercure**, topic `/scoring/event/{e}/pitch/{p}/score`, puis saisir | chaque changement arrive en SSE, `id: urn:kpi:scoring:{n}`, `event:` = type du payload | | ☐ |
 | 2.3 | S'abonner aussi à `…/clock` et `…/fact` | seuls les topics concernés reçoivent | | ☐ |
 | 2.4 | **Coupure abonné** 30 s, réabonnement avec `Last-Event-ID` | le hub **rejoue** les messages manqués, dans l'ordre | | ☐ |
@@ -280,7 +281,8 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 | 3.41 | Même match sur un **2ᵉ terminal**, y saisir un but | le 1ᵉʳ se met à jour en ~1 s ; le badge clignote | | ☐ |
 | 3.42 | Chrono depuis le 2ᵉ terminal | le 1ᵉʳ reprend le chrono synchronisé ; idem shotclock et pause | | ☐ |
 | 3.43 | Rafale sur le 1ᵉʳ terminal seul | **aucun** `GET /state` parasite (onglet Réseau) | | ☐ |
-| 3.44 | Couper le réseau 30 s puis le rétablir | badge orange **et bandeau rouge « Connexion perdue »** ; retour au vert, bandeau retiré, état resynchronisé | | ☐ |
+| 3.44 | Couper le réseau 30 s puis le rétablir | badge orange aussitôt, **bandeau rouge « Connexion perdue »** (immédiat si le navigateur se sait hors ligne, sinon après **10 s** sans réabonnement) ; retour au vert, bandeau retiré, état resynchronisé (onglet Réseau : un `GET /state` au réabonnement) | | ☐ |
+| 3.44a | Console ouverte **15 min** en direct sans rien toucher | `make api2_logs lines=50` montre « Subscriber disconnected » puis « New subscriber » ~5 s après (recyclage normal du hub) ; le badge passe brièvement orange, **le bandeau rouge n'apparaît pas** | | ☐ |
 | 3.45 | Source `HARDWARE` depuis un autre client, puis écrire | **409** et reflet des changements de la source active | | ☐ |
 | 3.46 | Match **hors événement** | topic de repli `/scoring/match/{id}/{type}` | | ☐ |
 
@@ -328,7 +330,7 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §7.1, §7.2, §7.3, §7.6
 | 3.72b | Deux joueurs au **même numéro** ; aucun **capitaine** | « numéros en double (n) » ; « aucun capitaine désigné » | | ☐ |
 | 3.72c | Arbitre secondaire ou chronométreur vides | « Officiels à renseigner : … » (juges de ligne et chronométreur de tir facultatifs) | | ☐ |
 | 3.72d | Vue **Déroulement**, match **En attente** avec des points à vérifier | bandeau ambre « n point(s) à vérifier sur les paramètres du match avant le coup d'envoi » + « Voir les paramètres » ; disparaît au coup d'envoi ; le coup d'envoi n'est **jamais** bloqué | | ☐ |
-| 3.73 | Mode avion (ou `docker stop kpi_api2`) en direct | bandeau rouge « **Connexion perdue** » sous l'entête ; disparaît au retour | | ☐ |
+| 3.73 | Mode avion (ou `docker stop kpi_api2`) en direct | bandeau rouge « **Connexion perdue** » sous l'entête (mode avion : immédiat ; `docker stop` : après 10 s) ; disparaît au retour | | ☐ |
 
 #### Révision du 2026-11-06 — ordre de saisie, statut du match, Paramètres
 
