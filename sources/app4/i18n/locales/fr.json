@@ -2302,7 +2302,9 @@
       "action": "Action",
       "action_all": "Toutes",
       "action_group_ensemble": "Ensemble",
-      "action_group_detail": "Détail",
+      "category": "Catégories",
+      "category_all": "Toutes",
+      "category_count": "{count} sur {total}",
       "action_connexion": "Connexions",
       "action_ajout": "Ajouts",
       "action_modif": "Modifications",
@@ -2314,6 +2316,15 @@
       "competition_placeholder": "Code compétition...",
       "date_from": "Du",
       "date_to": "Au"
+    },
+    "categories": {
+      "connexion": "Connexion",
+      "administration": "Administration",
+      "operation": "Gestion sportive",
+      "presence": "Présence",
+      "scoring": "Scoring",
+      "pdf": "PDF",
+      "editorial": "Éditorial"
     },
     "table": {
       "date": "Date",

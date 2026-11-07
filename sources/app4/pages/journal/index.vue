@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { actionGroups, categoriesParam, defaultCategoryKeys, type JournalCategory } from '~/utils/journal'
+
 interface JournalEntry {
   id: number
   date: string
@@ -7,6 +9,7 @@ interface JournalEntry {
   userFonction: string | null
   isDeleted: boolean
   action: string
+  category: string
   journal: string | null
   saison: string | null
   competition: string | null
@@ -61,14 +64,17 @@ const filterSeason = ref('')
 const filterCompetition = ref('')
 const filterDateFrom = ref('')
 const filterDateTo = ref('')
+const filterCategories = ref<string[]>([])
+const categoriesOpen = ref(false)
+const categoriesDropdown = ref<HTMLElement | null>(null)
 
 // Filter data
 const journalUsers = ref<JournalUser[]>([])
-const journalActions = ref<string[]>([])
+const journalCategories = ref<JournalCategory[]>([])
 const seasons = ref<{ code: string; active: boolean }[]>([])
 
-// Action groups for "Ensemble" optgroup
-const actionGroups = [
+// Prefix groups of the "Ensemble" optgroup
+const actionPrefixGroups = [
   { value: 'Connexion', labelKey: 'journal.filters.action_connexion' },
   { value: 'Ajout', labelKey: 'journal.filters.action_ajout' },
   { value: 'Modif', labelKey: 'journal.filters.action_modif' },
@@ -81,11 +87,12 @@ async function loadFilters() {
   try {
     const [usersData, actionsData, seasonsData] = await Promise.all([
       api.get<JournalUser[]>('/admin/journal/users'),
-      api.get<string[]>('/admin/journal/actions'),
+      api.get<{ categories: JournalCategory[] }>('/admin/journal/actions'),
       api.get<{ seasons: { code: string; active: boolean }[] }>('/admin/filters/seasons'),
     ])
     journalUsers.value = usersData
-    journalActions.value = actionsData
+    journalCategories.value = actionsData.categories
+    filterCategories.value = defaultCategoryKeys(actionsData.categories)
     seasons.value = seasonsData.seasons || []
   } catch { /* useApi handles toast */ }
 }
@@ -108,6 +115,8 @@ async function loadJournal() {
     if (filterCompetition.value) params.competition = filterCompetition.value
     if (filterDateFrom.value) params.dateFrom = filterDateFrom.value
     if (filterDateTo.value) params.dateTo = filterDateTo.value
+    const categories = categoriesParam(filterCategories.value, journalCategories.value)
+    if (categories) params.categories = categories
 
     const data = await api.get<JournalResponse>('/admin/journal', params)
     entries.value = data.items
@@ -124,6 +133,47 @@ function onActionFilterChange(event: Event) {
   const mode = selectedOption?.dataset.mode as 'prefix' | 'exact' | undefined
   filterActionMode.value = mode || 'prefix'
   filterAction.value = select.value
+}
+
+// Category filter (multi-select)
+const visibleActionGroups = computed(() => actionGroups(journalCategories.value, filterCategories.value))
+const allCategoriesSelected = computed(() =>
+  journalCategories.value.length > 0 && journalCategories.value.every(c => filterCategories.value.includes(c.key)),
+)
+const categoriesSummary = computed(() =>
+  allCategoriesSelected.value || filterCategories.value.length === 0
+    ? t('journal.filters.category_all')
+    : t('journal.filters.category_count', { count: filterCategories.value.length, total: journalCategories.value.length }),
+)
+
+function setCategories(keys: string[]) {
+  filterCategories.value = keys
+  page.value = 1
+  // An exact action hidden by the new selection is dropped (its watcher reloads the journal).
+  const actionStillVisible = filterActionMode.value !== 'exact'
+    || visibleActionGroups.value.some(g => g.actions.includes(filterAction.value))
+  if (filterAction.value && !actionStillVisible) {
+    filterAction.value = ''
+    filterActionMode.value = 'prefix'
+    return
+  }
+  loadJournal()
+}
+
+function toggleCategory(key: string) {
+  setCategories(filterCategories.value.includes(key)
+    ? filterCategories.value.filter(k => k !== key)
+    : [...filterCategories.value, key])
+}
+
+function toggleAllCategories() {
+  setCategories(allCategoriesSelected.value ? [] : journalCategories.value.map(c => c.key))
+}
+
+function closeCategoriesOnClickOutside(event: MouseEvent) {
+  if (categoriesDropdown.value && !categoriesDropdown.value.contains(event.target as Node)) {
+    categoriesOpen.value = false
+  }
 }
 
 // Debounced search
@@ -179,13 +229,17 @@ function formatCompSaison(entry: JournalEntry): string {
 const hasActiveFilters = computed(() => {
   return filterUser.value || filterAction.value || filterSeason.value ||
     filterCompetition.value || filterDateFrom.value || filterDateTo.value ||
-    searchQuery.value
+    searchQuery.value || categoriesParam(filterCategories.value, journalCategories.value) !== undefined
 })
 
-onMounted(() => {
-  loadFilters()
+onMounted(async () => {
+  document.addEventListener('click', closeCategoriesOnClickOutside)
+  // Categories first: the default selection (scoring unchecked) applies to the very first load.
+  await loadFilters()
   loadJournal()
 })
+
+onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOutside))
 </script>
 
 <template>
@@ -236,16 +290,58 @@ onMounted(() => {
           >
             <option value="">{{ t('journal.filters.action_all') }}</option>
             <optgroup :label="t('journal.filters.action_group_ensemble')">
-              <option v-for="g in actionGroups" :key="g.value" :value="g.value" data-mode="prefix">
+              <option v-for="g in actionPrefixGroups" :key="g.value" :value="g.value" data-mode="prefix">
                 {{ t(g.labelKey) }}
               </option>
             </optgroup>
-            <optgroup :label="t('journal.filters.action_group_detail')">
-              <option v-for="a in journalActions" :key="a" :value="a" data-mode="exact">
+            <optgroup v-for="group in visibleActionGroups" :key="group.key" :label="t(`journal.categories.${group.key}`)">
+              <option v-for="a in group.actions" :key="a" :value="a" data-mode="exact">
                 {{ a }}
               </option>
             </optgroup>
           </select>
+        </div>
+
+        <!-- Category filter (multi-select) -->
+        <div ref="categoriesDropdown" class="relative flex flex-col gap-1">
+          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.category') }}</label>
+          <button
+            type="button"
+            class="flex items-center justify-between gap-2 min-w-40 px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            :aria-expanded="categoriesOpen"
+            @click="categoriesOpen = !categoriesOpen"
+          >
+            <span>{{ categoriesSummary }}</span>
+            <UIcon name="heroicons:chevron-down" class="w-4 h-4 text-header-600 dark:text-header-300" />
+          </button>
+          <div
+            v-if="categoriesOpen"
+            class="absolute top-full left-0 z-20 mt-1 w-56 border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 shadow-lg overflow-hidden"
+          >
+            <label class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 cursor-pointer border-b border-header-200 dark:border-header-700">
+              <input
+                type="checkbox"
+                :checked="allCategoriesSelected"
+                :indeterminate="filterCategories.length > 0 && !allCategoriesSelected"
+                class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
+                @change="toggleAllCategories"
+              >
+              <span class="text-sm font-medium text-header-900 dark:text-header-50">{{ t('journal.filters.category_all') }}</span>
+            </label>
+            <label
+              v-for="category in journalCategories"
+              :key="category.key"
+              class="flex items-center gap-2 p-2 hover:bg-header-50 dark:hover:bg-header-800 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                :checked="filterCategories.includes(category.key)"
+                class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500"
+                @change="toggleCategory(category.key)"
+              >
+              <span class="text-sm text-header-900 dark:text-header-200">{{ t(`journal.categories.${category.key}`) }}</span>
+            </label>
+          </div>
         </div>
 
         <!-- Season filter -->

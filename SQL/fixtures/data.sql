@@ -392,10 +392,14 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 INSERT INTO `kp_user_capability` (`user_code`, `capability`) VALUES ('TEDIT', 'editor');
 
 -- Entrées de journal utilisées par AdminJournalTest : la 1re pointe sur TADMIN (existe) et la 2e sur
--- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal).
+-- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal) ;
+-- les suivantes alimentent le filtre par catégorie.
 INSERT INTO `kp_journal` (`Dates`, `Users`, `Actions`, `Journal`) VALUES
   ('2026-10-01 10:00:00', 'TADMIN', 'Connexion Admin', 'Admin Test'),
-  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean');
+  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean'),
+  -- Catégories (PAGE_GESTION_JOURNAL.md § 5.2) : une action de scoring et une de PDF pour le filtre categories.
+  ('2026-10-03 10:00:00', 'TADMIN', 'Scoring score', 'Fixture catégorie scoring'),
+  ('2026-10-04 10:00:00', 'TADMIN', 'PDF presence', 'Fixture catégorie pdf');
 
 INSERT INTO `kp_cms_media` (`id`, `path`, `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `created_at`, `updated_at`) VALUES
   (9501, '2999/01/finale.jpg', 'image/jpeg', 1600, 900, 120000, 'La finale', 'The final', 'CNA', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),

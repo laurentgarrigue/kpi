@@ -29,6 +29,7 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
 | 4 | Filtre par type d'action | <= 2 | Select dropdown avec groupes Ensemble/Detail | ✅ Conserver - select avec optgroups |
 | 5 | Filtre par saison | <= 2 | Input text (LIKE prefix) | ✅ Ameliorer - select dropdown des saisons |
 | 6 | Filtre par competition | <= 2 | Input text (LIKE prefix) | ✅ Ameliorer - select dropdown des competitions |
+| 7 | Filtre par categorie d'action (choix multiple), scoring decoche par defaut | <= 2 | Absent | ✅ Ajoute (§ 5.2) |
 
 ### 2.2 Ameliorations par rapport au legacy
 
@@ -57,6 +58,7 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
 | Q6 | Groupes d'actions dans le select | **Conserver** les groupes "Ensemble" (Connexion, Ajout, Modif, Supp, Calcul) et "Detail" (toutes les actions distinctes de la base). Les groupes Ensemble utilisent un prefix match. |
 | Q7 | Colonnes affichees | Conserver les 7 colonnes du legacy : Date, Identite, Action, Journal (detail), Competition + Saison, Journee, Match. |
 | Q8 | Export du journal ? | **Non** pour la V1. Peut etre ajoute ultérieurement si besoin. |
+| Q9 | Le scoring noie le journal (une ligne par but, carton, top chrono) | Les actions sont rangees en **categories** (§ 5.2), filtrables en choix multiple ; **Scoring decoche par defaut**. Les categories et leurs regles vivent cote api2 (`App\Journal\JournalCategories`), le front recoit la liste, les actions et la selection par defaut. |
 
 ---
 
@@ -140,20 +142,51 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
 - **Valeur par defaut** : Tous (pas de filtre)
 - **Persistence** : Non (reset a chaque chargement de page)
 
-### 5.2 Filtre Action
+### 5.2 Categories et filtre Action
+
+Les libelles de `kp_journal.Actions` sont libres (legacy `utyJournal`, api2 `AdminLoggableTrait`, `PdfJournal`…).
+api2 les range en **categories** par des motifs `LIKE` evalues dans l'ordre (premiere correspondance gagnante,
+insensible a la casse comme la collation `_ci` de la colonne) — source unique : `sources/api2/src/Journal/JournalCategories.php`.
+
+| Ordre d'affichage | Cle | Libelle FR | Exemples d'actions | Coche par defaut |
+|---|---|---|---|---|
+| 1 | `connexion` | Connexion | Connexion, Connexion Admin, Revocation appareil, Lien Google ajoute, Reset mot de passe | ✅ |
+| 2 | `administration` | Administration | utilisateurs, mandats, saisons, clubs / CD, licencies (`ATHLETE_*`), RC, images et logos, fusions, Change code, Import PCE, Purge Cache, Update Locks | ✅ |
+| 3 | `operation` | Gestion sportive | **categorie par defaut** de toute action non reconnue : competitions, journees, matchs, equipes, classements, evenements, groupes | ✅ |
+| 4 | `presence` | Presence | titulaires, copies de composition, `Modification kp_competition_equipe_joueur` / `kp_match_joueur`, joueurs de match, controle equipement (`Scrut *`) | ✅ |
+| 5 | `scoring` | Scoring | `Scoring *` (console de marque), `Incrustation *` | ❌ |
+| 6 | `pdf` | PDF | `PDF *` (documents imprimes via api2) | ✅ |
+| 7 | `editorial` | Editorial | articles, pages, medias, formulaires, inscriptions, menu, accueil, redirections, capacite Redacteur | ✅ |
+
+Priorite d'evaluation des regles : scoring, pdf, connexion, presence, editorial, administration, puis `operation` par defaut.
+
+#### Filtre Categories (choix multiple)
+
+- **Type** : bouton deroulant avec une case « Toutes » (etat indetermine si selection partielle) et une case par categorie.
+- **Defaut** : toutes les categories sauf **Scoring** (le scoring ecrit une ligne par evenement de match et surcharge la lecture).
+- **Comportement** : `GET /admin/journal?categories=connexion,pdf` ne garde que les entrees de ces categories. Aucune ou toutes cochees = pas de filtre (parametre omis).
+
+#### Filtre Action
 
 - **Type** : Select dropdown avec optgroups
 - **Groupes** :
-  - **Ensemble** (prefix match) :
-    - `Connexion` → Connexions
-    - `Ajout` → Ajouts
-    - `Modif` → Modifications
-    - `Supp` → Suppressions
-    - `Calcul` → Calculs
-  - **Detail** (valeur exacte) : Toutes les actions distinctes de la base (chargees depuis l'API)
+  - **Ensemble** (prefix match) : `Connexion`, `Ajout`, `Modif`, `Supp`, `Calcul`
+  - **Un groupe par categorie** (valeur exacte) : les actions distinctes de la base, rangees sous leur categorie. Seules les categories cochees (toutes si aucune) et non vides apparaissent.
 - **Source** : Endpoint `/admin/journal/actions`
-- **Comportement** : Filtre les entrees dont `j.Actions` commence par ou est egal a la valeur selectionnee
+- **Comportement** : Filtre les entrees dont `j.Actions` commence par ou est egal a la valeur selectionnee, **en plus** du filtre categories. Une action exacte masquee par un changement de categories est retiree du filtre.
 - **Valeur par defaut** : Toutes
+
+#### Criteres d'acceptation
+
+| ID | Critere | Test |
+|---|---|---|
+| JRN-CAT-01 | Chaque libelle d'action connu est range dans sa categorie ; un libelle inconnu va dans `operation` | `tests/Unit/Journal/JournalCategoriesTest.php` |
+| JRN-CAT-02 | Le classement ignore la casse (collation `_ci`) | idem |
+| JRN-CAT-03 | Scoring est la seule categorie decochee par defaut | idem + `app4/tests/unit/journal.spec.ts` |
+| JRN-CAT-04 | Le parametre `categories` ignore les cles inconnues ; vide ou complet = pas de filtre | idem |
+| JRN-CAT-05 | `GET /admin/journal?categories=…` ne renvoie que les categories demandees, chaque entree porte sa `category` | `tests/Integration/AdminJournalTest.php` + `journal.spec.ts` |
+| JRN-CAT-06 | `GET /admin/journal/actions` renvoie les categories dans l'ordre d'affichage avec leurs actions et `defaultSelected` | `AdminJournalTest.php` |
+| JRN-CAT-07 | Le select Action regroupe les actions par categorie cochee, sans groupe vide | `journal.spec.ts` |
 
 ### 5.3 Filtre Saison
 
@@ -207,6 +240,7 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
 | `season` | string | - | Code saison (filtre exact) |
 | `competition` | string | - | Code competition (prefix match) |
 | `search` | string | - | Recherche textuelle dans journal/actions/competitions/matchs |
+| `categories` | string | - | Cles de categories separees par des virgules (§ 5.2) ; absent, vide ou complet = pas de filtre |
 | `dateFrom` | string | - | Date debut (format YYYY-MM-DD) |
 | `dateTo` | string | - | Date fin (format YYYY-MM-DD) |
 
@@ -222,6 +256,7 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
       "userIdentite": "Laurent Garrigue",
       "userFonction": "Webmaster",
       "action": "Update logo equipes",
+      "category": "administration",
       "journal": "",
       "saison": "2025",
       "competition": "N1D",
@@ -250,22 +285,20 @@ Page d'administration permettant de consulter le journal d'activite (audit log) 
 
 ### 6.5 Reponse GET /admin/journal/actions
 
+Categories dans l'ordre d'affichage (§ 5.2), chacune avec ses actions distinctes triees (une categorie sans action est renvoyee avec une liste vide) :
+
 ```json
-[
-  "Ajout Competition",
-  "Ajout Equipe",
-  "Ajout Journee",
-  "Ajout Match",
-  "Ajout Rc",
-  "Calcul Classements",
-  "Connexion",
-  "Modif Competition",
-  "Modification kp_competition_equipe",
-  "Modification kp_match_joueur",
-  "Modif Rc",
-  "Supp Competition",
-  "Supp Equipe"
-]
+{
+  "categories": [
+    { "key": "connexion", "defaultSelected": true, "actions": ["Connexion", "Connexion Admin"] },
+    { "key": "administration", "defaultSelected": true, "actions": ["Creation utilisateur", "Modif Rc"] },
+    { "key": "operation", "defaultSelected": true, "actions": ["Ajout match", "Calcul Classement"] },
+    { "key": "presence", "defaultSelected": true, "actions": ["Ajout titulaire", "Scrut équipement"] },
+    { "key": "scoring", "defaultSelected": false, "actions": ["Scoring score", "Scoring statut"] },
+    { "key": "pdf", "defaultSelected": true, "actions": ["PDF presence"] },
+    { "key": "editorial", "defaultSelected": true, "actions": ["Création article"] }
+  ]
+}
 ```
 
 ### 6.6 Logique backend
@@ -307,6 +340,9 @@ FROM kp_journal j
 INNER JOIN kp_user u ON u.Code = j.Users
 ORDER BY u.Identite
 ```
+
+- `categories` : `CASE j.Actions LIKE … THEN 'scoring' … ELSE 'operation' END IN (…)`, expression generee par
+  `JournalCategories::sqlCase()` (motifs constants cites par `Connection::quote`), aussi selectionnee pour renvoyer `category`.
 
 **GET /admin/journal/actions :**
 
@@ -401,6 +437,9 @@ La page Journal est accessible depuis le menu sous "Administration" > "Journal d
 
 ## 10. Traductions i18n
 
+Libelles des categories : `journal.categories.<cle>` (FR : Connexion, Administration, Gestion sportive, Presence,
+Scoring, PDF, Editorial ; EN : Login, Administration, Sports management, Attendance, Scoring, PDF, Editorial).
+
 ### 10.1 Cles francaises (`fr.json`)
 
 ```json
@@ -415,7 +454,9 @@ La page Journal est accessible depuis le menu sous "Administration" > "Journal d
       "action": "Action",
       "action_all": "Toutes",
       "action_group_ensemble": "Ensemble",
-      "action_group_detail": "Detail",
+      "category": "Categories",
+      "category_all": "Toutes",
+      "category_count": "{count} sur {total}",
       "action_connexion": "Connexions",
       "action_ajout": "Ajouts",
       "action_modif": "Modifications",
@@ -461,7 +502,9 @@ La page Journal est accessible depuis le menu sous "Administration" > "Journal d
       "action": "Action",
       "action_all": "All",
       "action_group_ensemble": "Groups",
-      "action_group_detail": "Detail",
+      "category": "Categories",
+      "category_all": "All",
+      "category_count": "{count} of {total}",
       "action_connexion": "Logins",
       "action_ajout": "Additions",
       "action_modif": "Modifications",
@@ -541,6 +584,6 @@ La table `kp_journal` reste inchangee. Aucune migration Doctrine n'est necessair
 ---
 
 **Document cree le** : 20 fevrier 2026
-**Derniere mise a jour** : 20 fevrier 2026
+**Derniere mise a jour** : 7 novembre 2026 (categories d'actions, § 5.2)
 **Statut** : A VALIDER
 **Auteur** : Claude Code

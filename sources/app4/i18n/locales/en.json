@@ -2290,7 +2290,9 @@
       "action": "Action",
       "action_all": "All",
       "action_group_ensemble": "Groups",
-      "action_group_detail": "Detail",
+      "category": "Categories",
+      "category_all": "All",
+      "category_count": "{count} of {total}",
       "action_connexion": "Logins",
       "action_ajout": "Additions",
       "action_modif": "Modifications",
@@ -2302,6 +2304,15 @@
       "competition_placeholder": "Competition code...",
       "date_from": "From",
       "date_to": "To"
+    },
+    "categories": {
+      "connexion": "Login",
+      "administration": "Administration",
+      "operation": "Sports management",
+      "presence": "Attendance",
+      "scoring": "Scoring",
+      "pdf": "PDF",
+      "editorial": "Editorial"
     },
     "table": {
       "date": "Date",

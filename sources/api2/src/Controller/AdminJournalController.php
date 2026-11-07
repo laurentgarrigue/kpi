@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Journal\JournalCategories;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -44,6 +45,8 @@ class AdminJournalController extends AbstractController
         $search = $request->query->get('search', '');
         $dateFrom = $request->query->get('dateFrom', '');
         $dateTo = $request->query->get('dateTo', '');
+        $categories = JournalCategories::parseFilter((string) $request->query->get('categories', ''));
+        $categorySql = $this->categorySql();
 
         // Build WHERE clauses
         $conditions = [];
@@ -93,6 +96,11 @@ class AdminJournalController extends AbstractController
             $params[] = $dateTo . ' 23:59:59';
         }
 
+        if ($categories !== []) {
+            $conditions[] = $categorySql . ' IN (' . implode(', ', array_fill(0, count($categories), '?')) . ')';
+            array_push($params, ...$categories);
+        }
+
         $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
         // Count total
@@ -106,7 +114,7 @@ class AdminJournalController extends AbstractController
         // qu'il faut afficher le code brut suivi de « (compte supprimé) ».
         $sql = "SELECT j.Id, j.Dates, j.Users, j.Actions, j.Saisons, j.Competitions,
                        j.Evenements, j.Journees, j.Matchs, j.Journal,
-                       u.Identite, u.Fonction
+                       u.Identite, u.Fonction, $categorySql AS Category
                 FROM kp_journal j
                 LEFT JOIN kp_user u ON u.Code = j.Users
                 $whereClause
@@ -126,6 +134,7 @@ class AdminJournalController extends AbstractController
                 'userFonction' => $entry['Fonction'],
                 'isDeleted' => $entry['Identite'] === null,
                 'action' => $entry['Actions'],
+                'category' => $entry['Category'],
                 'journal' => $entry['Journal'],
                 'saison' => $entry['Saisons'],
                 'competition' => $entry['Competitions'],
@@ -174,7 +183,8 @@ class AdminJournalController extends AbstractController
     }
 
     /**
-     * Get distinct actions from the journal
+     * Categories of the journal, in display order, each with its distinct actions (PAGE_GESTION_JOURNAL.md § 5.2).
+     * `defaultSelected` tells the front which categories are checked when the page opens.
      */
     #[Route('/actions', name: 'admin_journal_actions', methods: ['GET'])]
     public function actions(): JsonResponse
@@ -183,10 +193,25 @@ class AdminJournalController extends AbstractController
                 FROM kp_journal j
                 ORDER BY j.Actions";
 
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery();
-        $actions = $result->fetchFirstColumn();
+        $actionsByCategory = array_fill_keys(JournalCategories::ALL, []);
+        foreach ($this->connection->executeQuery($sql)->fetchFirstColumn() as $action) {
+            $actionsByCategory[JournalCategories::categoryOf($action)][] = $action;
+        }
 
-        return $this->json($actions);
+        $categories = [];
+        foreach ($actionsByCategory as $category => $actions) {
+            $categories[] = [
+                'key' => $category,
+                'defaultSelected' => !in_array($category, JournalCategories::HIDDEN_BY_DEFAULT, true),
+                'actions' => $actions,
+            ];
+        }
+
+        return $this->json(['categories' => $categories]);
+    }
+
+    private function categorySql(): string
+    {
+        return JournalCategories::sqlCase('j.Actions', fn (string $value) => $this->connection->quote($value));
     }
 }
