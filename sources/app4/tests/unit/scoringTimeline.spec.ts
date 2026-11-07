@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ScoringEvent } from '../../types/scoring'
-import { timelineOrder } from '../../utils/scoringTimeline'
+import { timelineOrder, timelineView } from '../../utils/scoringTimeline'
 
 /**
  * Ordre de la chronologie (PAGE_SCORING.md §7.1). Le temps d'un fait est le temps
@@ -39,5 +39,23 @@ describe('timelineOrder — le plus récent en premier', () => {
     const events = [fact('M1', '08:30', 'early'), fact('M1', '02:10', 'late')]
     timelineOrder(events)
     expect(events.map(e => e.uid)).toEqual(['early', 'late'])
+  })
+})
+
+describe('timelineView — sens d’affichage et « N derniers »', () => {
+  const events = [fact('M1', '08:00', 'a'), fact('M1', '05:00', 'b'), fact('M2', '09:00', 'c'), fact('M2', '01:00', 'd')]
+  const view = (opts: { newestFirst?: boolean, limit?: number }) => timelineView(events, opts).map(e => e.uid)
+
+  it('affiche par défaut le plus récent en haut', () => {
+    expect(view({})).toEqual(['d', 'c', 'b', 'a'])
+  })
+
+  it('inverse le sens : le plus ancien en haut', () => {
+    expect(view({ newestFirst: false })).toEqual(['a', 'b', 'c', 'd'])
+  })
+
+  it('garde les N faits les plus récents, quel que soit le sens', () => {
+    expect(view({ limit: 2 })).toEqual(['d', 'c'])
+    expect(view({ limit: 2, newestFirst: false })).toEqual(['c', 'd'])
   })
 })

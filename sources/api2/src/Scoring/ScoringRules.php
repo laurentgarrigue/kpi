@@ -67,6 +67,26 @@ final class ScoringRules
         return $overtime !== null ? $overtimePrefix . $overtime : $period;
     }
 
+    /** Below this remaining time, clocks show tenths (as scoreboards do for the end). */
+    private const TENTHS_BELOW_MS = 10000;
+
+    /**
+     * Remaining time of a clock as the console shows it: "9:52" (whole seconds rounded up),
+     * "9.9" … "0.0" under 10 seconds. Used to journal the clock writes, so a manual
+     * correction (two stops in a row at different times) can be traced.
+     * Mirror of `formatGameClock` (app4 utils/scoringDisplay.ts).
+     */
+    public static function clockDisplay(int $remainingMs): string
+    {
+        $ms = max(0, $remainingMs);
+        if ($ms < self::TENTHS_BELOW_MS) {
+            return number_format(floor($ms / 100) / 10, 1, '.', '');
+        }
+        $totalSeconds = (int) ceil($ms / 1000);
+
+        return sprintf('%d:%02d', intdiv($totalSeconds, 60), $totalSeconds % 60);
+    }
+
     /**
      * Next period for the "advance" button (§7.1):
      *  - type C (classement): M1 → M2 → null (a draw is allowed, no overtime);

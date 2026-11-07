@@ -30,3 +30,17 @@ export function timelineOrder(events: ScoringEvent[]): ScoringEvent[] {
   return [...events].sort((a, b) =>
     periodRank(b.period) - periodRank(a.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
 }
+
+/**
+ * Facts as displayed: the `limit` most recent ones (0 = all), newest at the top by default or
+ * oldest at the top (the operator's choice). The « latest N » are always the most recent
+ * facts, whichever way they are shown. Returns a copy.
+ */
+export function timelineView(
+  events: ScoringEvent[],
+  { newestFirst = true, limit = 0 }: { newestFirst?: boolean, limit?: number } = {}
+): ScoringEvent[] {
+  const ordered = timelineOrder(events)
+  const shown = limit > 0 ? ordered.slice(0, limit) : ordered
+  return newestFirst ? shown : shown.reverse()
+}

@@ -136,9 +136,9 @@ d'incrustation reflètent la saisie sans rechargement. ☐
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
-| 1.1 | Saisir un but, un carton, lancer/arrêter le chrono, changer de période, donner le coup d'envoi | chaque action répond `success` ; l'UI se met à jour | | ☐ |
-| 1.1a | Console du navigateur ouverte pendant toute la saisie | **aucune erreur** ; en particulier pas de `<SelectItem /> must have a value prop that is not an empty string` ni de `Must be called at the top of a \`setup\` function` | | ☐ |
-| 1.1b | Badge de statut | affiché **une seule fois** (sur le tableau de score) ; **cliquable uniquement « En attente »** (coup d'envoi) ; « En cours » et « Terminé » ne réagissent pas au clic. L'entête n'affiche plus qu'un badge **Verrouillé**, et seulement si le match l'est | | ☐ |
+| 1.1 | Saisir un but, un carton, lancer/arrêter le chrono, changer de période, donner le coup d'envoi | chaque action répond `success` ; l'UI se met à jour | | ☑ |
+| 1.1a | Console du navigateur ouverte pendant toute la saisie | **aucune erreur** ; en particulier pas de `<SelectItem /> must have a value prop that is not an empty string` ni de `Must be called at the top of a \`setup\` function` | | ☑ |
+| 1.1b | Badge de statut | affiché **une seule fois** (sur le tableau de score) ; **cliquable uniquement « En attente »** (coup d'envoi) ; « En cours » et « Terminé » ne réagissent pas au clic. L'entête n'affiche plus qu'un badge **Verrouillé**, et seulement si le match l'est | | ☑ |
 | 1.1c | **Titre de l'onglet** du navigateur | « Scoring — Match N°{numéro} · Terrain {n} · {équipe A} - {équipe B} » : le **numéro de match**, pas l'id interne | | ☐ |
 | 1.1d | Depuis **Matchs**, cliquer « Scoring » sur un match, puis sur **un autre** | **un seul onglet** de console, réutilisé | | ☐ |
 | 1.1e | **Mode sombre** sur toute la page | aucun texte délavé (entête, score, effectifs, historique, chronos, pénalités, panneau de clôture, sélecteur par numéro) | | ☐ |

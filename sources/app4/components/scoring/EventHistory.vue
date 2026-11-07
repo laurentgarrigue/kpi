@@ -14,6 +14,9 @@ import type { ScoringEvent } from '~/types/scoring'
  * away: the full timeline pushed the entry zone off a tablet screen (spec §7.1 — history
  * on demand). Post-match, where the timeline IS the work, everything is shown.
  *
+ * Order: most recent first by default; the arrow next to « Temps » shows which way time
+ * flows (↑ = the latest fact at the top) and flips it — a per-device preference.
+ *
  * Props down / events up: emits `edit`/`remove`; the page mutates the store.
  */
 const props = defineProps<{
@@ -22,6 +25,9 @@ const props = defineProps<{
   canScore?: boolean
   /** Show only the N most recent facts until "Tout voir"; 0 = always everything. */
   recentCount?: number
+  /** Team names, recalled over their column on wide screens (A left, B right). */
+  teamA?: string
+  teamB?: string
 }>()
 
 const emit = defineEmits<{ edit: [e: ScoringEvent]; remove: [e: ScoringEvent] }>()
@@ -33,13 +39,41 @@ const fmtTime = (t: string): string => {
   return parts.length >= 3 ? parts.slice(1).join(':') : t
 }
 
-// Most recent first (utils/scoringTimeline — the fact time is the time LEFT, the clock
-// counts down), which is also the legacy order: period ↓, then time ↑.
-const ordered = computed(() => timelineOrder(props.events))
+// Display direction, remembered on this device (storage may be unavailable: private mode…).
+const NEWEST_FIRST_KEY = 'kpi.scoring.timelineNewestFirst'
+const newestFirst = ref(true)
+onMounted(() => {
+  try { newestFirst.value = localStorage.getItem(NEWEST_FIRST_KEY) !== '0' } catch { /* default */ }
+})
+const toggleDirection = () => {
+  newestFirst.value = !newestFirst.value
+  try { localStorage.setItem(NEWEST_FIRST_KEY, newestFirst.value ? '1' : '0') } catch { /* not kept */ }
+}
+const directionIcon = computed(() => (newestFirst.value ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'))
+const directionTitle = computed(() => t(newestFirst.value ? 'scoring.history_newest_first' : 'scoring.history_oldest_first'))
 
 const showAll = ref(false)
 const limited = computed(() => !!props.recentCount && !showAll.value && props.events.length > props.recentCount)
-const sorted = computed(() => (limited.value ? ordered.value.slice(0, props.recentCount) : ordered.value))
+// utils/scoringTimeline: most recent first by default (the fact time is the time LEFT, the
+// clock counts down — legacy order: period ↓, then time ↑); the latest N stay the latest.
+const sorted = computed(() => timelineView(props.events, {
+  newestFirst: newestFirst.value,
+  limit: limited.value ? props.recentCount : 0
+}))
+
+// Extract ↔ everything: one row on the side of the older facts — under the list when the
+// newest are on top, above it otherwise. « … tout voir (N de plus) » makes the extract read
+// as one and invites the click; once expanded, « Les N derniers seulement » sits at the same
+// place. The chevron points to where the rows appear (expand) or go (collapse).
+const canToggleAll = computed(() => !!props.recentCount && props.events.length > props.recentCount)
+const toggleBefore = computed(() => canToggleAll.value && !newestFirst.value)
+const toggleAfter = computed(() => canToggleAll.value && newestFirst.value)
+const toggleIcon = computed(() => (showAll.value === newestFirst.value ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'))
+const toggleLabel = computed(() => (showAll.value
+  ? t('scoring.history_recent', { n: props.recentCount })
+  : t('scoring.history_more', { count: props.events.length - (props.recentCount ?? 0) })))
+const TOGGLE_CLASS = 'w-full inline-flex items-center justify-center gap-1 rounded px-2 py-1 text-header-600 dark:text-header-300 hover:bg-header-50 dark:hover:bg-header-800 '
+  + 'hover:text-primary-700 dark:hover:text-primary-300 focus-visible:outline-2 focus-visible:outline-primary-500'
 
 const playerLabel = (e: ScoringEvent): string => {
   if (e.player === '0' || !e.nom) return t('scoring.team') + ' ' + e.team
@@ -55,26 +89,42 @@ const onRowClick = (e: ScoringEvent) => {
   <div>
     <div class="flex items-center gap-2 mb-2">
       <h3 class="font-semibold flex-1">{{ t('scoring.history') }}</h3>
+      <!-- Mobile has no column header: the direction toggle sits in the title bar -->
       <UButton
-        v-if="recentCount && events.length > recentCount"
-        size="xs"
-        variant="ghost"
-        :icon="showAll ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
-        @click="showAll = !showAll"
-      >{{ showAll ? t('scoring.history_recent', { n: recentCount }) : t('scoring.history_all', { count: events.length }) }}</UButton>
+        class="md:hidden"
+        size="xs" variant="ghost" color="neutral"
+        :icon="directionIcon"
+        :aria-label="directionTitle" :title="directionTitle"
+        @click="toggleDirection"
+      >{{ t('scoring.time.short') }}</UButton>
     </div>
 
     <!-- Symmetric table (PC / large tablet) -->
     <table class="hidden md:table w-full text-sm border-collapse">
       <thead>
         <tr class="text-xs text-header-600 dark:text-header-300 border-b border-header-200 dark:border-header-700">
-          <!-- Columns mirror the score banner (A left, B right): no team names repeated -->
-          <th class="py-1 w-[42%]" />
-          <th class="py-1 text-center w-[16%]">{{ t('scoring.time.short') }}</th>
-          <th class="py-1 w-[42%]" />
+          <!-- Columns mirror the score banner (A left, B right), team names recalled -->
+          <th class="py-1 px-3 w-[42%] text-left font-semibold">{{ teamA }}</th>
+          <th class="py-1 text-center w-[16%]">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded px-1 hover:bg-header-100 dark:hover:bg-header-800 focus-visible:outline-2 focus-visible:outline-primary-500"
+              :aria-label="directionTitle" :title="directionTitle"
+              @click="toggleDirection"
+            >
+              {{ t('scoring.time.short') }}
+              <UIcon :name="directionIcon" class="size-3.5" />
+            </button>
+          </th>
+          <th class="py-1 px-3 w-[42%] text-right font-semibold">{{ teamB }}</th>
         </tr>
       </thead>
       <tbody>
+        <tr v-if="toggleBefore">
+          <td colspan="3" class="py-1 text-center">
+            <button type="button" :class="TOGGLE_CLASS" @click="showAll = !showAll"><UIcon :name="toggleIcon" class="size-4" />{{ toggleLabel }}</button>
+          </td>
+        </tr>
         <tr
           v-for="(e, i) in sorted" :key="e.uid ?? i"
           class="border-b border-header-100 dark:border-header-800 align-middle"
@@ -121,11 +171,19 @@ const onRowClick = (e: ScoringEvent) => {
             </div>
           </td>
         </tr>
+        <tr v-if="toggleAfter">
+          <td colspan="3" class="py-1 text-center">
+            <button type="button" :class="TOGGLE_CLASS" @click="showAll = !showAll"><UIcon :name="toggleIcon" class="size-4" />{{ toggleLabel }}</button>
+          </td>
+        </tr>
       </tbody>
     </table>
 
     <!-- Vertical list (mobile) -->
     <ul class="md:hidden text-sm divide-y divide-header-100 dark:divide-header-800">
+      <li v-if="toggleBefore" class="py-1 text-center">
+        <button type="button" :class="TOGGLE_CLASS" @click="showAll = !showAll"><UIcon :name="toggleIcon" class="size-4" />{{ toggleLabel }}</button>
+      </li>
       <li
         v-for="(e, i) in sorted" :key="e.uid ?? i"
         class="flex items-center gap-2 py-1"
@@ -154,6 +212,9 @@ const onRowClick = (e: ScoringEvent) => {
         <span class="w-6 shrink-0 text-right">
           <UBadge v-if="e.team === 'B'" size="xs" color="neutral">B</UBadge>
         </span>
+      </li>
+      <li v-if="toggleAfter" class="py-1 text-center">
+        <button type="button" :class="TOGGLE_CLASS" @click="showAll = !showAll"><UIcon :name="toggleIcon" class="size-4" />{{ toggleLabel }}</button>
       </li>
     </ul>
 

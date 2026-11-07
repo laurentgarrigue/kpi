@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Scoring\ScoringRules;
 use App\Service\ScoringLiveService;
 use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
@@ -529,23 +530,30 @@ class ScoringController extends AbstractController
         $team = (string) ($data->params->team ?? '');
         $slot = (int) ($data->params->slot ?? 0);
 
+        // Remaining time as displayed, journalized with run/stop: a fine adjust is persisted as a
+        // « stop » — two stops in a row at different times trace a manual correction.
+        $shown = '';
         if ($data->params->action === 'RAZ') {
             $this->live->removeClock($matchId, $kind, $team, $slot);
         } else {
             // Payload stays in seconds (unchanged endpoint contract); storage is ms.
+            $initMs = (int) round(((float) ($data->params->maxTime ?? 0)) * 1000);
+            $elapsedMs = (int) round(((float) ($data->params->startTime ?? 0)) * 1000);
             $this->live->setClock($matchId, [
                 'kind' => $kind,
                 'team' => $team,
                 'slot' => $slot,
                 'playerId' => $data->params->playerId ?? null,
                 'cardCode' => $data->params->cardCode ?? null,
-                'initMs' => (int) round(((float) ($data->params->maxTime ?? 0)) * 1000),
-                'elapsedMs' => (int) round(((float) ($data->params->startTime ?? 0)) * 1000),
+                'initMs' => $initMs,
+                'elapsedMs' => $elapsedMs,
                 'running' => $data->params->action === 'run',
             ]);
+            $shown = ScoringRules::clockDisplay($initMs - $elapsedMs);
         }
 
-        $this->logScoring('Scoring chrono', $matchId, trim("{$kind} {$data->params->action} {$team}{$slot}", ' 0'));
+        $target = $slot > 0 ? "{$team}{$slot}" : $team;
+        $this->logScoring('Scoring chrono', $matchId, implode(' ', array_filter([$kind, $data->params->action, $target, $shown], 'strlen')));
 
         return new JsonResponse(['success' => true]);
     }

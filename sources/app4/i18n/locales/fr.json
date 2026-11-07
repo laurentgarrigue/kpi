@@ -2684,11 +2684,12 @@
       "reset": "Réinitialiser",
       "shotclock": "Time-shoot",
       "group": "Chronomètre de jeu",
-      "adjust_locked": "Arrêtez le chrono pour le corriger"
+      "adjust_locked": "Arrêtez le chrono pour le corriger",
+      "adjust": "Corriger le chrono"
     },
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
-    "field": "Terrain",
+    "pitch": "Terrain",
     "history": "Chronologie",
     "not_found": "Match introuvable",
     "roster_empty": "Aucun joueur sur la feuille de match",
@@ -2752,7 +2753,9 @@
     "shotclock": {
       "title": "Chronomètre de tir",
       "stop": "Arrêt",
-      "short": "Tir"
+      "short": "Tir",
+      "adjust": "Corriger le chrono de tir",
+      "adjust_locked": "Arrêtez le chrono de jeu pour corriger le chrono de tir"
     },
     "break": {
       "title": "Pause",
@@ -2829,7 +2832,11 @@
       "status_C": "Capitaine",
       "status_E": "Staff",
       "compo_loaded": "Composition de {team} chargée depuis la feuille de présence",
-      "clear_official": "Vider le champ"
+      "clear_official": "Vider le champ",
+      "officials_unsaved_title": "Officiels non enregistrés",
+      "officials_unsaved_message": "Les modifications des officiels n’ont pas été enregistrées. Quitter les Paramètres sans les enregistrer ?",
+      "officials_unsaved_leave": "Quitter sans enregistrer",
+      "officials_unsaved_stay": "Rester pour enregistrer"
     },
     "score_only": {
       "label": "Score seul",
@@ -2876,8 +2883,10 @@
     "status_kickoff_hint": "Cliquer pour donner le coup d'envoi",
     "period_confirm_action": "Passer en {period}",
     "roster_goals": "{n} but(s)",
-    "history_all": "Tout voir ({count})",
+    "history_more": "… tout voir ({count} de plus)",
     "history_recent": "Les {n} derniers seulement",
+    "history_newest_first": "Plus récents en haut — cliquer pour inverser",
+    "history_oldest_first": "Plus anciens en haut — cliquer pour inverser",
     "close": {
       "action": "Clore le match…",
       "title": "Clore le match",

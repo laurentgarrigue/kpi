@@ -4,8 +4,8 @@ import type { ShotclockDurations } from '~/types/scoring'
 
 /**
  * Shotclock (chronomètre de tir) commands of spec §6.5: start/reset 60 s, start/reset 40 s
- * (offensive rebound, 2027 rules), stop (back to "--"). ±1 s fine adjust only while
- * suspended (game clock stopped). The digits are on the console board (ScoringBoard).
+ * (offensive rebound, 2027 rules), stop (back to "--"). The digits — and their fine adjust,
+ * suspended only (game clock stopped) — are on the console board (ScoringBoard).
  * Props down / events up: the page owns the useShotclock instance and the persistence.
  */
 defineProps<{
@@ -18,7 +18,6 @@ defineProps<{
 const emit = defineEmits<{
   start: [seconds: number]
   stop: []
-  adjust: [delta: number]
   testSound: []
 }>()
 
@@ -26,10 +25,9 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <!-- −1 | 60 s / 40 s / Arrêt | +1 — same symmetry as the game clock keys. ±1 s only while
-       suspended (spec: adjust only when the game clock is stopped). -->
+  <!-- 60 s / 40 s / Arrêt. The fine adjust is a click on the shot clock digits of the board
+       (ScoringTimeAdjust, like the game clock and the penalties). -->
   <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.shotclock.title')">
-    <UButton size="sm" variant="ghost" :disabled="!canScore || state !== 'SUSPENDED'" @click="emit('adjust', -1)">−1</UButton>
     <UButton size="sm" :disabled="!canScore" @click="emit('start', durations.full)">
       {{ durations.full }} s
     </UButton>
@@ -50,7 +48,6 @@ const { t } = useI18n()
     >
       {{ t('scoring.shotclock.stop') }}
     </UButton>
-    <UButton size="sm" variant="ghost" :disabled="!canScore || state !== 'SUSPENDED'" @click="emit('adjust', 1)">+1</UButton>
     <UButton
       size="sm"
       variant="ghost"

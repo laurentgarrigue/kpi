@@ -22,6 +22,12 @@ const props = defineProps<{
   scoreLevel?: boolean
   /** Shootout allowed by the competition (spec §7.5 — tournament option). */
   shootoutEnabled?: boolean
+  /**
+   * The game clock reached 0:00: only then is the « next period » key shown, and it needs no
+   * confirmation (nothing left to lose in the finished period). The direct-access menu stays
+   * available at any time, with its confirmation.
+   */
+  periodOver?: boolean
 }>()
 
 const emit = defineEmits<{ change: [period: Period] }>()
@@ -87,15 +93,16 @@ const cancel = () => { pending.value = null }
       >{{ period ? periodLabel(period) : t('scoring.period_direct') }}</UButton>
     </UDropdownMenu>
 
-    <!-- Advance to next period (unbounded overtimes for type E while level) -->
+    <!-- Advance to next period, once the clock is at 0:00 (unbounded overtimes for type E
+         while level) -->
     <UButton
-      v-if="nextP"
+      v-if="nextP && periodOver"
       size="sm"
       icon="i-heroicons-forward"
       :disabled="!canChange"
       :aria-label="`${t('scoring.period_next')} — ${periodLabel(nextP)}`"
       :title="`${t('scoring.period_next')} — ${periodLabel(nextP)}`"
-      @click="requestChange(nextP)"
+      @click="emit('change', nextP)"
     />
 
     <!-- Confirmation: changing period resets the clock -->

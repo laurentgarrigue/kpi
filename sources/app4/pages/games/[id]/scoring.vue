@@ -91,6 +91,24 @@ const canEditFacts = computed(() => canScore.value && matchOn.value)
 // ─── Two views: "Paramètres" (before kick-off) / "Déroulement" (spec §7.1) ───
 const view = ref<'run' | 'settings'>('run')
 
+// Officials edited in « Paramètres » live in that view's form until saved: leaving the view
+// would drop them silently, so the switch asks first (the operator stays, then saves).
+const officialsDirty = ref(false)
+const leaveSettingsOpen = ref(false)
+const switchView = (v: 'run' | 'settings') => {
+  if (v === view.value) return
+  if (view.value === 'settings' && officialsDirty.value) {
+    leaveSettingsOpen.value = true
+    return
+  }
+  view.value = v
+}
+const confirmLeaveSettings = () => {
+  leaveSettingsOpen.value = false
+  officialsDirty.value = false
+  view.value = 'run'
+}
+
 // ─── Score-only mode (spec §3, plan §4.1 source SCORE_ONLY) ───
 // Some tables only follow the score, without attributing goals to players (no roster, or
 // no time for it). The console then shows score/period/status alone: same single entry
@@ -177,7 +195,7 @@ const pageTitle = computed(() => {
   if (!m) return t('scoring.title')
   const parts = [
     m.numeroOrdre ? `${t('games.field.game_number')}${m.numeroOrdre}` : `#${m.id}`,
-    m.terrain ? `${t('scoring.field')} ${m.terrain}` : null,
+    m.terrain ? `${t('scoring.pitch')} ${m.terrain}` : null,
     m.equipeA && m.equipeB ? `${m.equipeA} - ${m.equipeB}` : null
   ].filter(Boolean)
   return `${t('scoring.title')} — ${parts.join(' · ')}`
@@ -188,21 +206,38 @@ useHead({ title: pageTitle })
 const buzzer = useBuzzer()
 
 // ─── Game clock (timestamp-based, like the shotclock and the penalties) ───
-const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
+const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, maxTime: timerMaxTime, setPeriod: timerSetPeriod, start: timerStart, stop: timerStop, reset: timerReset, restoreFromServer } =
   useTimer({
     onTargetReached: () => {
-      // Buzzer at period end; persist the stop server-side; start the indicative
-      // inter-period break countdown when one applies (spec §7.5 — 3'/3'/1').
+      // Buzzer at period end; persist the stop server-side; then the break, if any.
       buzzer.beep()
       void scoringStore.setTimer('stop', { startTime: elapsedPrecise.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
-      const m = scoringStore.match
-      if (m && isLive.value) {
-        const next = nextPeriodFor(m.type, (m.periode ?? 'M1') as Period, scoreLevel.value)
-        const dur = next ? breakDurationBefore(next, scoringStore.config.breakDurations) : null
-        if (dur) startBreak(dur)
-      }
+      startBreakAfterPeriod()
     }
   })
+
+// The period this one leads to (spec §7.5): M1 → M2 always; M2 → P1 and P{n} → P{n+1} only
+// for an elimination match still level. Null: nothing follows (the match can be closed).
+const nextPeriod = computed<Period | null>(() => {
+  const m = match.value
+  if (!m?.periode) return null
+  return nextPeriodFor(m.type, m.periode as Period, scoreLevel.value)
+})
+
+/**
+ * Indicative break before the next period (spec §7.5): 3' at half-time, 3' before the first
+ * overtime, 1' before each further one — only when a next period exists (an elimination
+ * match goes to overtime only if level). Run when the game clock reaches 0:00, whether by
+ * itself or brought there by the fine adjust (a clock corrected to zero = period over).
+ */
+const startBreakAfterPeriod = () => {
+  if (!isLive.value || !nextPeriod.value) return
+  const dur = breakDurationBefore(nextPeriod.value, scoringStore.config.breakDurations)
+  if (dur) startBreak(dur)
+}
+
+// Game clock at 0:00 (stopped): the period is over — the period selector offers the next one.
+const clockAtZero = computed(() => !isRunning.value && elapsed.value >= timerMaxTime.value)
 
 // ─── Click debounce: a press held too long or too hard counts once ───
 // Two tolerances: a start/stop toggle or a score key must count once per press (a double
@@ -604,6 +639,9 @@ onMounted(async () => {
     await loadEmptyCompositions()
     // Default mode from status, period field from the match's current period.
     mode.value = scoringStore.match?.statut === 'END' ? 'post' : 'live'
+    // A pending match opens on « Paramètres »: officials and compositions are what the
+    // scoring table checks before kick-off (spec §7.1).
+    view.value = scoringStore.match?.statut === 'ATT' ? 'settings' : 'run'
     eventPeriod.value = (scoringStore.match?.periode ?? 'M1') as Period
     // Card reason pre-selected for fast entry (spec §0.9 — Autre/Non précisé)
     eventReason.value = scoringStore.config.defaultCardReason
@@ -1084,7 +1122,7 @@ const toggleClock = () => {
   timer(isRunning.value ? 'stop' : 'run')
 }
 
-// Fine-adjust the live clock (±1/±10 s). Only meaningful in live mode.
+// Fine-adjust the live clock (±1/±10 s — ScoringTimeAdjust popover on the board digits).
 // `deltaSec` is expressed on the DISPLAYED time (a countdown): +1 adds a second to the time
 // left, so it SUBTRACTS a second from the elapsed time. Getting this backwards inverted the
 // buttons (fixed 2026-08-02).
@@ -1100,8 +1138,10 @@ const adjustClock = (deltaSec: number) => {
     scoringStore.currentPeriodDuration,
     Math.max(0, elapsed.value - deltaSec)
   )
+  const reachesZero = next >= scoringStore.currentPeriodDuration && elapsed.value < scoringStore.currentPeriodDuration
   timerSetPeriod(scoringStore.currentPeriodDuration, next) // re-primes the clock (paused)
   if (wasRunning) timerStart() // keep it running if it was
+  if (reachesZero) startBreakAfterPeriod()
   // Persisted when the burst ends, with the elapsed time AT THAT MOMENT (it may be running).
   persistAfterBurst('clock', () => {
     void scoringStore.setTimer(isRunning.value ? 'run' : 'stop', {
@@ -1207,7 +1247,7 @@ const toggleLock = async () => {
             <template v-else>#{{ match.id }}</template>
           </h1>
           <p class="text-sm text-header-700 dark:text-header-200 truncate">
-            {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.field') }} {{ match.terrain }}
+            {{ match.codeCompetition }} · {{ match.phase }} · {{ t('scoring.pitch') }} {{ match.terrain }}
           </p>
         </div>
 
@@ -1222,7 +1262,7 @@ const toggleLock = async () => {
               :variant="view === v ? 'solid' : 'ghost'"
               :color="view === v ? 'primary' : 'neutral'"
               :icon="v === 'settings' ? 'i-heroicons-adjustments-horizontal' : 'i-heroicons-play-circle'"
-              @click="view = v"
+              @click="switchView(v)"
             >{{ t('scoring.view.' + v) }}</UButton>
           </div>
 
@@ -1293,6 +1333,7 @@ const toggleLock = async () => {
         @save-officials="saveOfficials"
         @load-match="loadOtherMatch"
         @load-next="loadNextOnPitch"
+        @officials-dirty="officialsDirty = $event"
       />
 
       <!-- ══ Déroulement view ══ -->
@@ -1325,9 +1366,14 @@ const toggleLock = async () => {
           :score-only="scoreOnly"
           :can-score="canEditFacts"
           :can-adjust-penalties="canScore && !isRunning"
+          :can-open-clock-adjust="isLive && matchOn && canScore"
+          :clock-adjustable="clockAdjustable"
+          :shotclock-adjustable="shotclock.state.value === 'SUSPENDED'"
           @bump="bumpScore"
           @remove-penalty="removePenalty"
           @adjust-penalty="adjustPenalty"
+          @adjust-clock="adjustClock"
+          @adjust-shotclock="shotclockAdjust"
         >
           <template #state>
             <ScoringStatusBadge
@@ -1359,6 +1405,7 @@ const toggleLock = async () => {
               :can-change="canScore"
               :score-level="scoreLevel"
               :shootout-enabled="scoringStore.config.shootoutEnabled"
+              :period-over="isLive && clockAtZero"
               @change="setPeriod"
             />
           </template>
@@ -1371,9 +1418,7 @@ const toggleLock = async () => {
           class="rounded-b-xl border border-t-0 border-header-200 dark:border-header-700 bg-header-50 dark:bg-header-900 px-3 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
         >
           <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.timer.group')">
-            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(-10)">−10</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(-1)">−1</UButton>
-            <!-- One start/pause toggle: only one of the two actions is ever meaningful -->
+            <!-- One start/pause toggle (fine adjust = click on the board digits) -->
             <UButton
               class="min-w-32 justify-center"
               :color="isRunning ? 'warning' : 'success'"
@@ -1381,8 +1426,6 @@ const toggleLock = async () => {
               :disabled="!canScore"
               @click="toggleClock"
             >{{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(1)">+1</UButton>
-            <UButton size="sm" variant="ghost" :disabled="!canScore || !clockAdjustable" :title="clockAdjustable ? '' : t('scoring.timer.adjust_locked')" @click="adjustClock(10)">+10</UButton>
             <UButton
               size="sm"
               icon="i-heroicons-arrow-uturn-left"
@@ -1403,7 +1446,6 @@ const toggleLock = async () => {
             :can-score="canScore"
             @start="shotclockStart"
             @stop="shotclockStop"
-            @adjust="shotclockAdjust"
             @test-sound="buzzer.test()"
           />
 
@@ -1667,10 +1709,24 @@ const toggleLock = async () => {
         :editing-uid="editingUid"
         :can-score="canEditFacts"
         :recent-count="isLive ? HISTORY_RECENT_COUNT : 0"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
         @edit="startEdit"
         @remove="removeEvent"
       />
       </template>
+
+      <!-- Leaving « Paramètres » with officials not saved -->
+      <AdminConfirmModal
+        :open="leaveSettingsOpen"
+        variant="warning"
+        :title="t('scoring.settings.officials_unsaved_title')"
+        :message="t('scoring.settings.officials_unsaved_message')"
+        :confirm-text="t('scoring.settings.officials_unsaved_leave')"
+        :cancel-text="t('scoring.settings.officials_unsaved_stay')"
+        @confirm="confirmLeaveSettings"
+        @close="leaveSettingsOpen = false"
+      />
 
       <!-- Closure (spec §7.6): score check, end time, comments, lock -->
       <ScoringCloseMatchModal

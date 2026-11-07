@@ -1,6 +1,7 @@
 /**
  * How the console and the scoreboard show their clocks (PAGE_SCORING.md §6.5). Pure
- * presentation — unlike utils/scoringRules there is no api2 mirror to keep in step.
+ * presentation. `formatGameClock` has a PHP twin, `ScoringRules::clockDisplay` (api2), used
+ * to journal the clock writes — change both together.
  */
 
 /** Below this remaining time, clocks switch to tenths (as scoreboards do for the end). */

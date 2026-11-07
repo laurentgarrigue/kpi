@@ -341,4 +341,28 @@ final class ScoringRulesTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         ScoringRules::shotclockTransition(ScoringRules::SHOTCLOCK_IDLE, 'pause');
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Temps affiché d'une horloge (journal des chronos, §6.4)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Le journal note le temps restant tel que la console l'affiche (`formatGameClock` côté
+     * app4) : deux « stop » successifs à des temps différents tracent une correction manuelle.
+     */
+    #[DataProvider('clockDisplayProvider')]
+    public function testClockDisplay(int $remainingMs, string $expected): void
+    {
+        self::assertSame($expected, ScoringRules::clockDisplay($remainingMs));
+    }
+
+    public static function clockDisplayProvider(): iterable
+    {
+        yield 'période pleine' => [600000, '10:00'];
+        yield 'secondes arrondies au-dessus' => [292100, '4:53'];
+        yield 'dixièmes sous 10 s' => [9950, '9.9'];
+        yield 'zéro' => [0, '0.0'];
+        yield 'négatif borné à zéro' => [-500, '0.0'];
+        yield 'shotclock' => [38000, '0:38'];
+    }
 }

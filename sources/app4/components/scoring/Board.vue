@@ -13,6 +13,9 @@ import type { TeamSide } from '~/types/scoring'
  * `clock` is null in post-match (no live clock): the centre then only carries the state line.
  * Running penalties sit under each team's score, as on the pitch scoreboard: the operator
  * watches one place for every countdown (game clock, shot clock, exclusions).
+ *
+ * Every countdown is corrected the same way: click on it → ScoringTimeAdjust popover (±10/±1 s
+ * around a live copy of the value). No ± keys in the deck any more.
  */
 defineProps<{
   teamA: string
@@ -32,15 +35,26 @@ defineProps<{
   /** Score-only mode: ±1 under each score, the board becomes the whole entry surface. */
   scoreOnly?: boolean
   canScore?: boolean
+  /** Game clock and shot clock open their fine adjust on click (live, match in progress). */
+  canOpenClockAdjust?: boolean
+  /** Game clock correctable now (stopped, unless the competition allows it running). */
+  clockAdjustable?: boolean
+  /** Shot clock correctable now (suspended: game clock stopped). */
+  shotclockAdjustable?: boolean
 }>()
 
 const emit = defineEmits<{
   bump: [team: TeamSide, delta: 1 | -1]
   'remove-penalty': [id: string]
   'adjust-penalty': [id: string, deltaSec: number]
+  'adjust-clock': [deltaSec: number]
+  'adjust-shotclock': [deltaSec: number]
 }>()
 
 const { t } = useI18n()
+
+/** The game clock also takes whole minutes (a period started late, a forgotten stop). */
+const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
 </script>
 
 <template>
@@ -74,11 +88,25 @@ const { t } = useI18n()
 
       <!-- Centre: game clock, then shot clock (or the inter-period break) -->
       <div class="flex flex-col items-center pb-1">
+        <!-- Size and colour on a wrapper: this component's scoped styles do not reach the
+             trigger rendered by ScoringTimeAdjust, which inherits them instead. No `bg-white…`
+             class on the triggers: admin.css forces dark text on those in light mode. -->
         <div
           v-if="clock !== null"
           class="scoring-digits board-clock"
           :class="clockRunning ? 'text-green-400' : 'text-red-500'"
-        >{{ clock }}</div>
+        >
+          <ScoringTimeAdjust
+            :display="clock"
+            :steps="CLOCK_STEPS"
+            :disabled="!canOpenClockAdjust"
+            :can-adjust="clockAdjustable"
+            :locked-hint="t('scoring.timer.adjust_locked')"
+            :label="t('scoring.timer.adjust')"
+            trigger-class="px-2 hover:bg-header-50/10"
+            @adjust="emit('adjust-clock', $event)"
+          >{{ clock }}</ScoringTimeAdjust>
+        </div>
         <!-- Post-match: no clock, the scores still need their separator -->
         <div v-else class="scoring-digits board-score text-white/40" aria-hidden="true">–</div>
         <div v-if="breakDisplay" class="mt-1 flex items-baseline gap-2 text-amber-400">
@@ -87,11 +115,16 @@ const { t } = useI18n()
         </div>
         <div v-else-if="shotclock !== undefined && shotclock !== null" class="mt-1 flex items-baseline gap-2">
           <span class="text-sm text-white/60">{{ t('scoring.shotclock.short') }}</span>
-          <span
-            class="scoring-digits text-4xl sm:text-5xl leading-none"
-            :class="shotclockState === 'RUNNING' ? 'text-amber-400'
-              : shotclockState === 'SUSPENDED' ? 'text-amber-400/70' : 'text-white/30'"
-          >{{ shotclock }}</span>
+          <ScoringTimeAdjust
+            :display="shotclock"
+            :disabled="!canOpenClockAdjust"
+            :can-adjust="shotclockAdjustable"
+            :locked-hint="t('scoring.shotclock.adjust_locked')"
+            :label="t('scoring.shotclock.adjust')"
+            :trigger-class="`scoring-digits text-4xl sm:text-5xl leading-none px-1 hover:bg-header-50/10 ${shotclockState === 'RUNNING' ? 'text-amber-400'
+              : shotclockState === 'SUSPENDED' ? 'text-amber-400/70' : 'text-white/30'}`"
+            @adjust="emit('adjust-shotclock', $event)"
+          >{{ shotclock }}</ScoringTimeAdjust>
         </div>
       </div>
 

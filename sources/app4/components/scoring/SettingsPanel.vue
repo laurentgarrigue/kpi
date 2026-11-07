@@ -28,6 +28,8 @@ const emit = defineEmits<{
   'save-officials': [officials: Record<string, string>]
   'load-match': [numberOrId: string]
   'load-next': []
+  /** Officials edited but not saved yet — the page warns before leaving the view. */
+  'officials-dirty': [dirty: boolean]
 }>()
 
 const { t } = useI18n()
@@ -66,6 +68,8 @@ const saveOfficials = () => {
   emit('save-officials', { ...officials.value })
   officialsDirty.value = false
 }
+
+watch(officialsDirty, dirty => emit('officials-dirty', dirty), { immediate: true })
 
 // ─── Load another match by short number or full id (spec §7.8) ───
 const gameLookup = ref('')
@@ -120,7 +124,7 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
         <UButton
           block
           size="sm"
-          variant="outline"
+          variant="soft"
           icon="i-heroicons-forward"
           @click="emit('load-next')"
         >{{ t('scoring.settings.load_next') }}</UButton>
@@ -135,13 +139,22 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
         <dl class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
           <dt class="text-header-600 dark:text-header-300">{{ t('scoring.settings.type') }}</dt>
           <dd>
-            <UBadge variant="soft" color="neutral">
+            <!-- Same icons as the games list (bars = ranking, arrows = elimination) -->
+            <UBadge
+              variant="soft"
+              :color="match.type === 'E' ? 'warning' : 'neutral'"
+              :icon="match.type === 'E' ? 'i-heroicons-arrows-right-left' : 'i-heroicons-bars-3'"
+            >
               {{ t('scoring.settings.type_' + (match.type === 'E' ? 'elimination' : 'ranking')) }}
             </UBadge>
           </dd>
           <dt class="text-header-600 dark:text-header-300">{{ t('scoring.settings.publication') }}</dt>
           <dd>
-            <UBadge variant="soft" :color="match.publication === 'O' ? 'success' : 'neutral'">
+            <UBadge
+              variant="soft"
+              :color="match.publication === 'O' ? 'success' : 'neutral'"
+              :icon="match.publication === 'O' ? 'i-heroicons-eye-solid' : 'i-heroicons-eye-slash'"
+            >
               {{ t('scoring.settings.publication_' + (match.publication === 'O' ? 'public' : 'private')) }}
             </UBadge>
           </dd>
@@ -214,7 +227,7 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
             <h2 class="text-xl truncate">{{ team.name }}</h2>
             <UButton
               size="xs"
-              variant="outline"
+              variant="soft"
               icon="i-heroicons-arrow-path"
               :disabled="!canManagePlayers"
               @click="emit('reload-players', team.code)"

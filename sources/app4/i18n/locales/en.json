@@ -2672,11 +2672,12 @@
       "reset": "Reset",
       "shotclock": "Shot clock",
       "group": "Game clock",
-      "adjust_locked": "Stop the clock to correct it"
+      "adjust_locked": "Stop the clock to correct it",
+      "adjust": "Correct the clock"
     },
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
-    "field": "Field",
+    "pitch": "Pitch",
     "history": "Timeline",
     "not_found": "Match not found",
     "roster_empty": "No player on the game sheet",
@@ -2740,7 +2741,9 @@
     "shotclock": {
       "title": "Shot clock",
       "stop": "Stop",
-      "short": "Shot"
+      "short": "Shot",
+      "adjust": "Correct the shot clock",
+      "adjust_locked": "Stop the game clock to correct the shot clock"
     },
     "break": {
       "title": "Break",
@@ -2817,7 +2820,11 @@
       "status_C": "Captain",
       "status_E": "Staff",
       "compo_loaded": "{team} roster loaded from the presence sheet",
-      "clear_official": "Clear the field"
+      "clear_official": "Clear the field",
+      "officials_unsaved_title": "Officials not saved",
+      "officials_unsaved_message": "The changes to the officials have not been saved. Leave the Settings without saving them?",
+      "officials_unsaved_leave": "Leave without saving",
+      "officials_unsaved_stay": "Stay and save"
     },
     "score_only": {
       "label": "Score only",
@@ -2864,8 +2871,10 @@
     "status_kickoff_hint": "Click to start the game",
     "period_confirm_action": "Go to {period}",
     "roster_goals": "{n} goal(s)",
-    "history_all": "Show all ({count})",
+    "history_more": "… show all ({count} more)",
     "history_recent": "Only the last {n}",
+    "history_newest_first": "Newest at the top — click to reverse",
+    "history_oldest_first": "Oldest at the top — click to reverse",
     "close": {
       "action": "Close the game…",
       "title": "Close the game",
