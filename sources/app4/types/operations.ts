@@ -29,12 +29,13 @@ export interface MercurePublishResult {
 // Message reçu via SSE, tel qu'affiché dans le journal de la page de test
 export interface MercureReceivedMessage {
   id: string
-  topic: string
+  // Champ SSE `event:` (ex. `clock`, `score` pour le scoring) ; null si non typé.
+  type: string | null
   receivedAt: string
   raw: string
   // Id Mercure réel de l'update, s'il en a un. Distinct de `id`, qui n'est
   // qu'une clé de rendu (générée quand le hub n'envoie pas d'id). C'est cette
-  // valeur qu'on rejoue via lastEventID pour tester la reprise après coupure.
+  // valeur qu'on renvoie en en-tête Last-Event-ID pour tester la reprise après coupure.
   eventId: string | null
   // Update reçu lors d'un rattrapage d'historique plutôt qu'en direct.
   replayed: boolean

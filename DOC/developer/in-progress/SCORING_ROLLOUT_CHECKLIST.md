@@ -79,7 +79,7 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
-| 8 | `make app4_test` | `Test Files 17 passed`, `Tests 203 passed` (dont `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-07* | ☐ |
+| 8 | `make app4_test` | `Test Files 18 passed`, `Tests 212 passed` (dont `sseStream`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-07 (après ajout de `sseStream`)* | ☐ |
 | 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
 | 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
 
@@ -165,16 +165,28 @@ make docker_dev_up                                       # l'env du worker porte
 docker logs -f ${APPLICATION_NAME}_event_cache_worker    # surveiller le drainage
 ```
 
+**Observer la diffusion** : banc **app4 → Opérations → Mercure**, champ **Topics** (un ou plusieurs
+topics réels, séparés par des espaces ; seule la *publication* du banc est confinée à `test/`). Chaque
+message affiche son **type** (`event:`) et son **id**. Solution de repli en ligne de commande (dev,
+abonnement anonyme autorisé) :
+
+```bash
+# tout le terrain ({type} = gabarit) ; ou plusieurs ?topic=…&topic=…
+curl -kN 'https://kpi.localhost/api2/.well-known/mercure?topic=/scoring/event/229/pitch/1/{type}'
+# reprise après coupure : EN-TÊTE Last-Event-ID (le paramètre ?lastEventID= est ignoré par le hub 1.13)
+curl -kN -H 'Last-Event-ID: urn:kpi:scoring:575' 'https://kpi.localhost/api2/.well-known/mercure?topic=/scoring/event/229/pitch/1/{type}'
+```
+
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
 | 2.0 | `docker inspect kpi_event_cache_worker --format '{{.Config.Cmd}}'` puis `docker stats --no-stream kpi_event_cache_worker` à quelques minutes d'écart | commande avec **`--no-debug`** ; mémoire stable (~70 Mo). Sans ce drapeau, le profilage Doctrine du mode debug accumule chaque requête et le worker meurt en `Allowed memory size … exhausted` (corrigé le 2026-11-07) | 2026-11-07 | ☑ |
 | 2.1 | Saisir, puis 🗄 `SELECT * FROM scoring_outbox ORDER BY id DESC LIMIT 5` | `published_at` renseigné en ~1 s | | ☑ |
-| 2.2 | Banc **app4 → Opérations → Mercure**, topic `/scoring/event/{e}/pitch/{p}/score`, puis saisir | chaque changement arrive en SSE, `id: urn:kpi:scoring:{n}`, `event:` = type du payload | | ☐ |
-| 2.3 | S'abonner aussi à `…/clock` et `…/fact` | seuls les topics concernés reçoivent | | ☐ |
-| 2.4 | **Coupure abonné** 30 s, réabonnement avec `Last-Event-ID` | le hub **rejoue** les messages manqués, dans l'ordre | | ☐ |
-| 2.5 | **Coupure hub** : `make api2_restart` pendant des saisies | écritures jamais bloquées ; l'outbox s'accumule puis se draine dans l'ordre. ⚠️ le rejeu `Last-Event-ID` ne survit **pas** au redémarrage du hub (transport bolt) : la console se recale par refetch | | ☐ |
-| 2.6 | **Arrêt worker** : `docker stop kpi_event_cache_worker`, saisir, redémarrer | rattrapage complet | | ☐ |
-| 2.7 | Sans **aucune** config Event Cache Manager active | le drainage fonctionne quand même | | ☐ |
+| 2.2 | Banc (ou `curl`), topic `/scoring/event/{e}/pitch/{p}/score`, puis saisir un but | chaque changement arrive, id `urn:kpi:scoring:{n}`, type `state` (le topic `…/score` porte le bloc statut/période/score ; `…/clock`, `…/shotclock`, `…/penalty` portent le type `clock`, `…/fact` le type `fact`) | | ☑ |
+| 2.3 | Topics `…/clock …/fact` (sans `…/score`), puis saisir un but et lancer le chrono | seuls les topics demandés reçoivent : messages `clock` et `fact`, aucun message `state` (topic `…/score` non demandé) | | ☑ |
+| 2.4 | **Coupure abonné** : noter le dernier id reçu, **Se déconnecter** (ou Ctrl+C sur `curl`), saisir 30 s, puis « Reprendre depuis un id » → **Se connecter** (ou `curl -H 'Last-Event-ID: …'`) | le hub **rejoue** les messages manqués, dans l'ordre, badgés « Rejoué » ; `curl -D -` montre l'en-tête `mercure-last-event-id`. ⚠️ avec `?lastEventID=` dans l'URL **rien** n'est rejoué (paramètre ignoré par le hub 1.13, constaté le 2026-11-07). Un id **absent de l'historique** (sorti des `size` derniers updates, ou fichier `mercure.db` recréé) ne rejoue **rien** : partir d'un id reçu pendant la session | | ☑ |
+| 2.5 | **Coupure hub** : `make api2_restart` pendant des saisies | écritures jamais bloquées ; l'outbox s'accumule puis se draine dans l'ordre ; un abonné qui reprend avec `Last-Event-ID` reçoit aussi ce qui a été publié avant le redémarrage (mesuré le 2026-11-07 — la note « ne survit pas au redémarrage » de juillet ne vaut plus) | | ☑ |
+| 2.6 | **Arrêt worker** : `docker stop kpi_event_cache_worker`, saisir, redémarrer | rattrapage complet | | ☑ |
+| 2.7 | Sans **aucune** config Event Cache Manager active | le drainage fonctionne quand même | | ☑ |
 | 2.8 | Après 1 h | les lignes publiées anciennes sont purgées | | ☐ |
 
 ### Lot 3 — Console Scoring

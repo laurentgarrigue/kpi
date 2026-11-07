@@ -856,14 +856,14 @@
         "disconnected": "Disconnected",
         "connecting": "Connecting…",
         "connected": "Connected",
-        "error": "Error — reconnecting automatically"
+        "error": "Error — reconnect"
       },
       "subscribe": "Subscribe",
       "topic": "Topic",
       "topic_hint": "The prefix is enforced by api2: this test page cannot publish to real topics.",
       "resume": "Resume from an id",
-      "resume_hint": "Replays updates published after this id. Disconnect, publish from another browser, then reconnect: the catch-up should deliver what was missed, without touching the network.",
-      "resume_placeholder": "urn:uuid:… (empty = no catch-up)",
+      "resume_hint": "Replays updates published after this id (sent as the Last-Event-ID header). Disconnect, publish or score at the console, then reconnect: the catch-up should deliver what was missed, without touching the network. \"earliest\" replays the whole history.",
+      "resume_placeholder": "urn:kpi:scoring:… or earliest (empty = no catch-up)",
       "use_last_id": "Last received",
       "last_id": "Last received id:",
       "connect": "Connect",
@@ -880,7 +880,11 @@
       "success_publish": "Update published (id: {id})",
       "error_publish": "Failed to publish to the hub",
       "error_config": "Could not read the hub configuration",
-      "replayed": "Replayed"
+      "replayed": "Replayed",
+      "topics": "Topics",
+      "topics_hint": "One or more space-separated topics: test topics (test/…) or real ones, e.g. /scoring/event/229/pitch/1/score, or /scoring/event/229/pitch/1/{'{'}type{'}'} for the whole pitch.",
+      "topics_placeholder": "test/ping /scoring/event/{'{'}e{'}'}/pitch/{'{'}p{'}'}/score",
+      "untyped": "(untyped)"
     }
   },
   "competitions": {

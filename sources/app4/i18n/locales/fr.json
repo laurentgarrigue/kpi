@@ -857,14 +857,14 @@
         "disconnected": "Déconnecté",
         "connecting": "Connexion…",
         "connected": "Connecté",
-        "error": "Erreur — reconnexion automatique"
+        "error": "Erreur — reconnectez-vous"
       },
       "subscribe": "S'abonner",
       "topic": "Topic",
       "topic_hint": "Le préfixe est imposé par api2 : la page de test ne peut pas publier sur les topics réels.",
       "resume": "Reprendre depuis un id",
-      "resume_hint": "Rejoue les updates publiés après cet id. Déconnectez-vous, publiez depuis un autre navigateur, puis reconnectez-vous : le rattrapage doit livrer ce qui a été manqué, sans toucher au réseau.",
-      "resume_placeholder": "urn:uuid:… (laisser vide = pas de rattrapage)",
+      "resume_hint": "Rejoue les updates publiés après cet id (envoyé en en-tête Last-Event-ID). Déconnectez-vous, publiez ou saisissez à la console, puis reconnectez-vous : le rattrapage doit livrer ce qui a été manqué, sans toucher au réseau. « earliest » rejoue tout l'historique.",
+      "resume_placeholder": "urn:kpi:scoring:… ou earliest (laisser vide = pas de rattrapage)",
       "use_last_id": "Dernier reçu",
       "last_id": "Dernier id reçu :",
       "connect": "Se connecter",
@@ -881,7 +881,11 @@
       "success_publish": "Update publié (id : {id})",
       "error_publish": "Échec de la publication sur le hub",
       "error_config": "Impossible de lire la configuration du hub",
-      "replayed": "Rejoué"
+      "replayed": "Rejoué",
+      "topics": "Topics",
+      "topics_hint": "Un ou plusieurs topics séparés par des espaces : topics de test (test/…) ou réels, ex. /scoring/event/229/pitch/1/score, ou /scoring/event/229/pitch/1/{'{'}type{'}'} pour tout le terrain.",
+      "topics_placeholder": "test/ping /scoring/event/{'{'}e{'}'}/pitch/{'{'}p{'}'}/score",
+      "untyped": "(non typé)"
     }
   },
   "competitions": {

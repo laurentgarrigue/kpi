@@ -664,9 +664,26 @@ D'où la directive `transport bolt { … }` ajoutée ci-dessus, qui écrit les u
 > mais rien n'est persisté. Constaté à l'implémentation (2026-07-17). Vérifier `/data/mercure.db`
 > plutôt que de se fier au code HTTP.
 
-### ⚠️ La persistance disque ne suffit pas à survivre à un redémarrage
+### ⚠️ Demander la reprise par l'en-tête `Last-Event-ID`, jamais par le paramètre `lastEventID`
 
-**Mesuré le 2026-07-17**, et contre-intuitif :
+**Mesuré le 2026-11-07 sur FrankenPHP 1.13.0** (hub `protocol_version_compatibility 8`) :
+
+| Demande de reprise | Résultat |
+|---|---|
+| En-tête **`Last-Event-ID: <id>`** (ou `earliest`) | ✅ rejoue ce qui suit `<id>` ; réponse avec l'en-tête `Mercure-Last-Event-Id` |
+| Paramètre d'URL **`?lastEventID=<id>`** | ❌ **ignoré** : aucun rejeu, le hub journalise `last_event_id: ""` |
+| En-tête, avec un **`docker restart kpi_api2`** entre la publication et la reprise | ✅ rejoué — le point de reprise **survit** au redémarrage |
+
+Le paramètre d'URL est pourtant prévu par le spec Mercure ; ce hub ne l'honore pas. Côté client,
+c'est sans conséquence pour `EventSource` : à **sa** reconnexion automatique il envoie l'en-tête de
+lui-même. En revanche, un outil qui demande la reprise à la main (banc de test, `curl`) doit poser
+l'en-tête — d'où le banc réécrit avec `fetch` (voir « Tester la reprise » ci-dessous).
+
+> Historique : le 2026-07-17 (FrankenPHP 1.12, reprise demandée par le **paramètre**), on avait
+> mesuré le tableau ci-dessous et conclu que la reprise ne survivait pas à un redémarrage. Cette
+> conclusion n'est **plus vraie** avec l'en-tête sur 1.13 ; le tableau est gardé pour mémoire.
+
+**Mesure du 2026-07-17 (FrankenPHP 1.12, paramètre `lastEventID`) — dépassée :**
 
 | Scénario | Rattrapage via `lastEventID` |
 |---|---|
@@ -678,10 +695,9 @@ toujours présents après le restart. C'est donc le **point de reprise** que le 
 pas la donnée. Autrement dit, `bolt` protège des micro-coupures **côté client**, mais **pas** d'un
 redémarrage **côté serveur**.
 
-> **Conséquence directe pour le scoring** : un `make api2_restart` en prod (obligatoire après chaque
-> déploiement, cf. §7.9) **coupe le rattrapage pour tous les clients connectés**. La resynchronisation
-> applicative à `onopen` n'est donc pas une ceinture optionnelle — c'est le **seul** mécanisme qui
-> couvre le redéploiement. Voir « Conséquence pour la refonte scoring » ci-dessous.
+> **Conséquence pour le scoring** : la resynchronisation applicative à `onopen` reste obligatoire
+> (historique borné par `size`, fichier bolt perdu si le volume l'est), mais un `make api2_restart`
+> ne coupe plus le rattrapage à lui seul. Voir « Conséquence pour la refonte scoring » ci-dessous.
 
 ### Le volume `/data`, et pourquoi il diffère par environnement
 
@@ -704,16 +720,27 @@ Les trois `compose.*.yaml` montent **`./mercure_data:/data`**. Le répertoire es
 > `MERCURE_JWT_SECRET` doit néanmoins être **régénéré par environnement** — non pour éviter un
 > conflit, mais parce qu'un secret partagé rendrait un JWT publisher de préprod valide en prod.
 
-### Tester la reprise : le `lastEventID` pilotable
+### Tester la reprise : le `Last-Event-ID` pilotable
 
 La reprise est normalement **invisible** : le navigateur mémorise le dernier id et renvoie
 `Last-Event-ID` tout seul à la reconnexion, sans qu'on puisse ni choisir le point de reprise, ni
 observer ce qui est demandé.
 
-Le hub accepte le même mécanisme via un **query param `lastEventID`** sur l'URL d'abonnement. Le banc
-de test ([MercureTab.vue](../../../sources/app4/components/operations/MercureTab.vue)) l'expose :
-chaque message affiche son id Mercure, un champ « Reprendre depuis un id » permet de le rejouer, et
-les updates issus d'un rattrapage portent un badge **« Rejoué »**.
+Le banc de test ([MercureTab.vue](../../../sources/app4/components/operations/MercureTab.vue)) lit le
+flux avec `fetch` (et [utils/sseStream.ts](../../../sources/app4/utils/sseStream.ts)) plutôt qu'avec
+`EventSource`, pour pouvoir poser l'en-tête `Last-Event-ID` lui-même (le paramètre d'URL est ignoré,
+voir plus haut) : chaque message affiche son id Mercure et son type `event:`, un champ « Reprendre
+depuis un id » (ou `earliest`) permet de le rejouer, et les updates issus d'un rattrapage portent un
+badge **« Rejoué »**. L'abonnement accepte un ou plusieurs topics **réels** (seule la publication
+reste confinée au préfixe `test/`). Pas de reconnexion automatique : quand le hub recycle
+l'abonnement, l'état repasse à « Déconnecté ».
+
+Équivalent en ligne de commande (dev, abonnement anonyme autorisé) :
+
+```bash
+curl -kN -H 'Last-Event-ID: urn:kpi:scoring:575' \
+  'https://kpi.localhost/api2/.well-known/mercure?topic=/scoring/event/229/pitch/1/{type}'
+```
 
 Protocole, **sans toucher au réseau** :
 
@@ -728,8 +755,7 @@ l'historique remonte réellement (donc où est la falaise de `size`), un id **in
 le hub réagit quand le point de reprise est introuvable.
 
 > ℹ️ Le rejeu démarre **strictement après** l'id fourni : l'update portant cet id n'est pas
-> renvoyé. Un id introuvable ne rejoue **rien** (plutôt que tout) — c'est aussi ce qu'on observe
-> après un redémarrage du conteneur (voir plus haut).
+> renvoyé. Un id introuvable ne rejoue **rien** (plutôt que tout).
 
 > ⚠️ **Ce test valide le hub, pas le navigateur.** Il ne prouve pas que l'`EventSource` renvoie
 > correctement `Last-Event-ID` de lui-même, ni qu'il se reconnecte avec le bon backoff. Pour ça, il
@@ -744,8 +770,9 @@ le hub réagit quand le point de reprise est introuvable.
 Le rattrapage Mercure est **insuffisant à lui seul**, pour deux raisons cumulatives :
 
 1. **L'historique est borné** — au-delà de `size` updates, le trou est silencieux.
-2. **Un redémarrage d'api2 annule le rattrapage** (mesuré, voir plus haut) — or c'est un geste de
-   déploiement **routinier**, pas un incident.
+2. **Le fichier bolt peut disparaître** (volume recréé, migration de serveur) — et la mesure du
+   2026-07-17 sur 1.12 montrait une perte du rattrapage au redémarrage : on ne parie pas sur la
+   version du hub.
 
 Pour une feuille de marque, prévoir donc la ceinture **et** les bretelles : Mercure pour le temps
 réel, plus un `GET` de l'état complet du match **à chaque `onopen`**. La reconnexion redemande la
@@ -989,8 +1016,9 @@ Avant bascule, vérifier :
     **aucune reprise après coupure n'est possible**.
 11. **Reprise après coupure** — via le banc de test (§7.7ter) : se déconnecter, publier, se
     reconnecter avec « Reprendre depuis un id ». Les messages manqués doivent arriver badgés
-    « Rejoué ». ⚠️ Ne pas faire de `make api2_restart` entre les deux : le rattrapage ne survit
-    **pas** au redémarrage (comportement mesuré et attendu, cf. §7.7ter).
+    « Rejoué ». Le banc envoie l'en-tête `Last-Event-ID` ; le paramètre d'URL `lastEventID` est
+    ignoré par le hub 1.13 (cf. §7.7ter). Le rattrapage survit à un `make api2_restart` (mesuré le
+    2026-11-07).
 10. **`event-cache-worker` intact** — `docker logs ${APPLICATION_NAME}_event_cache_worker` continue
     d'émettre ses passes, et `kp_event_worker_config.last_execution` avance. Le démon ne doit être
     affecté d'aucune manière.
