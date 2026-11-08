@@ -7,7 +7,9 @@ import type { ScoringEventCode } from '~/types/scoring'
  *
  * Clock keys are the same in every language. Fact keys follow the interface language
  * (initial of the fact), always rebindable. No digit is ever a fact key: once a fact is
- * armed, digits type the player's number.
+ * armed, digits type the player's number. The shot clock keys (`+` 60 s, `-` 40 s, `*` stop)
+ * stay off `Entrée`, the digits and `.`, which validate a fact and type the player's number
+ * (decision 2026-11-08). The shot clock is adjusted by clicking its countdown, never by key.
  */
 
 export type ShortcutAction =
@@ -15,8 +17,6 @@ export type ShortcutAction =
   | 'shotclockStart60'
   | 'shotclockStart40'
   | 'shotclockStop'
-  | 'shotclockPlus'
-  | 'shotclockMinus'
   | 'factGoal'
   | 'factGreen'
   | 'factYellow'
@@ -37,8 +37,6 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'shotclockStart60',
   'shotclockStart40',
   'shotclockStop',
-  'shotclockPlus',
-  'shotclockMinus',
   'factGoal',
   'factGreen',
   'factYellow',
@@ -51,11 +49,9 @@ type Bindings = Record<ShortcutAction, string>
 /** KeyboardEvent.key values — ' ' is the space bar. */
 const CLOCK_KEYS = {
   gameClockToggle: ' ',
-  shotclockStart60: 'Enter',
-  shotclockStart40: '.',
-  shotclockStop: '0',
-  shotclockPlus: '+',
-  shotclockMinus: '-'
+  shotclockStart60: '+',
+  shotclockStart40: '-',
+  shotclockStop: '*'
 } as const
 
 const FACT_KEYS: Record<string, Pick<Bindings, 'factGoal' | 'factGreen' | 'factYellow' | 'factRed' | 'factBlack'>> = {
@@ -65,6 +61,9 @@ const FACT_KEYS: Record<string, Pick<Bindings, 'factGoal' | 'factGreen' | 'factY
   en: { factGoal: 'g', factGreen: 'e', factYellow: 'y', factRed: 'r', factBlack: 'k' }
 }
 const DEFAULT_LOCALE = 'fr'
+
+/** Languages offering a set of default keys (one "defaults" link each in the settings). */
+export const SHORTCUT_LOCALES = Object.keys(FACT_KEYS)
 
 /** Default bindings for an interface language (French when the language is unknown). */
 export function shortcutDefaults(locale: string): Bindings {

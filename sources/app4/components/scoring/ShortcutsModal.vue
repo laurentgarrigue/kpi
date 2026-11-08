@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { SHORTCUT_ACTIONS, shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
+import { SHORTCUT_ACTIONS, SHORTCUT_LOCALES, shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
 
 /**
  * Keyboard shortcuts settings (spec §6.5 — per-device preference, decision §0.9).
  * Click a row's "change" button then press the desired key; one key = one action
  * (assigning a key steals it from any other action). Same hand-rolled modal pattern
- * as admin/ConfirmModal.vue.
+ * as admin/ConfirmModal.vue. One "defaults" link per language (FR, EN), whatever the
+ * interface language.
  */
 const props = defineProps<{
   open: boolean
@@ -15,7 +16,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   set: [action: ShortcutAction, key: string]
-  reset: []
+  reset: [locale: string]
 }>()
 
 const { t } = useI18n()
@@ -85,9 +86,19 @@ onUnmounted(() => {
         </div>
 
         <div class="flex justify-between gap-2 p-4 pt-3 border-t border-header-200 dark:border-header-800 bg-header-50 dark:bg-header-950 rounded-b-lg">
-          <UButton size="xs" variant="ghost" @click="emit('reset')">
-            {{ t('scoring.shortcuts.reset') }}
-          </UButton>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-header-600 dark:text-header-300">{{ t('scoring.shortcuts.reset') }}</span>
+            <UButton
+              v-for="loc in SHORTCUT_LOCALES"
+              :key="loc"
+              size="xs"
+              variant="ghost"
+              :aria-label="t('scoring.shortcuts.reset') + ' ' + loc.toUpperCase()"
+              @click="emit('reset', loc)"
+            >
+              {{ loc.toUpperCase() }}
+            </UButton>
+          </div>
           <UButton size="xs" @click="emit('close')">
             {{ t('common.close') }}
           </UButton>

@@ -589,9 +589,12 @@ Trois états en tout : **arrêté** (`--`), **en décompte**, **suspendu par le 
 | Action | Touche par défaut |
 |---|---|
 | Chrono principal : départ / arrêt | `Espace` |
-| Shotclock : **départ/reset 60 s** | `Entrée` |
-| Shotclock : **départ/reset 40 s** | `.` (pavé numérique) — proposé, à valider |
-| Shotclock : **arrêt** (retour `--`) | `0` |
+| Shotclock : **départ/reset 60 s** | `+` |
+| Shotclock : **départ/reset 40 s** | `-` |
+| Shotclock : **arrêt** (retour `--`) | `*` |
+
+> Revu le 2026-11-08 (spec PAGE_SCORING §0.13) : `Entrée` / `.` / `0` abandonnés, ils servent à la
+> saisie des faits et du n° du joueur ; plus de touche ±1 s pour le shotclock (clic sur le décompte).
 
 ### 4.12 Les durées viennent de `ScoringConfig`, puis de la compétition
 

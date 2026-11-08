@@ -2786,8 +2786,6 @@
       "shotclockStart60": "Chrono de tir : départ/reset 60 s",
       "shotclockStart40": "Chrono de tir : départ/reset 40 s",
       "shotclockStop": "Chrono de tir : arrêt (--)",
-      "shotclockPlus": "Chrono de tir : +1 s",
-      "shotclockMinus": "Chrono de tir : −1 s",
       "factGoal": "Fait de jeu : but",
       "factGreen": "Fait de jeu : carton vert",
       "factYellow": "Fait de jeu : carton jaune",

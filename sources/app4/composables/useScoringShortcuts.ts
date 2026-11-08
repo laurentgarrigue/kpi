@@ -2,9 +2,10 @@
  * Configurable keyboard shortcuts of the scoring console (spec §6.5, decisions §0.8/§0.9).
  *
  * The bindings are a per-device/user preference, persisted in localStorage. Defaults
- * (utils/scoringShortcuts): Espace = game clock start/stop · Entrée = shotclock start/reset
- * 60 s · `.` = start/reset 40 s · `0` = shotclock stop (back to "--") · `+`/`−` = shotclock
- * ±1 s · one letter per fact, after the interface language (FR B V J R N, EN G E Y R K).
+ * (utils/scoringShortcuts): Espace = game clock start/stop · `+` = shotclock start/reset
+ * 60 s · `-` = start/reset 40 s · `*` = shotclock stop (back to "--") · one letter per fact,
+ * after the interface language (FR B V J R N, EN G E Y R K). The defaults of either language
+ * can be restored whatever the interface language.
  *
  * Shortcuts are neutralized while the focus is in an editable field, and can be globally
  * disabled through the `enabled` ref (post-match mode, capture modal open…).
@@ -12,7 +13,9 @@
 
 import { SHORTCUT_ACTIONS, mergeStoredBindings, shortcutDefaults, type ShortcutAction } from '~/utils/scoringShortcuts'
 
-const STORAGE_KEY = 'kpi.scoring.shortcuts'
+// v2 (2026-11-08): the shot clock left `Entrée` / `.` / `0`; bindings saved before kept
+// `Entrée` on the 60 s start, so they are dropped rather than merged.
+const STORAGE_KEY = 'kpi.scoring.shortcuts.v2'
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false
@@ -49,8 +52,9 @@ export function useScoringShortcuts(
     persist()
   }
 
-  const resetDefaults = () => {
-    bindings.value = shortcutDefaults(locale())
+  /** Restore the defaults of a language (the interface language when omitted). */
+  const resetDefaults = (defaultsLocale: string = locale()) => {
+    bindings.value = shortcutDefaults(defaultsLocale)
     persist()
   }
 

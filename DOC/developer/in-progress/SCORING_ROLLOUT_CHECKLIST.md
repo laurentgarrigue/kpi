@@ -79,7 +79,7 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
-| 8 | `make app4_test` | `Test Files 18 passed`, `Tests 212 passed` (dont `sseStream`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-07 (après ajout de `sseStream`)* | ☐ |
+| 8 | `make app4_test` | `Test Files 18 passed`, `Tests 215 passed` (dont `sseStream`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-08 (touches du chrono de tir revues)* | ☐ |
 | 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
 | 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
 
@@ -199,17 +199,17 @@ make app4_dev                  # si le serveur dev n'est pas déjà lancé
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
-| 3.1 | Match **type E** à égalité, « Période suivante » depuis M2, puis P1, P2… | P1, P2, **P3, P4… sans plafond** tant que le score est à égalité | | ☐ |
-| 3.2 | Match **type E** avec un vainqueur à la fin de M2 | pas de prolongation proposée | | ☐ |
-| 3.3 | Match **type C** | M1 → M2 seulement ; jamais de prolongation ; TB absent | | ☐ |
-| 3.4 | Passer en P1 | le chrono se re-prime à **5 min** | | ☐ |
-| 3.4a | Modale de changement de période | le bouton de confirmation dit « **Passer en {période}** » (et non « Enregistrer ») | | ☐ |
-| 3.5 | **But en or** en P{n} d'un match E | modale « But en or … Clore le match ? » ; confirmer → ouvre le **panneau de clôture** (3.60) | | ☐ |
-| 3.6 | **Progression des cartons** : jaune puis jaune ; jaune puis vert ; rouge puis n'importe quoi ; noir en premier | alertes « carton identique/inférieur », « joueur déjà exclu » ; premier jaune/rouge sans alerte ; noir à tout moment ; bouton « **Enregistrer quand même** » force la saisie | | ☐ |
-| 3.7 | Carton `D` | « **Carton noir (exclusion définitive)** », bouton neutre, token **⬛** | | ☐ |
-| 3.8 | Zone de saisie d'un carton | motif pré-sélectionné « **Autre/Non précisé** » ; les buts n'ont pas de motif | | ☐ |
-| 3.9 | Sélecteur de période (édition post-match) | M1/M2 + prolongations utilisées +1 ; TB hérité sélectionnable | | ☐ |
-| 3.10 | Édition d'un fait `P3` d'un match ancien | s'affiche et s'édite normalement | | ☐ |
+| 3.1 | Match **type E** à égalité, « Période suivante » depuis M2, puis P1, P2… | P1, P2, **P3, P4… sans plafond** tant que le score est à égalité | | ☑ |
+| 3.2 | Match **type E** avec un vainqueur à la fin de M2 | pas de prolongation proposée | | ☑ |
+| 3.3 | Match **type C** | M1 → M2 seulement ; jamais de prolongation ; TB absent | | ☑ |
+| 3.4 | Passer en P1 | le chrono se re-prime à **5 min** | | ☑ |
+| 3.4a | Modale de changement de période | le bouton de confirmation dit « **Passer en {période}** » (et non « Enregistrer ») | | ☑ |
+| 3.5 | **But en or** en P{n} d'un match E | modale « But en or … Clore le match ? » ; confirmer → ouvre le **panneau de clôture** (3.60) | | ☑ |
+| 3.6 | **Progression des cartons** : jaune puis jaune ; jaune puis vert ; rouge puis n'importe quoi ; noir en premier | alertes « carton identique/inférieur », « joueur déjà exclu » ; premier jaune/rouge sans alerte ; noir à tout moment ; bouton « **Enregistrer quand même** » force la saisie | | ☑ |
+| 3.7 | Carton `D` | « **Carton noir (exclusion définitive)** », bouton neutre, token **⬛** | | ☑ |
+| 3.8 | Zone de saisie d'un carton | motif pré-sélectionné « **Autre/Non précisé** » ; les buts n'ont pas de motif | | ☑ |
+| 3.9 | Sélecteur de période (édition post-match) | M1/M2 + prolongations utilisées +1 ; TB hérité sélectionnable | | ☑ |
+| 3.10 | Édition d'un fait `P3` d'un match ancien | s'affiche et s'édite normalement | | ☑ |
 
 #### Enchaînement de saisie
 
@@ -218,15 +218,15 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
-| 3.10a | **But** puis joueur, **ou** joueur puis **But** (ordre libre à la souris) | rien n'est enregistré ; le fait armé et le joueur s'affichent en tête du panneau, le focus va sur le temps quand les deux sont choisis, bouton **Enregistrer : But** | | ☐ |
-| 3.10b | Corriger le temps puis **`Entrée`** | fait enregistré **avec le temps corrigé** | | ☐ |
-| 3.10c | Joueur → **Carton** → changer le **motif** → `Entrée` | le motif choisi est enregistré | | ☐ |
-| 3.10d | **`Échap`** (ou **Désélectionner**) pendant une saisie | rien n'est enregistré ; fait, joueur et motif sont levés | | ☐ |
-| 3.10e | `Entrée` dans le champ temps | valide le fait — **ne déclenche pas** le shotclock 60 s | | ☐ |
-| 3.10f | Clic sur un fait de l'historique | ligne surlignée, joueur re-sélectionné, focus sur le temps, bouton **Enregistrer** | | ☐ |
-| 3.10g | Modifier le temps puis **Enregistrer** | mise à jour **sur place** (pas de doublon) | | ☐ |
-| 3.10h | Temps **en chiffres seuls** : `750`, `0800`, `139`, `12` | → `07:50`, `08:00`, `01:39`, `00:12` | | ☐ |
-| 3.10i | `09:09` ou `0170` | `09:09` inchangé ; `0170` → `02:10` | | ☐ |
+| 3.10a | **But** puis joueur, **ou** joueur puis **But** (ordre libre à la souris) | rien n'est enregistré ; le fait armé et le joueur s'affichent en tête du panneau, le focus va sur le temps quand les deux sont choisis, bouton **Enregistrer : But** | | ☑ |
+| 3.10b | Corriger le temps puis **`Entrée`** | fait enregistré **avec le temps corrigé** | | ☑ |
+| 3.10c | Joueur → **Carton** → changer le **motif** → `Entrée` | le motif choisi est enregistré | | ☑ |
+| 3.10d | **`Échap`** (ou **Désélectionner**) pendant une saisie | rien n'est enregistré ; fait, joueur et motif sont levés | | ☑ |
+| 3.10e | `Entrée` dans le champ temps, puis `Entrée` **hors champ** | valide le fait — **ne déclenche pas** le shotclock ; hors champ, `Entrée` ne fait rien sur les chronos | | ☑ |
+| 3.10f | Clic sur un fait de l'historique | ligne surlignée, joueur re-sélectionné, focus sur le temps, bouton **Enregistrer** | | ☑ |
+| 3.10g | Modifier le temps puis **Enregistrer** | mise à jour **sur place** (pas de doublon) | | ☑ |
+| 3.10h | Temps **en chiffres seuls** : `750`, `0800`, `139`, `12` | → `07:50`, `08:00`, `01:39`, `00:12` | | ☑ |
+| 3.10i | `09:09` ou `0170` | `09:09` inchangé ; `0170` → `02:10` | | ☑ |
 
 #### Chrono, shotclock, pauses, raccourcis
 
@@ -234,18 +234,18 @@ Un clic sur un bouton de fait **n'enregistre rien** : il *arme* le fait, place l
 |---|---|---|---|---|
 | 3.11 | Démarrer le **chrono principal** | le shotclock reste à `--` | | ☐ |
 | 3.11a | **60 s / 40 s chrono principal arrêté** | le shotclock charge la valeur mais ne défile pas (ambre) | | ☐ |
-| 3.12 | **60 s** (ou `Entrée`) puis **40 s** (ou `.`) | charge 60 et décompte ; re-appuyer recharge | | ☐ |
+| 3.12 | **60 s** (ou `+`) puis **40 s** (ou `-`) | charge 60 et décompte ; re-appuyer recharge | | ☐ |
 | 3.13 | **Arrêter le chrono** pendant que le shotclock tourne | le shotclock se **suspend** ; relancer → il repart | | ☐ |
-| 3.14 | **Arrêt** (ou `0`) | retour à `--` | | ☐ |
+| 3.14 | **Arrêt** (ou `*`) | retour à `--` | | ☐ |
 | 3.15 | Shotclock à **0** | buzzer ; reste à 0 | | ☐ |
-| 3.16 | Shotclock **±1 s** | actifs uniquement chrono arrêté | | ☐ |
+| 3.16 | Clic sur le **décompte du shotclock** (popover ±1/±10) | actif uniquement chrono arrêté ; **aucune touche** ne règle le shotclock | | ☐ |
 | 3.17 | 🗄 `SELECT * FROM scoring_live_clock WHERE kind='SHOTCLOCK'` puis recharger | ligne persistée ; même état après rechargement | | ☐ |
 | 3.18 | Chrono principal à **0** en fin de M1 | buzzer + pause **3 min** (1 min entre prolongations) ; buzzer en fin de pause ; « Terminer la pause » l'interrompt | | ☐ |
 | 3.18a | Pendant la pause, **changer de période** | le décompte de pause **continue** ; le shotclock repasse à `--` | | ☐ |
 | 3.18b | Pendant la pause, **lancer le chrono** | la pause disparaît ; ligne `BREAK` supprimée | | ☐ |
 | 3.18c | **−10 / −1 / +1 / +10** du chrono principal, **chrono arrêté**, match **En cours** | dans le sens de l'**affichage** : `+1` ajoute une seconde au temps restant ; bornés à `00:00.0` et à la durée de la période ; une **rafale** de clics rapides compte chaque clic | | ☐ |
-| 3.19 | **Raccourcis** : `Espace`, `Entrée` / `.` / `0` / `+` / `−` | agissent partout **sauf** dans un champ de saisie ; inactifs en post-match | | ☐ |
-| 3.20 | Modale **Raccourcis clavier** : réassigner une touche déjà utilisée | l'autre action perd sa touche ; persiste au rechargement ; « Valeurs par défaut » restaure. La liste contient les **5 faits de jeu** (FR `B V J R N`, EN `G E Y R K`) | | ☐ |
+| 3.19 | **Raccourcis** : `Espace`, `+` / `-` / `*` (pavé numérique et clavier principal) | agissent partout **sauf** dans un champ de saisie ; inactifs en post-match | | ☐ |
+| 3.20 | Modale **Raccourcis clavier** : réassigner une touche déjà utilisée | l'autre action perd sa touche ; persiste au rechargement ; deux liens **« Valeurs par défaut » FR et EN**, **quelle que soit la langue** de l'interface : FR restaure `B V J R N`, EN `G E Y R K` (chronos identiques). La liste ne contient plus « Chrono de tir : ±1 s » | | ☐ |
 | 3.21 | Temps de jeu restant **inférieur** au shotclock | le shotclock affiche `--` | | ☐ |
 
 #### Pénalités
@@ -355,7 +355,7 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.12.
 | 3.76 | Champ d'un **officiel** rempli : croix à droite | le champ se vide, le **focus** y revient et la liste des suggestions (équipe d'arbitrage) s'ouvre ; champ vide ou match verrouillé : pas de croix | | ☐ |
 | 3.77 | Match **En attente** avec des points à vérifier : flèche **Réduire** du bandeau | il devient une petite pastille ambre avec le nombre ; un clic dessus le **ré-affiche** (le bandeau n'existe que pour un match En attente) | | ☐ |
 | 3.78 | Tableau de score : ordre de la ligne d'état | **statut + Clore/Rouvrir** d'abord, **période** ensuite | | ☐ |
-| 3.79 | Match **En attente** (ou **Terminé**) en direct | **Démarrer**, ±1/±10, remise à zéro, **60 s / 40 s / Arrêt** et sélecteur de **période** sont **masqués** (les chiffres du chrono restent sur le tableau de score) ; raccourcis `Espace`, `Entrée`, `.`… sans effet ; tout réapparaît au coup d'envoi | | ☐ |
+| 3.79 | Match **En attente** (ou **Terminé**) en direct | **Démarrer**, ±1/±10, remise à zéro, **60 s / 40 s / Arrêt** et sélecteur de **période** sont **masqués** (les chiffres du chrono restent sur le tableau de score) ; raccourcis `Espace`, `+`, `-`, `*` sans effet ; tout réapparaît au coup d'envoi | | ☐ |
 | 3.79a | ⚠️ après `make api2_restart` : match **En cours** à la console, puis **Matchs** → passer son statut à **En attente** ; revenir à la console | la console affiche **En attente** (en direct si l'abonnement Mercure est actif, sinon au rechargement) ; 🗄 `scoring_live_state.statut = 'ATT'` ; le bandeau « points à vérifier » réapparaît s'il y en a | | ☐ |
 | 3.79b | Depuis **Matchs**, passer à **Terminé** un match saisi à la console | `kp_match_detail` reconstruit depuis la console (consolidation), comme une clôture à la console | | ☐ |
 | 3.79c | Chrono principal **arrêté** ou **à zéro** | chiffres **rouges** ; **verts** quand il tourne (les affichages plein écran ne changent pas) | | ☐ |

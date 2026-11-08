@@ -2774,8 +2774,6 @@
       "shotclockStart60": "Shot clock: start/reset 60 s",
       "shotclockStart40": "Shot clock: start/reset 40 s",
       "shotclockStop": "Shot clock: stop (--)",
-      "shotclockPlus": "Shot clock: +1 s",
-      "shotclockMinus": "Shot clock: −1 s",
       "factGoal": "Game fact: goal",
       "factGreen": "Game fact: green card",
       "factYellow": "Game fact: yellow card",

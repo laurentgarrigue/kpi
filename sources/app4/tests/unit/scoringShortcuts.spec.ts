@@ -27,6 +27,25 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
     expect(en.shotclockStop).toBe(fr.shotclockStop)
   })
 
+  it('pilote le chrono de tir par + (60 s), - (40 s) et * (arrêt)', () => {
+    const d = shortcutDefaults('fr')
+    expect([d.shotclockStart60, d.shotclockStart40, d.shotclockStop]).toEqual(['+', '-', '*'])
+  })
+
+  it('ne lie jamais Entrée, un chiffre ou le point au chrono de tir (saisie des faits et du n° du joueur)', () => {
+    for (const locale of ['fr', 'en']) {
+      const d = shortcutDefaults(locale)
+      for (const k of [d.gameClockToggle, d.shotclockStart60, d.shotclockStart40, d.shotclockStop]) {
+        expect(k).not.toMatch(/^(Enter|\d|\.)$/)
+      }
+    }
+  })
+
+  it('n’a plus de raccourci de réglage ±1 s du chrono de tir (réglage au clic sur le décompte)', () => {
+    expect(SHORTCUT_ACTIONS).not.toContain('shotclockPlus')
+    expect(SHORTCUT_ACTIONS).not.toContain('shotclockMinus')
+  })
+
   it('n’attribue jamais la même touche à deux actions', () => {
     for (const locale of ['fr', 'en']) {
       const keys = Object.values(shortcutDefaults(locale)).filter(k => k !== '')
@@ -49,8 +68,8 @@ describe('mergeStoredBindings — préférences enregistrées sur le poste', () 
     expect(merged.factGoal).toBe('g')
   })
 
-  it('ignore les actions qui n’existent plus (ancien raccourci « joueur par numéro »)', () => {
-    const merged = mergeStoredBindings({ playerByNumber: 'n' }, 'fr')
+  it('ignore les actions qui n’existent plus (« joueur par numéro », chrono de tir ±1 s)', () => {
+    const merged = mergeStoredBindings({ playerByNumber: 'n', shotclockPlus: '+', shotclockMinus: '-' }, 'fr')
     expect(Object.keys(merged).sort()).toEqual([...SHORTCUT_ACTIONS].sort())
   })
 

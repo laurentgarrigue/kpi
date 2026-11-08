@@ -532,8 +532,8 @@ const toolItems = computed(() => [
     : []),
   { label: t('scoring.shortcuts.title'), icon: 'i-heroicons-command-line', onSelect: () => { shortcutsOpen.value = true } }
 ])
-// Off while a dialog or the card-reason list owns the keyboard (`Entrée` there picks a
-// reason — it must not also start the shot clock). Clock keys: live mode, match in
+// Off while a dialog or the card-reason list owns the keyboard (keys there pick a reason
+// — they must not also drive the clocks). Clock keys: live mode, match in
 // progress only. Fact keys: Déroulement view with the detailed entry (live and post-match).
 const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value
   && !closeOpen.value && !reopenOpen.value && !reasonOpen.value)
@@ -550,8 +550,6 @@ const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
     }
   }),
   shotclockStop: clockKey(shotclockStop),
-  shotclockPlus: clockKey(() => shotclockAdjust(1)),
-  shotclockMinus: clockKey(() => shotclockAdjust(-1)),
   factGoal: factKey('B'),
   factGreen: factKey('V'),
   factYellow: factKey('J'),
