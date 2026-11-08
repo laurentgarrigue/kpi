@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { comparePitches, normalizeTime, pitchConflictIds, pitchDays, type PitchGame } from '../../utils/pitchGrid'
+import { comparePitches, isBreakGame, normalizeTime, pitchConflictIds, pitchDays, type PitchGame } from '../../utils/pitchGrid'
 
 const game = (id: number, dateMatch: string | null, heureMatch: string | null, terrain: string | null): PitchGame =>
   ({ id, dateMatch, heureMatch, terrain })
@@ -69,5 +69,12 @@ describe('pitch conflicts', () => {
 
   it('honours a custom interval', () => {
     expect(pitchConflictIds([game(1, '2026-06-01', '09:00', '1'), game(2, '2026-06-01', '09:40', '1')], 45)).toEqual(new Set([1, 2]))
+  })
+
+  it('GAM-PIT-06: Pause and Break phases are virtual placeholder games', () => {
+    expect(isBreakGame({ phase: 'Pause' })).toBe(true)
+    expect(isBreakGame({ phase: 'Break' })).toBe(true)
+    expect(isBreakGame({ phase: 'Poule A' })).toBe(false)
+    expect(isBreakGame({ phase: null })).toBe(false)
   })
 })

@@ -252,6 +252,7 @@ Bouton **Terrains** (icône `view-columns`) à côté du bouton 🛡️ de contr
 | GAM-PIT-02 | La grille affiche exactement les matchs de la liste : **tous les filtres actifs** s'appliquent (contexte, tour, journée, date, terrain, tri, non verrouillés, entité sélectionnée dans la barre de planification). |
 | GAM-PIT-03 | Chaque match : compétition + phase, n°, verrou, équipes (placeholder bracket en orange italique), score s'il existe. **Si cochés dans « Affichage »**, les arbitres 1 et 2 puis le shotclock sont affichés sous les noms d'équipes. |
 | GAM-PIT-04 | Un créneau est **encadré en rouge** quand il pose problème : plusieurs matchs au même créneau sur le même terrain, ou deux matchs consécutifs du même terrain (même date) espacés de **moins de 30 min** (intervalle terrain réglable dans la barre de planification). La détection porte sur les matchs affichés et ne dépend pas de l'ouverture de la barre. |
+| GAM-PIT-06 | Les matchs des phases virtuelles `Pause` / `Break` ne sont que des placeholders de créneau : la case affiche uniquement « Pause » / « Break » (ni n°, ni catégorie, ni équipes, ni arbitres, ni score), sur fond gris neutre. |
 | GAM-PIT-05 | Un clic sur un match ouvre son formulaire d'édition quand le tableau le permettrait (profil ≤ 6, non verrouillé, autorisé) ; sinon rien. |
 
 Implémentation : `components/games/PitchView.vue` + `utils/pitchGrid.ts` (`pitchDays`, `pitchConflictIds`), tests `tests/unit/pitchGrid.spec.ts`.

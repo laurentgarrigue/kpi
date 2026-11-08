@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { gameDisplayStatus } from '~/utils/gameStatus'
-import { pitchDays } from '~/utils/pitchGrid'
+import { isBreakGame, pitchDays } from '~/utils/pitchGrid'
 import type { Game } from '~/types/games'
 
 // « Pitches » view of the games page (PAGE_MATCHS.md § 2.7): one time × pitch grid per date,
@@ -81,9 +81,17 @@ const refereeLines = (game: Game) => {
                   :data-problem="isProblemSlot(row.cells[pitch]) || undefined"
                   :title="isProblemSlot(row.cells[pitch]) ? t('games.pitch_view_problem', { minutes: minInterval }) : undefined"
                 >
+                  <template v-for="g in row.cells[pitch]" :key="g.id">
                   <button
-                    v-for="g in row.cells[pitch]"
-                    :key="g.id"
+                    v-if="isBreakGame(g)"
+                    type="button"
+                    class="block w-full rounded border border-header-200 bg-header-100 p-1.5 text-center text-xs italic text-header-600 hover:bg-header-200 dark:border-header-700 dark:bg-header-800 dark:text-header-300 dark:hover:bg-header-700"
+                    :data-game="g.id"
+                    data-break
+                    @click="emit('open', g)"
+                  >{{ g.phase }}</button>
+                  <button
+                    v-else
                     type="button"
                     class="block w-full text-left rounded border p-1.5 hover:bg-header-50 dark:hover:bg-header-800"
                     :class="[
@@ -136,6 +144,7 @@ const refereeLines = (game: Game) => {
                       </span>
                     </span>
                   </button>
+                  </template>
                 </div>
               </td>
             </tr>

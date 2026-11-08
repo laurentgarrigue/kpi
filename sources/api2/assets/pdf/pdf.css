@@ -260,6 +260,7 @@ table.pdf-table {
 /* Pitch grid (games-grid): equal columns, games on several lines. */
 .pdf-grid { table-layout: fixed; }
 .pdf-grid .pdf-grid__time { width: 14mm; font-weight: 700; }
+.pdf-grid .pdf-grid__break { background: var(--pdf-line); color: var(--pdf-muted); font-style: italic; text-align: center; }
 .pdf-grid .pdf-grid__cell { white-space: pre-line; font-size: 8.5pt; border-left: 0.2mm solid var(--pdf-line); }
 
 /* Scoresheet: official sheet, two columns on A4 landscape, written by hand (scoresheet.html.twig). Each page is a box

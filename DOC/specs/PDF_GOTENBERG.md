@@ -356,7 +356,9 @@ donne 3 colonnes. Plus de paramètre `pitches` ni de variante par plage de terra
 
 Mise en page : A4 paysage ; au-delà de **6 terrains** par page (largeur lisible minimale d'une case), les terrains sont
 répartis en groupes équilibrés (8 → 4 + 4, 9 → 5 + 4) imprimés en sections successives, chaque section répétant
-l'en-tête des créneaux. Un jour = une section ; une date ou un lieu différent fait sauter une page.
+l'en-tête des créneaux. Un jour = une section **unique, quel que soit le lieu des journées** (le titre liste les lieux distincts) ; une date différente fait sauter une page.
+
+**Pauses** : les matchs des phases virtuelles `Pause` / `Break` ne servent qu'à faire apparaître un créneau sans match. Leur case affiche uniquement « Pause » / « Break » (ni numéro, ni catégorie, ni équipes) sur fond gris neutre.
 
 #### 7.3.2 Feuille de marque publique : non développée
 
@@ -649,6 +651,8 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **PDF-DATA-04** : `lang=en` traduit tous les libellés fixes ; les horaires respectent `tz`.
 - **PDF-DATA-05** : `games-grid` a exactement une colonne par terrain utilisé par les matchs sélectionnés, dans l'ordre naturel (matchs sur les terrains 5 à 8 → colonnes 5, 6, 7, 8 ; aucune colonne vide).
 - **PDF-DATA-06** : `games-grid` avec plus de 6 terrains répartit les colonnes en groupes équilibrés (8 → 4 + 4) et répète l'en-tête des créneaux dans chaque section.
+- **PDF-DATA-08** : `games-grid` produit une seule section par jour, même si les journées de ce jour ont des lieux différents (#376).
+- **PDF-DATA-09** : dans `games-grid`, un match de phase `Pause` / `Break` n'affiche que ce mot, sur fond neutre distinct (#377).
 - **PDF-DATA-07** : `view=teams` affiche les équipes de chaque match, `view=phases` sa phase / poule ; toute autre valeur → 400.
 
 **Documents**
