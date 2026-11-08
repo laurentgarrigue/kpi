@@ -17,6 +17,7 @@ export type ShortcutAction =
   | 'shotclockStart60'
   | 'shotclockStart40'
   | 'shotclockStop'
+  | 'penaltiesClearExpired'
   | 'factGoal'
   | 'factGreen'
   | 'factYellow'
@@ -37,6 +38,7 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'shotclockStart60',
   'shotclockStart40',
   'shotclockStop',
+  'penaltiesClearExpired',
   'factGoal',
   'factGreen',
   'factYellow',
@@ -46,19 +48,21 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
 
 type Bindings = Record<ShortcutAction, string>
 
-/** KeyboardEvent.key values — ' ' is the space bar. */
+/** KeyboardEvent.key values — ' ' is the space bar. Same keys in every language. */
 const CLOCK_KEYS = {
   gameClockToggle: ' ',
   shotclockStart60: '+',
   shotclockStart40: '-',
-  shotclockStop: '*'
+  shotclockStop: '*',
+  // Expired penalties (00:00, blinking) all removed at once — §0.16
+  penaltiesClearExpired: 'x'
 } as const
 
 const FACT_KEYS: Record<string, Pick<Bindings, 'factGoal' | 'factGreen' | 'factYellow' | 'factRed' | 'factBlack'>> = {
   // But, Vert, Jaune, Rouge, Noir
   fr: { factGoal: 'b', factGreen: 'v', factYellow: 'j', factRed: 'r', factBlack: 'n' },
-  // Goal, grEen, Yellow, Red, blacK
-  en: { factGoal: 'g', factGreen: 'e', factYellow: 'y', factRed: 'r', factBlack: 'k' }
+  // gOal, Green, Yellow, Red, Black — colours on their initial, the goal on its O
+  en: { factGoal: 'o', factGreen: 'g', factYellow: 'y', factRed: 'r', factBlack: 'b' }
 }
 const DEFAULT_LOCALE = 'fr'
 

@@ -11,9 +11,9 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
     expect([d.factGoal, d.factGreen, d.factYellow, d.factRed, d.factBlack]).toEqual(['b', 'v', 'j', 'r', 'n'])
   })
 
-  it('propose G E Y R K en anglais (Goal, grEen, Yellow, Red, blacK)', () => {
+  it('propose O G Y R B en anglais (gOal, Green, Yellow, Red, Black)', () => {
     const d = shortcutDefaults('en')
-    expect([d.factGoal, d.factGreen, d.factYellow, d.factRed, d.factBlack]).toEqual(['g', 'e', 'y', 'r', 'k'])
+    expect([d.factGoal, d.factGreen, d.factYellow, d.factRed, d.factBlack]).toEqual(['o', 'g', 'y', 'r', 'b'])
   })
 
   it('retombe sur le français pour une langue inconnue', () => {
@@ -30,6 +30,11 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
   it('pilote le chrono de tir par + (60 s), - (40 s) et * (arrêt)', () => {
     const d = shortcutDefaults('fr')
     expect([d.shotclockStart60, d.shotclockStart40, d.shotclockStop]).toEqual(['+', '-', '*'])
+  })
+
+  it('retire les pénalités échues par X, en français comme en anglais', () => {
+    expect(shortcutDefaults('fr').penaltiesClearExpired).toBe('x')
+    expect(shortcutDefaults('en').penaltiesClearExpired).toBe('x')
   })
 
   it('ne lie jamais Entrée, un chiffre ou le point au chrono de tir (saisie des faits et du n° du joueur)', () => {
@@ -65,7 +70,7 @@ describe('mergeStoredBindings — préférences enregistrées sur le poste', () 
   it('complète les actions manquantes avec les défauts de la langue', () => {
     const merged = mergeStoredBindings({ gameClockToggle: 'p' }, 'en')
     expect(merged.gameClockToggle).toBe('p')
-    expect(merged.factGoal).toBe('g')
+    expect(merged.factGoal).toBe('o')
   })
 
   it('ignore les actions qui n’existent plus (« joueur par numéro », chrono de tir ±1 s)', () => {

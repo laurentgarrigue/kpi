@@ -2,6 +2,9 @@
 import type { MatchClosure, OfficialRole, Period, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
 import { shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
+import type { DisplayKind, DisplayOptions } from '~/utils/scoringDisplayOptions'
+import { closureWarnings, type ClosureWarning } from '~/utils/scoringClosure'
+import { isPenaltyExpired } from '~/utils/scoringPenalties'
 import { keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
 
 definePageMeta({
@@ -312,9 +315,11 @@ const shotclockAdjust = (delta: number) => {
 // V/J lift early on a conceded goal (player returns); R always runs its full 2 minutes
 // (replacement at the end only, even if goals are conceded meanwhile).
 const penalties = usePenalties({
+  // Expired: a short beep (not the buzzer), and the clock stays at 00:00, blinking, until
+  // the table removes it (§0.15) — persisted stopped at 0 so every screen keeps it.
   onExpired: (p) => {
-    buzzer.play()
-    void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
+    buzzer.beep()
+    persistPenalty(p, 'stop')
     toast.add({
       title: t('scoring.penalty.expired_title'),
       description: t(
@@ -356,6 +361,10 @@ const removePenalty = (id: string) => {
   if (!canScore.value) return
   const p = penalties.remove(id)
   if (p) void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
+}
+/** Every expired penalty (00:00, blinking) at once — keyboard shortcut, §0.16. */
+const clearExpiredPenalties = () => {
+  for (const p of penalties.penalties.value.filter(isPenaltyExpired)) removePenalty(p.id)
 }
 
 // Conceded-goal early lift — asked to the operator (spec §7.4: after confirmation).
@@ -466,9 +475,29 @@ const closeOpen = ref(false)
 const closing = ref(false)
 const reopenOpen = ref(false)
 const goals = computed(() => goalCounts(scoringStore.events))
-// Only a match in progress can be closed (a pending one has not been played).
+// Only a match in progress can be closed (a pending one has not been played). A closure
+// that looks premature (clock running or not at zero, first period, tied elimination
+// match) is confirmed first, never blocked (§0.15).
+const closeWarnings = ref<ClosureWarning[]>([])
 const openClose = () => {
   if (canScore.value && matchOn.value) closeOpen.value = true
+}
+const askClose = () => {
+  if (!canScore.value || !matchOn.value || !match.value) return
+  const warnings = closureWarnings({
+    live: isLive.value,
+    running: isRunning.value,
+    atZero: clockAtZero.value,
+    period: match.value.periode ?? 'M1',
+    type: match.value.type,
+    scoreLevel: scoreLevel.value
+  })
+  if (warnings.length) closeWarnings.value = warnings
+  else openClose()
+}
+const confirmEarlyClose = () => {
+  closeWarnings.value = []
+  openClose()
 }
 const confirmClose = async (closure: MatchClosure) => {
   if (!canScore.value || closing.value) return
@@ -522,13 +551,21 @@ onUnmounted(() => {
 })
 const connectionLost = computed(() => isLive.value && (!online.value || liveSync.lost.value))
 
+// A display opens through its options dialog (theme, blocks — §0.15): its popup has no
+// editable address bar.
+const displayOptionsFor = ref<DisplayKind | null>(null)
+const openDisplay = (kind: DisplayKind, options: DisplayOptions[DisplayKind]) => {
+  displayOptionsFor.value = null
+  broadcast.openDisplay(kind, matchId.value, options)
+}
+
 // Occasional tools, grouped in the header's ⋯ menu: full-screen displays (live only — same
 // origin, BroadcastChannel keeps them in sync) and the keyboard shortcuts.
 const toolItems = computed(() => [
   ...(isLive.value
     ? [
-        { label: t('scoring.display.scoreboard'), icon: 'i-heroicons-tv', onSelect: () => broadcast.openScoreboard(matchId.value) },
-        { label: t('scoring.display.shotclock'), icon: 'i-heroicons-clock', onSelect: () => broadcast.openShotclock(matchId.value) }
+        { label: t('scoring.display.scoreboard'), icon: 'i-heroicons-tv', onSelect: () => { displayOptionsFor.value = 'scoreboard' } },
+        { label: t('scoring.display.shotclock'), icon: 'i-heroicons-clock', onSelect: () => { displayOptionsFor.value = 'shotclock' } }
       ]
     : []),
   { label: t('scoring.shortcuts.title'), icon: 'i-heroicons-command-line', onSelect: () => { shortcutsOpen.value = true } }
@@ -537,7 +574,7 @@ const toolItems = computed(() => [
 // — they must not also drive the clocks). Clock keys: live mode, match in
 // progress only. Fact keys: Déroulement view with the detailed entry (live and post-match).
 const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value
-  && !closeOpen.value && !reopenOpen.value && !reasonOpen.value)
+  && displayOptionsFor.value === null && !closeOpen.value && closeWarnings.value.length === 0 && !reopenOpen.value && !reasonOpen.value && deletePending.value === null)
 const clockKey = (handler: () => void) => () => { if (isLive.value && matchOn.value) handler() }
 const factKey = (code: ScoringEventCode) => () => {
   if (view.value === 'run' && !scoreOnly.value) void stageEvent(code)
@@ -551,6 +588,7 @@ const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
     }
   }),
   shotclockStop: clockKey(shotclockStop),
+  penaltiesClearExpired: clockKey(clearExpiredPenalties),
   factGoal: factKey('B'),
   factGreen: factKey('V'),
   factYellow: factKey('J'),
@@ -691,6 +729,7 @@ onMounted(async () => {
     }
     // Local channel for the scoreboard / shotclock windows, then a first full snapshot.
     broadcast.init()
+    broadcast.announceMatch()
     broadcast.broadcastAll()
 
     // Subscribe to this match's topics: another terminal (or the hardware relay) taking
@@ -870,12 +909,19 @@ const clearEntry = () => {
 
 watch(matchOn, (on) => { if (!on) clearEntry() })
 
-// Deleting the fact being edited (entry panel): confirmed, a goal changes the score.
-const deleteEditedOpen = ref(false)
-const confirmDeleteEdited = async () => {
-  deleteEditedOpen.value = false
-  const edited = scoringStore.events.find(e => e.uid === editingUid.value)
-  if (edited) await removeEvent(edited)
+// Deleting a fact — from the entry panel (fact being edited) or the timeline's bin — is
+// always confirmed: a goal changes the score.
+const deletePending = ref<ScoringEvent | null>(null)
+const askDeleteEdited = () => {
+  deletePending.value = scoringStore.events.find(e => e.uid === editingUid.value) ?? null
+}
+const askDelete = (e: ScoringEvent) => {
+  if (canEditFacts.value) deletePending.value = e
+}
+const confirmDelete = async () => {
+  const e = deletePending.value
+  deletePending.value = null
+  if (e) await removeEvent(e)
 }
 
 /** Validate the entry (`Entrée` in the time field, or the confirm button). */
@@ -948,9 +994,6 @@ const pushEvent = async (code: ScoringEventCode) => {
     nom: player.nom,
     prenom: player.prenom
   }
-  // Captured before the selection is cleared: the undo toast names who and when.
-  const recordedLabel = `${t(eventCodes.find(e => e.code === code)!.shortKey)} · ${selectedLabel.value} · ${periodDisplayCode(event.period, t('scoring.period.overtime_short'))} ${event.tpsJeu}`
-  let createdPenaltyId: string | null = null
   try {
     await scoringStore.addEvent(event)
     clearEntry()
@@ -977,50 +1020,13 @@ const pushEvent = async (code: ScoringEventCode) => {
           durationSec: scoringStore.config.penaltyDuration,
           running: isRunning.value
         })
-        if (clock) {
-          createdPenaltyId = clock.id
-          persistPenalty(clock, clock.running ? 'run' : 'stop')
-        } else toast.add({ title: t('scoring.penalty.title'), description: t('scoring.penalty.full_slots'), color: 'warning' })
+        if (clock) persistPenalty(clock, clock.running ? 'run' : 'stop')
+        else toast.add({ title: t('scoring.penalty.title'), description: t('scoring.penalty.full_slots'), color: 'warning' })
       }
     } else if (code === 'D') {
       // Black card: definitive exclusion, NO penalty clock, no replacement to the end.
       toast.add({ title: t('scoring.event.card_black'), description: t('scoring.penalty.black_no_penalty'), color: 'info' })
     }
-    offerUndo(event, recordedLabel, createdPenaltyId)
-  } catch { /* toast handled */ }
-}
-
-/**
- * Undo of the fact just recorded, offered for a few seconds (cheaper than finding the row
- * in the history). Removes what the fact created along with it: its penalty clock, and the
- * goal's follow-up dialogs (early lift, golden goal).
- */
-const UNDO_TOAST_MS = 6000
-const offerUndo = (event: ScoringEvent, label: string, penaltyId: string | null) => {
-  toast.add({
-    title: t('scoring.undo.recorded'),
-    description: label,
-    color: 'success',
-    duration: UNDO_TOAST_MS,
-    actions: [{
-      label: t('scoring.undo.action'),
-      icon: 'i-heroicons-arrow-uturn-left',
-      color: 'neutral',
-      variant: 'outline',
-      onClick: () => { void undoEvent(event, penaltyId) }
-    }]
-  })
-}
-const undoEvent = async (event: ScoringEvent, penaltyId: string | null) => {
-  if (!canEditFacts.value || !scoringStore.events.some(e => e.uid === event.uid)) return
-  try {
-    await scoringStore.removeEvent(event)
-    if (penaltyId) removePenalty(penaltyId)
-    if (event.code === 'B') {
-      liftPending.value = null
-      goldenGoalOpen.value = false
-    }
-    toast.add({ title: t('scoring.undo.done'), color: 'info' })
   } catch { /* toast handled */ }
 }
 
@@ -1418,7 +1424,7 @@ const toggleLock = async () => {
               variant="outline"
               color="neutral"
               icon="i-heroicons-flag"
-              @click="openClose"
+              @click="askClose"
             >{{ t('scoring.close.action') }}</UButton>
             <UButton
               v-else-if="match.statut === 'END' && canScore"
@@ -1656,7 +1662,7 @@ const toggleLock = async () => {
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
               </div>
-              <p v-if="isLive && entryActive && !editingUid" class="mt-1 text-center text-xs text-header-500 dark:text-header-400">
+              <p v-if="isLive && entryActive && !editingUid" class="mt-1 text-center text-xs text-header-500 dark:text-header-400 whitespace-pre-line">
                 {{ t('scoring.entry.time_frozen') }}
               </p>
             </div>
@@ -1681,7 +1687,7 @@ const toggleLock = async () => {
                   variant="soft"
                   icon="i-heroicons-trash"
                   :disabled="!canEditFacts"
-                  @click="deleteEditedOpen = true"
+                  @click="askDeleteEdited"
                 >{{ t('scoring.edit.delete') }}</UButton>
                 <UButton class="flex-1 justify-center" color="neutral" variant="outline" @click="clearEntry">
                   {{ t('scoring.edit.cancel') }}
@@ -1693,16 +1699,16 @@ const toggleLock = async () => {
         </section>
       </div>
 
-      <!-- Delete the fact being edited (entry panel) -->
+      <!-- Delete a fact (entry panel or timeline bin) -->
       <AdminConfirmModal
-        :open="deleteEditedOpen"
+        :open="deletePending !== null"
         variant="danger"
         :title="t('scoring.edit.delete_title')"
         :message="t('scoring.edit.delete_message')"
         :confirm-text="t('scoring.edit.delete')"
         :cancel-text="t('scoring.edit.cancel')"
-        @confirm="confirmDeleteEdited"
-        @close="deleteEditedOpen = false"
+        @confirm="confirmDelete"
+        @close="deletePending = null"
       />
 
       <!-- Card progression alert (spec §7.4) — the operator can record anyway -->
@@ -1717,6 +1723,22 @@ const toggleLock = async () => {
         @confirm="confirmCardWarning"
         @close="cardWarning = null"
       />
+
+      <!-- Premature-looking closure (§0.15): the reasons, then the closure panel -->
+      <AdminConfirmModal
+        :open="closeWarnings.length > 0"
+        variant="warning"
+        :title="t('scoring.close.early_title')"
+        :message="t('scoring.close.early_message')"
+        :confirm-text="t('scoring.close.early_confirm')"
+        :cancel-text="t('scoring.edit.cancel')"
+        @confirm="confirmEarlyClose"
+        @close="closeWarnings = []"
+      >
+        <ul class="mt-2 list-disc pl-5 space-y-1 text-header-900 dark:text-header-100">
+          <li v-for="w in closeWarnings" :key="w">{{ t('scoring.close.warning.' + w) }}</li>
+        </ul>
+      </AdminConfirmModal>
 
       <!-- Golden goal (spec §7.5): offer to close the match right after the winning goal -->
       <AdminConfirmModal
@@ -1753,7 +1775,7 @@ const toggleLock = async () => {
         :team-a="match.equipeA ?? 'A'"
         :team-b="match.equipeB ?? 'B'"
         @edit="startEdit"
-        @remove="removeEvent"
+        @remove="askDelete"
       />
       </template>
 
@@ -1805,6 +1827,13 @@ const toggleLock = async () => {
           </div>
         </div>
       </Teleport>
+
+      <!-- Options of a full-screen display, before it opens (§0.15) -->
+      <ScoringDisplayOptionsModal
+        :kind="displayOptionsFor"
+        @close="displayOptionsFor = null"
+        @open="openDisplay"
+      />
 
       <!-- Keyboard shortcuts settings (per-device preference) -->
       <ScoringShortcutsModal

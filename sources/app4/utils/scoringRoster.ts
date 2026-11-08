@@ -1,4 +1,5 @@
 import type { ScoringEvent, ScoringEventCode, ScoringPlayer, TeamSide } from '~/types/scoring'
+import { matchOrder } from './scoringTimeline'
 
 /**
  * Reading the rosters of the scoring console (PAGE_SCORING.md §7.3): who scored or was
@@ -14,14 +15,18 @@ const STAFF = 'E'
 
 export interface PlayerTally {
   goals: number
-  /** Cards in entry order (V/J/R/D) — the last one is the player's current situation. */
+  /** Every card (V/J/R/D) in match order — the last one is the player's current situation. */
   cards: ScoringEventCode[]
 }
 
-/** Goals and cards of each player, keyed by licence number (team-level facts left out). */
+/**
+ * Goals and cards of each player, keyed by licence number (team-level facts left out).
+ * Facts are read in match order (period, then time), not entry order: a card added
+ * afterwards in post-match lands where it happened.
+ */
 export function playerTallies(events: ScoringEvent[]): Map<string, PlayerTally> {
   const tallies = new Map<string, PlayerTally>()
-  for (const e of events) {
+  for (const e of matchOrder(events)) {
     if (e.player === TEAM_FACT_PLAYER) continue
     const tally = tallies.get(e.player) ?? { goals: 0, cards: [] }
     if (e.code === 'B') tally.goals++

@@ -42,8 +42,6 @@ const { t } = useI18n()
 const TEAM_FACT_MATRIC = 0
 const exclusionOf = (p: ScoringPlayer) => props.excludedCard.get(String(p.matric))
 const tallyOf = (p: ScoringPlayer) => props.tallies.get(String(p.matric))
-/** Last card shown on the row — unless the exclusion marker (R/D) already says it. */
-const lastCardOf = (p: ScoringPlayer) => (exclusionOf(p) ? null : tallyOf(p)?.cards.at(-1) ?? null)
 </script>
 
 <template>
@@ -109,8 +107,10 @@ const lastCardOf = (p: ScoringPlayer) => (exclusionOf(p) ? null : tallyOf(p)?.ca
               <ScoringEventIcon code="B" />
               <span v-if="tallyOf(p)!.goals > 1" class="scoring-digits text-xs">×{{ tallyOf(p)!.goals }}</span>
             </span>
-            <ScoringEventIcon v-if="lastCardOf(p)" :code="lastCardOf(p)!" />
-            <ScoringEventIcon v-if="exclusionOf(p)" :code="exclusionOf(p)!" />
+            <!-- Every card, in match order (an R/D card is also the exclusion marker) -->
+            <span v-if="tallyOf(p)?.cards.length" class="inline-flex items-center gap-0.5 shrink-0">
+              <ScoringEventIcon v-for="(card, i) in tallyOf(p)!.cards" :key="i" :code="card" />
+            </span>
           </button>
         </li>
       </ul>

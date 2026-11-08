@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Kayak-Polo.Info - Administration"
+    "title": "Kayak-Polo.Info - Administration",
+    "home_title": "Kayak-Polo.Info - Gestion sportive"
   },
   "footer": {
     "version": "Version"
@@ -2786,6 +2787,7 @@
       "shotclockStart60": "Chrono de tir : départ/reset 60 s",
       "shotclockStart40": "Chrono de tir : départ/reset 40 s",
       "shotclockStop": "Chrono de tir : arrêt (--)",
+      "penaltiesClearExpired": "Pénalités échues (00:00) : retirer",
       "factGoal": "Fait de jeu : but",
       "factGreen": "Fait de jeu : carton vert",
       "factYellow": "Fait de jeu : carton jaune",
@@ -2882,7 +2884,7 @@
       "player_none": "Aucun joueur avec ce numéro",
       "player_hint": "Tapez le numéro, ou cliquez le joueur",
       "player_missing": "Choisissez le joueur du fait de jeu",
-      "time_frozen": "Temps figé au début de la saisie — Désélectionner le resynchronise",
+      "time_frozen": "Temps figé au début de la saisie.\nDésélectionner le resynchronise.",
       "locked_pending": "Donnez le coup d'envoi (badge « En attente ») pour saisir les faits de jeu.",
       "locked_end": "Match terminé : rouvrez-le (« Rouvrir le match… ») pour corriger les faits de jeu, puis clôturez-le à nouveau."
     },
@@ -2914,7 +2916,16 @@
       "lock_hint": "Plus aucune modification possible ensuite, sauf déverrouillage.",
       "confirm": "Clore le match",
       "done": "Match clos",
-      "done_description": "Le résultat est enregistré sur la feuille de match officielle."
+      "done_description": "Le résultat est enregistré sur la feuille de match officielle.",
+      "early_title": "Clore le match maintenant ?",
+      "early_message": "La clôture semble prématurée :",
+      "early_confirm": "Clore quand même…",
+      "warning": {
+        "clock_running": "le chrono est en marche",
+        "clock_not_zero": "le chrono n'est pas à zéro",
+        "first_period": "le match est en 1ère période",
+        "tied_elimination": "match éliminatoire à égalité : il faut un vainqueur"
+      }
     },
     "reopen": {
       "action": "Rouvrir le match…",
@@ -2922,11 +2933,6 @@
       "message": "Le match repasse « En cours » pour corriger la saisie. Il faudra le clore à nouveau pour enregistrer le résultat corrigé.",
       "confirm": "Rouvrir le match",
       "done": "Match rouvert"
-    },
-    "undo": {
-      "recorded": "Fait de jeu enregistré",
-      "action": "Annuler",
-      "done": "Saisie annulée"
     },
     "offline": {
       "title": "Connexion perdue",
@@ -2953,6 +2959,17 @@
       "off": "Raccourcis suspendus (fenêtre ouverte ou saisie impossible)",
       "window": "Clavier inactif : la fenêtre de la console n'a pas le focus. Cliquez dans la console",
       "banner": "Clavier inactif : cliquez dans la console"
+    },
+    "display_options": {
+      "title_scoreboard": "Ouvrir le tableau de score",
+      "title_shotclock": "Ouvrir le chronomètre de tir",
+      "hint": "Choix mémorisé sur ce poste. Rouvrir un affichage déjà ouvert lui applique les nouvelles options.",
+      "theme": "Thème",
+      "theme_dark": "Sombre (blanc sur noir)",
+      "theme_light": "Clair (noir sur blanc)",
+      "scoreboard_shotclock": "Afficher le chronomètre de tir",
+      "shotclock_clock": "Afficher le chrono principal",
+      "open": "Ouvrir"
     }
   },
   "competition": {

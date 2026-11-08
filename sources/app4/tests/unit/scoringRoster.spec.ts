@@ -21,10 +21,20 @@ describe('playerTallies — buts et cartons de chaque joueur', () => {
     expect(tallies.get('22')?.goals).toBe(1)
   })
 
-  it('garde les cartons dans l’ordre de saisie', () => {
+  it('garde tous les cartons du joueur', () => {
     const tallies = playerTallies([fact('V', 'A', '11'), fact('J', 'A', '11')])
     expect(tallies.get('11')?.cards).toEqual(['V', 'J'])
     expect(tallies.get('11')?.goals).toBe(0)
+  })
+
+  it('range les cartons dans l’ordre du match, pas dans l’ordre de saisie', () => {
+    // Jaune en prolongation saisi d'abord, vert de la 2e période saisi après coup (post-match)
+    const tallies = playerTallies([
+      { ...fact('J', 'A', '11'), period: 'P6', tpsJeu: '03:31' },
+      { ...fact('V', 'A', '11'), period: 'M2', tpsJeu: '09:58' },
+      { ...fact('R', 'A', '11'), period: 'M2', tpsJeu: '01:00' }
+    ])
+    expect(tallies.get('11')?.cards).toEqual(['V', 'R', 'J'])
   })
 
   it('ignore les faits d’équipe (joueur 0)', () => {

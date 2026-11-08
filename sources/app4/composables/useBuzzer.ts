@@ -1,6 +1,7 @@
 /**
- * Buzzer for the scoring console (spec §6.5/§7.5): sounds at shotclock expiry, period end,
- * penalty expiry and end of inter-period breaks (decision §0.9). Plays the buzzer of the
+ * Buzzer for the scoring console (spec §6.5/§7.5): sounds at shotclock expiry, period end
+ * and end of inter-period breaks (decision §0.9). A penalty expiry only gets a short `beep()`
+ * (§0.15): a buzzer there would be taken for the game clock or the shot clock. Plays the buzzer of the
  * legacy online score sheet (FeuilleMarque3, `img/buzzeer-180942.mp3`), copied into
  * `public/sounds/` so it is served under /admin2 and kept by the PWA cache.
  *
@@ -14,6 +15,10 @@
 const BUZZER_PATH = 'sounds/buzzer.mp3'
 const FALLBACK_MS = 900
 const FALLBACK_HZ = 660
+/** Penalty expiry: two short high tones, nothing like the buzzer. */
+const BEEP_MS = 120
+const BEEP_GAP_MS = 80
+const BEEP_HZ = 1320
 
 export function useBuzzer() {
   const soundUrl = `${useRuntimeConfig().app.baseURL}${BUZZER_PATH}`
@@ -37,17 +42,19 @@ export function useBuzzer() {
     return loading
   }
 
-  const synthesized = (audio: AudioContext) => {
+  const tone = (audio: AudioContext, type: OscillatorType, hz: number, ms: number, delayMs = 0) => {
+    const at = audio.currentTime + delayMs / 1000
     const osc = audio.createOscillator()
     const gain = audio.createGain()
-    osc.type = 'square'
-    osc.frequency.value = FALLBACK_HZ
-    gain.gain.setValueAtTime(0.4, audio.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + FALLBACK_MS / 1000)
+    osc.type = type
+    osc.frequency.value = hz
+    gain.gain.setValueAtTime(0.4, at)
+    gain.gain.exponentialRampToValueAtTime(0.001, at + ms / 1000)
     osc.connect(gain).connect(audio.destination)
-    osc.start()
-    osc.stop(audio.currentTime + FALLBACK_MS / 1000)
+    osc.start(at)
+    osc.stop(at + ms / 1000)
   }
+  const synthesized = (audio: AudioContext) => tone(audio, 'square', FALLBACK_HZ, FALLBACK_MS)
 
   /** Sound the buzzer (the legacy one; the synthesized blast while it is not loaded). */
   const play = () => {
@@ -62,6 +69,14 @@ export function useBuzzer() {
     source.buffer = buffer
     source.connect(audio.destination)
     source.start()
+  }
+
+  /** Short double beep (penalty expiry) — distinct from the buzzer. */
+  const beep = () => {
+    const audio = ensureContext()
+    if (!audio) return
+    tone(audio, 'sine', BEEP_HZ, BEEP_MS)
+    tone(audio, 'sine', BEEP_HZ, BEEP_MS, BEEP_MS + BEEP_GAP_MS)
   }
 
   /** The console's "test sound" button: the real buzzer, as in the legacy sheet. */
@@ -81,5 +96,5 @@ export function useBuzzer() {
     window.removeEventListener('keydown', prime, { capture: true })
   })
 
-  return { play, test }
+  return { play, beep, test }
 }

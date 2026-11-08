@@ -24,7 +24,7 @@ onMounted(() => {
   <div>
     <!-- Site title -->
     <p class="mb-4 text-sm text-center text-xl font-bold text-header-800 dark:text-header-100">
-      {{ t('app.title') }}
+      {{ t('app.home_title') }}
     </p>
 
     <!-- Page header -->

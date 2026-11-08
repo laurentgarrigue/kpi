@@ -6,8 +6,9 @@
  * makes the correction readable: the popover may cover the countdown it adjusts (a penalty
  * chip at the bottom of the board, a narrow screen), the operator still sees the result.
  *
- * `canAdjust` greys the steps out (clock running…) and shows `lockedHint` instead; `disabled`
- * makes the countdown a plain display (no popover at all — post-match, no scoring right).
+ * `disabled` (post-match, no scoring right) or `canAdjust` false (clock running…) make the
+ * countdown a plain display: no popover at all rather than greyed steps (2026-11-08) — only a
+ * `lockedHint` tooltip says why. A popover left open closes when the clock starts.
  * Props down / events up: emits `adjust` with the delta in seconds, the page applies it.
  */
 const props = withDefaults(defineProps<{
@@ -38,11 +39,11 @@ const stepLabel = (d: number): string => (d > 0 ? `+${d}` : `−${-d}`)
 // Explicit contrast in both themes: generic ghost buttons were barely readable in dark mode.
 const STEP_CLASS = 'min-w-11 px-2 py-1.5 rounded-md text-sm font-semibold tabular-nums cursor-pointer '
   + 'bg-header-100 text-header-900 hover:bg-header-200 dark:bg-header-700 dark:text-header-50 dark:hover:bg-header-600 '
-  + 'disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-primary-500'
+  + 'focus-visible:outline-2 focus-visible:outline-primary-500'
 </script>
 
 <template>
-  <span v-if="disabled" :class="triggerClass"><slot /></span>
+  <span v-if="disabled || !canAdjust" :class="triggerClass" :title="disabled ? undefined : lockedHint || undefined"><slot /></span>
   <UPopover
     v-else
     :content="{ side: 'bottom', align: 'center' }"
@@ -64,17 +65,16 @@ const STEP_CLASS = 'min-w-11 px-2 py-1.5 rounded-md text-sm font-semibold tabula
         <div class="flex items-center gap-1">
           <button
             v-for="d in minus" :key="d"
-            type="button" :class="STEP_CLASS" :disabled="!canAdjust"
+            type="button" :class="STEP_CLASS"
             @click="emit('adjust', d)"
           >{{ stepLabel(d) }}</button>
           <span class="scoring-digits text-3xl min-w-24 px-2 text-center text-header-950 dark:text-white" aria-live="polite">{{ display }}</span>
           <button
             v-for="d in plus" :key="d"
-            type="button" :class="STEP_CLASS" :disabled="!canAdjust"
+            type="button" :class="STEP_CLASS"
             @click="emit('adjust', d)"
           >{{ stepLabel(d) }}</button>
         </div>
-        <p v-if="!canAdjust && lockedHint" class="text-xs text-center text-header-600 dark:text-header-200">{{ lockedHint }}</p>
       </section>
     </template>
   </UPopover>

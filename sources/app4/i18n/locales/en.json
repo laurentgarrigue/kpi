@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Kayak-Polo.Info - Administration"
+    "title": "Kayak-Polo.Info - Administration",
+    "home_title": "Kayak-Polo.Info - Sports management"
   },
   "footer": {
     "version": "Version"
@@ -2774,6 +2775,7 @@
       "shotclockStart60": "Shot clock: start/reset 60 s",
       "shotclockStart40": "Shot clock: start/reset 40 s",
       "shotclockStop": "Shot clock: stop (--)",
+      "penaltiesClearExpired": "Expired penalties (00:00): remove",
       "factGoal": "Game fact: goal",
       "factGreen": "Game fact: green card",
       "factYellow": "Game fact: yellow card",
@@ -2870,7 +2872,7 @@
       "player_none": "No player with this number",
       "player_hint": "Type the number, or click the player",
       "player_missing": "Pick the player of the game fact",
-      "time_frozen": "Time frozen when the entry started — Deselect resyncs it",
+      "time_frozen": "Time frozen when the entry started.\nDeselect resyncs it.",
       "locked_pending": "Start the game (\"Pending\" badge) to enter game facts.",
       "locked_end": "Game closed: reopen it (\"Reopen the game…\") to correct the game facts, then close it again."
     },
@@ -2902,7 +2904,16 @@
       "lock_hint": "No further change is possible unless it is unlocked.",
       "confirm": "Close the game",
       "done": "Game closed",
-      "done_description": "The result is recorded on the official game sheet."
+      "done_description": "The result is recorded on the official game sheet.",
+      "early_title": "Close the game now?",
+      "early_message": "Closing looks premature:",
+      "early_confirm": "Close anyway…",
+      "warning": {
+        "clock_running": "the clock is running",
+        "clock_not_zero": "the clock is not at zero",
+        "first_period": "the game is in its 1st period",
+        "tied_elimination": "elimination game tied: a winner is needed"
+      }
     },
     "reopen": {
       "action": "Reopen the game…",
@@ -2910,11 +2921,6 @@
       "message": "The game goes back to \"In progress\" so the entries can be corrected. Close it again to record the corrected result.",
       "confirm": "Reopen the game",
       "done": "Game reopened"
-    },
-    "undo": {
-      "recorded": "Game fact recorded",
-      "action": "Undo",
-      "done": "Entry undone"
     },
     "offline": {
       "title": "Connection lost",
@@ -2941,6 +2947,17 @@
       "off": "Shortcuts paused (dialog open or entry not allowed)",
       "window": "Keyboard inactive: the console window does not have the focus. Click in the console",
       "banner": "Keyboard inactive: click in the console"
+    },
+    "display_options": {
+      "title_scoreboard": "Open the scoreboard",
+      "title_shotclock": "Open the shot clock",
+      "hint": "Choice remembered on this device. Opening a display that is already open applies the new options to it.",
+      "theme": "Theme",
+      "theme_dark": "Dark (white on black)",
+      "theme_light": "Light (black on white)",
+      "scoreboard_shotclock": "Show the shot clock",
+      "shotclock_clock": "Show the game clock",
+      "open": "Open"
     }
   },
   "competition": {

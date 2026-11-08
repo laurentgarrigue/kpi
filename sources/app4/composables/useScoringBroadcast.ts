@@ -1,6 +1,11 @@
 import type { TeamSide, Period } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
 import type { ShotclockState } from '~/utils/scoringRules'
+import { displayQuery, type DisplayKind, type DisplayOptions } from '~/utils/scoringDisplayOptions'
+import { consoleMatchSwitch, matchSwitchTarget } from '~/utils/scoringDisplaySwitch'
+
+/** Match last shown by the console in this tab — survives the navigation to another match. */
+const CONSOLE_MATCH_KEY = 'kpi.scoring.console.match'
 
 /**
  * Local broadcast between the console and the full-screen displays opened from it
@@ -74,6 +79,22 @@ export function useScoringBroadcast(getState: () => BroadcastState) {
     }
   }
 
+  /**
+   * The console's tab moved to another match (§0.16): the displays of the match it left
+   * follow it. Remembered per tab (sessionStorage), so two consoles in two tabs never
+   * steal each other's displays.
+   */
+  const announceMatch = () => {
+    const current = getState().matchId
+    if (current === null) return
+    try {
+      const stored = window.sessionStorage.getItem(CONSOLE_MATCH_KEY)
+      const change = consoleMatchSwitch(stored ? Number(stored) : null, current)
+      if (change) post('match_switch', change)
+      window.sessionStorage.setItem(CONSOLE_MATCH_KEY, String(current))
+    } catch { /* storage unavailable: the displays keep their match */ }
+  }
+
   /** Full snapshot — sent on open and whenever a display announces itself ready. */
   const broadcastAll = () => {
     teams()
@@ -106,12 +127,18 @@ export function useScoringBroadcast(getState: () => BroadcastState) {
     channel = null
   }
 
-  /** Open the full-screen displays (same origin → the channel works). */
-  const openScoreboard = (matchId: number) => {
-    window.open(`/games/${matchId}/scoreboard`, 'kpi_scoreboard', 'width=1280,height=720')
+  /**
+   * Open a full-screen display (same origin → the channel works) with its options in the
+   * URL (§0.15). The href is resolved by the router so it carries the app base (/admin2).
+   */
+  const router = useRouter()
+  const WINDOWS: Record<DisplayKind, { name: string, features: string }> = {
+    scoreboard: { name: 'kpi_scoreboard', features: 'width=1280,height=720' },
+    shotclock: { name: 'kpi_shotclock', features: 'width=640,height=480' }
   }
-  const openShotclock = (matchId: number) => {
-    window.open(`/games/${matchId}/shotclock`, 'kpi_shotclock', 'width=640,height=480')
+  const openDisplay = <K extends DisplayKind>(kind: K, matchId: number, options: DisplayOptions[K]) => {
+    const href = router.resolve({ path: `/games/${matchId}/${kind}`, query: displayQuery(kind, options) }).href
+    window.open(href, WINDOWS[kind].name, WINDOWS[kind].features)
   }
 
   onUnmounted(close)
@@ -127,8 +154,8 @@ export function useScoringBroadcast(getState: () => BroadcastState) {
     teams,
     scores,
     penalties,
-    openScoreboard,
-    openShotclock
+    openDisplay,
+    announceMatch
   }
 }
 
@@ -153,8 +180,19 @@ export function useScoringDisplay(matchId: number, role: 'scoreboard' | 'shotclo
   })
 
   let channel: BroadcastChannel | null = null
+  const router = useRouter()
+  const route = useRoute()
 
   const apply = (message: ChannelMessage) => {
+    // The console left this match for another one: follow it (§0.16) — a full reload on the
+    // new match, display options kept, then the usual handshake.
+    if (message.type === 'match_switch') {
+      const to = matchSwitchTarget(message.value, matchId)
+      if (to !== null) {
+        window.location.replace(router.resolve({ path: `/games/${to}/${role}`, query: route.query }).href)
+      }
+      return
+    }
     // Ignore messages of another match displayed on the same workstation.
     if (message.matchId != null && message.matchId !== matchId) return
     switch (message.type) {

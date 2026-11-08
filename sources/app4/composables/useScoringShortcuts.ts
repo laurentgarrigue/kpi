@@ -4,7 +4,7 @@
  * The bindings are a per-device/user preference, persisted in localStorage. Defaults
  * (utils/scoringShortcuts): Espace = game clock start/stop · `+` = shotclock start/reset
  * 60 s · `-` = start/reset 40 s · `*` = shotclock stop (back to "--") · one letter per fact,
- * after the interface language (FR B V J R N, EN G E Y R K). The defaults of either language
+ * after the interface language (FR B V J R N, EN O G Y R B). The defaults of either language
  * can be restored whatever the interface language.
  *
  * Shortcuts are neutralized while the focus is in an editable field, and can be globally

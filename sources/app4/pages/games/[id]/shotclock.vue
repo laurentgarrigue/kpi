@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { displayOptionsFromQuery } from '~/utils/scoringDisplayOptions'
+
 /**
  * Full-screen shot-clock display (spec §6.1) — replaces the legacy admin/shotclock.php.
  *
@@ -9,7 +11,8 @@
  *
  * Fed by BroadcastChannel only (same origin, no network), like the scoreboard.
  *
- * URL options (the display is autonomous — no interaction, cf. PAGE_INCRUSTATION spirit):
+ * URL options (the display is autonomous — no interaction, cf. PAGE_INCRUSTATION spirit),
+ * chosen in the console's options dialog before opening (§0.15, utils/scoringDisplayOptions):
  *   ?theme=light   black on white (default: white on black)
  *   ?clock=0       hide the small game clock shown underneath (default: shown)
  */
@@ -20,8 +23,9 @@ const matchId = Number(route.params.id)
 const { state } = useScoringDisplay(matchId, 'shotclock')
 
 // ─── URL options ───
-const light = computed(() => route.query.theme === 'light')
-const showClock = computed(() => route.query.clock !== '0')
+const options = computed(() => displayOptionsFromQuery('shotclock', route.query))
+const light = computed(() => options.value.theme === 'light')
+const showClock = computed(() => options.value.clock)
 
 // ─── Auto-fit ───
 // Candidates, not just the current value: '60' (widest 2-digit) and '8.8' (widest tenths)
@@ -33,11 +37,9 @@ const { fontSize: mainSize } = useFitText(mainBox, () => ['60', '8.8', state.sho
 const clockBox = ref<HTMLElement | null>(null)
 const { fontSize: clockSize } = useFitText(clockBox, () => ['00:00'], { fill: 0.8 })
 
-// Colours: full black/white only — maximum contrast for LED panels and daylight.
+// Colours: full black/white only — maximum contrast for LED panels and daylight, whatever
+// the state (stopped or suspended included, 2026-11-08): a dimmed number reads as "off".
 const colours = computed(() => (light.value ? 'bg-white text-black' : 'bg-black text-white'))
-// The suspended state (game clock stopped) is the one thing worth signalling, and it is
-// done by dimming rather than by a colour, which would break the contrast requirement.
-const dimmed = computed(() => state.shotclockState === 'IDLE' || state.shotclockState === 'SUSPENDED')
 </script>
 
 <template>
@@ -45,16 +47,15 @@ const dimmed = computed(() => state.shotclockState === 'IDLE' || state.shotclock
     <!-- Shot clock: takes all the space left by the optional game clock -->
     <div ref="mainBox" class="flex-1 min-h-0 flex items-center justify-center">
       <span
-        class="leading-none whitespace-nowrap transition-opacity duration-150"
-        :class="dimmed ? 'opacity-40' : 'opacity-100'"
+        class="leading-none whitespace-nowrap"
         :style="{ fontSize: mainSize + 'px' }"
       >{{ state.shotclock }}</span>
     </div>
 
-    <!-- Game clock, smaller, underneath — optional (?clock=0) -->
+    <!-- Game clock, smaller, underneath — optional (?clock=0); full contrast too -->
     <div v-if="showClock" ref="clockBox" class="h-[18%] shrink-0 flex items-center justify-center">
       <span
-        class="leading-none whitespace-nowrap opacity-70"
+        class="leading-none whitespace-nowrap"
         :style="{ fontSize: clockSize + 'px' }"
       >{{ state.timer }}</span>
     </div>

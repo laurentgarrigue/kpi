@@ -1,4 +1,5 @@
 import type { TeamSide } from '~/types/scoring'
+import { busyPenaltySlots, isPenaltyExpired } from '~/utils/scoringPenalties'
 
 /**
  * Penalty clocks of the console (spec §7.4, rules corrected 2026-07-29):
@@ -9,6 +10,9 @@ import type { TeamSide } from '~/types/scoring'
  *  - the clocks follow the game clock (suspendAll/resumeAll, like the shotclock);
  *  - on a conceded goal, the OLDEST liftable (V/J) penalty ends early — the player
  *    returns; an R penalty always runs its full 2 minutes (replacement at its end).
+ *
+ *  - at 0 a penalty is NOT removed (§0.15): it stays at 00:00, stopped, until the table
+ *    removes it — it no longer holds its slot nor can be lifted by a goal.
  *
  * The composable owns the countdown only; persistence (scoring_live_clock kind PENALTY)
  * and confirmations live in the page.
@@ -59,14 +63,18 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
       if (p.remainingMs <= 0) expired.push(p)
     }
     for (const p of expired) {
-      remove(p.id)
+      p.remainingMs = 0
+      p.running = false
+      endAt.delete(p.id)
       options.onExpired?.(p)
     }
+    clearTickIfIdle()
   }
 
   /**
    * Start a penalty for a team. Returns the created clock, or null when the team already
-   * has 2 concurrent exclusions (spec: the operator is warned, nothing is created).
+   * has 2 concurrent exclusions (spec: the operator is warned, nothing is created). An
+   * expired penalty left on the slot it takes is dropped (the server row is overwritten).
    */
   const add = (input: {
     team: TeamSide
@@ -76,9 +84,10 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
     durationSec: number
     running: boolean
   }): PenaltyClock | null => {
-    const busy = penalties.value.filter(p => p.team === input.team).map(p => p.slot)
-    const slot = freePenaltySlot(busy)
+    const slot = freePenaltySlot(busyPenaltySlots(penalties.value, input.team))
     if (slot === null) return null
+    const stale = penalties.value.find(p => p.team === input.team && p.slot === slot)
+    if (stale) remove(stale.id)
 
     const clock: PenaltyClock = {
       id: uuid(),
@@ -151,7 +160,7 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
    */
   const liftCandidate = (team: TeamSide): PenaltyClock | null => {
     const candidates = penalties.value.filter(
-      p => p.team === team && penaltyLiftableOnGoal(p.cardCode)
+      p => p.team === team && !isPenaltyExpired(p) && penaltyLiftableOnGoal(p.cardCode)
     )
     if (candidates.length === 0) return null
     // Slot order follows creation order here (clocks are pushed sequentially).
@@ -171,8 +180,8 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
   }>, gameClockRunning: boolean) => {
     for (const c of clocks) {
       if (!cardCreatesPenaltyClock(c.cardCode ?? '')) continue
+      // Expired ones come back at 00:00, still waiting for the table to remove them.
       const left = Math.max(0, c.initMs - c.elapsedMs)
-      if (left <= 0) continue
       const clock: PenaltyClock = {
         id: c.id,
         team: c.team,
@@ -181,7 +190,7 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
         playerNumber: null,
         cardCode: (c.cardCode ?? 'V') as 'V' | 'J' | 'R',
         remainingMs: left,
-        running: c.running && gameClockRunning
+        running: c.running && gameClockRunning && left > 0
       }
       penalties.value.push(clock)
       if (clock.running) endAt.set(clock.id, Date.now() + left)

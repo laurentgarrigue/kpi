@@ -31,6 +31,12 @@ export function timelineOrder(events: ScoringEvent[]): ScoringEvent[] {
     periodRank(b.period) - periodRank(a.period) || timeToSeconds(a.tpsJeu) - timeToSeconds(b.tpsJeu))
 }
 
+/** Match order, oldest fact first; facts at the same moment keep their entry order. Returns a copy. */
+export function matchOrder(events: ScoringEvent[]): ScoringEvent[] {
+  return [...events].sort((a, b) =>
+    periodRank(a.period) - periodRank(b.period) || timeToSeconds(b.tpsJeu) - timeToSeconds(a.tpsJeu))
+}
+
 /**
  * Facts as displayed: the `limit` most recent ones (0 = all), newest at the top by default or
  * oldest at the top (the operator's choice). The « latest N » are always the most recent
