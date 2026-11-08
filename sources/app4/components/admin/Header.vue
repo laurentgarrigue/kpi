@@ -439,15 +439,24 @@ onMounted(() => {
               leave-from-class="transform opacity-100 scale-100"
               leave-to-class="transform opacity-0 scale-95"
             >
+              <!-- Two columns (CSS columns, a group never split) once there are several groups; mobile keeps its accordion -->
               <div
                 v-if="openDropdown === 'admin'"
-                class="absolute left-0 mt-1 w-56 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
+                :class="[
+                  'absolute mt-1 bg-header-950 rounded-lg shadow-lg border border-header-700 p-1 z-50',
+                  adminMenuGroups.length > 1
+                    ? 'w-[30rem] max-w-[calc(100vw-2rem)] columns-2 gap-1 right-0'
+                    : 'w-56 left-0'
+                ]"
               >
-                <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
+                <div
+                  v-for="group in adminMenuGroups"
+                  :key="group.key"
+                  class="break-inside-avoid mb-1 last:mb-0 rounded-md overflow-hidden border border-header-800"
+                >
                   <!-- Group title: non-clickable band, distinct from the links below -->
                   <div
-                    class="px-3 py-1 bg-header-900 border-y border-header-800 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
-                    :class="gIndex > 0 ? 'mt-1' : '-mt-1 border-t-0 rounded-t-lg'"
+                    class="px-3 py-1 bg-header-900 border-b border-header-800 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
                   >
                     <UIcon :name="group.icon" class="w-3 h-3" />
                     {{ group.label }}
@@ -456,13 +465,13 @@ onMounted(() => {
                     v-for="item in group.items"
                     :key="item.to"
                     :to="item.to!"
-                    class="flex items-center gap-2 pl-6 pr-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
+                    class="flex items-center gap-2 pl-4 pr-3 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
                     @click="openDropdown = null"
                   >
-                    <UIcon :name="item.icon" class="w-4 h-4" />
+                    <UIcon :name="item.icon" class="w-4 h-4 shrink-0" />
                     <span>{{ item.label }}</span>
                   </NuxtLink>
-                </template>
+                </div>
               </div>
             </Transition>
           </div>
