@@ -160,7 +160,7 @@ export default defineNuxtConfig({
           }
         },
         {
-          urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|ico|woff|woff2|ttf|eot)$/,
+          urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|ico|woff|woff2|ttf|eot|mp3)$/,
           handler: 'CacheFirst',
           options: {
             cacheName: 'assets-static',

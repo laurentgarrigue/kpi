@@ -211,7 +211,7 @@ const { display: clockDisplay, gameTime, elapsed, elapsedPrecise, isRunning, max
   useTimer({
     onTargetReached: () => {
       // Buzzer at period end; persist the stop server-side; then the break, if any.
-      buzzer.beep()
+      buzzer.play()
       void scoringStore.setTimer('stop', { startTime: elapsedPrecise.value, runTime: 0, maxTime: scoringStore.currentPeriodDuration })
       startBreakAfterPeriod()
     }
@@ -269,7 +269,7 @@ onUnmounted(() => {
 })
 
 // ─── Shotclock (chronomètre de tir) — 3 commands, auto-follows the game clock (§6.5) ───
-const shotclock = useShotclock({ onExpired: () => buzzer.beep() })
+const shotclock = useShotclock({ onExpired: () => buzzer.play() })
 
 const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
   void scoringStore.setTimer(action, {
@@ -313,7 +313,7 @@ const shotclockAdjust = (delta: number) => {
 // (replacement at the end only, even if goals are conceded meanwhile).
 const penalties = usePenalties({
   onExpired: (p) => {
-    buzzer.beep(400)
+    buzzer.play()
     void scoringStore.setTimer('RAZ', { kind: 'PENALTY', team: p.team, slot: p.slot })
     toast.add({
       title: t('scoring.penalty.expired_title'),
@@ -422,7 +422,7 @@ const startBreak = (seconds: number, persist = true) => {
     if (breakRemaining.value === null) return
     breakRemaining.value = Math.max(0, breakRemaining.value - 1)
     if (breakRemaining.value <= 0) {
-      buzzer.beep() // end of break = resume signal
+      buzzer.play() // end of break = resume signal
       stopBreak()
     }
   }, 1000)

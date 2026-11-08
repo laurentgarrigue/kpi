@@ -394,6 +394,17 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.14. Sur un PC avec sou
 | 3.94 | Ouvrir la modale **Raccourcis clavier** | icône ambre, touches estompées, **pas** de liseré | | ☐ |
 | 3.95 | Tablette **sans clavier** (ou émulation tactile des outils de développement), toucher la barre d'adresse | **ni liseré ni pastille** ; l'icône de l'entête reflète quand même l'état | | ☐ |
 
+#### Son du buzzer (2026-11-08)
+
+⌨️ Après le pull : `make app4_dev_restart` (le serveur de dev ne voit pas un nouveau dossier de `public/`).
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.96 | `curl -sk -o /dev/null -w '%{http_code} %{content_type}\n' https://kpi.localhost/admin2/sounds/buzzer.mp3` | `200 audio/mpeg` (et non `text/html`) | | ☐ |
+| 3.97 | Console ouverte, un clic n'importe où, puis bouton **test son** (haut-parleur à côté d'Arrêt) | le **buzzer de FeuilleMarque3** (même son que son bouton test), pas un bip | | ☐ |
+| 3.98 | Shotclock à 0, fin de période, fin de pause, expiration d'une pénalité | même buzzer dans les quatre cas ; shotclock et fin de période simultanés → les deux se superposent | | ☐ |
+| 3.99 | Console **buildée** (PWA), ouverte une fois en ligne, puis réseau coupé et rechargement | le buzzer sonne encore (fichier en cache `assets-static`) | | ☐ |
+
 ### Lot 4 — Page d'incrustation unique
 
 Les migrations du lot 4 sont dans R0.2. Puis :
