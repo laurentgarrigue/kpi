@@ -38,7 +38,7 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [PAGE_NEWS.md](PAGE_NEWS.md) | Actualités : liste, article, catégories, partage, RSS | 4a | ✅ Validée (11/10/2026) — 🚀 Livrée (beta) |
 | [PAGE_CONTENT.md](PAGE_CONTENT.md) | Pages éditoriales, menu « Le kayak-polo », accueil éditorial | 4a | ✅ Validée (11/10/2026) — 🚀 Livrée (beta) |
 | [FEATURE_FORMS.md](FEATURE_FORMS.md) | Formulaires d'inscription, liste publique, HelloAsso, anti-spam, RGPD | 4b | ✅ Validée (11/10/2026) — 🚀 Livrée (beta) |
-| [FEATURE_MATCH_MEDALS.md](FEATURE_MATCH_MEDALS.md) | Médailles de match (équipes, joueurs) et statistiques de timeline par compétition / événement, app3 + app2 | transverse | 📝 Brouillon |
+| [FEATURE_MATCH_MEDALS.md](FEATURE_MATCH_MEDALS.md) | Médailles de match (équipes, joueurs) et statistiques de timeline, publication par surface (app2, app3), catalogue admin (app4) | transverse | 📝 Brouillon (retours du 08/11/2026 intégrés) |
 | `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |
 | [maquettes/](maquettes/README.md) | Modernisation de l'interface : maquettes HTML de toutes les pages, décisions de design | — | ✅ Validées (22/10/2026) — specs à mettre à jour page par page |
 

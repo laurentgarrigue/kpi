@@ -1,109 +1,176 @@
 # Médailles de match et statistiques de timeline
 
-**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon
-**Surfaces** : app3 (site public) et app2 (PWA résultats) — **Données** : api2, sans saisie supplémentaire
+**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours du
+08/11/2026 intégrés)
+**Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
+saisie supplémentaire
 **Remplace** : — (nouveauté)
 
 ## 1. Objectif
 
 Raconter chaque match autrement que par le score : à partir de la **timeline** déjà saisie (buts et cartons
 horodatés), attribuer des **médailles** aux équipes et aux joueurs (premier but, but en supériorité numérique,
-remontée au score…) et en tirer des **statistiques originales** par compétition et par événement (taux de
-conversion en supériorité, part des matchs gagnés par l'équipe qui ouvre le score…).
+remontée au score…) et en tirer des **statistiques originales** par compétition et par événement.
 
 Public visé : joueurs, clubs, spectateurs et commentateurs. Rien n'est saisi en plus : tout est **déduit** des
 faits de match existants.
 
-**Décisions de cadrage (08/11/2026)** :
+Le catalogue est **évolutif** : chaque médaille, étiquette ou statistique est d'abord visible dans l'admin
+(profils 1 et 2), puis **publiée** — sur app2, sur app3 ou sur les deux, selon ce qui sert le mieux chaque public —
+quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu pertinente. On ajoute ainsi des nouveautés au fil des saisons.
 
-| Question | Décision |
+### 1.1 Décisions de cadrage
+
+| Sujet | Décision |
 |---|---|
-| Surfaces du premier lot | **app3** (stats compétition / événement, fiche équipe) et **app2** (feuille de match, stats). Incrustations TV et fiche joueur : plus tard (§ 9). |
-| Matchs éligibles | **Matchs validés uniquement** (`kp_match.Validation = 'O'`), publiés. |
-| Terminologie | **Anglicismes sportifs assumés** (vocabulaire courant des clubs : *Powerplay*, *Comeback*…), jamais guerriers. Mêmes noms en français et en anglais, description traduite. |
-| Tirs (`T`) et arrêts (`A`) | **Exclus** du premier lot : buts et cartons seulement (§ 9). |
+| Surfaces | **app3** (stats compétition / événement, fiche équipe, page d'explication) et **app2** (feuille de match, stats) pour le public ; **app4** (profils 1–2) pour tout le catalogue. Incrustations TV et fiche joueur : plus tard (§ 10). |
+| Matchs éligibles | **Matchs validés uniquement** (`kp_match.Validation = 'O'`), publiés, **matchs de classement et de placement compris**. |
+| Appellation | **Double appellation** : un nom français et son équivalent anglais, affichés ensemble en français (« Premier but · Opener ») pour que le vocabulaire anglais s'installe progressivement ; le nom anglais seul sur le site anglais. Jamais de vocabulaire guerrier. |
+| Explications | Chaque médaille, étiquette et statistique a une **explication** stockée et affichée (§ 3.1, § 8). |
+| Tirs (`T`) et arrêts (`A`) | **Exclus** : buts et cartons seulement (§ 10). |
+| Durée des périodes | **Non stockée, approximation acceptée** : 10 min par période et 5 min par prolongation dans la grande majorité des cas ; les formats courts (jeunes : 7 min et 3 min) gardent des proportions proches (§ 5.2). |
+| Exclusions | Carton vert, jaune, rouge : **2 min**, levée au premier but adverse. Rouge définitif (`D`, futur carton noir) : **infériorité jusqu'à la fin du match** (§ 5.3). |
+| Seuils | **Centralisés en un seul endroit**, communs à toutes les compétitions (§ 5.4). |
+| Recalcul | **Toutes les saisons**, **saison par saison** : changer un seuil ne recalcule que les saisons choisies, les anciennes gardent leurs résultats et leurs seuils (§ 6.3). |
+| Premier lot public | **Sélection réduite** (§ 4) ; le reste n'est visible que dans l'admin en attendant d'être publié. |
+| Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
 
 ## 2. Vocabulaire
 
 | Terme | Définition |
 |---|---|
 | **Timeline** | Suite des faits de match d'un match (`kp_match_detail`) : buts (`B`) et cartons (`V`, `J`, `R`, `D`), chacun avec une période et un temps. |
-| **Temps de jeu écoulé** | Position d'un fait sur un axe continu depuis le coup d'envoi, en secondes (§ 4.2). Le champ `Temps` stocke le **temps restant** au chrono de la période (décompte). |
-| **Exclusion** | Infériorité numérique provoquée par un carton (§ 4.3). |
-| **Supériorité / infériorité** | Une équipe est en **supériorité** quand l'adversaire a au moins une exclusion en cours, et qu'elle-même en a moins ; en **infériorité** dans le cas inverse. |
-| **Médaille** | Distinction attribuée par un match à une équipe ou à un joueur, selon une règle de § 3. Un match peut attribuer la même médaille plusieurs fois (ex. deux buts en supériorité). |
-| **Médaille d'équipe / de joueur** | Selon son bénéficiaire. Une médaille de joueur rapporte aussi la médaille à son équipe dans les agrégats. |
-| **Timeline fiable** | Timeline qui permet les médailles « chronologiques » (§ 4.1). |
+| **Temps de jeu écoulé** | Position d'un fait sur un axe continu depuis le coup d'envoi, en secondes (§ 5.2). Le champ `Temps` stocke le **temps restant** au chrono de la période (décompte). |
+| **Exclusion** | Infériorité numérique provoquée par un carton (§ 5.3). |
+| **Supériorité / infériorité** | Une équipe est en **supériorité** quand l'adversaire a plus d'exclusions en cours qu'elle ; en **infériorité** dans le cas inverse. |
+| **Médaille** | Distinction attribuée par un match à une équipe ou à un joueur. Un match peut attribuer la même médaille plusieurs fois (ex. deux buts en supériorité). Une médaille de joueur compte aussi pour son équipe dans les agrégats. |
+| **Étiquette** | Qualificatif d'un match entier (ex. « Suspense · Thriller »). |
+| **Statistique de timeline** | Indicateur agrégé sur une compétition ou un événement (ex. « Supériorité % · Powerplay % »). |
+| **Élément du catalogue** | Une médaille, une étiquette ou une statistique de timeline, avec ses noms, son explication et ses surfaces de publication (§ 3). |
+| **Surface** | Application publique où un élément peut être publié : **app2** (résultats en direct, match par match) ou **app3** (site public, vue saison et analyse). |
+| **Seuils de saison** | Copie des seuils utilisés pour calculer une saison (§ 6.3). |
+| **Timeline fiable** | Timeline qui permet les éléments « chronologiques » (§ 5.1). |
 
-> Les termes *Timeline*, *Médaille* et *Exclusion* seront ajoutés à `GLOSSARY.md` à la validation de la spec.
+> Ces termes seront ajoutés à `GLOSSARY.md` à la validation de la spec.
 
-## 3. Catalogue des médailles
+## 3. Catalogue
 
-Chaque médaille a un **code** stable (clé technique et i18n), un **nom** (identique FR/EN), une **description**
-traduite, une **famille** (pour l'affichage) et un **niveau de données** requis :
+### 3.1 Structure d'un élément
 
-- **S (score)** : n'a besoin que du score et des faits de match, sans ordre ni temps ;
-- **T (timeline)** : a besoin d'une timeline fiable (§ 4.1).
+Chaque élément du catalogue a :
 
-Les seuils (en *italique*) sont des **paramètres** (§ 4.4), pas des valeurs codées en dur.
+- un **code** stable (clé technique), un **type** (`medal`, `label`, `stat`) et, pour une médaille, sa **portée**
+  (équipe, joueur, ou les deux) ;
+- un **nom français** et un **nom anglais** ;
+- une **explication** en français et en anglais, courte (une à deux phrases), qui peut citer les seuils sous forme de
+  variables (`{bounceBackSeconds}`) remplacées par les seuils de la saison affichée ;
+- une **famille** (pour le regroupement et la couleur) et un **niveau de données** requis :
+  **S** (score et faits de match, sans ordre ni temps) ou **T** (timeline fiable, § 5.1) ;
+- un **statut** : `active` (calculé, visible dans l'admin) ou `retired` (masqué partout, plus calculé) ;
+- ses **surfaces de publication** : aucune, `app2`, `app3`, ou les deux. Un élément actif sans surface n'est visible
+  que dans l'admin (« non publié »). Un nouvel élément naît actif et sans surface.
 
-### 3.1 Médailles d'équipe
+Les éléments actifs sont **calculés qu'ils soient publiés ou non** : publier un élément sur une surface affiche
+aussitôt tout son historique, sans recalcul. Les surfaces ne filtrent que la lecture.
 
-| Code | Nom | Règle d'attribution | Famille | Données |
-|---|---|---|---|---|
-| `opener` | **Opener** | Marque le premier but du match. | Momentum | T |
-| `wire_to_wire` | **Wire to Wire** | Ouvre le score, n'est jamais rejointe ni dépassée, et gagne. | Momentum | T |
-| `scoring_run` | **Scoring Run** | Marque au moins *3* buts consécutifs sans en encaisser. Une seule médaille par série ; plusieurs séries = plusieurs médailles. | Momentum | T |
-| `bounce_back` | **Bounce Back** | Marque moins de *60 s* de temps de jeu après avoir encaissé un but. Une médaille par but concerné. | Réaction | T |
-| `comeback` | **Comeback** | Menée d'au moins *3* buts à un moment du match, finit par gagner. | Réaction | T |
-| `comeback_draw` | **Fightback** | Menée d'au moins *3* buts, obtient le match nul (matchs de classement, type `C`). | Réaction | T |
-| `late_winner` | **Late Winner** | Marque le but décisif (§ 4.5) dans les *60* dernières secondes du temps réglementaire. | Réaction | T |
-| `lifeline` | **Lifeline** | Égalise dans les *60* dernières secondes de `M2` et arrache la prolongation (match éliminatoire, type `E`). | Réaction | T |
-| `extra_time` | **Extra Time** | Le match va en prolongation (les deux équipes). | Endurance | S |
-| `marathon` | **Marathon** | Le match atteint au moins une *2ᵉ* prolongation (`P2`) (les deux équipes). | Endurance | S |
-| `golden_goal` | **Golden Goal** | Gagne en prolongation (but en or). | Endurance | S |
-| `powerplay` | **Powerplay** | Marque en supériorité numérique (§ 4.3). Une médaille par but. | Supériorité | T |
-| `shorthanded` | **Shorthanded** | Marque en infériorité numérique. Une médaille par but. | Supériorité | T |
-| `penalty_kill` | **Penalty Kill** | Traverse au moins *2* exclusions dans le match sans encaisser de but pendant ces exclusions. | Supériorité | T |
-| `clean_sheet` | **Clean Sheet** | N'encaisse aucun but (match terminé, adversaire présent). | Défense | S |
-| `big_win` | **Big Win** | Gagne avec au moins *5* buts d'écart. | Défense | S |
-| `fair_play` | **Fair Play** | Ne reçoit aucun carton dans le match. | Esprit sportif | S |
+Le catalogue est stocké en base (§ 6.2), initialisé par migration à partir des tableaux ci-dessous ; les **noms,
+explications, statuts et surfaces** se modifient dans l'admin (§ 9.3). Les **règles** de calcul restent dans le code.
 
-### 3.2 Médailles de joueur
+### 3.2 Médailles
 
-| Code | Nom | Règle d'attribution | Famille | Données |
-|---|---|---|---|---|
-| `first_goal` | **First Goal** | Marque le premier but du match. | Momentum | T |
-| `fast_start` | **Fast Start** | Marque dans les *30* premières secondes d'une période réglementaire (`M1`, `M2`). | Momentum | T |
-| `hat_trick` | **Hat-trick** | Marque au moins *3* buts dans le match. | Finition | S |
-| `natural_hat_trick` | **Natural Hat-trick** | Marque *3* buts consécutifs du match (aucun autre but, des deux équipes, entre eux). | Finition | T |
-| `game_winner` | **Game Winner** | Marque le but décisif (§ 4.5). | Réaction | T |
-| `bounce_back` | **Bounce Back** | Marque le but de la médaille d'équipe `bounce_back`. | Réaction | T |
-| `late_winner` | **Late Winner** | Marque le but de la médaille d'équipe `late_winner`. | Réaction | T |
-| `lifeline` | **Lifeline** | Marque le but de la médaille d'équipe `lifeline`. | Réaction | T |
-| `golden_goal` | **Golden Goal** | Marque le but en or. | Endurance | S |
-| `powerplay` | **Powerplay** | Marque en supériorité numérique. | Supériorité | T |
-| `shorthanded` | **Shorthanded** | Marque en infériorité numérique. | Supériorité | T |
+Les seuils en *italique* sont des paramètres (§ 5.4). Portée : É = équipe, J = joueur.
 
-**Exclusions communes** : les faits de la période `TB` (tirs au but) ne comptent pour **aucune** médaille ; les buts
-d'un membre marqué entraîneur (`kp_match_joueur.Capitaine = 'E'`) ne rapportent pas de médaille de joueur (même
-règle que les statistiques existantes) ; un but sans joueur identifié rapporte la médaille d'équipe, pas celle de
-joueur.
+| Code | Nom FR · EN | Portée | Explication (attribution) | Famille | Données | Publication initiale |
+|---|---|---|---|---|---|---|
+| `opener` | **Premier but · Opener** | É, J | L'équipe et le joueur qui ouvrent le score. | Élan | T | **app2, app3** |
+| `wire_to_wire` | **De bout en bout · Wire to Wire** | É | Ouvre le score, n'est jamais rejointe, et gagne. | Élan | T | — (admin) |
+| `scoring_run` | **Série · Scoring Run** | É | Marque au moins *3* buts consécutifs sans en encaisser (une médaille par série). | Élan | T | — (admin) |
+| `fast_start` | **Entrée express · Fast Start** | J | Marque dans les *30* premières secondes d'une mi-temps. | Élan | T | — (admin) |
+| `bounce_back` | **Réplique · Bounce Back** | É, J | Marque moins de *60 s* après avoir encaissé un but (une médaille par but). | Réaction | T | — (admin) |
+| `comeback` | **Remontée · Comeback** | É | Menée d'au moins *3* buts, finit par gagner. | Réaction | T | **app2, app3** |
+| `fightback` | **Retour au score · Fightback** | É | Menée d'au moins *3* buts, obtient le match nul (match sans prolongation). | Réaction | T | — (admin) |
+| `game_winner` | **But de la victoire · Game Winner** | J | Marque le but décisif (§ 5.5). | Réaction | T | **app2** |
+| `late_winner` | **Dernière minute · Late Winner** | É, J | Marque le but décisif dans les *60* dernières secondes du temps réglementaire. | Réaction | T | — (admin) |
+| `lifeline` | **Égalisation salvatrice · Lifeline** | É, J | Égalise dans les *60* dernières secondes de la 2ᵉ mi-temps et arrache la prolongation. | Réaction | T | — (admin) |
+| `extra_time` | **Prolongation · Extra Time** | É | Le match va en prolongation (les deux équipes). | Endurance | S | — (admin) |
+| `marathon` | **Marathon · Marathon** | É | Le match atteint au moins une *2ᵉ* prolongation (les deux équipes). | Endurance | S | — (admin) |
+| `golden_goal` | **But en or · Golden Goal** | É, J | Gagne en prolongation ; le joueur marque le but en or. | Endurance | S | **app2, app3** |
+| `powerplay` | **Supériorité · Powerplay** | É, J | Marque en supériorité numérique (une médaille par but). | Supériorité numérique | T | **app2, app3** |
+| `shorthanded` | **Infériorité · Shorthanded** | É, J | Marque en infériorité numérique (une médaille par but). | Supériorité numérique | T | — (admin) |
+| `penalty_kill` | **Résistance · Penalty Kill** | É | Traverse au moins *2* exclusions sans encaisser de but pendant celles-ci. | Supériorité numérique | T | — (admin) |
+| `hat_trick` | **Triplé · Hat-trick** | J | Marque au moins *3* buts dans le match. | Finition | S | **app2, app3** |
+| `natural_hat_trick` | **Triplé consécutif · Natural Hat-trick** | J | Marque *3* buts consécutifs du match, sans autre but entre eux. | Finition | T | — (admin) |
+| `clean_sheet` | **Cage inviolée · Clean Sheet** | É | N'encaisse aucun but. | Défense | S | **app2, app3** |
+| `big_win` | **Large victoire · Big Win** | É | Gagne avec au moins *5* buts d'écart. | Défense | S | — (admin) |
+| `fair_play` | **Fair-play · Fair Play** | É | Ne reçoit aucun carton dans le match. | Esprit sportif | S | **app3** |
+
+**Règles communes** : les faits de la période `TB` (tirs au but) ne comptent pour aucune médaille ; les buts d'un
+membre marqué entraîneur (`kp_match_joueur.Capitaine = 'E'`) et les buts sans joueur identifié rapportent la
+médaille d'équipe, jamais celle de joueur. Aucune médaille « négative » : on ne distingue jamais une équipe pour ce
+qu'elle a subi.
 
 ### 3.3 Étiquettes de match
 
-En plus des médailles, un match reçoit des **étiquettes** qui le qualifient dans les listes (« matchs à revoir ») :
+| Code | Nom FR · EN | Explication | Données | Publication initiale |
+|---|---|---|---|---|
+| `thriller` | **Suspense · Thriller** | Au moins *3* changements de leader (§ 5.5). | T | **app2, app3** |
+| `seesaw` | **Chassé-croisé · Seesaw** | Au moins *4* égalisations. | T | — (admin) |
+| `goal_fest` | **Festival · Goal Fest** | Total de buts parmi les *10 %* les plus élevés de la compétition (au moins *10* matchs éligibles). | S | — (admin) |
+| `lockdown` | **Verrouillé · Lockdown** | Au plus *2* buts dans le match. | S | — (admin) |
 
-| Code | Nom | Règle | Données |
+### 3.4 Statistiques de timeline (compétition, événement)
+
+Chaque statistique est un fournisseur `CompetitionStatInterface` (API_PUBLIC_RESULTS.md § 5.4), sur le périmètre
+d'une compétition ou d'un événement. Ne comptent que les matchs éligibles ; celles qui reposent sur des éléments **T**
+ne comptent que les matchs à timeline fiable et indiquent **sur combien de matchs** elles portent.
+
+| Kind | Nom FR · EN | Explication (calcul) | Publication initiale |
 |---|---|---|---|
-| `thriller` | **Thriller** | Au moins *3* changements de leader (§ 4.5). | T |
-| `seesaw` | **Seesaw** | Au moins *4* égalisations dans le match. | T |
-| `goal_fest` | **Goal Fest** | Total de buts ≥ *percentile 90* des matchs de la compétition (au moins *10* matchs éligibles). | S |
-| `lockdown` | **Lockdown** | Total de buts ≤ *2*. | S |
+| `medals_teams` | **Médailles des équipes · Team Medals** | Par équipe : nombre de médailles par code et total. | **app3** |
+| `medals_players` | **Médailles des joueurs · Player Medals** | Par joueur : idem, top 20 (`limit`). | **app2, app3** |
+| `opener_wins` | **Premier but gagnant · First Goal Wins** | Part des matchs gagnés par l'équipe qui ouvre le score (nuls à part). | **app3** |
+| `powerplay_rate` | **Supériorité % · Powerplay %** | Par équipe : buts en supériorité / exclusions adverses. | **app3** |
+| `penalty_kill_rate` | **Résistance % · Penalty Kill %** | Par équipe : exclusions sans but encaissé / exclusions. | — (admin) |
+| `goal_timing` | **Minutes des buts · Goal Timing** | Répartition des buts par tranche de *2 min* de jeu (histogramme). | — (admin) |
+| `first_goal_time` | **Délai du premier but · First Goal Time** | Délai moyen et médian avant le premier but ; but le plus rapide. | — (admin) |
+| `comebacks` | **Remontées · Comebacks** | Nombre de remontées, plus grosse remontée (écart, match). | — (admin) |
+| `extra_time` | **Prolongations · Extra Time** | Matchs en prolongation, plus grand nombre de prolongations, buts en or. | — (admin) |
+| `discipline` | **Discipline · Discipline** | Cartons par match et par équipe, minutes d'infériorité. | — (admin) |
+| `highlights` | **Matchs à revoir · Highlights** | Matchs étiquetés (`thriller`, `seesaw`, `goal_fest`), par date. Ne liste que les étiquettes publiées sur la même surface. | — (admin) |
+| `medals_{code}` | (nom de la médaille) | Classement d'une médaille donnée (ex. meilleurs buteurs en supériorité). Suit les surfaces de la médaille. | — |
 
-## 4. Règles de calcul
+## 4. Premier lot public, par surface
 
-### 4.1 Éligibilité et fiabilité
+Une sélection courte, facile à comprendre et peu sensible aux approximations de temps, répartie selon l'usage de
+chaque application :
+
+- **app2 — l'instant du match.** Consultée sur téléphone pendant le tournoi, match par match : on y montre ce qui
+  raconte **le match qui vient de se jouer** et l'événement en cours.
+- **app3 — la saison et l'analyse.** Consultée à froid, pour une compétition, une équipe ou un club : on y montre
+  les **bilans** et les **indicateurs** qui demandent du recul.
+
+| Élément | app2 | app3 | Pourquoi |
+|---|:-:|:-:|---|
+| Premier but · Opener | ✓ | ✓ | Simple et parlant partout ; base de « Premier but gagnant ». |
+| Remontée · Comeback | ✓ | ✓ | Fait marquant du match, et trace dans le bilan d'équipe. |
+| But de la victoire · Game Winner | ✓ | | Médaille de joueur, surtout lue sur la feuille de match. |
+| But en or · Golden Goal | ✓ | ✓ | Moment fort du match, et rareté dans le bilan. |
+| Supériorité · Powerplay | ✓ | ✓ | Sur le match (le but) et dans le bilan (base de « Supériorité % »). |
+| Triplé · Hat-trick | ✓ | ✓ | Exploit individuel, lisible partout. |
+| Cage inviolée · Clean Sheet | ✓ | ✓ | Exploit collectif, lisible partout. |
+| Fair-play · Fair Play | | ✓ | Prend son sens en cumul sur la saison (valeur de club) plutôt que match par match. |
+| Suspense · Thriller | ✓ | ✓ | Pastille du match dans app2 ; repère « match à revoir » dans les listes d'app3. |
+| Médailles des joueurs · Player Medals | ✓ | ✓ | Classement de l'événement en direct (app2) et de la compétition (app3). |
+| Médailles des équipes · Team Medals | | ✓ | Bilan d'équipe, plutôt saisonnier. |
+| Premier but gagnant · First Goal Wins | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
+| Supériorité % · Powerplay % | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
+
+Tout le reste naît non publié. Publier un élément sur une surface, l'en retirer ou le retirer complètement est un
+changement dans l'admin (§ 9.3), sans déploiement ni recalcul.
+
+## 5. Règles de calcul
+
+### 5.1 Éligibilité et fiabilité
 
 Un match **attribue des médailles** si :
 
@@ -111,185 +178,206 @@ Un match **attribue des médailles** si :
 2. son score est numérique des deux côtés (pas de forfait ni de score non saisi) ;
 3. il a deux équipes.
 
-Sa **timeline est fiable** (médailles **T** et étiquettes **T** autorisées) si, en plus :
+Les matchs de placement et de classement sont traités comme les autres.
+
+Sa **timeline est fiable** (éléments **T** autorisés) si, en plus :
 
 4. le nombre de buts `B` hors `TB` de chaque équipe est égal à son score (`ScoreA`, `ScoreB`) ;
 5. chaque but et chaque carton hors `TB` a une période et un temps renseignés ;
-6. aucun temps n'est hors de sa période (temps restant > durée de la période, § 4.2).
+6. aucun temps n'est hors de sa période (temps restant > durée retenue, § 5.2, après allongement).
 
-Un match éligible dont la timeline n'est pas fiable n'attribue **que les médailles S**. L'API expose ce niveau
-(`timeline_reliable: false`) pour que l'affichage l'explique (« médailles chronologiques indisponibles : feuille
-incomplète »), sans jamais l'imputer à une équipe.
+Un match éligible dont la timeline n'est pas fiable n'attribue **que les médailles S**. L'API l'indique
+(`timeline_reliable: false`) pour que l'affichage l'explique, sans jamais l'imputer à une équipe.
 
-### 4.2 Axe de temps
+### 5.2 Axe de temps
 
 - Ordre des périodes : `M1`, `M2`, `P1`, `P2`, … `Pn` (non borné, cf. PAGE_SCORING.md § 0.6). `TB` est hors axe.
-- La **durée d'une période** n'est pas stockée. Durée retenue : la durée par défaut (`M*` = *600 s*, `P*` = *300 s*),
-  **allongée** à la minute pleine supérieure au plus grand temps restant saisi dans cette période — même règle que
-  la frise d'app2 (`sources/app2/utils/gameTimeline.ts`), à **mutualiser** plutôt qu'à dupliquer.
+- **Durée d'une période** (non stockée) : *600 s* pour une mi-temps, *300 s* pour une prolongation, **allongée** à la
+  minute pleine supérieure au plus grand temps restant saisi dans la période — même règle que la frise d'app2
+  (`sources/app2/utils/gameTimeline.ts`), à **mutualiser** plutôt qu'à dupliquer.
 - Temps écoulé d'un fait = somme des durées des périodes précédentes + (durée de sa période − temps restant).
-- À temps égal, l'ordre est : carton avant but (un carton et un but à la même seconde : le but est réputé marqué
-  après le carton), puis ordre de saisie (`date_insert`, puis `Id`).
+- Les fenêtres **de fin de période** (*Dernière minute*, *Égalisation salvatrice*) se lisent directement sur le temps
+  restant : elles sont exactes quel que soit le format.
+- À temps égal : carton avant but, puis ordre de saisie (`date_insert`, puis `Id`).
 
-> **Limite connue** : pour une compétition jouée en périodes plus courtes (jeunes, tournois), la durée par défaut
-> fausse les écarts **entre deux périodes**. Les écarts **dans une même période** restent exacts. Évolution : lire
-> la durée dans la configuration de la compétition dès qu'elle existera (PAGE_SCORING.md § 6.4). Voir § 9, Q1.
+> **Approximation acceptée (décision du 08/11/2026)** : les formats courts (7 min par mi-temps, 3 min par
+> prolongation, surtout chez les jeunes) sont calculés avec les durées par défaut. Les écarts **dans une même
+> période** restent exacts ; les écarts **entre deux périodes** et *Entrée express* sont approximatifs pour ces
+> matchs. Les proportions restant proches, c'est jugé suffisant.
 
-### 4.3 Exclusions et supériorité numérique
+### 5.3 Exclusions et supériorité numérique
 
-Règle de jeu reprise de PAGE_SCORING.md § 7.4 :
-
-- chaque carton (`V`, `J`, `R`, `D`) ouvre une **exclusion** du joueur pendant *120 s* de temps de jeu (durée
-  paramétrable **par couleur**, § 4.4), qui se poursuit d'une période à l'autre ;
-- une exclusion se **termine plus tôt** au premier but encaissé par l'équipe exclue, **sauf** pour le rouge
-  définitif (`D`), qui va à son terme ;
-- si l'équipe a deux exclusions en cours, le but adverse lève **la plus ancienne** (hors `D`) ;
-- l'équipe ne descend jamais sous 3 joueurs : au plus 2 exclusions comptées par équipe à un instant donné.
+- Un carton **vert, jaune ou rouge** (`V`, `J`, `R`) ouvre une **exclusion de 120 s** de temps de jeu, qui se
+  poursuit d'une période à l'autre et se **termine plus tôt** au premier but encaissé par l'équipe exclue.
+- Un carton **rouge définitif** (`D`, futur **carton noir**) ouvre une exclusion **jusqu'à la fin du match**,
+  prolongations comprises, jamais levée par un but. La liste des codes « définitifs » est un paramètre
+  (`permanentCards`, § 5.4) pour accueillir le futur code du carton noir sans changer les règles.
+- Si l'équipe a plusieurs exclusions temporaires en cours, un but adverse lève **la plus ancienne**.
+- Une équipe ne descend jamais sous 3 joueurs : au plus **2 exclusions comptées** par équipe à un instant donné.
 
 Un but est **en supériorité** si, à l'instant du but, l'adversaire a strictement plus d'exclusions en cours que
-l'équipe qui marque ; **en infériorité** dans le cas inverse. À égalité d'exclusions (ex. une de chaque côté), le
-but n'est ni l'un ni l'autre.
+l'équipe qui marque ; **en infériorité** dans le cas inverse ; ni l'un ni l'autre à égalité.
 
-### 4.4 Paramètres
+### 5.4 Seuils (un seul endroit)
 
-Les seuils sont regroupés dans un objet de configuration unique côté api2 (`MedalRules`), versionné (§ 5.2). Valeurs
-initiales :
+Tous les seuils sont réunis dans **un seul fichier de configuration d'api2** (`config/match_medals.yaml`, lu par un
+objet `MedalThresholds`), **communs à toutes les compétitions**. Aucun seuil n'est écrit ailleurs (ni dans les règles,
+ni dans les explications, qui les citent par variable). Valeurs initiales :
 
 | Paramètre | Valeur | Utilisé par |
 |---|---|---|
 | `bounceBackSeconds` | 60 | `bounce_back` |
-| `comebackDeficit` | 3 | `comeback`, `comeback_draw` |
+| `comebackDeficit` | 3 | `comeback`, `fightback` |
 | `scoringRunGoals` | 3 | `scoring_run` |
 | `lateWindowSeconds` | 60 | `late_winner`, `lifeline` |
 | `fastStartSeconds` | 30 | `fast_start` |
 | `hatTrickGoals` | 3 | `hat_trick`, `natural_hat_trick` |
 | `bigWinMargin` | 5 | `big_win` |
 | `penaltyKillExclusions` | 2 | `penalty_kill` |
-| `exclusionSeconds` | `{ V: 120, J: 120, R: 120, D: 120 }` | § 4.3 |
-| `regularPeriodSeconds` / `extraPeriodSeconds` | 600 / 300 | § 4.2 |
+| `marathonOvertimes` | 2 | `marathon` |
+| `exclusionSeconds` | 120 | § 5.3 (`V`, `J`, `R`) |
+| `permanentCards` | `[D]` | § 5.3 |
+| `regularPeriodSeconds` / `extraPeriodSeconds` | 600 / 300 | § 5.2 |
 | `thrillerLeadChanges` / `seesawEqualizers` | 3 / 4 | étiquettes |
-| `goalFestPercentile` / `goalFestMinGames` / `lockdownMaxGoals` | 90 / 10 / 2 | étiquettes |
+| `goalFestTopPercent` / `goalFestMinGames` / `lockdownMaxGoals` | 10 / 10 / 2 | étiquettes |
+| `goalTimingSliceSeconds` | 120 | `goal_timing` |
 
-### 4.5 Définitions dérivées
+Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3).
 
-- **Leader** : équipe qui mène au score. Un **changement de leader** est un but qui fait passer l'avantage d'une
-  équipe à l'autre (une égalisation n'en est pas un ; le but suivant qui redonne l'avantage à l'autre équipe en est
-  un).
-- **But décisif** : pour le vainqueur, le but qui porte son score à (score final du perdant + 1). Pas de but décisif
-  pour un match nul.
+### 5.5 Définitions dérivées
 
-## 5. Données (api2)
+- **Leader** : équipe qui mène. Un **changement de leader** est un but qui donne l'avantage à l'équipe qui ne l'avait
+  pas au dernier moment où une équipe menait (une égalisation n'en est pas un).
+- **But décisif** : pour le vainqueur, le but qui porte son score à (score final du perdant + 1). Aucun pour un nul.
 
-### 5.1 Calcul
+## 6. Données (api2)
 
-- Un **service de domaine pur** (`src/MatchMedals/`) prend un match (score, type, période finale) et sa timeline, et
-  renvoie ses médailles et étiquettes. Sans accès base, sans horloge : il est testé unitairement règle par règle.
-- Chaque médaille est une **règle** indépendante (`MedalRuleInterface` : `code()`, `scope()` équipe/joueur,
-  `dataLevel()` S/T, `award(MatchTimeline)`), enregistrée par étiquette de service Symfony — même principe
-  ouvert/fermé que les statistiques (API_PUBLIC_RESULTS.md § 5.4). Ajouter une médaille = une classe + sa ligne dans
-  cette spec.
+### 6.1 Calcul
 
-### 5.2 Persistance
+- Un **service de domaine pur** (`src/MatchMedals/`) prend un match (score, type, période finale), sa timeline et des
+  seuils, et renvoie ses médailles et étiquettes. Sans accès base ni horloge : testé unitairement règle par règle.
+- Chaque élément est une **règle** indépendante (`MedalRuleInterface` : `code()`, `type()`, `scopes()`,
+  `dataLevel()`, `award(MatchTimeline, MedalThresholds)`), enregistrée par étiquette de service Symfony. Ajouter un
+  élément = une classe, sa ligne de catalogue (migration) et sa ligne dans cette spec.
 
-Les matchs validés ne bougent plus : les médailles sont **calculées une fois et stockées**, ce qui rend les
-agrégats (compétition, événement, saison) simples et rapides.
+### 6.2 Tables
 
-- Table `kp_match_medal` : `id`, `match_id`, `code`, `scope` (`team`/`player`), `team_side` (`A`/`B`),
-  `team_id`, `player_matric` (NULL pour une médaille d'équipe), `event_detail_id` (but à l'origine, si applicable),
-  `game_seconds` (temps écoulé du but, si applicable), `rules_version`. Index sur `match_id`, `team_id`,
-  `player_matric`, `code`.
-- Table `kp_match_insight` (une ligne par match calculé) : `match_id`, `timeline_reliable`, `labels` (JSON), `lead_changes`,
-  `equalizers`, `first_goal_seconds`, `max_deficit_A`, `max_deficit_B`, `exclusions_A`, `exclusions_B`,
-  `powerplay_goals_A`, `powerplay_goals_B`, `rules_version`, `source_hash`, `computed_at`. Elle sert aussi les
-  statistiques de taux (§ 6.2) et le suivi du recalcul.
-- Migration Doctrine dans api2 ; noms de tables préfixés `kp_` comme le reste du schéma.
+- **`kp_medal_catalog`** : `code` (clé), `type`, `scopes`, `family`, `data_level`, `name_fr`, `name_en`,
+  `explanation_fr`, `explanation_en`, `status` (`active`/`retired`), `published_app2`, `published_app3`,
+  `sort_order`, `updated_at`, `updated_by`. Initialisée par migration ; modifiable dans l'admin (noms, explications,
+  statut, surfaces, ordre).
+- **`kp_medal_season`** : `season` (clé), `thresholds` (JSON, copie des seuils), `rules_version`, `computed_at`,
+  `games_count`, `reliable_games_count`.
+- **`kp_match_medal`** : `id`, `match_id`, `code`, `scope` (`team`/`player`), `team_side` (`A`/`B`), `team_id`,
+  `player_matric` (NULL pour l'équipe), `event_detail_id` (but à l'origine), `game_seconds`. Index sur `match_id`,
+  `team_id`, `player_matric`, `code`.
+- **`kp_match_insight`** (une ligne par match calculé) : `match_id`, `season`, `timeline_reliable`, `labels` (JSON),
+  `lead_changes`, `equalizers`, `first_goal_seconds`, `max_deficit_A`, `max_deficit_B`, `exclusions_A`,
+  `exclusions_B`, `powerplay_goals_A`, `powerplay_goals_B`, `penalty_killed_A`, `penalty_killed_B`, `source_hash`,
+  `computed_at`.
 
-**Recalcul** :
+Migrations Doctrine dans api2, tables préfixées `kp_` comme le reste du schéma.
 
-- **À la validation / dévalidation** d'un match dans api2 (`AdminGamesController`) : calcul immédiat, ou
-  suppression des médailles à la dévalidation.
-- **Commande** `app:match-medals:refresh [--season=] [--competition=] [--event=] [--all]`, lancée **par cron**
-  (toutes les 10 min) : traite les matchs validés sans calcul, ceux dont `source_hash` (hash du score et de la
-  timeline) a changé, ceux calculés avec une `rules_version` antérieure, et supprime ceux qui ne sont plus validés.
-  Elle couvre la validation faite dans le legacy et le **rattrapage de l'historique** (toutes saisons).
-- Changer une règle ou un seuil = incrémenter `rules_version` ; la commande recalcule tout au passage suivant.
+### 6.3 Recalcul saison par saison
 
-### 5.3 Endpoints publics
+Chaque saison est calculée avec **ses** seuils, copiés dans `kp_medal_season` au moment de son calcul complet.
 
-Lecture seule, sans authentification, mêmes règles de publication que les résultats. **Aucun numéro de licence**
-exposé (identifiant joueur public opaque, comme `scorers`).
+- **Calcul complet d'une saison** — commande `app:match-medals:compute --season=2026` (cible
+  `make api2_match_medals_compute season=2026`) : copie les seuils actuels et la `rules_version` du code dans
+  `kp_medal_season`, puis recalcule tous les matchs éligibles de la saison et supprime les résultats des matchs qui ne
+  le sont plus. Les **autres saisons ne sont pas touchées**.
+- **Mise à jour au fil de l'eau** — à la **validation / dévalidation** d'un match dans api2 (`AdminGamesController`)
+  et par la commande `app:match-medals:sync` lancée **par cron** (toutes les 10 min, couvre la validation faite dans
+  le legacy) : calcule les matchs validés sans résultat ou dont `source_hash` (score + timeline) a changé, supprime
+  ceux qui ne sont plus validés. Elle utilise **les seuils de la saison du match** ; une saison jamais calculée
+  reçoit d'abord sa copie des seuils actuels.
+- **Mise en service** : un calcul complet de **chaque saison**, une par une, de la plus récente à la plus ancienne.
+- **Changer un seuil** : modifier `config/match_medals.yaml`, déployer, puis lancer le calcul complet des seules
+  saisons voulues (en général la saison en cours). Les saisons passées gardent leurs résultats et leurs seuils, et
+  leurs explications continuent de citer les seuils qui les ont produits.
+- **Changer une règle dans le code** : incrémenter `rules_version` ; l'admin signale les saisons calculées avec une
+  version antérieure (§ 9.3), sans recalcul automatique.
+
+### 6.4 Endpoints
+
+Lecture seule, mêmes règles de publication que les résultats. **Aucun numéro de licence** dans les réponses
+publiques (identifiant joueur public opaque, comme `scorers`). Les endpoints publics partagés prennent un paramètre
+**`surface=app2|app3`** (obligatoire, 400 sinon) et ne renvoient **que les éléments publiés sur cette surface** ; un
+endpoint propre à une application (feuille de match → app2, fiche équipe → app3) applique sa surface d'office. Les
+endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 
 | Endpoint | Contenu | Consommateurs |
 |---|---|---|
-| `GET /game-sheet/{id}` (existant) | **ajoute** `medals: { reliable, labels: [...], team: [{ code, side, count }], player: [{ code, side, number, first_name, last_name, event_id }] }` ; vide si le match n'est pas validé | app2 feuille de match |
-| `GET /competition/{season}/{code}/stats` (existant) | `kinds` **s'enrichit** des statistiques de § 6 | app3 onglet Stats |
-| `GET /competition/{season}/{code}/stats/{kind}` | une statistique de § 6, format commun `{ kind, columns, rows }` | app3, app2 |
-| `GET /event/{id}/stats` et `…/stats/{kind}` | mêmes statistiques sur le périmètre d'un événement (à créer si l'onglet Stats événement n'a pas encore son endpoint) | app3, app2 |
-| `GET /team/{id}/medals?season=` | collection de médailles de l'équipe sur la saison, par code, avec les matchs concernés | app3 fiche équipe |
+| `GET /medals/catalog?surface=&season=` | éléments publiés sur la surface : code, type, famille, noms, explication **rendue avec les seuils de la saison** | app3, app2 |
+| `GET /game-sheet/{id}` (existant) | **ajoute** `medals: { reliable, labels: [...], team: [{ code, side, count }], player: [{ code, side, number, first_name, last_name, event_id }] }`, éléments publiés sur app2 ; vide si le match n'est pas validé | app2 |
+| `GET /competition/{season}/{code}/stats?surface=` (existant) | `kinds` **s'enrichit** des statistiques publiées sur la surface (§ 3.4) | app3, app2 |
+| `GET /competition/{season}/{code}/stats/{kind}?surface=` | format commun `{ kind, columns, rows }` + `games_count` / `reliable_games_count` ; kind non publié sur la surface → 404 | app3, app2 |
+| `GET /event/{id}/stats?surface=` et `…/stats/{kind}?surface=` | mêmes statistiques sur un événement | app3, app2 |
+| `GET /team/{id}/medals?season=` | médailles de l'équipe publiées sur app3 sur la saison, par code, avec les matchs concernés | app3 |
+| `GET /admin/medals/catalog`, `PATCH /admin/medals/catalog/{code}` | catalogue complet ; modification des noms, explications, statut, surfaces, ordre (profils 1–2) | app4 |
+| `GET /admin/medals/seasons` | saisons calculées : seuils, `rules_version` (et retard éventuel), date, nombre de matchs | app4 |
+| `GET /admin/medals/stats/{kind}?season=&competitions=&event=` | toutes les statistiques actives, mêmes formats, avec leurs surfaces | app4 |
+| `GET /admin/medals/games/{id}` | médailles et étiquettes actives d'un match, avec leurs surfaces | app4 |
 
-Cache HTTP : celui des statistiques existantes (les données ne changent qu'au recalcul).
+Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; les autres profils reçoivent 403.
 
-## 6. Statistiques globales (compétition, événement)
+## 7. Affichage commun
 
-Chaque statistique est un fournisseur `CompetitionStatInterface` (kind) ; le périmètre est la compétition ou
-l'événement. Ne comptent que les matchs éligibles ; les taux qui reposent sur des médailles **T** ne comptent que les
-matchs à timeline fiable, et l'affichage indique sur combien de matchs le taux est calculé.
+- Une médaille s'affiche en **pastille** : pictogramme (un par élément, jeu d'icônes déjà utilisé par l'application),
+  **nom double** en français (« Supériorité · Powerplay »), nom anglais seul en anglais, compteur si > 1 (« ×2 »),
+  et **info-bulle** avec l'explication et, pour un but, son temps (« 2ᵉ mi-temps · 03:12 »).
+- Couleur par **famille**, issue des jetons de la charte, jamais seule porteuse du sens (nom toujours écrit).
+- Accessibilité : `aria-label` = nom + explication + compteur.
 
-### 6.1 Classements de médailles
+## 8. Explications publiques
 
-| Kind | Contenu |
-|---|---|
-| `medals_teams` | Par équipe : nombre de médailles par code, total, tri par total puis par nom. |
-| `medals_players` | Par joueur : idem (top 20 par défaut, `limit` comme `scorers`). |
-| `medals_{code}` | Classement d'une médaille donnée (ex. `medals_powerplay` = meilleurs buteurs en supériorité). |
+Chaque élément publié est expliqué **là où il apparaît** (info-bulle de la pastille, en-tête de la statistique) et
+sur une **page d'explication** d'app3 : `/medals` (+ `/en/medals`), « Médailles et statistiques », qui liste les
+éléments publiés sur app2 **ou** app3 (un élément visible dans app2 doit pouvoir y être expliqué) par famille avec leur pictogramme, leurs deux noms et leur explication. Un sélecteur de saison
+affiche les explications avec les seuils de la saison choisie. L'onglet Stats et la feuille de match d'app2 y
+renvoient par un lien « Comment sont attribuées les médailles ? ».
 
-### 6.2 Indicateurs de compétition
+## 9. Surfaces
 
-| Kind | Indicateur | Calcul |
-|---|---|---|
-| `opener_wins` | **First goal wins** | % des matchs gagnés par l'équipe qui ouvre le score (nuls à part). |
-| `powerplay_rate` | **Powerplay %** par équipe | buts en supériorité / exclusions adverses subies. |
-| `penalty_kill_rate` | **Penalty Kill %** par équipe | exclusions sans but encaissé / exclusions. |
-| `goal_timing` | **Goal timing** | répartition des buts par tranche de *2 min* de temps de jeu (M1, M2, prolongations) : histogramme. |
-| `first_goal_time` | **First goal time** | délai moyen et médian avant le premier but ; but le plus rapide (joueur, match). |
-| `comebacks` | **Comebacks** | nombre de `comeback`, plus grosse remontée (écart, match). |
-| `extra_time` | **Extra Time** | matchs en prolongation, nombre maximal de prolongations d'un match, buts en or. |
-| `discipline` | **Discipline** | cartons par match et par équipe, minutes d'infériorité subies (complète la statistique `cards` pressentie). |
-| `highlights` | **Highlights** | liste des matchs étiquetés `thriller`, `seesaw`, `goal_fest`, triés par date. |
+### 9.1 app2 (PWA résultats)
 
-Les noms de kinds suivent les libellés i18n `stats.<kind>.*` d'app3 ; app3 n'ajoute que des libellés et, pour
-`goal_timing`, un histogramme (règles de `dataviz` / charte FFCK).
+- **Feuille de match** (`/game/[id]`) : bloc « Médailles » sous le score, une colonne par équipe (médailles d'équipe
+  puis de joueurs), étiquettes du match en tête. Sur la frise (`GameTimelineBar`), les buts médaillés portent un
+  repère discret.
+- Match non validé : bloc absent. Timeline non fiable : mention « Médailles chronologiques indisponibles (feuille
+  incomplète) ».
+- Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante.
+- Seuls les éléments publiés sur **app2** apparaissent.
 
-## 7. Affichage
+### 9.2 app3 (site public)
 
-### 7.1 Composant commun
+- Seuls les éléments publiés sur **app3** apparaissent (sauf la page `/medals`, § 8).
+- **Onglet Stats** de la compétition et de l'événement : les kinds publiés sur app3 dans le sélecteur générique, avec leur
+  explication en en-tête.
+- **Liste des matchs** : icône discrète à côté du score d'un match étiqueté (étiquettes publiées sur app3), avec info-bulle.
+- **Fiche équipe** : section « Médailles de la saison » (médailles publiées sur app3, compteurs par médaille, lien vers les matchs).
+- **Page `/medals`** (§ 8), ajoutée au menu une fois livrée (`ready` dans `app/utils/navigation.ts`).
 
-- Une médaille s'affiche en **pastille** : pictogramme (jeu d'icônes déjà utilisé par l'application, un par famille
-  et par médaille), nom, compteur si > 1 (« Powerplay ×2 »), **info-bulle** avec la description traduite et le temps
-  du but (« M2 · 03:12 »). Couleur par **famille**, issue des jetons de la charte, jamais seule porteuse du sens
-  (nom toujours écrit).
-- Pas de médaille « négative » : on ne distingue jamais une équipe pour ce qu'elle a subi (pas de « a encaissé
-  une remontée »).
+### 9.3 app4 (admin2, profils 1 et 2)
 
-### 7.2 app2 (PWA résultats)
+Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
 
-- **Feuille de match** (`/game/[id]`) : bloc « Médailles » sous le score, une colonne par équipe (médailles
-  d'équipe puis de joueurs), étiquettes du match en tête. Sur la frise (`GameTimelineBar`), les buts médaillés
-  portent un repère discret (ex. contour pour *Powerplay*).
-- Match non validé : bloc absent (pas de message). Timeline non fiable : mention « Médailles chronologiques
-  indisponibles (feuille incomplète) ».
-- Statistiques (`/team`, groupe) : les kinds de § 6 s'ajoutent à la liste existante.
+- **Catalogue** : tous les éléments (tri par famille), avec type, niveau de données, statut, noms, explication et
+  nombre d'attributions sur la saison du contexte. Édition des noms, explications (aperçu avec les seuils de la
+  saison), ordre, **surfaces de publication** (cases app2 / app3) et **statut** (actif / retiré, et retour). Chaque changement est journalisé
+  (`kp_journal`, comme les autres actions d'admin).
+- **Saisons** : pour chaque saison calculée, les seuils utilisés, la `rules_version` (alerte si antérieure à celle du
+  code), la date du calcul, le nombre de matchs et de timelines fiables. Le calcul se lance par commande (§ 6.3).
+- **Statistiques** : toutes les statistiques actives sur le périmètre du contexte de travail (saison,
+  compétitions, événement), avec le même tableau générique que la page Statistiques (PAGE_STATISTIQUES.md) et un
+  badge de surface (« app2 », « app3 » ou « non publié ») sur chaque élément.
+- **Match** : dans la fiche d'un match de la page Matchs, les médailles et étiquettes actives, avec leur badge
+  de surface.
 
-### 7.3 app3 (site public)
+Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. La spec de page admin détaillée
+(`DOC/specs/PAGE_MEDAILLES.md`) sera dérivée de cette section avant implémentation.
 
-- **Onglet Stats** de la compétition et de l'événement : les nouveaux kinds dans le sélecteur générique ;
-  `medals_teams` et `highlights` en tête.
-- **Liste des matchs** : une icône discrète à côté du score pour un match étiqueté (`thriller`…), avec info-bulle.
-- **Fiche équipe** : section « Médailles de la saison » (compteurs par médaille, lien vers les matchs).
-- SEO : rien de spécifique ; les médailles sont du texte rendu côté serveur, lisible par les lecteurs d'écran
-  (`aria-label` = nom + description + compteur).
-
-## 8. Critères d'acceptation
+## 10. Critères d'acceptation
 
 **Éligibilité**
 
@@ -299,100 +387,116 @@ Les noms de kinds suivent les libellés i18n `stats.<kind>.*` d'app3 ; app3 n'aj
   `timeline_reliable = false` et seules les médailles **S** sont attribuées.
 - **MED-03** — Étant donné un match validé dont un but n'a pas de temps, quand on calcule, alors
   `timeline_reliable = false`.
-- **MED-04** — Étant donné un match dont un score est un forfait (non numérique), quand on calcule, alors aucune
-  médaille n'est attribuée.
-- **MED-05** — Étant donné des buts en période `TB`, quand on calcule, alors ils ne comptent pour aucune médaille ni
-  pour la fiabilité.
+- **MED-04** — Étant donné un match dont un score est un forfait (non numérique), alors aucune médaille.
+- **MED-05** — Étant donné des buts en période `TB`, alors ils ne comptent pour aucune médaille ni pour la fiabilité.
+- **MED-06** — Étant donné un match de placement validé, alors il attribue des médailles comme un autre match.
 
 **Axe de temps et exclusions**
 
-- **MED-06** — Étant donné un but en `M2` avec 9:10 restant et des périodes par défaut, alors son temps écoulé est
-  650 s ; avec un temps restant de 11:30 en `M2`, la durée retenue de `M2` est 720 s.
-- **MED-07** — Étant donné un carton jaune de B à 05:00 restant en `M1` et un but de A à 04:00 restant en `M1`,
-  alors le but de A est `powerplay` et le but de B qui suit à 03:30 n'est plus en infériorité pour B (exclusion
-  levée).
-- **MED-08** — Étant donné un carton `D` de B puis deux buts de A dans les 120 s, alors les deux buts sont
-  `powerplay` (le rouge définitif n'est pas levé par un but).
-- **MED-09** — Étant donné un carton de B à 00:30 restant en `M1` et un but de A à 09:20 restant en `M2`, alors le
-  but est `powerplay` (l'exclusion se poursuit sur la période suivante : 30 s + 40 s < 120 s).
-- **MED-10** — Étant donné une exclusion de chaque côté en cours, quand A marque, alors le but n'est ni
-  `powerplay` ni `shorthanded`.
-- **MED-11** — Étant donné un carton de A et un but de A à la même seconde, alors le but est `shorthanded`
-  (carton avant but à temps égal).
+- **MED-07** — Étant donné un but en `M2` avec 9:10 restant, alors son temps écoulé est 650 s ; avec un temps restant
+  de 11:30 en `M2`, la durée retenue de `M2` est 720 s.
+- **MED-08** — Étant donné un carton jaune de B à 05:00 restant en `M1` et un but de A à 04:00 restant, alors le but
+  de A est `powerplay` et un but de B à 03:30 n'est pas en infériorité (exclusion levée).
+- **MED-09** — Étant donné un carton vert de B à 05:00 restant en `M1` et un but de A à 02:50 restant, alors le but
+  n'est pas `powerplay` (130 s > 120 s).
+- **MED-10** — Étant donné un carton `D` de B en `M1` puis trois buts de A en `M2` et en `P1`, alors les trois buts
+  sont `powerplay` (infériorité jusqu'à la fin du match, non levée par un but).
+- **MED-11** — Étant donné `permanentCards` contenant un nouveau code de carton noir, alors ce carton se comporte
+  comme `D` sans autre changement de code.
+- **MED-12** — Étant donné un carton de B à 00:30 restant en `M1` et un but de A à 09:20 restant en `M2`, alors le
+  but est `powerplay` (30 s + 40 s < 120 s).
+- **MED-13** — Étant donné une exclusion de chaque côté en cours, quand A marque, alors le but n'est ni `powerplay`
+  ni `shorthanded`.
+- **MED-14** — Étant donné un carton de A et un but de A à la même seconde, alors le but est `shorthanded`.
+- **MED-15** — Étant donné trois cartons temporaires de B en cours, alors seules 2 exclusions sont comptées.
 
-**Médailles d'équipe**
+**Médailles et étiquettes**
 
-- **MED-12** — `opener` / `first_goal` vont à l'équipe et au joueur du premier but sur l'axe de temps.
-- **MED-13** — Étant donné A mène 1-0, B égalise 1-1, puis A gagne 3-1, alors A n'a pas `wire_to_wire`.
-- **MED-14** — Étant donné B mène 4-1 puis A gagne 5-4, alors A reçoit `comeback` ; avec un final 4-4 en match de
-  type `C`, A reçoit `comeback_draw`.
-- **MED-15** — Étant donné A encaisse à 06:00 restant et marque à 05:01 restant dans la même période, alors A et le
-  buteur reçoivent `bounce_back` ; à 05:00 restant (60 s), non (strictement moins de 60 s).
-- **MED-16** — Étant donné A marque 4 buts consécutifs, alors A reçoit une seule `scoring_run` ; deux séries de 3
-  séparées par un but de B donnent deux médailles.
-- **MED-17** — Étant donné un match de type `E` décidé en `P2`, alors les deux équipes reçoivent `extra_time` et
-  `marathon`, le vainqueur `golden_goal`, le buteur `golden_goal`.
-- **MED-18** — Étant donné un match terminé 0-0, alors les deux équipes reçoivent `clean_sheet`.
-- **MED-19** — Étant donné une équipe sans carton, alors elle reçoit `fair_play`.
-- **MED-20** — Étant donné B exclue deux fois sans encaisser pendant ces exclusions, alors B reçoit
-  `penalty_kill`.
+- **MED-16** — `opener` va à l'équipe et au joueur du premier but sur l'axe de temps.
+- **MED-17** — Étant donné A mène 1-0, B égalise, puis A gagne 3-1, alors A n'a pas `wire_to_wire`.
+- **MED-18** — Étant donné B mène 4-1 puis A gagne 5-4, alors A reçoit `comeback` ; avec un final 4-4 sans
+  prolongation, A reçoit `fightback`.
+- **MED-19** — Étant donné A encaisse à 06:00 restant et marque à 05:01 restant dans la même période, alors A et le
+  buteur reçoivent `bounce_back` ; à 05:00 restant (60 s), non.
+- **MED-20** — Étant donné A marque 4 buts consécutifs, alors une seule `scoring_run` ; deux séries de 3 séparées par
+  un but de B donnent deux médailles.
+- **MED-21** — Étant donné un match décidé en `P2`, alors les deux équipes reçoivent `extra_time` et `marathon`, le
+  vainqueur et le buteur `golden_goal`.
+- **MED-22** — Étant donné un match terminé 0-0, alors les deux équipes reçoivent `clean_sheet` ; une équipe sans
+  carton reçoit `fair_play`.
+- **MED-23** — Étant donné B exclue deux fois sans encaisser pendant ces exclusions, alors B reçoit `penalty_kill`.
+- **MED-24** — Étant donné un joueur auteur de 3 buts, alors `hat_trick` (même sans timeline fiable) ; si ces buts
+  sont consécutifs dans le match, aussi `natural_hat_trick`.
+- **MED-25** — Étant donné A gagne 4-2, alors le 3ᵉ but de A porte `game_winner`.
+- **MED-26** — Étant donné le but décisif à 00:45 restant en `M2`, alors `late_winner` ; une égalisation dans la même
+  fenêtre d'un match qui va en prolongation porte `lifeline`. Le résultat est le même pour un match en mi-temps de
+  7 min (fenêtre lue sur le temps restant).
+- **MED-27** — Étant donné un but d'un membre `Capitaine = 'E'` ou sans joueur, alors médaille d'équipe seulement.
+- **MED-28** — Étant donné un match avec 3 changements de leader, alors il reçoit l'étiquette `thriller`.
 
-**Médailles de joueur**
+**Seuils et recalcul**
 
-- **MED-21** — Étant donné un joueur auteur de 3 buts, alors il reçoit `hat_trick` (médaille S, même sans timeline
-  fiable) ; si ces 3 buts sont consécutifs dans le match, il reçoit aussi `natural_hat_trick`.
-- **MED-22** — Étant donné A gagne 4-2, alors le 3ᵉ but de A porte `game_winner`.
-- **MED-23** — Étant donné le but décisif marqué à 00:45 restant en `M2`, alors il porte `late_winner` ; un but
-  égalisateur dans la même fenêtre d'un match `E` allant en prolongation porte `lifeline`.
-- **MED-24** — Étant donné un but marqué par un membre `Capitaine = 'E'` ou sans joueur identifié, alors l'équipe
-  reçoit la médaille d'équipe mais aucun joueur ne reçoit la médaille de joueur.
+- **MED-29** — Étant donné un seuil modifié dans `config/match_medals.yaml`, quand on recherche ce seuil ailleurs
+  dans le code, des règles ou des explications, alors on ne le trouve pas (une seule définition).
+- **MED-30** — Étant donné les saisons 2025 et 2026 calculées avec `bounceBackSeconds = 60`, quand le seuil passe à
+  45 et qu'on lance le calcul complet de 2026, alors seules les médailles de 2026 changent, et `kp_medal_season`
+  garde 60 pour 2025 et 45 pour 2026.
+- **MED-31** — Étant donné un match de 2025 validé après le changement de seuil, quand `sync` passe, alors il est
+  calculé avec les seuils de 2025.
+- **MED-32** — Étant donné une saison jamais calculée, quand `sync` traite un de ses matchs, alors la saison reçoit
+  d'abord la copie des seuils actuels.
+- **MED-33** — Étant donné un match validé dans le legacy, quand `sync` passe, alors ses médailles existent ;
+  repassée sans changement, elle ne réécrit rien (`source_hash` identique). Dévalidé, ses médailles disparaissent.
+- **MED-34** — Étant donné une `rules_version` du code supérieure à celle d'une saison, alors l'admin signale la
+  saison, et aucun recalcul n'a lieu sans commande.
 
-**Persistance et API**
+**Catalogue, publication et explications**
 
-- **MED-25** — Étant donné un match validé, quand il est dévalidé dans api2, alors ses médailles sont supprimées ;
-  revalidé après correction, elles sont recalculées.
-- **MED-26** — Étant donné un match validé dans le legacy, quand la commande de recalcul passe, alors ses médailles
-  existent ; repassée sans changement, elle ne réécrit rien (`source_hash` identique).
-- **MED-27** — Étant donné une `rules_version` incrémentée, quand la commande passe, alors tous les matchs sont
-  recalculés.
-- **MED-28** — Aucune réponse publique ne contient de numéro de licence.
-- **MED-29** — `GET /competition/{season}/{code}/stats` liste les nouveaux kinds ; `…/stats/powerplay_rate` renvoie
-  le format commun `{ kind, columns, rows }`, et indique le nombre de matchs à timeline fiable pris en compte.
+- **MED-35** — Étant donné un élément actif sans surface, alors il n'apparaît dans aucune réponse publique
+  (feuille, stats, catalogue, équipe) et son kind renvoie 404 ; il apparaît dans les endpoints admin.
+- **MED-36** — Étant donné un élément non publié déjà calculé sur plusieurs saisons, quand un profil 1 le publie sur
+  app3, alors il apparaît aussitôt dans app3 sur toutes ces saisons, sans recalcul.
+- **MED-37** — Étant donné une statistique publiée sur app3 seulement, alors `…/stats?surface=app3` la liste,
+  `…/stats?surface=app2` ne la liste pas et `…/stats/{kind}?surface=app2` renvoie 404 ; sans `surface`, 400.
+- **MED-38** — Étant donné une médaille publiée sur app3 seulement (`fair_play`), alors elle est absente de la
+  feuille de match app2 et présente sur la fiche équipe app3.
+- **MED-39** — Étant donné un élément `retired`, alors il n'apparaît nulle part et n'est plus calculé.
+- **MED-40** — Étant donné un profil 3 ou plus, alors la page Médailles d'app4 et les endpoints `/admin/medals/*`
+  lui sont refusés (403).
+- **MED-41** — Étant donné une explication contenant `{bounceBackSeconds}`, alors elle s'affiche avec 60 pour une
+  saison calculée à 60 et 45 pour une saison calculée à 45.
+- **MED-42** — Étant donné le site en français, alors une pastille affiche « Supériorité · Powerplay » ; en anglais,
+  « Powerplay ».
+- **MED-43** — Toute modification du catalogue dans l'admin est journalisée (auteur, élément, avant / après).
+- **MED-44** — Aucune réponse publique ne contient de numéro de licence.
 
 **Affichage**
 
-- **MED-30** — Étant donné un match validé médaillé, la feuille de match app2 affiche le bloc « Médailles » ; chaque
-  pastille a un nom écrit et une description accessible (`aria-label`).
-- **MED-31** — Étant donné une timeline non fiable, la feuille de match app2 affiche les médailles S et la mention
+- **MED-45** — Étant donné un match validé médaillé, la feuille de match app2 affiche le bloc « Médailles » ; chaque
+  pastille a un nom écrit, une explication en info-bulle et un `aria-label`.
+- **MED-46** — Étant donné une timeline non fiable, la feuille de match app2 affiche les médailles S et la mention
   « Médailles chronologiques indisponibles (feuille incomplète) ».
-- **MED-32** — L'onglet Stats d'app3 (compétition et événement) affiche `medals_teams` et `highlights` sans code
-  spécifique autre que les libellés i18n, et `goal_timing` en histogramme.
-- **MED-33** — La fiche équipe d'app3 affiche les médailles de la saison, chaque compteur menant aux matchs
-  concernés.
+- **MED-47** — L'onglet Stats d'app3 affiche les statistiques publiées sur app3 avec leur explication et le nombre de matchs
+  pris en compte, sans code spécifique autre que les libellés.
+- **MED-48** — La page `/medals` d'app3 liste les éléments publiés sur app2 ou app3, et seulement eux, avec leurs deux noms et
+  leur explication.
+- **MED-49** — La fiche équipe d'app3 affiche les médailles de la saison publiées sur app3, chaque compteur menant aux matchs.
 
-## 9. Hors périmètre et questions ouvertes
+## 11. Hors périmètre et questions ouvertes
 
 **Hors périmètre (lots suivants)** :
 
-- Incrustations TV / live (« Opener ! », « Powerplay » en direct) : demanderait le calcul sur matchs non validés.
-- Fiche joueur publique et collection de carrière (la fiche n'existe pas encore).
-- Tirs (`T`) et arrêts (`A`) : médailles gardien (*Big Save*, *Wall*) et efficacité (*Sniper*) dès que ces faits
-  seront saisis de façon régulière.
-- Agrégats de saison toutes compétitions et palmarès historique des médailles.
-- Badges partageables (image pour réseaux sociaux).
+- Incrustations TV / live (« Premier but ! », « Supériorité » en direct) : demanderait le calcul sur matchs non
+  validés.
+- Fiche joueur publique et collection de carrière.
+- Tirs (`T`) et arrêts (`A`) : médailles de gardien et d'efficacité dès que ces faits seront saisis régulièrement.
+- Agrégats de saison toutes compétitions, palmarès historique des médailles, badges partageables.
+- Bouton « recalculer la saison » dans l'admin (la commande suffit au départ).
+- Seuils modifiables dans l'admin (aujourd'hui dans un fichier versionné, revu comme du code).
 
 **Questions ouvertes** :
 
-- **Q1 — Durée des périodes** : faut-il, dès ce lot, une table de durées par compétition (ou par catégorie d'âge)
-  pour fiabiliser les écarts entre périodes, ou accepte-t-on l'approximation de § 4.2 ?
-- **Q2 — Durée d'exclusion par carton** : PAGE_SCORING.md § 7.4 fixe 2 min pour **tout** carton. Le rouge (`R`)
-  et le rouge définitif (`D`) ont-ils une autre durée d'infériorité dans les règlements FFCK / ICF (ex. 4 min) ?
-  Valeurs à confirmer dans `exclusionSeconds`.
-- **Q3 — Seuils** : 60 s pour *Bounce Back*, 3 buts pour *Comeback*, 5 buts pour *Big Win*, 30 s pour
-  *Fast Start* : à valider (on pourra les ajuster après un premier calcul sur l'historique).
-- **Q4 — Noms** : la liste des noms anglais (§ 3) convient-elle ? En particulier *Fightback* (nul après 3 buts de
-  retard), *Lifeline* (égalisation qui arrache la prolongation) et *Penalty Kill*.
-- **Q5 — Matchs de classement à faible enjeu** (matchs de placement, coefficient nul) : attribuent-ils des médailles
-  comme les autres ?
-- **Q6 — Rattrapage** : recalcul de **toutes** les saisons dès la mise en production, ou seulement la saison en
-  cours (les feuilles anciennes sont moins souvent horodatées) ?
+- **Q1 — Noms français** : la liste du § 3 convient-elle (en particulier *Réplique*, *Résistance*, *Entrée express*,
+  *Égalisation salvatrice*, *Verrouillé*) ?
+- **Q2 — Premier lot public** (§ 4) : la sélection et sa répartition entre app2 et app3 conviennent-elles ?
+- **Q3 — Pictogrammes** : jeu d'icônes existant (Nuxt UI / Iconify) ou pictogrammes dessinés pour l'occasion ?
