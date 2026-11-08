@@ -11,17 +11,13 @@
  * disabled through the `enabled` ref (post-match mode, capture modal open…).
  */
 
+import { isEditableTarget } from '~/utils/scoringKeyboard'
 import { SHORTCUT_ACTIONS, mergeStoredBindings, shortcutDefaults, type ShortcutAction } from '~/utils/scoringShortcuts'
 
 // v2 (2026-11-08): the shot clock left `Entrée` / `.` / `0`; bindings saved before kept
 // `Entrée` on the 60 s start, so they are dropped rather than merged.
 const STORAGE_KEY = 'kpi.scoring.shortcuts.v2'
 
-const isEditableTarget = (target: EventTarget | null): boolean => {
-  if (!(target instanceof HTMLElement)) return false
-  const tag = target.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
-}
 
 export function useScoringShortcuts(
   handlers: Partial<Record<ShortcutAction, () => void>>,

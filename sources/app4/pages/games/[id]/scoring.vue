@@ -2,6 +2,7 @@
 import type { MatchClosure, OfficialRole, Period, ScoringPlayer, ScoringEvent, ScoringEventCode, TeamSide } from '~/types/scoring'
 import type { PenaltyClock } from '~/composables/usePenalties'
 import { shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
+import { keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
 
 definePageMeta({
   layout: 'admin',
@@ -556,6 +557,21 @@ const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
   factRed: factKey('R'),
   factBlack: factKey('D')
 }, { enabled: shortcutsEnabled, locale })
+
+// Does the keyboard reach the console? (spec §0.14) — amber frame when the window lost the
+// focus, keys printed on the buttons dimmed whenever they would not answer.
+const keyboardFocus = useKeyboardFocus()
+const kbState = computed(() => keyboardState({
+  windowFocused: keyboardFocus.windowFocused.value,
+  fieldFocused: keyboardFocus.fieldFocused.value,
+  enabled: shortcutsEnabled.value
+}))
+const kbFrame = computed(() => keyboardFrameShown(kbState.value, keyboardFocus.keyboardLikely.value))
+const kbKeysActive = computed(() => keyboardKeysActive(kbState.value))
+const KEYBOARD_BADGE_COLOR: Record<KeyboardState, 'success' | 'neutral' | 'warning'> = {
+  ready: 'success', field: 'neutral', off: 'warning', window: 'warning'
+}
+const kbdClass = computed(() => kbKeysActive.value ? 'opacity-80' : 'opacity-30 line-through')
 
 // The fact time follows the clock until an entry starts: the moment a fact or a player is
 // picked, it freezes — on some matches the clock keeps running after a goal, and the time
@@ -1293,6 +1309,17 @@ const toggleLock = async () => {
             <UIcon :name="liveSync.status.value === 'connected' ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'" class="size-4" />
           </UBadge>
 
+          <!-- Keyboard state (spec §0.14): do the shortcuts answer right now, and why not -->
+          <UBadge
+            v-if="canScore"
+            variant="soft"
+            :color="KEYBOARD_BADGE_COLOR[kbState]"
+            :title="t('scoring.keyboard.' + kbState)"
+            :aria-label="t('scoring.keyboard.' + kbState)"
+          >
+            <UIcon name="i-heroicons-command-line" class="size-4" />
+          </UBadge>
+
           <!-- Occasional tools: full-screen displays + keyboard shortcuts -->
           <UDropdownMenu :items="toolItems">
             <UButton size="sm" variant="ghost" color="neutral" icon="i-heroicons-ellipsis-horizontal" :aria-label="t('scoring.tools')" :title="t('scoring.tools')" />
@@ -1427,8 +1454,16 @@ const toggleLock = async () => {
               :color="isRunning ? 'warning' : 'success'"
               :icon="isRunning ? 'i-heroicons-pause' : 'i-heroicons-play'"
               :disabled="!canScore"
+              :aria-keyshortcuts="bindings.gameClockToggle || undefined"
               @click="toggleClock"
-            >{{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}</UButton>
+            >
+              {{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}
+              <kbd
+                v-if="bindings.gameClockToggle"
+                class="rounded border border-current/40 px-1.5 text-xs font-mono leading-5"
+                :class="kbdClass"
+              >{{ shortcutKeyLabel(bindings.gameClockToggle) }}</kbd>
+            </UButton>
             <UButton
               size="sm"
               icon="i-heroicons-arrow-uturn-left"
@@ -1447,6 +1482,8 @@ const toggleLock = async () => {
             :durations="scoringStore.config.shotclockDurations"
             :offensive-rebound-enabled="scoringStore.config.shotclockOffensiveReboundEnabled"
             :can-score="canScore"
+            :keys="{ start60: bindings.shotclockStart60, start40: bindings.shotclockStart40, stop: bindings.shotclockStop }"
+            :kbd-class="kbdClass"
             @start="shotclockStart"
             @stop="shotclockStop"
             @test-sound="buzzer.test()"
@@ -1541,7 +1578,8 @@ const toggleLock = async () => {
               <!-- Its keyboard key: on the right, under the label on a phone -->
               <kbd
                 v-if="bindings[evt.shortcut]"
-                class="fact-kbd shrink-0 rounded border border-current/40 px-1.5 text-xs font-mono leading-5 opacity-80"
+                class="fact-kbd shrink-0 rounded border border-current/40 px-1.5 text-xs font-mono leading-5"
+                :class="kbdClass"
                 :title="t('scoring.entry.keys_hint')"
               >{{ shortcutKeyLabel(bindings[evt.shortcut]) }}</kbd>
             </UButton>
@@ -1756,6 +1794,17 @@ const toggleLock = async () => {
         @confirm="confirmReopen"
         @close="reopenOpen = false"
       />
+
+      <!-- Window without the focus (spec §0.14): fixed frame + pill, no layout shift, clicks
+           go through — the click that brings the focus back also acts on its target. -->
+      <Teleport to="body">
+        <div v-if="kbFrame" class="pointer-events-none fixed inset-0 z-[10000] border-4 border-amber-400" aria-hidden="true">
+          <div class="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-full bg-amber-400 px-3 py-1 text-sm font-medium text-amber-950 shadow">
+            <UIcon name="i-heroicons-command-line" class="size-4" />
+            {{ t('scoring.keyboard.banner') }}
+          </div>
+        </div>
+      </Teleport>
 
       <!-- Keyboard shortcuts settings (per-device preference) -->
       <ScoringShortcutsModal

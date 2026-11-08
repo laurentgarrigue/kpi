@@ -79,7 +79,7 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
-| 8 | `make app4_test` | `Test Files 18 passed`, `Tests 215 passed` (dont `sseStream`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-08 (touches du chrono de tir revues)* | ☐ |
+| 8 | `make app4_test` | `Test Files 19 passed`, `Tests 223 passed` (dont `sseStream`, `scoringKeyboard`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-08 (touches du chrono de tir revues)* | ☐ |
 | 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
 | 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
 
@@ -379,6 +379,20 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.12.
 | 3.89 | Match **En attente** | pas de bouton « Clore le match… » (seulement pour un match En cours) | | ☐ |
 | 3.89a | Clore un match à 16:42, le **rouvrir** vers 17:05, corriger, **clore** à nouveau | le panneau propose **16:42** (heure déjà enregistrée), pas l'heure courante ; 🗄 `kp_match.Heure_fin` reste `16:42:00` | | ☐ |
 | 3.90 | Chronologie de la console (match E avec prolongations) puis **feuille de match PDF** (api2), en **français** puis en **anglais** | périodes **P1**, **P2**, puis **PRL1**, **PRL2**… en français, **OVT1**, **OVT2**… en anglais ; dans le PDF, « PRL2 - 00:53 » tient en entier dans la colonne Période ; 🗄 les codes stockés restent `M1`/`M2`/`P1`… | | ☐ |
+
+#### Clavier actif ou non (2026-11-08)
+
+Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.14. Sur un PC avec souris et clavier.
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.91 | Console en direct, match **En cours** : cliquer dans la **barre d'adresse** | **liseré ambre** autour de la fenêtre + pastille « Clavier inactif… » en haut ; icône clavier de l'entête **ambre** ; touches des boutons (faits, `Espace`, `+` `-` `*`) **estompées et barrées** ; le chrono continue de défiler, ses couleurs inchangées | | ☐ |
+| 3.91a | Dans cet état, cliquer **directement** sur « Démarrer » | le chrono démarre **dès ce clic** ; liseré et pastille disparaissent ; rien ne bouge dans la page au moment du clic | | ☐ |
+| 3.92 | Menu **⋯ → Ouvrir le tableau de score** | la nouvelle fenêtre a le focus : la console montre le liseré ; un clic dans la console le retire et `+` relance le chrono de tir | | ☐ |
+| 3.92a | Passer à une autre application (`Alt+Tab`) puis revenir | liseré pendant l'absence, retiré au retour | | ☐ |
+| 3.93 | `B` puis focus dans « N° du joueur » | **pas** de liseré ; touches des boutons estompées ; icône clavier **neutre** ; après `↵ ↵`, tout redevient actif (icône verte) | | ☐ |
+| 3.94 | Ouvrir la modale **Raccourcis clavier** | icône ambre, touches estompées, **pas** de liseré | | ☐ |
+| 3.95 | Tablette **sans clavier** (ou émulation tactile des outils de développement), toucher la barre d'adresse | **ni liseré ni pastille** ; l'icône de l'entête reflète quand même l'état | | ☐ |
 
 ### Lot 4 — Page d'incrustation unique
 

@@ -417,6 +417,22 @@ de §0.11 et §7.
 | Chronologie : **flèche à côté de « Temps »** (↑ plus récents en haut, ↓ plus anciens en haut), un clic inverse — préférence de l'appareil ; les « N derniers » restent les N plus récents dans les deux sens (`timelineView`, testé) ; une ligne **« … tout voir (N de plus) »** se place du côté des faits masqués (sous l'extrait, ou au-dessus en ordre inverse) pour montrer que c'est un extrait ; une fois tout affiché, **« Les N derniers seulement »** prend la même place ; le chevron indique où les lignes apparaissent / disparaissent. Sur PC, **noms des équipes en tête de colonnes** (marge intérieure), de part et d'autre de Temps | lecture dans l'ordre du match à la demande |
 | Traduction anglaise de « Terrain » : **Pitch** (onglet du navigateur, en-tête), comme partout dans KPI — clé `scoring.pitch` (ex-`scoring.field`) | cohérence (Match → Game, Terrain → Pitch) |
 
+### 0.14 Le clavier répond-il ? (2026-11-08)
+
+Les raccourcis ne fonctionnent que si la fenêtre de la console a le focus. Ouvrir le tableau de
+score ou le chronomètre de tir (menu ⋯), cliquer dans la barre d'adresse, OBS ou une autre fenêtre
+le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne se passe.
+
+| Décision | Pourquoi |
+|---|---|
+| **État du clavier** calculé par `keyboardState` (`utils/scoringKeyboard.ts`, testé) : `window` (la fenêtre n'a pas le focus) l'emporte sur `off` (raccourcis coupés : fenêtre modale, liste des motifs, saisie impossible), puis `field` (focus dans un champ de saisie), sinon `ready`. Focus de la fenêtre suivi par `focus` / `blur` **et** une vérification `document.hasFocus()` chaque seconde (filet de sécurité) | un seul calcul, testable, pour tous les signaux |
+| État `window` → **liseré ambre** sur le pourtour de la fenêtre et pastille « Clavier inactif : cliquez dans la console » en haut. Les deux sont **fixes** (aucun décalage de la mise en page) et **laissent passer les clics** : le clic qui rend le focus agit aussi sur ce qu'il vise (« Démarrer » n'est jamais perdu) | un décalage au moment du clic ferait cliquer à côté ; un calque qui mange le clic retarderait une action chronométrée |
+| Le tableau de score n'est **jamais** grisé : chiffres, couleurs rouge/vert du chrono (3.79c) et décomptes restent intacts | c'est ce que l'opérateur regarde en continu |
+| Les **touches affichées** sur les boutons (faits de jeu, `Espace` sur Démarrer, `+` / `-` / `*` sur 60 s / 40 s / Arrêt) sont **estompées et barrées** dès que l'état n'est pas `ready` — y compris `field`, seul signal dans ce cas (pas de liseré : pendant `B 7 ↵ ↵` le focus est dans un champ la moitié du temps) | « cette touche ne répond pas maintenant », à l'endroit où l'œil la cherche |
+| **Icône clavier** dans l'entête, à côté de l'antenne : verte (`ready`), neutre (`field`), ambre (`window`, `off`) ; l'info-bulle dit pourquoi | état consultable à tout moment |
+| Liseré et pastille **seulement si un clavier est probable** : pointeur précis (`(pointer: fine)`) ou une touche déjà pressée dans la console | une tablette sans clavier n'a rien à signaler |
+| Pas de `window.focus()` après l'ouverture du tableau de score : le navigateur le refuse souvent, et quand il l'accepte la console repasse **devant** la nouvelle fenêtre qu'on voulait placer sur l'autre écran | le liseré suffit à signaler qu'il faut cliquer dans la console |
+
 ## 1. Contexte et objectif
 
 Le **Scoring** est l'outil de gestion du déroulé d'un match de kayak-polo : chronomètre,
@@ -1664,6 +1680,7 @@ règles restent la référence. Tests fonctionnels à dérouler :
 | `composables/useShotclock.ts` | **Créé.** Modèle 3 commandes (§6.5) : `start(s)` (le départ EST un reset, 60 ou 40), `stopToIdle()` (retour `--`), `suspend()`/`resume()` (**seule** pause, pilotée par le chrono). Décompte par horodatage (sans dérive), gel à 0 + `onExpired` (buzzer), `restore()` depuis `scoring_live_clock`, `elapsedSeconds` pour la persistance. Transitions = miroir des règles testées (`shotclockTransition`). |
 | `composables/useBuzzer.ts` | **Créé.** Web Audio (aucun asset, compatible PWA offline) : `beep()` + `test()`. Sonne en fin de période, à l'expiration du shotclock et en **fin de pause** (§0.9). |
 | `composables/useScoringShortcuts.ts` | **Créé.** Raccourcis **paramétrables par poste** (localStorage `kpi.scoring.shortcuts`), défauts §0.9 : `Espace`/`Entrée`/`.`/`0`/`+`/`−` (**revus le 2026-11-08** : `Espace`/`+`/`-`/`*`, clé `kpi.scoring.shortcuts.v2`, §0.13). Une touche = une action (réassignation vole la touche), neutralisés dans les champs éditables, désactivables (post-match, modale ouverte). |
+| `utils/scoringKeyboard.ts` + `composables/useKeyboardFocus.ts` | **Créés (2026-11-08, §0.14).** État du clavier (`window` / `off` / `field` / `ready`, testé dans `tests/unit/scoringKeyboard.spec.ts`), suivi du focus de la fenêtre et des champs ; la page en tire le liseré ambre, l'icône clavier de l'entête et l'estompage des touches affichées sur les boutons (faits, Démarrer, `ScoringShotclock`). |
 | `components/scoring/Shotclock.vue` | **Créé** (`<ScoringShotclock>`). Affichage `--`/secondes (vert = décompte, ambre = suspendu), boutons 60 s / 40 s (si actif) / Arrêt / ±1 s (suspendu seulement) / test son. Masquage `shotClockShow` (temps restant < shotclock) via prop `masked`. |
 | `components/scoring/ShortcutsModal.vue` | **Créé** (`<ScoringShortcutsModal>`). Réglage des touches (capture au clavier, Échap annule), remise aux défauts — pattern modal maison (admin/ConfirmModal). |
 | `pages/games/[id]/scoring.vue` | Câblage : suivi auto chrono↔shotclock (watch `isRunning`), persistance kind `SHOTCLOCK` (run/stop/RAZ) + **restauration** depuis `store.liveClocks`, **pause inter-périodes automatique** en fin de période (durée via `breakDurationBefore`, persistance kind `BREAK`, restauration, bouton « Terminer la pause », clôturée au changement de période), buzzer, bouton réglages raccourcis (engrenage). |

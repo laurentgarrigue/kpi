@@ -2934,6 +2934,13 @@
       "missing_officials": "Officials to fill in: {roles}",
       "expand": "Show the points to check",
       "collapse": "Collapse"
+    },
+    "keyboard": {
+      "ready": "Keyboard active: shortcuts answer",
+      "field": "Typing in a field: keys type text, shortcuts wait",
+      "off": "Shortcuts paused (dialog open or entry not allowed)",
+      "window": "Keyboard inactive: the console window does not have the focus. Click in the console",
+      "banner": "Keyboard inactive: click in the console"
     }
   },
   "competition": {

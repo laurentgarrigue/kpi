@@ -2946,6 +2946,13 @@
       "missing_officials": "Officiels à renseigner : {roles}",
       "expand": "Afficher les points à vérifier",
       "collapse": "Réduire"
+    },
+    "keyboard": {
+      "ready": "Clavier actif : les raccourcis répondent",
+      "field": "Saisie dans un champ : les touches tapent du texte, les raccourcis attendent",
+      "off": "Raccourcis suspendus (fenêtre ouverte ou saisie impossible)",
+      "window": "Clavier inactif : la fenêtre de la console n'a pas le focus. Cliquez dans la console",
+      "banner": "Clavier inactif : cliquez dans la console"
     }
   },
   "competition": {
