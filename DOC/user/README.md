@@ -15,6 +15,12 @@ Cette section contient la documentation orientée utilisateurs finaux du systèm
 
 ### Fonctionnalités Principales
 
+- **[MATCH_MEDALS.md](MATCH_MEDALS.md)** - **Médailles de match et statistiques de timeline**
+  - Médailles d'équipe, de joueur et d'arbitre déduites de la feuille de match, sans saisie supplémentaire
+  - Publication par application (app2, site public), seuils figés par saison
+  - Page Opérations › Médailles (profils 1 et 2)
+  - **Statut**: 🛠 À déployer
+
 - **[EVENT_CACHE_MANAGER.md](EVENT_CACHE_MANAGER.md)** - **Event Cache Manager - Worker en arrière-plan**
   - Génération automatique des caches d'événements pour les incrustations vidéo
   - Fonctionnement 24/7 sans navigateur ouvert

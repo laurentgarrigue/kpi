@@ -85,6 +85,16 @@
   --ui-color-neutral-800: oklch(0.269 0 0);
   --ui-color-neutral-900: oklch(0.205 0 0);
   --ui-color-neutral-950: oklch(0.145 0 0);
+  --color-fam-elan: #2f6f8f;
+  --color-fam-reaction: #b4530f;
+  --color-fam-endurance: #6a4c9c;
+  --color-fam-superiorite: #0d7466;
+  --color-fam-finition: #3a45a3;
+  --color-fam-defense: #4b5d77;
+  --color-fam-esprit: #2f7d4a;
+  --color-fam-arbitrage: #45484f;
+  --color-fam-match: #9b3a6f;
+  --color-fam-analyse: #20265b;
   --color-header-50: oklch(0.970 0.014 274.28);
   --color-header-100: oklch(0.940 0.033 274.28);
   --color-header-200: oklch(0.880 0.061 274.28);

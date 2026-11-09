@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - [Match Consistency Stats](DOC/user/MATCH_CONSISTENCY_STATS.md) - Match scheduling consistency
   - [Multi-Competition Type](DOC/user/MULTI_COMPETITION_TYPE.md) - Multi-competition aggregation
   - [Consolidation Phases](DOC/user/CONSOLIDATION_PHASES_CLASSEMENT.md) - Lock ranking phases
+  - [Match Medals](DOC/user/MATCH_MEDALS.md) - Medals and timeline statistics derived from the score sheets
 
 ### Developer Documentation
 - **[DOC/developer/](DOC/developer/)** - Technical documentation for developers, classified by the *state* of the subject
@@ -155,6 +156,9 @@ make backend_npm_add package=flatpickr
 - `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
 - `make pdf_tokens_sync` - Copy the app4/app3 charter (colour tokens, fonts, logos) used by the PDFs into `sources/api2/assets/pdf/`, then commit
 - `make gotenberg_logs` - Logs of the Gotenberg (PDF rendering) container
+- `make api2_match_medals_compute season=AAAA` - Compute the match medals of ONE season with the current thresholds
+  (`sources/api2/config/packages/match_medals.yaml`); `make api2_match_medals_sync` is what the cron runs every 10 min.
+  Spec: [FEATURE_MATCH_MEDALS.md](DOC/specs/public/FEATURE_MATCH_MEDALS.md)
 
 **PDF documents** ([PDF_GOTENBERG.md](DOC/specs/PDF_GOTENBERG.md)): rendered by api2 with Gotenberg (`/api2/pdf/*` public,
 `/api2/admin/pdf/*` profile + mandate). The legacy `admin/Feuille*.php` PDFs only answer to a legacy session or to a

@@ -1,7 +1,7 @@
 # Médailles de match et statistiques de timeline
 
-**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours des
-08 et 09/11/2026 intégrés, maquettes validées le 09/11/2026)
+**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : ✅ Validée (09/11/2026,
+maquettes comprises) — 🛠 Implémentée, à déployer (§ 12)
 **Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
 saisie supplémentaire
 **Remplace** : — (nouveauté)
@@ -243,7 +243,8 @@ Sa **timeline est fiable** (éléments **T** autorisés) si, en plus :
 
 4. le nombre de buts `B` hors `TB` de chaque équipe est égal à son score (`ScoreA`, `ScoreB`) ;
 5. chaque but et chaque carton hors `TB` a une période et un temps renseignés ;
-6. aucun temps n'est hors de sa période (temps restant > durée retenue, § 5.2, après allongement).
+6. chaque période est connue (`M1`, `M2`, `P1`, `P2`…). Un temps `00:00:00` compte comme **non saisi** : le legacy
+   enregistre « `00:` + temps saisi », un temps vide y devient donc `00:00:00` (décision d'implémentation, § 12).
 
 Un match éligible dont la timeline n'est pas fiable n'attribue **que les médailles S**. L'API l'indique
 (`timeline_reliable: false`) pour que l'affichage l'explique, sans jamais l'imputer à une équipe.
@@ -279,7 +280,7 @@ l'équipe qui marque ; **en infériorité** dans le cas inverse ; ni l'un ni l'a
 
 ### 5.4 Seuils (un seul endroit)
 
-Tous les seuils sont réunis dans **un seul fichier de configuration d'api2** (`config/match_medals.yaml`, lu par un
+Tous les seuils sont réunis dans **un seul fichier de configuration d'api2** (`config/packages/match_medals.yaml`, lu par un
 objet `MedalThresholds`), **communs à toutes les compétitions**. Aucun seuil n'est écrit ailleurs (ni dans les règles,
 ni dans les explications, qui les citent par variable). Valeurs initiales :
 
@@ -356,7 +357,8 @@ Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3)
   `exclusions_B`, `powerplay_goals_A`, `powerplay_goals_B`, `penalty_killed_A`, `penalty_killed_B`, `source_hash`,
   `computed_at`.
 
-Migrations Doctrine dans api2, tables préfixées `kp_` comme le reste du schéma.
+Migration SQL datée `SQL/migrations/2026-11-09_public_site_match_medals.sql` (idempotente, comme celle du module
+éditorial, chargée aussi par les fixtures de test), tables préfixées `kp_` comme le reste du schéma.
 
 ### 6.3 Recalcul saison par saison
 
@@ -372,7 +374,7 @@ Chaque saison est calculée avec **ses** seuils, copiés dans `kp_medal_season` 
   ceux qui ne sont plus validés. Elle utilise **les seuils de la saison du match** ; une saison jamais calculée
   reçoit d'abord sa copie des seuils actuels.
 - **Mise en service** : un calcul complet de **chaque saison**, une par une, de la plus récente à la plus ancienne.
-- **Changer un seuil** : modifier `config/match_medals.yaml`, déployer, puis lancer le calcul complet des seules
+- **Changer un seuil** : modifier `config/packages/match_medals.yaml`, déployer, puis lancer le calcul complet des seules
   saisons voulues (en général la saison en cours). Les saisons passées gardent leurs résultats et leurs seuils, et
   leurs explications continuent de citer les seuils qui les ont produits.
 - **Changer une règle dans le code** : incrémenter `rules_version` ; l'admin signale les saisons calculées avec une
@@ -561,7 +563,7 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 **Seuils et recalcul**
 
-- **MED-29** — Étant donné un seuil modifié dans `config/match_medals.yaml`, quand on recherche ce seuil ailleurs
+- **MED-29** — Étant donné un seuil modifié dans `config/packages/match_medals.yaml`, quand on recherche ce seuil ailleurs
   dans le code, des règles ou des explications, alors on ne le trouve pas (une seule définition).
 - **MED-30** — Étant donné les saisons 2025 et 2026 calculées avec `bounceBackSeconds = 60`, quand le seuil passe à
   45 et qu'on lance le calcul complet de 2026, alors seules les médailles de 2026 changent, et `kp_medal_season`
@@ -654,3 +656,38 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 **Maquettes (validées le 09/11/2026)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
 `stats-medailles`, `equipe-medailles`, `app2-feuille`, `admin-medailles`).
+
+## 12. Implémentation (09/11/2026)
+
+Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout checklist](../../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md#fonction-transverse--médailles-de-match-et-statistiques-de-timeline).
+
+| Brique | Où | Tests |
+|---|---|---|
+| Moteur | `sources/api2/src/MatchMedals/` (`MatchTimeline`, `Rule/*`, `MatchMedalCalculator`) | `tests/Unit/MatchMedals/` (MED-01 à 29, 53, 56) |
+| Persistance, commandes | `MatchMedalRepository`, `MatchMedalService`, `app:match-medals:compute` / `:sync`, recalcul dans `AdminGamesController` | `tests/Integration/MatchMedalsPersistenceTest.php`, `MatchMedalsValidationTest.php` |
+| Endpoints, statistiques | `Catalog/MedalCatalog`, `Stats/*` (20 statistiques), `MatchMedalReader`, `PublicMedalsController`, `AdminMedalsController` | `tests/Integration/MatchMedalsEndpointsTest.php` |
+| app3 | `components/medal/`, `pages/medals.vue`, `components/team/TeamMatchMedals.vue`, onglet Stats, liste des matchs | `tests/unit/medals.spec.ts`, `tests/nuxt/medals.spec.ts` |
+| app2 | `components/GameMedals.vue`, `MedalPill.vue`, `GameEventIcon.vue` (ballon) | lint (app2 n'a pas de tests) |
+| app4 | `pages/medals/index.vue` | `tests/unit/medals.spec.ts` |
+
+**Écarts assumés par rapport aux sections précédentes** :
+
+- **Surface** (§ 6.4) : sur les endpoints de compétition, `surface` vaut `app3` par défaut (au lieu d'un 400) pour
+  qu'app3 reste déployable indépendamment ; une valeur inconnue ou `admin` renvoie 400. Les kinds des statistiques de
+  timeline ne sont listés que si la compétition a au moins un match calculé (pas d'onglet vide).
+- **Événement** (§ 3.4, § 6.4) : l'onglet Stats d'un événement montre la compétition choisie (comme les autres
+  statistiques, EVT-07) ; pas d'endpoint `/event/{id}/stats` propre.
+- **Étiquettes dans les listes d'app3** : endpoint dédié `/competition/{season}/{code}/labels` plutôt qu'un champ de
+  plus dans le format des matchs partagé avec app2.
+- **Pictogrammes** (§ 7.1) : le catalogue renvoie aussi le dessin en ligne (`icon_svg`), car un masque CSS chargé
+  depuis une autre origine exigerait du CORS sur les fichiers statiques.
+- **Admin** (§ 9.3) : page dans le groupe **Opérations** d'app4 (la rubrique Statistiques n'est pas un menu).
+- **Discipline** (§ 3.4) : cartons par couleur et par match ; les minutes d'infériorité ne sont pas calculées.
+- **Goal Fest** (§ 3.3) : décidé à la lecture (il dépend de toute la compétition), jamais stocké.
+
+**Reste à faire** (lots suivants) :
+
+- app2 : statistiques de l'événement et du groupe publiées sur app2 (pas d'endpoint d'événement, cf. ci-dessus).
+- app4 : médailles d'un match dans la page Matchs (l'endpoint `/admin/medals/games/{id}` existe).
+- Symbole du but (§ 7.2) : ballon dans le Scoring d'app4 et dans les PDF (fait dans app2).
+
