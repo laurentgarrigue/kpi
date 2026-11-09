@@ -866,7 +866,9 @@ porté par la compétition, en **hydratant `store.config`**).
 - **Shotclock — chronomètre de tir (Phase 2)** (terminologie §0.9 : « chronomètre de tir », ne
   plus employer « temps d'action de but ») : compte à rebours, buzzer à 0 (`targetAchieved`),
   suit le chrono (pause quand le chrono s'arrête), **caché quand le temps de jeu restant est
-  inférieur au shotclock** (`shotClockShow`), affiché `--` quand il est à l'arrêt. Ajustements
+  inférieur au shotclock** (`shotClockShow`), affiché `--` quand il est à l'arrêt.
+  Afficheurs physiques aux angles du terrain : étude
+  [SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md](../developer/in-progress/SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md). Ajustements
   **−10 / −1 / +1 / +10 s**, autorisés **seulement chrono à l'arrêt**
   (`allowShotclockUpdateWhileRunning = false`). Le shotclock ne concerne que le **mode direct**.
 
