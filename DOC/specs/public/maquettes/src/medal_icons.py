@@ -121,7 +121,8 @@ ICONS = {
     'thriller': THRILLER,
     'seesaw': '<path d="M3 8.5l18 7"/><path d="M12 12.2l-3.6 8.3h7.2z"/><circle cx="5" cy="5.3" r="1.8"/>',
     'goal_fest': ball(8.5, 15, 5.5) + '<circle cx="17.5" cy="7" r="2.6"/><path d="M19 15.5l1.5 1.5M14 2.5v2M21 10.5h2M4 3.5l1.5 1.5"/>',
-    'lockdown': '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.8"/>',
+    'chess_match': ('<circle cx="12" cy="5.8" r="2.9"/><path d="M8.8 10.2h6.4"/>'
+                    '<path d="M10.2 10.2c0 3.6-1.3 6.2-3 8.3h9.6c-1.7-2.1-3-4.7-3-8.3"/><path d="M5.5 21h13"/>'),
     # --- referees (base pictograms, the whistle badge is added below)
     'whistle': WHISTLE,
     'nocard': NO_CARD,

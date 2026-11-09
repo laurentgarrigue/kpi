@@ -72,7 +72,7 @@ design.
 
 ## Médailles et statistiques de timeline
 
-Maquettes du 09/11/2026, **à valider**, pour [FEATURE_MATCH_MEDALS](../FEATURE_MATCH_MEDALS.md). Elles couvrent
+Maquettes **validées le 09/11/2026** (l’étiquette *Verrouillé · Lockdown* est devenue *Partie d’échecs · Chess Match* : le cadenas évoquait le verrouillage d’un match), pour [FEATURE_MATCH_MEDALS](../FEATURE_MATCH_MEDALS.md). Elles couvrent
 app3, mais aussi la feuille de match d'**app2** et la page d'**admin** (app4), dans le style de chaque application.
 
 **Données** : scores, équipes et arbitres réels de la PlayOff Hommes 2026 (`data/`). L'ordre des buts, les temps, les

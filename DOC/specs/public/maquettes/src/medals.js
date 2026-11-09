@@ -7,7 +7,7 @@ const THRESHOLDS = {
   bounceBackSeconds: 60, comebackDeficit: 3, scoringRunGoals: 3, lateWindowSeconds: 60, fastStartSeconds: 30,
   hatTrickGoals: 3, bigWinMargin: 5, penaltyKillExclusions: 2, marathonOvertimes: 2, exclusionSeconds: 120,
   permanentCards: ['D'], regularPeriodSeconds: 600, extraPeriodSeconds: 300, thrillerLeadChanges: 3,
-  seesawEqualizers: 4, goalFestTopPercent: 10, goalFestMinGames: 10, lockdownMaxGoals: 2, goalTimingSliceSeconds: 120,
+  seesawEqualizers: 4, goalFestTopPercent: 10, goalFestMinGames: 10, chessMatchMaxGoals: 2, goalTimingSliceSeconds: 120,
   refereeMinGames: 5,
 };
 /** Thresholds frozen per season (§ 6.3). 2025 is illustrative: a season computed before a threshold change. */
@@ -55,7 +55,7 @@ const CATALOG = [
   C('thriller', 'label', 'match', '', 'T', ['app2', 'app3'], 'Suspense', 'Thriller', t => `Au moins ${t.thrillerLeadChanges} changements d'équipe en tête au cours du match.`),
   C('seesaw', 'label', 'match', '', 'T', [], 'Chassé-croisé', 'Seesaw', t => `Au moins ${t.seesawEqualizers} égalisations.`),
   C('goal_fest', 'label', 'match', '', 'S', [], 'Festival', 'Goal Fest', t => `Total de buts parmi les ${t.goalFestTopPercent} % les plus élevés de la compétition.`),
-  C('lockdown', 'label', 'match', '', 'S', [], 'Verrouillé', 'Lockdown', t => `Au plus ${t.lockdownMaxGoals} buts dans le match.`),
+  C('chess_match', 'label', 'match', '', 'S', [], 'Partie d’échecs', 'Chess Match', t => `Au plus ${t.chessMatchMaxGoals} buts : un match tactique, où chaque but se joue comme un coup.`),
   C('ref_smooth_game', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Match fluide', 'Smooth Game', () => 'Arbitre un match sans aucun carton.'),
   C('ref_knockout', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Match couperet', 'Knockout', () => 'Arbitre un match à élimination directe.'),
   C('ref_extra_time', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Prolongation', 'Extra Time', () => 'Arbitre un match qui va en prolongation.'),
@@ -215,7 +215,7 @@ function computeMatch(m, t = THRESHOLDS) {
       if (winner === s && score[s] - score[other(s)] >= t.bigWinMargin) add(out.team, 'big_win', { side: s });
       if (!events.some(e => e.team === s && e.type !== 'B')) add(out.team, 'fair_play', { side: s });
     }
-    if (score.A + score.B <= t.lockdownMaxGoals) out.labels.push('lockdown');
+    if (score.A + score.B <= t.chessMatchMaxGoals) out.labels.push('chess_match');
   }
   if (T && leadChanges >= t.thrillerLeadChanges) out.labels.push('thriller');
   if (T && equalizers >= t.seesawEqualizers) out.labels.push('seesaw');

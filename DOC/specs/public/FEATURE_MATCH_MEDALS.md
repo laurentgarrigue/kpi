@@ -1,7 +1,7 @@
 # Médailles de match et statistiques de timeline
 
 **Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours des
-08 et 09/11/2026 intégrés, maquettes à valider)
+08 et 09/11/2026 intégrés, maquettes validées le 09/11/2026)
 **Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
 saisie supplémentaire
 **Remplace** : — (nouveauté)
@@ -36,7 +36,8 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Premier lot public | **Sélection réduite** (§ 4) ; le reste n'est visible que dans l'admin en attendant d'être publié. |
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
 | Noms français, premier lot (09/11/2026) | **Validés** tels que proposés (§ 3, § 4). |
-| Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). |
+| Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). Validés avec les maquettes. |
+| Étiquette « peu de buts » (09/11/2026) | **Partie d’échecs · Chess Match** (pion d’échecs) remplace *Verrouillé · Lockdown*, dont le nom et le cadenas se confondaient avec le verrouillage d’un match. |
 | Ballon (09/11/2026) | Les pictogrammes qui montrent un ballon dessinent le **ballon de kayak-polo** (celui du water-polo), d'après le **dessin de référence choisi** : disque plein, panneaux blancs en trois groupes autour d'une jonction en « Y » décentrée. Le ballon seul (`goal`) devient le **symbole du but** dans toutes les applications, à la place des cercles et disques actuels (§ 7.2). |
 | Arbitres, publication (09/11/2026) | Les **médailles d'arbitre** sont publiées **dès le premier lot** (§ 4). Les statistiques d'arbitrage autres que *Matchs arbitrés* et *Médailles des arbitres* restent réservées à l'admin, **profils 1 et 2 seulement**. |
 | Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
@@ -124,7 +125,7 @@ qu'elle a subi.
 | `thriller` | **Suspense · Thriller** | Au moins *3* changements de leader (§ 5.5). | T | **app2, app3** |
 | `seesaw` | **Chassé-croisé · Seesaw** | Au moins *4* égalisations. | T | — (admin) |
 | `goal_fest` | **Festival · Goal Fest** | Total de buts parmi les *10 %* les plus élevés de la compétition (au moins *10* matchs éligibles). | S | — (admin) |
-| `lockdown` | **Verrouillé · Lockdown** | Au plus *2* buts dans le match. | S | — (admin) |
+| `chess_match` | **Partie d’échecs · Chess Match** | Au plus *2* buts dans le match : un match tactique, où chaque but se joue comme un coup. | S | — (admin) |
 
 ### 3.4 Statistiques de timeline (compétition, événement)
 
@@ -297,7 +298,7 @@ ni dans les explications, qui les citent par variable). Valeurs initiales :
 | `permanentCards` | `[D]` | § 5.3 |
 | `regularPeriodSeconds` / `extraPeriodSeconds` | 600 / 300 | § 5.2 |
 | `thrillerLeadChanges` / `seesawEqualizers` | 3 / 4 | étiquettes |
-| `goalFestTopPercent` / `goalFestMinGames` / `lockdownMaxGoals` | 10 / 10 / 2 | étiquettes |
+| `goalFestTopPercent` / `goalFestMinGames` / `chessMatchMaxGoals` | 10 / 10 / 2 | étiquettes |
 | `goalTimingSliceSeconds` | 120 | `goal_timing`, `referee_card_timing` |
 | `refereeMinGames` | 5 | statistiques d'arbitrage (§ 3.5) |
 
@@ -651,5 +652,5 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 **Questions ouvertes** : aucune (Q1 à Q5 tranchées les 08 et 09/11/2026, cf. § 1.1).
 
-**Maquettes (09/11/2026, à valider)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
+**Maquettes (validées le 09/11/2026)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
 `stats-medailles`, `equipe-medailles`, `app2-feuille`, `admin-medailles`).
