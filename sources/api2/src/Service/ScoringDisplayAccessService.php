@@ -109,22 +109,28 @@ class ScoringDisplayAccessService
             return true;
         }
 
-        $host = parse_url($origin, PHP_URL_HOST);
-        if ($host === null || $host === false) {
+        $parts = parse_url($origin);
+        if (!is_array($parts) || !isset($parts['scheme'], $parts['host'])) {
             return false;
         }
-        if ($host === $request->getHost()) {
+        if ($parts['host'] === $request->getHost()) {
             return true;
         }
 
-        foreach (array_filter(array_map('trim', explode(',', $this->trustedOrigins))) as $trusted) {
-            $trustedHost = parse_url($trusted, PHP_URL_HOST) ?: $trusted;
-            if ($host === $trustedHost) {
-                return true;
-            }
+        return $this->isTrustedOrigin($parts['scheme'] . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : ''));
+    }
+
+    /**
+     * `trustedOrigins` is CORS_ALLOW_ORIGIN: a regex matched against `scheme://host[:port]`,
+     * exactly as NelmioCorsBundle reads it (origin_regex: true, same delimiters and flags).
+     */
+    private function isTrustedOrigin(string $origin): bool
+    {
+        if ($this->trustedOrigins === '') {
+            return false;
         }
 
-        return false;
+        return @preg_match('{' . $this->trustedOrigins . '}i', $origin) === 1;
     }
 
     /**

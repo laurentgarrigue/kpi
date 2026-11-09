@@ -20,6 +20,19 @@ export function formatGameClock(remainingMs: number): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}`
 }
 
+/** Finest step a clock display changes on (tenths under 10 s; whole seconds are multiples of it). */
+const DISPLAY_STEP_MS = 100
+
+/**
+ * Milliseconds until a counting-down clock crosses its next display boundary (+1 ms to be
+ * strictly past it). Console clocks schedule their refresh on it, so their digits flip at
+ * the same instant as the overlay's (which repaints every frame) — a free-running 100 ms
+ * interval showed each change up to 100 ms late.
+ */
+export function msUntilDisplayChange(remainingMs: number): number {
+  return (Math.max(0, remainingMs) % DISPLAY_STEP_MS) + 1
+}
+
 /**
  * ±1 s on the shot clock lands on a whole second: the operator corrects what they read,
  * so the base is the displayed second (rounded up above 10 s, nearest under 10 s where

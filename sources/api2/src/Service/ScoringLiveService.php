@@ -406,10 +406,25 @@ class ScoringLiveService
                 $c['elapsedMs'] = (int) $c['elapsedMs'];
                 $c['slot'] = (int) $c['slot'];
                 $c['running'] = (bool) $c['running'];
+                $c['startedAtMs'] = self::instantMs($c['startedAt']);
                 return $c;
             }, $clocks),
             'events' => $events,
         ];
+    }
+
+    /**
+     * `started_at` is a naive DATETIME(3) written in api2's PHP timezone (setClock). It is
+     * shipped as an absolute instant too — epoch ms — so a reader in another timezone (the
+     * overlay on an OBS PC) never re-interprets it as its own local time.
+     */
+    public static function instantMs(?string $storedDatetime): ?int
+    {
+        if ($storedDatetime === null || $storedDatetime === '') {
+            return null;
+        }
+
+        return (int) (new \DateTimeImmutable($storedDatetime))->format('Uv');
     }
 
     // ------------------------------------------------------------------
@@ -543,6 +558,7 @@ class ScoringLiveService
                 'initMs' => (int) $row['initMs'],
                 'elapsedMs' => (int) $row['elapsedMs'],
                 'startedAt' => $row['startedAt'],
+                'startedAtMs' => self::instantMs($row['startedAt']),
                 'running' => (bool) $row['running'],
             ],
         ]);

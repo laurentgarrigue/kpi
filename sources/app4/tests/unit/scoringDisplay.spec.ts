@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatGameClock, snapShotclockAdjust } from '../../utils/scoringDisplay'
+import { formatGameClock, msUntilDisplayChange, snapShotclockAdjust } from '../../utils/scoringDisplay'
 
 /**
  * Affichage des chronos de la console et du tableau d'affichage (PAGE_SCORING.md §6.5).
@@ -52,5 +52,25 @@ describe('snapShotclockAdjust — ajustement ±1 s du chrono de tir', () => {
   it('ne dépasse ni zéro ni la durée chargée', () => {
     expect(snapShotclockAdjust(400, -1, 60_000)).toBe(0)
     expect(snapShotclockAdjust(59_500, 1, 60_000)).toBe(60_000)
+  })
+})
+
+// Console and overlay must flip their digits at the same instant: the console refresh is
+// scheduled on the next display boundary (whole second above 10 s, tenth below), not on a
+// free-running 100 ms interval that showed every change up to 100 ms late.
+describe('msUntilDisplayChange', () => {
+  it('waits until the remaining time drops below the next tenth boundary', () => {
+    expect(msUntilDisplayChange(9_537)).toBe(38)
+    expect(msUntilDisplayChange(531_082)).toBe(83)
+  })
+
+  it('on an exact boundary, the change happens 1 ms later', () => {
+    expect(msUntilDisplayChange(9_000)).toBe(1)
+  })
+
+  it('a second boundary is hit 1 ms after it is crossed', () => {
+    const after = 13_020 - msUntilDisplayChange(13_020)
+    expect(formatGameClock(after)).toBe('0:13')
+    expect(formatGameClock(after + 2)).toBe('0:14')
   })
 })

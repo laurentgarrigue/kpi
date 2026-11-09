@@ -21,6 +21,8 @@ export interface OverlayProgramMatch {
   type: string
   equipeA: string | null
   equipeB: string | null
+  /** Competition category (kp_competition.Soustitre2), null when not set. */
+  categorie: string | null
 }
 
 export interface OverlaySettings {
@@ -49,6 +51,7 @@ export interface OverlayState {
     initMs: number
     elapsedMs: number
     startedAt: string | null
+    startedAtMs: number | null
     running: boolean
   }>
   events: Array<{
@@ -57,11 +60,19 @@ export interface OverlayState {
     period: string
     tpsJeu: string
     team: string
-    numero: string | null
+    /** Player cap number, as api2 names it (`number`). */
+    number: string | null
     nom: string | null
     prenom: string | null
   }>
 }
+
+/**
+ * Always revalidate (ETag → 304) instead of trusting the HTTP cache: the refetch triggered by a
+ * Mercure message lands within the responses' max-age, and would otherwise get the state from
+ * BEFORE the change (e.g. a clock still stopped right after « run »).
+ */
+const REVALIDATE: RequestInit = { cache: 'no-cache' }
 
 export function useOverlayProgram(event: number, pitch: string, apiBase: string, token: string) {
   const program = ref<{
@@ -86,7 +97,7 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
   const auth = `token=${encodeURIComponent(token)}`
 
   const fetchProgram = async () => {
-    const res = await fetch(`${apiBase}/scoring/program/${event}/${encodeURIComponent(pitch)}?${auth}`)
+    const res = await fetch(`${apiBase}/scoring/program/${event}/${encodeURIComponent(pitch)}?${auth}`, REVALIDATE)
     if (!res.ok) {
       // 401/403: the token is missing, expired or revoked — say so instead of showing
       // an empty overlay that looks like a data problem.
@@ -103,7 +114,7 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
       currentMatchId = null
       return
     }
-    const res = await fetch(`${apiBase}/scoring/state/${id}?${auth}`)
+    const res = await fetch(`${apiBase}/scoring/state/${id}?${auth}`, REVALIDATE)
     // 404 = the match exists but was never touched live yet: keep an empty board.
     state.value = res.ok ? await res.json() : null
     currentMatchId = id

@@ -31,6 +31,11 @@ const has = (block: string) => blocks.value.includes(block)
 const skin = computed(() => (route.query.skin === 'clubs' ? 'clubs' : 'nations'))
 const variant = computed(() => String(route.query.variant ?? 'live'))
 const debug = computed(() => route.query.debug !== undefined)
+/** Fixed labels follow `lang` (§4, default fr): overtimes read PRL{n} in French, OVT{n} in English. */
+const OVERTIME_PREFIX: Record<string, string> = { fr: 'PRL', en: 'OVT' }
+const overtimePrefix = computed(() => OVERTIME_PREFIX[String(route.query.lang ?? 'fr')] ?? OVERTIME_PREFIX.fr)
+/** Period as shown to viewers (M1/M2 → P1/P2, P{n} → PRL{n}/OVT{n}); storage codes never shown. */
+const showPeriod = (period: string) => periodDisplayCode(period, overtimePrefix.value)
 
 const { program, state, status } = useOverlayProgram(event, pitch, config.public.api2BaseUrl, token)
 
@@ -67,6 +72,15 @@ const setPhase = (value: Phase, afterMs = 0) => {
 }
 onUnmounted(() => { if (phaseTimer) clearTimeout(phaseTimer) })
 
+// ─── Stage fitting: 1920×1080 scaled to the browser source (see utils/overlayStage) ───
+const scale = ref(1)
+const fitStage = () => { scale.value = stageScale(window.innerWidth, window.innerHeight) }
+onMounted(() => {
+  fitStage()
+  window.addEventListener('resize', fitStage)
+})
+onUnmounted(() => window.removeEventListener('resize', fitStage))
+
 watch(() => [current.value?.statut, state.value?.statut, clocks.breakClock.value], () => {
   const matchStatus = state.value?.statut ?? current.value?.statut
   const s = settings.value
@@ -96,7 +110,9 @@ watch(() => [current.value?.statut, state.value?.statut, clocks.breakClock.value
 const teamA = computed(() => current.value?.equipeA ?? '')
 const teamB = computed(() => current.value?.equipeB ?? '')
 
-const periodLabel = computed(() => state.value?.periode ?? '')
+const periodLabel = computed(() => showPeriod(state.value?.periode ?? ''))
+const category = computed(() => current.value?.categorie ?? null)
+const teamOf = (side: string) => (side === 'A' ? teamA.value : side === 'B' ? teamB.value : '')
 
 /** Facts to display (goals/cards), most recent first — used by the `fact` block. */
 const facts = computed(() => {
@@ -114,15 +130,19 @@ const CARD_COLOUR: Record<string, string> = {
   <!-- 1920×1080 stage, scaled to the browser source: the overlay is authored once at
        broadcast resolution and adapts if OBS captures at another size. -->
   <div class="overlay-root" :style="{ background }">
-    <div class="overlay-stage">
+    <div class="overlay-stage" :style="{ '--stage-scale': scale }">
       <!-- Score banner -->
       <div v-if="has('score') && (phase === 'match' || phase === 'halftime' || phase === 'final')" class="score-band">
+        <div v-if="category" class="category">{{ category }}</div>
         <div class="team team-a">{{ teamA }}</div>
         <div class="score">{{ state?.scoreA ?? 0 }}<span class="sep">–</span>{{ state?.scoreB ?? 0 }}</div>
         <div class="team team-b">{{ teamB }}</div>
 
-        <div v-if="has('clock') && phase === 'match'" class="clock" :class="{ running: clocks.gameRunning.value }">
-          {{ clocks.gameClock.value ?? '--:--' }}
+        <div v-if="has('clock') && phase === 'match'" class="clock-box">
+          <div class="clock" :class="{ running: clocks.gameRunning.value }">
+            {{ clocks.gameClock.value ?? '--:--' }}
+          </div>
+          <div v-if="periodLabel" class="period">{{ periodLabel }}</div>
         </div>
         <div v-if="has('shotclock') && phase === 'match'" class="shotclock">
           {{ clocks.shotClock.value ?? '--' }}
@@ -135,7 +155,7 @@ const CARD_COLOUR: Record<string, string> = {
       <div v-if="has('penalty') && phase === 'match'" class="penalties">
         <div class="pen-side">
           <span
-            v-for="p in penaltiesA.value"
+            v-for="p in penaltiesA"
             :key="'a' + p.slot"
             class="pen"
             :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
@@ -143,7 +163,7 @@ const CARD_COLOUR: Record<string, string> = {
         </div>
         <div class="pen-side right">
           <span
-            v-for="p in penaltiesB.value"
+            v-for="p in penaltiesB"
             :key="'b' + p.slot"
             class="pen"
             :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
@@ -155,14 +175,15 @@ const CARD_COLOUR: Record<string, string> = {
       <div v-if="has('fact') && phase !== 'next'" class="facts">
         <div v-for="f in facts" :key="f.uid" class="fact">
           <span class="fact-token" :style="{ background: f.code === 'B' ? '#1e40af' : CARD_COLOUR[f.code] }" />
-          <span class="fact-time">{{ f.period }} {{ f.tpsJeu }}</span>
-          <span class="fact-name">{{ f.numero }} {{ f.nom }}</span>
+          <span class="fact-time">{{ showPeriod(f.period) }} {{ f.tpsJeu }}</span>
+          <span class="fact-team">{{ teamOf(f.team) }}</span>
+          <span class="fact-name">{{ f.number }} {{ f.nom }}</span>
         </div>
       </div>
 
       <!-- Next match presentation -->
       <div v-if="has('next') && phase === 'next' && next" class="next-game">
-        <div class="next-title">MATCH {{ next.numero }} · {{ next.heure }}</div>
+        <div class="next-title">MATCH {{ next.numero }} · {{ next.heure }}<template v-if="next.categorie"> · {{ next.categorie }}</template></div>
         <div class="next-teams">{{ next.equipeA }} <span class="sep">vs</span> {{ next.equipeB }}</div>
       </div>
 
@@ -194,7 +215,7 @@ const CARD_COLOUR: Record<string, string> = {
   left: 50%;
   width: 1920px;
   height: 1080px;
-  transform: translate(-50%, -50%) scale(min(100vw / 1920, 100vh / 1080));
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
   font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -214,12 +235,26 @@ const CARD_COLOUR: Record<string, string> = {
   font-size: 44px;
   font-weight: 800;
 }
+.category {
+  position: absolute;
+  left: 28px;
+  bottom: 100%;
+  padding: 6px 18px;
+  background: rgba(10, 12, 20, .82);
+  border-radius: 10px 10px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
 .team { min-width: 320px; }
 .team-a { text-align: right; }
 .team-b { text-align: left; }
 .score { font-size: 64px; }
 .sep { opacity: .45; margin: 0 12px; }
-.clock { font-size: 52px; margin-left: 24px; color: #e5e7eb; }
+.clock-box { display: flex; flex-direction: column; align-items: center; margin-left: 24px; line-height: 1; }
+.clock { font-size: 52px; color: #e5e7eb; }
+.period { font-size: 24px; font-weight: 700; letter-spacing: .12em; opacity: .75; margin-top: 6px; }
 .clock.running { color: #4ade80; }
 .shotclock { font-size: 52px; color: #fbbf24; min-width: 90px; text-align: center; }
 .phase-label { font-size: 32px; letter-spacing: .2em; opacity: .8; margin-left: 16px; }
@@ -262,6 +297,7 @@ const CARD_COLOUR: Record<string, string> = {
 }
 .fact-token { width: 18px; height: 18px; border-radius: 4px; display: inline-block; }
 .fact-time { opacity: .7; font-size: 24px; }
+.fact-team { font-weight: 700; }
 
 .next-game {
   position: absolute;

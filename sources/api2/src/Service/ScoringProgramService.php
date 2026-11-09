@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Scoring\EventClock;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -44,6 +45,23 @@ class ScoringProgramService
         'styleId' => 'default',
     ];
 
+    /**
+     * Columns of a program match (current or next) and the joins they need. The category
+     * is the competition's Soustitre2 (`categ` of the legacy cache files).
+     */
+    private const MATCH_SELECT = "SELECT m.Id, m.Numero_ordre, m.Heure_match, m.Date_match, m.Statut,
+                    m.Terrain, m.Type,
+                    COALESCE(s.statut, m.Statut) live_statut,
+                    ea.Libelle equipeA, eb.Libelle equipeB,
+                    c.Soustitre2 categorie
+             FROM kp_match m
+             INNER JOIN kp_evenement_journee ej ON ej.Id_journee = m.Id_journee
+             INNER JOIN kp_journee j ON j.Id = m.Id_journee
+             LEFT JOIN kp_competition c ON c.Code = j.Code_competition AND c.Code_saison = j.Code_saison
+             LEFT JOIN scoring_live_state s ON s.id_match = m.Id
+             LEFT JOIN kp_competition_equipe ea ON ea.Id = m.Id_equipeA
+             LEFT JOIN kp_competition_equipe eb ON eb.Id = m.Id_equipeB";
+
     public function __construct(
         private readonly Connection $connection,
     ) {
@@ -56,8 +74,9 @@ class ScoringProgramService
      */
     public function getProgram(int $idEvent, string $pitch): array
     {
-        $current = $this->currentMatch($idEvent, $pitch);
-        $next = $this->nextMatch($idEvent, $pitch, $current['id'] ?? null);
+        $clock = $this->eventClock($idEvent);
+        $current = $this->currentMatch($idEvent, $pitch, $clock);
+        $next = $this->nextMatch($idEvent, $pitch, $clock, $current['id'] ?? null);
 
         return [
             'event' => $idEvent,
@@ -107,62 +126,68 @@ class ScoringProgramService
     }
 
     /**
-     * Current match of a pitch. Live status wins (a match flagged ON is being played,
-     * whatever the schedule says); otherwise the most recent match whose kick-off time
-     * has passed today — same rule as the legacy cache generator.
+     * Clock of the event: the Event Cache Manager's simulated clock while a worker runs
+     * (or is paused) for it, the real clock otherwise — so the overlay follows the same
+     * match day and hour as the legacy cache files.
+     */
+    public function eventClock(int $idEvent): EventClock
+    {
+        $config = $this->connection->fetchAssociative(
+            "SELECT date_event, hour_event_initial, offset_event, created_at
+             FROM kp_event_worker_config
+             WHERE id_event = ? AND status IN ('running', 'paused')
+             ORDER BY id DESC
+             LIMIT 1",
+            [$idEvent]
+        );
+
+        return $config === false
+            ? EventClock::real(time())
+            : EventClock::fromWorkerConfig($config, time());
+    }
+
+    /**
+     * Current match of a pitch on the event's match day. Live status wins (a match
+     * flagged ON is being played, whatever the schedule says); otherwise the most recent
+     * match whose kick-off time has passed — same rule as the legacy cache generator.
      *
      * @return array<string,mixed>|null
      */
-    public function currentMatch(int $idEvent, string $pitch): ?array
+    public function currentMatch(int $idEvent, string $pitch, EventClock $clock): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT m.Id, m.Numero_ordre, m.Heure_match, m.Date_match, m.Statut,
-                    m.Terrain, m.Type,
-                    COALESCE(s.statut, m.Statut) live_statut,
-                    ea.Libelle equipeA, eb.Libelle equipeB
-             FROM kp_match m
-             INNER JOIN kp_evenement_journee ej ON ej.Id_journee = m.Id_journee
-             LEFT JOIN scoring_live_state s ON s.id_match = m.Id
-             LEFT JOIN kp_competition_equipe ea ON ea.Id = m.Id_equipeA
-             LEFT JOIN kp_competition_equipe eb ON eb.Id = m.Id_equipeB
+            self::MATCH_SELECT . "
              WHERE ej.Id_evenement = ? AND m.Terrain = ? AND m.Publication = 'O'
-               AND m.Date_match = CURDATE()
+               AND m.Date_match = ?
              ORDER BY
                -- a match actually running comes first, then the latest already started
                (COALESCE(s.statut, m.Statut) = 'ON') DESC,
-               (m.Heure_match <= DATE_FORMAT(NOW(), '%H:%i')) DESC,
+               (m.Heure_match <= ?) DESC,
                m.Heure_match DESC
              LIMIT 1",
-            [$idEvent, $pitch]
+            [$idEvent, $pitch, $clock->date, $clock->workHour]
         );
 
         return $row === false ? null : $this->formatMatch($row);
     }
 
     /**
-     * Next match of a pitch: the first one still waiting (ATT) after the current one.
+     * Next match of a pitch: the first one of the event's match day still waiting (ATT)
+     * after the current one.
      *
      * @return array<string,mixed>|null
      */
-    public function nextMatch(int $idEvent, string $pitch, ?int $currentId): ?array
+    public function nextMatch(int $idEvent, string $pitch, EventClock $clock, ?int $currentId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT m.Id, m.Numero_ordre, m.Heure_match, m.Date_match, m.Statut,
-                    m.Terrain, m.Type,
-                    COALESCE(s.statut, m.Statut) live_statut,
-                    ea.Libelle equipeA, eb.Libelle equipeB
-             FROM kp_match m
-             INNER JOIN kp_evenement_journee ej ON ej.Id_journee = m.Id_journee
-             LEFT JOIN scoring_live_state s ON s.id_match = m.Id
-             LEFT JOIN kp_competition_equipe ea ON ea.Id = m.Id_equipeA
-             LEFT JOIN kp_competition_equipe eb ON eb.Id = m.Id_equipeB
+            self::MATCH_SELECT . "
              WHERE ej.Id_evenement = ? AND m.Terrain = ? AND m.Publication = 'O'
-               AND m.Date_match = CURDATE()
+               AND m.Date_match = ?
                AND COALESCE(s.statut, m.Statut) = 'ATT'
                AND (? IS NULL OR m.Id <> ?)
              ORDER BY m.Heure_match ASC, m.Numero_ordre ASC
              LIMIT 1",
-            [$idEvent, $pitch, $currentId, $currentId]
+            [$idEvent, $pitch, $clock->date, $currentId, $currentId]
         );
 
         return $row === false ? null : $this->formatMatch($row);
@@ -247,6 +272,7 @@ class ScoringProgramService
             'type' => $row['Type'],
             'equipeA' => $row['equipeA'],
             'equipeB' => $row['equipeB'],
+            'categorie' => $row['categorie'] !== null && $row['categorie'] !== '' ? $row['categorie'] : null,
         ];
     }
 }

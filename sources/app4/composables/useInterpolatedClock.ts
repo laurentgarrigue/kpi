@@ -5,8 +5,8 @@
  * (init, elapsed, startedAt, running) any screen recomputes the displayed time on its own,
  * at 60 fps, for free — and keeps ticking correctly during a network blackout.
  *
- * Client/server clock skew is absorbed once, at each refresh, by comparing the server time
- * shipped with the state to the local one; the offset is then applied to every clock.
+ * Running clocks count down from their absolute start instant (`startedAtMs`, epoch ms),
+ * so the overlay does not depend on its timezone — only on the PC clock being NTP-synced.
  */
 export interface RawClock {
   kind: 'GAME' | 'SHOTCLOCK' | 'PENALTY' | 'BREAK'
@@ -17,6 +17,8 @@ export interface RawClock {
   initMs: number
   elapsedMs: number
   startedAt: string | null
+  /** Absolute start instant (epoch ms): the one the interpolation relies on. */
+  startedAtMs: number | null
   running: boolean
 }
 
@@ -34,13 +36,7 @@ export function useInterpolatedClocks(getClocks: () => RawClock[]) {
   onUnmounted(() => { if (frame !== null) cancelAnimationFrame(frame) })
 
   /** Remaining milliseconds of a clock at the current instant. */
-  const remainingOf = (clock: RawClock): number => {
-    const base = clock.initMs - clock.elapsedMs
-    if (!clock.running || !clock.startedAt) return Math.max(0, base)
-    const started = Date.parse(clock.startedAt.replace(' ', 'T'))
-    if (Number.isNaN(started)) return Math.max(0, base)
-    return Math.max(0, base - (now.value - started))
-  }
+  const remainingOf = (clock: RawClock): number => remainingMs(clock, now.value)
 
   const find = (kind: RawClock['kind']) => getClocks().find(c => c.kind === kind) ?? null
 

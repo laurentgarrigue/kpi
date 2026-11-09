@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Scoring\EventClock;
 use App\Service\EventCacheService;
 use App\Service\ScoringOutboxPublisher;
 use App\Service\ScoringProgramService;
@@ -171,19 +172,10 @@ class EventCacheWorkerCommand extends Command
             ));
         }
 
-        // Simulated current time = initial event time + real seconds elapsed since
-        // created_at (the shared clock origin). Both the DATE and the hour are derived
-        // from this timestamp, so a worker started on day 1 naturally rolls over to the
-        // following match days as real time passes (a multi-day event stayed stuck on
-        // date_event otherwise, only the hour advanced).
-        $elapsed              = max(0, time() - $startTime);
-        $currentSimulatedTime = $initialTime + $elapsed;
-        $dateEventWork        = date('Y-m-d', $currentSimulatedTime);
-        $currentHourEvent     = date('H:i', $currentSimulatedTime);
-
-        // Apply the warm-up offset to compute the "working" time used for selection
-        $workMinutes   = $this->eventCache->hhmmToMinutes($currentHourEvent) + (int) $config['offset_event'];
-        $hourEventWork = $this->eventCache->minutesToHhmm($workMinutes);
+        // Simulated clock (initial event time + real seconds since created_at, warm-up
+        // offset applied to the working hour). Shared with ScoringProgramService so the
+        // overlay program and the legacy cache files pick matches on the same clock.
+        $clock = EventClock::fromWorkerConfig($config, time());
 
         $pitches = [];
         $pitchEvent = (int) $config['pitch_event'];
@@ -194,9 +186,9 @@ class EventCacheWorkerCommand extends Command
         try {
             $this->eventCache->generateEvent(
                 $idEvent,
-                $dateEventWork,
-                $hourEventWork,
-                $currentHourEvent,
+                $clock->date,
+                $clock->workHour,
+                $clock->hour,
                 $pitches
             );
             $this->sendHeartbeat($configId, null);

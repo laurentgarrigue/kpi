@@ -1,5 +1,5 @@
 import type { ShotclockState } from '~/utils/scoringRules'
-import { snapShotclockAdjust } from '~/utils/scoringDisplay'
+import { msUntilDisplayChange, snapShotclockAdjust } from '~/utils/scoringDisplay'
 
 /**
  * Shotclock (chronomètre de tir) — the 3-command model of spec §6.5 (decision 2026-07-27):
@@ -25,13 +25,13 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
   const initSeconds = ref(60)
 
   let endAt = 0
-  let intervalId: ReturnType<typeof setInterval> | null = null
+  let tickTimeout: ReturnType<typeof setTimeout> | null = null
   let expiredFired = false
 
   const clearTick = () => {
-    if (intervalId !== null) {
-      clearInterval(intervalId)
-      intervalId = null
+    if (tickTimeout !== null) {
+      clearTimeout(tickTimeout)
+      tickTimeout = null
     }
   }
 
@@ -47,10 +47,16 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
     }
   }
 
+  /** Refresh, then wake up again exactly when the displayed digit next changes. */
+  const loop = () => {
+    tickTimeout = null
+    tick()
+    if (remainingMs.value > 0) tickTimeout = setTimeout(loop, msUntilDisplayChange(remainingMs.value))
+  }
+
   const startTick = () => {
     clearTick()
-    intervalId = setInterval(tick, 100)
-    tick()
+    loop()
   }
 
   /**
@@ -58,7 +64,7 @@ export function useShotclock(options: { onExpired?: () => void } = {}) {
    *  - "--" when idle;
    *  - whole seconds, rounded up, from 60 down to 10 (max width: 2 chars, "60");
    *  - **tenths under 10 s** ("8.8"), as scoreboards do for the last seconds.
-   * The 100 ms tick gives exactly the resolution the tenths need.
+   * The refresh is scheduled on each display boundary (msUntilDisplayChange), tenths included.
    */
   const display = computed(() => {
     if (state.value === 'IDLE') return '--'

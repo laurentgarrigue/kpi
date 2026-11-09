@@ -1,5 +1,5 @@
 import { ref, computed, onUnmounted, type Ref } from 'vue'
-import { formatGameClock } from '~/utils/scoringDisplay'
+import { formatGameClock, msUntilDisplayChange } from '~/utils/scoringDisplay'
 
 /**
  * Match countdown timer (game clock) — timestamp-based, like useShotclock/usePenalties.
@@ -44,13 +44,13 @@ export function useTimer(options: TimerOptions = {}) {
 
   /** Epoch instant of expiry while running; only meaningful when `isRunning`. */
   let endAt = 0
-  let intervalId: ReturnType<typeof setInterval> | null = null
+  let tickTimeout: ReturnType<typeof setTimeout> | null = null
   let targetFired = false
 
   const clearTick = () => {
-    if (intervalId !== null) {
-      clearInterval(intervalId)
-      intervalId = null
+    if (tickTimeout !== null) {
+      clearTimeout(tickTimeout)
+      tickTimeout = null
     }
   }
 
@@ -92,10 +92,16 @@ export function useTimer(options: TimerOptions = {}) {
     }
   }
 
+  /** Refresh, then wake up again exactly when the displayed digit next changes. */
+  const loop = () => {
+    tickTimeout = null
+    tick()
+    if (remainingMs.value > 0) tickTimeout = setTimeout(loop, msUntilDisplayChange(remainingMs.value))
+  }
+
   const startTick = () => {
     clearTick()
-    intervalId = setInterval(tick, 100)
-    tick()
+    loop()
   }
 
   /**
