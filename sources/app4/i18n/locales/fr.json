@@ -60,7 +60,8 @@
     "cms_home": "Accueil du site",
     "cms_redirects": "Redirections",
     "public_site_beta": "Nouveau site public (bêta)",
-    "scrutineering": "Scrutineering"
+    "scrutineering": "Scrutineering",
+    "medals": "Médailles"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -3165,5 +3166,63 @@
       "open_presence": "Feuille de présence",
       "open_scrutineering": "Scrutineering"
     }
+  },
+  "medals": {
+    "title": "Médailles",
+    "intro": "Catalogue des médailles, étiquettes et statistiques de timeline : publication sur app2 et app3, seuils figés par saison, accompagnement des arbitres. Profils 1 et 2.",
+    "tabs": {
+      "catalogue": "Catalogue",
+      "seasons": "Saisons",
+      "stats": "Statistiques",
+      "referees": "Arbitrage"
+    },
+    "type": "Type",
+    "all": "Tous",
+    "types": {
+      "medal": "Médaille",
+      "label": "Étiquette",
+      "stat": "Statistique"
+    },
+    "referee": "arbitre",
+    "levels": {
+      "S": "Score seulement",
+      "T": "Timeline fiable"
+    },
+    "unpublished_only": "Non publiés seulement",
+    "publish_note": "Publier ne recalcule rien : l’historique s’affiche aussitôt.",
+    "name": "Nom",
+    "data": "Données",
+    "awards": "Attributions {season}",
+    "status": "Statut",
+    "active": "Actif",
+    "retired": "Retiré",
+    "publish_on": "Publier {name} sur {surface}",
+    "saved": "Catalogue mis à jour.",
+    "save_error": "La modification n’a pas été enregistrée.",
+    "seasons_help": "Chaque saison garde les seuils utilisés pour la calculer. Recalcul complet d’une saison avec les seuils actuels : make api2_match_medals_compute season=AAAA. Version des règles du code : {version}.",
+    "no_season": "Aucune saison calculée.",
+    "season": "Saison",
+    "rules": "Règles",
+    "computed_at": "Calculée le",
+    "games": "Matchs",
+    "reliable": "Feuilles complètes",
+    "thresholds": "Seuils",
+    "outdated": "version antérieure : relancer le calcul si voulu",
+    "thresholds_differ": "diffèrent des seuils actuels",
+    "thresholds_same": "identiques aux seuils actuels",
+    "statistic": "Statistique",
+    "unpublished": "non publiée",
+    "referee_note": "Les faits d’un match comptent pour ses deux arbitres ; « — » sous le nombre minimum de matchs ; tri par nombre de matchs.",
+    "no_context": "Choisissez une saison et des compétitions dans le contexte de travail.",
+    "basis": "Calculé sur {games} matchs validés, dont {reliable} à feuille complète.",
+    "undesignated": "{n} matchs sans arbitre désigné nommément.",
+    "summary": "Ensemble du périmètre",
+    "name_fr": "Nom français",
+    "name_en": "Nom anglais",
+    "explanation_fr": "Explication (français)",
+    "explanation_en": "Explication (anglais)",
+    "variables": "Variables :",
+    "preview": "Aperçu (seuils de la saison) :",
+    "journalled": "Chaque modification est journalisée (avant / après)."
   }
 }

@@ -60,7 +60,8 @@
     "cms_home": "Site home page",
     "cms_redirects": "Redirections",
     "public_site_beta": "New public site (beta)",
-    "scrutineering": "Scrutineering"
+    "scrutineering": "Scrutineering",
+    "medals": "Medals"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -3153,5 +3154,63 @@
       "open_presence": "Presence sheet",
       "open_scrutineering": "Scrutineering"
     }
+  },
+  "medals": {
+    "title": "Medals",
+    "intro": "Catalogue of the medals, labels and timeline statistics: publication on app2 and app3, thresholds frozen per season, support of the referees. Profiles 1 and 2.",
+    "tabs": {
+      "catalogue": "Catalogue",
+      "seasons": "Seasons",
+      "stats": "Statistics",
+      "referees": "Officiating"
+    },
+    "type": "Type",
+    "all": "All",
+    "types": {
+      "medal": "Medal",
+      "label": "Label",
+      "stat": "Statistic"
+    },
+    "referee": "referee",
+    "levels": {
+      "S": "Score only",
+      "T": "Reliable timeline"
+    },
+    "unpublished_only": "Unpublished only",
+    "publish_note": "Publishing recomputes nothing: the history shows at once.",
+    "name": "Name",
+    "data": "Data",
+    "awards": "Awards {season}",
+    "status": "Status",
+    "active": "Active",
+    "retired": "Retired",
+    "publish_on": "Publish {name} on {surface}",
+    "saved": "Catalogue updated.",
+    "save_error": "The change was not saved.",
+    "seasons_help": "Each season keeps the thresholds it was computed with. Full computation of a season with the current thresholds: make api2_match_medals_compute season=YYYY. Rules version of the code: {version}.",
+    "no_season": "No computed season.",
+    "season": "Season",
+    "rules": "Rules",
+    "computed_at": "Computed on",
+    "games": "Games",
+    "reliable": "Complete sheets",
+    "thresholds": "Thresholds",
+    "outdated": "older version: compute again if wanted",
+    "thresholds_differ": "differ from the current thresholds",
+    "thresholds_same": "same as the current thresholds",
+    "statistic": "Statistic",
+    "unpublished": "unpublished",
+    "referee_note": "The facts of a game count for both its referees; « — » under the minimum number of games; sorted by games.",
+    "no_context": "Choose a season and competitions in the work context.",
+    "basis": "Computed on {games} validated games, {reliable} with a complete sheet.",
+    "undesignated": "{n} games without a referee designated by name.",
+    "summary": "Whole perimeter",
+    "name_fr": "French name",
+    "name_en": "English name",
+    "explanation_fr": "Explanation (French)",
+    "explanation_en": "Explanation (English)",
+    "variables": "Variables:",
+    "preview": "Preview (thresholds of the season):",
+    "journalled": "Every change is journalled (before / after)."
   }
 }
