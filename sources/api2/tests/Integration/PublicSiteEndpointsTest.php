@@ -63,7 +63,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
 
         self::assertSame([1, 2, 100], self::column($sections, 'section'));
         self::assertSame(['TSTGRP'], array_column($sections[0]['groups'], 'code'));
-        self::assertSame(['TSTRES'], array_column($sections[1]['groups'], 'code'));
+        self::assertSame(['TSTRES', 'TSTMED'], array_column($sections[1]['groups'], 'code'), 'TSTMED : fixtures des médailles de match');
         self::assertSame(['TSTDIV'], array_column($sections[2]['groups'], 'code'), 'Divers inclus, contrairement à /groups/{season}');
         self::assertSame(['code', 'libelle', 'libelle_en'], array_keys($sections[1]['groups'][0]));
     }

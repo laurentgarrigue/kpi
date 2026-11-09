@@ -13,6 +13,7 @@
 SET NAMES utf8mb4;
 
 DELETE FROM `kp_match_detail`;
+DELETE FROM `kp_match_joueur`;
 DELETE FROM `kp_match`;
 DELETE FROM `kp_competition_equipe_joueur`;
 DELETE FROM `kp_competition_equipe_journee`;
@@ -619,3 +620,68 @@ UPDATE `kp_competition_equipe` SET `Clt` = 4, `Pts` = 300, `J` = 3, `G` = 1, `P`
 -- Profil 7 limité à RCH (PDF_GOTENBERG.md PDF-AUTH-10) : liste des matchs = matchs publiés seulement, comme sa page Matchs.
 INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
   ('TTEAM', '', 'Equipe Test', 'team@example.test', '', '', 7, '|RCH|', '|2999|', '', '', NULL, '');
+
+-- ---------------------------------------------------------------- médailles de match (FEATURE_MATCH_MEDALS.md)
+-- Consommé par tests/Integration/MatchMedals*Test.php. Saison 2998 (passée), groupe TSTMED, compétition MED publiée.
+-- Équipes 9361 (Medal Alpha) et 9362 (Medal Bravo) ; joueurs 9531-9534, entraîneur 9535 ; arbitres 9921 et 9922.
+--   9461 : timeline complète, 4-3, Suspense (3 changements d'équipe en tête), but en supériorité (carton jaune de B),
+--          arbitres 9921 (principal) et 9922 (secondaire)
+--   9462 : match à élimination (E) gagné en prolongation P1 (but en or de 9532), arbitre 9921 seul
+--   9463 : feuille sans temps (00:00:00 = non saisi) : médailles liées au score seulement (triplé de 9531, cage
+--          inviolée) ; arbitres saisis en texte seulement → aucune statistique d'arbitrage
+--   9464 : terminé mais NON validé → aucune médaille
+--   9465 : validé, but de l'entraîneur 9535 → médaille d'équipe seulement
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (2, 9, 'NAT', 'TSTMED', 'Groupe Médailles', 'Medals group');
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`, `Statut`, `Publication`) VALUES
+  ('MED', '2998', 'Médailles Test', '', '', '', 'N', 'TSTMED', 'CP', 'ON', 'O');
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Etat`, `Type`, `Publication`) VALUES
+  (9291, 'MED', '2998', '2998-05-01', '2998-05-02', 'Médailles', 'MED J1', 'Testville', 'O', 'C', 'O');
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9361, 'MED', '2998', 'Medal Alpha', 'C001', NULL, 161, '', 0),
+  (9362, 'MED', '2998', 'Medal Bravo', 'C002', NULL, 162, '', 0);
+INSERT INTO `kp_licence` (`Matric`, `Nom`, `Prenom`) VALUES
+  (9531, 'MEDAL', 'Ana'), (9532, 'MEDAL', 'Ben'), (9533, 'MEDAL', 'Cleo'), (9534, 'MEDAL', 'Dio'), (9535, 'MEDAL', 'Coach'),
+  (9921, 'REFEREE', 'One'), (9922, 'REFEREE', 'Two');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9361, 9531, 'MEDAL', 'Ana', 'F', 'SEN', 1, 'C'), (9361, 9532, 'MEDAL', 'Ben', 'M', 'SEN', 2, '-'),
+  (9361, 9535, 'MEDAL', 'Coach', 'M', 'SEN', NULL, 'E'),
+  (9362, 9533, 'MEDAL', 'Cleo', 'F', 'SEN', 3, 'C'), (9362, 9534, 'MEDAL', 'Dio', 'M', 'SEN', 4, '-');
+INSERT INTO `kp_match`
+  (`Id`, `Id_journee`, `Libelle`, `Type`, `Statut`, `Date_match`, `Heure_match`, `Terrain`, `Numero_ordre`, `Periode`,
+   `Id_equipeA`, `Id_equipeB`, `ScoreA`, `ScoreB`, `CoeffA`, `CoeffB`,
+   `Arbitre_principal`, `Arbitre_secondaire`, `Matric_arbitre_principal`, `Matric_arbitre_secondaire`, `Publication`, `Validation`) VALUES
+  (9461, 9291, 'MD1', 'C', 'END', '2998-05-01', '10:00', '1', 61, 'M2', 9361, 9362, '4', '3', 1, 1,
+   'REFEREE One (9921)', 'REFEREE Two (9922)', 9921, 9922, 'O', 'O'),
+  (9462, 9291, 'MD2', 'E', 'END', '2998-05-01', '11:00', '1', 62, 'P1', 9361, 9362, '2', '1', 1, 1,
+   'REFEREE One (9921)', NULL, 9921, 0, 'O', 'O'),
+  (9463, 9291, 'MD3', 'C', 'END', '2998-05-02', '10:00', '1', 63, 'M2', 9361, 9362, '3', '0', 1, 1,
+   'Arbitre en texte', 'Autre arbitre', NULL, 0, 'O', 'O'),
+  (9464, 9291, 'MD4', 'C', 'END', '2998-05-02', '11:00', '1', 64, 'M2', 9361, 9362, '1', '0', 1, 1,
+   'REFEREE One (9921)', NULL, 9921, NULL, 'O', 'N'),
+  (9465, 9291, 'MD5', 'C', 'END', '2998-05-02', '12:00', '1', 65, 'M2', 9361, 9362, '1', '0', 1, 1,
+   NULL, NULL, NULL, NULL, 'O', 'O');
+INSERT INTO `kp_match_joueur` (`Id_match`, `Matric`, `Numero`, `Equipe`, `Capitaine`) VALUES
+  (9465, 9535, NULL, 'A', 'E');
+-- Temps = temps RESTANT au chrono (« 00:mm:ss »). 9461 : B, A, A, B, B, A, A → 0-1, 2-1, 2-3, 4-3 ; carton jaune de B
+-- à 06:00 en M2, but de A à 05:30 → supériorité.
+INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Temps`, `Id_evt_match`, `motif`, `Competiteur`, `Numero`, `Equipe_A_B`, `date_insert`) VALUES
+  ('med-9461-01', 9461, 'M1', '00:09:00', 'B', NULL, 9533, '3', 'B', '2998-05-01 10:01:00'),
+  ('med-9461-02', 9461, 'M1', '00:07:00', 'B', NULL, 9531, '1', 'A', '2998-05-01 10:03:00'),
+  ('med-9461-03', 9461, 'M1', '00:05:00', 'B', NULL, 9532, '2', 'A', '2998-05-01 10:05:00'),
+  ('med-9461-04', 9461, 'M1', '00:02:00', 'B', NULL, 9534, '4', 'B', '2998-05-01 10:08:00'),
+  ('med-9461-05', 9461, 'M2', '00:09:00', 'B', NULL, 9533, '3', 'B', '2998-05-01 10:14:00'),
+  ('med-9461-06', 9461, 'M2', '00:06:00', 'J', 'r_ht', 9534, '4', 'B', '2998-05-01 10:16:00'),
+  ('med-9461-07', 9461, 'M2', '00:05:30', 'B', NULL, 9531, '1', 'A', '2998-05-01 10:17:00'),
+  ('med-9461-08', 9461, 'M2', '00:02:00', 'B', NULL, 9532, '2', 'A', '2998-05-01 10:20:00'),
+  ('med-9462-01', 9462, 'M1', '00:06:00', 'B', NULL, 9531, '1', 'A', '2998-05-01 11:04:00'),
+  ('med-9462-02', 9462, 'M2', '00:03:00', 'B', NULL, 9533, '3', 'B', '2998-05-01 11:17:00'),
+  ('med-9462-03', 9462, 'P1', '00:02:30', 'B', NULL, 9532, '2', 'A', '2998-05-01 11:25:00'),
+  ('med-9463-01', 9463, 'M1', '00:00:00', 'B', NULL, 9531, '1', 'A', '2998-05-02 10:30:00'),
+  ('med-9463-02', 9463, 'M1', '00:00:00', 'B', NULL, 9531, '1', 'A', '2998-05-02 10:30:01'),
+  ('med-9463-03', 9463, 'M2', '00:00:00', 'B', NULL, 9531, '1', 'A', '2998-05-02 10:30:02'),
+  ('med-9464-01', 9464, 'M1', '00:04:00', 'B', NULL, 9531, '1', 'A', '2998-05-02 11:05:00'),
+  ('med-9465-01', 9465, 'M1', '00:04:00', 'B', NULL, 9535, NULL, 'A', '2998-05-02 12:05:00');
+
