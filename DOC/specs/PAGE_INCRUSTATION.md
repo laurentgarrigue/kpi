@@ -84,7 +84,7 @@ L'URL est **le seul contrat** de la page. Tout ce qui varie d'une incrustation �
 | `event` | ✅ | id d'événement KPI | 1ᵉʳ niveau d'abonnement (isolation multi-événements, plan §3.3) |
 | `pitch` | ✅ | numéro de terrain | 2ᵉ niveau d'abonnement |
 | `blocks` | — | liste parmi `score`, `clock`, `shotclock`, `penalty`, `fact`, `teams`, `next` ; défaut `score,clock` | blocs affichés **et** topics souscrits (rien de plus) |
-| `skin` | — | `nations` \| `clubs` ; défaut `nations` | habillage : drapeaux/nations ou logos/clubs (logo d'équipe d'abord, drapeau dérivé du code club en fallback — cf. PAGE_SCORING §0.9) |
+| `skin` | — | `inter` (alias `nations`) \| `club` (alias `clubs`) ; défaut `inter` | format du bandeau score : `club` = noms d'équipes complets ; `inter` = nations, **3 premiers caractères** du nom en majuscules (comme `live/score.php`). Logos/drapeaux : plus tard (logo d'équipe d'abord, drapeau dérivé du code club en fallback — cf. PAGE_SCORING §0.9) |
 | `style` | — | identifiant de style (ex. `avranches2025`) ; défaut : style de l'événement (§7) | thème visuel (css/assets), cf. §10 |
 | `variant` | — | `live` \| `events` \| `static` \| `hd` ; défaut `live` | équivalents des suffixes legacy (sans/`_e`/`_s`/HD), le temps de la transition |
 | `bg` | — | `transparent` \| `magenta` \| couleur CSS ; défaut : réglage événement (§7) | fond (alpha OBS ou chromakey) |
@@ -201,13 +201,24 @@ même chose au même moment.
 Chaque bloc est un composant autonome (props down, aucune logique d'abonnement en propre) monté
 selon `blocks` :
 
+**Mise en page (2026-11-09, inspirée de `live/score.php`)** :
+
+- **haut, centré** : bandeau équipes + score (format `club` ou `inter`, cf. `skin` §4) ;
+- **juste dessous, centré** : barre période · chrono · chronomètre de tir (ceux demandés par
+  `blocks`) ; à la mi-temps la période terminée, en fin de match `FINAL` ;
+- sous la barre : pénalités, chaque équipe sous son côté du bandeau ;
+- **bas gauche** : « catégorie - phase » (`kp_competition.Soustitre2` - `kp_journee.Phase`,
+  champ `phase` du programme) ;
+- bloc `fact` (6 derniers buts/cartons) **masqué pour l'instant** : trop gros et lourd pour
+  l'incrustation, mise en page à repenser. Le paramètre est accepté mais n'affiche rien.
+
 | Bloc | Contenu | Source |
 |---|---|---|
 | `score` | bandeau score : équipes (noms courts, logos/drapeaux, couleurs), score, période | topic `score` + état |
 | `clock` | chrono de jeu (interpolation locale) | topic `clock` |
 | `shotclock` | chronomètre de tir — affiché `--` à l'arrêt, masqué quand le temps restant de la période est inférieur (parité console, PAGE_SCORING §6.5) | topic `shotclock` |
 | `penalty` | pénalités en cours par équipe (décomptes, n° joueur) — cartons : vert/jaune/rouge/**noir** (exclusion définitive, PAGE_SCORING §0.9) | topic `penalty` |
-| `fact` | faits de jeu (buts/cartons horodatés, nom du joueur) — défilement/apparition selon `variant` | topic `fact` + état |
+| `fact` | faits de jeu (buts/cartons horodatés, nom du joueur) — défilement/apparition selon `variant` — ⏸ **masqué** (cf. ci-dessus) | topic `fact` + état |
 | `teams` | compositions des deux équipes (n°, noms, capitaine, officiels) | état (`GET /state`) |
 | `next` | présentation du prochain match (n°, heure, équipes, compos si disponibles) | programme (§6) |
 

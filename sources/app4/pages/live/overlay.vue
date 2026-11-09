@@ -9,7 +9,7 @@
  * locally so it keeps ticking even during a network blackout.
  *
  * URL contract (§4):
- *   /live/overlay?event=236&pitch=2&token=…&blocks=score,clock,shotclock&skin=nations
+ *   /live/overlay?event=236&pitch=2&token=…&blocks=score,clock,shotclock&skin=inter|club
  *                &style=…&variant=live|events|static|hd&bg=transparent|magenta|#rrggbb
  *                &lang=fr|en&debug
  *
@@ -28,7 +28,8 @@ const pitch = String(route.query.pitch ?? '')
 const token = String(route.query.token ?? '')
 const blocks = computed(() => String(route.query.blocks ?? 'score,clock').split(',').map(b => b.trim()))
 const has = (block: string) => blocks.value.includes(block)
-const skin = computed(() => (route.query.skin === 'clubs' ? 'clubs' : 'nations'))
+/** Score-banner format: `club` (full names) or `inter` (3-letter nations), from `skin`. */
+const teamFormat = computed(() => overlayTeamFormat(route.query.skin))
 const variant = computed(() => String(route.query.variant ?? 'live'))
 const debug = computed(() => route.query.debug !== undefined)
 /** Fixed labels follow `lang` (§4, default fr): overtimes read PRL{n} in French, OVT{n} in English. */
@@ -105,21 +106,21 @@ watch(() => [current.value?.statut, state.value?.statut, clocks.breakClock.value
   setPhase(matchStatus === 'ON' ? 'match' : 'next')
 }, { immediate: true })
 
-// Team labels follow the skin: club names as-is, nations derived from the club code
-// (spec §4 — the logo comes first, the derived flag is only a fallback).
-const teamA = computed(() => current.value?.equipeA ?? '')
-const teamB = computed(() => current.value?.equipeB ?? '')
+// Team labels follow the banner format (§8): full club names, or 3-letter nations.
+const teamA = computed(() => overlayTeamLabel(current.value?.equipeA ?? null, teamFormat.value))
+const teamB = computed(() => overlayTeamLabel(current.value?.equipeB ?? null, teamFormat.value))
 
 const periodLabel = computed(() => showPeriod(state.value?.periode ?? ''))
-const category = computed(() => current.value?.categorie ?? null)
-const teamOf = (side: string) => (side === 'A' ? teamA.value : side === 'B' ? teamB.value : '')
+/** Bottom-left caption, "Category - Phase" as in the legacy overlays. */
+const categoryLine = computed(() => overlayCategoryLine(current.value?.categorie ?? null, current.value?.phase ?? null))
 
-/** Facts to display (goals/cards), most recent first — used by the `fact` block. */
-const facts = computed(() => {
-  const list = state.value?.events ?? []
-  // `static` variant freezes the whole list; `live` keeps the last few.
-  return variant.value === 'static' ? list : list.slice(0, 6)
-})
+/** The banner is on air from kick-off to the end of the final-score display. */
+const scoreOnAir = computed(() => phase.value === 'match' || phase.value === 'halftime' || phase.value === 'final')
+/** Second line under the banner: period + game clock + shot clock (only those requested). */
+const showClockBar = computed(() => scoreOnAir.value && (has('clock') || has('shotclock')))
+
+// Facts (last goals/cards, `fact` block) are deliberately NOT rendered for now: the list was
+// too big and heavy for an overlay; its layout is to be redesigned (lot 4, PAGE_INCRUSTATION §8).
 
 const CARD_COLOUR: Record<string, string> = {
   V: '#22c55e', J: '#eab308', R: '#dc2626', D: '#000000'
@@ -131,55 +132,49 @@ const CARD_COLOUR: Record<string, string> = {
        broadcast resolution and adapts if OBS captures at another size. -->
   <div class="overlay-root" :style="{ background }">
     <div class="overlay-stage" :style="{ '--stage-scale': scale }">
-      <!-- Score banner -->
-      <div v-if="has('score') && (phase === 'match' || phase === 'halftime' || phase === 'final')" class="score-band">
-        <div v-if="category" class="category">{{ category }}</div>
-        <div class="team team-a">{{ teamA }}</div>
-        <div class="score">{{ state?.scoreA ?? 0 }}<span class="sep">–</span>{{ state?.scoreB ?? 0 }}</div>
-        <div class="team team-b">{{ teamB }}</div>
+      <!-- Top centre: score banner, then period / clock / shot clock underneath -->
+      <div class="top">
+        <div v-if="has('score') && scoreOnAir" class="score-band" :class="`format-${teamFormat}`">
+          <div class="team team-a">{{ teamA }}</div>
+          <div class="score">{{ state?.scoreA ?? 0 }}<span class="sep">-</span>{{ state?.scoreB ?? 0 }}</div>
+          <div class="team team-b">{{ teamB }}</div>
+        </div>
 
-        <div v-if="has('clock') && phase === 'match'" class="clock-box">
-          <div class="clock" :class="{ running: clocks.gameRunning.value }">
-            {{ clocks.gameClock.value ?? '--:--' }}
+        <div v-if="showClockBar" class="clock-bar">
+          <template v-if="phase === 'match'">
+            <span v-if="periodLabel" class="period">{{ periodLabel }}</span>
+            <span v-if="has('clock')" class="clock" :class="{ running: clocks.gameRunning.value }">
+              {{ clocks.gameClock.value ?? '--:--' }}
+            </span>
+            <span v-if="has('shotclock')" class="shotclock">{{ clocks.shotClock.value ?? '--' }}</span>
+          </template>
+          <span v-else-if="phase === 'halftime'" class="phase-label">{{ periodLabel }}</span>
+          <span v-else class="phase-label">FINAL</span>
+        </div>
+
+        <!-- Penalties, each team under its own side of the banner -->
+        <div v-if="has('penalty') && phase === 'match'" class="penalties">
+          <div class="pen-side left">
+            <span
+              v-for="p in penaltiesA"
+              :key="'a' + p.slot"
+              class="pen"
+              :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
+            >{{ p.remaining }}</span>
           </div>
-          <div v-if="periodLabel" class="period">{{ periodLabel }}</div>
-        </div>
-        <div v-if="has('shotclock') && phase === 'match'" class="shotclock">
-          {{ clocks.shotClock.value ?? '--' }}
-        </div>
-        <div v-if="phase === 'halftime'" class="phase-label">{{ periodLabel }}</div>
-        <div v-if="phase === 'final'" class="phase-label">FINAL</div>
-      </div>
-
-      <!-- Penalties -->
-      <div v-if="has('penalty') && phase === 'match'" class="penalties">
-        <div class="pen-side">
-          <span
-            v-for="p in penaltiesA"
-            :key="'a' + p.slot"
-            class="pen"
-            :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
-          >{{ p.remaining }}</span>
-        </div>
-        <div class="pen-side right">
-          <span
-            v-for="p in penaltiesB"
-            :key="'b' + p.slot"
-            class="pen"
-            :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
-          >{{ p.remaining }}</span>
+          <div class="pen-side right">
+            <span
+              v-for="p in penaltiesB"
+              :key="'b' + p.slot"
+              class="pen"
+              :style="{ background: CARD_COLOUR[p.cardCode ?? 'V'] }"
+            >{{ p.remaining }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Facts (goals / cards) -->
-      <div v-if="has('fact') && phase !== 'next'" class="facts">
-        <div v-for="f in facts" :key="f.uid" class="fact">
-          <span class="fact-token" :style="{ background: f.code === 'B' ? '#1e40af' : CARD_COLOUR[f.code] }" />
-          <span class="fact-time">{{ showPeriod(f.period) }} {{ f.tpsJeu }}</span>
-          <span class="fact-team">{{ teamOf(f.team) }}</span>
-          <span class="fact-name">{{ f.number }} {{ f.nom }}</span>
-        </div>
-      </div>
+      <!-- Bottom left: category + phase -->
+      <div v-if="categoryLine && scoreOnAir" class="category-line">{{ categoryLine }}</div>
 
       <!-- Next match presentation -->
       <div v-if="has('next') && phase === 'next' && next" class="next-game">
@@ -195,7 +190,7 @@ const CARD_COLOUR: Record<string, string> = {
       <!-- Diagnostics — never in production, only with ?debug -->
       <div v-if="debug" class="debug">
         event={{ event }} pitch={{ pitch }} · sse={{ status }} · phase={{ phase }} ·
-        match={{ current?.id ?? '—' }} tick={{ state?.tick ?? '—' }} · skin={{ skin }} variant={{ variant }}
+        match={{ current?.id ?? '—' }} tick={{ state?.tick ?? '—' }} · format={{ teamFormat }} variant={{ variant }}
       </div>
     </div>
   </div>
@@ -203,13 +198,22 @@ const CARD_COLOUR: Record<string, string> = {
 
 <style scoped>
 /* The overlay is authored at 1920×1080 and scaled by the viewport, so a browser source
-   captured at another resolution keeps the exact same composition. */
+   captured at another resolution keeps the exact same composition.
+   Look inspired by the legacy live/score.php: light banner with blue team names, dark
+   clock bar underneath. Colours are tokens so a future style (§10) only overrides them. */
 .overlay-root {
   position: fixed;
   inset: 0;
   overflow: hidden;
 }
 .overlay-stage {
+  --ov-band-bg: linear-gradient(180deg, #eef6fd 0%, #d6e8f8 100%);
+  --ov-band-border: #4a7fd0;
+  --ov-team: #3d8fd6;
+  --ov-score: #12304f;
+  --ov-bar-bg: linear-gradient(180deg, #1d4566 0%, #0d2338 100%);
+  --ov-bar-text: #4fa3e6;
+  --ov-running: #7cc7ff;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -218,86 +222,90 @@ const CARD_COLOUR: Record<string, string> = {
   transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
   font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
-  color: #fff;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, .6);
+  font-weight: 700;
+}
+
+.top {
+  position: absolute;
+  top: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .score-band {
-  position: absolute;
-  left: 60px;
-  bottom: 80px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 16px 28px;
-  background: rgba(10, 12, 20, .82);
-  border-radius: 12px;
-  font-size: 44px;
-  font-weight: 800;
+  gap: 22px;
+  padding: 10px 26px;
+  background: var(--ov-band-bg);
+  border: 3px solid var(--ov-band-border);
+  border-radius: 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .35);
+  font-size: 38px;
+  line-height: 1.15;
+  white-space: nowrap;
 }
-.category {
-  position: absolute;
-  left: 28px;
-  bottom: 100%;
-  padding: 6px 18px;
-  background: rgba(10, 12, 20, .82);
-  border-radius: 10px 10px 0 0;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.team { color: var(--ov-team); }
+.format-inter .team { min-width: 84px; text-align: center; letter-spacing: .02em; }
+.format-club .team { max-width: 560px; overflow: hidden; text-overflow: ellipsis; }
+.format-club .team-a { text-align: right; }
+.score { color: var(--ov-score); font-size: 40px; }
+.sep { margin: 0 14px; }
+
+/* Dark bar tucked under the banner (legacy: chrono + period). */
+.clock-bar {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  min-width: 220px;
+  justify-content: center;
+  padding: 6px 24px 8px;
+  background: var(--ov-bar-bg);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .35);
+  color: var(--ov-bar-text);
+  font-size: 34px;
+  line-height: 1.1;
 }
-.team { min-width: 320px; }
-.team-a { text-align: right; }
-.team-b { text-align: left; }
-.score { font-size: 64px; }
-.sep { opacity: .45; margin: 0 12px; }
-.clock-box { display: flex; flex-direction: column; align-items: center; margin-left: 24px; line-height: 1; }
-.clock { font-size: 52px; color: #e5e7eb; }
-.period { font-size: 24px; font-weight: 700; letter-spacing: .12em; opacity: .75; margin-top: 6px; }
-.clock.running { color: #4ade80; }
-.shotclock { font-size: 52px; color: #fbbf24; min-width: 90px; text-align: center; }
-.phase-label { font-size: 32px; letter-spacing: .2em; opacity: .8; margin-left: 16px; }
+.clock.running { color: var(--ov-running); }
+.shotclock { color: #fbbf24; min-width: 44px; text-align: center; }
+.phase-label { letter-spacing: .12em; }
 
 .penalties {
-  position: absolute;
-  left: 60px;
-  bottom: 190px;
-  width: 900px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 720px;
+  margin-top: 10px;
 }
 .pen-side { display: flex; gap: 8px; }
-.pen-side.right { justify-content: flex-end; }
+.pen-side.left { justify-content: flex-end; }
+.pen-side.right { justify-content: flex-start; }
 .pen {
-  min-width: 54px;
-  padding: 4px 10px;
+  min-width: 48px;
+  padding: 2px 10px;
   border-radius: 6px;
-  font-size: 30px;
-  font-weight: 800;
+  color: #fff;
+  font-size: 26px;
   text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
 }
 
-.facts {
+.category-line {
   position: absolute;
-  right: 60px;
-  bottom: 80px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  left: 52px;
+  bottom: 52px;
+  padding: 8px 18px;
+  background: var(--ov-band-bg);
+  border: 2px solid var(--ov-band-border);
+  border-radius: 6px;
+  color: var(--ov-team);
+  font-size: 22px;
+  font-style: italic;
 }
-.fact {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: rgba(10, 12, 20, .78);
-  border-radius: 8px;
-  font-size: 28px;
-}
-.fact-token { width: 18px; height: 18px; border-radius: 4px; display: inline-block; }
-.fact-time { opacity: .7; font-size: 24px; }
-.fact-team { font-weight: 700; }
 
 .next-game {
   position: absolute;
@@ -308,9 +316,11 @@ const CARD_COLOUR: Record<string, string> = {
   padding: 24px 48px;
   background: rgba(10, 12, 20, .82);
   border-radius: 14px;
+  color: #fff;
 }
 .next-title { font-size: 30px; letter-spacing: .18em; opacity: .8; }
 .next-teams { font-size: 54px; font-weight: 800; margin-top: 10px; }
+.next-teams .sep { opacity: .45; }
 
 .denied {
   position: absolute;
@@ -318,6 +328,7 @@ const CARD_COLOUR: Record<string, string> = {
   left: 50%;
   transform: translateX(-50%);
   font-size: 28px;
+  color: #fff;
   background: rgba(153, 27, 27, .9);
   padding: 12px 24px;
   border-radius: 8px;
@@ -327,7 +338,9 @@ const CARD_COLOUR: Record<string, string> = {
   top: 12px;
   left: 12px;
   font-size: 18px;
+  font-weight: 400;
   font-family: ui-monospace, monospace;
+  color: #fff;
   background: rgba(0, 0, 0, .7);
   padding: 6px 10px;
   border-radius: 6px;

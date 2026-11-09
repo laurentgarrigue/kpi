@@ -23,6 +23,8 @@ export interface OverlayProgramMatch {
   equipeB: string | null
   /** Competition category (kp_competition.Soustitre2), null when not set. */
   categorie: string | null
+  /** Game day phase (kp_journee.Phase), null when not set. */
+  phase: string | null
 }
 
 export interface OverlaySettings {

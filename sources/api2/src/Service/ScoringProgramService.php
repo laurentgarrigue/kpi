@@ -47,13 +47,14 @@ class ScoringProgramService
 
     /**
      * Columns of a program match (current or next) and the joins they need. The category
-     * is the competition's Soustitre2 (`categ` of the legacy cache files).
+     * is the competition's Soustitre2 and the phase the game day's Phase (`categ` and
+     * `phase` of the legacy cache files).
      */
     private const MATCH_SELECT = "SELECT m.Id, m.Numero_ordre, m.Heure_match, m.Date_match, m.Statut,
                     m.Terrain, m.Type,
                     COALESCE(s.statut, m.Statut) live_statut,
                     ea.Libelle equipeA, eb.Libelle equipeB,
-                    c.Soustitre2 categorie
+                    c.Soustitre2 categorie, j.Phase phase
              FROM kp_match m
              INNER JOIN kp_evenement_journee ej ON ej.Id_journee = m.Id_journee
              INNER JOIN kp_journee j ON j.Id = m.Id_journee
@@ -273,6 +274,7 @@ class ScoringProgramService
             'equipeA' => $row['equipeA'],
             'equipeB' => $row['equipeB'],
             'categorie' => $row['categorie'] !== null && $row['categorie'] !== '' ? $row['categorie'] : null,
+            'phase' => $row['phase'] !== null && $row['phase'] !== '' ? $row['phase'] : null,
         ];
     }
 }

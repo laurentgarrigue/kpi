@@ -320,7 +320,9 @@ class ScoringLiveService
                     $clock['cardCode'] ?? null,
                     (int) ($clock['initMs'] ?? 0),
                     (int) ($clock['elapsedMs'] ?? 0),
-                    $running ? ($clock['startedAt'] ?? date('Y-m-d H:i:s.v')) : null,
+                    // DateTimeImmutable, not date(): date() has no sub-second part ('.v' is
+                    // always .000), which put the overlay up to 1 s ahead of the console.
+                    $running ? ($clock['startedAt'] ?? (new \DateTimeImmutable())->format('Y-m-d H:i:s.v')) : null,
                     $running ? 1 : 0,
                 ]
             );

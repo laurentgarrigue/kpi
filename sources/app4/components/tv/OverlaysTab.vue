@@ -152,7 +152,7 @@ const overlayUrl = (token: DisplayToken, pitch?: string): string => {
   const p = pitch ?? token.pitch ?? '1'
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   return `${origin}${base}/live/overlay?event=${props.eventId}&pitch=${p}`
-    + `&token=${token.token}&blocks=score,clock,shotclock,penalty,fact,next`
+    + `&token=${token.token}&blocks=score,clock,shotclock,penalty,next`
 }
 
 const copy = async (text: string) => {

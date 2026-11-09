@@ -445,7 +445,7 @@ SELECT token FROM scoring_display_token WHERE label = 'Régie test';
 ```
 
 URL type (source navigateur OBS, 1920×1080) :
-`https://kpi.localhost/admin2/live/overlay?event=236&pitch=2&token=<jeton>&blocks=score,clock,shotclock,penalty,fact,next&debug`
+`https://kpi.localhost/admin2/live/overlay?event=236&pitch=2&token=<jeton>&blocks=score,clock,shotclock,penalty,next&debug`
 
 | # | Test | Attendu | Exécuté le | ☑ |
 |---|---|---|---|---|
@@ -467,6 +467,9 @@ URL type (source navigateur OBS, 1920×1080) :
 | 4.11 | `bg=magenta` puis `bg=transparent` dans OBS | chromakey / alpha correct | | ☐ |
 | 4.12 | 🗄 `scoring_display_settings` événement puis terrain | le terrain l'emporte ; `NULL` hérite | | ☐ |
 | 4.13 | Comparer avec l'incrustation legacy du même terrain | mêmes valeurs — condition de bascule terrain par terrain | | ☐ |
+| 4.13a | Mise en page (défaut `skin=inter`) | en haut au centre : `CZE 1 - 6 GER` (3 lettres), dessous période · chrono · shotclock ; en bas à gauche « catégorie - phase » | | ☐ |
+| 4.13b | `&skin=club` | noms d'équipes complets dans le bandeau, reste identique | | ☐ |
+| 4.13c | `blocks=…,fact` | aucun fait de jeu affiché (bloc masqué volontairement) | | ☐ |
 
 **Compatibilité legacy ↔ live (vues)**
 
