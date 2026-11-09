@@ -637,8 +637,8 @@ INSERT INTO `kp_competition`
   (`Code`, `Code_saison`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`, `Statut`, `Publication`) VALUES
   ('MED', '2998', 'Médailles Test', '', '', '', 'N', 'TSTMED', 'CP', 'ON', 'O');
 INSERT INTO `kp_journee`
-  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Etat`, `Type`, `Publication`) VALUES
-  (9291, 'MED', '2998', '2998-05-01', '2998-05-02', 'Médailles', 'MED J1', 'Testville', 'O', 'C', 'O');
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Etat`, `Type`, `Phase`, `Publication`) VALUES
+  (9291, 'MED', '2998', '2998-05-01', '2998-05-02', 'Médailles', 'MED J1', 'Testville', 'O', 'C', 'Poule A', 'O');
 INSERT INTO `kp_equipe` (`Numero`, `Libelle`, `Code_club`) VALUES
   (161, 'Medal Oscar', 'C005'), (162, 'Medal Papa', 'C006');
 INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { groupGamesByDate } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
+import type { MedalItem } from '~/utils/medals'
 
 // Games grouped by date, sorted by time then pitch (CMP-05); the scores of a day form one column (CMP-19).
 // `competitionHref` adds the competition to each game (event and group views).
-const props = defineProps<{ games: ResultsGame[], competitionHref?: (game: ResultsGame) => string }>()
+const props = defineProps<{ games: ResultsGame[], competitionHref?: (game: ResultsGame) => string, labelsByGame?: Record<string, MedalItem[]> }>()
 const language = useLanguageTag()
 const groups = computed(() => groupGamesByDate(props.games))
 
@@ -26,6 +27,7 @@ function longDate(date: string): string {
           :key="game.g_id"
           :game="game"
           :competition-href="competitionHref?.(game)"
+          :labels="labelsByGame?.[String(game.g_id)]"
         />
       </ol>
     </section>

@@ -86,7 +86,7 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     expect(all.findAll('select[name="group"] optgroup').map(group => group.attributes('label'))).toEqual(['International', 'National', 'Divers'])
     const national = await mountRoute('/calendar?month=2999-04&section=2')
     expect(national.findAll('select[name="group"] optgroup').map(group => group.attributes('label'))).toEqual(['National'])
-    expect(national.findAll('select[name="group"] option').map(option => option.attributes('value'))).toEqual(['', 'TSTRES'])
+    expect(national.findAll('select[name="group"] option').map(option => option.attributes('value'))).toEqual(['', 'TSTRES', 'TSTMED'])
   })
 
   it('CAL-09: a group of another section than the chosen one is not sent to api2', async () => {

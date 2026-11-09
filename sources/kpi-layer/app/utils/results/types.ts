@@ -200,13 +200,18 @@ export interface CompetitionInfo {
 
 export interface StatColumn {
   key: string
-  type: 'integer' | 'string'
+  type: 'integer' | 'string' | 'percent' | 'decimal' | 'seconds' | 'histogram'
 }
 
 export interface Stat {
   kind: string
   columns: StatColumn[]
-  rows: (Record<string, unknown> & { rank: number })[]
+  rows: (Record<string, unknown> & { rank?: number })[]
+  /** Timeline statistics (FEATURE_MATCH_MEDALS.md § 3.4): totals of the perimeter and the games they rely on. */
+  summary?: Record<string, unknown>
+  games_count?: number
+  reliable_games_count?: number
+  needs_reliable_timeline?: boolean
 }
 
 /** Competition of an event, with the gamedays held at the event out of all its gamedays (PAGE_EVENT_GROUP.md § 2.2). */

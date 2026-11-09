@@ -1,7 +1,24 @@
 {
   "status": 200,
   "body": {
-    "gamedays": [],
+    "gamedays": [
+      {
+        "id": 9291,
+        "name": "Médailles",
+        "phase": "Poule A",
+        "start": "2998-05-01",
+        "end": "2998-05-02",
+        "place": "Testville",
+        "department": null,
+        "organizer": null,
+        "officials": {
+          "rc": null,
+          "r1": null,
+          "delegate": null,
+          "chief_referee": null
+        }
+      }
+    ],
     "teams_by_pool": [
       {
         "pool": "",
