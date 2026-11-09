@@ -1,9 +1,12 @@
 # Étude — Afficheurs de chronomètre de tir déportés (console Scoring app4)
 
-> **Statut** : étude / aide à la décision (2026-11-09). Aucune ligne de code engagée.
+> **Statut** : étude / aide à la décision. v1 du 2026-11-09, **v2 du 2026-11-09** intégrant les
+> réponses aux questions (§2.1) et la piste « capter le signal du chronomètre de tir » (§4).
+> Aucune ligne de code engagée.
 > **Contexte fonctionnel** : [PAGE_SCORING.md §6.5](../../specs/PAGE_SCORING.md) (chronomètre de tir,
-> 3 commandes, diffusion locale `BroadcastChannel` / distante Mercure) et
-> [plan de refonte live §4.7](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (relais matériel).
+> 3 commandes, raccourcis clavier, diffusion locale `BroadcastChannel` / distante Mercure) et
+> [plan de refonte live §4.7](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (relais matériel,
+> *Hardware Scoring*).
 > **Terminologie** : « chronomètre de tir » (code : `shotclock`).
 
 ---
@@ -15,251 +18,263 @@ ou Linux) exécute la console Scoring d'app4.
 
 | Afficheur | Public | Position | Solution |
 |---|---|---|---|
-| **Tableau de score** | joueurs + public en face | face à la table, de l'autre côté du terrain | **HDMI + écran étendu** vers l'écran LED (route `games/[id]/scoreboard`) — ✅ réglé |
-| **Chronomètres de tir ×2** | joueurs (surtout l'attaque) | **aux deux extrémités du terrain, dans les angles** | ❓ **objet de cette étude** |
+| **Tableau de score** | joueurs + public | face à la table | **HDMI + écran étendu** vers l'écran LED (route `games/[id]/scoreboard`) — ✅ réglé |
+| **Chronomètres de tir ×2** | joueurs (surtout l'attaque), public si possible | **dans les angles, aux deux extrémités du terrain** | ❓ **objet de cette étude** |
 
 Deux obstacles bloquent l'approche « une sortie vidéo par afficheur » :
 
 1. **La connectique** : un portable a en général **une seule** sortie vidéo libre une fois
    l'écran LED du tableau de score branché ;
-2. **La distance** : un terrain de kayak-polo mesure ~35 × 23 m. Depuis la table (milieu d'une
-   longueur), chaque angle opposé est à **~25–40 m** en ligne droite, et **plus de 40 m de câble**
-   si on contourne le terrain et les zones de passage. Le HDMI passif s'arrête vers 10–15 m.
+2. **La distance** : terrain de ~35 × 23 m, table au milieu d'une longueur. Les angles du **même
+   côté** que la table sont à ~18–20 m, ceux du **côté opposé** à ~29–32 m en ligne droite — et
+   bien plus en câble, qui doit contourner le terrain et les zones de passage. Le HDMI passif
+   s'arrête vers 10–15 m.
 
 ## 2. Exigences
 
-Ce qu'un chronomètre de tir doit garantir, quelle que soit la solution :
+### 2.1 Données d'entrée (réponses du 2026-11-09)
+
+| # | Sujet | Réponse | Conséquence |
+|---|---|---|---|
+| R1 | Solutions propriétaires | Plusieurs existent, certaines à l'étude, pas encore d'information détaillée | Ne pas en dépendre ; **prévoir de pouvoir les brancher** (§4, §7) |
+| R2 | Parc | **Jusqu'à 5 terrains** (rares tournois à 5 ; internationaux à 4 → le 5ᵉ jeu sert de rechange) | 5 jeux = 5 bases + 10 afficheurs ; 5 identifiants de terrain sans interférence |
+| R3 | Énergie | Secteur **généralement disponible** dans les angles ; batterie = **option** appréciée des petites organisations | Alimentation secteur 12 V de base, **module batterie optionnel** sur le même connecteur |
+| R4 | Fabrication | **Fabrication maison à étudier** | Conception documentée, reproductible, pièces standard |
+| R5 | Budget | **< 1 000 € par terrain, < 500 € si possible** | Élimine d'emblée les options vidéo (§3) |
+| R6 | Contenu | Chronomètre de tir **+ temps de jeu** si la taille le permet. **Pas de buzzer dans les angles**, seulement à la table (mini-enceinte sur le PC) | Afficheur 2 + 4 chiffres ; le buzzer reste dans la console (Web Audio) |
+| R7 | Navigateur | **Difficile d'imposer un navigateur**, seulement en dernier recours | Le canal **de base** doit marcher dans **tous** les navigateurs ; Web Serial (Chromium) ne peut être qu'un **bonus** |
+| R8 | Règlements | FFCK : « affichage électronique **visible par les deux équipes** et si possible par le public » ; ICF : « **dans les coins du terrain, du même côté que l'arbitre responsable** » | Deux afficheurs d'angle sur la longueur de l'arbitre ; face principale vers le terrain, **face arrière vers le public en option** |
+
+### 2.2 Exigences techniques
 
 | # | Exigence | Pourquoi |
 |---|---|---|
-| E1 | **Lisible en plein soleil à ~40 m** : chiffres de **≥ 20 cm** de haut, luminosité « outdoor » (≥ 3 000–5 000 cd/m², soit au-delà de tout moniteur ou TV grand public, qui plafonnent à 300–600 cd/m²) | c'est un afficheur d'arbitrage, pas un écran d'ambiance |
-| E2 | **Les deux afficheurs synchrones** entre eux et avec la console (écart < 0,1 s, aucun saut visible) | un joueur ne doit jamais voir deux valeurs différentes |
-| E3 | **Latence de commande < 200 ms** (départ/reset 60 s, 40 s, arrêt) | l'opérateur réagit au sifflet ; au-delà le décalage se voit |
-| E4 | **Tolérance aux coupures** : une perte de liaison de quelques secondes ne doit ni figer ni faire sauter le décompte, et doit être **signalée** à l'opérateur | fiabilité match |
-| E5 | **Aucune dépendance à Internet** | réseau souvent absent ou saturé sur les sites extérieurs |
-| E6 | **Autonomie d'une journée** (8–12 h) sans secteur, ou alimentation secteur simple | pas toujours de prise dans les angles |
-| E7 | **Robustesse extérieure** : pluie (IP54 minimum, IP65 conseillé), chaleur au soleil, vent (pied stable, lesté) | compétitions de plusieurs jours, plusieurs saisons |
-| E8 | **Mise en place en < 10 min par terrain**, sans compétence réseau, avec appairage stable d'un jour à l'autre | bénévoles, montage chaque matin |
-| E9 | **Multi-terrains sans interférence** (4 à 8 terrains côte à côte) | un afficheur ne doit obéir qu'à **sa** table |
-| E10 | **Coût maîtrisé** et **maintenable** (pièces standard, remplaçables) | budget associatif, parc à faire durer |
+| E1 | **Lisible en plein soleil à ~30 m** : chronomètre de tir en chiffres de **≥ 20–25 cm**, temps de jeu en **~10–12 cm** ; luminosité « outdoor » (≥ 3 000–5 000 cd/m², hors de portée des moniteurs/TV grand public, qui plafonnent à 300–600 cd/m²) | afficheur d'arbitrage |
+| E2 | **Les deux afficheurs synchrones** entre eux et avec la console (écart < 0,1 s) | un joueur ne doit jamais voir deux valeurs différentes |
+| E3 | **Latence de commande < 200 ms** (départ/reset 60 s, 40 s, arrêt) | l'opérateur réagit au sifflet |
+| E4 | **Tolérance aux coupures**, signalées à l'opérateur | fiabilité match |
+| E5 | **Aucune dépendance à Internet** pour le chronomètre de tir | réseau souvent absent ou saturé en extérieur |
+| E6 | **Indépendant du navigateur** (R7) | parc de PC hétérogène, opérateurs bénévoles |
+| E7 | **Robustesse extérieure** : IP54 minimum (IP65 conseillé), chaleur, vent (pied lesté) | plusieurs jours, plusieurs saisons |
+| E8 | **Mise en place < 10 min par terrain**, sans compétence réseau, appairage stable d'un jour à l'autre | bénévoles, montage chaque matin |
+| E9 | **5 terrains côte à côte sans interférence** | un afficheur n'obéit qu'à **sa** table |
+| E10 | **Coût < 500 € / terrain visé** (R5), maintenable (pièces standard) | budget associatif |
 
-> **Principe directeur — envoyer un *état*, pas une *image*.** Un chronomètre de tir n'affiche
-> que deux chiffres. Transporter de la vidéo (HDMI, cast d'écran) jusqu'aux angles revient à
-> payer cher pour transporter beaucoup de pixels sur une longue distance. Il suffit de
-> transmettre l'**état** du chronomètre — exactement ce que le nouveau modèle sait déjà
-> décrire (`scoring_live_clock` kind `SHOTCLOCK` : `init_ms`, `elapsed_ms`, `running`, cf.
-> PAGE_SCORING §0.5) — et de laisser **l'afficheur décompter lui-même** avec sa propre horloge.
-> Quelques octets suffisent, la latence et les micro-coupures deviennent indolores (E2–E4).
+> **Principe directeur — transmettre un *état*, pas une *image*.** Un chronomètre de tir
+> n'affiche que deux chiffres. Il suffit de transmettre son **état** (60 s / 40 s lancé, arrêté,
+> suspendu) — exactement ce que décrit déjà `scoring_live_clock` kind `SHOTCLOCK`
+> (`init_ms`, `elapsed_ms`, `running`, cf. PAGE_SCORING §0.5) — et de laisser **chaque
+> afficheur décompter lui-même** avec sa propre horloge, recalé par des trames d'état
+> périodiques. Quelques octets suffisent ; latence et micro-coupures deviennent indolores.
 
-## 3. Solutions envisagées
+## 3. Options écartées (résumé de la v1)
 
-### Option A — Prolonger la vidéo (HDMI déporté)
+| Option | Pourquoi elle est écartée | Coût / terrain |
+|---|---|---|
+| **A. Prolonger la vidéo** (dock DisplayLink/splitter + extendeurs HDMI sur Cat6 ou HDMI sans fil) | Un écran **lisible au soleil** par angle (1 500–3 000 € pièce), ~100 m de câble au sol ou liaison vidéo 2,4/5 GHz saturée, pilote DisplayLink fragile sous macOS/Linux | 3 500–6 000 € |
+| **B. Navigateur dans chaque angle** (mini-PC/tablette + page `shotclock` abonnée à Mercure) | Dépend d'Internet (E5) ; mêmes écrans, même coût ; une version 100 % locale bute sur le *mixed content* (page HTTPS ⇏ `ws://` local) | 3 000–5 000 € (tablettes : ~300 € mais illisibles au soleil) |
+| **E. LoRa 868 MHz** | *Duty cycle* européen (1 %, 10 % sur 869,4–869,65 MHz) incompatible avec des trames toutes les 250–500 ms ; portée inutile à 30 m | — |
 
-Ajouter des sorties (dock USB-C **DisplayLink** ou **splitter HDMI**) puis transporter le signal :
+Ces options restent valables **en dépannage** (B en salle ou à l'ombre) et pour les **écrans
+d'ambiance distants** (buvette, zone d'attente), déjà couverts par la cible Mercure.
 
-- **A1. Extendeurs HDMI sur câble réseau** (HDBaseT, Cat6 jusqu'à 70–100 m) ;
-- **A2. Émetteurs HDMI sans fil** (gamme vidéo « prosumer », 50–150 m en vue directe).
+## 4. La vraie question : qui est le maître du chronomètre de tir ?
 
-| | |
-|---|---|
-| ✅ | Aucun développement ; réutilise la route `games/[id]/shotclock` existante |
-| ❌ | Il faut **un écran par angle**, et un écran **lisible au soleil** coûte 1 500–3 000 € (moniteur haute luminosité) ; un téléviseur ordinaire est illisible dehors (E1) |
-| ❌ | A1 : ~100 m de câble au sol, à protéger des passages, de l'eau, à dérouler/enrouler chaque jour ; un connecteur abîmé = afficheur noir |
-| ❌ | A2 : 2,4/5 GHz saturé sur un site plein de téléphones ; liaison sensible aux obstacles (public, bateaux) ; alimentation des récepteurs dans les angles |
-| ❌ | Le dock DisplayLink exige un pilote (fragile sous macOS/Linux) ; trois écrans étendus à gérer à la main à chaque match |
-| 💶 | **~3 500–6 000 € par terrain** (2 écrans haute luminosité + transport + dock) |
+La famille de solution retenue dès la v1 — **afficheurs LED dédiés pilotés par radio** — reste la
+bonne (lisibilité, coût, aucune vidéo). La réponse R7 (pas de navigateur imposé) et la piste
+proposée (« récupérer le signal du chronomètre de tir ») font émerger la question structurante :
+**dans quel sens circule l'information ?**
 
-**Verdict : déconseillé.** Cher, lourd à installer, fragile dans la durée, et la lisibilité
-soleil reste le vrai coût.
+### 4.1 Sens 1 — Console maîtresse (console → afficheurs)
 
-### Option B — Navigateur dans chaque angle (écrans « intelligents » en réseau)
+L'opérateur pilote tout depuis le PC (raccourcis `Entrée` / `.` / `0`, cf. PAGE_SCORING §6.5) ;
+la console pousse l'état vers une base radio, qui le diffuse aux afficheurs.
 
-Un petit appareil autonome par angle (Raspberry Pi, clé Android TV, vieille tablette) ouvre en
-mode kiosque une page `shotclock` qui **s'abonne à Mercure**.
+Le point dur est le **lien navigateur → boîtier local**, qui dépend du navigateur :
 
-| | |
-|---|---|
-| ✅ | Réutilise la diffusion distante prévue (Mercure, PAGE_SCORING §0.8) ; aucun câble vers la table |
-| ❌ | **Dépend d'Internet** (E5) : la console publie vers le serveur KPI, les afficheurs y relisent. Latence 0,2–1 s, coupures 4G fréquentes en bord de plan d'eau |
-| ❌ | Mêmes écrans que l'option A → même problème de luminosité et de coût (E1) |
-| ❌ | Une version 100 % locale (routeur Wi-Fi à la table) se heurte à une limite du navigateur : la console est servie en **HTTPS** et **ne peut pas ouvrir de connexion `ws://` vers un appareil local** (*mixed content*). Il faudrait un serveur local avec certificat, donc un logiciel à installer et maintenir |
-| 💶 | Écrans compris : **~3 000–5 000 € par terrain** ; sans écran adapté (tablettes) : ~300 €, mais **illisible au soleil** |
+| Canal console → base | Navigateurs | Sans Internet | Logiciel à installer | Verdict |
+|---|---|:---:|:---:|---|
+| **Web Serial** (clé USB) | Chrome, Edge, Opera, Brave — **pas Firefox, pas Safari** | ✅ | non | Excellent techniquement, **mais impose Chromium** (contraire à R7) |
+| **Mercure via Internet** (la base s'abonne au topic du terrain par Wi-Fi/4G) | tous | ❌ | non | Latence 0,2–1 s (console → api2 → outbox → Mercure), recalage horaire nécessaire, coupures 4G → **contraire à E5** |
+| **Petit logiciel relais sur le PC** (`ws://localhost`) | Chrome/Firefox oui (localhost « de confiance », invite d'accès réseau local chez Chrome) ; **Safari à vérifier** | ✅ | **oui** (Win/Mac/Linux, signé, maintenu) | Lourd à maintenir pour des bénévoles |
+| **Signal audio** (tonalités codées sur la sortie son) | tous | ✅ | non | **Fragile** (volume, sons système) et **en conflit avec le buzzer** sur la même enceinte → écarté |
 
-**Verdict : acceptable seulement en dépannage** (tablettes à l'ombre, compétition en salle).
-Utile en revanche pour les **écrans d'ambiance distants** (buvette, zone d'attente), qui sont
-déjà dans la cible Mercure.
+**Conclusion : aucun canal console → boîtier n'est à la fois universel, local et sans
+installation.** Le sens 1 seul ne satisfait pas R7.
 
-### Option C — Afficheurs LED dédiés pilotés par radio, depuis le navigateur ⭐
+### 4.2 Sens 2 — Pupitre maître (pupitre → afficheurs, pupitre → console)
 
-Chaque chronomètre de tir est un **afficheur LED 2 chiffres** (segments géants, lisibles au
-soleil) piloté par un **microcontrôleur ESP32**. À la table, une **« base » ESP32** branchée en
-**USB** sur le PC reçoit l'état depuis la console via l'API **Web Serial** du navigateur, et le
-**diffuse par radio** aux deux afficheurs.
+C'est la piste proposée, généralisée : **le chronomètre de tir est piloté par un matériel dédié
+à la table** (pupitre maison ou télécommande d'un système propriétaire). Ce matériel commande
+**directement** les afficheurs, et **informe** la console.
+
+Le lien **boîtier → navigateur**, lui, a une solution universelle : **se présenter comme un
+clavier USB** (HID). Tous les systèmes d'exploitation et tous les navigateurs reconnaissent un
+clavier, sans pilote, sans autorisation, sans installation. Et la console **sait déjà** piloter
+le chronomètre de tir et le chrono principal au clavier (raccourcis paramétrables,
+PAGE_SCORING §6.5).
 
 ```
- PC table de marque                                         Angle A
- ┌───────────────────────┐   USB    ┌──────────┐  radio   ┌──────────────────┐
- │ app4 Scoring (Chrome) │─────────▶│ Base     │─ ─ ─ ─ ─▶│ ESP32 + LED 2 ch.│
- │  store shotclock      │  Web     │ ESP32    │  2,4 GHz │ batterie 12 V    │
- │  └ useShotclockDevice │  Serial  │ (clé USB)│ ESP-NOW  └──────────────────┘
- │                       │◀─────────│          │─ ─ ─ ─ ─▶┌──────────────────┐
- │  HDMI ─▶ écran LED    │  accusés │          │◀─ accusés│ Angle B          │
- │        tableau score  │          └──────────┘          └──────────────────┘
- └───────────────────────┘
+                 Table de marque                                   Angle A (côté arbitre)
+ ┌──────────────────────────────┐                                  ┌──────────────────────┐
+ │ PC — app4 Scoring            │                                  │  ┌──┐┌──┐  tir 25 cm │
+ │  (n'importe quel navigateur) │                          radio   │  └──┘└──┘            │
+ │                              │                        ┌ ─ ─ ─ ─▶│  12:34   jeu 10 cm   │
+ │  ◀── touches F13…F18 ──┐     │                        │ ESP-NOW │  ESP32 · secteur 12 V │
+ │  (clavier USB virtuel) │     │                        │         │  (batterie en option) │
+ │                        │     │   ┌────────────────┐   │         └──────────────────────┘
+ │  ┄┄ canal retour ┄┄┄┄┄┄┼┄┄┄┄▶│   │ PUPITRE        │───┤         ┌──────────────────────┐
+ │  (Web Serial si Chromium,    │USB│ ESP32-S3       │   │         │ Angle B (côté arbitre)│
+ │   optionnel)           └─────┼───│ [Chrono ▶/■]   │   └ ─ ─ ─ ─▶│  idem                 │
+ │                              │   │ [60] [40] [--] │             └──────────────────────┘
+ │  HDMI ─▶ écran LED score     │   │ voyants A / B  │
+ │  🔊 buzzer (mini-enceinte)   │   └────────────────┘
+ └──────────────────────────────┘
 ```
 
-**Pourquoi c'est la bonne famille de solution**
+**Le pupitre maison** : un petit boîtier USB (microcontrôleur **ESP32-S3**, qui gère nativement
+l'USB) avec 4 gros boutons — **chrono principal départ/arrêt**, **60 s**, **40 s**, **arrêt
+`--`** — et deux voyants de liaison (un par afficheur, alimentés par les accusés de réception
+radio). À chaque appui, il :
 
-- **Aucun écran, aucune vidéo** : deux chiffres LED haute luminosité, conçus pour l'extérieur
-  (E1), pour une fraction du prix d'un moniteur.
-- **Aucun réseau, aucun Internet, aucun logiciel à installer** (E5, E8) : le navigateur parle
-  directement à la clé USB. Le reste de la console (Mercure, api2) peut tomber, les chronomètres
-  de tir continuent.
-- **ESP-NOW** (protocole radio d'Espressif, sans routeur ni appairage Wi-Fi) : trame de quelques
-  dizaines d'octets, **latence de quelques millisecondes**, portée **100–200 m en vue directe**
-  (davantage en mode *long range* et antenne externe) — largement assez pour 40 m (E3).
-  Une **même trame diffusée** atteint les deux afficheurs simultanément (E2).
-- **Accusés de réception** : la base remonte à la console, afficheur par afficheur, « reçu / perdu
-  depuis X s » → la console affiche un **voyant de liaison** pour chaque angle (E4).
-- **Le décompte est local** : l'afficheur reçoit « 60 s, en marche » et décompte avec son quartz ;
-  une **trame d'état complète est renvoyée périodiquement** (heartbeat ~250–500 ms) qui recale
-  la valeur. Une coupure de 2 s ne se voit pas ; au-delà d'un seuil (ex. 3 s sans trame), le
-  point décimal clignote pour alerter, et à l'expiration l'afficheur continue de décompter jusqu'à
-  0 (comportement sûr : il ne fige pas une valeur fausse).
-- **Multi-terrains** (E9) : chaque base et ses afficheurs portent un **identifiant de terrain**
-  (sélecteur rotatif/DIP sur le boîtier ou réglage mémorisé) ; les trames d'un autre terrain sont
-  ignorées. Canal radio choisissable si un site est saturé.
+1. **diffuse par radio (ESP-NOW)** le nouvel état aux deux afficheurs (quelques ms, même trame
+   pour les deux → synchrones, E2–E3) ;
+2. **envoie une touche** au PC (clavier virtuel) → la console applique la même commande que
+   son raccourci.
 
-#### Variantes de réalisation de l'afficheur
+Pourquoi c'est solide :
 
-| Variante | Description | Coût indicatif / afficheur¹ | Remarques |
-|---|---|---|---|
-| **C1. Fabrication maison (« DIY »)** | Chiffres 7 segments de ~25–30 cm en **ruban LED adressable 12 V** (WS2815/SK6812) sous diffuseur PMMA, ESP32, boîtier étanche IP65, batterie **LiFePO4 12 V 20 Ah**, pied enceinte lesté | **200–350 €** | Coût minimal, pièces standard réparables, **firmware ouvert maîtrisé par KPI** ; demande un bricoleur (soudure simple) et un gabarit reproductible |
-| **C2. Afficheur du commerce + carte de pilotage** | Afficheur « chronomètre de tir / compteur » LED extérieur générique (2 chiffres, entrée RS-485/RS-232 ou contacts), auquel on ajoute un ESP32 qui traduit la trame radio vers son entrée | **350–800 €** | Mécanique et étanchéité « finies » ; vérifier **avant achat** que le protocole d'entrée est documenté |
-| **C3. Système de chronomètre de tir professionnel sans fil** | Gamme équipementier sportif (basket/water-polo), avec sa propre télécommande | **2 000–6 000 € la paire** | Robuste, garanti ; mais **double saisie** (télécommande ≠ console KPI) sauf si le fabricant expose une entrée de pilotage, ce qui est rare/payant |
+- **Universel** (E6) : aucun navigateur imposé, aucune autorisation, aucun logiciel.
+- **Indépendant du PC** : si le navigateur se fige, que le PC redémarre ou qu'Internet tombe,
+  **les chronomètres de tir continuent de fonctionner**. La console n'est plus sur le chemin
+  critique de l'affichage d'arbitrage (E4, E5).
+- **Synchronisation avec le chrono principal résolue par construction** : le bouton chrono du
+  pupitre démarre/arrête **à la fois** le chrono de la console (touche) et la suspension
+  automatique du chronomètre de tir (radio). Un seul appui, une seule origine : l'écart se
+  limite à la latence d'une touche USB (~10 ms) ; la dérive des quartz sur une période de
+  10 min reste de l'ordre de quelques centièmes.
+- **Ergonomie** : de vrais boutons, utilisables sans regarder l'écran, à côté du clavier où
+  l'opérateur saisit les faits de jeu.
 
-¹ *Ordres de grandeur 2026, hors main-d'œuvre, à vérifier par devis.* La base USB coûte
-**~15–30 €** (ESP32 avec antenne externe dans un petit boîtier).
+**Points de vigilance (à transformer en critères d'acceptation dans la spec)** :
 
-**Budget par terrain (C1)** : 2 afficheurs + 1 base + 1 base de rechange ≈ **450–750 €**, à
-comparer aux 3 500–6 000 € des options A/B.
-
-#### Point d'attention : navigateur
-
-**Web Serial** n'est disponible que dans les navigateurs **Chromium** (Chrome, Edge, Opera,
-Brave) sur ordinateur — **pas Firefox, pas Safari**. Sur Mac, il faut donc utiliser **Chrome ou
-Edge** pour la console Scoring. L'autorisation d'accès au port est donnée **une fois** (clic
-« Connecter les chronomètres de tir ») puis retrouvée automatiquement aux ouvertures suivantes.
-Alternative sans câble USB : **Web Bluetooth** vers la base (même restriction navigateur, mais
-moins robuste qu'une liaison USB à la table) — non recommandé en premier choix.
-
-### Option D — Liaison filaire RS-485 vers les afficheurs
-
-Mêmes afficheurs que l'option C, mais reliés à la base par **un câble 2 paires** (RS-485 :
-plusieurs centaines de mètres, insensible aux perturbations).
-
-| | |
+| Risque | Parade |
 |---|---|
-| ✅ | Le plus déterministe ; peut aussi transporter l'alimentation (12–24 V) et supprimer les batteries |
-| ❌ | ~100 m de câble à poser autour du terrain chaque jour, à protéger des passages et de l'eau ; connecteurs à entretenir |
-| 💶 | Câble + connecteurs étanches : 100–200 € par terrain en plus des afficheurs |
+| **Collision avec la saisie** (touches qui partent dans un champ de texte) | Touches **dédiées F13–F18**, inexistantes sur les claviers physiques ; la console les traite **même si le focus est dans un champ**. À tester sur macOS (certaines touches F13+ sont réservées par le système sur certains postes) |
+| **Focus perdu** (l'opérateur a cliqué la fenêtre du tableau de score sur l'écran étendu ; les touches n'arrivent pas à la console) | La fenêtre `scoreboard` **relaie** les touches F13–F18 à la console par `BroadcastChannel` (déjà en place) ; l'afficheur d'angle, maître, reste juste de toute façon |
+| **Double pilotage** (l'opérateur utilise aussi `Espace`/`Entrée` du PC, que le pupitre ne voit pas) | Paramètre `ScoringConfig` **« horloges pilotées par pupitre »** : quand il est actif, la console **désactive** ses propres commandes chrono/chronomètre de tir et affiche « piloté par pupitre » |
+| **Temps de jeu sur les afficheurs d'angle** (R6) et **masquage** du chronomètre de tir quand le temps restant est inférieur (`shotClockShow`) : il faut que le pupitre connaisse le temps de jeu, or les **corrections** se font dans la console | Le pupitre tient son propre temps de jeu (départ/arrêt + durée de période). **Sans canal retour**, une correction faite dans la console n'atteint pas les angles → afficher le temps de jeu aux angles **seulement si un canal retour existe**, ou faire les corrections au pupitre (boutons ±1 s, à arbitrer) |
+| **État de liaison** invisible pour la console en mode clavier pur | Voyants **sur le pupitre** ; la console les reçoit en plus si un canal retour existe |
 
-**Verdict : excellente roue de secours de l'option C.** Prévoir dans le firmware **les deux
-liaisons** (radio et RS-485) ne coûte presque rien : si un site est saturé en radio, on tire un
-câble, sans rien changer d'autre.
+### 4.3 Le meilleur des deux : sens 2 + canal retour optionnel
 
-### Option E — LoRa 868 MHz
+Le pupitre ESP32-S3 peut se présenter **à la fois** comme clavier **et** comme port série
+(périphérique USB composite). On obtient une **amélioration progressive** :
 
-Portée kilométrique et bonne traversée des obstacles, mais **la réglementation européenne limite
-le temps d'émission** (*duty cycle* 1 %, 10 % sur la sous-bande 869,4–869,65 MHz). Un heartbeat
-toutes les 500 ms la dépasse vite. Sur 40 m, la portée de LoRa n'apporte rien. **Écartée**, sauf
-site très particulier.
+| Navigateur de la table | Ce qui marche |
+|---|---|
+| **N'importe lequel** | Pupitre maître, afficheurs synchrones, console synchronisée par touches, buzzer dans la console, voyants sur le pupitre. Chronomètre de tir seul aux angles (ou temps de jeu du pupitre, cf. §4.2) |
+| **Chromium (Web Serial accepté)** | + la console pousse le **temps de jeu de référence** et ses **corrections** au pupitre (temps de jeu fiable aux angles, masquage `shotClockShow` exact), + voyants de liaison **dans la console**, + **mode test** d'avant-match lancé depuis la console |
+| **Internet disponible** (optionnel) | Même enrichissement possible par Mercure (le pupitre s'abonne au topic du terrain en Wi-Fi), utile si le navigateur n'est pas Chromium — **jamais requis** |
 
-## 4. Comparatif
+### 4.4 Capter un système propriétaire (piste « récupérer le signal »)
 
-| Critère | A. HDMI déporté | B. Navigateur + Mercure | **C. LED + ESP-NOW + Web Serial** | D. LED + RS-485 |
-|---|:---:|:---:|:---:|:---:|
-| Lisible au soleil (E1) | 💶💶💶 | 💶💶💶 / ❌ | ✅ | ✅ |
-| Synchro & latence (E2–E3) | ✅ | ⚠️ (Internet) | ✅ | ✅ |
-| Tolérance coupure (E4) | ❌ écran noir | ⚠️ | ✅ décompte local + voyant | ✅ |
-| Sans Internet (E5) | ✅ | ❌ | ✅ | ✅ |
-| Mise en place (E8) | ❌ câbles + config écrans | ⚠️ Wi-Fi | ✅ allumer + brancher la clé | ⚠️ câbles |
-| Multi-terrains (E9) | ✅ | ✅ | ✅ (ID terrain) | ✅ |
-| Coût / terrain | 3 500–6 000 € | 3 000–5 000 € | **450–750 €** (C1) | C + 150 € |
-| Développement KPI | aucun | faible | **moyen** (composable + firmware) | idem C |
-| Contrainte poste | sorties vidéo | aucune | Chrome/Edge | Chrome/Edge |
+Le sens 2 accueille naturellement un système du commerce : **sa télécommande devient le
+pupitre**. Il suffit d'un **adaptateur** (même ESP32-S3) qui lit les signaux du système et les
+transforme en **les mêmes touches F13–F18** pour la console. Un seul contrat d'entrée côté
+console, quel que soit le matériel → aucun développement spécifique par fabricant côté app4.
 
-## 5. Recommandation
+Ce qu'il faut savoir **par fabricant** (questionnaire à envoyer, R1) :
 
-**Option C1 (afficheurs LED maison, ESP32, ESP-NOW, base USB pilotée en Web Serial), avec la
-liaison RS-485 de l'option D prévue dans le firmware comme secours.**
+| # | Question | Pourquoi |
+|---|---|---|
+| F1 | Le système expose-t-il une **sortie** : contacts secs/relais, RS-232/RS-485, UDP/TCP, Bluetooth ? Le protocole est-il **documenté** et sa réutilisation **autorisée** ? | moyen de capter le signal |
+| F2 | Sort-il des **événements** (reset 60 / 40 / `--`, départ/arrêt) ou la **valeur affichée** ? À quelle fréquence ? | événements → la console reconstitue ; valeur → la console recopie à l'identique |
+| F3 | Accepte-t-il une **entrée externe départ/arrêt** du chrono principal (contact, trame) ? Gère-t-il lui-même un **temps de jeu** ? | c'est **le** point de synchronisation avec la console (cf. ci-dessous) |
+| F4 | Accepte-t-il une **entrée de pilotage** (pour le sens 1) ? | permettrait de le commander depuis notre pupitre ou la console |
+| F5 | Radio utilisée, portée, coexistence de **5 jeux** sur un même site | E9 |
+| F6 | Lisibilité soleil (cd/m²), taille des chiffres, IP, alimentation (secteur/batterie, autonomie), garantie, pièces détachées, **prix par terrain** | E1, E7, R3, R5 |
 
-Elle répond à toutes les exigences, divise le coût par ~6, n'ajoute aucune dépendance réseau et
-s'insère proprement dans l'architecture déjà décidée :
+**Le problème de synchronisation avec le chrono principal** se règle selon la réponse à F3 :
 
-- la console reste la **source unique** de l'état du chronomètre de tir (store Pinia), comme
-  pour `BroadcastChannel` (fenêtres locales) et Mercure (écrans distants) : on ajoute un
-  **troisième canal de sortie**, « matériel local » ;
-- le **contrat de données** est celui de `scoring_live_clock` (kind `SHOTCLOCK`) : pas de
-  nouvelle logique métier, seulement une sérialisation ;
-- les règles déjà spécifiées s'appliquent telles quelles : `--` à l'arrêt, masquage quand le
-  temps de jeu restant est inférieur au chronomètre de tir (`shotClockShow`), suspension
-  automatique quand le chrono principal s'arrête, buzzer à 0.
+- **Le système accepte une entrée départ/arrêt** → notre adaptateur la pilote depuis le bouton
+  chrono du pupitre : un seul appui pour les deux horloges (comme en §4.2) ;
+- **Le système gère aussi le temps de jeu** → c'est un cas de **Hardware Scoring** (plan §4.7) :
+  le système devient la source des horloges, la console les recopie ;
+- **Ni l'un ni l'autre** → la suspension du chronomètre de tir à l'arrêt du jeu repose sur un
+  **double geste** de l'opérateur (chrono console + télécommande). Risque d'oubli → **à
+  éviter** ; le système ne serait acceptable qu'avec cette parade matérielle.
 
-### 5.1 Esquisse d'intégration logicielle (pour mémoire, à spécifier avant tout code)
+> **Note** : la captation **n'exige pas** que le système envoie la valeur affichée. Des
+> événements horodatés suffisent : la console recalcule le décompte comme elle le fait déjà
+> (horloges en horodatage, PAGE_SCORING §6.4).
 
-- **app4** : composable `useShotclockDevice` (Web Serial) abonné au store, à côté de
-  `useScoringBroadcast` ; bouton « Connecter les chronomètres de tir » + **voyants de liaison
-  A/B** dans la console ; mode **test** (affiche 88, fait clignoter, déclenche le buzzer) pour
-  le contrôle d'avant-match.
-- **Trame** (binaire compacte, versionnée) : `version, terrain, séquence, état (arrêté / en
-  décompte / suspendu / masqué), valeur restante en dixièmes, buzzer, luminosité` + CRC.
-  Renvoyée à chaque commande **et** en heartbeat.
-- **Firmware** (base + afficheur) : versionné dans le dépôt (ex. `hardware/shotclock/`),
-  mise à jour par USB ou OTA, réglages (ID terrain, luminosité, seuil d'alerte) persistés.
-- **Option** : afficher aussi le **temps de jeu** sur une 2ᵉ ligne (afficheurs 4 chiffres),
-  comme en basket — à décider (cf. questions).
+## 5. Afficheur d'angle maison (sens 2)
 
-### 5.2 Fiabilité sur plusieurs jours et plusieurs saisons
+| Élément | Choix proposé |
+|---|---|
+| Chronomètre de tir | 2 chiffres 7 segments **~25 cm**, ruban LED adressable **12 V** (WS2815, tolérant à une LED défaillante) sous diffuseur |
+| Temps de jeu (R6) | 4 chiffres `mm:ss` **~10–12 cm** sous le chronomètre de tir (disposition « basket ») |
+| Face | Une face vers le terrain, visible des deux équipes (R8) ; **face arrière public en option** |
+| Commande | ESP32, ESP-NOW (portée 100–200 m en vue directe ≫ 30 m), identifiant de terrain 1–5 par sélecteur rotatif, canal radio réglable |
+| Comportement | Décompte local, trame d'état complète toutes les 250–500 ms ; au-delà de ~3 s sans trame, point clignotant (alerte) ; luminosité auto (capteur de lumière : moins de chaleur, moins de consommation) |
+| Énergie | Secteur : bloc 12 V étanche (R3). **Option** : batterie LiFePO4 12 V sur le même connecteur |
+| Mécanique | Caisson IP65, face PMMA teintée anti-reflet, fixation sur pied enceinte lesté ou poteau |
+| Évolutions | Firmware versionné dans le dépôt (ex. `hardware/shotclock/`), mise à jour USB/OTA |
 
-- **Énergie** : estimer la consommation réelle au prototype (ordre de grandeur 10–30 W selon
-  luminosité) → batterie dimensionnée pour **1 journée + 30 %**, recharge la nuit ; prise
-  secteur 12 V optionnelle sur le même connecteur.
-- **Chaleur** : boîtier clair, aéré par chicanes, LED **pilotées en luminosité** (capteur de
-  lumière ambiante) — moins de chaleur, plus d'autonomie.
-- **Démarrage sans intervention** : l'afficheur s'allume, rejoint son terrain, affiche `--` ;
-  aucun appairage à refaire chaque matin.
-- **Parc** : un **afficheur de rechange** pour 3–4 terrains, une **base de rechange** par
-  terrain (pièce à 20 €), une fiche « montage / test / démontage » d'une page.
-- **Maintenance** : pièces standard (ruban LED, ESP32, batterie), firmware ouvert ; aucune
-  dépendance à un fournisseur unique.
+Pas de buzzer dans l'afficheur (R6) : le buzzer reste dans la console, sur la mini-enceinte du
+PC, déclenché par l'état (fin du chronomètre de tir, fin de période, fin de pause).
 
-### 5.3 Démarche proposée
+### 5.1 Budget indicatif (ordres de grandeur 2026, à confirmer par le prototype)
 
-1. **Réponses aux questions ci-dessous** (§6) → figer les exigences.
-2. **Spec** dédiée avec critères d'acceptation (conformément aux principes du projet) :
-   contrat de trame, comportements en coupure, voyants, mode test.
-3. **Prototype** : 1 base + 1 afficheur, test terrain réel (soleil, 40 m, téléphones du
-   public), mesure de consommation et de latence.
-4. **Pré-série** pour 1 terrain (2 afficheurs) sur une compétition test, en parallèle du
-   dispositif actuel.
-5. **Série** pour le parc de terrains ; documentation utilisateur dans `DOC/user/`.
+| Poste | Par unité | Par terrain |
+|---|---|---|
+| Afficheur d'angle (LED ~6 m, ESP32, caisson + face, bloc 12 V, fixation, connectique) | 180–220 € | 360–440 € (×2) |
+| Pupitre (ESP32-S3 + antenne, 4 gros boutons, voyants, boîtier, câble USB) | 40–60 € | 40–60 € |
+| **Total de base (secteur)** | | **≈ 400–500 €** ✅ cible < 500 € |
+| Option batterie (LiFePO4 12 V 12–20 Ah + chargeur) | +80–120 € / afficheur | +160–240 € |
+| Option face arrière public | +50–80 € / afficheur | +100–160 € |
 
-## 6. Questions ouvertes
+**Parc de 5 terrains** : ~2 000–2 500 € de base (le 5ᵉ jeu sert de rechange lors des
+internationaux à 4 terrains, R2). À comparer aux 3 000–6 000 € **par terrain** des options A/B.
 
-1. **Matériel existant** : le panneau de score propriétaire utilisé en *Hardware Scoring*
-   comporte-t-il déjà des chronomètres de tir ? Si oui, peut-on les piloter (protocole) ?
-2. **Parc** : combien de terrains simultanés au maximum sur une compétition (donc combien de
-   jeux à produire) ?
-3. **Énergie** : y a-t-il habituellement du secteur dans les angles, ou faut-il viser 100 %
-   batterie ?
-4. **Fabrication** : une réalisation « maison » (C1) est-elle envisageable (bénévoles bricoleurs,
-   club partenaire, fablab), ou faut-il privilégier l'achat (C2/C3) ?
-5. **Budget** cible par terrain ?
-6. **Contenu** : les afficheurs d'angle doivent-ils montrer **uniquement** le chronomètre de tir,
-   ou aussi le **temps de jeu** ? Un **buzzer** doit-il sonner dans les angles, ou seulement à la
-   table ?
-7. **Poste** : peut-on imposer **Chrome ou Edge** sur le PC de table (nécessaire pour Web
-   Serial) ?
-8. **Règlement** : existe-t-il une exigence ICF/FFCK sur la taille, la couleur ou la position des
-   afficheurs de chronomètre de tir à respecter (homologation de compétition) ?
+## 6. Recommandation
+
+1. **Architecture : pupitre maître (sens 2)**, afficheurs d'angle LED maison pilotés en
+   **ESP-NOW**, console synchronisée par **clavier USB virtuel (touches F13–F18)** — universel,
+   sans navigateur imposé (R7), sans Internet (E5), et le chronomètre de tir ne dépend plus du PC.
+2. **Canal retour optionnel** par Web Serial (Chromium) puis, si utile, Mercure : il apporte le
+   temps de jeu de référence aux angles, les voyants dans la console et le mode test. **Jamais
+   requis** pour arbitrer.
+3. **Un seul contrat d'entrée console** (touches F13–F18 + paramètre « horloges pilotées par
+   pupitre ») qui sert **aussi** aux systèmes propriétaires via un adaptateur → envoyer le
+   **questionnaire F1–F6** aux fabricants en parallèle du prototype ; on comparera prix et
+   fiabilité sur pièces.
+4. **Fabrication maison** à valider par prototype (R4) ; budget visé ≈ 400–500 € par terrain
+   sur secteur (R5).
+
+### 6.1 Démarche
+
+1. **Valider cette v2** (questions §7).
+2. **Spec** dédiée avec critères d'acceptation (principe du projet) : contrat des touches, mode
+   « horloges pilotées par pupitre », trame radio, comportements en coupure, voyants, mode test,
+   canal retour.
+3. **Prototype** : 1 pupitre + 1 afficheur, essai réel (soleil, 30 m, téléphones du public,
+   Windows/macOS/Linux × Chrome/Firefox/Safari), mesure de consommation et de latence.
+4. **Pré-série** 1 terrain sur une compétition test, en parallèle du dispositif actuel.
+5. **Série** 5 terrains ; guide montage/test/démontage dans `DOC/user/`.
+
+## 7. Questions ouvertes (v2)
+
+1. **Pupitre physique** : l'opérateur accepte-t-il de piloter chrono principal et chronomètre de
+   tir sur **un boîtier à boutons** à côté du PC (plutôt qu'au clavier du PC) ? C'est ce qui
+   rend la solution indépendante du navigateur.
+2. **Corrections du temps de jeu** : sans canal retour, vaut-il mieux (a) n'afficher **que** le
+   chronomètre de tir aux angles, (b) ajouter des boutons **±1 s** au pupitre, ou (c) réserver le
+   temps de jeu aux angles aux tables équipées de Chromium ?
+3. **Position de la table** : est-elle habituellement du **même côté** que les angles de
+   l'arbitre (≈ 20 m) ou du côté opposé (≈ 30 m) ? Cela fixe la taille des chiffres.
+4. **Face arrière public** : souhaitée d'emblée, ou en option ultérieure ?
+5. **Fabrication** : existe-t-il un club, un fablab ou des bénévoles identifiés pour un
+   prototype, et qui assurera la maintenance du parc ?
+6. **Fabricants** : peut-on leur envoyer le questionnaire F1–F6 dès maintenant, et lesquels ?
