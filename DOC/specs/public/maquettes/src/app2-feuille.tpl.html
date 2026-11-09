@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feuille de match app2 · médailles</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+/* app2 look (Tailwind gray scale, `bg-bar`), not the app3 charter */
+:root { --bar: #1f2937; --g50: #f9fafb; --g100: #f3f4f6; --g200: #e5e7eb; --g300: #d1d5db; --g500: #6b7280; --g700: #374151; --a: #1d4ed8; --b: #b91c1c; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #111827; --g50: #1f2937; --g100: #111827; --g200: #374151; --g300: #4b5563; --g500: #9ca3af; --g700: #d1d5db; --a: #93c5fd; --b: #fca5a5; } }
+:root[data-theme="dark"] { --bar: #111827; --g50: #1f2937; --g100: #111827; --g200: #374151; --g300: #4b5563; --g500: #9ca3af; --g700: #d1d5db; --a: #93c5fd; --b: #fca5a5; }
+body { font-family: ui-sans-serif, system-ui, sans-serif; background: var(--surface); }
+.app-top { background: var(--bar); color: #fff; padding: 10px 16px; font-weight: 700; display: flex; justify-content: space-between; }
+.sheet { max-width: 896px; margin: 16px auto 80px; padding: 0 12px; }
+.hd { background: var(--bar); color: #fff; border-radius: 8px 8px 0 0; padding: 14px; text-align: center; }
+.hd div { font-size: 13px; color: #d1d5db; } .hd small { display: block; font-size: 12px; color: #9ca3af; margin-top: 4px; }
+.score { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; background: var(--g100); border: 1px solid var(--g300); border-top: 0; padding: 14px 8px; }
+.score .t { text-align: center; } .score .t img { width: 52px; height: 52px; object-fit: contain; display: block; margin: 0 auto 6px; }
+.score .t span { display: inline-block; font-weight: 700; background: var(--g200); padding: 3px 10px; border-radius: 4px; }
+.score .s { display: flex; gap: 6px; align-items: center; } .score .s b { font: 700 34px/1 ui-monospace, monospace; background: var(--bar); color: #fff; padding: 6px 12px; border-radius: 4px; }
+.refs { background: var(--g50); border: 1px solid var(--g300); border-top: 0; padding: 8px 12px; text-align: center; font-size: 14px; color: var(--g700); }
+.refs .pills { justify-content: center; margin-top: 6px; }
+.box { border: 1px solid var(--g300); border-radius: 8px; overflow: hidden; margin-top: 16px; }
+.box > h2 { margin: 0; background: var(--bar); color: #fff; padding: 8px 12px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.box > h2 a { color: #d1d5db; font-weight: 400; font-size: 13px; }
+.labels { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 0; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; }
+.col { padding: 10px 12px 12px; } .col + .col { border-left: 1px solid var(--g300); }
+.col h3 { margin: 0 0 8px; font-size: 14px; }
+.col ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.col li { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-wrap: wrap; }
+.col li small { color: var(--g500); }
+.empty { color: var(--g500); font-size: 13px; }
+.warn { margin: 10px 12px 0; padding: 8px 10px; border-radius: 6px; background: var(--g100); border: 1px dashed var(--g300); font-size: 13px; color: var(--g700); }
+/* timeline bar (GameTimelineBar), medaled goals ringed */
+.tl { position: relative; height: 92px; margin: 14px 18px 6px; }
+.tl .line { position: absolute; left: 0; right: 0; top: 46px; height: 2px; background: var(--g300); }
+.tl .seg { position: absolute; top: 40px; height: 14px; border-left: 2px solid var(--g300); font-size: 10px; color: var(--g500); padding-left: 3px; }
+.tl .mk { position: absolute; transform: translateX(-50%); display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 700; color: #fff; }
+.tl .mk.A { top: 14px; background: var(--a); } .tl .mk.B { top: 60px; background: var(--b); }
+.tl .mk.card { width: 9px; height: 13px; border-radius: 2px; } .tl .mk.card.A { top: 18px; } .tl .mk.card.B { top: 62px; }
+.tl .mk.V { background: #22c55e; } .tl .mk.J { background: #facc15; } .tl .mk.R, .tl .mk.D { background: #dc2626; }
+.tl .mk.medal { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--fam-superiorite); }
+.tl .mk.medal.op { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--fam-elan); }
+.ev { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; padding: 7px 12px; border-top: 1px solid var(--g200); font-size: 14px; }
+.ev .tm { font: 12px ui-monospace, monospace; color: var(--g500); text-align: center; }
+.ev .who { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; } .ev .B { justify-content: flex-end; grid-column: 3; }
+.ev .A b { color: var(--a); } .ev .B b { color: var(--b); }
+.ev .ic { width: 14px; height: 18px; border-radius: 3px; display: inline-grid; place-items: center; font-size: 11px; }
+.ev .ic.goal { width: 18px; border-radius: 50%; background: var(--g200); }
+.ev .ic.V { background: #22c55e; } .ev .ic.J { background: #facc15; } .ev .ic.R, .ev .ic.D { background: #dc2626; }
+.per { background: var(--g100); padding: 4px 12px; font-size: 12px; color: var(--g500); font-weight: 600; }
+.demo select { font: inherit; }
+@media (max-width: 600px) {
+  .cols { grid-template-columns: 1fr; } .col + .col { border-left: 0; border-top: 1px solid var(--g300); }
+  .score .s b { font-size: 26px; padding: 5px 8px; }
+  .score .t span { font-size: 13px; }
+  .ev { grid-template-columns: 40px minmax(0, 1fr); } .ev .B { grid-column: 2; }
+}
+</style>
+</head>
+<body>
+<div class="app-top"><span>KPI · Résultats</span><span>☰</span></div>
+<main class="sheet" id="main"></main>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+const GAMES = __GAMES__;
+const { matches, results } = medalsData(GAMES, __SCORERS__.rows);
+const SHOWCASE = [[302, 'Suspense, premier but'], [318, 'Remontée après 0-3'], [326, 'But en or (3e place)'], [304, 'Triplés, rouge définitif'], [313, 'Cage inviolée, supériorités'], [316, 'Feuille incomplète'], [317, 'Arbitres non désignés']];
+let game = +(new URLSearchParams(location.search).get('game') ?? 302);
+const app2 = c => BY_CODE[c].surfaces.includes('app2');
+
+function render() {
+  const i = matches.findIndex(m => m.number === game), m = matches[i], res = results[i], g = GAMES[i];
+  const teamMedals = s => Object.entries(res.team.filter(x => x.side === s && app2(x.code)).reduce((o, x) => ((o[x.code] ??= []).push(x), o), {}));
+  const playerMedals = s => res.player.filter(x => x.side === s && app2(x.code));
+  const byPlayer = s => Object.values(playerMedals(s).reduce((o, x) => ((o[x.p.id] ??= { p: x.p, list: [] }).list.push(x), o), {}));
+  const groupCodes = list => Object.entries(list.reduce((o, x) => ((o[x.code] ??= []).push(x), o), {}));
+  const col = s => {
+    const team = teamMedals(s), players = byPlayer(s);
+    return `<div class="col"><h3>${esc(m.teams[s].label)}</h3>
+      ${team.length ? `<div class="pills">${team.map(([c, xs]) => pill(c, { count: xs.length, detail: xs.map(x => x.when ?? x.detail).filter(Boolean).join(' ; ') })).join('')}</div>` : '<span class="empty">Pas de médaille d’équipe</span>'}
+      ${players.length ? `<ul>${players.map(({ p, list }) => `<li>${groupCodes(list).map(([c, xs]) => pill(c, { compact: true, count: xs.length, detail: xs.map(x => x.when ?? x.detail).filter(Boolean).join(' ; ') })).join('')}<span><b>${esc(p.first)} ${esc(p.last)}</b> <small>#${p.number}</small></span></li>`).join('')}</ul>` : ''}</div>`;
+  };
+  const refMedals = groupCodes(res.referee.filter(x => app2(x.code)).filter((x, k, a) => a.findIndex(y => y.code === x.code) === k));
+  const labels = res.labels.filter(app2);
+  // timeline
+  const goals = res.reliable ? res.facts.goals : [];
+  const cards = res.reliable ? m.events.filter(e => e.type !== 'B').map(e => ({ ...e, at: res.facts.offset[e.period] + res.facts.length[e.period] - e.remaining })) : [];
+  const total = res.reliable ? Object.values(res.facts.length).reduce((a, b) => a + b, 0) : 1;
+  const pos = at => `${(100 * at / total).toFixed(2)}%`;
+  const medalOf = e => e.pp ? 'powerplay' : e.opener ? 'opener' : e.winner ? 'game_winner' : null;
+  const tl = res.reliable ? `<div class="tl" aria-hidden="true"><div class="line"></div>
+      ${Object.keys(res.facts.offset).map(p => `<span class="seg" style="left:${pos(res.facts.offset[p])}">${p}</span>`).join('')}
+      ${cards.map(c => `<span class="mk card ${c.team} ${c.type}" style="left:${pos(c.at)}"></span>`).join('')}
+      ${goals.map(e => `<span class="mk ${e.team}${e.pp ? ' medal' : e.opener ? ' medal op' : ''}" style="left:${pos(e.at)}">${e.player?.number ?? ''}</span>`).join('')}</div>` : '';
+  const evs = res.reliable ? [...goals, ...cards].sort((a, b) => a.at - b.at || (a.type === 'B') - (b.type === 'B')) : m.events;
+  let last = null;
+  const list = evs.map(e => {
+    const per = e.period !== last ? `<div class="per">${PERIOD_LABEL(e.period)}</div>` : ''; last = e.period;
+    const codes = e.type === 'B' ? [e.opener && 'opener', e.pp && 'powerplay', e.winner && 'game_winner'].filter(Boolean).filter(app2) : [];
+    const who = `<span class="who ${e.team}">${e.team === 'A' ? '' : codes.map(c => pill(c, { compact: true })).join('')}<span class="ic ${e.type === 'B' ? 'goal' : e.type}"></span><b>${esc(e.player?.first ?? '')} ${esc(e.player?.last ?? '')}</b><small>#${e.player?.number ?? ''}${e.motif ? ` · ${esc(e.motif)}` : ''}</small>${e.team === 'A' ? codes.map(c => pill(c, { compact: true })).join('') : ''}</span>`;
+    return per + `<div class="ev"><span class="tm">${e.remaining == null ? '--:--' : mmss(e.remaining)}</span>${who}</div>`;
+  }).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="hd"><div>${esc(g.c_label)} - ${esc(g.d_phase)}</div><small>Match #${g.g_number} | ${esc(g.d_place)} | Terrain ${esc(g.g_pitch)}</small><small>${fmt(g.g_date, { day: 'numeric', month: 'long', year: 'numeric' })} - ${g.g_time}</small></div>
+    <div class="score"><div class="t">${g.t_a_logo ? `<img src="${KPI_IMG}${g.t_a_logo}" alt="">` : ''}<span>${esc(g.t_a_label)}</span></div>
+      <div class="s"><b>${g.g_score_a}</b>-<b>${g.g_score_b}</b></div>
+      <div class="t">${g.t_b_logo ? `<img src="${KPI_IMG}${g.t_b_logo}" alt="">` : ''}<span>${esc(g.t_b_label)}</span></div></div>
+    <div class="refs"><b>Arbitres :</b> ${m.referees.map(r => esc(r.name)).join(' / ')}${m.referees.some(r => r.designated) ? '' : ' <small>(non désignés : pas de médaille d’arbitre)</small>'}
+      ${refMedals.length ? `<div class="pills" aria-label="Médailles d’arbitre"><small style="color:var(--g500);align-self:center">Médailles d’arbitre (pour les deux) :</small>${refMedals.map(([c]) => pill(c)).join('')}</div>` : ''}</div>
+    <section class="box" aria-labelledby="mh"><h2 id="mh">Médailles <a href="medailles.html">Comment sont-elles attribuées ?</a></h2>
+      ${labels.length ? `<div class="labels">${labels.map(c => pill(c)).join('')}</div>` : ''}
+      ${res.reliable ? '' : '<p class="warn">Médailles chronologiques indisponibles (feuille incomplète) : seules les médailles liées au score sont attribuées.</p>'}
+      <div class="cols">${col('A')}${col('B')}</div></section>
+    <p class="mock-note">Composition des équipes : inchangée (non reproduite ici).</p>
+    <section class="box" aria-labelledby="th"><h2 id="th">Déroulement du match</h2>${tl}${list}</section>`;
+}
+render();
+const bar = demoBar(`<label>Match <select id="pick">${SHOWCASE.map(([n, l]) => `<option value="${n}"${n === game ? ' selected' : ''}>n° ${n} · ${l}</option>`).join('')}</select></label>`);
+bar.querySelector('#pick').addEventListener('change', e => { game = +e.target.value; history.replaceState(null, '', `?game=${game}`); render(); });
+</script>
+</body>
+</html>

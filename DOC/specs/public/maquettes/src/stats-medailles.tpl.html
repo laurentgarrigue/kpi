@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stats PlayOff Hommes · médailles</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+.stats > * { min-width: 0; }
+.stats { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 40px; margin: 26px auto 70px; }
+.menu h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 16px 0 4px; }
+.menu h2:first-child { margin-top: 0; }
+.menu a { display: flex; align-items: center; gap: 9px; padding: 6px 8px; margin: 0 -8px; border-radius: 6px; text-decoration: none; font-size: 14.5px; }
+.menu a[aria-current] { background: var(--wash); font-weight: 700; }
+.menu a .disc { width: 24px; height: 24px; }
+.menu select { display: none; }
+.head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 14px; align-items: center; margin-bottom: 18px; }
+.head .disc { grid-row: span 2; }
+.head h2 { margin: 0; font: 400 32px/1 var(--display); color: var(--title); }
+.head h2 .en { font: italic 400 16px var(--text); color: var(--muted); }
+.head p { margin: 0; color: var(--muted); font-size: 14px; }
+.basis { font-size: 13px; color: var(--muted); margin: -8px 0 16px; }
+.basis a { color: var(--blue-deep); }
+.scroll { overflow-x: auto; position: relative; }
+table.med { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+table.med th { font-size: 12px; color: var(--muted); font-weight: 600; padding: 0 6px 8px; text-align: center; }
+table.med th.l, table.med td.l { text-align: left; }
+table.med td { border-top: 1px solid var(--line); padding: 8px 6px; text-align: center; }
+table.med td.tot { font-weight: 700; }
+table.med .tm { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+table.med th .disc { width: 26px; height: 26px; margin: 0 auto; }
+table.med td.zero { color: var(--line); }
+.lead { display: grid; grid-template-columns: auto 1fr; gap: 4px 20px; align-items: center; padding: 18px 20px; border-radius: 8px; background: var(--navy); color: #fff; margin-bottom: 22px; }
+.lead .big { grid-row: span 2; font: 400 84px/0.85 var(--display); color: #fff; font-variant-numeric: tabular-nums; }
+.lead b { font: 400 28px/1.05 var(--display); }
+.lead span { color: #dfe3f5; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(90px, 1fr) 120px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.rows .tm { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rows .bar { height: 10px; border-radius: 5px; background: var(--wash); overflow: hidden; }
+.rows .bar i { display: block; height: 100%; background: var(--fam-superiorite); border-radius: 5px; }
+.rows .n { text-align: right; font-size: 13px; color: var(--muted); }
+.rows .n b { font-size: 15px; color: var(--ink); }
+.who { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.who small { display: block; color: var(--muted); font-size: 13px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+@media (max-width: 860px) {
+  .stats { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .menu nav { display: none; }
+  .menu select { display: block; width: 100%; font: inherit; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .menu h2 { display: none; }
+  .rows li { grid-template-columns: minmax(0, 1fr) 90px; }
+  .rows .bar { display: none; }
+  .who { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div id="head"></div>
+<main class="wrap stats"><aside class="menu" id="menu"></aside><section id="main" aria-live="polite"></section></main>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+const COMP = __COMP__;
+const EVENT = __EVENT__;
+const GAMES = __GAMES__;
+const SCORERS = __SCORERS__;
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+document.getElementById('head').innerHTML = competitionHeader(COMP, 'Stats', EVENT.competitions.length);
+const { matches, results, agg } = medalsData(GAMES, SCORERS.rows);
+const LOGOS = logosByTeam(GAMES);
+const teamCell = t => `<span class="tm">${logoImg(t.logo)}<span>${esc(t.label)}</span></span>`;
+const STAT_MENU = [['Joueurs', [['scorers', 'Meilleurs buteurs'], 'medals_players']], ['Équipes', ['medals_teams', 'opener_wins', 'powerplay_rate']], ['Arbitrage', ['referee_games', 'medals_referees']]];
+let kind = new URLSearchParams(location.search).get('kind') ?? 'medals_teams';
+
+function head(code) {
+  const e = BY_CODE[code], timeline = e.level === 'T';
+  return `<div class="head fam-${e.family}"><span class="disc lg">${iconSvg(code, 28)}</span><h2>${e.fr}${e.fr !== e.en ? ` <span class="en">· ${e.en}</span>` : ''}</h2><p>${esc(e.explain(THRESHOLDS))}</p></div>
+    <p class="basis">Calculé sur ${timeline ? `${agg.reliableGames} matchs à feuille complète (sur ${agg.games} validés)` : `${agg.games} matchs validés`}. <a href="medailles.html">Comment sont attribuées les médailles ?</a></p>`;
+}
+const teamCodes = published('app3', 'medal').filter(e => e.scopes !== 'R').map(e => e.code);
+const playerCodes = published('app3', 'medal').filter(e => e.scopes.includes('P')).map(e => e.code);
+const refCodes = published('app3', 'medal').filter(e => e.scopes === 'R').map(e => e.code);
+const iconHead = c => `<th><span class="fam-${BY_CODE[c].family}"><span class="disc" title="${esc(plainName(BY_CODE[c]))}">${iconSvg(c, 16)}</span></span><span class="sr-only">${esc(plainName(BY_CODE[c]))}</span></th>`;
+const count = (o, c) => o.medals[c] ? `<td>${o.medals[c]}</td>` : '<td class="zero">·</td>';
+const totalOf = (o, codes) => codes.reduce((s, c) => s + (o.medals[c] ?? 0), 0);
+
+const VIEWS = {
+  medals_teams() {
+    const rows = agg.teams.map(t => ({ t, n: totalOf(t, teamCodes) })).sort((a, b) => b.n - a.n || a.t.label.localeCompare(b.t.label));
+    return `<div class="scroll"><table class="med"><thead><tr><th class="l">Équipe</th>${teamCodes.map(iconHead).join('')}<th>Total</th></tr></thead>
+      <tbody>${rows.map(({ t, n }) => `<tr><td class="l">${teamCell(t)}</td>${teamCodes.map(c => count(t, c)).join('')}<td class="tot">${n}</td></tr>`).join('')}</tbody></table></div>
+      <p class="note">Survolez un pictogramme pour son nom. Les médailles de joueur (triplé…) comptent aussi pour l’équipe ; une médaille qui existe pour l’équipe et le joueur (supériorité, but en or) n’est comptée qu’une fois.</p>`;
+  },
+  medals_players() {
+    const rows = agg.players.map(p => ({ p, n: totalOf(p, playerCodes) })).filter(x => x.n).sort((a, b) => b.n - a.n || a.p.last.localeCompare(b.p.last)).slice(0, 20);
+    return rows.map(({ p, n }) => `<div class="who"><span><b>${esc(p.first)} ${esc(p.last)}</b><small>${esc(p.team.label)}, n° ${p.number} · ${n} médaille${n > 1 ? 's' : ''}</small></span>
+      <span class="pills">${playerCodes.filter(c => p.medals[c]).map(c => pill(c, { count: p.medals[c] })).join('')}</span></div>`).join('');
+  },
+  opener_wins() {
+    const { won, of } = agg.openerWins, pct = Math.round(100 * won / of);
+    const rows = agg.teams.filter(t => t.opened).sort((a, b) => b.opened - a.opened || b.openedWon - a.openedWon);
+    return `<div class="lead"><span class="big">${pct} %</span><b>L’équipe qui ouvre le score gagne ${won} matchs sur ${of}</b><span>Matchs nuls et feuilles incomplètes à part.</span></div>
+      <div class="scroll"><table class="med"><thead><tr><th class="l">Équipe</th><th>Premier but marqué</th><th>Dont gagnés</th><th>%</th></tr></thead>
+      <tbody>${rows.map(t => `<tr><td class="l">${teamCell(t)}</td><td>${t.opened}</td><td>${t.openedWon}</td><td class="tot">${Math.round(100 * t.openedWon / t.opened)} %</td></tr>`).join('')}</tbody></table></div>`;
+  },
+  powerplay_rate() {
+    const rows = agg.teams.map(t => ({ t, r: t.oppExcl ? t.pp / t.oppExcl : null })).sort((a, b) => (b.r ?? -1) - (a.r ?? -1) || a.t.label.localeCompare(b.t.label));
+    return `<ol class="rows">${rows.map(({ t, r }) => `<li>${teamCell(t)}<span class="bar" aria-hidden="true"><i style="width:${(r ?? 0) * 100}%"></i></span>
+      <span class="n">${r === null ? '— <small>aucune exclusion adverse</small>' : `<b>${Math.round(r * 100)} %</b><br>${t.pp} but${t.pp > 1 ? 's' : ''} / ${t.oppExcl} exclusion${t.oppExcl > 1 ? 's' : ''}`}</span></li>`).join('')}</ol>`;
+  },
+  referee_games() {
+    const rows = [...agg.referees].sort((a, b) => b.games - a.games || a.name.localeCompare(b.name));
+    return `<div class="scroll"><table class="med"><thead><tr><th class="l">Arbitre</th><th>Matchs</th><th>Principal</th><th>Secondaire</th><th>Couperets</th><th>Prolongations</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td class="l"><b>${esc(r.name)}</b></td><td class="tot">${r.games}</td><td>${r.principal}</td><td>${r.secondaire}</td><td>${r.knockouts}</td><td>${r.overtimes}</td></tr>`).join('')}</tbody></table></div>
+      <p class="note">Seuls les arbitres désignés nommément sont comptés : ${agg.undesignated} match${agg.undesignated > 1 ? 's' : ''} de la compétition ${agg.undesignated > 1 ? 'n’ont' : 'n’a'} pas d’arbitre désigné. Tri par nombre de matchs, puis par nom.</p>`;
+  },
+  medals_referees() {
+    const rows = agg.referees.map(r => ({ r, n: totalOf(r, refCodes) })).sort((a, b) => b.r.games - a.r.games || a.r.name.localeCompare(b.r.name));
+    return rows.map(({ r, n }) => `<div class="who"><span><b>${esc(r.name)}</b><small>${r.games} match${r.games > 1 ? 's' : ''} arbitré${r.games > 1 ? 's' : ''}</small></span>
+      <span class="pills">${n ? refCodes.filter(c => r.medals[c]).map(c => pill(c, { count: r.medals[c] })).join('') : '<small style="color:var(--muted)">—</small>'}</span></div>`).join('')
+      + '<p class="note">Les faits d’un match comptent pour ses deux arbitres. Tri par nombre de matchs, jamais par nombre de cartons.</p>';
+  },
+};
+function render() {
+  const link = x => { const [code, label] = Array.isArray(x) ? x : [x, null]; const e = BY_CODE[code];
+    return code === 'scorers' ? `<a href="stats.html"><span class="fam-finition"><span class="disc">${iconSvg('hat_trick', 14)}</span></span>${label}</a>`
+      : `<a href="?kind=${code}" data-kind="${code}"${code === kind ? ' aria-current="page"' : ''}><span class="fam-${e.family}"><span class="disc">${iconSvg(code, 14)}</span></span>${e.fr}</a>`; };
+  document.getElementById('menu').innerHTML = `<nav aria-label="Statistiques">${STAT_MENU.map(([g, items]) => `<h2>${g}</h2>${items.map(link).join('')}</nav>`).join('<nav>')}
+    <label class="sr-only" for="pick">Statistique</label><select id="pick">${STAT_MENU.flatMap(([g, items]) => items.map(x => Array.isArray(x) ? x[0] : x)).map(c => `<option value="${c}"${c === kind ? ' selected' : ''}>${c === 'scorers' ? 'Meilleurs buteurs' : BY_CODE[c].fr}</option>`).join('')}</select>`;
+  document.getElementById('main').innerHTML = head(kind) + VIEWS[kind]();
+}
+document.getElementById('menu').addEventListener('click', e => { const a = e.target.closest('[data-kind]'); if (a) { e.preventDefault(); kind = a.dataset.kind; history.replaceState(null, '', `?kind=${kind}`); render(); } });
+document.getElementById('menu').addEventListener('change', e => { if (e.target.value === 'scorers') location.href = 'stats.html'; else { kind = e.target.value; render(); } });
+render();
+demoBar('<span>Timelines fictives générées sur les vrais scores</span>');
+</script>
+</body>
+</html>

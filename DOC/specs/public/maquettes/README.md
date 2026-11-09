@@ -70,6 +70,26 @@ design.
 | `contenu` | `/{slug}` | [PAGE_CONTENT](../PAGE_CONTENT.md) | Colonne de lecture, sommaire « Sur cette page » qui suit la lecture (au-dessus du texte sur mobile). |
 | `formulaire` | `/forms/{slug}` | [FEATURE_FORMS](../FEATURE_FORMS.md) | Champs groupés en sections, quantités avec boutons − / +, récapitulatif et total en direct (barre collante en bas sur mobile). |
 
+## Médailles et statistiques de timeline
+
+Maquettes du 09/11/2026, **à valider**, pour [FEATURE_MATCH_MEDALS](../FEATURE_MATCH_MEDALS.md). Elles couvrent
+app3, mais aussi la feuille de match d'**app2** et la page d'**admin** (app4), dans le style de chaque application.
+
+**Données** : scores, équipes et arbitres réels de la PlayOff Hommes 2026 (`data/`). L'ordre des buts, les temps, les
+buteurs et les cartons sont **fictifs** (générés avec une graine fixe, quelques matchs scénarisés : n° 302
+*Suspense*, 318 *Remontée*, 326 *But en or*, 316 feuille incomplète, 317 arbitres non désignés). Les médailles sont
+calculées par `src/medals.js`, **implémentation de référence des règles** de la spec (§ 5) : elle servira d'oracle
+pour écrire les tests d'api2.
+
+| Maquette | Surface | Décisions proposées |
+|---|---|---|
+| `pictogrammes` | toutes | Un pictogramme dessiné par élément (`src/medal_icons.py`, exportés en SVG dans [pictogrammes/](pictogrammes/)) : grille 24, trait 1,75, `currentColor`, lisible à 16 px. Badge en coin (sifflet, %, barres…) qui découpe le dessin pour les arbitres et les statistiques. Une couleur par famille, **ni or ni rouge**. |
+| `medailles` | app3 `/medals` | Page d'explication : quatre principes (matchs validés, feuille complète, arbitres, seuils de saison), puis les éléments publiés par famille avec leurs deux noms et l'endroit où on les voit. Sélecteur de saison qui change les seuils cités. |
+| `stats-medailles` | app3 onglet Stats | Menu des statistiques par rubrique (Joueurs, Équipes, Arbitrage) ; en tête de chaque statistique : pictogramme, explication, nombre de matchs pris en compte et lien vers `/medals`. Tableau des médailles d'équipe en colonnes de pictogrammes ; *Premier but gagnant* en grand chiffre ; *Supériorité %* en barres. Arbitres triés par nombre de matchs. |
+| `equipe-medailles` | app3 fiche équipe | Section « Médailles de match » sous le décompte des podiums : une carte par médaille (compteur, explication, matchs dépliables vers la feuille de match). |
+| `app2-feuille` | app2 `/game/{id}` | Bloc « Médailles » sous le score : étiquettes du match, puis une colonne par équipe (médailles d'équipe en pastilles nommées, médailles de joueur en pastilles compactes devant le nom). Médailles d'arbitre sous la ligne des arbitres. Frise : buts médaillés cerclés ; liste des faits : pastilles à côté des buts. |
+| `admin-medailles` | app4 | Onglets **Catalogue** (cases app2 / app3, statut, nombre d'attributions, tiroir d'édition des noms et explications avec variables et aperçu), **Saisons** (seuils figés, version des règles), **Arbitrage** (indicateurs à côté de la moyenne, « — » sous le seuil de matchs, binômes, matchs écartés), **Statistiques** (toutes, avec leur surface). |
+
 ## Implémentation (branche `app3_design`, 23/10/2026)
 
 Toutes les pages du tableau sont implémentées dans app3, spec d'abord (critères ajoutés ou révisés dans chaque

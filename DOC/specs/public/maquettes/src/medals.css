@@ -1,0 +1,62 @@
+/* Match medals mockups: family colours and pills (FEATURE_MATCH_MEDALS.md § 7).
+   Gold stays reserved to finals and podium medals, red to the live (maquettes/README.md), so no family uses them. */
+:root {
+  --fam-elan: #2f6f8f;
+  --fam-reaction: #b4530f;
+  --fam-endurance: #6a4c9c;
+  --fam-superiorite: #0d7466;
+  --fam-finition: #3a45a3;
+  --fam-defense: #4b5d77;
+  --fam-esprit: #2f7d4a;
+  --fam-arbitrage: #45484f;
+  --fam-match: #9b3a6f;
+  --fam-analyse: #20265b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fam-elan: #7fb6d1; --fam-reaction: #f0a465; --fam-endurance: #b9a2e6; --fam-superiorite: #5fc9b8; --fam-finition: #a7aef2;
+    --fam-defense: #a9b9d1; --fam-esprit: #86cf9c; --fam-arbitrage: #c7cbd3; --fam-match: #e79bc4; --fam-analyse: #b8c0f0;
+  }
+}
+:root[data-theme="dark"] {
+  --fam-elan: #7fb6d1; --fam-reaction: #f0a465; --fam-endurance: #b9a2e6; --fam-superiorite: #5fc9b8; --fam-finition: #a7aef2;
+  --fam-defense: #a9b9d1; --fam-esprit: #86cf9c; --fam-arbitrage: #c7cbd3; --fam-match: #e79bc4; --fam-analyse: #b8c0f0;
+}
+.fam-elan { --fam: var(--fam-elan); } .fam-reaction { --fam: var(--fam-reaction); } .fam-endurance { --fam: var(--fam-endurance); }
+.fam-superiorite { --fam: var(--fam-superiorite); } .fam-finition { --fam: var(--fam-finition); } .fam-defense { --fam: var(--fam-defense); }
+.fam-esprit { --fam: var(--fam-esprit); } .fam-arbitrage { --fam: var(--fam-arbitrage); } .fam-match { --fam: var(--fam-match); }
+.fam-analyse { --fam: var(--fam-analyse); }
+
+.mi { display: block; flex: none; }
+/* Pictogram on its family disc */
+.disc { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; flex: none;
+  color: var(--fam); background: color-mix(in srgb, var(--fam) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fam) 35%, transparent); }
+.disc.lg { width: 48px; height: 48px; }
+.disc.xl { width: 72px; height: 72px; }
+
+/* Pill: disc, double name (« Supériorité · Powerplay »), counter, tooltip with the explanation */
+.pill { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 2px 10px 2px 2px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--fam) 30%, var(--line, #dcdddd)); background: var(--surface, #fff); color: inherit;
+  font-size: 13.5px; line-height: 1.2; cursor: default; vertical-align: middle; }
+.pill.compact { padding: 2px; gap: 2px; }
+.pill.compact .x { padding-right: 6px; }
+.pill .nm b { font-weight: 600; }
+.pill .nm .en { color: var(--muted, #5d5f63); font-style: italic; }
+.pill .x { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--fam); }
+.pill .tip { position: absolute; z-index: 30; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: max-content; max-width: 260px;
+  padding: 8px 10px; border-radius: 6px; background: #1d2246; color: #fff; font-size: 12.5px; line-height: 1.4; text-align: left;
+  box-shadow: 0 6px 20px rgb(0 0 0 / .25); display: none; pointer-events: none; }
+.pill .tip .when { color: #b8c0f0; }
+.pill:hover .tip, .pill:focus-visible .tip, .pill:focus .tip { display: block; }
+.pill:focus-visible { outline: 3px solid var(--fam); outline-offset: 2px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Surface badges (admin and catalogue sheets) */
+.surf { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; }
+.surf.app2 { background: #e2e8f0; color: #1f2937; }
+.surf.app3 { background: #dbe8f1; color: #20265b; }
+.surf.none { background: transparent; color: var(--muted, #5d5f63); border: 1px dashed currentColor; font-weight: 600; }
+.surf.off { background: transparent; color: var(--muted, #5d5f63); text-decoration: line-through; }
+.lvl { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid var(--line, #dcdddd); color: var(--muted, #5d5f63); }
+
+.mock-note { font-size: 13px; color: var(--muted, #5d5f63); border-left: 3px solid var(--line, #dcdddd); padding: 4px 0 4px 10px; margin: 12px 0; max-width: 80ch; }

@@ -1,7 +1,7 @@
 # Médailles de match et statistiques de timeline
 
 **Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours des
-08 et 09/11/2026 intégrés)
+08 et 09/11/2026 intégrés, maquettes à valider)
 **Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
 saisie supplémentaire
 **Remplace** : — (nouveauté)
@@ -37,6 +37,7 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
 | Noms français, premier lot (09/11/2026) | **Validés** tels que proposés (§ 3, § 4). |
 | Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). |
+| Arbitres, publication (09/11/2026) | Les **médailles d'arbitre** sont publiées **dès le premier lot** (§ 4). Les statistiques d'arbitrage autres que *Matchs arbitrés* et *Médailles des arbitres* restent réservées à l'admin, **profils 1 et 2 seulement**. |
 | Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
 
 ## 2. Vocabulaire
@@ -140,7 +141,7 @@ ne comptent que les matchs à timeline fiable et indiquent **sur combien de matc
 | `goal_timing` | **Minutes des buts · Goal Timing** | Répartition des buts par tranche de *2 min* de jeu (histogramme). | — (admin) |
 | `first_goal_time` | **Délai du premier but · First Goal Time** | Délai moyen et médian avant le premier but ; but le plus rapide. | — (admin) |
 | `comebacks` | **Remontées · Comebacks** | Nombre de remontées, plus grosse remontée (écart, match). | — (admin) |
-| `extra_time` | **Prolongations · Extra Time** | Matchs en prolongation, plus grand nombre de prolongations, buts en or. | — (admin) |
+| `overtimes` | **Prolongations · Extra Time** | Matchs en prolongation, plus grand nombre de prolongations, buts en or. | — (admin) |
 | `discipline` | **Discipline · Discipline** | Cartons par match et par équipe, minutes d'infériorité. | — (admin) |
 | `highlights` | **Matchs à revoir · Highlights** | Matchs étiquetés (`thriller`, `seesaw`, `goal_fest`), par date. Ne liste que les étiquettes publiées sur la même surface. | — (admin) |
 | `medals_{code}` | (nom de la médaille) | Classement d'une médaille donnée (ex. meilleurs buteurs en supériorité). Suit les surfaces de la médaille. | — |
@@ -168,11 +169,11 @@ Attribuées à chaque arbitre désigné du match (portée Ar = arbitre).
 
 | Code | Nom FR · EN | Portée | Explication (attribution) | Famille | Données | Publication initiale |
 |---|---|---|---|---|---|---|
-| `ref_smooth_game` | **Match fluide · Smooth Game** | Ar | Arbitre un match sans aucun carton. | Arbitrage | S | — (admin) |
-| `ref_knockout` | **Match couperet · Knockout** | Ar | Arbitre un match à élimination directe (type `E`). | Arbitrage | S | — (admin) |
-| `ref_extra_time` | **Prolongation · Extra Time** | Ar | Arbitre un match qui va en prolongation. | Arbitrage | S | — (admin) |
-| `ref_thriller` | **Suspense · Thriller** | Ar | Arbitre un match étiqueté *Suspense* (§ 3.3). | Arbitrage | T | — (admin) |
-| `ref_golden_goal` | **But en or · Golden Goal** | Ar | Arbitre un match décidé par un but en or. | Arbitrage | S | — (admin) |
+| `ref_smooth_game` | **Match fluide · Smooth Game** | Ar | Arbitre un match sans aucun carton. | Arbitrage | S | **app2, app3** |
+| `ref_knockout` | **Match couperet · Knockout** | Ar | Arbitre un match à élimination directe (type `E`). | Arbitrage | S | **app2, app3** |
+| `ref_extra_time` | **Prolongation · Extra Time** | Ar | Arbitre un match qui va en prolongation. | Arbitrage | S | **app2, app3** |
+| `ref_thriller` | **Suspense · Thriller** | Ar | Arbitre un match étiqueté *Suspense* (§ 3.3). | Arbitrage | T | **app2, app3** |
+| `ref_golden_goal` | **But en or · Golden Goal** | Ar | Arbitre un match décidé par un but en or. | Arbitrage | S | **app2, app3** |
 
 #### Statistiques d'arbitrage
 
@@ -189,7 +190,7 @@ compétitions, comme la page Statistiques). Une ligne par arbitre désigné.
 | `referee_card_reasons` | **Motifs des cartons · Card Reasons** | Répartition des cartons des matchs arbitrés par motif (`motif`), sur les cartons dont le motif est saisi ; affiche la part de motifs saisis. | S | — (admin) |
 | `referee_powerplay` | **Impact des exclusions · Powerplay Impact** | Part des buts des matchs arbitrés marqués en supériorité numérique, avec la moyenne du périmètre. | T | — (admin) |
 | `referee_pairs` | **Binômes · Referee Pairs** | Binômes d'arbitres désignés ayant arbitré ensemble : nombre de matchs, cartons par match. Ne compte que les matchs où les deux sont désignés. | S | — (admin) |
-| `medals_referees` | **Médailles des arbitres · Referee Medals** | Par arbitre : nombre de médailles d'arbitre par code. | S | — (admin) |
+| `medals_referees` | **Médailles des arbitres · Referee Medals** | Par arbitre : nombre de médailles d'arbitre par code. | S | **app3** |
 
 ## 4. Premier lot public, par surface
 
@@ -217,9 +218,11 @@ chaque application :
 | Premier but gagnant · First Goal Wins | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
 | Supériorité % · Powerplay % | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
 | Matchs arbitrés · Games Officiated | | ✓ | Met en valeur l'engagement des arbitres, sans jugement sur leurs décisions. |
+| Médailles d'arbitre (*Match fluide*, *Match couperet*, *Prolongation*, *Suspense*, *But en or*) | ✓ | ✓ | Sur la feuille de match, à côté des arbitres (app2) ; dans les bilans (app3). |
+| Médailles des arbitres · Referee Medals | | ✓ | Bilan des arbitres de la compétition, trié par nombre de matchs. |
 
-Tout le reste naît non publié, **en particulier toutes les autres statistiques et médailles d'arbitres**, réservées
-d'abord à l'accompagnement des arbitres dans l'admin. Publier un élément sur une surface, l'en retirer ou le retirer complètement est un
+Tout le reste naît non publié, **en particulier les autres statistiques d'arbitrage** (cartons, moment des cartons,
+répartition, motifs, impact des exclusions, binômes), réservées à l'accompagnement des arbitres dans l'admin. Publier un élément sur une surface, l'en retirer ou le retirer complètement est un
 changement dans l'admin (§ 9.3), sans déploiement ni recalcul.
 
 ## 5. Règles de calcul
@@ -413,8 +416,12 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
 - Livrés en **SVG** optimisés, servis par api2 (`/api2/medals/icons/{code}.svg`, fichiers statiques versionnés) et
   référencés par le catalogue (`icon`) : app2, app3 et app4 les affichent sans copie, et un nouvel élément arrive
   avec son pictogramme sans redéploiement des applications.
-- Les maquettes des pictogrammes du premier lot rejoignent [maquettes/](maquettes/README.md) avant implémentation ;
-  tant qu'un élément n'a pas son pictogramme, il affiche le pictogramme générique de sa famille.
+- Les pictogrammes sont dessinés dans [maquettes/src/medal_icons.py](maquettes/src/medal_icons.py), source unique
+  dont `build.py` tire les fichiers [maquettes/pictogrammes/](maquettes/pictogrammes/) (à copier dans api2 à
+  l'implémentation). Planche : maquette `pictogrammes`. Tant qu'un élément n'a pas son pictogramme, il affiche le
+  pictogramme générique de sa famille.
+- Le code d'un élément est **unique dans tout le catalogue** (clé de `kp_medal_catalog`) : la statistique des
+  prolongations s'appelle `overtimes`, pas `extra_time` (code de la médaille).
 
 ## 8. Explications publiques
 
@@ -435,6 +442,7 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
   incomplète) ».
 - Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante (arbitrage
   compris, s'ils y sont publiés).
+- Sous la ligne des arbitres : les médailles d'arbitre du match (une seule ligne, communes aux deux arbitres).
 - Seuls les éléments publiés sur **app2** apparaissent.
 
 ### 9.2 app3 (site public)
@@ -461,7 +469,8 @@ Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
 - **Statistiques** : toutes les statistiques actives sur le périmètre du contexte de travail (saison,
   compétitions, événement), avec le même tableau générique que la page Statistiques (PAGE_STATISTIQUES.md) et un
   badge de surface (« app2 », « app3 » ou « non publié ») sur chaque élément.
-- **Arbitrage** : toutes les statistiques et médailles d'arbitres sur le périmètre du contexte, avec la moyenne du
+- **Arbitrage** (profils 1 et 2 seulement, comme toute la page) : toutes les statistiques et médailles d'arbitres
+  sur le périmètre du contexte, avec la moyenne du
   périmètre, et la liste des matchs écartés faute d'arbitre désigné (nombre et lien), pour suivre la qualité des
   désignations.
 - **Match** : dans la fiche d'un match de la page Matchs, les médailles et étiquettes actives, avec leur badge
@@ -616,9 +625,7 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - Statistiques par rôle d'arbitre (impossible sans saisie de l'arbitre auteur de chaque carton).
 - Statistiques des autres officiels (secrétaire, chronométreur, juges de ligne).
 
-**Questions ouvertes** :
+**Questions ouvertes** : aucune (Q1 à Q5 tranchées les 08 et 09/11/2026, cf. § 1.1).
 
-- **Q4 — Médailles d'arbitre publiques** : faut-il en publier dès le premier lot (ex. *Match couperet* sur app3), ou
-  attendre un retour de la commission d'arbitrage ?
-- **Q5 — Accès aux statistiques d'arbitrage dans l'admin** : profils 1 et 2 seulement, ou aussi les responsables de
-  l'arbitrage (ex. profils ≤ 6, comme `OfficielsMatchs` dans PAGE_STATISTIQUES.md) ?
+**Maquettes (09/11/2026, à valider)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
+`stats-medailles`, `equipe-medailles`, `app2-feuille`, `admin-medailles`).

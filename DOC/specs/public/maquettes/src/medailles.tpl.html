@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Médailles et statistiques</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+.layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; margin: 10px auto 70px; }
+.toc { position: sticky; top: 16px; align-self: start; font-size: 14px; }
+.toc h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+.toc a { display: flex; align-items: center; gap: 8px; padding: 5px 0; text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.toc .chips { margin: 0 0 18px; }
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 24px; padding: 16px 18px; border-radius: 8px; background: var(--wash); margin-bottom: 30px; }
+.how b { display: block; margin-bottom: 2px; }
+.how p { margin: 0; font-size: 14px; }
+.family { margin-bottom: 30px; scroll-margin-top: 16px; }
+.family h2 { display: flex; align-items: center; gap: 10px; font: 400 30px/1.1 var(--display); color: var(--fam); margin: 0 0 6px; }
+.family h2 small { font: italic 400 15px var(--text); color: var(--muted); }
+.item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 2px 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.item .disc { grid-row: span 3; }
+.item h3 { margin: 0; font-size: 17px; }
+.item h3 .en { color: var(--muted); font-style: italic; font-weight: 400; }
+.item p { margin: 0; max-width: 65ch; }
+.item .where { font-size: 13px; color: var(--muted); }
+.tag { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); font-size: 12px; margin-right: 4px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 10px; }
+  .toc { position: static; }
+  .toc nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .page-head h1 { font-size: 40px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<div class="wrap page-head"><nav class="crumbs" aria-label="Fil d'Ariane" style="padding-top:0"><a href="accueil.html">Accueil</a> › Médailles et statistiques</nav>
+  <h1>Médailles et statistiques</h1>
+  <p>Chaque match raconte plus qu’un score. À partir des buts et des cartons notés sur la feuille de match, nous attribuons des médailles aux équipes, aux joueurs et aux arbitres, et calculons des statistiques par compétition. Rien n’est saisi en plus.</p></div>
+<div class="wrap layout"><aside class="toc" id="toc"></aside><main id="main"></main></div>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+document.getElementById('chrome').innerHTML = siteChrome('');
+const ORDER = ['elan', 'reaction', 'endurance', 'superiorite', 'finition', 'defense', 'esprit', 'match', 'arbitrage', 'analyse'];
+const SCOPE = { T: 'équipe', P: 'joueur', R: 'arbitre' };
+const where = e => [e.surfaces.includes('app2') ? 'feuille de match (résultats en direct)' : '', e.surfaces.includes('app3') ? (e.type === 'stat' ? 'onglet Stats des compétitions et événements' : 'bilans des équipes et onglet Stats') : ''].filter(Boolean).join(' · ');
+let season = '2026';
+function render() {
+  const t = SEASON_THRESHOLDS[season];
+  // public page: everything published on app2 OR app3 (an element seen in app2 must be explained here)
+  const items = CATALOG.filter(e => e.surfaces.length);
+  const fams = ORDER.filter(f => items.some(e => e.family === f && e.type !== 'stat'));
+  const stats = items.filter(e => e.type === 'stat');
+  document.getElementById('toc').innerHTML = `<h2>Saison</h2><div class="chips">${Object.keys(SEASON_THRESHOLDS).sort().reverse().map(s => `<button type="button" data-season="${s}" aria-pressed="${s === season}">${s}</button>`).join('')}</div>
+    <h2>Sur cette page</h2><nav>${fams.map(f => `<a href="#${f}" class="fam-${f}"><span class="disc" style="width:22px;height:22px">${iconSvg(FAMILY_ICON[f], 14)}</span>${FAMILIES[f].fr}</a>`).join('')}<a href="#stats" class="fam-analyse"><span class="disc" style="width:22px;height:22px">${iconSvg('goal_timing', 14)}</span>Statistiques</a></nav>`;
+  document.getElementById('main').innerHTML = `
+    <div class="how">
+      <div><b>Matchs validés</b><p>Seuls les matchs dont la feuille est validée comptent. Une médaille n’apparaît qu’une fois le match validé.</p></div>
+      <div><b>Feuille complète</b><p>Les médailles liées au déroulé (premier but, supériorité…) demandent que chaque but ait son temps. Sinon, seules les médailles liées au score sont attribuées.</p></div>
+      <div><b>Arbitres</b><p>La feuille ne dit pas quel arbitre a sorti un carton : les faits d’un match comptent pour ses deux arbitres. Seuls les arbitres désignés nommément sont pris en compte.</p></div>
+      <div><b>Seuils de la saison ${season}</b><p>Les explications citent les seuils utilisés pour la saison choisie : ils peuvent évoluer d’une saison à l’autre.</p></div>
+    </div>
+    ${fams.map(f => `<section class="family fam-${f}" id="${f}"><h2><span class="disc">${iconSvg(FAMILY_ICON[f], 18)}</span>${FAMILIES[f].fr} <small>${FAMILIES[f].en}</small></h2>
+      ${items.filter(e => e.family === f && e.type !== 'stat').map(item).join('')}</section>`).join('')}
+    <section class="family fam-analyse" id="stats"><h2><span class="disc">${iconSvg('goal_timing', 18)}</span>Statistiques <small>Statistics</small></h2>${stats.map(item).join('')}</section>`;
+  function item(e) {
+    return `<article class="item fam-${e.family}"><span class="disc lg">${iconSvg(e.code, 28)}</span>
+      <h3>${e.fr}${e.fr !== e.en ? ` <span class="en">· ${e.en}</span>` : ''}</h3>
+      <p>${esc(e.explain(t))}</p>
+      <span class="where">${e.type === 'label' ? '<span class="tag">match</span>' : [...e.scopes].map(s => `<span class="tag">${SCOPE[s]}</span>`).join('')} Visible : ${where(e)}</span></article>`;
+  }
+}
+document.body.addEventListener('click', e => { const b = e.target.closest('[data-season]'); if (b) { season = b.dataset.season; render(); } });
+render();
+demoBar('<span>Saison 2025 : seuil de remontée à 4 buts (exemple de seuils figés par saison)</span>');
+</script>
+</body>
+</html>
