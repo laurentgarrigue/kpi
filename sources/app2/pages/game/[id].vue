@@ -31,6 +31,7 @@
         :loading="loading"
         :error="error"
         :game-id="gameId"
+        :medal-catalog="medalCatalog"
         @refresh="handleRefresh"
       />
     </div>
@@ -79,6 +80,20 @@ const goBack = () => {
   }
 }
 
+// Medals published on app2 (FEATURE_MATCH_MEDALS.md § 9.1): optional, never blocks the score sheet.
+const medalCatalog = ref(new Map())
+const loadMedalCatalog = async () => {
+  try {
+    const response = await getApi('/medals/catalog?surface=app2')
+    if (response.ok) {
+      const catalog = await response.json()
+      medalCatalog.value = new Map(catalog.items.map(item => [item.code, item]))
+    }
+  } catch {
+    medalCatalog.value = new Map()
+  }
+}
+
 const loadMatchSheet = async () => {
   loading.value = true
   error.value = null
@@ -111,5 +126,6 @@ const handleRefresh = () => {
 
 onMounted(() => {
   loadMatchSheet()
+  loadMedalCatalog()
 })
 </script>

@@ -5,6 +5,8 @@ import { version as appVersion } from './package.json'
 const baseUrl = process.env.BASE_URL ?? ''
 const apiBaseUrl = process.env.API_BASE_URL ?? 'https://kpi.localhost/api'
 const backendBaseUrl = process.env.BACKEND_BASE_URL ?? 'https://kpi.localhost'
+// Public website (app3): explanation page of the match medals (FEATURE_MATCH_MEDALS.md § 8).
+const publicSiteUrl = process.env.PUBLIC_SITE_URL ?? 'https://beta.kpi.localhost'
 
 const matomoUrl = process.env.MATOMO_URL ?? ''
 const matomoSiteId = process.env.MATOMO_SITE_ID ?? ''
@@ -53,6 +55,7 @@ export default defineNuxtConfig({
       baseUrl,
       apiBaseUrl,
       backendBaseUrl,
+      publicSiteUrl,
       matomoUrl,
       matomoSiteId,
       matomoEnabled,

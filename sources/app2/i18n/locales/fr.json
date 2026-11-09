@@ -258,7 +258,8 @@
     "Loading": "Chargement de la feuille de match...",
     "NotFound": "Match non trouvé ou non disponible",
     "Refresh": "Actualiser",
-    "Back": "Retour"
+    "Back": "Retour",
+    "Goal": "But"
   },
   "errors": {
     "generic": {
@@ -330,5 +331,13 @@
         "description": "Affichage des données précédemment chargées"
       }
     }
+  },
+  "Medals": {
+    "Title": "Médailles",
+    "How": "Comment sont-elles attribuées ?",
+    "Incomplete": "Médailles chronologiques indisponibles (feuille incomplète) : seules les médailles liées au score sont attribuées.",
+    "NoTeamMedal": "Pas de médaille d’équipe",
+    "Referees": "Médailles d’arbitre (pour les deux) :",
+    "Times": "{label}, {n} fois"
   }
 }
