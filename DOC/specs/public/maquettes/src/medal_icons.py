@@ -5,28 +5,48 @@ in `../pictogrammes/` (the files api2 will serve). Grid 24 × 24, 1.75 stroke, r
 only, so the family colour and the dark theme come from the page. Sporting vocabulary (ball, goal,
 kayak, chrono, cards, whistle), never a warlike one.
 """
+import math
 
 STROKE = 'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"'
 FILL = 'fill="currentColor" stroke="none"'
 
 
-def ball(cx, cy, r, stripes=None):
-    """Canoe polo (water polo) ball: three groups of panels around a junction right of the centre.
+# Canoe polo (water polo) ball, after the reference drawing chosen on 09/11/2026: the white panels, traced from it
+# (unit circle, then smoothed), are holes in a filled disc. Seams slightly thickened so they survive at 16 px.
+BALL_PANELS = [
+    [(-0.014, -0.934), (-0.227, -0.907), (-0.342, -0.863), (-0.074, -0.814), (0.123, -0.743), (0.347, -0.623), (0.555, -0.464), (0.615, -0.710), (0.467, -0.814), (0.309, -0.885), (0.150, -0.923)],
+    [(0.697, -0.628), (0.604, -0.350), (0.495, -0.148), (0.363, 0.011), (0.265, 0.093), (0.189, 0.137), (0.189, 0.273), (0.221, 0.437), (0.566, 0.120), (0.669, -0.005), (0.773, -0.180), (0.822, -0.317), (0.839, -0.421), (0.757, -0.557)],
+    [(-0.577, -0.443), (-0.833, -0.415), (-0.893, -0.273), (-0.921, -0.115), (-0.631, -0.158), (-0.347, -0.153), (-0.079, -0.082), (0.063, -0.011), (0.145, 0.055), (0.238, 0.005), (0.347, -0.098), (0.189, -0.246), (-0.036, -0.361), (-0.303, -0.426)],
+    [(-0.757, -0.055), (-0.932, -0.016), (-0.926, 0.126), (-0.855, 0.383), (-0.795, 0.497), (-0.697, 0.623), (-0.735, 0.344), (-0.740, -0.055)],
+    [(-0.303, -0.049), (-0.303, 0.169), (-0.243, 0.470), (-0.167, 0.672), (-0.085, 0.814), (0.025, 0.934), (0.178, 0.923), (0.336, 0.880), (0.342, 0.863), (0.265, 0.760), (0.199, 0.634), (0.134, 0.459), (0.101, 0.301), (0.096, 0.120), (0.014, 0.060), (-0.085, 0.011)],
+    [(0.768, 0.541), (0.587, 0.705), (0.418, 0.809), (0.418, 0.831), (0.456, 0.825), (0.587, 0.738), (0.708, 0.623)],
+]
 
-    The three seams leaving the junction are always drawn; each group of panels also gets one stripe
-    parallel to its seam, except on small balls (r < 6, e.g. the hat-trick) where it would clutter.
-    """
-    p = lambda dx, dy: f'{cx + dx * r:.2f} {cy + dy * r:.2f}'
-    j = p(0.22, 0.08)
-    d = (f'M{j}Q{p(0.22, -0.55)} {p(-0.32, -0.95)}'      # seam up
-         f'M{j}Q{p(-0.4, 0.3)} {p(-0.97, 0.24)}'         # seam left
-         f'M{j}Q{p(0.5, 0.5)} {p(0.2, 0.98)}')           # seam down
-    if stripes if stripes is not None else r >= 6:
-        d += (f'M{p(-0.9, -0.43)}Q{p(-0.35, -0.25)} {p(0.12, -0.42)}'   # upper-left panels
-              f'M{p(0.24, -0.97)}Q{p(0.78, -0.42)} {p(0.86, 0.5)}'      # right panels
-              f'M{p(-0.3, 0.25)}Q{p(-0.05, 0.6)} {p(-0.3, 0.95)}')      # bottom panels
-    # seams a little thinner than the outline, so the ball stays a ball at 16 px
-    return f'<circle cx="{cx}" cy="{cy}" r="{r}"/><path d="{d}" stroke-width="1.35"/>'
+
+def _smooth(points, cx, cy, scale, corner_deg=55):
+    """Closed Catmull-Rom curve through the points, kept sharp where the outline turns more than corner_deg."""
+    P = [(cx + x * scale, cy + y * scale) for x, y in points]
+    n = len(P)
+
+    def turn(i):
+        a, b, c = P[i - 1], P[i], P[(i + 1) % n]
+        v1, v2 = (b[0] - a[0], b[1] - a[1]), (c[0] - b[0], c[1] - b[1])
+        return abs(math.degrees(math.atan2(v1[0] * v2[1] - v1[1] * v2[0], v1[0] * v2[0] + v1[1] * v2[1])))
+    sharp = [turn(i) > corner_deg for i in range(n)]
+    d = f'M{P[0][0]:.2f} {P[0][1]:.2f}'
+    for i in range(n):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[(i + 1) % n], P[(i + 2) % n]
+        t1 = (0, 0) if sharp[i] else ((p2[0] - p0[0]) / 6, (p2[1] - p0[1]) / 6)
+        t2 = (0, 0) if sharp[(i + 1) % n] else ((p3[0] - p1[0]) / 6, (p3[1] - p1[1]) / 6)
+        d += f'C{p1[0] + t1[0]:.2f} {p1[1] + t1[1]:.2f} {p2[0] - t2[0]:.2f} {p2[1] - t2[1]:.2f} {p2[0]:.2f} {p2[1]:.2f}'
+    return d + 'Z'
+
+
+def ball(cx, cy, r):
+    """Filled ball: a disc of radius r with the white panels cut out (even-odd), in currentColor."""
+    disc = f'M{cx - r:.2f} {cy}a{r} {r} 0 1 0 {2 * r} 0a{r} {r} 0 1 0 {-2 * r} 0Z'
+    holes = ''.join(_smooth(panel, cx, cy, r * 0.933) for panel in BALL_PANELS)
+    return f'<path d="{disc}{holes}" fill-rule="evenodd" {FILL}/>'
 
 
 def clock(cx, cy, r, hand=True):
@@ -71,7 +91,7 @@ DISCIPLINE = ('<rect x="3.5" y="4.5" width="9" height="13.5" rx="1.5" transform=
 
 ICONS = {
     # --- the ball alone: symbol of a goal everywhere (scoring, app2, app3), replacing circles and discs
-    'goal': ball(12, 12, 9.5),
+    'goal': ball(12, 12, 10.5),
     # --- team and player medals
     'opener': OPENER,
     'wire_to_wire': '<path d="M4 4.5v15M20 4.5v15M7.5 12h9.5M14 9l3 3-3 3"/>',
@@ -91,7 +111,7 @@ ICONS = {
     'powerplay': POWERPLAY,
     'shorthanded': '<path d="M11.5 2.5L4 12.5h5.8l-1 7.5 7.6-10H10.6z"/><path d="M16.5 19.5h5.5"/>',
     'penalty_kill': PENALTY_KILL,
-    'hat_trick': ball(7.2, 16.3, 4.3) + ball(16.8, 16.3, 4.3) + ball(12, 7.6, 4.3),
+    'hat_trick': ball(6.6, 16.6, 4.6) + ball(17.4, 16.6, 4.6) + ball(12, 7.2, 4.6),  # apart: filled balls must not touch
     'natural_hat_trick': ball(4.6, 11, 3.4) + ball(12, 11, 3.4) + ball(19.4, 11, 3.4) + '<path d="M3 18.5h18"/>',
     'clean_sheet': goal_frame(3, 6.5, 18, 11),
     'big_win': '<path d="M3 20.5h18"/><rect x="5" y="4" width="5.5" height="16.5" rx="1"/><rect x="14" y="15" width="5.5" height="5.5" rx="1"/>',

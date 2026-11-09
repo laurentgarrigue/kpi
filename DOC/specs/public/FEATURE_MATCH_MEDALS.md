@@ -37,7 +37,7 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
 | Noms français, premier lot (09/11/2026) | **Validés** tels que proposés (§ 3, § 4). |
 | Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). |
-| Ballon (09/11/2026) | Les pictogrammes qui montrent un ballon dessinent le **ballon de kayak-polo** (celui du water-polo : trois groupes de panneaux courbes). Le ballon seul (`goal`) devient le **symbole du but** dans toutes les applications, à la place des cercles et disques actuels (§ 7.2). |
+| Ballon (09/11/2026) | Les pictogrammes qui montrent un ballon dessinent le **ballon de kayak-polo** (celui du water-polo), d'après le **dessin de référence choisi** : disque plein, panneaux blancs en trois groupes autour d'une jonction en « Y » décentrée. Le ballon seul (`goal`) devient le **symbole du but** dans toutes les applications, à la place des cercles et disques actuels (§ 7.2). |
 | Arbitres, publication (09/11/2026) | Les **médailles d'arbitre** sont publiées **dès le premier lot** (§ 4). Les statistiques d'arbitrage autres que *Matchs arbitrés* et *Médailles des arbitres* restent réservées à l'admin, **profils 1 et 2 seulement**. |
 | Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
 
@@ -421,10 +421,11 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
   dont `build.py` tire les fichiers [maquettes/pictogrammes/](maquettes/pictogrammes/) (à copier dans api2 à
   l'implémentation). Planche : maquette `pictogrammes`. Tant qu'un élément n'a pas son pictogramme, il affiche le
   pictogramme générique de sa famille.
-- **Ballon de kayak-polo** : trois coutures partent d'un point de jonction décentré vers la droite, et chaque groupe
-  de panneaux a une bande parallèle, comme sur un ballon de water-polo. Sur un petit ballon (rayon < 6, ex. le
-  *Triplé*), seules les trois coutures sont dessinées. Les coutures sont un peu plus fines que le contour pour rester
-  lisibles à 16 px.
+- **Ballon de kayak-polo** : dessin **plein** (la seule exception au trait), d'après le dessin de référence choisi le
+  09/11/2026 : un disque dans la couleur de l'élément, dont les panneaux blancs sont découpés (règle *even-odd*,
+  donc transparents sur tout fond). Les panneaux ont été tracés sur le modèle puis lissés ; les coutures sont
+  légèrement épaissies pour rester visibles à 16 px. Des ballons groupés (*Triplé*) ne se touchent pas, sinon ils
+  se confondent.
 - Le code d'un élément est **unique dans tout le catalogue** (clé de `kp_medal_catalog`) : la statistique des
   prolongations s'appelle `overtimes`, pas `extra_time` (code de la médaille).
 
