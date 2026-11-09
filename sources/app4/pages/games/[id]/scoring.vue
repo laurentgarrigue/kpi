@@ -206,7 +206,7 @@ const pageTitle = computed(() => {
 })
 useHead({ title: pageTitle })
 
-// ─── Buzzer (shotclock expiry, period end, end of break — decision §0.9) ───
+// ─── Buzzer (period end, end of break; a higher, shorter one at shotclock expiry — §0.9) ───
 const buzzer = useBuzzer()
 
 // ─── Game clock (timestamp-based, like the shotclock and the penalties) ───
@@ -272,7 +272,7 @@ onUnmounted(() => {
 })
 
 // ─── Shotclock (chronomètre de tir) — 3 commands, auto-follows the game clock (§6.5) ───
-const shotclock = useShotclock({ onExpired: () => buzzer.play() })
+const shotclock = useShotclock({ onExpired: () => buzzer.playShotclock() })
 
 const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
   void scoringStore.setTimer(action, {

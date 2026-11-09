@@ -414,8 +414,17 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.14. Sur un PC avec sou
 |---|---|---|---|---|
 | 3.96 | Serveur de dev : `curl -sk -o /dev/null -w '%{http_code} %{content_type}\n' https://kpi-node4.localhost/admin2/sounds/buzzer.mp3` ; build : `make app4_generate_dev` puis la même commande sur `https://kpi.localhost/admin2/sounds/buzzer.mp3` | `200 audio/mpeg` dans les deux cas (`text/html` = fichier absent, page de l'application renvoyée à la place). Relevé le 2026-11-08 : dev `200 audio/mpeg` ; build `text/html` tant que `app4_generate_dev` n'a pas tourné | | ☐ |
 | 3.97 | Console ouverte, un clic n'importe où, puis bouton **test son** (haut-parleur à côté d'Arrêt) | le **buzzer de FeuilleMarque3** (même son que son bouton test), pas un bip | | ☑ |
-| 3.98 | Shotclock à 0, fin de période, fin de pause | même buzzer dans les trois cas ; shotclock et fin de période simultanés → les deux se superposent. *(Expiration d'une pénalité : bip court depuis le 2026-11-08, cf. 3.28)* | | ☑ |
+| 3.98 | Shotclock à 0, fin de période, fin de pause | même buzzer dans les trois cas *(remplacé le 2026-11-09 : le chronomètre de tir a son propre buzzer, cf. 3.100+)* ; shotclock et fin de période simultanés → les deux se superposent. *(Expiration d'une pénalité : bip court depuis le 2026-11-08, cf. 3.28)* | | ☑ |
 | 3.99 | Console **buildée** (PWA), ouverte une fois en ligne, puis réseau coupé et rechargement | le buzzer sonne encore (fichier en cache `assets-static`) | | ☐ |
+
+#### Buzzer du chronomètre de tir (2026-11-09)
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.100 | Console ouverte, un clic n'importe où, puis bouton **test son** | le buzzer principal, puis ~0,4 s après un **second buzzer nettement plus aigu et plus court** (~0,5 s) | | ☐ |
+| 3.101 | Chronomètre de tir à **0** | le buzzer **aigu et court** (pas le principal) | | ☐ |
+| 3.102 | Chrono principal à 0 (fin de période), puis fin de pause | le buzzer **principal** (grave, ~1 s) dans les deux cas | | ☐ |
+| 3.103 | Chronomètre de tir et fin de période **simultanés** | les deux buzzers se superposent et restent distincts à l'oreille | | ☐ |
 
 ### Lot 4 — Page d'incrustation unique
 

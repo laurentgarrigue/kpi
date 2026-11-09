@@ -74,6 +74,9 @@ export interface OverlayState {
  */
 const REVALIDATE: RequestInit = { cache: 'no-cache' }
 
+/** Full reload period when SSE may have died silently (proxy, sleeping wall). */
+const SAFETY_RELOAD_MS = 5 * 60 * 1000
+
 export function useOverlayProgram(event: number, pitch: string, apiBase: string, token: string) {
   const program = ref<{
     current: OverlayProgramMatch | null
@@ -92,6 +95,7 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
   let source: EventSource | null = null
   let debounce: ReturnType<typeof setTimeout> | null = null
   let currentMatchId: number | null = null
+  let safetyNet: ReturnType<typeof setInterval> | null = null
 
   // The display token authorizes every read and scopes the Mercure subscription.
   const auth = `token=${encodeURIComponent(token)}`
@@ -194,11 +198,12 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
     document.addEventListener('visibilitychange', onVisible)
     // Long safety net: if SSE dies silently (proxy, sleeping wall), a full reload every
     // 5 min guarantees the screen can never stay wrong for long.
-    const interval = setInterval(() => void reload(), 5 * 60 * 1000)
-    onUnmounted(() => clearInterval(interval))
+    // (cleared in the onUnmounted below: a hook registered after `await` is never bound)
+    safetyNet = setInterval(() => void reload(), SAFETY_RELOAD_MS)
   })
 
   onUnmounted(() => {
+    if (safetyNet !== null) clearInterval(safetyNet)
     source?.close()
     source = null
     if (debounce !== null) clearTimeout(debounce)
