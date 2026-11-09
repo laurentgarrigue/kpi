@@ -419,8 +419,8 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
   référencés par le catalogue (`icon`) : app2, app3 et app4 les affichent sans copie, et un nouvel élément arrive
   avec son pictogramme sans redéploiement des applications.
 - Les pictogrammes sont dessinés dans [maquettes/src/medal_icons.py](maquettes/src/medal_icons.py), source unique
-  dont `build.py` tire les fichiers [maquettes/pictogrammes/](maquettes/pictogrammes/) (à copier dans api2 à
-  l'implémentation). Planche : maquette `pictogrammes`. Tant qu'un élément n'a pas son pictogramme, il affiche le
+  dont `build.py` tire les fichiers SVG de [sources/api2/public/medals/icons/](../../../sources/api2/public/medals/icons/),
+  servis par api2 (`/api2/medals/icons/{code}.svg`) et inclus en ligne par son catalogue (`icon_svg`). Planche : maquette `pictogrammes`. Tant qu'un élément n'a pas son pictogramme, il affiche le
   pictogramme générique de sa famille.
 - **Ballon de kayak-polo** : dessin **plein** (la seule exception au trait), d'après le dessin de référence choisi le
   09/11/2026 : un disque dans la couleur de l'élément, dont les panneaux blancs sont découpés (règle *even-odd*,
@@ -432,7 +432,7 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
 
 ### 7.2 Symbole du but
 
-Le pictogramme `goal` (ballon seul, `pictogrammes/goal.svg`) remplace, partout où un but est représenté, le cercle
+Le pictogramme `goal` (ballon seul, `sources/api2/public/medals/icons/goal.svg`) remplace, partout où un but est représenté, le cercle
 ou le disque actuel. Il prend la **couleur de l'équipe** (`currentColor`) ; sur une frise, le numéro du buteur
 l'accompagne dans une petite étiquette.
 

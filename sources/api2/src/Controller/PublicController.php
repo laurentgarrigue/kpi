@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\MatchMedals\Catalog\MedalSurface;
+use App\MatchMedals\MatchMedalReader;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,7 +14,8 @@ use Symfony\Component\Routing\Attribute\Route;
 class PublicController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private MatchMedalReader $matchMedals,
     ) {
     }
 
@@ -410,6 +413,8 @@ class PublicController extends AbstractController
                 'stats' => $teamBStats
             ],
             'events' => $events,
+            // Match medals published on app2 (FEATURE_MATCH_MEDALS.md § 6.4), empty until the game is validated
+            'medals' => $this->matchMedals->forGame((int) $gameId, MedalSurface::App2),
             'halftime_score' => [
                 'team_a' => $halftimeScoreA,
                 'team_b' => $halftimeScoreB
