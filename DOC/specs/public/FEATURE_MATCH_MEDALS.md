@@ -1,7 +1,7 @@
 # Médailles de match et statistiques de timeline
 
-**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours du
-08/11/2026 intégrés)
+**Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : 📝 Brouillon (retours des
+08 et 09/11/2026 intégrés)
 **Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
 saisie supplémentaire
 **Remplace** : — (nouveauté)
@@ -9,8 +9,9 @@ saisie supplémentaire
 ## 1. Objectif
 
 Raconter chaque match autrement que par le score : à partir de la **timeline** déjà saisie (buts et cartons
-horodatés), attribuer des **médailles** aux équipes et aux joueurs (premier but, but en supériorité numérique,
-remontée au score…) et en tirer des **statistiques originales** par compétition et par événement.
+horodatés), attribuer des **médailles** aux équipes, aux joueurs et aux arbitres (premier but, but en supériorité numérique,
+remontée au score…) et en tirer des **statistiques originales** par compétition et par événement, y compris sur
+l'arbitrage (§ 3.5).
 
 Public visé : joueurs, clubs, spectateurs et commentateurs. Rien n'est saisi en plus : tout est **déduit** des
 faits de match existants.
@@ -34,6 +35,9 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Recalcul | **Toutes les saisons**, **saison par saison** : changer un seuil ne recalcule que les saisons choisies, les anciennes gardent leurs résultats et leurs seuils (§ 6.3). |
 | Premier lot public | **Sélection réduite** (§ 4) ; le reste n'est visible que dans l'admin en attendant d'être publié. |
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
+| Noms français, premier lot (09/11/2026) | **Validés** tels que proposés (§ 3, § 4). |
+| Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). |
+| Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
 
 ## 2. Vocabulaire
 
@@ -48,6 +52,8 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | **Statistique de timeline** | Indicateur agrégé sur une compétition ou un événement (ex. « Supériorité % · Powerplay % »). |
 | **Élément du catalogue** | Une médaille, une étiquette ou une statistique de timeline, avec ses noms, son explication et ses surfaces de publication (§ 3). |
 | **Surface** | Application publique où un élément peut être publié : **app2** (résultats en direct, match par match) ou **app3** (site public, vue saison et analyse). |
+| **Arbitre désigné** | Arbitre principal ou secondaire d'un match identifié par son numéro de licence (`Matric_arbitre_*` > 0), et non par un simple libellé (« Équipe X », nom saisi à la main). |
+| **Matchs arbitrés** | Pour un arbitre désigné : les matchs éligibles où il est principal ou secondaire. Les faits de ces matchs (buts, cartons) sont ceux du **binôme arbitral**, comptés à chacun de ses membres. |
 | **Seuils de saison** | Copie des seuils utilisés pour calculer une saison (§ 6.3). |
 | **Timeline fiable** | Timeline qui permet les éléments « chronologiques » (§ 5.1). |
 
@@ -139,6 +145,52 @@ ne comptent que les matchs à timeline fiable et indiquent **sur combien de matc
 | `highlights` | **Matchs à revoir · Highlights** | Matchs étiquetés (`thriller`, `seesaw`, `goal_fest`), par date. Ne liste que les étiquettes publiées sur la même surface. | — (admin) |
 | `medals_{code}` | (nom de la médaille) | Classement d'une médaille donnée (ex. meilleurs buteurs en supériorité). Suit les surfaces de la médaille. | — |
 
+### 3.5 Arbitres
+
+Les arbitres reçoivent des médailles et ont leurs statistiques, **dans le même esprit** : rien n'est saisi en plus,
+tout vient de la timeline et des désignations.
+
+**Deux principes**, rappelés dans l'explication de chaque élément :
+
+- **Les faits du match sont ceux du binôme.** La timeline ne dit pas quel arbitre a sorti un carton : chaque carton
+  (et chaque fait de match) d'un match compte **pour l'arbitre principal et pour l'arbitre secondaire**. Une
+  statistique d'arbitre décrit donc **les matchs qu'il a arbitrés**, pas ses décisions personnelles. Le rôle
+  (principal / secondaire) n'est connu qu'à l'échelle du match : on peut compter les matchs par rôle, pas les
+  cartons par rôle.
+- **Ni palmarès de sévérité, ni classement par cartons.** Les statistiques d'arbitres sont triées par nombre de
+  matchs arbitrés puis par nom ; les indicateurs de cartons sont présentés **à côté de la moyenne du périmètre**, pour
+  l'accompagnement des arbitres, jamais comme un classement. Un indicateur par arbitre n'est affiché qu'à partir de
+  *5* matchs arbitrés sur le périmètre (en dessous : « — », pas assez de matchs).
+
+#### Médailles d'arbitre
+
+Attribuées à chaque arbitre désigné du match (portée Ar = arbitre).
+
+| Code | Nom FR · EN | Portée | Explication (attribution) | Famille | Données | Publication initiale |
+|---|---|---|---|---|---|---|
+| `ref_smooth_game` | **Match fluide · Smooth Game** | Ar | Arbitre un match sans aucun carton. | Arbitrage | S | — (admin) |
+| `ref_knockout` | **Match couperet · Knockout** | Ar | Arbitre un match à élimination directe (type `E`). | Arbitrage | S | — (admin) |
+| `ref_extra_time` | **Prolongation · Extra Time** | Ar | Arbitre un match qui va en prolongation. | Arbitrage | S | — (admin) |
+| `ref_thriller` | **Suspense · Thriller** | Ar | Arbitre un match étiqueté *Suspense* (§ 3.3). | Arbitrage | T | — (admin) |
+| `ref_golden_goal` | **But en or · Golden Goal** | Ar | Arbitre un match décidé par un but en or. | Arbitrage | S | — (admin) |
+
+#### Statistiques d'arbitrage
+
+Sur le périmètre d'une compétition ou d'un événement (et, dans l'admin, d'une saison et d'un ensemble de
+compétitions, comme la page Statistiques). Une ligne par arbitre désigné.
+
+| Kind | Nom FR · EN | Explication (calcul) | Données | Publication initiale |
+|---|---|---|---|---|
+| `referee_games` | **Matchs arbitrés · Games Officiated** | Matchs arbitrés : total, dont principal et secondaire, dont matchs couperets et prolongations. | S | **app3** |
+| `referee_cards` | **Cartons par match · Cards per Game** | Cartons des matchs arbitrés (vert, jaune, rouge, rouge définitif) par match, avec la moyenne du périmètre. | S | — (admin) |
+| `referee_smooth_rate` | **Matchs fluides · Smooth Games** | Part des matchs arbitrés sans aucun carton, avec la moyenne du périmètre. | S | — (admin) |
+| `referee_card_timing` | **Moment des cartons · Card Timing** | Répartition des cartons des matchs arbitrés par tranche de *2 min* de jeu ; délai moyen avant le premier carton. | T | — (admin) |
+| `referee_card_balance` | **Répartition entre équipes · Card Balance** | Écart moyen, par match, entre les cartons de l'équipe A et de l'équipe B, avec la moyenne du périmètre. | S | — (admin) |
+| `referee_card_reasons` | **Motifs des cartons · Card Reasons** | Répartition des cartons des matchs arbitrés par motif (`motif`), sur les cartons dont le motif est saisi ; affiche la part de motifs saisis. | S | — (admin) |
+| `referee_powerplay` | **Impact des exclusions · Powerplay Impact** | Part des buts des matchs arbitrés marqués en supériorité numérique, avec la moyenne du périmètre. | T | — (admin) |
+| `referee_pairs` | **Binômes · Referee Pairs** | Binômes d'arbitres désignés ayant arbitré ensemble : nombre de matchs, cartons par match. Ne compte que les matchs où les deux sont désignés. | S | — (admin) |
+| `medals_referees` | **Médailles des arbitres · Referee Medals** | Par arbitre : nombre de médailles d'arbitre par code. | S | — (admin) |
+
 ## 4. Premier lot public, par surface
 
 Une sélection courte, facile à comprendre et peu sensible aux approximations de temps, répartie selon l'usage de
@@ -164,8 +216,10 @@ chaque application :
 | Médailles des équipes · Team Medals | | ✓ | Bilan d'équipe, plutôt saisonnier. |
 | Premier but gagnant · First Goal Wins | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
 | Supériorité % · Powerplay % | | ✓ | Indicateur d'analyse, demande un volume de matchs. |
+| Matchs arbitrés · Games Officiated | | ✓ | Met en valeur l'engagement des arbitres, sans jugement sur leurs décisions. |
 
-Tout le reste naît non publié. Publier un élément sur une surface, l'en retirer ou le retirer complètement est un
+Tout le reste naît non publié, **en particulier toutes les autres statistiques et médailles d'arbitres**, réservées
+d'abord à l'accompagnement des arbitres dans l'admin. Publier un élément sur une surface, l'en retirer ou le retirer complètement est un
 changement dans l'admin (§ 9.3), sans déploiement ni recalcul.
 
 ## 5. Règles de calcul
@@ -240,7 +294,8 @@ ni dans les explications, qui les citent par variable). Valeurs initiales :
 | `regularPeriodSeconds` / `extraPeriodSeconds` | 600 / 300 | § 5.2 |
 | `thrillerLeadChanges` / `seesawEqualizers` | 3 / 4 | étiquettes |
 | `goalFestTopPercent` / `goalFestMinGames` / `lockdownMaxGoals` | 10 / 10 / 2 | étiquettes |
-| `goalTimingSliceSeconds` | 120 | `goal_timing` |
+| `goalTimingSliceSeconds` | 120 | `goal_timing`, `referee_card_timing` |
+| `refereeMinGames` | 5 | statistiques d'arbitrage (§ 3.5) |
 
 Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3).
 
@@ -249,6 +304,20 @@ Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3)
 - **Leader** : équipe qui mène. Un **changement de leader** est un but qui donne l'avantage à l'équipe qui ne l'avait
   pas au dernier moment où une équipe menait (une égalisation n'en est pas un).
 - **But décisif** : pour le vainqueur, le but qui porte son score à (score final du perdant + 1). Aucun pour un nul.
+
+### 5.6 Arbitres
+
+- Un match compte pour un arbitre si le match est éligible (§ 5.1) et que l'arbitre y est **désigné** :
+  `Matric_arbitre_principal` ou `Matric_arbitre_secondaire` égal à son numéro de licence (> 0). Un match dont aucun
+  arbitre n'est désigné ne compte pour aucune statistique d'arbitrage ; un match dont un seul l'est compte pour lui
+  seul (et pas pour `referee_pairs`).
+- Le même numéro de licence en principal et en secondaire (erreur de saisie) compte **une fois**.
+- Chaque fait de match (hors `TB`) du match compte pour chacun de ses arbitres désignés. Les éléments **T** ne
+  comptent que les matchs à timeline fiable, et indiquent sur combien de matchs ils portent.
+- Les **moyennes du périmètre** se calculent par match (chaque match compte une fois, quel que soit le nombre
+  d'arbitres désignés), sur les matchs ayant au moins un arbitre désigné.
+- Identité publique : prénom et nom de l'arbitre (déjà publics sur les feuilles de match), identifiant public opaque,
+  **jamais** le numéro de licence.
 
 ## 6. Données (api2)
 
@@ -264,13 +333,19 @@ Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3)
 
 - **`kp_medal_catalog`** : `code` (clé), `type`, `scopes`, `family`, `data_level`, `name_fr`, `name_en`,
   `explanation_fr`, `explanation_en`, `status` (`active`/`retired`), `published_app2`, `published_app3`,
-  `sort_order`, `updated_at`, `updated_by`. Initialisée par migration ; modifiable dans l'admin (noms, explications,
+  `icon`, `sort_order`, `updated_at`, `updated_by`. Initialisée par migration ; modifiable dans l'admin (noms, explications,
   statut, surfaces, ordre).
 - **`kp_medal_season`** : `season` (clé), `thresholds` (JSON, copie des seuils), `rules_version`, `computed_at`,
   `games_count`, `reliable_games_count`.
-- **`kp_match_medal`** : `id`, `match_id`, `code`, `scope` (`team`/`player`), `team_side` (`A`/`B`), `team_id`,
-  `player_matric` (NULL pour l'équipe), `event_detail_id` (but à l'origine), `game_seconds`. Index sur `match_id`,
-  `team_id`, `player_matric`, `code`.
+- **`kp_match_medal`** : `id`, `match_id`, `code`, `scope` (`team`/`player`/`referee`), `team_side` (`A`/`B`, NULL
+  pour un arbitre), `team_id`, `person_matric` (joueur ou arbitre ; NULL pour l'équipe), `event_detail_id` (but à
+  l'origine), `game_seconds`. Index sur `match_id`, `team_id`, `person_matric`, `code`.
+- **`kp_match_card`** (une ligne par carton d'un match calculé, dérivée de la timeline) : `match_id`, `event_detail_id`,
+  `team_side`, `code`, `motif`, `period`, `game_seconds` (NULL si la timeline n'est pas fiable). Sert les
+  statistiques de discipline et d'arbitrage sans recalculer l'axe de temps.
+- **`kp_match_referee`** (une ligne par arbitre désigné d'un match calculé) : `match_id`, `referee_matric`, `role`
+  (`principal`/`secondaire`). Copie des désignations au moment du calcul ; entre dans `source_hash`, de sorte qu'un
+  changement de désignation sur un match validé est repris par `sync`.
 - **`kp_match_insight`** (une ligne par match calculé) : `match_id`, `season`, `timeline_reliable`, `labels` (JSON),
   `lead_changes`, `equalizers`, `first_goal_seconds`, `max_deficit_A`, `max_deficit_B`, `exclusions_A`,
   `exclusions_B`, `powerplay_goals_A`, `powerplay_goals_B`, `penalty_killed_A`, `penalty_killed_B`, `source_hash`,
@@ -288,7 +363,7 @@ Chaque saison est calculée avec **ses** seuils, copiés dans `kp_medal_season` 
   le sont plus. Les **autres saisons ne sont pas touchées**.
 - **Mise à jour au fil de l'eau** — à la **validation / dévalidation** d'un match dans api2 (`AdminGamesController`)
   et par la commande `app:match-medals:sync` lancée **par cron** (toutes les 10 min, couvre la validation faite dans
-  le legacy) : calcule les matchs validés sans résultat ou dont `source_hash` (score + timeline) a changé, supprime
+  le legacy) : calcule les matchs validés sans résultat ou dont `source_hash` (score + timeline + arbitres désignés) a changé, supprime
   ceux qui ne sont plus validés. Elle utilise **les seuils de la saison du match** ; une saison jamais calculée
   reçoit d'abord sa copie des seuils actuels.
 - **Mise en service** : un calcul complet de **chaque saison**, une par une, de la plus récente à la plus ancienne.
@@ -313,6 +388,7 @@ endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 | `GET /competition/{season}/{code}/stats?surface=` (existant) | `kinds` **s'enrichit** des statistiques publiées sur la surface (§ 3.4) | app3, app2 |
 | `GET /competition/{season}/{code}/stats/{kind}?surface=` | format commun `{ kind, columns, rows }` + `games_count` / `reliable_games_count` ; kind non publié sur la surface → 404 | app3, app2 |
 | `GET /event/{id}/stats?surface=` et `…/stats/{kind}?surface=` | mêmes statistiques sur un événement | app3, app2 |
+| `GET /competition/{season}/{code}/stats/referee_*`, `GET /event/{id}/stats/referee_*` | statistiques d'arbitrage, même format commun ; aucune ligne pour un arbitre sous `refereeMinGames` sur les indicateurs de cartons | app3, app2 |
 | `GET /team/{id}/medals?season=` | médailles de l'équipe publiées sur app3 sur la saison, par code, avec les matchs concernés | app3 |
 | `GET /admin/medals/catalog`, `PATCH /admin/medals/catalog/{code}` | catalogue complet ; modification des noms, explications, statut, surfaces, ordre (profils 1–2) | app4 |
 | `GET /admin/medals/seasons` | saisons calculées : seuils, `rules_version` (et retard éventuel), date, nombre de matchs | app4 |
@@ -323,11 +399,22 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
 
 ## 7. Affichage commun
 
-- Une médaille s'affiche en **pastille** : pictogramme (un par élément, jeu d'icônes déjà utilisé par l'application),
+- Une médaille s'affiche en **pastille** : pictogramme (§ 7.1),
   **nom double** en français (« Supériorité · Powerplay »), nom anglais seul en anglais, compteur si > 1 (« ×2 »),
   et **info-bulle** avec l'explication et, pour un but, son temps (« 2ᵉ mi-temps · 03:12 »).
 - Couleur par **famille**, issue des jetons de la charte, jamais seule porteuse du sens (nom toujours écrit).
 - Accessibilité : `aria-label` = nom + explication + compteur.
+
+### 7.1 Pictogrammes
+
+- **Dessinés exprès**, un par élément du catalogue (médailles, étiquettes, statistiques, arbitres), dans un style
+  commun : trait simple, lisible à 16 px, monochrome (couleur portée par la famille), version claire et sombre par
+  `currentColor`. Vocabulaire visuel sportif (kayak, pagaie, ballon, but, chrono, cartons), **jamais guerrier**.
+- Livrés en **SVG** optimisés, servis par api2 (`/api2/medals/icons/{code}.svg`, fichiers statiques versionnés) et
+  référencés par le catalogue (`icon`) : app2, app3 et app4 les affichent sans copie, et un nouvel élément arrive
+  avec son pictogramme sans redéploiement des applications.
+- Les maquettes des pictogrammes du premier lot rejoignent [maquettes/](maquettes/README.md) avant implémentation ;
+  tant qu'un élément n'a pas son pictogramme, il affiche le pictogramme générique de sa famille.
 
 ## 8. Explications publiques
 
@@ -346,7 +433,8 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
   repère discret.
 - Match non validé : bloc absent. Timeline non fiable : mention « Médailles chronologiques indisponibles (feuille
   incomplète) ».
-- Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante.
+- Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante (arbitrage
+  compris, s'ils y sont publiés).
 - Seuls les éléments publiés sur **app2** apparaissent.
 
 ### 9.2 app3 (site public)
@@ -355,6 +443,8 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
 - **Onglet Stats** de la compétition et de l'événement : les kinds publiés sur app3 dans le sélecteur générique, avec leur
   explication en en-tête.
 - **Liste des matchs** : icône discrète à côté du score d'un match étiqueté (étiquettes publiées sur app3), avec info-bulle.
+- **Onglet Stats** : une rubrique **Arbitrage** regroupe les statistiques d'arbitrage publiées, avec le rappel
+  « Les cartons d'un match comptent pour ses deux arbitres ».
 - **Fiche équipe** : section « Médailles de la saison » (médailles publiées sur app3, compteurs par médaille, lien vers les matchs).
 - **Page `/medals`** (§ 8), ajoutée au menu une fois livrée (`ready` dans `app/utils/navigation.ts`).
 
@@ -371,6 +461,9 @@ Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
 - **Statistiques** : toutes les statistiques actives sur le périmètre du contexte de travail (saison,
   compétitions, événement), avec le même tableau générique que la page Statistiques (PAGE_STATISTIQUES.md) et un
   badge de surface (« app2 », « app3 » ou « non publié ») sur chaque élément.
+- **Arbitrage** : toutes les statistiques et médailles d'arbitres sur le périmètre du contexte, avec la moyenne du
+  périmètre, et la liste des matchs écartés faute d'arbitre désigné (nombre et lien), pour suivre la qualité des
+  désignations.
 - **Match** : dans la fiche d'un match de la page Matchs, les médailles et étiquettes actives, avec leur badge
   de surface.
 
@@ -482,6 +575,33 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
   leur explication.
 - **MED-49** — La fiche équipe d'app3 affiche les médailles de la saison publiées sur app3, chaque compteur menant aux matchs.
 
+**Arbitres**
+
+- **MED-50** — Étant donné un match validé dont `Matric_arbitre_principal` et `Matric_arbitre_secondaire` sont vides
+  ou à 0 (arbitres saisis seulement en texte), alors il ne compte dans aucune statistique d'arbitrage ni médaille
+  d'arbitre.
+- **MED-51** — Étant donné un match avec 3 cartons, un arbitre principal désigné X et un secondaire désigné Y, alors
+  `referee_cards` compte 3 cartons pour X **et** 3 pour Y ; la moyenne du périmètre compte ce match une fois (3).
+- **MED-52** — Étant donné un match où seul le principal X est désigné, alors il compte pour X, pas pour
+  `referee_pairs`.
+- **MED-53** — Étant donné le même numéro de licence en principal et en secondaire, alors le match compte une fois
+  pour cet arbitre.
+- **MED-54** — Étant donné un arbitre avec 4 matchs arbitrés sur le périmètre (`refereeMinGames = 5`), alors ses
+  indicateurs de cartons affichent « — » et il apparaît dans `referee_games`.
+- **MED-55** — Les statistiques d'arbitrage sont triées par nombre de matchs arbitrés puis par nom, jamais par
+  nombre de cartons.
+- **MED-56** — Étant donné un match sans carton arbitré par X et Y, alors X et Y reçoivent `ref_smooth_game`.
+- **MED-57** — Étant donné une désignation d'arbitre modifiée sur un match validé, quand `sync` passe, alors ses
+  statistiques et médailles d'arbitres sont recalculées (`source_hash` changé).
+- **MED-58** — `referee_games` distingue les matchs comme principal et comme secondaire ; aucune statistique ne
+  répartit les cartons par rôle.
+- **MED-59** — Aucune réponse publique d'arbitrage ne contient de numéro de licence.
+
+**Pictogrammes**
+
+- **MED-60** — Chaque élément du catalogue a un pictogramme SVG servi par api2 ; un élément sans pictogramme dédié
+  affiche celui de sa famille.
+
 ## 11. Hors périmètre et questions ouvertes
 
 **Hors périmètre (lots suivants)** :
@@ -493,10 +613,12 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - Agrégats de saison toutes compétitions, palmarès historique des médailles, badges partageables.
 - Bouton « recalculer la saison » dans l'admin (la commande suffit au départ).
 - Seuils modifiables dans l'admin (aujourd'hui dans un fichier versionné, revu comme du code).
+- Statistiques par rôle d'arbitre (impossible sans saisie de l'arbitre auteur de chaque carton).
+- Statistiques des autres officiels (secrétaire, chronométreur, juges de ligne).
 
 **Questions ouvertes** :
 
-- **Q1 — Noms français** : la liste du § 3 convient-elle (en particulier *Réplique*, *Résistance*, *Entrée express*,
-  *Égalisation salvatrice*, *Verrouillé*) ?
-- **Q2 — Premier lot public** (§ 4) : la sélection et sa répartition entre app2 et app3 conviennent-elles ?
-- **Q3 — Pictogrammes** : jeu d'icônes existant (Nuxt UI / Iconify) ou pictogrammes dessinés pour l'occasion ?
+- **Q4 — Médailles d'arbitre publiques** : faut-il en publier dès le premier lot (ex. *Match couperet* sur app3), ou
+  attendre un retour de la commission d'arbitrage ?
+- **Q5 — Accès aux statistiques d'arbitrage dans l'admin** : profils 1 et 2 seulement, ou aussi les responsables de
+  l'arbitrage (ex. profils ≤ 6, comme `OfficielsMatchs` dans PAGE_STATISTIQUES.md) ?
