@@ -1,0 +1,74 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "scorers",
+    "columns": [
+      {
+        "key": "goals",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "first_name": "Ana",
+        "last_name": "MEDAL",
+        "number": 1,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar"
+        },
+        "goals": 6
+      },
+      {
+        "rank": 2,
+        "first_name": "Ben",
+        "last_name": "MEDAL",
+        "number": 2,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar"
+        },
+        "goals": 3
+      },
+      {
+        "rank": 2,
+        "first_name": "Cleo",
+        "last_name": "MEDAL",
+        "number": 3,
+        "team": {
+          "id": 9362,
+          "number": 162,
+          "label": "Medal Papa"
+        },
+        "goals": 3
+      },
+      {
+        "rank": 4,
+        "first_name": "Coach",
+        "last_name": "MEDAL",
+        "number": null,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar"
+        },
+        "goals": 1
+      },
+      {
+        "rank": 4,
+        "first_name": "Dio",
+        "last_name": "MEDAL",
+        "number": 4,
+        "team": {
+          "id": 9362,
+          "number": 162,
+          "label": "Medal Papa"
+        },
+        "goals": 1
+      }
+    ]
+  }
+}

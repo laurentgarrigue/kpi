@@ -1,0 +1,59 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "medals_teams",
+    "columns": [
+      {
+        "key": "total",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar",
+          "logo": null
+        },
+        "medals": {
+          "fair_play": 4,
+          "powerplay": 1,
+          "golden_goal": 1,
+          "opener": 2,
+          "clean_sheet": 2,
+          "hat_trick": 1
+        },
+        "total": 11
+      },
+      {
+        "rank": 2,
+        "team": {
+          "id": 9362,
+          "number": 162,
+          "label": "Medal Papa",
+          "logo": null
+        },
+        "medals": {
+          "opener": 1,
+          "fair_play": 3
+        },
+        "total": 4
+      }
+    ],
+    "summary": {
+      "codes": [
+        "opener",
+        "golden_goal",
+        "powerplay",
+        "hat_trick",
+        "clean_sheet",
+        "fair_play"
+      ]
+    },
+    "games_count": 4,
+    "reliable_games_count": 3,
+    "needs_reliable_timeline": true
+  }
+}

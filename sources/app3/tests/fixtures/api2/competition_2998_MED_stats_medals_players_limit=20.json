@@ -1,0 +1,68 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "medals_players",
+    "columns": [
+      {
+        "key": "total",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "first_name": "Ana",
+        "last_name": "MEDAL",
+        "number": 1,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar",
+          "logo": null
+        },
+        "medals": {
+          "powerplay": 1,
+          "opener": 1,
+          "hat_trick": 1
+        },
+        "total": 3
+      },
+      {
+        "rank": 2,
+        "first_name": "Ben",
+        "last_name": "MEDAL",
+        "number": 2,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar",
+          "logo": null
+        },
+        "medals": {
+          "golden_goal": 1
+        },
+        "total": 1
+      },
+      {
+        "rank": 2,
+        "first_name": "Cleo",
+        "last_name": "MEDAL",
+        "number": 3,
+        "team": {
+          "id": 9362,
+          "number": 162,
+          "label": "Medal Papa",
+          "logo": null
+        },
+        "medals": {
+          "opener": 1
+        },
+        "total": 1
+      }
+    ],
+    "summary": {},
+    "games_count": 4,
+    "reliable_games_count": 3,
+    "needs_reliable_timeline": true
+  }
+}

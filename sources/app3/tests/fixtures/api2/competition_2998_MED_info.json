@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "body": {
+    "gamedays": [],
+    "teams_by_pool": [
+      {
+        "pool": "",
+        "teams": [
+          {
+            "id": 9361,
+            "number": 161,
+            "label": "Medal Oscar",
+            "logo": null
+          },
+          {
+            "id": 9362,
+            "number": 162,
+            "label": "Medal Papa",
+            "logo": null
+          }
+        ]
+      }
+    ],
+    "schema": null
+  }
+}

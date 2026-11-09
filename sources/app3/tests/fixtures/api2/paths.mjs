@@ -2,6 +2,10 @@
 const COMPETITIONS = ['RCH', 'RCP', 'RMU', 'RAT']
 const TABS = ['games', 'charts', 'ranking', 'info', 'stats', 'stats/scorers?limit=20', 'stats/scorers?limit=100']
 
+// Match medals (FEATURE_MATCH_MEDALS.md): competition MED of season 2998, computed before the capture
+// (php bin/console app:match-medals:compute --season=2998 on the fixtures database).
+const MEDAL_STATS = ['medals_teams', 'medals_players', 'opener_wins', 'powerplay_rate', 'referee_games', 'medals_referees']
+
 export const FIXTURE_PATHS = [
   '/events/all',
   '/seasons',
@@ -72,6 +76,13 @@ export const FIXTURE_PATHS = [
   '/forms?event=77',
   '/forms?event=78',
   '/forms?competition=2999%2FRCH',
+  // Match medals (FEATURE_MATCH_MEDALS.md § 6.4)
+  ...['', ...TABS, 'labels', ...MEDAL_STATS.map(kind => `stats/${kind}?limit=20`)].map(tab => `/competition/2998/MED${tab ? `/${tab}` : ''}`),
+  '/medals/catalog',
+  '/medals/catalog?season=2998',
+  '/team/161',
+  '/team/161/medals?season=2998',
+  '/team/161/roster/2998/MED',
 ]
 
 /** File name of a request: `/competition/2999/RCH/stats/scorers?limit=20` → `competition_2999_RCH_stats_scorers_limit=20.json`. */

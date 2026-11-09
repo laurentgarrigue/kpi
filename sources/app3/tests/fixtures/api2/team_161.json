@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "body": {
+    "number": 161,
+    "label": "Medal Oscar",
+    "club": {
+      "code": "C005",
+      "label": "Club Echo"
+    },
+    "logo": null,
+    "colors": null,
+    "photo": null,
+    "honours": [],
+    "seasons": [
+      {
+        "season": "2998",
+        "competitions": [
+          {
+            "code": "MED",
+            "display_title": "Médailles Test"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "referee_games",
+    "columns": [
+      {
+        "key": "games",
+        "type": "integer"
+      },
+      {
+        "key": "principal",
+        "type": "integer"
+      },
+      {
+        "key": "secondary",
+        "type": "integer"
+      },
+      {
+        "key": "knockouts",
+        "type": "integer"
+      },
+      {
+        "key": "overtimes",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "referee": {
+          "first_name": "One",
+          "last_name": "REFEREE"
+        },
+        "games": 2,
+        "principal": 2,
+        "secondary": 0,
+        "knockouts": 1,
+        "overtimes": 1
+      },
+      {
+        "rank": 2,
+        "referee": {
+          "first_name": "Two",
+          "last_name": "REFEREE"
+        },
+        "games": 1,
+        "principal": 0,
+        "secondary": 1,
+        "knockouts": 0,
+        "overtimes": 0
+      }
+    ],
+    "summary": {
+      "undesignated_games": 2
+    },
+    "games_count": 4,
+    "reliable_games_count": 3,
+    "needs_reliable_timeline": false
+  }
+}

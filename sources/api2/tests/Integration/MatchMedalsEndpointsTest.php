@@ -38,7 +38,7 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
         self::assertSame('powerplay_rate', $stat['kind']);
         self::assertSame(4, $stat['games_count']);
         self::assertSame(3, $stat['reliable_games_count']);
-        $alpha = array_values(array_filter($stat['rows'], static fn (array $r): bool => $r['team']['label'] === 'Medal Alpha'))[0];
+        $alpha = array_values(array_filter($stat['rows'], static fn (array $r): bool => $r['team']['label'] === 'Medal Oscar'))[0];
         self::assertSame([1, 1, 100], [$alpha['powerplay_goals'], $alpha['opponent_exclusions'], $alpha['percent']]);
     }
 

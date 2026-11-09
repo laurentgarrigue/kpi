@@ -623,7 +623,7 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 
 -- ---------------------------------------------------------------- médailles de match (FEATURE_MATCH_MEDALS.md)
 -- Consommé par tests/Integration/MatchMedals*Test.php. Saison 2998 (passée), groupe TSTMED, compétition MED publiée.
--- Équipes 9361 (Medal Alpha) et 9362 (Medal Bravo) ; joueurs 9531-9534, entraîneur 9535 ; arbitres 9921 et 9922.
+-- Équipes 9361 (Medal Oscar) et 9362 (Medal Papa) ; joueurs 9531-9534, entraîneur 9535 ; arbitres 9921 et 9922.
 --   9461 : timeline complète, 4-3, Suspense (3 changements d'équipe en tête), but en supériorité (carton jaune de B),
 --          arbitres 9921 (principal) et 9922 (secondaire)
 --   9462 : match à élimination (E) gagné en prolongation P1 (but en or de 9532), arbitre 9921 seul
@@ -639,9 +639,11 @@ INSERT INTO `kp_competition`
 INSERT INTO `kp_journee`
   (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Etat`, `Type`, `Publication`) VALUES
   (9291, 'MED', '2998', '2998-05-01', '2998-05-02', 'Médailles', 'MED J1', 'Testville', 'O', 'C', 'O');
+INSERT INTO `kp_equipe` (`Numero`, `Libelle`, `Code_club`) VALUES
+  (161, 'Medal Oscar', 'C005'), (162, 'Medal Papa', 'C006');
 INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
-  (9361, 'MED', '2998', 'Medal Alpha', 'C001', NULL, 161, '', 0),
-  (9362, 'MED', '2998', 'Medal Bravo', 'C002', NULL, 162, '', 0);
+  (9361, 'MED', '2998', 'Medal Oscar', 'C005', NULL, 161, '', 0),
+  (9362, 'MED', '2998', 'Medal Papa', 'C006', NULL, 162, '', 0);
 INSERT INTO `kp_licence` (`Matric`, `Nom`, `Prenom`) VALUES
   (9531, 'MEDAL', 'Ana'), (9532, 'MEDAL', 'Ben'), (9533, 'MEDAL', 'Cleo'), (9534, 'MEDAL', 'Dio'), (9535, 'MEDAL', 'Coach'),
   (9921, 'REFEREE', 'One'), (9922, 'REFEREE', 'Two');

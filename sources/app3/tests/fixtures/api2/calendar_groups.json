@@ -21,6 +21,11 @@
             "code": "TSTRES",
             "libelle": "Groupe Résultats",
             "libelle_en": "Results group"
+          },
+          {
+            "code": "TSTMED",
+            "libelle": "Groupe Médailles",
+            "libelle_en": "Medals group"
           }
         ]
       },
