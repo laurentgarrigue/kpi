@@ -10,12 +10,23 @@ STROKE = 'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="
 FILL = 'fill="currentColor" stroke="none"'
 
 
-def ball(cx, cy, r):
-    """Ball: a circle and its two S-shaped seams."""
+def ball(cx, cy, r, stripes=None):
+    """Canoe polo (water polo) ball: three groups of panels around a junction right of the centre.
+
+    The three seams leaving the junction are always drawn; each group of panels also gets one stripe
+    parallel to its seam, except on small balls (r < 6, e.g. the hat-trick) where it would clutter.
+    """
     p = lambda dx, dy: f'{cx + dx * r:.2f} {cy + dy * r:.2f}'
-    return (f'<circle cx="{cx}" cy="{cy}" r="{r}"/>'
-            f'<path d="M{p(-0.97, -0.25)}C{p(-0.35, -0.1)} {p(-0.3, 0.55)} {p(0.15, 0.98)}'
-            f'M{p(0.97, 0.25)}C{p(0.35, 0.1)} {p(0.3, -0.55)} {p(-0.15, -0.98)}"/>')
+    j = p(0.22, 0.08)
+    d = (f'M{j}Q{p(0.22, -0.55)} {p(-0.32, -0.95)}'      # seam up
+         f'M{j}Q{p(-0.4, 0.3)} {p(-0.97, 0.24)}'         # seam left
+         f'M{j}Q{p(0.5, 0.5)} {p(0.2, 0.98)}')           # seam down
+    if stripes if stripes is not None else r >= 6:
+        d += (f'M{p(-0.9, -0.43)}Q{p(-0.35, -0.25)} {p(0.12, -0.42)}'   # upper-left panels
+              f'M{p(0.24, -0.97)}Q{p(0.78, -0.42)} {p(0.86, 0.5)}'      # right panels
+              f'M{p(-0.3, 0.25)}Q{p(-0.05, 0.6)} {p(-0.3, 0.95)}')      # bottom panels
+    # seams a little thinner than the outline, so the ball stays a ball at 16 px
+    return f'<circle cx="{cx}" cy="{cy}" r="{r}"/><path d="{d}" stroke-width="1.35"/>'
 
 
 def clock(cx, cy, r, hand=True):
@@ -59,6 +70,8 @@ DISCIPLINE = ('<rect x="3.5" y="4.5" width="9" height="13.5" rx="1.5" transform=
               '<rect x="11" y="6" width="9" height="13.5" rx="1.5" transform="rotate(10 15.5 12.7)"/>')
 
 ICONS = {
+    # --- the ball alone: symbol of a goal everywhere (scoring, app2, app3), replacing circles and discs
+    'goal': ball(12, 12, 9.5),
     # --- team and player medals
     'opener': OPENER,
     'wire_to_wire': '<path d="M4 4.5v15M20 4.5v15M7.5 12h9.5M14 9l3 3-3 3"/>',
@@ -122,7 +135,7 @@ COMPOSED = {
 # One generic pictogram per family, shown until an element has its own (§ 7.1).
 FAMILIES = {
     'elan': 'wire_to_wire', 'reaction': 'bounce_back', 'endurance': 'clock', 'superiorite': 'powerplay',
-    'finition': 'hat_trick', 'defense': 'clean_sheet', 'esprit': 'fair_play', 'arbitrage': 'whistle',
+    'finition': 'goal', 'defense': 'clean_sheet', 'esprit': 'fair_play', 'arbitrage': 'whistle',
     'match': 'thriller', 'analyse': 'goal_timing',
 }
 

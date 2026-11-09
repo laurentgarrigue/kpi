@@ -37,6 +37,7 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
 | Noms français, premier lot (09/11/2026) | **Validés** tels que proposés (§ 3, § 4). |
 | Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). |
+| Ballon (09/11/2026) | Les pictogrammes qui montrent un ballon dessinent le **ballon de kayak-polo** (celui du water-polo : trois groupes de panneaux courbes). Le ballon seul (`goal`) devient le **symbole du but** dans toutes les applications, à la place des cercles et disques actuels (§ 7.2). |
 | Arbitres, publication (09/11/2026) | Les **médailles d'arbitre** sont publiées **dès le premier lot** (§ 4). Les statistiques d'arbitrage autres que *Matchs arbitrés* et *Médailles des arbitres* restent réservées à l'admin, **profils 1 et 2 seulement**. |
 | Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
 
@@ -420,8 +421,28 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
   dont `build.py` tire les fichiers [maquettes/pictogrammes/](maquettes/pictogrammes/) (à copier dans api2 à
   l'implémentation). Planche : maquette `pictogrammes`. Tant qu'un élément n'a pas son pictogramme, il affiche le
   pictogramme générique de sa famille.
+- **Ballon de kayak-polo** : trois coutures partent d'un point de jonction décentré vers la droite, et chaque groupe
+  de panneaux a une bande parallèle, comme sur un ballon de water-polo. Sur un petit ballon (rayon < 6, ex. le
+  *Triplé*), seules les trois coutures sont dessinées. Les coutures sont un peu plus fines que le contour pour rester
+  lisibles à 16 px.
 - Le code d'un élément est **unique dans tout le catalogue** (clé de `kp_medal_catalog`) : la statistique des
   prolongations s'appelle `overtimes`, pas `extra_time` (code de la médaille).
+
+### 7.2 Symbole du but
+
+Le pictogramme `goal` (ballon seul, `pictogrammes/goal.svg`) remplace, partout où un but est représenté, le cercle
+ou le disque actuel. Il prend la **couleur de l'équipe** (`currentColor`) ; sur une frise, le numéro du buteur
+l'accompagne dans une petite étiquette.
+
+| Application | Emplacement actuel | Changement |
+|---|---|---|
+| app2 | `components/GameEventIcon.vue` (disque `bg-bar` et cercle blanc), `components/GameTimelineBar.vue` (pastille numérotée) | ballon `goal` ; sur la frise, ballon + numéro |
+| app4 | Scoring : bouton « But » et historique des faits (`components/scoring/EventButtons.vue`, `EventHistory.vue`) ; liste des matchs | ballon `goal` |
+| app3 | futures pages de match, frises et listes de buts | ballon `goal` dès la conception |
+| PDF (api2) | feuilles de match et récapitulatifs qui marquent les buts | ballon `goal` (SVG copié avec la charte, cf. `make pdf_tokens_sync`) |
+
+Ce changement est **indépendant des médailles** : il peut être livré seul, avant elles. Chaque application le
+reprend dans sa propre spec (`PAGE_SCORING.md`, feuille de match d'app2) au moment de l'implémenter.
 
 ## 8. Explications publiques
 
@@ -610,6 +631,8 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 - **MED-60** — Chaque élément du catalogue a un pictogramme SVG servi par api2 ; un élément sans pictogramme dédié
   affiche celui de sa famille.
+- **MED-61** — Dans app2, app3, le Scoring d'app4 et les PDF, un but est représenté par le pictogramme `goal`
+  (ballon de kayak-polo) dans la couleur de son équipe, et non plus par un cercle ou un disque.
 
 ## 11. Hors périmètre et questions ouvertes
 

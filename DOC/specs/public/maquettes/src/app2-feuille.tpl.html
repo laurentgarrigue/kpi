@@ -39,7 +39,12 @@ body { font-family: ui-sans-serif, system-ui, sans-serif; background: var(--surf
 .tl .line { position: absolute; left: 0; right: 0; top: 46px; height: 2px; background: var(--g300); }
 .tl .seg { position: absolute; top: 40px; height: 14px; border-left: 2px solid var(--g300); font-size: 10px; color: var(--g500); padding-left: 3px; }
 .tl .mk { position: absolute; transform: translateX(-50%); display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 700; color: #fff; }
-.tl .mk.A { top: 14px; background: var(--a); } .tl .mk.B { top: 60px; background: var(--b); }
+.tl .mk.A { top: 12px; } .tl .mk.B { top: 58px; }
+/* a goal is the ball pictogram (goal.svg) in the team colour, the scorer's number in a small tag */
+.tl .mk.goal { width: 22px; height: 22px; background: var(--surface); }
+.tl .mk.goal.A { color: var(--a); } .tl .mk.goal.B { color: var(--b); }
+.tl .mk.goal i { position: absolute; right: -9px; bottom: -5px; font-style: normal; font-size: 9.5px; line-height: 1; padding: 1px 3px; border-radius: 3px; background: currentColor; }
+.tl .mk.goal i b { color: #fff; }
 .tl .mk.card { width: 9px; height: 13px; border-radius: 2px; } .tl .mk.card.A { top: 18px; } .tl .mk.card.B { top: 62px; }
 .tl .mk.V { background: #22c55e; } .tl .mk.J { background: #facc15; } .tl .mk.R, .tl .mk.D { background: #dc2626; }
 .tl .mk.medal { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--fam-superiorite); }
@@ -49,7 +54,7 @@ body { font-family: ui-sans-serif, system-ui, sans-serif; background: var(--surf
 .ev .who { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; } .ev .B { justify-content: flex-end; grid-column: 3; }
 .ev .A b { color: var(--a); } .ev .B b { color: var(--b); }
 .ev .ic { width: 14px; height: 18px; border-radius: 3px; display: inline-grid; place-items: center; font-size: 11px; }
-.ev .ic.goal { width: 18px; border-radius: 50%; background: var(--g200); }
+.ev .ic.goal { width: 18px; height: 18px; } .ev .A .ic.goal { color: var(--a); } .ev .B .ic.goal { color: var(--b); }
 .ev .ic.V { background: #22c55e; } .ev .ic.J { background: #facc15; } .ev .ic.R, .ev .ic.D { background: #dc2626; }
 .per { background: var(--g100); padding: 4px 12px; font-size: 12px; color: var(--g500); font-weight: 600; }
 .demo select { font: inherit; }
@@ -97,13 +102,13 @@ function render() {
   const tl = res.reliable ? `<div class="tl" aria-hidden="true"><div class="line"></div>
       ${Object.keys(res.facts.offset).map(p => `<span class="seg" style="left:${pos(res.facts.offset[p])}">${p}</span>`).join('')}
       ${cards.map(c => `<span class="mk card ${c.team} ${c.type}" style="left:${pos(c.at)}"></span>`).join('')}
-      ${goals.map(e => `<span class="mk ${e.team}${e.pp ? ' medal' : e.opener ? ' medal op' : ''}" style="left:${pos(e.at)}">${e.player?.number ?? ''}</span>`).join('')}</div>` : '';
+      ${goals.map(e => `<span class="mk goal ${e.team}${e.pp ? ' medal' : e.opener ? ' medal op' : ''}" style="left:${pos(e.at)}">${iconSvg('goal', 20)}<i><b>${e.player?.number ?? ''}</b></i></span>`).join('')}</div>` : '';
   const evs = res.reliable ? [...goals, ...cards].sort((a, b) => a.at - b.at || (a.type === 'B') - (b.type === 'B')) : m.events;
   let last = null;
   const list = evs.map(e => {
     const per = e.period !== last ? `<div class="per">${PERIOD_LABEL(e.period)}</div>` : ''; last = e.period;
     const codes = e.type === 'B' ? [e.opener && 'opener', e.pp && 'powerplay', e.winner && 'game_winner'].filter(Boolean).filter(app2) : [];
-    const who = `<span class="who ${e.team}">${e.team === 'A' ? '' : codes.map(c => pill(c, { compact: true })).join('')}<span class="ic ${e.type === 'B' ? 'goal' : e.type}"></span><b>${esc(e.player?.first ?? '')} ${esc(e.player?.last ?? '')}</b><small>#${e.player?.number ?? ''}${e.motif ? ` · ${esc(e.motif)}` : ''}</small>${e.team === 'A' ? codes.map(c => pill(c, { compact: true })).join('') : ''}</span>`;
+    const who = `<span class="who ${e.team}">${e.team === 'A' ? '' : codes.map(c => pill(c, { compact: true })).join('')}<span class="ic ${e.type === 'B' ? 'goal' : e.type}">${e.type === 'B' ? iconSvg('goal', 18) : ''}</span><b>${esc(e.player?.first ?? '')} ${esc(e.player?.last ?? '')}</b><small>#${e.player?.number ?? ''}${e.motif ? ` · ${esc(e.motif)}` : ''}</small>${e.team === 'A' ? codes.map(c => pill(c, { compact: true })).join('') : ''}</span>`;
     return per + `<div class="ev"><span class="tm">${e.remaining == null ? '--:--' : mmss(e.remaining)}</span>${who}</div>`;
   }).join('');
   document.getElementById('main').innerHTML = `
