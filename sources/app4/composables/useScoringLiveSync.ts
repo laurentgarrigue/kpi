@@ -90,7 +90,8 @@ export function useScoringLiveSync(options: {
       if (connectionWatch.open().reconnected) void options.onReconnect()
     }
 
-    source.onmessage = () => {
+    // Messages are typed (`event: clock`…): onmessage would never fire, see utils/scoringSse.
+    onScoringMessage(source, () => {
       // Our own echo: nothing to do, the local state is already the freshest.
       if (Date.now() - options.lastLocalWrite() < echoWindowMs) return
       if (debounce !== null) clearTimeout(debounce)
@@ -98,7 +99,7 @@ export function useScoringLiveSync(options: {
         debounce = null
         void options.onRemoteChange()
       }, debounceMs)
-    }
+    })
 
     // EventSource reconnects on its own (and replays from Last-Event-ID); the badge shows
     // the gap at once, the banner only if it outlasts the grace delay.

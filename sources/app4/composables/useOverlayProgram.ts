@@ -162,7 +162,8 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
 
     source.onopen = () => { status.value = 'live' }
 
-    source.onmessage = (message: MessageEvent<string>) => {
+    // Messages are typed (`event: clock`…): onmessage would never fire, see utils/scoringSse.
+    onScoringMessage(source, (message) => {
       let payload: { type?: string } = {}
       try {
         payload = JSON.parse(message.data)
@@ -174,7 +175,7 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
         return
       }
       scheduleRefresh(fetchState)
-    }
+    })
 
     source.onerror = () => {
       // EventSource retries on its own and replays from Last-Event-ID; we only note that
