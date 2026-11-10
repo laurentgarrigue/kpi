@@ -87,3 +87,8 @@ export function isTimelineStat(stat: { games_count?: number }): boolean {
 export function svgWithUniqueIds(svg: string, suffix: string): string {
   return svg.replace(/(id="|url\(#)(m-[a-z_]+)/g, `$1$2-${suffix}`)
 }
+
+/** Players of the stats and of the medals come from two tables: they meet on their names, not on a licence number. */
+export function playerKey(firstName: string | null | undefined, lastName: string | null | undefined): string {
+  return [firstName, lastName].map(part => (part ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()).join('|')
+}

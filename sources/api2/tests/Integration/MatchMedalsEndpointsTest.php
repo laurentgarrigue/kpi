@@ -148,10 +148,16 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
         self::assertSame(['team' => [], 'players' => []], $this->getJson('/event/80/team/9361/medals'));
     }
 
+    public function testMed64TheMedalsOfATeamInACompetitionAreThoseOfTheGroupWhenTheGroupHasOnlyThatCompetition(): void
+    {
+        self::assertSame($this->getJson('/group/2998/TSTMED/team/9361/medals'), $this->getJson('/competition/2998/MED/team/9361/medals'));
+    }
+
     public function testMed63AnUnknownTeamIs404(): void
     {
         $this->getJson('/group/2998/TSTMED/team/1/medals', 404);
         $this->getJson('/event/81/team/1/medals', 404);
+        $this->getJson('/competition/2998/MED/team/1/medals', 404);
     }
 
     public function testThrillerLabelOfTheCompetitionGames(): void

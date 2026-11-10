@@ -47,6 +47,7 @@ body {
   --color-fam-arbitrage: #45484f;
   --color-fam-match: #9b3a6f;
   --color-fam-analyse: #20265b;
+  --color-shield-ink: #fff;
 }
 
 .dark {
@@ -68,6 +69,7 @@ body {
   --color-fam-arbitrage: #c7cbd3;
   --color-fam-match: #e79bc4;
   --color-fam-analyse: #b8c0f0;
+  --color-shield-ink: #10131f;
 
   --color-gray-50: oklch(0.24 0.02 262);
   --color-gray-100: oklch(0.27 0.022 262);

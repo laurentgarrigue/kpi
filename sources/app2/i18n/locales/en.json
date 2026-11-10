@@ -107,6 +107,7 @@
     "EliminationGames": "Elimination games",
     "FinalRanking": "Final ranking",
     "NoData": "No data available for this team",
+    "Medals": "Team medals",
     "TournamentRounds": "Bracket"
   },
   "Games": {
@@ -243,6 +244,8 @@
     "NoStats": "No statistics available for this team.",
     "Player": "Player",
     "Goals": "Goals",
+    "GoalCount": "{n} goal | {n} goals",
+    "Medals": "Medals",
     "Coach": "Staff"
   },
   "MatchSheet": {

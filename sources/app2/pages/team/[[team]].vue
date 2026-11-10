@@ -260,52 +260,26 @@
         </div>
       </div>
 
+      <!-- Medals of the team (FEATURE_MATCH_MEDALS.md § 9.1): only what api2 publishes on app2 -->
+      <section v-if="teamMedalItems.length > 0" class="mb-6 px-2" aria-labelledby="team-medals-title" data-testid="team-medals">
+        <div class="mx-auto w-full max-w-3xl border border-gray-300 rounded-lg bg-surface">
+          <div class="flex items-center justify-between rounded-t-lg bg-bar px-3 py-2 text-sm text-white">
+            <h3 id="team-medals-title" class="font-bold">{{ t('Team.Medals') }}</h3>
+            <a :href="explanationsUrl" target="_blank" rel="noopener" class="text-on-bar-muted underline">{{ t('Medals.How') }}</a>
+          </div>
+          <div class="flex flex-wrap justify-center gap-x-2 gap-y-4 px-3 py-4">
+            <MedalPill v-for="medal in teamMedalItems" :key="medal.item.code" :item="medal.item" :count="medal.count" stacked />
+          </div>
+        </div>
+      </section>
+
       <!-- Team Statistics (event mode) -->
       <div v-if="teamStats && teamStats.length > 0" class="mb-6">
         <div class="w-full px-2">
           <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Stats.Title') }}</h3>
           <div class="flex justify-center">
             <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
-            <table class="w-full">
-              <thead class="bg-bar text-white">
-                <tr>
-                  <th class="py-2 px-3 border-b text-left">{{ t('Stats.Player') }}</th>
-                  <th class="py-2 px-2 border-b text-center">{{ t('Stats.Goals') }}</th>
-                  <th class="py-2 px-2 border-b text-center">
-                    <div class="inline-block bg-green-500 w-6 h-8 transform -rotate-12 rounded-sm"></div>
-                  </th>
-                  <th class="py-2 px-2 border-b text-center">
-                    <div class="inline-block bg-yellow-400 w-6 h-8 transform -rotate-12 rounded-sm"></div>
-                  </th>
-                  <th class="py-2 px-2 border-b text-center">
-                    <div class="relative inline-block">
-                      <div class="absolute bg-yellow-400 w-6 h-8 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
-                      <div class="relative bg-red-500 w-6 h-8 rounded-sm transform -rotate-12"></div>
-                    </div>
-                  </th>
-                  <th class="py-2 px-2 border-b text-center">
-                    <div class="flex items-center justify-center bg-red-500 w-6 h-8 transform -rotate-12 rounded-sm text-white font-bold text-xs">E</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="player in teamStats" :key="player.licence" class="hover:bg-gray-100 border-b">
-                  <td class="py-2 px-3">
-                    <div class="font-medium flex items-center">
-                      <span v-if="player.captain !== 'E'" class="text-sm text-gray-500 mr-2">#{{ player.number }}</span>
-                      <span class="text-xs md:text-sm lg:text-base ml-1">{{ formatPrenom(player.firstname) }} {{ formatNom(player.name) }}</span>
-                      <span v-if="player.captain === 'C'" class="ml-2 bg-black text-white text-xs font-bold w-4 h-4 flex items-center justify-center rounded-sm">C</span>
-                      <span v-if="player.captain === 'E'" class="ml-2 text-xs text-gray-500">({{ t('Stats.Coach') }})</span>
-                    </div>
-                  </td>
-                  <td class="py-2 px-2 text-center">{{ player.goals > 0 ? player.goals : '' }}</td>
-                  <td class="py-2 px-2 text-center">{{ player.green_cards > 0 ? player.green_cards : '' }}</td>
-                  <td class="py-2 px-2 text-center">{{ player.yellow_cards > 0 ? player.yellow_cards : '' }}</td>
-                  <td class="py-2 px-2 text-center">{{ player.red_cards > 0 ? player.red_cards : '' }}</td>
-                  <td class="py-2 px-2 text-center">{{ player.exclusions > 0 ? player.exclusions : '' }}</td>
-                </tr>
-              </tbody>
-            </table>
+              <TeamPlayerStats :players="teamStats" :medal-players="teamMedals?.players" :catalog="medalCatalog" />
             </div>
           </div>
         </div>
@@ -321,46 +295,7 @@
                 {{ compStats.competition_label || compStats.competition_code }}
                 <span v-if="selectedTeam" class="font-normal ml-2">- {{ selectedTeam }}</span>
               </div>
-              <table class="w-full">
-                <thead class="bg-gray-100">
-                  <tr>
-                    <th class="py-2 px-3 border-b text-left">{{ t('Stats.Player') }}</th>
-                    <th class="py-2 px-2 border-b text-center">{{ t('Stats.Goals') }}</th>
-                    <th class="py-2 px-2 border-b text-center">
-                      <div class="inline-block bg-green-500 w-6 h-8 transform -rotate-12 rounded-sm"></div>
-                    </th>
-                    <th class="py-2 px-2 border-b text-center">
-                      <div class="inline-block bg-yellow-400 w-6 h-8 transform -rotate-12 rounded-sm"></div>
-                    </th>
-                    <th class="py-2 px-2 border-b text-center">
-                      <div class="relative inline-block">
-                        <div class="absolute bg-yellow-400 w-6 h-8 rounded-sm transform -rotate-3 translate-x-0.5 translate-y-0.5"></div>
-                        <div class="relative bg-red-500 w-6 h-8 rounded-sm transform -rotate-12"></div>
-                      </div>
-                    </th>
-                    <th class="py-2 px-2 border-b text-center">
-                      <div class="flex items-center justify-center bg-red-500 w-6 h-8 transform -rotate-12 rounded-sm text-white font-bold text-xs">E</div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="player in compStats.players" :key="player.licence" class="hover:bg-gray-100 border-b">
-                    <td class="py-2 px-3">
-                      <div class="font-medium flex items-center">
-                        <span v-if="player.captain !== 'E'" class="text-sm text-gray-500 mr-2">#{{ player.number }}</span>
-                        <span class="text-xs md:text-sm lg:text-base ml-1">{{ formatPrenom(player.firstname) }} {{ formatNom(player.name) }}</span>
-                        <span v-if="player.captain === 'C'" class="ml-2 bg-black text-white text-xs font-bold w-4 h-4 flex items-center justify-center rounded-sm">C</span>
-                        <span v-if="player.captain === 'E'" class="ml-2 text-xs text-gray-500">({{ t('Stats.Coach') }})</span>
-                      </div>
-                    </td>
-                    <td class="py-2 px-2 text-center">{{ player.goals > 0 ? player.goals : '' }}</td>
-                    <td class="py-2 px-2 text-center">{{ player.green_cards > 0 ? player.green_cards : '' }}</td>
-                    <td class="py-2 px-2 text-center">{{ player.yellow_cards > 0 ? player.yellow_cards : '' }}</td>
-                    <td class="py-2 px-2 text-center">{{ player.red_cards > 0 ? player.red_cards : '' }}</td>
-                    <td class="py-2 px-2 text-center">{{ player.exclusions > 0 ? player.exclusions : '' }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <TeamPlayerStats :players="compStats.players" :medal-players="competitionMedals[compStats.competition_code]?.players" :catalog="medalCatalog" head-class="bg-gray-100" />
             </div>
           </div>
         </div>
@@ -384,19 +319,19 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGames } from '~/composables/useGames'
 import { useCharts } from '~/composables/useCharts'
 import { useAutoRefresh } from '~/composables/useAutoRefresh'
-import { formatNom, formatPrenom } from '~/utils/nameFormat'
 import { usePreferenceStore } from '~/stores/preferenceStore'
 import { useApi } from '~/composables/useApi'
 import GameList from '~/components/GameList.vue'
 import TeamName from '~/components/TeamName.vue'
 import RankingMark from '~/components/RankingMark.vue'
+import TeamPlayerStats from '~/components/TeamPlayerStats.vue'
 
 // Protect this page - require event selection
 definePageMeta({
   middleware: 'event-guard'
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const preferenceStore = usePreferenceStore()
@@ -427,10 +362,16 @@ const isLoading = ref(false)
 const showFilters = ref(false)
 const stats = ref(null)
 const groupStatsData = ref(null)
+// Medals of the team and of its players over the perimeter of the page (FEATURE_MATCH_MEDALS.md § 9.1)
+const { catalog: medalCatalog, load: loadMedalCatalog } = useMedalCatalog()
+const teamMedals = ref(null)
+const competitionMedals = ref({})
 
 const runtimeConfig = useRuntimeConfig()
 const baseUrl = runtimeConfig.public.backendBaseUrl
 const { getApi } = useApi()
+const { publicSiteUrl } = runtimeConfig.public
+const explanationsUrl = computed(() => `${publicSiteUrl}${locale.value === 'en' ? '/en' : ''}/medals`)
 
 // Page-specific SEO (will be updated when team is selected)
 const pageTitle = computed(() =>
@@ -475,11 +416,26 @@ const groupStats = computed(() => {
     .filter(comp => comp.players.length > 0)
 })
 
+// Medals are optional: a failure shows none and never blocks the statistics
+const fetchJson = async (path) => {
+  try {
+    const response = await getApi(path)
+    return response.ok ? await response.json() : null
+  } catch {
+    return null
+  }
+}
+
+const teamMedalItems = computed(() => (teamMedals.value?.team ?? [])
+  .flatMap(medal => medalCatalog.value.get(medal.code) ? [{ item: medalCatalog.value.get(medal.code), count: medal.count }] : []))
+
 // Fetch team statistics
 const fetchStats = async (teamId) => {
   if (!teamId) {
     stats.value = null
     groupStatsData.value = null
+    teamMedals.value = null
+    competitionMedals.value = {}
     return
   }
 
@@ -496,6 +452,12 @@ const fetchStats = async (teamId) => {
       } else {
         groupStatsData.value = null
       }
+      const [groupMedals, ...perCompetition] = await Promise.all([
+        fetchJson(`/group/${lastSeason}/${lastGroup.code}/team/${teamId}/medals`),
+        ...(groupStatsData.value ?? []).map(comp => fetchJson(`/competition/${lastSeason}/${comp.competition_code}/team/${comp.team_id}/medals`))
+      ])
+      teamMedals.value = groupMedals
+      competitionMedals.value = Object.fromEntries((groupStatsData.value ?? []).map((comp, index) => [comp.competition_code, perCompetition[index]]))
     } else {
       groupStatsData.value = null
       const eventId = preferenceStore.preferences.lastEvent?.id
@@ -509,11 +471,13 @@ const fetchStats = async (teamId) => {
       } else {
         stats.value = null
       }
+      teamMedals.value = await fetchJson(`/event/${eventId}/team/${teamId}/medals`)
     }
   } catch (e) {
     console.error('Error fetching stats:', e)
     stats.value = null
     groupStatsData.value = null
+    teamMedals.value = null
   }
 }
 
@@ -1078,6 +1042,7 @@ useAutoRefresh(() => loadData(true), 'games_last_api_load')
 onMounted(async () => {
   await Promise.all([
     preferenceStore.fetchItems(),
+    loadMedalCatalog(),
     getGamesFav(),
     getChartsFav(),
     loadData()

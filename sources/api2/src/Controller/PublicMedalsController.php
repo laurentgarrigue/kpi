@@ -6,6 +6,7 @@ use App\Http\UnicodeJsonResponse;
 use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\MatchMedalReader;
+use App\PublicResults\Scope\CompetitionScope;
 use App\PublicResults\Scope\EventScopeFactory;
 use App\PublicResults\Scope\GroupScope;
 use App\PublicResults\Scope\ResultsScope;
@@ -94,6 +95,17 @@ final class PublicMedalsController extends AbstractController
     public function groupTeamMedals(string $season, string $groupCode, int $teamId): JsonResponse
     {
         return $this->scopedTeamMedals(new GroupScope($season, $groupCode), $teamId);
+    }
+
+    #[Route('/competition/{season}/{code}/team/{teamId}/medals', name: 'public_competition_team_medals', methods: ['GET'], requirements: ['season' => '\d{4}', 'code' => '[A-Za-z0-9_-]{1,20}', 'teamId' => '\d{1,9}'])]
+    #[OA\Get(
+        path: '/competition/{season}/{code}/team/{teamId}/medals',
+        summary: 'Medals of a team and of its players over one competition, published on app2',
+        tags: ['2. App2 - Public'],
+    )]
+    public function competitionTeamMedals(string $season, string $code, int $teamId): JsonResponse
+    {
+        return $this->scopedTeamMedals(new CompetitionScope($season, $code), $teamId);
     }
 
     private function scopedTeamMedals(ResultsScope $scope, int $teamId): JsonResponse
