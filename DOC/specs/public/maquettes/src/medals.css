@@ -73,6 +73,9 @@
 .shield.solid .body { fill: var(--fam); }
 .shield.solid .chief { fill: #fff; opacity: .16; clip-path: none; }
 .shield.solid .line { stroke: var(--shield-ink); opacity: .45; }
+/* KPI watermark, top left of the chief */
+.shield .wm { font: 800 4.4px/1 var(--body, sans-serif); letter-spacing: .25px; fill: currentColor; opacity: .55; }
+.shield .mi { margin-top: -4%; }
 .shield.tint .body { fill: color-mix(in srgb, var(--fam) 13%, var(--surface, #fff)); stroke: var(--fam); stroke-width: 1.6; }
 .shield.tint .chief { fill: var(--fam); opacity: .1; }
 .shield.tint .line { stroke: var(--fam); opacity: .35; }

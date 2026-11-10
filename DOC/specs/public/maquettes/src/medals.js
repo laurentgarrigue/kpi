@@ -108,7 +108,7 @@ function pill(code, { count = 1, detail = '', thresholds = THRESHOLDS, lang = 'f
 const SHIELD_OUTER = 'M2 2.5h36v22C38 35 30 41 20 44.5 10 41 2 35 2 24.5z';
 const SHIELD_INNER = 'M5.5 6h29v18.5c0 8-6 13-14.5 16.5C11.5 37.5 5.5 32.5 5.5 24.5z';
 function shield(code, { size = 56, variant = 'solid', count = 1 } = {}) {
-  return `<span class="shield ${variant}" style="--w:${size}px"><svg class="sh" viewBox="0 0 40 46" aria-hidden="true"><path class="body" d="${SHIELD_OUTER}"/><path class="chief" d="M2 2.5h36v8.5H2z"/><path class="line" d="${SHIELD_INNER}"/></svg>${iconSvg(code, size)}${count > 1 ? `<span class="cnt">×${count}</span>` : ''}</span>`;
+  return `<span class="shield ${variant}" style="--w:${size}px"><svg class="sh" viewBox="0 0 40 46" aria-hidden="true"><path class="body" d="${SHIELD_OUTER}"/><path class="chief" d="M2 2.5h36v8.5H2z"/><path class="line" d="${SHIELD_INNER}"/><text class="wm" x="6.2" y="10.4">KPI</text></svg>${iconSvg(code, size)}${count > 1 ? `<span class="cnt">×${count}</span>` : ''}</span>`;
 }
 let STIP = 0;
 /** A shield with its double name under it and the explanation in a tooltip (app2 team page, medal boards). */
