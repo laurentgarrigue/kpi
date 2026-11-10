@@ -27,18 +27,18 @@ export interface AdminMedalItem {
   updated_by: string | null
 }
 
-/** Literal classes, so that Tailwind generates them. */
+/** Family colour of the shield; literal classes, so that Tailwind generates them. */
 export const FAMILY_CLASSES: Record<MedalFamily, string> = {
-  elan: 'text-fam-elan bg-fam-elan/15',
-  reaction: 'text-fam-reaction bg-fam-reaction/15',
-  endurance: 'text-fam-endurance bg-fam-endurance/15',
-  superiorite: 'text-fam-superiorite bg-fam-superiorite/15',
-  finition: 'text-fam-finition bg-fam-finition/15',
-  defense: 'text-fam-defense bg-fam-defense/15',
-  esprit: 'text-fam-esprit bg-fam-esprit/15',
-  arbitrage: 'text-fam-arbitrage bg-fam-arbitrage/15',
-  match: 'text-fam-match bg-fam-match/15',
-  analyse: 'text-fam-analyse bg-fam-analyse/15',
+  elan: 'text-fam-elan',
+  reaction: 'text-fam-reaction',
+  endurance: 'text-fam-endurance',
+  superiorite: 'text-fam-superiorite',
+  finition: 'text-fam-finition',
+  defense: 'text-fam-defense',
+  esprit: 'text-fam-esprit',
+  arbitrage: 'text-fam-arbitrage',
+  match: 'text-fam-match',
+  analyse: 'text-fam-analyse',
 }
 
 const NO_VALUE = '—'

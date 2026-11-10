@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FAMILY_CLASSES, formatStatValue, isRefereeKind, statSubject, svgWithUniqueIds, type AdminMedalItem } from '~/utils/medals'
+import { formatStatValue, isRefereeKind, statSubject, type AdminMedalItem } from '~/utils/medals'
 
 /**
  * Admin of the match medals, profiles 1 and 2 (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 9.3, maquette
@@ -45,7 +45,6 @@ const byCode = computed(() => new Map(items.value.map(item => [item.code, item])
 const shownItems = computed(() => items.value.filter(item =>
   (!typeFilter.value || item.type === typeFilter.value) && (!unpublishedOnly.value || (!item.published_app2 && !item.published_app3))))
 const tabKinds = computed(() => kinds.value.filter(entry => isRefereeKind(entry.code) === (tab.value === 'referees')))
-const iconOf = (item: AdminMedalItem) => svgWithUniqueIds(item.icon_svg, item.code)
 const variables = (template: string) => [...new Set(template.match(/\{\w+\}/g) ?? [])]
 
 async function loadCatalogue() {
@@ -172,10 +171,7 @@ onMounted(async () => {
           <tbody>
             <tr v-for="item in shownItems" :key="item.code" class="border-t border-header-100 dark:border-header-800" :class="{ 'opacity-50': item.status === 'retired' }">
               <td class="py-2 pr-2">
-                <span class="inline-grid h-7 w-7 place-items-center rounded-full" :class="FAMILY_CLASSES[item.family]">
-                  <!-- eslint-disable-next-line vue/no-v-html -- pictogram of the api2 catalogue -->
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="iconOf(item)" />
-                </span>
+                <MedalShield :item="item" :size="36" />
               </td>
               <td class="py-2 pr-2">
                 <b>{{ item.name_fr }}</b><span v-if="item.name_fr !== item.name_en" class="italic text-header-500"> · {{ item.name_en }}</span>

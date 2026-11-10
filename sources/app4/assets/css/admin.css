@@ -114,6 +114,7 @@
   --color-fam-arbitrage: #45484f;
   --color-fam-match: #9b3a6f;
   --color-fam-analyse: #20265b;
+  --color-shield-ink: #fff;
 
   /* Header - deep blue (#20265b) */
   --color-header-50: oklch(0.970 0.014 274.28);
@@ -255,6 +256,7 @@ h1, h2 {
   --color-fam-arbitrage: #c7cbd3;
   --color-fam-match: #e79bc4;
   --color-fam-analyse: #b8c0f0;
+  --color-shield-ink: #10131f;
 }
 
 /* Dark-mode Nuxt UI surface/text tokens.
