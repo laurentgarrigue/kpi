@@ -259,7 +259,16 @@
     "NotFound": "Match non trouvé ou non disponible",
     "Refresh": "Actualiser",
     "Back": "Retour",
-    "Goal": "But"
+    "Goal": "But",
+    "Reason": {
+      "r_pad": "Pagaie",
+      "r_kt": "Éperonnage",
+      "r_ht": "Poussée / Accrochage",
+      "r_p": "Possession",
+      "r_o": "Obstruction",
+      "r_un": "Antisportif / contestation",
+      "r_rep": "Remplacement"
+    }
   },
   "errors": {
     "generic": {

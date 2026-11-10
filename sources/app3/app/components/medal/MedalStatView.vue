@@ -73,7 +73,7 @@ const percent = (value: unknown) => (value === null || value === undefined ? 'â€
         <span>
           <b class="font-semibold">{{ name(stat.kind === 'medals_players' ? row : row.referee) }}</b>
           <small class="block text-muted">
-            <template v-if="stat.kind === 'medals_players'">{{ row.team?.label }}<template v-if="row.number !== null">, {{ $t('stats.playerNumber', { number: row.number }) }}</template></template>
+            <template v-if="stat.kind === 'medals_players'">{{ row.team?.label }}<template v-if="row.number !== null">, {{ $t('results.stats.playerNumber', { number: row.number }) }}</template></template>
             <template v-else>{{ $t('medals.gamesOfficiated', { n: row.games }, Number(row.games)) }}</template>
           </small>
         </span>

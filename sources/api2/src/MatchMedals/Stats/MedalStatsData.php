@@ -214,5 +214,35 @@ final class MedalStatsData
                 $this->refereeNames[(int) $l['Matric']] = ['first_name' => $l['Prenom'], 'last_name' => $l['Nom']];
             }
         }
+        $this->loadOffRosterPlayers();
+    }
+
+    /**
+     * A player can be on the game sheets without being (any more) on the team roster: named from the licence, numbered
+     * from the last game sheet of a medal that gives one.
+     */
+    private function loadOffRosterPlayers(): void
+    {
+        $missing = array_values(array_filter($this->medals, fn (array $m): bool => $m['scope'] === 'player' && $m['team_id'] !== null
+            && $m['matric'] !== null && !isset($this->players[$m['team_id'].'-'.$m['matric']])));
+        if ($missing === []) {
+            return;
+        }
+        $types = [ArrayParameterType::INTEGER, ArrayParameterType::INTEGER];
+        $params = [array_values(array_unique(array_column($missing, 'match_id'))), array_values(array_unique(array_column($missing, 'matric')))];
+        $names = $this->connection->fetchAllAssociativeIndexed('SELECT Matric, Nom, Prenom FROM kp_licence WHERE Matric IN (?)', [$params[1]], [$types[1]]);
+        $numbers = [];
+        foreach ($this->connection->fetchAllAssociative('SELECT Id_match, Matric, Numero FROM kp_match_joueur WHERE Id_match IN (?) AND Matric IN (?)', $params, $types) as $row) {
+            $numbers[$row['Id_match'].'-'.$row['Matric']] = $row['Numero'] === null ? null : (int) $row['Numero'];
+        }
+        usort($missing, static fn (array $a, array $b): int => $a['match_id'] <=> $b['match_id']);
+        foreach ($missing as $m) {
+            $key = $m['team_id'].'-'.$m['matric'];
+            $name = $names[$m['matric']] ?? ['Nom' => null, 'Prenom' => null];
+            $this->players[$key] = [
+                'first_name' => $name['Prenom'], 'last_name' => $name['Nom'],
+                'number' => $numbers[$m['match_id'].'-'.$m['matric']] ?? $this->players[$key]['number'] ?? null,
+            ];
+        }
     }
 }

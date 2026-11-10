@@ -167,6 +167,18 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
         $this->requestAs('TSUPER', 'GET', '/admin/medals/stats/referee_cards?season=2998', expectedStatus: 400);
     }
 
+    public function testAPlayerOnTheGameSheetButNoLongerOnTheTeamRosterKeepsANameAndANumber(): void
+    {
+        $this->db->executeStatement('DELETE FROM kp_competition_equipe_joueur WHERE Id_equipe = 9361 AND Matric = 9532');
+        $this->db->executeStatement("INSERT INTO kp_match_joueur (Id_match, Matric, Numero, Equipe, Capitaine) VALUES (9461, 9532, 7, 'A', '-')");
+
+        $rows = $this->getJson('/competition/2998/MED/stats/medals_players')['rows'];
+        $ben = array_values(array_filter($rows, static fn (array $r): bool => $r['first_name'] === 'Ben'));
+
+        self::assertCount(1, $ben, 'the player is named from his licence');
+        self::assertSame(['MEDAL', 7, 'Medal Oscar'], [$ben[0]['last_name'], $ben[0]['number'], $ben[0]['team']['label']]);
+    }
+
     public function testAdminSeasonsShowTheFrozenThresholds(): void
     {
         $seasons = $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons');

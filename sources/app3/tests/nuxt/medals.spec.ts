@@ -67,6 +67,11 @@ describe('stats tab (§ 9.2)', () => {
     expect(pill.attributes('tabindex')).toBe('0')
   })
 
+  it('player medals: the team and the shirt number under the name', async () => {
+    const wrapper = await mountRoute('/competitions/2998/MED/stats?stat=medals_players')
+    expect(wrapper.find('[data-testid="medal-row"]').text()).toContain('Medal Oscar, n° 1')
+  })
+
   it('MED-42: in English, the English name alone', async () => {
     const wrapper = await mountRoute('/en/competitions/2998/MED/stats?stat=medals_players')
     expect(wrapper.find('[data-testid="medal-pill"][data-medal="hat_trick"]').attributes('aria-label')).toBe('Hat-trick. Scores at least 3 goals in the game.')

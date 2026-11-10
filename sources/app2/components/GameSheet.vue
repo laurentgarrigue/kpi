@@ -219,7 +219,7 @@
                 <span class="text-blue-700 dark:text-blue-300 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
                 <span class="text-gray-500 text-sm ml-2">#{{ event.e_number }}</span>
                 <span class="text-gray-400 text-xs ml-2">({{ matchData.team_a.label }})</span>
-                <span v-if="event.e_motif" class="text-gray-500 text-xs ml-2">- {{ event.e_motif }}</span>
+                <span v-if="cardReason(event.e_motif)" class="text-gray-500 text-xs ml-2">- {{ cardReason(event.e_motif) }}</span>
               </div>
             </template>
 
@@ -227,7 +227,7 @@
             <template v-else>
               <!-- Event details -->
               <div class="flex-1 text-right">
-                <span v-if="event.e_motif" class="text-gray-500 text-xs mr-2">{{ event.e_motif }} -</span>
+                <span v-if="cardReason(event.e_motif)" class="text-gray-500 text-xs mr-2">{{ cardReason(event.e_motif) }} -</span>
                 <span class="text-gray-400 text-xs mr-2">({{ matchData.team_b.label }})</span>
                 <span class="text-gray-500 text-sm mr-2">#{{ event.e_number }}</span>
                 <span class="text-red-700 dark:text-red-400 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
@@ -261,7 +261,10 @@ import GameTimelineBar from '~/components/GameTimelineBar.vue'
 import GameMedals from '~/components/GameMedals.vue'
 import MedalPill from '~/components/MedalPill.vue'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
+
+// Card reason: its label, nothing when the code is empty, 'unknown' or not in the list (same codes as the app4 scoring)
+const cardReason = code => (code && te(`MatchSheet.Reason.${code}`) ? t(`MatchSheet.Reason.${code}`) : null)
 const runtimeConfig = useRuntimeConfig()
 const baseUrl = runtimeConfig.public.backendBaseUrl
 

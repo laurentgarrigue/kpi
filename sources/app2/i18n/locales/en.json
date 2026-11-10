@@ -259,7 +259,16 @@
     "NotFound": "Game not found or not available",
     "Refresh": "Refresh",
     "Back": "Back",
-    "Goal": "Goal"
+    "Goal": "Goal",
+    "Reason": {
+      "r_pad": "Paddle",
+      "r_kt": "Tackle",
+      "r_ht": "Hand Tackle / Holding",
+      "r_p": "Possession",
+      "r_o": "Obstruction",
+      "r_un": "Unsporting / Protest",
+      "r_rep": "Substitution"
+    }
   },
   "errors": {
     "generic": {
