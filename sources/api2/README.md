@@ -231,7 +231,9 @@ thresholds in `config/packages/match_medals.yaml` (frozen per season in `kp_meda
 
 - Public: `GET /medals/catalog?surface=public|app2|app3&season=`, `GET /team/{number}/medals?season=`,
   `GET /competition/{season}/{code}/labels`, `medals` in `GET /game-sheet/{id}`, timeline kinds in
-  `GET /competition/{season}/{code}/stats?surface=` (default `app3`).
+  `GET /competition/{season}/{code}/stats?surface=` (default `app3`); for app2's team page, the medals of a team and of
+  its players over a perimeter: `GET /event/{eventId}/team/{teamId}/medals`,
+  `GET /group/{season}/{groupCode}/team/{teamId}/medals`, `GET /competition/{season}/{code}/team/{teamId}/medals`.
 - Admin (ROLE_ADMIN, profiles 1–2): `/admin/medals/catalog`, `/admin/medals/seasons`, `/admin/medals/stats/{kind}`,
   `/admin/medals/games/{id}`.
 - Commands: `app:match-medals:compute --season=AAAA` (full season), `app:match-medals:sync` (cron, every 10 min).

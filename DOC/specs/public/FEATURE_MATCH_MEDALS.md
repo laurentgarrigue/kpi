@@ -694,11 +694,13 @@ Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout
 | Moteur | `sources/api2/src/MatchMedals/` (`MatchTimeline`, `Rule/*`, `MatchMedalCalculator`) | `tests/Unit/MatchMedals/` (MED-01 à 29, 53, 56) |
 | Persistance, commandes | `MatchMedalRepository`, `MatchMedalService`, `app:match-medals:compute` / `:sync`, recalcul dans `AdminGamesController` | `tests/Integration/MatchMedalsPersistenceTest.php`, `MatchMedalsValidationTest.php` |
 | Endpoints, statistiques | `Catalog/MedalCatalog`, `Stats/*` (20 statistiques), `MatchMedalReader`, `PublicMedalsController`, `AdminMedalsController` | `tests/Integration/MatchMedalsEndpointsTest.php` |
-| app3 | `components/medal/`, `pages/medals.vue`, `components/team/TeamMatchMedals.vue`, onglet Stats, liste des matchs | `tests/unit/medals.spec.ts`, `tests/nuxt/medals.spec.ts` |
-| app2 | `components/GameMedals.vue`, `MedalPill.vue`, `GameEventIcon.vue` (ballon) | lint (app2 n'a pas de tests) |
+| app3 | `components/medal/` (dont `MedalShield.vue`), `pages/medals.vue`, `components/team/TeamMatchMedals.vue`, onglet Stats, liste des matchs | `tests/unit/medals.spec.ts`, `tests/nuxt/medals.spec.ts` |
+| app2 | `components/GameMedals.vue`, `MedalPill.vue`, `MedalShield.vue`, `GoalCount.vue`, `TeamPlayerStats.vue`, `pages/team/[[team]].vue`, `GameEventIcon.vue` (ballon) | lint (app2 n'a pas de tests) |
 | app4 | `pages/medals/index.vue` | `tests/unit/medals.spec.ts` |
 
 **Écarts assumés par rapport aux sections précédentes** :
+
+- **Page équipe d'app2** (§ 9.1) : un point d'accès par compétition s'ajoute à ceux de l'événement et du groupe, pour que chaque tableau d'un groupe ne montre que les médailles de sa compétition. Les joueurs des statistiques et des médailles se retrouvent par leur **nom** (aucun numéro de licence dans les réponses médailles). Le blason de **64 px** est utilisé pour les médailles d'équipe (la maquette annonçait aussi 56 px par défaut) ; sur la page d'explications, 88 px.
 
 - **Surface** (§ 6.4) : sur les endpoints de compétition, `surface` vaut `app3` par défaut (au lieu d'un 400) pour
   qu'app3 reste déployable indépendamment ; une valeur inconnue ou `admin` renvoie 400. Les kinds des statistiques de

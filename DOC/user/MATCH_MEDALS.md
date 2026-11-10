@@ -15,8 +15,13 @@ plus.
   temps (ou avec des temps à `00:00`) n'attribue que les médailles liées au score.
 - Les faits d'un match comptent pour ses **deux arbitres**, et seuls les arbitres **désignés nommément** comptent.
 
-Où on les voit : la feuille de match d'**app2**, l'onglet **Stats** des compétitions, la fiche des équipes et la page
-**/medals** (explications) du site public.
+Où on les voit : la feuille de match et la **page équipe** d'**app2**, l'onglet **Stats** des compétitions, la fiche
+des équipes et la page **/medals** (explications) du site public.
+
+Une médaille se montre dans un **blason** à la couleur de sa famille, signé d'un petit « KPI » en haut à gauche ; un
+chiffre en pastille (« ×3 ») dit combien de fois elle a été gagnée. Sur la page équipe d'app2, le nombre de buts d'un
+joueur est le **ballon** avec la même pastille (« ×13 »), et les médailles de l'équipe et de ses joueurs portent sur
+l'événement (ou le groupe) choisi.
 
 ## La page Médailles
 

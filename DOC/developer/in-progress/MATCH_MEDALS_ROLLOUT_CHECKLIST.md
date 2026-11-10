@@ -27,10 +27,10 @@ app4 : l'impact hors beta est réel (feuille de match d'app2, page d'admin, reca
 |---|---|---|
 | feat(api2) moteur | `src/MatchMedals` : analyse de la timeline, une règle par élément, seuils | aucun |
 | feat(api2) persistance | migration `SQL/migrations/2026-11-09_public_site_match_medals.sql` (6 tables `kp_medal_*` / `kp_match_*`, catalogue initial) ; commandes `app:match-medals:compute` / `:sync` ; recalcul à la (dé)validation dans app4 | **schéma** : nouvelles tables seulement ; la (dé)validation d'un match dans app4 recalcule ses médailles |
-| feat(api2) endpoints | `/medals/catalog`, `/team/{n}/medals`, `/competition/…/labels`, `medals` dans `/game-sheet/{id}`, statistiques de timeline dans `/competition/…/stats` (paramètre `surface`, `app3` par défaut), `/admin/medals/*` (profils 1–2), pictogrammes `public/medals/icons/` | `/game-sheet/{id}` : champ **ajouté** ; `/competition/…/stats` : kinds **ajoutés** quand la compétition a des matchs calculés |
-| feat(app3) | onglet Stats, `/medals`, fiche équipe, étiquettes des matchs, entrée de menu | aucun (beta) |
-| feat(app2) | bloc Médailles de la feuille de match, ballon pour les buts (liste et frise) | **app2** : feuille de match ; variable `PUBLIC_SITE_URL` (lien vers `/medals`) |
-| feat(app4) | page **Médailles** (groupe Opérations, profils 1–2) | **app4** : nouvelle page |
+| feat(api2) endpoints | `/medals/catalog`, `/team/{n}/medals`, `/event/{id}/team/{teamId}/medals`, `/group/{season}/{code}/team/{teamId}/medals`, `/competition/{season}/{code}/team/{teamId}/medals`, `/competition/…/labels`, `medals` dans `/game-sheet/{id}`, statistiques de timeline dans `/competition/…/stats` (paramètre `surface`, `app3` par défaut), `/admin/medals/*` (profils 1–2), pictogrammes `public/medals/icons/` | `/game-sheet/{id}` : champ **ajouté** ; `/competition/…/stats` : kinds **ajoutés** quand la compétition a des matchs calculés |
+| feat(app3) | blason plein (écu français moderne, filigrane « KPI ») à la place du disque ; onglet Stats, `/medals`, fiche équipe, étiquettes des matchs, entrée de menu | aucun (beta) |
+| feat(app2) | bloc Médailles de la feuille de match, ballon pour les buts (liste et frise), **page équipe** (médailles d'équipe et de joueur, buts en ballon avec pastille « ×N »), blason | **app2** : feuille de match et page équipe ; variable `PUBLIC_SITE_URL` (lien vers `/medals`) |
+| feat(app4) | blason dans le catalogue ; page **Médailles** (groupe Opérations, profils 1–2) | **app4** : nouvelle page |
 | docs | spec, checklist, cron, guide utilisateur, jetons PDF resynchronisés (couleurs de famille) | aucun |
 
 ### M.2 ⌨️ Tester en local
@@ -46,7 +46,7 @@ make app4_bash                          # puis `npm test`
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 316 + integration 336 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
+| 1 | `make api2_test` | unit 316 + integration 340 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
 | 2 | `make app3_test` | unit 185, nuxt 188 (dont `medals.spec.ts`), e2e verts | ☐ |
 | 3 | `make api2_match_medals_compute season=2026` | `Season 2026: N validated games computed` ; relancé : mêmes nombres, aucune erreur | ☐ |
 | 4 | `make api2_match_medals_sync` | `0 computed, 0 removed` juste après le calcul complet | ☐ |
@@ -54,6 +54,9 @@ make app4_bash                          # puis `npm test`
 | 6 | `https://beta.kpi.localhost/medals` et `/en/medals` | éléments publiés par famille, double nom en français, nom anglais seul en anglais | ☐ |
 | 7 | Fiche d'une équipe de la saison | section « Médailles de match », compteurs menant à la feuille de match d'app2 | ☐ |
 | 8 | app2 : feuille d'un match validé à feuille complète | bloc Médailles, médailles d'arbitre, ballon aux couleurs des équipes ; match non validé : pas de bloc | ☐ |
+| 8b | app2 : page équipe d'un événement (ou d'un groupe) calculé | bloc « Médailles de l'équipe » en blasons de 64 px ; colonne « Médailles » du tableau des joueurs (sous le joueur sur mobile) ; buts en ballon avec « ×13 » (ballon seul pour 1 but, rien pour 0) ; hors événement calculé : ni bloc ni colonne, statistiques inchangées | ☐ |
+| 8c | `curl -s https://kpi.localhost/api2/event/<id>/team/<teamId>/medals` et `…/group/<saison>/<code>/team/<teamId>/medals` | `{ team, players }`, aucun numéro de licence ; équipe inconnue : `404` | ☐ |
+| 8d | Blasons dans app2, app3 (`/medals`, Stats, fiche équipe) et app4 (catalogue) ; thème sombre | blason plein, filigrane « KPI » en haut à gauche, pictogramme foncé en thème sombre | ☐ |
 | 9 | app4 › Opérations › Médailles (profil 1) | catalogue, saisons (v1, seuils), statistiques et arbitrage du contexte de travail ; profil 3 : page refusée | ☐ |
 | 10 | app4 : publier `goal_timing` sur app3, puis le retirer | la statistique apparaît puis disparaît de l'onglet Stats sans recalcul ; entrées dans le journal | ☐ |
 | 11 | app4 : dévalider puis revalider un match calculé | médailles supprimées puis recalculées aussitôt | ☐ |
