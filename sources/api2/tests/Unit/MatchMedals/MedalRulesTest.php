@@ -10,6 +10,9 @@ final class MedalRulesTest extends TestCase
 {
     use MedalAssertions;
 
+    /** The time-window scenarios below are written for 60-second windows, whatever the tuning of match_medals.yaml. */
+    private const SIXTY_SECOND_WINDOWS = ['bounceBackSeconds' => 60, 'lateWindowSeconds' => 60];
+
     public function testMed16OpenerGoesToTheTeamAndPlayerOfTheFirstGoalOnTheTimeAxis(): void
     {
         // recorded out of order: the goal of B comes first on the clock
@@ -35,11 +38,11 @@ final class MedalRulesTest extends TestCase
 
     public function testMed19BounceBackIsStrictlyUnderTheWindow(): void
     {
-        $quick = self::compute(GameBuilder::game()->goal('B', 'M1', '06:00', 8)->goal('A', 'M1', '05:01', 7)->build());
+        $quick = self::compute(GameBuilder::game()->goal('B', 'M1', '06:00', 8)->goal('A', 'M1', '05:01', 7)->build(), self::SIXTY_SECOND_WINDOWS);
         self::assertContains('bounce_back', self::teamCodes($quick, 'A'));
         self::assertContains('bounce_back', self::playerCodes($quick, 7));
 
-        $late = self::compute(GameBuilder::game()->goal('B', 'M1', '06:00', 8)->goal('A', 'M1', '05:00', 7)->build());
+        $late = self::compute(GameBuilder::game()->goal('B', 'M1', '06:00', 8)->goal('A', 'M1', '05:00', 7)->build(), self::SIXTY_SECOND_WINDOWS);
         self::assertNotContains('bounce_back', self::teamCodes($late, 'A'), '60 s is not under 60 s');
     }
 
@@ -100,15 +103,15 @@ final class MedalRulesTest extends TestCase
 
     public function testMed26LateWinnerAndLifelineReadTheRemainingTime(): void
     {
-        $late = self::compute(GameBuilder::game()->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '05:00', 6)->goal('A', 'M2', '00:45', 7)->build());
+        $late = self::compute(GameBuilder::game()->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '05:00', 6)->goal('A', 'M2', '00:45', 7)->build(), self::SIXTY_SECOND_WINDOWS);
         self::assertContains('late_winner', self::teamCodes($late, 'A'));
         self::assertContains('late_winner', self::playerCodes($late, 7));
 
-        $short = self::compute(GameBuilder::game()->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '05:00', 6)->goal('A', 'M2', '00:45', 7)->build(), ['regularPeriodSeconds' => 420]);
+        $short = self::compute(GameBuilder::game()->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '05:00', 6)->goal('A', 'M2', '00:45', 7)->build(), [...self::SIXTY_SECOND_WINDOWS, 'regularPeriodSeconds' => 420]);
         self::assertContains('late_winner', self::teamCodes($short, 'A'), 'same result with 7-minute halves');
 
         $lifeline = self::compute(GameBuilder::game()->knockout()->endedIn('P1')
-            ->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '00:30', 7)->goal('A', 'P1', '03:00', 6)->build());
+            ->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '00:30', 7)->goal('A', 'P1', '03:00', 6)->build(), self::SIXTY_SECOND_WINDOWS);
         self::assertContains('lifeline', self::teamCodes($lifeline, 'A'));
         self::assertContains('lifeline', self::playerCodes($lifeline, 7));
     }

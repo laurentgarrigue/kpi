@@ -4,7 +4,7 @@
 
 /* ------------------------------------------------------------------ thresholds (§ 5.4) */
 const THRESHOLDS = {
-  bounceBackSeconds: 60, comebackDeficit: 3, scoringRunGoals: 3, lateWindowSeconds: 60, fastStartSeconds: 30,
+  bounceBackSeconds: 30, comebackDeficit: 3, scoringRunGoals: 3, lateWindowSeconds: 30, fastStartSeconds: 30,
   hatTrickGoals: 3, bigWinMargin: 5, penaltyKillExclusions: 2, marathonOvertimes: 2, exclusionSeconds: 120,
   permanentCards: ['D'], regularPeriodSeconds: 600, extraPeriodSeconds: 300, thrillerLeadChanges: 3,
   seesawEqualizers: 4, goalFestTopPercent: 10, goalFestMinGames: 10, chessMatchMaxGoals: 2, goalTimingSliceSeconds: 120,

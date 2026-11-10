@@ -3,6 +3,7 @@
 namespace App\MatchMedals;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Keeps the stored medals in step with the validated games (FEATURE_MATCH_MEDALS.md § 6.3). A season is computed
@@ -16,6 +17,7 @@ final class MatchMedalService
         private readonly MatchMedalCalculator $calculator,
         #[Autowire('%match_medals.thresholds%')] private readonly array $thresholds,
         #[Autowire('%match_medals.rules_version%')] private readonly int $rulesVersion,
+        #[Autowire(service: 'services_resetter')] private readonly ResetInterface $servicesResetter,
     ) {
     }
 
@@ -50,7 +52,7 @@ final class MatchMedalService
     {
         $this->repository->saveSeason($season, MedalThresholds::fromArray($this->thresholds)->toArray(), $this->rulesVersion);
         $games = $this->repository->validatedGameIds($season);
-        $this->refreshGames($games);
+        $this->refreshBatch($games);
         $orphans = $this->repository->orphanGameIds($season);
         array_map(fn (int $id) => $this->repository->delete($id), $orphans);
         $this->repository->refreshSeasonCounts($season);
@@ -66,7 +68,7 @@ final class MatchMedalService
     public function sync(): array
     {
         $stale = $this->repository->staleGameIds();
-        $this->refreshGames($stale);
+        $this->refreshBatch($stale);
         $orphans = $this->repository->orphanGameIds();
         array_map(fn (int $id) => $this->repository->delete($id), $orphans);
 
@@ -76,6 +78,20 @@ final class MatchMedalService
     public function rulesVersion(): int
     {
         return $this->rulesVersion;
+    }
+
+    /**
+     * Console batches (thousands of games): services are reset between games, as a Messenger worker does between
+     * messages, otherwise in debug the profiler's query log (every query and its backtrace) exhausts the memory limit.
+     *
+     * @param list<int> $gameIds
+     */
+    private function refreshBatch(array $gameIds): void
+    {
+        foreach ($gameIds as $gameId) {
+            $this->refreshGame($gameId);
+            $this->servicesResetter->reset();
+        }
     }
 
     /** A season never computed first gets a copy of the current thresholds (§ 6.3, MED-32). */

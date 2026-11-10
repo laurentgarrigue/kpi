@@ -70,7 +70,7 @@ final class EligibilityTest extends TestCase
 
     public function testMed29ThresholdsComeFromOneConfigurationAndAllAreRequired(): void
     {
-        self::assertSame(60, self::thresholds()->bounceBackSeconds);
+        self::assertSame(30, self::thresholds()->bounceBackSeconds);
         $this->expectException(\InvalidArgumentException::class);
         MedalThresholds::fromArray(['bounceBackSeconds' => 45]);
     }

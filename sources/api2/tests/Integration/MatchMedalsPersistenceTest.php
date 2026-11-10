@@ -94,7 +94,7 @@ final class MatchMedalsPersistenceTest extends ApiTestCase
         $this->medals()->refreshGame(9461);
 
         $copy = json_decode((string) $this->db->fetchOne("SELECT thresholds FROM kp_medal_season WHERE season = '2998'"), true);
-        self::assertSame(60, $copy['bounceBackSeconds']);
+        self::assertSame(30, $copy['bounceBackSeconds']);
     }
 
     public function testMed31AGameIsComputedWithTheThresholdsOfItsSeason(): void

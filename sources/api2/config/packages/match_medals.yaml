@@ -5,10 +5,10 @@
 parameters:
     match_medals.rules_version: 1
     match_medals.thresholds:
-        bounceBackSeconds: 60          # Réplique · Bounce Back
+        bounceBackSeconds: 30          # Réplique · Bounce Back
         comebackDeficit: 3             # Remontée · Comeback, Retour au score · Fightback
         scoringRunGoals: 3             # Série · Scoring Run
-        lateWindowSeconds: 60          # Dernière minute · Late Winner, Égalisation salvatrice · Lifeline
+        lateWindowSeconds: 30          # Dernières secondes · Late Winner, Égalisation salvatrice · Lifeline
         fastStartSeconds: 30           # Entrée express · Fast Start
         hatTrickGoals: 3               # Triplé · Hat-trick, Triplé consécutif · Natural Hat-trick
         bigWinMargin: 5                # Large victoire · Big Win

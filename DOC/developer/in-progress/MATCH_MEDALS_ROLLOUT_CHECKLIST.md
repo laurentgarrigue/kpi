@@ -14,12 +14,12 @@ app4 : l'impact hors beta est réel (feuille de match d'app2, page d'admin, reca
 
 | # | Question | Retenu | ☑ |
 |---|---|---|---|
-| 1 | Matchs éligibles | validés et publiés, matchs de placement compris | ☐ |
-| 2 | Durée des périodes | 10 min / 5 min, approximation acceptée pour les formats courts | ☐ |
-| 3 | Exclusions | vert, jaune, rouge : 2 min levées au but adverse ; rouge définitif (`D`) : jusqu'à la fin du match | ☐ |
-| 4 | Seuils | un seul fichier (`sources/api2/config/packages/match_medals.yaml`), figés par saison | ☐ |
-| 5 | Publication | par surface (app2, app3), premier lot réduit, le reste dans l'admin (profils 1–2) | ☐ |
-| 6 | Arbitres | désignés nommément seulement ; faits du match comptés pour les deux ; médailles d'arbitre publiées dès le premier lot | ☐ |
+| 1 | Matchs éligibles | validés et publiés, matchs de placement compris | ☑ |
+| 2 | Durée des périodes | 10 min / 5 min, approximation acceptée pour les formats courts | ☑ |
+| 3 | Exclusions | vert, jaune, rouge : 2 min levées au but adverse ; rouge définitif (`D`) : jusqu'à la fin du match | ☑ |
+| 4 | Seuils | un seul fichier (`sources/api2/config/packages/match_medals.yaml`), figés par saison | ☑ |
+| 5 | Publication | par surface (app2, app3), premier lot réduit, le reste dans l'admin (profils 1–2) | ☑ |
+| 6 | Arbitres | désignés nommément seulement ; faits du match comptés pour les deux ; médailles d'arbitre publiées dès le premier lot | ☑ |
 
 ### M.1 Contenu (commits relisibles séparément)
 
@@ -46,7 +46,7 @@ make app4_bash                          # puis `npm test`
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 316 + integration 336 (tests `MED-*` : `MatchMedals*Test`) | ☐ |
+| 1 | `make api2_test` | unit 316 + integration 336 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
 | 2 | `make app3_test` | unit 185, nuxt 188 (dont `medals.spec.ts`), e2e verts | ☐ |
 | 3 | `make api2_match_medals_compute season=2026` | `Season 2026: N validated games computed` ; relancé : mêmes nombres, aucune erreur | ☐ |
 | 4 | `make api2_match_medals_sync` | `0 computed, 0 removed` juste après le calcul complet | ☐ |

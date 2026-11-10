@@ -286,10 +286,10 @@ ni dans les explications, qui les citent par variable). Valeurs initiales :
 
 | Paramètre | Valeur | Utilisé par |
 |---|---|---|
-| `bounceBackSeconds` | 60 | `bounce_back` |
+| `bounceBackSeconds` | 30 | `bounce_back` |
 | `comebackDeficit` | 3 | `comeback`, `fightback` |
 | `scoringRunGoals` | 3 | `scoring_run` |
-| `lateWindowSeconds` | 60 | `late_winner`, `lifeline` |
+| `lateWindowSeconds` | 30 | `late_winner`, `lifeline` |
 | `fastStartSeconds` | 30 | `fast_start` |
 | `hatTrickGoals` | 3 | `hat_trick`, `natural_hat_trick` |
 | `bigWinMargin` | 5 | `big_win` |
@@ -565,9 +565,9 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 - **MED-29** — Étant donné un seuil modifié dans `config/packages/match_medals.yaml`, quand on recherche ce seuil ailleurs
   dans le code, des règles ou des explications, alors on ne le trouve pas (une seule définition).
-- **MED-30** — Étant donné les saisons 2025 et 2026 calculées avec `bounceBackSeconds = 60`, quand le seuil passe à
+- **MED-30** — Étant donné les saisons 2025 et 2026 calculées avec `bounceBackSeconds = 30`, quand le seuil passe à
   45 et qu'on lance le calcul complet de 2026, alors seules les médailles de 2026 changent, et `kp_medal_season`
-  garde 60 pour 2025 et 45 pour 2026.
+  garde 30 pour 2025 et 45 pour 2026.
 - **MED-31** — Étant donné un match de 2025 validé après le changement de seuil, quand `sync` passe, alors il est
   calculé avec les seuils de 2025.
 - **MED-32** — Étant donné une saison jamais calculée, quand `sync` traite un de ses matchs, alors la saison reçoit
@@ -590,8 +590,8 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-39** — Étant donné un élément `retired`, alors il n'apparaît nulle part et n'est plus calculé.
 - **MED-40** — Étant donné un profil 3 ou plus, alors la page Médailles d'app4 et les endpoints `/admin/medals/*`
   lui sont refusés (403).
-- **MED-41** — Étant donné une explication contenant `{bounceBackSeconds}`, alors elle s'affiche avec 60 pour une
-  saison calculée à 60 et 45 pour une saison calculée à 45.
+- **MED-41** — Étant donné une explication contenant `{bounceBackSeconds}`, alors elle s'affiche avec 30 pour une
+  saison calculée à 30 et 45 pour une saison calculée à 45.
 - **MED-42** — Étant donné le site en français, alors une pastille affiche « Supériorité · Powerplay » ; en anglais,
   « Powerplay ».
 - **MED-43** — Toute modification du catalogue dans l'admin est journalisée (auteur, élément, avant / après).
