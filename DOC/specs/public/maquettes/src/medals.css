@@ -60,3 +60,32 @@
 .lvl { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; font-size: 11px; font-weight: 700; border: 1px solid var(--line, #dcdddd); color: var(--muted, #5d5f63); }
 
 .mock-note { font-size: 13px; color: var(--muted, #5d5f63); border-left: 3px solid var(--line, #dcdddd); padding: 4px 0 4px 10px; margin: 12px 0; max-width: 80ch; }
+
+/* Shield (écu français moderne): bigger than the 28 px disc, the pictogram fills most of it. */
+:root { --shield-ink: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --shield-ink: #10131f; } }
+:root[data-theme="dark"] { --shield-ink: #10131f; }
+.shield { position: relative; display: inline-grid; place-items: center; flex: none; width: var(--w, 56px); height: calc(var(--w, 56px) * 1.15); color: var(--fam); vertical-align: middle; }
+.shield .sh { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.shield .mi { position: relative; width: 60%; height: 60%; margin-top: -7%; stroke-width: 1.9; }
+.shield .line { fill: none; stroke-width: .6; }
+.shield.solid { color: var(--shield-ink); }
+.shield.solid .body { fill: var(--fam); }
+.shield.solid .chief { fill: #fff; opacity: .16; clip-path: none; }
+.shield.solid .line { stroke: var(--shield-ink); opacity: .45; }
+.shield.tint .body { fill: color-mix(in srgb, var(--fam) 13%, var(--surface, #fff)); stroke: var(--fam); stroke-width: 1.6; }
+.shield.tint .chief { fill: var(--fam); opacity: .1; }
+.shield.tint .line { stroke: var(--fam); opacity: .35; }
+.shield.tint { color: var(--fam); }
+.shield .cnt { position: absolute; right: -9%; bottom: -2%; min-width: 1.7em; padding: 1px 5px; border-radius: 999px; font: 700 calc(var(--w, 56px) * .24)/1.25 var(--body, sans-serif);
+  text-align: center; font-variant-numeric: tabular-nums; background: var(--surface, #fff); color: var(--fam); box-shadow: 0 0 0 1.5px var(--fam); }
+.shield .cnt { font-size: max(11px, calc(var(--w, 56px) * .24)); }
+.sitem { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 6px; width: 104px; text-align: center; font-size: 12.5px; line-height: 1.25; cursor: default; border-radius: 8px; padding: 4px 2px; }
+.sitem.bare { width: auto; padding: 2px 6px 2px 2px; }
+.sitem .nm b { font-weight: 700; display: block; } .sitem .nm .en { display: block; color: var(--muted, #5d5f63); font-style: italic; }
+.sitem .tip { position: absolute; z-index: 30; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); width: max-content; max-width: 250px; padding: 8px 10px; border-radius: 6px;
+  background: #1d2246; color: #fff; font-size: 12.5px; line-height: 1.4; text-align: left; box-shadow: 0 6px 20px rgb(0 0 0 / .25); display: none; pointer-events: none; font-weight: 400; }
+.sitem .tip .when { color: #b8c0f0; }
+.sitem:hover .tip, .sitem:focus .tip, .sitem:focus-visible .tip { display: block; }
+.sitem:focus-visible { outline: 3px solid var(--fam); outline-offset: 2px; }
+.shields { display: flex; flex-wrap: wrap; gap: 6px 10px; }
