@@ -659,7 +659,7 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 ## 12. Implémentation (09/11/2026)
 
-Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout checklist](../../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md#fonction-transverse--médailles-de-match-et-statistiques-de-timeline).
+Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout checklist](../../developer/in-progress/MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
 
 | Brique | Où | Tests |
 |---|---|---|
