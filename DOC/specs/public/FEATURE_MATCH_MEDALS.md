@@ -39,6 +39,8 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Pictogrammes (09/11/2026) | **Dessinés exprès**, un par élément (§ 7.1). Validés avec les maquettes. |
 | Étiquette « peu de buts » (09/11/2026) | **Partie d’échecs · Chess Match** (pion d’échecs) remplace *Verrouillé · Lockdown*, dont le nom et le cadenas se confondaient avec le verrouillage d’un match. |
 | Ballon (09/11/2026) | Les pictogrammes qui montrent un ballon dessinent le **ballon de kayak-polo** (celui du water-polo), d'après le **dessin de référence choisi** : disque plein, panneaux blancs en trois groupes autour d'une jonction en « Y » décentrée. Le ballon seul (`goal`) devient le **symbole du but** dans toutes les applications, à la place des cercles et disques actuels (§ 7.2). |
+| Blason (10/11/2026) | Une médaille s'affiche dans un **blason** (écu français moderne), **plein** dans la couleur de sa famille, pictogramme clair, **filigrane « KPI »** en haut à gauche, compteur en pastille (« ×3 ») : **56 px** par défaut, 40 px dans les tableaux. Un seul rendu pour **tous** les affichages (app2, app3, app4, étiquettes de match) ; il remplace le disque de 28 px (§ 7.3). |
+| Page équipe d'app2 (10/11/2026) | Les médailles d'**équipe** et de **joueur** s'affichent sur la page équipe d'app2, sur le périmètre de l'événement ou du groupe choisi (nouveaux endpoints § 6.4). Dans ses statistiques de joueurs, le **nombre de buts** devient le **ballon** (`goal`) avec la **même pastille** que les médailles (« ×13 ») (§ 9.1). |
 | Arbitres, publication (09/11/2026) | Les **médailles d'arbitre** sont publiées **dès le premier lot** (§ 4). Les statistiques d'arbitrage autres que *Matchs arbitrés* et *Médailles des arbitres* restent réservées à l'admin, **profils 1 et 2 seulement**. |
 | Arbitres (09/11/2026) | Les actions de l'arbitre principal et du secondaire ne se distinguent pas dans la timeline : **chaque fait de match compte pour les deux**. Seuls les matchs dont un arbitre au moins est **désigné nominativement** (`Matric_arbitre_principal` / `Matric_arbitre_secondaire` renseigné) comptent, et seulement pour l'arbitre ainsi désigné (§ 3.5, § 5.6). |
 
@@ -397,6 +399,7 @@ endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 | `GET /event/{id}/stats?surface=` et `…/stats/{kind}?surface=` | mêmes statistiques sur un événement | app3, app2 |
 | `GET /competition/{season}/{code}/stats/referee_*`, `GET /event/{id}/stats/referee_*` | statistiques d'arbitrage, même format commun ; aucune ligne pour un arbitre sous `refereeMinGames` sur les indicateurs de cartons | app3, app2 |
 | `GET /team/{id}/medals?season=` | médailles de l'équipe publiées sur app3 sur la saison, par code, avec les matchs concernés | app3 |
+| `GET /event/{eventId}/team/{teamId}/medals` et `GET /group/{season}/{groupCode}/team/{teamId}/medals` | médailles d'une équipe sur le périmètre : `{ team: [{ code, count }], players: [{ first_name, last_name, number, medals: [{ code, count }] }] }`, éléments publiés sur app2 (`teamId` = `kp_competition_equipe.Id`, comme les statistiques de joueurs existantes ; l'équipe est retrouvée dans les autres compétitions par son numéro) ; `eventId` ≥ 3000 désigne une journée (contrat historique d'app2) | app2 |
 | `GET /admin/medals/catalog`, `PATCH /admin/medals/catalog/{code}` | catalogue complet ; modification des noms, explications, statut, surfaces, ordre (profils 1–2) | app4 |
 | `GET /admin/medals/seasons` | saisons calculées : seuils, `rules_version` (et retard éventuel), date, nombre de matchs | app4 |
 | `GET /admin/medals/stats/{kind}?season=&competitions=&event=` | toutes les statistiques actives, mêmes formats, avec leurs surfaces | app4 |
@@ -411,6 +414,15 @@ Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; le
   et **info-bulle** avec l'explication et, pour un but, son temps (« 2ᵉ mi-temps · 03:12 »).
 - Couleur par **famille**, issue des jetons de la charte, jamais seule porteuse du sens (nom toujours écrit).
 - Accessibilité : `aria-label` = nom + explication + compteur.
+
+### 7.3 Blason
+
+La pastille « disque de 28 px » est remplacée par un **blason** : écu français moderne (chef plat, côtés droits,
+pointe arrondie) rempli de la **couleur de la famille**, liseré intérieur, chef éclairci, pictogramme clair
+(foncé en thème sombre) occupant 60 % de la largeur. Le **filigrane « KPI »** se place en haut à gauche, à 55 %
+d'opacité, il se lit à partir de 56 px et devient un simple motif en dessous. Le **compteur** (« ×3 ») est une
+pastille à l'angle bas droit du blason. Tailles : 40 px (tableaux, mobile, nom en info-bulle), 56 px (défaut,
+nom double dessous), 88 px (page d'explications). Même accessibilité que la pastille (§ 7). Maquette : `blasons`.
 
 ### 7.1 Pictogrammes
 
@@ -465,6 +477,10 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
   repère discret.
 - Match non validé : bloc absent. Timeline non fiable : mention « Médailles chronologiques indisponibles (feuille
   incomplète) ».
+- **Page équipe** (`/team/[team]`, périmètre de l'événement ou du groupe choisi) : bloc « Médailles de l'équipe »
+  (blasons de 64 px, nom double, compteur) et colonne « Médailles » du tableau des statistiques (blasons de 40 px
+  sans nom ; sous 600 px de large, sur une ligne sous le joueur). Dans ce tableau, le **nombre de buts**
+  est le **ballon** (`goal`) avec la **même pastille** que les médailles (« ×13 ») ; un joueur sans but n'a pas de ballon.
 - Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante (arbitrage
   compris, s'ils y sont publiés).
 - Sous la ligne des arbitres : les médailles d'arbitre du match (une seule ligne, communes aux deux arbitres).
@@ -638,6 +654,18 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-61** — Dans app2, app3, le Scoring d'app4 et les PDF, un but est représenté par le pictogramme `goal`
   (ballon de kayak-polo) dans la couleur de son équipe, et non plus par un cercle ou un disque.
 
+**Blason et page équipe d'app2** (10/11/2026)
+
+- **MED-62** — Toute médaille s'affiche dans un blason plein de la couleur de sa famille, avec le filigrane « KPI »
+  en haut à gauche et le compteur en pastille quand il dépasse 1 ; un nom de médaille reste accessible (`aria-label`,
+  info-bulle).
+- **MED-63** — Étant donné une équipe et un groupe (ou un événement), alors `…/team/{teamId}/medals` renvoie ses
+  médailles d'équipe et de joueur publiées sur app2, sans numéro de licence ; une équipe inconnue renvoie 404.
+- **MED-64** — Les médailles ne comptent que les matchs validés du périmètre demandé : un match d'une autre journée
+  ou d'un autre événement n'y apparaît pas.
+- **MED-65** — Étant donné un joueur de 13 buts sur la page équipe d'app2, alors le tableau montre le ballon avec la
+  pastille « ×13 » ; avec 1 but, le ballon sans pastille ; sans but, rien.
+
 ## 11. Hors périmètre et questions ouvertes
 
 **Hors périmètre (lots suivants)** :
@@ -654,8 +682,8 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 **Questions ouvertes** : aucune (Q1 à Q5 tranchées les 08 et 09/11/2026, cf. § 1.1).
 
-**Maquettes (validées le 09/11/2026)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
-`stats-medailles`, `equipe-medailles`, `app2-feuille`, `admin-medailles`).
+**Maquettes (validées les 09 et 10/11/2026, dont `blasons` et `app2-equipe`)** : [maquettes/](maquettes/README.md#médailles-et-statistiques-de-timeline) (`pictogrammes`, `medailles`,
+`stats-medailles`, `equipe-medailles`, `app2-feuille`, `admin-medailles`, `blasons`, `app2-equipe`).
 
 ## 12. Implémentation (09/11/2026)
 

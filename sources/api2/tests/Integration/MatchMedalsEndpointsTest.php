@@ -121,6 +121,39 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
         $this->getJson('/team/161/medals', 400);
     }
 
+    public function testMed63And64TheMedalsOfATeamInAGroupAreThoseOfApp2WithItsPlayersAndNoLicence(): void
+    {
+        $body = $this->getJson('/group/2998/TSTMED/team/9361/medals');
+
+        $teamCodes = array_column($body['team'], 'count', 'code');
+        self::assertArrayHasKey('hat_trick', $teamCodes, 'a player medal without a team version counts for the team');
+        self::assertArrayNotHasKey('fair_play', $teamCodes, 'published on app3 only');
+        $players = array_column($body['players'], null, 'number');
+        self::assertSame('Ben', $players[2]['first_name']);
+        self::assertContains('game_winner', array_column($players[2]['medals'], 'code'));
+        self::assertSame(['code' => 'hat_trick', 'count' => 1], array_values(array_filter($players[1]['medals'], static fn (array $m): bool => $m['code'] === 'hat_trick'))[0]);
+        foreach (['9531', '9532', 'matric', 'licence'] as $private) {
+            self::assertStringNotContainsString($private, json_encode($body), "the response exposes $private");
+        }
+    }
+
+    public function testMed64TheMedalsOfATeamInAnEventOrAGamedayOnlyCountTheGamesOfThatPerimeter(): void
+    {
+        $event = $this->getJson('/event/81/team/9361/medals');
+        $gameday = $this->getJson('/event/9291/team/9361/medals');
+        self::assertSame($event, $gameday, 'an id from 3000 is a gameday, the same games here');
+        self::assertNotSame([], $event['team']);
+
+        // another gameday holds none of the games: nothing to show, but the team exists
+        self::assertSame(['team' => [], 'players' => []], $this->getJson('/event/80/team/9361/medals'));
+    }
+
+    public function testMed63AnUnknownTeamIs404(): void
+    {
+        $this->getJson('/group/2998/TSTMED/team/1/medals', 404);
+        $this->getJson('/event/81/team/1/medals', 404);
+    }
+
     public function testThrillerLabelOfTheCompetitionGames(): void
     {
         self::assertSame(['9461' => ['thriller']], $this->getJson('/competition/2998/MED/labels')['labels']);

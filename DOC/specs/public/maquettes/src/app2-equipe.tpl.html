@@ -85,7 +85,7 @@ function render() {
         <th><span class="cardhd" style="background:#22c55e"></span></th><th><span class="cardhd" style="background:#facc15"></span></th><th><span class="cardhd" style="background:#dc2626"></span></th>
         <th class="md" style="text-align:left">Médailles</th></tr></thead>
         <tbody>${rows.map(({ p, g, V, J, R }) => { const ms = medalsOf(p.id).map(([c, k]) => shieldItem(c, { size: 40, named: false, count: k })).join('');
-          return `<tr${ms ? ' class="has"' : ''}><td><span class="num">#${p.number}</span>${esc(p.first)} ${esc(p.last)}</td><td>${n(g)}</td><td>${n(V)}</td><td>${n(J)}</td><td>${n(R)}</td>
+          return `<tr${ms ? ' class="has"' : ''}><td><span class="num">#${p.number}</span>${esc(p.first)} ${esc(p.last)}</td><td style="padding-right:20px">${goalCount(g)}</td><td>${n(V)}</td><td>${n(J)}</td><td>${n(R)}</td>
           <td class="md"><div class="shields">${ms || '<span class="mock-hide">·</span>'}</div></td></tr>${ms ? `<tr class="mrow"><td colspan="5"><div class="shields">${ms}</div></td></tr>` : ''}`; }).join('')}</tbody></table></div></section>
     <p class="mock-note">Les médailles de joueur sont des blasons de 40 px sans nom (nom et explication au toucher ou au clavier), pour tenir sur une ligne du tableau actuel. Périmètre : l’événement (ou le groupe) choisi dans l’application, comme les statistiques existantes. Seules les médailles publiées sur app2 apparaissent ; une équipe sans match validé n’a pas de bloc « Médailles ».</p>`;
 }

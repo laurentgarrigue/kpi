@@ -110,6 +110,8 @@ const SHIELD_INNER = 'M5.5 6h29v18.5c0 8-6 13-14.5 16.5C11.5 37.5 5.5 32.5 5.5 2
 function shield(code, { size = 56, variant = 'solid', count = 1 } = {}) {
   return `<span class="shield ${variant}" style="--w:${size}px"><svg class="sh" viewBox="0 0 40 46" aria-hidden="true"><path class="body" d="${SHIELD_OUTER}"/><path class="chief" d="M2 2.5h36v8.5H2z"/><path class="line" d="${SHIELD_INNER}"/><text class="wm" x="6.2" y="10.4">KPI</text></svg>${iconSvg(code, size)}${count > 1 ? `<span class="cnt">×${count}</span>` : ''}</span>`;
 }
+/** Goals of a player: ball pictogram, count pastille from 2 goals up (the same as a medal's counter). */
+const goalCount = n => n > 0 ? `<span class="gcount" role="img" aria-label="${n} but${n > 1 ? 's' : ''}">${iconSvg('goal', 22)}${n > 1 ? `<span class="cnt">×${n}</span>` : ''}</span>` : '';
 let STIP = 0;
 /** A shield with its double name under it and the explanation in a tooltip (app2 team page, medal boards). */
 function shieldItem(code, { count = 1, detail = '', size = 56, variant = 'solid', named = true, thresholds = THRESHOLDS, lang = 'fr' } = {}) {

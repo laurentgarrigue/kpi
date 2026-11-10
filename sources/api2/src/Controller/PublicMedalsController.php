@@ -6,6 +6,9 @@ use App\Http\UnicodeJsonResponse;
 use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\MatchMedalReader;
+use App\PublicResults\Scope\EventScopeFactory;
+use App\PublicResults\Scope\GroupScope;
+use App\PublicResults\Scope\ResultsScope;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -69,6 +72,35 @@ final class PublicMedalsController extends AbstractController
         }
 
         return $this->cached(['season' => $season, 'medals' => $this->medals->teamSeason($number, $season, MedalSurface::App3)]);
+    }
+
+    #[Route('/event/{eventId}/team/{teamId}/medals', name: 'public_event_team_medals', methods: ['GET'], requirements: ['eventId' => '\d{1,6}', 'teamId' => '\d{1,9}'])]
+    #[OA\Get(
+        path: '/event/{eventId}/team/{teamId}/medals',
+        summary: 'Medals of a team and of its players over an event (an id from 3000 is a gameday), published on app2',
+        tags: ['2. App2 - Public'],
+    )]
+    public function eventTeamMedals(int $eventId, int $teamId): JsonResponse
+    {
+        return $this->scopedTeamMedals(EventScopeFactory::fromEventId($eventId), $teamId);
+    }
+
+    #[Route('/group/{season}/{groupCode}/team/{teamId}/medals', name: 'public_group_team_medals', methods: ['GET'], requirements: ['season' => '\d{4}', 'groupCode' => '[A-Za-z0-9_-]{1,20}', 'teamId' => '\d{1,9}'])]
+    #[OA\Get(
+        path: '/group/{season}/{groupCode}/team/{teamId}/medals',
+        summary: 'Medals of a team and of its players over a group and a season, published on app2',
+        tags: ['2. App2 - Public'],
+    )]
+    public function groupTeamMedals(string $season, string $groupCode, int $teamId): JsonResponse
+    {
+        return $this->scopedTeamMedals(new GroupScope($season, $groupCode), $teamId);
+    }
+
+    private function scopedTeamMedals(ResultsScope $scope, int $teamId): JsonResponse
+    {
+        $medals = $this->medals->teamInScope($scope, $teamId, MedalSurface::App2);
+
+        return $medals === null ? new UnicodeJsonResponse(['error' => 'not_found'], 404) : $this->cached($medals);
     }
 
     private function cached(array $data): JsonResponse

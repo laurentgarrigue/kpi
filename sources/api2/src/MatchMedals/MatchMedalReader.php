@@ -6,6 +6,8 @@ use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\Stats\MedalScope;
 use App\MatchMedals\Stats\MedalStatsData;
+use App\PublicResults\Scope\ResultsScope;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /** Read side of the stored medals for the public pages (§ 6.4): one game, the labels of a competition, a team. */
@@ -96,7 +98,7 @@ final class MatchMedalReader
         );
         $data = new MedalStatsData($this->connection, new MedalScope($season, $competitions), $this->catalog->thresholdsOf($season));
         $visible = $this->catalog->visibleCodes($surface, 'medal');
-        $teamCodes = array_column(array_filter($this->catalog->all(), static fn (array $r): bool => str_contains((string) $r['scopes'], 'T')), 'code');
+        $teamCodes = $this->codesWithATeamVersion();
         $byCode = [];
         foreach ($data->medals() as $m) {
             $team = $data->team($m['team_id']);
@@ -112,5 +114,73 @@ final class MatchMedalReader
         uasort($byCode, static fn (array $a, array $b): int => [$b['count'], $order[$a['code']]] <=> [$a['count'], $order[$b['code']]]);
 
         return array_values(array_map(static fn (array $c): array => [...$c, 'games' => array_values($c['games'])], $byCode));
+    }
+
+    /**
+     * Medals of a team over a perimeter (an event, a gameday or a group), for app2's team page: the team's own, and the
+     * players' (§ 9.1, MED-63, MED-64). The team is identified by a `kp_competition_equipe` Id and found again in the
+     * other competitions of the perimeter by its number. No licence number: a player is named and numbered.
+     *
+     * @return array{team: list<array{code: string, count: int}>, players: list<array<string, mixed>>}|null null for an unknown team
+     */
+    public function teamInScope(ResultsScope $scope, int $teamId, MedalSurface $surface): ?array
+    {
+        $number = $this->connection->fetchOne('SELECT Numero FROM kp_competition_equipe WHERE Id = ?', [$teamId]);
+        if ($number === false || $number === null) {
+            return null;
+        }
+        $journees = $this->connection->fetchAllAssociative(
+            "SELECT j.Id, j.Code_saison season, j.Code_competition competition FROM kp_journee j
+            INNER JOIN kp_competition c ON (c.Code = j.Code_competition AND c.Code_saison = j.Code_saison) {$scope->join()}
+            WHERE j.Publication = 'O' AND c.Publication = 'O' AND {$scope->condition()}",
+            $scope->parameters(),
+        );
+        $matchIds = $journees === [] ? [] : array_map('intval', $this->connection->fetchFirstColumn(
+            'SELECT Id FROM kp_match WHERE Id_journee IN (?)',
+            [array_column($journees, 'Id')],
+            [ArrayParameterType::INTEGER],
+        ));
+        $competitionsBySeason = [];
+        foreach ($journees as $journee) {
+            $competitionsBySeason[$journee['season']][$journee['competition']] = $journee['competition'];
+        }
+        $visible = $this->catalog->visibleCodes($surface, 'medal');
+        $teamVersion = $this->codesWithATeamVersion();
+        $team = [];
+        $players = [];
+        foreach ($competitionsBySeason as $season => $competitions) {
+            $data = new MedalStatsData($this->connection, new MedalScope((string) $season, array_values($competitions)), $this->catalog->thresholdsOf((string) $season));
+            foreach ($data->medals() as $m) {
+                $owner = $data->team($m['team_id']);
+                if ($owner === null || $owner['number'] !== (int) $number || !in_array($m['code'], $visible, true)
+                    || $m['scope'] === 'referee' || !in_array($m['match_id'], $matchIds, true)) {
+                    continue;
+                }
+                if ($m['scope'] === 'team' || !in_array($m['code'], $teamVersion, true)) {
+                    $team[$m['code']] = ($team[$m['code']] ?? 0) + 1;
+                }
+                if ($m['scope'] === 'player' && $m['matric'] !== null) {
+                    $key = (string) $m['matric'];
+                    $players[$key] ??= [...$data->player((int) $m['team_id'], (int) $m['matric']), 'medals' => []];
+                    $players[$key]['medals'][$m['code']] = ($players[$key]['medals'][$m['code']] ?? 0) + 1;
+                }
+            }
+        }
+        $order = array_flip($visible);
+        $ranked = static function (array $counts) use ($order): array {
+            uksort($counts, static fn (string $a, string $b): int => [$counts[$b], $order[$a]] <=> [$counts[$a], $order[$b]]);
+
+            return array_map(static fn (string $code, int $count): array => ['code' => $code, 'count' => $count], array_keys($counts), $counts);
+        };
+        $players = array_map(static fn (array $p): array => [...$p, 'medals' => $ranked($p['medals'])], array_values($players));
+        usort($players, static fn (array $a, array $b): int => [$a['number'] ?? PHP_INT_MAX, $a['last_name'], $a['first_name']] <=> [$b['number'] ?? PHP_INT_MAX, $b['last_name'], $b['first_name']]);
+
+        return ['team' => $ranked($team), 'players' => $players];
+    }
+
+    /** @return list<string> codes of the medals that also exist for a team: their player version is not added to the team's count */
+    private function codesWithATeamVersion(): array
+    {
+        return array_column(array_filter($this->catalog->all(), static fn (array $r): bool => str_contains((string) $r['scopes'], 'T')), 'code');
     }
 }

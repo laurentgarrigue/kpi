@@ -92,3 +92,9 @@
 .sitem:hover .tip, .sitem:focus .tip, .sitem:focus-visible .tip { display: block; }
 .sitem:focus-visible { outline: 3px solid var(--fam); outline-offset: 2px; }
 .shields { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+
+/* Goals of a player: the ball and the same count pastille as the medals (no ball without a goal) */
+.gcount { position: relative; display: inline-grid; place-items: center; width: 26px; height: 26px; color: var(--ink, currentColor); vertical-align: middle; }
+.gcount .cnt { position: absolute; right: -14px; bottom: -4px; min-width: 1.7em; padding: 1px 5px; border-radius: 999px; font: 700 11px/1.25 var(--body, sans-serif); text-align: center;
+  font-variant-numeric: tabular-nums; background: var(--surface, #fff); color: currentColor; box-shadow: 0 0 0 1.5px currentColor; }
+.gcount.n1 { margin-right: 0; }
