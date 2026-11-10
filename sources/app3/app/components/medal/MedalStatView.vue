@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Stat } from '#kpi-layer/utils/results/types'
-import { FAMILY_CLASSES, medalExplanation, medalLabel, type MedalItem } from '~/utils/medals'
+import { medalExplanation, medalLabel, type MedalItem } from '~/utils/medals'
 import { personName } from '~/utils/people'
 
 /**
@@ -17,7 +17,6 @@ const { locale } = useI18n()
 const localePath = useLocalePath()
 const rows = computed(() => props.stat.rows as Row[])
 const summary = computed(() => (props.stat.summary ?? {}) as Record<string, number | null | string[]>)
-const family = computed(() => (props.item ? FAMILY_CLASSES[props.item.family] : FAMILY_CLASSES.analyse))
 const teamCodes = computed(() => ((summary.value.codes as string[] | undefined) ?? []).filter(code => props.byCode.has(code)))
 const name = (person: Partial<Person> | undefined) => personName([person?.last_name, person?.first_name].filter(Boolean).join(' ')) ?? 'â€”'
 const medalsOf = (row: Row) => Object.entries(row.medals ?? {}).filter(([code]) => props.byCode.has(code))
@@ -27,9 +26,7 @@ const percent = (value: unknown) => (value === null || value === undefined ? 'â€
 <template>
   <section class="space-y-4" :data-kind="stat.kind" data-testid="medal-stat">
     <header class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3.5 gap-y-1">
-      <span v-if="item" class="row-span-2 inline-grid size-12 place-items-center rounded-full ring-1" :class="[family.text, family.disc]">
-        <MedalIcon :item="item" :size="28" />
-      </span>
+      <MedalShield v-if="item" :item="item" :size="56" class="row-span-2" />
       <h2 class="text-3xl leading-none text-kpi-blue-700">{{ item ? medalLabel(item, locale) : $t(`stats.${stat.kind}.title`) }}</h2>
       <p v-if="item" class="text-sm text-muted">{{ medalExplanation(item, locale) }}</p>
     </header>
@@ -49,9 +46,7 @@ const percent = (value: unknown) => (value === null || value === undefined ? 'â€
           <tr class="text-xs text-muted">
             <th scope="col" class="px-1 py-1 text-left">{{ $t('results.col.team') }}</th>
             <th v-for="code in teamCodes" :key="code" scope="col" class="px-1 py-1">
-              <span class="inline-grid size-7 place-items-center rounded-full ring-1" :class="[FAMILY_CLASSES[byCode.get(code)!.family].text, FAMILY_CLASSES[byCode.get(code)!.family].disc]" :title="medalLabel(byCode.get(code)!, locale)">
-                <MedalIcon :item="byCode.get(code)!" :size="16" />
-              </span>
+              <MedalShield :item="byCode.get(code)!" :size="36" :title="medalLabel(byCode.get(code)!, locale)" />
               <span class="sr-only">{{ medalLabel(byCode.get(code)!, locale) }}</span>
             </th>
             <th scope="col" class="px-1 py-1">{{ $t('medals.col.total') }}</th>

@@ -45,9 +45,7 @@ const score = (game: TeamMedalGame) => (game.side === 'A' ? `${game.score_a}-${g
     </p>
     <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <li v-for="medal in medals" :key="medal.code" class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg border border-line p-3.5" :data-medal="medal.code" data-testid="team-medal">
-        <span class="inline-grid size-12 place-items-center rounded-full ring-1" :class="[FAMILY_CLASSES[byCode.get(medal.code)!.family].text, FAMILY_CLASSES[byCode.get(medal.code)!.family].disc]">
-          <MedalIcon :item="byCode.get(medal.code)!" :size="26" />
-        </span>
+        <MedalShield :item="byCode.get(medal.code)!" :size="56" />
         <span class="leading-tight">
           <b>{{ medalName(byCode.get(medal.code)!, locale).main }}</b><span v-if="medalName(byCode.get(medal.code)!, locale).english" class="text-muted italic"> · {{ medalName(byCode.get(medal.code)!, locale).english }}</span>
         </span>

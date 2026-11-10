@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { byFamily, FAMILY_CLASSES, medalExplanation, medalName } from '~/utils/medals'
+import { byFamily, medalExplanation, medalName } from '~/utils/medals'
 
 // Explanation page of the medals, labels and statistics (FEATURE_MATCH_MEDALS.md § 8, MED-48): everything published
 // on app2 OR app3, by family, with the thresholds of the chosen season (MED-41). Maquette `medailles`.
@@ -57,13 +57,11 @@ useSeoMeta({ title: () => t('medals.page.title'), description: () => t('medals.p
           <article
             v-for="item in section.items"
             :key="item.code"
-            class="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-4 gap-y-0.5 border-t border-line py-3.5"
+            class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 gap-y-0.5 border-t border-line py-3.5"
             :data-medal="item.code"
             data-testid="medal-explained"
           >
-            <span class="row-span-3 inline-grid size-12 place-items-center rounded-full ring-1" :class="[FAMILY_CLASSES[item.family].text, FAMILY_CLASSES[item.family].disc]">
-              <MedalIcon :item="item" :size="28" />
-            </span>
+            <MedalShield :item="item" :size="88" class="row-span-3" />
             <h3 class="font-sans text-lg font-bold">
               {{ medalName(item, locale).main }}<span v-if="medalName(item, locale).english" class="font-normal text-muted italic"> · {{ medalName(item, locale).english }}</span>
             </h3>

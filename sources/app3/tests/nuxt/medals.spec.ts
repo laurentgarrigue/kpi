@@ -1,7 +1,9 @@
 // Match medals on the public website (FEATURE_MATCH_MEDALS.md § 7 to § 9.2), on real api2 responses of the MED
 // competition (season 2998) captured after computing its medals.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
+import MedalShield from '~/components/medal/MedalShield.vue'
+import type { MedalItem } from '~/utils/medals'
 import { fakeApi2 } from '../fixtures/api2'
 import { mountRoute } from './results-setup'
 
@@ -110,5 +112,26 @@ describe('games list (§ 9.2)', () => {
     const row = wrapper.find('[data-game="9461"]')
     expect(row.find('[data-testid="game-labels"] [data-medal="thriller"]').attributes('aria-label')).toContain('Suspense · Thriller')
     expect(wrapper.find('[data-game="9462"] [data-testid="game-labels"]').exists()).toBe(false)
+  })
+})
+
+describe('shield (§ 7.3)', () => {
+  const item = { code: 'powerplay', type: 'medal', scopes: ['T', 'P'], family: 'superiorite', data_level: 'T', name_fr: 'Supériorité', name_en: 'Powerplay', explanation_fr: '', explanation_en: '', icon: 'powerplay', icon_svg: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>' } as MedalItem
+
+  it('MED-62: the pictogram is in a family-coloured shield with the KPI watermark, and the counter from 2', async () => {
+    const one = await mountSuspended(MedalShield, { props: { item } })
+    expect(one.classes()).toContain('text-fam-superiorite')
+    expect(one.find('svg text').text()).toBe('KPI')
+    expect(one.find('[data-testid="medal-shield-count"]').exists()).toBe(false)
+    const three = await mountSuspended(MedalShield, { props: { item, count: 3, size: 40 } })
+    expect(three.find('[data-testid="medal-shield-count"]').text()).toBe('×3')
+    expect(three.attributes('style')).toContain('width: 40px')
+  })
+
+  it('MED-62: every element of the explanations page has its shield', async () => {
+    const wrapper = await mountRoute('/medals')
+    const items = wrapper.findAll('[data-testid="medal-explained"]')
+    expect(items.length).toBeGreaterThan(0)
+    for (const element of items) expect(element.find('[data-testid="medal-shield"]').exists()).toBe(true)
   })
 })
