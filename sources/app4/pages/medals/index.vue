@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdChanges, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
+import { awardsBasis, awardsPerGame, changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdChanges, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
 
 /**
  * Admin of the match medals, profiles 1 and 2 (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 9.3, maquette
@@ -74,6 +74,14 @@ const shownSeasons = computed(() => seasons.value.flatMap((row) => {
 const shownRows = computed(() => (stat.value?.rows ?? []).filter(row => matchesQuery(queries[tab.value], statRowText(row, stat.value!.columns))))
 const column = (key: string) => (te(`medals.cols.${key}`) ? t(`medals.cols.${key}`) : humanizeKey(key))
 const number = (value: number) => value.toLocaleString(locale.value)
+const contextSeason = computed(() => seasons.value.find(row => row.season === workContext.season))
+/** Awards of the season of the work context, against the games they could be given on (§ 9.3). */
+const awardsOf = (item: AdminMedalItem) => {
+  const basis = awardsBasis(item.data_level, contextSeason.value)
+  const rate = basis ? awardsPerGame(item.awards, basis.games) : null
+  return basis && rate !== null ? { games: number(basis.games), reliable: basis.reliable, rate: rate.toLocaleString(locale.value, { maximumFractionDigits: 2 }) } : null
+}
+const showDefaults = ref(false)
 const share = (row: SeasonRow) => (row.games_count ? Math.round((100 * row.reliable_games_count) / row.games_count) : 0)
 const computedAt = (row: SeasonRow) => new Date(row.computed_at.replace(' ', 'T')).toLocaleString(locale.value, { dateStyle: 'long', timeStyle: 'short' })
 const medalsOf = (row: Record<string, unknown>) => Object.entries((row.medals ?? {}) as Record<string, number>).flatMap(([code, count]) => (byCode.value.has(code) ? [{ item: byCode.value.get(code)!, count }] : []))
@@ -304,7 +312,12 @@ onMounted(async () => {
                 </ul>
                 <span v-else class="text-header-400">—</span>
               </td>
-              <td class="text-right tabular-nums">{{ item.awards ?? '—' }}</td>
+              <td class="text-right tabular-nums">
+                <b class="text-lg">{{ item.awards === null ? '—' : number(item.awards) }}</b>
+                <span v-if="awardsOf(item)" class="block text-sm whitespace-nowrap text-header-500">
+                  {{ t('medals.per_game', { rate: awardsOf(item)!.rate }) }} · {{ t(awardsOf(item)!.reliable ? 'medals.basis_reliable' : 'medals.basis_games', { games: awardsOf(item)!.games }) }}
+                </span>
+              </td>
               <td v-for="surface in (['published_app2', 'published_app3'] as const)" :key="surface">
                 <input
                   type="checkbox"
@@ -332,8 +345,14 @@ onMounted(async () => {
     <section v-else-if="tab === 'seasons'" class="space-y-8 rounded-lg bg-white p-5 shadow dark:bg-header-900">
       <!-- Default thresholds: the values used by the next computation of a season (§ 5.4, MED-66) -->
       <div data-testid="medal-thresholds">
-        <h2 class="text-xl font-bold">{{ t('medals.defaults_title') }}</h2>
-        <p class="mt-1 mb-5 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-xl font-bold">{{ t('medals.defaults_title') }}</h2>
+          <UButton variant="outline" :icon="showDefaults ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" :aria-expanded="showDefaults" aria-controls="medal-defaults" @click="showDefaults = !showDefaults">
+            {{ showDefaults ? t('medals.defaults_hide') : t(canEdit ? 'medals.defaults_show_edit' : 'medals.defaults_show') }}
+          </UButton>
+        </div>
+        <div v-show="showDefaults" id="medal-defaults">
+        <p class="mt-3 mb-5 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">
           {{ canEdit ? t('medals.defaults_help') : t('medals.defaults_readonly') }}
         </p>
         <form class="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" @submit.prevent="saveThresholds">
@@ -369,6 +388,7 @@ onMounted(async () => {
             <UButton v-if="Object.keys(overrides).length" type="button" size="lg" variant="ghost" :loading="saving" @click="resetThresholds">{{ t('medals.thresholds_reset') }}</UButton>
           </div>
         </form>
+        </div>
         <p v-if="outdatedSeasons > 0" class="mt-5 rounded-md bg-amber-50 px-4 py-3 text-base text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           {{ t('medals.outdated_seasons', { n: outdatedSeasons }, outdatedSeasons) }}
         </p>

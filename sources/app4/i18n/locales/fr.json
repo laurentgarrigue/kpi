@@ -3283,6 +3283,12 @@
     "confirm_compute_button": "Recalculer la saison {season}",
     "confirm_delete_title": "Supprimer les calculs de la saison {season} ?",
     "confirm_delete_text": "Les médailles, étiquettes et statistiques des {games} matchs de la saison {season} disparaissent des sites publics. Elles ne seront pas recalculées automatiquement : relancez le calcul ici quand vous le voulez.",
-    "confirm_delete_button": "Supprimer les calculs de {season}"
+    "confirm_delete_button": "Supprimer les calculs de {season}",
+    "defaults_show_edit": "Afficher et modifier",
+    "defaults_show": "Afficher",
+    "defaults_hide": "Masquer",
+    "per_game": "{rate} par match",
+    "basis_reliable": "sur {games} feuilles complètes",
+    "basis_games": "sur {games} matchs"
   }
 }

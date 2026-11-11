@@ -1,6 +1,6 @@
 // Admin page of the match medals (FEATURE_MATCH_MEDALS.md § 9.3): pure display rules of the statistics.
 import { describe, expect, it } from 'vitest'
-import { changedThresholds, thresholdChanges, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
+import { awardsBasis, awardsPerGame, changedThresholds, thresholdChanges, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
 
 describe('statistics of the admin page', () => {
   it('names the subject of a row: team, referee, pair, player or game', () => {
@@ -82,5 +82,22 @@ describe('editing the default thresholds', () => {
 
   it('leaves an empty field out (the form shows it as invalid)', () => {
     expect(thresholdChanges({ bounceBackSeconds: '', hatTrickGoals: 3, permanentCards: ['D'] }, current)).toEqual({})
+  })
+})
+
+describe('proportion of awards in the catalogue', () => {
+  const season = { games_count: 2024, reliable_games_count: 1819 }
+
+  it('counts against the complete sheets for a timeline element, the validated games otherwise', () => {
+    expect(awardsBasis('T', season)).toEqual({ games: 1819, reliable: true })
+    expect(awardsBasis('S', season)).toEqual({ games: 2024, reliable: false })
+    expect(awardsBasis('T', undefined)).toBeNull()
+  })
+
+  it('gives the awards per game, which can exceed 1 (one per player, one per team)', () => {
+    expect(awardsPerGame(3611, 1819)).toBeCloseTo(1.985, 3)
+    expect(awardsPerGame(0, 1819)).toBe(0)
+    expect(awardsPerGame(5, 0)).toBeNull()
+    expect(awardsPerGame(null, 100)).toBeNull()
   })
 })

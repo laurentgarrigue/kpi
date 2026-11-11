@@ -155,3 +155,16 @@ export function thresholdChanges(draft: Record<string, number | string | string[
   }
   return changes
 }
+
+/** Games an element is measured on: complete sheets for a timeline element (level T), validated games otherwise. */
+export function awardsBasis(level: 'S' | 'T', season: { games_count: number, reliable_games_count: number } | undefined): { games: number, reliable: boolean } | null {
+  if (!season) {
+    return null
+  }
+  return level === 'T' ? { games: season.reliable_games_count, reliable: true } : { games: season.games_count, reliable: false }
+}
+
+/** Awards per game of the season: above 1 when an element is given to several players or both teams. */
+export function awardsPerGame(awards: number | null, games: number): number | null {
+  return awards === null || games <= 0 ? null : awards / games
+}

@@ -519,7 +519,7 @@ Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
   (`kp_journal`, comme les autres actions d'admin).
 - **Saisons** : pour chaque saison calculée, les seuils utilisés (ceux qui diffèrent des seuils actuels sont
   signalés), la `rules_version` (alerte si antérieure à celle du code), la date du calcul, le nombre de matchs et de
-  timelines fiables. **Profil 1 seulement** : *Seuils par défaut* modifiables (enregistrer, rétablir le fichier),
+  timelines fiables. **Profil 1 seulement** : *Seuils par défaut* modifiables (formulaire **replié par défaut**, affiché à la demande) (enregistrer, rétablir le fichier),
   *Recalculer avec les seuils actuels* et *Supprimer les calculs* par saison, chacun **après une confirmation qui
   dit ce qui va se passer** ; les saisons existantes sans calcul proposent *Calculer*. Le profil 2 voit tout en
   lecture seule.

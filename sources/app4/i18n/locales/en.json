@@ -3271,6 +3271,12 @@
     "confirm_compute_button": "Recompute season {season}",
     "confirm_delete_title": "Delete the calculations of season {season}?",
     "confirm_delete_text": "The medals, labels and statistics of the {games} games of season {season} disappear from the public sites. They are not recomputed automatically: run the computation here whenever you want.",
-    "confirm_delete_button": "Delete the calculations of {season}"
+    "confirm_delete_button": "Delete the calculations of {season}",
+    "defaults_show_edit": "Show and edit",
+    "defaults_show": "Show",
+    "defaults_hide": "Hide",
+    "per_game": "{rate} per game",
+    "basis_reliable": "of {games} complete sheets",
+    "basis_games": "of {games} games"
   }
 }
