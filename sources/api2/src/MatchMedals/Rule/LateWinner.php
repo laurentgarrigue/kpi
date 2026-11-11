@@ -7,7 +7,7 @@ use App\MatchMedals\MatchTimeline;
 use App\MatchMedals\Model\Award;
 use App\MatchMedals\Model\DataLevel;
 
-/** Dernière minute · Late Winner: the decisive goal, in the last seconds of regulation time. */
+/** Dernières secondes · Late Winner: the decisive goal, in the last seconds of regulation time. */
 final class LateWinner implements MedalRule
 {
     public function code(): string

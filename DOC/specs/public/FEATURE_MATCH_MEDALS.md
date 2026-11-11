@@ -102,7 +102,7 @@ Les seuils en *italique* sont des paramètres (§ 5.4). Portée : É = équipe, 
 | `fightback` | **Retour au score · Fightback** | É | Menée d'au moins *3* buts, obtient le match nul (match sans prolongation). | Réaction | T | — (admin) |
 | `game_winner` | **But de la victoire · Game Winner** | J | Marque le but décisif (§ 5.5). | Réaction | T | **app2** |
 | `tiebreaker` | **But de la délivrance · Tiebreaker** | J | Marque le dernier but du match, à égalité, pour une victoire d'un but (cas du but en or). | Réaction | T | — (admin) |
-| `late_winner` | **Dernière minute · Late Winner** | É, J | Marque le but décisif dans les *60* dernières secondes du temps réglementaire. | Réaction | T | — (admin) |
+| `late_winner` | **Dernières secondes · Late Winner** | É, J | Marque le but décisif dans les *60* dernières secondes du temps réglementaire. | Réaction | T | — (admin) |
 | `lifeline` | **Égalisation salvatrice · Lifeline** | É, J | Égalise dans les *60* dernières secondes de la 2ᵉ mi-temps et arrache la prolongation. | Réaction | T | — (admin) |
 | `extra_time` | **Prolongation · Extra Time** | É | Le match va en prolongation (les deux équipes). | Endurance | S | — (admin) |
 | `marathon` | **Marathon · Marathon** | É | Le match atteint au moins une *2ᵉ* prolongation (les deux équipes). | Endurance | S | — (admin) |
@@ -274,7 +274,7 @@ Un match éligible dont la timeline n'est pas fiable n'attribue **que les médai
   minute pleine supérieure au plus grand temps restant saisi dans la période — même règle que la frise d'app2
   (`sources/app2/utils/gameTimeline.ts`), à **mutualiser** plutôt qu'à dupliquer.
 - Temps écoulé d'un fait = somme des durées des périodes précédentes + (durée de sa période − temps restant).
-- Les fenêtres **de fin de période** (*Dernière minute*, *Égalisation salvatrice*) se lisent directement sur le temps
+- Les fenêtres **de fin de période** (*Dernières secondes*, *Égalisation salvatrice*) se lisent directement sur le temps
   restant : elles sont exactes quel que soit le format.
 - À temps égal : carton avant but, puis ordre de saisie (`date_insert`, puis `Id`).
 
