@@ -14,6 +14,17 @@
   --color-medal-gold: #9a7208;
   --color-medal-silver: #6b7280;
   --color-medal-bronze: #9a5a2c;
+  --color-fam-elan: #2f6f8f;
+  --color-fam-reaction: #b4530f;
+  --color-fam-endurance: #6a4c9c;
+  --color-fam-superiorite: #0d7466;
+  --color-fam-finition: #3a45a3;
+  --color-fam-defense: #4b5d77;
+  --color-fam-esprit: #2f7d4a;
+  --color-fam-arbitrage: #45484f;
+  --color-fam-match: #9b3a6f;
+  --color-fam-analyse: #20265b;
+  --color-shield-ink: #fff;
   --color-kpi-blue-50: oklch(0.975 0.010 231.75);
   --color-kpi-blue-100: oklch(0.945 0.022 231.75);
   --color-kpi-blue-200: oklch(0.890 0.039 231.75);

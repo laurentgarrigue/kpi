@@ -27,7 +27,22 @@ for tpl in sorted(here.glob('*.tpl.html')):
             cache.setdefault(file, (data / file).read_text())
             t = t.replace(key, cache[file])
     (out / tpl.name.replace('.tpl', '')).write_text(t)
-for f in ['maquette.css', 'maquette.js', 'index.html']:
+for f in ['maquette.css', 'maquette.js', 'medals.css', 'medals.js', 'index.html']:
     if (here / f).exists():
         shutil.copy(here / f, out / f)
+
+# Match medals pictograms: one source (medal_icons.py) for the mockups and for the SVG files api2 will serve.
+import json, sys
+sys.dont_write_bytecode = True  # no __pycache__ in the docs
+sys.path.insert(0, str(here))
+import medal_icons as mi
+(out / 'medals-icons.js').write_text(
+    'const MEDAL_ICONS = ' + json.dumps({c: mi.inner(c) for c in mi.all_codes() + ['medal', 'clock', 'nocard', 'knockout', 'calm']}, ensure_ascii=False)
+    + ';\nconst FAMILY_ICON = ' + json.dumps(mi.FAMILIES) + ';\n')
+# Deployed with api2 (served at /api2/medals/icons/{code}.svg and inlined by its catalogue endpoint).
+svg_dir = here.parents[4] / 'sources/api2/public/medals/icons'
+svg_dir.mkdir(parents=True, exist_ok=True)
+for code in mi.all_codes():
+    (svg_dir / f'{code}.svg').write_text(mi.svg(code))
+shutil.copytree(svg_dir, out / 'pictogrammes', dirs_exist_ok=True)
 print(sorted(p.name for p in out.iterdir()))

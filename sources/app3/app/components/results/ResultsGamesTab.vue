@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { filterGames, gameDates, gamedayOptions, isLive } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
+import type { MedalItem } from '~/utils/medals'
 import { NEW_TAB_ATTRS } from '~/utils/links'
 
 // « Games » tab of a competition, an event or a group (PAGE_COMPETITION.md § 3.1, PAGE_EVENT_GROUP.md § 3).
@@ -11,6 +12,8 @@ const props = defineProps<{
   competitionHref?: (game: ResultsGame) => string
   pdfHref: string
   hiddenFields?: Record<string, string>
+  /** Labels (Thriller…) of the games, by game id (FEATURE_MATCH_MEDALS.md § 9.2). */
+  labelsByGame?: Record<string, MedalItem[]>
 }>()
 const emit = defineEmits<{ refresh: [] }>()
 const route = useRoute()
@@ -44,6 +47,6 @@ useAutoRefresh(() => isLive(props.games, now.value), () => emit('refresh'))
     </div>
     <p v-if="games.length === 0" data-testid="no-games">{{ $t('results.noGames') }}</p>
     <p v-else-if="filtered.length === 0" data-testid="no-filtered-games">{{ $t('results.noFilteredGames') }}</p>
-    <ResultsGameList v-else :games="filtered" :competition-href="competitionHref" />
+    <ResultsGameList v-else :games="filtered" :competition-href="competitionHref" :labels-by-game="labelsByGame" />
   </div>
 </template>

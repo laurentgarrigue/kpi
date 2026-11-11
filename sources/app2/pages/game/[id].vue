@@ -31,6 +31,7 @@
         :loading="loading"
         :error="error"
         :game-id="gameId"
+        :medal-catalog="medalCatalog"
         @refresh="handleRefresh"
       />
     </div>
@@ -49,6 +50,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { getApi } = useApi()
+const { selectForGame } = useContextSelection()
 
 const gameId = computed(() => route.params.id)
 const matchData = ref(null)
@@ -79,6 +81,9 @@ const goBack = () => {
   }
 }
 
+// Medals published on app2 (FEATURE_MATCH_MEDALS.md § 9.1): optional, never blocks the score sheet.
+const { catalog: medalCatalog, load: loadMedalCatalog } = useMedalCatalog()
+
 const loadMatchSheet = async () => {
   loading.value = true
   error.value = null
@@ -88,6 +93,7 @@ const loadMatchSheet = async () => {
 
     if (response.ok) {
       matchData.value = await response.json()
+      await alignContext()
     } else if (response.status === 404) {
       error.value = t('MatchSheet.NotFound')
     } else {
@@ -101,6 +107,16 @@ const loadMatchSheet = async () => {
   }
 }
 
+// Opened from elsewhere (the public website): the application moves to the event or group of the game, so that the
+// other games and the teams the visitor goes to next belong to it. `?event=` is the event the link came from.
+const alignContext = async () => {
+  const wantedEvent = parseInt(route.query.event)
+  await selectForGame(matchData.value.context ?? { season: '', group: null, events: [] }, Number.isNaN(wantedEvent) ? null : wantedEvent)
+  if (route.query.event) {
+    router.replace({ path: route.path })
+  }
+}
+
 const handleRefresh = () => {
   refreshButtonVisible.value = false
   loadMatchSheet()
@@ -111,5 +127,6 @@ const handleRefresh = () => {
 
 onMounted(() => {
   loadMatchSheet()
+  loadMedalCatalog()
 })
 </script>

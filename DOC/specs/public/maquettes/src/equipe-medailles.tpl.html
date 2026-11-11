@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avranches I · médailles de match</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+.team-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 24px; align-items: center; padding: 10px 0 28px; border-bottom: 1px solid var(--line); }
+.team-head > img { width: 120px; height: 120px; object-fit: contain; }
+.team-head h1 { font-size: 64px; }
+.team-head .club { margin: 6px 0 0; font-size: 16px; }
+.team-head .club a { font-weight: 600; text-decoration-color: var(--blue); text-underline-offset: 3px; }
+.team-head .colors { width: 70px; height: 120px; object-fit: contain; }
+
+/* The medal count, the team's story in three numbers. */
+.tally { display: flex; flex-wrap: wrap; gap: 14px 40px; padding: 26px 0; }
+.tally div { display: grid; grid-template-columns: auto auto; gap: 0 12px; align-items: center; }
+.tally .n { font: 400 72px/0.85 var(--display); font-variant-numeric: tabular-nums; grid-row: span 2; }
+.tally b { font-size: 15px; }
+.tally small { color: var(--muted); font-size: 13px; }
+.tally .g .n { color: var(--gold); } .tally .s .n { color: var(--silver); } .tally .b .n { color: var(--bronze); }
+
+.honours { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 0 24px; padding-bottom: 56px; }
+.honours h2 { grid-column: 1 / -1; }
+.honours .y { margin: 0; font: 400 28px/1 var(--display); color: var(--blue-deep); padding: 12px 0; border-top: 2px solid var(--navy); }
+.honours ul { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--navy); }
+.honours li { display: grid; grid-template-columns: minmax(0, 1fr) 60px; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.honours li:first-child { border-top: 0; }
+.honours li a { text-decoration: none; }
+.honours li a:hover { text-decoration: underline; }
+.honours li.phase a { color: var(--muted); }
+.honours li.phase small { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.honours .rk { justify-self: end; display: inline-flex; align-items: center; gap: 6px; font: 400 22px/1 var(--display); font-variant-numeric: tabular-nums; }
+.honours li.medal1 a, .honours li.medal2 a, .honours li.medal3 a { font-weight: 700; }
+/* Match medals of the season (FEATURE_MATCH_MEDALS.md § 9.2) */
+.season-medals { padding: 6px 0 40px; border-top: 1px solid var(--line); }
+.season-medals .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin: 22px 0 6px; }
+.season-medals .top h2 { margin: 0; }
+.season-medals .top .chips { margin-left: auto; }
+.season-medals > p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.mcard { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.mcard .x { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.mcard .n { font: 400 46px/0.9 var(--display); color: var(--fam); font-variant-numeric: tabular-nums; }
+.mcard .nm b { font-weight: 700; }
+.mcard .nm .en { color: var(--muted); font-style: italic; }
+.mcard details { grid-column: 1 / -1; font-size: 13px; }
+.mcard summary { cursor: pointer; color: var(--blue-deep); }
+.mcard ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.mcard li a { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.mcard li a:hover span { text-decoration: underline; }
+.mcard .sc { font: 400 17px/1 var(--display); white-space: nowrap; }
+@media (max-width: 700px) {
+  .team-head { grid-template-columns: 72px minmax(0, 1fr); }
+  .team-head > img { width: 72px; height: 72px; }
+  .team-head h1 { font-size: 42px; }
+  .team-head .colors { display: none; }
+  .tally .n { font-size: 54px; }
+  .honours { grid-template-columns: 1fr; }
+  .honours .y { border-top: 0; padding-bottom: 4px; }
+}
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap" id="main"></main>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+const T = __TEAM__;
+const { matches, results, agg } = medalsData(__GAMES__, __SCORERS__.rows);
+const MINE = agg.teams.find(t => t.id === T.number);
+document.getElementById('chrome').innerHTML = siteChrome('Clubs et équipes');
+const won = m => T.honours.filter(h => h.medal === m && h.final_round).length;
+const seasons = Object.entries(T.honours.reduce((m, h) => ((m[h.season] ??= []).push(h), m), {})).sort(([a], [b]) => b - a);
+const first = seasons[seasons.length - 1]?.[0];
+document.getElementById('main').innerHTML = `
+  <nav class="crumbs" aria-label="Fil d'Ariane"><a href="accueil.html">Accueil</a> › <a href="clubs.html">Clubs et équipes</a> › ${esc(T.label)}</nav>
+  <header class="team-head">
+    ${T.logo ? `<img src="${KPI_IMG}${T.logo}" alt="">` : ''}
+    <div><h1>${esc(T.label)}</h1><p class="club">Équipe du <a href="clubs.html?club=${T.club.code}">${esc(titleCase(T.club.label))}</a></p></div>
+    ${T.colors?.image ? `<img class="colors" src="${KPI_IMG}${T.colors.image}" alt="Tenue de l'équipe">` : ''}
+  </header>
+  <section class="tally" aria-label="Médailles">
+    <div class="g"><span class="n">${won(1)}</span><b>titres</b><small>1res places</small></div>
+    <div class="s"><span class="n">${won(2)}</span><b>deuxièmes places</b><small>médailles d'argent</small></div>
+    <div class="b"><span class="n">${won(3)}</span><b>troisièmes places</b><small>médailles de bronze</small></div>
+  </section>
+  <section class="season-medals fam-analyse" aria-labelledby="mm">
+    <div class="top"><h2 class="section" id="mm">Médailles de match</h2><div class="chips"><button type="button" aria-pressed="true">2026</button><button type="button" aria-pressed="false">2025</button></div></div>
+    <p>Distinctions gagnées match après match par l’équipe et ses joueurs, sur les matchs validés de la saison. <a href="medailles.html">Comment sont-elles attribuées ?</a></p>
+    <div class="mgrid">${published('app3', 'medal').filter(e => e.scopes !== 'R' && MINE.medals[e.code]).sort((a, b) => MINE.medals[b.code] - MINE.medals[a.code])
+      .map(e => { const list = [...new Set(MINE.matches[e.code])];
+        return `<div class="mcard fam-${e.family}"><span class="disc lg">${iconSvg(e.code, 26)}</span><span class="nm">${doubleName(e)}</span><span class="n">${MINE.medals[e.code]}</span>
+        <span class="x">${esc(e.explain(THRESHOLDS))}</span>
+        <details><summary>${list.length} match${list.length > 1 ? 's' : ''}</summary><ul>${list.map(m => { const side = m.teams.A.id === T.number ? 'A' : 'B', o = m.teams[side === 'A' ? 'B' : 'A'];
+          return `<li><a href="app2-feuille.html?game=${m.number}"><span>${esc(m.phase)} · contre ${esc(o.label)}</span><span class="sc">${side === 'A' ? `${m.scoreA}-${m.scoreB}` : `${m.scoreB}-${m.scoreA}`}</span></a></li>`; }).join('')}</ul></details></div>`; }).join('')}</div>
+    <p class="mock-note" style="margin-top:14px">Les médailles de joueur (triplé, supériorité…) comptent pour l’équipe ; le détail par joueur est dans l’onglet Stats de la compétition. Seules les médailles publiées sur app3 apparaissent.</p>
+  </section>
+  <section class="honours" aria-labelledby="h"><h2 class="section" id="h">Palmarès depuis ${first}</h2>
+    ${seasons.map(([y, list]) => `<p class="y">${y}</p><ul>${list.map(h => `<li class="${h.final_round ? '' : 'phase'} ${h.medal ? `medal${h.medal}` : ''}">
+      <span><a href="${h.competition.code === 'NPOH' ? 'classement.html' : '#'}">${esc(h.competition.display_title)}</a>${h.final_round ? '' : '<small>phase de qualification</small>'}</span>
+      <span class="rk">${h.medal ? `<span class="medal m${h.medal}"></span>` : ''}${h.rank}${h.rank === 1 ? 'er' : 'e'}</span></li>`).join('')}</ul>`).join('')}
+  </section>`;
+demoBar('<span>Saison réduite à la PlayOff Hommes 2026, timelines fictives</span>');
+</script>
+</body>
+</html>

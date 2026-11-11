@@ -67,6 +67,7 @@ useHead(() => ({
       <TeamZoomImage v-if="colors" :src="colors" :alt="$t('teams.colorsAlt', { team: team.label })" origin="right" class="hidden h-30 w-auto md:block" data-testid="team-colors" />
     </header>
     <TeamMedalTally :honours="team.honours" />
+    <TeamMatchMedals :number="team.number" :seasons="team.seasons.map(item => item.season)" />
     <figure v-if="photo && team.photo" class="max-w-3xl" data-testid="team-photo">
       <img :src="photo" :alt="$t('teams.photoAlt', { team: team.label, season: team.photo.season })" loading="lazy" class="w-full rounded">
     </figure>

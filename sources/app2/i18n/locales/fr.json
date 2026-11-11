@@ -107,7 +107,8 @@
     "EliminationGames": "Matchs d'élimination",
     "FinalRanking": "Classement final",
     "NoData": "Aucune donnée disponible pour cette équipe",
-    "TournamentRounds": "Progression"
+    "TournamentRounds": "Progression",
+    "Medals": "Médailles de l'équipe"
   },
   "Games": {
     "Categories": "Catégories",
@@ -243,6 +244,7 @@
     "NoStats": "Aucune statistique disponible pour cette équipe.",
     "Player": "Joueur",
     "Goals": "Buts",
+    "Medals": "Médailles",
     "Coach": "Staff"
   },
   "MatchSheet": {
@@ -258,7 +260,17 @@
     "Loading": "Chargement de la feuille de match...",
     "NotFound": "Match non trouvé ou non disponible",
     "Refresh": "Actualiser",
-    "Back": "Retour"
+    "Back": "Retour",
+    "Goal": "But",
+    "Reason": {
+      "r_pad": "Pagaie",
+      "r_kt": "Éperonnage",
+      "r_ht": "Poussée / Accrochage",
+      "r_p": "Possession",
+      "r_o": "Obstruction",
+      "r_un": "Antisportif / contestation",
+      "r_rep": "Remplacement"
+    }
   },
   "errors": {
     "generic": {
@@ -330,5 +342,13 @@
         "description": "Affichage des données précédemment chargées"
       }
     }
+  },
+  "Medals": {
+    "Title": "Médailles",
+    "How": "Comment sont-elles attribuées ?",
+    "Incomplete": "Médailles chronologiques indisponibles (feuille incomplète) : seules les médailles liées au score sont attribuées.",
+    "NoTeamMedal": "Pas de médaille d’équipe",
+    "Referees": "Médailles d’arbitre (pour les deux) :",
+    "Times": "{label}, {n} fois"
   }
 }

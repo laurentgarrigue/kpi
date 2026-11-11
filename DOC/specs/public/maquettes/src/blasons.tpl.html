@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blasons des médailles</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+main { padding-bottom: 70px; }
+section { margin-top: 38px; }
+.lead { max-width: 70ch; color: var(--muted); }
+.compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
+.compare > div { border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.compare h3 { margin: 0 0 12px; font-size: 15px; }
+.sizes { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
+.sizes figure { margin: 0; text-align: center; font-size: 12px; color: var(--muted); display: grid; gap: 6px; justify-items: center; }
+.fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.fams > div { display: grid; grid-template-columns: auto auto; gap: 4px 10px; align-items: center; justify-content: start; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.fams b { grid-column: 1 / -1; font-size: 13px; }
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px 6px; justify-items: center; }
+.ctx { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
+.ctx > div { border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.ctx h3 { margin: 0 0 10px; font-size: 15px; }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 28px; margin: 18px 0 0; padding: 0; list-style: none; }
+.principles li { border-top: 2px solid var(--navy); padding-top: 8px; font-size: 14px; }
+.principles b { display: block; font-size: 15px; }
+.row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div id="chrome"></div>
+<main class="wrap" id="main"></main>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
+const FAMS = Object.entries(FAMILY_ICON), name = { elan: 'Élan', reaction: 'Réaction', endurance: 'Endurance', superiorite: 'Supériorité', finition: 'Finition', defense: 'Défense', esprit: 'Esprit', arbitrage: 'Arbitrage', match: 'Match', analyse: 'Analyse' };
+const ALL = CATALOG.filter(e => e.type === 'medal' && e.surfaces.length);
+document.getElementById('main').innerHTML = `
+  <header class="page-head"><h1>Blasons des médailles</h1></header>
+  <p class="lead">Proposition : le pictogramme ne vit plus dans un disque de 28 px mais dans un <b>écu français moderne</b> (côtés droits, chef plat, pointe arrondie), plus grand (56 px par défaut), avec un liseré intérieur et un chef éclairci. Les pictogrammes, les familles de couleur et les noms ne changent pas.</p>
+  <ul class="principles">
+    <li><b>Plus grand</b>Le pictogramme passe de 18 px (disque de 28 px) à 34 px dans un blason de 56 px, et reste à 24 px dans un blason de 40 px (tableaux, mobile).</li>
+    <li><b>Une silhouette reconnaissable</b>Le blason se lit avant le pictogramme : on distingue une médaille d’un statut ou d’une carte, même flou ou en réduction.</li>
+    <li><b>Famille par la couleur, jamais seule</b>Le nom reste écrit ou en infobulle (clavier compris) ; l’or et le rouge restent réservés au podium et au direct.</li>
+    <li><b>Filigrane KPI</b>Un « KPI » discret en haut à gauche de chaque blason, qui le signe ; il devient un simple motif sous 40 px.</li>
+    <li><b>Compteur sur le blason</b>« ×3 » en pastille à l’angle, au lieu d’une valeur à côté.</li>
+  </ul>
+
+  <section><h2 class="section">Du disque au blason</h2>
+    <div class="compare">
+      <div class="fam-superiorite"><h3>Aujourd’hui : disque de 28 px</h3><div class="sizes">
+        <figure><span class="disc">${iconSvg('powerplay', 18)}</span>28 px (liste)</figure>
+        <figure><span class="disc lg">${iconSvg('powerplay', 26)}</span>48 px (carte)</figure></div></div>
+      <div class="fam-superiorite"><h3>Blason plein (recommandé)</h3><div class="sizes">
+        <figure>${shield('powerplay', { size: 36 })}36 px · liste dense</figure>
+        <figure>${shield('powerplay', { size: 56 })}56 px · défaut</figure>
+        <figure>${shield('powerplay', { size: 56, count: 3 })}avec compteur</figure>
+        <figure>${shield('powerplay', { size: 88 })}88 px · page des explications</figure></div></div>
+      <div class="fam-superiorite"><h3>Variante teintée</h3><div class="sizes">
+        <figure>${shield('powerplay', { size: 36, variant: 'tint' })}36 px</figure>
+        <figure>${shield('powerplay', { size: 56, variant: 'tint' })}56 px</figure>
+        <figure>${shield('powerplay', { size: 56, variant: 'tint', count: 3 })}avec compteur</figure>
+        <figure>${shield('powerplay', { size: 88, variant: 'tint' })}88 px</figure></div></div>
+    </div>
+    <p class="mock-note">Validé : blason plein, pour tous les affichages. Plein : plus lisible de loin et plus « décoration » ; teinté : plus discret, proche de l’existant. Le plein est recommandé pour le petit écran. Thème sombre : la couleur de famille s’éclaircit et le pictogramme devient foncé (bouton en bas à gauche).</p>
+  </section>
+
+  <section><h2 class="section">Les dix familles</h2>
+    <div class="fams">${FAMS.map(([f, code]) => `<div class="fam-${f}"><b>${name[f]}</b>${shield(code, { size: 56 })}${shield(code, { size: 56, variant: 'tint' })}</div>`).join('')}</div>
+  </section>
+
+  <section><h2 class="section">Tous les éléments publiés</h2>
+    <p class="mock-note">Survoler ou naviguer au clavier (Tab) : explication dans l’infobulle. Les étiquettes de match (Suspense, Partie d’échecs…) prendraient le même blason.</p>
+    <div class="board">${ALL.map(e => shieldItem(e.code, { count: e.code === 'hat_trick' ? 2 : 1 })).join('')}</div>
+  </section>
+
+  <section><h2 class="section">En situation</h2>
+    <div class="ctx">
+      <div><h3>Pastille app3 / app2 (blason 36 px + nom)</h3>
+        ${['powerplay', 'opener', 'hat_trick'].map(c => `<div class="row fam-${BY_CODE[c].family}">${shield(c, { size: 36 })}<span class="nm">${doubleName(BY_CODE[c])}</span></div>`).join('')}</div>
+      <div><h3>Mobile : blasons seuls, nom en infobulle (40 px)</h3>
+        <div class="shields">${['opener', 'powerplay', 'game_winner', 'hat_trick', 'clean_sheet'].map(c => shieldItem(c, { size: 40, named: false, count: c === 'powerplay' ? 2 : 1 })).join('')}</div></div>
+    </div>
+  </section>`;
+demoBar('<span>Pictogrammes inchangés, seule l’enveloppe change</span>');
+</script>
+</body>
+</html>

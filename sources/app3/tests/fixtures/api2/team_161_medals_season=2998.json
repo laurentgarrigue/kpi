@@ -1,0 +1,275 @@
+{
+  "status": 200,
+  "body": {
+    "season": "2998",
+    "medals": [
+      {
+        "code": "fair_play",
+        "count": 4,
+        "games": [
+          {
+            "side": "A",
+            "id": 9461,
+            "competition": "MED",
+            "number": 61,
+            "date": "2998-05-01",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 4,
+            "score_b": 3
+          },
+          {
+            "side": "A",
+            "id": 9462,
+            "competition": "MED",
+            "number": 62,
+            "date": "2998-05-01",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 2,
+            "score_b": 1
+          },
+          {
+            "side": "A",
+            "id": 9463,
+            "competition": "MED",
+            "number": 63,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 3,
+            "score_b": 0
+          },
+          {
+            "side": "A",
+            "id": 9465,
+            "competition": "MED",
+            "number": 65,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 1,
+            "score_b": 0
+          }
+        ]
+      },
+      {
+        "code": "opener",
+        "count": 2,
+        "games": [
+          {
+            "side": "A",
+            "id": 9462,
+            "competition": "MED",
+            "number": 62,
+            "date": "2998-05-01",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 2,
+            "score_b": 1
+          },
+          {
+            "side": "A",
+            "id": 9465,
+            "competition": "MED",
+            "number": 65,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 1,
+            "score_b": 0
+          }
+        ]
+      },
+      {
+        "code": "clean_sheet",
+        "count": 2,
+        "games": [
+          {
+            "side": "A",
+            "id": 9463,
+            "competition": "MED",
+            "number": 63,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 3,
+            "score_b": 0
+          },
+          {
+            "side": "A",
+            "id": 9465,
+            "competition": "MED",
+            "number": 65,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 1,
+            "score_b": 0
+          }
+        ]
+      },
+      {
+        "code": "golden_goal",
+        "count": 1,
+        "games": [
+          {
+            "side": "A",
+            "id": 9462,
+            "competition": "MED",
+            "number": 62,
+            "date": "2998-05-01",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 2,
+            "score_b": 1
+          }
+        ]
+      },
+      {
+        "code": "powerplay",
+        "count": 1,
+        "games": [
+          {
+            "side": "A",
+            "id": 9461,
+            "competition": "MED",
+            "number": 61,
+            "date": "2998-05-01",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 4,
+            "score_b": 3
+          }
+        ]
+      },
+      {
+        "code": "hat_trick",
+        "count": 1,
+        "games": [
+          {
+            "side": "A",
+            "id": 9463,
+            "competition": "MED",
+            "number": 63,
+            "date": "2998-05-02",
+            "team_a": {
+              "id": 9361,
+              "number": 161,
+              "label": "Medal Oscar",
+              "logo": null
+            },
+            "team_b": {
+              "id": 9362,
+              "number": 162,
+              "label": "Medal Papa",
+              "logo": null
+            },
+            "score_a": 3,
+            "score_b": 0
+          }
+        ]
+      }
+    ]
+  }
+}

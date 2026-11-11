@@ -45,3 +45,20 @@ _Avoid_ : date par défaut, date fictive
 **Catégorie d'âge** :
 Tranche d'âge (Poussin … Vétéran 9) d'un joueur pour une saison donnée, déduite de son année de naissance et de la saison de la compétition ; elle n'est pas déclarée et change donc d'une saison à l'autre. Un joueur dont la date de naissance est inconnue n'a pas de catégorie d'âge.
 _Avoid_ : catégorie (seul), catégorie de licence
+
+## Matchs
+
+**Timeline** :
+Suite des faits de match d'un match (buts et cartons, `kp_match_detail`), chacun avec sa période et le temps restant au chrono. Un temps `00:00:00` est un temps non saisi.
+_Avoid_ : historique, déroulé (seul)
+
+**Médaille** :
+Distinction attribuée par un match validé à une équipe, un joueur ou un arbitre désigné, déduite de la timeline selon une règle du catalogue (FEATURE_MATCH_MEDALS.md). Rien n'est saisi pour l'obtenir.
+_Avoid_ : badge, trophée ; ne pas confondre avec les médailles du classement (podium)
+
+**Exclusion** :
+Infériorité numérique provoquée par un carton : 2 minutes de jeu levées au premier but adverse, ou jusqu'à la fin du match pour un rouge définitif.
+_Avoid_ : pénalité (seul)
+
+**Arbitre désigné** :
+Arbitre principal ou secondaire d'un match identifié par son numéro de licence, et non par un simple libellé saisi à la main. Seuls les arbitres désignés comptent dans les statistiques d'arbitrage.

@@ -138,6 +138,10 @@ when@test:
         App\Tests\Support\FakeGotenbergClient:
             public: true
         App\Pdf\GotenbergClient: '@App\Tests\Support\FakeGotenbergClient'
+        # The medals job runs in the request (no second process sharing the test transaction).
+        App\Tests\Support\InlineSeasonComputeLauncher:
+            autowire: true
+        App\MatchMedals\SeasonComputeLauncher: '@App\Tests\Support\InlineSeasonComputeLauncher'
         # Reached directly by the integration tests of the Categ cache (CompositionAgeCategoriesTest).
         App\AgeCategory\CompositionAgeCategories:
             autowire: true

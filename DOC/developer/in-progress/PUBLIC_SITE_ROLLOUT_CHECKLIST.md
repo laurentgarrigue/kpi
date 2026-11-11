@@ -439,6 +439,10 @@ réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire
 | Import incorrect | Relancer l'import (idempotent) ; supprimer les contenus depuis l'app4 ; les tables sont indépendantes du legacy |
 | Problème hors app3 lié à la release | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) ; les nouvelles tables peuvent rester en place |
 
+## Fonction transverse — Médailles de match
+
+Checklist dédiée (touche api2, app3, app2 et app4) : [MATCH_MEDALS_ROLLOUT_CHECKLIST.md](MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
+
 ## Phase 5 — Bascule de `www`
 
 *À compléter.* Prévoir : 🌍 aucun changement DNS (même VPS) ; Traefik : app3 devient le routeur par défaut de

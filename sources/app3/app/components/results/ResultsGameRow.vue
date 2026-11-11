@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { displayStatus, drawCode, isFinal, normalizeTime, winnerSide } from '#kpi-layer/utils/results/games'
 import type { ResultsGame } from '#kpi-layer/utils/results/types'
+import type { MedalItem } from '~/utils/medals'
 import { gameLink } from '~/utils/page-links'
 import { personName } from '~/utils/people'
 
@@ -9,7 +10,7 @@ import { personName } from '~/utils/people'
  * referees, score sheet. Phone: teams stacked, scores stacked in the column on the right. The competition is shown in
  * event / group views (`competitionHref`).
  */
-const props = defineProps<{ game: ResultsGame, competitionHref?: string }>()
+const props = defineProps<{ game: ResultsGame, competitionHref?: string, labels?: MedalItem[] }>()
 const context = usePageLinkContext()
 
 const winner = computed(() => winnerSide(props.game))
@@ -37,6 +38,9 @@ const phaseClass = computed(() => (final.value
       <NuxtLink v-if="competitionHref" :to="competitionHref" class="block font-semibold hover:underline">{{ game.c_label ?? game.c_code }}</NuxtLink>
       <span :class="phaseClass">{{ game.d_phase }}</span>
       <span v-if="code" class="block text-xs text-muted opacity-80" data-testid="draw-code">{{ code }}</span>
+      <span v-if="labels?.length" class="mt-0.5 flex gap-1" :aria-label="$t('medals.gameLabels')" data-testid="game-labels">
+        <MedalPill v-for="label in labels" :key="label.code" :item="label" compact />
+      </span>
     </span>
     <ResultsGameTeam
       :game="game"
@@ -60,6 +64,9 @@ const phaseClass = computed(() => (final.value
       <NuxtLink v-if="competitionHref" :to="competitionHref" class="font-semibold hover:underline">{{ game.c_label ?? game.c_code }}</NuxtLink>
       <template v-if="competitionHref"> · </template>
       <span :class="phaseClass">{{ game.d_phase }}</span>
+      <span v-if="labels?.length" class="ml-1.5 inline-flex gap-1 align-middle" data-testid="game-labels-phone">
+        <MedalPill v-for="label in labels" :key="label.code" :item="label" compact />
+      </span>
     </span>
   </li>
 </template>

@@ -68,7 +68,7 @@ api2_composer_install api2_composer_update api2_composer_require api2_cache_clea
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
-api2_assets_install api2_jwt_generate_keys \
+api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
@@ -958,6 +958,16 @@ api2_migrations_migrate: ## Exécute les migrations Doctrine pour API2
 	@# échouer — et rollback — chaque déploiement automatisé (Phase 5).
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 	@echo "Migrations exécutées pour API2"
+
+# Médailles de match (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 6.3) : chaque saison est calculée avec SES seuils.
+# compute = calcul complet d'UNE saison avec les seuils actuels (config/packages/match_medals.yaml) ; les autres
+# saisons gardent leurs résultats. sync = mise à jour au fil de l'eau (cron toutes les 10 min, cf. CRON_DOCUMENTATION.md).
+api2_match_medals_compute: ## Calcule les médailles de match d'une saison avec les seuils actuels (make api2_match_medals_compute season=2026)
+	@[ -n "$(season)" ] || { echo "⛔ Usage : make api2_match_medals_compute season=<AAAA> (une saison à la fois)"; exit 1; }
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:match-medals:compute --season=$(season)
+
+api2_match_medals_sync: ## Met à jour les médailles des matchs validés nouveaux ou modifiés (ce que fait le cron)
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:match-medals:sync
 
 api2_assets_install: ## Installe les assets pour API2
 	@echo "Installation des assets pour API2 (container: $(API2_CONTAINER_NAME))..."

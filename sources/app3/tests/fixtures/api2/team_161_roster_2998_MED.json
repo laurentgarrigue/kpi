@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "body": {
+    "players": [
+      {
+        "first_name": "Ana",
+        "last_name": "MEDAL",
+        "number": 1,
+        "category": "SEN",
+        "role": "captain",
+        "goals": 6,
+        "green": 0,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      },
+      {
+        "first_name": "Ben",
+        "last_name": "MEDAL",
+        "number": 2,
+        "category": "SEN",
+        "role": null,
+        "goals": 3,
+        "green": 0,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      },
+      {
+        "first_name": "Coach",
+        "last_name": "MEDAL",
+        "number": null,
+        "category": "SEN",
+        "role": "coach",
+        "goals": 1,
+        "green": 0,
+        "yellow": 0,
+        "red": 0,
+        "red_final": 0
+      }
+    ]
+  }
+}

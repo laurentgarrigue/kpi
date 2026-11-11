@@ -33,6 +33,8 @@ export const MAIN_MENU: readonly MenuItem[] = [
     children: [
       { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: true },
       { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: true },
+      // Explanation of the match medals and timeline statistics (FEATURE_MATCH_MEDALS.md § 8): no legacy page.
+      { id: 'medals', to: '/medals', ready: true },
     ],
   },
   // One « Clubs and teams » page: the map, the clubs and the teams (PAGE_CLUBS.md § 2.1).

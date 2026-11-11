@@ -65,6 +65,10 @@ final class PublicApiDocumentationTest extends ApiTestCase
             '/search',
             // Accueil app3 / app2 (PAGE_HOME.md HOME-09, HOME-10)
             '/fixtures/{scope}',
+            // Médailles de match (FEATURE_MATCH_MEDALS.md § 6.4)
+            '/competition/{season}/{code}/labels',
+            '/medals/catalog',
+            '/team/{number}/medals',
         ], $documented);
     }
 }

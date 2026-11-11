@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page équipe app2 · médailles</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+/* app2 look (Tailwind gray scale, `bg-bar`), not the app3 charter */
+:root { --bar: #1f2937; --g50: #f9fafb; --g100: #f3f4f6; --g200: #e5e7eb; --g300: #d1d5db; --g500: #6b7280; --g700: #374151; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #111827; --g50: #1f2937; --g100: #111827; --g200: #374151; --g300: #4b5563; --g500: #9ca3af; --g700: #d1d5db; } }
+:root[data-theme="dark"] { --bar: #111827; --g50: #1f2937; --g100: #111827; --g200: #374151; --g300: #4b5563; --g500: #9ca3af; --g700: #d1d5db; }
+body { font-family: ui-sans-serif, system-ui, sans-serif; background: var(--surface); }
+.app-top { background: var(--bar); color: #fff; padding: 10px 16px; font-weight: 700; display: flex; justify-content: space-between; }
+.nav2 { display: flex; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--g300); }
+.nav2 select { font: inherit; padding: 4px 8px; border: 1px solid var(--g300); border-radius: 6px; background: var(--surface); color: inherit; min-width: 220px; }
+.page { max-width: 896px; margin: 0 auto 80px; padding: 0 8px; }
+.team { background: var(--g50); border-bottom: 1px solid var(--g300); display: flex; justify-content: center; align-items: center; gap: 12px; padding: 4px 0; }
+.team img { width: 48px; height: 48px; object-fit: contain; } .team h2 { margin: 0; font-size: 20px; }
+.box { border: 1px solid var(--g300); border-radius: 8px; overflow: hidden; margin-top: 16px; }
+.box > h3 { margin: 0; background: var(--bar); color: #fff; padding: 8px 12px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.box > h3 a { color: #d1d5db; font-weight: 400; font-size: 13px; }
+.box .in { padding: 12px; }
+.mock-hide { color: var(--g500); }
+.team-medals { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 6px; }
+.empty { color: var(--g500); font-size: 14px; text-align: center; }
+table.st { width: 100%; border-collapse: collapse; }
+table.st th { background: var(--g100); padding: 8px; font-size: 13px; text-align: center; border-bottom: 1px solid var(--g300); }
+table.st th:first-child { text-align: left; }
+table.st td { padding: 6px 8px; border-bottom: 1px solid var(--g200); text-align: center; vertical-align: middle; }
+table.st td:first-child { text-align: left; }
+table.st .num { color: var(--g500); font-size: 13px; margin-right: 6px; }
+table.st .md { text-align: left; }
+.md .shields { gap: 2px 4px; flex-wrap: wrap; }
+.cardhd { display: inline-block; width: 14px; height: 20px; border-radius: 2px; transform: rotate(-12deg); }
+.scroll { overflow-x: auto; position: relative; }
+table.st tr.mrow { display: none; }
+@media (max-width: 600px) {
+  table.st th.md, table.st td.md { display: none; }
+  table.st tr.mrow { display: table-row; } table.st tr.mrow td { text-align: left; padding: 0 8px 8px; border-bottom: 1px solid var(--g200); }
+  table.st tr.has td:not(.md) { border-bottom: 0; }
+  .nav2 select { min-width: 0; flex: 1; } }
+</style>
+</head>
+<body>
+<div class="app-top"><span>KPI · Résultats</span><span>☰</span></div>
+<div class="nav2"><select id="pick" aria-label="Équipe"></select></div>
+<main class="page" id="main"></main>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+const GAMES = __GAMES__;
+const { matches, results, agg } = medalsData(GAMES, __SCORERS__.rows);
+const app2 = c => BY_CODE[c].surfaces.includes('app2');
+const teams = agg.teams.slice().sort((a, b) => b.total - a.total);
+let teamId = +(new URLSearchParams(location.search).get('team') ?? teams[0].id);
+document.getElementById('pick').innerHTML = teams.map(t => `<option value="${t.id}"${t.id === teamId ? ' selected' : ''}>${esc(t.label)}</option>`).join('');
+
+function render() {
+  const T = agg.teams.find(t => t.id === teamId);
+  const mine = agg.players.filter(p => p.team.id === teamId);
+  // goals and cards of the team's players, from the same (fictional) timelines
+  const stats = {};
+  matches.forEach((m, i) => { if (!results[i].eligible) return; m.events.forEach(e => {
+    if (m.teams[e.team].id !== teamId) return;
+    const s = (stats[e.player.id] ??= { p: e.player, g: 0, V: 0, J: 0, R: 0 });
+    e.type === 'B' ? s.g++ : e.type === 'D' ? s.R++ : s[e.type]++;
+  }); });
+  mine.forEach(p => { stats[p.id] ??= { p, g: 0, V: 0, J: 0, R: 0 }; });
+  const rows = Object.values(stats).sort((a, b) => (a.p.number ?? 99) - (b.p.number ?? 99));
+  const medalsOf = id => Object.entries(mine.find(p => p.id === id)?.medals ?? {}).filter(([c]) => app2(c)).sort((a, b) => b[1] - a[1]);
+  const teamMedals = Object.entries(T.medals).filter(([c]) => app2(c) && BY_CODE[c].scopes.includes('T')).sort((a, b) => b[1] - a[1]);
+  const n = v => v > 0 ? v : '';
+  document.getElementById('main').innerHTML = `
+    <div class="team">${T.logo ? `<img src="${KPI_IMG}${T.logo}" alt="">` : ''}<h2>${esc(T.label)}</h2></div>
+    <p class="mock-note">Les blocs « Prochains matchs », « Matchs terminés », « Phases » et « Classement » de la page restent inchangés (non reproduits). Les nouveautés sont les deux blocs ci-dessous.</p>
+
+    <section class="box fam-analyse" aria-labelledby="tm"><h3 id="tm">Médailles de l’équipe <a href="medailles.html">Comment sont-elles attribuées ?</a></h3>
+      <div class="in">${teamMedals.length ? `<div class="team-medals">${teamMedals.map(([c, k]) => shieldItem(c, { count: k, size: 64, detail: `${[...new Set(T.matches[c])].length} match${[...new Set(T.matches[c])].length > 1 ? 's' : ''}` })).join('')}</div>` : '<p class="empty">Pas encore de médaille d’équipe.</p>'}</div></section>
+
+    <section class="box" aria-labelledby="st"><h3 id="st">Statistiques</h3>
+      <div class="scroll"><table class="st"><thead><tr><th>Joueur</th><th>${iconSvg('goal', 22)}</th>
+        <th><span class="cardhd" style="background:#22c55e"></span></th><th><span class="cardhd" style="background:#facc15"></span></th><th><span class="cardhd" style="background:#dc2626"></span></th>
+        <th class="md" style="text-align:left">Médailles</th></tr></thead>
+        <tbody>${rows.map(({ p, g, V, J, R }) => { const ms = medalsOf(p.id).map(([c, k]) => shieldItem(c, { size: 40, named: false, count: k })).join('');
+          return `<tr${ms ? ' class="has"' : ''}><td><span class="num">#${p.number}</span>${esc(p.first)} ${esc(p.last)}</td><td>${g || ''}</td><td>${n(V)}</td><td>${n(J)}</td><td>${n(R)}</td>
+          <td class="md"><div class="shields">${ms || '<span class="mock-hide">·</span>'}</div></td></tr>${ms ? `<tr class="mrow"><td colspan="5"><div class="shields">${ms}</div></td></tr>` : ''}`; }).join('')}</tbody></table></div></section>
+    <p class="mock-note">Les médailles de joueur sont des blasons de 40 px sans nom (nom et explication au toucher ou au clavier), pour tenir sur une ligne du tableau actuel. Périmètre : l’événement (ou le groupe) choisi dans l’application, comme les statistiques existantes. Seules les médailles publiées sur app2 apparaissent ; une équipe sans match validé n’a pas de bloc « Médailles ».</p>`;
+}
+render();
+document.getElementById('pick').addEventListener('change', e => { teamId = +e.target.value; history.replaceState(null, '', `?team=${teamId}`); render(); });
+demoBar('<span>Saison réduite à la PlayOff Hommes 2026, timelines fictives</span>');
+</script>
+</body>
+</html>
