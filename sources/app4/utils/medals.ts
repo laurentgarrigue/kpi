@@ -168,3 +168,42 @@ export function awardsBasis(level: 'S' | 'T', season: { games_count: number, rel
 export function awardsPerGame(awards: number | null, games: number): number | null {
   return awards === null || games <= 0 ? null : awards / games
 }
+
+/** An award as listed by the admin check of a medal (GET /admin/medals/catalog/{code}/games). */
+export interface AuditAward {
+  scope: 'team' | 'player' | 'referee'
+  side: string | null
+  first_name: string | null
+  last_name: string | null
+  period: string | null
+  /** Remaining time on the chrono, in seconds */
+  remaining: number | null
+}
+
+/** A game behind a figure of the admin page: a medal's games, or the games set aside (MED-80). */
+export interface AuditGame {
+  id: number
+  date: string | null
+  time: string | null
+  competition: string
+  number: number | null
+  team_a: string | null
+  team_b: string | null
+  score_a: string | null
+  score_b: string | null
+  timeline_issue: string | null
+  awards?: AuditAward[]
+}
+
+const clock = (seconds: number) => `${String(Math.floor(seconds / SECONDS_PER_MINUTE)).padStart(2, '0')}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, '0')}`
+
+/** "MEDAL Ana · M1 09:45": who received it and when the fact happened, as typed on the sheet (remaining time). */
+export function auditAwardText(award: Omit<AuditAward, 'scope'> & { scope: string }): string {
+  const who = personName(award) || award.side || ''
+  return award.period && award.remaining !== null ? `${who} · ${award.period} ${clock(award.remaining)}` : who
+}
+
+/** Sheet of a game in app2, with its timeline: the place to check what was typed. */
+export function gameSheetUrl(app2BaseUrl: string, gameId: number): string {
+  return `${app2BaseUrl.replace(/\/+$/, '')}/game/${gameId}`
+}

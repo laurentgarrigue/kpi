@@ -4,6 +4,8 @@ namespace App\Tests\Unit\MatchMedals;
 
 use App\MatchMedals\MedalThresholds;
 use App\MatchMedals\Model\AwardScope;
+use App\MatchMedals\Model\TimelineIssue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /** FEATURE_MATCH_MEDALS.md § 5.1. */
@@ -42,6 +44,55 @@ final class EligibilityTest extends TestCase
         $medals = self::compute(GameBuilder::game()->goal('A', 'X9', '05:00', 7)->build());
 
         self::assertFalse($medals->timeline->isReliable());
+    }
+
+    /** @return iterable<string, array{GameBuilder}> */
+    public static function factsAtTheStartOfTheirPeriod(): iterable
+    {
+        yield 'goal at 10:00 in M1' => [GameBuilder::game()->goal('A', 'M1', '10:00', 7)];
+        yield 'card at 10:00 in M2' => [GameBuilder::game()->card('B', 'V', 'M2', '10:00')];
+        yield 'goal at 05:00 in P1' => [GameBuilder::game()->goal('A', 'P1', '05:00', 7)];
+    }
+
+    #[DataProvider('factsAtTheStartOfTheirPeriod')]
+    public function testMed76AFactAtTheStartOfItsPeriodMakesTheTimelineUnreliable(GameBuilder $game): void
+    {
+        $medals = self::compute($game->goal('A', 'M1', '06:12', 8)->goal('B', 'M1', '06:05', 9)->build());
+
+        self::assertFalse($medals->timeline->isReliable());
+        self::assertSame(TimelineIssue::PeriodStart, $medals->timeline->timelineIssue());
+        self::assertNotContains('fast_start', self::playerCodes($medals, 7));
+        self::assertNotContains('bounce_back', self::playerCodes($medals, 9));
+    }
+
+    public function testMed76AGoalOneSecondAfterTheStartKeepsTheTimelineReliable(): void
+    {
+        $medals = self::compute(GameBuilder::game()->goal('A', 'M1', '09:59', 7)->build());
+
+        self::assertTrue($medals->timeline->isReliable());
+        self::assertNull($medals->timeline->timelineIssue());
+    }
+
+    public function testMed77TwoGoalsOfAPeriodAtTheSameTimeMakeTheTimelineUnreliable(): void
+    {
+        $medals = self::compute(GameBuilder::game()->goal('A', 'M1', '09:59', 7)->goal('B', 'M1', '09:59', 8)->build());
+
+        self::assertFalse($medals->timeline->isReliable());
+        self::assertSame(TimelineIssue::SameInstant, $medals->timeline->timelineIssue());
+    }
+
+    public function testMed77ACardAndAGoalOrGoalsOfTwoPeriodsAtTheSameTimeKeepTheTimelineReliable(): void
+    {
+        $medals = self::compute(GameBuilder::game()->card('B', 'V', 'M1', '05:00')->goal('A', 'M1', '05:00', 7)->goal('B', 'M2', '05:00', 8)->build());
+
+        self::assertTrue($medals->timeline->isReliable());
+    }
+
+    public function testMed78TheIssueIsTheFirstRuleBroken(): void
+    {
+        self::assertSame(TimelineIssue::ScoreMismatch, self::compute(GameBuilder::game()->goal('A', 'M1', '10:00', 7)->score('2', '0')->build())->timeline->timelineIssue());
+        self::assertSame(TimelineIssue::Untimed, self::compute(GameBuilder::game()->goal('A', 'M1', null, 7)->goal('B', 'M1', '10:00', 8)->build())->timeline->timelineIssue());
+        self::assertNull(self::compute(GameBuilder::game()->goal('A', 'M1', '10:00', 7)->notValidated()->build())->timeline->timelineIssue(), 'not eligible');
     }
 
     public function testMed04AForfeitScoreGivesNoMedal(): void

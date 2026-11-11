@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { awardsBasis, awardsPerGame, changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdChanges, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
+import { awardsBasis, type AuditGame, awardsPerGame, changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdChanges, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
 
 /**
  * Admin of the match medals, profiles 1 and 2 (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 9.3, maquette
@@ -11,7 +11,7 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-interface SeasonRow { season: string, thresholds: Record<string, unknown>, differs: boolean, rules_version: number, outdated: boolean, computed_at: string, games_count: number, reliable_games_count: number }
+interface SeasonRow { season: string, thresholds: Record<string, unknown>, differs: boolean, rules_version: number, outdated: boolean, computed_at: string, games_count: number, reliable_games_count: number, issues: Record<string, number> }
 interface Job { season: string, status: 'running' | 'done' | 'error', computed?: number, message?: string }
 interface Limit { min: number, max: number }
 interface StatResult { kind: string, columns: { key: string, type: string }[], rows: Record<string, unknown>[], summary: Record<string, unknown>, games_count: number, reliable_games_count: number }
@@ -58,6 +58,7 @@ const kind = ref('')
 const stat = ref<StatResult | null>(null)
 const editing = ref<AdminMedalItem | null>(null)
 const editDraft = reactive({ name_fr: '', name_en: '', explanation_fr: '', explanation_en: '' })
+const check = reactive({ open: false, title: '', loading: false, total: 0, games: [] as AuditGame[] })
 
 const name = (item: AdminMedalItem) => (locale.value === 'en' ? item.name_en : item.name_fr)
 const byCode = computed(() => new Map(items.value.map(item => [item.code, item])))
@@ -226,6 +227,23 @@ async function loadStat() {
 }
 
 /** Saves a change of the catalogue (journalled by api2, MED-43); publishing needs no recomputation (MED-36). */
+/** Games behind a figure (MED-80): those of an element of the catalogue, or those set aside for an issue. */
+async function openCheck(title: string, path: string, query: Record<string, string> = {}) {
+  Object.assign(check, { open: true, title, loading: true, total: 0, games: [] })
+  try {
+    const data = await api.get<{ total: number, games: AuditGame[] }>(path, query)
+    Object.assign(check, { total: data?.total ?? 0, games: data?.games ?? [] })
+  } catch {
+    toast.add({ title: t('common.error'), description: t('medals.check_error'), color: 'error' })
+    check.open = false
+  } finally {
+    check.loading = false
+  }
+}
+
+const checkElement = (item: AdminMedalItem) => openCheck(`${name(item)} — ${workContext.season}`, `/admin/medals/catalog/${item.code}/games`, { season: workContext.season })
+const checkIssue = (season: string, issue: string) => openCheck(`${t(`medals.issues.${issue}`)} — ${season}`, `/admin/medals/seasons/${season}/unreliable`, issue === 'unknown' ? {} : { issue })
+
 async function save(item: AdminMedalItem, changes: Partial<AdminMedalItem>) {
   try {
     await api.patch(`/admin/medals/catalog/${item.code}`, changes)
@@ -347,7 +365,16 @@ onMounted(async () => {
                 <span v-else class="text-header-400">—</span>
               </td>
               <td class="text-right tabular-nums">
-                <b class="text-lg">{{ item.awards === null ? '—' : number(item.awards) }}</b>
+                <button
+                  v-if="item.awards"
+                  type="button"
+                  class="text-lg font-bold underline decoration-dotted underline-offset-4 hover:text-primary-700 dark:hover:text-primary-300"
+                  :title="t('medals.check_games')"
+                  @click="checkElement(item)"
+                >
+                  {{ number(item.awards) }}
+                </button>
+                <b v-else class="text-lg">{{ item.awards === null ? '—' : number(item.awards) }}</b>
                 <span v-if="awardsOf(item)" class="block text-sm whitespace-nowrap text-header-500">
                   {{ t('medals.per_game', { rate: awardsOf(item)!.rate }) }} · {{ t(awardsOf(item)!.reliable ? 'medals.basis_reliable' : 'medals.basis_games', { games: awardsOf(item)!.games }) }}
                 </span>
@@ -462,6 +489,19 @@ onMounted(async () => {
                 <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-header-100 dark:bg-header-800" role="img" :aria-label="`${share(row)} %`">
                   <div class="h-full rounded-full bg-primary-600" :style="{ width: `${share(row)}%` }" />
                 </div>
+                <!-- Games set aside, by issue (§ 5.1): each count opens the list of the games (MED-80) -->
+                <p v-if="Object.keys(row.issues).length" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-header-500">
+                  <span>{{ t('medals.set_aside') }}</span>
+                  <button
+                    v-for="(count, issue) in row.issues"
+                    :key="issue"
+                    type="button"
+                    class="underline decoration-dotted underline-offset-4 hover:text-primary-700 dark:hover:text-primary-300"
+                    @click="checkIssue(row.season, String(issue))"
+                  >
+                    {{ t(`medals.issues.${issue}`) }} <b class="tabular-nums">{{ number(count) }}</b>
+                  </button>
+                </p>
               </div>
             </div>
             <details :open="queries.seasons !== ''">
@@ -575,6 +615,8 @@ onMounted(async () => {
         </div>
       </div>
     </AdminModal>
+
+    <MedalGamesModal :open="check.open" :title="check.title" :loading="check.loading" :total="check.total" :games="check.games" @close="check.open = false" />
 
     <AdminModal :open="editing !== null" :title="editing ? `${editing.name_fr} (${editing.code})` : ''" max-width="xl" @close="editing = null">
       <div v-if="editing" class="space-y-3 text-sm">

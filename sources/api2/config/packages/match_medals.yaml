@@ -4,7 +4,7 @@
 # (make api2_match_medals_compute season=…): each season keeps the copy of the thresholds it was computed with.
 # Changing a RULE in the code instead: increment match_medals.rules_version.
 parameters:
-    match_medals.rules_version: 2
+    match_medals.rules_version: 3
     match_medals.thresholds:
         bounceBackSeconds: 30          # Réplique · Bounce Back
         comebackDeficit: 3             # Remontée · Comeback, Retour au score · Fightback

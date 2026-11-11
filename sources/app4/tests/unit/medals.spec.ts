@@ -1,6 +1,6 @@
 // Admin page of the match medals (FEATURE_MATCH_MEDALS.md § 9.3): pure display rules of the statistics.
 import { describe, expect, it } from 'vitest'
-import { awardsBasis, awardsPerGame, changedThresholds, thresholdChanges, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
+import { auditAwardText, awardsBasis, awardsPerGame, changedThresholds, thresholdChanges, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, gameSheetUrl, thresholdsUsed } from '../../utils/medals'
 
 describe('statistics of the admin page', () => {
   it('names the subject of a row: team, referee, pair, player or game', () => {
@@ -99,5 +99,18 @@ describe('proportion of awards in the catalogue', () => {
     expect(awardsPerGame(0, 1819)).toBe(0)
     expect(awardsPerGame(5, 0)).toBeNull()
     expect(awardsPerGame(null, 100)).toBeNull()
+  })
+})
+
+describe('games behind the figures (MED-80)', () => {
+  it('names a player award with the time of the fact, a team award with its side', () => {
+    expect(auditAwardText({ scope: 'player', side: 'A', first_name: 'Ana', last_name: 'MEDAL', period: 'M1', remaining: 585 })).toBe('MEDAL Ana · M1 09:45')
+    expect(auditAwardText({ scope: 'team', side: 'B', first_name: null, last_name: null, period: 'M2', remaining: 0 })).toBe('B · M2 00:00')
+    expect(auditAwardText({ scope: 'player', side: 'A', first_name: 'Ana', last_name: 'MEDAL', period: null, remaining: null })).toBe('MEDAL Ana')
+  })
+
+  it('opens the sheet of a game in app2', () => {
+    expect(gameSheetUrl('https://app.kpi.localhost', 9461)).toBe('https://app.kpi.localhost/game/9461')
+    expect(gameSheetUrl('https://app.kpi.localhost/', 9461)).toBe('https://app.kpi.localhost/game/9461')
   })
 })

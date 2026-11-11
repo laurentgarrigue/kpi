@@ -191,7 +191,7 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
     public function testMed40AdminEndpointsAreForProfilesOneAndTwo(): void
     {
         $this->requestAs('TDIV', 'GET', '/admin/medals/catalog', expectedStatus: 403);
-        self::assertCount(53, $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog?season=2998')['items']);
+        self::assertCount(54, $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog?season=2998')['items']);
     }
 
     public function testMed36PublishingAnElementShowsItsHistoryWithoutRecomputing(): void
@@ -239,6 +239,40 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
 
         self::assertCount(1, $ben, 'the player is named from his licence');
         self::assertSame(['MEDAL', 7, 'Medal Oscar'], [$ben[0]['last_name'], $ben[0]['number'], $ben[0]['team']['label']]);
+    }
+
+    public function testMed79TheAdminListsTheGamesOfAMedalWithTheirAwards(): void
+    {
+        $this->requestAs('TDIV', 'GET', '/admin/medals/catalog/hat_trick/games?season=2998', expectedStatus: 403);
+        $hatTrick = $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog/hat_trick/games?season=2998');
+
+        self::assertSame(1, $hatTrick['total']);
+        self::assertSame([9463, 'MED', 63, 'Medal Oscar', 'Medal Papa', '3', '0'], [
+            $hatTrick['games'][0]['id'], $hatTrick['games'][0]['competition'], $hatTrick['games'][0]['number'],
+            $hatTrick['games'][0]['team_a'], $hatTrick['games'][0]['team_b'], $hatTrick['games'][0]['score_a'], $hatTrick['games'][0]['score_b'],
+        ]);
+        self::assertSame(['player', 'A', 9531, 'Ana'], [
+            $hatTrick['games'][0]['awards'][0]['scope'], $hatTrick['games'][0]['awards'][0]['side'],
+            $hatTrick['games'][0]['awards'][0]['matric'], $hatTrick['games'][0]['awards'][0]['first_name'],
+        ]);
+
+        $opener = $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog/opener/games?season=2998')['games'];
+        self::assertSame([9465, 9462, 9461], array_column($opener, 'id'), 'most recent first');
+
+        $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog/scorers/games?season=2998', expectedStatus: 404);
+        $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog/nope/games?season=2998', expectedStatus: 404);
+        $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog/opener/games', expectedStatus: 400);
+    }
+
+    public function testMed79TheAdminListsTheGamesSetAsideAndWhy(): void
+    {
+        $untimed = $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons/2998/unreliable?issue=untimed');
+        self::assertSame([9463], array_column($untimed['games'], 'id'));
+        self::assertSame('untimed', $untimed['games'][0]['timeline_issue']);
+
+        self::assertSame(0, $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons/2998/unreliable?issue=period_start')['total']);
+        $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons/2998/unreliable?issue=bogus', expectedStatus: 400);
+        self::assertSame(['untimed' => 1], $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons')['seasons'][0]['issues']);
     }
 
     public function testAdminSeasonsShowTheFrozenThresholds(): void

@@ -5,10 +5,12 @@ namespace App\Controller;
 use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\MatchMedalReader;
+use App\MatchMedals\MedalAudit;
 use App\MatchMedals\MatchMedalService;
 use App\MatchMedals\MedalComputeJob;
 use App\MatchMedals\MedalSettings;
 use App\MatchMedals\MedalThresholds;
+use App\MatchMedals\Model\TimelineIssue;
 use App\MatchMedals\SeasonComputeLauncher;
 use App\MatchMedals\Stats\MedalScope;
 use App\MatchMedals\Stats\MedalStats;
@@ -36,7 +38,6 @@ final class AdminMedalsController extends AbstractController
     private const DEFAULT_LIMIT = 100;
     private const MAX_LIMIT = 500;
 
-    /** @param array<string, mixed> $thresholds */
     public function __construct(
         private readonly MedalCatalog $catalog,
         private readonly MedalStats $stats,
@@ -46,6 +47,7 @@ final class AdminMedalsController extends AbstractController
         private readonly MedalSettings $settings,
         private readonly MedalComputeJob $job,
         private readonly SeasonComputeLauncher $launcher,
+        private readonly MedalAudit $audit,
     ) {
     }
 
@@ -94,11 +96,42 @@ final class AdminMedalsController extends AbstractController
         return $row === null ? $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND) : $this->json($row);
     }
 
+    #[Route('/catalog/{code}/games', name: 'admin_medals_catalog_games', methods: ['GET'], requirements: ['code' => '[a-z_]{1,40}'])]
+    #[OA\Get(path: '/admin/medals/catalog/{code}/games', summary: 'Games of a season that received a medal or a label, most recent first, with the awards (check, MED-79)')]
+    public function catalogGames(string $code, Request $request): JsonResponse
+    {
+        $season = $this->season($request);
+        if ($season === false || $season === null) {
+            return $this->invalid();
+        }
+        $type = $this->catalog->find($code)['type'] ?? null;
+
+        return match ($type) {
+            'medal' => $this->json(['code' => $code, 'season' => $season, ...$this->audit->gamesWithMedal($code, $season)]),
+            'label' => $this->json(['code' => $code, 'season' => $season, ...$this->audit->gamesWithLabel($code, $season)]),
+            default => $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND),
+        };
+    }
+
+    #[Route('/seasons/{season}/unreliable', name: 'admin_medals_season_unreliable', methods: ['GET'], requirements: ['season' => '\d{4}'])]
+    #[OA\Get(path: '/admin/medals/seasons/{season}/unreliable', summary: 'Eligible games of a season whose timeline is set aside, optionally for one issue (check, MED-79)')]
+    public function unreliableGames(string $season, Request $request): JsonResponse
+    {
+        $issue = $request->query->get('issue');
+        $filter = $issue === null || $issue === '' ? null : TimelineIssue::tryFrom((string) $issue);
+        if ($filter === null && $issue !== null && $issue !== '') {
+            return $this->invalid();
+        }
+
+        return $this->json(['season' => $season, 'issue' => $filter?->value, ...$this->audit->unreliableGames($season, $filter)]);
+    }
+
     #[Route('/seasons', name: 'admin_medals_seasons', methods: ['GET'])]
     #[OA\Get(path: '/admin/medals/seasons', summary: 'Computed seasons: frozen thresholds, rules version, counts')]
     public function seasons(): JsonResponse
     {
         $current = $this->settings->thresholds();
+        $issues = $this->audit->issueCounts();
 
         return $this->json([
             'rules_version' => $this->service->rulesVersion(),
@@ -118,6 +151,7 @@ final class AdminMedalsController extends AbstractController
                 'computed_at' => $s['computed_at'],
                 'games_count' => (int) $s['games_count'],
                 'reliable_games_count' => (int) $s['reliable_games_count'],
+                'issues' => $issues[$s['season']] ?? [],
             ], $this->connection->fetchAllAssociative('SELECT * FROM kp_medal_season ORDER BY season DESC')),
         ]);
     }

@@ -101,6 +101,7 @@ Les seuils en *italique* sont des paramètres (§ 5.4). Portée : É = équipe, 
 | `comeback` | **Remontée · Comeback** | É | Menée d'au moins *3* buts, finit par gagner. | Réaction | T | **app2, app3** |
 | `fightback` | **Retour au score · Fightback** | É | Menée d'au moins *3* buts, obtient le match nul (match sans prolongation). | Réaction | T | — (admin) |
 | `game_winner` | **But de la victoire · Game Winner** | J | Marque le but décisif (§ 5.5). | Réaction | T | **app2** |
+| `tiebreaker` | **But de la délivrance · Tiebreaker** | J | Marque le dernier but du match, à égalité, pour une victoire d'un but (cas du but en or). | Réaction | T | — (admin) |
 | `late_winner` | **Dernière minute · Late Winner** | É, J | Marque le but décisif dans les *60* dernières secondes du temps réglementaire. | Réaction | T | — (admin) |
 | `lifeline` | **Égalisation salvatrice · Lifeline** | É, J | Égalise dans les *60* dernières secondes de la 2ᵉ mi-temps et arrache la prolongation. | Réaction | T | — (admin) |
 | `extra_time` | **Prolongation · Extra Time** | É | Le match va en prolongation (les deux équipes). | Endurance | S | — (admin) |
@@ -249,10 +250,22 @@ Sa **timeline est fiable** (éléments **T** autorisés) si, en plus :
 4. le nombre de buts `B` hors `TB` de chaque équipe est égal à son score (`ScoreA`, `ScoreB`) ;
 5. chaque but et chaque carton hors `TB` a une période et un temps renseignés ;
 6. chaque période est connue (`M1`, `M2`, `P1`, `P2`…). Un temps `00:00:00` compte comme **non saisi** : le legacy
-   enregistre « `00:` + temps saisi », un temps vide y devient donc `00:00:00` (décision d'implémentation, § 12).
+   enregistre « `00:` + temps saisi », un temps vide y devient donc `00:00:00` (décision d'implémentation, § 12) ;
+7. aucun but ni carton n'a pour temps restant **le début de sa période** (durée par défaut, § 5.4 :
+   `regularPeriodSeconds` en `M*`, `extraPeriodSeconds` en `P*`, soit 10:00 et 05:00). C'est la valeur que garde le
+   chrono quand le temps n'a pas été saisi ; aucun fait réel n'a lieu à 0 s de jeu. C'est la notion de « temps non
+   saisi » de la frise d'app2 (`hasRecordedTimes`, MED-75), appliquée ici à **chaque** fait et non à au moins un ;
+8. deux buts d'une même période n'ont pas **le même temps** : deux buts à la même seconde sont impossibles, c'est la
+   trace d'une feuille remplie après coup avec un chrono figé (ex. tous les buts à 09:59).
+
+Mesure sur la saison 2025 (11/11/2026) : la règle 7 écarte 335 matchs jusqu'alors jugés fiables, qui portaient 98 % des
+`fast_start` (tous leurs buts à 0 s de jeu) et 64 % des `bounce_back` (buts à 0 s d'écart) ; la règle 8, 26 de plus.
+Des temps tous en minutes rondes (01:00, 02:00…) ne sont **pas** écartés : 12 matchs, sans effet mesuré.
 
 Un match éligible dont la timeline n'est pas fiable n'attribue **que les médailles S**. L'API l'indique
-(`timeline_reliable: false`) pour que l'affichage l'explique, sans jamais l'imputer à une équipe.
+(`timeline_reliable: false`) pour que l'affichage l'explique, sans jamais l'imputer à une équipe. Le calcul garde
+**la première raison** rencontrée, dans l'ordre des règles (`timeline_issue`) : `score_mismatch` (4), `untimed`
+(5, 6), `period_start` (7), `same_instant` (8). L'admin s'en sert pour contrôler les matchs écartés (§ 9.3).
 
 ### 5.2 Axe de temps
 
@@ -363,7 +376,8 @@ Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3)
 - **`kp_match_referee`** (une ligne par arbitre désigné d'un match calculé) : `match_id`, `referee_matric`, `role`
   (`principal`/`secondaire`). Copie des désignations au moment du calcul ; entre dans `source_hash`, de sorte qu'un
   changement de désignation sur un match validé est repris par `sync`.
-- **`kp_match_insight`** (une ligne par match calculé) : `match_id`, `season`, `timeline_reliable`, `labels` (JSON),
+- **`kp_match_insight`** (une ligne par match calculé) : `match_id`, `season`, `timeline_reliable`, `timeline_issue`
+  (raison de la non-fiabilité d'un match éligible, § 5.1 ; NULL sinon), `labels` (JSON),
   `lead_changes`, `equalizers`, `first_goal_seconds`, `max_deficit_A`, `max_deficit_B`, `exclusions_A`,
   `exclusions_B`, `powerplay_goals_A`, `powerplay_goals_B`, `penalty_killed_A`, `penalty_killed_B`, `source_hash`,
   `computed_at`.
@@ -420,6 +434,8 @@ endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 | `POST /admin/medals/seasons/{season}/compute`, `DELETE /admin/medals/seasons/{season}` | calcul complet de la saison avec les seuils actuels, **lancé en arrière-plan** (202, 409 si un calcul est déjà en cours ; son état `job` est dans `GET /seasons`) / suppression de ses calculs ; **profil 1** | app4 |
 | `GET /admin/medals/stats/{kind}?season=&competitions=&event=` | toutes les statistiques actives, mêmes formats, avec leurs surfaces | app4 |
 | `GET /admin/medals/games/{id}` | médailles et étiquettes actives d'un match, avec leurs surfaces | app4 |
+| `GET /admin/medals/catalog/{code}/games?season=` | **contrôle** : matchs de la saison qui ont reçu la médaille ou l'étiquette, du plus récent au plus ancien (au plus 200, `total` en plus), chacun avec ses attributions (côté, joueur, temps) | app4 |
+| `GET /admin/medals/seasons/{season}/unreliable?issue=` | **contrôle** : matchs éligibles de la saison dont la timeline n'est pas fiable pour cette raison (toutes sans `issue`), avec leur `timeline_issue` (au plus 200, `total` en plus) ; `GET /admin/medals/seasons` donne leur nombre par raison (`issues`) | app4 |
 
 Les endpoints admin exigent un JWT de profil ≤ 2 (`ROLE_…` équivalent) ; les autres profils reçoivent 403.
 
@@ -525,7 +541,12 @@ Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
   timelines fiables. **Profil 1 seulement** : *Seuils par défaut* modifiables (formulaire **replié par défaut**, affiché à la demande) (enregistrer, rétablir le fichier),
   *Recalculer avec les seuils actuels* et *Supprimer les calculs* par saison, chacun **après une confirmation qui
   dit ce qui va se passer** ; les saisons existantes sans calcul proposent *Calculer*. Le profil 2 voit tout en
-  lecture seule.
+  lecture seule. Sous le nombre de timelines fiables, le nombre de matchs écartés **par raison** (§ 5.1).
+- **Contrôle des matchs** (sans colonne ni onglet de plus) : dans le catalogue, le **nombre d'attributions** d'une
+  médaille ou d'une étiquette est un bouton qui ouvre la liste des matchs concernés (date, compétition, n°, équipes,
+  score, attributions avec joueur et temps) ; dans les saisons, chaque **raison d'écartement** est un bouton qui ouvre
+  la liste des matchs écartés pour elle. Chaque match ouvre sa feuille dans app2 (`/game/{id}`, frise comprise) dans un
+  nouvel onglet.
 - **Statistiques** : toutes les statistiques actives sur le périmètre du contexte de travail (saison,
   compétitions, événement), avec le même tableau générique que la page Statistiques (PAGE_STATISTIQUES.md) et un
   badge de surface (« app2 », « app3 » ou « non publié ») sur chaque élément.
@@ -690,8 +711,8 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-65** — Dans le tableau des joueurs de la page équipe d'app2, l'en-tête de la colonne des buts est le ballon
   et chaque joueur y a son nombre de buts en chiffres (rien pour zéro).
 - **MED-75** — Sur la feuille de match d'app2, la frise horizontale n'est pas affichée quand tous les buts et cartons
-  ont un temps à 10:00 ou à 00:00 (temps non saisis) ; la liste des faits reste. Les liens d'app3 vers app2 s'ouvrent
-  dans un nouvel onglet.
+  ont un temps au début de leur période (10:00, 05:00 en prolongation) ou à 00:00 (temps non saisis) ; la liste des
+  faits reste. Les liens d'app3 vers app2 s'ouvrent dans un nouvel onglet.
 
 **Seuils, recalcul et suppression depuis l'admin** (11/11/2026)
 
@@ -711,6 +732,26 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
   périmètre du match : l'événement du lien (`?event=`) s'il le contient, sinon la sélection actuelle si elle contient
   le match, sinon le **groupe** du match ; les autres matchs et les équipes auxquels on navigue ensuite sont ceux de ce
   périmètre. `GET /game-sheet/{id}` renvoie pour cela `context: { season, group, events }` (événements publiés).
+**Fiabilité de la timeline et contrôle des matchs** (11/11/2026)
+
+- **MED-76** — Étant donné un but à 10:00 restant en `M1` (ou un carton à 10:00 en `M2`, ou un but à 05:00 en `P1`)
+  parmi des faits aux temps réels, alors `timeline_reliable = false`, `timeline_issue = period_start`, et ni
+  `fast_start` ni `bounce_back` n'est attribué ; un but à 09:59 en `M1` ne l'écarte pas.
+- **MED-77** — Étant donné deux buts de la même période au même temps restant, alors `timeline_issue = same_instant` ;
+  un carton et un but au même temps (MED-14), ou deux buts au même temps dans deux périodes, ne l'écartent pas.
+- **MED-78** — `timeline_issue` vaut `score_mismatch` (MED-02), `untimed` (MED-03), et NULL pour un match fiable ou
+  non éligible ; la `rules_version` passe à 3.
+- **MED-79** — `GET /admin/medals/catalog/{code}/games?season=` renvoie les matchs de la saison qui ont l'élément, avec
+  `total` et pour chacun ses attributions ; un code inconnu ou une statistique → 404 ; une saison invalide → 400 ;
+  profils 1 et 2 seulement. `GET /admin/medals/seasons/{season}/unreliable?issue=` renvoie les matchs écartés pour
+  cette raison ; une raison inconnue → 400. `GET /admin/medals/seasons` donne `issues` par saison.
+- **MED-80** — Dans app4, le nombre d'attributions d'un élément du catalogue et chaque raison d'écartement d'une saison
+  ouvrent la liste des matchs concernés, chacun avec un lien vers sa feuille app2 ; la page n'a ni colonne ni onglet
+  de plus.
+- **MED-81** — Étant donné A gagne 3-2 et le 3ᵉ but de A est le dernier du match, marqué à 2-2, alors son buteur
+  reçoit `tiebreaker` (en plus de `game_winner`) ; un but en or (prolongation) le reçoit aussi. A gagne 4-2, ou A mène
+  3-1 puis B réduit à 3-2 : pas de `tiebreaker` (le but décisif n'est pas le dernier du match). Niveau T : une feuille
+  non fiable ne l'attribue pas, même pour un but en or, d'où un nombre inférieur à celui de `golden_goal`.
 - **MED-70** — L'admin demande une confirmation avant de recalculer ou de supprimer, et la dit en une phrase (saison,
   nombre de matchs, conséquence) ; le profil 2 ne voit aucun bouton d'action.
 
@@ -759,6 +800,13 @@ Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout
   depuis une autre origine exigerait du CORS sur les fichiers statiques.
 - **Admin** (§ 9.3) : page dans le groupe **Opérations** d'app4 (la rubrique Statistiques n'est pas un menu).
 - **Discipline** (§ 3.4) : cartons par couleur et par match ; les minutes d'infériorité ne sont pas calculées.
+- **Fiabilité** (§ 5.1, 11/11/2026) : règles 7 et 8 ajoutées après mesure (rules v3), raison stockée dans
+  `kp_match_insight.timeline_issue` (migration `2026-11-11_public_site_match_medals_timeline_issue.sql`) ; les saisons
+  calculées avant gardent `NULL` (« raison à recalculer » dans l'admin) jusqu'à leur recalcul. La règle de la frise
+  d'app2 (`hasRecordedTimes`) reste « au moins un temps saisi » (elle décide d'afficher une frise, pas de la fiabilité
+  d'un calcul) ; seule sa notion de début de période est alignée (05:00 en prolongation). Contrôle depuis l'admin :
+  `MedalAudit`, `components/MedalGamesModal.vue` (tests MED-76 à 80 : `EligibilityTest`, `MatchMedalsEndpointsTest`,
+  `tests/unit/medals.spec.ts` d'app4).
 - **Goal Fest** (§ 3.3) : décidé à la lecture (il dépend de toute la compétition), jamais stocké.
 
 **Reste à faire** (lots suivants) :

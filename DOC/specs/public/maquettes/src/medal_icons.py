@@ -101,6 +101,7 @@ ICONS = {
     'comeback': COMEBACK,
     'fightback': '<path d="M2.5 19c3.5 0 4-8.5 8-8.5"/><path d="M12 9h9.5M12 14.5h9.5"/>',
     'game_winner': ball(9.5, 14, 7) + '<path d="M15 5.5l2.4 2.4 4.6-5"/>',
+    'tiebreaker': ball(9.5, 14, 7) + '<path d="M15 4.5h7M15 8.5h7M20.5 2.5l-3.5 8"/>',  # the ball breaks the tie: a struck-out "="
     'late_winner': clock(12, 13, 8, hand=False) + f'<path d="M12 13L12 5A8 8 0 0 0 8 6.07Z" {FILL}/><path d="M12 13l3.2 2"/>',
     'lifeline': ('<circle cx="12" cy="12" r="8.8"/><circle cx="12" cy="12" r="4"/>'
                  '<path d="M9.2 9.2L5.8 5.8M14.8 9.2l3.4-3.4M9.2 14.8l-3.4 3.4M14.8 14.8l3.4 3.4"/>'),

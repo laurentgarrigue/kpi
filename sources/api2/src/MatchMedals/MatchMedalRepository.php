@@ -182,6 +182,7 @@ final class MatchMedalRepository
                 'season' => $season,
                 'is_eligible' => (int) $timeline->isEligible(),
                 'timeline_reliable' => (int) $timeline->isReliable(),
+                'timeline_issue' => $timeline->timelineIssue()?->value,
                 'labels' => json_encode($result->labels(), JSON_THROW_ON_ERROR),
                 'winner_side' => $timeline->isEligible() ? $timeline->winner() : null,
                 'overtimes' => $timeline->overtimes(),

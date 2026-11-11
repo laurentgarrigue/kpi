@@ -7,6 +7,7 @@ use App\MatchMedals\Model\GameEvent;
 use App\MatchMedals\Model\GameRecord;
 use App\MatchMedals\Model\Referee;
 use App\MatchMedals\Model\TimedGoal;
+use App\MatchMedals\Model\TimelineIssue;
 
 /**
  * Reads a game the way the medal rules need it (FEATURE_MATCH_MEDALS.md § 5): eligibility and reliability (§ 5.1),
@@ -24,6 +25,7 @@ final class MatchTimeline
     /** @var list<GameEvent> facts outside the shoot-out */
     private array $events;
     private bool $isEligible;
+    private ?TimelineIssue $timelineIssue = null;
     private bool $isReliable;
     /** @var array{A: int, B: int} */
     private array $score = ['A' => 0, 'B' => 0];
@@ -50,7 +52,10 @@ final class MatchTimeline
         if ($this->isEligible) {
             $this->score = ['A' => (int) $game->scoreA, 'B' => (int) $game->scoreB];
         }
-        $this->isReliable = $this->isEligible && $this->hasCompleteTimeline();
+        if ($this->isEligible) {
+            $this->timelineIssue = $this->findTimelineIssue();
+        }
+        $this->isReliable = $this->isEligible && $this->timelineIssue === null;
         if ($this->isReliable) {
             $this->measurePeriods();
             $this->walkTimeline();
@@ -72,6 +77,12 @@ final class MatchTimeline
     public function isReliable(): bool
     {
         return $this->isReliable;
+    }
+
+    /** First rule of § 5.1 the timeline of an eligible game breaks; null when reliable or not eligible. */
+    public function timelineIssue(): ?TimelineIssue
+    {
+        return $this->timelineIssue;
     }
 
     public function score(string $side): int
@@ -229,21 +240,32 @@ final class MatchTimeline
         return $score !== null && preg_match('/^\d+$/', $score) === 1;
     }
 
-    private function hasCompleteTimeline(): bool
+    private function findTimelineIssue(): ?TimelineIssue
     {
         foreach (self::SIDES as $side) {
             $goals = array_filter($this->goalEvents(), static fn (GameEvent $e): bool => $e->side === $side);
             if (count($goals) !== $this->score[$side]) {
-                return false;
+                return TimelineIssue::ScoreMismatch;
             }
         }
         foreach ($this->events as $event) {
             if ($event->remaining === null || $event->period === null || preg_match(self::TIMED_PERIOD, $event->period) !== 1) {
-                return false;
+                return TimelineIssue::Untimed;
             }
         }
+        foreach ($this->events as $event) {
+            if ($event->remaining === $this->defaultPeriodLength((string) $event->period)) {
+                return TimelineIssue::PeriodStart;
+            }
+        }
+        $instants = array_map(static fn (GameEvent $e): string => $e->period.'@'.$e->remaining, $this->goalEvents());
 
-        return true;
+        return count($instants) !== count(array_unique($instants)) ? TimelineIssue::SameInstant : null;
+    }
+
+    private function defaultPeriodLength(string $period): int
+    {
+        return $period[0] === 'P' ? $this->thresholds->extraPeriodSeconds : $this->thresholds->regularPeriodSeconds;
     }
 
     /** Default length, stretched to the whole minute above the largest remaining time recorded in the period. */
@@ -257,7 +279,7 @@ final class MatchTimeline
         usort($periods, static fn (string $a, string $b): int => self::periodRank($a) <=> self::periodRank($b));
         $offset = 0;
         foreach ($periods as $period) {
-            $base = $period[0] === 'P' ? $this->thresholds->extraPeriodSeconds : $this->thresholds->regularPeriodSeconds;
+            $base = $this->defaultPeriodLength($period);
             $remaining = array_map(static fn (GameEvent $e): int => (int) $e->remaining, array_filter($this->events, static fn (GameEvent $e): bool => $e->period === $period));
             $recorded = (int) ceil(max([0, ...$remaining]) / self::SECONDS_PER_MINUTE) * self::SECONDS_PER_MINUTE;
             $this->periodLength[$period] = max($base, $recorded);

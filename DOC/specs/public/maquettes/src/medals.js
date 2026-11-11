@@ -39,6 +39,7 @@ const CATALOG = [
   C('comeback', 'medal', 'reaction', 'T', 'T', ['app2', 'app3'], 'Remontée', 'Comeback', t => `Menée d'au moins ${t.comebackDeficit} buts, l'équipe finit par gagner.`),
   C('fightback', 'medal', 'reaction', 'T', 'T', [], 'Retour au score', 'Fightback', t => `Menée d'au moins ${t.comebackDeficit} buts, l'équipe obtient le match nul.`),
   C('game_winner', 'medal', 'reaction', 'P', 'T', ['app2'], 'But de la victoire', 'Game Winner', () => "Le but qui donne l'avantage définitif : le vainqueur ne sera plus rejoint."),
+  C('tiebreaker', 'medal', 'reaction', 'P', 'T', [], 'But de la délivrance', 'Tiebreaker', () => "Marque le dernier but du match alors que le score est à égalité, pour une victoire d'un but (le but en or en fait partie)."),
   C('late_winner', 'medal', 'reaction', 'TP', 'T', [], 'Dernière minute', 'Late Winner', t => `But de la victoire marqué dans les ${t.lateWindowSeconds} dernières secondes du temps réglementaire.`),
   C('lifeline', 'medal', 'reaction', 'TP', 'T', [], 'Égalisation salvatrice', 'Lifeline', t => `Égalise dans les ${t.lateWindowSeconds} dernières secondes et arrache la prolongation.`),
   C('extra_time', 'medal', 'endurance', 'T', 'S', [], 'Prolongation', 'Extra Time', () => 'Le match va en prolongation.'),
@@ -206,6 +207,7 @@ function computeMatch(m, t = THRESHOLDS) {
     if (decisive) {
       const p = scorer(decisive), when = `${PERIOD_LABEL(decisive.period)} · ${mmss(decisive.remaining)}`;
       p && add(out.player, 'game_winner', { side: winner, p, when });
+      if (decisive === lastGoal) p && add(out.player, 'tiebreaker', { side: winner, p, when });
       if (decisive.period === 'M2' && decisive.remaining < t.lateWindowSeconds) { add(out.team, 'late_winner', { side: winner, when }); p && add(out.player, 'late_winner', { side: winner, p, when }); }
     }
     if (maxDeficit[winner] >= t.comebackDeficit) add(out.team, 'comeback', { side: winner, detail: `mené ${maxDeficit[winner]} buts d'écart` });

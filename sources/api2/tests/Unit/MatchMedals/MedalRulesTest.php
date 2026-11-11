@@ -130,6 +130,24 @@ final class MedalRulesTest extends TestCase
         self::assertNotContains('game_winner', self::playerCodes($medals, 4));
     }
 
+    public function testMed81TiebreakerIsTheLastGoalScoredOnATieForAOneGoalWin(): void
+    {
+        $tied = self::compute(GameBuilder::game()->goal('A', 'M1', '09:00', 3)->goal('B', 'M1', '08:00', 8)->goal('A', 'M1', '07:00', 4)
+            ->goal('B', 'M1', '06:00', 8)->goal('A', 'M2', '05:00', 5)->build());
+        self::assertContains('tiebreaker', self::playerCodes($tied, 5));
+        self::assertContains('game_winner', self::playerCodes($tied, 5));
+
+        $golden = self::compute(GameBuilder::game()->goal('A', 'M1', '05:00', 7)->goal('B', 'M2', '05:00', 8)->goal('A', 'P1', '03:00', 9)->build());
+        self::assertContains('tiebreaker', self::playerCodes($golden, 9));
+
+        $twoGoals = self::compute(GameBuilder::game()->goal('B', 'M1', '09:00', 8)->goal('A', 'M1', '08:00', 3)->goal('A', 'M1', '07:00', 4)->goal('A', 'M1', '06:00', 5)->build());
+        self::assertNotContains('tiebreaker', [...self::playerCodes($twoGoals, 4), ...self::playerCodes($twoGoals, 5)], '3-1: the decisive goal is not the last one');
+
+        $reduced = self::compute(GameBuilder::game()->goal('A', 'M1', '09:00', 3)->goal('B', 'M1', '08:00', 8)->goal('A', 'M1', '07:00', 4)
+            ->goal('A', 'M1', '06:00', 5)->goal('B', 'M1', '05:00', 8)->build());
+        self::assertNotContains('tiebreaker', [...self::playerCodes($reduced, 5), ...self::playerCodes($reduced, 8)], '3-2 after leading 3-1');
+    }
+
     public function testMed26LateWinnerAndLifelineReadTheRemainingTime(): void
     {
         $late = self::compute(GameBuilder::game()->goal('B', 'M1', '05:00', 8)->goal('A', 'M2', '05:00', 6)->goal('A', 'M2', '00:45', 7)->build(), self::SIXTY_SECOND_WINDOWS);
