@@ -6,6 +6,7 @@ use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\MatchMedalReader;
 use App\MatchMedals\MatchMedalService;
+use App\MatchMedals\MedalSettings;
 use App\MatchMedals\MedalThresholds;
 use App\MatchMedals\Stats\MedalScope;
 use App\MatchMedals\Stats\MedalStats;
@@ -40,7 +41,7 @@ final class AdminMedalsController extends AbstractController
         private readonly MatchMedalReader $reader,
         private readonly MatchMedalService $service,
         private readonly Connection $connection,
-        #[Autowire('%match_medals.thresholds%')] private readonly array $thresholds,
+        private readonly MedalSettings $settings,
     ) {
     }
 
@@ -93,11 +94,16 @@ final class AdminMedalsController extends AbstractController
     #[OA\Get(path: '/admin/medals/seasons', summary: 'Computed seasons: frozen thresholds, rules version, counts')]
     public function seasons(): JsonResponse
     {
-        $current = MedalThresholds::fromArray($this->thresholds)->toArray();
+        $current = $this->settings->thresholds();
 
         return $this->json([
             'rules_version' => $this->service->rulesVersion(),
             'thresholds' => $current,
+            'default_thresholds' => $this->settings->fileThresholds(),
+            'overrides' => $this->settings->overrides(),
+            'limits' => array_map(static fn (array $range): array => ['min' => $range[0], 'max' => $range[1]], MedalThresholds::limits()),
+            'card_codes' => MedalThresholds::CARD_CODES,
+            'uncomputed' => $this->connection->fetchFirstColumn('SELECT Code FROM kp_saison WHERE Code NOT IN (SELECT season FROM kp_medal_season) ORDER BY Code DESC'),
             'seasons' => array_map(fn (array $s): array => [
                 'season' => $s['season'],
                 'thresholds' => $frozen = [...$current, ...json_decode((string) $s['thresholds'], true)],
@@ -109,6 +115,73 @@ final class AdminMedalsController extends AbstractController
                 'reliable_games_count' => (int) $s['reliable_games_count'],
             ], $this->connection->fetchAllAssociative('SELECT * FROM kp_medal_season ORDER BY season DESC')),
         ]);
+    }
+
+    #[Route('/thresholds', name: 'admin_medals_thresholds_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[OA\Put(path: '/admin/medals/thresholds', summary: 'Saves thresholds (partial, validated, journalled); profile 1 only. Computed seasons keep theirs')]
+    public function updateThresholds(Request $request): JsonResponse
+    {
+        $changes = json_decode($request->getContent(), true);
+        if (!is_array($changes) || !is_array($changes['changes'] ?? null)) {
+            return $this->invalid();
+        }
+        try {
+            $this->settings->saveThresholds($changes['changes'], $this->user());
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->thresholdsResponse();
+    }
+
+    #[Route('/thresholds', name: 'admin_medals_thresholds_reset', methods: ['DELETE'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[OA\Delete(path: '/admin/medals/thresholds', summary: 'Goes back to the values of match_medals.yaml; profile 1 only')]
+    public function resetThresholds(): JsonResponse
+    {
+        $this->settings->resetThresholds($this->user());
+
+        return $this->thresholdsResponse();
+    }
+
+    #[Route('/seasons/{season}/compute', name: 'admin_medals_season_compute', methods: ['POST'], requirements: ['season' => '\d{4}'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[OA\Post(path: '/admin/medals/seasons/{season}/compute', summary: 'Full computation of a season with the current thresholds (as make api2_match_medals_compute); profile 1 only')]
+    public function computeSeason(string $season): JsonResponse
+    {
+        if ($this->connection->fetchOne('SELECT 1 FROM kp_saison WHERE Code = ?', [$season]) === false) {
+            return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+        }
+        set_time_limit(0);
+        $result = $this->service->computeSeason($season, $this->user());
+        $this->settings->journalSeason($this->user(), sprintf('Saison %s recalculée : %d matchs', $season, $result['computed']));
+
+        return $this->json($result);
+    }
+
+    #[Route('/seasons/{season}', name: 'admin_medals_season_delete', methods: ['DELETE'], requirements: ['season' => '\d{4}'])]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[OA\Delete(path: '/admin/medals/seasons/{season}', summary: 'Deletes every calculation of a season; it is not computed again until a full computation; profile 1 only')]
+    public function deleteSeason(string $season): JsonResponse
+    {
+        if (!$this->service->seasonIsComputed($season)) {
+            return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+        }
+        $result = $this->service->deleteSeason($season, $this->user());
+        $this->settings->journalSeason($this->user(), sprintf('Saison %s : calculs supprimés (%d matchs)', $season, $result['removed']));
+
+        return $this->json($result);
+    }
+
+    private function thresholdsResponse(): JsonResponse
+    {
+        return $this->json(['thresholds' => $this->settings->thresholds(), 'overrides' => $this->settings->overrides()]);
+    }
+
+    private function user(): string
+    {
+        return $this->getUser()?->getUserIdentifier() ?? 'system';
     }
 
     #[Route('/stats', name: 'admin_medals_stat_kinds', methods: ['GET'])]

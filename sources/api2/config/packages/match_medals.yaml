@@ -1,4 +1,5 @@
-# Thresholds of the match medals (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 5.4): the ONLY place they are written.
+# Thresholds of the match medals (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 5.4): the ORIGINAL values.
+# Profile 1 can replace them from app4 (Operations > Medals > Seasons, stored in kp_medal_setting); those replacements win.
 # Common to every competition. Changing one changes nothing until a season is computed again
 # (make api2_match_medals_compute season=…): each season keeps the copy of the thresholds it was computed with.
 # Changing a RULE in the code instead: increment match_medals.rules_version.

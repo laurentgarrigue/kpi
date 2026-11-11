@@ -8,6 +8,7 @@ use App\MatchMedals\Model\GameEvent;
 use App\MatchMedals\Model\GameRecord;
 use App\MatchMedals\Model\Player;
 use App\MatchMedals\Model\Referee;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -119,15 +120,41 @@ final class MatchMedalRepository
         ));
     }
 
-    /** @return list<int> validated games never computed, or whose sources changed since (§ 6.3) */
-    public function staleGameIds(): array
+    /**
+     * @param list<string> $excludedSeasons seasons whose calculations were deleted: never brought back here
+     *
+     * @return list<int> validated games never computed, or whose sources changed since (§ 6.3)
+     */
+    public function staleGameIds(array $excludedSeasons = []): array
     {
         return array_map('intval', $this->connection->fetchFirstColumn(
             'SELECT m.Id FROM kp_match m INNER JOIN kp_journee j ON (j.Id = m.Id_journee)
             LEFT JOIN kp_match_insight i ON (i.match_id = m.Id)
-            WHERE m.Validation = \'O\' AND (i.match_id IS NULL OR i.source_hash <> '.self::SOURCE_HASH_SQL.')
+            WHERE m.Validation = \'O\' AND j.Code_saison NOT IN (?) AND (i.match_id IS NULL OR i.source_hash <> '.self::SOURCE_HASH_SQL.')
             ORDER BY m.Id',
+            [$excludedSeasons === [] ? [''] : $excludedSeasons],
+            [ArrayParameterType::STRING],
         ));
+    }
+
+    /** @return int number of games whose calculations were removed, with the row of the season */
+    public function deleteSeason(string $season): int
+    {
+        $games = array_map('intval', $this->connection->fetchFirstColumn('SELECT match_id FROM kp_match_insight WHERE season = ?', [$season]));
+        $this->connection->transactional(function () use ($games, $season): void {
+            foreach ($games as $gameId) {
+                $this->deleteRows($gameId);
+            }
+            $this->connection->executeStatement('DELETE FROM kp_medal_season WHERE season = ?', [$season]);
+        });
+
+        return count($games);
+    }
+
+    public function seasonExists(string $season): bool
+    {
+        return $this->connection->fetchOne('SELECT 1 FROM kp_medal_season WHERE season = ?', [$season]) !== false
+            || $this->connection->fetchOne('SELECT 1 FROM kp_match_insight WHERE season = ? LIMIT 1', [$season]) !== false;
     }
 
     /** @return list<int> computed games that are no longer validated (or no longer exist), optionally of one season */

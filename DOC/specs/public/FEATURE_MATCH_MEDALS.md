@@ -31,7 +31,7 @@ quand elle a fait ses preuves, et peut être **retirée** si elle s'avère peu p
 | Tirs (`T`) et arrêts (`A`) | **Exclus** : buts et cartons seulement (§ 10). |
 | Durée des périodes | **Non stockée, approximation acceptée** : 10 min par période et 5 min par prolongation dans la grande majorité des cas ; les formats courts (jeunes : 7 min et 3 min) gardent des proportions proches (§ 5.2). |
 | Exclusions | Carton vert, jaune, rouge : **2 min**, levée au premier but adverse. Rouge définitif (`D`, futur carton noir) : **infériorité jusqu'à la fin du match** (§ 5.3). |
-| Seuils | **Centralisés en un seul endroit**, communs à toutes les compétitions (§ 5.4). |
+| Seuils | **Centralisés en un seul endroit**, communs à toutes les compétitions (§ 5.4). Depuis le 11/11/2026, le **profil 1** les modifie depuis l'admin (§ 5.4, § 9.3) : le fichier fournit les valeurs d'origine, l'admin ses remplacements. |
 | Recalcul | **Toutes les saisons**, **saison par saison** : changer un seuil ne recalcule que les saisons choisies, les anciennes gardent leurs résultats et leurs seuils (§ 6.3). |
 | Premier lot public | **Sélection réduite** (§ 4) ; le reste n'est visible que dans l'admin en attendant d'être publié. |
 | Publication | **Par surface** : chaque élément est publié sur app2, sur app3, sur les deux ou sur aucune (§ 3.1, § 4). |
@@ -305,6 +305,11 @@ ni dans les explications, qui les citent par variable). Valeurs initiales :
 | `goalTimingSliceSeconds` | 120 | `goal_timing`, `referee_card_timing` |
 | `refereeMinGames` | 5 | statistiques d'arbitrage (§ 3.5) |
 
+**Modification depuis l'admin (11/11/2026, profil 1 seulement)** : les seuils actuels sont ceux du fichier
+`match_medals.yaml` **surchargés par ceux enregistrés dans l'admin** (table `kp_medal_setting`). Chaque valeur est
+validée (entier dans ses bornes ; `permanentCards` : codes de carton `V`, `J`, `R`, `D`). « Rétablir » supprime les
+remplacements et revient au fichier. Chaque changement est journalisé (`kp_journal`, avant / après).
+
 Modifier un seuil ne change rien tant qu'on ne recalcule pas une saison (§ 6.3).
 
 ### 5.5 Définitions dérivées
@@ -375,8 +380,13 @@ Chaque saison est calculée avec **ses** seuils, copiés dans `kp_medal_season` 
   le legacy) : calcule les matchs validés sans résultat ou dont `source_hash` (score + timeline + arbitres désignés) a changé, supprime
   ceux qui ne sont plus validés. Elle utilise **les seuils de la saison du match** ; une saison jamais calculée
   reçoit d'abord sa copie des seuils actuels.
+- **Depuis l'admin** (profil 1, après confirmation) : *Recalculer* une saison fait exactement le calcul complet
+  ci-dessus ; *Supprimer les calculs* d'une saison efface ses médailles, étiquettes, cartons, désignations et sa
+  ligne `kp_medal_season` (les pages publiques n'en montrent plus). Une saison supprimée est **mémorisée**
+  (`kp_medal_setting`) : ni `sync` ni la validation d'un match ne la recalculent, seul un calcul complet la remet en
+  service.
 - **Mise en service** : un calcul complet de **chaque saison**, une par une, de la plus récente à la plus ancienne.
-- **Changer un seuil** : modifier `config/packages/match_medals.yaml`, déployer, puis lancer le calcul complet des seules
+- **Changer un seuil** : depuis l'admin (§ 9.3, profil 1), ou en modifiant `config/packages/match_medals.yaml` et en déployant ; puis lancer le calcul complet des seules
   saisons voulues (en général la saison en cours). Les saisons passées gardent leurs résultats et leurs seuils, et
   leurs explications continuent de citer les seuils qui les ont produits.
 - **Changer une règle dans le code** : incrémenter `rules_version` ; l'admin signale les saisons calculées avec une
@@ -401,7 +411,9 @@ endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 | `GET /team/{id}/medals?season=` | médailles de l'équipe publiées sur app3 sur la saison, par code, avec les matchs concernés | app3 |
 | `GET /event/{eventId}/team/{teamId}/medals`, `GET /group/{season}/{groupCode}/team/{teamId}/medals` et `GET /competition/{season}/{code}/team/{teamId}/medals` | médailles d'une équipe sur le périmètre : `{ team: [{ code, count }], players: [{ first_name, last_name, number, medals: [{ code, count }] }] }`, éléments publiés sur app2 (`teamId` = `kp_competition_equipe.Id`, comme les statistiques de joueurs existantes ; l'équipe est retrouvée dans les autres compétitions par son numéro) ; `eventId` ≥ 3000 désigne une journée (contrat historique d'app2) ; le point d'accès par compétition sert aux tableaux par compétition d'un groupe | app2 |
 | `GET /admin/medals/catalog`, `PATCH /admin/medals/catalog/{code}` | catalogue complet ; modification des noms, explications, statut, surfaces, ordre (profils 1–2) | app4 |
-| `GET /admin/medals/seasons` | saisons calculées : seuils, `rules_version` (et retard éventuel), date, nombre de matchs | app4 |
+| `GET /admin/medals/seasons` | saisons calculées : seuils figés, `rules_version` (et retard éventuel), date, nombre de matchs ; **seuils actuels**, valeurs d'origine du fichier, remplacements, bornes ; saisons existantes non calculées (`uncomputed`) | app4 |
+| `PUT /admin/medals/thresholds`, `DELETE /admin/medals/thresholds` | enregistre des seuils (partiels) / rétablit les valeurs du fichier ; **profil 1** | app4 |
+| `POST /admin/medals/seasons/{season}/compute`, `DELETE /admin/medals/seasons/{season}` | calcul complet de la saison avec les seuils actuels / suppression de ses calculs ; **profil 1** | app4 |
 | `GET /admin/medals/stats/{kind}?season=&competitions=&event=` | toutes les statistiques actives, mêmes formats, avec leurs surfaces | app4 |
 | `GET /admin/medals/games/{id}` | médailles et étiquettes actives d'un match, avec leurs surfaces | app4 |
 
@@ -505,8 +517,12 @@ Une page **Médailles** (menu Statistiques), réservée aux profils 1 et 2 :
   nombre d'attributions sur la saison du contexte. Édition des noms, explications (aperçu avec les seuils de la
   saison), ordre, **surfaces de publication** (cases app2 / app3) et **statut** (actif / retiré, et retour). Chaque changement est journalisé
   (`kp_journal`, comme les autres actions d'admin).
-- **Saisons** : pour chaque saison calculée, les seuils utilisés, la `rules_version` (alerte si antérieure à celle du
-  code), la date du calcul, le nombre de matchs et de timelines fiables. Le calcul se lance par commande (§ 6.3).
+- **Saisons** : pour chaque saison calculée, les seuils utilisés (ceux qui diffèrent des seuils actuels sont
+  signalés), la `rules_version` (alerte si antérieure à celle du code), la date du calcul, le nombre de matchs et de
+  timelines fiables. **Profil 1 seulement** : *Seuils par défaut* modifiables (enregistrer, rétablir le fichier),
+  *Recalculer avec les seuils actuels* et *Supprimer les calculs* par saison, chacun **après une confirmation qui
+  dit ce qui va se passer** ; les saisons existantes sans calcul proposent *Calculer*. Le profil 2 voit tout en
+  lecture seule.
 - **Statistiques** : toutes les statistiques actives sur le périmètre du contexte de travail (saison,
   compétitions, événement), avec le même tableau générique que la page Statistiques (PAGE_STATISTIQUES.md) et un
   badge de surface (« app2 », « app3 » ou « non publié ») sur chaque élément.
@@ -666,6 +682,20 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-65** — Étant donné un joueur de 13 buts sur la page équipe d'app2, alors le tableau montre le ballon avec la
   pastille « ×13 » ; avec 1 but, le ballon sans pastille ; sans but, rien.
 
+**Seuils, recalcul et suppression depuis l'admin** (11/11/2026)
+
+- **MED-66** — Étant donné le profil 1, quand il enregistre `bounceBackSeconds = 45`, alors les seuils actuels valent 45
+  (les saisons déjà calculées gardent les leurs) et le changement est journalisé ; un profil 2 reçoit 403.
+- **MED-67** — Un seuil hors de ses bornes, inconnu ou de mauvais type est refusé (400) sans rien enregistrer ;
+  *Rétablir* revient aux valeurs du fichier.
+- **MED-68** — Étant donné des seuils modifiés, quand le profil 1 recalcule la saison 2998, alors ses seuils figés sont
+  les seuils actuels et ses médailles sont recalculées ; les autres saisons sont intactes.
+- **MED-69** — Quand le profil 1 supprime les calculs de la saison 2998, alors plus aucune médaille, étiquette, carton,
+  désignation ni ligne de saison n'existe pour elle, et ni `sync` ni la validation d'un match ne les recréent ; un
+  calcul complet la remet en service.
+- **MED-70** — L'admin demande une confirmation avant de recalculer ou de supprimer, et la dit en une phrase (saison,
+  nombre de matchs, conséquence) ; le profil 2 ne voit aucun bouton d'action.
+
 ## 11. Hors périmètre et questions ouvertes
 
 **Hors périmètre (lots suivants)** :
@@ -675,8 +705,6 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - Fiche joueur publique et collection de carrière.
 - Tirs (`T`) et arrêts (`A`) : médailles de gardien et d'efficacité dès que ces faits seront saisis régulièrement.
 - Agrégats de saison toutes compétitions, palmarès historique des médailles, badges partageables.
-- Bouton « recalculer la saison » dans l'admin (la commande suffit au départ).
-- Seuils modifiables dans l'admin (aujourd'hui dans un fichier versionné, revu comme du code).
 - Statistiques par rôle d'arbitre (impossible sans saisie de l'arbitre auteur de chaque carton).
 - Statistiques des autres officiels (secrétaire, chronométreur, juges de ligne).
 

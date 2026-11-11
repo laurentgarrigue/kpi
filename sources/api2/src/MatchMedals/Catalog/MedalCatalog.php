@@ -2,6 +2,7 @@
 
 namespace App\MatchMedals\Catalog;
 
+use App\MatchMedals\MedalSettings;
 use App\MatchMedals\MedalThresholds;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -26,10 +27,9 @@ final class MedalCatalog
     /** @var list<array<string, mixed>>|null */
     private ?array $rows = null;
 
-    /** @param array<string, mixed> $thresholds current configuration */
     public function __construct(
         private readonly Connection $connection,
-        #[Autowire('%match_medals.thresholds%')] private readonly array $thresholds,
+        private readonly MedalSettings $settings,
         #[Autowire('%kernel.project_dir%/public')] private readonly string $publicDir,
     ) {
     }
@@ -90,7 +90,7 @@ final class MedalCatalog
     {
         $copy = $season === null ? false : $this->connection->fetchOne('SELECT thresholds FROM kp_medal_season WHERE season = ?', [$season]);
 
-        return MedalThresholds::fromArray($copy === false ? $this->thresholds : [...$this->thresholds, ...json_decode((string) $copy, true, 512, JSON_THROW_ON_ERROR)]);
+        return MedalThresholds::fromArray($copy === false ? $this->settings->thresholds() : [...$this->settings->thresholds(), ...json_decode((string) $copy, true, 512, JSON_THROW_ON_ERROR)]);
     }
 
     /** Explanation with its {threshold} variables replaced (§ 3.1, MED-41). */

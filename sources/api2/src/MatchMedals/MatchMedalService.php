@@ -11,11 +11,10 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class MatchMedalService
 {
-    /** @param array<string, mixed> $thresholds */
     public function __construct(
         private readonly MatchMedalRepository $repository,
         private readonly MatchMedalCalculator $calculator,
-        #[Autowire('%match_medals.thresholds%')] private readonly array $thresholds,
+        private readonly MedalSettings $settings,
         #[Autowire('%match_medals.rules_version%')] private readonly int $rulesVersion,
         #[Autowire(service: 'services_resetter')] private readonly ResetInterface $servicesResetter,
     ) {
@@ -25,7 +24,7 @@ final class MatchMedalService
     public function refreshGame(int $gameId): void
     {
         $loaded = $this->repository->loadGame($gameId);
-        if ($loaded === null || !$loaded['game']->isValidated) {
+        if ($loaded === null || !$loaded['game']->isValidated || $this->settings->isDeleted($loaded['season'])) {
             $this->repository->delete($gameId);
 
             return;
@@ -48,9 +47,10 @@ final class MatchMedalService
      *
      * @return array{computed: int, removed: int}
      */
-    public function computeSeason(string $season): array
+    public function computeSeason(string $season, string $user = 'system'): array
     {
-        $this->repository->saveSeason($season, MedalThresholds::fromArray($this->thresholds)->toArray(), $this->rulesVersion);
+        $this->settings->unmarkDeleted($season, $user);
+        $this->repository->saveSeason($season, $this->settings->thresholds(), $this->rulesVersion);
         $games = $this->repository->validatedGameIds($season);
         $this->refreshBatch($games);
         $orphans = $this->repository->orphanGameIds($season);
@@ -61,18 +61,37 @@ final class MatchMedalService
     }
 
     /**
+     * Deletes every calculation of a season: its medals, cards, referees, insights and its row. The season is
+     * remembered as deleted, so that neither sync() nor a validation computes it again; computeSeason() ends that.
+     *
+     * @return array{removed: int}
+     */
+    public function deleteSeason(string $season, string $user): array
+    {
+        $removed = $this->repository->deleteSeason($season);
+        $this->settings->markDeleted($season, $user);
+
+        return ['removed' => $removed];
+    }
+
+    /**
      * Incremental update (cron, legacy validations): new or changed validated games, and no longer validated ones.
      *
      * @return array{computed: int, removed: int}
      */
     public function sync(): array
     {
-        $stale = $this->repository->staleGameIds();
+        $stale = $this->repository->staleGameIds($this->settings->deletedSeasons());
         $this->refreshBatch($stale);
         $orphans = $this->repository->orphanGameIds();
         array_map(fn (int $id) => $this->repository->delete($id), $orphans);
 
         return ['computed' => count($stale), 'removed' => count($orphans)];
+    }
+
+    public function seasonIsComputed(string $season): bool
+    {
+        return $this->repository->seasonExists($season);
     }
 
     public function rulesVersion(): int
@@ -99,7 +118,7 @@ final class MatchMedalService
     {
         $copy = $this->repository->seasonThresholds($season);
         if ($copy === null) {
-            $copy = MedalThresholds::fromArray($this->thresholds)->toArray();
+            $copy = $this->settings->thresholds();
             $this->repository->saveSeason($season, $copy, $this->rulesVersion);
         }
 
