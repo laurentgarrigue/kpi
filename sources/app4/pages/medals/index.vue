@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
+import { changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdChanges, thresholdsUsed, type AdminMedalItem, type Thresholds } from '~/utils/medals'
 
 /**
  * Admin of the match medals, profiles 1 and 2 (DOC/specs/public/FEATURE_MATCH_MEDALS.md § 9.3, maquette
@@ -12,6 +12,7 @@ definePageMeta({
 })
 
 interface SeasonRow { season: string, thresholds: Record<string, unknown>, differs: boolean, rules_version: number, outdated: boolean, computed_at: string, games_count: number, reliable_games_count: number }
+interface Limit { min: number, max: number }
 interface StatResult { kind: string, columns: { key: string, type: string }[], rows: Record<string, unknown>[], summary: Record<string, unknown>, games_count: number, reliable_games_count: number }
 type Tab = 'catalogue' | 'seasons' | 'stats' | 'referees'
 
@@ -35,12 +36,23 @@ const unpublishedOnly = ref(false)
 const seasons = ref<SeasonRow[]>([])
 const rulesVersion = ref(0)
 const currentThresholds = ref<Thresholds>({})
+const defaultThresholds = ref<Thresholds>({})
+const overrides = ref<Thresholds>({})
+const limits = ref<Record<string, Limit>>({})
+const cardCodes = ref<string[]>([])
+const uncomputed = ref<string[]>([])
+// Profile 1 changes the thresholds, recomputes and deletes seasons (§ 9.3); profile 2 reads
+const canEdit = computed(() => authStore.profile === 1)
+const draft = reactive<Record<string, number | string | string[]>>({})
+const saving = ref(false)
+const pending = ref<{ action: 'compute' | 'delete', season: string, games: number | null } | null>(null)
+const working = ref(false)
 const queries = reactive<Record<Tab, string>>({ catalogue: '', seasons: '', stats: '', referees: '' })
 const kinds = ref<{ code: string, surfaces: string[] }[]>([])
 const kind = ref('')
 const stat = ref<StatResult | null>(null)
 const editing = ref<AdminMedalItem | null>(null)
-const draft = reactive({ name_fr: '', name_en: '', explanation_fr: '', explanation_en: '' })
+const editDraft = reactive({ name_fr: '', name_en: '', explanation_fr: '', explanation_en: '' })
 
 const name = (item: AdminMedalItem) => (locale.value === 'en' ? item.name_en : item.name_fr)
 const byCode = computed(() => new Map(items.value.map(item => [item.code, item])))
@@ -74,10 +86,85 @@ async function loadCatalogue() {
 }
 
 async function loadSeasons() {
-  const data = await api.get<{ rules_version: number, thresholds: Thresholds, seasons: SeasonRow[] }>('/admin/medals/seasons')
+  const data = await api.get<{ rules_version: number, thresholds: Thresholds, default_thresholds: Thresholds, overrides: Thresholds, limits: Record<string, Limit>, card_codes: string[], uncomputed: string[], seasons: SeasonRow[] }>('/admin/medals/seasons')
   rulesVersion.value = data?.rules_version ?? 0
   currentThresholds.value = data?.thresholds ?? {}
+  defaultThresholds.value = data?.default_thresholds ?? {}
+  overrides.value = data?.overrides ?? {}
+  limits.value = data?.limits ?? {}
+  cardCodes.value = data?.card_codes ?? []
+  uncomputed.value = data?.uncomputed ?? []
+  resetDraft()
   seasons.value = data?.seasons ?? []
+}
+
+function resetDraft() {
+  for (const key of Object.keys(draft)) {
+    Reflect.deleteProperty(draft, key)
+  }
+  for (const [key, value] of Object.entries(currentThresholds.value)) {
+    draft[key] = Array.isArray(value) ? [...value as string[]] : value as number
+  }
+}
+
+const changes = computed(() => thresholdChanges(draft, currentThresholds.value))
+const invalidKeys = computed(() => Object.entries(limits.value).filter(([key, range]) => {
+  const value = draft[key]
+  return value === '' || value === undefined || !Number.isInteger(Number(value)) || Number(value) < range.min || Number(value) > range.max
+}).map(([key]) => key))
+const outdatedSeasons = computed(() => seasons.value.filter(row => changedThresholds(row.thresholds, currentThresholds.value).length > 0).length)
+const isOverridden = (key: string) => key in overrides.value
+const toggleCard = (card: string) => {
+  const cards = draft.permanentCards as string[]
+  draft.permanentCards = cards.includes(card) ? cards.filter(item => item !== card) : [...cards, card]
+}
+
+async function saveThresholds() {
+  saving.value = true
+  try {
+    await api.put('/admin/medals/thresholds', { changes: changes.value })
+    toast.add({ title: t('common.success'), description: t('medals.thresholds_saved'), color: 'success', duration: 3000 })
+    await loadSeasons()
+  } catch {
+    toast.add({ title: t('common.error'), description: t('medals.thresholds_error'), color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+
+async function resetThresholds() {
+  saving.value = true
+  try {
+    await api.del('/admin/medals/thresholds')
+    toast.add({ title: t('common.success'), description: t('medals.thresholds_reset_done'), color: 'success', duration: 3000 })
+    await loadSeasons()
+  } finally {
+    saving.value = false
+  }
+}
+
+/** Runs the action the user confirmed in the modal, then refreshes what depends on it. */
+async function confirmAction() {
+  if (!pending.value) {
+    return
+  }
+  const { action, season } = pending.value
+  working.value = true
+  try {
+    if (action === 'compute') {
+      const result = await api.post<{ computed: number }>(`/admin/medals/seasons/${season}/compute`)
+      toast.add({ title: t('common.success'), description: t('medals.computed_done', { season, n: result.computed }, result.computed), color: 'success', duration: 4000 })
+    } else {
+      const result = await api.del<{ removed: number }>(`/admin/medals/seasons/${season}`)
+      toast.add({ title: t('common.success'), description: t('medals.deleted_done', { season, n: result.removed }, result.removed), color: 'success', duration: 4000 })
+    }
+    pending.value = null
+    await Promise.all([loadSeasons(), loadCatalogue(), loadStat()])
+  } catch {
+    toast.add({ title: t('common.error'), description: t('medals.action_error'), color: 'error' })
+  } finally {
+    working.value = false
+  }
 }
 
 async function loadKinds() {
@@ -115,14 +202,14 @@ async function save(item: AdminMedalItem, changes: Partial<AdminMedalItem>) {
 
 function edit(item: AdminMedalItem) {
   editing.value = item
-  Object.assign(draft, { name_fr: item.name_fr, name_en: item.name_en, explanation_fr: item.explanation_fr_template, explanation_en: item.explanation_en_template })
+  Object.assign(editDraft, { name_fr: item.name_fr, name_en: item.name_en, explanation_fr: item.explanation_fr_template, explanation_en: item.explanation_en_template })
 }
 
 async function saveEdit() {
   if (!editing.value) {
     return
   }
-  await save(editing.value, { ...draft, explanation_fr_template: draft.explanation_fr, explanation_en_template: draft.explanation_en })
+  await save(editing.value, { ...editDraft, explanation_fr_template: editDraft.explanation_fr, explanation_en_template: editDraft.explanation_en })
   editing.value = null
   await loadCatalogue()
 }
@@ -242,11 +329,57 @@ onMounted(async () => {
     </section>
 
     <!-- Seasons: frozen thresholds (§ 6.3) -->
-    <section v-else-if="tab === 'seasons'" class="rounded-lg bg-white p-5 shadow dark:bg-header-900">
-      <div class="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <MedalSearch v-model="queries.seasons" :placeholder="t('medals.search_seasons')" :count="shownSeasons.length" :total="seasons.length" />
+    <section v-else-if="tab === 'seasons'" class="space-y-8 rounded-lg bg-white p-5 shadow dark:bg-header-900">
+      <!-- Default thresholds: the values used by the next computation of a season (§ 5.4, MED-66) -->
+      <div data-testid="medal-thresholds">
+        <h2 class="text-xl font-bold">{{ t('medals.defaults_title') }}</h2>
+        <p class="mt-1 mb-5 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">
+          {{ canEdit ? t('medals.defaults_help') : t('medals.defaults_readonly') }}
+        </p>
+        <form class="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" @submit.prevent="saveThresholds">
+          <div v-for="(value, key) in currentThresholds" :key="key" class="border-l-2 pl-3" :class="isOverridden(String(key)) ? 'border-primary-500' : 'border-header-200 dark:border-header-700'">
+            <template v-if="key === 'permanentCards'">
+              <span class="block text-sm text-header-500">{{ humanizeKey(String(key)) }}</span>
+              <span class="mt-1 flex gap-4 text-lg">
+                <label v-for="card in cardCodes" :key="card" class="flex items-center gap-1.5">
+                  <input type="checkbox" class="size-4" :checked="(draft.permanentCards as string[] | undefined)?.includes(card)" :disabled="!canEdit" @change="toggleCard(card)">
+                  <b>{{ card }}</b>
+                </label>
+              </span>
+            </template>
+            <label v-else class="block">
+              <span class="block text-sm text-header-500">{{ humanizeKey(String(key)) }}</span>
+              <input
+                v-model="draft[String(key)]"
+                type="number"
+                inputmode="numeric"
+                class="mt-1 w-28 rounded border bg-white px-2 py-1 text-lg font-semibold tabular-nums disabled:border-transparent disabled:bg-transparent dark:bg-header-800"
+                :class="invalidKeys.includes(String(key)) ? 'border-red-500' : 'border-header-300'"
+                :min="limits[String(key)]?.min"
+                :max="limits[String(key)]?.max"
+                :disabled="!canEdit"
+              >
+              <span v-if="invalidKeys.includes(String(key))" class="block text-sm text-red-600">{{ t('medals.threshold_range', { min: limits[String(key)]?.min, max: limits[String(key)]?.max }) }}</span>
+            </label>
+            <span v-if="isOverridden(String(key))" class="block text-sm text-primary-700 dark:text-primary-300">{{ t('medals.threshold_file', { value: formatThreshold(defaultThresholds[String(key)]) }) }}</span>
+          </div>
+          <div v-if="canEdit" class="flex flex-wrap items-center gap-3 sm:col-span-2 xl:col-span-3 2xl:col-span-4">
+            <UButton type="submit" size="lg" :loading="saving" :disabled="Object.keys(changes).length === 0 || invalidKeys.length > 0">{{ t('common.save') }}</UButton>
+            <UButton type="button" size="lg" variant="outline" :disabled="Object.keys(changes).length === 0" @click="resetDraft">{{ t('medals.cancel_changes') }}</UButton>
+            <UButton v-if="Object.keys(overrides).length" type="button" size="lg" variant="ghost" :loading="saving" @click="resetThresholds">{{ t('medals.thresholds_reset') }}</UButton>
+          </div>
+        </form>
+        <p v-if="outdatedSeasons > 0" class="mt-5 rounded-md bg-amber-50 px-4 py-3 text-base text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          {{ t('medals.outdated_seasons', { n: outdatedSeasons }, outdatedSeasons) }}
+        </p>
       </div>
-      <p class="mb-6 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">{{ t('medals.seasons_help', { version: rulesVersion }) }}</p>
+
+      <div>
+        <h2 class="mb-4 text-xl font-bold">{{ t('medals.seasons_title') }}</h2>
+        <div class="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <MedalSearch v-model="queries.seasons" :placeholder="t('medals.search_seasons')" :count="shownSeasons.length" :total="seasons.length" />
+        </div>
+        <p class="mb-6 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">{{ t('medals.seasons_help', { version: rulesVersion }) }}</p>
       <p v-if="seasons.length === 0" class="text-base">{{ t('medals.no_season') }}</p>
       <p v-else-if="shownSeasons.length === 0" class="py-6 text-base text-header-500">{{ t('medals.search_empty') }}</p>
       <ol v-else class="space-y-5">
@@ -290,9 +423,25 @@ onMounted(async () => {
                 </div>
               </dl>
             </details>
+            <div v-if="canEdit" class="flex flex-wrap gap-3">
+              <UButton variant="outline" @click="pending = { action: 'compute', season: row.season, games: row.games_count }">{{ t('medals.recompute') }}</UButton>
+              <UButton variant="outline" color="error" @click="pending = { action: 'delete', season: row.season, games: row.games_count }">{{ t('medals.delete_calculations') }}</UButton>
+            </div>
           </div>
         </li>
       </ol>
+
+      <!-- Existing seasons with no calculation (never computed, or deleted) -->
+      <div v-if="uncomputed.length" class="mt-8">
+        <h3 class="mb-3 text-lg font-bold">{{ t('medals.uncomputed_title') }}</h3>
+        <ul class="flex flex-wrap gap-3">
+          <li v-for="season in uncomputed.filter(code => matchesQuery(queries.seasons, code))" :key="season" class="flex items-center gap-3 rounded-lg border border-dashed border-header-300 px-4 py-2 dark:border-header-600">
+            <b class="text-xl tabular-nums">{{ season }}</b>
+            <UButton v-if="canEdit" size="sm" variant="outline" @click="pending = { action: 'compute', season, games: null }">{{ t('medals.compute') }}</UButton>
+          </li>
+        </ul>
+      </div>
+      </div>
     </section>
 
     <!-- Statistics and referee statistics of the work context -->
@@ -353,12 +502,28 @@ onMounted(async () => {
       </template>
     </section>
 
+    <!-- Confirmation before recomputing or deleting a season (MED-70) -->
+    <AdminModal :open="pending !== null" :title="pending ? t(`medals.confirm_${pending.action}_title`, { season: pending.season }) : ''" max-width="lg" @close="!working && (pending = null)">
+      <div v-if="pending" class="space-y-5 text-base">
+        <p class="leading-relaxed">
+          {{ pending.games === null ? t(`medals.confirm_${pending.action}_unknown`, { season: pending.season }) : t(`medals.confirm_${pending.action}_text`, { season: pending.season, games: number(pending.games) }) }}
+        </p>
+        <p v-if="pending.action === 'compute'" class="rounded-md bg-header-50 px-4 py-3 text-sm dark:bg-header-800">{{ t('medals.confirm_compute_thresholds') }}</p>
+        <div class="flex justify-end gap-3">
+          <UButton variant="outline" :disabled="working" @click="pending = null">{{ t('common.cancel') }}</UButton>
+          <UButton :color="pending.action === 'delete' ? 'error' : 'primary'" :loading="working" @click="confirmAction">
+            {{ t(`medals.confirm_${pending.action}_button`, { season: pending.season }) }}
+          </UButton>
+        </div>
+      </div>
+    </AdminModal>
+
     <AdminModal :open="editing !== null" :title="editing ? `${editing.name_fr} (${editing.code})` : ''" max-width="xl" @close="editing = null">
       <div v-if="editing" class="space-y-3 text-sm">
-        <label class="block">{{ t('medals.name_fr') }}<UInput v-model="draft.name_fr" class="w-full" maxlength="80" /></label>
-        <label class="block">{{ t('medals.name_en') }}<UInput v-model="draft.name_en" class="w-full" maxlength="80" /></label>
-        <label class="block">{{ t('medals.explanation_fr') }}<UTextarea v-model="draft.explanation_fr" class="w-full" maxlength="500" /></label>
-        <label class="block">{{ t('medals.explanation_en') }}<UTextarea v-model="draft.explanation_en" class="w-full" maxlength="500" /></label>
+        <label class="block">{{ t('medals.name_fr') }}<UInput v-model="editDraft.name_fr" class="w-full" maxlength="80" /></label>
+        <label class="block">{{ t('medals.name_en') }}<UInput v-model="editDraft.name_en" class="w-full" maxlength="80" /></label>
+        <label class="block">{{ t('medals.explanation_fr') }}<UTextarea v-model="editDraft.explanation_fr" class="w-full" maxlength="500" /></label>
+        <label class="block">{{ t('medals.explanation_en') }}<UTextarea v-model="editDraft.explanation_en" class="w-full" maxlength="500" /></label>
         <p v-if="variables(editing.explanation_fr_template).length" class="text-xs text-header-500">
           {{ t('medals.variables') }} <code v-for="variable in variables(editing.explanation_fr_template)" :key="variable" class="mr-1">{{ variable }}</code>
         </p>

@@ -137,3 +137,21 @@ export function humanizeKey(key: string): string {
 export function formatThreshold(value: unknown): string {
   return Array.isArray(value) ? value.join(', ') : String(value)
 }
+
+const CARD_ORDER = ['V', 'J', 'R', 'D']
+
+/** What the form changes: the fields that differ from the current thresholds, numbers read as numbers. */
+export function thresholdChanges(draft: Record<string, number | string | string[]>, current: Thresholds): Thresholds {
+  const changes: Thresholds = {}
+  for (const [key, value] of Object.entries(draft)) {
+    if (Array.isArray(value)) {
+      const cards = CARD_ORDER.filter(card => value.includes(card))
+      if (JSON.stringify(cards) !== JSON.stringify(current[key])) {
+        changes[key] = cards
+      }
+    } else if (value !== '' && Number(value) !== current[key]) {
+      changes[key] = Number(value)
+    }
+  }
+  return changes
+}

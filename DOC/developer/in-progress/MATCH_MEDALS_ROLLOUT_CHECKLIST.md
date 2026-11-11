@@ -60,6 +60,7 @@ make app4_bash                          # puis `npm test`
 | 9 | app4 › Opérations › Médailles (profil 1) | catalogue, saisons (v1, seuils), statistiques et arbitrage du contexte de travail ; profil 3 : page refusée | ☐ |
 | 10 | app4 : publier `goal_timing` sur app3, puis le retirer | la statistique apparaît puis disparaît de l'onglet Stats sans recalcul ; entrées dans le journal | ☐ |
 | 11 | app4 : dévalider puis revalider un match calculé | médailles supprimées puis recalculées aussitôt | ☐ |
+| 12 | app4 › Saisons, profil 1 : changer un seuil, enregistrer, recalculer une saison (confirmer), supprimer les calculs d'une autre (confirmer), puis la recalculer | seuils enregistrés et journalisés ; la saison recalculée a les nouveaux seuils ; la supprimée n'a plus de médaille et n'est pas recalculée par `sync` ; profil 2 : lecture seule, aucun bouton | ☐ |
 
 **Non-régression locale** : app2 (feuille de match d'un match sans médaille, frise), app4 (validation des matchs),
 app3 (onglets Stats existants : meilleurs buteurs), legacy, PDF (jetons resynchronisés). ☐
@@ -82,7 +83,7 @@ app4, `ci-summary` vert. ☐
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
 | 1 | 🌐 « Deploy preprod » | vert ; `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP) | ☐ |
-| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` | 6 tables créées, 50 éléments au catalogue ; relançable sans erreur | ☐ |
+| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` puis `…/2026-11-11_public_site_match_medals_settings.sql` | 6 tables créées, 50 éléments au catalogue, puis `kp_medal_setting` ; relançables sans erreur | ☐ |
 | 3 | `make api2_match_medals_compute season=AAAA` pour **chaque saison**, de la plus récente à la plus ancienne | une ligne par saison dans app4 › Médailles › Saisons ; part de feuilles complètes plausible | ☐ |
 | 4 | Pose du cron (§ M.4) puis, 10 min plus tard, `tail /var/log/kpi/cron_match_medals.log` | une ligne `… computed, … removed` par passage | ☐ |
 | 5 | `make app2_generate_preprod`, `make app3_generate_preprod`, `make app4_generate_preprod` | applications reconstruites | ☐ |
@@ -102,6 +103,6 @@ Vérifier une feuille de match d'app2, l'onglet Stats d'une compétition termin�
 | Situation | Action |
 |---|---|
 | Une médaille ou une statistique pose problème | app4 › Médailles : décocher app2 / app3 ou passer l'élément à « Retiré » (effet immédiat, sans déploiement) |
-| Un seuil est mal réglé | Corriger `config/packages/match_medals.yaml`, déployer, `make api2_match_medals_compute season=<saison courante>` |
+| Un seuil est mal réglé | app4 › Médailles › Saisons (profil 1) : corriger ou « Rétablir les valeurs d'origine », puis « Recalculer » la saison courante (ou fichier `config/packages/match_medals.yaml` + déploiement + `make api2_match_medals_compute season=<saison>`) |
 | Calcul en erreur ou trop lent | Retirer le cron ; les pages publiques n'affichent rien sans données (aucune erreur) |
 | Régression d'app2 / app4 | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) ; les nouvelles tables peuvent rester en place |

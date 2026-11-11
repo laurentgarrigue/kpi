@@ -28,7 +28,7 @@ l'événement (ou le groupe) choisi.
 | Onglet | Usage |
 |---|---|
 | **Catalogue** | Tous les éléments ; survoler une médaille affiche son explication (dans la langue de l'interface), la colonne **Seuils actuels** donne les seuils qu'elle utilise. Cocher **app2** ou **app3** publie un élément sur cette application ; l'historique s'affiche aussitôt, sans recalcul. **Retiré** le masque partout et arrête son calcul. **Modifier** : noms français et anglais, explications. Les variables entre accolades (`{bounceBackSeconds}`) sont remplacées par les seuils de la saison. Chaque modification est inscrite au journal. |
-| **Saisons** | Les seuils utilisés pour calculer chaque saison et la version des règles. Une alerte signale une saison calculée avec une version antérieure. |
+| **Saisons** | Les seuils utilisés pour calculer chaque saison et la version des règles. Une alerte signale une saison calculée avec une version antérieure. **Profil 1 seulement** : modifier les **seuils par défaut**, **recalculer** une saison avec ces seuils et **supprimer** les calculs d'une saison, chaque fois après une confirmation. Une saison supprimée n'est pas recalculée automatiquement : un calcul explicite (bouton *Calculer*) la remet en service. |
 | **Statistiques** | Toutes les statistiques actives, publiées ou non, sur le **contexte de travail** (saison et compétitions). |
 | **Arbitrage** | Statistiques d'arbitrage (cartons par match, matchs fluides, moment et motifs des cartons, binômes…), à côté de la moyenne. Un indicateur ne s'affiche qu'à partir de 5 matchs arbitrés (« — » en dessous). Tri par nombre de matchs, jamais par cartons. |
 
@@ -38,6 +38,6 @@ Chaque onglet a un champ de **recherche** (sans accents ni majuscules) qui filtr
 
 - Valider ou dévalider un match dans l'admin calcule ou supprime ses médailles **aussitôt**.
 - Les validations faites ailleurs (legacy) sont reprises toutes les 10 minutes.
-- **Changer un seuil** (`sources/api2/config/packages/match_medals.yaml`) ne change rien tant qu'on ne recalcule pas
-  une saison : `make api2_match_medals_compute season=AAAA`. Les autres saisons gardent leurs résultats et leurs
+- **Changer un seuil** (onglet Saisons, profil 1 ; le fichier `sources/api2/config/packages/match_medals.yaml` donne les valeurs d'origine) ne change rien tant qu'on ne recalcule pas
+  une saison : bouton *Recalculer*, ou `make api2_match_medals_compute season=AAAA`. Les autres saisons gardent leurs résultats et leurs
   seuils.

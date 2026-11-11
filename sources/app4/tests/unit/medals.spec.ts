@@ -1,6 +1,6 @@
 // Admin page of the match medals (FEATURE_MATCH_MEDALS.md § 9.3): pure display rules of the statistics.
 import { describe, expect, it } from 'vitest'
-import { changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
+import { changedThresholds, thresholdChanges, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
 
 describe('statistics of the admin page', () => {
   it('names the subject of a row: team, referee, pair, player or game', () => {
@@ -63,5 +63,24 @@ describe('thresholds of the admin page', () => {
     expect(humanizeKey('bounceBackSeconds')).toBe('Bounce back seconds')
     expect(formatThreshold(['D', 'R'])).toBe('D, R')
     expect(formatThreshold(60)).toBe('60')
+  })
+})
+
+describe('editing the default thresholds', () => {
+  const current = { bounceBackSeconds: 30, hatTrickGoals: 3, permanentCards: ['D'] }
+
+  it('sends only what differs from the current thresholds', () => {
+    expect(thresholdChanges({ bounceBackSeconds: 45, hatTrickGoals: 3, permanentCards: ['D'] }, current)).toEqual({ bounceBackSeconds: 45 })
+    expect(thresholdChanges({ bounceBackSeconds: 30, hatTrickGoals: 3, permanentCards: ['D'] }, current)).toEqual({})
+  })
+
+  it('reads a typed number, and keeps cards in their order', () => {
+    expect(thresholdChanges({ bounceBackSeconds: '45', hatTrickGoals: 3, permanentCards: ['D'] }, current)).toEqual({ bounceBackSeconds: 45 })
+    expect(thresholdChanges({ bounceBackSeconds: 30, hatTrickGoals: 3, permanentCards: ['D', 'R'] }, current)).toEqual({ permanentCards: ['R', 'D'] })
+    expect(thresholdChanges({ bounceBackSeconds: 30, hatTrickGoals: 3, permanentCards: ['R', 'D'] }, { ...current, permanentCards: ['R', 'D'] })).toEqual({})
+  })
+
+  it('leaves an empty field out (the form shows it as invalid)', () => {
+    expect(thresholdChanges({ bounceBackSeconds: '', hatTrickGoals: 3, permanentCards: ['D'] }, current)).toEqual({})
   })
 })
