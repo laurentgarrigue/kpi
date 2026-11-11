@@ -12,6 +12,7 @@ definePageMeta({
 })
 
 interface SeasonRow { season: string, thresholds: Record<string, unknown>, differs: boolean, rules_version: number, outdated: boolean, computed_at: string, games_count: number, reliable_games_count: number }
+interface Job { season: string, status: 'running' | 'done' | 'error', computed?: number, message?: string }
 interface Limit { min: number, max: number }
 interface StatResult { kind: string, columns: { key: string, type: string }[], rows: Record<string, unknown>[], summary: Record<string, unknown>, games_count: number, reliable_games_count: number }
 type Tab = 'catalogue' | 'seasons' | 'stats' | 'referees'
@@ -47,6 +48,10 @@ const draft = reactive<Record<string, number | string | string[]>>({})
 const saving = ref(false)
 const pending = ref<{ action: 'compute' | 'delete', season: string, games: number | null } | null>(null)
 const working = ref(false)
+// A full computation takes minutes: api2 runs it in the background and the page follows its state
+const job = ref<Job | null>(null)
+const computing = computed(() => job.value?.status === 'running')
+let pollTimer: ReturnType<typeof setInterval> | undefined
 const queries = reactive<Record<Tab, string>>({ catalogue: '', seasons: '', stats: '', referees: '' })
 const kinds = ref<{ code: string, surfaces: string[] }[]>([])
 const kind = ref('')
@@ -94,7 +99,7 @@ async function loadCatalogue() {
 }
 
 async function loadSeasons() {
-  const data = await api.get<{ rules_version: number, thresholds: Thresholds, default_thresholds: Thresholds, overrides: Thresholds, limits: Record<string, Limit>, card_codes: string[], uncomputed: string[], seasons: SeasonRow[] }>('/admin/medals/seasons')
+  const data = await api.get<{ rules_version: number, thresholds: Thresholds, default_thresholds: Thresholds, overrides: Thresholds, limits: Record<string, Limit>, card_codes: string[], uncomputed: string[], job: Job | null, seasons: SeasonRow[] }>('/admin/medals/seasons')
   rulesVersion.value = data?.rules_version ?? 0
   currentThresholds.value = data?.thresholds ?? {}
   defaultThresholds.value = data?.default_thresholds ?? {}
@@ -102,6 +107,7 @@ async function loadSeasons() {
   limits.value = data?.limits ?? {}
   cardCodes.value = data?.card_codes ?? []
   uncomputed.value = data?.uncomputed ?? []
+  job.value = data?.job ?? null
   resetDraft()
   seasons.value = data?.seasons ?? []
 }
@@ -160,20 +166,43 @@ async function confirmAction() {
   working.value = true
   try {
     if (action === 'compute') {
-      const result = await api.post<{ computed: number }>(`/admin/medals/seasons/${season}/compute`)
-      toast.add({ title: t('common.success'), description: t('medals.computed_done', { season, n: result.computed }, result.computed), color: 'success', duration: 4000 })
+      await api.post(`/admin/medals/seasons/${season}/compute`)
+      pending.value = null
+      await loadSeasons()
+      followJob()
+      return
     } else {
       const result = await api.del<{ removed: number }>(`/admin/medals/seasons/${season}`)
       toast.add({ title: t('common.success'), description: t('medals.deleted_done', { season, n: result.removed }, result.removed), color: 'success', duration: 4000 })
     }
     pending.value = null
     await Promise.all([loadSeasons(), loadCatalogue(), loadStat()])
-  } catch {
-    toast.add({ title: t('common.error'), description: t('medals.action_error'), color: 'error' })
+  } catch (error) {
+    const conflict = (error as { error?: string } | null)?.error === 'already_running'
+    toast.add({ title: t('common.error'), description: t(conflict ? 'medals.compute_already' : 'medals.action_error'), color: 'error' })
   } finally {
     working.value = false
   }
 }
+
+/** Polls the job every few seconds until it ends, then says how it went and refreshes what depends on it. */
+function followJob() {
+  clearInterval(pollTimer)
+  pollTimer = setInterval(async () => {
+    await loadSeasons()
+    if (job.value?.status === 'running') {
+      return
+    }
+    clearInterval(pollTimer)
+    if (job.value?.status === 'done') {
+      toast.add({ title: t('common.success'), description: t('medals.computed_done', { season: job.value.season, n: job.value.computed ?? 0 }, job.value.computed ?? 0), color: 'success', duration: 5000 })
+    } else if (job.value) {
+      toast.add({ title: t('common.error'), description: t('medals.compute_failed', { season: job.value.season, message: job.value.message ?? '' }), color: 'error' })
+    }
+    await Promise.all([loadCatalogue(), loadStat()])
+  }, 3000)
+}
+onBeforeUnmount(() => clearInterval(pollTimer))
 
 async function loadKinds() {
   const data = await api.get<{ kinds: { code: string, surfaces: string[] }[] }>('/admin/medals/stats')
@@ -237,6 +266,9 @@ onMounted(async () => {
   // Like the other pages: restores the work context (season, competitions) from the browser after a reload
   await workContext.initContext()
   await Promise.all([loadCatalogue(), loadSeasons(), loadKinds()])
+  if (computing.value) {
+    followJob()
+  }
 })
 </script>
 
@@ -346,6 +378,10 @@ onMounted(async () => {
     <!-- Seasons: frozen thresholds (§ 6.3) -->
     <section v-else-if="tab === 'seasons'" class="space-y-8 rounded-lg bg-white p-5 shadow dark:bg-header-900">
       <!-- Default thresholds: the values used by the next computation of a season (§ 5.4, MED-66) -->
+      <p v-if="computing" class="flex items-center gap-3 rounded-md bg-primary-50 px-4 py-3 text-base text-primary-900 dark:bg-primary-950/40 dark:text-primary-100" role="status" data-testid="medal-job">
+        <UIcon name="i-heroicons-arrow-path" class="size-5 animate-spin" />
+        {{ t('medals.compute_running', { season: job?.season }) }}
+      </p>
       <div data-testid="medal-thresholds">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 class="text-xl font-bold">{{ t('medals.defaults_title') }}</h2>
@@ -446,7 +482,7 @@ onMounted(async () => {
               </dl>
             </details>
             <div v-if="canEdit" class="flex flex-wrap gap-3">
-              <UButton variant="outline" @click="pending = { action: 'compute', season: row.season, games: row.games_count }">{{ t('medals.recompute') }}</UButton>
+              <UButton variant="outline" :disabled="computing" @click="pending = { action: 'compute', season: row.season, games: row.games_count }">{{ t('medals.recompute') }}</UButton>
               <UButton variant="outline" color="error" @click="pending = { action: 'delete', season: row.season, games: row.games_count }">{{ t('medals.delete_calculations') }}</UButton>
             </div>
           </div>
@@ -459,7 +495,7 @@ onMounted(async () => {
         <ul class="flex flex-wrap gap-3">
           <li v-for="season in uncomputed.filter(code => matchesQuery(queries.seasons, code))" :key="season" class="flex items-center gap-3 rounded-lg border border-dashed border-header-300 px-4 py-2 dark:border-header-600">
             <b class="text-xl tabular-nums">{{ season }}</b>
-            <UButton v-if="canEdit" size="sm" variant="outline" @click="pending = { action: 'compute', season, games: null }">{{ t('medals.compute') }}</UButton>
+            <UButton v-if="canEdit" size="sm" variant="outline" :disabled="computing" @click="pending = { action: 'compute', season, games: null }">{{ t('medals.compute') }}</UButton>
           </li>
         </ul>
       </div>

@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\MatchMedals\MatchMedalService;
+use App\MatchMedals\MedalComputeJob;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'app:match-medals:compute', description: 'Compute the match medals of one season with the current thresholds')]
 final class MatchMedalsComputeCommand extends Command
 {
-    public function __construct(private readonly MatchMedalService $medals)
+    public function __construct(private readonly MatchMedalService $medals, private readonly MedalComputeJob $job)
     {
         parent::__construct();
     }
@@ -22,6 +23,7 @@ final class MatchMedalsComputeCommand extends Command
     protected function configure(): void
     {
         $this->addOption('season', null, InputOption::VALUE_REQUIRED, 'Season to compute, e.g. 2026');
+        $this->addOption('user', null, InputOption::VALUE_REQUIRED, 'Who asked (journal and job state)', 'system');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -33,8 +35,9 @@ final class MatchMedalsComputeCommand extends Command
 
             return Command::INVALID;
         }
-        $result = $this->medals->computeSeason($season);
-        $io->success(sprintf('Season %s: %d validated games computed, %d removed (rules v%d).', $season, $result['computed'], $result['removed'], $this->medals->rulesVersion()));
+        $this->job->run($season, (string) $input->getOption('user'));
+        $result = ['computed' => (int) ($this->job->status()['computed'] ?? 0), 'removed' => 0];
+        $io->success(sprintf('Season %s: %d validated games computed (rules v%d).', $season, $result['computed'], $this->medals->rulesVersion()));
 
         return Command::SUCCESS;
     }

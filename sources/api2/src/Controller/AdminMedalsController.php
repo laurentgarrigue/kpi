@@ -6,8 +6,10 @@ use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\Catalog\MedalSurface;
 use App\MatchMedals\MatchMedalReader;
 use App\MatchMedals\MatchMedalService;
+use App\MatchMedals\MedalComputeJob;
 use App\MatchMedals\MedalSettings;
 use App\MatchMedals\MedalThresholds;
+use App\MatchMedals\SeasonComputeLauncher;
 use App\MatchMedals\Stats\MedalScope;
 use App\MatchMedals\Stats\MedalStats;
 use Doctrine\DBAL\Connection;
@@ -42,6 +44,8 @@ final class AdminMedalsController extends AbstractController
         private readonly MatchMedalService $service,
         private readonly Connection $connection,
         private readonly MedalSettings $settings,
+        private readonly MedalComputeJob $job,
+        private readonly SeasonComputeLauncher $launcher,
     ) {
     }
 
@@ -99,6 +103,7 @@ final class AdminMedalsController extends AbstractController
         return $this->json([
             'rules_version' => $this->service->rulesVersion(),
             'thresholds' => $current,
+            'job' => $this->job->status(),
             'default_thresholds' => $this->settings->fileThresholds(),
             'overrides' => $this->settings->overrides(),
             'limits' => array_map(static fn (array $range): array => ['min' => $range[0], 'max' => $range[1]], MedalThresholds::limits()),
@@ -147,17 +152,20 @@ final class AdminMedalsController extends AbstractController
 
     #[Route('/seasons/{season}/compute', name: 'admin_medals_season_compute', methods: ['POST'], requirements: ['season' => '\d{4}'])]
     #[IsGranted('ROLE_SUPER_ADMIN')]
-    #[OA\Post(path: '/admin/medals/seasons/{season}/compute', summary: 'Full computation of a season with the current thresholds (as make api2_match_medals_compute); profile 1 only')]
+    #[OA\Post(path: '/admin/medals/seasons/{season}/compute', summary: 'Starts the full computation of a season with the current thresholds, in the background (202); follow `job` of /seasons. Profile 1 only')]
     public function computeSeason(string $season): JsonResponse
     {
         if ($this->connection->fetchOne('SELECT 1 FROM kp_saison WHERE Code = ?', [$season]) === false) {
             return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
         }
-        set_time_limit(0);
-        $result = $this->service->computeSeason($season, $this->user());
-        $this->settings->journalSeason($this->user(), sprintf('Saison %s recalculée : %d matchs', $season, $result['computed']));
+        if ($this->job->isRunning()) {
+            return $this->json(['error' => 'already_running', 'job' => $this->job->status()], Response::HTTP_CONFLICT);
+        }
+        $user = $this->user();
+        $this->job->start($season, $user);
+        $this->launcher->launch($season, $user);
 
-        return $this->json($result);
+        return $this->json(['job' => $this->job->status()], Response::HTTP_ACCEPTED);
     }
 
     #[Route('/seasons/{season}', name: 'admin_medals_season_delete', methods: ['DELETE'], requirements: ['season' => '\d{4}'])]

@@ -3265,8 +3265,8 @@
     "deleted_done": "Calculations of season {season} deleted ({n} game). | Calculations of season {season} deleted ({n} games).",
     "action_error": "The action failed. Nothing was lost: try again or check the api2 logs.",
     "confirm_compute_title": "Recompute season {season}?",
-    "confirm_compute_text": "The {games} validated games of season {season} are recomputed with the current thresholds, which replace the season's. The medals shown on the sites change right away. It can take a minute.",
-    "confirm_compute_unknown": "Season {season} has no calculation. Its validated games are computed with the current thresholds; the medals then appear on the sites. It can take a minute.",
+    "confirm_compute_text": "The {games} validated games of season {season} are recomputed with the current thresholds, which replace the season's. The medals shown on the sites change right away. It runs in the background and can take several minutes.",
+    "confirm_compute_unknown": "Season {season} has no calculation. Its validated games are computed with the current thresholds; the medals then appear on the sites. It runs in the background and can take several minutes.",
     "confirm_compute_thresholds": "Public explanations will cite the current thresholds for this season.",
     "confirm_compute_button": "Recompute season {season}",
     "confirm_delete_title": "Delete the calculations of season {season}?",
@@ -3277,6 +3277,9 @@
     "defaults_hide": "Hide",
     "per_game": "{rate} per game",
     "basis_reliable": "of {games} complete sheets",
-    "basis_games": "of {games} games"
+    "basis_games": "of {games} games",
+    "compute_running": "Computing season {season}. You can leave this page: it carries on and is reported here.",
+    "compute_failed": "The computation of season {season} failed: {message}",
+    "compute_already": "A computation is already running: wait for it to end."
   }
 }

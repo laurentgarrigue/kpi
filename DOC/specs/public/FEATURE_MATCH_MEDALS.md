@@ -417,7 +417,7 @@ endpoints admin renvoient tous les éléments actifs, avec leurs surfaces.
 | `GET /admin/medals/catalog`, `PATCH /admin/medals/catalog/{code}` | catalogue complet ; modification des noms, explications, statut, surfaces, ordre (profils 1–2) | app4 |
 | `GET /admin/medals/seasons` | saisons calculées : seuils figés, `rules_version` (et retard éventuel), date, nombre de matchs ; **seuils actuels**, valeurs d'origine du fichier, remplacements, bornes ; saisons existantes non calculées (`uncomputed`) | app4 |
 | `PUT /admin/medals/thresholds`, `DELETE /admin/medals/thresholds` | enregistre des seuils (partiels) / rétablit les valeurs du fichier ; **profil 1** | app4 |
-| `POST /admin/medals/seasons/{season}/compute`, `DELETE /admin/medals/seasons/{season}` | calcul complet de la saison avec les seuils actuels / suppression de ses calculs ; **profil 1** | app4 |
+| `POST /admin/medals/seasons/{season}/compute`, `DELETE /admin/medals/seasons/{season}` | calcul complet de la saison avec les seuils actuels, **lancé en arrière-plan** (202, 409 si un calcul est déjà en cours ; son état `job` est dans `GET /seasons`) / suppression de ses calculs ; **profil 1** | app4 |
 | `GET /admin/medals/stats/{kind}?season=&competitions=&event=` | toutes les statistiques actives, mêmes formats, avec leurs surfaces | app4 |
 | `GET /admin/medals/games/{id}` | médailles et étiquettes actives d'un match, avec leurs surfaces | app4 |
 
@@ -702,6 +702,9 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-69** — Quand le profil 1 supprime les calculs de la saison 2998, alors plus aucune médaille, étiquette, carton,
   désignation ni ligne de saison n'existe pour elle, et ni `sync` ni la validation d'un match ne les recréent ; un
   calcul complet la remet en service.
+- **MED-73** — Un calcul complet lancé depuis l'admin s'exécute dans un processus à part (la requête répond 202) ; un
+  seul à la fois (409) ; son état (en cours, terminé avec le nombre de matchs, erreur) est relu par la page, qui peut
+  être quittée ; un calcul « en cours » depuis plus d'une heure est signalé en erreur. Le journal nomme l'utilisateur.
 - **MED-70** — L'admin demande une confirmation avant de recalculer ou de supprimer, et la dit en une phrase (saison,
   nombre de matchs, conséquence) ; le profil 2 ne voit aucun bouton d'action.
 

@@ -3277,8 +3277,8 @@
     "deleted_done": "Calculs de la saison {season} supprimés ({n} match). | Calculs de la saison {season} supprimés ({n} matchs).",
     "action_error": "L’action a échoué. Rien n’a été perdu : réessayez ou consultez les journaux d’api2.",
     "confirm_compute_title": "Recalculer la saison {season} ?",
-    "confirm_compute_text": "Les {games} matchs validés de la saison {season} sont recalculés avec les seuils actuels, qui remplacent ceux de la saison. Les médailles affichées sur les sites changent aussitôt. Le calcul peut durer une minute.",
-    "confirm_compute_unknown": "La saison {season} n’a aucun calcul. Ses matchs validés sont calculés avec les seuils actuels ; les médailles apparaissent ensuite sur les sites. Le calcul peut durer une minute.",
+    "confirm_compute_text": "Les {games} matchs validés de la saison {season} sont recalculés avec les seuils actuels, qui remplacent ceux de la saison. Les médailles affichées sur les sites changent aussitôt. Le calcul se fait en arrière-plan et peut durer plusieurs minutes.",
+    "confirm_compute_unknown": "La saison {season} n’a aucun calcul. Ses matchs validés sont calculés avec les seuils actuels ; les médailles apparaissent ensuite sur les sites. Le calcul se fait en arrière-plan et peut durer plusieurs minutes.",
     "confirm_compute_thresholds": "Les explications publiques citeront les seuils actuels pour cette saison.",
     "confirm_compute_button": "Recalculer la saison {season}",
     "confirm_delete_title": "Supprimer les calculs de la saison {season} ?",
@@ -3289,6 +3289,9 @@
     "defaults_hide": "Masquer",
     "per_game": "{rate} par match",
     "basis_reliable": "sur {games} feuilles complètes",
-    "basis_games": "sur {games} matchs"
+    "basis_games": "sur {games} matchs",
+    "compute_running": "Calcul de la saison {season} en cours. Vous pouvez quitter cette page : il continue et sera signalé ici.",
+    "compute_failed": "Le calcul de la saison {season} a échoué : {message}",
+    "compute_already": "Un calcul est déjà en cours : attendez qu’il se termine."
   }
 }

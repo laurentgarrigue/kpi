@@ -3,6 +3,7 @@
 namespace App\Tests\Integration;
 
 use App\MatchMedals\MatchMedalService;
+use App\MatchMedals\MedalSettings;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -82,12 +83,28 @@ final class MatchMedalsAdminSettingsTest extends ApiTestCase
         $this->requestAs('TSUPER', 'PUT', '/admin/medals/thresholds', ['changes' => ['bounceBackSeconds' => 45]]);
 
         $this->requestAs('TADMIN', 'POST', '/admin/medals/seasons/2998/compute', expectedStatus: 403);
-        $result = $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute');
+        $started = $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute', expectedStatus: 202);
 
-        self::assertSame(4, $result['computed']);
+        self::assertSame('2998', $started['job']['season']);
+        // the tests run the job in the request; in production it runs in a background process (the page polls /seasons)
+        $job = $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons')['job'];
+        self::assertSame(['season' => '2998', 'status' => 'done', 'computed' => 4], array_intersect_key($job, array_flip(['season', 'status', 'computed'])));
+        self::assertSame('TSUPER', $this->db->fetchOne("SELECT Users FROM kp_journal WHERE Journal LIKE 'Saison 2998 recalculée%' ORDER BY Id DESC LIMIT 1"), 'the journal names the user');
         self::assertSame(45, json_decode((string) $this->db->fetchOne("SELECT thresholds FROM kp_medal_season WHERE season = '2998'"), true)['bounceBackSeconds']);
         self::assertSame(20, json_decode((string) $this->db->fetchOne("SELECT thresholds FROM kp_medal_season WHERE season = '2997'"), true)['bounceBackSeconds']);
         $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/12/compute', expectedStatus: 404);
+    }
+
+    public function testMed73AComputationAlreadyRunningRefusesAnotherOne(): void
+    {
+        $settings = static::getContainer()->get(MedalSettings::class);
+        $settings->saveJob(['season' => '2997', 'status' => 'running', 'user' => 'TSUPER', 'started_at' => date('Y-m-d H:i:s')]);
+
+        $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute', expectedStatus: 409);
+
+        $settings->saveJob(['season' => '2997', 'status' => 'running', 'user' => 'TSUPER', 'started_at' => date('Y-m-d H:i:s', time() - 7200)]);
+        self::assertSame('error', $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons')['job']['status'], 'a job that never ended is reported as failed');
+        $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute', expectedStatus: 202);
     }
 
     public function testMed69DeletingASeasonRemovesItsCalculationsForGoodUntilItIsComputedAgain(): void
@@ -109,7 +126,7 @@ final class MatchMedalsAdminSettingsTest extends ApiTestCase
         $service->refreshGame(9461);
         self::assertFalse($this->db->fetchOne('SELECT match_id FROM kp_match_insight WHERE match_id = 9461'), 'nor does a validation');
 
-        $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute');
+        $this->requestAs('TSUPER', 'POST', '/admin/medals/seasons/2998/compute', expectedStatus: 202);
         self::assertSame(4, (int) $this->db->fetchOne('SELECT COUNT(*) FROM kp_match_insight WHERE match_id IN (9461, 9462, 9463, 9465)'));
         self::assertNotContains('2998', $this->requestAs('TSUPER', 'GET', '/admin/medals/seasons')['uncomputed']);
         $this->requestAs('TSUPER', 'DELETE', '/admin/medals/seasons/1234', expectedStatus: 404);

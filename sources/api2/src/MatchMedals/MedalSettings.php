@@ -14,6 +14,7 @@ final class MedalSettings
 {
     private const THRESHOLDS = 'thresholds';
     private const DELETED_SEASONS = 'deleted_seasons';
+    private const COMPUTE_JOB = 'compute_job';
     private const JOURNAL_ACTION = 'Seuils médailles';
 
     /** @param array<string, mixed> $fileThresholds values of the file, the originals */
@@ -94,6 +95,20 @@ final class MedalSettings
         if ($this->isDeleted($season)) {
             $this->write(self::DELETED_SEASONS, array_values(array_diff($this->deletedSeasons(), [$season])), $user);
         }
+    }
+
+    /** @return array<string, mixed>|null state of the last full computation started from the admin */
+    public function job(): ?array
+    {
+        $stored = $this->read(self::COMPUTE_JOB);
+
+        return is_array($stored) ? $stored : null;
+    }
+
+    /** @param array<string, mixed> $job */
+    public function saveJob(array $job): void
+    {
+        $this->write(self::COMPUTE_JOB, $job, (string) ($job['user'] ?? 'system'));
     }
 
     /** Journal entry of a season action (recalculation, deletion), written next to the threshold changes. */

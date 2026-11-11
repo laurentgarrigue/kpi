@@ -39,5 +39,5 @@ Chaque onglet a un champ de **recherche** (sans accents ni majuscules) qui filtr
 - Valider ou dévalider un match dans l'admin calcule ou supprime ses médailles **aussitôt**.
 - Les validations faites ailleurs (legacy) sont reprises toutes les 10 minutes.
 - **Changer un seuil** (onglet Saisons, profil 1 ; le fichier `sources/api2/config/packages/match_medals.yaml` donne les valeurs d'origine) ne change rien tant qu'on ne recalcule pas
-  une saison : bouton *Recalculer*, ou `make api2_match_medals_compute season=AAAA`. Les autres saisons gardent leurs résultats et leurs
+  une saison : bouton *Recalculer* (le calcul se fait en arrière-plan : la page indique « en cours » et peut être quittée), ou `make api2_match_medals_compute season=AAAA`. Les autres saisons gardent leurs résultats et leurs
   seuils.
