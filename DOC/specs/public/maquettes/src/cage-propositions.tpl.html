@@ -27,15 +27,15 @@ main { padding-bottom: 70px; }
 document.getElementById('chrome').innerHTML = siteChrome('Compétitions');
 const W = '<path d="M2 20.2c2.2-1.5 4.4-1.5 6.6 0s4.4 1.5 6.6 0 4.4-1.5 6.8 0"/>';
 const PROPOSALS = {
-  actuel: { title: 'Actuel', text: 'Cadre de handball vu de face : lisible, mais rien ne dit « kayak-polo ».' },
+  actuel: { title: 'En service : C, poche réduite', text: 'Proposition C retenue le 12/11/2026, avec une poche moins profonde (l’ancien cadre de handball vu de face est remplacé).' },
   cage_a: { title: 'A · Le but de face, au-dessus de l’eau', text: 'Cadre 2 × 1 m, filet quadrillé, les deux suspentes et la ligne d’eau : le but est suspendu, comme au bord du terrain.',
     svg: '<rect x="2.5" y="4" width="19" height="10.5" rx="1"/><path d="M8.8 4v10.5M15.2 4v10.5M2.5 9.25h19" stroke-width="1.1"/><path d="M6.5 4V1.5M17.5 4V1.5"/>' + W },
   cage_b: { title: 'B · Le but incliné, filet en poche', text: 'Comme sur la photo : le cadre penche en arrière et le filet retombe derrière lui ; plus reconnaissable, un peu moins net à 16 px.',
     svg: '<path d="M4.5 5.2L21 3v10.6L4.5 16z"/><path d="M9.9 4.5v10.7M15.4 3.8v10.4M4.5 10.6L21 8.3" stroke-width="1.1"/><path d="M4.5 16C3 17 2.6 18.2 2.8 19.5" stroke-width="1.1"/>' + W.replace('M2 20.2','M2 21') },
 };
 const BUTT = ' stroke-linecap="butt"';
-PROPOSALS.cage_c = { title: 'C · Le but en volume, filet en poche', text: 'Proportions réelles : cadre de 1,50 × 1 m (3 : 2) et poche de filet de 60 cm qui part vers l’arrière. Pas de support ni de bandes : à cette taille elles brouillent le dessin.',
-  svg: '<path d="M2.5 19.5v-10h15v10z"/><path d="M2.5 9.5L6.5 5h15v10l-4 4.5M17.5 9.5L21.5 5" stroke-width="1.1"/><path d="M8.5 9.5v10M12.5 9.5v10M2.5 14.5h15" stroke-width=".9"/>' };
+PROPOSALS.cage_c = { title: 'C · Le but en volume, poche peu profonde (retenu, ci-contre)', text: 'Proportions réelles : cadre de 1,50 × 1 m (3 : 2) et poche de filet de 60 cm qui part vers l’arrière. Pas de support ni de bandes : à cette taille elles brouillent le dessin.',
+  svg: '<path d="M3 19V9h15v10z"/><path d="M3 9l3-3h15v10l-3 3M18 9l3-3" stroke-width="1.1"/><path d="M8 9v10M13 9v10M3 14h15" stroke-width=".9"/>' };
 PROPOSALS.cage_d = { title: 'D · Le but de face, légèrement incliné', text: 'Vue de face comme la photo : le cadre penche, donc plus étroit en haut, et le filet quadrillé se resserre avec lui. Le plus simple à lire en petit.',
   svg: '<path d="M6 5.5h12l3.5 14h-19z"/><path d="M10.1 5.5L8.4 19.5M13.9 5.5l1.7 14M4.3 12.5h15.4" stroke-width="1"/>' };
 MEDAL_ICONS.cage_c = PROPOSALS.cage_c.svg; MEDAL_ICONS.cage_d = PROPOSALS.cage_d.svg;

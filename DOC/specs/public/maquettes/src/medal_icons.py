@@ -116,7 +116,8 @@ ICONS = {
     'natural_hat_trick': ball(4.6, 11, 3.4) + ball(12, 11, 3.4) + ball(19.4, 11, 3.4) + '<path d="M3 18.5h18"/>',
     'quadruple': ball(7.2, 7.2, 4.2) + ball(16.8, 7.2, 4.2) + ball(7.2, 16.8, 4.2) + ball(16.8, 16.8, 4.2),  # apart: filled balls must not touch
     'natural_quadruple': ball(3.9, 11, 2.7) + ball(9.3, 11, 2.7) + ball(14.7, 11, 2.7) + ball(20.1, 11, 2.7) + '<path d="M3 18.5h18"/>',
-    'clean_sheet': goal_frame(3, 6.5, 18, 11),
+    # Canoe polo goal: 1.50 x 1 m frame (3:2) with a shallow net pocket going back, no support
+    'clean_sheet': '<path d="M3 19V9h15v10z"/><path d="M3 9l3-3h15v10l-3 3M18 9l3-3" stroke-width="1.1"/><path d="M8 9v10M13 9v10M3 14h15" stroke-width=".9"/>',
     'big_win': '<path d="M3 20.5h18"/><rect x="5" y="4" width="5.5" height="16.5" rx="1"/><rect x="14" y="15" width="5.5" height="5.5" rx="1"/>',
     'fair_play': ('<path d="M2 9.5l4-3h3.5l2.5 1.8"/><path d="M22 9.5l-4-3h-3.2l-5.4 4.3a1.5 1.5 0 0 0 2 2.2l3-2.1 4.6 4.4"/>'
                   '<path d="M6 6.5v8.5l4.8 4a1.4 1.4 0 0 0 2-2"/><path d="M12.6 15.3l2.3 2.3a1.4 1.4 0 0 0 2-2l-1.7-1.8"/>'),
