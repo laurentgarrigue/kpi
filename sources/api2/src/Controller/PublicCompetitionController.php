@@ -3,6 +3,10 @@
 namespace App\Controller;
 
 use App\Http\UnicodeJsonResponse;
+use App\MatchMedals\Catalog\MedalSurface;
+use App\MatchMedals\MatchMedalReader;
+use App\MatchMedals\Stats\MedalScope;
+use App\MatchMedals\Stats\MedalStats;
 use App\PublicResults\PublicCompetitionService;
 use App\PublicResults\PublicResultsService;
 use App\PublicResults\ResultsFormat;
@@ -39,6 +43,8 @@ class PublicCompetitionController extends AbstractController
         private readonly PublicCompetitionService $competitions,
         private readonly PublicResultsService $results,
         private readonly CompetitionStats $stats,
+        private readonly MedalStats $medalStats,
+        private readonly MatchMedalReader $medals,
     ) {
     }
 
@@ -104,18 +110,48 @@ class PublicCompetitionController extends AbstractController
     }
 
     #[Route('/competition/{season}/{code}/stats', name: 'public_competition_stats', methods: ['GET'])]
-    #[OA\Get(path: '/competition/{season}/{code}/stats', summary: 'Available statistics of a competition', tags: [self::DOC_TAG])]
-    public function statKinds(string $season, string $code): JsonResponse
+    #[OA\Get(
+        path: '/competition/{season}/{code}/stats',
+        summary: 'Available statistics of a competition, timeline statistics published on the surface included',
+        tags: [self::DOC_TAG],
+        parameters: [new OA\Parameter(name: 'surface', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['app2', 'app3'], default: 'app3'))],
+    )]
+    public function statKinds(string $season, string $code, Request $request): JsonResponse
     {
-        return $this->respondForCompetition($season, $code, fn () => ['kinds' => $this->stats->kinds()]);
+        $surface = MedalSurface::fromPublicParameter($request->query->get('surface'));
+        if ($surface === null || $surface === MedalSurface::Public) {
+            return $this->invalidParameter();
+        }
+
+        return $this->respondForCompetition($season, $code, fn () => ['kinds' => [...$this->stats->kinds(), ...$this->medalStats->availableKinds($surface, new MedalScope($season, [$code]))]]);
+    }
+
+    #[Route('/competition/{season}/{code}/labels', name: 'public_competition_labels', methods: ['GET'])]
+    #[OA\Get(
+        path: '/competition/{season}/{code}/labels',
+        summary: 'Labels (Thriller…) of the validated games of a competition, published on the surface: {gameId: [codes]}',
+        tags: [self::DOC_TAG],
+        parameters: [new OA\Parameter(name: 'surface', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['app2', 'app3'], default: 'app3'))],
+    )]
+    public function labels(string $season, string $code, Request $request): JsonResponse
+    {
+        $surface = MedalSurface::fromPublicParameter($request->query->get('surface'));
+        if ($surface === null || $surface === MedalSurface::Public) {
+            return $this->invalidParameter();
+        }
+
+        return $this->respondForCompetition($season, $code, fn () => ['labels' => (object) $this->medals->competitionLabels($season, $code, $surface)]);
     }
 
     #[Route('/competition/{season}/{code}/stats/{kind}', name: 'public_competition_stat', methods: ['GET'])]
     #[OA\Get(
         path: '/competition/{season}/{code}/stats/{kind}',
-        summary: 'One statistic of a competition (scorers…)',
+        summary: 'One statistic of a competition (scorers, timeline statistics published on the surface…)',
         tags: [self::DOC_TAG],
-        parameters: [new OA\Parameter(name: 'limit', in: 'query', required: false, schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100, default: 20))],
+        parameters: [
+            new OA\Parameter(name: 'limit', in: 'query', required: false, schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 100, default: 20)),
+            new OA\Parameter(name: 'surface', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['app2', 'app3'], default: 'app3')),
+        ],
     )]
     public function stat(string $season, string $code, string $kind, Request $request): JsonResponse
     {
@@ -127,9 +163,18 @@ class PublicCompetitionController extends AbstractController
         if ($limit === false) {
             return $this->invalidParameter();
         }
+        $surface = MedalSurface::fromPublicParameter($request->query->get('surface'));
+        if ($surface === null || $surface === MedalSurface::Public) {
+            return $this->invalidParameter();
+        }
         $stat = $this->stats->find($kind);
         if ($stat === null) {
-            return $this->notFound();
+            // timeline statistic (FEATURE_MATCH_MEDALS.md § 3.4): 404 when not published on the surface (MED-37)
+            if (!$this->medalStats->isVisible($kind, $surface)) {
+                return $this->notFound();
+            }
+
+            return $this->respondForCompetition($season, $code, fn () => $this->medalStats->run($kind, new MedalScope($season, [$code]), $surface, $limit));
         }
 
         return $this->respondForCompetition($season, $code, fn () => [

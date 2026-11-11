@@ -68,7 +68,20 @@
       <span class="font-medium">{{ t('MatchSheet.Referees') }}:</span>
       {{ formatReferee(matchData.game.g_referee_1) }}
       <span v-if="matchData.game.g_referee_2"> / {{ formatReferee(matchData.game.g_referee_2) }}</span>
+      <!-- Referee medals, common to both referees of the game (FEATURE_MATCH_MEDALS.md § 9.1) -->
+      <div v-if="refereeMedals.length" class="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+        <small class="text-gray-500">{{ t('Medals.Referees') }}</small>
+        <MedalPill v-for="item in refereeMedals" :key="item.code" :item="item" />
+      </div>
     </div>
+
+    <GameMedals
+      v-if="matchData.medals && medalCatalog.size"
+      :game="matchData.medals"
+      :catalog="medalCatalog"
+      :team-a-label="matchData.team_a.label"
+      :team-b-label="matchData.team_b.label"
+    />
 
     <!-- Team Compositions -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-300">
@@ -183,6 +196,7 @@
         {{ t('MatchSheet.Timeline') }}
       </div>
       <GameTimelineBar
+        v-if="hasRecordedTimes(matchData.events)"
         class="border-b-4 border-gray-300 dark:border-gray-600"
         :events="matchData.events"
         :current-period="matchData.game.g_period"
@@ -200,13 +214,13 @@
 
             <!-- Team A: icon + details on left -->
             <template v-if="event.e_team === 'A'">
-              <GameEventIcon :type="event.e_type" />
+              <GameEventIcon :type="event.e_type" :team="event.e_team" />
               <!-- Event details -->
               <div class="flex-1 text-left">
                 <span class="text-blue-700 dark:text-blue-300 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
                 <span class="text-gray-500 text-sm ml-2">#{{ event.e_number }}</span>
                 <span class="text-gray-400 text-xs ml-2">({{ matchData.team_a.label }})</span>
-                <span v-if="event.e_motif" class="text-gray-500 text-xs ml-2">- {{ event.e_motif }}</span>
+                <span v-if="cardReason(event.e_motif)" class="text-gray-500 text-xs ml-2">- {{ cardReason(event.e_motif) }}</span>
               </div>
             </template>
 
@@ -214,12 +228,12 @@
             <template v-else>
               <!-- Event details -->
               <div class="flex-1 text-right">
-                <span v-if="event.e_motif" class="text-gray-500 text-xs mr-2">{{ event.e_motif }} -</span>
+                <span v-if="cardReason(event.e_motif)" class="text-gray-500 text-xs mr-2">{{ cardReason(event.e_motif) }} -</span>
                 <span class="text-gray-400 text-xs mr-2">({{ matchData.team_b.label }})</span>
                 <span class="text-gray-500 text-sm mr-2">#{{ event.e_number }}</span>
                 <span class="text-red-700 dark:text-red-400 font-medium">{{ event.e_firstname }} {{ event.e_name }}</span>
               </div>
-              <GameEventIcon :type="event.e_type" />
+              <GameEventIcon :type="event.e_type" :team="event.e_team" />
             </template>
           </div>
         </div>
@@ -242,11 +256,16 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatEventTime, parseEventTime } from '~/utils/gameTimeline'
+import { formatEventTime, hasRecordedTimes, parseEventTime } from '~/utils/gameTimeline'
 import GameEventIcon from '~/components/GameEventIcon.vue'
 import GameTimelineBar from '~/components/GameTimelineBar.vue'
+import GameMedals from '~/components/GameMedals.vue'
+import MedalPill from '~/components/MedalPill.vue'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
+
+// Card reason: its label, nothing when the code is empty, 'unknown' or not in the list (same codes as the app4 scoring)
+const cardReason = code => (code && te(`MatchSheet.Reason.${code}`) ? t(`MatchSheet.Reason.${code}`) : null)
 const runtimeConfig = useRuntimeConfig()
 const baseUrl = runtimeConfig.public.backendBaseUrl
 
@@ -254,8 +273,12 @@ const props = defineProps({
   matchData: { type: Object, default: null },
   loading: { type: Boolean, default: false },
   error: { type: String, default: null },
-  gameId: { type: [Number, String], required: true }
+  gameId: { type: [Number, String], required: true },
+  // Medals, labels and statistics published on app2, by code (FEATURE_MATCH_MEDALS.md § 6.4)
+  medalCatalog: { type: Map, default: () => new Map() }
 })
+
+const refereeMedals = computed(() => (props.matchData?.medals?.referee ?? []).flatMap(medal => props.medalCatalog.get(medal.code) ?? []))
 
 defineEmits(['refresh'])
 

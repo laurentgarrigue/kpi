@@ -103,6 +103,19 @@
    These point to the --ui-color-* vars above so both Tailwind classes and
    Nuxt UI components stay in sync with the same palette values. */
 @theme {
+  /* Families of the match medals (FEATURE_MATCH_MEDALS.md § 7), same values as kpi-layer (app3) */
+  --color-fam-elan: #2f6f8f;
+  --color-fam-reaction: #b4530f;
+  --color-fam-endurance: #6a4c9c;
+  --color-fam-superiorite: #0d7466;
+  --color-fam-finition: #3a45a3;
+  --color-fam-defense: #4b5d77;
+  --color-fam-esprit: #2f7d4a;
+  --color-fam-arbitrage: #45484f;
+  --color-fam-match: #9b3a6f;
+  --color-fam-analyse: #20265b;
+  --color-shield-ink: #fff;
+
   /* Header - deep blue (#20265b) */
   --color-header-50: oklch(0.970 0.014 274.28);
   --color-header-100: oklch(0.940 0.033 274.28);
@@ -233,6 +246,17 @@ h1, h2 {
 
 .dark {
   color-scheme: dark;
+  --color-fam-elan: #7fb6d1;
+  --color-fam-reaction: #f0a465;
+  --color-fam-endurance: #b9a2e6;
+  --color-fam-superiorite: #5fc9b8;
+  --color-fam-finition: #a7aef2;
+  --color-fam-defense: #a9b9d1;
+  --color-fam-esprit: #86cf9c;
+  --color-fam-arbitrage: #c7cbd3;
+  --color-fam-match: #e79bc4;
+  --color-fam-analyse: #b8c0f0;
+  --color-shield-ink: #10131f;
 }
 
 /* Dark-mode Nuxt UI surface/text tokens.

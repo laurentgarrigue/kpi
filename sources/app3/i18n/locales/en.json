@@ -33,7 +33,8 @@
     "teams-clubs": "Clubs and teams",
     "live": "Live",
     "events": "Events",
-    "editorial": "Kayak polo"
+    "editorial": "Kayak polo",
+    "medals": "Medals and statistics"
   },
   "footer": {
     "kayakPolo": "Canoe polo",
@@ -600,5 +601,75 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "medals": {
+    "times": "{label}, {n} times",
+    "basisTimeline": "Computed on {reliable} games with a complete sheet (out of {games} validated).",
+    "basisGames": "Computed on {games} validated games.",
+    "howLink": "How are the medals awarded?",
+    "openerLead": "The team that opens the score wins {won} games out of {decided}",
+    "openerNote": "Draws and incomplete sheets aside.",
+    "noOpponentExclusion": "no opponent exclusion",
+    "powerplayDetail": "{goals} goals / {exclusions} opponent exclusions",
+    "refereeNote": "The facts of a game count for both its referees; sorted by games, then by name.",
+    "undesignated": "No game without a designated referee. | Only referees designated by name are counted: {n} game without a designated referee. | Only referees designated by name are counted: {n} games without a designated referee.",
+    "gamesOfficiated": "{n} game officiated | {n} game officiated | {n} games officiated",
+    "gameLabels": "Game labels",
+    "col": {
+      "total": "Total",
+      "opened": "Opened the score",
+      "won": "Won",
+      "referee": "Referee",
+      "games": "Games",
+      "principal": "First",
+      "secondary": "Second",
+      "knockouts": "Knockouts",
+      "overtimes": "Overtimes"
+    },
+    "page": {
+      "title": "Medals and statistics",
+      "intro": "Every game tells more than a score. From the goals and cards recorded on the score sheet, we award medals to teams, players and referees, and compute statistics for each competition. Nothing more is recorded.",
+      "description": "Medals of canoe polo games and statistics of the competitions: what they reward and how they are awarded.",
+      "season": "Season",
+      "onThisPage": "On this page",
+      "statistics": "Statistics",
+      "validatedTitle": "Validated games",
+      "validated": "Only games whose sheet is validated count. A medal appears once the game is validated.",
+      "completeTitle": "Complete sheet",
+      "complete": "Medals about the course of the game (opener, power play…) need the time of every goal. Otherwise, only the medals about the score are awarded.",
+      "refereesTitle": "Referees",
+      "referees": "The sheet does not say which referee gave a card: the facts of a game count for both its referees. Only referees designated by name are taken into account.",
+      "thresholdsTitle": "Thresholds of season {season}",
+      "thresholds": "The explanations quote the thresholds used for the chosen season: they may change from one season to the next.",
+      "scope": {
+        "T": "team",
+        "P": "player",
+        "R": "referee",
+        "game": "game"
+      },
+      "where": "Shown: {places}",
+      "app2": "score sheet (live results)",
+      "app3": "team records and Stats tab",
+      "empty": "No medal published yet."
+    },
+    "team": {
+      "title": "Game medals",
+      "intro": "Awards won game after game by the team and its players, over the validated games of the season.",
+      "games": "{n} game | {n} game | {n} games",
+      "against": "{phase} · against {opponent}",
+      "seasons": "Seasons of the medals"
+    },
+    "family": {
+      "elan": "Momentum",
+      "reaction": "Reaction",
+      "endurance": "Endurance",
+      "superiorite": "Power play",
+      "finition": "Finishing",
+      "defense": "Defence",
+      "esprit": "Sportsmanship",
+      "arbitrage": "Officiating",
+      "match": "Game",
+      "analyse": "Analysis"
+    }
   }
 }

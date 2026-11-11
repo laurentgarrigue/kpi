@@ -63,7 +63,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
 
         self::assertSame([1, 2, 100], self::column($sections, 'section'));
         self::assertSame(['TSTGRP'], array_column($sections[0]['groups'], 'code'));
-        self::assertSame(['TSTRES'], array_column($sections[1]['groups'], 'code'));
+        self::assertSame(['TSTRES', 'TSTMED'], array_column($sections[1]['groups'], 'code'), 'TSTMED : fixtures des médailles de match');
         self::assertSame(['TSTDIV'], array_column($sections[2]['groups'], 'code'), 'Divers inclus, contrairement à /groups/{season}');
         self::assertSame(['code', 'libelle', 'libelle_en'], array_keys($sections[1]['groups'][0]));
     }
@@ -362,7 +362,8 @@ final class PublicSiteEndpointsTest extends ApiTestCase
             $fixtures['upcoming'][0],
         );
         // 9201 appartient à l'événement 78, non publié : elle compte comme hors événement. Fin décroissante.
-        self::assertSame(['group:TSTRES', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+        // TSTMED (2998-05-02) : fixtures des médailles de match, la plus ancienne.
+        self::assertSame(['group:TSTRES', 'event:42', 'group:TSTRES', 'group:TSTMED'], self::fixtureKeys($fixtures['recent']));
         self::assertSame(['2999', '2999-03-02', '2998', '2998-05-11'], [
             $fixtures['recent'][0]['season'], $fixtures['recent'][0]['end'], $fixtures['recent'][2]['season'], $fixtures['recent'][2]['end'],
         ]);
@@ -376,7 +377,7 @@ final class PublicSiteEndpointsTest extends ApiTestCase
         // app = 'O' : 9002 (non publié) entre, 9003 sort ; groupe « Divers » (section 100) exclu.
         self::assertSame(['event:77', 'event:9002', 'event:79', 'event:9001'], self::fixtureKeys($fixtures['upcoming']));
         // 9201 appartient à l'événement 78, activé pour app2 : elle n'apparaît que par lui.
-        self::assertSame(['event:78', 'event:42', 'group:TSTRES'], self::fixtureKeys($fixtures['recent']));
+        self::assertSame(['event:78', 'event:42', 'group:TSTRES', 'group:TSTMED'], self::fixtureKeys($fixtures['recent']));
     }
 
     public function testApi10UnknownFixtureScopeIsNotFound(): void

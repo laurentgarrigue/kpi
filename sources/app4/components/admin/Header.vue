@@ -205,6 +205,14 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.operations')
     })
   }
+  // Médailles de match (FEATURE_MATCH_MEDALS.md § 9.3): profiles 1–2 only
+  if (profile <= 2) {
+    operations.push({
+      to: '/medals',
+      icon: 'heroicons:trophy',
+      label: t('menu.medals')
+    })
+  }
   if (operations.length > 0) {
     groups.push({
       key: 'operations',

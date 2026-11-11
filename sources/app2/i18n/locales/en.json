@@ -107,6 +107,7 @@
     "EliminationGames": "Elimination games",
     "FinalRanking": "Final ranking",
     "NoData": "No data available for this team",
+    "Medals": "Team medals",
     "TournamentRounds": "Bracket"
   },
   "Games": {
@@ -243,6 +244,7 @@
     "NoStats": "No statistics available for this team.",
     "Player": "Player",
     "Goals": "Goals",
+    "Medals": "Medals",
     "Coach": "Staff"
   },
   "MatchSheet": {
@@ -258,7 +260,17 @@
     "Loading": "Loading game sheet...",
     "NotFound": "Game not found or not available",
     "Refresh": "Refresh",
-    "Back": "Back"
+    "Back": "Back",
+    "Goal": "Goal",
+    "Reason": {
+      "r_pad": "Paddle",
+      "r_kt": "Tackle",
+      "r_ht": "Hand Tackle / Holding",
+      "r_p": "Possession",
+      "r_o": "Obstruction",
+      "r_un": "Unsporting / Protest",
+      "r_rep": "Substitution"
+    }
   },
   "errors": {
     "generic": {
@@ -330,5 +342,13 @@
         "description": "Displaying previously loaded data"
       }
     }
+  },
+  "Medals": {
+    "Title": "Medals",
+    "How": "How are they awarded?",
+    "Incomplete": "Timeline medals unavailable (incomplete sheet): only the medals about the score are awarded.",
+    "NoTeamMedal": "No team medal",
+    "Referees": "Referee medals (for both):",
+    "Times": "{label}, {n} times"
   }
 }

@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\MatchMedals\MatchMedalService;
 use App\Service\EventCacheService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -29,6 +30,7 @@ class AdminGamesController extends AbstractController
     public function __construct(
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
+        private readonly MatchMedalService $matchMedals,
     ) {
     }
 
@@ -765,6 +767,8 @@ class AdminGamesController extends AbstractController
         $this->logActionForMatch('Validation match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
 
         $this->refreshMatchCache($id);
+        // Medals follow the validation (FEATURE_MATCH_MEDALS.md § 6.3): computed when validated, removed otherwise.
+        $this->matchMedals->refreshGame($id);
 
         return $this->json(['id' => $id, 'validation' => $newValue]);
     }
@@ -1126,6 +1130,7 @@ class AdminGamesController extends AbstractController
         )->executeStatement(array_merge([$newValue, $user?->getUserIdentifier()], $ids));
 
         $this->logActionForSeason('Validation masse matchs', null, count($ids) . " match(s) -> $newValue");
+        $this->matchMedals->refreshGames(array_values($ids));
 
         return $this->json(['updated' => count($ids), 'validation' => $newValue]);
     }
@@ -1162,6 +1167,7 @@ class AdminGamesController extends AbstractController
         )->executeStatement(array_merge([$user?->getUserIdentifier()], $ids));
 
         $this->logActionForSeason('Verrouillage+publication masse matchs', null, count($ids) . ' match(s)');
+        $this->matchMedals->refreshGames(array_values($ids));
 
         return $this->json(['updated' => count($ids)]);
     }

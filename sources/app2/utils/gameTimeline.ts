@@ -58,6 +58,20 @@ const defaultPeriodSeconds = (period: string): number =>
   period.startsWith('P') ? EXTRA_PERIOD_SECONDS : REGULAR_PERIOD_SECONDS
 
 /**
+ * Whether the sheet holds real times. A time left at the start of its period (10:00, 05:00 in overtime) or at zero
+ * (00:00) is what a sheet without recorded times carries: if every goal and card is like that, the horizontal timeline
+ * would stack them all on one spot and tell nothing. Same notion of an unrecorded time as the match medals, which set
+ * a game aside as soon as ONE fact carries it (FEATURE_MATCH_MEDALS.md § 5.1).
+ */
+export const hasRecordedTimes = (events: GameEvent[]): boolean =>
+  events.some((event) => {
+    const period = event.e_period ?? ''
+    if (!TIMED_PERIODS.includes(period)) return false
+    const seconds = parseEventTime(event.e_time)
+    return seconds !== 0 && seconds !== defaultPeriodSeconds(period)
+  })
+
+/**
  * Period length is not stored: take the default, stretched to the whole minute
  * above the largest remaining time recorded in that period.
  */

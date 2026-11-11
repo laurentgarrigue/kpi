@@ -12,7 +12,7 @@
       >
         <span class="text-xs font-medium text-blue-700 dark:text-blue-300 leading-4">#{{ marker.event.e_number }}</span>
         <div class="h-7 flex items-center justify-center scale-75">
-          <GameEventIcon :type="marker.event.e_type" />
+          <GameEventIcon :type="marker.event.e_type" :team="marker.event.e_team" />
         </div>
       </div>
     </div>
@@ -50,7 +50,7 @@
         :title="tooltip(marker.event, teamBLabel)"
       >
         <div class="h-7 flex items-center justify-center scale-75">
-          <GameEventIcon :type="marker.event.e_type" />
+          <GameEventIcon :type="marker.event.e_type" :team="marker.event.e_team" />
         </div>
         <span class="text-xs font-medium text-red-700 dark:text-red-400 leading-4">#{{ marker.event.e_number }}</span>
       </div>

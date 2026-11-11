@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "opener_wins",
+    "columns": [
+      {
+        "key": "opened",
+        "type": "integer"
+      },
+      {
+        "key": "won",
+        "type": "integer"
+      },
+      {
+        "key": "percent",
+        "type": "percent"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "team": {
+          "id": 9361,
+          "number": 161,
+          "label": "Medal Oscar",
+          "logo": null
+        },
+        "opened": 2,
+        "won": 2,
+        "percent": 100
+      },
+      {
+        "rank": 2,
+        "team": {
+          "id": 9362,
+          "number": 162,
+          "label": "Medal Papa",
+          "logo": null
+        },
+        "opened": 1,
+        "won": 0,
+        "percent": 0
+      }
+    ],
+    "summary": {
+      "won": 2,
+      "decided": 3,
+      "percent": 67
+    },
+    "games_count": 4,
+    "reliable_games_count": 3,
+    "needs_reliable_timeline": true
+  }
+}

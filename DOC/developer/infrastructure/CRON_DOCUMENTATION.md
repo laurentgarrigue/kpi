@@ -8,10 +8,12 @@
 
 ## Vue d'ensemble
 
-Le système KPI utilise **2 tâches automatisées** :
+Le système KPI utilise **4 tâches automatisées** :
 
 1. **Import licences PCE** (FFCK) - Quotidien
 2. **Verrouillage présences** compétitions - Multi-quotidien
+3. **Purge RGPD des inscriptions** (site public) - Quotidien
+4. **Médailles de match** (site public, app2) - Toutes les 10 minutes
 
 Ces tâches sont implémentées comme **services Symfony** dans API2, exposées à la fois comme :
 - **Endpoints HTTP** (`POST /admin/operations/...`) utilisables depuis app4
@@ -168,6 +170,42 @@ Spec : [FEATURE_FORMS.md](../../specs/public/FEATURE_FORMS.md) § 6 (FRM-09).
 ```
 
 (remplacer `kpi_api2` par `${APPLICATION_NAME}_api2` de l'environnement, ex. `kpi_preprod_api2`.)
+
+## 4. Médailles de match
+
+### Description
+
+Calcule les médailles et statistiques de timeline des matchs **validés** nouveaux ou modifiés depuis le passage
+précédent (empreinte du score, de la timeline et des arbitres désignés), et supprime celles des matchs dévalidés.
+Couvre surtout les validations faites dans le **legacy** : celles d'app4 (api2) recalculent le match aussitôt.
+Chaque match est calculé avec les seuils figés de **sa saison**. Spec :
+[FEATURE_MATCH_MEDALS.md](../../specs/public/FEATURE_MATCH_MEDALS.md) § 6.3.
+
+| Composant | Fichier |
+|-----------|---------|
+| Service | `sources/api2/src/MatchMedals/MatchMedalService.php` |
+| Commande (cron) | `app:match-medals:sync` (`make api2_match_medals_sync`) |
+| Commande (manuelle) | `app:match-medals:compute --season=AAAA` (`make api2_match_medals_compute season=AAAA`) |
+
+### Configuration CRON
+
+```cron
+# Médailles de match - toutes les 10 minutes
+*/10 * * * * docker exec kpi_api2 php bin/console app:match-medals:sync >> /var/log/kpi/cron_match_medals.log 2>&1
+```
+
+(remplacer `kpi_api2` par `${APPLICATION_NAME}_api2` de l'environnement, ex. `kpi_preprod_api2`.)
+
+### Calcul complet d'une saison
+
+À la mise en service (toutes les saisons, une par une) et après un changement de seuil dans
+`sources/api2/config/packages/match_medals.yaml` (seulement les saisons voulues) :
+
+```bash
+make api2_match_medals_compute season=2026
+```
+
+Les autres saisons gardent leurs résultats et leurs seuils.
 
 ## Notification email
 

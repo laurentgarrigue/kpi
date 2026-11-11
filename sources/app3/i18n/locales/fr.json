@@ -33,7 +33,8 @@
     "teams-clubs": "Clubs et équipes",
     "live": "En direct",
     "events": "Événements",
-    "editorial": "Le kayak-polo"
+    "editorial": "Le kayak-polo",
+    "medals": "Médailles et statistiques"
   },
   "footer": {
     "kayakPolo": "Kayak-polo",
@@ -600,5 +601,75 @@
     "light": "Clair",
     "dark": "Sombre",
     "system": "Système"
+  },
+  "medals": {
+    "times": "{label}, {n} fois",
+    "basisTimeline": "Calculé sur {reliable} matchs à feuille complète (sur {games} validés).",
+    "basisGames": "Calculé sur {games} matchs validés.",
+    "howLink": "Comment sont attribuées les médailles ?",
+    "openerLead": "L’équipe qui ouvre le score gagne {won} matchs sur {decided}",
+    "openerNote": "Matchs nuls et feuilles incomplètes à part.",
+    "noOpponentExclusion": "aucune exclusion adverse",
+    "powerplayDetail": "{goals} buts / {exclusions} exclusions adverses",
+    "refereeNote": "Les faits d’un match comptent pour ses deux arbitres ; tri par nombre de matchs, puis par nom.",
+    "undesignated": "Aucun match sans arbitre désigné nommément. | Seuls les arbitres désignés nommément sont comptés : {n} match sans arbitre désigné. | Seuls les arbitres désignés nommément sont comptés : {n} matchs sans arbitre désigné.",
+    "gamesOfficiated": "{n} match arbitré | {n} match arbitré | {n} matchs arbitrés",
+    "gameLabels": "Étiquettes du match",
+    "col": {
+      "total": "Total",
+      "opened": "Premier but marqué",
+      "won": "Dont gagnés",
+      "referee": "Arbitre",
+      "games": "Matchs",
+      "principal": "Principal",
+      "secondary": "Secondaire",
+      "knockouts": "Couperets",
+      "overtimes": "Prolongations"
+    },
+    "page": {
+      "title": "Médailles et statistiques",
+      "intro": "Chaque match raconte plus qu’un score. À partir des buts et des cartons notés sur la feuille de match, nous attribuons des médailles aux équipes, aux joueurs et aux arbitres, et calculons des statistiques par compétition. Rien n’est saisi en plus.",
+      "description": "Médailles des matchs de kayak-polo et statistiques des compétitions : ce qu’elles récompensent et comment elles sont attribuées.",
+      "season": "Saison",
+      "onThisPage": "Sur cette page",
+      "statistics": "Statistiques",
+      "validatedTitle": "Matchs validés",
+      "validated": "Seuls les matchs dont la feuille est validée comptent. Une médaille n’apparaît qu’une fois le match validé.",
+      "completeTitle": "Feuille complète",
+      "complete": "Les médailles liées au déroulé (premier but, supériorité…) demandent que chaque but ait son temps. Sinon, seules les médailles liées au score sont attribuées.",
+      "refereesTitle": "Arbitres",
+      "referees": "La feuille ne dit pas quel arbitre a sorti un carton : les faits d’un match comptent pour ses deux arbitres. Seuls les arbitres désignés nommément sont pris en compte.",
+      "thresholdsTitle": "Seuils de la saison {season}",
+      "thresholds": "Les explications citent les seuils utilisés pour la saison choisie : ils peuvent évoluer d’une saison à l’autre.",
+      "scope": {
+        "T": "équipe",
+        "P": "joueur",
+        "R": "arbitre",
+        "game": "match"
+      },
+      "where": "Visible : {places}",
+      "app2": "feuille de match (résultats en direct)",
+      "app3": "bilans des équipes et onglet Stats",
+      "empty": "Aucune médaille publiée pour le moment."
+    },
+    "team": {
+      "title": "Médailles de match",
+      "intro": "Distinctions gagnées match après match par l’équipe et ses joueurs, sur les matchs validés de la saison.",
+      "games": "{n} match | {n} match | {n} matchs",
+      "against": "{phase} · contre {opponent}",
+      "seasons": "Saisons des médailles"
+    },
+    "family": {
+      "elan": "Élan",
+      "reaction": "Réaction",
+      "endurance": "Endurance",
+      "superiorite": "Supériorité numérique",
+      "finition": "Finition",
+      "defense": "Défense",
+      "esprit": "Esprit sportif",
+      "arbitrage": "Arbitrage",
+      "match": "Match",
+      "analyse": "Analyse"
+    }
   }
 }

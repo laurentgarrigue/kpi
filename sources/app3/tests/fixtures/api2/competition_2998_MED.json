@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "body": {
+    "code": "MED",
+    "season": "2998",
+    "group": {
+      "code": "TSTMED",
+      "libelle": "Groupe Médailles",
+      "libelle_en": "Medals group"
+    },
+    "libelle": "Médailles Test",
+    "soustitre": null,
+    "soustitre2": null,
+    "display_title": "Médailles Test",
+    "type": "CP",
+    "status": "ON",
+    "level": null,
+    "banner": null,
+    "logo": null,
+    "web": null,
+    "qualified": 3,
+    "eliminated": 0,
+    "has_games": true,
+    "round": null,
+    "final": false,
+    "siblings": [
+      {
+        "code": "MED",
+        "display_title": "Médailles Test",
+        "soustitre2": null
+      }
+    ],
+    "events": []
+  }
+}

@@ -70,6 +70,28 @@ design.
 | `contenu` | `/{slug}` | [PAGE_CONTENT](../PAGE_CONTENT.md) | Colonne de lecture, sommaire « Sur cette page » qui suit la lecture (au-dessus du texte sur mobile). |
 | `formulaire` | `/forms/{slug}` | [FEATURE_FORMS](../FEATURE_FORMS.md) | Champs groupés en sections, quantités avec boutons − / +, récapitulatif et total en direct (barre collante en bas sur mobile). |
 
+## Médailles et statistiques de timeline
+
+Maquettes **validées le 09/11/2026** (l’étiquette *Verrouillé · Lockdown* est devenue *Partie d’échecs · Chess Match* : le cadenas évoquait le verrouillage d’un match), pour [FEATURE_MATCH_MEDALS](../FEATURE_MATCH_MEDALS.md). Elles couvrent
+app3, mais aussi la feuille de match d'**app2** et la page d'**admin** (app4), dans le style de chaque application.
+
+**Données** : scores, équipes et arbitres réels de la PlayOff Hommes 2026 (`data/`). L'ordre des buts, les temps, les
+buteurs et les cartons sont **fictifs** (générés avec une graine fixe, quelques matchs scénarisés : n° 302
+*Suspense*, 318 *Remontée*, 326 *But en or*, 316 feuille incomplète, 317 arbitres non désignés). Les médailles sont
+calculées par `src/medals.js`, **implémentation de référence des règles** de la spec (§ 5) : elle servira d'oracle
+pour écrire les tests d'api2.
+
+| Maquette | Surface | Décisions proposées |
+|---|---|---|
+| `pictogrammes` | toutes | Le **ballon de kayak-polo** (dessin plein d'après le modèle de référence, panneaux découpés) pour tout ce qui montre un ballon, et seul (`goal`) comme symbole du but partout. Un pictogramme dessiné par élément (`src/medal_icons.py`, exportés en SVG dans [sources/api2/public/medals/icons/](../../../../sources/api2/public/medals/icons/), servis par api2) : grille 24, trait 1,75, `currentColor`, lisible à 16 px. Badge en coin (sifflet, %, barres…) qui découpe le dessin pour les arbitres et les statistiques. Une couleur par famille, **ni or ni rouge**. |
+| `medailles` | app3 `/medals` | Page d'explication : quatre principes (matchs validés, feuille complète, arbitres, seuils de saison), puis les éléments publiés par famille avec leurs deux noms et l'endroit où on les voit. Sélecteur de saison qui change les seuils cités. |
+| `stats-medailles` | app3 onglet Stats | Menu des statistiques par rubrique (Joueurs, Équipes, Arbitrage) ; en tête de chaque statistique : pictogramme, explication, nombre de matchs pris en compte et lien vers `/medals`. Tableau des médailles d'équipe en colonnes de pictogrammes ; *Premier but gagnant* en grand chiffre ; *Supériorité %* en barres. Arbitres triés par nombre de matchs. |
+| `equipe-medailles` | app3 fiche équipe | Section « Médailles de match » sous le décompte des podiums : une carte par médaille (compteur, explication, matchs dépliables vers la feuille de match). |
+| `app2-feuille` | app2 `/game/{id}` | Bloc « Médailles » sous le score : étiquettes du match, puis une colonne par équipe (médailles d'équipe en pastilles nommées, médailles de joueur en pastilles compactes devant le nom). Médailles d'arbitre sous la ligne des arbitres. Buts représentés par le ballon `goal` dans la couleur de l'équipe (frise : ballon + numéro du buteur), buts médaillés cerclés ; liste des faits : pastilles à côté des buts. |
+| `blasons` | (composant commun) | Blason plein (écu français moderne) à la place du disque : couleur de famille, filigrane « KPI » en haut à gauche, compteur en pastille ; 56 px par défaut, 40 px en tableau, 88 px sur la page d'explications. Variante teintée écartée. |
+| `app2-equipe` | app2 `/team/{id}` | Bloc « Médailles de l'équipe » (blasons de 64 px) et colonne « Médailles » du tableau des joueurs (blasons de 40 px ; sur une ligne sous le joueur sur mobile). Les buts d'un joueur restent des chiffres ; l'en-tête de la colonne est le ballon. |
+| `admin-medailles` | app4 | Onglets **Catalogue** (cases app2 / app3, statut, nombre d'attributions, tiroir d'édition des noms et explications avec variables et aperçu), **Saisons** (seuils figés, version des règles), **Arbitrage** (indicateurs à côté de la moyenne, « — » sous le seuil de matchs, binômes, matchs écartés), **Statistiques** (toutes, avec leur surface). |
+
 ## Implémentation (branche `app3_design`, 23/10/2026)
 
 Toutes les pages du tableau sont implémentées dans app3, spec d'abord (critères ajoutés ou révisés dans chaque

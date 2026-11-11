@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Médailles</title>
+<link rel="stylesheet" href="maquette.css">
+<link rel="stylesheet" href="medals.css">
+<style>
+/* app4 look: navy header, primary #1e4385, Nuxt UI-like controls */
+:root { --primary: #1e4385; --bg: #eef0f7; --card: #fff; --warn-bg: #fff7e6; --warn: #8a5300; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --primary: #8fb0ee; --bg: #0b0f2a; --card: #11163a; --warn-bg: #3a2a08; --warn: #f5c56b; } }
+:root[data-theme="dark"] { --primary: #8fb0ee; --bg: #0b0f2a; --card: #11163a; --warn-bg: #3a2a08; --warn: #f5c56b; }
+body { background: var(--bg); font-size: 14px; }
+.top { background: #20265b; color: #fff; display: flex; align-items: center; gap: 18px; padding: 10px 18px; }
+.top b { font: 400 24px/1 var(--display); } .top nav { display: flex; gap: 16px; font-size: 14px; overflow-x: auto; } .top nav a { color: #c9cde6; text-decoration: none; white-space: nowrap; } .top nav a[aria-current] { color: #fff; font-weight: 700; }
+.top .user { margin-left: auto; font-size: 13px; color: #c9cde6; white-space: nowrap; }
+.page { max-width: 1240px; margin: 0 auto; padding: 16px 18px 80px; }
+.ctx { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.ctx b { color: var(--ink); }
+h1.t { font: 700 22px var(--text); margin: 18px 0 4px; color: var(--ink); } .lede { margin: 0 0 14px; color: var(--muted); }
+.tabs2 { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; }
+.tabs2 button { font: inherit; font-weight: 600; background: none; border: 0; padding: 10px 14px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs2 button[aria-selected="true"] { color: var(--primary); border-color: var(--primary); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 10px; }
+.tools select, .tools input[type=search], .drawer input, .drawer textarea, .card select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+.scroll { overflow-x: auto; position: relative; }
+table.adm { width: 100%; border-collapse: collapse; }
+table.adm th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.adm td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.adm td.num, table.adm th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.adm tr.retired td { opacity: .5; }
+table.adm .nm b { font-weight: 700; } table.adm .nm .en { color: var(--muted); font-style: italic; } table.adm .nm code { display: block; font-size: 11px; color: var(--muted); }
+.sw { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.sw input { width: 16px; height: 16px; accent-color: var(--primary); }
+.btn { font: inherit; font-weight: 600; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.alert { background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+.cmp { font-size: 12px; color: var(--muted); }
+.hi { font-weight: 700; }
+.spark { display: inline-flex; align-items: end; gap: 1px; height: 22px; vertical-align: middle; }
+.spark i { width: 5px; background: var(--fam-arbitrage); border-radius: 1px 1px 0 0; opacity: .8; }
+.hist { display: flex; align-items: end; gap: 4px; height: 180px; padding: 10px 0 0; border-bottom: 1px solid var(--line); }
+.hist div { flex: 1; display: grid; align-content: end; justify-items: center; gap: 4px; font-size: 11px; color: var(--muted); height: 100%; }
+.hist i { display: block; width: 100%; background: var(--fam-analyse); border-radius: 3px 3px 0 0; }
+.hist-x { display: flex; gap: 4px; font-size: 11px; color: var(--muted); } .hist-x span { flex: 1; text-align: center; }
+.drawer { position: fixed; inset: 0 0 0 auto; width: min(460px, 100%); background: var(--card); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgb(0 0 0 / .2); padding: 18px; overflow-y: auto; z-index: 40; }
+.drawer[hidden] { display: none; }
+.drawer label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 4px; }
+.drawer input, .drawer textarea { width: 100%; }
+.drawer textarea { min-height: 70px; }
+.drawer .preview { margin-top: 10px; padding: 10px; border-radius: 6px; background: var(--wash); font-size: 13px; }
+.drawer .vars code { font-size: 11.5px; background: var(--wash); padding: 0 4px; border-radius: 3px; margin-right: 4px; }
+@media (max-width: 700px) { .top nav { display: none; } }
+</style>
+</head>
+<body>
+<header class="top"><b>KPI Admin</b><nav><a href="#">Accueil</a><a href="#">Compétitions</a><a href="#">Matchs</a><a href="#" aria-current="page">Statistiques</a><a href="#">Opérations</a></nav><span class="user">Profil 1 · Laurent G.</span></header>
+<div class="page">
+  <div class="ctx"><span>Saison <b>2026</b></span><span>Périmètre <b>PlayOff Hommes</b> (1 compétition)</span><a href="#">Modifier</a></div>
+  <h1 class="t">Médailles</h1>
+  <p class="lede">Catalogue des médailles, étiquettes et statistiques de timeline : publication par surface, seuils par saison, accompagnement des arbitres. Profils 1 et 2.</p>
+  <div class="tabs2" role="tablist" id="tabs"></div>
+  <div id="panel"></div>
+</div>
+<aside class="drawer" id="drawer" hidden aria-label="Modifier l’élément"></aside>
+<script src="maquette.js"></script>
+<script src="medals-icons.js"></script>
+<script src="medals.js"></script>
+<script>
+const GAMES = __GAMES__;
+const { matches, results, agg } = medalsData(GAMES, __SCORERS__.rows);
+const STATUS = Object.fromEntries(CATALOG.map(e => [e.code, 'active']));
+const TABS = [['catalogue', 'Catalogue'], ['saisons', 'Saisons'], ['arbitrage', 'Arbitrage'], ['stats', 'Statistiques']];
+let tab = 'catalogue', filterType = '', onlyUnpublished = false, minGames = THRESHOLDS.refereeMinGames, statKind = 'goal_timing';
+const famName = f => FAMILIES[f].fr;
+const attributions = code => {
+  const e = BY_CODE[code];
+  if (e.type === 'stat') return null;
+  if (e.type === 'label') return results.filter(r => r.labels.includes(code)).length;
+  return results.reduce((s, r) => s + [...r.team, ...r.player, ...r.referee].filter(x => x.code === code).length, 0);
+};
+const surfBadges = e => e.surfaces.length ? e.surfaces.map(s => `<span class="surf ${s}">${s}</span>`).join(' ') : '<span class="surf none">non publié</span>';
+
+const PANELS = {
+  catalogue() {
+    const list = CATALOG.filter(e => (!filterType || e.type === filterType) && (!onlyUnpublished || !e.surfaces.length));
+    return `<div class="card"><div class="tools">
+        <label>Type <select id="ftype"><option value="">Tous</option>${[['medal', 'Médailles'], ['label', 'Étiquettes'], ['stat', 'Statistiques']].map(([v, l]) => `<option value="${v}"${v === filterType ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <label class="sw"><input type="checkbox" id="funpub"${onlyUnpublished ? ' checked' : ''}> Non publiés seulement</label>
+        <span class="cmp">${CATALOG.filter(e => e.surfaces.length).length} publiés sur ${CATALOG.length} · publier ne recalcule rien : l’historique s’affiche aussitôt.</span></div>
+      <div class="scroll"><table class="adm"><thead><tr><th></th><th>Nom</th><th>Type</th><th>Famille</th><th title="S : score ; T : timeline fiable">Données</th><th class="num">2026</th><th>app2</th><th>app3</th><th>Statut</th><th></th></tr></thead><tbody>
+      ${list.map(e => { const n = attributions(e.code), ret = STATUS[e.code] === 'retired';
+        return `<tr class="${ret ? 'retired' : ''}"><td class="fam-${e.family}"><span class="disc">${iconSvg(e.code, 16)}</span></td>
+          <td class="nm"><b>${e.fr}</b>${e.fr !== e.en ? ` <span class="en">· ${e.en}</span>` : ''}<code>${e.code}</code></td>
+          <td>${{ medal: e.scopes === 'R' ? 'Médaille arbitre' : 'Médaille', label: 'Étiquette', stat: 'Statistique' }[e.type]}</td><td>${famName(e.family)}</td><td><span class="lvl">${e.level}</span></td>
+          <td class="num">${n ?? '—'}</td>
+          ${['app2', 'app3'].map(s => `<td><label class="sw"><input type="checkbox" data-surf="${s}" data-code="${e.code}"${e.surfaces.includes(s) ? ' checked' : ''}${ret ? ' disabled' : ''}><span class="sr-only">Publier ${e.fr} sur ${s}</span></label></td>`).join('')}
+          <td><select data-status="${e.code}"><option value="active"${ret ? '' : ' selected'}>Actif</option><option value="retired"${ret ? ' selected' : ''}>Retiré</option></select></td>
+          <td><button class="btn" type="button" data-edit="${e.code}">Modifier</button></td></tr>`; }).join('')}
+      </tbody></table></div></div>`;
+  },
+  saisons() {
+    const rows = [['2026', 4, agg.games, agg.reliableGames, '09/11/2026 06:10', THRESHOLDS], ['2025', 4, 412, 371, '09/11/2026 05:52', SEASON_THRESHOLDS[2025]], ['2024', 3, 398, 322, '02/10/2026 22:14', THRESHOLDS]];
+    return `<div class="card"><p class="cmp" style="margin-top:0">Chaque saison garde les seuils utilisés pour la calculer. Recalcul complet : <code>make api2_match_medals_compute season=2026</code> (seuils actuels, saison choisie seulement). Version des règles du code : <b>4</b>.</p>
+      <div class="scroll"><table class="adm"><thead><tr><th>Saison</th><th>Règles</th><th>Calculée le</th><th class="num">Matchs</th><th class="num">Feuilles complètes</th><th>Seuils</th></tr></thead><tbody>
+      ${rows.map(([s, v, g, r, at, t]) => `<tr><td><b>${s}</b></td><td>v${v}${v < 4 ? ' <span class="alert">version antérieure : relancer le calcul si voulu</span>' : ''}</td><td>${at}</td><td class="num">${g}</td><td class="num">${r} <span class="cmp">(${Math.round(100 * r / g)} %)</span></td>
+        <td><details><summary>${t.comebackDeficit !== THRESHOLDS.comebackDeficit ? '<b>diffèrent des seuils actuels</b>' : 'identiques aux seuils actuels'}</summary><div class="cmp">${Object.entries(t).map(([k, v]) => `${k} = <span class="${THRESHOLDS[k] !== v ? 'hi' : ''}">${Array.isArray(v) ? v.join(', ') : v}</span>`).join(' · ')}</div></details></td></tr>`).join('')}
+      </tbody></table></div><p class="mock-note">2025 et 2024 : lignes d’exemple.</p></div>`;
+  },
+  arbitrage() {
+    // averages over the matches with at least one designated referee, each match counted once (§ 5.6)
+    const eligible = results.filter((r, i) => r.eligible && matches[i].referees.some(x => x.designated));
+    const avgCards = eligible.reduce((s, r) => s + r.facts.cards.length, 0) / eligible.length;
+    const avgSmooth = eligible.filter(r => !r.facts.cards.length).length / eligible.length;
+    const avgBalance = eligible.reduce((s, r) => s + Math.abs(r.facts.cards.filter(c => c.team === 'A').length - r.facts.cards.filter(c => c.team === 'B').length), 0) / eligible.length;
+    const rel = eligible.filter(r => r.reliable), allGoals = rel.reduce((s, r) => s + r.facts.goals.length, 0), allPP = rel.reduce((s, r) => s + r.facts.goals.filter(g => g.pp).length, 0);
+    const pairs = {}; matches.forEach((m, i) => { const d = m.referees.filter(r => r.designated); if (results[i].eligible && d.length === 2) { const k = d.map(r => r.name).sort().join(' + '); (pairs[k] ??= { n: 0, cards: 0 }); pairs[k].n++; pairs[k].cards += results[i].facts.cards.length; } });
+    const ok = r => r.games >= minGames, dash = '<span class="cmp">—</span>';
+    const spark = r => { const b = Array(10).fill(0); r.cardAt.forEach(a => b[Math.min(9, Math.floor(a / 120))]++); const mx = Math.max(1, ...b); return `<span class="spark" title="Cartons par tranche de 2 min">${b.map(x => `<i style="height:${Math.max(2, 22 * x / mx)}px"></i>`).join('')}</span>`; };
+    const rows = [...agg.referees].sort((a, b) => b.games - a.games || a.name.localeCompare(b.name));
+    return `<div class="card"><div class="alert" style="margin-bottom:10px">${agg.undesignated} match écarté faute d’arbitre désigné nommément (n° ${matches.filter((m, i) => results[i].eligible && !m.referees.some(r => r.designated)).map(m => m.number).join(', ')}). <a href="#">Voir les matchs</a></div>
+      <p class="cmp" style="margin-top:0">Les faits d’un match comptent pour ses deux arbitres. Indicateurs affichés à partir de ${minGames} matchs arbitrés sur le périmètre, toujours à côté de la moyenne. Tri par nombre de matchs.</p>
+      <div class="scroll"><table class="adm"><thead><tr><th>Arbitre</th><th class="num">Matchs (P / S)</th><th class="num">Cartons / match</th><th class="num">Matchs fluides</th><th class="num">Écart entre équipes</th><th class="num">Buts en supériorité</th><th>Moment des cartons</th><th>Médailles</th></tr></thead><tbody>
+      <tr><td><i>Moyenne du périmètre</i></td><td class="num">${eligible.length}</td><td class="num">${avgCards.toFixed(1)}</td><td class="num">${Math.round(100 * avgSmooth)} %</td><td class="num">${avgBalance.toFixed(1)}</td><td class="num">${Math.round(100 * allPP / allGoals)} %</td><td></td><td></td></tr>
+      ${rows.map(r => `<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.games} <span class="cmp">(${r.principal} / ${r.secondaire})</span></td>
+        <td class="num">${ok(r) ? (r.cards / r.games).toFixed(1) : dash}</td><td class="num">${ok(r) ? `${Math.round(100 * r.smooth / r.games)} %` : dash}</td>
+        <td class="num">${ok(r) ? (r.balance / r.games).toFixed(1) : dash}</td><td class="num">${ok(r) && r.goals ? `${Math.round(100 * r.ppGoals / r.goals)} %` : dash}</td>
+        <td>${ok(r) ? spark(r) : dash}</td><td><span class="pills">${Object.entries(r.medals).map(([c, n]) => pill(c, { compact: true, count: n })).join('')}</span></td></tr>`).join('')}
+      </tbody></table></div></div>
+      <div class="card"><h2 style="font-size:15px;margin:0 0 8px">Binômes</h2><div class="scroll"><table class="adm"><thead><tr><th>Binôme</th><th class="num">Matchs</th><th class="num">Cartons / match</th></tr></thead><tbody>
+      ${Object.entries(pairs).sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0])).map(([k, p]) => `<tr><td>${esc(k)}</td><td class="num">${p.n}</td><td class="num">${p.n >= minGames ? (p.cards / p.n).toFixed(1) : '<span class="cmp">—</span>'}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+  },
+  stats() {
+    const kinds = CATALOG.filter(e => e.type === 'stat' && STATUS[e.code] === 'active');
+    const rel = results.filter(r => r.reliable);
+    let body = '';
+    if (statKind === 'goal_timing') {
+      const b = Array(11).fill(0); rel.forEach(r => r.facts.goals.forEach(g => b[Math.min(10, Math.floor(g.at / 120))]++)); const mx = Math.max(...b);
+      body = `<div class="hist">${b.map(x => `<div>${x}<i style="height:${140 * x / mx}px"></i></div>`).join('')}</div><div class="hist-x">${b.map((x, i) => `<span>${i < 10 ? `${i * 2}–${i * 2 + 2}′` : 'prol.'}</span>`).join('')}</div>`;
+    } else if (statKind === 'penalty_kill_rate') {
+      body = `<table class="adm"><thead><tr><th>Équipe</th><th class="num">Exclusions</th><th class="num">Sans but encaissé</th><th class="num">%</th></tr></thead><tbody>${agg.teams.map(t => {
+        const ex = results.reduce((s, r, i) => s + (r.reliable ? ['A', 'B'].filter(x => matches[i].teams[x].id === t.id).reduce((u, x) => u + r.facts.exclusions[x], 0) : 0), 0);
+        const conc = results.reduce((s, r, i) => s + (r.reliable ? ['A', 'B'].filter(x => matches[i].teams[x].id === t.id).reduce((u, x) => u + r.facts.ppConceded[x], 0) : 0), 0);
+        return `<tr><td>${esc(t.label)}</td><td class="num">${ex}</td><td class="num">${Math.max(0, ex - conc)}</td><td class="num">${ex ? Math.round(100 * Math.max(0, ex - conc) / ex) + ' %' : '—'}</td></tr>`; }).join('')}</tbody></table>`;
+    } else if (statKind === 'highlights') {
+      body = `<table class="adm"><tbody>${results.map((r, i) => [r, matches[i]]).filter(([r]) => r.labels.some(l => l !== 'chess_match')).map(([r, m]) => `<tr><td>n° ${m.number}</td><td>${esc(m.teams.A.label)} ${m.scoreA}-${m.scoreB} ${esc(m.teams.B.label)}</td><td><span class="pills">${r.labels.map(l => pill(l, { compact: true })).join('')}</span></td></tr>`).join('')}</tbody></table>`;
+    } else body = '<p class="cmp">Même tableau générique que la page Statistiques (non détaillé dans la maquette).</p>';
+    const e = BY_CODE[statKind];
+    return `<div class="card"><div class="tools"><label>Statistique <select id="kind">${kinds.map(k => `<option value="${k.code}"${k.code === statKind ? ' selected' : ''}>${k.fr}${k.surfaces.length ? ` (${k.surfaces.join(', ')})` : ' (non publiée)'}</option>`).join('')}</select></label>${surfBadges(e)}</div>
+      <p class="cmp" style="margin-top:0">${esc(e.explain(THRESHOLDS))} Calculé sur ${e.level === 'T' ? `${agg.reliableGames} matchs à feuille complète` : `${agg.games} matchs validés`}.</p>${body}</div>`;
+  },
+};
+function drawer(code) {
+  const e = BY_CODE[code], d = document.getElementById('drawer');
+  const vars = Object.keys(THRESHOLDS).filter(k => e.explain.toString().includes(k));
+  d.hidden = false;
+  d.innerHTML = `<div style="display:flex;align-items:center;gap:10px" class="fam-${e.family}"><span class="disc lg">${iconSvg(code, 28)}</span><div><b style="font-size:16px">${e.fr}</b><br><code class="cmp">${code}</code></div><button class="btn" style="margin-left:auto" type="button" data-close>Fermer</button></div>
+    <label for="nfr">Nom français</label><input id="nfr" value="${esc(e.fr)}">
+    <label for="nen">Nom anglais</label><input id="nen" value="${esc(e.en)}">
+    <label for="xfr">Explication (français)</label><textarea id="xfr">${esc(e.explain(Object.fromEntries(Object.keys(THRESHOLDS).map(k => [k, `{${k}}`]))))}</textarea>
+    ${vars.length ? `<p class="vars cmp">Variables : ${vars.map(v => `<code>{${v}}</code>`).join('')}</p>` : ''}
+    <label for="xen">Explication (anglais)</label><textarea id="xen"></textarea>
+    <div class="preview"><b>Aperçu, saison 2026</b><br>${pill(code)}<p style="margin:6px 0 0">${esc(e.explain(THRESHOLDS))}</p></div>
+    <label>Publication</label><div class="pills">${['app2', 'app3'].map(s => `<label class="sw"><input type="checkbox"${e.surfaces.includes(s) ? ' checked' : ''}> ${s}</label>`).join('')}</div>
+    <p class="cmp">Modifié le 08/11/2026 par Laurent G. Chaque modification est journalisée (avant / après).</p>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn primary" type="button" data-close>Enregistrer</button><button class="btn" type="button" data-close>Annuler</button></div>`;
+}
+function render() {
+  document.getElementById('tabs').innerHTML = TABS.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" data-tab="${k}">${l}</button>`).join('');
+  document.getElementById('panel').innerHTML = PANELS[tab]();
+}
+document.body.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; render(); }
+  const ed = ev.target.closest('[data-edit]'); if (ed) drawer(ed.dataset.edit);
+  if (ev.target.closest('[data-close]')) document.getElementById('drawer').hidden = true;
+});
+document.body.addEventListener('change', ev => {
+  const x = ev.target;
+  if (x.id === 'ftype') filterType = x.value; else if (x.id === 'funpub') onlyUnpublished = x.checked; else if (x.id === 'kind') statKind = x.value;
+  else if (x.dataset.surf) { const e = BY_CODE[x.dataset.code]; e.surfaces = x.checked ? [...new Set([...e.surfaces, x.dataset.surf])].sort() : e.surfaces.filter(s => s !== x.dataset.surf); }
+  else if (x.dataset.status) STATUS[x.dataset.status] = x.value;
+  else return;
+  render();
+});
+render();
+const bar = demoBar('<label><input type="checkbox" id="demo-min"> Seuil arbitres à 2 matchs (démonstration)</label>');
+bar.querySelector('#demo-min').addEventListener('change', e => { minGames = e.target.checked ? 2 : THRESHOLDS.refereeMinGames; render(); });
+</script>
+</body>
+</html>

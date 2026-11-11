@@ -11,6 +11,8 @@ export interface PageLinkContext {
   legacyBaseUrl: string
   app2BaseUrl: string
   api2BaseUrl: string
+  /** Event page the link is on: app2 then opens the game in that event, not in the one it had selected. */
+  event?: number
 }
 
 export interface PageLink {
@@ -56,9 +58,9 @@ export function teamLogoUrl(path: string | null, legacyBaseUrl: string): string 
   return path && !EMPTY_TEAM_LOGO.test(path) ? legacyImageUrl(path, legacyBaseUrl) : null
 }
 
-/** Game sheet: stays in app2. */
+/** Game sheet: stays in app2, which selects the event or group of the game (the event of the page when there is one). */
 export function gameLink(gameId: number, context: PageLinkContext): PageLink {
-  return { kind: 'app2', href: joinURL(context.app2BaseUrl, 'game', String(gameId)) }
+  return { kind: 'app2', href: withQuery(joinURL(context.app2BaseUrl, 'game', String(gameId)), context.event ? { event: context.event } : {}) }
 }
 
 /** Every type, a cup included (its final ranking only), links to the ranking PDF (PDF_GOTENBERG.md § 7.4). */

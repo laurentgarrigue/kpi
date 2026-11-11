@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "body": {
+    "kinds": [
+      "scorers",
+      "medals_teams",
+      "medals_players",
+      "opener_wins",
+      "powerplay_rate",
+      "referee_games",
+      "medals_referees"
+    ]
+  }
+}

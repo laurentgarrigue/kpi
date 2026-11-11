@@ -1,0 +1,50 @@
+{
+  "status": 200,
+  "body": {
+    "kind": "medals_referees",
+    "columns": [
+      {
+        "key": "games",
+        "type": "integer"
+      },
+      {
+        "key": "total",
+        "type": "integer"
+      }
+    ],
+    "rows": [
+      {
+        "rank": 1,
+        "referee": {
+          "first_name": "One",
+          "last_name": "REFEREE"
+        },
+        "games": 2,
+        "medals": {
+          "ref_thriller": 1,
+          "ref_extra_time": 1,
+          "ref_golden_goal": 1,
+          "ref_knockout": 1,
+          "ref_smooth_game": 1
+        },
+        "total": 5
+      },
+      {
+        "rank": 2,
+        "referee": {
+          "first_name": "Two",
+          "last_name": "REFEREE"
+        },
+        "games": 1,
+        "medals": {
+          "ref_thriller": 1
+        },
+        "total": 1
+      }
+    ],
+    "summary": {},
+    "games_count": 4,
+    "reliable_games_count": 3,
+    "needs_reliable_timeline": false
+  }
+}
