@@ -33,12 +33,18 @@ const PROPOSALS = {
   cage_b: { title: 'B · Le but incliné, filet en poche', text: 'Comme sur la photo : le cadre penche en arrière et le filet retombe derrière lui ; plus reconnaissable, un peu moins net à 16 px.',
     svg: '<path d="M4.5 5.2L21 3v10.6L4.5 16z"/><path d="M9.9 4.5v10.7M15.4 3.8v10.4M4.5 10.6L21 8.3" stroke-width="1.1"/><path d="M4.5 16C3 17 2.6 18.2 2.8 19.5" stroke-width="1.1"/>' + W.replace('M2 20.2','M2 21') },
 };
+const BUTT = ' stroke-linecap="butt"';
+PROPOSALS.cage_c = { title: 'C · Le but en volume, filet en poche', text: 'Proportions réelles : cadre de 1,50 × 1 m (3 : 2) et poche de filet de 60 cm qui part vers l’arrière. Pas de support ni de bandes : à cette taille elles brouillent le dessin.',
+  svg: '<path d="M2.5 19.5v-10h15v10z"/><path d="M2.5 9.5L6.5 5h15v10l-4 4.5M17.5 9.5L21.5 5" stroke-width="1.1"/><path d="M8.5 9.5v10M12.5 9.5v10M2.5 14.5h15" stroke-width=".9"/>' };
+PROPOSALS.cage_d = { title: 'D · Le but de face, légèrement incliné', text: 'Vue de face comme la photo : le cadre penche, donc plus étroit en haut, et le filet quadrillé se resserre avec lui. Le plus simple à lire en petit.',
+  svg: '<path d="M6 5.5h12l3.5 14h-19z"/><path d="M10.1 5.5L8.4 19.5M13.9 5.5l1.7 14M4.3 12.5h15.4" stroke-width="1"/>' };
+MEDAL_ICONS.cage_c = PROPOSALS.cage_c.svg; MEDAL_ICONS.cage_d = PROPOSALS.cage_d.svg;
 MEDAL_ICONS.cage_a = PROPOSALS.cage_a.svg; MEDAL_ICONS.cage_b = PROPOSALS.cage_b.svg;
-for (const c of ['cage_a', 'cage_b']) BY_CODE[c] = { ...BY_CODE.clean_sheet, code: c };
+for (const c of ['cage_a', 'cage_b', 'cage_c', 'cage_d']) BY_CODE[c] = { ...BY_CODE.clean_sheet, code: c };
 document.getElementById('main').innerHTML = `
-  <header class="page-head"><h1>Cage inviolée : deux propositions</h1></header>
+  <header class="page-head"><h1>Cage inviolée : propositions</h1></header>
   <p class="mock-note">Même grille que les autres pictogrammes (24 px, trait de 1,75, une seule couleur). Aux tailles réelles : 16 px (étiquette), 24 px, blason de 40 et 56 px.</p>
-  <div class="props">${['actuel', 'cage_a', 'cage_b'].map(k => { const code = k === 'actuel' ? 'clean_sheet' : k, p = PROPOSALS[k]; return `<section class="fam-defense">
+  <div class="props">${['actuel', 'cage_c', 'cage_d', 'cage_a', 'cage_b'].map(k => { const code = k === 'actuel' ? 'clean_sheet' : k, p = PROPOSALS[k]; return `<section class="fam-defense">
     <h2>${p.title}</h2><p>${p.text}</p>
     <div class="row">
       <figure><span class="big">${iconSvg(code, 96)}</span>96 px</figure>
@@ -47,7 +53,7 @@ document.getElementById('main').innerHTML = `
       <figure>${shield(code, { size: 56 })}56 px</figure>
       <figure>${shield(code, { size: 40, count: 3 })}40 px</figure>
     </div></section>`; }).join('')}</div>`;
-demoBar('<span>Choisir A ou B (ou demander une variante)</span>');
+demoBar('<span>C et D tiennent compte des proportions réelles ; A et B sont les premières propositions</span>');
 </script>
 </body>
 </html>
