@@ -36,6 +36,8 @@ body {
   --color-bar-hover: oklch(37.3% 0.034 259.733);
   --color-bar-soft: oklch(44.6% 0.03 256.802);
   --color-on-bar-muted: oklch(87.2% 0.01 258.338);
+  /* Outline of the cards: gray-300 vanishes on the light `page` grey, so the light theme takes a darker tone */
+  --color-line: oklch(70.7% 0.022 261.325);
   /* Families of the match medals (FEATURE_MATCH_MEDALS.md § 7), same values as kpi-layer (app3) */
   --color-fam-elan: #2f6f8f;
   --color-fam-reaction: #b4530f;
@@ -59,6 +61,7 @@ body {
   --color-bar-strong: oklch(0.12 0.02 265);
   --color-bar-hover: oklch(0.38 0.034 260);
   --color-bar-soft: oklch(0.40 0.03 257);
+  --color-line: oklch(0.40 0.025 258);
   --color-fam-elan: #7fb6d1;
   --color-fam-reaction: #f0a465;
   --color-fam-endurance: #b9a2e6;

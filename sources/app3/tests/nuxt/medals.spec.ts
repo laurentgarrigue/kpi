@@ -42,10 +42,10 @@ describe('stats tab (§ 9.2)', () => {
     expect(oscar.text()).toContain('1 buts / 1 exclusions adverses')
   })
 
-  it('team medals: one column per pictogram, named for screen readers, and the total', async () => {
+  it('team medals: one column per pictogram, labelled under its shield, and the total', async () => {
     const wrapper = await mountRoute('/competitions/2998/MED/stats?stat=medals_teams')
     const table = wrapper.find('[data-testid="medal-table"]')
-    expect(table.findAll('thead .sr-only').map(cell => cell.text())).toContain('Cage inviolée · Clean Sheet')
+    expect(table.findAll('[data-testid="medal-column-label"]').map(cell => cell.text())).toContain('Cage inviolée · Clean Sheet')
     expect(table.findAll('[data-testid="medal-row"]')[0]!.text()).toContain('Medal Oscar')
   })
 

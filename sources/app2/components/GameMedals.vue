@@ -1,5 +1,5 @@
 <template>
-  <section v-if="hasMedals || game.reliable === false" class="mt-4 border border-gray-300 rounded-lg bg-surface" aria-labelledby="medals-title">
+  <section v-if="hasMedals || game.reliable === false" class="mt-4 border border-line rounded-lg bg-surface" aria-labelledby="medals-title">
     <div class="flex items-center justify-between rounded-t-lg bg-bar px-3 py-2 text-sm text-white">
       <h2 id="medals-title" class="font-bold">{{ t('Medals.Title') }}</h2>
       <a :href="explanationsUrl" target="_blank" rel="noopener" class="text-on-bar-muted underline">{{ t('Medals.How') }}</a>
@@ -11,7 +11,7 @@
       {{ t('Medals.Incomplete') }}
     </p>
     <div class="grid grid-cols-1 md:grid-cols-2">
-      <div v-for="side in SIDES" :key="side" class="px-3 py-3" :class="{ 'border-t md:border-t-0 md:border-l border-gray-300': side === 'B' }">
+      <div v-for="side in SIDES" :key="side" class="px-3 py-3" :class="{ 'border-t md:border-t-0 md:border-l border-line': side === 'B' }">
         <h3 class="mb-2 text-sm font-bold">{{ side === 'A' ? teamALabel : teamBLabel }}</h3>
         <div v-if="teamMedals(side).length" class="flex flex-wrap gap-1.5">
           <MedalPill v-for="medal in teamMedals(side)" :key="medal.item.code" :item="medal.item" :count="medal.count" />

@@ -54,45 +54,45 @@ make app4_bash                          # puis `npm test`
 | 6 | `https://beta.kpi.localhost/medals` et `/en/medals` | éléments publiés par famille, double nom en français, nom anglais seul en anglais | ☑ |
 | 7 | Fiche d'une équipe de la saison | section « Médailles de match », compteurs menant à la feuille de match d'app2 | ☑ |
 | 8 | app2 : feuille d'un match validé à feuille complète | bloc Médailles, médailles d'arbitre, ballon aux couleurs des équipes ; match non validé : pas de bloc | ☑ |
-| 8b | app2 : page équipe d'un événement (ou d'un groupe) calculé | bloc « Médailles de l'équipe » en blasons de 64 px ; colonne « Médailles » du tableau des joueurs (sous le joueur sur mobile) ; buts en ballon avec « ×13 » (ballon seul pour 1 but, rien pour 0) ; hors événement calculé : ni bloc ni colonne, statistiques inchangées | ☐ |
+| 8b | app2 : page équipe d'un événement (ou d'un groupe) calculé | bloc « Médailles de l'équipe » en blasons de 64 px ; colonne « Médailles » du tableau des joueurs (sous le joueur sur mobile) ; buts en ballon avec « ×13 » (ballon seul pour 1 but, rien pour 0) ; hors événement calculé : ni bloc ni colonne, statistiques inchangées | ☑ |
 | 8c | `curl -s https://kpi.localhost/api2/event/<id>/team/<teamId>/medals` et `…/group/<saison>/<code>/team/<teamId>/medals` | `{ team, players }`, aucun numéro de licence ; équipe inconnue : `404` | ☐ |
-| 8d | Blasons dans app2, app3 (`/medals`, Stats, fiche équipe) et app4 (catalogue) ; thème sombre | blason plein, filigrane « KPI » en haut à gauche, pictogramme foncé en thème sombre | ☐ |
+| 8d | Blasons dans app2, app3 (`/medals`, Stats, fiche équipe) et app4 (catalogue) ; thème sombre | blason plein, filigrane « KPI » en haut à gauche, pictogramme foncé en thème sombre | ☑ |
 | 9 | app4 › Opérations › Médailles (profil 1) | catalogue, saisons (v1, seuils), statistiques et arbitrage du contexte de travail ; profil 3 : page refusée | ☑ |
 | 10 | app4 : publier `goal_timing` sur app3, puis le retirer | la statistique apparaît puis disparaît de l'onglet Stats sans recalcul ; entrées dans le journal | ☑ |
 | 11 | app4 : dévalider puis revalider un match calculé | médailles supprimées puis recalculées aussitôt | ☐ |
-| 12b | app4 › Saisons : recalculer 2025 (rules v3, § 5.1 règles 7 et 8) | ≈ 1 458 feuilles complètes sur 2 024 (au lieu de 1 819) ; sous la barre « Écartés : temps au début de la période 335, deux buts au même temps 26… » ; chaque raison ouvre la liste de ses matchs, chacun avec un lien « Feuille » vers app2 | ☐ |
-| 12c | app4 › Catalogue, saison 2025 : cliquer le nombre d'attributions d'Entrée express | ≈ 35 matchs, chacun avec le joueur et le temps (« NOM Prénom · M1 09:47 ») ; « Feuille » ouvre app2 dans un nouvel onglet | ☐ |
-| 12 | app4 › Saisons, profil 1 : changer un seuil, enregistrer, recalculer une saison (confirmer), supprimer les calculs d'une autre (confirmer), puis la recalculer | seuils enregistrés et journalisés ; la saison recalculée a les nouveaux seuils ; la supprimée n'a plus de médaille et n'est pas recalculée par `sync` ; profil 2 : lecture seule, aucun bouton | ☐ |
+| 12b | app4 › Saisons : recalculer 2025 (rules v3, § 5.1 règles 7 et 8) | ≈ 1 458 feuilles complètes sur 2 024 (au lieu de 1 819) ; sous la barre « Écartés : temps au début de la période 335, deux buts au même temps 26… » ; chaque raison ouvre la liste de ses matchs, chacun avec un lien « Feuille » vers app2 | ☑ |
+| 12c | app4 › Catalogue, saison 2025 : cliquer le nombre d'attributions d'Entrée express | ≈ 35 matchs, chacun avec le joueur et le temps (« NOM Prénom · M1 09:47 ») ; « Feuille » ouvre app2 dans un nouvel onglet | ☑ |
+| 12 | app4 › Saisons, profil 1 : changer un seuil, enregistrer, recalculer une saison (confirmer), supprimer les calculs d'une autre (confirmer), puis la recalculer | seuils enregistrés et journalisés ; la saison recalculée a les nouveaux seuils ; la supprimée n'a plus de médaille et n'est pas recalculée par `sync` ; profil 2 : lecture seule, aucun bouton | ☑ |
 
 **Non-régression locale** : app2 (feuille de match d'un match sans médaille, frise), app4 (validation des matchs),
-app3 (onglets Stats existants : meilleurs buteurs), legacy, PDF (jetons resynchronisés). ☐
+app3 (onglets Stats existants : meilleurs buteurs), legacy, PDF (jetons resynchronisés). ☑
 
 ### M.3 ⌨️ 🌐 PR et CI
 
 Jobs attendus : `tests-api2` (la migration est chargée par la boucle `*_public_site_*.sql` entre `schema.sql` et
 `data.sql`), `phpstan-api2`, `lint-api2`, `lint-nuxt` (app2, app3, app4), `build-nuxt`, `tests-app3`, tests unitaires
-app4, `ci-summary` vert. ☐
+app4, `ci-summary` vert. ☑
 
 ### M.4 📦 Prérequis serveur (préprod puis prod)
 
 | # | Action | ☑ |
 |---|---|---|
-| 1 | `sources/app2/.env.preprod` / `.env.production` : `PUBLIC_SITE_URL` (`https://beta.preprod.kayak-polo.info`, `https://beta.kayak-polo.info` ; `www` après la bascule) | ☐ |
-| 2 | Cron toutes les 10 min : `*/10 * * * * docker exec <APPLICATION_NAME>_api2 php bin/console app:match-medals:sync >> /var/log/kpi/cron_match_medals.log 2>&1` ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 4) | ☐ |
+| 1 | `sources/app2/.env.preprod` / `.env.production` : `PUBLIC_SITE_URL` (`https://beta.preprod.kayak-polo.info`, `https://beta.kayak-polo.info` ; `www` après la bascule) | ☑ |
+| 2 | Cron toutes les 10 min, depuis le dépôt **vps-manager** sur le VPS : `make install-cron-match-medals-sync-preprod` (préprod, h:05, h:15…) puis `make install-cron-match-medals-sync-prod` (prod, h:00, h:10…) ; la commande affiche la crontab, la ligne `app:match-medals:sync` doit y figurer ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 4) | ☑ |
 
 ### M.5 🖥 Préprod (`/data/kpi_preprod`)
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | 🌐 « Deploy preprod » | vert ; `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP) | ☐ |
-| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` puis `…/2026-11-11_public_site_match_medals_settings.sql` puis `…/2026-11-12_public_site_match_medals_quadruple_calm.sql` puis `…/2026-11-11_public_site_match_medals_timeline_issue.sql` puis `…/2026-11-11_public_site_match_medals_tiebreaker.sql` puis `…/2026-11-11_public_site_match_medals_late_winner_name.sql` | 6 tables créées, 50 éléments au catalogue, puis `kp_medal_setting`, puis 3 éléments de plus (53), non publiés, puis la colonne `kp_match_insight.timeline_issue`, puis `tiebreaker` (54, non publié), puis `late_winner` nommée « Dernières secondes » ; relançables sans erreur | ☐ |
-| 3 | `make api2_match_medals_compute season=AAAA` pour **chaque saison**, de la plus récente à la plus ancienne | une ligne par saison dans app4 › Médailles › Saisons ; part de feuilles complètes plausible | ☐ |
-| 4 | Pose du cron (§ M.4) puis, 10 min plus tard, `tail /var/log/kpi/cron_match_medals.log` | une ligne `… computed, … removed` par passage | ☐ |
-| 5 | `make app2_generate_preprod`, `make app3_generate_preprod`, `make app4_generate_preprod` | applications reconstruites | ☐ |
-| 6 | Tests 5 à 11 du § M.2 sur la préprod | idem | ☐ |
-| 7 | `curl -sI https://preprod.kayak-polo.info/api2/medals/icons/goal.svg` | `200`, `image/svg+xml` | ☐ |
+| 1 | 🌐 « Deploy preprod » | vert ; `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP) | ☑ |
+| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` puis `…/2026-11-11_public_site_match_medals_settings.sql` puis `…/2026-11-12_public_site_match_medals_quadruple_calm.sql` puis `…/2026-11-11_public_site_match_medals_timeline_issue.sql` puis `…/2026-11-11_public_site_match_medals_tiebreaker.sql` puis `…/2026-11-11_public_site_match_medals_late_winner_name.sql` | 6 tables créées, 50 éléments au catalogue, puis `kp_medal_setting`, puis 3 éléments de plus (53), non publiés, puis la colonne `kp_match_insight.timeline_issue`, puis `tiebreaker` (54, non publié), puis `late_winner` nommée « Dernières secondes » ; relançables sans erreur | ☑ |
+| 3 | `make api2_match_medals_compute season=AAAA` pour **chaque saison**, de la plus récente à la plus ancienne | une ligne par saison dans app4 › Médailles › Saisons ; part de feuilles complètes plausible | ☑ |
+| 4 | Pose du cron (§ M.4, `make install-cron-match-medals-sync-preprod`) puis, 10 min plus tard, `cat $LOGS_BASE_DIR/cron/preprod-match-medals-sync.log` (dossier de logs du `.env` de vps-manager) | le dernier passage : `… computed, … removed` | ☑ |
+| 5 | `make app2_generate_preprod`, `make app3_generate_preprod`, `make app4_generate_preprod` | applications reconstruites | ☑ |
+| 6 | Tests 5 à 11 du § M.2 sur la préprod | idem | ☑ |
+| 7 | `curl -sI https://preprod.kayak-polo.info/api2/medals/icons/goal.svg` | `200`, `image/svg+xml` | ☑ |
 
-**Non-régression préprod** : app2 (feuilles de match), app4 (validation de masse), legacy, PDF. ☐
+**Non-régression préprod** : app2 (feuilles de match), app4 (validation de masse), legacy, PDF. ☑
 
 ### M.6 Production
 

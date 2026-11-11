@@ -20,7 +20,7 @@
     </div>
 
     <!-- Score Section -->
-    <div class="bg-gray-100 p-2 sm:p-4 border-x border-gray-300">
+    <div class="bg-gray-100 p-2 sm:p-4 border-x border-b border-line">
       <div class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-4 items-center">
         <!-- Team A -->
         <div class="text-center">
@@ -64,7 +64,7 @@
     </div>
 
     <!-- Referees -->
-    <div v-if="matchData.game.g_referee_1 || matchData.game.g_referee_2" class="bg-gray-50 px-4 py-2 border-x border-gray-300 text-center text-sm text-gray-600">
+    <div v-if="matchData.game.g_referee_1 || matchData.game.g_referee_2" class="bg-gray-50 px-4 py-2 border-x border-b border-line rounded-b-lg text-center text-sm text-gray-600">
       <span class="font-medium">{{ t('MatchSheet.Referees') }}:</span>
       {{ formatReferee(matchData.game.g_referee_1) }}
       <span v-if="matchData.game.g_referee_2"> / {{ formatReferee(matchData.game.g_referee_2) }}</span>
@@ -84,9 +84,9 @@
     />
 
     <!-- Team Compositions -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-300">
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden rounded-lg border border-line bg-surface">
       <!-- Team A Players -->
-      <div class="border-b md:border-b-0 md:border-r border-gray-300">
+      <div class="border-b md:border-b-0 md:border-r border-line">
         <div class="bg-gray-200 px-3 py-2 font-bold text-sm">
           {{ matchData.team_a.label }}
         </div>
@@ -191,7 +191,7 @@
     </div>
 
     <!-- Events Timeline -->
-    <div v-if="!isPending && matchData.events && matchData.events.length > 0" class="mt-4 border border-gray-300 rounded-lg overflow-hidden">
+    <div v-if="!isPending && matchData.events && matchData.events.length > 0" class="mt-4 border border-line rounded-lg overflow-hidden bg-surface">
       <div class="bg-bar text-white px-3 py-2 font-bold text-sm">
         {{ t('MatchSheet.Timeline') }}
       </div>
