@@ -1,6 +1,6 @@
 // Admin page of the match medals (FEATURE_MATCH_MEDALS.md § 9.3): pure display rules of the statistics.
 import { describe, expect, it } from 'vitest'
-import { formatStatValue, isRefereeKind, statSubject } from '../../utils/medals'
+import { changedThresholds, formatStatValue, formatThreshold, humanizeKey, isRefereeKind, matchesQuery, statRowText, statSubject, thresholdsUsed } from '../../utils/medals'
 
 describe('statistics of the admin page', () => {
   it('names the subject of a row: team, referee, pair, player or game', () => {
@@ -25,5 +25,43 @@ describe('statistics of the admin page', () => {
     expect(isRefereeKind('referee_cards')).toBe(true)
     expect(isRefereeKind('medals_referees')).toBe(true)
     expect(isRefereeKind('powerplay_rate')).toBe(false)
+  })
+})
+
+describe('search of the admin page (front-end only)', () => {
+  it('matches without case or accents, every word of the query', () => {
+    expect(matchesQuery('supériorite', 'Supériorité · Powerplay')).toBe(true)
+    expect(matchesQuery('POWER sup', 'Supériorité · Powerplay')).toBe(true)
+    expect(matchesQuery('triplé', 'Supériorité', 'Powerplay')).toBe(false)
+    expect(matchesQuery('', 'anything')).toBe(true)
+    expect(matchesQuery('  ', 'anything')).toBe(true)
+  })
+
+  it('searches a statistic row on its subject and on its values', () => {
+    const row = { team: { label: 'Medal Oscar' }, opened: 3, percent: 67 }
+    const columns = [{ key: 'opened', type: 'integer' }, { key: 'percent', type: 'percent' }]
+    expect(statRowText(row, columns)).toContain('Medal Oscar')
+    expect(matchesQuery('67 %', statRowText(row, columns))).toBe(true)
+  })
+})
+
+describe('thresholds of the admin page', () => {
+  it('lists the current thresholds an element uses, from the variables of its explanation', () => {
+    const current = { bounceBackSeconds: 60, comebackDeficit: 3, permanentCards: ['D'] }
+    expect(thresholdsUsed('Marque moins de {bounceBackSeconds} secondes après {bounceBackSeconds} ou {comebackDeficit}.', current))
+      .toEqual([{ key: 'bounceBackSeconds', value: 60 }, { key: 'comebackDeficit', value: 3 }])
+    expect(thresholdsUsed('Le match va en prolongation.', current)).toEqual([])
+    expect(thresholdsUsed('{unknown}', current)).toEqual([])
+  })
+
+  it('shows what a season froze differently from the current thresholds', () => {
+    expect(changedThresholds({ a: 1, b: 2, c: ['D'] }, { a: 1, b: 3, c: ['D'] })).toEqual([{ key: 'b', frozen: 2, current: 3 }])
+    expect(changedThresholds({ a: 1 }, { a: 1 })).toEqual([])
+  })
+
+  it('reads a threshold key and value', () => {
+    expect(humanizeKey('bounceBackSeconds')).toBe('Bounce back seconds')
+    expect(formatThreshold(['D', 'R'])).toBe('D, R')
+    expect(formatThreshold(60)).toBe('60')
   })
 })

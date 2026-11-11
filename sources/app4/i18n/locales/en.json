@@ -3177,6 +3177,22 @@
       "T": "Reliable timeline"
     },
     "unpublished_only": "Unpublished only",
+    "search_catalogue": "Search a medal, a code, an explanation…",
+    "search_seasons": "Search a season or a threshold…",
+    "search_stats": "Search a team, a player, a referee…",
+    "search_empty": "No result for this search.",
+    "current_thresholds": "Current thresholds",
+    "reliable_of": "complete sheets out of {games} games",
+    "thresholds_differ_n": "{n} threshold differs from the current ones | {n} thresholds differ from the current ones",
+    "threshold_now": "now: {value}",
+    "validated_games": "validated games",
+    "complete_sheets": "with a complete sheet",
+    "cols": {
+      "cards": "Cards", "deficit": "Deficit", "exclusions": "Exclusions", "games": "Games", "gap": "Gap", "goals": "Goals", "killed": "Penalties killed",
+      "knockouts": "Knockouts", "opened": "Opened", "opponent_exclusions": "Opponent exclusions", "overtimes": "Overtimes", "per_game": "Per game",
+      "percent": "Percentage", "powerplay_goals": "Powerplay goals", "principal": "Principal", "recorded": "Recorded", "secondary": "Secondary",
+      "seconds": "Seconds", "slices": "Slices", "total": "Total", "won": "Won"
+    },
     "publish_note": "Publishing recomputes nothing: the history shows at once.",
     "name": "Name",
     "data": "Data",

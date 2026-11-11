@@ -27,10 +27,12 @@ l'événement (ou le groupe) choisi.
 
 | Onglet | Usage |
 |---|---|
-| **Catalogue** | Tous les éléments. Cocher **app2** ou **app3** publie un élément sur cette application ; l'historique s'affiche aussitôt, sans recalcul. **Retiré** le masque partout et arrête son calcul. **Modifier** : noms français et anglais, explications. Les variables entre accolades (`{bounceBackSeconds}`) sont remplacées par les seuils de la saison. Chaque modification est inscrite au journal. |
+| **Catalogue** | Tous les éléments ; survoler une médaille affiche son explication (dans la langue de l'interface), la colonne **Seuils actuels** donne les seuils qu'elle utilise. Cocher **app2** ou **app3** publie un élément sur cette application ; l'historique s'affiche aussitôt, sans recalcul. **Retiré** le masque partout et arrête son calcul. **Modifier** : noms français et anglais, explications. Les variables entre accolades (`{bounceBackSeconds}`) sont remplacées par les seuils de la saison. Chaque modification est inscrite au journal. |
 | **Saisons** | Les seuils utilisés pour calculer chaque saison et la version des règles. Une alerte signale une saison calculée avec une version antérieure. |
 | **Statistiques** | Toutes les statistiques actives, publiées ou non, sur le **contexte de travail** (saison et compétitions). |
 | **Arbitrage** | Statistiques d'arbitrage (cartons par match, matchs fluides, moment et motifs des cartons, binômes…), à côté de la moyenne. Un indicateur ne s'affiche qu'à partir de 5 matchs arbitrés (« — » en dessous). Tri par nombre de matchs, jamais par cartons. |
+
+Chaque onglet a un champ de **recherche** (sans accents ni majuscules) qui filtre ce qui est affiché : médailles, saisons et seuils, lignes d'une statistique.
 
 ## Calcul et recalcul
 

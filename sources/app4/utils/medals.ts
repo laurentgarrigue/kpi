@@ -97,3 +97,43 @@ export function formatStatValue(value: unknown, type: string): string {
   }
   return type === 'percent' ? `${value} %` : String(value)
 }
+
+/** Lower case without accents, to search « superiorite » in « Supériorité ». */
+const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+/** Front-end search: every word of the query is found in one of the values (no case, no accents). */
+export function matchesQuery(query: string, ...values: (string | number | null | undefined)[]): boolean {
+  const words = fold(query).split(/\s+/).filter(Boolean)
+  const haystack = fold(values.join(' '))
+  return words.every(word => haystack.includes(word))
+}
+
+/** Text of a statistic row to search in: its subject and its displayed values. */
+export function statRowText(row: Row, columns: { key: string, type: string }[]): string {
+  return [statSubject(row), ...columns.map(column => formatStatValue(row[column.key], column.type)), row.medals ? formatStatValue(row.medals, 'integer') : ''].join(' ')
+}
+
+export type Thresholds = Record<string, unknown>
+
+/** The current thresholds an element's explanation cites (`{bounceBackSeconds}`), in order of appearance. */
+export function thresholdsUsed(template: string, current: Thresholds): { key: string, value: unknown }[] {
+  const keys = [...new Set([...template.matchAll(/\{(\w+)\}/g)].map(match => match[1]!))]
+  return keys.filter(key => key in current).map(key => ({ key, value: current[key] }))
+}
+
+/** Thresholds a season froze with another value than today's. */
+export function changedThresholds(frozen: Thresholds, current: Thresholds): { key: string, frozen: unknown, current: unknown }[] {
+  return Object.keys(frozen)
+    .filter(key => JSON.stringify(frozen[key]) !== JSON.stringify(current[key]))
+    .map(key => ({ key, frozen: frozen[key], current: current[key] }))
+}
+
+/** `bounceBackSeconds` → « Bounce back seconds », for a reader who is not in the code. */
+export function humanizeKey(key: string): string {
+  const words = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+export function formatThreshold(value: unknown): string {
+  return Array.isArray(value) ? value.join(', ') : String(value)
+}
