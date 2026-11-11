@@ -464,7 +464,7 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <details :open="row.changedCount > 0 || queries.seasons !== ''">
+            <details :open="queries.seasons !== ''">
               <summary class="cursor-pointer text-base font-semibold">
                 {{ t('medals.thresholds') }}
                 <span class="font-normal" :class="row.changedCount ? 'text-amber-700 dark:text-amber-400' : 'text-header-500'">

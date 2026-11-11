@@ -102,6 +102,7 @@ describe('team page (§ 9.2)', () => {
     const hatTrick = section.find('[data-testid="team-medal"][data-medal="hat_trick"]')
     expect(hatTrick.find('[data-testid="team-medal-count"]').text()).toBe('1')
     expect(hatTrick.find('[data-testid="team-medal-game"]').attributes('href')).toMatch(/\/game\/9463$/)
+    expect(hatTrick.find('[data-testid="team-medal-game"]').attributes('target')).toBe('_blank')
     expect(section.find('[data-medal="game_winner"]').exists()).toBe(false)
   })
 })

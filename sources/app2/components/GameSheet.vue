@@ -196,6 +196,7 @@
         {{ t('MatchSheet.Timeline') }}
       </div>
       <GameTimelineBar
+        v-if="hasRecordedTimes(matchData.events)"
         class="border-b-4 border-gray-300 dark:border-gray-600"
         :events="matchData.events"
         :current-period="matchData.game.g_period"
@@ -255,7 +256,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatEventTime, parseEventTime } from '~/utils/gameTimeline'
+import { formatEventTime, hasRecordedTimes, parseEventTime } from '~/utils/gameTimeline'
 import GameEventIcon from '~/components/GameEventIcon.vue'
 import GameTimelineBar from '~/components/GameTimelineBar.vue'
 import GameMedals from '~/components/GameMedals.vue'

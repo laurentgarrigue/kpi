@@ -495,8 +495,7 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
   incomplète) ».
 - **Page équipe** (`/team/[team]`, périmètre de l'événement ou du groupe choisi) : bloc « Médailles de l'équipe »
   (blasons de 64 px, nom double, compteur) et colonne « Médailles » du tableau des statistiques (blasons de 40 px
-  sans nom ; sous 600 px de large, sur une ligne sous le joueur). Dans ce tableau, le **nombre de buts**
-  est le **ballon** (`goal`) avec la **même pastille** que les médailles (« ×13 ») ; un joueur sans but n'a pas de ballon.
+  sans nom ; sous 600 px de large, sur une ligne sous le joueur). Dans ce tableau, le nombre de buts reste un **chiffre nu** et la colonne a pour **en-tête le ballon** (`goal`) à la place du mot « Buts ».
 - Statistiques de l'événement et du groupe : les kinds publiés sur app2 s'ajoutent à la liste existante (arbitrage
   compris, s'ils y sont publiés).
 - Sous la ligne des arbitres : les médailles d'arbitre du match (une seule ligne, communes aux deux arbitres).
@@ -688,8 +687,11 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
   médailles d'équipe et de joueur publiées sur app2, sans numéro de licence ; une équipe inconnue renvoie 404.
 - **MED-64** — Les médailles ne comptent que les matchs validés du périmètre demandé : un match d'une autre journée
   ou d'un autre événement n'y apparaît pas.
-- **MED-65** — Étant donné un joueur de 13 buts sur la page équipe d'app2, alors le tableau montre le ballon avec la
-  pastille « ×13 » ; avec 1 but, le ballon sans pastille ; sans but, rien.
+- **MED-65** — Dans le tableau des joueurs de la page équipe d'app2, l'en-tête de la colonne des buts est le ballon
+  et chaque joueur y a son nombre de buts en chiffres (rien pour zéro).
+- **MED-75** — Sur la feuille de match d'app2, la frise horizontale n'est pas affichée quand tous les buts et cartons
+  ont un temps à 10:00 ou à 00:00 (temps non saisis) ; la liste des faits reste. Les liens d'app3 vers app2 s'ouvrent
+  dans un nouvel onglet.
 
 **Seuils, recalcul et suppression depuis l'admin** (11/11/2026)
 

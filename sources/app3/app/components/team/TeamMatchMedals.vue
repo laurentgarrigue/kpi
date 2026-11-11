@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FAMILY_CLASSES, medalExplanation, medalName } from '~/utils/medals'
+import { NEW_TAB_ATTRS } from '~/utils/links'
 import { gameLink } from '~/utils/page-links'
 
 /**
@@ -55,7 +56,7 @@ const score = (game: TeamMedalGame) => (game.side === 'A' ? `${game.score_a}-${g
           <summary class="cursor-pointer text-kpi-blue-700">{{ $t('medals.team.games', { n: medal.games.length }, medal.games.length) }}</summary>
           <ul class="mt-1.5">
             <li v-for="game in medal.games" :key="game.id" class="border-t border-line">
-              <a :href="gameLink(game.id, context).href" class="flex justify-between gap-2 py-1 hover:underline" data-testid="team-medal-game">
+              <a :href="gameLink(game.id, context).href" v-bind="NEW_TAB_ATTRS" class="flex justify-between gap-2 py-1 hover:underline" data-testid="team-medal-game">
                 <span>{{ $t('medals.team.against', { phase: game.competition, opponent: opponent(game) }) }}</span>
                 <span class="font-display text-lg tabular-nums">{{ score(game) }}</span>
               </a>

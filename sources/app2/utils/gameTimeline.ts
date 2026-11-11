@@ -54,6 +54,18 @@ export const parseEventTime = (time: string | number | null | undefined): number
   return minutes * SECONDS_PER_MINUTE + seconds
 }
 
+/**
+ * Whether the sheet holds real times. A time left at the start of a period (10:00) or at zero (00:00) is what a sheet
+ * without recorded times carries: if every goal and card is like that, the horizontal timeline would stack them all
+ * on one spot and tell nothing.
+ */
+export const hasRecordedTimes = (events: GameEvent[]): boolean =>
+  events.some((event) => {
+    if (!TIMED_PERIODS.includes(event.e_period ?? '')) return false
+    const seconds = parseEventTime(event.e_time)
+    return seconds !== 0 && seconds !== REGULAR_PERIOD_SECONDS
+  })
+
 const defaultPeriodSeconds = (period: string): number =>
   period.startsWith('P') ? EXTRA_PERIOD_SECONDS : REGULAR_PERIOD_SECONDS
 

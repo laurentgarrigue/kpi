@@ -4,7 +4,10 @@
       <thead :class="headClass">
         <tr>
           <th class="py-2 px-3 border-b text-left">{{ t('Stats.Player') }}</th>
-          <th class="py-2 px-2 border-b text-center">{{ t('Stats.Goals') }}</th>
+          <th class="py-2 px-2 border-b text-center">
+            <!-- The ball stands for « Goals » (FEATURE_MATCH_MEDALS.md § 7.2) -->
+            <svg class="inline-block h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" role="img" :aria-label="t('Stats.Goals')" v-html="GOAL_ICON_SVG" />
+          </th>
           <th class="py-2 px-2 border-b text-center">
             <div class="inline-block bg-green-500 w-6 h-8 transform -rotate-12 rounded-sm"></div>
           </th>
@@ -34,7 +37,7 @@
                 <span v-if="player.captain === 'E'" class="ml-2 text-xs text-gray-500">({{ t('Stats.Coach') }})</span>
               </div>
             </td>
-            <td class="py-2 px-2 text-center"><GoalCount :count="player.goals" /></td>
+            <td class="py-2 px-2 text-center">{{ player.goals > 0 ? player.goals : '' }}</td>
             <td class="py-2 px-2 text-center">{{ player.green_cards > 0 ? player.green_cards : '' }}</td>
             <td class="py-2 px-2 text-center">{{ player.yellow_cards > 0 ? player.yellow_cards : '' }}</td>
             <td class="py-2 px-2 text-center">{{ player.red_cards > 0 ? player.red_cards : '' }}</td>
@@ -57,10 +60,11 @@
 
 <script setup lang="ts">
 import { formatNom, formatPrenom } from '~/utils/nameFormat'
+import { GOAL_ICON_SVG } from '~/utils/goalIcon'
 import { playerKey, type MedalItem } from '~/utils/medals'
 
 /**
- * Player statistics of a team page (goals as the ball with its count, cards) and, from api2, the medals of each
+ * Player statistics of a team page (goals as numbers under the ball, cards) and, from api2, the medals of each
  * player (FEATURE_MATCH_MEDALS.md § 9.1, MED-65). Only the medals the catalogue publishes on app2 appear.
  */
 interface StatPlayer { licence: string, name: string, firstname: string, number: number | null, captain: string | null, goals: number, green_cards: number, yellow_cards: number, red_cards: number, exclusions: number }
