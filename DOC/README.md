@@ -132,6 +132,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[REALIGNEMENT_STRUCTURES_FFCK.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)** - Réalignement CR/CD/Clubs et codes régionaux sur le PCE (import corrigé + remise à plat ponctuelle)
 - **[REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md)** - Réalignement des structures FFCK : rollout checklist dev → préprod → prod (script de remise à plat, contrôle, rollback)
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
+- **[PLAN_COMMUNICATION_SAISON_2027.md](developer/in-progress/PLAN_COMMUNICATION_SAISON_2027.md)** - Plan de communication Facebook / Instagram de la saison 2027 (plénières, formation arbitre, J1, championnats d'Europe de Thury-Harcourt) : nouveautés app2, app3, app4 et règlement 2027-2030, chantiers et échéances
 
 ### [Archives](developer/archive/) — sujets traités
 Index détaillé : [archive/README.md](developer/archive/README.md)
