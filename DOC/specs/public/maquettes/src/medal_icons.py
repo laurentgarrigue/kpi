@@ -113,6 +113,8 @@ ICONS = {
     'penalty_kill': PENALTY_KILL,
     'hat_trick': ball(6.6, 16.6, 4.6) + ball(17.4, 16.6, 4.6) + ball(12, 7.2, 4.6),  # apart: filled balls must not touch
     'natural_hat_trick': ball(4.6, 11, 3.4) + ball(12, 11, 3.4) + ball(19.4, 11, 3.4) + '<path d="M3 18.5h18"/>',
+    'quadruple': ball(7.2, 7.2, 4.2) + ball(16.8, 7.2, 4.2) + ball(7.2, 16.8, 4.2) + ball(16.8, 16.8, 4.2),  # apart: filled balls must not touch
+    'natural_quadruple': ball(3.9, 11, 2.7) + ball(9.3, 11, 2.7) + ball(14.7, 11, 2.7) + ball(20.1, 11, 2.7) + '<path d="M3 18.5h18"/>',
     'clean_sheet': goal_frame(3, 6.5, 18, 11),
     'big_win': '<path d="M3 20.5h18"/><rect x="5" y="4" width="5.5" height="16.5" rx="1"/><rect x="14" y="15" width="5.5" height="5.5" rx="1"/>',
     'fair_play': ('<path d="M2 9.5l4-3h3.5l2.5 1.8"/><path d="M22 9.5l-4-3h-3.2l-5.4 4.3a1.5 1.5 0 0 0 2 2.2l3-2.1 4.6 4.4"/>'
@@ -126,6 +128,7 @@ ICONS = {
     # --- referees (base pictograms, the whistle badge is added below)
     'whistle': WHISTLE,
     'nocard': NO_CARD,
+    'calm': '<path d="M2.5 9h19M6 13.5h12M9.5 18h5"/>',  # flat water: a horizon and its shortening reflections, no wave
     'knockout': '<path d="M3 4.5h5.5v15H3M8.5 12h5M13.5 6.5h7.5M13.5 6.5v11M13.5 17.5h7.5"/>',
     # --- statistics
     'medal': MEDAL,
@@ -140,7 +143,7 @@ ICONS = {
 # A badge in the bottom-right corner: the base is cut out under it (mask), so both stay legible at 16 px.
 BADGES = {'whistle': WHISTLE, 'percent': PERCENT, 'bars': BARS, 'person': PERSON, 'kayak': KAYAK, 'team': TEAM, 'one': ONE, 'card': CARD}
 COMPOSED = {
-    'ref_smooth_game': ('nocard', 'whistle'), 'ref_knockout': ('knockout', 'whistle'),
+    'ref_smooth_game': ('nocard', 'whistle'), 'ref_calm_game': ('calm', 'whistle'), 'ref_knockout': ('knockout', 'whistle'),
     'ref_extra_time': ('extra_time', 'whistle'), 'ref_thriller': ('thriller', 'whistle'),
     'ref_golden_goal': ('golden_goal', 'whistle'),
     'medals_teams': ('medal', 'team'), 'medals_players': ('medal', 'person'), 'medals_referees': ('medal', 'whistle'),
@@ -173,7 +176,7 @@ def inner(code):
 
 
 def all_codes():
-    return [c for c in ICONS if c not in ('medal', 'clock', 'card_balance', 'card_reasons', 'knockout', 'nocard')] + list(COMPOSED)
+    return [c for c in ICONS if c not in ('medal', 'clock', 'card_balance', 'card_reasons', 'knockout', 'nocard', 'calm')] + list(COMPOSED)
 
 
 def svg(code, title=None):

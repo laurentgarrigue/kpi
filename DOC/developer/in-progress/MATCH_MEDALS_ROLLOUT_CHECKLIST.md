@@ -46,7 +46,7 @@ make app4_bash                          # puis `npm test`
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `make api2_test` | unit 316 + integration 340 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
+| 1 | `make api2_test` | unit 318 + integration 352 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
 | 2 | `make app3_test` | unit 185, nuxt 188 (dont `medals.spec.ts`), e2e verts | ☑ |
 | 3 | `make api2_match_medals_compute season=2026` | `Season 2026: N validated games computed` ; relancé : mêmes nombres, aucune erreur | ☑ |
 | 4 | `make api2_match_medals_sync` | `0 computed, 0 removed` juste après le calcul complet | ☑ |
@@ -83,7 +83,7 @@ app4, `ci-summary` vert. ☐
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
 | 1 | 🌐 « Deploy preprod » | vert ; `make api2_restart` si le wrapper ne l'a pas fait (worker FrankenPHP) | ☐ |
-| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` puis `…/2026-11-11_public_site_match_medals_settings.sql` | 6 tables créées, 50 éléments au catalogue, puis `kp_medal_setting` ; relançables sans erreur | ☐ |
+| 2 | `make db_migrate file=SQL/migrations/2026-11-09_public_site_match_medals.sql` puis `…/2026-11-11_public_site_match_medals_settings.sql` puis `…/2026-11-12_public_site_match_medals_quadruple_calm.sql` | 6 tables créées, 50 éléments au catalogue, puis `kp_medal_setting`, puis 3 éléments de plus (53), non publiés ; relançables sans erreur | ☐ |
 | 3 | `make api2_match_medals_compute season=AAAA` pour **chaque saison**, de la plus récente à la plus ancienne | une ligne par saison dans app4 › Médailles › Saisons ; part de feuilles complètes plausible | ☐ |
 | 4 | Pose du cron (§ M.4) puis, 10 min plus tard, `tail /var/log/kpi/cron_match_medals.log` | une ligne `… computed, … removed` par passage | ☐ |
 | 5 | `make app2_generate_preprod`, `make app3_generate_preprod`, `make app4_generate_preprod` | applications reconstruites | ☐ |

@@ -6,7 +6,7 @@
 ## Ce que c'est
 
 À partir des buts et des cartons notés sur la feuille de match, KPI attribue des **médailles** aux équipes, aux
-joueurs et aux arbitres (Premier but · Opener, Supériorité · Powerplay, Triplé · Hat-trick, Match couperet…), des
+joueurs et aux arbitres (Premier but · Opener, Supériorité · Powerplay, Triplé · Hat-trick, Quadruplé · Four-goal Haul, Match couperet, Calme plat · Dead Calm pour l'arbitre d'un match sans but ni carton…), des
 **étiquettes** aux matchs (Suspense · Thriller…) et calcule des **statistiques** par compétition. Rien n'est saisi en
 plus.
 

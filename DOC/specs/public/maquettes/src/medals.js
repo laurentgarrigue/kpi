@@ -5,7 +5,7 @@
 /* ------------------------------------------------------------------ thresholds (§ 5.4) */
 const THRESHOLDS = {
   bounceBackSeconds: 30, comebackDeficit: 3, scoringRunGoals: 3, lateWindowSeconds: 30, fastStartSeconds: 30,
-  hatTrickGoals: 3, bigWinMargin: 5, penaltyKillExclusions: 2, marathonOvertimes: 2, exclusionSeconds: 120,
+  hatTrickGoals: 3, quadrupleGoals: 4, bigWinMargin: 5, penaltyKillExclusions: 2, marathonOvertimes: 2, exclusionSeconds: 120,
   permanentCards: ['D'], regularPeriodSeconds: 600, extraPeriodSeconds: 300, thrillerLeadChanges: 3,
   seesawEqualizers: 4, goalFestTopPercent: 10, goalFestMinGames: 10, chessMatchMaxGoals: 2, goalTimingSliceSeconds: 120,
   refereeMinGames: 5,
@@ -49,6 +49,8 @@ const CATALOG = [
   C('penalty_kill', 'medal', 'superiorite', 'T', 'T', [], 'Résistance', 'Penalty Kill', t => `Traverse au moins ${t.penaltyKillExclusions} exclusions sans encaisser de but pendant celles-ci.`),
   C('hat_trick', 'medal', 'finition', 'P', 'S', ['app2', 'app3'], 'Triplé', 'Hat-trick', t => `Marque au moins ${t.hatTrickGoals} buts dans le match.`),
   C('natural_hat_trick', 'medal', 'finition', 'P', 'T', [], 'Triplé consécutif', 'Natural Hat-trick', t => `Marque ${t.hatTrickGoals} buts consécutifs du match, sans autre but entre eux.`),
+  C('quadruple', 'medal', 'finition', 'P', 'S', [], 'Quadruplé', 'Four-goal Haul', t => `Marque au moins ${t.quadrupleGoals} buts dans le match.`),
+  C('natural_quadruple', 'medal', 'finition', 'P', 'T', [], 'Quadruplé consécutif', 'Natural Four-goal Haul', t => `Marque ${t.quadrupleGoals} buts consécutifs du match, sans autre but entre eux.`),
   C('clean_sheet', 'medal', 'defense', 'T', 'S', ['app2', 'app3'], 'Cage inviolée', 'Clean Sheet', () => "N'encaisse aucun but."),
   C('big_win', 'medal', 'defense', 'T', 'S', [], 'Large victoire', 'Big Win', t => `Gagne avec au moins ${t.bigWinMargin} buts d'écart.`),
   C('fair_play', 'medal', 'esprit', 'T', 'S', ['app3'], 'Fair-play', 'Fair Play', () => 'Ne reçoit aucun carton dans le match.'),
@@ -57,6 +59,7 @@ const CATALOG = [
   C('goal_fest', 'label', 'match', '', 'S', [], 'Festival', 'Goal Fest', t => `Total de buts parmi les ${t.goalFestTopPercent} % les plus élevés de la compétition.`),
   C('chess_match', 'label', 'match', '', 'S', [], 'Partie d’échecs', 'Chess Match', t => `Au plus ${t.chessMatchMaxGoals} buts : un match tactique, où chaque but se joue comme un coup.`),
   C('ref_smooth_game', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Match fluide', 'Smooth Game', () => 'Arbitre un match sans aucun carton.'),
+  C('ref_calm_game', 'medal', 'arbitrage', 'R', 'S', [], 'Calme plat', 'Dead Calm', () => 'Arbitre un match sans aucun but ni aucun carton.'),
   C('ref_knockout', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Match couperet', 'Knockout', () => 'Arbitre un match à élimination directe.'),
   C('ref_extra_time', 'medal', 'arbitrage', 'R', 'S', ['app2', 'app3'], 'Prolongation', 'Extra Time', () => 'Arbitre un match qui va en prolongation.'),
   C('ref_thriller', 'medal', 'arbitrage', 'R', 'T', ['app2', 'app3'], 'Suspense', 'Thriller', () => 'Arbitre un match étiqueté Suspense.'),
@@ -216,10 +219,15 @@ function computeMatch(m, t = THRESHOLDS) {
     const w = seq.slice(i, i + t.hatTrickGoals), p = scorer(w[0]);
     if (p && w.every(g => scorer(g)?.id === p.id) && !(i > 0 && scorer(seq[i - 1])?.id === p.id)) add(out.player, 'natural_hat_trick', { side: w[0].team, p });
   }
+  // natural four-goal haul: the same player scores four goals in a row of the match
+  if (T) for (let i = 0; i + t.quadrupleGoals <= seq.length; i++) {
+    const w = seq.slice(i, i + t.quadrupleGoals), p = scorer(w[0]);
+    if (p && w.every(g => scorer(g)?.id === p.id) && !(i > 0 && scorer(seq[i - 1])?.id === p.id)) add(out.player, 'natural_quadruple', { side: w[0].team, p });
+  }
   // S level: only the score and the goals
   if (S) {
     for (const g of goals) { const p = scorer(g); if (p) goalCount[p.id] = { p, side: g.team, n: (goalCount[p.id]?.n ?? 0) + 1 }; }
-    for (const { p, side, n } of Object.values(goalCount)) if (n >= t.hatTrickGoals) add(out.player, 'hat_trick', { side, p, detail: `${n} buts` });
+    for (const { p, side, n } of Object.values(goalCount)) { if (n >= t.hatTrickGoals) add(out.player, 'hat_trick', { side, p, detail: `${n} buts` }); if (n >= t.quadrupleGoals) add(out.player, 'quadruple', { side, p, detail: `${n} buts` }); }
     if (overtime) for (const s of ['A', 'B']) add(out.team, 'extra_time', { side: s });
     if (overtimes >= t.marathonOvertimes) for (const s of ['A', 'B']) add(out.team, 'marathon', { side: s });
     if (overtime && winner) {
@@ -241,6 +249,7 @@ function computeMatch(m, t = THRESHOLDS) {
   const refs = [...new Map(m.referees.filter(r => r.designated).map(r => [r.id, r])).values()];
   for (const r of refs) {
     if (!cards.length) add(out.referee, 'ref_smooth_game', { r });
+    if (!cards.length && score.A + score.B === 0) add(out.referee, 'ref_calm_game', { r });
     if (m.type === 'E') add(out.referee, 'ref_knockout', { r });
     if (overtime) add(out.referee, 'ref_extra_time', { r });
     if (out.labels.includes('thriller')) add(out.referee, 'ref_thriller', { r });

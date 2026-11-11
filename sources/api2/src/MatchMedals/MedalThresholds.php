@@ -17,6 +17,7 @@ final readonly class MedalThresholds
         public int $lateWindowSeconds,
         public int $fastStartSeconds,
         public int $hatTrickGoals,
+        public int $quadrupleGoals,
         public int $bigWinMargin,
         public int $penaltyKillExclusions,
         public int $marathonOvertimes,
@@ -52,7 +53,7 @@ final readonly class MedalThresholds
     /** Allowed range of every integer threshold: what the admin accepts (FEATURE_MATCH_MEDALS.md § 5.4, MED-67). */
     private const LIMITS = [
         'bounceBackSeconds' => [1, 600], 'comebackDeficit' => [1, 20], 'scoringRunGoals' => [2, 20], 'lateWindowSeconds' => [1, 600],
-        'fastStartSeconds' => [1, 600], 'hatTrickGoals' => [2, 20], 'bigWinMargin' => [2, 50], 'penaltyKillExclusions' => [1, 10],
+        'fastStartSeconds' => [1, 600], 'hatTrickGoals' => [2, 20], 'quadrupleGoals' => [3, 30], 'bigWinMargin' => [2, 50], 'penaltyKillExclusions' => [1, 10],
         'marathonOvertimes' => [1, 10], 'exclusionSeconds' => [10, 600], 'regularPeriodSeconds' => [60, 1800], 'extraPeriodSeconds' => [30, 900],
         'thrillerLeadChanges' => [1, 20], 'seesawEqualizers' => [1, 20], 'goalFestTopPercent' => [1, 100], 'goalFestMinGames' => [1, 1000],
         'chessMatchMaxGoals' => [1, 20], 'goalTimingSliceSeconds' => [30, 1200], 'refereeMinGames' => [1, 100],

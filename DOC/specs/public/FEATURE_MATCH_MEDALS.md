@@ -111,6 +111,8 @@ Les seuils en *italique* sont des paramètres (§ 5.4). Portée : É = équipe, 
 | `penalty_kill` | **Résistance · Penalty Kill** | É | Traverse au moins *2* exclusions sans encaisser de but pendant celles-ci. | Supériorité numérique | T | — (admin) |
 | `hat_trick` | **Triplé · Hat-trick** | J | Marque au moins *3* buts dans le match. | Finition | S | **app2, app3** |
 | `natural_hat_trick` | **Triplé consécutif · Natural Hat-trick** | J | Marque *3* buts consécutifs du match, sans autre but entre eux. | Finition | T | — (admin) |
+| `quadruple` | **Quadruplé · Four-goal Haul** | J | Marque au moins *4* buts dans le match. | Finition | S | — (admin) |
+| `natural_quadruple` | **Quadruplé consécutif · Natural Four-goal Haul** | J | Marque *4* buts consécutifs du match, sans autre but entre eux. | Finition | T | — (admin) |
 | `clean_sheet` | **Cage inviolée · Clean Sheet** | É | N'encaisse aucun but. | Défense | S | **app2, app3** |
 | `big_win` | **Large victoire · Big Win** | É | Gagne avec au moins *5* buts d'écart. | Défense | S | — (admin) |
 | `fair_play` | **Fair-play · Fair Play** | É | Ne reçoit aucun carton dans le match. | Esprit sportif | S | **app3** |
@@ -174,6 +176,7 @@ Attribuées à chaque arbitre désigné du match (portée Ar = arbitre).
 | Code | Nom FR · EN | Portée | Explication (attribution) | Famille | Données | Publication initiale |
 |---|---|---|---|---|---|---|
 | `ref_smooth_game` | **Match fluide · Smooth Game** | Ar | Arbitre un match sans aucun carton. | Arbitrage | S | **app2, app3** |
+| `ref_calm_game` | **Calme plat · Dead Calm** | Ar | Arbitre un match sans aucun but ni aucun carton. | Arbitrage | S | — (admin) |
 | `ref_knockout` | **Match couperet · Knockout** | Ar | Arbitre un match à élimination directe (type `E`). | Arbitrage | S | **app2, app3** |
 | `ref_extra_time` | **Prolongation · Extra Time** | Ar | Arbitre un match qui va en prolongation. | Arbitrage | S | **app2, app3** |
 | `ref_thriller` | **Suspense · Thriller** | Ar | Arbitre un match étiqueté *Suspense* (§ 3.3). | Arbitrage | T | **app2, app3** |
@@ -294,6 +297,7 @@ ni dans les explications, qui les citent par variable). Valeurs initiales :
 | `lateWindowSeconds` | 30 | `late_winner`, `lifeline` |
 | `fastStartSeconds` | 30 | `fast_start` |
 | `hatTrickGoals` | 3 | `hat_trick`, `natural_hat_trick` |
+| `quadrupleGoals` | 4 | `quadruple`, `natural_quadruple` |
 | `bigWinMargin` | 5 | `big_win` |
 | `penaltyKillExclusions` | 2 | `penalty_kill` |
 | `marathonOvertimes` | 2 | `marathon` |
@@ -656,6 +660,11 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
   indicateurs de cartons affichent « — » et il apparaît dans `referee_games`.
 - **MED-55** — Les statistiques d'arbitrage sont triées par nombre de matchs arbitrés puis par nom, jamais par
   nombre de cartons.
+- **MED-71** — Étant donné un joueur auteur de 4 buts, alors `quadruple` (en plus de `hat_trick`, les médailles
+  « au moins N buts » se cumulent) ; avec 3 buts, pas de `quadruple`. Si les 4 buts se suivent sans but adverse ni
+  d'un autre joueur entre eux, alors `natural_quadruple` en plus ; un but adverse entre eux l'écarte.
+- **MED-72** — Étant donné un match 0-0 sans carton arbitré par X et Y, alors X et Y reçoivent `ref_calm_game` (et
+  `ref_smooth_game`) ; un seul but ou un seul carton l'écarte. Un match sans temps saisi suffit (niveau score).
 - **MED-56** — Étant donné un match sans carton arbitré par X et Y, alors X et Y reçoivent `ref_smooth_game`.
 - **MED-57** — Étant donné une désignation d'arbitre modifiée sur un match validé, quand `sync` passe, alors ses
   statistiques et médailles d'arbitres sont recalculées (`source_hash` changé).

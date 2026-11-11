@@ -234,6 +234,8 @@ watch(() => [workContext.season, workContext.competitionCodes.join(',')], () => 
 })
 
 onMounted(async () => {
+  // Like the other pages: restores the work context (season, competitions) from the browser after a reload
+  await workContext.initContext()
   await Promise.all([loadCatalogue(), loadSeasons(), loadKinds()])
 })
 </script>

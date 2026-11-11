@@ -4,7 +4,7 @@
 # (make api2_match_medals_compute season=…): each season keeps the copy of the thresholds it was computed with.
 # Changing a RULE in the code instead: increment match_medals.rules_version.
 parameters:
-    match_medals.rules_version: 1
+    match_medals.rules_version: 2
     match_medals.thresholds:
         bounceBackSeconds: 30          # Réplique · Bounce Back
         comebackDeficit: 3             # Remontée · Comeback, Retour au score · Fightback
@@ -12,6 +12,7 @@ parameters:
         lateWindowSeconds: 30          # Dernières secondes · Late Winner, Égalisation salvatrice · Lifeline
         fastStartSeconds: 30           # Entrée express · Fast Start
         hatTrickGoals: 3               # Triplé · Hat-trick, Triplé consécutif · Natural Hat-trick
+        quadrupleGoals: 4              # Quadruplé · Four-goal Haul, Quadruplé consécutif · Natural Four-goal Haul
         bigWinMargin: 5                # Large victoire · Big Win
         penaltyKillExclusions: 2       # Résistance · Penalty Kill
         marathonOvertimes: 2           # Marathon

@@ -37,7 +37,7 @@ sys.dont_write_bytecode = True  # no __pycache__ in the docs
 sys.path.insert(0, str(here))
 import medal_icons as mi
 (out / 'medals-icons.js').write_text(
-    'const MEDAL_ICONS = ' + json.dumps({c: mi.inner(c) for c in mi.all_codes() + ['medal', 'clock', 'nocard', 'knockout']}, ensure_ascii=False)
+    'const MEDAL_ICONS = ' + json.dumps({c: mi.inner(c) for c in mi.all_codes() + ['medal', 'clock', 'nocard', 'knockout', 'calm']}, ensure_ascii=False)
     + ';\nconst FAMILY_ICON = ' + json.dumps(mi.FAMILIES) + ';\n')
 # Deployed with api2 (served at /api2/medals/icons/{code}.svg and inlined by its catalogue endpoint).
 svg_dir = here.parents[4] / 'sources/api2/public/medals/icons'

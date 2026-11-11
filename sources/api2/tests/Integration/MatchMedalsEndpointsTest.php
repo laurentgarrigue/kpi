@@ -168,7 +168,7 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
     public function testMed40AdminEndpointsAreForProfilesOneAndTwo(): void
     {
         $this->requestAs('TDIV', 'GET', '/admin/medals/catalog', expectedStatus: 403);
-        self::assertCount(50, $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog?season=2998')['items']);
+        self::assertCount(53, $this->requestAs('TSUPER', 'GET', '/admin/medals/catalog?season=2998')['items']);
     }
 
     public function testMed36PublishingAnElementShowsItsHistoryWithoutRecomputing(): void

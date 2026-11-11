@@ -122,6 +122,6 @@ final class MatchMedalService
             $this->repository->saveSeason($season, $copy, $this->rulesVersion);
         }
 
-        return MedalThresholds::fromArray($copy);
+        return MedalThresholds::fromArray([...$this->settings->thresholds(), ...$copy]);
     }
 }

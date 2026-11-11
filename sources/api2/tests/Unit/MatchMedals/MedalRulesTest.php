@@ -91,6 +91,35 @@ final class MedalRulesTest extends TestCase
         self::assertNotContains('natural_hat_trick', self::playerCodes($split, 7));
     }
 
+    public function testMed71QuadrupleAndNaturalQuadruple(): void
+    {
+        $four = self::compute(GameBuilder::game()->goals('AAAA', 7)->build());
+        self::assertSame(['game_winner', 'hat_trick', 'natural_hat_trick', 'natural_quadruple', 'opener', 'quadruple'], self::playerCodes($four, 7));
+
+        $three = self::compute(GameBuilder::game()->goals('AAA', 7)->build());
+        self::assertNotContains('quadruple', self::playerCodes($three, 7));
+
+        // four goals, but an opponent goal breaks the run: a quadruple, no natural one
+        $split = self::compute(GameBuilder::game()->goal('A', 'M1', '09:00', 7)->goal('A', 'M1', '08:00', 7)->goal('B', 'M1', '07:00', 8)
+            ->goal('A', 'M1', '06:00', 7)->goal('A', 'M1', '05:00', 7)->build());
+        self::assertContains('quadruple', self::playerCodes($split, 7));
+        self::assertNotContains('natural_quadruple', self::playerCodes($split, 7));
+    }
+
+    public function testMed72DeadCalmIsAGameWithNeitherGoalNorCard(): void
+    {
+        $calm = self::compute(GameBuilder::game()->referee(11)->referee(12, Referee::SECONDARY)->build());
+        self::assertSame(['ref_calm_game', 'ref_smooth_game'], self::refereeCodes($calm, 11));
+        self::assertSame(['ref_calm_game', 'ref_smooth_game'], self::refereeCodes($calm, 12));
+
+        $card = self::compute(GameBuilder::game()->referee(11)->card('A', 'V', 'M1', '05:00')->build());
+        self::assertNotContains('ref_calm_game', self::refereeCodes($card, 11));
+
+        $goal = self::compute(GameBuilder::game()->referee(11)->goals('A')->build());
+        self::assertNotContains('ref_calm_game', self::refereeCodes($goal, 11));
+        self::assertContains('ref_smooth_game', self::refereeCodes($goal, 11));
+    }
+
     public function testMed25TheDecisiveGoalIsTheLosersScorePlusOne(): void
     {
         $medals = self::compute(GameBuilder::game()
