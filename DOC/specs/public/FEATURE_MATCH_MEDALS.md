@@ -705,6 +705,10 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 - **MED-73** — Un calcul complet lancé depuis l'admin s'exécute dans un processus à part (la requête répond 202) ; un
   seul à la fois (409) ; son état (en cours, terminé avec le nombre de matchs, erreur) est relu par la page, qui peut
   être quittée ; un calcul « en cours » depuis plus d'une heure est signalé en erreur. Le journal nomme l'utilisateur.
+- **MED-74** — Étant donné une feuille de match d'app2 ouverte depuis le site public, alors app2 se place sur le
+  périmètre du match : l'événement du lien (`?event=`) s'il le contient, sinon la sélection actuelle si elle contient
+  le match, sinon le **groupe** du match ; les autres matchs et les équipes auxquels on navigue ensuite sont ceux de ce
+  périmètre. `GET /game-sheet/{id}` renvoie pour cela `context: { season, group, events }` (événements publiés).
 - **MED-70** — L'admin demande une confirmation avant de recalculer ou de supprimer, et la dit en une phrase (saison,
   nombre de matchs, conséquence) ; le profil 2 ne voit aucun bouton d'action.
 

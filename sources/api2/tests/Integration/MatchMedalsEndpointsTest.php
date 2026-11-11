@@ -167,6 +167,15 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
         self::assertSame(['9461' => ['thriller']], $this->getJson('/competition/2998/MED/labels')['labels']);
     }
 
+    public function testTheGameSheetTellsWhichGroupAndPublishedEventsItBelongsTo(): void
+    {
+        self::assertSame(['season' => '2998', 'group' => 'TSTMED', 'events' => []], $this->getJson('/game-sheet/9461')['context'], 'event 81 is not published');
+
+        $this->db->update('kp_evenement', ['Publication' => 'O'], ['Id' => 81]);
+
+        self::assertSame([81], $this->getJson('/game-sheet/9461')['context']['events']);
+    }
+
     public function testTheCatalogueIsReadAgainOnEachRequestOfAWorker(): void
     {
         $catalog = static::getContainer()->get(MedalCatalog::class);

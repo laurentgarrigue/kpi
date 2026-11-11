@@ -9,6 +9,10 @@ describe('PAGE_LINKS fallbacks', () => {
     expect(teamLink({ number: 104 })).toEqual({ kind: 'internal', href: '/teams/104' })
   })
 
+  it('a game linked from an event page tells app2 which event to open it in', () => {
+    expect(gameLink(9401, { ...context, event: 242 }).href).toBe('https://app.kayak-polo.info/game/9401?event=242')
+  })
+
   it('CMP-12: a game links to its app2 sheet', () => {
     expect(gameLink(9401, context)).toEqual({ kind: 'app2', href: 'https://app.kayak-polo.info/game/9401' })
   })

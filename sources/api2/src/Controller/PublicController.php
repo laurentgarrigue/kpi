@@ -233,7 +233,7 @@ class PublicController extends AbstractController
 
         // Get game info - pending (ATT), in progress (ON) or finished (END)
         $gameSql = "
-            SELECT c.Code c_code, c.Code_saison c_season, j.Phase d_phase, j.Niveau d_level, j.Type d_type,
+            SELECT c.Code c_code, c.Code_saison c_season, c.Code_ref c_group, j.Phase d_phase, j.Niveau d_level, j.Type d_type,
                 j.Lieu d_place, j.Libelle d_label, c.Soustitre2 c_label, c.Code_typeclt c_type,
                 m.Id g_id, m.Id_journee d_id, m.Numero_ordre g_number, m.Date_match g_date,
                 m.Heure_match g_time, m.Heure_fin g_time_end, m.Terrain g_pitch, m.Libelle g_code,
@@ -413,6 +413,15 @@ class PublicController extends AbstractController
                 'stats' => $teamBStats
             ],
             'events' => $events,
+            // Where the game is listed, so that app2 can select the right event or group when it is opened from elsewhere
+            'context' => [
+                'season' => (string) $game['c_season'],
+                'group' => $game['c_group'],
+                'events' => array_map('intval', $conn->fetchFirstColumn(
+                    "SELECT e.Id FROM kp_evenement e INNER JOIN kp_evenement_journee ej ON (ej.Id_evenement = e.Id) WHERE ej.Id_journee = ? AND e.Publication = 'O' ORDER BY e.Id",
+                    [$game['d_id']],
+                )),
+            ],
             // Match medals published on app2 (FEATURE_MATCH_MEDALS.md § 6.4), empty until the game is validated
             'medals' => $this->matchMedals->forGame((int) $gameId, MedalSurface::App2),
             'halftime_score' => [
