@@ -2,8 +2,10 @@
 
 namespace App\Tests\Integration;
 
+use App\MatchMedals\Catalog\MedalCatalog;
 use App\MatchMedals\MatchMedalService;
 use Doctrine\DBAL\Connection;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Public and admin endpoints of the match medals (FEATURE_MATCH_MEDALS.md § 6.4), on the TSTMED fixtures. Medals
@@ -163,6 +165,18 @@ final class MatchMedalsEndpointsTest extends ApiTestCase
     public function testThrillerLabelOfTheCompetitionGames(): void
     {
         self::assertSame(['9461' => ['thriller']], $this->getJson('/competition/2998/MED/labels')['labels']);
+    }
+
+    public function testTheCatalogueIsReadAgainOnEachRequestOfAWorker(): void
+    {
+        $catalog = static::getContainer()->get(MedalCatalog::class);
+        self::assertInstanceOf(ResetInterface::class, $catalog, 'a FrankenPHP worker resets it between requests');
+        $before = count($catalog->all());
+
+        $this->db->executeStatement("DELETE FROM kp_medal_catalog WHERE code = 'quadruple'");
+        $catalog->reset();
+
+        self::assertSame($before - 1, count($catalog->all()), 'a change made by another worker or a migration shows up');
     }
 
     public function testMed40AdminEndpointsAreForProfilesOneAndTwo(): void

@@ -6,12 +6,13 @@ use App\MatchMedals\MedalSettings;
 use App\MatchMedals\MedalThresholds;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * The catalogue of medals, labels and statistics (kp_medal_catalog, FEATURE_MATCH_MEDALS.md § 3.1): names,
  * explanations rendered with the thresholds of a season, publication per surface, edition from the admin.
  */
-final class MedalCatalog
+final class MedalCatalog implements ResetInterface
 {
     public const ICON_PATH = 'medals/icons/%s.svg';
     /** Generic pictogram of each family, shown until an element has its own (§ 7.1). */
@@ -32,6 +33,12 @@ final class MedalCatalog
         private readonly MedalSettings $settings,
         #[Autowire('%kernel.project_dir%/public')] private readonly string $publicDir,
     ) {
+    }
+
+    /** A FrankenPHP worker serves many requests: the list is read again for each, so that a change made by another worker or a migration shows. */
+    public function reset(): void
+    {
+        $this->rows = null;
     }
 
     /** @return list<array<string, mixed>> every element, in display order */
