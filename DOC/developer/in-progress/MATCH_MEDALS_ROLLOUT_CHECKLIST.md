@@ -47,18 +47,18 @@ make app4_bash                          # puis `npm test`
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
 | 1 | `make api2_test` | unit 316 + integration 340 (tests `MED-*` : `MatchMedals*Test`) | ☑ |
-| 2 | `make app3_test` | unit 185, nuxt 188 (dont `medals.spec.ts`), e2e verts | ☐ |
-| 3 | `make api2_match_medals_compute season=2026` | `Season 2026: N validated games computed` ; relancé : mêmes nombres, aucune erreur | ☐ |
-| 4 | `make api2_match_medals_sync` | `0 computed, 0 removed` juste après le calcul complet | ☐ |
+| 2 | `make app3_test` | unit 185, nuxt 188 (dont `medals.spec.ts`), e2e verts | ☑ |
+| 3 | `make api2_match_medals_compute season=2026` | `Season 2026: N validated games computed` ; relancé : mêmes nombres, aucune erreur | ☑ |
+| 4 | `make api2_match_medals_sync` | `0 computed, 0 removed` juste après le calcul complet | ☑ |
 | 5 | `https://beta.kpi.localhost/competitions/2026/<code>/stats` | statistiques « Médailles des équipes · Team Medals »… avec explication et nombre de matchs | ☐ |
-| 6 | `https://beta.kpi.localhost/medals` et `/en/medals` | éléments publiés par famille, double nom en français, nom anglais seul en anglais | ☐ |
-| 7 | Fiche d'une équipe de la saison | section « Médailles de match », compteurs menant à la feuille de match d'app2 | ☐ |
-| 8 | app2 : feuille d'un match validé à feuille complète | bloc Médailles, médailles d'arbitre, ballon aux couleurs des équipes ; match non validé : pas de bloc | ☐ |
+| 6 | `https://beta.kpi.localhost/medals` et `/en/medals` | éléments publiés par famille, double nom en français, nom anglais seul en anglais | ☑ |
+| 7 | Fiche d'une équipe de la saison | section « Médailles de match », compteurs menant à la feuille de match d'app2 | ☑ |
+| 8 | app2 : feuille d'un match validé à feuille complète | bloc Médailles, médailles d'arbitre, ballon aux couleurs des équipes ; match non validé : pas de bloc | ☑ |
 | 8b | app2 : page équipe d'un événement (ou d'un groupe) calculé | bloc « Médailles de l'équipe » en blasons de 64 px ; colonne « Médailles » du tableau des joueurs (sous le joueur sur mobile) ; buts en ballon avec « ×13 » (ballon seul pour 1 but, rien pour 0) ; hors événement calculé : ni bloc ni colonne, statistiques inchangées | ☐ |
 | 8c | `curl -s https://kpi.localhost/api2/event/<id>/team/<teamId>/medals` et `…/group/<saison>/<code>/team/<teamId>/medals` | `{ team, players }`, aucun numéro de licence ; équipe inconnue : `404` | ☐ |
 | 8d | Blasons dans app2, app3 (`/medals`, Stats, fiche équipe) et app4 (catalogue) ; thème sombre | blason plein, filigrane « KPI » en haut à gauche, pictogramme foncé en thème sombre | ☐ |
-| 9 | app4 › Opérations › Médailles (profil 1) | catalogue, saisons (v1, seuils), statistiques et arbitrage du contexte de travail ; profil 3 : page refusée | ☐ |
-| 10 | app4 : publier `goal_timing` sur app3, puis le retirer | la statistique apparaît puis disparaît de l'onglet Stats sans recalcul ; entrées dans le journal | ☐ |
+| 9 | app4 › Opérations › Médailles (profil 1) | catalogue, saisons (v1, seuils), statistiques et arbitrage du contexte de travail ; profil 3 : page refusée | ☑ |
+| 10 | app4 : publier `goal_timing` sur app3, puis le retirer | la statistique apparaît puis disparaît de l'onglet Stats sans recalcul ; entrées dans le journal | ☑ |
 | 11 | app4 : dévalider puis revalider un match calculé | médailles supprimées puis recalculées aussitôt | ☐ |
 | 12 | app4 › Saisons, profil 1 : changer un seuil, enregistrer, recalculer une saison (confirmer), supprimer les calculs d'une autre (confirmer), puis la recalculer | seuils enregistrés et journalisés ; la saison recalculée a les nouveaux seuils ; la supprimée n'a plus de médaille et n'est pas recalculée par `sync` ; profil 2 : lecture seule, aucun bouton | ☐ |
 
