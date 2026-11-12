@@ -23,14 +23,14 @@ export default defineNuxtPlugin((nuxtApp) => {
     return { provide: { matomo: null as MatomoTracker | null } }
   }
 
-  const queue = (window._paq = window._paq ?? [])
-  matomoInitCommands(target).forEach(command => queue.push(command))
+  const push = matomoQueue(window)
+  matomoInitCommands(target).forEach(push)
   const script = document.createElement('script')
   script.async = true
   script.src = target.scriptUrl
   document.head.appendChild(script)
 
-  const tracker = createMatomoTracker(command => queue.push(command), {
+  const tracker = createMatomoTracker(push, {
     href: () => window.location.href,
     title: () => document.title,
     referrer: () => document.referrer,

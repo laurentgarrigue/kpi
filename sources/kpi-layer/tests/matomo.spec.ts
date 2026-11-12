@@ -5,6 +5,7 @@ import {
   createMatomoTracker,
   type MatomoCommand,
   matomoInitCommands,
+  matomoQueue,
   matomoTarget,
   notFoundTitle,
 } from '../app/utils/matomo'
@@ -202,6 +203,30 @@ describe('createMatomoTracker — not found, search, events', () => {
     expect(analyticsEventOf({ analyticsCategory: 'Langue', analyticsAction: 'en' })).toEqual({ category: 'Langue', action: 'en' })
     expect(analyticsEventOf({ analyticsCategory: 'Partage' })).toBeNull()
     expect(analyticsEventOf({})).toBeNull()
+  })
+})
+
+describe('matomoQueue (ANA-16)', () => {
+  it('ANA-16: a command pushed after matomo.js replaced window._paq reaches the new object', () => {
+    const win: { _paq?: MatomoCommand[] } = {}
+    const push = matomoQueue(win)
+    push(['disableCookies'])
+    expect(win._paq).toEqual([['disableCookies']])
+
+    // matomo.js swaps the array for its own object, which executes commands as they come.
+    const executed: MatomoCommand[] = []
+    const stale = win._paq
+    win._paq = { push: (command: MatomoCommand) => executed.push(command) } as unknown as MatomoCommand[]
+    push(['trackPageView'])
+
+    expect(executed).toEqual([['trackPageView']])
+    expect(stale).toEqual([['disableCookies']])
+  })
+
+  it('ANA-16: keeps the commands already queued before the plugin runs', () => {
+    const win: { _paq?: MatomoCommand[] } = { _paq: [['setUserId', 'x']] }
+    matomoQueue(win)(['trackPageView'])
+    expect(win._paq).toEqual([['setUserId', 'x'], ['trackPageView']])
   })
 })
 
