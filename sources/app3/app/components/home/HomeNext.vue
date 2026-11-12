@@ -46,7 +46,7 @@ const where = computed(() => [fixturePlace(props.fixture), formatEventDates(prop
       </p>
       <div class="mt-5.5 flex flex-wrap gap-2.5">
         <template v-if="live">
-          <a :href="liveUrl(fixture, app2BaseUrl)" v-bind="NEW_TAB_ATTRS" class="inline-flex items-center gap-2 rounded-md bg-live px-4.5 py-2.5 font-semibold text-white" data-testid="live-cta">
+          <a :href="liveUrl(fixture, app2BaseUrl)" v-bind="NEW_TAB_ATTRS" class="inline-flex items-center gap-2 rounded-md bg-live px-4.5 py-2.5 font-semibold text-white" data-testid="live-cta" data-analytics-category="Direct" data-analytics-action="Suivre en direct" :data-analytics-name="liveUrl(fixture, app2BaseUrl)">
             <span class="size-2 rounded-full bg-white" aria-hidden="true" />{{ $t('results.followLive') }}<span class="sr-only"> {{ $t('a11y.newTab') }}</span>
           </a>
           <NuxtLink :to="localePath(fixturePath(fixture))" class="inline-flex items-center rounded-md border border-line px-4.5 py-2.5 font-semibold hover:bg-wash" data-testid="home-next-link">{{ $t('home.gamesAndResults') }}</NuxtLink>

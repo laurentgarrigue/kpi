@@ -4,7 +4,23 @@ Ce document explique comment configurer le tracking Matomo pour le projet KPI.
 
 ## 📋 Vue d'ensemble
 
-Le projet KPI utilise Matomo Analytics avec une configuration paramétrable permettant de définir différents Site IDs selon l'environnement (production, pré-production, développement) et selon la partie de l'application (publique ou administration).
+Toutes les briques envoient vers `https://matomo.kayak-polo.info`, **sans cookie** (spec :
+[FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md) ; mise en service :
+[MATOMO_ROLLOUT_CHECKLIST.md](../in-progress/MATOMO_ROLLOUT_CHECKLIST.md)).
+
+| Brique | Code | Configuration | Site prod | Préprod |
+|---|---|---|---|---|
+| Legacy public + WordPress | gabarits Smarty, module « Connect Matomo » | `sources/commun/MyParams.php` (ci-dessous), réglages WordPress | 1 | 3 |
+| Legacy admin | gabarits Smarty | `sources/commun/MyParams.php` | 2 | 3 |
+| app2 | `sources/app2/plugins/matomo.client.ts` + `utils/matomo.ts` | `MATOMO_URL`, `MATOMO_SITE_ID` dans `.env.preprod` / `.env.production` (build) | 6 | 3 |
+| app4 | `sources/app4/plugins/matomo.client.ts` + `utils/matomo.ts` | `MATOMO_URL`, `MATOMO_SITE_ID` dans `sources/app4/.env` (build) | 7 | 3 |
+| app3 | `sources/kpi-layer/app/plugins/matomo.client.ts` + `utils/matomo.ts` | `MATOMO_URL`, `APP3_MATOMO_SITE_ID` dans `docker/.env` (exécution, recréer le conteneur) | KPI Site public | 3 |
+
+Les applications Nuxt n'envoient rien tant que l'URL **et** le numéro de site ne sont pas renseignés
+(`MATOMO_ENABLED` n'existe plus). Le code d'app2 et d'app4 est une copie de celui du layer : le modifier dans
+`sources/kpi-layer/` puis recopier (un test vérifie que les copies sont identiques).
+
+La suite de ce document concerne le **legacy** (Smarty).
 
 ## ⚙️ Configuration
 
@@ -123,6 +139,7 @@ Les templates utilisent la syntaxe Smarty pour accéder aux constantes PHP :
 {literal}
 <script>
 var _paq = window._paq = window._paq || [];
+_paq.push(['disableCookies']); // sans cookie (FEATURE_ANALYTICS.md § 6)
 _paq.push(['trackPageView']);
 _paq.push(['enableLinkTracking']);
 (function() {
@@ -221,6 +238,7 @@ Si vous créez un nouveau template qui doit inclure Matomo :
 <!-- Matomo -->
 <script>
 var _paq = window._paq = window._paq || [];
+_paq.push(['disableCookies']); // sans cookie (FEATURE_ANALYTICS.md § 6)
 _paq.push(['trackPageView']);
 _paq.push(['enableLinkTracking']);
 (function() {
@@ -287,5 +305,5 @@ Si vous voyez `<!-- Matomo non configuré -->` dans le HTML :
 
 ---
 
-**Dernière mise à jour** : 2025-01-19
+**Dernière mise à jour** : 2026-11-12
 **Auteur** : Équipe KPI

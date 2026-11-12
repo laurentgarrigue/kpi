@@ -10,6 +10,9 @@ export default defineNuxtConfig({
     public: {
       // Browser-side api2 URL. Overridden by NUXT_PUBLIC_API2_BASE_URL.
       api2BaseUrl: 'https://kpi.localhost/api2',
+      // Matomo, cookie-free: off unless both are set (FEATURE_ANALYTICS.md § 4). NUXT_PUBLIC_MATOMO_URL / _SITE_ID.
+      matomoUrl: '',
+      matomoSiteId: '',
     },
   },
 })

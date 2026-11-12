@@ -1336,6 +1336,7 @@ function utyGetMatomoScript($type = 'public')
 <script>
 var _paq = window._paq = window._paq || [];
 /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+_paq.push(['disableCookies']); // sans cookie (FEATURE_ANALYTICS.md § 6)
 _paq.push(['trackPageView']);
 _paq.push(['enableLinkTracking']);
 (function() {

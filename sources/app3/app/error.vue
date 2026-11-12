@@ -11,6 +11,17 @@ const notFound = computed(() => props.error.statusCode === 404)
 useSiteSeo()
 const titleKey = computed(() => (notFound.value ? 'error.notFoundTitle' : 'error.genericTitle'))
 useSeoMeta({ title: () => t(titleKey.value) })
+
+// Audience: a 404 feeds Matomo's « Pages not found » report, other errors are counted as events (FEATURE_ANALYTICS.md § 5.3).
+const { trackNotFound, trackEvent } = useMatomo()
+onMounted(() => {
+  if (notFound.value) {
+    trackNotFound()
+  }
+  else {
+    trackEvent({ category: 'Erreur', action: String(props.error.statusCode), name: window.location.pathname })
+  }
+})
 </script>
 
 <template>
