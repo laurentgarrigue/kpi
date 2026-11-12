@@ -7,6 +7,18 @@
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
     },
+    "playwright-recording": {
+      "source": "digitalsamba/claude-code-video-toolkit",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/playwright-recording/SKILL.md",
+      "computedHash": "65dd7d4d2097a5ee137ee9a9ab9ced260d98d8728611fa70c6d8ba7d3c21f1e1"
+    },
+    "remotion-create": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "skillPath": "skills/remotion-create/SKILL.md",
+      "computedHash": "40282c0d31ff16266758933d06ad4ffae890d44efb49f2aef2a5b739a3d917f6"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
