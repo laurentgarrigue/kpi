@@ -119,6 +119,6 @@ beta ne doit pas provoquer le rollback du reste). Elle le sera en phase 5 (`/hea
 
 ## 9. Hors périmètre / questions ouvertes
 
-- Mesure d'audience (Matomo) : ajoutée à la bascule, en mode sans cookie (cf. stratégie § 11).
+- Mesure d'audience (Matomo) : en mode sans cookie, voir [FEATURE_ANALYTICS.md](FEATURE_ANALYTICS.md).
 - Sitemap, redirections 301 : phase 5.
 - Invalidation du cache Nitro à la publication d'un article : phase 4a.

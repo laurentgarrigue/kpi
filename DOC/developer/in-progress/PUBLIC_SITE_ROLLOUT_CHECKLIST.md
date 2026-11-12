@@ -448,6 +448,9 @@ Checklist dédiée (touche api2, app3, app2 et app4) : [MATCH_MEDALS_ROLLOUT_CHE
 *À compléter.* Prévoir : 🌍 aucun changement DNS (même VPS) ; Traefik : app3 devient le routeur par défaut de
 `kayak-polo.info`/`www`, Apache sur liste explicite ; `NUXT_PUBLIC_BETA=false` ; redirections 301 ; ajout de
 `/healthz` aux `SMOKE_URLS_*` (📦 `vps-manager`) ; Search Console ; suivi des 404.
+**Matomo** ([FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md)) : site app3 créé dans Matomo,
+`MATOMO_URL` et `APP3_MATOMO_SITE_ID` renseignés dans `docker/.env` (préprod, prod), annotation « bascule » sur les
+sites 1 et app3, IP anonymisée sur 2 octets côté Matomo.
 **Redirection 301 `beta.*` → domaine principal pendant au moins 1 saison** (chemin conservé) : des PDF publics
 imprimés portent des QR codes vers `beta.*` ([PDF_GOTENBERG.md §8.4](../../specs/PDF_GOTENBERG.md)) ; basculer en même
 temps `PUBLIC_SITE_URL` d'api2 (docker/compose.*.yaml) vers le domaine principal.
