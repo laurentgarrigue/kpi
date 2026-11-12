@@ -110,13 +110,14 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[CORS_CONFIGURATION.md](developer/infrastructure/CORS_CONFIGURATION.md)** - CORS du legacy (auto-prepend)
 - **[CACHE_BUSTING_STRATEGY.md](developer/infrastructure/CACHE_BUSTING_STRATEGY.md)** - Cache busting app2
 - **[CRON_DOCUMENTATION.md](developer/infrastructure/CRON_DOCUMENTATION.md)** - Tâches planifiées
-- **[MATOMO_CONFIG.md](developer/infrastructure/MATOMO_CONFIG.md)** - Configuration Matomo
+- **[MATOMO_CONFIG.md](developer/infrastructure/MATOMO_CONFIG.md)** - Configuration Matomo (legacy, app2, app3, app4 ; sites et variables)
 - **[WORDPRESS_DOCKER_DECISION.md](developer/infrastructure/WORDPRESS_DOCKER_DECISION.md)** - WordPress dans le conteneur PHP (décision)
 - Index détaillé : [infrastructure/README.md](developer/infrastructure/README.md)
 
 ### [Travaux en cours](developer/in-progress/)
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3) : phases 1 à 4 livrées sur `beta.*` (17/10/2026), prochaine étape la bascule de `www`
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
+- **[MATOMO_ROLLOUT_CHECKLIST.md](developer/in-progress/MATOMO_ROLLOUT_CHECKLIST.md)** - Matomo sans cookie : actions dans Matomo, en préprod, en prod, WordPress, à la bascule
 - **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
 - **[CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)** - Catégorie d'âge : tests, migration des données et déploiement dev → préprod → prod (commandes, résultats attendus)
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Plan de refonte du scoring live

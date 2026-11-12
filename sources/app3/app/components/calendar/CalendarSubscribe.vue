@@ -26,10 +26,10 @@ async function copyLink() {
   <section class="rounded-lg border border-line p-4.5" aria-labelledby="calendar-subscription-title" data-testid="calendar-subscription">
     <h2 id="calendar-subscription-title" class="mb-3 text-[1.75rem] leading-tight text-kpi-blue-700">{{ t('calendar.agenda') }}</h2>
     <p class="mb-3.5 text-sm text-muted">{{ t('calendar.agendaIntro') }}</p>
-    <a :href="webcalUrl(url)" class="flex w-full items-center justify-center gap-2 rounded-md bg-navy px-3.5 py-2.5 font-semibold text-white hover:bg-kpi-blue-700 dark:hover:bg-kpi-blue-900" data-testid="ics-subscribe">
+    <a :href="webcalUrl(url)" class="flex w-full items-center justify-center gap-2 rounded-md bg-navy px-3.5 py-2.5 font-semibold text-white hover:bg-kpi-blue-700 dark:hover:bg-kpi-blue-900" data-testid="ics-subscribe" data-analytics-category="Calendrier" data-analytics-action="Abonnement" :data-analytics-name="url">
       <UIcon name="i-heroicons-calendar-days" class="size-4.5" aria-hidden="true" />{{ t('calendar.subscribe') }}
     </a>
-    <button type="button" class="mt-2 flex w-full items-center justify-center rounded-md border border-line px-3.5 py-2.5 font-semibold hover:bg-wash" data-testid="ics-copy" @click="copyLink">
+    <button type="button" class="mt-2 flex w-full items-center justify-center rounded-md border border-line px-3.5 py-2.5 font-semibold hover:bg-wash" data-testid="ics-copy" data-analytics-category="Calendrier" data-analytics-action="Copie du lien" :data-analytics-name="url" @click="copyLink">
       {{ copied ? t('calendar.copied') : t('calendar.copy') }}
     </button>
     <label class="sr-only" for="ics-link">{{ t('calendar.linkLabel') }}</label>

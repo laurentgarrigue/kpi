@@ -10,9 +10,9 @@ const app2BaseUrl = process.env.APP2_BASE_URL ?? 'https://app.kpi.localhost'
 // (https://kpi.localhost → https://beta.kpi.localhost, https://www.kayak-polo.info → https://beta.kayak-polo.info).
 const publicSiteUrl = process.env.PUBLIC_SITE_URL ?? legacyBaseUrl.replace('://www.', '://').replace('://', '://beta.')
 
+// Matomo, cookie-free: off unless both are set (FEATURE_ANALYTICS.md § 4).
 const matomoUrl = process.env.MATOMO_URL ?? ''
 const matomoSiteId = process.env.MATOMO_SITE_ID ?? ''
-const matomoEnabled = process.env.MATOMO_ENABLED === 'true'
 
 // 'development' | 'preprod' | 'production'
 const appEnv = process.env.APP_ENV ?? (process.env.NODE_ENV === 'production' ? 'production' : 'development')
@@ -46,7 +46,6 @@ export default defineNuxtConfig({
       publicSiteUrl,
       matomoUrl,
       matomoSiteId,
-      matomoEnabled,
       appEnv
     }
   },

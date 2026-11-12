@@ -1,7 +1,9 @@
 # Mesure d'audience (Matomo)
 
-**Phase** : 5 (bascule), préparée pendant la beta — **Statut** : 📝 Brouillon — **Applications** : app3 (site
-public), app2 (résultats), app4 (administration)
+**Phase** : 5 (bascule), en service dès la beta — **Statut** : ✅ Validée (12/11/2026) — 🛠 En cours —
+**Applications** : app3 (site public), app2 (résultats), app4 (administration), legacy (Smarty)
+
+Mise en production : [MATOMO_ROLLOUT_CHECKLIST.md](../../developer/in-progress/MATOMO_ROLLOUT_CHECKLIST.md).
 
 ## 1. Objectif
 
@@ -14,143 +16,134 @@ Matomo (`https://matomo.kayak-polo.info`), **sans cookie** et sans appel à un t
 
 ## 2. Constat (12/11/2026)
 
-| Application | Site Matomo (prod) | État |
-|---|---|---|
-| Legacy public (`kp*.php`) | 1 | Smarty (`MATOMO_SITE_ID_PUBLIC`), avec cookie |
-| Legacy admin | 2 | Smarty (`MATOMO_SITE_ID_ADMIN`), avec cookie |
-| app2 `app.kayak-polo.info` | 6 | Plugin `app2/plugins/matomo.client.ts`, avec cookie |
-| app4 `/admin2` | 7 | Plugin `app4/plugins/matomo.client.ts` (copie de celui d'app2), avec cookie |
-| app3 `beta.kayak-polo.info` | — | **Aucun suivi** |
+| Site Matomo | Nom | Alimenté par | État avant correction |
+|---|---|---|---|
+| 1 | kayak-polo.info | Legacy public (`kp*.php`, Smarty) + WordPress (« Connect Matomo ») | avec cookie |
+| 2 | KPI back-office | Legacy admin (Smarty) | avec cookie |
+| 3 | PREPROD Kayak-polo.info | Legacy en préprod | app2/app4 coupés (`MATOMO_ENABLED=false`) |
+| 4 | DEV Kayak-polo.info | Legacy en dev (optionnel) | — |
+| 5 | KPI Old dev | — | inutilisé |
+| 6 | KPI App | app2 `app.kayak-polo.info` | avec cookie |
+| 7 | KPI Admin2 | app4 `/admin2` | avec cookie, **URL fausses** |
+| — | — | app3 `beta.kayak-polo.info` | **aucun suivi** |
 
-Défauts relevés en production sur le plugin app2/app4 :
+Défauts relevés en production sur le plugin commun à app2 et app4 :
 
-1. **app4 compte deux pages vues par visite de page** quand une redirection a lieu (ex. `/admin2/` → `/admin2/login`),
-   et **toutes les navigations internes sont enregistrées sans le préfixe `/admin2`** :
-   `setCustomUrl(to.fullPath)` reçoit `/login`, que Matomo résout en `https://www.kayak-polo.info/login`.
-   Les rapports de pages d'app4 sont donc faux et se mélangent avec des URL du site public.
-2. **Le titre envoyé est celui de la page précédente**, ou vide : `document.title` est lu dans
-   `router.afterEach`, avant que la nouvelle page ait mis son titre à jour (`action_name=` vide sur app2).
-3. **Cookies déposés** (`cookie=1`) sans bandeau de consentement, alors que la stratégie (§ 11) prévoit un mode
-   sans cookie.
-4. Le composable `useMatomo()` n'est utilisé nulle part ; les `.env.dist` indiquent les sites 1 et 2 alors que la
-   production utilise 6 et 7.
+1. **app4 compte deux pages vues** quand une redirection a lieu (`/admin2/` → `/admin2/login`), et **toutes les
+   navigations internes sont enregistrées sans le préfixe `/admin2`** : `setCustomUrl(to.fullPath)` reçoit `/login`,
+   que Matomo résout en `https://www.kayak-polo.info/login`.
+2. **Le titre envoyé est celui de la page précédente**, ou vide (`action_name=` sur app2) : `document.title` est lu
+   dans `router.afterEach`, avant que la nouvelle page ait rendu son titre.
+3. **Cookies déposés** (`cookie=1`) sans bandeau de consentement.
+4. `useMatomo()` n'était utilisé nulle part ; les `.env.dist` indiquaient les sites 1 et 2 au lieu de 6 et 7.
 
-> Sur app2, les deux appels identiques visibles dans l'onglet Réseau (même `r`, même `pv_id`) sont **une seule
-> requête** : elle apparaît deux fois parce qu'elle traverse le service worker de la PWA (ligne marquée ⚙ dans
-> les outils de développement). Matomo n'enregistre qu'une page vue.
+> Sur app2, les deux appels identiques de l'onglet Réseau (même `r`, même `pv_id`) sont **une seule requête**
+> vue deux fois parce qu'elle traverse le service worker de la PWA. Matomo n'enregistre qu'une page vue.
 
-## 3. Architecture
+## 3. Décisions (12/11/2026)
 
-Un seul traceur, dans le layer partagé :
+- **app3 a son propre site Matomo** (« KPI Site public »), alimenté dès la beta. Le site 1 garde son historique et
+  continue de mesurer le legacy public et WordPress jusqu'à leur retrait. Raisons : URL entièrement différentes
+  (rapports de pages non comparables ligne à ligne), changement du comptage des visiteurs uniques avec le passage
+  sans cookie, double comptage des visiteurs passant d'un site à l'autre pendant la beta. La comparaison se fait sur
+  les indicateurs globaux (tableau de bord « Tous les sites ») avec une **annotation** à la date de la bascule.
+- **Sans cookie partout** : app2, app3, app4, legacy Smarty et WordPress.
+- **Préprod** : toutes les applications envoient vers le site 3. **Dev** : suivi coupé (valeurs vides).
+
+## 4. Architecture
 
 | Élément | Emplacement | Rôle |
 |---|---|---|
-| `utils/matomo.ts` | `sources/kpi-layer/app/` | Fonctions pures : configuration → commandes `_paq` (initialisation, page vue, 404, recherche). Testées unitairement. |
-| `plugins/matomo.client.ts` | `sources/kpi-layer/app/` | Charge `matomo.js`, envoie une page vue par page affichée. Inactif si l'URL ou le site n'est pas configuré. |
-| `composables/useMatomo.ts` | `sources/kpi-layer/app/` | `trackEvent`, `trackSiteSearch`, `trackNotFound` pour les pages. Sans effet si le suivi est inactif ou côté serveur. |
+| `utils/matomo.ts` | `sources/kpi-layer/app/` | Logique pure (navigateur injecté) : configuration → commandes `_paq`, page vue dédupliquée, 404, recherche, événements. |
+| `plugins/matomo.client.ts` | `sources/kpi-layer/app/` | Charge `matomo.js`, envoie une page vue à chaque `page:finish`, écoute les clics sur les éléments `data-analytics-*`. |
+| `composables/useMatomo.ts` | `sources/kpi-layer/app/` | `trackNotFound`, `trackSiteSearch`, `trackEvent` pour les pages. Sans effet côté serveur ou si le suivi est coupé. |
 
-app3 le reçoit par le layer. **app2 et app4 sont corrigés dès maintenant** en remplaçant leur plugin par une copie
-du code du layer (mêmes fonctions, mêmes tests) ; ils passeront au layer en phase 6 avec le reste.
+app3 les reçoit par le layer. **app2 et app4 utilisent une copie identique** de `utils/matomo.ts` et
+`plugins/matomo.client.ts` (vérifiée par un test) jusqu'à leur adoption du layer en phase 6.
 
-## 4. Configuration
+Legacy Smarty : chaque gabarit et `utyGetMatomoScript()` envoient `disableCookies` avant la page vue. WordPress : réglage
+du module « Connect Matomo » (checklist).
 
-Toute la configuration passe par `runtimeConfig.public.matomo` (`url`, `siteId`). **Le suivi est actif si et
-seulement si les deux sont renseignés** : pas de troisième variable « enabled ».
+## 5. Configuration
 
-| Application | Variables | Dev | Préprod | Prod |
-|---|---|---|---|---|
-| app3 (exécution, conteneur) | `NUXT_PUBLIC_MATOMO_URL`, `NUXT_PUBLIC_MATOMO_SITE_ID` | vides (inactif) | site préprod (3) | **nouveau site** (voir § 8) |
-| app2 (build, `.env.*`) | `MATOMO_URL`, `MATOMO_SITE_ID` | vides | 3 | 6 |
-| app4 (build, `.env`) | `MATOMO_URL`, `MATOMO_SITE_ID` | vides | 3 | 7 |
+Clés `runtimeConfig.public.matomoUrl` et `matomoSiteId`. **Le suivi est actif si et seulement si les deux sont
+renseignés** ; `MATOMO_ENABLED` est supprimé.
 
-Pour app3, les deux valeurs viennent de `docker/.env` (`MATOMO_URL`, `APP3_MATOMO_SITE_ID`, vides par défaut dans
-`docker/.env.dist`) et sont passées au conteneur par les fichiers compose préprod et prod. C'est une exception à la
-règle « aucune nouvelle variable » de SITE_PLATFORM.md § 3 : le numéro de site ne se déduit pas du domaine.
-`MATOMO_ENABLED` disparaît d'app2 et app4.
+| Application | Où | Variables | Dev | Préprod | Prod |
+|---|---|---|---|---|---|
+| app3 | `docker/.env` → conteneur (exécution) | `MATOMO_URL`, `APP3_MATOMO_SITE_ID` (→ `NUXT_PUBLIC_MATOMO_URL`, `NUXT_PUBLIC_MATOMO_SITE_ID`) | vides | 3 | nouveau site |
+| app2 | `sources/app2/.env.preprod`, `.env.production` (build) | `MATOMO_URL`, `MATOMO_SITE_ID` | vides | 3 | 6 |
+| app4 | `sources/app4/.env` (build) | `MATOMO_URL`, `MATOMO_SITE_ID` | vides | 3 | 7 |
+| Legacy | `sources/commun/MyParams.php` | `MATOMO_SERVER_URL`, `MATOMO_SITE_ID_PUBLIC`, `MATOMO_SITE_ID_ADMIN` | 4 | 3 | 1, 2 |
 
-## 5. Comportement
+`MATOMO_URL` vaut `https://matomo.kayak-polo.info`. Pour app3, c'est une exception à la règle « aucune nouvelle
+variable » de SITE_PLATFORM.md § 3 : le numéro de site ne se déduit pas du domaine.
 
-### 5.1 Initialisation (toutes les applications)
-- Commandes envoyées avant toute page vue : `disableCookies`, `setTrackerUrl`, `setSiteId`, `enableLinkTracking`,
-  `enableHeartBeatTimer` (temps passé sur la dernière page), extensions de téléchargement + `ics`.
-- `matomo.js` est chargé une seule fois, en asynchrone, depuis `{url}/matomo.js` ; s'il est bloqué (bloqueur de
-  publicité), le site fonctionne normalement.
-- Rien n'est exécuté côté serveur (SSR) : aucune requête vers Matomo depuis Nitro.
+## 6. Comportement
 
-### 5.2 Pages vues
-- **Une seule page vue par page affichée**, y compris au premier chargement et après une redirection.
-- Déclenchement à la fin du rendu de la page (`page:finish`), après la mise à jour de l'en-tête, pour que le
-  **titre soit celui de la nouvelle page**.
-- URL envoyée : `window.location.href` **complète** (avec le préfixe de base, `/admin2` pour app4, et la langue
-  `/en` pour app3) ; référent : l'URL de la page précédente pour une navigation interne.
-- Les changements limités à la query ou au hash d'une même page (onglets, filtres) **ne** génèrent **pas** de
-  page vue. Exception : la page de recherche d'app3 (§ 5.4).
+### 6.1 Initialisation
+- Avant toute page vue : `disableCookies`, `setTrackerUrl`, `setSiteId`, `addDownloadExtensions` (`ics`),
+  `enableLinkTracking` (liens sortants et téléchargements), `enableHeartBeatTimer` (temps passé sur la dernière page).
+- `matomo.js` est chargé une fois, en asynchrone ; s'il est bloqué, l'application fonctionne normalement.
+- Rien n'est exécuté côté serveur (SSR).
 
-### 5.3 Pages introuvables (app3)
-- La page d'erreur 404 envoie une page vue au titre conventionnel Matomo
-  `404/URL = {chemin encodé}/From = {référent encodé}`, qui alimente le rapport « Pages introuvables ».
-- Les autres erreurs (500…) envoient un événement `Erreur` / `{code}` / `{chemin}`.
+### 6.2 Pages vues
+- **Une page vue par page affichée**, envoyée à la fin du rendu (`page:finish`) puis après le rendu de l'en-tête :
+  le titre est celui de la nouvelle page. Une redirection ne produit que la page finale.
+- URL : `window.location.href` **complète** (préfixe `/admin2`, langue `/en`). Référent : la page précédente pour une
+  navigation interne, `document.referrer` pour la première.
+- Même origine et même chemin = même page : un changement de query ou de hash (onglet, filtre) n'est pas une page vue.
 
-### 5.4 Recherche (app3)
-- La page `/search?q=` envoie `trackSiteSearch(q, false, {nombre total de résultats})` à la place de la page vue :
-  rapport « Recherche interne » (mots-clés, recherches sans résultat).
+### 6.3 Erreurs (app3)
+- 404 : page vue au titre `404/URL = {chemin encodé}/From = {référent encodé}` (rapport « Pages introuvables »).
+- Autres erreurs : événement `Erreur` / `{code}` / `{chemin}`.
 
-### 5.5 Événements (app3)
-Limités à ce qui n'est pas déjà couvert par les liens et téléchargements :
+### 6.4 Recherche (app3)
+- `/search?q=` envoie `trackSiteSearch(q, catégorie filtrée ou false, nombre de résultats)` **à la place** de la page
+  vue (`definePageMeta({ analytics: 'manual' })`), une fois par mot-clé et par filtre.
 
-| Catégorie | Action | Nom |
-|---|---|---|
-| `Calendrier` | `Abonnement ICS` | URL du flux (copie du lien d'abonnement) |
-| `Partage` | réseau (`facebook`, `copier`…) | chemin de l'article |
-| `Langue` | `fr` / `en` | page de départ |
+### 6.5 Événements (app3)
+Déclarés sur l'élément cliqué par `data-analytics-category`, `-action`, `-name` :
 
-## 6. Vie privée
+| Catégorie | Action | Nom | Élément |
+|---|---|---|---|
+| `Direct` | `Suivre en direct` | URL app2 visée | Boutons « Suivre en direct » (accueil, compétition, événement, groupe) |
+| `Calendrier` | `Abonnement` / `Copie du lien` | URL du flux ICS | Bloc « Dans votre agenda » (le téléchargement `.ics` est compté comme téléchargement) |
+| `Partage` | `facebook`, `email`… / `copie` / `natif` | URL de l'article | Bouton « Partager » |
+| `Langue` | `fr` / `en` | — | Sélecteur de langue |
 
-- Aucun cookie (`disableCookies`), aucun identifiant utilisateur (`setUserId` non utilisé, y compris dans app4).
-- Côté serveur Matomo (configuration, hors code) : anonymisation de l'IP sur 2 octets, suppression des journaux
-  bruts au-delà de 13 mois, respect de « Do Not Track » désactivé (sans objet sans cookie), exclusion des IP de
-  l'équipe si souhaité. Ces réglages conditionnent l'exemption de consentement de la CNIL.
-- La page « Mentions légales / Données personnelles » d'app3 mentionne la mesure d'audience et propose le
-  désabonnement (iframe d'opt-out Matomo ou lien équivalent).
+## 7. Vie privée
 
-## 7. Critères d'acceptation
+- Aucun cookie, aucun identifiant utilisateur (`setUserId` jamais utilisé, y compris dans app4).
+- Côté Matomo (configuration) : IP anonymisée sur 2 octets, suppression des journaux bruts au-delà de 13 mois. Avec
+  l'absence de cookie, ces réglages permettent l'exemption de consentement de la CNIL.
+- La page « Données personnelles » d'app3 mentionne la mesure d'audience et propose l'opposition (iframe d'opt-out).
+
+## 8. Critères d'acceptation
 
 | ID | Critère |
 |---|---|
 | ANA-01 | Sans URL ou sans numéro de site, aucun script Matomo n'est chargé et aucune commande n'est envoyée. |
-| ANA-02 | Avec la configuration, `matomo.js` est chargé une seule fois et `disableCookies`, `setTrackerUrl`, `setSiteId` précèdent la première page vue. |
+| ANA-02 | Avec la configuration, `matomo.js` est chargé une fois et `disableCookies`, `setTrackerUrl`, `setSiteId` précèdent la première page vue. |
 | ANA-03 | Le premier chargement d'une page produit exactement une page vue. |
-| ANA-04 | Une navigation suivie d'une redirection (ex. route protégée → connexion) produit exactement une page vue, celle de la page finale. |
+| ANA-04 | Une navigation suivie d'une redirection produit exactement une page vue, celle de la page finale. |
 | ANA-05 | L'URL envoyée contient le préfixe de base de l'application (`/admin2/login` pour app4). |
 | ANA-06 | Le titre envoyé est celui de la page affichée, pas celui de la précédente. |
 | ANA-07 | Après une navigation interne, le référent est l'URL de la page précédente. |
 | ANA-08 | Un changement de query ou de hash sur la même page ne produit pas de page vue. |
-| ANA-09 | Le rendu serveur (SSR) d'app3 ne contient aucun appel à Matomo et fonctionne si `window` est absent. |
+| ANA-09 | Le rendu serveur (SSR) d'app3 ne contient aucun appel à Matomo. |
 | ANA-10 | La page 404 d'app3 envoie le titre `404/URL = …/From = …`. |
-| ANA-11 | La page de recherche envoie une recherche interne avec le mot-clé et le nombre de résultats, sans page vue en double. |
+| ANA-11 | La page de recherche envoie une recherche interne avec le mot-clé, le filtre et le nombre de résultats, sans page vue en double. |
 | ANA-12 | Les fichiers `.ics` sont comptés comme téléchargements. |
-| ANA-13 | Les événements du § 5.5 sont envoyés avec les catégories, actions et noms indiqués. |
-| ANA-14 | app2 et app4 utilisent le même code (copie du layer) et satisfont ANA-01 à ANA-08 (tests dans app4 ; app2 n'a pas de lanceur de tests, sa copie est vérifiée identique à celle du layer). |
+| ANA-13 | Les événements du § 6.5 sont envoyés avec les catégories, actions et noms indiqués. |
+| ANA-14 | app2 et app4 utilisent une copie identique du code du layer. |
+| ANA-15 | Les gabarits legacy envoient `disableCookies` avant la page vue. |
 
-## 8. Questions ouvertes
-
-1. **Site Matomo d'app3 : réutiliser le site 1 (legacy public) ou en créer un nouveau ?**
-   Recommandation : **nouveau site**, à alimenter dès maintenant depuis `beta.kayak-polo.info` :
-   - les URL changent complètement (`/competitions/2026/N1H` au lieu de `kpresultats.php?…`) : les rapports de
-     pages ne sont de toute façon pas comparables ligne à ligne ;
-   - le passage sans cookie change le comptage des visiteurs uniques : mêler les deux modes dans un même site
-     fausserait la courbe au lieu de la rendre continue ;
-   - pendant la beta, les deux sites coexistent : un même site compterait deux fois les visiteurs qui passent de
-     l'un à l'autre ;
-   - la comparaison se fait sur les indicateurs globaux (visites, actions, durée, pages par visite) dans le tableau
-     de bord « Tous les sites », avec une **annotation** à la date de la bascule sur les deux sites. Le site 1 garde
-     son historique et continue de mesurer les pages legacy jusqu'à leur retrait (phase 6).
-2. WordPress (« Connect Matomo ») envoie-t-il aussi vers le site 1 ? À vérifier : si oui, l'historique du site 1
-   couvre déjà « www » dans son ensemble, ce qui renforce l'intérêt d'un site séparé pour app3.
-3. Événements du § 5.5 : la liste convient-elle, ou faut-il en ajouter (ex. clic sur « Suivre en direct » vers app2) ?
+Vérification en navigateur (12/11/2026, builds locaux, Matomo simulé) : app4 `/admin2/` → `/admin2/login` = 1 page vue
+avec `/admin2` ; app3 accueil → navigation → redirection, recherche, 404 et rendu serveur conformes.
 
 ## 9. Hors périmètre
 
 - Tableau de bord Matomo intégré à app4.
 - Mesure côté serveur (journaux Traefik) et suivi de l'API api2.
-- Legacy Smarty : inchangé jusqu'à son retrait (phase 6).
+- Événements dans app2 et app4 (pages vues seulement).

@@ -8,9 +8,9 @@ const backendBaseUrl = process.env.BACKEND_BASE_URL ?? 'https://kpi.localhost'
 // Public website (app3): explanation page of the match medals (FEATURE_MATCH_MEDALS.md § 8).
 const publicSiteUrl = process.env.PUBLIC_SITE_URL ?? 'https://beta.kpi.localhost'
 
+// Matomo, cookie-free: off unless both are set (FEATURE_ANALYTICS.md § 4).
 const matomoUrl = process.env.MATOMO_URL ?? ''
 const matomoSiteId = process.env.MATOMO_SITE_ID ?? ''
-const matomoEnabled = process.env.MATOMO_ENABLED === 'true'
 
 // 'development' | 'preprod' | 'production' — même convention qu'app4.
 // Sert au bandeau « préprod expérimentale » (Phase 7 CI/CD) : il ne s'active
@@ -58,7 +58,6 @@ export default defineNuxtConfig({
       publicSiteUrl,
       matomoUrl,
       matomoSiteId,
-      matomoEnabled,
       appEnv
     }
   },

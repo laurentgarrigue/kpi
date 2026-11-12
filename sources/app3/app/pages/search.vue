@@ -31,6 +31,18 @@ useSeoMeta({
   title: () => (query.value ? t('search.resultsFor', { query: query.value }) : t('search.title')),
   robots: 'noindex, nofollow',
 })
+
+// Audience: a site search instead of a page view, once per keyword and category (FEATURE_ANALYTICS.md § 5.4, ANA-11).
+definePageMeta({ analytics: 'manual' })
+const { trackSiteSearch } = useMatomo()
+const searchHit = computed(() => (query.value && view.value ? { keyword: query.value, category: kind.value, count: view.value.total } : null))
+onMounted(() => {
+  watch(() => (searchHit.value ? `${searchHit.value.keyword}|${searchHit.value.category}` : null), () => {
+    if (searchHit.value) {
+      trackSiteSearch(searchHit.value.keyword, searchHit.value.category, searchHit.value.count)
+    }
+  }, { immediate: true })
+})
 </script>
 
 <template>
