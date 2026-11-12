@@ -25,7 +25,9 @@ DOC/communication/visuels/
 ├── captures/                    captures haute définition (PNG)
 ├── gabarits/carrousel-feature.html   gabarit de carrousel 1080×1350
 ├── exports/                     livrables : PNG des slides, MP4 des Reels
-└── reels/frise-match/           projet Remotion (1 projet = 1 Reel, FR + EN)
+└── reels/
+    ├── frise-match/             Reel « Le match minute par minute » (captures animées)
+    └── installation-app/        Reel d'installation (cartes d'étapes + enregistrement Playwright hors ligne)
 ```
 
 ## 3. Outils et pièges de l'environnement
@@ -96,58 +98,56 @@ cp out/*.mp4 ../../exports/                          # `out/` est ignoré par gi
 
 ## 7. Reel en enregistrement d'écran (skill `playwright-recording`)
 
-Pour les Reels de démonstration (installation de l'application sur iPhone/Android, navigation, mode hors ligne). Procédure d'après le skill ; **non testée ici** à la date de rédaction, à valider sur le premier Reel concerné.
+Procédure **testée** sur le Reel d'installation (`reels/installation-app/`, script `scripts/record-offline.ts`). À copier pour tout Reel de démonstration.
 
-**Installation** (dans un projet Remotion, par exemple `reels/<nom>/`) :
+**Ce que Playwright peut et ne peut pas enregistrer**
+- Il enregistre **la page web** (l'application bord de terrain, le site public), y compris le **mode hors ligne** (`context.setOffline(true)`).
+- Il **ne peut pas** enregistrer l'interface native d'iOS ou d'Android (feuille « Partager » de Safari, menu de Chrome, écran d'accueil du téléphone). Pour ces étapes, on dessine des cartes d'étapes dans Remotion (numéro + icône SVG + texte) : ce ne sont pas des captures réelles. Pour un rendu 100 % réel, il faut un enregistrement d'écran fait à la main sur un vrai téléphone.
+
+**Installation** (dans le projet Remotion du Reel) :
 
 ```bash
-npm install -D playwright tsx
-npx playwright install chromium
+npm install -D --save-exact playwright tsx
+npx playwright install chromium-headless-shell   # la version du navigateur doit correspondre à la version de Playwright
 ```
 
-**Script `scripts/record.ts`** (squelette adapté à KPI, format téléphone) :
+Le cache `~/.cache/ms-playwright` peut contenir une autre version : en cas d'erreur « Executable doesn't exist », relancer la commande ci-dessus.
+
+**Écrire le script** : partir de `reels/installation-app/scripts/record-offline.ts`. Contexte testé :
 
 ```ts
-import { chromium } from "playwright";
-
-const browser = await chromium.launch({ slowMo: 80 });
 const context = await browser.newContext({
-  viewport: { width: 540, height: 960 },        // ratio 9:16
+  viewport: { width: 540, height: 960 },          // 9:16
   deviceScaleFactor: 2,
   locale: "fr-FR",
   recordVideo: { dir: "./recordings", size: { width: 540, height: 960 } },
 });
-const page = await context.newPage();
-
-await page.goto("https://app.preprod.kayak-polo.info/event/242");
-await page.waitForURL((u) => u.pathname === "/");
-await page.waitForTimeout(1500);
-await page.getByRole("link", { name: "Matchs Programme et résultats" }).click();
-await page.waitForTimeout(2000);
-// ... scénario : filtre (§ 4), ouverture d'une feuille de match, défilement de la frise
-
-await context.close();   // le fichier .webm n'est écrit qu'à la fermeture
-await browser.close();
 ```
 
-Lancer : `npx tsx scripts/record.ts`.
+Lancer : `npx tsx scripts/record-offline.ts` (le fichier est renommé en `recordings/offline.webm`).
 
-**Règles** :
-- Mêmes précautions qu'au § 4 : données publiques, arbitres masqués, jamais le bloc « Médailles » avant la révélation. Pour une **vidéo**, l'écran entier est enregistré : contrôler en début de script qu'aucune médaille n'est affichée (voir § 1) et arrêter l'enregistrement si c'est le cas.
-- `recordVideo.size` = taille du viewport, sinon la vidéo est redimensionnée.
-- Pauses (`waitForTimeout`) de 1 à 2 s entre les gestes : ce sont les temps de lecture.
-- Le curseur n'apparaît pas par défaut : injecter un curseur et un effet de clic (voir le skill, section « Cursor Highlighting »). Tout élément injecté est enregistré dans la vidéo.
-- Fermer la bannière de cookies et les fenêtres éventuelles avant de lancer l'enregistrement.
-- La vidéo se nomme au hasard dans `recordings/` : la récupérer par `page.video().path()` et la renommer.
+**Pièges rencontrés**
+- **Pas de `await` de premier niveau** avec `tsx` (erreur `ERR_REQUIRE_ASYNC_MODULE`) : envelopper dans `(async () => { ... })();`.
+- **Écrire la vidéo** : elle n'existe qu'après `context.close()` ; la récupérer avec `page.video().path()` dans un `finally`.
+- **Curseur visible** : injecté par `addInitScript` (disque bleu, rouge au clic), mais Playwright clique **instantanément** : la fonction `tap()` du script déplace d'abord la souris (`steps: 18`), pause, puis clique.
+- **Filtre des matchs** : mêmes règles qu'au § 4 (entonnoir à `mouse.click(80, 84)`, cases par `getByText(label, { exact: true })`). La bascule « Voir les arbitres » se trouve en remontant de chaque `input[type=checkbox]` jusqu'à un ancêtre dont le texte est exactement « Voir les arbitres » (le panneau contient aussi les cases des catégories et des équipes).
+- **Arbitres dans la feuille de match** : la ligne « Arbitres : ... » s'affiche quand même ; le script la **floute** (`filter: blur(7px)` sur la ligne entière, repérée par un `TreeWalker` sur les nœuds texte, juste après le chargement de la feuille). Le script échoue si rien n'est flouté.
+- **Garde-fou médailles** : le script lève une erreur si le texte de la page contient « médaille » ; l'enregistrement est alors à jeter.
+- **Hors ligne** : après `setOffline(true)`, l'application affiche l'icône de réseau barrée et les toasts « Hors connexion » / « Données en Cache ». Naviguer ensuite **dans l'application** (bouton « Retour »), pas par un `goto`. Seules les pages déjà consultées en ligne sont disponibles.
+- **Chronologie** : un enregistrement d'environ 20 s. Le Reel n'en garde que l'extrait utile (`OFFLINE_CLIP_START_SECONDS`) ; vérifier les temps en extrayant des images (ci-dessous).
+- **Définition** : la vidéo est en 540×960 (taille CSS), agrandie dans Remotion. Dans un cadre de téléphone de 600 px de large, le rendu reste correct.
 
-**Intégration dans Remotion** :
+**Conversion et contrôle** (pas de `ffmpeg` système : utiliser celui de Remotion, qui inclut libx264) :
 
 ```bash
-ffmpeg -i recordings/xxx.webm -c:v libx264 -crf 20 -movflags faststart public/demos/<nom>.mp4
-# sans ffmpeg installé : npx remotion ffmpeg -i ... (ffmpeg embarqué dans Remotion)
+npx remotion ffmpeg -y -i recordings/offline.webm -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags faststart public/demos/offline.mp4
+npx remotion ffprobe -v error -show_entries format=duration -of csv=p=0 recordings/offline.webm    # durée
+npx remotion ffmpeg -y -ss 11 -i public/demos/offline.mp4 -frames:v 1 out/frames/f11.png           # une image à t = 11 s
 ```
 
-Puis, dans la composition : `<OffthreadVideo src={staticFile("demos/<nom>.mp4")} />` dans une `<Sequence>`, avec les sous-titres incrustés FR ou EN (texte `TEXTS`) et la fin « URL + QR code » du modèle (plan § 8). Durée de la vidéo : `ffprobe -v error -show_entries format=duration -of csv=p=0 fichier.mp4`, × 30 pour les images.
+Le filtre `tile=` de ffmpeg échoue dans cette version : assembler les planches-contact avec Pillow (`PIL.Image`).
+
+**Intégration dans Remotion** : `<OffthreadVideo src={staticFile("demos/offline.mp4")} startFrom={secondes * fps} muted />` dans une `<Sequence>`, cadré dans un cadre de téléphone (bordure bleue, coins arrondis).
 
 ## 8. Check-list avant publication
 
@@ -158,3 +158,9 @@ Puis, dans la composition : `<OffthreadVideo src={staticFile("demos/<nom>.mp4")}
 - [ ] Lien avec les paramètres `mtm_*`, QR code lisible.
 - [ ] Texte FR relu, texte EN relu (vocabulaire du kayak-polo international).
 - [ ] Sous-titres présents sur les Reels (lecture sans son).
+
+### Version anglaise des enregistrements
+
+`npx tsx scripts/record-offline.ts en` enregistre l'application en anglais (cookie `i18n_redirected=en` + locale `en-US`) : libellés « Games », « Show refs », « Timeline », « Back », messages « Offline » / « Using Cached Data », ligne « Referees : » floutée. Convertir ensuite en `public/demos/offline-en.mp4`. Le nom de domaine d'un texte à étapes ne doit jamais être coupé : utiliser `withDomain()` (Composition.tsx).
+
+Capture de la frise en anglais : `cd reels/installation-app && npx tsx scripts/capture-frise.ts en` → `captures/bord-de-terrain-frise-match-en.png` (recadrer le pied « v1.x » à la main). Le Reel `frise-match` choisit la capture selon la langue (`SHOTS` dans `Composition.tsx`).

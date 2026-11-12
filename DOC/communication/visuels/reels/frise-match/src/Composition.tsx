@@ -146,7 +146,11 @@ const Hook: React.FC<FriseProps> = ({ lang }) => {
 // La capture (1479×1536) est affichée en largeur 920 ; elle se dévoile de haut en bas :
 // d'abord la frise des périodes, puis les événements un par un
 const SHOT_WIDTH = 920;
-const SHOT_HEIGHT = Math.round((SHOT_WIDTH * 1536) / 1479);
+// Capture propre à chaque langue (interface de l'application dans la langue de la vidéo)
+const SHOTS = {
+  fr: { file: "bord-de-terrain-frise-match.png", width: 1479, height: 1536 },
+  en: { file: "bord-de-terrain-frise-match-en.png", width: 1524, height: 1430 },
+} as const;
 const TIMELINE_SHARE = 0.38; // part haute de la capture occupée par la frise graphique
 
 const Frise: React.FC<FriseProps> = ({ lang }) => {
@@ -154,6 +158,8 @@ const Frise: React.FC<FriseProps> = ({ lang }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const enter = useEnter(0);
+  const shot = SHOTS[lang];
+  const shotHeight = Math.round((SHOT_WIDTH * shot.height) / shot.width);
 
   const revealed = interpolate(
     frame,
@@ -181,7 +187,7 @@ const Frise: React.FC<FriseProps> = ({ lang }) => {
         style={{
           marginTop: 110,
           width: SHOT_WIDTH,
-          height: SHOT_HEIGHT,
+          height: shotHeight,
           borderRadius: 36,
           overflow: "hidden",
           border: `8px solid ${BLEU_FONCE}`,
@@ -192,8 +198,8 @@ const Frise: React.FC<FriseProps> = ({ lang }) => {
         }}
       >
         <Img
-          src={staticFile("bord-de-terrain-frise-match.png")}
-          style={{ width: SHOT_WIDTH, height: SHOT_HEIGHT, display: "block" }}
+          src={staticFile(shot.file)}
+          style={{ width: SHOT_WIDTH, height: shotHeight, display: "block" }}
         />
       </div>
     </AbsoluteFill>
