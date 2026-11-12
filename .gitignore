@@ -213,3 +213,8 @@ sources/app4/tests/playwright/screenshots/*
 
 # app3 design mockups: generated preview (DOC/specs/public/maquettes/src/build.py), never deployed
 sources/app3/public/maquettes/
+
+# Communication visuals (Remotion projects): dependencies and renders
+DOC/communication/**/node_modules/
+DOC/communication/**/out/
+DOC/communication/**/recordings/
