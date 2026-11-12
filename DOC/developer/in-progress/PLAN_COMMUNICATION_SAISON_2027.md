@@ -90,7 +90,7 @@ du jeudi, § 9). Aux plénières et à la formation, on distingue clairement **�
 | Accueil **« À venir »** (prochains rendez-vous, badge « En cours ») | « Le prochain tournoi en un coup d'œil » | Story |
 | Mode **Compétitions** et lien direct par catégorie (`/group/2027/N1H`) | « Suis tout le championnat, pas seulement une journée » | Carrousel |
 | Fiche équipe et **Progression** (classements, tableaux) | « Le parcours de ton équipe » | Carrousel |
-| **QR code** de l'événement | « Un scan et tout le gymnase suit les scores » | Affiche A4 pour les organisateurs ; affiches FR/EN aux Europe |
+| **QR code** de l'événement | « Un scan et tout le plan d'eau suit les scores » | Affiche A4 pour les organisateurs ; affiches FR/EN aux Europe |
 | **Installation** sur l'écran d'accueil, **hors ligne** | « Pas de réseau au bord du bassin ? Elle marche quand même » | Reel tutoriel iPhone + Android, FR puis EN |
 | **Thème sombre**, **français / anglais** | « Mode sombre » / « Follow in English » | Stories |
 

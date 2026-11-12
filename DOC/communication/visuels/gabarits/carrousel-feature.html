@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Gabarit carrousel Instagram — 1080×1350</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Charte FFCK univers Compétition (PLAN_COMMUNICATION_SAISON_2027.md § 8) */
+  :root {
+    --bleu: #69b9e6; --bleu-fonce: #357b9c;
+    --rouge: #c94a4c; --rouge-fonce: #882831;
+    --noir: #1e1e1c; --gris: #c6c7c7;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #888; display: flex; flex-direction: column; gap: 40px; align-items: center; padding: 40px; }
+  .slide {
+    width: 1080px; height: 1350px; position: relative; overflow: hidden;
+    background: var(--noir); color: #fff;
+    font-family: Raleway, "Agency FB", system-ui, sans-serif;
+    display: flex; flex-direction: column; padding: 80px 80px 70px;
+  }
+  .slide::before { /* bandeau bleu en haut */
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 16px;
+    background: linear-gradient(90deg, var(--bleu-fonce), var(--bleu));
+  }
+  .kicker { color: var(--bleu); font-weight: 800; font-size: 34px; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { font-size: 84px; line-height: 1.04; font-weight: 800; margin: 20px 0 14px; }
+  h1 em { font-style: normal; color: var(--bleu); }
+  .sub { font-size: 40px; font-weight: 500; color: var(--gris); max-width: 860px; line-height: 1.3; }
+  .shot {
+    flex: 1; margin: 36px auto 0; min-height: 0;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+  /* Capture cadrée sur toute la largeur, coupée en bas avec un fondu : la capture reste lisible */
+  .shot img {
+    height: 100%; width: 860px; max-width: 100%; object-fit: cover; object-position: top;
+    border-radius: 28px 28px 0 0; border: 6px solid var(--bleu-fonce); border-bottom: 0;
+    box-shadow: 0 24px 60px rgba(0,0,0,.55);
+    -webkit-mask-image: linear-gradient(#000 82%, transparent);
+            mask-image: linear-gradient(#000 82%, transparent);
+  }
+  #slide-2 .shot img { width: 640px; }
+  footer { display: flex; justify-content: space-between; align-items: center; font-size: 32px; color: var(--gris); }
+  footer b { color: #fff; }
+  .pill { background: var(--rouge); color: #fff; font-weight: 800; padding: 10px 26px; border-radius: 40px; font-size: 30px; }
+  .qr { width: 150px; height: 150px; background: #fff; padding: 8px; border-radius: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Slide 1 : accroche -->
+<section class="slide" id="slide-1">
+  <div class="kicker">L'application bord de terrain</div>
+  <h1>Le match<br><em>minute par minute</em></h1>
+  <p class="sub">Chaque but, chaque carton, période par période. Touche un score pour ouvrir la feuille de match.</p>
+  <div class="shot"><img src="../captures/bord-de-terrain-frise-match.png" alt="Frise chronologique d'un match dans l'application bord de terrain"></div>
+  <footer><span><b>app.kayak-polo.info</b></span><span class="pill">#KPIsaison2027</span></footer>
+</section>
+
+<!-- Slide 2 : suite (liste des matchs) -->
+<section class="slide" id="slide-2">
+  <div class="kicker">Tous les matchs</div>
+  <h1>Les scores <em>en direct</em></h1>
+  <p class="sub">Un scan du QR code et tout le plan d'eau suit les matchs.</p>
+  <div class="shot"><img src="../captures/bord-de-terrain-liste-matchs.png" alt="Liste des matchs dans l'application bord de terrain"></div>
+  <footer><span><b>app.kayak-polo.info</b></span><img class="qr" src="../captures/qr-application-bord-de-terrain.png" alt="QR code de l'application"></footer>
+</section>
+
+</body>
+</html>
