@@ -5,6 +5,8 @@ import {
   findMenuLink,
   isActiveLink,
   isMenuGroup,
+  MEDALS_LINK_ID,
+  withoutLink,
   resolveMenu,
   resolveMenuLink,
   stripLocalePrefix,
@@ -121,6 +123,14 @@ describe('findMenuLink', () => {
 
   it('returns undefined for an unknown id', () => {
     expect(findMenuLink(MAIN_MENU, 'unknown')).toBeUndefined()
+  })
+})
+
+describe('withoutLink', () => {
+  it('MED-MENU: removes the medals entry from its group and keeps the others', () => {
+    const menu = withoutLink(MAIN_MENU, MEDALS_LINK_ID)
+    expect(findMenuLink(menu, MEDALS_LINK_ID)).toBeUndefined()
+    expect(findMenuLink(menu, 'history')).toBeDefined()
   })
 })
 

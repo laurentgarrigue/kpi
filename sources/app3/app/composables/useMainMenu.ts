@@ -1,5 +1,5 @@
 import { withQuery } from 'ufo'
-import { MAIN_MENU, isActiveLink, resolveMenu, stripLocalePrefix, withEditorialMenu, type EditorialMenuEntry, type ResolvedLink } from '~/utils/navigation'
+import { MAIN_MENU, MEDALS_LINK_ID, withoutLink, isActiveLink, resolveMenu, stripLocalePrefix, withEditorialMenu, type EditorialMenuEntry, type ResolvedLink } from '~/utils/navigation'
 import { cmsLanguageQuery } from '~/utils/news'
 import { PREFIXED_LOCALES } from '~~/shared/locales'
 
@@ -20,8 +20,15 @@ export async function useMainMenu() {
     () => api2<EditorialMenuEntry[]>(withQuery('/menu', cmsLanguageQuery(locale.value))).catch(() => []),
   )
 
+  // Nothing published on app2 nor app3 (surface `public` = app2 OR app3): the explanation page is pointless (MED-MENU).
+  const { data: hasMedals } = await useAsyncData(
+    'medals-published',
+    () => api2<{ items: unknown[] }>('/medals/catalog').then(catalog => catalog.items.length > 0).catch(() => false),
+  )
+  const menu = computed(() => hasMedals.value ? MAIN_MENU : withoutLink(MAIN_MENU, MEDALS_LINK_ID))
+
   const items = computed(() => withEditorialMenu(
-    resolveMenu(MAIN_MENU, {
+    resolveMenu(menu.value, {
       locale: locale.value,
       legacyBaseUrl,
       app2BaseUrl,
