@@ -281,10 +281,47 @@ Raccourcir le JWT pour voir les renouvellements : `JWT_TTL=180` dans `sources/ap
 
 Remettre `JWT_TTL` à sa valeur et `make api2_restart` après la recette.
 
-### 1b-ter.3 Rollback
+> **Vérification du cookie sans attendre l'expiration** (utile en préprod/prod, où `JWT_TTL=86400`) : DevTools →
+> Application → Local Storage → remplacer la valeur de `kpi_admin_token` par `x`, puis recharger. app4 doit
+> appeler `/auth/refresh-session` et rester connectée (AUTH-SC-06). Ne marche que dans les **8 h** qui suivent
+> la connexion (durée fixe du cookie refresh, corrigée au lot B).
 
-Revert du commit app4 et régénération (`make app4_generate_*`). Les jetons et cookies restent compatibles :
-aucune déconnexion n'est provoquée par le retour arrière.
+### 1b-ter.3 Fenêtre de déploiement
+
+- **Jamais pendant une compétition** : app4 est une PWA en *prompt-to-update* ; un onglet déjà ouvert garde
+  l'ancien code jusqu'au clic sur « Recharger ». Déployer la veille, et demander aux tables de marque de
+  recharger avant la première rencontre.
+- Aucun changement api2 ni base : pas de migration, pas d'`api2_restart` attendu.
+
+### 1b-ter.4 🌐 Pré-production (merge sur `main` → déploiement automatique)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, workflow « Deploy preprod » vert | ☐ |
+| 2 | 🌐 Actions → run « Deploy preprod » → étape « Déployer via SSH » | `nuxt generate` d'app4 joué par le wrapper (~7 min) | ☐ |
+| 3 | ⌨️ app4 préprod : bandeau « Recharger » → recharger | Nouvelle version chargée | ☐ |
+| 4 | ⌨️ Se connecter avec un compte **profil 9**, DevTools → Réseau filtré sur `auth/` | Login OK ; aucun `/auth/refresh` dans la foulée (JWT de 24 h, rien à renouveler) | ☐ |
+| 5 | ⌨️ Vérification du cookie (encadré ci-dessus) | `/auth/refresh-session` en 200, pas de `/login` | ☐ |
+| 6 | ⌨️ Même chose avec un mandat actif | Le mandat est toujours sélectionné après rechargement | ☐ |
+| 7 | ⌨️ Ouvrir une console Scoring, saisir un but, exporter un PDF | Tout passe, pas de 401 dans la console DevTools | ☐ |
+| 8 | ⌨️ Déconnexion | `/auth/logout`, retour sur `/login` ; un rechargement **ne** restaure **pas** la session | ☐ |
+| 9 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas de rafale de `401` sur `/auth/refresh-session` | ☐ |
+
+### 1b-ter.5 🌐 Production (après validation préprod, hors compétition)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour | Tag `vX.Y.Z` poussé | ☐ |
+| 2 | 🌐 Actions → « Deploy production » → Run workflow depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert, app4 régénérée | ☐ |
+| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☐ |
+| 4 | ⌨️ Refaire les étapes 3 à 6 et 8 de la préprod (sans saisie Scoring sur un vrai match) | Mêmes résultats | ☐ |
+| 5 | 🖥 `cd /data/kpi && make api2_logs lines=200` le lendemain | Pas de rafale de `401` sur `/auth/refresh` ni `/auth/refresh-session` | ☐ |
+| 6 | Après la première journée de compétition : demander aux tables de marque s'il y a eu un retour sur `/login` | Aucun (sinon : heure, poste, onglets ouverts → ticket) | ☐ |
+
+### 1b-ter.6 Rollback
+
+Revert du commit app4, merge, redéploiement (le wrapper régénère app4). Les jetons et cookies restent
+compatibles : aucune déconnexion n'est provoquée par le retour arrière.
 
 ---
 
