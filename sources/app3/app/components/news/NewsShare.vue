@@ -5,6 +5,7 @@ import { shareLinks } from '~/utils/news'
 // Share an article (PAGE_NEWS.md § 2.2.6, NEWS-05): the system share sheet (Web Share API) when the browser has
 // one, otherwise plain links to the networks — no third-party script. Without JavaScript, `<details>` shows the links.
 const props = defineProps<{ url: string, title: string }>()
+const { trackEvent } = useMatomo()
 const links = computed(() => shareLinks(props.url, props.title))
 const canCopy = ref(false)
 const copied = ref(false)
@@ -20,6 +21,7 @@ async function onToggle(event: MouseEvent) {
   event.preventDefault()
   try {
     await navigator.share({ url: props.url, title: props.title })
+    trackEvent({ category: 'Partage', action: 'natif', name: props.url })
   } catch {
     // Closed by the visitor: nothing to do.
   }
@@ -39,13 +41,13 @@ async function copy() {
     </summary>
     <ul class="absolute z-20 mt-1 min-w-48 rounded border border-line bg-surface py-1 shadow-lg">
       <li v-for="link in links" :key="link.id">
-        <a :href="link.href" v-bind="link.id === 'email' ? {} : NEW_TAB_ATTRS" class="block px-3 py-1 hover:bg-wash" :data-share="link.id">
+        <a :href="link.href" v-bind="link.id === 'email' ? {} : NEW_TAB_ATTRS" class="block px-3 py-1 hover:bg-wash" :data-share="link.id" data-analytics-category="Partage" :data-analytics-action="link.id" :data-analytics-name="url">
           {{ $t(`news.shareOn.${link.id}`) }}
           <span v-if="link.id !== 'email'" class="sr-only">{{ $t('a11y.newTab') }}</span>
         </a>
       </li>
       <li v-if="canCopy">
-        <button type="button" class="block w-full px-3 py-1 text-left hover:bg-wash" data-testid="share-copy" @click="copy">
+        <button type="button" class="block w-full px-3 py-1 text-left hover:bg-wash" data-testid="share-copy" data-analytics-category="Partage" data-analytics-action="copie" :data-analytics-name="url" @click="copy">
           {{ copied ? $t('news.copied') : $t('news.copyLink') }}
         </button>
       </li>

@@ -13,6 +13,8 @@ const switchLocalePath = useSwitchLocalePath()
           :lang="item.language"
           :aria-current="item.code === locale ? 'true' : undefined"
           :title="item.name"
+          data-analytics-category="Langue"
+          :data-analytics-action="item.code"
           class="rounded px-2 py-1 uppercase"
           :class="item.code === locale ? 'bg-kpi-blue-500 text-white' : 'text-kpi-blue-600 hover:bg-kpi-blue-50'"
         >

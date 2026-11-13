@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { describe, expect, it, vi } from 'vitest'
+import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import NavMain from '~/components/nav/NavMain.vue'
 import NavGroup from '~/components/nav/NavGroup.vue'
 import SiteLanguageSwitcher from '~/components/site/SiteLanguageSwitcher.vue'
+import { fakeApi2 } from '../fixtures/api2'
+
+// The menu hides /medals when api2 publishes no medal (MED-MENU): the fixture catalogue has some.
+const { api2 } = vi.hoisted(() => ({ api2: vi.fn() }))
+mockNuxtImport('useApi2', () => () => api2)
+api2.mockImplementation(fakeApi2)
 
 const group = {
   id: 'competitions',

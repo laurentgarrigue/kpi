@@ -54,7 +54,7 @@ Chaque évolution de design ou de menu se fait donc deux fois, dans deux technol
 - **Logique déjà écrite pour l'admin** : classements (`AdminRankingsController`), statistiques (`AdminStatsController`), clubs (`AdminClubsController`), compétitions, journées → à **factoriser en services** pour les exposer en lecture publique.
 - **Composants app2** : `GameList`, `GameSheet`, `Charts`, `ChartGroup`, `ChartChptRanking`, `ChartCpRanking`, `TeamName`, `EventQrCode`, `LanguageSwitcher`.
 - **Composants app4** : `ClubMap.client.vue`, `Pagination`, `Card`, `PageHeader`, sélecteurs de compétition, upload d'images.
-- **Mercure** (FrankenPHP) et **Matomo** (déjà câblé dans app2/app4).
+- **Mercure** (FrankenPHP) et **Matomo** (câblé dans app2/app4, à reprendre dans le layer : [FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md)).
 
 ---
 
@@ -199,7 +199,7 @@ La **bascule** (phase 5) se réduit alors à faire pointer `www` vers app3, inve
 | Galerie photo | 🟡 éventuellement | Bloc **Galerie** dans les articles et pages (album de médias, visionneuse) |
 | Rank Math SEO | ✅ implicite | Champs SEO par contenu (titre, description, image OG, slug) + sitemap + schema.org |
 | WP Multilang | ✅ FR/EN | Champs FR/EN par contenu, repli sur FR si EN vide |
-| Connect Matomo | ✅ | Matomo déjà câblé dans le socle Nuxt |
+| Connect Matomo | ✅ | Traceur Matomo sans cookie dans `kpi-layer` ([FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md)) |
 | Feature a Page Widget, Classic Widgets | Accueil | **Blocs d'accueil** : à la une, bandeau d'alerte, partenaires, prochains événements |
 | Enable Media Replace | Confort | « Remplacer le fichier » dans la médiathèque (même URL) |
 | Email Log | Suivi des mails | Journal des e-mails envoyés par les formulaires (table dédiée, consultable dans app4) |

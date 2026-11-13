@@ -382,6 +382,9 @@ services:
             - NUXT_PUBLIC_API2_BASE_URL=https://${KPI_DOMAIN_NAME}/api2
             - NUXT_PUBLIC_LEGACY_BASE_URL=https://www.${KPI_DOMAIN_NAME}
             - NUXT_PUBLIC_APP2_BASE_URL=https://app.${KPI_DOMAIN_NAME}
+            # Matomo, cookie-free (FEATURE_ANALYTICS.md § 4): off while either is empty.
+            - NUXT_PUBLIC_MATOMO_URL=${MATOMO_URL:-}
+            - NUXT_PUBLIC_MATOMO_SITE_ID=${APP3_MATOMO_SITE_ID:-}
             - NUXT_APP3_PURGE_TOKEN=${APP3_PURGE_TOKEN:-}
         healthcheck:
             test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/healthz || exit 1"]
