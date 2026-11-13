@@ -15,16 +15,18 @@ export async function useMainMenu() {
   const api2 = useApi2()
   const { legacyBaseUrl, app2BaseUrl } = useRuntimeConfig().public
 
-  const { data: editorial } = await useAsyncData(
+  // Both requests start before the first `await`: the Nuxt context is lost after it in a plain composable (SSR 500).
+  const editorialRequest = useAsyncData(
     () => `editorial-menu:${locale.value}`,
     () => api2<EditorialMenuEntry[]>(withQuery('/menu', cmsLanguageQuery(locale.value))).catch(() => []),
   )
 
   // Nothing published on app2 nor app3 (surface `public` = app2 OR app3): the explanation page is pointless (MED-MENU).
-  const { data: hasMedals } = await useAsyncData(
+  const medalsRequest = useAsyncData(
     'medals-published',
     () => api2<{ items: unknown[] }>('/medals/catalog').then(catalog => catalog.items.length > 0).catch(() => false),
   )
+  const [{ data: editorial }, { data: hasMedals }] = await Promise.all([editorialRequest, medalsRequest])
   const menu = computed(() => hasMedals.value ? MAIN_MENU : withoutLink(MAIN_MENU, MEDALS_LINK_ID))
 
   const items = computed(() => withEditorialMenu(
