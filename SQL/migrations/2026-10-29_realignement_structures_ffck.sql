@@ -1,8 +1,8 @@
 -- Remise à plat : réalignement des structures fédérales et des codes régionaux sur le PCE
 -- Date : 2026-10-29
--- Spec : DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md (« Script de remise à plat »)
+-- Spec : DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md (« Script de remise à plat »)
 -- ADR  : DOC/developer/reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md
--- Déroulé par environnement : DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md
+-- Déroulé par environnement : DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md
 --
 -- Exécution UNIQUE par environnement, APRÈS un import PCE fait avec l'import corrigé, et après un dump :
 --   make db_migrate file=SQL/migrations/2026-10-29_realignement_structures_ffck.sql

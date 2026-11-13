@@ -1,9 +1,14 @@
 # Matomo — checklist de mise en service
 
-**Créée le** : 12 novembre 2026 — **Spec** : [FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md) —
-**Doc d'exploitation** : [MATOMO_CONFIG.md](../infrastructure/MATOMO_CONFIG.md)
+> **✅ Close le 14/11/2026** : en service (PR #395). Les cases n'ont pas été cochées au fil de l'eau. Contrôle du 14/11 :
+> la page d'accueil de `beta.kayak-polo.info` embarque le traceur `matomo.kayak-polo.info`, site **8**. Le § 7
+> (« À la bascule de `www` ») est repris dans la phase 5 de
+> [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../../in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 
-> **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : 📊 interface Matomo
+**Créée le** : 12 novembre 2026 — **Spec** : [FEATURE_ANALYTICS.md](../../../specs/public/FEATURE_ANALYTICS.md) —
+**Doc d'exploitation** : [MATOMO_CONFIG.md](../../infrastructure/MATOMO_CONFIG.md)
+
+> **Convention** (comme le [runbook](../../infrastructure/DEPLOYMENT_RUNBOOK.md)) : 📊 interface Matomo
 > (`https://matomo.kayak-polo.info`, compte super-utilisateur) · 🖥 VPS (SSH) · 🌐 interface GitHub ·
 > 📝 WordPress (admin) · ✍️ app4 › Éditorial.
 
@@ -74,7 +79,7 @@ Si vous modifiez plus tard un `.env` d'app2 ou d'app4 sans changer le code : `ma
 | 3.2 | app2 | `sources/app2/.env.production` : `MATOMO_URL=https://matomo.kayak-polo.info`, `MATOMO_SITE_ID=6`, supprimer `MATOMO_ENABLED` | ☐ |
 | 3.3 | app4 | `sources/app4/.env` : `MATOMO_URL=https://matomo.kayak-polo.info`, `MATOMO_SITE_ID=7`, supprimer `MATOMO_ENABLED` | ☐ |
 | 3.4 | Legacy | `sources/commun/MyParams.php` : vérifier `'1'` (public), `'2'` (admin) | ☐ |
-| 3.5 | 🌐 Déployer | Actions › « Deploy production » › tag de la release ([runbook § 1.2](../infrastructure/DEPLOYMENT_RUNBOOK.md)) | ☐ |
+| 3.5 | 🌐 Déployer | Actions › « Deploy production » › tag de la release ([runbook § 1.2](../../infrastructure/DEPLOYMENT_RUNBOOK.md)) | ☐ |
 | 3.6 | Recréer le conteneur app3 | `make docker_prod_up` (seul le conteneur app3 est recréé) | ☐ |
 | 3.7 | Vider le cache Smarty | `rm -f sources/smarty/templates_c/*.php` | ☐ |
 | 3.8 | Contrôler les builds app2 et app4 | Si le déploiement a eu lieu avant l'édition des `.env` (3.2, 3.3) : `make app2_generate_production && make app4_generate_prod`, puis le `grep` de l'encadré du § 2 : il doit lister des fichiers. Navigateur : désinscrire le service worker d'app2 (outils de développement › Application) ou tester en navigation privée | ☐ |

@@ -22,7 +22,7 @@ Classement **par thème**, pas par type de document.
   [FIX_FEUILLE_MATCH_MULTI](php8/FIX_FEUILLE_MATCH_MULTI.md),
   [BUG_SQL_COMPET_ASTERISK](php8/BUG_SQL_COMPET_ASTERISK.md)
 
-## [pdf-exports/](pdf-exports/) - PDF et exports tableurs (✅ oct.-nov. 2025)
+## [pdf-exports/](pdf-exports/) - PDF et exports tableurs (✅ oct.-nov. 2025, Gotenberg nov. 2026)
 
 - [MIGRATION_FPDF_TO_MPDF.md](pdf-exports/MIGRATION_FPDF_TO_MPDF.md) - Plan FPDF → mPDF
 - [MIGRATION_FPDF_MYPDF_SUCCESS.md](pdf-exports/MIGRATION_FPDF_MYPDF_SUCCESS.md) - Bilan mPDF / wrapper MyPDF
@@ -32,6 +32,12 @@ Classement **par thème**, pas par type de document.
 - [QRCODE_MIGRATION.md](pdf-exports/QRCODE_MIGRATION.md) - Bibliothèque QR code
 - Correctifs : [FIX_CSV_EXPORT_OPENSPOUT](pdf-exports/FIX_CSV_EXPORT_OPENSPOUT.md),
   [FIX_MYPDF_OPEN_METHOD](pdf-exports/FIX_MYPDF_OPEN_METHOD.md)
+- [PDF_ROLLOUT_CHECKLIST.md](pdf-exports/PDF_ROLLOUT_CHECKLIST.md) - PDF Gotenberg, phases 0 à 5 : validation et
+  déploiement (clos le 14/11/2026 ; la phase 6 reste suivie dans [specs/PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 15)
+- [DOCUMENTS_MIGRATION.md](pdf-exports/DOCUMENTS_MIGRATION.md) - Premier plan de migration des PDF vers app4 (TCPDF/Dompdf),
+  remplacé par la spec Gotenberg
+- [LEGACY_PDF_STANDALONE_ACCESS.md](pdf-exports/LEGACY_PDF_STANDALONE_ACCESS.md) - Rustine : PDF legacy ouverts depuis admin2
+  par paramètres GET, rendue caduque par Gotenberg (liens signés, phase 0)
 
 ## [legacy-frontend/](legacy-frontend/) - Modernisation JS/CSS du legacy PHP (oct.-nov. 2025)
 
@@ -86,6 +92,8 @@ Pour l'usage courant : [guides/GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md) et
 - [MAKEFILE_COMPOSER_UPDATES.md](infrastructure/MAKEFILE_COMPOSER_UPDATES.md) - Makefile & Composer (2025-10)
 - [WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md](infrastructure/WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md) - WordPress vers le VPS (2025-11)
 - [MERGE_CHECKLIST_APP3_MEDIA.md](infrastructure/MERGE_CHECKLIST_APP3_MEDIA.md) - Suppression de l'ancien app3 + médias hors Git (clos le 06/10/2026)
+- [MATOMO_ROLLOUT_CHECKLIST.md](infrastructure/MATOMO_ROLLOUT_CHECKLIST.md) - Matomo sans cookie, mise en service (close le 14/11/2026 ;
+  les actions « à la bascule de `www` » sont reprises dans [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md))
 
 ## [features/](features/) - Fonctionnalités et correctifs applicatifs
 
@@ -96,6 +104,14 @@ Pour l'usage courant : [guides/GIT_WORKFLOW.md](../guides/GIT_WORKFLOW.md) et
 - [COMPETITION_TYPE_MULTI.md](features/COMPETITION_TYPE_MULTI.md) - Première doc MULTI, remplacée par
   [reference/features/COMPETITION_TYPE_MULTI_TECHNICAL.md](../reference/features/COMPETITION_TYPE_MULTI_TECHNICAL.md)
 - [PR_DESCRIPTION.md](features/PR_DESCRIPTION.md) - Description de PR (GestionOperations + upload d'images)
+- [REALIGNEMENT_STRUCTURES_FFCK.md](features/REALIGNEMENT_STRUCTURES_FFCK.md) - Réalignement CR/CD/Clubs et codes régionaux sur le PCE (clos en prod)
+- [REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md](features/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md) - Rollout checklist dev → préprod → prod de ce réalignement
+- [CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](features/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md) - Catégorie d'âge dérivée : tests, migration
+  des données et déploiement (close le 14/11/2026 ; spec [CATEGORIE_AGE.md](../../specs/CATEGORIE_AGE.md))
+- [MATCH_MEDALS_ROLLOUT_CHECKLIST.md](features/MATCH_MEDALS_ROLLOUT_CHECKLIST.md) - Médailles de match : tests et déploiement
+  (close le 14/11/2026 ; spec [FEATURE_MATCH_MEDALS.md](../../specs/public/FEATURE_MATCH_MEDALS.md))
+- [FIX_RANKING_CONSOLIDATED_PHASES.md](features/FIX_RANKING_CONSOLIDATED_PHASES.md) - Classement général et phases consolidées
+  (bugs A à D) et runbook de remédiation (clos le 14/11/2026)
 
 ## [audits/](audits/) - Audits et revues
 

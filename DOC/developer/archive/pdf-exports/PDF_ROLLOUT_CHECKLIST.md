@@ -1,9 +1,15 @@
 # PDF Gotenberg — checklist de validation et de déploiement par phase
 
-**Créée le** : 28 octobre 2026 · **Spec** : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) (§ 11 critères, § 12 phases,
+> **✅ Close le 14/11/2026** pour les phases 0 à 5 et les ajustements des 29/10 → 03/11 : en production (PR #361, #363,
+> #364, #387). Les cases n'ont pas été cochées au fil de l'eau. Contrôle du 14/11 sur `kayak-polo.info` :
+> `/api2/pdf/ranking` rend un `application/pdf`, `admin/FeuillePresence.php` sans session répond 403, `PdfMatchMulti.php`
+> redirige (301) vers app2. **Restent ouverts, suivis dans [PDF_GOTENBERG.md § 15](../../../specs/PDF_GOTENBERG.md)** :
+> les validations écrites des commissions (PDF-DOC-03 : feuille de présence, feuille de marque) et la phase 6.
+
+**Créée le** : 28 octobre 2026 · **Spec** : [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md) (§ 11 critères, § 12 phases,
 § 15 avancement) · **PR** : #361 (phases 0–1, fusionnée), #363 (phases 2–5)
 
-> **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev · 🖥 VPS (SSH) ·
+> **Convention** (comme le [runbook](../../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev · 🖥 VPS (SSH) ·
 > 🌐 interface GitHub. Cocher ☐ → ☑ au fil de l'eau ; une ligne qui échoue = on s'arrête et on corrige avant la suite.
 
 **Règle générale** : chaque phase se valide d'abord en local, puis en préprod, puis en production. Les pages legacy
@@ -107,7 +113,7 @@ make gotenberg_logs lines=20
 qu'au § 1.2 (`make docker_prod_up` si le conteneur `…_gotenberg` manque), lignes 3 à 9 du § 1.1 avec `B`/`L` de prod.
 
 **Rollback** : 🌐 PR de revert du merge → CI → merge (préprod) → release. En urgence préprod : `make last_merge_sha`
-puis `make preprod_rollback sha=…` ([runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md)).
+puis `make preprod_rollback sha=…` ([runbook § 4](../../infrastructure/DEPLOYMENT_RUNBOOK.md)).
 
 ---
 
@@ -217,7 +223,7 @@ garde le noyau en mémoire).
 
 ## Visuels de la compétition et langue (décisions du 2026-10-29, PR suivante)
 
-Spec : [PDF_GOTENBERG.md § 8.4.1](../../specs/PDF_GOTENBERG.md) et § 14. Choisir dans app4 (Compétitions → Visuels)
+Spec : [PDF_GOTENBERG.md § 8.4.1](../../../specs/PDF_GOTENBERG.md) et § 14. Choisir dans app4 (Compétitions → Visuels)
 une compétition **A** avec bandeau coché, une **B** avec logo coché sans bandeau, une **C** sans visuel, et cocher le
 sponsor de **A**.
 
@@ -251,7 +257,7 @@ ORDER BY Code_saison DESC, Code;"
 
 ## Ajustements du 2026-10-30 (même PR)
 
-Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 6.4, § 7.2 à § 7.4, § 8.4.1 et § 14. Choisir une compétition
+Spec : [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md) § 6.4, § 7.2 à § 7.4, § 8.4.1 et § 14. Choisir une compétition
 **N** d'une section Nationale ou Régionale, une **I** d'une autre section (internationale, tournoi…) et une coupe
 **K** (type CP) ; `$E` un événement à plusieurs compétitions.
 
@@ -272,7 +278,7 @@ Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 6.4, § 7.2 à § 7.4
 
 ## Ajustements du 2026-10-31 (même PR)
 
-Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14. Mêmes compétitions **N** (championnat),
+Spec : [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14. Mêmes compétitions **N** (championnat),
 **K** (coupe) qu'à la section précédente, et une compétition **M** de type MULTI.
 
 | # | Commande / action | Attendu | ☐ |
@@ -294,7 +300,7 @@ Spec : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 7.2, § 7.3 et § 14.
 
 ## Feuille de marque, nouvelle mise en page (2026-11-03)
 
-Spec : [PDF_GOTENBERG.md § 7.3.3](../../specs/PDF_GOTENBERG.md). Prérequis : `APP4_URL` dans `sources/api2/.env` est
+Spec : [PDF_GOTENBERG.md § 7.3.3](../../../specs/PDF_GOTENBERG.md). Prérequis : `APP4_URL` dans `sources/api2/.env` est
 l'adresse publique d'app4 de l'environnement (🖥 `grep APP4_URL sources/api2/.env`, attendu par exemple
 `https://kayak-polo.info/admin2`), puis `make api2_restart`.
 

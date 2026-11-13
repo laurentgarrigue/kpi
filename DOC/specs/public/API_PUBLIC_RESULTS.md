@@ -150,7 +150,7 @@ principal (PAGE_COMPETITIONS.md, PAGE_COMPETITION.md).
   les compétitions et journées publiées (API-04) ; fichiers de référence mis à jour dans le même commit
   (suppressions seulement).
 - **D-P2-2 — Liens PDF.** Les PDF publics doivent accepter leurs paramètres en GET, comme ceux appelés par
-  app4 ([LEGACY_PDF_STANDALONE_ACCESS.md](../../developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)).
+  app4 ([LEGACY_PDF_STANDALONE_ACCESS.md](../../developer/archive/pdf-exports/LEGACY_PDF_STANDALONE_ACCESS.md)).
   Vérification faite : les PDF publics utiles à app3 les acceptent déjà, la session n'étant qu'une valeur par
   défaut. app3 les appelle **toujours** avec `S` et `Compet` explicites, et `lang` :
 

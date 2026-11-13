@@ -1,13 +1,16 @@
 # Fix - Classement général et phases consolidées
 
+> **✅ Clos le 14/11/2026** : correctifs api2 et legacy en production. Le runbook de remédiation (fin du document) est
+> conservé pour l'historique ; ses chiffres viennent de la base de dev de septembre 2026.
+
 **Date** : 2026-09-01 (partie 1) · 2026-09-04 → 2026-09-07 (partie 2)
 **Type** : Bug fix, puis refonte de formule
-**Fonctionnalité concernée** : [Consolidation des phases](../reference/features/CONSOLIDATION_PHASES_CLASSEMENT.md)
+**Fonctionnalité concernée** : [Consolidation des phases](../../reference/features/CONSOLIDATION_PHASES_CLASSEMENT.md)
 **Fichiers corrigés** :
 - `sources/api2/src/Controller/AdminRankingsController.php`
 - `sources/admin/GestionClassement.php` (legacy)
 
-**Spécification** : [PAGE_CLASSEMENT.md](../../specs/PAGE_CLASSEMENT.md) §5 et §6
+**Spécification** : [PAGE_CLASSEMENT.md](../../../specs/PAGE_CLASSEMENT.md) §5 et §6
 
 **Sommaire** :
 

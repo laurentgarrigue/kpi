@@ -1,13 +1,17 @@
 # Médailles de match et statistiques de timeline — checklist de test et de déploiement
 
+> **✅ Close le 14/11/2026** : en production (PR #393). Contrôle du 14/11 sur `kayak-polo.info` : `/api2/medals/catalog`
+> et `/api2/medals/icons/goal.svg` répondent 200. Lignes restées ☐ sans vérification tracée : § M.2 n° 5 (onglet Stats
+> d'app3), 8c (endpoints équipe en `curl`), 11 (dévalidation / revalidation) ; § M.6 (production) non coché.
+
 **Créée le** : 10 novembre 2026 — fonction transverse : api2, app3 (beta), app2 et app4 (hors des phases du site public).
-Convention des pictogrammes (⌨️ 🖥 🌐 📦) et règle de non-régression : voir [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
+Convention des pictogrammes (⌨️ 🖥 🌐 📦) et règle de non-régression : voir [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../../in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
 
 ---
 
 
-Spec : [FEATURE_MATCH_MEDALS](../../specs/public/FEATURE_MATCH_MEDALS.md) (`MED-*`), maquettes validées le 09/11/2026.
-Branche : `claude/optimistic-cray-9nl0r6`. Statut : 🛠 implémentée, **à déployer**. Touche api2, app3 (beta), app2 et
+Spec : [FEATURE_MATCH_MEDALS](../../../specs/public/FEATURE_MATCH_MEDALS.md) (`MED-*`), maquettes validées le 09/11/2026.
+Branche : `claude/optimistic-cray-9nl0r6`. Statut : ✅ **en production** (checklist close le 14/11/2026). Touche api2, app3 (beta), app2 et
 app4 : l'impact hors beta est réel (feuille de match d'app2, page d'admin, recalcul à la validation).
 
 ### M.0 Décisions (08 et 09/11/2026)
@@ -78,7 +82,7 @@ app4, `ci-summary` vert. ☑
 | # | Action | ☑ |
 |---|---|---|
 | 1 | `sources/app2/.env.preprod` / `.env.production` : `PUBLIC_SITE_URL` (`https://beta.preprod.kayak-polo.info`, `https://beta.kayak-polo.info` ; `www` après la bascule) | ☑ |
-| 2 | Cron toutes les 10 min, depuis le dépôt **vps-manager** sur le VPS : `make install-cron-match-medals-sync-preprod` (préprod, h:05, h:15…) puis `make install-cron-match-medals-sync-prod` (prod, h:00, h:10…) ; la commande affiche la crontab, la ligne `app:match-medals:sync` doit y figurer ([CRON_DOCUMENTATION](../infrastructure/CRON_DOCUMENTATION.md) § 4) | ☑ |
+| 2 | Cron toutes les 10 min, depuis le dépôt **vps-manager** sur le VPS : `make install-cron-match-medals-sync-preprod` (préprod, h:05, h:15…) puis `make install-cron-match-medals-sync-prod` (prod, h:00, h:10…) ; la commande affiche la crontab, la ligne `app:match-medals:sync` doit y figurer ([CRON_DOCUMENTATION](../../infrastructure/CRON_DOCUMENTATION.md) § 4) | ☑ |
 
 ### M.5 🖥 Préprod (`/data/kpi_preprod`)
 
@@ -107,4 +111,4 @@ Vérifier une feuille de match d'app2, l'onglet Stats d'une compétition termin�
 | Une médaille ou une statistique pose problème | app4 › Médailles : décocher app2 / app3 ou passer l'élément à « Retiré » (effet immédiat, sans déploiement) |
 | Un seuil est mal réglé | app4 › Médailles › Saisons (profil 1) : corriger ou « Rétablir les valeurs d'origine », puis « Recalculer » la saison courante (ou fichier `config/packages/match_medals.yaml` + déploiement + `make api2_match_medals_compute season=<saison>`) |
 | Calcul en erreur ou trop lent | Retirer le cron ; les pages publiques n'affichent rien sans données (aucune erreur) |
-| Régression d'app2 / app4 | Procédure standard du [runbook § 4](../infrastructure/DEPLOYMENT_RUNBOOK.md) ; les nouvelles tables peuvent rester en place |
+| Régression d'app2 / app4 | Procédure standard du [runbook § 4](../../infrastructure/DEPLOYMENT_RUNBOOK.md) ; les nouvelles tables peuvent rester en place |

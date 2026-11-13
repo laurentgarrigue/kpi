@@ -11,7 +11,7 @@ J1 fixée aux 13-14 mars, tournoi de Corbeil-Essonnes) — **Statut** : 📝 Pro
 [PAGE_SCRUTINEERING.md](../../specs/PAGE_SCRUTINEERING.md), [PAGE_PRESENCE.md](../../specs/PAGE_PRESENCE.md),
 [PAGE_SCORING.md](../../specs/PAGE_SCORING.md), [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md),
 [FEATURE_MATCH_MEDALS.md](../../specs/public/FEATURE_MATCH_MEDALS.md),
-[REALIGNEMENT_STRUCTURES_FFCK.md](REALIGNEMENT_STRUCTURES_FFCK.md)
+[REALIGNEMENT_STRUCTURES_FFCK.md](../archive/features/REALIGNEMENT_STRUCTURES_FFCK.md)
 
 > 🤫 **Les médailles de match sont gardées secrètes jusqu'à leur révélation, la semaine qui suit la J1** :
 > absentes des plénières, du kit de relais, du kit formateurs et de toute publication avant (§ 3.4).
@@ -359,7 +359,7 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 | C12 | **Scrutineering en anglais** : relecture de l'interface app4 en anglais, guide bilingue | Interface traduite, à relire | 15 janv. | 5 févr. | Publications **EN** S6 |
 | C18 | **Accès « Contrôle équipement »** (profil 10, attribué par les profils 1-2) pour les juges arbitres de la J1 | À organiser | 26 févr. | **5 mars** | O5 |
 | C19 | **Gel des déploiements** les week-ends des plénières, de la formation et des tournois, et le week-end de la J1 (13-14 mars) ; pas de déploiement non urgent le vendredi qui précède | À convenir | 13 nov. | 20 nov. | Stabilité |
-| C48 | **Renommage des codes régionaux en prod** (script de remise à plat, [rollout checklist](REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md)) : régions prévenues aux plénières que les anciens liens ne sont pas redirigés, date communiquée par message direct | Dev validé le 29/10 | Annonce aux plénières ; renommage avant la reprise des compétitions régionales | Avant la 1re compétition régionale 2027 | Diapositive des plénières |
+| C48 | **Renommage des codes régionaux en prod** (script de remise à plat, [rollout checklist](../archive/features/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md)) : régions prévenues aux plénières que les anciens liens ne sont pas redirigés, date communiquée par message direct | Dev validé le 29/10 | Annonce aux plénières ; renommage avant la reprise des compétitions régionales | Avant la 1re compétition régionale 2027 | Diapositive des plénières |
 
 ### 7.5 bis Médailles de match (secret jusqu'à la révélation, semaine du 15 mars)
 

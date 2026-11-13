@@ -134,7 +134,7 @@ comptes du jeu scrutineering (`TADMIN`, `TVIEW`, `TDIV`, `TCLUB`, `TSCRUT`) et d
 ## Jeu « changer un code compétition » (RSF-03)
 
 Consommé par `tests/Integration/AdminChangeCompetitionCodeTest.php`
-([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)), qui renomme
+([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md)), qui renomme
 `TSTRN` en `TSTRX` (ou `TSTFAIL`). Chaque référence existe en `2999` (saison active) et en `2998` (passée), pour
 distinguer le mode « toutes saisons » du mode « saison active ».
 
@@ -161,7 +161,7 @@ garder les filtres de mandat en dernier.
 
 ## Fichier PCE de fixture (import PCE)
 
-Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)),
+Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md)),
 qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais dans
 `sources/api2/tests/Fixtures/pce/pce-2999.txt` (seul `sources/` est monté dans le conteneur api2).
 

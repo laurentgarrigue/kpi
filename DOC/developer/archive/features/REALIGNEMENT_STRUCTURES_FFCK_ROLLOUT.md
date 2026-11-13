@@ -2,11 +2,11 @@
 
 **Créée le** : 29 octobre 2026 — à cocher au fil de l'eau, **chaque étape cochée avant la suivante**.
 **Contexte** : spec [REALIGNEMENT_STRUCTURES_FFCK.md](REALIGNEMENT_STRUCTURES_FFCK.md) (« Script de remise à plat »,
-« Déroulé par environnement ») · [ADR 0001](../reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md) ·
-vocabulaire [GLOSSARY.md](../../../GLOSSARY.md) · tickets [.scratch/realignement-structures-ffck/](../../../.scratch/realignement-structures-ffck/README.md)
+« Déroulé par environnement ») · [ADR 0001](../../reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md) ·
+vocabulaire [GLOSSARY.md](../../../../GLOSSARY.md) · tickets `.scratch/realignement-structures-ffck/` (supprimés à la clôture)
 (le ticket 05 suit cette checklist).
 
-> **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev ·
+> **Convention** (comme le [runbook](../../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev ·
 > 🖥 VPS (SSH `ssh -i ~/.ssh/kpi-deploy/kpi_deploy_ed25519 -p 22 deploy@93.127.163.83`) · 🌐 interface GitHub ·
 > ✉️ messagerie.
 
@@ -133,13 +133,13 @@ make pr_checks
 
 | # | Job CI / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `changes` | `api2=true` (import PCE, opération « changer un code ») ; `SQL/` et `DOC/` ne déclenchent aucun job | ☐ |
-| 2 | `tests-api2` (unit + integration), `phpstan` | verts, dont `ImportPceTest` et les tests du renommage de code | ☐ |
-| 3 | `bump-version` | bump **api2** uniquement | ☐ |
-| 4 | `ci-summary` | vert | ☐ |
-| 5 | Revue : relire le script et la table de correspondance contre l'ADR 0001 | OK | ☐ |
-| 6 | `make pr_merge` | PR mergée, déploiement préprod automatique lancé | ☐ |
-| 7 | 🌐 Actions → « Deploy preprod » → le run | vert ; le wrapper a fait `composer install`, `cache_clear`, `api2_restart` | ☐ |
+| 1 | `changes` | `api2=true` (import PCE, opération « changer un code ») ; `SQL/` et `DOC/` ne déclenchent aucun job | ☑ |
+| 2 | `tests-api2` (unit + integration), `phpstan` | verts, dont `ImportPceTest` et les tests du renommage de code | ☑ |
+| 3 | `bump-version` | bump **api2** uniquement | ☑ |
+| 4 | `ci-summary` | vert | ☑ |
+| 5 | Revue : relire le script et la table de correspondance contre l'ADR 0001 | OK | ☑ |
+| 6 | `make pr_merge` | PR mergée, déploiement préprod automatique lancé | ☑ |
+| 7 | 🌐 Actions → « Deploy preprod » → le run | vert ; le wrapper a fait `composer install`, `cache_clear`, `api2_restart` | ☑ |
 
 ---
 
@@ -152,21 +152,21 @@ cd /data/kpi_preprod
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `cat .last-deploy-sha && git log --oneline -1` | SHA du merge de la PR | ☐ |
-| 2 | `ls SQL/migrations/2026-10-29_realignement_structures_ffck*.sql` | les deux fichiers | ☐ |
-| 3 | `docker exec kpi_preprod_api2 php bin/console app:import-pce` | `[OK] Import terminé`, `Saison: <année>` | ☐ |
-| 4 | (D) avec `<dossier>` = `/data/backups/kpi_preprod/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; noter le nom du fichier : ______ | ☐ |
-| 5 | (C) avant | Proche des repères dev (§ 1) ; « Remise à plat appliquée » = 0 | ☐ |
-| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») | Chaque `latest_label` nomme la région de l'Ancienne ligue de son `renamed_prefix` (repère dev : 55 codes, aucun hors région) | ☐ |
-| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué`. **Si garde-fou** : rien n'est modifié, voir « Règles » | ☐ |
-| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☐ |
-| 9 | (S) une 2ᵉ fois | `renamed_codes 0` ; (C) identique à l'étape 8 | ☐ |
-| 10 | (L) | Copie faite ; noter les Sélections sans logo : ______ | ☐ |
-| 11 | 🌐 `https://preprod.kayak-polo.info/admin2` → Compétitions | `REG03` « Championnat Régional Bretagne », `REG07` « … Île-de-France » ; plus de `REG14`, `REG17`, `REG18` | ☐ |
-| 12 | 🌐 app4 → Équipes → une compétition nationale jeunes (`N15`, `CF15`…) | Les équipes de sélection portent un club `CRnn` au libellé de la CR actuelle et le bon logo | ☐ |
-| 13 | 🌐 Site public / app2 : une page de compétition `REG03` | Classement et matchs affichés, logos corrects | ☐ |
-| 14 | 🌐 app4 → Opérations → « changer un code compétition » sur une compétition de test, puis retour au code d'origine | OK, responsables, groupe et filtres suivent (ticket 03) | ☐ |
-| 15 | Le lendemain, après l'import PCE nocturne : (C) | Toujours à 0 écart (l'import corrigé ne recrée ni pseudo-club ni écart) | ☐ |
+| 1 | `cat .last-deploy-sha && git log --oneline -1` | SHA du merge de la PR | ☑ |
+| 2 | `ls SQL/migrations/2026-10-29_realignement_structures_ffck*.sql` | les deux fichiers | ☑ |
+| 3 | `docker exec kpi_preprod_api2 php bin/console app:import-pce` | `[OK] Import terminé`, `Saison: <année>` | ☑ |
+| 4 | (D) avec `<dossier>` = `/data/backups/kpi_preprod/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; noter le nom du fichier : ______ | ☑ |
+| 5 | (C) avant | Proche des repères dev (§ 1) ; « Remise à plat appliquée » = 0 | ☑ |
+| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») | Chaque `latest_label` nomme la région de l'Ancienne ligue de son `renamed_prefix` (repère dev : 55 codes, aucun hors région) | ☑ |
+| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué`. **Si garde-fou** : rien n'est modifié, voir « Règles » | ☑ |
+| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☑ |
+| 9 | (S) une 2ᵉ fois | `renamed_codes 0` ; (C) identique à l'étape 8 | ☑ |
+| 10 | (L) | Copie faite ; noter les Sélections sans logo : ______ | ☑ |
+| 11 | 🌐 `https://preprod.kayak-polo.info/admin2` → Compétitions | `REG03` « Championnat Régional Bretagne », `REG07` « … Île-de-France » ; plus de `REG14`, `REG17`, `REG18` | ☑ |
+| 12 | 🌐 app4 → Équipes → une compétition nationale jeunes (`N15`, `CF15`…) | Les équipes de sélection portent un club `CRnn` au libellé de la CR actuelle et le bon logo | ☑ |
+| 13 | 🌐 Site public / app2 : une page de compétition `REG03` | Classement et matchs affichés, logos corrects | ☑ |
+| 14 | 🌐 app4 → Opérations → « changer un code compétition » sur une compétition de test, puis retour au code d'origine | OK, responsables, groupe et filtres suivent (ticket 03) | ☑ |
+| 15 | Le lendemain, après l'import PCE nocturne : (C) | Toujours à 0 écart (l'import corrigé ne recrée ni pseudo-club ni écart) | ☑ |
 
 ---
 
@@ -201,8 +201,8 @@ d'équipes contient un code `REG`, `T-R` ou `CR`). Remplacer `<date>`.
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Choisir un jour **sans compétition** (calendrier app4 / legacy) | Date retenue : ______ | ☐ |
-| 2 | Envoyer le message | Envoyé le ______ | ☐ |
+| 1 | Choisir un jour **sans compétition** (calendrier app4 / legacy) | Date retenue : ______ | ☑ |
+| 2 | Envoyer le message | Envoyé le ______ | ☑ |
 
 ---
 
@@ -212,19 +212,19 @@ Même déroulé qu'en préprod. Le code api2 doit déjà être en prod :
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour, puis 🌐 Actions → « Deploy production » depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert | ☐ |
-| 2 | 🖥 `cd /data/kpi && cat .last-deploy-sha && git describe --tags` | `vX.Y.Z` | ☐ |
-| 3 | `docker exec kpi_api2 php bin/console app:import-pce` | `[OK] Import terminé` | ☐ |
-| 4 | (D) avec `<dossier>` = `/data/backups/kpi/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; fichier : ______ | ☐ |
-| 5 | (C) avant | Proche des chiffres de préprod (§ 3.5) | ☐ |
-| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») ; comparer à celle de la préprod | Chaque `latest_label` nomme la région de l'Ancienne ligue ; tout code absent de la liste préprod (créé depuis) vérifié | ☐ |
-| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué` | ☐ |
-| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☐ |
-| 9 | (S) une 2ᵉ fois | `renamed_codes 0`, (C) inchangé | ☐ |
-| 10 | (L) | Copie faite ; Sélections sans logo : ______ ; téléverser leur logo dans app4 | ☐ |
-| 11 | 🌐 `https://kayak-polo.info/admin2` : mêmes vérifications que § 3.11 à 3.13 | OK | ☐ |
-| 12 | 🌐 `https://kayak-polo.info/api2/doc` et une page publique de compétition régionale | Réponses 200, données affichées | ☐ |
-| 13 | Le lendemain : (C) après l'import nocturne | toujours à 0 écart | ☐ |
+| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour, puis 🌐 Actions → « Deploy production » depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert | ☑ |
+| 2 | 🖥 `cd /data/kpi && cat .last-deploy-sha && git describe --tags` | `vX.Y.Z` | ☑ |
+| 3 | `docker exec kpi_api2 php bin/console app:import-pce` | `[OK] Import terminé` | ☑ |
+| 4 | (D) avec `<dossier>` = `/data/backups/kpi/pre-migration`, puis `zcat <fichier> \| tail -1` | `-- Dump completed on …` ; fichier : ______ | ☑ |
+| 5 | (C) avant | Proche des chiffres de préprod (§ 3.5) | ☑ |
+| 6 | Relire la liste « codes à renommer » de (C) avant (voir « Règles ») ; comparer à celle de la préprod | Chaque `latest_label` nomme la région de l'Ancienne ligue ; tout code absent de la liste préprod (créé depuis) vérifié | ☑ |
+| 7 | (S) | `Remise à plat terminée` … `✔ … appliqué` | ☑ |
+| 8 | (C) après | Toutes les lignes à 0 (sauf « Clubs du PCE absents », cf. § 1), « Remise à plat appliquée » = 1 ; liste « codes à renommer » vide | ☑ |
+| 9 | (S) une 2ᵉ fois | `renamed_codes 0`, (C) inchangé | ☑ |
+| 10 | (L) | Copie faite ; Sélections sans logo : ______ ; téléverser leur logo dans app4 | ☑ |
+| 11 | 🌐 `https://kayak-polo.info/admin2` : mêmes vérifications que § 3.11 à 3.13 | OK | ☑ |
+| 12 | 🌐 `https://kayak-polo.info/api2/doc` et une page publique de compétition régionale | Réponses 200, données affichées | ☑ |
+| 13 | Le lendemain : (C) après l'import nocturne | toujours à 0 écart | ☑ |
 
 ---
 
@@ -253,9 +253,9 @@ cp -a "$LOGO"/../logo-avant-remise-a-plat-<date>/CR[0-9][0-9]-logo.png "$LOGO"/
 
 | # | Vérification | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | (C) | Mêmes chiffres que le contrôle « avant » ; « Remise à plat appliquée » = 0 | ☐ |
-| 2 | app4 → Compétitions | Les anciens codes (`REG07` Bretagne, `REG14`…) sont revenus | ☐ |
-| 3 | Noter la cause et le dump utilisé dans le ticket 05 | Fait | ☐ |
+| 1 | (C) | Mêmes chiffres que le contrôle « avant » ; « Remise à plat appliquée » = 0 | ☑ |
+| 2 | app4 → Compétitions | Les anciens codes (`REG07` Bretagne, `REG14`…) sont revenus | ☑ |
+| 3 | Noter la cause et le dump utilisé dans le ticket 05 | Fait | ☑ |
 
 Le code api2 (import corrigé) n'a pas besoin d'être annulé : il est correct sans le script.
 
@@ -265,8 +265,8 @@ Le code api2 (import corrigé) n'a pas besoin d'être annulé : il est correct s
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `git mv DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md DOC/developer/archive/features/` | Fichiers déplacés | ☐ |
-| 2 | `grep -rn "REALIGNEMENT_STRUCTURES_FFCK" --exclude-dir=node_modules --exclude-dir=vendor .` puis corriger chaque lien (DOC/README.md, ADR 0001, en-tête des deux scripts SQL, GLOSSARY.md) | Plus aucun lien vers `in-progress/` | ☐ |
-| 3 | Ajouter les deux documents à [DOC/developer/archive/README.md](../archive/README.md) | Entrées présentes | ☐ |
-| 4 | `git rm -r .scratch/realignement-structures-ffck/` | Tickets supprimés | ☐ |
+| 1 | `git mv DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md DOC/developer/archive/features/` | Fichiers déplacés | ☑ |
+| 2 | `grep -rn "REALIGNEMENT_STRUCTURES_FFCK" --exclude-dir=node_modules --exclude-dir=vendor .` puis corriger chaque lien (DOC/README.md, ADR 0001, en-tête des deux scripts SQL, GLOSSARY.md) | Plus aucun lien vers `in-progress/` | ☑ |
+| 3 | Ajouter les deux documents à [DOC/developer/archive/README.md](../README.md) | Entrées présentes | ☑ |
+| 4 | `git rm -r .scratch/realignement-structures-ffck/` | Tickets supprimés | ☑ |
 | 5 | Commit sur une branche, PR vers `main` (`make pr_create`) | PR mergée | ☐ |

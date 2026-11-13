@@ -1,7 +1,11 @@
 # Migration des Documents PDF vers App4
 
+> **📦 Archivé le 14/11/2026** : plan remplacé par [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md). La page Documents
+> d'app4 ouvre les documents api2 + Gotenberg (`usePdf`, qui convertit les anciens liens legacy). Le tableau « Statut
+> Migration » ci-dessous (🔴 À faire) est périmé ; l'inventaire des fichiers legacy est repris au § 7 de la spec.
+
 > **Mise à jour 2026-10-26** : le choix de librairie de la phase 1 ci-dessous (TCPDF/Dompdf) est remplacé par
-> **Gotenberg**, et le catalogue est consolidé : voir [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md).
+> **Gotenberg**, et le catalogue est consolidé : voir [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md).
 > L'inventaire ci-dessous reste la référence des fichiers legacy à remplacer.
 
 ## Inventaire Complet des Documents

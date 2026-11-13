@@ -1,8 +1,8 @@
 # Réalignement des structures fédérales et des codes régionaux sur le PCE
 
-> Statut : spec prête à implémenter. Vocabulaire : [GLOSSARY.md](../../../GLOSSARY.md).
-> Décision structurante : [ADR 0001](../reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md).
-> Tickets : [.scratch/realignement-structures-ffck/](../../../.scratch/realignement-structures-ffck/README.md).
+> Statut : spec prête à implémenter. Vocabulaire : [GLOSSARY.md](../../../../GLOSSARY.md).
+> Décision structurante : [ADR 0001](../../reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md).
+> Tickets : `.scratch/realignement-structures-ffck/` (supprimés à la clôture du chantier).
 
 ## Problem Statement
 

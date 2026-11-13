@@ -1,7 +1,10 @@
 # Spec : Rendre les pages PDF legacy autonomes pour admin2
 
+> **📦 Archivé le 14/11/2026** : rustine caduque. Les `admin/Feuille*.php` n'acceptent plus d'appel sans session ni lien
+> signé par api2 (phase 0 de [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md)), et app4 utilise les documents api2.
+
 > **Mise à jour 2026-10-26** : rustine transitoire. Ouvrir ces pages sans session les a rendues **accessibles sans
-> authentification** (données personnelles). Cible et colmatage : [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) §1.2 et phase 0.
+> authentification** (données personnelles). Cible et colmatage : [PDF_GOTENBERG.md](../../../specs/PDF_GOTENBERG.md) §1.2 et phase 0.
 
 ## Contexte
 

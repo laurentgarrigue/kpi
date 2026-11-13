@@ -6,7 +6,7 @@ Ce document explique comment configurer le tracking Matomo pour le projet KPI.
 
 Toutes les briques envoient vers `https://matomo.kayak-polo.info`, **sans cookie** (spec :
 [FEATURE_ANALYTICS.md](../../specs/public/FEATURE_ANALYTICS.md) ; mise en service :
-[MATOMO_ROLLOUT_CHECKLIST.md](../in-progress/MATOMO_ROLLOUT_CHECKLIST.md)).
+[MATOMO_ROLLOUT_CHECKLIST.md](../archive/infrastructure/MATOMO_ROLLOUT_CHECKLIST.md)).
 
 | Brique | Code | Configuration | Site prod | Préprod |
 |---|---|---|---|---|

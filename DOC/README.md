@@ -122,27 +122,22 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[TARGET_ARCHITECTURE.md](developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ Architecture cible et schéma fonctionnel de tous les chantiers (app2, app3, app4, scoring, incrustations, PDF, auth, infra) sur une page
 - **[PUBLIC_SITE_REDESIGN_STRATEGY.md](developer/in-progress/PUBLIC_SITE_REDESIGN_STRATEGY.md)** - Refonte du site public (WordPress + kp*.php → app3) : phases 1 à 4 livrées sur `beta.*` (17/10/2026), prochaine étape la bascule de `www`
 - **[PUBLIC_SITE_ROLLOUT_CHECKLIST.md](developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md)** - Site public : tests et déploiement de chaque phase (commandes, résultats attendus)
-- **[MATOMO_ROLLOUT_CHECKLIST.md](developer/in-progress/MATOMO_ROLLOUT_CHECKLIST.md)** - Matomo sans cookie : actions dans Matomo, en préprod, en prod, WordPress, à la bascule
-- **[PDF_ROLLOUT_CHECKLIST.md](developer/in-progress/PDF_ROLLOUT_CHECKLIST.md)** - PDF Gotenberg : validation et déploiement de chaque phase (commandes, résultats attendus)
-- **[CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md)** - Catégorie d'âge : tests, migration des données et déploiement dev → préprod → prod (commandes, résultats attendus)
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Refonte du scoring live : stratégie, décisions actées et plan en 9 lots (point de situation en §0)
 - **[SCORING_ROLLOUT_CHECKLIST.md](developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md)** - Scoring live : checklist de déploiement — remise à niveau dev, porte de validation, tests fonctionnels par lot, preprod/prod
-- **[DOCUMENTS_MIGRATION.md](developer/in-progress/DOCUMENTS_MIGRATION.md)** - Migration des documents PDF vers app4
-- **[LEGACY_PDF_STANDALONE_ACCESS.md](developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md)** - PDF legacy accessibles depuis admin2
-- **[FIX_RANKING_CONSOLIDATED_PHASES.md](developer/in-progress/FIX_RANKING_CONSOLIDATED_PHASES.md)** - ⚠️ Correctif classement : remédiations manuelles restantes
-- **[REALIGNEMENT_STRUCTURES_FFCK.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)** - Réalignement CR/CD/Clubs et codes régionaux sur le PCE (import corrigé + remise à plat ponctuelle)
-- **[REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md](developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK_ROLLOUT.md)** - Réalignement des structures FFCK : rollout checklist dev → préprod → prod (script de remise à plat, contrôle, rollback)
+- **[SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md](developer/in-progress/SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md)** - Étude : afficheurs de chronomètre de tir déportés (aide à la décision)
+- **[AUTH_HARDENING.md](developer/in-progress/AUTH_HARDENING.md)** - Durcissement de l'authentification : plan par phases (1a, 1b, 2 livrées ; appareils et TOTP à venir)
+- **[AUTH_HARDENING_ROLLOUT_CHECKLIST.md](developer/in-progress/AUTH_HARDENING_ROLLOUT_CHECKLIST.md)** - Durcissement de l'authentification : checklist de déploiement par phase
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
 - **[PLAN_COMMUNICATION_SAISON_2027.md](developer/in-progress/PLAN_COMMUNICATION_SAISON_2027.md)** - Plan de communication Facebook / Instagram de la saison 2027 (plénières, formation arbitre, J1, championnats d'Europe de Thury-Harcourt) : nouveautés app2, app3, app4 et règlement 2027-2030, chantiers et échéances
 
 ### [Archives](developer/archive/) — sujets traités
 Index détaillé : [archive/README.md](developer/archive/README.md)
 - **[php8/](developer/archive/php8/)** - Migration PHP 8.4, Smarty v4, correctifs associés
-- **[pdf-exports/](developer/archive/pdf-exports/)** - FPDF → mPDF, OpenTBS → OpenSpout, QR codes
+- **[pdf-exports/](developer/archive/pdf-exports/)** - FPDF → mPDF, OpenTBS → OpenSpout, QR codes, déploiement des PDF Gotenberg
 - **[legacy-frontend/](developer/archive/legacy-frontend/)** - Bootstrap, Flatpickr, autocomplete, Axios, jQuery, tooltips, traductions
 - **[ci-cd/](developer/archive/ci-cd/)** - Stratégie CI/CD et simplification du workflow git
-- **[infrastructure/](developer/archive/infrastructure/)** - Correctifs Docker, migration VPS WordPress, médias hors Git
-- **[features/](developer/archive/features/)** - Plan de création d'app4, audits de recette, correctifs fonctionnels
+- **[infrastructure/](developer/archive/infrastructure/)** - Correctifs Docker, migration VPS WordPress, médias hors Git, Matomo sans cookie
+- **[features/](developer/archive/features/)** - Plan de création d'app4, audits de recette, correctifs fonctionnels, déploiements clos (catégorie d'âge, médailles de match, structures FFCK)
 - **[audits/](developer/archive/audits/)** - Audit initial (phase 0), revue du scoring live
 
 ---

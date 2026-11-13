@@ -1,6 +1,6 @@
 # Architecture cible de KPI — vue d'ensemble des chantiers
 
-> **Statut : vision de synthèse (2026-11-06).** Ce document ne décide rien de nouveau : il
+> **Statut : vision de synthèse (2026-11-06, état des chantiers mis à jour le 2026-11-14).** Ce document ne décide rien de nouveau : il
 > **assemble** sur une seule page la cible des chantiers en cours, telle que la décrivent leurs
 > documents de référence. En cas de divergence, **c'est le document du chantier qui fait foi** :
 >
@@ -175,7 +175,7 @@ flowchart TB
 
 | Conteneur | Rôle cible | Évolution |
 |---|---|---|
-| `${APPLICATION_NAME}_api2` | API unique + hub Mercure | inchangé ; validation preprod/prod FrankenPHP + hub à faire |
+| `${APPLICATION_NAME}_api2` | API unique + hub Mercure | inchangé ; en production (FrankenPHP + hub) ; reste à éprouver le hub avec le scoring (lot 0, action 0.3) |
 | `${APPLICATION_NAME}_app3` | SSR du site public | passe de `beta.*` à `www` |
 | `${APPLICATION_NAME}_nginx_static` | app2 et app4 statiques | inchangé |
 | `${APPLICATION_NAME}_gotenberg` | rendu PDF | inchangé |
@@ -340,7 +340,7 @@ officiels sont tous numériques et journalisés (`kp_journal`).
 |---|---|---|
 | WordPress + `dbwp`, `kp*.php`, `json-*.php`, Smarty « material » | app3 + CMS api2 | bascule `www` (phase 5) puis décommissionnement (phase 6) |
 | `frame_*.php` (écrans, iframes tiers) | app3 `/embed/…` + thèmes | phase 7 du site public |
-| `Pdf*.php`, `Feuille*.php` (mPDF) | api2 `/pdf/*`, `/admin/pdf/*` + Gotenberg | catalogue cible couvert ([PDF_ROLLOUT_CHECKLIST.md](PDF_ROLLOUT_CHECKLIST.md)) |
+| `Pdf*.php`, `Feuille*.php` (mPDF) | api2 `/pdf/*`, `/admin/pdf/*` + Gotenberg | catalogue cible en production (phases 0–5) ; retrait = phase 6 de [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) § 12 |
 | FeuilleMarque V2 / V3, `live/v2/*.php` | console Scoring app4 | lot 3 validé en réel + garde-fou chiffré (action 0.6) |
 | ~20 incrustations `live/*.php`, `app_live` | page d'incrustation unique | lot 4 validé, bascule terrain par terrain |
 | Cache JSON (`event_worker.php`, `create_cache_match.php`) | `GET /state` + Mercure | après les incrustations legacy |
@@ -367,15 +367,16 @@ officiels sont tous numériques et journalisés (`kp_journal`).
 
 ---
 
-## 6. État des chantiers au 2026-11-06
+## 6. État des chantiers au 2026-11-14
 
 | Chantier | État | Prochaine étape |
 |---|---|---|
-| api2 sur FrankenPHP + hub Mercure | 🟢 dev validé | validation preprod / prod |
-| app3 (site public) phases 1–4 | 🟢 en production sur `beta.*` | phase 5 : bascule de `www` |
+| api2 sur FrankenPHP + hub Mercure | 🟢 en production (préprod et prod) | éprouver le hub avec le scoring live (lot 0, action 0.3) |
+| app3 (site public) phases 1–4 | 🟢 en production sur `beta.*`, mesure d'audience Matomo sans cookie en service | phase 5 : bascule de `www` ([checklist](PUBLIC_SITE_ROLLOUT_CHECKLIST.md)) |
 | app2 sans authentification | 🟢 livré | adoption de `kpi-layer` (phase 6) |
-| PDF Gotenberg | 🟡 en déploiement | dérouler la checklist PDF |
-| Auth hardening | 🟡 phases 1a, 1b, 2 livrées | 1b-bis (appareils), puis TOTP (phase 3) |
-| Scoring lots 1–4 (état canonique, Mercure, console, incrustation) | 🟡 écrits, **jamais exécutés en réel** | porte de validation de [SCORING_DEV_CHECKLIST.md](SCORING_DEV_CHECKLIST.md) |
+| PDF Gotenberg | 🟢 phases 0–5 en production | validations écrites des commissions (PDF-DOC-03), puis phase 6 : retrait de `Feuille*.php` / `Pdf*.php` / mPDF |
+| Auth hardening | 🟡 phases 1a, 1b, 2 livrées ; 1b-bis (appareils) et 1b-ter (continuité de session, lot A) en cours | TOTP ciblé (phase 3) — [AUTH_HARDENING.md](AUTH_HARDENING.md) |
+| Scoring lots 1–4 (état canonique, Mercure, console, incrustation) | 🟡 essayés en dev (juillet–octobre), **jamais validés de bout en bout** ; lot 4 jamais passé dans OBS | porte de validation de [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) (R0 → R5) |
 | Scoring lots 5–9 (relais, paramétrage, offline, ménage, zéro papier) | 🔴 non commencés | après la porte de validation |
 | Médias hors Git | ✅ fait (dev, preprod, prod) | — |
+| Médailles de match, catégorie d'âge dérivée, réalignement des structures FFCK | ✅ en production (novembre 2026) | — |

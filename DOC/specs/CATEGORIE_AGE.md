@@ -1,10 +1,10 @@
 # Spécification - Catégorie d'âge des joueurs
 
-## Statut : PRÊT POUR IMPLÉMENTATION
+## Statut : ✅ LIVRÉ (en production ; checklist close le 14/11/2026)
 
 Vocabulaire : [GLOSSARY.md](../../GLOSSARY.md) (joueur international, date de naissance inconnue, catégorie d'âge).
 Décision d'architecture : [ADR 0001 - catégorie d'âge dérivée](../../docs/adr/0001-categorie-age-derivee.md).
-Déploiement et recette : [CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](../developer/in-progress/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md).
+Déploiement et recette : [CATEGORIE_AGE_ROLLOUT_CHECKLIST.md](../developer/archive/features/CATEGORIE_AGE_ROLLOUT_CHECKLIST.md).
 
 ## Problem Statement
 
