@@ -527,6 +527,8 @@ renvoient par un lien « Comment sont attribuées les médailles ? ».
   « Les cartons d'un match comptent pour ses deux arbitres ».
 - **Fiche équipe** : section « Médailles de la saison » (médailles publiées sur app3, compteurs par médaille, lien vers les matchs).
 - **Page `/medals`** (§ 8), ajoutée au menu une fois livrée (`ready` dans `app/utils/navigation.ts`).
+- **Menu** : l'entrée « Médailles » n'apparaît que si au moins un élément est publié sur app2 ou app3
+  (`GET /medals/catalog`, surface `public`, non vide) ; sinon elle est masquée (MED-MENU). Une erreur api2 la masque aussi.
 
 ### 9.3 app4 (admin2, profils 1 et 2)
 

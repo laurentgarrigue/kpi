@@ -138,6 +138,7 @@ Déclarés sur l'élément cliqué par `data-analytics-category`, `-action`, `-n
 | ANA-13 | Les événements du § 6.5 sont envoyés avec les catégories, actions et noms indiqués. |
 | ANA-14 | app2 et app4 utilisent une copie identique du code du layer. |
 | ANA-15 | Les gabarits legacy envoient `disableCookies` avant la page vue. |
+| ANA-16 | Une commande envoyée après le chargement de `matomo.js` (qui remplace `window._paq`) atteint Matomo : les navigations suivantes sont comptées. |
 
 Vérification en navigateur (12/11/2026, builds locaux, Matomo simulé) : app4 `/admin2/` → `/admin2/login` = 1 page vue
 avec `/admin2` ; app3 accueil → navigation → redirection, recherche, 404 et rendu serveur conformes.

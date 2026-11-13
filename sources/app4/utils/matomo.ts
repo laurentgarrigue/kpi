@@ -63,6 +63,15 @@ export function matomoInitCommands(target: MatomoTarget): MatomoCommand[] {
   ]
 }
 
+/**
+ * The way to send a command to Matomo (ANA-16). `window._paq` is read at each push: once matomo.js is loaded it
+ * replaces the array by its own object, and a reference kept from before would silently swallow every later command.
+ */
+export function matomoQueue(win: { _paq?: MatomoCommand[] }): (command: MatomoCommand) => void {
+  win._paq = win._paq ?? []
+  return command => win._paq!.push(command)
+}
+
 /** Matomo's convention for the « Pages not found » report (ANA-10). */
 export function notFoundTitle(href: string, referrer: string): string {
   const { pathname, search } = new URL(href)

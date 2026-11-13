@@ -10,6 +10,9 @@
 **Ce que livre la branche `claude/matomo_tracking_config`** : un traceur sans cookie commun à app2, app3 et app4
 (correction du double comptage et des URL sans `/admin2` d'app4, titres vides d'app2), le suivi d'app3 (pages, 404,
 recherche interne, « Suivre en direct », agenda, partage, langue), `disableCookies` dans les gabarits legacy.
+Un correctif ultérieur (`matomoQueue`, ANA-16) envoie les commandes sur le `window._paq` courant : sans lui, seule la
+première page vue d'un chargement partait, les navigations suivantes étaient perdues. Les builds antérieurs à ce
+correctif sont à régénérer.
 `MATOMO_ENABLED` disparaît : **le suivi est actif dès que l'URL et le numéro de site sont renseignés**.
 
 **Plan des sites Matomo**
@@ -53,7 +56,13 @@ renseignés se met à envoyer des données, même si l'ancien fichier contient e
 | 2.7 | Vider le cache Smarty | `rm -f sources/smarty/templates_c/*.php` (prise en compte de `disableCookies`) | ☐ |
 
 Si vous modifiez plus tard un `.env` d'app2 ou d'app4 sans changer le code : `make app2_generate_preprod` ou
-`make app4_generate_preprod` (les valeurs sont figées au build).
+`make app4_generate_preprod` (les valeurs sont figées au build, voir l'encadré ci-dessous).
+
+> **Les `.env` d'app2 et d'app4 sont lus au build** (`nuxt generate`), pas au chargement de la page. Éditer le fichier
+> **après** le build ne change rien : régénérer. app2 lit `.env.preprod` / `.env.production` (via `dotenv-cli`),
+> app4 lit `.env`. Vérifier que le build contient bien Matomo :
+> `grep -rl "matomo.kayak-polo.info" sources/app2/.output/public sources/app4/.output/public | head`
+> (aucun résultat = build sans Matomo).
 
 ## 3. 🖥 Production — avant le déploiement manuel
 
@@ -68,6 +77,7 @@ Si vous modifiez plus tard un `.env` d'app2 ou d'app4 sans changer le code : `ma
 | 3.5 | 🌐 Déployer | Actions › « Deploy production » › tag de la release ([runbook § 1.2](../infrastructure/DEPLOYMENT_RUNBOOK.md)) | ☐ |
 | 3.6 | Recréer le conteneur app3 | `make docker_prod_up` (seul le conteneur app3 est recréé) | ☐ |
 | 3.7 | Vider le cache Smarty | `rm -f sources/smarty/templates_c/*.php` | ☐ |
+| 3.8 | Contrôler les builds app2 et app4 | Si le déploiement a eu lieu avant l'édition des `.env` (3.2, 3.3) : `make app2_generate_production && make app4_generate_prod`, puis le `grep` de l'encadré du § 2 : il doit lister des fichiers. Navigateur : désinscrire le service worker d'app2 (outils de développement › Application) ou tester en navigation privée | ☐ |
 
 ## 4. 📝 WordPress (site 1)
 
@@ -85,7 +95,11 @@ Si vous modifiez plus tard un `.env` d'app2 ou d'app4 sans changer le code : `ma
 
 ## 6. Vérifier (préprod puis prod)
 
-Dans le navigateur : outils de développement › Réseau › filtre `matomo`, en navigation privée.
+Dans le navigateur : outils de développement › Réseau › filtre `matomo.php` (type « Tout », pas seulement Fetch/XHR),
+en navigation privée **sans extension** : uBlock, Brave et d'autres bloquent `matomo.php` tout en laissant passer
+`matomo.js`. Un hit qui manque : console, `Matomo.getAsyncTrackers().map(t => [t.getTrackerUrl(), t.getSiteId()])`
+(URL et site attendus), puis `_paq.push(['trackPageView'])` à la main (un hit part = le traceur est bon, le défaut est
+dans l'envoi automatique, par exemple un build antérieur à ANA-16).
 
 | # | Où | Attendu | ☐ |
 |---|---|---|---|

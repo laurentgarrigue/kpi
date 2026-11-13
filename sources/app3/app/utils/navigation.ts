@@ -23,6 +23,8 @@ export interface MenuGroup {
 
 export type MenuItem = MenuLink | MenuGroup
 
+export const MEDALS_LINK_ID = 'medals'
+
 export const MAIN_MENU: readonly MenuItem[] = [
   { id: 'home', to: '/', ready: true },
   { id: 'news', to: '/news', legacyPath: '/', ready: true },
@@ -34,7 +36,7 @@ export const MAIN_MENU: readonly MenuItem[] = [
       { id: 'competitions-list', to: '/competitions', legacyPath: '/kpclassements.php', ready: true },
       { id: 'history', to: '/history', legacyPath: '/kphistorique.php', ready: true },
       // Explanation of the match medals and timeline statistics (FEATURE_MATCH_MEDALS.md § 8): no legacy page.
-      { id: 'medals', to: '/medals', ready: true },
+      { id: MEDALS_LINK_ID, to: '/medals', ready: true },
     ],
   },
   // One « Clubs and teams » page: the map, the clubs and the teams (PAGE_CLUBS.md § 2.1).
@@ -68,6 +70,16 @@ export type ResolvedMenuItem = ResolvedLink | ResolvedGroup
 /** Narrows a configured or resolved menu item to a group. */
 export function isMenuGroup<T extends object>(item: T): item is Extract<T, { children: unknown }> {
   return 'children' in item
+}
+
+/** The menu without the link `id`, at any level. */
+export function withoutLink(menu: readonly MenuItem[], id: string): MenuItem[] {
+  return menu.flatMap((item): MenuItem[] => {
+    if (isMenuGroup(item)) {
+      return [{ ...item, children: item.children.filter(link => link.id !== id) }]
+    }
+    return item.id === id ? [] : [item]
+  })
 }
 
 /** A menu link by id, at any level of the menu. */
