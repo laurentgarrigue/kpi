@@ -456,6 +456,13 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 | **Les affichages suivent la console** : quand l'onglet de la console passe à un autre match (Paramètres → charger un match, ou bouton Scoring de la page Matchs, qui réutilise l'onglet), elle annonce `match_switch { from, to }` sur le canal local et les affichages du match quitté se rechargent sur le nouveau, **options conservées**. Le match précédent est mémorisé **par onglet** (sessionStorage `kpi.scoring.console.match`) : une 2ᵉ console dans un autre onglet ne prend jamais les affichages de la 1ʳᵉ (`utils/scoringDisplaySwitch.ts`, testé) | sans ça, le tableau de score restait figé sur le match précédent |
 | **Raccourci `X`** (FR et EN, réassignable) : **retire toutes les pénalités échues** (00:00, clignotantes) d'un coup — comme leurs croix. Live, match en cours | une touche plutôt que deux croix à viser quand les deux joueurs reviennent |
 
+### 0.17 Continuité de session pendant un match (2026-11-13)
+
+| Décision | Pourquoi |
+|---|---|
+| La table de marque **n'est jamais déconnectée** pendant un match. Règles et critères : [AUTH_HARDENING.md § 3ter](../developer/in-progress/AUTH_HARDENING.md) (AUTH-SC-01 à 08 pour app4, AUTH-SC-20 à 23 pour la console) | des déconnexions ont été constatées en dev en cours de saisie ; un fait de jeu refusé était annulé et la console quittée |
+| **À chaque chargement d'un match** (ouverture de la console ou « charger un match » dans le même onglet), la session est renouvelée s'il lui reste moins de **2 h** (AUTH-SC-20) | un match très long dure environ 1 h ; renouveler entre deux matchs, quand rien n'est en cours de saisie, fait apparaître un éventuel problème avant le coup d'envoi plutôt qu'en plein jeu |
+
 ## 1. Contexte et objectif
 
 Le **Scoring** est l'outil de gestion du déroulé d'un match de kayak-polo : chronomètre,

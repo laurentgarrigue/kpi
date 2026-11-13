@@ -1,38 +1,41 @@
-// Silently refresh the JWT token every 45 minutes for low-privilege users (profile < 7).
-// This keeps the session alive for a full workday without re-authentication.
-const REFRESH_INTERVAL_MS = 45 * 60 * 1000
+import { needsRefresh, readJwtLifetime } from '~/utils/session'
+
+/**
+ * Proactive session renewal for every profile (AUTH_HARDENING.md § 3ter, AUTH-SC-02).
+ *
+ * The check is cheap (it decodes the JWT) and runs every minute; browsers slow down timers in background tabs and
+ * stop them during sleep, so the check also runs when the tab comes back to the foreground, when the network comes
+ * back and when the window gets the focus. A failed proactive refresh never logs out (AUTH-SC-08): the next api2
+ * request settles it.
+ */
+const CHECK_INTERVAL_MS = 60_000
 
 export default defineNuxtPlugin(() => {
   const authStore = useAuthStore()
   const { refreshToken } = useAuth()
 
-  let intervalId: ReturnType<typeof setInterval> | null = null
+  let running = false
+  /** The server refused to renew this token: wait for a new one instead of asking again every minute. */
+  let deniedToken: string | null = null
 
-  const startRefreshLoop = () => {
-    if (intervalId) return
-    intervalId = setInterval(async () => {
-      if (!authStore.isAuthenticated || authStore.profile >= 7) return
-      if (!authStore.isTokenExpiringSoon) return
-      await refreshToken()
-    }, REFRESH_INTERVAL_MS)
-  }
+  const refreshIfDue = async () => {
+    if (running || !authStore.isAuthenticated || !authStore.token || authStore.token === deniedToken) return
+    if (!needsRefresh(readJwtLifetime(authStore.token), Date.now())) return
 
-  const stopRefreshLoop = () => {
-    if (intervalId) {
-      clearInterval(intervalId)
-      intervalId = null
+    running = true
+    const tokenBefore = authStore.token
+    try {
+      if (await refreshToken() === 'denied') deniedToken = tokenBefore
+    } finally {
+      running = false
     }
   }
 
-  watch(
-    () => authStore.isAuthenticated,
-    (authenticated) => {
-      if (authenticated && authStore.profile < 7) {
-        startRefreshLoop()
-      } else {
-        stopRefreshLoop()
-      }
-    },
-    { immediate: true }
-  )
+  setInterval(refreshIfDue, CHECK_INTERVAL_MS)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshIfDue()
+  })
+  window.addEventListener('online', refreshIfDue)
+  window.addEventListener('focus', refreshIfDue)
+  watch(() => authStore.isAuthenticated, refreshIfDue, { immediate: true })
 })

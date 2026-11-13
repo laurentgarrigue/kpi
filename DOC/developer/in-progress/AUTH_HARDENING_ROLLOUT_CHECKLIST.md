@@ -252,6 +252,42 @@ Si un incident survient (révocation de masse accidentelle, 500) :
 
 ---
 
+## Phase 1b-ter — Continuité de session, lot A (app4 uniquement)
+
+Spec : [AUTH_HARDENING.md § 3ter](AUTH_HARDENING.md). Aucun changement api2, aucune migration.
+
+### 1b-ter.1 ⌨️ Tests automatisés
+
+| # | Commande | Attendu | ☑ |
+|---|---|---|---|
+| 1 | `cd sources/app4 && npx vitest run tests/unit/session.spec.ts` | AUTH-SC-01 à 08 verts | ☐ |
+| 2 | `npm run lint` dans `sources/app4` | aucune erreur | ☐ |
+
+### 1b-ter.2 ⌨️ Tests manuels (dev)
+
+Raccourcir le JWT pour voir les renouvellements : `JWT_TTL=180` dans `sources/api2/.env.local`, puis
+`make api2_restart`. Compte de **profil 9** (table de marque) et DevTools → Réseau filtré sur `auth/`.
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Se connecter, rester sur une page 3 min | `POST /auth/refresh` vers 2 min (le plancher d'1 min avant échéance l'emporte sur 20 % d'un TTL de 3 min), aucune redirection (AUTH-SC-02) | ☐ |
+| 2 | DevTools → Offline 4 min (le renouvellement préventif échoue sans déconnecter), repasser en ligne, cliquer | `/auth/refresh-session` (JWT expiré) dès le retour du réseau, puis la requête passe, pas de `/login` (AUTH-SC-03, AUTH-SC-08) | ☐ |
+| 3 | Avec un mandat actif, refaire 2 | Le mandat actif est toujours sélectionné après le renouvellement (AUTH-SC-05) | ☐ |
+| 4 | Ouvrir deux onglets app4, attendre l'échéance | Un seul `/auth/refresh` pour les deux onglets ; aucun `401` sur `refresh-session` (AUTH-SC-04) | ☐ |
+| 5 | Fermer l'onglet, attendre 5 min, rouvrir app4 | Session restaurée sans passer par `/login` (AUTH-SC-06) | ☐ |
+| 6 | Couper le réseau (DevTools → Offline) après expiration, cliquer | Toast réseau, **pas** de déconnexion ; réseau rétabli → tout repart (AUTH-SC-08) | ☐ |
+| 7 | Révoquer l'appareil depuis `/profile/security` d'un autre navigateur | Le premier navigateur est renvoyé sur `/login` au prochain appel (déconnexion volontaire conservée) | ☐ |
+| 8 | Exporter un PDF après expiration du JWT | Le PDF arrive, pas de déconnexion (AUTH-SC-07) | ☐ |
+
+Remettre `JWT_TTL` à sa valeur et `make api2_restart` après la recette.
+
+### 1b-ter.3 Rollback
+
+Revert du commit app4 et régénération (`make app4_generate_*`). Les jetons et cookies restent compatibles :
+aucune déconnexion n'est provoquée par le retour arrière.
+
+---
+
 ## Phase 2 — OAuth Google
 
 Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 4](AUTH_HARDENING.md).
