@@ -298,7 +298,7 @@ sur la console Scoring. L'audit du code a trouvé plusieurs causes, qui existent
 
 - Jamais de régénération des clés JWT (`make api2_jwt_generate_keys`, `JWT_PASSPHRASE`) pendant une compétition : tous les JWT en cours deviendraient invalides (à ajouter au [DEPLOYMENT_RUNBOOK](../infrastructure/DEPLOYMENT_RUNBOOK.md)).
 - `JWT_TTL` vient de `sources/api2/.env` (Dotenv), pas de l'environnement du conteneur : `docker exec <app>_api2 printenv JWT_TTL` ne l'affiche pas. Le vérifier avec `docker exec <app>_api2 php bin/console debug:dotenv JWT_TTL`.
-  Relevé le 13/11/2026 : **86400 (24 h) en dev, préprod et prod**. Avec 24 h, le renouvellement préventif du lot A part à 19 h 12 de session (20 % restants) ; les déconnexions constatées venaient donc des causes 1, 2 et 6 (jeton expiré au bout de 24 h, aucun renouvellement pour les profils ≥ 7, rechargement après expiration), pas d'un TTL court.
+  Relevé le 13/11/2026 : **86400 (24 h) en dev, préprod et prod**. Avec 24 h, le renouvellement préventif du lot A part à 19 h 12 de session (20 % restants) ; les déconnexions constatées ne viennent pas d'un TTL court, mais plus probablement des causes 1, 2 et 6 (jeton expiré au bout de 24 h, aucun renouvellement pour les profils ≥ 7, rechargement après expiration) ; en dev, un rechargement de la base depuis un dump de prod ou une régénération des clés JWT donne le même symptôme.
 
 ---
 
