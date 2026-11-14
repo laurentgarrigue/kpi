@@ -6,6 +6,16 @@
 > **Convention** (comme le [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) : ⌨️ poste de dev ·
 > 🖥 VPS (SSH, en tant que `laurent` sauf mention) · 🌐 interface GitHub · 📦 autre dépôt.
 
+> **Point au 14/11/2026** — phases 1a, 1b, 1b-bis, 2 et 2-bis **en production** depuis la v2.10.0 (04/11/2026,
+> PR #383, #385, #388) : `/auth/login-history`, `/auth/devices` et `/auth/google/connect` répondent 401 (et non 404) en
+> préprod comme en prod. ⚠️ **OAuth Google cassé en prod** (constaté le 14/11) : `redirect_uri_mismatch`, la prod
+> envoie `https://www.kayak-polo.info/api2/auth/google/callback`, non déclarée chez Google → URI ajoutée le jour même
+> (2.5 n° 5) ; connexion Google validée en prod depuis `www` (2.5 n° 4). La préprod
+> envoie bien `https://preprod.kayak-polo.info/…`. Tests d'intégration verts en CI
+> (tous les noms cités existent). Phase 1b-ter lot A : sur `claude/scoring-refactoring-strategy-3d43ac`, **pas encore
+> dans `main`** ; tests unitaires (25) et lint verts en local. Restent ☐ : tests manuels non tracés, suivi SQL en base,
+> commande de purge (à écrire), lot A à recetter et à déployer, phase 3.
+
 **Règle d'or** : à chaque phase, on vérifie **aussi** qu'app2 (publique) et le site public (app3) ne sont pas impactés.
 
 > **Requêtes SQL** : le client n'est **pas** dans `kpi_php` (`mysql: command not found`), il est dans le
@@ -101,22 +111,22 @@ depuis `kp_user_login_history` et n'est pas effacé par cette commande).
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | ⌨️ `sources/api2/composer.lock` est commité dans la PR (`git diff main --stat -- sources/api2/composer.lock`) | Le lock contient `symfony/rate-limiter` | ☐ |
-| 2 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, workflow « Deploy preprod » vert | ☐ |
-| 3 | 🌐 Actions → run « Deploy preprod » → étape « Déployer via SSH » | `composer install`, migration `kp_user_login_history` appliquée, `api2_restart` joués par le wrapper | ☐ |
-| 4 | ⌨️ Smoke-test login app4 préprod | OK | ☐ |
-| 5 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas d'erreur après 10 min de trafic | ☐ |
+| 1 | ⌨️ `sources/api2/composer.lock` est commité dans la PR (`git diff main --stat -- sources/api2/composer.lock`) | Le lock contient `symfony/rate-limiter` | ☑ |
+| 2 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, workflow « Deploy preprod » vert | ☑ |
+| 3 | 🌐 Actions → run « Deploy preprod » → étape « Déployer via SSH » | `composer install`, migration `kp_user_login_history` appliquée, `api2_restart` joués par le wrapper | ☑ |
+| 4 | ⌨️ Smoke-test login app4 préprod | OK | ☑ |
+| 5 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas d'erreur après 10 min de trafic | ☑ |
 | 6 | 🖥 `cd /data/kpi_preprod`, 🗄 SQL : `SELECT success, COUNT(*) FROM kp_user_login_history GROUP BY success;` après quelques heures | Mix succès / échecs cohérent avec le trafic | ☐ |
 
 ### 1a.6 🌐 Production (après validation préprod)
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour | Tag `vX.Y.Z` poussé | ☐ |
-| 2 | 🌐 Actions → « Deploy production » → Run workflow depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert ; le wrapper joue `composer install`, la migration et `api2_restart` | ☐ |
-| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☐ |
-| 4 | 🖥 `cd /data/kpi && make api2_logs lines=50` | Boot sans erreur | ☐ |
-| 5 | ⌨️ Login prod sur app4 avec un compte réel | OK | ☐ |
+| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour | Tag `vX.Y.Z` poussé | ☑ |
+| 2 | 🌐 Actions → « Deploy production » → Run workflow depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert ; le wrapper joue `composer install`, la migration et `api2_restart` | ☑ |
+| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☑ |
+| 4 | 🖥 `cd /data/kpi && make api2_logs lines=50` | Boot sans erreur | ☑ |
+| 5 | ⌨️ Login prod sur app4 avec un compte réel | OK | ☑ |
 | 6 | 🖥 `cd /data/kpi`, 🗄 SQL — monitoring sur 48 h : `SELECT DATE(attempted_at), success, COUNT(*) FROM kp_user_login_history GROUP BY 1,2 ORDER BY 1 DESC LIMIT 20;` | Volume compatible avec le trafic nominal ; pas de pic d'échecs anormal | ☐ |
 | 7 | 🖥 Programmer la purge (⏳ la commande `app:auth:prune-login-history` **n'existe pas encore** — à livrer) | Cron OK | ☐ |
 
@@ -174,12 +184,12 @@ make api2_test_integration   # inclut AuthRefreshSessionTest
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `testLoginSetsBothCookies` | kpi_access + kpi_refresh HttpOnly, Secure, SameSite=Lax | ☐ |
-| 2 | `testRefreshSessionRotatesRefreshToken` | nouveau token émis, ancien révoqué, `replaced_by` positionné | ☐ |
-| 3 | `testReusingRevokedRefreshTokenRevokesAllActiveTokens` | 401 + révocation chaîne complète (détection rejeu) | ☐ |
-| 4 | `testLogoutRevokesRefreshTokenAndClearsCookies` | revoked_at non nul + cookies effacés | ☐ |
-| 5 | `testFirstLoginRegistersDeviceAndSecondFromSameFingerprintDoesNotCreateDuplicate` | pas de duplicata (IP /24 + UA famille) | ☐ |
-| 6 | `testDeviceRevokeTokenRevokesDeviceAndAllRefreshTokens` | appareil + sessions révoqués ; 2ᵉ appel = 404 | ☐ |
+| 1 | `testLoginSetsBothCookies` | kpi_access + kpi_refresh HttpOnly, Secure, SameSite=Lax | ☑ |
+| 2 | `testRefreshSessionRotatesRefreshToken` | nouveau token émis, ancien révoqué, `replaced_by` positionné | ☑ |
+| 3 | `testReusingRevokedRefreshTokenRevokesAllActiveTokens` | 401 + révocation chaîne complète (détection rejeu) | ☑ |
+| 4 | `testLogoutRevokesRefreshTokenAndClearsCookies` | revoked_at non nul + cookies effacés | ☑ |
+| 5 | `testFirstLoginRegistersDeviceAndSecondFromSameFingerprintDoesNotCreateDuplicate` | pas de duplicata (IP /24 + UA famille) | ☑ |
+| 6 | `testDeviceRevokeTokenRevokesDeviceAndAllRefreshTokens` | appareil + sessions révoqués ; 2ᵉ appel = 404 | ☑ |
 
 ### 1b.3 ⌨️ Tests manuels
 
@@ -221,14 +231,14 @@ API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthDevices
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `testEndpointsRequireAuthentication` | 401 sans JWT sur les trois endpoints | ☐ |
-| 2 | `testListReturnsActiveDevicesWithCurrentFlag` | Trois lignes, une seule `isCurrent=true`, label du courant construit sur IP /24 | ☐ |
-| 3 | `testListExcludesRevokedDevices` | Les devices révoqués n'apparaissent pas | ☐ |
-| 4 | `testRevokeByIdOnlyKillsItsOwnSessions` | Device A révoqué + ses refresh tokens tués ; device B intact | ☐ |
-| 5 | `testRevokeIdOfAnotherUserReturns404` | 404 anti-énumération, pas 403 | ☐ |
-| 6 | `testRevokeIdIsIdempotent` | 2ᵉ révocation = 200 (pas d'erreur) | ☐ |
-| 7 | `testRevokeOthersKeepsCurrentDevice` | Seul le device courant reste actif, refresh tokens des autres tués | ☐ |
-| 8 | `testRevocationIsJournaled` | Ligne `Révocation appareil` dans `kp_journal` avec texte « /profile/security » | ☐ |
+| 1 | `testEndpointsRequireAuthentication` | 401 sans JWT sur les trois endpoints | ☑ |
+| 2 | `testListReturnsActiveDevicesWithCurrentFlag` | Trois lignes, une seule `isCurrent=true`, label du courant construit sur IP /24 | ☑ |
+| 3 | `testListExcludesRevokedDevices` | Les devices révoqués n'apparaissent pas | ☑ |
+| 4 | `testRevokeByIdOnlyKillsItsOwnSessions` | Device A révoqué + ses refresh tokens tués ; device B intact | ☑ |
+| 5 | `testRevokeIdOfAnotherUserReturns404` | 404 anti-énumération, pas 403 | ☑ |
+| 6 | `testRevokeIdIsIdempotent` | 2ᵉ révocation = 200 (pas d'erreur) | ☑ |
+| 7 | `testRevokeOthersKeepsCurrentDevice` | Seul le device courant reste actif, refresh tokens des autres tués | ☑ |
+| 8 | `testRevocationIsJournaled` | Ligne `Révocation appareil` dans `kp_journal` avec texte « /profile/security » | ☑ |
 
 ### 1b-bis.2 ⌨️ Tests manuels
 
@@ -260,8 +270,8 @@ Spec : [AUTH_HARDENING.md § 3ter](AUTH_HARDENING.md). Aucun changement api2, au
 
 | # | Commande | Attendu | ☑ |
 |---|---|---|---|
-| 1 | `cd sources/app4 && npx vitest run tests/unit/session.spec.ts` | AUTH-SC-01 à 08 verts | ☐ |
-| 2 | `npm run lint` dans `sources/app4` | aucune erreur | ☐ |
+| 1 | `cd sources/app4 && npx vitest run tests/unit/session.spec.ts` | AUTH-SC-01 à 08 verts | ☑ |
+| 2 | `npm run lint` dans `sources/app4` | aucune erreur | ☑ |
 
 ### 1b-ter.2 ⌨️ Tests manuels (dev)
 
@@ -335,11 +345,11 @@ Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.m
 
 | # | Action | ☑ |
 |---|---|---|
-| 1 | Créer un projet (ou en réutiliser un) dans [Google Cloud Console](https://console.cloud.google.com/) | ☐ |
-| 2 | APIs & Services → OAuth consent screen : type **External**, nom « KPI », support email, scopes `openid email profile` | ☐ |
-| 3 | APIs & Services → Credentials → Create → OAuth 2.0 Client ID → Web application | ☐ |
-| 4 | Authorized redirect URIs : `https://kayak-polo.info/api2/auth/google/callback` **et** `https://preprod.kayak-polo.info/api2/auth/google/callback` **et** `https://kpi.localhost/api2/auth/google/callback` (dev) | ☐ |
-| 5 | Noter le Client ID et le Client Secret | ☐ |
+| 1 | Créer un projet (ou en réutiliser un) dans [Google Cloud Console](https://console.cloud.google.com/) | ☑ |
+| 2 | APIs & Services → OAuth consent screen : type **External**, nom « KPI », support email, scopes `openid email profile` | ☑ |
+| 3 | APIs & Services → Credentials → Create → OAuth 2.0 Client ID → Web application | ☑ |
+| 4 | Authorized redirect URIs : `https://kayak-polo.info/api2/auth/google/callback` **et** `https://preprod.kayak-polo.info/api2/auth/google/callback` **et** `https://kpi.localhost/api2/auth/google/callback` (dev) — **chaque URI à l'identique de `GOOGLE_OAUTH_REDIRECT_URI`** (même hôte, `www` compris) ; prod : `https://www.kayak-polo.info/…` ajoutée le 14/11/2026 | ☑ |
+| 5 | Noter le Client ID et le Client Secret | ☑ |
 
 ### 2.2 ⌨️ Configuration locale
 
@@ -364,35 +374,40 @@ make api2_test_integration   # inclut AuthOAuthGoogleTest
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `testCallbackWithUnknownEmailRedirectsToLoginWithError` | 302 vers `/login?oauth_error=oauth_no_account` | ☐ |
-| 2 | `testCallbackWithMatchingEmailRedirectsToLinkPage` | 302 vers `/auth/google/link?code=TADMIN&sub=…` + cookie `kpi_oauth_pending` | ☐ |
-| 3 | `testCallbackWithMismatchedStateIsRejected` | Anti-CSRF OK | ☐ |
-| 4 | `testCallbackRejectsUnverifiedEmail` | Erreur `oauth_email_not_verified` | ☐ |
-| 5 | `testCallbackWithExistingOauthLinkLogsInDirectly` | cookies `kpi_access` + `kpi_refresh` posés, journal `oauth_google` | ☐ |
-| 6 | `testUnlinkRefusesIfUserHasNoPassword` | 409 CONFLICT | ☐ |
-| 7 | `testUnlinkSucceedsWhenPasswordIsSet` | 200 + ligne supprimée | ☐ |
+| 1 | `testCallbackWithUnknownEmailRedirectsToLoginWithError` | 302 vers `/login?oauth_error=oauth_no_account` | ☑ |
+| 2 | `testCallbackWithMatchingEmailRedirectsToLinkPage` | 302 vers `/auth/google/link?code=TADMIN&sub=…` + cookie `kpi_oauth_pending` | ☑ |
+| 3 | `testCallbackWithMismatchedStateIsRejected` | Anti-CSRF OK | ☑ |
+| 4 | `testCallbackRejectsUnverifiedEmail` | Erreur `oauth_email_not_verified` | ☑ |
+| 5 | `testCallbackWithExistingOauthLinkLogsInDirectly` | cookies `kpi_access` + `kpi_refresh` posés, journal `oauth_google` | ☑ |
+| 6 | `testUnlinkRefusesIfUserHasNoPassword` | 409 CONFLICT | ☑ |
+| 7 | `testUnlinkSucceedsWhenPasswordIsSet` | 200 + ligne supprimée | ☑ |
 
 ### 2.4 ⌨️ Tests manuels
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `/login` : bouton « Continuer avec Google » visible | OK (le bouton n'apparaît pas si GOOGLE_OAUTH_CLIENT_ID est vide) | ☐ |
-| 2 | Clic sur le bouton | Redirection Google, consent screen | ☐ |
-| 3 | Autoriser avec un compte Google dont l'email ne correspond à aucun `kp_user` | Retour `/login` avec message « Aucun compte KPI… » | ☐ |
-| 4 | Autoriser avec un compte dont l'email matche TADMIN | Redirection vers `/auth/google/link?code=TADMIN&sub=…` ; demande du mot de passe KPI | ☐ |
-| 5 | Saisir le bon mot de passe | Redirection vers `/auth/oauth-complete` (spinner « Finalisation de votre connexion… »), cookies posés, puis atterrissage sur `/select-mandate` ou `/` selon les mandats | ☐ |
-| 6 | Rejouer le flow Google → login direct via `/auth/oauth-complete` (plus de page de link) | OK | ☐ |
-| 6b | ⚠️ **Non-régression du bug « Google OK mais renvoyé sur /login »** : après le callback, l'utilisateur doit bien se retrouver connecté dans app4 (dashboard visible). Si `/auth/oauth-complete` manque, `authStore` reste vide et le middleware auth renvoie sur `/login` — c'est exactement le symptôme corrigé. | ☐ |
-| 7 | Depuis `/profile/security` (si livrée), POST `/auth/google/unlink` avec un compte sans mot de passe | 409 (prévenir avant de délier) | ☐ |
+| 1 | `/login` : bouton « Continuer avec Google » visible | OK (le bouton n'apparaît pas si GOOGLE_OAUTH_CLIENT_ID est vide) | ☑ |
+| 2 | Clic sur le bouton | Redirection Google, consent screen | ☑ |
+| 3 | Autoriser avec un compte Google dont l'email ne correspond à aucun `kp_user` | Retour `/login` avec message « Aucun compte KPI… » | ☑ |
+| 4 | Autoriser avec un compte dont l'email matche TADMIN | Redirection vers `/auth/google/link?code=TADMIN&sub=…` ; demande du mot de passe KPI | ☑ |
+| 5 | Saisir le bon mot de passe | Redirection vers `/auth/oauth-complete` (spinner « Finalisation de votre connexion… »), cookies posés, puis atterrissage sur `/select-mandate` ou `/` selon les mandats | ☑ |
+| 6 | Rejouer le flow Google → login direct via `/auth/oauth-complete` (plus de page de link) | OK | ☑ |
+| 6b | ⚠️ **Non-régression du bug « Google OK mais renvoyé sur /login »** : après le callback, l'utilisateur doit bien se retrouver connecté dans app4 (dashboard visible). Si `/auth/oauth-complete` manque, `authStore` reste vide et le middleware auth renvoie sur `/login` — c'est exactement le symptôme corrigé. | ☑ |
+| 7 | Depuis `/profile/security` (si livrée), POST `/auth/google/unlink` avec un compte sans mot de passe | 409 (prévenir avant de délier) | ☑ |
 
 ### 2.5 🖥 Déploiement
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Provisionner `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` en preprod puis prod (Symfony Secrets ou `.env.local`) | ☐ |
-| 2 | Déployer via le CI/CD (préprod puis prod, cf. 1a.5 / 1a.6) | Le wrapper applique la migration `kp_user_oauth` et redémarre api2 | ☐ |
+| 1 | Provisionner `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` en preprod puis prod (Symfony Secrets ou `.env.local`) | ☑ |
+| 2 | Déployer via le CI/CD (préprod puis prod, cf. 1a.5 / 1a.6) | Le wrapper applique la migration `kp_user_oauth` et redémarre api2 | ☑ |
 | 3 | Après tout changement de variable `GOOGLE_OAUTH_*` seul (sans déploiement) : 🖥 `make api2_restart` | Worker reparti | ☐ |
-| 4 | Smoke-test depuis l'env public : clic bouton → consent screen Google → retour | ☐ |
+| 4 | Smoke-test depuis l'env public : clic bouton → consent screen Google → retour **connecté dans app4** (une simple redirection vers Google ne prouve rien) — prod OK depuis `www` le 14/11/2026 | ☑ |
+| 5 | 🖥 `grep -E '^(GOOGLE_OAUTH_REDIRECT_URI\|APP4_URL)=' sources/api2/.env` | **Même hôte** pour les deux (les cookies `kpi_oauth_state` et de session ne sont valables que sur l'hôte qui les a posés) ; URI déclarée dans la console Google — prod : les deux en `www` (14/11/2026). Depuis `kayak-polo.info/admin2`, le bouton part vers `api2BaseUrl` (`www`) : l'aller-retour reste sur `www` | ☑ |
+| 6 | Après le déploiement de la redirection `kayak-polo.info/admin2` → `www` (routeur `nginx_app4_bare`, `docker/compose.prod.yaml`) : 🖥 `cd /data/kpi && make docker_prod_up` (recrée `nginx_static`, dont les labels ont changé ; un simple restart ne relit pas les labels) | — | ☐ |
+| 7 | ⌨️ `curl -sI https://kayak-polo.info/admin2/login \| grep -iE '^HTTP\|^location'` | `301`, `location: https://www.kayak-polo.info/admin2/login` | ☐ |
+| 8 | ⌨️ `curl -s -o /dev/null -w '%{http_code}\n' https://kayak-polo.info/api2/medals/catalog` | `200` **sans** redirection : app2 appelle `/api2` sur le domaine nu (CORS), il ne doit pas être redirigé | ☐ |
+| 9 | ⌨️ App2 `https://app.kayak-polo.info` : ouvrir un événement | Données chargées, pas d'erreur CORS dans la console | ☐ |
 
 ### 2.6 Rollback
 
@@ -418,12 +433,12 @@ API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthOAuthGoog
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `testConnectRequiresAuthentication` | 401 sans JWT sur `/auth/google/connect` | ☐ |
-| 2 | `testCallbackWithValidLinkCookieWritesTheLinkWithoutEmailMatch` | 302 vers `/profile/security?link=ok`, ligne `kp_user_oauth` écrite, pas de résolution par e-mail | ☐ |
-| 3 | `testCallbackLinkModeDoesNotRequireMatchingEmail` | Même e-mail partagé par un autre compte : lie bien le compte du cookie, pas l'autre | ☐ |
-| 4 | `testCallbackLinkRefusesWhenSubjectAlreadyLinkedToAnotherUser` | 302 vers `?link=error&code=already_linked`, aucune écriture | ☐ |
-| 5 | `testCallbackIgnoresLinkCookieWithWrongSignature` | Cookie forgé ignoré, retombe sur `oauth_no_account` | ☐ |
-| 6 | `testCallbackIgnoresLinkCookieWhoseStateDoesNotMatch` | Cookie signé mais state obsolète : refusé, retombe sur `oauth_no_account` | ☐ |
+| 1 | `testConnectRequiresAuthentication` | 401 sans JWT sur `/auth/google/connect` | ☑ |
+| 2 | `testCallbackWithValidLinkCookieWritesTheLinkWithoutEmailMatch` | 302 vers `/profile/security?link=ok`, ligne `kp_user_oauth` écrite, pas de résolution par e-mail | ☑ |
+| 3 | `testCallbackLinkModeDoesNotRequireMatchingEmail` | Même e-mail partagé par un autre compte : lie bien le compte du cookie, pas l'autre | ☑ |
+| 4 | `testCallbackLinkRefusesWhenSubjectAlreadyLinkedToAnotherUser` | 302 vers `?link=error&code=already_linked`, aucune écriture | ☑ |
+| 5 | `testCallbackIgnoresLinkCookieWithWrongSignature` | Cookie forgé ignoré, retombe sur `oauth_no_account` | ☑ |
+| 6 | `testCallbackIgnoresLinkCookieWhoseStateDoesNotMatch` | Cookie signé mais state obsolète : refusé, retombe sur `oauth_no_account` | ☑ |
 
 ### 2b.2 ⌨️ Tests manuels
 
@@ -431,12 +446,12 @@ Pré-requis : OAuth Google configuré (cf. 2.1), deux comptes KPI partagent un m
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Se connecter sur app4 avec l'identifiant (voie mot de passe) | Dashboard | ☐ |
-| 2 | Menu utilisateur → « Sécurité du compte » | `/profile/security` chargée, bloc Google affiche « Liez votre compte Google… » + bouton « Lier mon compte Google » | ☐ |
-| 3 | Cliquer le bouton | Redirection Google, consent screen | ☐ |
-| 4 | Accepter avec un compte Google dont l'e-mail diffère de celui de KPI | Retour `/profile/security?link=ok` (URL nettoyée par le front), bannière « Compte Google lié avec succès », le bloc Google bascule en « lié » | ☐ |
-| 5 | Se déconnecter, cliquer « Continuer avec Google » sur `/login` avec le même compte Google | Login direct (AUTH-OA-03) — c'est la promesse de la phase 2 enfin tenue | ☐ |
-| 6 | Reconnexion mot de passe de l'AUTRE compte KPI (celui avec le même e-mail), `/profile/security` → clic « Lier mon compte Google » → autoriser avec le MÊME compte Google qu'avant | Retour `/profile/security?link=error&code=already_linked`, bannière « Ce compte Google est déjà associé à un autre utilisateur KPI… » | ☐ |
+| 1 | Se connecter sur app4 avec l'identifiant (voie mot de passe) | Dashboard | ☑ |
+| 2 | Menu utilisateur → « Sécurité du compte » | `/profile/security` chargée, bloc Google affiche « Liez votre compte Google… » + bouton « Lier mon compte Google » | ☑ |
+| 3 | Cliquer le bouton | Redirection Google, consent screen | ☑ |
+| 4 | Accepter avec un compte Google dont l'e-mail diffère de celui de KPI | Retour `/profile/security?link=ok` (URL nettoyée par le front), bannière « Compte Google lié avec succès », le bloc Google bascule en « lié » | ☑ |
+| 5 | Se déconnecter, cliquer « Continuer avec Google » sur `/login` avec le même compte Google | Login direct (AUTH-OA-03) — c'est la promesse de la phase 2 enfin tenue | ☑ |
+| 6 | Reconnexion mot de passe de l'AUTRE compte KPI (celui avec le même e-mail), `/profile/security` → clic « Lier mon compte Google » → autoriser avec le MÊME compte Google qu'avant | Retour `/profile/security?link=error&code=already_linked`, bannière « Ce compte Google est déjà associé à un autre utilisateur KPI… » | ☑ |
 
 ### 2b.3 Rollback
 

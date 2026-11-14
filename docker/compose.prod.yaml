@@ -354,6 +354,19 @@ services:
             - "traefik.http.middlewares.strip-admin2.stripprefix.prefixes=/admin2"
             - "traefik.http.routers.nginx_app4.priority=100"
             - "traefik.http.routers.nginx_app4.service=nginx_static"
+            # app4 on the bare domain: 301 to www (APP4_URL, OAuth callback, single PWA origin).
+            # Only /admin2, reached by navigation: /api2 on the bare domain must keep answering
+            # (app2 calls it cross-origin and a CORS preflight cannot follow a redirect).
+            - "traefik.http.routers.nginx_app4_bare.rule=Host(`${KPI_DOMAIN_NAME}`) && PathPrefix(`/admin2`)"
+            - "traefik.http.routers.nginx_app4_bare.entrypoints=websecure"
+            - "traefik.http.routers.nginx_app4_bare.tls=true"
+            - "traefik.http.routers.nginx_app4_bare.tls.certresolver=myresolver"
+            - "traefik.http.routers.nginx_app4_bare.priority=200"
+            - "traefik.http.routers.nginx_app4_bare.middlewares=admin2-to-www"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.regex=^https://[^/]+/(.*)"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.replacement=https://www.${KPI_DOMAIN_NAME}/$${1}"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.permanent=true"
+            - "traefik.http.routers.nginx_app4_bare.service=nginx_static"
 
 
     # Site public (app3, Nuxt SSR) servi sur beta.${KPI_DOMAIN_NAME} jusqu'à la bascule de www.
