@@ -13,8 +13,8 @@
 > (2.5 n° 5) ; connexion Google validée en prod depuis `www` (2.5 n° 4). La préprod
 > envoie bien `https://preprod.kayak-polo.info/…`. Tests d'intégration verts en CI
 > (tous les noms cités existent). Phase 1b-ter lot A : sur `claude/scoring-refactoring-strategy-3d43ac`, **pas encore
-> dans `main`** ; tests unitaires (25) et lint verts en local. Restent ☐ : tests manuels non tracés, suivi SQL en base,
-> commande de purge (à écrire), lot A à recetter et à déployer, phase 3.
+> dans `main`** ; tests unitaires (25) et lint verts en local, recette manuelle dev validée le 15/11/2026 (1b-ter.2).
+> Restent ☐ : tests manuels non tracés, suivi SQL en base, commande de purge (à écrire), lot A à déployer, phase 3.
 
 **Règle d'or** : à chaque phase, on vérifie **aussi** qu'app2 (publique) et le site public (app3) ne sont pas impactés.
 
@@ -278,16 +278,22 @@ Spec : [AUTH_HARDENING.md § 3ter](AUTH_HARDENING.md). Aucun changement api2, au
 Raccourcir le JWT pour voir les renouvellements : `JWT_TTL=180` dans `sources/api2/.env.local`, puis
 `make api2_restart`. Compte de **profil 9** (table de marque) et DevTools → Réseau filtré sur `auth/`.
 
+> ⚠️ **Recetter sur `https://kpi.localhost/admin2`** (après `make app4_generate_dev`), **pas** sur le serveur Nuxt
+> `https://kpi-node4.localhost` : pour le navigateur, `kpi-node4.localhost` et `kpi.localhost` sont deux sites
+> distincts, donc les cookies `SameSite=Lax` (`kpi_refresh`) ne sont ni enregistrés au login ni envoyés.
+> Symptôme : `/auth/refresh-session` en 401 (« Missing refresh token ») puis renvoi sur `/login`, alors que
+> `/auth/refresh` (en-tête `Bearer`) passe. En préprod/prod, app4 et api2 partagent l'hôte : pas de problème.
+
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Se connecter, rester sur une page 3 min | `POST /auth/refresh` vers 2 min (le plancher d'1 min avant échéance l'emporte sur 20 % d'un TTL de 3 min), aucune redirection (AUTH-SC-02) | ☐ |
-| 2 | DevTools → Offline 4 min (le renouvellement préventif échoue sans déconnecter), repasser en ligne, cliquer | `/auth/refresh-session` (JWT expiré) dès le retour du réseau, puis la requête passe, pas de `/login` (AUTH-SC-03, AUTH-SC-08) | ☐ |
-| 3 | Avec un mandat actif, refaire 2 | Le mandat actif est toujours sélectionné après le renouvellement (AUTH-SC-05) | ☐ |
-| 4 | Ouvrir deux onglets app4, attendre l'échéance | Un seul `/auth/refresh` pour les deux onglets ; aucun `401` sur `refresh-session` (AUTH-SC-04) | ☐ |
-| 5 | Fermer l'onglet, attendre 5 min, rouvrir app4 | Session restaurée sans passer par `/login` (AUTH-SC-06) | ☐ |
-| 6 | Couper le réseau (DevTools → Offline) après expiration, cliquer | Toast réseau, **pas** de déconnexion ; réseau rétabli → tout repart (AUTH-SC-08) | ☐ |
-| 7 | Révoquer l'appareil depuis `/profile/security` d'un autre navigateur | Le premier navigateur est renvoyé sur `/login` au prochain appel (déconnexion volontaire conservée) | ☐ |
-| 8 | Exporter un PDF après expiration du JWT | Le PDF arrive, pas de déconnexion (AUTH-SC-07) | ☐ |
+| 1 | Se connecter, rester sur une page 3 min | `POST /auth/refresh` vers 2 min (le plancher d'1 min avant échéance l'emporte sur 20 % d'un TTL de 3 min), aucune redirection (AUTH-SC-02) | ☑ |
+| 2 | DevTools → Offline 4 min (le renouvellement préventif échoue sans déconnecter), repasser en ligne, cliquer | `/auth/refresh-session` (JWT expiré) dès le retour du réseau, puis la requête passe, pas de `/login` (AUTH-SC-03, AUTH-SC-08) | ☑ |
+| 3 | Avec un mandat actif, refaire 2 | Le mandat actif est toujours sélectionné après le renouvellement (AUTH-SC-05) | ☑ |
+| 4 | Ouvrir deux onglets app4, attendre l'échéance | Un seul `/auth/refresh` pour les deux onglets ; aucun `401` sur `refresh-session` (AUTH-SC-04) | ☑ |
+| 5 | Fermer l'onglet, attendre 5 min, rouvrir app4 | Session restaurée sans passer par `/login` (AUTH-SC-06) | ☑ |
+| 6 | Couper le réseau (DevTools → Offline) après expiration, cliquer | Toast réseau, **pas** de déconnexion ; réseau rétabli → tout repart (AUTH-SC-08) | ☑ |
+| 7 | Révoquer l'appareil depuis `/profile/security` d'un autre navigateur | Le premier navigateur est renvoyé sur `/login` au prochain appel (déconnexion volontaire conservée) | ☑ |
+| 8 | Exporter un PDF après expiration du JWT | Le PDF arrive, pas de déconnexion (AUTH-SC-07) | ☑ |
 
 Remettre `JWT_TTL` à sa valeur et `make api2_restart` après la recette.
 
