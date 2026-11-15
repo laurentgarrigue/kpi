@@ -316,9 +316,25 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 |---|---|---|---|---|
 | C0 | **Valider ce plan**, confirmer les dates du § 0 | 6 nov. | **13 nov.** | Déclenchement aux plénières |
 | C13 | **Listing des nouveautés du règlement**, en marquant celles qui touchent KPI ; date d'entrée en vigueur | 6 nov. | **15 nov.** | Diapositives « règles dans KPI », C14, C15 |
-| C26 | **Support de présentation des plénières** (FR, ~15 diapositives, **sans les médailles**) : disponible / avant-première / à venir, changements pour les régions (codes régionaux), démonstration réelle sur app2, app4 et `beta.*` | 13 nov. | **19 nov.** | Plénières |
+| C26 | **Support de présentation des plénières** (diaporama « KPI – Plénières 2026 », lien ci-dessous ; FR, ~15 diapositives, **sans les médailles**) : disponible / avant-première / à venir, changements pour les régions (codes régionaux), démonstration réelle sur app2, app4 et `beta.*` | 13 nov. | **19 nov.** | Plénières |
 | C27 | **Kit de relais** pour les régions et les entraîneurs : 3 visuels, textes prêts à publier, liens marqués `mtm_source=relais`, QR code d'app2, calendrier de la saison | 18 nov. (remis sur place) | 4 déc. | O1 |
 | C2a | **Design modernisé visible sur `beta.*`**, même partiellement, pour l'avant-première | 18 nov. | 20 nov. (sinon : avant-première sur l'ancien design, ou sans le site) | Avant-première |
+
+**Support de C26 : diaporama « KPI – Plénières 2026 »** (artifact claude.ai, privé, lié au compte de l'auteur) :
+<https://claude.ai/artifact/XrVPVbmjrr1CwKuvdNyahN>
+
+- **Consignes de rédaction du diaporama** (à redonner à toute nouvelle session, qui ne connaît pas l'historique) :
+  **noms publics uniquement** (« application bord de terrain », « site public », « admin2 », jamais app2/app3/app4,
+  voir le vocabulaire de [GUIDE_PRODUCTION.md](../../communication/visuels/GUIDE_PRODUCTION.md)) ;
+  **« console de scoring »**, pas « feuille de marque » ; **ne pas parler du kit de relais** (C27, remis sur place) ;
+  **pas un mot des médailles** (§ 3.4).
+- **Captures et script qui les régénère** : branche `claude/plenieres-2026-visuels`, dossier
+  `DOC/communication/plenieres-2026/`. Les images déjà intégrées sont stockées avec le diaporama.
+- **Reprendre le diaporama dans une autre session** (web ou VS Code) : coller le lien avec la demande ; Claude relit
+  le diaporama et republie **au même lien**. Il faut que Claude Code soit connecté avec le **compte claude.ai**
+  (pas une clé d'API seule) ; `/artifacts` liste les artifacts, galerie web : `claude.ai/code/artifacts`.
+- **Une seule session à la fois** sur le diaporama : une session dont la copie n'est plus à jour doit le relire avant
+  de publier, sinon elle écrase les retouches de l'autre.
 
 ### 7.2 Site public (app3) et bascule
 
