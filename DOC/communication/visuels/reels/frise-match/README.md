@@ -13,4 +13,5 @@ npx remotion render FriseEN out/frise-match-en.mp4
   (copies de `../../captures/`, à remplacer par une capture de la saison 2027).
 - Police : Raleway (variable), copiée depuis `sources/kpi-layer/public/fonts/raleway/`.
 - Textes FR / EN : objet `TEXTS` dans `src/Composition.tsx`.
-- Les MP4 rendus sont copiés dans `../../exports/`.
+- Les MP4 rendus vont **hors du dépôt**, dans `~/Documents/dev/kpi_exports/reels/` :
+  `cp out/frise-match-*.mp4 ~/Documents/dev/kpi_exports/reels/`.

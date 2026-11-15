@@ -4,3 +4,6 @@ dist
 .env
 out
 recordings
+
+# Vidéos de démonstration : régénérées depuis recordings/, copie dans ~/Documents/dev/kpi_exports/demos/installation-app/
+public/demos/

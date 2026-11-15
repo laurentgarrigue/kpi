@@ -24,11 +24,20 @@ DOC/communication/visuels/
 ├── GUIDE_PRODUCTION.md          ce fichier
 ├── captures/                    captures haute définition (PNG)
 ├── gabarits/carrousel-feature.html   gabarit de carrousel 1080×1350
-├── exports/                     livrables : PNG des slides, MP4 des Reels
+├── exports/                     zone de dépôt temporaire, ignorée par git (Playwright MCP n'écrit que dans le dépôt)
 └── reels/
     ├── frise-match/             Reel « Le match minute par minute » (captures animées)
     └── installation-app/        Reel d'installation (cartes d'étapes + enregistrement Playwright hors ligne)
+
+~/Documents/dev/kpi_exports/     livrables, HORS du dépôt
+├── reels/                       MP4 des Reels
+├── carrousels/                  PNG des slides
+└── demos/installation-app/      copie des vidéos de démonstration (entrées du Reel, non versionnées)
 ```
+
+**Le dépôt ne contient que la recette** (code Remotion, scripts, captures sources PNG), jamais les vidéos :
+un MP4 ne se compresse pas dans git, chaque rendu alourdit l'historique pour toujours, et le dépôt est
+cloné sur les serveurs et dans la CI. `exports/`, `out/`, `recordings/` et `public/demos/` sont ignorés.
 
 ## 3. Outils et pièges de l'environnement
 
@@ -66,7 +75,8 @@ Nommage des captures : `bord-de-terrain-<sujet>.png`, `site-public-<sujet>.png`,
 - Dupliquer une `<section>` par slide, changer le texte et l'image.
 - La capture est cadrée en `object-fit: cover` avec un fondu en bas (`mask-image`). La slide 2 la réduit à 640 px (`#slide-2 .shot img`) car la capture est verticale.
 - Titres courts : au-delà de deux lignes, la capture rétrécit.
-- **Export** : servir le dossier (§ 3), ouvrir la page, puis `browser_take_screenshot` sur `#slide-N` en `scale: 'css'` avec `filename: 'DOC/communication/visuels/exports/<nom>-slide-N.png'`.
+- **Export** : servir le dossier (§ 3), ouvrir la page, puis `browser_take_screenshot` sur `#slide-N` en `scale: 'css'` avec `filename: 'DOC/communication/visuels/exports/<nom>-slide-N.png'`, puis
+  `mv DOC/communication/visuels/exports/*.png ~/Documents/dev/kpi_exports/carrousels/`.
 
 ## 6. Reel monté avec Remotion (modèle `reels/frise-match`)
 
@@ -79,7 +89,7 @@ npm run dev                                          # Remotion Studio
 npx remotion still FriseFR out/test.png --frame=120  # contrôler une image
 npx remotion render FriseFR out/frise-match-fr.mp4
 npx remotion render FriseEN out/frise-match-en.mp4
-cp out/*.mp4 ../../exports/                          # `out/` est ignoré par git
+cp out/*.mp4 ~/Documents/dev/kpi_exports/reels/     # livrables hors du dépôt (`out/` est ignoré par git)
 ```
 
 **Fabriquer un nouveau Reel** : copier le dossier `frise-match` (sans `node_modules` ni `out`), le renommer, puis :
@@ -141,6 +151,7 @@ Lancer : `npx tsx scripts/record-offline.ts` (le fichier est renommé en `record
 
 ```bash
 npx remotion ffmpeg -y -i recordings/offline.webm -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags faststart public/demos/offline.mp4
+cp public/demos/*.mp4 ~/Documents/dev/kpi_exports/demos/installation-app/                         # public/demos/ n'est pas versionné
 npx remotion ffprobe -v error -show_entries format=duration -of csv=p=0 recordings/offline.webm    # durée
 npx remotion ffmpeg -y -ss 11 -i public/demos/offline.mp4 -frames:v 1 out/frames/f11.png           # une image à t = 11 s
 ```

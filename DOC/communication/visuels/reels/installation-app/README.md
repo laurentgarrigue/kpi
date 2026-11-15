@@ -12,9 +12,11 @@ npx remotion ffmpeg -y -i recordings/offline.webm -c:v libx264 -crf 18 -pix_fmt 
 npm run dev                                             # Remotion Studio
 npx remotion render InstallFR out/installation-app-fr.mp4
 npx remotion render InstallEN out/installation-app-en.mp4
-cp out/*.mp4 ../../exports/
+cp out/installation-app-*.mp4 ~/Documents/dev/kpi_exports/reels/       # livrables hors du dépôt
 ```
 
+- `public/demos/*.mp4` n'est **pas versionné** : le régénérer (commandes ci-dessus) ou le restaurer depuis
+  `~/Documents/dev/kpi_exports/demos/installation-app/` avant de rendre le Reel.
 - Les cartes d'étapes iPhone/Android sont **dessinées** (icônes SVG) : l'interface native des téléphones n'est pas enregistrable.
 - Libellés Android à vérifier sur un vrai téléphone (« Ajouter à l'écran d'accueil » selon la doc, Chrome propose parfois « Installer l'application »).
 - Procédure complète : `../../GUIDE_PRODUCTION.md` (§ 7).
