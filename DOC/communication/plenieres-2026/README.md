@@ -10,7 +10,7 @@ Aucun fichier dupliqué : les logos viennent du dépôt.
 | Visuel | Source |
 |---|---|
 | Logo KPI complet (fond clair) | `sources/img/New_KPI_logo.png` |
-| Logo KPI, silhouette claire (fonds sombres) | dérivé de `New_KPI_logo.png` (pixels noirs → `#f5f7f8`) |
+| Logo KPI, version fonds sombres | dérivé de `New_KPI_logo.png` (noir et blanc inversés, lettres bleues conservées) |
 | app2 — Résultats | `sources/app2/public/img/logo.png` |
 | app3 — Site public | `sources/app3/public/favicon.png` |
 | app4 — Administration | `sources/app4/public/favicon.png` |
@@ -20,7 +20,7 @@ Aucun fichier dupliqué : les logos viennent du dépôt.
 | Fichier | Page | Slide |
 |---|---|---|
 | `captures/app2-match.jpg` | app2, feuille de la finale N1H 2026 (score + chronologie), iPhone 13 | 4 « Le match minute par minute » |
-| `captures/app-matchs.jpg`, `app-classement.jpg`, `app-equipe.jpg` | app2 N1H 2026 : programme, classement, parcours d'Avranches I | 6 « L'application en images » |
+| `captures/app-matchs.jpg`, `app-classement.jpg`, `app-equipe.jpg` | app2 N1H 2026 : programme, classement, parcours d'Avranches I | 5 « L'application en images » |
 | `captures/site-accueil.jpg` | beta.kayak-polo.info, accueil, 1440×900 | 7 « kayak-polo.info fait peau neuve » |
 | `captures/site-classement.jpg`, `site-palmares.jpg` | app3 : classement N1H 2026, palmarès N1H | 8 « Le site public en images » |
 | `captures/site-reg03.jpg` | beta.kayak-polo.info/groups/2026/REG03, bandeau | 16 « Des structures enfin à jour » |
@@ -37,8 +37,8 @@ Les pages d'app4 demandent une connexion : ces captures ont été fournies à la
 
 | Fichier | Page | Slide |
 |---|---|---|
-| `captures/console-scoring.jpg` | Console de scoring, match en cours | 11 « Une nouvelle console de scoring se prépare » |
+| `captures/gs-controle-equipement.jpg` | Contrôle équipement, GER Men, ECA1 2026 (barre de menu retirée) | 9 « Le contrôle équipement sur tablette » |
+| `captures/console-scoring.jpg` | Console de scoring, match en cours | 10 « Une nouvelle console de scoring se prépare » |
+| `captures/console-cartons.jpg`, `console-chrono-tir.jpg` | Détails recadrés de la console : faits de jeu (carton noir), chrono de tir 60 / 40 s | 11 « Les nouvelles règles déjà dans la console » |
 | `captures/gs-tableau-de-bord.jpg`, `gs-schema.jpg` | Tableau de bord, schéma ECA1 2026 | 13 « La gestion sportive en images » |
 | `captures/gs-copie-modale.jpg` | Feuille de présence équipe, fenêtre « Copier depuis » (recadrée) | 14 « Les clubs font leurs feuilles de présence » |
-
-La slide 10 (contrôle équipement) garde son exemple illustratif en attendant une capture.
