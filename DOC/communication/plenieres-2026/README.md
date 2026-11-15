@@ -20,8 +20,10 @@ Aucun fichier dupliqué : les logos viennent du dépôt.
 | Fichier | Page | Slide |
 |---|---|---|
 | `captures/app2-match.jpg` | app2, feuille de la finale N1H 2026 (score + chronologie), iPhone 13 | 4 « Le match minute par minute » |
-| `captures/site-accueil.jpg` | beta.kayak-polo.info, accueil, 1440×900 | 6 « kayak-polo.info fait peau neuve » |
-| `captures/site-reg03.jpg` | beta.kayak-polo.info/groups/2026/REG03, bandeau | 13 « Des structures enfin à jour » |
+| `captures/app-matchs.jpg`, `app-classement.jpg`, `app-equipe.jpg` | app2 N1H 2026 : programme, classement, parcours d'Avranches I | 6 « L'application en images » |
+| `captures/site-accueil.jpg` | beta.kayak-polo.info, accueil, 1440×900 | 7 « kayak-polo.info fait peau neuve » |
+| `captures/site-classement.jpg`, `site-palmares.jpg` | app3 : classement N1H 2026, palmarès N1H | 8 « Le site public en images » |
+| `captures/site-reg03.jpg` | beta.kayak-polo.info/groups/2026/REG03, bandeau | 16 « Des structures enfin à jour » |
 
 Refaire les captures brutes (PNG pleine résolution, à recadrer ensuite) :
 
@@ -29,7 +31,14 @@ Refaire les captures brutes (PNG pleine résolution, à recadrer ensuite) :
 node DOC/communication/plenieres-2026/capture.js
 ```
 
-## Pas encore de capture
+## Captures fournies (app4, environnement de dev)
 
-Les pages de l'administration (app4 : contrôle équipement, feuilles de présence, préparation de saison)
-demandent une connexion. La slide 8 garde son exemple illustratif en attendant de vraies captures.
+Les pages d'app4 demandent une connexion : ces captures ont été fournies à la main.
+
+| Fichier | Page | Slide |
+|---|---|---|
+| `captures/console-scoring.jpg` | Console de scoring, match en cours | 11 « Une nouvelle console de scoring se prépare » |
+| `captures/gs-tableau-de-bord.jpg`, `gs-schema.jpg` | Tableau de bord, schéma ECA1 2026 | 13 « La gestion sportive en images » |
+| `captures/gs-copie-modale.jpg` | Feuille de présence équipe, fenêtre « Copier depuis » (recadrée) | 14 « Les clubs font leurs feuilles de présence » |
+
+La slide 10 (contrôle équipement) garde son exemple illustratif en attendant une capture.
