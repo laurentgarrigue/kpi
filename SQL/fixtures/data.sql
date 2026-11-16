@@ -556,7 +556,8 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCRUT', '', 'Contrôleur Test', 'scrut@example.test', '', '', 10, '|SCA|SCB|SCC|', '|2997|', '', '', 'C002', '|80|'),  -- profil 10 limité à l'événement 80 (pas SCC), club ignoré
   ('TSCRUTA', '', 'Contrôleur SCA', 'scruta@example.test', '', '', 10, '|SCA|SCC|', '|2997|', '', '', NULL, ''),    -- profil 10, SCA + SCC, sans limite d'événement
   ('TDIV', '', 'Division Test', 'div@example.test', '', '', 3, '|SCA|SCB|', '|2997|', '', '', NULL, ''),            -- profil 3 : pas de scrutineering
-  ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', '');            -- profil 7 limité au club C002
+  ('TCLUB', '', 'Club Test', 'club@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C002', ''),            -- profil 7 limité au club C002
+  ('TCLUBA', '', 'Club Alpha Test', 'cluba@example.test', '', '', 7, '|SCA|SCB|', '|2997|', '', '', 'C001', '');    -- profil 7 limité au club C001 (copie de composition, #399)
 
 -- ---------------------------------------------------------------- documents PDF (PDF_GOTENBERG.md)
 -- Consommé par tests/Integration/PdfEndpointsTest.php : rôle minimum (§ 7), périmètre du mandat (PDF-AUTH-03).

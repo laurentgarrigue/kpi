@@ -100,14 +100,21 @@ destination à partir de la date de naissance (aucune catégorie si la date est 
 
 ### Droits d'accès
 
-**Profil ≤ 3** :
-- ✅ Peut copier des compositions sur toutes les compétitions
-- ✅ Même si la compétition est verrouillée
+**Profils 1 à 7** (jusqu'aux responsables d'équipe) :
+- ✅ Peuvent copier une composition sur les équipes de leur périmètre : compétitions de leur filtre et, si leur
+  compte est limité à des clubs, équipes de ces clubs uniquement
+- ❌ Bloqué si la compétition cible est verrouillée
+- ❌ Ne peuvent pas copier vers un club ou une compétition hors de leur périmètre
 
-**Profil > 3** :
-- ✅ Peut copier uniquement sur les équipes de leurs clubs
-- ❌ Bloqué si la compétition est verrouillée
-- ❌ Ne peut pas copier vers un club dont il n'a pas la gestion
+**Profil 10 (Contrôle équipement)** :
+- ✅ Peut copier sur toutes les équipes de ses compétitions (la limitation de club ne s'applique pas)
+- ❌ Bloqué si la compétition cible est verrouillée
+
+**Profils 8 (Consultation) et 9 (Table de marque)** : pas de copie (bouton absent).
+
+La copie reste sûre pour les responsables d'équipe : les joueurs non en règle passent en Inactif après la copie et
+le contrôle des compositions (licences, certificats, pagaies couleur, surclassements, contrôle équipement) est visible
+en direct.
 
 ### Vérifications automatiques
 

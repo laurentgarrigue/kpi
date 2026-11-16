@@ -98,7 +98,7 @@ Consommé par `tests/Integration/StaffScrutineeringTest.php`, `PresenceScrutinee
 | `SCB` (verrouillée) | 9384 Scrut Alpha Deux (C001, même équipe de club que 9381 : copie), 9385 Germany Women (`GER-W`) |
 | `SCC` (hors événement) | journée 9273 rattachée à aucun événement ; 9386 Scrut Charlie (C001), joueur 9517 |
 | `kp_scrutineering` | 9381 : un joueur complet et un partiel → « partiel » ; 9382 : ligne remise à 0 → « non contrôlé » |
-| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002) |
+| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002), `TCLUBA` (profil 7, club C001, SCA + SCB : copie de composition) |
 
 `kp_licence` reprend la définition de production (colonnes lues par la feuille de présence), avec `kp_arbitre`,
 `kp_surclassement` et `kp_categorie` (vides).

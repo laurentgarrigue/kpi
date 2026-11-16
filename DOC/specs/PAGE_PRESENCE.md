@@ -44,10 +44,17 @@ La page détecte automatiquement le mode en fonction des paramètres d'URL et ad
 | ≤ 8 | Édition inline (numéro, capitaine) | Verrou = 'N' |
 | ≤ 8 | Ajout joueurs (recherche licence) | Verrou = 'N' |
 | ≤ 8 | Suppression | Verrou = 'N' |
-| ≤ 4 | Copie depuis autre compétition | Verrou = 'N' |
+| ≤ 7 | Copie depuis autre compétition (équipe de ses clubs et compétitions) | Verrou = 'N' |
 | ≤ 4 | Création joueurs non-licenciés | Verrou = 'N' |
 
 **Bloqué si**: Competition verrouillée (`kp_competition.Verrou = 'O'`)
+
+**Copie depuis une autre compétition** (issue #399) : ouverte aux responsables d'équipe (profils 5 à 7) depuis que le
+contrôle des compositions se fait en direct (licences, certificats, pagaies couleur, surclassements, contrôle
+équipement). Les profils 8 (Consultation) et 9 (Table de marque) n'ont ni le bouton ni l'API (403). Côté api2,
+`POST /admin/teams/{teamId}/players/copy` applique la règle des autres écritures de la feuille d'équipe
+(`denyTeamCompositionWrite()` : profils ≤ 7 et 10, clubs et compétitions de l'utilisateur, compétition non
+verrouillée) ; côté app4, `canCopyTeamComposition()` (`utils/presencePermissions.ts`).
 
 **Profil 10 « Contrôle équipement »** ([PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2) : consultation, édition
 inline, ajout, suppression, copie, création de joueur et recherche par licence sur **toutes les équipes** de ses
@@ -141,7 +148,7 @@ interface PresencePageState {
 | 5 | Créer nouveau joueur (licence, arbitre, ICF) | ≤ 4 | ❌ | GestionEquipeJoueur.php:280-341 |
 | 6 | Ajouter joueur existant (autocomplete) | ≤ 8 | ❌ | GestionEquipeJoueur.tpl:197-235 |
 | 7 | Sélection multiple + suppression en masse | ≤ 8 | ❌ | GestionEquipeJoueur.php:416-420 |
-| 8 | Copier composition depuis autre compét. | ≤ 4 | ❌ | CopyTeamComposition.php |
+| 8 | Copier composition depuis autre compét. | ≤ 7 et 10 | ❌ | CopyTeamComposition.php |
 | 9 | Afficher info licence (ICF si dispo, sinon Matric) | ≤ 10 | - | GestionEquipeJoueur.php:156-170 |
 | 9b | Afficher saison licence entre parenthèses si < saison travail | ≤ 10 | - | - |
 | 10 | Afficher surclassement (icône #S) | ≤ 10 | - | GestionEquipeJoueur.tpl:110-115 |
@@ -1753,7 +1760,7 @@ export interface CopyToMatchesFormData {
 | Ajouter joueur existant | ≤ 8 | Verrou = 'N' |
 | Créer joueur non-licencié | ≤ 4 | Verrou = 'N' ET compétition non N*/CF* |
 | Supprimer joueurs | ≤ 8 | Verrou = 'N' |
-| Copier composition | ≤ 4 | Verrou = 'N' |
+| Copier composition | ≤ 7 et 10 | Verrou = 'N' |
 | Recherche licence avancée | ≤ 2 | - |
 | Voir dernière modification | ≤ 10 | - |
 | Accès PDF | ≤ 10 | - |

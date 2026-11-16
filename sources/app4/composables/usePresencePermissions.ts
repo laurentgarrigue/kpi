@@ -1,6 +1,7 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { PresenceMode } from '~/types/presence'
 import { canWriteTeamPresence, isScrutineerProfile } from '~/utils/scrutineering'
+import { canCopyTeamComposition } from '~/utils/presencePermissions'
 
 /**
  * Permission management for Presence Sheet
@@ -35,7 +36,10 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   // Copy permission
   const canCopy = computed(() => {
     if (isLocked.value) return false
-    if (mode === 'team') return authStore.profile <= 4 || isScrutineer.value // Copy from other competition
+    if (mode === 'team') {
+      // Copy from another competition: profiles ≤ 7 and the profile 10, perimeter checked by the server (#399)
+      return canCopyTeamComposition(authStore.profile, { locked: isLocked.value, inPerimeter: presenceStore.canEdit })
+    }
     if (mode === 'match') return authStore.profile <= 6 // Copy to same day matches
     return false
   })
