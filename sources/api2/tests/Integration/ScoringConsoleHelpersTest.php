@@ -134,4 +134,32 @@ final class ScoringConsoleHelpersTest extends ApiTestCase
         $claims = json_decode(base64_decode(strtr(explode('.', $state['mercureToken'])[1], '-_', '+/')), true);
         self::assertSame(['subscribe' => [$state['topicBase'] . '/{type}']], $claims['mercure']);
     }
+
+    /**
+     * Régression préprod : l'ETag ne dépendait que du tick. Après un déploiement qui ajoutait
+     * le jeton à la réponse, le navigateur revalidait, recevait 304 et gardait l'ancienne
+     * réponse sans jeton → abonnement refusé (401). L'ETag porte donc aussi l'empreinte du
+     * jeton : une réponse en cache sans jeton (ou au jeton périmé) n'est plus validée.
+     */
+    public function testStateEtagChangesWithTheSubscriberToken(): void
+    {
+        $this->beginWrites();
+        static::getContainer()->get(ScoringLiveService::class)->ensureState(9404);
+
+        $state = $this->requestAs(self::ADMIN, 'GET', '/admin/scoring/state/9404');
+        $etag = (string) $this->client->getResponse()->headers->get('ETag');
+        $tickOnlyEtag = 'W/"scoring-9404-' . $state['tick'] . '"';
+
+        $this->client->request('GET', '/admin/scoring/state/9404', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor(self::ADMIN),
+            'HTTP_IF_NONE_MATCH' => $tickOnlyEtag,
+        ]);
+        self::assertSame(200, $this->client->getResponse()->getStatusCode(), 'un ETag sans empreinte du jeton ne doit plus valider le cache');
+
+        $this->client->request('GET', '/admin/scoring/state/9404', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor(self::ADMIN),
+            'HTTP_IF_NONE_MATCH' => $etag,
+        ]);
+        self::assertSame(304, $this->client->getResponse()->getStatusCode(), 'même tick et même jeton : 304');
+    }
 }

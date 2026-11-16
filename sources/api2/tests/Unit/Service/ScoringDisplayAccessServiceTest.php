@@ -95,4 +95,33 @@ final class ScoringDisplayAccessServiceTest extends TestCase
     {
         self::assertSame('', $this->service()->mintTopicSubscriberJwt(['/scoring/match/1/{type}']));
     }
+
+    /**
+     * Le jeton entre dans l'ETag de l'état de la console : il doit rester identique d'une
+     * requête à l'autre dans la même heure, sinon plus aucun 304 n'est possible.
+     */
+    public function testTopicSubscriberJwtIsStableWithinTheHourAndRenewedAfter(): void
+    {
+        $service = new ScoringDisplayAccessService($this->createStub(Connection::class), 'hub-secret-for-tests');
+        $topics = ['/scoring/match/1/{type}'];
+        $hour = 1_800_000_000 - (1_800_000_000 % 3600);
+
+        $first = $service->mintTopicSubscriberJwt($topics, now: $hour + 10);
+
+        self::assertSame($first, $service->mintTopicSubscriberJwt($topics, now: $hour + 3500));
+        self::assertNotSame($first, $service->mintTopicSubscriberJwt($topics, now: $hour + 3600 + 10));
+    }
+
+    /** Arrondi à l'heure, le jeton reste valable au moins la durée demandée. */
+    public function testTopicSubscriberJwtLastsAtLeastTheRequestedTtl(): void
+    {
+        $service = new ScoringDisplayAccessService($this->createStub(Connection::class), 'hub-secret-for-tests');
+        $now = 1_800_000_123;
+
+        $payload = explode('.', $service->mintTopicSubscriberJwt(['/t/{type}'], 86400, $now))[1];
+        $exp = json_decode(base64_decode(strtr($payload, '-_', '+/')), true)['exp'];
+
+        self::assertGreaterThanOrEqual($now + 86400, $exp);
+        self::assertLessThan($now + 86400 + 3600, $exp);
+    }
 }

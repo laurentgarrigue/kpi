@@ -580,8 +580,14 @@ class ScoringController extends AbstractController
             return new JsonResponse(['exists' => false, 'matchId' => $matchId]);
         }
 
-        // Cheap HTTP cache: the tick IS the version (plan §1.3). 304 when unchanged.
-        $etag = 'W/"scoring-' . $matchId . '-' . $state['tick'] . '"';
+        // In preprod/prod the hub refuses anonymous subscribers: the console gets a
+        // subscriber JWT limited to its match's topics.
+        $mercureToken = $this->displayAccess->mintTopicSubscriberJwt([$state['topicBase'] . '/{type}']);
+
+        // Cheap HTTP cache: the tick IS the version (plan §1.3). 304 when unchanged. The
+        // token's fingerprint is part of it: a cached response without a token, or with an
+        // expired one, must not be revalidated (the console would subscribe and get a 401).
+        $etag = 'W/"scoring-' . $matchId . '-' . $state['tick'] . '-' . substr(md5($mercureToken), 0, 8) . '"';
         if ($request->headers->get('If-None-Match') === $etag) {
             return new JsonResponse(null, Response::HTTP_NOT_MODIFIED);
         }
@@ -589,11 +595,9 @@ class ScoringController extends AbstractController
         // The console subscribes to its own match's topics to stay coherent across
         // terminals (plan lot 3): it gets the hub URL and the topic base from here, so
         // the addressing scheme stays server-owned. Public info — never the JWT secret.
-        // In preprod/prod the hub refuses anonymous subscribers: the console gets a
-        // subscriber JWT limited to its match's topics.
         $response = new JsonResponse(['exists' => true] + $state + [
             'mercureUrl' => $this->mercurePublicUrl,
-            'mercureToken' => $this->displayAccess->mintTopicSubscriberJwt([$state['topicBase'] . '/{type}']),
+            'mercureToken' => $mercureToken,
             'nowServer' => time() % 86400,
         ]);
         $response->headers->set('ETag', $etag);

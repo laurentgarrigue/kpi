@@ -30,6 +30,9 @@ class ScoringDisplayAccessService
     public const SCOPE_EVENT = 'event';
     public const SCOPE_PITCH = 'pitch';
 
+    /** Subscriber JWT expiries are rounded up to this many seconds (stable token → usable ETag). */
+    private const TOKEN_EXPIRY_ROUNDING = 3600;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly string $mercureJwtSecret = '',
@@ -157,17 +160,22 @@ class ScoringDisplayAccessService
      * Used by the scoring console for its own match; '' when the hub has no secret (dev,
      * anonymous mode), in which case the client subscribes without a token.
      *
+     * The expiry is rounded up to the hour, so the token is identical for every request of
+     * the same hour: it takes part in HTTP ETags, which would otherwise never match again.
+     *
      * @param list<string> $topics
      */
-    public function mintTopicSubscriberJwt(array $topics, int $ttlSeconds = 86400): string
+    public function mintTopicSubscriberJwt(array $topics, int $ttlSeconds = 86400, ?int $now = null): string
     {
         if ($this->mercureJwtSecret === '') {
             return '';
         }
 
+        $expiresAt = $ttlSeconds + ($now ?? time());
+
         return $this->encodeHs256([
             'mercure' => ['subscribe' => $topics],
-            'exp' => time() + $ttlSeconds,
+            'exp' => $expiresAt + self::TOKEN_EXPIRY_ROUNDING - $expiresAt % self::TOKEN_EXPIRY_ROUNDING,
         ]);
     }
 
