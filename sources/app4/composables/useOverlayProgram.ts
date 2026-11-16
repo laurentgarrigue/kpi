@@ -151,16 +151,8 @@ export function useOverlayProgram(event: number, pitch: string, apiBase: string,
     // so a match change needs no re-subscription.
     if (source && source.readyState !== EventSource.CLOSED) return
 
-    const url = new URL(hub)
-    url.searchParams.append('topic', `${base}/{type}`)
-    // EventSource cannot set an Authorization header: the hub accepts the subscriber JWT
-    // as a query parameter. Required in preprod/prod (MERCURE_ANONYMOUS=0); harmless in
-    // dev where anonymous subscription is allowed.
-    const jwt = program.value?.mercureToken
-    if (jwt) url.searchParams.append('authorization', jwt)
-
     try {
-      source = new EventSource(url.toString())
+      source = new EventSource(scoringSubscribeUrl(hub, base, program.value?.mercureToken))
     } catch {
       status.value = 'blind'
       return

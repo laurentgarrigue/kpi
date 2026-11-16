@@ -82,9 +82,9 @@ make api2_test_integration                        # recrée kpi_fixtures_test à
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
-| 8 | `make app4_test` | `Test Files 24 passed`, `Tests 255 passed` (dont `sseStream`, `scoringDisplaySwitch`, `scoringPenalties`, `scoringDisplayOptions`, `scoringClosure`, `scoringKeyboard`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-08 (touches du chrono de tir revues)* | ☐ |
-| 9 | `make api2_test_unit` | `OK (455 tests …)` — *relevé le 2026-11-16* | ☑ |
-| 10 | `make api2_test_integration` | `Tests: 393`, aucune *failure* (2 *deprecations* connues, hors scoring) — *relevé le 2026-11-16, après ajout de `kp_event_worker_config` aux fixtures* | ☐ |
+| 8 | `make app4_test` | `Test Files 31 passed`, `Tests 328 passed` (dont `sseStream`, `scoringDisplaySwitch`, `scoringPenalties`, `scoringDisplayOptions`, `scoringClosure`, `scoringKeyboard`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *relevé le 2026-11-16* | ☑ |
+| 9 | `make api2_test_unit` | `OK (457 tests …)` — *relevé le 2026-11-16* | ☑ |
+| 10 | `make api2_test_integration` | `Tests: 394`, aucune *failure* (2 *deprecations* connues, hors scoring) — *relevé le 2026-11-16, après ajout de `kp_event_worker_config` aux fixtures* | ☑ |
 
 ### R0.4 🌐 Premier contact
 
@@ -116,7 +116,7 @@ Connexion app4 avec un **profil ≤ 2** (login dev `42054`), puis `https://kpi.l
 
 ### V1 — La base existe vraiment
 
-Couverte par R0.2 et R0.3. ☐
+Couverte par R0.2 et R0.3. ☑
 
 ### V2 — Un match complet, de bout en bout
 

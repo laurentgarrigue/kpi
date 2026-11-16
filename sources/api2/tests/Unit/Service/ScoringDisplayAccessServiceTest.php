@@ -67,4 +67,32 @@ final class ScoringDisplayAccessServiceTest extends TestCase
 
         self::assertTrue($this->service('')->looksSameOrigin($request));
     }
+
+    // ------------------------------------------------------------ JWT d'abonné de la console
+
+    /**
+     * La console de scoring s'abonne aux topics de SON match : en préprod/prod le hub refuse
+     * les abonnés anonymes, il lui faut donc un JWT signé avec le secret du hub, limité à ces topics.
+     */
+    public function testTopicSubscriberJwtIsSignedWithTheHubSecretAndLimitedToTheGivenTopics(): void
+    {
+        $secret = 'hub-secret-for-tests';
+        $service = new ScoringDisplayAccessService($this->createStub(Connection::class), $secret);
+
+        $jwt = $service->mintTopicSubscriberJwt(['/scoring/event/77/pitch/1/{type}']);
+
+        [$header, $payload, $signature] = explode('.', $jwt);
+        $expected = rtrim(strtr(base64_encode(hash_hmac('sha256', $header . '.' . $payload, $secret, true)), '+/', '-_'), '=');
+        self::assertSame($expected, $signature, 'signé HS256 avec le secret du hub');
+
+        $claims = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
+        self::assertSame(['subscribe' => ['/scoring/event/77/pitch/1/{type}']], $claims['mercure']);
+        self::assertGreaterThan(time(), $claims['exp']);
+    }
+
+    /** Sans secret (dev, hub en mode anonyme), aucun jeton : la console s'abonne sans. */
+    public function testNoTopicSubscriberJwtWithoutHubSecret(): void
+    {
+        self::assertSame('', $this->service()->mintTopicSubscriberJwt(['/scoring/match/1/{type}']));
+    }
 }

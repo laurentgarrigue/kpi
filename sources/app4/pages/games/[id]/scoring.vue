@@ -734,7 +734,7 @@ onMounted(async () => {
 
     // Subscribe to this match's topics: another terminal (or the hardware relay) taking
     // over is reflected here without a reload.
-    liveSync.connect(scoringStore.mercureUrl, scoringStore.topicBase)
+    liveSync.connect(scoringStore.mercureUrl, scoringStore.topicBase, scoringStore.mercureToken)
   } catch {
     // useApi already shows a toast
   }

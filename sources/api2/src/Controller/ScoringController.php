@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Scoring\ScoringRules;
+use App\Service\ScoringDisplayAccessService;
 use App\Service\ScoringLiveService;
 use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
@@ -66,6 +67,7 @@ class ScoringController extends AbstractController
         private EntityManagerInterface $entityManager,
         private ScoringLiveService $live,
         private ScoringProgramService $program,
+        private ScoringDisplayAccessService $displayAccess,
         /** Browser-facing Mercure subscribe URL (never the JWT secret). */
         private string $mercurePublicUrl = ''
     ) {
@@ -587,8 +589,11 @@ class ScoringController extends AbstractController
         // The console subscribes to its own match's topics to stay coherent across
         // terminals (plan lot 3): it gets the hub URL and the topic base from here, so
         // the addressing scheme stays server-owned. Public info — never the JWT secret.
+        // In preprod/prod the hub refuses anonymous subscribers: the console gets a
+        // subscriber JWT limited to its match's topics.
         $response = new JsonResponse(['exists' => true] + $state + [
             'mercureUrl' => $this->mercurePublicUrl,
+            'mercureToken' => $this->displayAccess->mintTopicSubscriberJwt([$state['topicBase'] . '/{type}']),
             'nowServer' => time() % 86400,
         ]);
         $response->headers->set('ETag', $etag);

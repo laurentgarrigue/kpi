@@ -145,20 +145,30 @@ class ScoringDisplayAccessService
      */
     public function mintSubscriberJwt(array $scope, int $ttlSeconds = 86400): string
     {
-        if ($this->mercureJwtSecret === '') {
-            return '';
-        }
-
         $topic = $scope['pitch'] !== null
             ? "/scoring/event/{$scope['event']}/pitch/{$scope['pitch']}/{type}"
             : "/scoring/event/{$scope['event']}/pitch/{pitch}/{type}";
 
-        $payload = [
-            'mercure' => ['subscribe' => [$topic]],
-            'exp' => time() + $ttlSeconds,
-        ];
+        return $this->mintTopicSubscriberJwt([$topic], $ttlSeconds);
+    }
 
-        return $this->encodeHs256($payload);
+    /**
+     * Mint a Mercure **subscriber** JWT limited to the given topics (URI templates allowed).
+     * Used by the scoring console for its own match; '' when the hub has no secret (dev,
+     * anonymous mode), in which case the client subscribes without a token.
+     *
+     * @param list<string> $topics
+     */
+    public function mintTopicSubscriberJwt(array $topics, int $ttlSeconds = 86400): string
+    {
+        if ($this->mercureJwtSecret === '') {
+            return '';
+        }
+
+        return $this->encodeHs256([
+            'mercure' => ['subscribe' => $topics],
+            'exp' => time() + $ttlSeconds,
+        ]);
     }
 
     /** Minimal HS256 JWT encoder — no dependency needed for a two-claim token. */

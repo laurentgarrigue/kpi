@@ -2,6 +2,8 @@
 
 namespace App\Tests\Integration;
 
+use App\Service\ScoringLiveService;
+
 /**
  * Aides de la vue « Paramètres » de la console de scoring (PAGE_SCORING.md §7.2, §7.8) :
  *
@@ -108,5 +110,28 @@ final class ScoringConsoleHelpersTest extends ApiTestCase
     public function testUnknownRoleIsRejected(): void
     {
         $this->requestAs(self::ADMIN, 'GET', '/admin/scoring/officials/9404/suggest?role=boss', expectedStatus: 400);
+    }
+
+    // ------------------------------------------------------------ abonnement temps réel
+
+    /**
+     * En préprod/prod le hub Mercure refuse les abonnés anonymes : l'état de la console doit
+     * fournir un JWT d'abonné, sinon la console affiche « Connexion perdue » en permanence.
+     * Le jeton n'ouvre que les topics du match (jamais ceux d'un autre terrain/tournoi).
+     */
+    public function testStateGivesTheConsoleASubscriberTokenLimitedToItsMatchTopics(): void
+    {
+        $this->beginWrites();
+        static::getContainer()->get(ScoringLiveService::class)->ensureState(9404);
+
+        $state = $this->requestAs(self::ADMIN, 'GET', '/admin/scoring/state/9404');
+
+        self::assertTrue($state['exists']);
+        self::assertArrayHasKey('mercureToken', $state);
+        if ($state['mercureToken'] === '') {
+            return; // hub sans secret (mode anonyme) : rien d'autre à vérifier
+        }
+        $claims = json_decode(base64_decode(strtr(explode('.', $state['mercureToken'])[1], '-_', '+/')), true);
+        self::assertSame(['subscribe' => [$state['topicBase'] . '/{type}']], $claims['mercure']);
     }
 }

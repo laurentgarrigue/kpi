@@ -66,17 +66,15 @@ export function useScoringLiveSync(options: {
   /**
    * @param hubUrl    browser-facing Mercure URL (from GET /state)
    * @param topicBase e.g. /scoring/event/236/pitch/2 (from GET /state)
+   * @param jwt       subscriber JWT limited to these topics (from GET /state; '' on a dev hub)
    */
-  const connect = (hubUrl: string, topicBase: string) => {
+  const connect = (hubUrl: string, topicBase: string, jwt = '') => {
     if (!hubUrl || !topicBase || typeof window === 'undefined') return
     disconnect()
 
-    const url = new URL(hubUrl)
-    // URI template: every block of this match, and this match only.
-    url.searchParams.append('topic', `${topicBase}/{type}`)
-
     try {
-      source = new EventSource(url.toString())
+      // URI template: every block of this match, and this match only.
+      source = new EventSource(scoringSubscribeUrl(hubUrl, topicBase, jwt))
     } catch {
       status.value = 'error'
       return

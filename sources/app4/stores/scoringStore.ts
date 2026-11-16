@@ -92,6 +92,8 @@ interface ScoringLiveStateResponse {
   nowServer?: number
   /** Mercure subscribe URL + topic base of this match (addressing is server-owned) */
   mercureUrl?: string
+  /** Subscriber JWT limited to topicBase (preprod/prod hubs refuse anonymous subscribers). */
+  mercureToken?: string
   topicBase?: string
 }
 
@@ -125,6 +127,7 @@ interface ScoringState {
   liveClocks: LiveClock[]
   /** Mercure subscribe URL and topic base of the match (from GET /state) */
   mercureUrl: string
+  mercureToken: string
   topicBase: string
   /** Active writing source of the match (plan §4.1) */
   activeSource: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
@@ -161,6 +164,7 @@ export const useScoringStore = defineStore('scoring', {
     config: defaultScoringConfig(),
     liveClocks: [],
     mercureUrl: '',
+    mercureToken: '',
     topicBase: '',
     activeSource: 'MANUAL',
     lastMutationAt: 0,
@@ -232,6 +236,7 @@ export const useScoringStore = defineStore('scoring', {
           if (liveState.activeSource) this.activeSource = liveState.activeSource
         }
         this.mercureUrl = liveState.mercureUrl ?? ''
+        this.mercureToken = liveState.mercureToken ?? ''
         this.topicBase = liveState.topicBase ?? ''
 
         this.match = match

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SCORING_SSE_TYPES, onScoringMessage } from '../../utils/scoringSse'
+import { SCORING_SSE_TYPES, onScoringMessage, scoringSubscribeUrl } from '../../utils/scoringSse'
 
 /** Minimal EventSource stand-in: dispatches by SSE `event:` name, like the browser does. */
 function fakeSource() {
@@ -56,5 +56,26 @@ describe('scoring SSE subscription', () => {
     source.emit(null, '{}')
 
     expect(handler).not.toHaveBeenCalled()
+  })
+})
+
+describe('scoringSubscribeUrl', () => {
+  const hub = 'https://preprod.kayak-polo.info/api2/.well-known/mercure'
+
+  it('subscribes to every block of the topic base (URI template)', () => {
+    const url = new URL(scoringSubscribeUrl(hub, '/scoring/event/77/pitch/1'))
+    expect(url.searchParams.get('topic')).toBe('/scoring/event/77/pitch/1/{type}')
+  })
+
+  // Preprod/prod hubs refuse anonymous subscribers: without the JWT the console showed
+  // « Connexion perdue » for good. EventSource cannot send a header, hence the query parameter.
+  it('passes the subscriber JWT as the authorization query parameter', () => {
+    const url = new URL(scoringSubscribeUrl(hub, '/scoring/match/9404', 'a.b.c'))
+    expect(url.searchParams.get('authorization')).toBe('a.b.c')
+  })
+
+  it('subscribes anonymously when there is no JWT (dev hub)', () => {
+    expect(new URL(scoringSubscribeUrl(hub, '/scoring/match/9404', '')).searchParams.has('authorization')).toBe(false)
+    expect(new URL(scoringSubscribeUrl(hub, '/scoring/match/9404')).searchParams.has('authorization')).toBe(false)
   })
 })
