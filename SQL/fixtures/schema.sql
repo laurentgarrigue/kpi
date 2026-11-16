@@ -824,6 +824,29 @@ CREATE TABLE `scoring_outbox` (
   KEY `idx_scoring_outbox_unpublished` (`published_at`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Horloge de l'événement (ScoringProgramService::eventClock) : le programme de terrain lit
+-- l'horloge simulée du worker de cache quand il tourne. Vide ici → horloge réelle.
+DROP TABLE IF EXISTS `kp_event_worker_config`;
+CREATE TABLE `kp_event_worker_config` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_event` int(11) NOT NULL,
+  `date_event` date NOT NULL,
+  `hour_event` time NOT NULL,
+  `hour_event_initial` time NOT NULL,
+  `offset_event` int(11) NOT NULL DEFAULT 15,
+  `pitch_event` int(11) NOT NULL DEFAULT 4,
+  `delay_event` int(11) NOT NULL DEFAULT 10,
+  `status` enum('stopped','running','paused') NOT NULL DEFAULT 'stopped',
+  `last_execution` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `error_message` text DEFAULT NULL,
+  `execution_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_id_event` (`id_event`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition

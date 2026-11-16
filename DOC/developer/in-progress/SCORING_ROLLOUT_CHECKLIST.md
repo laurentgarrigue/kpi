@@ -76,12 +76,15 @@ make api2_test_unit
 make api2_test_integration                        # recrée kpi_fixtures_test à chaque fois
 ```
 
+> Les deux commandes **app4** (lignes 7–8) ne tournent qu'en **dev** : la préprod/prod n'a pas de conteneur
+> `kpi_node_app4` (app4 y est servi en statique). Les deux suites **api2** (lignes 9–10) tournent partout.
+
 | # | Commande | Résultat attendu | ☑ |
 |---|---|---|---|
 | 7 | lint app4 | aucune erreur | ☑ |
 | 8 | `make app4_test` | `Test Files 24 passed`, `Tests 255 passed` (dont `sseStream`, `scoringDisplaySwitch`, `scoringPenalties`, `scoringDisplayOptions`, `scoringClosure`, `scoringKeyboard`, `scoringRules`, `scoringRoster`, `scoringReadiness`, `scoringTimeline`, `scoringShortcuts`, `scoringLiveConnection`) — *chiffres relevés le 2026-11-08 (touches du chrono de tir revues)* | ☐ |
-| 9 | `make api2_test_unit` | `OK (335 tests …)` | ☑ |
-| 10 | `make api2_test_integration` | `Tests: 340`, aucune *failure* (2 *deprecations* connues, hors scoring) — *ré-exécuter : `ScoringStatusSyncTest` ajouté le 2026-11-06* | ☐ |
+| 9 | `make api2_test_unit` | `OK (455 tests …)` — *relevé le 2026-11-16* | ☑ |
+| 10 | `make api2_test_integration` | `Tests: 393`, aucune *failure* (2 *deprecations* connues, hors scoring) — *relevé le 2026-11-16, après ajout de `kp_event_worker_config` aux fixtures* | ☐ |
 
 ### R0.4 🌐 Premier contact
 
