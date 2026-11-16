@@ -1,6 +1,6 @@
 # Classement national des clubs
 
-**Statut** : 📝 Brouillon — décisions de cadrage prises le 16/11/2026 (§ 1.1), reste Q-7 (§ 12) — **Surfaces** : app4 (calcul, revue, publication), PDF
+**Statut** : 📝 Brouillon — décisions de cadrage prises le 16/11/2026 (§ 1.1), restent Q-7, Q-9 à Q-11 (§ 12.2) — **Surfaces** : app4 (calcul, revue, publication), PDF
 (api2 + Gotenberg) ; page publique app3 plus tard (§ 11) — **Données** : api2, données KPI + saisies manuelles
 **Remplace** : le classeur `ClassementNationalClubs<AAAA>.xlsx` (onglet de calcul, onglets d'extraction
 `7_1_1`, `7_1_2`, `7_1_3`, `7_1_4_EdF`, `Délégués_-_Chefs_arbitres`, `Arbitres`) et les requêtes
