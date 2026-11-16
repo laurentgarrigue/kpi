@@ -55,6 +55,8 @@ final class PasswordRenewalTokenTest extends TestCase
         self::assertFalse($this->tokens->isValid($forged, self::HASH));
         self::assertFalse($this->tokens->isValid('garbage', self::HASH));
         self::assertNull($this->tokens->userCode('garbage'));
+        self::assertNull($this->tokens->userCode('forged.token.value'), 'base64 décodé en binaire : pas un code utilisateur');
+        self::assertNull($this->tokens->userCode(base64_encode('TOO-LONG-CODE') . '.1.sig'));
         self::assertFalse((new PasswordRenewalToken('other-secret', $this->clock))->isValid($token, self::HASH));
     }
 }

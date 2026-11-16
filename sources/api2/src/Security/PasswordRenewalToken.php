@@ -16,6 +16,8 @@ final class PasswordRenewalToken
 {
     public const LIFETIME_SECONDS = 900;
     private const PARTS = 3;
+    /** kp_user.Code est un VARCHAR(8). */
+    private const USER_CODE_MAX_LENGTH = 8;
 
     public function __construct(
         #[Autowire('%kernel.secret%')]
@@ -39,8 +41,10 @@ final class PasswordRenewalToken
             return null;
         }
         $code = base64_decode($parts[0], true);
+        $isUserCode = is_string($code) && $code !== '' && mb_check_encoding($code, 'UTF-8')
+            && mb_strlen($code) <= self::USER_CODE_MAX_LENGTH;
 
-        return $code === false || $code === '' ? null : $code;
+        return $isUserCode ? $code : null;
     }
 
     public function isValid(string $token, string $storedHash): bool
