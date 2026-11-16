@@ -182,3 +182,20 @@ schema.game: { fr: 'match', en: 'game' }
 schema.games: { fr: 'matchs', en: 'games' }
 schema.teams: { fr: 'Équipes', en: 'Teams' }
 schema.diff: { fr: '+/-', en: '+/-' }
+# National club ranking (PAGE_CLASSEMENT_NATIONAL_CLUBS.md § 8)
+club_ranking.title: { fr: 'Classement national des clubs', en: 'National club ranking' }
+club_ranking.rank: { fr: 'Rang', en: 'Rank' }
+club_ranking.club: { fr: 'Club', en: 'Club' }
+club_ranking.number: { fr: 'N°', en: 'No.' }
+club_ranking.department: { fr: 'Département', en: 'Department' }
+club_ranking.region: { fr: 'Région', en: 'Region' }
+club_ranking.points: { fr: 'Points', en: 'Points' }
+club_ranking.total: { fr: 'Total', en: 'Total' }
+club_ranking.scale: { fr: 'Barème', en: 'Scale' }
+club_ranking.code: { fr: 'Rubrique', en: 'Item' }
+club_ranking.label: { fr: 'Libellé', en: 'Label' }
+club_ranking.note: { fr: 'Interprétation', en: 'Interpretation' }
+club_ranking.adjustments: { fr: 'Ajustements', en: 'Adjustments' }
+club_ranking.reason: { fr: 'Motif', en: 'Reason' }
+club_ranking.reference_date: { fr: 'Date de référence (clubs des licenciés, qualifications)', en: 'Reference date (clubs of licensees, qualifications)' }
+club_ranking.version: { fr: 'Publication', en: 'Publication' }

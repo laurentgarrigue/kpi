@@ -1,6 +1,6 @@
 # Classement national des clubs
 
-**Statut** : 📝 Brouillon — décisions de cadrage prises le 16/11/2026 (§ 1.1), toutes les questions tranchées (§ 12) — **Surfaces** : app4 (calcul, revue, publication), PDF
+**Statut** : ✅ Validée (16/11/2026) — 🛠 Implémentée, à déployer (§ 14) — **Surfaces** : app4 (calcul, revue, publication), PDF
 (api2 + Gotenberg) ; page publique app3 plus tard (§ 11) — **Données** : api2, données KPI + saisies manuelles
 **Remplace** : le classeur `ClassementNationalClubs<AAAA>.xlsx` (onglet de calcul, onglets d'extraction
 `7_1_1`, `7_1_2`, `7_1_3`, `7_1_4_EdF`, `Délégués_-_Chefs_arbitres`, `Arbitres`) et les requêtes
@@ -523,3 +523,32 @@ Toutes tranchées le 16/11/2026.
 - **CNC-32** — Étant donné le barème 2026 et les données 2026, le calcul KPI et le classeur 2026 (tenu en parallèle)
   donnent les mêmes totaux aux écarts près **listés et expliqués** (décisions du 16/11/2026 qui changent la
   pratique : 7.4 aux clubs des joueurs, joueurs ayant joué), écarts relus avant publication.
+
+## 14. Implémentation (16/11/2026)
+
+| Brique | Emplacement |
+|---|---|
+| Migration (tables `kp_club_ranking_*`, barème 2026 pré-rempli) | [`SQL/migrations/2026-11-16_club_ranking.sql`](../../SQL/migrations/2026-11-16_club_ranking.sql), chargée aussi par les fixtures de test (`make api2_test_fixtures`, CI) |
+| Modèle et moteur (types de calcul, § 3.3) | `sources/api2/src/ClubRanking/` : `Model/`, `Data/`, `Calculator/` (un calculateur par type), `ClubRankingEngine`, `Standings` |
+| Données KPI de la saison (§ 6) | `ClubRanking/SeasonDataLoader.php` |
+| Cycle de vie (§ 8) | `ClubRanking/ClubRankingService.php`, `ClubRankingRepository.php` |
+| Endpoints `/admin/club-ranking/*` (profil 1) | `src/Controller/AdminClubRankingController.php` |
+| PDF `club-ranking` (`view=public` top N de la dernière publication, `view=work` détail + barème) | `src/Pdf/Document/ClubRankingDocument.php` |
+| Page app4 « Classement des clubs » (menu Opérations, profil 1) | `sources/app4/pages/club-ranking/index.vue`, `utils/clubRanking.ts` |
+| Tests | api2 `tests/Unit/ClubRanking/` (critères CNC-02 à CNC-31 sur le moteur), `tests/Integration/ClubRankingEndpointsTest.php` ; app4 `tests/unit/clubRanking.spec.ts` |
+
+Choix d'implémentation à connaître :
+
+- **Catégories 2026 pré-remplies à vérifier** avant le premier calcul (onglet Barème) : les codes de compétition
+  (`N1F`/`N1D`, `NPOH`/`NPOF`, `N15*`, `CFF`…) sont repris des saisons précédentes ; la page signale les codes
+  absents des compétitions de la saison. N1H et N1D couvrent aussi leurs play-off (une équipe ne compte qu'une fois
+  en 7.1) ; les catégories `PO_H` / `PO_D` ne servent qu'au classement final 7.4.
+- **Classement « publié et verrouillé »** (§ 5.6) : `kp_competition.Publication = 'O'` avec une date de publication du
+  calcul, et `Verrou = 'O'`.
+- **Événement** (§ 5.7) : journées du même organisateur, au même lieu, à des dates qui se chevauchent ou se suivent
+  (samedi + dimanche). `kp_evenement` n'est pas utilisé.
+- Les saisies manuelles et les rapprochements de noms ne produisent leurs lignes qu'au **calcul suivant** (bandeau
+  « relancez le calcul ») ; les **ajustements** comptent tout de suite.
+
+Mise en production : `make db_migrate file=SQL/migrations/2026-11-16_club_ranking.sql`, `make api2_restart`, build
+d'app4 ; puis, profil 1 : vérifier les catégories 2026, calculer, traiter les alertes, saisir 7.1.4, 7.2.5, 7.3.4.
