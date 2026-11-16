@@ -540,6 +540,24 @@ CREATE TABLE `kp_user_known_device` (
   KEY `idx_revoke_token` (`revoke_token_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Jetons « mot de passe oublié » (AdminAuthController::forgotPassword / resetPassword).
+DROP TABLE IF EXISTS `kp_user_token`;
+CREATE TABLE `kp_user_token` (
+  `user` varchar(8) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `generated_at` datetime NOT NULL,
+  PRIMARY KEY (`user`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Durcissement authentification (AUTH_HARDENING.md § 2bis) : mot de passe à renouveler.
+DROP TABLE IF EXISTS `kp_user_password_renewal`;
+CREATE TABLE `kp_user_password_renewal` (
+  `user_code` varchar(8) NOT NULL,
+  `required_at` datetime DEFAULT NULL,
+  `renewed_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
 -- utilisé par les tests de rate-limit, verrouillage et audit.
 DROP TABLE IF EXISTS `kp_user_login_history`;
