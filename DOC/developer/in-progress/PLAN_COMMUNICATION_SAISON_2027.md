@@ -1,7 +1,7 @@
 # Plan de communication Facebook / Instagram — nouveautés KPI, saison 2027
 
-**Créé le** : 21 octobre 2026 — **Révisé le** : 11 novembre 2026 (v4 : médailles de match révélées après la J1,
-J1 fixée aux 13-14 mars, tournoi de Corbeil-Essonnes) — **Statut** : 📝 Proposition à valider
+**Créé le** : 21 octobre 2026 — **Révisé le** : 16 novembre 2026 (v5 : tournoi « La nuit du kayak-polo » à Moreuil les 23-24 janvier ;
+v4 : médailles de match révélées après la J1, J1 fixée aux 13-14 mars, tournoi de Corbeil-Essonnes) — **Statut** : 📝 Proposition à valider
 **Déclencheur** : les **plénières kayak-polo des 21 et 22 novembre 2026**
 **Temps forts** : formation arbitre national (16-17 janvier 2027), **1re journée de championnat de France
 (13-14 mars 2027), suivie de la révélation des médailles de match avec les premières médailles réelles**, **championnats d'Europe à Thury-Harcourt du 22 au
@@ -26,8 +26,9 @@ J1 fixée aux 13-14 mars, tournoi de Corbeil-Essonnes) — **Statut** : 📝 Pro
 | Modernisation du design d'app3 | novembre 2026 | En cours |
 | **Bascule d'app3** (phase 5, `www.kayak-polo.info`) | **semaine du 7 décembre 2026** recommandée | Moment à arrêter |
 | **Formation arbitre national** | **samedi 16 – dimanche 17 janvier 2027** | ✅ Confirmé |
-| **Tournoi de Corbeil-Essonnes** | mi-janvier 2027 (peut tomber le week-end de la formation) | Date à confirmer |
-| Tournoi de fin février | 27-28 février 2027 par hypothèse | À confirmer |
+| **Tournoi « La nuit du kayak-polo », Moreuil (80)** | **samedi 23 – dimanche 24 janvier 2027** | ✅ Confirmé : tournoi de référence de janvier |
+| Tournoi de Corbeil-Essonnes | mi-janvier 2027 (peut tomber le week-end de la formation) | **Date toujours inconnue** (16/11) : le plan ne dépend pas de lui |
+| Tournoi de fin février | 27-28 février 2027 par hypothèse | **Existence et date inconnues** (16/11) ; sans lui, les rappels S8 et S9 restent, sans la couverture du tournoi |
 | **1re journée de championnat de France (J1)** | **samedi 13 – dimanche 14 mars 2027** | ✅ Confirmé |
 | **Révélation des médailles de match** (vague 1) | **semaine du 15 mars 2027**, dès que les matchs de la J1 sont validés ; Reel le jeudi 18 mars | Proposé (§ 3.4) |
 | Entrée en vigueur du règlement 2027-2030 | 1er janvier 2027 par hypothèse | Les tournois de préparation l'appliquent-ils ? |
@@ -227,7 +228,8 @@ Présentation de 20 à 30 minutes (support C26, une quinzaine de diapositives), 
    console de marque (scoring) présentée comme **« à venir »**, sans date promise.
 4. **Ce qui change pour les régions** : codes des compétitions régionales alignés sur les CR actuelles, Sélection
    régionale unique par CR, structures synchronisées avec le PCE ; anciens liens non redirigés.
-5. **Le calendrier de la saison** : tournoi de Corbeil-Essonnes, formation arbitre, **J1 des 13-14 mars**,
+5. **Le calendrier de la saison** : formation arbitre, tournoi de Moreuil (23-24 janvier ; Corbeil-Essonnes si sa
+   date est connue), **J1 des 13-14 mars**,
    **Europe de Thury-Harcourt**.
 6. **Ce qu'on attend des participants** : relayer le kit (C27), remonter les comptes des responsables d'équipes,
    proposer des clubs exemples pour la série « Tous les niveaux », signaler les codes régionaux à corriger.
@@ -252,19 +254,23 @@ phase 0 démarre le lundi 7 décembre au lieu du 23 novembre.
 | Semaine | Mardi | Jeudi | Samedi / dimanche |
 |---|---|---|---|
 | **S1** 4-10 jan. | 🅸🅵 🎬 **Lancement officiel du nouveau site** (Reel + publication épinglée) | 🅸🅵 🖼 Visite guidée : compétitions, calendrier, clubs, carte, historique, recherche | 🅸🅵 🖼 « Tous les niveaux » n° 1 (club de N1) |
-| **S2** 11-17 jan. — **formation arbitre national** | 🅸🅵 🎬 Installer app2 avant le tournoi de Corbeil-Essonnes (iPhone + Android) | 🅵 Affiche QR code envoyée à l'organisateur du tournoi | 🎤 **Formation** : séquence courte des formateurs (C28), dont la consigne « chaque but et chaque carton avec son temps » (elle nourrit la frise, et en secret les médailles) · 🅵 photos de la formation « les futurs arbitres découvrent le carton noir et le contrôle équipement dans KPI » |
+| **S2** 11-17 jan. — **formation arbitre national** | 🅸🅵 🎬 Installer app2 avant « La nuit du kayak-polo » de Moreuil (iPhone + Android) | 🅵 Affiche QR code envoyée à l'organisateur du tournoi de Moreuil | 🎤 **Formation** : séquence courte des formateurs (C28), dont la consigne « chaque but et chaque carton avec son temps » (elle nourrit la frise, et en secret les médailles) · 🅵 photos de la formation « les futurs arbitres découvrent le carton noir et le contrôle équipement dans KPI » |
 
-**Tournoi de Corbeil-Essonnes** (mi-janvier, date à confirmer) : 🅸 ⭕ stories du tournoi (scores, frise) le
-week-end même, 🅸🅵 🖼 bilan le mardi suivant (S3 ci-dessous). S'il tombe le week-end de la formation, une seule
-publication Facebook par jour (§ 9) ; s'il tombe en S1 ou en S3, l'installation d'app2 et l'affiche QR code
-glissent à la semaine du tournoi. L'équipe vérifie dans l'admin les médailles calculées sur ses matchs (C33).
+**« La nuit du kayak-polo », Moreuil (80), 23-24 janvier** (confirmé) : 🅸 ⭕ stories du tournoi (scores, frise)
+le week-end même (S3), 🅸🅵 🖼 bilan le mardi suivant (S4 ci-dessous), merci à l'organisateur. L'équipe vérifie
+dans l'admin les médailles calculées sur ses matchs (C33).
+
+**Tournoi de Corbeil-Essonnes** (date toujours inconnue) : traité en **bonus**, sans bloquer le plan. Dès que la
+date est connue, même gabarit que Moreuil (installation d'app2, affiche QR code, stories, bilan le mardi suivant).
+S'il tombe le week-end de la formation, une seule publication Facebook par jour (§ 9) ; s'il tombe le week-end de
+Moreuil, une seule couverture, celle de Moreuil.
 
 ### Phase 2 — Approfondissement (S3 à S5) : « Le site et l'app pour tous »
 
 | Semaine | Mardi | Jeudi | Samedi |
 |---|---|---|---|
-| **S3** 18-24 jan. | 🅸🅵 🖼 Bilan du tournoi de Corbeil-Essonnes + merci à l'organisateur et aux formateurs | 🅸🅵 🖼 « Tous les niveaux » n° 2 (équipe féminine) | 🅸🅵 🖼 **EN** « All levels » : club norvégien n° 1 (tagué) |
-| **S4** 25-31 jan. | 🅵 Préparer la saison dans app4 : mandats 2027, équipes depuis le classement précédent | 🅸🅵 🎬 S'abonner au calendrier de sa compétition (ICS) | 🅸🅵 🖼 « Tous les niveaux » n° 3 (club de N3) |
+| **S3** 18-24 jan. — **tournoi de Moreuil, 23-24 jan.** | 🅸🅵 🖼 Merci aux formateurs et retour sur la formation · 🅸🅵 Liens de suivi + QR code de « La nuit du kayak-polo » | 🅸🅵 🖼 « Tous les niveaux » n° 2 (équipe féminine) | 🅸 ⭕ stories en direct du tournoi (scores, frise) · 🅸🅵 🖼 **EN** « All levels » : club norvégien n° 1 (tagué) |
+| **S4** 25-31 jan. | 🅸🅵 🖼 Bilan de « La nuit du kayak-polo » + merci à l'organisateur · 🅵 Préparer la saison dans app4 : mandats 2027, équipes depuis le classement précédent | 🅸🅵 🎬 S'abonner au calendrier de sa compétition (ICS) | 🅸🅵 🖼 « Tous les niveaux » n° 3 (club de N3) |
 | **S5** 1-7 fév. | 🅵 📜 **Le carton noir dans KPI** | 🅸🅵 🖼 Historique et palmarès : quiz « Qui a gagné… ? » | 🅸🅵 🖼 « Tous les niveaux » n° 4 (club régional) · **EN** club norvégien n° 2 |
 
 ### Phase 3 — Outils de la journée (S6 et S7) : « Prêts pour les compétitions »
@@ -384,7 +390,7 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 | C30 | **Déployer les médailles en prod sans rien publier** : vider les surfaces du catalogue initial (aucune médaille, étiquette ni statistique publiée), masquer l'entrée de menu `/medals` d'app3 et le lien d'app2 tant que rien n'est publié ; calculer les saisons passées et 2027 | 18 déc. | **29 janv.** (avant le tournoi de fin février) | Tout le reste |
 | C31 | **Aligner la spec** (§ 4 « Premier lot public ») sur le calendrier de vagues du § 3.4 | 4 déc. | 8 janv. | C30 |
 | C32 | **Interface sans médaille** : vérifier qu'app2 (feuille de match, page équipe) et app3 (onglet Stats, fiche équipe, `/medals`) n'affichent ni bloc vide ni indice tant que rien n'est publié ; le ballon comme symbole du but peut rester | 18 déc. | 29 janv. | Secret |
-| C33 | **Recette sur données réelles** : médailles calculées sur le tournoi de Corbeil-Essonnes et celui de fin février, contrôlées dans l'admin ; fréquences de la vague 1 remesurées sur la prod (seuil < 0,2 / match) | Après chaque tournoi | **4 mars** | C34 |
+| C33 | **Recette sur données réelles** : médailles calculées sur le tournoi de Moreuil (23-24 janvier), puis sur ceux de Corbeil-Essonnes et de fin février s'ils ont lieu, contrôlées dans l'admin ; fréquences de la vague 1 remesurées sur la prod (seuil < 0,2 / match) | Après chaque tournoi | **4 mars** | C34 |
 | C34 | **Publication de la vague 1** dans l'admin (profil 1) dès que tous les matchs de la J1 sont validés, contrôle juste après sur app2 et app3 ; vagues suivantes : même geste, après validation de la journée choisie | Répétée sur la préprod le 4 mars ; publiée le lundi 15 mars | **Mercredi 17 mars** (sinon Reel décalé d'une semaine) | Révélation |
 | C35 | **Contenus médailles** : Reel de révélation (FR) monté à l'avance, ses plans « exemples réels » remplacés par les captures de la J1 le mardi 16 mars ; carrousel « Les 6 médailles expliquées », gabarit « Les médailles de la journée », gabarit « Nouvelle médaille débloquée », version **EN** pour la vague 4 et les Europe | 26 févr. | Gabarits le **11 mars**, Reel final le **17 mars** ; 30 juin (EN) | Phase 5, 6 |
 | C36 | **Traductions EN** des noms et explications des médailles relues (vocabulaire du kayak-polo international) | 30 avril | 30 juin | Vague 4, Europe |
@@ -454,7 +460,7 @@ production** ; sinon, permuter avec une publication « Tous les niveaux » ou de
 | Design pas visible sur `beta.*` aux plénières | Avant-première limitée aux pages prêtes, ou remplacée par la date de bascule |
 | Bascule repoussée après le 8 janvier | Le lancement du site glisse en S3 ; S1-S2 se concentrent sur app2, la formation et le tournoi |
 | Carton noir / chrono 60/40 pas prêts pour la formation | Les formateurs présentent la règle et une maquette marquée « à venir » ; consigne écrite aux tables de marque ; impératif absolu : la J1 |
-| Formation et tournoi le même week-end | Deux équipes distinctes : formateurs (séquence KPI) et communication (stories du tournoi) ; une seule publication Facebook par jour pour ne pas se concurrencer |
+| Corbeil-Essonnes tombe le week-end de la formation (date inconnue) | Deux équipes distinctes : formateurs (séquence KPI) et communication (stories du tournoi) ; une seule publication Facebook par jour pour ne pas se concurrencer |
 | Copie de composition non ouverte au profil 7 (C9) | Pas à pas sans la copie ; la copie est faite par le responsable de compétition sur demande |
 | Juges arbitres sans accès le matin de la J1 | Liste arrêtée le 5 mars (C18), test de connexion pendant le tournoi de fin février |
 | Scoring app4 / Mercure pas prêt pour les Europe | Décision au 31 mars (C44) : rester sur la feuille de marque actuelle, éprouvée ; la communication ne promet pas de nouveauté non répétée |
