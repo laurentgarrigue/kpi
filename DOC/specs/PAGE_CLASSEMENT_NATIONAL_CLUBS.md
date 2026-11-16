@@ -1,6 +1,6 @@
 # Classement national des clubs
 
-**Statut** : 📝 Brouillon — décisions de cadrage prises le 16/11/2026 (§ 1.1), restent Q-7, Q-9 à Q-11 (§ 12.2) — **Surfaces** : app4 (calcul, revue, publication), PDF
+**Statut** : 📝 Brouillon — décisions de cadrage prises le 16/11/2026 (§ 1.1), toutes les questions tranchées (§ 12) — **Surfaces** : app4 (calcul, revue, publication), PDF
 (api2 + Gotenberg) ; page publique app3 plus tard (§ 11) — **Données** : api2, données KPI + saisies manuelles
 **Remplace** : le classeur `ClassementNationalClubs<AAAA>.xlsx` (onglet de calcul, onglets d'extraction
 `7_1_1`, `7_1_2`, `7_1_3`, `7_1_4_EdF`, `Délégués_-_Chefs_arbitres`, `Arbitres`) et les requêtes
@@ -52,7 +52,9 @@ KPI doit permettre de :
 | Bénéficiaire 7.4 (16/11/2026) | **Chaque club d'origine des joueurs** de l'équipe, **sélections CR/CD comprises** (lecture littérale de l'annexe 2026) — I-7. |
 | Licencié dans une équipe (16/11/2026) | **Joueur ayant disputé au moins un match** validé de l'équipe dans la catégorie ; **entraîneurs exclus** — I-4. |
 | Unité 7.3 (16/11/2026) | **Une fois par licencié et par rubrique**, quel que soit le nombre de compétitions ou de journées — I-16. |
-| Arbitres (16/11/2026) | Comptent s'ils sont **licenciés pour la saison** et ont **arbitré dans la saison** — I-18. |
+| Arbitres, OTM, JO (16/11/2026, corrigé) | Comptent s'ils sont **licenciés pour la saison** et selon leur **qualification et niveau** à la date de référence ; **aucune condition d'arbitrage effectif** (7.3.5 → 7.3.7). Seul 7.3.3 exige, par son libellé, d'avoir officié en compétition nationale — I-18. |
+| Compétitions nationales (16/11/2026) | Codes **`N…`** et **`CF…`** (et non `Code_niveau = 'NAT'`, qui inclut UNSS, OPEND… hors animation nationale) — I-15. |
+| Points d'interprétation (16/11/2026) | Les propositions du § 10.1 sont **retenues**. |
 | Égalité (16/11/2026) | **Même rang** pour les clubs à égalité de points — I-21. |
 | Première saison (16/11/2026) | **2026**, calculée dans KPI **en parallèle du classeur** pour comparaison (CNC-32). |
 | Historique (16/11/2026) | Saisons 2017 → 2025 **non importées** : elles restent dans le classeur. |
@@ -113,7 +115,7 @@ disparaît, NEM…).
 | `EVENT_ORGANISER` | 1 unité par **événement** organisé par le club | `nature` (international, finale multi, finale mono / finale CdF, journée multiple, journée simple), `niveaux` |
 | `JOURNEE_OFFICIAL` | 1 unité par **licencié** ayant tenu le rôle sur au moins une journée nationale | `roles` (`Delegue`, `ChefArbitre`) |
 | `COMPETITION_MANAGER` | 1 unité par **licencié** responsable d'au moins une compétition nationale (`kp_rc`) | `phases_preliminaires` (oui) |
-| `REFEREE_QUALIFICATION` | 1 unité par **licencié** ayant la qualification | `qualifications` (couples `arbitre`/`niveau`), `activite_min` (matchs, défaut 1), `perimetre_activite` (`saison` = toute compétition de la saison ; `national` pour 7.3.3) |
+| `REFEREE_QUALIFICATION` | 1 unité par **licencié** ayant la qualification | `qualifications` (couples `arbitre`/`niveau`), `activite_min` (matchs arbitrés en compétition nationale ; défaut 0 = aucune condition, 1 pour 7.3.3) |
 | `MANUAL_LIST` | Lignes saisies (§ 7) | `unite` |
 
 Un barème est **valide** quand chaque rubrique a un type, des points et, pour les types automatiques, des
@@ -151,9 +153,9 @@ Proposition de configuration ; la colonne « Interprétation » renvoie aux poin
 | 7.3.2 | Responsable de compétition | 40 | `COMPETITION_MANAGER` | licencié | I-16 |
 | 7.3.3 | Arbitre international officiant en compétition nationale | 35 | `REFEREE_QUALIFICATION` (`Int`, `activite_min = 1`) | licencié | I-17 |
 | 7.3.4 | Autre membre de la CNA (Hors RC, délégué CNA, juge arbitre) | 20 | `MANUAL_LIST` | licencié | I-17, N-2 |
-| 7.3.5 | Arbitre national catégorie A | 15 | `REFEREE_QUALIFICATION` (`Nat`/`A`, activité saison ≥ 1) | licencié | I-17, I-18 |
-| 7.3.6 | Arbitre national catégorie B ou C | 10 | `REFEREE_QUALIFICATION` (`Nat`/`B`, `Nat`/`C`, activité saison ≥ 1) | licencié | I-18 |
-| 7.3.7 | Arbitre national stagiaire ou régional, Officiel de table de marque, Jeune Officiel | 3 | `REFEREE_QUALIFICATION` (`Nat`/`S`, `Reg`/*, `OTM`, `JO`, activité saison ≥ 1) | licencié | I-18, N-10, Q-7 |
+| 7.3.5 | Arbitre national catégorie A | 15 | `REFEREE_QUALIFICATION` (`Nat`/`A`) | licencié | I-17, I-18 |
+| 7.3.6 | Arbitre national catégorie B ou C | 10 | `REFEREE_QUALIFICATION` (`Nat`/`B`, `Nat`/`C`) | licencié | I-18 |
+| 7.3.7 | Arbitre national stagiaire ou régional, Officiel de table de marque, Jeune Officiel | 3 | `REFEREE_QUALIFICATION` (`Nat`/`S`, `Reg`/*, `OTM`, `JO`) | licencié | I-18 |
 
 ### 4.4 Résultats aux compétitions nationales (7.4) — « club ayant un ou plusieurs licenciés dans une équipe »
 
@@ -191,9 +193,14 @@ entente ou une sélection CR/CD.
 
 ### 5.2 Compétitions nationales
 
-Une compétition est nationale si `kp_competition.Code_niveau = 'NAT'` (et non plus « code commençant par `N` ou
-`CF` », règle des requêtes actuelles). Les compétitions internationales (`INT`) n'interviennent qu'en 7.2.1 ;
-l'activité exigée en 7.3.3 se mesure, elle, en compétition nationale.
+Une compétition est nationale (animation nationale officielle) si son code commence par **`N`** ou **`CF`**,
+comme dans les requêtes actuelles. On n'utilise **pas** `kp_competition.Code_niveau = 'NAT'` : ce niveau contient
+aussi des compétitions hors animation nationale (UNSS, OPEND…). Les préfixes sont un **paramètre de la saison**
+(préfixes inclus, codes exclus), pour suivre une évolution des codes sans développement.
+
+Ce périmètre sert en 7.2 (journées organisées), 7.3.1 (délégués, juges arbitres), 7.3.2 (responsables de
+compétition) et 7.3.3 (arbitres internationaux officiant). Les compétitions internationales (`INT`) n'interviennent
+qu'en 7.2.1.
 
 ### 5.3 Clubs bénéficiaires
 
@@ -265,10 +272,9 @@ pas. Le paramètre `présence = composition` reste disponible pour une saison do
 | 7.2.5 | — | ❌ Saisie (N-3) |
 | 7.3.1 | `kp_journee.Delegue`, `kp_journee.ChefArbitre` (**texte libre**) | ⚠️ Rapprochement nom → licencié (N-5) |
 | 7.3.2 | `kp_rc` (`Matric`, `Code_competition`, `Code_saison`) | ✅ Fiable (si `kp_rc` est tenue à jour) |
-| 7.3.3, 7.3.5 → 7.3.7 (activité des arbitres) | `kp_arbitre` + `kp_match.Matric_arbitre_principal/secondaire` sur les matchs validés de la saison | ✅ Fiable si les arbitres sont désignés nominativement |
+| 7.3.3 (activité des arbitres internationaux) | `kp_arbitre` + `kp_match.Matric_arbitre_principal/secondaire` sur les matchs validés des compétitions nationales | ✅ Fiable si les arbitres sont désignés nominativement |
 | 7.3.4 | — (composition de la CNA) | ❌ Saisie (N-2) |
 | 7.3.5 → 7.3.7 (qualification) | `kp_arbitre` (`arbitre`, `niveau`) | ⚠️ Valeur courante seulement (§ 5.1) |
-| 7.3.7 (activité OTM / JO) | `kp_match.Secretaire`, `Chronometre`, `Timeshoot`, `Ligne1/2` (**texte libre**) | ⚠️ Rapprochement nom → licencié (N-10) |
 | 7.4 | `kp_competition_equipe` (`Clt_publi`, `CltNiveau_publi`) + catégories § 3.2 | ✅ Fiable si classements publiés |
 | Département / région (publication) | `kp_club.Code_comite_dep` → `kp_cd` → `kp_cr` | ✅ Remplace la colonne saisie du classeur (`LEFT(N°, 2)` donnait des départements faux, ex. Mandelieu, Muret) |
 
@@ -282,8 +288,8 @@ pas. Le paramètre `présence = composition` reste disponible pour une saison do
 - **Liste de clubs** (7.2.5 formations, 7.2.1 compétitions internationales) : club + libellé + date.
 - **Ententes** : pour une équipe engagée, clubs associés. Utilisé par `TEAM_OF_CLUB` (`ententes = oui`) et
   `RANKING` (`beneficiaire = club_de_l_equipe`).
-- **Rapprochements** (7.3.1, activité OTM/JO de 7.3.7) : pour chaque nom de délégué, juge arbitre ou officiel de
-  table non rapproché automatiquement, choisir le licencié (mémorisé pour les saisons suivantes).
+- **Rapprochements** (7.3.1) : pour chaque nom de délégué ou de juge arbitre
+  non rapproché automatiquement, choisir le licencié (mémorisé pour les saisons suivantes).
 - **Ajustement** : ajout ou retrait de points à un club pour une rubrique, motif obligatoire, auteur et date
   conservés, affiché en italique dans le détail.
 - **Copie N-1** : les listes 7.3.4 (CNA) et les rapprochements sont proposés depuis la saison précédente, à
@@ -342,10 +348,10 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 | I-12 | 7.2 | Unité : par **événement** (week-end, lieu) ou par **journée** KPI ? Un événement donne-t-il une ou plusieurs rubriques ? | Par événement, une rubrique | Par événement, rubrique la plus élevée (§ 5.7) |
 | I-13 | 7.2.2, 7.2.3 | Qu'est-ce qu'une « finale de championnat » ? Play-off N1H/N1D, finale U15/U18 ; la dernière journée de N2/N3 (sans play-off) en est-elle une ? « Plusieurs divisions » = play-off H et D ensemble ? | Règles non officielles : « inclut Championnats de France et PlayOffs », 1 point quel que soit le nombre de terrains | Finale = phase finale des catégories de 7.4.1 et 7.4.3 ; dernière journée N2/N3 = journée simple/multiple |
 | I-14 | 7.2 | Organisation par un CD/CR, co-organisation par deux clubs, journée nationale organisée par une structure hors club | Au cas par cas | Pas de points automatiques ; liste « à vérifier » + saisie manuelle |
-| I-15 | 7.2 | Périmètre « compétition nationale » : U21, NEM, CF comptent-ils ? | Codes `N%` et `CF%` | `Code_niveau = 'NAT'` |
+| I-15 | 7.2 | Périmètre « compétition nationale » : U21, NEM, CF comptent-ils ? | Codes `N%` et `CF%` | ✅ **Décidé** : codes `N…` et `CF…` (le niveau `NAT` inclut UNSS, OPEND…) |
 | I-16 | 7.3.1, 7.3.2 | Un licencié RC de 3 compétitions : 40 pts ou 120 pts ? Un délégué sur 4 journées ? | Délégué : une fois (« sur une ou plusieurs journées ») ; RC : « 1 point par club d'origine de chaque responsable » | ✅ **Décidé** : une fois par licencié et par rubrique |
-| I-17 | 7.3 | **Cumul pour une même personne** : un arbitre international aussi délégué et RC ; un arbitre international est-il aussi « arbitre national catégorie A » ? | Cumul, sauf 7.3.4 (exclusion écrite) ; `Int` non compté en `Nat A` | Idem, à confirmer |
-| I-18 | 7.3.5 → 7.3.7 | Faut-il une **activité** (avoir arbitré dans la saison) et une **licence de la saison** ? Où classer l'arbitre **interrégional** (`IR`, absent de l'annexe) ? Un jeune officiel aussi arbitre régional compte-t-il deux fois ? | Aucune condition d'activité ; `IR` non compté ; une seule qualification par licencié dans KPI | ✅ **Décidé** : licence de la saison **et** au moins un match arbitré (validé) dans la saison, toutes compétitions. Reste ouvert : `IR` (proposé en 7.3.7) et activité des OTM / JO (Q-7) |
+| I-17 | 7.3 | **Cumul pour une même personne** : un arbitre international aussi délégué et RC ; un arbitre international est-il aussi « arbitre national catégorie A » ? | Cumul, sauf 7.3.4 (exclusion écrite) ; `Int` non compté en `Nat A` | ✅ **Confirmé** : idem |
+| I-18 | 7.3.5 → 7.3.7 | Faut-il une **activité** (avoir arbitré dans la saison) et une **licence de la saison** ? Un jeune officiel aussi arbitre régional compte-t-il deux fois ? | Aucune condition d'activité ; une seule qualification par licencié dans KPI | ✅ **Décidé** : licence de la saison et qualification/niveau à la date de référence, **sans condition d'arbitrage effectif** (arbitres, OTM, JO). Une seule qualification par licencié, donc pas de double compte. Pas d'arbitre interrégional en kayak-polo. |
 | I-19 | 7.1.2, 7.3, 7.4 | Club d'un licencié ayant muté pendant ou après la saison | Club au moment de l'extraction (« avant la fin de l'année ») | Club à la date de référence, figé (§ 5.1) |
 | I-20 | 7.1.4 | Une fois par club, ou par sélection (Senior F, Senior H, U21 F, U21 H) / par licencié ? Quelles sélections (stages, entraînements exclus ; compétitions officielles seulement ?) | Une fois par club ; entraînements exclus | Une fois par club, sélections en compétition officielle de la saison |
 | I-21 | Total | Égalité de points | Rangs distincts (2025 : 24e et 25e à 96 pts) | ✅ **Décidé** : même rang |
@@ -365,7 +371,6 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 | N-6 | Notion de **finale** et d'**événement** (week-end organisé) | Heuristique § 5.7 + liste « à vérifier » | Marqueur « finale » sur la journée/phase ; rattachement systématique des journées à un événement |
 | N-7 | **Ententes** (équipes bi-club) : un seul `Code_club` par équipe | Déclaration manuelle (§ 7) | Clubs associés sur l'équipe |
 | N-8 | **Historique** du club d'un licencié et de sa qualification d'arbitre | Date de référence + instantané (§ 5.1) | Historiser club et qualification par saison |
-| N-10 | **Activité des OTM / Jeunes Officiels** : les officiels de table (`Secretaire`, `Chronometre`, `Timeshoot`, `Ligne1/2`) sont du **texte libre**, sans Matric | Rapprochement nom → licencié comme N-5 (Q-7) | Choisir un licencié (Matric) pour les officiels de table dans la feuille de match |
 | N-9 | Données jamais saisies dans KPI (compositions incomplètes, `kp_rc` non tenue, organisateur vide) | Alertes du calcul (§ 8) | — |
 
 ### 10.3 À reformuler / clarifier dans les annexes 2027
@@ -386,8 +391,8 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
    organisation par un CD/CR ou de plusieurs clubs.
 8. **7.3** : préciser « une fois par licencié et par rubrique, quel que soit le nombre de journées / compétitions »
    (RC notamment) ; règle de cumul pour une même personne ; écrire la condition retenue pour 2026 (« licencié de la
-   saison et ayant officié sur au moins un match de la saison ») et ce qu'« officier » veut dire pour un OTM ou un
-   Jeune Officiel ; classement de l'arbitre interrégional ; l'arbitre international compte-t-il aussi comme
+   saison, selon sa qualification, sans condition d'arbitrage effectif », sauf l'arbitre international qui doit
+   avoir officié en compétition nationale) ; préciser que l'arbitre international ne compte pas aussi comme
    national A.
 9. **7.4 — bénéficiaire** : le texte 2026 est appliqué (chaque club ayant au moins un joueur dans l'équipe,
    sélections comprises) ; le confirmer en toutes lettres, avec « une fois par équipe » et la définition du
@@ -398,9 +403,11 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 11. **7.1.2 / 7.4 — « licencié dans une équipe »** : écrire « joueur ayant disputé au moins un match, entraîneurs
     exclus ».
 12. **Club d'un licencié** : club de la licence de la saison considérée (ou à une date fixée, ex. 31 décembre).
-13. **Classement** : écrire « à égalité de points, même rang » ; règle d'égalité de points ; nombre de clubs publiés (40) ; validation en bureau CNA ; délai
+13. **Compétition nationale** : définir le périmètre (championnats et coupes de France de l'animation nationale,
+    hors UNSS, OPEN…).
+14. **Classement** : écrire « à égalité de points, même rang » ; règle d'égalité de points ; nombre de clubs publiés (40) ; validation en bureau CNA ; délai
     de réclamation éventuel.
-14. **Vocabulaire** : « Juge arbitre » (2026) a remplacé « Chef des arbitres » ; aligner le règlement, les annexes
+15. **Vocabulaire** : « Juge arbitre » (2026) a remplacé « Chef des arbitres » ; aligner le règlement, les annexes
     et KPI.
 
 ## 11. Hors périmètre (pour l'instant)
@@ -413,7 +420,7 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 
 ## 12. Questions
 
-### 12.1 Tranchées le 16/11/2026
+Toutes tranchées le 16/11/2026.
 
 | # | Question | Décision |
 |---|---|---|
@@ -421,18 +428,13 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 | Q-2 | Bénéficiaire des points 7.4 (I-7) | **Règlement appliqué** : chaque club d'origine des joueurs, sélections comprises |
 | Q-3 | « Licencié dans une équipe » (I-4) | **Joueur ayant disputé au moins un match**, entraîneurs exclus |
 | Q-4 | Unité 7.3 (I-16) | **Une fois** par licencié et par rubrique |
-| Q-5 | Arbitres 7.3.5 → 7.3.7 (I-18) | **Licenciés de la saison et ayant arbitré dans la saison** |
+| Q-5 | Arbitres 7.3.5 → 7.3.7 (I-18) | **Licenciés de la saison**, selon qualification et niveau, **sans condition d'arbitrage effectif** (corrigé) |
 | Q-6 | Égalité de points (I-21) | **Même rang** |
 | Q-8 | Première saison / historique | **2026** en parallèle du classeur ; **pas d'import** de 2017 → 2025 |
-
-### 12.2 Encore ouvertes
-
-| # | Question | Proposition |
-|---|---|---|
-| Q-7 | « Avoir arbitré » pour un **OTM** ou un **Jeune Officiel** : avoir tenu la table de marque sur un match de la saison ? Les noms y sont en texte libre (N-10). | Oui, par rapprochement de nom mémorisé ; à défaut, saisie manuelle |
-| Q-9 | « Arbitré dans la saison » : toutes compétitions KPI (régionales comprises) ou seulement nationales ? | Toutes compétitions de la saison (seul 7.3.3 exige le national, par son libellé) |
-| Q-10 | Arbitre interrégional (`IR`) | En 7.3.7 avec les régionaux |
-| Q-11 | Les points restants de § 10.1 sans mention « Décidé » | Propositions de la colonne de droite, sauf avis contraire |
+| Q-7 | Activité des OTM / JO | **Sans objet** : pas de condition d'activité (Q-5) |
+| Q-9 | Périmètre de l'activité d'arbitrage | **Sans objet** (Q-5) ; seul 7.3.3 exige d'avoir officié en compétition nationale |
+| Q-10 | Arbitre interrégional | **Sans objet** : il n'y en a pas en kayak-polo |
+| Q-11 | Autres points du § 10.1 | **Propositions retenues** ; périmètre national = codes `N…` / `CF…` (I-15) ; cumul 7.3 confirmé (I-17) |
 
 ## 13. Critères d'acceptation
 
@@ -467,6 +469,8 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
   reçoit une ligne 7.2.4 (20) et non deux lignes 7.2.6.
 - **CNC-13** — Étant donné un club organisateur des play-off H et D le même week-end, alors une ligne 7.2.2 (45),
   sans ligne 7.2.4.
+- **CNC-14a** — Étant donné une journée d'une compétition `OPEND` (niveau `NAT`) organisée par un club, alors aucune
+  ligne 7.2 ; une journée `N2H` organisée par ce club donne une ligne.
 - **CNC-14** — Étant donné une journée nationale dont `Code_organisateur` est vide ou un code de CD, alors aucune
   ligne et la journée apparaît dans les alertes.
 
@@ -480,8 +484,10 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
   pas de ligne 7.3.3 ; avec un match, une ligne.
 - **CNC-19** — Étant donné un arbitre `Nat`/`A` dont la licence n'est pas renouvelée pour la saison, alors pas de
   ligne 7.3.5, même s'il a arbitré.
-- **CNC-19b** — Étant donné un arbitre `Nat`/`B` licencié pour la saison mais sans aucun match validé arbitré
-  (principal ou secondaire) dans la saison, alors pas de ligne 7.3.6 ; avec un match, une ligne.
+- **CNC-19b** — Étant donné un arbitre `Nat`/`B` licencié pour la saison sans aucun match arbitré dans la saison,
+  alors une ligne 7.3.6 ; de même pour un `OTM` ou un `JO` licencié sans activité (ligne 7.3.7).
+- **CNC-19c** — Étant donné un arbitre `Int` qui a officié en compétition nationale, alors une ligne 7.3.3 et
+  aucune ligne 7.3.5.
 - **CNC-20** — Étant donné un licencié saisi en 7.3.4 qui est aussi RC, alors la saisie est refusée (exclusion de
   l'annexe) avec un message.
 
@@ -516,4 +522,4 @@ C'est la partie à arbitrer avant d'implémenter, et à faire remonter pour la r
 - **CNC-31** — Pour tout club, la somme des lignes de détail est égale au total affiché.
 - **CNC-32** — Étant donné le barème 2026 et les données 2026, le calcul KPI et le classeur 2026 (tenu en parallèle)
   donnent les mêmes totaux aux écarts près **listés et expliqués** (décisions du 16/11/2026 qui changent la
-  pratique : 7.4 aux clubs des joueurs, joueurs ayant joué, activité des arbitres), écarts relus avant publication.
+  pratique : 7.4 aux clubs des joueurs, joueurs ayant joué), écarts relus avant publication.
