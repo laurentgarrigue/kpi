@@ -323,7 +323,7 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 | C0 | **Valider ce plan**, confirmer les dates du § 0 | 6 nov. | **13 nov.** | Déclenchement aux plénières |
 | C13 | **Listing des nouveautés du règlement**, en marquant celles qui touchent KPI ; date d'entrée en vigueur | 6 nov. | **15 nov.** | Diapositives « règles dans KPI », C14, C15 |
 | C26 | **Support de présentation des plénières** (diaporama « KPI – Plénières 2026 », lien ci-dessous ; FR, ~15 diapositives, **sans les médailles**) : disponible / avant-première / à venir, changements pour les régions (codes régionaux), démonstration réelle sur app2, app4 et `beta.*` | 13 nov. | **19 nov.** | Plénières |
-| C27 | **Kit de relais** pour les régions et les entraîneurs : 3 visuels, textes prêts à publier, liens marqués `mtm_source=relais`, QR code d'app2, calendrier de la saison | 18 nov. (remis sur place) | 4 déc. | O1 |
+| C27 | **Kit de relais** pour les régions et les entraîneurs : 3 visuels, textes prêts à publier, liens marqués `mtm_source=relais`, QR code d'app2, calendrier de la saison. **Produit le 17/11** ([kit-relais/](../../communication/visuels/kit-relais/README.md)) : 3 visuels + 1 story, QR de production, [textes](../../communication/visuels/kit-relais/TEXTES.md) ; à relire | 18 nov. (remis sur place) | 4 déc. | O1 |
 | C2a | **Design modernisé visible sur `beta.*`**, même partiellement, pour l'avant-première | 18 nov. | 20 nov. (sinon : avant-première sur l'ancien design, ou sans le site) | Avant-première |
 
 **Support de C26 : diaporama « KPI – Plénières 2026 »** (artifact claude.ai, privé, lié au compte de l'auteur) :

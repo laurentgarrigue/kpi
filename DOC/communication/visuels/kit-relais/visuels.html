@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Kit de relais — plénières 2026</title>
+<!-- Servir la RACINE du dépôt (polices de kpi-layer) : voir README.md de ce dossier. -->
+<style>
+  @font-face { font-family: Raleway; src: url("../../../../sources/kpi-layer/public/fonts/raleway/raleway-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "Agency FB"; src: url("../../../../sources/kpi-layer/public/fonts/agency-fb/agencyfb.ttf") format("truetype"); }
+  :root {
+    --bleu: #69b9e6; --bleu-fonce: #357b9c;
+    --rouge: #c94a4c; --rouge-fonce: #882831;
+    --noir: #1e1e1c; --gris: #c6c7c7;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #888; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; padding: 40px; }
+  .visuel {
+    width: 1080px; height: 1350px; position: relative; overflow: hidden;
+    background: var(--noir); color: #fff;
+    font-family: Raleway, system-ui, sans-serif;
+    display: flex; flex-direction: column; padding: 90px 80px 70px;
+  }
+  .visuel.story { height: 1920px; padding: 140px 80px 120px; }
+  .visuel::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 16px;
+    background: linear-gradient(90deg, var(--bleu-fonce), var(--bleu));
+  }
+  .kicker { color: var(--bleu); font-weight: 800; font-size: 34px; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { font-family: "Agency FB", Raleway, sans-serif; font-size: 116px; line-height: .98; font-weight: 700; margin: 18px 0 18px; }
+  h1 em { font-style: normal; color: var(--bleu); }
+  .sub { font-size: 40px; font-weight: 500; color: var(--gris); line-height: 1.32; }
+  .sub b { color: #fff; font-weight: 700; }
+
+  .shot { flex: 1; min-height: 0; margin-top: 40px; display: flex; justify-content: center; align-items: flex-start; }
+  .shot img {
+    height: 100%; width: 860px; object-fit: cover; object-position: top;
+    border-radius: 28px 28px 0 0; border: 6px solid var(--bleu-fonce); border-bottom: 0;
+    box-shadow: 0 24px 60px rgba(0,0,0,.55);
+    -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent);
+  }
+
+  footer { display: flex; justify-content: space-between; align-items: center; gap: 40px; font-size: 32px; color: var(--gris); }
+  footer b { color: #fff; font-size: 38px; white-space: nowrap; }
+  .pill { background: var(--rouge); color: #fff; font-weight: 800; padding: 10px 26px; border-radius: 40px; font-size: 30px; white-space: nowrap; }
+  .qr { width: 210px; height: 210px; background: #fff; padding: 10px; border-radius: 16px; flex: none; }
+  .scan { display: flex; align-items: center; gap: 30px; }
+  .scan p { font-size: 34px; line-height: 1.3; }
+
+  /* Visuel 1 : capture de la frise, cadrée sur le graphique et la liste des buts */
+  /* Visuel 1 : seulement le graphique des périodes (38 % du haut de la capture), aucun nom de joueur */
+  #v1 .shot { align-items: center; }
+  #v1 .shot img { flex: none; width: 920px; height: 344px; border-bottom: 6px solid var(--bleu-fonce); border-radius: 28px;
+                  -webkit-mask-image: none; mask-image: none; }
+  #v2 .shot img { width: 760px; }
+
+  /* Visuel 3 : calendrier */
+  .dates { list-style: none; padding: 0; margin-top: 46px; display: flex; flex-direction: column; gap: 26px; flex: 1; }
+  .dates li { display: grid; grid-template-columns: 300px 1fr; align-items: center; gap: 34px;
+              background: rgba(255,255,255,.06); border-left: 10px solid var(--bleu-fonce); border-radius: 8px; padding: 26px 32px; }
+  .dates li.top { border-left-color: var(--rouge); background: rgba(201,74,76,.14); }
+  .dates time { font-family: "Agency FB", Raleway, sans-serif; font-size: 62px; line-height: 1; color: var(--bleu); }
+  .dates li.top time { color: #fff; }
+  .dates strong { display: block; font-size: 38px; line-height: 1.2; }
+  .dates span { display: block; font-size: 30px; color: var(--gris); margin-top: 4px; }
+
+  /* Story */
+  .story h1 { font-size: 150px; margin-top: 30px; }
+  .story .sub { font-size: 46px; }
+  .story .shot img { width: 760px; }
+  .story .qr { width: 300px; height: 300px; }
+  .story .scan p { font-size: 42px; }
+</style>
+</head>
+<body>
+
+<!-- Visuel 1 : l'application bord de terrain -->
+<section class="visuel" id="v1">
+  <div class="kicker">L'application bord de terrain</div>
+  <h1>Tous les matchs,<br><em>en direct</em></h1>
+  <p class="sub">Scores, classements, et chaque match <b>minute par minute</b>. Gratuite, sans compte, même sans réseau.</p>
+  <div class="shot"><img src="../captures/bord-de-terrain-frise-match.png" alt="Frise chronologique d'un match dans l'application bord de terrain"></div>
+  <footer>
+    <div class="scan">
+      <img class="qr" src="../captures/qr-relais-application-bord-de-terrain.svg" alt="QR code de l'application bord de terrain">
+      <p><b>app.kayak-polo.info</b><br>Scanne, puis ajoute-la<br>à ton écran d'accueil</p>
+    </div>
+    <span class="pill">#KPIsaison2027</span>
+  </footer>
+</section>
+
+<!-- Visuel 2 : le site public -->
+<section class="visuel" id="v2">
+  <div class="kicker">Le site public fait peau neuve</div>
+  <h1>Trouve ton club,<br><em>et tous les autres</em></h1>
+  <p class="sub">Plus de 200 clubs sur la carte, le palmarès des compétitions, et tes dates <b>dans ton agenda</b>.</p>
+  <div class="shot"><img src="../captures/site-public-carte-clubs-cadree.png" alt="Carte des clubs de kayak-polo sur le nouveau site public"></div>
+  <footer><span><b>kayak-polo.info</b><br>Nouveau site, bientôt en ligne</span><span class="pill">#KPIsaison2027</span></footer>
+</section>
+
+<!-- Visuel 3 : le calendrier de la saison (dates confirmées uniquement, plan § 0) -->
+<section class="visuel" id="v3">
+  <div class="kicker">Les rendez-vous</div>
+  <h1>La saison <em>2027</em></h1>
+  <ul class="dates">
+    <li><time>16-17 janv.</time><div><strong>Formation arbitre national</strong><span>Les nouvelles règles 2027-2030</span></div></li>
+    <li><time>23-24 janv.</time><div><strong>La nuit du kayak-polo</strong><span>Moreuil (80)</span></div></li>
+    <li><time>13-14 mars</time><div><strong>1<sup>re</sup> journée du championnat de France</strong><span>Tous les matchs en direct dans l'application</span></div></li>
+    <li class="top"><time>22-26 sept.</time><div><strong>Championnats d'Europe</strong><span>Thury-Harcourt (14) · en France !</span></div></li>
+  </ul>
+  <footer>
+    <div class="scan">
+      <img class="qr" src="../captures/qr-relais-application-bord-de-terrain.svg" alt="QR code de l'application bord de terrain">
+      <p><b>app.kayak-polo.info</b><br>Toute la saison<br>dans ta poche</p>
+    </div>
+    <span class="pill">#KPIsaison2027</span>
+  </footer>
+</section>
+
+<!-- Story 1080×1920 : l'application bord de terrain -->
+<section class="visuel story" id="s1">
+  <div class="kicker">Saison 2027</div>
+  <h1>Tous les matchs,<br><em>en direct</em></h1>
+  <p class="sub">Scores, classements, et chaque match <b>minute par minute</b>.</p>
+  <div class="shot"><img src="../captures/bord-de-terrain-liste-matchs.png" alt="Liste des matchs dans l'application bord de terrain"></div>
+  <footer>
+    <div class="scan">
+      <img class="qr" src="../captures/qr-relais-application-bord-de-terrain.svg" alt="QR code de l'application bord de terrain">
+      <p><b>app.kayak-polo.info</b><br>Gratuite, sans compte</p>
+    </div>
+  </footer>
+</section>
+
+</body>
+</html>
