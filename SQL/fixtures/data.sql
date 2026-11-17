@@ -691,3 +691,46 @@ INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Temps`, `Id_evt_mat
   ('med-9464-01', 9464, 'M1', '00:04:00', 'B', NULL, 9531, '1', 'A', '2998-05-02 11:05:00'),
   ('med-9465-01', 9465, 'M1', '00:04:00', 'B', NULL, 9535, NULL, 'A', '2998-05-02 12:05:00');
 
+
+-- ---------------------------------------------------------------- copie de composition de match (PAGE_PRESENCE.md § 1.2)
+-- Consommé par tests/Integration/PresenceMatchCopyTest.php : copie vers les matchs de la journée (≤ 6) et de la
+-- compétition (≤ 4), feuille de match du profil 9, ajout limité à la feuille de présence. Compétition PCM (saison
+-- 2997, non publiée, hors événement), équipes 9387 (C001) et 9388 (C002) ; 9471 (J1, source, 9387 en A avec 9511 et
+-- 9512), 9472 (J1) et 9473 (J2) non validés, 9474 (J2) validé.
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
+   `Titre_actif`, `Bandeau_actif`, `Logo_actif`, `Code_ref`, `GroupOrder`, `Code_typeclt`, `Code_tour`, `Nb_equipes`,
+   `Statut`, `Qualifies`, `Elimines`, `Publication`, `Verrou`) VALUES
+  ('PCM', '2997', 'REG', 'Copie de composition', NULL, NULL, NULL, '', '', '',
+   'O', 'N', 'N', 'TSTSCR', 4, 'CHPT', 1, 2, 'ON', 0, 0, 'N', 'N');
+INSERT INTO `kp_journee`
+  (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Libelle`, `Lieu`, `Departement`, `Etat`, `Type`, `Phase`, `Niveau`, `Etape`, `Nbequipes`, `Publication`) VALUES
+  (9275, 'PCM', '2997', '2997-07-01', '2997-07-01', 'Copie', 'PCM J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 2, 'N'),
+  (9276, 'PCM', '2997', '2997-07-08', '2997-07-08', 'Copie', 'PCM J2', 'Lacville', '33', 'O', 'C', 'Journée 2', 1, 2, 2, 'N');
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
+  (9387, 'PCM', '2997', 'Copie Alpha', 'C001', NULL, 101, '', 0),
+  (9388, 'PCM', '2997', 'Copie Bravo', 'C002', NULL, 102, '', 0);
+INSERT INTO `kp_match`
+  (`Id`, `Id_journee`, `Libelle`, `Statut`, `Date_match`, `Heure_match`, `Terrain`, `Numero_ordre`,
+   `Id_equipeA`, `Id_equipeB`, `Publication`, `Validation`) VALUES
+  (9471, 9275, 'C1', 'ATT', '2997-07-01', '10:00', '1', 1, 9387, 9388, 'N', 'N'),
+  (9472, 9275, 'C2', 'ATT', '2997-07-01', '11:00', '1', 2, 9388, 9387, 'N', 'N'),
+  (9473, 9276, 'C3', 'ATT', '2997-07-08', '10:00', '1', 3, 9387, 9388, 'N', 'N'),
+  (9474, 9276, 'C4', 'END', '2997-07-08', '11:00', '1', 4, 9387, 9388, 'N', 'O');
+-- Feuille de présence de 9388 : capitaine 9516 et joueur 9518 ajoutables, entraîneur 9513 (E), arbitre 9514 (A) et
+-- inactif 9517 (X) non ajoutables à un match.
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9388, 9516, 'SCRUT', 'Remplaçant', 'M', 'U21', 5, 'C'),
+  (9388, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 6, '-'),
+  (9388, 9513, 'SCRUT', 'Coach', 'M', 'SEN', NULL, 'E'),
+  (9388, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A'),
+  (9388, 9517, 'SCRUT', 'Régional', 'M', 'U18', 9, 'X');
+INSERT INTO `kp_match_joueur` (`Id_match`, `Matric`, `Numero`, `Equipe`, `Capitaine`) VALUES
+  (9471, 9511, 1, 'A', 'C'), (9471, 9512, 2, 'A', '-');
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES
+  ('TORGA', '', 'Organisateur Test', 'orga@example.test', '', '', 6, '|PCM|', '|2997|', '', '', NULL, ''),   -- profil 6 : copie journée, pas compétition
+  ('TCOMP', '', 'Compétition Test', 'comp@example.test', '', '', 4, '|PCM|', '|2997|', '', '', NULL, ''),  -- profil 4 : les deux copies
+  ('TTEAMP', '', 'Equipe PCM Test', 'teamp@example.test', '', '', 7, '|PCM|', '|2997|', '', '', NULL, ''), -- profil 7 : aucune copie
+  ('TSCOREP', '', 'Table PCM Test', 'scorep@example.test', '', '', 9, '|PCM|', '|2997|', '', '', NULL, ''),  -- profil 9 : feuille de match, aucune copie
+  ('TVIEWP', '', 'Lecteur PCM Test', 'viewp@example.test', '', '', 8, '|PCM|', '|2997|', '', '', NULL, '');  -- profil 8 : lecture seule
+-- ---------------------------------------------------------------- fin copie de composition de match

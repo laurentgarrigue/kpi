@@ -72,14 +72,21 @@ même club / nation, ← / →) remplace le sélecteur d'équipes et ajoute la b
 
 | Profil | Droits | Conditions |
 |--------|--------|------------|
-| ≤ 8 | Lecture seule | - |
-| ≤ 7 | Édition inline, initialisation, ajout/suppression, vider | Validation = 'N' |
+| ≤ 9 | Lecture | - |
+| ≤ 7 et 9 | Édition inline, initialisation, ajout/suppression, vider | Validation = 'N' |
 | ≤ 6 | Copie vers matchs même journée | Validation = 'N' |
 | ≤ 4 | Copie vers tous matchs compétition | Validation = 'N' |
 
-Les profils 9 (Table de marque) et 10 (Contrôle équipement) n'ont pas accès à la feuille de présence match (api2 :
-`ROLE_VIEWER`, écritures refusées au-delà du profil 7). Les deux copies vers d'autres matchs sont restreintes par
-l'interface (≤ 6 et ≤ 4) ; api2 les accepte jusqu'au profil 7.
+Le profil 8 (Consultation) lit seulement ; le profil 9 (Table de marque) gère la composition des matchs (sans les
+copies vers d'autres matchs), mais n'a pas accès à la feuille de présence équipe ; le profil 10 (Contrôle équipement)
+n'a pas accès à la feuille de présence match. api2 applique les mêmes limites que l'interface : lecture
+`ROLE_SCORER` (profils 1–9), écritures `canWriteMatchCompositions()` (≤ 7 et 9), copies `MATCH_COPY_MAX_PROFILE`
+(journée ≤ 6, compétition ≤ 4) ; la copie journée ne vise que les matchs de la journée du match source, la copie
+compétition que ceux de sa compétition.
+
+**Ajout d'un joueur** : seulement un joueur de la feuille de présence de l'équipe, hors entraîneurs (E), arbitres (A)
+et inactifs (X), pas encore dans le match (`GET /admin/matches/:matchId/available-players`) ; api2 refuse tout autre
+joueur (422).
 
 **Bloqué si**: Match validé (`kp_match.Validation = 'O'`)
 
@@ -181,22 +188,22 @@ ORDER BY
 
 | # | Fonctionnalité | Profil | Bloqué si validation | Source |
 |---|----------------|--------|-----------------------|--------|
-| 1 | Afficher liste joueurs | ≤ 8 | - | GestionMatchEquipeJoueur.php:168-195 |
-| 2 | Édition inline Numero (0-99) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.js:75-104 |
-| 3 | Édition inline Capitaine (-, C, E) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.js:108-156 |
-| 4 | Initialiser depuis composition équipe | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:291-301 |
-| 5 | Ajouter joueur (limité équipe, pas E/A/X) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
-| 6 | Sélection multiple + suppression | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:372-380 |
-| 7 | Vider composition match | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:387-395 |
+| 1 | Afficher liste joueurs | ≤ 9 | - | GestionMatchEquipeJoueur.php:168-195 |
+| 2 | Édition inline Numero (0-99) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.js:75-104 |
+| 3 | Édition inline Capitaine (-, C, E) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.js:108-156 |
+| 4 | Initialiser depuis composition équipe | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:291-301 |
+| 5 | Ajouter joueur (feuille de présence de l'équipe, pas E/A/X) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
+| 6 | Sélection multiple + suppression | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:372-380 |
+| 7 | Vider composition match | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:387-395 |
 | 8 | Copier vers matchs même journée | ≤ 6 | ❌ | GestionMatchEquipeJoueur.php:293-358 |
 | 9 | Copier vers tous matchs compétition | ≤ 4 | ❌ | GestionMatchEquipeJoueur.php:361-428 |
-| 10 | Afficher contexte match | ≤ 8 | - | GestionMatchEquipeJoueur.tpl:4-16 |
-| 11 | Afficher pagaie avec warning | ≤ 8 | - | GestionMatchEquipeJoueur.tpl:120-125 |
+| 10 | Afficher contexte match | ≤ 9 | - | GestionMatchEquipeJoueur.tpl:4-16 |
+| 11 | Afficher pagaie avec warning | ≤ 9 | - | GestionMatchEquipeJoueur.tpl:120-125 |
 
-**Exclusion statuts E/A/X:**
-- Lors de l'initialisation depuis équipe
-- Lors de l'ajout manuel de joueurs
-- Impossibilité de définir ces statuts
+**Statuts exclus:**
+- Initialisation depuis équipe : arbitres (A) et inactifs (X) ; les entraîneurs (E) sont repris
+- Ajout manuel : entraîneurs (E), arbitres (A) et inactifs (X) ; seul un joueur de la feuille de présence de
+  l'équipe peut être ajouté
 
 ---
 
@@ -451,7 +458,7 @@ WHERE Id_equipe = (
 
 #### GET /admin/matches/:matchId/players
 
-**Description**: Récupère la composition d'une équipe pour un match
+**Description**: Récupère la composition d'une équipe pour un match (`ROLE_SCORER` : profils 1 à 9)
 
 **Query Params:**
 - `teamCode`: 'A' | 'B'
@@ -504,12 +511,34 @@ interface MatchPlayersResponse {
 -- 1. Récupérer Id_equipe depuis match
 SELECT Id_equipeA, Id_equipeB FROM kp_match WHERE Id = :matchId
 
--- 2. Copier joueurs (exclut E, A, X)
-INSERT INTO kp_match_joueur (Id_match, Matric, Numero, Equipe, Capitaine)
-SELECT :matchId, Matric, Numero, :teamCode, Capitaine
-FROM kp_competition_equipe_joueur
-WHERE Id_equipe = :teamId
-  AND Capitaine NOT IN ('E', 'A', 'X')
+-- 2. Copier joueurs licenciés (exclut A et X, garde les entraîneurs E)
+REPLACE INTO kp_match_joueur (Id_match, Matric, Numero, Equipe, Capitaine)
+SELECT :matchId, cej.Matric, cej.Numero, :teamCode, cej.Capitaine
+FROM kp_competition_equipe_joueur cej
+INNER JOIN kp_licence l ON l.Matric = cej.Matric
+WHERE cej.Id_equipe = :teamId
+  AND cej.Capitaine NOT IN ('A', 'X')
+```
+
+#### GET /admin/matches/:matchId/available-players
+
+**Description**: Joueurs pouvant être ajoutés au match (`ROLE_SCORER`, compétition du périmètre) : feuille de
+présence de l'équipe, licenciés, hors E, A et X, pas encore dans le match
+
+**Query Params:**
+- `teamCode`: 'A' | 'B'
+
+**Response:**
+```typescript
+{
+  players: Array<{
+    matric: number
+    nom: string
+    prenom: string
+    numero: number | null
+    capitaine: '-' | 'C'
+  }>
+}
 ```
 
 #### POST /admin/matches/:matchId/players/add
@@ -532,8 +561,9 @@ WHERE Id_equipe = :teamId
 ```
 
 **Validation:**
-- Vérifier que matric existe dans composition équipe
-- Vérifier que matric n'a pas statut E, A, ou X dans équipe
+- Profils ≤ 7 et 9, match non validé (sinon 403)
+- Le joueur fait partie des joueurs ajoutables (`available-players`) : feuille de présence de l'équipe, statut
+  autre que E, A ou X, pas encore dans le match (sinon 422)
 
 #### DELETE /admin/matches/:matchId/players
 
@@ -586,19 +616,20 @@ WHERE Id_equipe = :teamId
 
 #### POST /admin/matches/:matchId/players/copy-to-day
 
-**Description**: Copie vers tous matchs de l'équipe dans la même journée
+**Description**: Copie vers les matchs de l'équipe dans la même journée (profils ≤ 6 ; les matchs cibles d'une
+autre journée sont ignorés)
 
 **Request Body:**
 ```typescript
 {
   teamCode: 'A' | 'B'
-  journeeId: number
+  matchIds: number[]
 }
 ```
 
 **Response:**
 ```typescript
-{ success: boolean, copiedToMatches: number }
+{ success: boolean, copied: number }
 ```
 
 **Logique:**
@@ -622,17 +653,17 @@ WHERE m.Id_journee = :journeeId
 
 **Request Body:**
 ```typescript
-{ teamCode: 'A' | 'B' }
+{ teamCode: 'A' | 'B', matchIds: number[] }
 ```
 
 **Response:**
 ```typescript
-{ success: boolean, copiedToMatches: number }
+{ success: boolean, copied: number }
 ```
 
 **Validation:**
 - Profil ≤ 4 requis
-- Copie uniquement vers matchs non validés
+- Copie uniquement vers matchs non validés de la même compétition (saison comprise)
 
 #### GET /admin/matches/:matchId/copyable-matches
 
@@ -1779,12 +1810,12 @@ export interface CopyToMatchesFormData {
 
 | Action | Profil requis | Condition supplémentaire |
 |--------|---------------|--------------------------|
-| Voir liste | ≤ 8 | - |
-| Éditer inline (numero, capitaine) | ≤ 7 | Validation = 'N' |
-| Initialiser depuis équipe | ≤ 7 | Validation = 'N' |
-| Ajouter joueur | ≤ 7 | Validation = 'N' |
-| Supprimer joueurs | ≤ 7 | Validation = 'N' |
-| Vider composition | ≤ 7 | Validation = 'N' |
+| Voir liste | ≤ 9 | - |
+| Éditer inline (numero, capitaine) | ≤ 7 et 9 | Validation = 'N' |
+| Initialiser depuis équipe | ≤ 7 et 9 | Validation = 'N' |
+| Ajouter joueur | ≤ 7 et 9 | Validation = 'N' ET joueur de la feuille de présence (hors E/A/X) |
+| Supprimer joueurs | ≤ 7 et 9 | Validation = 'N' |
+| Vider composition | ≤ 7 et 9 | Validation = 'N' |
 | Copier vers journée | ≤ 6 | Validation = 'N' |
 | Copier vers compétition | ≤ 4 | Validation = 'N' |
 
@@ -1792,19 +1823,19 @@ export interface CopyToMatchesFormData {
 
 Les droits d'affichage sont calculés par `composables/usePresencePermissions.ts` (mode `team` ou `match`, verrou
 passé en `Ref`). Les règles de profil partagées sont des fonctions pures testées sans Nuxt :
-`canWriteTeamPresence()` et `isScrutineerProfile()` (`utils/scrutineering.ts`), `canCopyTeamComposition()`
-(`utils/presencePermissions.ts`). En mode `team`, les écritures exigent aussi `presenceStore.canEdit`, le contrôle de
+`canWriteTeamPresence()` et `isScrutineerProfile()` (`utils/scrutineering.ts`), `canCopyTeamComposition()`,
+`canWriteMatchPresence()`, `canCopyMatchToDay()` et `canCopyMatchToCompetition()` (`utils/presencePermissions.ts`). En mode `team`, les écritures exigent aussi `presenceStore.canEdit`, le contrôle de
 périmètre (clubs, compétitions, verrou) renvoyé par api2.
 
 | Computed | Mode team | Mode match |
 |----------|-----------|------------|
-| `canView` | ≤ 10 (l'API refuse le profil 9) | ≤ 10 (l'API refuse les profils 9 et 10) |
-| `canEdit` / `canDelete` | non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, ≤ 7 |
-| `canCopy` | `canCopyTeamComposition()` : non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, ≤ 6 (copie journée) |
-| `canCopyToCompetition` | - | non verrouillée, ≤ 4 |
+| `canView` | ≤ 10 (l'API refuse le profil 9) | ≤ 10 (l'API refuse le profil 10) |
+| `canEdit` / `canDelete` | non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, `canWriteMatchPresence()` : ≤ 7 ou 9 |
+| `canCopy` | `canCopyTeamComposition()` : non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, `canCopyMatchToDay()` : ≤ 6 |
+| `canCopyToCompetition` | - | non verrouillée, `canCopyMatchToCompetition()` : ≤ 4 |
 | `canCreatePlayer` | non verrouillée, ≤ 4 ou 10 | - |
 | `canSearchLicense` | ≤ 2 ou 10 | - |
-| `canInitializeFromTeam` / `canClearAll` | - | non verrouillée, ≤ 7 |
+| `canInitializeFromTeam` / `canClearAll` | - | non verrouillée, ≤ 7 ou 9 |
 
 ---
 
@@ -2209,7 +2240,7 @@ export const usePresenceStore = defineStore('presence', {
         ...(data.scope === 'day' && this.match ? { journeeId: this.match.idJournee } : {})
       })
 
-      return result.copiedToMatches
+      return result.copied
     },
 
     // Selection

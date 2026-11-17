@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Player, MatchAddPlayerFormData, CopyableMatch } from '~/types/presence'
+import type { Player, AvailableMatchPlayer, MatchAddPlayerFormData, CopyableMatch } from '~/types/presence'
 
 definePageMeta({
   layout: 'admin',
@@ -57,7 +57,7 @@ const addFormError = ref('')
 const addFormSaving = ref(false)
 
 // Available team players (for adding to match - loaded lazily)
-const availableTeamPlayers = ref<Player[]>([])
+const availableTeamPlayers = ref<AvailableMatchPlayer[]>([])
 const availableTeamPlayersLoaded = ref(false)
 
 // Copy to matches modal
@@ -150,20 +150,15 @@ const handleInlineKeydown = (e: KeyboardEvent) => {
   else if (e.key === 'Escape') cancelInlineEdit()
 }
 
-// Load available team players (excluding E/A/X and already added) - called lazily on modal open
+// Load the players of the team presence sheet that may join the match (api2 excludes E/A/X and the players already
+// in the match: only them can be added) - called lazily on modal open
 const loadAvailableTeamPlayers = async () => {
-  if (!presenceStore.team) return
-
   try {
-    const response = await api.get<{ players: Player[] }>(
-      `/admin/teams/${presenceStore.team.id}/players`
+    const response = await api.get<{ players: AvailableMatchPlayer[] }>(
+      `/admin/matches/${matchId.value}/available-players`,
+      { teamCode: teamCode.value }
     )
-
-    // Filter out E/A/X and already added players
-    const currentMatrics = presenceStore.players.map(p => p.matric)
-    availableTeamPlayers.value = response.players.filter(
-      p => !['E', 'A', 'X'].includes(p.capitaine) && !currentMatrics.includes(p.matric)
-    )
+    availableTeamPlayers.value = response.players
     availableTeamPlayersLoaded.value = true
   } catch (error) {
     console.error('Failed to load team players:', error)
@@ -192,8 +187,8 @@ const initializeFromTeam = async () => {
 const onPlayerSelect = () => {
   const player = availableTeamPlayers.value.find(p => p.matric === addFormData.value.matric)
   if (player) {
-    addFormData.value.numero = player.numero
-    addFormData.value.capitaine = player.capitaine as '-' | 'C' | 'E'
+    addFormData.value.numero = player.numero ?? undefined
+    addFormData.value.capitaine = player.capitaine
   }
 }
 

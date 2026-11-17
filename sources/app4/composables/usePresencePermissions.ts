@@ -1,7 +1,7 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { PresenceMode } from '~/types/presence'
 import { canWriteTeamPresence, isScrutineerProfile } from '~/utils/scrutineering'
-import { canCopyTeamComposition } from '~/utils/presencePermissions'
+import { canCopyMatchToCompetition, canCopyMatchToDay, canCopyTeamComposition, canWriteMatchPresence } from '~/utils/presencePermissions'
 
 /**
  * Permission management for Presence Sheet
@@ -18,7 +18,8 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   const isScrutineer = computed(() => isScrutineerProfile(authStore.profile))
 
   // Edit permission (inline edit, add, delete)
-  // Niveau 8 "Consultation" is read-only in both modes; editing starts at niveau 7 (club/team manager).
+  // Niveau 8 "Consultation" is read-only in both modes; editing starts at niveau 7 (club/team manager), plus the
+  // profile 10 on the team sheets and the profile 9 "Table de marque" on the match sheets.
   const canEdit = computed(() => {
     if (isLocked.value) return false
     if (mode === 'team') {
@@ -26,7 +27,7 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
       if (!presenceStore.canEdit) return false
       return canWriteTeamPresence(authStore.profile)
     }
-    if (mode === 'match') return authStore.profile <= 7
+    if (mode === 'match') return canWriteMatchPresence(authStore.profile)
     return false
   })
 
@@ -40,14 +41,14 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
       // Copy from another competition: profiles ≤ 7 and the profile 10, perimeter checked by the server (#399)
       return canCopyTeamComposition(authStore.profile, { locked: isLocked.value, inPerimeter: presenceStore.canEdit })
     }
-    if (mode === 'match') return authStore.profile <= 6 // Copy to same day matches
+    if (mode === 'match') return canCopyMatchToDay(authStore.profile)
     return false
   })
 
   // Copy to competition (Match Mode only, requires profile ≤ 4)
   const canCopyToCompetition = computed(() => {
     if (isLocked.value) return false
-    if (mode === 'match') return authStore.profile <= 4
+    if (mode === 'match') return canCopyMatchToCompetition(authStore.profile)
     return false
   })
 
@@ -68,14 +69,14 @@ export function usePresencePermissions(mode: PresenceMode, isLocked: Ref<boolean
   const canInitializeFromTeam = computed(() => {
     if (mode !== 'match') return false
     if (isLocked.value) return false
-    return authStore.profile <= 7
+    return canWriteMatchPresence(authStore.profile)
   })
 
   // Clear all players (Match Mode only)
   const canClearAll = computed(() => {
     if (mode !== 'match') return false
     if (isLocked.value) return false
-    return authStore.profile <= 7
+    return canWriteMatchPresence(authStore.profile)
   })
 
   return {

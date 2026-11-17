@@ -154,3 +154,16 @@ qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais
 
 Aucune de ces structures n'existe dans `data.sql` : l'import les crée. Pour un cas de mise à jour, insérer la
 structure dans `data.sql` avec un libellé ou un rattachement différent de celui du fichier.
+
+## Jeu « copie de composition de match »
+
+Consommé par `tests/Integration/PresenceMatchCopyTest.php` ([PAGE_PRESENCE.md](../../DOC/specs/PAGE_PRESENCE.md) § 1.2,
+mode match) : la copie vers les matchs de la journée est ouverte aux profils ≤ 6, vers la compétition aux profils ≤ 4 ;
+la feuille de match est éditée par les profils ≤ 7 et 9 ; on n'y ajoute qu'un joueur de la feuille de présence.
+
+| Élément | Cas couverts |
+|---|---|
+| `PCM` (2997, non publiée) | journées 9275 (J1) et 9276 (J2) ; équipes 9387 (C001, sans composition) et 9388 (C002) |
+| Feuille de présence de 9388 | 9516 (C) et 9518 (-) ajoutables à un match ; 9513 (E), 9514 (A), 9517 (X) non ajoutables |
+| Matchs 9471 (J1), 9472 (J1), 9473 (J2), 9474 (J2) | 9471 = source (9387 en A : 9511, 9512) ; 9387 est B dans 9472 ; seul 9474 est validé |
+| `TCOMP` (4), `TORGA` (6), `TTEAMP` (7), `TVIEWP` (8), `TSCOREP` (9) | les deux copies / la copie journée seule / aucune copie / lecture seule / feuille de match sans copie |

@@ -184,6 +184,15 @@ export interface AddPlayerFormData {
 /**
  * Match Mode: Add player form
  */
+/** Player of the team presence sheet that may join the match (GET /admin/matches/{id}/available-players) */
+export interface AvailableMatchPlayer {
+  matric: number
+  nom: string
+  prenom: string
+  numero: number | null
+  capitaine: '-' | 'C'
+}
+
 export interface MatchAddPlayerFormData {
   matric: number
   numero?: number

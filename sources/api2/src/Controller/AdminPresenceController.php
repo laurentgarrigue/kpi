@@ -26,8 +26,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * Migrated from GestionEquipeJoueur.php and GestionMatchEquipeJoueur.php
  *
  * Read routes are open to ROLE_VIEWER (niveau <= 8, consultation), the team ones also to ROLE_SCRUTINEER (profile
- * 10) through ROLE_PRESENCE_VIEWER; write routes are guarded by manual getEffectiveNiveau() checks in each method
- * body (denyTeamCompositionWrite() for the team mode). There is intentionally NO class-level
+ * 10) through ROLE_PRESENCE_VIEWER, the match ones also to ROLE_SCORER (profile 9); write routes are guarded by
+ * manual checks in each method body (denyTeamCompositionWrite() for the team mode, canWriteMatchCompositions() and
+ * MATCH_COPY_MAX_PROFILE for the match mode). There is intentionally NO class-level
  * #[IsGranted] here: Symfony merges class-level and method-level attributes rather than
  * overriding (see DOC/developer/reference/PROFILE_ROLES.md), so a ROLE_TEAM class guard would
  * silently block every ROLE_VIEWER (niveau 8) read, even on methods carrying their own
@@ -37,6 +38,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AdminPresenceController extends AbstractController
 {
     use AdminLoggableTrait;
+
+    /**
+     * Highest profile allowed per copy scope, same rule as app4 (PAGE_PRESENCE.md § 1.2, Match Mode): the day copy
+     * is open to profiles <= 6, the competition copy to profiles <= 4.
+     */
+    private const MATCH_COPY_MAX_PROFILE = ['day' => 6, 'competition' => 4];
 
     public function __construct(
         private readonly Connection $connection,
@@ -651,7 +658,7 @@ class AdminPresenceController extends AbstractController
      * Get match players for a team (A or B)
      */
     #[Route('/admin/matches/{matchId}/players', name: 'admin_match_players_list', methods: ['GET'])]
-    #[IsGranted('ROLE_VIEWER')]
+    #[IsGranted('ROLE_SCORER')]
     #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
     public function getMatchPlayers(int $matchId, Request $request): JsonResponse
@@ -769,6 +776,49 @@ class AdminPresenceController extends AbstractController
     }
 
     /**
+     * Players that may be added to the match composition: the team presence sheet without the staff (E), the referees
+     * (A) and the inactive players (X), minus the players already in the match (PAGE_PRESENCE.md § 3.2).
+     */
+    #[Route('/admin/matches/{matchId}/available-players', name: 'admin_match_players_available', methods: ['GET'])]
+    #[IsGranted('ROLE_SCORER')]
+    #[OA\Parameter(name: 'matchId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'teamCode', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['A', 'B']))]
+    public function getAvailableMatchPlayers(int $matchId, Request $request): JsonResponse
+    {
+        $teamCode = $request->query->get('teamCode');
+        if (!in_array($teamCode, ['A', 'B'], true)) {
+            return $this->json(['message' => 'teamCode must be A or B'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $matchInfo = $this->getMatchInfo($matchId);
+        if (!$matchInfo) {
+            return $this->json(['message' => 'Match not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        /** @var User|null $user */
+        $user = $this->getUser();
+        $allowedCompetitions = $user?->getAllowedCompetitions();
+        if ($allowedCompetitions !== null && !in_array($matchInfo['code_competition'], $allowedCompetitions, true)) {
+            return $this->json(['message' => 'Access denied to this competition'], Response::HTTP_FORBIDDEN);
+        }
+
+        $teamId = $teamCode === 'A' ? $matchInfo['id_equipe_a'] : $matchInfo['id_equipe_b'];
+        if (!$teamId) {
+            return $this->json(['message' => "Team {$teamCode} not assigned to this match"], Response::HTTP_NOT_FOUND);
+        }
+
+        $players = array_map(static fn (array $row): array => [
+            'matric' => (int) $row['Matric'],
+            'nom' => $row['Nom'] ?? '',
+            'prenom' => $row['Prenom'] ?? '',
+            'numero' => $row['Numero'] !== null ? (int) $row['Numero'] : null,
+            'capitaine' => $row['Capitaine'] ?? '-',
+        ], $this->fetchAddableMatchPlayers($matchId, $teamCode, $teamId));
+
+        return $this->json(['players' => $players]);
+    }
+
+    /**
      * Add player to match
      */
     #[Route('/admin/matches/{matchId}/players/add', name: 'admin_match_players_add', methods: ['POST'])]
@@ -796,18 +846,19 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || !self::canWriteMatchCompositions($user)) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
-        // Get player info from kp_licence
-        $sql = "SELECT Nom, Prenom, Sexe FROM kp_licence WHERE Matric = ?";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$matric]);
-        $licenceRow = $result->fetchAssociative();
+        $teamId = $teamCode === 'A' ? $matchInfo['id_equipe_a'] : $matchInfo['id_equipe_b'];
+        if (!$teamId) {
+            return $this->json(['message' => "Team {$teamCode} not assigned to this match"], Response::HTTP_BAD_REQUEST);
+        }
 
-        if (!$licenceRow) {
-            return $this->json(['message' => 'Player not found in license database'], Response::HTTP_NOT_FOUND);
+        // Only a player of the team presence sheet may join the match composition (PAGE_PRESENCE.md § 3.2)
+        $addable = array_column($this->fetchAddableMatchPlayers($matchId, $teamCode, $teamId), 'Matric');
+        if (!in_array((int) $matric, array_map('intval', $addable), true)) {
+            return $this->json(['message' => 'Player is not in the team presence sheet'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $numero = $data['numero'] ?? 0;
@@ -852,7 +903,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || !self::canWriteMatchCompositions($user)) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -902,7 +953,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || !self::canWriteMatchCompositions($user)) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -958,7 +1009,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || !self::canWriteMatchCompositions($user)) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -997,7 +1048,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || !self::canWriteMatchCompositions($user)) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1146,7 +1197,7 @@ class AdminPresenceController extends AbstractController
 
         /** @var User|null $user */
         $user = $this->getUser();
-        if (!$user || $user->getEffectiveNiveau() > 7) {
+        if (!$user || $user->getEffectiveNiveau() > self::MATCH_COPY_MAX_PROFILE[$scope]) {
             return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
         }
 
@@ -1169,14 +1220,20 @@ class AdminPresenceController extends AbstractController
         $copied = 0;
         foreach ($targetMatchIds as $targetMatchId) {
             // Get target match to find correct A/B assignment
-            $sql = "SELECT Id_equipeA, Id_equipeB, `Validation`
-                    FROM kp_match WHERE Id = ?";
+            $sql = "SELECT m.Id_equipeA, m.Id_equipeB, m.`Validation`, m.Id_journee,
+                           j.Code_competition, j.Code_saison
+                    FROM kp_match m
+                    LEFT JOIN kp_journee j ON m.Id_journee = j.Id
+                    WHERE m.Id = ?";
             $stmt = $this->connection->prepare($sql);
             $result = $stmt->executeQuery([$targetMatchId]);
             $targetMatch = $result->fetchAssociative();
 
             if (!$targetMatch || $targetMatch['Validation'] === 'O') {
                 continue; // Skip locked or non-existent matches
+            }
+            if (!self::isInCopyScope($matchInfo, $targetMatch, $scope)) {
+                continue; // The day copy stays in the day, the competition copy in the competition
             }
 
             // Determine team code in target match
@@ -1221,6 +1278,20 @@ class AdminPresenceController extends AbstractController
     // ============================================
     // HELPER METHODS
     // ============================================
+
+    /**
+     * @param array<string, mixed> $source getMatchInfo() of the source match
+     * @param array<string, mixed> $target target row (Id_journee, Code_competition, Code_saison)
+     */
+    private static function isInCopyScope(array $source, array $target, string $scope): bool
+    {
+        if ($scope === 'day') {
+            return (int) $target['Id_journee'] === (int) $source['id_journee'];
+        }
+
+        return $target['Code_competition'] === $source['code_competition']
+            && $target['Code_saison'] === $source['code_saison'];
+    }
 
     private function getMatchInfo(int $matchId): ?array
     {
@@ -1376,6 +1447,32 @@ class AdminPresenceController extends AbstractController
         ];
 
         return $labels[$code] ?? $code;
+    }
+
+    /**
+     * Team presence sheet players not staff (E), referee (A) nor inactive (X), with a licence (FK of kp_match_joueur),
+     * not yet in the match composition of the team.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function fetchAddableMatchPlayers(int $matchId, string $teamCode, int $teamId): array
+    {
+        return $this->connection->fetchAllAssociative(
+            "SELECT cej.Matric, cej.Nom, cej.Prenom, cej.Numero, cej.Capitaine
+             FROM kp_competition_equipe_joueur cej
+             INNER JOIN kp_licence l ON l.Matric = cej.Matric
+             WHERE cej.Id_equipe = ?
+             AND cej.Capitaine NOT IN ('E', 'A', 'X')
+             AND cej.Matric NOT IN (SELECT mj.Matric FROM kp_match_joueur mj WHERE mj.Id_match = ? AND mj.Equipe = ?)
+             ORDER BY cej.Numero, cej.Nom, cej.Prenom",
+            [$teamId, $matchId, $teamCode]
+        );
+    }
+
+    /** Match compositions are written by profiles <= 7 and by the score table, profile 9 (PAGE_PRESENCE.md § 1.2). */
+    private static function canWriteMatchCompositions(User $user): bool
+    {
+        return $user->getEffectiveNiveau() <= 7 || $user->isScorer();
     }
 
     /** Team compositions are written by profiles <= 7 and by the scrutineer (PAGE_SCRUTINEERING.md § 2.1). */
