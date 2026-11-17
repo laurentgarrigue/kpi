@@ -177,11 +177,13 @@ export function usePenalties(options: { onExpired?: (p: PenaltyClock) => void } 
     initMs: number
     elapsedMs: number
     running: boolean
+    /** Extra elapsed ms accumulated server-side while running (derived by the caller). */
+    driftMs?: number
   }>, gameClockRunning: boolean) => {
     for (const c of clocks) {
       if (!cardCreatesPenaltyClock(c.cardCode ?? '')) continue
       // Expired ones come back at 00:00, still waiting for the table to remove them.
-      const left = Math.max(0, c.initMs - c.elapsedMs)
+      const left = Math.max(0, c.initMs - c.elapsedMs - (c.running ? (c.driftMs ?? 0) : 0))
       const clock: PenaltyClock = {
         id: c.id,
         team: c.team,

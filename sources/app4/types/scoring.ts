@@ -168,6 +168,8 @@ export interface LiveClock {
   initMs: number
   elapsedMs: number
   startedAt: string | null
+  /** Absolute start instant (epoch ms) of a running clock — `startedAt` is a naive local datetime. */
+  startedAtMs: number | null
   running: boolean
 }
 
