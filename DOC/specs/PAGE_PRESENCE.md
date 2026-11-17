@@ -40,12 +40,18 @@ La page détecte automatiquement le mode en fonction des paramètres d'URL et ad
 
 | Profil | Droits | Conditions |
 |--------|--------|------------|
-| ≤ 10 | Lecture seule | - |
-| ≤ 8 | Édition inline (numéro, capitaine) | Verrou = 'N' |
-| ≤ 8 | Ajout joueurs (recherche licence) | Verrou = 'N' |
-| ≤ 8 | Suppression | Verrou = 'N' |
-| ≤ 7 | Copie depuis autre compétition (équipe de ses clubs et compétitions) | Verrou = 'N' |
-| ≤ 4 | Création joueurs non-licenciés | Verrou = 'N' |
+| ≤ 8 et 10 | Lecture seule (8 = Consultation) | - |
+| ≤ 7 et 10 | Édition inline (numéro, capitaine) | Verrou = 'N', équipe du périmètre |
+| ≤ 7 et 10 | Ajout joueurs (recherche licence) | Verrou = 'N', équipe du périmètre |
+| ≤ 7 et 10 | Suppression | Verrou = 'N', équipe du périmètre |
+| ≤ 7 et 10 | Copie depuis autre compétition | Verrou = 'N', équipe du périmètre |
+| ≤ 4 et 10 | Création joueurs non-licenciés | Verrou = 'N', compétition non N*/CF* |
+| ≤ 2 et 10 | Recherche licence avancée | - |
+
+Le profil 9 (Table de marque) n'a pas accès à la feuille de présence équipe (api2 : `ROLE_PRESENCE_VIEWER` = profils
+≤ 8 et 10). « Équipe du périmètre » : compétition dans le filtre de l'utilisateur et, si son compte est limité à des
+clubs (`Limit_clubs`), club de l'équipe dans cette liste ; api2 le renvoie dans `canEdit` de
+`GET /admin/teams/{teamId}/players` et le vérifie à chaque écriture (`denyTeamCompositionWrite()`).
 
 **Bloqué si**: Competition verrouillée (`kp_competition.Verrou = 'O'`)
 
@@ -66,10 +72,14 @@ même club / nation, ← / →) remplace le sélecteur d'équipes et ajoute la b
 
 | Profil | Droits | Conditions |
 |--------|--------|------------|
-| ≤ 10 | Lecture seule | - |
-| ≤ 9 | Édition inline, ajout/suppression | Validation = 'N' |
+| ≤ 8 | Lecture seule | - |
+| ≤ 7 | Édition inline, initialisation, ajout/suppression, vider | Validation = 'N' |
 | ≤ 6 | Copie vers matchs même journée | Validation = 'N' |
 | ≤ 4 | Copie vers tous matchs compétition | Validation = 'N' |
+
+Les profils 9 (Table de marque) et 10 (Contrôle équipement) n'ont pas accès à la feuille de présence match (api2 :
+`ROLE_VIEWER`, écritures refusées au-delà du profil 7). Les deux copies vers d'autres matchs sont restreintes par
+l'interface (≤ 6 et ≤ 4) ; api2 les accepte jusqu'au profil 7.
 
 **Bloqué si**: Match validé (`kp_match.Validation = 'O'`)
 
@@ -141,22 +151,22 @@ interface PresencePageState {
 
 | # | Fonctionnalité | Profil | Bloqué si verrou | Source |
 |---|----------------|--------|------------------|--------|
-| 1 | Afficher liste joueurs triée | ≤ 10 | - | GestionEquipeJoueur.php:156-170 |
-| 2 | Édition inline Numero (0-99) | ≤ 8 | ❌ | GestionEquipeJoueur.js:75-104 |
-| 3 | Édition inline Capitaine (-, C, E, A, X) | ≤ 8 | ❌ | GestionEquipeJoueur.js:108-156 |
-| 4 | Ajouter joueur depuis recherche licence | ≤ 8 | ❌ | GestionEquipeJoueur.php:269-276 |
-| 5 | Créer nouveau joueur (licence, arbitre, ICF) | ≤ 4 | ❌ | GestionEquipeJoueur.php:280-341 |
-| 6 | Ajouter joueur existant (autocomplete) | ≤ 8 | ❌ | GestionEquipeJoueur.tpl:197-235 |
-| 7 | Sélection multiple + suppression en masse | ≤ 8 | ❌ | GestionEquipeJoueur.php:416-420 |
+| 1 | Afficher liste joueurs triée | ≤ 8 et 10 | - | GestionEquipeJoueur.php:156-170 |
+| 2 | Édition inline Numero (0-99) | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.js:75-104 |
+| 3 | Édition inline Capitaine (-, C, E, A, X) | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.js:108-156 |
+| 4 | Ajouter joueur depuis recherche licence | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.php:269-276 |
+| 5 | Créer nouveau joueur (licence, arbitre, ICF) | ≤ 4 et 10 | ❌ | GestionEquipeJoueur.php:280-341 |
+| 6 | Ajouter joueur existant (autocomplete) | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.tpl:197-235 |
+| 7 | Sélection multiple + suppression en masse | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.php:416-420 |
 | 8 | Copier composition depuis autre compét. | ≤ 7 et 10 | ❌ | CopyTeamComposition.php |
-| 9 | Afficher info licence (ICF si dispo, sinon Matric) | ≤ 10 | - | GestionEquipeJoueur.php:156-170 |
-| 9b | Afficher saison licence entre parenthèses si < saison travail | ≤ 10 | - | - |
-| 10 | Afficher surclassement (icône #S) | ≤ 10 | - | GestionEquipeJoueur.tpl:110-115 |
-| 11 | Validation compétitions nationales | ≤ 8 | ❌ | GestionEquipeJoueur.js:242-265 |
-| 12 | Séparateur visuel joueurs actifs/inactifs | ≤ 10 | - | GestionEquipeJoueur.tpl:148-150 |
-| 13 | Dernière modification (date, « Prénom NOM » de l'utilisateur) | ≤ 10 | - | GestionEquipeJoueur.php:172-175 |
-| 14 | Liens PDF (FR/EN/Photo/Contrôle) | ≤ 10 | - | GestionEquipeJoueur.tpl:38-47 |
-| 15 | Détection doublons à la création (nom+prénom, cliquable) | ≤ 4 | ❌ | Frontend uniquement |
+| 9 | Afficher info licence (ICF si dispo, sinon Matric) | ≤ 8 et 10 | - | GestionEquipeJoueur.php:156-170 |
+| 9b | Afficher saison licence entre parenthèses si < saison travail | ≤ 8 et 10 | - | - |
+| 10 | Afficher surclassement (icône #S) | ≤ 8 et 10 | - | GestionEquipeJoueur.tpl:110-115 |
+| 11 | Validation compétitions nationales | ≤ 7 et 10 | ❌ | GestionEquipeJoueur.js:242-265 |
+| 12 | Séparateur visuel joueurs actifs/inactifs | ≤ 8 et 10 | - | GestionEquipeJoueur.tpl:148-150 |
+| 13 | Dernière modification (date, « Prénom NOM » de l'utilisateur) | ≤ 8 et 10 | - | GestionEquipeJoueur.php:172-175 |
+| 14 | Liens PDF (FR/EN/Photo/Contrôle) | ≤ 8 et 10 | - | GestionEquipeJoueur.tpl:38-47 |
+| 15 | Détection doublons à la création (nom+prénom, cliquable) | ≤ 4 et 10 | ❌ | Frontend uniquement |
 
 **Tri par défaut:**
 ```sql
@@ -171,17 +181,17 @@ ORDER BY
 
 | # | Fonctionnalité | Profil | Bloqué si validation | Source |
 |---|----------------|--------|-----------------------|--------|
-| 1 | Afficher liste joueurs | ≤ 10 | - | GestionMatchEquipeJoueur.php:168-195 |
-| 2 | Édition inline Numero (0-99) | ≤ 9 | ❌ | GestionMatchEquipeJoueur.js:75-104 |
-| 3 | Édition inline Capitaine (-, C, E) | ≤ 9 | ❌ | GestionMatchEquipeJoueur.js:108-156 |
-| 4 | Initialiser depuis composition équipe | ≤ 9 | ❌ | GestionMatchEquipeJoueur.php:291-301 |
-| 5 | Ajouter joueur (limité équipe, pas E/A/X) | ≤ 9 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
-| 6 | Sélection multiple + suppression | ≤ 9 | ❌ | GestionMatchEquipeJoueur.php:372-380 |
-| 7 | Vider composition match | ≤ 9 | ❌ | GestionMatchEquipeJoueur.php:387-395 |
+| 1 | Afficher liste joueurs | ≤ 8 | - | GestionMatchEquipeJoueur.php:168-195 |
+| 2 | Édition inline Numero (0-99) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.js:75-104 |
+| 3 | Édition inline Capitaine (-, C, E) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.js:108-156 |
+| 4 | Initialiser depuis composition équipe | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:291-301 |
+| 5 | Ajouter joueur (limité équipe, pas E/A/X) | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
+| 6 | Sélection multiple + suppression | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:372-380 |
+| 7 | Vider composition match | ≤ 7 | ❌ | GestionMatchEquipeJoueur.php:387-395 |
 | 8 | Copier vers matchs même journée | ≤ 6 | ❌ | GestionMatchEquipeJoueur.php:293-358 |
 | 9 | Copier vers tous matchs compétition | ≤ 4 | ❌ | GestionMatchEquipeJoueur.php:361-428 |
-| 10 | Afficher contexte match | ≤ 10 | - | GestionMatchEquipeJoueur.tpl:4-16 |
-| 11 | Afficher pagaie avec warning | ≤ 10 | - | GestionMatchEquipeJoueur.tpl:120-125 |
+| 10 | Afficher contexte match | ≤ 8 | - | GestionMatchEquipeJoueur.tpl:4-16 |
+| 11 | Afficher pagaie avec warning | ≤ 8 | - | GestionMatchEquipeJoueur.tpl:120-125 |
 
 **Exclusion statuts E/A/X:**
 - Lors de l'initialisation depuis équipe
@@ -1755,82 +1765,46 @@ export interface CopyToMatchesFormData {
 
 | Action | Profil requis | Condition supplémentaire |
 |--------|---------------|--------------------------|
-| Voir liste | ≤ 10 | - |
-| Éditer inline (numero, capitaine) | ≤ 8 | Verrou = 'N' |
-| Ajouter joueur existant | ≤ 8 | Verrou = 'N' |
-| Créer joueur non-licencié | ≤ 4 | Verrou = 'N' ET compétition non N*/CF* |
-| Supprimer joueurs | ≤ 8 | Verrou = 'N' |
-| Copier composition | ≤ 7 et 10 | Verrou = 'N' |
-| Recherche licence avancée | ≤ 2 | - |
-| Voir dernière modification | ≤ 10 | - |
-| Accès PDF | ≤ 10 | - |
+| Voir liste | ≤ 8 et 10 | - |
+| Éditer inline (numero, capitaine) | ≤ 7 et 10 | Verrou = 'N', équipe du périmètre |
+| Ajouter joueur existant | ≤ 7 et 10 | Verrou = 'N', équipe du périmètre |
+| Créer joueur non-licencié | ≤ 4 et 10 | Verrou = 'N' ET compétition non N*/CF* |
+| Supprimer joueurs | ≤ 7 et 10 | Verrou = 'N', équipe du périmètre |
+| Copier composition | ≤ 7 et 10 | Verrou = 'N', équipe du périmètre |
+| Recherche licence avancée | ≤ 2 et 10 | - |
+| Voir dernière modification | ≤ 8 et 10 | - |
+| Accès PDF | ≤ 8 et 10 | - |
 
 **Match Mode:**
 
 | Action | Profil requis | Condition supplémentaire |
 |--------|---------------|--------------------------|
-| Voir liste | ≤ 10 | - |
-| Éditer inline (numero, capitaine) | ≤ 9 | Validation = 'N' |
-| Initialiser depuis équipe | ≤ 9 | Validation = 'N' |
-| Ajouter joueur | ≤ 9 | Validation = 'N' |
-| Supprimer joueurs | ≤ 9 | Validation = 'N' |
-| Vider composition | ≤ 9 | Validation = 'N' |
+| Voir liste | ≤ 8 | - |
+| Éditer inline (numero, capitaine) | ≤ 7 | Validation = 'N' |
+| Initialiser depuis équipe | ≤ 7 | Validation = 'N' |
+| Ajouter joueur | ≤ 7 | Validation = 'N' |
+| Supprimer joueurs | ≤ 7 | Validation = 'N' |
+| Vider composition | ≤ 7 | Validation = 'N' |
 | Copier vers journée | ≤ 6 | Validation = 'N' |
 | Copier vers compétition | ≤ 4 | Validation = 'N' |
 
 ### 9.2 Computed Permissions
 
-```typescript
-// composables/usePresencePermissions.ts
-export function usePresencePermissions(mode: 'team' | 'match', isLocked: boolean) {
-  const authStore = useAuthStore()
+Les droits d'affichage sont calculés par `composables/usePresencePermissions.ts` (mode `team` ou `match`, verrou
+passé en `Ref`). Les règles de profil partagées sont des fonctions pures testées sans Nuxt :
+`canWriteTeamPresence()` et `isScrutineerProfile()` (`utils/scrutineering.ts`), `canCopyTeamComposition()`
+(`utils/presencePermissions.ts`). En mode `team`, les écritures exigent aussi `presenceStore.canEdit`, le contrôle de
+périmètre (clubs, compétitions, verrou) renvoyé par api2.
 
-  const canView = computed(() => authStore.profile <= 10)
-
-  const canEdit = computed(() => {
-    if (isLocked) return false
-    if (mode === 'team') return authStore.profile <= 8
-    if (mode === 'match') return authStore.profile <= 9
-    return false
-  })
-
-  const canDelete = computed(() => canEdit.value)
-
-  const canCopy = computed(() => {
-    if (isLocked) return false
-    if (mode === 'team') return authStore.profile <= 4
-    if (mode === 'match') return authStore.profile <= 6 // day copy
-    return false
-  })
-
-  const canCopyToCompetition = computed(() => {
-    if (isLocked) return false
-    if (mode === 'match') return authStore.profile <= 4
-    return false
-  })
-
-  const canCreatePlayer = computed(() => {
-    if (mode !== 'team') return false
-    if (isLocked) return false
-    return authStore.profile <= 4
-  })
-
-  const canSearchLicense = computed(() => {
-    if (mode !== 'team') return false
-    return authStore.profile <= 2
-  })
-
-  return {
-    canView,
-    canEdit,
-    canDelete,
-    canCopy,
-    canCopyToCompetition,
-    canCreatePlayer,
-    canSearchLicense,
-  }
-}
-```
+| Computed | Mode team | Mode match |
+|----------|-----------|------------|
+| `canView` | ≤ 10 (l'API refuse le profil 9) | ≤ 10 (l'API refuse les profils 9 et 10) |
+| `canEdit` / `canDelete` | non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, ≤ 7 |
+| `canCopy` | `canCopyTeamComposition()` : non verrouillée, `presenceStore.canEdit`, ≤ 7 ou 10 | non verrouillée, ≤ 6 (copie journée) |
+| `canCopyToCompetition` | - | non verrouillée, ≤ 4 |
+| `canCreatePlayer` | non verrouillée, ≤ 4 ou 10 | - |
+| `canSearchLicense` | ≤ 2 ou 10 | - |
+| `canInitializeFromTeam` / `canClearAll` | - | non verrouillée, ≤ 7 |
 
 ---
 
@@ -2054,33 +2028,8 @@ export const usePresenceStore = defineStore('presence', {
   }),
 
   getters: {
-    // Permission checks
-    canEdit(state): boolean {
-      const authStore = useAuthStore()
-      if (state.isLocked) return false
-      if (state.mode === 'team') return authStore.profile <= 8
-      if (state.mode === 'match') return authStore.profile <= 9
-      return false
-    },
-
-    canDelete(): boolean {
-      return this.canEdit
-    },
-
-    canCopy(state): boolean {
-      const authStore = useAuthStore()
-      if (state.isLocked) return false
-      if (state.mode === 'team') return authStore.profile <= 4
-      if (state.mode === 'match') return authStore.profile <= 6
-      return false
-    },
-
-    canCopyToCompetition(state): boolean {
-      const authStore = useAuthStore()
-      if (state.isLocked) return false
-      if (state.mode === 'match') return authStore.profile <= 4
-      return false
-    },
+    // Les permissions ne sont pas des getters du store : voir usePresencePermissions (§ 9.2).
+    // Le store ne garde que `canEdit`, contrôle de périmètre renvoyé par api2 en mode team.
 
     // Player filters
     activePlayers(state): Player[] {
