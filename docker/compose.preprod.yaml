@@ -190,7 +190,7 @@ services:
             # "localhost" (valeur du .env, pensée pour api2) désignerait le worker
             # lui-même → on passe par le réseau docker (service api2, HTTP interne).
             # Les vraies variables d'env priment sur le .env chargé par Symfony.
-            - MERCURE_URL=http://api2/.well-known/mercure
+            - MERCURE_URL=http://api2_preprod/.well-known/mercure
             - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
         # --no-debug : daemon longue durée. En mode debug, le profilage Doctrine garde
         # chaque requête SQL (avec backtrace) en mémoire ; le sondage de scoring_outbox
