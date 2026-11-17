@@ -393,10 +393,14 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
 INSERT INTO `kp_user_capability` (`user_code`, `capability`) VALUES ('TEDIT', 'editor');
 
 -- Entrées de journal utilisées par AdminJournalTest : la 1re pointe sur TADMIN (existe) et la 2e sur
--- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal).
+-- TGHOST (compte supprimé) pour valider le LEFT JOIN et le flag isDeleted (AUTH-HARDENING fix journal) ;
+-- les suivantes alimentent le filtre par catégorie.
 INSERT INTO `kp_journal` (`Dates`, `Users`, `Actions`, `Journal`) VALUES
   ('2026-10-01 10:00:00', 'TADMIN', 'Connexion Admin', 'Admin Test'),
-  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean');
+  ('2026-10-02 10:00:00', 'TGHOST', 'Connexion Admin', 'Compte supprimé en 2026 — Dupont Jean'),
+  -- Catégories (PAGE_GESTION_JOURNAL.md § 5.2) : une action de scoring et une de PDF pour le filtre categories.
+  ('2026-10-03 10:00:00', 'TADMIN', 'Scoring score', 'Fixture catégorie scoring'),
+  ('2026-10-04 10:00:00', 'TADMIN', 'PDF presence', 'Fixture catégorie pdf');
 
 INSERT INTO `kp_cms_media` (`id`, `path`, `mime`, `width`, `height`, `size`, `alt_fr`, `alt_en`, `credit`, `created_at`, `updated_at`) VALUES
   (9501, '2999/01/finale.jpg', 'image/jpeg', 1600, 900, 120000, 'La finale', 'The final', 'CNA', '2020-01-01 10:00:00', '2020-01-01 10:00:00'),
@@ -498,6 +502,30 @@ INSERT INTO `wptest_nf3_fields` (`id`, `label`, `key`, `type`, `parent_id`, `req
   (4, 'Envoyer', 'submit', 'submit', 19, b'0', 4);
 INSERT INTO `wptest_nf3_field_meta` (`parent_id`, `key`, `value`) VALUES
   (3, 'options', 'a:2:{i:0;a:2:{s:5:"label";s:3:"U18";s:5:"value";s:3:"u18";}i:1;a:2:{s:5:"label";s:6:"Senior";s:5:"value";s:3:"sen";}}');
+
+-- ================================================================ SCORING LIVE (refonte scoring, lot 4)
+-- Jetons d'affichage des incrustations. Chaque ligne = un motif de refus (ou
+-- d'acceptation) distinct, consommé par ScoringPublicEndpointsTest : un test qui échoue
+-- doit se diagnostiquer en lisant le jeton, pas en déroulant une requête.
+--
+-- On RÉUTILISE les données existantes du site public plutôt que d'en créer :
+--   * événement 77, journée 9202, match 9404 (en cours, terrain « 1 ») → portée du jeton ;
+--   * événement 78 → sert de « autre événement » pour l'isolation.
+-- Aucune ligne scoring_live_state n'est insérée : les tests d'accès doivent échouer AVANT
+-- toute lecture de données de match, et /state doit répondre 404 sur un match sans état live.
+
+INSERT INTO `scoring_display_token`
+  (`token`, `id_event`, `pitch`, `label`, `expires_at`, `revoked_at`) VALUES
+  -- valide, portée événement (tous les terrains)
+  ('tsttok-valid-event-77', 77, NULL, 'Test valide evenement', '2999-12-31 23:59:59', NULL),
+  -- valide mais restreint au terrain 1 : doit être refusé sur un autre terrain
+  ('tsttok-valid-pitch1', 77, '1', 'Test valide terrain 1', '2999-12-31 23:59:59', NULL),
+  -- expiré
+  ('tsttok-expired', 77, NULL, 'Test expire', '2000-01-01 00:00:00', NULL),
+  -- révoqué (expiration lointaine : c'est bien la révocation qui doit trancher)
+  ('tsttok-revoked', 77, NULL, 'Test revoque', '2999-12-31 23:59:59', '2999-01-01 00:00:00'),
+  -- valide, mais pour un AUTRE événement
+  ('tsttok-other-event', 78, NULL, 'Test autre evenement', '2999-12-31 23:59:59', NULL);
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Scrutineering et profil 10 (PAGE_SCRUTINEERING.md, tests/Integration/StaffScrutineeringTest.php). Saison 2997 et

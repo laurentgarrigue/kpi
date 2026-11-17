@@ -39,15 +39,17 @@ const percent = (value: unknown) => (value === null || value === undefined ? 'â€
 
     <p v-if="rows.length === 0" data-testid="no-stats">{{ $t('results.noStats') }}</p>
 
-    <!-- Team medals: one column per pictogram (named in its header for screen readers) -->
+    <!-- Team medals: one column per pictogram, labelled under its shield -->
     <div v-else-if="stat.kind === 'medals_teams'" class="overflow-x-auto lg:overflow-visible">
       <table class="w-full text-sm tabular-nums" data-testid="medal-table">
         <thead>
           <tr class="text-xs text-muted">
             <th scope="col" class="px-1 py-1 text-left">{{ $t('results.col.team') }}</th>
-            <th v-for="code in teamCodes" :key="code" scope="col" class="px-1 py-1">
-              <MedalShield :item="byCode.get(code)!" :size="36" :title="medalLabel(byCode.get(code)!, locale)" />
-              <span class="sr-only">{{ medalLabel(byCode.get(code)!, locale) }}</span>
+            <th v-for="code in teamCodes" :key="code" scope="col" class="px-1 py-1 align-bottom font-semibold">
+              <span class="flex flex-col items-center gap-1">
+                <MedalShield :item="byCode.get(code)!" :size="36" />
+                <span class="leading-tight" data-testid="medal-column-label">{{ medalLabel(byCode.get(code)!, locale) }}</span>
+              </span>
             </th>
             <th scope="col" class="px-1 py-1">{{ $t('medals.col.total') }}</th>
           </tr>

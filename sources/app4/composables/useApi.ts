@@ -15,9 +15,6 @@ enum ErrorType {
 let last401Time = 0
 const THROTTLE_401_MS = 5000
 
-// Prevent concurrent refresh attempts
-let refreshPromise: Promise<boolean> | null = null
-
 // Request timeout in milliseconds
 const REQUEST_TIMEOUT_MS = 10000
 
@@ -158,6 +155,25 @@ export const useApi = () => {
     navigateTo('/login')
   }
 
+  /**
+   * Answers a 401 (AUTH_HARDENING.md § 3ter, AUTH-SC-07/08): one refresh, then one replay of the request.
+   * Logs out only when the server refuses the refresh or still answers 401 with the new token; an unreachable
+   * refresh keeps the session and reports a network error.
+   */
+  const replayAfterRefresh = async (send: () => Promise<Response>, rejectedToken: string | null): Promise<Response> => {
+    const outcome = await refreshToken({ rejectedToken })
+    if (outcome === 'unreachable') {
+      showErrorToast(ErrorType.NETWORK)
+      throw new Error('Session refresh unreachable')
+    }
+    if (outcome === 'refreshed') {
+      const replayed = await send()
+      if (replayed.status !== 401) return replayed
+    }
+    forceLogout()
+    throw new Error('Session expired')
+  }
+
   // Generic fetch wrapper with timeout, silent refresh on 401, and error handling
   const apiFetch = async <T>(
     endpoint: string,
@@ -168,32 +184,14 @@ export const useApi = () => {
     let fetchError: Error | null
 
     try {
-      // Add timeout wrapper
+      const sentToken = authStore.token
       response = await doFetch(url, options)
+      if (response.status === 401) {
+        response = await replayAfterRefresh(() => doFetch(url, options), sentToken)
+      }
 
       if (!response.ok) {
         const errorType = detectErrorType(null, response)
-
-        // Handle 401 - try silent token refresh once before giving up
-        if (errorType === ErrorType.HTTP_401) {
-          // Deduplicate concurrent refresh calls
-          if (!refreshPromise) {
-            refreshPromise = refreshToken().finally(() => { refreshPromise = null })
-          }
-          const refreshed = await refreshPromise
-
-          if (refreshed) {
-            // Retry the original request with the new token
-            response = await doFetch(url, options)
-            if (response.ok) {
-              if (response.status === 204) return {} as T
-              return response.json()
-            }
-          }
-
-          forceLogout()
-          throw new Error('Session expired')
-        }
 
         // Handle 403 - forbidden
         if (errorType === ErrorType.HTTP_403) {
@@ -308,9 +306,8 @@ export const useApi = () => {
     let response: Response | null = null
     let fetchError: Error | null
 
-    try {
-      // Add timeout wrapper
-      response = await Promise.race([
+    // Headers are built at each call so that a replay after a refresh carries the new token.
+    const send = () => Promise.race([
         fetch(url, {
           method: 'POST',
           headers: {
@@ -325,13 +322,15 @@ export const useApi = () => {
         )
       ])
 
+    try {
+      const sentToken = authStore.token
+      response = await send()
+      if (response.status === 401) {
+        response = await replayAfterRefresh(send, sentToken)
+      }
+
       if (!response.ok) {
         const errorType = detectErrorType(null, response)
-
-        if (errorType === ErrorType.HTTP_401) {
-          forceLogout()
-          throw new Error('Session expired')
-        }
 
         if (errorType === ErrorType.HTTP_403) {
           showErrorToast(ErrorType.HTTP_403)
@@ -379,8 +378,7 @@ export const useApi = () => {
     let response: Response | null = null
     let fetchError: Error | null
 
-    try {
-      response = await Promise.race([
+    const send = () => Promise.race([
         fetch(url, {
           method: 'GET',
           headers: {
@@ -393,13 +391,15 @@ export const useApi = () => {
         )
       ])
 
+    try {
+      const sentToken = authStore.token
+      response = await send()
+      if (response.status === 401) {
+        response = await replayAfterRefresh(send, sentToken)
+      }
+
       if (!response.ok) {
         const errorType = detectErrorType(null, response)
-
-        if (errorType === ErrorType.HTTP_401) {
-          forceLogout()
-          throw new Error('Session expired')
-        }
 
         if (errorType) {
           showErrorToast(errorType, response.status)

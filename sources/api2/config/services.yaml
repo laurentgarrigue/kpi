@@ -96,6 +96,24 @@ services:
         arguments:
             $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
 
+    # La console Scoring renvoie l'URL d'abonnement du hub dans GET /state pour que
+    # les terminaux d'un même match restent cohérents (refonte scoring, lot 3).
+    App\Controller\ScoringController:
+        arguments:
+            $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
+
+    # Lecture publique du live (page d'incrustation, lot 4) : même URL de hub.
+    App\Controller\ScoringLiveController:
+        arguments:
+            $mercurePublicUrl: '%env(default::MERCURE_PUBLIC_URL)%'
+
+    # Accès des afficheurs : jeton d'affichage + JWT d'abonné Mercure restreint aux topics
+    # du jeton (indispensable en preprod/prod où MERCURE_ANONYMOUS=0).
+    App\Service\ScoringDisplayAccessService:
+        arguments:
+            $mercureJwtSecret: '%env(default::MERCURE_JWT_SECRET)%'
+            $trustedOrigins: '%env(default::CORS_ALLOW_ORIGIN)%'
+
     # Les deux limiteurs sont créés par framework.rate_limiter.{login_ip,login_user} (rate_limiter.yaml).
     # Symfony en fait des services `limiter.login_ip` / `limiter.login_user` qui ne sont pas autowirables
     # par type (RateLimiterFactory) sans ce bind explicite.

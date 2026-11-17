@@ -3,6 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Scoring\ScoringRules;
+use App\Service\ScoringDisplayAccessService;
+use App\Service\ScoringLiveService;
+use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,6 +27,11 @@ use Symfony\Component\Routing\Attribute\Route;
  *
  * Routes are under /admin/scoring so they sit behind the existing JWT firewall (^/admin).
  *
+ * Storage (lot 1 of the refactoring plan): live writes go to the canonical scoring_live_*
+ * tables via ScoringLiveService — NOT to kp_* anymore. kp_* is only written back by the
+ * end-of-match consolidation (Statut → END). Endpoints and payloads are unchanged, so the
+ * console UI did not move. See LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
+ *
  * ⚠️ Experimentation phase: access restricted to ROLE_ADMIN (profile <= 2). Open up to
  * ROLE_SCORER (profile 9 "Table de marque") once validated — see spec §6.3.
  */
@@ -31,6 +40,17 @@ use Symfony\Component\Routing\Attribute\Route;
 class ScoringController extends AbstractController
 {
     use AdminLoggableTrait;
+
+    /** Licence holders suggested outside the referee team (the operator keeps typing). */
+    private const OFFICIAL_SUGGESTIONS_LIMIT = 20;
+
+    /** Parameters accepted by PUT /gameParam (kp column names — the console vocabulary). */
+    private const GAME_PARAMS = [
+        'Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin', 'Commentaires_officiels',
+    ];
+
+    /** Result data written straight to kp_match; every other parameter is live state. */
+    private const RESULT_PARAMS = ['ScoreA', 'ScoreB', 'Commentaires_officiels'];
 
     /** DBAL connection — also required by AdminLoggableTrait (expects $this->connection). */
     private Connection $connection;
@@ -44,9 +64,38 @@ class ScoringController extends AbstractController
     private ?array $matchContext = null;
 
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ScoringLiveService $live,
+        private ScoringProgramService $program,
+        private ScoringDisplayAccessService $displayAccess,
+        /** Browser-facing Mercure subscribe URL (never the JWT secret). */
+        private string $mercurePublicUrl = ''
     ) {
         $this->connection = $entityManager->getConnection();
+    }
+
+    /**
+     * Enforce plan §4.1 (single active source). This controller IS the human console, in
+     * either of its two flavours — full entry (MANUAL) or score-only (SCORE_ONLY): both
+     * are the same operator at the same table, so both are accepted here. What must be
+     * rejected is a write while an EXTERNAL source owns the match (hardware relay,
+     * import): the command is then journalized but NOT applied.
+     * Returns a 409 JsonResponse to send back, or null when writing is allowed.
+     */
+    private function assertSourceAllowed(int $matchId, string $detail): ?JsonResponse
+    {
+        $state = $this->live->ensureState($matchId);
+        if ($this->live->isSourceAllowed($state, 'MANUAL')
+            || $this->live->isSourceAllowed($state, 'SCORE_ONLY')) {
+            return null;
+        }
+
+        $this->logScoring('Scoring rejeté (source)', $matchId, $detail . ' — source active: ' . $state['active_source']);
+
+        return new JsonResponse(
+            ['error' => 'Another source is active for this match', 'activeSource' => $state['active_source']],
+            Response::HTTP_CONFLICT
+        );
     }
 
     /**
@@ -94,11 +143,28 @@ class ScoringController extends AbstractController
      * The console works in MM:SS (a half lasts ≤ 10 min). Legacy (v2/evt_match.php) prefixed
      * '00:' before insert; we do the same so MySQL doesn't read "01:28" as 1h28. Already-3-part
      * values are passed through.
+     *
+     * A client may also send unpunctuated digits ("750", "0800"): the ':' is inserted here as
+     * well — the last two digits are the seconds — otherwise '00:' . '0800' reaches the TIME
+     * column malformed and the fact is stored with a wrong (or zero) time.
      */
     private function normalizeTemps(string $tpsJeu): string
     {
         $tpsJeu = trim($tpsJeu);
-        return substr_count($tpsJeu, ':') >= 2 ? $tpsJeu : '00:' . $tpsJeu;
+        if (substr_count($tpsJeu, ':') >= 2) {
+            return $tpsJeu;
+        }
+        if (str_contains($tpsJeu, ':')) {
+            return '00:' . $tpsJeu;
+        }
+        // Digits only: last two are the seconds, the rest are the minutes (carry over 60s).
+        $digits = preg_replace('/\D/', '', $tpsJeu) ?? '';
+        if ($digits === '') {
+            return '00:00:00';
+        }
+        $total = ((int) (substr($digits, 0, -2) ?: '0')) * 60 + (int) substr($digits, -2);
+
+        return sprintf('00:%02d:%02d', intdiv($total, 60), $total % 60);
     }
 
     /**
@@ -134,7 +200,7 @@ class ScoringController extends AbstractController
                     new OA\Property(
                         property: 'param',
                         type: 'string',
-                        enum: ['Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin']
+                        enum: self::GAME_PARAMS
                     ),
                     new OA\Property(property: 'value', type: 'string', example: '5')
                 ]
@@ -152,27 +218,60 @@ class ScoringController extends AbstractController
 
         $data = json_decode($request->getContent());
 
-        if (!in_array($data->param ?? '', ['Statut', 'Periode', 'ScoreA', 'ScoreB', 'ScoreDetailA', 'ScoreDetailB', 'Heure_fin'])) {
+        if (!in_array($data->param ?? '', self::GAME_PARAMS, true)) {
             return new JsonResponse(['error' => 'Invalid parameter'], 401);
         }
 
-        $sql = "UPDATE kp_match
-            SET {$data->param} = ?
-            WHERE Id = ?
-            AND Validation != 'O'";
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
 
         try {
-            $this->connection->executeStatement($sql, [$data->value, $matchId]);
+            if (in_array($data->param, self::RESULT_PARAMS, true)) {
+                // Official score and officials' comments are result concerns, not live
+                // state: they keep writing kp_match directly (spec §7.6 — closure).
+                $this->connection->executeStatement(
+                    "UPDATE kp_match SET {$data->param} = ? WHERE Id = ? AND Validation != 'O'",
+                    [$data->value, $matchId]
+                );
+            } else {
+                // Live state → scoring_live_state (+ tick + outbox, one transaction).
+                // Statut → END also consolidates back to kp_* (plan §4.3).
+                if ($err = $this->assertSourceAllowed($matchId, "{$data->param} = {$data->value}")) return $err;
+                $this->live->setParam($matchId, $data->param, (string) $data->value);
+            }
 
             // Journal: "Scoring score/statut/période" depending on the param
             $label = match ($data->param) {
                 'Statut' => 'Scoring statut',
                 'Periode' => 'Scoring période',
+                'Commentaires_officiels' => 'Scoring commentaires',
                 default => 'Scoring score',
             };
             $this->logScoring($label, $matchId, "{$data->param} = {$data->value}");
+            if ($data->param === 'Statut' && $data->value === 'END') {
+                $this->logScoring('Scoring consolidation', $matchId, 'Statut END → kp_*');
+            }
 
-            // TODO (Phase 3): generate broadcast cache here
+            // A status change moves the pitch's program (this match starts/ends, the next
+            // one becomes current): republish it right away instead of waiting for the
+            // worker's next pass — that latency is exactly what the legacy polling cost.
+            // Never let this break the scoring action itself.
+            if ($data->param === 'Statut') {
+                try {
+                    $location = $this->program->locateMatch($matchId);
+                    if ($location !== null) {
+                        $this->program->publishIfChanged($location['event'], $location['pitch']);
+                    }
+                } catch (\Throwable) {
+                    // Best effort: the worker will republish on its next pass.
+                }
+            }
+
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
@@ -205,64 +304,39 @@ class ScoringController extends AbstractController
         $p = $data->params;
         $action = $p->action ?? '';
 
-        if ($action === 'add') {
-            $uid = $p->uid ?? str_replace('-', '', uniqid('', true));
-
-            $sql = "INSERT INTO kp_match_detail (Id, Id_match, Periode, Temps, Id_evt_match,
-                Competiteur, Numero, Equipe_A_B, motif)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            $this->connection->executeStatement($sql, [
-                $uid, $matchId, $p->period, $this->normalizeTemps($p->tpsJeu), $p->code,
-                $p->player, $p->number, $p->team, $p->reason
-            ]);
-
-            $this->logScoring('Scoring événement', $matchId, "add {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}");
-        } elseif ($action === 'update') {
-            // Edit an existing event in place (period/time/player/number/code/team/reason),
-            // located by its uid. Central to post-match correction (spec §7.3).
-            if (empty($p->uid)) {
-                return new JsonResponse(['error' => 'uid required for update'], 400);
-            }
-
-            $sql = "UPDATE kp_match_detail
-                SET Periode = ?, Temps = ?, Id_evt_match = ?, Competiteur = ?,
-                    Numero = ?, Equipe_A_B = ?, motif = ?
-                WHERE Id = ? AND Id_match = ?";
-
-            $this->connection->executeStatement($sql, [
-                $p->period, $this->normalizeTemps($p->tpsJeu), $p->code, $p->player,
-                $p->number, $p->team, $p->reason, $p->uid, $matchId
-            ]);
-
-            $this->logScoring('Scoring événement', $matchId, "update {$p->uid} {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}");
-        } elseif ($action === 'remove') {
-            // Prefer removal by uid (precise); fall back to the legacy match-by-fields delete.
-            if (!empty($p->uid)) {
-                $this->connection->executeStatement(
-                    "DELETE FROM kp_match_detail WHERE Id = ? AND Id_match = ?",
-                    [$p->uid, $matchId]
-                );
-                $this->logScoring('Scoring événement', $matchId, "remove {$p->uid}");
-            } else {
-                $sql = "DELETE FROM kp_match_detail
-                    WHERE Id_match = ?
-                    AND Periode = ?
-                    AND Competiteur = ?
-                    AND Id_evt_match = ?
-                    ORDER BY date_insert DESC
-                    LIMIT 1";
-
-                $this->connection->executeStatement($sql, [
-                    $matchId, $p->period, $p->player, $p->code
-                ]);
-                $this->logScoring('Scoring événement', $matchId, "remove {$p->code} {$p->period} player {$p->player}");
-            }
-        } else {
+        if (!in_array($action, ['add', 'update', 'remove'], true)) {
             return new JsonResponse(['error' => 'Invalid action'], 400);
         }
+        if ($action === 'update' && empty($p->uid)) {
+            // Edit in place, located by uid — central to post-match correction (spec §7.3).
+            return new JsonResponse(['error' => 'uid required for update'], 400);
+        }
 
-        // TODO (Phase 3): generate broadcast cache here
+        if ($err = $this->assertSourceAllowed($matchId, "event $action")) return $err;
+
+        $uid = $p->uid ?? str_replace('-', '', uniqid('', true));
+
+        // Live facts → scoring_live_event (+ tick + outbox on the /fact topic).
+        // kp_match_detail is only rebuilt at consolidation (Statut → END).
+        $this->live->writeEvent($matchId, $action, [
+            'uid' => $action === 'add' ? $uid : ($p->uid ?? null),
+            'code' => $p->code ?? null,
+            'period' => $p->period ?? null,
+            'temps' => isset($p->tpsJeu) ? $this->normalizeTemps($p->tpsJeu) : null,
+            'tpsJeu' => $p->tpsJeu ?? null,
+            'team' => $p->team ?? null,
+            'player' => $p->player ?? null,
+            'number' => $p->number ?? null,
+            'reason' => $p->reason ?? null,
+        ]);
+
+        $detail = match ($action) {
+            'add' => "add {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}",
+            'update' => "update {$p->uid} {$p->code} #{$p->number} {$p->period} {$p->tpsJeu}",
+            'remove' => !empty($p->uid) ? "remove {$p->uid}" : "remove {$p->code} {$p->period} player {$p->player}",
+        };
+        $this->logScoring('Scoring événement', $matchId, $detail);
+
         return new JsonResponse(['success' => true]);
     }
 
@@ -279,19 +353,34 @@ class ScoringController extends AbstractController
     {
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
-        // Mirrors ReportController event enrichment (player name from kp_licence).
-        // Temps is a TIME column stored as 00:MM:SS (legacy prefixes '00:'); the console works
-        // in MM:SS, so format it back to MM:SS here (a half lasts ≤ 10 min — no hours to show).
+        // Live facts from scoring_live_event (player name from kp_licence, as before).
+        // Temps is stored 00:MM:SS (legacy convention kept); format back to MM:SS.
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT md.Id uid, md.Periode period, TIME_FORMAT(md.Temps, '%i:%s') tpsJeu,
-                md.Id_evt_match code, md.Competiteur player, md.Numero number,
-                md.Equipe_A_B team, md.motif reason, l.Nom nom, l.Prenom prenom
-             FROM kp_match_detail md
-             LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric)
-             WHERE md.Id_match = ?
-             ORDER BY md.Periode DESC, md.Temps ASC, md.date_insert ASC",
+            "SELECT e.uid, e.periode period, TIME_FORMAT(e.temps, '%i:%s') tpsJeu,
+                e.code, e.id_player player, e.numero number,
+                e.team, e.motif reason, l.Nom nom, l.Prenom prenom
+             FROM scoring_live_event e
+             LEFT OUTER JOIN kp_licence l ON (e.id_player = l.Matric)
+             WHERE e.id_match = ?
+             ORDER BY e.periode DESC, e.temps ASC, e.created_at ASC",
             [$matchId]
         );
+
+        // Transition: a match never touched by the new flow has no live rows yet — fall
+        // back to the legacy detail table (read-only; the live table is seeded on the
+        // first mutation, see ScoringLiveService::ensureState).
+        if ($rows === []) {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT md.Id uid, md.Periode period, TIME_FORMAT(md.Temps, '%i:%s') tpsJeu,
+                    md.Id_evt_match code, md.Competiteur player, md.Numero number,
+                    md.Equipe_A_B team, md.motif reason, l.Nom nom, l.Prenom prenom
+                 FROM kp_match_detail md
+                 LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric)
+                 WHERE md.Id_match = ?
+                 ORDER BY md.Periode DESC, md.Temps ASC, md.date_insert ASC",
+                [$matchId]
+            );
+        }
 
         $response = new JsonResponse(['events' => $rows]);
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
@@ -353,26 +442,57 @@ class ScoringController extends AbstractController
     {
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
+        // Server time in seconds since midnight (same basis as start_time_server).
+        // Sub-second: the drift compensation on the console side is only as precise as
+        // this reference, so truncating here would throw away the stored tenths.
+        $nowServer = fmod(microtime(true), 86400);
+
+        // Live clock (kind GAME) first — same response contract as the kp_chrono era so
+        // the console restore logic is untouched. Times are exposed as floats carrying
+        // tenths; a client reading them as integers still gets a valid (rounded) value.
+        $clock = $this->connection->fetchAssociative(
+            "SELECT init_ms, elapsed_ms, started_at, running
+             FROM scoring_live_clock
+             WHERE id_match = ? AND kind = 'GAME'",
+            [$matchId]
+        );
+
+        if ($clock !== false) {
+            $elapsed = ((int) $clock['elapsed_ms']) / 1000;
+
+            return new JsonResponse([
+                'action' => ((bool) $clock['running']) ? 'run' : 'stop',
+                'startTime' => $elapsed,
+                // started_at is a datetime(3): keep the milliseconds, strtotime drops them
+                'startTimeServer' => $clock['started_at'] !== null
+                    ? fmod((float) (new \DateTimeImmutable($clock['started_at']))->format('U.u'), 86400)
+                    : null,
+                'runTime' => $elapsed,
+                'maxTime' => ((int) $clock['init_ms']) / 1000,
+                'nowServer' => $nowServer,
+            ]);
+        }
+
+        // Transition fallback: matches last driven under the legacy flow.
         $row = $this->connection->fetchAssociative(
             "SELECT `action`, start_time, start_time_server, run_time, max_time
              FROM kp_chrono WHERE IdMatch = ?",
             [$matchId]
         );
 
-        // Server time in seconds since midnight (same basis as start_time_server)
-        $nowServer = time() % 86400;
-
         if (!$row) {
             return new JsonResponse(['action' => null, 'nowServer' => $nowServer]);
         }
 
+        // kp_chrono only ever stored whole seconds: report `nowServer` on the same basis so
+        // the drift delta is not inflated by a fraction the stored start time cannot match.
         return new JsonResponse([
             'action' => $row['action'],
             'startTime' => (int) $row['start_time'],
             'startTimeServer' => $row['start_time_server'] !== null ? (int) $row['start_time_server'] : null,
             'runTime' => (int) $row['run_time'],
             'maxTime' => (int) $row['max_time'],
-            'nowServer' => $nowServer,
+            'nowServer' => (int) $nowServer,
         ]);
     }
 
@@ -404,28 +524,395 @@ class ScoringController extends AbstractController
             return new JsonResponse(['error' => 'Game locked'], 400);
         }
 
-        if ($data->params->action === 'RAZ') {
-            $sql = "DELETE FROM kp_chrono WHERE IdMatch = ?";
-            $this->connection->executeStatement($sql, [$matchId]);
-        } else {
-            $data->params->startTimeServer = time() % 86400;
-            $sql = "REPLACE kp_chrono
-                SET IdMatch = ?,
-                `action` = ?,
-                start_time = ?,
-                start_time_server = ?,
-                run_time = ?,
-                max_time = ?";
+        if ($err = $this->assertSourceAllowed($matchId, 'timer ' . ($data->params->action ?? ''))) return $err;
 
-            $this->connection->executeStatement($sql, [
-                $matchId, $data->params->action, $data->params->startTime, $data->params->startTimeServer,
-                $data->params->runTime, $data->params->maxTime
+        // Clock kind defaults to the main game clock; the same endpoint drives the
+        // shotclock, penalties and inter-period breaks (spec §0.5 — N clocks per match).
+        $kind = strtoupper($data->params->kind ?? 'GAME');
+        $team = (string) ($data->params->team ?? '');
+        $slot = (int) ($data->params->slot ?? 0);
+
+        // Remaining time as displayed, journalized with run/stop: a fine adjust is persisted as a
+        // « stop » — two stops in a row at different times trace a manual correction.
+        $shown = '';
+        if ($data->params->action === 'RAZ') {
+            $this->live->removeClock($matchId, $kind, $team, $slot);
+        } else {
+            // Payload stays in seconds (unchanged endpoint contract); storage is ms.
+            $initMs = (int) round(((float) ($data->params->maxTime ?? 0)) * 1000);
+            $elapsedMs = (int) round(((float) ($data->params->startTime ?? 0)) * 1000);
+            $this->live->setClock($matchId, [
+                'kind' => $kind,
+                'team' => $team,
+                'slot' => $slot,
+                'playerId' => $data->params->playerId ?? null,
+                'cardCode' => $data->params->cardCode ?? null,
+                'initMs' => $initMs,
+                'elapsedMs' => $elapsedMs,
+                'running' => $data->params->action === 'run',
             ]);
+            $shown = ScoringRules::clockDisplay($initMs - $elapsedMs);
         }
 
-        $this->logScoring('Scoring chrono', $matchId, $data->params->action);
+        $target = $slot > 0 ? "{$team}{$slot}" : $team;
+        $this->logScoring('Scoring chrono', $matchId, implode(' ', array_filter([$kind, $data->params->action, $target, $shown], 'strlen')));
 
-        // TODO (Phase 3): generate broadcast cache here
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/state/{matchId}', name: 'state_get', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/state/{matchId}',
+        summary: 'Full canonical live state of a match (state + clocks + facts)',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: 'Live state (exists = false when the match was never touched live)'),
+            new OA\Response(response: 304, description: 'Not modified (If-None-Match / tick)')
+        ]
+    )]
+    public function getState(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $state = $this->live->getState($matchId);
+
+        if ($state === null) {
+            return new JsonResponse(['exists' => false, 'matchId' => $matchId]);
+        }
+
+        // In preprod/prod the hub refuses anonymous subscribers: the console gets a
+        // subscriber JWT limited to its match's topics.
+        $mercureToken = $this->displayAccess->mintTopicSubscriberJwt([$state['topicBase'] . '/{type}']);
+
+        // Cheap HTTP cache: the tick IS the version (plan §1.3). 304 when unchanged. The
+        // token's fingerprint is part of it: a cached response without a token, or with an
+        // expired one, must not be revalidated (the console would subscribe and get a 401).
+        $etag = 'W/"scoring-' . $matchId . '-' . $state['tick'] . '-' . substr(md5($mercureToken), 0, 8) . '"';
+        if ($request->headers->get('If-None-Match') === $etag) {
+            return new JsonResponse(null, Response::HTTP_NOT_MODIFIED);
+        }
+
+        // The console subscribes to its own match's topics to stay coherent across
+        // terminals (plan lot 3): it gets the hub URL and the topic base from here, so
+        // the addressing scheme stays server-owned. Public info — never the JWT secret.
+        $response = new JsonResponse(['exists' => true] + $state + [
+            'mercureUrl' => $this->mercurePublicUrl,
+            'mercureToken' => $mercureToken,
+            'nowServer' => time() % 86400,
+        ]);
+        $response->headers->set('ETag', $etag);
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_UNESCAPED_UNICODE);
+
+        return $response;
+    }
+
+    #[Route('/source/{matchId}', name: 'source_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/source/{matchId}',
+        summary: 'Promote the active writing source of a match (plan §4.1)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['source'],
+                properties: [
+                    new OA\Property(property: 'source', type: 'string', enum: ['MANUAL', 'HARDWARE', 'SCORE_ONLY', 'IMPORT'])
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Source promoted (timestamped, journalized)'),
+            new OA\Response(response: 400, description: 'Unknown source or locked game')
+        ]
+    )]
+    public function putSource(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+        $source = strtoupper((string) ($data->source ?? ''));
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+
+        try {
+            $tick = $this->live->promoteSource($matchId, $source);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
+        $this->logScoring('Scoring source', $matchId, "promotion → {$source}");
+
+        return new JsonResponse(['success' => true, 'activeSource' => $source, 'tick' => $tick]);
+    }
+
+    #[Route('/resolve/{matchId}/{number}', name: 'resolve_short_number', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/resolve/{matchId}/{number}',
+        summary: 'Resolve a short game number (Numero_ordre) into a match id, relative to the current match',
+        description: 'Port of the legacy getShortGame.php: searches the same gameday first, then the same competition, then the same KPI event — the first scope with exactly one hit wins.',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: 'Resolved match id'),
+            new OA\Response(response: 404, description: 'No match, or several matches carry this number in every scope')
+        ]
+    )]
+    public function resolveShortNumber(int $matchId, int $number): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        if ($number <= 0) {
+            return new JsonResponse(['error' => 'Invalid number'], 400);
+        }
+
+        // Three widening scopes, in the legacy order. A scope returning several matches
+        // is ambiguous and must NOT silently fall through to a wider one.
+        $scopes = [
+            // Same gameday
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_match m2 ON m1.Id_journee = m2.Id_journee
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+            // Same competition
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_journee j1 ON m1.Id_journee = j1.Id
+             JOIN kp_journee j2 ON j2.Code_competition = j1.Code_competition
+                               AND j2.Code_saison = j1.Code_saison
+             JOIN kp_match m2 ON m2.Id_journee = j2.Id
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+            // Same KPI event
+            'SELECT m1.Id FROM kp_match m1
+             JOIN kp_evenement_journee ej1 ON m1.Id_journee = ej1.Id_journee
+             JOIN kp_evenement_journee ej2 ON ej1.Id_evenement = ej2.Id_evenement
+             JOIN kp_match m2 ON m2.Id_journee = ej2.Id_journee
+             WHERE m2.Id = ? AND m1.Numero_ordre = ? AND m1.Id != m2.Id',
+        ];
+
+        foreach ($scopes as $sql) {
+            $ids = $this->connection->fetchFirstColumn($sql . ' LIMIT 2', [$matchId, $number]);
+            if (count($ids) === 1) {
+                return new JsonResponse(['id' => (int) $ids[0]]);
+            }
+            if (count($ids) > 1) {
+                return new JsonResponse(['error' => 'Several games carry this number'], Response::HTTP_NOT_FOUND);
+            }
+        }
+
+        return new JsonResponse(['error' => 'Game not found'], Response::HTTP_NOT_FOUND);
+    }
+
+    #[Route('/next/{matchId}', name: 'next_on_pitch', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/next/{matchId}',
+        summary: 'Next match on the same pitch, same day (whole KPI event, else same gameday)',
+        description: 'The scoring table chains the matches of its pitch: within a tournament (KPI event) they may belong to different competitions. Publication is ignored — an unpublished match is still played and scored.',
+        tags: ['6. Scoring'],
+        responses: [
+            new OA\Response(response: 200, description: '{id}: next match id, or null when this is the last match of the pitch (a normal answer, not an error)')
+        ]
+    )]
+    public function nextOnPitch(int $matchId): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        // Same date + pitch, after the current one by (time, number). Scope: the KPI event
+        // when the gameday belongs to one, else the gameday itself.
+        $id = $this->connection->fetchOne(
+            "SELECT m1.Id
+             FROM kp_match m2
+             LEFT JOIN kp_evenement_journee ej2 ON ej2.Id_journee = m2.Id_journee
+             JOIN kp_match m1 ON m1.Date_match = m2.Date_match AND m1.Terrain = m2.Terrain
+             LEFT JOIN kp_evenement_journee ej1 ON ej1.Id_journee = m1.Id_journee
+             WHERE m2.Id = ? AND m1.Id <> m2.Id AND m2.Terrain <> ''
+               AND (ej2.Id_evenement IS NOT NULL AND ej1.Id_evenement = ej2.Id_evenement
+                    OR ej2.Id_evenement IS NULL AND m1.Id_journee = m2.Id_journee)
+               AND (m1.Heure_match > m2.Heure_match
+                    OR m1.Heure_match = m2.Heure_match AND m1.Numero_ordre > m2.Numero_ordre)
+             ORDER BY m1.Heure_match, m1.Numero_ordre
+             LIMIT 1",
+            [$matchId]
+        );
+
+        return new JsonResponse(['id' => $id === false ? null : (int) $id]);
+    }
+
+    #[Route('/officials/{matchId}/suggest', name: 'officials_suggest', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/officials/{matchId}/suggest',
+        summary: 'Suggest licence holders for the scoring-table officials and line judges',
+        description: 'role=table (secretary, timekeepers) favours the players of the first referee team, role=line (line judges) those of the second. The team is the referee field itself, or the part in parentheses of a nominative designation. Values use the legacy format "NOM Prénom (matric)".',
+        tags: ['6. Scoring'],
+        parameters: [
+            new OA\Parameter(name: 'role', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['table', 'line'])),
+            new OA\Parameter(name: 'q', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [new OA\Response(response: 200, description: '{team, items: [{group: team|other, value, label}]}')]
+    )]
+    public function suggestOfficials(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $refereeColumn = match ($request->query->get('role')) {
+            'table' => 'Arbitre_principal',
+            'line' => 'Arbitre_secondaire',
+            default => null,
+        };
+        if ($refereeColumn === null) {
+            return new JsonResponse(['error' => 'role must be table or line'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $q = trim((string) $request->query->get('q', ''));
+        $like = '%' . $q . '%';
+        $nameFilter = "(Matric LIKE ? OR CONCAT_WS(' ', Nom, Prenom) LIKE ? OR CONCAT_WS(' ', Prenom, Nom) LIKE ?)";
+
+        $designation = (string) $this->connection->fetchOne(
+            "SELECT COALESCE($refereeColumn, '') FROM kp_match WHERE Id = ?",
+            [$matchId]
+        );
+        $teamName = self::refereeTeamName($designation);
+
+        // The referee team: same season, its own competition first (a tournament often
+        // takes its referees from another category).
+        $teamId = $teamName === '' ? false : $this->connection->fetchOne(
+            'SELECT Id FROM kp_competition_equipe
+             WHERE Libelle = ? AND Code_saison = ?
+             ORDER BY Code_compet = ? DESC LIMIT 1',
+            [$teamName, $this->matchContext['Code_saison'], $this->matchContext['Code_competition']]
+        );
+
+        $items = [];
+        $teamMatrics = [];
+        if ($teamId !== false) {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT Matric, Nom, Prenom FROM kp_competition_equipe_joueur
+                 WHERE Id_equipe = ? AND Capitaine <> 'X' AND $nameFilter
+                 ORDER BY Nom, Prenom",
+                [$teamId, $like, $like, $like]
+            );
+            foreach ($rows as $row) {
+                $teamMatrics[] = (int) $row['Matric'];
+                $items[] = self::officialItem('team', $row);
+            }
+        }
+
+        // Anyone else holding a licence, once the operator has typed enough to narrow it.
+        if (mb_strlen($q) >= 2) {
+            $exclude = $teamMatrics === [] ? '' : ' AND Matric NOT IN (' . implode(',', $teamMatrics) . ')';
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT Matric, Nom, Prenom FROM kp_licence
+                 WHERE $nameFilter$exclude
+                 ORDER BY Nom, Prenom LIMIT " . self::OFFICIAL_SUGGESTIONS_LIMIT,
+                [$like, $like, $like]
+            );
+            foreach ($rows as $row) {
+                $items[] = self::officialItem('other', $row);
+            }
+        }
+
+        return new JsonResponse(['team' => $teamId === false ? null : $teamName, 'items' => $items]);
+    }
+
+    /**
+     * Team named by a referee field: "Equipe X" (team designated) or "NOM Prénom (Equipe X)"
+     * (nominative designation, team in the last parentheses).
+     */
+    private static function refereeTeamName(string $designation): string
+    {
+        if (preg_match('/\(([^()]+)\)[^()]*$/', $designation, $m) === 1) {
+            return trim($m[1]);
+        }
+
+        return trim($designation);
+    }
+
+    /** @param array{Matric: int|string, Nom: ?string, Prenom: ?string} $row */
+    private static function officialItem(string $group, array $row): array
+    {
+        $name = trim(mb_strtoupper((string) $row['Nom']) . ' ' . (string) $row['Prenom']);
+
+        return ['group' => $group, 'value' => "$name ({$row['Matric']})", 'label' => $name];
+    }
+
+    #[Route('/officials/{matchId}', name: 'officials_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/officials/{matchId}',
+        summary: 'Update the match officials (referees, secretary, timekeepers, line judges)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['officials'],
+                properties: [
+                    new OA\Property(
+                        property: 'officials',
+                        type: 'object',
+                        description: 'Any subset of: arbitrePrincipal, arbitreSecondaire, matricArbitrePrincipal, matricArbitreSecondaire, secretaire, chronometre, timeshoot, ligne1, ligne2'
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Officials updated'),
+            new OA\Response(response: 400, description: 'Game locked or nothing to update')
+        ]
+    )]
+    public function putOfficials(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+
+        // Officials are match-sheet metadata, not live state: they write kp_match directly
+        // (parity FMV3 saveOfficiel/saveArbitres — spec §7.8, plan lot 1.5). Whitelisted map
+        // payload key → kp_match column; only the provided keys are updated.
+        $columns = [
+            'arbitrePrincipal' => 'Arbitre_principal',
+            'arbitreSecondaire' => 'Arbitre_secondaire',
+            'matricArbitrePrincipal' => 'Matric_arbitre_principal',
+            'matricArbitreSecondaire' => 'Matric_arbitre_secondaire',
+            'secretaire' => 'Secretaire',
+            'chronometre' => 'Chronometre',
+            'timeshoot' => 'Timeshoot',
+            'ligne1' => 'Ligne1',
+            'ligne2' => 'Ligne2',
+        ];
+
+        $sets = [];
+        $values = [];
+        foreach ($columns as $key => $column) {
+            if (property_exists($data->officials ?? new \stdClass(), $key)) {
+                $sets[] = "$column = ?";
+                $values[] = $data->officials->$key;
+            }
+        }
+
+        if ($sets === []) {
+            return new JsonResponse(['error' => 'Nothing to update'], 400);
+        }
+
+        $values[] = $matchId;
+        $this->connection->executeStatement(
+            'UPDATE kp_match SET ' . implode(', ', $sets) . " WHERE Id = ? AND Validation != 'O'",
+            $values
+        );
+
+        $this->logScoring('Scoring officiels', $matchId, implode(', ', array_map(
+            fn (string $k): string => $k . ' = ' . ($data->officials->$k ?? ''),
+            array_keys(array_intersect_key($columns, (array) ($data->officials ?? [])))
+        )));
+
         return new JsonResponse(['success' => true]);
     }
 

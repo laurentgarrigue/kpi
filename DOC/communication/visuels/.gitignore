@@ -1,0 +1,3 @@
+# Livrables (MP4, PNG de slides) : hors du dépôt, dans ~/Documents/dev/kpi_exports/ (GUIDE_PRODUCTION.md § 2).
+# exports/ ne sert que de zone de dépôt pour Playwright MCP, qui n'écrit que dans le dépôt.
+exports/

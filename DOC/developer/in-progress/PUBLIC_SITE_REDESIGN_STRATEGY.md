@@ -416,7 +416,7 @@ Légende api2 : ✅ existe · 🟡 logique présente côté admin, à exposer ·
 | Bandeau / logo / lien de compétition | `kpnavgroup.tpl` | 🟡 | ✅ |
 | QR codes vers app2 | `kpqr.php` | — | ✅ |
 | Pages joueur | — | — | ❌ **exclues** |
-| PDF publics | `Pdf*.php` | — | 🔗 liens vers le legacy (chantier `DOCUMENTS_MIGRATION.md`) |
+| PDF publics | `Pdf*.php` | — | ✅ api2 + Gotenberg (`/api2/pdf/*`, [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md)) |
 | Contrôle TV / scénarios | `kptv.php`, `kptvscenario.php` | ✅ | ➖ déjà dans app4 (`/tv`), non public |
 | Écrans et iframes tiers (`?Css=`) | `frame_*.php` | ✅ données | ⏳ legacy, puis **phase 7** (`/embed/...` + `?theme=`) |
 | Live, incrustations | `live/*.php` | ✅ | ➖ branche `claude/scoring-refactoring-strategy-3d43ac` |
@@ -564,7 +564,7 @@ Aucune question ouverte à ce stade.
 - [APP2_TECHNICAL_ARCHITECTURE.md](../reference/APP2_TECHNICAL_ARCHITECTURE.md), [APP4_STRUCTURE.md](../reference/APP4_STRUCTURE.md)
 - [FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md) — routage Traefik / api2
 - [DEPLOYMENT_RUNBOOK.md](../infrastructure/DEPLOYMENT_RUNBOOK.md) — déploiement, sauvegarde et restauration
-- [DOCUMENTS_MIGRATION.md](DOCUMENTS_MIGRATION.md), [LEGACY_PDF_STANDALONE_ACCESS.md](LEGACY_PDF_STANDALONE_ACCESS.md) — PDF
+- [PDF_GOTENBERG.md](../../specs/PDF_GOTENBERG.md) — PDF (api2 + Gotenberg)
 - [WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md](../archive/infrastructure/WORDPRESS_MIGRATION_OLD_PROD_TO_VPS.md) — installation WordPress actuelle
 - [IMAGE_UPLOAD_MANAGEMENT.md](../../user/IMAGE_UPLOAD_MANAGEMENT.md) — upload d'images (app4)
 - Branche `claude/scoring-refactoring-strategy-3d43ac` — refonte du live et de la feuille de marque
