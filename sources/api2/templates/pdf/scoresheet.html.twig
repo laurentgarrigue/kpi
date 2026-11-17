@@ -80,7 +80,7 @@
         </thead>
         <tbody>
             {% for event in lines %}
-                <tr>
+                <tr{% if event.period_start|default(false) %} class="pdf-sheet__period-start"{% endif %}>
                     <td class="pdf-sheet__card pdf-sheet__card--green">{{ event.a_green|default('') }}</td><td class="pdf-sheet__card pdf-sheet__card--yellow">{{ event.a_yellow|default('') }}</td><td class="pdf-sheet__card pdf-sheet__card--red">{{ event.a_red|default('') }}</td><td class="pdf-sheet__card pdf-sheet__card--definitive">{{ event.a_definitive|default('') }}</td>
                     <td>{{ event.a_player|default('') }}</td><td class="pdf-sheet__card">{{ event.a_goal|default('') }}</td>
                     <td class="pdf-sheet__time">{{ event.time|default('') }}</td>
@@ -100,7 +100,7 @@
                 {{ _self.banner(sheet) }}
                 {# Four equal columns: every name field takes at least half the width. #}
                 <table class="pdf-sheet__box pdf-sheet__info">
-                    <tr><td colspan="3"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right">{{ sheet.category }}</td></tr>
+                    <tr><td colspan="3"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right"><strong>{{ sheet.category }}</strong></td></tr>
                     <tr><td colspan="2">{{ l['scoresheet.organiser'] }}: {{ sheet.organiser }}</td><td colspan="2" class="pdf-sheet__right">{{ l.season }} : {{ sheet.season }}</td></tr>
                     <tr><td colspan="2">{{ l['scoresheet.manager'] }}: {{ sheet.manager }}</td><td colspan="2">{{ l['scoresheet.delegate'] }}: {{ sheet.delegate }}</td></tr>
                     {{ _self.key_facts(sheet, l) }}
@@ -164,7 +164,7 @@
                 <div class="pdf-sheet__column">
                     {{ _self.banner(sheet) }}
                     <table class="pdf-sheet__box pdf-sheet__info">
-                        <tr><td colspan="3"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right">{{ sheet.category }}</td></tr>
+                        <tr><td colspan="3"><strong>{{ sheet.competition }}</strong></td><td class="pdf-sheet__right"><strong>{{ sheet.category }}</strong></td></tr>
                         {{ _self.key_facts(sheet, l) }}
                         <tr><td colspan="2">{{ l['scoresheet.team'] }} A : {{ sheet.team_a.name }}</td><td colspan="2">{{ l['scoresheet.team'] }} B : {{ sheet.team_b.name }}</td></tr>
                         <tr><td colspan="2">{{ l['scoresheet.referee_1'] }} : {{ sheet.referee_1 }}</td><td colspan="2">{{ l['scoresheet.referee_2'] }} : {{ sheet.referee_2 }}</td></tr>

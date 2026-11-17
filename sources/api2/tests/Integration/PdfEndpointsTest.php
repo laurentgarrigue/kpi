@@ -90,9 +90,13 @@ final class PdfEndpointsTest extends ApiTestCase
 
     public function testPublicPdfIsNotRecordedInTheJournal(): void
     {
+        // Les fixtures portent déjà une ligne « PDF … » (filtre par catégorie du journal) : on compare avant/après.
+        $countPdfEntries = fn (): int => (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_journal WHERE Actions LIKE 'PDF %'");
+        $before = $countPdfEntries();
+
         $this->client->request('GET', self::RANKING_RCH);
 
-        self::assertFalse($this->connection->fetchOne("SELECT Id FROM kp_journal WHERE Actions LIKE 'PDF %'"));
+        self::assertSame($before, $countPdfEntries());
     }
 
     public function testPdfDataLanguage(): void
