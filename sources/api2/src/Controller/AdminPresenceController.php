@@ -776,8 +776,8 @@ class AdminPresenceController extends AbstractController
     }
 
     /**
-     * Players that may be added to the match composition: the team presence sheet without the staff (E), the referees
-     * (A) and the inactive players (X), minus the players already in the match (PAGE_PRESENCE.md § 3.2).
+     * Players that may be added to the match composition: the team presence sheet, staff (E) included, without the
+     * referees (A) and the inactive players (X), minus the players already in the match (PAGE_PRESENCE.md § 3.2).
      */
     #[Route('/admin/matches/{matchId}/available-players', name: 'admin_match_players_available', methods: ['GET'])]
     #[IsGranted('ROLE_SCORER')]
@@ -1450,8 +1450,8 @@ class AdminPresenceController extends AbstractController
     }
 
     /**
-     * Team presence sheet players not staff (E), referee (A) nor inactive (X), with a licence (FK of kp_match_joueur),
-     * not yet in the match composition of the team.
+     * Team presence sheet players and staff (E), not referee (A) nor inactive (X), with a licence (FK of
+     * kp_match_joueur), not yet in the match composition of the team: the same players as the initialization.
      *
      * @return list<array<string, mixed>>
      */
@@ -1462,7 +1462,7 @@ class AdminPresenceController extends AbstractController
              FROM kp_competition_equipe_joueur cej
              INNER JOIN kp_licence l ON l.Matric = cej.Matric
              WHERE cej.Id_equipe = ?
-             AND cej.Capitaine NOT IN ('E', 'A', 'X')
+             AND cej.Capitaine NOT IN ('A', 'X')
              AND cej.Matric NOT IN (SELECT mj.Matric FROM kp_match_joueur mj WHERE mj.Id_match = ? AND mj.Equipe = ?)
              ORDER BY cej.Numero, cej.Nom, cej.Prenom",
             [$teamId, $matchId, $teamCode]

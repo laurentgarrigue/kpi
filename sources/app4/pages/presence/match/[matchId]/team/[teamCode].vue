@@ -150,8 +150,8 @@ const handleInlineKeydown = (e: KeyboardEvent) => {
   else if (e.key === 'Escape') cancelInlineEdit()
 }
 
-// Load the players of the team presence sheet that may join the match (api2 excludes E/A/X and the players already
-// in the match: only them can be added) - called lazily on modal open
+// Load the players of the team presence sheet that may join the match (api2 excludes A/X and the players already in
+// the match, coaches E included: only them can be added) - called lazily on modal open
 const loadAvailableTeamPlayers = async () => {
   try {
     const response = await api.get<{ players: AvailableMatchPlayer[] }>(

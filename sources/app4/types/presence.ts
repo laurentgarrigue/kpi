@@ -190,7 +190,7 @@ export interface AvailableMatchPlayer {
   nom: string
   prenom: string
   numero: number | null
-  capitaine: '-' | 'C'
+  capitaine: '-' | 'C' | 'E'
 }
 
 export interface MatchAddPlayerFormData {

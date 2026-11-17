@@ -717,7 +717,7 @@ INSERT INTO `kp_match`
   (9472, 9275, 'C2', 'ATT', '2997-07-01', '11:00', '1', 2, 9388, 9387, 'N', 'N'),
   (9473, 9276, 'C3', 'ATT', '2997-07-08', '10:00', '1', 3, 9387, 9388, 'N', 'N'),
   (9474, 9276, 'C4', 'END', '2997-07-08', '11:00', '1', 4, 9387, 9388, 'N', 'O');
--- Feuille de présence de 9388 : capitaine 9516 et joueur 9518 ajoutables, entraîneur 9513 (E), arbitre 9514 (A) et
+-- Feuille de présence de 9388 : entraîneur 9513 (E), capitaine 9516 et joueur 9518 ajoutables, arbitre 9514 (A) et
 -- inactif 9517 (X) non ajoutables à un match.
 INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
   (9388, 9516, 'SCRUT', 'Remplaçant', 'M', 'U21', 5, 'C'),

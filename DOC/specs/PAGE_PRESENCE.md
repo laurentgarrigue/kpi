@@ -84,9 +84,9 @@ n'a pas accès à la feuille de présence match. api2 applique les mêmes limite
 (journée ≤ 6, compétition ≤ 4) ; la copie journée ne vise que les matchs de la journée du match source, la copie
 compétition que ceux de sa compétition.
 
-**Ajout d'un joueur** : seulement un joueur de la feuille de présence de l'équipe, hors entraîneurs (E), arbitres (A)
-et inactifs (X), pas encore dans le match (`GET /admin/matches/:matchId/available-players`) ; api2 refuse tout autre
-joueur (422).
+**Ajout d'un joueur** : seulement un joueur ou un entraîneur (E) de la feuille de présence de l'équipe, hors arbitres
+(A) et inactifs (X), pas encore dans le match (`GET /admin/matches/:matchId/available-players`) ; api2 refuse tout
+autre joueur (422). Ce sont les mêmes joueurs que ceux repris par l'initialisation depuis l'équipe.
 
 **Bloqué si**: Match validé (`kp_match.Validation = 'O'`)
 
@@ -192,7 +192,7 @@ ORDER BY
 | 2 | Édition inline Numero (0-99) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.js:75-104 |
 | 3 | Édition inline Capitaine (-, C, E) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.js:108-156 |
 | 4 | Initialiser depuis composition équipe | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:291-301 |
-| 5 | Ajouter joueur (feuille de présence de l'équipe, pas E/A/X) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
+| 5 | Ajouter joueur ou entraîneur (feuille de présence de l'équipe, pas A/X) | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:306-327 |
 | 6 | Sélection multiple + suppression | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:372-380 |
 | 7 | Vider composition match | ≤ 7 et 9 | ❌ | GestionMatchEquipeJoueur.php:387-395 |
 | 8 | Copier vers matchs même journée | ≤ 6 | ❌ | GestionMatchEquipeJoueur.php:293-358 |
@@ -200,10 +200,9 @@ ORDER BY
 | 10 | Afficher contexte match | ≤ 9 | - | GestionMatchEquipeJoueur.tpl:4-16 |
 | 11 | Afficher pagaie avec warning | ≤ 9 | - | GestionMatchEquipeJoueur.tpl:120-125 |
 
-**Statuts exclus:**
-- Initialisation depuis équipe : arbitres (A) et inactifs (X) ; les entraîneurs (E) sont repris
-- Ajout manuel : entraîneurs (E), arbitres (A) et inactifs (X) ; seul un joueur de la feuille de présence de
-  l'équipe peut être ajouté
+**Statuts exclus** (initialisation depuis équipe et ajout manuel) : arbitres (A) et inactifs (X). Les entraîneurs (E)
+sont repris par l'initialisation et peuvent être ajoutés manuellement ; seul un joueur de la feuille de présence de
+l'équipe peut être ajouté.
 
 ---
 
@@ -523,7 +522,7 @@ WHERE cej.Id_equipe = :teamId
 #### GET /admin/matches/:matchId/available-players
 
 **Description**: Joueurs pouvant être ajoutés au match (`ROLE_SCORER`, compétition du périmètre) : feuille de
-présence de l'équipe, licenciés, hors E, A et X, pas encore dans le match
+présence de l'équipe, licenciés, entraîneurs (E) compris, hors A et X, pas encore dans le match
 
 **Query Params:**
 - `teamCode`: 'A' | 'B'
@@ -536,7 +535,7 @@ présence de l'équipe, licenciés, hors E, A et X, pas encore dans le match
     nom: string
     prenom: string
     numero: number | null
-    capitaine: '-' | 'C'
+    capitaine: '-' | 'C' | 'E'
   }>
 }
 ```
@@ -563,7 +562,7 @@ présence de l'équipe, licenciés, hors E, A et X, pas encore dans le match
 **Validation:**
 - Profils ≤ 7 et 9, match non validé (sinon 403)
 - Le joueur fait partie des joueurs ajoutables (`available-players`) : feuille de présence de l'équipe, statut
-  autre que E, A ou X, pas encore dans le match (sinon 422)
+  autre que A ou X (entraîneurs compris), pas encore dans le match (sinon 422)
 
 #### DELETE /admin/matches/:matchId/players
 
@@ -1630,7 +1629,7 @@ export interface CopyToMatchesFormData {
       {{ formError }}
     </div>
 
-    <!-- Player selection (from team roster, excluding E/A/X and already added) -->
+    <!-- Player selection (GET available-players: team roster with coaches, excluding A/X and already added) -->
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1">
         {{ t('presence.select_player') }}
@@ -1813,7 +1812,7 @@ export interface CopyToMatchesFormData {
 | Voir liste | ≤ 9 | - |
 | Éditer inline (numero, capitaine) | ≤ 7 et 9 | Validation = 'N' |
 | Initialiser depuis équipe | ≤ 7 et 9 | Validation = 'N' |
-| Ajouter joueur | ≤ 7 et 9 | Validation = 'N' ET joueur de la feuille de présence (hors E/A/X) |
+| Ajouter joueur | ≤ 7 et 9 | Validation = 'N' ET joueur ou entraîneur de la feuille de présence (hors A/X) |
 | Supprimer joueurs | ≤ 7 et 9 | Validation = 'N' |
 | Vider composition | ≤ 7 et 9 | Validation = 'N' |
 | Copier vers journée | ≤ 6 | Validation = 'N' |
@@ -1875,9 +1874,9 @@ if (!$player) {
     throw new ValidationException('Joueur non trouvé dans composition équipe');
 }
 
-// Interdire statuts E, A, X
-if (in_array($player->getCapitaine(), ['E', 'A', 'X'])) {
-    throw new ValidationException('Impossible d\'ajouter un joueur avec statut E, A ou X');
+// Interdire statuts A, X (les entraîneurs E peuvent être ajoutés) → 422
+if (in_array($player->getCapitaine(), ['A', 'X'])) {
+    throw new ValidationException('Impossible d\'ajouter un joueur avec statut A ou X');
 }
 ```
 
@@ -2329,20 +2328,20 @@ export const usePresenceStore = defineStore('presence', {
 **1. Chargement initial**
 - ✅ Affiche contexte match (date, heure, terrain, numéro)
 - ✅ Affiche équipe (A ou B)
-- ✅ Affiche joueurs filtrés (pas E/A/X si initialisé depuis équipe)
+- ✅ Affiche joueurs filtrés (pas A/X si initialisé depuis équipe)
 - ✅ Affiche indicateur validation si match validé
 
 **2. Initialisation depuis équipe**
 - ✅ Bouton visible si composition vide
-- ✅ Copie uniquement joueurs avec statut -, C
-- ✅ Exclut E, A, X
+- ✅ Copie joueurs (-, C) et entraîneurs (E)
+- ✅ Exclut A, X
 - ✅ Copie numéros depuis équipe
 - ✅ Bloqué si match validé
 
 **3. Ajout joueur**
-- ✅ Liste uniquement joueurs de l'équipe
+- ✅ Liste uniquement joueurs et entraîneurs de la feuille de présence de l'équipe
 - ✅ Exclut joueurs déjà dans match
-- ✅ Exclut joueurs E, A, X
+- ✅ Exclut joueurs A, X ; un autre joueur est refusé par api2 (422)
 - ✅ Pré-remplit numéro depuis équipe
 - ✅ Statut limité à -, C, E
 - ✅ Bloqué si match validé
