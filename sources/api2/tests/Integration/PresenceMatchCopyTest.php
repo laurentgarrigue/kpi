@@ -7,8 +7,8 @@ use Doctrine\DBAL\Connection;
 /**
  * Copie de la composition d'un match vers les autres matchs de l'équipe (PAGE_PRESENCE.md § 1.2, mode match) : la
  * journée est ouverte aux profils ≤ 6, la compétition aux profils ≤ 4, comme le bouton d'app4.
- * Fixtures « copie de composition de match » : compétition PCM, source 9471 (J1, équipe 9387 en A : 9511, 9512),
- * cibles 9472 (J1, 9387 en B) et 9473 (J2, 9387 en A). Comptes TCOMP (4), TORGA (6), TTEAMP (7).
+ * Fixtures « copie de composition de match » : compétition PCM, source 9471 (J1, équipe 9395 en A : 9511, 9512),
+ * cibles 9472 (J1, 9395 en B) et 9473 (J2, 9395 en A). Comptes TCOMP (4), TORGA (6), TTEAMP (7).
  */
 final class PresenceMatchCopyTest extends ApiTestCase
 {

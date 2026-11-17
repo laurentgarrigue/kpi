@@ -163,7 +163,7 @@ la feuille de match est éditée par les profils ≤ 7 et 9 ; on n'y ajoute qu'u
 
 | Élément | Cas couverts |
 |---|---|
-| `PCM` (2997, non publiée) | journées 9275 (J1) et 9276 (J2) ; équipes 9387 (C001, sans composition) et 9388 (C002) |
-| Feuille de présence de 9388 | 9513 (E), 9516 (C) et 9518 (-) ajoutables à un match ; 9514 (A), 9517 (X) non ajoutables |
-| Matchs 9471 (J1), 9472 (J1), 9473 (J2), 9474 (J2) | 9471 = source (9387 en A : 9511, 9512) ; 9387 est B dans 9472 ; seul 9474 est validé |
+| `PCM` (2997, non publiée) | journées 9275 (J1) et 9276 (J2) ; équipes 9395 (C001, sans composition) et 9396 (C002) |
+| Feuille de présence de 9396 | 9513 (E), 9516 (C) et 9518 (-) ajoutables à un match ; 9514 (A), 9517 (X) non ajoutables |
+| Matchs 9471 (J1), 9472 (J1), 9473 (J2), 9474 (J2) | 9471 = source (9395 en A : 9511, 9512) ; 9395 est B dans 9472 ; seul 9474 est validé |
 | `TCOMP` (4), `TORGA` (6), `TTEAMP` (7), `TVIEWP` (8), `TSCOREP` (9) | les deux copies / la copie journée seule / aucune copie / lecture seule / feuille de match sans copie |

@@ -695,7 +695,7 @@ INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Temps`, `Id_evt_mat
 -- ---------------------------------------------------------------- copie de composition de match (PAGE_PRESENCE.md § 1.2)
 -- Consommé par tests/Integration/PresenceMatchCopyTest.php : copie vers les matchs de la journée (≤ 6) et de la
 -- compétition (≤ 4), feuille de match du profil 9, ajout limité à la feuille de présence. Compétition PCM (saison
--- 2997, non publiée, hors événement), équipes 9387 (C001) et 9388 (C002) ; 9471 (J1, source, 9387 en A avec 9511 et
+-- 2997, non publiée, hors événement), équipes 9395 (C001) et 9396 (C002) ; 9471 (J1, source, 9395 en A avec 9511 et
 -- 9512), 9472 (J1) et 9473 (J2) non validés, 9474 (J2) validé.
 INSERT INTO `kp_competition`
   (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `Soustitre`, `Soustitre2`, `Web`, `BandeauLink`, `LogoLink`, `SponsorLink`,
@@ -708,23 +708,23 @@ INSERT INTO `kp_journee`
   (9275, 'PCM', '2997', '2997-07-01', '2997-07-01', 'Copie', 'PCM J1', 'Lacville', '33', 'O', 'C', 'Journée 1', 1, 1, 2, 'N'),
   (9276, 'PCM', '2997', '2997-07-08', '2997-07-08', 'Copie', 'PCM J2', 'Lacville', '33', 'O', 'C', 'Journée 2', 1, 2, 2, 'N');
 INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`, `logo`, `Numero`, `Poule`, `Tirage`) VALUES
-  (9387, 'PCM', '2997', 'Copie Alpha', 'C001', NULL, 101, '', 0),
-  (9388, 'PCM', '2997', 'Copie Bravo', 'C002', NULL, 102, '', 0);
+  (9395, 'PCM', '2997', 'Copie Alpha', 'C001', NULL, 101, '', 0),
+  (9396, 'PCM', '2997', 'Copie Bravo', 'C002', NULL, 102, '', 0);
 INSERT INTO `kp_match`
   (`Id`, `Id_journee`, `Libelle`, `Statut`, `Date_match`, `Heure_match`, `Terrain`, `Numero_ordre`,
    `Id_equipeA`, `Id_equipeB`, `Publication`, `Validation`) VALUES
-  (9471, 9275, 'C1', 'ATT', '2997-07-01', '10:00', '1', 1, 9387, 9388, 'N', 'N'),
-  (9472, 9275, 'C2', 'ATT', '2997-07-01', '11:00', '1', 2, 9388, 9387, 'N', 'N'),
-  (9473, 9276, 'C3', 'ATT', '2997-07-08', '10:00', '1', 3, 9387, 9388, 'N', 'N'),
-  (9474, 9276, 'C4', 'END', '2997-07-08', '11:00', '1', 4, 9387, 9388, 'N', 'O');
--- Feuille de présence de 9388 : entraîneur 9513 (E), capitaine 9516 et joueur 9518 ajoutables, arbitre 9514 (A) et
+  (9471, 9275, 'C1', 'ATT', '2997-07-01', '10:00', '1', 1, 9395, 9396, 'N', 'N'),
+  (9472, 9275, 'C2', 'ATT', '2997-07-01', '11:00', '1', 2, 9396, 9395, 'N', 'N'),
+  (9473, 9276, 'C3', 'ATT', '2997-07-08', '10:00', '1', 3, 9395, 9396, 'N', 'N'),
+  (9474, 9276, 'C4', 'END', '2997-07-08', '11:00', '1', 4, 9395, 9396, 'N', 'O');
+-- Feuille de présence de 9396 : entraîneur 9513 (E), capitaine 9516 et joueur 9518 ajoutables, arbitre 9514 (A) et
 -- inactif 9517 (X) non ajoutables à un match.
 INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
-  (9388, 9516, 'SCRUT', 'Remplaçant', 'M', 'U21', 5, 'C'),
-  (9388, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 6, '-'),
-  (9388, 9513, 'SCRUT', 'Coach', 'M', 'SEN', NULL, 'E'),
-  (9388, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A'),
-  (9388, 9517, 'SCRUT', 'Régional', 'M', 'U18', 9, 'X');
+  (9396, 9516, 'SCRUT', 'Remplaçant', 'M', 'U21', 5, 'C'),
+  (9396, 9518, 'SCRUT', 'Bravo', 'M', 'U21', 6, '-'),
+  (9396, 9513, 'SCRUT', 'Coach', 'M', 'SEN', NULL, 'E'),
+  (9396, 9514, 'SCRUT', 'Arbitre', 'M', 'SEN', NULL, 'A'),
+  (9396, 9517, 'SCRUT', 'Régional', 'M', 'U18', 9, 'X');
 INSERT INTO `kp_match_joueur` (`Id_match`, `Matric`, `Numero`, `Equipe`, `Capitaine`) VALUES
   (9471, 9511, 1, 'A', 'C'), (9471, 9512, 2, 'A', '-');
 INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`, `Limitation_equipe_club`, `Id_Evenement`) VALUES

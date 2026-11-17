@@ -7,7 +7,7 @@ use Doctrine\DBAL\Connection;
 /**
  * Feuille de présence match (PAGE_PRESENCE.md § 1.2 et § 3.2) : éditée par les profils ≤ 7 et la table de marque
  * (profil 9), en lecture seule pour le profil 8 ; on n'y ajoute qu'un joueur de la feuille de présence de l'équipe.
- * Fixtures « copie de composition de match » : 9472 (J1, 9388 en A), 9474 (validé). Feuille de présence de 9388 :
+ * Fixtures « copie de composition de match » : 9472 (J1, 9396 en A), 9474 (validé). Feuille de présence de 9396 :
  * 9513 (E), 9516 (C) et 9518 (-) ajoutables, 9514 (A), 9517 (X) non ajoutables ; 9511 n'y figure pas.
  * Comptes TTEAMP (7), TVIEWP (8), TSCOREP (9), TSCRUTA (10).
  */
@@ -26,7 +26,7 @@ final class PresenceMatchSheetTest extends ApiTestCase
     public function testTheScoreTableReadsTheMatchSheetButNotTheTeamSheet(): void
     {
         self::assertSame([], $this->requestAs('TSCOREP', 'GET', '/admin/matches/9472/players?teamCode=A')['players']);
-        $this->requestAs('TSCOREP', 'GET', '/admin/teams/9388/players', expectedStatus: 403);
+        $this->requestAs('TSCOREP', 'GET', '/admin/teams/9396/players', expectedStatus: 403);
         $this->requestAs('TSCRUTA', 'GET', '/admin/matches/9472/players?teamCode=A', expectedStatus: 403);
     }
 
