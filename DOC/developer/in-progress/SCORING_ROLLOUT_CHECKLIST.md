@@ -154,6 +154,7 @@ d'incrustation reflètent la saisie sans rechargement. ☐
 | 1.3 | 🗄 `scoring_outbox` | une ligne par écriture, `topic` = `/scoring/event/{e}/pitch/{p}/…` (ou `/scoring/match/{id}/…`) | | ☑ |
 | 1.4 | `GET /api2/admin/scoring/state/{id}` (avec JWT) | état complet + `ETag` ; re-GET avec `If-None-Match` → **304** | | ☑ |
 | 1.5 | Recharger la page en cours de match ; ouvrir le même match dans un 2ᵉ onglet | statut/période/score et chrono restaurés depuis l'état live | | ☑ |
+| 1.5a | Recharger la page **shotclock et pénalité en cours** (ex. shotclock 60 s lancé il y a ~25 s) ; puis chrono de jeu arrêté | shotclock à ~35 s et pénalité au temps réel (± 1 s), pas revenus à leur durée initiale ; chrono arrêté : valeurs suspendues inchangées ([#401](https://github.com/laurentgarrigue/kpi/issues/401)) | | ☐ |
 | 1.6 | **Clore le match** (bouton « Clore le match… », cf. 3.59+) | **consolidation** : `kp_match` (Statut/Periode/ScoreDetail/Heure_fin/Commentaires_officiels) et `kp_match_detail` reconstruits depuis le live ; fiche/PDF/classements corrects | | ☑ |
 | 1.7 | `PUT /api2/admin/scoring/source/{id}` avec `{"source":"HARDWARE"}` puis re-saisir | **409** « Another source is active » + `kp_journal` « Scoring rejeté (source) » ; re-promouvoir `MANUAL` → la saisie repasse | | ☐ |
 | 1.8 | 🗄 `kp_journal` | une ligne par action mutante (statut, période, score, événement, chrono, joueur, officiels, commentaires, source, consolidation) | | ☑ |

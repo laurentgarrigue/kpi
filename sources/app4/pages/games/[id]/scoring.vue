@@ -5,6 +5,7 @@ import { shortcutKeyLabel, type ShortcutAction } from '~/utils/scoringShortcuts'
 import type { DisplayKind, DisplayOptions } from '~/utils/scoringDisplayOptions'
 import { closureWarnings, type ClosureWarning } from '~/utils/scoringClosure'
 import { isPenaltyExpired } from '~/utils/scoringPenalties'
+import { remainingMs, runningDriftMs } from '~/utils/overlayClock'
 import { keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
 
 definePageMeta({
@@ -655,8 +656,9 @@ onUnmounted(() => { if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout) })
  *
  * The game clock goes through GET /gameTimer, which returns the server time alongside the
  * state: that is the only path that compensates the elapsed drift exactly (and handles
- * midnight). The shot clock and the break are re-primed from their persisted value; a
- * sub-second drift is possible right after a takeover, which is irrelevant at their scale.
+ * midnight). The shot clock and the break are re-primed from their persisted value plus,
+ * when running, the time elapsed since their absolute start instant (`startedAtMs`) —
+ * `elapsedMs` is only written at start, so without it a reload restarted them (issue #401).
  */
 const applyServerClocks = async () => {
   if (!isLive.value) return
@@ -676,7 +678,7 @@ const applyServerClocks = async () => {
 
   const sc = scoringStore.liveClocks.find(c => c.kind === 'SHOTCLOCK')
   if (sc) {
-    shotclock.restore({ initMs: sc.initMs, elapsedMs: sc.elapsedMs, running: sc.running })
+    shotclock.restore({ initMs: sc.initMs, elapsedMs: sc.elapsedMs, running: sc.running, driftMs: runningDriftMs(sc, Date.now()) })
     // A shotclock can only run while the game clock runs: align after restore.
     if (!isRunning.value && shotclock.state.value === 'RUNNING') shotclock.suspend()
   } else if (shotclock.state.value !== 'IDLE') {
@@ -684,7 +686,7 @@ const applyServerClocks = async () => {
   }
 
   const br = scoringStore.liveClocks.find(c => c.kind === 'BREAK')
-  const left = br ? Math.max(0, Math.round((br.initMs - br.elapsedMs) / 1000)) : 0
+  const left = br ? Math.round(remainingMs(br, Date.now()) / 1000) : 0
   if (left > 0) startBreak(left, false)
   else stopBreak(false)
 }
@@ -717,7 +719,8 @@ onMounted(async () => {
           cardCode: c.cardCode,
           initMs: c.initMs,
           elapsedMs: c.elapsedMs,
-          running: c.running
+          running: c.running,
+          driftMs: runningDriftMs(c, Date.now())
         })),
         isRunning.value
       )
