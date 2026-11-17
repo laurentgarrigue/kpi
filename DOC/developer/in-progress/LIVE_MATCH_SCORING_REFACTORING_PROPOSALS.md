@@ -1,15 +1,142 @@
-# Refonte du scoring live — Plan de travail
+# Refonte du scoring live — Stratégie et plan d'action
 
-> **Ce document dit ce qu'on va construire, dans quel ordre, et ce qu'on supprimera ensuite.**
+> **Statut : stratégie actée (2026-07-23). Ce document n'est plus une proposition.**
+> Il dit ce qu'on construit, dans quel ordre, avec quels livrables et quels critères de sortie.
 > Il ne décrit pas l'existant : pour cela, voir
 > [LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](../reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md).
 > La revue critique qui a conduit à ces choix est dans
 > [LIVE_MATCH_REFACTORING_REVIEW.md](../archive/audits/LIVE_MATCH_REFACTORING_REVIEW.md).
+> La **spécification fonctionnelle détaillée de la console de saisie** est
+> [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) — ce plan dit *quand* et *dans quel ordre*,
+> la spec dit *quoi* et *comment*. Les **commandes à exécuter en dev et les tests
+> fonctionnels par lot** sont dans
+> [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md).
 >
 > **Principe directeur : on ne touche à rien tant que le neuf ne marche pas.** Le nouveau système se
 > construit **à côté** de l'ancien — nouvelles tables, nouveau canal de diffusion. La production
 > continue de tourner sur le cache JSON et le broker actuels jusqu'à la bascule, qui se fait
 > **incrustation par incrustation, terrain par terrain**.
+
+---
+
+## 0. Point de situation et analyse critique (2026-10-17, mis à jour le 2026-11-05)
+
+> **Mise à jour du 2026-11-05.** Le constat « jamais exécuté » du §0.2 était **faux** : les
+> sauvegardes de la base de dev montrent les migrations appliquées et des matchs réellement saisis
+> (juillet–août puis 19 octobre), et une outbox drainée. La base de dev **courante**, rechargée
+> depuis, n'a en revanche plus les tables. La revue UX de la console est livrée (spec §0.11). La
+> marche à suivre pour revenir à niveau, valider puis déployer est désormais une checklist de
+> déploiement : [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) (étapes R0 → R5).
+
+> **Note de numérotation** : les `§0.x`, `§4.x`… sans autre mention renvoient à **ce document** ;
+> un renvoi à la spec de la console est toujours écrit « spec §x » ou pointe explicitement
+> [PAGE_SCORING.md](../../specs/PAGE_SCORING.md).
+>
+> Relecture faite après l'intégration de `main` (réorganisation de /DOC, site public app3,
+> PHPUnit et Vitest configurés, [CLEAN_CODE.md](../guides/CLEAN_CODE.md) devenu la règle de
+> tout nouveau code). Cette section **remplace** les points de situation antérieurs ; les
+> suivis d'exécution détaillés restent au pied de chaque lot.
+
+### 0.1 Où on en est, lot par lot
+
+| Lot | État | Ce qui existe | Ce qui manque |
+|---|---|---|---|
+| **0** Fondations | 🟡 partiel | hub Mercure en dev (actions 0.1 et 0.2 du lot 0 ✅) | actions **0.3** validation preprod/prod, **0.5** captures de vraies sessions matériel, **0.6** garde-fou chiffré |
+| **1** État canonique | 🟡 essayé en dev | 4 migrations `scoring_live_*`, `ScoringLiveService` (porte d'écriture unique, transaction + `tick` + outbox), `ScoringRules` (testé), `ScoringController` réaiguillé, `PUT /source`, `PUT /officials`, `GET /resolve/{id}/{n°}` ; tests d'intégration du score live et de la clôture | clôture/consolidation et 409 jamais vérifiés à l'écran ; tests d'intégration source active / `tick` / outbox |
+| **2** Diffusion Mercure | 🟡 probable en dev | `ScoringOutboxPublisher` (drainage ordonné, at-least-once, `Last-Event-ID`), drainage branché sur le worker existant, env Mercure des 3 compose | outbox trouvée vidée (drainée puis purgée) mais tests 2.x non tracés ; `MERCURE_ANONYMOUS=0` non validé hors dev |
+| **3** Console app4 | 🟡 essayée en dev | console complète : prolongations non bornées, cartons 2027, shotclock 3 commandes, pénalités, pauses + buzzer, raccourcis paramétrables, scoreboard/shotclock plein écran, abonnement Mercure, mode score seul, panneau Paramètres, PWA ; **revue UX du 2026-11-05** (clôture §7.6, annulation, saisie par numéro, contrôles avant coup d'envoi — spec §0.11) | tests de rendu des composants ; durée de période non standard ; **aucun événement réel tenu à la console** |
+| **4** Incrustation unique | 🟢 écrit | `PAGE_INCRUSTATION.md`, `pages/live/overlay.vue`, `ScoringProgramService` (défauts → événement → terrain), `ScoringLiveController` (lecture publique), jetons d'affichage + JWT abonné, vues de compatibilité legacy, onglet d'administration | validation OBS réelle ; bascule d'une incrustation sur un terrain |
+| **5** Relais matériel | 🔴 non commencé | — | bloqué par **0.5** (format STOMP fermé : sans captures, on code à l'aveugle) |
+| **6** Paramétrage compétition | 🔴 non commencé | — | dépend du lot 3 soldé |
+| **7** Offline complet | 🔴 non commencé | — | dépend du lot 3 ; la PWA livrée est *installable*, pas *offline* |
+| **8** Ménage | 🔴 non commencé | — | bloqué par le garde-fou (action **0.6** du lot 0), toujours non chiffré |
+| **9** Zéro papier (profil 7) | 🔴 non commencé | — | dépend des lots 3 et 6 |
+
+### 0.2 Ce qui n'a jamais été vérifié — à lire avant de continuer
+
+> **Corrigé le 2026-11-05** : la liste ci-dessous était fausse pour les lots 1 à 3 (voir l'encart
+> en tête de §0 et le relevé de [la checklist](SCORING_ROLLOUT_CHECKLIST.md)). Elle reste vraie
+> pour le **lot 4** (aucune incrustation dans OBS) et pour **tout ce qui est hors dev**.
+
+Les lots 1 à 4 ont été **écrits**, pas **validés**. Concrètement, au 2026-10-17 :
+
+- **aucune requête n'a tourné sur une base MariaDB** : les 4 migrations n'ont jamais été
+  appliquées, aucun `INSERT` de `scoring_live_*` n'a jamais eu lieu ;
+- **aucun message n'a transité par le hub Mercure** ;
+- **aucune incrustation n'a été affichée dans OBS** ;
+- ce qui est vérifié se limite à : `eslint`, `nuxt build`, `php -l`, les **suites unitaires**
+  (api2 `ScoringRulesTest` + miroir Vitest `scoringRules.spec.ts`) et un test d'intégration
+  d'accès (`ScoringPublicEndpointsTest`, jamais exécuté faute de base).
+
+C'est **le** risque principal du chantier, et il croît à chaque lot ajouté : plus on empile de
+code non exécuté, plus le premier passage en réel coûtera cher. La règle pour la suite est en
+§0.4.
+
+### 0.3 La stratégie est-elle toujours bonne ?
+
+**Oui sur le fond, et l'évolution de `main` l'a plutôt renforcée.** Les quatre paris
+structurants tiennent :
+
+1. **L'état canonique en base plutôt que dans un onglet** (§2, §3) : c'est la réponse directe
+   au problème d'origine et rien dans l'évolution du dépôt ne la remet en cause.
+2. **Outbox transactionnelle → Mercure** plutôt qu'un broker maison (§4.6) : renforcé — api2
+   est passé en FrankenPHP avec hub embarqué, et le site public app3 consomme déjà api2. Le
+   canal temps réel n'est plus une brique isolée du chantier scoring.
+3. **`kp_*` reste la vérité pour les résultats** (§4.3) : indispensable, puisque le site public
+   et les PDF legacy lisent `kp_*`. La consolidation en fin de match est le bon point de
+   couture.
+4. **Une seule page d'incrustation paramétrée** (§3.2) : le plus gros gisement de DRY du legacy
+   (~20 pages quasi dupliquées) ; inchangé.
+
+**Trois réserves, par ordre d'importance.**
+
+- **Réserve 1 — l'ordre « écriture d'abord » a été respecté, « valider au fur et à mesure » ne
+  l'a pas été.** Le plan est séquencé par flux, ce qui est juste, mais rien n'imposait de
+  *prouver* un lot avant d'écrire le suivant. Correctif en §0.4 : une porte de validation
+  obligatoire avant tout nouveau lot.
+- **Réserve 2 — le garde-fou du §6 (action 0.6 du lot 0) n'est toujours pas chiffré.** C'est la faille
+  stratégique la plus durable : sans critère écrit et daté, le lot 8 ne se fera jamais et on
+  gardera indéfiniment le double chemin (legacy + neuf), c'est-à-dire exactement la
+  duplication que le chantier prétend supprimer. Les **vues de compatibilité**
+  (`v_match_detail`, `v_match_live`) aggravent ce risque : elles sont conçues comme
+  transitoires mais rien ne les date.
+- **Réserve 3 — la duplication des règles PHP/TS est assumée mais coûteuse.** Elle est
+  justifiée (retour immédiat dans la console, y compris hors ligne), et désormais **tenue par
+  deux suites jumelles** (cf. §4.15) — qui ont immédiatement trouvé deux divergences réelles.
+  Il faut accepter le prix : toute règle modifiée se modifie **deux fois, tests compris**.
+
+**Points où la stratégie était incohérente et qui sont corrigés :**
+
+| Incohérence | Correction |
+|---|---|
+| Le §4.9 et l'étape 3.6 prescrivaient `skipWaiting`/`clients.claim` et un rechargement automatique, en contradiction avec [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md) §2 (bandeau explicite, pas de bascule en pleine saisie) | app4 réaligné sur la spec (*prompt-to-update*) ; §4.9 réécrit. Au passage : `registerType: 'autoUpdate'` **ne peut pas** donner ce comportement, le module force `skipWaiting` — c'est `'prompt'` qu'il faut |
+| `nextPeriod()` portait un paramètre `shootoutEnabled` inatteignable (branche morte) | paramètre retiré des deux implémentations ; la règle (but en or, TB = choix explicite) est nommée par un test |
+| `utils/scoringRules.ts` n'avait aucun test, contre [CLEAN_CODE.md](../guides/CLEAN_CODE.md) | `sources/app4/tests/unit/scoringRules.spec.ts`, 66 cas, miroir du test PHP |
+
+### 0.4 Règle pour la suite : une porte de validation par lot
+
+**Aucun nouveau lot ne démarre avant que le précédent ait tourné pour de vrai.** Chaque étape
+désormais livrée l'est avec, dans [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) :
+
+1. les **commandes exactes** à exécuter (migration, tests, redémarrage de service) ;
+2. les **tests automatisés** correspondants — écrits **avant** le code
+   ([CLEAN_CODE.md](../guides/CLEAN_CODE.md) : TDD) : Vitest pour `utils/` et les critères de
+   rendu des composants, PHPUnit `unit` pour les services purs, PHPUnit `integration` sur
+   fixtures pour les routes ;
+3. un **test fonctionnel numéroté**, avec le résultat attendu observable à l'écran ;
+4. la **trace de ce qui a réellement été exécuté**, et de ce qui ne l'a pas été, sans
+   arrondi.
+
+**Dette à solder en priorité, avant le lot 5 ou 6** (détail et commandes dans la checklist) :
+
+| # | À faire | Pourquoi maintenant |
+|---|---|---|
+| V1 | Appliquer les 4 migrations sur la base de dev, puis `make api2_test` | rien n'a jamais touché une base ; c'est le préalable de tout le reste |
+| V2 | Un match complet à la console sur dev (préparation → clôture → consolidation `kp_*`) | valide les lots 1 et 3 ensemble, et la couture avec `kp_*` |
+| V3 | Vérifier la diffusion : outbox drainée, SSE reçu par la console **et** par l'incrustation | valide le lot 2, dont dépend tout le lot 4 |
+| V4 | Tests d'intégration des routes d'**écriture** du scoring (source active, 409, `tick`) | la porte d'écriture unique est la pièce la plus critique et n'a aucun test |
+| V5 | Tests de rendu des composants de la console sur les critères de la spec | seule la logique pure est couverte |
+| V6 | **Chiffrer le garde-fou 0.6** et **dater** les vues de compatibilité | sans ça, le lot 8 n'arrivera pas |
 
 ---
 
@@ -33,13 +160,14 @@ Trois termes reviennent partout. Ils sont simples ; ils sont juste mal expliqué
 
 On désigne ainsi, dans toute la documentation, le **panneau de score du commerce** installé sur les
 terrains équipés : la console de saisie de la table de marque, sa passerelle réseau, et le
-**protocole fermé** (non documenté publiquement) qu'elle parle. C'est la source de vérité de la
+**protocole fermé** (non documenté publiquement) qu'elle parle. La passerelle expose ce flux en
+**WebSocket STOMP sur le réseau local** (cf. architecture §2.2). C'est la source de vérité de la
 saisie **sur les terrains qui en disposent** — mais tous n'en ont pas, d'où les modes de saisie
 alternatifs.
 
 Ce qu'il faut retenir : c'est un **format externe qu'on subit**. Il ne doit jamais fuiter dans notre
-modèle de données. On le traduit **une seule fois, au plus près de l'entrée**, vers notre propre
-vocabulaire (`but`, `carton`, `chrono démarre`, `chrono s'arrête`).
+modèle de données. On le traduit **une seule fois, côté serveur**, vers notre propre
+vocabulaire (`but`, `carton`, `chrono démarre`, `chrono s'arrête`) — cf. décision §4.7.
 
 ### 1.2 Mercure
 
@@ -48,8 +176,8 @@ actuel fait déjà** — pousser des messages du serveur vers les écrans, en te
 différences pratiques :
 
 - C'est un **logiciel standard** (un « hub »), maintenu par la communauté Symfony. Ce n'est plus un
-  dépôt personnel à maintenir dans le chemin critique. **Où il tourne exactement** — un conteneur à
-  part ou, mieux, embarqué dans le FrankenPHP d'api2 — est tranché au §4.6.
+  dépôt personnel à maintenir dans le chemin critique. Le hub est **embarqué dans le FrankenPHP
+  d'api2** — en place et validé en dev (cf. §4.6).
 - Le navigateur s'y connecte en **SSE** (*Server-Sent Events*) : un WebSocket en plus simple, à
   **sens unique**. Le serveur envoie, l'écran reçoit. Une incrustation n'a jamais besoin de parler
   dans l'autre sens — SSE suffit largement.
@@ -65,7 +193,7 @@ worker qui écrit des fichiers.
 
 | | Aujourd'hui | Demain |
 |---|---|---|
-| **Mécanisme** | un worker recalcule `10842_match_score.json` toutes les N secondes ; l'écran lit le fichier | l'écran appelle `GET /api2/scoring/state/10842` ; **le serveur web garde la réponse en mémoire quelques secondes** (Nginx aujourd'hui, ou Caddy/FrankenPHP après la migration du §4.6) |
+| **Mécanisme** | un worker recalcule `10842_match_score.json` toutes les N secondes ; l'écran lit le fichier | l'écran appelle `GET /api2/scoring/state/10842` ; **le serveur web (Caddy/FrankenPHP) garde la réponse en mémoire quelques secondes** |
 | **Fraîcheur** | dépend de la cadence du worker (risque de fichier périmé) | invalidé par l'état lui-même (`ETag` / `updated_at`) |
 | **À maintenir** | un worker de génération, des fichiers sur disque | rien : une en-tête HTTP |
 
@@ -100,15 +228,15 @@ Tout le reste en découle :
 
 ```mermaid
 flowchart TB
-    HW["Matériel propriétaire<br/>(via relais)"] --> ING
-    MAN["Console Scoring app4<br/>(saisie manuelle)"] --> ING
+    HW["Matériel propriétaire<br/>(via relais Stomp,<br/>serveur ou boîtier)"] --> ING
+    MAN["Console Scoring app4 (PWA)<br/>(saisie directe ou post-match)"] --> ING
     SCO["Mode score seul"] --> ING
     IMP["Import a posteriori"] --> ING
 
     ING["<b>Une seule porte d'entrée</b><br/>api2 — ScoringController étendu"] --> DB[("<b>État complet du match</b><br/>score, période, chronos,<br/>shotclock, pénalités, faits de jeu")]
 
-    DB --> PUB["Publieur<br/>(détecte les changements)"]
-    PUB --> MER(("Mercure"))
+    DB --> PUB["Publieur<br/>(outbox → worker)"]
+    PUB --> MER(("Mercure<br/>(hub embarqué api2)"))
     MER --> INC["<b>Page d'incrustation unique</b><br/>(paramétrée)"]
     DB -->|GET /state au démarrage<br/>+ cache HTTP| INC
     DB -->|supervision| APP4["app4"]
@@ -156,7 +284,8 @@ purement local, à 60 images par seconde, gratuit.
 
 C'est **déjà ce que fait le système actuel** : le relais n'écrit en base qu'au démarrage et à
 l'arrêt du chrono, et l'incrustation interpole localement. La refonte ne fait qu'**étendre ce
-mécanisme au shotclock et aux pénalités**, qui aujourd'hui n'existent que le temps du direct.
+mécanisme au shotclock, aux pénalités et aux pauses inter-périodes**, qui aujourd'hui n'existent
+que le temps du direct (ou pas du tout).
 
 **On ne perd aucune précision — on en gagne :**
 
@@ -165,6 +294,7 @@ mécanisme au shotclock et aux pénalités**, qui aujourd'hui n'existent que le 
 | **Chrono de jeu** | horloge en base, dixième dérivé à l'affichage | **identique**, plus récupérable après un crash |
 | **Shotclock** | jamais écrit — perdu à la moindre coupure | horloge persistée |
 | **Pénalités** | reçues, jamais exploitées | N horloges, liées au joueur |
+| **Pauses inter-périodes** | inexistantes | horloge indicative persistée (cf. §4.10) |
 
 ### 3.2 Une seule page d'incrustation
 
@@ -216,7 +346,7 @@ donc chaque flux par une **URI hiérarchique** événement → terrain → bloc 
 - **Sélection par bloc** : elle ne s'abonne qu'aux **derniers segments** dont elle a besoin. Une
   incrustation « score seul » écoute `.../score` et ignore `.../clock`, `.../shotclock`, etc. C'est
   le « uniquement les flux dont elle a besoin » du §3.2, rendu concret par l'adressage.
-- **Correspondance avec l'écriture** : le **publieur** (étape 2) publie chaque changement d'état sur
+- **Correspondance avec l'écriture** : le **publieur** (lot 2) publie chaque changement d'état sur
   l'URI correspondante — il connaît l'événement, le terrain et le type de donnée depuis la ligne
   d'outbox. Le `topic` de la table `scoring_outbox` **porte cette URI**.
 
@@ -237,14 +367,41 @@ directement des paramètres de la page :
 > Ce mécanisme **remplace** la clé d'échange legacy `event{id}_pitch{p}` du broker actuel (cf.
 > [architecture §6](../reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)) : même idée d'un flux stable par
 > **événement + terrain**, mais portée par les topics Mercure (adressage natif + rejeu) au lieu
-> d'une clé applicative à router à la main.
+> d'une clé applicative à router à la main. Il remplace aussi le mécanisme d'activation par
+> `event{idEvent}_network.json` : plus de fichier de configuration réseau par événement.
+
+### 3.4 La console Scoring app4 : remplaçante unique de la saisie
+
+Côté **écriture manuelle**, la cible est **une seule interface** : la console Scoring d'app4
+(spécifiée en détail dans [PAGE_SCORING.md](../../specs/PAGE_SCORING.md)). Elle remplace :
+
+- la **FeuilleMarque V2** (`sources/admin/FeuilleMarque2.php`) ;
+- la **FeuilleMarque V3** (`sources/admin/FeuilleMarque3.php` + `sources/live/v2/*.php`) ;
+- le **prototype app3** (`sources/app3/`, jamais allé en production) — **supprimé depuis** ; code
+  conservé au tag Git `archive/app3-matchsheet` (voir « Le cas `app3` » plus bas).
+
+Ses caractéristiques structurantes (toutes actées, détail dans la spec) :
+
+- **Deux modes de travail** : **en direct** (table de marque pendant le match) et **post-match**
+  (saisie ou correction après coup). En post-match, chrono, shotclock et scoreboard sont
+  **masqués** — ces blocs sont optionnels et n'ont de sens qu'en live.
+- **PWA installable** dès sa livraison (manifest + service worker + app shell) — cf. §4.9.
+- **Parité fonctionnelle FMV3** (officiels, joueurs, faits de jeu édités, motifs, validation,
+  verrouillage…), le WebSocket broker en moins : la diffusion passe par la stack Mercure.
+- **Prolongations non bornées** (`P1`, `P2`, … `Pn`, but en or) — le plafond legacy de 2
+  prolongations viole le règlement.
+- **Durées paramétrables** : périodes, pauses inter-périodes, prolongations, shotclock, pénalités —
+  d'abord des **valeurs par défaut** centralisées (`ScoringConfig`), **dans un second temps
+  paramétrables au niveau de la compétition** (lot 6).
+- **Toutes les actions tracées** dans `kp_journal` (déjà implémenté pour les endpoints existants).
 
 ---
 
-## 4. Les décisions déjà tranchées
+## 4. Les décisions actées
 
 C'étaient les seuls points réellement difficiles. Ils sont **actés avant tout code** ; le reste est
-de l'exécution.
+de l'exécution. Les décisions §4.7 à §4.12 ont été tranchées le **2026-07-23**, les §4.13 et
+§4.14 (et les compléments datés dans les sections précédentes) le **2026-07-27**.
 
 ### 4.1 Qui a le droit d'écrire : une seule source à la fois
 
@@ -282,12 +439,20 @@ Le live et les résultats sont **deux mondes distincts** :
 Conséquence directe : **le reporting existant n'est jamais impacté** par l'expérimentation, et il n'y
 a **aucune double écriture à maintenir** pendant la transition.
 
+> ⚠️ **Un cas à traiter quand même (2026-07-27)** : certains consommateurs de `kp_*` affichent le
+> **déroulement du match en cours** (le legacy écrit `kp_match_detail` en live) — le PDF
+> **`FeuilleMatchMulti.php`** imprimé pendant un match et **app2** (détail public des matchs). Une
+> fois la saisie basculée sur `scoring_live_*`, ils ne verront plus rien avant la consolidation de
+> fin de match. Leur **évolution** (lecture de l'état live via `GET /scoring/state` / Mercure) est
+> planifiée au **lot 4** (étape 4.4) et conditionne la bascule des terrains où cet affichage « en
+> cours » est utilisé.
+
 ### 4.4 Un relais non surveillé a besoin de son propre mot de passe
 
 `/admin/scoring/*` est aujourd'hui protégé par une authentification conçue pour des **humains**. Un
-boîtier laissé seul dans un gymnase exige un **identifiant machine** : jeton limité à **un événement
-et un terrain**, valable le temps de l'événement, révocable depuis app4. À spécifier **avant** tout
-déploiement de matériel.
+relais qui tourne seul (boîtier dans un gymnase **ou** processus côté serveur) exige un
+**identifiant machine** : jeton limité à **un événement et un terrain**, valable le temps de
+l'événement, révocable depuis app4. À spécifier **avant** tout déploiement de matériel (lot 5).
 
 ### 4.5 Nommage : « v2 » est banni
 
@@ -295,171 +460,616 @@ Ce nom désigne **déjà deux choses** dans la base de code (`sources/live/v2/*.
 V2) ; un troisième sens garantirait la confusion. Les nouveaux éléments sont nommés par leur **rôle** :
 `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`.
 
-### 4.6 Où tourne le hub Mercure : dans api2, pas à côté
+### 4.6 Où tourne le hub Mercure : dans api2 — **fait**
 
-> Cette décision **remplace** la formulation « un hub qu'on installe à côté d'api2 » du §1.2. Elle est
-> analysée en détail dans
-> [FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md).
+La question « conteneur `dunglas/mercure` séparé ou hub embarqué dans FrankenPHP ? » est **résolue
+par les faits** : la migration FrankenPHP d'api2 est **réalisée** (cf.
+[FRANKENPHP_MIGRATION_ANALYSIS.md](../reference/FRANKENPHP_MIGRATION_ANALYSIS.md) et CLAUDE.md).
+Cette décision **remplace** la formulation « un hub qu'on installe à côté d'api2 » du §1.2.
+Le hub Mercure est **embarqué dans le conteneur FrankenPHP d'api2** (directive du Caddyfile),
+exposé sur `https://kpi.localhost/api2/.well-known/mercure`, avec `symfony/mercure-bundle`
+installé (publication via `HubInterface`) et un banc de test dans app4 (Operations → Mercure).
 
-Le §1.2 présentait Mercure comme « un logiciel standard qu'on installe **à côté** d'api2 ». C'est vrai
-avec l'infrastructure Apache actuelle : il faudrait alors un **conteneur Mercure séparé** (l'image
-officielle `dunglas/mercure`), avec sa propre configuration, son propre TLS interne et ses propres
-labels Traefik.
-
-Mais la trajectoire d'infrastructure d'api2 croise directement ce besoin. L'audit FrankenPHP propose
-d'**extraire api2 dans un conteneur FrankenPHP** en mode worker (pour les performances de l'API). Or
-**FrankenPHP embarque un hub Mercure natif** : le hub n'est plus un service à déployer et à maintenir
-à part, c'est une **directive du Caddyfile** du conteneur api2. C'est le même binaire qui sert l'API
-et diffuse les faits de jeu.
-
-**Conséquence pour cette refonte :**
-
-| | Sans FrankenPHP (Apache) | Avec FrankenPHP (recommandé) |
-|---|---|---|
-| Le hub Mercure | conteneur `mercure` dédié | **directive Caddyfile dans api2** — rien à déployer en plus |
-| Le cache HTTP du §1.3 | supposait Nginx | **fourni par Caddy/FrankenPHP** — même mécanisme, même conteneur |
-| Surface à exploiter | 1 conteneur de plus | **0 conteneur de plus** |
-| TLS interne du hub | à configurer | Traefik termine déjà le TLS ; le hub écoute en HTTP interne |
+| | État |
+|---|---|
+| Hub Mercure embarqué (dev) | ✅ en place, validé |
+| `MERCURE_URL` / `MERCURE_PUBLIC_URL` / `MERCURE_JWT_SECRET` | ✅ configurés (dev) |
+| Validation preprod/prod FrankenPHP + hub | ⬜ **à faire** (prérequis du lot 2 en production, pas du développement) |
 
 **Ce que ça ne change pas.** Mercure reste Mercure : SSE, rejeu natif des messages ratés, canal
-séparé de l'actuel (étape 2). Le protocole vu par l'incrustation (étape 3) est **identique** quel que
-soit l'hôte du hub. Cette décision ne porte que sur **où le hub s'exécute**, pas sur ce qu'il fait.
+séparé de l'actuel. Le protocole vu par l'incrustation est indépendant de l'hôte du hub.
 
-**Ordre des chantiers.** La migration FrankenPHP d'api2 est un **prérequis souhaitable mais non
-bloquant** de l'étape 2 :
+### 4.7 Le relais matériel : un seul composant, deux déploiements — le boîtier est optionnel
 
-- Si FrankenPHP est en place **avant** l'étape 2, le hub Mercure est simplement activé dans le
-  Caddyfile existant — coût quasi nul.
-- Sinon, l'étape 2 démarre avec un conteneur `dunglas/mercure` provisoire, remplacé plus tard par le
-  hub natif lors de la bascule FrankenPHP. Le canal et le code de publication (la table `scoring_outbox`
-  et son worker) sont **inchangés** : seule l'URL du hub bouge, dans une variable d'environnement.
+**Réponse fournisseur obtenue : la passerelle n'accepte que des connexions entrantes** (elle expose
+un serveur WebSocket STOMP sur le LAN, elle n'initie rien vers Internet). **Mais**, selon le site,
+le réseau local peut être — ou non — rendu accessible depuis Internet par une **redirection de
+port** vers la passerelle.
 
-> ⚠️ **Ne pas conditionner l'étape 2 à la migration FrankenPHP.** L'état canonique (étape 1) et la
-> diffusion (étape 2) restent le cœur du sujet ; l'hôte du hub est un **détail d'infrastructure**
-> qu'on peut faire converger après coup. La boussole du §3 s'applique : le tuyau est secondaire.
+La conséquence est une architecture **à un seul composant, deux modes de déploiement** :
+
+| Mode | Où tourne le relais | Quand |
+|---|---|---|
+| **Relais serveur** | processus côté serveur KPI, qui se connecte **en sortant** au WS STOMP de la passerelle via la redirection de port du site | site dont le réseau est configurable (port forwarding possible) |
+| **Boîtier local** | mini-PC sur le LAN du terrain, démarre au boot, se relance seul, tampon local + rejeu en cas de coupure Internet | site sans accès configurable (Wi-Fi captif, réseau fermé) — **le boîtier est optionnel, décidé site par site** |
+
+**Dans les deux cas, le relais fait le moins possible** (c'est le même code) :
+
+- il se **connecte au WebSocket STOMP** de la passerelle (remplaçant ainsi l'onglet `app_wsm`) ;
+- il **transmet les messages bruts** vers api2, en **filtrant le tic-tac des chronos** (il ne
+  garde que les démarrages et les arrêts) ;
+- il **ne traduit pas** et **ne décide pas** quel match est en cours. La **traduction du protocole
+  propriétaire et l'aiguillage du match vivent côté serveur**, à un seul endroit, versionnés avec le
+  reste du code et testables par les fichiers de référence (lot 1).
+
+**Pourquoi ce partage.** Si le relais traduisait, la logique métier serait dupliquée sur chaque
+boîtier de la flotte, à mettre à jour à distance — exactement la complexité qu'on cherche à
+supprimer. Le boîtier devient un quasi-firmware : on n'y touche plus jamais. Et comme le relais
+serveur exécute **le même code** que le boîtier, un site qui perd sa redirection de port bascule
+sur boîtier sans rien changer d'autre.
+
+**Au kit du boîtier** : synchronisation NTP (obligatoire, cf. §4.2) et une **clé 4G de secours** —
+les Wi-Fi captifs et le filtrage sortant existent dans les gymnases.
+
+### 4.8 La console Scoring remplace FMV2, FMV3 et app3
+
+Acté (détail au §3.4 et dans [PAGE_SCORING.md](../../specs/PAGE_SCORING.md)) : la console Scoring
+d'app4 est l'unique interface de saisie cible, en **direct comme en post-match**. Pendant la
+transition, les liens V2/V3 **restent en place** à côté du lien Scoring (cohabitation, cf. spec
+§6.1) ; leur retrait relève du lot 8 (ménage), conditionné au garde-fou du §6.
+
+### 4.9 PWA : installable d'abord, offline complet ensuite
+
+La console Scoring est une **PWA installable dès sa livraison** : manifest + service worker +
+mise en cache de l'app shell (elle s'installe sur la tablette de la table de marque et démarre
+même sans réseau). La **saisie reste online-first** dans un premier temps ; la **file d'écritures
+offline** (IndexedDB + resynchronisation) est un lot dédié de fin de chantier (lot 7) — on ne
+complexifie pas le MVP avec de la synchro bidirectionnelle.
+
+**Exigence associée (2026-07-27, révisée le 2026-10-17) : jamais d'app shell périmé.**
+L'utilisateur doit bénéficier de la dernière version déployée sans écran blanc ni chunk
+manquant. Le **comment** n'appartient pas à ce plan : il est spécifié une fois pour app2 **et**
+app4 dans [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md), que ce lot applique.
+
+> ⚠️ **Correction d'une décision de ce document.** La rédaction du 2026-07-27 prescrivait une
+> activation immédiate (`skipWaiting`/`clients.claim`) et un rechargement automatique. C'est
+> **écarté** : sur une console de saisie, un rechargement surprise en plein fait de jeu est
+> pire que l'app shell périmé qu'il évite. Le pattern retenu est le ***prompt-to-update*** du
+> §2 de la spec — le nouveau service worker **attend** le clic sur « Recharger » (bandeau
+> `PwaUpdatePrompt`), avec re-vérification au chargement, au retour au premier plan, au retour
+> en ligne et toutes les 60 minutes.
+>
+> Piège technique à ne pas réintroduire : `registerType: 'autoUpdate'` **force**
+> `skipWaiting`/`clientsClaim` dans le `sw.js` généré dès que `client.registerPlugin` est actif,
+> quelles que soient les options `workbox`. C'est `registerType: 'prompt'` qu'il faut — vérifié
+> sur le worker généré.
+
+La fraîcheur des assets repose aussi sur un `buildId` par build (`/_nuxt/v<ts>/`), ce qui
+suppose un **déploiement non destructif** (cf. §6 de la spec) : un client encore sur l'ancien
+build ne doit pas voir ses chunks disparaître.
+
+### 4.10 Horloges : pauses inter-périodes, pas de temps morts d'équipe
+
+Le modèle d'horloges (§3.1) couvre, en plus du chrono de jeu, du shotclock et des pénalités, les
+**pauses entre périodes** — des décomptes **indicatifs** (repère pour l'arbitre, jamais bloquants) :
+
+| Pause | Durée par défaut |
+|---|---|
+| Entre M1 et M2 (mi-temps) | **3 min** |
+| Entre M2 et P1 (avant prolongations) | **3 min** |
+| Entre chaque prolongation (P1→P2, P2→P3, …) | **1 min** |
+
+Le **buzzer** signale la fin de période **et la fin de pause** (signal de reprise). Ces durées
+sont des valeurs par défaut de `ScoringConfig`, **paramétrables par compétition dans un second
+temps** (lot 6). **Il n'y a pas de temps mort d'équipe** en kayak-polo : rien à modéliser de ce
+côté.
+
+### 4.11 Shotclock (chronomètre de tir) : trois commandes, le départ EST un reset
+
+**Terminologie (2026-07-27)** : la traduction française de *shotclock* est **« chronomètre de
+tir »** — ne plus employer « temps d'action de but » ni « temps d'action de jeu » dans l'UI et la
+documentation.
+
+Comportement acté 2026-07-27 (détail UI dans la spec §6.5) — **exactement trois commandes** :
+
+- **Départ/reset 60 s** : charge 60 s **et lance** le décompte (engagement, nouvelle possession).
+  **Indépendant du chrono principal** : le démarrage du chrono ne lance jamais le shotclock ; en
+  début de période il reste à `--` tant qu'aucune équipe n'a pris la possession.
+- **Départ/reset 40 s** : charge 40 s **et lance** le décompte (rebond offensif). **Actif
+  d'emblée** dans le nouveau système (cf. §4.14).
+- **Arrêt** : **ce n'est pas une pause** — retour à l'affichage `--` et à l'**état initial**, en
+  attente d'un nouveau départ 60 s ou 40 s.
+
+Une fois lancé, le shotclock **suit le chrono principal** (arrêt du chrono ⇒ suspension
+automatique, reprise ⇒ reprise) : c'est la seule « pause » existante, et elle est automatique.
+Trois états en tout : **arrêté** (`--`), **en décompte**, **suspendu par le chrono**.
+
+**Raccourcis clavier paramétrables** (préférence par poste/utilisateur), avec ces défauts :
+
+| Action | Touche par défaut |
+|---|---|
+| Chrono principal : départ / arrêt | `Espace` |
+| Shotclock : **départ/reset 60 s** | `+` |
+| Shotclock : **départ/reset 40 s** | `-` |
+| Shotclock : **arrêt** (retour `--`) | `*` |
+
+> Revu le 2026-11-08 (spec PAGE_SCORING §0.13) : `Entrée` / `.` / `0` abandonnés, ils servent à la
+> saisie des faits et du n° du joueur ; plus de touche ±1 s pour le shotclock (clic sur le décompte).
+
+### 4.12 Les durées viennent de `ScoringConfig`, puis de la compétition
+
+**Aucune constante de durée éparpillée.** Toutes les valeurs réglables (durées de période, de
+prolongation, de pauses, de shotclock 60/40, de pénalité, options but-en-or/TB/arrêt-sur-but…)
+vivent dans un objet unique `ScoringConfig` avec des valeurs par défaut (spec §6.2). **Dans un
+second temps** (lot 6), ces réglages sont portés par la **compétition** et hydratent
+`ScoringConfig` — sans changer aucun point d'appel, le défaut restant le fallback.
+
+**Correction 2026-07-27** : la durée des prolongations est de **5 minutes** dans les règlements
+ICF **et** FFCK (l'ancienne mention « FFCK = 3 min » était erronée). Défaut `P{n}` = 300 s.
+
+### 4.13 Identifiants : les clés legacy restent en int, l'uid est additif
+
+Question posée (offline, import de matchs) : faut-il passer l'id du match en uid court, et les
+horloges en UUID ?
+
+- **`kp_match.Id_match` (int) est conservé.** Il est partout dans le legacy : clés étrangères
+  (`kp_match_detail`, `kp_match_joueur`, `kp_chrono`…), URLs (`FeuilleMarque3.php?id=…`), noms de
+  fichiers de cache (`{idMatch}_match_score.json`), réponses des deux API. Le remplacer serait une
+  migration massive à risque pour un bénéfice nul côté legacy.
+- **Un `uid` public court, additif**, est ajouté au match (colonne nullable unique, générée à la
+  création — type nanoid court). Le legacy l'ignore (zéro impact) ; les usages futurs — création
+  **hors ligne**, **import de matchs**, adressage public — passent par lui, avec correspondance
+  `uid ↔ id` côté serveur. À poser au lot 1 (migration) pour ne pas re-migrer ensuite.
+- **`scoring_live_clock` passe en PK UUID** (généré par l'émetteur : console ou relais) — table
+  neuve, **aucun impact legacy**, et l'idempotence/création hors ligne sont gratuites.
+  `scoring_live_event.uid` (généré client) existait déjà dans le cadrage.
+
+### 4.14 Règlement 2027 appliqué d'emblée : carton noir et shotclock 40 s
+
+Le nouveau système de scoring sera mis en place en **2027, sur le nouveau règlement**. Deux
+conséquences immédiates dans la console et le modèle — **sans toucher au legacy**, qui reste sur
+l'ancien règlement jusqu'à la fin de saison 2026 :
+
+- Le carton `D` devient le **« carton d'exclusion définitive »** (EN : *Ejection card*), de
+  couleur **noire** (UI, i18n, historique) — l'appellation « rouge définitif » disparaît du
+  nouveau système. Le code `D` est conservé en base (compat).
+- Le **départ/reset 40 s** du shotclock (rebond offensif) est **actif par défaut**
+  (`shotclockOffensiveReboundEnabled = true`).
+
+La **progression des cartons** est précisée au passage (spec §7.4) : ordre vert → jaune → rouge,
+un 2ᵉ/3ᵉ carton ne peut être identique ou inférieur au précédent, un jaune ou un rouge peut être
+le premier carton, l'exclusion définitive est applicable à tout moment.
+
+**Pénalités (correctif réglementaire 2026-07-29, cf. spec §0.10)** :
+
+- **`V`/`J`** : pénalité de 2 min, **levée sur but encaissé** (confirmation opérateur) ou à
+  l'expiration — le **joueur revient** ;
+- **`R`** : pénalité de 2 min **qui va toujours à son terme**, même si un ou plusieurs buts
+  sont encaissés ; **remplacement uniquement à l'issue** (le joueur sanctionné ne revient
+  jamais) ;
+- **`D` (noir)** : **aucune pénalité de 2 min** — exclusion immédiate et définitive, **aucun
+  remplacement jusqu'à la fin du match** : l'équipe termine à effectif réduit.
+
+### 4.15 Les règles de jeu existent deux fois — et deux suites jumelles l'encadrent
+
+Les règles pures (périodes, prolongations, cartons, pénalités, chronomètre de tir) sont écrites
+**deux fois** :
+
+| Où | Rôle |
+|---|---|
+| `sources/api2/src/Scoring/ScoringRules.php` | **autorité** : c'est le serveur qui valide et persiste |
+| `sources/app4/utils/scoringRules.ts` | **retour immédiat** dans la console, sans aller-retour réseau — et plus tard hors ligne (lot 7) |
+
+C'est une entorse assumée au DRY : la seule alternative serait de faire valider chaque frappe
+par le serveur, ce qui est inacceptable à la table de marque. **Le prix est explicite** :
+
+- toute règle ajoutée ou modifiée se modifie **des deux côtés**, tests compris ;
+- les deux suites de tests portent les **mêmes cas métier** et sont tenues en miroir :
+  `sources/api2/tests/Unit/Scoring/ScoringRulesTest.php` ↔
+  `sources/app4/tests/unit/scoringRules.spec.ts` ;
+- en cas de désaccord entre les deux implémentations, **c'est PHP qui a raison** (c'est la base
+  qui tranche), et le front se réaligne.
+
+Ce dispositif n'est pas théorique : écrit le 2026-10-17, le miroir TypeScript a immédiatement
+révélé deux divergences réelles (commande de shotclock inconnue silencieusement ignorée côté TS,
+et un paramètre `shootoutEnabled` inatteignable des deux côtés).
 
 ---
 
-## 5. La trajectoire
+## 5. Le plan d'action
 
-> **Règle de découpage : par flux, pas par date.** N'attends pas que les 5 étapes soient finies pour
+> **Règle de découpage : par flux, pas par date.** N'attends pas que tous les lots soient finis pour
 > basculer quoi que ce soit — ce serait un big-bang qui ne bascule jamais. Dès qu'une incrustation
 > marche (le bandeau score, disons), tu la bascules **elle**, sur **un** terrain, **un** week-end.
 > Les autres restent sur l'ancien. Tu apprends en réel sans tout risquer.
 
-### Étape 1 — La base porte l'état complet
+### Vue d'ensemble
 
-**Ce qu'on fait.** Nouvelles tables `scoring_live_*`. On **étend le `ScoringController` d'api2 qui
-existe déjà** (mêmes routes `/admin/scoring/*`, même authentification, même journalisation) pour
-qu'il porte **tout** ce qui manque : shotclock, pénalités, chronos complets.
+| Lot | Contenu | Dépend de | Correspondance spec |
+|---|---|---|---|
+| **0** | Fondations & actions immédiates | — | — |
+| **1** | L'état canonique en base (`scoring_live_*` + routes api2 complètes) | 0 | PAGE_SCORING §0.2, §0.5 |
+| **2** | Diffusion Mercure (outbox → worker → hub) | 1 | PAGE_SCORING §0.3 |
+| **3** | Console Scoring app4 complète (direct + post-match, PWA) | 1 (partiellement parallèle) | PAGE_SCORING §6–§8 (Phases 1–2 + PWA) |
+| **4** | Page d'incrustation unique + consommateurs `kp_*` en cours de match | 2 | [PAGE_INCRUSTATION.md](../../specs/PAGE_INCRUSTATION.md) |
+| **5** | Relais matériel (serveur ou boîtier) | 1, 2 | PAGE_SCORING §6.5 (Hardware Scoring) |
+| **6** | Paramétrage par compétition | 3 | PAGE_SCORING §6.2 (cible ScoringConfig) |
+| **7** | Offline complet (file d'écritures PWA) | 3 | PAGE_SCORING §8 (Phase 4) |
+| **8** | Le ménage | 3, 4, 5 + garde-fou | — |
+| **9** | Zéro papier — responsable d'équipe (profil 7) | 3, 6 | PAGE_SCORING §1 |
 
-**Pourquoi étendre plutôt que créer à côté.** api2 est neuf, authentifié et journalisé, et la console
-Scoring d'app4 y est **déjà branchée**. Créer un contrôleur parallèle obligerait à re-migrer la
-console juste après sa livraison, et ajouterait un **quatrième** chemin d'écriture aux trois
-existants. L'isolation « module parallèle » se justifie vis-à-vis du **legacy PHP**, pas à l'intérieur
-d'api2.
+L'**écriture d'abord** : le lot 1 conditionne tout le reste. Les lots 3 et 4 peuvent avancer en
+parallèle dès que les lots 1 et 2 fournissent leurs contrats (routes + topics).
+
+---
+
+### Lot 0 — Fondations & actions immédiates
+
+**Objectif.** Solder ce qui conditionne les autres lots sans écrire de code métier.
+
+| # | Étape | Livrable |
+|---|---|---|
+| 0.1 | ~~Question fournisseur passerelle~~ | ✅ **Fait** — entrant uniquement, port forwarding selon site (§4.7) |
+| 0.2 | ~~Hub Mercure~~ | ✅ **Fait** en dev — hub embarqué FrankenPHP (§4.6) |
+| 0.3 | Valider FrankenPHP + hub Mercure en **preprod puis prod** | environnement prêt pour le lot 2 en réel (`MERCURE_JWT_SECRET`, `api2_restart`, checklist de l'audit FrankenPHP) |
+| 0.4 | Mettre à jour [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) avec les décisions §4.7–§4.12 | spec alignée (fait en même temps que ce document) |
+| 0.5 | **Enregistrer de vraies sessions matériel** au prochain événement équipé : messages STOMP entrants bruts + écritures produites par le relais actuel | fichiers de référence du lot 1/5 — **la seule protection réaliste sur un format fermé** ; à planifier dès maintenant (dépend du calendrier des événements) |
+| 0.6 | Fixer le **garde-fou chiffré** du ménage (§6) | critère écrit et daté |
+
+**Critère de sortie.** Fichiers de référence en cours de collecte, preprod/prod validés FrankenPHP,
+spec et plan alignés.
+
+---
+
+### Lot 1 — L'état canonique en base
+
+**Objectif.** La base porte l'état complet du match ; api2 est la seule porte d'entrée, avec
+**toutes** les routes nécessaires au scoring.
 
 **Ce qu'on ne touche pas.** `/api/wsm/*`, les fichiers `sources/live/v2/*.php`, le cache JSON, les
 incrustations actuelles. Ils restent la voie de production.
 
-**Comment on se protège des régressions.** Le protocole du matériel propriétaire n'est pas documenté.
-On enregistre donc de **vraies sessions** de messages entrants, et les écritures que le relais actuel
-produit en réponse. Ces paires deviennent des **fichiers de référence** : la nouvelle traduction doit
-les reproduire **à l'identique** avant toute amélioration. C'est la seule protection réaliste sur un
-format fermé.
+| # | Étape | Détail |
+|---|---|---|
+| 1.1 | **Tables** `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox` | schéma cadré dans PAGE_SCORING §0.5 (migration Doctrine) ; `scoring_live_clock` inclut les horloges de **pause inter-périodes** (§4.10) et a une **PK UUID** (§4.13) ; la même migration ajoute le **`uid` public additif** du match (§4.13) |
+| 1.2 | **Machine à états du match** (statuts, périodes `P{n}` non bornées, transitions, règles cartons/pénalités, but en or) | logique pure, **développée test-first** (sans base ni réseau) |
+| 1.3 | **Re-routage SQL du `ScoringController`** : `gameParam`/`gameEvent`/`gameTimer`/`playerStatus` écrivent dans `scoring_live_*` (endpoints et payloads inchangés → l'UI existante ne bouge pas) | cf. PAGE_SCORING §0.2 |
+| 1.4 | **Extension horloges** : `gameTimer` généralisé aux N horloges (`GAME`, `SHOTCLOCK`, `PENALTY` ×4, `BREAK`) — le modèle validé sur `kp_chrono` se transpose et s'étend | résout « shotclock/pénalités perdus à la reprise » |
+| 1.5 | **Routes manquantes** à ajouter au contrôleur : | |
+| | `GET /scoring/state/{matchId}` | état complet (state + clocks + events), `ETag`/`updated_at` pour le cache HTTP — consommé par incrustation, reprise console, supervision |
+| | `PUT /scoring/source/{matchId}` | **promotion de la source active** (§4.1), horodatée, journalisée |
+| | `PUT /scoring/officials/{matchId}` | édition des officiels (parité FMV3, spec §7.8 — n'existe pas encore dans api2) |
+| | recharge des présents / charge par n° court | vérifier l'existant (`presence`, `getShortGame`) et compléter côté `/admin/scoring` si absent |
+| 1.6 | **Consolidation fin de match** : au passage `Statut → END`, un service api2 recopie l'état live vers `kp_*` (seul moment où le Scoring écrit `kp_*`) | cf. §4.3, PAGE_SCORING §0.2 |
+| 1.7 | **Journal** : toutes les nouvelles routes tracées dans `kp_journal` via `AdminLoggableTrait` (comme l'existant) | §3.4 |
+| 1.8 | **Fichiers de référence** (issus de 0.5) rejoués contre la nouvelle traduction : reproduction **à l'identique** avant toute amélioration | protection anti-régression du format fermé |
 
-**Livrables.** Tables + routes + machine à états (développée en test-first : c'est de la logique pure,
-sans base ni réseau) + fichiers de référence + la table de sortie (`scoring_outbox`, voir étape 2).
+**Livrables.** Tables + migration ; machine à états testée ; contrôleur complet re-routé ;
+consolidation ; fichiers de référence intégrés aux tests.
+
+> **Suivi d'exécution (2026-07-27) — première tranche livrée :**
+> - ✅ 1.1 — migration SQL écrite (`SQL/migrations/2026-07-27_scoring_live_tables.sql`, PK UUID
+>   horloges + `kp_match.uid` additif) — **à exécuter en dev** ;
+> - ✅ 1.3 — `ScoringController` re-routé vers `scoring_live_*` via le nouveau
+>   `ScoringLiveService` (endpoints/payloads inchangés ; transition : seed depuis `kp_*` au
+>   premier contact, fallback lecture legacy) ;
+> - ✅ 1.4 — `gameTimer` généralisé aux N horloges (`kind`/`team`/`slot`, GAME par défaut) ;
+> - ✅ 1.5 (partiel) — `GET /state` (ETag = tick), `PUT /source` (promotion §4.1, garde
+>   « source active » sur toutes les écritures) et `PUT /officials` (édition des officiels,
+>   parité FMV3) livrés ; **recharge des présents / charge par n° court : à vérifier contre
+>   l'existant presence** ;
+> - ✅ 1.6 — consolidation `kp_*` au passage `Statut → END` (état + reconstruction
+>   `kp_match_detail` depuis les faits live) ;
+> - ✅ 1.7 — journal `kp_journal` sur toutes les routes (y c. rejets de source et
+>   consolidation) ; l'outbox est alimentée à chaque écriture (le worker qui la draine =
+>   lot 2) ;
+> - ✅ 1.2 — règles pures livrées **test-first** : `src/Scoring/ScoringRules.php` (périodes
+>   `P{n}` non bornées + but en or, durées et pauses, progression des cartons 2027,
+>   pénalités et levée sur but encaissé, machine à états shotclock 3 commandes) ;
+>   **`tests/Unit/Scoring/ScoringRulesTest.php`** — PHPUnit, suite `unit` (59 cas,
+>   73 assertions), bloquante en CI via `composer test-unit`. *(Livré d'abord comme runner
+>   autonome faute de test pack dans api2 ; converti dès que PHPUnit est arrivé sur
+>   `develop`.)*
+> - ⬜ 1.8 (fichiers de référence matériel, dépend de 0.5).
+>
+> Détail d'implémentation dans [PAGE_SCORING.md §12](../../specs/PAGE_SCORING.md).
+
+**Critère de sortie.** Un match complet (direct puis correction post-match) saisi via les routes
+api2 aboutit à un état `scoring_live_*` cohérent, consolidé dans `kp_*` à la clôture, chaque action
+journalisée — l'existant legacy intact.
 
 ---
 
-### Étape 2 — Mercure diffuse cet état
+### Lot 2 — Mercure diffuse cet état
 
-**Ce qu'on fait.** Un petit service serveur détecte les changements en base et les pousse sur Mercure,
-**sur un canal séparé** de l'actuel — donc sans perturber les incrustations de production.
+**Objectif.** Chaque changement d'état est publié sur le topic Mercure correspondant, **sur un canal
+séparé** de l'actuel — sans perturber les incrustations de production.
 
-**Où tourne le hub.** Voir §4.6 : le hub Mercure est **embarqué dans le conteneur FrankenPHP d'api2**
-si la migration d'infrastructure est faite, sinon un conteneur `dunglas/mercure` provisoire.
-Cette étape ne dépend **pas** de ce choix — seule l'URL du hub change, dans une variable d'env.
-
-**Le mécanisme (table de sortie).** Quand api2 écrit un changement d'état, il dépose **dans la même
-transaction** une ligne dans une table `scoring_outbox`. Un worker draine cette table et publie sur
-Mercure. **Chaque ligne porte le topic de destination** — l'URI événement/terrain/bloc du §3.3
-(ex. `/scoring/event/236/pitch/2/score`) — que le worker utilise comme adresse de publication : c'est
-ce qui garantit que le message n'atteint que les incrustations abonnées à **ce** terrain de **cet**
-événement.
-
-> ⚠️ **Pourquoi une table intermédiaire plutôt que publier directement dans la requête HTTP ?**
-> Si Mercure est lent ou en panne, l'écriture de l'état ne doit **jamais** être bloquée ni perdue —
-> la base est prioritaire. On écrit donc l'état **et** le message à diffuser dans **une seule
-> transaction** : soit les deux, soit aucun. La diffusion réelle se fait **après**, hors du chemin
-> critique, et se **rejoue** si Mercure était tombé.
-
-**Quel worker.** On **étend le worker api2 existant** (`app:event-cache-worker`), qui a déjà son
-modèle supervisé. On n'ajoute **pas** Symfony Messenger : ce serait un **deuxième modèle de worker à
-exploiter** à côté du premier, pour quelques messages par seconde sur 5 terrains. Drainer une petite
-table, c'est une requête et une boucle.
+| # | Étape | Détail |
+|---|---|---|
+| 2.1 | **Outbox transactionnelle** : chaque écriture d'état dépose, dans la même transaction, une ligne `scoring_outbox` (topic URI §3.3 + payload + tick) | si Mercure est lent ou tombé, l'écriture d'état n'est ni bloquée ni perdue ; le message se rejoue |
+| 2.2 | **Worker** : étendre le worker api2 existant (`app:event-cache-worker`) pour drainer l'outbox et publier via `HubInterface` | **pas** de Symfony Messenger — pas un deuxième modèle de worker à exploiter pour quelques messages par seconde |
+| 2.3 | **Cache HTTP** sur `GET /scoring/state/{id}` (Caddy/FrankenPHP, `ETag`) | remplace le cache JSON pour les nouveaux consommateurs |
+| 2.4 | **Banc de validation** : page de test (app4, banc Mercure existant) abonnée aux topics d'un terrain, comparée au flux legacy sur un match réel | preuve avant d'écrire l'incrustation |
 
 **Ce qui disparaît par rapport au plan initial.** Le mécanisme de numéro de version + détection de
 trous + demande de resynchronisation, qu'il aurait fallu coder à la main : **Mercure le fournit
-nativement.**
+nativement** (`Last-Event-ID`).
+
+**Critère de sortie.** Un match saisi via la console fait apparaître ses changements sur les topics
+Mercure, avec rejeu correct après coupure simulée de l'abonné et après coupure simulée du hub.
+
+> **Suivi d'exécution (2026-07-27) :**
+> - ✅ 2.1 — outbox transactionnelle livrée au lot 1 (`ScoringLiveService::deposit`).
+> - ✅ 2.2 — `ScoringOutboxPublisher` (drainage **ordonné par id, stoppé à la première
+>   erreur** — un message ne double jamais un échec —, at-least-once : marquage
+>   `published_at` après acceptation par le hub, dédup côté abonnés par `tick` ; `id` SSE
+>   `urn:kpi:scoring:{id}`, `type` SSE = `payload.type` ; purge bornée des lignes publiées
+>   > 60 min). Intégré à `app:event-cache-worker` : **drainage toutes les ~1 s** (sommeil
+>   découpé), y compris **sans aucune config événement active**, cadence du cache inchangée.
+>   **Correctif d'infra inclus** : les conteneurs `event-cache-worker` (dev/preprod/prod)
+>   reçoivent `MERCURE_URL=http://api2/.well-known/mercure` + `MERCURE_JWT_SECRET` — le
+>   `.env` monté pointe `localhost`, qui n'est valide que depuis le conteneur api2.
+> - ✅ 2.3 (partiel) — `ETag` = tick sur `GET /state` (lot 1) ; la mise en cache Caddy
+>   côté FrankenPHP reste optionnelle (à évaluer quand l'incrustation consommera l'état).
+> - ⬜ 2.4 — banc de validation en réel (saisie console → banc Mercure app4, coupures
+>   simulées) : nécessite la base + le hub en dev.
 
 ---
 
-### Étape 3 — La page d'incrustation unique
+### Lot 3 — La console Scoring app4, complète
 
-**Ce qu'on fait.** Une page qui lit `GET /state` au démarrage (servi par cache HTTP), puis s'abonne à
-Mercure sur les **topics ciblés événement + terrain + blocs** (§3.3) — donc uniquement le flux de
-**son** terrain de **son** événement, et uniquement les blocs qu'elle affiche (§3.2). C'est
-l'abonnement ciblé qui évite tout conflit quand plusieurs événements tournent en même temps.
+**Objectif.** Finir la console (spec [PAGE_SCORING.md](../../specs/PAGE_SCORING.md)) comme
+**remplaçante de FMV2/FMV3/app3**, en direct et en post-match, PWA installable.
 
-**Ce qu'elle remplace.** Toute la famille des ~20 pages PHP, et à terme `app_live_dev`.
+État : Phase 0 ✅, Phase 1 largement avancée (voir spec §12). Reste, dans l'ordre :
 
-**On valide en parallèle.** Les anciennes incrustations continuent de tourner sur le cache JSON et
-l'ancien broker. On branche la nouvelle page sur un terrain, et on compare.
-
----
-
-### Étape 4 — On remplace l'onglet WSM
-
-**C'est le plus gros morceau, et il ne peut venir qu'après l'étape 1.** Tant que l'état n'est pas
-canonique en base, déplacer le relais ne ferait que **déménager la fragilité**.
-
-**Deux voies possibles**, à trancher quand on aura la réponse à la question ci-dessous :
-
-| Voie | Principe | Condition |
+| # | Étape | Détail (renvois spec) |
 |---|---|---|
-| **Boîtier local** | un mini-PC posé près des terrains, sur le réseau local, remplace l'onglet. Il démarre au boot, se relance seul, et **encaisse les coupures Internet** grâce à un tampon local qu'il rejoue ensuite. | aucune — c'est la voie par défaut |
-| **Relais serveur** | la passerelle du matériel parle **directement** au serveur KPI ; plus rien à déployer sur le terrain. | ⚠️ **il faut que le matériel puisse émettre vers Internet** — à vérifier auprès du fournisseur |
+| 3.1 | **Solde de la Phase 1** : statut joueur, édition inline officiels/n° maillot, recharge présents, publication (lecture seule), charge par ID#/n° court, alertes progression cartons, durée de période non standard, test fonctionnel complet authentifié | spec §12 « Reste à faire » |
+| 3.2 | **Prolongations non bornées** côté front (`Period = 'M1'\|'M2'\|`P${number}`\|'TB'`, sélecteur « prolongation suivante », but en or) | spec §0.6, §7.5 |
+| 3.3 | **Chrono/shotclock/pénalités — nouveau modèle** : shotclock 3 commandes (départ/reset 60 s, départ/reset 40 s actif d'emblée, arrêt `--` — §4.11/§4.14), pénalités ≤ 2/équipe avec levée sur but encaissé et remplacement pour `R`/`D` (§4.14), cartons **noirs** d'exclusion définitive, **pauses inter-périodes** avec buzzer en fin de pause (§4.10) | spec §6.4–§6.5, §7.4–§7.5 |
+| 3.4 | **Raccourcis paramétrables** : défauts §4.11, écran de réglage, préférence par poste (localStorage), neutralisés dans les champs de saisie | spec §6.5 |
+| 3.5 | **Scoreboard + shotclock plein écran** (routes Nuxt) synchronisés par **BroadcastChannel** en local ; les écrans **distants** consomment Mercure (lot 4) — canal local sans réseau, canal distant par le hub | spec §6.5 |
+| 3.6 | **PWA installable** : manifest, service worker, `buildId` par build (saisie toujours online-first) + **bandeau « nouvelle version »** (*prompt-to-update*, pas de bascule automatique) — même mécanisme qu'app2 | §4.9, [PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md) §5 |
+| 3.7 | **Console abonnée à Mercure** (topics de son terrain) pour la reprise multi-terminal et la cohérence multi-onglets | remplace le « rechargement pour resynchroniser » |
+| 3.8 | **Mode « score seul »** : saisie minimale (score/période/statut) comme source de plus, même porte d'entrée | §3, §4.1 |
 
-> ❓ **Question bloquante à poser au fournisseur du matériel : sa passerelle peut-elle initier une
-> connexion sortante vers un serveur, ou attend-elle qu'on vienne s'y connecter ?**
-> Si oui, tout devient plus simple (plus de matériel à déployer). Si non, c'est le boîtier local — et
-> **c'est le cas le plus probable** : un gymnase a rarement un réseau qu'on peut configurer.
-> **À obtenir dès maintenant : cette réponse conditionne l'étape 4.**
+**Critère de sortie.** Un événement réel tenu de bout en bout à la console (préparation, direct,
+clôture, correction post-match, verrouillage) sans ouvrir FMV3 ; console installée en PWA sur
+tablette ; reprise sur un second terminal validée en cours de match.
 
-**Ce que fait le boîtier, précisément.** Le moins possible :
-
-- Il **transmet** les messages du matériel vers KPI, en **filtrant le tic-tac des chronos** (il ne
-  garde que les démarrages et les arrêts).
-- Il **ne traduit pas** et **ne décide pas** quel match est en cours. La traduction du protocole
-  propriétaire et l'aiguillage du match vivent **côté serveur**.
-
-**Pourquoi ce partage.** Si le boîtier traduisait, la **logique métier serait dupliquée sur chaque
-boîtier de la flotte**, à mettre à jour à distance — exactement la complexité qu'on cherche à
-supprimer. En gardant la traduction côté serveur, elle **existe à un seul endroit**, versionnée avec
-le reste du code et testable par les fichiers de référence de l'étape 1. Le boîtier devient un
-quasi-firmware : on n'y touche plus jamais.
-
-**Au kit du boîtier** : synchronisation NTP (obligatoire, cf. §4.2) et une **clé 4G de secours** —
-« ne dépend pas du réseau du site » suppose quand même une sortie Internet, or les Wi-Fi captifs et le
-filtrage sortant existent dans les gymnases.
+> **Suivi d'exécution (2026-07-27) — première tranche :**
+> - ✅ 3.2 — prolongations **non bornées** côté front : type `Period = 'M1'|'M2'|`
+>   `` `P${number}` ``|`'TB'`, `PeriodSelector` avance sans plafond tant que le score est à
+>   égalité (type E), TB seulement si la compétition l'active, libellés « Prolongation n »
+>   paramétrés ; **but en or** : modale de clôture immédiate après un but en prolongation ;
+> - ✅ (partiel) 3.1 — **alerte de progression des cartons** (règles 2027, contournable par
+>   l'opérateur) et **motif par défaut « Autre/Non précisé »** ; reste : statut joueur,
+>   officiels UI, recharge présents, n° court, durée non standard ;
+> - ✅ `ScoringConfig` **centralisée** dans le store (P{n} = 300 s, pauses 3'/3'/1',
+>   shotclock 60/40 **actif**, `defaultCardReason`…) — plus aucune durée éparse ;
+> - ✅ **carton noir** d'exclusion définitive dans l'UI (libellés fr/en, token ⬛,
+>   couleur neutre) — « rouge définitif » a disparu du nouveau système ;
+> - ✅ miroir TS des règles pures : `app4/utils/scoringRules.ts` (aligné sur
+>   `api2/src/Scoring/ScoringRules.php`, réutilisé par la Phase 2 shotclock/pénalités).
+> - Commandes dev + tests fonctionnels : [SCORING_ROLLOUT_CHECKLIST.md](../in-progress/SCORING_ROLLOUT_CHECKLIST.md).
+>
+> **Suivi d'exécution (2026-07-27) — deuxième tranche (étape 3.3/3.4 partiel) :**
+> - ✅ **Shotclock 3 commandes** (§4.11) : `useShotclock` (états IDLE `--` / RUNNING /
+>   SUSPENDED, transitions = miroir des règles testées), composant `ScoringShotclock`
+>   (départ/reset 60 s, 40 s actif d'emblée, arrêt, ±1 s seulement à l'arrêt du chrono,
+>   masquage temps-restant < shotclock), **suivi automatique du chrono** (suspension/
+>   reprise — seule « pause » existante), persistance `scoring_live_clock` kind
+>   `SHOTCLOCK` + restauration à la reprise via `GET /state` ;
+> - ✅ **Pauses inter-périodes** (§4.10) : décompte indicatif automatique en fin de
+>   période (3'/3'/1' selon la période suivante), persistance kind `BREAK`, restauration,
+>   bouton « Terminer la pause » ;
+> - ✅ **Buzzer** (`useBuzzer`, Web Audio, zéro asset) : fin de période, expiration du
+>   shotclock, **fin de pause** (spec §0.9) + bouton test son ;
+> - ✅ **Raccourcis paramétrables** (§4.11) : `useScoringShortcuts` (localStorage par
+>   poste, une touche = une action, neutralisés dans les champs) + modale de réglage ;
+>   défauts Espace / Entrée / `.` / `0` / `+` / `−` ;
+> - ✅ **Pénalités** (§7.4, règles corrigées 2026-07-29 — cf. spec §0.10) : `usePenalties`
+>   (≤ 2 horloges/équipe via `freePenaltySlot`, suivi du chrono, expiration → buzzer +
+>   toast « le joueur revient » / « remplacement autorisé » selon `V`/`J` vs `R`),
+>   création automatique sur carton `V`/`J`/`R` (`D` = exclusion sèche sans horloge,
+>   message dédié), **levée sur but encaissé** proposée à l'opérateur pour la plus
+>   ancienne pénalité **levable** (`V`/`J` — jamais `R`), composant `ScoringPenalties`
+>   (décomptes, retrait manuel), **marqueurs 🔴/⬛ dans les effectifs**, persistance
+>   kind `PENALTY` (team/slot/playerId/cardCode) + restauration via `GET /state`.
+>   Règles pures mises à jour des deux côtés (`cardCreatesPenaltyClock`,
+>   `penaltyLiftableOnGoal`, `penaltySlotToLift` filtré) — **71 assertions PHP**.
+>
+> **Suivi d'exécution (2026-07-29) — quatrième tranche (étapes 3.5 et 3.6) :**
+> - ✅ 3.5 — **scoreboard + chronomètre de tir plein écran** : routes Nuxt
+>   `/games/{id}/scoreboard` et `/games/{id}/shotclock` (layout `false`, lecture seule),
+>   alimentées par **BroadcastChannel** (`useScoringBroadcast`, canal `kpi_channel` —
+>   contrat legacy conservé + `matchId` et handshake `ready`). **Zéro réseau** : les
+>   écrans branchés sur le poste de saisie fonctionnent même sans Internet, conformément
+>   à la décision « BroadcastChannel local + Mercure distant » ; les écrans distants et
+>   incrustations restent sur Mercure (lot 4). **Écrans non standards** (précision
+>   2026-07-29, spec §6.5bis) : panneaux LED extérieurs, satellites, portrait,
+>   ultra-larges → `useFitText` mesure les métriques d'encre des glyphes et met le nombre
+>   à la **taille maximale tenable** (recalcul par `ResizeObserver`), **contraste
+>   maximal** commutable (`?theme=light`), **dixièmes sous 10 s** à taille stable, police
+>   grasse à chiffres tabulaires sans police web (démarrage instantané, hors ligne) ;
+> - ✅ 3.6 — **PWA installable + mise à jour immédiate** : module `@vite-pwa/nuxt`
+>   (`registerType: 'autoUpdate'`, `skipWaiting`/`clientsClaim`, manifest `standalone`
+>   scope `/admin2/`) + `usePwaUpdate` (vérification au chargement, au retour d'onglet et
+>   toutes les 5 min, **rechargement automatique** quand le nouveau worker prend la main).
+>   Service worker **désactivé en dev** (jamais de cache des chunks Vite). Mécanisme
+>   conçu pour être **réutilisé tel quel sur app2**. Build Nuxt validé (`sw.js` généré,
+>   111 entrées de precache) ;
+> - ✅ 3.7 — **console abonnée à Mercure** (2026-07-29) : `useScoringLiveSync` s'abonne
+>   au **gabarit d'URI `{topicBase}/{type}`** du match (tous les blocs d'un coup) ;
+>   `GET /state` renvoie désormais **`topicBase` et `mercureUrl`** — l'adressage reste
+>   **propriété du serveur**, le client ne fabrique jamais un topic. Sur message : pas de
+>   fusion de diff (qui dériverait de la logique serveur) mais un **refetch de l'état
+>   canonique** (débounce 400 ms, gratuit grâce à l'`ETag`) puis re-amorçage des horloges
+>   — donc **auto-réparant** même si un message est perdu ou hors ordre. **Suppression
+>   d'écho** de nos propres écritures via `store.lastMutationAt` (fenêtre 2 s), sans
+>   toucher au contrat d'écriture. Indicateur d'état dans l'entête + **signal visuel**
+>   quand l'état a bougé depuis un autre terminal (failover, source matérielle).
+> **Suivi d'exécution (2026-07-29) — sixième tranche (étapes 3.1 solde et 3.8) :**
+> - ✅ 3.8 — **mode score seul** : bascule dans l'entête qui **promeut la source
+>   `SCORE_ONLY`** (§4.1) et réduit la console au score (±1 par équipe), période et
+>   statut — buts enregistrés comme **faits d'équipe** (joueur `0`), donc l'historique
+>   reflète ce qui a réellement été capté. Le garde de source accepte les **deux
+>   variantes de la console** (`MANUAL`/`SCORE_ONLY`) : c'est le même opérateur ; seule
+>   une source **externe** (relais matériel, import) bloque la saisie ;
+> - ✅ 3.1 (solde) — **vue « Paramètres »** (`ScoringSettingsPanel`, spec §7.1/§7.2) :
+>   type de match et publication **en lecture seule** (écart assumé vs FMV3), **édition
+>   des officiels** (7 champs → `PUT /officials`), **n° de maillot et statut
+>   capitaine/coach** éditables, **suppression** d'un joueur et **recharge des présents**
+>   — tous branchés sur les **endpoints presence existants** (mêmes lignes
+>   `kp_match_joueur`, déjà journalisées : pas de second chemin d'écriture) ;
+>   **chargement d'un autre match** par n° court ou ID#, avec portage de la résolution
+>   legacy (`GET /scoring/resolve` : même journée → même compétition → même événement, un
+>   scope ambigu **n'élargit pas** silencieusement) ;
+> - ✅ `GET /admin/games/{id}` complété (secrétaire, chronométreurs, juges de ligne,
+>   commentaires, heure de fin) — colonnes déjà lues par `m.*`, simplement non exposées.
+>
+> **Le lot 3 est ainsi couvert** ; restent les vérifications en dev
+> ([SCORING_ROLLOUT_CHECKLIST.md](../in-progress/SCORING_ROLLOUT_CHECKLIST.md)) et les évolutions
+> renvoyées aux lots suivants (paramétrage par compétition = lot 6, offline = lot 7).
 
 ---
 
-### Étape 5 — Le ménage
+### Lot 4 — La page d'incrustation unique
 
-Voir §6 — **avec un critère chiffré, sinon le legacy ne meurt jamais.**
+**Objectif.** Une page paramétrée (terrain, blocs, habillage, format — §3.2) qui lit
+`GET /state` au démarrage puis s'abonne aux topics ciblés (§3.3), **entièrement autonome** (aucune
+interaction utilisateur — calque OBS). Elle remplace, à terme, les ~20 pages PHP et
+`app_live_dev`. **Spécification détaillée : [PAGE_INCRUSTATION.md](../../specs/PAGE_INCRUSTATION.md).**
+
+| # | Étape | Détail |
+|---|---|---|
+| 4.1 | Page (Nuxt 4 + Tailwind, 1920×1080 par défaut) : lecture `GET /state` + abonnement SSE, interpolation locale des horloges (§3.1) | fond transparent / magenta / chromakey paramétrable (spec §5) |
+| 4.2 | Variantes par paramètres d'URL : score seul, faits de jeu, compositions, prochain match, HD, nations/clubs, style | une page, des options (spec §4) |
+| 4.3 | **Aiguillage sans polling** : l'event-cache-worker calcule toujours current/next par terrain, mais **publie le « programme du terrain » via outbox → Mercure** (topic `…/program`) + `GET /scoring/program/{event}/{pitch}` au démarrage — remplace le polling de `event{e}_pitch{p}.json` | spec §6 |
+| 4.4 | **Enchaînement automatique paramétré** : délais d'affichage (score mi-temps, score final, présentation du prochain match…) et fond — **valeurs par défaut, surchargeables en base par événement puis par terrain** —, servis par api2, modifiables dans app4 | spec §7 |
+| 4.5 | **Consommateurs `kp_*` en cours de match** : faire évoluer `FeuilleMatchMulti.php` et app2 pour lire l'état live (`GET /scoring/state` / Mercure) quand le match est en cours — condition de bascule des terrains où l'affichage « en cours » est utilisé (§4.3, encadré) | nouveau 2026-07-27 |
+| 4.6 | **Validation en parallèle** : les anciennes incrustations tournent sur le cache JSON ; la nouvelle page est branchée sur un terrain, on compare | bascule terrain par terrain, week-end par week-end |
+
+**Critère de sortie.** Chaque variante legacy a son équivalent paramétré, validé en réel sur au
+moins un événement ; l'enchaînement avant-match → match → fin de match → prochain match se
+déroule sans intervention humaine.
+
+> **Suivi d'exécution (2026-07-29) — première tranche :**
+> - ✅ 4.3 — **aiguillage sans polling** : `ScoringProgramService` (match courant/suivant du
+>   terrain + réglages résolus) et **publication par différence** (`publishIfChanged`,
+>   signature du programme) → ligne d'outbox → topic `…/program`. **Recalcul immédiat au
+>   changement de statut** depuis la console (best effort, n'interrompt jamais la saisie),
+>   et passe régulière du worker en filet. Le fichier `event{e}_pitch{p}.json` continue
+>   d'être écrit pour les incrustations legacy : **rien n'est retiré**.
+> - ✅ 4.4 — **réglages d'enchaînement** : table `scoring_display_settings`
+>   (`SQL/migrations/2026-07-29_…`), résolution **défauts → événement → terrain**, `NULL`
+>   = hériter (jamais « zéro »). Édition dans app4 : à faire avec le lot 6.
+> - ✅ 4.1/4.2 — **page d'incrustation unique** `pages/live/overlay.vue` : scène 1920×1080
+>   mise à l'échelle, contrat d'URL complet (`event`, `pitch`, `blocks`, `skin`, `variant`,
+>   `bg`, `debug`), blocs score/chrono/shotclock/pénalités/faits/prochain match, séquence
+>   d'affichage pilotée par les **faits serveur + délais configurés**, interpolation locale
+>   des horloges (`useInterpolatedClock`, modèle 4 valeurs — continue de tourner pendant
+>   une coupure), `useOverlayProgram` (boot `GET /program` + `GET /state`, puis SSE ;
+>   **auto-réparant** : refetch sur message, au réveil d'onglet et toutes les 5 min).
+> - ✅ **Lecture sans session, mais pas ouverte** : `ScoringLiveController`
+>   (`GET /scoring/program/{event}/{pitch}`, `GET /scoring/state/{matchId}`), **GET
+>   uniquement**, `ETag`. L'accès est porté par un **jeton d'affichage**
+>   (`scoring_display_token`) : portée événement (+ terrain), expiration, révocation — cf.
+>   spec §11bis, qui explique pourquoi un contrôle *same-origin* ne peut pas être la
+>   serrure (en-têtes falsifiables) et reste une simple défense en profondeur.
+>   **Le jeton mint aussi le JWT d'abonné Mercure restreint à ses topics** : sans lui
+>   l'abonnement SSE serait **refusé en preprod/prod** (`MERCURE_ANONYMOUS=0`) — défaut
+>   fonctionnel corrigé au passage, invisible en dev.
+> - ✅ 4.5 — **consommateurs `kp_*` en cours de match** : deux **vues de compatibilité**
+>   (`v_match_detail`, `v_match_live`) qui servent l'état live et **retombent sur `kp_*`**
+>   pour les matchs sans état live. `FeuilleMatchMulti.php`, `reportControllers.php` et
+>   `publicControllers.php` ne changent **qu'un identifiant** dans leur `FROM` — aucune
+>   double écriture (§4.3 respecté), aucune logique dupliquée. Échafaudage supprimable
+>   quand les lecteurs legacy disparaîtront.
+> - ✅ **Administration dans app4** (nouvel onglet **TV → Incrustations**) :
+>   `AdminScoringDisplayController` + `TvOverlaysTab` — création/**révocation en un clic**
+>   des jetons (§4.4 : « révocable depuis app4 » — un jeton vit dans une configuration OBS
+>   qui peut finir n'importe où), **URL OBS prête à coller**, colonne « dernière
+>   utilisation » pour repérer un jeton encore actif après un événement, et réglage des
+>   **délais d'enchaînement** par événement ou par terrain (champ vide = **hériter**,
+>   l'espace réservé montrant la valeur réellement appliquée). Un jeton révoqué est
+>   **conservé** (traçabilité), jamais supprimé. Actions journalisées.
+> - ⬜ reste : 4.6 (validation en parallèle, terrain par terrain — activité terrain),
+>   styles par compétition (§10, second temps).
+
+---
+
+### Lot 5 — Le relais matériel (remplacement de WSM)
+
+**C'est le plus gros morceau côté écriture, et il ne peut venir qu'après le lot 1.** Tant que l'état
+n'est pas canonique en base, déplacer le relais ne ferait que déménager la fragilité.
+
+| # | Étape | Détail |
+|---|---|---|
+| 5.1 | **Jeton machine** (§4.4) : émission/révocation depuis app4, scope événement + terrain, durée de vie bornée | à spécifier avant tout déploiement |
+| 5.2 | **Endpoint d'ingestion** api2 : réception des messages STOMP bruts (filtrés des tics), idempotence par identifiant unique, horodatage client (§4.2), contrôle de dérive NTP | nouvelle route `/scoring/ingest` (nom à fixer) protégée par jeton machine |
+| 5.3 | **Traduction serveur** du protocole propriétaire vers les commandes internes, validée par les **fichiers de référence** (0.5/1.8) | un seul endroit, versionné, testé |
+| 5.4 | **Aiguillage du match courant** par terrain (côté serveur, à partir de la programmation) + **promotion de source** (§4.1) pilotée depuis la supervision app4 | le relais ne décide rien |
+| 5.5 | **Le composant relais** : client STOMP → filtre → POST api2, avec tampon local et rejeu ; **déployable côté serveur KPI** (site avec redirection de port) **ou en boîtier** (image système : autostart, watchdog, NTP, clé 4G) | §4.7 — un seul code, deux déploiements |
+| 5.6 | **Supervision app4** : état des relais, divergences base/panneau (alerte, §4.1), promotion/rétrogradation de source | tableau de bord événement |
+| 5.7 | **Validation terrain** : un terrain équipé, relais en parallèle de l'onglet WSM (lecture seule d'abord), puis bascule de la source | même méthode que les incrustations : un terrain, un week-end |
+
+**Critère de sortie.** Un événement complet sur terrain équipé sans onglet `app_wsm` ouvert ; une
+coupure Internet pendant un match est rattrapée sans perte ni décalage d'horloge.
+
+---
+
+### Lot 6 — Paramétrage par compétition
+
+**Objectif.** Les durées et options (`ScoringConfig` : périodes, prolongations, **pauses**,
+shotclock 60/40, pénalité, TB, arrêt-sur-but, profil fédération…) deviennent des **réglages de la
+compétition**, saisis dans app4, servis par api2, hydratant `store.config` — les défauts restant le
+fallback (§4.12).
+
+| # | Étape |
+|---|---|
+| 6.1 | Modèle : réglages scoring au niveau compétition (colonnes ou table dédiée), édition dans app4 (page compétition), endpoint api2 |
+| 6.2 | Hydratation de `ScoringConfig` au chargement du match (aucun point d'appel ne change) |
+| 6.3 | Activation par compétition des options réglementaires : TB, reset 40 s (rebond offensif) |
+
+**Critère de sortie.** Deux compétitions avec des réglages différents (ex. ICF 5 min / FFCK 3 min de
+prolongation) tournent sans toucher au code.
+
+---
+
+### Lot 7 — Offline complet (PWA)
+
+**Objectif.** La console encaisse une coupure réseau **en cours de saisie** : file d'écritures
+locale (IndexedDB) derrière le store, resynchronisation à la reconnexion, protection par les
+identifiants uniques et l'horodatage client (§4.2) — même mécanique de rejeu que le relais.
+
+**Uniquement après un online-first solide** (lot 3 validé en réel). La PWA installable (coquille)
+est déjà en place depuis le lot 3 ; ce lot n'ajoute que la couche de synchro.
+
+---
+
+### Lot 8 — Le ménage
+
+Voir §6 — **avec le critère chiffré fixé au lot 0.6, sinon le legacy ne meurt jamais.**
+
+---
+
+### Lot 9 — Zéro papier : le responsable d'équipe (profil 7)
+
+**Objectif (décision 2026-07-27).** Prolonger l'objectif zéro papier au-delà de la table de
+marque : donner au **responsable d'équipe** (profil 7) ses deux gestes réglementaires, dans app4,
+avec des délais **paramétrés par la compétition** (d'où la dépendance au lot 6).
+
+| # | Étape | Détail |
+|---|---|---|
+| 9.1 | **Validation de la composition avant match** : pour chaque match, le responsable d'équipe valide/ajuste **sa** compo à partir de la feuille de présence, **dans un délai réglementaire** (ex. jusqu'à 30 min avant le match, paramètre de compétition) | droits limités : **supprimer** des joueurs absents pour ce match uniquement ; **changer les numéros** de maillot et le **capitaine** seulement si le règlement de la compétition l'autorise (paramètre). Hors délai → lecture seule. Actions journalisées |
+| 9.2 | **Consultation + réclamation après match** : le responsable d'équipe consulte le **déroulement numérique** du match (faits de jeu horodatés) et peut déposer une **réclamation**, immédiatement et **dans un délai réglementaire** (ex. jusqu'à 30 min après la fin, paramètre de compétition) | réclamation horodatée, journalisée, notifiée à l'organisation ; hors délai → dépôt refusé ; consultation libre au-delà |
+| 9.3 | **Permissions** : extension de la revue des droits (spec §6.3) au profil 7 — scope strict « son équipe, ses matchs », délais évalués **côté serveur** | jamais de gating uniquement client |
+
+**Critère de sortie.** Sur un événement réel, une équipe valide sa compo et dépose une
+réclamation sans papier ; les délais sont respectés côté serveur ; tout est journalisé.
 
 ---
 
@@ -469,13 +1079,13 @@ Voir §6 — **avec un critère chiffré, sinon le legacy ne meurt jamais.**
 
 | Quoi | Où | Peut mourir quand |
 |---|---|---|
-| Les ~20 pages d'incrustation PHP | `sources/live/*.php` | la page unique les couvre toutes (étape 3) |
+| Les ~20 pages d'incrustation PHP | `sources/live/*.php` | la page unique les couvre toutes (lot 4) |
 | La génération du cache JSON | `sources/live/event_worker.php`, `create_cache_match.php` | juste après — elle n'existait que pour ces pages |
 | L'app d'incrustation Vue | `sources/app_live_dev/` | la page unique la remplace aussi |
 | Le broker WebSocket personnel | dépôt `laurentgarrigue/broker` | plus personne ne s'y abonne (Mercure a pris le relais) |
-| Les FeuilleMarque V2 et V3 | `sources/admin/FeuilleMarque2.php`, `FeuilleMarque3.php`, `sources/live/v2/*.php` | la console Scoring d'app4 les remplace |
-| Le prototype de feuille de marque Nuxt | `sources/app3/` | idem — même remplaçant (voir ci-dessous) |
-| Les endpoints de relais | `sources/api/` → `/api/wsm/*` | l'onglet WSM disparaît (étape 4) |
+| Les FeuilleMarque V2 et V3 | `sources/admin/FeuilleMarque2.php`, `FeuilleMarque3.php`, `sources/live/v2/*.php` | la console Scoring d'app4 les remplace (lot 3 validé) |
+| Le prototype de feuille de marque Nuxt | ~~`sources/app3/`~~ | **Fait (28/09/2026)** — supprimé, code au tag `archive/app3-matchsheet` (voir ci-dessous) |
+| Les endpoints de relais | `sources/api/` → `/api/wsm/*` | l'onglet WSM disparaît (lot 5) |
 | L'app WSM | `sources/app_wsm_dev/` | idem |
 
 > **Le cas `app3`.** C'est un **prototype**, pas une brique de production : il n'existe **qu'en dev**
@@ -484,22 +1094,31 @@ Voir §6 — **avec un critère chiffré, sinon le legacy ne meurt jamais.**
 > été **retiré de Dependabot** pour cette raison.
 >
 > Il relève du chantier **écriture** (§7), pas du chantier lecture : son remplaçant est la **console
-> Scoring d'app4**, pas la page d'incrustation unique. Son sort dépend donc de l'avancement de
-> [PAGE_SCORING.md](../../specs/PAGE_SCORING.md), **pas** de l'étape 3.
+> Scoring d'app4**, pas la page d'incrustation unique. Son sort dépend donc de l'avancement du
+> **lot 3**, pas du lot 4.
 >
-> **On le garde tant que le port n'est pas fini** : c'est le seul endroit où `useTimer.ts`,
-> `useBroadcast.ts` et `useWebSocket.ts` tournent réellement, et PAGE_SCORING.md les désigne
-> explicitement comme sources du port vers app4. Il sert de **référence de comportement** pendant
-> l'implémentation de la console.
+> ~~**On le garde tant que le port n'est pas fini**~~ : il était le seul endroit où `useTimer.ts`,
+> `useBroadcast.ts` et `useWebSocket.ts` tournaient réellement, et PAGE_SCORING.md les désignait
+> comme sources du port vers app4.
 >
-> **Quand il peut mourir** : la console Scoring couvre chrono + shotclock + faits de jeu, et le port
-> des trois composables est validé. Le ménage comprend alors `sources/app3/`, le service `node_app3`
-> de `docker/compose.dev.yaml`, la variable `APP3_DOMAIN_NAME`, les cibles `make app3_*` et les
-> entrées `app3` de `.github/workflows/ci.yml`.
+> **Supprimé le 28/09/2026, avant la fin du lot 3**, par le chantier refonte du site public, qui a
+> besoin du nom `sources/app3/` (cf. `PUBLIC_SITE_REDESIGN_STRATEGY.md`). Ce qui justifiait de le
+> garder ne tient plus :
+> - **la référence de comportement reste disponible** au tag Git **`archive/app3-matchsheet`**
+>   (`git show archive/app3-matchsheet:sources/app3/composables/useBroadcast.ts`, idem pour
+>   `useTimer.ts`, `useWebSocket.ts`, `stores/matchStore.ts`) ;
+> - `useTimer.ts` est porté (et réécrit en horodatage, cf. PAGE_SCORING.md §6.4) ;
+> - `useBroadcast.ts` est porté en `useScoringBroadcast.ts` (contrat `kpi_channel` conservé) ;
+> - `useWebSocket.ts` n'a **pas** à être porté : la diffusion distante passe par Mercure (§0.3 de
+>   la spec).
+>
+> Le ménage a couvert `sources/app3/`, le service `node_app3` de `docker/compose.dev.yaml`, la
+> variable `APP3_DOMAIN_NAME`, les cibles `make app3_*` et les entrées `app3` de
+> `.github/workflows/ci.yml`.
 
 ### Le garde-fou
 
-**Fixe un critère chiffré et daté pour autoriser ce ménage.** Par exemple :
+**Fixe un critère chiffré et daté pour autoriser ce ménage** (action 0.6). Par exemple :
 
 > *Le nouveau système a tourné sur **3 événements réels complets** sans **un seul écart** entre ce
 > qu'il affiche et la fiche de match de référence.*
@@ -513,12 +1132,12 @@ est manqué.
 
 La refonte a **deux moitiés**, et il est facile de n'en voir qu'une.
 
-| | La question | Étapes | Sans elle… |
+| | La question | Lots | Sans elle… |
 |---|---|---|---|
-| **Écriture** (saisir) | Comment l'info **arrive** dans KPI ? | 1, 4 | belle incrustation… toujours alimentée par un onglet Chrome qui peut se fermer |
-| **Lecture** (afficher) | Comment les écrans **reçoivent** l'info ? | 2, 3 | l'état est propre, mais les 20 pages dupliquées restent et le cache JSON ne peut pas mourir |
+| **Écriture** (saisir) | Comment l'info **arrive** dans KPI ? | 1, 3, 5, 7, 9 | belle incrustation… toujours alimentée par un onglet Chrome qui peut se fermer |
+| **Lecture** (afficher) | Comment les écrans **reçoivent** l'info ? | 2, 4 | l'état est propre, mais les 20 pages dupliquées restent et le cache JSON ne peut pas mourir |
 
-Les deux sont nécessaires. **L'écriture d'abord** : l'étape 1 conditionne tout le reste.
+Les deux sont nécessaires. **L'écriture d'abord** : le lot 1 conditionne tout le reste.
 
 ---
 
@@ -531,3 +1150,5 @@ Les deux sont nécessaires. **L'écriture d'abord** : l'étape 1 conditionne tou
 - Le **risque** de changer de mode de saisie en cours de match.
 - La reprise **fragile** basée sur la mémoire du navigateur.
 - **~20 pages d'incrustation** quasi identiques, et le worker qui existait pour les alimenter.
+- **Deux feuilles de marque legacy et un prototype** (`FMV2`, `FMV3`, `app3`) au profit d'une seule
+  console, installable, utilisable en direct comme après match.

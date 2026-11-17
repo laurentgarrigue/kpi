@@ -2,7 +2,10 @@
 
 namespace App\Command;
 
+use App\Scoring\EventClock;
 use App\Service\EventCacheService;
+use App\Service\ScoringOutboxPublisher;
+use App\Service\ScoringProgramService;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,6 +21,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * (driven by the app4 "Event Cache Manager" page via AdminEventWorkerController)
  * and continuously regenerates the live cache JSON files
  * (event<id>_pitch<pitch>.json + on-demand <idMatch>_match_global.json).
+ *
+ * Since the scoring refactoring (plan lot 2) it ALSO drains scoring_outbox to the
+ * Mercure hub: cache generation keeps its own cadence (delay_event per config), while
+ * the outbox is drained every second — including when no event config is active, since
+ * live scoring does not require a cache config to run. Same worker, no second daemon
+ * model (no Messenger) — see LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
  *
  * Replaces the legacy live/event_worker.php daemon.
  *
@@ -36,9 +45,14 @@ class EventCacheWorkerCommand extends Command
     /** @var array<int, array{startTime: int, initialTime: int, idEvent: int}> */
     private array $eventStates = [];
 
+    /** Unix timestamp of the last scoring_outbox prune (throttled to every 10 min). */
+    private int $lastOutboxPrune = 0;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
+        private readonly ScoringOutboxPublisher $outboxPublisher,
+        private readonly ScoringProgramService $programService,
     ) {
         parent::__construct();
     }
@@ -69,11 +83,21 @@ class EventCacheWorkerCommand extends Command
                 $delay = 10;
             }
 
+            $this->drainOutbox($io);
+
             if ($once) {
                 break;
             }
 
-            sleep($delay);
+            // Sleep in 1 s slices, draining the outbox each time: cache generation keeps
+            // its own cadence ($delay) while scoring messages reach Mercure within ~1 s.
+            for ($slept = 0; $slept < $delay && $this->running; $slept++) {
+                sleep(1);
+                if (function_exists('pcntl_signal_dispatch')) {
+                    pcntl_signal_dispatch();
+                }
+                $this->drainOutbox($io);
+            }
         }
 
         $io->writeln('Event Cache Worker stopped');
@@ -148,19 +172,10 @@ class EventCacheWorkerCommand extends Command
             ));
         }
 
-        // Simulated current time = initial event time + real seconds elapsed since
-        // created_at (the shared clock origin). Both the DATE and the hour are derived
-        // from this timestamp, so a worker started on day 1 naturally rolls over to the
-        // following match days as real time passes (a multi-day event stayed stuck on
-        // date_event otherwise, only the hour advanced).
-        $elapsed              = max(0, time() - $startTime);
-        $currentSimulatedTime = $initialTime + $elapsed;
-        $dateEventWork        = date('Y-m-d', $currentSimulatedTime);
-        $currentHourEvent     = date('H:i', $currentSimulatedTime);
-
-        // Apply the warm-up offset to compute the "working" time used for selection
-        $workMinutes   = $this->eventCache->hhmmToMinutes($currentHourEvent) + (int) $config['offset_event'];
-        $hourEventWork = $this->eventCache->minutesToHhmm($workMinutes);
+        // Simulated clock (initial event time + real seconds since created_at, warm-up
+        // offset applied to the working hour). Shared with ScoringProgramService so the
+        // overlay program and the legacy cache files pick matches on the same clock.
+        $clock = EventClock::fromWorkerConfig($config, time());
 
         $pitches = [];
         $pitchEvent = (int) $config['pitch_event'];
@@ -171,15 +186,27 @@ class EventCacheWorkerCommand extends Command
         try {
             $this->eventCache->generateEvent(
                 $idEvent,
-                $dateEventWork,
-                $hourEventWork,
-                $currentHourEvent,
+                $clock->date,
+                $clock->workHour,
+                $clock->hour,
                 $pitches
             );
             $this->sendHeartbeat($configId, null);
         } catch (\Throwable $e) {
             $io->warning(sprintf('Event #%d generation error: %s', $idEvent, $e->getMessage()));
             $this->sendHeartbeat($configId, $e->getMessage());
+        }
+
+        // Program of each pitch (current/next match + display settings) → Mercure, but
+        // only when it actually changed. This is what replaces the overlay's polling of
+        // event{e}_pitch{p}.json (PAGE_INCRUSTATION.md §6). The legacy JSON files keep
+        // being written above for the legacy overlays: nothing is taken away yet.
+        foreach ($pitches as $pitch) {
+            try {
+                $this->programService->publishIfChanged($idEvent, (string) $pitch);
+            } catch (\Throwable $e) {
+                $io->warning(sprintf('Event #%d pitch %s program error: %s', $idEvent, $pitch, $e->getMessage()));
+            }
         }
     }
 
@@ -209,6 +236,32 @@ class EventCacheWorkerCommand extends Command
             );
         } catch (\Throwable) {
             // Heartbeat failures must not kill the worker loop
+        }
+    }
+
+    /**
+     * One outbox pass: publish pending scoring messages to Mercure, prune old published
+     * rows every 10 minutes. Failures are logged and never kill the worker loop — the
+     * unpublished rows stay first in line for the next pass (at-least-once, ordered).
+     */
+    private function drainOutbox(SymfonyStyle $io): void
+    {
+        try {
+            $published = $this->outboxPublisher->drain();
+            if ($published > 0 && $io->isVerbose()) {
+                $io->writeln(sprintf('scoring_outbox: %d message(s) published to Mercure', $published));
+            }
+        } catch (\Throwable $e) {
+            $io->warning('scoring_outbox drain error (will retry): ' . $e->getMessage());
+        }
+
+        if (time() - $this->lastOutboxPrune >= 600) {
+            $this->lastOutboxPrune = time();
+            try {
+                $this->outboxPublisher->prune();
+            } catch (\Throwable $e) {
+                $io->warning('scoring_outbox prune error: ' . $e->getMessage());
+            }
         }
     }
 
