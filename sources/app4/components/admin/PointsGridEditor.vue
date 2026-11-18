@@ -128,7 +128,7 @@ const jsonPreview = computed(() => {
     <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
       {{ t('competitions.multi.points_grid') }}
     </label>
-    <p class="text-xs text-header-600 dark:text-header-300 mb-2">
+    <p class="text-sm text-header-600 dark:text-header-300 mb-2">
       {{ t('competitions.multi.points_grid_hint') }}
     </p>
 
@@ -136,7 +136,7 @@ const jsonPreview = computed(() => {
     <div v-if="!isActive">
       <button
         type="button"
-        class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium"
+        class="text-sm text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-300 font-medium"
         @click="activate"
       >
         {{ t('competitions.multi.points_grid_editor.configure') }}
@@ -157,7 +157,7 @@ const jsonPreview = computed(() => {
           max="50"
           class="w-20 px-2 py-1 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         >
-        <span class="text-xs text-header-600 dark:text-header-300">{{ t('competitions.multi.points_grid_editor.num_positions_hint') }}</span>
+        <span class="text-sm text-header-600 dark:text-header-300">{{ t('competitions.multi.points_grid_editor.num_positions_hint') }}</span>
       </div>
 
       <!-- Positions grid -->
@@ -189,28 +189,28 @@ const jsonPreview = computed(() => {
           min="0"
           class="w-20 px-2 py-1 border border-header-300 dark:border-header-700 rounded text-sm text-right bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         >
-        <span class="text-xs text-header-600 dark:text-header-300">{{ t('competitions.multi.points_grid_editor.default_points_hint') }}</span>
+        <span class="text-sm text-header-600 dark:text-header-300">{{ t('competitions.multi.points_grid_editor.default_points_hint') }}</span>
       </div>
 
       <!-- JSON preview -->
       <div>
         <button
           type="button"
-          class="text-xs text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+          class="text-sm text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
           @click="showPreview = !showPreview"
         >
           {{ showPreview ? '▾' : '▸' }} {{ t('competitions.multi.points_grid_editor.json_preview') }}
         </button>
         <pre
           v-if="showPreview"
-          class="mt-1 p-2 bg-header-200 dark:bg-header-700 rounded text-xs font-mono text-header-900 dark:text-header-50 overflow-x-auto"
+          class="mt-1 p-2 bg-header-200 dark:bg-header-700 rounded text-sm font-mono text-header-900 dark:text-header-50 overflow-x-auto"
         >{{ jsonPreview }}</pre>
       </div>
 
       <!-- Clear -->
       <button
         type="button"
-        class="text-xs text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
+        class="text-sm text-danger-600 dark:text-danger-300 hover:text-danger-700 dark:hover:text-danger-300"
         @click="clear"
       >
         {{ t('competitions.multi.points_grid_editor.clear') }}

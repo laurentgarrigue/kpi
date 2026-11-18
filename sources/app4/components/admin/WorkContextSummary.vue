@@ -46,7 +46,7 @@ const scopeLabel = computed(() => {
         <UIcon name="i-heroicons-funnel" class="w-5 h-5 text-primary-600 shrink-0" />
         <span class="text-sm text-header-900 dark:text-header-300">{{ t('context.scope') }}:</span>
         <span class="font-semibold text-header-900 dark:text-header-50">{{ scopeLabel }}</span>
-        <span class="text-sm text-header-600 dark:text-header-600">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
+        <span class="text-sm text-header-600 dark:text-header-300">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
       </div>
       <div v-else class="flex items-center gap-2 text-sm text-warning-600">
         <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 shrink-0" />
@@ -71,15 +71,15 @@ const scopeLabel = computed(() => {
     <span v-if="workContext.hasValidContext" class="inline-flex items-center gap-1.5">
       <UIcon name="i-heroicons-funnel" class="w-4 h-4 text-primary-600 shrink-0" />
       <span class="font-medium text-header-900 dark:text-header-50">{{ scopeLabel }}</span>
-      <span class="text-xs text-header-600 dark:text-header-600">({{ workContext.competitionCount }})</span>
+      <span class="text-sm text-header-600 dark:text-header-300">({{ workContext.competitionCount }})</span>
     </span>
-    <span v-else class="inline-flex items-center gap-1 text-xs text-warning-600">
+    <span v-else class="inline-flex items-center gap-1 text-sm text-warning-600">
       <UIcon name="i-heroicons-exclamation-triangle" class="w-3.5 h-3.5 shrink-0" />
       {{ t('context.no_context') }}
     </span>
     <NuxtLink
       to="/"
-      class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary-800 dark:text-primary-200 bg-primary-200 dark:bg-primary-800 hover:bg-primary-300 dark:hover:bg-primary-700 rounded transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-1 text-sm font-medium text-primary-800 dark:text-primary-200 bg-primary-200 dark:bg-primary-800 hover:bg-primary-300 dark:hover:bg-primary-700 rounded transition-colors"
     >
       <UIcon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
       {{ t('context.change') }}

@@ -59,7 +59,7 @@ onUnmounted(() => {
           <h3 class="text-lg font-semibold text-header-900 dark:text-header-50">
             {{ t('scoring.shortcuts.title') }}
           </h3>
-          <p class="text-xs text-header-600 dark:text-header-300 mt-1">{{ t('scoring.shortcuts.hint') }}</p>
+          <p class="text-sm text-header-600 dark:text-header-300 mt-1">{{ t('scoring.shortcuts.hint') }}</p>
         </div>
 
         <div class="p-4 space-y-1">
@@ -87,7 +87,7 @@ onUnmounted(() => {
 
         <div class="flex justify-between gap-2 p-4 pt-3 border-t border-header-200 dark:border-header-800 bg-header-50 dark:bg-header-950 rounded-b-lg">
           <div class="flex items-center gap-1">
-            <span class="text-xs text-header-600 dark:text-header-300">{{ t('scoring.shortcuts.reset') }}</span>
+            <span class="text-sm text-header-600 dark:text-header-300">{{ t('scoring.shortcuts.reset') }}</span>
             <UButton
               v-for="loc in SHORTCUT_LOCALES"
               :key="loc"

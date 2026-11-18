@@ -424,7 +424,7 @@ const copyCompetitions = async () => {
                   class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 dark:text-primary-300 focus:ring-primary-500"
                   @change="toggleSection(group.competitions.map(c => c.code))"
                 >
-                <span class="text-xs font-semibold uppercase text-header-900 dark:text-header-50">
+                <span class="text-sm font-semibold uppercase text-header-900 dark:text-header-50">
                   {{ t(`groups.sections.${group.section}`) }}
                 </span>
               </label>

@@ -268,7 +268,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- User filter -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.user') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.user') }}</label>
           <select
             v-model="filterUser"
             class="px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -282,7 +282,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Action filter with optgroups -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.action') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.action') }}</label>
           <select
             :value="filterAction"
             class="px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -304,7 +304,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Category filter (multi-select) -->
         <div ref="categoriesDropdown" class="relative flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.category') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.category') }}</label>
           <button
             type="button"
             class="flex items-center justify-between gap-2 min-w-40 px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -346,7 +346,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Season filter -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.season') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.season') }}</label>
           <select
             v-model="filterSeason"
             class="px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -360,7 +360,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Competition filter (text input) -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.competition') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.competition') }}</label>
           <input
             v-model="filterCompetition"
             type="text"
@@ -371,7 +371,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Date from -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.date_from') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.date_from') }}</label>
           <input
             v-model="filterDateFrom"
             type="date"
@@ -381,7 +381,7 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
 
         <!-- Date to -->
         <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.date_to') }}</label>
+          <label class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('journal.filters.date_to') }}</label>
           <input
             v-model="filterDateTo"
             type="date"
@@ -401,13 +401,13 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
       <table v-if="entries.length > 0" class="min-w-full divide-y divide-header-200 dark:divide-header-700 bg-white dark:bg-header-900 rounded-lg shadow-sm">
         <thead class="bg-header-50 dark:bg-header-900">
           <tr>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.date') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.identite') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.action') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.detail') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.competition') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.gameday') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.match') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.date') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.identite') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.action') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.detail') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.competition') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.gameday') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('journal.table.match') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200 dark:divide-header-700">
@@ -418,8 +418,8 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
             <td class="px-3 py-2">
               <div class="text-sm font-medium text-header-900 dark:text-header-50" :title="entry.userFonction ?? ''">
                 <template v-if="entry.isDeleted">
-                  <span class="italic text-header-500 dark:text-header-400">{{ entry.userCode }}</span>
-                  <span class="ml-1 text-xs text-header-500 dark:text-header-400">({{ t('journal.deleted_account') }})</span>
+                  <span class="italic text-header-600 dark:text-header-300">{{ entry.userCode }}</span>
+                  <span class="ml-1 text-sm text-header-600 dark:text-header-300">({{ t('journal.deleted_account') }})</span>
                 </template>
                 <template v-else>{{ entry.userIdentite }}</template>
               </div>
@@ -464,21 +464,21 @@ onUnmounted(() => document.removeEventListener('click', closeCategoriesOnClickOu
           <span class="text-sm text-header-900 dark:text-header-50">{{ formatDate(entry.date) }}</span>
         </template>
         <template #header-right>
-          <span v-if="formatCompSaison(entry)" class="text-xs font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 px-2 py-0.5 rounded">
+          <span v-if="formatCompSaison(entry)" class="text-sm font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 px-2 py-0.5 rounded">
             {{ formatCompSaison(entry) }}
           </span>
         </template>
         <div class="space-y-1 text-sm">
           <div class="font-medium text-header-900 dark:text-header-50" :title="entry.userFonction ?? ''">
             <template v-if="entry.isDeleted">
-              <span class="italic text-header-500 dark:text-header-400">{{ entry.userCode }}</span>
-              <span class="ml-1 text-xs text-header-500 dark:text-header-400">({{ t('journal.deleted_account') }})</span>
+              <span class="italic text-header-600 dark:text-header-300">{{ entry.userCode }}</span>
+              <span class="ml-1 text-sm text-header-600 dark:text-header-300">({{ t('journal.deleted_account') }})</span>
             </template>
             <template v-else>{{ entry.userIdentite }}</template>
           </div>
           <div class="text-header-900 dark:text-header-50">{{ entry.action }}</div>
           <div v-if="entry.journal" class="text-header-600 dark:text-header-300">{{ entry.journal }}</div>
-          <div v-if="entry.journee || entry.match" class="text-xs text-header-600 dark:text-header-300">
+          <div v-if="entry.journee || entry.match" class="text-sm text-header-600 dark:text-header-300">
             <span v-if="entry.journee">{{ t('journal.table.gameday') }}: {{ entry.journee }}</span>
             <span v-if="entry.journee && entry.match"> · </span>
             <span v-if="entry.match">{{ t('journal.table.match') }}: {{ entry.match }}</span>

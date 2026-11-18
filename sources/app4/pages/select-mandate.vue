@@ -81,7 +81,7 @@ const profileLabel = (niveau: number) => {
       <!-- Error -->
       <div
         v-if="error"
-        class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
+        class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm"
       >
         {{ error }}
       </div>
@@ -120,7 +120,7 @@ const profileLabel = (niveau: number) => {
               <div class="text-sm text-header-600 dark:text-header-300 mt-0.5">
                 {{ profileLabel(mandate.niveau) }}
               </div>
-              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-xs text-header-600 dark:text-header-300 mt-1 space-y-0.5">
+              <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length || mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="text-sm text-header-600 dark:text-header-300 mt-1 space-y-0.5">
                 <div v-if="mandate.filters.seasons?.length || mandate.filters.competitions?.length" class="flex flex-wrap gap-x-2">
                   <span v-if="mandate.filters.seasons?.length">
                     {{ t('users.select_mandate.seasons') }}: {{ mandate.filters.seasons.join(', ') }}
@@ -129,7 +129,7 @@ const profileLabel = (niveau: number) => {
                     {{ t('users.select_mandate.competitions') }}: {{ mandate.filters.competitions.join(', ') }}
                   </span>
                 </div>
-                <div v-if="mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="flex flex-wrap gap-x-2 text-orange-500">
+                <div v-if="mandate.filters.clubs?.length || mandate.filters.journees?.length || mandate.filters.events?.length" class="flex flex-wrap gap-x-2 text-orange-700">
                   <span v-if="mandate.filters.clubs?.length">
                     {{ t('users.modal.filter_clubs') }}: {{ mandate.filters.clubs.join(', ') }}
                   </span>
@@ -142,7 +142,7 @@ const profileLabel = (niveau: number) => {
                 </div>
               </div>
             </div>
-            <UIcon name="i-heroicons-identification" class="w-8 h-8 text-primary-400" />
+            <UIcon name="i-heroicons-identification" class="w-8 h-8 text-primary-500" />
           </div>
         </button>
       </div>

@@ -78,6 +78,6 @@ const message = (issue: ReadinessIssue): string => {
     <ul v-if="issues.length" class="list-disc pl-6 text-sm text-amber-900 dark:text-amber-100 space-y-0.5">
       <li v-for="(issue, i) in issues" :key="i">{{ message(issue) }}</li>
     </ul>
-    <p v-if="issues.length" class="text-xs text-amber-800 dark:text-amber-200">{{ t('scoring.readiness.hint') }}</p>
+    <p v-if="issues.length" class="text-sm text-amber-800 dark:text-amber-200">{{ t('scoring.readiness.hint') }}</p>
   </section>
 </template>

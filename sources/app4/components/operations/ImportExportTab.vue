@@ -225,7 +225,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
               @click="selectExportEvent(event)"
             >
               <div class="font-medium">{{ event.libelle }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">
+              <div class="text-sm text-header-600 dark:text-header-300">
                 ID: {{ event.id }} - {{ event.lieu || 'Sans lieu' }}
               </div>
             </button>
@@ -235,7 +235,7 @@ const canImport = computed(() => importEventId.value !== null && importEventId.v
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               <span class="text-sm font-medium">{{ selectedExportEvent.libelle }}</span>
-              <span class="text-xs text-header-600 dark:text-header-300">(ID: {{ selectedExportEvent.id }})</span>
+              <span class="text-sm text-header-600 dark:text-header-300">(ID: {{ selectedExportEvent.id }})</span>
             </div>
           </div>
         </div>

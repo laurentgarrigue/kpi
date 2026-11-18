@@ -86,7 +86,7 @@ onMounted(() => {
             />
             <span
               v-if="team.colortext"
-              class="inline-block w-5 h-5 rounded border border-header-300 dark:border-header-700 text-[10px] leading-5 text-center font-bold"
+              class="inline-block w-5 h-5 rounded border border-header-300 dark:border-header-700 text-xs leading-5 text-center font-bold"
               :style="{ backgroundColor: team.colortext }"
               title="Text color"
             >
@@ -103,7 +103,7 @@ onMounted(() => {
             :alt="team.libelle"
             class="h-32 w-auto max-w-64 object-contain rounded-lg border border-header-200 dark:border-header-700 cursor-zoom-in"
           >
-          <span class="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-xs font-medium px-1.5 py-0.5 rounded">
+          <span class="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-sm font-medium px-1.5 py-0.5 rounded">
             {{ team.latestPhotoSaison }}
           </span>
           <!-- Enlarged preview on hover -->
@@ -147,13 +147,13 @@ onMounted(() => {
                 :class="idx % 2 === 0 ? 'bg-white dark:bg-header-900' : 'bg-header-50 dark:bg-header-800'"
                 class="border-b border-header-100 dark:border-header-800"
               >
-                <td class="py-2 px-3 font-mono text-xs text-header-600 dark:text-header-300">{{ comp.codeSaison }}</td>
-                <td class="py-2 px-3 font-mono text-xs text-header-600 dark:text-header-300">{{ comp.codeCompet }}</td>
+                <td class="py-2 px-3 font-mono text-sm text-header-600 dark:text-header-300">{{ comp.codeSaison }}</td>
+                <td class="py-2 px-3 font-mono text-sm text-header-600 dark:text-header-300">{{ comp.codeCompet }}</td>
                 <td class="py-2 px-3 text-header-900 dark:text-header-50">
                   <span class="align-middle">{{ comp.libelleCompet || comp.codeCompet }}</span>
                   <span v-if="comp.soustitre2" class="ml-1 align-middle text-header-600 dark:text-header-300">— {{ comp.soustitre2 }}</span>
                   <span
-                    class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 align-middle"
+                    class="ml-2 inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 align-middle"
                   >{{ comp.codeTypeclt }}</span>
                 </td>
                 <td class="py-2 px-3 font-semibold text-header-900 dark:text-header-50">

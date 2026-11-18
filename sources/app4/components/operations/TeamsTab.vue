@@ -376,7 +376,7 @@ const confirmMove = async () => {
               @click="selectRenameTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -432,7 +432,7 @@ const confirmMove = async () => {
               @click="selectMergeSource(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -462,7 +462,7 @@ const confirmMove = async () => {
               @click="selectMergeTarget(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -505,7 +505,7 @@ const confirmMove = async () => {
               @click="selectMoveTeam(team)"
             >
               <div class="font-medium">{{ team.libelle }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ team.numero }} - {{ team.club }}</div>
             </button>
           </div>
         </div>
@@ -535,7 +535,7 @@ const confirmMove = async () => {
               @click="selectMoveClub(club)"
             >
               <div class="font-medium">{{ club.nom }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">{{ club.numero }} - {{ club.departement }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ club.numero }} - {{ club.departement }}</div>
             </button>
           </div>
         </div>

@@ -48,7 +48,7 @@ const addChild = (item: CmsMenuItem) => {
           v-model="item.children" :depth="depth + 1" :prefix="`${prefix}.${index}.children`"
           :page-items="pageItems" :target-items="targetItems" :errors="errors"
         />
-        <UButton size="xs" variant="ghost" icon="heroicons:plus" class="ml-6 mt-1" @click="addChild(item)">
+        <UButton size="sm" variant="ghost" icon="heroicons:plus" class="ml-6 mt-1" @click="addChild(item)">
           {{ t('cms.menu.add_child', { level: depth + 1 }) }}
         </UButton>
       </template>

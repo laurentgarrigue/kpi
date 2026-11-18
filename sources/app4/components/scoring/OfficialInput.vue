@@ -134,7 +134,7 @@ const groupLabel = (g: OfficialSuggestion['group']) =>
       class="absolute z-50 mt-1 w-full max-h-64 overflow-auto rounded-lg border border-header-200 dark:border-header-700 bg-white dark:bg-header-900 shadow-lg py-1 text-sm"
     >
       <template v-for="(item, i) in items" :key="item.value">
-        <li v-if="startsGroup(i)" role="presentation" class="px-3 pt-2 pb-1 text-xs text-header-500 dark:text-header-400">
+        <li v-if="startsGroup(i)" role="presentation" class="px-3 pt-2 pb-1 text-sm text-header-600 dark:text-header-300">
           {{ groupLabel(item.group) }}
         </li>
         <li

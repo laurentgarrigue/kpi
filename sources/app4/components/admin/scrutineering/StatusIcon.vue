@@ -13,9 +13,9 @@ const VALID = 1
 
 const icon = computed(() => ICONS[props.status] ?? ICONS[0])
 const colorClass = computed(() => {
-  if (props.status === VALID) return 'text-success-600 dark:text-success-400'
-  if (props.status > VALID) return 'text-danger-600 dark:text-danger-400'
-  return 'text-header-400 dark:text-header-500'
+  if (props.status === VALID) return 'text-success-700 dark:text-success-300'
+  if (props.status > VALID) return 'text-danger-600 dark:text-danger-300'
+  return 'text-header-600 dark:text-header-300'
 })
 </script>
 

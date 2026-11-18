@@ -31,7 +31,7 @@ const emit = defineEmits<{
     <div class="flex flex-wrap items-center gap-2">
       <button
         v-if="showBulkDelete && selectedCount > 0"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-400 rounded-lg font-medium text-sm hover:bg-danger-100 dark:hover:bg-danger-900 transition-colors"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-danger-50 dark:bg-danger-950 text-danger-700 dark:text-danger-300 rounded-lg font-medium text-sm hover:bg-danger-100 dark:hover:bg-danger-900 transition-colors"
         @click="emit('bulk-delete')"
       >
         <UIcon name="heroicons:trash" class="w-5 h-5" />
@@ -47,7 +47,7 @@ const emit = defineEmits<{
       <div class="relative flex-1 min-w-40 sm:flex-none">
         <UIcon
           name="heroicons:magnifying-glass"
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-600 dark:text-header-600 pointer-events-none"
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-header-600 dark:text-header-300 pointer-events-none"
         />
         <input
           v-model="search"

@@ -272,31 +272,31 @@ onMounted(() => {
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
           <thead class="bg-header-50 dark:bg-header-900">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.code') }}
               </th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('common.edit') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.status') }}
               </th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.activate') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.nat_start') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.nat_end') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.inter_start') }}
               </th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('operations.seasons.inter_end') }}
               </th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+              <th class="px-4 py-3 text-right text-sm font-medium text-header-600 dark:text-header-300 uppercase">
                 {{ t('common.actions') }}
               </th>
             </tr>
@@ -324,7 +324,7 @@ onMounted(() => {
               <td class="px-4 py-3 text-sm">
                 <span
                   :class="[
-                    'px-2 py-1 rounded-full text-xs font-medium',
+                    'px-2 py-1 rounded-full text-sm font-medium',
                     season.active ? 'bg-success-100 dark:bg-success-800 text-success-800 dark:text-success-50' : 'bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50'
                   ]"
                 >
@@ -335,7 +335,7 @@ onMounted(() => {
                 <button
                   v-if="!season.active"
                   :title="t('operations.seasons.activate')"
-                  class="p-1 text-primary-500 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 rounded"
+                  class="p-1 text-primary-500 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-300 rounded"
                   @click="openActivateModal(season)"
                 >
                   <UIcon name="i-heroicons-check-circle" class="w-5 h-5" />
@@ -349,7 +349,7 @@ onMounted(() => {
                 <button
                   v-if="!season.active"
                   :title="t('common.delete')"
-                  class="p-1 text-error-500 dark:text-error-400 hover:text-error-700 dark:hover:text-error-300 rounded"
+                  class="p-1 text-error-600 dark:text-error-300 hover:text-error-700 dark:hover:text-error-300 rounded"
                   @click="openDeleteModal(season)"
                 >
                   <UIcon name="i-heroicons-trash" class="w-5 h-5" />
@@ -520,14 +520,14 @@ onMounted(() => {
           </p>
           <div class="mt-2 max-h-48 overflow-y-auto space-y-2">
             <div v-for="sec in previousSeasonSections" :key="sec.section">
-              <div class="text-xs font-semibold text-header-900 dark:text-header-50 uppercase tracking-wider">
+              <div class="text-sm font-semibold text-header-900 dark:text-header-50 uppercase tracking-wider">
                 {{ t(`groups.sections.${sec.section}`) }}
               </div>
               <div class="flex flex-wrap gap-1 mt-1">
                 <span
                   v-for="c in sec.competitions"
                   :key="c.code"
-                  class="px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-header-800 border border-amber-300 dark:border-amber-800 rounded text-header-900 dark:text-header-50"
+                  class="px-1.5 py-0.5 text-sm font-mono bg-white dark:bg-header-800 border border-amber-300 dark:border-amber-800 rounded text-header-900 dark:text-header-50"
                   :title="c.libelle"
                 >
                   {{ c.code }}

@@ -134,7 +134,7 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
       <section class="rounded-xl border border-header-200 dark:border-header-700 p-4 space-y-3">
         <div class="flex items-baseline gap-2">
           <h2 class="text-xl">{{ t('scoring.settings.match') }}</h2>
-          <span class="text-sm text-header-500 dark:text-header-400">ID#{{ match.id }}</span>
+          <span class="text-sm text-header-600 dark:text-header-300">ID#{{ match.id }}</span>
         </div>
         <dl class="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
           <dt class="text-header-600 dark:text-header-300">{{ t('scoring.settings.type') }}</dt>
@@ -159,7 +159,7 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
             </UBadge>
           </dd>
         </dl>
-        <p class="text-xs text-header-500 dark:text-header-400">{{ t('scoring.settings.read_only_hint') }}</p>
+        <p class="text-sm text-header-600 dark:text-header-300">{{ t('scoring.settings.read_only_hint') }}</p>
       </section>
 
       <!-- Officials (spec §7.2) — edited here, saved in one call -->
@@ -234,11 +234,11 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
             >{{ t('scoring.settings.reload_players') }}</UButton>
           </div>
 
-          <p v-if="team.players.length === 0" class="text-sm text-header-500 dark:text-header-400">
+          <p v-if="team.players.length === 0" class="text-sm text-header-600 dark:text-header-300">
             {{ t('scoring.settings.no_player') }}
           </p>
           <table v-else class="w-full text-sm">
-            <thead class="text-xs text-header-600 dark:text-header-300">
+            <thead class="text-sm text-header-600 dark:text-header-300">
               <tr>
                 <th class="text-left font-normal w-16 pb-1">{{ t('scoring.settings.number') }}</th>
                 <th class="text-left font-normal pb-1">{{ t('scoring.settings.player') }}</th>
@@ -248,7 +248,7 @@ const STATUS_OPTIONS = computed(() => (['-', 'C', 'E'] as const).map(value => ({
             </thead>
             <tbody v-for="group in groupsOf(team.players)" :key="group.key">
               <tr v-if="group.staff">
-                <th colspan="4" class="pt-4 pb-1 text-left text-xs font-semibold text-header-600 dark:text-header-300">
+                <th colspan="4" class="pt-4 pb-1 text-left text-sm font-semibold text-header-600 dark:text-header-300">
                   {{ t('scoring.settings.status_E') }}
                 </th>
               </tr>

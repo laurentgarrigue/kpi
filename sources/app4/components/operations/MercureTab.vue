@@ -55,7 +55,7 @@ let abortController: AbortController | null = null
 let expectingReplay = false
 
 const stateColor = computed(() => ({
-  connected: 'text-success-600 dark:text-success-300',
+  connected: 'text-success-700 dark:text-success-300',
   connecting: 'text-warning-600 dark:text-warning-300',
   error: 'text-danger-600 dark:text-danger-300',
   disconnected: 'text-header-600 dark:text-header-300'
@@ -219,7 +219,7 @@ onBeforeUnmount(disconnect)
           <dt class="font-medium text-header-900 dark:text-header-50 sm:w-40 shrink-0">
             {{ t('operations.mercure.hub_url') }}
           </dt>
-          <dd class="text-header-600 dark:text-header-300 break-all font-mono text-xs">{{ config.publicUrl }}</dd>
+          <dd class="text-header-600 dark:text-header-300 break-all font-mono text-sm">{{ config.publicUrl }}</dd>
         </div>
         <div class="flex flex-col sm:flex-row sm:gap-2">
           <dt class="font-medium text-header-900 dark:text-header-50 sm:w-40 shrink-0">
@@ -268,7 +268,7 @@ onBeforeUnmount(disconnect)
               </button>
             </div>
           </div>
-          <p class="mt-2 text-xs text-header-600 dark:text-header-300">
+          <p class="mt-2 text-sm text-header-600 dark:text-header-300">
             {{ t('operations.mercure.topics_hint') }}
           </p>
 
@@ -278,7 +278,7 @@ onBeforeUnmount(disconnect)
               <input v-model="resumeFromId" type="checkbox" class="mt-1 rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500">
               <span class="text-sm text-header-900 dark:text-header-50">
                 {{ t('operations.mercure.resume') }}
-                <span class="block text-xs text-header-600 dark:text-header-300">{{ t('operations.mercure.resume_hint') }}</span>
+                <span class="block text-sm text-header-600 dark:text-header-300">{{ t('operations.mercure.resume_hint') }}</span>
               </span>
             </label>
             <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
@@ -288,7 +288,7 @@ onBeforeUnmount(disconnect)
                 type="text"
                 :disabled="!resumeFromId"
                 :placeholder="t('operations.mercure.resume_placeholder')"
-                class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 text-xs font-mono focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50"
+                class="flex-1 min-w-0 px-3 py-2 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 text-sm font-mono focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50"
               >
               <button
                 :disabled="!lastEventId"
@@ -298,7 +298,7 @@ onBeforeUnmount(disconnect)
                 {{ t('operations.mercure.use_last_id') }}
               </button>
             </div>
-            <p v-if="lastEventId" class="text-xs text-header-600 dark:text-header-300 break-all">
+            <p v-if="lastEventId" class="text-sm text-header-600 dark:text-header-300 break-all">
               {{ t('operations.mercure.last_id') }} <span class="font-mono">{{ lastEventId }}</span>
             </p>
           </div>
@@ -325,7 +325,7 @@ onBeforeUnmount(disconnect)
                   class="flex-1 min-w-0 px-3 py-2 rounded-r-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 text-sm font-mono focus:border-primary-500 focus:ring-primary-500"
                 >
               </div>
-              <p class="mt-1 text-xs text-header-600 dark:text-header-300">
+              <p class="mt-1 text-sm text-header-600 dark:text-header-300">
                 {{ t('operations.mercure.topic_hint') }}
               </p>
             </div>
@@ -344,7 +344,7 @@ onBeforeUnmount(disconnect)
               <input v-model="isPrivate" type="checkbox" class="mt-1 rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500">
               <span class="text-sm text-header-900 dark:text-header-50">
                 {{ t('operations.mercure.private') }}
-                <span class="block text-xs text-header-600 dark:text-header-300">{{ t('operations.mercure.private_hint') }}</span>
+                <span class="block text-sm text-header-600 dark:text-header-300">{{ t('operations.mercure.private_hint') }}</span>
               </span>
             </label>
             <button
@@ -385,18 +385,18 @@ onBeforeUnmount(disconnect)
           >
             <div class="flex items-center justify-between gap-2 mb-1">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-xs font-mono text-primary-600 dark:text-primary-300 truncate">{{ msg.type ?? t('operations.mercure.untyped') }}</span>
+                <span class="text-sm font-mono text-primary-600 dark:text-primary-300 truncate">{{ msg.type ?? t('operations.mercure.untyped') }}</span>
                 <span
                   v-if="msg.replayed"
-                  class="px-1.5 py-0.5 rounded text-xs font-medium bg-warning-100 dark:bg-warning-900 text-warning-700 dark:text-warning-300 shrink-0"
+                  class="px-1.5 py-0.5 rounded text-sm font-medium bg-warning-100 dark:bg-warning-900 text-warning-700 dark:text-warning-300 shrink-0"
                 >
                   {{ t('operations.mercure.replayed') }}
                 </span>
               </div>
-              <span class="text-xs text-header-600 dark:text-header-300 shrink-0">{{ msg.receivedAt }}</span>
+              <span class="text-sm text-header-600 dark:text-header-300 shrink-0">{{ msg.receivedAt }}</span>
             </div>
-            <pre class="text-xs text-header-900 dark:text-header-50 whitespace-pre-wrap break-all font-mono">{{ msg.raw }}</pre>
-            <p v-if="msg.eventId" class="mt-1 text-xs text-header-600 dark:text-header-300 break-all font-mono">
+            <pre class="text-sm text-header-900 dark:text-header-50 whitespace-pre-wrap break-all font-mono">{{ msg.raw }}</pre>
+            <p v-if="msg.eventId" class="mt-1 text-sm text-header-600 dark:text-header-300 break-all font-mono">
               {{ msg.eventId }}
             </p>
           </li>

@@ -47,10 +47,10 @@ onMounted(async () => {
               <NuxtLink :to="`/cms/pages/${page.id}`" class="font-medium text-primary-700 dark:text-primary-300 hover:underline" @click.stop>{{ page.title }}</NuxtLink>
               <UBadge v-if="page.imported" size="sm" variant="outline" class="ml-2">{{ t('cms.imported') }}</UBadge>
             </td>
-            <td class="hidden px-4 py-2 font-mono text-xs md:table-cell">{{ page.path }}</td>
+            <td class="hidden px-4 py-2 font-mono text-sm md:table-cell">{{ page.path }}</td>
             <td class="px-4 py-2">
               <CmsStatusBadge :status="page.status" />
-              <span v-if="page.status === 'published' && !page.public" class="ml-1 text-xs text-warning-600">{{ t('cms.pages.parent_unpublished') }}</span>
+              <span v-if="page.status === 'published' && !page.public" class="ml-1 text-sm text-warning-600">{{ t('cms.pages.parent_unpublished') }}</span>
             </td>
           </tr>
         </tbody>

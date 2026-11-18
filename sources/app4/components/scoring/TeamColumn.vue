@@ -105,7 +105,7 @@ const tallyOf = (p: ScoringPlayer) => props.tallies.get(String(p.matric))
             </span>
             <span v-if="tallyOf(p)?.goals" class="inline-flex items-center gap-0.5 shrink-0" :title="t('scoring.roster_goals', { n: tallyOf(p)!.goals })">
               <ScoringEventIcon code="B" />
-              <span v-if="tallyOf(p)!.goals > 1" class="scoring-digits text-xs">×{{ tallyOf(p)!.goals }}</span>
+              <span v-if="tallyOf(p)!.goals > 1" class="scoring-digits text-sm">×{{ tallyOf(p)!.goals }}</span>
             </span>
             <!-- Every card, in match order (an R/D card is also the exclusion marker) -->
             <span v-if="tallyOf(p)?.cards.length" class="inline-flex items-center gap-0.5 shrink-0">

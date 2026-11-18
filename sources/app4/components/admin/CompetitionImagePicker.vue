@@ -219,11 +219,11 @@ const removeImage = () => {
         @error="($event.target as HTMLImageElement).style.display='none'"
       >
       <div class="flex items-center justify-between gap-2">
-        <span class="text-xs text-header-900 dark:text-header-50 font-mono truncate">{{ modelValue }}</span>
+        <span class="text-sm text-header-900 dark:text-header-50 font-mono truncate">{{ modelValue }}</span>
         <button
           v-if="!disabled"
           type="button"
-          class="text-xs text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-300 shrink-0"
+          class="text-sm text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-300 shrink-0"
           @click="removeImage"
         >
           {{ t('competitions.images.remove') }}
@@ -239,7 +239,7 @@ const removeImage = () => {
           :key="m"
           type="button"
           :class="[
-            'px-3 py-1.5 text-xs font-medium rounded-t transition-colors',
+            'px-3 py-1.5 text-sm font-medium rounded-t transition-colors',
             mode === m
               ? 'bg-white dark:bg-header-900 border border-b-white dark:border-b-header-900 border-header-200 dark:border-header-700 -mb-px text-primary-700 dark:text-primary-300'
               : 'text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'
@@ -263,13 +263,13 @@ const removeImage = () => {
           class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 mb-2 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
         >
         <div class="border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
-          <div v-if="searchQuery.length < 2" class="p-3 text-xs text-header-600 dark:text-header-300 text-center italic">
+          <div v-if="searchQuery.length < 2" class="p-3 text-sm text-header-600 dark:text-header-300 text-center italic">
             {{ t('competitions.images.search_min_chars') }}
           </div>
-          <div v-else-if="listLoading" class="p-3 text-xs text-header-600 dark:text-header-300 text-center">
+          <div v-else-if="listLoading" class="p-3 text-sm text-header-600 dark:text-header-300 text-center">
             {{ t('competitions.images.loading') }}
           </div>
-          <div v-else-if="existingImages.length === 0" class="p-3 text-xs text-header-600 dark:text-header-300 text-center">
+          <div v-else-if="existingImages.length === 0" class="p-3 text-sm text-header-600 dark:text-header-300 text-center">
             {{ t('competitions.images.no_results') }}
           </div>
           <button
@@ -277,7 +277,7 @@ const removeImage = () => {
             :key="img.filename"
             type="button"
             :class="[
-              'w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-header-50 dark:hover:bg-header-800 transition-colors border-b border-header-100 dark:border-header-800 last:border-b-0',
+              'w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-header-50 dark:hover:bg-header-800 transition-colors border-b border-header-100 dark:border-header-800 last:border-b-0',
               modelValue === img.filename ? 'bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-200 font-medium' : 'text-header-900 dark:text-header-50'
             ]"
             @click="selectExisting(img.filename)"
@@ -295,7 +295,7 @@ const removeImage = () => {
             <span class="font-mono truncate">{{ img.filename }}</span>
           </button>
         </div>
-        <p v-if="!canAddImage" class="mt-2 text-xs text-header-600 dark:text-header-300">
+        <p v-if="!canAddImage" class="mt-2 text-sm text-header-600 dark:text-header-300">
           <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 inline" />
           {{ t('competitions.images.request_hint', { format: meta.formatHint }) }}
           <a :href="`mailto:${contactEmail}`" class="underline hover:no-underline text-primary-600 dark:text-primary-300">{{ contactEmail }}</a>
@@ -304,7 +304,7 @@ const removeImage = () => {
 
       <!-- Upload -->
       <template v-else-if="mode === 'upload' && canAddImage">
-        <p class="text-xs text-primary-600 dark:text-primary-300 mb-2">
+        <p class="text-sm text-primary-600 dark:text-primary-300 mb-2">
           <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 inline" />
           {{ meta.formatHint }}
         </p>
@@ -313,32 +313,32 @@ const removeImage = () => {
             ref="fileInput"
             type="file"
             :accept="meta.accept"
-            class="flex-1 text-xs text-header-900 dark:text-header-50 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-primary-50 dark:file:bg-primary-950 file:text-primary-700 dark:file:text-primary-200 hover:file:bg-primary-100 dark:hover:file:bg-primary-900"
+            class="flex-1 text-sm text-header-900 dark:text-header-50 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-950 file:text-primary-700 dark:file:text-primary-200 hover:file:bg-primary-100 dark:hover:file:bg-primary-900"
             @change="onFileChange"
           >
           <button
             v-if="selectedFile"
             type="button"
-            class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+            class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
             @click="clearFile"
           >
-            <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+            <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
           </button>
         </div>
-        <p v-if="selectedFile" class="text-xs text-header-600 dark:text-header-300 mt-1">
+        <p v-if="selectedFile" class="text-sm text-header-600 dark:text-header-300 mt-1">
           {{ selectedFile.name }} ({{ Math.round(selectedFile.size / 1024) }} Ko)
         </p>
         <button
           type="button"
           :disabled="!canUpload || uploading"
-          class="mt-2 px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+          class="mt-2 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
           @click="uploadFile"
         >
           <UIcon v-if="uploading" name="i-heroicons-arrow-path" class="w-3.5 h-3.5 animate-spin" />
           <UIcon v-else name="i-heroicons-arrow-up-tray" class="w-3.5 h-3.5" />
           {{ t('competitions.images.mode_upload') }}
         </button>
-        <p v-if="!props.competitionCode.trim() || !props.saison.trim()" class="text-xs text-warning-600 mt-1">
+        <p v-if="!props.competitionCode.trim() || !props.saison.trim()" class="text-sm text-warning-600 mt-1">
           {{ t('competitions.form.images_hint_create') }}
         </p>
       </template>
@@ -350,19 +350,19 @@ const removeImage = () => {
             v-model="externalUrl"
             type="url"
             :placeholder="t('competitions.images.url_placeholder')"
-            class="flex-1 px-2 py-1.5 text-xs border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
+            class="flex-1 px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded-lg focus:ring-1 focus:ring-primary-500 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
           >
           <button
             type="button"
             :disabled="!canImportUrl || importing"
-            class="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
+            class="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shrink-0"
             @click="importFromUrl"
           >
             <UIcon v-if="importing" name="i-heroicons-arrow-path" class="w-3.5 h-3.5 animate-spin" />
             {{ importing ? t('competitions.images.url_importing') : t('competitions.images.url_import') }}
           </button>
         </div>
-        <p v-if="!props.competitionCode.trim() || !props.saison.trim()" class="text-xs text-warning-600 mt-1">
+        <p v-if="!props.competitionCode.trim() || !props.saison.trim()" class="text-sm text-warning-600 mt-1">
           {{ t('competitions.form.images_hint_create') }}
         </p>
       </template>

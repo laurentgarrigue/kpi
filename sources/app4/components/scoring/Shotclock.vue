@@ -35,7 +35,7 @@ const { t } = useI18n()
   <div class="flex items-center gap-1" role="group" :aria-label="t('scoring.shotclock.title')">
     <UButton size="sm" :disabled="!canScore" @click="emit('start', durations.full)">
       {{ durations.full }} s
-      <kbd v-if="keys?.start60" class="rounded border border-current/40 px-1 text-xs font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.start60) }}</kbd>
+      <kbd v-if="keys?.start60" class="rounded border border-current/40 px-1 text-sm font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.start60) }}</kbd>
     </UButton>
     <UButton
       v-if="offensiveReboundEnabled"
@@ -45,7 +45,7 @@ const { t } = useI18n()
       @click="emit('start', durations.offensiveRebound)"
     >
       {{ durations.offensiveRebound }} s
-      <kbd v-if="keys?.start40" class="rounded border border-current/40 px-1 text-xs font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.start40) }}</kbd>
+      <kbd v-if="keys?.start40" class="rounded border border-current/40 px-1 text-sm font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.start40) }}</kbd>
     </UButton>
     <UButton
       size="sm"
@@ -54,7 +54,7 @@ const { t } = useI18n()
       @click="emit('stop')"
     >
       {{ t('scoring.shotclock.stop') }}
-      <kbd v-if="keys?.stop" class="rounded border border-current/40 px-1 text-xs font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.stop) }}</kbd>
+      <kbd v-if="keys?.stop" class="rounded border border-current/40 px-1 text-sm font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(keys.stop) }}</kbd>
     </UButton>
     <UButton
       size="sm"

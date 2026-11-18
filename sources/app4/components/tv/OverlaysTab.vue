@@ -181,15 +181,15 @@ const isActive = (token: DisplayToken): boolean =>
 
       <div class="flex flex-wrap items-end gap-2 mb-4">
         <div>
-          <label class="block text-xs text-header-600 mb-1">{{ t('tv.overlays.pitch') }}</label>
+          <label class="block text-sm text-header-600 mb-1">{{ t('tv.overlays.pitch') }}</label>
           <UInput v-model="newToken.pitch" size="sm" class="w-24" :placeholder="t('tv.overlays.all_pitches')" />
         </div>
         <div>
-          <label class="block text-xs text-header-600 mb-1">{{ t('tv.overlays.label') }}</label>
+          <label class="block text-sm text-header-600 mb-1">{{ t('tv.overlays.label') }}</label>
           <UInput v-model="newToken.label" size="sm" class="w-56" :placeholder="t('tv.overlays.label_placeholder')" />
         </div>
         <div>
-          <label class="block text-xs text-header-600 mb-1">{{ t('tv.overlays.days') }}</label>
+          <label class="block text-sm text-header-600 mb-1">{{ t('tv.overlays.days') }}</label>
           <UInput v-model.number="newToken.days" type="number" size="sm" class="w-20" />
         </div>
         <UButton size="sm" icon="i-heroicons-plus" @click="createToken">{{ t('tv.overlays.create_token') }}</UButton>
@@ -206,7 +206,7 @@ const isActive = (token: DisplayToken): boolean =>
 
       <div v-if="loading" class="text-sm text-header-600">…</div>
       <table v-else-if="tokens.length" class="w-full text-sm">
-        <thead class="text-xs text-header-600">
+        <thead class="text-sm text-header-600">
           <tr>
             <th class="text-left">{{ t('tv.overlays.label') }}</th>
             <th class="text-left w-24">{{ t('tv.overlays.pitch') }}</th>
@@ -232,14 +232,14 @@ const isActive = (token: DisplayToken): boolean =>
             <td class="py-1 text-right space-x-1">
               <UButton
                 v-if="isActive(tok)"
-                size="xs"
+                size="sm"
                 variant="outline"
                 icon="i-heroicons-clipboard"
                 @click="copy(overlayUrl(tok))"
               >{{ t('tv.overlays.copy_url') }}</UButton>
               <UButton
                 v-if="isActive(tok)"
-                size="xs"
+                size="sm"
                 color="error"
                 variant="ghost"
                 icon="i-heroicons-x-mark"
@@ -249,7 +249,7 @@ const isActive = (token: DisplayToken): boolean =>
           </tr>
         </tbody>
       </table>
-      <div v-else class="text-sm text-header-400">{{ t('tv.overlays.no_token') }}</div>
+      <div v-else class="text-sm text-header-600">{{ t('tv.overlays.no_token') }}</div>
     </section>
 
     <!-- ─── Chaining settings ─── -->
@@ -259,7 +259,7 @@ const isActive = (token: DisplayToken): boolean =>
 
       <div class="flex items-end gap-2 mb-3">
         <div>
-          <label class="block text-xs text-header-600 mb-1">{{ t('tv.overlays.scope') }}</label>
+          <label class="block text-sm text-header-600 mb-1">{{ t('tv.overlays.scope') }}</label>
           <UInput v-model="settingsScope" size="sm" class="w-40" :placeholder="t('tv.overlays.scope_event')" />
         </div>
         <UButton size="sm" @click="saveSettings">{{ t('tv.overlays.save') }}</UButton>
@@ -267,11 +267,11 @@ const isActive = (token: DisplayToken): boolean =>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div v-for="field in SETTING_FIELDS" :key="field">
-          <label class="block text-xs text-header-600 mb-1">{{ t('tv.overlays.field.' + field) }}</label>
+          <label class="block text-sm text-header-600 mb-1">{{ t('tv.overlays.field.' + field) }}</label>
           <UInput v-model="form[field]" size="sm" :placeholder="inheritedOf(field)" />
         </div>
       </div>
-      <p class="text-xs text-header-400 mt-2">{{ t('tv.overlays.inherit_hint') }}</p>
+      <p class="text-sm text-header-600 mt-2">{{ t('tv.overlays.inherit_hint') }}</p>
     </section>
   </div>
 </template>

@@ -303,7 +303,7 @@ onMounted(async () => {
         role="tab"
         :aria-selected="tab === item"
         class="whitespace-nowrap border-b-2 px-5 py-2.5 text-base font-semibold"
-        :class="tab === item ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-header-500'"
+        :class="tab === item ? 'border-primary-600 text-primary-700 dark:text-primary-300' : 'border-transparent text-header-600'"
         @click="tab = item"
       >
         {{ t(`medals.tabs.${item}`) }}
@@ -322,8 +322,8 @@ onMounted(async () => {
         </label>
         <label class="flex items-center gap-2"><input v-model="unpublishedOnly" type="checkbox" class="size-4"> {{ t('medals.unpublished_only') }}</label>
       </div>
-      <p class="mb-4 text-sm text-header-500">{{ t('medals.publish_note') }}</p>
-      <p v-if="shownItems.length === 0" class="py-6 text-base text-header-500">{{ t('medals.search_empty') }}</p>
+      <p class="mb-4 text-sm text-header-600">{{ t('medals.publish_note') }}</p>
+      <p v-if="shownItems.length === 0" class="py-6 text-base text-header-600">{{ t('medals.search_empty') }}</p>
       <div v-else class="overflow-x-auto xl:overflow-visible">
         <table class="w-full text-base [&_td]:px-3 [&_th]:px-3">
           <thead>
@@ -346,8 +346,8 @@ onMounted(async () => {
                 <div class="group relative flex w-fit items-center gap-3" tabindex="0" :aria-label="`${name(item)}. ${explanation(item)}`">
                   <MedalShield :item="item" :size="40" />
                   <span>
-                    <b>{{ item.name_fr }}</b><span v-if="item.name_fr !== item.name_en" class="italic text-header-500"> · {{ item.name_en }}</span>
-                    <code class="block text-sm text-header-400">{{ item.code }}</code>
+                    <b>{{ item.name_fr }}</b><span v-if="item.name_fr !== item.name_en" class="italic text-header-600"> · {{ item.name_en }}</span>
+                    <code class="block text-sm text-header-600">{{ item.code }}</code>
                   </span>
                   <span role="tooltip" class="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-sm rounded-md bg-header-900 px-3 py-2 text-sm leading-snug text-white shadow-lg ring-1 ring-white/10 group-hover:block group-focus-visible:block">
                     {{ explanation(item) }}
@@ -359,10 +359,10 @@ onMounted(async () => {
               <td>
                 <ul v-if="thresholdsOfItem(item).length" class="space-y-0.5">
                   <li v-for="threshold in thresholdsOfItem(item)" :key="threshold.key" class="whitespace-nowrap">
-                    <span class="text-header-500">{{ humanizeKey(threshold.key) }}</span> <b class="tabular-nums">{{ formatThreshold(threshold.value) }}</b>
+                    <span class="text-header-600">{{ humanizeKey(threshold.key) }}</span> <b class="tabular-nums">{{ formatThreshold(threshold.value) }}</b>
                   </li>
                 </ul>
-                <span v-else class="text-header-400">—</span>
+                <span v-else class="text-header-600">—</span>
               </td>
               <td class="text-right tabular-nums">
                 <button
@@ -375,7 +375,7 @@ onMounted(async () => {
                   {{ number(item.awards) }}
                 </button>
                 <b v-else class="text-lg">{{ item.awards === null ? '—' : number(item.awards) }}</b>
-                <span v-if="awardsOf(item)" class="block text-sm whitespace-nowrap text-header-500">
+                <span v-if="awardsOf(item)" class="block text-sm whitespace-nowrap text-header-600">
                   {{ t('medals.per_game', { rate: awardsOf(item)!.rate }) }} · {{ t(awardsOf(item)!.reliable ? 'medals.basis_reliable' : 'medals.basis_games', { games: awardsOf(item)!.games }) }}
                 </span>
               </td>
@@ -423,7 +423,7 @@ onMounted(async () => {
         <form class="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" @submit.prevent="saveThresholds">
           <div v-for="(value, key) in currentThresholds" :key="key" class="border-l-2 pl-3" :class="isOverridden(String(key)) ? 'border-primary-500' : 'border-header-200 dark:border-header-700'">
             <template v-if="key === 'permanentCards'">
-              <span class="block text-sm text-header-500">{{ humanizeKey(String(key)) }}</span>
+              <span class="block text-sm text-header-600">{{ humanizeKey(String(key)) }}</span>
               <span class="mt-1 flex gap-4 text-lg">
                 <label v-for="card in cardCodes" :key="card" class="flex items-center gap-1.5">
                   <input type="checkbox" class="size-4" :checked="(draft.permanentCards as string[] | undefined)?.includes(card)" :disabled="!canEdit" @change="toggleCard(card)">
@@ -432,7 +432,7 @@ onMounted(async () => {
               </span>
             </template>
             <label v-else class="block">
-              <span class="block text-sm text-header-500">{{ humanizeKey(String(key)) }}</span>
+              <span class="block text-sm text-header-600">{{ humanizeKey(String(key)) }}</span>
               <input
                 v-model="draft[String(key)]"
                 type="number"
@@ -443,7 +443,7 @@ onMounted(async () => {
                 :max="limits[String(key)]?.max"
                 :disabled="!canEdit"
               >
-              <span v-if="invalidKeys.includes(String(key))" class="block text-sm text-red-600">{{ t('medals.threshold_range', { min: limits[String(key)]?.min, max: limits[String(key)]?.max }) }}</span>
+              <span v-if="invalidKeys.includes(String(key))" class="block text-sm text-red-700">{{ t('medals.threshold_range', { min: limits[String(key)]?.min, max: limits[String(key)]?.max }) }}</span>
             </label>
             <span v-if="isOverridden(String(key))" class="block text-sm text-primary-700 dark:text-primary-300">{{ t('medals.threshold_file', { value: formatThreshold(defaultThresholds[String(key)]) }) }}</span>
           </div>
@@ -466,31 +466,31 @@ onMounted(async () => {
         </div>
         <p class="mb-6 max-w-3xl text-base leading-relaxed text-header-600 dark:text-header-300">{{ t('medals.seasons_help', { version: rulesVersion }) }}</p>
       <p v-if="seasons.length === 0" class="text-base">{{ t('medals.no_season') }}</p>
-      <p v-else-if="shownSeasons.length === 0" class="py-6 text-base text-header-500">{{ t('medals.search_empty') }}</p>
+      <p v-else-if="shownSeasons.length === 0" class="py-6 text-base text-header-600">{{ t('medals.search_empty') }}</p>
       <ol v-else class="space-y-5">
         <li v-for="row in shownSeasons" :key="row.season" class="grid gap-x-8 gap-y-4 rounded-xl border border-header-200 p-5 lg:grid-cols-[8rem_minmax(0,1fr)] dark:border-header-700" data-testid="medal-season">
           <p class="text-5xl leading-none font-bold tabular-nums text-primary-700 dark:text-primary-300">{{ row.season }}</p>
           <div class="space-y-5">
             <div class="flex flex-wrap items-center gap-x-10 gap-y-3 text-base">
               <p>
-                <span class="block text-sm text-header-500">{{ t('medals.rules') }}</span>
+                <span class="block text-sm text-header-600">{{ t('medals.rules') }}</span>
                 <b>v{{ row.rules_version }}</b>
                 <span v-if="row.outdated" class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-sm text-amber-800">{{ t('medals.outdated') }}</span>
               </p>
               <p>
-                <span class="block text-sm text-header-500">{{ t('medals.computed_at') }}</span>
+                <span class="block text-sm text-header-600">{{ t('medals.computed_at') }}</span>
                 <b>{{ computedAt(row) }}</b>
               </p>
               <div class="min-w-64 flex-1">
                 <p class="flex flex-wrap items-baseline justify-between gap-x-4">
-                  <span><b class="text-2xl tabular-nums">{{ number(row.reliable_games_count) }}</b> <span class="text-header-500">{{ t('medals.reliable_of', { games: number(row.games_count) }) }}</span></span>
+                  <span><b class="text-2xl tabular-nums">{{ number(row.reliable_games_count) }}</b> <span class="text-header-600">{{ t('medals.reliable_of', { games: number(row.games_count) }) }}</span></span>
                   <b class="tabular-nums">{{ share(row) }} %</b>
                 </p>
                 <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-header-100 dark:bg-header-800" role="img" :aria-label="`${share(row)} %`">
                   <div class="h-full rounded-full bg-primary-600" :style="{ width: `${share(row)}%` }" />
                 </div>
                 <!-- Games set aside, by issue (§ 5.1): each count opens the list of the games (MED-80) -->
-                <p v-if="Object.keys(row.issues).length" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-header-500">
+                <p v-if="Object.keys(row.issues).length" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-header-600">
                   <span>{{ t('medals.set_aside') }}</span>
                   <button
                     v-for="(count, issue) in row.issues"
@@ -507,13 +507,13 @@ onMounted(async () => {
             <details :open="queries.seasons !== ''">
               <summary class="cursor-pointer text-base font-semibold">
                 {{ t('medals.thresholds') }}
-                <span class="font-normal" :class="row.changedCount ? 'text-amber-700 dark:text-amber-400' : 'text-header-500'">
+                <span class="font-normal" :class="row.changedCount ? 'text-amber-700 dark:text-amber-400' : 'text-header-600'">
                   — {{ row.changedCount ? t('medals.thresholds_differ_n', { n: row.changedCount }, row.changedCount) : t('medals.thresholds_same') }}
                 </span>
               </summary>
               <dl class="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 <div v-for="entry in row.entries" :key="entry.key" class="border-l-2 pl-3" :class="entry.changed ? 'border-amber-500' : 'border-header-200 dark:border-header-700'">
-                  <dt class="text-sm text-header-500">{{ humanizeKey(entry.key) }}</dt>
+                  <dt class="text-sm text-header-600">{{ humanizeKey(entry.key) }}</dt>
                   <dd class="text-lg font-semibold tabular-nums">
                     {{ formatThreshold(entry.value) }}
                     <span v-if="entry.changed" class="block text-sm font-normal text-amber-700 dark:text-amber-400">{{ t('medals.threshold_now', { value: formatThreshold(entry.current) }) }}</span>
@@ -554,7 +554,7 @@ onMounted(async () => {
         </label>
         <MedalSearch v-model="queries[tab]" :placeholder="t('medals.search_stats')" :count="shownRows.length" :total="stat?.rows.length ?? 0" />
       </div>
-      <p v-if="tab === 'referees'" class="mb-4 max-w-3xl text-sm text-header-500">{{ t('medals.referee_note') }}</p>
+      <p v-if="tab === 'referees'" class="mb-4 max-w-3xl text-sm text-header-600">{{ t('medals.referee_note') }}</p>
       <p v-if="workContext.competitionCodes.length === 0" class="text-base">{{ t('medals.no_context') }}</p>
       <p v-else-if="loading" class="text-base">{{ t('common.loading') }}</p>
       <template v-else-if="stat">
@@ -564,15 +564,15 @@ onMounted(async () => {
             <p class="max-w-prose text-base leading-relaxed">{{ byCode.get(stat.kind) ? explanation(byCode.get(stat.kind)!) : '' }}</p>
           </div>
           <p class="flex gap-8">
-            <span><b class="block text-3xl tabular-nums">{{ number(stat.games_count) }}</b><span class="text-sm text-header-500">{{ t('medals.validated_games') }}</span></span>
-            <span><b class="block text-3xl tabular-nums">{{ number(stat.reliable_games_count) }}</b><span class="text-sm text-header-500">{{ t('medals.complete_sheets') }}</span></span>
+            <span><b class="block text-3xl tabular-nums">{{ number(stat.games_count) }}</b><span class="text-sm text-header-600">{{ t('medals.validated_games') }}</span></span>
+            <span><b class="block text-3xl tabular-nums">{{ number(stat.reliable_games_count) }}</b><span class="text-sm text-header-600">{{ t('medals.complete_sheets') }}</span></span>
           </p>
         </div>
-        <p v-if="stat.summary.undesignated_games" class="mb-4 text-sm text-header-500">{{ t('medals.undesignated', { n: stat.summary.undesignated_games }) }}</p>
+        <p v-if="stat.summary.undesignated_games" class="mb-4 text-sm text-header-600">{{ t('medals.undesignated', { n: stat.summary.undesignated_games }) }}</p>
         <p v-if="Object.keys(stat.summary).length" class="mb-4 text-base">
           <b>{{ t('medals.summary') }} :</b> {{ formatStatValue(stat.summary, 'integer') }}
         </p>
-        <p v-if="shownRows.length === 0" class="py-6 text-base text-header-500">{{ t('medals.search_empty') }}</p>
+        <p v-if="shownRows.length === 0" class="py-6 text-base text-header-600">{{ t('medals.search_empty') }}</p>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-base tabular-nums [&_td]:px-4 [&_th]:px-4">
             <thead>
@@ -624,11 +624,11 @@ onMounted(async () => {
         <label class="block">{{ t('medals.name_en') }}<UInput v-model="editDraft.name_en" class="w-full" maxlength="80" /></label>
         <label class="block">{{ t('medals.explanation_fr') }}<UTextarea v-model="editDraft.explanation_fr" class="w-full" maxlength="500" /></label>
         <label class="block">{{ t('medals.explanation_en') }}<UTextarea v-model="editDraft.explanation_en" class="w-full" maxlength="500" /></label>
-        <p v-if="variables(editing.explanation_fr_template).length" class="text-xs text-header-500">
+        <p v-if="variables(editing.explanation_fr_template).length" class="text-sm text-header-600">
           {{ t('medals.variables') }} <code v-for="variable in variables(editing.explanation_fr_template)" :key="variable" class="mr-1">{{ variable }}</code>
         </p>
         <p class="rounded bg-header-50 p-2 dark:bg-header-800"><b>{{ t('medals.preview') }}</b> {{ editing.explanation_fr }}</p>
-        <p class="text-xs text-header-500">{{ t('medals.journalled') }}</p>
+        <p class="text-sm text-header-600">{{ t('medals.journalled') }}</p>
         <div class="flex justify-end gap-2">
           <UButton variant="outline" @click="editing = null">{{ t('common.cancel') }}</UButton>
           <UButton @click="saveEdit">{{ t('common.save') }}</UButton>

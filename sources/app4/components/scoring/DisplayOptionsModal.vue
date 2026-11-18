@@ -62,7 +62,7 @@ const submit = () => {
           <h3 class="text-lg font-semibold text-header-900 dark:text-header-50">
             {{ t('scoring.display_options.title_' + kind) }}
           </h3>
-          <p class="text-xs text-header-600 dark:text-header-300 mt-1">{{ t('scoring.display_options.hint') }}</p>
+          <p class="text-sm text-header-600 dark:text-header-300 mt-1">{{ t('scoring.display_options.hint') }}</p>
         </div>
 
         <div class="p-4 space-y-4">

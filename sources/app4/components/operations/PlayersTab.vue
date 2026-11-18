@@ -263,7 +263,7 @@ const onClickOutside = () => {
               @click="selectSource(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">
+              <div class="text-sm text-header-600 dark:text-header-300">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
@@ -273,7 +273,7 @@ const onClickOutside = () => {
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               <span class="text-sm font-medium">{{ formatNom(selectedSource.nom) }} {{ formatPrenom(selectedSource.prenom) }}</span>
-              <span class="text-xs text-header-600 dark:text-header-300">({{ selectedSource.matric }})</span>
+              <span class="text-sm text-header-600 dark:text-header-300">({{ selectedSource.matric }})</span>
             </div>
           </div>
         </div>
@@ -304,7 +304,7 @@ const onClickOutside = () => {
               @click="selectTarget(player)"
             >
               <div class="font-medium">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">
+              <div class="text-sm text-header-600 dark:text-header-300">
                 {{ player.matric }} - {{ player.club || 'Sans club' }}
               </div>
             </button>
@@ -314,7 +314,7 @@ const onClickOutside = () => {
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-success-500" />
               <span class="text-sm font-medium">{{ formatNom(selectedTarget.nom) }} {{ formatPrenom(selectedTarget.prenom) }}</span>
-              <span class="text-xs text-header-600 dark:text-header-300">({{ selectedTarget.matric }})</span>
+              <span class="text-sm text-header-600 dark:text-header-300">({{ selectedTarget.matric }})</span>
             </div>
           </div>
         </div>
