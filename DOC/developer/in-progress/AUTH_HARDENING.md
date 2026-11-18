@@ -15,7 +15,7 @@
 | **1a-bis** | Renouvellement forcé des mots de passe en début de saison 2027, inventaire, retrait définitif du MD5 ([#400](https://github.com/laurentgarrigue/kpi/issues/400)) | Ponctuelle (un renouvellement par compte) | 🚧 Implémentée, campagne et retrait à dater |
 | **1b** | JWT en cookie `HttpOnly` + refresh token glissant (rotation + détection de rejeu), `/auth/logout`, notification email sur nouvel appareil + lien de révocation | Nulle (invisible) | ✅ Implémentée (02/11/2026) — transition hybride : app4 continue d'utiliser le JWT en body **ET** reçoit les cookies, migration pure cookie en v+1 |
 | **1b-bis** | **Gestion utilisateur de ses appareils et sessions** : lister ses appareils, en révoquer un sans dépendre de l'email d'alerte, « déconnecter toutes les autres sessions », page `/profile/security` qui concentre déliement Google et (à venir) TOTP | Positive (autonomie) | 🚧 En cours (02/11/2026) |
-| **1b-ter** | **Continuité de session** : jamais déconnecté pendant une gestion sportive ou un match (renouvellement fiable, rotation tolérante, zéro saisie perdue en Scoring) — § 3ter | Positive | 🚧 Lot A en cours (13/11/2026) |
+| **1b-ter** | **Continuité de session** : jamais déconnecté pendant une gestion sportive ou un match (renouvellement fiable, rotation tolérante, zéro saisie perdue en Scoring) — § 3ter | Positive | 🚧 Lot A fusionné (#402, 16/11/2026, recette à faire) ; lot B implémenté (18/11/2026, à fusionner) ; lot C réduit à AUTH-SC-21 |
 | **2** | OAuth Google en **option** sur la page `/login` (bouton « Continuer avec Google »), lien/déliement depuis `/profile/security` | **Négative** (facilite) | ✅ Implémentée (02/11/2026) |
 | **3** | TOTP (Google Authenticator / Authy / 1Password) **obligatoire** pour les profils `≤ 3`, **optionnel** pour les autres ; appareil de confiance 30 jours ; 10 codes de récupération | Faible, ciblée | 📋 Spécifiée, non implémentée |
 
@@ -199,7 +199,7 @@ Rendre le vol de JWT inutile et notifier l'utilisateur de toute connexion depuis
 
 | ID | Critère |
 |---|---|
-| AUTH-CK-01 | Le login réussi pose deux cookies : `kpi_access` (JWT, TTL 15 min) et `kpi_refresh` (opaque, TTL 8 h glissant), tous deux `HttpOnly; Secure; SameSite=Lax; Path=/api2` |
+| AUTH-CK-01 | Le login réussi pose deux cookies : `kpi_access` (JWT, TTL 15 min) et `kpi_refresh` (opaque, TTL 8 h glissant — **révisé** : `REFRESH_TOKEN_TTL`, cf. AUTH-SC-13), tous deux `HttpOnly; Secure; SameSite=Lax; Path=/api2` |
 | AUTH-CK-02 | `localStorage.kpi_admin_token` n'est plus écrit (ni lu). Le `authStore` ne contient plus de `token` ; `isAuthenticated` est dérivé de l'appel `/auth/me` |
 | AUTH-RT-01 | Au bout de 15 min, l'app4 reçoit `401` sur un appel métier ; un intercepteur HTTP appelle `POST /auth/refresh` (envoie le cookie refresh), reçoit un nouveau cookie access, et rejoue la requête de façon transparente |
 | AUTH-RT-02 | `POST /auth/logout` invalide côté serveur le refresh token courant (table `kp_user_refresh_token`, flag `revoked_at`) et supprime les cookies |
@@ -341,22 +341,48 @@ sur la console Scoring. L'audit du code a trouvé plusieurs causes, qui existent
 
 **Limite connue du lot A** : `/auth/refresh` ne prolonge pas le cookie refresh (8 h absolues). Tant que l'onglet est ouvert, le JWT est renouvelé indéfiniment et le cookie n'est pas nécessaire ; après une mise en veille plus longue que la durée du JWT **et** plus de 8 h après la connexion, une reconnexion reste nécessaire. Corrigé au lot B.
 
-### 3ter.4 Lot B — api2 : rotation tolérante (à spécifier en détail avant code)
+### 3ter.4 Lot B — api2 : rotation tolérante et cookie refresh utile
 
-| ID | Critère |
-|---|---|
-| AUTH-SC-10 | Délai de grâce de 60 s : un refresh token remplacé depuis moins de 60 s, présenté **par le même appareil** (`device_fingerprint`), émet un nouveau successeur au lieu d'être traité comme un vol |
-| AUTH-SC-11 | Rejeu avéré (hors délai ou autre appareil) : révocation des sessions **de cet appareil**, pas de tout le compte (un compte de table de marque partagé entre terrains ne doit pas tomber d'un coup) |
-| AUTH-SC-12 | `/auth/refresh` prolonge aussi le cookie refresh (8 h glissantes), avec un plafond absolu à décider (16 à 24 h) |
+**Constat (18/11/2026).** Le cookie refresh dure 8 h fixes alors que `JWT_TTL` vaut 24 h partout. Le cookie
+n'existe que pour rattraper un JWT expiré ; or, avec ces durées, il est toujours mort avant le JWT : il ne
+rattrape jamais rien. Et une rotation présentée deux fois (onglets, réponse perdue sur un wifi de gymnase)
+coupe **toutes** les sessions du compte, y compris les autres terrains d'un compte de table de marque partagé.
 
-### 3ter.5 Lot C — console Scoring : zéro saisie perdue
+| ID | Critère | Test |
+|---|---|---|
+| AUTH-SC-10 | **Délai de grâce** : un refresh token remplacé par rotation depuis moins de **60 s**, présenté **par le même appareil** (même empreinte IP /24 + famille de navigateur), alors que sa chaîne est toujours active, renvoie `200` avec un **nouveau** successeur. Aucune révocation. Le successeur émis plus tôt reste valide | `RefreshTokenReuseTest` (unit) + `AuthSessionContinuityTest` |
+| AUTH-SC-11 | Le délai de grâce ne ressuscite jamais une session terminée : si la chaîne a été close par une déconnexion ou une révocation d'appareil, réponse `401`, sans autre révocation | `RefreshTokenReuseTest` + `AuthSessionContinuityTest` |
+| AUTH-SC-12 | **Rejeu avéré** (hors délai, ou depuis un autre appareil) : `401` et révocation des sessions actives **de l'appareil de la chaîne** (`user_code` + `device_fingerprint`) seulement. Les autres appareils du compte restent connectés. Jeton sans empreinte (émis avant la phase 1b) : révocation de tout le compte, comme avant | `RefreshTokenReuseTest` + `AuthSessionContinuityTest` |
+| AUTH-SC-13 | Durée du refresh token réglée par `REFRESH_TOKEN_TTL` (défaut **72 h**), **glissante** : chaque rotation émet un successeur de pleine durée, et chaque `POST /auth/refresh` qui porte un cookie `kpi_refresh` valide **du même utilisateur** repousse son expiration et renvoie le cookie (même valeur, sans rotation, donc sans risque de rejeu). Cookie absent, invalide ou d'un autre compte : ignoré, `/auth/refresh` répond `200` comme avant | `AuthSessionContinuityTest` |
+| AUTH-SC-14 | Login, OAuth et `refresh-session` posent le cookie avec cette même durée (plus de 8 h codées en dur) | `AuthSessionContinuityTest` |
 
-| ID | Critère |
-|---|---|
-| AUTH-SC-20 | **Au chargement d'un match** dans la console (ouverture de la page ou « charger un match » dans le même onglet), app4 s'assure que la session reste valable au moins **2 h** et la renouvelle sinon. Un match très long dure environ 1 h (2×10 min + 2×3 min de pause + prolongations + pauses) ; 2 h couvrent ce match et le retard au coup d'envoi. Un échec est signalé **avant** le coup d'envoi (invitation à se reconnecter), pas en plein jeu |
-| AUTH-SC-21 | Un `401` définitif sur la console n'en sort pas : une fenêtre de reconnexion s'affiche par-dessus, la console (chrono, période) reste en place |
-| AUTH-SC-22 | Les faits de jeu refusés pour une raison d'authentification sont conservés localement (`localStorage`, par match) et rejoués après reconnexion, dédupliqués par `uid` |
-| AUTH-SC-23 | Un indicateur discret dans l'en-tête de la console : session valide / renouvellement en cours / à reconnecter |
+**Choix techniques**
+
+- La décision « rotation / grâce / session close / rejeu » est une fonction pure (`App\Security\RefreshTokenReuse`),
+  testée dans la suite `unit` (bloquante en CI) ; `RefreshTokenService` l'applique.
+- Pour savoir si la chaîne est encore active, on suit `replaced_by` jusqu'au dernier maillon (10 maillons au plus,
+  bien au-delà de ce que 60 s peuvent produire).
+- L'empreinte de la requête est celle de `KnownDeviceService::currentFingerprint()`, déjà utilisée au login.
+- **Pourquoi 72 h et pas de plafond absolu** (décision à valider) : le cookie doit survivre au JWT (24 h) pour
+  servir ; 72 h couvrent un tournoi de week-end avec une tablette en veille la nuit. Un plafond absolu ne
+  protégerait rien : `/auth/refresh` renouvelle déjà indéfiniment un JWT valide. Les leviers restent la
+  déconnexion et la révocation d'appareil (`/profile/security`, lien de l'email).
+- Révise AUTH-CK-01 (« 8 h glissant ») : la durée devient `REFRESH_TOKEN_TTL`.
+- `REFRESH_TOKEN_TTL` est **facultative** (paramètre `refresh_token_ttl` de `config/services.yaml`, défaut 259200) :
+  aucun `.env` serveur à modifier au déploiement. Pas de migration : seules les durées et la règle de rejeu changent.
+- Fichiers : `src/Security/RefreshTokenReuse.php`, `RefreshTokenUse.php`, `PresentedRefreshToken.php` (décision pure),
+  `RefreshTokenService.php` (`rotate()` reçoit l'empreinte, `extend()`, `ttlSeconds()`), `AdminAuthController`
+  (`refresh-session` passe l'empreinte, `/auth/refresh` prolonge le cookie), `OAuthController` (durée du cookie).
+- Un token émis avant le déploiement garde son expiration à 8 h jusqu'à sa prochaine rotation ou prolongation.
+
+### 3ter.5 Lot C — console Scoring (révisé le 18/11/2026)
+
+| ID | Critère | Statut |
+|---|---|---|
+| AUTH-SC-20 | ~~Au chargement d'un match, renouveler la session s'il lui reste moins de 2 h~~ | **Retiré** : avec `JWT_TTL=86400`, le lot A garde toujours plus de 4 h 48 de validité ; et le chargement du match appelle api2, donc un problème de session est déjà traité (renouvellement + rejeu) avant le coup d'envoi |
+| AUTH-SC-21 | Un `401` définitif sur la console n'en sort pas : une fenêtre de reconnexion s'affiche par-dessus, la console reste en place, le fait de jeu en cours est renvoyé après reconnexion | À faire, priorité basse : depuis #404, chrono, chronomètre de tir et pénalités sont restaurés depuis le serveur au rechargement ; seul le fait de jeu en cours est perdu |
+| AUTH-SC-22 | ~~File locale des faits de jeu refusés pour une raison d'authentification~~ | **Rattaché** à la « Phase 4 — Offline » de [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) § 8 : même mécanisme (file d'écritures rejouée par `uid`), qui couvre aussi les coupures réseau, bien plus fréquentes |
+| AUTH-SC-23 | ~~Indicateur de session dans l'en-tête de la console~~ | **Retiré** : le bandeau « Connexion perdue » existe déjà |
 
 ### 3ter.6 Lot D — exploitation
 
@@ -543,7 +569,7 @@ Quand une phase est livrée en production, cocher ici et déplacer les élément
 - [ ] Phase 1a-bis — renouvellement de saison 2027 et retrait du MD5 (code livré ; campagne et retrait à dater)
 - [x] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil (livrée 02/11/2026, hybride cookie+body)
 - [x] Phase 1b-bis — gestion appareils + `/profile/security` (02/11/2026)
-- [x] Phase 1b-ter — continuité de session (§ 3ter) : lot A ☐, lot B ☐, lot C ☐, lot D ☐
+- [ ] Phase 1b-ter — continuité de session (§ 3ter) : lot A ✅ fusionné (#402, recette à faire), lot B 🚧 implémenté (à fusionner), lot C (AUTH-SC-21 seul) ☐, lot D ☐
 - [x] Phase 2 — OAuth Google en option (livrée 02/11/2026)
 - [x] Phase 2-bis — Lier Google depuis le profil (AUTH-OA-07/08/09/10, 03/11/2026)
 - [ ] Phase 3 — TOTP pour profils ≤ 3
