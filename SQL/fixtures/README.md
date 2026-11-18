@@ -116,7 +116,7 @@ Consommé par `tests/Integration/StaffScrutineeringTest.php`, `PresenceScrutinee
 | `SCB` (verrouillée) | 9384 Scrut Alpha Deux (C001, même équipe de club que 9381 : copie), 9385 Germany Women (`GER-W`) |
 | `SCC` (hors événement) | journée 9273 rattachée à aucun événement ; 9386 Scrut Charlie (C001), joueur 9517 |
 | `kp_scrutineering` | 9381 : un joueur complet et un partiel → « partiel » ; 9382 : ligne remise à 0 → « non contrôlé » |
-| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002) |
+| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002), `TCLUBA` (profil 7, club C001, SCA + SCB : copie de composition) |
 
 `kp_licence` reprend la définition de production (colonnes lues par la feuille de présence), avec `kp_arbitre`,
 `kp_surclassement` et `kp_categorie` (vides).
@@ -172,3 +172,16 @@ qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais
 
 Aucune de ces structures n'existe dans `data.sql` : l'import les crée. Pour un cas de mise à jour, insérer la
 structure dans `data.sql` avec un libellé ou un rattachement différent de celui du fichier.
+
+## Jeu « copie de composition de match »
+
+Consommé par `tests/Integration/PresenceMatchCopyTest.php` ([PAGE_PRESENCE.md](../../DOC/specs/PAGE_PRESENCE.md) § 1.2,
+mode match) : la copie vers les matchs de la journée est ouverte aux profils ≤ 6, vers la compétition aux profils ≤ 4 ;
+la feuille de match est éditée par les profils ≤ 7 et 9 ; on n'y ajoute qu'un joueur de la feuille de présence.
+
+| Élément | Cas couverts |
+|---|---|
+| `PCM` (2997, non publiée) | journées 9275 (J1) et 9276 (J2) ; équipes 9395 (C001, sans composition) et 9396 (C002) |
+| Feuille de présence de 9396 | 9513 (E), 9516 (C) et 9518 (-) ajoutables à un match ; 9514 (A), 9517 (X) non ajoutables |
+| Matchs 9471 (J1), 9472 (J1), 9473 (J2), 9474 (J2) | 9471 = source (9395 en A : 9511, 9512) ; 9395 est B dans 9472 ; seul 9474 est validé |
+| `TCOMP` (4), `TORGA` (6), `TTEAMP` (7), `TVIEWP` (8), `TSCOREP` (9) | les deux copies / la copie journée seule / aucune copie / lecture seule / feuille de match sans copie |

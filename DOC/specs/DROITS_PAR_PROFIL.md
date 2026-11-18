@@ -77,13 +77,13 @@
 | | C (types restreints) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Athlètes** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | | M (modifier données) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Feuille de présence (équipe)** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| | M/S (si non verrouillée) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | X | ❌ | ✅ |
-| | Copier depuis autre compétition | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Feuille de présence (équipe)** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| | M/S (si non verrouillée) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| | Copier depuis autre compétition | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | | Créer un joueur | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | | Rechercher par licence | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Feuille de présence (match)** | C | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| | M/S (si non verrouillée) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| | M/S (si non validé ; ajout limité aux joueurs de la feuille de présence) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | | Copier vers matchs de la journée | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Copier vers compétition | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Scrutineering** (contrôle équipement, depuis la page Équipes) | C/M, réinitialiser une équipe | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -149,7 +149,7 @@ profil d'un utilisateur, quel que soit son niveau. Les profils 1–2 ont tous ce
 - Les droits s'appliquent dans le **périmètre filtré** de l'utilisateur (saisons, compétitions, clubs) — un profil 6 ne voit/modifie que les journées qui lui sont assignées.
 - Le système de **mandats** permet d'élever ou restreindre temporairement le profil effectif.
 - Les actions M/S sont bloquées si la ressource est **verrouillée**, indépendamment du profil.
-- Le profil **9 (Table de marque)** a un accès très ciblé : saisie des scores et feuilles de présence match uniquement.
+- Le profil **9 (Table de marque)** a un accès très ciblé : saisie des scores et feuilles de présence match (composition du match, sans copie vers d'autres matchs ; ajout limité aux joueurs de la feuille de présence de l'équipe). Il n'a pas accès à la feuille de présence équipe.
 - Le profil **10 (Contrôle équipement)** est hors hiérarchie : aucune consultation générale hormis la page Équipes (lecture seule, son entrée vers le scrutineering), mais scrutineering et feuilles de présence équipe de **toutes** les équipes de ses compétitions (`Limit_clubs` ignoré). Il ne se connecte pas au back-office legacy. Voir [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md) § 2.
 - **Bypass périmètre profils 1 et 2** (voir section suivante) : les filtres de périmètre sont ignorés pour les utilisateurs dont le niveau effectif est ≤ 2.
 
