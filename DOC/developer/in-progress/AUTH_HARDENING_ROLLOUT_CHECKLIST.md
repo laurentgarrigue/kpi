@@ -341,6 +341,59 @@ compatibles : aucune déconnexion n'est provoquée par le retour arrière.
 
 ---
 
+## Phase 1b-ter — Continuité de session, lot B (api2 uniquement)
+
+Spec : [AUTH_HARDENING.md § 3ter.4](AUTH_HARDENING.md) (AUTH-SC-10 à 14). Aucune migration, aucun changement app4,
+aucune variable à ajouter (`REFRESH_TOKEN_TTL` facultative, défaut 72 h).
+
+### 1b-ter-B.1 ⌨️ Tests automatisés
+
+| # | Commande | Attendu | ☑ |
+|---|---|---|---|
+| 1 | `make api2_test_unit` | `RefreshTokenReuseTest` vert (AUTH-SC-10 à 12) | ☐ |
+| 2 | `make api2_test_integration` | `AuthSessionContinuityTest` et `AuthRefreshSessionTest` verts | ☐ |
+| 3 | `docker exec kpi_api2 sh -lc 'cd /app && composer phpstan'` | aucune nouvelle erreur | ☐ |
+
+### 1b-ter-B.2 ⌨️ Tests manuels (dev)
+
+DevTools → Réseau filtré sur `auth/`. Deux navigateurs (ou un navigateur et une fenêtre privée) connectés **au même compte**.
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Se connecter, DevTools → Application → Cookies | `kpi_refresh` expire dans **72 h** (AUTH-SC-14) | ☐ |
+| 2 | Navigateur A : vider `kpi_admin_token` du Local Storage, recharger ; sur la ligne `/auth/refresh-session`, « Copier en tant que cURL » | Session restaurée | ☐ |
+| 3 | Dans les 60 s, rejouer **deux fois** ce cURL depuis le **même poste** | `200` les deux fois : délai de grâce (AUTH-SC-10) | ☐ |
+| 4 | Attendre plus de 60 s, rejouer le même cURL | `401` ; 🗄 SQL `SELECT device_fingerprint, revoked_at IS NULL AS actif FROM kp_user_refresh_token WHERE user_code = '<code>' ORDER BY id DESC LIMIT 10;` : plus aucun token actif pour l'empreinte de A, **ceux de B restent actifs** ; B continue de naviguer (AUTH-SC-12) | ☐ |
+| 5 | `JWT_TTL=180` dans `sources/api2/.env.local`, `make api2_restart`, se reconnecter, attendre 2 min | `/auth/refresh` renvoie un `Set-Cookie: kpi_refresh` de **même valeur**, expiration repoussée à +72 h (AUTH-SC-13) | ☐ |
+| 6 | Se reconnecter dans A, refaire l'étape 2, se déconnecter dans A, puis rejouer le cURL dans les 60 s | `401` : la grâce ne ressuscite pas une session close (AUTH-SC-11) ; les tokens de B restent actifs | ☐ |
+
+Remettre `JWT_TTL` et `make api2_restart` après la recette.
+
+### 1b-ter-B.3 🌐 Pré-production (merge sur `main` → déploiement automatique)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte (dont PHPStan), « Deploy preprod » vert | ☐ |
+| 2 | 🌐 Run « Deploy preprod » → « Déployer via SSH » | `cache:clear` et `api2_restart` joués par le wrapper | ☐ |
+| 3 | ⌨️ Étapes 1 à 4 de la recette dev sur la préprod | Mêmes résultats | ☐ |
+| 4 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas d'erreur sur `/auth/*` | ☐ |
+
+### 1b-ter-B.4 🌐 Production (après validation préprod, hors compétition)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | ⌨️ `make release_tag version=X.Y.Z`, 🌐 « Deploy production » sur le tag | Run vert | ☐ |
+| 2 | ⌨️ Login prod | `kpi_refresh` expire dans 72 h | ☐ |
+| 3 | 🖥 `cd /data/kpi && make api2_logs lines=200` le lendemain | Pas de rafale de `401` sur `/auth/refresh-session` | ☐ |
+| 4 | 🖥 🗄 SQL après une journée de compétition : `SELECT COUNT(*) FROM kp_user_refresh_token WHERE revoked_at > NOW() - INTERVAL 1 DAY AND replaced_by IS NULL;` | Révocations limitées aux déconnexions et appareils révoqués (pas de vague sur un compte entier) | ☐ |
+
+### 1b-ter-B.5 Rollback
+
+Revert du commit api2, merge, redéploiement. Les tokens émis pendant le lot B (expiration à 72 h) restent acceptés
+par l'ancien code jusqu'à leur prochaine rotation, qui les ramène à 8 h : aucune déconnexion provoquée.
+
+---
+
 ## Phase 2 — OAuth Google
 
 Branche : `claude/enhance-user-authentication-33dZW` · Spec : [AUTH_HARDENING.md § 4](AUTH_HARDENING.md).

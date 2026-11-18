@@ -460,8 +460,9 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 
 | Décision | Pourquoi |
 |---|---|
-| La table de marque **n'est jamais déconnectée** pendant un match. Règles et critères : [AUTH_HARDENING.md § 3ter](../developer/in-progress/AUTH_HARDENING.md) (AUTH-SC-01 à 08 pour app4, AUTH-SC-20 à 23 pour la console) | des déconnexions ont été constatées en dev en cours de saisie ; un fait de jeu refusé était annulé et la console quittée |
-| **À chaque chargement d'un match** (ouverture de la console ou « charger un match » dans le même onglet), la session est renouvelée s'il lui reste moins de **2 h** (AUTH-SC-20) | un match très long dure environ 1 h ; renouveler entre deux matchs, quand rien n'est en cours de saisie, fait apparaître un éventuel problème avant le coup d'envoi plutôt qu'en plein jeu |
+| La table de marque **n'est jamais déconnectée** pendant un match. Règles et critères : [AUTH_HARDENING.md § 3ter](../developer/in-progress/AUTH_HARDENING.md) (AUTH-SC-01 à 08 pour app4, AUTH-SC-10 à 14 pour api2, AUTH-SC-21 pour la console) | des déconnexions ont été constatées en dev en cours de saisie ; un fait de jeu refusé était annulé et la console quittée |
+| ~~À chaque chargement d'un match, la session est renouvelée s'il lui reste moins de 2 h (AUTH-SC-20)~~ — **retiré le 2026-11-18** | avec un JWT de 24 h, le renouvellement préventif garde toujours plus de 4 h 48 de validité ; et le chargement du match appelle déjà api2, qui renouvelle et rejoue en cas de besoin, avant le coup d'envoi |
+| La file locale des faits de jeu refusés (ex-AUTH-SC-22) rejoint la **Phase 4 — Offline** (§ 8) | même mécanisme (écritures gardées puis rejouées par `uid`) ; les coupures réseau sont bien plus fréquentes que les refus d'authentification |
 
 ## 1. Contexte et objectif
 
@@ -1418,6 +1419,9 @@ Fonctions présentes dans `FeuilleMarque3.php` + `v2/fm3_*.js` non couvertes ail
   store + resynchronisation à la reconnexion. La **coquille PWA** (installable) est déjà livrée
   en Phase 2 (cf. §0.8) ; cette phase n'ajoute que la couche de synchro. Uniquement après un
   online-first solide.
+  Elle couvre aussi les faits de jeu refusés pour une raison d'authentification (ex-AUTH-SC-22,
+  [AUTH_HARDENING.md § 3ter.5](../developer/in-progress/AUTH_HARDENING.md)) : rejeu après reconnexion,
+  dédupliqué par `uid`.
 
 ## 9. Fichiers critiques
 
