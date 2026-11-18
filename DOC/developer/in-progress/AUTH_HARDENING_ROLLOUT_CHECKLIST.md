@@ -156,8 +156,82 @@ GROUP BY DATE(attempted_at)
 ORDER BY 1 DESC;
 ```
 
-- Si **< 1 %** des logins quotidiens utilisent encore le hash MD5 pendant 2 semaines consécutives → ouvrir PR « Retrait du fallback MD5 » (phase 1a-bis).
-- Envoyer un email aux comptes concernés 2 semaines avant pour les forcer à se reconnecter.
+- Le retrait du MD5 ne demande plus de PR : il suit la [phase 1a-bis](#phase-1a-bis--renouvellement-de-saison-et-retrait-du-md5)
+  (`AUTH_LEGACY_MD5_FALLBACK=0` puis `app:auth:purge-md5-hashes`).
+
+---
+
+## Phase 1a-bis — Renouvellement de saison et retrait du MD5
+
+Issue [#400](https://github.com/laurentgarrigue/kpi/issues/400) · Spec : [AUTH_HARDENING.md § 2bis](AUTH_HARDENING.md).
+Le déploiement du code ne change rien pour les utilisateurs : rien ne se passe tant qu'on ne lance pas la campagne
+et qu'on ne coupe pas le repli MD5. La migration `Version20261116100000` (table `kp_user_password_renewal`) est jouée
+par le wrapper.
+
+### 1a-bis.1 ⌨️ Tests automatisés
+
+```bash
+vendor/bin/phpunit --testsuite=unit --filter 'PasswordVerifier|PasswordRenewalToken'
+API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter 'AuthPasswordRenewal|AuthLegacyMd5Removal'
+```
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `testCampaignFlagsAccountsWithAPasswordNotRenewedSinceTheDate` | Compte non renouvelé marqué, renouvelé depuis la date et Google seul exemptés | ☐ |
+| 2 | `testFlaggedAccountLoginOpensNoSessionAndReturnsARenewalToken` | 403 `PASSWORD_RENEWAL_REQUIRED`, jeton, aucun cookie | ☐ |
+| 3 | `testJwtIssuedBeforeTheFlagIsRefused` / `testRefreshSessionOfAFlaggedAccountIsRefused` | 401 / 403 : refus côté api2 | ☐ |
+| 4 | `testNonCompliantRenewalIsRefused` / `testRenewalWithTheCurrentPasswordIsRefused` | 400 `WEAK_PASSWORD` / `PASSWORD_REUSED` | ☐ |
+| 5 | `testRenewalSetsThePasswordOpensTheSessionAndIsJournaled` | 200 + session, indicateur levé, `kp_journal`, jeton à usage unique | ☐ |
+| 6 | `testCorrectMd5PasswordFailsOnceTheFallbackIsRemoved` | 401 avec `AUTH_LEGACY_MD5_FALLBACK=0` | ☐ |
+| 7 | `testPurgeLeavesNoMd5HashAndJournalsEachAccount` | Plus aucun `Pwd` de 32 hexadécimaux, bcrypt intacts | ☐ |
+
+### 1a-bis.2 ⌨️ Tests manuels (dev)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `docker exec kpi_api2 php bin/console app:auth:require-password-renewal --renewed-since=2027-01-01` | Liste des comptes marqués | ☐ |
+| 2 | Login app4 d'un compte marqué | Écran « Renouvellement du mot de passe », aucune page d'app4 accessible | ☐ |
+| 3 | Saisir l'ancien mot de passe, puis un mot de passe faible | Messages « différent de l'actuel » puis règles non respectées | ☐ |
+| 4 | Saisir un mot de passe conforme | Accès à app4 (ou au choix du mandat), ligne `Renouvellement mdp` dans le journal | ☐ |
+| 5 | Onglet resté connecté avant l'étape 1 : naviguer | Retour à `/login`, puis renouvellement | ☐ |
+| 6 | Compte marqué lié à Google : « Continuer avec Google » | Message « Votre mot de passe doit être renouvelé… » | ☐ |
+
+### 1a-bis.3 Avant la campagne (J-30)
+
+1. ☐ 🖥 Inventaire : `docker exec kpi_api2 php bin/console app:auth:password-audit --without-email`.
+2. ☐ Transmettre aux régions la liste des comptes **sans e-mail valide** : sans e-mail, pas de « mot de passe
+   oublié » possible (ni après la purge MD5, ni en cas d'oubli pendant le renouvellement).
+3. ☐ Message aux utilisateurs : date du renouvellement, règles du mot de passe, vérifier son e-mail dans sa fiche ;
+   date du retrait MD5 (un compte jamais reconnecté d'ici là devra passer par « mot de passe oublié »).
+4. ☐ Aide utilisateur : [PASSWORD_RENEWAL.md](../../user/PASSWORD_RENEWAL.md) (lisible dans le DocViewer), à citer dans le message et le tutoriel.
+
+### 1a-bis.4 🖥 Jour J — campagne de renouvellement (prod)
+
+```bash
+docker exec kpi_api2 php bin/console app:auth:require-password-renewal --renewed-since=2027-01-01 --dry-run
+docker exec kpi_api2 php bin/console app:auth:require-password-renewal --renewed-since=2027-01-01
+```
+
+Suivi : `app:auth:password-audit` (ligne « Renouvellement en attente ») ; 🗄 SQL
+`SELECT COUNT(*) FROM kp_journal WHERE Actions = 'Renouvellement mdp' AND Dates >= '2027-01-01';`
+
+**Annuler la campagne** : 🗄 SQL `UPDATE kp_user_password_renewal SET required_at = NULL;` (effet immédiat).
+
+### 1a-bis.5 🖥 Date annoncée — retrait du MD5 (prod)
+
+1. ☐ Dump de la base :
+   ```bash
+   docker exec kpi_db sh -c 'mariadb-dump -u<user> -p<pass> kpi' \
+     | gzip > /data/backups/kpi/pre-migration/kpi_avant-purge-md5_$(date +%F_%H%M%S).sql.gz
+   ```
+2. ☐ Dans `sources/api2/.env` du serveur : `AUTH_LEGACY_MD5_FALLBACK=0`, puis `make api2_restart`.
+3. ☐ `docker exec kpi_api2 php bin/console app:auth:purge-md5-hashes --dry-run`, relire la liste.
+4. ☐ `docker exec kpi_api2 php bin/console app:auth:purge-md5-hashes`.
+5. ☐ Vérifier : 🗄 SQL `SELECT COUNT(*) FROM kp_user WHERE Pwd REGEXP '^[0-9a-fA-F]{32}$';` → `0`.
+
+**Rollback** : remettre `AUTH_LEGACY_MD5_FALLBACK=1` + `make api2_restart` rétablit le repli tant que la purge n'a
+pas tourné. Après la purge, les hash vidés ne se restaurent que depuis le dump (comptes à faire passer par
+« mot de passe oublié » sinon).
 
 ---
 

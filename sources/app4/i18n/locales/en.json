@@ -134,7 +134,8 @@
       "oauth_email_not_verified": "Your Google email must be verified to sign in.",
       "oauth_no_account": "No KPI account matches this Google address. Contact your administrator.",
       "oauth_email_ambiguous": "Several KPI accounts share this address. Sign in with your identifier then link Google from your profile.",
-      "oauth_generic": "Google sign-in error."
+      "oauth_generic": "Google sign-in error.",
+      "password_renewal_required": "Your password must be renewed: sign in with your identifier and current password."
     },
     "oauth_link": {
       "title": "Link your Google account",
@@ -143,6 +144,15 @@
       "cancel": "Cancel",
       "bad_password": "Wrong password.",
       "expired": "The link request has expired, please restart Google sign-in."
+    },
+    "renewal": {
+      "title": "Password renewal",
+      "intro": "For the new season, choose a new password before accessing KPI. It must differ from the current one.",
+      "submit": "Save and continue",
+      "error_reused": "The new password must differ from the current one.",
+      "error_weak": "The password does not meet the rules below.",
+      "error_expired": "The renewal delay has expired: please sign in again.",
+      "back_to_login": "Back to sign in"
     }
   },
   "dashboard": {
@@ -2136,7 +2146,8 @@
       "rule_uppercase": "1 uppercase letter",
       "rule_lowercase": "1 lowercase letter",
       "rule_digit": "1 digit",
-      "rule_special": "1 special character (!{'@'}#$%...)"
+      "rule_special": "1 special character (!{'@'}#$%...)",
+      "error_reused": "The new password must differ from the current one."
     },
     "select_mandate": {
       "title": "Choose a mandate",

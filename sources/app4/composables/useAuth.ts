@@ -76,6 +76,23 @@ interface SwitchMandateResponse {
   }
 }
 
+/** api2 code of a login refused until the user renews the password (AUTH_HARDENING.md § 2bis). */
+export const PASSWORD_RENEWAL_REQUIRED = 'PASSWORD_RENEWAL_REQUIRED'
+
+/** Thrown by login() for an account flagged "password to renew": no session, a renewal token instead. */
+export class PasswordRenewalRequiredError extends Error {
+  constructor(public readonly renewalToken: string) {
+    super(PASSWORD_RENEWAL_REQUIRED)
+  }
+}
+
+/** Rejected renewal: api2 code (WEAK_PASSWORD, PASSWORD_REUSED, INVALID_TOKEN). */
+export class PasswordRenewalError extends Error {
+  constructor(public readonly code: string) {
+    super(code)
+  }
+}
+
 export const useAuth = () => {
   const config = useRuntimeConfig()
   const authStore = useAuthStore()
@@ -98,25 +115,50 @@ export const useAuth = () => {
         if (response.status === 401) {
           throw new Error('Invalid credentials')
         }
+        if (response.status === 403) {
+          const body = await response.json().catch(() => null)
+          if (body?.code === PASSWORD_RENEWAL_REQUIRED && body.renewalToken) {
+            throw new PasswordRenewalRequiredError(body.renewalToken)
+          }
+        }
         throw new Error('Login failed')
       }
 
-      const data: LoginResponse = await response.json()
-
-      authStore.setAuth(
-        data.user,
-        data.token,
-        data.user.mandates,
-        data.user.activeMandate,
-        data.user.effectiveProfile,
-        data.user.effectiveFilters
-      )
-
-      return { hasMandates: data.hasMandates }
+      return openSession(await response.json())
     } catch (error) {
       authStore.clearAuth()
       throw error
     }
+  }
+
+  // Forced renewal: sets the new password and, on success, opens the session like login().
+  const renewPassword = async (renewalToken: string, password: string): Promise<{ hasMandates: boolean }> => {
+    const response = await fetch(`${baseUrl}/auth/renew-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ renewalToken, password })
+    })
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null)
+      throw new PasswordRenewalError(body?.code ?? 'INVALID_TOKEN')
+    }
+
+    return openSession(await response.json())
+  }
+
+  const openSession = (data: LoginResponse): { hasMandates: boolean } => {
+    authStore.setAuth(
+      data.user,
+      data.token,
+      data.user.mandates,
+      data.user.activeMandate,
+      data.user.effectiveProfile,
+      data.user.effectiveFilters
+    )
+
+    return { hasMandates: data.hasMandates }
   }
 
   // Logout: révoque le refresh token côté api2 (AUTH_HARDENING § 3) puis nettoie l'état local.
@@ -264,6 +306,7 @@ export const useAuth = () => {
 
   return {
     login,
+    renewPassword,
     logout,
     checkAuth,
     refreshToken,

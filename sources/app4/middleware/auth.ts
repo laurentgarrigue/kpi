@@ -10,7 +10,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/access-request', '/auth/google/link', '/auth/oauth-complete']
+  const publicRoutes = ['/login', '/reset-password', '/forgot-password', '/access-request', '/renew-password', '/auth/google/link', '/auth/oauth-complete']
 
   if (publicRoutes.includes(to.path)) {
     // If already authenticated and on login, redirect to home

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { version } from '~/package.json'
+import { PasswordRenewalRequiredError } from '~/composables/useAuth'
 
 definePageMeta({
   layout: 'default',
@@ -8,6 +9,7 @@ definePageMeta({
 
 const { t, locale, setLocale } = useI18n()
 const { login } = useAuth()
+const renewalToken = usePasswordRenewalToken()
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -60,6 +62,11 @@ const handleSubmit = async () => {
       await navigateTo('/')
     }
   } catch (e) {
+    if (e instanceof PasswordRenewalRequiredError) {
+      renewalToken.value = e.renewalToken
+      await navigateTo('/renew-password')
+      return
+    }
     if (e instanceof Error) {
       if (e.message.includes('profile 1')) {
         error.value = t('login.error_profile_restricted')

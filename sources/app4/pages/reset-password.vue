@@ -35,6 +35,8 @@ async function handleSubmit() {
       const data = await response.json().catch(() => null)
       if (response.status === 400 && data?.code === 'INVALID_TOKEN') {
         error.value = t('users.reset_password.error_token_invalid')
+      } else if (data?.code === 'PASSWORD_REUSED') {
+        error.value = t('users.reset_password.error_reused')
       } else if (data?.message) {
         error.value = data.message
       } else {

@@ -134,7 +134,8 @@
       "oauth_email_not_verified": "Votre adresse Google doit être vérifiée pour vous connecter.",
       "oauth_no_account": "Aucun compte KPI ne correspond à cette adresse Google. Contactez votre administrateur.",
       "oauth_email_ambiguous": "Plusieurs comptes KPI partagent cette adresse. Connectez-vous avec votre identifiant puis liez Google depuis votre profil.",
-      "oauth_generic": "Erreur lors de la connexion Google."
+      "oauth_generic": "Erreur lors de la connexion Google.",
+      "password_renewal_required": "Votre mot de passe doit être renouvelé : connectez-vous avec votre identifiant et votre mot de passe actuel."
     },
     "oauth_link": {
       "title": "Lier votre compte Google",
@@ -143,6 +144,15 @@
       "cancel": "Annuler",
       "bad_password": "Mot de passe incorrect.",
       "expired": "La demande de lien a expiré, relancez la connexion Google."
+    },
+    "renewal": {
+      "title": "Renouvellement du mot de passe",
+      "intro": "Pour la nouvelle saison, choisissez un nouveau mot de passe avant d'accéder à KPI. Il doit être différent de l'actuel.",
+      "submit": "Enregistrer et continuer",
+      "error_reused": "Le nouveau mot de passe doit être différent de l'actuel.",
+      "error_weak": "Le mot de passe ne respecte pas les règles ci-dessous.",
+      "error_expired": "Le délai de renouvellement a expiré : reconnectez-vous.",
+      "back_to_login": "Retour à la connexion"
     }
   },
   "dashboard": {
@@ -2148,7 +2158,8 @@
       "rule_uppercase": "1 lettre majuscule",
       "rule_lowercase": "1 lettre minuscule",
       "rule_digit": "1 chiffre",
-      "rule_special": "1 caractère spécial (!{'@'}#$%...)"
+      "rule_special": "1 caractère spécial (!{'@'}#$%...)",
+      "error_reused": "Le nouveau mot de passe doit être différent de l'actuel."
     },
     "select_mandate": {
       "title": "Choisir un mandat",
