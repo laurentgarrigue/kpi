@@ -262,7 +262,7 @@ onMounted(async () => {
       <div v-if="eventLoading" class="h-16 flex items-center">
         <UIcon name="heroicons:arrow-path" class="w-5 h-5 animate-spin text-header-600 dark:text-header-300" />
       </div>
-      <div v-else-if="eventNotFound" class="text-danger-600 dark:text-danger-400 text-sm">
+      <div v-else-if="eventNotFound" class="text-danger-600 dark:text-danger-300 text-sm">
         {{ t('events.association.event_not_found') }}
       </div>
       <div v-else-if="event" class="bg-white dark:bg-header-900 rounded-lg shadow px-4 py-3">
@@ -297,7 +297,7 @@ onMounted(async () => {
       <div class="flex flex-wrap gap-3">
         <!-- Season filter -->
         <div class="min-w-30">
-          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('events.association.filter_season') }}
           </label>
           <select
@@ -312,7 +312,7 @@ onMounted(async () => {
 
         <!-- State filter -->
         <div class="min-w-35">
-          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             {{ t('events.association.filter_state') }}
           </label>
           <select
@@ -327,7 +327,7 @@ onMounted(async () => {
 
         <!-- Search -->
         <div class="flex-1 min-w-50">
-          <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
+          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
             &nbsp;
           </label>
           <div class="relative">
@@ -387,7 +387,7 @@ onMounted(async () => {
         {{ t('events.association.no_candidates') }}
       </div>
       <table v-else class="w-full text-sm">
-        <thead class="bg-header-50 dark:bg-header-800 text-header-900 dark:text-header-50 text-xs uppercase">
+        <thead class="bg-header-50 dark:bg-header-800 text-header-900 dark:text-header-50 text-sm uppercase">
           <tr>
             <th class="px-4 py-3 text-center w-10">
               <UIcon name="heroicons:link" class="w-4 h-4" />
@@ -418,12 +418,12 @@ onMounted(async () => {
                 @change="toggleAssociation(g)"
               >
             </td>
-            <td class="px-4 py-2 text-header-600 dark:text-header-300 font-mono text-xs">
+            <td class="px-4 py-2 text-header-600 dark:text-header-300 font-mono text-sm">
               {{ g.id }}
             </td>
             <td class="px-4 py-2 font-medium text-header-900 dark:text-header-50">
               {{ g.codeCompetition }}
-              <span v-if="g.competitionLibelle" class="font-normal text-header-600 dark:text-header-300 text-xs ml-1">{{ g.competitionLibelle }}</span>
+              <span v-if="g.competitionLibelle" class="font-normal text-header-600 dark:text-header-300 text-sm ml-1">{{ g.competitionLibelle }}</span>
             </td>
             <td class="px-4 py-2 text-header-900 dark:text-header-50">
               {{ g.phase || '—' }}
@@ -446,14 +446,14 @@ onMounted(async () => {
             <td class="px-4 py-2 text-center">
               <span
                 v-if="associatedIds.has(g.id)"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
               >
                 <UIcon name="heroicons:check-circle" class="w-3.5 h-3.5" />
                 {{ t('events.association.linked_badge') }}
               </span>
               <span
                 v-else
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-200 dark:bg-header-700 text-header-600 dark:text-header-300"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-header-200 dark:bg-header-700 text-header-600 dark:text-header-300"
               >
                 {{ t('events.association.unlinked_badge') }}
               </span>
@@ -490,14 +490,14 @@ onMounted(async () => {
         <template #header-right>
           <span
             v-if="associatedIds.has(g.id)"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300"
           >
             <UIcon name="heroicons:check-circle" class="w-3.5 h-3.5" />
             {{ t('events.association.linked_badge') }}
           </span>
           <span
             v-else
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-header-200 dark:bg-header-700 text-header-600 dark:text-header-300"
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-header-200 dark:bg-header-700 text-header-600 dark:text-header-300"
           >
             {{ t('events.association.unlinked_badge') }}
           </span>
@@ -526,7 +526,7 @@ onMounted(async () => {
             :disabled="toggling.has(g.id)"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             :class="associatedIds.has(g.id)
-              ? 'bg-danger-50 dark:bg-danger-950 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-900'
+              ? 'bg-danger-50 dark:bg-danger-950 text-danger-600 dark:text-danger-300 hover:bg-danger-100 dark:hover:bg-danger-900'
               : 'bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900'"
             @click="toggleAssociation(g)"
           >

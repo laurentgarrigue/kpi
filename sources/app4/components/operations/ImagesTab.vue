@@ -606,7 +606,7 @@ const onTypeChange = (type: ImageType) => {
 
       <div v-else class="border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
         <table class="w-full text-sm">
-          <thead class="bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 text-xs uppercase">
+          <thead class="bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 text-sm uppercase">
             <tr>
               <th class="px-3 py-2 text-left w-16">{{ t('operations.images.col_preview') }}</th>
               <th class="px-3 py-2 text-left">{{ t('operations.images.col_filename') }}</th>
@@ -629,7 +629,7 @@ const onTypeChange = (type: ImageType) => {
                     >
                   </a>
                 </td>
-                <td class="px-3 py-2 font-mono text-xs text-header-900 dark:text-header-50">
+                <td class="px-3 py-2 font-mono text-sm text-header-900 dark:text-header-50">
                   <a :href="imageUrl(entry.filename)" target="_blank" rel="noopener" class="hover:underline hover:text-primary-600">
                     {{ entry.filename }}
                   </a>
@@ -639,18 +639,18 @@ const onTypeChange = (type: ImageType) => {
                 <td class="px-3 py-2 text-right">
                   <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      class="p-1.5 rounded text-header-600 dark:text-header-300 hover:text-primary-600 hover:bg-primary-50"
+                      class="p-2.5 rounded text-header-600 dark:text-header-300 hover:text-primary-600 hover:bg-primary-50"
                       :title="t('operations.images.rename_button')"
                       @click="startRename(entry)"
                     >
-                      <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+                      <UIcon name="i-heroicons-pencil" class="w-5 h-5" />
                     </button>
                     <button
-                      class="p-1.5 rounded text-header-600 dark:text-header-300 hover:text-error-600 hover:bg-error-50"
+                      class="p-2.5 rounded text-header-600 dark:text-header-300 hover:text-error-600 hover:bg-error-50"
                       :title="t('common.delete')"
                       @click="openDeleteModal(entry)"
                     >
-                      <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+                      <UIcon name="i-heroicons-trash" class="w-5 h-5" />
                     </button>
                   </div>
                 </td>
@@ -671,20 +671,20 @@ const onTypeChange = (type: ImageType) => {
                     <input
                       v-model="renameValue"
                       type="text"
-                      class="flex-1 px-2 py-1 text-xs font-mono border border-primary-400 rounded focus:ring-2 focus:ring-primary-500"
+                      class="flex-1 px-2 py-1 text-sm font-mono border border-primary-400 rounded focus:ring-2 focus:ring-primary-500"
                       @keyup.enter="confirmRename"
                       @keyup.escape="cancelRename"
                     >
                     <button
                       :disabled="!canConfirmRename || loading"
-                      class="px-3 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50"
+                      class="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50"
                       @click="confirmRename"
                     >
                       <UIcon v-if="loading" name="i-heroicons-arrow-path" class="w-3.5 h-3.5 animate-spin" />
                       <span v-else>{{ t('common.confirm') }}</span>
                     </button>
                     <button
-                      class="px-3 py-1 text-xs bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 rounded hover:bg-header-300"
+                      class="px-3 py-1 text-sm bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 rounded hover:bg-header-300"
                       @click="cancelRename"
                     >
                       {{ t('common.cancel') }}
@@ -790,10 +790,10 @@ const onTypeChange = (type: ImageType) => {
                 <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
                 <button
                   v-if="clubSearch && !clubSearchLoading"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                   @click="clearClubSearch"
                 >
-                  <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+                  <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
                 </button>
                 <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
               </div>
@@ -807,7 +807,7 @@ const onTypeChange = (type: ImageType) => {
                   class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
                   @click="selectClub(club)"
                 >
-                  <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
+                  <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ club.numero }}</span>
                   <span>{{ club.nom }}</span>
                 </button>
               </div>
@@ -848,10 +848,10 @@ const onTypeChange = (type: ImageType) => {
                   <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
                   <button
                     v-if="teamSearch && !teamSearchLoading"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                     @click="clearTeamSearch"
                   >
-                    <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+                    <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
                   </button>
                   <UIcon v-if="teamSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
                 </div>
@@ -866,7 +866,7 @@ const onTypeChange = (type: ImageType) => {
                     @click="selectTeam(team)"
                   >
                     <span class="font-medium">{{ team.libelle }}</span>
-                    <span class="text-xs text-header-600 dark:text-header-300">{{ team.numero }} — {{ team.club }}</span>
+                    <span class="text-sm text-header-600 dark:text-header-300">{{ team.numero }} — {{ team.club }}</span>
                   </button>
                 </div>
               </div>

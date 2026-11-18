@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Kayak-Polo.Info - Administration"
+    "title": "Kayak-Polo.Info - Administration",
+    "home_title": "Kayak-Polo.Info - Gestion sportive"
   },
   "footer": {
     "version": "Version"
@@ -20,6 +21,10 @@
   "experimental": {
     "title": "PRÉPROD — Feature expérimentale :",
     "expires_in": "retour à main dans {hours} h"
+  },
+  "pwa": {
+    "update_available": "Une nouvelle version est disponible",
+    "reload": "Recharger"
   },
   "menu": {
     "competition": "Compétitions",
@@ -864,14 +869,14 @@
         "disconnected": "Déconnecté",
         "connecting": "Connexion…",
         "connected": "Connecté",
-        "error": "Erreur — reconnexion automatique"
+        "error": "Erreur — reconnectez-vous"
       },
       "subscribe": "S'abonner",
       "topic": "Topic",
       "topic_hint": "Le préfixe est imposé par api2 : la page de test ne peut pas publier sur les topics réels.",
       "resume": "Reprendre depuis un id",
-      "resume_hint": "Rejoue les updates publiés après cet id. Déconnectez-vous, publiez depuis un autre navigateur, puis reconnectez-vous : le rattrapage doit livrer ce qui a été manqué, sans toucher au réseau.",
-      "resume_placeholder": "urn:uuid:… (laisser vide = pas de rattrapage)",
+      "resume_hint": "Rejoue les updates publiés après cet id (envoyé en en-tête Last-Event-ID). Déconnectez-vous, publiez ou saisissez à la console, puis reconnectez-vous : le rattrapage doit livrer ce qui a été manqué, sans toucher au réseau. « earliest » rejoue tout l'historique.",
+      "resume_placeholder": "urn:kpi:scoring:… ou earliest (laisser vide = pas de rattrapage)",
       "use_last_id": "Dernier reçu",
       "last_id": "Dernier id reçu :",
       "connect": "Se connecter",
@@ -888,7 +893,11 @@
       "success_publish": "Update publié (id : {id})",
       "error_publish": "Échec de la publication sur le hub",
       "error_config": "Impossible de lire la configuration du hub",
-      "replayed": "Rejoué"
+      "replayed": "Rejoué",
+      "topics": "Topics",
+      "topics_hint": "Un ou plusieurs topics séparés par des espaces : topics de test (test/…) ou réels, ex. /scoring/event/229/pitch/1/score, ou /scoring/event/229/pitch/1/{'{'}type{'}'} pour tout le terrain.",
+      "topics_placeholder": "test/ping /scoring/event/{'{'}e{'}'}/pitch/{'{'}p{'}'}/score",
+      "untyped": "(non typé)"
     }
   },
   "competitions": {
@@ -1573,7 +1582,7 @@
     "time_invalid": "L'heure n'est pas au format HH:MM. Continuer quand même ?",
     "referee_unidentified": "Arbitre non identifié",
     "team_undefined": "Équipe non définie",
-    "presence": "Présence",
+    "presence": "Compo",
     "all_events": "Tous les événements",
     "all_competitions": "Toutes les compétitions",
     "all_rounds": "Tous",
@@ -2310,7 +2319,9 @@
       "action": "Action",
       "action_all": "Toutes",
       "action_group_ensemble": "Ensemble",
-      "action_group_detail": "Détail",
+      "category": "Catégories",
+      "category_all": "Toutes",
+      "category_count": "{count} sur {total}",
       "action_connexion": "Connexions",
       "action_ajout": "Ajouts",
       "action_modif": "Modifications",
@@ -2322,6 +2333,15 @@
       "competition_placeholder": "Code compétition...",
       "date_from": "Du",
       "date_to": "Au"
+    },
+    "categories": {
+      "connexion": "Connexion",
+      "administration": "Administration",
+      "operation": "Gestion sportive",
+      "presence": "Présence",
+      "scoring": "Scoring",
+      "pdf": "PDF",
+      "editorial": "Éditorial"
     },
     "table": {
       "date": "Date",
@@ -2446,7 +2466,8 @@
     "title": "Contrôle TV",
     "tabs": {
       "channels": "Channels",
-      "scenarios": "Scénarios"
+      "scenarios": "Scénarios",
+      "overlays": "Incrustations"
     },
     "global": {
       "event": "Événement",
@@ -2545,6 +2566,42 @@
       "with_stats": "Joueurs avec stats",
       "all": "Tous les joueurs",
       "without_stats": "Tous sans stats"
+    },
+    "overlays": {
+      "select_event": "Sélectionnez d'abord un événement dans l'onglet Chaînes.",
+      "tokens_title": "Jetons d'affichage",
+      "tokens_hint": "Chaque incrustation s'authentifie par un jeton porté dans son URL : limité à l'événement (et éventuellement à un terrain), il expire et se révoque en un clic.",
+      "pitch": "Terrain",
+      "all_pitches": "Tous",
+      "label": "Libellé",
+      "label_placeholder": "Régie terrain 2, écran hall…",
+      "days": "Jours",
+      "create_token": "Créer un jeton",
+      "token_created": "Jeton créé",
+      "token_created_hint": "Utilisez « Copier l'URL » sur la ligne correspondante pour obtenir l'adresse à coller dans la source navigateur d'OBS.",
+      "expires": "Expire le",
+      "last_used": "Dernière utilisation",
+      "revoked": "Révoqué",
+      "copy_url": "Copier l'URL",
+      "revoke": "Révoquer",
+      "copied": "URL copiée",
+      "no_token": "Aucun jeton pour cet événement.",
+      "settings_title": "Enchaînement de l'affichage",
+      "settings_hint": "Délais (en secondes) et habillage. Laissez vide pour hériter : terrain → événement → valeur par défaut.",
+      "scope": "Portée",
+      "scope_event": "Événement (vide)",
+      "save": "Enregistrer",
+      "settings_saved": "Réglages enregistrés",
+      "inherit_hint": "Un champ vide hérite du niveau supérieur ; l'espace réservé indique la valeur réellement appliquée.",
+      "field": {
+        "halftimeScoreDelay": "Score mi-temps après (s)",
+        "finalScoreDelay": "Score final après (s)",
+        "finalScoreDuration": "Durée du score final (s)",
+        "nextGameDelay": "Prochain match après (s)",
+        "nextGameDuration": "Durée présentation (s, 0 = jusqu’au coup d’envoi)",
+        "background": "Fond (transparent, magenta…)",
+        "styleId": "Style"
+      }
     }
   },
   "eventCacheManager": {
@@ -2634,31 +2691,37 @@
       "END": "Terminé"
     },
     "period": {
-      "M1": "Période 1",
-      "M2": "Période 2",
-      "P1": "Prolong. 1",
-      "P2": "Prolong. 2",
-      "TB": "Tirs au but"
+      "M1": "1ère période",
+      "M2": "2ème période",
+      "P1": "Prolongation 1",
+      "P2": "Prolongation 2",
+      "TB": "Tirs au but",
+      "overtime": "Prolongation {n}",
+      "overtime_short": "PRL"
     },
     "event": {
       "goal": "But",
       "card_green": "Carton vert",
       "card_yellow": "Carton jaune",
       "card_red": "Carton rouge",
-      "card_red_def": "Carton rouge définitif"
+      "card_black": "Carton noir"
     },
     "timer": {
       "start": "Démarrer",
       "pause": "Pause",
       "reset": "Réinitialiser",
-      "shotclock": "Time-shoot"
+      "shotclock": "Time-shoot",
+      "group": "Chronomètre de jeu",
+      "adjust_locked": "Arrêtez le chrono pour le corriger",
+      "adjust": "Corriger le chrono"
     },
     "scoreboard": "Tableau d'affichage",
     "locked": "Match verrouillé — lecture seule",
-    "field": "Terrain",
-    "history": "Historique des faits de jeu",
+    "pitch": "Terrain",
+    "history": "Chronologie",
     "not_found": "Match introuvable",
-    "select_player_first": "Sélectionnez d'abord un joueur",
+    "roster_empty": "Aucun joueur sur la feuille de match",
+    "team_fact": "Fait d'équipe (sans joueur)",
     "no_access": "Accès réservé (phase d'expérimentation)",
     "mode": {
       "label": "Mode",
@@ -2670,10 +2733,15 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "edit_hint": "Cliquez sur un fait de jeu pour le modifier"
+      "delete_title": "Supprimer ce fait de jeu ?",
+      "delete_message": "Le fait de jeu est retiré de la chronologie ; un but retiré fait baisser le score."
+    },
+    "pending": {
+      "validate_event": "Enregistrer : {event}"
     },
     "time": {
       "label": "Temps du fait de jeu",
+      "short": "Temps",
       "period": "Période"
     },
     "adjust": {
@@ -2691,13 +2759,230 @@
       "r_rep": "Remplacement",
       "unknown": "Autre / Non précisé"
     },
-    "status_cycle_hint": "Cliquer pour changer de statut",
     "period_next": "Période suivante",
     "period_direct": "Aller à…",
     "period_confirm_title": "Changer de période ?",
     "period_confirm_message": "Passer en {period} réinitialisera le chronomètre à la durée de cette période.",
     "team": "Équipe",
-    "history_table_hint": "Cliquez une ligne pour la modifier ; survolez pour supprimer."
+    "history_table_hint": "Cliquez une ligne pour la modifier ; survolez pour supprimer.",
+    "card_progression": {
+      "title": "Progression des cartons",
+      "card_not_higher": "Ce joueur a déjà reçu un carton de couleur égale ou supérieure : le carton suivant doit être strictement supérieur (vert → jaune → rouge).",
+      "player_already_out": "Ce joueur est déjà exclu pour ce match (carton rouge ou noir) : aucun carton supplémentaire n'est possible.",
+      "unknown_card": "Code de carton inconnu.",
+      "confirm": "Enregistrer quand même ?",
+      "record_anyway": "Enregistrer quand même"
+    },
+    "golden_goal": {
+      "title": "But en or",
+      "message": "But marqué en {period} : le règlement met fin au match immédiatement. Clore le match maintenant ?",
+      "close_match": "Clore le match"
+    },
+    "shotclock": {
+      "title": "Chronomètre de tir",
+      "stop": "Arrêt",
+      "short": "Tir",
+      "adjust": "Corriger le chrono de tir",
+      "adjust_locked": "Arrêtez le chrono de jeu pour corriger le chrono de tir"
+    },
+    "break": {
+      "title": "Pause",
+      "skip": "Terminer la pause"
+    },
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "hint": "Préférence propre à ce poste. Cliquez « Modifier » puis pressez la touche voulue (Échap pour annuler). Une touche = une action.",
+      "change": "Modifier",
+      "press_key": "Pressez…",
+      "reset": "Valeurs par défaut",
+      "gameClockToggle": "Chrono : départ / arrêt",
+      "shotclockStart60": "Chrono de tir : départ/reset 60 s",
+      "shotclockStart40": "Chrono de tir : départ/reset 40 s",
+      "shotclockStop": "Chrono de tir : arrêt (--)",
+      "penaltiesClearExpired": "Pénalités échues (00:00) : retirer",
+      "factGoal": "Fait de jeu : but",
+      "factGreen": "Fait de jeu : carton vert",
+      "factYellow": "Fait de jeu : carton jaune",
+      "factRed": "Fait de jeu : carton rouge",
+      "factBlack": "Fait de jeu : carton noir"
+    },
+    "sound_test": "Tester le son",
+    "penalty": {
+      "title": "Pénalités",
+      "remove": "Retirer la pénalité",
+      "full_slots": "Cette équipe a déjà 2 exclusions en cours : aucune pénalité supplémentaire ne peut être créée (jamais moins de 3 joueurs).",
+      "black_no_penalty": "Exclusion définitive : pas de pénalité de 2 minutes, aucun remplacement possible jusqu'à la fin du match — l'équipe termine à effectif réduit.",
+      "expired_title": "Fin de pénalité",
+      "expired_return": "Pénalité du n°{number} terminée : le joueur revient en jeu.",
+      "expired_replace": "Pénalité du n°{number} (carton rouge) terminée : remplacement autorisé — le joueur sanctionné ne revient pas.",
+      "lift_title": "But encaissé — levée de pénalité",
+      "lift_message": "L'équipe en infériorité vient d'encaisser un but : lever la pénalité la plus ancienne (n°{number}) ? Le joueur revient en jeu. (Un carton rouge n'est jamais levé : ses 2 minutes vont à leur terme.)",
+      "lift_confirm": "Lever la pénalité",
+      "adjust": "Ajuster le décompte"
+    },
+    "display": {
+      "scoreboard": "Ouvrir le tableau de score",
+      "shotclock": "Ouvrir le chronomètre de tir"
+    },
+    "sync": {
+      "connected": "Synchronisation temps réel active",
+      "error": "Synchronisation temps réel interrompue (reconnexion…)",
+      "idle": "Synchronisation temps réel inactive",
+      "remote_change": "Modification reçue d’un autre terminal"
+    },
+    "settings": {
+      "type": "Type de match",
+      "type_ranking": "Classement",
+      "type_elimination": "Élimination",
+      "read_only_hint": "Modifiable depuis la gestion du match",
+      "publication": "Publication",
+      "publication_public": "Public",
+      "publication_private": "Privé",
+      "load_game": "Charger un autre match",
+      "load_game_placeholder": "N° ou ID#",
+      "load": "Charger",
+      "game_not_found": "Aucun match trouvé pour ce numéro (ou plusieurs correspondances).",
+      "officials": "Officiels",
+      "officials_saved": "Officiels enregistrés",
+      "reload_players": "Recharger les présents",
+      "no_player": "Aucun joueur",
+      "number": "N°",
+      "player": "Joueur",
+      "remove_player": "Retirer le joueur",
+      "officials_table": "Table de marque",
+      "officials_referees": "Arbitres",
+      "match": "Match",
+      "load_next": "Match suivant du terrain",
+      "no_next_game": "Aucun match après celui-ci sur ce terrain",
+      "other_licensees": "Autres licenciés",
+      "status": "Statut",
+      "status_C": "Capitaine",
+      "status_E": "Staff",
+      "compo_loaded": "Composition de {team} chargée depuis la feuille de présence",
+      "clear_official": "Vider le champ",
+      "officials_unsaved_title": "Officiels non enregistrés",
+      "officials_unsaved_message": "Les modifications des officiels n’ont pas été enregistrées. Quitter les Paramètres sans les enregistrer ?",
+      "officials_unsaved_leave": "Quitter sans enregistrer",
+      "officials_unsaved_stay": "Rester pour enregistrer"
+    },
+    "score_only": {
+      "label": "Score seul",
+      "hint": "Saisie minimale : score, période et statut, sans attribution des buts aux joueurs."
+    },
+    "officials": {
+      "secretaire": "Secrétaire",
+      "chronometre": "Chronométreur",
+      "timeshoot": "Chronométreur de tir",
+      "arbitrePrincipal": "Arbitre principal",
+      "arbitreSecondaire": "Arbitre secondaire",
+      "ligne1": "Juge de ligne 1",
+      "ligne2": "Juge de ligne 2"
+    },
+    "view": {
+      "settings": "Paramètres",
+      "run": "Déroulement"
+    },
+    "tools": "Raccourcis",
+    "lock_toggle": "Verrouiller ou déverrouiller le match",
+    "entry": {
+      "title": "Saisie d'un fait de jeu",
+      "clear": "Désélectionner",
+      "start_hint": "Choisissez un fait de jeu ou un joueur",
+      "keys_hint": "Touche du clavier (réglable dans Raccourcis clavier)",
+      "player_number": "N° du joueur",
+      "player_number_placeholder": "N°",
+      "player_ambiguous": "Numéro présent dans les deux équipes : ← équipe A, → équipe B",
+      "player_enter": "Entrée pour choisir",
+      "player_none": "Aucun joueur avec ce numéro",
+      "player_hint": "Tapez le numéro, ou cliquez le joueur",
+      "player_missing": "Choisissez le joueur du fait de jeu",
+      "time_frozen": "Temps figé au début de la saisie.\nDésélectionner le resynchronise.",
+      "locked_pending": "Donnez le coup d'envoi (badge « En attente ») pour saisir les faits de jeu.",
+      "locked_end": "Match terminé : rouvrez-le (« Rouvrir le match… ») pour corriger les faits de jeu, puis clôturez-le à nouveau."
+    },
+    "event_short": {
+      "goal": "But",
+      "card_green": "Vert",
+      "card_yellow": "Jaune",
+      "card_red": "Rouge",
+      "card_black": "Noir"
+    },
+    "status_kickoff_hint": "Cliquer pour donner le coup d'envoi",
+    "period_confirm_action": "Passer en {period}",
+    "roster_goals": "{n} but(s)",
+    "history_more": "… tout voir ({count} de plus)",
+    "history_recent": "Les {n} derniers seulement",
+    "history_newest_first": "Plus récents en haut — cliquer pour inverser",
+    "history_oldest_first": "Plus anciens en haut — cliquer pour inverser",
+    "close": {
+      "action": "Clore le match…",
+      "title": "Clore le match",
+      "score": "Score affiché",
+      "goals": "Buts saisis",
+      "mismatch": "Le score affiché ne correspond pas aux buts saisis.",
+      "align": "Aligner le score sur les buts",
+      "end_time": "Heure de fin",
+      "comments": "Commentaires des officiels",
+      "comments_placeholder": "Réserves des capitaines, rapport de l'arbitre…",
+      "lock": "Verrouiller le match après la clôture",
+      "lock_hint": "Plus aucune modification possible ensuite, sauf déverrouillage.",
+      "confirm": "Clore le match",
+      "done": "Match clos",
+      "done_description": "Le résultat est enregistré sur la feuille de match officielle.",
+      "early_title": "Clore le match maintenant ?",
+      "early_message": "La clôture semble prématurée :",
+      "early_confirm": "Clore quand même…",
+      "warning": {
+        "clock_running": "le chrono est en marche",
+        "clock_not_zero": "le chrono n'est pas à zéro",
+        "first_period": "le match est en 1ère période",
+        "tied_elimination": "match éliminatoire à égalité : il faut un vainqueur"
+      }
+    },
+    "reopen": {
+      "action": "Rouvrir le match…",
+      "title": "Rouvrir le match ?",
+      "message": "Le match repasse « En cours » pour corriger la saisie. Il faudra le clore à nouveau pour enregistrer le résultat corrigé.",
+      "confirm": "Rouvrir le match",
+      "done": "Match rouvert"
+    },
+    "offline": {
+      "title": "Connexion perdue",
+      "message": "Les saisies risquent de ne pas être enregistrées. Gardez la page ouverte : la synchronisation reprend au retour du réseau. Vérifiez ensuite la chronologie."
+    },
+    "readiness": {
+      "title": "À vérifier avant le coup d'envoi",
+      "ok": "Feuille de match prête : effectifs, numéros, capitaines et officiels vérifiés",
+      "hint": "Ces contrôles n'empêchent pas le coup d'envoi.",
+      "summary": "{count} point(s) à vérifier sur les paramètres du match avant le coup d'envoi",
+      "open": "Voir les paramètres",
+      "too_few_players": "{team} : {count} joueur(s) sur la feuille (staff non compté), il en faut au moins {min}",
+      "too_many_players": "{team} : {count} joueurs sur la feuille (staff non compté), {max} au maximum",
+      "too_many_staff": "{team} : {count} membres du staff, {max} au maximum",
+      "duplicate_numbers": "{team} : numéros de maillot en double ({numbers})",
+      "no_captain": "{team} : aucun capitaine désigné",
+      "missing_officials": "Officiels à renseigner : {roles}",
+      "expand": "Afficher les points à vérifier",
+      "collapse": "Réduire"
+    },
+    "keyboard": {
+      "ready": "Clavier actif : les raccourcis répondent",
+      "field": "Saisie dans un champ : les touches tapent du texte, les raccourcis attendent",
+      "off": "Raccourcis suspendus (fenêtre ouverte ou saisie impossible)",
+      "window": "Clavier inactif : la fenêtre de la console n'a pas le focus. Cliquez dans la console",
+      "banner": "Clavier inactif : cliquez dans la console"
+    },
+    "display_options": {
+      "title_scoreboard": "Ouvrir le tableau de score",
+      "title_shotclock": "Ouvrir le chronomètre de tir",
+      "hint": "Choix mémorisé sur ce poste. Rouvrir un affichage déjà ouvert lui applique les nouvelles options.",
+      "theme": "Thème",
+      "theme_dark": "Sombre (blanc sur noir)",
+      "theme_light": "Clair (noir sur blanc)",
+      "scoreboard_shotclock": "Afficher le chronomètre de tir",
+      "shotclock_clock": "Afficher le chrono principal",
+      "open": "Ouvrir"
+    }
   },
   "competition": {
     "ended_title": "Compétition terminée — lecture seule",

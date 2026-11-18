@@ -366,13 +366,13 @@ onMounted(() => {
         <div class="flex items-center gap-4">
           <NuxtLink to="/" class="relative flex items-center gap-2 pb-4">
             <img :src="logoSrc" width="30" height="30" alt="logo" class="inline-block align-middle" >
-            <span class="text-xl font-bold text-primary-400">KPI</span>
+            <span class="text-xl font-bold text-primary-500">KPI</span>
             <span class="text-sm text-header-300">Admin</span>
             <!-- Environment badge (hidden in production) -->
             <span
               v-if="runtimeConfig.public.appEnv !== 'production'"
               :class="[
-                'absolute -bottom-0.5 right-0 -rotate-12 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest rounded pointer-events-none select-none leading-none',
+                'absolute -bottom-0.5 right-0 -rotate-12 px-2 py-0.5 text-xs font-black uppercase tracking-widest rounded pointer-events-none select-none leading-none',
                 runtimeConfig.public.appEnv === 'preprod'
                   ? 'bg-orange-500 text-white'
                   : 'bg-yellow-400 text-yellow-900'
@@ -385,12 +385,12 @@ onMounted(() => {
           <!-- Online/Offline indicator -->
           <ClientOnly>
             <UTooltip :text="isOnline ? t('status.online') : t('status.offline')">
-              <span :class="isOnline ? 'text-success-400' : 'text-danger-500 animate-pulse'">
+              <span :class="isOnline ? 'text-success-700' : 'text-danger-600 animate-pulse'">
                 <UIcon :name="isOnline ? 'i-heroicons-wifi' : 'i-heroicons-signal-slash'" class="h-5 w-5" />
               </span>
             </UTooltip>
             <template #fallback>
-              <span class="text-success-400">
+              <span class="text-success-700">
                 <UIcon name="i-heroicons-wifi" class="h-5 w-5" />
               </span>
             </template>
@@ -447,15 +447,24 @@ onMounted(() => {
               leave-from-class="transform opacity-100 scale-100"
               leave-to-class="transform opacity-0 scale-95"
             >
+              <!-- Two columns (CSS columns, a group never split) once there are several groups; mobile keeps its accordion -->
               <div
                 v-if="openDropdown === 'admin'"
-                class="absolute left-0 mt-1 w-56 bg-header-950 rounded-lg shadow-lg border border-header-700 py-1 z-50"
+                :class="[
+                  'absolute mt-1 bg-header-950 rounded-lg shadow-lg border border-header-700 p-1 z-50',
+                  adminMenuGroups.length > 1
+                    ? 'w-[30rem] max-w-[calc(100vw-2rem)] columns-2 gap-1 right-0'
+                    : 'w-56 left-0'
+                ]"
               >
-                <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
+                <div
+                  v-for="group in adminMenuGroups"
+                  :key="group.key"
+                  class="break-inside-avoid mb-1 last:mb-0 rounded-md overflow-hidden border border-header-800"
+                >
                   <!-- Group title: non-clickable band, distinct from the links below -->
                   <div
-                    class="px-3 py-1 bg-header-900 border-y border-header-800 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
-                    :class="gIndex > 0 ? 'mt-1' : '-mt-1 border-t-0 rounded-t-lg'"
+                    class="px-3 py-1 bg-header-900 border-b border-header-800 text-xs font-bold text-header-300 uppercase tracking-widest flex items-center gap-1.5 cursor-default select-none"
                   >
                     <UIcon :name="group.icon" class="w-3 h-3" />
                     {{ group.label }}
@@ -464,13 +473,13 @@ onMounted(() => {
                     v-for="item in group.items"
                     :key="item.to"
                     :to="item.to!"
-                    class="flex items-center gap-2 pl-6 pr-4 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
+                    class="flex items-center gap-2 pl-4 pr-3 py-2 text-sm text-header-300 hover:bg-header-800 hover:text-light-50 transition-colors"
                     @click="openDropdown = null"
                   >
-                    <UIcon :name="item.icon" class="w-4 h-4" />
+                    <UIcon :name="item.icon" class="w-4 h-4 shrink-0" />
                     <span>{{ item.label }}</span>
                   </NuxtLink>
-                </template>
+                </div>
               </div>
             </Transition>
           </div>
@@ -485,7 +494,7 @@ onMounted(() => {
                 'flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 publicMenuOpen
                   ? 'text-success-200 bg-success-900'
-                  : 'text-success-300 hover:text-light-50 hover:bg-success-900'
+                  : 'text-success-700 hover:text-light-50 hover:bg-success-900'
               ]"
               @click="publicMenuOpen = !publicMenuOpen"
             >
@@ -512,7 +521,7 @@ onMounted(() => {
                 <a
                   :href="runtimeConfig.public.legacyBaseUrl"
                   target="_blank"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-700 hover:bg-header-800 hover:text-success-100 transition-colors"
                   @click="publicMenuOpen = false"
                 >
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
@@ -521,7 +530,7 @@ onMounted(() => {
                 <a
                   :href="runtimeConfig.public.publicSiteUrl"
                   target="_blank"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-700 hover:bg-header-800 hover:text-success-100 transition-colors"
                   data-testid="public-site-beta-link"
                   @click="publicMenuOpen = false"
                 >
@@ -532,7 +541,7 @@ onMounted(() => {
                 <a
                   :href="runtimeConfig.public.app2BaseUrl"
                   target="_blank"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-700 hover:bg-header-800 hover:text-success-100 transition-colors"
                   @click="publicMenuOpen = false"
                 >
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
@@ -542,7 +551,7 @@ onMounted(() => {
                 <a
                   :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
                   target="_blank"
-                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-300 hover:bg-header-800 hover:text-success-100 transition-colors"
+                  class="flex items-center gap-2 px-4 py-2 text-sm text-success-700 hover:bg-header-800 hover:text-success-100 transition-colors"
                   @click="publicMenuOpen = false"
                 >
                   <UIcon name="heroicons:arrow-top-right-on-square" class="w-4 h-4" />
@@ -561,7 +570,7 @@ onMounted(() => {
               v-for="lang in languages"
               :key="lang.code"
               :class="[
-                'text-2xl transition-all duration-200 cursor-pointer',
+                'text-2xl p-1 transition-all duration-200 cursor-pointer',
                 locale === lang.code
                   ? 'opacity-100 scale-110 drop-shadow-lg'
                   : 'opacity-50 hover:opacity-75 hover:scale-105'
@@ -579,7 +588,7 @@ onMounted(() => {
               class="relative flex items-center gap-2 px-3 py-2 bg-header-800 hover:bg-header-700 rounded-lg transition-colors"
               @click="userMenuOpen = !userMenuOpen"
             >
-              <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-sm font-medium">
+              <div class="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center text-sm font-medium">
                 {{ user?.firstname?.[0] ?? 'U' }}{{ user?.name?.[0] ?? '' }}
               </div>
               <!-- New tutorial features badge -->
@@ -592,7 +601,7 @@ onMounted(() => {
               </span>
               <UIcon
                 name="heroicons:chevron-down"
-                class="w-4 h-4 text-header-400 transition-transform"
+                class="w-4 h-4 text-header-300 transition-transform"
                 :class="{ 'rotate-180': userMenuOpen }"
               />
             </button>
@@ -608,26 +617,26 @@ onMounted(() => {
             >
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 mt-2 w-64 bg-white dark:bg-header-900 rounded-lg shadow-lg border border-header-200 dark:border-header-700 py-1 z-50"
+                class="absolute right-0 mt-2 w-72 bg-white dark:bg-header-900 rounded-lg shadow-lg border border-header-200 dark:border-header-700 py-1 z-50"
               >
                 <!-- User identity -->
                 <div class="px-4 py-3 border-b border-header-200 dark:border-header-800">
-                  <div class="text-sm font-medium text-header-900 dark:text-header-50">
+                  <div class="text-base font-medium text-header-900 dark:text-header-50">
                     {{ user?.name }} {{ user?.firstname }}
                   </div>
                 </div>
 
                 <!-- Profile / active mandate -->
                 <div class="px-4 py-2">
-                  <div v-if="!authStore.activeMandate" class="text-xs text-header-600 dark:text-header-300">
+                  <div v-if="!authStore.activeMandate" class="text-sm text-header-600 dark:text-header-300">
                     {{ t('profile') }} {{ user?.profile }}
                   </div>
                   <!-- Active mandate display -->
-                  <div v-if="authStore.activeMandate" class="px-2 py-1 bg-primary-50 dark:bg-primary-950 rounded text-xs text-primary-700 dark:text-primary-200">
+                  <div v-if="authStore.activeMandate" class="px-2 py-1 bg-primary-50 dark:bg-primary-950 rounded text-sm text-primary-700 dark:text-primary-200">
                     <div class="font-medium">{{ t('users.header.current_mandate') }}</div>
                     <div>{{ authStore.activeMandate.libelle }}</div>
-                    <div class="text-primary-500 dark:text-primary-400">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
-                    <div v-if="activeMandateSummary?.filters.clubs?.length || activeMandateSummary?.filters.journees?.length || activeMandateSummary?.filters.events?.length" class="text-orange-500 mt-0.5 space-y-0.5">
+                    <div class="text-primary-500 dark:text-primary-300">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
+                    <div v-if="activeMandateSummary?.filters.clubs?.length || activeMandateSummary?.filters.journees?.length || activeMandateSummary?.filters.events?.length" class="text-orange-700 mt-0.5 space-y-0.5">
                       <div v-if="activeMandateSummary.filters.clubs?.length">{{ t('users.modal.filter_clubs') }}: {{ activeMandateSummary.filters.clubs.join(', ') }}</div>
                       <div v-if="activeMandateSummary.filters.journees?.length">{{ t('users.modal.filter_gamedays') }}: {{ activeMandateSummary.filters.journees.join(', ') }}</div>
                       <div v-if="activeMandateSummary.filters.events?.length">{{ t('users.modal.filter_events') }}: {{ activeMandateSummary.filters.events.join(', ') }}</div>
@@ -639,38 +648,38 @@ onMounted(() => {
                 <NuxtLink
                   v-if="authStore.hasMandates"
                   to="/select-mandate"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-base text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
                   @click="userMenuOpen = false"
                 >
-                  <UIcon name="heroicons:arrows-right-left" class="w-5 h-5" />
+                  <UIcon name="heroicons:arrows-right-left" class="w-6 h-6" />
                   <span>{{ t('users.header.switch_mandate') }}</span>
                 </NuxtLink>
 
                 <!-- Help & tutorials page (les tutoriels se relancent depuis /help) -->
                 <NuxtLink
                   to="/help"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-base text-header-900 dark:text-header-200 hover:bg-header-50 dark:hover:bg-header-800 border-b border-header-200 dark:border-header-800 transition-colors"
                   @click="userMenuOpen = false"
                 >
-                  <UIcon name="heroicons:question-mark-circle" class="w-5 h-5" />
+                  <UIcon name="heroicons:question-mark-circle" class="w-6 h-6" />
                   <span>{{ t('help.title') }}</span>
                   <span
                     v-if="hasNewSteps"
-                    class="ml-auto text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200"
+                    class="ml-auto text-xs font-semibold uppercase px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200"
                   >{{ t('tour.new_badge') }}</span>
                 </NuxtLink>
 
                 <!-- Theme selector: light / dark / system -->
                 <ClientOnly>
                   <div class="px-4 py-2 border-b border-header-200 dark:border-header-800">
-                    <div class="text-xs font-medium text-header-600 dark:text-header-300 mb-1.5">{{ t('theme.label') }}</div>
+                    <div class="text-sm font-medium text-header-600 dark:text-header-300 mb-1.5">{{ t('theme.label') }}</div>
                     <div class="flex gap-1 p-0.5 bg-header-200 dark:bg-header-800 rounded-lg">
                       <button
                         v-for="opt in themeOptions"
                         :key="opt.value"
                         type="button"
                         :class="[
-                          'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer',
+                          'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-2 min-h-12 text-sm font-medium rounded-md transition-colors cursor-pointer',
                           colorMode.preference === opt.value
                             ? 'bg-white dark:bg-header-950 text-header-900 dark:text-header-50 shadow-sm'
                             : 'text-header-900 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50'
@@ -678,7 +687,7 @@ onMounted(() => {
                         :title="t(opt.labelKey)"
                         @click="colorMode.preference = opt.value"
                       >
-                        <UIcon :name="opt.icon" class="w-4 h-4 shrink-0" />
+                        <UIcon :name="opt.icon" class="w-5 h-5 shrink-0" />
                         <span class="truncate max-w-full">{{ t(opt.labelKey) }}</span>
                       </button>
                     </div>
@@ -688,17 +697,17 @@ onMounted(() => {
                 <!-- Menu items -->
                 <NuxtLink
                   to="/profile/security"
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-header-700 dark:text-header-200 hover:bg-header-100 dark:hover:bg-header-800 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-base text-header-700 dark:text-header-200 hover:bg-header-100 dark:hover:bg-header-800 transition-colors"
                   @click="userMenuOpen = false"
                 >
-                  <UIcon name="heroicons:shield-check" class="w-5 h-5" />
+                  <UIcon name="heroicons:shield-check" class="w-6 h-6" />
                   <span>{{ t('security.title') }}</span>
                 </NuxtLink>
                 <button
-                  class="w-full flex items-center gap-3 px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
+                  class="w-full flex items-center gap-3 px-4 py-3 text-base text-danger-600 dark:text-danger-300 hover:bg-danger-50 dark:hover:bg-danger-950 transition-colors"
                   @click="handleLogout"
                 >
-                  <UIcon name="heroicons:arrow-right-on-rectangle" class="w-5 h-5" />
+                  <UIcon name="heroicons:arrow-right-on-rectangle" class="w-6 h-6" />
                   <span>{{ t('logout') }}</span>
                 </button>
               </div>
@@ -707,7 +716,7 @@ onMounted(() => {
 
           <!-- Mobile menu toggle -->
           <button
-            class="lg:hidden p-2 text-header-300 hover:text-white hover:bg-header-800 rounded-lg"
+            class="lg:hidden p-2.5 text-header-300 hover:text-white hover:bg-header-800 rounded-lg"
             @click="emit('toggle-mobile-menu')"
           >
             <UIcon
@@ -730,7 +739,7 @@ onMounted(() => {
           <a
             :href="runtimeConfig.public.legacyBaseUrl"
             target="_blank"
-            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-700 hover:text-success-100"
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI Public</span>
@@ -738,7 +747,7 @@ onMounted(() => {
           <a
             :href="runtimeConfig.public.publicSiteUrl"
             target="_blank"
-            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-700 hover:text-success-100"
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>{{ t('menu.public_site_beta') }}</span>
@@ -746,7 +755,7 @@ onMounted(() => {
           <a
             :href="runtimeConfig.public.app2BaseUrl"
             target="_blank"
-            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-700 hover:text-success-100"
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI App</span>
@@ -754,7 +763,7 @@ onMounted(() => {
           <a
             :href="`${runtimeConfig.public.legacyBaseUrl}/admin`"
             target="_blank"
-            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-300 hover:text-success-100"
+            class="flex items-center gap-2 py-2 text-sm font-medium transition-colors text-success-700 hover:text-success-100"
           >
             <UIcon name="heroicons:arrow-top-right-on-square" class="w-5 h-5" />
             <span>KPI Admin1 (legacy)</span>
@@ -766,7 +775,7 @@ onMounted(() => {
               :class="[
                 'flex items-center gap-2 py-2 text-sm font-medium transition-colors',
                 isActive(item)
-                  ? 'text-primary-400'
+                  ? 'text-primary-500'
                   : 'text-header-200 hover:text-white'
               ]"
             >
@@ -784,7 +793,7 @@ onMounted(() => {
               type="button"
               :class="[
                 'w-full flex items-center justify-between py-2 text-sm font-medium transition-colors',
-                mobileExpanded === 'admin' ? 'text-primary-400' : 'text-header-200 hover:text-white'
+                mobileExpanded === 'admin' ? 'text-primary-500' : 'text-header-200 hover:text-white'
               ]"
               @click.stop="toggleMobileExpanded('admin')"
             >
@@ -802,7 +811,7 @@ onMounted(() => {
               <template v-for="(group, gIndex) in adminMenuGroups" :key="group.key">
                 <!-- Group title: non-clickable band, distinct from the links below -->
                 <div
-                  class="px-2 py-1 rounded bg-header-900 text-[0.65rem] font-bold text-header-400 uppercase tracking-widest flex items-center gap-1.5 select-none"
+                  class="px-2 py-1 rounded bg-header-900 text-xs font-bold text-header-300 uppercase tracking-widest flex items-center gap-1.5 select-none"
                   :class="{ 'mt-3': gIndex > 0 }"
                 >
                   <UIcon :name="group.icon" class="w-3 h-3" />
@@ -829,14 +838,14 @@ onMounted(() => {
               <div class="text-sm font-medium text-white">
                 {{ user?.name }} {{ user?.firstname }}
               </div>
-              <div v-if="!authStore.activeMandate" class="text-xs text-header-300">
+              <div v-if="!authStore.activeMandate" class="text-sm text-header-300">
                 {{ t('profile') }} {{ user?.profile }}
               </div>
               <!-- Active mandate display (mobile) -->
-              <div v-if="authStore.activeMandate" class="mt-1 px-2 py-0.5 bg-primary-900 rounded text-xs text-primary-200">
+              <div v-if="authStore.activeMandate" class="mt-1 px-2 py-0.5 bg-primary-900 rounded text-sm text-primary-200">
                 <div>{{ authStore.activeMandate.libelle }}</div>
-                <div class="text-primary-400">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
-                <div v-if="activeMandateSummary?.filters.clubs?.length || activeMandateSummary?.filters.journees?.length || activeMandateSummary?.filters.events?.length" class="text-orange-300 mt-0.5 space-y-0.5">
+                <div class="text-primary-500">{{ t(`users.profiles.${authStore.effectiveProfile}`) }}</div>
+                <div v-if="activeMandateSummary?.filters.clubs?.length || activeMandateSummary?.filters.journees?.length || activeMandateSummary?.filters.events?.length" class="text-orange-700 mt-0.5 space-y-0.5">
                   <div v-if="activeMandateSummary.filters.clubs?.length">{{ t('users.modal.filter_clubs') }}: {{ activeMandateSummary.filters.clubs.join(', ') }}</div>
                   <div v-if="activeMandateSummary.filters.journees?.length">{{ t('users.modal.filter_gamedays') }}: {{ activeMandateSummary.filters.journees.join(', ') }}</div>
                   <div v-if="activeMandateSummary.filters.events?.length">{{ t('users.modal.filter_events') }}: {{ activeMandateSummary.filters.events.join(', ') }}</div>
@@ -848,7 +857,7 @@ onMounted(() => {
               <NuxtLink
                 v-if="authStore.hasMandates"
                 to="/select-mandate"
-                class="p-2 text-header-300 hover:text-white hover:bg-header-700 rounded-lg transition-colors"
+                class="p-2.5 text-header-300 hover:text-white hover:bg-header-700 rounded-lg transition-colors"
                 @click="emit('toggle-mobile-menu')"
               >
                 <UIcon name="heroicons:arrows-right-left" class="w-5 h-5" />
@@ -856,7 +865,7 @@ onMounted(() => {
               <!-- Security / profile (mobile) -->
               <NuxtLink
                 to="/profile/security"
-                class="p-2 text-header-300 hover:text-white hover:bg-header-700 rounded-lg transition-colors"
+                class="p-2.5 text-header-300 hover:text-white hover:bg-header-700 rounded-lg transition-colors"
                 :title="t('security.title')"
                 @click="emit('toggle-mobile-menu')"
               >
@@ -878,14 +887,14 @@ onMounted(() => {
           <!-- Theme selector (mobile): light / dark / system -->
           <ClientOnly>
             <div class="mt-3">
-              <div class="text-xs font-medium text-header-300 mb-1.5">{{ t('theme.label') }}</div>
+              <div class="text-sm font-medium text-header-300 mb-1.5">{{ t('theme.label') }}</div>
               <div class="flex gap-1 p-0.5 bg-header-800 rounded-lg">
                 <button
                   v-for="opt in themeOptions"
                   :key="opt.value"
                   type="button"
                   :class="[
-                    'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer',
+                    'flex-1 min-w-0 flex flex-col items-center justify-center gap-1 px-1 py-2 min-h-12 text-sm font-medium rounded-md transition-colors cursor-pointer',
                     colorMode.preference === opt.value
                       ? 'bg-header-950 text-white shadow-sm'
                       : 'text-header-300 hover:text-white'

@@ -46,11 +46,14 @@ function GetGameController($route, $params)
   $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
   // Events
-  $sql = "SELECT md.Id e_id, md.Id_match g_id, md.Equipe_A_B e_team, md.Id_evt_match e_type, 
+  // v_match_detail : vue de compatibilité (SQL/migrations/2026-07-29_scoring_live_compat_views.sql).
+  // Sert les faits live pendant le match et retombe sur kp_match_detail une fois consolidé
+  // — la fiche de match reste donc à jour EN COURS de match, sans double écriture.
+  $sql = "SELECT md.Id e_id, md.Id_match g_id, md.Equipe_A_B e_team, md.Id_evt_match e_type,
     md.Periode e_period, md.Temps e_time, md.motif e_motif, 
     l.Matric e_licence, md.Numero e_number, l.Nom e_name, l.Prenom e_firstname, mj.Capitaine e_status
-    FROM kp_match_detail md 
-    LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric) 
+    FROM v_match_detail md
+    LEFT OUTER JOIN kp_licence l ON (md.Competiteur = l.Matric)
     LEFT OUTER JOIN kp_match_joueur mj
       ON (md.Competiteur = mj.Matric AND md.Id_match = mj.Id_match) 
     WHERE md.Id_match = ? 

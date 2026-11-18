@@ -58,7 +58,7 @@ const refereeLines = (game: Game) => {
         {{ dayLabel(day.date) }}
       </h2>
       <div class="overflow-x-auto">
-        <table class="min-w-full table-fixed text-xs" data-testid="pitch-grid">
+        <table class="min-w-full table-fixed text-sm" data-testid="pitch-grid">
           <thead class="bg-header-50 dark:bg-header-800">
             <tr>
               <th scope="col" class="w-16 px-2 py-2 text-left font-medium text-header-900 dark:text-header-50">{{ t('games.field.time') }}</th>
@@ -85,7 +85,7 @@ const refereeLines = (game: Game) => {
                   <button
                     v-if="isBreakGame(g)"
                     type="button"
-                    class="block w-full rounded border border-header-200 bg-header-100 p-1.5 text-center text-xs italic text-header-600 hover:bg-header-200 dark:border-header-700 dark:bg-header-800 dark:text-header-300 dark:hover:bg-header-700"
+                    class="block w-full rounded border border-header-200 bg-header-100 p-1.5 text-center text-sm italic text-header-600 hover:bg-header-200 dark:border-header-700 dark:bg-header-800 dark:text-header-300 dark:hover:bg-header-700"
                     :data-game="g.id"
                     data-break
                     @click="emit('open', g)"
@@ -101,11 +101,11 @@ const refereeLines = (game: Game) => {
                     :data-game="g.id"
                     @click="emit('open', g)"
                   >
-                    <span class="flex items-center justify-between gap-2 text-[10px] text-primary-700 dark:text-primary-300 font-semibold">
+                    <span class="flex items-center justify-between gap-2 text-xs text-primary-700 dark:text-primary-300 font-semibold">
                       <span class="truncate">{{ [g.codeCompetition, g.phase].filter(Boolean).join(' - ') }}</span>
                       <span class="flex shrink-0 items-center gap-1 text-header-600 dark:text-header-300 tabular-nums">
                         <span v-if="g.numeroOrdre">#{{ g.numeroOrdre }}</span>
-                        <UIcon v-if="g.validation === 'O'" name="heroicons:lock-closed" class="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                        <UIcon v-if="g.validation === 'O'" name="heroicons:lock-closed" class="w-3 h-3 text-amber-700 dark:text-amber-400" />
                       </span>
                     </span>
                     <span
@@ -115,14 +115,14 @@ const refereeLines = (game: Game) => {
                     >
                       <span
                         class="truncate font-medium"
-                        :class="teamLine(g, side).placeholder ? 'text-orange-400 italic' : ''"
+                        :class="teamLine(g, side).placeholder ? 'text-orange-700 italic' : ''"
                         :title="teamLine(g, side).text"
                       >{{ teamLine(g, side).text }}</span>
                       <span v-if="hasScore(g)" class="shrink-0 font-bold tabular-nums">{{ side === 'A' ? g.scoreA : g.scoreB }}</span>
                     </span>
                     <span
                       v-if="showReferees || showShotclock"
-                      class="mt-1 block space-y-0.5 border-t border-header-100 dark:border-header-800 pt-1 text-[10px] text-header-700 dark:text-header-300"
+                      class="mt-1 block space-y-0.5 border-t border-header-100 dark:border-header-800 pt-1 text-xs text-header-700 dark:text-header-300"
                     >
                       <template v-if="showReferees">
                         <span
@@ -133,7 +133,7 @@ const refereeLines = (game: Game) => {
                           <UIcon name="heroicons:flag" class="w-3 h-3 shrink-0 mt-px" :title="t(index === 0 ? 'games.field.referee_1' : 'games.field.referee_2')" />
                           <span
                             class="truncate"
-                            :class="referee?.placeholder ? 'text-orange-400 italic' : ''"
+                            :class="referee?.placeholder ? 'text-orange-700 italic' : ''"
                             :title="referee?.text"
                           >{{ referee?.text ?? '-' }}</span>
                         </span>

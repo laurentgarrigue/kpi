@@ -1,6 +1,7 @@
 {
   "app": {
-    "title": "Kayak-Polo.Info - Administration"
+    "title": "Kayak-Polo.Info - Administration",
+    "home_title": "Kayak-Polo.Info - Sports management"
   },
   "footer": {
     "version": "Version"
@@ -20,6 +21,10 @@
   "experimental": {
     "title": "PREPROD — Experimental feature:",
     "expires_in": "back to main in {hours} h"
+  },
+  "pwa": {
+    "update_available": "Update available",
+    "reload": "Reload"
   },
   "menu": {
     "competition": "Competitions",
@@ -863,14 +868,14 @@
         "disconnected": "Disconnected",
         "connecting": "Connecting…",
         "connected": "Connected",
-        "error": "Error — reconnecting automatically"
+        "error": "Error — reconnect"
       },
       "subscribe": "Subscribe",
       "topic": "Topic",
       "topic_hint": "The prefix is enforced by api2: this test page cannot publish to real topics.",
       "resume": "Resume from an id",
-      "resume_hint": "Replays updates published after this id. Disconnect, publish from another browser, then reconnect: the catch-up should deliver what was missed, without touching the network.",
-      "resume_placeholder": "urn:uuid:… (empty = no catch-up)",
+      "resume_hint": "Replays updates published after this id (sent as the Last-Event-ID header). Disconnect, publish or score at the console, then reconnect: the catch-up should deliver what was missed, without touching the network. \"earliest\" replays the whole history.",
+      "resume_placeholder": "urn:kpi:scoring:… or earliest (empty = no catch-up)",
       "use_last_id": "Last received",
       "last_id": "Last received id:",
       "connect": "Connect",
@@ -887,7 +892,11 @@
       "success_publish": "Update published (id: {id})",
       "error_publish": "Failed to publish to the hub",
       "error_config": "Could not read the hub configuration",
-      "replayed": "Replayed"
+      "replayed": "Replayed",
+      "topics": "Topics",
+      "topics_hint": "One or more space-separated topics: test topics (test/…) or real ones, e.g. /scoring/event/229/pitch/1/score, or /scoring/event/229/pitch/1/{'{'}type{'}'} for the whole pitch.",
+      "topics_placeholder": "test/ping /scoring/event/{'{'}e{'}'}/pitch/{'{'}p{'}'}/score",
+      "untyped": "(untyped)"
     }
   },
   "competitions": {
@@ -1561,7 +1570,7 @@
     "time_invalid": "Time is not in HH:MM format. Continue anyway?",
     "referee_unidentified": "Unidentified referee",
     "team_undefined": "Undefined team",
-    "presence": "Presence",
+    "presence": "Rosters",
     "all_events": "All events",
     "all_competitions": "All competitions",
     "all_rounds": "All",
@@ -2298,7 +2307,9 @@
       "action": "Action",
       "action_all": "All",
       "action_group_ensemble": "Groups",
-      "action_group_detail": "Detail",
+      "category": "Categories",
+      "category_all": "All",
+      "category_count": "{count} of {total}",
       "action_connexion": "Logins",
       "action_ajout": "Additions",
       "action_modif": "Modifications",
@@ -2310,6 +2321,15 @@
       "competition_placeholder": "Competition code...",
       "date_from": "From",
       "date_to": "To"
+    },
+    "categories": {
+      "connexion": "Login",
+      "administration": "Administration",
+      "operation": "Sports management",
+      "presence": "Attendance",
+      "scoring": "Scoring",
+      "pdf": "PDF",
+      "editorial": "Editorial"
     },
     "table": {
       "date": "Date",
@@ -2434,7 +2454,8 @@
     "title": "TV Control",
     "tabs": {
       "channels": "Channels",
-      "scenarios": "Scenarios"
+      "scenarios": "Scenarios",
+      "overlays": "Overlays"
     },
     "global": {
       "event": "Event",
@@ -2533,6 +2554,42 @@
       "with_stats": "Players with stats",
       "all": "All players",
       "without_stats": "All without stats"
+    },
+    "overlays": {
+      "select_event": "Select an event in the Channels tab first.",
+      "tokens_title": "Display tokens",
+      "tokens_hint": "Each overlay authenticates with a token carried in its URL: scoped to the event (and optionally to one pitch), it expires and can be revoked in one click.",
+      "pitch": "Pitch",
+      "all_pitches": "All",
+      "label": "Label",
+      "label_placeholder": "Pitch 2 control room, hall screen…",
+      "days": "Days",
+      "create_token": "Create a token",
+      "token_created": "Token created",
+      "token_created_hint": "Use \"Copy URL\" on the matching row to get the address to paste into the OBS browser source.",
+      "expires": "Expires on",
+      "last_used": "Last used",
+      "revoked": "Revoked",
+      "copy_url": "Copy URL",
+      "revoke": "Revoke",
+      "copied": "URL copied",
+      "no_token": "No token for this event.",
+      "settings_title": "Display chaining",
+      "settings_hint": "Delays (in seconds) and styling. Leave empty to inherit: pitch → event → default value.",
+      "scope": "Scope",
+      "scope_event": "Event (empty)",
+      "save": "Save",
+      "settings_saved": "Settings saved",
+      "inherit_hint": "An empty field inherits from the level above; the placeholder shows the value actually applied.",
+      "field": {
+        "halftimeScoreDelay": "Half-time score after (s)",
+        "finalScoreDelay": "Final score after (s)",
+        "finalScoreDuration": "Final score duration (s)",
+        "nextGameDelay": "Next game after (s)",
+        "nextGameDuration": "Presentation duration (s, 0 = until kick-off)",
+        "background": "Background (transparent, magenta…)",
+        "styleId": "Style"
+      }
     }
   },
   "eventCacheManager": {
@@ -2622,31 +2679,37 @@
       "END": "Finished"
     },
     "period": {
-      "M1": "Period 1",
-      "M2": "Period 2",
+      "M1": "1st period",
+      "M2": "2nd period",
       "P1": "Overtime 1",
       "P2": "Overtime 2",
-      "TB": "Shoot-out"
+      "TB": "Penalty shootout",
+      "overtime": "Overtime {n}",
+      "overtime_short": "OVT"
     },
     "event": {
       "goal": "Goal",
       "card_green": "Green card",
       "card_yellow": "Yellow card",
       "card_red": "Red card",
-      "card_red_def": "Red card (final)"
+      "card_black": "Black card"
     },
     "timer": {
       "start": "Start",
       "pause": "Pause",
       "reset": "Reset",
-      "shotclock": "Shot clock"
+      "shotclock": "Shot clock",
+      "group": "Game clock",
+      "adjust_locked": "Stop the clock to correct it",
+      "adjust": "Correct the clock"
     },
     "scoreboard": "Scoreboard",
     "locked": "Match locked — read only",
-    "field": "Field",
-    "history": "Game action history",
+    "pitch": "Pitch",
+    "history": "Timeline",
     "not_found": "Match not found",
-    "select_player_first": "Select a player first",
+    "roster_empty": "No player on the game sheet",
+    "team_fact": "Team fact (no player)",
     "no_access": "Restricted access (experimentation phase)",
     "mode": {
       "label": "Mode",
@@ -2658,10 +2721,15 @@
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
-      "edit_hint": "Click a game action to edit it"
+      "delete_title": "Delete this game fact?",
+      "delete_message": "The fact is removed from the timeline; removing a goal lowers the score."
+    },
+    "pending": {
+      "validate_event": "Record: {event}"
     },
     "time": {
       "label": "Game action time",
+      "short": "Time",
       "period": "Period"
     },
     "adjust": {
@@ -2679,13 +2747,230 @@
       "r_rep": "Substitution",
       "unknown": "Other / Unspecified"
     },
-    "status_cycle_hint": "Click to change status",
     "period_next": "Next period",
     "period_direct": "Go to…",
     "period_confirm_title": "Change period?",
     "period_confirm_message": "Switching to {period} will reset the clock to that period's duration.",
     "team": "Team",
-    "history_table_hint": "Click a row to edit; hover to delete."
+    "history_table_hint": "Click a row to edit; hover to delete.",
+    "card_progression": {
+      "title": "Card progression",
+      "card_not_higher": "This player already received a card of equal or higher color: the next card must be strictly higher (green → yellow → red).",
+      "player_already_out": "This player is already out for this match (red or black card): no further card is possible.",
+      "unknown_card": "Unknown card code.",
+      "confirm": "Record anyway?",
+      "record_anyway": "Record anyway"
+    },
+    "golden_goal": {
+      "title": "Golden goal",
+      "message": "Goal scored in {period}: the rules end the match immediately. Close the match now?",
+      "close_match": "Close the match"
+    },
+    "shotclock": {
+      "title": "Shot clock",
+      "stop": "Stop",
+      "short": "Shot",
+      "adjust": "Correct the shot clock",
+      "adjust_locked": "Stop the game clock to correct the shot clock"
+    },
+    "break": {
+      "title": "Break",
+      "skip": "End break"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "hint": "Per-device preference. Click \"Change\" then press the desired key (Escape to cancel). One key = one action.",
+      "change": "Change",
+      "press_key": "Press…",
+      "reset": "Reset defaults",
+      "gameClockToggle": "Game clock: start / stop",
+      "shotclockStart60": "Shot clock: start/reset 60 s",
+      "shotclockStart40": "Shot clock: start/reset 40 s",
+      "shotclockStop": "Shot clock: stop (--)",
+      "penaltiesClearExpired": "Expired penalties (00:00): remove",
+      "factGoal": "Game fact: goal",
+      "factGreen": "Game fact: green card",
+      "factYellow": "Game fact: yellow card",
+      "factRed": "Game fact: red card",
+      "factBlack": "Game fact: black card"
+    },
+    "sound_test": "Test sound",
+    "penalty": {
+      "title": "Penalties",
+      "remove": "Remove penalty",
+      "full_slots": "This team already has 2 exclusions running: no further penalty can be created (never fewer than 3 players).",
+      "black_no_penalty": "Definitive ejection: no 2-minute penalty, no replacement until the end of the match — the team finishes short-handed.",
+      "expired_title": "Penalty over",
+      "expired_return": "Penalty of #{number} is over: the player returns.",
+      "expired_replace": "Penalty of #{number} (red card) is over: replacement allowed — the sanctioned player does not return.",
+      "lift_title": "Goal conceded — penalty lift",
+      "lift_message": "The short-handed team just conceded a goal: lift the oldest penalty (#{number})? The player returns. (A red-card penalty is never lifted: its 2 minutes run to the end.)",
+      "lift_confirm": "Lift the penalty",
+      "adjust": "Adjust the countdown"
+    },
+    "display": {
+      "scoreboard": "Open the scoreboard",
+      "shotclock": "Open the shot clock"
+    },
+    "sync": {
+      "connected": "Live sync active",
+      "error": "Live sync interrupted (reconnecting…)",
+      "idle": "Live sync inactive",
+      "remote_change": "Change received from another terminal"
+    },
+    "settings": {
+      "type": "Match type",
+      "type_ranking": "Ranking",
+      "type_elimination": "Elimination",
+      "read_only_hint": "Edited from the match management",
+      "publication": "Publication",
+      "publication_public": "Public",
+      "publication_private": "Private",
+      "load_game": "Load another game",
+      "load_game_placeholder": "Number or ID#",
+      "load": "Load",
+      "game_not_found": "No game found for this number (or several matches).",
+      "officials": "Officials",
+      "officials_saved": "Officials saved",
+      "reload_players": "Reload present players",
+      "no_player": "No player",
+      "number": "No.",
+      "player": "Player",
+      "remove_player": "Remove player",
+      "officials_table": "Scoring table",
+      "officials_referees": "Referees",
+      "match": "Game",
+      "load_next": "Next game on this pitch",
+      "no_next_game": "No later game on this pitch",
+      "other_licensees": "Other licence holders",
+      "status": "Status",
+      "status_C": "Captain",
+      "status_E": "Staff",
+      "compo_loaded": "{team} roster loaded from the presence sheet",
+      "clear_official": "Clear the field",
+      "officials_unsaved_title": "Officials not saved",
+      "officials_unsaved_message": "The changes to the officials have not been saved. Leave the Settings without saving them?",
+      "officials_unsaved_leave": "Leave without saving",
+      "officials_unsaved_stay": "Stay and save"
+    },
+    "score_only": {
+      "label": "Score only",
+      "hint": "Minimal capture: score, period and status, without attributing goals to players."
+    },
+    "officials": {
+      "secretaire": "Secretary",
+      "chronometre": "Timekeeper",
+      "timeshoot": "Shot-clock timekeeper",
+      "arbitrePrincipal": "Main referee",
+      "arbitreSecondaire": "Second referee",
+      "ligne1": "Line judge 1",
+      "ligne2": "Line judge 2"
+    },
+    "view": {
+      "settings": "Settings",
+      "run": "Game flow"
+    },
+    "tools": "Shortcuts",
+    "lock_toggle": "Lock or unlock the game",
+    "entry": {
+      "title": "Game action entry",
+      "clear": "Deselect",
+      "start_hint": "Pick a game fact or a player",
+      "keys_hint": "Keyboard key (set it in Keyboard shortcuts)",
+      "player_number": "Player number",
+      "player_number_placeholder": "No.",
+      "player_ambiguous": "Number found in both teams: ← team A, → team B",
+      "player_enter": "Enter to pick",
+      "player_none": "No player with this number",
+      "player_hint": "Type the number, or click the player",
+      "player_missing": "Pick the player of the game fact",
+      "time_frozen": "Time frozen when the entry started.\nDeselect resyncs it.",
+      "locked_pending": "Start the game (\"Pending\" badge) to enter game facts.",
+      "locked_end": "Game closed: reopen it (\"Reopen the game…\") to correct the game facts, then close it again."
+    },
+    "event_short": {
+      "goal": "Goal",
+      "card_green": "Green",
+      "card_yellow": "Yellow",
+      "card_red": "Red",
+      "card_black": "Black"
+    },
+    "status_kickoff_hint": "Click to start the game",
+    "period_confirm_action": "Go to {period}",
+    "roster_goals": "{n} goal(s)",
+    "history_more": "… show all ({count} more)",
+    "history_recent": "Only the last {n}",
+    "history_newest_first": "Newest at the top — click to reverse",
+    "history_oldest_first": "Oldest at the top — click to reverse",
+    "close": {
+      "action": "Close the game…",
+      "title": "Close the game",
+      "score": "Displayed score",
+      "goals": "Goals recorded",
+      "mismatch": "The displayed score does not match the recorded goals.",
+      "align": "Align the score on the goals",
+      "end_time": "End time",
+      "comments": "Officials' comments",
+      "comments_placeholder": "Captains' reservations, referee report…",
+      "lock": "Lock the game after closing it",
+      "lock_hint": "No further change is possible unless it is unlocked.",
+      "confirm": "Close the game",
+      "done": "Game closed",
+      "done_description": "The result is recorded on the official game sheet.",
+      "early_title": "Close the game now?",
+      "early_message": "Closing looks premature:",
+      "early_confirm": "Close anyway…",
+      "warning": {
+        "clock_running": "the clock is running",
+        "clock_not_zero": "the clock is not at zero",
+        "first_period": "the game is in its 1st period",
+        "tied_elimination": "elimination game tied: a winner is needed"
+      }
+    },
+    "reopen": {
+      "action": "Reopen the game…",
+      "title": "Reopen the game?",
+      "message": "The game goes back to \"In progress\" so the entries can be corrected. Close it again to record the corrected result.",
+      "confirm": "Reopen the game",
+      "done": "Game reopened"
+    },
+    "offline": {
+      "title": "Connection lost",
+      "message": "Entries may not be saved. Keep the page open: syncing resumes when the network is back. Then check the timeline."
+    },
+    "readiness": {
+      "title": "To check before kick-off",
+      "ok": "Game sheet ready: rosters, numbers, captains and officials checked",
+      "hint": "These checks do not prevent the kick-off.",
+      "summary": "{count} point(s) to check in the game settings before kick-off",
+      "open": "Open the settings",
+      "too_few_players": "{team}: {count} player(s) on the sheet (staff not counted), at least {min} needed",
+      "too_many_players": "{team}: {count} players on the sheet (staff not counted), {max} at most",
+      "too_many_staff": "{team}: {count} staff members, {max} at most",
+      "duplicate_numbers": "{team}: duplicate jersey numbers ({numbers})",
+      "no_captain": "{team}: no captain designated",
+      "missing_officials": "Officials to fill in: {roles}",
+      "expand": "Show the points to check",
+      "collapse": "Collapse"
+    },
+    "keyboard": {
+      "ready": "Keyboard active: shortcuts answer",
+      "field": "Typing in a field: keys type text, shortcuts wait",
+      "off": "Shortcuts paused (dialog open or entry not allowed)",
+      "window": "Keyboard inactive: the console window does not have the focus. Click in the console",
+      "banner": "Keyboard inactive: click in the console"
+    },
+    "display_options": {
+      "title_scoreboard": "Open the scoreboard",
+      "title_shotclock": "Open the shot clock",
+      "hint": "Choice remembered on this device. Opening a display that is already open applies the new options to it.",
+      "theme": "Theme",
+      "theme_dark": "Dark (white on black)",
+      "theme_light": "Light (black on white)",
+      "scoreboard_shotclock": "Show the shot clock",
+      "shotclock_clock": "Show the game clock",
+      "open": "Open"
+    }
   },
   "competition": {
     "ended_title": "Competition ended — read only",

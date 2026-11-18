@@ -62,7 +62,7 @@ onMounted(() => loadScenario())
     <!-- Scenario selector + refresh -->
     <div class="flex items-end gap-3 mb-4">
       <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-header-900 dark:text-header-50">{{ t('tv.scenario.title') }}</label>
+        <label class="text-sm font-medium text-header-900 dark:text-header-50">{{ t('tv.scenario.title') }}</label>
         <select
           v-model.number="selectedScenario"
           class="px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 min-w-[250px]"

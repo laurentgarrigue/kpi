@@ -14,17 +14,17 @@ onMounted(() => {
   <div v-if="workContext.hasValidContext" class="flex items-center gap-2 text-sm text-header-900 dark:text-header-300 mb-4">
     <UIcon name="i-heroicons-calendar" class="w-4 h-4" />
     <span>{{ t('context.season') }}: <strong>{{ workContext.season }}</strong></span>
-    <span class="text-header-600 dark:text-header-600">|</span>
+    <span class="text-header-600 dark:text-header-300">|</span>
     <span>{{ workContext.contextLabel }}</span>
-    <span class="text-header-600 dark:text-header-600">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
-    <NuxtLink to="/" class="text-primary-600 hover:underline text-xs ml-2">
+    <span class="text-header-600 dark:text-header-300">({{ t('context.competitions_count', { count: workContext.competitionCount }) }})</span>
+    <NuxtLink to="/" class="text-primary-600 hover:underline text-sm ml-2">
       {{ t('context.change') }}
     </NuxtLink>
   </div>
   <div v-else class="flex items-center gap-2 text-sm text-warning-600 dark:text-warning-300 mb-4 bg-warning-50 dark:bg-warning-950 p-2 rounded">
     <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4" />
     <span>{{ t('context.no_context') }}</span>
-    <NuxtLink to="/" class="text-primary-600 hover:underline text-xs ml-2">
+    <NuxtLink to="/" class="text-primary-600 hover:underline text-sm ml-2">
       {{ t('context.change') }}
     </NuxtLink>
   </div>

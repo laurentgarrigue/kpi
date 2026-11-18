@@ -80,7 +80,7 @@ onMounted(async () => {
       </div>
       <div
         v-else
-        class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm max-w-md"
+        class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm max-w-md"
       >
         {{ error }}
       </div>

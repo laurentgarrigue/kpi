@@ -18,8 +18,8 @@ const { t } = useI18n()
 <template>
   <div class="flex flex-wrap items-end gap-2">
     <div class="flex flex-col">
-      <UButton size="xs" variant="ghost" icon="heroicons:chevron-up" :disabled="first" :aria-label="t('cms.move_up')" @click="emit('up')" />
-      <UButton size="xs" variant="ghost" icon="heroicons:chevron-down" :disabled="last" :aria-label="t('cms.move_down')" @click="emit('down')" />
+      <UButton size="sm" variant="ghost" icon="heroicons:chevron-up" :disabled="first" :aria-label="t('cms.move_up')" @click="emit('up')" />
+      <UButton size="sm" variant="ghost" icon="heroicons:chevron-down" :disabled="last" :aria-label="t('cms.move_down')" @click="emit('down')" />
     </div>
     <UFormField :label="t('cms.menu.label_fr')" :error="errors[`${prefix}.label_fr`] ? t(`cms.errors.${errors[`${prefix}.label_fr`]}`) : undefined">
       <UInput v-model="item.label_fr" class="w-48" />

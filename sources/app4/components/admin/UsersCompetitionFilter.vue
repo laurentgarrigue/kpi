@@ -104,11 +104,11 @@ watch(() => props.season, () => {
       <span
         v-for="code in modelValue"
         :key="code"
-        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 text-xs rounded-full"
+        class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 text-sm rounded-full"
       >
         {{ code }}
-        <button type="button" class="hover:text-primary-600" @click="remove(code)">
-          <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
+        <button type="button" class="hover:text-primary-600 p-2" @click="remove(code)">
+          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </span>
 
@@ -117,7 +117,7 @@ watch(() => props.season, () => {
         ref="inputRef"
         v-model="query"
         type="text"
-        class="flex-1 min-w-20 outline-none bg-transparent text-header-900 dark:text-header-50 placeholder-header-400 text-sm"
+        class="flex-1 min-w-20 outline-none bg-transparent text-header-900 dark:text-header-50 placeholder-header-600 text-sm"
         :placeholder="modelValue.length === 0 ? (placeholder ?? '') : ''"
         @input="onInput"
         @keydown.escape="isOpen = false"
@@ -140,9 +140,9 @@ watch(() => props.season, () => {
       class="absolute z-50 mt-1 w-full min-w-55 max-w-90 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg overflow-hidden"
     >
       <div v-if="isLoading" class="flex justify-center py-3">
-        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-600 dark:text-header-600" />
+        <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-header-600 dark:text-header-300" />
       </div>
-      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-600 dark:text-header-600">
+      <div v-else-if="results.length === 0 && query.length >= 2" class="px-3 py-2 text-sm text-header-600 dark:text-header-300">
         {{ $t('common.no_results') }}
       </div>
       <ul v-else class="max-h-48 overflow-y-auto divide-y divide-header-100">
@@ -153,8 +153,8 @@ watch(() => props.season, () => {
           @mousedown.prevent="select(option)"
         >
           <span class="font-medium text-header-900 dark:text-header-100">{{ option.code }}</span>
-          <span class="text-header-600 dark:text-header-600 ml-1">– {{ option.libelle }}</span>
-          <span v-if="!season" class="text-header-600 dark:text-header-600 text-xs ml-1">({{ option.season }})</span>
+          <span class="text-header-600 dark:text-header-300 ml-1">– {{ option.libelle }}</span>
+          <span v-if="!season" class="text-header-600 dark:text-header-300 text-sm ml-1">({{ option.season }})</span>
         </li>
       </ul>
     </div>

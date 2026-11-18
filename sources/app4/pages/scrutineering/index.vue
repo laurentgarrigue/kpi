@@ -18,7 +18,7 @@ const loadError = ref(false)
 const STATUS_STYLES: Record<OverviewStatus, { icon: string, color: string }> = {
   complete: { icon: 'heroicons:check-circle-solid', color: 'text-success-700 dark:text-success-400' },
   partial: { icon: 'heroicons:ellipsis-horizontal-circle-solid', color: 'text-warning-600 dark:text-warning-400' },
-  none: { icon: 'heroicons:clock', color: 'text-header-400 dark:text-header-500' },
+  none: { icon: 'heroicons:clock', color: 'text-header-600 dark:text-header-300' },
 }
 const STATUSES = Object.keys(STATUS_STYLES) as OverviewStatus[]
 
@@ -113,10 +113,10 @@ onMounted(async () => {
                     :title="t(`scrutineering.status_${team.status}`)"
                   >
                     <UIcon :name="STATUS_STYLES[team.status].icon" class="w-5 h-5 shrink-0" />
-                    <span class="text-xs leading-tight">{{ team.label }}</span>
+                    <span class="text-sm leading-tight">{{ team.label }}</span>
                   </NuxtLink>
                 </div>
-                <span v-else class="text-header-300 dark:text-header-600">—</span>
+                <span v-else class="text-header-500 dark:text-header-300">—</span>
               </td>
             </tr>
           </tbody>

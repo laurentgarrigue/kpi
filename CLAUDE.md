@@ -32,6 +32,7 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 `DOC/developer/` as top-level folders: `sources/admin/DocViewer.php` only reads those two.
 
 **Key documents:**
+- **[Target Architecture](DOC/developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ **Target of all ongoing projects** (app2, app3, app4, scoring, overlays, PDF, auth, infra): architecture and functional diagrams, legacy greyed out
 - **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
 - **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
@@ -396,6 +397,16 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
 - **Profile 10 "Contrôle équipement"** is a specialised profile outside the linear hierarchy (`ROLE_SCRUTINEER`):
   scrutineering + team presence sheets of every team, nothing else; assigned by profiles 1–2 only
 - App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
+- **Live scoring refactoring** (in progress): canonical match state in `scoring_live_*` + outbox →
+  Mercure, a single app4 Scoring console replacing FeuilleMarque V2/V3, and one parameterized
+  overlay page replacing the ~20 legacy ones.
+  Plan and situation report: [DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (§0).
+  Specs: [DOC/specs/PAGE_SCORING.md](DOC/specs/PAGE_SCORING.md), [DOC/specs/PAGE_INCRUSTATION.md](DOC/specs/PAGE_INCRUSTATION.md).
+  Rollout checklist (catch-up in dev → validation gate → preprod → prod pilot):
+  [DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md](DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
+  ⚠️ Lots 1–3 were tried in dev (Aug/Oct 2026) but never validated end to end; lot 4 never ran in OBS.
+  **Reloading the dev database from a prod dump drops the `scoring_live_*` tables** — re-run the 4
+  scoring migrations (checklist R0.2) or the console answers 500. Do not open a new lot before R1/R2.
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments

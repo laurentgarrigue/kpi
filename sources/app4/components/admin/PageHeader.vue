@@ -57,13 +57,13 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
     <div v-if="showFilters" class="flex flex-wrap gap-3 items-end">
       <!-- Event / Group filter -->
       <div class="min-w-48 max-w-96">
-        <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('eventGroupSelect.label') }}</label>
+        <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('eventGroupSelect.label') }}</label>
         <AdminEventGroupSelect @change="emit('event-group-change')" />
       </div>
 
       <!-- Competition filter -->
       <div class="min-w-48 max-w-96">
-        <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t(workContext.competitionFilterLabelKey) }}</label>
+        <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t(workContext.competitionFilterLabelKey) }}</label>
         <AdminCompetitionSingleSelect
           :show-all-option="showAllOption"
           :filtered-codes="competitionFilteredCodes"
@@ -87,10 +87,10 @@ watch(() => workContext.pageCompetitionCodeAll, () => {
     <div v-if="props.hasNotices && !noticesDismissed" class="mt-2 relative">
       <slot name="notices" />
       <button
-        class="absolute top-1 right-1 p-1 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 rounded transition-colors"
+        class="absolute top-1 right-1 p-2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 rounded transition-colors"
         @click="noticesDismissed = true"
       >
-        <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+        <UIcon name="heroicons:x-mark" class="w-5 h-5" />
       </button>
     </div>
   </div>

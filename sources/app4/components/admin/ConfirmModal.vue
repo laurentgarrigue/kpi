@@ -29,7 +29,7 @@ const isWarning = computed(() => props.variant === 'warning')
 
 const titleClass = computed(() => {
   if (isDanger.value) return 'text-danger-600'
-  if (isWarning.value) return 'text-amber-600'
+  if (isWarning.value) return 'text-amber-700'
   return 'text-header-900 dark:text-header-50'
 })
 

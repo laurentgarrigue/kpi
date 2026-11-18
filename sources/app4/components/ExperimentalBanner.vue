@@ -13,7 +13,7 @@ const { flag, isExperimental, hoursLeft } = useExperimentalFlag()
 <template>
   <div
     v-if="isExperimental && flag"
-    class="sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-fuchsia-600 px-3 py-1.5 text-center text-xs font-semibold text-white sm:text-sm"
+    class="sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-fuchsia-600 px-3 py-1.5 text-center text-sm font-semibold text-white sm:text-sm"
     role="status"
   >
     <span>🧪 {{ $t('experimental.title') }}</span>

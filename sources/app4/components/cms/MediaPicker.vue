@@ -75,7 +75,7 @@ watch(page, load)
         <li v-for="media in items" :key="media.id">
           <button type="button" class="w-full rounded border border-header-200 dark:border-header-700 p-1 hover:ring-2 hover:ring-primary-500" :title="media.name" @click="emit('select', media)">
             <img v-if="media.mime.startsWith('image/')" :src="mediaSrc(media.thumbnail, legacyBaseUrl)" :alt="media.alt_fr" class="h-24 w-full object-cover">
-            <span v-else class="flex h-24 flex-col items-center justify-center text-xs">
+            <span v-else class="flex h-24 flex-col items-center justify-center text-sm">
               <UIcon name="heroicons:document" class="h-8 w-8" />{{ media.name }}
             </span>
           </button>

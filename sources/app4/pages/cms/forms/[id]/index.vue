@@ -114,8 +114,8 @@ onMounted(async () => {
       <div v-for="(field, index) in form.fields" :key="index" class="space-y-2 rounded border border-header-200 dark:border-header-700 p-3">
         <div class="flex flex-wrap items-end gap-2">
           <div class="flex flex-col">
-            <UButton size="xs" variant="ghost" icon="heroicons:chevron-up" :disabled="index === 0" :aria-label="t('cms.move_up')" @click="form.fields = moveItem(form.fields, index, -1)" />
-            <UButton size="xs" variant="ghost" icon="heroicons:chevron-down" :disabled="index === form.fields.length - 1" :aria-label="t('cms.move_down')" @click="form.fields = moveItem(form.fields, index, 1)" />
+            <UButton size="sm" variant="ghost" icon="heroicons:chevron-up" :disabled="index === 0" :aria-label="t('cms.move_up')" @click="form.fields = moveItem(form.fields, index, -1)" />
+            <UButton size="sm" variant="ghost" icon="heroicons:chevron-down" :disabled="index === form.fields.length - 1" :aria-label="t('cms.move_down')" @click="form.fields = moveItem(form.fields, index, 1)" />
           </div>
           <UFormField :label="t('cms.forms.field_label')" :error="error(`fields.${index}.label_fr`)"><UInput v-model="field.label_fr" class="w-56" /></UFormField>
           <UFormField :label="t('cms.forms.field_label_en')"><UInput v-model="field.label_en" class="w-44" /></UFormField>
@@ -137,7 +137,7 @@ onMounted(async () => {
             <UButton variant="ghost" color="neutral" icon="heroicons:x-mark" :aria-label="t('cms.remove')" @click="field.options.splice(optionIndex, 1)" />
           </div>
           <p v-if="errors[`fields.${index}.options`]" class="text-sm text-danger-600">{{ t(`cms.errors.options_${errors[`fields.${index}.options`]}`) }}</p>
-          <UButton size="xs" variant="outline" icon="heroicons:plus" @click="field.options.push({ value: '', label_fr: '', label_en: '' })">{{ t('cms.forms.add_option') }}</UButton>
+          <UButton size="sm" variant="outline" icon="heroicons:plus" @click="field.options.push({ value: '', label_fr: '', label_en: '' })">{{ t('cms.forms.add_option') }}</UButton>
         </div>
       </div>
       <UButton variant="outline" icon="heroicons:plus" @click="addField">{{ t('cms.forms.add_field') }}</UButton>
@@ -165,7 +165,7 @@ onMounted(async () => {
       <fieldset v-if="form.public_list" class="space-y-1">
         <legend class="text-sm">{{ t('cms.forms.public_columns') }}</legend>
         <UCheckbox v-for="field in publishable" :key="field.key" :model-value="form.public_columns.includes(field.key)" :label="field.label_fr" @update:model-value="togglePublicColumn(field.key, !!$event)" />
-        <p class="text-xs text-header-600 dark:text-header-300">{{ t('cms.forms.public_columns_help') }}</p>
+        <p class="text-sm text-header-600 dark:text-header-300">{{ t('cms.forms.public_columns_help') }}</p>
         <p v-if="errors.public_columns" class="text-sm text-danger-600">{{ t('cms.errors.personal') }}</p>
       </fieldset>
     </section>

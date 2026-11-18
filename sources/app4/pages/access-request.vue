@@ -109,12 +109,12 @@ async function handleSubmit() {
 
         <!-- Form -->
         <form v-else class="space-y-4" @submit.prevent="handleSubmit">
-          <p class="text-xs text-header-600 dark:text-header-300">{{ t('access_request.required_fields') }}</p>
+          <p class="text-sm text-header-600 dark:text-header-300">{{ t('access_request.required_fields') }}</p>
 
           <!-- Error -->
           <div
             v-if="error"
-            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
+            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm"
           >
             {{ error }}
           </div>

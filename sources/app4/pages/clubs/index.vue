@@ -519,7 +519,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <p class="mt-2 text-xs text-header-600 dark:text-header-300">
+        <p class="mt-2 text-sm text-header-600 dark:text-header-300">
           {{ t('clubs.map.no_club_on_map') }}
         </p>
       </div>
@@ -541,10 +541,10 @@ onBeforeUnmount(() => {
               <UIcon name="i-heroicons-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300" />
               <button
                 v-if="clubSearch && !clubSearchLoading"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                 @click="clearClubSearch"
               >
-                <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+                <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
               </button>
               <UIcon v-if="clubSearchLoading" name="i-heroicons-arrow-path" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-header-600 dark:text-header-300 animate-spin" />
             </div>
@@ -559,7 +559,7 @@ onBeforeUnmount(() => {
                 class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-100 dark:focus:bg-primary-900 focus:outline-none flex items-center gap-2"
                 @click="selectClub(result)"
               >
-                <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ result.code }}</span>
+                <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ result.code }}</span>
                 <span>{{ result.libelle }}</span>
               </button>
             </div>
@@ -569,10 +569,10 @@ onBeforeUnmount(() => {
           <template v-if="selectedClub">
             <div class="mb-3 text-sm">
               <div class="flex items-center gap-2 mb-1">
-                <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ selectedClub.code }}</span>
+                <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ selectedClub.code }}</span>
                 <span class="font-semibold text-header-900 dark:text-header-50">{{ selectedClub.libelle }}</span>
               </div>
-              <span v-if="selectedClub.libelleComiteDep" class="text-xs text-header-900 dark:text-header-50">
+              <span v-if="selectedClub.libelleComiteDep" class="text-sm text-header-900 dark:text-header-50">
                 {{ selectedClub.libelleComiteDep }}
               </span>
             </div>
@@ -591,7 +591,7 @@ onBeforeUnmount(() => {
             <div v-if="canEdit" class="space-y-3">
               <!-- Postal -->
               <div>
-                <label class="block text-xs font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.postal') }}</label>
+                <label class="block text-sm font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.postal') }}</label>
                 <input
                   v-model="updateForm.postal"
                   type="text"
@@ -603,7 +603,7 @@ onBeforeUnmount(() => {
 
               <!-- Website -->
               <div>
-                <label class="block text-xs font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.www') }}</label>
+                <label class="block text-sm font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.www') }}</label>
                 <input
                   v-model="updateForm.www"
                   type="text"
@@ -615,7 +615,7 @@ onBeforeUnmount(() => {
 
               <!-- Email -->
               <div>
-                <label class="block text-xs font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.email') }}</label>
+                <label class="block text-sm font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.email') }}</label>
                 <input
                   v-model="updateForm.email"
                   type="text"
@@ -627,7 +627,7 @@ onBeforeUnmount(() => {
 
               <!-- GPS Coordinates -->
               <div>
-                <label class="block text-xs font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.coord') }}</label>
+                <label class="block text-sm font-bold text-header-900 dark:text-header-50 mb-1">{{ t('clubs.update.coord') }}</label>
                 <input
                   v-model="updateForm.coord"
                   type="text"
@@ -694,7 +694,7 @@ onBeforeUnmount(() => {
                     <span class="text-sm font-medium text-header-900 dark:text-header-50 group-hover:text-primary-700 dark:group-hover:text-primary-300">{{ team.libelle }}</span>
                     <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-header-600 dark:text-header-300 group-hover:text-primary-500 dark:group-hover:text-primary-400" />
                   </div>
-                  <div class="flex items-center gap-3 text-xs text-header-600 dark:text-header-300 mt-0.5">
+                  <div class="flex items-center gap-3 text-sm text-header-600 dark:text-header-300 mt-0.5">
                     <span v-if="team.derniereSaison">{{ t('clubs.teams.last_season') }} : {{ team.derniereSaison }}</span>
                     <span v-if="team.nbCompetitions > 0">{{ team.nbCompetitions }} {{ t('clubs.teams.competitions_count') }}</span>
                   </div>
@@ -722,7 +722,7 @@ onBeforeUnmount(() => {
         <!-- CR autocomplete -->
         <div ref="crSearchRef" class="relative">
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_cd.comite_reg') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_cd.comite_reg') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="crSearch"
@@ -742,7 +742,7 @@ onBeforeUnmount(() => {
               class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-100 dark:focus:bg-primary-900 focus:outline-none flex items-center gap-2"
               @click="selectCR(cr)"
             >
-              <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ cr.code }}</span>
+              <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ cr.code }}</span>
               <span>{{ cr.libelle }}</span>
             </button>
           </div>
@@ -751,7 +751,7 @@ onBeforeUnmount(() => {
         <!-- Code -->
         <div>
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_cd.code') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_cd.code') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="cdForm.code"
@@ -764,7 +764,7 @@ onBeforeUnmount(() => {
         <!-- Libelle -->
         <div>
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_cd.libelle') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_cd.libelle') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="cdForm.libelle"
@@ -809,7 +809,7 @@ onBeforeUnmount(() => {
         <!-- CD autocomplete -->
         <div ref="cdSearchRef" class="relative">
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_club.comite_dep') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_club.comite_dep') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="cdSearch"
@@ -829,7 +829,7 @@ onBeforeUnmount(() => {
               class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-950 focus:bg-primary-100 dark:focus:bg-primary-900 focus:outline-none flex items-center gap-2"
               @click="selectCD(cd)"
             >
-              <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ cd.code }}</span>
+              <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ cd.code }}</span>
               <span>{{ cd.libelle }}</span>
             </button>
           </div>
@@ -838,7 +838,7 @@ onBeforeUnmount(() => {
         <!-- Code -->
         <div>
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_club.code') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_club.code') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="newClubForm.code"
@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
         <!-- Libelle -->
         <div>
           <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-            {{ t('clubs.add_club.libelle') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+            {{ t('clubs.add_club.libelle') }} <span class="text-danger-600 dark:text-danger-300">*</span>
           </label>
           <input
             v-model="newClubForm.libelle"
@@ -914,7 +914,7 @@ onBeforeUnmount(() => {
             maxlength="40"
             class="w-full px-3 py-2 border border-header-300 dark:border-header-700 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           >
-          <p class="mt-1 text-xs text-header-600 dark:text-header-300">
+          <p class="mt-1 text-sm text-header-600 dark:text-header-300">
             {{ t('clubs.add_club.equipe_help') }}
           </p>
         </div>
