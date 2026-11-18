@@ -495,7 +495,7 @@ class OAuthController extends AbstractController
     private function buildRefreshCookie(string $token): Cookie
     {
         return Cookie::create('kpi_refresh')->withValue($token)
-            ->withExpires(time() + RefreshTokenService::TTL_SECONDS)
+            ->withExpires(time() + $this->refreshTokenService->ttlSeconds())
             ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('lax');
     }
 }

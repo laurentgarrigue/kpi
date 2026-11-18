@@ -27,6 +27,10 @@ parameters:
     # (servi par Apache sous /media/content/). CMS_MEDIA_ROOT ne sert qu'aux tests (répertoire temporaire).
     cms_media_root_default: '%legacy_document_root%/media/content'
     cms_media_root: '%env(default:cms_media_root_default:CMS_MEDIA_ROOT)%'
+    # Durée glissante du refresh token / cookie kpi_refresh (AUTH_HARDENING.md § 3ter.4, AUTH-SC-13) : doit dépasser
+    # JWT_TTL (24 h) pour pouvoir rattraper un JWT expiré. 72 h couvrent un tournoi de week-end, tablette en veille la nuit.
+    refresh_token_ttl_default: 259200
+    refresh_token_ttl: '%env(int:default:refresh_token_ttl_default:REFRESH_TOKEN_TTL)%'
     # OAuth Google (AUTH_HARDENING § 4), facultatif : repli sur '' (et non null, que `default::` produirait
     # et que le constructeur typé string de GoogleOAuthClient refuse — lint:container en CI).
     env(GOOGLE_OAUTH_CLIENT_ID): ''

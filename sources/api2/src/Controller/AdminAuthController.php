@@ -228,7 +228,7 @@ class AdminAuthController extends AbstractController
             return $this->json(['message' => 'Missing refresh token'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $result = $this->refreshTokenService->rotate($presented);
+        $result = $this->refreshTokenService->rotate($presented, $this->knownDeviceService->currentFingerprint($request));
         if (!$result) {
             // Même en cas de rejeu détecté (toute la chaîne révoquée), on répond 401 — pas d'indication à l'attaquant.
             $response = $this->json(['message' => 'Invalid refresh token'], Response::HTTP_UNAUTHORIZED);
@@ -371,7 +371,7 @@ class AdminAuthController extends AbstractController
      * Refresh token endpoint
      */
     #[Route('/refresh', name: 'api_auth_refresh', methods: ['POST'])]
-    public function refresh(): JsonResponse
+    public function refresh(Request $request): JsonResponse
     {
         /** @var User|null $user */
         $user = $this->getUser();
@@ -393,10 +393,19 @@ class AdminAuthController extends AbstractController
         $userData['mandates'] = $mandates;
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
-        return $this->json([
+        $response = $this->json([
             'token' => $token,
             'user' => $userData
         ]);
+
+        // AUTH-SC-13 : le cookie refresh glisse avec le JWT, sans rotation (aucun risque de rejeu). Un cookie
+        // absent, invalide ou d'un autre compte est ignoré : le JWT est renouvelé quand même.
+        $presented = (string) $request->cookies->get('kpi_refresh', '');
+        if ($presented !== '' && $this->refreshTokenService->extend($presented, $user->getCode())) {
+            $response->headers->setCookie($this->buildRefreshCookie($presented));
+        }
+
+        return $response;
     }
 
     /**
@@ -630,7 +639,7 @@ class AdminAuthController extends AbstractController
     {
         return Cookie::create('kpi_refresh')
             ->withValue($token)
-            ->withExpires(time() + RefreshTokenService::TTL_SECONDS)
+            ->withExpires(time() + $this->refreshTokenService->ttlSeconds())
             ->withPath('/')
             ->withSecure(true)
             ->withHttpOnly(true)
