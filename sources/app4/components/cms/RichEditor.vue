@@ -79,7 +79,7 @@ function insertVideo() {
           v-for="command in commands"
           :key="command.label"
           :icon="command.icon"
-          size="xs"
+          size="sm"
           :variant="command.active?.(editor) ? 'soft' : 'ghost'"
           :color="command.active?.(editor) ? 'primary' : 'neutral'"
           :aria-label="t(command.label)"

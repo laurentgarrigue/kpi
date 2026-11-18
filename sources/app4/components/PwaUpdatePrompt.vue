@@ -26,7 +26,7 @@ const reload = async () => {
   >
     <UIcon name="heroicons:arrow-path" class="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400" />
     <span class="text-sm text-header-900 dark:text-header-100">{{ $t('pwa.update_available') }}</span>
-    <UButton size="xs" :loading="reloading" @click="reload">
+    <UButton size="sm" :loading="reloading" @click="reload">
       {{ $t('pwa.reload') }}
     </UButton>
   </div>

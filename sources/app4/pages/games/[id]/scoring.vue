@@ -1469,7 +1469,7 @@ const toggleLock = async () => {
               {{ isRunning ? t('scoring.timer.pause') : t('scoring.timer.start') }}
               <kbd
                 v-if="bindings.gameClockToggle"
-                class="rounded border border-current/40 px-1.5 text-xs font-mono leading-5"
+                class="rounded border border-current/40 px-1.5 text-sm font-mono leading-5"
                 :class="kbdClass"
               >{{ shortcutKeyLabel(bindings.gameClockToggle) }}</kbd>
             </UButton>
@@ -1556,7 +1556,7 @@ const toggleLock = async () => {
                 <strong v-if="pendingCode">{{ t(eventCodes.find(e => e.code === pendingCode)!.shortKey) }}</strong>
                 <template v-if="pendingCode && selected"> · </template>
                 <template v-if="selected">
-                  <span class="text-header-500 dark:text-header-400">{{ selected.team === 'A' ? match.equipeA : match.equipeB }}</span>
+                  <span class="text-header-600 dark:text-header-300">{{ selected.team === 'A' ? match.equipeA : match.equipeB }}</span>
                   <strong class="ml-1">{{ selectedLabel }}</strong>
                 </template>
               </span>
@@ -1565,7 +1565,7 @@ const toggleLock = async () => {
               </UButton>
             </template>
             <template v-else-if="canScore">
-              <span class="flex-1 text-header-500 dark:text-header-400">{{ t('scoring.entry.start_hint') }}</span>
+              <span class="flex-1 text-header-600 dark:text-header-300">{{ t('scoring.entry.start_hint') }}</span>
             </template>
           </div>
 
@@ -1574,7 +1574,7 @@ const toggleLock = async () => {
             <UButton
               v-for="evt in eventCodes" :key="evt.code"
               block
-              class="fact-key max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:text-xs lg:justify-start"
+              class="fact-key max-sm:flex-col max-sm:gap-1 max-sm:px-1 max-sm:text-sm lg:justify-start"
               :color="evt.color as any"
               :variant="pendingCode === evt.code ? 'solid' : 'outline'"
               :disabled="!canEditFacts"
@@ -1587,7 +1587,7 @@ const toggleLock = async () => {
               <!-- Its keyboard key: on the right, under the label on a phone -->
               <kbd
                 v-if="bindings[evt.shortcut]"
-                class="fact-kbd shrink-0 rounded border border-current/40 px-1.5 text-xs font-mono leading-5"
+                class="fact-kbd shrink-0 rounded border border-current/40 px-1.5 text-sm font-mono leading-5"
                 :class="kbdClass"
                 :title="t('scoring.entry.keys_hint')"
               >{{ shortcutKeyLabel(bindings[evt.shortcut]) }}</kbd>
@@ -1596,7 +1596,7 @@ const toggleLock = async () => {
 
           <!-- 2. A card's reason: the list opens by itself (optional — default "Autre") -->
           <div v-if="pendingIsCard">
-            <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
+            <label class="block text-center text-sm text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
             <USelect
               v-model="eventReasonSelect"
               :open="reasonOpen"
@@ -1610,7 +1610,7 @@ const toggleLock = async () => {
 
           <!-- 3. The player by number (keyboard): ←/→ when both teams have it, then Entrée -->
           <div v-if="pendingCode && !selected && !editingUid" class="max-md:hidden">
-            <label for="scoring-player-number" class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.entry.player_number') }}</label>
+            <label for="scoring-player-number" class="block text-center text-sm text-header-600 dark:text-header-300 mb-1">{{ t('scoring.entry.player_number') }}</label>
             <UInput
               id="scoring-player-number"
               ref="playerInput"
@@ -1623,7 +1623,7 @@ const toggleLock = async () => {
               :placeholder="t('scoring.entry.player_number_placeholder')"
               @keydown="onPlayerQueryKey"
             />
-            <p class="mt-1 text-center text-xs text-header-600 dark:text-header-300">
+            <p class="mt-1 text-center text-sm text-header-600 dark:text-header-300">
               <template v-if="playerCandidates.length > 1">{{ t('scoring.entry.player_ambiguous') }}</template>
               <template v-else-if="playerCandidates.length === 1">
                 {{ playerCandidates[0]!.team }} · {{ playerCandidates[0]!.nom.toUpperCase() }} — {{ t('scoring.entry.player_enter') }}
@@ -1637,11 +1637,11 @@ const toggleLock = async () => {
                On mobile it only opens once something is armed, to keep the bottom bar short. -->
           <div class="space-y-3" :class="entryActive ? '' : 'max-md:hidden'">
             <div v-if="!isLive || editingUid">
-              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
+              <label class="block text-center text-sm text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.period') }}</label>
               <USelect v-model="eventPeriod" :items="periodItems" value-key="value" :disabled="!canScore" size="sm" class="w-full" />
             </div>
             <div>
-              <label class="block text-center text-xs text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
+              <label class="block text-center text-sm text-header-600 dark:text-header-300 mb-1">{{ t('scoring.time.label') }}</label>
               <div class="flex items-center justify-center gap-0.5">
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-60)">−60</UButton>
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(-10)">−10</UButton>
@@ -1665,7 +1665,7 @@ const toggleLock = async () => {
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(10)">+10</UButton>
                 <UButton size="xs" variant="ghost" :disabled="!canScore" @click="adjustEventTime(60)">+60</UButton>
               </div>
-              <p v-if="isLive && entryActive && !editingUid" class="mt-1 text-center text-xs text-header-500 dark:text-header-400 whitespace-pre-line">
+              <p v-if="isLive && entryActive && !editingUid" class="mt-1 text-center text-sm text-header-600 dark:text-header-300 whitespace-pre-line">
                 {{ t('scoring.entry.time_frozen') }}
               </p>
             </div>

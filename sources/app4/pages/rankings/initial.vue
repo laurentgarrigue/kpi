@@ -185,7 +185,7 @@ const fieldLabel = (field: string) => {
           </p>
           <span
             v-if="competitionStatut"
-            class="px-2 py-0.5 text-xs font-medium rounded uppercase flex items-center gap-1"
+            class="px-2 py-0.5 text-sm font-medium rounded uppercase flex items-center gap-1"
             :class="getStatusColor(competitionStatut)"
           >
             <UIcon
@@ -235,17 +235,17 @@ const fieldLabel = (field: string) => {
         <table class="min-w-full divide-y divide-header-200 dark:divide-header-700">
           <thead class="bg-header-50 dark:bg-header-900">
             <tr>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.rank') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.team') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.pts') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.j') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.g') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.n') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.p') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.f') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.plus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.minus') }}</th>
-              <th class="px-3 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.diff') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.rank') }}</th>
+              <th class="px-3 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.team') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.pts') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.j') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.g') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.n') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.p') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.f') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.plus') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.minus') }}</th>
+              <th class="px-3 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('rankings.table.diff') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-header-200 dark:divide-header-700">
@@ -303,9 +303,9 @@ const fieldLabel = (field: string) => {
       <div class="lg:hidden divide-y divide-header-200 dark:divide-header-700">
         <div v-for="team in teams" :key="team.id" class="p-3">
           <div class="font-medium text-header-900 dark:text-header-50 text-sm mb-1">{{ team.libelle }}</div>
-          <div class="grid grid-cols-5 gap-1 text-xs text-header-900 dark:text-header-50">
+          <div class="grid grid-cols-5 gap-1 text-sm text-header-900 dark:text-header-50">
             <div v-for="field in editableFields" :key="field" class="text-center">
-              <div class="text-[10px] text-header-600 dark:text-header-300 uppercase">{{ fieldLabel(field) }}</div>
+              <div class="text-xs text-header-600 dark:text-header-300 uppercase">{{ fieldLabel(field) }}</div>
               <span
                 :class="canEdit ? 'editable-cell' : ''"
                 @click="canEdit && startEdit(team.id, field, (team as Record<string, any>)[{ Clt: 'clt', Pts: 'pts', J: 'j', G: 'g', N: 'n', P: 'p', F: 'f', Plus: 'plus', Moins: 'moins', Diff: 'diff' }[field]])"

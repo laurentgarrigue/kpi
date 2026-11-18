@@ -99,7 +99,7 @@ onUnmounted(() => {
         type="text"
         :disabled="disabled"
         :placeholder="placeholder || t('common.club')"
-        class="w-full px-2 py-1 border border-header-300 dark:border-header-700 rounded text-xs bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-400 dark:placeholder-header-500 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-800 disabled:cursor-not-allowed"
+        class="w-full px-2 py-1 border border-header-300 dark:border-header-700 rounded text-sm bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-600 dark:placeholder-header-300 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-800 disabled:cursor-not-allowed"
         @focus="isOpen = results.length > 0"
       >
       <div class="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -107,10 +107,10 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
           @click="clearSelection"
         >
-          <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
+          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -121,7 +121,7 @@ onUnmounted(() => {
     >
       <div
         v-if="!isLoading && results.length === 0 && searchQuery.length >= 2"
-        class="px-3 py-2 text-xs text-header-600 dark:text-header-300 text-center"
+        class="px-3 py-2 text-sm text-header-600 dark:text-header-300 text-center"
       >
         {{ t('common.no_results') }}
       </div>
@@ -132,8 +132,8 @@ onUnmounted(() => {
         class="w-full px-3 py-2 text-left hover:bg-primary-50 dark:hover:bg-primary-950 border-b border-header-100 dark:border-header-800 last:border-b-0 transition-colors"
         @click="selectClub(club)"
       >
-        <div class="text-xs font-medium text-header-900 dark:text-header-50">{{ club.nom }}</div>
-        <div class="text-xs text-header-600 dark:text-header-300 font-mono">{{ club.numero }}</div>
+        <div class="text-sm font-medium text-header-900 dark:text-header-50">{{ club.nom }}</div>
+        <div class="text-sm text-header-600 dark:text-header-300 font-mono">{{ club.numero }}</div>
       </button>
     </div>
   </div>

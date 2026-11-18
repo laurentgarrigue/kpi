@@ -488,7 +488,7 @@ interface PostColumn {
 }
 
 const postColumns: PostColumn[] = [
-  { key: 'referees', labelKey: 'games.show_referees', model: showReferees, span: 2 },
+  { key: 'referees', labelKey: 'games.show_referees', model: showReferees, span: 1 },
   { key: 'shotclock', labelKey: 'games.show_shotclock', model: showShotclock, span: 1 },
 ]
 
@@ -747,6 +747,16 @@ const formatDateShort = (date: string | null) => {
 
 // ─── Row state helpers ───
 const isLocked = (game: Game) => game.validation === 'O'
+// Score chip: winner in white, loser dimmed once the game is over (not while it is on, nor on a draw)
+const scoreChipClass = (game: Game, side: 'A' | 'B'): string[] => {
+  const mine = side === 'A' ? game.scoreA : game.scoreB
+  if (mine === '' || mine === null || mine === undefined) return []
+  const a = Number(game.scoreA)
+  const b = Number(game.scoreB)
+  const over = game.statut === 'END' || game.validation === 'O'
+  const loser = over && a !== b && (side === 'A' ? a < b : b < a)
+  return loser ? ['score-chip', 'score-chip--loser'] : ['score-chip']
+}
 const hasScore = (game: Game) => !!(game.scoreA || game.scoreB)
 const isCompetitionEnded = (game: Game) => game.competitionStatut === 'END'
 const isGameEditable = (game: Game) => canEdit.value && !isLocked(game) && !isCompetitionEnded(game) && game.authorized
@@ -1882,7 +1892,7 @@ const openScoring = (gameId: number) => {
       <template #filters>
         <!-- Tour -->
         <div>
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_round') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_round') }}</label>
           <select v-model="selectedTour" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTour ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_rounds') }}</option>
             <option v-for="n in 5" :key="n" :value="String(n)">{{ t('games.round_n', { n }) }}</option>
@@ -1891,7 +1901,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Journee -->
         <div class="min-w-48">
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_journee') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_journee') }}</label>
           <select v-model="selectedJournee" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedJournee !== '*' ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="*">{{ t('games.all_journees') }}</option>
             <option v-for="j in journees" :key="j.id" :value="String(j.id)">{{ journeeLabel(j) }}</option>
@@ -1900,7 +1910,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Date -->
         <div>
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_date') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_date') }}</label>
           <select v-model="selectedDate" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedDate ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_dates') }}</option>
             <option v-for="d in availableDates" :key="d" :value="d">{{ formatDate(d) }}</option>
@@ -1909,7 +1919,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Terrain -->
         <div>
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_terrain') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_terrain') }}</label>
           <select v-model="selectedTerrain" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedTerrain ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="">{{ t('games.all_terrains') }}</option>
             <option v-for="n in 8" :key="n" :value="String(n)">{{ n }}</option>
@@ -1918,7 +1928,7 @@ const openScoring = (gameId: number) => {
 
         <!-- Sort -->
         <div>
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_sort') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.filter_sort') }}</label>
           <select v-model="selectedSort" class="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-primary-500" :class="selectedSort !== 'date_time_terrain' ? 'border-warning-400 bg-warning-50 dark:bg-warning-950 text-header-900 dark:text-header-50' : 'border-header-300 dark:border-header-700'">
             <option value="date_time_terrain">{{ t('games.sort.date_time_terrain') }}</option>
             <option value="competition_date">{{ t('games.sort.competition_date') }}</option>
@@ -1938,18 +1948,18 @@ const openScoring = (gameId: number) => {
           >
             <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
             {{ t('games.display.title') }}
-            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-xs font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
+            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-sm font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
             <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': displayOpen }" />
           </button>
           <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
             <!-- Filtres -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.display.filters_section') }}</div>
             <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800">
               <input v-model="unlockedOnly" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600">
               {{ t('games.unlocked_only') }}
             </label>
             <!-- Postes -->
-            <div class="mt-1 px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800">{{ t('games.display.posts_section') }}</div>
+            <div class="mt-1 px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800">{{ t('games.display.posts_section') }}</div>
             <label
               v-for="col in postColumns"
               :key="col.key"
@@ -2004,14 +2014,14 @@ const openScoring = (gameId: number) => {
           >
             <UIcon name="heroicons:bolt" class="w-6 h-6" />
             {{ t('games.bulk.actions') }}
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-100">
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-800 text-primary-800 dark:text-primary-100">
               {{ selectedIds.length }}
             </span>
             <UIcon name="heroicons:chevron-down" class="w-6 h-6 transition-transform" :class="{ 'rotate-180': bulkActionsOpen }" />
           </button>
           <div v-show="bulkActionsOpen" class="absolute z-20 mt-1 w-72 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 left-0">
             <!-- ── Toggle section ── -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.toggle_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkPublishConfirmOpen = true; bulkActionsOpen = false"
@@ -2045,7 +2055,7 @@ const openScoring = (gameId: number) => {
 
             <!-- ── Edit section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.edit_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkAutoAssignConfirmOpen = true; bulkActionsOpen = false"
@@ -2092,7 +2102,7 @@ const openScoring = (gameId: number) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="openBulkChangeGroup"
             >
-              <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-amber-600" />
+              <UIcon name="heroicons:arrow-path" class="w-5 h-5 text-amber-700" />
               {{ t('games.bulk.change_group') }}
             </button>
             <button
@@ -2105,7 +2115,7 @@ const openScoring = (gameId: number) => {
 
             <!-- ── Documents section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.bulk.documents_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="openBulkMatchSheets"
@@ -2171,7 +2181,7 @@ const openScoring = (gameId: number) => {
             <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': documentsOpen }" />
           </button>
           <div v-show="documentsOpen" class="absolute z-20 mt-1 w-64 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.admin_section') }}</div>
             <button
               type="button"
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
@@ -2198,7 +2208,7 @@ const openScoring = (gameId: number) => {
               {{ t('games.documents.export_ods') }}
             </a>
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.public_section') }}</div>
             <a
               :href="publicGamesUrl('games-list', {})"
               target="_blank"
@@ -2209,7 +2219,7 @@ const openScoring = (gameId: number) => {
               {{ t('games.documents.public_list') }}
             </a>
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('games.documents.pitches_section') }}</div>
             <a
               :href="publicGamesUrl('games-grid', { view: 'teams' })"
               target="_blank"
@@ -2238,12 +2248,12 @@ const openScoring = (gameId: number) => {
       <!-- Prev / dropdown / Next navigation -->
       <div class="flex items-center gap-1">
         <button
-          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
+          class="p-2 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
           :disabled="availableTeams.length === 0"
           :title="t('games.team_prev')"
           @click="selectPrevTeam"
         >
-          <UIcon name="heroicons:chevron-left" class="w-4 h-4" />
+          <UIcon name="heroicons:chevron-left" class="w-5 h-5" />
         </button>
 
         <!-- Team dropdown -->
@@ -2257,20 +2267,20 @@ const openScoring = (gameId: number) => {
               <UIcon
                 :name="selectedTeamEntity?.isReferee ? 'heroicons:identification' : selectedTeamEntity?.isPlaceholder ? 'heroicons:clock' : 'heroicons:user-group'"
                 class="w-5 h-5 shrink-0"
-                :class="selectedTeam ? (selectedTeamEntity?.isReferee ? 'text-info-500' : selectedTeamEntity?.isPlaceholder ? 'text-orange-400' : 'text-primary-500') : 'text-header-600 dark:text-header-600'"
+                :class="selectedTeam ? (selectedTeamEntity?.isReferee ? 'text-info-600' : selectedTeamEntity?.isPlaceholder ? 'text-orange-700' : 'text-primary-500') : 'text-header-600 dark:text-header-300'"
               />
               <span
                 class="truncate"
-                :class="selectedTeamEntity?.isPlaceholder ? 'italic text-orange-600' : selectedTeamEntity?.isReferee ? 'text-info-700' : ''"
+                :class="selectedTeamEntity?.isPlaceholder ? 'italic text-orange-700' : selectedTeamEntity?.isReferee ? 'text-info-700' : ''"
               >{{ selectedTeamEntity?.label || t('games.filter_team') }}</span>
               <span
                 v-if="selectedTeamEntity?.isReferee"
-                class="ml-1 shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                class="ml-1 shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-xs font-semibold"
                 :title="t('games.referee_assignments', { count: selectedTeamEntity.refereeCount ?? 0 })"
               >{{ selectedTeamEntity.refereeCount }}</span>
             </span>
-            <button v-if="selectedTeam" class="ml-0.5 shrink-0 text-primary-400 hover:text-primary-700" :title="t('common.all')" @click.stop="selectedTeam = ''; teamSearchInput = ''">
-              <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+            <button v-if="selectedTeam" class="ml-0.5 p-1 shrink-0 text-primary-500 hover:text-primary-700" :title="t('common.all')" @click.stop="selectedTeam = ''; teamSearchInput = ''">
+              <UIcon name="heroicons:x-mark" class="w-5 h-5" />
             </button>
             <UIcon v-else name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': teamSearchOpen }" />
           </button>
@@ -2280,7 +2290,7 @@ const openScoring = (gameId: number) => {
                 v-model="teamSearchInput"
                 type="text"
                 :placeholder="t('games.search_team_placeholder')"
-                class="w-full px-2 py-1.5 text-xs border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none"
+                class="w-full px-2 py-1.5 text-sm border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none"
                 @click.stop
               >
             </div>
@@ -2297,7 +2307,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Real teams -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'team')">
-                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">
+                <div v-if="filteredTeamOptions.some(e => e.kind !== 'team')" class="px-3 pt-2 pb-0.5 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">
                   {{ t('games.teams_assigned') }}
                 </div>
                 <button
@@ -2314,7 +2324,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Nominative referees (people, identified by matricule; club not shown) -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.referees_nominative_section') }}
                 </div>
                 <button
@@ -2324,10 +2334,10 @@ const openScoring = (gameId: number) => {
                   :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-900 dark:text-header-50'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
-                  <UIcon name="heroicons:identification" class="w-4 h-4 text-info-400 shrink-0" />
+                  <UIcon name="heroicons:identification" class="w-4 h-4 text-info-500 shrink-0" />
                   <span class="truncate">{{ entity.label }}</span>
                   <span
-                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-xs font-semibold"
                     :title="t('games.referee_assignments', { count: entity.refereeCount ?? 0 })"
                   >{{ entity.refereeCount }}</span>
                 </button>
@@ -2335,7 +2345,7 @@ const openScoring = (gameId: number) => {
 
               <!-- Team-designated referees (matric=0, e.g. "RKV I") -->
               <template v-if="filteredTeamOptions.some(e => e.kind === 'referee' && !e.refereeNominative)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.referees_team_section') }}
                 </div>
                 <button
@@ -2345,10 +2355,10 @@ const openScoring = (gameId: number) => {
                   :class="selectedTeam === entity.code ? 'font-medium text-info-700 bg-info-50' : 'text-header-900 dark:text-header-50'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
-                  <UIcon name="heroicons:flag" class="w-4 h-4 text-info-400 shrink-0" />
+                  <UIcon name="heroicons:flag" class="w-4 h-4 text-info-500 shrink-0" />
                   <span class="truncate">{{ entity.label }}</span>
                   <span
-                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-[10px] font-semibold"
+                    class="ml-auto shrink-0 px-1.5 py-0.5 rounded-full bg-info-100 text-info-700 text-xs font-semibold"
                     :title="t('games.referee_assignments', { count: entity.refereeCount ?? 0 })"
                   >{{ entity.refereeCount }}</span>
                 </button>
@@ -2356,45 +2366,45 @@ const openScoring = (gameId: number) => {
 
               <!-- Placeholders -->
               <template v-if="filteredTeamOptions.some(e => e.isPlaceholder)">
-                <div class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
+                <div class="px-3 pt-2 pb-0.5 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800 mt-1">
                   {{ t('games.teams_placeholder') }}
                 </div>
                 <button
                   v-for="entity in filteredTeamOptions.filter(e => e.isPlaceholder)"
                   :key="entity.code"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-orange-50 truncate"
-                  :class="selectedTeam === entity.code ? 'font-medium text-orange-700 bg-orange-50' : 'text-orange-500'"
+                  :class="selectedTeam === entity.code ? 'font-medium text-orange-700 bg-orange-50' : 'text-orange-700'"
                   @click="selectedTeam = entity.code; teamSearchInput = ''; teamSearchOpen = false"
                 >
-                  <UIcon name="heroicons:clock" class="w-4 h-4 text-orange-300 shrink-0" />
+                  <UIcon name="heroicons:clock" class="w-4 h-4 text-orange-600 shrink-0" />
                   <span class="italic">{{ entity.label }}</span>
-                  <span class="ml-auto text-[10px] text-header-600 dark:text-header-600 font-mono shrink-0">{{ entity.code }}</span>
+                  <span class="ml-auto text-xs text-header-600 dark:text-header-300 font-mono shrink-0">{{ entity.code }}</span>
                 </button>
               </template>
 
-              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-xs text-header-900 dark:text-header-300 italic">
+              <div v-if="filteredTeamOptions.length === 0" class="px-3 py-2 text-sm text-header-900 dark:text-header-300 italic">
                 {{ t('common.no_results') }}
               </div>
             </div>
           </div>
         </div>
 
-        <span class="text-xs text-header-900 dark:text-header-50 min-w-10 text-center">
+        <span class="text-sm text-header-900 dark:text-header-50 min-w-10 text-center">
           <template v-if="selectedTeam && selectedTeamIndex >= 0">{{ selectedTeamIndex + 1 }}/{{ availableTeams.length }}</template>
           <template v-else>—</template>
         </span>
         <button
-          class="p-1.5 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
+          class="p-2 rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 hover:bg-header-50 dark:hover:bg-header-800 text-header-900 dark:text-header-300 disabled:opacity-30"
           :disabled="availableTeams.length === 0"
           :title="t('games.team_next')"
           @click="selectNextTeam"
         >
-          <UIcon name="heroicons:chevron-right" class="w-4 h-4" />
+          <UIcon name="heroicons:chevron-right" class="w-5 h-5" />
         </button>
       </div>
 
       <!-- Rest threshold -->
-      <div class="flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50" :title="t('games.rest_threshold_tooltip')">
+      <div class="flex items-center gap-1.5 text-sm text-header-900 dark:text-header-50" :title="t('games.rest_threshold_tooltip')">
         <UIcon name="heroicons:clock" class="w-4 h-4 text-warning-500 shrink-0" />
         <label class="whitespace-nowrap cursor-help">{{ t('games.rest_threshold') }}</label>
         <input
@@ -2403,13 +2413,13 @@ const openScoring = (gameId: number) => {
           min="1"
           max="240"
           :title="t('games.rest_threshold_tooltip')"
-          class="w-14 px-1.5 py-1 text-xs border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
+          class="w-14 px-1.5 py-1 text-sm border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
         >
         <span>{{ t('games.rest_minutes') }}</span>
       </div>
 
       <!-- Terrain min interval threshold -->
-      <div class="flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50" :title="t('games.terrain_interval_tooltip')">
+      <div class="flex items-center gap-1.5 text-sm text-header-900 dark:text-header-50" :title="t('games.terrain_interval_tooltip')">
         <UIcon name="heroicons:map-pin" class="w-4 h-4 text-danger-500 shrink-0" />
         <label class="whitespace-nowrap cursor-help">{{ t('games.terrain_interval') }}</label>
         <input
@@ -2418,7 +2428,7 @@ const openScoring = (gameId: number) => {
           min="1"
           max="240"
           :title="t('games.terrain_interval_tooltip')"
-          class="w-14 px-1.5 py-1 text-xs border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
+          class="w-14 px-1.5 py-1 text-sm border border-header-300 dark:border-header-700 rounded focus:ring-1 focus:ring-primary-400 focus:outline-none text-center"
         >
         <span>{{ t('games.rest_minutes') }}</span>
       </div>
@@ -2427,7 +2437,7 @@ const openScoring = (gameId: number) => {
       <div class="h-5 w-px bg-header-200 dark:bg-header-700 hidden sm:block" />
 
       <!-- Legend -->
-      <div class="flex flex-wrap items-center gap-3 text-xs text-header-900 dark:text-header-50">
+      <div class="flex flex-wrap items-center gap-3 text-sm text-header-900 dark:text-header-50">
         <span class="flex items-center gap-1.5">
           <span class="inline-block w-3 h-3 rounded-sm bg-danger-200 border border-danger-400 shrink-0" />
           {{ t('games.team_conflict') }}
@@ -2439,25 +2449,25 @@ const openScoring = (gameId: number) => {
         <!-- Terrain double-booking: global, independent of the selected team -->
         <span
           class="flex items-center gap-1.5"
-          :class="terrainConflictGameIds.size ? 'text-danger-700 dark:text-danger-400 font-medium' : ''"
+          :class="terrainConflictGameIds.size ? 'text-danger-700 dark:text-danger-300 font-medium' : ''"
           :title="t('games.terrain_conflict_tooltip')"
         >
           <UIcon name="heroicons:map-pin" class="w-4 h-4 text-danger-500 shrink-0" />
           {{ t('games.terrain_conflict') }}
           <span
             v-if="terrainConflictGameIds.size"
-            class="px-1.5 py-0.5 rounded-full bg-danger-100 text-danger-700 text-[10px] font-semibold"
+            class="px-1.5 py-0.5 rounded-full bg-danger-100 text-danger-700 text-xs font-semibold"
           >{{ terrainConflictGameIds.size }}</span>
         </span>
       </div>
 
       <!-- Close -->
       <button
-        class="ml-auto p-1 text-header-600 dark:text-header-600 hover:text-header-900 dark:hover:text-header-50"
+        class="ml-auto p-2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
         :title="t('common.close')"
         @click="conflictBarOpen = false; selectedTeam = ''; teamSearchInput = ''"
       >
-        <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+        <UIcon name="heroicons:x-mark" class="w-5 h-5" />
       </button>
     </div>
 
@@ -2475,7 +2485,7 @@ const openScoring = (gameId: number) => {
     <!-- ═══════ DESKTOP TABLE ═══════ -->
     <div v-if="!pitchView" class="hidden lg:block bg-white dark:bg-header-900 rounded-lg shadow">
       <div class="sticky-thead">
-        <table class="min-w-full divide-y divide-header-200 dark:divide-header-700 text-xs">
+        <table class="font-ops min-w-full divide-y divide-header-200 dark:divide-header-700 text-sm">
           <thead class="bg-header-50 dark:bg-header-800">
             <tr>
               <!-- Checkbox -->
@@ -2522,10 +2532,8 @@ const openScoring = (gameId: number) => {
               <th class="w-8 px-1 py-2 text-center text-header-900 dark:text-header-50 font-medium">{{ t('games.field.score_b') }}</th>
               <!-- Team B -->
               <th class="px-1 py-2 text-left text-header-900 dark:text-header-50 font-medium">{{ t('games.field.team_b') }}</th>
-              <!-- Referee 1 (optional column) -->
-              <th v-if="showReferees" class="px-1 py-2 text-left text-header-900 dark:text-header-50 font-medium">{{ t('games.field.referee_1') }}</th>
-              <!-- Referee 2 (optional column) -->
-              <th v-if="showReferees" class="px-1 py-2 text-left text-header-900 dark:text-header-50 font-medium">{{ t('games.field.referee_2') }}</th>
+              <!-- Referees: one column, principal above secondary -->
+              <th v-if="showReferees" class="px-1 py-2 text-left text-header-900 dark:text-header-50 font-medium">{{ t('games.show_referees') }}</th>
               <!-- Shotclock (optional column) -->
               <th v-if="showShotclock" class="px-1 py-2 text-left text-header-900 dark:text-header-50 font-medium">{{ t('games.field.shotclock') }}</th>
               <!-- Printed -->
@@ -2600,7 +2608,7 @@ const openScoring = (gameId: number) => {
                     v-model="editingValue" v-inline-focus
                     type="tel"
                     maxlength="4"
-                    class="w-10 px-0.5 py-0 text-xs text-center border border-primary-400 rounded"
+                    class="w-10 px-0.5 py-0 text-sm text-center border border-primary-400 rounded"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -2615,47 +2623,47 @@ const openScoring = (gameId: number) => {
 
               <!-- Actions -->
               <td v-if="canEdit" class="px-1 py-1 text-center" @click.stop>
-                <button v-if="!isLocked(g) && g.authorized" :title="t('common.edit')" class="text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
+                <button v-if="!isLocked(g) && g.authorized" :title="t('common.edit')" class="p-1.5 text-primary-600 hover:text-primary-800" @click="openEditModal(g)">
                   <UIcon name="heroicons:pencil" class="w-6 h-6" />
                   <br>
-                  <span class="text-xs text-header-900 dark:text-header-50">Edit</span>
+                  <span class="text-sm text-header-900 dark:text-header-50">Edit</span>
                 </button>
               </td>
               <td v-if="canEdit || canEditScores" class="px-1 py-1 text-center" @click.stop>
                 <div class="flex items-center text-center gap-0.5">
-                  <button v-if="canEdit && g.authorized" type="button" :title="t('games.scoresheet_pdf')" class="p-0.5 text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
+                  <button v-if="canEdit && g.authorized" type="button" :title="t('games.scoresheet_pdf')" class="p-1.5 text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
                     <UIcon name="heroicons:document-text" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-900 dark:text-header-50">PDF</span>
+                    <span class="text-sm text-header-900 dark:text-header-50">PDF</span>
                   </button>
-                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-0.5 text-primary-400 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
+                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-1.5 text-primary-500 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-900 dark:text-header-50">V2</span>
+                    <span class="text-sm text-header-900 dark:text-header-50">V2</span>
                   </button>
-                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v3')" class="p-0.5 text-primary-500 hover:text-primary-700" @click.stop="openScoresheet(g.id, 3)">
+                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v3')" class="p-1.5 text-primary-500 hover:text-primary-700" @click.stop="openScoresheet(g.id, 3)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-900 dark:text-header-50">V3</span>
+                    <span class="text-sm text-header-900 dark:text-header-50">V3</span>
                   </button>
-                  <button v-if="canScoring && g.authorized" :title="t('scoring.link_title')" class="p-0.5 text-emerald-500 hover:text-emerald-700" @click.stop="openScoring(g.id)">
+                  <button v-if="canScoring && g.authorized" :title="t('scoring.link_title')" class="p-1.5 text-emerald-700 hover:text-emerald-700" @click.stop="openScoring(g.id)">
                     <UIcon name="heroicons:bolt" class="w-6 h-6" />
                     <br>
-                    <span class="text-xs text-header-900 dark:text-header-50">{{ t('scoring.link') }}</span>
+                    <span class="text-sm text-header-900 dark:text-header-50">{{ t('scoring.link') }}</span>
                   </button>
                 </div>
               </td>
 
               <!-- Time (Date + Heure on same line, inline editable) -->
               <td class="px-1 py-1 whitespace-nowrap">
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-3">
                   <!-- Date inline -->
                   <template v-if="editingCell?.id === g.id && editingCell.field === 'Date_match'">
                     <input
                       :id="`inline-${g.id}-Date_match`"
                       v-model="editingValue" v-inline-focus
                       type="date"
-                      class="w-28 px-0.5 py-0 text-xs border border-primary-400 rounded"
+                      class="w-28 px-0.5 py-0 text-sm border border-primary-400 rounded"
                       @keydown="handleInlineKeydown"
                       @blur="saveInlineEdit"
                     >
@@ -2672,7 +2680,7 @@ const openScoring = (gameId: number) => {
                       :id="`inline-${g.id}-Heure_match`"
                       v-model="editingValue" v-inline-focus
                       type="time"
-                      class="w-20 px-0.5 py-0 text-xs border border-primary-400 rounded"
+                      class="w-20 px-0.5 py-0 text-sm border border-primary-400 rounded"
                       @keydown="handleInlineKeydown"
                       @blur="saveInlineEdit"
                     >
@@ -2694,7 +2702,7 @@ const openScoring = (gameId: number) => {
                     v-model="editingValue" v-inline-focus
                     type="tel"
                     maxlength="2"
-                    class="w-8 px-0.5 py-0 text-xs text-center border border-primary-400 rounded"
+                    class="w-8 px-0.5 py-0 text-sm text-center border border-primary-400 rounded"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -2716,7 +2724,7 @@ const openScoring = (gameId: number) => {
                   <select
                     :id="`inline-${g.id}-Phase`"
                     v-model="editingValue" v-inline-focus
-                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded"
+                    class="w-full px-0.5 py-0 text-sm border border-primary-400 rounded"
                     @change="savePhaseEdit"
                     @keydown="handleTeamKeydown"
                     @blur="savePhaseEdit"
@@ -2736,7 +2744,7 @@ const openScoring = (gameId: number) => {
               <td class="px-1 py-1 text-center">
                 <button
                   :title="g.type === 'C' ? t('games.type_classification') : t('games.type_elimination')"
-                  class="p-0.5 rounded"
+                  class="p-1.5 rounded"
                   :class="isGameEditable(g) ? 'hover:bg-header-200 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
                   :disabled="!isGameEditable(g)"
                   @click="isGameEditable(g) && toggleType(g)"
@@ -2744,7 +2752,7 @@ const openScoring = (gameId: number) => {
                   <UIcon
                     :name="g.type === 'C' ? 'heroicons:bars-3' : 'heroicons:arrows-right-left'"
                     class="w-6 h-6"
-                    :class="g.type === 'C' ? 'text-primary-900 dark:text-primary-300' : 'text-orange-600'"
+                    :class="g.type === 'C' ? 'text-primary-900 dark:text-primary-300' : 'text-orange-700'"
                   />
                 </button>
               </td>
@@ -2757,7 +2765,7 @@ const openScoring = (gameId: number) => {
                     v-model="editingValue" v-inline-focus
                     type="text"
                     maxlength="30"
-                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded game-code"
+                    class="w-full px-0.5 py-0 text-sm border border-primary-400 rounded game-code"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
                   >
@@ -2780,7 +2788,7 @@ const openScoring = (gameId: number) => {
                   <select
                     :id="`inline-${g.id}-Team_A`"
                     v-model="editingValue" v-inline-focus
-                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded text-right"
+                    class="w-full px-0.5 py-0 text-sm border border-primary-400 rounded text-right"
                     @change="saveTeamEdit"
                     @keydown="handleTeamKeydown"
                     @blur="saveTeamEdit"
@@ -2797,25 +2805,25 @@ const openScoring = (gameId: number) => {
                   >{{ g.equipeA }}</span>
                   <span
                     v-else-if="bracketLabels(g.libelle).teamA"
-                    class="text-orange-400 italic"
+                    class="text-orange-700 italic"
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
                     :title="bracketLabels(g.libelle).teamA!"
                     @click="startTeamEdit(g, 'A')"
                   >({{ bracketLabels(g.libelle).teamA }})</span>
                   <span
                     v-else
-                    class="text-danger-400 italic"
+                    class="text-danger-600 italic"
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
                     @click="startTeamEdit(g, 'A')"
                   >{{ t('games.team_undefined') }}</span>
                   <NuxtLink
                     v-if="g.idEquipeA"
                     :to="`/presence/match/${g.id}/team/A`"
-                    class="block text-[10px] text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
+                    class="block w-fit ml-auto p-1 text-primary-700 hover:text-primary-900 dark:text-primary-300"
                     :title="t('presence.title_match')"
                     @click.stop
                   >
-                    <UIcon name="heroicons:user-group" class="w-5 h-5 mt-2 me-4" />
+                    <UIcon name="heroicons:user-group" class="w-6 h-6" />
                   </NuxtLink>
                 </template>
               </td>
@@ -2828,7 +2836,7 @@ const openScoring = (gameId: number) => {
                     v-model="editingValue" v-inline-focus
                     type="text" inputmode="numeric"
                     maxlength="4"
-                    class="w-10 px-0.5 py-0 text-xs text-center border border-primary-400 rounded"
+                    class="w-10 px-0.5 py-0 text-sm text-center border border-primary-400 rounded"
                     @input="onScoreInput"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
@@ -2836,7 +2844,7 @@ const openScoring = (gameId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="isScoreEditable(g) ? 'editable-cell' : ''"
+                    :class="[...scoreChipClass(g, 'A'), isScoreEditable(g) ? 'editable-cell' : '']"
                     @click="startInlineEdit(g, 'ScoreA')"
                   >{{ g.scoreA || '' }}</span>
                 </template>
@@ -2859,19 +2867,19 @@ const openScoring = (gameId: number) => {
                     @toggle="toggleValidation(g)"
                   />
                   <UIcon v-else-if="g.validation === 'O'" name="heroicons:lock-closed-solid" class="w-6 h-6 text-primary-500" :title="t('games.locked')" />
-                  <div class="min-h-4 text-[11px] font-semibold leading-4 text-nowrap tabular-nums text-header-900 dark:text-header-50">
+                  <div class="min-h-4 text-xs font-semibold leading-4 text-nowrap tabular-nums text-header-900 dark:text-header-50">
                     <template v-if="(g.statut === 'ON' || g.statut === 'END') && (g.scoreDetailA || g.scoreDetailB)">{{ g.scoreDetailA || '0' }}-{{ g.scoreDetailB || '0' }}</template>
                     <span v-if="periodText(g, true)" class="ml-1 text-primary-700 dark:text-primary-200" :title="periodText(g, false)">{{ periodText(g, true) }}</span>
                   </div>
                   <button
                     v-if="isStatutEditable(g)"
-                    class="px-1.5 py-1 text-[10px] font-semibold rounded-full border leading-tight text-nowrap"
+                    class="px-1.5 py-1 text-xs font-semibold rounded-full border leading-tight text-nowrap"
                     :class="statusBtnClass(g)"
                     @click="openStatusConfirm(g)"
                   >{{ statusLabel(g) }}</button>
                   <span
                     v-else
-                    class="px-1.5 py-1 text-[10px] font-semibold rounded-full border leading-tight inline-block text-nowrap"
+                    class="px-1.5 py-1 text-xs font-semibold rounded-full border leading-tight inline-block text-nowrap"
                     :class="statusBtnClass(g)"
                   >{{ statusLabel(g) }}</span>
                 </div>
@@ -2885,7 +2893,7 @@ const openScoring = (gameId: number) => {
                     v-model="editingValue" v-inline-focus
                     type="text" inputmode="numeric"
                     maxlength="4"
-                    class="w-10 px-0.5 py-0 text-xs text-center border border-primary-400 rounded"
+                    class="w-10 px-0.5 py-0 text-sm text-center border border-primary-400 rounded"
                     @input="onScoreInput"
                     @keydown="handleInlineKeydown"
                     @blur="saveInlineEdit"
@@ -2893,7 +2901,7 @@ const openScoring = (gameId: number) => {
                 </template>
                 <template v-else>
                   <span
-                    :class="isScoreEditable(g) ? 'editable-cell' : ''"
+                    :class="[...scoreChipClass(g, 'B'), isScoreEditable(g) ? 'editable-cell' : '']"
                     @click="startInlineEdit(g, 'ScoreB')"
                   >{{ g.scoreB || '' }}</span>
                 </template>
@@ -2905,7 +2913,7 @@ const openScoring = (gameId: number) => {
                   <select
                     :id="`inline-${g.id}-Team_B`"
                     v-model="editingValue" v-inline-focus
-                    class="w-full px-0.5 py-0 text-xs border border-primary-400 rounded"
+                    class="w-full px-0.5 py-0 text-sm border border-primary-400 rounded"
                     @change="saveTeamEdit"
                     @keydown="handleTeamKeydown"
                     @blur="saveTeamEdit"
@@ -2922,44 +2930,45 @@ const openScoring = (gameId: number) => {
                   >{{ g.equipeB }}</span>
                   <span
                     v-else-if="bracketLabels(g.libelle).teamB"
-                    class="text-orange-400 italic"
+                    class="text-orange-700 italic"
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
                     :title="bracketLabels(g.libelle).teamB!"
                     @click="startTeamEdit(g, 'B')"
                   >({{ bracketLabels(g.libelle).teamB }})</span>
                   <span
                     v-else
-                    class="text-danger-400 italic"
+                    class="text-danger-600 italic"
                     :class="isGameEditable(g) ? 'editable-cell' : ''"
                     @click="startTeamEdit(g, 'B')"
                   >{{ t('games.team_undefined') }}</span>
                   <NuxtLink
                     v-if="g.idEquipeB"
                     :to="`/presence/match/${g.id}/team/B`"
-                    class="block text-[10px] text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
+                    class="block w-fit p-1 text-primary-700 hover:text-primary-900 dark:text-primary-300"
                     :title="t('presence.title_match')"
                     @click.stop
                   >
-                    <UIcon name="heroicons:user-group" class="w-5 h-5 mt-2 ms-4" />
+                    <UIcon name="heroicons:user-group" class="w-6 h-6" />
                   </NuxtLink>
                 </template>
               </td>
 
-              <!-- Referee 1 (optional column) -->
-              <td v-if="showReferees" class="px-1 py-1 max-w-32">
+              <!-- Referees: one column, principal above secondary -->
+              <td v-if="showReferees" class="px-1 py-1 max-w-48">
+                <div class="mb-1">
                 <span
                   v-if="g.arbitrePrincipal"
                   class="truncate block"
                   :class="[
                     isGameEditable(g) ? 'editable-cell' : '',
-                    selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 dark:bg-success-900 text-header-900 dark:text-header-50 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-600 italic' : 'text-header-900 dark:text-header-50'),
+                    selectedTeam && extractRefereeTeam(g.arbitrePrincipal, g.matricArbitrePrincipal) === selectedTeam ? 'bg-success-100 dark:bg-success-900 text-header-900 dark:text-header-50 font-semibold' : (g.matricArbitrePrincipal === 0 ? 'text-secondary-700 italic' : 'text-header-900 dark:text-header-50'),
                   ]"
                   :title="g.arbitrePrincipal"
                   @click="startRefereeEdit(g, 'principal')"
                 >{{ g.arbitrePrincipal }}</span>
                 <span
                   v-else-if="bracketLabels(g.libelle).refereePrincipal"
-                  class="truncate block text-orange-400 italic"
+                  class="truncate block text-orange-700 italic"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   :title="bracketLabels(g.libelle).refereePrincipal!"
                   @click="startRefereeEdit(g, 'principal')"
@@ -2969,23 +2978,21 @@ const openScoring = (gameId: number) => {
                   :class="isGameEditable(g) ? 'editable-cell text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
                   @click="startRefereeEdit(g, 'principal')"
                 >-</span>
-              </td>
-
-              <!-- Referee 2 (optional column) -->
-              <td v-if="showReferees" class="px-1 py-1 max-w-32">
+                </div>
+                <div>
                 <span
                   v-if="g.arbitreSecondaire"
                   class="truncate block"
                   :class="[
                     isGameEditable(g) ? 'editable-cell' : '',
-                    selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 dark:bg-success-900 text-header-900 dark:text-header-50 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-600 italic' : 'text-header-900 dark:text-header-50'),
+                    selectedTeam && extractRefereeTeam(g.arbitreSecondaire, g.matricArbitreSecondaire) === selectedTeam ? 'bg-success-100 dark:bg-success-900 text-header-900 dark:text-header-50 font-semibold' : (g.matricArbitreSecondaire === 0 ? 'text-secondary-700 italic' : 'text-header-900 dark:text-header-50'),
                   ]"
                   :title="g.arbitreSecondaire"
                   @click="startRefereeEdit(g, 'secondaire')"
                 >{{ g.arbitreSecondaire }}</span>
                 <span
                   v-else-if="bracketLabels(g.libelle).refereeSecondaire"
-                  class="truncate block text-orange-400 italic"
+                  class="truncate block text-orange-700 italic"
                   :class="isGameEditable(g) ? 'editable-cell' : ''"
                   :title="bracketLabels(g.libelle).refereeSecondaire!"
                   @click="startRefereeEdit(g, 'secondaire')"
@@ -2995,6 +3002,7 @@ const openScoring = (gameId: number) => {
                   :class="isGameEditable(g) ? 'editable-cell text-header-900 dark:text-header-50' : 'text-header-900 dark:text-header-50'"
                   @click="startRefereeEdit(g, 'secondaire')"
                 >-</span>
+                </div>
               </td>
 
               <!-- Shotclock (optional column) -->
@@ -3027,7 +3035,7 @@ const openScoring = (gameId: number) => {
                   @toggle="togglePrinted(g)"
                 />
                 <!-- Coefficients -->
-                <div v-if="g.coeffA !== 1 || g.coeffB !== 1" class="text-[9px] text-purple-500 leading-tight">
+                <div v-if="g.coeffA !== 1 || g.coeffB !== 1" class="text-xs text-purple-600 leading-tight">
                   {{ g.coeffA }}/{{ g.coeffB }}
                 </div>
               </td>
@@ -3036,7 +3044,7 @@ const openScoring = (gameId: number) => {
               <td v-if="canEdit" class="px-1 py-1" @click.stop>
                 <button
                   v-if="isDeletable(g)"
-                  class="p-0.5 text-danger-500 hover:text-danger-700"
+                  class="p-1.5 text-danger-600 hover:text-danger-700"
                   :title="t('common.delete')"
                   @click="openDeleteConfirm(g)"
                 >
@@ -3061,7 +3069,7 @@ const openScoring = (gameId: number) => {
     </div>
 
     <!-- ═══════ MOBILE CARDS ═══════ -->
-    <AdminCardList v-if="!pitchView" class="lg:hidden" :loading="loading && games.length === 0" :empty="filteredGames.length === 0" :empty-text="!hasContextFilter ? t('games.select_context') : t('games.no_results')">
+    <AdminCardList v-if="!pitchView" class="font-ops lg:hidden" :loading="loading && games.length === 0" :empty="filteredGames.length === 0" :empty-text="!hasContextFilter ? t('games.select_context') : t('games.no_results')">
       <div
         v-for="g in filteredGames"
         :key="g.id"
@@ -3235,12 +3243,12 @@ const openScoring = (gameId: number) => {
           <div class="flex items-center justify-center gap-2 py-1">
             <span class="text-right flex-1 truncate">
               <span v-if="g.equipeA" class="font-medium">{{ g.equipeA }}</span>
-              <span v-else-if="bracketLabels(g.libelle).teamA" class="font-medium text-orange-400 italic">({{ bracketLabels(g.libelle).teamA }})</span>
-              <span v-else class="font-medium text-danger-400 italic">{{ t('games.team_undefined') }}</span>
+              <span v-else-if="bracketLabels(g.libelle).teamA" class="font-medium text-orange-700 italic">({{ bracketLabels(g.libelle).teamA }})</span>
+              <span v-else class="font-medium text-danger-600 italic">{{ t('games.team_undefined') }}</span>
               <NuxtLink
                 v-if="g.idEquipeA"
                 :to="`/presence/match/${g.id}/team/A`"
-                class="block text-[10px] text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
+                class="block w-fit ml-auto p-1 text-sm text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
                 @click.stop
               >{{ t('games.presence') }}</NuxtLink>
             </span>
@@ -3259,8 +3267,8 @@ const openScoring = (gameId: number) => {
             </template>
             <span
               v-else
-              class="font-bold text-lg min-w-6 text-center"
-              :class="isScoreEditable(g) ? 'editable-cell' : ''"
+              class="min-w-6 text-center"
+              :class="[...scoreChipClass(g, 'A'), isScoreEditable(g) ? 'editable-cell' : '']"
               @click="startInlineEdit(g, 'ScoreA')"
             >{{ g.scoreA || '-' }}</span>
             <span class="text-header-900 dark:text-header-300">-</span>
@@ -3279,28 +3287,28 @@ const openScoring = (gameId: number) => {
             </template>
             <span
               v-else
-              class="font-bold text-lg min-w-6 text-center"
-              :class="isScoreEditable(g) ? 'editable-cell' : ''"
+              class="min-w-6 text-center"
+              :class="[...scoreChipClass(g, 'B'), isScoreEditable(g) ? 'editable-cell' : '']"
               @click="startInlineEdit(g, 'ScoreB')"
             >{{ g.scoreB || '-' }}</span>
             <span class="text-left flex-1 truncate">
               <span v-if="g.equipeB" class="font-medium">{{ g.equipeB }}</span>
-              <span v-else-if="bracketLabels(g.libelle).teamB" class="font-medium text-orange-400 italic">({{ bracketLabels(g.libelle).teamB }})</span>
-              <span v-else class="font-medium text-danger-400 italic">{{ t('games.team_undefined') }}</span>
+              <span v-else-if="bracketLabels(g.libelle).teamB" class="font-medium text-orange-700 italic">({{ bracketLabels(g.libelle).teamB }})</span>
+              <span v-else class="font-medium text-danger-600 italic">{{ t('games.team_undefined') }}</span>
               <NuxtLink
                 v-if="g.idEquipeB"
                 :to="`/presence/match/${g.id}/team/B`"
-                class="block text-[10px] text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
+                class="block w-fit p-1 text-sm text-primary-700 hover:text-primary-900 dark:text-primary-300 hover:underline"
                 @click.stop
               >{{ t('games.presence') }}</NuxtLink>
             </span>
           </div>
 
           <!-- Type + Status -->
-          <div class="flex items-center gap-3 text-xs text-header-900 dark:text-header-50">
+          <div class="flex items-center gap-3 text-sm text-header-900 dark:text-header-50">
             <button
               :title="g.type === 'C' ? t('games.type_classification') : t('games.type_elimination')"
-              class="p-0.5 rounded"
+              class="p-1.5 rounded"
               :class="isGameEditable(g) ? 'hover:bg-header-200 dark:hover:bg-header-800 cursor-pointer' : 'cursor-default opacity-60'"
               :disabled="!isGameEditable(g)"
               @click="isGameEditable(g) && toggleType(g)"
@@ -3308,30 +3316,30 @@ const openScoring = (gameId: number) => {
               <UIcon
                 :name="g.type === 'C' ? 'heroicons:bars-3' : 'heroicons:arrows-right-left'"
                 class="w-5 h-5"
-                :class="g.type === 'C' ? 'text-primary-600' : 'text-orange-600'"
+                :class="g.type === 'C' ? 'text-primary-600' : 'text-orange-700'"
               />
             </button>
             <span class="text-header-900 dark:text-header-50">|</span>
-            <!-- <span class="text-header-600 dark:text-header-600">{{ t('games.field.status') }}</span> -->
+            <!-- <span class="text-header-600 dark:text-header-300">{{ t('games.field.status') }}</span> -->
             <button
               v-if="isStatutEditable(g)"
-              class="px-2 py-0.5 text-xs font-medium rounded-full border"
+              class="px-2 py-0.5 text-sm font-medium rounded-full border"
               :class="statusBtnClass(g)"
               @click="openStatusConfirm(g)"
             >{{ statusLabel(g) }}</button>
             <span
               v-else
-              class="px-2 py-0.5 text-xs font-medium rounded-full border"
+              class="px-2 py-0.5 text-sm font-medium rounded-full border"
               :class="statusBtnClass(g)"
             >{{ statusLabel(g) }}</span>
           </div>
 
-          <div v-if="g.arbitrePrincipal || g.arbitreSecondaire || bracketLabels(g.libelle).refereePrincipal || bracketLabels(g.libelle).refereeSecondaire" class="text-xs text-header-900 dark:text-header-50">
+          <div v-if="g.arbitrePrincipal || g.arbitreSecondaire || bracketLabels(g.libelle).refereePrincipal || bracketLabels(g.libelle).refereeSecondaire" class="text-sm text-header-900 dark:text-header-50">
             <span v-if="g.arbitrePrincipal" :class="{ 'italic text-header-900 dark:text-header-50': g.matricArbitrePrincipal === 0 }">{{ g.arbitrePrincipal }}</span>
-            <span v-else-if="bracketLabels(g.libelle).refereePrincipal" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereePrincipal }})</span>
+            <span v-else-if="bracketLabels(g.libelle).refereePrincipal" class="italic text-orange-700">({{ bracketLabels(g.libelle).refereePrincipal }})</span>
             <template v-if="g.arbitreSecondaire || bracketLabels(g.libelle).refereeSecondaire"> /
               <span v-if="g.arbitreSecondaire" :class="{ 'italic text-header-900 dark:text-header-50': g.matricArbitreSecondaire === 0 }">{{ g.arbitreSecondaire }}</span>
-              <span v-else-if="bracketLabels(g.libelle).refereeSecondaire" class="italic text-orange-400">({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
+              <span v-else-if="bracketLabels(g.libelle).refereeSecondaire" class="italic text-orange-700">({{ bracketLabels(g.libelle).refereeSecondaire }})</span>
             </template>
           </div>
         </div>
@@ -3340,20 +3348,20 @@ const openScoring = (gameId: number) => {
           <AdminActionButton v-if="canEdit && !isLocked(g) && g.authorized" icon="heroicons:pencil" @click="openEditModal(g)">
             {{ t('common.edit') }}
           </AdminActionButton>
-          <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
-            <UIcon name="heroicons:document-text" class="w-4 h-4" />
+          <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
+            <UIcon name="heroicons:document-text" class="w-5 h-5" />
             {{ t('games.scoresheet_pdf') }}
           </button>
-          <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
-            <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
+          <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-emerald-700 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
+            <UIcon name="heroicons:device-tablet" class="w-5 h-5" />
             v2
           </button>
-          <button v-if="canEdit && authStore.profile <= 2 && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple-600 hover:text-purple-800" @click="openScoresheet(g.id, 3)">
-            <UIcon name="heroicons:device-tablet" class="w-4 h-4" />
+          <button v-if="canEdit && authStore.profile <= 2 && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-purple-600 hover:text-purple-800" @click="openScoresheet(g.id, 3)">
+            <UIcon name="heroicons:device-tablet" class="w-5 h-5" />
             v3
           </button>
-          <button v-if="canScoring && g.authorized" class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-600 hover:text-emerald-800" @click="openScoring(g.id)">
-            <UIcon name="heroicons:bolt" class="w-4 h-4" />
+          <button v-if="canScoring && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-emerald-700 hover:text-emerald-800" @click="openScoring(g.id)">
+            <UIcon name="heroicons:bolt" class="w-5 h-5" />
             {{ t('scoring.link') }}
           </button>
           <AdminActionButton v-if="isDeletable(g)" variant="danger" icon="heroicons:trash" @click="openDeleteConfirm(g)">
@@ -3434,7 +3442,7 @@ const openScoring = (gameId: number) => {
                 <span class="text-sm">{{ t('games.type_classification') }}</span>
               </label>
               <label class="flex items-center gap-2">
-                <input v-model="formData.type" type="radio" value="E" class="text-orange-600">
+                <input v-model="formData.type" type="radio" value="E" class="text-orange-700">
                 <span class="text-sm">{{ t('games.type_elimination') }}</span>
               </label>
             </div>
@@ -3485,7 +3493,7 @@ const openScoring = (gameId: number) => {
         <div class="space-y-4">
             <!-- Referee 1 -->
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_1') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_1') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitrePrincipal"
                 :matric="formData.matricArbitrePrincipal"
@@ -3495,9 +3503,9 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitrePrincipal > 0" class="mt-1">
-                <label class="block text-[10px] text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-xs text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
-                  class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
+                  class="w-full px-2 py-1 text-sm border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
                   :value="extractTeamFromReferee(formData.arbitrePrincipal)"
                   @change="updateRefereeTeam('principal', ($event.target as HTMLSelectElement).value)"
                 >
@@ -3507,7 +3515,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Referee 2 -->
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_2') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.referee_2') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.arbitreSecondaire"
                 :matric="formData.matricArbitreSecondaire"
@@ -3517,9 +3525,9 @@ const openScoring = (gameId: number) => {
               />
               <!-- Team override for nominative referee -->
               <div v-if="formData.matricArbitreSecondaire > 0" class="mt-1">
-                <label class="block text-[10px] text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
+                <label class="block text-xs text-header-900 dark:text-header-200 mb-0.5">{{ t('games.referee_team_label') }}</label>
                 <select
-                  class="w-full px-2 py-1 text-xs border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
+                  class="w-full px-2 py-1 text-sm border border-header-200 dark:border-header-700 rounded bg-header-50 dark:bg-header-900"
                   :value="extractTeamFromReferee(formData.arbitreSecondaire)"
                   @change="updateRefereeTeam('secondaire', ($event.target as HTMLSelectElement).value)"
                 >
@@ -3529,7 +3537,7 @@ const openScoring = (gameId: number) => {
             </div>
             <!-- Shotclock (Timeshoot) — nominative name only, free text allowed -->
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.shotclock') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.field.shotclock') }}</label>
               <AdminRefereeAutocomplete
                 v-model="formData.timeshoot"
                 :matric="formShotclockMatric"
@@ -3892,7 +3900,7 @@ const openScoring = (gameId: number) => {
           />
         </div>
         <div v-if="editingRefereeMatric > 0">
-          <label class="block text-xs font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.referee_team_label') }}</label>
+          <label class="block text-sm font-medium text-header-900 dark:text-header-200 mb-1">{{ t('games.referee_team_label') }}</label>
           <select
             :value="refereeModalTeamValue"
             class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900"

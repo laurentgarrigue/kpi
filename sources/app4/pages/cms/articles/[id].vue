@@ -169,7 +169,7 @@ v-for="category in categories" :key="category.id" :model-value="article.categori
         </div>
         <fieldset class="space-y-2">
           <legend class="text-sm font-medium">{{ t('cms.articles.links') }}</legend>
-          <p class="text-xs text-header-600 dark:text-header-300">{{ t('cms.articles.links_help') }}</p>
+          <p class="text-sm text-header-600 dark:text-header-300">{{ t('cms.articles.links_help') }}</p>
           <div v-for="(link, index) in article.links" :key="index" class="flex gap-1">
             <USelect v-model="link.kind" :items="linkKindItems" class="w-32" />
             <UInput v-model="link.ref" class="flex-1" :placeholder="t(`cms.articles.link_placeholder.${link.kind}`)" />

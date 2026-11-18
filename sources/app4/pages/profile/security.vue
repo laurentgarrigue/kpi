@@ -171,13 +171,13 @@ onMounted(async () => {
 
     <div
       v-if="actionError"
-      class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded text-sm text-danger-700 dark:text-danger-400"
+      class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded text-sm text-danger-700 dark:text-danger-300"
     >
       {{ actionError }}
     </div>
     <div
       v-if="actionNotice"
-      class="p-3 bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800 rounded text-sm text-success-700 dark:text-success-400"
+      class="p-3 bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800 rounded text-sm text-success-700 dark:text-success-300"
     >
       {{ actionNotice }}
     </div>
@@ -205,12 +205,12 @@ onMounted(async () => {
               {{ device.label }}
               <span
                 v-if="device.isCurrent"
-                class="text-xs font-semibold px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200"
+                class="text-sm font-semibold px-2 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200"
               >
                 {{ t('security.devices.current') }}
               </span>
             </div>
-            <div class="text-xs text-header-500 dark:text-header-400">
+            <div class="text-sm text-header-600 dark:text-header-300">
               {{ t('security.devices.last_seen', { date: formatDate(device.lastSeenAt) }) }}
               · {{ t('security.devices.created', { date: formatDate(device.createdAt) }) }}
             </div>
@@ -225,7 +225,7 @@ onMounted(async () => {
             {{ t('security.devices.revoke') }}
           </UButton>
         </li>
-        <li v-if="devices.length === 0" class="py-4 text-sm text-header-500 dark:text-header-400 italic">
+        <li v-if="devices.length === 0" class="py-4 text-sm text-header-600 dark:text-header-300 italic">
           {{ t('security.devices.empty') }}
         </li>
       </ul>

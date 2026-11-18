@@ -727,7 +727,7 @@ const printJurySheet = (gameday: Gameday | null) => {
       <template v-if="view === 'list'" #filters>
         <!-- Month filter -->
         <div class="min-w-36">
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('gamedays.field.date_debut') }}</label>
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('gamedays.field.date_debut') }}</label>
           <select
             v-model="selectedMonth"
             class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500"
@@ -739,7 +739,7 @@ const printJurySheet = (gameday: Gameday | null) => {
 
         <!-- Sort -->
         <div class="min-w-48">
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('gamedays.sort.date_asc') }}</label>
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('gamedays.sort.date_asc') }}</label>
           <select
             v-model="selectedSort"
             class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500"
@@ -769,14 +769,14 @@ const printJurySheet = (gameday: Gameday | null) => {
           >
             <UIcon name="heroicons:bolt" class="w-6 h-6" />
             {{ t('gamedays.bulk.actions') }}
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">
               {{ selectedIds.length }}
             </span>
             <UIcon name="heroicons:chevron-down" class="w-6 h-6 transition-transform" :class="{ 'rotate-180': bulkActionsOpen }" />
           </button>
           <div v-show="bulkActionsOpen" class="absolute z-20 mt-1 w-72 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 left-0">
             <!-- ── Toggle section ── -->
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.bulk.toggle_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.bulk.toggle_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="bulkPublishConfirmOpen = true; bulkActionsOpen = false"
@@ -787,7 +787,7 @@ const printJurySheet = (gameday: Gameday | null) => {
 
             <!-- ── Edit section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
-            <div class="px-3 py-1 text-[10px] font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.bulk.edit_section') }}</div>
+            <div class="px-3 py-1 text-xs font-semibold text-header-600 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.bulk.edit_section') }}</div>
             <button
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="openBulkCalendarModal(); bulkActionsOpen = false"
@@ -800,14 +800,14 @@ const printJurySheet = (gameday: Gameday | null) => {
               class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
               @click="openBulkOfficialsModal(); bulkActionsOpen = false"
             >
-              <UIcon name="heroicons:user-group" class="w-5 h-5 text-amber-600 dark:text-amber-300" />
+              <UIcon name="heroicons:user-group" class="w-5 h-5 text-amber-700 dark:text-amber-300" />
               {{ t('gamedays.bulk_officials_title') }}
             </button>
 
             <!-- ── Danger section ── -->
             <div class="border-t border-header-100 dark:border-header-800 my-1" />
             <button
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950"
+              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-600 dark:text-danger-300 hover:bg-danger-50 dark:hover:bg-danger-950"
               @click="bulkDeleteConfirmOpen = true; bulkActionsOpen = false"
             >
               <UIcon name="heroicons:trash" class="w-5 h-5" />
@@ -848,31 +848,31 @@ const printJurySheet = (gameday: Gameday | null) => {
                 >
               </th>
               <!-- Publication -->
-              <th class="w-10 px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+              <th class="w-10 px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                 <UIcon name="heroicons:eye" class="w-6 h-6" />
               </th>
               <!-- Id -->
-              <th class="px-2 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.id') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.id') }}</th>
               <!-- Actions -->
               <th v-if="canEdit" class="w-20 px-2 py-3" />
               <!-- Competition / Phase -->
-              <th class="px-2 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.competition') }} / {{ t('gamedays.field.phase') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.competition') }} / {{ t('gamedays.field.phase') }}</th>
               <!-- CP columns -->
-              <th v-if="showCPColumns" class="px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.niveau') }}</th>
-              <th v-if="showCPColumns" class="px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.etape') }}</th>
-              <th v-if="showCPColumns" class="px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.nb_equipes') }}</th>
+              <th v-if="showCPColumns" class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.niveau') }}</th>
+              <th v-if="showCPColumns" class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.etape') }}</th>
+              <th v-if="showCPColumns" class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.nb_equipes') }}</th>
               <!-- Type -->
-              <th class="w-10 px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.type') }}</th>
+              <th class="w-10 px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.type') }}</th>
               <!-- Calendar public columns (green headers) -->
-              <th class="px-2 py-3 text-left text-xs font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.nom') }}</th>
-              <th class="px-2 py-3 text-left text-xs font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.date_debut') }}</th>
-              <th class="px-2 py-3 text-left text-xs font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.date_fin') }}</th>
-              <th class="px-2 py-3 text-left text-xs font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.lieu') }}</th>
-              <th class="px-2 py-3 text-left text-xs font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.departement') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.nom') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.date_debut') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.date_fin') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.lieu') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-success-700 dark:text-success-300 uppercase bg-success-100 dark:bg-success-900">{{ t('gamedays.field.departement') }}</th>
               <!-- Matches -->
-              <th class="px-2 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.matches') }}</th>
+              <th class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.matches') }}</th>
               <!-- Officials -->
-              <th class="px-2 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
+              <th class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
               <!-- Delete -->
               <th v-if="canEdit" class="w-10 px-2 py-3" />
             </tr>
@@ -1036,7 +1036,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                   <UIcon
                     :name="g.type === 'C' ? 'heroicons:bars-3' : 'heroicons:arrows-right-left'"
                     class="w-6 h-6"
-                    :class="g.type === 'C' ? 'text-primary-600 dark:text-primary-300' : 'text-orange-600 dark:text-orange-400'"
+                    :class="g.type === 'C' ? 'text-primary-600 dark:text-primary-300' : 'text-orange-700 dark:text-orange-300'"
                   />
                 </button>
               </td>
@@ -1153,7 +1153,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 <span v-else class="text-header-600 dark:text-header-300">0</span>
               </td>
               <!-- Officials -->
-              <td class="px-2 py-2 text-xs text-header-900 dark:text-header-50 max-w-48" @click.stop>
+              <td class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
                 <button
                   class="text-left hover:text-primary-600 dark:hover:text-primary-300 truncate max-w-full"
                   :title="getOfficialsSummary(g)"
@@ -1166,7 +1166,7 @@ const printJurySheet = (gameday: Gameday | null) => {
               <td v-if="canEdit && g.matchCount === 0" class="px-2 py-2" @click.stop>
                 <button
                   v-if="canEditGameday(g)"
-                  class="p-1 text-danger-500 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300"
+                  class="p-1 text-danger-600 dark:text-danger-300 hover:text-danger-700 dark:hover:text-danger-300"
                   :title="t('common.delete')"
                   @click="openDeleteConfirm(g)"
                 >
@@ -1228,11 +1228,11 @@ const printJurySheet = (gameday: Gameday | null) => {
             <UIcon name="heroicons:map-pin" class="w-6 h-6 text-header-900 dark:text-header-50" />
             <span>{{ g.lieu }} <span v-if="g.departement">({{ g.departement }})</span></span>
           </div>
-          <div class="flex items-center gap-3 text-xs text-header-900 dark:text-header-50">
+          <div class="flex items-center gap-3 text-sm text-header-900 dark:text-header-50">
             <span>{{ g.type === 'C' ? t('gamedays.field.type_c') : t('gamedays.field.type_e') }}</span>
             <span v-if="g.matchCount > 0">{{ g.matchCount }} {{ t('gamedays.field.matches').toLowerCase() }}</span>
           </div>
-          <button v-if="g.responsableInsc" class="text-xs text-header-900 dark:text-header-50 hover:text-primary-600 dark:hover:text-primary-300" @click.stop="openOfficialsModal(g)">
+          <button v-if="g.responsableInsc" class="text-sm text-header-900 dark:text-header-50 hover:text-primary-600 dark:hover:text-primary-300" @click.stop="openOfficialsModal(g)">
             RC: {{ g.responsableInsc }}
           </button>
         </div>
@@ -1337,7 +1337,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 <span class="text-sm">{{ t('gamedays.field.type_c') }}</span>
               </label>
               <label class="flex items-center gap-2">
-                <input v-model="formData.type" type="radio" value="E" class="text-orange-600 dark:text-orange-400">
+                <input v-model="formData.type" type="radio" value="E" class="text-orange-700 dark:text-orange-300">
                 <span class="text-sm">{{ t('gamedays.field.type_e') }}</span>
               </label>
             </div>
@@ -1432,7 +1432,7 @@ const printJurySheet = (gameday: Gameday | null) => {
           <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="formData.responsableInsc"
                   :placeholder="t('gamedays.field.responsable_insc')"
@@ -1440,7 +1440,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="formData.responsableR1"
                   :placeholder="t('gamedays.field.responsable_r1')"
@@ -1448,7 +1448,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="formData.delegue"
                   :placeholder="t('gamedays.field.delegue')"
@@ -1456,7 +1456,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="formData.chefArbitre"
                   :placeholder="t('gamedays.field.chef_arbitre')"
@@ -1464,7 +1464,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="formData.repAthletes"
                   :placeholder="t('gamedays.field.rep_athletes')"
@@ -1473,7 +1473,7 @@ const printJurySheet = (gameday: Gameday | null) => {
               </div>
             </div>
             <div class="border-t border-header-100 dark:border-header-800 pt-3">
-              <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-2">{{ t('gamedays.field.arb_nj') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-2">{{ t('gamedays.field.arb_nj') }}</label>
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 <AdminAthleteAutocomplete
                   :model-value="formData.arbNj1"
@@ -1732,7 +1732,7 @@ const printJurySheet = (gameday: Gameday | null) => {
           <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="officialsFormData.responsableInsc"
                   :placeholder="t('gamedays.field.responsable_insc')"
@@ -1740,7 +1740,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="officialsFormData.responsableR1"
                   :placeholder="t('gamedays.field.responsable_r1')"
@@ -1748,7 +1748,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="officialsFormData.delegue"
                   :placeholder="t('gamedays.field.delegue')"
@@ -1756,7 +1756,7 @@ const printJurySheet = (gameday: Gameday | null) => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="officialsFormData.chefArbitre"
                   :placeholder="t('gamedays.field.chef_arbitre')"
@@ -1775,19 +1775,19 @@ const printJurySheet = (gameday: Gameday | null) => {
           <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }} ({{ t('gamedays.field.delegue') }})</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }} ({{ t('gamedays.field.delegue') }})</label>
                 <div class="px-3 py-2 text-sm bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-header-900 dark:text-header-50">
                   {{ officialsFormData.delegue || '-' }}
                 </div>
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
                 <div class="px-3 py-2 text-sm bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-header-900 dark:text-header-50">
                   {{ officialsFormData.responsableR1 || '-' }}
                 </div>
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
                 <AdminAthleteAutocomplete
                   :model-value="officialsFormData.repAthletes"
                   :placeholder="t('gamedays.field.rep_athletes')"

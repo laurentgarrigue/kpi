@@ -153,7 +153,7 @@ onMounted(() => Promise.all([load(), loadAlbums()]))
     >
       <UIcon :name="uploading ? 'heroicons:arrow-path' : 'heroicons:arrow-up-tray'" class="h-8 w-8" :class="{ 'animate-spin': uploading }" />
       <span>{{ t('cms.media.drop') }}</span>
-      <span class="text-xs text-header-600 dark:text-header-300">{{ t('cms.media.limits') }}</span>
+      <span class="text-sm text-header-600 dark:text-header-300">{{ t('cms.media.limits') }}</span>
       <input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" class="sr-only" @change="uploadFiles(($event.target as HTMLInputElement).files ?? [])">
     </label>
 
@@ -166,7 +166,7 @@ onMounted(() => Promise.all([load(), loadAlbums()]))
             <button type="button" class="w-full rounded border p-1 text-left" :class="selected?.id === media.id ? 'border-primary-500 ring-2 ring-primary-500' : 'border-header-200 dark:border-header-700'" @click="selected = { ...media }">
               <img v-if="media.mime.startsWith('image/')" :src="mediaSrc(media.thumbnail, legacyBaseUrl)" :alt="media.alt_fr" class="h-24 w-full object-cover" loading="lazy">
               <span v-else class="flex h-24 items-center justify-center"><UIcon name="heroicons:document" class="h-10 w-10" /></span>
-              <span class="mt-1 block truncate text-xs">{{ media.name }}</span>
+              <span class="mt-1 block truncate text-sm">{{ media.name }}</span>
             </button>
           </li>
         </ul>
@@ -176,10 +176,10 @@ onMounted(() => Promise.all([load(), loadAlbums()]))
       <aside v-if="selected" class="space-y-3 rounded-lg bg-white dark:bg-header-900 p-4 shadow" data-testid="media-details">
         <img v-if="selected.mime.startsWith('image/')" :src="mediaSrc(selected.url, legacyBaseUrl)" :alt="selected.alt_fr" class="max-h-48 w-full rounded object-contain">
         <p class="break-all text-sm font-medium">{{ selected.name }}</p>
-        <p class="text-xs text-header-600 dark:text-header-300">
+        <p class="text-sm text-header-600 dark:text-header-300">
           {{ selected.mime }} · {{ formatBytes(selected.size, locale === 'en' ? 'en-GB' : 'fr-FR') }}<template v-if="selected.width"> · {{ selected.width }}×{{ selected.height }}</template>
         </p>
-        <UButton size="xs" variant="outline" icon="heroicons:clipboard" @click="copyUrl(selected.url)">{{ t('cms.media.copy_url') }}</UButton>
+        <UButton size="sm" variant="outline" icon="heroicons:clipboard" @click="copyUrl(selected.url)">{{ t('cms.media.copy_url') }}</UButton>
         <UFormField :label="t('cms.media.alt_fr')" :required="selected.mime.startsWith('image/')" :error="errors.alt_fr ? t(`cms.errors.${errors.alt_fr}`) : undefined">
           <UInput v-model="selected.alt_fr" class="w-full" />
         </UFormField>
@@ -198,7 +198,7 @@ onMounted(() => Promise.all([load(), loadAlbums()]))
           <input ref="replaceInput" type="file" class="sr-only" :accept="selected.mime" @change="replace">
           <UButton v-if="authStore.canAdministerContent" size="sm" color="error" variant="ghost" icon="heroicons:trash" @click="remove">{{ t('common.delete') }}</UButton>
         </div>
-        <p class="text-xs text-header-600 dark:text-header-300">{{ t('cms.media.replace_help') }}</p>
+        <p class="text-sm text-header-600 dark:text-header-300">{{ t('cms.media.replace_help') }}</p>
       </aside>
     </div>
 

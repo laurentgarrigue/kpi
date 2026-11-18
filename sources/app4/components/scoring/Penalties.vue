@@ -57,7 +57,7 @@ const sorted = computed(() => [...props.penalties].sort((a, b) => a.slot - b.slo
         <span class="scoring-digits">{{ p.playerNumber ?? '?' }}</span>
         <span
           class="scoring-digits"
-          :class="p.running || isPenaltyExpired(p) ? 'text-error-600 dark:text-error-400' : 'text-amber-600 dark:text-amber-400'"
+          :class="p.running || isPenaltyExpired(p) ? 'text-error-600 dark:text-error-300' : 'text-amber-700 dark:text-amber-400'"
         >{{ fmt(p.remainingMs) }}</span>
       </ScoringTimeAdjust>
       <UButton

@@ -66,7 +66,7 @@ async function handleSubmit() {
         </h2>
 
         <!-- No token -->
-        <div v-if="!token" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm">
+        <div v-if="!token" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm">
           {{ t('users.reset_password.error_token_invalid') }}
         </div>
 
@@ -88,7 +88,7 @@ async function handleSubmit() {
           <!-- Error -->
           <div
             v-if="error"
-            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
+            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm"
           >
             {{ error }}
           </div>
@@ -106,7 +106,7 @@ async function handleSubmit() {
           </div>
 
           <!-- Rules checklist -->
-          <div class="text-xs text-header-900 dark:text-header-50 space-y-0.5">
+          <div class="text-sm text-header-900 dark:text-header-50 space-y-0.5">
             <div class="font-medium mb-1">{{ t('users.reset_password.rules') }}</div>
             <div
               v-for="rule in rules"
@@ -115,7 +115,7 @@ async function handleSubmit() {
             >
               <UIcon
                 :name="rule.valid ? 'i-heroicons-check-circle' : 'i-heroicons-x-circle'"
-                :class="rule.valid ? 'text-success-500' : 'text-header-600 dark:text-header-300'"
+                :class="rule.valid ? 'text-success-700' : 'text-header-600 dark:text-header-300'"
                 class="w-4 h-4"
               />
               <span :class="rule.valid ? 'text-success-700 dark:text-success-300' : 'text-header-600 dark:text-header-300'">{{ rule.label }}</span>
@@ -134,7 +134,7 @@ async function handleSubmit() {
             />
             <p
               v-if="confirmPassword && !passwordsMatch"
-              class="mt-1 text-xs text-danger-500"
+              class="mt-1 text-sm text-danger-600"
             >
               {{ t('users.reset_password.error_mismatch') }}
             </p>

@@ -46,11 +46,11 @@ const isHighlighted = (team: string) => {
       <table class="w-full text-sm schema-pool-table">
         <thead>
           <tr class="bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50">
-            <th class="px-1 py-1 text-left text-xs">{{ t('schema.table.rank') }}</th>
-            <th class="px-1 py-1 text-left text-xs">{{ t('schema.table.teams') }}</th>
-            <th class="px-1 py-1 text-center text-xs">{{ t('schema.table.pts') }}</th>
-            <th class="px-1 py-1 text-center text-xs">{{ t('schema.table.played') }}</th>
-            <th class="px-1 py-1 text-center text-xs">+/-</th>
+            <th class="px-1 py-1 text-left text-sm">{{ t('schema.table.rank') }}</th>
+            <th class="px-1 py-1 text-left text-sm">{{ t('schema.table.teams') }}</th>
+            <th class="px-1 py-1 text-center text-sm">{{ t('schema.table.pts') }}</th>
+            <th class="px-1 py-1 text-center text-sm">{{ t('schema.table.played') }}</th>
+            <th class="px-1 py-1 text-center text-sm">+/-</th>
           </tr>
         </thead>
         <tbody>
@@ -65,11 +65,11 @@ const isHighlighted = (team: string) => {
             @mouseenter="emit('hoverTeam', team.libelle)"
             @mouseleave="emit('hoverTeam', null)"
           >
-            <td class="px-1 py-1 text-xs" :class="isHighlighted(team.libelle) ? 'text-header-700' : 'text-header-600 dark:text-header-300'">{{ team.clt }}</td>
-            <td class="px-1 py-1 text-xs font-medium truncate max-w-30" :title="team.libelle">{{ team.libelle }}</td>
-            <td class="px-1 py-1 text-center text-xs font-bold">{{ team.pts }}</td>
-            <td class="px-1 py-1 text-center text-xs">{{ team.j }}</td>
-            <td class="px-1 py-1 text-center text-xs">{{ team.diff }}</td>
+            <td class="px-1 py-1 text-sm" :class="isHighlighted(team.libelle) ? 'text-header-700' : 'text-header-600 dark:text-header-300'">{{ team.clt }}</td>
+            <td class="px-1 py-1 text-sm font-medium truncate max-w-30" :title="team.libelle">{{ team.libelle }}</td>
+            <td class="px-1 py-1 text-center text-sm font-bold">{{ team.pts }}</td>
+            <td class="px-1 py-1 text-center text-sm">{{ team.j }}</td>
+            <td class="px-1 py-1 text-center text-sm">{{ team.diff }}</td>
           </tr>
         </tbody>
       </table>
@@ -80,7 +80,7 @@ const isHighlighted = (team: string) => {
       <div
         v-for="team in phase.poolTeams"
         :key="team.id"
-        class="py-0.5 px-1 rounded transition-colors duration-100 text-xs"
+        class="py-0.5 px-1 rounded transition-colors duration-100 text-sm"
         :class="isHighlighted(team.libelle) ? 'bg-warning-200 text-black' : 'text-header-900 dark:text-header-50'"
         @mouseenter="emit('hoverTeam', team.libelle)"
         @mouseleave="emit('hoverTeam', null)"
@@ -94,7 +94,7 @@ const isHighlighted = (team: string) => {
       <div
         v-for="team in teamsFromMatches"
         :key="team"
-        class="py-0.5 px-1 rounded transition-colors duration-100 text-xs"
+        class="py-0.5 px-1 rounded transition-colors duration-100 text-sm"
         :class="isHighlighted(team) ? 'bg-warning-200 text-black' : 'text-header-900 dark:text-header-50'"
         @mouseenter="emit('hoverTeam', team)"
         @mouseleave="emit('hoverTeam', null)"
@@ -105,7 +105,7 @@ const isHighlighted = (team: string) => {
 
     <!-- Empty rows -->
     <div v-else>
-      <div v-for="n in emptyRows" :key="n" class="py-0.5 px-1 text-header-600 dark:text-header-300 border-b border-header-100 dark:border-header-800 text-xs">
+      <div v-for="n in emptyRows" :key="n" class="py-0.5 px-1 text-header-600 dark:text-header-300 border-b border-header-100 dark:border-header-800 text-sm">
         —
       </div>
     </div>

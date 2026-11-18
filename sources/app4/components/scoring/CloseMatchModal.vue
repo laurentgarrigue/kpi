@@ -82,7 +82,7 @@ const confirm = () => {
       <!-- 1. Score check -->
       <table class="w-full">
         <thead>
-          <tr class="text-xs text-header-600 dark:text-header-300">
+          <tr class="text-sm text-header-600 dark:text-header-300">
             <th />
             <th class="font-normal text-center w-20">{{ t('scoring.close.score') }}</th>
             <th class="font-normal text-center w-20">{{ t('scoring.close.goals') }}</th>
@@ -94,7 +94,7 @@ const confirm = () => {
             <td class="py-1 text-center scoring-digits text-lg">{{ score[side] }}</td>
             <td
               class="py-1 text-center scoring-digits text-lg"
-              :class="score[side] !== goals[side] ? 'text-amber-600 dark:text-amber-400' : ''"
+              :class="score[side] !== goals[side] ? 'text-amber-700 dark:text-amber-400' : ''"
             >{{ goals[side] }}</td>
           </tr>
         </tbody>

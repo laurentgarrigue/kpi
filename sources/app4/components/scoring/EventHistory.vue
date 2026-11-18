@@ -72,7 +72,7 @@ const toggleIcon = computed(() => (showAll.value === newestFirst.value ? 'i-hero
 const toggleLabel = computed(() => (showAll.value
   ? t('scoring.history_recent', { n: props.recentCount })
   : t('scoring.history_more', { count: props.events.length - (props.recentCount ?? 0) })))
-const TOGGLE_CLASS = 'w-full inline-flex items-center justify-center gap-1 rounded px-2 py-1 text-header-600 dark:text-header-300 hover:bg-header-50 dark:hover:bg-header-800 '
+const TOGGLE_CLASS = 'w-full inline-flex items-center justify-center gap-1 rounded px-2 py-2 text-header-600 dark:text-header-300 hover:bg-header-50 dark:hover:bg-header-800 '
   + 'hover:text-primary-700 dark:hover:text-primary-300 focus-visible:outline-2 focus-visible:outline-primary-500'
 
 const playerLabel = (e: ScoringEvent): string => {
@@ -102,18 +102,18 @@ const onRowClick = (e: ScoringEvent) => {
     <!-- Symmetric table (PC / large tablet) -->
     <table class="hidden md:table w-full text-sm border-collapse">
       <thead>
-        <tr class="text-xs text-header-600 dark:text-header-300 border-b border-header-200 dark:border-header-700">
+        <tr class="text-sm text-header-600 dark:text-header-300 border-b border-header-200 dark:border-header-700">
           <!-- Columns mirror the score banner (A left, B right), team names recalled -->
           <th class="py-1 px-3 w-[42%] text-left font-semibold">{{ teamA }}</th>
           <th class="py-1 text-center w-[16%]">
             <button
               type="button"
-              class="inline-flex items-center gap-1 rounded px-1 hover:bg-header-100 dark:hover:bg-header-800 focus-visible:outline-2 focus-visible:outline-primary-500"
+              class="inline-flex items-center gap-1 rounded px-2 py-1.5 hover:bg-header-100 dark:hover:bg-header-800 focus-visible:outline-2 focus-visible:outline-primary-500"
               :aria-label="directionTitle" :title="directionTitle"
               @click="toggleDirection"
             >
               {{ t('scoring.time.short') }}
-              <UIcon :name="directionIcon" class="size-3.5" />
+              <UIcon :name="directionIcon" class="size-4" />
             </button>
           </th>
           <th class="py-1 px-3 w-[42%] text-right font-semibold">{{ teamB }}</th>
@@ -147,7 +147,7 @@ const onRowClick = (e: ScoringEvent) => {
               <ScoringEventIcon :code="e.code" />
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
-              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
+              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-sm">({{ t('scoring.reason.' + e.reason) }})</span>
             </div>
           </td>
 
@@ -159,7 +159,7 @@ const onRowClick = (e: ScoringEvent) => {
           <!-- RIGHT: team B (mirrored) -->
           <td class="py-1 pl-2">
             <div v-if="e.team === 'B'" class="group flex items-center gap-2 justify-end">
-              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-xs">({{ t('scoring.reason.' + e.reason) }})</span>
+              <span v-if="e.reason" class="text-header-600 dark:text-header-300 text-sm">({{ t('scoring.reason.' + e.reason) }})</span>
               <span class="truncate">{{ playerLabel(e) }}</span>
               <span class="font-mono w-7 text-center">#{{ e.number }}</span>
               <ScoringEventIcon :code="e.code" />
@@ -219,7 +219,7 @@ const onRowClick = (e: ScoringEvent) => {
     </ul>
 
     <!-- Row actions for the symmetric table (delete; edit is the row click) -->
-    <p v-if="sorted.length" class="hidden md:block text-xs text-header-600 dark:text-header-300 mt-2">
+    <p v-if="sorted.length" class="hidden md:block text-sm text-header-600 dark:text-header-300 mt-2">
       {{ t('scoring.history_table_hint') }}
     </p>
   </div>

@@ -113,7 +113,7 @@ const handleSubmit = async () => {
         <!-- Error message -->
         <div
           v-if="error || oauthError"
-          class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
+          class="mb-4 p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm"
         >
           {{ error || oauthError }}
         </div>
@@ -144,7 +144,7 @@ const handleSubmit = async () => {
               </label>
               <NuxtLink
                 to="/forgot-password"
-                class="text-xs text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
+                class="text-sm text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
               >
                 {{ t('login.forgot_password') }}
               </NuxtLink>
@@ -176,7 +176,7 @@ const handleSubmit = async () => {
         <div v-if="googleEnabled" class="mt-4">
           <div class="flex items-center my-3">
             <div class="flex-grow border-t border-header-300 dark:border-header-700" />
-            <span class="px-2 text-xs text-header-500 dark:text-header-400 uppercase">{{ t('login.or') }}</span>
+            <span class="px-2 text-sm text-header-600 dark:text-header-300 uppercase">{{ t('login.or') }}</span>
             <div class="flex-grow border-t border-header-300 dark:border-header-700" />
           </div>
           <UButton color="neutral" variant="outline" block @click="goToGoogle">
@@ -202,7 +202,7 @@ const handleSubmit = async () => {
       </div>
 
       <!-- App version -->
-      <p class="mt-4 text-center text-xs text-header-500 dark:text-header-400 italic">v{{ version }}</p>
+      <p class="mt-4 text-center text-sm text-header-600 dark:text-header-300 italic">v{{ version }}</p>
     </div>
   </div>
 </template>

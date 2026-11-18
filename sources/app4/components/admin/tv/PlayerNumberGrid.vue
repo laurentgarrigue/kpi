@@ -11,7 +11,7 @@ const numbers = Array.from({ length: 22 }, (_, i) => i)
         v-for="n in numbers"
         :key="n"
         type="button"
-        class="px-2 py-1 text-xs font-medium rounded border transition-colors"
+        class="px-2 py-1 text-sm font-medium rounded border transition-colors"
         :class="modelValue === n
           ? 'bg-primary-600 text-white border-primary-600'
           : 'bg-white dark:bg-header-900 text-header-900 dark:text-header-50 border-header-300 dark:border-header-700 hover:bg-header-200 dark:hover:bg-header-700'"

@@ -51,8 +51,8 @@ onMounted(async () => {
     <ol class="space-y-3">
       <li v-for="(block, index) in blocks" :key="block.id" class="space-y-3 rounded-lg bg-white dark:bg-header-900 p-4 shadow" :data-block="block.kind">
         <div class="flex items-center gap-2">
-          <UButton size="xs" variant="ghost" icon="heroicons:chevron-up" :disabled="index === 0" :aria-label="t('cms.move_up')" @click="blocks = moveItem(blocks, index, -1)" />
-          <UButton size="xs" variant="ghost" icon="heroicons:chevron-down" :disabled="index === blocks.length - 1" :aria-label="t('cms.move_down')" @click="blocks = moveItem(blocks, index, 1)" />
+          <UButton size="sm" variant="ghost" icon="heroicons:chevron-up" :disabled="index === 0" :aria-label="t('cms.move_up')" @click="blocks = moveItem(blocks, index, -1)" />
+          <UButton size="sm" variant="ghost" icon="heroicons:chevron-down" :disabled="index === blocks.length - 1" :aria-label="t('cms.move_down')" @click="blocks = moveItem(blocks, index, 1)" />
           <h2 class="flex-1 font-semibold">{{ t(`cms.home.kind.${block.kind}`) }}</h2>
           <USwitch v-model="block.enabled" :label="t('cms.home.enabled')" />
         </div>

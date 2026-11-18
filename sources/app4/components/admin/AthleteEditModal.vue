@@ -194,14 +194,14 @@ async function handleSubmit() {
   >
     <div class="space-y-4">
       <!-- Error message -->
-      <div v-if="formError" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-sm text-danger-700 dark:text-danger-400">
+      <div v-if="formError" class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-sm text-danger-700 dark:text-danger-300">
         {{ formError }}
       </div>
 
       <!-- Nom -->
       <div>
         <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-          {{ t('athletes.edit.nom') }} <span class="text-danger-500">*</span>
+          {{ t('athletes.edit.nom') }} <span class="text-danger-600">*</span>
         </label>
         <input
           v-model="form.nom"
@@ -214,7 +214,7 @@ async function handleSubmit() {
       <!-- Prenom -->
       <div>
         <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-          {{ t('athletes.edit.prenom') }} <span class="text-danger-500">*</span>
+          {{ t('athletes.edit.prenom') }} <span class="text-danger-600">*</span>
         </label>
         <input
           v-model="form.prenom"
@@ -227,7 +227,7 @@ async function handleSubmit() {
       <!-- Sexe -->
       <div>
         <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-          {{ t('athletes.edit.sexe') }} <span class="text-danger-500">*</span>
+          {{ t('athletes.edit.sexe') }} <span class="text-danger-600">*</span>
         </label>
         <select
           v-model="form.sexe"
@@ -343,7 +343,7 @@ async function handleSubmit() {
             class="w-full px-3 py-2 text-left text-sm text-header-900 dark:text-header-50 hover:bg-primary-50 dark:hover:bg-primary-900 focus:bg-primary-100 focus:outline-none flex items-center gap-2"
             @click="selectClub(result)"
           >
-            <span class="font-mono text-xs text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ result.code }}</span>
+            <span class="font-mono text-sm text-header-900 dark:text-header-50 bg-header-200 dark:bg-header-700 px-1.5 py-0.5 rounded">{{ result.code }}</span>
             <span>{{ result.libelle }}</span>
           </button>
         </div>

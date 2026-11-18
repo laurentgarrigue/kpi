@@ -101,7 +101,7 @@ onBeforeUnmount(() => { if (searchTimer) clearTimeout(searchTimer) })
     <!-- List -->
     <div class="bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg overflow-hidden">
       <div v-if="loading && items.length === 0" class="p-6 text-center">
-        <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-header-400" />
+        <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 animate-spin text-header-600" />
       </div>
       <div v-else-if="items.length === 0" class="p-6 text-center text-sm text-header-600 dark:text-header-300">
         {{ t('athletes_list.empty') }}
@@ -123,7 +123,7 @@ onBeforeUnmount(() => { if (searchTimer) clearTimeout(searchTimer) })
             <tr v-for="athlete in items" :key="athlete.matric" class="hover:bg-header-50 dark:hover:bg-header-800">
               <td class="px-4 py-2 font-mono text-header-900 dark:text-header-50">
                 {{ athlete.matric }}
-                <span v-if="athlete.international" class="ml-1 text-xs px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">
+                <span v-if="athlete.international" class="ml-1 text-sm px-1.5 py-0.5 rounded bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">
                   {{ t('athletes_list.international_badge') }}
                 </span>
               </td>
@@ -137,7 +137,7 @@ onBeforeUnmount(() => { if (searchTimer) clearTimeout(searchTimer) })
               </td>
               <td class="px-4 py-2 text-header-900 dark:text-header-50">{{ athlete.club || athlete.codeClub }}</td>
               <td class="px-4 py-2 text-right">
-                <NuxtLink :to="sheetLink(athlete.matric)" :title="t('athletes_list.open_sheet')" class="inline-flex text-primary-600 dark:text-primary-400 hover:text-primary-800">
+                <NuxtLink :to="sheetLink(athlete.matric)" :title="t('athletes_list.open_sheet')" class="inline-flex text-primary-600 dark:text-primary-300 hover:text-primary-800">
                   <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-4 h-4" />
                 </NuxtLink>
               </td>
@@ -154,7 +154,7 @@ onBeforeUnmount(() => { if (searchTimer) clearTimeout(searchTimer) })
             class="block px-4 py-3 hover:bg-header-50 dark:hover:bg-header-800"
           >
             <div class="font-medium text-header-900 dark:text-header-50">{{ athlete.nom }} {{ athlete.prenom }} ({{ athlete.sexe }})</div>
-            <div class="text-xs text-header-600 dark:text-header-300 mt-0.5">
+            <div class="text-sm text-header-600 dark:text-header-300 mt-0.5">
               {{ athlete.matric }}
               <span v-if="athlete.international"> · {{ t('athletes_list.international_badge') }}</span>
               · <span v-if="athlete.naissance">{{ formatBirthDate(athlete.naissance) }}</span>

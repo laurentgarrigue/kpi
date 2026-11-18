@@ -14,7 +14,7 @@ const formatDate = (date: string): string => {
 </script>
 
 <template>
-  <div class="px-4 py-2 bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-xs text-header-600 dark:text-header-300 text-center" data-testid="team-last-update">
+  <div class="px-4 py-2 bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-sm text-header-600 dark:text-header-300 text-center" data-testid="team-last-update">
     {{ t('presence.last_update') }} {{ formatDate(lastUpdate.date) }} {{ t('presence.last_update_by') }} {{ lastUpdate.user }}
   </div>
 </template>

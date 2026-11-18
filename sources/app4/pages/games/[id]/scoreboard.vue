@@ -144,7 +144,7 @@ const fmtPenalty = (ms: number): string => {
     <div ref="clockBox" class="relative min-w-0 min-h-0" :class="clocksSideBySide ? '' : 'col-span-2'">
       <span
         class="absolute inset-0 flex items-center justify-center leading-none whitespace-nowrap"
-        :class="state.timerRunning ? (light ? 'text-green-700' : 'text-green-400') : ''"
+        :class="state.timerRunning ? (light ? 'text-green-700' : 'text-green-700') : ''"
         :style="{ fontSize: clockSize + 'px' }"
       >{{ state.timer }}</span>
     </div>

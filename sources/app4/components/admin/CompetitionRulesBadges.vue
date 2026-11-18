@@ -22,14 +22,14 @@ const isIcfPoints = computed(() => props.competition.points === '3-1-0-0')
   <div class="flex flex-wrap items-center gap-1">
     <template v-if="!isMulti">
       <span
-        class="px-1.5 py-px text-[10px] font-medium rounded"
+        class="px-1.5 py-px text-xs font-medium rounded"
         :class="isGaParticulier ? FFCK_CLASS : ICF_CLASS"
         :title="`${t('competitions.form.goalaverage')} : ${t(`competitions.goalaverage_options.${isGaParticulier ? 'part_hint' : 'gen_hint'}`)}`"
       >
         {{ t('competitions.goalaverage_short') }} {{ t(`competitions.goalaverage_options.${isGaParticulier ? 'part' : 'gen'}`) }}
       </span>
       <span
-        class="px-1.5 py-px text-[10px] font-medium rounded"
+        class="px-1.5 py-px text-xs font-medium rounded"
         :class="isIcfPoints ? ICF_CLASS : FFCK_CLASS"
         :title="`${t('competitions.form.points')} : ${t(`competitions.points_options.${isIcfPoints ? 'icf_hint' : 'ffck_hint'}`)}`"
       >
@@ -38,7 +38,7 @@ const isIcfPoints = computed(() => props.competition.points === '3-1-0-0')
     </template>
     <span
       v-if="competition.qualifies > 0"
-      class="inline-flex items-center gap-0.5 px-1.5 py-px text-[10px] font-medium rounded bg-header-100 dark:bg-header-800 text-header-900 dark:text-header-50"
+      class="inline-flex items-center gap-0.5 px-1.5 py-px text-xs font-medium rounded bg-header-100 dark:bg-header-800 text-header-900 dark:text-header-50"
       :title="t('competitions.form.qualifies')"
     >
       <UIcon name="heroicons:arrow-up-solid" class="w-3 h-3 text-success-600 dark:text-success-400" />
@@ -46,7 +46,7 @@ const isIcfPoints = computed(() => props.competition.points === '3-1-0-0')
     </span>
     <span
       v-if="competition.elimines > 0"
-      class="inline-flex items-center gap-0.5 px-1.5 py-px text-[10px] font-medium rounded bg-header-100 dark:bg-header-800 text-header-900 dark:text-header-50"
+      class="inline-flex items-center gap-0.5 px-1.5 py-px text-xs font-medium rounded bg-header-100 dark:bg-header-800 text-header-900 dark:text-header-50"
       :title="t('competitions.form.elimines')"
     >
       <UIcon name="heroicons:arrow-down-solid" class="w-3 h-3 text-danger-600 dark:text-danger-400" />

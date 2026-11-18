@@ -94,7 +94,7 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
         <div
           v-if="clock !== null"
           class="scoring-digits board-clock"
-          :class="clockRunning ? 'text-green-400' : 'text-red-500'"
+          :class="clockRunning ? 'text-green-700' : 'text-red-700'"
         >
           <ScoringTimeAdjust
             :display="clock"
@@ -109,7 +109,7 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
         </div>
         <!-- Post-match: no clock, the scores still need their separator -->
         <div v-else class="scoring-digits board-score text-white/40" aria-hidden="true">–</div>
-        <div v-if="breakDisplay" class="mt-1 flex items-baseline gap-2 text-amber-400">
+        <div v-if="breakDisplay" class="mt-1 flex items-baseline gap-2 text-amber-700">
           <span class="text-sm">{{ t('scoring.break.title') }}</span>
           <span class="scoring-digits text-3xl">{{ breakDisplay }}</span>
         </div>
@@ -121,8 +121,8 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
             :can-adjust="shotclockAdjustable"
             :locked-hint="t('scoring.shotclock.adjust_locked')"
             :label="t('scoring.shotclock.adjust')"
-            :trigger-class="`scoring-digits text-4xl sm:text-5xl leading-none px-1 hover:bg-header-50/10 ${shotclockState === 'RUNNING' ? 'text-amber-400'
-              : shotclockState === 'SUSPENDED' ? 'text-amber-400/70' : 'text-white/30'}`"
+            :trigger-class="`scoring-digits text-4xl sm:text-5xl leading-none px-1 hover:bg-header-50/10 ${shotclockState === 'RUNNING' ? 'text-amber-700'
+              : shotclockState === 'SUSPENDED' ? 'text-amber-700/70' : 'text-white/30'}`"
             @adjust="emit('adjust-shotclock', $event)"
           >{{ shotclock }}</ScoringTimeAdjust>
         </div>

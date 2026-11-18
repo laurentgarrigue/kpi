@@ -1560,7 +1560,7 @@
     "time_invalid": "Time is not in HH:MM format. Continue anyway?",
     "referee_unidentified": "Unidentified referee",
     "team_undefined": "Undefined team",
-    "presence": "Presence",
+    "presence": "Rosters",
     "all_events": "All events",
     "all_competitions": "All competitions",
     "all_rounds": "All",
