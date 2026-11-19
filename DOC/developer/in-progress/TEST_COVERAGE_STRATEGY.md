@@ -79,14 +79,14 @@ sur ce qui est mesuré) — voir le ticket 08 pour la routine de relèvement.
 
 ## 4. Baseline
 
-Mesurée en local le 19/11/2026 sur `3b02b69` + ces changements (Vitest 5.1.1, v8). Valeurs à confirmer par la première CI.
+Mesurée en local le 19/11/2026 sur `3b02b69` + ces changements (Vitest 5.1.1, v8). Valeurs locales (app2, app3, app4) ; api2 mesuré par la première CI.
 
 | Brique | Lignes | Plancher | Remarque |
 |---|---|---|---|
 | app2 | **2,9 %** | 2,9 | 19 tests (3 fichiers), 73 fichiers dont 42 `.vue` |
 | app3 + kpi-layer | **91,5 %** | 91 | 440 tests (unit + nuxt + e2e), 192 fichiers dont 130 `.vue` |
 | app4 | **9,9 %** | 9,8 | 340 tests (unit + nuxt), 234 fichiers dont 153 `.vue` |
-| api2 | _à mesurer en CI_ | `null` | PCOV absent de l'environnement de rédaction ; `make api2_coverage` ou job `tests-api2` |
+| api2 | **51,0 %** | 50,9 | Mesuré en CI (PCOV, unit + integration, PR #408) ; 358 fichiers dans `src/` |
 
 ⚠️ **Le taux de lignes d'un `.vue` dépend du compilateur** : avec le seul `@vitejs/plugin-vue`, app4 affichait
 3,3 % (templates comptés comme du code) ; avec le projet `nuxt` (même mécanisme qu'app3) 9,9 %. Les planchers

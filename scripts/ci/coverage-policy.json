@@ -3,7 +3,7 @@
     "app2": 2.9,
     "app3": 91,
     "app4": 9.8,
-    "api2": null
+    "api2": 50.9
   },
   "diffThresholds": {
     "app2": 80,

@@ -1,7 +1,7 @@
 # api2 : test de contrat OpenAPI
 
 Status: needs-triage
-Blocked by: 01
+Blocked by: —
 
 Spec : [TEST_COVERAGE_STRATEGY.md](../../../DOC/developer/in-progress/TEST_COVERAGE_STRATEGY.md)
 
