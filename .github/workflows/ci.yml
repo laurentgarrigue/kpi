@@ -49,6 +49,7 @@ jobs:
       app3: ${{ steps.filter.outputs.app3 }}
       app4: ${{ steps.filter.outputs.app4 }}
       docker: ${{ steps.filter.outputs.docker }}
+      ci: ${{ steps.filter.outputs.ci }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -75,6 +76,9 @@ jobs:
             docker:
               - 'docker/**'
               - 'Makefile'
+            # Scripts de la CI elle-même (cliquet de couverture) : ils sont testés (COV-05, COV-12 à COV-15).
+            ci:
+              - 'scripts/ci/**'
 
   # ---------------------------------------------------------------------------
   # 2. Lint ESLint des apps Nuxt (app2 / app3 / app4).
@@ -92,7 +96,10 @@ jobs:
       matrix:
         app: [app2, app3, app4]
     steps:
+      # Historique complet : le cliquet de couverture compare au diff de la PR (git diff base...HEAD).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Skip les apps non modifiées à l'intérieur de la matrice.
       - name: Cette app est-elle concernée ?
@@ -123,22 +130,32 @@ jobs:
         run: npx eslint .
 
       # app4 : tests unitaires Vitest des utils purs (rubrique Éditorial, PAGE_CMS.md). app3 a son propre job.
-      # Couverture mesurée, sans seuil (TEST_COVERAGE_STRATEGY.md, étape 1).
-      - name: Tests unitaires + couverture (app4)
-        if: steps.relevant.outputs.changed == 'true' && matrix.app == 'app4'
-        working-directory: sources/app4
+      # Tests + couverture (TEST_COVERAGE_STRATEGY.md) : app2 et app4 ont Vitest ; app3 a son propre job.
+      # Le cliquet (scripts/ci/coverage-policy.json) est BLOQUANT : plancher global + couverture du diff en PR.
+      - name: Tests + couverture (${{ matrix.app }})
+        if: steps.relevant.outputs.changed == 'true' && matrix.app != 'app3'
+        working-directory: sources/${{ matrix.app }}
         run: npm run test:coverage
 
-      - name: Synthèse de couverture (app4)
-        if: always() && steps.relevant.outputs.changed == 'true' && matrix.app == 'app4'
-        run: node scripts/ci/coverage-summary.mjs app4 vitest sources/app4/coverage/coverage-summary.json
+      - name: Synthèse de couverture (${{ matrix.app }})
+        if: always() && steps.relevant.outputs.changed == 'true' && matrix.app != 'app3'
+        run: node scripts/ci/coverage-summary.mjs ${{ matrix.app }} vitest sources/${{ matrix.app }}/coverage/coverage-summary.json
 
-      - name: Rapport de couverture (app4)
-        if: always() && steps.relevant.outputs.changed == 'true' && matrix.app == 'app4'
+      - name: Cliquet de couverture (${{ matrix.app }})
+        if: steps.relevant.outputs.changed == 'true' && matrix.app != 'app3'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          base=""; [ -n "$BASE_REF" ] && base="--base origin/$BASE_REF"
+          node scripts/ci/coverage-check.mjs ${{ matrix.app }} vitest sources/${{ matrix.app }} \
+            sources/${{ matrix.app }}/coverage/coverage-summary.json --lcov sources/${{ matrix.app }}/coverage/lcov.info $base
+
+      - name: Rapport de couverture (${{ matrix.app }})
+        if: always() && steps.relevant.outputs.changed == 'true' && matrix.app != 'app3'
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-app4
-          path: sources/app4/coverage/
+          name: coverage-${{ matrix.app }}
+          path: sources/${{ matrix.app }}/coverage/
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
@@ -161,7 +178,10 @@ jobs:
       matrix:
         app: [app2, app3, app4]
     steps:
+      # Historique complet : le cliquet de couverture compare au diff de la PR (git diff base...HEAD).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Skip les apps non modifiées à l'intérieur de la matrice.
       - name: Cette app est-elle concernée ?
@@ -383,6 +403,8 @@ jobs:
           --health-retries=10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -431,6 +453,15 @@ jobs:
           # `kpi_fixtures` SANS `_test` : Doctrine ajoute le suffixe (voir plus haut).
           DATABASE_URL: 'mysql://root:fixtures@127.0.0.1:3306/kpi_fixtures?serverVersion=11.5.2-MariaDB&charset=utf8mb4'
         run: composer test-coverage
+
+      # Cliquet BLOQUANT (scripts/ci/coverage-policy.json) : plancher (null tant que la baseline n'est pas connue)
+      # + couverture du diff en PR.
+      - name: Cliquet de couverture (api2)
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          base=""; [ -n "$BASE_REF" ] && base="--base origin/$BASE_REF"
+          node scripts/ci/coverage-check.mjs api2 clover sources/api2 sources/api2/var/coverage/clover.xml $base
 
       - name: Synthèse de couverture (api2)
         if: always()
@@ -991,6 +1022,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -1007,6 +1040,15 @@ jobs:
         working-directory: sources/app3
         run: npm run test:coverage
 
+      # Cliquet BLOQUANT (scripts/ci/coverage-policy.json) : plancher + couverture du diff en PR.
+      - name: Cliquet de couverture (app3 + kpi-layer)
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          base=""; [ -n "$BASE_REF" ] && base="--base origin/$BASE_REF"
+          node scripts/ci/coverage-check.mjs app3 vitest sources/app3 \
+            sources/app3/coverage/coverage-summary.json --lcov sources/app3/coverage/lcov.info $base
+
       - name: Synthèse de couverture (app3 + kpi-layer)
         if: always()
         run: node scripts/ci/coverage-summary.mjs "app3 + kpi-layer" vitest sources/app3/coverage/coverage-summary.json
@@ -1020,14 +1062,28 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Tests des scripts de CI (synthèse et cliquet de couverture) — node --test, sans dépendance.
+  # ---------------------------------------------------------------------------
+  tests-ci-scripts:
+    needs: [changes]
+    if: needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs
+
   ci-summary:
-    needs: [changes, lint-nuxt, build-nuxt, tests-app3, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
+    needs: [changes, lint-nuxt, build-nuxt, tests-app3, tests-ci-scripts, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Vérifier qu'aucun job requis n'a échoué
         run: |
-          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.tests-app3.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.tests-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
+          results="${{ needs.lint-nuxt.result }} ${{ needs.build-nuxt.result }} ${{ needs.tests-app3.result }} ${{ needs.tests-ci-scripts.result }} ${{ needs.lint-api2.result }} ${{ needs.phpstan-api2.result }} ${{ needs.smoke-api2.result }} ${{ needs.tests-api2.result }} ${{ needs.lint-legacy.result }} ${{ needs.lint-docker.result }} ${{ needs.audit-composer.result }} ${{ needs.audit-npm.result }} ${{ needs.secrets-scan.result }} ${{ needs.trivy-config.result }}"
           echo "Résultats: $results"
           for r in $results; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then

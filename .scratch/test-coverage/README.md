@@ -2,4 +2,4 @@
 
 Spec et stratégie : [DOC/developer/in-progress/TEST_COVERAGE_STRATEGY.md](../../DOC/developer/in-progress/TEST_COVERAGE_STRATEGY.md)
 
-Étapes 2 à 5 (cliquet, niveau d'app3 partout, socle commun, objectifs chiffrés) : tickets à créer dans `issues/` une fois la baseline connue.
+Étapes 1, 2 et 4 livrées ; les tickets de `issues/` portent le reste de l'étape 3 et le suivi de l'étape 5.

@@ -41,6 +41,12 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 
 See [DOC/README.md](DOC/README.md) for the complete index.
 
+## Git conventions
+
+- **Branch names are explicit**: name every new branch after its subject (`claude/test-coverage-baseline`,
+  `fix/mercure-publish-403`), never an auto-generated or random name (`claude/intelligent-shannon-0z5cxe`). Rename
+  with `git branch -m` before the first push if the harness hands out a random one.
+
 ## Engineering principles (apply to every change)
 
 - **Spec first**: every page or feature gets a spec with testable acceptance criteria before any code
