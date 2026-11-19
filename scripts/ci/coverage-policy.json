@@ -1,0 +1,14 @@
+{
+  "floors": {
+    "app2": 2.9,
+    "app3": 91,
+    "app4": 9.8,
+    "api2": 50.9
+  },
+  "diffThresholds": {
+    "app2": 80,
+    "app3": 80,
+    "app4": 80,
+    "api2": 60
+  }
+}

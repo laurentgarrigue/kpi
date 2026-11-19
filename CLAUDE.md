@@ -41,6 +41,12 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 
 See [DOC/README.md](DOC/README.md) for the complete index.
 
+## Git conventions
+
+- **Branch names are explicit**: name every new branch after its subject (`claude/test-coverage-baseline`,
+  `fix/mercure-publish-403`), never an auto-generated or random name (`claude/intelligent-shannon-0z5cxe`). Rename
+  with `git branch -m` before the first push if the harness hands out a random one.
+
 ## Engineering principles (apply to every change)
 
 - **Spec first**: every page or feature gets a spec with testable acceptance criteria before any code
@@ -157,6 +163,8 @@ make backend_npm_add package=flatpickr
 - `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
 - `make pdf_tokens_sync` - Copy the app4/app3 charter (colour tokens, fonts, logos) used by the PDFs into `sources/api2/assets/pdf/`, then commit
 - `make gotenberg_logs` - Logs of the Gotenberg (PDF rendering) container
+- `make api2_coverage` / `make app3_coverage` / `make app4_coverage` - Tests + rapport de couverture (mesure seule, sans seuil ;
+  [TEST_COVERAGE_STRATEGY.md](DOC/developer/in-progress/TEST_COVERAGE_STRATEGY.md)) ; `make ci_scripts_test` teste `scripts/ci/`
 - `make api2_match_medals_compute season=AAAA` - Compute the match medals of ONE season with the current thresholds
   (`sources/api2/config/packages/match_medals.yaml`); `make api2_match_medals_sync` is what the cron runs every 10 min.
   Spec: [FEATURE_MATCH_MEDALS.md](DOC/specs/public/FEATURE_MATCH_MEDALS.md)
