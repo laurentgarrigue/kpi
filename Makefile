@@ -1299,7 +1299,7 @@ feature: ## Crée une branche feature depuis main à jour, ou depuis la branche 
 
 version: ## Affiche les versions actuelles de chaque brique + le dernier tag de release
 	@echo "Versions dans le working tree ($$(git rev-parse --abbrev-ref HEAD)) :"
-	@for app in app2 app4; do \
+	@for app in app2 app3 app4; do \
 		f="sources/$$app/package.json"; \
 		[ -f "$$f" ] || continue; \
 		v=$$(grep -oP '(?<="version": ")[^"]+' "$$f" | head -1); \
@@ -1322,24 +1322,52 @@ version: ## Affiche les versions actuelles de chaque brique + le dernier tag de 
 	fi
 	@echo
 	@echo "Versions servies (ce que voient les utilisateurs) :"
-	@echo "  app2  → pied de page de l'accueil       app4 → page de login + pied de page (layouts/admin.vue)"
+	@echo "  app2  → pied de page de l'accueil"
+	@echo "  app3  → <meta name=\"app-version\"> du site public beta (rien d'affiché)"
+	@echo "  app4  → page de login + pied de page (layouts/admin.vue)"
 	@echo "  api2  → /api2/doc, champ info.version"
 	@echo "  (app2/app4 exposent aussi <meta name=\"app-version\"> dans leur index.html, lu ci-dessous)"
 	@echo
 	@echo "Versions DÉPLOYÉES (lu en direct) :"
-	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info" \
-	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info"; do \
-		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; app2url="$${rest#*|}"; \
+	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info|https://beta.preprod.kayak-polo.info" \
+	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info|https://beta.kayak-polo.info"; do \
+		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; rest="$${rest#*|}"; app2url="$${rest%%|*}"; app3url="$${rest#*|}"; \
 		semver='[0-9]+\.[0-9]+\.[0-9]+'; \
 		api2=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
 			| grep -oE "\"version\" *: *\"$$semver\"" | head -1 | grep -oE "$$semver"); \
-		app2=$$(curl -fsS --max-time 8 "$$app2url/" 2>/dev/null \
+		app2=$$(curl -fsSL --max-time 8 "$$app2url/" 2>/dev/null \
 			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
-		app4=$$(curl -fsS --max-time 8 "$$url/admin2/" 2>/dev/null \
+		app3=$$(curl -fsSL --max-time 8 "$$app3url/" 2>/dev/null \
 			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
-		printf "  %s  api2 %-8s app2 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app4:-?}"; \
-	done
-	@echo "  (? = injoignable, ou build antérieur à la balise app-version)"
+		app4=$$(curl -fsSL --max-time 8 "$$url/admin2/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		printf "  %s  api2 %-8s app2 %-8s app3 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app3:-?}" "$${app4:-?}"; \
+		case "$$name" in pré*) k=pre ;; *) k=prod ;; esac; \
+		for b in api2 app2 app3 app4; do eval "$${k}_$$b=\$$b"; done; \
+	done; \
+	echo "  (? = injoignable, ou build antérieur à la balise app-version)"; \
+	echo; \
+	last=$$(git tag --list 'v*' --sort=-v:refname | head -1); \
+	if [ -z "$$last" ]; then echo "Prochaine release : aucun tag existant, choisis la version à la main."; exit 0; fi; \
+	level=0; diffs=""; \
+	for b in api2 app2 app3 app4; do \
+		eval "pv=\$$pre_$$b; qv=\$$prod_$$b"; \
+		[ -n "$$pv" ] && [ -n "$$qv" ] || continue; \
+		[ "$$pv" != "$$qv" ] || continue; \
+		l=1; \
+		[ "$${pv%%.*}" != "$${qv%%.*}" ] && l=3; \
+		[ "$$l" = 1 ] && [ "$${pv%.*}" != "$${qv%.*}" ] && l=2; \
+		[ "$$l" -gt "$$level" ] && level=$$l; \
+		diffs="$$diffs $$b($$qv→$$pv)"; \
+	done; \
+	if [ "$$level" = 0 ]; then \
+		echo "Prochaine release : préprod = prod sur chaque brique lisible, rien à tagger."; \
+	else \
+		cur=$${last#v}; ma=$${cur%%.*}; r=$${cur#*.}; mi=$${r%%.*}; pa=$${r#*.}; \
+		case $$level in 3) ma=$$((ma+1)); mi=0; pa=0 ;; 2) mi=$$((mi+1)); pa=0 ;; *) pa=$$((pa+1)) ;; esac; \
+		echo "Prochaine release (dernier tag $$last ; écarts prod→préprod :$$diffs) :"; \
+		echo "  make release_tag version=$$ma.$$mi.$$pa"; \
+	fi
 
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)
