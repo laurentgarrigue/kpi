@@ -66,7 +66,7 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures api2_coverage app2_test app2_coverage app3_coverage app4_coverage ci_scripts_test test db_migrate \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync \
 db_bash \
@@ -520,17 +520,8 @@ app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sin
 		docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME); \
 	fi
 
-app2_test: ## Tests unitaires d'app2 (Vitest : utils purs) dans le conteneur de dev
-	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npm test"
-
-app2_coverage: ## Tests d'app2 + rapport de couverture (app2/coverage/)
-	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npm run test:coverage"
-
 app3_test: ## Tests du site public (Vitest : unit, composants, e2e) dans le conteneur de dev
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm test"
-
-app3_coverage: ## Tests du site public + rapport de couverture (app3/coverage/, sans seuil)
-	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run test:coverage"
 
 app3_lint: ## ESLint + typecheck du site public (app3)
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run lint && npm run typecheck"
@@ -633,9 +624,6 @@ app4_lint: ## Exécute ESLint sur app4
 
 app4_test: ## Tests unitaires d'app4 (Vitest : utils purs, sans Nuxt) dans le conteneur de dev
 	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm test"
-
-app4_coverage: ## Tests d'app4 + rapport de couverture (app4/coverage/, sans seuil)
-	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm run test:coverage"
 
 app4_bash: ## Ouvre un shell dans le container Node (app4 admin)
 	$(DOCKER_EXEC_NODE4) sh
@@ -1073,21 +1061,6 @@ api2_test_integration: api2_test_fixtures ## Lance la suite PHPUnit `integration
 api2_test: api2_test_unit api2_test_integration ## Lance les DEUX suites PHPUnit d'API2 (unit + integration) — ce que fait la CI
 	@echo "✅ Suites unit + integration passées (équivalent local du job CI tests-api2)"
 
-# Couverture api2 : PCOV n'est pas dans l'image FrankenPHP, on l'ajoute à la volée au conteneur de dev
-# (éphémère : perdu à la recréation du conteneur, c'est voulu — la CI utilise setup-php `coverage: pcov`).
-api2_coverage: api2_test_fixtures ## Tests api2 (unit + integration) + couverture (api2/var/coverage/, sans seuil)
-	@$(DOCKER_EXEC_API2_NON_INTERACTIVE) sh -lc 'php -m | grep -qi "^pcov$$" || install-php-extensions pcov'
-	@docker exec \
-		-e APP_ENV=test \
-		-e API2_TEST_DB=1 \
-		-e DATABASE_URL='mysql://root:$(DB_ROOT_PASSWORD)@$(DB_CONTAINER_NAME):3306/$(API2_TEST_DB_BASE)?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-		$(API2_CONTAINER_NAME) composer test-coverage
-
-test: app2_test app3_test app4_test api2_test ci_scripts_test ## TOUS les tests (app2, app3, app4, api2, scripts de CI) — équivalent local de la CI
-	@echo "✅ Tous les tests sont passés"
-
-ci_scripts_test: ## Tests des scripts de CI (scripts/ci/, node --test, sans Docker)
-	node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs
 
 ## ACCÈS SHELLS
 db_bash: ## Ouvre un shell dans le container MySQL

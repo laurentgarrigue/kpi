@@ -24,6 +24,3 @@ logs
 
 # Build ID
 .build-id
-
-# Rapport de couverture (npm run test:coverage)
-coverage

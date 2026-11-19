@@ -23,6 +23,3 @@ logs
 .env.*
 !.env.dist
 !.env.example
-
-# Rapport de couverture (npm run test:coverage)
-coverage
