@@ -15,6 +15,11 @@
 > (tous les noms cités existent). Phase 1b-ter lot A : sur `claude/scoring-refactoring-strategy-3d43ac`, **pas encore
 > dans `main`** ; tests unitaires (25) et lint verts en local, recette manuelle dev validée le 15/11/2026 (1b-ter.2).
 > Restent ☐ : tests manuels non tracés, suivi SQL en base, commande de purge (à écrire), lot A à déployer, phase 3.
+>
+> **Point au 19/11/2026** — nettoyage de la base de prod : comptes sans e-mail corrigés ou supprimés, comptes encore
+> en MD5 supprimés (inactifs depuis mars 2026, à recréer au besoin en saison 2027). `app:auth:password-audit` :
+> 121 comptes, tous bcrypt, 0 MD5, 0 sans e-mail. Préalables J-30 de la [phase 1a-bis](#phase-1a-bis--renouvellement-de-saison-et-retrait-du-md5)
+> (1a-bis.3 n° 1 et 2) levés ; `AUTH_LEGACY_MD5_FALLBACK=0` en préprod et en prod, dump fait (1a-bis.5) : **retrait du MD5 terminé**.
 
 **Règle d'or** : à chaque phase, on vérifie **aussi** qu'app2 (publique) et le site public (app3) ne sont pas impactés.
 
@@ -189,18 +194,21 @@ API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter 'AuthPassword
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `docker exec kpi_api2 php bin/console app:auth:require-password-renewal --renewed-since=2027-01-01` | Liste des comptes marqués | ☐ |
-| 2 | Login app4 d'un compte marqué | Écran « Renouvellement du mot de passe », aucune page d'app4 accessible | ☐ |
-| 3 | Saisir l'ancien mot de passe, puis un mot de passe faible | Messages « différent de l'actuel » puis règles non respectées | ☐ |
-| 4 | Saisir un mot de passe conforme | Accès à app4 (ou au choix du mandat), ligne `Renouvellement mdp` dans le journal | ☐ |
-| 5 | Onglet resté connecté avant l'étape 1 : naviguer | Retour à `/login`, puis renouvellement | ☐ |
-| 6 | Compte marqué lié à Google : « Continuer avec Google » | Message « Votre mot de passe doit être renouvelé… » | ☐ |
+| 1 | `docker exec kpi_api2 php bin/console app:auth:require-password-renewal --renewed-since=2027-01-01` | Liste des comptes marqués | ☑ |
+| 2 | Login app4 d'un compte marqué | Écran « Renouvellement du mot de passe », aucune page d'app4 accessible | ☑ |
+| 3 | Saisir l'ancien mot de passe, puis un mot de passe faible | Messages « différent de l'actuel » puis règles non respectées | ☑ |
+| 4 | Saisir un mot de passe conforme | Accès à app4 (ou au choix du mandat), ligne `Renouvellement mdp` dans le journal | ☑ |
+| 5 | Onglet resté connecté avant l'étape 1 : naviguer | Retour à `/login`, puis renouvellement | ☑ |
+| 6 | Compte marqué lié à Google : « Continuer avec Google » | Message « Votre mot de passe doit être renouvelé… » | ☑ |
 
 ### 1a-bis.3 Avant la campagne (J-30)
 
-1. ☐ 🖥 Inventaire : `docker exec kpi_api2 php bin/console app:auth:password-audit --without-email`.
-2. ☐ Transmettre aux régions la liste des comptes **sans e-mail valide** : sans e-mail, pas de « mot de passe
-   oublié » possible (ni après la purge MD5, ni en cas d'oubli pendant le renouvellement).
+1. ☑ 🖥 Inventaire : `docker exec kpi_api2 php bin/console app:auth:password-audit --without-email`.
+   Fait en prod le 19/11/2026, **après nettoyage** : 121 comptes, tous en bcrypt ; 0 MD5, 0 sans mot de passe,
+   0 « autre format », 0 sans e-mail valide, 0 renouvellement en attente.
+2. ☑ Comptes **sans e-mail valide** : corrigés ou supprimés directement en prod (19/11/2026), plus rien à
+   transmettre aux régions. Les comptes encore en MD5 (aucune connexion depuis mars 2026) ont été **supprimés** ;
+   ils seront recréés au besoin au fil de la saison 2027.
 3. ☐ Message aux utilisateurs : date du renouvellement, règles du mot de passe, vérifier son e-mail dans sa fiche ;
    date du retrait MD5 (un compte jamais reconnecté d'ici là devra passer par « mot de passe oublié »).
 4. ☐ Aide utilisateur : [PASSWORD_RENEWAL.md](../../user/PASSWORD_RENEWAL.md) (lisible dans le DocViewer), à citer dans le message et le tutoriel.
@@ -219,15 +227,22 @@ Suivi : `app:auth:password-audit` (ligne « Renouvellement en attente ») ; 🗄
 
 ### 1a-bis.5 🖥 Date annoncée — retrait du MD5 (prod)
 
-1. ☐ Dump de la base :
+1. ☑ Dump de la base (fait en prod avant le nettoyage, 19/11/2026) :
    ```bash
    docker exec kpi_db sh -c 'mariadb-dump -u<user> -p<pass> kpi' \
      | gzip > /data/backups/kpi/pre-migration/kpi_avant-purge-md5_$(date +%F_%H%M%S).sql.gz
    ```
-2. ☐ Dans `sources/api2/.env` du serveur : `AUTH_LEGACY_MD5_FALLBACK=0`, puis `make api2_restart`.
-3. ☐ `docker exec kpi_api2 php bin/console app:auth:purge-md5-hashes --dry-run`, relire la liste.
-4. ☐ `docker exec kpi_api2 php bin/console app:auth:purge-md5-hashes`.
-5. ☐ Vérifier : 🗄 SQL `SELECT COUNT(*) FROM kp_user WHERE Pwd REGEXP '^[0-9a-fA-F]{32}$';` → `0`.
+2. ☑ Dans `sources/api2/.env` du serveur : `AUTH_LEGACY_MD5_FALLBACK=0`, puis `make api2_restart` (préprod et prod, 19/11/2026).
+3. ➖ `app:auth:purge-md5-hashes --dry-run` : sans objet, les comptes MD5 ont été supprimés à la main (19/11/2026).
+4. ➖ `app:auth:purge-md5-hashes` : sans objet (idem). À jouer quand même si un compte MD5 réapparaît.
+5. ☑ Vérifier : `app:auth:password-audit` du 19/11/2026 → « Hash MD5 : 0 » (équivalent de
+   🗄 SQL `SELECT COUNT(*) FROM kp_user WHERE Pwd REGEXP '^[0-9a-fA-F]{32}$';` → `0`).
+
+> ✅ Repli MD5 coupé en préprod et en prod le 19/11/2026 (l'audit pris juste avant affichait encore « actif »).
+> Retrait du MD5 terminé : plus aucun hash et plus de repli. Vérifié en prod le 19/11/2026 par
+> `app:auth:password-audit` → « Repli MD5 au login : **retiré** » (0 MD5, 121 bcrypt).
+> Base de prod restaurée en préprod le 19/11/2026 ; audit préprod identique (0 MD5, 121 bcrypt, 0 sans e-mail,
+> « Repli MD5 au login : retiré »).
 
 **Rollback** : remettre `AUTH_LEGACY_MD5_FALLBACK=1` + `make api2_restart` rétablit le repli tant que la purge n'a
 pas tourné. Après la purge, les hash vidés ne se restaurent que depuis le dump (comptes à faire passer par
