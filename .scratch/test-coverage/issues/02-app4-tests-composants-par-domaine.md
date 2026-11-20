@@ -17,4 +17,6 @@ Non testé dans `PeriodSelector` : le menu d'accès direct et sa modale de confi
 
 **Lot 3 — modales du scoring** : `ShortcutsModal`, `CloseMatchModal`, `DisplayOptionsModal` (31 tests). app4 11,7 % → 13,2 %, plancher 13,0. Les modales passent par `Teleport` vers `body` : requêtes sur `document.body` et démontage via `tests/nuxt/modal-helpers.ts` (sinon le DOM téléporté fuit d'un test à l'autre). `ShortcutsModal` et `CloseMatchModal` n'amorcent leur état qu'au passage de `open` à vrai : les monter fermées puis `setProps({ open: true })`.
 
-Reste dans le scoring : `EventHistory`, `OfficialInput`, `SettingsPanel` ; puis présence, auth/login, éditorial.
+**Lot 4 — panneaux du scoring** : `EventHistory`, `OfficialInput`, `SettingsPanel` (58 tests). app4 13,2 % → 15,7 %, plancher 15,5. Les tableau et liste mobile d'`EventHistory` sont tous deux rendus (le masquage est du CSS) : requêtes par `table tbody tr` et `ul > li.flex`. `OfficialInput` : temporisation de recherche et réponses périmées testées avec des faux timers.
+
+Reste : le scoring est terminé hors menu d'accès direct de `PeriodSelector` ; puis présence, auth/login, éditorial.
