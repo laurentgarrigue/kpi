@@ -15,4 +15,6 @@ Les textes sont lus via l'i18n de l'app (`tests/nuxt/helpers.ts`), pas copiés. 
 **Lot 2 — scoring** : `Board`, `TeamColumn`, `PeriodSelector` (40 tests). app4 10,6 % → 11,7 %, plancher 11,5. Le helper `t()` de `tests/nuxt/helpers.ts` échoue désormais sur une clé i18n absente (sinon une assertion « contient t(clé) » passe à tort).
 Non testé dans `PeriodSelector` : le menu d'accès direct et sa modale de confirmation (menu rendu hors du composant, à traiter avec `AdminConfirmModal`).
 
-Reste dans le scoring : `EventHistory`, `OfficialInput`, `CloseMatchModal`, `SettingsPanel`, `ShortcutsModal`, `DisplayOptionsModal` ; puis présence, auth/login, éditorial.
+**Lot 3 — modales du scoring** : `ShortcutsModal`, `CloseMatchModal`, `DisplayOptionsModal` (31 tests). app4 11,7 % → 13,2 %, plancher 13,0. Les modales passent par `Teleport` vers `body` : requêtes sur `document.body` et démontage via `tests/nuxt/modal-helpers.ts` (sinon le DOM téléporté fuit d'un test à l'autre). `ShortcutsModal` et `CloseMatchModal` n'amorcent leur état qu'au passage de `open` à vrai : les monter fermées puis `setProps({ open: true })`.
+
+Reste dans le scoring : `EventHistory`, `OfficialInput`, `SettingsPanel` ; puis présence, auth/login, éditorial.
