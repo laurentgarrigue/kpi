@@ -249,11 +249,11 @@ onMounted(async () => {
           <tbody>
             <tr v-for="player in players" :key="player.player_id" class="border-t border-header-200 dark:border-header-800">
               <td class="px-2 py-2">
-                <span class="inline-block min-w-7 px-2 py-1 text-xs font-bold text-center text-white bg-header-700 dark:bg-header-600 rounded">
+                <span class="inline-block min-w-7 px-2 py-1 text-sm font-bold text-center text-white bg-header-700 dark:bg-header-600 rounded">
                   {{ isStaff(player) ? t('scrutineering.coach') : (player.num ?? '') }}
                 </span>
                 <span class="ml-1">{{ playerName(player) }}</span>
-                <span v-if="player.cap === 'C'" class="ml-1 inline-block px-2 py-1 text-xs font-bold text-header-900 bg-yellow-400 rounded">C</span>
+                <span v-if="player.cap === 'C'" class="ml-1 inline-block px-2 py-1 text-sm font-bold text-header-900 bg-yellow-400 rounded">C</span>
               </td>
               <template v-if="!isStaff(player)">
                 <td v-for="column in STATUS_COLUMNS" :key="column.parameter" class="px-1 py-1 text-center">
@@ -281,12 +281,12 @@ onMounted(async () => {
                 <td class="px-1 py-1">
                   <button
                     type="button"
-                    class="w-full min-w-32 min-h-11 px-2 py-1 text-xs text-left border border-header-300 dark:border-header-700 rounded hover:bg-header-50 dark:hover:bg-header-800"
+                    class="w-full min-w-32 min-h-11 px-2 py-1 text-sm text-left border border-header-300 dark:border-header-700 rounded hover:bg-header-50 dark:hover:bg-header-800"
                     :title="player.comment || t('scrutineering.add_comment')"
                     @click="openComment(player)"
                   >
                     <span v-if="player.comment">{{ commentPreview(player.comment) }}</span>
-                    <span v-else class="italic text-header-400">{{ t('scrutineering.add_comment') }}</span>
+                    <span v-else class="italic text-header-600">{{ t('scrutineering.add_comment') }}</span>
                   </button>
                 </td>
               </template>
@@ -316,14 +316,14 @@ onMounted(async () => {
               <span>{{ t(`scrutineering.legend_${status}`) }}</span>
             </div>
             <div class="flex items-center gap-1">
-              <span class="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-success-600 rounded">6</span>
+              <span class="inline-flex items-center justify-center w-6 h-6 text-sm font-bold text-white bg-success-600 rounded">6</span>
               <span>{{ t('scrutineering.legend_paddles') }}</span>
             </div>
           </div>
         </div>
         <button
           type="button"
-          class="flex items-center gap-1 px-4 py-2 text-sm text-danger-600 dark:text-danger-400 border border-danger-600 dark:border-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
+          class="flex items-center gap-1 px-4 py-2 text-sm text-danger-600 dark:text-danger-300 border border-danger-600 dark:border-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
           @click="resetModalOpen = true"
         >
           <UIcon name="heroicons:trash" class="w-5 h-5" />
@@ -345,7 +345,7 @@ onMounted(async () => {
         :maxlength="COMMENT_MAX_LENGTH"
         class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900"
       />
-      <p class="mt-1 text-xs text-right text-header-500">{{ t('scrutineering.comment_max', { count: commentText.length }) }}</p>
+      <p class="mt-1 text-sm text-right text-header-600">{{ t('scrutineering.comment_max', { count: commentText.length }) }}</p>
       <template #footer>
         <button type="button" class="px-4 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg" @click="commentPlayer = null">
           {{ t('common.cancel') }}

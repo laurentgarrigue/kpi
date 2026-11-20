@@ -441,18 +441,30 @@ réel) ; vérifier `beta.kayak-polo.info/news`, une page, le menu, un formulaire
 
 ## Fonction transverse — Médailles de match
 
-Checklist dédiée (touche api2, app3, app2 et app4) : [MATCH_MEDALS_ROLLOUT_CHECKLIST.md](MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
+Checklist dédiée (touche api2, app3, app2 et app4), close le 14/11/2026 : [MATCH_MEDALS_ROLLOUT_CHECKLIST.md](../archive/features/MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
 
 ## Phase 5 — Bascule de `www`
 
 *À compléter.* Prévoir : 🌍 aucun changement DNS (même VPS) ; Traefik : app3 devient le routeur par défaut de
 `kayak-polo.info`/`www`, Apache sur liste explicite ; `NUXT_PUBLIC_BETA=false` ; redirections 301 ; ajout de
-`/healthz` aux `SMOKE_URLS_*` (📦 `vps-manager`) ; Search Console ; suivi des 404.
-**Matomo** : mise en service pendant la beta, puis section « À la bascule » de
-[MATOMO_ROLLOUT_CHECKLIST.md](MATOMO_ROLLOUT_CHECKLIST.md) (URL www du site app3, annotations, suivi des 404).
-**Redirection 301 `beta.*` → domaine principal pendant au moins 1 saison** (chemin conservé) : des PDF publics
-imprimés portent des QR codes vers `beta.*` ([PDF_GOTENBERG.md §8.4](../../specs/PDF_GOTENBERG.md)) ; basculer en même
-temps `PUBLIC_SITE_URL` d'api2 (docker/compose.*.yaml) vers le domaine principal.
+`/healthz` aux `SMOKE_URLS_*` (📦 `vps-manager`) ; Search Console ; suivi des 404. Détail des redirections,
+du routage Apache restant et des critères : [SITE_REDIRECTS.md](../../specs/public/SITE_REDIRECTS.md).
+**`beta.*` n'est pas maintenu** (décision du 20/11/2026) : le routeur `beta.*` est retiré à la bascule, sans redirection ;
+les QR codes de PDF déjà imprimés vers `beta.*` ne seront plus servis. Basculer en même temps `PUBLIC_SITE_URL` d'api2
+(docker/compose.*.yaml) vers le domaine principal, pour que les nouveaux PDF portent la bonne adresse.
+**Prérequis** : scoring publié aux profils adéquats avant la bascule (les outils legacy `kptv.php`, `tv.php`,
+`feuillemarque.php`… répondent 410 ensuite, [SITE_REDIRECTS.md § 5.2](../../specs/public/SITE_REDIRECTS.md)).
+
+**Matomo** (en service depuis la beta, mise en service close :
+[MATOMO_ROLLOUT_CHECKLIST.md](../archive/infrastructure/MATOMO_ROLLOUT_CHECKLIST.md)) — 📊 `https://matomo.kayak-polo.info` :
+
+| # | Action | Détail | ☐ |
+|---|---|---|---|
+| M1 | 📊 URL du site app3 (site **8**, « KPI Site public ») | Ajouter `https://www.kayak-polo.info` et `https://kayak-polo.info` | ☐ |
+| M2 | 📊 Annotations | « Bascule www → nouveau site » à la date de la bascule, sur le site 1 et sur le site 8 | ☐ |
+| M3 | 📊 Suivi des 404 | Comportement › Titres de pages › ligne `404` : les anciennes URL fréquentes sans redirection sont à ajouter aux 301 | ☐ |
+| M4 | 📊 Tableau de bord comparatif | Tous les sites : visites, actions, durée moyenne, avant/après, sites 1 + 8 | ☐ |
+| M5 | Phase 6 | Après retrait du legacy public et de WordPress, le site 1 ne reçoit plus rien : le garder pour l'historique | ☐ |
 
 ## Phase 6 — Décommissionnement
 

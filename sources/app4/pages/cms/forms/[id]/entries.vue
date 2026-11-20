@@ -76,13 +76,13 @@ onMounted(async () => {
             <td class="px-3 py-2 tabular-nums whitespace-nowrap">{{ entry.created_at.slice(0, 16) }}</td>
             <td class="px-3 py-2">
               <UBadge :color="STATUS_COLORS[entry.status]" variant="subtle" size="sm">{{ t(`cms.forms.entry_status.${entry.status}`) }}</UBadge>
-              <span v-if="entry.reason" class="block text-xs text-header-600 dark:text-header-300">{{ t(`cms.forms.reason.${entry.reason}`) }}</span>
+              <span v-if="entry.reason" class="block text-sm text-header-600 dark:text-header-300">{{ t(`cms.forms.reason.${entry.reason}`) }}</span>
             </td>
             <td v-for="column in data.columns" :key="column.key" class="px-3 py-2">{{ entry.answers[column.key] }}</td>
             <td class="px-3 py-2 whitespace-nowrap text-right">
-              <UButton v-if="entry.status !== 'confirmed'" size="xs" color="success" variant="soft" data-testid="confirm-entry" @click="setStatus(entry.id, 'confirmed')">{{ t('cms.forms.confirm') }}</UButton>
-              <UButton v-if="entry.status === 'confirmed'" size="xs" color="warning" variant="ghost" @click="setStatus(entry.id, 'waiting')">{{ t('cms.forms.hold') }}</UButton>
-              <UButton v-if="entry.status !== 'cancelled'" size="xs" color="neutral" variant="ghost" @click="setStatus(entry.id, 'cancelled')">{{ t('cms.forms.cancel') }}</UButton>
+              <UButton v-if="entry.status !== 'confirmed'" size="sm" color="success" variant="soft" data-testid="confirm-entry" @click="setStatus(entry.id, 'confirmed')">{{ t('cms.forms.confirm') }}</UButton>
+              <UButton v-if="entry.status === 'confirmed'" size="sm" color="warning" variant="ghost" @click="setStatus(entry.id, 'waiting')">{{ t('cms.forms.hold') }}</UButton>
+              <UButton v-if="entry.status !== 'cancelled'" size="sm" color="neutral" variant="ghost" @click="setStatus(entry.id, 'cancelled')">{{ t('cms.forms.cancel') }}</UButton>
             </td>
           </tr>
         </tbody>
@@ -96,7 +96,7 @@ onMounted(async () => {
           <span class="tabular-nums">{{ mail.sent_at.slice(0, 16) }}</span>
           <span class="flex-1">{{ mail.recipient }} — {{ mail.subject }}</span>
           <UBadge :color="mail.status === 'sent' ? 'success' : 'error'" variant="subtle" size="sm">{{ t(`cms.forms.mail_status.${mail.status}`) }}</UBadge>
-          <UButton v-if="mail.resendable" size="xs" variant="outline" @click="resend(mail.id)">{{ t('cms.forms.resend') }}</UButton>
+          <UButton v-if="mail.resendable" size="sm" variant="outline" @click="resend(mail.id)">{{ t('cms.forms.resend') }}</UButton>
         </li>
       </ul>
     </details>

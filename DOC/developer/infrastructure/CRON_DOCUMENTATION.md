@@ -189,12 +189,15 @@ Chaque match est calculé avec les seuils figés de **sa saison**. Spec :
 
 ### Configuration CRON
 
+Installé par le dépôt **vps-manager** : `make install-cron-match-medals-sync-prod` (h:00, h:10…) et
+`make install-cron-match-medals-sync-preprod` (h:05, h:15…, décalé pour ne pas charger le VPS en même temps).
+
 ```cron
-# Médailles de match - toutes les 10 minutes
-*/10 * * * * docker exec kpi_api2 php bin/console app:match-medals:sync >> /var/log/kpi/cron_match_medals.log 2>&1
+# Médailles de match - toutes les 10 minutes (prod ; préprod : 5-59/10 et kpi_preprod_api2)
+*/10 * * * * docker exec -t kpi_api2 php bin/console app:match-medals:sync > $LOGS_BASE_DIR/cron/match-medals-sync.log 2>&1
 ```
 
-(remplacer `kpi_api2` par `${APPLICATION_NAME}_api2` de l'environnement, ex. `kpi_preprod_api2`.)
+Le journal ne garde que le **dernier passage** (`>`), pour ne pas grossir à raison de 144 passages par jour.
 
 ### Calcul complet d'une saison
 

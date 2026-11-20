@@ -998,16 +998,16 @@ const getLogoUrl = (team: CompetitionTeam) => {
       <template #badges>
         <div v-if="competitionInfo" class="flex items-center gap-2 flex-wrap">
           <span
-            class="px-2 py-1 text-xs font-medium rounded"
+            class="px-2 py-1 text-sm font-medium rounded"
             :class="getLevelColor(competitionInfo.codeNiveau)"
           >
             {{ competitionInfo.codeNiveau }}
           </span>
-          <span class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50">
+          <span class="px-2 py-1 text-sm font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50">
             {{ competitionInfo.codeTypeclt }}
           </span>
           <span
-            class="px-2 py-1 text-xs font-medium rounded uppercase"
+            class="px-2 py-1 text-sm font-medium rounded uppercase"
             :class="getStatusColor(competitionInfo.statut)"
           >
             {{ t(`competitions.status.${competitionInfo.statut}`) }}
@@ -1029,7 +1029,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
           <UIcon
             v-else-if="competitionInfo.verrou"
             name="heroicons:lock-closed-solid"
-            class="w-6 h-6 text-danger-600 dark:text-danger-400"
+            class="w-6 h-6 text-danger-600 dark:text-danger-300"
           />
         </div>
       </template>
@@ -1074,7 +1074,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
               >
                 <UIcon name="heroicons:bolt" class="w-5 h-5" />
                 {{ t('teams_page.bulk.actions') }}
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100">
                   {{ selectedIds.length }}
                 </span>
                 <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': bulkActionsOpen }" />
@@ -1196,28 +1196,28 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   <th v-if="canAddDelete" class="px-3 py-2">
                     <span class="sr-only">Select</span>
                   </th>
-                  <th v-if="showPoolDrawColumns" class="px-3 py-2 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th v-if="showPoolDrawColumns" class="px-3 py-2 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.poule') }}
                   </th>
-                  <th v-if="showPoolDrawColumns" class="px-3 py-2 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th v-if="showPoolDrawColumns" class="px-3 py-2 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.tirage') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.logo') }}
                   </th>
-                  <th class="px-3 py-2 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.equipe') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.club') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.joueurs') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.matchs') }}
                   </th>
-                  <th class="px-3 py-2 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase">
+                  <th class="px-3 py-2 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">
                     {{ t('teams_page.columns.pdf') }}
                   </th>                </tr>
               </thead>
@@ -1376,7 +1376,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                       <!-- Delete or placeholder to keep PDF centered -->
                       <button
                         v-if="canAddDelete && team.nbMatchs === 0"
-                        class="p-1 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950 rounded"
+                        class="p-1 text-danger-600 dark:text-danger-300 hover:bg-danger-50 dark:hover:bg-danger-950 rounded"
                         :title="t('common.delete')"
                         @click="openDeleteModal(team)"
                       >
@@ -1423,7 +1423,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   >
                   <span
                     v-if="team.color1 || team.color2"
-                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm aspect-square text-[10px] font-bold"
+                    class="inline-flex items-center justify-center w-6 h-6 rounded-sm aspect-square text-xs font-bold"
                     :style="{
                       backgroundColor: team.color1 || '#000',
                       borderColor: team.color2 || 'transparent',
@@ -1439,7 +1439,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
                 <div class="flex-1 min-w-0">
                   <div class="font-medium text-header-900 dark:text-header-50">{{ team.libelle }}</div>
-                  <div class="flex flex-wrap items-center gap-2 text-xs text-header-600 dark:text-header-300 mt-1">
+                  <div class="flex flex-wrap items-center gap-2 text-sm text-header-600 dark:text-header-300 mt-1">
                     <!-- Poule inline edit (mobile) -->
                     <template v-if="showPoolDrawColumns">
                       <template v-if="editingCell?.id === team.id && editingCell.field === 'poule'">
@@ -1448,7 +1448,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                           v-model="editingValue"
                           type="text"
                           maxlength="5"
-                          class="w-12 px-1 py-0.5 border border-primary-400 rounded text-center text-xs uppercase focus:ring-2 focus:ring-primary-500"
+                          class="w-12 px-1 py-0.5 border border-primary-400 rounded text-center text-sm uppercase focus:ring-2 focus:ring-primary-500"
                           @keydown="handleInlineKeydown"
                           @blur="saveInlineEdit"
                         >
@@ -1469,7 +1469,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                           type="number"
                           min="0"
                           max="99"
-                          class="w-14 px-1 py-0.5 border border-primary-400 rounded text-center text-xs focus:ring-2 focus:ring-primary-500"
+                          class="w-14 px-1 py-0.5 border border-primary-400 rounded text-center text-sm focus:ring-2 focus:ring-primary-500"
                           @keydown="handleInlineKeydown"
                           @blur="saveInlineEdit"
                         >
@@ -1514,7 +1514,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   </button>
                   <button
                     v-if="canAddDelete && team.nbMatchs === 0"
-                    class="p-1 text-danger-600 dark:text-danger-400"
+                    class="p-1 text-danger-600 dark:text-danger-300"
                     @click="openDeleteModal(team)"
                   >
                     <UIcon name="heroicons:trash-solid" class="w-6 h-6" />
@@ -1663,7 +1663,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <!-- Team name -->
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-                {{ t('teams_page.add_modal.libelle') }} <span class="text-danger-500">*</span>
+                {{ t('teams_page.add_modal.libelle') }} <span class="text-danger-600">*</span>
               </label>
               <div class="relative">
                 <input
@@ -1678,10 +1678,10 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="addFormData.libelle"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                   @click="addFormData.libelle = ''; focusManualLibelle()"
                 >
-                  <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+                  <UIcon name="heroicons:x-mark" class="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -1702,10 +1702,10 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="clubSearchQuery"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                   @click="clearClubSearch"
                 >
-                  <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+                  <UIcon name="heroicons:x-mark" class="w-5 h-5" />
                 </button>
                 <div
                   v-if="clubSearchResults.length > 0"
@@ -1725,7 +1725,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
               <!-- Club filters (collapsible) -->
               <details class="mt-2">
-                <summary class="text-xs text-header-600 dark:text-header-300 cursor-pointer hover:text-header-900 dark:hover:text-header-50">
+                <summary class="text-sm text-header-600 dark:text-header-300 cursor-pointer hover:text-header-900 dark:hover:text-header-50">
                   {{ t('teams_page.add_modal.filter_cr') }} / {{ t('teams_page.add_modal.filter_cd') }}
                 </summary>
                 <div class="mt-2 grid grid-cols-3 gap-2">
@@ -1782,10 +1782,10 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 <button
                   v-if="historySearchQuery"
                   type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
                   @click="historySearchQuery = ''; historySearchResults = []; focusHistorySearch()"
                 >
-                  <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+                  <UIcon name="heroicons:x-mark" class="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -1794,7 +1794,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
             <div v-if="historySearchResults.length > 0" class="border border-header-200 dark:border-header-700 rounded-lg max-h-60 overflow-y-auto">
               <!-- France teams -->
               <div v-if="historySearchResults.filter(t => !t.international).length > 0">
-                <div class="px-3 py-1 bg-header-50 dark:bg-header-900 text-xs font-medium text-header-600 dark:text-header-300 uppercase sticky top-0">
+                <div class="px-3 py-1 bg-header-50 dark:bg-header-900 text-sm font-medium text-header-600 dark:text-header-300 uppercase sticky top-0">
                   {{ t('teams_page.add_modal.france') }}
                 </div>
                 <div
@@ -1809,13 +1809,13 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 pointer-events-none"
                   >
                   <span class="text-sm flex-1">{{ ht.libelle }}</span>
-                  <span class="text-xs text-header-600 dark:text-header-300">{{ ht.codeClub }}</span>
+                  <span class="text-sm text-header-600 dark:text-header-300">{{ ht.codeClub }}</span>
                 </div>
               </div>
 
               <!-- International teams -->
               <div v-if="historySearchResults.filter(t => t.international).length > 0">
-                <div class="px-3 py-1 bg-header-50 dark:bg-header-900 text-xs font-medium text-header-900 dark:text-header-50 uppercase sticky top-0">
+                <div class="px-3 py-1 bg-header-50 dark:bg-header-900 text-sm font-medium text-header-900 dark:text-header-50 uppercase sticky top-0">
                   {{ t('teams_page.add_modal.international') }}
                 </div>
                 <div
@@ -1830,7 +1830,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 pointer-events-none"
                   >
                   <span class="text-sm flex-1">{{ ht.libelle }}</span>
-                  <span class="text-xs text-header-600 dark:text-header-300">{{ ht.codeClub }}</span>
+                  <span class="text-sm text-header-600 dark:text-header-300">{{ ht.codeClub }}</span>
                 </div>
               </div>
             </div>
@@ -1874,7 +1874,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                     {{ comp.season }} - {{ comp.competition }} - {{ comp.competitionLibelle }} ({{ t('teams_page.add_modal.players', { count: comp.playerCount }) }})
                   </option>
                 </select>
-                <p v-if="compositions.length === 0 && !compositionsLoading" class="text-xs text-header-600 dark:text-header-300 mt-1">
+                <p v-if="compositions.length === 0 && !compositionsLoading" class="text-sm text-header-600 dark:text-header-300 mt-1">
                   {{ t('teams_page.add_modal.no_compositions') }}
                 </p>
               </div>
@@ -1932,7 +1932,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   >
                     {{ t('teams_page.add_modal.ranking_toggle_all') }}
                   </button>
-                  <span class="text-xs text-header-600 dark:text-header-300">
+                  <span class="text-sm text-header-600 dark:text-header-300">
                     {{ t(`teams_page.add_modal.ranking_type_${rankingData.competition.codeTypeclt}`) }}
                   </span>
                 </div>
@@ -1952,24 +1952,24 @@ const getLogoUrl = (team: CompetitionTeam) => {
                       type="checkbox"
                       class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-primary-600 pointer-events-none"
                     >
-                    <span class="w-4 text-center text-xs">
+                    <span class="w-4 text-center text-sm">
                       <span
                         v-if="getRankingQualifiedStatus(idx) === 'qualified'"
-                        class="text-success-500"
+                        class="text-success-700"
                         :title="t('rankings.qualified')"
                       >▲</span>
                       <span
                         v-else-if="getRankingQualifiedStatus(idx) === 'eliminated'"
-                        class="text-danger-600 dark:text-danger-400"
+                        class="text-danger-600 dark:text-danger-300"
                         :title="t('rankings.eliminated')"
                       >▼</span>
                     </span>
                     <span class="w-6 text-right text-sm font-medium text-header-900 dark:text-header-50">{{ rt.rank || '-' }}</span>
                     <span class="text-sm flex-1">{{ rt.libelle }}</span>
-                    <span v-if="currentTeamNumbers.has(rt.numero)" class="text-xs italic text-header-600 dark:text-header-300">
+                    <span v-if="currentTeamNumbers.has(rt.numero)" class="text-sm italic text-header-600 dark:text-header-300">
                       {{ t('teams_page.add_modal.ranking_already_added') }}
                     </span>
-                    <span v-else class="text-xs text-header-600 dark:text-header-300">{{ rt.codeClub }}</span>
+                    <span v-else class="text-sm text-header-600 dark:text-header-300">{{ rt.codeClub }}</span>
                   </div>
                 </div>
               </template>
@@ -2084,14 +2084,14 @@ const getLogoUrl = (team: CompetitionTeam) => {
                 class="h-30 max-w-30 object-contain border border-header-100 dark:border-header-800 rounded"
                 @error="($event.target as HTMLImageElement).style.opacity = '0.3'"
               >
-              <div class="text-xs text-header-600 dark:text-header-300">{{ colorsFormData.logo }}</div>
+              <div class="text-sm text-header-600 dark:text-header-300">{{ colorsFormData.logo }}</div>
             </div>
           </div>
 
           <!-- Colors -->
           <div class="grid grid-cols-3 gap-4 items-end">
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.color1') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.color1') }}</label>
               <input
                 v-model="colorsFormData.color1"
                 type="color"
@@ -2099,7 +2099,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
               >
             </div>
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.color2') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.color2') }}</label>
               <input
                 v-model="colorsFormData.color2"
                 type="color"
@@ -2107,7 +2107,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
               >
             </div>
             <div>
-              <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.colortext') }}</label>
+              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('teams_page.edit_modal.colortext') }}</label>
               <input
                 v-model="colorsFormData.colortext"
                 type="color"
@@ -2147,7 +2147,7 @@ const getLogoUrl = (team: CompetitionTeam) => {
               <span class="text-sm">{{ t('teams_page.edit_modal.propagate_previous') }}</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer text-amber-900">
-              <input v-model="colorsFormData.propagateClub" type="checkbox" class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-amber-600" >
+              <input v-model="colorsFormData.propagateClub" type="checkbox" class="w-4 h-4 rounded border-header-300 dark:border-header-700 text-amber-700" >
               <span class="text-sm font-medium">{{ t('teams_page.edit_modal.propagate_club') }}</span>
             </label>
           </div>

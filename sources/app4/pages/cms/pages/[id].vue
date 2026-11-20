@@ -92,7 +92,7 @@ onMounted(load)
       <div>
         <NuxtLink to="/cms/pages" class="text-sm text-primary-700 dark:text-primary-300 hover:underline">← {{ t('cms.pages.title') }}</NuxtLink>
         <h1 class="text-2xl font-bold text-header-900 dark:text-header-50">{{ page.title_fr || t('cms.pages.new') }}</h1>
-        <p v-if="page.path" class="font-mono text-xs text-header-600 dark:text-header-300">{{ page.path }}</p>
+        <p v-if="page.path" class="font-mono text-sm text-header-600 dark:text-header-300">{{ page.path }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <CmsStatusBadge :status="page.status" />

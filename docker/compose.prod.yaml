@@ -185,7 +185,17 @@ services:
             # Racine legacy pour api2 (paramètre legacy_document_root) : variable
             # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
             - LEGACY_DOCUMENT_ROOT=/var/www/html
-        command: php /var/www/html/api2/bin/console app:event-cache-worker
+            # Drainage scoring_outbox → Mercure (refonte scoring, lot 2).
+            # Le hub vit DANS le conteneur api2 : depuis ce conteneur-ci,
+            # "localhost" (valeur du .env, pensée pour api2) désignerait le worker
+            # lui-même → on passe par le réseau docker (service api2, HTTP interne).
+            # Les vraies variables d'env priment sur le .env chargé par Symfony.
+            - MERCURE_URL=http://api2/.well-known/mercure
+            - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
+        # --no-debug : daemon longue durée. En mode debug, le profilage Doctrine garde
+        # chaque requête SQL (avec backtrace) en mémoire ; le sondage de scoring_outbox
+        # chaque seconde épuise alors les 128 Mo en quelques heures (OutOfMemoryError).
+        command: php /var/www/html/api2/bin/console app:event-cache-worker --no-debug
         volumes:
             - ../sources:/var/www/html
             # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).
@@ -344,6 +354,19 @@ services:
             - "traefik.http.middlewares.strip-admin2.stripprefix.prefixes=/admin2"
             - "traefik.http.routers.nginx_app4.priority=100"
             - "traefik.http.routers.nginx_app4.service=nginx_static"
+            # app4 on the bare domain: 301 to www (APP4_URL, OAuth callback, single PWA origin).
+            # Only /admin2, reached by navigation: /api2 on the bare domain must keep answering
+            # (app2 calls it cross-origin and a CORS preflight cannot follow a redirect).
+            - "traefik.http.routers.nginx_app4_bare.rule=Host(`${KPI_DOMAIN_NAME}`) && PathPrefix(`/admin2`)"
+            - "traefik.http.routers.nginx_app4_bare.entrypoints=websecure"
+            - "traefik.http.routers.nginx_app4_bare.tls=true"
+            - "traefik.http.routers.nginx_app4_bare.tls.certresolver=myresolver"
+            - "traefik.http.routers.nginx_app4_bare.priority=200"
+            - "traefik.http.routers.nginx_app4_bare.middlewares=admin2-to-www"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.regex=^https://[^/]+/(.*)"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.replacement=https://www.${KPI_DOMAIN_NAME}/$${1}"
+            - "traefik.http.middlewares.admin2-to-www.redirectregex.permanent=true"
+            - "traefik.http.routers.nginx_app4_bare.service=nginx_static"
 
 
     # Site public (app3, Nuxt SSR) servi sur beta.${KPI_DOMAIN_NAME} jusqu'à la bascule de www.

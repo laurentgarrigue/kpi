@@ -27,6 +27,16 @@ updates:
       # par le CI/CD. Aucun job de `ci.yml` ne les couvre (matrices `[app2, app4]`),
       # donc leurs PR de bump ne peuvent pas être validées — elles n'apportaient
       # que du bruit et des lockfiles à arbitrer à la main.
+    # Les *security updates* ignorent `directories:` et scannent tout le dépôt.
+    # Ces manifestes portent des vulnérabilités sans correctif possible
+    # (elliptic, @intlify 9.x figé par @intlify/vue-i18n-loader, vue-cli…) :
+    # une seule suffit à faire échouer tout le groupe `npm_and_yarn`, et aucune
+    # PR n'est alors créée, même pour app2/app3/app4. On les sort du périmètre.
+    exclude-paths:
+      - "sources/app_dev/**"
+      - "sources/app_live_dev/**"
+      - "sources/app_wsm_dev/**"
+      - "DOC/communication/visuels/reels/**"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

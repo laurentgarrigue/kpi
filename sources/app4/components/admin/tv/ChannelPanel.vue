@@ -99,7 +99,7 @@ function openReport() {
         <!-- Channel + Presentation -->
         <div class="flex flex-wrap items-end gap-3">
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.channel') }}</label>
+            <label class="text-sm font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.channel') }}</label>
             <AdminTvChannelSelector
               v-model="panel.channel"
               :labels="channelLabels"
@@ -108,7 +108,7 @@ function openReport() {
           </div>
 
           <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.presentation') }}</label>
+            <label class="text-sm font-medium text-header-900 dark:text-header-50">{{ t('tv.panel.presentation') }}</label>
             <AdminTvPresentationSelector v-model="panel.presentation" />
           </div>
         </div>
@@ -168,7 +168,7 @@ function openReport() {
         type="text"
         :value="panel.generatedUrl"
         readonly
-        class="flex-1 px-3 py-1.5 text-xs border border-header-200 dark:border-header-700 rounded-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 min-w-[200px]"
+        class="flex-1 px-3 py-1.5 text-sm border border-header-200 dark:border-header-700 rounded-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 min-w-[200px]"
         @click="($event.target as HTMLInputElement).select()"
       >
 

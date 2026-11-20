@@ -56,7 +56,7 @@ const teamNameClass = (side: 'A' | 'B') => {
 <template>
   <div class="flex items-center space-x-2">
     <!-- Match number -->
-    <div v-if="match.numeroOrdre" class="text-xs text-header-600 dark:text-header-300 italic font-medium shrink-0 w-8 text-right">
+    <div v-if="match.numeroOrdre" class="text-sm text-header-600 dark:text-header-300 italic font-medium shrink-0 w-8 text-right">
       #{{ match.numeroOrdre }}
     </div>
     <div v-else class="w-8 shrink-0" />
@@ -66,7 +66,7 @@ const teamNameClass = (side: 'A' | 'B') => {
       <!-- First team (winner if decided) -->
       <div class="flex items-center gap-1">
         <span
-          class="text-xs flex-1 truncate px-1 py-0.5 rounded transition-colors duration-100 text-end"
+          class="text-sm flex-1 truncate px-1 py-0.5 rounded transition-colors duration-100 text-end"
           :class="teamNameClass(firstTeam)"
           :title="getLabel(firstTeam)"
           @mouseenter="emit('hoverTeam', getLabel(firstTeam))"
@@ -76,7 +76,7 @@ const teamNameClass = (side: 'A' | 'B') => {
         </span>
         <span
           v-if="hasScore"
-          class="text-xs px-2 py-0.5 rounded text-center min-w-7 tabular-nums"
+          class="text-sm px-2 py-0.5 rounded text-center min-w-7 tabular-nums"
           :class="scoreBlockClass(firstTeam)"
         >
           {{ getScore(firstTeam) }}
@@ -86,7 +86,7 @@ const teamNameClass = (side: 'A' | 'B') => {
       <!-- Second team (loser if decided) -->
       <div class="flex items-center gap-1">
         <span
-          class="text-xs flex-1 truncate px-1 py-0.5 rounded transition-colors duration-100 text-end"
+          class="text-sm flex-1 truncate px-1 py-0.5 rounded transition-colors duration-100 text-end"
           :class="teamNameClass(secondTeam)"
           :title="getLabel(secondTeam)"
           @mouseenter="emit('hoverTeam', getLabel(secondTeam))"
@@ -96,7 +96,7 @@ const teamNameClass = (side: 'A' | 'B') => {
         </span>
         <span
           v-if="hasScore"
-          class="text-xs px-2 py-0.5 rounded text-center min-w-7 tabular-nums"
+          class="text-sm px-2 py-0.5 rounded text-center min-w-7 tabular-nums"
           :class="scoreBlockClass(secondTeam)"
         >
           {{ getScore(secondTeam) }}

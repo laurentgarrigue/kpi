@@ -110,7 +110,7 @@
         <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Team.TournamentRounds') }}</h3>
         <div v-for="group in tournamentRoundsByCategory" :key="group.category" class="mb-4">
           <div :class="containerClasses" class="px-2">
-            <div v-for="round in group.rounds" :key="round.id" class="w-80 border rounded-lg shadow-sm flex flex-col">
+            <div v-for="round in group.rounds" :key="round.id" class="w-80 border rounded-lg bg-surface shadow-sm flex flex-col">
               <div class="bg-bar text-white px-3 py-2 rounded-t-lg text-sm">
                 {{ round.category }}<span v-if="round.phase"> - {{ round.phase }}</span>
               </div>
@@ -260,35 +260,31 @@
         </div>
       </div>
 
-      <!-- Medals of the team (FEATURE_MATCH_MEDALS.md § 9.1): only what api2 publishes on app2 -->
-      <section v-if="teamMedalItems.length > 0" class="mb-6 px-2" aria-labelledby="team-medals-title" data-testid="team-medals">
-        <div class="mx-auto w-full max-w-3xl border border-gray-300 rounded-lg bg-surface">
-          <div class="flex items-center justify-between rounded-t-lg bg-bar px-3 py-2 text-sm text-white">
-            <h3 id="team-medals-title" class="font-bold">{{ t('Team.Medals') }}</h3>
-            <a :href="explanationsUrl" target="_blank" rel="noopener" class="text-on-bar-muted underline">{{ t('Medals.How') }}</a>
-          </div>
-          <div class="flex flex-wrap justify-center gap-x-2 gap-y-4 px-3 py-4">
-            <MedalPill v-for="medal in teamMedalItems" :key="medal.item.code" :item="medal.item" :count="medal.count" stacked />
-          </div>
-        </div>
-      </section>
-
-      <!-- Team Statistics (event mode) -->
-      <div v-if="teamStats && teamStats.length > 0" class="mb-6">
+      <!-- Team Statistics: one heading, then the team medals (FEATURE_MATCH_MEDALS.md § 9.1), then the player tables -->
+      <div v-if="hasStatistics" class="mb-6">
         <div class="w-full px-2">
           <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Stats.Title') }}</h3>
-          <div class="flex justify-center">
+
+          <section v-if="teamMedalItems.length > 0" class="mb-6 flex justify-center" aria-labelledby="team-medals-title" data-testid="team-medals">
+            <div class="w-full max-w-3xl rounded-lg border border-line bg-surface shadow-sm">
+              <div class="flex items-center justify-between rounded-t-lg bg-bar px-3 py-2 text-sm text-white">
+                <h4 id="team-medals-title" class="font-bold">{{ t('Team.Medals') }}</h4>
+                <a :href="explanationsUrl" target="_blank" rel="noopener" class="text-on-bar-muted underline">{{ t('Medals.How') }}</a>
+              </div>
+              <div class="flex flex-wrap justify-center gap-x-2 gap-y-4 px-3 py-4">
+                <MedalPill v-for="medal in teamMedalItems" :key="medal.item.code" :item="medal.item" :count="medal.count" stacked />
+              </div>
+            </div>
+          </section>
+
+          <!-- Event mode -->
+          <div v-if="teamStats.length > 0" class="mb-6 flex justify-center">
             <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
               <TeamPlayerStats :players="teamStats" :medal-players="teamMedals?.players" :catalog="medalCatalog" />
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Team Statistics (group mode - one table per competition) -->
-      <div v-if="groupStats && groupStats.length > 0" class="mb-6">
-        <div class="w-full px-2">
-          <h3 class="px-4 text-xl font-semibold text-gray-700 mb-3">{{ t('Stats.Title') }}</h3>
+          <!-- Group mode: one table per competition -->
           <div v-for="compStats in groupStats" :key="compStats.competition_code" class="mb-6 flex justify-center">
             <div class="overflow-x-auto bg-surface rounded-lg shadow-sm border w-full max-w-3xl">
               <div class="bg-bar text-white px-3 py-2 rounded-t-lg text-sm font-medium">
@@ -425,6 +421,8 @@ const fetchJson = async (path) => {
     return null
   }
 }
+
+const hasStatistics = computed(() => teamStats.value.length > 0 || groupStats.value.length > 0 || teamMedalItems.value.length > 0)
 
 const teamMedalItems = computed(() => (teamMedals.value?.team ?? [])
   .flatMap(medal => medalCatalog.value.get(medal.code) ? [{ item: medalCatalog.value.get(medal.code), count: medal.count }] : []))

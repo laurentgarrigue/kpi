@@ -596,14 +596,14 @@ const exportPdf = async () => {
               <!-- Ranking column -->
               <th
                 v-if="showRankingColumn && data.length > 0"
-                class="px-4 py-3 text-xs font-medium uppercase tracking-wider text-center text-header-900 dark:text-header-50 w-16"
+                class="px-4 py-3 text-sm font-medium uppercase tracking-wider text-center text-header-900 dark:text-header-50 w-16"
               >
                 #
               </th>
               <th
                 v-for="column in columns"
                 :key="column"
-                class="px-4 py-3 text-xs font-medium uppercase tracking-wider"
+                class="px-4 py-3 text-sm font-medium uppercase tracking-wider"
                 :class="isNumericColumn(column)
                   ? 'text-right text-header-900 dark:text-header-50'
                   : 'text-left text-header-900 dark:text-header-50'"
@@ -742,7 +742,7 @@ const exportPdf = async () => {
               </option>
             </optgroup>
           </select>
-          <p v-if="getTempStatTypeDescription" class="mt-1 text-xs text-header-900 dark:text-header-50 italic">
+          <p v-if="getTempStatTypeDescription" class="mt-1 text-sm text-header-900 dark:text-header-50 italic">
             {{ getTempStatTypeDescription }}
           </p>
         </div>
@@ -776,7 +776,7 @@ const exportPdf = async () => {
                 class="px-3 py-2 border border-header-300 dark:border-header-700 rounded-l-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                 @click="tempLimit = Math.max(1, tempLimit - 1)"
               >
-                <UIcon name="heroicons:minus" class="w-4 h-4" />
+                <UIcon name="heroicons:minus" class="w-5 h-5" />
               </button>
               <input
                 v-model.number="tempLimit"
@@ -790,7 +790,7 @@ const exportPdf = async () => {
                 class="px-3 py-2 border border-header-300 dark:border-header-700 rounded-r-lg bg-header-50 dark:bg-header-900 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                 @click="tempLimit = Math.min(5000, tempLimit + 1)"
               >
-                <UIcon name="heroicons:plus" class="w-4 h-4" />
+                <UIcon name="heroicons:plus" class="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -821,7 +821,7 @@ const exportPdf = async () => {
               </option>
             </optgroup>
           </select>
-          <p class="mt-1 text-xs text-header-900 dark:text-header-50">
+          <p class="mt-1 text-sm text-header-900 dark:text-header-50">
             {{ t('stats.params.multi_select_hint') }}
           </p>
         </div>

@@ -7,7 +7,11 @@ use App\Entity\User;
 use App\Security\KnownDeviceService;
 use App\Security\LoginAttemptLogger;
 use App\Security\LoginRateLimiter;
+use App\Security\PasswordMatch;
 use App\Security\PasswordPolicy;
+use App\Security\PasswordRenewalService;
+use App\Security\PasswordRenewalToken;
+use App\Security\PasswordVerifier;
 use App\Security\RefreshTokenService;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
@@ -29,6 +33,8 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 #[OA\Tag(name: '20. App4 - Authentication')]
 class AdminAuthController extends AbstractController
 {
+    public const PASSWORD_RENEWAL_REQUIRED = 'PASSWORD_RENEWAL_REQUIRED';
+
     public function __construct(
         private readonly UserProvider $userProvider,
         private readonly JWTTokenManagerInterface $jwtManager,
@@ -39,6 +45,9 @@ class AdminAuthController extends AbstractController
         private readonly LoginRateLimiter $loginRateLimiter,
         private readonly RefreshTokenService $refreshTokenService,
         private readonly KnownDeviceService $knownDeviceService,
+        private readonly PasswordVerifier $passwordVerifier,
+        private readonly PasswordRenewalService $passwordRenewals,
+        private readonly PasswordRenewalToken $renewalTokens,
     ) {
     }
 
@@ -48,7 +57,9 @@ class AdminAuthController extends AbstractController
      * Durcissement (AUTH_HARDENING.md § 2) :
      *  - rate-limit par IP (5/15 min) et par code utilisateur (10/15 min) → 429 ;
      *  - verrouillage dérivé du journal : 5 échecs dans la fenêtre glissante → 423 ;
-     *  - chaque tentative est journalisée dans kp_user_login_history.
+     *  - chaque tentative est journalisée dans kp_user_login_history ;
+     *  - compte « mot de passe à renouveler » : 403 PASSWORD_RENEWAL_REQUIRED + jeton de renouvellement,
+     *    aucune session (AUTH_HARDENING.md § 2bis, AUTH-RN-02).
      */
     #[Route('/login', name: 'api_auth_login', methods: ['POST'])]
     public function login(Request $request): JsonResponse
@@ -101,7 +112,7 @@ class AdminAuthController extends AbstractController
             ], Response::HTTP_LOCKED);
         }
 
-        // Dual password verification: bcrypt first, then MD5 fallback.
+        // bcrypt, puis repli MD5 tant que AUTH_LEGACY_MD5_FALLBACK est actif.
         $usedLegacyHash = false;
         if (!$this->verifyPassword($user, $password, $usedLegacyHash)) {
             $this->loginLogger->logFailure($user->getCode(), LoginAttemptLogger::REASON_BAD_PASSWORD, $request);
@@ -114,7 +125,66 @@ class AdminAuthController extends AbstractController
         $this->loginLogger->logSuccess($user->getCode(), LoginAttemptLogger::METHOD_PASSWORD, $usedLegacyHash, $request);
         $this->loginRateLimiter->resetUser($username);
 
-        // Load mandates for the user
+        if ($this->passwordRenewals->isRequired($user->getCode())) {
+            return $this->json([
+                'message' => 'Password renewal required',
+                'code' => self::PASSWORD_RENEWAL_REQUIRED,
+                'renewalToken' => $this->renewalTokens->create($user->getCode(), $this->storedHash($user->getCode())),
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        return $this->openSession($user, $request);
+    }
+
+    /**
+     * Renouvellement forcé du mot de passe (AUTH_HARDENING.md § 2bis, AUTH-RN-02 à 05) : le jeton remis par
+     * /auth/login prouve le mot de passe actuel ; le nouveau doit respecter PasswordPolicy et différer de
+     * l'ancien. En cas de succès, la session s'ouvre comme après un login.
+     */
+    #[Route('/renew-password', name: 'api_auth_renew_password', methods: ['POST'])]
+    #[OA\Post(
+        path: '/auth/renew-password',
+        summary: 'Set a new password for an account flagged \'password renewal required\', then open the session',
+        tags: ['20. App4 - Authentication']
+    )]
+    #[OA\Response(response: 200, description: 'Password renewed, same payload and cookies as /auth/login')]
+    #[OA\Response(response: 400, description: 'WEAK_PASSWORD or PASSWORD_REUSED')]
+    #[OA\Response(response: 401, description: 'INVALID_TOKEN')]
+    public function renewPassword(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $token = is_array($data) ? (string) ($data['renewalToken'] ?? '') : '';
+        $password = is_array($data) ? (string) ($data['password'] ?? '') : '';
+        if ($token === '' || $password === '') {
+            return $this->json(['message' => 'renewalToken and password are required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $userCode = $this->renewalTokens->userCode($token);
+        $storedHash = $userCode === null ? '' : $this->storedHash($userCode);
+        if ($userCode === null || !$this->renewalTokens->isValid($token, $storedHash)) {
+            return $this->json(['message' => 'Invalid or expired token', 'code' => 'INVALID_TOKEN'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $passwordError = $this->newPasswordError($password, $storedHash);
+        if ($passwordError !== null) {
+            return $passwordError;
+        }
+
+        $this->connection->executeStatement('UPDATE kp_user SET Pwd = ? WHERE Code = ?', [password_hash($password, PASSWORD_BCRYPT), $userCode]);
+        $this->passwordRenewals->markRenewed($userCode, 'Renouvellement imposé au login');
+
+        /** @var User $user */
+        $user = $this->userProvider->loadUserByIdentifier($userCode);
+
+        return $this->openSession($user, $request);
+    }
+
+    /**
+     * Ouvre la session après une authentification réussie : journal fonctionnel, JWT, refresh token,
+     * alerte « nouvel appareil ». Partagé par /auth/login et /auth/renew-password.
+     */
+    private function openSession(User $user, Request $request): JsonResponse
+    {
         $mandates = $this->loadMandates($user->getCode());
 
         // Log successful login dans le journal fonctionnel historique (séparé du journal de sécurité).
@@ -232,6 +302,15 @@ class AdminAuthController extends AbstractController
         if (!$result) {
             // Même en cas de rejeu détecté (toute la chaîne révoquée), on répond 401 — pas d'indication à l'attaquant.
             $response = $this->json(['message' => 'Invalid refresh token'], Response::HTTP_UNAUTHORIZED);
+            $response->headers->clearCookie('kpi_refresh', '/', null, true, true, 'lax');
+            $response->headers->clearCookie('kpi_access', '/', null, true, true, 'lax');
+            return $response;
+        }
+
+        if ($this->passwordRenewals->isRequired($result['userCode'])) {
+            // Session ouverte avant le marquage : on la ferme, le login exigera le renouvellement (AUTH-RN-03).
+            $this->refreshTokenService->revokeAllFor($result['userCode']);
+            $response = $this->json(['message' => 'Password renewal required', 'code' => self::PASSWORD_RENEWAL_REQUIRED], Response::HTTP_FORBIDDEN);
             $response->headers->clearCookie('kpi_refresh', '/', null, true, true, 'lax');
             $response->headers->clearCookie('kpi_access', '/', null, true, true, 'lax');
             return $response;
@@ -460,12 +539,6 @@ class AdminAuthController extends AbstractController
             return $this->json(['message' => 'Token and password are required'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Validate password complexity
-        $complexityError = PasswordPolicy::validate($password);
-        if ($complexityError) {
-            return $this->json(['message' => $complexityError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
-        }
-
         // Find token (valid for 48h)
         $row = $this->connection->fetchAssociative(
             'SELECT user, generated_at FROM kp_user_token WHERE token = ?',
@@ -486,9 +559,16 @@ class AdminAuthController extends AbstractController
 
         $userCode = $row['user'];
 
+        $passwordError = $this->newPasswordError($password, $this->storedHash($userCode));
+        if ($passwordError !== null) {
+            return $passwordError;
+        }
+
         // Hash with bcrypt and update
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
         $this->connection->executeStatement('UPDATE kp_user SET Pwd = ? WHERE Code = ?', [$hashedPassword, $userCode]);
+        // Un mot de passe choisi par l'utilisateur vaut renouvellement (compte marqué qui a oublié son mot de passe).
+        $this->passwordRenewals->markRenewed($userCode, 'Mot de passe oublié');
 
         // Delete the used token
         $this->connection->executeStatement('DELETE FROM kp_user_token WHERE user = ?', [$userCode]);
@@ -644,37 +724,47 @@ class AdminAuthController extends AbstractController
         return is_string($mail) ? trim($mail) : '';
     }
 
+    /** Hash courant de kp_user.Pwd ('' si le compte n'existe pas ou n'a pas de mot de passe). */
+    private function storedHash(string $userCode): string
+    {
+        $hash = $this->connection->fetchOne('SELECT Pwd FROM kp_user WHERE Code = ?', [$userCode]);
+        return is_string($hash) ? $hash : '';
+    }
+
+    /** Nouveau mot de passe refusé : non conforme à PasswordPolicy ou identique à l'ancien (AUTH-RN-04). */
+    private function newPasswordError(string $password, string $storedHash): ?JsonResponse
+    {
+        $complexityError = PasswordPolicy::validate($password);
+        if ($complexityError !== null) {
+            return $this->json(['message' => $complexityError, 'code' => 'WEAK_PASSWORD'], Response::HTTP_BAD_REQUEST);
+        }
+        if ($this->passwordVerifier->isSameAsCurrent($password, $storedHash)) {
+            return $this->json(['message' => 'The new password must differ from the current one', 'code' => 'PASSWORD_REUSED'], Response::HTTP_BAD_REQUEST);
+        }
+
+        return null;
+    }
+
     /**
-     * Verify password: try bcrypt first, then MD5 fallback.
-     * If MD5 matches, upgrade to bcrypt automatically.
+     * Vérifie le mot de passe ({@see PasswordVerifier}) ; un ancien hash MD5 accepté est aussitôt
+     * remplacé par un bcrypt.
      *
-     * $usedLegacyHash est positionné à true quand c'est le fallback MD5 qui a validé le login :
+     * $usedLegacyHash est positionné à true quand c'est le repli MD5 qui a validé le login :
      * {@see LoginAttemptLogger} le reporte dans la colonne `legacy_hash` du journal, ce qui
      * permet de suivre le retrait du MD5 (AUTH-MD-01).
      */
     private function verifyPassword(User $user, string $plainPassword, bool &$usedLegacyHash = false): bool
     {
-        $usedLegacyHash = false;
-        $storedHash = $user->getPassword();
-
-        // Try bcrypt first (new passwords)
-        if (password_verify($plainPassword, $storedHash)) {
-            return true;
-        }
-
-        // Fallback: MD5 (legacy passwords)
-        if (md5($plainPassword) === $storedHash) {
-            // Auto-upgrade to bcrypt
-            $bcryptHash = password_hash($plainPassword, PASSWORD_BCRYPT);
+        $match = $this->passwordVerifier->verify($plainPassword, $user->getPassword());
+        $usedLegacyHash = $match === PasswordMatch::LegacyMd5;
+        if ($usedLegacyHash) {
             $this->connection->executeStatement(
                 'UPDATE kp_user SET Pwd = ? WHERE Code = ?',
-                [$bcryptHash, $user->getUserIdentifier()]
+                [password_hash($plainPassword, PASSWORD_BCRYPT), $user->getUserIdentifier()]
             );
-            $usedLegacyHash = true;
-            return true;
         }
 
-        return false;
+        return $match !== PasswordMatch::None;
     }
 
     /**

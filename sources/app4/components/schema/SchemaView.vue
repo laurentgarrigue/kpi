@@ -166,19 +166,19 @@ watch([competitionCode, season], loadSchema, { immediate: true })
         <!-- Level + type badges -->
         <template v-if="data">
           <span
-            class="px-2 py-1 text-xs font-medium rounded uppercase"
+            class="px-2 py-1 text-sm font-medium rounded uppercase"
             :class="getLevelBadgeClass(data.competition.codeNiveau)"
           >
             {{ data.competition.codeNiveau }}
           </span>
-          <span class="px-2 py-1 text-xs font-medium rounded uppercase bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
+          <span class="px-2 py-1 text-sm font-medium rounded uppercase bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
             {{ data.competition.codeTypeclt }}
           </span>
         </template>
 
         <!-- Toggles (CP only) -->
         <template v-if="isCp">
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-sm text-header-900 dark:text-header-50 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showMatchCount"
@@ -187,7 +187,7 @@ watch([competitionCode, season], loadSchema, { immediate: true })
             >
             {{ t('schema.show_game_count') }}
           </label>
-          <label class="inline-flex items-center gap-1.5 text-xs text-header-900 dark:text-header-50 cursor-pointer select-none">
+          <label class="inline-flex items-center gap-1.5 text-sm text-header-900 dark:text-header-50 cursor-pointer select-none">
             <input
               type="checkbox"
               :checked="showTimeSlots"

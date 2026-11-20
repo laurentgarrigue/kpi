@@ -26,10 +26,10 @@ const title = computed(() =>
 )
 
 const colorClass = computed(() => {
-  if (!props.playing) return 'text-header-500 dark:text-header-400'
+  if (!props.playing) return 'text-header-600 dark:text-header-300'
   return props.enforcement === 'block'
-    ? 'text-danger-600 dark:text-danger-400'
-    : 'text-amber-600 dark:text-amber-300'
+    ? 'text-danger-600 dark:text-danger-300'
+    : 'text-amber-700 dark:text-amber-300'
 })
 </script>
 

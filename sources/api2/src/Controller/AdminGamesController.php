@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\MatchMedals\MatchMedalService;
 use App\Service\EventCacheService;
+use App\Service\ScoringLiveService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
 use OpenApi\Attributes as OA;
@@ -30,6 +31,7 @@ class AdminGamesController extends AbstractController
     public function __construct(
         private readonly Connection $connection,
         private readonly EventCacheService $eventCache,
+        private readonly ScoringLiveService $scoringLive,
         private readonly MatchMedalService $matchMedals,
     ) {
     }
@@ -370,6 +372,15 @@ class AdminGamesController extends AbstractController
             'matricArbitrePrincipal' => (int) ($row['Matric_arbitre_principal'] ?? 0),
             'arbitreSecondaire' => $row['Arbitre_secondaire'],
             'matricArbitreSecondaire' => (int) ($row['Matric_arbitre_secondaire'] ?? 0),
+            // Remaining officials — displayed and edited by the Scoring console's
+            // "Paramètres" view (spec §7.2); already selected by m.* above.
+            'secretaire' => $row['Secretaire'],
+            'chronometre' => $row['Chronometre'],
+            'timeshoot' => $row['Timeshoot'],
+            'ligne1' => $row['Ligne1'],
+            'ligne2' => $row['Ligne2'],
+            'commentairesOfficiels' => $row['Commentaires_officiels'],
+            'heureFin' => $row['Heure_fin'],
             'codeCompetition' => $row['Code_competition'],
             'competitionStatut' => $row['CompetitionStatut'] ?? 'ATT',
             'phase' => $row['Phase'],
@@ -847,6 +858,8 @@ class AdminGamesController extends AbstractController
         }
 
         $this->connection->update('kp_match', $update, ['Id' => $id]);
+        // A match scored at the console reads its status from the live state: keep it in step.
+        $this->scoringLive->syncStatusFromAdmin($id, $newValue, $update['Periode'] ?? null);
 
         $this->logActionForMatch('Statut match', $row['Code_saison'], $row['Code_competition'], (int) $row['Id_journee'], $id, $newValue);
 

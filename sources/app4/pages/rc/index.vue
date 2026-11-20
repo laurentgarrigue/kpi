@@ -341,19 +341,19 @@ watch([() => workContext.pageCompetitionCodeAll, () => workContext.pageEventGrou
                 @change="selectedIds = selectedIds.length === filteredRc.length ? [] : filteredRc.map(r => r.id)"
               >
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
               {{ t('rc.field.competition') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
               {{ t('rc.field.ordre') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
               {{ t('common.last_name') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
               {{ t('common.first_name') }}
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">
               {{ t('rc.field.licence') }}
             </th>
             <th v-if="canEdit" class="w-16 px-3 py-3" />

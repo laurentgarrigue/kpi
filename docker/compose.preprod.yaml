@@ -185,7 +185,17 @@ services:
             # Racine legacy pour api2 (paramètre legacy_document_root) : variable
             # d'env, pas de littéral dans services.yaml (cf. le commentaire là-bas).
             - LEGACY_DOCUMENT_ROOT=/var/www/html
-        command: php /var/www/html/api2/bin/console app:event-cache-worker
+            # Drainage scoring_outbox → Mercure (refonte scoring, lot 2).
+            # Le hub vit DANS le conteneur api2 : depuis ce conteneur-ci,
+            # "localhost" (valeur du .env, pensée pour api2) désignerait le worker
+            # lui-même → on passe par le réseau docker (service api2, HTTP interne).
+            # Les vraies variables d'env priment sur le .env chargé par Symfony.
+            - MERCURE_URL=http://api2_preprod/.well-known/mercure
+            - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
+        # --no-debug : daemon longue durée. En mode debug, le profilage Doctrine garde
+        # chaque requête SQL (avec backtrace) en mémoire ; le sondage de scoring_outbox
+        # chaque seconde épuise alors les 128 Mo en quelques heures (OutOfMemoryError).
+        command: php /var/www/html/api2/bin/console app:event-cache-worker --no-debug
         volumes:
             - ../sources:/var/www/html
             # Médias uploadés, stockés HORS du dépôt (cf. DOC/developer/infrastructure/MEDIA_STORAGE.md).

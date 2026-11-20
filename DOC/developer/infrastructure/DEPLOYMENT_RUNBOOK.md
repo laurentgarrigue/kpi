@@ -213,6 +213,13 @@ de filet après une saisie par l'ancienne interface.
 
 Retour arrière : restaurer le dump de l'étape 2 (§5.2).
 
+#### 1.4.2 Mots de passe : renouvellement de saison et retrait du MD5
+
+Trois commandes, déroulé complet dans la
+[checklist AUTH_HARDENING § 1a-bis](../in-progress/AUTH_HARDENING_ROLLOUT_CHECKLIST.md#phase-1a-bis--renouvellement-de-saison-et-retrait-du-md5) :
+`app:auth:password-audit` (lecture seule), `app:auth:require-password-renewal --renewed-since=AAAA-MM-JJ`
+(campagne) et `app:auth:purge-md5-hashes` (après `AUTH_LEGACY_MD5_FALLBACK=0` + `make api2_restart`, dump avant).
+
 ---
 
 ## 2. Constater : où regarder

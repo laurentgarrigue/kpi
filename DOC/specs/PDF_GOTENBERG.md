@@ -1,13 +1,13 @@
 # Spécification - Génération PDF modernisée (Gotenberg)
 
-> **Statut** : 🚧 En cours — spec validée (2026-10-28) ; **phase 0** (colmatage des PDF legacy) et **phase 1** (socle
-> api2 + Gotenberg, documents de référence `teams-groups` et `ranking`) implémentées, cf. § 15.
+> **Statut** : 🚧 En cours — spec validée (2026-10-28) ; **phases 0 à 5 en production** (checklist close le
+> 14/11/2026) ; restent les validations des commissions (PDF-DOC-03) et la **phase 6** (retrait du legacy), cf. § 15.
 > **Périmètre** : tous les PDF produits par KPI, appelés depuis app4 (admin2), app3 (site public beta)
 > et app2 (résultats). Remplace à terme `commun/MyPDF.php`, les `admin/Feuille*.php`, les `Pdf*.php`
 > de la racine et les rendus mPDF de api2.
-> **Remplace** : la phase 1 de [DOCUMENTS_MIGRATION.md](../developer/in-progress/DOCUMENTS_MIGRATION.md)
+> **Remplace** : la phase 1 de [DOCUMENTS_MIGRATION.md](../developer/archive/pdf-exports/DOCUMENTS_MIGRATION.md)
 > (choix de librairie) et rend caduque, une fois livrée, la rustine
-> [LEGACY_PDF_STANDALONE_ACCESS.md](../developer/in-progress/LEGACY_PDF_STANDALONE_ACCESS.md).
+> [LEGACY_PDF_STANDALONE_ACCESS.md](../developer/archive/pdf-exports/LEGACY_PDF_STANDALONE_ACCESS.md).
 > **Pages app4 concernées** : [PAGE_DOCUMENTS.md](PAGE_DOCUMENTS.md), [PAGE_EQUIPES.md](PAGE_EQUIPES.md),
 > [PAGE_MATCHS.md](PAGE_MATCHS.md), [PAGE_CLASSEMENT.md](PAGE_CLASSEMENT.md), [PAGE_PRESENCE.md](PAGE_PRESENCE.md),
 > [PAGE_SCRUTINEERING.md](PAGE_SCRUTINEERING.md), [PAGE_STATISTIQUES.md](PAGE_STATISTIQUES.md),
@@ -522,8 +522,9 @@ par le même script que les jetons.
   **Dès la beta** : l'URL est construite à partir du paramètre api2 existant `PUBLIC_SITE_URL` (aujourd'hui
   `https://beta.${KPI_DOMAIN_NAME}`, domaine principal après la bascule), jamais codée en dur. Chaque document déclare
   le chemin de sa page app3 (`PdfContent::$publicPath`) une fois celle-ci livrée ; sans chemin, pas de QR code.
-  Comme ces QR codes seront imprimés, **`beta.*` devra rediriger (301) vers le domaine principal pendant au moins
-  1 saison après la bascule** : exigence reportée dans [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
+  Les QR codes imprimés pendant la beta pointent vers `beta.*`, qui **n'est pas maintenu après la bascule** (décision du
+  20/11/2026, [SITE_REDIRECTS.md § 7](public/SITE_REDIRECTS.md)) : ces exemplaires cesseront de fonctionner ; `PUBLIC_SITE_URL`
+  passe au domaine principal le jour de la bascule.
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
   colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
   de matchs reprend la présentation du calendrier / des résultats.
@@ -555,7 +556,7 @@ sur les PDF admin comme publics :
   n'ayant aucun accès réseau (§ 9). **Chantier ultérieur** : quand un utilisateur autorisé choisit une URL externe pour
   le logo, le bandeau ou le sponsor d'une compétition, l'image est importée dans KPI (contrôles de sécurité,
   redimensionnement éventuel) puis servie localement. En attendant, les compétitions concernées se listent avec la
-  requête de [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md) (section « Visuels de la
+  requête de [PDF_ROLLOUT_CHECKLIST.md](../developer/archive/pdf-exports/PDF_ROLLOUT_CHECKLIST.md) (section « Visuels de la
   compétition et langue »).
 
 ### 8.5 Contraintes propres au papier
@@ -615,7 +616,7 @@ sur les PDF admin comme publics :
 | R12 | Admin legacy (Smarty) encore utilisé pendant la transition | certaine | faible | Les `Feuille*.php` restent jusqu'au retrait de l'admin legacy, mais **protégés** (phase 0) |
 | R13 | Dérive entre la charte des applis et celle des PDF (couleurs recopiées à la main) | élevée sans outillage | moyen | Jetons extraits par script + test de dérive (§8.1, PDF-DESIGN-05) |
 | R14 | Licence **Agency FB** : police commerciale | faible | moyen | **Hypothèse retenue** : la licence FFCK couvre l'incorporation dans les PDF publics. Repli `'Arial Narrow', Arial` conservé dans la pile CSS si elle était remise en cause |
-| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | moyen | URL issue de `PUBLIC_SITE_URL` ; redirection 301 `beta.*` → domaine principal pendant 1 saison après la bascule (§8.4, PDF-DESIGN-08) |
+| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | faible (accepté) | URL issue de `PUBLIC_SITE_URL` ; `beta.*` non maintenu après la bascule, QR codes déjà imprimés perdus (décision du 20/11/2026, §8.4, PDF-DESIGN-08) |
 
 ---
 
@@ -874,7 +875,7 @@ Aucune à ce stade.
 
 ### Reste à faire
 
-Validation et déploiement phase par phase : [PDF_ROLLOUT_CHECKLIST.md](../developer/in-progress/PDF_ROLLOUT_CHECKLIST.md).
+Phases 0 à 5 validées et déployées (checklist close le 14/11/2026) : [PDF_ROLLOUT_CHECKLIST.md](../developer/archive/pdf-exports/PDF_ROLLOUT_CHECKLIST.md).
 
 - Validations des commissions (PDF-DOC-03) : feuille de présence, feuille de marque.
 - Phase 6 (§ 12) : suppression des pages legacy, redirections 301 / 410, retrait de `mpdf/mpdf` du legacy.

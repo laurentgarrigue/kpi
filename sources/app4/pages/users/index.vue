@@ -573,13 +573,13 @@ const profileOptions = computed(() => {
             <th v-if="canDelete" class="w-10 px-3 py-3">
               <input type="checkbox" :checked="scopesAllSelected" @change="toggleSelectAllScopes">
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.identity') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.profile') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.seasons') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.competitions') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.clubs') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.view_mode_mandates') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.actions') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.identity') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.profile') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.seasons') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.competitions') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.clubs') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.view_mode_mandates') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.actions') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200 dark:divide-header-700">
@@ -593,7 +593,7 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2">
               <div class="text-sm font-medium text-header-900 dark:text-header-50">{{ scope.identite }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">({{ scope.userCode }})</div>
+              <div class="text-sm text-header-600 dark:text-header-300">({{ scope.userCode }})</div>
             </td>
             <td class="px-3 py-2 text-sm font-medium text-header-900 dark:text-header-50">{{ scope.niveau }}</td>
             <td class="px-3 py-2 text-sm text-header-900 dark:text-header-50">{{ formatFilter(scope.filtreSaison, t('users.table.seasons_all')) }}</td>
@@ -604,7 +604,7 @@ const profileOptions = computed(() => {
             <td class="px-3 py-2">
               <span
                 v-if="scope.scopeType === 'base'"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 text-xs font-medium"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 text-sm font-medium"
                 :title="t('users.mandate_scope_base_aria')"
               >
                 <UIcon name="i-heroicons-user" class="w-3 h-3" />
@@ -623,7 +623,7 @@ const profileOptions = computed(() => {
               </button>
               <button
                 v-else-if="canOpenMandatesModal(scope.userNiveau)"
-                class="p-1.5 text-primary-500 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 rounded"
+                class="p-1.5 text-primary-500 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-300 rounded"
                 :title="t('users.mandate_edit')"
                 @click="openEditModalOnMandate(scope)"
               >
@@ -662,14 +662,14 @@ const profileOptions = computed(() => {
                 @change="toggleSelectAll"
               >
             </th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.identity') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.function') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.profile') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.seasons') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.competitions') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.events_gamedays') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.clubs') }}</th>
-            <th class="px-3 py-3 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.actions') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.identity') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.function') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.profile') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.seasons') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.competitions') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.events_gamedays') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.clubs') }}</th>
+            <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.actions') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-header-200 dark:divide-header-700">
@@ -683,14 +683,14 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2">
               <div class="text-sm font-medium text-header-900 dark:text-header-50">{{ user.identite }}</div>
-              <div class="text-xs text-header-600 dark:text-header-300">({{ user.code }})</div>
+              <div class="text-sm text-header-600 dark:text-header-300">({{ user.code }})</div>
             </td>
             <td class="px-3 py-2 text-sm text-header-900 dark:text-header-50">{{ user.fonction }}</td>
             <td class="px-3 py-2">
               <span class="text-sm font-medium">{{ user.niveau }}</span>
               <div v-if="user.mandateCount > 0" class="relative inline-block ml-1">
                 <button
-                  class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 text-xs font-semibold rounded-full border border-primary-300 dark:border-primary-800 hover:bg-primary-200 dark:hover:bg-primary-900 transition-colors"
+                  class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 text-sm font-semibold rounded-full border border-primary-300 dark:border-primary-800 hover:bg-primary-200 dark:hover:bg-primary-900 transition-colors"
                   @mouseenter="showTooltip(user.code, $event)"
                   @mouseleave="hideTooltip"
                   @focus="showTooltip(user.code, $event)"
@@ -726,7 +726,7 @@ const profileOptions = computed(() => {
                 <template v-else>
                   <button
                     v-if="canOpenMandatesModal(user.niveau)"
-                    class="p-1.5 text-primary-500 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 rounded"
+                    class="p-1.5 text-primary-500 dark:text-primary-300 hover:text-primary-700 dark:hover:text-primary-300 rounded"
                     :title="t('users.mandate_edit')"
                     @click="openEditModal(user)"
                   >
@@ -776,14 +776,14 @@ const profileOptions = computed(() => {
         <template #header>
           <div>
             <span class="font-medium">{{ user.identite }}</span>
-            <span class="text-xs text-header-600 dark:text-header-300 ml-1">({{ user.code }})</span>
+            <span class="text-sm text-header-600 dark:text-header-300 ml-1">({{ user.code }})</span>
           </div>
         </template>
         <template #header-right>
           <span class="text-sm font-medium">{{ t('users.table.profile') }} {{ user.niveau }}</span>
           <button
             v-if="user.mandateCount > 0"
-            class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 text-xs font-semibold rounded-full border border-primary-300 dark:border-primary-800 active:bg-primary-200"
+            class="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 text-sm font-semibold rounded-full border border-primary-300 dark:border-primary-800 active:bg-primary-200"
             @click.stop="toggleMandates(user.code)"
           >
             <UIcon name="i-heroicons-identification" class="w-3 h-3" />
@@ -805,7 +805,7 @@ const profileOptions = computed(() => {
           <div
             v-for="mandate in user.mandates"
             :key="mandate.id"
-            class="text-xs bg-primary-50 dark:bg-primary-950 rounded-lg px-2 py-1.5"
+            class="text-sm bg-primary-50 dark:bg-primary-950 rounded-lg px-2 py-1.5"
           >
             <div class="font-semibold text-primary-800 dark:text-primary-200">{{ mandate.libelle }}</div>
             <div class="text-primary-600 dark:text-primary-300 mt-0.5">
@@ -819,21 +819,21 @@ const profileOptions = computed(() => {
           <div class="flex items-center gap-2">
             <button
               v-if="canEditUser(user.niveau)"
-              class="px-3 py-1 text-xs text-primary-600 dark:text-primary-300 border border-primary-300 dark:border-primary-800 rounded hover:bg-primary-50 dark:hover:bg-primary-950"
+              class="px-3 py-1 text-sm text-primary-600 dark:text-primary-300 border border-primary-300 dark:border-primary-800 rounded hover:bg-primary-50 dark:hover:bg-primary-950"
               @click="openEditModal(user)"
             >
               {{ t('common.edit') }}
             </button>
             <button
               v-else-if="canOpenMandatesModal(user.niveau)"
-              class="px-3 py-1 text-xs text-primary-600 dark:text-primary-300 border border-primary-300 dark:border-primary-800 rounded hover:bg-primary-50 dark:hover:bg-primary-950"
+              class="px-3 py-1 text-sm text-primary-600 dark:text-primary-300 border border-primary-300 dark:border-primary-800 rounded hover:bg-primary-50 dark:hover:bg-primary-950"
               @click="openEditModal(user)"
             >
               {{ t('users.view_mode_mandates') }}
             </button>
             <button
               v-if="canDeleteUser(user.niveau)"
-              class="px-3 py-1 text-xs text-danger-600 dark:text-danger-400 border border-danger-300 dark:border-danger-800 rounded hover:bg-danger-50 dark:hover:bg-danger-950"
+              class="px-3 py-1 text-sm text-danger-600 dark:text-danger-300 border border-danger-300 dark:border-danger-800 rounded hover:bg-danger-50 dark:hover:bg-danger-950"
               @click="confirmDeleteUser(user)"
             >
               {{ t('common.delete') }}
@@ -967,7 +967,7 @@ const profileOptions = computed(() => {
       <div
         v-if="tooltipUser"
         ref="tooltipRef"
-        class="fixed z-50 max-w-xs bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg p-3 text-xs pointer-events-none"
+        class="fixed z-50 max-w-xs bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
         :style="tooltipStyle"
       >
         <template v-for="mandate in users.find(u => u.code === tooltipUser)?.mandates ?? []" :key="mandate.id">

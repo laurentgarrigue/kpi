@@ -151,4 +151,6 @@
   --color-danger-800: oklch(0.420 0.136 22.73);
   --color-danger-900: oklch(0.380 0.121 22.73);
   --color-danger-950: oklch(0.280 0.097 22.73);
+  --font-data: Arial, Helvetica, sans-serif;
+  --font-brand: 'Raleway', sans-serif;
 }

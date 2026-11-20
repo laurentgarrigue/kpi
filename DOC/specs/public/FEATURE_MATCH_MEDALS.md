@@ -1,7 +1,7 @@
 # Médailles de match et statistiques de timeline
 
 **Phase** : transverse (après la phase 4, avant ou pendant la phase 5) — **Statut** : ✅ Validée (09/11/2026,
-maquettes comprises) — 🛠 Implémentée, à déployer (§ 12)
+maquettes comprises) — ✅ En production (PR #393, checklist close le 14/11/2026, § 12)
 **Surfaces** : app3 (site public), app2 (PWA résultats), app4 (admin2, profils 1–2) — **Données** : api2, sans
 saisie supplémentaire
 **Remplace** : — (nouveauté)
@@ -776,7 +776,7 @@ Les profils au-delà de 2 ne voient ni la page ni les éléments non publiés. L
 
 ## 12. Implémentation (09/11/2026)
 
-Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout checklist](../../developer/in-progress/MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
+Livrée sur la branche `claude/optimistic-cray-9nl0r6` ; déploiement : [rollout checklist](../../developer/archive/features/MATCH_MEDALS_ROLLOUT_CHECKLIST.md).
 
 | Brique | Où | Tests |
 |---|---|---|

@@ -42,7 +42,7 @@ const hasLogo = computed(() => props.competition.logoActif && props.competition.
           <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">
             {{ competition.libelle }}
             <!-- Season badge -->
-            <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+            <span class="px-2 py-1 text-sm font-medium rounded bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
               {{ competition.season }}
             </span>
           </h2>
@@ -53,7 +53,7 @@ const hasLogo = computed(() => props.competition.logoActif && props.competition.
       </div>
 
       <!-- Game count badge (right side) -->
-      <span v-if="showMatchCount" class="px-2 py-1 text-xs font-medium rounded bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
+      <span v-if="showMatchCount" class="px-2 py-1 text-sm font-medium rounded bg-header-200 text-header-900 dark:bg-header-700 dark:text-header-50">
         {{ t('schema.games_count', { count: totalMatches }, totalMatches) }}
       </span>
     </div>

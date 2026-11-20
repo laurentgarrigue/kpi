@@ -1,9 +1,9 @@
 # Mesure d'audience (Matomo)
 
-**Phase** : 5 (bascule), en service dès la beta — **Statut** : ✅ Validée (12/11/2026) — 🛠 En cours —
+**Phase** : 5 (bascule), en service dès la beta — **Statut** : ✅ Validée (12/11/2026) — ✅ En service (PR #395, checklist close le 14/11/2026) —
 **Applications** : app3 (site public), app2 (résultats), app4 (administration), legacy (Smarty)
 
-Mise en production : [MATOMO_ROLLOUT_CHECKLIST.md](../../developer/in-progress/MATOMO_ROLLOUT_CHECKLIST.md).
+Mise en production : [MATOMO_ROLLOUT_CHECKLIST.md](../../developer/archive/infrastructure/MATOMO_ROLLOUT_CHECKLIST.md).
 
 ## 1. Objectif
 
