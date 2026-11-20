@@ -33,6 +33,13 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 
 **Key documents:**
 - **[Target Architecture](DOC/developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ **Target of all ongoing projects** (app2, app3, app4, scoring, overlays, PDF, auth, infra): architecture and functional diagrams, legacy greyed out
+- **Living views (claude.ai, owner-only)** - derived from the repo, never a source of their own:
+  - [Architecture cible KPI](https://claude.ai/artifact/WMmVktC2SY3YKHEwYtW3gf) (artifact): **republish it whenever
+    `TARGET_ARCHITECTURE.md` changes** (same URL, `url` parameter of the Artifact tool).
+  - [KPI — Suivi des chantiers](https://claude.ai/artifact/1f7pfsvSq8Zr49ArVgkjja) (Claude Docs): state of every ongoing
+    project and the owner's actions to tick. Update it when a PR merges, a deployment runs, a rollout checklist
+    step completes or a branch is created/deleted (user phrase: « mets à jour le suivi des chantiers »).
+  - Server hosting (Traefik, security, backups) is documented in the private `vps-manager` repo, `docs/SERVER.md`.
 - **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
 - **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
