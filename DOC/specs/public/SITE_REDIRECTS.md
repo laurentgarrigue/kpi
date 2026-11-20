@@ -35,13 +35,13 @@ dans cette liste : c'est ce qui les fait atterrir sur le middleware.
 
 | Reste sur Apache (liste explicite) | Raison |
 |---|---|
-| `/admin/`, `/Login.php`, `/AdminChoice.php`, `/feuillemarque.php`, `/gamereport.php`, `/kpadmin.php`, `/kptv.php`, `/kptvscenario.php`, `/tv.php`, `/scenario.php` | Outils d'administration et de saisie, hors site public |
+| `/admin/`, `/Login.php`, `/AdminChoice.php`, `/scenario.php` | Administration legacy et pages non encore inventoriées (Q-R8) |
 | `/Pdf*.php`, `/kpqr.php` | PDF publics (QR codes imprimés) et générateur de QR : liens externes et documents imprimés ; hors phase 5 (PDF → api2/Gotenberg) |
 | `/frame_*.php` | Écrans de gymnase et iframes tiers, hors phase 5 → **phase 7** (§ 5.3) |
 | `/live/`, `/api/`, `/img/`, `/media/`, `/css/`, `/fonts/`, `/js/` et les scripts de données (`json-clubs.php`, `json-events.php`, `searchClubs.php`, `searchEquipes.php`, `ajax_search_equipe.php`, `api_players.php`, `api_stats.php`, `upload_ics.php`) | Ressources et appels de données du legacy encore utilisés par l'admin et les écrans |
 | `/wordpress/wp-content/uploads/`, `/wp-login.php`, `/wp-admin/`, `/wp-json/` | Médias de contenus non repris, connexion des rédacteurs, jusqu'à la phase 6 (§ 6.4) |
 
-Cette liste est **la checklist de décommissionnement** (elle doit encore être épurée outil par outil, Q-R8) : chaque entrée qui disparaît en phase 6 ou 7 est
+Cette liste est **la checklist de décommissionnement** : chaque entrée qui disparaît en phase 6 ou 7 est
 d'abord remplacée par une réponse 301 ou 410 décidée ici (§ 7).
 
 ## 4. Règles communes pour les paramètres de requête
@@ -124,7 +124,7 @@ Cas particuliers :
 | `/index.php`, `/fr/`, `/fr/index.php` | 301 → `/` |
 | `/en/`, `/en/index.php` | 301 → `/en` |
 | `/kpqr.php`, `/Pdf*.php` | Maintenus sur Apache (§ 3) — aucune redirection |
-| `/kpadmin.php`, `/kptv.php`, `/kptvscenario.php`, `/tv.php`, `/scenario.php`, `/feuillemarque.php`, `/gamereport.php` | Maintenus sur Apache (outils internes) ; hors public indexable : aucune redirection, et `/robots.txt` d'app3 reste celui de `www` (Q-R8) |
+| `/kpadmin.php` (non fonctionnel), `/kptv.php` + `/kptvscenario.php` (panneau de contrôle TV legacy, remplacé par `/tv` d'app4), `/tv.php` (incrustations legacy), `/feuillemarque.php` et `/gamereport.php` (accès à la feuille de marque en ligne V2 legacy, en français / en anglais) | **410** par le middleware, **sans redirection** : plus rien à garder après la bascule, **à condition que le scoring soit publié aux profils adéquats avant** (prérequis P1, § 11) |
 | `/json-*.php`, `/search*.php`, `/ajax_search_equipe.php`, `/api_*.php`, `/upload_ics.php` | Maintenus sur Apache jusqu'à la phase 6, puis **410** (§ 7) |
 | Match isolé (feuille publique) | `/games/{id}` n'est pas livré : tant qu'il ne l'est pas, les liens existants vers app2 (`/game/{id}`) restent valables, aucune redirection |
 
@@ -135,7 +135,7 @@ Les écrans de gymnase et les iframes de partenaires utilisent `frame_*.php` et 
 `frame_*.php` n'est redirigé, tous restent servis par Apache** (§ 3). Ils ne dépendent pas de WordPress ni des pages
 `kp*.php`.
 
-Les adresses `frame_*.php?…` sont aussi **enregistrées en base** (`kp_tv`, panneau de contrôle TV : [PAGE_TV_CONTROL_PANEL.md](../PAGE_TV_CONTROL_PANEL.md), chemins relatifs à la racine) : les déplacer avant la phase 7 casserait les écrans en place. Le chantier scoring ([PAGE_INCRUSTATION.md](../PAGE_INCRUSTATION.md)) ne les reprend pas non plus.
+Les adresses `frame_*.php?…` enregistrées en base (`kp_tv`, [PAGE_TV_CONTROL_PANEL.md](../PAGE_TV_CONTROL_PANEL.md)) **ne sont pas migrées** : aucun écran ne tourne (décision du 20/11/2026), les liens seront recréés dans le nouveau système après la bascule. Le chantier scoring ([PAGE_INCRUSTATION.md](../PAGE_INCRUSTATION.md)) ne reprend pas les `frame_*.php` : ils restent sur Apache pour les iframes tierces jusqu'à la phase 7.
 
 Pour un `kp*.php` appelé avec **`Css=`** (intégré dans une iframe par un tiers, thème `simply`, `ckca`,
 `saintomer2022`…) : une page complète d'app3 (en-tête, menu) dans une iframe serait un contresens. Règle :
@@ -274,6 +274,7 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 - **RDR-15** — Domaine : `kayak-polo.info` → `www` en **301**, chemin et requête conservés, un seul saut depuis HTTP ; `/api2` et `/admin2` ne sont pas affectés ; `beta.*` ne répond plus (aucun routeur). Vérifié en préprod avant la production.
 - **RDR-16** — Parité de bascule (préprod, avant la prod) : un script rejoue **la liste des 200 URL legacy et WordPress les plus fréquentes** extraite des journaux Apache des 12 derniers mois ; chacune finit en `200` (ou 410 / 404 listés et validés), **aucune en 5xx ni en boucle**. Le rapport est joint à la PR de la bascule.
 - **RDR-17** — Les chemins du § 3 (`/frame_*.php`, `/Pdf*.php`, `/kpqr.php`, `/admin/`…) répondent toujours depuis Apache après l'inversion du routage Traefik, et **aucun `kp*.php` n'y est routé**.
+- **RDR-20** — `kptv.php`, `kptvscenario.php`, `kpadmin.php`, `tv.php`, `feuillemarque.php` et `gamereport.php` répondent **410** sur `www` après la bascule, et ne figurent plus dans la liste Apache du § 3.
 - **RDR-18** — `/sitemap.xml` ne contient aucune ancienne URL ni aucune URL en 3xx/4xx (test sur un échantillon rendu par l'api2 de fixtures) ; `robots.txt` référence le sitemap et n'interdit aucune ancienne URL.
 - **RDR-19** — Suivi : la page 404 d'app3 émet le titre `404/URL = …/From = …` (ANA-10) ; le tableau de bord Matomo « 404 » existe avant la bascule (checklist M3).
 
@@ -281,6 +282,7 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 
 À reporter dans la checklist de la phase 5 (`PUBLIC_SITE_ROLLOUT_CHECKLIST.md`) au moment de son écriture :
 
+0. **P1 — prérequis** : le scoring (console app4, [PAGE_SCORING.md](../PAGE_SCORING.md)) est publié aux profils adéquats et le panneau TV d'app4 (`/tv`) est utilisable ; sans cela les 410 de § 5.2 privent les opérateurs de leurs outils.
 1. 📊 Extraire des journaux Apache (12 mois) les 200 URL les plus fréquentes et le volume de `kp*.php?Css=` (RDR-16, Q-R3).
 2. Livrer `legacy-paths.ts` et ses tests, **sur `beta.*` d'abord** : `beta.*/kpmatchs.php?…` redirige vers les pages d'app3 de `beta.*`, ce qui permet de rejouer la table sans toucher à `www` (les liens de repli du menu ciblent le legacy en URL absolue et ne passent pas par ce middleware).
 3. Préprod : inverser le routage Traefik, rejouer le script RDR-16, valider les domaines (RDR-15).

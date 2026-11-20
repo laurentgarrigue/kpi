@@ -42,7 +42,7 @@
 **Objectif** : app3 devient le site `kayak-polo.info` ; WordPress et les pages `kp*.php` ne sont plus servis au public.
 
 - Traefik : app3 routeur par défaut, Apache sur liste explicite de préfixes
-- Redirections 301 (anciennes URL, `beta.*` → domaine principal pendant au moins une saison)
+- Redirections 301 (anciennes URL ; `beta.*` non maintenu après la bascule)
 - Search Console, suivi des 404, actions Matomo à la bascule
 
 **Suivi** : [PUBLIC_SITE_REDESIGN_STRATEGY.md](PUBLIC_SITE_REDESIGN_STRATEGY.md) ·

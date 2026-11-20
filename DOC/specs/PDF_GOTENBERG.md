@@ -522,8 +522,9 @@ par le même script que les jetons.
   **Dès la beta** : l'URL est construite à partir du paramètre api2 existant `PUBLIC_SITE_URL` (aujourd'hui
   `https://beta.${KPI_DOMAIN_NAME}`, domaine principal après la bascule), jamais codée en dur. Chaque document déclare
   le chemin de sa page app3 (`PdfContent::$publicPath`) une fois celle-ci livrée ; sans chemin, pas de QR code.
-  Comme ces QR codes seront imprimés, **`beta.*` devra rediriger (301) vers le domaine principal pendant au moins
-  1 saison après la bascule** : exigence reportée dans [PUBLIC_SITE_ROLLOUT_CHECKLIST.md](../developer/in-progress/PUBLIC_SITE_ROLLOUT_CHECKLIST.md).
+  Les QR codes imprimés pendant la beta pointent vers `beta.*`, qui **n'est pas maintenu après la bascule** (décision du
+  20/11/2026, [SITE_REDIRECTS.md § 7](public/SITE_REDIRECTS.md)) : ces exemplaires cesseront de fonctionner ; `PUBLIC_SITE_URL`
+  passe au domaine principal le jour de la bascule.
 - Mêmes conventions visuelles que les composants app3 équivalents : un tableau de classement PDF reprend
   colonnes, ordre et codes couleur du classement de [PAGE_COMPETITION.md](public/PAGE_COMPETITION.md) ; une liste
   de matchs reprend la présentation du calendrier / des résultats.
@@ -615,7 +616,7 @@ sur les PDF admin comme publics :
 | R12 | Admin legacy (Smarty) encore utilisé pendant la transition | certaine | faible | Les `Feuille*.php` restent jusqu'au retrait de l'admin legacy, mais **protégés** (phase 0) |
 | R13 | Dérive entre la charte des applis et celle des PDF (couleurs recopiées à la main) | élevée sans outillage | moyen | Jetons extraits par script + test de dérive (§8.1, PDF-DESIGN-05) |
 | R14 | Licence **Agency FB** : police commerciale | faible | moyen | **Hypothèse retenue** : la licence FFCK couvre l'incorporation dans les PDF publics. Repli `'Arial Narrow', Arial` conservé dans la pile CSS si elle était remise en cause |
-| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | moyen | URL issue de `PUBLIC_SITE_URL` ; redirection 301 `beta.*` → domaine principal pendant 1 saison après la bascule (§8.4, PDF-DESIGN-08) |
+| R15 | QR codes imprimés pointant vers `beta.*`, domaine appelé à disparaître | élevée | faible (accepté) | URL issue de `PUBLIC_SITE_URL` ; `beta.*` non maintenu après la bascule, QR codes déjà imprimés perdus (décision du 20/11/2026, §8.4, PDF-DESIGN-08) |
 
 ---
 
