@@ -103,10 +103,85 @@
       "unlink_done": "Compte Google délié.",
       "unlink_failed": "Impossible de délier le compte Google.",
       "password_required": "Définissez d'abord un mot de passe avant de délier votre compte Google."
+    }
+  },
+  "second_factor": {
+    "method": {
+      "totp": "application d'authentification",
+      "email": "code par e-mail"
     },
-    "totp": {
-      "title": "Double authentification (2FA)",
-      "coming_soon": "La double authentification par application (Google Authenticator, Authy…) arrive bientôt."
+    "code_label": "Code à 6 chiffres",
+    "code_sent": "Un code vient d'être envoyé à {email}. Il est valable 10 minutes.",
+    "resend": "Renvoyer un code",
+    "challenge": {
+      "title": "Double authentification",
+      "totp_intro": "Saisissez le code affiché par votre application d'authentification.",
+      "email_intro": "Saisissez le code reçu par e-mail à {email}.",
+      "recovery_hint": "Plus d'accès à votre téléphone ou à votre boîte mail ? Saisissez un de vos codes de récupération.",
+      "trust_device": "Faire confiance à cet appareil pendant 30 jours",
+      "submit": "Valider"
+    },
+    "enroll": {
+      "required_title": "Activez la double authentification",
+      "required_intro": "Votre compte a des droits d'administration : une double authentification est désormais obligatoire pour y accéder.",
+      "choose": "Choisissez comment recevoir vos codes de connexion :",
+      "totp_title": "Application d'authentification",
+      "recommended": "Recommandé",
+      "totp_help": "Google Authenticator, Authy, 1Password… Fonctionne même sans réseau.",
+      "email_title": "Code par e-mail",
+      "email_help": "Un code envoyé à {email} à chaque connexion depuis un nouvel appareil.",
+      "email_limit": "Le code par e-mail est moins sûr : quelqu'un qui accède à votre boîte mail peut aussi réinitialiser votre mot de passe. Préférez l'application si vous le pouvez.",
+      "totp_scan": "Scannez ce QR code avec votre application d'authentification, puis saisissez le code qu'elle affiche.",
+      "qr_alt": "QR code à scanner avec l'application d'authentification",
+      "totp_manual": "Pas de caméra ? Saisissez cette clé dans l'application :",
+      "other_method": "Autre méthode",
+      "activate": "Activer"
+    },
+    "recovery": {
+      "title": "Vos codes de récupération",
+      "intro": "Chaque code permet une connexion si vous perdez votre téléphone ou l'accès à votre boîte mail. Ils ne seront plus affichés : conservez-les en lieu sûr (gestionnaire de mots de passe, papier).",
+      "file_heading": "KPI — codes de récupération du compte {account}",
+      "copy": "Copier",
+      "copied": "Copiés",
+      "download": "Télécharger",
+      "kept": "J'ai conservé ces codes en lieu sûr",
+      "continue": "Continuer"
+    },
+    "error": {
+      "invalid_code": "Code incorrect ou expiré.",
+      "expired": "Le délai est dépassé : reconnectez-vous.",
+      "locked": "Trop d'essais : compte bloqué 15 minutes.",
+      "email_required": "Aucune adresse e-mail valide sur votre compte : choisissez l'application, ou demandez à un administrateur de corriger votre adresse.",
+      "too_many_codes": "Patientez une minute avant de demander un nouveau code.",
+      "totp_unavailable": "L'application d'authentification n'est pas disponible sur ce serveur : choisissez le code par e-mail.",
+      "generic": "L'opération a échoué, réessayez."
+    },
+    "settings": {
+      "title": "Double authentification",
+      "active": "Activée : {method}.",
+      "recovery_left": "{count} code(s) de récupération restant(s)",
+      "required": "Obligatoire pour votre compte (droits d'administration) à partir de la date annoncée.",
+      "required_by": "Obligatoire pour votre compte : activez-la dans les {days} jour(s), sinon elle vous sera demandée à la connexion.",
+      "optional": "Facultative pour votre compte, mais recommandée.",
+      "enable": "Activer la double authentification",
+      "change": "Changer de méthode",
+      "new_recovery_codes": "Nouveaux codes de récupération",
+      "disable": "Désactiver",
+      "mandatory": "Obligatoire pour votre profil : elle ne peut pas être désactivée.",
+      "trusted_title": "Appareils de confiance (code non demandé)",
+      "trusted_until": "jusqu'au {date}",
+      "proof_totp": "Saisissez d'abord un code de votre application (ou un code de récupération).",
+      "proof_email": "Recevez d'abord un code par e-mail (ou saisissez un code de récupération).",
+      "send_code": "Recevoir un code",
+      "confirm_change": "Continuer",
+      "confirm_recovery": "Générer de nouveaux codes",
+      "confirm_disable": "Désactiver",
+      "activated": "Double authentification activée.",
+      "disabled": "Double authentification désactivée."
+    },
+    "banner": {
+      "text": "Double authentification obligatoire pour votre compte : plus que {days} jour(s) pour l'activer.",
+      "link": "L'activer maintenant"
     }
   },
   "login": {

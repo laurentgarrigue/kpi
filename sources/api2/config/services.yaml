@@ -35,6 +35,10 @@ parameters:
     # Repli MD5 au login (AUTH_HARDENING § 2bis) : actif jusqu'à la date de retrait annoncée, puis 0
     # et `app:auth:purge-md5-hashes`.
     env(AUTH_LEGACY_MD5_FALLBACK): '1'
+    # Second facteur (AUTH_HARDENING § 5.2bis) : date d'entrée en vigueur (vide = aucune obligation) et clé de
+    # chiffrement des secrets TOTP (vide = TOTP indisponible, code par e-mail seul).
+    env(AUTH_2FA_ENFORCED_FROM): ''
+    env(AUTH_2FA_ENCRYPTION_KEY): ''
 
 services:
     # default configuration for services in *this* file

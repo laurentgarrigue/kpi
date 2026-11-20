@@ -16,11 +16,13 @@ security:
         # Public auth endpoints - no authentication required.
         # refresh-session / logout / device/revoke sont publics : ils tiennent leur preuve d'identité
         # du cookie refresh (AUTH_HARDENING § 3) ou du token signé dans l'URL (lien email), pas du JWT.
+        # /auth/2fa/verify, /email/send, /enroll/* : second facteur (AUTH_HARDENING § 5) — la preuve est le jeton
+        # signé remis par /auth/login (défi ou enrôlement), pas un JWT : aucune session n'est ouverte avant.
         # /auth/google /callback /link : flow OAuth 2.0 (phase 2) — public, le state cookie fait office
         # d'anti-CSRF, le mot de passe sert de preuve de propriété au moment du link.
         # Motif ancré par `$` : sans lui, `login` capturait aussi /auth/login-history (JWT jamais lu → 401).
         login:
-            pattern: ^/auth/(login|reset-password|renew-password|forgot-password|access-request|refresh-session|logout|device/revoke/[^/]+|google/?|google/callback|google/link)$
+            pattern: ^/auth/(login|reset-password|renew-password|forgot-password|access-request|refresh-session|logout|device/revoke/[^/]+|google/?|google/callback|google/link|2fa/verify|2fa/email/send|2fa/enroll/(totp|email)/(setup|activate))$
             stateless: true
             security: false
 
@@ -84,6 +86,7 @@ security:
         - { path: ^/auth/google/unlink, roles: ROLE_USER }
         - { path: ^/auth/google/connect, roles: ROLE_USER }
         - { path: ^/auth/devices, roles: ROLE_USER }
+        - { path: ^/auth/2fa, roles: ROLE_USER }
 
 when@test:
     security:

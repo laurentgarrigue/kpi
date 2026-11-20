@@ -264,11 +264,8 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- TOTP (phase 3, placeholder) -->
-    <section class="bg-white dark:bg-header-900 rounded-lg shadow p-6 opacity-60">
-      <h2 class="text-lg font-semibold text-header-900 dark:text-header-50 mb-2">{{ t('security.totp.title') }}</h2>
-      <p class="text-sm text-header-600 dark:text-header-300">{{ t('security.totp.coming_soon') }}</p>
-    </section>
+    <!-- Double authentification (AUTH_HARDENING.md § 5) -->
+    <AuthSecondFactorSettings />
 
     <!-- Déconnexion -->
     <section class="pt-2">

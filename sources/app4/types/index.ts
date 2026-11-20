@@ -1,3 +1,5 @@
+import type { SecondFactorSummary } from '~/utils/secondFactor'
+
 // User filters (from JWT)
 export interface UserFilters {
   seasons: string[] | null
@@ -17,6 +19,8 @@ export interface User {
   filters?: UserFilters
   /** Rights independent of the profile level, e.g. 'editor' (DOC/specs/PAGE_CMS.md). */
   capabilities?: string[]
+  /** Second factor summary (AUTH_HARDENING.md § 5): method, obligation, end of the grace. */
+  secondFactor?: SecondFactorSummary
 }
 
 // Season from filters API

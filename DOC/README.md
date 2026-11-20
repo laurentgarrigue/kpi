@@ -47,6 +47,7 @@ Convention de nommage des fichiers : [NAMING_CONVENTION.md](NAMING_CONVENTION.md
 - **[DOCVIEWER_GUIDE.md](user/DOCVIEWER_GUIDE.md)** - Visualiseur de documentation
 - **[APP2_APPLICATION_WEB.md](user/APP2_APPLICATION_WEB.md)** - Application web (app2)
 - **[PASSWORD_RENEWAL.md](user/PASSWORD_RENEWAL.md)** - Renouvellement du mot de passe de saison 2027 (app4)
+- **[SECOND_FACTOR.md](user/SECOND_FACTOR.md)** - Double authentification (TOTP ou code par e-mail), obligatoire jusqu'au profil 4 (app4)
 - **[ADMIN_STATISTICS.md](user/ADMIN_STATISTICS.md)** - Statistiques - nouvelle interface (app4)
 - **[PUBLIC_SITE_EDITORIAL.md](user/PUBLIC_SITE_EDITORIAL.md)** - Rubrique Éditorial du site public : articles, pages, médias, menu, accueil, formulaires (app4)
 - **[EVENT_CACHE_MANAGER.md](user/EVENT_CACHE_MANAGER.md)** - Worker de cache pour incrustations vidéo

@@ -31,6 +31,9 @@ watch(() => route.path, () => {
       @toggle-mobile-menu="mobileMenuOpen = !mobileMenuOpen"
     />
 
+    <!-- Reminder during the second factor grace (AUTH-2FA-02) -->
+    <AuthSecondFactorGraceBanner />
+
     <!-- Page content -->
     <main class="flex-1 px-4 py-2 md:px-6">
       <slot />

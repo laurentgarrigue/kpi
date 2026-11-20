@@ -558,6 +558,56 @@ CREATE TABLE `kp_user_password_renewal` (
   PRIMARY KEY (`user_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Second facteur (AUTH_HARDENING.md § 5) : méthode active, codes e-mail, codes de récupération, appareils de confiance.
+DROP TABLE IF EXISTS `kp_user_second_factor`;
+CREATE TABLE kp_user_second_factor (
+    user_code VARCHAR(8) NOT NULL,
+    method VARCHAR(16) DEFAULT NULL,
+    totp_secret_encrypted VARBINARY(255) DEFAULT NULL,
+    pending_totp_secret_encrypted VARBINARY(255) DEFAULT NULL,
+    totp_last_timestep BIGINT UNSIGNED DEFAULT NULL,
+    enrollment_required_since DATETIME DEFAULT NULL,
+    activated_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `kp_user_email_otp`;
+CREATE TABLE kp_user_email_otp (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    purpose VARCHAR(16) NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user_time (user_code, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `kp_user_recovery_code`;
+CREATE TABLE kp_user_recovery_code (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `kp_user_trusted_device`;
+CREATE TABLE kp_user_trusted_device (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    device_token_hash CHAR(64) NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
 -- utilisé par les tests de rate-limit, verrouillage et audit.
 DROP TABLE IF EXISTS `kp_user_login_history`;

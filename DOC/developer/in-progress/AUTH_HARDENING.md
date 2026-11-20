@@ -15,9 +15,9 @@
 | **1a-bis** | Renouvellement forcé des mots de passe en début de saison 2027, inventaire, retrait définitif du MD5 ([#400](https://github.com/laurentgarrigue/kpi/issues/400)) | Ponctuelle (un renouvellement par compte) | 🚧 Implémentée, campagne et retrait à dater |
 | **1b** | JWT en cookie `HttpOnly` + refresh token glissant (rotation + détection de rejeu), `/auth/logout`, notification email sur nouvel appareil + lien de révocation | Nulle (invisible) | ✅ Implémentée (02/11/2026) — transition hybride : app4 continue d'utiliser le JWT en body **ET** reçoit les cookies, migration pure cookie en v+1 |
 | **1b-bis** | **Gestion utilisateur de ses appareils et sessions** : lister ses appareils, en révoquer un sans dépendre de l'email d'alerte, « déconnecter toutes les autres sessions », page `/profile/security` qui concentre déliement Google et (à venir) TOTP | Positive (autonomie) | 🚧 En cours (02/11/2026) |
-| **1b-ter** | **Continuité de session** : jamais déconnecté pendant une gestion sportive ou un match (renouvellement fiable, rotation tolérante, zéro saisie perdue en Scoring) — § 3ter | Positive | 🚧 Lot A en cours (13/11/2026) |
+| **1b-ter** | **Continuité de session** : jamais déconnecté pendant une gestion sportive ou un match (renouvellement fiable, rotation tolérante, zéro saisie perdue en Scoring) — § 3ter | Positive | 🚧 Lot A en production (19/11/2026), lots B à D à faire |
 | **2** | OAuth Google en **option** sur la page `/login` (bouton « Continuer avec Google »), lien/déliement depuis `/profile/security` | **Négative** (facilite) | ✅ Implémentée (02/11/2026) |
-| **3** | TOTP (Google Authenticator / Authy / 1Password) **obligatoire** pour les profils `≤ 3`, **optionnel** pour les autres ; appareil de confiance 30 jours ; 10 codes de récupération | Faible, ciblée | 📋 Spécifiée, non implémentée |
+| **3** | Double authentification **obligatoire** jusqu'au profil **4** (profil maximal, mandats compris), au choix TOTP ou code par e-mail ; grâce de 7 jours ; appareil de confiance 30 jours ; 10 codes de récupération ; **optionnelle** pour les autres | Faible, ciblée | 🚧 Implémentée (19/11/2026), entrée en vigueur à dater |
 
 > **Principe directeur** : la vraie faille aujourd'hui n'est pas l'absence de 2FA — c'est le JWT en `localStorage` (volé par un XSS), l'absence totale de rate-limit (bruteforce libre) et l'absence de signal utilisateur sur les connexions suspectes. On corrige d'abord les fondations invisibles, puis on ajoute du 2FA là où il protège vraiment (profils admin).
 
@@ -43,7 +43,7 @@
 | Pas de verrouillage sur échecs | Un compte à mot de passe faible tombe en quelques heures | ★★★★ | **1a** |
 | Pas de notification « nouvelle connexion » | L'utilisateur ne voit jamais qu'un tiers s'est connecté | ★★★ | **1b** |
 | MD5 fallback encore actif | Dump de la base ⇒ cassage trivial des hashes MD5 restants | ★★ | **1a** (plan de retrait) |
-| Pas de 2FA sur profils admin | Phishing réussi sur un super-admin → prise de contrôle totale | ★★★ | **3** |
+| Pas de 2FA sur profils admin (1 à 4, mandats compris) | Phishing réussi sur un super-admin → prise de contrôle totale | ★★★ | **3** |
 | `kp_user.Mail` non unique | Impossible de bâtir OAuth proprement sur le mail seul | ★★ | **2** (lier par `sub` OAuth) |
 
 ### 1.3 Ce qui existe déjà et qu'on garde
@@ -445,72 +445,233 @@ Dans les deux cas, la session authentifiée est la **meilleure preuve** de la pr
 
 ---
 
-## 5. Phase 3 — TOTP ciblé profils ≤ 3
+## 5. Phase 3 — Double authentification obligatoire jusqu'au profil 4
 
 ### 5.1 Objectif
 
-Protéger les comptes critiques (super-admin, bureau CNAKP, responsables division) contre le phishing — **sans imposer de 2FA aux centaines de bénévoles de profil 7-10**.
+Protéger les comptes qui administrent les compétitions (super-admin, bureau CNAKP, responsables de division et de
+compétition) contre le vol ou la réutilisation d'un mot de passe, **sans imposer de second facteur aux bénévoles de
+profil 5 à 10**. L'utilisateur choisit sa méthode : application TOTP ou code par e-mail.
 
-### 5.2 Critères d'acceptation
+### 5.2 Population concernée : le profil maximal
 
-| ID | Critère |
-|---|---|
-| AUTH-2FA-01 | Un utilisateur de profil `≤ 3` sans TOTP activé est redirigé vers `/auth/enroll` dès son prochain login (soft-fail : il peut continuer, mais une bannière lui rappelle l'obligation ; au bout de 7 jours, redirection obligatoire) |
-| AUTH-2FA-02 | L'enrôlement affiche un QR code TOTP (algorithme SHA-1, 6 chiffres, période 30 s) et exige la saisie d'un premier code valide pour activer le secret |
-| AUTH-2FA-03 | À l'activation, 10 codes de récupération à usage unique sont affichés **une seule fois** et stockés hashés (bcrypt) dans `kp_user_recovery_code` |
-| AUTH-2FA-04 | Le login des profils `≤ 3` demande un code TOTP (ou un code de récupération) après le mot de passe |
-| AUTH-2FA-05 | Case « Faire confiance à cet appareil 30 jours » : cookie signé HMAC qui saute le prompt TOTP sur ce même appareil (révocable depuis `/profile/security`) |
-| AUTH-2FA-06 | Un utilisateur de profil `> 3` peut activer le TOTP volontairement depuis `/profile/security` |
-| AUTH-2FA-07 | Un super-admin peut forcer un réenrôlement (téléphone perdu) via `POST /auth/2fa/reset/{code}` ; l'utilisateur se reconnecte, un nouveau QR lui est présenté |
-| AUTH-2FA-08 | Désactivation du TOTP par l'utilisateur **interdite** si profil `≤ 3` (seul le super-admin peut la demander, et uniquement si le profil change) |
+Un compte peut tenir un profil élevé par un **mandat** (`kp_user_mandat.niveau`) alors que son `kp_user.Niveau` est
+bas. Le second facteur suit donc le **profil maximal** (à ne pas confondre avec le « niveau effectif » de
+[DROITS_PAR_PROFIL.md](../../specs/DROITS_PAR_PROFIL.md), qui est celui du mandat actif) :
 
-### 5.3 Dépendances
+```
+profil maximal = min(kp_user.Niveau, niveau de chacun des mandats du compte)
+```
 
-- `scheb/2fa-bundle` + `scheb/2fa-google-authenticator` (composer).
-- `endroid/qr-code` (**déjà présent** dans le lock api2) pour générer le QR.
+Second facteur **obligatoire** si le profil maximal est **≤ 4**, **à partir de la date d'entrée en vigueur** (§ 5.2bis). Il est calculé **à chaque connexion**, pas au choix
+du mandat : un seul niveau de confiance par session, pas de JWT « partiel ». Les mandats n'ont pas de date de
+validité : seul leur retrait fait sortir un compte de la population.
 
-### 5.4 Nouvelles tables
+Inventaire (🗄 SQL) :
 
 ```sql
-CREATE TABLE kp_user_totp (
-  user_code VARCHAR(8) NOT NULL,
-  secret_encrypted VARBINARY(255) NOT NULL,
-  activated_at DATETIME DEFAULT NULL,
-  PRIMARY KEY (user_code)
-) ENGINE=InnoDB;
-
-CREATE TABLE kp_user_recovery_code (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_code VARCHAR(8) NOT NULL,
-  code_hash VARCHAR(255) NOT NULL,
-  used_at DATETIME DEFAULT NULL,
-  created_at DATETIME NOT NULL,
-  PRIMARY KEY (id),
-  KEY fk_user (user_code)
-) ENGINE=InnoDB;
-
-CREATE TABLE kp_user_trusted_device (
-  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_code VARCHAR(8) NOT NULL,
-  device_token_hash VARCHAR(255) NOT NULL,
-  label VARCHAR(100) NOT NULL,
-  created_at DATETIME NOT NULL,
-  expires_at DATETIME NOT NULL,
-  PRIMARY KEY (id),
-  KEY fk_user (user_code)
-) ENGINE=InnoDB;
+SELECT u.Code, u.Niveau, MIN(m.niveau) AS niveau_mandat,
+       LEAST(u.Niveau, COALESCE(MIN(m.niveau), u.Niveau)) AS profil_maximal
+FROM kp_user u
+LEFT JOIN kp_user_mandat m ON m.user_code = u.Code
+GROUP BY u.Code, u.Niveau
+HAVING profil_maximal <= 4
+ORDER BY profil_maximal, u.Code;
 ```
+
+### 5.2bis Date d'entrée en vigueur : décidée par l'exploitant
+
+Comme la campagne de renouvellement (§ 2bis.4), le forçage ne démarre que sur décision explicite, sans redéploiement :
+
+- Variable `AUTH_2FA_ENFORCED_FROM` dans `sources/api2/.env` (date `AAAA-MM-JJ`), puis `make api2_restart`.
+- **Vide (défaut) ou date future** : aucune obligation, aucune grâce ouverte. L'enrôlement **volontaire** est déjà
+  possible (AUTH-2FA-13) : on peut livrer le code, laisser les volontaires s'équiper, puis fixer la date.
+- **Date atteinte** : chaque compte concerné ouvre sa grâce de 7 jours à sa connexion suivante (AUTH-2FA-02).
+- **Retour arrière** : vider la variable + `make api2_restart` suspend l'obligation (les seconds facteurs déjà
+  activés restent demandés, les dates `enrollment_required_since` sont conservées).
+- `app:auth:password-audit` (ou une commande sœur `app:auth:second-factor-audit`) affiche la date en vigueur et, par
+  compte concerné : méthode active, en grâce (échéance), enrôlement exigé.
+
+**Ordre imposé** : le login legacy (`admin/Login.php`) est désactivé en début d'année 2027, une fois la console Scoring
+validée comme remplaçante de la feuille de marque en ligne legacy. `AUTH_2FA_ENFORCED_FROM` ne doit pas être
+antérieure à cette désactivation (sinon le legacy contourne le second facteur, AUTH-2FA-17).
+
+### 5.3 Méthodes de second facteur
+
+| Méthode | Disponible pour | Remarque |
+|---|---|---|
+| **TOTP** (Google Authenticator, Authy, 1Password…) | Tous | **Recommandée** : indépendante de la boîte mail, fonctionne hors réseau |
+| **Code par e-mail** | Tous, profils 1 à 4 compris | Au choix de l'utilisateur. Exige un `kp_user.Mail` valide |
+| **Codes de récupération** (10) | Tout compte qui a activé un second facteur | Secours (téléphone perdu, e-mail injoignable), usage unique |
+
+Un compte a **une seule méthode active** à la fois. L'e-mail n'est **pas** un secours automatique du TOTP : sinon la
+protection d'un compte TOTP retomberait au niveau de sa boîte mail.
+
+> **Limite assumée du code par e-mail** : « mot de passe oublié » passe déjà par l'e-mail. Une boîte mail compromise
+> donne donc mot de passe **et** code. Le code par e-mail protège contre le vol ou la réutilisation du seul mot de
+> passe (cas le plus fréquent), pas contre la compromission de la boîte. L'écran de choix recommande le TOTP.
+
+### 5.4 Critères d'acceptation
+
+| ID | Critère | Validation |
+|---|---|---|
+| AUTH-2FA-00 | Sans `AUTH_2FA_ENFORCED_FROM`, ou tant que la date n'est pas atteinte, aucun compte n'est tenu d'activer un second facteur ; ceux qui l'ont activé volontairement le voient demandé | Test d'intégration : variable vide → 200 sans `secondFactorEnrollmentDueAt` ; date passée → grâce ouverte |
+| AUTH-2FA-01 | Le profil maximal est le minimum de `kp_user.Niveau` et des `niveau` des mandats du compte. Second facteur exigé si ≤ 4 | Test unitaire `SecondFactorPolicy` (sans mandat, mandat plus élevé, mandat moins élevé, plusieurs mandats) |
+| AUTH-2FA-02 | **Grâce de 7 jours** : à la première connexion où un compte sans second facteur est concerné, api2 note la date (`enrollment_required_since`). Pendant 7 jours, le login réussit normalement et la réponse porte `secondFactorEnrollmentDueAt` ; app4 affiche une bannière avec un lien vers l'enrôlement. Au-delà : 403 `SECOND_FACTOR_ENROLLMENT_REQUIRED` + jeton d'enrôlement, **ni JWT ni cookie**. Le délai est appliqué par api2, pas seulement par app4 | Test d'intégration : J+6 → 200 + date ; J+8 → 403 |
+| AUTH-2FA-03 | Un compte qui **devient** concerné (nouveau mandat ≤ 4, changement de `Niveau`) ouvre sa propre grâce de 7 jours à sa connexion suivante. Un compte qui sort de la population perd l'obligation, pas son second facteur | Test d'intégration |
+| AUTH-2FA-04 | Enrôlement TOTP : QR code (SHA-1, 6 chiffres, période 30 s) et clé en texte ; activation seulement après saisie d'un premier code valide | Test d'intégration |
+| AUTH-2FA-05 | Enrôlement e-mail : refusé (400 `EMAIL_REQUIRED`) si le compte n'a pas d'e-mail valide ; un code est envoyé, l'activation exige sa saisie (preuve que la boîte est accessible) | Test d'intégration |
+| AUTH-2FA-06 | À l'activation, 10 codes de récupération sont affichés **une seule fois**, stockés hachés (bcrypt). Ils peuvent être régénérés depuis `/profile/security` (les anciens sont alors invalidés) | Test d'intégration |
+| AUTH-2FA-07 | Login d'un compte qui a un second facteur actif, bon mot de passe, appareil non approuvé : 403 `SECOND_FACTOR_REQUIRED` + `challengeToken` + `method`, **ni JWT ni cookie**. `POST /auth/2fa/verify {challengeToken, code}` ouvre la session (même réponse et cookies que `/auth/login`). Mauvais mot de passe : 401 habituel, pas de jeton | Test d'intégration |
+| AUTH-2FA-08 | Méthode e-mail : le code est envoyé au login (puis via `POST /auth/2fa/email/send {challengeToken}`). 6 chiffres, valable 10 min, usage unique, stocké haché ; un nouvel envoi invalide le précédent ; envois limités à 1 par minute et 5 par heure et par compte (429 au-delà) | Test d'intégration |
+| AUTH-2FA-09 | TOTP : tolérance d'une période (± 30 s) ; un code déjà accepté est refusé (dernier pas de temps mémorisé) | Test unitaire |
+| AUTH-2FA-10 | Échec de second facteur : 401, ligne `kp_user_login_history` (`failure_reason = bad_second_factor`), compté dans le verrouillage AUTH-LK-01 (5 échecs / 15 min → 423) | Test d'intégration |
+| AUTH-2FA-11 | Case « Faire confiance à cet appareil 30 jours » : cookie signé `kpi_2fa_trust` lié au compte et à l'appareil, qui saute le second facteur sur cet appareil. Appareils approuvés listés et révocables dans `/profile/security` ; **tous révoqués** au changement de mot de passe, au changement de méthode et à la réinitialisation par un super-admin | Test d'intégration |
+| AUTH-2FA-12 | La connexion Google d'un compte qui a un second facteur ne le contourne pas : le callback ne pose pas de session, il renvoie vers app4 `/auth/second-factor` avec le jeton de challenge (même logique qu'AUTH-RN-06) | Test d'intégration |
+| AUTH-2FA-13 | Un compte de profil maximal > 4 peut activer un second facteur volontairement ; il lui est ensuite demandé comme à un compte concerné | Test d'intégration |
+| AUTH-2FA-14 | Changer de méthode depuis `/profile/security` exige un code valide de la méthode actuelle (ou un code de récupération). **Désactivation interdite** tant que le profil maximal est ≤ 4 | Test d'intégration |
+| AUTH-2FA-15 | `POST /auth/2fa/reset/{code}` (super-admin, lui-même doté d'un second facteur actif) supprime le second facteur du compte : journalisé dans `kp_journal` (`Réinitialisation 2FA`), e-mail d'information à l'utilisateur, enrôlement **immédiat** (sans nouvelle grâce) à sa connexion suivante | Test d'intégration |
+| AUTH-2FA-16 | Journal : `kp_user_login_history.method` vaut `totp`, `email_otp` ou `recovery_code` pour le second facteur ; activation, changement de méthode et régénération des codes dans `kp_journal` | Test d'intégration |
+| AUTH-2FA-17 | Le login legacy (`admin/Login.php`) ne contourne pas le second facteur : il est désactivé (début 2027) avant l'entrée en vigueur ; à défaut, il refuse les comptes de profil maximal ≤ 4 (message renvoyant vers admin2) | Constat de la désactivation du legacy avant de fixer `AUTH_2FA_ENFORCED_FROM` |
+
+### 5.5 Choix techniques
+
+- **Pas de `scheb/2fa-bundle`** : il s'appuie sur une session serveur, api2 est sans état (JWT). On reprend le modèle
+  du renouvellement de mot de passe (§ 2bis) : le login répond 403 avec un **jeton** signé `SecondFactorToken`
+  (`{but}.{base64(code)}.{expiration}.{hmac}`, but `challenge` ou `enroll`, 10 min, HMAC avec `kernel.secret` et le
+  hash courant du mot de passe), gardé en mémoire côté app4 (`useState`), jamais en `localStorage`.
+- **Ordre des étapes** (`LoginCompletion`) : mot de passe → second facteur (défi ou enrôlement exigé) → renouvellement
+  exigé (§ 2bis) → session. Le second facteur passe **avant** le renouvellement : sinon `/auth/renew-password`
+  ouvrirait une session sans lui. Tant que le second facteur n'est pas prouvé, le login n'écrit **aucune** ligne
+  `success = 1` dans `kp_user_login_history` (elle remettrait le compteur de verrouillage à zéro entre deux salves de
+  codes) : la ligne est écrite à la preuve, avec la méthode `totp`, `email_otp` ou `recovery_code`.
+- **`SecondFactorPolicy`** (logique pure) : profil maximal (§ 5.2) et décision `Pass` / `Grace` / `Challenge` /
+  `EnrollmentRequired` avec la date d'échéance de la grâce. `SecondFactorService::evaluate()` l'applique au login
+  (`AdminAuthController`, `OAuthController::issueSession`) et mémorise le début de la grâce.
+- **TOTP** : implémentation interne `Totp` (RFC 6238, HMAC-SHA1, 6 chiffres, 30 s, ± 1 période), testée sur les
+  vecteurs de la RFC — pas de dépendance ajoutée. QR code en SVG avec `endroid/qr-code` (déjà présent). Secret chiffré
+  (libsodium `secretbox`, `SecondFactorSecretBox`) avec une clé dédiée `AUTH_2FA_ENCRYPTION_KEY`, **pas**
+  `kernel.secret`. Sans clé valide, seul le code par e-mail est proposé.
+- **Code par e-mail** (`EmailOtpService`) : `NotificationService` existant ; texte FR/EN sans lien cliquable.
+- **Codes de récupération** (`RecoveryCodes`) : format `abcde-fghij`, bcrypt, acceptés à la place de tout code.
+- **Appareils de confiance** (`TrustedDevices`) : cookie `kpi_2fa_trust` = `{id}.{jeton}`, SHA-256 du jeton en base.
+- **Google** : le callback renvoie vers `/auth/second-factor#challenge=…` ou `#enroll=…` ; le **fragment** d'URL
+  n'est jamais envoyé à un serveur (ni journaux, ni en-tête `Referer`).
+- **Sessions en cours au moment de l'activation de l'obligation** : non coupées ; la grâce s'ouvre à la connexion
+  suivante (JWT de 24 h, cf. § 3ter.6).
+
+### 5.6 Nouvelles tables (migration `Version20261120100000`)
+
+`pending_totp_secret_encrypted` garde le secret d'un TOTP en cours d'enrôlement : le secret actif n'est remplacé
+qu'à la confirmation du premier code.
+
+```sql
+CREATE TABLE kp_user_second_factor (
+    user_code VARCHAR(8) NOT NULL,
+    method VARCHAR(16) DEFAULT NULL,
+    totp_secret_encrypted VARBINARY(255) DEFAULT NULL,
+    pending_totp_secret_encrypted VARBINARY(255) DEFAULT NULL,
+    totp_last_timestep BIGINT UNSIGNED DEFAULT NULL,
+    enrollment_required_since DATETIME DEFAULT NULL,
+    activated_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE kp_user_email_otp (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    purpose VARCHAR(16) NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user_time (user_code, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE kp_user_recovery_code (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    used_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE kp_user_trusted_device (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(8) NOT NULL,
+    device_token_hash CHAR(64) NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    revoked_at DATETIME DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user (user_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### 5.7 Dépendances et configuration
+
+- Aucune dépendance composer ajoutée (`endroid/qr-code` est déjà présent).
+- `AUTH_2FA_ENCRYPTION_KEY` (32 octets en base64, `php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'`) dans
+  `sources/api2/.env` de chaque environnement. **Ne jamais la changer** une fois des TOTP activés (ils deviendraient
+  illisibles : il faudrait réinitialiser chaque compte).
+- `AUTH_2FA_ENFORCED_FROM` (date, vide par défaut) dans `sources/api2/.env` (§ 5.2bis).
+
+### 5.7bis Endpoints
+
+| Route | Accès | Rôle |
+|---|---|---|
+| `POST /auth/2fa/verify` `{challengeToken, code, trustDevice}` | jeton `challenge` | Preuve → session (ou 403 `PASSWORD_RENEWAL_REQUIRED`) |
+| `POST /auth/2fa/email/send` `{challengeToken}` | jeton `challenge` | Nouveau code par e-mail à la connexion |
+| `POST /auth/2fa/enroll/{totp,email}/{setup,activate}` | jeton `enroll` | Enrôlement exigé ; `activate` ouvre la session et renvoie `recoveryCodes` |
+| `GET /auth/2fa` | JWT | État : méthode, obligation, échéance, codes restants, appareils de confiance |
+| `POST /auth/2fa/{totp,email}/setup` `{currentCode?}`, `…/activate` `{code}` | JWT | Activation ou changement de méthode |
+| `POST /auth/2fa/email/code` | JWT | Code par e-mail prouvant la méthode actuelle |
+| `POST /auth/2fa/recovery-codes` `{code}` | JWT | Nouveaux codes de récupération |
+| `POST /auth/2fa/disable` `{code}` | JWT | Désactivation (409 `SECOND_FACTOR_MANDATORY` jusqu'au profil 4) |
+| `POST /auth/2fa/trusted-devices/{id}/revoke` | JWT | Retirer la confiance à un appareil |
+| `POST /auth/2fa/reset/{code}` | JWT, profil 1 avec second facteur | Réinitialisation (téléphone perdu) |
+
+Commande : `php bin/console app:auth:second-factor-audit` (date en vigueur, état de chaque compte concerné).
+
+### 5.7ter Fichiers touchés
+
+- **api2, nouveaux** : `src/Security/{Totp,SecondFactorPolicy,SecondFactorDecision,SecondFactorOutcome,SecondFactorSettings,
+  SecondFactorSecretBox,SecondFactorToken,SecondFactorService,EmailOtpService,EmailOtpSendResult,RecoveryCodes,
+  TrustedDevices,LoginCompletion,SessionCookies,UserMandates}.php`, `src/Controller/SecondFactorController.php`,
+  `src/Command/SecondFactorAuditCommand.php`, `migrations/Version20261120100000.php` ; tests
+  `Unit/Security/{TotpTest,SecondFactorPolicyTest,SecondFactorSecretBoxTest,SecondFactorTokenTest}.php`,
+  `Integration/AuthSecondFactorTest.php`.
+- **api2, modifiés** : `AdminAuthController` (login via `LoginCompletion`, `secondFactor` dans `/auth/me` et
+  `/auth/refresh-session`, appareils de confiance révoqués au changement de mot de passe), `OAuthController`,
+  `LoginAttemptLogger`, `KnownDeviceService::label()`, `NotificationService`, `security.yaml`, `services.yaml`,
+  `.env.dist`, `.env.test`, `SQL/fixtures/schema.sql`, `Integration/AuthOAuthGoogleTest.php`.
+- **app4, nouveaux** : `pages/auth/second-factor.vue`, `components/auth/{SecondFactorEnrollment,RecoveryCodes,
+  SecondFactorSettings,SecondFactorGraceBanner}.vue`, `composables/useSecondFactor.ts`, `utils/secondFactor.ts`,
+  `tests/unit/secondFactor.spec.ts`.
+- **app4, modifiés** : `composables/useAuth.ts`, `pages/login.vue`, `pages/profile/security.vue`, `layouts/admin.vue`,
+  `middleware/auth.ts`, `stores/authStore.ts`, `types/index.ts`, `i18n/locales/{fr,en}.json`.
+- **Doc utilisateur** : [DOC/user/SECOND_FACTOR.md](../../user/SECOND_FACTOR.md).
+
+### 5.8 Points ouverts
+
+- **Comptes de profil ≤ 4 partagés** entre plusieurs personnes (s'il en existe) : le TOTP ne se partage pas
+  proprement ; à repérer dans l'inventaire et à scinder en comptes nominatifs.
+- **Passkeys (WebAuthn)**, seule méthode résistante à l'hameçonnage en temps réel : v+1, d'abord pour les profils 1 et 2.
 
 ---
 
 ## 6. Modèle de rôles et politique par profil
 
-| Profil `Niveau` | Rôle principal | Mot de passe | TOTP | OAuth Google |
+Le profil s'entend comme **profil maximal** (§ 5.2) : `kp_user.Niveau` et mandats confondus.
+
+| Profil maximal | Rôle principal | Mot de passe | Second facteur (TOTP ou e-mail) | OAuth Google |
 |---|---|---|---|---|
-| 1 | Super Admin | obligatoire + politique renforcée (14 car.) | **obligatoire** (phase 3) | optionnel |
-| 2 | Bureau CNAKP | obligatoire + politique renforcée | **obligatoire** | optionnel |
-| 3 | Responsable Division | obligatoire | **obligatoire** | optionnel |
-| 4-6 | Responsables compétition / délégué / organisateur | obligatoire | **recommandé** | optionnel |
+| 1 | Super Admin | obligatoire + politique renforcée (14 car.) | **obligatoire** (phase 3) | optionnel, second facteur exigé quand même |
+| 2 | Bureau CNAKP | obligatoire + politique renforcée | **obligatoire** | idem |
+| 3 | Responsable Division | obligatoire | **obligatoire** | idem |
+| 4 | Resp. poule / compétition | obligatoire | **obligatoire** | idem |
+| 5-6 | Délégué fédéral, organisateur de journée | obligatoire | **recommandé** | optionnel |
 | 7-9 | Club, consultation, table de marque | obligatoire | optionnel | **recommandé** (facilite) |
 | 10 | Contrôle équipement (scrutineering) | obligatoire | optionnel | optionnel |
 
@@ -521,7 +682,7 @@ CREATE TABLE kp_user_trusted_device (
 - **Aucun breaking change utilisateur** pour la phase 1a : les comptes existants continuent de fonctionner avec leur mot de passe actuel.
 - **Phase 1b** (cookies) : nécessite une re-connexion de tous les utilisateurs connectés après déploiement (le `localStorage.kpi_admin_token` n'est plus lu). Prévoir une bannière informative dans app4 avant le déploiement.
 - **Phase 2** (OAuth) : aucune bascule, c'est un ajout.
-- **Phase 3** (TOTP) : les 20-30 utilisateurs de profil `≤ 3` reçoivent un email avant la fenêtre de 7 jours ; procédure de secours via super-admin documentée.
+- **Phase 3** (second facteur) : les comptes de profil maximal ≤ 4 (mandats compris, inventaire § 5.2) reçoivent un e-mail avant l'entrée en vigueur ; chacun dispose ensuite de 7 jours de grâce à partir de sa première connexion concernée ; procédure de secours via super-admin (AUTH-2FA-15).
 
 ---
 
@@ -543,9 +704,9 @@ Quand une phase est livrée en production, cocher ici et déplacer les élément
 - [ ] Phase 1a-bis — renouvellement de saison 2027 et retrait du MD5 (code livré ; campagne et retrait à dater)
 - [x] Phase 1b — cookies HttpOnly, refresh, email nouvel appareil (livrée 02/11/2026, hybride cookie+body)
 - [x] Phase 1b-bis — gestion appareils + `/profile/security` (02/11/2026)
-- [x] Phase 1b-ter — continuité de session (§ 3ter) : lot A ☐, lot B ☐, lot C ☐, lot D ☐
+- [x] Phase 1b-ter — continuité de session (§ 3ter) : lot A ☑, lot B ☐, lot C ☐, lot D ☐
 - [x] Phase 2 — OAuth Google en option (livrée 02/11/2026)
 - [x] Phase 2-bis — Lier Google depuis le profil (AUTH-OA-07/08/09/10, 03/11/2026)
-- [ ] Phase 3 — TOTP pour profils ≤ 3
+- [ ] Phase 3 — second facteur (TOTP ou e-mail) obligatoire jusqu'au profil 4, mandats compris (code livré le 19/11/2026 ; entrée en vigueur à dater)
 
 Lorsque les 4 phases seront cochées, déplacer ce document en `DOC/developer/archive/features/AUTH_HARDENING.md` et mettre à jour `DOC/developer/archive/README.md` (cf. CLAUDE.md).

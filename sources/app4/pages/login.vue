@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { version } from '~/package.json'
-import { PasswordRenewalRequiredError } from '~/composables/useAuth'
+import { PasswordRenewalRequiredError, SecondFactorStepRequiredError } from '~/composables/useAuth'
+import { useSecondFactorStep } from '~/composables/useSecondFactor'
 
 definePageMeta({
   layout: 'default',
@@ -10,6 +11,7 @@ definePageMeta({
 const { t, locale, setLocale } = useI18n()
 const { login } = useAuth()
 const renewalToken = usePasswordRenewalToken()
+const secondFactorStep = useSecondFactorStep()
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -65,6 +67,11 @@ const handleSubmit = async () => {
     if (e instanceof PasswordRenewalRequiredError) {
       renewalToken.value = e.renewalToken
       await navigateTo('/renew-password')
+      return
+    }
+    if (e instanceof SecondFactorStepRequiredError) {
+      secondFactorStep.value = e.step
+      await navigateTo('/auth/second-factor')
       return
     }
     if (e instanceof Error) {

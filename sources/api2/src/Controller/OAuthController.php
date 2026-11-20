@@ -6,9 +6,13 @@ use App\Entity\User;
 use App\Security\GoogleOAuthClient;
 use App\Security\KnownDeviceService;
 use App\Security\LoginAttemptLogger;
+use App\Security\LoginCompletion;
 use App\Security\LoginRateLimiter;
 use App\Security\PasswordRenewalService;
 use App\Security\RefreshTokenService;
+use App\Security\SecondFactorDecision;
+use App\Security\SecondFactorService;
+use App\Security\SessionCookies;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
@@ -54,6 +58,8 @@ class OAuthController extends AbstractController
         private readonly LoginRateLimiter $loginRateLimiter,
         private readonly NotificationService $notificationService,
         private readonly PasswordRenewalService $passwordRenewals,
+        private readonly SecondFactorService $secondFactors,
+        private readonly LoginCompletion $loginCompletion,
         private readonly string $app4Url,
     ) {
     }
@@ -320,6 +326,14 @@ class OAuthController extends AbstractController
         return $redirect;
     }
 
+    /** @param array<string, string> $fragment */
+    private function redirectSecondFactor(array $fragment): RedirectResponse
+    {
+        $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/auth/second-factor#' . http_build_query($fragment));
+        $redirect->headers->clearCookie('kpi_oauth_state', '/', null, true, true, 'lax');
+        return $redirect;
+    }
+
     private function redirectSecurity(string $query): RedirectResponse
     {
         $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/profile/security?' . $query);
@@ -462,6 +476,27 @@ class OAuthController extends AbstractController
 
         /** @var User $user */
         $user = $this->userProvider->loadUserByIdentifier($userCode);
+
+        // AUTH-2FA-12 : Google ne dispense pas du second facteur. Le jeton passe par le fragment d'URL
+        // (jamais envoyé au serveur) vers la page app4 qui demande le code ou l'enrôlement.
+        $outcome = $this->secondFactors->evaluate($user, $request);
+        if ($outcome->decision === SecondFactorDecision::Challenge) {
+            $challenge = $this->loginCompletion->challenge($userCode);
+            return $this->redirectSecondFactor([
+                'challenge' => $challenge['challengeToken'],
+                'method' => $challenge['method'],
+                'maskedEmail' => $challenge['maskedEmail'] ?? '',
+            ]);
+        }
+        if ($outcome->decision === SecondFactorDecision::EnrollmentRequired) {
+            $enrollment = $this->loginCompletion->enrollmentRequired($userCode);
+            return $this->redirectSecondFactor([
+                'enroll' => $enrollment['enrollmentToken'],
+                'totpAvailable' => $enrollment['totpAvailable'] ? '1' : '0',
+                'maskedEmail' => $enrollment['maskedEmail'] ?? '',
+            ]);
+        }
+
         $this->loginLogger->logSuccess($userCode, $method, $legacyMd5, $request);
 
         $email = (string) $this->connection->fetchOne('SELECT Mail FROM kp_user WHERE Code = ?', [$userCode]);
@@ -486,23 +521,9 @@ class OAuthController extends AbstractController
         // middleware auth renvoie l'utilisateur sur /login (la cause du bug « Google OK mais renvoyé
         // vers login »).
         $redirect = new RedirectResponse(rtrim($this->app4Url, '/') . '/auth/oauth-complete');
-        $redirect->headers->setCookie($this->buildAccessCookie($accessToken));
-        $redirect->headers->setCookie($this->buildRefreshCookie($refreshToken));
+        $redirect->headers->setCookie(SessionCookies::access($accessToken));
+        $redirect->headers->setCookie(SessionCookies::refresh($refreshToken));
         $redirect->headers->clearCookie('kpi_oauth_state', '/', null, true, true, 'lax');
         return $redirect;
-    }
-
-    private function buildAccessCookie(string $jwt): Cookie
-    {
-        $ttl = (int) ($_ENV['JWT_TTL'] ?? getenv('JWT_TTL') ?: 900);
-        return Cookie::create('kpi_access')->withValue($jwt)->withExpires(time() + $ttl)
-            ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('lax');
-    }
-
-    private function buildRefreshCookie(string $token): Cookie
-    {
-        return Cookie::create('kpi_refresh')->withValue($token)
-            ->withExpires(time() + RefreshTokenService::TTL_SECONDS)
-            ->withPath('/')->withSecure(true)->withHttpOnly(true)->withSameSite('lax');
     }
 }

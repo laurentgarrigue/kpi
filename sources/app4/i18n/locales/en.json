@@ -103,10 +103,85 @@
       "unlink_done": "Google account unlinked.",
       "unlink_failed": "Could not unlink the Google account.",
       "password_required": "Please set a password before unlinking your Google account."
+    }
+  },
+  "second_factor": {
+    "method": {
+      "totp": "authenticator app",
+      "email": "e-mail code"
     },
-    "totp": {
-      "title": "Two-factor authentication (2FA)",
-      "coming_soon": "Authenticator-app two-factor (Google Authenticator, Authy…) is coming soon."
+    "code_label": "6-digit code",
+    "code_sent": "A code has just been sent to {email}. It is valid for 10 minutes.",
+    "resend": "Send a new code",
+    "challenge": {
+      "title": "Two-step verification",
+      "totp_intro": "Enter the code shown by your authenticator app.",
+      "email_intro": "Enter the code sent by e-mail to {email}.",
+      "recovery_hint": "Lost your phone or your mailbox? Enter one of your recovery codes.",
+      "trust_device": "Trust this device for 30 days",
+      "submit": "Verify"
+    },
+    "enroll": {
+      "required_title": "Turn on two-step verification",
+      "required_intro": "Your account has administration rights: two-step verification is now required to access it.",
+      "choose": "Choose how to receive your sign-in codes:",
+      "totp_title": "Authenticator app",
+      "recommended": "Recommended",
+      "totp_help": "Google Authenticator, Authy, 1Password… Works even offline.",
+      "email_title": "E-mail code",
+      "email_help": "A code sent to {email} at each sign-in from a new device.",
+      "email_limit": "The e-mail code is less secure: someone who gets into your mailbox can also reset your password. Prefer the app if you can.",
+      "totp_scan": "Scan this QR code with your authenticator app, then enter the code it shows.",
+      "qr_alt": "QR code to scan with the authenticator app",
+      "totp_manual": "No camera? Type this key in the app:",
+      "other_method": "Another method",
+      "activate": "Turn on"
+    },
+    "recovery": {
+      "title": "Your recovery codes",
+      "intro": "Each code lets you sign in once if you lose your phone or your mailbox. They will not be shown again: keep them somewhere safe (password manager, paper).",
+      "file_heading": "KPI — recovery codes of account {account}",
+      "copy": "Copy",
+      "copied": "Copied",
+      "download": "Download",
+      "kept": "I have kept these codes somewhere safe",
+      "continue": "Continue"
+    },
+    "error": {
+      "invalid_code": "Wrong or expired code.",
+      "expired": "Time is up: please sign in again.",
+      "locked": "Too many attempts: account locked for 15 minutes.",
+      "email_required": "No valid e-mail address on your account: choose the app, or ask an administrator to fix your address.",
+      "too_many_codes": "Please wait a minute before asking for a new code.",
+      "totp_unavailable": "The authenticator app is not available on this server: choose the e-mail code.",
+      "generic": "The operation failed, please retry."
+    },
+    "settings": {
+      "title": "Two-step verification",
+      "active": "On: {method}.",
+      "recovery_left": "{count} recovery code(s) left",
+      "required": "Required for your account (administration rights) from the announced date.",
+      "required_by": "Required for your account: turn it on within {days} day(s), otherwise it will be asked at sign-in.",
+      "optional": "Optional for your account, but recommended.",
+      "enable": "Turn on two-step verification",
+      "change": "Change method",
+      "new_recovery_codes": "New recovery codes",
+      "disable": "Turn off",
+      "mandatory": "Required for your profile: it cannot be turned off.",
+      "trusted_title": "Trusted devices (no code asked)",
+      "trusted_until": "until {date}",
+      "proof_totp": "First enter a code from your app (or a recovery code).",
+      "proof_email": "First get a code by e-mail (or enter a recovery code).",
+      "send_code": "Get a code",
+      "confirm_change": "Continue",
+      "confirm_recovery": "Generate new codes",
+      "confirm_disable": "Turn off",
+      "activated": "Two-step verification turned on.",
+      "disabled": "Two-step verification turned off."
+    },
+    "banner": {
+      "text": "Two-step verification is required for your account: {days} day(s) left to turn it on.",
+      "link": "Turn it on now"
     }
   },
   "login": {

@@ -2,6 +2,7 @@ import { canAdministerContent, canEditContent } from '~/utils/cms'
 import { defineStore } from 'pinia'
 import type { User, UserFilters } from '~/types'
 import type { MandateSummary, MandateFilters } from '~/types/users'
+import type { SecondFactorSummary } from '~/utils/secondFactor'
 import { storedSessionState, type StoredSessionState } from '~/utils/session'
 
 const TOKEN_KEY = 'kpi_admin_token'
@@ -96,6 +97,15 @@ export const useAuthStore = defineStore('auth', {
         } else {
           localStorage.removeItem('kpi_admin_effective_filters')
         }
+      }
+    },
+
+    /** Second factor summary changed (/profile/security): updates the grace banner (AUTH-2FA-02). */
+    setSecondFactor(summary: SecondFactorSummary) {
+      if (!this.user) return
+      this.user = { ...this.user, secondFactor: summary }
+      if (import.meta.client) {
+        localStorage.setItem('kpi_admin_user', JSON.stringify(this.user))
       }
     },
 

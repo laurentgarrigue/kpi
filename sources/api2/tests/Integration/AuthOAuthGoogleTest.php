@@ -65,6 +65,31 @@ final class AuthOAuthGoogleTest extends ApiTestCase
         self::assertContains('kpi_oauth_pending', $cookieNames);
     }
 
+    // ------------------------------------------------------- AUTH-2FA-12 : Google ne dispense pas du second facteur
+
+    public function testCallbackOfAnAccountWithASecondFactorRedirectsToTheChallengeWithoutSession(): void
+    {
+        $this->connection->insert('kp_user_oauth', [
+            'user_code' => 'TADMIN',
+            'provider' => 'google',
+            'subject' => 'g-ADMIN-123',
+            'email_at_link' => 'admin@example.test',
+            'linked_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ]);
+        $this->connection->executeStatement("INSERT INTO kp_user_second_factor (user_code, method, activated_at) VALUES ('TADMIN', 'email', NOW())");
+
+        $this->sendCookies(['kpi_oauth_state' => 'S']);
+        $this->client->request('GET', '/auth/google/callback?code=xyz&state=S');
+
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+        $location = (string) $this->client->getResponse()->headers->get('Location');
+        self::assertStringContainsString('/auth/second-factor#challenge=', $location);
+        self::assertStringContainsString('method=email', $location);
+        $cookieNames = array_map(fn($c) => $c->getName(), $this->client->getResponse()->headers->getCookies());
+        self::assertNotContains('kpi_access', $cookieNames);
+        self::assertNotContains('kpi_refresh', $cookieNames);
+    }
+
     // ------------------------------------------------------- Anti-CSRF state
 
     public function testCallbackWithMismatchedStateIsRejected(): void

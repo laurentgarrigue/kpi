@@ -102,6 +102,43 @@ class NotificationService
      * Alerte « nouvelle connexion depuis un appareil inconnu » (AUTH_HARDENING.md AUTH-DV-01).
      * Le lien de révocation invalide l'appareil ET tous les refresh tokens actifs du compte.
      */
+    /**
+     * Code de second facteur par e-mail (AUTH_HARDENING.md § 5, AUTH-2FA-05 et 08) : le code seul, sans lien
+     * cliquable, pour ne pas ressembler à un hameçonnage.
+     */
+    public function sendSecondFactorCode(string $toEmail, string $code, int $validityMinutes): void
+    {
+        $body  = "Bonjour,\n\n";
+        $body .= "Votre code de connexion KPI : {$code}\n\n";
+        $body .= "Il est valable {$validityMinutes} minutes et ne sert qu'une fois.\n";
+        $body .= "Si vous n'êtes pas en train de vous connecter, ignorez ce message et changez votre mot de passe.\n\n";
+        $body .= "Hello,\n\nYour KPI sign-in code: {$code} (valid for {$validityMinutes} minutes, single use).\n\n";
+        $body .= "Cordialement,\nL'équipe KPI";
+
+        $this->sendText($toEmail, "KPI — Code de connexion {$code}", $body, 'second factor code');
+    }
+
+    /** Le second facteur du compte a été réinitialisé par un super-admin (AUTH-2FA-15). */
+    public function sendSecondFactorReset(string $toEmail, string $userCode): void
+    {
+        $body  = "Bonjour,\n\n";
+        $body .= "La double authentification de votre compte KPI ({$userCode}) a été réinitialisée par un administrateur.\n";
+        $body .= "À votre prochaine connexion, vous devrez en configurer une nouvelle (application ou code par e-mail).\n\n";
+        $body .= "Si vous n'avez pas demandé cette réinitialisation, contactez immédiatement l'équipe KPI.\n\n";
+        $body .= "Cordialement,\nL'équipe KPI";
+
+        $this->sendText($toEmail, 'KPI — Double authentification réinitialisée', $body, 'second factor reset');
+    }
+
+    private function sendText(string $toEmail, string $subject, string $body, string $logLabel): void
+    {
+        try {
+            $this->mailer->send((new Email())->from($this->mailFrom)->to($toEmail)->subject($subject)->text($body));
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send ' . $logLabel . ' email', ['to' => $toEmail, 'error' => $e->getMessage()]);
+        }
+    }
+
     public function sendNewDeviceAlert(string $toEmail, string $userCode, string $deviceLabel, string $revokeToken): void
     {
         $revokeUrl = rtrim($this->app4Url, '/') . '/auth/device/revoke/' . $revokeToken;

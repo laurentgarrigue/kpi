@@ -1,5 +1,6 @@
 import type { MandateSummary, MandateFilters } from '~/types/users'
 import { mandateToKeep, planRefresh, refreshOutcomeOf, type RefreshOutcome } from '~/utils/session'
+import type { SecondFactorMethod, SecondFactorStep, SecondFactorSummary } from '~/utils/secondFactor'
 
 /** Web Locks name shared by every app4 tab: one refresh at a time per browser (AUTH-SC-04). */
 const REFRESH_LOCK = 'kpi-auth-refresh'
@@ -50,6 +51,7 @@ interface LoginResponse {
     activeMandate: { id: number; libelle: string } | null
     effectiveProfile: number
     effectiveFilters: MandateFilters
+    secondFactor?: SecondFactorSummary
   }
   hasMandates: boolean
 }
@@ -86,6 +88,52 @@ export class PasswordRenewalRequiredError extends Error {
   }
 }
 
+/** api2 codes of a login that opens no session until the second factor is proved or enrolled (§ 5). */
+export const SECOND_FACTOR_REQUIRED = 'SECOND_FACTOR_REQUIRED'
+export const SECOND_FACTOR_ENROLLMENT_REQUIRED = 'SECOND_FACTOR_ENROLLMENT_REQUIRED'
+
+/** Thrown by login(): a code of the second factor is expected, or the enrollment is required (AUTH-2FA-02/07). */
+export class SecondFactorStepRequiredError extends Error {
+  constructor(public readonly step: SecondFactorStep) {
+    super(step.mode === 'challenge' ? SECOND_FACTOR_REQUIRED : SECOND_FACTOR_ENROLLMENT_REQUIRED)
+  }
+}
+
+interface SecondFactorRefusal {
+  code?: string
+  challengeToken?: string
+  enrollmentToken?: string
+  method?: SecondFactorMethod
+  maskedEmail?: string | null
+  codeSent?: boolean
+  totpAvailable?: boolean
+}
+
+/** The 403 of /auth/login turned into the next sign-in step, or null for another refusal. */
+const secondFactorStepOf = (body: SecondFactorRefusal | null): SecondFactorStep | null => {
+  if (body?.code === SECOND_FACTOR_REQUIRED && body.challengeToken) {
+    return {
+      mode: 'challenge',
+      token: body.challengeToken,
+      method: body.method ?? null,
+      maskedEmail: body.maskedEmail ?? null,
+      totpAvailable: true,
+      codeSent: body.codeSent ?? false
+    }
+  }
+  if (body?.code === SECOND_FACTOR_ENROLLMENT_REQUIRED && body.enrollmentToken) {
+    return {
+      mode: 'enroll',
+      token: body.enrollmentToken,
+      method: null,
+      maskedEmail: body.maskedEmail ?? null,
+      totpAvailable: body.totpAvailable ?? true,
+      codeSent: false
+    }
+  }
+  return null
+}
+
 /** Rejected renewal: api2 code (WEAK_PASSWORD, PASSWORD_REUSED, INVALID_TOKEN). */
 export class PasswordRenewalError extends Error {
   constructor(public readonly code: string) {
@@ -119,6 +167,10 @@ export const useAuth = () => {
           const body = await response.json().catch(() => null)
           if (body?.code === PASSWORD_RENEWAL_REQUIRED && body.renewalToken) {
             throw new PasswordRenewalRequiredError(body.renewalToken)
+          }
+          const step = secondFactorStepOf(body)
+          if (step) {
+            throw new SecondFactorStepRequiredError(step)
           }
         }
         throw new Error('Login failed')
@@ -306,6 +358,7 @@ export const useAuth = () => {
 
   return {
     login,
+    openSession,
     renewPassword,
     logout,
     checkAuth,

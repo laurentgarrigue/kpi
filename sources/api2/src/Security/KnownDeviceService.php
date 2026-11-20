@@ -249,7 +249,8 @@ final class KnownDeviceService
         return hash('sha256', $this->maskIp($ip) . '|' . $this->uaFamily($ua));
     }
 
-    private function label(Request $request): string
+    /** « Famille de navigateur / IP », affiché dans /profile/security. */
+    public function label(Request $request): string
     {
         $ua = (string) $request->headers->get('User-Agent', '');
         $ip = $request->getClientIp() ?? '0.0.0.0';

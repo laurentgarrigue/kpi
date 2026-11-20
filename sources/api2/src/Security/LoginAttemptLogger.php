@@ -18,11 +18,17 @@ final class LoginAttemptLogger
 {
     public const METHOD_PASSWORD = 'password';
     public const METHOD_PASSWORD_RESET = 'password_reset';
+    /** Second facteur (AUTH_HARDENING.md § 5, AUTH-2FA-16). */
+    public const METHOD_TOTP = 'totp';
+    public const METHOD_EMAIL_OTP = 'email_otp';
+    public const METHOD_RECOVERY_CODE = 'recovery_code';
 
     public const REASON_UNKNOWN_USER = 'unknown_user';
     public const REASON_BAD_PASSWORD = 'bad_password';
     public const REASON_RATE_LIMITED = 'rate_limited';
     public const REASON_ACCOUNT_LOCKED = 'account_locked';
+    /** Code de second facteur faux : compte dans le verrouillage comme un mauvais mot de passe (AUTH-2FA-10). */
+    public const REASON_BAD_SECOND_FACTOR = 'bad_second_factor';
 
     /** Seuil de verrouillage : 5 échecs sur la fenêtre glissante déclenchent le lock (AUTH-LK-01). */
     public const FAILURE_THRESHOLD = 5;

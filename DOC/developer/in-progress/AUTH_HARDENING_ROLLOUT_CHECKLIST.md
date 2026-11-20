@@ -14,7 +14,9 @@
 > envoie bien `https://preprod.kayak-polo.info/…`. Tests d'intégration verts en CI
 > (tous les noms cités existent). Phase 1b-ter lot A : sur `claude/scoring-refactoring-strategy-3d43ac`, **pas encore
 > dans `main`** ; tests unitaires (25) et lint verts en local, recette manuelle dev validée le 15/11/2026 (1b-ter.2).
-> Restent ☐ : tests manuels non tracés, suivi SQL en base, commande de purge (à écrire), lot A à déployer, phase 3.
+> Restent ☐ (au 19/11) : suivi SQL en base (1a.5 n° 6, 1a.6 n° 6), commande de purge (à écrire), message aux utilisateurs
+> (1a-bis.3), recette et déploiement de la phase 3 (code livré en local le 19/11/2026, tests automatisés verts).
+> Tests manuels 1b, 1b-bis et lot A de la phase 1b-ter (préprod + prod) cochés le 19/11/2026.
 >
 > **Point au 19/11/2026** — nettoyage de la base de prod : comptes sans e-mail corrigés ou supprimés, comptes encore
 > en MD5 supprimés (inactifs depuis mars 2026, à recréer au besoin en saison 2027). `app:auth:password-audit` :
@@ -182,13 +184,13 @@ API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter 'AuthPassword
 
 | # | Test | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | `testCampaignFlagsAccountsWithAPasswordNotRenewedSinceTheDate` | Compte non renouvelé marqué, renouvelé depuis la date et Google seul exemptés | ☐ |
-| 2 | `testFlaggedAccountLoginOpensNoSessionAndReturnsARenewalToken` | 403 `PASSWORD_RENEWAL_REQUIRED`, jeton, aucun cookie | ☐ |
-| 3 | `testJwtIssuedBeforeTheFlagIsRefused` / `testRefreshSessionOfAFlaggedAccountIsRefused` | 401 / 403 : refus côté api2 | ☐ |
-| 4 | `testNonCompliantRenewalIsRefused` / `testRenewalWithTheCurrentPasswordIsRefused` | 400 `WEAK_PASSWORD` / `PASSWORD_REUSED` | ☐ |
-| 5 | `testRenewalSetsThePasswordOpensTheSessionAndIsJournaled` | 200 + session, indicateur levé, `kp_journal`, jeton à usage unique | ☐ |
-| 6 | `testCorrectMd5PasswordFailsOnceTheFallbackIsRemoved` | 401 avec `AUTH_LEGACY_MD5_FALLBACK=0` | ☐ |
-| 7 | `testPurgeLeavesNoMd5HashAndJournalsEachAccount` | Plus aucun `Pwd` de 32 hexadécimaux, bcrypt intacts | ☐ |
+| 1 | `testCampaignFlagsAccountsWithAPasswordNotRenewedSinceTheDate` | Compte non renouvelé marqué, renouvelé depuis la date et Google seul exemptés | ☑ |
+| 2 | `testFlaggedAccountLoginOpensNoSessionAndReturnsARenewalToken` | 403 `PASSWORD_RENEWAL_REQUIRED`, jeton, aucun cookie | ☑ |
+| 3 | `testJwtIssuedBeforeTheFlagIsRefused` / `testRefreshSessionOfAFlaggedAccountIsRefused` | 401 / 403 : refus côté api2 | ☑ |
+| 4 | `testNonCompliantRenewalIsRefused` / `testRenewalWithTheCurrentPasswordIsRefused` | 400 `WEAK_PASSWORD` / `PASSWORD_REUSED` | ☑ |
+| 5 | `testRenewalSetsThePasswordOpensTheSessionAndIsJournaled` | 200 + session, indicateur levé, `kp_journal`, jeton à usage unique | ☑ |
+| 6 | `testCorrectMd5PasswordFailsOnceTheFallbackIsRemoved` | 401 avec `AUTH_LEGACY_MD5_FALLBACK=0` | ☑ |
+| 7 | `testPurgeLeavesNoMd5HashAndJournalsEachAccount` | Plus aucun `Pwd` de 32 hexadécimaux, bcrypt intacts | ☑ |
 
 ### 1a-bis.2 ⌨️ Tests manuels (dev)
 
@@ -284,12 +286,12 @@ make api2_test_integration   # inclut AuthRefreshSessionTest
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Login app4 depuis un navigateur frais | OK, DevTools → onglet Application → Cookies : `kpi_access` et `kpi_refresh` visibles (HttpOnly ✓) | ☐ |
-| 2 | Effacer `localStorage.kpi_admin_token` manuellement, recharger | App4 reste connectée (le cookie `kpi_access` suffit à api2) | ☐ |
-| 3 | Attendre > JWT_TTL, naviguer, puis déclencher un refresh (via refreshToken() de useAuth) | Nouveau JWT en cookie, pas de 401 utilisateur | ☐ |
-| 4 | Click « Déconnexion » | `/auth/logout` → cookies effacés, redirection login | ☐ |
-| 5 | Login depuis un nouveau navigateur / appareil | Email d'alerte reçu avec lien de révocation | ☐ |
-| 6 | Cliquer le lien de révocation de l'email | Appareil révoqué, toutes sessions actives terminées (le navigateur d'origine est déconnecté au prochain refresh) | ☐ |
+| 1 | Login app4 depuis un navigateur frais | OK, DevTools → onglet Application → Cookies : `kpi_access` et `kpi_refresh` visibles (HttpOnly ✓) | ☑ |
+| 2 | Effacer `localStorage.kpi_admin_token` manuellement, recharger | App4 reste connectée (le cookie `kpi_access` suffit à api2) | ☑ |
+| 3 | Attendre > JWT_TTL, naviguer, puis déclencher un refresh (via refreshToken() de useAuth) | Nouveau JWT en cookie, pas de 401 utilisateur | ☑ |
+| 4 | Click « Déconnexion » | `/auth/logout` → cookies effacés, redirection login | ☑ |
+| 5 | Login depuis un nouveau navigateur / appareil | Email d'alerte reçu avec lien de révocation | ☑ |
+| 6 | Cliquer le lien de révocation de l'email | Appareil révoqué, toutes sessions actives terminées (le navigateur d'origine est déconnecté au prochain refresh) | ☑ |
 
 ### 1b.4 CORS et domaines (préprod/prod)
 
@@ -333,13 +335,13 @@ API2_TEST_DB=1 vendor/bin/phpunit --testsuite=integration --filter AuthDevices
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | Depuis l'avatar en haut à droite, cliquer « Sécurité du compte » | Page `/profile/security` chargée, section « Appareils actifs » renseignée | ☐ |
-| 2 | Dans la liste, l'appareil marqué « Cet appareil » ne peut pas être révoqué (bouton grisé) | OK | ☐ |
-| 3 | Ouvrir le site dans un deuxième navigateur, se connecter | Un deuxième appareil apparaît dans `/profile/security` du 1er navigateur | ☐ |
-| 4 | Révoquer ce deuxième appareil → recharger le 2ᵉ navigateur | 2ᵉ navigateur déconnecté (401 au prochain appel métier) ; 1er navigateur toujours connecté | ☐ |
-| 5 | Cliquer « Déconnecter toutes les autres sessions » | Notice « X autre(s) appareil(s) déconnecté(s) », la liste ne contient plus que l'appareil courant | ☐ |
-| 6 | Si Google est lié, cliquer « Délier mon compte Google » | Notice « Compte Google délié », l'encart devient « Aucun compte Google lié » | ☐ |
-| 7 | Si l'utilisateur n'a pas de mot de passe (`Pwd=''`), bouton délier → 409 affiché proprement | « Définissez d'abord un mot de passe… » | ☐ |
+| 1 | Depuis l'avatar en haut à droite, cliquer « Sécurité du compte » | Page `/profile/security` chargée, section « Appareils actifs » renseignée | ☑ |
+| 2 | Dans la liste, l'appareil marqué « Cet appareil » ne peut pas être révoqué (bouton grisé) | OK | ☑ |
+| 3 | Ouvrir le site dans un deuxième navigateur, se connecter | Un deuxième appareil apparaît dans `/profile/security` du 1er navigateur | ☑ |
+| 4 | Révoquer ce deuxième appareil → recharger le 2ᵉ navigateur | 2ᵉ navigateur déconnecté (401 au prochain appel métier) ; 1er navigateur toujours connecté | ☑ |
+| 5 | Cliquer « Déconnecter toutes les autres sessions » | Notice « X autre(s) appareil(s) déconnecté(s) », la liste ne contient plus que l'appareil courant | ☑ |
+| 6 | Si Google est lié, cliquer « Délier mon compte Google » | Notice « Compte Google délié », l'encart devient « Aucun compte Google lié » | ☑ |
+| 7 | Si l'utilisateur n'a pas de mot de passe (`Pwd=''`), bouton délier → 409 affiché proprement | « Définissez d'abord un mot de passe… » | ☑ |
 
 ### 1b-bis.3 Rollback
 
@@ -402,26 +404,26 @@ Remettre `JWT_TTL` à sa valeur et `make api2_restart` après la recette.
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, workflow « Deploy preprod » vert | ☐ |
-| 2 | 🌐 Actions → run « Deploy preprod » → étape « Déployer via SSH » | `nuxt generate` d'app4 joué par le wrapper (~7 min) | ☐ |
-| 3 | ⌨️ app4 préprod : bandeau « Recharger » → recharger | Nouvelle version chargée | ☐ |
-| 4 | ⌨️ Se connecter avec un compte **profil 9**, DevTools → Réseau filtré sur `auth/` | Login OK ; aucun `/auth/refresh` dans la foulée (JWT de 24 h, rien à renouveler) | ☐ |
-| 5 | ⌨️ Vérification du cookie (encadré ci-dessus) | `/auth/refresh-session` en 200, pas de `/login` | ☐ |
-| 6 | ⌨️ Même chose avec un mandat actif | Le mandat est toujours sélectionné après rechargement | ☐ |
-| 7 | ⌨️ Ouvrir une console Scoring, saisir un but, exporter un PDF | Tout passe, pas de 401 dans la console DevTools | ☐ |
-| 8 | ⌨️ Déconnexion | `/auth/logout`, retour sur `/login` ; un rechargement **ne** restaure **pas** la session | ☐ |
-| 9 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas de rafale de `401` sur `/auth/refresh-session` | ☐ |
+| 1 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, workflow « Deploy preprod » vert | ☑ |
+| 2 | 🌐 Actions → run « Deploy preprod » → étape « Déployer via SSH » | `nuxt generate` d'app4 joué par le wrapper (~7 min) | ☑ |
+| 3 | ⌨️ app4 préprod : bandeau « Recharger » → recharger | Nouvelle version chargée | ☑ |
+| 4 | ⌨️ Se connecter avec un compte **profil 9**, DevTools → Réseau filtré sur `auth/` | Login OK ; aucun `/auth/refresh` dans la foulée (JWT de 24 h, rien à renouveler) | ☑ |
+| 5 | ⌨️ Vérification du cookie (encadré ci-dessus) | `/auth/refresh-session` en 200, pas de `/login` | ☑ |
+| 6 | ⌨️ Même chose avec un mandat actif | Le mandat est toujours sélectionné après rechargement | ☑ |
+| 7 | ⌨️ Ouvrir une console Scoring, saisir un but, exporter un PDF | Tout passe, pas de 401 dans la console DevTools | ☑ |
+| 8 | ⌨️ Déconnexion | `/auth/logout`, retour sur `/login` ; un rechargement **ne** restaure **pas** la session | ☑ |
+| 9 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas de rafale de `401` sur `/auth/refresh-session` | ☑ |
 
 ### 1b-ter.5 🌐 Production (après validation préprod, hors compétition)
 
 | # | Action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour | Tag `vX.Y.Z` poussé | ☐ |
-| 2 | 🌐 Actions → « Deploy production » → Run workflow depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert, app4 régénérée | ☐ |
-| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☐ |
-| 4 | ⌨️ Refaire les étapes 3 à 6 et 8 de la préprod (sans saisie Scoring sur un vrai match) | Mêmes résultats | ☐ |
-| 5 | 🖥 `cd /data/kpi && make api2_logs lines=200` le lendemain | Pas de rafale de `401` sur `/auth/refresh` ni `/auth/refresh-session` | ☐ |
-| 6 | Après la première journée de compétition : demander aux tables de marque s'il y a eu un retour sur `/login` | Aucun (sinon : heure, poste, onglets ouverts → ticket) | ☐ |
+| 1 | ⌨️ `make release_tag version=X.Y.Z` sur `main` à jour | Tag `vX.Y.Z` poussé | ☑ |
+| 2 | 🌐 Actions → « Deploy production » → Run workflow depuis `main`, `ref` = `vX.Y.Z` → approuver | Run vert, app4 régénérée | ☑ |
+| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☑ |
+| 4 | ⌨️ Refaire les étapes 3 à 6 et 8 de la préprod (sans saisie Scoring sur un vrai match) | Mêmes résultats | ☑ |
+| 5 | 🖥 `cd /data/kpi && make api2_logs lines=200` le lendemain | Pas de rafale de `401` sur `/auth/refresh` ni `/auth/refresh-session` | ☑ |
+| 6 | Après la première journée de compétition : demander aux tables de marque s'il y a eu un retour sur `/login` | Aucun (sinon : heure, poste, onglets ouverts → ticket) | ☑ |
 
 ### 1b-ter.6 Rollback
 
@@ -496,13 +498,13 @@ make api2_test_integration   # inclut AuthOAuthGoogleTest
 |---|---|---|---|
 | 1 | Provisionner `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` en preprod puis prod (Symfony Secrets ou `.env.local`) | ☑ |
 | 2 | Déployer via le CI/CD (préprod puis prod, cf. 1a.5 / 1a.6) | Le wrapper applique la migration `kp_user_oauth` et redémarre api2 | ☑ |
-| 3 | Après tout changement de variable `GOOGLE_OAUTH_*` seul (sans déploiement) : 🖥 `make api2_restart` | Worker reparti | ☐ |
+| 3 | Après tout changement de variable `GOOGLE_OAUTH_*` seul (sans déploiement) : 🖥 `make api2_restart` | Worker reparti | ☑ |
 | 4 | Smoke-test depuis l'env public : clic bouton → consent screen Google → retour **connecté dans app4** (une simple redirection vers Google ne prouve rien) — prod OK depuis `www` le 14/11/2026 | ☑ |
 | 5 | 🖥 `grep -E '^(GOOGLE_OAUTH_REDIRECT_URI\|APP4_URL)=' sources/api2/.env` | **Même hôte** pour les deux (les cookies `kpi_oauth_state` et de session ne sont valables que sur l'hôte qui les a posés) ; URI déclarée dans la console Google — prod : les deux en `www` (14/11/2026). Depuis `kayak-polo.info/admin2`, le bouton part vers `api2BaseUrl` (`www`) : l'aller-retour reste sur `www` | ☑ |
-| 6 | Après le déploiement de la redirection `kayak-polo.info/admin2` → `www` (routeur `nginx_app4_bare`, `docker/compose.prod.yaml`) : 🖥 `cd /data/kpi && make docker_prod_up` (recrée `nginx_static`, dont les labels ont changé ; un simple restart ne relit pas les labels) | — | ☐ |
-| 7 | ⌨️ `curl -sI https://kayak-polo.info/admin2/login \| grep -iE '^HTTP\|^location'` | `301`, `location: https://www.kayak-polo.info/admin2/login` | ☐ |
-| 8 | ⌨️ `curl -s -o /dev/null -w '%{http_code}\n' https://kayak-polo.info/api2/medals/catalog` | `200` **sans** redirection : app2 appelle `/api2` sur le domaine nu (CORS), il ne doit pas être redirigé | ☐ |
-| 9 | ⌨️ App2 `https://app.kayak-polo.info` : ouvrir un événement | Données chargées, pas d'erreur CORS dans la console | ☐ |
+| 6 | Après le déploiement de la redirection `kayak-polo.info/admin2` → `www` (routeur `nginx_app4_bare`, `docker/compose.prod.yaml`) : 🖥 `cd /data/kpi && make docker_prod_up` (recrée `nginx_static`, dont les labels ont changé ; un simple restart ne relit pas les labels) | — | ☑ |
+| 7 | ⌨️ `curl -sI https://kayak-polo.info/admin2/login \| grep -iE '^HTTP\|^location'` | `301`, `location: https://www.kayak-polo.info/admin2/login` | ☑ |
+| 8 | ⌨️ `curl -s -o /dev/null -w '%{http_code}\n' https://kayak-polo.info/api2/medals/catalog` | `200` **sans** redirection : app2 appelle `/api2` sur le domaine nu (CORS), il ne doit pas être redirigé | ☑ |
+| 9 | ⌨️ App2 `https://app.kayak-polo.info` : ouvrir un événement | Données chargées, pas d'erreur CORS dans la console | ☑ |
 
 ### 2.6 Rollback
 
@@ -559,11 +561,140 @@ Si le flow /connect casse (500, redirections infinies) :
 
 ---
 
-## Phase 3 — TOTP profils ≤ 3 (à venir)
+## Phase 3 — Second facteur jusqu'au profil 4
 
-Statut : 📋 spécifiée. Pré-requis :
+Spec : [AUTH_HARDENING.md § 5](AUTH_HARDENING.md) · aide utilisateur : [SECOND_FACTOR.md](../../user/SECOND_FACTOR.md).
+Le déploiement du code ne force rien : tant que `AUTH_2FA_ENFORCED_FROM` est vide, seuls les volontaires activent un
+second facteur. La migration `Version20261120100000` (4 tables) est jouée par le wrapper.
 
-1. Phases 1a, 1b et 2 en production.
-2. Liste des utilisateurs profil ≤ 3 identifiée (environ 20-30 personnes).
-3. Email d'information rédigé et envoyé 2 semaines avant la date d'activation forcée.
-4. Procédure « téléphone perdu » documentée côté support (contact super-admin pour reset).
+### 3.0 Pré-requis
+
+| # | Pré-requis | ☑ |
+|---|---|---|
+| 1 | Phases 1a, 1b et 2 en production | ☑ |
+| 2 | Inventaire des comptes de **profil maximal ≤ 4, mandats compris** : `app:auth:second-factor-audit` (ou la requête SQL du § 5.2) ; comptes partagés repérés et scindés | ☐ |
+| 3 | Ces comptes ont un e-mail valide (`app:auth:password-audit --without-email`) : nécessaire au code par e-mail et au message d'information | ☐ |
+| 4 | Login legacy `admin/Login.php` désactivé (prévu début 2027, après validation de la console Scoring) : condition pour fixer la date (AUTH-2FA-17) | ☐ |
+| 5 | Procédure « téléphone perdu / e-mail injoignable » connue des super-admins : réinitialisation par `POST /auth/2fa/reset/{code}` (§ 3.7) | ☐ |
+
+### 3.1 ⌨️ Tests automatisés
+
+```bash
+make api2_test_unit          # TotpTest, SecondFactorPolicyTest, SecondFactorSecretBoxTest, SecondFactorTokenTest
+make api2_test_integration   # AuthSecondFactorTest (29 tests) + AuthOAuthGoogleTest
+cd sources/app4 && npx vitest run tests/unit/secondFactor.spec.ts && npm run lint
+```
+
+Joués en local le 19/11/2026 : unit 496 ✅, integration 458 ✅, PHPStan ✅, vitest 8 ✅, ESLint ✅.
+
+| # | Test | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | `TotpTest` | Vecteurs RFC 6238, ± 1 période, anti-rejeu (AUTH-2FA-04, 09) | ☑ |
+| 2 | `SecondFactorPolicyTest` | Profil maximal avec mandats, grâce de 7 jours, pas d'obligation sans date ou avant (AUTH-2FA-00 à 03, 13) | ☑ |
+| 3 | `testWithoutEnforcementDate…` / `testEnforcementDateInTheFuture…` | Login 200 sans échéance (AUTH-2FA-00) | ☑ |
+| 4 | `testFirstConcernedLoginOpensTheGrace…` / `testAMandateUpToProfile4…` | Échéance renvoyée ; un mandat ≤ 4 rend un profil 8 concerné (AUTH-2FA-01 à 03) | ☑ |
+| 5 | `testOnceTheGraceIsOverLoginReturnsAnEnrollmentToken…` | 403 `SECOND_FACTOR_ENROLLMENT_REQUIRED`, ni JWT ni cookie | ☑ |
+| 6 | `testTotpEnrollmentWithTheToken…` / `testEmailEnrollment…` | Activation, 10 codes de récupération bcrypt, `kp_journal` « Activation 2FA » ; e-mail exigé (AUTH-2FA-04 à 06) | ☑ |
+| 7 | `testLoginWithAnActiveTotp…` / `testVerifyWithTheTotpCode…` / `testATotpCodeCannotBeUsedTwice` | 403 `SECOND_FACTOR_REQUIRED` puis session ; méthode `totp` au journal ; rejeu refusé (AUTH-2FA-07, 09, 16) | ☑ |
+| 8 | `testWrongCodesAreJournaledAndLockTheAccount` | 5 × `bad_second_factor` puis 423 (AUTH-2FA-10) | ☑ |
+| 9 | `testEmailMethodSendsTheCodeAtLogin…` / `…InvalidatesThePreviousOne` / `…IsThrottled` / `…ExpiresAfterTenMinutes` | Code envoyé, usage unique, 429, expiration (AUTH-2FA-08) | ☑ |
+| 10 | `testARecoveryCodeWorksOnce` / `testRegeneratingRecoveryCodes…` | Usage unique ; anciens codes invalidés (AUTH-2FA-06) | ☑ |
+| 11 | `testATrustedDeviceSkipsTheChallengeUntilThePasswordChanges` / `testATrustedDeviceIsListedAndRevocable` | Cookie `kpi_2fa_trust` ; révoqué au changement de mot de passe ou à la main (AUTH-2FA-11) | ☑ |
+| 12 | `testPasswordRenewalIsStillRequiredAfterTheSecondFactor` | Second facteur puis 403 `PASSWORD_RENEWAL_REQUIRED` | ☑ |
+| 13 | `testCallbackOfAnAccountWithASecondFactorRedirectsToTheChallenge…` (`AuthOAuthGoogleTest`) | Google → `/auth/second-factor#challenge=…`, aucun cookie de session (AUTH-2FA-12) | ☑ |
+| 14 | `testDisablingIsRefusedUpToProfile4…` / `testChangingMethodRequiresACodeOfTheCurrentOne` | 409 `SECOND_FACTOR_MANDATORY` ; preuve exigée (AUTH-2FA-13, 14) | ☑ |
+| 15 | `testSuperAdminResetRemovesTheFactor…` / `testResetIsReservedToASuperAdminWithASecondFactor` | Enrôlement immédiat, journal, e-mail ; refus sans second facteur (AUTH-2FA-15) | ☑ |
+| 16 | `testAuditListsTheConcernedAccountsWithTheirState` | `app:auth:second-factor-audit` | ☑ |
+| 17 | `tests/unit/secondFactor.spec.ts` (app4) | Fragment Google, format des codes, jours de grâce | ☑ |
+
+### 3.2 ⌨️ Préparation et tests manuels (dev)
+
+```bash
+make api2_migrations_migrate   # Version20261120100000 (fait en dev le 19/11/2026)
+# dans sources/api2/.env.local :
+#   AUTH_2FA_ENCRYPTION_KEY=<sortie de : docker exec kpi_api2 php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'>
+make api2_restart
+make app4_generate_dev         # recette sur https://kpi.localhost/admin2 (cookies, cf. 1b-ter.2)
+```
+
+E-mails : Mailpit. Application TOTP : n'importe laquelle sur un téléphone (ou `oathtool --totp -b <clé>`).
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Compte de test **profil 8**, **Sécurité du compte** → bloc « Double authentification » | « Facultative… » + bouton « Activer » | ☐ |
+| 2 | Activer → Application → scanner le QR code → saisir le code | 10 codes de récupération ; « Continuer » grisé tant que la case n'est pas cochée ; puis « Activée : application d'authentification · 10 codes » | ☐ |
+| 3 | Se déconnecter, se reconnecter | Écran « Double authentification » après le mot de passe ; code de l'application → accès | ☐ |
+| 4 | Se reconnecter en cochant « Faire confiance à cet appareil », puis se déconnecter / reconnecter | Plus de code demandé ; l'appareil apparaît dans « Appareils de confiance » ; « Révoquer » → le code est redemandé | ☐ |
+| 5 | Se reconnecter avec un code de récupération | Accès ; « 9 codes restants » | ☐ |
+| 6 | « Changer de méthode » → code de l'application → E-mail → code reçu dans Mailpit | « Activée : code par e-mail » ; nouveaux codes de récupération | ☐ |
+| 7 | Se reconnecter : code par e-mail, puis « Renvoyer un code » deux fois de suite | Code reçu ; 2ᵉ renvoi refusé (« Patientez une minute ») | ☐ |
+| 8 | « Désactiver » (profil 8) avec un code | « Double authentification désactivée » ; login sans code | ☐ |
+| 9 | `AUTH_2FA_ENFORCED_FROM=<hier>` dans `.env.local` + `make api2_restart` ; login d'un compte **profil ≤ 4 sans second facteur** | Bandeau orange « plus que 7 jour(s) » sur toutes les pages sauf Sécurité du compte | ☐ |
+| 10 | 🗄 SQL : `UPDATE kp_user_second_factor SET enrollment_required_since = NOW() - INTERVAL 8 DAY WHERE user_code = '<code>';` puis login | Écran « Activez la double authentification », aucune page accessible ; activation → codes → accès | ☐ |
+| 11 | Ce compte profil ≤ 4 : « Désactiver » | Bouton absent, mention « Obligatoire pour votre profil » | ☐ |
+| 12 | Profil 1 doté d'un second facteur : `POST /api2/auth/2fa/reset/<code>` (Swagger) | E-mail « Double authentification réinitialisée » (Mailpit) ; au login suivant du compte, enrôlement exigé | ☐ |
+| 13 | Compte lié à Google et doté d'un second facteur : « Continuer avec Google » | Retour sur l'écran du code (pas de connexion directe) | ☐ |
+| 14 | `docker exec kpi_api2 php bin/console app:auth:second-factor-audit` | Date en vigueur, méthode et état de chaque compte concerné | ☐ |
+| 15 | Remettre `AUTH_2FA_ENFORCED_FROM=` vide + `make api2_restart` | Plus de bandeau ni d'enrôlement exigé | ☐ |
+
+### 3.3 Non-régression
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | Login d'un compte sans second facteur, date vide | Flux inchangé (`/select-mandate` ou `/`) | ☐ |
+| 2 | Renouvellement de mot de passe exigé (1a-bis.2) | Inchangé ; avec un second facteur actif : code **puis** renouvellement | ☐ |
+| 3 | Mot de passe oublié → réinitialisation | OK ; les appareils de confiance du compte sont révoqués | ☐ |
+| 4 | Continuité de session (1b-ter.2 n° 1 et 5) | Inchangée : le second facteur n'est demandé qu'au login, pas au renouvellement du JWT | ☐ |
+| 5 | app2 et site public | Aucun impact | ☐ |
+
+### 3.4 🌐 Pré-production (merge sur `main` → déploiement automatique)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | 🖥 `cd /data/kpi_preprod`, générer la clé avec `docker exec kpi_preprod_api2 php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'`, puis ajouter `AUTH_2FA_ENCRYPTION_KEY=<cette clé, propre à la préprod>` et `AUTH_2FA_ENFORCED_FROM=` (vide) dans `sources/api2/.env` | Clé de 44 caractères ; la noter dans le gestionnaire de secrets | ☐ |
+| 2 | ⌨️ `make pr_create` → `make pr_checks` → `make pr_merge` | CI verte, « Deploy preprod » vert | ☐ |
+| 3 | 🌐 Actions → « Deploy preprod » → « Déployer via SSH » | Migration `Version20261120100000` appliquée, `api2_restart`, `nuxt generate` d'app4 | ☐ |
+| 4 | 🖥 `docker exec kpi_preprod_api2 php bin/console app:auth:second-factor-audit` | « Entrée en vigueur : non fixée », « TOTP : disponible », liste des comptes ≤ 4 | ☐ |
+| 5 | ⌨️ app4 préprod : refaire 3.2 n° 1 à 8 avec un compte de test (vrai e-mail) | Mêmes résultats | ☐ |
+| 6 | ⌨️ Refaire 3.2 n° 9 à 11 avec `AUTH_2FA_ENFORCED_FROM=<hier>` puis remettre vide (+ `make api2_restart` à chaque fois) | Mêmes résultats | ☐ |
+| 7 | 🖥 `cd /data/kpi_preprod && make api2_logs lines=100` | Pas d'erreur | ☐ |
+
+### 3.5 🌐 Production — livraison du code (sans forçage)
+
+| # | Action | Résultat attendu | ☑ |
+|---|---|---|---|
+| 1 | 🖥 `cd /data/kpi`, générer la clé avec `docker exec kpi_api2 php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'`, puis ajouter `AUTH_2FA_ENCRYPTION_KEY=<cette clé, propre à la prod>` et `AUTH_2FA_ENFORCED_FROM=` (vide) dans `sources/api2/.env` | Clé sauvegardée hors serveur | ☐ |
+| 2 | ⌨️ `make release_tag version=X.Y.Z` puis 🌐 « Deploy production » sur `vX.Y.Z` | Run vert ; migration appliquée | ☐ |
+| 3 | 🖥 `cat /data/kpi/.last-deploy-sha` | SHA du tag | ☐ |
+| 4 | 🖥 `docker exec kpi_api2 php bin/console app:auth:second-factor-audit` | « non fixée », « disponible » | ☐ |
+| 5 | ⌨️ Activer le second facteur sur **votre** compte super-admin (application) et conserver les codes de récupération | Login avec code OK — prérequis de toute réinitialisation (AUTH-2FA-15) | ☐ |
+| 6 | Inviter les volontaires (profils 1 à 4) à l'activer dès maintenant | Suivi par l'audit | ☐ |
+
+### 3.6 🖥 Date annoncée — entrée en vigueur (prod)
+
+1. ☐ Le login legacy est désactivé (3.0 n° 4).
+2. ☐ E-mail d'information envoyé **2 semaines avant** (méthodes au choix, application recommandée, 7 jours de grâce,
+   codes de récupération à conserver, lien vers [SECOND_FACTOR.md](../../user/SECOND_FACTOR.md)).
+3. ☐ On peut poser la date à l'avance (rien ne se passe avant) : `AUTH_2FA_ENFORCED_FROM=AAAA-MM-JJ` dans
+   `sources/api2/.env`, puis `make api2_restart`. En préprod d'abord.
+4. ☐ Suivi quotidien la 1ʳᵉ semaine : `app:auth:second-factor-audit` (« grâce à la prochaine connexion » →
+   « en grâce jusqu'au… » → « actif ») ; relancer les comptes « enrôlement exigé ».
+5. ☐ 🗄 SQL : `SELECT method, failure_reason, COUNT(*) FROM kp_user_login_history WHERE attempted_at >= CURDATE() - INTERVAL 7 DAY AND method IN ('totp','email_otp','recovery_code') GROUP BY 1,2;` — pas de rafale de `bad_second_factor`.
+
+### 3.7 Support — téléphone perdu
+
+1. L'utilisateur se connecte avec un **code de récupération** et change de méthode depuis **Sécurité du compte**.
+2. Sans code : un super-admin doté d'un second facteur appelle `POST /api2/auth/2fa/reset/<code>` (Swagger
+   `https://www.kayak-polo.info/api2/doc`, tag « 20. App4 - Authentication »), après avoir vérifié l'identité de la
+   personne. Journal `Réinitialisation 2FA`, e-mail à l'utilisateur ; enrôlement exigé à sa connexion suivante.
+
+### 3.8 Rollback
+
+1. **Suspendre l'obligation** : vider `AUTH_2FA_ENFORCED_FROM` + `make api2_restart`. Effet immédiat ; les seconds
+   facteurs déjà activés restent demandés.
+2. **Débloquer un compte** : réinitialisation (§ 3.7), ou 🗄 SQL `DELETE FROM kp_user_second_factor WHERE user_code = '<code>';`
+   (+ `DELETE FROM kp_user_recovery_code WHERE user_code = '<code>';`).
+3. **Retour arrière du code** : revert + redéploiement. Les 4 tables restent (pas de perte). Le login redevient sans
+   second facteur pour tous.
+4. ⚠️ **Ne jamais changer `AUTH_2FA_ENCRYPTION_KEY`** une fois des TOTP activés : ils deviendraient illisibles (codes
+   refusés). Si la clé est perdue : réinitialiser chaque compte TOTP.

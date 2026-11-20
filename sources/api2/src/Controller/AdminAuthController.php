@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Cms\EditorialAccess;
 use App\Entity\User;
 use App\Security\KnownDeviceService;
+use App\Security\LoginCompletion;
 use App\Security\LoginAttemptLogger;
 use App\Security\LoginRateLimiter;
 use App\Security\PasswordMatch;
@@ -13,13 +14,16 @@ use App\Security\PasswordRenewalService;
 use App\Security\PasswordRenewalToken;
 use App\Security\PasswordVerifier;
 use App\Security\RefreshTokenService;
+use App\Security\SecondFactorService;
+use App\Security\SessionCookies;
+use App\Security\TrustedDevices;
+use App\Security\UserMandates;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
 use Doctrine\DBAL\Connection;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -33,7 +37,7 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 #[OA\Tag(name: '20. App4 - Authentication')]
 class AdminAuthController extends AbstractController
 {
-    public const PASSWORD_RENEWAL_REQUIRED = 'PASSWORD_RENEWAL_REQUIRED';
+    public const PASSWORD_RENEWAL_REQUIRED = LoginCompletion::PASSWORD_RENEWAL_REQUIRED;
 
     public function __construct(
         private readonly UserProvider $userProvider,
@@ -48,6 +52,10 @@ class AdminAuthController extends AbstractController
         private readonly PasswordVerifier $passwordVerifier,
         private readonly PasswordRenewalService $passwordRenewals,
         private readonly PasswordRenewalToken $renewalTokens,
+        private readonly LoginCompletion $loginCompletion,
+        private readonly UserMandates $userMandates,
+        private readonly SecondFactorService $secondFactors,
+        private readonly TrustedDevices $trustedDevices,
     ) {
     }
 
@@ -122,18 +130,8 @@ class AdminAuthController extends AbstractController
         }
 
         // Succès : alimente le journal de sécurité (AUTH-JL-01) avant toute suite.
-        $this->loginLogger->logSuccess($user->getCode(), LoginAttemptLogger::METHOD_PASSWORD, $usedLegacyHash, $request);
-        $this->loginRateLimiter->resetUser($username);
-
-        if ($this->passwordRenewals->isRequired($user->getCode())) {
-            return $this->json([
-                'message' => 'Password renewal required',
-                'code' => self::PASSWORD_RENEWAL_REQUIRED,
-                'renewalToken' => $this->renewalTokens->create($user->getCode(), $this->storedHash($user->getCode())),
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        return $this->openSession($user, $request);
+        // Second facteur, puis renouvellement exigé, puis session (AUTH_HARDENING.md § 5).
+        return $this->loginCompletion->afterPassword($user, $request, $username, $usedLegacyHash);
     }
 
     /**
@@ -160,7 +158,7 @@ class AdminAuthController extends AbstractController
         }
 
         $userCode = $this->renewalTokens->userCode($token);
-        $storedHash = $userCode === null ? '' : $this->storedHash($userCode);
+        $storedHash = $userCode === null ? '' : $this->loginCompletion->storedHash($userCode);
         if ($userCode === null || !$this->renewalTokens->isValid($token, $storedHash)) {
             return $this->json(['message' => 'Invalid or expired token', 'code' => 'INVALID_TOKEN'], Response::HTTP_UNAUTHORIZED);
         }
@@ -172,62 +170,13 @@ class AdminAuthController extends AbstractController
 
         $this->connection->executeStatement('UPDATE kp_user SET Pwd = ? WHERE Code = ?', [password_hash($password, PASSWORD_BCRYPT), $userCode]);
         $this->passwordRenewals->markRenewed($userCode, 'Renouvellement imposé au login');
+        $this->trustedDevices->revokeAll($userCode);
 
         /** @var User $user */
         $user = $this->userProvider->loadUserByIdentifier($userCode);
 
-        return $this->openSession($user, $request);
-    }
-
-    /**
-     * Ouvre la session après une authentification réussie : journal fonctionnel, JWT, refresh token,
-     * alerte « nouvel appareil ». Partagé par /auth/login et /auth/renew-password.
-     */
-    private function openSession(User $user, Request $request): JsonResponse
-    {
-        $mandates = $this->loadMandates($user->getCode());
-
-        // Log successful login dans le journal fonctionnel historique (séparé du journal de sécurité).
-        try {
-            $identite = trim($user->getPrenom() . ' ' . $user->getNom());
-            $sql = "INSERT INTO kp_journal (Dates, Users, Actions, Journal) VALUES (NOW(), ?, 'Connexion Admin', ?)";
-            $this->connection->prepare($sql)->executeStatement([
-                $user->getUserIdentifier(),
-                $identite ?: $user->getUserIdentifier(),
-            ]);
-        } catch (\Exception) {
-        }
-
-        // Generate JWT token
-        $token = $this->jwtManager->create($user);
-
-        // Phase 1b : refresh token opaque posé en cookie HttpOnly ; access JWT posé aussi en cookie
-        // pour que l'extracteur `cookie` de lexik_jwt le trouve sur les appels suivants d'app4.
-        // Phase 1b-bis : on attache l'empreinte au refresh token pour que la révocation ciblée
-        // d'un appareil depuis /profile/security puisse ne tuer que ses sessions (AUTH-DV-04).
-        $fingerprint = $this->knownDeviceService->currentFingerprint($request);
-        $refreshToken = $this->refreshTokenService->issue($user, $fingerprint);
-
-        // Nouvelle connexion depuis un appareil inconnu → email d'alerte avec lien de révocation.
-        $email = $this->fetchUserEmail($user->getCode());
-        $this->knownDeviceService->recognizeAndNotify($user, $email, $request);
-
-        $userData = $user->toArray();
-        // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
-        $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
-        $userData['mandates'] = $mandates;
-        $userData['activeMandate'] = null;
-        $userData['effectiveProfile'] = $user->getNiveau();
-        $userData['effectiveFilters'] = $userData['filters'];
-
-        $response = $this->json([
-            'token' => $token, // conservé en body pendant la transition d'app4 vers le cookie (AUTH-CK-02)
-            'user' => $userData,
-            'hasMandates' => count($mandates) > 0,
-        ]);
-        $response->headers->setCookie($this->buildAccessCookie($token));
-        $response->headers->setCookie($this->buildRefreshCookie($refreshToken));
-        return $response;
+        // Le jeton de renouvellement n'est remis qu'après le second facteur : la session peut s'ouvrir.
+        return $this->loginCompletion->openSession($user, $request);
     }
 
     /**
@@ -245,12 +194,13 @@ class AdminAuthController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $mandates = $this->loadMandates($user->getCode());
+        $mandates = $this->userMandates->forUser($user->getCode());
         $userData = $user->toArray();
         // Rights independent of the profile level, e.g. 'editor' (FEATURE_CMS.md § 4).
         $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $userData['oauthProviders'] = $this->oauthProvidersFor($user->getCode());
+        $userData['secondFactor'] = $this->secondFactors->summary($user);
         $this->applyActiveMandateToUserData($userData, $user, $mandates);
 
         return $this->json([
@@ -319,7 +269,7 @@ class AdminAuthController extends AbstractController
         /** @var User $user */
         $user = $this->userProvider->loadUserByIdentifier($result['userCode']);
         $accessToken = $this->jwtManager->create($user);
-        $mandates = $this->loadMandates($user->getCode());
+        $mandates = $this->userMandates->forUser($user->getCode());
 
         // Shape alignée sur /auth/login : app4 peut remplir son authStore à partir du body
         // sans passer par /auth/me puis un endpoint séparé. C'est ce dont /auth/oauth-complete
@@ -328,6 +278,7 @@ class AdminAuthController extends AbstractController
         $userData['capabilities'] = $this->editorialAccess->capabilities($user->getCode());
         $userData['mandates'] = $mandates;
         $userData['oauthProviders'] = $this->oauthProvidersFor($user->getCode());
+        $userData['secondFactor'] = $this->secondFactors->summary($user);
         $userData['activeMandate'] = null;
         $userData['effectiveProfile'] = $user->getNiveau();
         $userData['effectiveFilters'] = $userData['filters'];
@@ -338,8 +289,8 @@ class AdminAuthController extends AbstractController
             'hasMandates' => count($mandates) > 0,
             'refreshed' => true, // conservé pour compat avec un éventuel appelant qui n'attend que ça
         ]);
-        $response->headers->setCookie($this->buildAccessCookie($accessToken));
-        $response->headers->setCookie($this->buildRefreshCookie($result['token']));
+        $response->headers->setCookie(SessionCookies::access($accessToken));
+        $response->headers->setCookie(SessionCookies::refresh($result['token']));
         return $response;
     }
 
@@ -461,7 +412,7 @@ class AdminAuthController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $mandates = $this->loadMandates($user->getCode());
+        $mandates = $this->userMandates->forUser($user->getCode());
 
         // Generate new JWT token
         $token = $this->jwtManager->create($user);
@@ -559,7 +510,7 @@ class AdminAuthController extends AbstractController
 
         $userCode = $row['user'];
 
-        $passwordError = $this->newPasswordError($password, $this->storedHash($userCode));
+        $passwordError = $this->newPasswordError($password, $this->loginCompletion->storedHash($userCode));
         if ($passwordError !== null) {
             return $passwordError;
         }
@@ -569,6 +520,7 @@ class AdminAuthController extends AbstractController
         $this->connection->executeStatement('UPDATE kp_user SET Pwd = ? WHERE Code = ?', [$hashedPassword, $userCode]);
         // Un mot de passe choisi par l'utilisateur vaut renouvellement (compte marqué qui a oublié son mot de passe).
         $this->passwordRenewals->markRenewed($userCode, 'Mot de passe oublié');
+        $this->trustedDevices->revokeAll($userCode);
 
         // Delete the used token
         $this->connection->executeStatement('DELETE FROM kp_user_token WHERE user = ?', [$userCode]);
@@ -689,48 +641,6 @@ class AdminAuthController extends AbstractController
     // Helpers
     // ──────────────────────────────────────────────────────────────────────
 
-    /**
-     * JWT en cookie HttpOnly ; même TTL court que le token Bearer (15 min typique via JWT_TTL).
-     * Secure + SameSite=Lax : envoyé sur une navigation normale cross-site (le login est en POST
-     * depuis app4, qui est sur un sous-domaine du api2) mais pas sur une requête de 3ᵉ partie.
-     */
-    private function buildAccessCookie(string $jwt): Cookie
-    {
-        $ttl = (int) ($_ENV['JWT_TTL'] ?? getenv('JWT_TTL') ?: 900);
-        return Cookie::create('kpi_access')
-            ->withValue($jwt)
-            ->withExpires(time() + $ttl)
-            ->withPath('/')
-            ->withSecure(true)
-            ->withHttpOnly(true)
-            ->withSameSite('lax');
-    }
-
-    private function buildRefreshCookie(string $token): Cookie
-    {
-        return Cookie::create('kpi_refresh')
-            ->withValue($token)
-            ->withExpires(time() + RefreshTokenService::TTL_SECONDS)
-            ->withPath('/')
-            ->withSecure(true)
-            ->withHttpOnly(true)
-            ->withSameSite('lax');
-    }
-
-    /** Récupère l'email du compte (string vide si absent) — pour l'alerte « nouvel appareil ». */
-    private function fetchUserEmail(string $userCode): string
-    {
-        $mail = $this->connection->fetchOne('SELECT Mail FROM kp_user WHERE Code = ?', [$userCode]);
-        return is_string($mail) ? trim($mail) : '';
-    }
-
-    /** Hash courant de kp_user.Pwd ('' si le compte n'existe pas ou n'a pas de mot de passe). */
-    private function storedHash(string $userCode): string
-    {
-        $hash = $this->connection->fetchOne('SELECT Pwd FROM kp_user WHERE Code = ?', [$userCode]);
-        return is_string($hash) ? $hash : '';
-    }
-
     /** Nouveau mot de passe refusé : non conforme à PasswordPolicy ou identique à l'ancien (AUTH-RN-04). */
     private function newPasswordError(string $password, string $storedHash): ?JsonResponse
     {
@@ -765,58 +675,5 @@ class AdminAuthController extends AbstractController
         }
 
         return $match !== PasswordMatch::None;
-    }
-
-    /**
-     * Load mandates for a user, formatted for API response
-     */
-    private function loadMandates(string $userCode): array
-    {
-        $rows = $this->connection->fetchAllAssociative(
-            'SELECT id, libelle, niveau, filtre_saison, filtre_competition, limitation_equipe_club, filtre_journee, id_evenement
-             FROM kp_user_mandat WHERE user_code = ? ORDER BY id',
-            [$userCode]
-        );
-
-        return array_map(fn(array $row) => [
-            'id' => (int) $row['id'],
-            'libelle' => $row['libelle'],
-            'niveau' => (int) $row['niveau'],
-            'filters' => [
-                'seasons' => self::parsePipeFilter($row['filtre_saison']),
-                'competitions' => self::parsePipeFilter($row['filtre_competition']),
-                'clubs' => self::parseCommaFilter($row['limitation_equipe_club']),
-                'journees' => self::parseCommaFilterInt($row['filtre_journee']),
-                'events' => self::parsePipeFilterInt($row['id_evenement']),
-            ],
-        ], $rows);
-    }
-
-    private static function parsePipeFilter(?string $value): ?array
-    {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-        return array_values(array_filter(explode('|', trim($value, '|')), fn($v) => $v !== ''));
-    }
-
-    private static function parseCommaFilter(?string $value): ?array
-    {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-        return array_values(array_filter(explode(',', $value), fn($v) => trim($v) !== ''));
-    }
-
-    private static function parsePipeFilterInt(?string $value): ?array
-    {
-        $values = self::parsePipeFilter($value);
-        return $values !== null ? array_map('intval', $values) : null;
-    }
-
-    private static function parseCommaFilterInt(?string $value): ?array
-    {
-        $values = self::parseCommaFilter($value);
-        return $values !== null ? array_map('intval', $values) : null;
     }
 }
