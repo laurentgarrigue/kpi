@@ -1,6 +1,6 @@
 # Architecture cible de KPI — vue d'ensemble des chantiers
 
-> **Statut : vision de synthèse (2026-11-06, état des chantiers mis à jour le 2026-11-14).** Ce document ne décide rien de nouveau : il
+> **Statut : vision de synthèse (2026-11-06).** Ce document ne décide rien de nouveau : il
 > **assemble** sur une seule page la cible des chantiers en cours, telle que la décrivent leurs
 > documents de référence. En cas de divergence, **c'est le document du chantier qui fait foi** :
 >
@@ -367,16 +367,9 @@ officiels sont tous numériques et journalisés (`kp_journal`).
 
 ---
 
-## 6. État des chantiers au 2026-11-14
+## 6. État des chantiers
 
-| Chantier | État | Prochaine étape |
-|---|---|---|
-| api2 sur FrankenPHP + hub Mercure | 🟢 en production (préprod et prod) | éprouver le hub avec le scoring live (lot 0, action 0.3) |
-| app3 (site public) phases 1–4 | 🟢 en production sur `beta.*`, mesure d'audience Matomo sans cookie en service | phase 5 : bascule de `www` ([checklist](PUBLIC_SITE_ROLLOUT_CHECKLIST.md)) |
-| app2 sans authentification | 🟢 livré | adoption de `kpi-layer` (phase 6) |
-| PDF Gotenberg | 🟢 phases 0–5 en production | validations écrites des commissions (PDF-DOC-03), puis phase 6 : retrait de `Feuille*.php` / `Pdf*.php` / mPDF |
-| Auth hardening | 🟡 phases 1a, 1b, 2 livrées ; 1b-bis (appareils) et 1b-ter (continuité de session, lot A) en cours | TOTP ciblé (phase 3) — [AUTH_HARDENING.md](AUTH_HARDENING.md) |
-| Scoring lots 1–4 (état canonique, Mercure, console, incrustation) | 🟡 essayés en dev (juillet–octobre), **jamais validés de bout en bout** ; lot 4 jamais passé dans OBS | porte de validation de [SCORING_ROLLOUT_CHECKLIST.md](SCORING_ROLLOUT_CHECKLIST.md) (R0 → R5) |
-| Scoring lots 5–9 (relais, paramétrage, offline, ménage, zéro papier) | 🔴 non commencés | après la porte de validation |
-| Médias hors Git | ✅ fait (dev, preprod, prod) | — |
-| Médailles de match, catégorie d'âge dérivée, réalignement des structures FFCK | ✅ en production (novembre 2026) | — |
+L'état des chantiers et les actions à mener ne sont plus tenus ici : ils vivent dans le document
+[KPI — Suivi des chantiers](https://claude.ai/artifact/1f7pfsvSq8Zr49ArVgkjja). Ce document-ci ne décrit
+que la cible ; sa vue illustrée, [Architecture cible KPI](https://claude.ai/artifact/WMmVktC2SY3YKHEwYtW3gf),
+se republie depuis lui quand il change.
