@@ -85,7 +85,7 @@ Mesurée en local le 19/11/2026 sur `3b02b69` + ces changements (Vitest 5.1.1, v
 |---|---|---|---|
 | app2 | **2,9 %** | 2,9 | 19 tests (3 fichiers), 73 fichiers dont 42 `.vue` |
 | app3 + kpi-layer | **91,5 %** | 91 | 440 tests (unit + nuxt + e2e), 192 fichiers dont 130 `.vue` |
-| app4 | **11,7 %** | 11,5 | 420 tests (unit + nuxt), 234 fichiers dont 153 `.vue` ; lots 1 et 2 du scoring livrés (ticket 02) |
+| app4 | **13,2 %** | 13,0 | 451 tests (unit + nuxt), 234 fichiers dont 153 `.vue` ; lots 1 à 3 du scoring livrés (ticket 02) |
 | api2 | **51,0 %** | 50,9 | Mesuré en CI (PCOV, unit + integration, PR #408) ; 358 fichiers dans `src/` |
 
 ⚠️ **Le taux de lignes d'un `.vue` dépend du compilateur** : avec le seul `@vitejs/plugin-vue`, app4 affichait
