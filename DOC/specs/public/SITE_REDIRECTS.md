@@ -63,7 +63,7 @@ d'abord remplacée par une réponse 301 ou 410 décidée ici (§ 7).
 | `Equipe=N`, `Compet=C`, `Saison=S` (fiche équipe) | `/teams/N?competition=C&season=S` | |
 | `clubId=C` | `?club=C` | |
 
-5. **Paramètres abandonnés** (retirés sans effet, jamais transmis) : `Round`, `private`, `nbLignes`, `Compets`,
+5. **Paramètres abandonnés** (retirés sans effet, jamais transmis) : `Round`, `private`, `nbLignes`, `typ`, `Compets`,
    `terrains`, `arbitres`, `intervalle`, `voie`, `navGroup`, `mirror`, `Pg`, `len`, `start`. Ce sont des réglages
    d'écran de gymnase ou de session, sans équivalent sur un site consultatif. **Exception** : `Css`, § 5.3.
 6. **Paramètres inconnus** : retirés. La redirection ne produit jamais de paramètre que l'ancien lien ne
@@ -121,6 +121,7 @@ Cas particuliers :
 | Ancienne URL | Décision |
 |---|---|
 | `/index.php`, `/fr/`, `/fr/index.php` | 301 → `/` |
+| `/app/` | 301 → `https://app.kayak-polo.info/` (Q-R9) |
 | `/en/`, `/en/index.php` | 301 → `/en` |
 | `/kpqr.php`, `/Pdf*.php` | Maintenus sur Apache (§ 3) — aucune redirection |
 | `/live/` (pages d'incrustation et de score legacy, remplacées par les overlays d'app4), `/kpadmin.php` (non fonctionnel), `/Login.php`, `/AdminChoice.php`, `/admin/` (repris dans app4), `/kptv.php` + `/kptvscenario.php` + `/scenario.php` (panneau de contrôle TV legacy, remplacé par `/tv` d'app4), `/tv.php` (incrustations legacy), `/feuillemarque.php` et `/gamereport.php` (accès à la feuille de marque en ligne V2 legacy, en français / en anglais) | **410** par le middleware, **sans redirection** : plus rien à garder après la bascule, **à condition que le scoring soit publié aux profils adéquats avant** (prérequis P1, § 11) |
@@ -136,12 +137,17 @@ Les écrans de gymnase et les iframes de partenaires utilisent `frame_*.php` et 
 
 Les adresses `frame_*.php?…` enregistrées en base (`kp_tv`, [PAGE_TV_CONTROL_PANEL.md](../PAGE_TV_CONTROL_PANEL.md)) **ne sont pas migrées** : aucun écran ne tourne (décision du 20/11/2026), les liens seront recréés dans le nouveau système après la bascule. Le chantier scoring ([PAGE_INCRUSTATION.md](../PAGE_INCRUSTATION.md)) ne reprend pas les `frame_*.php` : ils restent sur Apache pour les iframes tierces jusqu'à la phase 7.
 
-Pour un `kp*.php` appelé avec **`Css=`** (intégré dans une iframe par un tiers, thème `simply`, `ckca`,
-`saintomer2022`…) : une page complète d'app3 (en-tête, menu) dans une iframe serait un contresens. Règle :
-**redirection 301 vers le `frame_*.php` équivalent, même requête conservée** (les `frame_*` acceptent les mêmes
-paramètres) :
+**Constat des journaux de production (Q-R3, 20/11/2026)** : dans l'immense majorité des requêtes, `Css=` est **vide** (le legacy
+l'ajoute à tous ses propres liens) : sa présence ne signale pas une iframe. Les sites tiers (fédérations internationale et
+européenne, clubs, comités) intègrent **directement les pages `kp*.php`**, avec `Css=` vide ou un thème (`welland2018`,
+`saintomer2022`). Une page complète d'app3 (en-tête, menu) dans une iframe serait un contresens. Règle : une requête `kp*.php` est
+traitée comme une **iframe** si l'en-tête `Sec-Fetch-Dest: iframe` est présent (envoyé par les navigateurs actuels pour toute
+iframe, y compris entre sites) **ou** si `Css` n'est pas vide. Elle reçoit alors une
+**301 vers le `frame_*.php` équivalent, même requête conservée** (les `frame_*` acceptent les mêmes paramètres, y compris
+`navGroup`, `typ`) ; sinon, la redirection vers app3 des § 5.1. Une iframe sans l'en-tête (navigateur ancien, robot) arrive sur
+app3 : dégradation acceptée.
 
-| `kp*.php?Css=…` | → |
+| `kp*.php` en iframe | → |
 |---|---|
 | `kpmatchs.php` | `frame_matchs.php` |
 | `kpterrains.php` | `frame_terrains.php` |
@@ -152,7 +158,7 @@ paramètres) :
 | `kpstats.php` | `frame_stats.php` |
 | `kpequipes.php` | `frame_equipes.php` |
 
-Ces redirections se retirent avec les `frame_*.php` en phase 7. Vérifier avant la bascule, dans les journaux Apache,
+Ces redirections se retirent avec les `frame_*.php` en phase 7 : les sites concernés doivent alors changer l'adresse de leur iframe (liste des sites connus : § 13, Q-R3).
 le volume réel de `kp*.php?Css=` (question Q-R3, commandes au § 11.1).
 
 ## 6. WordPress
@@ -264,7 +270,8 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 - **RDR-06** — Une valeur invalide (code `Compet` hors `[A-Za-z0-9_-]{1,20}`, `Saison` non numérique, `event=abc`, `filtreJour=x`) est ignorée et la requête redirige quand même ; aucune `Location` ne contient `//`, un schéma ou un autre hôte (`Group=//evil.test` reste sur `www`).
 - **RDR-07** — Une redirection ne passe jamais par deux sauts : suivre la `Location` d'un cas du § 5.1 donne directement un `200` (test sur les fixtures de page), y compris pour `/teams/N` et `/clubs?club=C`.
 - **RDR-08** — `POST`, et les chemins qui ne sont pas dans la table (`/competitions/…`, `/news`), ne sont **pas** redirigés par ce middleware et ne déclenchent aucun appel api2 supplémentaire.
-- **RDR-09** — Un `kp*.php` avec `Css=` répond **301** vers le `frame_*.php` du tableau § 5.3 en conservant la requête ; sans `Css`, vers app3.
+- **RDR-09** — Un `kp*.php` appelé avec `Sec-Fetch-Dest: iframe`, ou avec `Css` non vide, répond **301** vers le `frame_*.php` du tableau § 5.3 en conservant la requête (dont `Css=` vide, `navGroup`, `typ`) ; sans l'en-tête et avec `Css` vide ou absent, vers app3. Cas de test réels : `kpmatchs.php?lang=en&Saison=2018&Group=CM&Compet=*&Round=&Css=welland2018&navGroup=1`, `kpdetails.php?lang=en&event=0&Saison=2025&Group=CE&Compet=ECM&J=*&Round=*&Css=&navGroup=1&typ=CP`.
+- **RDR-21** — `/app/` répond 301 vers `https://app.kayak-polo.info/`.
 - **RDR-10** — `/index.php`, `/fr/`, `/en/` → `/` ou `/en` ; `HEAD` répond comme `GET`.
 - **RDR-11** — WordPress : `/?p=ID`, `/?page_id=ID` et un permalien connu → 301 vers la cible de `kp_cms_redirect` ; un article non repris → `/news` ; une page non reprise → la cible désignée ou `/` ; `hits` augmente d'un à chaque redirection.
 - **RDR-12** — Test de cohérence (CI) : toute ligne de `kp_cms_redirect` pointe un chemin interne existant (article, page publiés ou route d'app3) ; sinon le test échoue et nomme la ligne.
@@ -367,9 +374,8 @@ Lecture des résultats et décision :
 
 | Résultat | Décision |
 |---|---|
-| Commande 3 vide, ou quelques requêtes isolées sans référent récurrent | Supprimer la règle `Css=` du § 5.3 (et RDR-09) : un `kp*.php?Css=` est redirigé comme un autre, `Css` abandonné |
-| Un ou plusieurs sites tiers récurrents (ordre de grandeur : plus de 50 requêtes par mois) | Garder la règle § 5.3 jusqu'à la phase 7, et **prévenir ces sites** avant la bascule (leur indiquer le `frame_*.php` équivalent à mettre dans leur iframe) |
-| Thème (commande 2) absent du code des `frame_*` | Le noter dans la PR de la bascule : l'iframe de ce site changera d'aspect |
+| Sites tiers récurrents (commande 3) | Voir le constat du § 5.3 : règle « iframe » conservée jusqu'à la phase 7, sites prévenus |
+| `Css=` vide dans presque toutes les requêtes (constat du 20/11) | Ne pas détecter une iframe d'après la seule présence de `Css=` (§ 5.3) ; utiliser `Sec-Fetch-Dest` |
 
 Reporter les chiffres et la décision dans la PR de la bascule, puis fermer Q-R3. La commande 5 produit l'entrée du test
 RDR-16 (le script de parité en rejoue chaque chemin sur la préprod).
@@ -387,7 +393,8 @@ RDR-16 (le script de parité en rejoue chaque chemin sur la préprod).
 |---|---|---|
 | Q-R1 | La **saison active** (règle 2) : l'API publique l'expose-t-elle déjà de façon stable, ou faut-il l'ajouter à api2 ? | Réutiliser la source de `/competitions` ; sinon ajouter un `GET /seasons/active` |
 | Q-R2 | ✅ Pages WordPress non reprises (29 sur 43) : `/` (20/11/2026), sans table de pages proches à valider | — |
-| Q-R3 | **Résultat partiel (journaux de prod, 20/11/2026)** : 478 923 requêtes `kp*.php?Css=` ; référents externes : Google 26 612 (résultats de recherche : ces URL sont **indexées**, la 301 compte pour le référencement) ; sites tiers qui les intègrent : 47 requêtes en tout, aucun récurrent (paddleworldwide.com 12, paddle-europe.eu 11, kayakavranches.fr 8, kayak-iledefrance.fr 4, une dizaine d'autres à 1 ou 2) ; les ~452 000 restantes sont **sans référent ou internes** : à qualifier avec les commandes 3b à 3d (pages WordPress qui intègrent ces iframes ? robots ?) | Aucun tiers récurrent : la règle `Css=` du § 5.3 n'est **pas justifiée par les tiers** ; décision finale après 3b à 3d (si les iframes viennent de pages WordPress ou de robots, supprimer la règle ; si elles viennent de pages à conserver, les migrer vers l'`/embed` ou vers un lien) |
+| Q-R3 | ✅ **Résolue (journaux de prod, 20/11/2026)** : 478 923 requêtes `kp*.php` avec `Css=` (vide presque partout) : 257 147 sans référent, 196 786 internes (navigation du site), 26 609 Google (longue traîne, au plus 7 par URL : ces pages sont **indexées**), 47 sites tiers ; 289 579 sont des robots (60 %). **Sites tiers qui intègrent des pages en iframe** : `paddleworldwide.com` (`kpmatchs` 2018 thème `welland2018`, `frame_matchs` 2022 thème `saintomer2022`), `paddle-europe.eu` (`kpdetails` ECM 2025, `kpmatchs` ECA1 2026), `kayakavranches.fr` (`kpmatchs` ECA1/CE/ECA2, N15, N18), `kayak-iledefrance.fr` (`kpstats` T-R14, REG14) | Règle « iframe » du § 5.3 (en-tête `Sec-Fetch-Dest`) ; les sites sont prévenus avant la bascule (clubs et comité par Laurent, fédérations internationale et européenne à contacter), puis à nouveau en phase 7 |
+| Q-R9 | `paddleworldwide.com` appelle `/app/` (9 requêtes) : le dossier `sources/app/` est vide dans le dépôt (`.gitkeep`). Qu'y a-t-il sur le serveur de production, et où doit mener `/app/` ? | 301 → `https://app.kayak-polo.info/` (app2), à confirmer après `ls` du dossier sur le VPS |
 | Q-R4 | Schéma d'URL anglais de WordPress (WP Multilang) : `/en/…` ou `?lang=en` ? | `/en/` + table de redirection existante, à vérifier sur la base `dbwp` |
 | Q-R5 | ✅ `kayak-polo.info` est aujourd'hui redirigé vers `www` (20/11/2026). **À vérifier après la bascule** : la redirection survit-elle à l'inversion du routage Traefik ? | Test RDR-15 en préprod, puis contrôle en production le jour J |
 | Q-R6 | ✅ Durée de maintien : `beta.*` **non maintenu** dès la bascule (QR codes déjà imprimés perdus, accepté). Autres redirections : 1 an, puis revue sur les `hits` | — |
