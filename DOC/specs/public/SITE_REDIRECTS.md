@@ -153,7 +153,7 @@ paramètres) :
 | `kpequipes.php` | `frame_equipes.php` |
 
 Ces redirections se retirent avec les `frame_*.php` en phase 7. Vérifier avant la bascule, dans les journaux Apache,
-le volume réel de `kp*.php?Css=` (question Q-R3).
+le volume réel de `kp*.php?Css=` (question Q-R3, commandes au § 11.1).
 
 ## 6. WordPress
 
@@ -282,11 +282,67 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 À reporter dans la checklist de la phase 5 (`PUBLIC_SITE_ROLLOUT_CHECKLIST.md`) au moment de son écriture :
 
 0. **P1 — prérequis** : le scoring (console app4, [PAGE_SCORING.md](../PAGE_SCORING.md)) est publié aux profils adéquats et le panneau TV d'app4 (`/tv`) est utilisable ; sans cela les 410 de § 5.2 privent les opérateurs de leurs outils.
-1. 📊 Extraire des journaux Apache (12 mois) les 200 URL les plus fréquentes et le volume de `kp*.php?Css=` (RDR-16, Q-R3).
+1. 📊 Extraire des journaux Apache (12 mois, commandes du § 11.1) les 200 URL les plus fréquentes et le volume de `kp*.php?Css=` (RDR-16, Q-R3).
 2. Livrer `legacy-paths.ts` et ses tests, **sur `beta.*` d'abord** : `beta.*/kpmatchs.php?…` redirige vers les pages d'app3 de `beta.*`, ce qui permet de rejouer la table sans toucher à `www` (les liens de repli du menu ciblent le legacy en URL absolue et ne passent pas par ce middleware).
 3. Préprod : inverser le routage Traefik, rejouer le script RDR-16, valider les domaines (RDR-15).
 4. Prod, **le jour de la bascule** : routage Traefik, `NUXT_PUBLIC_BETA=false`, `PUBLIC_SITE_URL`, sitemap, Search Console, annotations Matomo.
 5. Suivi des 404 (§ 9) ; rollback = restaurer le routage Traefik précédent (aucun changement de données).
+
+### 11.1 Vérifier Q-R3 et extraire la liste d'URL de référence (journaux Apache)
+
+À lancer **sur le VPS de production** (🖥), dans le dossier des journaux Apache du legacy (`HOST_APACHE2_LOG_PATH`,
+`docker/apachelogs_8/` par défaut : [ENVIRONNEMENT_DEV.md](../../developer/guides/ENVIRONNEMENT_DEV.md)). Format
+`combined_remoteip` (`docker/config/apache-remoteip.conf`) : `IP - - [date] "GET /chemin HTTP/1.1" statut octets "référent" "agent"`,
+donc, avec `awk -F'"'`, `$2` = requête et `$4` = référent (la page qui contient l'iframe). `zcat -f` lit aussi bien
+`access.log` que les `access.log.N.gz`. Lecture seule : rien n'est modifié.
+
+```bash
+cd docker/apachelogs_8
+# Période couverte par les journaux (si moins de 12 mois, le noter dans la PR de la bascule)
+zcat -f access.log* | awk '{print $4}' | sed 's/\[//' | sort -t/ -k3,3 -k2,2M -k1,1 | sed -n '1p;$p'
+```
+
+```bash
+# 1. Volume total de kp*.php appelés avec Css= (candidats à l'intégration en iframe)
+zcat -f access.log* | grep -cE '"GET /kp[a-z]+\.php\?[^" ]*Css='
+```
+
+```bash
+# 2. Répartition par thème Css
+zcat -f access.log* | grep -oE '"GET /kp[a-z]+\.php\?[^" ]*' | grep -oE 'Css=[A-Za-z0-9_-]+' | sort | uniq -c | sort -rn
+```
+
+```bash
+# 3. Sites tiers qui les intègrent : référents hors kayak-polo.info (la réponse à Q-R3)
+zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' \
+  | awk -F'"' '$4 != "-" {print $4}' | sed -E 's#^(https?://[^/]+).*#\1#' \
+  | grep -vE 'kayak-polo\.info|kpi\.localhost' | sort | uniq -c | sort -rn | head -30
+```
+
+```bash
+# 4. Pour comparaison : les frame_*.php (restent sur Apache jusqu'à la phase 7), par référent externe
+zcat -f access.log* | grep -E '"GET /frame_[a-z_]+\.php' \
+  | awk -F'"' '$4 != "-" {print $4}' | sed -E 's#^(https?://[^/]+).*#\1#' \
+  | grep -vE 'kayak-polo\.info|kpi\.localhost' | sort | uniq -c | sort -rn | head -30
+```
+
+```bash
+# 5. Liste de référence de la parité RDR-16 : les 200 chemins legacy et WordPress les plus demandés (réponses 2xx/3xx)
+zcat -f access.log* | awk -F'"' '{split($3,s," "); if (s[1] ~ /^[23]/) {split($2,r," "); if (r[1]=="GET") print r[2]}}' \
+  | grep -E '^/(kp[a-z]+\.php|index\.php|[0-9]{4}/|\?p=|\?page_id=|feed|category/|tag/|\?s=|\?feed=)' \
+  | sort | uniq -c | sort -rn | head -200 > /tmp/legacy-top200.txt
+```
+
+Lecture des résultats et décision :
+
+| Résultat | Décision |
+|---|---|
+| Commande 3 vide, ou quelques requêtes isolées sans référent récurrent | Supprimer la règle `Css=` du § 5.3 (et RDR-09) : un `kp*.php?Css=` est redirigé comme un autre, `Css` abandonné |
+| Un ou plusieurs sites tiers récurrents (ordre de grandeur : plus de 50 requêtes par mois) | Garder la règle § 5.3 jusqu'à la phase 7, et **prévenir ces sites** avant la bascule (leur indiquer le `frame_*.php` équivalent à mettre dans leur iframe) |
+| Thème (commande 2) absent du code des `frame_*` | Le noter dans la PR de la bascule : l'iframe de ce site changera d'aspect |
+
+Reporter les chiffres et la décision dans la PR de la bascule, puis fermer Q-R3. La commande 5 produit l'entrée du test
+RDR-16 (le script de parité en rejoue chaque chemin sur la préprod).
 
 ## 12. Hors périmètre
 
