@@ -22,7 +22,7 @@ Sources : plan d'URL ([stratégie § 6](../../developer/in-progress/PUBLIC_SITE_
 | Legacy `kp*.php` | **Middleware serveur Nitro d'app3** `server/middleware/legacy-paths.ts`, logique pure dans `server/utils/legacy-paths.ts` (table de correspondance, testée) | à créer |
 | WordPress (permaliens, `?p=`, `?page_id=`, articles non repris) | Middleware `server/middleware/old-paths.ts` → api2 `GET /redirect` → table `kp_cms_redirect` | ✅ en place |
 | WordPress « structurel » (flux, catégories, recherche, sitemaps) | Même middleware que le legacy (règles fixes, § 6.2) | à créer |
-| `beta.*` → domaine principal | Traefik (`redirectregex` permanent, chemin et requête conservés) | à créer |
+| `kayak-polo.info` → `www` | Traefik (`redirectregex` permanent, chemin et requête conservés) ; déjà en place, à vérifier après l'inversion du routage (§ 7) | existant |
 
 Le middleware ne répond qu'à `GET` et `HEAD`. Une URL qui ne correspond à aucune règle continue vers la
 page 404 d'app3. Les redirections sont émises **avant** tout appel de données de page (aucun rendu SSR gaspillé).
@@ -41,7 +41,7 @@ dans cette liste : c'est ce qui les fait atterrir sur le middleware.
 | `/live/`, `/api/`, `/img/`, `/media/`, `/css/`, `/fonts/`, `/js/` et les scripts de données (`json-clubs.php`, `json-events.php`, `searchClubs.php`, `searchEquipes.php`, `ajax_search_equipe.php`, `api_players.php`, `api_stats.php`, `upload_ics.php`) | Ressources et appels de données du legacy encore utilisés par l'admin et les écrans |
 | `/wordpress/wp-content/uploads/`, `/wp-login.php`, `/wp-admin/`, `/wp-json/` | Médias de contenus non repris, connexion des rédacteurs, jusqu'à la phase 6 (§ 6.4) |
 
-Cette liste est **la checklist de décommissionnement** : chaque entrée qui disparaît en phase 6 ou 7 est
+Cette liste est **la checklist de décommissionnement** (elle doit encore être épurée outil par outil, Q-R8) : chaque entrée qui disparaît en phase 6 ou 7 est
 d'abord remplacée par une réponse 301 ou 410 décidée ici (§ 7).
 
 ## 4. Règles communes pour les paramètres de requête
@@ -135,6 +135,8 @@ Les écrans de gymnase et les iframes de partenaires utilisent `frame_*.php` et 
 `frame_*.php` n'est redirigé, tous restent servis par Apache** (§ 3). Ils ne dépendent pas de WordPress ni des pages
 `kp*.php`.
 
+Les adresses `frame_*.php?…` sont aussi **enregistrées en base** (`kp_tv`, panneau de contrôle TV : [PAGE_TV_CONTROL_PANEL.md](../PAGE_TV_CONTROL_PANEL.md), chemins relatifs à la racine) : les déplacer avant la phase 7 casserait les écrans en place. Le chantier scoring ([PAGE_INCRUSTATION.md](../PAGE_INCRUSTATION.md)) ne les reprend pas non plus.
+
 Pour un `kp*.php` appelé avec **`Css=`** (intégré dans une iframe par un tiers, thème `simply`, `ckca`,
 `saintomer2022`…) : une page complète d'app3 (en-tête, menu) dans une iframe serait un contresens. Règle :
 **redirection 301 vers le `frame_*.php` équivalent, même requête conservée** (les `frame_*` acceptent les mêmes
@@ -207,11 +209,11 @@ la liste explicite (§ 3). À la phase 6 : arrêt de `dbwp`, la liste Apache per
 
 | Cas | Décision |
 |---|---|
-| `https://beta.kayak-polo.info/{chemin}` | **301** → `https://www.kayak-polo.info/{chemin}`, chemin et requête conservés, **au moins une saison** (QR codes imprimés, [PDF_GOTENBERG.md § 8.4](../PDF_GOTENBERG.md)) |
-| `https://kayak-polo.info/{chemin}` | **301** → `https://www.kayak-polo.info/{chemin}` (forme canonique : `www`, § 8) — hors `/api2` et `/admin2` qui ont déjà leurs routeurs |
+| `https://beta.kayak-polo.info/{chemin}` | **Pas de redirection, pas de maintien** (décision du 20/11/2026) : le routeur `beta.*` est retiré à la bascule ; les QR codes déjà imprimés vers `beta.*` ne seront plus servis |
+| `https://kayak-polo.info/{chemin}` | **301** → `https://www.kayak-polo.info/{chemin}` (forme canonique : `www`, § 8). **Redirigé aujourd'hui** : à vérifier après la bascule, car cette redirection est portée par le routeur par défaut actuel (Q-R5). Hors `/api2` et `/admin2` qui ont déjà leurs routeurs |
 | `http://…` | Redirection HTTP → HTTPS par Traefik (déjà en place), **un seul saut** vers l'URL finale |
 
-`PUBLIC_SITE_URL` d'api2 passe au domaine principal **le même jour** que la bascule (les nouveaux PDF n'émettent plus
+`PUBLIC_SITE_URL` d'api2 passe au domaine principal **le même jour** que la bascule (les nouveaux PDF n'émettent plus d'URL `beta.*`). `NUXT_PUBLIC_BETA=false` (non-indexation levée, [SITE_PLATFORM.md § 4.2](SITE_PLATFORM.md)). Cette décision remplace la redirection `beta.*` d'une saison prévue par la checklist de la phase 5 et par [PDF_GOTENBERG.md § 8.4](../PDF_GOTENBERG.md) (R15, PDF-DESIGN-08) : à y reporter.
 d'URL `beta.*`). `NUXT_PUBLIC_BETA=false` (non-indexation levée, [SITE_PLATFORM.md § 4.2](SITE_PLATFORM.md)).
 
 ## 8. Sitemap, canonique et Search Console
@@ -269,7 +271,7 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 - **RDR-12** — Test de cohérence (CI) : toute ligne de `kp_cms_redirect` pointe un chemin interne existant (article, page publiés ou route d'app3) ; sinon le test échoue et nomme la ligne.
 - **RDR-13** — Règles § 6.2 : `/feed/` et `/?feed=rss2` → `/rss.xml` ; `/category/{slug}/` → `/news?category={slug}` ; `/?s=x` → `/search?q=x` ; `/sitemap_index.xml` → `/sitemap.xml` ; `/comments/feed/` → 410 ; `/wp-json/` → 410 **après** la phase 6 seulement (avant : servi par Apache).
 - **RDR-14** — Toute règle ajoutée après la bascule (§ 9) arrive avec un test ; la table des cas ne diminue jamais.
-- **RDR-15** — Domaine : `beta.*` → `www`, et `kayak-polo.info` → `www`, en **301**, chemin et requête conservés, un seul saut depuis HTTP ; `/api2` et `/admin2` ne sont pas affectés. Vérifié en préprod (`beta.preprod.…`) avant la production.
+- **RDR-15** — Domaine : `kayak-polo.info` → `www` en **301**, chemin et requête conservés, un seul saut depuis HTTP ; `/api2` et `/admin2` ne sont pas affectés ; `beta.*` ne répond plus (aucun routeur). Vérifié en préprod avant la production.
 - **RDR-16** — Parité de bascule (préprod, avant la prod) : un script rejoue **la liste des 200 URL legacy et WordPress les plus fréquentes** extraite des journaux Apache des 12 derniers mois ; chacune finit en `200` (ou 410 / 404 listés et validés), **aucune en 5xx ni en boucle**. Le rapport est joint à la PR de la bascule.
 - **RDR-17** — Les chemins du § 3 (`/frame_*.php`, `/Pdf*.php`, `/kpqr.php`, `/admin/`…) répondent toujours depuis Apache après l'inversion du routage Traefik, et **aucun `kp*.php` n'y est routé**.
 - **RDR-18** — `/sitemap.xml` ne contient aucune ancienne URL ni aucune URL en 3xx/4xx (test sur un échantillon rendu par l'api2 de fixtures) ; `robots.txt` référence le sitemap et n'interdit aucune ancienne URL.
@@ -297,10 +299,10 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 | # | Question | Proposition par défaut |
 |---|---|---|
 | Q-R1 | La **saison active** (règle 2) : l'API publique l'expose-t-elle déjà de façon stable, ou faut-il l'ajouter à api2 ? | Réutiliser la source de `/competitions` ; sinon ajouter un `GET /seasons/active` |
-| Q-R2 | Pages WordPress non reprises (29 sur 43) : quelle page la plus proche pour chacune ? | `/` par défaut, liste à valider par les rédacteurs avant la bascule |
+| Q-R2 | ✅ Pages WordPress non reprises (29 sur 43) : `/` (20/11/2026), sans table de pages proches à valider | — |
 | Q-R3 | Des tiers intègrent-ils `kp*.php?Css=` en iframe ? Combien de requêtes ? | Rediriger vers `frame_*.php` (§ 5.3) ; à confirmer par les journaux |
 | Q-R4 | Schéma d'URL anglais de WordPress (WP Multilang) : `/en/…` ou `?lang=en` ? | `/en/` + table de redirection existante, à vérifier sur la base `dbwp` |
-| Q-R5 | `kayak-polo.info` (sans `www`) : forme canonique `www` conservée ? | Oui (la préprod et le legacy l'utilisent déjà) |
-| Q-R6 | Durée de maintien des redirections et de `beta.*` | `beta.*` : 1 saison minimum (PDF) ; reste : 1 an, puis revue sur les `hits` |
-| Q-R7 | Faut-il garder `json-events.php` / `searchClubs.php` publics pour des consommateurs externes connus ? | Oui jusqu'à la phase 6, puis 410 ; à confirmer avec le porteur |
-| Q-R8 | Les outils internes maintenus sur Apache (`kpadmin.php`, `tv.php`…) doivent-ils recevoir `X-Robots-Tag: noindex` ? | Oui, en-tête posé par Traefik sur la liste § 3 |
+| Q-R5 | ✅ `kayak-polo.info` est aujourd'hui redirigé vers `www` (20/11/2026). **À vérifier après la bascule** : la redirection survit-elle à l'inversion du routage Traefik ? | Test RDR-15 en préprod, puis contrôle en production le jour J |
+| Q-R6 | ✅ Durée de maintien : `beta.*` **non maintenu** dès la bascule (QR codes déjà imprimés perdus, accepté). Autres redirections : 1 an, puis revue sur les `hits` | — |
+| Q-R7 | ✅ Aucun consommateur externe des scripts de données (`json-events.php`, `searchClubs.php`…) | Ils ne restent sur Apache que pour l'admin et les écrans, puis 410 en phase 6 |
+| Q-R8 | Il ne devrait plus rester d'outil interne réellement utile sur Apache (§ 3, § 5.2) : à vérifier **un par un** (`kpadmin.php`, `kptv.php`, `kptvscenario.php`, `tv.php`, `scenario.php`, `feuillemarque.php`, `gamereport.php`…). Ceux qui sont inutiles sont retirés de la liste et reçoivent un 410 ; les autres reçoivent `X-Robots-Tag: noindex` | Inventaire à faire avant la rédaction de la checklist de phase 5 |
