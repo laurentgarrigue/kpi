@@ -35,7 +35,6 @@ dans cette liste : c'est ce qui les fait atterrir sur le middleware.
 
 | Reste sur Apache (liste explicite) | Raison |
 |---|---|
-| `/admin/`, `/Login.php`, `/AdminChoice.php`, `/scenario.php` | Administration legacy et pages non encore inventoriées (Q-R8) |
 | `/Pdf*.php`, `/kpqr.php` | PDF publics (QR codes imprimés) et générateur de QR : liens externes et documents imprimés ; hors phase 5 (PDF → api2/Gotenberg) |
 | `/frame_*.php` | Écrans de gymnase et iframes tiers, hors phase 5 → **phase 7** (§ 5.3) |
 | `/live/`, `/api/`, `/img/`, `/media/`, `/css/`, `/fonts/`, `/js/` et les scripts de données (`json-clubs.php`, `json-events.php`, `searchClubs.php`, `searchEquipes.php`, `ajax_search_equipe.php`, `api_players.php`, `api_stats.php`, `upload_ics.php`) | Ressources et appels de données du legacy encore utilisés par l'admin et les écrans |
@@ -124,7 +123,7 @@ Cas particuliers :
 | `/index.php`, `/fr/`, `/fr/index.php` | 301 → `/` |
 | `/en/`, `/en/index.php` | 301 → `/en` |
 | `/kpqr.php`, `/Pdf*.php` | Maintenus sur Apache (§ 3) — aucune redirection |
-| `/kpadmin.php` (non fonctionnel), `/kptv.php` + `/kptvscenario.php` (panneau de contrôle TV legacy, remplacé par `/tv` d'app4), `/tv.php` (incrustations legacy), `/feuillemarque.php` et `/gamereport.php` (accès à la feuille de marque en ligne V2 legacy, en français / en anglais) | **410** par le middleware, **sans redirection** : plus rien à garder après la bascule, **à condition que le scoring soit publié aux profils adéquats avant** (prérequis P1, § 11) |
+| `/kpadmin.php` (non fonctionnel), `/Login.php`, `/AdminChoice.php`, `/admin/` (repris dans app4), `/kptv.php` + `/kptvscenario.php` + `/scenario.php` (panneau de contrôle TV legacy, remplacé par `/tv` d'app4), `/tv.php` (incrustations legacy), `/feuillemarque.php` et `/gamereport.php` (accès à la feuille de marque en ligne V2 legacy, en français / en anglais) | **410** par le middleware, **sans redirection** : plus rien à garder après la bascule, **à condition que le scoring soit publié aux profils adéquats avant** (prérequis P1, § 11) |
 | `/json-*.php`, `/search*.php`, `/ajax_search_equipe.php`, `/api_*.php`, `/upload_ics.php` | Maintenus sur Apache jusqu'à la phase 6, puis **410** (§ 7) |
 | Match isolé (feuille publique) | `/games/{id}` n'est pas livré : tant qu'il ne l'est pas, les liens existants vers app2 (`/game/{id}`) restent valables, aucune redirection |
 
@@ -273,8 +272,8 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 - **RDR-14** — Toute règle ajoutée après la bascule (§ 9) arrive avec un test ; la table des cas ne diminue jamais.
 - **RDR-15** — Domaine : `kayak-polo.info` → `www` en **301**, chemin et requête conservés, un seul saut depuis HTTP ; `/api2` et `/admin2` ne sont pas affectés ; `beta.*` ne répond plus (aucun routeur). Vérifié en préprod avant la production.
 - **RDR-16** — Parité de bascule (préprod, avant la prod) : un script rejoue **la liste des 200 URL legacy et WordPress les plus fréquentes** extraite des journaux Apache des 12 derniers mois ; chacune finit en `200` (ou 410 / 404 listés et validés), **aucune en 5xx ni en boucle**. Le rapport est joint à la PR de la bascule.
-- **RDR-17** — Les chemins du § 3 (`/frame_*.php`, `/Pdf*.php`, `/kpqr.php`, `/admin/`…) répondent toujours depuis Apache après l'inversion du routage Traefik, et **aucun `kp*.php` n'y est routé**.
-- **RDR-20** — `kptv.php`, `kptvscenario.php`, `kpadmin.php`, `tv.php`, `feuillemarque.php` et `gamereport.php` répondent **410** sur `www` après la bascule, et ne figurent plus dans la liste Apache du § 3.
+- **RDR-17** — Les chemins du § 3 (`/frame_*.php`, `/Pdf*.php`, `/kpqr.php`…) répondent toujours depuis Apache après l'inversion du routage Traefik, et **aucun `kp*.php` n'y est routé**.
+- **RDR-20** — `/kptv.php`, `/kptvscenario.php`, `/scenario.php`, `/kpadmin.php`, `/tv.php`, `/feuillemarque.php`, `/gamereport.php`, `/Login.php`, `/AdminChoice.php` et `/admin/…` répondent **410** sur `www` après la bascule, et ne figurent plus dans la liste Apache du § 3.
 - **RDR-18** — `/sitemap.xml` ne contient aucune ancienne URL ni aucune URL en 3xx/4xx (test sur un échantillon rendu par l'api2 de fixtures) ; `robots.txt` référence le sitemap et n'interdit aucune ancienne URL.
 - **RDR-19** — Suivi : la page 404 d'app3 émet le titre `404/URL = …/From = …` (ANA-10) ; le tableau de bord Matomo « 404 » existe avant la bascule (checklist M3).
 
@@ -307,4 +306,4 @@ Chaque critère est couvert par un test nommé d'après lui (`RDR-nn`), unitaire
 | Q-R5 | ✅ `kayak-polo.info` est aujourd'hui redirigé vers `www` (20/11/2026). **À vérifier après la bascule** : la redirection survit-elle à l'inversion du routage Traefik ? | Test RDR-15 en préprod, puis contrôle en production le jour J |
 | Q-R6 | ✅ Durée de maintien : `beta.*` **non maintenu** dès la bascule (QR codes déjà imprimés perdus, accepté). Autres redirections : 1 an, puis revue sur les `hits` | — |
 | Q-R7 | ✅ Aucun consommateur externe des scripts de données (`json-events.php`, `searchClubs.php`…) | Ils ne restent sur Apache que pour l'admin et les écrans, puis 410 en phase 6 |
-| Q-R8 | Il ne devrait plus rester d'outil interne réellement utile sur Apache (§ 3, § 5.2) : à vérifier **un par un** (`kpadmin.php`, `kptv.php`, `kptvscenario.php`, `tv.php`, `scenario.php`, `feuillemarque.php`, `gamereport.php`…). Ceux qui sont inutiles sont retirés de la liste et reçoivent un 410 ; les autres reçoivent `X-Robots-Tag: noindex` | Inventaire à faire avant la rédaction de la checklist de phase 5 |
+| Q-R8 | ✅ Outils internes inventoriés (20/11/2026) : `kptv.php`, `kptvscenario.php`, `scenario.php` (panneau TV legacy), `kpadmin.php` (non fonctionnel), `tv.php` (incrustations legacy), `feuillemarque.php` / `gamereport.php` (feuille de marque V2) ; **tout `/admin/` a été repris dans app4**, ainsi que `Login.php` et `AdminChoice.php`. Rien à garder après la bascule : 410, une fois le scoring publié (P1) | — |
