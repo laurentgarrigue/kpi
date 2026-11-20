@@ -339,6 +339,17 @@ zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' | grep -E '"http
 ```
 
 ```bash
+# 3e. Reproduire les iframes d'un site tiers : page qui intègre (référent) + URL demandée à KPI, toutes pages confondues
+# (kp*.php, frame_*.php, avec ou sans Css). Exemple : les sites des fédérations internationale et européenne.
+zcat -f access.log* | awk -F'"' '$4 ~ /paddleworldwide\.com|paddle-europe\.eu/ {split($2,r," "); print $4 "  ->  " r[2]}' \
+  | sort | uniq -c | sort -rn
+```
+
+Pour un autre site, remplacer l'expression entre `/…/` (ex. `kayakavranches\.fr|kayak-iledefrance\.fr`). La sortie ne contient ni IP ni
+agent. Chaque ligne donne la page du site tiers qui contient l'iframe et l'adresse exacte appelée sur KPI : ouvrir l'adresse avec
+`https://www.kayak-polo.info` devant la reproduit.
+
+```bash
 # 4. Pour comparaison : les frame_*.php (restent sur Apache jusqu'à la phase 7), par référent externe
 zcat -f access.log* | grep -E '"GET /frame_[a-z_]+\.php' \
   | awk -F'"' '$4 != "-" {print $4}' | sed -E 's#^(https?://[^/]+).*#\1#' \
