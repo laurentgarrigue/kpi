@@ -320,6 +320,25 @@ zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' \
 ```
 
 ```bash
+# 3b. Origine de toutes ces requêtes : sans référent, interne, Google, autre
+zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' \
+  | awk -F'"' '{r=$4; if (r=="-") k="sans référent"; else if (r ~ /kayak-polo\.info|kpi\.localhost/) k="interne"; else if (r ~ /google\./) k="google"; else k="autre"; n[k]++} END {for (k in n) print n[k], k}' | sort -rn
+```
+
+```bash
+# 3c. Pages de kayak-polo.info qui contiennent ces iframes ou liens (référent interne), par page
+zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' \
+  | awk -F'"' '$4 ~ /kayak-polo\.info/ {print $4}' | sed -E 's/[?#].*//' | sort | uniq -c | sort -rn | head -20
+```
+
+```bash
+# 3d. Part des robots, et pages kp*.php?Css= où arrivent les visiteurs de Google
+zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' | awk -F'"' '{print $6}' | grep -ciE 'bot|crawl|spider|slurp'
+zcat -f access.log* | grep -E '"GET /kp[a-z]+\.php\?[^" ]*Css=' | grep -E '"https://www\.google\.' \
+  | awk -F'"' '{split($2,r," "); print r[2]}' | sort | uniq -c | sort -rn | head -20
+```
+
+```bash
 # 4. Pour comparaison : les frame_*.php (restent sur Apache jusqu'à la phase 7), par référent externe
 zcat -f access.log* | grep -E '"GET /frame_[a-z_]+\.php' \
   | awk -F'"' '$4 != "-" {print $4}' | sed -E 's#^(https?://[^/]+).*#\1#' \
@@ -357,7 +376,7 @@ RDR-16 (le script de parité en rejoue chaque chemin sur la préprod).
 |---|---|---|
 | Q-R1 | La **saison active** (règle 2) : l'API publique l'expose-t-elle déjà de façon stable, ou faut-il l'ajouter à api2 ? | Réutiliser la source de `/competitions` ; sinon ajouter un `GET /seasons/active` |
 | Q-R2 | ✅ Pages WordPress non reprises (29 sur 43) : `/` (20/11/2026), sans table de pages proches à valider | — |
-| Q-R3 | Des tiers intègrent-ils `kp*.php?Css=` en iframe ? Combien de requêtes ? | Rediriger vers `frame_*.php` (§ 5.3) ; à confirmer par les journaux |
+| Q-R3 | **Résultat partiel (journaux de prod, 20/11/2026)** : 478 923 requêtes `kp*.php?Css=` ; référents externes : Google 26 612 (résultats de recherche : ces URL sont **indexées**, la 301 compte pour le référencement) ; sites tiers qui les intègrent : 47 requêtes en tout, aucun récurrent (paddleworldwide.com 12, paddle-europe.eu 11, kayakavranches.fr 8, kayak-iledefrance.fr 4, une dizaine d'autres à 1 ou 2) ; les ~452 000 restantes sont **sans référent ou internes** : à qualifier avec les commandes 3b à 3d (pages WordPress qui intègrent ces iframes ? robots ?) | Aucun tiers récurrent : la règle `Css=` du § 5.3 n'est **pas justifiée par les tiers** ; décision finale après 3b à 3d (si les iframes viennent de pages WordPress ou de robots, supprimer la règle ; si elles viennent de pages à conserver, les migrer vers l'`/embed` ou vers un lien) |
 | Q-R4 | Schéma d'URL anglais de WordPress (WP Multilang) : `/en/…` ou `?lang=en` ? | `/en/` + table de redirection existante, à vérifier sur la base `dbwp` |
 | Q-R5 | ✅ `kayak-polo.info` est aujourd'hui redirigé vers `www` (20/11/2026). **À vérifier après la bascule** : la redirection survit-elle à l'inversion du routage Traefik ? | Test RDR-15 en préprod, puis contrôle en production le jour J |
 | Q-R6 | ✅ Durée de maintien : `beta.*` **non maintenu** dès la bascule (QR codes déjà imprimés perdus, accepté). Autres redirections : 1 an, puis revue sur les `hits` | — |
