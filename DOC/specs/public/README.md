@@ -40,7 +40,7 @@ Une évolution d'une page livrée commence par la mise à jour de sa spec (crit�
 | [FEATURE_FORMS.md](FEATURE_FORMS.md) | Formulaires d'inscription, liste publique, HelloAsso, anti-spam, RGPD | 4b | ✅ Validée (11/10/2026) — 🚀 Livrée (beta) |
 | [FEATURE_ANALYTICS.md](FEATURE_ANALYTICS.md) | Mesure d'audience Matomo sans cookie (app3, correction app2/app4, legacy), 404, recherche interne | 5 | ✅ Validée (12/11/2026) — 🛠 En cours |
 | [FEATURE_MATCH_MEDALS.md](FEATURE_MATCH_MEDALS.md) | Médailles de match (équipes, joueurs, arbitres) et statistiques de timeline et d'arbitrage, publication par surface (app2, app3), catalogue admin (app4) | transverse | ✅ Validée (09/11/2026) — 🛠 Implémentée, à déployer |
-| `SITE_REDIRECTS.md` | Table des redirections 301 (legacy, WordPress) | 5 | ⏳ À rédiger |
+| [SITE_REDIRECTS.md](SITE_REDIRECTS.md) | Redirections 301 de la bascule de `www` : legacy `kp*.php`, WordPress, `beta.*`, sitemap, Search Console, suivi des 404 | 5 | 📝 Brouillon |
 | [maquettes/](maquettes/README.md) | Modernisation de l'interface : maquettes HTML de toutes les pages, décisions de design | — | ✅ Validées (22/10/2026) — specs à mettre à jour page par page |
 
 > Les specs de l'**administration** (app4) restent dans [DOC/specs/](../) (`PAGE_*.md`) ; les écrans du module
