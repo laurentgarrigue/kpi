@@ -34,6 +34,9 @@ export default defineConfig({
           // Starting the Nuxt environment can exceed the 10 s default on a cold, busy machine (CI).
           hookTimeout: 60_000,
           include: ['tests/nuxt/**/*.spec.ts'],
+          // @nuxt/fonts (pulled in by @nuxt/ui) queries 5 web font providers at startup: offline container =
+          // retries and 2 Vite servers that do not exit. app4 self-hosts its fonts (assets/css/admin.css).
+          environmentOptions: { nuxt: { overrides: { ui: { fonts: false } } } },
         },
       }),
     ],

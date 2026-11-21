@@ -112,12 +112,13 @@ class AdminAuthController extends AbstractController
 
         // Verrouillage : 5 échecs consécutifs depuis le dernier succès dans la fenêtre glissante.
         // Même avec le bon mot de passe, 423 Locked pendant la fenêtre.
-        if ($this->loginLogger->isAccountLocked($user->getCode())) {
+        $lockSecondsLeft = $this->loginLogger->lockSecondsLeft($user->getCode());
+        if ($lockSecondsLeft !== null) {
             $this->loginLogger->logFailure($user->getCode(), LoginAttemptLogger::REASON_ACCOUNT_LOCKED, $request);
             return $this->json([
                 'message' => 'Account temporarily locked after too many failed attempts',
                 'code' => 'ACCOUNT_LOCKED',
-            ], Response::HTTP_LOCKED);
+            ], Response::HTTP_LOCKED, ['Retry-After' => (string) $lockSecondsLeft]);
         }
 
         // bcrypt, puis repli MD5 tant que AUTH_LEGACY_MD5_FALLBACK est actif.

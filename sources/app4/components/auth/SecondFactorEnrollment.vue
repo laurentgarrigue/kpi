@@ -114,7 +114,7 @@ function back() {
         >
           <div class="font-semibold text-header-900 dark:text-header-50">
             {{ t('second_factor.enroll.totp_title') }}
-            <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded bg-success-100 dark:bg-success-900 text-success-800 dark:text-success-200">{{ t('second_factor.enroll.recommended') }}</span>
+            <span class="ml-2 text-sm font-semibold px-2 py-0.5 rounded bg-success-100 dark:bg-success-900 text-success-800 dark:text-success-200">{{ t('second_factor.enroll.recommended') }}</span>
           </div>
           <div class="text-sm text-header-600 dark:text-header-300">{{ t('second_factor.enroll.totp_help') }}</div>
         </button>
@@ -130,7 +130,7 @@ function back() {
             {{ t('second_factor.enroll.email_help', { email: maskedEmail ?? '—' }) }}
           </div>
         </button>
-        <p class="text-xs text-header-600 dark:text-header-300">{{ t('second_factor.enroll.email_limit') }}</p>
+        <p class="text-sm text-header-600 dark:text-header-300">{{ t('second_factor.enroll.email_limit') }}</p>
         <UButton color="neutral" variant="ghost" size="sm" @click="emit('cancel')">{{ t('common.cancel') }}</UButton>
       </div>
 
@@ -139,7 +139,7 @@ function back() {
         <p class="text-sm text-header-700 dark:text-header-200">{{ t('second_factor.enroll.totp_scan') }}</p>
         <div v-if="totp" class="flex flex-col items-center gap-3">
           <img :src="qrImage" :alt="t('second_factor.enroll.qr_alt')" class="w-48 h-48 bg-white p-2 rounded">
-          <div class="text-xs text-header-600 dark:text-header-300">{{ t('second_factor.enroll.totp_manual') }}</div>
+          <div class="text-sm text-header-600 dark:text-header-300">{{ t('second_factor.enroll.totp_manual') }}</div>
           <code class="font-mono text-sm text-header-900 dark:text-header-50 select-all" data-testid="totp-secret">{{ groupedSecret }}</code>
         </div>
       </div>

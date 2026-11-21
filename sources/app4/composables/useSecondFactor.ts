@@ -1,9 +1,17 @@
 import { PASSWORD_RENEWAL_REQUIRED, PasswordRenewalRequiredError } from '~/composables/useAuth'
 import type { SecondFactorStep, SecondFactorSummary } from '~/utils/secondFactor'
+import { retryAfterMinutes } from '~/utils/loginThrottle'
 
-/** Refusal of a second factor call: api2 code (INVALID_CODE, INVALID_TOKEN, TOO_MANY_CODES, EMAIL_REQUIRED…). */
+/**
+ * Refusal of a second factor call: api2 code (INVALID_CODE, INVALID_TOKEN, TOO_MANY_CODES, EMAIL_REQUIRED…), and the
+ * minutes of its Retry-After when api2 sends one (ACCOUNT_LOCKED, AUTH-LK-04).
+ */
 export class SecondFactorError extends Error {
-  constructor(public readonly code: string, public readonly status: number) {
+  constructor(
+    public readonly code: string,
+    public readonly status: number,
+    public readonly retryAfterMinutes: number | null = null
+  ) {
     super(code)
   }
 }
@@ -70,7 +78,11 @@ export const useSecondFactor = () => {
       throw new PasswordRenewalRequiredError(data.renewalToken)
     }
     if (!response.ok) {
-      throw new SecondFactorError(typeof data.code === 'string' ? data.code : 'ERROR', response.status)
+      throw new SecondFactorError(
+        typeof data.code === 'string' ? data.code : 'ERROR',
+        response.status,
+        retryAfterMinutes(response.headers.get('Retry-After'))
+      )
     }
     return data
   }

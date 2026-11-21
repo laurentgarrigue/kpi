@@ -8,12 +8,11 @@ import type {
   TeamAddFormData,
   TeamColorsFormData,
   DuplicateFormData,
-  RegionalCommittee,
-  DepartmentalCommittee,
   Club,
   RankingSourceCompetition,
   RankingSourceResponse
 } from '~/types/teams'
+import type { RegionalCommittee, DepartmentalCommittee } from '~/types/clubs'
 import type { IneligibleSummary } from '~/types/presence'
 import { canManageScrutineering, isScrutineerProfile } from '~/utils/scrutineering'
 import { canGetAdminPdf } from '~/utils/pdf'

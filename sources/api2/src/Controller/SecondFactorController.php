@@ -56,9 +56,10 @@ class SecondFactorController extends AbstractController
         if ($user === null) {
             return $this->invalidToken();
         }
-        if ($this->loginLogger->isAccountLocked($user->getCode())) {
+        $lockSecondsLeft = $this->loginLogger->lockSecondsLeft($user->getCode());
+        if ($lockSecondsLeft !== null) {
             $this->loginLogger->logFailure($user->getCode(), LoginAttemptLogger::REASON_ACCOUNT_LOCKED, $request);
-            return $this->json(['message' => 'Account temporarily locked after too many failed attempts', 'code' => 'ACCOUNT_LOCKED'], Response::HTTP_LOCKED);
+            return $this->json(['message' => 'Account temporarily locked after too many failed attempts', 'code' => 'ACCOUNT_LOCKED'], Response::HTTP_LOCKED, ['Retry-After' => (string) $lockSecondsLeft]);
         }
 
         $method = $this->secondFactors->prove($user->getCode(), (string) ($data['code'] ?? ''));

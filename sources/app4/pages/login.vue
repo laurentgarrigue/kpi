@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { version } from '~/package.json'
-import { PasswordRenewalRequiredError, SecondFactorStepRequiredError } from '~/composables/useAuth'
+import { LoginBlockedError, PasswordRenewalRequiredError, SecondFactorStepRequiredError } from '~/composables/useAuth'
 import { useSecondFactorStep } from '~/composables/useSecondFactor'
+import { loginBlockMessage } from '~/utils/loginThrottle'
 
 definePageMeta({
   layout: 'default',
@@ -72,6 +73,10 @@ const handleSubmit = async () => {
     if (e instanceof SecondFactorStepRequiredError) {
       secondFactorStep.value = e.step
       await navigateTo('/auth/second-factor')
+      return
+    }
+    if (e instanceof LoginBlockedError) {
+      error.value = loginBlockMessage(e.block, t)
       return
     }
     if (e instanceof Error) {

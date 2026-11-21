@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PlayerAutocomplete, AutoMergeResult } from '~/types/operations'
+import type { PlayerMergeCandidate, AutoMergeResult } from '~/types/operations'
 
 const { t } = useI18n()
 const api = useApi()
@@ -12,10 +12,10 @@ const activeSubTab = ref('manual_merge')
 const loading = ref(false)
 const searchSource = ref('')
 const searchTarget = ref('')
-const sourceResults = ref<PlayerAutocomplete[]>([])
-const targetResults = ref<PlayerAutocomplete[]>([])
-const selectedSource = ref<PlayerAutocomplete | null>(null)
-const selectedTarget = ref<PlayerAutocomplete | null>(null)
+const sourceResults = ref<PlayerMergeCandidate[]>([])
+const targetResults = ref<PlayerMergeCandidate[]>([])
+const selectedSource = ref<PlayerMergeCandidate | null>(null)
+const selectedTarget = ref<PlayerMergeCandidate | null>(null)
 const showSourceDropdown = ref(false)
 const showTargetDropdown = ref(false)
 
@@ -73,7 +73,7 @@ const searchPlayers = async (query: string, isSource: boolean) => {
   }
 
   try {
-    const results = await api.get<PlayerAutocomplete[]>('/admin/operations/autocomplete/players', {
+    const results = await api.get<PlayerMergeCandidate[]>('/admin/operations/autocomplete/players', {
       q: query,
       limit: 10
     })
@@ -108,13 +108,13 @@ watch(searchTarget, (value) => {
 })
 
 // Select player
-const selectSource = (player: PlayerAutocomplete) => {
+const selectSource = (player: PlayerMergeCandidate) => {
   selectedSource.value = player
   searchSource.value = player.label
   showSourceDropdown.value = false
 }
 
-const selectTarget = (player: PlayerAutocomplete) => {
+const selectTarget = (player: PlayerMergeCandidate) => {
   selectedTarget.value = player
   searchTarget.value = player.label
   showTargetDropdown.value = false

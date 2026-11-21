@@ -110,19 +110,6 @@ export interface DuplicateFormData {
   copyPlayers: boolean
 }
 
-// Regional committee (for club filters)
-export interface RegionalCommittee {
-  code: string
-  libelle: string
-}
-
-// Departmental committee (for club filters)
-export interface DepartmentalCommittee {
-  code: string
-  libelle: string
-  codeComiteReg: string
-}
-
 // Club (for club selection)
 export interface Club {
   code: string

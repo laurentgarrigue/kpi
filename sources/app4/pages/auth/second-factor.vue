@@ -7,6 +7,7 @@
 import { PasswordRenewalRequiredError } from '~/composables/useAuth'
 import { SecondFactorError, useSecondFactorStep } from '~/composables/useSecondFactor'
 import { accountOf, isCompleteCode, normalizeCode, parseSecondFactorFragment } from '~/utils/secondFactor'
+import { loginBlockMessage } from '~/utils/loginThrottle'
 
 definePageMeta({
   layout: 'default',
@@ -29,7 +30,6 @@ const canSubmit = computed(() => isCompleteCode(code.value) && !loading.value)
 
 const errorKeys: Record<string, string> = {
   INVALID_CODE: 'second_factor.error.invalid_code',
-  ACCOUNT_LOCKED: 'second_factor.error.locked',
   TOO_MANY_CODES: 'second_factor.error.too_many_codes',
   EMAIL_REQUIRED: 'second_factor.error.email_required'
 }
@@ -49,6 +49,10 @@ function showError(e: unknown) {
   if (e instanceof SecondFactorError && e.code === 'INVALID_TOKEN') {
     expired.value = true
     error.value = t('second_factor.error.expired')
+    return
+  }
+  if (e instanceof SecondFactorError && e.code === 'ACCOUNT_LOCKED') {
+    error.value = loginBlockMessage({ reason: 'account_locked', retryAfterMinutes: e.retryAfterMinutes }, t)
     return
   }
   const key = e instanceof SecondFactorError ? errorKeys[e.code] : undefined
@@ -165,7 +169,7 @@ async function cancel() {
                 required
                 autofocus
               />
-              <p class="mt-1 text-xs text-header-600 dark:text-header-300">{{ t('second_factor.challenge.recovery_hint') }}</p>
+              <p class="mt-1 text-sm text-header-600 dark:text-header-300">{{ t('second_factor.challenge.recovery_hint') }}</p>
             </div>
 
             <UCheckbox v-model="trustDevice" :label="t('second_factor.challenge.trust_device')" />

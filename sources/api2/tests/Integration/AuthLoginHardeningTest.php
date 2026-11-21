@@ -124,6 +124,55 @@ final class AuthLoginHardeningTest extends ApiTestCase
         $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.11', expectedStatus: 423);
     }
 
+    // ---------------------------------------------------------------- AUTH-LK-03 (seuls les vrais échecs comptent)
+
+    public function testRateLimitAndLockRefusalsDoNotLockTheAccount(): void
+    {
+        for ($i = 0; $i < 4; $i++) {
+            $this->failure('bad_password', minutesAgo: 5);
+        }
+        $this->failure('rate_limited', minutesAgo: 2);
+        $this->failure('account_locked', minutesAgo: 1);
+
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.1', expectedStatus: 200);
+    }
+
+    public function testRefusalsDuringTheLockDoNotExtendIt(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->failure('bad_password', minutesAgo: 16);
+        }
+        for ($i = 0; $i < 5; $i++) {
+            $this->failure('account_locked', minutesAgo: 3);
+        }
+
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.1', expectedStatus: 200);
+    }
+
+    public function testWrongSecondFactorCodesStillLockTheAccount(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->failure('bad_second_factor', minutesAgo: 1);
+        }
+
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.1', expectedStatus: 423);
+    }
+
+    // ---------------------------------------------------------------- AUTH-LK-04 (durée restante)
+
+    public function testLockAnswersWithTheSecondsLeftUntilItLifts(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->failure('bad_password', minutesAgo: 10);
+        }
+
+        $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.1', expectedStatus: 423);
+
+        $retryAfter = (int) $this->client->getResponse()->headers->get('Retry-After');
+        self::assertGreaterThan(5 * 60 - 10, $retryAfter);
+        self::assertLessThanOrEqual(5 * 60, $retryAfter);
+    }
+
     // ---------------------------------------------------------------- AUTH-JL-03 (lecture du journal)
 
     public function testLoginHistoryEndpointIsReservedToSelfAndSuperAdmin(): void
@@ -141,6 +190,19 @@ final class AuthLoginHardeningTest extends ApiTestCase
     }
 
     // ---------------------------------------------------------------- Helpers
+
+    /** An earlier refusal of TADMIN, dated in UTC like the ones the logger writes. */
+    private function failure(string $reason, int $minutesAgo): void
+    {
+        $this->connection->insert('kp_user_login_history', [
+            'user_code' => 'TADMIN',
+            'success' => 0,
+            'method' => 'password',
+            'failure_reason' => $reason,
+            'ip' => '203.0.113.1',
+            'attempted_at' => (new \DateTimeImmutable(sprintf('-%d minutes', $minutesAgo)))->format('Y-m-d H:i:s'),
+        ]);
+    }
 
     private function postLogin(string $username, string $password, string $ip, ?int $expectedStatus = null): void
     {

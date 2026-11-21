@@ -28,6 +28,9 @@ class AdminUsersController extends AbstractController
 {
     use AdminLoggableTrait;
 
+    /** Only the super-admin sees the last sign-in of each account (PAGE_UTILISATEURS.md § 2.1 n° 16). */
+    private const LAST_LOGIN_PROFILE = 1;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly NotificationService $notificationService
@@ -159,6 +162,8 @@ class AdminUsersController extends AbstractController
             }
         }
 
+        $lastLoginByCode = $adminNiveau === self::LAST_LOGIN_PROFILE ? $this->lastLoginByCode($pageCodes) : null;
+
         $items = array_map(fn(array $row) => [
             'code' => $row['Code'],
             'identite' => $row['Identite'] ?? '',
@@ -171,7 +176,7 @@ class AdminUsersController extends AbstractController
             'limitClubs' => $row['Limitation_equipe_club'] ?? '',
             'mandateCount' => (int) $row['mandateCount'],
             'mandates' => $mandatesByCode[$row['Code']] ?? [],
-        ], $rows);
+        ] + ($lastLoginByCode === null ? [] : ['lastLoginAt' => $lastLoginByCode[$row['Code']] ?? null]), $rows);
 
         $totalPages = $limit > 0 ? (int) ceil($total / $limit) : 1;
 
@@ -182,6 +187,33 @@ class AdminUsersController extends AbstractController
             'limit' => $limit,
             'totalPages' => $totalPages,
         ]);
+    }
+
+    /**
+     * Last successful sign-in through api2 of each account, ISO 8601 in UTC (attempted_at is written in UTC).
+     * A separate IN() query rather than a join: kp_user.Code (utf8mb3) and user_code (utf8mb4) differ in charset,
+     * which would keep a join from using idx_user_time.
+     *
+     * @param list<string> $codes
+     * @return array<string, string>
+     */
+    private function lastLoginByCode(array $codes): array
+    {
+        if ($codes === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($codes), '?'));
+        $rows = $this->connection->fetchAllKeyValue(
+            "SELECT user_code, MAX(attempted_at) FROM kp_user_login_history
+             WHERE success = 1 AND user_code IN ($placeholders) GROUP BY user_code",
+            $codes
+        );
+        $utc = new \DateTimeZone('UTC');
+
+        return array_map(
+            fn (string $attemptedAt): string => (new \DateTimeImmutable($attemptedAt, $utc))->format(\DateTimeInterface::ATOM),
+            $rows
+        );
     }
 
     // ──────────────────────────────────────────────────────────────────────

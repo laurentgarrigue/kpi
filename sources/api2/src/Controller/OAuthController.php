@@ -260,12 +260,13 @@ class OAuthController extends AbstractController
                 'Retry-After' => (string) $retryAfter,
             ]);
         }
-        if ($this->loginLogger->isAccountLocked($userCode)) {
+        $lockSecondsLeft = $this->loginLogger->lockSecondsLeft($userCode);
+        if ($lockSecondsLeft !== null) {
             $this->loginLogger->logFailure($userCode, LoginAttemptLogger::REASON_ACCOUNT_LOCKED, $request);
             return $this->json([
                 'message' => 'Account temporarily locked after too many failed attempts',
                 'code' => 'ACCOUNT_LOCKED',
-            ], Response::HTTP_LOCKED);
+            ], Response::HTTP_LOCKED, ['Retry-After' => (string) $lockSecondsLeft]);
         }
 
         $row = $this->connection->fetchAssociative('SELECT Pwd FROM kp_user WHERE Code = ?', [$userCode]);

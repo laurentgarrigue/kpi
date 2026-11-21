@@ -12,6 +12,8 @@ export interface UserListItem {
   limitClubs: string
   mandateCount: number
   mandates: Mandate[]
+  /** Profile 1 only (PAGE_UTILISATEURS.md § 2.1 n° 16): last sign-in through api2, ISO 8601 UTC; null if none. */
+  lastLoginAt?: string | null
 }
 
 export interface UserDetail extends UserListItem {

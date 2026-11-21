@@ -43,7 +43,7 @@ export interface Competition {
 }
 
 // Competition group (by section)
-export interface CompetitionGroup {
+export interface CompetitionSectionGroup {
   section: number
   sectionLabel: string
   competitions: Competition[]

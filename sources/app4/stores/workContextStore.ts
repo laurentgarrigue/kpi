@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Season, Competition, CompetitionGroup, FilterEvent } from '~/types'
+import type { Season, Competition, CompetitionSectionGroup, FilterEvent } from '~/types'
 
 // Selection type for work context
 export type SelectionType = 'all' | 'selection' | 'section' | 'group' | 'event' | null
@@ -52,7 +52,7 @@ interface WorkContextState {
 
   // Reference data (loaded from API)
   seasons: Season[]
-  groups: CompetitionGroup[]
+  groups: CompetitionSectionGroup[]
   competitions: Competition[]
   events: FilterEvent[]
 
@@ -434,7 +434,7 @@ export const useWorkContextStore = defineStore('workContext', {
       const api = apiInstance ?? useApi()
 
       try {
-        const response = await api.get<{ season: string; groups: CompetitionGroup[] }>(
+        const response = await api.get<{ season: string; groups: CompetitionSectionGroup[] }>(
           '/admin/filters/competitions',
           { season: this.season },
         )

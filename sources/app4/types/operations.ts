@@ -61,8 +61,8 @@ export interface OperationsCompetition {
   section: number
 }
 
-// Player autocomplete result
-export interface PlayerAutocomplete {
+// Player search result of the merge tool (/admin/operations/autocomplete/players)
+export interface PlayerMergeCandidate {
   matric: number
   nom: string
   prenom: string

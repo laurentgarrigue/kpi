@@ -150,7 +150,6 @@
     "error": {
       "invalid_code": "Wrong or expired code.",
       "expired": "Time is up: please sign in again.",
-      "locked": "Too many attempts: account locked for 15 minutes.",
       "email_required": "No valid e-mail address on your account: choose the app, or ask an administrator to fix your address.",
       "too_many_codes": "Please wait a minute before asking for a new code.",
       "totp_unavailable": "The authenticator app is not available on this server: choose the e-mail code.",
@@ -195,6 +194,10 @@
     "error_invalid_credentials": "Invalid username or password",
     "error_profile_restricted": "Access restricted to profile 1 during beta phase",
     "error_generic": "Login error. Please try again.",
+    "error_rate_limited": "Too many sign-in attempts. Try again in {n} minute. | Too many sign-in attempts. Try again in {n} minutes.",
+    "error_rate_limited_unknown": "Too many sign-in attempts. Try again in a few minutes.",
+    "error_account_locked": "Account temporarily locked after too many failed attempts. Try again in {n} minute. | Account temporarily locked after too many failed attempts. Try again in {n} minutes.",
+    "error_account_locked_unknown": "Account temporarily locked after too many failed attempts. Try again in a few minutes.",
     "beta_title": "Beta Version",
     "beta_message": "Please report any difficulties to the developer.",
     "forgot_password": "Forgot password?",
@@ -2110,6 +2113,7 @@
       "events_gamedays": "Evt/GD",
       "clubs": "Clubs",
       "actions": "Actions",
+      "last_login": "Last sign-in",
       "edit_not_allowed": "Your profile does not allow you to edit this user"
     },
     "modal": {

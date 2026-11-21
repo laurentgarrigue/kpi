@@ -42,6 +42,7 @@ Page d'administration des utilisateurs accredites du systeme KPI. Permet de list
 | 13 | Export CSV de la liste filtrée | <= 2 | Aucun | ✅ Nouveau — exporte les utilisateurs visibles selon les filtres actifs (voir section 2.4) |
 | 14 | Mode "Vue mandats" — affichage une ligne par perimetre d'acces | <= 4 | Aucun | ✅ Nouveau — toggle "Utilisateurs / Mandats" dans la toolbar ; en mode Mandats, une ligne = un scope (profil de base ou mandat), les actions varient selon le type de ligne (voir section 2.6) |
 | 15 | Ajout de saison en masse sur une selection de scopes | <= 2 | Aucun | ✅ Nouveau — action groupee en mode Mandats : ajoute une saison au filtre saison de chaque scope selectionne (voir section 2.7) |
+| 16 | Colonne « Dernière connexion » (mode Utilisateurs, tableau et cartes mobiles) | = 1 | Aucun | ✅ Nouveau — date et heure locales de la dernière connexion **réussie** passée par api2 (admin2, Google, second facteur), lue dans `kp_user_login_history` (`success = 1`) ; « — » si aucune. Les connexions à l'ancienne administration ne sont pas journalisées. `GET /admin/users` ne renvoie `lastLoginAt` (ISO 8601, UTC) **qu'au profil 1** ; la clé est absente pour les autres profils |
 
 ### 2.2 Creation / Modification d'un utilisateur
 

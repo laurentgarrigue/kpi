@@ -7,7 +7,8 @@ nelmio_cors:
         allow_credentials: true
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         allow_headers: ['Content-Type', 'Authorization', 'X-Active-Mandate', 'Cache-Control', 'Pragma', 'Expires']
-        expose_headers: ['Link']
+        # Retry-After : app4 lit la durée d'attente d'un 429 de /auth/login (AUTH-RL-03).
+        expose_headers: ['Link', 'Retry-After']
         max_age: 3600
     paths:
         '^/': null

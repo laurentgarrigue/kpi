@@ -162,7 +162,7 @@ onMounted(() => run(reload))
           </UButton>
         </template>
       </div>
-      <p v-if="status.method && !status.canDisable" class="text-xs text-header-600 dark:text-header-300">
+      <p v-if="status.method && !status.canDisable" class="text-sm text-header-600 dark:text-header-300">
         {{ t('second_factor.settings.mandatory') }}
       </p>
 

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { UserListItem, UsersResponse, MandateScope, MandateScopesResponse } from '~/types/users'
+import { formatLastLogin } from '~/utils/lastLogin'
 
 definePageMeta({
   layout: 'admin',
   middleware: ['auth']
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const authStore = useAuthStore()
 const toast = useToast()
@@ -23,6 +24,8 @@ if (authStore.profile > 4) {
 const canEdit = computed(() => authStore.hasProfile(3))
 const canManageMandates = computed(() => authStore.hasProfile(4))
 const canDelete = computed(() => authStore.hasProfile(2))
+// Last sign-in column: super-admin only, api2 sends lastLoginAt to profile 1 only (PAGE_UTILISATEURS.md § 2.1 n° 16)
+const showLastLogin = computed(() => authStore.profile === 1)
 
 // Per-row permission: an admin can only edit/delete users with a strictly higher profile number (lower privilege)
 // Exception: profile 1 can edit/delete anyone
@@ -669,6 +672,7 @@ const profileOptions = computed(() => {
             <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.competitions') }}</th>
             <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.events_gamedays') }}</th>
             <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.clubs') }}</th>
+            <th v-if="showLastLogin" class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.last_login') }}</th>
             <th class="px-3 py-3 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('users.table.actions') }}</th>
           </tr>
         </thead>
@@ -712,6 +716,9 @@ const profileOptions = computed(() => {
             </td>
             <td class="px-3 py-2 text-sm text-header-900 dark:text-header-50">
               {{ user.limitClubs || '—' }}
+            </td>
+            <td v-if="showLastLogin" class="px-3 py-2 text-sm text-header-900 dark:text-header-50 whitespace-nowrap">
+              {{ formatLastLogin(user.lastLoginAt, locale) }}
             </td>
             <td class="px-3 py-2">
               <div class="flex items-center gap-1">
@@ -799,6 +806,7 @@ const profileOptions = computed(() => {
           <div>{{ t('users.table.seasons') }}: {{ formatFilter(user.filtreSaison, t('users.table.seasons_all')) }}</div>
           <div>{{ t('users.table.competitions') }}: {{ formatFilter(user.filtreCompetition, t('users.table.competitions_all')) }}</div>
           <div v-if="user.limitClubs">{{ t('users.table.clubs') }}: {{ user.limitClubs }}</div>
+          <div v-if="showLastLogin">{{ t('users.table.last_login') }}: {{ formatLastLogin(user.lastLoginAt, locale) }}</div>
         </div>
         <!-- Mandates expand (mobile) -->
         <div v-if="expandedMandates.has(user.code) && user.mandates.length > 0" class="mt-2 border-t border-primary-100 dark:border-primary-900 pt-2 space-y-2">

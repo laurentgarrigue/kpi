@@ -1,6 +1,7 @@
 import type { MandateSummary, MandateFilters } from '~/types/users'
 import { mandateToKeep, planRefresh, refreshOutcomeOf, type RefreshOutcome } from '~/utils/session'
 import type { SecondFactorMethod, SecondFactorStep, SecondFactorSummary } from '~/utils/secondFactor'
+import { loginBlockOf, type LoginBlock } from '~/utils/loginThrottle'
 
 /** Web Locks name shared by every app4 tab: one refresh at a time per browser (AUTH-SC-04). */
 const REFRESH_LOCK = 'kpi-auth-refresh'
@@ -88,6 +89,13 @@ export class PasswordRenewalRequiredError extends Error {
   }
 }
 
+/** Thrown by login() when api2 refuses for a while: rate limit (429) or locked account (423), AUTH-RL-03 / AUTH-LK-04. */
+export class LoginBlockedError extends Error {
+  constructor(public readonly block: LoginBlock) {
+    super(block.reason)
+  }
+}
+
 /** api2 codes of a login that opens no session until the second factor is proved or enrolled (§ 5). */
 export const SECOND_FACTOR_REQUIRED = 'SECOND_FACTOR_REQUIRED'
 export const SECOND_FACTOR_ENROLLMENT_REQUIRED = 'SECOND_FACTOR_ENROLLMENT_REQUIRED'
@@ -162,6 +170,10 @@ export const useAuth = () => {
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Invalid credentials')
+        }
+        const block = loginBlockOf(response.status, response.headers.get('Retry-After'))
+        if (block) {
+          throw new LoginBlockedError(block)
         }
         if (response.status === 403) {
           const body = await response.json().catch(() => null)

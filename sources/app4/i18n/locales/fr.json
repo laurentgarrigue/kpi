@@ -150,7 +150,6 @@
     "error": {
       "invalid_code": "Code incorrect ou expiré.",
       "expired": "Le délai est dépassé : reconnectez-vous.",
-      "locked": "Trop d'essais : compte bloqué 15 minutes.",
       "email_required": "Aucune adresse e-mail valide sur votre compte : choisissez l'application, ou demandez à un administrateur de corriger votre adresse.",
       "too_many_codes": "Patientez une minute avant de demander un nouveau code.",
       "totp_unavailable": "L'application d'authentification n'est pas disponible sur ce serveur : choisissez le code par e-mail.",
@@ -195,6 +194,10 @@
     "error_invalid_credentials": "Identifiant ou mot de passe incorrect",
     "error_profile_restricted": "Accès restreint au profil 1 pendant la phase beta",
     "error_generic": "Erreur de connexion. Veuillez réessayer.",
+    "error_rate_limited": "Trop de tentatives de connexion. Réessayez dans {n} minute. | Trop de tentatives de connexion. Réessayez dans {n} minutes.",
+    "error_rate_limited_unknown": "Trop de tentatives de connexion. Réessayez dans quelques minutes.",
+    "error_account_locked": "Compte temporairement verrouillé après trop d'échecs. Réessayez dans {n} minute. | Compte temporairement verrouillé après trop d'échecs. Réessayez dans {n} minutes.",
+    "error_account_locked_unknown": "Compte temporairement verrouillé après trop d'échecs. Réessayez dans quelques minutes.",
     "beta_title": "Version Beta",
     "beta_message": "Merci d'indiquer au développeur toute difficulté rencontrée.",
     "forgot_password": "Mot de passe oublié ?",
@@ -2122,6 +2125,7 @@
       "events_gamedays": "Evt/J",
       "clubs": "Clubs",
       "actions": "Actions",
+      "last_login": "Dernière connexion",
       "edit_not_allowed": "Votre profil ne vous permet pas de modifier cet utilisateur"
     },
     "modal": {

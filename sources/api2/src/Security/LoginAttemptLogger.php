@@ -56,41 +56,58 @@ final class LoginAttemptLogger
     }
 
     /**
-     * Un compte est verrouillé si {@see FAILURE_THRESHOLD} échecs sont survenus depuis le
-     * dernier succès dans la fenêtre glissante — autrement dit : on compte uniquement les
-     * échecs postérieurs au dernier succès.
+     * Seuls les échecs d'authentification comptent (AUTH-LK-03) : un refus `rate_limited` ou
+     * `account_locked` ne vérifie aucun secret. Les compter verrouillait un compte sans un seul
+     * mauvais mot de passe, et chaque essai pendant le verrou le prolongeait de 15 min.
+     */
+    private const LOCKING_REASONS = [self::REASON_BAD_PASSWORD, self::REASON_BAD_SECOND_FACTOR];
+
+    /**
+     * Secondes avant la levée du verrou (AUTH-LK-04), null si le compte n'est pas verrouillé.
      *
-     * Mécanique utile : un succès « reset » le compteur sans table d'état ni job de déblocage
-     * (AUTH-LK-02).
+     * Le compte est verrouillé si {@see FAILURE_THRESHOLD} échecs (AUTH-LK-03) sont survenus
+     * depuis le dernier succès dans la fenêtre glissante : un succès « reset » le compteur sans
+     * table d'état ni job de déblocage (AUTH-LK-02). Pendant le verrou, aucun échec ne peut
+     * s'ajouter (le secret n'est plus vérifié) : le verrou tombe quand le {@see FAILURE_THRESHOLD}ᵉ
+     * échec le plus récent sort de la fenêtre.
      *
      * Le début de la fenêtre est calculé par PHP, comme `attempted_at` à l'écriture : comparer à
      * NOW() mélangerait le fuseau de PHP (UTC) et celui de MariaDB (CET), et la fenêtre ne
      * contiendrait jamais aucun échec. « Après le dernier succès » se lit sur `id` (auto-increment,
      * monotone) et non sur `attempted_at`, précis à la seconde seulement.
      */
-    public function isAccountLocked(string $userCode): bool
+    public function lockSecondsLeft(string $userCode): ?int
     {
-        $sql = <<<'SQL'
-SELECT COUNT(*)
+        $sql = sprintf(<<<'SQL'
+SELECT attempted_at
 FROM kp_user_login_history
 WHERE user_code = ?
   AND success = 0
+  AND failure_reason IN (?, ?)
   AND attempted_at >= ?
   AND id > COALESCE(
       (SELECT MAX(id) FROM kp_user_login_history
        WHERE user_code = ? AND success = 1),
       0
   )
-SQL;
+ORDER BY id DESC
+LIMIT 1 OFFSET %d
+SQL, self::FAILURE_THRESHOLD - 1);
 
-        $windowStart = (new \DateTimeImmutable(sprintf('-%d minutes', self::WINDOW_MINUTES)))->format('Y-m-d H:i:s');
-        $failures = (int) $this->connection->executeQuery($sql, [
+        $now = new \DateTimeImmutable();
+        $windowStart = $now->modify(sprintf('-%d minutes', self::WINDOW_MINUTES));
+        $oldestLockingFailure = $this->connection->fetchOne($sql, [
             $userCode,
-            $windowStart,
+            ...self::LOCKING_REASONS,
+            $windowStart->format('Y-m-d H:i:s'),
             $userCode,
-        ])->fetchOne();
+        ]);
+        if (!is_string($oldestLockingFailure)) {
+            return null;
+        }
+        $liftsAt = (new \DateTimeImmutable($oldestLockingFailure))->modify(sprintf('+%d minutes', self::WINDOW_MINUTES));
 
-        return $failures >= self::FAILURE_THRESHOLD;
+        return max(1, $liftsAt->getTimestamp() - $now->getTimestamp());
     }
 
     private function insert(?string $userCode, bool $success, string $method, ?string $reason, bool $legacyHash, Request $request): void

@@ -4,13 +4,12 @@ namespace App\Tests\Unit\Security;
 
 use App\Security\LoginAttemptLogger;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Result;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Tests unitaires du journal de tentatives de login
- * ({@see AUTH_HARDENING.md § 2.2 — AUTH-JL-01, AUTH-JL-02, AUTH-LK-01}).
+ * ({@see AUTH_HARDENING.md § 2.2 — AUTH-JL-01, AUTH-JL-02, AUTH-LK-01/03/04}).
  *
  * On vérifie la forme des INSERT et le calcul du verrouillage à partir des échecs
  * récents : la DB est mockée, le but n'est pas de tester MariaDB.
@@ -87,37 +86,49 @@ final class LoginAttemptLoggerTest extends TestCase
         $this->logger->logFailure('TADMIN', LoginAttemptLogger::REASON_BAD_PASSWORD, $this->request('1.1.1.1', $longUa));
     }
 
-    public function testIsAccountLockedReturnsTrueWhenFiveFailuresWithinWindow(): void
+    public function testLockLiftsFifteenMinutesAfterTheFifthMostRecentFailure(): void
     {
-        $this->mockFailureCount('TADMIN', 5);
+        $this->mockFifthMostRecentFailure('TADMIN', (new \DateTimeImmutable('-10 minutes'))->format('Y-m-d H:i:s'));
 
-        self::assertTrue($this->logger->isAccountLocked('TADMIN'));
+        $secondsLeft = $this->logger->lockSecondsLeft('TADMIN');
+
+        self::assertNotNull($secondsLeft);
+        self::assertGreaterThan(5 * 60 - 10, $secondsLeft);
+        self::assertLessThanOrEqual(5 * 60, $secondsLeft);
     }
 
-    public function testIsAccountLockedReturnsFalseBelowThreshold(): void
+    public function testNoLockBelowThreshold(): void
     {
-        $this->mockFailureCount('TADMIN', 4);
+        $this->mockFifthMostRecentFailure('TADMIN', false);
 
-        self::assertFalse($this->logger->isAccountLocked('TADMIN'));
+        self::assertNull($this->logger->lockSecondsLeft('TADMIN'));
     }
 
-    public function testIsAccountLockedReturnsFalseForUnknownUser(): void
+    public function testOnlyAuthenticationFailuresCountTowardsTheLock(): void
     {
-        $this->mockFailureCount('GHOST', 0);
+        $this->connection->expects(self::once())
+            ->method('fetchOne')
+            ->with(
+                self::stringContains('failure_reason IN'),
+                self::callback(fn (array $params): bool => in_array(LoginAttemptLogger::REASON_BAD_PASSWORD, $params, true)
+                    && in_array(LoginAttemptLogger::REASON_BAD_SECOND_FACTOR, $params, true)
+                    && !in_array(LoginAttemptLogger::REASON_RATE_LIMITED, $params, true)
+                    && !in_array(LoginAttemptLogger::REASON_ACCOUNT_LOCKED, $params, true)),
+            )
+            ->willReturn(false);
 
-        self::assertFalse($this->logger->isAccountLocked('GHOST'));
+        $this->logger->lockSecondsLeft('TADMIN');
     }
 
-    private function mockFailureCount(string $code, int $count): void
+    /** @param string|false $attemptedAt `attempted_at` of the 5th most recent counted failure, false if there are fewer */
+    private function mockFifthMostRecentFailure(string $code, string|false $attemptedAt): void
     {
-        $result = $this->createMock(Result::class);
-        $result->method('fetchOne')->willReturn($count);
-        $this->connection->method('executeQuery')
+        $this->connection->method('fetchOne')
             ->with(
                 self::stringContains('kp_user_login_history'),
                 self::callback(fn(array $params): bool => in_array($code, $params, true)),
             )
-            ->willReturn($result);
+            ->willReturn($attemptedAt);
     }
 
     private function request(string $ip, string $userAgent): Request
