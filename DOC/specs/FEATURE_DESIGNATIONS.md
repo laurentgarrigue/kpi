@@ -51,10 +51,10 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D23 | Autorité de désignation | Chaque Désignation porte qui l'a décidée : `CNA` (par défaut) ou `ORGANISATEUR`. Pour `ARBITRE_NJ` : désigné par le club organisateur → rétribution au club fournisseur ; désigné par la CNA (pool arbitres) → budget CNA, pas de rétribution au club. |
 | D24 | Ordre de livraison | 1. Fusion du classement national des clubs tel quel. 2. Désignations. 3. Bascule des calculateurs 7.3.1, 7.3.2, 7.3.4 sur `kp_designation`, la table d'alias restant pour les saisons antérieures. |
 | D25 | Contenu du bilan de journée | Structure validée le 2026-11-22, § 7. |
+| D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, délégué CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif. États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ou du même club qu'une équipe engagée ; **vert** = pourvu. Détail § 4. |
 
 ## 3. Questions ouvertes
 
-- Rôles « requis » par niveau de compétition (ce qui rend une case rouge dans le suivi).
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
 - PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
 - Destinataires des autres types de rapport.
@@ -72,6 +72,21 @@ scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et n
 - **Équipes sans responsable désigné**, par compétition.
 - **Club de chaque officiel désigné** affiché dans la matrice, pour repérer les conflits d'intérêts (officiel du même
   club qu'une équipe engagée) et l'équilibre entre clubs.
+- **Rôles requis** (D26) :
+
+  | Rôle | Nationales (`N…`, `CF…`) | Régionales et autres |
+  |---|---|---|
+  | RC | Requis par compétition | Requis par compétition |
+  | Responsable d'équipe | Requis par équipe engagée | Facultatif |
+  | Délégué CNA | Requis par journée (héritage compris) | Sans objet |
+  | R1 | Requis par journée | Facultatif |
+  | Juge arbitre | Requis par journée | Facultatif |
+  | Arbitre non-joueur | Facultatif | Facultatif |
+  | Représentant des équipes ou des athlètes | Facultatif (souvent désigné sur place) | Facultatif |
+  | Autres membres du jury d'appel | Facultatif, sauf finales | Sans objet |
+
+- **États** : rouge (requis non pourvu), orange (pourvu sans email, ou officiel du même club qu'une équipe engagée),
+  vert (pourvu).
 - **Récapitulatif par personne et par club** : nombre de désignations et de journées couvertes, en cours de saison et
   en fin de saison ; il alimente le calcul des rétributions.
 
