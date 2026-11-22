@@ -38,12 +38,16 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D10 | Périmètre du mandat | Calculé depuis les journées effectivement couvertes : `filtre_competition` pour une Désignation sur une compétition, `filtre_journee` pour un événement ou une journée. Il est recalculé quand une journée est créée, supprimée ou (dés)associée à un événement. |
 | D11 | Tableaux de suivi | Vues de couverture : rôles requis non pourvus par compétition, événement, journée et équipe ; club de chaque officiel désigné ; répartition par club et par personne pour l'équilibre des désignations et les rétributions (§ 4). |
 | D12 | Rapports officiels | Le bilan de journée est le premier d'une famille de **rapports officiels** au même formalisme (formulaire app4 pré-rempli depuis KPI, PDF Gotenberg, rôle requis, destinataires) : rapport d'incident (arbitre), rapport de jury d'appel, fiche d'évaluation d'arbitrage. Le rôle requis et les destinataires sont définis par type de rapport. |
+| D13 | Catalogue des types de rapport | Défini **en code** dans api2 et **versionné** ([ADR-0004](../developer/reference/adr/0004-regles-metier-en-catalogues-api2.md)) : champs et sections, champs calculés et pré-remplis, rattachements possibles, rédacteurs, destinataires. Les réponses sont stockées en JSON avec la version du modèle. Le constructeur des formulaires d'inscription n'est pas réutilisé. |
+| D14 | Rapport d'incident | Rédigé par **n'importe quel officiel**. Rattaché à une compétition, un événement, une journée ou un match. |
 
 ## 3. Questions ouvertes
 
 - Rôles « requis » par niveau de compétition (ce qui rend une case rouge dans le suivi).
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
-- Structure des rapports officiels : définie en code ou configurable dans app4.
+- Qui compte comme « officiel » pour rédiger un rapport d'incident.
+- Workflow des rapports (brouillon, soumission, délai, correction, verrouillage) et destinataires.
+- Notifications et cumuls de cartons (aucun catalogue n'existe) : dans ce périmètre ou non.
 - Contenu détaillé du bilan, son workflow (brouillon, soumission, verrouillage), ses lecteurs.
 - Barème et calcul des rétributions ; infractions.
 
@@ -68,7 +72,7 @@ d'évaluation d'arbitrage (5 blocs notés sur 10, note finale sur 50, aptitudes 
 | Rapport | Rédacteur | Rattachement | Données KPI pré-remplies |
 |---|---|---|---|
 | Bilan de journée | Délégué CNA | Événement (ou journée) | Dates, lieu, officiels désignés, nombre de matchs, cartons |
-| Rapport d'incident | Arbitre du match | Match | Match, équipes, arbitres, carton concerné |
+| Rapport d'incident | Tout officiel (D14) | Compétition, événement, journée ou match | Selon le rattachement ; pour un match : équipes, arbitres et leurs clubs, cartons |
 | Rapport de jury d'appel | Président du jury (délégué CNA) | Événement ou journée, matchs concernés | Composition du jury, journée, dates, lieu, matchs, arbitres et leurs clubs |
 | Fiche d'évaluation d'arbitrage | Évaluateur | Match + arbitre évalué | Saison, compétition, journée, match, rencontre, scores, arbitre secondaire |
 
