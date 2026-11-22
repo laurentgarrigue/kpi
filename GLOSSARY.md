@@ -72,6 +72,13 @@ _Avoid_ : nomination, affectation, officiel saisi
 **Catalogue des rôles** :
 Liste unique, définie dans api2, des rôles désignables, avec pour chacun les types de périmètre autorisés et le profil du mandat généré.
 
+**Officiel** :
+Personne qui a une Désignation sur un périmètre (héritée ou non), ou arbitre désigné d'un match de ce périmètre. Les profils 1 et 2 sont officiels partout. Un responsable d'équipe n'est pas un officiel.
+
+**Bureau CNA** :
+Membres du bureau de la commission nationale d'activité, désignés pour une saison sur toutes les compétitions nationales.
+_Avoid_ : bureau CNAKP (libellé du profil 2)
+
 **Délégué CNA** :
 Officiel désigné par la commission nationale d'activité sur un événement ou une journée. Il préside le jury d'appel et rédige le bilan de journée.
 _Avoid_ : délégué fédéral (libellé du profil 5), délégué (seul)

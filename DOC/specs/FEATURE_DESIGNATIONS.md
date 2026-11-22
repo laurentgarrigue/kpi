@@ -40,16 +40,20 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D12 | Rapports officiels | Le bilan de journée est le premier d'une famille de **rapports officiels** au même formalisme (formulaire app4 pré-rempli depuis KPI, PDF Gotenberg, rôle requis, destinataires) : rapport d'incident (arbitre), rapport de jury d'appel, fiche d'évaluation d'arbitrage. Le rôle requis et les destinataires sont définis par type de rapport. |
 | D13 | Catalogue des types de rapport | Défini **en code** dans api2 et **versionné** ([ADR-0004](../developer/reference/adr/0004-regles-metier-en-catalogues-api2.md)) : champs et sections, champs calculés et pré-remplis, rattachements possibles, rédacteurs, destinataires. Les réponses sont stockées en JSON avec la version du modèle. Le constructeur des formulaires d'inscription n'est pas réutilisé. |
 | D14 | Rapport d'incident | Rédigé par **n'importe quel officiel**. Rattaché à une compétition, un événement, une journée ou un match. |
+| D15 | Officiel | Est **officiel** d'un périmètre : toute personne qui y a une Désignation (y compris héritée, D9), tout arbitre désigné d'un match de ce périmètre, et les profils 1 et 2. Les responsables d'équipe et la table de marque n'en sont pas. |
+| D16 | Bureau CNA | `BUREAU_CNA` est un rôle de Désignation, sur un périmètre **niveau** : toutes les compétitions nationales de la saison. |
 
 ## 3. Questions ouvertes
 
 - Rôles « requis » par niveau de compétition (ce qui rend une case rouge dans le suivi).
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
-- Qui compte comme « officiel » pour rédiger un rapport d'incident.
+- Accès des arbitres sans compte aux rapports (D15).
 - Workflow des rapports (brouillon, soumission, délai, correction, verrouillage) et destinataires.
-- Notifications et cumuls de cartons (aucun catalogue n'existe) : dans ce périmètre ou non.
 - Contenu détaillé du bilan, son workflow (brouillon, soumission, verrouillage), ses lecteurs.
 - Barème et calcul des rétributions ; infractions.
+
+**Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
+scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
 
 ## 4. Suivi des désignations (app4)
 
