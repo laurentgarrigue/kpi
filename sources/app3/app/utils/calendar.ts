@@ -239,12 +239,29 @@ export function weekSegments(week: readonly CalendarDay[]): WeekSegment[] {
   return segments
 }
 
-/** Views of the calendar page (PAGE_CALENDAR.md § 2 bis): by week (default) or the month grid. */
-export const CALENDAR_VIEWS = ['week', 'month'] as const
+/** Views of the calendar page (PAGE_CALENDAR.md § 2 bis): the month grid (default), by week, or the whole season (overview or list). */
+export const CALENDAR_VIEWS = ['week', 'month', 'season', 'list'] as const
 export type CalendarView = typeof CALENDAR_VIEWS[number]
 
 export function parseView(value: unknown): CalendarView {
-  return (CALENDAR_VIEWS as readonly unknown[]).includes(value) ? value as CalendarView : 'week'
+  return (CALENDAR_VIEWS as readonly unknown[]).includes(value) ? value as CalendarView : DEFAULT_VIEW
+}
+
+export const DEFAULT_VIEW: CalendarView = 'month'
+
+/** Season view: the civil year of `month`, as the season of the competitions (400 days maximum for the API). */
+export function seasonRange(month: string): { start: string, end: string } {
+  const year = month.slice(0, 4)
+  return { start: `${year}-01-01`, end: `${year}-12-31` }
+}
+
+/** The twelve months of the season of `month`, each as a grid of weeks (days outside the month are `inMonth: false`). */
+export function seasonMonths(entries: readonly CalendarEntry[], month: string): { month: string, weeks: CalendarDay[][] }[] {
+  const year = month.slice(0, 4)
+  return Array.from({ length: MONTHS_PER_YEAR }, (_, index) => {
+    const target = `${year}-${String(index + 1).padStart(2, '0')}`
+    return { month: target, weeks: monthGrid(entries, target) }
+  })
 }
 
 /** A gameday of a week block: its length in days; `ownDates` when they must be written (CAL-12). */
@@ -281,10 +298,10 @@ function dayCount(start: string, end: string): number {
  * Week blocks of a month (CAL-12): a gameday belongs to the week (Monday → Sunday) it starts in; one started before the
  * month but still running in it is kept. Gamedays sorted by section, then start.
  */
-export function calendarWeeks(entries: readonly CalendarEntry[], month: string, today: string): CalendarWeek[] {
-  const { start: first, end: last } = monthRange(month)
+export function calendarWeeks(entries: readonly CalendarEntry[], month: string, today: string, period?: { start: string, end: string }): CalendarWeek[] {
+  const { start: first, end: last } = period ?? monthRange(month)
   const weeks = new Map<string, CalendarEntry[]>()
-  for (const entry of entries.filter(item => item.start.slice(0, 7) === month || (item.start < first && item.end >= first))) {
+  for (const entry of entries.filter(item => (item.start >= first && item.start <= last) || (item.start < first && item.end >= first))) {
     const monday = mondayOf(entry.start)
     weeks.set(monday, [...(weeks.get(monday) ?? []), entry])
   }

@@ -111,7 +111,7 @@
   },
   "login": {
     "title": "Login",
-    "subtitle": "Administration Panel",
+    "subtitle": "Sports Management Panel",
     "username": "Username",
     "username_placeholder": "Enter your username",
     "password": "Password",

@@ -13,8 +13,8 @@ use App\Scoring\ScoringRules;
  */
 final class ScoresheetSheet
 {
-    /** Lines of each roster: 12 for an international competition, 10 otherwise. */
-    public const ROSTER_LINES = 10;
+    /** Lines of each roster: 12 for an international competition, 11 otherwise (8 players + 3 staff). */
+    public const ROSTER_LINES = 11;
     public const INTERNATIONAL_ROSTER_LINES = 12;
 
     /** Lines of the event grid on the sheet, then on each continuation page (no score nor signatures there). */

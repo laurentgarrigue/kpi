@@ -26,7 +26,7 @@ const waitForSuggestions = async () => {
 
 describe('calendar (PAGE_CALENDAR.md)', () => {
   it('CAL-01/CAL-02: the month of the query, gamedays by start date, merged, labelled like the legacy calendar, with the section as colour and text', async () => {
-    const wrapper = await mountRoute('/calendar?month=2999-04')
+    const wrapper = await mountRoute('/calendar?month=2999-04&view=week')
     expect(api2).toHaveBeenCalledWith('/calendar?start=2999-04-01&end=2999-05-05')
     expect(wrapper.find('[data-testid="calendar-month"]').text()).toBe('avril 2999')
     const agenda = wrapper.find('[data-testid="calendar-weeks"]')
@@ -50,7 +50,7 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-03/CAL-11: a gameday leads to its event; in a single-group event, the competition link stays in the event', async () => {
-    const row = (await mountRoute('/calendar?month=2999-04')).find('[data-testid="calendar-weeks"] [data-gameday="9202"]')
+    const row = (await mountRoute('/calendar?month=2999-04&view=week')).find('[data-testid="calendar-weeks"] [data-gameday="9202"]')
     expect(row.find('[data-testid="calendar-competition"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-label"]').attributes('href')).toBe('/events/77/games?competition=RCH')
     expect(row.find('[data-testid="calendar-event"]').attributes('href')).toBe('/events/77')
@@ -80,13 +80,16 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
   })
 
   it('CAL-09: the section filter replaces the level; the groups offered are those of the chosen section, Divers included', async () => {
-    const all = await mountRoute('/calendar?month=2999-04')
+    const all = await mountRoute('/calendar?month=2999-04&view=week')
     expect(all.findAll('select[name="section"] option').map(option => option.text())).toEqual(
       ['Toutes les sections', 'International', 'National', 'Régional', 'Tournoi', 'Continental', 'Divers'])
-    expect(all.findAll('select[name="group"] optgroup').map(group => group.attributes('label'))).toEqual(['International', 'National', 'Divers'])
-    const national = await mountRoute('/calendar?month=2999-04&section=2')
-    expect(national.findAll('select[name="group"] optgroup').map(group => group.attributes('label'))).toEqual(['National'])
-    expect(national.findAll('select[name="group"] option').map(option => option.attributes('value'))).toEqual(['', 'TSTRES', 'TSTMED'])
+    type Sections = { section: number, groups: { code: string }[] }[]
+    const groupSelect = (wrapper: typeof all) => wrapper.findComponent({ name: 'SiteGroupSearchSelect' })
+    const sectionsOf = (wrapper: typeof all) => groupSelect(wrapper).props('sections') as Sections
+    expect(sectionsOf(all).map(item => item.section)).toEqual([1, 2, 100])
+    const national = await mountRoute('/calendar?month=2999-04&section=2&view=week')
+    expect(sectionsOf(national).map(item => item.section)).toEqual([2])
+    expect(sectionsOf(national).flatMap(item => item.groups.map(group => group.code))).toEqual(['TSTRES', 'TSTMED'])
   })
 
   it('CAL-09: a group of another section than the chosen one is not sent to api2', async () => {
@@ -115,16 +118,31 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     expect(grid.find('[data-testid="calendar-bar"]').attributes('data-section')).toBe('2')
   })
 
-  it('CAL-13: the views are links keeping the month and the filters; the month view is kept by the navigation', async () => {
+  it('CAL-14: the season view shows the twelve months, the days with gamedays link to their month', async () => {
+    // The season request (the whole civil year) has no captured response: it is answered with the April one.
+    api2.mockImplementation((path: string) => fakeApi2(path.startsWith('/calendar?start=2999-01-01&end=2999-12-31') ? '/calendar?start=2999-04-01&end=2999-05-05' : path))
+    const wrapper = await mountRoute('/calendar?month=2999-04&view=season')
+    expect(api2).toHaveBeenCalledWith('/calendar?start=2999-01-01&end=2999-12-31')
+    expect(wrapper.findAll('[data-month]')).toHaveLength(12)
+    const days = wrapper.findAll('[data-testid="season-day"]')
+    expect(days.length).toBeGreaterThan(0)
+    expect(wrapper.find('[data-testid="calendar-season"]').exists()).toBe(true)
+    expect(days[0]!.attributes('href')).toContain('month=2999-04')
+    expect(wrapper.find('[data-testid="calendar-legend"]').exists()).toBe(true)
+  })
+
+  it('CAL-13: the views are links keeping the month and the filters; the week view is kept by the navigation', async () => {
     const wrapper = await mountRoute('/calendar?month=2999-04&section=2')
     const views = wrapper.findAll('[data-testid="calendar-views"] a')
     expect(views.map(view => [view.text(), view.attributes('href'), view.attributes('aria-current')])).toEqual([
-      ['Par semaine', '/calendar?section=2&month=2999-04', 'page'],
-      ['Mois', '/calendar?section=2&month=2999-04&view=month', undefined],
+      ['Par semaine', '/calendar?section=2&month=2999-04&view=week', undefined],
+      ['Par mois', '/calendar?section=2&month=2999-04', 'page'],
+      ['Par saison', '/calendar?section=2&month=2999-04&view=season', undefined],
+      ['Liste', '/calendar?section=2&month=2999-04&view=list', undefined],
     ])
-    const month = await mountRoute('/calendar?month=2999-04&view=month')
-    expect(month.find('[data-testid="next-month"]').attributes('href')).toBe('/calendar?month=2999-05&view=month')
-    expect(month.find('[data-testid="calendar-filters"] input[name="view"]').attributes('value')).toBe('month')
+    const week = await mountRoute('/calendar?month=2999-04&view=week')
+    expect(week.find('[data-testid="next-month"]').attributes('href')).toBe('/calendar?month=2999-05&view=week')
+    expect(week.find('[data-testid="calendar-filters"] input[name="view"]').attributes('value')).toBe('week')
   })
 
   it('CAL-05: an empty month says so and links to the next month having gamedays', async () => {

@@ -164,7 +164,7 @@ class AdminPresenceController extends AbstractController
                 'verrou' => $isLocked,
                 'codeNiveau' => $teamRow['Code_niveau'] ?? '',
                 'statut' => $teamRow['Statut'] ?? '',
-                'eligibility' => $this->eligibility->describe($eligibilityLevel)
+                'eligibility' => $this->eligibility->describe($eligibilityLevel, (string) $season)
             ],
             'canEdit' => $canEdit,
             'players' => $players,
@@ -219,7 +219,7 @@ class AdminPresenceController extends AbstractController
                     $teamInfo['code_compet'],
                     $this->ageCategories->categoryFor($data['naissance'] ?? null, $teamInfo['code_saison'])?->code
                 );
-                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings);
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings, (string) $teamInfo['code_saison']);
                 if ($rejection) {
                     return $rejection;
                 }
@@ -273,7 +273,7 @@ class AdminPresenceController extends AbstractController
             // Eligibility rules ("joueur en règle"), see App\Eligibility\PlayerEligibilityRules
             if ($eligibilityLevel !== null) {
                 $errors = $this->eligibility->checkPlayer((int) $matric, $eligibilityLevel, $teamInfo['code_saison'], $teamInfo['code_compet']);
-                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings);
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_ADD, $capitaine, !empty($data['forceAdd']), $user, $warnings, (string) $teamInfo['code_saison']);
                 if ($rejection) {
                     return $rejection;
                 }
@@ -371,7 +371,7 @@ class AdminPresenceController extends AbstractController
             }
             if ($currentStatus !== $updateData['Capitaine']) {
                 $errors = $this->eligibility->checkPlayer($matric, $eligibilityLevel, $teamInfo['code_saison'], $teamInfo['code_compet']);
-                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_STATUS_CHANGE, $updateData['Capitaine'], !empty($data['force']), $user, $warnings);
+                $rejection = $this->applyEligibilityDecision($eligibilityLevel, $errors, PlayerEligibilityChecker::OPERATION_STATUS_CHANGE, $updateData['Capitaine'], !empty($data['force']), $user, $warnings, (string) $teamInfo['code_saison']);
                 if ($rejection) {
                     return $rejection;
                 }
@@ -1392,7 +1392,7 @@ class AdminPresenceController extends AbstractController
         $categ = $this->ageCategories->categoryFor($row['Naissance'], $season)?->code;
 
         // Indicate whether surclassement is required (only where the rule set checks it) and whether it's present
-        $eligibility = $this->eligibility->describe($eligibilityLevel);
+        $eligibility = $this->eligibility->describe($eligibilityLevel, (string) $season);
         $surclassementNeeded = ($eligibility['surclassement'] ?? false) && $this->eligibility->requiresSurclassement($competCode, $categ);
         $surclassementOk = !$surclassementNeeded || !empty($row['date_surclassement']);
 
@@ -1559,9 +1559,9 @@ class AdminPresenceController extends AbstractController
      * @param string[] $errors
      * @param string[] $warnings
      */
-    private function applyEligibilityDecision(string $level, array $errors, string $operation, string $status, bool $force, User $user, array &$warnings): ?JsonResponse
+    private function applyEligibilityDecision(string $level, array $errors, string $operation, string $status, bool $force, User $user, array &$warnings, string $season = ''): ?JsonResponse
     {
-        $decision = $this->eligibility->decide($level, $errors, $operation, $status, $force, $user->getEffectiveNiveau());
+        $decision = $this->eligibility->decide($level, $errors, $operation, $status, $force, $user->getEffectiveNiveau(), $season);
         if ($decision['allowed']) {
             array_push($warnings, ...$decision['warnings']);
             return null;
