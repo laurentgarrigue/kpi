@@ -142,3 +142,182 @@ Les frais d'accueil des officiels (nuits, repas) restent hors KPI.
 | 9 | Pièces liées [KPI] | Rapports d'incident et de jury d'appel rattachés au même périmètre |
 
 Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de 1 à 4.
+
+## 8. Modèle de données et API (esquisse)
+
+### 8.1 Tables
+
+| Table | Colonnes principales | Remarques |
+|---|---|---|
+| `kp_designation` | `id`, `saison`, `role`, `perimetre_type` (`NIVEAU`, `COMPETITION`, `EQUIPE`, `EVENEMENT`, `JOURNEE`), `perimetre_id`, `matric`, `club` (figé, D22), `autorite` (`CNA`, `ORGANISATEUR`), `ordre`, `qualite`, `created_by`, `created_at` | Unicité `(saison, role, perimetre_type, perimetre_id, matric)` |
+| `kp_user_mandat` | + `designation_role`, `designation_saison` (nullable) | Un mandat généré par `(utilisateur, saison, rôle)` (D6) ; un mandat sans ces colonnes est un mandat saisi à la main, jamais touché |
+| `kp_report` | `id`, `type`, `version_modele`, `perimetre_type` (`COMPETITION`, `EVENEMENT`, `JOURNEE`, `MATCH`), `perimetre_id`, `saison`, `auteur_matric`, `saisi_par` (code utilisateur), `etat` (`BROUILLON`, `SOUMIS`), `soumis_le`, `hors_delai`, `reponses` (JSON) | Un rapport rouvert repasse en `BROUILLON` |
+| `kp_report_pdf` | `report_id`, `numero`, `fichier`, `genere_le` | Un PDF par soumission, conservé (D18) |
+| vue `kp_rc` | `Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric` | Lecture seule sur `kp_designation` rôle `RC` (D4) |
+
+### 8.2 Catalogues (api2, ADR-0004)
+
+- `App\Designation\RoleCatalog` : pour chaque rôle, périmètres autorisés, profil du mandat (ou aucun), exigence par
+  niveau (D26), qui peut le désigner (profils 1–2 ; délégué CNA pour `REP_EQUIPES` et `JURY_APPEL`, D27), colonne
+  legacy recopiée (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`).
+- `App\Report\ReportTypeCatalog` : par type et par version, sections, champs, champs calculés et pré-remplis,
+  rattachements, rédacteurs, destinataires, lecteurs, délai.
+
+### 8.3 Endpoints (api2)
+
+| Endpoint | Rôle |
+|---|---|
+| `GET/POST/PATCH/DELETE /admin/designations` | CRUD (filtres saison, rôle, périmètre, personne, club) |
+| `GET /admin/designations/coverage` | Matrice de couverture (D11, D26) |
+| `GET /admin/designations/summary` | Récapitulatif par personne et par club |
+| `GET /admin/designations/roles` | Catalogue des rôles actif (app4 ne le réimplémente pas) |
+| `GET /admin/reports/types` | Catalogue des types de rapport |
+| `GET/POST/PATCH /admin/reports`, `POST /admin/reports/{id}/submit`, `POST /admin/reports/{id}/reopen` | Rapports et cycle de vie |
+| `GET /admin/reports/{id}/prefill` | Données KPI pré-remplies |
+| `GET /admin/pdf/report`, `GET /admin/pdf/report-blank` | PDF d'un rapport soumis, PDF vierge (D29) |
+| `GET /admin/designations/facts` | Relevé des faits par club (D19), export CSV / Excel |
+
+### 8.4 Écrans app4
+
+- **Admin › Désignations** : matrice de couverture (filtres saison, niveau, compétition, « seulement les manques »),
+  ajout ou retrait d'une Désignation depuis une case, récapitulatif par personne et par club, relevé des faits.
+- **Compétitions, Événements, Journées, Équipes** : bloc « Désignations » du périmètre (remplace l'onglet RC et la
+  section Officiels de la modale journée, en lecture des champs legacy).
+- **Rapports** : liste filtrable (type, état, saison, périmètre, hors délai), formulaire, aperçu PDF ; accès
+  « Mes rapports » pour un officiel.
+
+## 9. Critères d'acceptation
+
+Les tests portent le code du critère dans leur nom. « National » = compétition dont le code commence par `N` ou `CF`.
+
+**Désignations et catalogue des rôles**
+
+- **DES-01** — Étant donné le rôle `DELEGUE_CNA`, quand on le désigne sur une équipe, alors `422` (périmètre non
+  autorisé par le catalogue).
+- **DES-02** — Étant donné une Désignation, alors elle porte une licence existante ; un nom sans licence est refusé.
+- **DES-03** — Étant donné la même personne, le même rôle et le même périmètre, quand on la désigne deux fois, alors
+  `409`.
+- **DES-04** — Étant donné un licencié du club A au PCE, quand on le désigne, alors `club = A` ; quand le PCE le passe
+  ensuite au club B, alors la Désignation garde A ; un profil 1–2 peut corriger le club.
+- **DES-05** — Étant donné une Désignation sans autorité précisée, alors `autorite = CNA`.
+- **DES-06** — Étant donné un utilisateur de profil 3 à 10, quand il crée une Désignation, alors `403`, sauf
+  DES-07.
+- **DES-07** — Étant donné le délégué CNA désigné sur un événement, quand il désigne un `REP_EQUIPES` ou un
+  `JURY_APPEL` sur cet événement ou l'une de ses journées, alors c'est accepté ; sur un autre périmètre, `403`.
+- **DES-08** — Étant donné une Désignation `DELEGUE_CNA` sur un événement, alors chacune de ses journées a ce
+  délégué ; étant donné en plus une Désignation sur une de ses journées, alors cette journée a le délégué de la
+  journée (D9).
+- **DES-09** — Étant donné un délégué désigné sur une compétition et un autre sur l'événement qui la contient, alors
+  les journées de cette compétition ont le délégué de la compétition.
+- **DES-10** — Étant donné une compétition de type CP désignée une fois, quand on ajoute une phase, alors la
+  nouvelle phase hérite des Désignations sans action.
+- **DES-11** — Étant donné une modification de Désignation qui touche une journée, alors les colonnes legacy de
+  `kp_journee` (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`) valent « NOM Prénom » des
+  Désignations effectives de la journée.
+
+**Absorption de `kp_rc` et legacy (D4, ADR-0002)**
+
+- **RC-01** — Étant donné les lignes de `kp_rc` avant migration, alors chacune devient une Désignation `RC` sur la
+  compétition, avec la même saison, le même ordre et la même licence, et le club du licencié au PCE.
+- **RC-02** — Après migration, `SELECT * FROM kp_rc` rend les mêmes lignes qu'avant (vue).
+- **RC-03** — Après migration, les pages legacy `GestionRc`, `GestionCompetition`, `GestionParamJournee`,
+  `GestionInstances`, `GestionOperations` s'affichent sans erreur.
+- **RC-04** — Les écrans et endpoints api2 qui lisaient `kp_rc` (page RC, compétitions, renommage de code,
+  opérations de saison) donnent le même résultat qu'avant à partir de `kp_designation`.
+
+**Comptes et mandats générés (D5, D6, D8, D10, D16)**
+
+- **MAN-01** — Étant donné un licencié sans compte avec un email connu, quand on le désigne sur un rôle à mandat,
+  alors un compte `Code = licence`, profil 8, est créé et un e-mail d'activation est envoyé.
+- **MAN-02** — Étant donné un licencié sans email, quand on le désigne, alors la Désignation est créée, sans compte
+  ni mandat, et la réponse le signale.
+- **MAN-03** — Étant donné un compte existant de profil 7, quand on le désigne délégué CNA, alors son profil de
+  base reste 7 et il reçoit un mandat de profil 5.
+- **MAN-04** — Étant donné un délégué désigné sur deux événements de la même saison, alors il a **un** mandat
+  « Délégué CNA <saison> » dont `filtre_journee` contient les journées des deux événements.
+- **MAN-05** — Étant donné un RC désigné sur une compétition, alors son mandat a `filtre_competition` = cette
+  compétition et la saison ; une phase ajoutée ensuite est couverte sans recalcul.
+- **MAN-06** — Étant donné un délégué désigné sur un événement, quand on associe une journée à l'événement, alors
+  elle entre dans `filtre_journee` ; quand on la dissocie, elle en sort.
+- **MAN-07** — Étant donné la dernière Désignation d'un rôle et d'une saison supprimée, alors le mandat généré est
+  supprimé et le compte est conservé.
+- **MAN-08** — Étant donné un mandat saisi à la main, alors aucune opération sur les Désignations ne le modifie.
+- **MAN-09** — Étant donné un responsable d'équipe désigné, alors son mandat (profil 7) a
+  `limitation_equipe_club` = le club de l'équipe.
+- **MAN-10** — Étant donné un membre du bureau CNA de profil de base 1 ou 2, alors aucun mandat n'est généré ; de
+  profil 3 ou plus, un mandat de profil 2.
+- **MAN-11** — Étant donné une Désignation `REP_EQUIPES`, `JURY_APPEL` ou `ARBITRE_NJ`, alors aucun compte ni mandat.
+
+**Suivi des désignations (D11, D26)**
+
+- **SUI-01** — Étant donné une journée nationale sans délégué CNA (ni hérité), alors sa case « Délégué CNA » est
+  rouge ; pour une journée régionale, la case est « sans objet ».
+- **SUI-02** — Étant donné une équipe engagée en nationale sans responsable désigné, alors elle figure dans la
+  liste des équipes sans responsable.
+- **SUI-03** — Étant donné une case pourvue par héritage, alors elle est distinguée d'une case pourvue en propre et
+  indique d'où vient la Désignation.
+- **SUI-04** — Étant donné un juge arbitre du même club qu'une équipe engagée sur la journée, alors la case est
+  orange avec le motif ; idem pour une personne sans email.
+- **SUI-05** — Étant donné le filtre « seulement les manques », alors seules les lignes ayant au moins une case
+  rouge sont listées.
+- **SUI-06** — Le récapitulatif donne, par personne et par club, le nombre de Désignations par rôle et le nombre de
+  journées couvertes, sur la saison ou une période.
+
+**Rapports officiels (D12–D18, D28, D29)**
+
+- **RAP-01** — Étant donné un type de rapport, quand app4 l'affiche, alors les champs viennent de
+  `GET /admin/reports/types` (aucun champ codé dans app4).
+- **RAP-02** — Étant donné un rapport soumis avec la version 1 d'un modèle, quand le modèle passe en version 2,
+  alors le rapport s'affiche et s'imprime selon la version 1.
+- **RAP-03** — Étant donné une personne ni officielle du périmètre (D15) ni profil 1–2, quand elle crée un rapport
+  d'incident, alors `403`.
+- **RAP-04** — Étant donné un arbitre désigné d'un match de la journée, alors il est proposé comme auteur d'un
+  rapport d'incident saisi par un officiel, et le rapport enregistre `auteur_matric` (arbitre) et `saisi_par`.
+- **RAP-05** — Étant donné un rapport en brouillon, alors seuls son rédacteur, son auteur s'il a un compte et les
+  profils 1–2 le lisent.
+- **RAP-06** — Étant donné un rapport soumis, alors il n'est plus modifiable, un PDF est généré et les
+  destinataires de D28 sont notifiés par e-mail (résolus depuis les Désignations au moment de la soumission).
+- **RAP-07** — Étant donné un rapport soumis, quand un profil 3 à 10 demande sa réouverture, alors `403` ; un profil
+  1–2 doit donner un motif, journalisé, et le PDF précédent est conservé.
+- **RAP-08** — Étant donné une fiche d'évaluation d'arbitrage, alors elle n'est lisible que par son rédacteur, le
+  juge arbitre du périmètre et le bureau CNA ; la note sur 50 est la somme des cinq blocs, non saisissable.
+- **RAP-09** — Étant donné un rapport de jury d'appel, alors la composition est pré-remplie depuis les Désignations ;
+  quand on remplace un membre dans le rapport, alors les Désignations ne changent pas.
+- **RAP-10** — Étant donné un type de rapport, alors `GET /admin/pdf/report-blank` rend un PDF vierge imprimable
+  avec les mêmes sections que le formulaire.
+
+**Bilan de journée (D1, D18, D25)**
+
+- **BIL-01** — Étant donné un événement, alors un seul bilan peut y être rattaché ; étant donné une journée
+  rattachée à un événement, alors on ne peut pas créer de bilan sur la journée seule.
+- **BIL-02** — Étant donné le délégué CNA effectif de l'événement, alors lui seul (et les profils 1–2) peut rédiger
+  le bilan.
+- **BIL-03** — Étant donné un bilan, alors l'en-tête, les officiels, le nombre de matchs et les cartons (verts,
+  jaunes, rouges, noirs) sont pré-remplis depuis KPI.
+- **BIL-04** — Étant donné un bilan soumis plus de 3 jours après la fin de l'événement, alors il est accepté et
+  marqué « hors délai ».
+- **BIL-05** — Étant donné un bilan soumis, alors le bureau CNA, les RC des compétitions de l'événement et le
+  rédacteur reçoivent le PDF.
+- **BIL-06** — Étant donné un officiel marqué « absent » ou « remplacé par » dans un bilan soumis, alors le relevé des
+  faits en tient compte.
+- **BIL-07** — Étant donné les rapports d'incident et de jury d'appel du même périmètre, alors ils sont listés dans
+  la section « Pièces liées ».
+
+**Relevé des faits (D19, D22, D23)**
+
+- **REL-01** — Le relevé ne contient que des quantités, jamais de montant.
+- **REL-02** — Étant donné un arbitre non-joueur désigné par l'organisateur, alors il compte pour son club
+  fournisseur ; désigné par la CNA, alors il n'y compte pas.
+- **REL-03** — Étant donné un délégué CNA présent sur deux journées, alors son club a deux « délégués fournis » sur le
+  club figé dans la Désignation.
+- **REL-04** — Étant donné un fait du relevé, alors son détail donne la source (journée, match, Désignation ou
+  rapport).
+- **REL-05** — Le relevé s'exporte en CSV et en Excel.
+
+**Classement national des clubs (D20, D24)**
+
+- **CLA-01** — Étant donné une saison où des Désignations existent, alors les rubriques 7.3.1, 7.3.2 et 7.3.4 sont
+  calculées depuis `kp_designation` avec le club figé, et non depuis les noms en texte libre, `kp_rc` ou la liste
+  manuelle.
+- **CLA-02** — Étant donné une saison antérieure aux Désignations, alors le calcul existant (noms et table d'alias)
+  s'applique inchangé.
