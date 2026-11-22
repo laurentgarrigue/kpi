@@ -1,6 +1,6 @@
 # Les désignations sont la source unique des officiels et responsables, et absorbent `kp_rc`
 
-Qui est RC d'une compétition, responsable d'une équipe, R1, délégué CNA ou membre du jury d'appel d'un événement ou d'une journée est enregistré dans une seule table, `kp_designation` : `(saison, rôle, type et id de périmètre, licence, ordre, qualité)`. Chaque Désignation porte la licence de la personne, jamais un nom en texte libre. Les rôles, les types de périmètre autorisés et le profil du mandat généré sont définis à un seul endroit, le catalogue des rôles côté api2. La table `kp_rc` est migrée en Désignations de rôle `RC` sur le périmètre compétition, puis remplacée par une vue SQL `kp_rc` en lecture seule sur `kp_designation` (rôle `RC`).
+Qui est RC d'une compétition, responsable d'une équipe, R1, délégué CNA, juge arbitre, arbitre non-joueur ou membre du jury d'appel d'un événement ou d'une journée est enregistré dans une seule table, `kp_designation` : `(saison, rôle, type et id de périmètre, licence, ordre, qualité)`. Chaque Désignation porte la licence de la personne, jamais un nom en texte libre. Les rôles, les types de périmètre autorisés et le profil du mandat généré sont définis à un seul endroit, le catalogue des rôles côté api2. La table `kp_rc` est migrée en Désignations de rôle `RC` sur le périmètre compétition, puis remplacée par une vue SQL `kp_rc` en lecture seule sur `kp_designation` (rôle `RC`).
 
 ## Considered Options
 

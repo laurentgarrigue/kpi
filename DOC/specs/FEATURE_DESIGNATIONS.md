@@ -11,7 +11,7 @@
 ## 1. Objectif
 
 1. **Désigner**, en amont de la saison ou des journées, les responsables et les officiels : RC (compétition),
-   responsables d'équipe (équipe et club), R1, délégués CNA, chef des arbitres et membres du jury d'appel
+   responsables d'équipe (équipe et club), R1, délégués CNA, juges arbitres, arbitres non-joueurs et membres du jury d'appel
    (événement ou journée), en leur attribuant **dans le même geste** le compte et le mandat adéquats.
 2. Permettre au **délégué CNA** de remplir un **bilan de journée** à la fin de la compétition ou dans les 3 jours
    qui suivent : représentants des clubs et des athlètes, bilan général (dont l'évaluation du site), bilan sportif,
@@ -27,13 +27,13 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | # | Sujet | Décision |
 |---|---|---|
 | D1 | Rattachement du bilan | Un bilan **par événement**, avec repli sur la **journée** quand elle n'appartient à aucun événement. |
-| D2 | Source de vérité | Table `kp_designation` `(saison, rôle, type et id de périmètre, licence, ordre, qualité)`. Les champs texte de `kp_journee` en sont recopiés. |
+| D2 | Source de vérité | Table `kp_designation` `(saison, rôle, type et id de périmètre, licence, club, autorité, ordre, qualité)`. Les champs texte de `kp_journee` en sont recopiés. |
 | D3 | Rôles | Le catalogue des rôles est défini à un seul endroit (api2) : périmètres autorisés et profil du mandat généré. |
 | D4 | `kp_rc` | Absorbée dans `kp_designation` (rôle `RC`, périmètre compétition), puis remplacée par une vue SQL en lecture seule pendant la période de secours. |
 | D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8), **seulement si son email est connu**. Le profil de base d'un compte existant n'est jamais modifié. |
 | D6 | Mandat | Un **mandat généré par saison et par rôle**, dont le périmètre est l'union des Désignations de ce rôle. Il est recalculé à chaque création ou suppression de Désignation, et supprimé quand il n'en reste plus. |
 | D7 | Personnes désignables | Toute personne de la base des joueurs, Joueurs internationaux compris. Sans email, la Désignation est enregistrée sans compte ni mandat. |
-| D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; délégué CNA → 5 ; R1 et chef des arbitres → 6 ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
+| D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; délégué CNA → 5 ; R1 et juge arbitre → 6 ; arbitre non-joueur → aucun mandat ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
 | D9 | Périmètres emboîtés | Une Désignation se pose sur l'**événement**, la **compétition** (saison) ou la **journée**. Pour une journée et un rôle donnés, la Désignation la plus précise l'emporte : journée, puis compétition, puis événement. Cas du tournoi (CP) : on désigne une fois sur la compétition (une catégorie) ou sur l'événement, et toutes les phases en héritent. On ne désigne sur une phase que pour faire une exception. |
 | D10 | Périmètre du mandat | Calculé depuis les journées effectivement couvertes : `filtre_competition` pour une Désignation sur une compétition, `filtre_journee` pour un événement ou une journée. Il est recalculé quand une journée est créée, supprimée ou (dés)associée à un événement. |
 | D11 | Tableaux de suivi | Vues de couverture : rôles requis non pourvus par compétition, événement, journée et équipe ; club de chaque officiel désigné ; répartition par club et par personne pour l'équilibre des désignations et les rétributions (§ 4). |
@@ -46,7 +46,10 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D18 | Cycle de vie d'un rapport | **Brouillon** (visible du rédacteur et des profils 1–2) → **Soumis** (figé, PDF généré, destinataires notifiés). Seul un profil 1–2 peut **rouvrir** un rapport soumis, avec un motif journalisé ; le PDF précédent est conservé. Pas d'état « validé ». Le délai (3 jours après la fin pour le bilan de journée) est indicatif : au-delà, le rapport est marqué « hors délai ». Les destinataires sont résolus depuis les Désignations à la soumission. Bilan de journée : bureau CNA, RC des compétitions de l'événement, copie au rédacteur. |
 | D19 | Rétributions et pénalités | L'outillage **prépare** le calcul (annexe 8 du règlement sportif) sans le faire : un **relevé des faits par club et par saison** (quantités, jamais de montants), exportable, avec le détail de chaque fait et sa source (§ 6). |
 | D20 | Classement national des clubs | Les Désignations alimentent le classement national des clubs (branche `claude/classement-national-clubs`, [PAGE_CLASSEMENT_NATIONAL_CLUBS.md](PAGE_CLASSEMENT_NATIONAL_CLUBS.md) une fois fusionnée) : 7.3.1 (délégué CNA, juge arbitre), 7.3.2 (RC) et 7.3.4 (autre membre de la CNA) sont lus dans `kp_designation` au lieu des noms en texte libre, de `kp_rc` et des listes saisies à la main. |
-| D21 | Rôles ajoutés | `MEMBRE_CNA` (périmètre niveau national, pour 7.3.4 ; le bureau CNA en est un sous-ensemble) et `ARBITRE_NJ` (arbitre non-joueur, sur une journée ou un événement, pour la prime de l'annexe 8 § 1). « Juge arbitre » (règlement) et « chef des arbitres » (KPI) désignent le même rôle `CHEF_ARBITRE`. |
+| D21 | Rôles ajoutés | `MEMBRE_CNA` (périmètre niveau national, pour 7.3.4 ; le bureau CNA en est un sous-ensemble) et `ARBITRE_NJ` (arbitre non-joueur, sur une journée ou un événement, pour la prime de l'annexe 8 § 1). Le rôle s'appelle `JUGE_ARBITRE` (« chef des arbitres » est l'ancienne appellation, colonne legacy `kp_journee.ChefArbitre`). |
+| D22 | Club fournisseur | Le **club** de l'officiel est **figé dans la Désignation** à sa création (pré-rempli depuis le PCE, modifiable par les profils 1–2). Le relevé des faits et le classement national des clubs l'utilisent tous les deux. Les deux se calculent **pendant la saison**, pas la saison suivante. |
+| D23 | Autorité de désignation | Chaque Désignation porte qui l'a décidée : `CNA` (par défaut) ou `ORGANISATEUR`. Pour `ARBITRE_NJ` : désigné par le club organisateur → rétribution au club fournisseur ; désigné par la CNA (pool arbitres) → budget CNA, pas de rétribution au club. |
+| D24 | Ordre de livraison | 1. Fusion du classement national des clubs tel quel. 2. Désignations. 3. Bascule des calculateurs 7.3.1, 7.3.2, 7.3.4 sur `kp_designation`, la table d'alias restant pour les saisons antérieures. |
 
 ## 3. Questions ouvertes
 
@@ -55,7 +58,6 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 - PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
 - Destinataires des autres types de rapport.
 - Contenu détaillé du bilan de journée.
-- Club retenu pour un officiel désigné (club « fournisseur ») : à quelle date.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
 scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
@@ -98,7 +100,7 @@ Source : annexes 2026 au règlement sportif, annexe 8 « Rétributions, pénalit
 | Organisation d'un podium (N2, NEM) | Bilan de journée |
 | Finales accueillies (championnat, Coupe de France, play-off, play-down) et nombre de terrains | `kp_journee`, phases finales |
 | RC fournis, par catégorie (championnat ; Coupe de France, U21, play-down) | Désignations `RC` + club du licencié |
-| Délégués CNA, juges arbitres, arbitres non-joueurs fournis, par journée | Désignations `DELEGUE_CNA`, `CHEF_ARBITRE`, `ARBITRE_NJ`, confirmées par le bilan de journée (présence effective) |
+| Délégués CNA, juges arbitres, arbitres non-joueurs désignés par l'organisateur (D23) fournis, par journée | Désignations `DELEGUE_CNA`, `JUGE_ARBITRE`, `ARBITRE_NJ`, confirmées par le bilan de journée (présence effective) |
 | Joueurs ajoutés hors délai sur une feuille de présence | Journal des feuilles de présence (à vérifier) |
 | Cartons rouges et jaunes pris par des joueurs | Timeline des matchs validés |
 | Avertissements pour tenue d'arbitre non conforme, par arbitre | Bilan arbitrage (champ structuré par arbitre) |
