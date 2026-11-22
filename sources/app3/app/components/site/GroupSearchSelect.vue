@@ -28,6 +28,6 @@ const items = computed<Item[][]>(() => [
 <template>
   <div class="min-w-56">
     <input type="hidden" :name="name" :value="model">
-    <USelectMenu v-model="selected as never" :items="items as never" value-key="value" class="w-full" :search-input="{ placeholder: $t('common.search') }" />
+    <USelectMenu :model-value="selected as never" :items="items as never" value-key="value" class="w-full" :search-input="{ placeholder: $t('common.search') }" @update:model-value="selected = $event as string" />
   </div>
 </template>

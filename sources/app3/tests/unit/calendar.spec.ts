@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   calendarApiPath, entriesByDate, gamedayCompetitionPath, gridRange, lookaheadRange, monthGrid, monthRange,
   nextMonthWithEntries, parseFilters, parseMonth, shiftMonth, shiftYear, weekSegments, type CalendarEntry,
-  CALENDAR_SECTIONS, SECTION_STYLES, entrySection, groupsOfSection, reconcileFilters, calendarWeeks, parseView,
+  CALENDAR_SECTIONS, SECTION_STYLES, entrySection, groupsOfSection, reconcileFilters, calendarWeeks, parseView, seasonRange, seasonMonths,
 } from '../../app/utils/calendar'
 
 function entry(id: number, start: string, end: string, type = 'CHPT'): CalendarEntry {
@@ -188,5 +188,15 @@ describe('calendarWeeks (PAGE_CALENDAR.md § 2 bis)', () => {
     expect(parseView('list')).toBe('list')
     expect(parseView(undefined)).toBe('month')
     expect(parseView('grid')).toBe('month')
+  })
+})
+
+describe('calendar season view (PAGE_CALENDAR.md § 2 bis)', () => {
+  it('the season is the civil year of the month, as twelve month grids', () => {
+    expect(seasonRange('2026-06')).toEqual({ start: '2026-01-01', end: '2026-12-31' })
+    const months = seasonMonths([entry(1, '2026-03-07', '2026-03-08')], '2026-06')
+    expect(months.map(item => item.month)).toEqual(Array.from({ length: 12 }, (_, index) => `2026-${String(index + 1).padStart(2, '0')}`))
+    const march = months[2]!.weeks.flat().filter(day => day.inMonth && day.entries.length > 0)
+    expect(march.map(day => day.date)).toEqual(['2026-03-07', '2026-03-08'])
   })
 })

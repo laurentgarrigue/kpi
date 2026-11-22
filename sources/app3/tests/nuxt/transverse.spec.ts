@@ -118,6 +118,19 @@ describe('calendar (PAGE_CALENDAR.md)', () => {
     expect(grid.find('[data-testid="calendar-bar"]').attributes('data-section')).toBe('2')
   })
 
+  it('CAL-14: the season view shows the twelve months, the days with gamedays link to their month', async () => {
+    // The season request (the whole civil year) has no captured response: it is answered with the April one.
+    api2.mockImplementation((path: string) => fakeApi2(path.startsWith('/calendar?start=2999-01-01&end=2999-12-31') ? '/calendar?start=2999-04-01&end=2999-05-05' : path))
+    const wrapper = await mountRoute('/calendar?month=2999-04&view=season')
+    expect(api2).toHaveBeenCalledWith('/calendar?start=2999-01-01&end=2999-12-31')
+    expect(wrapper.findAll('[data-month]')).toHaveLength(12)
+    const days = wrapper.findAll('[data-testid="season-day"]')
+    expect(days.length).toBeGreaterThan(0)
+    expect(wrapper.find('[data-testid="calendar-season"]').exists()).toBe(true)
+    expect(days[0]!.attributes('href')).toContain('month=2999-04')
+    expect(wrapper.find('[data-testid="calendar-legend"]').exists()).toBe(true)
+  })
+
   it('CAL-13: the views are links keeping the month and the filters; the week view is kept by the navigation', async () => {
     const wrapper = await mountRoute('/calendar?month=2999-04&section=2')
     const views = wrapper.findAll('[data-testid="calendar-views"] a')
