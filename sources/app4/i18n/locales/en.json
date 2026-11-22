@@ -2745,6 +2745,9 @@
       "r_o": "Obstruction",
       "r_un": "Unsporting / protest",
       "r_rep": "Substitution",
+      "r_ct": "Dissent",
+      "hint_enter": "Confirm",
+      "hint_esc": "Close",
       "unknown": "Other / Unspecified"
     },
     "period_next": "Next period",

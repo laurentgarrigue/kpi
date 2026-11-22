@@ -2,7 +2,8 @@
  * Tracks what the keyboard state of the scoring console depends on (PAGE_SCORING.md §0.14):
  * - `windowFocused`: `focus` / `blur` of the window, plus a `document.hasFocus()` check every
  *   second (some focus moves — devtools, an embedded frame — send no `blur`);
- * - `fieldFocused`: the active element is an editable field;
+ * - `fieldFocused`: the active element is an editable field (re-read every second as well:
+ *   an element removed while focused sends no `focusout`);
  * - `keyboardLikely`: fine pointer (mouse) or a key already pressed — a tablet without keyboard
  *   has nothing to be warned about.
  */
@@ -31,7 +32,8 @@ export function useKeyboardFocus() {
     document.addEventListener('focusin', syncField)
     document.addEventListener('focusout', syncField)
     window.addEventListener('keydown', onKeydown, { capture: true, passive: true })
-    timer = setInterval(syncWindow, FOCUS_CHECK_MS)
+    // A focused field that leaves the DOM (entry validated) fires no focusout: re-read it too.
+    timer = setInterval(() => { syncWindow(); syncField() }, FOCUS_CHECK_MS)
   })
   onUnmounted(() => {
     window.removeEventListener('focus', syncWindow)

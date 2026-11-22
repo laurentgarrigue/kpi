@@ -2757,6 +2757,9 @@
       "r_o": "Obstruction",
       "r_un": "Antijeu / Non sportif",
       "r_rep": "Remplacement",
+      "r_ct": "Contestation",
+      "hint_enter": "Valider",
+      "hint_esc": "Fermer",
       "unknown": "Autre / Non précisé"
     },
     "period_next": "Période suivante",
