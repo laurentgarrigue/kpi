@@ -1,6 +1,6 @@
 # Spécification - Désignations, jury d'appel, bilan de journée et rétributions
 
-## Statut : 📝 CADRAGE TERMINÉ (2026-11-22) — critères d'acceptation et découpage à écrire
+## Statut : 📝 SPÉCIFIÉE (2026-11-22) — à valider, découpage en tickets à faire
 
 **Spec créée le** : 2026-11-22
 **Décisions d'architecture** : [ADR-0002](../developer/reference/adr/0002-plus-d-evolution-du-legacy.md), [ADR-0003](../developer/reference/adr/0003-designations-source-unique-absorbe-kp-rc.md)
@@ -58,8 +58,8 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 
 ## 3. Questions ouvertes
 
-Aucune question de cadrage ouverte. Reste à écrire : écrans app4, endpoints api2, schéma `kp_designation` et
-`kp_report`, critères d'acceptation testables, découpage en tickets.
+Aucune question de cadrage ouverte. Reste à faire : relecture des critères (§ 9) et
+découpage en tickets.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
 scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
