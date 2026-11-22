@@ -62,3 +62,19 @@ _Avoid_ : pénalité (seul)
 
 **Arbitre désigné** :
 Arbitre principal ou secondaire d'un match identifié par son numéro de licence, et non par un simple libellé saisi à la main. Seuls les arbitres désignés comptent dans les statistiques d'arbitrage.
+
+## Officiels et responsables
+
+**Désignation** :
+Attribution nominative d'un rôle (RC, responsable d'équipe, R1, délégué CNA, membre du jury d'appel…) à un licencié, sur un périmètre (compétition, équipe, événement ou journée) et pour une saison. C'est la seule source de vérité de « qui tient quel rôle » ([ADR-0003](DOC/developer/reference/adr/0003-designations-source-unique-absorbe-kp-rc.md)).
+_Avoid_ : nomination, affectation, officiel saisi
+
+**Catalogue des rôles** :
+Liste unique, définie dans api2, des rôles désignables, avec pour chacun les types de périmètre autorisés et le profil du mandat généré.
+
+**Délégué CNA** :
+Officiel désigné par la commission nationale d'activité sur un événement ou une journée. Il préside le jury d'appel et rédige le bilan de journée.
+_Avoid_ : délégué fédéral (libellé du profil 5), délégué (seul)
+
+**Jury d'appel** :
+Instance qui statue sur les réclamations d'un événement ou d'une journée. Elle est composée de Désignations : le délégué CNA (président), le R1, un représentant des athlètes et, pour les finales, des représentants des instances fédérales.
