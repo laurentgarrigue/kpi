@@ -43,14 +43,15 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D15 | Officiel | Est **officiel** d'un périmètre : toute personne qui y a une Désignation (y compris héritée, D9), tout arbitre désigné d'un match de ce périmètre, et les profils 1 et 2. Les responsables d'équipe et la table de marque n'en sont pas. |
 | D16 | Bureau CNA | `BUREAU_CNA` est un rôle de Désignation, sur un périmètre **niveau** : toutes les compétitions nationales de la saison. Mandat généré de profil 2, **sauf si le profil de base est déjà 1 ou 2** (cas habituel). |
 | D17 | Rapport d'un arbitre sans compte | Pas de compte ni de lien de rédaction (pour commencer) : chaque type de rapport fournit un **PDF vierge** à remplir à la main ou sur ordinateur, sans connexion. Un officiel le **saisit dans KPI** : l'auteur enregistré est l'arbitre, avec la mention « saisi par » l'officiel. Le PDF vierge est généré depuis la définition du catalogue (D13), pour rester identique au formulaire. |
+| D18 | Cycle de vie d'un rapport | **Brouillon** (visible du rédacteur et des profils 1–2) → **Soumis** (figé, PDF généré, destinataires notifiés). Seul un profil 1–2 peut **rouvrir** un rapport soumis, avec un motif journalisé ; le PDF précédent est conservé. Pas d'état « validé ». Le délai (3 jours après la fin pour le bilan de journée) est indicatif : au-delà, le rapport est marqué « hors délai ». Les destinataires sont résolus depuis les Désignations à la soumission. Bilan de journée : bureau CNA, RC des compétitions de l'événement, copie au rédacteur. |
 
 ## 3. Questions ouvertes
 
 - Rôles « requis » par niveau de compétition (ce qui rend une case rouge dans le suivi).
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
 - PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
-- Workflow des rapports (brouillon, soumission, délai, correction, verrouillage) et destinataires.
-- Contenu détaillé du bilan, son workflow (brouillon, soumission, verrouillage), ses lecteurs.
+- Destinataires des autres types de rapport.
+- Contenu détaillé du bilan de journée.
 - Barème et calcul des rétributions ; infractions.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
