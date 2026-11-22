@@ -92,3 +92,10 @@ _Avoid_ : formulaire (réservé aux formulaires d'inscription publics, FEATURE_F
 
 **Bilan de journée** :
 Rapport officiel du délégué CNA sur un événement, ou sur une journée hors événement, rédigé au plus tard 3 jours après la fin.
+
+**Chef des arbitres** :
+Officiel désigné qui dirige le corps arbitral d'un événement ou d'une journée. Le règlement sportif l'appelle « juge arbitre ».
+_Avoid_ : juge arbitre (dans KPI), chef arbitre
+
+**Relevé des faits** :
+Liste, par club et par saison, des faits qui ouvrent droit à une rétribution ou à une pénalité (annexe 8), en quantités et sans montant.

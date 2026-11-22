@@ -44,6 +44,9 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D16 | Bureau CNA | `BUREAU_CNA` est un rôle de Désignation, sur un périmètre **niveau** : toutes les compétitions nationales de la saison. Mandat généré de profil 2, **sauf si le profil de base est déjà 1 ou 2** (cas habituel). |
 | D17 | Rapport d'un arbitre sans compte | Pas de compte ni de lien de rédaction (pour commencer) : chaque type de rapport fournit un **PDF vierge** à remplir à la main ou sur ordinateur, sans connexion. Un officiel le **saisit dans KPI** : l'auteur enregistré est l'arbitre, avec la mention « saisi par » l'officiel. Le PDF vierge est généré depuis la définition du catalogue (D13), pour rester identique au formulaire. |
 | D18 | Cycle de vie d'un rapport | **Brouillon** (visible du rédacteur et des profils 1–2) → **Soumis** (figé, PDF généré, destinataires notifiés). Seul un profil 1–2 peut **rouvrir** un rapport soumis, avec un motif journalisé ; le PDF précédent est conservé. Pas d'état « validé ». Le délai (3 jours après la fin pour le bilan de journée) est indicatif : au-delà, le rapport est marqué « hors délai ». Les destinataires sont résolus depuis les Désignations à la soumission. Bilan de journée : bureau CNA, RC des compétitions de l'événement, copie au rédacteur. |
+| D19 | Rétributions et pénalités | L'outillage **prépare** le calcul (annexe 8 du règlement sportif) sans le faire : un **relevé des faits par club et par saison** (quantités, jamais de montants), exportable, avec le détail de chaque fait et sa source (§ 6). |
+| D20 | Classement national des clubs | Les Désignations alimentent le classement national des clubs (branche `claude/classement-national-clubs`, [PAGE_CLASSEMENT_NATIONAL_CLUBS.md](PAGE_CLASSEMENT_NATIONAL_CLUBS.md) une fois fusionnée) : 7.3.1 (délégué CNA, juge arbitre), 7.3.2 (RC) et 7.3.4 (autre membre de la CNA) sont lus dans `kp_designation` au lieu des noms en texte libre, de `kp_rc` et des listes saisies à la main. |
+| D21 | Rôles ajoutés | `MEMBRE_CNA` (périmètre niveau national, pour 7.3.4 ; le bureau CNA en est un sous-ensemble) et `ARBITRE_NJ` (arbitre non-joueur, sur une journée ou un événement, pour la prime de l'annexe 8 § 1). « Juge arbitre » (règlement) et « chef des arbitres » (KPI) désignent le même rôle `CHEF_ARBITRE`. |
 
 ## 3. Questions ouvertes
 
@@ -52,7 +55,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 - PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
 - Destinataires des autres types de rapport.
 - Contenu détaillé du bilan de journée.
-- Barème et calcul des rétributions ; infractions.
+- Club retenu pour un officiel désigné (club « fournisseur ») : à quelle date.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
 scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
@@ -83,3 +86,22 @@ d'évaluation d'arbitrage (5 blocs notés sur 10, note finale sur 50, aptitudes 
 | Fiche d'évaluation d'arbitrage | Évaluateur | Match + arbitre évalué | Saison, compétition, journée, match, rencontre, scores, arbitre secondaire |
 
 Destinataires et workflow : à définir par type.
+
+## 6. Relevé des faits pour les rétributions et pénalités (annexe 8)
+
+Source : annexes 2026 au règlement sportif, annexe 8 « Rétributions, pénalités et sanctions ». Le relevé donne des
+**quantités par club**, que la CNA valorise elle-même avec le barème en vigueur.
+
+| Fait relevé (par club, par saison) | Source KPI |
+|---|---|
+| Journées de compétition nationale accueillies, par division, et nombre de terrains | `kp_journee` (`Code_organisateur`, compétition), terrains des matchs |
+| Organisation d'un podium (N2, NEM) | Bilan de journée |
+| Finales accueillies (championnat, Coupe de France, play-off, play-down) et nombre de terrains | `kp_journee`, phases finales |
+| RC fournis, par catégorie (championnat ; Coupe de France, U21, play-down) | Désignations `RC` + club du licencié |
+| Délégués CNA, juges arbitres, arbitres non-joueurs fournis, par journée | Désignations `DELEGUE_CNA`, `CHEF_ARBITRE`, `ARBITRE_NJ`, confirmées par le bilan de journée (présence effective) |
+| Joueurs ajoutés hors délai sur une feuille de présence | Journal des feuilles de présence (à vérifier) |
+| Cartons rouges et jaunes pris par des joueurs | Timeline des matchs validés |
+| Avertissements pour tenue d'arbitre non conforme, par arbitre | Bilan arbitrage (champ structuré par arbitre) |
+| Infractions par catégorie (RP KAP 59) | Bilans de journée, rapports d'incident et de jury d'appel |
+
+Les frais d'accueil des officiels (nuits, repas) restent hors KPI.
