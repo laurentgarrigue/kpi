@@ -50,6 +50,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D22 | Club fournisseur | Le **club** de l'officiel est **figé dans la Désignation** à sa création (pré-rempli depuis le PCE, modifiable par les profils 1–2). Le relevé des faits et le classement national des clubs l'utilisent tous les deux. Les deux se calculent **pendant la saison**, pas la saison suivante. |
 | D23 | Autorité de désignation | Chaque Désignation porte qui l'a décidée : `CNA` (par défaut) ou `ORGANISATEUR`. Pour `ARBITRE_NJ` : désigné par le club organisateur → rétribution au club fournisseur ; désigné par la CNA (pool arbitres) → budget CNA, pas de rétribution au club. |
 | D24 | Ordre de livraison | 1. Fusion du classement national des clubs tel quel. 2. Désignations. 3. Bascule des calculateurs 7.3.1, 7.3.2, 7.3.4 sur `kp_designation`, la table d'alias restant pour les saisons antérieures. |
+| D25 | Contenu du bilan de journée | Structure validée le 2026-11-22, § 7. |
 
 ## 3. Questions ouvertes
 
@@ -57,7 +58,6 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
 - PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
 - Destinataires des autres types de rapport.
-- Contenu détaillé du bilan de journée.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
 scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
@@ -107,3 +107,21 @@ Source : annexes 2026 au règlement sportif, annexe 8 « Rétributions, pénalit
 | Infractions par catégorie (RP KAP 59) | Bilans de journée, rapports d'incident et de jury d'appel |
 
 Les frais d'accueil des officiels (nuits, repas) restent hors KPI.
+
+## 7. Contenu du bilan de journée (D25)
+
+**[KPI]** = pré-rempli, non modifiable ; **[KPI✎]** = pré-rempli, corrigeable par le délégué.
+
+| # | Section | Contenu |
+|---|---|---|
+| 1 | En-tête [KPI] | Événement ou journée, compétitions, dates, lieu, plan d'eau, club organisateur, nombre de terrains |
+| 2 | Officiels [KPI✎] | Désignations effectives (héritage D9) : délégué CNA, R1, juge arbitre, arbitres non-joueurs (avec l'autorité D23), membres du jury d'appel ; pour chacun **présent / absent / remplacé par…** (alimente le relevé des faits, § 6) |
+| 3 | Représentants | Représentant des clubs, représentant des athlètes (licenciés), remarques |
+| 4 | Bilan général | Évaluation du site, critères notés 1 à 4 : plan d'eau, terrains et buts, vestiaires et sanitaires, **camping disponible pour les équipes**, table de marque et sono, affichage des résultats, accueil et restauration, sécurité et secours, hébergement et repas des officiels ; commentaire ; organisation d'un podium (N2, NEM) |
+| 5 | Bilan sportif [KPI✎] | Matchs prévus et joués, forfaits, retards, équipes présentes ou absentes, commentaire |
+| 6 | Bilan arbitrage | [KPI] cartons verts, jaunes, rouges, noirs par compétition ; par arbitre désigné : matchs arbitrés [KPI], avertissement tenue non conforme (annexe 8 § 2.3), observation ; commentaire |
+| 7 | Bilan logistique | Horaires tenus, scoring et feuilles de match, matériel, commentaire |
+| 8 | Rétributions et infractions | Faits pour le relevé (terrains utilisés, finale, podium) ; infractions constatées (club ou licencié, catégorie 1 à 6 RP KAP 59, description, lien vers un rapport) ; joueurs ajoutés hors délai [KPI si disponible] |
+| 9 | Pièces liées [KPI] | Rapports d'incident et de jury d'appel rattachés au même périmètre |
+
+Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de 1 à 4.
