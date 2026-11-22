@@ -1,6 +1,6 @@
 # Spécification - Désignations, jury d'appel, bilan de journée et rétributions
 
-## Statut : 📝 EN CADRAGE (interrogatoire en cours, sections à compléter)
+## Statut : 📝 CADRAGE TERMINÉ (2026-11-22) — critères d'acceptation et découpage à écrire
 
 **Spec créée le** : 2026-11-22
 **Décisions d'architecture** : [ADR-0002](../developer/reference/adr/0002-plus-d-evolution-du-legacy.md), [ADR-0003](../developer/reference/adr/0003-designations-source-unique-absorbe-kp-rc.md)
@@ -54,10 +54,12 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, délégué CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif. États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ou du même club qu'une équipe engagée ; **vert** = pourvu. Détail § 4. |
 | D27 | Jury d'appel | Composition par défaut (journées nationales) : délégué CNA (président de droit) + R1, repris de leurs Désignations, + un **représentant des équipes** (rôle `REP_EQUIPES`, alimente la colonne legacy `Rep_athletes`). En finale, des Désignations `JURY_APPEL` avec qualité (« représentant FFCK », « membre du bureau CNA »…) complètent le jury. Le rapport de jury d'appel reprend la composition et peut la **modifier pour l'affaire** (absence, récusation), dans le rapport seulement. Le délégué CNA peut créer les Désignations `REP_EQUIPES` et `JURY_APPEL` de son périmètre (sans mandat). Le **représentant des clubs** n'existe que dans le bilan de journée et ne siège pas au jury. |
 | D28 | Rédacteurs et destinataires des rapports | **Incident** : tout officiel du périmètre (ou saisi pour un arbitre, D17) → délégué CNA et juge arbitre du périmètre, RC des compétitions concernées, copie au rédacteur. **Jury d'appel** : président du jury (délégué CNA) → bureau CNA, RC concernés, membres du jury, copie au rédacteur ; notification aux responsables des équipes en cause ; date et heure d'affichage sur site. **Évaluation d'arbitrage** : saisie par l'évaluateur s'il est déjà officiel du périmètre, sinon par le bureau CNA (pas de rôle évaluateur pour l'instant) → juge arbitre du périmètre, bureau CNA, copie au rédacteur ; **pas de copie à l'arbitre évalué** ; lecture réservée à ces personnes ; note sur 50 calculée (somme des 5 blocs sur 10). |
+| D29 | PDF vierge | Première version : PDF vierge **imprimable** seulement, généré par Gotenberg depuis le catalogue (annotation possible dans un lecteur PDF). Pas de PDF à champs ni de `.docx` tant que le terrain ne le demande pas. |
 
 ## 3. Questions ouvertes
 
-- PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
+Aucune question de cadrage ouverte. Reste à écrire : écrans app4, endpoints api2, schéma `kp_designation` et
+`kp_report`, critères d'acceptation testables, découpage en tickets.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
 scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
