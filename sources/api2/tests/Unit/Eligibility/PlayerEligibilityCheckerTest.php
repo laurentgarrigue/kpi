@@ -166,4 +166,23 @@ final class PlayerEligibilityCheckerTest extends TestCase
         self::assertSame([], $this->checker->ageWarnings(null, null, null));
         self::assertSame([], $this->checker->ageWarnings(null, 0, 0));
     }
+
+    public function testNationalPagaieIsOnlyAdvisoryFrom2027(): void
+    {
+        $add = PlayerEligibilityChecker::OPERATION_ADD;
+        $errors = [Rules::ERROR_PAGAIE];
+
+        // 2026 : toujours bloquant
+        self::assertFalse($this->checker->decide(Rules::LEVEL_NATIONAL, $errors, $add, '-', false, 1, '2026')['allowed']);
+        // 2027 : signalée mais acceptée, sans forçage
+        $d = $this->checker->decide(Rules::LEVEL_NATIONAL, $errors, $add, '-', false, 7, '2027');
+        self::assertTrue($d['allowed']);
+        self::assertSame($errors, $d['warnings']);
+        // les autres critères restent bloquants
+        self::assertFalse($this->checker->decide(Rules::LEVEL_NATIONAL, [Rules::ERROR_PAGAIE, Rules::ERROR_CERTIFICATE], $add, '-', false, 7, '2027')['allowed']);
+        // la pagaie est toujours détectée
+        self::assertSame([Rules::ERROR_PAGAIE], $this->checker->evaluate(['Pagaie_ECA' => 'PAGJ'] + self::COMPLIANT, Rules::LEVEL_NATIONAL, '2027', 'NPO', 'SEN'));
+        self::assertSame([Rules::ERROR_PAGAIE], $this->checker->describe(Rules::LEVEL_NATIONAL, '2027')['advisoryErrors']);
+        self::assertSame([], $this->checker->describe(Rules::LEVEL_NATIONAL, '2026')['advisoryErrors']);
+    }
 }

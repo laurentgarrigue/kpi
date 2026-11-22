@@ -29,9 +29,9 @@ class PlayerEligibilityChecker
     /**
      * Rule set summary exposed to app4 (null when the competition has no control).
      *
-     * @return array{level: string, enforcement: string, forceMaxProfile: int, forceAddStatuses: string[], forceStatusChangeStatuses: string[], playingStatuses: string[], minPagaieECA: ?string, surclassement: bool}|null
+     * @return array{level: string, enforcement: string, forceMaxProfile: int, forceAddStatuses: string[], forceStatusChangeStatuses: string[], playingStatuses: string[], minPagaieECA: ?string, advisoryErrors: string[], surclassement: bool}|null
      */
-    public function describe(?string $level): ?array
+    public function describe(?string $level, string $season = ''): ?array
     {
         if ($level === null) {
             return null;
@@ -46,6 +46,7 @@ class PlayerEligibilityChecker
             'forceStatusChangeStatuses' => Rules::FORCE_STATUS_CHANGE_STATUSES,
             'playingStatuses' => Rules::PLAYING_STATUSES,
             'minPagaieECA' => $rules['minPagaieECA'],
+            'advisoryErrors' => Rules::advisoryErrors($level, $season),
             'surclassement' => (bool) $rules['surclassement'],
         ];
     }
@@ -117,14 +118,21 @@ class PlayerEligibilityChecker
      *   playing status is refused unless forced by a profile <= FORCE_MAX_PROFILE into
      *   one of FORCE_STATUS_CHANGE_STATUSES.
      *
+     * Advisory errors of the season (Rules::advisoryErrors) never block: they only come back as warnings, on a
+     * playing status or an add.
+     *
      * @param string[] $errors Output of evaluate()
      *
      * @return array{allowed: bool, warnings: string[], canForce: bool}
      */
-    public function decide(string $level, array $errors, string $operation, string $status, bool $force, int $profile): array
+    public function decide(string $level, array $errors, string $operation, string $status, bool $force, int $profile, string $season = ''): array
     {
+        $advisory = array_values(array_intersect($errors, Rules::advisoryErrors($level, $season)));
+        $errors = array_values(array_diff($errors, $advisory));
         if ($errors === []) {
-            return ['allowed' => true, 'warnings' => [], 'canForce' => false];
+            $warn = $operation === self::OPERATION_ADD || in_array($status, Rules::PLAYING_STATUSES, true);
+
+            return ['allowed' => true, 'warnings' => $warn ? $advisory : [], 'canForce' => false];
         }
 
         $isPlayingStatus = in_array($status, Rules::PLAYING_STATUSES, true);
@@ -132,7 +140,7 @@ class PlayerEligibilityChecker
         if (Rules::RULES[$level]['enforcement'] === Rules::ENFORCEMENT_WARN) {
             // A status change only matters when it makes the person play
             $warn = $operation === self::OPERATION_ADD || $isPlayingStatus;
-            return ['allowed' => true, 'warnings' => $warn ? $errors : [], 'canForce' => false];
+            return ['allowed' => true, 'warnings' => $warn ? [...$errors, ...$advisory] : [], 'canForce' => false];
         }
 
         if ($operation === self::OPERATION_STATUS_CHANGE && !$isPlayingStatus) {
@@ -222,7 +230,9 @@ class PlayerEligibilityChecker
                 continue;
             }
 
-            if ($enforcement === Rules::ENFORCEMENT_BLOCK) {
+            // A player failing on advisory errors only is reported, never deactivated.
+            $blocking = array_diff($errors, Rules::advisoryErrors($level, $season));
+            if ($enforcement === Rules::ENFORCEMENT_BLOCK && $blocking !== []) {
                 $this->connection->update(
                     'kp_competition_equipe_joueur',
                     ['Capitaine' => Rules::COPY_INELIGIBLE_STATUS],

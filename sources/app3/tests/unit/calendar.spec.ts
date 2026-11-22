@@ -185,7 +185,8 @@ describe('calendarWeeks (PAGE_CALENDAR.md § 2 bis)', () => {
   it('CAL-13: the view of the query, the week view by default', () => {
     expect(parseView('month')).toBe('month')
     expect(parseView('week')).toBe('week')
-    expect(parseView(undefined)).toBe('week')
-    expect(parseView('grid')).toBe('week')
+    expect(parseView('list')).toBe('list')
+    expect(parseView(undefined)).toBe('month')
+    expect(parseView('grid')).toBe('month')
   })
 })

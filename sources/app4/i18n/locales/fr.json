@@ -111,7 +111,7 @@
   },
   "login": {
     "title": "Connexion",
-    "subtitle": "Panneau d'administration",
+    "subtitle": "Panneau de gestion sportive",
     "username": "Identifiant",
     "username_placeholder": "Entrez votre identifiant",
     "password": "Mot de passe",
@@ -1620,7 +1620,7 @@
       "team_b": "Équipe B",
       "referee_1": "Arbitre 1",
       "referee_2": "Arbitre 2",
-      "shotclock": "Shotclock",
+      "shotclock": "Chrono tir",
       "actions": "Actions",
       "printed": "Imprimé",
       "date": "Date",
@@ -1635,7 +1635,7 @@
     "referee_placeholder": "Rechercher arbitre, équipe, joueur...",
     "referee_team_label": "Équipe associée",
     "shotclock_placeholder": "Rechercher une personne...",
-    "show_shotclock": "Shotclock",
+    "show_shotclock": "Chrono tir",
     "show_referees": "Arbitres",
     "display": {
       "title": "Affichage",
@@ -2710,7 +2710,7 @@
       "start": "Démarrer",
       "pause": "Pause",
       "reset": "Réinitialiser",
-      "shotclock": "Time-shoot",
+      "shotclock": "Chrono tir",
       "group": "Chronomètre de jeu",
       "adjust_locked": "Arrêtez le chrono pour le corriger",
       "adjust": "Corriger le chrono"

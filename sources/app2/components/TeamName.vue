@@ -99,6 +99,8 @@ const teamBlockClass = computed(() => {
     return {
       'bg-bar': true,
       'text-white': true,
+      'dark:bg-white': true, // dark theme: bar is as dark as gray-200, the loser's colour
+      'dark:text-black': true,
       'font-bold': true
     }
   }

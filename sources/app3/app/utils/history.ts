@@ -31,9 +31,25 @@ export interface SeasonFinal {
   competition: HistoryCompetition
 }
 
-export function seasonFinals(history: History): SeasonFinal[] {
+/** Category of a competition of the group (Men, Women, U21 Men…): its short subtitle, else its title. */
+export function categoryLabel(competition: HistoryCompetition): string {
+  return competition.soustitre2 || competition.display_title
+}
+
+/** Categories awarding a title in the group, in order of appearance (most recent season first). */
+export function historyCategories(history: History): string[] {
+  const awarding = history.seasons.flatMap(({ competitions }) => competitions.filter(item => item.podium.some(entry => entry.medal === 1)))
+  return [...new Set(awarding.map(categoryLabel))]
+}
+
+/** The category asked for if the group has it, else the first one. */
+export function pickCategory(categories: readonly string[], requested: unknown): string | undefined {
+  return typeof requested === 'string' && categories.includes(requested) ? requested : categories[0]
+}
+
+export function seasonFinals(history: History, category?: string): SeasonFinal[] {
   return history.seasons.flatMap(({ season, competitions }) => {
-    const competition = competitions.find(item => item.podium.some(entry => entry.medal === 1))
+    const competition = competitions.find(item => item.podium.some(entry => entry.medal === 1) && (category === undefined || categoryLabel(item) === category))
     return competition ? [{ season, competition }] : []
   })
 }
