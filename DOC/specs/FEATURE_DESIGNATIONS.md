@@ -41,13 +41,14 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D13 | Catalogue des types de rapport | Défini **en code** dans api2 et **versionné** ([ADR-0004](../developer/reference/adr/0004-regles-metier-en-catalogues-api2.md)) : champs et sections, champs calculés et pré-remplis, rattachements possibles, rédacteurs, destinataires. Les réponses sont stockées en JSON avec la version du modèle. Le constructeur des formulaires d'inscription n'est pas réutilisé. |
 | D14 | Rapport d'incident | Rédigé par **n'importe quel officiel**. Rattaché à une compétition, un événement, une journée ou un match. |
 | D15 | Officiel | Est **officiel** d'un périmètre : toute personne qui y a une Désignation (y compris héritée, D9), tout arbitre désigné d'un match de ce périmètre, et les profils 1 et 2. Les responsables d'équipe et la table de marque n'en sont pas. |
-| D16 | Bureau CNA | `BUREAU_CNA` est un rôle de Désignation, sur un périmètre **niveau** : toutes les compétitions nationales de la saison. |
+| D16 | Bureau CNA | `BUREAU_CNA` est un rôle de Désignation, sur un périmètre **niveau** : toutes les compétitions nationales de la saison. Mandat généré de profil 2, **sauf si le profil de base est déjà 1 ou 2** (cas habituel). |
+| D17 | Rapport d'un arbitre sans compte | Pas de compte ni de lien de rédaction (pour commencer) : chaque type de rapport fournit un **PDF vierge** à remplir à la main ou sur ordinateur, sans connexion. Un officiel le **saisit dans KPI** : l'auteur enregistré est l'arbitre, avec la mention « saisi par » l'officiel. Le PDF vierge est généré depuis la définition du catalogue (D13), pour rester identique au formulaire. |
 
 ## 3. Questions ouvertes
 
 - Rôles « requis » par niveau de compétition (ce qui rend une case rouge dans le suivi).
 - Composition du jury d'appel (représentant des équipes ou des athlètes, finales, représentants fédéraux).
-- Accès des arbitres sans compte aux rapports (D15).
+- PDF vierge « remplissable sur ordinateur » (D17) : Chromium/Gotenberg ne produit pas de champs de formulaire PDF ; à évaluer (post-traitement, ou PDF imprimable seulement).
 - Workflow des rapports (brouillon, soumission, délai, correction, verrouillage) et destinataires.
 - Contenu détaillé du bilan, son workflow (brouillon, soumission, verrouillage), ses lecteurs.
 - Barème et calcul des rétributions ; infractions.
