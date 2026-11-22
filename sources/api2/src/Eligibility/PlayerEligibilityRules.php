@@ -2,6 +2,8 @@
 
 namespace App\Eligibility;
 
+use App\Competition\CompetitionLevel;
+
 /**
  * ============================================================================
  *  PLAYER ELIGIBILITY RULES ("joueur en règle") — SINGLE CONFIGURATION POINT
@@ -142,7 +144,7 @@ final class PlayerEligibilityRules
      */
     public static function levelFor(string $competitionCode, ?string $codeNiveau): ?string
     {
-        if (str_starts_with($competitionCode, 'N') || str_starts_with($competitionCode, 'CF')) {
+        if (CompetitionLevel::isNational($competitionCode)) {
             return self::LEVEL_NATIONAL;
         }
         if ($codeNiveau === 'REG') {
