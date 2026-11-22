@@ -181,7 +181,7 @@ final class PlayerEligibilityCheckerTest extends TestCase
         // les autres critères restent bloquants
         self::assertFalse($this->checker->decide(Rules::LEVEL_NATIONAL, [Rules::ERROR_PAGAIE, Rules::ERROR_CERTIFICATE], $add, '-', false, 7, '2027')['allowed']);
         // la pagaie est toujours détectée
-        self::assertSame([Rules::ERROR_PAGAIE], $this->checker->evaluate(['Pagaie_ECA' => 'PAGJ'] + self::COMPLIANT, Rules::LEVEL_NATIONAL, '2027', 'NPO', 'SEN'));
+        self::assertSame([Rules::ERROR_PAGAIE], $this->checker->evaluate(['Pagaie_ECA' => 'PAGJ', 'Origine' => '2027'] + self::COMPLIANT, Rules::LEVEL_NATIONAL, '2027', 'NPO', 'SEN'));
         self::assertSame([Rules::ERROR_PAGAIE], $this->checker->describe(Rules::LEVEL_NATIONAL, '2027')['advisoryErrors']);
         self::assertSame([], $this->checker->describe(Rules::LEVEL_NATIONAL, '2026')['advisoryErrors']);
     }
