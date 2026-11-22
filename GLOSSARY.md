@@ -77,4 +77,11 @@ Officiel désigné par la commission nationale d'activité sur un événement ou
 _Avoid_ : délégué fédéral (libellé du profil 5), délégué (seul)
 
 **Jury d'appel** :
-Instance qui statue sur les réclamations d'un événement ou d'une journée. Elle est composée de Désignations : le délégué CNA (président), le R1, un représentant des athlètes et, pour les finales, des représentants des instances fédérales.
+Instance qui statue sur les réclamations d'un événement ou d'une journée. Elle est composée de Désignations : le délégué CNA (président), le R1, un représentant des équipes ou des athlètes et, pour les finales, des représentants des instances fédérales.
+
+**Rapport officiel** :
+Document rédigé dans app4 par un officiel désigné ou un arbitre (bilan de journée, rapport d'incident, rapport de jury d'appel, fiche d'évaluation d'arbitrage), pré-rempli avec les données KPI et exporté en PDF.
+_Avoid_ : formulaire (réservé aux formulaires d'inscription publics, FEATURE_FORMS.md)
+
+**Bilan de journée** :
+Rapport officiel du délégué CNA sur un événement, ou sur une journée hors événement, rédigé au plus tard 3 jours après la fin.
