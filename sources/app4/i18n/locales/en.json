@@ -3767,9 +3767,10 @@
       "button": "New report",
       "choose_title": "New official report: perimeter",
       "scope": "Attached to",
-      "search": "Search",
-      "search_match": "Search (team, number)",
-      "selected": "Attached to: {label}"
+      "selected": "Attached to: {label}",
+      "search_label": "Search the linked item",
+      "search_placeholder": "Event, competition, gameday, place, team or game number (at least 2 characters)",
+      "no_result": "No result in the season."
     },
     "blank": "Blank PDF: {type}",
     "filter": {

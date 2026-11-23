@@ -7,6 +7,7 @@ use App\Report\Report;
 use App\Report\ReportPdf;
 use App\Report\ReportRejected;
 use App\Report\ReportScope;
+use App\Report\ReportScopeSearch;
 use App\Report\ReportService;
 use App\Report\ReportTypeCatalog;
 use App\Report\ReportTypeDefinition;
@@ -39,7 +40,24 @@ final class AdminReportsController extends AbstractController
         private readonly ReportService $service,
         private readonly ReportPdf $pdf,
         private readonly Connection $connection,
+        private readonly ReportScopeSearch $scopeSearch,
     ) {
+    }
+
+    #[Route('/scopes', name: 'admin_reports_scopes', methods: ['GET'])]
+    #[OA\Get(path: '/admin/reports/scopes', summary: 'Chercher un événement, une compétition, une journée ou un match de la saison (?q=, ?types=)')]
+    public function scopes(Request $request): JsonResponse
+    {
+        $season = (string) $request->query->get('season', '');
+        $types = array_values(array_filter(array_map(
+            static fn (string $type): ?ReportScope => ReportScope::tryFrom(trim($type)),
+            explode(',', (string) $request->query->get('types', '')),
+        )));
+        if (!preg_match(self::SEASON_PATTERN, $season)) {
+            return $this->error('invalid', Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json(['items' => $this->scopeSearch->search($season, (string) $request->query->get('q', ''), $types)]);
     }
 
     #[Route('/types', name: 'admin_reports_types', methods: ['GET'])]

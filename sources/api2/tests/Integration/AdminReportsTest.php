@@ -110,6 +110,20 @@ final class AdminReportsTest extends ApiTestCase
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
     }
 
+    public function testANewReportFindsItsEventCompetitionGamedayOrGameBySearch(): void
+    {
+        $items = $this->requestAs('9811', 'GET', '/admin/reports/scopes?season=2998&q=' . rawurlencode('Désig'))['items'];
+
+        $found = array_map(static fn (array $item): string => $item['scopeType'] . ':' . $item['scopeId'], $items);
+        self::assertContains('EVENEMENT:9801', $found);
+        self::assertContains('COMPETITION:NDES', $found);
+        self::assertContains('MATCH:9801', $found); // équipes « Désignés Un » et « Désignés Deux »
+        $byNumber = $this->requestAs('9811', 'GET', '/admin/reports/scopes?season=2998&types=MATCH&q=1')['items'];
+        self::assertContains('MATCH:9801', array_map(static fn (array $item): string => $item['scopeType'] . ':' . $item['scopeId'], $byNumber));
+        self::assertSame(['MATCH'], array_values(array_unique(array_column($byNumber, 'scopeType'))));
+        self::assertSame([], $this->requestAs('9811', 'GET', '/admin/reports/scopes?season=2998&q=D')['items']);
+    }
+
     public function testThePrefillGivesTheKpiDataOfTheMatch(): void
     {
         $prefill = $this->requestAs('9811', 'GET', '/admin/reports/prefill?scopeType=MATCH&scopeId=9801&season=2998');

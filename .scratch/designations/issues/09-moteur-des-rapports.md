@@ -29,3 +29,7 @@ RAP-01 à RAP-07, RAP-10.
   une recherche de l'élément lié : événement, compétition, journée ou match (compétition → journée → match). Les
   boutons « Rapport » de la page des matchs et le lien du bloc Désignations sont retirés (interfaces existantes
   allégées).
+- 2026-11-23 — Retour : la recherche de la fenêtre « Nouveau rapport » filtrait côté navigateur des listes chargées à
+  l'ouverture (aucun appel réseau à la saisie). Remplacée par `GET /admin/reports/scopes?season=&q=&types=`
+  (`ReportScopeSearch` : événements, compétitions, journées, matchs par libellé, code, lieu, phase, équipes ou n°),
+  appelée à la saisie (300 ms, 2 caractères au moins). Bouton « Nouveau rapport » placé à côté des filtres Type et État.

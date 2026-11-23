@@ -86,16 +86,6 @@ onMounted(async () => {
   <div>
     <AdminPageHeader :title="t('reports.title')" :show-filters="false" />
 
-    <div class="flex justify-end mb-4">
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
-        @click="choosing = true"
-      >
-        <UIcon name="heroicons:plus" class="w-5 h-5" />
-        {{ t('reports.new.button') }}
-      </button>
-    </div>
     <ReportsScopeChooser :open="choosing" :season="season" @close="choosing = false" @chosen="choose" />
 
     <section v-if="scope" class="mb-6 p-4 rounded-lg border border-header-200 dark:border-header-700">
@@ -136,6 +126,14 @@ onMounted(async () => {
           <option value="SOUMIS">{{ t('reports.state.SOUMIS') }}</option>
         </select>
       </label>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+        @click="choosing = true"
+      >
+        <UIcon name="heroicons:plus" class="w-5 h-5" />
+        {{ t('reports.new.button') }}
+      </button>
     </div>
 
     <p v-if="loading" class="text-sm text-header-500">{{ t('common.loading') }}</p>
