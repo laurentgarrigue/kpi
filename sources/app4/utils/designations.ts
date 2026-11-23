@@ -64,7 +64,7 @@ export interface RoleDefinition {
   maxPerScope: number | null
 }
 
-export type RowKind = 'competition' | 'gameday' | 'team'
+export type RowKind = 'competition' | 'gameday' | 'team' | 'event'
 
 const STATUS_CLASSES: Record<CoverageStatus, string> = {
   red: 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100',
@@ -78,7 +78,7 @@ export const statusClasses = (status: CoverageStatus): string => STATUS_CLASSES[
 
 /** Périmètre d'une Désignation posée depuis une ligne de la matrice. */
 export const scopeOfRow = (kind: RowKind, id: string | number): { scopeType: ScopeType, scopeId: string } => ({
-  scopeType: ({ competition: 'COMPETITION', gameday: 'JOURNEE', team: 'EQUIPE' } as const)[kind],
+  scopeType: ({ competition: 'COMPETITION', gameday: 'JOURNEE', team: 'EQUIPE', event: 'EVENEMENT' } as const)[kind],
   scopeId: String(id),
 })
 
@@ -177,3 +177,42 @@ export const visibleRoles = (roles: string[], chosen: string[]): string[] => (ch
 
 /** Identifiants à supprimer pour retirer un titulaire (toutes ses Désignations regroupées). */
 export const designationIdsOf = (holder: CoverageHolder): number[] => holder.designationIds ?? [holder.designationId]
+
+/** Cible de la fenêtre « Désigner » : une ligne du suivi (kind + ids) ou un périmètre direct (scopeType + scopeIds). */
+export interface DesignationTarget {
+  role: string
+  label: string
+  kind?: RowKind
+  ids?: (string | number)[]
+  scopeType?: ScopeType
+  scopeIds?: string[]
+}
+
+/**
+ * Cases d'un périmètre autre qu'une journée (compétition, événement, équipe) : ses Désignations propres, par rôle
+ * autorisé sur ce périmètre. Pas d'exigence ici : le suivi de couverture la porte.
+ */
+export const scopeCells = (
+  scopeType: ScopeType,
+  roles: RoleDefinition[],
+  items: { id: number, role: string, matric: number, lastName: string | null, firstName: string | null, club: string | null }[],
+): Record<string, CoverageCell> => Object.fromEntries(roles
+  .filter(role => role.scopes.includes(scopeType))
+  .map((role) => {
+    const holders: CoverageHolder[] = items.filter(item => item.role === role.code).map(item => ({
+      designationId: item.id,
+      matric: item.matric,
+      name: `${item.lastName ?? ''} ${item.firstName ?? ''}`.trim(),
+      club: item.club,
+      origin: scopeType,
+      warnings: [],
+    }))
+    return [role.code, { requirement: 'optional', status: holders.length ? 'green' : 'empty', holders }]
+  }))
+
+/** Ligne de suivi correspondant à un périmètre (pour savoir quels titulaires sont hérités). */
+export const rowKindOf = (scopeType: ScopeType): RowKind | null =>
+  ({ COMPETITION: 'competition', JOURNEE: 'gameday', EQUIPE: 'team', EVENEMENT: 'event' } as Partial<Record<ScopeType, RowKind>>)[scopeType] ?? null
+
+/** Périmètre ouvert dans la fenêtre « Désignations » d'une page compétitions, événements ou équipes. */
+export interface ScopeModalTarget { season: string, scopeType: ScopeType, scopeId: string | number, label: string }

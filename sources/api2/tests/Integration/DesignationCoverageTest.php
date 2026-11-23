@@ -90,6 +90,21 @@ final class DesignationCoverageTest extends ApiTestCase
         $this->requestAs('TADMIN', 'GET', '/admin/designations/coverage?season=2998&level=bad', expectedStatus: 400);
     }
 
+    public function testTheEffectiveDesignationsOfAGamedayShowInheritanceForItsBlock(): void
+    {
+        $this->designate(['role' => 'RC', 'scopeType' => 'COMPETITION', 'scopeId' => 'NDES', 'matric' => 9814]);
+
+        $effective = $this->requestAs('9811', 'GET', '/admin/designations/effective?gameday=9802');
+
+        self::assertSame(['id' => 9802, 'competition' => 'NDES'], array_intersect_key($effective['gameday'], array_flip(['id', 'competition'])));
+        self::assertSame(['EVENEMENT', 9811], $this->holder($effective['roles']['DELEGUE_CNA']));
+        self::assertSame(['COMPETITION', 9814], $this->holder($effective['roles']['RC']));
+        self::assertSame('red', $effective['roles']['R1']['status']);
+        $this->requestAs('TCLUB', 'GET', '/admin/designations/effective?gameday=9802', expectedStatus: 403);
+        $this->requestAs('TCLUB', 'GET', '/admin/designations?season=2998', expectedStatus: 403);
+        $this->requestAs('TADMIN', 'GET', '/admin/designations/effective?gameday=1', expectedStatus: 404);
+    }
+
     /** @return array<mixed> */
     private function matrix(string $query = ''): array
     {

@@ -101,6 +101,39 @@ final class CoverageService
     }
 
     /**
+     * Cases d'une seule journée (bloc « Désignations » de la page des journées, ticket 08) : RC et rôles de journée,
+     * titulaires effectifs avec leur provenance (héritage D9).
+     *
+     * @return array{gameday: array<string, mixed>, roles: array<string, array<string, mixed>>}|null
+     */
+    public function gameday(int $gamedayId): ?array
+    {
+        $scope = $this->designations->gameday($gamedayId);
+        if ($scope === null) {
+            return null;
+        }
+        $national = CompetitionLevel::isNational($scope->competitionCode);
+        $designations = $this->designations->ofSeason($scope->season);
+        $people = $this->coverage->people(array_values(array_unique(array_map(static fn (Designation $d): int => $d->matric, $designations))));
+        $clubs = [];
+        foreach ($this->coverage->teams($scope->season, [$scope->competitionCode]) as $team) {
+            if ($team['club'] !== null) {
+                $clubs[$team['club']] = true;
+            }
+        }
+        $effective = EffectiveDesignations::of($scope, $designations);
+        $cells = [self::COMPETITION_ROLE => $this->cell(self::COMPETITION_ROLE, $national, $effective->holders(self::COMPETITION_ROLE), $people, $clubs)];
+        foreach (self::GAMEDAY_ROLES as $role) {
+            $cells[$role] = $this->cell($role, $national, $effective->holders($role), $people, $clubs);
+        }
+
+        return [
+            'gameday' => ['id' => $gamedayId, 'season' => $scope->season, 'competition' => $scope->competitionCode, 'eventIds' => $scope->eventIds, 'national' => $national],
+            'roles' => $cells,
+        ];
+    }
+
+    /**
      * Récapitulatif par personne et par club (SUI-06) : Désignations par rôle et journées couvertes (effectives,
      * héritage compris), sur la saison ou sur une période de dates de journée.
      *

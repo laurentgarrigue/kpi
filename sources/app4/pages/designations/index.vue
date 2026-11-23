@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { PlayerAutocomplete } from '~/types'
-import { canAddHolder, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition, type RowKind } from '~/utils/designations'
+import { canAddHolder, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type DesignationTarget, type RoleDefinition, type RowKind } from '~/utils/designations'
 
 /**
  * Suivi des Désignations, profils 1 et 2 (DOC/specs/FEATURE_DESIGNATIONS.md § 4, ticket designations/07) : matrice de
@@ -16,7 +15,6 @@ type Tab = 'matrix' | 'summary'
 type Level = 'all' | 'national' | 'other'
 interface SummaryPerson { matric: number, name: string, club: string | null, designations: Record<string, number>, gamedays: Record<string, number> }
 interface SummaryClub { club: string | null, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
-interface Target { kind: RowKind, ids: (string | number)[], role: string, label: string }
 
 const { t } = useI18n()
 const api = useApi()
@@ -41,16 +39,12 @@ const roles = ref<Record<string, RoleDefinition>>({})
 const summary = ref<{ people: SummaryPerson[], clubs: SummaryClub[] } | null>(null)
 const summaryFrom = ref('')
 const summaryTo = ref('')
-const target = ref<Target | null>(null)
-const person = ref<PlayerAutocomplete | null>(null)
-const draft = reactive({ email: '', authority: 'CNA', order: 1, quality: '' })
-const saving = ref(false)
+const target = ref<DesignationTarget | null>(null)
 const removing = ref<CoverageHolder | null>(null)
 
 const season = computed(() => workContext.season)
 const counts = computed(() => (matrix.value ? countStatuses(matrix.value) : { red: 0, orange: 0 }))
 const roleLabel = (code: string) => roles.value[code]?.label ?? code
-const targetRole = computed(() => (target.value ? roles.value[target.value.role] : undefined))
 const summaryRoles = computed(() => Object.keys(roles.value))
 const pickableRoles = computed(() => [...MANAGER_ROLES, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: roleLabel(code) })))
 const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], chosenRoles.value))
@@ -93,35 +87,11 @@ const reload = () => (tab.value === 'matrix' ? loadMatrix() : loadSummary())
 /** Une ligne de phases regroupées (tournoi) désigne sur chacune de ses phases. */
 const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: string) => {
   target.value = { kind, ids, role, label }
-  person.value = null
-  Object.assign(draft, { email: '', authority: 'CNA', order: 1, quality: '' })
 }
 
-const save = async () => {
-  if (!target.value || !person.value || !season.value) return
-  saving.value = true
-  try {
-    let created: { account: 'created' | 'existing' | 'none' } = { account: 'none' }
-    for (const id of target.value.ids) {
-      created = await api.post<{ account: 'created' | 'existing' | 'none' }>('/admin/designations', {
-        season: season.value,
-        role: target.value.role,
-        ...scopeOfRow(target.value.kind, id),
-        matric: person.value.matric,
-        authority: draft.authority,
-        order: draft.order,
-        quality: draft.quality || null,
-        email: draft.email || null,
-      })
-    }
-    toast.add({ title: t(`designations.account.${created.account}`), color: created.account === 'none' && targetRole.value?.mandateProfile ? 'warning' : 'success' })
-    target.value = null
-    await loadMatrix()
-  } catch {
-    // useApi affiche déjà l'erreur
-  } finally {
-    saving.value = false
-  }
+const saved = async () => {
+  target.value = null
+  await loadMatrix()
 }
 
 const confirmRemove = async () => {
@@ -316,39 +286,7 @@ onMounted(async () => {
     </template>
 
     <!-- Désigner depuis une case -->
-    <AdminModal :open="target !== null" :title="target ? t('designations.add.title', { role: roleLabel(target.role), line: target.label }) : ''" @close="target = null">
-      <form v-if="target" class="space-y-4" @submit.prevent="save">
-        <div>
-          <label class="block text-sm font-medium mb-1">{{ t('designations.add.person') }} *</label>
-          <AdminPlayerAutocomplete v-model="person" :placeholder="t('designations.add.person_placeholder')" />
-        </div>
-        <div v-if="targetRole?.mandateProfile">
-          <label class="block text-sm font-medium mb-1" for="designation-email">{{ t('designations.add.email') }}</label>
-          <input id="designation-email" v-model="draft.email" type="email" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700" aria-describedby="designation-email-help">
-          <p id="designation-email-help" class="text-xs text-header-500 mt-1">{{ t('designations.add.email_help') }}</p>
-        </div>
-        <div v-if="(targetRole?.authorities.length ?? 0) > 1">
-          <label class="block text-sm font-medium mb-1" for="designation-authority">{{ t('designations.add.authority') }}</label>
-          <select id="designation-authority" v-model="draft.authority" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
-            <option v-for="authority in targetRole?.authorities ?? []" :key="authority" :value="authority">{{ t(`designations.authority.${authority}`) }}</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1" for="designation-order">{{ t('designations.add.order') }}</label>
-            <input id="designation-order" v-model.number="draft.order" type="number" min="1" max="99" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1" for="designation-quality">{{ t('designations.add.quality') }}</label>
-            <input id="designation-quality" v-model="draft.quality" type="text" maxlength="100" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
-          </div>
-        </div>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="px-3 py-1.5 rounded border border-header-300 dark:border-header-700 text-sm" @click="target = null">{{ t('common.cancel') }}</button>
-          <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm disabled:opacity-50" :disabled="!person || saving">{{ t('designations.add.submit') }}</button>
-        </div>
-      </form>
-    </AdminModal>
+    <DesignationsAddModal :target="target" :season="season" :roles="roles" @close="target = null" @saved="saved" />
 
     <AdminConfirmModal
       :open="removing !== null"

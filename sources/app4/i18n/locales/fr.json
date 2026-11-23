@@ -1565,7 +1565,8 @@
       "10": "Octobre",
       "11": "Novembre",
       "12": "Décembre"
-    }
+    },
+    "officials_by_designations": "Les officiels (RC, R1, délégué, juge arbitre, représentant des équipes, arbitres non-joueurs) se désignent avec le bouton « Officiels » de la journée ou dans Référentiels › Désignations."
   },
   "games": {
     "title": "Gestion des Matchs",
@@ -3694,6 +3695,12 @@
     "roles_picker": {
       "label": "Rôles",
       "all": "Tous"
+    },
+    "block": {
+      "caption": "Désignations : {line}",
+      "help": "En italique : désigné sur la compétition ou l'événement (hérité). Les champs officiels de la journée (feuilles, PDF, pages legacy) sont recopiés automatiquement.",
+      "title": "Désignations — {line}",
+      "button": "Désignations"
     }
   },
   "competition_picker": {

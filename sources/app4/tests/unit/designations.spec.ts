@@ -1,6 +1,6 @@
 // Suivi des Désignations (FEATURE_DESIGNATIONS.md § 4, SUI-01 à SUI-06) : règles d'affichage pures.
 import { describe, expect, it } from 'vitest'
-import { canAddHolder, countStatuses, gamedayDates, gamedayRows, holderLabel, isInherited, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
+import { canAddHolder, countStatuses, gamedayDates, gamedayRows, holderLabel, isInherited, rowKindOf, scopeCells, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
 
 const holder = (origin: CoverageHolder['origin'], club: string | null = 'C001'): CoverageHolder => ({ designationId: 1, matric: 1001, name: 'DUPONT Jean', club, origin, warnings: [] })
 const cell = (status: CoverageCell['status'], holders: CoverageHolder[] = []): CoverageCell => ({ requirement: 'required', status, holders })
@@ -95,5 +95,27 @@ describe('phases d\'un tournoi (CP)', () => {
   it('filtre les rôles affichés', () => {
     expect(visibleRoles(['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE'], ['R1'])).toEqual(['R1'])
     expect(visibleRoles(['DELEGUE_CNA', 'R1'], [])).toEqual(['DELEGUE_CNA', 'R1'])
+  })
+})
+
+describe('bloc « Désignations » d\'un périmètre', () => {
+  const roles: RoleDefinition[] = [
+    { code: 'RC', label: 'RC', scopes: ['COMPETITION', 'NIVEAU'], mandateProfile: 4, authorities: ['CNA'], maxPerScope: null },
+    { code: 'R1', label: 'R1', scopes: ['EVENEMENT', 'COMPETITION', 'JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope: 1 },
+    { code: 'RESP_EQUIPE', label: 'Resp', scopes: ['EQUIPE'], mandateProfile: 7, authorities: ['CNA'], maxPerScope: null },
+  ]
+
+  it('liste, par rôle autorisé sur le périmètre, ses Désignations propres', () => {
+    const cells = scopeCells('COMPETITION', roles, [{ id: 5, role: 'RC', matric: 10, lastName: 'DUPONT', firstName: 'Jean', club: 'C001' }])
+    expect(Object.keys(cells)).toEqual(['RC', 'R1'])
+    expect(cells.RC.status).toBe('green')
+    expect(cells.RC.holders[0]).toMatchObject({ designationId: 5, name: 'DUPONT Jean', origin: 'COMPETITION' })
+    expect(cells.R1.status).toBe('empty')
+  })
+
+  it('associe un périmètre à sa ligne de suivi', () => {
+    expect(rowKindOf('JOURNEE')).toBe('gameday')
+    expect(rowKindOf('EVENEMENT')).toBe('event')
+    expect(rowKindOf('NIVEAU')).toBeNull()
   })
 })

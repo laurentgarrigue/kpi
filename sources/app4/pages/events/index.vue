@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Event, EventFormData, PaginatedResponse } from '~/types'
+import type { ScopeModalTarget } from '~/utils/designations'
 
 definePageMeta({
   layout: 'admin',
@@ -9,6 +10,12 @@ definePageMeta({
 const { t, locale } = useI18n()
 const api = useApi()
 const authStore = useAuthStore()
+const workContext = useWorkContextStore()
+// Désignations de l'événement : officiels de toutes ses journées (FEATURE_DESIGNATIONS.md D9, ticket 08)
+const designationsTarget = ref<ScopeModalTarget | null>(null)
+const openDesignations = (event: Event) => {
+  designationsTarget.value = { season: workContext.season, scopeType: 'EVENEMENT', scopeId: event.id, label: event.libelle }
+}
 
 // State
 const loading = ref(false)
@@ -559,6 +566,16 @@ const formatDate = (date: string | null) => {
                 >
                   <UIcon name="heroicons:link" class="w-6 h-6" />
                 </button>
+                <button
+                  v-if="authStore.profile <= 2"
+                  type="button"
+                  class="p-1.5 text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
+                  :title="t('designations.block.button')"
+                  :aria-label="t('designations.block.title', { line: event.libelle })"
+                  @click="openDesignations(event)"
+                >
+                  <UIcon name="heroicons:users-solid" class="w-6 h-6" />
+                </button>
               </td>
 
               <!-- Nb gamedays -->
@@ -673,6 +690,13 @@ const formatDate = (date: string | null) => {
             @click="navigateTo(`/events/${event.id}/gamedays`)"
           >
             {{ t('events.manage_gameday_associations') }}
+          </AdminActionButton>
+          <AdminActionButton
+            v-if="authStore.profile <= 2"
+            icon="heroicons:users-solid"
+            @click="openDesignations(event)"
+          >
+            {{ t('designations.block.button') }}
           </AdminActionButton>
           <AdminActionButton
             v-if="authStore.isSuperAdmin"
@@ -820,5 +844,6 @@ const formatDate = (date: string | null) => {
 
     <!-- Scroll to top button -->
     <AdminScrollToTop :title="t('common.scroll_to_top')" />
+    <DesignationsScopeModal :target="designationsTarget" @close="designationsTarget = null" />
   </div>
 </template>

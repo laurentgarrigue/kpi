@@ -35,6 +35,7 @@ final class AdminDesignationsController extends AbstractController
     private const SEASON_PATTERN = '/^\d{4}$/';
     private const SCOPE_ID_PATTERN = '/^[A-Za-z0-9_-]{1,20}$/';
     private const MAX_ORDER = 99;
+    private const READER_MAX_PROFILE = 5;
     private const MAX_QUALITY_LENGTH = 100;
     /** Taille de kp_user.Mail. */
     private const MAX_EMAIL_LENGTH = 100;
@@ -64,6 +65,23 @@ final class AdminDesignationsController extends AbstractController
         $competitions = array_values(array_filter(array_map('trim', explode(',', (string) $request->query->get('competitions', '')))));
 
         return $this->json($this->coverage->matrix($season, $level, $competitions, $request->query->getBoolean('onlyGaps')));
+    }
+
+    /** Désignations effectives d'une journée, héritage compris (bloc « Désignations » d'app4, ticket 08). */
+    #[Route('/effective', name: 'admin_designations_effective', methods: ['GET'])]
+    #[OA\Get(path: '/admin/designations/effective', summary: "Titulaires effectifs de chaque rôle d'une journée, avec leur provenance")]
+    public function effective(Request $request): JsonResponse
+    {
+        $gamedayId = $request->query->getInt('gameday');
+        if ($gamedayId <= 0) {
+            return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->canRead()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+        $gameday = $this->coverage->gameday($gamedayId);
+
+        return $gameday === null ? $this->error(DesignationRejected::NOT_FOUND, Response::HTTP_NOT_FOUND) : $this->json($gameday);
     }
 
     /** Récapitulatif par personne et par club (SUI-06), profils 1 et 2. */
@@ -101,6 +119,9 @@ final class AdminDesignationsController extends AbstractController
         $season = (string) $request->query->get('season', '');
         if (!preg_match(self::SEASON_PATTERN, $season)) {
             return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->canRead()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
         }
         $filters = array_filter([
             'role' => $request->query->get('role'),
@@ -320,6 +341,12 @@ final class AdminDesignationsController extends AbstractController
             $designation->matric,
             $designation->id,
         ));
+    }
+
+    /** Lecture des Désignations d'un périmètre : jusqu'au délégué fédéral (profil 5), qui constitue le jury. */
+    private function canRead(): bool
+    {
+        return $this->currentUser()->getEffectiveNiveau() <= self::READER_MAX_PROFILE;
     }
 
     private function isDesignator(): bool

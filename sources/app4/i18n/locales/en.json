@@ -1553,7 +1553,8 @@
       "10": "October",
       "11": "November",
       "12": "December"
-    }
+    },
+    "officials_by_designations": "Officials (competition manager, R1, delegate, chief referee, teams representative, non-playing referees) are designated with the gameday « Officials » button or in Referentials › Designations."
   },
   "games": {
     "title": "Game Management",
@@ -3682,6 +3683,12 @@
     "roles_picker": {
       "label": "Roles",
       "all": "All"
+    },
+    "block": {
+      "caption": "Designations: {line}",
+      "help": "In italics: designated on the competition or the event (inherited). The gameday officials fields (sheets, PDF, legacy pages) are copied automatically.",
+      "title": "Designations — {line}",
+      "button": "Designations"
     }
   },
   "competition_picker": {
