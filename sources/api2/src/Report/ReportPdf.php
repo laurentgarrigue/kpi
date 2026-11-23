@@ -56,7 +56,8 @@ final class ReportPdf
             ];
         }
 
-        return new PdfContent('sections.html.twig', $en ? $definition->labelEn : $definition->labelFr, $filename, ['sections' => $sections]);
+        // « columns » est lu par le gabarit même sans tableau (Twig strict_variables)
+        return new PdfContent('sections.html.twig', $en ? $definition->labelEn : $definition->labelFr, $filename, ['sections' => $sections, 'columns' => [], 'internal' => true]);
     }
 
     /**
