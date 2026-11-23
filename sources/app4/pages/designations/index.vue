@@ -88,12 +88,14 @@ const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: s
 
 // Copie des RC d'une autre saison (reprise de l'ancienne page RC, retirée : ticket designations/08)
 const copySource = ref('')
+const copyOpen = ref(false)
 const otherSeasons = computed(() => workContext.seasons.map(s => s.code).filter(code => code !== season.value))
 const copyRc = async () => {
   if (!copySource.value || !season.value) return
   const result = await api.post<{ copied: number, skipped: number }>('/admin/operations/seasons/copy-rc', { sourceCode: copySource.value, targetCode: season.value })
   toast.add({ title: t('designations.copy_rc.done', { copied: result.copied, skipped: result.skipped }), color: 'success' })
   copySource.value = ''
+  copyOpen.value = false
   await loadMatrix()
 }
 
@@ -149,6 +151,14 @@ onMounted(async () => {
         </button>
       </div>
       <span class="text-sm text-header-600 dark:text-header-300">{{ t('designations.season', { season }) }}</span>
+      <button
+        type="button"
+        class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
+        @click="copyOpen = true"
+      >
+        <UIcon name="heroicons:document-duplicate" class="w-5 h-5" />
+        {{ t('designations.copy_rc.button') }}
+      </button>
     </div>
 
     <!-- Matrice de couverture (SUI-01 à SUI-05) -->
@@ -160,14 +170,6 @@ onMounted(async () => {
           <input v-model="onlyGaps" type="checkbox" class="rounded">
           {{ t('designations.only_gaps') }}
         </label>
-        <form class="text-sm inline-flex items-center gap-2" @submit.prevent="copyRc">
-          <label for="copy-rc-source">{{ t('designations.copy_rc.label') }}</label>
-          <select id="copy-rc-source" v-model="copySource" class="rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
-            <option value="">—</option>
-            <option v-for="code in otherSeasons" :key="code" :value="code">{{ code }}</option>
-          </select>
-          <button type="submit" class="px-2 py-1 rounded border border-header-300 dark:border-header-700 disabled:opacity-50" :disabled="!copySource">{{ t('designations.copy_rc.button') }}</button>
-        </form>
         <span class="text-sm"><span class="px-2 py-0.5 rounded bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100">{{ t('designations.count.red', { n: counts.red }) }}</span></span>
         <span class="text-sm"><span class="px-2 py-0.5 rounded bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100">{{ t('designations.count.orange', { n: counts.orange }) }}</span></span>
       </div>
@@ -294,6 +296,24 @@ onMounted(async () => {
         </div>
       </template>
     </template>
+
+    <!-- Copier les RC d'une autre saison -->
+    <AdminModal :open="copyOpen" :title="t('designations.copy_rc.title', { season })" @close="copyOpen = false">
+      <form class="space-y-4" @submit.prevent="copyRc">
+        <div>
+          <label for="copy-rc-source" class="block text-sm font-medium mb-1">{{ t('designations.copy_rc.label') }}</label>
+          <select id="copy-rc-source" v-model="copySource" required class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
+            <option value="">—</option>
+            <option v-for="code in otherSeasons" :key="code" :value="code">{{ code }}</option>
+          </select>
+          <p class="text-xs text-header-500 mt-1">{{ t('designations.copy_rc.help', { season }) }}</p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="px-3 py-1.5 rounded border border-header-300 dark:border-header-700 text-sm" @click="copyOpen = false">{{ t('common.cancel') }}</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm disabled:opacity-50" :disabled="!copySource">{{ t('designations.copy_rc.submit') }}</button>
+        </div>
+      </form>
+    </AdminModal>
 
     <!-- Désigner depuis une case -->
     <DesignationsAddModal :target="target" :season="season" :roles="roles" @close="target = null" @saved="saved" />

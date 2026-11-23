@@ -3705,9 +3705,12 @@
       "button": "Désignations"
     },
     "copy_rc": {
-      "label": "Copier les RC de la saison",
-      "button": "Copier",
-      "done": "{copied} RC copiés ({skipped} déjà présents)"
+      "label": "Saison source",
+      "button": "Copier les RC",
+      "done": "{copied} RC copiés ({skipped} déjà présents)",
+      "title": "Copier les RC vers la saison {season}",
+      "help": "Les RC de la saison source sont désignés pour la saison {season}, sur les mêmes compétitions ; ceux déjà présents sont ignorés.",
+      "submit": "Copier"
     }
   },
   "competition_picker": {

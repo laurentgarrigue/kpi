@@ -3693,9 +3693,12 @@
       "button": "Designations"
     },
     "copy_rc": {
-      "label": "Copy the competition managers of season",
-      "button": "Copy",
-      "done": "{copied} managers copied ({skipped} already there)"
+      "label": "Source season",
+      "button": "Copy the managers",
+      "done": "{copied} managers copied ({skipped} already there)",
+      "title": "Copy the competition managers to season {season}",
+      "help": "The managers of the source season are designated for season {season}, on the same competitions; those already there are skipped.",
+      "submit": "Copy"
     }
   },
   "competition_picker": {
