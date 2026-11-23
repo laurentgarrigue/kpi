@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Kit de relais — saison 2027</title>
+<!-- PDF A4 à imprimer pour les plénières : npm run pdf (README.md). Textes alignés sur TEXTES.md.
+     Au moment de l'export, les <span data-qr="URL"> deviennent un QR code SVG et les <img data-visuel="nom"> reçoivent le PNG exporté (hors dépôt). -->
+<style>
+  @font-face { font-family: Raleway; src: url("../../../../sources/kpi-layer/public/fonts/raleway/raleway-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "Agency FB"; src: url("../../../../sources/kpi-layer/public/fonts/agency-fb/agencyfb.ttf") format("truetype"); }
+  @page { size: A4; margin: 0; }
+  :root { --bleu: #69b9e6; --bleu-fonce: #357b9c; --rouge: #c94a4c; --noir: #1e1e1c; --gris: #c6c7c7; --gris-texte: #555; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; color: var(--noir); font-family: Raleway, system-ui, sans-serif; font-size: 10.5pt; line-height: 1.4; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 16mm 12mm; position: relative; overflow: hidden;
+          page-break-after: always; display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: auto; }
+  .page::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4mm;
+                  background: linear-gradient(90deg, var(--bleu-fonce), var(--bleu)); }
+  .kicker { color: var(--bleu-fonce); font-weight: 800; font-size: 10pt; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { font-family: "Agency FB", Raleway, sans-serif; font-weight: 700; font-size: 44pt; line-height: 1; margin: 2mm 0 4mm; }
+  h1 em, h2 em { font-style: normal; color: var(--bleu-fonce); }
+  h2 { font-family: "Agency FB", Raleway, sans-serif; font-weight: 700; font-size: 26pt; line-height: 1.05; margin: 1mm 0 5mm; }
+  h3 { font-size: 11pt; font-weight: 800; margin-bottom: 2mm; display: flex; align-items: center; gap: 2mm; }
+  .lead { font-size: 12.5pt; color: #333; max-width: 165mm; }
+  b { font-weight: 700; }
+  footer { margin-top: auto; padding-top: 4mm; border-top: .3mm solid var(--gris); display: flex; justify-content: space-between;
+           font-size: 8.5pt; color: var(--gris-texte); }
+
+  /* Page 1 */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 9mm; }
+  .card { border: .4mm solid var(--gris); border-radius: 3mm; padding: 5mm 6mm; }
+  .card.accent { border-color: var(--bleu-fonce); background: #f2f8fc; }
+  ul.check { list-style: none; display: flex; flex-direction: column; gap: 2.5mm; }
+  ul.check li { padding-left: 6mm; position: relative; }
+  ul.check li::before { content: ""; position: absolute; left: 0; top: 1.6mm; width: 2.6mm; height: 2.6mm; border-radius: 50%; background: var(--bleu); }
+  .hero-qr { display: flex; gap: 8mm; align-items: center; margin-top: 9mm; padding: 6mm; border-radius: 3mm; background: var(--noir); color: #fff; }
+  .hero-qr .qr { width: 50mm; height: 50mm; background: #fff; padding: 2mm; border-radius: 2mm; }
+  .hero-qr .big { font-family: "Agency FB", Raleway, sans-serif; font-size: 30pt; line-height: 1; }
+  .hero-qr .big em { font-style: normal; color: var(--bleu); }
+  .hero-qr p { color: var(--gris); font-size: 11pt; margin-top: 2mm; }
+  .hero-qr .url { color: #fff; font-weight: 800; font-size: 14pt; margin-top: 3mm; }
+  .sommaire { margin-top: 9mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+  .sommaire div { border-left: 1.2mm solid var(--bleu-fonce); padding: 1mm 0 1mm 4mm; font-size: 9.5pt; color: var(--gris-texte); }
+  .sommaire strong { display: block; color: var(--noir); font-size: 11pt; }
+
+  /* Pages visuel */
+  .visuel-page { display: grid; grid-template-columns: 88mm 1fr; gap: 8mm; align-items: start; }
+  .visuel-page img { display: block; width: 88mm; border-radius: 2mm; box-shadow: 0 1mm 3mm rgba(0,0,0,.25); }
+  .visuel-page .legende { font-size: 8.5pt; color: var(--gris-texte); margin-top: 2mm; }
+  .texte { border: .4mm solid var(--gris); border-radius: 3mm; padding: 4mm 5mm; margin-bottom: 5mm; }
+  .texte blockquote { font-size: 9.8pt; white-space: pre-line; }
+  .lien { display: flex; gap: 4mm; align-items: center; margin-top: 3mm; padding-top: 3mm; border-top: .3mm dashed var(--gris); font-size: 8.5pt; color: var(--gris-texte); }
+  .lien .qr { width: 22mm; height: 22mm; flex: none; }
+  .lien code { font-family: ui-monospace, monospace; font-size: 7.5pt; color: var(--noir); word-break: break-all; display: block; margin-top: 1mm; }
+  .tag { font-size: 8pt; font-weight: 800; color: #fff; border-radius: 1mm; padding: .6mm 2mm; }
+  .tag.fb { background: #1877f2; } .tag.ig { background: #c13584; }
+  .qr { display: block; flex: none; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .consignes { margin-top: auto; }
+  .astuce { margin-top: auto; display: flex; gap: 5mm; align-items: flex-start; background: #f2f8fc; border-left: 1.5mm solid var(--bleu-fonce);
+            border-radius: 0 3mm 3mm 0; padding: 5mm 6mm; font-size: 10pt; }
+  .astuce strong { display: block; font-size: 11pt; margin-bottom: 1mm; }
+  .astuce + footer { margin-top: 6mm; }
+  .hashtags { font-weight: 700; color: var(--bleu-fonce); }
+</style>
+</head>
+<body>
+
+<!-- Page 1 : présentation -->
+<section class="page">
+  <div class="kicker">Plénières kayak-polo · 21-22 novembre 2026</div>
+  <h1>Saison 2027 :<br><em>faites-le savoir !</em></h1>
+  <p class="lead">Ce kit vous aide à relayer, dans votre région et vos clubs, ce qui arrive cette saison sur kayak-polo.info.
+    Trois publications prêtes à l'emploi, pour Facebook et Instagram.</p>
+
+  <div class="cols">
+    <div class="card">
+      <h3>Ce qui arrive cette saison</h3>
+      <ul class="check">
+        <li><b>L'application bord de terrain</b> : tous les matchs en direct, scores, classements et chaque match minute par minute.</li>
+        <li><b>Le site public fait peau neuve</b> : la carte des clubs, le palmarès des compétitions, les dates dans votre agenda.</li>
+        <li><b>Les championnats d'Europe en France</b>, à Thury-Harcourt, du 22 au 26 septembre 2027.</li>
+      </ul>
+    </div>
+    <div class="card accent">
+      <h3>Ce que nous vous demandons</h3>
+      <ul class="check">
+        <li>Publier ces trois messages sur les pages de votre région et de vos clubs, <b>entre le 23 novembre et le 20 décembre</b> (une publication par semaine suffit).</li>
+        <li>Utiliser les <b>liens indiqués</b> : scannez le QR code de chaque texte pour l'ouvrir sur votre téléphone et le copier.</li>
+        <li>Nous signaler un club mal placé sur la carte ou un code de région à corriger.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hero-qr">
+    <span class="qr" data-qr="https://app.kayak-polo.info/?mtm_campaign=saison2027&mtm_source=relais&mtm_content=kit-pdf"></span>
+    <div>
+      <div class="big">Installez l'application <em>dès maintenant</em></div>
+      <p>Scannez le QR code, puis ajoutez l'application à l'écran d'accueil de votre téléphone. Gratuite, sans compte, même sans réseau au bord du plan d'eau.</p>
+      <div class="url">app.kayak-polo.info</div>
+    </div>
+  </div>
+
+  <div class="sommaire">
+    <div><strong>Page 2</strong>L'application bord de terrain</div>
+    <div><strong>Page 3</strong>Le site public fait peau neuve</div>
+    <div><strong>Page 4</strong>Les rendez-vous de la saison</div>
+  </div>
+
+  <footer><span>Kit de relais · saison 2027 · kayak-polo.info</span><span>1 / 4</span></footer>
+</section>
+
+<!-- Page 2 : application bord de terrain -->
+<section class="page">
+  <div class="kicker">Publication 1</div>
+  <h2>L'application bord de terrain : <em>tous les matchs, en direct</em></h2>
+  <div class="visuel-page">
+    <div>
+      <img data-visuel="kit-relais-1-application-bord-de-terrain" alt="Visuel : tous les matchs, en direct">
+      <p class="legende">Visuel carré 1080×1350 pour Instagram et Facebook.</p>
+    </div>
+    <div>
+      <div class="texte">
+        <h3><span class="tag fb">Facebook</span></h3>
+        <blockquote>📱 Cette saison, suivez tous les matchs de kayak-polo en direct dans l'application bord de terrain : scores, classements, et chaque match minute par minute, but après but.
+
+Elle est gratuite, sans compte, et reste consultable même sans réseau au bord du plan d'eau. Ajoutez-la à l'écran d'accueil de votre téléphone :
+👉 [lien ci-dessous]</blockquote>
+        <div class="lien"><span class="qr" data-qr="https://app.kayak-polo.info/?mtm_campaign=saison2027&mtm_source=relais&mtm_content=kit-app-fb"></span>
+          <div>Lien à coller dans la publication :<code>https://app.kayak-polo.info/?mtm_campaign=saison2027&amp;mtm_source=relais&amp;mtm_content=kit-app-fb</code></div></div>
+      </div>
+      <div class="texte">
+        <h3><span class="tag ig">Instagram</span></h3>
+        <blockquote>📱 Tous les matchs, en direct. Scores, classements, et chaque match minute par minute dans l'application bord de terrain. Gratuite, sans compte, même sans réseau. Scanne le QR code et ajoute-la à ton écran d'accueil 👇
+🔗 app.kayak-polo.info</blockquote>
+        <div class="lien"><span class="qr" data-qr="https://app.kayak-polo.info/?mtm_campaign=saison2027&mtm_source=relais&mtm_content=kit-app-ig"></span>
+          <div>Lien pour la bio ou l'autocollant « lien » en story :<code>https://app.kayak-polo.info/?mtm_campaign=saison2027&amp;mtm_source=relais&amp;mtm_content=kit-app-ig</code></div></div>
+      </div>
+      <p class="hashtags">#kayakpolo #canoepolo #kayakpoloinfo #KPIsaison2027</p>
+    </div>
+  </div>
+  <div class="astuce"><div><strong>Aussi en story</strong>Publiez le visuel en story avec l'autocollant « lien » pointant vers le lien Instagram ci-dessus. Le meilleur moment : la veille ou le jour d'une compétition, quand chacun cherche les résultats.</div></div>
+  <footer><span>Kit de relais · saison 2027 · kayak-polo.info</span><span>2 / 4</span></footer>
+</section>
+
+<!-- Page 3 : site public -->
+<section class="page">
+  <div class="kicker">Publication 2</div>
+  <h2>Le site public fait peau neuve : <em>trouvez votre club</em></h2>
+  <div class="visuel-page">
+    <div>
+      <img data-visuel="kit-relais-2-site-public" alt="Visuel : trouve ton club, et tous les autres">
+      <p class="legende">Visuel carré 1080×1350 pour Instagram et Facebook.</p>
+    </div>
+    <div>
+      <div class="texte">
+        <h3><span class="tag fb">Facebook</span></h3>
+        <blockquote>🗺️ Le site kayak-polo.info fait peau neuve cet hiver. Au programme : plus de 200 clubs sur une carte, le palmarès de toutes les compétitions, et les dates de votre compétition directement dans votre agenda.
+
+Votre club est-il bien placé sur la carte ? Rendez-vous sur kayak-polo.info dès la mise en ligne.</blockquote>
+      </div>
+      <div class="texte">
+        <h3><span class="tag ig">Instagram</span></h3>
+        <blockquote>🗺️ Trouve ton club, et tous les autres. Le site kayak-polo.info fait peau neuve : plus de 200 clubs sur la carte, le palmarès des compétitions, et tes dates dans ton agenda. Bientôt en ligne !</blockquote>
+      </div>
+      <p class="hashtags">#kayakpolo #canoepolo #kayakpoloinfo #KPIsaison2027</p>
+      <p class="legende" style="margin-top:4mm">Pas de lien pour cette publication : le nouveau site remplacera l'actuel à la même adresse, kayak-polo.info.</p>
+    </div>
+  </div>
+  <div class="astuce"><div><strong>Le bon moment</strong>Publiez-la de préférence quand le nouveau site est en ligne : nous l'annoncerons sur la page Facebook de kayak-polo.info. Profitez-en pour vérifier que votre club est bien placé sur la carte, et signalez-nous toute erreur.</div></div>
+  <footer><span>Kit de relais · saison 2027 · kayak-polo.info</span><span>3 / 4</span></footer>
+</section>
+
+<!-- Page 4 : saison 2027 -->
+<section class="page">
+  <div class="kicker">Publication 3</div>
+  <h2>Les rendez-vous de <em>la saison 2027</em></h2>
+  <div class="visuel-page">
+    <div>
+      <img data-visuel="kit-relais-3-saison-2027" alt="Visuel : la saison 2027">
+      <p class="legende">Visuel carré 1080×1350, à épingler en haut de votre page.</p>
+    </div>
+    <div>
+      <div class="texte">
+        <h3><span class="tag fb">Facebook</span></h3>
+        <blockquote>📅 Les rendez-vous de la saison 2027 :
+• 16-17 janvier : formation arbitre national
+• 23-24 janvier : La nuit du kayak-polo, Moreuil (80)
+• 13-14 mars : 1re journée du championnat de France
+• 22-26 septembre : championnats d'Europe à Thury-Harcourt (14), en France !
+
+Tous les matchs se suivent en direct dans l'application bord de terrain :
+👉 [lien ci-dessous]</blockquote>
+        <div class="lien"><span class="qr" data-qr="https://app.kayak-polo.info/?mtm_campaign=saison2027&mtm_source=relais&mtm_content=kit-saison-fb"></span>
+          <div>Lien à coller dans la publication :<code>https://app.kayak-polo.info/?mtm_campaign=saison2027&amp;mtm_source=relais&amp;mtm_content=kit-saison-fb</code></div></div>
+      </div>
+      <div class="texte">
+        <h3><span class="tag ig">Instagram</span></h3>
+        <blockquote>📅 La saison 2027 est lancée ! Formation arbitre national, La nuit du kayak-polo à Moreuil, la 1re journée du championnat de France… et les championnats d'Europe à Thury-Harcourt, en France, du 22 au 26 septembre 🇪🇺
+Tous les matchs en direct : lien en bio 📱</blockquote>
+      </div>
+      <p class="hashtags">#kayakpolo #canoepolo #kayakpoloinfo #KPIsaison2027</p>
+    </div>
+  </div>
+  <div class="astuce"><div><strong>À épingler</strong>Épinglez cette publication en haut de votre page : c'est le calendrier que vos licenciés consulteront tout l'hiver. Les dates des autres tournois seront annoncées dès qu'elles seront confirmées.</div></div>
+  <footer><span>Kit de relais · saison 2027 · kayak-polo.info</span><span>4 / 4</span></footer>
+</section>
+
+</body>
+</html>

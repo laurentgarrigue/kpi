@@ -224,8 +224,8 @@ Présentation de 20 à 30 minutes (support C26, une quinzaine de diapositives), 
    (contexte de travail, mandats 2027, équipes depuis le classement précédent, vérification des compositions,
    **contrôle équipement**).
 2. **En avant-première** : le nouveau site sur `beta.kayak-polo.info` (nouveau design), date de bascule.
-3. **Les règles 2027-2030 dans KPI** : carton noir, chrono 60/40, calendrier de mise à disposition ; la nouvelle
-   console de marque (scoring) présentée comme **« à venir »**, sans date promise.
+3. **Les règles 2027-2030 dans KPI** : carton noir, chrono 60/40, calendrier de mise à disposition ; la console
+   de marque (scoring), **en production depuis le 18/11/2026**.
 4. **Ce qui change pour les régions** : codes des compétitions régionales alignés sur les CR actuelles, Sélection
    régionale unique par CR, structures synchronisées avec le PCE ; anciens liens non redirigés.
 5. **Le calendrier de la saison** : formation arbitre, tournoi de Moreuil (23-24 janvier ; Corbeil-Essonnes si sa
@@ -375,8 +375,8 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 
 | # | Chantier | État | Idéale | Impérative | Bloque |
 |---|---|---|---|---|---|
-| C8 | **Mise à jour automatique** d'app2 et app4 ([PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md)) | À implémenter | 18 déc. | **8 janv.** | Reel d'installation S2 |
-| C9 | **Copie de composition par les responsables d'équipes et de clubs** : aujourd'hui le profil 7 édite, ajoute et supprime, mais **ne copie pas** (copie depuis une autre compétition : profils ≤ 4 ; vers les matchs : profils ≤ 6). Ouvrir la copie au profil 7 sur ses clubs, ou écrire le pas à pas sans elle | À décider | Décision le 15 nov. (peut être débattue aux plénières), livré le 15 janv. | **29 janv.** | Pas à pas S6 |
+| C8 | **Mise à jour automatique** d'app2 et app4 ([PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md)) | app4 fait ; app2 et Nginx restent à faire (PWA_AUTO_UPDATE.md) | 18 déc. | **8 janv.** | Reel d'installation S2 |
+| C9 | **Copie de composition par les responsables d'équipes et de clubs** : aujourd'hui le profil 7 édite, ajoute et supprime, mais **ne copie pas** (copie depuis une autre compétition : profils ≤ 4 ; vers les matchs : profils ≤ 6). Ouvrir la copie au profil 7 sur ses clubs, ou écrire le pas à pas sans elle | Livré en v2.12.1 (#403) : le profil 7 copie les compositions de ses clubs | Livré | **29 janv.** | Pas à pas S6 |
 | C10 | **Comptes des responsables d'équipes et de clubs** (profil 7) pour 2027 : existants, mandats passés à 2027, e-mail renseigné | À vérifier ; liste remontée par les régions après les plénières | 31 janv. | 26 févr. | O4 |
 | C12 | **Scrutineering en anglais** : relecture de l'interface app4 en anglais, guide bilingue | Interface traduite, à relire | 15 janv. | 5 févr. | Publications **EN** S6 |
 | C18 | **Accès « Contrôle équipement »** (profil 10, attribué par les profils 1-2) pour les juges arbitres de la J1 | À organiser | 26 févr. | **5 mars** | O5 |
@@ -403,7 +403,7 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 | C41 | **Compétition des Europe paramétrée dans KPI** : catégories, équipes, terrains, programme ; noms de nations et catégories en anglais | Dès réception des engagements | **1er sept.** | Pages de la compétition, ICS, phase 6b-6c |
 | C42 | **Traductions anglaises complètes** d'app2, d'app3 (pages compétition, calendrier, clubs, historique) et des écrans d'app4 utilisés par les arbitres internationaux | 30 avril | **30 juin** | Phase 6b |
 | C43 | **Comptes « Contrôle équipement » des arbitres internationaux** et procédure de demande en anglais ; guide EN | 30 juin | **1er sept.** | Contrôle équipement aux Europe |
-| C44 | **Direct** : refonte du scoring app4 (Mercure) livrée **ou** décision de rester sur la feuille de marque actuelle pour les Europe ; écrans du site et overlays TV (gestionnaire de cache d'événements, panneau TV) | Décision le 31 mars ; répétition sur une compétition nationale en juin | Répétition le **31 juillet** au plus tard | Direct aux Europe |
+| C44 | **Direct** : scoring app4 (Mercure), en production depuis le 18/11/2026 : décision de le garder pour les Europe ou de revenir à la feuille de marque legacy ; écrans du site et overlays TV (gestionnaire de cache d'événements, panneau TV) | Décision le 31 mars ; répétition sur une compétition nationale en juin | Répétition le **31 juillet** au plus tard | Direct aux Europe |
 | C45 | **Tenue en charge** d'app2, d'app3 et d'api2 pour une audience européenne (test de charge, cache, Mercure) | 30 juin | **31 août** | O6 |
 | C46 | **Gel des déploiements** du 15 septembre au 27 septembre, sauf correctif urgent | — | 15 sept. | Stabilité |
 | C47 | **Contenus EN de la phase 6** : Reels (installation, frise, contrôle équipement), affiches QR code FR/EN, présentations des nations | 30 juin | 31 août | Phase 6b-6c |
@@ -461,9 +461,8 @@ production** ; sinon, permuter avec une publication « Tous les niveaux » ou de
 | Bascule repoussée après le 8 janvier | Le lancement du site glisse en S3 ; S1-S2 se concentrent sur app2, la formation et le tournoi |
 | Carton noir / chrono 60/40 pas prêts pour la formation | Les formateurs présentent la règle et une maquette marquée « à venir » ; consigne écrite aux tables de marque ; impératif absolu : la J1 |
 | Corbeil-Essonnes tombe le week-end de la formation (date inconnue) | Deux équipes distinctes : formateurs (séquence KPI) et communication (stories du tournoi) ; une seule publication Facebook par jour pour ne pas se concurrencer |
-| Copie de composition non ouverte au profil 7 (C9) | Pas à pas sans la copie ; la copie est faite par le responsable de compétition sur demande |
 | Juges arbitres sans accès le matin de la J1 | Liste arrêtée le 5 mars (C18), test de connexion pendant le tournoi de fin février |
-| Scoring app4 / Mercure pas prêt pour les Europe | Décision au 31 mars (C44) : rester sur la feuille de marque actuelle, éprouvée ; la communication ne promet pas de nouveauté non répétée |
+| Scoring app4 / Mercure (en production depuis le 18/11/2026) insuffisamment éprouvé pour les Europe | Décision au 31 mars (C44) : garder la console de scoring ou revenir à la feuille de marque legacy ; répétition sur une compétition nationale en juin |
 | Pic de fréquentation aux Europe | Test de charge (C45), gel des déploiements (C46), équipe technique d'astreinte |
 | Formulaires / HelloAsso non validés | Aucune publication (C11) |
 | Les médailles fuitent avant la révélation (capture d'admin, bloc vide visible, page `/medals` indexée) | Rien de publié avant la validation de la J1 (C30), interface vérifiée sans médaille (C32), page d'admin réservée aux profils 1-2 ; en cas de fuite, assumer un teaser plutôt que démentir |
