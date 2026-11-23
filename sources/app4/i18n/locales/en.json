@@ -359,7 +359,8 @@
     "all": "All",
     "select": "Select",
     "copy": "Copy",
-    "validate": "Confirm"
+    "validate": "Confirm",
+    "clear": "Clear"
   },
   "legacy_redirect": {
     "message": "Redirecting to classic interface...",

@@ -1,34 +1,23 @@
 <script setup lang="ts">
-/**
- * AdminCompetitionSectionPicker — sélection multiple de compétitions d'une saison, groupées par section, avec un
- * filtre section et une recherche (même source et même présentation que le filtre compétitions des mandats,
- * UserMandateForm). Aucune compétition choisie = toutes.
- */
-interface Competition { code: string, libelle: string, section: number, sectionLabel: string }
+import type { ChecklistCompetition } from '~/types'
 
+/**
+ * AdminCompetitionSectionPicker — choix de compétitions d'une saison : une liste « section » à part, puis une liste
+ * déroulante de compétitions à cocher (AdminCompetitionChecklist, celle du formulaire de mandat). Même source que le
+ * filtre des mandats. Aucune compétition choisie = toutes (de la section choisie, s'il y en a une).
+ */
 const props = defineProps<{ modelValue: string[], season: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 const { t } = useI18n()
 const api = useApi()
 
-const competitions = ref<Competition[]>([])
+const competitions = ref<ChecklistCompetition[]>([])
 const loading = ref(false)
-const search = ref('')
 const section = ref<number | ''>('')
+const checklist = ref<{ shown: string[] } | null>(null)
 
 const sections = computed(() => [...new Map(competitions.value.map(c => [c.section, c.sectionLabel])).entries()])
-const shown = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  return competitions.value.filter(c => (section.value === '' || c.section === section.value)
-    && (!q || c.code.toLowerCase().includes(q) || c.libelle.toLowerCase().includes(q)))
-})
-const grouped = computed(() => {
-  const groups = new Map<number, { label: string, items: Competition[] }>()
-  for (const c of shown.value) {
-    groups.set(c.section, { label: c.sectionLabel, items: [...(groups.get(c.section)?.items ?? []), c] })
-  }
-  return [...groups.values()]
-})
+const inSection = computed(() => competitions.value.filter(c => section.value === '' || c.section === section.value))
 const summary = computed(() => (props.modelValue.length === 0 ? t('competition_picker.all') : t('competition_picker.count', { n: props.modelValue.length })))
 
 const load = async () => {
@@ -46,42 +35,42 @@ const load = async () => {
   }
 }
 
-const toggle = (code: string) => emit('update:modelValue', props.modelValue.includes(code)
-  ? props.modelValue.filter(c => c !== code)
-  : [...props.modelValue, code])
-const selectShown = () => emit('update:modelValue', [...new Set([...props.modelValue, ...shown.value.map(c => c.code)])])
+/** Une section choisie sans compétition cochée restreint l'affichage à ses compétitions. */
+const onSection = () => emit('update:modelValue', section.value === '' ? [] : inSection.value.map(c => c.code))
+const selectShown = () => emit('update:modelValue', [...new Set([...props.modelValue, ...(checklist.value?.shown ?? [])])])
 
 watch(() => props.season, load, { immediate: true })
 </script>
 
 <template>
-  <details class="relative">
-    <summary class="cursor-pointer list-none px-3 py-1.5 text-sm rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900">
-      {{ t('competition_picker.label') }} : {{ summary }}
-    </summary>
-    <div class="absolute z-20 mt-1 w-96 max-w-[90vw] p-3 rounded-lg shadow-lg border border-header-200 dark:border-header-700 bg-white dark:bg-header-900">
-      <div class="flex gap-2 mb-2">
-        <select v-model="section" class="flex-1 text-sm rounded border-header-300 dark:bg-header-900 dark:border-header-700" :aria-label="t('competition_picker.section')">
-          <option value="">{{ t('competition_picker.all_sections') }}</option>
-          <option v-for="[id, label] in sections" :key="id" :value="id">{{ label }}</option>
-        </select>
-        <input v-model="search" type="search" class="flex-1 text-sm rounded border-header-300 dark:bg-header-900 dark:border-header-700" :placeholder="t('competition_picker.search')" :aria-label="t('competition_picker.search')">
+  <div class="flex flex-wrap items-center gap-2">
+    <select
+      v-model="section"
+      class="px-3 py-1.5 text-sm rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50"
+      :aria-label="t('competition_picker.section')"
+      @change="onSection"
+    >
+      <option value="">{{ t('competition_picker.all_sections') }}</option>
+      <option v-for="[id, label] in sections" :key="id" :value="id">{{ label }}</option>
+    </select>
+    <details class="relative">
+      <summary class="cursor-pointer list-none px-3 py-1.5 text-sm rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900">
+        {{ t('competition_picker.label') }} : {{ summary }}
+      </summary>
+      <div class="absolute z-20 mt-1 w-96 max-w-[90vw] p-2 rounded-lg shadow-lg border border-header-200 dark:border-header-700 bg-white dark:bg-header-900">
+        <div class="flex gap-3 mb-2 text-xs">
+          <button type="button" class="underline" @click="selectShown">{{ t('competition_picker.select_shown') }}</button>
+          <button type="button" class="underline" @click="emit('update:modelValue', [])">{{ t('competition_picker.clear') }}</button>
+        </div>
+        <AdminCompetitionChecklist
+          ref="checklist"
+          :model-value="modelValue"
+          :competitions="inSection"
+          :loading="loading"
+          list-class="max-h-72"
+          @update:model-value="emit('update:modelValue', $event)"
+        />
       </div>
-      <div class="flex gap-3 mb-2 text-xs">
-        <button type="button" class="underline" @click="selectShown">{{ t('competition_picker.select_shown') }}</button>
-        <button type="button" class="underline" @click="emit('update:modelValue', [])">{{ t('competition_picker.clear') }}</button>
-      </div>
-      <p v-if="loading" class="text-xs text-header-500">{{ t('common.loading') }}</p>
-      <div v-else class="max-h-72 overflow-y-auto">
-        <template v-for="group in grouped" :key="group.label">
-          <div class="text-xs font-semibold text-header-600 dark:text-header-300 mt-1 mb-0.5">— {{ group.label }} —</div>
-          <label v-for="c in group.items" :key="c.code" class="flex items-center gap-1.5 text-sm mb-0.5 cursor-pointer">
-            <input type="checkbox" :checked="modelValue.includes(c.code)" @change="toggle(c.code)">
-            {{ c.code }} - {{ c.libelle }}
-          </label>
-        </template>
-        <p v-if="grouped.length === 0" class="text-xs italic text-header-500">{{ t('competition_picker.none') }}</p>
-      </div>
-    </div>
-  </details>
+    </details>
+  </div>
 </template>

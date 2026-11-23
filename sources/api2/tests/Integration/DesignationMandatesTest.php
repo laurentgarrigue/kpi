@@ -136,6 +136,13 @@ final class DesignationMandatesTest extends ApiTestCase
         self::assertNull($this->mandate('9814', 'REP_EQUIPES'));
     }
 
+    public function testTheAddDialogAsksForAnEmailOnlyWithoutAccount(): void
+    {
+        self::assertSame(['exists' => true, 'hasEmail' => true], $this->requestAs('TADMIN', 'GET', '/admin/designations/account?matric=9814'));
+        self::assertSame(['exists' => false, 'hasEmail' => false], $this->requestAs('TADMIN', 'GET', '/admin/designations/account?matric=9812'));
+        $this->requestAs('TCLUB', 'GET', '/admin/designations/account?matric=9814', expectedStatus: 403);
+    }
+
     public function testAnInvalidEmailIsRefused(): void
     {
         $this->requestAs('TADMIN', 'POST', '/admin/designations', [

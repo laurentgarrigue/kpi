@@ -67,6 +67,25 @@ final class AdminDesignationsController extends AbstractController
         return $this->json($this->coverage->matrix($season, $level, $competitions, $request->query->getBoolean('onlyGaps')));
     }
 
+    /**
+     * Le licencié a-t-il déjà un compte KPI (code = licence) ? La fenêtre « Désigner » ne demande l'email que sinon (D5).
+     */
+    #[Route('/account', name: 'admin_designations_account', methods: ['GET'])]
+    #[OA\Get(path: '/admin/designations/account', summary: 'Le licencié a-t-il un compte KPI (et un email) ?')]
+    public function account(Request $request): JsonResponse
+    {
+        $matric = $request->query->getInt('matric');
+        if ($matric <= 0) {
+            return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->canRead()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+        $mail = $this->connection->fetchOne('SELECT Mail FROM kp_user WHERE Code = ?', [(string) $matric]);
+
+        return $this->json(['exists' => $mail !== false, 'hasEmail' => is_string($mail) && $mail !== '']);
+    }
+
     /** Désignations effectives d'une journée, héritage compris (bloc « Désignations » d'app4, ticket 08). */
     #[Route('/effective', name: 'admin_designations_effective', methods: ['GET'])]
     #[OA\Get(path: '/admin/designations/effective', summary: "Titulaires effectifs de chaque rôle d'une journée, avec leur provenance")]

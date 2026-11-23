@@ -25,11 +25,11 @@ const optionLabel = (key: string, option: string) => t(`reports.option.${key}.${
             <td v-for="column in columns" :key="column.key" class="px-2 py-1">
               <span v-if="column.readonly">{{ row[column.key] }}</span>
               <input v-else-if="column.type === 'checkbox'" type="checkbox" :checked="row[column.key] === true" :disabled="disabled" :aria-label="localized(column.label, locale)" @change="emit('update', withCell(rows, index, column.key, ($event.target as HTMLInputElement).checked))">
-              <select v-else-if="column.type === 'select'" :value="(row[column.key] as string) ?? ''" :disabled="disabled" :aria-label="localized(column.label, locale)" class="rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm" @change="emit('update', withCell(rows, index, column.key, ($event.target as HTMLSelectElement).value || null))">
+              <select v-else-if="column.type === 'select'" :value="(row[column.key] as string) ?? ''" :disabled="disabled" :aria-label="localized(column.label, locale)" class="rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm" @change="emit('update', withCell(rows, index, column.key, ($event.target as HTMLSelectElement).value || null))">
                 <option value="">—</option>
                 <option v-for="option in column.options ?? []" :key="option" :value="option">{{ optionLabel(column.key, option) }}</option>
               </select>
-              <input v-else type="text" :value="(row[column.key] as string) ?? ''" :disabled="disabled" :aria-label="localized(column.label, locale)" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm" @input="emit('update', withCell(rows, index, column.key, ($event.target as HTMLInputElement).value))">
+              <input v-else type="text" :value="(row[column.key] as string) ?? ''" :disabled="disabled" :aria-label="localized(column.label, locale)" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm" @input="emit('update', withCell(rows, index, column.key, ($event.target as HTMLInputElement).value))">
             </td>
             <td v-if="canAddRows(field) && !disabled" class="px-2 py-1">
               <button type="button" class="text-xs underline" @click="emit('update', rows.filter((_, i) => i !== index))">{{ t('reports.table.remove') }}</button>

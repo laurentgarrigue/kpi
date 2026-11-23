@@ -16,6 +16,8 @@ const toast = useToast()
 const person = ref<PlayerAutocomplete | null>(null)
 const draft = reactive({ email: '', authority: 'CNA', order: 1, quality: '' })
 const saving = ref(false)
+/** null = pas encore vérifié ; l'email n'est demandé que si le licencié n'a pas de compte KPI (D5). */
+const hasAccount = ref<boolean | null>(null)
 const role = computed(() => (props.target ? props.roles[props.target.role] : undefined))
 const roleLabel = (code: string) => props.roles[code]?.label ?? code
 
@@ -26,6 +28,14 @@ const scopes = (target: DesignationTarget) => (target.kind
 watch(() => props.target, () => {
   person.value = null
   Object.assign(draft, { email: '', authority: 'CNA', order: 1, quality: '' })
+})
+
+watch(person, async (selected) => {
+  hasAccount.value = null
+  draft.email = ''
+  if (selected && role.value?.mandateProfile) {
+    hasAccount.value = (await api.get<{ exists: boolean }>('/admin/designations/account', { matric: String(selected.matric) })).exists
+  }
 })
 
 const save = async () => {
@@ -63,25 +73,25 @@ const save = async () => {
         <label class="block text-sm font-medium mb-1">{{ t('designations.add.person') }} *</label>
         <AdminPlayerAutocomplete v-model="person" :placeholder="t('designations.add.person_placeholder')" />
       </div>
-      <div v-if="role?.mandateProfile">
+      <div v-if="role?.mandateProfile && person && hasAccount === false">
         <label class="block text-sm font-medium mb-1" for="designation-email">{{ t('designations.add.email') }}</label>
-        <input id="designation-email" v-model="draft.email" type="email" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700" aria-describedby="designation-email-help">
+        <input id="designation-email" v-model="draft.email" type="email" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1" aria-describedby="designation-email-help">
         <p id="designation-email-help" class="text-xs text-header-500 mt-1">{{ t('designations.add.email_help') }}</p>
       </div>
       <div v-if="(role?.authorities.length ?? 0) > 1">
         <label class="block text-sm font-medium mb-1" for="designation-authority">{{ t('designations.add.authority') }}</label>
-        <select id="designation-authority" v-model="draft.authority" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
+        <select id="designation-authority" v-model="draft.authority" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1">
           <option v-for="authority in role?.authorities ?? []" :key="authority" :value="authority">{{ t(`designations.authority.${authority}`) }}</option>
         </select>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium mb-1" for="designation-order">{{ t('designations.add.order') }}</label>
-          <input id="designation-order" v-model.number="draft.order" type="number" min="1" max="99" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
+          <input id="designation-order" v-model.number="draft.order" type="number" min="1" max="99" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1">
         </div>
         <div>
           <label class="block text-sm font-medium mb-1" for="designation-quality">{{ t('designations.add.quality') }}</label>
-          <input id="designation-quality" v-model="draft.quality" type="text" maxlength="100" class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700">
+          <input id="designation-quality" v-model="draft.quality" type="text" maxlength="100" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1">
         </div>
       </div>
       <div class="flex justify-end gap-2">

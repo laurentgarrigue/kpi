@@ -83,7 +83,7 @@ onMounted(async () => {
       <form class="flex flex-wrap items-end gap-4" @submit.prevent="create">
         <label class="text-sm">
           {{ t('reports.new.type') }}
-          <select v-model="newType" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm" required>
+          <select v-model="newType" class="ml-2 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm" required>
             <option value="">—</option>
             <option v-for="type in creatable" :key="type.code" :value="type.code">{{ localized(type.label, locale) }}</option>
           </select>
@@ -103,14 +103,14 @@ onMounted(async () => {
     <div class="flex flex-wrap items-center gap-4 mb-4">
       <label class="text-sm">
         {{ t('reports.filter.type') }}
-        <select v-model="typeFilter" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
+        <select v-model="typeFilter" class="ml-2 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
           <option value="">{{ t('reports.filter.all') }}</option>
           <option v-for="code in Object.keys(types)" :key="code" :value="code">{{ typeLabel(code) }}</option>
         </select>
       </label>
       <label class="text-sm">
         {{ t('reports.filter.state') }}
-        <select v-model="stateFilter" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
+        <select v-model="stateFilter" class="ml-2 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
           <option value="">{{ t('reports.filter.all') }}</option>
           <option value="BROUILLON">{{ t('reports.state.BROUILLON') }}</option>
           <option value="SOUMIS">{{ t('reports.state.SOUMIS') }}</option>

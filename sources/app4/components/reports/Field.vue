@@ -7,7 +7,7 @@ const emit = defineEmits<{ update: [key: string, value: unknown] }>()
 const { t, locale } = useI18n()
 const id = computed(() => `report-field-${props.field.key}`)
 const value = computed(() => props.answers[props.field.key])
-const inputClass = 'w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm disabled:opacity-70'
+const inputClass = 'w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm disabled:opacity-70'
 const asNumber = (raw: string) => (raw === '' ? null : Number(raw))
 </script>
 
@@ -27,7 +27,7 @@ const asNumber = (raw: string) => (raw === '' ? null : Number(raw))
     </label>
     <p v-else-if="field.type === 'sum'" :id="id" class="text-sm font-semibold">{{ computedValue(field, answers) }} / {{ field.max }}</p>
     <div v-else-if="field.type === 'score' || field.type === 'number'" class="flex items-center gap-2">
-      <input :id="id" type="number" :min="field.type === 'score' ? 0 : undefined" :max="field.max" :value="(value as number) ?? ''" class="w-24 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm" :disabled="disabled" :aria-invalid="!!error" @input="emit('update', field.key, asNumber(($event.target as HTMLInputElement).value))">
+      <input :id="id" type="number" :min="field.type === 'score' ? 0 : undefined" :max="field.max" :value="(value as number) ?? ''" class="w-24 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm" :disabled="disabled" :aria-invalid="!!error" @input="emit('update', field.key, asNumber(($event.target as HTMLInputElement).value))">
       <span v-if="field.type === 'score'" class="text-sm">/ {{ field.max }}</span>
     </div>
     <input v-else :id="id" :type="field.type" :value="(value as string) ?? ''" :class="inputClass" :disabled="disabled" :aria-invalid="!!error" :aria-describedby="error ? `${id}-error` : undefined" @input="emit('update', field.key, ($event.target as HTMLInputElement).value)">

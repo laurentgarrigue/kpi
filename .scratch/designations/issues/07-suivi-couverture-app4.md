@@ -28,3 +28,7 @@ SUI-01 à SUI-06.
   retire de chaque phase), filtres événement/groupe et compétition du contexte masqués, sélecteur de compétitions
   avec filtre section et recherche (`AdminCompetitionSectionPicker`, même source que le filtre des mandats), choix des
   rôles affichés. api2 renvoie `type` (Code_typeclt) par compétition.
+- 2026-11-23 — Retours : filtre de niveau retiré (toutes les compétitions, à filtrer par section ou compétition) ;
+  sélecteur de compétitions = une liste « section » séparée + la liste à cocher du formulaire de mandat, extraite en
+  `AdminCompetitionChecklist` (réutilisée par `UserMandateForm`) ; bordures des champs ; la fenêtre « Désigner » ne
+  demande l'email que si le licencié n'a pas de compte (`GET /admin/designations/account?matric=`).

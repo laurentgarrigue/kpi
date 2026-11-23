@@ -12,7 +12,6 @@ definePageMeta({
 })
 
 type Tab = 'matrix' | 'summary'
-type Level = 'all' | 'national' | 'other'
 interface SummaryPerson { matric: number, name: string, club: string | null, designations: Record<string, number>, gamedays: Record<string, number> }
 interface SummaryClub { club: string | null, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
 
@@ -27,7 +26,6 @@ if (authStore.profile > 2) {
 }
 
 const tab = ref<Tab>('matrix')
-const level = ref<Level>('national')
 const onlyGaps = ref(false)
 const competitionCodes = ref<string[]>([])
 const chosenRoles = ref<string[]>([])
@@ -60,7 +58,6 @@ const loadMatrix = async () => {
   try {
     matrix.value = await api.get<CoverageMatrix>('/admin/designations/coverage', {
       season: season.value,
-      level: level.value,
       onlyGaps: onlyGaps.value ? '1' : '0',
       competitions: competitionCodes.value.join(','),
     })
@@ -123,7 +120,7 @@ const cellTitle = (cell: CoverageCell) => cell.holders
   .map(holder => `${holderLabel(holder)} — ${t(`designations.origin.${holder.origin}`)}${holder.warnings.map(w => ` · ${t(`designations.warning.${w}`)}`).join('')}`)
   .join('\n')
 
-watch([season, level, onlyGaps, competitionCodes], () => loadMatrix())
+watch([season, onlyGaps, competitionCodes], () => loadMatrix())
 watch(tab, () => reload())
 onMounted(async () => {
   await workContext.initContext?.()
@@ -159,19 +156,13 @@ onMounted(async () => {
       <div class="flex flex-wrap items-center gap-4 mb-4">
         <AdminCompetitionSectionPicker v-model="competitionCodes" :season="season" />
         <DesignationsRolePicker v-model="chosenRoles" :roles="pickableRoles" />
-        <label class="text-sm">
-          {{ t('designations.level.label') }}
-          <select v-model="level" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
-            <option v-for="value in (['national', 'other', 'all'] as Level[])" :key="value" :value="value">{{ t(`designations.level.${value}`) }}</option>
-          </select>
-        </label>
         <label class="text-sm inline-flex items-center gap-2">
           <input v-model="onlyGaps" type="checkbox" class="rounded">
           {{ t('designations.only_gaps') }}
         </label>
         <form class="text-sm inline-flex items-center gap-2" @submit.prevent="copyRc">
           <label for="copy-rc-source">{{ t('designations.copy_rc.label') }}</label>
-          <select id="copy-rc-source" v-model="copySource" class="rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
+          <select id="copy-rc-source" v-model="copySource" class="rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
             <option value="">—</option>
             <option v-for="code in otherSeasons" :key="code" :value="code">{{ code }}</option>
           </select>
@@ -265,10 +256,10 @@ onMounted(async () => {
     <template v-else>
       <form class="flex flex-wrap items-end gap-4 mb-4" @submit.prevent="loadSummary">
         <label class="text-sm">{{ t('designations.period.from') }}
-          <input v-model="summaryFrom" type="date" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
+          <input v-model="summaryFrom" type="date" class="ml-2 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
         </label>
         <label class="text-sm">{{ t('designations.period.to') }}
-          <input v-model="summaryTo" type="date" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
+          <input v-model="summaryTo" type="date" class="ml-2 rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
         </label>
         <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm">{{ t('designations.period.apply') }}</button>
       </form>

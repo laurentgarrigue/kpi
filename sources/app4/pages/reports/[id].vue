@@ -176,7 +176,7 @@ onMounted(load)
     <AdminModal :open="reopening" :title="t('reports.reopen.title')" @close="reopening = false">
       <form class="space-y-4" @submit.prevent="reopen">
         <label for="reopen-reason" class="block text-sm font-medium">{{ t('reports.reopen.reason') }} *</label>
-        <textarea id="reopen-reason" v-model="reason" rows="3" maxlength="500" required class="w-full rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm" />
+        <textarea id="reopen-reason" v-model="reason" rows="3" maxlength="500" required class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm" />
         <div class="flex justify-end gap-2">
           <button type="button" class="px-3 py-1.5 rounded border border-header-300 dark:border-header-700 text-sm" @click="reopening = false">{{ t('common.cancel') }}</button>
           <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm disabled:opacity-50" :disabled="!reason.trim()">{{ t('reports.reopen.button') }}</button>
