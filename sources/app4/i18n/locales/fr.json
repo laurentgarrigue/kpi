@@ -3629,9 +3629,10 @@
       "line": "Ligne",
       "person": "Personne",
       "club": "Club",
-      "people": "Personnes"
+      "people": "Personnes",
+      "holders": "Titulaires",
+      "gameday": "Journée"
     },
-    "team": "Équipe {team}",
     "missing": "À désigner",
     "not_applicable": "Sans objet",
     "origin": {
@@ -3684,6 +3685,26 @@
       "clubs": "Par club"
     },
     "gamedays_short": "{n} j.",
-    "no_club": "Sans club"
+    "no_club": "Sans club",
+    "table": {
+      "managers": "Responsables",
+      "gamedays": "Journées"
+    },
+    "phases": "{n} phases : {phases}",
+    "roles_picker": {
+      "label": "Rôles",
+      "all": "Tous"
+    }
+  },
+  "competition_picker": {
+    "label": "Compétitions",
+    "all": "toutes",
+    "count": "{n} choisie(s)",
+    "section": "Section",
+    "all_sections": "Toutes les sections",
+    "search": "Rechercher une compétition",
+    "select_shown": "Cocher les compétitions affichées",
+    "clear": "Tout décocher",
+    "none": "Aucune compétition"
   }
 }

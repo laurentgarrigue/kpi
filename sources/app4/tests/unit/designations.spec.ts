@@ -1,6 +1,6 @@
 // Suivi des Désignations (FEATURE_DESIGNATIONS.md § 4, SUI-01 à SUI-06) : règles d'affichage pures.
 import { describe, expect, it } from 'vitest'
-import { canAddHolder, countStatuses, gamedayDates, holderLabel, isInherited, scopeOfRow, statusClasses, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
+import { canAddHolder, countStatuses, gamedayDates, gamedayRows, holderLabel, isInherited, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
 
 const holder = (origin: CoverageHolder['origin'], club: string | null = 'C001'): CoverageHolder => ({ designationId: 1, matric: 1001, name: 'DUPONT Jean', club, origin, warnings: [] })
 const cell = (status: CoverageCell['status'], holders: CoverageHolder[] = []): CoverageCell => ({ requirement: 'required', status, holders })
@@ -42,7 +42,7 @@ describe('suivi des désignations', () => {
       season: '2998',
       gamedayRoles: ['R1'],
       competitions: [{
-        code: 'NDES', label: 'N', national: true, cells: { RC: cell('red') },
+        code: 'NDES', label: 'N', type: 'CHPT', national: true, cells: { RC: cell('red') },
         gamedays: [{ id: 1, label: 'J1', place: '', start: null, end: null, eventIds: [], cells: { R1: cell('orange'), JURY_APPEL: cell('empty') } }],
         teams: [{ id: 2, label: 'E', club: null, cells: { RESP_EQUIPE: cell('red') } }],
       }],
@@ -54,5 +54,46 @@ describe('suivi des désignations', () => {
     expect(gamedayDates('2998-03-07', '2998-03-08')).toBe('07/03 – 08/03')
     expect(gamedayDates('2998-03-07', '2998-03-07')).toBe('07/03')
     expect(gamedayDates(null, null)).toBe('')
+  })
+})
+
+describe('phases d\'un tournoi (CP)', () => {
+  const gameday = (id: number, start: string, place: string, cells: Record<string, CoverageCell>) => ({ id, label: `Phase ${id}`, place, start, end: start, eventIds: [], cells })
+  const own = (designationId: number, matric: number): CoverageHolder => ({ designationId, matric, name: `P${matric}`, club: null, origin: 'JOURNEE', warnings: [] })
+  const fromCompetition: CoverageHolder = { designationId: 9, matric: 7, name: 'P7', club: null, origin: 'COMPETITION', warnings: [] }
+
+  it('regroupe les phases de mêmes dates et lieu en une ligne', () => {
+    const rows = gamedayRows({ type: 'CP', gamedays: [
+      gameday(1, '2998-06-01', 'A', { R1: cell('green', [fromCompetition]) }),
+      gameday(2, '2998-06-01', 'A', { R1: cell('green', [fromCompetition]) }),
+      gameday(3, '2998-06-08', 'A', { R1: cell('red') }),
+    ] })
+    expect(rows.map(row => row.ids)).toEqual([[1, 2], [3]])
+    expect(rows[0].cells.R1.holders).toEqual([{ ...fromCompetition, designationIds: [9] }])
+  })
+
+  it('ne regroupe pas les journées d\'un championnat', () => {
+    const rows = gamedayRows({ type: 'CHPT', gamedays: [gameday(1, '2998-06-01', 'A', {}), gameday(2, '2998-06-01', 'A', {})] })
+    expect(rows.map(row => row.ids)).toEqual([[1], [2]])
+  })
+
+  it('l\'état d\'un groupe est le plus mauvais de ses phases ; une même personne désignée sur chaque phase est une seule fois', () => {
+    const [row] = gamedayRows({ type: 'CP', gamedays: [
+      gameday(1, '2998-06-01', 'A', { R1: cell('green', [own(11, 5)]), JUGE_ARBITRE: cell('empty') }),
+      gameday(2, '2998-06-01', 'A', { R1: cell('red'), JUGE_ARBITRE: cell('green', [own(12, 6)]) }),
+    ] })
+    expect(row.cells.R1.status).toBe('red')
+    expect(row.cells.JUGE_ARBITRE.status).toBe('empty')
+    const both = gamedayRows({ type: 'CP', gamedays: [
+      gameday(1, '2998-06-01', 'A', { R1: cell('green', [own(11, 5)]) }),
+      gameday(2, '2998-06-01', 'A', { R1: cell('green', [own(13, 5)]) }),
+    ] })[0]
+    expect(both.cells.R1.holders).toHaveLength(1)
+    expect(both.cells.R1.holders[0].designationIds).toEqual([11, 13])
+  })
+
+  it('filtre les rôles affichés', () => {
+    expect(visibleRoles(['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE'], ['R1'])).toEqual(['R1'])
+    expect(visibleRoles(['DELEGUE_CNA', 'R1'], [])).toEqual(['DELEGUE_CNA', 'R1'])
   })
 })

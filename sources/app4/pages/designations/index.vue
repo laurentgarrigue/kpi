@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PlayerAutocomplete } from '~/types'
-import { canAddHolder, countStatuses, gamedayDates, holderLabel, scopeOfRow, statusClasses, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition, type RowKind } from '~/utils/designations'
+import { canAddHolder, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition, type RowKind } from '~/utils/designations'
 
 /**
  * Suivi des Désignations, profils 1 et 2 (DOC/specs/FEATURE_DESIGNATIONS.md § 4, ticket designations/07) : matrice de
@@ -16,7 +16,7 @@ type Tab = 'matrix' | 'summary'
 type Level = 'all' | 'national' | 'other'
 interface SummaryPerson { matric: number, name: string, club: string | null, designations: Record<string, number>, gamedays: Record<string, number> }
 interface SummaryClub { club: string | null, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
-interface Target { kind: RowKind, id: string | number, role: string, label: string }
+interface Target { kind: RowKind, ids: (string | number)[], role: string, label: string }
 
 const { t } = useI18n()
 const api = useApi()
@@ -31,6 +31,10 @@ if (authStore.profile > 2) {
 const tab = ref<Tab>('matrix')
 const level = ref<Level>('national')
 const onlyGaps = ref(false)
+const competitionCodes = ref<string[]>([])
+const chosenRoles = ref<string[]>([])
+/** Rôles des responsables (premier tableau de chaque compétition) ; les autres sont des colonnes de journée. */
+const MANAGER_ROLES = ['RC', 'RESP_EQUIPE']
 const loading = ref(false)
 const matrix = ref<CoverageMatrix | null>(null)
 const roles = ref<Record<string, RoleDefinition>>({})
@@ -48,6 +52,9 @@ const counts = computed(() => (matrix.value ? countStatuses(matrix.value) : { re
 const roleLabel = (code: string) => roles.value[code]?.label ?? code
 const targetRole = computed(() => (target.value ? roles.value[target.value.role] : undefined))
 const summaryRoles = computed(() => Object.keys(roles.value))
+const pickableRoles = computed(() => [...MANAGER_ROLES, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: roleLabel(code) })))
+const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], chosenRoles.value))
+const showsManager = (role: string) => chosenRoles.value.length === 0 || chosenRoles.value.includes(role)
 
 const loadRoles = async () => {
   roles.value = await api.get<Record<string, RoleDefinition>>('/admin/designations/roles')
@@ -57,7 +64,12 @@ const loadMatrix = async () => {
   if (!season.value) return
   loading.value = true
   try {
-    matrix.value = await api.get<CoverageMatrix>('/admin/designations/coverage', { season: season.value, level: level.value, onlyGaps: onlyGaps.value ? '1' : '0' })
+    matrix.value = await api.get<CoverageMatrix>('/admin/designations/coverage', {
+      season: season.value,
+      level: level.value,
+      onlyGaps: onlyGaps.value ? '1' : '0',
+      competitions: competitionCodes.value.join(','),
+    })
   } finally {
     loading.value = false
   }
@@ -78,8 +90,9 @@ const loadSummary = async () => {
 
 const reload = () => (tab.value === 'matrix' ? loadMatrix() : loadSummary())
 
-const openAdd = (kind: RowKind, id: string | number, role: string, label: string) => {
-  target.value = { kind, id, role, label }
+/** Une ligne de phases regroupées (tournoi) désigne sur chacune de ses phases. */
+const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: string) => {
+  target.value = { kind, ids, role, label }
   person.value = null
   Object.assign(draft, { email: '', authority: 'CNA', order: 1, quality: '' })
 }
@@ -88,16 +101,19 @@ const save = async () => {
   if (!target.value || !person.value || !season.value) return
   saving.value = true
   try {
-    const created = await api.post<{ account: 'created' | 'existing' | 'none' }>('/admin/designations', {
-      season: season.value,
-      role: target.value.role,
-      ...scopeOfRow(target.value.kind, target.value.id),
-      matric: person.value.matric,
-      authority: draft.authority,
-      order: draft.order,
-      quality: draft.quality || null,
-      email: draft.email || null,
-    })
+    let created: { account: 'created' | 'existing' | 'none' } = { account: 'none' }
+    for (const id of target.value.ids) {
+      created = await api.post<{ account: 'created' | 'existing' | 'none' }>('/admin/designations', {
+        season: season.value,
+        role: target.value.role,
+        ...scopeOfRow(target.value.kind, id),
+        matric: person.value.matric,
+        authority: draft.authority,
+        order: draft.order,
+        quality: draft.quality || null,
+        email: draft.email || null,
+      })
+    }
     toast.add({ title: t(`designations.account.${created.account}`), color: created.account === 'none' && targetRole.value?.mandateProfile ? 'warning' : 'success' })
     target.value = null
     await loadMatrix()
@@ -111,7 +127,9 @@ const save = async () => {
 const confirmRemove = async () => {
   if (!removing.value) return
   try {
-    await api.del(`/admin/designations/${removing.value.designationId}`)
+    for (const id of designationIdsOf(removing.value)) {
+      await api.del(`/admin/designations/${id}`)
+    }
     toast.add({ title: t('designations.removed'), color: 'success' })
     removing.value = null
     await loadMatrix()
@@ -124,7 +142,7 @@ const cellTitle = (cell: CoverageCell) => cell.holders
   .map(holder => `${holderLabel(holder)} — ${t(`designations.origin.${holder.origin}`)}${holder.warnings.map(w => ` · ${t(`designations.warning.${w}`)}`).join('')}`)
   .join('\n')
 
-watch([season, level, onlyGaps], () => loadMatrix())
+watch([season, level, onlyGaps, competitionCodes], () => loadMatrix())
 watch(tab, () => reload())
 onMounted(async () => {
   await workContext.initContext?.()
@@ -135,7 +153,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <AdminPageHeader :title="t('designations.title')" />
+    <AdminPageHeader :title="t('designations.title')" :show-filters="false" />
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <div class="inline-flex rounded-md shadow-sm" role="tablist">
@@ -158,6 +176,8 @@ onMounted(async () => {
     <!-- Matrice de couverture (SUI-01 à SUI-05) -->
     <template v-if="tab === 'matrix'">
       <div class="flex flex-wrap items-center gap-4 mb-4">
+        <AdminCompetitionSectionPicker v-model="competitionCodes" :season="season" />
+        <DesignationsRolePicker v-model="chosenRoles" :roles="pickableRoles" />
         <label class="text-sm">
           {{ t('designations.level.label') }}
           <select v-model="level" class="ml-2 rounded border-header-300 dark:bg-header-900 dark:border-header-700 text-sm">
@@ -175,62 +195,81 @@ onMounted(async () => {
       <p v-if="loading" class="text-sm text-header-500">{{ t('common.loading') }}</p>
       <p v-else-if="matrix && matrix.competitions.length === 0" class="text-sm text-header-500">{{ t('designations.nothing') }}</p>
 
-      <div v-for="competition in matrix?.competitions ?? []" :key="competition.code" class="mb-6 overflow-x-auto">
-        <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
-          <caption class="text-left font-semibold py-2">
-            {{ competition.code }} — {{ competition.label }}
-          </caption>
-          <thead>
-            <tr class="bg-header-50 dark:bg-header-800">
-              <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.line') }}</th>
-              <th v-for="role in matrix?.gamedayRoles ?? []" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role) }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- RC de la compétition -->
-            <tr>
-              <th scope="row" class="px-2 py-1 text-left font-medium">{{ roleLabel('RC') }}</th>
-              <td :colspan="matrix?.gamedayRoles.length" class="px-2 py-1" :class="statusClasses(competition.cells.RC.status)" :title="cellTitle(competition.cells.RC)">
-                <DesignationsCellHolders
-                  :cell="competition.cells.RC"
-                  kind="competition"
-                  :can-add="canAddHolder(competition.cells.RC, 'competition', roles.RC)"
-                  @add="openAdd('competition', competition.code, 'RC', competition.label)"
-                  @remove="removing = $event"
-                />
-              </td>
-            </tr>
-            <!-- Journées : rôles de journée, héritage visible (SUI-03) -->
-            <tr v-for="gameday in competition.gamedays" :key="gameday.id">
-              <th scope="row" class="px-2 py-1 text-left font-normal whitespace-nowrap">
-                {{ gamedayDates(gameday.start, gameday.end) }} · {{ gameday.label }}<span v-if="gameday.place"> · {{ gameday.place }}</span>
-              </th>
-              <td v-for="role in matrix?.gamedayRoles ?? []" :key="role" class="px-2 py-1 align-top" :class="statusClasses(gameday.cells[role].status)" :title="cellTitle(gameday.cells[role])">
-                <DesignationsCellHolders
-                  :cell="gameday.cells[role]"
-                  kind="gameday"
-                  :can-add="canAddHolder(gameday.cells[role], 'gameday', roles[role])"
-                  @add="openAdd('gameday', gameday.id, role, `${competition.code} · ${gameday.label}`)"
-                  @remove="removing = $event"
-                />
-              </td>
-            </tr>
-            <!-- Équipes sans responsable (SUI-02) -->
-            <tr v-for="team in competition.teams" :key="`team-${team.id}`">
-              <th scope="row" class="px-2 py-1 text-left font-normal">{{ t('designations.team', { team: team.label }) }}</th>
-              <td :colspan="matrix?.gamedayRoles.length" class="px-2 py-1" :class="statusClasses(team.cells.RESP_EQUIPE.status)" :title="cellTitle(team.cells.RESP_EQUIPE)">
-                <DesignationsCellHolders
-                  :cell="team.cells.RESP_EQUIPE"
-                  kind="team"
-                  :can-add="canAddHolder(team.cells.RESP_EQUIPE, 'team', roles.RESP_EQUIPE)"
-                  @add="openAdd('team', team.id, 'RESP_EQUIPE', team.label)"
-                  @remove="removing = $event"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section v-for="competition in matrix?.competitions ?? []" :key="competition.code" class="mb-8">
+        <h2 class="font-semibold mb-2">{{ competition.code }} — {{ competition.label }}</h2>
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <!-- Responsables : RC et responsables d'équipe (SUI-02) -->
+          <div v-if="showsManager('RC') || showsManager('RESP_EQUIPE')" class="overflow-x-auto">
+            <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
+              <caption class="text-left text-xs uppercase tracking-wide text-header-500 py-1">{{ t('designations.table.managers') }}</caption>
+              <thead>
+                <tr class="bg-header-50 dark:bg-header-800">
+                  <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.line') }}</th>
+                  <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.holders') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="showsManager('RC')">
+                  <th scope="row" class="px-2 py-1 text-left font-medium">{{ roleLabel('RC') }}</th>
+                  <td class="px-2 py-1" :class="statusClasses(competition.cells.RC.status)" :title="cellTitle(competition.cells.RC)">
+                    <DesignationsCellHolders
+                      :cell="competition.cells.RC"
+                      kind="competition"
+                      :can-add="canAddHolder(competition.cells.RC, 'competition', roles.RC)"
+                      @add="openAdd('competition', [competition.code], 'RC', competition.label)"
+                      @remove="removing = $event"
+                    />
+                  </td>
+                </tr>
+                <template v-if="showsManager('RESP_EQUIPE')">
+                  <tr v-for="team in competition.teams" :key="`team-${team.id}`">
+                    <th scope="row" class="px-2 py-1 text-left font-normal">{{ team.label }}</th>
+                    <td class="px-2 py-1" :class="statusClasses(team.cells.RESP_EQUIPE.status)" :title="cellTitle(team.cells.RESP_EQUIPE)">
+                      <DesignationsCellHolders
+                        :cell="team.cells.RESP_EQUIPE"
+                        kind="team"
+                        :can-add="canAddHolder(team.cells.RESP_EQUIPE, 'team', roles.RESP_EQUIPE)"
+                        @add="openAdd('team', [team.id], 'RESP_EQUIPE', team.label)"
+                        @remove="removing = $event"
+                      />
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Journées × rôles ; phases d'un tournoi regroupées par dates et lieu (SUI-03 : héritage visible) -->
+          <div v-if="shownGamedayRoles.length && competition.gamedays.length" class="overflow-x-auto">
+            <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
+              <caption class="text-left text-xs uppercase tracking-wide text-header-500 py-1">{{ t('designations.table.gamedays') }}</caption>
+              <thead>
+                <tr class="bg-header-50 dark:bg-header-800">
+                  <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.gameday') }}</th>
+                  <th v-for="role in shownGamedayRoles" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role) }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in gamedayRows(competition)" :key="row.key">
+                  <th scope="row" class="px-2 py-1 text-left font-normal">
+                    <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span>
+                    <span class="block text-xs text-header-500">{{ row.labels.length > 1 ? t('designations.phases', { n: row.labels.length, phases: row.labels.join(', ') }) : row.labels[0] }}</span>
+                  </th>
+                  <td v-for="role in shownGamedayRoles" :key="role" class="px-2 py-1 align-top" :class="statusClasses(row.cells[role].status)" :title="cellTitle(row.cells[role])">
+                    <DesignationsCellHolders
+                      :cell="row.cells[role]"
+                      kind="gameday"
+                      :can-add="canAddHolder(row.cells[role], 'gameday', roles[role])"
+                      @add="openAdd('gameday', row.ids, role, `${competition.code} · ${row.labels.join(', ')}`)"
+                      @remove="removing = $event"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </template>
 
     <!-- Récapitulatif par personne et par club (SUI-06) -->

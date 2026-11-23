@@ -23,3 +23,8 @@ SUI-01 à SUI-06.
   couvertes sur la période. app4 : page `/designations` (menu Référentiels), `utils/designations.ts`,
   `components/designations/CellHolders.vue`. Vitest et ESLint d'app4 verts dans la session cloud ; tests api2 écrits,
   non exécutés.
+- 2026-11-23 — Retours après essai : deux tableaux par compétition (responsables : RC et équipes ; journées × rôles),
+  phases d'un tournoi (CP) regroupées par dates et lieu (désigner sur la ligne désigne sur chaque phase, retirer
+  retire de chaque phase), filtres événement/groupe et compétition du contexte masqués, sélecteur de compétitions
+  avec filtre section et recherche (`AdminCompetitionSectionPicker`, même source que le filtre des mandats), choix des
+  rôles affichés. api2 renvoie `type` (Code_typeclt) par compétition.

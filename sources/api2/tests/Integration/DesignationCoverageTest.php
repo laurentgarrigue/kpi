@@ -25,6 +25,7 @@ final class DesignationCoverageTest extends ApiTestCase
         self::assertSame('not_applicable', $this->gamedayCell($matrix, 'REGDES', 9803, 'DELEGUE_CNA')['status']);
         self::assertSame('empty', $this->gamedayCell($matrix, 'REGDES', 9803, 'R1')['status']);
         self::assertSame('red', $this->competition($matrix, 'NDES')['cells']['RC']['status']);
+        self::assertArrayHasKey('type', $this->competition($matrix, 'NDES')); // regroupement des phases d'un tournoi (CP) dans app4
     }
 
     public function testSui02ATeamOfANationalCompetitionWithoutManagerIsRed(): void

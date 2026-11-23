@@ -3617,9 +3617,10 @@
       "line": "Line",
       "person": "Person",
       "club": "Club",
-      "people": "People"
+      "people": "People",
+      "holders": "Holders",
+      "gameday": "Gameday"
     },
-    "team": "Team {team}",
     "missing": "To designate",
     "not_applicable": "Not applicable",
     "origin": {
@@ -3672,6 +3673,26 @@
       "clubs": "By club"
     },
     "gamedays_short": "{n} gd",
-    "no_club": "No club"
+    "no_club": "No club",
+    "table": {
+      "managers": "Managers",
+      "gamedays": "Gamedays"
+    },
+    "phases": "{n} phases: {phases}",
+    "roles_picker": {
+      "label": "Roles",
+      "all": "All"
+    }
+  },
+  "competition_picker": {
+    "label": "Competitions",
+    "all": "all",
+    "count": "{n} selected",
+    "section": "Section",
+    "all_sections": "All sections",
+    "search": "Search a competition",
+    "select_shown": "Tick the shown competitions",
+    "clear": "Untick all",
+    "none": "No competition"
   }
 }

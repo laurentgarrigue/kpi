@@ -11,6 +11,8 @@ export interface CoverageHolder {
   club: string | null
   origin: ScopeType
   warnings: string[]
+  /** Toutes les Désignations regroupées sous ce titulaire (phases d'un tournoi) ; à défaut, designationId. */
+  designationIds?: number[]
 }
 
 export interface CoverageCell {
@@ -39,6 +41,8 @@ export interface CoverageTeam {
 export interface CoverageCompetition {
   code: string
   label: string
+  /** Code_typeclt : CP = tournoi, dont les phases de mêmes dates et lieu sont regroupées. */
+  type: string
   national: boolean
   cells: Record<string, CoverageCell>
   gamedays: CoverageGameday[]
@@ -115,3 +119,61 @@ export const gamedayDates = (start: string | null, end: string | null): string =
   const short = (date: string | null) => (date ? `${date.slice(8, 10)}/${date.slice(5, 7)}` : '')
   return end && end !== start ? `${short(start)} – ${short(end)}` : short(start)
 }
+
+/** Une ligne du tableau des journées : une journée, ou les phases d'un tournoi (CP) de mêmes dates et lieu. */
+export interface GamedayRow {
+  key: string
+  ids: number[]
+  labels: string[]
+  place: string
+  start: string | null
+  end: string | null
+  cells: Record<string, CoverageCell>
+}
+
+/** Du pire au meilleur : l'état d'un groupe de phases est le pire de ses phases. */
+const STATUS_ORDER: CoverageStatus[] = ['red', 'orange', 'empty', 'green', 'not_applicable']
+
+const mergeCells = (cells: CoverageCell[]): CoverageCell => {
+  const holders = new Map<string, CoverageHolder>()
+  for (const cell of cells) {
+    for (const holder of cell.holders) {
+      // une Désignation héritée est commune aux phases ; une Désignation propre se répète sur chaque phase
+      const key = holder.origin === 'JOURNEE' ? `own-${holder.matric}` : `inherited-${holder.designationId}`
+      const known = holders.get(key)
+      const ids = [...(known?.designationIds ?? []), ...(holder.designationIds ?? [holder.designationId])]
+      holders.set(key, { ...(known ?? holder), designationIds: [...new Set(ids)] })
+    }
+  }
+  return {
+    requirement: cells[0]?.requirement ?? 'optional',
+    status: STATUS_ORDER.find(status => cells.some(cell => cell.status === status)) ?? 'empty',
+    holders: [...holders.values()],
+  }
+}
+
+export const gamedayRows = (competition: Pick<CoverageCompetition, 'type' | 'gamedays'>): GamedayRow[] => {
+  const groups = new Map<string, CoverageGameday[]>()
+  for (const gameday of competition.gamedays) {
+    const key = competition.type === 'CP' ? `${gameday.start}|${gameday.end}|${gameday.place}` : String(gameday.id)
+    groups.set(key, [...(groups.get(key) ?? []), gameday])
+  }
+  return [...groups.entries()].map(([key, gamedays]) => {
+    const roles = [...new Set(gamedays.flatMap(gameday => Object.keys(gameday.cells)))]
+    return {
+      key,
+      ids: gamedays.map(gameday => gameday.id),
+      labels: gamedays.map(gameday => gameday.label),
+      place: gamedays[0].place,
+      start: gamedays[0].start,
+      end: gamedays[0].end,
+      cells: Object.fromEntries(roles.map(role => [role, mergeCells(gamedays.map(gameday => gameday.cells[role]).filter(Boolean))])),
+    }
+  })
+}
+
+/** Rôles affichés : ceux choisis, dans l'ordre de l'API ; aucun choix = tous. */
+export const visibleRoles = (roles: string[], chosen: string[]): string[] => (chosen.length === 0 ? roles : roles.filter(role => chosen.includes(role)))
+
+/** Identifiants à supprimer pour retirer un titulaire (toutes ses Désignations regroupées). */
+export const designationIdsOf = (holder: CoverageHolder): number[] => holder.designationIds ?? [holder.designationId]

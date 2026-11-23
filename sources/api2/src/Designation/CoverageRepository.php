@@ -12,12 +12,12 @@ final class CoverageRepository
     {
     }
 
-    /** @return list<array{code: string, label: string}> */
+    /** @return list<array{code: string, label: string, type: string}> type = Code_typeclt (CHPT, CP, MULTI…) */
     public function competitions(string $season): array
     {
         return array_map(
-            static fn (array $row): array => ['code' => $row['Code'], 'label' => (string) ($row['Libelle'] ?? $row['Code'])],
-            $this->connection->fetchAllAssociative('SELECT Code, Libelle FROM kp_competition WHERE Code_saison = ? ORDER BY Code', [$season]),
+            static fn (array $row): array => ['code' => $row['Code'], 'label' => (string) ($row['Libelle'] ?? $row['Code']), 'type' => (string) ($row['Code_typeclt'] ?? '')],
+            $this->connection->fetchAllAssociative('SELECT Code, Libelle, Code_typeclt FROM kp_competition WHERE Code_saison = ? ORDER BY Code', [$season]),
         );
     }
 
