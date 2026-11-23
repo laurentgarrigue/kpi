@@ -3739,7 +3739,11 @@
       "author": "Auteur (si vous saisissez pour un arbitre)",
       "author_placeholder": "Licence de l'arbitre",
       "submit": "Créer le brouillon",
-      "help": "Un rapport est rédigé par un officiel du périmètre ; il peut saisir celui d'un arbitre désigné, rempli sur le PDF vierge."
+      "help": "Un rapport est rédigé par un officiel du périmètre ; il peut saisir celui d'un arbitre désigné, rempli sur le PDF vierge.",
+      "button": "Nouveau rapport",
+      "choose_title": "Nouveau rapport officiel : périmètre",
+      "scope": "Rattaché à",
+      "match_hint": "Un rapport sur un match (incident, évaluation d'arbitrage) se crée avec le bouton « Rapport » de la page des matchs."
     },
     "blank": "PDF vierge : {type}",
     "filter": {

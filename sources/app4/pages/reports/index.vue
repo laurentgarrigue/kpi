@@ -31,6 +31,14 @@ const creatable = computed(() => (scope.value ? typesForScope(types.value, scope
 const newType = ref('')
 const author = ref<PlayerAutocomplete | null>(null)
 const creating = ref(false)
+const choosing = ref(false)
+
+/** Périmètre choisi depuis la page : même formulaire de création que depuis une journée ou un match. */
+const choose = async (scope: { scopeType: ReportScope, scopeId: string, label: string }) => {
+  choosing.value = false
+  newType.value = ''
+  await navigateTo({ path: '/reports', query: scope })
+}
 
 const typeLabel = (code: string) => {
   const type = types.value[code]
@@ -77,6 +85,18 @@ onMounted(async () => {
 <template>
   <div>
     <AdminPageHeader :title="t('reports.title')" :show-filters="false" />
+
+    <div class="flex justify-end mb-4">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+        @click="choosing = true"
+      >
+        <UIcon name="heroicons:plus" class="w-5 h-5" />
+        {{ t('reports.new.button') }}
+      </button>
+    </div>
+    <ReportsScopeChooser :open="choosing" :season="season" @close="choosing = false" @chosen="choose" />
 
     <section v-if="scope" class="mb-6 p-4 rounded-lg border border-header-200 dark:border-header-700">
       <h2 class="font-semibold mb-3">{{ t('reports.new.title', { line: scope.label }) }}</h2>

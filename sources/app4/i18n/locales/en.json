@@ -3727,7 +3727,11 @@
       "author": "Author (if you enter it for a referee)",
       "author_placeholder": "Referee licence",
       "submit": "Create the draft",
-      "help": "A report is written by an official of the perimeter; they may enter the one of a designated referee, filled in on the blank PDF."
+      "help": "A report is written by an official of the perimeter; they may enter the one of a designated referee, filled in on the blank PDF.",
+      "button": "New report",
+      "choose_title": "New official report: perimeter",
+      "scope": "Attached to",
+      "match_hint": "A report on a game (incident, referee evaluation) is created with the « Report » button of the games page."
     },
     "blank": "Blank PDF: {type}",
     "filter": {
