@@ -66,7 +66,8 @@
     "cms_redirects": "Redirections",
     "public_site_beta": "Nouveau site public (bêta)",
     "scrutineering": "Scrutineering",
-    "medals": "Médailles"
+    "medals": "Médailles",
+    "designations": "Désignations"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -3604,5 +3605,85 @@
     "compute_running": "Calcul de la saison {season} en cours. Vous pouvez quitter cette page : il continue et sera signalé ici.",
     "compute_failed": "Le calcul de la saison {season} a échoué : {message}",
     "compute_already": "Un calcul est déjà en cours : attendez qu’il se termine."
+  },
+  "designations": {
+    "title": "Désignations",
+    "season": "Saison {season}",
+    "tab": {
+      "matrix": "Couverture",
+      "summary": "Récapitulatif"
+    },
+    "level": {
+      "label": "Compétitions",
+      "national": "Nationales",
+      "other": "Régionales et autres",
+      "all": "Toutes"
+    },
+    "only_gaps": "Seulement les manques",
+    "count": {
+      "red": "{n} rôle(s) requis non pourvu(s)",
+      "orange": "{n} à vérifier"
+    },
+    "nothing": "Aucune compétition à afficher.",
+    "column": {
+      "line": "Ligne",
+      "person": "Personne",
+      "club": "Club",
+      "people": "Personnes"
+    },
+    "team": "Équipe {team}",
+    "missing": "À désigner",
+    "not_applicable": "Sans objet",
+    "origin": {
+      "NIVEAU": "niveau national",
+      "COMPETITION": "compétition",
+      "EQUIPE": "équipe",
+      "EVENEMENT": "événement",
+      "JOURNEE": "journée"
+    },
+    "warning": {
+      "no_email": "sans email : ni compte ni mandat",
+      "same_club": "même club qu'une équipe engagée"
+    },
+    "authority": {
+      "CNA": "CNA (pool arbitres)",
+      "ORGANISATEUR": "Club organisateur"
+    },
+    "account": {
+      "created": "Désignation enregistrée, compte créé et lien d'activation envoyé",
+      "existing": "Désignation enregistrée",
+      "none": "Désignation enregistrée, sans compte ni mandat (email inconnu)"
+    },
+    "add": {
+      "button": "Désigner",
+      "title": "Désigner : {role} — {line}",
+      "person": "Licencié",
+      "person_placeholder": "Nom, prénom ou licence",
+      "email": "Email (s'il n'a pas encore de compte KPI)",
+      "email_help": "Sert seulement à créer son compte et à lui envoyer le lien d'activation.",
+      "authority": "Désigné par",
+      "order": "Ordre",
+      "quality": "Qualité (facultatif)",
+      "submit": "Désigner"
+    },
+    "remove": {
+      "label": "Retirer {name}",
+      "title": "Retirer la désignation",
+      "message": "Retirer la désignation de {name} ? Son mandat sera recalculé.",
+      "confirm": "Retirer"
+    },
+    "removed": "Désignation retirée",
+    "period": {
+      "from": "Du",
+      "to": "Au",
+      "apply": "Appliquer"
+    },
+    "summary_help": "Nombre de désignations par rôle ; « j. » = journées couvertes sur la période (héritage compris).",
+    "summary": {
+      "people": "Par personne",
+      "clubs": "Par club"
+    },
+    "gamedays_short": "{n} j.",
+    "no_club": "Sans club"
   }
 }

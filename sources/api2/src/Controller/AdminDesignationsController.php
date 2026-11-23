@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Designation\Authority;
+use App\Designation\CoverageService;
 use App\Designation\Designation;
 use App\Designation\DesignationRejected;
 use App\Designation\DesignationRepository;
@@ -42,7 +43,48 @@ final class AdminDesignationsController extends AbstractController
         private readonly DesignationService $service,
         private readonly DesignationRepository $repository,
         private readonly Connection $connection,
+        private readonly CoverageService $coverage,
     ) {
+    }
+
+    /** Suivi de couverture (SUI-01 à SUI-05), réservé à ceux qui désignent : profils 1 et 2. */
+    #[Route('/coverage', name: 'admin_designations_coverage', methods: ['GET'])]
+    #[OA\Get(path: '/admin/designations/coverage', summary: 'Matrice de couverture : compétitions, journées, équipes × rôles, avec état de chaque case')]
+    public function coverage(Request $request): JsonResponse
+    {
+        $season = (string) $request->query->get('season', '');
+        $level = (string) $request->query->get('level', CoverageService::LEVEL_ALL);
+        if (!preg_match(self::SEASON_PATTERN, $season)
+            || !in_array($level, [CoverageService::LEVEL_ALL, CoverageService::LEVEL_NATIONAL, CoverageService::LEVEL_OTHER], true)) {
+            return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->isDesignator()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+        $competitions = array_values(array_filter(array_map('trim', explode(',', (string) $request->query->get('competitions', '')))));
+
+        return $this->json($this->coverage->matrix($season, $level, $competitions, $request->query->getBoolean('onlyGaps')));
+    }
+
+    /** Récapitulatif par personne et par club (SUI-06), profils 1 et 2. */
+    #[Route('/summary', name: 'admin_designations_summary', methods: ['GET'])]
+    #[OA\Get(path: '/admin/designations/summary', summary: 'Désignations par rôle et journées couvertes, par personne et par club (période facultative)')]
+    public function summary(Request $request): JsonResponse
+    {
+        $season = (string) $request->query->get('season', '');
+        $from = $request->query->get('from');
+        $to = $request->query->get('to');
+        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
+        if (!preg_match(self::SEASON_PATTERN, $season)
+            || ($from !== null && !preg_match($datePattern, (string) $from))
+            || ($to !== null && !preg_match($datePattern, (string) $to))) {
+            return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->isDesignator()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+
+        return $this->json($this->coverage->summary($season, $from, $to));
     }
 
     #[Route('/roles', name: 'admin_designations_roles', methods: ['GET'])]
@@ -278,6 +320,11 @@ final class AdminDesignationsController extends AbstractController
             $designation->matric,
             $designation->id,
         ));
+    }
+
+    private function isDesignator(): bool
+    {
+        return $this->currentUser()->getEffectiveNiveau() <= RoleCatalog::DESIGNATOR_MAX_PROFILE;
     }
 
     private function currentUser(): User

@@ -100,6 +100,9 @@
 | | Attribuer le profil 10 (utilisateur ou mandat) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **RC (Responsables de Compétition)** | C | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | M/Copier/S | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Désignations** (suivi, récapitulatif — [FEATURE_DESIGNATIONS.md](FEATURE_DESIGNATIONS.md)) | C | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| | M (désigner, retirer) | ✅ | ✅ | ❌ | ❌ | ✅ délégué CNA du périmètre : représentant des équipes et jury d'appel | ❌ | ❌ | ❌ | ❌ | ❌ |
+| | Corriger le club figé | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Groupes** | C/M/S | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Événements** | C/M/S | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Journal** | C | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |

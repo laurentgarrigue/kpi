@@ -179,6 +179,11 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       icon: 'heroicons:flag',
       label: t('menu.referees_pool')
     })
+    referentials.push({
+      to: '/designations',
+      icon: 'heroicons:user-group',
+      label: t('menu.designations')
+    })
   }
   if (referentials.length > 0) {
     groups.push({

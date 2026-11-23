@@ -66,7 +66,8 @@
     "cms_redirects": "Redirections",
     "public_site_beta": "New public site (beta)",
     "scrutineering": "Scrutineering",
-    "medals": "Medals"
+    "medals": "Medals",
+    "designations": "Designations"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -3592,5 +3593,85 @@
     "compute_running": "Computing season {season}. You can leave this page: it carries on and is reported here.",
     "compute_failed": "The computation of season {season} failed: {message}",
     "compute_already": "A computation is already running: wait for it to end."
+  },
+  "designations": {
+    "title": "Designations",
+    "season": "Season {season}",
+    "tab": {
+      "matrix": "Coverage",
+      "summary": "Summary"
+    },
+    "level": {
+      "label": "Competitions",
+      "national": "National",
+      "other": "Regional and other",
+      "all": "All"
+    },
+    "only_gaps": "Gaps only",
+    "count": {
+      "red": "{n} required role(s) missing",
+      "orange": "{n} to check"
+    },
+    "nothing": "No competition to show.",
+    "column": {
+      "line": "Line",
+      "person": "Person",
+      "club": "Club",
+      "people": "People"
+    },
+    "team": "Team {team}",
+    "missing": "To designate",
+    "not_applicable": "Not applicable",
+    "origin": {
+      "NIVEAU": "national level",
+      "COMPETITION": "competition",
+      "EQUIPE": "team",
+      "EVENEMENT": "event",
+      "JOURNEE": "gameday"
+    },
+    "warning": {
+      "no_email": "no email: no account nor mandate",
+      "same_club": "same club as an engaged team"
+    },
+    "authority": {
+      "CNA": "CNA (referee pool)",
+      "ORGANISATEUR": "Host club"
+    },
+    "account": {
+      "created": "Designation saved, account created and activation link sent",
+      "existing": "Designation saved",
+      "none": "Designation saved, without account nor mandate (unknown email)"
+    },
+    "add": {
+      "button": "Designate",
+      "title": "Designate: {role} — {line}",
+      "person": "Licensee",
+      "person_placeholder": "Name or licence",
+      "email": "Email (if they have no KPI account yet)",
+      "email_help": "Only used to create their account and send the activation link.",
+      "authority": "Designated by",
+      "order": "Order",
+      "quality": "Capacity (optional)",
+      "submit": "Designate"
+    },
+    "remove": {
+      "label": "Remove {name}",
+      "title": "Remove the designation",
+      "message": "Remove the designation of {name}? Their mandate will be recomputed.",
+      "confirm": "Remove"
+    },
+    "removed": "Designation removed",
+    "period": {
+      "from": "From",
+      "to": "To",
+      "apply": "Apply"
+    },
+    "summary_help": "Designations per role; « gd » = gamedays covered over the period (inherited included).",
+    "summary": {
+      "people": "By person",
+      "clubs": "By club"
+    },
+    "gamedays_short": "{n} gd",
+    "no_club": "No club"
   }
 }
