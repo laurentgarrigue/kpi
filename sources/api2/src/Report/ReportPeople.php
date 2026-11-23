@@ -45,6 +45,26 @@ final class ReportPeople
         return in_array($matric, $this->perimeters->referees($perimeter->matchIds), true);
     }
 
+    /** Délégué CNA effectif d'une journée du périmètre, ou désigné sur l'événement ou la compétition (BIL-02). */
+    public function isDelegate(int $matric, ReportPerimeter $perimeter): bool
+    {
+        $designations = $this->designations->ofSeason($perimeter->season);
+        foreach ($designations as $designation) {
+            if ($designation->role === 'DELEGUE_CNA' && $designation->matric === $matric && $designation->scopeType->value === $perimeter->scope->value && $designation->scopeId === $perimeter->scopeId) {
+                return true;
+            }
+        }
+        foreach ($this->gamedayScopes($perimeter) as $gameday) {
+            foreach (EffectiveDesignations::of($gameday, $designations)->holders('DELEGUE_CNA') as $holder) {
+                if ($holder->matric === $matric) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Licences des destinataires (D28) : titulaires effectifs des rôles nommés sur les journées du périmètre (et RC
      * de ses compétitions), bureau CNA, auteur.

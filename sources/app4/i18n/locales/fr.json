@@ -3782,6 +3782,29 @@
       "required": "Obligatoire",
       "invalid": "Valeur invalide",
       "unknown": "Champ inconnu"
+    },
+    "kpi_matches": "Matchs",
+    "kpi_matches_value": "{planned} prévus, {played} joués",
+    "kpi_cards": "Cartons {competition}",
+    "kpi_cards_value": "{green} verts, {yellow} jaunes, {red} rouges, {black} noirs",
+    "kpi_linked": "Pièces liées",
+    "table": {
+      "add": "Ajouter une ligne",
+      "remove": "Retirer",
+      "empty": "Aucune ligne",
+      "actions": "Actions"
+    },
+    "option": {
+      "presence": {
+        "present": "Présent",
+        "absent": "Absent",
+        "replaced": "Remplacé"
+      },
+      "schedule_kept": {
+        "yes": "Oui",
+        "partly": "En partie",
+        "no": "Non"
+      }
     }
   }
 }

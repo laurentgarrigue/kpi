@@ -3770,6 +3770,29 @@
       "required": "Required",
       "invalid": "Invalid value",
       "unknown": "Unknown field"
+    },
+    "kpi_matches": "Games",
+    "kpi_matches_value": "{planned} planned, {played} played",
+    "kpi_cards": "Cards {competition}",
+    "kpi_cards_value": "{green} green, {yellow} yellow, {red} red, {black} black",
+    "kpi_linked": "Linked reports",
+    "table": {
+      "add": "Add a row",
+      "remove": "Remove",
+      "empty": "No row",
+      "actions": "Actions"
+    },
+    "option": {
+      "presence": {
+        "present": "Present",
+        "absent": "Absent",
+        "replaced": "Replaced"
+      },
+      "schedule_kept": {
+        "yes": "Yes",
+        "partly": "Partly",
+        "no": "No"
+      }
     }
   }
 }

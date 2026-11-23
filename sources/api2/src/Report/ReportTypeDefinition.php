@@ -12,6 +12,9 @@ final class ReportTypeDefinition
     /** Destinataires : un rôle de Désignation du périmètre (`ROLE:<code>`), le bureau CNA, l'auteur, le jury. */
     public const RECIPIENT_AUTHOR = 'AUTHOR';
     public const RECIPIENT_BUREAU = 'BUREAU_CNA';
+    /** Rédacteurs : tout officiel du périmètre (D15), ou seulement son délégué CNA (bilan de journée, BIL-02). */
+    public const WRITERS_OFFICIALS = 'OFFICIALS';
+    public const WRITERS_DELEGATE = 'DELEGATE';
 
     /**
      * @param list<ReportScope>   $scopes
@@ -19,6 +22,8 @@ final class ReportTypeDefinition
      * @param list<ReportSection> $sections
      * @param int|null            $deadlineDays délai indicatif après la fin du périmètre (D18), null = aucun
      * @param bool                $restricted lecture réservée au rédacteur, aux destinataires et aux profils 1–2 (D28)
+     * @param bool                $uniquePerScope un seul rapport de ce type par périmètre (bilan de journée, BIL-01)
+     * @param bool                $gamedayOnlyOutsideEvent sur une journée seulement si elle n'est dans aucun événement (D1)
      */
     public function __construct(
         public readonly string $code,
@@ -30,6 +35,9 @@ final class ReportTypeDefinition
         public readonly array $sections,
         public readonly ?int $deadlineDays = null,
         public readonly bool $restricted = false,
+        public readonly string $writers = self::WRITERS_OFFICIALS,
+        public readonly bool $uniquePerScope = false,
+        public readonly bool $gamedayOnlyOutsideEvent = false,
     ) {
     }
 
@@ -62,6 +70,8 @@ final class ReportTypeDefinition
             'recipients' => $this->recipients,
             'deadlineDays' => $this->deadlineDays,
             'restricted' => $this->restricted,
+            'writers' => $this->writers,
+            'uniquePerScope' => $this->uniquePerScope,
             'sections' => array_map(static fn (ReportSection $section): array => $section->toArray(), $this->sections),
         ];
     }

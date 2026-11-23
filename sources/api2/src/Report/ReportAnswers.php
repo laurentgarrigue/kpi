@@ -55,6 +55,42 @@ final class ReportAnswers
         return ['answers' => $clean, 'errors' => $errors];
     }
 
+    /**
+     * Lignes d'un tableau : chaque cellule est validée selon sa colonne ; une colonne en lecture seule (pré-remplie
+     * depuis KPI) est gardée telle quelle si c'est un texte ou un nombre.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private static function rows(ReportField $field, mixed $value): ?array
+    {
+        if (!is_array($value) || !array_is_list($value) || count($value) > ReportField::MAX_TABLE_ROWS) {
+            return null;
+        }
+        $rows = [];
+        foreach ($value as $row) {
+            if (!is_array($row)) {
+                return null;
+            }
+            $clean = [];
+            foreach ($field->columns as $column) {
+                $cell = $row[$column->key] ?? null;
+                if ($cell === null || $cell === '') {
+                    continue;
+                }
+                $cell = $column->readonly ? (is_string($cell) || is_int($cell) ? $cell : null) : self::value($column, $cell);
+                if ($cell === null) {
+                    return null;
+                }
+                $clean[$column->key] = $cell;
+            }
+            if ($clean !== []) {
+                $rows[] = $clean;
+            }
+        }
+
+        return $rows;
+    }
+
     /** Date réelle au format AAAA-MM-JJ : PHP accepte « 2998-02-30 » en le décalant au 2 mars, on le refuse. */
     private static function isCalendarDate(string $value): bool
     {
@@ -74,6 +110,7 @@ final class ReportAnswers
             ReportField::CHECKBOX => is_bool($value) ? $value : null,
             ReportField::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : null,
             ReportField::SCORE => is_int($value) && $value >= 0 && $value <= (int) $field->max ? $value : null,
+            ReportField::TABLE => self::rows($field, $value),
             default => null,
         };
     }

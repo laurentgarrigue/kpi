@@ -16,12 +16,19 @@ final class ReportField
     public const SELECT = 'select';
     public const SCORE = 'score';
     public const SUM = 'sum';
+    /** Lignes répétées ; `rowsFrom` = lignes pré-remplies depuis les données KPI (`officials`, `referees`). */
+    public const TABLE = 'table';
+    public const MAX_TABLE_ROWS = 200;
     public const MAX_TEXT_LENGTH = 255;
     public const MAX_TEXTAREA_LENGTH = 10000;
 
     /**
      * @param list<string> $options valeurs possibles d'un `select`
      * @param list<string> $sumOf   champs additionnés par un `sum`
+     * @param list<ReportField> $columns colonnes d'un `table`
+     * @param string|null $rowsFrom donnée KPI qui pré-remplit les lignes d'un `table`
+     * @param bool $readonly colonne pré-remplie depuis KPI, non modifiable
+     * @param string|null $prefill donnée KPI (chemin « matches.planned ») qui pré-remplit le champ, corrigible ensuite
      */
     public function __construct(
         public readonly string $key,
@@ -32,6 +39,10 @@ final class ReportField
         public readonly array $options = [],
         public readonly ?int $max = null,
         public readonly array $sumOf = [],
+        public readonly array $columns = [],
+        public readonly ?string $rowsFrom = null,
+        public readonly bool $readonly = false,
+        public readonly ?string $prefill = null,
     ) {
     }
 
@@ -51,6 +62,10 @@ final class ReportField
             'options' => $this->options,
             'max' => $this->max,
             'sumOf' => $this->sumOf,
-        ], static fn (mixed $value): bool => $value !== [] && $value !== null);
+            'columns' => array_map(static fn (ReportField $column): array => $column->toArray(), $this->columns),
+            'rowsFrom' => $this->rowsFrom,
+            'readonly' => $this->readonly ?: null,
+            'prefill' => $this->prefill,
+        ], static fn (mixed $value): bool => $value !== [] && $value !== null && $value !== false);
     }
 }

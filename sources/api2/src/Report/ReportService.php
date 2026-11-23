@@ -23,6 +23,7 @@ final class ReportService
         private readonly ReportPerimeters $perimeters,
         private readonly ReportPeople $people,
         private readonly ReportPdf $pdf,
+        private readonly ReportKpiData $kpi,
         private readonly NotificationService $notifications,
         private readonly ClockInterface $clock,
     ) {
@@ -43,14 +44,20 @@ final class ReportService
             throw new ReportRejected(ReportRejected::SCOPE_NOT_ALLOWED, 422);
         }
         $perimeter = $this->perimeter($scope, $scopeId, $season);
-        if (!$this->canWrite($user, $perimeter)) {
+        if ($definition->gamedayOnlyOutsideEvent && $scope === ReportScope::Journee && ($perimeter->gamedayEvents[(int) $scopeId] ?? []) !== []) {
+            throw new ReportRejected(ReportRejected::GAMEDAY_IN_EVENT, 422);
+        }
+        if (!$this->canWrite($user, $perimeter, $definition)) {
             throw new ReportRejected(ReportRejected::FORBIDDEN, 403);
+        }
+        if ($definition->uniquePerScope && $this->reports->exists($type, $scope, $perimeter->scopeId, $perimeter->season)) {
+            throw new ReportRejected(ReportRejected::ALREADY_EXISTS, 409);
         }
         $author ??= self::matricOf($user);
         if ($author !== null && $author !== self::matricOf($user) && !$this->people->isOfficial($author, $perimeter)) {
             throw new ReportRejected(ReportRejected::AUTHOR_NOT_OFFICIAL, 422);
         }
-        $clean = $this->answers($definition, $answers, false);
+        $clean = $this->answers($definition, self::seeded($definition, $answers, $this->kpi->of($perimeter)), false);
 
         $id = $this->reports->insert($definition, $scope, $scopeId, $perimeter->season, $author, $user->getUserIdentifier(), $clean);
 
@@ -81,7 +88,7 @@ final class ReportService
         $late = $definition->deadlineDays !== null && $perimeter->endDate !== null
             && $now > (new \DateTimeImmutable($perimeter->endDate))->modify(sprintf('+%d days 23:59:59', $definition->deadlineDays));
         $recipients = $this->people->recipients($definition->recipients, $perimeter, $report->authorMatric);
-        $kpiData = $perimeter->header;
+        $kpiData = $this->kpi->of($perimeter, $report->id);
 
         $number = $this->reports->submit($report, $now->format('Y-m-d H:i:s'), $late, $kpiData, $recipients, $user->getUserIdentifier());
         $submitted = $this->reports->find($id) ?? throw new ReportRejected(ReportRejected::NOT_FOUND, 404);
@@ -143,11 +150,11 @@ final class ReportService
     public function prefill(User $user, ReportScope $scope, string $scopeId, string $season): array
     {
         $perimeter = $this->perimeter($scope, $scopeId, $season);
-        if (!$this->canWrite($user, $perimeter)) {
+        if (!$this->canWrite($user, $perimeter, null) && !$this->canReadPerimeterReport($user, $scope, $perimeter)) {
             throw new ReportRejected(ReportRejected::FORBIDDEN, 403);
         }
 
-        return $perimeter->header + ['season' => $perimeter->season];
+        return $this->kpi->of($perimeter) + ['season' => $perimeter->season];
     }
 
     /**
@@ -178,7 +185,7 @@ final class ReportService
         $perimeter = $this->perimeter($report->scope, $report->scopeId, $report->season);
         $filename = self::filename($report, 0);
 
-        return ['content' => $this->pdf->render($report->definition(), $report->season, $lang, $report->answers, $perimeter->header, $filename, $lang === 'en' ? 'Draft' : 'Brouillon'), 'filename' => $filename];
+        return ['content' => $this->pdf->render($report->definition(), $report->season, $lang, $report->answers, $this->kpi->of($perimeter, $report->id), $filename, $lang === 'en' ? 'Draft' : 'Brouillon'), 'filename' => $filename];
     }
 
     /** @return list<array{number: int, version: int, submittedAt: string, submittedBy: string}> */
@@ -210,14 +217,63 @@ final class ReportService
         return $last !== false && in_array($matric, $last['recipients'], true);
     }
 
-    private function canWrite(User $user, ReportPerimeter $perimeter): bool
+    /** Rédacteur possible : profils 1–2, sinon officiel du périmètre (D15) ou son délégué CNA selon le type (BIL-02). */
+    private function canWrite(User $user, ReportPerimeter $perimeter, ?ReportTypeDefinition $definition): bool
     {
         if ($user->getEffectiveNiveau() <= self::MANAGER_MAX_PROFILE) {
             return true;
         }
         $matric = self::matricOf($user);
+        if ($matric === null) {
+            return false;
+        }
 
-        return $matric !== null && $this->people->isOfficial($matric, $perimeter);
+        return $definition?->writers === ReportTypeDefinition::WRITERS_DELEGATE
+            ? $this->people->isDelegate($matric, $perimeter)
+            : $this->people->isOfficial($matric, $perimeter);
+    }
+
+    /** Les données KPI d'un périmètre sont lisibles de qui y lit déjà un rapport (page d'un rapport, BIL-03). */
+    private function canReadPerimeterReport(User $user, ReportScope $scope, ReportPerimeter $perimeter): bool
+    {
+        foreach ($this->reports->search($perimeter->season, ['scopeType' => $scope->value, 'scopeId' => $perimeter->scopeId]) as $report) {
+            if ($this->canRead($user, $report)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Valeurs pré-remplies depuis KPI quand le rédacteur ne les donne pas (BIL-03) : lignes d'un tableau
+     * (`rowsFrom`), champs `prefill` (« matches.planned »).
+     *
+     * @param array<string, mixed> $answers
+     * @param array<string, mixed> $kpi
+     *
+     * @return array<string, mixed>
+     */
+    private static function seeded(ReportTypeDefinition $definition, array $answers, array $kpi): array
+    {
+        foreach ($definition->fields() as $key => $field) {
+            if (array_key_exists($key, $answers)) {
+                continue;
+            }
+            $path = $field->rowsFrom ?? $field->prefill;
+            if ($path === null) {
+                continue;
+            }
+            $value = $kpi;
+            foreach (explode('.', $path) as $segment) {
+                $value = is_array($value) ? ($value[$segment] ?? null) : null;
+            }
+            if ($value !== null) {
+                $answers[$key] = $value;
+            }
+        }
+
+        return $answers;
     }
 
     /** @throws ReportRejected */

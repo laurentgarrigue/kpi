@@ -36,6 +36,14 @@ final class ReportRepository
         return array_map(self::hydrate(...), $qb->executeQuery()->fetchAllAssociative());
     }
 
+    public function exists(string $type, ReportScope $scope, string $scopeId, string $season): bool
+    {
+        return (bool) $this->connection->fetchOne(
+            'SELECT 1 FROM kp_report WHERE type = ? AND perimetre_type = ? AND perimetre_id = ? AND saison = ?',
+            [$type, $scope->value, $scopeId, $season],
+        );
+    }
+
     /** @param array<string, mixed> $answers */
     public function insert(ReportTypeDefinition $definition, ReportScope $scope, string $scopeId, string $season, ?int $author, string $enteredBy, array $answers): int
     {

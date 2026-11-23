@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { answersToSend, localized, missingRequired, type ReportDetail } from '~/utils/reports'
+import { answersToSend, localized, missingRequired, type ReportDetail, type ReportRow } from '~/utils/reports'
 
 /**
  * Un rapport officiel (DOC/specs/FEATURE_DESIGNATIONS.md § 5, D18 ; ticket designations/09) : données KPI du
@@ -11,7 +11,17 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-interface KpiData { label?: string, competitions?: string[], start?: string | null, end?: string | null, places?: string[], match?: { number: string | null, teams: (string | null)[], score: (string | null)[], referees: string[] } }
+interface KpiData {
+  label?: string
+  competitions?: string[]
+  start?: string | null
+  end?: string | null
+  places?: string[]
+  match?: { number: string | null, teams: (string | null)[], score: (string | null)[], referees: string[] }
+  matches?: { planned: number, played: number }
+  cards?: Record<string, { green: number, yellow: number, red: number, black: number }>
+  linked?: { id: number, type: string, scopeType: string, scopeId: string, state: string }[]
+}
 
 const { t, locale } = useI18n()
 const api = useApi()
@@ -102,6 +112,17 @@ onMounted(load)
           <dt class="text-header-500">{{ t('reports.kpi_match') }}</dt><dd>n° {{ kpi.match.number }} · {{ kpi.match.teams.join(' - ') }} · {{ kpi.match.score.join(' - ') }}</dd>
           <dt class="text-header-500">{{ t('reports.kpi_referees') }}</dt><dd>{{ kpi.match.referees.join(', ') }}</dd>
         </template>
+        <template v-if="kpi.matches && !kpi.match"><dt class="text-header-500">{{ t('reports.kpi_matches') }}</dt><dd>{{ t('reports.kpi_matches_value', kpi.matches) }}</dd></template>
+        <template v-for="(cards, code) in kpi.cards ?? {}" :key="code">
+          <dt class="text-header-500">{{ t('reports.kpi_cards', { competition: code }) }}</dt>
+          <dd>{{ t('reports.kpi_cards_value', cards) }}</dd>
+        </template>
+        <template v-if="kpi.linked?.filter(item => item.id !== report?.id).length">
+          <dt class="text-header-500">{{ t('reports.kpi_linked') }}</dt>
+          <dd>
+            <NuxtLink v-for="item in kpi.linked.filter(i => i.id !== report?.id)" :key="item.id" :to="`/reports/${item.id}`" class="underline mr-3">{{ item.type }} n° {{ item.id }} ({{ t(`reports.state.${item.state}`) }})</NuxtLink>
+          </dd>
+        </template>
       </dl>
     </section>
 
@@ -109,16 +130,25 @@ onMounted(load)
       <fieldset v-for="section in report.definition.sections" :key="section.key" class="p-4 rounded-lg border border-header-200 dark:border-header-700">
         <legend class="px-1 font-semibold">{{ localized(section.title, locale) }}</legend>
         <div class="grid gap-4 md:grid-cols-2">
-          <ReportsField
-            v-for="field in section.fields"
-            :key="field.key"
-            :class="{ 'md:col-span-2': field.type === 'textarea' }"
-            :field="field"
-            :answers="answers"
-            :disabled="!report.canEdit"
-            :error="errors[field.key]"
-            @update="(key, value) => (answers[key] = value)"
-          />
+          <template v-for="field in section.fields" :key="field.key">
+            <ReportsTableField
+              v-if="field.type === 'table'"
+              :field="field"
+              :rows="(answers[field.key] as ReportRow[]) ?? []"
+              :disabled="!report.canEdit"
+              :error="errors[field.key]"
+              @update="rows => (answers[field.key] = rows)"
+            />
+            <ReportsField
+              v-else
+              :class="{ 'md:col-span-2': field.type === 'textarea' }"
+              :field="field"
+              :answers="answers"
+              :disabled="!report.canEdit"
+              :error="errors[field.key]"
+              @update="(key, value) => (answers[key] = value)"
+            />
+          </template>
         </div>
       </fieldset>
 

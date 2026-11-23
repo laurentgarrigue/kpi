@@ -19,7 +19,7 @@ const asNumber = (raw: string) => (raw === '' ? null : Number(raw))
     <textarea v-if="field.type === 'textarea'" :id="id" :value="(value as string) ?? ''" rows="4" :class="inputClass" :disabled="disabled" :required="field.required" :aria-invalid="!!error" :aria-describedby="error ? `${id}-error` : undefined" @input="emit('update', field.key, ($event.target as HTMLTextAreaElement).value)" />
     <select v-else-if="field.type === 'select'" :id="id" :value="(value as string) ?? ''" :class="inputClass" :disabled="disabled" :aria-invalid="!!error" @change="emit('update', field.key, ($event.target as HTMLSelectElement).value)">
       <option value="">—</option>
-      <option v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</option>
+      <option v-for="option in field.options ?? []" :key="option" :value="option">{{ t(`reports.option.${field.key}.${option}`, option) }}</option>
     </select>
     <label v-else-if="field.type === 'checkbox'" :for="id" class="inline-flex items-center gap-2 text-sm">
       <input :id="id" type="checkbox" :checked="value === true" :disabled="disabled" @change="emit('update', field.key, ($event.target as HTMLInputElement).checked)">

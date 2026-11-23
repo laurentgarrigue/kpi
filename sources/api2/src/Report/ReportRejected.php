@@ -14,6 +14,8 @@ final class ReportRejected extends \RuntimeException
     public const NOT_SUBMITTED = 'not_submitted';
     public const REASON_REQUIRED = 'reason_required';
     public const INVALID_ANSWERS = 'invalid_answers';
+    public const GAMEDAY_IN_EVENT = 'gameday_in_event';
+    public const ALREADY_EXISTS = 'already_exists';
 
     /** @param array<string, string> $fieldErrors */
     public function __construct(public readonly string $error, public readonly int $status, public readonly array $fieldErrors = [])

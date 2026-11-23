@@ -7,13 +7,26 @@ export type Localized = { fr: string, en: string }
 
 export interface ReportFieldDefinition {
   key: string
-  type: 'text' | 'textarea' | 'number' | 'date' | 'time' | 'checkbox' | 'select' | 'score' | 'sum'
+  type: 'text' | 'textarea' | 'number' | 'date' | 'time' | 'checkbox' | 'select' | 'score' | 'sum' | 'table'
   label: Localized
   required?: boolean
   options?: string[]
   max?: number
   sumOf?: string[]
+  /** Colonnes d'un tableau ; `rowsFrom` = lignes pré-remplies depuis KPI (pas d'ajout ni de retrait). */
+  columns?: ReportFieldDefinition[]
+  rowsFrom?: string
+  readonly?: boolean
 }
+
+export type ReportRow = Record<string, unknown>
+
+/** Ajout de ligne possible seulement dans un tableau libre (infractions), pas dans un tableau pré-rempli. */
+export const canAddRows = (field: ReportFieldDefinition): boolean => field.type === 'table' && !field.rowsFrom
+
+/** Lignes d'un tableau après modification d'une cellule (copie, sans toucher aux autres lignes). */
+export const withCell = (rows: ReportRow[], index: number, key: string, value: unknown): ReportRow[] =>
+  rows.map((row, i) => (i === index ? { ...row, [key]: value } : row))
 
 export interface ReportSectionDefinition { key: string, title: Localized, fields: ReportFieldDefinition[] }
 

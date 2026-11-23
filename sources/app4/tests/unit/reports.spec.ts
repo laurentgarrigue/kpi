@@ -1,6 +1,6 @@
 // Rapports officiels (FEATURE_DESIGNATIONS.md RAP-01) : formulaires rendus depuis le catalogue de api2.
 import { describe, expect, it } from 'vitest'
-import { answersToSend, computedValue, localized, missingRequired, typesForScope, type ReportTypeDefinition, type ReportTypes } from '../../utils/reports'
+import { answersToSend, canAddRows, computedValue, localized, missingRequired, typesForScope, withCell, type ReportTypeDefinition, type ReportTypes } from '../../utils/reports'
 
 const definition: ReportTypeDefinition = {
   code: 'EVAL', version: 2, label: { fr: 'Évaluation', en: 'Evaluation' }, scopes: ['MATCH'], recipients: [], deadlineDays: null, restricted: true,
@@ -37,5 +37,18 @@ describe('rapports officiels', () => {
 
   it('traduit les libellés', () => {
     expect(localized({ fr: 'Faits', en: 'Facts' }, 'en')).toBe('Facts')
+  })
+})
+
+describe('tableaux d\'un rapport', () => {
+  it('ajoute des lignes seulement dans un tableau libre', () => {
+    expect(canAddRows({ key: 'infractions', type: 'table', label: { fr: '', en: '' }, columns: [] })).toBe(true)
+    expect(canAddRows({ key: 'officials', type: 'table', label: { fr: '', en: '' }, columns: [], rowsFrom: 'officials' })).toBe(false)
+  })
+
+  it('modifie une cellule sans toucher aux autres lignes', () => {
+    const rows = [{ name: 'A', presence: null }, { name: 'B' }]
+    expect(withCell(rows, 0, 'presence', 'absent')).toEqual([{ name: 'A', presence: 'absent' }, { name: 'B' }])
+    expect(rows[0].presence).toBeNull()
   })
 })
