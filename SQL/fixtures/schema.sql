@@ -582,6 +582,44 @@ CREATE TABLE `kp_designation` (
   KEY `idx_matric` (`matric`, `saison`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Rapports officiels (SQL/migrations/2026-11-23_reports.sql).
+DROP TABLE IF EXISTS `kp_report_submission`;
+DROP TABLE IF EXISTS `kp_report`;
+CREATE TABLE `kp_report` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(30) NOT NULL,
+  `version_modele` smallint(6) NOT NULL,
+  `perimetre_type` enum('COMPETITION','EVENEMENT','JOURNEE','MATCH') NOT NULL,
+  `perimetre_id` varchar(20) NOT NULL,
+  `saison` char(4) NOT NULL,
+  `auteur_matric` int(11) unsigned DEFAULT NULL COMMENT 'Licence de l''auteur (arbitre dont un officiel saisit le rapport, D17)',
+  `saisi_par` varchar(8) NOT NULL COMMENT 'Compte qui a saisi le rapport',
+  `etat` enum('BROUILLON','SOUMIS') NOT NULL DEFAULT 'BROUILLON',
+  `soumis_le` datetime DEFAULT NULL,
+  `hors_delai` tinyint(1) NOT NULL DEFAULT 0,
+  `reponses` longtext NOT NULL DEFAULT '{}',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_report_perimetre` (`perimetre_type`, `perimetre_id`),
+  KEY `idx_report_saison` (`saison`, `type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `kp_report_submission` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `report_id` int(11) NOT NULL,
+  `numero` smallint(6) NOT NULL,
+  `version_modele` smallint(6) NOT NULL,
+  `reponses` longtext NOT NULL,
+  `donnees_kpi` longtext NOT NULL COMMENT 'Données KPI pré-remplies au moment de la soumission (JSON)',
+  `destinataires` text NOT NULL COMMENT 'Licences des destinataires (JSON)',
+  `submitted_at` datetime NOT NULL,
+  `submitted_by` varchar(8) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_report_numero` (`report_id`, `numero`),
+  CONSTRAINT `fk_submission_report` FOREIGN KEY (`report_id`) REFERENCES `kp_report` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
 -- utilisé par les tests de rate-limit, verrouillage et audit.
 DROP TABLE IF EXISTS `kp_user_login_history`;

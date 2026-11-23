@@ -152,7 +152,7 @@ Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de
 | `kp_designation` | `id`, `saison`, `role`, `perimetre_type` (`NIVEAU`, `COMPETITION`, `EQUIPE`, `EVENEMENT`, `JOURNEE`), `perimetre_id`, `matric`, `club` (figé, D22), `autorite` (`CNA`, `ORGANISATEUR`), `ordre`, `qualite`, `created_by`, `created_at` | Unicité `(saison, role, perimetre_type, perimetre_id, matric)` |
 | `kp_user_mandat` | + `designation_role`, `designation_saison` (nullable) | Un mandat généré par `(utilisateur, saison, rôle)` (D6) ; un mandat sans ces colonnes est un mandat saisi à la main, jamais touché |
 | `kp_report` | `id`, `type`, `version_modele`, `perimetre_type` (`COMPETITION`, `EVENEMENT`, `JOURNEE`, `MATCH`), `perimetre_id`, `saison`, `auteur_matric`, `saisi_par` (code utilisateur), `etat` (`BROUILLON`, `SOUMIS`), `soumis_le`, `hors_delai`, `reponses` (JSON) | Un rapport rouvert repasse en `BROUILLON` |
-| `kp_report_pdf` | `report_id`, `numero`, `fichier`, `genere_le` | Un PDF par soumission, conservé (D18) |
+| `kp_report_submission` | `report_id`, `numero`, `version_modele`, `reponses`, `donnees_kpi`, `destinataires`, `submitted_at`, `submitted_by` | Une ligne figée par soumission ; son PDF est rendu à la demande depuis elle, donc chaque PDF soumis reste disponible après une réouverture (D18) |
 | vue `kp_rc` | `Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric` | Lecture seule sur `kp_designation` rôle `RC` (D4) |
 
 ### 8.2 Catalogues (api2, ADR-0004)
@@ -172,9 +172,9 @@ Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de
 | `GET /admin/designations/summary` | Récapitulatif par personne et par club |
 | `GET /admin/designations/roles` | Catalogue des rôles actif (app4 ne le réimplémente pas) |
 | `GET /admin/reports/types` | Catalogue des types de rapport |
-| `GET/POST/PATCH /admin/reports`, `POST /admin/reports/{id}/submit`, `POST /admin/reports/{id}/reopen` | Rapports et cycle de vie |
-| `GET /admin/reports/{id}/prefill` | Données KPI pré-remplies |
-| `GET /admin/pdf/report`, `GET /admin/pdf/report-blank` | PDF d'un rapport soumis, PDF vierge (D29) |
+| `GET/POST /admin/reports`, `GET/PATCH /admin/reports/{id}`, `POST /admin/reports/{id}/submit`, `POST /admin/reports/{id}/reopen` | Rapports et cycle de vie |
+| `GET /admin/reports/prefill?scopeType=&scopeId=&season=` | Données KPI du périmètre |
+| `GET /admin/reports/{id}/pdf?number=`, `GET /admin/reports/blank/{type}?season=` | PDF d'une soumission (ou du brouillon), PDF vierge (D29) |
 | `GET /admin/designations/facts` | Relevé des faits par club (D19), export CSV / Excel |
 
 ### 8.4 Écrans app4

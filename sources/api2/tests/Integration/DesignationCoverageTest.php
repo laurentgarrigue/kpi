@@ -4,8 +4,8 @@ namespace App\Tests\Integration;
 
 /**
  * Suivi des Désignations (FEATURE_DESIGNATIONS.md SUI-01 à SUI-06, ticket designations/07). Fixtures « désignations » :
- * NDES 2998 nationale (journées 9801, 9802 de l'événement 9801 dont 9811, club C001, est délégué ; équipe 9801 du club
- * C001), REGDES régionale (journée 9803) ; 9812 (C002, sans compte), 9813 (sans club ni compte), 9814 (C003, compte
+ * NDES 2998 nationale (journées 9801, 9802 de l'événement 9801 dont 9811, club C001, est délégué ; équipes 9801 du club
+ * C001 et 9802 du club C002), REGDES régionale (journée 9803) ; 9812 (C002, sans compte), 9813 (sans club ni compte), 9814 (C003, compte
  * avec email) ; RC 9822 (TSTRN, 9511).
  */
 final class DesignationCoverageTest extends ApiTestCase
@@ -30,9 +30,10 @@ final class DesignationCoverageTest extends ApiTestCase
 
     public function testSui02ATeamOfANationalCompetitionWithoutManagerIsRed(): void
     {
-        $team = $this->competition($this->matrix(), 'NDES')['teams'][0];
+        $teams = $this->competition($this->matrix(), 'NDES')['teams'];
+        $team = array_values(array_filter($teams, static fn (array $t): bool => $t['id'] === 9801))[0];
 
-        self::assertSame([9801, 'red'], [$team['id'], $team['cells']['RESP_EQUIPE']['status']]);
+        self::assertSame('red', $team['cells']['RESP_EQUIPE']['status']);
     }
 
     public function testSui03AnInheritedHolderSaysWhereItComesFrom(): void
@@ -63,6 +64,7 @@ final class DesignationCoverageTest extends ApiTestCase
         $this->designate(['role' => 'R1', 'scopeType' => 'EVENEMENT', 'scopeId' => '9801', 'matric' => 9814]); // compte avec email, club C003
         $this->designate(['role' => 'JUGE_ARBITRE', 'scopeType' => 'EVENEMENT', 'scopeId' => '9801', 'matric' => 9813]);
         $this->designate(['role' => 'RESP_EQUIPE', 'scopeType' => 'EQUIPE', 'scopeId' => '9801', 'matric' => 9813]);
+        $this->designate(['role' => 'RESP_EQUIPE', 'scopeType' => 'EQUIPE', 'scopeId' => '9802', 'matric' => 9812]);
 
         self::assertSame([], $this->matrix('&level=national&onlyGaps=1')['competitions']);
         self::assertSame('green', $this->gamedayCell($this->matrix(), 'NDES', 9801, 'R1')['status']);

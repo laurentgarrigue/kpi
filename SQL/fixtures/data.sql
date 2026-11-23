@@ -780,7 +780,11 @@ INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `
   (9801, 'Étape Désignations', 'Désiville', '2998-03-07', '2998-03-08', 'N', 'N');
 INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES (9801, 9801), (9801, 9802);
 INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`) VALUES
-  (9801, 'NDES', '2998', 'Désignés Un', 'C001');
+  (9801, 'NDES', '2998', 'Désignés Un', 'C001'),
+  (9802, 'NDES', '2998', 'Désignés Deux', 'C002');
+-- Match 9801 de la journée 9801 : arbitre principal 9813 (désigné par sa licence, sans compte), rapports officiels
+INSERT INTO `kp_match` (`Id`, `Id_journee`, `Numero_ordre`, `Date_match`, `Id_equipeA`, `Id_equipeB`, `ScoreA`, `ScoreB`, `Arbitre_principal`, `Matric_arbitre_principal`) VALUES
+  (9801, 9801, 1, '2998-03-07', 9801, 9802, '3', '2', 'DESIGNE Sansclub (9813)', 9813);
 INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
   (9811, '2998', 'DESIGNE', 'Délégué', 'M', 'C001', 'Actif'),
   (9812, '2998', 'DESIGNE', 'Arbitre', 'F', 'C002', 'Actif'),

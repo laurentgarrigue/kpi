@@ -39,6 +39,25 @@ class NotificationService
     }
 
     /**
+     * Rapport officiel soumis (FEATURE_DESIGNATIONS.md D18, RAP-06) : un e-mail par destinataire, avec le PDF.
+     */
+    public function sendReportSubmitted(string $toEmail, string $title, string $perimeter, int $reportId, string $pdf, string $filename): void
+    {
+        try {
+            $link = rtrim($this->app4Url, '/') . '/reports/' . $reportId;
+            $email = (new Email())
+                ->from($this->mailFrom)
+                ->to($toEmail)
+                ->subject(sprintf('KPI — %s : %s', $title, $perimeter))
+                ->text(sprintf("Bonjour,\n\nUn rapport officiel vient d'être soumis : %s (%s).\nIl est joint à ce message et consultable dans KPI : %s\n\nCordialement,\nL'équipe KPI", $title, $perimeter, $link))
+                ->attach($pdf, $filename, 'application/pdf');
+            $this->mailer->send($email);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to send report email', ['report' => $reportId, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Send a password reset email to a user.
      */
     public function sendPasswordReset(string $toEmail, string $token, bool $includeDocLink, string $complementaryMessage, string $loginCode = '', string $locale = 'fr'): void
