@@ -190,7 +190,7 @@ class AdminRcController extends AbstractController
         $scopeType = $national ? ScopeType::Niveau : ScopeType::Competition;
         $scopeId = $national ? Designation::NATIONAL_LEVEL : (string) $competitionCode;
 
-        return $this->designations->create($this->currentUser(), $season, self::ROLE, $scopeType, $scopeId, $matric, null, $ordre, null);
+        return $this->designations->create($this->currentUser(), $season, self::ROLE, $scopeType, $scopeId, $matric, null, $ordre, null)->designation;
     }
 
     private function findRc(int $id): ?Designation

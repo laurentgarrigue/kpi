@@ -488,8 +488,11 @@ CREATE TABLE `kp_user_mandat` (
   `limitation_equipe_club` varchar(50) DEFAULT NULL,
   `filtre_journee` mediumtext NOT NULL DEFAULT '',
   `id_evenement` varchar(20) NOT NULL DEFAULT '',
+  `designation_role` varchar(20) DEFAULT NULL,   -- mandat généré par les Désignations (2026-11-23_designations_mandates.sql)
+  `designation_saison` char(4) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `fk_mandat_user` (`user_code`)
+  KEY `fk_mandat_user` (`user_code`),
+  UNIQUE KEY `uniq_generated_mandate` (`user_code`, `designation_saison`, `designation_role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 -- Durcissement authentification (AUTH_HARDENING.md § 4) : lien compte KPI ↔ identifiant OAuth

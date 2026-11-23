@@ -784,9 +784,13 @@ INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libell
 INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
   (9811, '2998', 'DESIGNE', 'Délégué', 'M', 'C001', 'Actif'),
   (9812, '2998', 'DESIGNE', 'Arbitre', 'F', 'C002', 'Actif'),
-  (9813, '2998', 'DESIGNE', 'Sansclub', 'M', NULL, 'Actif');
+  (9813, '2998', 'DESIGNE', 'Sansclub', 'M', NULL, 'Actif'),
+  (9814, '2998', 'DESIGNE', 'Profilsept', 'F', 'C003', 'Actif'),   -- compte « 9814 » de profil 7 (mandats générés)
+  (9815, '2998', 'DESIGNE', 'Bureau', 'M', 'C003', 'Actif');        -- compte « 9815 » de profil 2 (bureau CNA)
 INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
-  ('9811', '', 'Délégué Désigné', 'delegue@example.test', '', '', 5, '|NDES|', '|2998|', '', '');
+  ('9811', '', 'Délégué Désigné', 'delegue@example.test', '', '', 5, '|NDES|', '|2998|', '', ''),
+  ('9814', '', 'Profil Sept', 'sept@example.test', '', '', 7, '|NDES|', '|2998|', '', ''),
+  ('9815', '', 'Bureau CNA', 'bureau@example.test', '', '', 2, '', '', '', '');
 INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
   (9801, '2998', 'DELEGUE_CNA', 'EVENEMENT', '9801', 9811, 'C001', 'CNA', 1);
 -- ---------------------------------------------------------------- fin désignations

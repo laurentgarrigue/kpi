@@ -13,6 +13,7 @@ final class DesignationService
     public function __construct(
         private readonly DesignationRepository $repository,
         private readonly LegacyColumnsSync $legacyColumns,
+        private readonly GeneratedMandates $mandates,
     ) {
     }
 
@@ -29,7 +30,8 @@ final class DesignationService
         ?Authority $authority,
         int $order,
         ?string $quality,
-    ): Designation {
+        ?string $email = null,
+    ): CreatedDesignation {
         $authority ??= RoleCatalog::has($role) ? RoleCatalog::get($role)->defaultAuthority() : Authority::Cna;
         $error = DesignationRules::validate($role, $scopeType, $authority, 0);
         if ($error !== null) {
@@ -56,12 +58,14 @@ final class DesignationService
 
         $designation = new Designation(0, $season, $role, $scopeType, $scopeId, $matric, $licence['club'], $authority, $order, $quality);
 
-        return $this->repository->transactional(function () use ($designation, $user): Designation {
+        return $this->repository->transactional(function () use ($designation, $user, $email): CreatedDesignation {
             $created = $this->repository->find($this->repository->insert($designation, $user->getUserIdentifier()))
                 ?? throw DesignationRejected::notFound();
             $this->legacyColumns->afterDesignationChange($created);
+            $account = $this->mandates->ensureAccount($created->matric, $created->role, $email);
+            $this->mandates->refresh($created->matric, $created->season, $created->role);
 
-            return $created;
+            return new CreatedDesignation($created, $account);
         });
     }
 
@@ -117,6 +121,7 @@ final class DesignationService
         $this->repository->transactional(function () use ($designation): void {
             $this->repository->delete($designation->id);
             $this->legacyColumns->afterDesignationChange($designation);
+            $this->mandates->refresh($designation->matric, $designation->season, $designation->role);
         });
 
         return $designation;

@@ -30,7 +30,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D2 | Source de vérité | Table `kp_designation` `(saison, rôle, type et id de périmètre, licence, club, autorité, ordre, qualité)`. Les champs texte de `kp_journee` en sont recopiés. |
 | D3 | Rôles | Le catalogue des rôles est défini à un seul endroit (api2) : périmètres autorisés et profil du mandat généré. |
 | D4 | `kp_rc` | Absorbée dans `kp_designation` (rôle `RC`, périmètre compétition ; un RC « national sans compétition », ex `- CNA -`, devient un RC sur le **niveau national**), puis remplacée par une vue SQL en lecture seule pendant la période de secours (l'ancienne table est gardée sous le nom `kp_rc_avant_designations`). |
-| D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8), **seulement si son email est connu**. Le profil de base d'un compte existant n'est jamais modifié. |
+| D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8), **seulement si son email est connu**. La base des licences n'ayant pas d'email, il est saisi avec la Désignation (`email`, facultatif) ; il ne sert qu'à créer le compte. Le profil de base d'un compte existant n'est jamais modifié. |
 | D6 | Mandat | Un **mandat généré par saison et par rôle**, dont le périmètre est l'union des Désignations de ce rôle. Il est recalculé à chaque création ou suppression de Désignation, et supprimé quand il n'en reste plus. |
 | D7 | Personnes désignables | Toute personne de la base des joueurs, Joueurs internationaux compris. Sans email, la Désignation est enregistrée sans compte ni mandat. |
 | D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; délégué CNA → 5 ; R1 et juge arbitre → 6 ; arbitre non-joueur → aucun mandat ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
@@ -229,8 +229,9 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
 
 **Comptes et mandats générés (D5, D6, D8, D10, D16)**
 
-- **MAN-01** — Étant donné un licencié sans compte avec un email connu, quand on le désigne sur un rôle à mandat,
-  alors un compte `Code = licence`, profil 8, est créé et un e-mail d'activation est envoyé.
+- **MAN-01** — Étant donné un licencié sans compte, quand on le désigne sur un rôle à mandat en donnant son email,
+  alors un compte `Code = licence`, profil 8, est créé et un e-mail d'activation est envoyé ; la réponse indique
+  `account: created` (`existing` si le compte existait, `none` sinon).
 - **MAN-02** — Étant donné un licencié sans email, quand on le désigne, alors la Désignation est créée, sans compte
   ni mandat, et la réponse le signale.
 - **MAN-03** — Étant donné un compte existant de profil 7, quand on le désigne délégué CNA, alors son profil de

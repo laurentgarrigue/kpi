@@ -35,6 +35,8 @@ final class AdminDesignationsController extends AbstractController
     private const SCOPE_ID_PATTERN = '/^[A-Za-z0-9_-]{1,20}$/';
     private const MAX_ORDER = 99;
     private const MAX_QUALITY_LENGTH = 100;
+    /** Taille de kp_user.Mail. */
+    private const MAX_EMAIL_LENGTH = 100;
 
     public function __construct(
         private readonly DesignationService $service,
@@ -71,7 +73,7 @@ final class AdminDesignationsController extends AbstractController
     }
 
     #[Route('', name: 'admin_designations_create', methods: ['POST'])]
-    #[OA\Post(path: '/admin/designations', summary: 'Désigner un licencié sur un périmètre (club figé depuis la licence)')]
+    #[OA\Post(path: '/admin/designations', summary: "Désigner un licencié sur un périmètre (club figé depuis la licence ; `email` crée son compte s'il n'en a pas)")]
     #[OA\Response(response: 201, description: 'Désignation créée')]
     #[OA\Response(response: 403, description: 'Rôle non désignable par cet utilisateur')]
     #[OA\Response(response: 409, description: 'Même personne, même rôle, même périmètre')]
@@ -85,13 +87,16 @@ final class AdminDesignationsController extends AbstractController
         }
 
         try {
-            $designation = $this->service->create($this->currentUser(), ...$input);
+            $created = $this->service->create($this->currentUser(), ...$input);
         } catch (DesignationRejected $rejected) {
             return $this->error($rejected->error, $rejected->status);
         }
-        $this->journal('Ajout Désignation', $designation);
+        $this->journal('Ajout Désignation', $created->designation);
 
-        return $this->json($this->designationToArray($designation), Response::HTTP_CREATED);
+        return $this->json(
+            $this->designationToArray($created->designation) + ['account' => $created->account],
+            Response::HTTP_CREATED,
+        );
     }
 
     #[Route('/{id}', name: 'admin_designations_update', methods: ['PATCH'], requirements: ['id' => '\d+'])]
@@ -131,7 +136,7 @@ final class AdminDesignationsController extends AbstractController
     /**
      * @param array<mixed> $data
      *
-     * @return array{season: string, role: string, scopeType: ScopeType, scopeId: string, matric: int, authority: Authority|null, order: int, quality: string|null}|null
+     * @return array{season: string, role: string, scopeType: ScopeType, scopeId: string, matric: int, authority: Authority|null, order: int, quality: string|null, email: string|null}|null
      */
     private static function creationInput(array $data): ?array
     {
@@ -143,6 +148,10 @@ final class AdminDesignationsController extends AbstractController
         $authority = $data['authority'] ?? null;
         $order = $data['order'] ?? 1;
         $quality = $data['quality'] ?? null;
+        $email = $data['email'] ?? null;
+        if ($email !== null && (!is_string($email) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || mb_strlen($email) > self::MAX_EMAIL_LENGTH)) {
+            return null;
+        }
         if (!is_string($season) || !preg_match(self::SEASON_PATTERN, $season)
             || !is_string($role) || $scopeType === null
             || !is_string($scopeId) || !preg_match(self::SCOPE_ID_PATTERN, $scopeId)
@@ -161,6 +170,7 @@ final class AdminDesignationsController extends AbstractController
             'authority' => $authority === null ? null : Authority::from($authority),
             'order' => $order,
             'quality' => $quality,
+            'email' => $email,
         ];
     }
 

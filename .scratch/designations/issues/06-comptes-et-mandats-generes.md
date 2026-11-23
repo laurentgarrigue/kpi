@@ -14,3 +14,11 @@ Colonnes `designation_role`, `designation_saison` sur `kp_user_mandat` ; créati
 MAN-01 à MAN-11.
 
 ## Comments
+
+- 2026-11-23 — Implémenté : migration `SQL/migrations/2026-11-23_designations_mandates.sql` (colonnes
+  `designation_role`, `designation_saison` + clé unique), `MandatePerimeter` (filtres), `MandateRepository`,
+  `GeneratedMandates` (compte + mandat), `GamedayDesignations` (création, duplication, (dés)association de journée),
+  crochets dans `DesignationService`. **Écart à la spec** : `kp_licence` n'a pas d'email ; l'email est un champ
+  facultatif de `POST /admin/designations`, qui ne sert qu'à créer le compte (spec D5 et MAN-01 mises à jour).
+  Le lien d'activation est celui du mot de passe oublié (`NotificationService::sendPasswordReset`).
+  Tests écrits, non exécutés dans la session cloud.
