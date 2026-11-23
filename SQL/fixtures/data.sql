@@ -613,9 +613,10 @@ INSERT INTO `kp_competition`
   ('TSTRB', '2998', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
   ('TSTMU', '2999', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'ATT', '["TSTRN","TSTRB"]'),
   ('TSTMU', '2998', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'END', '["TSTRN","TSTRB"]');
-INSERT INTO `kp_rc` (`Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric`) VALUES
-  (9801, 'TSTRN', '2999', 1, 9511),
-  (9802, 'TSTRN', '2998', 1, 9511);
+-- RC (vue kp_rc sur kp_designation, ADR-0003)
+INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
+  (9821, '2999', 'RC', 'COMPETITION', 'TSTRN', 9511, 'C001', 'CNA', 1),
+  (9822, '2998', 'RC', 'COMPETITION', 'TSTRN', 9511, 'C001', 'CNA', 1);
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9801, 'TDIV', 'Mandat régional actif', 4, '|2999|', '|TSTRN|TSTRB|', NULL, '', ''),
   (9802, 'TDIV', 'Mandat régional passé', 4, '|2998|', '|TSTRN|TSTRB|', NULL, '', '');

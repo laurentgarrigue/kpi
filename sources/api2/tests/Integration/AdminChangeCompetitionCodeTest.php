@@ -40,7 +40,7 @@ final class AdminChangeCompetitionCodeTest extends ApiTestCase
 
         self::assertSame(
             ['2998' => 'TSTRX', '2999' => 'TSTRX'],
-            $this->bySeason('SELECT Code_saison, Code_competition FROM kp_rc WHERE Id IN (9801, 9802) ORDER BY Code_saison')
+            $this->bySeason('SELECT Code_saison, Code_competition FROM kp_rc WHERE Id IN (9821, 9822) ORDER BY Code_saison')
         );
     }
 
@@ -116,7 +116,7 @@ final class AdminChangeCompetitionCodeTest extends ApiTestCase
 
         self::assertSame(
             ['2998' => 'TSTRN', '2999' => 'TSTRX'],
-            $this->bySeason('SELECT Code_saison, Code_competition FROM kp_rc WHERE Id IN (9801, 9802) ORDER BY Code_saison'),
+            $this->bySeason('SELECT Code_saison, Code_competition FROM kp_rc WHERE Id IN (9821, 9822) ORDER BY Code_saison'),
             'responsables de compétition'
         );
         self::assertSame(

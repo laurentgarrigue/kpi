@@ -2,6 +2,11 @@
 
 namespace App\Controller;
 
+use App\Designation\Designation;
+use App\Designation\DesignationRejected;
+use App\Designation\DesignationRepository;
+use App\Designation\DesignationService;
+use App\Designation\ScopeType;
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -14,10 +19,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Admin RC (Responsables de Compétition) Controller
- *
- * CRUD operations for competition officials management (kp_rc table)
- * Migrated from GestionRc.php
+ * Page RC d'app4 (PAGE_RC.md). Depuis l'absorption de kp_rc (FEATURE_DESIGNATIONS.md D4, ADR-0003), un RC est une
+ * Désignation de rôle `RC` : sur la compétition, ou sur le niveau national pour un RC « national sans compétition »
+ * (`competitionCode` null). Le contrat de l'API est inchangé (RC-04) ; les écritures passent par DesignationService
+ * (club figé, recopie dans Responsable_insc).
  */
 #[IsGranted('ROLE_ADMIN')]
 #[OA\Tag(name: '27. App4 - RC')]
@@ -25,348 +30,199 @@ class AdminRcController extends AbstractController
 {
     use AdminLoggableTrait;
 
+    private const ROLE = 'RC';
+    private const MIN_ORDER = 1;
+    private const MAX_ORDER = 99;
+
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly DesignationService $designations,
+        private readonly DesignationRepository $repository,
     ) {
     }
 
-    /**
-     * List RC for a season
-     */
     #[Route('/admin/rc', name: 'admin_rc_list', methods: ['GET'])]
-    #[OA\Get(
-        path: '/admin/rc',
-        summary: 'List RC for a season',
-        tags: ['27. App4 - RC']
-    )]
-    #[OA\Parameter(
-        name: 'season',
-        in: 'query',
-        required: true,
-        description: 'Season code',
-        schema: new OA\Schema(type: 'string')
-    )]
-    #[OA\Parameter(
-        name: 'competitions',
-        in: 'query',
-        required: false,
-        description: 'Comma-separated competition codes (optional filter)',
-        schema: new OA\Schema(type: 'string')
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'List of RC with total count'
-    )]
+    #[OA\Get(path: '/admin/rc', summary: 'List RC for a season', tags: ['27. App4 - RC'])]
     public function list(Request $request): JsonResponse
     {
-        $season = $request->query->get('season', '');
-        $competitionsFilter = $request->query->get('competitions', '');
-
-        if (empty($season)) {
+        $season = (string) $request->query->get('season', '');
+        if ($season === '') {
             return $this->json(['message' => 'Season is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Build query
-        $sql = "SELECT rc.Id, rc.Code_competition, rc.Code_saison, rc.Ordre, rc.Matric,
-                       lc.Nom, lc.Prenom, lc.Numero_club,
-                       comp.Libelle AS competition_libelle
-                FROM kp_rc rc
-                LEFT JOIN kp_licence lc ON rc.Matric = lc.Matric
-                LEFT JOIN kp_competition comp ON rc.Code_competition = comp.Code AND rc.Code_saison = comp.Code_saison
-                WHERE rc.Code_saison = ?";
-
+        $sql = "SELECT d.id, d.perimetre_type, d.perimetre_id, d.saison, d.ordre, d.matric, d.club,
+                       l.Nom, l.Prenom, comp.Libelle AS competition_libelle
+                FROM kp_designation d
+                LEFT JOIN kp_licence l ON l.Matric = d.matric
+                LEFT JOIN kp_competition comp ON d.perimetre_type = 'COMPETITION' AND comp.Code = d.perimetre_id AND comp.Code_saison = d.saison
+                WHERE d.role = 'RC' AND d.saison = ?";
         $params = [$season];
-
-        // Apply competition filter if provided
-        if (!empty($competitionsFilter)) {
-            $codes = array_filter(array_map('trim', explode(',', $competitionsFilter)));
-            if (!empty($codes)) {
-                $placeholders = implode(',', array_fill(0, count($codes), '?'));
-                $sql .= " AND (rc.Code_competition IN ($placeholders) OR rc.Code_competition IS NULL)";
-                $params = array_merge($params, $codes);
-            }
+        $codes = array_values(array_filter(array_map('trim', explode(',', (string) $request->query->get('competitions', '')))));
+        if ($codes !== []) {
+            $sql .= sprintf(" AND (d.perimetre_type = 'NIVEAU' OR d.perimetre_id IN (%s))", implode(',', array_fill(0, count($codes), '?')));
+            $params = array_merge($params, $codes);
         }
+        $sql .= " ORDER BY d.perimetre_type = 'NIVEAU' DESC, d.perimetre_id, d.ordre";
 
-        $sql .= " ORDER BY rc.Code_competition ASC, rc.Ordre ASC";
+        $items = array_map(static function (array $row): array {
+            $competitionCode = $row['perimetre_type'] === ScopeType::Niveau->value ? null : $row['perimetre_id'];
 
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery($params);
-        $rows = $result->fetchAllAssociative();
-
-        $items = array_map(function ($row) {
             return [
-                'id' => (int) $row['Id'],
-                'competitionCode' => $row['Code_competition'], // null = RC national
-                'competitionLabel' => $row['Code_competition']
-                    ? $row['competition_libelle'] ?? $row['Code_competition']
-                    : 'National (sans compétition)',
-                'season' => $row['Code_saison'],
-                'ordre' => (int) $row['Ordre'],
-                'matric' => (int) $row['Matric'],
+                'id' => (int) $row['id'],
+                'competitionCode' => $competitionCode,
+                'competitionLabel' => $competitionCode === null ? 'National (sans compétition)' : ($row['competition_libelle'] ?? $competitionCode),
+                'season' => $row['saison'],
+                'ordre' => (int) $row['ordre'],
+                'matric' => (int) $row['matric'],
                 'nom' => $row['Nom'] ?? '',
                 'prenom' => $row['Prenom'] ?? '',
-                'club' => $row['Numero_club'] ?? '',
+                'club' => $row['club'] ?? '',
             ];
-        }, $rows);
+        }, $this->connection->fetchAllAssociative($sql, $params));
 
-        return $this->json([
-            'items' => $items,
-            'total' => count($items),
-        ]);
+        return $this->json(['items' => $items, 'total' => count($items)]);
     }
 
-    /**
-     * Create a new RC
-     */
     #[Route('/admin/rc', name: 'admin_rc_create', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
-    #[OA\Post(
-        path: '/admin/rc',
-        summary: 'Create a new RC',
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'season', type: 'string', example: '2026'),
-                    new OA\Property(property: 'competitionCode', type: 'string', nullable: true, example: 'N1H-A'),
-                    new OA\Property(property: 'matric', type: 'integer', example: 12345),
-                    new OA\Property(property: 'ordre', type: 'integer', example: 1),
-                ]
-            )
-        ),
-        tags: ['27. App4 - RC']
-    )]
-    #[OA\Response(response: 201, description: 'RC created successfully')]
-    #[OA\Response(response: 400, description: 'Invalid data')]
-    #[OA\Response(response: 409, description: 'RC already exists')]
+    #[OA\Post(path: '/admin/rc', summary: 'Create a new RC', tags: ['27. App4 - RC'])]
     public function create(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
-        // Validate required fields
-        if (empty($data['season']) || empty($data['matric']) || !isset($data['ordre'])) {
+        if (!is_array($data) || empty($data['season']) || empty($data['matric']) || !isset($data['ordre'])) {
             return $this->json(['message' => 'Season, matric, and ordre are required'], Response::HTTP_BAD_REQUEST);
         }
-
-        $season = $data['season'];
-        $competitionCode = $data['competitionCode'] ?? null; // null = RC national
-        $matric = (int) $data['matric'];
         $ordre = (int) $data['ordre'];
-
-        // Validate ordre range
-        if ($ordre < 1 || $ordre > 99) {
+        if ($ordre < self::MIN_ORDER || $ordre > self::MAX_ORDER) {
             return $this->json(['message' => 'Ordre must be between 1 and 99'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Check if matric exists in kp_licence
-        $sql = "SELECT Matric FROM kp_licence WHERE Matric = ?";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$matric]);
-        if (!$result->fetchAssociative()) {
-            return $this->json(['message' => 'Licence not found'], Response::HTTP_NOT_FOUND);
-        }
-
-        // Check for duplicate (same season + competition + matric)
-        $sql = "SELECT Id FROM kp_rc
-                WHERE Code_saison = ? AND Matric = ?
-                AND (Code_competition = ? OR (Code_competition IS NULL AND ? IS NULL))";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$season, $matric, $competitionCode, $competitionCode]);
-        if ($result->fetchAssociative()) {
-            return $this->json(['message' => 'Ce RC existe déjà pour cette compétition et cette saison'], Response::HTTP_CONFLICT);
-        }
-
-        // Insert RC
-        $this->connection->beginTransaction();
         try {
-            $sql = "INSERT INTO kp_rc (Code_competition, Code_saison, Ordre, Matric)
-                    VALUES (?, ?, ?, ?)";
-            $stmt = $this->connection->prepare($sql);
-            $stmt->executeStatement([$competitionCode, $season, $ordre, $matric]);
-
-            $id = (int) $this->connection->lastInsertId();
-
-            // Log action
-            $this->logActionForCompetition(
-                'Ajout Rc',
-                $season,
-                $competitionCode ?? 'CNA',
-                "Matric: $matric, Ordre: $ordre"
-            );
-
-            $this->connection->commit();
-
-            return $this->json([
-                'id' => $id,
-                'message' => 'RC ajouté avec succès',
-            ], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            $this->connection->rollBack();
-            return $this->json(['message' => 'Error creating RC: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $rc = $this->designate((string) $data['season'], $data['competitionCode'] ?? null, (int) $data['matric'], $ordre);
+        } catch (DesignationRejected $rejected) {
+            return $this->rejection($rejected);
         }
+        $this->logActionForCompetition('Ajout Rc', $rc->season, self::competitionOf($rc) ?? 'CNA', "Matric: {$rc->matric}, Ordre: {$rc->order}");
+
+        return $this->json(['id' => $rc->id, 'message' => 'RC ajouté avec succès'], Response::HTTP_CREATED);
     }
 
-    /**
-     * Update an existing RC
-     */
+    /** Changer de compétition ou de licencié remplace la Désignation (nouvel id) ; changer l'ordre la modifie. */
     #[Route('/admin/rc/{id}', name: 'admin_rc_update', methods: ['PUT'])]
-    #[IsGranted('ROLE_ADMIN')]
-    #[OA\Put(
-        path: '/admin/rc/{id}',
-        summary: 'Update an existing RC',
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'competitionCode', type: 'string', nullable: true),
-                    new OA\Property(property: 'matric', type: 'integer'),
-                    new OA\Property(property: 'ordre', type: 'integer'),
-                ]
-            )
-        ),
-        tags: ['27. App4 - RC']
-    )]
-    #[OA\Response(response: 200, description: 'RC updated successfully')]
-    #[OA\Response(response: 404, description: 'RC not found')]
+    #[OA\Put(path: '/admin/rc/{id}', summary: 'Update an existing RC', tags: ['27. App4 - RC'])]
     public function update(int $id, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        // Check if RC exists
-        $sql = "SELECT Id, Code_saison, Code_competition FROM kp_rc WHERE Id = ?";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$id]);
-        $rc = $result->fetchAssociative();
-
-        if (!$rc) {
+        $current = $this->findRc($id);
+        if ($current === null) {
             return $this->json(['message' => 'RC not found'], Response::HTTP_NOT_FOUND);
         }
-
-        $competitionCode = $data['competitionCode'] ?? $rc['Code_competition'];
+        $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
+        $competitionCode = array_key_exists('competitionCode', $data) ? $data['competitionCode'] : self::competitionOf($current);
         $matric = (int) ($data['matric'] ?? 0);
         $ordre = (int) ($data['ordre'] ?? 0);
-
         if ($matric === 0 || $ordre === 0) {
             return $this->json(['message' => 'Matric and ordre are required'], Response::HTTP_BAD_REQUEST);
         }
-
-        // Validate ordre range
-        if ($ordre < 1 || $ordre > 99) {
+        if ($ordre < self::MIN_ORDER || $ordre > self::MAX_ORDER) {
             return $this->json(['message' => 'Ordre must be between 1 and 99'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Check for duplicate (excluding current RC)
-        $sql = "SELECT Id FROM kp_rc
-                WHERE Code_saison = ? AND Matric = ? AND Id != ?
-                AND (Code_competition = ? OR (Code_competition IS NULL AND ? IS NULL))";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$rc['Code_saison'], $matric, $id, $competitionCode, $competitionCode]);
-        if ($result->fetchAssociative()) {
-            return $this->json(['message' => 'Ce RC existe déjà pour cette compétition et cette saison'], Response::HTTP_CONFLICT);
-        }
-
-        // Update RC
-        $this->connection->beginTransaction();
+        $user = $this->currentUser();
         try {
-            $sql = "UPDATE kp_rc
-                    SET Code_competition = ?, Matric = ?, Ordre = ?
-                    WHERE Id = ?";
-            $stmt = $this->connection->prepare($sql);
-            $stmt->executeStatement([$competitionCode, $matric, $ordre, $id]);
+            $rc = $this->repository->transactional(function () use ($user, $current, $competitionCode, $matric, $ordre): Designation {
+                if ($competitionCode === self::competitionOf($current) && $matric === $current->matric) {
+                    return $this->designations->update($user, $current->id, ['order' => $ordre]);
+                }
+                $this->designations->delete($user, $current->id);
 
-            // Log action
-            $this->logActionForCompetition(
-                'Modif Rc',
-                $rc['Code_saison'],
-                $competitionCode ?? 'CNA',
-                "Id: $id, Matric: $matric, Ordre: $ordre"
-            );
-
-            $this->connection->commit();
-
-            return $this->json(['message' => 'RC modifié avec succès']);
-        } catch (\Exception $e) {
-            $this->connection->rollBack();
-            return $this->json(['message' => 'Error updating RC: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                return $this->designate($current->season, $competitionCode, $matric, $ordre);
+            });
+        } catch (DesignationRejected $rejected) {
+            return $this->rejection($rejected);
         }
+        $this->logActionForCompetition('Modif Rc', $rc->season, self::competitionOf($rc) ?? 'CNA', "Id: {$rc->id}, Matric: {$rc->matric}, Ordre: {$rc->order}");
+
+        return $this->json(['id' => $rc->id, 'message' => 'RC modifié avec succès']);
     }
 
-    /**
-     * Delete RC (bulk) - DELETE method (legacy)
-     */
     #[Route('/admin/rc', name: 'admin_rc_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
-    #[OA\Delete(
-        path: '/admin/rc',
-        summary: 'Delete RC in bulk (legacy - use POST /bulk-delete instead)',
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'ids', type: 'array', items: new OA\Items(type: 'integer')),
-                ]
-            )
-        ),
-        tags: ['27. App4 - RC']
-    )]
-    #[OA\Response(response: 200, description: 'RC deleted successfully')]
+    #[OA\Delete(path: '/admin/rc', summary: 'Delete RC in bulk (legacy - use POST /bulk-delete instead)', tags: ['27. App4 - RC'])]
     public function delete(Request $request): JsonResponse
     {
         return $this->bulkDelete($request);
     }
 
-    /**
-     * Delete RC (bulk) - POST method (preferred)
-     */
     #[Route('/admin/rc/bulk-delete', name: 'admin_rc_bulk_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
-    #[OA\Post(
-        path: '/admin/rc/bulk-delete',
-        summary: 'Delete RC in bulk',
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'ids', type: 'array', items: new OA\Items(type: 'integer')),
-                ]
-            )
-        ),
-        tags: ['27. App4 - RC']
-    )]
-    #[OA\Response(response: 200, description: 'RC deleted successfully')]
+    #[OA\Post(path: '/admin/rc/bulk-delete', summary: 'Delete RC in bulk', tags: ['27. App4 - RC'])]
     public function bulkDelete(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $ids = $data['ids'] ?? [];
-
+        $ids = is_array($data) ? ($data['ids'] ?? []) : [];
         if (empty($ids) || !is_array($ids)) {
             return $this->json(['message' => 'IDs array is required'], Response::HTTP_BAD_REQUEST);
         }
 
-        $this->connection->beginTransaction();
+        $user = $this->currentUser();
         try {
-            $placeholders = implode(',', array_fill(0, count($ids), '?'));
-            $sql = "DELETE FROM kp_rc WHERE Id IN ($placeholders)";
-            $stmt = $this->connection->prepare($sql);
-            // DBAL 3: Statement::executeStatement() renvoie directement le nombre
-            // de lignes affectées. Statement n'a pas de rowCount() (c'est Result
-            // qui en a un) — l'appeler était un fatal à l'exécution.
-            $deleted = $stmt->executeStatement($ids);
+            $deleted = $this->repository->transactional(function () use ($user, $ids): int {
+                $deleted = 0;
+                foreach (array_map('intval', $ids) as $id) {
+                    if ($this->findRc($id) !== null) {
+                        $this->designations->delete($user, $id);
+                        $deleted++;
+                    }
+                }
 
-            // Log action
-            $idsStr = implode(', ', $ids);
-            $this->logActionForCompetition(
-                'Suppression Rc',
-                null,
-                null,
-                "IDs: $idsStr"
-            );
-
-            $this->connection->commit();
-
-            return $this->json([
-                'deleted' => $deleted,
-                'message' => "$deleted RC supprimé(s) avec succès",
-            ]);
-        } catch (\Exception $e) {
-            $this->connection->rollBack();
-            return $this->json(['message' => 'Error deleting RC: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                return $deleted;
+            });
+        } catch (DesignationRejected $rejected) {
+            return $this->rejection($rejected);
         }
+        $this->logActionForCompetition('Suppression Rc', null, null, 'IDs: ' . implode(', ', $ids));
+
+        return $this->json(['deleted' => $deleted, 'message' => "$deleted RC supprimé(s) avec succès"]);
+    }
+
+    /** @throws DesignationRejected */
+    private function designate(string $season, mixed $competitionCode, int $matric, int $ordre): Designation
+    {
+        $national = $competitionCode === null || $competitionCode === '';
+        $scopeType = $national ? ScopeType::Niveau : ScopeType::Competition;
+        $scopeId = $national ? Designation::NATIONAL_LEVEL : (string) $competitionCode;
+
+        return $this->designations->create($this->currentUser(), $season, self::ROLE, $scopeType, $scopeId, $matric, null, $ordre, null);
+    }
+
+    private function findRc(int $id): ?Designation
+    {
+        $designation = $this->repository->find($id);
+
+        return $designation?->role === self::ROLE ? $designation : null;
+    }
+
+    private static function competitionOf(Designation $rc): ?string
+    {
+        return $rc->scopeType === ScopeType::Niveau ? null : $rc->scopeId;
+    }
+
+    private function rejection(DesignationRejected $rejected): JsonResponse
+    {
+        return match ($rejected->error) {
+            DesignationRejected::LICENCE_UNKNOWN => $this->json(['message' => 'Licence not found'], Response::HTTP_NOT_FOUND),
+            DesignationRejected::DUPLICATE => $this->json(['message' => 'Ce RC existe déjà pour cette compétition et cette saison'], Response::HTTP_CONFLICT),
+            DesignationRejected::SCOPE_UNKNOWN => $this->json(['message' => 'Competition not found in this season'], Response::HTTP_BAD_REQUEST),
+            DesignationRejected::NOT_FOUND => $this->json(['message' => 'RC not found'], Response::HTTP_NOT_FOUND),
+            default => $this->json(['message' => $rejected->error], $rejected->status),
+        };
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 }

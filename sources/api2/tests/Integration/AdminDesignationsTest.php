@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
  * API des Désignations (FEATURE_DESIGNATIONS.md § 8.3, ticket designations/03). Fixtures « désignations » de
  * data.sql : saison 2998, NDES (journées 9801, 9802, événement 9801), REGDES (journée 9803), équipe 9801,
  * licenciés 9811 (C001, délégué CNA de l'événement 9801, compte « 9811 » de profil 5), 9812 (C002), 9813.
+ * Saison 2998 : aussi le RC 9822 de TSTRN (fixtures du renommage de code).
  */
 final class AdminDesignationsTest extends ApiTestCase
 {
@@ -117,7 +118,7 @@ final class AdminDesignationsTest extends ApiTestCase
         $all = $this->requestAs('TADMIN', 'GET', '/admin/designations?season=2998');
         $teams = $this->requestAs('TADMIN', 'GET', '/admin/designations?season=2998&scopeType=EQUIPE&scopeId=9801');
 
-        self::assertSame(['DELEGUE_CNA', 'RESP_EQUIPE'], self::column($all['items'], 'role'));
+        self::assertSame(['DELEGUE_CNA', 'RC', 'RESP_EQUIPE'], self::column($all['items'], 'role'));
         self::assertSame([9813], self::column($teams['items'], 'matric'));
         self::assertSame('DESIGNE', $teams['items'][0]['lastName']);
         self::assertNull($teams['items'][0]['club']);

@@ -240,56 +240,25 @@ class SeasonOperationsService
             throw new \Exception('Source and target seasons must be different');
         }
 
-        // Check source has RC
-        $sql = "SELECT COUNT(*) FROM kp_rc WHERE Code_saison = ?";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$sourceCode]);
-
-        if ((int) $result->fetchOne() === 0) {
+        // RC = Désignations de rôle RC (FEATURE_DESIGNATIONS.md D4) ; le club est figé à nouveau depuis la licence (D22)
+        $source = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_designation WHERE role = 'RC' AND saison = ?", [$sourceCode]);
+        if ($source === 0) {
             throw new \Exception("No RC found for season $sourceCode");
         }
 
-        // Get all RC from source
-        $sql = "SELECT Code_competition, Matric, Ordre
-                FROM kp_rc
-                WHERE Code_saison = ?
-                ORDER BY Code_competition, Ordre";
-        $stmt = $this->connection->prepare($sql);
-        $result = $stmt->executeQuery([$sourceCode]);
-        $rcList = $result->fetchAllAssociative();
-
-        $copied = 0;
-        $skipped = 0;
-
-        $this->connection->beginTransaction();
-
-        try {
-            foreach ($rcList as $rc) {
-                // Check if RC already exists
-                $sql = "SELECT COUNT(*) FROM kp_rc WHERE Code_saison = ? AND Code_competition = ? AND Matric = ?";
-                $stmt = $this->connection->prepare($sql);
-                $result = $stmt->executeQuery([$targetCode, $rc['Code_competition'], $rc['Matric']]);
-
-                if ((int) $result->fetchOne() === 0) {
-                    $sql = "INSERT INTO kp_rc (Code_saison, Code_competition, Matric, Ordre) VALUES (?, ?, ?, ?)";
-                    $stmt = $this->connection->prepare($sql);
-                    $stmt->executeStatement([$targetCode, $rc['Code_competition'], $rc['Matric'], $rc['Ordre']]);
-                    $copied++;
-                } else {
-                    $skipped++;
-                }
-            }
-
-            $this->connection->commit();
-        } catch (\Exception $e) {
-            $this->connection->rollBack();
-            throw $e;
-        }
+        $copied = $this->connection->executeStatement(
+            "INSERT IGNORE INTO kp_designation (saison, role, perimetre_type, perimetre_id, matric, club, autorite, ordre, qualite, created_by)
+             SELECT ?, d.role, d.perimetre_type, d.perimetre_id, d.matric, NULLIF(l.Numero_club, ''), d.autorite, d.ordre, d.qualite, 'COPIE'
+             FROM kp_designation d
+             LEFT JOIN kp_licence l ON l.Matric = d.matric
+             WHERE d.role = 'RC' AND d.saison = ?",
+            [$targetCode, $sourceCode]
+        );
 
         return [
             'message' => 'RC copied successfully',
             'copied' => $copied,
-            'skipped' => $skipped,
+            'skipped' => $source - $copied,
         ];
     }
 

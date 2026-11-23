@@ -29,7 +29,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D1 | Rattachement du bilan | Un bilan **par événement**, avec repli sur la **journée** quand elle n'appartient à aucun événement. |
 | D2 | Source de vérité | Table `kp_designation` `(saison, rôle, type et id de périmètre, licence, club, autorité, ordre, qualité)`. Les champs texte de `kp_journee` en sont recopiés. |
 | D3 | Rôles | Le catalogue des rôles est défini à un seul endroit (api2) : périmètres autorisés et profil du mandat généré. |
-| D4 | `kp_rc` | Absorbée dans `kp_designation` (rôle `RC`, périmètre compétition), puis remplacée par une vue SQL en lecture seule pendant la période de secours. |
+| D4 | `kp_rc` | Absorbée dans `kp_designation` (rôle `RC`, périmètre compétition ; un RC « national sans compétition », ex `- CNA -`, devient un RC sur le **niveau national**), puis remplacée par une vue SQL en lecture seule pendant la période de secours (l'ancienne table est gardée sous le nom `kp_rc_avant_designations`). |
 | D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8), **seulement si son email est connu**. Le profil de base d'un compte existant n'est jamais modifié. |
 | D6 | Mandat | Un **mandat généré par saison et par rôle**, dont le périmètre est l'union des Désignations de ce rôle. Il est recalculé à chaque création ou suppression de Désignation, et supprimé quand il n'en reste plus. |
 | D7 | Personnes désignables | Toute personne de la base des joueurs, Joueurs internationaux compris. Sans email, la Désignation est enregistrée sans compte ni mandat. |

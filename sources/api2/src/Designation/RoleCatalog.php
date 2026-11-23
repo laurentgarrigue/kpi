@@ -54,7 +54,8 @@ final class RoleCatalog
         $none = Requirement::NotApplicable;
 
         $roles = [
-            new RoleDefinition('RC', 'Responsable de compétition', [ScopeType::Competition], 4, $required, $required,
+            // Niveau : RC « national sans compétition » repris de kp_rc (ex '- CNA -', ticket designations/05)
+            new RoleDefinition('RC', 'Responsable de compétition', [ScopeType::Competition, ScopeType::Niveau], 4, $required, $required,
                 legacyColumns: ['Responsable_insc']),
             new RoleDefinition('RESP_EQUIPE', "Responsable d'équipe", [ScopeType::Equipe], 7, $required, $optional,
                 mandateLimitedToTeamClub: true),

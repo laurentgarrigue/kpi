@@ -37,7 +37,7 @@ final class RoleCatalogTest extends TestCase
 
     public function testScopesOfTheOtherRoles(): void
     {
-        self::assertSame([ScopeType::Competition], RoleCatalog::get('RC')->scopes);
+        self::assertSame([ScopeType::Competition, ScopeType::Niveau], RoleCatalog::get('RC')->scopes);
         self::assertSame([ScopeType::Equipe], RoleCatalog::get('RESP_EQUIPE')->scopes);
         self::assertSame([ScopeType::Niveau], RoleCatalog::get('BUREAU_CNA')->scopes);
         self::assertSame([ScopeType::Niveau], RoleCatalog::get('MEMBRE_CNA')->scopes);

@@ -891,15 +891,17 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
 -- Responsables de compétition (RC), suivis par le renommage d'un code compétition.
 SET FOREIGN_KEY_CHECKS = 0;
+-- kp_rc est une vue sur kp_designation (SQL/migrations/2026-11-23_designations_absorb_kp_rc.sql, ADR-0003).
 DROP TABLE IF EXISTS `kp_rc`;
-CREATE TABLE `kp_rc` (
-  `Id` int(11) NOT NULL AUTO_INCREMENT,
-  `Code_competition` varchar(10) DEFAULT NULL,
-  `Code_saison` varchar(8) NOT NULL,
-  `Ordre` int(11) NOT NULL,
-  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+DROP VIEW IF EXISTS `kp_rc`;
+CREATE OR REPLACE VIEW `kp_rc` AS
+SELECT d.id AS Id,
+       IF(d.perimetre_type = 'NIVEAU', NULL, CONVERT(d.perimetre_id USING utf8mb3) COLLATE utf8mb3_general_ci) AS Code_competition,
+       CONVERT(d.saison USING utf8mb3) COLLATE utf8mb3_general_ci AS Code_saison,
+       d.ordre AS Ordre,
+       d.matric AS Matric
+FROM kp_designation d
+WHERE d.role = 'RC';
 -- Échec provoqué (test d'atomicité) : renommer en TSTFAIL viole cette contrainte au DERNIER UPDATE du renommage
 -- (filtres de mandat), après les compétitions, engagements, journées et RC. Absente de la prod.
 ALTER TABLE `kp_user_mandat` ADD CONSTRAINT `chk_fixture_rename_failure` CHECK (`filtre_competition` NOT LIKE '%|TSTFAIL|%');
