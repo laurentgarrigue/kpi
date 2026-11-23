@@ -20,8 +20,6 @@ const loading = ref(false)
 const target = ref<DesignationTarget | null>(null)
 const removing = ref<CoverageHolder | null>(null)
 const kind = computed(() => rowKindOf(props.scopeType)!)
-/** Périmètres auxquels un rapport officiel peut être rattaché (D12, D14). */
-const REPORT_SCOPES: ScopeType[] = ['COMPETITION', 'EVENEMENT', 'JOURNEE']
 const canWrite = computed(() => authStore.profile <= 5)
 
 const load = async () => {
@@ -89,13 +87,6 @@ watch(() => [props.scopeType, props.scopeId, props.season], load, { immediate: t
       </tbody>
     </table>
     <p class="text-xs text-header-500 mt-2">{{ t('designations.block.help') }}</p>
-    <NuxtLink
-      v-if="REPORT_SCOPES.includes(scopeType)"
-      :to="{ path: '/reports', query: { scopeType, scopeId: String(scopeId), label } }"
-      class="inline-block mt-2 text-sm underline"
-    >
-      {{ t('reports.write') }}
-    </NuxtLink>
 
     <DesignationsAddModal :target="target" :season="season" :roles="roles" @close="target = null" @saved="saved" />
     <AdminConfirmModal

@@ -3764,7 +3764,6 @@
   },
   "reports": {
     "title": "Rapports officiels",
-    "write": "Rédiger un rapport officiel",
     "empty": "Aucun rapport.",
     "late": "hors délai",
     "version": "modèle v{version}",
@@ -3780,7 +3779,9 @@
       "button": "Nouveau rapport",
       "choose_title": "Nouveau rapport officiel : périmètre",
       "scope": "Rattaché à",
-      "match_hint": "Un rapport sur un match (incident, évaluation d'arbitrage) se crée avec le bouton « Rapport » de la page des matchs."
+      "search": "Rechercher",
+      "search_match": "Rechercher (équipe, numéro)",
+      "selected": "Rattaché à : {label}"
     },
     "blank": "PDF vierge : {type}",
     "filter": {
@@ -3870,7 +3871,6 @@
         "national_c": "National C",
         "regional": "Régional"
       }
-    },
-    "short": "Rapport"
+    }
   }
 }

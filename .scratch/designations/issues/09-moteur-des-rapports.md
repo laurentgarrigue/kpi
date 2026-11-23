@@ -25,3 +25,7 @@ RAP-01 à RAP-07, RAP-10.
   rendu depuis la définition de la version, brouillon, soumission, réouverture avec motif, PDF par soumission), lien
   « Rédiger un rapport officiel » dans le bloc Désignations, menu Référentiels › Rapports (profils ≤ 8).
   Rapports sur un match : pas encore de point d'entrée depuis la page des matchs (ticket 11).
+- 2026-11-23 — Décision : un rapport se crée **seulement depuis la page Rapports** (bouton « Nouveau rapport »), avec
+  une recherche de l'élément lié : événement, compétition, journée ou match (compétition → journée → match). Les
+  boutons « Rapport » de la page des matchs et le lien du bloc Désignations sont retirés (interfaces existantes
+  allégées).

@@ -3752,7 +3752,6 @@
   },
   "reports": {
     "title": "Official reports",
-    "write": "Write an official report",
     "empty": "No report.",
     "late": "late",
     "version": "form v{version}",
@@ -3768,7 +3767,9 @@
       "button": "New report",
       "choose_title": "New official report: perimeter",
       "scope": "Attached to",
-      "match_hint": "A report on a game (incident, referee evaluation) is created with the « Report » button of the games page."
+      "search": "Search",
+      "search_match": "Search (team, number)",
+      "selected": "Attached to: {label}"
     },
     "blank": "Blank PDF: {type}",
     "filter": {
@@ -3858,7 +3859,6 @@
         "national_c": "National C",
         "regional": "Regional"
       }
-    },
-    "short": "Report"
+    }
   }
 }
