@@ -3699,7 +3699,8 @@
       "title": "Copy the competition managers to season {season}",
       "help": "The managers of the source season are designated for season {season}, on the same competitions; those already there are skipped.",
       "submit": "Copy"
-    }
+    },
+    "missing_add": "Designate (required role, missing)"
   },
   "competition_picker": {
     "label": "Competitions",

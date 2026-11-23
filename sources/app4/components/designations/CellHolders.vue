@@ -24,9 +24,15 @@ const { t } = useI18n()
         ×
       </button>
     </span>
-    <span v-if="props.cell.status === 'red'" class="text-xs font-semibold">{{ t('designations.missing') }}</span>
-    <button v-if="props.canAdd" type="button" class="self-start text-xs underline" @click="emit('add')">
-      + {{ t('designations.add.button') }}
+    <button
+      v-if="props.canAdd"
+      type="button"
+      class="self-start inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border border-current hover:bg-white/30 dark:hover:bg-black/20"
+      :aria-label="props.cell.status === 'red' ? t('designations.missing_add') : t('designations.add.button')"
+      @click="emit('add')"
+    >
+      <UIcon name="heroicons:plus" class="w-3.5 h-3.5" />
+      {{ t('designations.add.button') }}
     </button>
   </div>
 </template>

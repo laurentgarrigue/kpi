@@ -47,6 +47,8 @@ const summaryRoles = computed(() => Object.keys(roles.value))
 const pickableRoles = computed(() => [...MANAGER_ROLES, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: roleLabel(code) })))
 const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], chosenRoles.value))
 const showsManager = (role: string) => chosenRoles.value.length === 0 || chosenRoles.value.includes(role)
+/** Le tableau des responsables n'occupe une colonne que s'il est affiché ; sinon les journées prennent toute la largeur. */
+const showsManagerTable = computed(() => showsManager('RC') || showsManager('RESP_EQUIPE'))
 
 const loadRoles = async () => {
   roles.value = await api.get<Record<string, RoleDefinition>>('/admin/designations/roles')
@@ -179,9 +181,9 @@ onMounted(async () => {
 
       <section v-for="competition in matrix?.competitions ?? []" :key="competition.code" class="mb-8">
         <h2 class="font-semibold mb-2">{{ competition.code }} — {{ competition.label }}</h2>
-        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <div class="grid gap-4" :class="{ 'xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]': showsManagerTable && shownGamedayRoles.length && competition.gamedays.length }">
           <!-- Responsables : RC et responsables d'équipe (SUI-02) -->
-          <div v-if="showsManager('RC') || showsManager('RESP_EQUIPE')" class="overflow-x-auto">
+          <div v-if="showsManagerTable" class="overflow-x-auto">
             <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
               <caption class="text-left text-xs uppercase tracking-wide text-header-500 py-1">{{ t('designations.table.managers') }}</caption>
               <thead>

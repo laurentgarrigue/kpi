@@ -3711,7 +3711,8 @@
       "title": "Copier les RC vers la saison {season}",
       "help": "Les RC de la saison source sont désignés pour la saison {season}, sur les mêmes compétitions ; ceux déjà présents sont ignorés.",
       "submit": "Copier"
-    }
+    },
+    "missing_add": "Désigner (rôle requis, non pourvu)"
   },
   "competition_picker": {
     "label": "Compétitions",
