@@ -69,11 +69,12 @@ final class ReportPeople
      * Licences des destinataires (D28) : titulaires effectifs des rôles nommés sur les journées du périmètre (et RC
      * de ses compétitions), bureau CNA, auteur.
      *
-     * @param list<string> $recipients spécification du type (`ROLE:<code>`, `BUREAU_CNA`, `AUTHOR`)
+     * @param list<string>         $recipients spécification du type (`ROLE:<code>`, `BUREAU_CNA`, `AUTHOR`, `JURY`, `TEAMS_IN_CAUSE`)
+     * @param array<string, mixed> $answers    réponses du rapport (composition du jury, matchs cités)
      *
      * @return list<int>
      */
-    public function recipients(array $recipients, ReportPerimeter $perimeter, ?int $author): array
+    public function recipients(array $recipients, ReportPerimeter $perimeter, ?int $author, array $answers = []): array
     {
         $designations = $this->designations->ofSeason($perimeter->season);
         $matrics = [];
@@ -81,6 +82,23 @@ final class ReportPeople
             if ($recipient === ReportTypeDefinition::RECIPIENT_AUTHOR) {
                 if ($author !== null) {
                     $matrics[] = $author;
+                }
+            } elseif ($recipient === ReportTypeDefinition::RECIPIENT_JURY) {
+                foreach (is_array($answers['jury'] ?? null) ? $answers['jury'] : [] as $member) {
+                    if ((int) ($member['matric'] ?? 0) > 0 && ($member['presence'] ?? 'present') === 'present') {
+                        $matrics[] = (int) $member['matric'];
+                    }
+                }
+            } elseif ($recipient === ReportTypeDefinition::RECIPIENT_TEAMS_IN_CAUSE) {
+                $numbers = array_values(array_filter(array_map(
+                    static fn (mixed $row): string => is_array($row) ? trim((string) ($row['number'] ?? '')) : '',
+                    is_array($answers['matches'] ?? null) ? $answers['matches'] : [],
+                )));
+                $teams = array_map('strval', $this->perimeters->teamsOfMatches($perimeter->matchIds, $numbers));
+                foreach ($designations as $designation) {
+                    if ($designation->role === 'RESP_EQUIPE' && $designation->scopeType === ScopeType::Equipe && in_array($designation->scopeId, $teams, true)) {
+                        $matrics[] = $designation->matric;
+                    }
                 }
             } elseif ($recipient === ReportTypeDefinition::RECIPIENT_BUREAU) {
                 foreach ($designations as $designation) {

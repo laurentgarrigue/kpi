@@ -18,6 +18,8 @@ final class ReportKpiData
 {
     /** Rôles listés dans les officiels d'un bilan, dans cet ordre. */
     private const OFFICIAL_ROLES = ['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL', 'RC'];
+    /** Composition du jury d'appel (D27) : délégué CNA (président), R1, représentant des équipes, membres désignés. */
+    private const JURY_ROLES = ['DELEGUE_CNA', 'R1', 'REP_EQUIPES', 'JURY_APPEL'];
     private const CARD_CODES = ['V' => 'green', 'J' => 'yellow', 'R' => 'red', 'D' => 'black'];
     private const PLAYED_STATUS = 'END';
 
@@ -31,7 +33,8 @@ final class ReportKpiData
     public function of(ReportPerimeter $perimeter, ?int $excludedReportId = null): array
     {
         return $perimeter->header + [
-            'officials' => $this->officials($perimeter),
+            'officials' => $this->officials($perimeter, self::OFFICIAL_ROLES),
+            'jury' => $this->officials($perimeter, self::JURY_ROLES),
             'referees' => $this->referees($perimeter->matchIds),
             'matches' => $this->matches($perimeter->matchIds),
             'cards' => $this->cards($perimeter->matchIds),
@@ -39,24 +42,28 @@ final class ReportKpiData
         ];
     }
 
-    /** @return list<array{role: string, name: string, matric: int}> */
-    private function officials(ReportPerimeter $perimeter): array
+    /**
+     * @param list<string> $roles rôles retenus, dans l'ordre d'affichage
+     *
+     * @return list<array{role: string, name: string, matric: int}>
+     */
+    private function officials(ReportPerimeter $perimeter, array $roles): array
     {
         $designations = $this->designations->ofSeason($perimeter->season);
         $holders = [];
         foreach ($perimeter->gamedays as $gamedayId => $competition) {
             $effective = EffectiveDesignations::of(new GamedayScope($gamedayId, $perimeter->season, $competition, $perimeter->gamedayEvents[$gamedayId] ?? []), $designations);
-            foreach (self::OFFICIAL_ROLES as $role) {
+            foreach ($roles as $role) {
                 foreach ($effective->holders($role) as $holder) {
                     $holders["$role|{$holder->matric}"] = ['role' => $role, 'matric' => $holder->matric];
                 }
             }
         }
-        uasort($holders, static fn (array $a, array $b): int => array_search($a['role'], self::OFFICIAL_ROLES, true) <=> array_search($b['role'], self::OFFICIAL_ROLES, true));
+        uasort($holders, static fn (array $a, array $b): int => array_search($a['role'], $roles, true) <=> array_search($b['role'], $roles, true));
         $names = $this->names(array_values(array_unique(array_column($holders, 'matric'))));
 
         return array_values(array_map(static fn (array $h): array => [
-            'role' => RoleCatalog::get($h['role'])->label,
+            'role' => $h['role'] === 'DELEGUE_CNA' && $roles === self::JURY_ROLES ? 'Président (délégué CNA)' : RoleCatalog::get($h['role'])->label,
             'name' => $names[$h['matric']] ?? '',
             'matric' => $h['matric'],
         ], $holders));

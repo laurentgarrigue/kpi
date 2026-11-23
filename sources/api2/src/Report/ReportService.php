@@ -87,7 +87,7 @@ final class ReportService
         $now = $this->clock->now();
         $late = $definition->deadlineDays !== null && $perimeter->endDate !== null
             && $now > (new \DateTimeImmutable($perimeter->endDate))->modify(sprintf('+%d days 23:59:59', $definition->deadlineDays));
-        $recipients = $this->people->recipients($definition->recipients, $perimeter, $report->authorMatric);
+        $recipients = $this->people->recipients($definition->recipients, $perimeter, $report->authorMatric, $report->answers);
         $kpiData = $this->kpi->of($perimeter, $report->id);
 
         $number = $this->reports->submit($report, $now->format('Y-m-d H:i:s'), $late, $kpiData, $recipients, $user->getUserIdentifier());

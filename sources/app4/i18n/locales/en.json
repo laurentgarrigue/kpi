@@ -3790,13 +3790,33 @@
       "presence": {
         "present": "Present",
         "absent": "Absent",
-        "replaced": "Replaced"
+        "replaced": "Replaced",
+        "recused": "Recused"
       },
       "schedule_kept": {
         "yes": "Yes",
         "partly": "Partly",
         "no": "No"
+      },
+      "difficulty": {
+        "easy": "Easy",
+        "normal": "Normal",
+        "difficult": "Difficult",
+        "very_difficult": "Very difficult"
+      },
+      "second_presence": {
+        "absent": "Absent",
+        "errors": "Causes errors",
+        "relevant": "Relevant",
+        "overbearing": "Overbearing"
+      },
+      "recommended_level": {
+        "national_a": "National A",
+        "national_b": "National B",
+        "national_c": "National C",
+        "regional": "Regional"
       }
-    }
+    },
+    "short": "Report"
   }
 }

@@ -2636,6 +2636,17 @@ const openScoring = (gameId: number) => {
                     <br>
                     <span class="text-sm text-header-900 dark:text-header-50">PDF</span>
                   </button>
+                  <!-- Rapport officiel sur le match : incident, évaluation d'arbitrage (FEATURE_DESIGNATIONS.md D14, D28) -->
+                  <NuxtLink
+                    v-if="authStore.profile <= 5"
+                    :to="{ path: '/reports', query: { scopeType: 'MATCH', scopeId: String(g.id), label: `n° ${g.numeroOrdre ?? g.id} · ${g.equipeA ?? '?'} - ${g.equipeB ?? '?'}` } }"
+                    :title="t('reports.write')"
+                    class="p-1.5 text-primary-600 hover:text-primary-800"
+                  >
+                    <UIcon name="heroicons:clipboard-document-list" class="w-6 h-6" />
+                    <br>
+                    <span class="text-sm text-header-900 dark:text-header-50">{{ t('reports.short') }}</span>
+                  </NuxtLink>
                   <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-1.5 text-primary-500 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
                     <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
                     <br>

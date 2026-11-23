@@ -3802,13 +3802,33 @@
       "presence": {
         "present": "Présent",
         "absent": "Absent",
-        "replaced": "Remplacé"
+        "replaced": "Remplacé",
+        "recused": "Récusé"
       },
       "schedule_kept": {
         "yes": "Oui",
         "partly": "En partie",
         "no": "Non"
+      },
+      "difficulty": {
+        "easy": "Facile",
+        "normal": "Normal",
+        "difficult": "Difficile",
+        "very_difficult": "Très difficile"
+      },
+      "second_presence": {
+        "absent": "Effacé, absent",
+        "errors": "Induit des erreurs, placements",
+        "relevant": "Pertinent et à bon escient",
+        "overbearing": "Trop présent ou omniprésent"
+      },
+      "recommended_level": {
+        "national_a": "National A",
+        "national_b": "National B",
+        "national_c": "National C",
+        "regional": "Régional"
       }
-    }
+    },
+    "short": "Rapport"
   }
 }

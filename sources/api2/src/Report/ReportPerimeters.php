@@ -132,6 +132,35 @@ final class ReportPerimeters
     }
 
     /**
+     * Équipes des matchs du périmètre cités par leur numéro (rapport de jury d'appel : équipes en cause, D28).
+     *
+     * @param list<int>    $matchIds
+     * @param list<string> $numbers
+     *
+     * @return list<int>
+     */
+    public function teamsOfMatches(array $matchIds, array $numbers): array
+    {
+        if ($matchIds === [] || $numbers === []) {
+            return [];
+        }
+        $teams = [];
+        foreach ($this->connection->fetchAllAssociative(
+            'SELECT Id_equipeA, Id_equipeB FROM kp_match WHERE Id IN (?) AND Numero_ordre IN (?)',
+            [$matchIds, array_map('intval', $numbers)],
+            [ArrayParameterType::INTEGER, ArrayParameterType::INTEGER],
+        ) as $row) {
+            foreach ([$row['Id_equipeA'], $row['Id_equipeB']] as $team) {
+                if ((int) $team > 0) {
+                    $teams[] = (int) $team;
+                }
+            }
+        }
+
+        return array_values(array_unique($teams));
+    }
+
+    /**
      * Licences des arbitres désignés des matchs (D15).
      *
      * @param list<int> $matchIds

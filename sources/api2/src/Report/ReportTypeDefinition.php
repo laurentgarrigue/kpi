@@ -12,6 +12,10 @@ final class ReportTypeDefinition
     /** Destinataires : un rôle de Désignation du périmètre (`ROLE:<code>`), le bureau CNA, l'auteur, le jury. */
     public const RECIPIENT_AUTHOR = 'AUTHOR';
     public const RECIPIENT_BUREAU = 'BUREAU_CNA';
+    /** Membres du jury cités dans la composition du rapport (licences). */
+    public const RECIPIENT_JURY = 'JURY';
+    /** Responsables des équipes des matchs cités dans le rapport (D28 : notifiés). */
+    public const RECIPIENT_TEAMS_IN_CAUSE = 'TEAMS_IN_CAUSE';
     /** Rédacteurs : tout officiel du périmètre (D15), ou seulement son délégué CNA (bilan de journée, BIL-02). */
     public const WRITERS_OFFICIALS = 'OFFICIALS';
     public const WRITERS_DELEGATE = 'DELEGATE';
