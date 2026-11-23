@@ -3602,7 +3602,8 @@
     "season": "Season {season}",
     "tab": {
       "matrix": "Coverage",
-      "summary": "Summary"
+      "summary": "Summary",
+      "facts": "Facts statement"
     },
     "level": {
       "label": "Competitions",
@@ -3700,7 +3701,43 @@
       "help": "The managers of the source season are designated for season {season}, on the same competitions; those already there are skipped.",
       "submit": "Copy"
     },
-    "missing_add": "Designate (required role, missing)"
+    "missing_add": "Designate (required role, missing)",
+    "facts": {
+      "filter": "Filter by club",
+      "help": "Quantities per club for the season, national competitions; the CNA applies the scale of annex 8.",
+      "empty": "No fact.",
+      "fact": "Fact",
+      "qualifier_label": "Detail",
+      "quantity": "Quantity",
+      "sources": "Sources",
+      "sources_count": "{n} source(s)",
+      "no_club": "Club to assign",
+      "kind": {
+        "gameday_hosted": "National gameday hosted",
+        "gameday_pitches": "Pitches × gamedays",
+        "final_hosted": "Final hosted",
+        "podium": "Podium organised",
+        "rc_provided": "Competition manager provided",
+        "official_provided": "Official provided",
+        "card": "Player card",
+        "outfit_warning": "Referee outfit warning",
+        "infraction": "Offence"
+      },
+      "qualifier": {
+        "DELEGUE_CNA": "CNA delegate",
+        "JUGE_ARBITRE": "Chief referee",
+        "ARBITRE_NJ": "Non-playing referee (host club)",
+        "yellow": "Yellow",
+        "red": "Red",
+        "black": "Black",
+        "1": "Category 1",
+        "2": "Category 2",
+        "3": "Category 3",
+        "4": "Category 4",
+        "5": "Category 5",
+        "6": "Category 6"
+      }
+    }
   },
   "competition_picker": {
     "label": "Competitions",

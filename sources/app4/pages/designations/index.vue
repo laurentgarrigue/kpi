@@ -11,7 +11,7 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-type Tab = 'matrix' | 'summary'
+type Tab = 'matrix' | 'summary' | 'facts'
 interface SummaryPerson { matric: number, name: string, club: string | null, designations: Record<string, number>, gamedays: Record<string, number> }
 interface SummaryClub { club: string | null, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
 
@@ -81,7 +81,7 @@ const loadSummary = async () => {
   }
 }
 
-const reload = () => (tab.value === 'matrix' ? loadMatrix() : loadSummary())
+const reload = () => (tab.value === 'matrix' ? loadMatrix() : tab.value === 'summary' ? loadSummary() : undefined)
 
 /** Une ligne de phases regroupées (tournoi) désigne sur chacune de ses phases. */
 const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: string) => {
@@ -140,7 +140,7 @@ onMounted(async () => {
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <div class="inline-flex rounded-md shadow-sm" role="tablist">
         <button
-          v-for="name in (['matrix', 'summary'] as Tab[])"
+          v-for="name in (['matrix', 'summary', 'facts'] as Tab[])"
           :key="name"
           type="button"
           role="tab"
@@ -255,6 +255,9 @@ onMounted(async () => {
         </div>
       </section>
     </template>
+
+    <!-- Relevé des faits pour les rétributions (REL-01 à REL-05) -->
+    <DesignationsFactsStatement v-else-if="tab === 'facts'" :season="season" />
 
     <!-- Récapitulatif par personne et par club (SUI-06) -->
     <template v-else>

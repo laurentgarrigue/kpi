@@ -4,6 +4,12 @@ namespace App\Controller;
 
 use App\Designation\Authority;
 use App\Designation\CoverageService;
+use App\Designation\Facts\FactsAggregator;
+use App\Designation\Facts\FactsCollector;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Designation\Designation;
 use App\Designation\DesignationRejected;
 use App\Designation\DesignationRepository;
@@ -45,7 +51,63 @@ final class AdminDesignationsController extends AbstractController
         private readonly DesignationRepository $repository,
         private readonly Connection $connection,
         private readonly CoverageService $coverage,
+        private readonly FactsCollector $facts,
     ) {
+    }
+
+    /**
+     * Relevé des faits pour les rétributions et pénalités (D19, § 6 ; REL-01 à REL-05) : quantités par club, sources ;
+     * `format=csv|xlsx` pour l'export. Profils 1 et 2.
+     */
+    #[Route('/facts', name: 'admin_designations_facts', methods: ['GET'])]
+    #[OA\Get(path: '/admin/designations/facts', summary: 'Relevé des faits par club (quantités, sans montant), JSON, CSV ou Excel')]
+    public function facts(Request $request): Response
+    {
+        $season = (string) $request->query->get('season', '');
+        $format = (string) $request->query->get('format', 'json');
+        if (!preg_match(self::SEASON_PATTERN, $season) || !in_array($format, ['json', 'csv', 'xlsx'], true)) {
+            return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
+        }
+        if (!$this->isDesignator()) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+        $collected = $this->facts->collect($season);
+        $rows = FactsAggregator::rows($collected['facts'], $collected['clubLabels']);
+        if ($format === 'json') {
+            return $this->json(['season' => $season, 'items' => $rows]);
+        }
+
+        $table = [['Club', 'Libellé du club', 'Fait', 'Précision', 'Quantité', 'Sources']];
+        foreach ($rows as $row) {
+            $table[] = [
+                $row['club'] ?? '',
+                $row['clubLabel'],
+                $row['fact'],
+                $row['qualifier'],
+                $row['quantity'],
+                implode(' ; ', array_map(static fn (array $d): string => sprintf('%s (%s %s)', $d['label'], $d['sourceType'], $d['sourceId']), $row['details'])),
+            ];
+        }
+        $xlsx = $format === 'xlsx';
+        $response = new StreamedResponse(static function () use ($table, $xlsx): void {
+            if ($xlsx) {
+                $spreadsheet = new Spreadsheet();
+                $spreadsheet->getActiveSheet()->fromArray($table, null, 'A1', true);
+                (new Xlsx($spreadsheet))->save('php://output');
+
+                return;
+            }
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF"); // BOM : accents corrects dans Excel
+            foreach ($table as $line) {
+                fputcsv($output, $line, ';', '"', '');
+            }
+            fclose($output);
+        });
+        $response->headers->set('Content-Type', $xlsx ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv; charset=utf-8');
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, sprintf('releve-des-faits-%s.%s', $season, $format)));
+
+        return $response;
     }
 
     /** Suivi de couverture (SUI-01 à SUI-05), réservé à ceux qui désignent : profils 1 et 2. */

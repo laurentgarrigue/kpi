@@ -3614,7 +3614,8 @@
     "season": "Saison {season}",
     "tab": {
       "matrix": "Couverture",
-      "summary": "Récapitulatif"
+      "summary": "Récapitulatif",
+      "facts": "Relevé des faits"
     },
     "level": {
       "label": "Compétitions",
@@ -3712,7 +3713,43 @@
       "help": "Les RC de la saison source sont désignés pour la saison {season}, sur les mêmes compétitions ; ceux déjà présents sont ignorés.",
       "submit": "Copier"
     },
-    "missing_add": "Désigner (rôle requis, non pourvu)"
+    "missing_add": "Désigner (rôle requis, non pourvu)",
+    "facts": {
+      "filter": "Filtrer par club",
+      "help": "Quantités par club pour la saison, compétitions nationales ; la CNA applique le barème de l'annexe 8.",
+      "empty": "Aucun fait relevé.",
+      "fact": "Fait",
+      "qualifier_label": "Précision",
+      "quantity": "Quantité",
+      "sources": "Sources",
+      "sources_count": "{n} source(s)",
+      "no_club": "Club à attribuer",
+      "kind": {
+        "gameday_hosted": "Journée nationale accueillie",
+        "gameday_pitches": "Terrains × journées",
+        "final_hosted": "Finale accueillie",
+        "podium": "Podium organisé",
+        "rc_provided": "RC fourni",
+        "official_provided": "Officiel fourni",
+        "card": "Carton de joueur",
+        "outfit_warning": "Avertissement de tenue d'arbitre",
+        "infraction": "Infraction"
+      },
+      "qualifier": {
+        "DELEGUE_CNA": "Délégué CNA",
+        "JUGE_ARBITRE": "Juge arbitre",
+        "ARBITRE_NJ": "Arbitre non-joueur (désigné par l'organisateur)",
+        "yellow": "Jaune",
+        "red": "Rouge",
+        "black": "Noir",
+        "1": "Catégorie 1",
+        "2": "Catégorie 2",
+        "3": "Catégorie 3",
+        "4": "Catégorie 4",
+        "5": "Catégorie 5",
+        "6": "Catégorie 6"
+      }
+    }
   },
   "competition_picker": {
     "label": "Compétitions",
