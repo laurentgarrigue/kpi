@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Designation\LegacyColumnsSync;
+
 use App\Entity\User;
 use App\Trait\AdminLoggableTrait;
 use App\Trait\CompetitionLockTrait;
@@ -30,7 +32,8 @@ class AdminGamedaysController extends AbstractController
     use DateValidationTrait;
 
     public function __construct(
-        private readonly Connection $connection
+        private readonly Connection $connection,
+        private readonly LegacyColumnsSync $legacyColumns,
     ) {
     }
 
@@ -344,6 +347,8 @@ class AdminGamedaysController extends AbstractController
         ];
 
         $this->connection->insert('kp_journee', $insertData);
+        // une nouvelle phase hérite des Désignations de sa compétition (FEATURE_DESIGNATIONS.md D9, DES-10)
+        $this->legacyColumns->afterGamedayChange($nextId);
 
         $this->logActionForGameday('Ajout journee', $season, $competition, $nextId, $phase);
 
@@ -626,6 +631,8 @@ class AdminGamedaysController extends AbstractController
             $insertData['Code_uti'] = $user?->getUserIdentifier();
 
             $this->connection->insert('kp_journee', $insertData);
+            // la copie hérite des Désignations de sa compétition (FEATURE_DESIGNATIONS.md D9)
+            $this->legacyColumns->afterGamedayChange($nextId);
 
             // Optionally duplicate matches
             $matchCount = 0;
@@ -1009,6 +1016,7 @@ class AdminGamedaysController extends AbstractController
         // Use REPLACE INTO for idempotent association
         $sql = "REPLACE INTO kp_evenement_journee (Id_evenement, Id_journee) VALUES (?, ?)";
         $this->connection->prepare($sql)->executeStatement([$eventId, $id]);
+        $this->legacyColumns->afterGamedayChange($id);
 
         $this->logActionForEvent('Association journee-evenement', $eventId, "Journee $id");
 
@@ -1026,6 +1034,7 @@ class AdminGamedaysController extends AbstractController
             'Id_evenement' => $eventId,
             'Id_journee' => $id,
         ]);
+        $this->legacyColumns->afterGamedayChange($id, leftEventId: $eventId);
 
         $this->logActionForEvent('Dissociation journee-evenement', $eventId, "Journee $id");
 

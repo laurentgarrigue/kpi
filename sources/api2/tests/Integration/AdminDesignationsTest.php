@@ -140,6 +140,6 @@ final class AdminDesignationsTest extends ApiTestCase
      */
     private function create(string $user, array $body, int $expectedStatus): array
     {
-        return $this->requestAs($user, 'POST', '/admin/designations', ['season' => '2998'] + $body, $expectedStatus);
+        return $this->requestAs($user, 'POST', '/admin/designations', $body + ['season' => '2998'], $expectedStatus);
     }
 }

@@ -121,6 +121,89 @@ final class DesignationRepository
         return new GamedayScope($gamedayId, $row['Code_saison'], $row['Code_competition'], $eventIds);
     }
 
+    /**
+     * Journées couvertes par un périmètre (D9) : une journée, les journées d'une compétition ou d'un événement dans la
+     * saison. Niveau et équipe ne couvrent aucune journée pour la recopie legacy.
+     *
+     * @return list<int>
+     */
+    public function gamedayIdsOf(string $season, ScopeType $scopeType, string $scopeId): array
+    {
+        $sql = match ($scopeType) {
+            ScopeType::Journee => 'SELECT Id FROM kp_journee WHERE Id = ? AND Code_saison = ?',
+            ScopeType::Competition => 'SELECT Id FROM kp_journee WHERE Code_competition = ? AND Code_saison = ?',
+            ScopeType::Evenement => 'SELECT j.Id FROM kp_evenement_journee ej JOIN kp_journee j ON j.Id = ej.Id_journee WHERE ej.Id_evenement = ? AND j.Code_saison = ?',
+            ScopeType::Niveau, ScopeType::Equipe => null,
+        };
+
+        return $sql === null ? [] : array_map('intval', $this->connection->fetchFirstColumn($sql, [$scopeId, $season]));
+    }
+
+    /**
+     * Rôles des Désignations posées sur la journée, sa compétition ou les événements donnés.
+     *
+     * @param list<int> $eventIds
+     *
+     * @return list<string>
+     */
+    public function rolesAround(GamedayScope $gameday, array $eventIds): array
+    {
+        $sql = "SELECT DISTINCT role FROM kp_designation WHERE saison = ? AND (
+                    (perimetre_type = 'JOURNEE' AND perimetre_id = ?)
+                    OR (perimetre_type = 'COMPETITION' AND perimetre_id = ?)";
+        $params = [$gameday->season, (string) $gameday->gamedayId, $gameday->competitionCode];
+        if ($eventIds !== []) {
+            $sql .= sprintf(" OR (perimetre_type = 'EVENEMENT' AND perimetre_id IN (%s))", implode(',', array_fill(0, count($eventIds), '?')));
+            array_push($params, ...array_map('strval', $eventIds));
+        }
+
+        return $this->connection->fetchFirstColumn($sql . ') ORDER BY role', $params);
+    }
+
+    /**
+     * Libellé legacy « NOM Prénom (licence) » de chaque licence.
+     *
+     * @param list<int> $matrics
+     *
+     * @return array<int, string>
+     */
+    public function personLabels(array $matrics): array
+    {
+        if ($matrics === []) {
+            return [];
+        }
+        $rows = $this->connection->fetchAllAssociative(
+            sprintf('SELECT Matric, Nom, Prenom FROM kp_licence WHERE Matric IN (%s)', implode(',', array_fill(0, count($matrics), '?'))),
+            $matrics,
+        );
+        $labels = [];
+        foreach ($rows as $row) {
+            $labels[(int) $row['Matric']] = LegacyGamedayColumns::personLabel((int) $row['Matric'], $row['Nom'], $row['Prenom']);
+        }
+
+        return $labels;
+    }
+
+    /** @param array<string, string|null> $columns */
+    public function updateGamedayColumns(int $gamedayId, array $columns): void
+    {
+        if ($columns !== []) {
+            $this->connection->update('kp_journee', $columns, ['Id' => $gamedayId]);
+        }
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $operation
+     *
+     * @return T
+     */
+    public function transactional(callable $operation): mixed
+    {
+        return $this->connection->transactional(static fn (): mixed => $operation());
+    }
+
     public function insert(Designation $designation, string $createdBy): int
     {
         $this->connection->insert('kp_designation', [

@@ -212,8 +212,10 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
 - **DES-10** — Étant donné une compétition de type CP désignée une fois, quand on ajoute une phase, alors la
   nouvelle phase hérite des Désignations sans action.
 - **DES-11** — Étant donné une modification de Désignation qui touche une journée, alors les colonnes legacy de
-  `kp_journee` (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`) valent « NOM Prénom » des
-  Désignations effectives de la journée.
+  `kp_journee` (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`, `Responsable_insc`) valent
+  « NOM Prénom (licence) » (format legacy) des Désignations effectives de la journée, pour les **rôles touchés** par
+  le changement ; la colonne d'un rôle qu'aucune Désignation ne touche reste telle quelle (transition, ADR-0002). La
+  création d'une phase et la (dés)association à un événement recopient aussi les rôles hérités.
 
 **Absorption de `kp_rc` et legacy (D4, ADR-0002)**
 

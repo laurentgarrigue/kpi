@@ -10,8 +10,10 @@ use App\Entity\User;
  */
 final class DesignationService
 {
-    public function __construct(private readonly DesignationRepository $repository)
-    {
+    public function __construct(
+        private readonly DesignationRepository $repository,
+        private readonly LegacyColumnsSync $legacyColumns,
+    ) {
     }
 
     /**
@@ -53,9 +55,14 @@ final class DesignationService
         }
 
         $designation = new Designation(0, $season, $role, $scopeType, $scopeId, $matric, $licence['club'], $authority, $order, $quality);
-        $id = $this->repository->insert($designation, $user->getUserIdentifier());
 
-        return $this->repository->find($id) ?? throw DesignationRejected::notFound();
+        return $this->repository->transactional(function () use ($designation, $user): Designation {
+            $created = $this->repository->find($this->repository->insert($designation, $user->getUserIdentifier()))
+                ?? throw DesignationRejected::notFound();
+            $this->legacyColumns->afterDesignationChange($created);
+
+            return $created;
+        });
     }
 
     /**
@@ -89,9 +96,15 @@ final class DesignationService
         if (array_key_exists('quality', $changes)) {
             $columns['qualite'] = $changes['quality'];
         }
-        $this->repository->update($id, $columns);
 
-        return $this->repository->find($id) ?? throw DesignationRejected::notFound();
+        return $this->repository->transactional(function () use ($id, $columns): Designation {
+            $this->repository->update($id, $columns);
+            $updated = $this->repository->find($id) ?? throw DesignationRejected::notFound();
+            // l'ordre décide quelle colonne Arb_nj<n> reçoit chaque arbitre non-joueur
+            $this->legacyColumns->afterDesignationChange($updated);
+
+            return $updated;
+        });
     }
 
     /**
@@ -101,7 +114,10 @@ final class DesignationService
     {
         $designation = $this->repository->find($id) ?? throw DesignationRejected::notFound();
         $this->assertCanDesignate($user, $designation);
-        $this->repository->delete($id);
+        $this->repository->transactional(function () use ($designation): void {
+            $this->repository->delete($designation->id);
+            $this->legacyColumns->afterDesignationChange($designation);
+        });
 
         return $designation;
     }

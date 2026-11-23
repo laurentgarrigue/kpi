@@ -19,3 +19,5 @@ DES-02, DES-03, DES-04, DES-06, DES-07.
   Erreurs renvoyées `{ "error": code }` : 400 `invalid`, 403 `forbidden`, 404 `not_found`, 409 `duplicate`,
   422 `role_unknown` · `scope_not_allowed` · `authority_not_allowed` · `scope_full` · `scope_unknown` · `licence_unknown`.
   Un événement appartient à une saison s'il contient au moins une journée de cette saison.
+- 2026-11-23 — `make api2_test` : 1 échec, `testAnUnknownScopeIsRefused`, dû au test (union de tableaux qui gardait
+  la saison 2998) ; corrigé.

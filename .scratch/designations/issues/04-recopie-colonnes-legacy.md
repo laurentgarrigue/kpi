@@ -14,3 +14,9 @@ Après chaque écriture de Désignation (et (dés)association journée ↔ évé
 DES-11.
 
 ## Comments
+
+- 2026-11-23 — Implémenté (`LegacyGamedayColumns`, `LegacyColumnsSync`, crochets dans `DesignationService` et
+  `AdminGamedaysController` : création, duplication, association et dissociation d'événement). Format legacy
+  « NOM Prénom (licence) ». Seuls les rôles touchés sont réécrits. Non couverts : import d'événement
+  (`EventExportImportService`) et copie de compétition (nouvelle saison, donc sans Désignation). Tests écrits, non
+  exécutés dans la session cloud.
