@@ -16,3 +16,5 @@ Spec : [FEATURE_DESIGNATIONS.md](../../../DOC/specs/FEATURE_DESIGNATIONS.md) (D2
 DES-01, DES-05 ; tests unitaires du catalogue (chaque rôle de la spec présent avec ses valeurs).
 
 ## Comments
+
+- 2026-11-23 — Implémenté sur `claude/spec-designations-bilan-journee`. Tests écrits mais **non exécutés** dans la session cloud (Composer ne peut pas télécharger depuis GitHub, pas de Docker) : lancer `make api2_test` avant de clore.

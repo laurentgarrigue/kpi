@@ -762,3 +762,30 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCOREP', '', 'Table PCM Test', 'scorep@example.test', '', '', 9, '|PCM|', '|2997|', '', '', NULL, ''),  -- profil 9 : feuille de match, aucune copie
   ('TVIEWP', '', 'Lecteur PCM Test', 'viewp@example.test', '', '', 8, '|PCM|', '|2997|', '', '', NULL, '');  -- profil 8 : lecture seule
 -- ---------------------------------------------------------------- fin copie de composition de match
+
+-- ---------------------------------------------------------------- désignations (FEATURE_DESIGNATIONS.md, ticket 03)
+-- Saison 2998 : NDES nationale (journées 9801, 9802 dans l'événement 9801), REGDES régionale (journée 9803),
+-- équipe 9801 (NDES, club C001). Licenciés 9811 (C001, délégué CNA de l'événement 9801 et compte « 9811 » de
+-- profil 5), 9812 (C002), 9813 (sans club). Compte TSUPER (profil 1), TADMIN (profil 2), TDIV (profil 3).
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`) VALUES
+  ('NDES', '2998', 'NAT', 'Nationale Désignations', '', '', '', 'N', 'NDES'),
+  ('REGDES', '2998', 'REG', 'Régionale Désignations', '', '', '', 'N', 'REGDES');
+INSERT INTO `kp_journee` (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Lieu`) VALUES
+  (9801, 'NDES', '2998', '2998-03-07', '2998-03-08', 'Étape 1', 'Désiville'),
+  (9802, 'NDES', '2998', '2998-03-07', '2998-03-08', 'Étape 1 bis', 'Désiville'),
+  (9803, 'REGDES', '2998', '2998-04-04', '2998-04-04', 'Régionale', 'Régiville');
+INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `app`) VALUES
+  (9801, 'Étape Désignations', 'Désiville', '2998-03-07', '2998-03-08', 'N', 'N');
+INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES (9801, 9801), (9801, 9802);
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`) VALUES
+  (9801, 'NDES', '2998', 'Désignés Un', 'C001');
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9811, '2998', 'DESIGNE', 'Délégué', 'M', 'C001', 'Actif'),
+  (9812, '2998', 'DESIGNE', 'Arbitre', 'F', 'C002', 'Actif'),
+  (9813, '2998', 'DESIGNE', 'Sansclub', 'M', NULL, 'Actif');
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('9811', '', 'Délégué Désigné', 'delegue@example.test', '', '', 5, '|NDES|', '|2998|', '', '');
+INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
+  (9801, '2998', 'DELEGUE_CNA', 'EVENEMENT', '9801', 9811, 'C001', 'CNA', 1);
+-- ---------------------------------------------------------------- fin désignations

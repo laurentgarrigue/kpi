@@ -14,3 +14,5 @@ Service pur qui, pour une journée et un rôle, choisit la Désignation la plus 
 DES-08, DES-09, DES-10 ; base de SUI-03.
 
 ## Comments
+
+- 2026-11-23 — Implémenté sur `claude/spec-designations-bilan-journee`. Tests écrits mais **non exécutés** dans la session cloud (Composer ne peut pas télécharger depuis GitHub, pas de Docker) : lancer `make api2_test` avant de clore.

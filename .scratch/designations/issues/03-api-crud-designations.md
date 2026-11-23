@@ -14,3 +14,8 @@ Spec : [FEATURE_DESIGNATIONS.md](../../../DOC/specs/FEATURE_DESIGNATIONS.md) (D5
 DES-02, DES-03, DES-04, DES-06, DES-07.
 
 ## Comments
+
+- 2026-11-23 — Implémenté sur `claude/spec-designations-bilan-journee`. Tests écrits mais **non exécutés** dans la session cloud (Composer ne peut pas télécharger depuis GitHub, pas de Docker) : lancer `make api2_test` avant de clore.
+  Erreurs renvoyées `{ "error": code }` : 400 `invalid`, 403 `forbidden`, 404 `not_found`, 409 `duplicate`,
+  422 `role_unknown` · `scope_not_allowed` · `authority_not_allowed` · `scope_full` · `scope_unknown` · `licence_unknown`.
+  Un événement appartient à une saison s'il contient au moins une journée de cette saison.
