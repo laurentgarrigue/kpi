@@ -2,7 +2,7 @@
 
 **Version** : 1.2
 **Date** : 2026-02-14
-**Status** : Implemented
+**Status** : ❌ Retirée le 2026-11-23 — remplacée par les Désignations ([FEATURE_DESIGNATIONS.md](FEATURE_DESIGNATIONS.md)) : un RC est une Désignation de rôle `RC` (bloc Désignations de la compétition, page Référentiels › Désignations, copie des RC d'une saison à l'autre). `kp_rc` est une vue en lecture seule (ADR-0003). Ce document reste comme historique.
 **Legacy PHP** : GestionRc.php + GestionRc.tpl + GestionRc.js
 
 ---

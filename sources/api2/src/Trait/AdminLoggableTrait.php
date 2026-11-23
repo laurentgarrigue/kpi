@@ -104,7 +104,7 @@ trait AdminLoggableTrait
 
     /**
      * Log an admin action with season and competition context.
-     * Used by AdminRcController and other controllers managing competition-level data.
+     * Used by controllers managing competition-level data.
      */
     private function logActionForCompetition(
         string $action,

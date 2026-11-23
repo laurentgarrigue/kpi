@@ -387,7 +387,7 @@ Legacy utilise `UpdateCellJQ.php` avec une table whitelist. En API2, créer un e
 > retirer ; profils 1–2, délégué CNA pour le jury). Les colonnes `Responsable_insc`, `Responsable_R1`, `Delegue`,
 > `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5` sont recopiées depuis les Désignations et ne sont plus envoyées par le
 > formulaire. La description ci-dessous est l'ancienne saisie, conservée pour l'historique ; l'action en masse
-> « Officiels » (copie des colonnes d'une journée à d'autres) existe encore.
+> « Officiels » (copie des officiels et du calendrier d'une journée à d'autres) a été retirée.
 
 La gestion des officiels, précédemment dans une page séparée (GestionInstances.php), est **intégrée dans le formulaire modal** sous forme d'une section collapsible.
 

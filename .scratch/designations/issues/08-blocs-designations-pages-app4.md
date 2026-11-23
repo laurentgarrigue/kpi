@@ -23,3 +23,8 @@ DES-07 (côté écran), SUI-03 (affichage de l'héritage).
   de la page RC). Événements et équipes : bouton « Désignations » (profils 1–2). **Non fait** : la page RC reste au
   menu (copie des RC entre saisons) ; l'action en masse « Officiels » des journées écrit encore les colonnes legacy
   directement (à retirer ou à remplacer par une copie de Désignations : à décider).
+- 2026-11-23 — Décisions : action en masse « Officiels » des journées **retirée** (app4 et
+  `PATCH /admin/gamedays/bulk/officials`) ; page RC **retirée** (app4 `pages/rc`, menu, `AdminRcController` et son
+  test ; la copie des RC d'une saison passe dans la page Désignations, `POST /admin/operations/seasons/copy-rc`
+  inchangé ; les tests utiles deviennent `DesignationRcTest`). Lignes de tournoi : « n phases » sans les noms.
+  Les nouveaux composants demandent un redémarrage du serveur de dev (`make app4_dev_restart`).

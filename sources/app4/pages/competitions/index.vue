@@ -287,8 +287,7 @@ const canEdit = computed(() => authStore.profile <= 3)
 const canDelete = computed(() => authStore.profile <= 2)
 const canTogglePublish = computed(() => authStore.profile <= 4)
 const canToggleLock = computed(() => authStore.profile <= 4)
-// RC (Responsables de Compétition) management is reserved to profile <= 2, same as
-// admin/rc backend routes (AdminRcController, #[IsGranted('ROLE_ADMIN')] at class level).
+// Désignations of the competition (RC and officials) are written by profiles <= 2 (FEATURE_DESIGNATIONS.md DES-06)
 const canManageRc = computed(() => authStore.profile <= 2)
 // Whether the Actions column has anything to show at all for the current profile
 const showActionsColumn = computed(() => canManageRc.value || canDelete.value)

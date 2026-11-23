@@ -3679,7 +3679,7 @@
       "managers": "Managers",
       "gamedays": "Gamedays"
     },
-    "phases": "{n} phases: {phases}",
+    "phases": "{n} phases",
     "roles_picker": {
       "label": "Roles",
       "all": "All"
@@ -3689,6 +3689,11 @@
       "help": "In italics: designated on the competition or the event (inherited). The gameday officials fields (sheets, PDF, legacy pages) are copied automatically.",
       "title": "Designations — {line}",
       "button": "Designations"
+    },
+    "copy_rc": {
+      "label": "Copy the competition managers of season",
+      "button": "Copy",
+      "done": "{copied} managers copied ({skipped} already there)"
     }
   },
   "competition_picker": {

@@ -3691,7 +3691,7 @@
       "managers": "Responsables",
       "gamedays": "Journées"
     },
-    "phases": "{n} phases : {phases}",
+    "phases": "{n} phases",
     "roles_picker": {
       "label": "Rôles",
       "all": "Tous"
@@ -3701,6 +3701,11 @@
       "help": "En italique : désigné sur la compétition ou l'événement (hérité). Les champs officiels de la journée (feuilles, PDF, pages legacy) sont recopiés automatiquement.",
       "title": "Désignations — {line}",
       "button": "Désignations"
+    },
+    "copy_rc": {
+      "label": "Copier les RC de la saison",
+      "button": "Copier",
+      "done": "{copied} RC copiés ({skipped} déjà présents)"
     }
   },
   "competition_picker": {

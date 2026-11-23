@@ -170,11 +170,6 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
   }
   if (profile <= 2) {
     referentials.push({
-      to: '/rc',
-      icon: 'heroicons:identification',
-      label: t('menu.rc')
-    })
-    referentials.push({
       to: '/referees-pool',
       icon: 'heroicons:flag',
       label: t('menu.referees_pool')

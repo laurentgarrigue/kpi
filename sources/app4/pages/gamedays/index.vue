@@ -39,7 +39,6 @@ const duplicateConfirmOpen = ref(false)
 const bulkDeleteConfirmOpen = ref(false)
 const bulkPublishConfirmOpen = ref(false)
 const bulkCalendarModalOpen = ref(false)
-const bulkOfficialsModalOpen = ref(false)
 const officialsModalOpen = ref(false)
 
 // Form
@@ -62,7 +61,6 @@ const bulkCalendarData = ref<Omit<GamedayBulkCalendarData, 'ids'>>({
 })
 
 // Bulk officials
-const bulkOfficialsSourceId = ref<number | null>(null)
 
 // Officials modal: Désignations de la journée (FEATURE_DESIGNATIONS.md § 8.4, ticket designations/08)
 const officialsGameday = ref<Gameday | null>(null)
@@ -610,41 +608,6 @@ const getOfficialsSummary = (g: Gameday): string => {
   return parts.length > 0 ? parts.join(', ') : '-'
 }
 
-// ─── Bulk Officials Copy (Feature 1) ───
-const bulkOfficialsSource = computed(() => {
-  if (!bulkOfficialsSourceId.value) return null
-  return gamedays.value.find(g => g.id === bulkOfficialsSourceId.value) ?? null
-})
-
-const openBulkOfficialsModal = () => {
-  bulkOfficialsSourceId.value = null
-  bulkOfficialsModalOpen.value = true
-}
-
-const submitBulkOfficials = async () => {
-  if (!bulkOfficialsSourceId.value) return
-  formSaving.value = true
-  try {
-    const targetIds = selectedIds.value.filter(id => id !== bulkOfficialsSourceId.value)
-    const response = await api.patch<{ updated: number }>('/admin/gamedays/bulk/officials', {
-      sourceId: bulkOfficialsSourceId.value,
-      ids: targetIds,
-    })
-    toast.add({
-      title: t('common.success'),
-      description: t('gamedays.bulk_officials_updated', { count: response.updated }),
-      color: 'success',
-    })
-    bulkOfficialsModalOpen.value = false
-    selectedIds.value = []
-    await loadGamedays()
-  } catch {
-    // Error already shown by useApi
-  } finally {
-    formSaving.value = false
-  }
-}
-
 // ─── Officials Modal (Feature 2) : bloc Désignations de la journée ───
 const openOfficialsModal = (g: Gameday) => {
   officialsGameday.value = g
@@ -744,14 +707,6 @@ const printJurySheet = (gameday: Gameday | null) => {
             >
               <UIcon name="heroicons:calendar-days" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               {{ t('gamedays.calendar_public') }}
-            </button>
-            <button
-              v-if="showCPColumns"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="openBulkOfficialsModal(); bulkActionsOpen = false"
-            >
-              <UIcon name="heroicons:user-group" class="w-5 h-5 text-amber-700 dark:text-amber-300" />
-              {{ t('gamedays.bulk_officials_title') }}
             </button>
 
             <!-- ── Danger section ── -->
@@ -1515,73 +1470,6 @@ const printJurySheet = (gameday: Gameday | null) => {
       </form>
     </AdminModal>
 
-    <!-- ═══════ BULK OFFICIALS COPY MODAL (Feature 1) ═══════ -->
-    <AdminModal
-      :open="bulkOfficialsModalOpen"
-      :title="t('gamedays.bulk_officials_title')"
-      max-width="lg"
-      @close="bulkOfficialsModalOpen = false"
-    >
-      <div class="space-y-4">
-        <p class="text-sm text-header-900 dark:text-header-50">
-          {{ t('gamedays.bulk_officials_hint', { count: selectedIds.length }) }}
-        </p>
-
-        <!-- Source phase selector -->
-        <div>
-          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.bulk_officials_source') }}</label>
-          <select
-            v-model.number="bulkOfficialsSourceId"
-            class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500"
-          >
-            <option :value="null">{{ t('gamedays.bulk_officials_select_source') }}</option>
-            <option v-for="g in gamedays" :key="g.id" :value="g.id">
-              #{{ g.id }} - {{ g.phase || '?' }} ({{ g.nom || '-' }})
-            </option>
-          </select>
-        </div>
-
-        <!-- Preview of source data -->
-        <div v-if="bulkOfficialsSource" class="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm space-y-1">
-          <p class="font-medium text-amber-800 dark:text-amber-200 mb-2">{{ t('gamedays.bulk_officials_preview') }}</p>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-header-900 dark:text-header-50">
-            <div class="text-success-700 dark:text-success-300 font-medium col-span-2 mt-1">{{ t('gamedays.calendar_public') }}</div>
-            <div>{{ t('gamedays.field.nom') }}: <span class="font-medium">{{ bulkOfficialsSource.nom || '-' }}</span></div>
-            <div>{{ t('gamedays.field.lieu') }}: <span class="font-medium">{{ bulkOfficialsSource.lieu || '-' }} {{ bulkOfficialsSource.departement ? `(${bulkOfficialsSource.departement})` : '' }}</span></div>
-            <div>{{ t('gamedays.field.date_debut') }}: <span class="font-medium">{{ formatDate(bulkOfficialsSource.dateDebut) }}</span></div>
-            <div>{{ t('gamedays.field.date_fin') }}: <span class="font-medium">{{ formatDate(bulkOfficialsSource.dateFin) }}</span></div>
-            <div class="text-amber-800 dark:text-amber-200 font-medium col-span-2 mt-1">{{ t('gamedays.field.officiels') }}</div>
-            <div v-if="bulkOfficialsSource.responsableInsc">{{ t('gamedays.field.responsable_insc') }}: {{ bulkOfficialsSource.responsableInsc }}</div>
-            <div v-if="bulkOfficialsSource.responsableR1">{{ t('gamedays.field.responsable_r1') }}: {{ bulkOfficialsSource.responsableR1 }}</div>
-            <div v-if="bulkOfficialsSource.delegue">{{ t('gamedays.field.delegue') }}: {{ bulkOfficialsSource.delegue }}</div>
-            <div v-if="bulkOfficialsSource.chefArbitre">{{ t('gamedays.field.chef_arbitre') }}: {{ bulkOfficialsSource.chefArbitre }}</div>
-            <div v-if="bulkOfficialsSource.repAthletes">{{ t('gamedays.field.rep_athletes') }}: {{ bulkOfficialsSource.repAthletes }}</div>
-            <div v-if="bulkOfficialsSource.arbNj1">{{ t('gamedays.field.arb_nj') }} 1: {{ bulkOfficialsSource.arbNj1 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj2">{{ t('gamedays.field.arb_nj') }} 2: {{ bulkOfficialsSource.arbNj2 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj3">{{ t('gamedays.field.arb_nj') }} 3: {{ bulkOfficialsSource.arbNj3 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj4">{{ t('gamedays.field.arb_nj') }} 4: {{ bulkOfficialsSource.arbNj4 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj5">{{ t('gamedays.field.arb_nj') }} 5: {{ bulkOfficialsSource.arbNj5 }}</div>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-4 border-t">
-          <button
-            type="button"
-            class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
-            @click="bulkOfficialsModalOpen = false"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50"
-            :disabled="formSaving || !bulkOfficialsSourceId"
-            @click="submitBulkOfficials"
-          >
-            {{ formSaving ? t('common.loading') : t('common.confirm') }}
-          </button>
-        </div>
-      </div>
-    </AdminModal>
 
     <!-- ═══════ OFFICIALS MODAL (Feature 2) ═══════ -->
     <AdminModal
