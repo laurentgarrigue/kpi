@@ -55,13 +55,21 @@ final class ReportAnswers
         return ['answers' => $clean, 'errors' => $errors];
     }
 
+    /** Date réelle au format AAAA-MM-JJ : PHP accepte « 2998-02-30 » en le décalant au 2 mars, on le refuse. */
+    private static function isCalendarDate(string $value): bool
+    {
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date !== false && $date->format('Y-m-d') === $value;
+    }
+
     private static function value(ReportField $field, mixed $value): mixed
     {
         return match ($field->type) {
             ReportField::TEXT => is_string($value) && mb_strlen($value) <= ReportField::MAX_TEXT_LENGTH ? trim($value) : null,
             ReportField::TEXTAREA => is_string($value) && mb_strlen($value) <= ReportField::MAX_TEXTAREA_LENGTH ? trim($value) : null,
             ReportField::NUMBER => is_int($value) || is_float($value) ? $value : null,
-            ReportField::DATE => is_string($value) && \DateTimeImmutable::createFromFormat('!Y-m-d', $value) !== false && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : null,
+            ReportField::DATE => is_string($value) && self::isCalendarDate($value) ? $value : null,
             ReportField::TIME => is_string($value) && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $value) ? $value : null,
             ReportField::CHECKBOX => is_bool($value) ? $value : null,
             ReportField::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : null,
