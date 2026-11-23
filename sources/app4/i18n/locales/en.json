@@ -67,7 +67,8 @@
     "public_site_beta": "New public site (beta)",
     "scrutineering": "Scrutineering",
     "medals": "Medals",
-    "designations": "Designations"
+    "designations": "Designations",
+    "reports": "Reports"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -3706,5 +3707,69 @@
     "select_shown": "Tick the shown competitions",
     "clear": "Untick all",
     "none": "No competition"
+  },
+  "reports": {
+    "title": "Official reports",
+    "write": "Write an official report",
+    "empty": "No report.",
+    "late": "late",
+    "version": "form v{version}",
+    "entered_by": "entered by {code}",
+    "for_author": "for licence {matric}",
+    "new": {
+      "title": "New report: {line}",
+      "type": "Type",
+      "author": "Author (if you enter it for a referee)",
+      "author_placeholder": "Referee licence",
+      "submit": "Create the draft",
+      "help": "A report is written by an official of the perimeter; they may enter the one of a designated referee, filled in on the blank PDF."
+    },
+    "blank": "Blank PDF: {type}",
+    "filter": {
+      "type": "Type",
+      "state": "State",
+      "all": "All"
+    },
+    "state": {
+      "BROUILLON": "Draft",
+      "SOUMIS": "Submitted"
+    },
+    "scope": {
+      "COMPETITION": "Competition",
+      "EVENEMENT": "Event",
+      "JOURNEE": "Gameday",
+      "MATCH": "Game"
+    },
+    "column": {
+      "type": "Report",
+      "scope": "Perimeter",
+      "state": "State",
+      "entered_by": "Entered by"
+    },
+    "kpi": "KPI data",
+    "kpi_label": "Perimeter",
+    "kpi_competitions": "Competitions",
+    "kpi_dates": "Dates",
+    "kpi_place": "Place",
+    "kpi_match": "Game",
+    "kpi_referees": "Referees",
+    "save": "Save the draft",
+    "submit": "Submit",
+    "saved": "Draft saved",
+    "submitted": "Report submitted and sent to its recipients",
+    "missing": "{n} required field(s) to fill",
+    "pdf": "PDF",
+    "reopen": {
+      "button": "Reopen",
+      "title": "Reopen the report",
+      "reason": "Reason (kept in the log)"
+    },
+    "submissions": "Submissions",
+    "submission": "Submission {number} of {date} by {by}",
+    "error": {
+      "required": "Required",
+      "invalid": "Invalid value",
+      "unknown": "Unknown field"
+    }
   }
 }

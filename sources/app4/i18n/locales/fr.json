@@ -67,7 +67,8 @@
     "public_site_beta": "Nouveau site public (bêta)",
     "scrutineering": "Scrutineering",
     "medals": "Médailles",
-    "designations": "Désignations"
+    "designations": "Désignations",
+    "reports": "Rapports"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -3718,5 +3719,69 @@
     "select_shown": "Cocher les compétitions affichées",
     "clear": "Tout décocher",
     "none": "Aucune compétition"
+  },
+  "reports": {
+    "title": "Rapports officiels",
+    "write": "Rédiger un rapport officiel",
+    "empty": "Aucun rapport.",
+    "late": "hors délai",
+    "version": "modèle v{version}",
+    "entered_by": "saisi par {code}",
+    "for_author": "pour la licence {matric}",
+    "new": {
+      "title": "Nouveau rapport : {line}",
+      "type": "Type",
+      "author": "Auteur (si vous saisissez pour un arbitre)",
+      "author_placeholder": "Licence de l'arbitre",
+      "submit": "Créer le brouillon",
+      "help": "Un rapport est rédigé par un officiel du périmètre ; il peut saisir celui d'un arbitre désigné, rempli sur le PDF vierge."
+    },
+    "blank": "PDF vierge : {type}",
+    "filter": {
+      "type": "Type",
+      "state": "État",
+      "all": "Tous"
+    },
+    "state": {
+      "BROUILLON": "Brouillon",
+      "SOUMIS": "Soumis"
+    },
+    "scope": {
+      "COMPETITION": "Compétition",
+      "EVENEMENT": "Événement",
+      "JOURNEE": "Journée",
+      "MATCH": "Match"
+    },
+    "column": {
+      "type": "Rapport",
+      "scope": "Périmètre",
+      "state": "État",
+      "entered_by": "Saisi par"
+    },
+    "kpi": "Données KPI",
+    "kpi_label": "Périmètre",
+    "kpi_competitions": "Compétitions",
+    "kpi_dates": "Dates",
+    "kpi_place": "Lieu",
+    "kpi_match": "Match",
+    "kpi_referees": "Arbitres",
+    "save": "Enregistrer le brouillon",
+    "submit": "Soumettre",
+    "saved": "Brouillon enregistré",
+    "submitted": "Rapport soumis et envoyé aux destinataires",
+    "missing": "{n} champ(s) obligatoire(s) à remplir",
+    "pdf": "PDF",
+    "reopen": {
+      "button": "Rouvrir",
+      "title": "Rouvrir le rapport",
+      "reason": "Motif (gardé au journal)"
+    },
+    "submissions": "Soumissions",
+    "submission": "Soumission {number} du {date} par {by}",
+    "error": {
+      "required": "Obligatoire",
+      "invalid": "Valeur invalide",
+      "unknown": "Champ inconnu"
+    }
   }
 }

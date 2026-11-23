@@ -180,6 +180,14 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.designations')
     })
   }
+  // Rapports officiels : chacun voit ceux qu'il peut lire (rédacteur, auteur, destinataire, profils 1–2)
+  if (profile <= 8) {
+    referentials.push({
+      to: '/reports',
+      icon: 'heroicons:document-text',
+      label: t('menu.reports')
+    })
+  }
   if (referentials.length > 0) {
     groups.push({
       key: 'referentials',

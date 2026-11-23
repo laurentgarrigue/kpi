@@ -14,3 +14,14 @@ Spec : [FEATURE_DESIGNATIONS.md](../../../DOC/specs/FEATURE_DESIGNATIONS.md) (D1
 RAP-01 à RAP-07, RAP-10.
 
 ## Comments
+
+- 2026-11-23 — Implémenté. api2 : `src/Report/` (catalogue `ReportTypeCatalog` versionné avec INCIDENT v1 pour
+  éprouver le moteur, `ReportAnswers` validation et sommes calculées, `ReportPerimeters`, `ReportPeople` officiels D15
+  et destinataires D28, `ReportService`, `ReportPdf` sur `sections.html.twig`), `AdminReportsController`, e-mail
+  `NotificationService::sendReportSubmitted` avec le PDF joint. **Écart à la spec** : pas de table `kp_report_pdf` ;
+  chaque soumission est figée dans `kp_report_submission` (réponses, données KPI, destinataires) et son PDF est
+  rendu à la demande, ce qui garde tous les PDF soumis (spec § 8.1 mise à jour). app4 : `pages/reports` (liste,
+  création depuis un périmètre avec auteur arbitre facultatif, PDF vierge), `pages/reports/[id].vue` (formulaire
+  rendu depuis la définition de la version, brouillon, soumission, réouverture avec motif, PDF par soumission), lien
+  « Rédiger un rapport officiel » dans le bloc Désignations, menu Référentiels › Rapports (profils ≤ 8).
+  Rapports sur un match : pas encore de point d'entrée depuis la page des matchs (ticket 11).
