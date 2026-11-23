@@ -30,6 +30,9 @@
     <php>
         <ini name="display_errors" value="1"/>
         <ini name="error_reporting" value="-1"/>
+        <!-- La suite d'intégration tourne dans un seul processus et atteignait 111 Mo sur 128 ; un export Excel
+             (PhpSpreadsheet / zipstream) réserve 16 Mo d'un coup. -->
+        <ini name="memory_limit" value="512M"/>
         <server name="APP_ENV" value="test" force="true"/>
         <server name="SHELL_VERBOSITY" value="-1"/>
         <!-- Les tests d'intégration sont ignorés si cette variable ne vaut pas 1.
