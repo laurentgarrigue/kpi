@@ -3769,7 +3769,7 @@
       "scope": "Attached to",
       "selected": "Attached to: {label}",
       "search_label": "Search the linked item",
-      "search_placeholder": "Event, competition, gameday, place, team or game number (at least 2 characters)",
+      "search_placeholder": "Event, competition, gameday, place, team (at least 2 characters) or game number",
       "no_result": "No result in the season."
     },
     "blank": "Blank PDF: {type}",

@@ -3781,7 +3781,7 @@
       "scope": "Rattaché à",
       "selected": "Rattaché à : {label}",
       "search_label": "Rechercher l'élément lié",
-      "search_placeholder": "Événement, compétition, journée, lieu, équipe ou n° de match (2 caractères au moins)",
+      "search_placeholder": "Événement, compétition, journée, lieu, équipe (2 caractères au moins) ou n° de match",
       "no_result": "Aucun résultat dans la saison."
     },
     "blank": "PDF vierge : {type}",

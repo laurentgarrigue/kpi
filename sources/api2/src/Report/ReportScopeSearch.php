@@ -26,7 +26,8 @@ final class ReportScopeSearch
     public function search(string $season, string $query, array $scopes): array
     {
         $query = trim($query);
-        if (mb_strlen($query) < self::MIN_LENGTH) {
+        // un numéro de match peut tenir en un chiffre : la longueur minimale ne vaut que pour un texte
+        if ($query === '' || (!ctype_digit($query) && mb_strlen($query) < self::MIN_LENGTH)) {
             return [];
         }
         $like = '%' . addcslashes($query, '%_\\') . '%';

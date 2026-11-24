@@ -23,8 +23,11 @@ const loading = ref(false)
 const selected = ref<ScopeItem | null>(null)
 let timer: ReturnType<typeof setTimeout> | undefined
 
+/** Un texte de 2 caractères au moins, ou un numéro de match (un chiffre suffit). */
+const searchable = computed(() => /^\d+$/.test(query.value.trim()) || query.value.trim().length >= MIN_LENGTH)
+
 const search = async () => {
-  if (query.value.trim().length < MIN_LENGTH || !props.season) {
+  if (!searchable.value || !props.season) {
     items.value = []
     return
   }
@@ -79,7 +82,7 @@ const submit = () => {
       </fieldset>
 
       <p v-if="loading" class="text-sm text-header-500">{{ t('common.loading') }}</p>
-      <p v-else-if="query.trim().length >= MIN_LENGTH && items.length === 0" class="text-sm text-header-500">{{ t('reports.new.no_result') }}</p>
+      <p v-else-if="searchable && items.length === 0" class="text-sm text-header-500">{{ t('reports.new.no_result') }}</p>
       <ul v-else-if="items.length" class="max-h-72 overflow-y-auto border border-header-200 dark:border-header-700 rounded divide-y divide-header-100 dark:divide-header-800" role="listbox" :aria-label="t('reports.new.search_label')">
         <li v-for="item in items" :key="`${item.scopeType}-${item.scopeId}`" role="option" :aria-selected="selected === item">
           <button
