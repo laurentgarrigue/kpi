@@ -25,7 +25,8 @@ const hasContextFilter = computed(() => !!(workContext.pageCompetitionCodeAll ||
 const limit = ref(hasContextFilter.value ? 0 : 25)
 
 // Filters
-const searchQuery = ref('')
+// ?search=ID: deep link to one gameday (e.g. from the club ranking alerts)
+const searchQuery = ref(typeof useRoute().query.search === 'string' ? useRoute().query.search as string : '')
 const selectedMonth = ref('')
 const selectedSort = ref('date_asc')
 
@@ -214,8 +215,11 @@ const onClickOutside = (e: MouseEvent) => {
     bulkActionsOpen.value = false
   }
 }
-onMounted(() => {
-  workContext.initContext()
+onMounted(async () => {
+  await workContext.initContext()
+  // Deep link (club ranking alerts): ?competition=CODE&search=ID
+  const linked = route.query.competition
+  if (typeof linked === 'string' && linked) workContext.setPageCompetitionAll(linked)
   document.addEventListener('click', onClickOutside)
 })
 onUnmounted(() => document.removeEventListener('click', onClickOutside))

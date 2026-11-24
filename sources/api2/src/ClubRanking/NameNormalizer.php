@@ -29,4 +29,22 @@ final class NameNormalizer
 
         return array_values(array_filter(array_map('trim', $parts), static fn (string $part): bool => self::normalize($part) !== ''));
     }
+
+    /** The licence number written after a name, « Virginie BRACKEZ (26407) » → 26407. */
+    public static function matric(string $name): ?int
+    {
+        return preg_match('/\(\s*(\d{1,9})\s*\)\s*$/', $name, $found) === 1 ? (int) $found[1] : null;
+    }
+
+    /** The name without its trailing « (licence number) ». */
+    public static function withoutMatric(string $name): string
+    {
+        return trim(preg_replace('/\(\s*\d{1,9}\s*\)\s*$/', '', $name) ?? $name);
+    }
+
+    /** A club label as typed in a gameday: HTML entities decoded (« D&#039;AVRANCHES »), then normalised. */
+    public static function normalizeLabel(string $label): string
+    {
+        return self::normalize(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
 }

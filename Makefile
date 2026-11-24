@@ -1049,7 +1049,7 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 		echo "⛔ DB_ROOT_PASSWORD non défini. Vérifie docker/.env (voir docker/.env.dist)."; exit 1; }
 	@echo "Création de la base de test $(API2_TEST_DB_NAME) dans $(DB_CONTAINER_NAME)..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' \
-		-e "CREATE DATABASE IF NOT EXISTS $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
+		-e "DROP DATABASE IF EXISTS $(API2_TEST_DB_NAME); CREATE DATABASE $(API2_TEST_DB_NAME) CHARACTER SET utf8mb4" \
 		|| { echo "⛔ Conteneur $(DB_CONTAINER_NAME) injoignable ou mot de passe root incorrect."; exit 1; }
 	@echo "Chargement de SQL/fixtures/schema.sql, des migrations du site public et du classement des clubs puis data.sql..."
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/schema.sql

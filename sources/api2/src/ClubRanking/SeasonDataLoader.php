@@ -39,7 +39,8 @@ final class SeasonDataLoader
     public function load(Scale $scale): SeasonData
     {
         $season = $scale->season;
-        $gamedays = $this->gamedays($season);
+        $clubs = $this->clubs();
+        $gamedays = $this->gamedays($season, $clubs);
         $teamPlayers = $this->teamPlayers($season);
         $managers = $this->managers($season);
         $referees = $this->referees($season, $scale);
@@ -50,12 +51,13 @@ final class SeasonDataLoader
             ...array_map(static fn (Referee $referee): int => $referee->matric, $referees),
             ...array_filter(array_map(static fn (ManualEntry $entry): ?int => $entry->matric, $entries)),
             ...array_values($this->repository->aliases()),
+            ...array_filter(array_map(NameNormalizer::matric(...), $this->officialNames($gamedays))),
         ];
 
         return new SeasonData(
             $season,
-            $this->clubs(),
-            [...$this->licensees($matrics), ...$this->licenseesNamed($this->officialNames($gamedays))],
+            $clubs,
+            [...$this->licensees($matrics), ...$this->licenseesNamed(array_map(NameNormalizer::withoutMatric(...), $this->officialNames($gamedays)))],
             $this->competitions($season),
             $this->teamEntries($season),
             $teamPlayers,
@@ -94,10 +96,11 @@ final class SeasonDataLoader
     {
         return array_map(
             static fn (array $row): Competition => new Competition(
-                (string) $row['Code'], (string) $row['Libelle'], (string) ($row['Code_typeclt'] ?? Competition::CHAMPIONSHIP), (string) ($row['Code_niveau'] ?? ''),
+                (string) $row['Code'], (string) $row['Libelle'], (string) ($row['Code_typeclt'] ?? Competition::CHAMPIONSHIP), (int) ($row['section'] ?? Competition::SECTION_NATIONAL),
                 $row['Publication'] === self::PUBLISHED && (string) $row['Date_publication_calcul'] > '1970', $row['Verrou'] === self::LOCKED,
             ),
-            $this->connection->fetchAllAssociative('SELECT Code, Libelle, Code_typeclt, Code_niveau, Publication, Verrou, Date_publication_calcul FROM kp_competition WHERE Code_saison = ?', [$season]),
+            $this->connection->fetchAllAssociative('SELECT c.Code, c.Libelle, c.Code_typeclt, g.section, c.Publication, c.Verrou, c.Date_publication_calcul
+             FROM kp_competition c LEFT JOIN kp_groupe g ON g.Groupe = c.Code_ref WHERE c.Code_saison = ?', [$season]),
         );
     }
 
@@ -158,17 +161,47 @@ final class SeasonDataLoader
         return $list;
     }
 
-    /** @return list<Gameday> */
-    private function gamedays(string $season): array
+    /**
+     * @param list<Club> $clubs
+     *
+     * @return list<Gameday>
+     */
+    private function gamedays(string $season, array $clubs): array
     {
         $date = static fn (mixed $value): ?string => is_string($value) && $value !== '' && $value !== self::NO_DATE ? substr($value, 0, 10) : null;
+        $codes = self::clubCodesByLabel($clubs);
 
         return array_map(
-            static fn (array $row): Gameday => new Gameday((int) $row['Id'], (string) $row['Code_competition'], $date($row['Date_debut']), $date($row['Date_fin']),
-                (string) ($row['Lieu'] ?? ''), trim((string) ($row['Code_organisateur'] ?? '')), (string) ($row['Organisateur'] ?? ''),
-                (string) ($row['Delegue'] ?? ''), (string) ($row['ChefArbitre'] ?? '')),
+            static function (array $row) use ($date, $codes): Gameday {
+                $label = (string) ($row['Organisateur'] ?? '');
+                $code = trim((string) ($row['Code_organisateur'] ?? ''));
+
+                return new Gameday((int) $row['Id'], (string) $row['Code_competition'], $date($row['Date_debut']), $date($row['Date_fin']),
+                    (string) ($row['Lieu'] ?? ''), $code !== '' ? $code : ($codes[NameNormalizer::normalizeLabel($label)] ?? ''), $label,
+                    (string) ($row['Delegue'] ?? ''), (string) ($row['ChefArbitre'] ?? ''));
+            },
             $this->connection->fetchAllAssociative('SELECT Id, Code_competition, Date_debut, Date_fin, Lieu, Code_organisateur, Organisateur, Delegue, ChefArbitre FROM kp_journee WHERE Code_saison = ? ORDER BY Id', [$season]),
         );
+    }
+
+    /**
+     * The organiser of a gameday is often typed as a label, with no club code: the label of a club identifies it
+     * (HTML entities and accents ignored), unless two clubs share it.
+     *
+     * @param list<Club> $clubs
+     *
+     * @return array<string, string> normalised label → club code
+     */
+    private static function clubCodesByLabel(array $clubs): array
+    {
+        $codes = [];
+        foreach ($clubs as $club) {
+            $key = NameNormalizer::normalizeLabel($club->label);
+            $codes[$key] = isset($codes[$key]) ? '' : $club->code;
+        }
+        unset($codes['']);
+
+        return array_filter($codes, static fn (string $code): bool => $code !== '');
     }
 
     /** @return list<CompetitionManager> */

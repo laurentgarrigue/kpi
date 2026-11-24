@@ -78,6 +78,20 @@ final class FederalLifeCalculatorsTest extends TestCase
         self::assertSame(['3512' => 50, '5006' => 50], self::pointsByClub((new GamedayOfficialCalculator())->compute(self::officialRule(), $fixture->context())));
     }
 
+    public function testALicenceNumberWrittenAfterTheNameMatchesTheLicenseeAutomatically(): void
+    {
+        $fixture = self::fixture()->gameday(1, 'N1H', '2026-05-01', 'Caen', '5006', 'Paul MARTIN (4)', 'Nom Inexact (1)');
+
+        $result = (new GamedayOfficialCalculator())->compute(self::officialRule(), $fixture->context());
+
+        self::assertSame(['4421' => 50, '5006' => 50], self::pointsByClub($result));
+        self::assertSame([], $result->alerts);
+        self::assertSame(4, NameNormalizer::matric('Paul MARTIN (4)'));
+        self::assertSame('Paul MARTIN', NameNormalizer::withoutMatric('Paul MARTIN (4)'));
+        self::assertNull(NameNormalizer::matric('Paul MARTIN'));
+        self::assertSame("CANOE CLUB D AVRANCHES", NameNormalizer::normalizeLabel('CANOE CLUB D&#039;AVRANCHES'));
+    }
+
     public function testCnc16AnUnmatchedOrAmbiguousNameIsAnAlertUntilItIsMatchedByHand(): void
     {
         $fixture = self::fixture()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PlayerAutocomplete } from '~/types'
 import {
-  articleGroups, compareRules, groupAlerts, linesCsv, MANUAL_TYPE, parseCodes, seasonActions, standingsCsv, unresolvedOfficials,
+  alertLinks, articleGroups, compareRules, gamedayLink, groupAlerts, linesCsv, MANUAL_TYPE, parseCodes, seasonActions, standingsCsv, unresolvedOfficials,
   type ClubRankingCategory, type ClubRankingRule, type DetailLine, type RankingAlert, type SeasonStatus, type StandingRow,
 } from '~/utils/clubRanking'
 
@@ -48,6 +48,7 @@ type Tab = 'ranking' | 'alerts' | 'entries' | 'adjustments' | 'scale' | 'publica
 interface ApiFailure { message?: string }
 
 const { t } = useI18n()
+const router = useRouter()
 const api = useApi()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -59,8 +60,8 @@ if (authStore.profile > 1) {
   navigateTo('/')
 }
 
-const TABS: Tab[] = ['ranking', 'alerts', 'entries', 'adjustments', 'scale', 'publications']
-const tab = ref<Tab>('ranking')
+const TABS: Tab[] = ['scale', 'ranking', 'alerts', 'entries', 'adjustments', 'publications']
+const tab = ref<Tab>('scale')
 const seasons = ref<{ season: string, status: SeasonStatus }[]>([])
 const season = ref('')
 const data = ref<Overview | null>(null)
@@ -194,10 +195,10 @@ async function addEntry(rule: string) {
 const deleteEntry = (id: number) => run(() => api.del(`${base()}/entries/${id}`))
 
 // Ententes (N-7)
-const ententeForm = reactive({ team: '', club: '' })
+const ententeForm = reactive<{ team: number | null, club: string }>({ team: null, club: '' })
 async function addEntente() {
-  if (await run(() => api.post(`${base()}/ententes`, { team_number: Number(ententeForm.team), club: ententeForm.club }), t('club_ranking.entente_added'))) {
-    Object.assign(ententeForm, { team: '', club: '' })
+  if (await run(() => api.post(`${base()}/ententes`, { team_number: ententeForm.team, club: ententeForm.club }), t('club_ranking.entente_added'))) {
+    Object.assign(ententeForm, { team: null, club: '' })
   }
 }
 const deleteEntente = (team: number, club: string) => run(() => api.del(`${base()}/ententes/${team}/${club}`))
@@ -374,7 +375,7 @@ onMounted(async () => {
           <h2 class="mb-2 text-lg font-bold">{{ t('club_ranking.officials_title') }}</h2>
           <p class="mb-3 text-sm text-header-600 dark:text-header-300">{{ t('club_ranking.officials_help') }}</p>
           <div v-for="official in officials" :key="official.name" class="mb-3 grid items-start gap-3 md:grid-cols-[16rem_1fr_auto]">
-            <span><b>{{ official.name }}</b><span class="block text-xs text-header-500">{{ t('club_ranking.gamedays', { ids: official.gamedays.join(', ') }) }}</span></span>
+            <span><b>{{ official.name }}</b><span class="block text-xs text-header-600 dark:text-header-300">{{ t('club_ranking.gamedays', { ids: '' }) }}<a v-for="id in official.gamedays" :key="id" :href="router.resolve(gamedayLink(id, official.competitions[String(id)]).to).href" target="_blank" rel="noopener" class="mr-1 underline">{{ id }}</a></span></span>
             <AdminPlayerAutocomplete :model-value="aliasChoice[official.name] ?? null" :placeholder="t('club_ranking.find_licensee')" :disabled="!actions?.editable" @update:model-value="value => aliasChoice[official.name] = value" />
             <UButton :disabled="!aliasChoice[official.name] || !actions?.editable" @click="saveAlias(official.name)">{{ t('club_ranking.match') }}</UButton>
           </div>
@@ -382,7 +383,10 @@ onMounted(async () => {
         <div v-for="group in alertGroups" :key="group.kind">
           <h2 class="mb-2 text-base font-bold" :class="group.blocking ? 'text-red-700 dark:text-red-300' : ''">{{ t(`club_ranking.alerts.${group.kind}`) }} ({{ group.items.length }})</h2>
           <ul class="list-disc space-y-1 pl-6 text-sm">
-            <li v-for="(item, index) in group.items" :key="index">{{ item.message }}</li>
+            <li v-for="(item, index) in group.items" :key="index">
+              {{ item.message }}
+              <a v-for="link in alertLinks(item)" :key="link.to" :href="router.resolve(link.to).href" target="_blank" rel="noopener" class="ml-2 whitespace-nowrap font-semibold text-primary-700 underline dark:text-primary-300">{{ link.label }} ↗</a>
+            </li>
           </ul>
         </div>
       </section>
@@ -422,7 +426,7 @@ onMounted(async () => {
             </li>
           </ul>
           <form v-if="actions?.editable" class="grid gap-3 md:grid-cols-[12rem_1fr_auto]" @submit.prevent="addEntente">
-            <input v-model="ententeForm.team" type="number" min="1" class="rounded border border-header-300 px-2 py-1.5 dark:bg-header-800" :placeholder="t('club_ranking.team_number')">
+            <AdminTeamAutocomplete v-model="ententeForm.team" :placeholder="t('club_ranking.team_search')" />
             <AdminClubAutocomplete v-model="ententeForm.club" :placeholder="t('club_ranking.partner_club')" />
             <UButton type="submit" :disabled="!ententeForm.team || !ententeForm.club">{{ t('common.add') }}</UButton>
           </form>
@@ -500,17 +504,17 @@ onMounted(async () => {
             <h2 class="text-lg font-bold">{{ t('club_ranking.categories_title') }}</h2>
             <UButton v-if="actions?.editable" size="sm" icon="i-heroicons-plus" @click="editCategory()">{{ t('common.add') }}</UButton>
           </div>
-          <p class="mb-2 text-sm text-header-500">{{ t('club_ranking.categories_help') }}</p>
+          <p class="mb-2 text-sm text-header-600 dark:text-header-300">{{ t('club_ranking.categories_help') }}</p>
           <table class="w-full text-sm [&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2">
-            <thead><tr class="text-left text-header-600 dark:text-header-300"><th>{{ t('club_ranking.category') }}</th><th>{{ t('club_ranking.entry_codes') }}</th><th>{{ t('club_ranking.final_code') }}</th><th>{{ t('club_ranking.regular_code') }}</th><th /></tr></thead>
+            <thead><tr class="text-left text-header-600 dark:text-header-300"><th>{{ t('club_ranking.category') }}</th><th>{{ t('club_ranking.entry_codes') }}</th><th>{{ t('club_ranking.regular_code') }}</th><th>{{ t('club_ranking.final_code') }}</th><th /></tr></thead>
             <tbody>
               <tr v-for="category in data.categories" :key="category.id" class="border-t border-header-100 dark:border-header-800">
                 <td><b>{{ category.code }}</b> <span class="text-header-500">{{ category.label }}</span></td>
                 <td>{{ category.entry_codes.join(', ') || '—' }}</td>
-                <td>{{ category.final_code ?? '—' }}</td>
                 <td>{{ category.regular_code ?? '—' }}</td>
+                <td>{{ category.final_code ?? '—' }}</td>
                 <td class="whitespace-nowrap text-right">
-                  <span v-if="unknownCodes(category).length" class="mr-2 text-xs text-amber-700" :title="t('club_ranking.unknown_codes_help')">⚠ {{ unknownCodes(category).join(', ') }}</span>
+                  <span v-if="unknownCodes(category).length" class="mr-2 text-xs font-semibold text-amber-700 dark:text-amber-300" :title="t('club_ranking.unknown_codes_help')">⚠ {{ unknownCodes(category).join(', ') }}</span>
                   <UButton v-if="actions?.editable" size="xs" variant="outline" @click="editCategory(category)">{{ t('common.edit') }}</UButton>
                   <UButton v-if="actions?.editable" size="xs" variant="ghost" color="error" icon="i-heroicons-trash" :aria-label="t('common.delete')" @click="deleteCategory(category.id)" />
                 </td>
@@ -589,9 +593,9 @@ onMounted(async () => {
         <label class="text-sm">{{ t('club_ranking.code') }}<input v-model="categoryForm.code" required pattern="[A-Za-z0-9_]{1,20}" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800"></label>
         <label class="text-sm">{{ t('club_ranking.label') }}<input v-model="categoryForm.label" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800"></label>
         <label class="text-sm md:col-span-2">{{ t('club_ranking.entry_codes') }}<input v-model="categoryForm.entry_codes" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800" placeholder="N15*, CF15"></label>
-        <label class="text-sm">{{ t('club_ranking.final_code') }}<input v-model="categoryForm.final_code" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800"></label>
         <label class="text-sm">{{ t('club_ranking.regular_code') }}<input v-model="categoryForm.regular_code" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800"></label>
-        <p class="text-xs text-header-500 md:col-span-2">{{ t('club_ranking.categories_help') }}</p>
+        <label class="text-sm">{{ t('club_ranking.final_code') }}<input v-model="categoryForm.final_code" class="mt-1 w-full rounded border border-header-300 px-2 py-1.5 dark:bg-header-800"></label>
+        <p class="text-xs text-header-600 dark:text-header-300 md:col-span-2">{{ t('club_ranking.categories_help') }}</p>
         <UButton type="submit" class="md:justify-self-start">{{ t('common.save') }}</UButton>
       </form>
     </AdminModal>

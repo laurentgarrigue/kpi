@@ -38,13 +38,14 @@ final class GamedayOfficialCalculator implements RuleCalculator
     public function compute(Rule $rule, CalculationContext $context): CalculationResult
     {
         $names = $this->namesOfNationalGamedays($rule, $context);
+        $competitions = $this->competitionsOfGamedays($context);
         $lines = [];
         $alerts = [];
         $paid = [];
         foreach ($names as $name => $gamedays) {
-            $candidates = $context->data->alias($name) !== null ? [$context->data->alias($name)] : $context->data->matricsNamed($name);
+            $candidates = $this->candidates($name, $context);
             if (count($candidates) !== 1) {
-                $alerts[] = new Alert(Alert::OFFICIAL_UNRESOLVED, sprintf('« %s » (journées %s) : %s, à rapprocher d\'un licencié.', $name, implode(', ', $gamedays), $candidates === [] ? 'aucun licencié de ce nom' : count($candidates) . ' licenciés de ce nom'), $rule->code(), context: ['name' => $name, 'gamedays' => $gamedays, 'candidates' => $candidates]);
+                $alerts[] = new Alert(Alert::OFFICIAL_UNRESOLVED, sprintf('« %s » (journées %s) : %s, à rapprocher d\'un licencié.', $name, implode(', ', $gamedays), $candidates === [] ? 'aucun licencié de ce nom' : count($candidates) . ' licenciés de ce nom'), $rule->code(), context: ['name' => $name, 'gamedays' => $gamedays, 'gameday_competitions' => array_intersect_key($competitions, array_flip($gamedays)), 'candidates' => $candidates]);
                 continue;
             }
             $matric = $candidates[0];
@@ -61,6 +62,29 @@ final class GamedayOfficialCalculator implements RuleCalculator
     }
 
     /** @return array<string, list<int>> raw name → its national gamedays */
+    /** @return list<int> a licence number written after the name wins, then a stored matching, then the name itself */
+    private function candidates(string $name, CalculationContext $context): array
+    {
+        $written = NameNormalizer::matric($name);
+        if ($written !== null && $context->data->licensee($written) !== null) {
+            return [$written];
+        }
+        $alias = $context->data->alias($name);
+
+        return $alias !== null ? [$alias] : $context->data->matricsNamed(NameNormalizer::withoutMatric($name));
+    }
+
+    /** @return array<int, string> gameday id → competition code */
+    private function competitionsOfGamedays(CalculationContext $context): array
+    {
+        $competitions = [];
+        foreach ($context->data->gamedays as $gameday) {
+            $competitions[$gameday->id] = $gameday->competition;
+        }
+
+        return $competitions;
+    }
+
     private function namesOfNationalGamedays(Rule $rule, CalculationContext $context): array
     {
         $names = [];

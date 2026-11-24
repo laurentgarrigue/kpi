@@ -2,7 +2,6 @@
 
 namespace App\ClubRanking\Calculator;
 
-use App\ClubRanking\Data\Competition;
 use App\ClubRanking\Data\Gameday;
 use App\ClubRanking\Model\Alert;
 use App\ClubRanking\NameNormalizer;
@@ -28,15 +27,15 @@ final class OrganisedEvents
                 continue;
             }
             if ($gameday->start === null) {
-                $this->alerts[] = new Alert(Alert::GAMEDAY_WITHOUT_DATE, sprintf('Journée %d (%s) sans date : non comptée.', $gameday->id, $gameday->competition), context: ['gameday' => $gameday->id]);
+                $this->alerts[] = new Alert(Alert::GAMEDAY_WITHOUT_DATE, sprintf('Journée %d (%s) sans date : non comptée.', $gameday->id, $gameday->competition), context: ['gameday' => $gameday->id, 'gameday_competitions' => [$gameday->id => $gameday->competition]]);
                 continue;
             }
             $gamedays[] = $gameday;
         }
-        foreach ($this->group($gamedays) as $group) {
+        foreach ($this->group($gamedays, $context) as $group) {
             $event = new OrganisedEvent($group, $this->nature($group, $context));
             if (!$context->data->isEligibleClub($event->organiser())) {
-                $this->alerts[] = new Alert(Alert::ORGANISER_UNKNOWN, sprintf('%s : organisateur « %s » qui n\'est pas un club, aucun point.', $event->describe(), $event->organiser() !== '' ? $event->organiser() : ($group[0]->organiserLabel !== '' ? $group[0]->organiserLabel : 'non renseigné')), context: ['gamedays' => array_map(static fn (Gameday $gameday): int => $gameday->id, $group)]);
+                $this->alerts[] = new Alert(Alert::ORGANISER_UNKNOWN, sprintf('%s : organisateur « %s » qui n\'est pas un club, aucun point.', $event->describe(), $event->organiser() !== '' ? $event->organiser() : ($group[0]->organiserLabel !== '' ? $group[0]->organiserLabel : 'non renseigné')), context: ['gamedays' => array_map(static fn (Gameday $gameday): int => $gameday->id, $group), 'gameday_competitions' => array_column(array_map(static fn (Gameday $gameday): array => [$gameday->id, $gameday->competition], $group), 1, 0)]);
                 continue;
             }
             $this->events[] = $event;
@@ -62,7 +61,7 @@ final class OrganisedEvents
 
     private function isInternational(Gameday $gameday, CalculationContext $context): bool
     {
-        return $context->data->competition($gameday->competition)?->level === Competition::LEVEL_INTERNATIONAL
+        return $context->data->competition($gameday->competition)?->isInternational() === true
             && !$context->scale->isNational($gameday->competition);
     }
 
@@ -71,9 +70,18 @@ final class OrganisedEvents
      *
      * @return list<non-empty-list<Gameday>>
      */
-    private function group(array $gamedays): array
+    private function group(array $gamedays, CalculationContext $context): array
     {
-        $key = static fn (Gameday $gameday): string => $gameday->organiserCode . '|' . NameNormalizer::normalize($gameday->place);
+        // The phases of a tournament (CP) share the organiser of the place: one typed on a single phase is enough
+        $tournamentOrganiser = [];
+        foreach ($gamedays as $gameday) {
+            if ($gameday->organiserCode !== '' && $context->data->competition($gameday->competition)?->isTournament() === true) {
+                $tournamentOrganiser[NameNormalizer::normalize($gameday->place)] ??= $gameday->organiserCode;
+            }
+        }
+        $isTournament = static fn (Gameday $gameday): bool => $context->data->competition($gameday->competition)?->isTournament() === true;
+        $key = static fn (Gameday $gameday): string => ($isTournament($gameday) ? $tournamentOrganiser[NameNormalizer::normalize($gameday->place)] ?? $gameday->organiserCode : $gameday->organiserCode)
+            . '|' . NameNormalizer::normalize($gameday->place);
         usort($gamedays, static fn (Gameday $a, Gameday $b): int => [$key($a), $a->start, $a->id] <=> [$key($b), $b->start, $b->id]);
         $groups = [];
         $current = [];

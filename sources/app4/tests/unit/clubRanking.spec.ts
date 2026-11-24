@@ -1,6 +1,6 @@
 // Admin page of the national club ranking (PAGE_CLASSEMENT_NATIONAL_CLUBS.md § 8): pure display rules.
 import { describe, expect, it } from 'vitest'
-import { articleGroups, groupAlerts, linesCsv, parseCodes, seasonActions, standingsCsv, unresolvedOfficials, type ClubRankingRule, type RankingAlert } from '../../utils/clubRanking'
+import { alertLinks, articleGroups, groupAlerts, linesCsv, parseCodes, seasonActions, standingsCsv, unresolvedOfficials, type ClubRankingRule, type RankingAlert } from '../../utils/clubRanking'
 
 const rule = (article: string, rank: number, points = 10): ClubRankingRule => ({
   id: rank, code: `${article}.${rank}`, article, rank, label: `Rubrique ${article}.${rank}`, short_label: `R${rank}`, points, type: 'TEAM_OF_CLUB', params: {}, note: '',
@@ -34,7 +34,16 @@ describe('alerts of a calculation', () => {
 
   it('lists the officials to match with a licensee', () => {
     expect(unresolvedOfficials([alert('official_unresolved', false, { name: 'MARTIN Paul', gamedays: [3], candidates: [1, 2] }), alert('selection_team')]))
-      .toEqual([{ name: 'MARTIN Paul', gamedays: [3], candidates: [1, 2] }])
+      .toEqual([{ name: 'MARTIN Paul', gamedays: [3], competitions: {}, candidates: [1, 2] }])
+  })
+})
+
+describe('links of an alert', () => {
+  it('points to the gamedays and to the competition of the alert', () => {
+    expect(alertLinks(alert('organiser_unknown', false, { gamedays: [12, 13], gameday_competitions: { 12: 'N1D', 13: 'N1D' } })).map(link => link.to)).toEqual(['/gamedays?competition=N1D&search=12', '/gamedays?competition=N1D&search=13'])
+    expect(alertLinks(alert('gameday_without_date', false, { gameday: 7 })).map(link => link.label)).toEqual(['#7'])
+    expect(alertLinks(alert('ranking_not_published', true, { category: 'N1D', competition: 'N1D' }))).toEqual([{ label: 'N1D', to: '/competitions?search=N1D' }])
+    expect(alertLinks(alert('after_season'))).toEqual([])
   })
 })
 

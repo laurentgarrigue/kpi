@@ -23,7 +23,13 @@ final class OrganisedEvent
 
     public function organiser(): string
     {
-        return $this->gamedays[0]->organiserCode;
+        foreach ($this->gamedays as $gameday) {
+            if ($gameday->organiserCode !== '') {
+                return $gameday->organiserCode;
+            }
+        }
+
+        return '';
     }
 
     public function id(): string
@@ -38,6 +44,6 @@ final class OrganisedEvent
         $competitions = array_values(array_unique(array_map(static fn (Gameday $gameday): string => $gameday->competition, $this->gamedays)));
         sort($competitions);
 
-        return sprintf('%s, %s%s : %s', trim($first->place) !== '' ? trim($first->place) : '?', $first->start, $last !== $first->start ? ' → ' . $last : '', implode(', ', $competitions));
+        return sprintf('%s : %s%s, %s', implode(', ', $competitions), $first->start, $last !== $first->start ? ' → ' . $last : '', trim($first->place) !== '' ? trim($first->place) : '?');
     }
 }

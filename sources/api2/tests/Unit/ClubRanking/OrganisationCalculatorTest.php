@@ -47,7 +47,7 @@ final class OrganisationCalculatorTest extends TestCase
             ->category('PO_D', ['NPOF'], 'NPOF')
             ->category('N2', ['N2H*'], null, 'N2H')
             ->competition('N1H')->competition('N1F')->competition('NPOH', 'CP')->competition('NPOF', 'CP')
-            ->competition('N2H')->competition('OPEND', level: 'NAT')->competition('ECA', 'CP', level: 'INT');
+            ->competition('N2H')->competition('OPEND', section: 2)->competition('ECA', 'CP', section: 1);
     }
 
     public function testCnc12TwoDivisionsTheSameWeekendAtTheSamePlaceAreOneMultipleDay(): void

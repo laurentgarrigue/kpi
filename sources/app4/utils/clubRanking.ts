@@ -101,13 +101,32 @@ export function groupAlerts(alerts: RankingAlert[]): { kind: string, blocking: b
     .sort((a, b) => Number(b.blocking) - Number(a.blocking) || a.kind.localeCompare(b.kind))
 }
 
+export interface AlertLink { label: string, to: string }
+
+/** Link to a gameday in the Phases page: it needs the competition, the page lists nothing without one. */
+export function gamedayLink(id: number, competition?: string): AlertLink {
+  return { label: `#${id}`, to: `/gamedays?${competition ? `competition=${encodeURIComponent(competition)}&` : ''}search=${id}` }
+}
+
+/** Links to the gamedays and the competition an alert is about, to open in the admin pages. */
+export function alertLinks(alert: RankingAlert): AlertLink[] {
+  const gamedays = [...((alert.context.gamedays as number[] | undefined) ?? []), ...(typeof alert.context.gameday === 'number' ? [alert.context.gameday] : [])]
+  const competitions = (alert.context.gameday_competitions as Record<string, string> | undefined) ?? {}
+  const competition = typeof alert.context.competition === 'string' ? alert.context.competition : null
+  return [
+    ...gamedays.map(id => gamedayLink(id, competitions[String(id)])),
+    ...(competition ? [{ label: competition, to: `/competitions?search=${encodeURIComponent(competition)}` }] : []),
+  ]
+}
+
 /** Names of gameday officials still to match with a licensee (N-5). */
-export function unresolvedOfficials(alerts: RankingAlert[]): { name: string, gamedays: number[], candidates: number[] }[] {
+export function unresolvedOfficials(alerts: RankingAlert[]): { name: string, gamedays: number[], competitions: Record<string, string>, candidates: number[] }[] {
   return alerts
     .filter(alert => alert.kind === 'official_unresolved')
     .map(alert => ({
       name: String(alert.context.name ?? ''),
       gamedays: (alert.context.gamedays as number[] | undefined) ?? [],
+      competitions: (alert.context.gameday_competitions as Record<string, string> | undefined) ?? {},
       candidates: (alert.context.candidates as number[] | undefined) ?? [],
     }))
 }

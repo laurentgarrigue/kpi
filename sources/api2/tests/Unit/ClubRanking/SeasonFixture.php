@@ -81,9 +81,9 @@ final class SeasonFixture
         return $this;
     }
 
-    public function competition(string $code, string $type = 'CHPT', bool $published = true, bool $locked = true, string $level = 'NAT'): self
+    public function competition(string $code, string $type = 'CHPT', bool $published = true, bool $locked = true, int $section = Competition::SECTION_NATIONAL): self
     {
-        $this->competitions[] = new Competition($code, $code, $type, $level, $published, $locked);
+        $this->competitions[] = new Competition($code, $code, $type, $section, $published, $locked);
 
         return $this;
     }
