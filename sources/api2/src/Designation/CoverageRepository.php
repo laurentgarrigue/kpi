@@ -12,12 +12,13 @@ final class CoverageRepository
     {
     }
 
-    /** @return list<array{code: string, label: string, type: string}> type = Code_typeclt (CHPT, CP, MULTI…) */
+    /** Même ordre que le site public : section et ordre du groupe, tour, ordre dans le groupe. @return list<array{code: string, label: string, type: string}> type = Code_typeclt (CHPT, CP, MULTI…) */
     public function competitions(string $season): array
     {
         return array_map(
             static fn (array $row): array => ['code' => $row['Code'], 'label' => (string) ($row['Libelle'] ?? $row['Code']), 'type' => (string) ($row['Code_typeclt'] ?? '')],
-            $this->connection->fetchAllAssociative('SELECT Code, Libelle, Code_typeclt FROM kp_competition WHERE Code_saison = ? ORDER BY Code', [$season]),
+            $this->connection->fetchAllAssociative('SELECT c.Code, c.Libelle, c.Code_typeclt FROM kp_competition c LEFT JOIN kp_groupe g ON g.Groupe = c.Code_ref
+                 WHERE c.Code_saison = ? ORDER BY COALESCE(g.section, 999), COALESCE(g.ordre, 999), c.Code_tour, c.GroupOrder, c.Code', [$season]),
         );
     }
 

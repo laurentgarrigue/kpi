@@ -68,7 +68,8 @@ scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et n
 
 À détailler. Intentions validées (D11) :
 
-- **Matrice de couverture** : en lignes les compétitions, puis les événements et les journées (héritage visible : une
+- **Matrice de couverture** : en lignes les compétitions (dans l'ordre du site public : section et ordre du groupe, tour,
+  ordre dans le groupe), puis les événements et les journées (héritage visible : une
   case pourvue par héritage est distinguée d'une case pourvue en propre) ; en colonnes les rôles ; une case vide sur
   un rôle requis est signalée. Filtres : saison, niveau, compétition, « seulement les manques ».
 - **Équipes sans responsable désigné**, par compétition.
